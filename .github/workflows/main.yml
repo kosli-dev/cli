@@ -77,7 +77,7 @@ jobs:
         credentials: ${{ secrets.GCP_K8S_CREDENTIALS }}
 
     - name: list image digests
-      uses: docker://watcher
+      uses: docker://ghcr.io/merkely-development/watcher
       env: 
         KUBECONFIG: ${{ env.KUBECONFIG }} 
       with:
