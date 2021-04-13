@@ -1,0 +1,85 @@
+name: Get Image digests
+
+on:
+  push:
+    branches:
+      - '**'
+
+env: 
+  PRODUCTION_NAMESPACE: production
+  STAGING_NAMESPACE: staging
+  K8S_CLUSTER_NAME: cdb-prod-eu
+  K8S_GCP_ZONE: europe-west1-b      
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+    
+    - uses: actions/checkout@v2
+
+    - name: Prepare
+      id: prep
+      run: |
+        TAG=$(echo $GITHUB_SHA | head -c7)
+        IMAGE=ghcr.io/merkely-development/watcher
+        TAGGED_IMAGE=${IMAGE}:${TAG}
+        echo "TAG=${TAG}" >> ${GITHUB_ENV}
+        echo "IMAGE=${IMAGE}" >> ${GITHUB_ENV}
+        echo "TAGGED_IMAGE=${TAGGED_IMAGE}" >> ${GITHUB_ENV}
+        echo "MERKELY_FINGERPRINT=docker://${TAGGED_IMAGE}" >> ${GITHUB_ENV}
+        cat ./merkely.env >> ${GITHUB_ENV}
+        echo ::set-output name=tag::${TAG}
+        echo ::set-output name=tagged-image::${TAGGED_IMAGE}
+  
+    # This is the a separate action that sets up buildx (buildkit) runner
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    # So now you can use Actions' own caching!
+    - name: Cache Docker layers
+      uses: actions/cache@v2
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and push Docker image
+      id: docker_build
+      uses: docker/build-push-action@v2
+      with:
+        push: true
+        tags: ${{ env.TAGGED_IMAGE }}
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+    # This is necessary to prevent cache from growing forever
+    # till it hits GitHub's limit of 5GB.
+    - name: Move cache
+      run: |
+        rm -rf /tmp/.buildx-cache
+        mv /tmp/.buildx-cache-new /tmp/.buildx-cache    
+
+    - id: connect-to-k8s
+      uses: google-github-actions/get-gke-credentials@main
+      with:
+        cluster_name: ${{ env.K8S_CLUSTER_NAME }}
+        location: ${{ env.K8S_GCP_ZONE }}
+        credentials: ${{ secrets.GCP_K8S_CREDENTIALS }}
+
+    - name: list image digests
+      uses: docker://watcher
+      env: 
+        KUBECONFIG: ${{ env.KUBECONFIG }} 
+      with:
+        entrypoint: /bin/watcher
+        args: --kubeconfig=${KUBECONFIG}  
