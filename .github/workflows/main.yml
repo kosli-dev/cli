@@ -16,7 +16,8 @@ env:
 jobs:
   build:
     runs-on: ubuntu-20.04
-
+    outputs:
+      tag: ${{ steps.prep.outputs.tag }}
     steps:
     
     - uses: actions/checkout@v2
@@ -71,9 +72,10 @@ jobs:
         mv /tmp/.buildx-cache-new /tmp/.buildx-cache    
 
   test-watcher:
+    needs: [build]
     runs-on: ubuntu-20.04
     container:
-      image: ghcr.io/merkely-development/watcher
+      image: ghcr.io/merkely-development/watcher:${{ needs.build.outputs.tag }}
       credentials:
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
