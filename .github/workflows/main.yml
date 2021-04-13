@@ -9,7 +9,9 @@ env:
   PRODUCTION_NAMESPACE: production
   STAGING_NAMESPACE: staging
   K8S_CLUSTER_NAME: cdb-prod-eu
-  K8S_GCP_ZONE: europe-west1-b      
+  K8S_GCP_ZONE: europe-west1-b 
+  MERKELY_OWNER: compliancedb  
+  MERKELY_PIPELINE: watcher
 
 jobs:
   build:
@@ -29,7 +31,6 @@ jobs:
         echo "IMAGE=${IMAGE}" >> ${GITHUB_ENV}
         echo "TAGGED_IMAGE=${TAGGED_IMAGE}" >> ${GITHUB_ENV}
         echo "MERKELY_FINGERPRINT=docker://${TAGGED_IMAGE}" >> ${GITHUB_ENV}
-        cat ./merkely.env >> ${GITHUB_ENV}
         echo ::set-output name=tag::${TAG}
         echo ::set-output name=tagged-image::${TAGGED_IMAGE}
   
