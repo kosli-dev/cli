@@ -1,21 +1,19 @@
 package main
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/merkely-development/watcher/internal/kube"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 const (
@@ -23,13 +21,15 @@ const (
 	defaultConfigFilename = "merkely"
 
 	// The environment variable prefix of all environment variables bound to our command line flags.
-	// For example, --number is bound to STING_NUMBER.
+	// For example, --namespace is bound to MERKELY_NAMESPACE.
 	envPrefix = "MERKELY"
 )
 
-var (
+// harvestArgs is the harvest command arguments
+type harvestArgs struct {
 	kubeconfig string
-)
+	namespace  string
+}
 
 func main() {
 	cmd := NewRootCommand()
@@ -38,61 +38,52 @@ func main() {
 	}
 }
 
-// Build the cobra command that handles our command line tool.
+// NewRootCommand Build the cobra command that handles our command line tool.
 func NewRootCommand() *cobra.Command {
-	// Store the result of binding cobra flags and viper config. In a
-	// real application these would be data structures, most likely
-	// custom structs per command. This is simplified for the demo app and is
-	// not recommended that you use one-off variables. The point is that we
-	// aren't retrieving the values directly from viper or flags, we read the values
-	// from standard Go data structures.
+	harvest := harvestArgs{}
 
-	home, _ := homedir.Dir()
-	defaultKubeConfigPath := filepath.Join(home, ".kube", "merkely")
+	// define the default kubeconfig path
+	home, err := homedir.Dir()
+	defaultKubeConfigPath := ""
+	if err == nil {
+		path := filepath.Join(home, ".kube", "config")
+		_, err := os.Stat(path)
+		if err == nil {
+			defaultKubeConfigPath = path
+		}
+	}
 
 	// Define our command
 	rootCmd := &cobra.Command{
 		Use:   "merkely",
-		Short: "Cober and Viper together at last",
-		Long:  `Demonstrate how to get cobra flags to bind to viper properly`,
+		Short: "harvest pod info from a cluster",
+		Long:  `harvest pod image data from specific namespace or entire cluster`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// You can bind cobra and viper in a few locations, but PersistencePreRunE on the root command works well
 			return initializeConfig(cmd)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			// Working with OutOrStdout/OutOrStderr allows us to unit test our command easier
-			// out := cmd.OutOrStdout()
-			listPods()
-			// // Print the final resolved value from binding cobra flags and viper config
-			// fmt.Fprintln(out, "The artifact is:", deploy.artifact)
-			// fmt.Fprintln(out, "The pipeline is:", deploy.pipeline)
+			clientset, err := kube.NewK8sClientSet(harvest.kubeconfig)
+			if err != nil {
+				log.Fatal(err)
+			}
+			podsData, err := kube.GetPodsData(harvest.namespace, clientset)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			js, _ := json.MarshalIndent(podsData, "", "    ")
+			//TODO: send the json to merkely API
+			fmt.Println(string(js))
 		},
 	}
 
 	// Define cobra flags, the default value has the lowest (least significant) precedence
-	rootCmd.Flags().StringVarP(&kubeconfig, "kubeconfig", "k", defaultKubeConfigPath, "kubeconfig path")
-	// rootCmd.Flags().StringVarP(&deploy.pipeline, "pipeline", "p", "default-pipe", "Should come from flag first, then env var MERKELY_PIPELINE then the config file, then the default last")
+	// CLI args are read from command line, then env variables, then config files, then the CLI arg default is used.
+	rootCmd.Flags().StringVarP(&harvest.kubeconfig, "kubeconfig", "k", defaultKubeConfigPath, "kubeconfig path for the target cluster")
+	rootCmd.Flags().StringVarP(&harvest.namespace, "namespace", "n", "", "the namespace to harvest artifacts info from.")
 
 	return rootCmd
-}
-
-func listPods() {
-
-	log.Println(kubeconfig)
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		log.Fatalf("could not get kubeconfig: %v ", err)
-	}
-	clientset := kubernetes.NewForConfigOrDie(config)
-
-	ctx := context.Background()
-	list, err := clientset.CoreV1().Pods("").List(ctx, metav1.ListOptions{})
-	if err != nil {
-		log.Fatalf("could not list pods: %v ", err)
-	}
-	for _, pod := range list.Items {
-		log.Println(pod.Status.ContainerStatuses[0].ImageID)
-	}
 }
 
 func initializeConfig(cmd *cobra.Command) error {
@@ -116,14 +107,14 @@ func initializeConfig(cmd *cobra.Command) error {
 	}
 
 	// When we bind flags to environment variables expect that the
-	// environment variables are prefixed, e.g. a flag like --number
-	// binds to an environment variable STING_NUMBER. This helps
+	// environment variables are prefixed, e.g. a flag like --namespace
+	// binds to an environment variable MERKELY_NAMESPACE. This helps
 	// avoid conflicts.
 	v.SetEnvPrefix(envPrefix)
 
 	// Bind to environment variables
 	// Works great for simple config names, but needs help for names
-	// like --favorite-color which we fix in the bindFlags function
+	// like --kube-config which we fix in the bindFlags function
 	v.AutomaticEnv()
 
 	// Bind the current command's flags to viper
@@ -136,7 +127,7 @@ func initializeConfig(cmd *cobra.Command) error {
 func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 	cmd.Flags().VisitAll(func(f *pflag.Flag) {
 		// Environment variables can't have dashes in them, so bind them to their equivalent
-		// keys with underscores, e.g. --favorite-color to STING_FAVORITE_COLOR
+		// keys with underscores, e.g. --kube-config to MERKELY_KUBE_CONFIG
 		if strings.Contains(f.Name, "-") {
 			envVarSuffix := strings.ToUpper(strings.ReplaceAll(f.Name, "-", "_"))
 			v.BindEnv(f.Name, fmt.Sprintf("%s_%s", envPrefix, envVarSuffix))
