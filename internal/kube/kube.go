@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/merkely-development/watcher/internal/utils"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -63,12 +64,43 @@ func NewK8sClientSet(kubeconfigPath string) (*kubernetes.Clientset, error) {
 
 // GetPodsData lists pods in the target namespace of a target cluster and creates a list of
 // PodData objects for them
-func GetPodsData(namespace string, clientset *kubernetes.Clientset) ([]*PodData, error) {
+func GetPodsData(namespaces []string, excludeNamespace []string, clientset *kubernetes.Clientset) ([]*PodData, error) {
 	podsData := []*PodData{}
 	ctx := context.Background()
-	list, err := clientset.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return podsData, fmt.Errorf("could not list pods: %v ", err)
+	list := &corev1.PodList{}
+	var err error
+	nsList := &corev1.NamespaceList{}
+
+	if len(excludeNamespace) > 0 {
+		nsList, err = GetClusterNamespaces(clientset)
+		if err != nil {
+			return podsData, err
+		}
+
+		for _, ns := range nsList.Items {
+			if !utils.Contains(excludeNamespace, ns.Name) {
+				pods, err := getPodsInNamespace(ns.Name, clientset)
+				if err != nil {
+					return podsData, err
+				}
+				list.Items = append(list.Items, pods...)
+			}
+		}
+
+	} else if len(namespaces) == 0 {
+		list, err = clientset.CoreV1().Pods("").List(ctx, metav1.ListOptions{})
+		if err != nil {
+			return podsData, fmt.Errorf("could not list pods on cluster scope: %v ", err)
+		}
+	}
+
+	for _, ns := range namespaces {
+
+		pods, err := getPodsInNamespace(ns, clientset)
+		if err != nil {
+			return podsData, err
+		}
+		list.Items = append(list.Items, pods...)
 	}
 
 	for _, pod := range list.Items {
@@ -76,4 +108,27 @@ func GetPodsData(namespace string, clientset *kubernetes.Clientset) ([]*PodData,
 	}
 
 	return podsData, nil
+}
+
+// getPodsInNamespace get pods in a specific namespace in a cluster
+func getPodsInNamespace(namespace string, clientset *kubernetes.Clientset) ([]corev1.Pod, error) {
+	ctx := context.Background()
+	podlist, err := clientset.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return []corev1.Pod{}, fmt.Errorf("could not list pods on namespace %s: %v ", namespace, err)
+	}
+	return podlist.Items, nil
+}
+
+// GetClusterNamespaces gets a namespace list from the cluster
+func GetClusterNamespaces(clientset *kubernetes.Clientset) (*corev1.NamespaceList, error) {
+	namespaces := &corev1.NamespaceList{}
+	ctx := context.Background()
+
+	namespaces, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return namespaces, fmt.Errorf("could not list namespaces on cluster scope: %v ", err)
+	}
+
+	return namespaces, nil
 }

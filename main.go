@@ -27,8 +27,10 @@ const (
 
 // harvestArgs is the harvest command arguments
 type harvestArgs struct {
-	kubeconfig string
-	namespace  string
+	kubeconfig         string
+	namespaces         []string
+	excludeNamespaces  []string
+	merkelyEnvironment string
 }
 
 func main() {
@@ -62,12 +64,18 @@ func NewRootCommand() *cobra.Command {
 			// You can bind cobra and viper in a few locations, but PersistencePreRunE on the root command works well
 			return initializeConfig(cmd)
 		},
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(harvest.excludeNamespaces) > 0 && len(harvest.namespaces) > 0 {
+				return fmt.Errorf("--namespace and --exclude-namespace can't be used together")
+			}
+			return nil
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			clientset, err := kube.NewK8sClientSet(harvest.kubeconfig)
 			if err != nil {
 				log.Fatal(err)
 			}
-			podsData, err := kube.GetPodsData(harvest.namespace, clientset)
+			podsData, err := kube.GetPodsData(harvest.namespaces, harvest.excludeNamespaces, clientset)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -81,7 +89,9 @@ func NewRootCommand() *cobra.Command {
 	// Define cobra flags, the default value has the lowest (least significant) precedence
 	// CLI args are read from command line, then env variables, then config files, then the CLI arg default is used.
 	rootCmd.Flags().StringVarP(&harvest.kubeconfig, "kubeconfig", "k", defaultKubeConfigPath, "kubeconfig path for the target cluster")
-	rootCmd.Flags().StringVarP(&harvest.namespace, "namespace", "n", "", "the namespace to harvest artifacts info from.")
+	rootCmd.Flags().StringSliceVarP(&harvest.namespaces, "namespace", "n", []string{}, "the comma separated list of namespaces to harvest artifacts info from. Can't be used together with --exclude-namespace.")
+	rootCmd.Flags().StringSliceVarP(&harvest.excludeNamespaces, "exclude-namespace", "x", []string{}, "the comma separated list of namespaces NOT to harvest artifacts info from. Can't be used together with --namespace.")
+	rootCmd.Flags().StringVarP(&harvest.merkelyEnvironment, "environment", "e", "", "the name of the merkely environment.")
 
 	return rootCmd
 }
