@@ -130,13 +130,17 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 		// keys with underscores, e.g. --kube-config to MERKELY_KUBE_CONFIG
 		if strings.Contains(f.Name, "-") {
 			envVarSuffix := strings.ToUpper(strings.ReplaceAll(f.Name, "-", "_"))
-			v.BindEnv(f.Name, fmt.Sprintf("%s_%s", envPrefix, envVarSuffix))
+			if err := v.BindEnv(f.Name, fmt.Sprintf("%s_%s", envPrefix, envVarSuffix)); err != nil {
+				log.Fatalf("failed to bind viper to env variable: %v", err)
+			}
 		}
 
 		// Apply the viper config value to the flag when the flag is not set and viper has a value
 		if !f.Changed && v.IsSet(f.Name) {
 			val := v.Get(f.Name)
-			cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val))
+			if err := cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val)); err != nil {
+				log.Fatalf("failed to set flag: %v", err)
+			}
 		}
 	})
 }
