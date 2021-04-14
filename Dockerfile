@@ -20,3 +20,5 @@ FROM alpine:${ALPINE_VERSION} as base
 RUN apk add --update --no-cache git openssh bash
 
 COPY --from=builder /go/src/watcher/watcher /bin/watcher
+
+ENTRYPOINT [ "/bin/watcher" ]
