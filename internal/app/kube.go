@@ -1,10 +1,9 @@
-package kube
+package app
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/merkely-development/watcher/internal/utils"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -68,17 +67,15 @@ func GetPodsData(namespaces []string, excludeNamespace []string, clientset *kube
 	podsData := []*PodData{}
 	ctx := context.Background()
 	list := &corev1.PodList{}
-	var err error
-	nsList := &corev1.NamespaceList{}
 
 	if len(excludeNamespace) > 0 {
-		nsList, err = GetClusterNamespaces(clientset)
+		nsList, err := GetClusterNamespaces(clientset)
 		if err != nil {
 			return podsData, err
 		}
 
 		for _, ns := range nsList.Items {
-			if !utils.Contains(excludeNamespace, ns.Name) {
+			if !Contains(excludeNamespace, ns.Name) {
 				pods, err := getPodsInNamespace(ns.Name, clientset)
 				if err != nil {
 					return podsData, err
@@ -88,6 +85,7 @@ func GetPodsData(namespaces []string, excludeNamespace []string, clientset *kube
 		}
 
 	} else if len(namespaces) == 0 {
+		var err error
 		list, err = clientset.CoreV1().Pods("").List(ctx, metav1.ListOptions{})
 		if err != nil {
 			return podsData, fmt.Errorf("could not list pods on cluster scope: %v ", err)
@@ -122,7 +120,6 @@ func getPodsInNamespace(namespace string, clientset *kubernetes.Clientset) ([]co
 
 // GetClusterNamespaces gets a namespace list from the cluster
 func GetClusterNamespaces(clientset *kubernetes.Clientset) (*corev1.NamespaceList, error) {
-	namespaces := &corev1.NamespaceList{}
 	ctx := context.Background()
 
 	namespaces, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})

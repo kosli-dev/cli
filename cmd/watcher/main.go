@@ -8,7 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/merkely-development/watcher/internal/kube"
+	"github.com/merkely-development/watcher/internal/app"
+	"github.com/merkely-development/watcher/internal/version"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -31,6 +32,11 @@ type harvestArgs struct {
 	namespaces         []string
 	excludeNamespaces  []string
 	merkelyEnvironment string
+	apiToken           string
+	owner              string
+	host               string
+	dryRun             bool
+	version            bool
 }
 
 func main() {
@@ -43,6 +49,7 @@ func main() {
 // NewRootCommand Build the cobra command that handles our command line tool.
 func NewRootCommand() *cobra.Command {
 	harvest := harvestArgs{}
+	url := fmt.Sprintf("%s/api/v1/projects/%s", harvest.host, harvest.owner)
 
 	// define the default kubeconfig path
 	home, err := homedir.Dir()
@@ -71,18 +78,38 @@ func NewRootCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			clientset, err := kube.NewK8sClientSet(harvest.kubeconfig)
+			if harvest.version {
+				fmt.Printf("Version: %v", version.Get())
+				os.Exit(0)
+			}
+
+			clientset, err := app.NewK8sClientSet(harvest.kubeconfig)
 			if err != nil {
 				log.Fatal(err)
 			}
-			podsData, err := kube.GetPodsData(harvest.namespaces, harvest.excludeNamespaces, clientset)
+			podsData, err := app.GetPodsData(harvest.namespaces, harvest.excludeNamespaces, clientset)
 			if err != nil {
 				log.Fatal(err)
 			}
 
-			js, _ := json.MarshalIndent(podsData, "", "    ")
-			//TODO: send the json to merkely API
-			fmt.Println(string(js))
+			requestBody := &app.HarvestRequest{
+				PodsData:    podsData,
+				Owner:       harvest.owner,
+				Environment: harvest.merkelyEnvironment,
+			}
+			js, _ := json.MarshalIndent(requestBody, "", "    ")
+
+			if harvest.dryRun {
+				fmt.Println("############### THIS IS A DRY-RUN  ###############")
+				fmt.Println(string(js))
+			} else {
+				fmt.Println("****** Sending a Test to the API")
+				fmt.Println(string(js))
+				_, err = app.DoPost(js, url, harvest.apiToken)
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
 		},
 	}
 
@@ -92,6 +119,11 @@ func NewRootCommand() *cobra.Command {
 	rootCmd.Flags().StringSliceVarP(&harvest.namespaces, "namespace", "n", []string{}, "the comma separated list of namespaces to harvest artifacts info from. Can't be used together with --exclude-namespace.")
 	rootCmd.Flags().StringSliceVarP(&harvest.excludeNamespaces, "exclude-namespace", "x", []string{}, "the comma separated list of namespaces NOT to harvest artifacts info from. Can't be used together with --namespace.")
 	rootCmd.Flags().StringVarP(&harvest.merkelyEnvironment, "environment", "e", "", "the name of the merkely environment.")
+	rootCmd.Flags().StringVarP(&harvest.apiToken, "api-token", "a", "", "the merkely API token.")
+	rootCmd.Flags().StringVarP(&harvest.owner, "owner", "o", "", "the merkely organization.")
+	rootCmd.Flags().StringVarP(&harvest.host, "host", "H", "https://app.merkely.com", "the merkely endpoint.")
+	rootCmd.Flags().BoolVarP(&harvest.dryRun, "dry-run", "d", false, "whether to send the request to the endpoint or just log it in stdout.")
+	rootCmd.Flags().BoolVarP(&harvest.version, "version", "v", false, "print the version.")
 
 	return rootCmd
 }
