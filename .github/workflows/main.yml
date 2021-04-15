@@ -38,8 +38,12 @@ jobs:
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v2
       with:
-        version: v1.29    
-  
+        version: v1.29  
+    
+    # Set up QEMU emulator to allow building multi-arch images    
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v1
+
     # This is the a separate action that sets up buildx (buildkit) runner
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
