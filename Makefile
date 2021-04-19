@@ -29,7 +29,7 @@ deps: ## Install depdendencies. Runs `go get` internally.
 .PHONY: deps
 
 build: deps vet ## Build the package
-	@go build -o watcher -ldflags '$(LDFLAGS)' cmd/watcher/main.go
+	@go build -o watcher -ldflags '$(LDFLAGS)' ./cmd/watcher/
 .PHONY: build
 
 test: deps vet ## Run unit tests

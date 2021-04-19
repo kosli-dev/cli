@@ -1,9 +1,10 @@
-package app
+package kube
 
 import (
 	"context"
 	"fmt"
 
+	"github.com/merkely-development/watcher/internal/utils"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -75,7 +76,7 @@ func GetPodsData(namespaces []string, excludeNamespace []string, clientset *kube
 		}
 
 		for _, ns := range nsList.Items {
-			if !Contains(excludeNamespace, ns.Name) {
+			if !utils.Contains(excludeNamespace, ns.Name) {
 				pods, err := getPodsInNamespace(ns.Name, clientset)
 				if err != nil {
 					return podsData, err

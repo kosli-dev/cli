@@ -1,20 +1,25 @@
-package app
+package requests
 
 import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/merkely-development/watcher/internal/kube"
 )
 
-// Contains checks if a string is contained in a string slice
-func Contains(s []string, e string) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
+// HTTPResponse is a simplified version of http.Response
+type HTTPResponse struct {
+	Body       string
+	StatusCode int
+}
+
+// EnvRequest represents the POST request body to be sent to merkely harvest endpoint
+type EnvRequest struct {
+	PodsData    []*kube.PodData
+	Owner       string
+	Environment string
 }
 
 // DoPost sends an HTTP Post request to a URL and returns the response body and status code
