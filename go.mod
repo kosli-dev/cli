@@ -3,6 +3,7 @@ module github.com/merkely-development/watcher
 go 1.13
 
 require (
+	github.com/hashicorp/go-retryablehttp v0.6.8
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/errors v0.9.1
