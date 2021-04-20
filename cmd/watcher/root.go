@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -20,7 +21,8 @@ Environment variables:
 | $MERKELY_OWNER                     | set the Merkely Pipeline Owner.                                                   |
 | $MERKELY_HOST                      | set the Merkely host.                                                             |
 | $MERKELY_DRY_RUN                   | indicate whether or not Merkely CLI is running in Dry Run mode.                   |
-| $MERKELY_MAX_API_RETRIES           | set the maximum number of API calling retries when the API host is not reachable. |         
+| $MERKELY_MAX_API_RETRIES           | set the maximum number of API calling retries when the API host is not reachable. |
+| $MERKELY_CONFIG_FILE               | set the path to Merkely config file where you can set your options.               |         
 `
 
 const (
@@ -41,15 +43,17 @@ type globalOpts struct {
 	host          string
 	dryRun        bool
 	maxAPIRetries int
+	configFile    string
 }
 
 func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	global = new(globalOpts)
 	cmd := &cobra.Command{
-		Use:          "merkely",
-		Short:        "The Merkely evidence reporting CLI.",
-		Long:         globalUsage,
-		SilenceUsage: true,
+		Use:              "merkely",
+		Short:            "The Merkely evidence reporting CLI.",
+		Long:             globalUsage,
+		SilenceUsage:     true,
+		TraverseChildren: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// You can bind cobra and viper in a few locations, but PersistencePreRunE on the root command works well
 			return initializeConfig(cmd)
@@ -60,18 +64,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	cmd.PersistentFlags().StringVarP(&global.host, "host", "H", "https://app.merkely.com", "the merkely endpoint.")
 	cmd.PersistentFlags().BoolVarP(&global.dryRun, "dry-run", "d", false, "whether to send the request to the endpoint or just log it in stdout.")
 	cmd.PersistentFlags().IntVarP(&global.maxAPIRetries, "max-api-retries", "r", maxAPIRetries, "how many times should API calls be retried when the API host is not reachable.")
-
-	flags := cmd.PersistentFlags()
-
-	// We can safely ignore any errors that flags.Parse encounters since
-	// those errors will be caught later during the call to cmd.Execution.
-	// This call is required to gather configuration information prior to
-	// execution.
-	flags.ParseErrorsWhitelist.UnknownFlags = true
-	err := flags.Parse(args)
-	if err != nil {
-		return cmd, err
-	}
+	cmd.PersistentFlags().StringVarP(&global.configFile, "config-file", "c", defaultConfigFilename, "[optional] the merkely config file path.")
 
 	// Add subcommands
 	cmd.AddCommand(
@@ -89,12 +82,19 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 func initializeConfig(cmd *cobra.Command) error {
 	v := viper.New()
 
+	// If provided, extract the custom config file dir and name
+	dir, file := filepath.Split(global.configFile)
+	file = strings.TrimSuffix(file, filepath.Ext(file))
+
 	// Set the base name of the config file, without the file extension.
-	v.SetConfigName(defaultConfigFilename)
+	v.SetConfigName(file)
 
 	// Set as many paths as you like where viper should look for the
 	// config file. We are only looking in the current working directory.
-	v.AddConfigPath(".")
+	if dir == "" {
+		dir = "."
+	}
+	v.AddConfigPath(dir)
 
 	// Attempt to read the config file, gracefully ignoring errors
 	// caused by a config file not being found. Return an error
@@ -105,7 +105,6 @@ func initializeConfig(cmd *cobra.Command) error {
 			return err
 		}
 	}
-
 	// When we bind flags to environment variables expect that the
 	// environment variables are prefixed, e.g. a flag like --namespace
 	// binds to an environment variable MERKELY_NAMESPACE. This helps
