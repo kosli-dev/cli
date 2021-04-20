@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"github.com/merkely-development/watcher/internal/kube"
 )
 
@@ -22,12 +23,18 @@ type EnvRequest struct {
 	Environment string
 }
 
+func getRetryableHttpClient(maxAPIRetries int) *http.Client {
+	retryClient := retryablehttp.NewClient()
+	retryClient.RetryMax = maxAPIRetries
+	client := retryClient.StandardClient() // *http.Client
+	return client
+}
+
 // DoPost sends an HTTP Post request to a URL and returns the response body and status code
-func DoPost(jsonBody []byte, url string, apiToken string) (*HTTPResponse, error) {
+func DoPost(jsonBody []byte, url string, apiToken string, maxAPIRetries int) (*HTTPResponse, error) {
 	requestBody := bytes.NewBuffer(jsonBody)
 
-	client := &http.Client{}
-
+	client := getRetryableHttpClient(maxAPIRetries)
 	req, err := http.NewRequest("POST", url, requestBody)
 	if err != nil {
 		return &HTTPResponse{}, fmt.Errorf("failed to create post request to %s : %v", url, err)
