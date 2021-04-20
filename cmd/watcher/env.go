@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -18,8 +17,26 @@ const envDesc = `
 Report actual deployments in an environment back to Merkely.
 This allows Merkely to establish Runtime compliance of the environment.
 
-This command lists the artifacts deployed in the k8s environment and thier digests,
+This command lists the artifacts deployed in the k8s environment and their digests,
 before reporting them to Merkely. 
+`
+
+const envExample = `
+* report what's running in an entire cluster using kubeconfig at $HOME/.kube/config:
+merkely report env prod --api-token 1234 --owner exampleOrg
+
+* report what's running in an entire cluster using kubeconfig at $HOME/.kube/config 
+(with global flags defined in environment or in  a config file):
+merkely report env prod
+
+* report what's running in an entire cluster excluding some namespaces using kubeconfig at $HOME/.kube/config:
+merkely report env prod -x kube-system,utilities
+
+* report what's running in a given namespace in the cluster using kubeconfig at $HOME/.kube/config:
+merkely report env prod -n prod-namespace
+
+* report what's running in a cluster using kubeconfig at a custom path:
+merkely report env prod -k /path/to/kube/config
 `
 
 type envOptions struct {
@@ -42,12 +59,18 @@ func newEnvCmd(out io.Writer) *cobra.Command {
 
 	o := new(envOptions)
 	// TODO remove hard coded url
-	url := fmt.Sprintf("%s/api/v1/projects/%s", global.host, global.owner)
+	url := fmt.Sprintf("%s/api/v1/projects/%s", "http://localhost", global.owner)
 	cmd := &cobra.Command{
-		Use:   "env [env-name] [flags]",
-		Short: "report images data from specific namespace or entire cluster to Merkely.",
-		Long:  envDesc,
+		Use:     "env [-n namespace | -x namespace]... [-k /path/to/kube/config] env-name",
+		Short:   "report images data from specific namespace or entire cluster to Merkely.",
+		Long:    envDesc,
+		Aliases: []string{"environment"},
+		Example: envExample,
+		//SuggestFor: []string{"prod", "test", "staging"},
 		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) > 1 {
+				return fmt.Errorf("only environment name argument is allowed")
+			}
 			if len(args) == 0 || args[0] == "" {
 				return fmt.Errorf("environment name is required")
 			}
@@ -56,14 +79,14 @@ func newEnvCmd(out io.Writer) *cobra.Command {
 			}
 			return nil
 		},
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			clientset, err := kube.NewK8sClientSet(o.kubeconfig)
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 			podsData, err := kube.GetPodsData(o.namespaces, o.excludeNamespaces, clientset)
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 
 			requestBody := &requests.EnvRequest{
@@ -77,13 +100,14 @@ func newEnvCmd(out io.Writer) *cobra.Command {
 				fmt.Println("############### THIS IS A DRY-RUN  ###############")
 				fmt.Println(string(js))
 			} else {
-				fmt.Println("****** Sending a Test to the API")
+				fmt.Println("****** Sending a Test to the API ******")
 				fmt.Println(string(js))
-				_, err = requests.DoPost(js, url, global.apiToken)
+				_, err = requests.DoPost(js, url, global.apiToken, global.maxAPIRetries)
 				if err != nil {
-					log.Fatal(err)
+					return err
 				}
 			}
+			return nil
 		},
 	}
 
