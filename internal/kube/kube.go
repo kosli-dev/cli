@@ -15,24 +15,30 @@ import (
 
 // PodData represents the harvested pod data
 type PodData struct {
-	Name      string            `json:"name"`
-	Namespace string            `json:"namespace"`
-	Images    map[string]string `json:"images"`
+	Name              string                  `json:"name"`
+	Namespace         string                  `json:"namespace"`
+	Images            map[string]string       `json:"images"`
+	CreationTimestamp metav1.Time             `json:"creationTimestamp"`
+	Owners            []metav1.OwnerReference `json:"owners"`
 }
 
 // NewPodData creates a PodData object from a k8s pod
 func NewPodData(pod *corev1.Pod) *PodData {
 	images := make(map[string]string)
 
+	creationTimestamp := pod.GetObjectMeta().GetCreationTimestamp()
+	owners := pod.GetObjectMeta().GetOwnerReferences()
 	containers := pod.Status.ContainerStatuses
 	for _, cs := range containers {
 		images[cs.Image] = cs.ImageID[len(cs.ImageID)-64:]
 	}
 
 	return &PodData{
-		Name:      pod.Name,
-		Namespace: pod.Namespace,
-		Images:    images,
+		Name:              pod.Name,
+		Namespace:         pod.Namespace,
+		Images:            images,
+		CreationTimestamp: creationTimestamp,
+		Owners:            owners,
 	}
 }
 
