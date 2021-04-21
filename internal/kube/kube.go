@@ -109,7 +109,10 @@ func GetPodsData(namespaces []string, excludeNamespace []string, clientset *kube
 	}
 
 	for _, pod := range list.Items {
-		podsData = append(podsData, NewPodData(&pod))
+		// only report running or failed pods
+		if pod.Status.Phase == corev1.PodRunning || pod.Status.Phase == corev1.PodFailed {
+			podsData = append(podsData, NewPodData(&pod))
+		}
 	}
 
 	return podsData, nil
