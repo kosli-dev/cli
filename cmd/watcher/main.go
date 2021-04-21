@@ -9,5 +9,5 @@ import (
 func main() {
 	cmd, err := newRootCmd(os.Stdout, os.Args[1:])
 	handleError(err)
-	cmd.Execute()
+	_ = cmd.Execute()
 }
