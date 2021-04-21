@@ -15,7 +15,7 @@ import (
 
 // PodData represents the harvested pod data
 type PodData struct {
-	Name              string                  `json:"name"`
+	PodName           string                  `json:"podName"`
 	Namespace         string                  `json:"namespace"`
 	Images            map[string]string       `json:"images"`
 	CreationTimestamp metav1.Time             `json:"creationTimestamp"`
@@ -34,7 +34,7 @@ func NewPodData(pod *corev1.Pod) *PodData {
 	}
 
 	return &PodData{
-		Name:              pod.Name,
+		PodName:           pod.Name,
 		Namespace:         pod.Namespace,
 		Images:            images,
 		CreationTimestamp: creationTimestamp,
