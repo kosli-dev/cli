@@ -15,7 +15,7 @@ import (
 
 const envDesc = `
 Report actual deployments in an environment back to Merkely.
-This allows Merkely to establish Runtime compliance of the environment.
+This allows Merkely to determine Runtime compliance status of the environment.
 
 This command lists the artifacts deployed in the k8s environment and their digests,
 before reporting them to Merkely. 
