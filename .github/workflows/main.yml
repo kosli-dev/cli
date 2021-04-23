@@ -102,4 +102,4 @@ jobs:
       env: 
         KUBECONFIG: ${{ env.KUBECONFIG }} 
       run: 
-        watcher --kubeconfig=${KUBECONFIG}
+        watcher report env production --namespace production --kubeconfig=${KUBECONFIG} --dry-run
