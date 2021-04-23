@@ -74,12 +74,12 @@ func newEnvCmd(out io.Writer) *cobra.Command {
 			if len(args) == 0 || args[0] == "" {
 				return fmt.Errorf("environment name is required")
 			}
-			if len(o.excludeNamespaces) > 0 && len(o.namespaces) > 0 {
-				return fmt.Errorf("--namespace and --exclude-namespace can't be used together")
-			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(o.excludeNamespaces) > 0 && len(o.namespaces) > 0 {
+				return fmt.Errorf("--namespace and --exclude-namespace can't be used together. This can also happen if you set one of the two options in a config file or env var and the other on the command line")
+			}
 			clientset, err := kube.NewK8sClientSet(o.kubeconfig)
 			if err != nil {
 				return err
@@ -112,8 +112,8 @@ func newEnvCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.kubeconfig, "kubeconfig", "k", defaultKubeConfigPath, "kubeconfig path for the target cluster")
-	cmd.Flags().StringSliceVarP(&o.namespaces, "namespace", "n", []string{}, "the comma separated list of namespaces to harvest artifacts info from. Can't be used together with --exclude-namespace.")
-	cmd.Flags().StringSliceVarP(&o.excludeNamespaces, "exclude-namespace", "x", []string{}, "the comma separated list of namespaces NOT to harvest artifacts info from. Can't be used together with --namespace.")
+	cmd.Flags().StringSliceVarP(&o.namespaces, "namespace", "n", []string{}, "the comma separated list of namespaces (or namespaces regex patterns) to harvest artifacts info from. Can't be used together with --exclude-namespace.")
+	cmd.Flags().StringSliceVarP(&o.excludeNamespaces, "exclude-namespace", "x", []string{}, "the comma separated list of namespaces (or namespaces regex patterns) NOT to harvest artifacts info from. Can't be used together with --namespace.")
 
 	return cmd
 }

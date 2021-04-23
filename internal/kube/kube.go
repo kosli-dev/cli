@@ -3,9 +3,10 @@ package kube
 import (
 	"context"
 	"fmt"
+	"log"
+	"regexp"
 	"sync"
 
-	"github.com/merkely-development/watcher/internal/utils"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -71,7 +72,7 @@ func NewK8sClientSet(kubeconfigPath string) (*kubernetes.Clientset, error) {
 
 // GetPodsData lists pods in the target namespace(s) of a target cluster and creates a list of
 // PodData objects for them
-func GetPodsData(namespaces []string, excludeNamespace []string, clientset *kubernetes.Clientset) ([]*PodData, error) {
+func GetPodsData(namespaces []string, excludeNamespaces []string, clientset *kubernetes.Clientset) ([]*PodData, error) {
 	podsData := []*PodData{}
 	ctx := context.Background()
 	list := &corev1.PodList{}
@@ -82,13 +83,17 @@ func GetPodsData(namespaces []string, excludeNamespace []string, clientset *kube
 		mutex = &sync.Mutex{}
 	)
 
+	// get all namespaces in the cluster
 	nsList, err := GetClusterNamespaces(clientset)
 	if err != nil {
 		return podsData, err
 	}
 
-	if len(excludeNamespace) > 0 {
-		filteredNamespaces = excludeNamespaces(nsList.Items, excludeNamespace)
+	if len(excludeNamespaces) > 0 {
+		filteredNamespaces, err = filterNamespaces(nsList.Items, excludeNamespaces, "exclude")
+		if err != nil {
+			return podsData, fmt.Errorf("could not filter namespaces: %v ", err)
+		}
 	} else if len(namespaces) == 0 {
 		var err error
 		list, err = clientset.CoreV1().Pods("").List(ctx, metav1.ListOptions{})
@@ -96,15 +101,20 @@ func GetPodsData(namespaces []string, excludeNamespace []string, clientset *kube
 			return podsData, fmt.Errorf("could not list pods on cluster scope: %v ", err)
 		}
 	} else {
-		filteredNamespaces = namespaces
+		filteredNamespaces, err = filterNamespaces(nsList.Items, namespaces, "include")
+		if err != nil {
+			return podsData, fmt.Errorf("could not filter namespaces: %v ", err)
+		}
 	}
 
+	log.Printf("scraping the following namespaces: %v \n", filteredNamespaces)
+
+	// run concurrently
 	errs := make(chan error, 1) // Buffered only for the first error
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // Make sure it's called to release resources even if no errors
 
 	for _, ns := range filteredNamespaces {
-		// run concurrently
 		wg.Add(1)
 		go func(ns string) {
 			defer wg.Done()
@@ -167,28 +177,78 @@ func processPods(list *corev1.PodList) []*PodData {
 	return podsData
 }
 
-// excludeNamespaces excludes a subset of namespaces from a super set of namespaces.
-// It returns a list of namespace names
-func excludeNamespaces(nsList []corev1.Namespace, toExclude []string) []string {
+// filterNamespaces filters a super set of namespaces by including or excluding a subset of namespaces using regex patterns.
+func filterNamespaces(nsList []corev1.Namespace, patterns []string, operation string) ([]string, error) {
 	result := []string{}
 	var (
 		wg    sync.WaitGroup
 		mutex = &sync.Mutex{}
 	)
 
+	errs := make(chan error, 1) // Buffered only for the first error
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // Make sure it's called to release resources even if no errors
+
 	for _, ns := range nsList {
 		wg.Add(1)
 		go func(ns string) {
 			defer wg.Done()
-			if !utils.Contains(toExclude, ns) {
+
+			// Check if any error occurred in any other gorouties:
+			select {
+			case <-ctx.Done():
+				return // Error somewhere, terminate
+			default: // Default is must to avoid blocking
+			}
+
+			// if exclude nothing, then add all namespaces to result
+			if len(patterns) == 0 && operation == "exclude" {
 				mutex.Lock()
 				result = append(result, ns)
 				mutex.Unlock()
 			}
+			for _, p := range patterns {
+				r, err := regexp.Compile(p)
+				if err != nil {
+					select {
+					case errs <- fmt.Errorf("failed to compile regex pattern %v : %v", p, err):
+					default:
+					}
+					cancel() // send cancel signal to goroutines
+					return
+				}
+				match := r.MatchString(ns)
+				switch operation {
+				case "include":
+					if match {
+						mutex.Lock()
+						result = append(result, ns)
+						mutex.Unlock()
+					}
+				case "exclude":
+					if !match {
+						mutex.Lock()
+						result = append(result, ns)
+						mutex.Unlock()
+					}
+
+				default:
+					select {
+					case errs <- fmt.Errorf("unsupported operation %s", operation):
+					default:
+					}
+					cancel() // send cancel signal to goroutines
+					return
+
+				}
+			}
 		}(ns.Name)
 	}
 	wg.Wait()
-	return result
+	if ctx.Err() != nil {
+		return result, <-errs
+	}
+	return result, nil
 }
 
 // getPodsInNamespace get pods in a specific namespace in a cluster
