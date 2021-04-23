@@ -69,7 +69,7 @@ func NewK8sClientSet(kubeconfigPath string) (*kubernetes.Clientset, error) {
 	return clientset, nil
 }
 
-// GetPodsData lists pods in the target namespace of a target cluster and creates a list of
+// GetPodsData lists pods in the target namespace(s) of a target cluster and creates a list of
 // PodData objects for them
 func GetPodsData(namespaces []string, excludeNamespace []string, clientset *kubernetes.Clientset) ([]*PodData, error) {
 	podsData := []*PodData{}
@@ -82,16 +82,13 @@ func GetPodsData(namespaces []string, excludeNamespace []string, clientset *kube
 		mutex = &sync.Mutex{}
 	)
 
+	nsList, err := GetClusterNamespaces(clientset)
+	if err != nil {
+		return podsData, err
+	}
+
 	if len(excludeNamespace) > 0 {
-		nsList, err := GetClusterNamespaces(clientset)
-		if err != nil {
-			return podsData, err
-		}
-		for _, ns := range nsList.Items {
-			if !utils.Contains(excludeNamespace, ns.Name) {
-				filteredNamespaces = append(filteredNamespaces, ns.Name)
-			}
-		}
+		filteredNamespaces = excludeNamespaces(nsList.Items, excludeNamespace)
 	} else if len(namespaces) == 0 {
 		var err error
 		list, err = clientset.CoreV1().Pods("").List(ctx, metav1.ListOptions{})
@@ -141,14 +138,57 @@ func GetPodsData(namespaces []string, excludeNamespace []string, clientset *kube
 		return podsData, <-errs
 	}
 
-	for _, pod := range list.Items {
-		// only report running or failed pods
-		if pod.Status.Phase == corev1.PodRunning || pod.Status.Phase == corev1.PodFailed {
-			podsData = append(podsData, NewPodData(&pod))
-		}
-	}
+	podsData = processPods(list)
 
 	return podsData, nil
+}
+
+// processPods returns podData list for a list of Pods
+func processPods(list *corev1.PodList) []*PodData {
+	podsData := []*PodData{}
+	var (
+		wg    sync.WaitGroup
+		mutex = &sync.Mutex{}
+	)
+	for _, pod := range list.Items {
+		wg.Add(1)
+		go func(pod corev1.Pod) {
+			defer wg.Done()
+			// only report running or failed pods
+			if pod.Status.Phase == corev1.PodRunning || pod.Status.Phase == corev1.PodFailed {
+				data := NewPodData(&pod)
+				mutex.Lock()
+				podsData = append(podsData, data)
+				mutex.Unlock()
+			}
+		}(pod)
+	}
+	wg.Wait()
+	return podsData
+}
+
+// excludeNamespaces excludes a subset of namespaces from a super set of namespaces.
+// It returns a list of namespace names
+func excludeNamespaces(nsList []corev1.Namespace, toExclude []string) []string {
+	result := []string{}
+	var (
+		wg    sync.WaitGroup
+		mutex = &sync.Mutex{}
+	)
+
+	for _, ns := range nsList {
+		wg.Add(1)
+		go func(ns string) {
+			defer wg.Done()
+			if !utils.Contains(toExclude, ns) {
+				mutex.Lock()
+				result = append(result, ns)
+				mutex.Unlock()
+			}
+		}(ns.Name)
+	}
+	wg.Wait()
+	return result
 }
 
 // getPodsInNamespace get pods in a specific namespace in a cluster
