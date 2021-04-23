@@ -3,6 +3,7 @@ package kube
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/merkely-development/watcher/internal/utils"
 	corev1 "k8s.io/api/core/v1"
@@ -74,38 +75,70 @@ func GetPodsData(namespaces []string, excludeNamespace []string, clientset *kube
 	podsData := []*PodData{}
 	ctx := context.Background()
 	list := &corev1.PodList{}
+	filteredNamespaces := []string{}
+
+	var (
+		wg    sync.WaitGroup
+		mutex = &sync.Mutex{}
+	)
 
 	if len(excludeNamespace) > 0 {
 		nsList, err := GetClusterNamespaces(clientset)
 		if err != nil {
 			return podsData, err
 		}
-
 		for _, ns := range nsList.Items {
 			if !utils.Contains(excludeNamespace, ns.Name) {
-				pods, err := getPodsInNamespace(ns.Name, clientset)
-				if err != nil {
-					return podsData, err
-				}
-				list.Items = append(list.Items, pods...)
+				filteredNamespaces = append(filteredNamespaces, ns.Name)
 			}
 		}
-
 	} else if len(namespaces) == 0 {
 		var err error
 		list, err = clientset.CoreV1().Pods("").List(ctx, metav1.ListOptions{})
 		if err != nil {
 			return podsData, fmt.Errorf("could not list pods on cluster scope: %v ", err)
 		}
+	} else {
+		filteredNamespaces = namespaces
 	}
 
-	for _, ns := range namespaces {
+	errs := make(chan error, 1) // Buffered only for the first error
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // Make sure it's called to release resources even if no errors
 
-		pods, err := getPodsInNamespace(ns, clientset)
-		if err != nil {
-			return podsData, err
-		}
-		list.Items = append(list.Items, pods...)
+	for _, ns := range filteredNamespaces {
+		// run concurrently
+		wg.Add(1)
+		go func(ns string) {
+			defer wg.Done()
+			// Check if any error occurred in any other gorouties:
+			select {
+			case <-ctx.Done():
+				return // Error somewhere, terminate
+			default: // Default is must to avoid blocking
+			}
+
+			pods, err := getPodsInNamespace(ns, clientset)
+			if err != nil {
+				// Non-blocking send of error
+				select {
+				case errs <- err:
+				default:
+				}
+				cancel() // send cancel signal to goroutines
+				return
+			}
+			mutex.Lock()
+			list.Items = append(list.Items, pods...)
+			mutex.Unlock()
+
+		}(ns)
+	}
+
+	wg.Wait()
+	// Return (first) error, if any:
+	if ctx.Err() != nil {
+		return podsData, <-errs
 	}
 
 	for _, pod := range list.Items {
