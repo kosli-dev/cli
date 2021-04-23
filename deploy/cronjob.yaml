@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: merkely-cronjob
+  namespace: production
+---  
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: merkely-reader
+rules:
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: merkely-read-global
+subjects:
+- kind: ServiceAccount
+  name: merkely-cronjob
+  namespace: production
+roleRef:
+  kind: ClusterRole
+  name: merkely-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: merkely-watcher
+  namespace: production
+spec:
+  schedule: "*/5 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: merkely-cronjob
+          imagePullSecrets:
+          - name: dockerpull-secret
+          containers:
+          - name: watcher
+            image: ghcr.io/merkely-development/watcher:d7b008f
+            imagePullPolicy: IfNotPresent
+            env:
+              - name: TOKEN
+                valueFrom:
+                  secretKeyRef:
+                    name: merkely-api-token
+                    key: token
+            command:
+            - /bin/sh
+            - -c
+            - watcher report env production --namespace production --owner compliancedb --api-token ${TOKEN} --dry-run
+          restartPolicy: OnFailure
+
