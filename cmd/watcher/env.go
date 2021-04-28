@@ -58,14 +58,12 @@ func newEnvCmd(out io.Writer) *cobra.Command {
 	}
 
 	o := new(envOptions)
-	// TODO remove hard coded url
 	cmd := &cobra.Command{
 		Use:     "env [-n namespace | -x namespace]... [-k /path/to/kube/config] env-name",
 		Short:   "report images data from specific namespace or entire cluster to Merkely.",
 		Long:    envDesc,
 		Aliases: []string{"environment"},
 		Example: envExample,
-		//SuggestFor: []string{"prod", "test", "staging"},
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				return fmt.Errorf("only environment name argument is allowed")
@@ -80,7 +78,7 @@ func newEnvCmd(out io.Writer) *cobra.Command {
 				return fmt.Errorf("--namespace and --exclude-namespace can't be used together. This can also happen if you set one of the two options in a config file or env var and the other on the command line")
 			}
 			envName := args[0]
-			url := fmt.Sprintf("%s/%s/environment/%s/harvest", global.host, global.owner, envName)
+			url := fmt.Sprintf("%s/api/v1/projects/%s/environments/%s", global.host, global.owner, envName)
 			clientset, err := kube.NewK8sClientSet(o.kubeconfig)
 			if err != nil {
 				return err
@@ -91,9 +89,9 @@ func newEnvCmd(out io.Writer) *cobra.Command {
 			}
 
 			requestBody := &requests.EnvRequest{
-				PodsData:    podsData,
-				Owner:       global.owner,
-				Environment: envName,
+				Data: podsData,
+				// Owner:       global.owner,
+				// Environment: envName,
 			}
 			js, _ := json.MarshalIndent(requestBody, "", "    ")
 
@@ -103,9 +101,12 @@ func newEnvCmd(out io.Writer) *cobra.Command {
 			} else {
 				fmt.Println("****** Sending a Test to the API ******")
 				fmt.Println(string(js))
-				_, err = requests.DoPost(js, url, global.apiToken, global.maxAPIRetries)
+				resp, err := requests.DoPost(js, url, global.apiToken, global.maxAPIRetries)
 				if err != nil {
 					return err
+				}
+				if resp.StatusCode != 201 && resp.StatusCode != 200 {
+					return fmt.Errorf("failed to send scrape data: %v", resp.Body)
 				}
 			}
 			return nil
