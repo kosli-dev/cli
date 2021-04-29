@@ -1,17 +1,9 @@
-name: Build
+name: release
 
 on:
   push:
-    branches:
-      - '**'
-
-env: 
-  PRODUCTION_NAMESPACE: production
-  STAGING_NAMESPACE: staging
-  K8S_CLUSTER_NAME: cdb-prod-eu
-  K8S_GCP_ZONE: europe-west1-b 
-  MERKELY_OWNER: compliancedb  
-  MERKELY_PIPELINE: watcher
+    tags:        
+      - 'v*' 
 
 jobs:
   build:
@@ -64,13 +56,17 @@ jobs:
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Get tag
+      id: tag
+      uses: dawidd6/action-get-tag@v1
+
     - name: Build and push Docker image
       id: docker_build
       uses: docker/build-push-action@v2
       with:
         push: true
-        tags: ${{ env.TAGGED_IMAGE }}
-        platforms: linux/amd64,linux/arm64
+        tags: ${{steps.tag.outputs.tag}}  
+        platforms: linux/amd64,linux/arm64, linux/386
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new
 
@@ -79,27 +75,23 @@ jobs:
     - name: Move cache
       run: |
         rm -rf /tmp/.buildx-cache
-        mv /tmp/.buildx-cache-new /tmp/.buildx-cache    
+        mv /tmp/.buildx-cache-new /tmp/.buildx-cache 
 
-  test-watcher:
-    needs: [build]
-    runs-on: ubuntu-20.04
-    container:
-      image: ghcr.io/merkely-development/watcher:${{ needs.build.outputs.tag }}
-      credentials:
-        username: ${{ github.repository_owner }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    
-    steps:      
-    - id: connect-to-k8s
-      uses: google-github-actions/get-gke-credentials@main
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
       with:
-        cluster_name: ${{ env.K8S_CLUSTER_NAME }}
-        location: ${{ env.K8S_GCP_ZONE }}
-        credentials: ${{ secrets.GCP_K8S_CREDENTIALS }}
-
-    - name: list image digests
-      env: 
-        KUBECONFIG: ${{ env.KUBECONFIG }} 
-      run: 
-        watcher report env production --namespace production --kubeconfig=${KUBECONFIG} --dry-run
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
