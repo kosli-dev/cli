@@ -6,6 +6,22 @@ GIT_SHA    = $(shell git rev-parse --short HEAD)
 GIT_TAG    = $(shell git describe --tags --abbrev=0 --exact-match 2>/dev/null)
 GIT_DIRTY  = $(shell test -n "`git status --porcelain`" && echo "dirty" || echo "clean")
 
+ifdef VERSION
+	BINARY_VERSION = $(VERSION)
+endif
+BINARY_VERSION ?= ${GIT_TAG}
+
+# Only set Version if building a tag or VERSION is set
+ifneq ($(BINARY_VERSION),)
+	LDFLAGS += -X github.com/merkely-development/watcher/internal/version.version=${BINARY_VERSION}
+endif
+
+VERSION_METADATA = unreleased
+# Clear the "unreleased" string in BuildMetadata
+ifneq ($(GIT_TAG),)
+	VERSION_METADATA =
+endif
+
 LDFLAGS += -X github.com/merkely-development/watcher/internal/version.metadata=${VERSION_METADATA}
 LDFLAGS += -X github.com/merkely-development/watcher/internal/version.gitCommit=${GIT_COMMIT}
 LDFLAGS += -X github.com/merkely-development/watcher/internal/version.gitTreeState=${GIT_DIRTY}
