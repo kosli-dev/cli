@@ -78,7 +78,7 @@ func newEnvCmd(out io.Writer) *cobra.Command {
 				return fmt.Errorf("--namespace and --exclude-namespace can't be used together. This can also happen if you set one of the two options in a config file or env var and the other on the command line")
 			}
 			envName := args[0]
-			url := fmt.Sprintf("%s/api/v1/projects/%s/environments/%s", global.host, global.owner, envName)
+			url := fmt.Sprintf("%s/api/v1/projects/%s/environments/%s/data", global.host, global.owner, envName)
 			clientset, err := kube.NewK8sClientSet(o.kubeconfig)
 			if err != nil {
 				return err
@@ -90,7 +90,6 @@ func newEnvCmd(out io.Writer) *cobra.Command {
 
 			requestBody := &requests.EnvRequest{
 				Data: podsData,
-				Type: "k8s",
 				// Owner:       global.owner,
 				// Environment: envName,
 			}

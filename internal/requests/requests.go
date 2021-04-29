@@ -19,7 +19,6 @@ type HTTPResponse struct {
 // EnvRequest represents the POST request body to be sent to merkely harvest endpoint
 type EnvRequest struct {
 	Data []*kube.PodData `json:"data"`
-	Type string          `json:"type"`
 	// Owner       string
 	// Environment string
 }
