@@ -90,6 +90,7 @@ func newEnvCmd(out io.Writer) *cobra.Command {
 
 			requestBody := &requests.EnvRequest{
 				Data: podsData,
+				Type: "k8s",
 				// Owner:       global.owner,
 				// Environment: envName,
 			}
