@@ -31,10 +31,10 @@ func getRetryableHttpClient(maxAPIRetries int) *http.Client {
 	return client
 }
 
-// DoPost sends an HTTP Post request to a URL and returns the response body and status code
-func DoPost(jsonBody []byte, url string, apiToken string, maxAPIRetries int) (*HTTPResponse, error) {
+// DoPut sends an HTTP Post request to a URL and returns the response body and status code
+func DoPut(jsonBody []byte, url string, apiToken string, maxAPIRetries int) (*HTTPResponse, error) {
 	client := getRetryableHttpClient(maxAPIRetries)
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
+	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return &HTTPResponse{}, fmt.Errorf("failed to create post request to %s : %v", url, err)
 	}
