@@ -1,0 +1,16 @@
+project_name: watcher
+builds:
+  - binary: watcher
+    ldflags: {{ .Env.LDFLAGS }}
+    env:
+      - CGO_ENABLED=0
+      - GO111MODULE=on
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+      - arm
+    main: ./cmd/watcher/main.go

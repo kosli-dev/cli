@@ -29,6 +29,9 @@ LDFLAGS += -X github.com/merkely-development/watcher/internal/version.gitCommit=
 LDFLAGS += -X github.com/merkely-development/watcher/internal/version.gitTreeState=${GIT_DIRTY}
 LDFLAGS += -extldflags "-static"
 
+ldflags:
+	@echo $(LDFLAGS)
+
 fmt: ## Reformat package sources
 	@go fmt ./...
 .PHONY: fmt

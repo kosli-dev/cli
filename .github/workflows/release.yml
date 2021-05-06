@@ -5,27 +5,30 @@ on:
     tags:        
       - 'v*' 
 
+env: 
+  IMAGE: ghcr.io/merkely-development/watcher
+
 jobs:
   build:
     runs-on: ubuntu-20.04
-    outputs:
-      tag: ${{ steps.prep.outputs.tag }}
+    # outputs:
+    #   tag: ${{ steps.prep.outputs.tag }}
     steps:
     
     - uses: actions/checkout@v2
 
-    - name: Prepare
-      id: prep
-      run: |
-        TAG=$(echo $GITHUB_SHA | head -c7)
-        IMAGE=ghcr.io/merkely-development/watcher
-        TAGGED_IMAGE=${IMAGE}:${TAG}
-        echo "TAG=${TAG}" >> ${GITHUB_ENV}
-        echo "IMAGE=${IMAGE}" >> ${GITHUB_ENV}
-        echo "TAGGED_IMAGE=${TAGGED_IMAGE}" >> ${GITHUB_ENV}
-        echo "MERKELY_FINGERPRINT=docker://${TAGGED_IMAGE}" >> ${GITHUB_ENV}
-        echo ::set-output name=tag::${TAG}
-        echo ::set-output name=tagged-image::${TAGGED_IMAGE}
+    # - name: Prepare
+    #   id: prep
+    #   run: |
+    #     TAG=$(echo $GITHUB_SHA | head -c7)
+    #     IMAGE=ghcr.io/merkely-development/watcher
+    #     TAGGED_IMAGE=${IMAGE}:${TAG}
+    #     echo "TAG=${TAG}" >> ${GITHUB_ENV}
+    #     echo "IMAGE=${IMAGE}" >> ${GITHUB_ENV}
+    #     echo "TAGGED_IMAGE=${TAGGED_IMAGE}" >> ${GITHUB_ENV}
+    #     echo "MERKELY_FINGERPRINT=docker://${TAGGED_IMAGE}" >> ${GITHUB_ENV}
+    #     echo ::set-output name=tag::${TAG}
+    #     echo ::set-output name=tagged-image::${TAGGED_IMAGE}
 
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v2
@@ -77,21 +80,49 @@ jobs:
         rm -rf /tmp/.buildx-cache
         mv /tmp/.buildx-cache-new /tmp/.buildx-cache 
 
-  release:
-    name: release
+
+  goreleaser:
     runs-on: ubuntu-latest
-    needs: build
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-    - name: Check out code
-      uses: actions/checkout@v2
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
 
-    - name: Create Release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: false
+      - id: ldflags
+        run: |
+          LDFLAGS=$(make ldflags)
+          echo "LDFLAGS=${LDFLAGS}" >> ${GITHUB_ENV}
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          version: latest
+          args: release --rm-dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LDFLAGS: ${{ env.LDFLAGS }}
+
+  # release:
+  #   name: release
+  #   runs-on: ubuntu-latest
+  #   needs: build
+  #   steps:
+
+  #   - name: Check out code
+  #     uses: actions/checkout@v2
+
+  #   - name: Create Release
+  #     uses: actions/create-release@v1
+  #     env:
+  #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+  #     with:
+  #       tag_name: ${{ github.ref }}
+  #       release_name: Release ${{ github.ref }}
+  #       draft: false
+  #       prerelease: false
