@@ -1,6 +1,8 @@
 export CGO_ENABLED=0
 export GO111MODULE=on
 
+LDFLAGS := -w -s
+
 GIT_COMMIT = $(shell git rev-parse HEAD)
 GIT_SHA    = $(shell git rev-parse --short HEAD)
 GIT_TAG    = $(shell git describe --tags --abbrev=0 --exact-match 2>/dev/null)
