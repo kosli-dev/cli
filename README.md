@@ -3,7 +3,7 @@
 This CLI is used to report the images of workloads running in a k8s cluster back to merkely.
 
 
-## Usage 
+## Usage 
 
 See the [docs](docs/merkely.md)
 
