@@ -2,6 +2,7 @@ project_name: watcher
 builds:
   - binary: watcher
     ldflags: 
+      - -w -s
       - -X github.com/merkely-development/watcher/internal/version.version={{ .Tag }}
       - -X github.com/merkely-development/watcher/internal/version.gitCommit={{ .FullCommit }}
       - -X github.com/merkely-development/watcher/internal/version.gitTreeState=clean
@@ -16,5 +17,5 @@ builds:
     goarch:
       - amd64
       - arm64
-      - arm
+      # - arm  -- failes on building for windows
     main: ./cmd/watcher/main.go
