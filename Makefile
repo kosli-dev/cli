@@ -59,5 +59,9 @@ test: deps vet ## Run unit tests
 
 docker: deps vet lint
 	@docker build -t watcher .
-.PHONY: docker	
+.PHONY: docker
+
+docs: build
+	@./watcher docs --dir docs
+.PHONY: docs
 
