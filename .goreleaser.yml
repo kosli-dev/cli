@@ -2,7 +2,10 @@ project_name: watcher
 builds:
   - binary: watcher
     ldflags: 
-      - {{ .Env.LDFLAGS }}
+      - -X github.com/merkely-development/watcher/internal/version.version={{ .Tag }}
+      - -X github.com/merkely-development/watcher/internal/version.gitCommit={{ .FullCommit }}
+      - -X github.com/merkely-development/watcher/internal/version.gitTreeState=clean
+      - -extldflags "-static"
     env:
       - CGO_ENABLED=0
       - GO111MODULE=on
