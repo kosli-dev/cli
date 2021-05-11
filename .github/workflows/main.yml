@@ -69,8 +69,7 @@ jobs:
       uses: docker/build-push-action@v2
       with:
         push: true
-        tags: ${{ env.TAGGED_IMAGE }}, ${{ env.IMAGE }}:latest
-        platforms: linux/amd64,linux/arm64
+        tags: ${{ env.TAGGED_IMAGE }}, ${{ env.IMAGE }}:latest, ${{ env.IMAGE }}:main
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new
 
