@@ -11,7 +11,7 @@ var (
 	//
 	// Increment major number for new feature additions and behavioral changes.
 	// Increment minor number for bug fixes and performance enhancements.
-	version = "v0.1.0"
+	version = "main" // this is overwritten with a release tag in the makefile
 
 	// metadata is extra build time data
 	metadata = ""
