@@ -3,3 +3,4 @@
 !internal/
 !Makefile
 !go.*
+!.git/
