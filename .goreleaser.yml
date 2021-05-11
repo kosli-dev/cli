@@ -1,7 +1,8 @@
 project_name: watcher
 builds:
   - binary: watcher
-    ldflags: {{ .Env.LDFLAGS }}
+    ldflags: 
+      - {{ .Env.LDFLAGS }}
     env:
       - CGO_ENABLED=0
       - GO111MODULE=on
