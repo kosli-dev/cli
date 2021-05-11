@@ -1,1 +1,5 @@
-/watcher
+*
+!cmd/
+!internal/
+!Makefile
+!go.*
