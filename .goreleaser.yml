@@ -1,4 +1,7 @@
 project_name: watcher
+before:
+  hooks:
+  - go mod tidy
 builds:
   - binary: watcher
     ldflags: 
@@ -17,5 +20,5 @@ builds:
     goarch:
       - amd64
       - arm64
-      # - arm  -- failes on building for windows
-    main: ./cmd/watcher/main.go
+      - arm
+    main: ./cmd/watcher/
