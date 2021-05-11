@@ -2,3 +2,4 @@
 *.env
 TODO
 merkely.yaml
+dist/
