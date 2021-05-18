@@ -23,7 +23,7 @@ version.BuildInfo{Version:"v0.0.1", GitCommit:"fe51cd1e31e6a202cba7dead9552a6d41
 func newVersionCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
-		Short: "print the client version information",
+		Short: "Print the client version information",
 		Long:  versionDesc,
 		Args:  NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
