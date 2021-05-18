@@ -16,11 +16,9 @@ type HTTPResponse struct {
 	StatusCode int
 }
 
-// EnvRequest represents the POST request body to be sent to merkely harvest endpoint
+// EnvRequest represents the PUT request body to be sent to merkely harvest endpoint
 type EnvRequest struct {
 	Data []*kube.PodData `json:"data"`
-	// Owner       string
-	// Environment string
 }
 
 func getRetryableHttpClient(maxAPIRetries int) *http.Client {
