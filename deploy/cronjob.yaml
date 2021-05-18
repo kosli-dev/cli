@@ -32,7 +32,7 @@ roleRef:
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: merkely-watcher
+  name: merkely-reporter
   namespace: production
 spec:
   schedule: "*/5 * * * *"
@@ -44,8 +44,8 @@ spec:
           imagePullSecrets:
           - name: dockerpull-secret
           containers:
-          - name: watcher
-            image: ghcr.io/merkely-development/watcher:d7b008f
+          - name: reporter
+            image: ghcr.io/merkely-development/reporter:latest # replace latest with a specific version
             imagePullPolicy: IfNotPresent
             env:
               - name: TOKEN
@@ -56,6 +56,6 @@ spec:
             command:
             - /bin/sh
             - -c
-            - watcher report env production --namespace production --owner compliancedb --api-token ${TOKEN} --dry-run
+            - reporter report env production --namespace production --owner compliancedb --api-token ${TOKEN} --dry-run
           restartPolicy: OnFailure
 

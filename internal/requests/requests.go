@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
-	"github.com/merkely-development/watcher/internal/kube"
+	"github.com/merkely-development/reporter/internal/kube"
 )
 
 // HTTPResponse is a simplified version of http.Response

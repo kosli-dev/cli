@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/merkely-development/watcher/internal/kube"
-	"github.com/merkely-development/watcher/internal/requests"
+	"github.com/merkely-development/reporter/internal/kube"
+	"github.com/merkely-development/reporter/internal/requests"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 )

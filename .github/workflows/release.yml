@@ -6,7 +6,7 @@ on:
       - 'v*' 
 
 env: 
-  IMAGE: ghcr.io/merkely-development/watcher
+  IMAGE: ghcr.io/merkely-development/reporter
   GO_VERSION: 1.16.4
 
 jobs:

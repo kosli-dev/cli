@@ -15,7 +15,7 @@ BINARY_VERSION ?= ${GIT_TAG}
 
 # Only set Version if building a tag or VERSION is set
 ifneq ($(BINARY_VERSION),)
-	LDFLAGS += -X github.com/merkely-development/watcher/internal/version.version=${BINARY_VERSION}
+	LDFLAGS += -X github.com/merkely-development/reporter/internal/version.version=${BINARY_VERSION}
 endif
 
 VERSION_METADATA = unreleased
@@ -24,9 +24,9 @@ ifneq ($(GIT_TAG),)
 	VERSION_METADATA =
 endif
 
-LDFLAGS += -X github.com/merkely-development/watcher/internal/version.metadata=${VERSION_METADATA}
-LDFLAGS += -X github.com/merkely-development/watcher/internal/version.gitCommit=${GIT_COMMIT}
-LDFLAGS += -X github.com/merkely-development/watcher/internal/version.gitTreeState=${GIT_DIRTY}
+LDFLAGS += -X github.com/merkely-development/reporter/internal/version.metadata=${VERSION_METADATA}
+LDFLAGS += -X github.com/merkely-development/reporter/internal/version.gitCommit=${GIT_COMMIT}
+LDFLAGS += -X github.com/merkely-development/reporter/internal/version.gitTreeState=${GIT_DIRTY}
 LDFLAGS += -extldflags "-static"
 
 ldflags:
@@ -50,7 +50,7 @@ deps: ## Install depdendencies. Runs `go get` internally.
 .PHONY: deps
 
 build: deps vet ## Build the package
-	@go build -o watcher -ldflags '$(LDFLAGS)' ./cmd/watcher/
+	@go build -o reporter -ldflags '$(LDFLAGS)' ./cmd/reporter/
 .PHONY: build
 
 test: deps vet ## Run unit tests
@@ -58,10 +58,10 @@ test: deps vet ## Run unit tests
 .PHONY: test
 
 docker: deps vet lint
-	@docker build -t watcher .
+	@docker build -t reporter .
 .PHONY: docker
 
 docs: build
-	@./watcher docs --dir docs
+	@./reporter docs --dir docs
 .PHONY: docs
 

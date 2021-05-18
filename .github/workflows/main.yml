@@ -26,7 +26,7 @@ jobs:
       id: prep
       run: |
         TAG=$(echo $GITHUB_SHA | head -c7)
-        IMAGE=ghcr.io/merkely-development/watcher
+        IMAGE=ghcr.io/merkely-development/reporter
         TAGGED_IMAGE=${IMAGE}:${TAG}
         echo "TAG=${TAG}" >> ${GITHUB_ENV}
         echo "IMAGE=${IMAGE}" >> ${GITHUB_ENV}
@@ -80,11 +80,11 @@ jobs:
         rm -rf /tmp/.buildx-cache
         mv /tmp/.buildx-cache-new /tmp/.buildx-cache    
 
-  test-watcher:
+  test-reporter:
     needs: [build]
     runs-on: ubuntu-20.04
     container:
-      image: ghcr.io/merkely-development/watcher:${{ needs.build.outputs.tag }}
+      image: ghcr.io/merkely-development/reporter:${{ needs.build.outputs.tag }}
       credentials:
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -101,4 +101,4 @@ jobs:
       env: 
         KUBECONFIG: ${{ env.KUBECONFIG }} 
       run: 
-        watcher report env production --namespace production --kubeconfig=${KUBECONFIG} --dry-run
+        reporter report env production --namespace production --kubeconfig=${KUBECONFIG} --dry-run

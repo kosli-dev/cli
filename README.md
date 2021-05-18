@@ -1,6 +1,9 @@
-# Watcher (temporary working name)
+# Merkely Reporter
 
-This CLI is used to report the images of workloads running in a k8s cluster back to merkely.
+This CLI is used to report the images of workloads running in an environment back to merkely.
+
+Supported environments:
+- Kubernetes
 
 
 ## Usage 

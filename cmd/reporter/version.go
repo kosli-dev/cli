@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/merkely-development/watcher/internal/version"
+	"github.com/merkely-development/reporter/internal/version"
 	"github.com/spf13/cobra"
 )
 

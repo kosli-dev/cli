@@ -1,14 +1,14 @@
-project_name: watcher
+project_name: reporter
 before:
   hooks:
   - go mod tidy
 builds:
-  - binary: watcher
+  - binary: reporter
     ldflags: 
       - -w -s
-      - -X github.com/merkely-development/watcher/internal/version.version={{ .Tag }}
-      - -X github.com/merkely-development/watcher/internal/version.gitCommit={{ .FullCommit }}
-      - -X github.com/merkely-development/watcher/internal/version.gitTreeState=clean
+      - -X github.com/merkely-development/reporter/internal/version.version={{ .Tag }}
+      - -X github.com/merkely-development/reporter/internal/version.gitCommit={{ .FullCommit }}
+      - -X github.com/merkely-development/reporter/internal/version.gitTreeState=clean
       - -extldflags "-static"
     env:
       - CGO_ENABLED=0
@@ -21,4 +21,4 @@ builds:
       - amd64
       - arm64
       - arm
-    main: ./cmd/watcher/
+    main: ./cmd/reporter/

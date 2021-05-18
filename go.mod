@@ -1,4 +1,4 @@
-module github.com/merkely-development/watcher
+module github.com/merkely-development/reporter
 
 go 1.13
 
