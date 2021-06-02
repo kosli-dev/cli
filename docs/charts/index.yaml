@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  reporter:
+  - apiVersion: v2
+    appVersion: 0.2.0
+    created: "2021-06-02T14:27:45.122667+02:00"
+    description: A Helm chart for Merkely reporter
+    digest: 8fd7a231f4b75086a45a30f60deeed396b079b2533c7c4304ad6e7a936189503
+    name: reporter
+    type: application
+    urls:
+    - https://merkely-development.github.io/reporter/reporter-0.1.0.tgz
+    version: 0.1.0
+generated: "2021-06-02T14:27:45.121349+02:00"
