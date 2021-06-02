@@ -1,0 +1,26 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ include "reporter.fullname" . }}
+spec:
+  schedule: {{ .Values.cronschedule }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: {{ include "reporter.serviceAccountName" . }}
+          containers:
+          - name: reporter
+            image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+            imagePullPolicy: {{ .Values.image.pullPolicy }}
+            env:
+              - name: TOKEN
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ required ".Values.merkelyApiToken.secretName is required." .Values.merkelyApiToken.secretName }}
+                    key: {{ .Values.merkelyApiToken.secretKey | default "token" }}
+            command:
+            - /bin/sh
+            - -c
+            - reporter report env k8s {{ .Values.reporterConfig.merkelyEnvironmentName }} --namespace {{ .Values.reporterConfig.namespaces }} --owner {{ .Values.reporterConfig.merkelyOwner }} --api-token ${TOKEN} {{ if .Values.reporterConfig.dryRun }}--dry-run{{ end }}
+          restartPolicy: OnFailure
