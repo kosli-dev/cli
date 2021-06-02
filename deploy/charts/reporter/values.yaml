@@ -2,36 +2,48 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-replicaCount: 1
-
 image:
+  # -- the merkely reporter image repository
   repository: ghcr.io/merkely-development/reporter
+  # -- the merkely reporter image pull policy
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
+  # -- the merkely reporter image tag, overrides the image tag whose default is the chart appVersion.
   tag: "v0.2.0"
 
+# -- overrides the name used for the created k8s resources. If `fullnameOverride` is provided, it has higher precedence than this one
 nameOverride: ""
+# -- overrides the fullname used for the created k8s resources. It has higher precedence than `nameOverride`
 fullnameOverride: ""
 
 serviceAccount:
-  # Specifies whether a service account should be created
+  # -- specifies whether a service account should be created
   create: true
-  # Annotations to add to the service account
+  # -- annotations to add to the service account
   annotations: {}
-  # The name of the service account to use.
+  # -- the name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
+# -- the cron schedule at which the reporter is triggered to report to Merkely  
 cronSchedule: "*/5 * * * *"
 
 merkelyApiToken:
+  # -- the name of the secret containing the Merkely API token
   secretName: ""
+  # -- the name of the key in the secret data which containts the Merkely API token
   secretKey: ""
 
 reporterConfig:
+  # -- the name of the Merkely owner (Org)
   merkelyOwner: ""
+  # -- the name of Merkely environment that the k8s cluster/namespace correlates to
   merkelyEnvironmentName: ""
+  # -- the namespaces which represent the environment.
+  # It is a comma separated list of namespace names and/or regex patterns.
+  # e.g. `*` reports for all namespaces. `prod,dev-*` reports for the `prod` namespace and any namespace that starts with `dev-`
   namespaces: ""
+  # -- whether the dry run mode is enabled or not. In dry run mode, the reporter logs the reports to stdout and does not send them to Merkely.
   dryRun: false
 
+# -- any custom annotations to be added to the cronjob
 podAnnotations: {}
