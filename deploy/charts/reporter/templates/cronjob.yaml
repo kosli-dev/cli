@@ -26,7 +26,7 @@ spec:
             command:
             - /bin/sh
             - -c
-            - reporter report env k8s {{ required ".Values.reporterConfig.merkelyEnvironmentName is required" .Values.reporterConfig.merkelyEnvironmentName }} --namespace {{ .Values.reporterConfig.namespaces | quote }} --owner {{ required ".Values.reporterConfig.merkelyOwner is required" .Values.reporterConfig.merkelyOwner }} {{ if .Values.reporterConfig.dryRun }}--dry-run{{ end }}
+            - reporter report env k8s {{ required ".Values.reporterConfig.merkelyEnvironmentName is required" .Values.reporterConfig.merkelyEnvironmentName }} {{ if .Values.reporterConfig.namespaces }}--namespace {{ .Values.reporterConfig.namespaces | quote }} {{ end }} --owner {{ required ".Values.reporterConfig.merkelyOwner is required" .Values.reporterConfig.merkelyOwner }} {{ if .Values.reporterConfig.dryRun }}--dry-run{{ end }}
             resources:
 {{ toYaml .Values.resources | indent 14 }}
           restartPolicy: OnFailure

@@ -40,8 +40,9 @@ reporterConfig:
   merkelyEnvironmentName: ""
   # -- the namespaces which represent the environment.
   # It is a comma separated list of namespace names and/or regex patterns.
-  # e.g. `*` reports for all namespaces. `prod,dev-*` reports for the `prod` namespace and any namespace that starts with `dev-`
-  namespaces: "*"
+  # e.g. `prod,dev-*` reports for the `prod` namespace and any namespace that starts with `dev-`
+  # leave this unset if you want to report what is running in the entire cluster
+  namespaces: ""
   # -- whether the dry run mode is enabled or not. In dry run mode, the reporter logs the reports to stdout and does not send them to Merkely.
   dryRun: false
 

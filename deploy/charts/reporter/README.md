@@ -1,6 +1,6 @@
 # reporter
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2.0](https://img.shields.io/badge/AppVersion-0.2.0-informational?style=flat-square)
+![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.2.0](https://img.shields.io/badge/AppVersion-0.2.0-informational?style=flat-square)
 
 A Helm chart for Merkely reporter
 
@@ -20,7 +20,7 @@ A Helm chart for Merkely reporter
 | reporterConfig.dryRun | bool | `false` | whether the dry run mode is enabled or not. In dry run mode, the reporter logs the reports to stdout and does not send them to Merkely. |
 | reporterConfig.merkelyEnvironmentName | string | `""` | the name of Merkely environment that the k8s cluster/namespace correlates to |
 | reporterConfig.merkelyOwner | string | `""` | the name of the Merkely owner (Org) |
-| reporterConfig.namespaces | string | `"*"` | the namespaces which represent the environment. It is a comma separated list of namespace names and/or regex patterns. e.g. `*` reports for all namespaces. `prod,dev-*` reports for the `prod` namespace and any namespace that starts with `dev-` |
+| reporterConfig.namespaces | string | `""` | the namespaces which represent the environment. It is a comma separated list of namespace names and/or regex patterns. e.g. `prod,dev-*` reports for the `prod` namespace and any namespace that starts with `dev-` leave this unset if you want to report what is running in the entire cluster |
 | resources.limits.cpu | string | `"100m"` | the cpu limit |
 | resources.limits.memory | string | `"256Mi"` | the memory limit |
 | resources.requests.memory | string | `"64Mi"` | the memory request |
