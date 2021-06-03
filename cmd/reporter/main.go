@@ -9,5 +9,7 @@ import (
 func main() {
 	cmd, err := newRootCmd(os.Stdout, os.Args[1:])
 	handleError(err)
-	_ = cmd.Execute()
+	if err := cmd.Execute(); err != nil {
+		os.Exit(1)
+	}
 }
