@@ -18,7 +18,7 @@ spec:
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
             imagePullPolicy: {{ .Values.image.pullPolicy }}
             env:
-              - name: TOKEN
+              - name: MERKELY_API_TOKEN
                 valueFrom:
                   secretKeyRef:
                     name: {{ required ".Values.merkelyApiToken.secretName is required." .Values.merkelyApiToken.secretName }}
@@ -26,5 +26,5 @@ spec:
             command:
             - /bin/sh
             - -c
-            - reporter report env k8s {{ required ".Values.reporterConfig.merkelyEnvironmentName is required" .Values.reporterConfig.merkelyEnvironmentName }} --namespace {{ .Values.reporterConfig.namespaces }} --owner {{ required ".Values.reporterConfig.merkelyOwner is required" .Values.reporterConfig.merkelyOwner }} --api-token ${TOKEN} {{ if .Values.reporterConfig.dryRun }}--dry-run{{ end }}
+            - reporter report env k8s {{ required ".Values.reporterConfig.merkelyEnvironmentName is required" .Values.reporterConfig.merkelyEnvironmentName }} --namespace {{ .Values.reporterConfig.namespaces }} --owner {{ required ".Values.reporterConfig.merkelyOwner is required" .Values.reporterConfig.merkelyOwner }} {{ if .Values.reporterConfig.dryRun }}--dry-run{{ end }}
           restartPolicy: OnFailure
