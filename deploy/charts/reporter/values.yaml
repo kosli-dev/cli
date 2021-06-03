@@ -47,3 +47,13 @@ reporterConfig:
 
 # -- any custom annotations to be added to the cronjob
 podAnnotations: {}
+
+resources: 
+  requests:
+    # -- the memory request
+    memory: "64Mi"
+  limits:
+    # -- the memory limit
+    memory: "256Mi"
+    # -- the cpu limit
+    cpu: "100m"
