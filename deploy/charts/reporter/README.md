@@ -21,6 +21,9 @@ A Helm chart for Merkely reporter
 | reporterConfig.merkelyEnvironmentName | string | `""` | the name of Merkely environment that the k8s cluster/namespace correlates to |
 | reporterConfig.merkelyOwner | string | `""` | the name of the Merkely owner (Org) |
 | reporterConfig.namespaces | string | `"*"` | the namespaces which represent the environment. It is a comma separated list of namespace names and/or regex patterns. e.g. `*` reports for all namespaces. `prod,dev-*` reports for the `prod` namespace and any namespace that starts with `dev-` |
+| resources.limits.cpu | string | `"100m"` | the cpu limit |
+| resources.limits.memory | string | `"256Mi"` | the memory limit |
+| resources.requests.memory | string | `"64Mi"` | the memory request |
 | serviceAccount.annotations | object | `{}` | annotations to add to the service account |
 | serviceAccount.create | bool | `true` | specifies whether a service account should be created |
 | serviceAccount.name | string | `""` | the name of the service account to use. If not set and create is true, a name is generated using the fullname template |
