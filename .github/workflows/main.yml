@@ -5,12 +5,12 @@ on:
     branches:
       - '**'
 
-env: 
+env:
   PRODUCTION_NAMESPACE: production
   STAGING_NAMESPACE: staging
   K8S_CLUSTER_NAME: cdb-prod-eu
-  K8S_GCP_ZONE: europe-west1-b 
-  MERKELY_OWNER: compliancedb  
+  K8S_GCP_ZONE: europe-west1-b
+  MERKELY_OWNER: compliancedb
   MERKELY_PIPELINE: watcher
 
 jobs:
@@ -19,7 +19,7 @@ jobs:
     outputs:
       tag: ${{ steps.prep.outputs.tag }}
     steps:
-    
+
     - uses: actions/checkout@v2
 
     - name: Prepare
@@ -38,9 +38,9 @@ jobs:
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v2
       with:
-        version: v1.29  
-    
-    # Set up QEMU emulator to allow building multi-arch images    
+        version: v1.29
+
+    # Set up QEMU emulator to allow building multi-arch images
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v1
 
@@ -78,7 +78,17 @@ jobs:
     - name: Move cache
       run: |
         rm -rf /tmp/.buildx-cache
-        mv /tmp/.buildx-cache-new /tmp/.buildx-cache    
+        mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+    - name: Slack Notification on Failure
+      if: ${{ failure() }}
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_CHANNEL: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }}
+        SLACK_COLOR: ${{ job.status }}
+        SLACK_TITLE: Build-Test Failed in Reporter repository
+        SLACK_USERNAME: GithubActions
+        SLACK_WEBHOOK: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
 
   test-reporter:
     needs: [build]
@@ -88,8 +98,8 @@ jobs:
       credentials:
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
-    
-    steps:      
+
+    steps:
     - id: connect-to-k8s
       uses: google-github-actions/get-gke-credentials@main
       with:
@@ -98,7 +108,17 @@ jobs:
         credentials: ${{ secrets.GCP_K8S_CREDENTIALS }}
 
     - name: list image digests
-      env: 
-        KUBECONFIG: ${{ env.KUBECONFIG }} 
-      run: 
+      env:
+        KUBECONFIG: ${{ env.KUBECONFIG }}
+      run:
         reporter report env production --namespace production --kubeconfig=${KUBECONFIG} --dry-run
+
+    - name: Slack Notification on Failure
+      if: ${{ failure() }}
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_CHANNEL: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }}
+        SLACK_COLOR: ${{ job.status }}
+        SLACK_TITLE: Build-Test Failed in Reporter repository
+        SLACK_USERNAME: GithubActions
+        SLACK_WEBHOOK: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
