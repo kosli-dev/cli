@@ -46,6 +46,9 @@ reporterConfig:
   # -- whether the dry run mode is enabled or not. In dry run mode, the reporter logs the reports to stdout and does not send them to Merkely.
   dryRun: false
 
+# env:
+#   MERKELY_HOST: staging.app.merkely.com
+
 # -- any custom annotations to be added to the cronjob
 podAnnotations: {}
 

@@ -23,6 +23,10 @@ spec:
                   secretKeyRef:
                     name: {{ required ".Values.merkelyApiToken.secretName is required." .Values.merkelyApiToken.secretName }}
                     key: {{ .Values.merkelyApiToken.secretKey | default "token" }}
+              {{- range $key, $value :=  .Values.env }}
+              - name: {{ $key }}
+                value: {{ $value }}
+              {{ end }}    
             command:
             - /bin/sh
             - -c
