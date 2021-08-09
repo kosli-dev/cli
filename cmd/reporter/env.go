@@ -22,6 +22,7 @@ func newEnvCmd(out io.Writer) *cobra.Command {
 	// Add subcommands
 	cmd.AddCommand(
 		newK8sEnvCmd(out),
+		newEcsEnvCmd(out),
 	)
 
 	return cmd
