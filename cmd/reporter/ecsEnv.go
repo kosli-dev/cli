@@ -44,7 +44,10 @@ func newEcsEnvCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			aws.ListEcsServices(client)
+			err = aws.ListEcsServices(client)
+			if err != nil {
+				return err
+			}
 
 			requestBody := &requests.EnvRequest{
 				Data: []*kube.PodData{},
