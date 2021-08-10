@@ -2,28 +2,27 @@ package aws
 
 import (
 	"context"
-	"fmt"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ecs"
 	"github.com/aws/aws-sdk-go/aws"
 )
 
-// PodData represents the harvested ECS service data
-type EcsServiceData struct {
-	Name              string            `json:"name"`
-	Images            map[string]string `json:"images"`
-	CreationTimestamp string            `json:"creationTimestamp"`
+// EcsTaskData represents the harvested ECS task data
+type EcsTaskData struct {
+	TaskArn   string            `json:"taskArn"`
+	Images    map[string]string `json:"images"`
+	StartedAt time.Time         `json:"startedAt"`
 }
 
-// NewEcsServiceData creates a NewEcsServiceData object from an ECS service
-func NewEcsServiceData() *EcsServiceData {
-	images := make(map[string]string)
+// NewEcsTaskData creates a NewEcsTaskData object from an ECS task
+func NewEcsTaskData(taskArn string, images map[string]string, startedAt time.Time) *EcsTaskData {
 
-	return &EcsServiceData{
-		Name:              "",
-		Images:            images,
-		CreationTimestamp: "",
+	return &EcsTaskData{
+		TaskArn:   taskArn,
+		Images:    images,
+		StartedAt: startedAt,
 	}
 }
 
@@ -40,8 +39,9 @@ func NewAWSClient() (*ecs.Client, error) {
 	return ecs.NewFromConfig(cfg), nil
 }
 
-func ListEcsTasks(client *ecs.Client, cluster string, family string, serviceName string) error {
+func ListEcsTasks(client *ecs.Client, cluster string, family string, serviceName string) ([]*EcsTaskData, error) {
 	var input *ecs.ListTasksInput
+	tasksData := []*EcsTaskData{}
 	if serviceName != "" {
 		input = &ecs.ListTasksInput{
 			ServiceName: aws.String(serviceName),
@@ -55,7 +55,7 @@ func ListEcsTasks(client *ecs.Client, cluster string, family string, serviceName
 
 	list, err := client.ListTasks(context.Background(), input)
 	if err != nil {
-		return err
+		return tasksData, err
 	}
 	tasks := list.TaskArns
 
@@ -64,14 +64,22 @@ func ListEcsTasks(client *ecs.Client, cluster string, family string, serviceName
 			Tasks: tasks,
 		})
 		if err != nil {
-			return err
+			return tasksData, err
 		}
 
 		for _, taskDesc := range result.Tasks {
-			fmt.Println(*taskDesc.Containers[0].Image)
-			fmt.Println(taskDesc.Containers[0].ImageDigest)
+			images := make(map[string]string)
+			for _, container := range taskDesc.Containers {
+				if container.ImageDigest != nil {
+					images[*container.Image] = *container.ImageDigest
+				} else {
+					images[*container.Image] = ""
+				}
+			}
+			data := NewEcsTaskData(*taskDesc.TaskArn, images, *taskDesc.StartedAt)
+			tasksData = append(tasksData, data)
 		}
 	}
 
-	return nil
+	return tasksData, nil
 }

@@ -55,10 +55,11 @@ func newEcsEnvCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			err = aws.ListEcsTasks(client, o.cluster, o.family, o.serviceName)
+			tasksData, err := aws.ListEcsTasks(client, o.cluster, o.family, o.serviceName)
 			if err != nil {
 				return err
 			}
+			fmt.Println(*tasksData[0])
 
 			requestBody := &requests.EnvRequest{
 				Data: []*kube.PodData{},
