@@ -94,7 +94,7 @@ func newK8sEnvCmd(out io.Writer) *cobra.Command {
 				fmt.Println("############### THIS IS A DRY-RUN  ###############")
 				fmt.Println(string(js))
 			} else {
-				fmt.Println("****** Sending a Test to the API ******")
+				fmt.Println("****** Sending the payload to the API ******")
 				fmt.Println(string(js))
 				resp, err := requests.DoPut(js, url, global.apiToken, global.maxAPIRetries)
 				if err != nil {
