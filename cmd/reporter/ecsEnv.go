@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/merkely-development/reporter/internal/aws"
 	"github.com/merkely-development/reporter/internal/kube"
 	"github.com/merkely-development/reporter/internal/requests"
 	"github.com/spf13/cobra"
@@ -39,6 +40,11 @@ func newEcsEnvCmd(out io.Writer) *cobra.Command {
 
 			envName := args[0]
 			url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.host, global.owner, envName)
+			client, err := aws.NewAWSClient()
+			if err != nil {
+				return err
+			}
+			aws.ListEcsServices(client)
 
 			requestBody := &requests.EnvRequest{
 				Data: []*kube.PodData{},

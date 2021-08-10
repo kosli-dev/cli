@@ -3,6 +3,9 @@ module github.com/merkely-development/reporter
 go 1.13
 
 require (
+	github.com/aws/aws-sdk-go v1.40.17
+	github.com/aws/aws-sdk-go-v2/config v1.6.0
+	github.com/aws/aws-sdk-go-v2/service/ecs v1.7.0
 	github.com/hashicorp/go-retryablehttp v0.6.8
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
