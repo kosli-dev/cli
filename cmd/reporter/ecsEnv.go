@@ -6,7 +6,6 @@ import (
 	"io"
 
 	"github.com/merkely-development/reporter/internal/aws"
-	"github.com/merkely-development/reporter/internal/kube"
 	"github.com/merkely-development/reporter/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -23,7 +22,6 @@ merkely report env ecs prod --api-token 1234 --owner exampleOrg
 
 type ecsEnvOptions struct {
 	cluster     string
-	family      string
 	serviceName string
 }
 
@@ -45,24 +43,19 @@ func newEcsEnvCmd(out io.Writer) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			if o.serviceName != "" && (o.cluster != "" || o.family != "") {
-				return fmt.Errorf("cannot specify --service-name with --family or --cluster")
-			}
-
 			envName := args[0]
 			url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.host, global.owner, envName)
 			client, err := aws.NewAWSClient()
 			if err != nil {
 				return err
 			}
-			tasksData, err := aws.ListEcsTasks(client, o.cluster, o.family, o.serviceName)
+			tasksData, err := aws.GetEcsTasksData(client, o.cluster, o.serviceName)
 			if err != nil {
 				return err
 			}
-			fmt.Println(*tasksData[0])
 
-			requestBody := &requests.EnvRequest{
-				Data: []*kube.PodData{},
+			requestBody := &requests.EcsEnvRequest{
+				Data: tasksData,
 			}
 			js, _ := json.MarshalIndent(requestBody, "", "    ")
 
@@ -85,7 +78,6 @@ func newEcsEnvCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.cluster, "cluster", "C", "", "name of the ECS cluster")
-	cmd.Flags().StringVarP(&o.family, "family", "f", "", "name of the ECS task definition family")
 	cmd.Flags().StringVarP(&o.serviceName, "service-name", "s", "", "name of the ECS service")
 
 	return cmd

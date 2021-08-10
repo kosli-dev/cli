@@ -85,7 +85,7 @@ func newK8sEnvCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
-			requestBody := &requests.EnvRequest{
+			requestBody := &requests.K8sEnvRequest{
 				Data: podsData,
 			}
 			js, _ := json.MarshalIndent(requestBody, "", "    ")

@@ -39,45 +39,45 @@ func NewAWSClient() (*ecs.Client, error) {
 	return ecs.NewFromConfig(cfg), nil
 }
 
-func ListEcsTasks(client *ecs.Client, cluster string, family string, serviceName string) ([]*EcsTaskData, error) {
-	var input *ecs.ListTasksInput
+// GetEcsTasksData returns a list of tasks data for an ECS cluster or service
+func GetEcsTasksData(client *ecs.Client, cluster string, serviceName string) ([]*EcsTaskData, error) {
+	listInput := &ecs.ListTasksInput{}
+	descriptionInput := &ecs.DescribeTasksInput{}
 	tasksData := []*EcsTaskData{}
 	if serviceName != "" {
-		input = &ecs.ListTasksInput{
-			ServiceName: aws.String(serviceName),
-		}
-	} else {
-		input = &ecs.ListTasksInput{
-			Cluster: aws.String(cluster),
-			Family:  aws.String(family),
-		}
+		listInput.ServiceName = aws.String(serviceName)
+	}
+	if cluster != "" {
+		listInput.Cluster = aws.String(cluster)
+		descriptionInput.Cluster = aws.String(cluster)
 	}
 
-	list, err := client.ListTasks(context.Background(), input)
+	list, err := client.ListTasks(context.Background(), listInput)
 	if err != nil {
 		return tasksData, err
 	}
 	tasks := list.TaskArns
 
 	if len(tasks) > 0 {
-		result, err := client.DescribeTasks(context.Background(), &ecs.DescribeTasksInput{
-			Tasks: tasks,
-		})
+		descriptionInput.Tasks = tasks
+		result, err := client.DescribeTasks(context.Background(), descriptionInput)
 		if err != nil {
 			return tasksData, err
 		}
 
 		for _, taskDesc := range result.Tasks {
 			images := make(map[string]string)
-			for _, container := range taskDesc.Containers {
-				if container.ImageDigest != nil {
-					images[*container.Image] = *container.ImageDigest
-				} else {
-					images[*container.Image] = ""
+			if *taskDesc.LastStatus == "RUNNING" {
+				for _, container := range taskDesc.Containers {
+					if container.ImageDigest != nil {
+						images[*container.Image] = *container.ImageDigest
+					} else {
+						images[*container.Image] = ""
+					}
 				}
+				data := NewEcsTaskData(*taskDesc.TaskArn, images, *taskDesc.StartedAt)
+				tasksData = append(tasksData, data)
 			}
-			data := NewEcsTaskData(*taskDesc.TaskArn, images, *taskDesc.StartedAt)
-			tasksData = append(tasksData, data)
 		}
 	}
 

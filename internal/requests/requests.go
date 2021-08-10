@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
+	"github.com/merkely-development/reporter/internal/aws"
 	"github.com/merkely-development/reporter/internal/kube"
 )
 
@@ -16,9 +17,14 @@ type HTTPResponse struct {
 	StatusCode int
 }
 
-// EnvRequest represents the PUT request body to be sent to merkely harvest endpoint
-type EnvRequest struct {
+// K8sEnvRequest represents the PUT request body to be sent to merkely from k8s
+type K8sEnvRequest struct {
 	Data []*kube.PodData `json:"data"`
+}
+
+// EcsEnvRequest represents the PUT request body to be sent to merkely from ECS
+type EcsEnvRequest struct {
+	Data []*aws.EcsTaskData `json:"data"`
 }
 
 func getRetryableHttpClient(maxAPIRetries int) *http.Client {
