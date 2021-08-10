@@ -41,7 +41,7 @@ func NewAWSClient() (*ecs.Client, error) {
 }
 
 func ListEcsTasks(client *ecs.Client, cluster string, family string, serviceName string) error {
-	input := &ecs.ListTasksInput{}
+	var input *ecs.ListTasksInput
 	if serviceName != "" {
 		input = &ecs.ListTasksInput{
 			ServiceName: aws.String(serviceName),
