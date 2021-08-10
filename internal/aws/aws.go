@@ -40,9 +40,17 @@ func NewAWSClient() (*ecs.Client, error) {
 	return ecs.NewFromConfig(cfg), nil
 }
 
-func ListEcsServices(client *ecs.Client) error {
-	input := &ecs.ListTasksInput{
-		Cluster: aws.String("default"),
+func ListEcsTasks(client *ecs.Client, cluster string, family string, serviceName string) error {
+	input := &ecs.ListTasksInput{}
+	if serviceName != "" {
+		input = &ecs.ListTasksInput{
+			ServiceName: aws.String(serviceName),
+		}
+	} else {
+		input = &ecs.ListTasksInput{
+			Cluster: aws.String(cluster),
+			Family:  aws.String(family),
+		}
 	}
 
 	list, err := client.ListTasks(context.Background(), input)
@@ -51,16 +59,19 @@ func ListEcsServices(client *ecs.Client) error {
 	}
 	tasks := list.TaskArns
 
-	result, err := client.DescribeTasks(context.Background(), &ecs.DescribeTasksInput{
-		Tasks: tasks,
-	})
-	if err != nil {
-		return err
+	if len(tasks) > 0 {
+		result, err := client.DescribeTasks(context.Background(), &ecs.DescribeTasksInput{
+			Tasks: tasks,
+		})
+		if err != nil {
+			return err
+		}
+
+		for _, taskDesc := range result.Tasks {
+			fmt.Println(*taskDesc.Containers[0].Image)
+			fmt.Println(taskDesc.Containers[0].ImageDigest)
+		}
 	}
 
-	for _, taskDesc := range result.Tasks {
-		fmt.Println(*taskDesc.Containers[0].Image)
-		fmt.Println(taskDesc.Containers[0].ImageDigest)
-	}
 	return nil
 }
