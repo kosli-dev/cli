@@ -2,6 +2,7 @@ package aws
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -71,6 +72,8 @@ func GetEcsTasksData(client *ecs.Client, cluster string, serviceName string) ([]
 				for _, container := range taskDesc.Containers {
 					if container.ImageDigest != nil {
 						images[*container.Image] = *container.ImageDigest
+					} else if strings.Contains(*container.Image, "@sha256:") {
+						images[*container.Image] = strings.Split(*container.Image, "@sha256:")[1]
 					} else {
 						images[*container.Image] = ""
 					}
