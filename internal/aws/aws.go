@@ -14,7 +14,7 @@ import (
 type EcsTaskData struct {
 	TaskArn   string            `json:"taskArn"`
 	Images    map[string]string `json:"images"`
-	StartedAt time.Time         `json:"startedAt"`
+	StartedAt int64             `json:"creationTimestamp"`
 }
 
 // NewEcsTaskData creates a NewEcsTaskData object from an ECS task
@@ -23,7 +23,7 @@ func NewEcsTaskData(taskArn string, images map[string]string, startedAt time.Tim
 	return &EcsTaskData{
 		TaskArn:   taskArn,
 		Images:    images,
-		StartedAt: startedAt,
+		StartedAt: startedAt.Unix(),
 	}
 }
 

@@ -90,21 +90,8 @@ func newK8sEnvCmd(out io.Writer) *cobra.Command {
 			}
 			js, _ := json.MarshalIndent(requestBody, "", "    ")
 
-			if global.dryRun {
-				fmt.Println("############### THIS IS A DRY-RUN  ###############")
-				fmt.Println(string(js))
-			} else {
-				fmt.Println("****** Sending the payload to the API ******")
-				fmt.Println(string(js))
-				resp, err := requests.DoPut(js, url, global.apiToken, global.maxAPIRetries)
-				if err != nil {
-					return err
-				}
-				if resp.StatusCode != 201 && resp.StatusCode != 200 {
-					return fmt.Errorf("failed to send scrape data: %v", resp.Body)
-				}
-			}
-			return nil
+			return requests.SendPayload(js, url, global.apiToken,
+				global.maxAPIRetries, global.dryRun)
 		},
 	}
 

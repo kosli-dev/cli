@@ -20,7 +20,7 @@ type PodData struct {
 	PodName           string                  `json:"podName"`
 	Namespace         string                  `json:"namespace"`
 	Images            map[string]string       `json:"images"`
-	CreationTimestamp metav1.Time             `json:"creationTimestamp"`
+	CreationTimestamp int64                   `json:"creationTimestamp"`
 	Owners            []metav1.OwnerReference `json:"owners"`
 }
 
@@ -39,7 +39,7 @@ func NewPodData(pod *corev1.Pod) *PodData {
 		PodName:           pod.Name,
 		Namespace:         pod.Namespace,
 		Images:            images,
-		CreationTimestamp: creationTimestamp,
+		CreationTimestamp: creationTimestamp.Unix(),
 		Owners:            owners,
 	}
 }
