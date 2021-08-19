@@ -39,6 +39,7 @@ jobs:
       uses: golangci/golangci-lint-action@v2
       with:
         version: v1.29
+        args: --timeout=3m
 
     # Set up QEMU emulator to allow building multi-arch images
     - name: Set up QEMU
