@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"io"
-	"path"
-	"path/filepath"
-	"strings"
+	//"path"
+	//"path/filepath"
+	//"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -45,18 +45,25 @@ func newDocsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *docsOptions) run(out io.Writer) error {
-	if o.generateHeaders {
-		standardLinks := func(s string) string { return s }
+	// if o.generateHeaders {
+	// 	standardLinks := func(s string) string { return s }
 
-		hdrFunc := func(filename string) string {
-			base := filepath.Base(filename)
-			name := strings.TrimSuffix(base, path.Ext(base))
-			title := strings.Title(strings.Replace(name, "_", " ", -1))
-			return fmt.Sprintf("---\ntitle: \"%s\"\n---\n\n", title)
-		}
+	// 	hdrFunc := func(filename string) string {
+	// 		base := filepath.Base(filename)
+	// 		name := strings.TrimSuffix(base, path.Ext(base))
+	// 		title := strings.Title(strings.Replace(name, "_", " ", -1))
+	// 		return fmt.Sprintf("---\ntitle: \"%s\"\n---\n\n", title)
+	// 	}
 
-		return doc.GenMarkdownTreeCustom(o.topCmd, o.dest, hdrFunc, standardLinks)
+	// 	return doc.GenMarkdownTreeCustom(o.topCmd, o.dest, hdrFunc, standardLinks)
+	// }
+	var err = doc.GenMarkdownTree(o.topCmd, o.dest)
+	if err != nil {
+		return err
 	}
-	return doc.GenMarkdownTree(o.topCmd, o.dest)
+	linkHandler := func(name, ref string) string {
+		return fmt.Sprintf(":ref:`%s <%s>`", name, ref)
+	}
 
+	return doc.GenReSTTreeCustom(o.topCmd, "docs/rst", func(filename string) string { return "" }, linkHandler)
 }

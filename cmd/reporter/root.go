@@ -12,17 +12,36 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Environment variables:
+// | Name                               | Description                                                                       |
+// |------------------------------------|-----------------------------------------------------------------------------------|
+// | $MERKELY_API_TOKEN                 | set the Merkely API token.                                                        |
+// | $MERKELY_OWNER                     | set the Merkely Pipeline Owner.                                                   |
+// | $MERKELY_HOST                      | set the Merkely host.                                                             |
+// | $MERKELY_DRY_RUN                   | indicate whether or not Merkely CLI is running in Dry Run mode.                   |
+// | $MERKELY_MAX_API_RETRIES           | set the maximum number of API calling retries when the API host is not reachable. |
+// | $MERKELY_CONFIG_FILE               | set the path to Merkely config file where you can set your options.               |
+
 var globalUsage = `The Merkely evidence reporting CLI.
 
-Environment variables:
-| Name                               | Description                                                                       |
-|------------------------------------|-----------------------------------------------------------------------------------|
-| $MERKELY_API_TOKEN                 | set the Merkely API token.                                                        |
-| $MERKELY_OWNER                     | set the Merkely Pipeline Owner.                                                   |
-| $MERKELY_HOST                      | set the Merkely host.                                                             |
-| $MERKELY_DRY_RUN                   | indicate whether or not Merkely CLI is running in Dry Run mode.                   |
-| $MERKELY_MAX_API_RETRIES           | set the maximum number of API calling retries when the API host is not reachable. |
-| $MERKELY_CONFIG_FILE               | set the path to Merkely config file where you can set your options.               |         
+.. list-table:: Environment variables
+   :widths: 50 50
+   :header-rows: 1
+
+   * - Name
+     - Description
+   * - $MERKELY_API_TOKEN
+     - set the Merkely API token.
+   * - $MERKELY_OWNER
+     - set the Merkely Pipeline Owner.  
+   * - $MERKELY_HOST
+     - set the Merkely host.
+   * - $MERKELY_DRY_RUN
+     - indicate whether or not Merkely CLI is running in Dry Run mode.
+   * - $MERKELY_MAX_API_RETRIES 
+     - set the maximum number of API calling retries when the API host is not reachable.
+   * - $MERKELY_CONFIG_FILE
+     - set the path to Merkely config file where you can set your options. 
 `
 
 const (
