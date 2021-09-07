@@ -100,7 +100,10 @@ func generateReSTFiles(cmd *cobra.Command, dir string) error {
 		}
 	} else {
 		for _, c := range cmd.Commands() {
-			generateReSTFiles(c, dir)
+			err := generateReSTFiles(c, dir)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
