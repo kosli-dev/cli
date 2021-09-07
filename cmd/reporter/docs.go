@@ -3,12 +3,13 @@ package main
 import (
 	"fmt"
 	"io"
-	//"path"
-	//"path/filepath"
-	//"strings"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
+	"github.com/spf13/pflag"
 )
 
 const docsDesc = `
@@ -61,9 +62,36 @@ func (o *docsOptions) run(out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	linkHandler := func(name, ref string) string {
-		return fmt.Sprintf(":ref:`%s <%s>`", name, ref)
-	}
 
-	return doc.GenReSTTreeCustom(o.topCmd, "docs/rst", func(filename string) string { return "" }, linkHandler)
+	return explore(o.topCmd, "docs/rst")
+	// linkHandler := func(name, ref string) string {
+	// 	return fmt.Sprintf(":ref:`%s <%s>`", name, ref)
+	// }
+	//return doc.GenReSTTreeCustom(o.topCmd, "docs/rst", func(filename string) string { return "" }, linkHandler)
+}
+
+func explore(cmd *cobra.Command, dir string) error {
+	if len(cmd.Commands()) == 0 && (cmd.Name() == "k8s" || cmd.Name() == "ecs") {
+		basename := strings.Replace(cmd.CommandPath(), " ", "_", -1) + ".rst"
+		filename := filepath.Join(dir, basename)
+		file, err := os.Create(filename)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		var buffer strings.Builder
+		buffer.WriteString(fmt.Sprintf("Command name: %s\n", cmd.Name()))
+		buffer.WriteString(fmt.Sprintf("Command path: %s\n", cmd.CommandPath()))
+		cmd.Flags().VisitAll(func(f *pflag.Flag) {
+			if f.Name != "help" {
+				buffer.WriteString(fmt.Sprintf("     Name: %s. Def Value: %s\n", f.Name, f.DefValue))
+			}
+		})
+		fmt.Fprintf(file, "%s", buffer.String())
+	} else {
+		for _, c := range cmd.Commands() {
+			explore(c, dir)
+		}
+	}
+	return nil
 }

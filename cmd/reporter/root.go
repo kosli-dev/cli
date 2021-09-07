@@ -25,7 +25,6 @@ import (
 var globalUsage = `The Merkely evidence reporting CLI.
 
 .. list-table:: Environment variables
-   :widths: 50 50
    :header-rows: 1
 
    * - Name
