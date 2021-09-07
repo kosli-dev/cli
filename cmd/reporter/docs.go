@@ -63,14 +63,14 @@ func (o *docsOptions) run(out io.Writer) error {
 		return err
 	}
 
-	return explore(o.topCmd, "docs/rst")
+	return generateReSTFiles(o.topCmd, "docs/rst")
 	// linkHandler := func(name, ref string) string {
 	// 	return fmt.Sprintf(":ref:`%s <%s>`", name, ref)
 	// }
 	//return doc.GenReSTTreeCustom(o.topCmd, "docs/rst", func(filename string) string { return "" }, linkHandler)
 }
 
-func explore(cmd *cobra.Command, dir string) error {
+func generateReSTFiles(cmd *cobra.Command, dir string) error {
 	if len(cmd.Commands()) == 0 && (cmd.Name() == "k8s" || cmd.Name() == "ecs") {
 		basename := strings.Replace(cmd.CommandPath(), " ", "_", -1) + ".rst"
 		filename := filepath.Join(dir, basename)
@@ -79,19 +79,35 @@ func explore(cmd *cobra.Command, dir string) error {
 			return err
 		}
 		defer file.Close()
-		var buffer strings.Builder
-		buffer.WriteString(fmt.Sprintf("Command name: %s\n", cmd.Name()))
-		buffer.WriteString(fmt.Sprintf("Command path: %s\n", cmd.CommandPath()))
+
+		lines := []string{}
+
+		lines = append(lines, fmt.Sprintf(".. list-table:: %s", cmd.CommandPath()))
+		lines = append(lines, "   :header-rows: 1")
+		lines = append(lines, "")
+		lines = append(lines, "   * - ENV_VAR_NAME")
+		lines = append(lines, "     - Default")
+		lines = append(lines, "     - Notes")
 		cmd.Flags().VisitAll(func(f *pflag.Flag) {
 			if f.Name != "help" {
-				buffer.WriteString(fmt.Sprintf("     Name: %s. Def Value: %s\n", f.Name, f.DefValue))
+				lines = append(lines, fmt.Sprintf("   * - %s", merkelyEnvVar(f.Name)))
+				lines = append(lines, fmt.Sprintf("     - %s", f.DefValue))
+				lines = append(lines, fmt.Sprintf("     - %s", f.Usage))
 			}
 		})
-		fmt.Fprintf(file, "%s", buffer.String())
+		for _, line := range lines {
+			fmt.Fprintf(file, "%s\n", line)
+		}
 	} else {
 		for _, c := range cmd.Commands() {
-			explore(c, dir)
+			generateReSTFiles(c, dir)
 		}
 	}
 	return nil
+}
+
+func merkelyEnvVar(s string) string {
+	s = strings.Replace(s, "-", "_", -1)
+	s = strings.ToUpper(s)
+	return "MERKELY_" + s
 }
