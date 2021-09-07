@@ -86,13 +86,13 @@ func generateReSTFiles(cmd *cobra.Command, dir string) error {
 		lines = append(lines, "   :header-rows: 1")
 		lines = append(lines, "")
 		lines = append(lines, "   * - ENV_VAR_NAME")
-		lines = append(lines, "     - Default")
+		lines = append(lines, "     - Required?")
 		lines = append(lines, "     - Notes")
 		cmd.Flags().VisitAll(func(f *pflag.Flag) {
 			if f.Name != "help" {
 				lines = append(lines, fmt.Sprintf("   * - %s", merkelyEnvVar(f.Name)))
-				lines = append(lines, fmt.Sprintf("     - %s", f.DefValue))
-				lines = append(lines, fmt.Sprintf("     - %s", f.Usage))
+				lines = append(lines, fmt.Sprintf("     - %s", required(f.DefValue)))
+				lines = append(lines, fmt.Sprintf("     - %s", usage(f.Usage, f.DefValue)))
 			}
 		})
 		for _, line := range lines {
@@ -113,4 +113,21 @@ func merkelyEnvVar(s string) string {
 	s = strings.Replace(s, "-", "_", -1)
 	s = strings.ToUpper(s)
 	return "MERKELY_" + s
+}
+
+func required(s string) string {
+	if len(s) == 0 {
+		return "yes"
+	} else {
+		return "no"
+	}
+}
+
+func usage(usage string, def string) string {
+	var result string
+	result += usage
+	if required(def) == "no" {
+		result += " Defaults to :code:`" + def + "`."
+	}
+	return result
 }

@@ -2,32 +2,32 @@
    :header-rows: 1
 
    * - ENV_VAR_NAME
-     - Default
+     - Required?
      - Notes
    * - MERKELY_API_TOKEN
-     - 
+     - yes
      - the merkely API token.
    * - MERKELY_CONFIG_FILE
-     - merkely
-     - [optional] the merkely config file path.
+     - no
+     - [optional] the merkely config file path. Defaults to :code:`merkely`.
    * - MERKELY_DRY_RUN
-     - false
-     - whether to send the request to the endpoint or just log it in stdout.
+     - no
+     - whether to send the request to the endpoint or just log it in stdout. Defaults to :code:`false`.
    * - MERKELY_EXCLUDE_NAMESPACE
-     - []
-     - the comma separated list of namespaces (or namespaces regex patterns) NOT to harvest artifacts info from. Can't be used together with --namespace.
+     - no
+     - the comma separated list of namespaces (or namespaces regex patterns) NOT to harvest artifacts info from. Can't be used together with --namespace. Defaults to :code:`[]`.
    * - MERKELY_HOST
-     - https://app.merkely.com
-     - the merkely endpoint.
+     - no
+     - the merkely endpoint. Defaults to :code:`https://app.merkely.com`.
    * - MERKELY_KUBECONFIG
-     - 
+     - yes
      - kubeconfig path for the target cluster
    * - MERKELY_MAX_API_RETRIES
-     - 3
-     - how many times should API calls be retried when the API host is not reachable.
+     - no
+     - how many times should API calls be retried when the API host is not reachable. Defaults to :code:`3`.
    * - MERKELY_NAMESPACE
-     - []
-     - the comma separated list of namespaces (or namespaces regex patterns) to harvest artifacts info from. Can't be used together with --exclude-namespace.
+     - no
+     - the comma separated list of namespaces (or namespaces regex patterns) to harvest artifacts info from. Can't be used together with --exclude-namespace. Defaults to :code:`[]`.
    * - MERKELY_OWNER
-     - 
+     - yes
      - the merkely organization.
