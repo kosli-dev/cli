@@ -23,6 +23,7 @@ merkely report env ecs prod --api-token 1234 --owner exampleOrg
 type ecsEnvOptions struct {
 	cluster     string
 	serviceName string
+	id          string
 }
 
 func newEcsEnvCmd(out io.Writer) *cobra.Command {
@@ -44,6 +45,15 @@ func newEcsEnvCmd(out io.Writer) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			envName := args[0]
+			if o.id == "" {
+				if o.serviceName != "" {
+					o.id = o.serviceName
+				} else if o.cluster != "" {
+					o.id = o.cluster
+				} else {
+					o.id = envName
+				}
+			}
 			url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.host, global.owner, envName)
 			client, err := aws.NewAWSClient()
 			if err != nil {
@@ -56,6 +66,8 @@ func newEcsEnvCmd(out io.Writer) *cobra.Command {
 
 			requestBody := &requests.EcsEnvRequest{
 				Data: tasksData,
+				Type: "ECS",
+				Id:   o.id,
 			}
 			js, _ := json.MarshalIndent(requestBody, "", "    ")
 
@@ -66,6 +78,8 @@ func newEcsEnvCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVarP(&o.cluster, "cluster", "C", "", "name of the ECS cluster")
 	cmd.Flags().StringVarP(&o.serviceName, "service-name", "s", "", "name of the ECS service")
+	cmd.Flags().StringVarP(&o.id, "id", "i", "", "the unique identifier of the source infrastructure of the report (e.g. the ECS cluster/service name)."+
+		"If not set, it is defaulted based on the following order: --service-name, --cluster, environment name.")
 
 	return cmd
 }

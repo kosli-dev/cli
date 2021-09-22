@@ -20,7 +20,7 @@ and report them to Merkely.
 
 const k8sEnvExample = `
 * report what's running in an entire cluster using kubeconfig at $HOME/.kube/config:
-merkely report env k8s prod --api-token 1234 --owner exampleOrg
+merkely report env k8s prod --api-token 1234 --owner exampleOrg --id prod-cluster
 
 * report what's running in an entire cluster using kubeconfig at $HOME/.kube/config 
 (with global flags defined in environment or in  a config file):
@@ -40,6 +40,7 @@ type k8sEnvOptions struct {
 	kubeconfig        string
 	namespaces        []string
 	excludeNamespaces []string
+	id                string
 }
 
 func newK8sEnvCmd(out io.Writer) *cobra.Command {
@@ -56,8 +57,8 @@ func newK8sEnvCmd(out io.Writer) *cobra.Command {
 
 	o := new(k8sEnvOptions)
 	cmd := &cobra.Command{
-		Use:     "k8s [-n namespace | -x namespace]... [-k /path/to/kube/config] env-name",
-		Short:   "Report images data from specific namespace or entire cluster to Merkely.",
+		Use:     "k8s [-n namespace | -x namespace]... [-k /path/to/kube/config] [-i infrastructure-identifier] env-name",
+		Short:   "Report images data from specific namespace(s) or entire cluster to Merkely.",
 		Long:    k8sEnvDesc,
 		Aliases: []string{"kubernetes"},
 		Example: k8sEnvExample,
@@ -75,6 +76,9 @@ func newK8sEnvCmd(out io.Writer) *cobra.Command {
 				return fmt.Errorf("--namespace and --exclude-namespace can't be used together. This can also happen if you set one of the two options in a config file or env var and the other on the command line")
 			}
 			envName := args[0]
+			if o.id == "" {
+				o.id = envName
+			}
 			url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.host, global.owner, envName)
 			clientset, err := kube.NewK8sClientSet(o.kubeconfig)
 			if err != nil {
@@ -87,6 +91,8 @@ func newK8sEnvCmd(out io.Writer) *cobra.Command {
 
 			requestBody := &requests.K8sEnvRequest{
 				Data: podsData,
+				Type: "K8S",
+				Id:   o.id,
 			}
 			js, _ := json.MarshalIndent(requestBody, "", "    ")
 
@@ -96,8 +102,9 @@ func newK8sEnvCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.kubeconfig, "kubeconfig", "k", defaultKubeConfigPath, "kubeconfig path for the target cluster")
-	cmd.Flags().StringSliceVarP(&o.namespaces, "namespace", "n", []string{}, "the comma separated list of namespaces (or namespaces regex patterns) to harvest artifacts info from. Can't be used together with --exclude-namespace.")
-	cmd.Flags().StringSliceVarP(&o.excludeNamespaces, "exclude-namespace", "x", []string{}, "the comma separated list of namespaces (or namespaces regex patterns) NOT to harvest artifacts info from. Can't be used together with --namespace.")
+	cmd.Flags().StringSliceVarP(&o.namespaces, "namespace", "n", []string{}, "the comma separated list of namespaces regex patterns to report artifacts info from. Can't be used together with --exclude-namespace.")
+	cmd.Flags().StringSliceVarP(&o.excludeNamespaces, "exclude-namespace", "x", []string{}, "the comma separated list of namespaces regex patterns NOT to report artifacts info from. Can't be used together with --namespace.")
+	cmd.Flags().StringVarP(&o.id, "id", "i", "", "the unique identifier of the source infrastructure of the report (e.g. the K8S cluster/namespace name). If not set, it is defaulted to environment name.")
 
 	return cmd
 }
