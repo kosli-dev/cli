@@ -13,16 +13,16 @@ import (
 // EcsTaskData represents the harvested ECS task data
 type EcsTaskData struct {
 	TaskArn   string            `json:"taskArn"`
-	Images    map[string]string `json:"images"`
+	Digests   map[string]string `json:"digests"`
 	StartedAt int64             `json:"creationTimestamp"`
 }
 
 // NewEcsTaskData creates a NewEcsTaskData object from an ECS task
-func NewEcsTaskData(taskArn string, images map[string]string, startedAt time.Time) *EcsTaskData {
+func NewEcsTaskData(taskArn string, digests map[string]string, startedAt time.Time) *EcsTaskData {
 
 	return &EcsTaskData{
 		TaskArn:   taskArn,
-		Images:    images,
+		Digests:   digests,
 		StartedAt: startedAt.Unix(),
 	}
 }
@@ -67,18 +67,18 @@ func GetEcsTasksData(client *ecs.Client, cluster string, serviceName string) ([]
 		}
 
 		for _, taskDesc := range result.Tasks {
-			images := make(map[string]string)
+			digests := make(map[string]string)
 			if *taskDesc.LastStatus == "RUNNING" {
 				for _, container := range taskDesc.Containers {
 					if container.ImageDigest != nil {
-						images[*container.Image] = *container.ImageDigest
+						digests[*container.Image] = *container.ImageDigest
 					} else if strings.Contains(*container.Image, "@sha256:") {
-						images[*container.Image] = strings.Split(*container.Image, "@sha256:")[1]
+						digests[*container.Image] = strings.Split(*container.Image, "@sha256:")[1]
 					} else {
-						images[*container.Image] = ""
+						digests[*container.Image] = ""
 					}
 				}
-				data := NewEcsTaskData(*taskDesc.TaskArn, images, *taskDesc.StartedAt)
+				data := NewEcsTaskData(*taskDesc.TaskArn, digests, *taskDesc.StartedAt)
 				tasksData = append(tasksData, data)
 			}
 		}
