@@ -19,16 +19,16 @@ type HTTPResponse struct {
 
 // K8sEnvRequest represents the PUT request body to be sent to merkely from k8s
 type K8sEnvRequest struct {
-	Data []*kube.PodData `json:"data"`
-	Type string          `json:"type"`
-	Id   string          `json:"id"`
+	Artifacts []*kube.PodData `json:"artifacts"`
+	Type      string          `json:"type"`
+	Id        string          `json:"id"`
 }
 
 // EcsEnvRequest represents the PUT request body to be sent to merkely from ECS
 type EcsEnvRequest struct {
-	Data []*aws.EcsTaskData `json:"data"`
-	Type string             `json:"type"`
-	Id   string             `json:"id"`
+	Artifacts []*aws.EcsTaskData `json:"artifacts"`
+	Type      string             `json:"type"`
+	Id        string             `json:"id"`
 }
 
 func getRetryableHttpClient(maxAPIRetries int) *http.Client {

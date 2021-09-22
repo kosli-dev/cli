@@ -65,9 +65,9 @@ func newEcsEnvCmd(out io.Writer) *cobra.Command {
 			}
 
 			requestBody := &requests.EcsEnvRequest{
-				Data: tasksData,
-				Type: "ECS",
-				Id:   o.id,
+				Artifacts: tasksData,
+				Type:      "ECS",
+				Id:        o.id,
 			}
 			js, _ := json.MarshalIndent(requestBody, "", "    ")
 
