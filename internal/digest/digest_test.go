@@ -113,9 +113,6 @@ func (suite *DigestTestSuite) TestDirSah256() {
 				},
 			},
 			want: "f29c4d614fa3c1fa5e8b82239ad698febe7de2329b7fcc7b35e08e892bc3da85",
-			// want: "9b9d0a0f475c2e94e21a10a5d05438783bd1effeda27d55ef4f766c8e2c715b2",
-			// python 0fc7bd4415d23ddfcb3657b8117876542d47ab802f2ceb64d40fa707e7619b8bd312b65295c400dec57c83514cb3cccecc51afaf968f5f113e69c429e7ecad6b 87202e509fb7a8a8db57be3c7211cb1108e178cf3da4e7220df56ecdbdab74d9
-			// go     f737e86aaa2f59a39ca139c8326af46973f77c6bfaa94ba33f7fed6401ecd044ad100ace3aeb9832988b0216ca0fba3236ce5f08ef77f31ae8ed59c9a226e7e9 87202e509fb7a8a8db57be3c7211cb1108e178cf3da4e7220df56ecdbdab74d9
 		},
 		{
 			name: "an empty dir has a digest.",
