@@ -291,7 +291,7 @@ func (suite *DigestTestSuite) TestDirSha256Validation() {
 
 			_, err := DirSha256(dirPath)
 			if t.errExpected {
-				require.Errorf(suite.T(), err, fmt.Sprintf("TestDirSha256Validation: error was expected"))
+				require.Errorf(suite.T(), err, "TestDirSha256Validation: error was expected")
 			}
 
 		})
