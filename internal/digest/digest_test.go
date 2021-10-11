@@ -35,7 +35,7 @@ func (suite *DigestTestSuite) AfterTest() {
 
 // All methods that begin with "Test" are run as tests within a
 // suite.
-func (suite *DigestTestSuite) TestFileSah256() {
+func (suite *DigestTestSuite) TestFileSha256() {
 	type args struct {
 		filename string
 		content  string
@@ -69,6 +69,14 @@ func (suite *DigestTestSuite) TestFileSah256() {
 			},
 			want: "a50afcf37a327e0715b3148c2625bc28b3e4dcdf32b6cf78c8b8fa3ac1ebfe47",
 		},
+		{
+			name: "a different file name with same content has the same digest.",
+			args: args{
+				filename: "test4",
+				content:  "this is non empty.",
+			},
+			want: "a50afcf37a327e0715b3148c2625bc28b3e4dcdf32b6cf78c8b8fa3ac1ebfe47",
+		},
 	} {
 		suite.Run(t.name, func() {
 			testFile, err := os.Create(filepath.Join(suite.tmpDir, t.args.filename))
@@ -85,7 +93,7 @@ func (suite *DigestTestSuite) TestFileSah256() {
 	}
 }
 
-func (suite *DigestTestSuite) TestDirSah256() {
+func (suite *DigestTestSuite) TestDirSha256() {
 	type fileSystemEntry struct {
 		name     string
 		content  string            // file content (if entry is a file)
@@ -199,6 +207,27 @@ func (suite *DigestTestSuite) TestDirSah256() {
 			},
 			want: "7624535c2de214d13227c9ed83a3cd1359a1b30da8369942c0741e214c40f7e3",
 		},
+		{
+			name: "a dir with a nested dir with a different name has a different digest.",
+			args: args{
+				dirName: "test6",
+				dirContent: []fileSystemEntry{
+					{
+						name:     "sample.yaml",
+						content:  "some content. And some more.",
+						children: make(map[string]string),
+					},
+					{
+						name: "nested-dir2",
+						children: map[string]string{
+							"file1": "content1",
+							"file2": "content2",
+						},
+					},
+				},
+			},
+			want: "865a17aa813c982c474fb61c9331c460b713636ce77f15e79834d3e98e10e47d",
+		},
 	} {
 		suite.Run(t.name, func() {
 			dirPath := filepath.Join(suite.tmpDir, t.args.dirName)
@@ -223,6 +252,48 @@ func (suite *DigestTestSuite) TestDirSah256() {
 			require.NoErrorf(suite.T(), err, "error creating digest for test dir %s", dirPath)
 
 			assert.Equal(suite.T(), t.want, sha256, fmt.Sprintf("TestDirSha256: %s , got: %v -- want: %v", t.name, sha256, t.want))
+		})
+	}
+}
+
+func (suite *DigestTestSuite) TestDirSha256Validation() {
+	type args struct {
+		name   string
+		isFile bool
+	}
+	for _, t := range []struct {
+		name        string
+		args        args
+		errExpected bool
+	}{
+		{
+			name: "non existing path raises an error",
+			args: args{
+				name: "test1",
+			},
+			errExpected: true,
+		},
+		{
+			name: "path is a file path but not a directory",
+			args: args{
+				name:   "test2",
+				isFile: true,
+			},
+			errExpected: true,
+		},
+	} {
+		suite.Run(t.name, func() {
+			dirPath := filepath.Join(suite.tmpDir, t.args.name)
+
+			if t.args.isFile {
+				suite.createFileWithContent(dirPath, "")
+			}
+
+			_, err := DirSha256(dirPath)
+			if t.errExpected {
+				require.Errorf(suite.T(), err, fmt.Sprintf("TestDirSha256Validation: error was expected"))
+			}
+
 		})
 	}
 }

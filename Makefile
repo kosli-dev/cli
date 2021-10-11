@@ -54,7 +54,9 @@ build: deps vet ## Build the package
 .PHONY: build
 
 test: deps vet ## Run unit tests
-	@go test -v -cover -p=1 ./...
+	@go test -v -cover -p=1 -coverprofile=coverage.out ./...
+	@go tool cover -func=coverage.out
+	@go tool cover -html=coverage.out
 .PHONY: test
 
 docker: deps vet lint
