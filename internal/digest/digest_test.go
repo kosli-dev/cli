@@ -258,8 +258,9 @@ func (suite *DigestTestSuite) TestDirSha256() {
 
 func (suite *DigestTestSuite) TestDirSha256Validation() {
 	type args struct {
-		name   string
-		isFile bool
+		name       string
+		isFile     bool
+		isAbsolute bool
 	}
 	for _, t := range []struct {
 		name        string
@@ -281,9 +282,20 @@ func (suite *DigestTestSuite) TestDirSha256Validation() {
 			},
 			errExpected: true,
 		},
+		{
+			name: "path is an empty string",
+			args: args{
+				name:       "",
+				isAbsolute: true,
+			},
+			errExpected: true,
+		},
 	} {
 		suite.Run(t.name, func() {
 			dirPath := filepath.Join(suite.tmpDir, t.args.name)
+			if t.args.isAbsolute {
+				dirPath = t.args.name
+			}
 
 			if t.args.isFile {
 				suite.createFileWithContent(dirPath, "")

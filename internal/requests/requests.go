@@ -9,6 +9,7 @@ import (
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"github.com/merkely-development/reporter/internal/aws"
 	"github.com/merkely-development/reporter/internal/kube"
+	"github.com/merkely-development/reporter/internal/server"
 )
 
 // HTTPResponse is a simplified version of http.Response
@@ -29,6 +30,13 @@ type EcsEnvRequest struct {
 	Artifacts []*aws.EcsTaskData `json:"artifacts"`
 	Type      string             `json:"type"`
 	Id        string             `json:"id"`
+}
+
+// ServerEnvRequest represents the PUT request body to be sent to merkely from a server
+type ServerEnvRequest struct {
+	Artifacts []*server.ServerData `json:"artifacts"`
+	Type      string               `json:"type"`
+	Id        string               `json:"id"`
 }
 
 func getRetryableHttpClient(maxAPIRetries int) *http.Client {
