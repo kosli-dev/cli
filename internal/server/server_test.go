@@ -118,7 +118,16 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsData() {
 				digestsList = append(digestsList, data.Digests)
 				assert.NotEqual(suite.T(), int64(0), data.CreationTimestamp, fmt.Sprintf("TestCreateServerArtifactsData: %s , got: %v, should not be 0, at index: %d", t.name, data.CreationTimestamp, i))
 			}
-			assert.ElementsMatch(suite.T(), t.want, digestsList, fmt.Sprintf("TestCreateServerArtifactsData: %s , got: %v -- want: %v", t.name, digestsList, t.want))
+
+			expected := []map[string]string{}
+			for _, m := range t.want {
+				tmpMap := make(map[string]string)
+				for k, v := range m {
+					tmpMap[filepath.Join(suite.tmpDir, k)] = v
+				}
+				expected = append(expected, tmpMap)
+			}
+			assert.ElementsMatch(suite.T(), expected, digestsList, fmt.Sprintf("TestCreateServerArtifactsData: %s , got: %v -- want: %v", t.name, digestsList, expected))
 
 		})
 	}

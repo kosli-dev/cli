@@ -3,7 +3,7 @@ package server
 import (
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 
 	"github.com/merkely-development/reporter/internal/digest"
 )
@@ -23,7 +23,10 @@ func CreateServerArtifactsData(paths []string) ([]*ServerData, error) {
 		if err != nil {
 			return []*ServerData{}, fmt.Errorf("Failed to get a digest of path %s with error: %v", p, err)
 		}
-		artifactName := path.Base(p)
+		artifactName, err := filepath.Abs(p)
+		if err != nil {
+			return []*ServerData{}, fmt.Errorf("Failed to get absolute path for %s with error: %v", p, err)
+		}
 		digests[artifactName] = sha256
 		ts, err := getPathLastModifiedTimestamp(p)
 		if err != nil {
