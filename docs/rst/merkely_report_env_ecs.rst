@@ -19,6 +19,9 @@
    * - MERKELY_HOST
      - no
      - the merkely endpoint. Defaults to :code:`https://app.merkely.com`.
+   * - MERKELY_ID
+     - yes
+     - the unique identifier of the source infrastructure of the report (e.g. the ECS cluster/service name).If not set, it is defaulted based on the following order: --service-name, --cluster, environment name.
    * - MERKELY_MAX_API_RETRIES
      - no
      - how many times should API calls be retried when the API host is not reachable. Defaults to :code:`3`.

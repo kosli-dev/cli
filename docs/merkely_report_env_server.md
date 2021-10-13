@@ -1,34 +1,33 @@
-## merkely report env ecs
+## merkely report env server
 
-Report images data from AWS ECS cluster to Merkely.
+Report directory artifacts data in the given list of paths to Merkely.
 
 ### Synopsis
 
 
-List the artifacts deployed in an AWS ECS cluster and their digests 
+List the artifacts deployed in a server environment and their digests 
 and report them to Merkely. 
 
 
 ```
-merkely report env ecs env-name [flags]
+merkely report env server [-p /path/of/artifacts/directory] [-i infrastructure-identifier] env-name [flags]
 ```
 
 ### Examples
 
 ```
 
-* report what's running in an entire AWS ECS cluster:
-merkely report env ecs prod --api-token 1234 --owner exampleOrg
+* report directory artifacts running in a server at a list of paths:
+merkely report env server prod --api-token 1234 --owner exampleOrg --id prod-server --paths a/b/c, e/f/g
 
 ```
 
 ### Options
 
 ```
-  -C, --cluster string        name of the ECS cluster
-  -h, --help                  help for ecs
-  -i, --id string             the unique identifier of the source infrastructure of the report (e.g. the ECS cluster/service name).If not set, it is defaulted based on the following order: --service-name, --cluster, environment name.
-  -s, --service-name string   name of the ECS service
+  -h, --help            help for server
+  -i, --id string       the unique identifier of the source infrastructure of the report (e.g. the K8S cluster/namespace name). If not set, it is defaulted to environment name.
+  -p, --paths strings   the comma separated list of artifact directories.
 ```
 
 ### Options inherited from parent commands
