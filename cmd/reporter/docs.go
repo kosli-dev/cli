@@ -71,7 +71,7 @@ func (o *docsOptions) run(out io.Writer) error {
 }
 
 func generateReSTFiles(cmd *cobra.Command, dir string) error {
-	if len(cmd.Commands()) == 0 && (cmd.Name() == "k8s" || cmd.Name() == "ecs") {
+	if len(cmd.Commands()) == 0 && (cmd.Name() == "k8s" || cmd.Name() == "ecs" || cmd.Name() == "server") {
 		basename := strings.Replace(cmd.CommandPath(), " ", "_", -1) + ".rst"
 		filename := filepath.Join(dir, basename)
 		file, err := os.Create(filename)
