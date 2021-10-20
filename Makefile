@@ -67,3 +67,11 @@ docs: build
 	@./reporter docs --dir docs
 .PHONY: docs
 
+licenses:
+	@rm -rf licenses || true
+	@go install github.com/google/go-licenses@latest
+	@go-licenses save ./... --save_path="licenses/" || true
+	$(eval DATA := $(shell go-licenses csv ./...))
+	@echo $(DATA) | tr " " "\n" > licenses/licenses.csv
+.PHONY: licenses
+
