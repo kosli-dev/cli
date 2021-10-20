@@ -71,7 +71,7 @@ func GetEcsTasksData(client *ecs.Client, cluster string, serviceName string) ([]
 			if *taskDesc.LastStatus == "RUNNING" {
 				for _, container := range taskDesc.Containers {
 					if container.ImageDigest != nil {
-						digests[*container.Image] = *container.ImageDigest
+						digests[*container.Image] = strings.TrimPrefix(*container.ImageDigest, "sha256:")
 					} else if strings.Contains(*container.Image, "@sha256:") {
 						digests[*container.Image] = strings.Split(*container.Image, "@sha256:")[1]
 					} else {
