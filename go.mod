@@ -26,6 +26,7 @@ require (
 	k8s.io/api v0.22.3
 	k8s.io/apimachinery v0.22.3
 	k8s.io/client-go v0.22.3
+	sigs.k8s.io/kind v0.11.1
 )
 
 replace k8s.io/client-go => k8s.io/client-go v0.22.3
