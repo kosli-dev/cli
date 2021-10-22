@@ -40,22 +40,6 @@ func DirSha256(dirPath string) (string, error) {
 
 // prepareDirContentSha256 calculates a sha256 digest for a directory content
 func prepareDirContentSha256(digestsFile *os.File, dirPath, tmpDir string) error {
-	// dirName := filepath.Base(dirPath)
-	// file, err := os.Create(filepath.Join(tmpDir, "name"))
-	// if err != nil {
-	// 	return err
-	// }
-	// if _, err := file.Write([]byte(dirName)); err != nil {
-	// 	return err
-	// }
-
-	// dirNameSha256, err := FileSha256(filepath.Join(tmpDir, "name"))
-	// if err != nil {
-	// 	return err
-	// }
-	// if _, err := digestsFile.Write([]byte(dirNameSha256)); err != nil {
-	// 	return err
-	// }
 
 	files, err := ioutil.ReadDir(dirPath)
 	if err != nil {
