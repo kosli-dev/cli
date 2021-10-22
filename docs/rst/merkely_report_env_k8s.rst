@@ -23,8 +23,8 @@
      - yes
      - the unique identifier of the source infrastructure of the report (e.g. the K8S cluster/namespace name). If not set, it is defaulted to environment name.
    * - MERKELY_KUBECONFIG
-     - no
-     - kubeconfig path for the target cluster Defaults to :code:`/Users/simonmerkely/.kube/config`.
+     - yes
+     - kubeconfig path for the target cluster
    * - MERKELY_MAX_API_RETRIES
      - no
      - how many times should API calls be retried when the API host is not reachable. Defaults to :code:`3`.
