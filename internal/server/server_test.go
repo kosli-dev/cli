@@ -58,7 +58,7 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsData() {
 			},
 
 			want: []map[string]string{
-				{"directory-name": "ccfac53009268f5db73ae31ef062c832e20d23ffa66d6b4ee9923dd4fac8676c"},
+				{"directory-name": "388ab80164bbd9d96f132b046b8d09354f68b79a3668da7b507625cd1230dddf"},
 			},
 		},
 		{
@@ -81,8 +81,8 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsData() {
 			},
 
 			want: []map[string]string{
-				{"directory-name2": "4fadb5e568c94bd6adebc8bbead8492df170f4245725d047bb731655099317a8"},
-				{"directory-name3": "da9f25ae376572c038ecd9aea2b7d6a5c7ac133cdb18bb99e8a9d6c39c6866b7"},
+				{"directory-name2": "388ab80164bbd9d96f132b046b8d09354f68b79a3668da7b507625cd1230dddf"},
+				{"directory-name3": "3025bae51416f4348cbeaf3d2f7394a21d637792c850fb63d6c5242f073bc9b3"},
 			},
 		},
 	} {
@@ -150,6 +150,6 @@ func (suite *ServerTestSuite) createFileWithContent(path, content string) {
 
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
-func TestDigestTestSuite(t *testing.T) {
+func TestServerTestSuite(t *testing.T) {
 	suite.Run(t, new(ServerTestSuite))
 }

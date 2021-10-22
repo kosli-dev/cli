@@ -120,7 +120,7 @@ func (suite *DigestTestSuite) TestDirSha256() {
 					},
 				},
 			},
-			want: "f29c4d614fa3c1fa5e8b82239ad698febe7de2329b7fcc7b35e08e892bc3da85",
+			want: "c71f5baef8cce289c9b7c971cf219e21b787a025af68ad6539b82634fe62819e",
 		},
 		{
 			name: "an empty dir has a digest.",
@@ -128,7 +128,7 @@ func (suite *DigestTestSuite) TestDirSha256() {
 				dirName:    "test1",
 				dirContent: []fileSystemEntry{},
 			},
-			want: "ab0ee213d0bc9b7f69411817874fdfe6550c640b5479e5111b90ccd566c1163b",
+			want: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
 		},
 		{
 			name: "a non-empty dir has a digest.",
@@ -142,7 +142,7 @@ func (suite *DigestTestSuite) TestDirSha256() {
 					},
 				},
 			},
-			want: "d32fbe18ef42d44c093f8c4e645cbe59ab0e8908462d2f94dac91a530064bd02",
+			want: "388ab80164bbd9d96f132b046b8d09354f68b79a3668da7b507625cd1230dddf",
 		},
 		{
 			name: "changing a file content changes the digest.",
@@ -156,7 +156,7 @@ func (suite *DigestTestSuite) TestDirSha256() {
 					},
 				},
 			},
-			want: "6e8a8c47e0cf60365ca7de56b6e04c671d970e5e54c7b318143741047694edaa",
+			want: "5b0e14a923d7239b0a23750a6bbfc837f71e684b8bdc2909d5ff6d90e59449c1",
 		},
 		{
 			name: "changing a file name changes the digest.",
@@ -170,10 +170,10 @@ func (suite *DigestTestSuite) TestDirSha256() {
 					},
 				},
 			},
-			want: "1fb9e9d620cd2e82a38c92603213ea13ca3b006bab75e71b48336d1e5d8b8901",
+			want: "c38fbc1a99dad628142d0b7e2e05901362623d2b81e316d2cf650b08e93e0cef",
 		},
 		{
-			name: "changing the dir name changes the digest.",
+			name: "changing the root dir name doesn't change the digest.",
 			args: args{
 				dirName: "test44",
 				dirContent: []fileSystemEntry{
@@ -184,7 +184,7 @@ func (suite *DigestTestSuite) TestDirSha256() {
 					},
 				},
 			},
-			want: "70f73a3ffa71818a39f8e16bd46f756a602a75f16dc4412c3cc90a15f5776d99",
+			want: "c38fbc1a99dad628142d0b7e2e05901362623d2b81e316d2cf650b08e93e0cef",
 		},
 		{
 			name: "a dir with a nested dir has a digest.",
@@ -205,7 +205,7 @@ func (suite *DigestTestSuite) TestDirSha256() {
 					},
 				},
 			},
-			want: "7624535c2de214d13227c9ed83a3cd1359a1b30da8369942c0741e214c40f7e3",
+			want: "5d3c17dae9e208bbb92ee04ff8342abf77cb0959764def4af3ccfe9a2109d4a7",
 		},
 		{
 			name: "a dir with a nested dir with a different name has a different digest.",
@@ -226,7 +226,7 @@ func (suite *DigestTestSuite) TestDirSha256() {
 					},
 				},
 			},
-			want: "865a17aa813c982c474fb61c9331c460b713636ce77f15e79834d3e98e10e47d",
+			want: "db40d79b3a15b17ee9fcc2f49aa73736e0073de6b5a35c459268bb9a31e55139",
 		},
 	} {
 		suite.Run(t.name, func() {
