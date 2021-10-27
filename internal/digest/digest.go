@@ -40,6 +40,7 @@ func DirSha256(dirPath string, verbose bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer digestsFile.Close()
 	err = prepareDirContentSha256(digestsFile, dirPath, tmpDir)
 	if err != nil {
 		return "", err
@@ -57,46 +58,54 @@ func prepareDirContentSha256(digestsFile *os.File, dirPath, tmpDir string) error
 	}
 
 	for _, f := range files {
+		nameSha256, err := addNameDigest(tmpDir, f.Name(), digestsFile)
+		if err != nil {
+			return err
+		}
+
 		pathed_entry := filepath.Join(dirPath, f.Name())
-
-		file, err := os.Create(filepath.Join(tmpDir, "name"))
-		if err != nil {
-			return err
-		}
-		if _, err := file.Write([]byte(f.Name())); err != nil {
-			return err
-		}
-
-		nameSha256, err := FileSha256(filepath.Join(tmpDir, "name"))
-		if err != nil {
-			return err
-		}
-		if _, err := digestsFile.Write([]byte(nameSha256)); err != nil {
-			return err
-		}
 
 		if f.IsDir() {
 			verboseLogs("dirname: %s -- dirname digest: %v", pathed_entry, nameSha256)
-
 			err := prepareDirContentSha256(digestsFile, pathed_entry, tmpDir)
 			if err != nil {
 				return err
 			}
 		} else {
 			verboseLogs("filename: %s -- filename digest: %s", pathed_entry, nameSha256)
-
 			fileContentSha256, err := FileSha256(pathed_entry)
 			if err != nil {
 				return err
 			}
 			verboseLogs("filename: %s -- content digest: %s", pathed_entry, fileContentSha256)
-
 			if _, err := digestsFile.Write([]byte(fileContentSha256)); err != nil {
 				return err
 			}
 		}
 	}
 	return nil
+}
+
+// addNameDigest calculates the sha256 digest of the filename and adds it to the digests file
+func addNameDigest(tmpDir string, filename string, digestsFile *os.File) (string, error) {
+	file, err := os.Create(filepath.Join(tmpDir, "name"))
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	if _, err := file.Write([]byte(filename)); err != nil {
+		return "", err
+	}
+
+	nameSha256, err := FileSha256(filepath.Join(tmpDir, "name"))
+	if err != nil {
+		return "", err
+	}
+	if _, err := digestsFile.Write([]byte(nameSha256)); err != nil {
+		return "", err
+	}
+	return nameSha256, nil
 }
 
 // FileSha256 returns a sha256 digest of a file.
