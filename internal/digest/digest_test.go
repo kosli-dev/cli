@@ -187,6 +187,7 @@ func (suite *DigestTestSuite) TestDirSha256() {
 			want: "c38fbc1a99dad628142d0b7e2e05901362623d2b81e316d2cf650b08e93e0cef",
 		},
 		{
+			// this test case is replicated in change for consistency
 			name: "a dir with a nested dir has a digest.",
 			args: args{
 				dirName: "test5",
