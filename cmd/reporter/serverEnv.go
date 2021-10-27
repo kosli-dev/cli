@@ -21,8 +21,9 @@ merkely report env server prod --api-token 1234 --owner exampleOrg --id prod-ser
 `
 
 type serverEnvOptions struct {
-	paths []string
-	id    string
+	paths   []string
+	id      string
+	verbose bool
 }
 
 func newServerEnvCmd(out io.Writer) *cobra.Command {
@@ -50,7 +51,7 @@ func newServerEnvCmd(out io.Writer) *cobra.Command {
 
 			url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.host, global.owner, envName)
 
-			artifacts, err := server.CreateServerArtifactsData(o.paths)
+			artifacts, err := server.CreateServerArtifactsData(o.paths, o.verbose)
 			if err != nil {
 				return err
 			}
@@ -68,6 +69,6 @@ func newServerEnvCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringSliceVarP(&o.paths, "paths", "p", []string{}, "the comma separated list of artifact directories.")
 	cmd.Flags().StringVarP(&o.id, "id", "i", "", "the unique identifier of the source infrastructure of the report (e.g. the K8S cluster/namespace name). If not set, it is defaulted to environment name.")
-
+	cmd.Flags().BoolVarP(&o.verbose, "verbose", "v", false, "print verbose output of directory digest calculation.")
 	return cmd
 }

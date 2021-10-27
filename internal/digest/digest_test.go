@@ -248,7 +248,8 @@ func (suite *DigestTestSuite) TestDirSha256() {
 				}
 			}
 
-			sha256, err := DirSha256(dirPath)
+			verbose := false
+			sha256, err := DirSha256(dirPath, verbose)
 			require.NoErrorf(suite.T(), err, "error creating digest for test dir %s", dirPath)
 
 			assert.Equal(suite.T(), t.want, sha256, fmt.Sprintf("TestDirSha256: %s , got: %v -- want: %v", t.name, sha256, t.want))
@@ -301,7 +302,8 @@ func (suite *DigestTestSuite) TestDirSha256Validation() {
 				suite.createFileWithContent(dirPath, "")
 			}
 
-			_, err := DirSha256(dirPath)
+			verbose := false
+			_, err := DirSha256(dirPath, verbose)
 			if t.errExpected {
 				require.Errorf(suite.T(), err, "TestDirSha256Validation: error was expected")
 			}

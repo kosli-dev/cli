@@ -15,11 +15,11 @@ type ServerData struct {
 }
 
 // CreateServerArtifactsData creates a list of ServerData for server artifacts at given paths
-func CreateServerArtifactsData(paths []string) ([]*ServerData, error) {
+func CreateServerArtifactsData(paths []string, verbose bool) ([]*ServerData, error) {
 	result := []*ServerData{}
 	for _, p := range paths {
 		digests := make(map[string]string)
-		sha256, err := digest.DirSha256(p)
+		sha256, err := digest.DirSha256(p, verbose)
 		if err != nil {
 			return []*ServerData{}, fmt.Errorf("Failed to get a digest of path %s with error: %v", p, err)
 		}

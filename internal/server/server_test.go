@@ -109,7 +109,8 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsData() {
 				}
 			}
 
-			serverData, err := CreateServerArtifactsData(paths)
+			verbose := false
+			serverData, err := CreateServerArtifactsData(paths, verbose)
 			require.NoErrorf(suite.T(), err, "error creating server artifact data: %v", err)
 
 			digestsList := []map[string]string{}
@@ -137,7 +138,8 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsDataInvalid() {
 
 	paths := []string{"a/b/c"}
 
-	_, err := CreateServerArtifactsData(paths)
+	verbose := false
+	_, err := CreateServerArtifactsData(paths, verbose)
 	require.Errorf(suite.T(), err, "error was expected")
 }
 
