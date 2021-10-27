@@ -28,3 +28,6 @@
    * - MERKELY_PATHS
      - no
      - the comma separated list of artifact directories. Defaults to :code:`[]`.
+   * - MERKELY_VERBOSE
+     - no
+     - print verbose output of directory digest calculation. Defaults to :code:`false`.
