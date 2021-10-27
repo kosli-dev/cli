@@ -14,6 +14,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/kubernetes/test/e2e/framework"
 	"sigs.k8s.io/kind/pkg/cluster"
 )
 
@@ -30,7 +31,7 @@ type KubeTestSuite struct {
 	clientset       *kubernetes.Clientset
 }
 
-// create a KIND cluster before the suite execution
+// create a KIND cluster and a tmp dir before the suite execution
 func (suite *KubeTestSuite) SetupSuite() {
 	suite.clusterName = "test"
 	suite.namespacesLabel = fmt.Sprintf("suite=%s", suite.clusterName)
@@ -45,9 +46,10 @@ func (suite *KubeTestSuite) SetupSuite() {
 	require.NoError(suite.T(), err, "exporting kubeconfig failed")
 	ctx := context.Background()
 	suite.clientset = suite.GetK8sClient(ctx)
+	framework.ExpectNoError(framework.WaitForAllNodesSchedulable(suite.clientset, framework.TestContext.NodeSchedulableTimeout))
 }
 
-// delete the KIND cluster after the suite execution
+// delete the KIND cluster and the tmp dir after the suite execution
 func (suite *KubeTestSuite) TearDownSuite() {
 	err := suite.provider.Delete(suite.clusterName, suite.kubeConfigPath)
 	require.NoError(suite.T(), err, "deleting KIND cluster failed")
