@@ -62,7 +62,7 @@ func newFingerprintCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.artifactType, "type", "t", "", "the type of the artifact to calculate its SHA256 fingerprint")
-	err := cobra.MarkFlagRequired(cmd.Flags(), "type")
+	err := RequireFlags(cmd, []string{"type"})
 	if err != nil {
 		log.Fatalf("failed to configure required flags: %v", err)
 	}

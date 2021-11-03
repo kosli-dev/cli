@@ -62,7 +62,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	cmd.PersistentFlags().StringVarP(&global.apiToken, "api-token", "a", "", "the merkely API token.")
 	cmd.PersistentFlags().StringVarP(&global.owner, "owner", "o", "", "the merkely organization.")
 	cmd.PersistentFlags().StringVarP(&global.host, "host", "H", "https://app.merkely.com", "the merkely endpoint.")
-	cmd.PersistentFlags().BoolVarP(&global.dryRun, "dry-run", "d", false, "whether to send the request to the endpoint or just log it in stdout.")
+	cmd.PersistentFlags().BoolVarP(&global.dryRun, "dry-run", "D", false, "whether to send the request to the endpoint or just log it in stdout.")
 	cmd.PersistentFlags().IntVarP(&global.maxAPIRetries, "max-api-retries", "r", maxAPIRetries, "how many times should API calls be retried when the API host is not reachable.")
 	cmd.PersistentFlags().StringVarP(&global.configFile, "config-file", "c", defaultConfigFilename, "[optional] the merkely config file path.")
 

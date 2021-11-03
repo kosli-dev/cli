@@ -126,6 +126,9 @@ func FileSha256(filepath string) (string, error) {
 	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
+// DockerImageSha256 returns a sha256 digest of a docker image. It requires
+// the docker deamon to be accessible.
+// The docker image must have been pushed into a registry to have a digest.
 func DockerImageSha256(imageName string) (string, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
@@ -135,6 +138,11 @@ func DockerImageSha256(imageName string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fingerprint := strings.Split(imageInspect.RepoDigests[0], "@sha256:")[1]
-	return fingerprint, nil
+	repoDigests := imageInspect.RepoDigests
+	if len(repoDigests) > 0 {
+		fingerprint := strings.Split(repoDigests[0], "@sha256:")[1]
+		return fingerprint, nil
+	} else {
+		return "", fmt.Errorf("failed to get a digest for the image, has it been pushed to a registry?")
+	}
 }

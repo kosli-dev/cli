@@ -22,6 +22,7 @@ func newReportCmd(out io.Writer) *cobra.Command {
 	// Add subcommands
 	cmd.AddCommand(
 		newEnvCmd(out),
+		newArtifactCmd(out),
 	)
 
 	return cmd

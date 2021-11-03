@@ -13,7 +13,6 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 		Use:   "create",
 		Short: createDesc,
 		Long:  createDesc,
-		// Args:  NoArgs,
 	}
 
 	// Add subcommands
