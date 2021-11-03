@@ -71,6 +71,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 
 		newVersionCmd(out),
 		newReportCmd(out),
+		newCreateCmd(out),
 
 		// Hidden documentation generator command: 'merkely docs'
 		newDocsCmd(out),
