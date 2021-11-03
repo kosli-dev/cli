@@ -1,6 +1,7 @@
 package digest
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -8,6 +9,9 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/docker/docker/client"
 )
 
 var verboseFlag bool
@@ -120,4 +124,17 @@ func FileSha256(filepath string) (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(hasher.Sum(nil)), nil
+}
+
+func DockerImageSha256(imageName string) (string, error) {
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return "", err
+	}
+	imageInspect, _, err := cli.ImageInspectWithRaw(context.Background(), imageName)
+	if err != nil {
+		return "", err
+	}
+	fingerprint := strings.Split(imageInspect.RepoDigests[0], "@sha256:")[1]
+	return fingerprint, nil
 }
