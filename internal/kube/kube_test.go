@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/kubernetes/test/e2e/framework"
+	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 	"sigs.k8s.io/kind/pkg/cluster"
 )
 
@@ -46,7 +47,8 @@ func (suite *KubeTestSuite) SetupSuite() {
 	require.NoError(suite.T(), err, "exporting kubeconfig failed")
 	ctx := context.Background()
 	suite.clientset = suite.GetK8sClient(ctx)
-	framework.ExpectNoError(framework.WaitForAllNodesSchedulable(suite.clientset, framework.TestContext.NodeSchedulableTimeout))
+	err = framework.WaitForAllNodesSchedulable(suite.clientset, 100*time.Second)
+	require.NoError(suite.T(), err, "waiting for cluster nodes to become schedulable failed")
 }
 
 // delete the KIND cluster and the tmp dir after the suite execution
@@ -76,8 +78,9 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 		digests   map[string]string
 	}
 	type args struct {
-		namespaces []string
-		pods       map[string][]*corev1.Pod
+		namespaces        []string
+		excludeNamespaces []string
+		pods              map[string][]*corev1.Pod
 	}
 	for _, t := range []struct {
 		name string
@@ -87,37 +90,62 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 		{
 			name: "an empty namespace has nothing to report.",
 			args: args{
+				namespaces: []string{"empty-ns"},
+			},
+			want: []*comparablePodData{},
+		},
+		{
+			name: "a namespace with one pod reports one pod data.",
+			args: args{
 				namespaces: []string{"ns1"},
 				pods: map[string][]*corev1.Pod{
-					"ns1": {suite.GetPodPayload("pod1", []string{"nginx"})},
+					"ns1": {suite.GetPodPayload("pod1", []string{"nginx:1.21.3"})},
 				},
 			},
 			want: []*comparablePodData{
-				// {
-				// 	podName:   "",
-				// 	namespace: "ns1",
-				// 	digests: map[string]string{
-				// 		"": "",
-				// 	},
-				// },
+				{
+					podName:   "pod1",
+					namespace: "ns1",
+					digests: map[string]string{
+						"docker.io/library/nginx:1.21.3": "644a70516a26004c97d0d85c7fe1d0c3a67ea8ab7ddf4aff193d9f301670cf36",
+					},
+				},
+			},
+		},
+		{
+			name: "excluding a namespace works.",
+			args: args{
+				namespaces:        []string{"ns2", "ns3"},
+				excludeNamespaces: []string{"ns3", "default", "local-path-storage", "ns1", "kube-system", "empty-ns", "kube-node-lease", "kube-public"},
+				pods: map[string][]*corev1.Pod{
+					"ns2": {suite.GetPodPayload("nginx1", []string{"nginx:1.21.3"})},
+					"ns3": {suite.GetPodPayload("nginx2", []string{"nginx:1.21.0"})},
+				},
+			},
+			want: []*comparablePodData{
+				{
+					podName:   "nginx1",
+					namespace: "ns2",
+					digests: map[string]string{
+						"docker.io/library/nginx:1.21.3": "644a70516a26004c97d0d85c7fe1d0c3a67ea8ab7ddf4aff193d9f301670cf36",
+					},
+				},
 			},
 		},
 	} {
 		suite.Run(t.name, func() {
 			// create namespaces
 			for _, ns := range t.args.namespaces {
-				fmt.Printf("creating ns %s \n", ns)
 				suite.CreateNamespace(ns)
 			}
 			// create pods
 			for ns, pods := range t.args.pods {
 				for _, pod := range pods {
-					fmt.Printf("creating pod %s \n", pod.Name)
 					suite.CreatePod(ns, pod)
 				}
 			}
 			// Get pods data
-			podsData, err := GetPodsData(t.args.namespaces, []string{}, suite.clientset)
+			podsData, err := GetPodsData(t.args.namespaces, t.args.excludeNamespaces, suite.clientset)
 			require.NoErrorf(suite.T(), err, "error getting pods data for test %s", t.name)
 			actual := []*comparablePodData{}
 			for _, pd := range podsData {
@@ -127,7 +155,6 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 					digests:   pd.Digests,
 				})
 			}
-			fmt.Printf("actual %v \n", actual)
 			require.Equal(suite.T(), t.want, actual, fmt.Sprintf("want: %v -- got: %v", t.want, actual))
 
 		})
@@ -189,4 +216,6 @@ func (suite *KubeTestSuite) CreatePod(namespace string, pod *corev1.Pod) {
 	ctx := context.Background()
 	_, err := suite.clientset.CoreV1().Pods(namespace).Create(ctx, pod, metav1.CreateOptions{})
 	require.NoErrorf(suite.T(), err, "error creating pod %s", pod.Name)
+	err = e2epod.WaitForPodNameRunningInNamespace(suite.clientset, pod.Name, namespace)
+	require.NoErrorf(suite.T(), err, "error waiting for pod %s to be running in namespace %s", pod.Name, namespace)
 }
