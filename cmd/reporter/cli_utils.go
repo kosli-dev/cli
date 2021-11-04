@@ -1,11 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"reflect"
 
 	"github.com/merkely-development/reporter/internal/digest"
+	"github.com/merkely-development/reporter/internal/utils"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -165,6 +167,27 @@ func GetSha256Digest(artifactType, name string) (string, error) {
 	}
 
 	return fingerprint, err
+}
+
+// LoadUserData reads a user data file and validates that it contains JSON
+func LoadUserData(filepath string) (map[string]interface{}, error) {
+	var err error
+	result := make(map[string]interface{})
+	content := `{}`
+	if filepath != "" {
+		content, err = utils.LoadFileContent(filepath)
+		if err != nil {
+			return result, err
+		}
+		if !utils.IsJSON(content) {
+			return result, fmt.Errorf("%s does not contain a valid JSON", filepath)
+		}
+	}
+	err = json.Unmarshal([]byte(content), &result)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
 }
 
 func handleError(err error) {

@@ -70,7 +70,7 @@ func newServerEnvCmd(out io.Writer) *cobra.Command {
 			js, _ := json.MarshalIndent(requestBody, "", "    ")
 
 			return requests.SendPayload(js, url, global.ApiToken,
-				global.MaxAPIRetries, global.DryRun)
+				global.MaxAPIRetries, global.DryRun, "PUT")
 		},
 	}
 

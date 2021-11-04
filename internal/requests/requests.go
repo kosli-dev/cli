@@ -47,10 +47,10 @@ func getRetryableHttpClient(maxAPIRetries int) *http.Client {
 	return client
 }
 
-// doPut sends an HTTP Post request to a URL and returns the response body and status code
-func doPut(jsonBody []byte, url string, apiToken string, maxAPIRetries int) (*HTTPResponse, error) {
+// doRequest sends an HTTP request to a URL and returns the response body and status code
+func doRequest(jsonBody []byte, url string, apiToken string, maxAPIRetries int, method string) (*HTTPResponse, error) {
 	client := getRetryableHttpClient(maxAPIRetries)
-	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return &HTTPResponse{}, fmt.Errorf("failed to create post request to %s : %v", url, err)
 	}
@@ -74,19 +74,19 @@ func doPut(jsonBody []byte, url string, apiToken string, maxAPIRetries int) (*HT
 }
 
 // SendPayload sends a JSON payload to a URL
-func SendPayload(payload []byte, url, token string, maxRetries int, dryRun bool) error {
+func SendPayload(payload []byte, url, token string, maxRetries int, dryRun bool, method string) error {
 	if dryRun {
 		fmt.Println("############### THIS IS A DRY-RUN  ###############")
 		fmt.Println(string(payload))
 	} else {
 		fmt.Println("****** Sending the payload to the API ******")
 		fmt.Println(string(payload))
-		resp, err := doPut(payload, url, token, maxRetries)
+		resp, err := doRequest(payload, url, token, maxRetries, method)
 		if err != nil {
 			return err
 		}
 		if resp.StatusCode != 201 && resp.StatusCode != 200 {
-			return fmt.Errorf("failed to send environment data: %v", resp.Body)
+			return fmt.Errorf("failed to send payload. Got status %d: %v", resp.StatusCode, resp.Body)
 		}
 	}
 	return nil

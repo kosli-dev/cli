@@ -5,36 +5,34 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"path/filepath"
 
 	"github.com/merkely-development/reporter/internal/digest"
 	"github.com/merkely-development/reporter/internal/requests"
 	"github.com/spf13/cobra"
 )
 
-type artifactOptions struct {
+type deploymentOptions struct {
 	artifactType string
 	inputSha256  string
 	pipelineName string
-	metadata     ArtifactPayload
+	userDataFile string
+	metadata     DeploymentPayload
 }
 
-type ArtifactPayload struct {
-	Sha256       string `json:"sha256"`
-	Filename     string `json:"filename"`
-	Description  string `json:"description"`
-	Git_commit   string `json:"git_commit"`
-	Is_compliant bool   `json:"is_compliant"`
-	Build_url    string `json:"build_url"`
-	Commit_url   string `json:"commit_url"`
+type DeploymentPayload struct {
+	Sha256      string                 `json:"artifact_sha256"`
+	Description string                 `json:"description"`
+	Environment string                 `json:"environment"`
+	UserData    map[string]interface{} `json:"user_data"`
+	BuildUrl    string                 `json:"build_url"`
 }
 
-func newArtifactCmd(out io.Writer) *cobra.Command {
-	o := new(artifactOptions)
+func newDeploymentCmd(out io.Writer) *cobra.Command {
+	o := new(deploymentOptions)
 	cmd := &cobra.Command{
-		Use:   "artifact ARTIFACT-NAME-OR-PATH",
-		Short: "Report/Log an artifact to Merkely. ",
-		Long:  artifactDesc(),
+		Use:   "deployment ARTIFACT-NAME-OR-PATH",
+		Short: "Report/Log a deployment to Merkely. ",
+		Long:  deploymentDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				return fmt.Errorf("only one argument (docker image name or file/dir path) is allowed")
@@ -60,28 +58,27 @@ func newArtifactCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			var err error
 			if o.inputSha256 != "" {
-				o.metadata.Filename = args[0]
 				o.metadata.Sha256 = o.inputSha256
 			} else {
-				var err error
 				o.metadata.Sha256, err = GetSha256Digest(o.artifactType, args[0])
 				if err != nil {
 					return err
 				}
-				if o.artifactType == "dir" || o.artifactType == "file" {
-					o.metadata.Filename = filepath.Base(args[0])
-				} else {
-					o.metadata.Filename = args[0]
-				}
 			}
 
-			url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/", global.Host, global.Owner, o.pipelineName)
+			o.metadata.UserData, err = LoadUserData(o.userDataFile)
+			if err != nil {
+				return err
+			}
+
+			url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/", global.Host, global.Owner, o.pipelineName)
 
 			js, _ := json.MarshalIndent(o.metadata, "", "    ")
 
 			return requests.SendPayload(js, url, global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, "PUT")
+				global.MaxAPIRetries, global.DryRun, "POST")
 		},
 	}
 
@@ -89,13 +86,12 @@ func newArtifactCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.artifactType, "type", "t", "", "the type of the artifact to calculate its SHA256 fingerprint")
 	cmd.Flags().StringVarP(&o.inputSha256, "sha256", "s", "", "the SHA256 fingerprint for the artifact. Only required if you don't specify --type")
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", "the Merkely pipeline name")
+	cmd.Flags().StringVarP(&o.metadata.Environment, "environment", "e", "", "the environment name")
 	cmd.Flags().StringVarP(&o.metadata.Description, "description", "d", "", "[optional] the artifact description")
-	cmd.Flags().StringVarP(&o.metadata.Git_commit, "git-commit", "g", DefaultValue(ci, "git-commit"), "the git commit from which the artifact was created")
-	cmd.Flags().StringVarP(&o.metadata.Build_url, "build-url", "b", DefaultValue(ci, "build-url"), "the url of CI pipeline that built the artifact")
-	cmd.Flags().StringVarP(&o.metadata.Commit_url, "commit-url", "u", DefaultValue(ci, "commit-url"), "the url for the git commit that created the artifact")
-	cmd.Flags().BoolVarP(&o.metadata.Is_compliant, "compliant", "C", true, "whether the artifact is compliant or not")
+	cmd.Flags().StringVarP(&o.metadata.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), "the url of CI pipeline that built the artifact")
+	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", "the path to a JSON file containing additional data you would like to attach to this deployment")
 
-	err := RequireFlags(cmd, []string{"pipeline", "git-commit", "build-url", "commit-url"})
+	err := RequireFlags(cmd, []string{"pipeline", "build-url", "environment"})
 	if err != nil {
 		log.Fatalf("failed to configure required flags: %v", err)
 	}
@@ -103,10 +99,10 @@ func newArtifactCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func artifactDesc() string {
+func deploymentDesc() string {
 	return `
-   Report an artifact to a pipeline in Merkely. 
+   Report a deployment of an artifact to an environment in Merkely. 
    The artifact SHA256 fingerprint is calculated and reported 
    or,alternatively, can be provided directly. 
-   ` + GetCIDefaultsTemplates(supportedCIs, []string{"git-commit", "build-url", "commit-url"})
+   ` + GetCIDefaultsTemplates(supportedCIs, []string{"build-url"})
 }

@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/docker/docker/client"
@@ -145,4 +146,17 @@ func DockerImageSha256(imageName string) (string, error) {
 	} else {
 		return "", fmt.Errorf("failed to get a digest for the image, has it been pushed to a registry?")
 	}
+}
+
+// ValidateDigest checks if a digest matches the sha256 regex
+func ValidateDigest(shaToCheck string) error {
+	validSha256regex := "^([a-f0-9]{64})$"
+	r, err := regexp.Compile(validSha256regex)
+	if err != nil {
+		return fmt.Errorf("failed to validate the provided SHA256 digest")
+	}
+	if !r.MatchString(shaToCheck) {
+		return fmt.Errorf("%s is not a valid SHA256 digest. It should the match %v", shaToCheck, validSha256regex)
+	}
+	return nil
 }
