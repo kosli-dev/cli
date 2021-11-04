@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"unicode"
 
 	"github.com/merkely-development/reporter/internal/digest"
 	"github.com/merkely-development/reporter/internal/utils"
@@ -129,13 +130,30 @@ func RequireGlobalFlags(global *GlobalOpts, fields []string) error {
 		for i := 0; i < v.NumField(); i++ {
 			if typeOfGlobal.Field(i).Name == field {
 				if v.Field(i).Interface() == "" {
-					return fmt.Errorf("%s is not set", field)
+					return fmt.Errorf("%s is not set", GetFlagFromVarName(field))
 				}
 			}
 		}
 	}
 
 	return nil
+}
+
+// GetFlagFromVarName returns a POSIX cmd flag from a camelCase variable name
+func GetFlagFromVarName(varName string) string {
+	result := "--"
+	for pos, char := range varName {
+		if pos == 0 {
+			result += string(unicode.ToLower(char))
+			continue
+		}
+		if unicode.IsLetter(char) && unicode.IsUpper(char) {
+			result += fmt.Sprintf("-%c", unicode.ToLower(char))
+		} else {
+			result += string(char)
+		}
+	}
+	return result
 }
 
 // NoArgs returns an error if any args are included.
