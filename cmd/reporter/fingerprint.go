@@ -5,7 +5,6 @@ import (
 	"io"
 	"log"
 
-	"github.com/merkely-development/reporter/internal/digest"
 	"github.com/spf13/cobra"
 )
 
@@ -34,24 +33,11 @@ func newFingerprintCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var err error
-			var fingerprint string
-			switch o.artifactType {
-			case "file":
-				fingerprint, err = digest.FileSha256(args[0])
-			case "dir":
-				fingerprint, err = digest.DirSha256(args[0], false)
-			case "docker":
-				fingerprint, err = digest.DockerImageSha256(args[0])
-			default:
-				return fmt.Errorf("%s is not a supported artifact type", o.artifactType)
-			}
-
+			fingerprint, err := GetSha256Digest(o.artifactType, args[0])
 			if err != nil {
 				return err
 			}
 			fmt.Print(fingerprint)
-
 			return nil
 		},
 	}

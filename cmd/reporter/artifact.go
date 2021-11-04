@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/merkely-development/reporter/internal/digest"
 	"github.com/merkely-development/reporter/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -71,21 +70,14 @@ func newArtifactCmd(out io.Writer) *cobra.Command {
 				o.metadata.Sha256 = o.inputSha256
 			} else {
 				var err error
-				switch o.artifactType {
-				case "dir":
-					o.metadata.Filename = filepath.Base(args[0])
-					o.metadata.Sha256, err = digest.DirSha256(args[0], false)
-				case "file":
-					o.metadata.Filename = filepath.Base(args[0])
-					o.metadata.Sha256, err = digest.FileSha256(args[0])
-				case "docker":
-					o.metadata.Filename = args[0]
-					o.metadata.Sha256, err = digest.DockerImageSha256(args[0])
-				default:
-					return fmt.Errorf("%s is not a supported artifact type", o.artifactType)
-				}
+				o.metadata.Sha256, err = GetSha256Digest(o.artifactType, args[0])
 				if err != nil {
 					return err
+				}
+				if o.artifactType == "dir" || o.artifactType == "file" {
+					o.metadata.Filename = filepath.Base(args[0])
+				} else {
+					o.metadata.Filename = args[0]
 				}
 			}
 

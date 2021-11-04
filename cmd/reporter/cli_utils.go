@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/merkely-development/reporter/internal/digest"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -87,6 +88,25 @@ func NoArgs(cmd *cobra.Command, args []string) error {
 		)
 	}
 	return nil
+}
+
+// GetSha256Digest calculates the sha256 digest of an artifact.
+// Supported artifact types are: dir, file, docker
+func GetSha256Digest(artifactType, name string) (string, error) {
+	var err error
+	var fingerprint string
+	switch artifactType {
+	case "file":
+		fingerprint, err = digest.FileSha256(name)
+	case "dir":
+		fingerprint, err = digest.DirSha256(name, false)
+	case "docker":
+		fingerprint, err = digest.DockerImageSha256(name)
+	default:
+		return "", fmt.Errorf("%s is not a supported artifact type", artifactType)
+	}
+
+	return fingerprint, err
 }
 
 func handleError(err error) {
