@@ -50,7 +50,7 @@ func newFingerprintCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println(fingerprint)
+			fmt.Print(fingerprint)
 
 			return nil
 		},

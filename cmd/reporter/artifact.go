@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"path/filepath"
+	"regexp"
 
 	"github.com/merkely-development/reporter/internal/digest"
 	"github.com/merkely-development/reporter/internal/requests"
@@ -50,6 +51,17 @@ func newArtifactCmd(out io.Writer) *cobra.Command {
 
 			if o.artifactType == "" && o.inputSha256 == "" {
 				return fmt.Errorf("either --type or --sha256 must be specified")
+			}
+
+			if o.inputSha256 != "" {
+				validSha256regex := "^([a-f0-9]{64})$"
+				r, err := regexp.Compile(validSha256regex)
+				if err != nil {
+					return fmt.Errorf("failed to validate the provided SHA256 digest")
+				}
+				if !r.MatchString(o.inputSha256) {
+					return fmt.Errorf("%s is not a valid SHA256 digest. It should the match %v", o.inputSha256, validSha256regex)
+				}
 			}
 			return nil
 		},
