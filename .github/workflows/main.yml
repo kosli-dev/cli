@@ -112,7 +112,7 @@ jobs:
       env:
         KUBECONFIG: ${{ env.KUBECONFIG }}
       run:
-        reporter report env k8s production --namespace production --kubeconfig=${KUBECONFIG} --dry-run
+        reporter report env k8s production --namespace production --kubeconfig=${KUBECONFIG} --owner test --api-token topSecret --dry-run
 
     - name: Slack Notification on Failure
       if: ${{ failure() }}
