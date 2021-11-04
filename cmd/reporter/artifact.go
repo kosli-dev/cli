@@ -12,11 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const artifactDesc = `
-Report an artifact to a pipeline in Merkely. 
-The artifact SHA256 fingerprint is calculated and reported. 
-`
-
 type artifactOptions struct {
 	artifactType string
 	inputSha256  string
@@ -37,9 +32,9 @@ type ArtifactPayload struct {
 func newArtifactCmd(out io.Writer) *cobra.Command {
 	o := new(artifactOptions)
 	cmd := &cobra.Command{
-		Use:   "artifact",
+		Use:   "artifact ARTIFACT-NAME-OR-PATH",
 		Short: "Report/Log an artifact to Merkely. ",
-		Long:  artifactDesc,
+		Long:  artifactDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				return fmt.Errorf("only one argument (docker image name or file/dir path) is allowed")
@@ -111,4 +106,12 @@ func newArtifactCmd(out io.Writer) *cobra.Command {
 	}
 
 	return cmd
+}
+
+func artifactDesc() string {
+	return `
+   Report an artifact to a pipeline in Merkely. 
+   The artifact SHA256 fingerprint is calculated and reported 
+   or,alternatively, can be provided directly. 
+   ` + GetCIDefaultsTemplates(supportedCIs, []string{"git-commit", "build-url", "commit-url"})
 }

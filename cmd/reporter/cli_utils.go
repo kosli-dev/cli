@@ -14,6 +14,24 @@ const bitbucket = "Bitbucket"
 const github = "Github"
 const unknown = "Unknown"
 
+// supportedCIs the set of CI tools that are supported for defaulting
+var supportedCIs = []string{bitbucket, github}
+
+// ciTemplates a map of merkely flags and corresponding default templates in supported CI tools
+var ciTemplates = map[string]map[string]string{
+	github: {
+		"git-commit": "${GITHUB_SHA}",
+		"commit-url": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}",
+		"build-url":  "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}",
+	},
+	bitbucket: {
+		"git-commit": "${BITBUCKET_COMMIT}",
+		"commit-url": "https://bitbucket.org/${BITBUCKET_WORKSPACE}/${BITBUCKET_REPO_SLUG}/commits/${BITBUCKET_COMMIT}",
+		"build-url":  "https://bitbucket.org/${BITBUCKET_WORKSPACE}/${BITBUCKET_REPO_SLUG}/addon/pipelines/home#!/results/${BITBUCKET_BUILD_NUMBER}",
+	},
+}
+
+// TODO: derive actual values from templates above
 // githubDefaults a map of merkely flags and corresponding default values in Github actions
 var githubDefaults = map[string]string{
 	"git-commit": os.Getenv("GITHUB_SHA"),
@@ -38,6 +56,27 @@ var bitbucketDefaults = map[string]string{
 		os.Getenv("BITBUCKET_WORKSPACE"),
 		os.Getenv("BITBUCKET_REPO_SLUG"),
 		os.Getenv("BITBUCKET_BUILD_NUMBER")),
+}
+
+// GetCIDefaultsTemplates returns the templates used in a given CI
+// to calculate the input list of keys
+func GetCIDefaultsTemplates(ciTools, keys []string) string {
+	result := `The following flags are defaulted as follows in the CI list below:
+
+   `
+	for _, ci := range ciTools {
+		result += fmt.Sprintf(`
+	| %s 
+	|---------------------------------------------------------------------------`, ci)
+		for _, key := range keys {
+			result += fmt.Sprintf(`
+	| %s : %s`, key, ciTemplates[ci][key])
+
+		}
+		result += `
+	|---------------------------------------------------------------------------`
+	}
+	return result
 }
 
 // WhichCI detects which CI tool we are in based on env variables
