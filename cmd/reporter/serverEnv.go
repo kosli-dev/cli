@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 
 	"github.com/merkely-development/reporter/internal/requests"
 	"github.com/merkely-development/reporter/internal/server"
@@ -34,13 +35,19 @@ func newServerEnvCmd(out io.Writer) *cobra.Command {
 		Long:    serverEnvDesc,
 		Aliases: []string{"directories"},
 		Example: serverEnvExample,
-		Args: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				return fmt.Errorf("only environment name argument is allowed")
 			}
 			if len(args) == 0 || args[0] == "" {
 				return fmt.Errorf("environment name is required")
 			}
+
+			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			if err != nil {
+				return err
+			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -49,7 +56,7 @@ func newServerEnvCmd(out io.Writer) *cobra.Command {
 				o.id = envName
 			}
 
-			url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.host, global.owner, envName)
+			url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
 
 			artifacts, err := server.CreateServerArtifactsData(o.paths, o.verbose)
 			if err != nil {
@@ -62,13 +69,19 @@ func newServerEnvCmd(out io.Writer) *cobra.Command {
 			}
 			js, _ := json.MarshalIndent(requestBody, "", "    ")
 
-			return requests.SendPayload(js, url, global.apiToken,
-				global.maxAPIRetries, global.dryRun)
+			return requests.SendPayload(js, url, global.ApiToken,
+				global.MaxAPIRetries, global.DryRun)
 		},
 	}
 
 	cmd.Flags().StringSliceVarP(&o.paths, "paths", "p", []string{}, "the comma separated list of artifact directories.")
 	cmd.Flags().StringVarP(&o.id, "id", "i", "", "the unique identifier of the source infrastructure of the report (e.g. the K8S cluster/namespace name). If not set, it is defaulted to environment name.")
 	cmd.Flags().BoolVarP(&o.verbose, "verbose", "v", false, "print verbose output of directory digest calculation.")
+
+	err := RequireFlags(cmd, []string{"paths"})
+	if err != nil {
+		log.Fatalf("failed to configure required flags: %v", err)
+	}
+
 	return cmd
 }

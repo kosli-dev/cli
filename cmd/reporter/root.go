@@ -35,19 +35,19 @@ const (
 	envPrefix = "MERKELY"
 )
 
-var global *globalOpts
+var global *GlobalOpts
 
-type globalOpts struct {
-	apiToken      string
-	owner         string
-	host          string
-	dryRun        bool
-	maxAPIRetries int
-	configFile    string
+type GlobalOpts struct {
+	ApiToken      string
+	Owner         string
+	Host          string
+	DryRun        bool
+	MaxAPIRetries int
+	ConfigFile    string
 }
 
 func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
-	global = new(globalOpts)
+	global = new(GlobalOpts)
 	cmd := &cobra.Command{
 		Use:              "merkely",
 		Short:            "The Merkely evidence reporting CLI.",
@@ -59,12 +59,12 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 			return initializeConfig(cmd)
 		},
 	}
-	cmd.PersistentFlags().StringVarP(&global.apiToken, "api-token", "a", "", "the merkely API token.")
-	cmd.PersistentFlags().StringVarP(&global.owner, "owner", "o", "", "the merkely organization.")
-	cmd.PersistentFlags().StringVarP(&global.host, "host", "H", "https://app.merkely.com", "the merkely endpoint.")
-	cmd.PersistentFlags().BoolVarP(&global.dryRun, "dry-run", "D", false, "whether to send the request to the endpoint or just log it in stdout.")
-	cmd.PersistentFlags().IntVarP(&global.maxAPIRetries, "max-api-retries", "r", maxAPIRetries, "how many times should API calls be retried when the API host is not reachable.")
-	cmd.PersistentFlags().StringVarP(&global.configFile, "config-file", "c", defaultConfigFilename, "[optional] the merkely config file path.")
+	cmd.PersistentFlags().StringVarP(&global.ApiToken, "api-token", "a", "", "the merkely API token.")
+	cmd.PersistentFlags().StringVarP(&global.Owner, "owner", "o", "", "the merkely organization.")
+	cmd.PersistentFlags().StringVarP(&global.Host, "host", "H", "https://app.merkely.com", "the merkely endpoint.")
+	cmd.PersistentFlags().BoolVarP(&global.DryRun, "dry-run", "D", false, "whether to send the request to the endpoint or just log it in stdout.")
+	cmd.PersistentFlags().IntVarP(&global.MaxAPIRetries, "max-api-retries", "r", maxAPIRetries, "how many times should API calls be retried when the API host is not reachable.")
+	cmd.PersistentFlags().StringVarP(&global.ConfigFile, "config-file", "c", defaultConfigFilename, "[optional] the merkely config file path.")
 
 	// Add subcommands
 	cmd.AddCommand(
@@ -85,7 +85,7 @@ func initializeConfig(cmd *cobra.Command) error {
 	v := viper.New()
 
 	// If provided, extract the custom config file dir and name
-	dir, file := filepath.Split(global.configFile)
+	dir, file := filepath.Split(global.ConfigFile)
 	file = strings.TrimSuffix(file, filepath.Ext(file))
 
 	// Set the base name of the config file, without the file extension.

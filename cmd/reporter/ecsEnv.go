@@ -33,13 +33,19 @@ func newEcsEnvCmd(out io.Writer) *cobra.Command {
 		Short:   "Report images data from AWS ECS cluster to Merkely.",
 		Long:    ecsEnvDesc,
 		Example: ecsEnvExample,
-		Args: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				return fmt.Errorf("only environment name argument is allowed")
 			}
 			if len(args) == 0 || args[0] == "" {
 				return fmt.Errorf("environment name is required")
 			}
+
+			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			if err != nil {
+				return err
+			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -54,7 +60,7 @@ func newEcsEnvCmd(out io.Writer) *cobra.Command {
 					o.id = envName
 				}
 			}
-			url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.host, global.owner, envName)
+			url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
 			client, err := aws.NewAWSClient()
 			if err != nil {
 				return err
@@ -71,8 +77,8 @@ func newEcsEnvCmd(out io.Writer) *cobra.Command {
 			}
 			js, _ := json.MarshalIndent(requestBody, "", "    ")
 
-			return requests.SendPayload(js, url, global.apiToken,
-				global.maxAPIRetries, global.dryRun)
+			return requests.SendPayload(js, url, global.ApiToken,
+				global.MaxAPIRetries, global.DryRun)
 		},
 	}
 

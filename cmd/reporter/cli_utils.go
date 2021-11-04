@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"reflect"
 
 	"github.com/merkely-development/reporter/internal/digest"
 	"github.com/pkg/errors"
@@ -75,6 +76,24 @@ func RequireFlags(cmd *cobra.Command, flagNames []string) error {
 			}
 		}
 	}
+	return nil
+}
+
+// RequireGlobalFlags validates that a set of global fields have been provided a value
+func RequireGlobalFlags(global *GlobalOpts, fields []string) error {
+	v := reflect.ValueOf(*global)
+	typeOfGlobal := v.Type()
+
+	for _, field := range fields {
+		for i := 0; i < v.NumField(); i++ {
+			if typeOfGlobal.Field(i).Name == field {
+				if v.Field(i).Interface() == "" {
+					return fmt.Errorf("%s is not set", field)
+				}
+			}
+		}
+	}
+
 	return nil
 }
 

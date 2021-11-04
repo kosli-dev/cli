@@ -23,7 +23,7 @@ func newFingerprintCmd(out io.Writer) *cobra.Command {
 		Use:   "fingerprint",
 		Short: "Print the SHA256 fingerprint of an artifact.",
 		Long:  fingerprintDesc,
-		Args: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				return fmt.Errorf("only one argument (docker image name or file/dir path) is allowed")
 			}

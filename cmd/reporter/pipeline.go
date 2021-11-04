@@ -48,13 +48,19 @@ func newPipelineCmd(out io.Writer) *cobra.Command {
 		Short:   "Create a Merkely pipeline",
 		Long:    pipelineDesc,
 		Example: pipelineExample,
-		Args: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				return fmt.Errorf("only pipefile path argument is allowed")
 			}
 			if len(args) == 0 || args[0] == "" {
 				return fmt.Errorf("pipefile path is required")
 			}
+
+			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			if err != nil {
+				return err
+			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -64,12 +70,12 @@ func newPipelineCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 			owner := pipe.Owner
-			url := fmt.Sprintf("%s/api/v1/projects/%s/", global.host, owner)
+			url := fmt.Sprintf("%s/api/v1/projects/%s/", global.Host, owner)
 
 			js, _ := json.MarshalIndent(pipe, "", "    ")
 
-			return requests.SendPayload(js, url, global.apiToken,
-				global.maxAPIRetries, global.dryRun)
+			return requests.SendPayload(js, url, global.ApiToken,
+				global.MaxAPIRetries, global.DryRun)
 		},
 	}
 

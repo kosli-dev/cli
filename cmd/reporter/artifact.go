@@ -40,7 +40,7 @@ func newArtifactCmd(out io.Writer) *cobra.Command {
 		Use:   "artifact",
 		Short: "Report/Log an artifact to Merkely. ",
 		Long:  artifactDesc,
-		Args: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				return fmt.Errorf("only one argument (docker image name or file/dir path) is allowed")
 			}
@@ -50,6 +50,11 @@ func newArtifactCmd(out io.Writer) *cobra.Command {
 
 			if o.artifactType == "" && o.inputSha256 == "" {
 				return fmt.Errorf("either --type or --sha256 must be specified")
+			}
+
+			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			if err != nil {
+				return err
 			}
 
 			if o.inputSha256 != "" {
@@ -81,12 +86,12 @@ func newArtifactCmd(out io.Writer) *cobra.Command {
 				}
 			}
 
-			url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/", global.host, global.owner, o.pipelineName)
+			url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/", global.Host, global.Owner, o.pipelineName)
 
 			js, _ := json.MarshalIndent(o.metadata, "", "    ")
 
-			return requests.SendPayload(js, url, global.apiToken,
-				global.maxAPIRetries, global.dryRun)
+			return requests.SendPayload(js, url, global.ApiToken,
+				global.MaxAPIRetries, global.DryRun)
 		},
 	}
 

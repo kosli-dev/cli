@@ -62,13 +62,19 @@ func newK8sEnvCmd(out io.Writer) *cobra.Command {
 		Long:    k8sEnvDesc,
 		Aliases: []string{"kubernetes"},
 		Example: k8sEnvExample,
-		Args: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				return fmt.Errorf("only environment name argument is allowed")
 			}
 			if len(args) == 0 || args[0] == "" {
 				return fmt.Errorf("environment name is required")
 			}
+
+			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			if err != nil {
+				return err
+			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -79,7 +85,7 @@ func newK8sEnvCmd(out io.Writer) *cobra.Command {
 			if o.id == "" {
 				o.id = envName
 			}
-			url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.host, global.owner, envName)
+			url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
 			clientset, err := kube.NewK8sClientSet(o.kubeconfig)
 			if err != nil {
 				return err
@@ -96,8 +102,8 @@ func newK8sEnvCmd(out io.Writer) *cobra.Command {
 			}
 			js, _ := json.MarshalIndent(requestBody, "", "    ")
 
-			return requests.SendPayload(js, url, global.apiToken,
-				global.maxAPIRetries, global.dryRun)
+			return requests.SendPayload(js, url, global.ApiToken,
+				global.MaxAPIRetries, global.DryRun)
 		},
 	}
 
