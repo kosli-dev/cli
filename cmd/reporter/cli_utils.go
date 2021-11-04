@@ -15,6 +15,8 @@ import (
 
 const bitbucket = "Bitbucket"
 const github = "Github"
+
+// const teamcity = "Teamcity"
 const unknown = "Unknown"
 
 // supportedCIs the set of CI tools that are supported for defaulting
@@ -32,6 +34,11 @@ var ciTemplates = map[string]map[string]string{
 		"commit-url": "https://bitbucket.org/${BITBUCKET_WORKSPACE}/${BITBUCKET_REPO_SLUG}/commits/${BITBUCKET_COMMIT}",
 		"build-url":  "https://bitbucket.org/${BITBUCKET_WORKSPACE}/${BITBUCKET_REPO_SLUG}/addon/pipelines/home#!/results/${BITBUCKET_BUILD_NUMBER}",
 	},
+	// teamcity: {
+	// 	"git-commit": "${BITBUCKET_COMMIT}",
+	// 	"commit-url": "https://bitbucket.org/${BITBUCKET_WORKSPACE}/${BITBUCKET_REPO_SLUG}/commits/${BITBUCKET_COMMIT}",
+	// 	"build-url":  "https://bitbucket.org/${BITBUCKET_WORKSPACE}/${BITBUCKET_REPO_SLUG}/addon/pipelines/home#!/results/${BITBUCKET_BUILD_NUMBER}",
+	// },
 }
 
 // TODO: derive actual values from templates above
@@ -60,6 +67,13 @@ var bitbucketDefaults = map[string]string{
 		os.Getenv("BITBUCKET_REPO_SLUG"),
 		os.Getenv("BITBUCKET_BUILD_NUMBER")),
 }
+
+// teamcityDefaults a map of merkely flags and corresponding default values in TeamCity pipelines
+// var teamcityDefaults = map[string]string{
+// 	"git-commit": "",
+// 	"commit-url": "",
+// 	"build-url":  "",
+// }
 
 // GetCIDefaultsTemplates returns the templates used in a given CI
 // to calculate the input list of keys
@@ -91,6 +105,9 @@ func WhichCI() string {
 	} else {
 		return unknown
 	}
+	// } else if _, ok := os.LookupEnv("TEAMCITY_VERSION"); ok {
+	// 	return teamcity
+	// }
 }
 
 // DefaultValue looks up the default value of a given flag in a given CI tool
@@ -104,6 +121,10 @@ func DefaultValue(ci, flag string) string {
 		if v, ok := bitbucketDefaults[flag]; ok {
 			return v
 		}
+		// case teamcity:
+		// 	if v, ok := teamcityDefaults[flag]; ok {
+		// 		return v
+		// 	}
 	}
 	return ""
 }
