@@ -85,6 +85,22 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsData() {
 				{"directory-name3": "3025bae51416f4348cbeaf3d2f7394a21d637792c850fb63d6c5242f073bc9b3"},
 			},
 		},
+		{
+			name: "can get digest of a directory containing a file with a space in its name",
+			fileSystem: map[string][]fileSystemEntry{
+				"directory-name4": {
+					{
+						name:     "SPV STS Prod.pem",
+						content:  "content",
+						children: make(map[string]string),
+					},
+				},
+			},
+
+			want: []map[string]string{
+				{"directory-name4": "0cccd704109ea889ed18739f9e0ed610b7993512a23998a6491886a9de77845d"},
+			},
+		},
 	} {
 		suite.Run(t.name, func() {
 			paths := []string{}
