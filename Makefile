@@ -53,12 +53,12 @@ build: deps vet ## Build the package
 	@go build -o reporter -ldflags '$(LDFLAGS)' ./cmd/reporter/
 .PHONY: build
 
-test: deps vet ## Run unit tests
+test_unit: deps vet ## Run unit tests
 	@go test -v -cover -p=1 -coverprofile=coverage.out ./...
 	@go tool cover -func=coverage.out
 	@go tool cover -html=coverage.out -o coverage.html
 	@open coverage.html
-.PHONY: test
+.PHONY: test_unit
 
 docker: deps vet lint
 	@docker build -t reporter .
