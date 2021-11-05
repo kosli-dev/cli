@@ -1,9 +1,9 @@
-project_name: merkley-reporter
+project_name: merkely-reporter
 before:
   hooks:
   - go mod tidy
 builds:
-  - binary: merkley-reporter
+  - binary: merkely-reporter
     ldflags: 
       - -w -s
       - -X github.com/merkely-development/reporter/internal/version.version={{ .Tag }}
