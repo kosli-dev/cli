@@ -82,9 +82,9 @@ func newEcsEnvCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.cluster, "cluster", "C", "", "name of the ECS cluster")
-	cmd.Flags().StringVarP(&o.serviceName, "service-name", "s", "", "name of the ECS service")
-	cmd.Flags().StringVarP(&o.id, "id", "i", "", "the unique identifier of the source infrastructure of the report (e.g. the ECS cluster/service name)."+
+	cmd.Flags().StringVarP(&o.cluster, "cluster", "C", "", "The name of the ECS cluster.")
+	cmd.Flags().StringVarP(&o.serviceName, "service-name", "s", "", "The name of the ECS service.")
+	cmd.Flags().StringVarP(&o.id, "id", "i", "", "The unique identifier of the source infrastructure of the report (e.g. the ECS cluster/service name)."+
 		"If not set, it is defaulted based on the following order: --service-name, --cluster, environment name.")
 
 	return cmd

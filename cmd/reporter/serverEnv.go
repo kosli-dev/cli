@@ -74,9 +74,9 @@ func newServerEnvCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringSliceVarP(&o.paths, "paths", "p", []string{}, "the comma separated list of artifact directories.")
-	cmd.Flags().StringVarP(&o.id, "id", "i", "", "the unique identifier of the source infrastructure of the report (e.g. the K8S cluster/namespace name). If not set, it is defaulted to environment name.")
-	cmd.Flags().BoolVarP(&o.verbose, "verbose", "v", false, "print verbose output of directory digest calculation.")
+	cmd.Flags().StringSliceVarP(&o.paths, "paths", "p", []string{}, "The comma separated list of artifact directories.")
+	cmd.Flags().StringVarP(&o.id, "id", "i", "", "The unique identifier of the source infrastructure of the report (e.g. the K8S cluster/namespace name). If not set, it is defaulted to environment name.")
+	cmd.Flags().BoolVarP(&o.verbose, "verbose", "v", false, "Print verbose output of directory digest calculation.")
 
 	err := RequireFlags(cmd, []string{"paths"})
 	if err != nil {

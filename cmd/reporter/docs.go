@@ -38,8 +38,8 @@ func newDocsCmd(out io.Writer) *cobra.Command {
 	}
 
 	f := cmd.Flags()
-	f.StringVar(&o.dest, "dir", "./", "directory to which documentation is written")
-	f.BoolVar(&o.generateHeaders, "generate-headers", true, "generate standard headers for markdown files")
+	f.StringVar(&o.dest, "dir", "./", "The directory to which documentation is written.")
+	f.BoolVar(&o.generateHeaders, "generate-headers", true, "Generate standard headers for markdown files.")
 
 	return cmd
 }

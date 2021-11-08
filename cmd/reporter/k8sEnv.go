@@ -107,10 +107,10 @@ func newK8sEnvCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.kubeconfig, "kubeconfig", "k", defaultKubeConfigPath, "kubeconfig path for the target cluster")
-	cmd.Flags().StringSliceVarP(&o.namespaces, "namespace", "n", []string{}, "the comma separated list of namespaces regex patterns to report artifacts info from. Can't be used together with --exclude-namespace.")
-	cmd.Flags().StringSliceVarP(&o.excludeNamespaces, "exclude-namespace", "x", []string{}, "the comma separated list of namespaces regex patterns NOT to report artifacts info from. Can't be used together with --namespace.")
-	cmd.Flags().StringVarP(&o.id, "id", "i", "", "the unique identifier of the source infrastructure of the report (e.g. the K8S cluster/namespace name). If not set, it is defaulted to environment name.")
+	cmd.Flags().StringVarP(&o.kubeconfig, "kubeconfig", "k", defaultKubeConfigPath, "The kubeconfig path for the target cluster.")
+	cmd.Flags().StringSliceVarP(&o.namespaces, "namespace", "n", []string{}, "The comma separated list of namespaces regex patterns to report artifacts info from. Can't be used together with --exclude-namespace.")
+	cmd.Flags().StringSliceVarP(&o.excludeNamespaces, "exclude-namespace", "x", []string{}, "The comma separated list of namespaces regex patterns NOT to report artifacts info from. Can't be used together with --namespace.")
+	cmd.Flags().StringVarP(&o.id, "id", "i", "", "The unique identifier of the source infrastructure of the report (e.g. the K8S cluster/namespace name). If not set, it is defaulted to environment name.")
 
 	return cmd
 }

@@ -21,7 +21,7 @@ See the [docs](docs/merkely.md)
 
 ## Testing the code
 
-`make test`
+`make test_unit`
 
 ## Building the docker image
 

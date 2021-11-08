@@ -16,7 +16,7 @@ type deploymentOptions struct {
 	inputSha256  string
 	pipelineName string
 	userDataFile string
-	metadata     DeploymentPayload
+	payload      DeploymentPayload
 }
 
 type DeploymentPayload struct {
@@ -60,22 +60,22 @@ func newDeploymentCmd(out io.Writer) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var err error
 			if o.inputSha256 != "" {
-				o.metadata.Sha256 = o.inputSha256
+				o.payload.Sha256 = o.inputSha256
 			} else {
-				o.metadata.Sha256, err = GetSha256Digest(o.artifactType, args[0])
+				o.payload.Sha256, err = GetSha256Digest(o.artifactType, args[0])
 				if err != nil {
 					return err
 				}
 			}
 
-			o.metadata.UserData, err = LoadUserData(o.userDataFile)
+			o.payload.UserData, err = LoadUserData(o.userDataFile)
 			if err != nil {
 				return err
 			}
 
 			url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/", global.Host, global.Owner, o.pipelineName)
 
-			js, _ := json.MarshalIndent(o.metadata, "", "    ")
+			js, _ := json.MarshalIndent(o.payload, "", "    ")
 
 			return requests.SendPayload(js, url, global.ApiToken,
 				global.MaxAPIRetries, global.DryRun, "POST")
@@ -83,13 +83,13 @@ func newDeploymentCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVarP(&o.artifactType, "type", "t", "", "the type of the artifact to calculate its SHA256 fingerprint")
-	cmd.Flags().StringVarP(&o.inputSha256, "sha256", "s", "", "the SHA256 fingerprint for the artifact. Only required if you don't specify --type")
-	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", "the Merkely pipeline name")
-	cmd.Flags().StringVarP(&o.metadata.Environment, "environment", "e", "", "the environment name")
-	cmd.Flags().StringVarP(&o.metadata.Description, "description", "d", "", "[optional] the artifact description")
-	cmd.Flags().StringVarP(&o.metadata.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), "the url of CI pipeline that built the artifact")
-	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", "the path to a JSON file containing additional data you would like to attach to this deployment")
+	cmd.Flags().StringVarP(&o.artifactType, "type", "t", "", "The type of the artifact. Options are [dir, file, docker].")
+	cmd.Flags().StringVarP(&o.inputSha256, "sha256", "s", "", "The SHA256 fingerprint for the artifact. Only required if you don't specify --type.")
+	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", "The Merkely pipeline name.")
+	cmd.Flags().StringVarP(&o.payload.Environment, "environment", "e", "", "The environment name.")
+	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", "[optional] The artifact description.")
+	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), "The url of CI pipeline that built the artifact.")
+	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", "The path to a JSON file containing additional data you would like to attach to this deployment.")
 
 	err := RequireFlags(cmd, []string{"pipeline", "build-url", "environment"})
 	if err != nil {

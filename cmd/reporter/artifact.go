@@ -16,17 +16,17 @@ type artifactOptions struct {
 	artifactType string
 	inputSha256  string
 	pipelineName string
-	metadata     ArtifactPayload
+	payload      ArtifactPayload
 }
 
 type ArtifactPayload struct {
-	Sha256       string `json:"sha256"`
-	Filename     string `json:"filename"`
-	Description  string `json:"description"`
-	Git_commit   string `json:"git_commit"`
-	Is_compliant bool   `json:"is_compliant"`
-	Build_url    string `json:"build_url"`
-	Commit_url   string `json:"commit_url"`
+	Sha256      string `json:"sha256"`
+	Filename    string `json:"filename"`
+	Description string `json:"description"`
+	GitCommit   string `json:"git_commit"`
+	IsCompliant bool   `json:"is_compliant"`
+	BuildUrl    string `json:"build_url"`
+	CommitUrl   string `json:"commit_url"`
 }
 
 func newArtifactCmd(out io.Writer) *cobra.Command {
@@ -61,24 +61,24 @@ func newArtifactCmd(out io.Writer) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if o.inputSha256 != "" {
-				o.metadata.Filename = args[0]
-				o.metadata.Sha256 = o.inputSha256
+				o.payload.Filename = args[0]
+				o.payload.Sha256 = o.inputSha256
 			} else {
 				var err error
-				o.metadata.Sha256, err = GetSha256Digest(o.artifactType, args[0])
+				o.payload.Sha256, err = GetSha256Digest(o.artifactType, args[0])
 				if err != nil {
 					return err
 				}
 				if o.artifactType == "dir" || o.artifactType == "file" {
-					o.metadata.Filename = filepath.Base(args[0])
+					o.payload.Filename = filepath.Base(args[0])
 				} else {
-					o.metadata.Filename = args[0]
+					o.payload.Filename = args[0]
 				}
 			}
 
 			url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/", global.Host, global.Owner, o.pipelineName)
 
-			js, _ := json.MarshalIndent(o.metadata, "", "    ")
+			js, _ := json.MarshalIndent(o.payload, "", "    ")
 
 			return requests.SendPayload(js, url, global.ApiToken,
 				global.MaxAPIRetries, global.DryRun, "PUT")
@@ -86,14 +86,14 @@ func newArtifactCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVarP(&o.artifactType, "type", "t", "", "the type of the artifact to calculate its SHA256 fingerprint")
-	cmd.Flags().StringVarP(&o.inputSha256, "sha256", "s", "", "the SHA256 fingerprint for the artifact. Only required if you don't specify --type")
-	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", "the Merkely pipeline name")
-	cmd.Flags().StringVarP(&o.metadata.Description, "description", "d", "", "[optional] the artifact description")
-	cmd.Flags().StringVarP(&o.metadata.Git_commit, "git-commit", "g", DefaultValue(ci, "git-commit"), "the git commit from which the artifact was created")
-	cmd.Flags().StringVarP(&o.metadata.Build_url, "build-url", "b", DefaultValue(ci, "build-url"), "the url of CI pipeline that built the artifact")
-	cmd.Flags().StringVarP(&o.metadata.Commit_url, "commit-url", "u", DefaultValue(ci, "commit-url"), "the url for the git commit that created the artifact")
-	cmd.Flags().BoolVarP(&o.metadata.Is_compliant, "compliant", "C", true, "whether the artifact is compliant or not")
+	cmd.Flags().StringVarP(&o.artifactType, "type", "t", "", "The type of the artifact. Options are [dir, file, docker].")
+	cmd.Flags().StringVarP(&o.inputSha256, "sha256", "s", "", "The SHA256 fingerprint for the artifact. Only required if you don't specify --type.")
+	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", "The Merkely pipeline name.")
+	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", "[optional] The artifact description.")
+	cmd.Flags().StringVarP(&o.payload.GitCommit, "git-commit", "g", DefaultValue(ci, "git-commit"), "The git commit from which the artifact was created.")
+	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), "The url of CI pipeline that built the artifact.")
+	cmd.Flags().StringVarP(&o.payload.CommitUrl, "commit-url", "u", DefaultValue(ci, "commit-url"), "The url for the git commit that created the artifact.")
+	cmd.Flags().BoolVarP(&o.payload.IsCompliant, "compliant", "C", true, "Whether the artifact is compliant or not.")
 
 	err := RequireFlags(cmd, []string{"pipeline", "git-commit", "build-url", "commit-url"})
 	if err != nil {
