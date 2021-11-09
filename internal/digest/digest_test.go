@@ -1,12 +1,16 @@
 package digest
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -318,6 +322,116 @@ func (suite *DigestTestSuite) createFileWithContent(path, content string) {
 	require.NoErrorf(suite.T(), err, "error creating test file %s", path)
 	_, err = file.Write([]byte(content))
 	require.NoErrorf(suite.T(), err, "error adding content to test file %s", path)
+}
+
+func (suite *DigestTestSuite) TestValidateDigest() {
+	for _, t := range []struct {
+		name        string
+		sha256      string
+		expectError bool
+	}{
+		{
+			name:        "a valid sha256",
+			sha256:      "db40d79b3a15b17ee9fcc2f49aa73736e0073de6b5a35c459268bb9a31e55139",
+			expectError: false,
+		},
+		{
+			name:        "a sha256 with characters outside [a-f0-9] is invalid",
+			sha256:      "xyz0d79b3a15b17ee9fcc2f49aa73736e0073de6b5a35c459268bb9a31e55139",
+			expectError: true,
+		},
+		{
+			name:        "a sha256 with less than 64 characters is invalid",
+			sha256:      "db40d79b3a15b17ee9fcc2f49aa73736e0073de6b5a3",
+			expectError: true,
+		},
+		{
+			name:        "a sha256 with more than 64 characters is invalid",
+			sha256:      "db40d79b3a15b17ee9fcc2f49aa73736e0073de6b5a35c459268bb9a31e55139sd23",
+			expectError: true,
+		},
+	} {
+		suite.Run(t.name, func() {
+			err := ValidateDigest(t.sha256)
+			if t.expectError {
+				require.Errorf(suite.T(), err, "TestValidateDigest: error was expected")
+			} else {
+				require.NoErrorf(suite.T(), err, "TestValidateDigest: error was NOT expected")
+			}
+
+		})
+	}
+}
+
+func (suite *DigestTestSuite) TestDockerImageSha256() {
+	type want struct {
+		sha256      string
+		expectError bool
+	}
+	for _, t := range []struct {
+		name      string
+		imageName string
+		pullImage bool
+		want      want
+	}{
+		{
+			name:      "empty image name should cause an error",
+			imageName: "",
+			pullImage: false,
+			want: want{
+				expectError: true,
+			},
+		},
+		{
+			name:      "non existing image should cause an error",
+			imageName: "imaginery/non-existing",
+			pullImage: false,
+			want: want{
+				expectError: true,
+			},
+		},
+		{
+			name:      "pulled image should gets a digest",
+			imageName: "library/alpine@sha256:e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
+			pullImage: true,
+			want: want{
+				expectError: false,
+				sha256:      "e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
+			},
+		},
+	} {
+		suite.Run(t.name, func() {
+			if t.pullImage {
+				err := pullDockerImage(t.imageName)
+				require.NoErrorf(suite.T(), err, "TestDockerImageSha256: test image should be pullable")
+			}
+			actual, err := DockerImageSha256(t.imageName)
+			if t.want.expectError {
+				require.Errorf(suite.T(), err, "TestDockerImageSha256: error was expected")
+			} else {
+				require.NoErrorf(suite.T(), err, "TestDockerImageSha256: error was NOT expected")
+				assert.Equal(suite.T(), t.want.sha256, actual, fmt.Sprintf("TestDockerImageSha256: want %s -- got %s", t.want.sha256, actual))
+			}
+
+		})
+	}
+}
+
+// pullDockerImage pulls a docker image or returns an error
+func pullDockerImage(imageName string) error {
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return err
+	}
+
+	rc, err := cli.ImagePull(context.Background(), imageName, types.ImagePullOptions{})
+	if err != nil {
+		return err
+	}
+	defer rc.Close()
+	io.Copy(os.Stdout, rc)
+
+	return nil
 }
 
 // In order for 'go test' to run this suite, we need to create

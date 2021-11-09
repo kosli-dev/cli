@@ -149,14 +149,14 @@ func DockerImageSha256(imageName string) (string, error) {
 }
 
 // ValidateDigest checks if a digest matches the sha256 regex
-func ValidateDigest(shaToCheck string) error {
+func ValidateDigest(sha256ToCheck string) error {
 	validSha256regex := "^([a-f0-9]{64})$"
 	r, err := regexp.Compile(validSha256regex)
 	if err != nil {
 		return fmt.Errorf("failed to validate the provided SHA256 digest")
 	}
-	if !r.MatchString(shaToCheck) {
-		return fmt.Errorf("%s is not a valid SHA256 digest. It should the match %v", shaToCheck, validSha256regex)
+	if !r.MatchString(sha256ToCheck) {
+		return fmt.Errorf("%s is not a valid SHA256 digest. It should the match %v", sha256ToCheck, validSha256regex)
 	}
 	return nil
 }
