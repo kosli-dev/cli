@@ -9,7 +9,6 @@ import (
 
 	"github.com/merkely-development/reporter/internal/digest"
 	"github.com/merkely-development/reporter/internal/utils"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -35,43 +34,7 @@ var ciTemplates = map[string]map[string]string{
 	},
 	teamcity: {
 		"git-commit": "${BUILD_VCS_NUMBER}",
-		// "commit-url": "",
-		// "build-url":  "${TEAMCITY_SERVER_URL}/viewLog.html?buildId=%teamcity.build.id%",
 	},
-}
-
-// TODO: derive actual values from templates above
-// githubDefaults a map of merkely flags and corresponding default values in Github actions
-var githubDefaults = map[string]string{
-	"git-commit": os.Getenv("GITHUB_SHA"),
-	"commit-url": fmt.Sprintf("%s/%s/commit/%s",
-		os.Getenv("GITHUB_SERVER_URL"),
-		os.Getenv("GITHUB_REPOSITORY"),
-		os.Getenv("GITHUB_SHA")),
-	"build-url": fmt.Sprintf("%s/%s/actions/runs/%s",
-		os.Getenv("GITHUB_SERVER_URL"),
-		os.Getenv("GITHUB_REPOSITORY"),
-		os.Getenv("GITHUB_RUN_ID")),
-}
-
-// bitbucketDefaults a map of merkely flags and corresponding default values in Bitbucket pipelines
-var bitbucketDefaults = map[string]string{
-	"git-commit": os.Getenv("BITBUCKET_COMMIT"),
-	"commit-url": fmt.Sprintf("https://bitbucket.org/%s/%s/commits/%s",
-		os.Getenv("BITBUCKET_WORKSPACE"),
-		os.Getenv("BITBUCKET_REPO_SLUG"),
-		os.Getenv("BITBUCKET_COMMIT")),
-	"build-url": fmt.Sprintf("https://bitbucket.org/%s/%s/addon/pipelines/home#!/results/%s",
-		os.Getenv("BITBUCKET_WORKSPACE"),
-		os.Getenv("BITBUCKET_REPO_SLUG"),
-		os.Getenv("BITBUCKET_BUILD_NUMBER")),
-}
-
-// teamcityDefaults a map of merkely flags and corresponding default values in TeamCity pipelines
-var teamcityDefaults = map[string]string{
-	"git-commit": os.Getenv("BUILD_VCS_NUMBER"),
-	// "commit-url": "",
-	// "build-url":  "",
 }
 
 // GetCIDefaultsTemplates returns the templates used in a given CI
@@ -111,19 +74,8 @@ func WhichCI() string {
 
 // DefaultValue looks up the default value of a given flag in a given CI tool
 func DefaultValue(ci, flag string) string {
-	switch ci {
-	case github:
-		if v, ok := githubDefaults[flag]; ok {
-			return v
-		}
-	case bitbucket:
-		if v, ok := bitbucketDefaults[flag]; ok {
-			return v
-		}
-	case teamcity:
-		if v, ok := teamcityDefaults[flag]; ok {
-			return v
-		}
+	if v, ok := ciTemplates[ci][flag]; ok {
+		return os.ExpandEnv(v)
 	}
 	return ""
 }
@@ -141,7 +93,7 @@ func RequireFlags(cmd *cobra.Command, flagNames []string) error {
 	return nil
 }
 
-// RequireGlobalFlags validates that a set of global fields have been provided a value
+// RequireGlobalFlags validates that a set of global fields have been assigned a value
 func RequireGlobalFlags(global *GlobalOpts, fields []string) error {
 	v := reflect.ValueOf(*global)
 	typeOfGlobal := v.Type()
@@ -161,6 +113,9 @@ func RequireGlobalFlags(global *GlobalOpts, fields []string) error {
 
 // GetFlagFromVarName returns a POSIX cmd flag from a camelCase variable name
 func GetFlagFromVarName(varName string) string {
+	if varName == "" {
+		return ""
+	}
 	result := "--"
 	for pos, char := range varName {
 		if pos == 0 {
@@ -179,7 +134,7 @@ func GetFlagFromVarName(varName string) string {
 // NoArgs returns an error if any args are included.
 func NoArgs(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
-		return errors.Errorf(
+		return fmt.Errorf(
 			"%q accepts no arguments\n\nUsage:  %s",
 			cmd.CommandPath(),
 			cmd.UseLine(),
@@ -226,11 +181,4 @@ func LoadUserData(filepath string) (map[string]interface{}, error) {
 		return result, err
 	}
 	return result, nil
-}
-
-func handleError(err error) {
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %+v", err)
-		os.Exit(1)
-	}
 }
