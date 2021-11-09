@@ -429,7 +429,10 @@ func pullDockerImage(imageName string) error {
 		return err
 	}
 	defer rc.Close()
-	io.Copy(os.Stdout, rc)
+	_, err = io.Copy(os.Stdout, rc)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
