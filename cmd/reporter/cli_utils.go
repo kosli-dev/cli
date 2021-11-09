@@ -15,12 +15,11 @@ import (
 
 const bitbucket = "Bitbucket"
 const github = "Github"
-
-// const teamcity = "Teamcity"
+const teamcity = "Teamcity"
 const unknown = "Unknown"
 
 // supportedCIs the set of CI tools that are supported for defaulting
-var supportedCIs = []string{bitbucket, github}
+var supportedCIs = []string{bitbucket, github, teamcity}
 
 // ciTemplates a map of merkely flags and corresponding default templates in supported CI tools
 var ciTemplates = map[string]map[string]string{
@@ -34,11 +33,11 @@ var ciTemplates = map[string]map[string]string{
 		"commit-url": "https://bitbucket.org/${BITBUCKET_WORKSPACE}/${BITBUCKET_REPO_SLUG}/commits/${BITBUCKET_COMMIT}",
 		"build-url":  "https://bitbucket.org/${BITBUCKET_WORKSPACE}/${BITBUCKET_REPO_SLUG}/addon/pipelines/home#!/results/${BITBUCKET_BUILD_NUMBER}",
 	},
-	// teamcity: {
-	// 	"git-commit": "${BITBUCKET_COMMIT}",
-	// 	"commit-url": "https://bitbucket.org/${BITBUCKET_WORKSPACE}/${BITBUCKET_REPO_SLUG}/commits/${BITBUCKET_COMMIT}",
-	// 	"build-url":  "https://bitbucket.org/${BITBUCKET_WORKSPACE}/${BITBUCKET_REPO_SLUG}/addon/pipelines/home#!/results/${BITBUCKET_BUILD_NUMBER}",
-	// },
+	teamcity: {
+		"git-commit": "${BUILD_VCS_NUMBER}",
+		// "commit-url": "",
+		// "build-url":  "${TEAMCITY_SERVER_URL}/viewLog.html?buildId=%teamcity.build.id%",
+	},
 }
 
 // TODO: derive actual values from templates above
@@ -69,11 +68,11 @@ var bitbucketDefaults = map[string]string{
 }
 
 // teamcityDefaults a map of merkely flags and corresponding default values in TeamCity pipelines
-// var teamcityDefaults = map[string]string{
-// 	"git-commit": "",
-// 	"commit-url": "",
-// 	"build-url":  "",
-// }
+var teamcityDefaults = map[string]string{
+	"git-commit": os.Getenv("BUILD_VCS_NUMBER"),
+	// "commit-url": "",
+	// "build-url":  "",
+}
 
 // GetCIDefaultsTemplates returns the templates used in a given CI
 // to calculate the input list of keys
@@ -86,9 +85,10 @@ func GetCIDefaultsTemplates(ciTools, keys []string) string {
 	| %s 
 	|---------------------------------------------------------------------------`, ci)
 		for _, key := range keys {
-			result += fmt.Sprintf(`
-	| %s : %s`, key, ciTemplates[ci][key])
-
+			if value, ok := ciTemplates[ci][key]; ok {
+				result += fmt.Sprintf(`
+	| %s : %s`, key, value)
+			}
 		}
 		result += `
 	|---------------------------------------------------------------------------`
@@ -102,12 +102,11 @@ func WhichCI() string {
 		return bitbucket
 	} else if _, ok := os.LookupEnv("GITHUB_RUN_NUMBER"); ok {
 		return github
+	} else if _, ok := os.LookupEnv("TEAMCITY_VERSION"); ok {
+		return teamcity
 	} else {
 		return unknown
 	}
-	// } else if _, ok := os.LookupEnv("TEAMCITY_VERSION"); ok {
-	// 	return teamcity
-	// }
 }
 
 // DefaultValue looks up the default value of a given flag in a given CI tool
@@ -121,10 +120,10 @@ func DefaultValue(ci, flag string) string {
 		if v, ok := bitbucketDefaults[flag]; ok {
 			return v
 		}
-		// case teamcity:
-		// 	if v, ok := teamcityDefaults[flag]; ok {
-		// 		return v
-		// 	}
+	case teamcity:
+		if v, ok := teamcityDefaults[flag]; ok {
+			return v
+		}
 	}
 	return ""
 }
