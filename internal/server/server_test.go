@@ -47,7 +47,7 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsData() {
 		want       []map[string]string
 	}{
 		{
-			name: "can get a artifact data for a single path",
+			name: "can get artifact data for a single path",
 			fileSystem: map[string][]fileSystemEntry{
 				"directory-name": {
 					{
@@ -63,7 +63,7 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsData() {
 			},
 		},
 		{
-			name: "can get a artifact data for two paths",
+			name: "can get artifact data for two paths",
 			fileSystem: map[string][]fileSystemEntry{
 				"directory-name2": {
 					{
@@ -145,6 +145,78 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsData() {
 				expected = append(expected, tmpMap)
 			}
 			assert.ElementsMatch(suite.T(), expected, digestsList, fmt.Sprintf("TestCreateServerArtifactsData: %s , got: %v -- want: %v", t.name, digestsList, expected))
+
+		})
+	}
+}
+
+func (suite *ServerTestSuite) TestCreateServerArtifactsDataWithFiles() {
+	type args struct {
+		name    string
+		content string
+		create  bool
+	}
+
+	for _, t := range []struct {
+		name        string
+		args        args
+		expectError bool
+		want        []map[string]string
+	}{
+		{
+			name: "can get artifact data for a single file",
+			args: args{
+				name:    "sample.txt",
+				content: "some content.",
+				create:  true,
+			},
+			expectError: false,
+			want: []map[string]string{
+				{"sample.txt": "593cfe761544e1363f7594b403c222a4d93cc3f15246ba88d1efc3cb8e817cc5"},
+			},
+		},
+		{
+			name: "attempting to get artifact data for a non-existing file returns error",
+			args: args{
+				name:    "sample2.txt",
+				content: "some content.",
+				create:  false,
+			},
+			expectError: true,
+			want:        []map[string]string{},
+		},
+	} {
+		suite.Run(t.name, func() {
+			paths := []string{}
+			path := filepath.Join(suite.tmpDir, t.args.name)
+			paths = append(paths, path)
+			if t.args.create {
+				suite.createFileWithContent(path, t.args.content)
+			}
+
+			serverData, err := CreateServerArtifactsData(paths, logrus.New())
+			if t.expectError {
+				require.Errorf(suite.T(), err, "was expecting error during creating server artifact data but got none")
+			} else {
+				require.NoErrorf(suite.T(), err, "error creating server artifact data was NOT expected: %v", err)
+
+				digestsList := []map[string]string{}
+
+				for i, data := range serverData {
+					digestsList = append(digestsList, data.Digests)
+					assert.NotEqual(suite.T(), int64(0), data.CreationTimestamp, fmt.Sprintf("TestCreateServerArtifactsDataWithFiles: %s , got: %v, should not be 0, at index: %d", t.name, data.CreationTimestamp, i))
+				}
+
+				expected := []map[string]string{}
+				for _, m := range t.want {
+					tmpMap := make(map[string]string)
+					for k, v := range m {
+						tmpMap[filepath.Join(suite.tmpDir, k)] = v
+					}
+					expected = append(expected, tmpMap)
+				}
+				assert.ElementsMatch(suite.T(), expected, digestsList, fmt.Sprintf("TestCreateServerArtifactsDataWithFiles: %s , got: %v -- want: %v", t.name, digestsList, expected))
+			}
 
 		})
 	}

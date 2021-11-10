@@ -20,7 +20,18 @@ func CreateServerArtifactsData(paths []string, logger *logrus.Logger) ([]*Server
 	result := []*ServerData{}
 	for _, p := range paths {
 		digests := make(map[string]string)
-		sha256, err := digest.DirSha256(p, logger)
+
+		finfo, err := os.Stat(p)
+		if err != nil {
+			return []*ServerData{}, fmt.Errorf("failed to open path %s with error: %v", p, err)
+		}
+		var sha256 string
+		if !finfo.IsDir() {
+			sha256, err = digest.FileSha256(p)
+		} else {
+			sha256, err = digest.DirSha256(p, logger)
+		}
+
 		if err != nil {
 			return []*ServerData{}, fmt.Errorf("failed to get a digest of path %s with error: %v", p, err)
 		}
