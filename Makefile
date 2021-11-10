@@ -37,7 +37,7 @@ fmt: ## Reformat package sources
 .PHONY: fmt
 
 lint:
-	@docker run --rm -v $(PWD):/app -w /app golangci/golangci-lint:v1.39-alpine golangci-lint run -v ./...
+	@docker run --rm -v $(PWD):/app -w /app golangci/golangci-lint:v1.39-alpine golangci-lint run --timeout=5m  -v ./...
 .PHONY: lint
 
 vet: fmt

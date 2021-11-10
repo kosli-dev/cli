@@ -8,31 +8,28 @@ import (
 	"github.com/merkely-development/reporter/internal/digest"
 	"github.com/merkely-development/reporter/internal/requests"
 	"github.com/spf13/cobra"
+
+	junit "github.com/joshdk/go-junit"
 )
 
-type evidenceOptions struct {
-	artifactType string
-	inputSha256  string
-	sha256       string // This is calculated or provided by the user
-	pipelineName string
-	description  string
-	isCompliant  bool
-	buildUrl     string
-	userDataFile string
-	payload      EvidencePayload
+type testEvidenceOptions struct {
+	artifactType   string
+	inputSha256    string
+	sha256         string // This is calculated or provided by the user
+	pipelineName   string
+	description    string
+	testResultsDir string
+	buildUrl       string
+	userDataFile   string
+	payload        EvidencePayload
 }
 
-type EvidencePayload struct {
-	EvidenceType string                 `json:"evidence_type"`
-	Contents     map[string]interface{} `json:"contents"`
-}
-
-func newEvidenceCmd(out io.Writer) *cobra.Command {
-	o := new(evidenceOptions)
+func newTestEvidenceCmd(out io.Writer) *cobra.Command {
+	o := new(testEvidenceOptions)
 	cmd := &cobra.Command{
-		Use:   "evidence ARTIFACT-NAME-OR-PATH",
-		Short: "Report/Log an evidence to an artifact in Merkely. ",
-		Long:  evidenceDesc(),
+		Use:   "test ARTIFACT-NAME-OR-PATH",
+		Short: "Report/Log a JUnit test evidence to an artifact in Merkely. ",
+		Long:  testEvidenceDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				return fmt.Errorf("only one argument (docker image name or file/dir path) is allowed")
@@ -70,7 +67,10 @@ func newEvidenceCmd(out io.Writer) *cobra.Command {
 
 			url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s", global.Host, global.Owner, o.pipelineName, o.sha256)
 			o.payload.Contents = map[string]interface{}{}
-			o.payload.Contents["is_compliant"] = o.isCompliant
+			o.payload.Contents["is_compliant"], err = isCompliantTestsDir(o.testResultsDir)
+			if err != nil {
+				return err
+			}
 			o.payload.Contents["url"] = o.buildUrl
 			o.payload.Contents["description"] = o.description
 			o.payload.Contents["user_data"], err = LoadUserData(o.userDataFile)
@@ -90,11 +90,11 @@ func newEvidenceCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", "The Merkely pipeline name.")
 	cmd.Flags().StringVarP(&o.description, "description", "d", "", "[optional] The evidence description.")
 	cmd.Flags().StringVarP(&o.buildUrl, "build-url", "b", DefaultValue(ci, "build-url"), "The url of CI pipeline that generated the evidence.")
-	cmd.Flags().BoolVarP(&o.isCompliant, "compliant", "C", true, "Whether the evidence is compliant or not.")
+	cmd.Flags().StringVarP(&o.testResultsDir, "results-dir", "R", "", "The folder with JUnit test results.")
 	cmd.Flags().StringVarP(&o.payload.EvidenceType, "evidence-type", "e", "", "The type of evidence being reported.")
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", "[optional] The path to a JSON file containing additional data you would like to attach to this evidence.")
 
-	err := RequireFlags(cmd, []string{"pipeline", "build-url", "evidence-type"})
+	err := RequireFlags(cmd, []string{"pipeline", "build-url", "evidence-type", "results-dir"})
 	if err != nil {
 		log.Fatalf("failed to configure required flags: %v", err)
 	}
@@ -102,9 +102,30 @@ func newEvidenceCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func evidenceDesc() string {
+func testEvidenceDesc() string {
 	return `
-   Report an evidence to an artifact in Merkely. 
+   Report a JUnit test evidence to an artifact in Merkely. 
    The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
    ` + GetCIDefaultsTemplates(supportedCIs, []string{"build-url"})
+}
+
+func isCompliantTestsDir(testResultsDir string) (bool, error) {
+	suites, err := junit.IngestDir(testResultsDir)
+	if err != nil {
+		return false, err
+	}
+
+	if len(suites) == 0 {
+		return false, fmt.Errorf("no tests found in %s directory", testResultsDir)
+	}
+
+	for _, suite := range suites {
+		for _, test := range suite.Tests {
+			if test.Status == junit.StatusFailed || test.Status == junit.StatusError {
+				return false, nil
+			}
+		}
+	}
+
+	return true, nil
 }

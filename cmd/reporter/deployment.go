@@ -88,7 +88,7 @@ func newDeploymentCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.Environment, "environment", "e", "", "The environment name.")
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", "[optional] The artifact description.")
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), "The url of CI pipeline that built the artifact.")
-	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", "The path to a JSON file containing additional data you would like to attach to this deployment.")
+	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", "[optional] The path to a JSON file containing additional data you would like to attach to this deployment.")
 
 	err := RequireFlags(cmd, []string{"pipeline", "build-url", "environment"})
 	if err != nil {
