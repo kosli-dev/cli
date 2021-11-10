@@ -14,6 +14,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.6.8
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/morikuni/aec v1.0.0 // indirect
+	github.com/sirupsen/logrus v1.8.1
 	github.com/smartystreets/assertions v1.1.0 // indirect
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5

@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"log"
 
 	"github.com/spf13/cobra"
 )

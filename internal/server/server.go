@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/merkely-development/reporter/internal/digest"
+	"github.com/sirupsen/logrus"
 )
 
 // ServerData represents the harvested server artifacts data
@@ -15,22 +16,22 @@ type ServerData struct {
 }
 
 // CreateServerArtifactsData creates a list of ServerData for server artifacts at given paths
-func CreateServerArtifactsData(paths []string, verbose bool) ([]*ServerData, error) {
+func CreateServerArtifactsData(paths []string, logger *logrus.Logger) ([]*ServerData, error) {
 	result := []*ServerData{}
 	for _, p := range paths {
 		digests := make(map[string]string)
-		sha256, err := digest.DirSha256(p, verbose)
+		sha256, err := digest.DirSha256(p, logger)
 		if err != nil {
-			return []*ServerData{}, fmt.Errorf("Failed to get a digest of path %s with error: %v", p, err)
+			return []*ServerData{}, fmt.Errorf("failed to get a digest of path %s with error: %v", p, err)
 		}
 		artifactName, err := filepath.Abs(p)
 		if err != nil {
-			return []*ServerData{}, fmt.Errorf("Failed to get absolute path for %s with error: %v", p, err)
+			return []*ServerData{}, fmt.Errorf("failed to get absolute path for %s with error: %v", p, err)
 		}
 		digests[artifactName] = sha256
 		ts, err := getPathLastModifiedTimestamp(p)
 		if err != nil {
-			return []*ServerData{}, fmt.Errorf("Failed to get last modified timestamp of path %s with error: %v", p, err)
+			return []*ServerData{}, fmt.Errorf("failed to get last modified timestamp of path %s with error: %v", p, err)
 		}
 		result = append(result, &ServerData{Digests: digests, CreationTimestamp: ts})
 	}

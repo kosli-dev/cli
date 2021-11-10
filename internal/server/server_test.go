@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -125,8 +126,7 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsData() {
 				}
 			}
 
-			verbose := false
-			serverData, err := CreateServerArtifactsData(paths, verbose)
+			serverData, err := CreateServerArtifactsData(paths, logrus.New())
 			require.NoErrorf(suite.T(), err, "error creating server artifact data: %v", err)
 
 			digestsList := []map[string]string{}
@@ -154,8 +154,7 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsDataInvalid() {
 
 	paths := []string{"a/b/c"}
 
-	verbose := false
-	_, err := CreateServerArtifactsData(paths, verbose)
+	_, err := CreateServerArtifactsData(paths, logrus.New())
 	require.Errorf(suite.T(), err, "error was expected")
 }
 

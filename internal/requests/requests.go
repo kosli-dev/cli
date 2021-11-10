@@ -10,6 +10,7 @@ import (
 	"github.com/merkely-development/reporter/internal/aws"
 	"github.com/merkely-development/reporter/internal/kube"
 	"github.com/merkely-development/reporter/internal/server"
+	"github.com/sirupsen/logrus"
 )
 
 // HTTPResponse is a simplified version of http.Response
@@ -39,17 +40,18 @@ type ServerEnvRequest struct {
 	Id        string               `json:"id"`
 }
 
-func getRetryableHttpClient(maxAPIRetries int) *http.Client {
+func getRetryableHttpClient(maxAPIRetries int, logger *logrus.Logger) *http.Client {
 	retryClient := retryablehttp.NewClient()
 	retryClient.RetryMax = maxAPIRetries
+	retryClient.Logger = logger
 	// get a standard *http.Client from the retryable client
 	client := retryClient.StandardClient()
 	return client
 }
 
 // doRequest sends an HTTP request to a URL and returns the response body and status code
-func doRequest(jsonBody []byte, url string, apiToken string, maxAPIRetries int, method string) (*HTTPResponse, error) {
-	client := getRetryableHttpClient(maxAPIRetries)
+func doRequest(jsonBody []byte, url string, apiToken string, maxAPIRetries int, method string, logger *logrus.Logger) (*HTTPResponse, error) {
+	client := getRetryableHttpClient(maxAPIRetries, logger)
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return &HTTPResponse{}, fmt.Errorf("failed to create post request to %s : %v", url, err)
@@ -74,14 +76,14 @@ func doRequest(jsonBody []byte, url string, apiToken string, maxAPIRetries int, 
 }
 
 // SendPayload sends a JSON payload to a URL
-func SendPayload(payload []byte, url, token string, maxRetries int, dryRun bool, method string) error {
+func SendPayload(payload []byte, url, token string, maxRetries int, dryRun bool, method string, logger *logrus.Logger) error {
 	if dryRun {
-		fmt.Println("############### THIS IS A DRY-RUN  ###############")
-		fmt.Println(string(payload))
+		logger.Info("############### THIS IS A DRY-RUN  ###############")
+		logger.Info(string(payload))
 	} else {
-		fmt.Println("****** Sending the payload to the API ******")
-		fmt.Println(string(payload))
-		resp, err := doRequest(payload, url, token, maxRetries, method)
+		logger.Info("****** Sending the payload to the API ******")
+		logger.Info(string(payload))
+		resp, err := doRequest(payload, url, token, maxRetries, method, logger)
 		if err != nil {
 			return err
 		}

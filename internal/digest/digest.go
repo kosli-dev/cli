@@ -13,20 +13,20 @@ import (
 	"strings"
 
 	"github.com/docker/docker/client"
+	"github.com/sirupsen/logrus"
 )
 
-var verboseFlag bool
+// var verboseFlag bool
 
-func verboseLogs(format string, a ...interface{}) {
-	if verboseFlag {
-		fmt.Println(fmt.Sprintf(format, a...))
-	}
-}
+// func verboseLogs(format string, a ...interface{}) {
+// 	if verboseFlag {
+// 		fmt.Println(fmt.Sprintf(format, a...))
+// 	}
+// }
 
 // DirSha256 returns sha256 digest of a directory
-func DirSha256(dirPath string, verbose bool) (string, error) {
-	verboseFlag = verbose
-	verboseLogs("Input path: %v", filepath.Base(dirPath))
+func DirSha256(dirPath string, logger *logrus.Logger) (string, error) {
+	logger.Debugf("Input path: %v", filepath.Base(dirPath))
 	info, err := os.Stat(dirPath)
 	if err != nil {
 		return "", err
@@ -46,7 +46,7 @@ func DirSha256(dirPath string, verbose bool) (string, error) {
 		return "", err
 	}
 	defer digestsFile.Close()
-	err = prepareDirContentSha256(digestsFile, dirPath, tmpDir)
+	err = prepareDirContentSha256(digestsFile, dirPath, tmpDir, logger)
 	if err != nil {
 		return "", err
 	}
@@ -55,7 +55,7 @@ func DirSha256(dirPath string, verbose bool) (string, error) {
 }
 
 // prepareDirContentSha256 calculates a sha256 digest for a directory content
-func prepareDirContentSha256(digestsFile *os.File, dirPath, tmpDir string) error {
+func prepareDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, logger *logrus.Logger) error {
 
 	files, err := ioutil.ReadDir(dirPath)
 	if err != nil {
@@ -71,18 +71,18 @@ func prepareDirContentSha256(digestsFile *os.File, dirPath, tmpDir string) error
 		pathed_entry := filepath.Join(dirPath, f.Name())
 
 		if f.IsDir() {
-			verboseLogs("dirname: %s -- dirname digest: %v", pathed_entry, nameSha256)
-			err := prepareDirContentSha256(digestsFile, pathed_entry, tmpDir)
+			logger.Debugf("dirname: %s -- dirname digest: %v", pathed_entry, nameSha256)
+			err := prepareDirContentSha256(digestsFile, pathed_entry, tmpDir, logger)
 			if err != nil {
 				return err
 			}
 		} else {
-			verboseLogs("filename: %s -- filename digest: %s", pathed_entry, nameSha256)
+			logger.Debugf("filename: %s -- filename digest: %s", pathed_entry, nameSha256)
 			fileContentSha256, err := FileSha256(pathed_entry)
 			if err != nil {
 				return err
 			}
-			verboseLogs("filename: %s -- content digest: %s", pathed_entry, fileContentSha256)
+			logger.Debugf("filename: %s -- content digest: %s", pathed_entry, fileContentSha256)
 			if _, err := digestsFile.Write([]byte(fileContentSha256)); err != nil {
 				return err
 			}

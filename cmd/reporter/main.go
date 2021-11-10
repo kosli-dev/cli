@@ -1,17 +1,23 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
+	"github.com/sirupsen/logrus"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
+var log = logrus.New()
+
 func main() {
-	cmd, err := newRootCmd(os.Stdout, os.Args[1:])
+	out := os.Stdout
+	log.Out = out
+	log.Formatter = &logrus.TextFormatter{
+		FullTimestamp: true,
+	}
+	cmd, err := newRootCmd(out, os.Args[1:])
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %+v", err)
-		os.Exit(1)
+		log.Fatalf("Error: %+v", err)
 	}
 	if err := cmd.Execute(); err != nil {
 		os.Exit(1)

@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"io"
-	"log"
 	"path/filepath"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -44,6 +44,7 @@ type GlobalOpts struct {
 	DryRun        bool
 	MaxAPIRetries int
 	ConfigFile    string
+	Verbose       bool
 }
 
 func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
@@ -65,6 +66,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	cmd.PersistentFlags().BoolVarP(&global.DryRun, "dry-run", "D", false, "Whether to send the request to the endpoint or just log it in stdout.")
 	cmd.PersistentFlags().IntVarP(&global.MaxAPIRetries, "max-api-retries", "r", maxAPIRetries, "How many times should API calls be retried when the API host is not reachable.")
 	cmd.PersistentFlags().StringVarP(&global.ConfigFile, "config-file", "c", defaultConfigFilename, "[optional] The merkely config file path.")
+	cmd.PersistentFlags().BoolVarP(&global.Verbose, "verbose", "v", false, "Print verbose logs to stdout.")
 
 	// Add subcommands
 	cmd.AddCommand(
@@ -82,6 +84,10 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 }
 
 func initializeConfig(cmd *cobra.Command) error {
+	if global.Verbose {
+		log.Level = logrus.DebugLevel
+	}
+
 	v := viper.New()
 
 	// If provided, extract the custom config file dir and name

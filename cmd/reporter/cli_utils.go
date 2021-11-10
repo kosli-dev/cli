@@ -152,7 +152,7 @@ func GetSha256Digest(artifactType, name string) (string, error) {
 	case "file":
 		fingerprint, err = digest.FileSha256(name)
 	case "dir":
-		fingerprint, err = digest.DirSha256(name, false)
+		fingerprint, err = digest.DirSha256(name, log)
 	case "docker":
 		fingerprint, err = digest.DockerImageSha256(name)
 	default:

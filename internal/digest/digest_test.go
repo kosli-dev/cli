@@ -11,6 +11,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -253,8 +254,7 @@ func (suite *DigestTestSuite) TestDirSha256() {
 				}
 			}
 
-			verbose := false
-			sha256, err := DirSha256(dirPath, verbose)
+			sha256, err := DirSha256(dirPath, logrus.New())
 			require.NoErrorf(suite.T(), err, "error creating digest for test dir %s", dirPath)
 
 			assert.Equal(suite.T(), t.want, sha256, fmt.Sprintf("TestDirSha256: %s , got: %v -- want: %v", t.name, sha256, t.want))
@@ -307,8 +307,7 @@ func (suite *DigestTestSuite) TestDirSha256Validation() {
 				suite.createFileWithContent(dirPath, "")
 			}
 
-			verbose := false
-			_, err := DirSha256(dirPath, verbose)
+			_, err := DirSha256(dirPath, logrus.New())
 			if t.errExpected {
 				require.Errorf(suite.T(), err, "TestDirSha256Validation: error was expected")
 			}

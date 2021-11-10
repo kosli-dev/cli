@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 
 	"github.com/merkely-development/reporter/internal/digest"
 	"github.com/merkely-development/reporter/internal/requests"
@@ -78,7 +77,7 @@ func newDeploymentCmd(out io.Writer) *cobra.Command {
 			js, _ := json.MarshalIndent(o.payload, "", "    ")
 
 			return requests.SendPayload(js, url, global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, "POST")
+				global.MaxAPIRetries, global.DryRun, "POST", log)
 		},
 	}
 

@@ -75,7 +75,7 @@ func newPipelineCmd(out io.Writer) *cobra.Command {
 			js, _ := json.MarshalIndent(pipe, "", "    ")
 
 			return requests.SendPayload(js, url, global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, "PUT")
+				global.MaxAPIRetries, global.DryRun, "PUT", log)
 		},
 	}
 
