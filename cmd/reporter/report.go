@@ -27,6 +27,7 @@ func newReportCmd(out io.Writer) *cobra.Command {
 		newEvidenceCmd(out),
 		newTestEvidenceCmd(out),
 		newApproveDeploymentCmd(out),
+		newRequestApprovalCmd(out),
 	)
 
 	return cmd
