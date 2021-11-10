@@ -61,7 +61,7 @@ func doRequest(jsonBody []byte, url string, apiToken string, maxAPIRetries int, 
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return &HTTPResponse{}, fmt.Errorf("failed to send post request to %s : %v", url, err)
+		return &HTTPResponse{}, fmt.Errorf("failed to send %s request to %s : %v", method, url, err)
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
