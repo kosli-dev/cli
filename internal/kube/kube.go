@@ -3,10 +3,10 @@ package kube
 import (
 	"context"
 	"fmt"
-	"log"
 	"regexp"
 	"sync"
 
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -72,7 +72,7 @@ func NewK8sClientSet(kubeconfigPath string) (*kubernetes.Clientset, error) {
 
 // GetPodsData lists pods in the target namespace(s) of a target cluster and creates a list of
 // PodData objects for them
-func GetPodsData(namespaces []string, excludeNamespaces []string, clientset *kubernetes.Clientset) ([]*PodData, error) {
+func GetPodsData(namespaces []string, excludeNamespaces []string, clientset *kubernetes.Clientset, logger *logrus.Logger) ([]*PodData, error) {
 	podsData := []*PodData{}
 	ctx := context.Background()
 	list := &corev1.PodList{}
@@ -107,7 +107,7 @@ func GetPodsData(namespaces []string, excludeNamespaces []string, clientset *kub
 		}
 	}
 
-	log.Printf("scraping the following namespaces: %v \n", filteredNamespaces)
+	logger.Infof("scanning the following namespaces: %v ", filteredNamespaces)
 
 	// run concurrently
 	errs := make(chan error, 1) // Buffered only for the first error

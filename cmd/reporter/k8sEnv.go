@@ -90,7 +90,7 @@ func newK8sEnvCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			podsData, err := kube.GetPodsData(o.namespaces, o.excludeNamespaces, clientset)
+			podsData, err := kube.GetPodsData(o.namespaces, o.excludeNamespaces, clientset, log)
 			if err != nil {
 				return err
 			}
