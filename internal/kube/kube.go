@@ -72,7 +72,7 @@ func NewK8sClientSet(kubeconfigPath string) (*kubernetes.Clientset, error) {
 
 // GetPodsData lists pods in the target namespace(s) of a target cluster and creates a list of
 // PodData objects for them
-func GetPodsData(namespaces []string, excludeNamespaces []string, clientset *kubernetes.Clientset, logger *logrus.Logger) ([]*PodData, error) {
+func GetPodsData(includNamespaces []string, excludeNamespaces []string, clientset *kubernetes.Clientset, logger *logrus.Logger) ([]*PodData, error) {
 	podsData := []*PodData{}
 	ctx := context.Background()
 	list := &corev1.PodList{}
@@ -94,14 +94,14 @@ func GetPodsData(namespaces []string, excludeNamespaces []string, clientset *kub
 		if err != nil {
 			return podsData, fmt.Errorf("could not filter namespaces: %v ", err)
 		}
-	} else if len(namespaces) == 0 {
+	} else if len(includNamespaces) == 0 {
 		var err error
 		list, err = clientset.CoreV1().Pods("").List(ctx, metav1.ListOptions{})
 		if err != nil {
 			return podsData, fmt.Errorf("could not list pods on cluster scope: %v ", err)
 		}
 	} else {
-		filteredNamespaces, err = filterNamespaces(nsList.Items, namespaces, "include")
+		filteredNamespaces, err = filterNamespaces(nsList.Items, includNamespaces, "include")
 		if err != nil {
 			return podsData, fmt.Errorf("could not filter namespaces: %v ", err)
 		}
@@ -189,6 +189,14 @@ func filterNamespaces(nsList []corev1.Namespace, patterns []string, operation st
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // Make sure it's called to release resources even if no errors
 
+	// if exclude nothing, then add all namespaces to result
+	if len(patterns) == 0 && operation == "exclude" {
+		for _, ns := range nsList {
+			result = append(result, ns.Name)
+		}
+		return result, nil
+	}
+
 	for _, ns := range nsList {
 		wg.Add(1)
 		go func(ns string) {
@@ -201,12 +209,7 @@ func filterNamespaces(nsList []corev1.Namespace, patterns []string, operation st
 			default: // Default is must to avoid blocking
 			}
 
-			// if exclude nothing, then add all namespaces to result
-			if len(patterns) == 0 && operation == "exclude" {
-				mutex.Lock()
-				result = append(result, ns)
-				mutex.Unlock()
-			}
+			match := false
 			for _, p := range patterns {
 				r, err := regexp.Compile(p)
 				if err != nil {
@@ -217,30 +220,33 @@ func filterNamespaces(nsList []corev1.Namespace, patterns []string, operation st
 					cancel() // send cancel signal to goroutines
 					return
 				}
-				match := r.MatchString(ns)
-				switch operation {
-				case "include":
-					if match {
-						mutex.Lock()
-						result = append(result, ns)
-						mutex.Unlock()
-					}
-				case "exclude":
-					if !match {
-						mutex.Lock()
-						result = append(result, ns)
-						mutex.Unlock()
-					}
-
-				default:
-					select {
-					case errs <- fmt.Errorf("unsupported operation %s", operation):
-					default:
-					}
-					cancel() // send cancel signal to goroutines
-					return
-
+				if r.MatchString(ns) {
+					match = true
+					break
 				}
+			}
+			switch operation {
+			case "include":
+				if match {
+					mutex.Lock()
+					result = append(result, ns)
+					mutex.Unlock()
+				}
+			case "exclude":
+				if !match {
+					mutex.Lock()
+					result = append(result, ns)
+					mutex.Unlock()
+				}
+
+			default:
+				select {
+				case errs <- fmt.Errorf("unsupported operation %s", operation):
+				default:
+				}
+				cancel() // send cancel signal to goroutines
+				return
+
 			}
 		}(ns.Name)
 	}

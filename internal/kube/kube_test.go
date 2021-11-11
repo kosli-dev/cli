@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
@@ -46,7 +47,7 @@ func (suite *KubeTestSuite) SetupSuite() {
 	err = suite.provider.ExportKubeConfig(suite.clusterName, suite.kubeConfigPath)
 	require.NoError(suite.T(), err, "exporting kubeconfig failed")
 	ctx := context.Background()
-	suite.clientset = suite.GetK8sClient(ctx)
+	suite.clientset = suite.getK8sClient(ctx)
 	err = framework.WaitForAllNodesSchedulable(suite.clientset, 100*time.Second)
 	require.NoError(suite.T(), err, "waiting for cluster nodes to become schedulable failed")
 }
@@ -78,9 +79,10 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 		digests   map[string]string
 	}
 	type args struct {
-		namespaces        []string
-		excludeNamespaces []string
-		pods              map[string][]*corev1.Pod
+		namespaces      []string
+		includePatterns []string
+		excludePatterns []string
+		pods            map[string][]*corev1.Pod
 	}
 	for _, t := range []struct {
 		name string
@@ -90,7 +92,8 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 		{
 			name: "an empty namespace has nothing to report.",
 			args: args{
-				namespaces: []string{"empty-ns"},
+				namespaces:      []string{"empty-ns"},
+				includePatterns: []string{"^empty-ns$"},
 			},
 			want: []*comparablePodData{},
 		},
@@ -99,8 +102,9 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 			args: args{
 				namespaces: []string{"ns1"},
 				pods: map[string][]*corev1.Pod{
-					"ns1": {suite.GetPodPayload("pod1", []string{"nginx:1.21.3"})},
+					"ns1": {suite.getPodPayload("pod1", []string{"nginx:1.21.3"})},
 				},
+				includePatterns: []string{"^ns1$"},
 			},
 			want: []*comparablePodData{
 				{
@@ -115,11 +119,11 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 		{
 			name: "excluding a namespace works.",
 			args: args{
-				namespaces:        []string{"ns2", "ns3"},
-				excludeNamespaces: []string{"ns3", "default", "local-path-storage", "ns1", "kube-system", "empty-ns", "kube-node-lease", "kube-public"},
+				namespaces:      []string{"ns2", "ns3"},
+				excludePatterns: []string{"^ns3$", "^default$", "^local-path-storage$", "^ns1$", "^kube-system$", "^empty-ns$", "^kube-node-lease$", "^kube-public$"},
 				pods: map[string][]*corev1.Pod{
-					"ns2": {suite.GetPodPayload("nginx1", []string{"nginx:1.21.3"})},
-					"ns3": {suite.GetPodPayload("nginx2", []string{"nginx:1.21.0"})},
+					"ns2": {suite.getPodPayload("nginx1", []string{"nginx:1.21.3"})},
+					"ns3": {suite.getPodPayload("nginx2", []string{"nginx:1.21.0"})},
 				},
 			},
 			want: []*comparablePodData{
@@ -136,16 +140,16 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 		suite.Run(t.name, func() {
 			// create namespaces
 			for _, ns := range t.args.namespaces {
-				suite.CreateNamespace(ns)
+				suite.createNamespace(ns)
 			}
 			// create pods
 			for ns, pods := range t.args.pods {
 				for _, pod := range pods {
-					suite.CreatePod(ns, pod)
+					suite.createPod(ns, pod)
 				}
 			}
 			// Get pods data
-			podsData, err := GetPodsData(t.args.namespaces, t.args.excludeNamespaces, suite.clientset)
+			podsData, err := GetPodsData(t.args.includePatterns, t.args.excludePatterns, suite.clientset, logrus.New())
 			require.NoErrorf(suite.T(), err, "error getting pods data for test %s", t.name)
 			actual := []*comparablePodData{}
 			for _, pd := range podsData {
@@ -161,21 +165,78 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 	}
 }
 
-// In order for 'go test' to run this suite, we need to create
-// a normal test function and pass our suite to suite.Run
-func TestKubeTestSuite(t *testing.T) {
-	suite.Run(t, new(KubeTestSuite))
+func (suite *KubeTestSuite) TestFilterNamespaces() {
+	type args struct {
+		nsList    []corev1.Namespace
+		patterns  []string
+		operation string
+	}
+	for _, t := range []struct {
+		name        string
+		args        args
+		expectError bool
+		want        []string
+	}{
+		{
+			name: "unknown operation causes an error",
+			args: args{
+				nsList: []corev1.Namespace{
+					{ObjectMeta: metav1.ObjectMeta{Name: "ns1"}},
+				},
+				patterns:  []string{"^ns"},
+				operation: "unknown",
+			},
+			expectError: true,
+		},
+		{
+			name: "invlaid patterns return error",
+			args: args{
+				nsList: []corev1.Namespace{
+					{ObjectMeta: metav1.ObjectMeta{Name: "ns1"}},
+					{ObjectMeta: metav1.ObjectMeta{Name: "ns2"}},
+				},
+				patterns:  []string{"["},
+				operation: "exclude",
+			},
+			expectError: true,
+			want:        []string{},
+		},
+		{
+			name: "excluding when no patterns, returns all input namespaces",
+			args: args{
+				nsList: []corev1.Namespace{
+					{ObjectMeta: metav1.ObjectMeta{Name: "ns1"}},
+					{ObjectMeta: metav1.ObjectMeta{Name: "ns2"}},
+				},
+				patterns:  []string{},
+				operation: "exclude",
+			},
+			expectError: false,
+			want:        []string{"ns1", "ns2"},
+		},
+	} {
+		suite.Run(t.name, func() {
+			result, err := filterNamespaces(t.args.nsList, t.args.patterns, t.args.operation)
+			if t.expectError {
+				require.Error(suite.T(), err, "error was expected but got none.")
+			} else {
+				require.NoErrorf(suite.T(), err, "error was NOT expected but got: %v.", err)
+				require.Equal(suite.T(), t.want, result, "TestFilterNamespaces: got %v -- want %v", result, t.want)
+			}
+		})
+	}
+
 }
 
-// GetK8sClient creates a k8s client set
-func (suite *KubeTestSuite) GetK8sClient(ctx context.Context) *kubernetes.Clientset {
+// getK8sClient creates a k8s client set
+func (suite *KubeTestSuite) getK8sClient(ctx context.Context) *kubernetes.Clientset {
 	clientset, err := NewK8sClientSet(suite.kubeConfigPath)
 	require.NoErrorf(suite.T(), err, "error creating k8s client set for kubeconfig %s", suite.kubeConfigPath)
 	return clientset
 }
 
-// CreateNamespace creates a namespace in the suite KIND cluster
-func (suite *KubeTestSuite) CreateNamespace(name string) {
+// createNamespace creates a namespace in the suite KIND cluster
+func (suite *KubeTestSuite) createNamespace(name string) {
 	ctx := context.Background()
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -189,8 +250,8 @@ func (suite *KubeTestSuite) CreateNamespace(name string) {
 	require.NoErrorf(suite.T(), err, "error creating namespace %s", name)
 }
 
-// GetPodPayload creates a k8s Pod struct
-func (suite *KubeTestSuite) GetPodPayload(name string, images []string) *corev1.Pod {
+// getPodPayload creates a k8s Pod struct
+func (suite *KubeTestSuite) getPodPayload(name string, images []string) *corev1.Pod {
 	podContainers := []corev1.Container{}
 	for i, image := range images {
 		podContainers = append(podContainers, corev1.Container{
@@ -211,11 +272,17 @@ func (suite *KubeTestSuite) GetPodPayload(name string, images []string) *corev1.
 	}
 }
 
-// CreatePod creates a pod in the suite KIND cluster
-func (suite *KubeTestSuite) CreatePod(namespace string, pod *corev1.Pod) {
+// createPod creates a pod in the suite KIND cluster
+func (suite *KubeTestSuite) createPod(namespace string, pod *corev1.Pod) {
 	ctx := context.Background()
 	_, err := suite.clientset.CoreV1().Pods(namespace).Create(ctx, pod, metav1.CreateOptions{})
 	require.NoErrorf(suite.T(), err, "error creating pod %s", pod.Name)
 	err = e2epod.WaitForPodNameRunningInNamespace(suite.clientset, pod.Name, namespace)
 	require.NoErrorf(suite.T(), err, "error waiting for pod %s to be running in namespace %s", pod.Name, namespace)
+}
+
+// In order for 'go test' to run this suite, we need to create
+// a normal test function and pass our suite to suite.Run
+func TestKubeTestSuite(t *testing.T) {
+	suite.Run(t, new(KubeTestSuite))
 }
