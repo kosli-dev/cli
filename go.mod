@@ -11,6 +11,7 @@ require (
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/hashicorp/go-retryablehttp v0.6.8
 	github.com/joshdk/go-junit v0.0.0-20210226021600-6145f504ca0d
+	github.com/maxcnunes/httpfake v1.2.4
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
