@@ -1,9 +1,9 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 
 	"github.com/merkely-development/reporter/internal/requests"
 	"github.com/merkely-development/reporter/internal/server"
@@ -65,10 +65,10 @@ func newServerEnvCmd(out io.Writer) *cobra.Command {
 				Type:      "server",
 				Id:        o.id,
 			}
-			js, _ := json.MarshalIndent(requestBody, "", "    ")
 
-			return requests.SendPayload(js, url, global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, "PUT", log)
+			_, err = requests.SendPayload(requestBody, url, global.ApiToken,
+				global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+			return err
 		},
 	}
 

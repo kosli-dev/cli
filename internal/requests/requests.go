@@ -2,6 +2,7 @@ package requests
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -49,16 +50,16 @@ func getRetryableHttpClient(maxAPIRetries int, logger *logrus.Logger) *http.Clie
 	return client
 }
 
-// DoRequest sends an HTTP request to a URL and returns the response body and status code
-func DoRequest(jsonBody []byte, url string, apiToken string, maxAPIRetries int, method string, logger *logrus.Logger) (*HTTPResponse, error) {
+// doRequest sends an HTTP request to a URL and returns the response body and status code
+func doRequest(jsonBytes []byte, url string, apiToken string, maxAPIRetries int, method string, logger *logrus.Logger) (*HTTPResponse, error) {
 	client := getRetryableHttpClient(maxAPIRetries, logger)
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonBody))
+
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonBytes))
 	if err != nil {
 		return &HTTPResponse{}, fmt.Errorf("failed to create post request to %s : %v", url, err)
 	}
 	req.SetBasicAuth(apiToken, "unset")
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
-	// req.Header.Set("Accept", "application/json")
 
 	resp, err := client.Do(req)
 
@@ -68,7 +69,7 @@ func DoRequest(jsonBody []byte, url string, apiToken string, maxAPIRetries int, 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return &HTTPResponse{}, fmt.Errorf("failed to read response from post request to %s : %v", url, err)
+		return &HTTPResponse{}, fmt.Errorf("failed to read response from %s request to %s : %v", method, url, err)
 	}
 
 	return &HTTPResponse{
@@ -78,20 +79,26 @@ func DoRequest(jsonBody []byte, url string, apiToken string, maxAPIRetries int, 
 }
 
 // SendPayload sends a JSON payload to a URL
-func SendPayload(payload []byte, url, token string, maxRetries int, dryRun bool, method string, logger *logrus.Logger) error {
+func SendPayload(payload interface{}, url, token string, maxRetries int, dryRun bool, method string, logger *logrus.Logger) (*HTTPResponse, error) {
+	var resp *HTTPResponse
+	jsonBytes, err := json.MarshalIndent(payload, "", "    ")
+	if err != nil {
+		return resp, err
+	}
+
 	if dryRun {
 		logger.Info("############### THIS IS A DRY-RUN  ###############")
-		logger.Info(string(payload))
+		logger.Info(string(jsonBytes))
 	} else {
 		logger.Info("****** Sending the payload to the API ******")
-		logger.Info(string(payload))
-		resp, err := DoRequest(payload, url, token, maxRetries, method, logger)
+		logger.Info(string(jsonBytes))
+		resp, err = doRequest(jsonBytes, url, token, maxRetries, method, logger)
 		if err != nil {
-			return err
+			return resp, err
 		}
 		if resp.StatusCode != 201 && resp.StatusCode != 200 {
-			return fmt.Errorf("failed to send payload. Got status %d: %v", resp.StatusCode, resp.Body)
+			return resp, fmt.Errorf("failed to send payload. Got status %d: %v", resp.StatusCode, resp.Body)
 		}
 	}
-	return nil
+	return resp, nil
 }

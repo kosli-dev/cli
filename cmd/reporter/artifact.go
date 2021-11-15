@@ -1,9 +1,9 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"path/filepath"
 
 	"github.com/merkely-development/reporter/internal/digest"
@@ -77,10 +77,9 @@ func newArtifactCmd(out io.Writer) *cobra.Command {
 
 			url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/", global.Host, global.Owner, o.pipelineName)
 
-			js, _ := json.MarshalIndent(o.payload, "", "    ")
-
-			return requests.SendPayload(js, url, global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, "PUT", log)
+			_, err := requests.SendPayload(o.payload, url, global.ApiToken,
+				global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+			return err
 		},
 	}
 

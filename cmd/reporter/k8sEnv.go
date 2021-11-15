@@ -1,9 +1,9 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 
@@ -100,10 +100,10 @@ func newK8sEnvCmd(out io.Writer) *cobra.Command {
 				Type:      "K8S",
 				Id:        o.id,
 			}
-			js, _ := json.MarshalIndent(requestBody, "", "    ")
 
-			return requests.SendPayload(js, url, global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, "PUT", log)
+			_, err = requests.SendPayload(requestBody, url, global.ApiToken,
+				global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+			return err
 		},
 	}
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 
 	"github.com/merkely-development/reporter/internal/requests"
@@ -72,10 +73,9 @@ func newPipelineCmd(out io.Writer) *cobra.Command {
 			owner := pipe.Owner
 			url := fmt.Sprintf("%s/api/v1/projects/%s/", global.Host, owner)
 
-			js, _ := json.MarshalIndent(pipe, "", "    ")
-
-			return requests.SendPayload(js, url, global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, "PUT", log)
+			_, err = requests.SendPayload(pipe, url, global.ApiToken,
+				global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+			return err
 		},
 	}
 

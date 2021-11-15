@@ -1,9 +1,9 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 
 	"github.com/merkely-development/reporter/internal/digest"
 	"github.com/merkely-development/reporter/internal/requests"
@@ -77,10 +77,10 @@ func newEvidenceCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			js, _ := json.MarshalIndent(o.payload, "", "    ")
 
-			return requests.SendPayload(js, url, global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, "PUT", log)
+			_, err = requests.SendPayload(o.payload, url, global.ApiToken,
+				global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+			return err
 		},
 	}
 

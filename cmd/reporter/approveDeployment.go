@@ -1,9 +1,9 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 
 	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -89,10 +89,10 @@ func newApproveDeploymentCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			js, _ := json.MarshalIndent(o.payload, "", "    ")
 
-			return requests.SendPayload(js, url, global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, "POST", log)
+			_, err = requests.SendPayload(o.payload, url, global.ApiToken,
+				global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+			return err
 		},
 	}
 

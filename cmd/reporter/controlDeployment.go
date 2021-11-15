@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"net/http"
 
 	"github.com/merkely-development/reporter/internal/digest"
 	"github.com/merkely-development/reporter/internal/requests"
@@ -56,8 +57,8 @@ func newControlDeploymentCmd(out io.Writer) *cobra.Command {
 
 			url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/approvals/", global.Host, global.Owner, o.pipelineName, o.sha256)
 
-			response, err := requests.DoRequest([]byte{}, url, global.ApiToken,
-				global.MaxAPIRetries, "GET", log)
+			response, err := requests.SendPayload([]byte{}, url, global.ApiToken,
+				global.MaxAPIRetries, global.DryRun, http.MethodGet, log)
 			if err != nil {
 				return err
 			}
