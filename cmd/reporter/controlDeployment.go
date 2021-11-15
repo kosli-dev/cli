@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/merkely-development/reporter/internal/digest"
 	"github.com/merkely-development/reporter/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -23,28 +22,12 @@ func newControlDeploymentCmd(out io.Writer) *cobra.Command {
 		Short: "Check if an artifact in Merkely has been approved for deployment.",
 		Long:  controlDeploymentDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 1 {
-				return fmt.Errorf("only one argument (docker image name or file/dir path) is allowed")
-			}
-			if len(args) == 0 || args[0] == "" {
-				return fmt.Errorf("docker image name or file/dir path is required")
-			}
-
-			if o.artifactType == "" && o.sha256 == "" {
-				return fmt.Errorf("either --type or --sha256 must be specified")
-			}
-
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return err
 			}
 
-			if o.sha256 != "" {
-				if err := digest.ValidateDigest(o.sha256); err != nil {
-					return err
-				}
-			}
-			return nil
+			return ValidateArtifactArg(args, o.artifactType, o.sha256)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var err error

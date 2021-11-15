@@ -370,6 +370,67 @@ func (suite *CliUtilsTestSuite) TestLoadUserData() {
 	}
 }
 
+func (suite *CliUtilsTestSuite) TestValidateArtifactArg() {
+	for _, t := range []struct {
+		name         string
+		args         []string
+		artifactType string
+		inputSha256  string
+		expectError  bool
+	}{
+		{
+			name:         "two args are not allowed",
+			args:         []string{"arg1", "arg2"},
+			artifactType: "dir",
+			expectError:  true,
+		},
+		{
+			name:         "no args are not allowed",
+			args:         []string{},
+			artifactType: "dir",
+			expectError:  true,
+		},
+		{
+			name:         "empty args is not allowed",
+			args:         []string{""},
+			artifactType: "dir",
+			expectError:  true,
+		},
+		{
+			name:        "missing both artifact type and sha is not allowed",
+			args:        []string{"arg1"},
+			expectError: true,
+		},
+		{
+			name:        "invalid sha256 is not allowed",
+			args:        []string{"arg1"},
+			inputSha256: "12345",
+			expectError: true,
+		},
+		{
+			name:         "happy case with artifact type",
+			args:         []string{"arg1"},
+			artifactType: "dir",
+			expectError:  false,
+		},
+		{
+			name:        "happy case with artifact sha",
+			args:        []string{"arg1"},
+			inputSha256: "8b4fd747df6882b897aa514af7b40571a7508cc78a8d48ae2c12f9f4bcb1598f",
+			expectError: false,
+		},
+	} {
+		suite.Run(t.name, func() {
+			err := ValidateArtifactArg(t.args, t.artifactType, t.inputSha256)
+			if t.expectError {
+				require.Errorf(suite.T(), err, "error was expected but got none")
+			} else {
+				require.NoErrorf(suite.T(), err, "error was NOT expected but got %v", err)
+			}
+		})
+	}
+}
+
 // setEnvVars sets env variables
 func (suite *CliUtilsTestSuite) setEnvVars(envVars map[string]string) {
 	for key, value := range envVars {
