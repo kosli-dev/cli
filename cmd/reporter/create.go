@@ -18,6 +18,7 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 	// Add subcommands
 	cmd.AddCommand(
 		newPipelineCmd(out),
+		newEnvironmentCmd(out),
 	)
 
 	return cmd
