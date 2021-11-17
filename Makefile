@@ -64,7 +64,7 @@ docker: deps vet lint
 .PHONY: docker
 
 docs: build
-	@./reporter docs --dir docs
+	@./reporter docs --dir docs.merkely.com/content/docs
 .PHONY: docs
 
 licenses:

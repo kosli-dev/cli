@@ -52,7 +52,7 @@ func (o *docsOptions) run(out io.Writer) error {
 			base := filepath.Base(filename)
 			name := strings.TrimSuffix(base, path.Ext(base))
 			title := strings.Title(strings.Replace(name, "_", " ", -1))
-			return fmt.Sprintf("---\ntitle: \"%s\"\n---\n\n", title)
+			return fmt.Sprintf("---\ntitle: \"%s\"\n---\n\n", strings.ToLower(title))
 		}
 
 		return doc.GenMarkdownTreeCustom(o.topCmd, o.dest, hdrFunc, standardLinks)
