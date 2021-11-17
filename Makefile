@@ -75,3 +75,6 @@ licenses:
 	@echo $(DATA) | tr " " "\n" > licenses/licenses.csv
 .PHONY: licenses
 
+hugo:
+	cd docs.merkely.com && hugo server --minify
+.PHONY: hugo
