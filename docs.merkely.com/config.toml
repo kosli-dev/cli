@@ -1,5 +1,5 @@
-baseURL = 'http://example.org/'
+baseURL = 'https://merkely-development.github.io/reporter/'
 languageCode = 'en-us'
-title = 'My New Hugo Site'
+title = 'Merkely developer documentation'
 
 theme="book"
