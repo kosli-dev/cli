@@ -1,4 +1,4 @@
-baseURL = 'https://merkely-development.github.io/reporter/'
+baseURL = '/reporter'
 languageCode = 'en-us'
 title = 'Merkely developer documentation'
 
