@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "cellular-deck-259216",
+  "private_key_id": "37f13cb31b77047152ac6ce8499fa615e57cc58b",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEugIBADANBgkqhkiG9w0BAQEFAASCBKQwggSgAgEAAoIBAQCjjbOVYpejx+8c\njXFq8VygQ43d0BMLlzXyptUIQSJBNbn3eu7xnC+YDptn1oTbgGuF4YlSioaNQgYt\nDtJhTn8K1UZYQCSzk9vD8J8Gl/uJFqRcnhR4UN8+zi8iA9yUVvG2WDXI2lqezvhJ\n3NjOnRuT1CGZDV5PIfW+LYZgHt5MWgcb55WP/hVFp/quAPh+9MAOD0G/FSKsY6UP\nY8IigBF5dklA27oFbn5WBI2n1OVAWacEcxZxoJ6VoXEfUNrgVbEfLf2U+MzPFnSv\ncKeDOosEYFPl9rAKc0PACOzyXYQosINnbLhGt+4qn0Y3vBUA0PQoRnoA/uVzgZ7q\nVwiG+TH5AgMBAAECgf818KzbdCPf4DeEKXYuPTgu05CyORE5DydXOpFPHeTdO51X\nMh1uogDCmiIeuIDK7YkkNslAw/pYOuYcUOEEoY3TQmM05TBSsfxkbwq/gyyVtZdv\nVYLPO7XwUcIchf9jvF+ttsffYsZZcwZCs/fwyBO7PBQzVdqhDfamtSxeoQ0qz7F6\ntMKuexjTsBrrvbB4q7+G53OCY2y9OvwtjOgEzHdiZBoAiqmRYEl9+EZI6qxNvNHb\nFZXCb8sH8mZpw+iFEuXMuKtw+hGTh2hEoPMbNVRzaBex2TQRkw3DhdePdj3JuS16\nIUaaW9FDJqHipU9mnIYkhNAS7RNd40izNCpDRCECgYEA0gGJFOB0MWF6nL1jqNfr\nex+rliggh8zmKMFPqL8yKzTUJc4aUDtES1hXWYC6neB0RxIZ0D72zyojvAH5oN7a\n4VWV5iY+JkhIIC1hMNuwYFwYEJouaVE6Ft5nMJrN/DhBZAVOVzTgyzdt6Z4PAsko\n0gnHrqNTuTB3WrhyVYxPfMUCgYEAx1+zv6UFEr4GxRqb6+jNppYOCDcuzFfI7xeQ\n7UBZ3Ke+LhPYznnVDL25CrJrvERSWPdScwBRlgELI3saTRlx/B31eArvpLIrEc23\nBsWcpgyGonEdI1uEwoApatZorTeLqsAaBhxj8paFvCx72ZRkbVyoV6eJmMJiGroM\nS4KRG6UCgYBpm2YRPpKP5qJfQgpk9TgxMYr7NvCs+ghgRF5H0OZsveNVo6Ct6i/8\n5879bnPqQt6Wgu7CP3ekVF+mAyRClu9hU8XO+DpWzBChRdDTXhcDTiy35KEkSzm4\nGF2yHpcpmCyiHNz5k9jbuOMoEVkhIIHLpilplC7dORc8Yvb0OFwctQKBgBFGwr21\noAXqv41u69n6d2+bCyY9GeoNJVVKln1omSDczEcT4zKpLgQHoLRDl8Bdr0EUVWmv\numIkPwHZFgNeVBlDw1SepfuAkOjfCaAlmZht93C2Go9Iy+1Ky8v9Pl7cNFcchGTJ\nKwQHdRlERYsqJ7WuVMwbsXmyRmwIeS5F5ysdAoGAbzXsmG4xLbPE1QL8lp7jmBBK\nH9K0/Hj/Lrv1NHKcscJYcgxyAaX7j1iLtJIWaumSzjWoUqfDiZuXeS9v9aJDJ6V6\nBNy45iBojSjkJxXEm9hautsZmhAKRarBJhpUsiSY8rp2+2ZrKQ/7Y9bXDAXlU09d\nzKs7nmSmNMOHgFVFkto=\n-----END PRIVATE KEY-----\n",
+  "client_email": "gcs-access@cellular-deck-259216.iam.gserviceaccount.com",
+  "client_id": "112695666145076246623",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/gcs-access%40cellular-deck-259216.iam.gserviceaccount.com"
+}
