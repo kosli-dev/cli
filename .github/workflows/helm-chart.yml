@@ -22,8 +22,10 @@ jobs:
         run: cd charts/k8s-reporter && helm lint .
 
       - name: Generate Helm Docs
-        uses: docker://jnorwood/helm-docs:latest
         run: |
+          curl -L https://github.com/norwoodj/helm-docs/releases/download/v1.5.0/helm-docs_1.5.0_linux_amd64.deb --output helm-docs.dep
+          dpkg -i helm-docs.dep
+          rm helm-docs.dep
           cd charts/k8s-reporter 
           helm-docs --template-files README.md.gotmpl,_templates.gotmpl --output-file README.md 
           helm-docs --template-files README.md.gotmpl,_templates.gotmpl --output-file ../../docs.merkely.com/content/docs/helm_chart.md
