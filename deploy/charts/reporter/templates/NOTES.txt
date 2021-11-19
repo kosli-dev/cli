@@ -1,1 +1,0 @@
-Reporter is deployed in the cluster

@@ -75,6 +75,15 @@ licenses:
 	@echo $(DATA) | tr " " "\n" > licenses/licenses.csv
 .PHONY: licenses
 
-hugo: docs
+hugo: docs helm-docs
 	cd docs.merkely.com && hugo server --minify
 .PHONY: hugo
+
+helm-lint: 
+	@cd charts/k8s-reporter && helm lint .
+.PHONY: helm-lint
+
+helm-docs: helm-lint
+	@cd charts/k8s-reporter &&  docker run --rm --volume "$(PWD):/helm-docs" jnorwood/helm-docs:latest --template-files README.md.gotmpl,_templates.gotmpl --output-file README.md
+	@cd charts/k8s-reporter &&  docker run --rm --volume "$(PWD):/helm-docs" jnorwood/helm-docs:latest --template-files README.md.gotmpl,_templates.gotmpl --output-file ../../docs.merkely.com/content/docs/helm_chart.md
+.PHONY: helm-docs
