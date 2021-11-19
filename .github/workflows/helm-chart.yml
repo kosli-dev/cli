@@ -44,7 +44,7 @@ jobs:
         run: gsutil cp gs://merkely-charts/index.yaml package/old-index.yaml   
 
       - name: Helm regenerate repo index
-        run: helm repo index packages/. --url https://charts.merkely.com/ --merge package/old-index.yaml
+        run: helm repo index package/. --url https://charts.merkely.com/ --merge package/old-index.yaml
 
       - id: upload-file
         uses: google-github-actions/upload-cloud-storage@v0.4.0
