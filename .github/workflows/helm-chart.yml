@@ -6,7 +6,7 @@ on:
       - 'charts/**'
 
 jobs:
-  deploy:
+  publish:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
@@ -24,7 +24,7 @@ jobs:
       - name: Generate Helm Docs
         run: |
           curl -L https://github.com/norwoodj/helm-docs/releases/download/v1.5.0/helm-docs_1.5.0_linux_amd64.deb --output helm-docs.dep
-          dpkg -i helm-docs.dep
+          sudo dpkg -i helm-docs.dep
           rm helm-docs.dep
           cd charts/k8s-reporter 
           helm-docs --template-files README.md.gotmpl,_templates.gotmpl --output-file README.md 
