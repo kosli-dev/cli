@@ -74,7 +74,7 @@ func newApproveDeploymentCmd(out io.Writer) *cobra.Command {
 			}
 
 			_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+				global.MaxAPIRetries, global.DryRun, http.MethodPost, log)
 			return err
 		},
 	}
@@ -86,7 +86,7 @@ func newApproveDeploymentCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", "[optional] The path to a JSON file containing additional data you would like to attach to this approval.")
 	cmd.Flags().StringVar(&o.oldestSrcCommit, "oldest-commit", "", "The source commit sha for the oldest change in the deployment approval.")
 	cmd.Flags().StringVar(&o.newestSrcCommit, "newest-commit", "HEAD", "The source commit sha for the newest change in the deployment approval.")
-	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", "/src", "The directory where the source git repository is volume-mounted.")
+	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", "The directory where the source git repository is volume-mounted.")
 
 	err := RequireFlags(cmd, []string{"pipeline", "oldest-commit"})
 	if err != nil {
