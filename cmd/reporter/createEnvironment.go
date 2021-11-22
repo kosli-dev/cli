@@ -49,7 +49,7 @@ func newEnvironmentCmd(out io.Writer) *cobra.Command {
 			payload.Owner = global.Owner
 			url := fmt.Sprintf("%s/api/v1/environments/%s/", global.Host, global.Owner)
 
-			_, err := requests.SendPayload(payload, url, global.ApiToken,
+			_, err := requests.SendPayload(payload, url, "", global.ApiToken,
 				global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
 			return err
 		},

@@ -45,7 +45,7 @@ func newRequestApprovalCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
-			_, err = requests.SendPayload(o.payload, url, global.ApiToken,
+			_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
 				global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
 			return err
 		},

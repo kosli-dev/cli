@@ -76,7 +76,7 @@ func newEcsEnvCmd(out io.Writer) *cobra.Command {
 				Id:        o.id,
 			}
 
-			_, err = requests.SendPayload(requestBody, url, global.ApiToken,
+			_, err = requests.SendPayload(requestBody, url, "", global.ApiToken,
 				global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
 			return err
 		},

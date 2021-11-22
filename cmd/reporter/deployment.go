@@ -57,7 +57,7 @@ func newDeploymentCmd(out io.Writer) *cobra.Command {
 
 			url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/", global.Host, global.Owner, o.pipelineName)
 
-			_, err = requests.SendPayload(o.payload, url, global.ApiToken,
+			_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
 				global.MaxAPIRetries, global.DryRun, http.MethodPost, log)
 			return err
 		},

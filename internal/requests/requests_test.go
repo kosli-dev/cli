@@ -109,7 +109,7 @@ func (suite *RequestsTestSuite) TestSendPayload() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			resp, err := SendPayload(t.args.payload, t.args.url, t.args.token, t.args.maxRetries, t.args.dryRun, t.args.method, logrus.New())
+			resp, err := SendPayload(t.args.payload, t.args.url, "", t.args.token, t.args.maxRetries, t.args.dryRun, t.args.method, logrus.New())
 			if t.expectError {
 				require.Errorf(suite.T(), err, "error was expected but got none")
 			} else {

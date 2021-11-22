@@ -19,7 +19,7 @@ type controlDeploymentOptions struct {
 func newControlDeploymentCmd(out io.Writer) *cobra.Command {
 	o := new(controlDeploymentOptions)
 	cmd := &cobra.Command{
-		Use:   "control ARTIFACT-NAME-OR-PATH",
+		Use:   "deployment ARTIFACT-NAME-OR-PATH",
 		Short: "Check if an artifact in Merkely has been approved for deployment.",
 		Long:  controlDeploymentDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -41,7 +41,7 @@ func newControlDeploymentCmd(out io.Writer) *cobra.Command {
 
 			url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/approvals/", global.Host, global.Owner, o.pipelineName, o.sha256)
 
-			response, err := requests.SendPayload([]byte{}, url, global.ApiToken,
+			response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
 				global.MaxAPIRetries, global.DryRun, http.MethodGet, log)
 			if err != nil {
 				return err

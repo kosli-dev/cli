@@ -51,14 +51,17 @@ func getRetryableHttpClient(maxAPIRetries int, logger *logrus.Logger) *http.Clie
 }
 
 // doRequest sends an HTTP request to a URL and returns the response body and status code
-func doRequest(jsonBytes []byte, url string, apiToken string, maxAPIRetries int, method string, logger *logrus.Logger) (*HTTPResponse, error) {
+func doRequest(jsonBytes []byte, url, username, password string, maxAPIRetries int, method string, logger *logrus.Logger) (*HTTPResponse, error) {
 	client := getRetryableHttpClient(maxAPIRetries, logger)
 
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonBytes))
 	if err != nil {
 		return &HTTPResponse{}, fmt.Errorf("failed to create post request to %s : %v", url, err)
 	}
-	req.SetBasicAuth(apiToken, "unset")
+	if username == "" {
+		username = "unset"
+	}
+	req.SetBasicAuth(password, username)
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 
 	resp, err := client.Do(req)
@@ -79,7 +82,7 @@ func doRequest(jsonBytes []byte, url string, apiToken string, maxAPIRetries int,
 }
 
 // SendPayload sends a JSON payload to a URL
-func SendPayload(payload interface{}, url, token string, maxRetries int, dryRun bool, method string, logger *logrus.Logger) (*HTTPResponse, error) {
+func SendPayload(payload interface{}, url, username, token string, maxRetries int, dryRun bool, method string, logger *logrus.Logger) (*HTTPResponse, error) {
 	var resp *HTTPResponse
 	jsonBytes, err := json.MarshalIndent(payload, "", "    ")
 	if err != nil {
@@ -92,7 +95,7 @@ func SendPayload(payload interface{}, url, token string, maxRetries int, dryRun 
 	} else {
 		logger.Info("****** Sending the payload to the API ******")
 		logger.Info(string(jsonBytes))
-		resp, err = doRequest(jsonBytes, url, token, maxRetries, method, logger)
+		resp, err = doRequest(jsonBytes, url, username, token, maxRetries, method, logger)
 		if err != nil {
 			return resp, err
 		}

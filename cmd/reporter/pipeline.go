@@ -73,7 +73,7 @@ func newPipelineCmd(out io.Writer) *cobra.Command {
 			owner := pipe.Owner
 			url := fmt.Sprintf("%s/api/v1/projects/%s/", global.Host, owner)
 
-			_, err = requests.SendPayload(pipe, url, global.ApiToken,
+			_, err = requests.SendPayload(pipe, url, "", global.ApiToken,
 				global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
 			return err
 		},
