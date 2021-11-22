@@ -38,8 +38,7 @@ jobs:
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_GCS_CREDENTIALS }}
-          export_default_credentials: true
-          credentials_file_path: credentials/    
+          export_default_credentials: true    
 
       - name: Pull existing Index.yaml
         run: gsutil cp gs://merkely-charts/index.yaml package/old-index.yaml   
