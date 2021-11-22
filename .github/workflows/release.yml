@@ -108,7 +108,7 @@ jobs:
 
       - uses: EndBug/add-and-commit@v7
         with:
-          add: 'docs'
+          add: 'docs.merkely.com/.'
           branch: main
           default_author: github_actor
           message: 'Update docs'
