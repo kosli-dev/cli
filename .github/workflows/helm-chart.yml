@@ -55,7 +55,9 @@ jobs:
          parent: false  
 
       - name: cleanup
-        run: rm -rf package 
+        run: |
+          rm -rf package 
+          rm -rf credentials
 
       - uses: EndBug/add-and-commit@v7
         with:

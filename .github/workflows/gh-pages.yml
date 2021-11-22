@@ -3,8 +3,11 @@ name: github pages
 on:
   push:
     branches:
-      - main  # Set a branch to deploy
-  pull_request:
+      - main 
+  workflow_run:
+    workflows: ["helm chart", "release"]
+    types:
+      - completed
 
 jobs:
   deploy:
