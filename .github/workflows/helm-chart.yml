@@ -38,7 +38,8 @@ jobs:
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_GCS_CREDENTIALS }}
-          export_default_credentials: true    
+          export_default_credentials: true
+          credentials_file_path: /tmp/    
 
       - name: Pull existing Index.yaml
         run: gsutil cp gs://merkely-charts/index.yaml package/old-index.yaml   
@@ -58,8 +59,8 @@ jobs:
 
       - uses: EndBug/add-and-commit@v7
         with:
-          add: '.'
+          add: '["docs.merkely.com/.", "charts/."]'
           branch: main
           default_author: github_actor
           message: 'Update helm docs'
-          pull_strategy: 'NO-PULL'     
+          pull: 'NO-PULL'     
