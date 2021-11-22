@@ -3,7 +3,9 @@ name: github pages
 on:
   push:
     branches:
-      - main 
+      - main
+    paths:  
+      - 'docs.merkely.com/**'
   workflow_run:
     workflows: ["helm chart", "release"]
     types:
