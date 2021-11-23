@@ -9,3 +9,4 @@ licenses/
 pipe.json
 /docs/public
 **/.DS_Store
+docs.merkely.com/resources/_gen/*
