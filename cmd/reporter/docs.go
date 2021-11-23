@@ -110,7 +110,13 @@ func MerkelyGenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender,
 	filename := filepath.Join(dir, basename)
 
 	if _, err := os.Stat(dir); os.IsNotExist(err) && cmd.HasParent() {
-		os.MkdirAll(dir, 0700)
+		mkdirErr := os.MkdirAll(dir, 0700)
+		if mkdirErr != nil {
+			return mkdirErr
+		}
+		if err != nil {
+			return err
+		}
 	}
 
 	if cmd.HasSubCommands() && cmd.HasParent() {
