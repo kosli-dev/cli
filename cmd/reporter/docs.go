@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
-	"path"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -48,16 +48,32 @@ func (o *docsOptions) run(out io.Writer) error {
 	if o.generateHeaders {
 		standardLinks := func(s string) string { return s }
 
-		hdrFunc := func(filename string) string {
-			base := filepath.Base(filename)
-			name := strings.TrimSuffix(base, path.Ext(base))
-			title := strings.Title(strings.Replace(name, "_", " ", -1))
-			return fmt.Sprintf("---\ntitle: \"%s\"\n---\n\n", strings.ToLower(title))
-		}
+		// make directory name after root command
+		// set destination directory
+		// name md file for root command md file as _index.md
 
-		return doc.GenMarkdownTreeCustom(o.topCmd, o.dest, hdrFunc, standardLinks)
+		// fmt.Println(o.topCmd.Commands())
+
+		// for _, c := range o.topCmd.Commands() {
+		// 	dest := c.Name()
+		// 	hdrFunc := func(filename string) string {
+		// 		base := filepath.Base(filename)
+		// 		name := strings.TrimSuffix(base, path.Ext(base))
+		// 		title := strings.Title(strings.Replace(name, "_", " ", -1))
+		// 		return fmt.Sprintf("---\ntitle: \"%s\"\n---\n\n", strings.ToLower(title))
+		// 	}
+		// 	doc.GenMarkdownTreeCustom(o.topCmd, dest, hdrFunc, standardLinks)
+		// }
+
+		hdrFunc := func(cmdName string) string {
+			name := filepath.Base(cmdName)
+			// name := strings.TrimSuffix(base, path.Ext(base))
+			// title := strings.Title(strings.Replace(name, "_", " ", -1))
+			return fmt.Sprintf("---\ntitle: \"%s\"\n---\n\n", strings.ToLower(name))
+		}
+		return MerkelyGenMarkdownTreeCustom(o.topCmd, o.dest, hdrFunc, standardLinks)
 	}
-	return doc.GenMarkdownTree(o.topCmd, o.dest)
+	return MerkelyGenMarkdownTree(o.topCmd, o.dest)
 	// var err = doc.GenMarkdownTree(o.topCmd, o.dest)
 	// if err != nil {
 	// 	return err
@@ -68,6 +84,53 @@ func (o *docsOptions) run(out io.Writer) error {
 	// 	return fmt.Sprintf(":ref:`%s <%s>`", name, ref)
 	// }
 	//return doc.GenReSTTreeCustom(o.topCmd, "docs/rst", func(filename string) string { return "" }, linkHandler)
+}
+
+func MerkelyGenMarkdownTree(cmd *cobra.Command, dir string) error {
+	identity := func(s string) string { return s }
+	emptyStr := func(s string) string { return "" }
+	return MerkelyGenMarkdownTreeCustom(cmd, dir, emptyStr, identity)
+}
+
+func MerkelyGenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender, linkHandler func(string) string) error {
+	for _, c := range cmd.Commands() {
+		if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
+			continue
+		}
+		cmdDir := fmt.Sprintf("%s/%s", dir, cmd.Name())
+		if !cmd.HasParent() {
+			cmdDir = dir
+		}
+		if err := MerkelyGenMarkdownTreeCustom(c, cmdDir, filePrepender, linkHandler); err != nil {
+			return err
+		}
+	}
+
+	basename := strings.Replace(cmd.CommandPath(), " ", "_", -1) + ".md"
+	filename := filepath.Join(dir, basename)
+
+	if _, err := os.Stat(dir); os.IsNotExist(err) && cmd.HasParent() {
+		os.MkdirAll(dir, 0700)
+	}
+
+	if cmd.HasSubCommands() && cmd.HasParent() {
+		basename = "_index.md"
+		filename = filepath.Join(dir, cmd.Name(), basename)
+	}
+
+	f, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if _, err := io.WriteString(f, filePrepender(cmd.CommandPath())); err != nil {
+		return err
+	}
+	if err := doc.GenMarkdownCustom(cmd, f, linkHandler); err != nil {
+		return err
+	}
+	return nil
 }
 
 // func generateReSTFiles(cmd *cobra.Command, dir string) error {
