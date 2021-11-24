@@ -1,5 +1,0 @@
-baseURL = 'https://new-docs.merkely.com'
-languageCode = 'en-us'
-title = 'Merkely developer documentation'
-
-theme="book"
