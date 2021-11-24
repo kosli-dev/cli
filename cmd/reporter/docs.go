@@ -46,7 +46,11 @@ func newDocsCmd(out io.Writer) *cobra.Command {
 
 func (o *docsOptions) run(out io.Writer) error {
 	if o.generateHeaders {
-		standardLinks := func(s string) string { return s }
+		// standardLinks := func(s string) string { return s }
+		linkHandler := func(name string) string {
+			base := strings.TrimSuffix(name, path.Ext(name))
+			return "/client_reference/" + strings.ToLower(base) + "/"
+		}
 
 		hdrFunc := func(filename string) string {
 			base := filepath.Base(filename)
@@ -55,7 +59,7 @@ func (o *docsOptions) run(out io.Writer) error {
 			return fmt.Sprintf("---\ntitle: \"%s\"\n---\n\n", strings.ToLower(title))
 		}
 
-		return doc.GenMarkdownTreeCustom(o.topCmd, o.dest, hdrFunc, standardLinks)
+		return doc.GenMarkdownTreeCustom(o.topCmd, o.dest, hdrFunc, linkHandler)
 	}
 	return doc.GenMarkdownTree(o.topCmd, o.dest)
 	// var err = doc.GenMarkdownTree(o.topCmd, o.dest)
