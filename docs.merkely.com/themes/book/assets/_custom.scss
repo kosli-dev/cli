@@ -5,3 +5,21 @@
     background-color: #272822;
     color: #f8f8f2;
 }
+
+.book-brand {
+    img {
+        width: auto;
+    }
+    span {
+        display: none;
+    }
+}
+
+.book-menu .book-menu-content {
+    background-color: $merkely-light-blue;
+}
+
+.book-search input {
+    background-color: white;
+    border: 1px solid $merkely-dark-royal-blue;
+}

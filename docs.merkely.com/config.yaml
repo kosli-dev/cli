@@ -6,3 +6,4 @@ theme: "book"
 
 params:
   BookSection: '/'
+  BookLogo: 'logo.png'
