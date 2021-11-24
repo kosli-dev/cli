@@ -1,6 +1,14 @@
 /* You can add custom styles here. */
 
 // @import "plugins/numbered";
+body {
+    background-color: $merkely-light-blue;
+}
+
+main.container {
+    height: 100vh;
+}
+
 .markdown pre {
     background-color: #272822;
     color: #f8f8f2;
@@ -22,4 +30,8 @@
 .book-search input {
     background-color: white;
     border: 1px solid $merkely-dark-royal-blue;
+}
+
+.book-page {
+    background-color: white;
 }
