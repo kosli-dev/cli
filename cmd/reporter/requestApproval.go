@@ -12,9 +12,10 @@ import (
 func newRequestApprovalCmd(out io.Writer) *cobra.Command {
 	o := new(approvalOptions)
 	cmd := &cobra.Command{
-		Use:   "request ARTIFACT-NAME-OR-PATH",
-		Short: "Request an approval for deploying an artifact in Merkely. ",
-		Long:  requestApprovalDesc(),
+		Use:               "request ARTIFACT-NAME-OR-PATH",
+		Short:             "Request an approval for deploying an artifact in Merkely. ",
+		Long:              requestApprovalDesc(),
+		DisableAutoGenTag: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -71,6 +72,6 @@ func newRequestApprovalCmd(out io.Writer) *cobra.Command {
 func requestApprovalDesc() string {
 	return `
    Request an approval of a deployment of an artifact in Merkely. The request should be reviewed in Merkely UI.
-   The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
+   The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly.
    `
 }

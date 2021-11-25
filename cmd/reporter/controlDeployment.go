@@ -19,9 +19,10 @@ type controlDeploymentOptions struct {
 func newControlDeploymentCmd(out io.Writer) *cobra.Command {
 	o := new(controlDeploymentOptions)
 	cmd := &cobra.Command{
-		Use:   "deployment ARTIFACT-NAME-OR-PATH",
-		Short: "Check if an artifact in Merkely has been approved for deployment.",
-		Long:  controlDeploymentDesc(),
+		Use:               "deployment ARTIFACT-NAME-OR-PATH",
+		Short:             "Check if an artifact in Merkely has been approved for deployment.",
+		Long:              controlDeploymentDesc(),
+		DisableAutoGenTag: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -76,6 +77,6 @@ func newControlDeploymentCmd(out io.Writer) *cobra.Command {
 
 func controlDeploymentDesc() string {
 	return `Check if an artifact in Merkely has been approved for deployment.
-   The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
+   The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly.
    `
 }

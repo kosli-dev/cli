@@ -28,9 +28,10 @@ type DeploymentPayload struct {
 func newDeploymentCmd(out io.Writer) *cobra.Command {
 	o := new(deploymentOptions)
 	cmd := &cobra.Command{
-		Use:   "deployment ARTIFACT-NAME-OR-PATH",
-		Short: "Report/Log a deployment to Merkely. ",
-		Long:  deploymentDesc(),
+		Use:               "deployment ARTIFACT-NAME-OR-PATH",
+		Short:             "Report/Log a deployment to Merkely. ",
+		Long:              deploymentDesc(),
+		DisableAutoGenTag: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -82,8 +83,8 @@ func newDeploymentCmd(out io.Writer) *cobra.Command {
 
 func deploymentDesc() string {
 	return `
-   Report a deployment of an artifact to an environment in Merkely. 
-   The artifact SHA256 fingerprint is calculated and reported 
-   or,alternatively, can be provided directly. 
+   Report a deployment of an artifact to an environment in Merkely.
+   The artifact SHA256 fingerprint is calculated and reported
+   or,alternatively, can be provided directly.
    ` + GetCIDefaultsTemplates(supportedCIs, []string{"build-url"})
 }

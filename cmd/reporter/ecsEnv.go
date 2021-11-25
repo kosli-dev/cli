@@ -11,8 +11,8 @@ import (
 )
 
 const ecsEnvDesc = `
-List the artifacts deployed in an AWS ECS cluster and their digests 
-and report them to Merkely. 
+List the artifacts deployed in an AWS ECS cluster and their digests
+and report them to Merkely.
 `
 
 const ecsEnvExample = `
@@ -29,10 +29,11 @@ type ecsEnvOptions struct {
 func newEcsEnvCmd(out io.Writer) *cobra.Command {
 	o := new(ecsEnvOptions)
 	cmd := &cobra.Command{
-		Use:     "ecs env-name",
-		Short:   "Report images data from AWS ECS cluster to Merkely.",
-		Long:    ecsEnvDesc,
-		Example: ecsEnvExample,
+		Use:               "ecs env-name",
+		Short:             "Report images data from AWS ECS cluster to Merkely.",
+		Long:              ecsEnvDesc,
+		Example:           ecsEnvExample,
+		DisableAutoGenTag: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				return fmt.Errorf("only environment name argument is allowed")

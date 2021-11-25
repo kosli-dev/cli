@@ -14,15 +14,15 @@ import (
 )
 
 const k8sEnvDesc = `
-List the artifacts deployed in the k8s environment and their digests 
-and report them to Merkely. 
+List the artifacts deployed in the k8s environment and their digests
+and report them to Merkely.
 `
 
 const k8sEnvExample = `
 * report what's running in an entire cluster using kubeconfig at $HOME/.kube/config:
 merkely report env k8s prod --api-token 1234 --owner exampleOrg --id prod-cluster
 
-* report what's running in an entire cluster using kubeconfig at $HOME/.kube/config 
+* report what's running in an entire cluster using kubeconfig at $HOME/.kube/config
 (with global flags defined in environment or in  a config file):
 merkely report env k8s prod
 
@@ -57,11 +57,12 @@ func newK8sEnvCmd(out io.Writer) *cobra.Command {
 
 	o := new(k8sEnvOptions)
 	cmd := &cobra.Command{
-		Use:     "k8s [-n namespace | -x namespace]... [-k /path/to/kube/config] [-i infrastructure-identifier] env-name",
-		Short:   "Report images data from specific namespace(s) or entire cluster to Merkely.",
-		Long:    k8sEnvDesc,
-		Aliases: []string{"kubernetes"},
-		Example: k8sEnvExample,
+		Use:               "k8s [-n namespace | -x namespace]... [-k /path/to/kube/config] [-i infrastructure-identifier] env-name",
+		Short:             "Report images data from specific namespace(s) or entire cluster to Merkely.",
+		Long:              k8sEnvDesc,
+		Aliases:           []string{"kubernetes"},
+		Example:           k8sEnvExample,
+		DisableAutoGenTag: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				return fmt.Errorf("only environment name argument is allowed")

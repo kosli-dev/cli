@@ -33,9 +33,10 @@ type ApprovalPayload struct {
 func newApproveDeploymentCmd(out io.Writer) *cobra.Command {
 	o := new(approvalOptions)
 	cmd := &cobra.Command{
-		Use:   "approval ARTIFACT-NAME-OR-PATH",
-		Short: "Approve deploying an artifact in Merkely. ",
-		Long:  approveDeploymentDesc(),
+		Use:               "approval ARTIFACT-NAME-OR-PATH",
+		Short:             "Approve deploying an artifact in Merkely. ",
+		Long:              approveDeploymentDesc(),
+		DisableAutoGenTag: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -98,8 +99,8 @@ func newApproveDeploymentCmd(out io.Writer) *cobra.Command {
 
 func approveDeploymentDesc() string {
 	return `
-   Approve a deployment of an artifact in Merkely. 
-   The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
+   Approve a deployment of an artifact in Merkely.
+   The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly.
    `
 }
 

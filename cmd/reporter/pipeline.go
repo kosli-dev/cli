@@ -13,7 +13,7 @@ import (
 )
 
 const pipelineDesc = `
-Create a Merkely pipeline by providing a JSON pipefile. 
+Create a Merkely pipeline by providing a JSON pipefile.
 The pipefile contains the pipeline metadata and compliance template.
 `
 
@@ -45,10 +45,11 @@ type Pipefile struct {
 
 func newPipelineCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "pipeline",
-		Short:   "Create a Merkely pipeline",
-		Long:    pipelineDesc,
-		Example: pipelineExample,
+		Use:               "pipeline",
+		Short:             "Create a Merkely pipeline",
+		Long:              pipelineDesc,
+		Example:           pipelineExample,
+		DisableAutoGenTag: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				return fmt.Errorf("only pipefile path argument is allowed")

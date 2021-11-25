@@ -19,9 +19,10 @@ type fingerprintOptions struct {
 func newFingerprintCmd(out io.Writer) *cobra.Command {
 	o := new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "fingerprint",
-		Short: "Print the SHA256 fingerprint of an artifact.",
-		Long:  fingerprintDesc,
+		Use:               "fingerprint",
+		Short:             "Print the SHA256 fingerprint of an artifact.",
+		Long:              fingerprintDesc,
+		DisableAutoGenTag: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				return fmt.Errorf("only one argument (docker image name or file/dir path) is allowed")
