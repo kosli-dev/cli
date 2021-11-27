@@ -45,7 +45,7 @@ merkely report env k8s prod -k /path/to/kube/config
   -x, --exclude-namespace strings   The comma separated list of namespaces regex patterns NOT to report artifacts info from. Can't be used together with --namespace.
   -h, --help                        help for k8s
   -i, --id string                   The unique identifier of the source infrastructure of the report (e.g. the K8S cluster/namespace name). If not set, it is defaulted to environment name.
-  -k, --kubeconfig string           The kubeconfig path for the target cluster. (default "/Users/mikelong/.kube/config")
+  -k, --kubeconfig string           The kubeconfig path for the target cluster. (default "$HOME/.kube/config")
   -n, --namespace strings           The comma separated list of namespaces regex patterns to report artifacts info from. Can't be used together with --exclude-namespace.
 ```
 
