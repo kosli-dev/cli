@@ -11,8 +11,8 @@ import (
 )
 
 const serverEnvDesc = `
-List the artifacts deployed in a server environment and their digests 
-and report them to Merkely. 
+List the artifacts deployed in a server environment and their digests
+and report them to Merkely.
 `
 
 const serverEnvExample = `
@@ -28,11 +28,12 @@ type serverEnvOptions struct {
 func newServerEnvCmd(out io.Writer) *cobra.Command {
 	o := new(serverEnvOptions)
 	cmd := &cobra.Command{
-		Use:     "server [-p /path/of/artifacts/directory] [-i infrastructure-identifier] env-name",
-		Short:   "Report directory artifacts data in the given list of paths to Merkely.",
-		Long:    serverEnvDesc,
-		Aliases: []string{"directories"},
-		Example: serverEnvExample,
+		Use:               "server [-p /path/of/artifacts/directory] [-i infrastructure-identifier] env-name",
+		Short:             "Report directory artifacts data in the given list of paths to Merkely.",
+		Long:              serverEnvDesc,
+		Aliases:           []string{"directories"},
+		Example:           serverEnvExample,
+		DisableAutoGenTag: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				return fmt.Errorf("only environment name argument is allowed")

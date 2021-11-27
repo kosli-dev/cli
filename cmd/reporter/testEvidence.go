@@ -26,9 +26,10 @@ type testEvidenceOptions struct {
 func newTestEvidenceCmd(out io.Writer) *cobra.Command {
 	o := new(testEvidenceOptions)
 	cmd := &cobra.Command{
-		Use:   "test ARTIFACT-NAME-OR-PATH",
-		Short: "Report/Log a JUnit test evidence to an artifact in Merkely. ",
-		Long:  testEvidenceDesc(),
+		Use:               "test ARTIFACT-NAME-OR-PATH",
+		Short:             "Report/Log a JUnit test evidence to an artifact in Merkely. ",
+		Long:              testEvidenceDesc(),
+		DisableAutoGenTag: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -87,8 +88,8 @@ func newTestEvidenceCmd(out io.Writer) *cobra.Command {
 
 func testEvidenceDesc() string {
 	return `
-   Report a JUnit test evidence to an artifact in Merkely. 
-   The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
+   Report a JUnit test evidence to an artifact in Merkely.
+   The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly.
    ` + GetCIDefaultsTemplates(supportedCIs, []string{"build-url"})
 }
 

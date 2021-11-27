@@ -26,11 +26,12 @@ func newDocsCmd(out io.Writer) *cobra.Command {
 	o := &docsOptions{}
 
 	cmd := &cobra.Command{
-		Use:    "docs",
-		Short:  "generate documentation as markdown",
-		Long:   docsDesc,
-		Hidden: true,
-		Args:   NoArgs,
+		Use:               "docs",
+		Short:             "generate documentation as markdown",
+		Long:              docsDesc,
+		Hidden:            true,
+		Args:              NoArgs,
+		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.topCmd = cmd.Root()
 			return o.run(out)

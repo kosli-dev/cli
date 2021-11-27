@@ -22,7 +22,7 @@ Environment variables:
 | $MERKELY_HOST                      | set the Merkely host.                                                             |
 | $MERKELY_DRY_RUN                   | indicate whether or not Merkely CLI is running in Dry Run mode.                   |
 | $MERKELY_MAX_API_RETRIES           | set the maximum number of API calling retries when the API host is not reachable. |
-| $MERKELY_CONFIG_FILE               | set the path to Merkely config file where you can set your options.               |         
+| $MERKELY_CONFIG_FILE               | set the path to Merkely config file where you can set your options.               |
 `
 
 const (
@@ -50,11 +50,12 @@ type GlobalOpts struct {
 func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	global = new(GlobalOpts)
 	cmd := &cobra.Command{
-		Use:              "merkely",
-		Short:            "The Merkely evidence reporting CLI.",
-		Long:             globalUsage,
-		SilenceUsage:     true,
-		TraverseChildren: true,
+		Use:               "merkely",
+		Short:             "The Merkely evidence reporting CLI.",
+		Long:              globalUsage,
+		SilenceUsage:      true,
+		TraverseChildren:  true,
+		DisableAutoGenTag: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// You can bind cobra and viper in a few locations, but PersistencePreRunE on the root command works well
 			return initializeConfig(cmd)

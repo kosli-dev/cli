@@ -10,9 +10,10 @@ const createDesc = `Create objects in Merkely.`
 
 func newCreateCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create",
-		Short: createDesc,
-		Long:  createDesc,
+		Use:               "create",
+		Short:             createDesc,
+		Long:              createDesc,
+		DisableAutoGenTag: true,
 	}
 
 	// Add subcommands

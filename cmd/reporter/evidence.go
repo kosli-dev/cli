@@ -29,9 +29,10 @@ type EvidencePayload struct {
 func newEvidenceCmd(out io.Writer) *cobra.Command {
 	o := new(evidenceOptions)
 	cmd := &cobra.Command{
-		Use:   "evidence ARTIFACT-NAME-OR-PATH",
-		Short: "Report/Log an evidence to an artifact in Merkely. ",
-		Long:  evidenceDesc(),
+		Use:               "evidence ARTIFACT-NAME-OR-PATH",
+		Short:             "Report/Log an evidence to an artifact in Merkely. ",
+		Long:              evidenceDesc(),
+		DisableAutoGenTag: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -87,7 +88,7 @@ func newEvidenceCmd(out io.Writer) *cobra.Command {
 
 func evidenceDesc() string {
 	return `
-   Report an evidence to an artifact in Merkely. 
-   The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
+   Report an evidence to an artifact in Merkely.
+   The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly.
    ` + GetCIDefaultsTemplates(supportedCIs, []string{"build-url"})
 }

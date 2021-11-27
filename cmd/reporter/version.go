@@ -22,10 +22,11 @@ version.BuildInfo{Version:"v0.0.1", GitCommit:"fe51cd1e31e6a202cba7dead9552a6d41
 
 func newVersionCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "version",
-		Short: "Print the client version information",
-		Long:  versionDesc,
-		Args:  NoArgs,
+		Use:               "version",
+		Short:             "Print the client version information",
+		Long:              versionDesc,
+		Args:              NoArgs,
+		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runVersion(out)
 		},

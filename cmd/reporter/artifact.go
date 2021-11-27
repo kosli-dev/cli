@@ -30,9 +30,10 @@ type ArtifactPayload struct {
 func newArtifactCmd(out io.Writer) *cobra.Command {
 	o := new(artifactOptions)
 	cmd := &cobra.Command{
-		Use:   "artifact ARTIFACT-NAME-OR-PATH",
-		Short: "Report/Log an artifact to Merkely. ",
-		Long:  artifactDesc(),
+		Use:               "artifact ARTIFACT-NAME-OR-PATH",
+		Short:             "Report/Log an artifact to Merkely. ",
+		Long:              artifactDesc(),
+		DisableAutoGenTag: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -86,8 +87,8 @@ func newArtifactCmd(out io.Writer) *cobra.Command {
 
 func artifactDesc() string {
 	return `
-   Report an artifact to a pipeline in Merkely. 
-   The artifact SHA256 fingerprint is calculated and reported 
-   or,alternatively, can be provided directly. 
+   Report an artifact to a pipeline in Merkely.
+   The artifact SHA256 fingerprint is calculated and reported
+   or,alternatively, can be provided directly.
    ` + GetCIDefaultsTemplates(supportedCIs, []string{"git-commit", "build-url", "commit-url"})
 }

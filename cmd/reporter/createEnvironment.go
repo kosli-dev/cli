@@ -28,11 +28,12 @@ type CreateEnvironmentPayload struct {
 func newEnvironmentCmd(out io.Writer) *cobra.Command {
 	payload := new(CreateEnvironmentPayload)
 	cmd := &cobra.Command{
-		Use:     "environment",
-		Short:   "Create a Merkely environment",
-		Long:    createEnvDesc,
-		Example: createEnvExample,
-		Args:    NoArgs,
+		Use:               "environment",
+		Short:             "Create a Merkely environment",
+		Long:              createEnvDesc,
+		Example:           createEnvExample,
+		DisableAutoGenTag: true,
+		Args:              NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
