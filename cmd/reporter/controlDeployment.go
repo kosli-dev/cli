@@ -43,26 +43,36 @@ func newControlDeploymentCmd(out io.Writer) *cobra.Command {
 
 			response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
 				global.MaxAPIRetries, false, http.MethodGet, log)
-			if err != nil {
+			if err != nil && !global.DryRun {
 				return err
+			} else if err != nil {
+				log.Infof("failed to get approvals for artifact %s: %v", o.sha256, err)
+				return nil
 			}
 
 			var approvals []map[string]interface{}
-			if !global.DryRun {
-				err = json.Unmarshal([]byte(response.Body), &approvals)
-				if err != nil {
-					return err
-				}
+			err = json.Unmarshal([]byte(response.Body), &approvals)
+			if err != nil && !global.DryRun {
+				return err
+			}
 
-				state, ok := approvals[len(approvals)-1]["state"].(string)
-				if ok && state == "APPROVED" {
-					log.Infof("artifact with sha256 %s is approved in approval no. [%d]", o.sha256, len(approvals))
+			if len(approvals) == 0 {
+				if global.DryRun {
+					log.Infof("artifact with sha256 %s has no approvals created", o.sha256)
 					return nil
 				}
-				return fmt.Errorf("artifact with sha256 %s is not approved", o.sha256)
+				return fmt.Errorf("artifact with sha256 %s has no approvals created", o.sha256)
 			}
-			// TODO: log the result without failing
-			return nil
+
+			state, ok := approvals[len(approvals)-1]["state"].(string)
+			if ok && state == "APPROVED" {
+				log.Infof("artifact with sha256 %s is approved in approval no. [%d]", o.sha256, len(approvals))
+				return nil
+			} else if !global.DryRun {
+				return fmt.Errorf("artifact with sha256 %s is not approved", o.sha256)
+			} else {
+				return nil
+			}
 		},
 	}
 
