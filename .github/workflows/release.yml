@@ -6,67 +6,30 @@ on:
       - 'v*' 
 
 env: 
-  IMAGE: ghcr.io/merkely-development/reporter
   GO_VERSION: 1.16.4
 
 jobs:
-  build:
+  pre-build:
     runs-on: ubuntu-20.04
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
     steps:
     
     - uses: actions/checkout@v2
-
-    - name: Run golangci-lint
-      uses: golangci/golangci-lint-action@v2
-      with:
-        version: v1.29
-        args: --timeout=3m
-    
-    # Set up QEMU emulator to allow building multi-arch images    
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v1
-
-    # This is the a separate action that sets up buildx (buildkit) runner
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
-
-    # So now you can use Actions' own caching!
-    - name: Cache Docker layers
-      uses: actions/cache@v2
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-buildx-
-
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v1
-      with:
-        registry: ghcr.io
-        username: ${{ github.repository_owner }}
-        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Get tag
       id: tag
       uses: dawidd6/action-get-tag@v1
 
-    - name: Build and push Docker image
-      id: docker_build
-      uses: docker/build-push-action@v2
-      with:
-        push: true
-        tags: ${{ env.IMAGE }}:${{steps.tag.outputs.tag}}, ${{ env.IMAGE }}:latest  
-        platforms: linux/amd64,linux/arm64, linux/386
-        cache-from: type=local,src=/tmp/.buildx-cache
-        cache-to: type=local,dest=/tmp/.buildx-cache-new
-
-    # This is necessary to prevent cache from growing forever
-    # till it hits GitHub's limit of 5GB.
-    - name: Move cache
-      run: |
-        rm -rf /tmp/.buildx-cache
-        mv /tmp/.buildx-cache-new /tmp/.buildx-cache 
-
+  build:
+    needs: [pre-build]
+    uses: merkely-development/reporter/.github/workflows/build.yml@89e1ee8f2e6bd5019e5d8f47d391096850c2951b
+    with:
+      tag: ${{ needs.pre-build.outputs.tag }}
+      platforms: linux/amd64,linux/arm64
+    secrets:
+      slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
+      slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }}
 
   goreleaser:
     needs: [build]

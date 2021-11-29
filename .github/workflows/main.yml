@@ -24,9 +24,10 @@ jobs:
 
   build:
     needs: [pre-build]
-    uses: merkely-development/reporter/.github/workflows/build.yml@f51d33e68e224f4aa3d3d8f28ab0ecf37f5a8217
+    uses: merkely-development/reporter/.github/workflows/build.yml@89e1ee8f2e6bd5019e5d8f47d391096850c2951b
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
+      platforms: linux/amd64
     secrets:
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
       slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
