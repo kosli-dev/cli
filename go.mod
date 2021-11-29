@@ -79,3 +79,5 @@ replace k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.22.3
 replace k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.22.3
 
 replace k8s.io/sample-controller => k8s.io/sample-controller v0.22.3
+
+replace github.com/opencontainers/image-spec => github.com/opencontainers/image-spec v1.0.2
