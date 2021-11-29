@@ -32,9 +32,12 @@ jobs:
 
   build:
     needs: [pre-build]
-    uses: merkely-development/reporter/.github/workflows/build.yml@866d8289c7815bb40cf0d62ccd3f3a1a4a365c72
+    uses: merkely-development/reporter/.github/workflows/build.yml@d4e61a56990db3d55054fb0f8b7e42181d5fe8a4
     with:
-      tag: ${{ needs.pre-build.outputs.tag }} 
+      tag: ${{ needs.pre-build.outputs.tag }}
+    secrets:
+      slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
+      slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
 
     # - name: Run golangci-lint
     #   uses: golangci/golangci-lint-action@v2
