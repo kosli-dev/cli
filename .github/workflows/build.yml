@@ -6,6 +6,9 @@ on:
       tag:
         required: true
         type: string
+      platforms:
+        required: true
+        type: string  
     secrets:
       slack_channel:
         required: true
@@ -57,6 +60,7 @@ jobs:
       with:
         push: true
         tags: ${{ env.IMAGE }}:${{ inputs.tag }}
+        platforms: ${{ inputs.platforms }}
         cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
         cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max 
 
