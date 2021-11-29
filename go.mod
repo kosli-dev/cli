@@ -6,7 +6,7 @@ require (
 	github.com/aws/aws-sdk-go v1.40.17
 	github.com/aws/aws-sdk-go-v2/config v1.6.0
 	github.com/aws/aws-sdk-go-v2/service/ecs v1.7.0
-	github.com/containerd/containerd v1.5.7 // indirect
+	github.com/containerd/containerd v1.5.8 // indirect
 	github.com/docker/docker v20.10.10+incompatible
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/hashicorp/go-retryablehttp v0.6.8

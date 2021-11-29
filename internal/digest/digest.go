@@ -16,14 +16,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// var verboseFlag bool
-
-// func verboseLogs(format string, a ...interface{}) {
-// 	if verboseFlag {
-// 		fmt.Println(fmt.Sprintf(format, a...))
-// 	}
-// }
-
 // DirSha256 returns sha256 digest of a directory
 func DirSha256(dirPath string, logger *logrus.Logger) (string, error) {
 	logger.Debugf("Input path: %v", filepath.Base(dirPath))
