@@ -49,7 +49,7 @@ deps: ## Install depdendencies. Runs `go get` internally.
 	@GOFLAGS="" go mod tidy
 .PHONY: deps
 
-build: deps vet ## Build the package
+build: deps vet ## Build the binary
 	@go build -o reporter -ldflags '$(LDFLAGS)' ./cmd/reporter/
 .PHONY: build
 
