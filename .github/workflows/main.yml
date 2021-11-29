@@ -34,7 +34,7 @@ jobs:
 
   build:
     needs: [pre-build]
-    uses: merkely-development/reporter/.github/workflows/build.yml@v1
+    uses: merkely-development/reporter/.github/workflows/build.yml@b577eecc56927913f00f529d713dc82d3c09188f
     with:
       image: ${{ env.IMAGE }} 
       tag: ${{ needs.pre-build.outputs.tag }} 
