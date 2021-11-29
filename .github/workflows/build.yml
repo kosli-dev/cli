@@ -57,8 +57,8 @@ jobs:
       with:
         push: true
         tags: ${{ env.IMAGE }}:${{ inputs.tag }}
-        cache-from: type=registry,ref=${{ env.image }}:buildcache
-        cache-to: type=registry,ref=${{ env.image }}:buildcache,mode=max 
+        cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
+        cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max 
 
     - name: Slack Notification on Failure
       if: ${{ failure() }}
