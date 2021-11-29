@@ -42,23 +42,27 @@ func newControlDeploymentCmd(out io.Writer) *cobra.Command {
 			url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/approvals/", global.Host, global.Owner, o.pipelineName, o.sha256)
 
 			response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, http.MethodGet, log)
+				global.MaxAPIRetries, false, http.MethodGet, log)
 			if err != nil {
 				return err
 			}
 
 			var approvals []map[string]interface{}
-			err = json.Unmarshal([]byte(response.Body), &approvals)
-			if err != nil {
-				return err
-			}
+			if !global.DryRun {
+				err = json.Unmarshal([]byte(response.Body), &approvals)
+				if err != nil {
+					return err
+				}
 
-			state, ok := approvals[len(approvals)-1]["state"].(string)
-			if ok && state == "APPROVED" {
-				log.Infof("artifact with sha256 %s is approved in approval no. [%d]", o.sha256, len(approvals))
-				return nil
+				state, ok := approvals[len(approvals)-1]["state"].(string)
+				if ok && state == "APPROVED" {
+					log.Infof("artifact with sha256 %s is approved in approval no. [%d]", o.sha256, len(approvals))
+					return nil
+				}
+				return fmt.Errorf("artifact with sha256 %s is not approved", o.sha256)
 			}
-			return fmt.Errorf("artifact with sha256 %s is not approved", o.sha256)
+			// TODO: log the result without failing
+			return nil
 		},
 	}
 
