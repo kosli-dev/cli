@@ -3,7 +3,7 @@ title: 'DevOps: Change is the New Normal'
 weight: 1
 ---
 
-# DevOps: Change is the New Normal
+## DevOps: Change is the New Normal
 
 The software industry is moving away from large, monolithic, centrally managed IT systems, towards a future with small, loosely coupled and rapidly updated micro-systems.
 

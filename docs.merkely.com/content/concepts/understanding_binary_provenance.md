@@ -3,7 +3,7 @@ title: 'Understanding Binary Provenance'
 weight: 4
 ---
 
-# Understanding Binary Provenance
+## Understanding Binary Provenance
 
 From a security and change management perspective,  the strongest form of trust in your production environment is to identify what is running and know where it came from.
 

@@ -3,7 +3,7 @@ title: 'Mapping your value stream'
 weight: 3
 ---
 
-# Mapping your value stream
+## Mapping your value stream
 
 When implementing DevOps Change Management, the first step is to uncover your process as a team.  The way we most often do this is to run a value stream mapping exercise with the team.  This can be as simple as spending 30 minutes around a whiteboard, or as involved as you like.
 

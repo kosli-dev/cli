@@ -3,7 +3,7 @@ title: 'DevOps and Change Management'
 weight: 2
 ---
 
-# DevOps and Change Management
+## DevOps and Change Management
 
 If you work in regulated industries such as finance, medical, and retail, or even just need to follow certain industry standards such as ISO - the way you make software has compliance needs.
 

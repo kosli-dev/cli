@@ -1,0 +1,12 @@
+{{ define "main" }}
+  <article class="markdown">
+      {{ .Content }}
+      <ul class="contents">
+      {{ range .Pages }}
+          <li>
+            <a href="{{.Permalink}}">{{.Title}}</a>
+          </li>
+      {{ end }}
+      </ul>
+  </article>
+{{ end }}
