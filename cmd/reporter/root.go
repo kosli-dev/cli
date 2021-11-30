@@ -57,7 +57,16 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		TraverseChildren: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// You can bind cobra and viper in a few locations, but PersistencePreRunE on the root command works well
-			return initializeConfig(cmd)
+			err := initializeConfig(cmd)
+			if err != nil {
+				return err
+			}
+
+			if global.ApiToken == "DRY_RUN" {
+				global.DryRun = true
+			}
+
+			return nil
 		},
 	}
 	cmd.PersistentFlags().StringVarP(&global.ApiToken, "api-token", "a", "", "The merkely API token.")
