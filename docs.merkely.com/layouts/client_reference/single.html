@@ -1,0 +1,15 @@
+{{ define "main" }}
+  <article class="markdown">
+    {{ .Content }}
+  </article>
+  <script>
+    function changeHtmlTag(fromTag, toTag) {
+      let tags = document.querySelectorAll(`.markdown ${fromTag}`);
+      tags.forEach(function(tag){
+        tag.outerHTML = `<${toTag} id="${tag.id}">${tag.innerHTML}</${toTag}>`;
+      })
+    }
+    changeHtmlTag("h2", "h1");
+    changeHtmlTag("h3", "h2");
+  </script>
+{{ end }}
