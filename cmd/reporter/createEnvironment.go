@@ -15,7 +15,7 @@ Create a Merkely environment.
 
 const createEnvExample = `
 * create a Merkely environment:
-merkely create environment --api-token 1234 --owner test --name newEnv --type K8S --description "my new env"
+merkely create environment --api-token 1234 --owner test --name newEnv --environment-type K8S --description "my new env"
 `
 
 type CreateEnvironmentPayload struct {
@@ -56,10 +56,10 @@ func newEnvironmentCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&payload.Name, "name", "n", "", "The name of environment.")
-	cmd.Flags().StringVarP(&payload.Type, "type", "t", "", "The type of environment. Valid options are: [K8S, ECS, server]")
+	cmd.Flags().StringVarP(&payload.Type, "environment-type", "t", "", "The type of environment. Valid options are: [K8S, ECS, server]")
 	cmd.Flags().StringVarP(&payload.Description, "description", "d", "", "[optional] The environment description.")
 
-	err := RequireFlags(cmd, []string{"name", "type"})
+	err := RequireFlags(cmd, []string{"name", "environment-type"})
 	if err != nil {
 		log.Fatalf("failed to configure required flags: %v", err)
 	}
