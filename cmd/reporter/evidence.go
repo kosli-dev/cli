@@ -68,12 +68,12 @@ func newEvidenceCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVarP(&o.artifactType, "artifact-type", "t", "", "The type of the artifact related to the evidence. Options are [dir, file, docker].")
-	cmd.Flags().StringVarP(&o.inputSha256, "sha256", "s", "", "The SHA256 fingerprint for the artifact. Only required if you don't specify --type.")
+	cmd.Flags().StringVarP(&o.artifactType, "artifact-type", "t", "", "The type of the artifact related to the evidence. Options are [dir, file, docker]. Only required if you don't specify --sha256.")
+	cmd.Flags().StringVarP(&o.inputSha256, "sha256", "s", "", "The SHA256 fingerprint for the artifact. Only required if you don't specify --artifact-type.")
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", "The Merkely pipeline name.")
 	cmd.Flags().StringVarP(&o.description, "description", "d", "", "[optional] The evidence description.")
 	cmd.Flags().StringVarP(&o.buildUrl, "build-url", "b", DefaultValue(ci, "build-url"), "The url of CI pipeline that generated the evidence.")
-	cmd.Flags().BoolVarP(&o.isCompliant, "compliant", "C", true, "Whether the evidence is compliant or not.")
+	cmd.Flags().BoolVarP(&o.isCompliant, "compliant", "C", true, "Whether the evidence is compliant or not. Use '-C=false' to mark as non-compliant.")
 	cmd.Flags().StringVarP(&o.payload.EvidenceType, "evidence-type", "e", "", "The type of evidence being reported.")
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", "[optional] The path to a JSON file containing additional data you would like to attach to this evidence.")
 

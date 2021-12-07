@@ -48,26 +48,26 @@ merkely report deployment prod-image:latest \
 ### Options
 
 ```
-  -t, --artifact-type string   The type of the artifact. Options are [dir, file, docker].
-  -b, --build-url string       The url of CI pipeline that built the artifact.
+  -t, --artifact-type string   The type of the artifact. Options are [dir, file, docker]. Only required if you don't specify --sha256.
+  -b, --build-url string       The url of the CI pipeline that built the artifact.
   -d, --description string     [optional] The artifact description.
   -e, --environment string     The environment name.
   -h, --help                   help for deployment
   -p, --pipeline string        The Merkely pipeline name.
-  -s, --sha256 string          The SHA256 fingerprint for the artifact. Only required if you don't specify --type.
+  -s, --sha256 string          The SHA256 fingerprint for the artifact. Only required if you don't specify --artifact-type.
   -u, --user-data string       [optional] The path to a JSON file containing additional data you would like to attach to this deployment.
 ```
 
 ### Options inherited from parent commands
 
 ```
-  -a, --api-token string      The merkely API token.
-  -c, --config-file string    [optional] The merkely config file path. (default "merkely")
-  -D, --dry-run               Whether to send the request to the endpoint or just log it in stdout.
-  -H, --host string           The merkely endpoint. (default "https://app.merkely.com")
-  -r, --max-api-retries int   How many times should API calls be retried when the API host is not reachable. (default 3)
-  -o, --owner string          The merkely organization.
-  -v, --verbose               Print verbose logs to stdout.
+  -a, --api-token string      The Merkely API token. Set to 'DRY_RUN' to enable dry-run mode.
+  -c, --config-file string    [optional] The Merkely config file path. (default "merkely")
+  -D, --dry-run               [optional] Disable sending the request to the endpoint and log it to stdout.
+  -H, --host string           The Merkely endpoint. (default "https://app.merkely.com")
+  -r, --max-api-retries int   [optional] How many times should API calls be retried when the API host is not reachable. (default 3)
+  -o, --owner string          The Merkely organization.
+  -v, --verbose               [optional] Print verbose logs to stdout.
 ```
 
 ### SEE ALSO

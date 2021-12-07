@@ -7,7 +7,7 @@ import (
 )
 
 const envDesc = `
-Report actual deployments in an environment back to Merkely.
+Report actual deployments in an environment to Merkely.
 This allows Merkely to determine Runtime compliance status of the environment.
 `
 

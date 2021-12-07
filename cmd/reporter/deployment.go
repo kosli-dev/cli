@@ -21,8 +21,8 @@ const deploymentExample = `* report a deployment of docker image to an environme
 merkely report deployment prod-image:latest \
 		--artifact-type docker \
 		--pipeline prod-image-pipeline \
-		--api-token $MERKELY_TOKEN \
-		--owner $MERKELY_OWNER \
+		--api-token 1234 \
+		--owner exampleOrg \
 		--build-url https://your.build.url/build-number \
 		--commit-url https://your.commit.url/sha \
 		--git-commit e5275f161d08c98e280dad9e8b59cc6d929e2608`

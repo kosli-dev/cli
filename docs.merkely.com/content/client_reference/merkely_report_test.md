@@ -47,13 +47,13 @@ merkely report test ARTIFACT-NAME-OR-PATH [flags]
 ### Options inherited from parent commands
 
 ```
-  -a, --api-token string      The merkely API token.
-  -c, --config-file string    [optional] The merkely config file path. (default "merkely")
-  -D, --dry-run               Whether to send the request to the endpoint or just log it in stdout.
-  -H, --host string           The merkely endpoint. (default "https://app.merkely.com")
-  -r, --max-api-retries int   How many times should API calls be retried when the API host is not reachable. (default 3)
-  -o, --owner string          The merkely organization.
-  -v, --verbose               Print verbose logs to stdout.
+  -a, --api-token string      The Merkely API token. Set to 'DRY_RUN' to enable dry-run mode.
+  -c, --config-file string    [optional] The Merkely config file path. (default "merkely")
+  -D, --dry-run               [optional] Disable sending the request to the endpoint and log it to stdout.
+  -H, --host string           The Merkely endpoint. (default "https://app.merkely.com")
+  -r, --max-api-retries int   [optional] How many times should API calls be retried when the API host is not reachable. (default 3)
+  -o, --owner string          The Merkely organization.
+  -v, --verbose               [optional] Print verbose logs to stdout.
 ```
 
 ### SEE ALSO
