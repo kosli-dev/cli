@@ -69,12 +69,12 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 			return nil
 		},
 	}
-	cmd.PersistentFlags().StringVarP(&global.ApiToken, "api-token", "a", "", "The merkely API token.")
-	cmd.PersistentFlags().StringVarP(&global.Owner, "owner", "o", "", "The merkely organization.")
-	cmd.PersistentFlags().StringVarP(&global.Host, "host", "H", "https://app.merkely.com", "The merkely endpoint.")
-	cmd.PersistentFlags().BoolVarP(&global.DryRun, "dry-run", "D", false, "Whether to send the request to the endpoint or just log it in stdout.")
+	cmd.PersistentFlags().StringVarP(&global.ApiToken, "api-token", "a", "", "The Merkely API token. Set to 'DRY_RUN' to enable dry-run mode.")
+	cmd.PersistentFlags().StringVarP(&global.Owner, "owner", "o", "", "The Merkely organization.")
+	cmd.PersistentFlags().StringVarP(&global.Host, "host", "H", "https://app.merkely.com", "The Merkely endpoint.")
+	cmd.PersistentFlags().BoolVarP(&global.DryRun, "dry-run", "D", false, "Disable sending the request to the endpoint and log it to stdout.")
 	cmd.PersistentFlags().IntVarP(&global.MaxAPIRetries, "max-api-retries", "r", maxAPIRetries, "How many times should API calls be retried when the API host is not reachable.")
-	cmd.PersistentFlags().StringVarP(&global.ConfigFile, "config-file", "c", defaultConfigFilename, "[optional] The merkely config file path.")
+	cmd.PersistentFlags().StringVarP(&global.ConfigFile, "config-file", "c", defaultConfigFilename, "[optional] The Merkely config file path.")
 	cmd.PersistentFlags().BoolVarP(&global.Verbose, "verbose", "v", false, "Print verbose logs to stdout.")
 
 	// Add subcommands
