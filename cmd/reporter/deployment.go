@@ -9,6 +9,26 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func deploymentDesc() string {
+	return `
+   Report a deployment of an artifact to an environment in Merkely. 
+   The artifact SHA256 fingerprint is calculated and reported 
+   or,alternatively, can be provided directly. 
+   ` + GetCIDefaultsTemplates(supportedCIs, []string{"build-url"})
+}
+
+const deploymentExample = `
+* report a deployment of docker image to an environment prod in Merkely:
+merkely report deployment prod-image:latest \
+		--artifact-type docker \
+		--pipeline prod-image-pipeline \
+		--api-token $MERKELY_TOKEN \
+		--owner $MERKELY_OWNER \
+		--build-url https://your.build.url/build-number \
+		--commit-url https://your.commit.url/sha \
+		--git-commit e5275f161d08c98e280dad9e8b59cc6d929e2608 
+`
+
 type deploymentOptions struct {
 	artifactType string
 	inputSha256  string
@@ -28,9 +48,10 @@ type DeploymentPayload struct {
 func newDeploymentCmd(out io.Writer) *cobra.Command {
 	o := new(deploymentOptions)
 	cmd := &cobra.Command{
-		Use:   "deployment ARTIFACT-NAME-OR-PATH",
-		Short: "Report/Log a deployment to Merkely. ",
-		Long:  deploymentDesc(),
+		Use:     "deployment ARTIFACT-NAME-OR-PATH",
+		Short:   "Report/Log a deployment to Merkely. ",
+		Long:    deploymentDesc(),
+		Example: deploymentExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -78,12 +99,4 @@ func newDeploymentCmd(out io.Writer) *cobra.Command {
 	}
 
 	return cmd
-}
-
-func deploymentDesc() string {
-	return `
-   Report a deployment of an artifact to an environment in Merkely. 
-   The artifact SHA256 fingerprint is calculated and reported 
-   or,alternatively, can be provided directly. 
-   ` + GetCIDefaultsTemplates(supportedCIs, []string{"build-url"})
 }
