@@ -193,7 +193,7 @@ func ValidateArtifactArg(args []string, artifactType, inputSha256 string) error 
 	}
 
 	if artifactType == "" && inputSha256 == "" {
-		return fmt.Errorf("either --type or --sha256 must be specified")
+		return fmt.Errorf("either --artifact-type or --sha256 must be specified")
 	}
 
 	if inputSha256 != "" {

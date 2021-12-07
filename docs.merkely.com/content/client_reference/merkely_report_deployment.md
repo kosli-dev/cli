@@ -34,7 +34,6 @@ merkely report deployment ARTIFACT-NAME-OR-PATH [flags]
 ### Examples
 
 ```
-
 * report a deployment of docker image to an environment prod in Merkely:
 merkely report deployment prod-image:latest \
 		--artifact-type docker \
@@ -43,8 +42,7 @@ merkely report deployment prod-image:latest \
 		--owner $MERKELY_OWNER \
 		--build-url https://your.build.url/build-number \
 		--commit-url https://your.commit.url/sha \
-		--git-commit e5275f161d08c98e280dad9e8b59cc6d929e2608 
-
+		--git-commit e5275f161d08c98e280dad9e8b59cc6d929e2608
 ```
 
 ### Options
