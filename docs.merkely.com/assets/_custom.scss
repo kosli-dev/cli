@@ -6,7 +6,15 @@ body {
 }
 
 main.container {
-    min-height: 100vh;
+    min-height: calc(100vh - #{$top-header-height});
+    position: relative;
+    top: $top-header-height;
+}
+
+aside.book-menu .book-menu-content {
+    position: fixed;
+    top: $top-header-height;
+    padding-top: 1rem;
 }
 
 .markdown pre {
