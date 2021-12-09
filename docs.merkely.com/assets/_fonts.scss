@@ -69,3 +69,37 @@ code {
 a, a:hover, a:visited {
   color: $merkely-medium-blue;
 }
+
+.book-menu {
+  font-size: 1rem;
+
+  a {
+    color: $merkely-lavender-blue;
+  }
+
+  label {
+    a {
+      font-family: 'Poppins', sans-serif;
+      color: black;
+    }
+    a:hover, a.active {
+      color: $merkely-medium-blue;
+    }
+    a.active {
+      font-weight: 600;
+    }
+  }
+
+  a:hover {
+    color: $merkely-medium-blue;
+  }
+
+  a.active {
+    color: $merkely-medium-blue;
+    font-weight: 600;
+  }
+}
+
+aside nav ul a:hover {
+  opacity: 1;
+}

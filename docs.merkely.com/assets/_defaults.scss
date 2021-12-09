@@ -34,8 +34,8 @@ $hint-colors: (
   --gray-200: #e9ecef;
   --gray-500: #adb5bd;
 
-  --color-link: $merkely-medium-blue;
-  --color-visited-link: $merkely-medium-blue;
+  --color-link: #{$merkely-medium-blue};
+  --color-visited-link: #{$merkely-medium-blue};
 
   --body-background: white;
   --body-font-color: black;
