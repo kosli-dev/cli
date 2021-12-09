@@ -1,0 +1,69 @@
+/* You can add custom styles here. */
+
+// @import "plugins/numbered";
+body {
+    background-color: $merkely-light-blue;
+}
+
+main.container {
+    min-height: 100vh;
+}
+
+.markdown pre {
+    background-color: #272822;
+    color: #f8f8f2;
+}
+
+.book-brand {
+    img {
+        width: auto;
+    }
+    span {
+        display: none;
+    }
+}
+
+.book-menu .book-menu-content {
+    background-color: $merkely-light-blue;
+}
+
+.book-search input {
+    background-color: $merkely-white;
+    border: 1px solid $merkely-dark-blue;
+}
+
+.book-page {
+    background-color: $merkely-white;
+}
+
+.top-header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background-color: $merkely-dark-blue;
+    height: $top-header-height;
+    color: $merkely-white;
+
+    .container {
+        height: $top-header-height;
+        .docs-logo {        
+            width: 16rem;
+            padding: 1.5rem 1.2rem 1.2rem;
+        }
+
+        .separator {
+            width: 1px;
+            border-left: 1px solid rgba(255, 255, 255, 0.5);
+            margin: 0.8rem 0;
+        }
+
+        .back-to-site {
+            margin: 1.8rem 0;
+            a {
+                color: $merkely-white;
+                display: block;
+                padding-left: 1.5rem;
+            }
+        }
+    }
+}
