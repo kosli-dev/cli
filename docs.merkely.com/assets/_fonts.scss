@@ -30,6 +30,26 @@
        url('fonts/roboto-mono-v13-latin-regular.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }
 
+// /* poppins-regular - latin */
+// @font-face {
+//   font-family: 'Poppins';
+//   font-style: normal;
+//   font-weight: 400;
+//   font-display: swap;
+//   src: local(''),
+//        url('fonts/Poppins-Regular.ttf') format('ttf'), 
+// }
+
+// /* poppins-semi-bold - latin */
+// @font-face {
+//   font-family: 'Poppins';
+//   font-style: semi-bold;
+//   font-weight: 600;
+//   font-display: swap;
+//   src: local(''),
+//        url('fonts/Poppins-SemiBold.ttf') format('ttf'), 
+// }
+
 body {
   font-family: 'Roboto', sans-serif;
 }
