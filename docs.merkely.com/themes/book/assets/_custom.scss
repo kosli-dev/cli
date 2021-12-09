@@ -28,10 +28,33 @@ main.container {
 }
 
 .book-search input {
-    background-color: white;
-    border: 1px solid $merkely-dark-royal-blue;
+    background-color: $merkely-white;
+    border: 1px solid $merkely-dark-blue;
 }
 
 .book-page {
-    background-color: white;
+    background-color: $merkely-white;
+}
+
+.top-header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background-color: $merkely-dark-blue;
+    height: $top-header-height;
+    color: $merkely-white;
+
+    .docs-logo {
+        width: 16rem;
+        padding: 1.5rem;
+    }
+
+    .back-to-site {
+        padding: 1.5rem;
+        a {
+            color: $merkely-white;
+            display: block;
+            border-left: 1px solid rgba(255, 255, 255, 0.5);
+        }
+    }
 }
