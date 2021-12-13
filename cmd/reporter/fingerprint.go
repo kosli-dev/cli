@@ -32,12 +32,7 @@ func newFingerprintCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fingerprint, err := GetSha256Digest(o.artifactType, args[0])
-			if err != nil {
-				return err
-			}
-			fmt.Print(fingerprint)
-			return nil
+			return o.run(args)
 		},
 	}
 
@@ -47,4 +42,13 @@ func newFingerprintCmd(out io.Writer) *cobra.Command {
 		log.Fatalf("failed to configure required flags: %v", err)
 	}
 	return cmd
+}
+
+func (o *fingerprintOptions) run(args []string) error {
+	fingerprint, err := GetSha256Digest(o.artifactType, args[0])
+	if err != nil {
+		return err
+	}
+	fmt.Print(fingerprint)
+	return nil
 }

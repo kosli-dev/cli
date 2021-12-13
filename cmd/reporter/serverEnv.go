@@ -29,7 +29,7 @@ func newServerEnvCmd(out io.Writer) *cobra.Command {
 	o := new(serverEnvOptions)
 	cmd := &cobra.Command{
 		Use:     "server [-p /path/of/artifacts/directory] [-i infrastructure-identifier] env-name",
-		Short:   "Report directory artifacts data in the given list of paths to Merkely.",
+		Short:   "Report directory or file artifacts data in the given list of paths to Merkely.",
 		Long:    serverEnvDesc,
 		Aliases: []string{"directories"},
 		Example: serverEnvExample,
@@ -49,26 +49,7 @@ func newServerEnvCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			envName := args[0]
-			if o.id == "" {
-				o.id = envName
-			}
-
-			url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
-
-			artifacts, err := server.CreateServerArtifactsData(o.paths, log)
-			if err != nil {
-				return err
-			}
-			requestBody := &requests.ServerEnvRequest{
-				Artifacts: artifacts,
-				Type:      "server",
-				Id:        o.id,
-			}
-
-			_, err = requests.SendPayload(requestBody, url, "", global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
-			return err
+			return o.run(args)
 		},
 	}
 
@@ -81,4 +62,28 @@ func newServerEnvCmd(out io.Writer) *cobra.Command {
 	}
 
 	return cmd
+}
+
+func (o *serverEnvOptions) run(args []string) error {
+	envName := args[0]
+	if o.id == "" {
+		o.id = envName
+	}
+
+	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
+
+	artifacts, err := server.CreateServerArtifactsData(o.paths, log)
+	if err != nil {
+		return err
+	}
+	requestBody := &requests.ServerEnvRequest{
+		Artifacts: artifacts,
+		Type:      "server",
+		Id:        o.id,
+	}
+
+	_, err = requests.SendPayload(requestBody, url, "", global.ApiToken,
+		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+	return err
+
 }

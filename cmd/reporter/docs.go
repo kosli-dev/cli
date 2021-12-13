@@ -33,7 +33,7 @@ func newDocsCmd(out io.Writer) *cobra.Command {
 		Args:   NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.topCmd = cmd.Root()
-			return o.run(out)
+			return o.run()
 		},
 	}
 
@@ -44,7 +44,7 @@ func newDocsCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *docsOptions) run(out io.Writer) error {
+func (o *docsOptions) run() error {
 	if o.generateHeaders {
 		linkHandler := func(name string) string {
 			base := strings.TrimSuffix(name, path.Ext(name))

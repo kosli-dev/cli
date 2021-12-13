@@ -13,7 +13,7 @@ func main() {
 	out := os.Stdout
 	log.Out = out
 	log.Formatter = &logrus.TextFormatter{
-		FullTimestamp: true,
+		DisableTimestamp: true,
 	}
 	cmd, err := newRootCmd(out, os.Args[1:])
 	if err != nil {

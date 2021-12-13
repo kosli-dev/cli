@@ -49,36 +49,7 @@ func newEcsEnvCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-
-			envName := args[0]
-			if o.id == "" {
-				if o.serviceName != "" {
-					o.id = o.serviceName
-				} else if o.cluster != "" {
-					o.id = o.cluster
-				} else {
-					o.id = envName
-				}
-			}
-			url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
-			client, err := aws.NewAWSClient()
-			if err != nil {
-				return err
-			}
-			tasksData, err := aws.GetEcsTasksData(client, o.cluster, o.serviceName)
-			if err != nil {
-				return err
-			}
-
-			requestBody := &requests.EcsEnvRequest{
-				Artifacts: tasksData,
-				Type:      "ECS",
-				Id:        o.id,
-			}
-
-			_, err = requests.SendPayload(requestBody, url, "", global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
-			return err
+			return o.run(args)
 		},
 	}
 
@@ -88,4 +59,36 @@ func newEcsEnvCmd(out io.Writer) *cobra.Command {
 		"If not set, it is defaulted based on the following order: --service-name, --cluster, environment name.")
 
 	return cmd
+}
+
+func (o *ecsEnvOptions) run(args []string) error {
+	envName := args[0]
+	if o.id == "" {
+		if o.serviceName != "" {
+			o.id = o.serviceName
+		} else if o.cluster != "" {
+			o.id = o.cluster
+		} else {
+			o.id = envName
+		}
+	}
+	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
+	client, err := aws.NewAWSClient()
+	if err != nil {
+		return err
+	}
+	tasksData, err := aws.GetEcsTasksData(client, o.cluster, o.serviceName)
+	if err != nil {
+		return err
+	}
+
+	requestBody := &requests.EcsEnvRequest{
+		Artifacts: tasksData,
+		Type:      "ECS",
+		Id:        o.id,
+	}
+
+	_, err = requests.SendPayload(requestBody, url, "", global.ApiToken,
+		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+	return err
 }

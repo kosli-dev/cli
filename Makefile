@@ -64,6 +64,7 @@ docker: deps vet lint
 .PHONY: docker
 
 docs: build
+	@export DEV=true
 	@./reporter docs --dir docs.merkely.com/content/client_reference
 .PHONY: docs
 

@@ -11,7 +11,6 @@ import (
 
 type deploymentOptions struct {
 	artifactType string
-	inputSha256  string
 	pipelineName string
 	userDataFile string
 	payload      DeploymentPayload
@@ -37,35 +36,16 @@ func newDeploymentCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
-			return ValidateArtifactArg(args, o.artifactType, o.inputSha256)
+			return ValidateArtifactArg(args, o.artifactType, o.payload.Sha256)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var err error
-			if o.inputSha256 != "" {
-				o.payload.Sha256 = o.inputSha256
-			} else {
-				o.payload.Sha256, err = GetSha256Digest(o.artifactType, args[0])
-				if err != nil {
-					return err
-				}
-			}
-
-			o.payload.UserData, err = LoadUserData(o.userDataFile)
-			if err != nil {
-				return err
-			}
-
-			url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/", global.Host, global.Owner, o.pipelineName)
-
-			_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, http.MethodPost, log)
-			return err
+			return o.run(args)
 		},
 	}
 
 	ci := WhichCI()
 	cmd.Flags().StringVarP(&o.artifactType, "artifact-type", "t", "", "The type of the artifact. Options are [dir, file, docker].")
-	cmd.Flags().StringVarP(&o.inputSha256, "sha256", "s", "", "The SHA256 fingerprint for the artifact. Only required if you don't specify --type.")
+	cmd.Flags().StringVarP(&o.payload.Sha256, "sha256", "s", "", "The SHA256 fingerprint for the artifact. Only required if you don't specify --artifact-type.")
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", "The Merkely pipeline name.")
 	cmd.Flags().StringVarP(&o.payload.Environment, "environment", "e", "", "The environment name.")
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", "[optional] The artifact description.")
@@ -78,6 +58,27 @@ func newDeploymentCmd(out io.Writer) *cobra.Command {
 	}
 
 	return cmd
+}
+
+func (o *deploymentOptions) run(args []string) error {
+	var err error
+	if o.payload.Sha256 == "" {
+		o.payload.Sha256, err = GetSha256Digest(o.artifactType, args[0])
+		if err != nil {
+			return err
+		}
+	}
+
+	o.payload.UserData, err = LoadUserData(o.userDataFile)
+	if err != nil {
+		return err
+	}
+
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/", global.Host, global.Owner, o.pipelineName)
+
+	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
+		global.MaxAPIRetries, global.DryRun, http.MethodPost, log)
+	return err
 }
 
 func deploymentDesc() string {

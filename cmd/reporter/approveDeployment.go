@@ -13,7 +13,6 @@ import (
 
 type approvalOptions struct {
 	artifactType    string
-	inputSha256     string
 	pipelineName    string
 	oldestSrcCommit string
 	newestSrcCommit string
@@ -42,45 +41,15 @@ func newApproveDeploymentCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
-			return ValidateArtifactArg(args, o.artifactType, o.inputSha256)
+			return ValidateArtifactArg(args, o.artifactType, o.payload.ArtifactSha256)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var err error
-			if o.inputSha256 != "" {
-				o.payload.ArtifactSha256 = o.inputSha256
-			} else {
-				o.payload.ArtifactSha256, err = GetSha256Digest(o.artifactType, args[0])
-				if err != nil {
-					return err
-				}
-			}
-
-			url := fmt.Sprintf("%s/api/v1/projects/%s/%s/approvals/", global.Host, global.Owner, o.pipelineName)
-			o.payload.Reviews = []map[string]string{
-				{
-					"state":        "APPROVED",
-					"comment":      o.payload.Description,
-					"approved_by":  "External",
-					"approval_url": "undefined",
-				},
-			}
-			o.payload.UserData, err = LoadUserData(o.userDataFile)
-			if err != nil {
-				return err
-			}
-			o.payload.CommitList, err = listCommitsBetween(o.srcRepoRoot, o.oldestSrcCommit, o.newestSrcCommit)
-			if err != nil {
-				return err
-			}
-
-			_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, http.MethodPost, log)
-			return err
+			return o.run(args, false)
 		},
 	}
 
 	cmd.Flags().StringVarP(&o.artifactType, "artifact-type", "t", "", "The type of the artifact to be approved. Options are [dir, file, docker]. Only required if you don't specify --sha256.")
-	cmd.Flags().StringVarP(&o.inputSha256, "sha256", "s", "", "The SHA256 fingerprint for the artifact to be approved. Only required if you don't specify --type.")
+	cmd.Flags().StringVarP(&o.payload.ArtifactSha256, "sha256", "s", "", "The SHA256 fingerprint for the artifact to be approved. Only required if you don't specify --type.")
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", "The Merkely pipeline name.")
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", "[optional] The approval description.")
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", "[optional] The path to a JSON file containing additional data you would like to attach to this approval.")
@@ -94,6 +63,43 @@ func newApproveDeploymentCmd(out io.Writer) *cobra.Command {
 	}
 
 	return cmd
+}
+
+func (o *approvalOptions) run(args []string, request bool) error {
+	var err error
+	if o.payload.ArtifactSha256 == "" {
+		o.payload.ArtifactSha256, err = GetSha256Digest(o.artifactType, args[0])
+		if err != nil {
+			return err
+		}
+	}
+
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/approvals/", global.Host, global.Owner, o.pipelineName)
+	if !request {
+		o.payload.Reviews = []map[string]string{
+			{
+				"state":        "APPROVED",
+				"comment":      o.payload.Description,
+				"approved_by":  "External",
+				"approval_url": "undefined",
+			},
+		}
+	} else {
+		o.payload.Reviews = []map[string]string{}
+	}
+
+	o.payload.UserData, err = LoadUserData(o.userDataFile)
+	if err != nil {
+		return err
+	}
+	o.payload.CommitList, err = listCommitsBetween(o.srcRepoRoot, o.oldestSrcCommit, o.newestSrcCommit)
+	if err != nil {
+		return err
+	}
+
+	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
+		global.MaxAPIRetries, global.DryRun, http.MethodPost, log)
+	return err
 }
 
 func approveDeploymentDesc() string {

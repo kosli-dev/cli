@@ -12,7 +12,6 @@ import (
 
 type artifactOptions struct {
 	artifactType string
-	inputSha256  string
 	pipelineName string
 	payload      ArtifactPayload
 }
@@ -39,36 +38,16 @@ func newArtifactCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
-			return ValidateArtifactArg(args, o.artifactType, o.inputSha256)
+			return ValidateArtifactArg(args, o.artifactType, o.payload.Sha256)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if o.inputSha256 != "" {
-				o.payload.Filename = args[0]
-				o.payload.Sha256 = o.inputSha256
-			} else {
-				var err error
-				o.payload.Sha256, err = GetSha256Digest(o.artifactType, args[0])
-				if err != nil {
-					return err
-				}
-				if o.artifactType == "dir" || o.artifactType == "file" {
-					o.payload.Filename = filepath.Base(args[0])
-				} else {
-					o.payload.Filename = args[0]
-				}
-			}
-
-			url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/", global.Host, global.Owner, o.pipelineName)
-
-			_, err := requests.SendPayload(o.payload, url, "", global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
-			return err
+			return o.run(args)
 		},
 	}
 
 	ci := WhichCI()
 	cmd.Flags().StringVarP(&o.artifactType, "artifact-type", "t", "", "The type of the artifact. Options are [dir, file, docker].")
-	cmd.Flags().StringVarP(&o.inputSha256, "sha256", "s", "", "The SHA256 fingerprint for the artifact. Only required if you don't specify --type.")
+	cmd.Flags().StringVarP(&o.payload.Sha256, "sha256", "s", "", "The SHA256 fingerprint for the artifact. Only required if you don't specify --artifact-type.")
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", "The Merkely pipeline name.")
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", "[optional] The artifact description.")
 	cmd.Flags().StringVarP(&o.payload.GitCommit, "git-commit", "g", DefaultValue(ci, "git-commit"), "The git commit from which the artifact was created.")
@@ -82,6 +61,29 @@ func newArtifactCmd(out io.Writer) *cobra.Command {
 	}
 
 	return cmd
+}
+
+func (o *artifactOptions) run(args []string) error {
+	if o.payload.Sha256 != "" {
+		o.payload.Filename = args[0]
+	} else {
+		var err error
+		o.payload.Sha256, err = GetSha256Digest(o.artifactType, args[0])
+		if err != nil {
+			return err
+		}
+		if o.artifactType == "dir" || o.artifactType == "file" {
+			o.payload.Filename = filepath.Base(args[0])
+		} else {
+			o.payload.Filename = args[0]
+		}
+	}
+
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/", global.Host, global.Owner, o.pipelineName)
+
+	_, err := requests.SendPayload(o.payload, url, "", global.ApiToken,
+		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+	return err
 }
 
 func artifactDesc() string {
