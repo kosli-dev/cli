@@ -22,11 +22,11 @@ type pullRequestOptions struct {
 	payload      EvidencePayload
 }
 
-type prEvidence struct {
-	pullRequestMergeCommit string
-	pullRequestURL         string
-	pullRequestState       string
-	approvers              string
+type PrEvidence struct {
+	PullRequestMergeCommit string `json:"pullRequestMergeCommit"`
+	PullRequestURL         string `json:"pullRequestURL"`
+	PullRequestState       string `json:"pullRequestState"`
+	Approvers              string `json:"approvers"`
 }
 
 func newControlPullRequestCmd(out io.Writer) *cobra.Command {
@@ -59,7 +59,7 @@ func newControlPullRequestCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 			o.payload.Contents = map[string]interface{}{}
-			o.payload.Contents["isCompliant"] = isCompliant
+			o.payload.Contents["is_compliant"] = isCompliant
 			o.payload.Contents["url"] = o.buildUrl
 			o.payload.Contents["description"] = o.description
 			o.payload.Contents["source"] = pullRequestsEvidence
@@ -90,19 +90,18 @@ func newControlPullRequestCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func getPullRequestForCurrentCommit() ([]*prEvidence, bool, error) {
+func getPullRequestForCurrentCommit() ([]*PrEvidence, bool, error) {
 	workspace := os.Getenv("BITBUCKET_WORKSPACE")
 	repository := os.Getenv("BITBUCKET_REPO_SLUG")
 	commit := os.Getenv("BITBUCKET_COMMIT")
 	user := os.Getenv("BITBUCKET_API_USER")
 	password := os.Getenv("BITBUCKET_API_TOKEN")
-
 	return getPullRequestsFromBitbucketApi(workspace, repository, commit, user, password)
 }
 
-func getPullRequestsFromBitbucketApi(workspace, repository, commit, username, password string) ([]*prEvidence, bool, error) {
+func getPullRequestsFromBitbucketApi(workspace, repository, commit, username, password string) ([]*PrEvidence, bool, error) {
 	isCompliant := false
-	pullRequestsEvidence := []*prEvidence{}
+	pullRequestsEvidence := []*PrEvidence{}
 
 	url := fmt.Sprintf("https://api.bitbucket.org/2.0/repositories/%s/%s/commit/%s/pullrequests", workspace, repository, commit)
 	log.Debug("Getting pull requests from " + url)
@@ -127,23 +126,25 @@ func getPullRequestsFromBitbucketApi(workspace, repository, commit, username, pa
 	return pullRequestsEvidence, isCompliant, nil
 }
 
-func parseBitbucketResponse(commit, password, username string, response *requests.HTTPResponse) (bool, []*prEvidence, error) {
+func parseBitbucketResponse(commit, password, username string, response *requests.HTTPResponse) (bool, []*PrEvidence, error) {
 	log.Debug("Pull requests response: " + response.Body)
-	pullRequestsEvidence := []*prEvidence{}
+	pullRequestsEvidence := []*PrEvidence{}
 	isCompliant := false
 	var responseData map[string]interface{}
 	err := json.Unmarshal([]byte(response.Body), &responseData)
 	if err != nil {
 		return isCompliant, pullRequestsEvidence, err
 	}
-	pullRequests, ok := responseData["values"].([]map[string]interface{})
+	pullRequests, ok := responseData["values"].([]interface{})
 	if !ok {
 		return isCompliant, pullRequestsEvidence, nil
 	}
-
-	for _, pr := range pullRequests {
-		links := pr["links"].(map[string]map[string]string)
-		evidence, err := getPullRequestDetailsFromBitbucket(links["self"]["href"], links["html"]["href"], username, password, commit)
+	for _, prInterface := range pullRequests {
+		pr := prInterface.(map[string]interface{})
+		linksInterface := pr["links"].(map[string]interface{})
+		apiLinkMap := linksInterface["self"].(map[string]interface{})
+		htmlLinkMap := linksInterface["html"].(map[string]interface{})
+		evidence, err := getPullRequestDetailsFromBitbucket(apiLinkMap["href"].(string), htmlLinkMap["href"].(string), username, password, commit)
 		if err != nil {
 			return false, pullRequestsEvidence, err
 		}
@@ -155,9 +156,9 @@ func parseBitbucketResponse(commit, password, username string, response *request
 	return isCompliant, pullRequestsEvidence, nil
 }
 
-func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, username, password, commit string) (*prEvidence, error) {
+func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, username, password, commit string) (*PrEvidence, error) {
 	log.Debug("Getting pull request details for" + prApiUrl)
-	evidence := &prEvidence{}
+	evidence := &PrEvidence{}
 	response, err := requests.SendPayload([]byte{}, prApiUrl, username, password,
 		global.MaxAPIRetries, false, http.MethodGet, log)
 	if err != nil {
@@ -170,14 +171,15 @@ func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, username, password
 			return evidence, err
 		}
 
-		evidence.pullRequestURL = prHtmlLink
-		evidence.pullRequestMergeCommit = commit
-		evidence.pullRequestState = responseData["state"].(string)
-		participants := responseData["participants"].([]map[string]interface{})
+		evidence.PullRequestURL = prHtmlLink
+		evidence.PullRequestMergeCommit = commit
+		evidence.PullRequestState = responseData["state"].(string)
+		participants := responseData["participants"].([]interface{})
 		approvers := ""
 
 		if len(participants) > 0 {
-			for _, p := range participants {
+			for _, participantInterface := range participants {
+				p := participantInterface.(map[string]interface{})
 				if p["approved"].(bool) {
 					user := p["user"].(map[string]interface{})
 					approvers = approvers + user["display_name"].(string) + ","
@@ -187,7 +189,7 @@ func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, username, password
 		} else {
 			log.Debug("No approvers found")
 		}
-		evidence.approvers = approvers
+		evidence.Approvers = approvers
 
 	} else {
 		return evidence, fmt.Errorf("failed to get PR details, got HTTP status %d. Please review repository permissions", response.StatusCode)

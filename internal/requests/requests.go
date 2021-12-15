@@ -58,10 +58,15 @@ func doRequest(jsonBytes []byte, url, username, password string, maxAPIRetries i
 	if err != nil {
 		return &HTTPResponse{}, fmt.Errorf("failed to create post request to %s : %v", url, err)
 	}
+
 	if username == "" {
-		username = "unset"
+		// when communicating with Merkely, apiToken is sent as username
+		// (passed to doRequest() as password)
+		username = password
+		// when communicating with Merkely, password should be "unset"
+		password = "unset"
 	}
-	req.SetBasicAuth(password, username)
+	req.SetBasicAuth(username, password)
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 
 	resp, err := client.Do(req)
@@ -93,8 +98,10 @@ func SendPayload(payload interface{}, url, username, token string, maxRetries in
 		logger.Info("############### THIS IS A DRY-RUN  ###############")
 		logger.Info(string(jsonBytes))
 	} else {
-		logger.Info("****** Sending the payload to the API ******")
-		logger.Info(string(jsonBytes))
+		if method != http.MethodGet {
+			logger.Info("****** Sending the payload to the API ******")
+			logger.Info(string(jsonBytes))
+		}
 		resp, err = doRequest(jsonBytes, url, username, token, maxRetries, method, logger)
 		if err != nil {
 			return resp, err
