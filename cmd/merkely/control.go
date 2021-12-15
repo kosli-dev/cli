@@ -18,6 +18,7 @@ func newControlCmd(out io.Writer) *cobra.Command {
 	// Add subcommands
 	cmd.AddCommand(
 		newControlDeploymentCmd(out),
+		newControlPullRequestCmd(out),
 	)
 
 	return cmd
