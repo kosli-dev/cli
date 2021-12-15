@@ -45,7 +45,7 @@ type Pipefile struct {
 
 func newPipelineCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "pipeline",
+		Use:     "pipeline ARTIFACT-NAME-OR-PATH",
 		Short:   "Create a Merkely pipeline",
 		Long:    pipelineDesc,
 		Example: pipelineExample,

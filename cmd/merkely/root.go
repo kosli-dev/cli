@@ -70,7 +70,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		},
 	}
 	cmd.PersistentFlags().StringVarP(&global.ApiToken, "api-token", "a", "", "The merkely API token.")
-	cmd.PersistentFlags().StringVarP(&global.Owner, "owner", "o", "", "The merkely organization.")
+	cmd.PersistentFlags().StringVarP(&global.Owner, "owner", "o", "", "The merkely user or organization.")
 	cmd.PersistentFlags().StringVarP(&global.Host, "host", "H", "https://app.merkely.com", "The merkely endpoint.")
 	cmd.PersistentFlags().BoolVarP(&global.DryRun, "dry-run", "D", false, "Whether to send the request to the endpoint or just log it in stdout.")
 	cmd.PersistentFlags().IntVarP(&global.MaxAPIRetries, "max-api-retries", "r", maxAPIRetries, "How many times should API calls be retried when the API host is not reachable.")
