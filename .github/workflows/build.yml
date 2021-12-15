@@ -16,7 +16,7 @@ on:
         required: true      
 
 env:
-  IMAGE: ghcr.io/merkely-development/reporter
+  IMAGE: ghcr.io/merkely-development/merkely-cli
 
 jobs:
   build:

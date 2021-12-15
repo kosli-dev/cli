@@ -50,7 +50,7 @@ deps: ## Install depdendencies. Runs `go get` internally.
 .PHONY: deps
 
 build: deps vet ## Build the binary
-	@go build -o reporter -ldflags '$(LDFLAGS)' ./cmd/reporter/
+	@go build -o merkely -ldflags '$(LDFLAGS)' ./cmd/merkely/
 .PHONY: build
 
 test_unit: deps vet ## Run unit tests
@@ -60,12 +60,12 @@ test_unit: deps vet ## Run unit tests
 .PHONY: test_unit
 
 docker: deps vet lint
-	@docker build -t reporter .
+	@docker build -t merkely-cli .
 .PHONY: docker
 
 docs: build
 	@export DEV=true
-	@./reporter docs --dir docs.merkely.com/content/client_reference
+	@./merkely docs --dir docs.merkely.com/content/client_reference
 .PHONY: docs
 
 licenses:
