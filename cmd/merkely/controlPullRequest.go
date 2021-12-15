@@ -45,31 +45,7 @@ func newControlPullRequestCmd(out io.Writer) *cobra.Command {
 			return ValidateArtifactArg(args, o.artifactType, o.sha256)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var err error
-			if o.sha256 == "" {
-				o.sha256, err = GetSha256Digest(o.artifactType, args[0])
-				if err != nil {
-					return err
-				}
-			}
-
-			url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s", global.Host, global.Owner, o.pipelineName, o.sha256)
-			pullRequestsEvidence, isCompliant, err := getPullRequestForCurrentCommit()
-			if err != nil {
-				return err
-			}
-			o.payload.Contents = map[string]interface{}{}
-			o.payload.Contents["is_compliant"] = isCompliant
-			o.payload.Contents["url"] = o.buildUrl
-			o.payload.Contents["description"] = o.description
-			o.payload.Contents["source"] = pullRequestsEvidence
-			if err != nil {
-				return err
-			}
-
-			_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
-			return err
+			return o.run(args)
 		},
 	}
 
@@ -88,6 +64,34 @@ func newControlPullRequestCmd(out io.Writer) *cobra.Command {
 	}
 
 	return cmd
+}
+
+func (o *pullRequestOptions) run(args []string) error {
+	var err error
+	if o.sha256 == "" {
+		o.sha256, err = GetSha256Digest(o.artifactType, args[0])
+		if err != nil {
+			return err
+		}
+	}
+
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s", global.Host, global.Owner, o.pipelineName, o.sha256)
+	pullRequestsEvidence, isCompliant, err := getPullRequestForCurrentCommit()
+	if err != nil {
+		return err
+	}
+	o.payload.Contents = map[string]interface{}{}
+	o.payload.Contents["is_compliant"] = isCompliant
+	o.payload.Contents["url"] = o.buildUrl
+	o.payload.Contents["description"] = o.description
+	o.payload.Contents["source"] = pullRequestsEvidence
+	if err != nil {
+		return err
+	}
+
+	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
+		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+	return err
 }
 
 func getPullRequestForCurrentCommit() ([]*PrEvidence, bool, error) {
