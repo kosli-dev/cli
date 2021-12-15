@@ -63,9 +63,6 @@ func (o *controlDeploymentOptions) run(args []string) error {
 
 	if err != nil && !global.DryRun {
 		return err
-	} else if err != nil {
-		log.Infof("failed to get approvals for artifact %s: %v", o.sha256, err)
-		return nil
 	}
 
 	var approvals []map[string]interface{}
@@ -86,7 +83,6 @@ func (o *controlDeploymentOptions) run(args []string) error {
 			return fmt.Errorf("artifact with sha256 %s is not approved", o.sha256)
 		}
 	} else {
-		log.Infof("artifact with sha256 %s has no approvals created", o.sha256)
 		return nil
 	}
 }
