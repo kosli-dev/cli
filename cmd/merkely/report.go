@@ -22,10 +22,10 @@ func newReportCmd(out io.Writer) *cobra.Command {
 	// Add subcommands
 	cmd.AddCommand(
 		newEnvCmd(out),
-		newArtifactCmd(out),
+		// newArtifactCmd(out),
 		newDeploymentCmd(out),
-		newEvidenceCmd(out),
-		newTestEvidenceCmd(out),
+		// newEvidenceCmd(out),
+		// newTestEvidenceCmd(out),
 		newApproveDeploymentCmd(out),
 		newRequestApprovalCmd(out),
 	)
