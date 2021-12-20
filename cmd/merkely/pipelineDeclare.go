@@ -13,12 +13,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const declarePipelineDesc = `
+const pipelineDeclareDesc = `
 Declare or update a Merkely pipeline by providing a JSON pipefile or by providing pipeline parameters in flags. 
 The pipefile contains the pipeline metadata and compliance policy.
 `
 
-const declarePipelineExample = `
+const pipelineDeclareExample = `
 * create a Merkely pipeline with a pipefile:
 merkely pipeline declare myPipe --owner owner-name --api-token topSecret --pipefile /path/to/pipefile.json
 
@@ -39,7 +39,7 @@ merkely pipeline declare myPipe --description desc \
    --owner owner-name --api-token topSecret
 `
 
-type declarePipelineOptions struct {
+type pipelineDeclareOptions struct {
 	pipefile string
 	payload  PipelinePayload
 }
@@ -52,13 +52,13 @@ type PipelinePayload struct {
 	Template    []string `json:"template"`
 }
 
-func newDeclarePipelineCmd(out io.Writer) *cobra.Command {
-	o := new(declarePipelineOptions)
+func newPipelineDeclareCmd(out io.Writer) *cobra.Command {
+	o := new(pipelineDeclareOptions)
 	cmd := &cobra.Command{
 		Use:     "declare PIPELINE-NAME",
 		Short:   "Declare a Merkely pipeline",
-		Long:    declarePipelineDesc,
-		Example: declarePipelineExample,
+		Long:    pipelineDeclareDesc,
+		Example: pipelineDeclareExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				return fmt.Errorf("only pipeline name argument is allowed")
@@ -87,7 +87,7 @@ func newDeclarePipelineCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *declarePipelineOptions) run(args []string) error {
+func (o *pipelineDeclareOptions) run(args []string) error {
 	pipelineName := args[0]
 	url := fmt.Sprintf("%s/api/v1/projects/%s/", global.Host, global.Owner)
 	if o.pipefile != "" {

@@ -10,29 +10,29 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const ecsEnvDesc = `
+const environmentReportECSDesc = `
 List the artifacts deployed in an AWS ECS cluster and their digests 
 and report them to Merkely. 
 `
 
-const ecsEnvExample = `
+const environmentReportECSExample = `
 * report what's running in an entire AWS ECS cluster:
-merkely report env ecs prod --api-token 1234 --owner exampleOrg
+merkely environment report ecs prod --api-token 1234 --owner exampleOrg
 `
 
-type ecsEnvOptions struct {
+type environmentReportECSOptions struct {
 	cluster     string
 	serviceName string
 	id          string
 }
 
-func newEcsEnvCmd(out io.Writer) *cobra.Command {
-	o := new(ecsEnvOptions)
+func newEnvironmentReportECSCmd(out io.Writer) *cobra.Command {
+	o := new(environmentReportECSOptions)
 	cmd := &cobra.Command{
 		Use:     "ecs env-name",
 		Short:   "Report images data from AWS ECS cluster to Merkely.",
-		Long:    ecsEnvDesc,
-		Example: ecsEnvExample,
+		Long:    environmentReportECSDesc,
+		Example: environmentReportECSExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				return fmt.Errorf("only environment name argument is allowed")
@@ -61,7 +61,7 @@ func newEcsEnvCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *ecsEnvOptions) run(args []string) error {
+func (o *environmentReportECSOptions) run(args []string) error {
 	envName := args[0]
 	if o.id == "" {
 		if o.serviceName != "" {

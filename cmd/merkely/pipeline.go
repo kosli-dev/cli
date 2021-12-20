@@ -17,8 +17,10 @@ func newPipelineCmd(out io.Writer) *cobra.Command {
 
 	// Add subcommands
 	cmd.AddCommand(
-		newDeclarePipelineCmd(out),
+		newPipelineDeclareCmd(out),
 		newArtifactCmd(out),
+		newApprovalCmd(out),
+		newDeploymentCmd(out),
 	)
 
 	return cmd

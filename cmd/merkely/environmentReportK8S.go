@@ -13,44 +13,44 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const k8sEnvDesc = `
+const environmentReportK8SDesc = `
 List the artifacts deployed in the k8s environment and their digests 
 and report them to Merkely. 
 `
 
-const k8sEnvExample = `
+const environmentReportK8SExample = `
 * report what's running in an entire cluster using kubeconfig at $HOME/.kube/config:
-merkely report env k8s prod --api-token 1234 --owner exampleOrg --id prod-cluster
+merkely environment report k8s prod --api-token 1234 --owner exampleOrg --id prod-cluster
 
 * report what's running in an entire cluster using kubeconfig at $HOME/.kube/config 
 (with global flags defined in environment or in  a config file):
-merkely report env k8s prod
+merkely environment report  k8s prod
 
 * report what's running in an entire cluster excluding some namespaces using kubeconfig at $HOME/.kube/config:
-merkely report env k8s prod -x kube-system,utilities
+merkely environment report k8s prod -x kube-system,utilities
 
 * report what's running in a given namespace in the cluster using kubeconfig at $HOME/.kube/config:
-merkely report env k8s prod -n prod-namespace
+merkely environment report k8s prod -n prod-namespace
 
 * report what's running in a cluster using kubeconfig at a custom path:
-merkely report env k8s prod -k /path/to/kube/config
+merkely environment report k8s prod -k /path/to/kube/config
 `
 
-type k8sEnvOptions struct {
+type environmentReportK8SOptions struct {
 	kubeconfig        string
 	namespaces        []string
 	excludeNamespaces []string
 	id                string
 }
 
-func newK8sEnvCmd(out io.Writer) *cobra.Command {
-	o := new(k8sEnvOptions)
+func newEnvironmentReportK8SCmd(out io.Writer) *cobra.Command {
+	o := new(environmentReportK8SOptions)
 	cmd := &cobra.Command{
 		Use:     "k8s [-n namespace | -x namespace]... [-k /path/to/kube/config] [-i infrastructure-identifier] env-name",
 		Short:   "Report images data from specific namespace(s) or entire cluster to Merkely.",
-		Long:    k8sEnvDesc,
+		Long:    environmentReportK8SDesc,
 		Aliases: []string{"kubernetes"},
-		Example: k8sEnvExample,
+		Example: environmentReportK8SExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				return fmt.Errorf("only environment name argument is allowed")
@@ -79,7 +79,7 @@ func newK8sEnvCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *k8sEnvOptions) run(args []string) error {
+func (o *environmentReportK8SOptions) run(args []string) error {
 	if len(o.excludeNamespaces) > 0 && len(o.namespaces) > 0 {
 		return fmt.Errorf("--namespace and --exclude-namespace can't be used together. This can also happen if you set one of the two options in a config file or env var and the other on the command line")
 	}

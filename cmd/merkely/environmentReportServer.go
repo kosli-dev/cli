@@ -10,29 +10,29 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const serverEnvDesc = `
+const environmentReportServerDesc = `
 List the artifacts deployed in a server environment and their digests 
 and report them to Merkely. 
 `
 
-const serverEnvExample = `
+const environmentReportServerExample = `
 * report directory artifacts running in a server at a list of paths:
-merkely report env server prod --api-token 1234 --owner exampleOrg --id prod-server --paths a/b/c, e/f/g
+merkely environment report server prod --api-token 1234 --owner exampleOrg --id prod-server --paths a/b/c, e/f/g
 `
 
-type serverEnvOptions struct {
+type environmentReportServerOptions struct {
 	paths []string
 	id    string
 }
 
-func newServerEnvCmd(out io.Writer) *cobra.Command {
-	o := new(serverEnvOptions)
+func newEnvironmentReportServerCmd(out io.Writer) *cobra.Command {
+	o := new(environmentReportServerOptions)
 	cmd := &cobra.Command{
 		Use:     "server [-p /path/of/artifacts/directory] [-i infrastructure-identifier] env-name",
 		Short:   "Report directory or file artifacts data in the given list of paths to Merkely.",
-		Long:    serverEnvDesc,
+		Long:    environmentReportServerDesc,
 		Aliases: []string{"directories"},
-		Example: serverEnvExample,
+		Example: environmentReportServerExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				return fmt.Errorf("only environment name argument is allowed")
@@ -64,7 +64,7 @@ func newServerEnvCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *serverEnvOptions) run(args []string) error {
+func (o *environmentReportServerOptions) run(args []string) error {
 	envName := args[0]
 	if o.id == "" {
 		o.id = envName

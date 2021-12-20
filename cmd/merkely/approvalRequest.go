@@ -6,12 +6,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newRequestApprovalCmd(out io.Writer) *cobra.Command {
-	o := new(approvalOptions)
+func newApprovalRequestCmd(out io.Writer) *cobra.Command {
+	o := new(approvalReportOptions)
 	cmd := &cobra.Command{
 		Use:   "request ARTIFACT-NAME-OR-PATH",
 		Short: "Request an approval for deploying an artifact in Merkely. ",
-		Long:  requestApprovalDesc(),
+		Long:  approvalRequestDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -32,7 +32,7 @@ func newRequestApprovalCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", "[optional] The path to a JSON file containing additional data you would like to attach to this approval.")
 	cmd.Flags().StringVar(&o.oldestSrcCommit, "oldest-commit", "", "The source commit sha for the oldest change in the deployment approval.")
 	cmd.Flags().StringVar(&o.newestSrcCommit, "newest-commit", "HEAD", "The source commit sha for the newest change in the deployment approval.")
-	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", "/src", "The directory where the source git repository is volume-mounted.")
+	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", "The directory where the source git repository is volume-mounted.")
 
 	err := RequireFlags(cmd, []string{"pipeline", "oldest-commit"})
 	if err != nil {
@@ -42,7 +42,7 @@ func newRequestApprovalCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func requestApprovalDesc() string {
+func approvalRequestDesc() string {
 	return `
    Request an approval of a deployment of an artifact in Merkely. The request should be reviewed in Merkely UI.
    The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 

@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type approvalOptions struct {
+type approvalReportOptions struct {
 	artifactType    string
 	pipelineName    string
 	oldestSrcCommit string
@@ -29,12 +29,12 @@ type ApprovalPayload struct {
 	UserData       map[string]interface{} `json:"user_data"`
 }
 
-func newApproveDeploymentCmd(out io.Writer) *cobra.Command {
-	o := new(approvalOptions)
+func newApprovalReportCmd(out io.Writer) *cobra.Command {
+	o := new(approvalReportOptions)
 	cmd := &cobra.Command{
-		Use:   "approval ARTIFACT-NAME-OR-PATH",
-		Short: "Approve deploying an artifact in Merkely. ",
-		Long:  approveDeploymentDesc(),
+		Use:   "report ARTIFACT-NAME-OR-PATH",
+		Short: "Report approval of deploying an artifact in Merkely. ",
+		Long:  approvalReportDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -65,7 +65,7 @@ func newApproveDeploymentCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *approvalOptions) run(args []string, request bool) error {
+func (o *approvalReportOptions) run(args []string, request bool) error {
 	var err error
 	if o.payload.ArtifactSha256 == "" {
 		o.payload.ArtifactSha256, err = GetSha256Digest(o.artifactType, args[0])
@@ -102,7 +102,7 @@ func (o *approvalOptions) run(args []string, request bool) error {
 	return err
 }
 
-func approveDeploymentDesc() string {
+func approvalReportDesc() string {
 	return `
    Approve a deployment of an artifact in Merkely. 
    The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 

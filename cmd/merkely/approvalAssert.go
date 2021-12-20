@@ -10,18 +10,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type controlDeploymentOptions struct {
+type approvalAssertOptions struct {
 	artifactType string
 	sha256       string
 	pipelineName string
 }
 
-func newControlDeploymentCmd(out io.Writer) *cobra.Command {
-	o := new(controlDeploymentOptions)
+func newApprovalAssertCmd(out io.Writer) *cobra.Command {
+	o := new(approvalAssertOptions)
 	cmd := &cobra.Command{
-		Use:   "deployment ARTIFACT-NAME-OR-PATH",
-		Short: "Check if an artifact in Merkely has been approved for deployment.",
-		Long:  controlDeploymentDesc(),
+		Use:   "assert ARTIFACT-NAME-OR-PATH",
+		Short: "Assert if an artifact in Merkely has been approved for deployment.",
+		Long:  approvalAssertDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -47,7 +47,7 @@ func newControlDeploymentCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *controlDeploymentOptions) run(args []string) error {
+func (o *approvalAssertOptions) run(args []string) error {
 	var err error
 	if o.sha256 == "" {
 		o.sha256, err = GetSha256Digest(o.artifactType, args[0])
@@ -87,8 +87,8 @@ func (o *controlDeploymentOptions) run(args []string) error {
 	}
 }
 
-func controlDeploymentDesc() string {
-	return `Check if an artifact in Merkely has been approved for deployment.
+func approvalAssertDesc() string {
+	return `Assert if an artifact in Merkely has been approved for deployment.
    The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
    `
 }
