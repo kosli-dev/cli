@@ -25,7 +25,8 @@ func (suite *FingerprintTestSuite) SetupSuite() {
 }
 
 func (suite *FingerprintTestSuite) TearDownSuite() {
-	utils.RemoveDockerImage(imageName)
+	err := utils.RemoveDockerImage(imageName)
+	require.NoError(suite.T(), err, "removing the docker image should pass")
 }
 
 func (suite *FingerprintTestSuite) TestCmdRun() {
