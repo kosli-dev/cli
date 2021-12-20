@@ -156,6 +156,8 @@ func parseBitbucketResponse(commit, password, username string, response *request
 	}
 	if len(pullRequestsEvidence) > 0 {
 		isCompliant = true
+	} else {
+		return isCompliant, pullRequestsEvidence, fmt.Errorf("No pull requests found for given commit %s", commit)
 	}
 	return isCompliant, pullRequestsEvidence, nil
 }
