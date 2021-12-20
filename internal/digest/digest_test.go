@@ -401,7 +401,7 @@ func (suite *DigestTestSuite) TestDockerImageSha256() {
 	} {
 		suite.Run(t.name, func() {
 			if t.pullImage {
-				err := pullDockerImage(t.imageName)
+				err := PullDockerImage(t.imageName)
 				require.NoErrorf(suite.T(), err, "TestDockerImageSha256: test image should be pullable")
 			}
 			actual, err := DockerImageSha256(t.imageName)
@@ -416,8 +416,8 @@ func (suite *DigestTestSuite) TestDockerImageSha256() {
 	}
 }
 
-// pullDockerImage pulls a docker image or returns an error
-func pullDockerImage(imageName string) error {
+// PullDockerImage pulls a docker image or returns an error
+func PullDockerImage(imageName string) error {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return err
