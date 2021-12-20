@@ -9,13 +9,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const createEnvDesc = `
-Create a Merkely environment.
+const enviromentDeclareDesc = `
+Declare or update a Merkely environment.
 `
 
-const createEnvExample = `
-* create a Merkely environment:
-merkely create environment --api-token 1234 --owner test --name newEnv --environment-type K8S --description "my new env"
+const enviromentDeclareExample = `
+* declare (or update) a Merkely environment:
+merkely environment declare --api-token 1234 --owner test --name newEnv --environment-type K8S --description "my new env"
 `
 
 type CreateEnvironmentPayload struct {
@@ -25,13 +25,13 @@ type CreateEnvironmentPayload struct {
 	Description string `json:"description"`
 }
 
-func newEnvironmentCmd(out io.Writer) *cobra.Command {
+func newEnvironmentDeclareCmd(out io.Writer) *cobra.Command {
 	payload := new(CreateEnvironmentPayload)
 	cmd := &cobra.Command{
-		Use:     "environment",
-		Short:   "Create a Merkely environment",
-		Long:    createEnvDesc,
-		Example: createEnvExample,
+		Use:     "declare",
+		Short:   "Declare or update a Merkely environment",
+		Long:    enviromentDeclareDesc,
+		Example: enviromentDeclareExample,
 		Args:    NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})

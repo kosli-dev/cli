@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type evidenceOptions struct {
+type genericEvidenceOptions struct {
 	artifactType string
 	sha256       string // This is calculated or provided by the user
 	pipelineName string
@@ -25,12 +25,12 @@ type EvidencePayload struct {
 	Contents     map[string]interface{} `json:"contents"`
 }
 
-func newEvidenceCmd(out io.Writer) *cobra.Command {
-	o := new(evidenceOptions)
+func newGenericEvidenceCmd(out io.Writer) *cobra.Command {
+	o := new(genericEvidenceOptions)
 	cmd := &cobra.Command{
-		Use:   "evidence ARTIFACT-NAME-OR-PATH",
-		Short: "Report/Log an evidence to an artifact in Merkely. ",
-		Long:  evidenceDesc(),
+		Use:   "generic ARTIFACT-NAME-OR-PATH",
+		Short: "Report a generic evidence to an artifact in a Merkely pipeline. ",
+		Long:  genericEvidenceDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -62,7 +62,7 @@ func newEvidenceCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *evidenceOptions) run(args []string) error {
+func (o *genericEvidenceOptions) run(args []string) error {
 	var err error
 	if o.sha256 == "" {
 		o.sha256, err = GetSha256Digest(o.artifactType, args[0])
@@ -86,9 +86,9 @@ func (o *evidenceOptions) run(args []string) error {
 	return err
 }
 
-func evidenceDesc() string {
+func genericEvidenceDesc() string {
 	return `
-   Report an evidence to an artifact in Merkely. 
+   Report a generic evidence to an artifact in a Merkely pipeline. 
    The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
    ` + GetCIDefaultsTemplates(supportedCIs, []string{"build-url"})
 }

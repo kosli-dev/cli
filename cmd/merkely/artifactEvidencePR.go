@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type pullRequestOptions struct {
+type pullRequestEvidenceOptions struct {
 	artifactType string
 	sha256       string // This is calculated or provided by the user
 	pipelineName string
@@ -29,12 +29,12 @@ type PrEvidence struct {
 	Approvers              string `json:"approvers"`
 }
 
-func newControlPullRequestCmd(out io.Writer) *cobra.Command {
-	o := new(pullRequestOptions)
+func newPullRequestEvidenceCmd(out io.Writer) *cobra.Command {
+	o := new(pullRequestEvidenceOptions)
 	cmd := &cobra.Command{
 		Use:     "pullrequest ARTIFACT-NAME-OR-PATH",
 		Aliases: []string{"pull-request", "pr"},
-		Short:   "Check if a pull request exists for an artifact and report the pull-request evidence to the artifact in Merkely.",
+		Short:   "Report a pull request evidence for an artifact in a Merkely pipeline.",
 		Long:    controlPullRequestDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -66,7 +66,7 @@ func newControlPullRequestCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *pullRequestOptions) run(args []string) error {
+func (o *pullRequestEvidenceOptions) run(args []string) error {
 	var err error
 	if o.sha256 == "" {
 		o.sha256, err = GetSha256Digest(o.artifactType, args[0])
