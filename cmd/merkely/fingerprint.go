@@ -32,7 +32,7 @@ func newFingerprintCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(args)
+			return o.run(args, out)
 		},
 	}
 
@@ -44,11 +44,11 @@ func newFingerprintCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *fingerprintOptions) run(args []string) error {
+func (o *fingerprintOptions) run(args []string, out io.Writer) error {
 	fingerprint, err := GetSha256Digest(o.artifactType, args[0])
 	if err != nil {
 		return err
 	}
-	fmt.Print(fingerprint)
+	fmt.Fprint(out, fingerprint)
 	return nil
 }

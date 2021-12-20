@@ -1,16 +1,13 @@
 package digest
 
 import (
-	"context"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
+	"github.com/merkely-development/reporter/internal/utils"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -401,7 +398,7 @@ func (suite *DigestTestSuite) TestDockerImageSha256() {
 	} {
 		suite.Run(t.name, func() {
 			if t.pullImage {
-				err := PullDockerImage(t.imageName)
+				err := utils.PullDockerImage(t.imageName)
 				require.NoErrorf(suite.T(), err, "TestDockerImageSha256: test image should be pullable")
 			}
 			actual, err := DockerImageSha256(t.imageName)
@@ -414,26 +411,6 @@ func (suite *DigestTestSuite) TestDockerImageSha256() {
 
 		})
 	}
-}
-
-// PullDockerImage pulls a docker image or returns an error
-func PullDockerImage(imageName string) error {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		return err
-	}
-
-	rc, err := cli.ImagePull(context.Background(), imageName, types.ImagePullOptions{})
-	if err != nil {
-		return err
-	}
-	defer rc.Close()
-	_, err = io.Copy(os.Stdout, rc)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // In order for 'go test' to run this suite, we need to create
