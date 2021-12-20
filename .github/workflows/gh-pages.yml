@@ -6,6 +6,8 @@ on:
       - main
     paths:  
       - 'docs.merkely.com/**'
+      - '!docs.merkely.com/content/client_reference/**'
+      - '!docs.merkely.com/content/helm/**'
   workflow_run:
     workflows: ["helm chart", "release"]
     types:
