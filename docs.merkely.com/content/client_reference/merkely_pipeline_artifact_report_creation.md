@@ -40,11 +40,11 @@ merkely pipeline artifact report creation ARTIFACT-NAME-OR-PATH [flags]
 
 ```
   -t, --artifact-type string   The type of the artifact. Options are [dir, file, docker].
-  -b, --build-url string       The url of CI pipeline that built the artifact. (default "https://github.com/merkely-development/cli/actions/runs/1606157656")
-  -u, --commit-url string      The url for the git commit that created the artifact. (default "https://github.com/merkely-development/cli/commit/35be5dc598a5a5c3b01748af0a5b677fef4e765d")
+  -b, --build-url string       The url of CI pipeline that built the artifact.
+  -u, --commit-url string      The url for the git commit that created the artifact.
   -C, --compliant              Whether the artifact is compliant or not. (default true)
   -d, --description string     [optional] The artifact description.
-  -g, --git-commit string      The git commit from which the artifact was created. (default "35be5dc598a5a5c3b01748af0a5b677fef4e765d")
+  -g, --git-commit string      The git commit from which the artifact was created.
   -h, --help                   help for creation
   -p, --pipeline string        The Merkely pipeline name.
   -s, --sha256 string          The SHA256 fingerprint for the artifact. Only required if you don't specify --artifact-type.

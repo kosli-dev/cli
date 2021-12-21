@@ -34,7 +34,7 @@ merkely pipeline artifact report evidence pullrequest ARTIFACT-NAME-OR-PATH [fla
 
 ```
   -t, --artifact-type string   The type of the artifact related to the evidence. Options are [dir, file, docker].
-  -b, --build-url string       The url of CI pipeline that generated the evidence. (default "https://github.com/merkely-development/cli/actions/runs/1606157656")
+  -b, --build-url string       The url of CI pipeline that generated the evidence.
   -d, --description string     [optional] The evidence description.
   -e, --evidence-type string   The type of evidence being reported.
   -h, --help                   help for pullrequest
