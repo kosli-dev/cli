@@ -12,6 +12,7 @@ on:
     workflows: ["helm chart", "release"]
     types:
       - completed
+  workflow_dispatch:    
 
 jobs:
   deploy:
