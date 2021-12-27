@@ -19,24 +19,25 @@ The pipefile contains the pipeline metadata and compliance policy.
 `
 
 const pipelineDeclareExample = `
-* create a Merkely pipeline with a pipefile:
-merkely pipeline declare myPipe --owner owner-name --api-token topSecret --pipefile /path/to/pipefile.json
+* create/update a Merkely pipeline without a pipefile:
+merkely pipeline declare --pipeline myPipe --description desc \
+   --visibility private --template artifact,evidence-type1,evidence-type2 \
+   --owner owner-name --api-token topSecret
+
+* create/update a Merkely pipeline with a pipefile (this is a legacy way which will be removed in the future):
+merkely pipeline declare --owner owner-name --api-token topSecret --pipefile /path/to/pipefile.json
 
 * The pipefile format is:
 {
+    "name": "myPipe",
     "description": "pipeline short description",
     "visibility": "public or private",
     "template": [
         "artifact",
         "evidence-type1",
-		"evidence-type2"
+        "evidence-type2"
     ]
 }
-
-* create a Merkely pipeline without a pipefile:
-merkely pipeline declare myPipe --description desc \
-   --visibility private --template artifact,evidence-type1,evidence-type2 \
-   --owner owner-name --api-token topSecret
 `
 
 type pipelineDeclareOptions struct {
@@ -55,21 +56,29 @@ type PipelinePayload struct {
 func newPipelineDeclareCmd(out io.Writer) *cobra.Command {
 	o := new(pipelineDeclareOptions)
 	cmd := &cobra.Command{
-		Use:     "declare PIPELINE-NAME",
-		Short:   "Declare a Merkely pipeline",
+		Use:     "declare",
+		Short:   "Declare or update a Merkely pipeline",
 		Long:    pipelineDeclareDesc,
 		Example: pipelineDeclareExample,
+		Args:    NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 1 {
-				return fmt.Errorf("only pipeline name argument is allowed")
-			}
-			if len(args) == 0 || args[0] == "" {
-				return fmt.Errorf("pipeline name argument is required")
-			}
-
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return err
+			}
+
+			if o.pipefile != "" {
+				// This check does not catch if --template or --visibility is provided by the user
+				// as they both have defaults.
+				// When a pipefile is provided, the flags are ignored anyway
+				if o.payload.Description != "" || o.payload.Name != "" {
+					return fmt.Errorf("--pipefile cannot be used together with any of" +
+						" --description, --pipeline flags")
+				}
+			} else {
+				if o.payload.Name == "" {
+					return fmt.Errorf("--pipeline is required when you are not using --pipefile")
+				}
 			}
 
 			return nil
@@ -79,7 +88,8 @@ func newPipelineDeclareCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&o.pipefile, "pipefile", "", "The path to the JSON pipefile.")
+	cmd.Flags().StringVar(&o.payload.Name, "pipeline", "", "The name of the pipeline to be created or updated.")
+	cmd.Flags().StringVar(&o.pipefile, "pipefile", "", "[deprecated] The path to the JSON pipefile.")
 	cmd.Flags().StringVar(&o.payload.Description, "description", "", "[optional] The Merkely pipeline description.")
 	cmd.Flags().StringVar(&o.payload.Visibility, "visibility", "private", "The visibility of the Merkely pipeline. Options are [public, private].")
 	cmd.Flags().StringSliceVarP(&o.payload.Template, "template", "t", []string{"artifact"}, "The comma-separated list of required compliance controls names.")
@@ -88,21 +98,18 @@ func newPipelineDeclareCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *pipelineDeclareOptions) run(args []string) error {
-	pipelineName := args[0]
 	url := fmt.Sprintf("%s/api/v1/projects/%s/", global.Host, global.Owner)
 	if o.pipefile != "" {
 		pipePayload, err := loadPipefile(o.pipefile)
 		if err != nil {
 			return err
 		}
-		pipePayload.Name = pipelineName
 		pipePayload.Owner = global.Owner
 		o.payload.Template = injectArtifactIntoTemplateIfNotExisting(pipePayload.Template)
 		_, err = requests.SendPayload(pipePayload, url, "", global.ApiToken,
 			global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
 		return err
 	} else {
-		o.payload.Name = pipelineName
 		o.payload.Owner = global.Owner
 		o.payload.Template = injectArtifactIntoTemplateIfNotExisting(o.payload.Template)
 		_, err := requests.SendPayload(o.payload, url, "", global.ApiToken,
