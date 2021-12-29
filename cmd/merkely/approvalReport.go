@@ -111,26 +111,37 @@ func approvalReportDesc() string {
 
 // listCommitsBetween list all commits that have happened between two commits in a git repo
 func listCommitsBetween(repoRoot, oldest, newest string) ([]string, error) {
-	newestHash := plumbing.NewHash(newest)
-	oldestHash := plumbing.NewHash(oldest)
 	repo, err := git.PlainOpen(repoRoot)
 	if err != nil {
-		return []string{}, err
+		return []string{}, fmt.Errorf("failed to open git repository at %s: %v",
+			repoRoot, err)
 	}
+
+	newestHash, err := repo.ResolveRevision(plumbing.Revision(newest))
+	if err != nil {
+		return []string{}, fmt.Errorf("failed to resolve %s: %v", newest, err)
+	}
+	oldestHash, err := repo.ResolveRevision(plumbing.Revision(oldest))
+	if err != nil {
+		return []string{}, fmt.Errorf("failed to resolve %s: %v", oldest, err)
+
+	}
+	log.Debugf("This is the newest commit hash %s", newestHash.String())
+	log.Debugf("This is the oldest commit hash %s", oldestHash.String())
 
 	commits := []string{}
 
-	commitsIter, err := repo.Log(&git.LogOptions{From: newestHash, Order: git.LogOrderCommitterTime})
+	commitsIter, err := repo.Log(&git.LogOptions{From: *newestHash, Order: git.LogOrderCommitterTime})
 	if err != nil {
-		return []string{}, err
+		return []string{}, fmt.Errorf("failed to git log: %v", err)
 	}
 
 	for ok := true; ok; {
 		commit, err := commitsIter.Next()
 		if err != nil {
-			return []string{}, err
+			return []string{}, fmt.Errorf("failed to get next commit: %v", err)
 		}
-		if commit.Hash != oldestHash {
+		if commit.Hash != *oldestHash {
 			commits = append(commits, commit.Hash.String())
 		} else {
 			break
