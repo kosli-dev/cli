@@ -63,7 +63,7 @@ func newDeploymentReportCmd(out io.Writer) *cobra.Command {
 func (o *deploymentReportOptions) run(args []string) error {
 	var err error
 	if o.payload.Sha256 == "" {
-		o.payload.Sha256, err = GetSha256Digest(o.artifactType, args[0])
+		o.payload.Sha256, err = GetSha256Digest(o.artifactType, args[0], "", "", "")
 		if err != nil {
 			return err
 		}

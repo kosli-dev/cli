@@ -69,7 +69,7 @@ func newPullRequestEvidenceCmd(out io.Writer) *cobra.Command {
 func (o *pullRequestEvidenceOptions) run(args []string) error {
 	var err error
 	if o.sha256 == "" {
-		o.sha256, err = GetSha256Digest(o.artifactType, args[0])
+		o.sha256, err = GetSha256Digest(o.artifactType, args[0], "", "", "")
 		if err != nil {
 			return err
 		}
@@ -157,7 +157,7 @@ func parseBitbucketResponse(commit, password, username string, response *request
 	if len(pullRequestsEvidence) > 0 {
 		isCompliant = true
 	} else {
-		return isCompliant, pullRequestsEvidence, fmt.Errorf("No pull requests found for given commit %s", commit)
+		return isCompliant, pullRequestsEvidence, fmt.Errorf("no pull requests found for given commit %s", commit)
 	}
 	return isCompliant, pullRequestsEvidence, nil
 }

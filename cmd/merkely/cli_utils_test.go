@@ -292,7 +292,7 @@ func (suite *CliUtilsTestSuite) TestGetSha256Digest() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			fingerprint, err := GetSha256Digest(t.args.artifactType, t.args.artifactName)
+			fingerprint, err := GetSha256Digest(t.args.artifactType, t.args.artifactName, "", "", "")
 			if t.expectError {
 				require.Errorf(suite.T(), err, "TestGetSha256Digest: error was expected but got none.")
 			} else {
