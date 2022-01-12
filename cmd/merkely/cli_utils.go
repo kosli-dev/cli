@@ -3,12 +3,16 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"reflect"
+	"strings"
 	"unicode"
 
 	"github.com/merkely-development/reporter/internal/digest"
+	"github.com/merkely-development/reporter/internal/requests"
 	"github.com/merkely-development/reporter/internal/utils"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -143,9 +147,52 @@ func NoArgs(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+type registryProviderEndpoints struct {
+	mainApi string
+	authApi string
+	service string
+}
+
+func getRegistryEndpointForProvider(provider string) (*registryProviderEndpoints, error) {
+	switch provider {
+	case "dockerhub":
+		return &registryProviderEndpoints{
+			mainApi: "https://registry-1.docker.io/v2",
+			authApi: "https://auth.docker.io",
+			service: "registry.docker.io",
+		}, nil
+	case "github":
+		return &registryProviderEndpoints{
+			mainApi: "https://ghcr.io/v2",
+			authApi: "https://ghcr.io",
+			service: "ghcr.io",
+		}, nil
+
+	default:
+		return &registryProviderEndpoints{}, fmt.Errorf("%s is not a supported docker registry provider", provider)
+	}
+
+}
+
+func getDockerRegistryAPIToken(providerInfo *registryProviderEndpoints, username, password, imageName string) (string, error) {
+	url := fmt.Sprintf("%s/token?scope=repository:%s:pull&service=%s", providerInfo.authApi, imageName, providerInfo.service)
+	res, err := requests.DoRequest([]byte{}, url, username, password, 3, http.MethodGet, logrus.New())
+
+	if err != nil {
+		return "", fmt.Errorf("failed to create an authentication token for the docker registry: %v", err)
+	}
+
+	var responseData map[string]interface{}
+	err = json.Unmarshal([]byte(res.Body), &responseData)
+	if err != nil {
+		return "", err
+	}
+	return responseData["token"].(string), nil
+}
+
 // GetSha256Digest calculates the sha256 digest of an artifact.
 // Supported artifact types are: dir, file, docker
-func GetSha256Digest(artifactType, name string) (string, error) {
+func GetSha256Digest(artifactType, name, provider, username, password string) (string, error) {
 	var err error
 	var fingerprint string
 	switch artifactType {
@@ -154,8 +201,26 @@ func GetSha256Digest(artifactType, name string) (string, error) {
 	case "dir":
 		fingerprint, err = digest.DirSha256(name, log)
 	case "docker":
-		token := "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsIng1YyI6WyJNSUlDK1RDQ0FwK2dBd0lCQWdJQkFEQUtCZ2dxaGtqT1BRUURBakJHTVVRd1FnWURWUVFERXp0U1RVbEdPbEZNUmpRNlEwZFFNenBSTWtWYU9sRklSRUk2VkVkRlZUcFZTRlZNT2taTVZqUTZSMGRXV2pwQk5WUkhPbFJMTkZNNlVVeElTVEFlRncweU1UQXhNalV5TXpFMU1EQmFGdzB5TWpBeE1qVXlNekUxTURCYU1FWXhSREJDQmdOVkJBTVRPMVZQU1ZJNlJFMUpWVHBZVlZKUk9rdFdRVXc2U2twTFZ6cExORkpGT2tWT1RFczZRMWRGVERwRVNrOUlPbEpYTjFjNlRrUktWRHBWV0U1WU1JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBbnZBeVpFK09sZHgrY3hRS0RBWUtmTHJJYk5rK2hnaEg3Ti9mTFpMVDhEYXVPMXRoTWdoamxjcGhFVkNuYTFlMEZpOHVsUlZ4WG1HdWpZVDNXbnFsZ2ZpM2ZYTUQvQlBRTmlkWHZkeWprbDFZS3dPTkl3TkFWMnRXbExxaXFsdGhSWkFnTFdvWWZZMXZQMHFKTFZBbWt5bUkrOXRBcEMxNldNZ1ZFcHJGdE1rNnV0NDlMcDlUR1J0aDJQbHVWc3RSQ1hVUGp4bjI0d3NnYlUwVStjWTJSNEpyZmVJdzN0T1ZKbXNESkNaYW5SNmVheFYyVFZFUkxoZnNGVTlsSHAzcldCZ1RuNVRCSHlMRDNRdGVFLzJ3L3MvcUxZcmdIK1hCMmZBazJPd1NIRG5YWDg4WWVJd0EyVGJJMDdYNS8xQnVsaUwrUDduOWVBT1RmbDkxVlZwNER3SURBUUFCbzRHeU1JR3ZNQTRHQTFVZER3RUIvd1FFQXdJSGdEQVBCZ05WSFNVRUNEQUdCZ1JWSFNVQU1FUUdBMVVkRGdROUJEdFZUMGxTT2tSTlNWVTZXRlZTVVRwTFZrRk1Pa3BLUzFjNlN6UlNSVHBGVGt4TE9rTlhSVXc2UkVwUFNEcFNWemRYT2s1RVNsUTZWVmhPV0RCR0JnTlZIU01FUHpBOWdEdFNUVWxHT2xGTVJqUTZRMGRRTXpwUk1rVmFPbEZJUkVJNlZFZEZWVHBWU0ZWTU9rWk1WalE2UjBkV1dqcEJOVlJIT2xSTE5GTTZVVXhJU1RBS0JnZ3Foa2pPUFFRREFnTklBREJGQWlFQTBkN3l1azQrWElabmtQb3RJVkdCeHBRSndpMzQwdExSb3R3Qzl4NkJpdWNDSUhFSmIyWGg0QzhtYVZic1Exd3ZUSCthRGV0VXhBS21lYkdXa3F6Z1J1Z1QiXX0.eyJhY2Nlc3MiOlt7InR5cGUiOiJyZXBvc2l0b3J5IiwibmFtZSI6Im1lcmtlbHkvY2hhbmdlIiwiYWN0aW9ucyI6WyJwdWxsIl0sInBhcmFtZXRlcnMiOnsicHVsbF9saW1pdCI6IjIwMCIsInB1bGxfbGltaXRfaW50ZXJ2YWwiOiIyMTYwMCJ9fV0sImF1ZCI6InJlZ2lzdHJ5LmRvY2tlci5pbyIsImV4cCI6MTY0MTk4NDgxMCwiaWF0IjoxNjQxOTg0NTEwLCJpc3MiOiJhdXRoLmRvY2tlci5pbyIsImp0aSI6ImM0LWhTUzF1cThrMHR0SWxpczc3IiwibmJmIjoxNjQxOTg0MjEwLCJzdWIiOiIxMWZjM2Q4Ny1hZDRlLTQwYjQtOTEzOS05NzZkNjFhMDJmYzMifQ.nWR1MauMJE1_iy84iQkKHwOlt5AyJk_fzUG8sRGeg1J6l-4iSXc5R6GBjd2-El2mefLPNivoDfbJP7rPVAzmSqgSyVup3882xmU2TIo4UX7IawDW0xGGt8PoABk5nN3vRV_SpP7MsGGCU6dwbMiIYUB1jKM7T9sXs2U0LXrLifdpaWhoFxfE1rtGCOf4b8pX0rRil-HgMGcAKt3tI1lCkLaUG3Q6Y1LLvjFP0eSTTNNs9p2fhUNLD8P6BEpPq7FgA95rDKYO_CR8117GPfItsSrrEPLzrpmbLnjrYWHAH94y0iOP6OO1iIrqA86zxTfHRtpQg8Dfsoe9-MZuInBktA"
-		fingerprint, err = digest.DockerImageSha256NoPull("merkely/change", "latest", "https://registry-1.docker.io/v2", token)
+		if provider != "" {
+			var providerInfo *registryProviderEndpoints
+			providerInfo, err = getRegistryEndpointForProvider(provider)
+			if err != nil {
+				return "", err
+			}
+			nameSlice := strings.Split(name, ":")
+			if len(nameSlice) < 2 {
+				nameSlice = append(nameSlice, "latest")
+			}
+			token := ""
+			token, err = getDockerRegistryAPIToken(providerInfo, username, password, name)
+			if err != nil {
+				return "", err
+			}
+			fingerprint, err = digest.DockerImageSha256NoPull(nameSlice[0], nameSlice[1], providerInfo.mainApi, token)
+
+		} else {
+			fingerprint, err = digest.DockerImageSha256(name)
+		}
 	default:
 		return "", fmt.Errorf("%s is not a supported artifact type", artifactType)
 	}

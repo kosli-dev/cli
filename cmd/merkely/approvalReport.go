@@ -68,7 +68,7 @@ func newApprovalReportCmd(out io.Writer) *cobra.Command {
 func (o *approvalReportOptions) run(args []string, request bool) error {
 	var err error
 	if o.payload.ArtifactSha256 == "" {
-		o.payload.ArtifactSha256, err = GetSha256Digest(o.artifactType, args[0])
+		o.payload.ArtifactSha256, err = GetSha256Digest(o.artifactType, args[0], "", "", "")
 		if err != nil {
 			return err
 		}

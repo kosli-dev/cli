@@ -50,7 +50,7 @@ func newApprovalAssertCmd(out io.Writer) *cobra.Command {
 func (o *approvalAssertOptions) run(args []string) error {
 	var err error
 	if o.sha256 == "" {
-		o.sha256, err = GetSha256Digest(o.artifactType, args[0])
+		o.sha256, err = GetSha256Digest(o.artifactType, args[0], "", "", "")
 		if err != nil {
 			return err
 		}

@@ -44,7 +44,7 @@ func getRetryableHttpClient(maxAPIRetries int, logger *logrus.Logger) *http.Clie
 }
 
 // doRequest sends an HTTP request to a URL and returns the response body and status code
-func doRequest(jsonBytes []byte, url, username, password string, maxAPIRetries int, method string, logger *logrus.Logger) (*HTTPResponse, error) {
+func DoRequest(jsonBytes []byte, url, username, password string, maxAPIRetries int, method string, logger *logrus.Logger) (*HTTPResponse, error) {
 	client := getRetryableHttpClient(maxAPIRetries, logger)
 
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonBytes))
@@ -132,7 +132,7 @@ func SendPayload(payload interface{}, url, username, token string, maxRetries in
 			logger.Info("****** Sending the payload to the API ******")
 			logger.Info(string(jsonBytes))
 		}
-		resp, err = doRequest(jsonBytes, url, username, token, maxRetries, method, logger)
+		resp, err = DoRequest(jsonBytes, url, username, token, maxRetries, method, logger)
 		if err != nil {
 			return resp, err
 		}

@@ -68,7 +68,7 @@ func (o *artifactCreationOptions) run(args []string) error {
 		o.payload.Filename = args[0]
 	} else {
 		var err error
-		o.payload.Sha256, err = GetSha256Digest(o.artifactType, args[0])
+		o.payload.Sha256, err = GetSha256Digest(o.artifactType, args[0], "", "", "")
 		if err != nil {
 			return err
 		}
