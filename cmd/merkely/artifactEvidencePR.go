@@ -13,13 +13,14 @@ import (
 )
 
 type pullRequestEvidenceOptions struct {
-	artifactType string
-	sha256       string // This is calculated or provided by the user
-	pipelineName string
-	description  string
-	buildUrl     string
-	provider     string
-	payload      EvidencePayload
+	// artifactType string
+	fingerprintOptions *fingerprintOptions
+	sha256             string // This is calculated or provided by the user
+	pipelineName       string
+	description        string
+	buildUrl           string
+	provider           string
+	payload            EvidencePayload
 }
 
 type PrEvidence struct {
@@ -31,6 +32,7 @@ type PrEvidence struct {
 
 func newPullRequestEvidenceCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestEvidenceOptions)
+	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:     "pullrequest ARTIFACT-NAME-OR-PATH",
 		Aliases: []string{"pull-request", "pr"},
@@ -42,7 +44,7 @@ func newPullRequestEvidenceCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
-			return ValidateArtifactArg(args, o.artifactType, o.sha256)
+			return ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.sha256)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)
@@ -51,12 +53,13 @@ func newPullRequestEvidenceCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	cmd.Flags().StringVar(&o.provider, "provider", "bitbucket", "The source code repository provider name. Options are [bitbucket].")
-	cmd.Flags().StringVarP(&o.artifactType, "artifact-type", "t", "", "The type of the artifact related to the evidence. Options are [dir, file, docker].")
+	// cmd.Flags().StringVarP(&o.artifactType, "artifact-type", "t", "", "The type of the artifact related to the evidence. Options are [dir, file, docker].")
 	cmd.Flags().StringVarP(&o.sha256, "sha256", "s", "", "The SHA256 fingerprint for the artifact. Only required if you don't specify --artifact-type.")
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", "The Merkely pipeline name.")
 	cmd.Flags().StringVarP(&o.description, "description", "d", "", "[optional] The evidence description.")
 	cmd.Flags().StringVarP(&o.buildUrl, "build-url", "b", DefaultValue(ci, "build-url"), "The url of CI pipeline that generated the evidence.")
 	cmd.Flags().StringVarP(&o.payload.EvidenceType, "evidence-type", "e", "", "The type of evidence being reported.")
+	addFingerprintFlags(cmd, o.fingerprintOptions)
 
 	err := RequireFlags(cmd, []string{"pipeline", "build-url", "evidence-type"})
 	if err != nil {
@@ -69,7 +72,7 @@ func newPullRequestEvidenceCmd(out io.Writer) *cobra.Command {
 func (o *pullRequestEvidenceOptions) run(args []string) error {
 	var err error
 	if o.sha256 == "" {
-		o.sha256, err = GetSha256Digest(o.artifactType, args[0], "", "", "")
+		o.sha256, err = GetSha256Digest(args[0], o.fingerprintOptions)
 		if err != nil {
 			return err
 		}

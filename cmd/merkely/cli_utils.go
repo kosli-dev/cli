@@ -192,37 +192,37 @@ func getDockerRegistryAPIToken(providerInfo *registryProviderEndpoints, username
 
 // GetSha256Digest calculates the sha256 digest of an artifact.
 // Supported artifact types are: dir, file, docker
-func GetSha256Digest(artifactType, name, provider, username, password string) (string, error) {
+func GetSha256Digest(artifactName string, o *fingerprintOptions) (string, error) {
 	var err error
 	var fingerprint string
-	switch artifactType {
+	switch o.artifactType {
 	case "file":
-		fingerprint, err = digest.FileSha256(name)
+		fingerprint, err = digest.FileSha256(artifactName)
 	case "dir":
-		fingerprint, err = digest.DirSha256(name, log)
+		fingerprint, err = digest.DirSha256(artifactName, log)
 	case "docker":
-		if provider != "" {
+		if o.registryProvider != "" {
 			var providerInfo *registryProviderEndpoints
-			providerInfo, err = getRegistryEndpointForProvider(provider)
+			providerInfo, err = getRegistryEndpointForProvider(o.registryProvider)
 			if err != nil {
 				return "", err
 			}
-			nameSlice := strings.Split(name, ":")
+			nameSlice := strings.Split(artifactName, ":")
 			if len(nameSlice) < 2 {
 				nameSlice = append(nameSlice, "latest")
 			}
 			token := ""
-			token, err = getDockerRegistryAPIToken(providerInfo, username, password, name)
+			token, err = getDockerRegistryAPIToken(providerInfo, o.registryUsername, o.registryPassword, nameSlice[0])
 			if err != nil {
 				return "", err
 			}
 			fingerprint, err = digest.DockerImageSha256NoPull(nameSlice[0], nameSlice[1], providerInfo.mainApi, token)
 
 		} else {
-			fingerprint, err = digest.DockerImageSha256(name)
+			fingerprint, err = digest.DockerImageSha256(artifactName)
 		}
 	default:
-		return "", fmt.Errorf("%s is not a supported artifact type", artifactType)
+		return "", fmt.Errorf("%s is not a supported artifact type", o.artifactType)
 	}
 
 	return fingerprint, err

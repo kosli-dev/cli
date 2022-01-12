@@ -249,8 +249,9 @@ func (suite *CliUtilsTestSuite) TestGetCIDefaultsTemplates() {
 
 func (suite *CliUtilsTestSuite) TestGetSha256Digest() {
 	type args struct {
-		artifactType string
-		artifactName string
+		// artifactType string
+		fingerprintOptions *fingerprintOptions
+		artifactName       string
 	}
 	for _, t := range []struct {
 		name        string
@@ -261,7 +262,9 @@ func (suite *CliUtilsTestSuite) TestGetSha256Digest() {
 		{
 			name: "not supported artifact type returns an error.",
 			args: args{
-				artifactType: "unknown",
+				fingerprintOptions: &fingerprintOptions{
+					artifactType: "unknown",
+				},
 				artifactName: "",
 			},
 			expectError: true,
@@ -269,7 +272,9 @@ func (suite *CliUtilsTestSuite) TestGetSha256Digest() {
 		{
 			name: "non-existing dir returns an error.",
 			args: args{
-				artifactType: "dir",
+				fingerprintOptions: &fingerprintOptions{
+					artifactType: "dir",
+				},
 				artifactName: "non-existing",
 			},
 			expectError: true,
@@ -277,7 +282,9 @@ func (suite *CliUtilsTestSuite) TestGetSha256Digest() {
 		{
 			name: "non-existing file returns an error.",
 			args: args{
-				artifactType: "file",
+				fingerprintOptions: &fingerprintOptions{
+					artifactType: "file",
+				},
 				artifactName: "non-existing.txt",
 			},
 			expectError: true,
@@ -285,14 +292,16 @@ func (suite *CliUtilsTestSuite) TestGetSha256Digest() {
 		{
 			name: "non-existing docker image returns an error.",
 			args: args{
-				artifactType: "docker",
+				fingerprintOptions: &fingerprintOptions{
+					artifactType: "docker",
+				},
 				artifactName: "registry/non-existing",
 			},
 			expectError: true,
 		},
 	} {
 		suite.Run(t.name, func() {
-			fingerprint, err := GetSha256Digest(t.args.artifactType, t.args.artifactName, "", "", "")
+			fingerprint, err := GetSha256Digest(t.args.artifactName, t.args.fingerprintOptions)
 			if t.expectError {
 				require.Errorf(suite.T(), err, "TestGetSha256Digest: error was expected but got none.")
 			} else {

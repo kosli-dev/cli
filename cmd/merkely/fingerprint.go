@@ -12,13 +12,6 @@ Print the SHA256 fingerprint of an artifact. Requires artifact type flag to be s
 Artifact type can be one of: "file" for files, "dir" for directories, "docker" for docker images.
 `
 
-type fingerprintOptions struct {
-	artifactType     string
-	registryProvider string
-	registryUsername string
-	registryPassword string
-}
-
 func newFingerprintCmd(out io.Writer) *cobra.Command {
 	o := new(fingerprintOptions)
 	cmd := &cobra.Command{
@@ -48,10 +41,7 @@ func newFingerprintCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.artifactType, "artifact-type", "t", "", "The type of the artifact to calculate its SHA256 fingerprint.")
-	cmd.Flags().StringVar(&o.registryProvider, "registry-provider", "", "The docker registry provider. Allowed options are [dockerhub, github].")
-	cmd.Flags().StringVar(&o.registryUsername, "registry-username", "", "The docker registry username.")
-	cmd.Flags().StringVar(&o.registryPassword, "registry-password", "", "The docker registry password or access token.")
+	addFingerprintFlags(cmd, o)
 	err := RequireFlags(cmd, []string{"artifact-type"})
 	if err != nil {
 		log.Fatalf("failed to configure required flags: %v", err)
@@ -60,7 +50,7 @@ func newFingerprintCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *fingerprintOptions) run(args []string, out io.Writer) error {
-	fingerprint, err := GetSha256Digest(o.artifactType, args[0], o.registryProvider, o.registryUsername, o.registryPassword)
+	fingerprint, err := GetSha256Digest(args[0], o)
 	if err != nil {
 		return err
 	}

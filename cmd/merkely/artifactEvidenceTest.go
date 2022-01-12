@@ -12,18 +12,19 @@ import (
 )
 
 type testEvidenceOptions struct {
-	artifactType   string
-	sha256         string // This is calculated or provided by the user
-	pipelineName   string
-	description    string
-	testResultsDir string
-	buildUrl       string
-	userDataFile   string
-	payload        EvidencePayload
+	fingerprintOptions *fingerprintOptions
+	sha256             string // This is calculated or provided by the user
+	pipelineName       string
+	description        string
+	testResultsDir     string
+	buildUrl           string
+	userDataFile       string
+	payload            EvidencePayload
 }
 
 func newTestEvidenceCmd(out io.Writer) *cobra.Command {
 	o := new(testEvidenceOptions)
+	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:   "test ARTIFACT-NAME-OR-PATH",
 		Short: "Report a JUnit test evidence to an artifact in a Merkely pipeline. ",
@@ -34,7 +35,7 @@ func newTestEvidenceCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
-			return ValidateArtifactArg(args, o.artifactType, o.sha256)
+			return ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.sha256)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)
@@ -42,7 +43,6 @@ func newTestEvidenceCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVarP(&o.artifactType, "artifact-type", "t", "", "The type of the artifact related to the evidence. Options are [dir, file, docker].")
 	cmd.Flags().StringVarP(&o.sha256, "sha256", "s", "", "The SHA256 fingerprint for the artifact. Only required if you don't specify --type.")
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", "The Merkely pipeline name.")
 	cmd.Flags().StringVarP(&o.description, "description", "d", "", "[optional] The evidence description.")
@@ -50,6 +50,7 @@ func newTestEvidenceCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.testResultsDir, "results-dir", "R", "/data/junit/", "The folder with JUnit test results.")
 	cmd.Flags().StringVarP(&o.payload.EvidenceType, "evidence-type", "e", "", "The type of evidence being reported.")
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", "[optional] The path to a JSON file containing additional data you would like to attach to this evidence.")
+	addFingerprintFlags(cmd, o.fingerprintOptions)
 
 	err := RequireFlags(cmd, []string{"pipeline", "build-url", "evidence-type"})
 	if err != nil {
@@ -69,7 +70,7 @@ func testEvidenceDesc() string {
 func (o *testEvidenceOptions) run(args []string) error {
 	var err error
 	if o.sha256 == "" {
-		o.sha256, err = GetSha256Digest(o.artifactType, args[0], "", "", "")
+		o.sha256, err = GetSha256Digest(args[0], o.fingerprintOptions)
 		if err != nil {
 			return err
 		}
