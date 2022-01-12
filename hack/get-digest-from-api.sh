@@ -15,6 +15,9 @@ get_token() {
 
 token=$(get_token merkely/change)
 
+echo "token:"
+echo $token
+
 curl \
     --silent -X GET -vvv -k \
     --header "Accept: application/vnd.docker.distribution.manifest.v2+json" \

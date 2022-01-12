@@ -10,14 +10,14 @@ import (
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"github.com/merkely-development/reporter/internal/aws"
 	"github.com/merkely-development/reporter/internal/kube"
-	"github.com/merkely-development/reporter/internal/server"
 	"github.com/sirupsen/logrus"
 )
 
 // HTTPResponse is a simplified version of http.Response
 type HTTPResponse struct {
-	Body       string
-	StatusCode int
+	DigestHeader string
+	Body         string
+	StatusCode   int
 }
 
 // K8sEnvRequest represents the PUT request body to be sent to merkely from k8s
@@ -32,13 +32,6 @@ type EcsEnvRequest struct {
 	Artifacts []*aws.EcsTaskData `json:"artifacts"`
 	Type      string             `json:"type"`
 	Id        string             `json:"id"`
-}
-
-// ServerEnvRequest represents the PUT request body to be sent to merkely from a server
-type ServerEnvRequest struct {
-	Artifacts []*server.ServerData `json:"artifacts"`
-	Type      string               `json:"type"`
-	Id        string               `json:"id"`
 }
 
 func getRetryableHttpClient(maxAPIRetries int, logger *logrus.Logger) *http.Client {
@@ -83,6 +76,43 @@ func doRequest(jsonBytes []byte, url, username, password string, maxAPIRetries i
 	return &HTTPResponse{
 		Body:       string(body),
 		StatusCode: resp.StatusCode,
+	}, nil
+}
+
+// doRequestWithToken sends an HTTP request to a URL and returns the response body and status code
+func DoRequestWithToken(jsonBytes []byte, url, token string, maxAPIRetries int, method string, logger *logrus.Logger) (*HTTPResponse, error) {
+	client := getRetryableHttpClient(maxAPIRetries, logger)
+
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonBytes))
+	if err != nil {
+		return &HTTPResponse{}, fmt.Errorf("failed to create %s request to %s : %v", method, url, err)
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	req.Header.Set("Accept", "application/vnd.docker.distribution.manifest.v2+json")
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return &HTTPResponse{}, fmt.Errorf("failed to send %s request to %s : %v", method, url, err)
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return &HTTPResponse{}, fmt.Errorf("failed to read response from %s request to %s : %v", method, url, err)
+	}
+
+	if resp.StatusCode != 200 {
+		return &HTTPResponse{}, fmt.Errorf("request failed with status code %d: %s", resp.StatusCode, string(body))
+	}
+
+	digest := resp.Header.Get("docker-content-digest")
+
+	return &HTTPResponse{
+		DigestHeader: digest,
+		Body:         string(body),
+		StatusCode:   resp.StatusCode,
 	}, nil
 }
 
