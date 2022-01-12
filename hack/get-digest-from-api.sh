@@ -7,8 +7,8 @@ get_token() {
   " >&2
 
   curl \
-    --silent \ 
-    --u "$DOCKER_USERNAME:$DOCKER_PASSWORD" \
+    --silent \
+    -u "$DOCKER_USERNAME:$DOCKER_PASSWORD" \
     "https://auth.docker.io/token?scope=repository:$image:pull&service=registry.docker.io" \
     | jq -r '.token'
 }
@@ -16,8 +16,10 @@ get_token() {
 token=$(get_token merkely/change)
 
 curl \
-    --silent \
+    --silent -X GET -vvv -k \
     --header "Accept: application/vnd.docker.distribution.manifest.v2+json" \
     --header "Authorization: Bearer $token" \
     "https://registry-1.docker.io/v2/merkely/change/manifests/latest" \
-    | jq -r '.config.digest'
+     2>&1 \
+    | grep "< docker-content-digest"
+
