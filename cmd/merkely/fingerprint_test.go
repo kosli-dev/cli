@@ -29,7 +29,7 @@ func (suite *FingerprintTestSuite) TearDownSuite() {
 	require.NoError(suite.T(), err, "removing the docker image should pass")
 }
 
-func (suite *FingerprintTestSuite) TestCmdRun() {
+func (suite *FingerprintTestSuite) TestRun() {
 	for _, t := range []struct {
 		name           string
 		opts           fingerprintOptions
@@ -96,6 +96,17 @@ func (suite *FingerprintTestSuite) TestCmdRun() {
 			}
 		})
 	}
+}
+
+func (suite *FingerprintTestSuite) TestFingerprintCmd() {
+	tests := []cmdTestCase{
+		{
+			name: "file fingerprint",
+			cmd:  "fingerprint --artifact-type file testdata/file1",
+			//golden: "output/install.txt",
+		},
+	}
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create
