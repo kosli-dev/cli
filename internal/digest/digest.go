@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/docker/docker/client"
+	"github.com/merkely-development/reporter/internal/requests"
 	"github.com/sirupsen/logrus"
 )
 
@@ -138,6 +140,32 @@ func DockerImageSha256(imageName string) (string, error) {
 	} else {
 		return "", fmt.Errorf("failed to get a digest for the image, has it been pushed to a registry?")
 	}
+}
+
+func DockerImageSha256NoPull(imageName, imageTag, registryEndPoint, registryToken string) (string, error) {
+	// cli, err := client.NewClientWithOpts(client.FromEnv)
+	// if err != nil {
+	// 	return "", err
+	// }
+	// imageInspect, _, err := cli.ImageInspectWithRaw(context.Background(), imageName)
+	// if err != nil {
+	// 	return "", err
+	// }
+	// repoDigests := imageInspect.RepoDigests
+	// if len(repoDigests) > 0 {
+	// 	fingerprint := strings.Split(repoDigests[0], "@sha256:")[1]
+	// 	return fingerprint, nil
+	// } else {
+	// 	return "", fmt.Errorf("failed to get a digest for the image, has it been pushed to a registry?")
+	// }
+
+	res, err := requests.DoRequestWithToken([]byte{}, registryEndPoint+"/"+imageName+"/"+"manifests/"+imageTag, registryToken, 3, http.MethodGet, logrus.New())
+
+	if err != nil {
+		return "", fmt.Errorf("failed to get docker digest from registry %v", err)
+	}
+
+	return res.DigestHeader, nil
 }
 
 // ValidateDigest checks if a digest matches the sha256 regex
