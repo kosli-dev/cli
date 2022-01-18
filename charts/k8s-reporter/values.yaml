@@ -4,11 +4,11 @@
 
 image:
   # -- the merkely reporter image repository
-  repository: ghcr.io/merkely-development/reporter
+  repository: ghcr.io/merkely-development/merkely-cli
   # -- the merkely reporter image pull policy
   pullPolicy: IfNotPresent
   # -- the merkely reporter image tag, overrides the image tag whose default is the chart appVersion.
-  tag: "v0.5.0"
+  tag: "v1.1.0"
 
 # -- overrides the name used for the created k8s resources. If `fullnameOverride` is provided, it has higher precedence than this one
 nameOverride: ""
