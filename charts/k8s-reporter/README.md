@@ -1,6 +1,6 @@
 # k8s-reporter
 
-![Version: 0.3.0](https://img.shields.io/badge/Version-0.3.0-informational?style=flat-square)
+![Version: 0.4.0](https://img.shields.io/badge/Version-0.4.0-informational?style=flat-square)
 
 A Helm chart for installing the Merkely K8S reporter as a cronjob.
 The chart allows you to create a Kubernetes cronjob and all its necessary RBAC to report running images to Merkely at a given cron schedule.
@@ -52,8 +52,8 @@ helm upgrade [RELEASE-NAME] merkely/k8s-reporter
 | cronSchedule | string | `"*/5 * * * *"` | the cron schedule at which the reporter is triggered to report to Merkely   |
 | fullnameOverride | string | `""` | overrides the fullname used for the created k8s resources. It has higher precedence than `nameOverride` |
 | image.pullPolicy | string | `"IfNotPresent"` | the merkely reporter image pull policy |
-| image.repository | string | `"ghcr.io/merkely-development/reporter"` | the merkely reporter image repository |
-| image.tag | string | `"v0.5.0"` | the merkely reporter image tag, overrides the image tag whose default is the chart appVersion. |
+| image.repository | string | `"ghcr.io/merkely-development/merkely-cli"` | the merkely reporter image repository |
+| image.tag | string | `"v1.1.0"` | the merkely reporter image tag, overrides the image tag whose default is the chart appVersion. |
 | merkelyApiToken.secretKey | string | `""` | the name of the key in the secret data which containts the Merkely API token |
 | merkelyApiToken.secretName | string | `""` | the name of the secret containing the Merkely API token |
 | nameOverride | string | `""` | overrides the name used for the created k8s resources. If `fullnameOverride` is provided, it has higher precedence than this one |
