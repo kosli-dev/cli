@@ -8,10 +8,10 @@ metadata:
 
 spec:
   schedule: {{ .Values.cronSchedule | quote }}
+  concurrencyPolicy: Replace
+  startingDeadlineSeconds: 30
   jobTemplate:
     spec:
-      concurrencyPolicy: Replace
-      startingDeadlineSeconds: 30
       template:
         spec:
           serviceAccountName: {{ include "reporter.serviceAccountName" . }}
