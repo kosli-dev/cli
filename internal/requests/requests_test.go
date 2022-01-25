@@ -48,11 +48,17 @@ func (suite *RequestsTestSuite) TestSendPayload() {
 		method     string
 	}
 
+	type want struct {
+		body       string
+		statusCode int
+	}
+
 	for _, t := range []struct {
 		name        string
 		args        args
 		expectError bool
-		want        *HTTPResponse
+		nilResponse bool
+		want        want
 	}{
 		{
 			name: "PUT request works",
@@ -65,9 +71,9 @@ func (suite *RequestsTestSuite) TestSendPayload() {
 				method:     http.MethodPut,
 			},
 			expectError: false,
-			want: &HTTPResponse{
-				Body:       `{"sha": "8b4fd747df6882b897aa514af7b40571a7508cc78a8d48ae2c12f9f4bcb1598f","name": "artifact"}`,
-				StatusCode: 201,
+			want: want{
+				body:       `{"sha": "8b4fd747df6882b897aa514af7b40571a7508cc78a8d48ae2c12f9f4bcb1598f","name": "artifact"}`,
+				statusCode: 201,
 			},
 		},
 		{
@@ -105,17 +111,20 @@ func (suite *RequestsTestSuite) TestSendPayload() {
 				method:     http.MethodGet,
 			},
 			expectError: false,
-			want:        nil,
+			nilResponse: true,
 		},
 	} {
 		suite.Run(t.name, func() {
 			resp, err := SendPayload(t.args.payload, t.args.url, "", t.args.token, t.args.maxRetries, t.args.dryRun, t.args.method, logrus.New())
 			if t.expectError {
 				require.Errorf(suite.T(), err, "error was expected but got none")
+			} else if t.nilResponse {
+				var expected *HTTPResponse
+				require.Equal(suite.T(), expected, resp, "response is expected to be nil")
 			} else {
 				require.NoErrorf(suite.T(), err, "error was not expected, but got: %v", err)
-				require.Equal(suite.T(), t.want, resp, fmt.Sprintf("want: %v -- got: %v", t.want, resp))
-				// require.Equal(suite.T(), t.want.StatusCode, resp.StatusCode, fmt.Sprintf("Status Code ** want: %v -- got: %v", t.want.StatusCode, resp.StatusCode))
+				require.Equal(suite.T(), t.want.body, resp.Body, fmt.Sprintf("want: %v -- got: %v", t.want.body, resp.Body))
+				require.Equal(suite.T(), t.want.statusCode, resp.Resp.StatusCode, fmt.Sprintf("Status Code ** want: %v -- got: %v", t.want.statusCode, resp.Resp.StatusCode))
 
 			}
 		})
