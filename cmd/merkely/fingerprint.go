@@ -25,16 +25,8 @@ func newFingerprintCmd(out io.Writer) *cobra.Command {
 			if len(args) == 0 || args[0] == "" {
 				return fmt.Errorf("docker image name or file/dir path is required")
 			}
-			if (o.registryProvider != "" && o.registryPassword == "") ||
-				(o.registryProvider == "" && o.registryPassword != "") {
-				return fmt.Errorf("both --registry-provider, --registry-username and registry-password are required if you want to get the digest from a remote registry")
 
-			}
-
-			if o.registryProvider != "dockerhub" && o.registryProvider != "github" && o.registryProvider != "" {
-				return fmt.Errorf("%s is not a supported registry for getting the docker image digest remotely", o.registryProvider)
-			}
-			return nil
+			return ValidateRegisteryFlags(o)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args, out)
