@@ -115,14 +115,14 @@ func getPullRequestsFromBitbucketApi(workspace, repository, commit, username, pa
 	if err != nil {
 		return pullRequestsEvidence, false, err
 	}
-	if response.StatusCode == 200 {
+	if response.Resp.StatusCode == 200 {
 		isCompliant, pullRequestsEvidence, err = parseBitbucketResponse(commit, password, username, response)
 		if err != nil {
 			return pullRequestsEvidence, isCompliant, err
 		}
-	} else if response.StatusCode == 202 {
+	} else if response.Resp.StatusCode == 202 {
 		return pullRequestsEvidence, isCompliant, fmt.Errorf("repository pull requests are still being indexed, please retry")
-	} else if response.StatusCode == 404 {
+	} else if response.Resp.StatusCode == 404 {
 		return pullRequestsEvidence, isCompliant, fmt.Errorf("repository does not exist or pull requests are not indexed." +
 			"Please make sure Pull Request Commit Links app is installed")
 	} else {
@@ -171,7 +171,7 @@ func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, username, password
 	if err != nil {
 		return evidence, err
 	}
-	if response.StatusCode == 200 {
+	if response.Resp.StatusCode == 200 {
 		var responseData map[string]interface{}
 		err := json.Unmarshal([]byte(response.Body), &responseData)
 		if err != nil {
@@ -199,7 +199,7 @@ func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, username, password
 		evidence.Approvers = approvers
 
 	} else {
-		return evidence, fmt.Errorf("failed to get PR details, got HTTP status %d. Please review repository permissions", response.StatusCode)
+		return evidence, fmt.Errorf("failed to get PR details, got HTTP status %d. Please review repository permissions", response.Resp.StatusCode)
 	}
 	return evidence, nil
 }

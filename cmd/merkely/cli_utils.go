@@ -174,9 +174,10 @@ func getRegistryEndpointForProvider(provider string) (*registryProviderEndpoints
 
 }
 
+// getDockerRegistryAPIToken returns a short-lived read-only api token for a docker registry api
 func getDockerRegistryAPIToken(providerInfo *registryProviderEndpoints, username, password, imageName string) (string, error) {
 	url := fmt.Sprintf("%s/token?scope=repository:%s:pull&service=%s", providerInfo.authApi, imageName, providerInfo.service)
-	res, err := requests.DoRequest([]byte{}, url, username, password, 3, http.MethodGet, logrus.New())
+	res, err := requests.DoBasicAuthRequest([]byte{}, url, username, password, 3, http.MethodGet, map[string]string{}, logrus.New())
 
 	if err != nil {
 		return "", fmt.Errorf("failed to create an authentication token for the docker registry: %v", err)
@@ -216,7 +217,7 @@ func GetSha256Digest(artifactName string, o *fingerprintOptions) (string, error)
 			if err != nil {
 				return "", err
 			}
-			fingerprint, err = digest.DockerImageSha256NoPull(nameSlice[0], nameSlice[1], providerInfo.mainApi, token)
+			fingerprint, err = digest.RemoteDockerImageSha256(nameSlice[0], nameSlice[1], providerInfo.mainApi, token)
 
 		} else {
 			fingerprint, err = digest.DockerImageSha256(artifactName)

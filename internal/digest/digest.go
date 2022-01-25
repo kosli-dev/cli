@@ -122,7 +122,7 @@ func FileSha256(filepath string) (string, error) {
 }
 
 // DockerImageSha256 returns a sha256 digest of a docker image. It requires
-// the docker deamon to be accessible.
+// the docker deamon to be accessible and the docker image to be locally present.
 // The docker image must have been pushed into a registry to have a digest.
 func DockerImageSha256(imageName string) (string, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
@@ -142,14 +142,19 @@ func DockerImageSha256(imageName string) (string, error) {
 	}
 }
 
-func DockerImageSha256NoPull(imageName, imageTag, registryEndPoint, registryToken string) (string, error) {
-	res, err := requests.DoRequestWithToken([]byte{}, registryEndPoint+"/"+imageName+"/"+"manifests/"+imageTag, registryToken, 3, http.MethodGet, logrus.New())
+// RemoteDockerImageSha256 returns a sha256 digest of a docker image by reading it from
+// remote docker registry
+func RemoteDockerImageSha256(imageName, imageTag, registryEndPoint, registryToken string) (string, error) {
+	dockerHeaders := map[string]string{"Accept": "application/vnd.docker.distribution.manifest.v2+json"}
+	res, err := requests.DoRequestWithToken([]byte{}, registryEndPoint+"/"+imageName+"/"+"manifests/"+imageTag, registryToken, 3, http.MethodGet, dockerHeaders, logrus.New())
 
 	if err != nil {
 		return "", fmt.Errorf("failed to get docker digest from registry %v", err)
 	}
 
-	fingerprint := strings.TrimPrefix(res.DigestHeader, "sha256:")
+	digestHeader := res.Resp.Header.Get("docker-content-digest")
+
+	fingerprint := strings.TrimPrefix(digestHeader, "sha256:")
 	return fingerprint, nil
 }
 
