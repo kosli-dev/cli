@@ -29,7 +29,12 @@ func newApprovalAssertCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
-			return ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.sha256)
+			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.sha256)
+			if err != nil {
+				return err
+			}
+			return ValidateRegisteryFlags(o.fingerprintOptions)
+
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)

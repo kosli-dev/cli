@@ -37,7 +37,12 @@ func newDeploymentReportCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
-			return ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.Sha256)
+			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.Sha256)
+			if err != nil {
+				return err
+			}
+			return ValidateRegisteryFlags(o.fingerprintOptions)
+
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)
