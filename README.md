@@ -8,7 +8,7 @@ Supported environments:
 
 ## Usage 
 
-See the [docs](https://merkely-development.github.io/reporter/)
+See the [docs](https://docs.merkely.com/client_reference/)
 
 ## Linting the code
 
