@@ -166,7 +166,7 @@ func ValidateDigest(sha256ToCheck string) error {
 		return fmt.Errorf("failed to validate the provided SHA256 digest")
 	}
 	if !r.MatchString(sha256ToCheck) {
-		return fmt.Errorf("%s is not a valid SHA256 digest. It should the match %v", sha256ToCheck, validSha256regex)
+		return fmt.Errorf("%s is not a valid SHA256 digest. It should match the pattern %v", sha256ToCheck, validSha256regex)
 	}
 	return nil
 }
