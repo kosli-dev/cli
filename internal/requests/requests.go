@@ -8,8 +8,6 @@ import (
 	"net/http"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
-	"github.com/merkely-development/reporter/internal/aws"
-	"github.com/merkely-development/reporter/internal/kube"
 	"github.com/sirupsen/logrus"
 )
 
@@ -17,20 +15,6 @@ import (
 type HTTPResponse struct {
 	Body string
 	Resp *http.Response
-}
-
-// K8sEnvRequest represents the PUT request body to be sent to merkely from k8s
-type K8sEnvRequest struct {
-	Artifacts []*kube.PodData `json:"artifacts"`
-	Type      string          `json:"type"`
-	Id        string          `json:"id"`
-}
-
-// EcsEnvRequest represents the PUT request body to be sent to merkely from ECS
-type EcsEnvRequest struct {
-	Artifacts []*aws.EcsTaskData `json:"artifacts"`
-	Type      string             `json:"type"`
-	Id        string             `json:"id"`
 }
 
 func getRetryableHttpClient(maxAPIRetries int, logger *logrus.Logger) *http.Client {
