@@ -387,7 +387,7 @@ func (suite *DigestTestSuite) TestDockerImageSha256() {
 			},
 		},
 		{
-			name:      "pulled image should gets a digest",
+			name:      "pulled image should get a digest",
 			imageName: "library/alpine@sha256:e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
 			pullImage: true,
 			want: want{
@@ -407,6 +407,71 @@ func (suite *DigestTestSuite) TestDockerImageSha256() {
 			} else {
 				require.NoErrorf(suite.T(), err, "TestDockerImageSha256: error was NOT expected")
 				assert.Equal(suite.T(), t.want.sha256, actual, fmt.Sprintf("TestDockerImageSha256: want %s -- got %s", t.want.sha256, actual))
+			}
+
+		})
+	}
+}
+
+func (suite *DigestTestSuite) TestRemoteDockerImageSha256() {
+	type want struct {
+		sha256      string
+		expectError bool
+	}
+	for _, t := range []struct {
+		name           string
+		imageName      string
+		localImageName string
+		localImageTag  string
+		pullImage      bool
+		want           want
+	}{
+		{
+			name:      "empty image name should cause an error",
+			imageName: "",
+			pullImage: false,
+			want: want{
+				expectError: true,
+			},
+		},
+		{
+			name:      "non existing image should cause an error",
+			imageName: "imaginery/non-existing",
+			pullImage: false,
+			want: want{
+				expectError: true,
+			},
+		},
+		{
+			name:           "registry returns a digest for an existing image",
+			imageName:      "library/alpine@sha256:e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
+			localImageName: "merkely/alpine",
+			localImageTag:  "v1",
+			pullImage:      true,
+			want: want{
+				expectError: false,
+				sha256:      "e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
+			},
+		},
+	} {
+		suite.Run(t.name, func() {
+			if t.pullImage {
+				err := utils.PullDockerImage(t.imageName)
+				require.NoErrorf(suite.T(), err, "TestRemoteDockerImageSha256: test image should be pullable")
+
+				localImage := fmt.Sprintf("localhost:5000/%s:%s", t.localImageName, t.localImageTag)
+				err = utils.TagDockerImage(t.imageName, localImage)
+				require.NoErrorf(suite.T(), err, "TestRemoteDockerImageSha256: test image should be taggable")
+
+				err = utils.PushDockerImage(localImage)
+				require.NoErrorf(suite.T(), err, "TestRemoteDockerImageSha256: test image should be pushable")
+			}
+			actual, err := RemoteDockerImageSha256(t.localImageName, t.localImageTag, "http://localhost:5000/v2", "secret")
+			if t.want.expectError {
+				require.Errorf(suite.T(), err, "TestRemoteDockerImageSha256: error was expected")
+			} else {
+				require.NoErrorf(suite.T(), err, "TestRemoteDockerImageSha256: error was NOT expected")
+				assert.Equal(suite.T(), t.want.sha256, actual, fmt.Sprintf("TestRemoteDockerImageSha256: want %s -- got %s", t.want.sha256, actual))
 			}
 
 		})
