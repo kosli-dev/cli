@@ -249,7 +249,6 @@ func (suite *CliUtilsTestSuite) TestGetCIDefaultsTemplates() {
 
 func (suite *CliUtilsTestSuite) TestGetSha256Digest() {
 	type args struct {
-		// artifactType string
 		fingerprintOptions *fingerprintOptions
 		artifactName       string
 	}
@@ -296,6 +295,32 @@ func (suite *CliUtilsTestSuite) TestGetSha256Digest() {
 					artifactType: "docker",
 				},
 				artifactName: "registry/non-existing",
+			},
+			expectError: true,
+		},
+		{
+			name: "getting digest from docker registry fails when credentials are invalid",
+			args: args{
+				fingerprintOptions: &fingerprintOptions{
+					artifactType:     "docker",
+					registryProvider: "dockerhub",
+					registryUsername: "user",
+					registryPassword: "pass",
+				},
+				artifactName: "merkely/change",
+			},
+			expectError: true,
+		},
+		{
+			name: "getting digest from docker registry fails when provider is not supported",
+			args: args{
+				fingerprintOptions: &fingerprintOptions{
+					artifactType:     "docker",
+					registryProvider: "unknown",
+					registryUsername: "user",
+					registryPassword: "pass",
+				},
+				artifactName: "merkely/change",
 			},
 			expectError: true,
 		},
@@ -431,6 +456,114 @@ func (suite *CliUtilsTestSuite) TestValidateArtifactArg() {
 	} {
 		suite.Run(t.name, func() {
 			err := ValidateArtifactArg(t.args, t.artifactType, t.inputSha256)
+			if t.expectError {
+				require.Errorf(suite.T(), err, "error was expected but got none")
+			} else {
+				require.NoErrorf(suite.T(), err, "error was NOT expected but got %v", err)
+			}
+		})
+	}
+}
+
+func (suite *CliUtilsTestSuite) TestGetRegistryEndpointForProvider() {
+	for _, t := range []struct {
+		name        string
+		provider    string
+		want        *registryProviderEndpoints
+		expectError bool
+	}{
+		{
+			name:     "github provider returns expected endpoints",
+			provider: "github",
+			want: &registryProviderEndpoints{
+				mainApi: "https://ghcr.io/v2",
+				authApi: "https://ghcr.io",
+				service: "ghcr.io",
+			},
+		},
+		{
+			name:     "dockerhub provider returns expected endpoints",
+			provider: "dockerhub",
+			want: &registryProviderEndpoints{
+				mainApi: "https://registry-1.docker.io/v2",
+				authApi: "https://auth.docker.io",
+				service: "registry.docker.io",
+			},
+		},
+		{
+			name:        "not-supported provider returns an error",
+			provider:    "unknown",
+			expectError: true,
+		},
+	} {
+		suite.Run(t.name, func() {
+			endpoints, err := getRegistryEndpointForProvider(t.provider)
+			if t.expectError {
+				require.Errorf(suite.T(), err, "error was expected but got none")
+			} else {
+				require.NoErrorf(suite.T(), err, "error was NOT expected but got %v", err)
+				require.Equalf(suite.T(), t.want, endpoints,
+					"TestGetRegistryEndpointForProvider: got %v -- want %v", t.want, endpoints)
+			}
+		})
+	}
+}
+
+func (suite *CliUtilsTestSuite) TestValidateRegisteryFlags() {
+	for _, t := range []struct {
+		name        string
+		options     *fingerprintOptions
+		expectError bool
+	}{
+		{
+			name: "registry flags are valid",
+			options: &fingerprintOptions{
+				registryProvider: "dockerhub",
+				registryUsername: "user",
+				registryPassword: "pass",
+			},
+		},
+		{
+			name: "missing username causes an error",
+			options: &fingerprintOptions{
+				registryProvider: "dockerhub",
+				registryPassword: "pass",
+			},
+			expectError: true,
+		},
+		{
+			name: "missing password causes an error",
+			options: &fingerprintOptions{
+				registryProvider: "dockerhub",
+				registryUsername: "user",
+			},
+			expectError: true,
+		},
+		{
+			name: "missing provider causes an error 1",
+			options: &fingerprintOptions{
+				registryUsername: "user",
+				registryPassword: "pass",
+			},
+			expectError: true,
+		},
+		{
+			name: "missing provider causes an error 2",
+			options: &fingerprintOptions{
+				registryUsername: "user",
+			},
+			expectError: true,
+		},
+		{
+			name: "missing provider causes an error 3",
+			options: &fingerprintOptions{
+				registryPassword: "pass",
+			},
+			expectError: true,
+		},
+	} {
+		suite.Run(t.name, func() {
+			err := ValidateRegisteryFlags(t.options)
 			if t.expectError {
 				require.Errorf(suite.T(), err, "error was expected but got none")
 			} else {
