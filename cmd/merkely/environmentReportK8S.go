@@ -97,7 +97,7 @@ func (o *environmentReportK8SOptions) run(args []string) error {
 		return err
 	}
 
-	requestBody := &requests.K8sEnvRequest{
+	requestBody := &kube.K8sEnvRequest{
 		Artifacts: podsData,
 		Type:      "K8S",
 		Id:        o.id,

@@ -82,7 +82,7 @@ func (o *environmentReportECSOptions) run(args []string) error {
 		return err
 	}
 
-	requestBody := &requests.EcsEnvRequest{
+	requestBody := &aws.EcsEnvRequest{
 		Artifacts: tasksData,
 		Type:      "ECS",
 		Id:        o.id,

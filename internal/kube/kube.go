@@ -15,6 +15,13 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+// K8sEnvRequest represents the PUT request body to be sent to merkely from k8s
+type K8sEnvRequest struct {
+	Artifacts []*PodData `json:"artifacts"`
+	Type      string     `json:"type"`
+	Id        string     `json:"id"`
+}
+
 // PodData represents the harvested pod data
 type PodData struct {
 	PodName           string                  `json:"podName"`
