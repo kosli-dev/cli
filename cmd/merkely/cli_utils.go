@@ -273,15 +273,12 @@ func ValidateArtifactArg(args []string, artifactType, inputSha256 string) error 
 
 // ValidateRegisteryFlags validates that you provide all registery information necessary for
 // remote digest.
-// TODO: Currently this validation does not cover everything
 func ValidateRegisteryFlags(o *fingerprintOptions) error {
-	if (o.registryProvider != "" && o.registryPassword == "") ||
-		(o.registryProvider == "" && o.registryPassword != "") {
-		return fmt.Errorf("both --registry-provider, --registry-username and registry-password are required if you want to get the digest from a remote registry")
+	if o.registryProvider != "" && (o.registryPassword == "" || o.registryUsername == "") {
+		return fmt.Errorf("both --registry-username and registry-password are required when --registry-provider is used")
 	}
-
-	if o.registryProvider != "dockerhub" && o.registryProvider != "github" && o.registryProvider != "" {
-		return fmt.Errorf("%s is not a supported registry for getting the docker image digest remotely", o.registryProvider)
+	if o.registryProvider == "" && (o.registryPassword != "" || o.registryUsername != "") {
+		return fmt.Errorf("--registry-username and registry-password are only used when --registry-provider is used")
 	}
 	return nil
 }
