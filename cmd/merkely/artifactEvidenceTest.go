@@ -35,7 +35,7 @@ func newTestEvidenceCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
-			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.sha256)
+			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.sha256, false)
 			if err != nil {
 				return err
 			}
