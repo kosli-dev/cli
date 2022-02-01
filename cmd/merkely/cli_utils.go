@@ -226,9 +226,13 @@ func GetSha256Digest(artifactName string, o *fingerprintOptions) (string, error)
 				nameSlice = append(nameSlice, "latest")
 			}
 			token := ""
-			token, err = getDockerRegistryAPIToken(providerInfo, o.registryUsername, o.registryPassword, nameSlice[0])
-			if err != nil {
-				return "", err
+			if !strings.Contains(providerInfo.mainApi, "jfrog.io") {
+				token, err = getDockerRegistryAPIToken(providerInfo, o.registryUsername, o.registryPassword, nameSlice[0])
+				if err != nil {
+					return "", err
+				}
+			} else {
+				token = o.registryPassword
 			}
 			fingerprint, err = digest.RemoteDockerImageSha256(nameSlice[0], nameSlice[1], providerInfo.mainApi, token)
 
