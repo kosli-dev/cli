@@ -39,7 +39,7 @@ func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
-			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.Sha256)
+			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.Sha256, true)
 			if err != nil {
 				return err
 			}

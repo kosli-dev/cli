@@ -406,11 +406,12 @@ func (suite *CliUtilsTestSuite) TestLoadUserData() {
 
 func (suite *CliUtilsTestSuite) TestValidateArtifactArg() {
 	for _, t := range []struct {
-		name         string
-		args         []string
-		artifactType string
-		inputSha256  string
-		expectError  bool
+		name                      string
+		args                      []string
+		artifactType              string
+		inputSha256               string
+		alwaysRequireArtifactName bool
+		expectError               bool
 	}{
 		{
 			name:         "two args are not allowed",
@@ -453,9 +454,23 @@ func (suite *CliUtilsTestSuite) TestValidateArtifactArg() {
 			inputSha256: "8b4fd747df6882b897aa514af7b40571a7508cc78a8d48ae2c12f9f4bcb1598f",
 			expectError: false,
 		},
+		{
+			name:                      "throws an error when sha256 is provided and arg(filename) is not and it is expected",
+			args:                      []string{""},
+			inputSha256:               "8b4fd747df6882b897aa514af7b40571a7508cc78a8d48ae2c12f9f4bcb1598f",
+			expectError:               true,
+			alwaysRequireArtifactName: true,
+		},
+		{
+			name:                      "does not throw an error when sha256 is provided and arg(filename) is not and it is NOT expected",
+			args:                      []string{""},
+			inputSha256:               "8b4fd747df6882b897aa514af7b40571a7508cc78a8d48ae2c12f9f4bcb1598f",
+			expectError:               false,
+			alwaysRequireArtifactName: false,
+		},
 	} {
 		suite.Run(t.name, func() {
-			err := ValidateArtifactArg(t.args, t.artifactType, t.inputSha256)
+			err := ValidateArtifactArg(t.args, t.artifactType, t.inputSha256, t.alwaysRequireArtifactName)
 			if t.expectError {
 				require.Errorf(suite.T(), err, "error was expected but got none")
 			} else {
@@ -489,11 +504,6 @@ func (suite *CliUtilsTestSuite) TestGetRegistryEndpointForProvider() {
 				authApi: "https://auth.docker.io",
 				service: "registry.docker.io",
 			},
-		},
-		{
-			name:        "not-supported provider returns an error",
-			provider:    "unknown",
-			expectError: true,
 		},
 	} {
 		suite.Run(t.name, func() {

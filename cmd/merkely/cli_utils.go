@@ -271,12 +271,17 @@ func LoadUserData(filepath string) (map[string]interface{}, error) {
 }
 
 // ValidateArtifactArg validates the artifact name or path argument
-func ValidateArtifactArg(args []string, artifactType, inputSha256 string) error {
+func ValidateArtifactArg(args []string, artifactType, inputSha256 string, alwaysRequireArtifactName bool) error {
 	if len(args) > 1 {
 		return fmt.Errorf("only one argument (docker image name or file/dir path) is allowed")
 	}
+
 	if len(args) == 0 || args[0] == "" {
-		return fmt.Errorf("docker image name or file/dir path is required")
+		if alwaysRequireArtifactName {
+			return fmt.Errorf("docker image name or file/dir path is required")
+		} else if inputSha256 == "" {
+			return fmt.Errorf("docker image name or file/dir path is required when --sha256 is not provided")
+		}
 	}
 
 	if artifactType == "" && inputSha256 == "" {
