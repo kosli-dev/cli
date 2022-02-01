@@ -96,6 +96,6 @@ func artifactCreationDesc() string {
 	return `
    Report an artifact creation to a pipeline in Merkely. 
    The artifact SHA256 fingerprint is calculated and reported 
-   or,alternatively, can be provided directly. 
+   or, alternatively, can be provided directly. 
    ` + GetCIDefaultsTemplates(supportedCIs, []string{"git-commit", "build-url", "commit-url"})
 }
