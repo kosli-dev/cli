@@ -176,6 +176,9 @@ func getRegistryEndpointForProvider(provider string) (*registryProviderEndpoints
 }
 
 func getRegistryEndpoint(url string) (*registryProviderEndpoints, error) {
+	url = strings.TrimPrefix(url, "https://")
+	url = strings.Split(url, "/")[0]
+
 	return &registryProviderEndpoints{
 		mainApi: "https://" + url + "/v2",
 		authApi: "https://" + url + "/oauth2",
