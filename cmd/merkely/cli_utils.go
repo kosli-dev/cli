@@ -169,9 +169,18 @@ func getRegistryEndpointForProvider(provider string) (*registryProviderEndpoints
 		}, nil
 
 	default:
-		return &registryProviderEndpoints{}, fmt.Errorf("%s is not a supported docker registry provider", provider)
+		return getRegistryEndpoint(provider)
+		// return &registryProviderEndpoints{}, fmt.Errorf("%s is not a supported docker registry provider", provider)
 	}
 
+}
+
+func getRegistryEndpoint(url string) (*registryProviderEndpoints, error) {
+	return &registryProviderEndpoints{
+		mainApi: "https://" + url + "/v2",
+		authApi: "https://" + url + "/oauth2",
+		service: url,
+	}, nil
 }
 
 // getDockerRegistryAPIToken returns a short-lived read-only api token for a docker registry api
@@ -188,7 +197,11 @@ func getDockerRegistryAPIToken(providerInfo *registryProviderEndpoints, username
 	if err != nil {
 		return "", err
 	}
-	return responseData["token"].(string), nil
+	token := responseData["token"]
+	if token == nil {
+		token = responseData["access_token"]
+	}
+	return token.(string), nil
 }
 
 // GetSha256Digest calculates the sha256 digest of an artifact.
