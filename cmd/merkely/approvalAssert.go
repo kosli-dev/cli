@@ -11,13 +11,14 @@ import (
 )
 
 type approvalAssertOptions struct {
-	artifactType string
-	sha256       string
-	pipelineName string
+	fingerprintOptions *fingerprintOptions
+	sha256             string
+	pipelineName       string
 }
 
 func newApprovalAssertCmd(out io.Writer) *cobra.Command {
 	o := new(approvalAssertOptions)
+	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:   "assert ARTIFACT-NAME-OR-PATH",
 		Short: "Assert if an artifact in Merkely has been approved for deployment.",
@@ -28,16 +29,21 @@ func newApprovalAssertCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
-			return ValidateArtifactArg(args, o.artifactType, o.sha256)
+			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.sha256)
+			if err != nil {
+				return err
+			}
+			return ValidateRegisteryFlags(o.fingerprintOptions)
+
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.artifactType, "artifact-type", "t", "", "The type of the artifact to be approved. Options are [dir, file, docker]. Only required if you don't specify --sha256.")
 	cmd.Flags().StringVarP(&o.sha256, "sha256", "s", "", "The SHA256 fingerprint for the artifact to be approved. Only required if you don't specify --type.")
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", "The Merkely pipeline name.")
+	addFingerprintFlags(cmd, o.fingerprintOptions)
 
 	err := RequireFlags(cmd, []string{"pipeline"})
 	if err != nil {
@@ -50,7 +56,7 @@ func newApprovalAssertCmd(out io.Writer) *cobra.Command {
 func (o *approvalAssertOptions) run(args []string) error {
 	var err error
 	if o.sha256 == "" {
-		o.sha256, err = GetSha256Digest(o.artifactType, args[0])
+		o.sha256, err = GetSha256Digest(args[0], o.fingerprintOptions)
 		if err != nil {
 			return err
 		}

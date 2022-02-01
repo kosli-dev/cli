@@ -3,12 +3,16 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"reflect"
+	"strings"
 	"unicode"
 
 	"github.com/merkely-development/reporter/internal/digest"
+	"github.com/merkely-development/reporter/internal/requests"
 	"github.com/merkely-development/reporter/internal/utils"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -143,20 +147,103 @@ func NoArgs(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+type registryProviderEndpoints struct {
+	mainApi string
+	authApi string
+	service string
+}
+
+func getRegistryEndpointForProvider(provider string) (*registryProviderEndpoints, error) {
+	switch provider {
+	case "dockerhub":
+		return &registryProviderEndpoints{
+			mainApi: "https://registry-1.docker.io/v2",
+			authApi: "https://auth.docker.io",
+			service: "registry.docker.io",
+		}, nil
+	case "github":
+		return &registryProviderEndpoints{
+			mainApi: "https://ghcr.io/v2",
+			authApi: "https://ghcr.io",
+			service: "ghcr.io",
+		}, nil
+
+	default:
+		return getRegistryEndpoint(provider)
+		// return &registryProviderEndpoints{}, fmt.Errorf("%s is not a supported docker registry provider", provider)
+	}
+
+}
+
+func getRegistryEndpoint(url string) (*registryProviderEndpoints, error) {
+	url = strings.TrimPrefix(url, "https://")
+	url = strings.Split(url, "/")[0]
+
+	return &registryProviderEndpoints{
+		mainApi: "https://" + url + "/v2",
+		authApi: "https://" + url + "/oauth2",
+		service: url,
+	}, nil
+}
+
+// getDockerRegistryAPIToken returns a short-lived read-only api token for a docker registry api
+func getDockerRegistryAPIToken(providerInfo *registryProviderEndpoints, username, password, imageName string) (string, error) {
+	url := fmt.Sprintf("%s/token?scope=repository:%s:pull&service=%s", providerInfo.authApi, imageName, providerInfo.service)
+	res, err := requests.DoBasicAuthRequest([]byte{}, url, username, password, 3, http.MethodGet, map[string]string{}, logrus.New())
+
+	if err != nil {
+		return "", fmt.Errorf("failed to create an authentication token for the docker registry: %v", err)
+	}
+
+	var responseData map[string]interface{}
+	err = json.Unmarshal([]byte(res.Body), &responseData)
+	if err != nil {
+		return "", err
+	}
+	token := responseData["token"]
+	if token == nil {
+		token = responseData["access_token"]
+	}
+	return token.(string), nil
+}
+
 // GetSha256Digest calculates the sha256 digest of an artifact.
 // Supported artifact types are: dir, file, docker
-func GetSha256Digest(artifactType, name string) (string, error) {
+func GetSha256Digest(artifactName string, o *fingerprintOptions) (string, error) {
 	var err error
 	var fingerprint string
-	switch artifactType {
+	switch o.artifactType {
 	case "file":
-		fingerprint, err = digest.FileSha256(name)
+		fingerprint, err = digest.FileSha256(artifactName)
 	case "dir":
-		fingerprint, err = digest.DirSha256(name, log)
+		fingerprint, err = digest.DirSha256(artifactName, log)
 	case "docker":
-		fingerprint, err = digest.DockerImageSha256(name)
+		if o.registryProvider != "" {
+			var providerInfo *registryProviderEndpoints
+			providerInfo, err = getRegistryEndpointForProvider(o.registryProvider)
+			if err != nil {
+				return "", err
+			}
+			nameSlice := strings.Split(artifactName, ":")
+			if len(nameSlice) < 2 {
+				nameSlice = append(nameSlice, "latest")
+			}
+			token := ""
+			if !strings.Contains(providerInfo.mainApi, "jfrog.io") {
+				token, err = getDockerRegistryAPIToken(providerInfo, o.registryUsername, o.registryPassword, nameSlice[0])
+				if err != nil {
+					return "", err
+				}
+			} else {
+				token = o.registryPassword
+			}
+			fingerprint, err = digest.RemoteDockerImageSha256(nameSlice[0], nameSlice[1], providerInfo.mainApi, token)
+
+		} else {
+			fingerprint, err = digest.DockerImageSha256(artifactName)
+		}
 	default:
-		return "", fmt.Errorf("%s is not a supported artifact type", artifactType)
+		return "", fmt.Errorf("%s is not a supported artifact type", o.artifactType)
 	}
 
 	return fingerprint, err
@@ -200,6 +287,18 @@ func ValidateArtifactArg(args []string, artifactType, inputSha256 string) error 
 		if err := digest.ValidateDigest(inputSha256); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// ValidateRegisteryFlags validates that you provide all registery information necessary for
+// remote digest.
+func ValidateRegisteryFlags(o *fingerprintOptions) error {
+	if o.registryProvider != "" && (o.registryPassword == "" || o.registryUsername == "") {
+		return fmt.Errorf("both --registry-username and registry-password are required when --registry-provider is used")
+	}
+	if o.registryProvider == "" && (o.registryPassword != "" || o.registryUsername != "") {
+		return fmt.Errorf("--registry-username and registry-password are only used when --registry-provider is used")
 	}
 	return nil
 }

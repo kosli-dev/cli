@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -31,6 +32,44 @@ func PullDockerImage(imageName string) error {
 	return nil
 }
 
+// PushDockerImage pushes a docker image or returns an error
+func PushDockerImage(imageName string) error {
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return err
+	}
+
+	authConfig := types.AuthConfig{
+		ServerAddress: "http://localhost:5000/",
+	}
+	authConfigBytes, _ := json.Marshal(authConfig)
+	authConfigEncoded := base64.URLEncoding.EncodeToString(authConfigBytes)
+	opts := types.ImagePushOptions{RegistryAuth: authConfigEncoded}
+
+	rc, err := cli.ImagePush(context.Background(), imageName, opts)
+	if err != nil {
+		return err
+	}
+	defer rc.Close()
+	_, err = io.Copy(os.Stdout, rc)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// TagDockerImage tags a docker image or returns an error
+func TagDockerImage(sourceName, targetName string) error {
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return err
+	}
+
+	return cli.ImageTag(context.Background(), sourceName, targetName)
+}
+
+// RemoveDockerImage deletes a docker image or return an error
 func RemoveDockerImage(imageName string) error {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {

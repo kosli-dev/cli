@@ -11,9 +11,9 @@ import (
 )
 
 type artifactCreationOptions struct {
-	artifactType string
-	pipelineName string
-	payload      ArtifactPayload
+	fingerprintOptions *fingerprintOptions
+	pipelineName       string
+	payload            ArtifactPayload
 }
 
 type ArtifactPayload struct {
@@ -28,6 +28,7 @@ type ArtifactPayload struct {
 
 func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 	o := new(artifactCreationOptions)
+	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:   "creation ARTIFACT-NAME-OR-PATH",
 		Short: "Report an artifact creation to a Merkely pipeline. ",
@@ -38,7 +39,12 @@ func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
-			return ValidateArtifactArg(args, o.artifactType, o.payload.Sha256)
+			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.Sha256)
+			if err != nil {
+				return err
+			}
+			return ValidateRegisteryFlags(o.fingerprintOptions)
+
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)
@@ -46,7 +52,6 @@ func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVarP(&o.artifactType, "artifact-type", "t", "", "The type of the artifact. Options are [dir, file, docker].")
 	cmd.Flags().StringVarP(&o.payload.Sha256, "sha256", "s", "", "The SHA256 fingerprint for the artifact. Only required if you don't specify --artifact-type.")
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", "The Merkely pipeline name.")
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", "[optional] The artifact description.")
@@ -54,6 +59,7 @@ func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), "The url of CI pipeline that built the artifact.")
 	cmd.Flags().StringVarP(&o.payload.CommitUrl, "commit-url", "u", DefaultValue(ci, "commit-url"), "The url for the git commit that created the artifact.")
 	cmd.Flags().BoolVarP(&o.payload.IsCompliant, "compliant", "C", true, "Whether the artifact is compliant or not.")
+	addFingerprintFlags(cmd, o.fingerprintOptions)
 
 	err := RequireFlags(cmd, []string{"pipeline", "git-commit", "build-url", "commit-url"})
 	if err != nil {
@@ -68,11 +74,11 @@ func (o *artifactCreationOptions) run(args []string) error {
 		o.payload.Filename = args[0]
 	} else {
 		var err error
-		o.payload.Sha256, err = GetSha256Digest(o.artifactType, args[0])
+		o.payload.Sha256, err = GetSha256Digest(args[0], o.fingerprintOptions)
 		if err != nil {
 			return err
 		}
-		if o.artifactType == "dir" || o.artifactType == "file" {
+		if o.fingerprintOptions.artifactType == "dir" || o.fingerprintOptions.artifactType == "file" {
 			o.payload.Filename = filepath.Base(args[0])
 		} else {
 			o.payload.Filename = args[0]

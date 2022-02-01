@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/docker/docker/client"
+	"github.com/merkely-development/reporter/internal/requests"
 	"github.com/sirupsen/logrus"
 )
 
@@ -120,7 +122,7 @@ func FileSha256(filepath string) (string, error) {
 }
 
 // DockerImageSha256 returns a sha256 digest of a docker image. It requires
-// the docker deamon to be accessible.
+// the docker deamon to be accessible and the docker image to be locally present.
 // The docker image must have been pushed into a registry to have a digest.
 func DockerImageSha256(imageName string) (string, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
@@ -140,6 +142,22 @@ func DockerImageSha256(imageName string) (string, error) {
 	}
 }
 
+// RemoteDockerImageSha256 returns a sha256 digest of a docker image by reading it from
+// remote docker registry
+func RemoteDockerImageSha256(imageName, imageTag, registryEndPoint, registryToken string) (string, error) {
+	dockerHeaders := map[string]string{"Accept": "application/vnd.docker.distribution.manifest.v2+json"}
+	res, err := requests.DoRequestWithToken([]byte{}, registryEndPoint+"/"+imageName+"/"+"manifests/"+imageTag, registryToken, 3, http.MethodGet, dockerHeaders, logrus.New())
+
+	if err != nil {
+		return "", fmt.Errorf("failed to get docker digest from registry %v", err)
+	}
+
+	digestHeader := res.Resp.Header.Get("docker-content-digest")
+
+	fingerprint := strings.TrimPrefix(digestHeader, "sha256:")
+	return fingerprint, nil
+}
+
 // ValidateDigest checks if a digest matches the sha256 regex
 func ValidateDigest(sha256ToCheck string) error {
 	validSha256regex := "^([a-f0-9]{64})$"
@@ -148,7 +166,7 @@ func ValidateDigest(sha256ToCheck string) error {
 		return fmt.Errorf("failed to validate the provided SHA256 digest")
 	}
 	if !r.MatchString(sha256ToCheck) {
-		return fmt.Errorf("%s is not a valid SHA256 digest. It should the match %v", sha256ToCheck, validSha256regex)
+		return fmt.Errorf("%s is not a valid SHA256 digest. It should match the pattern %v", sha256ToCheck, validSha256regex)
 	}
 	return nil
 }

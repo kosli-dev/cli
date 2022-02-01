@@ -13,13 +13,13 @@ import (
 )
 
 type pullRequestEvidenceOptions struct {
-	artifactType string
-	sha256       string // This is calculated or provided by the user
-	pipelineName string
-	description  string
-	buildUrl     string
-	provider     string
-	payload      EvidencePayload
+	fingerprintOptions *fingerprintOptions
+	sha256             string // This is calculated or provided by the user
+	pipelineName       string
+	description        string
+	buildUrl           string
+	provider           string
+	payload            EvidencePayload
 }
 
 type PrEvidence struct {
@@ -31,6 +31,7 @@ type PrEvidence struct {
 
 func newPullRequestEvidenceCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestEvidenceOptions)
+	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:     "pullrequest ARTIFACT-NAME-OR-PATH",
 		Aliases: []string{"pull-request", "pr"},
@@ -42,7 +43,12 @@ func newPullRequestEvidenceCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
-			return ValidateArtifactArg(args, o.artifactType, o.sha256)
+			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.sha256)
+			if err != nil {
+				return err
+			}
+			return ValidateRegisteryFlags(o.fingerprintOptions)
+
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)
@@ -51,12 +57,12 @@ func newPullRequestEvidenceCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	cmd.Flags().StringVar(&o.provider, "provider", "bitbucket", "The source code repository provider name. Options are [bitbucket].")
-	cmd.Flags().StringVarP(&o.artifactType, "artifact-type", "t", "", "The type of the artifact related to the evidence. Options are [dir, file, docker].")
 	cmd.Flags().StringVarP(&o.sha256, "sha256", "s", "", "The SHA256 fingerprint for the artifact. Only required if you don't specify --artifact-type.")
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", "The Merkely pipeline name.")
 	cmd.Flags().StringVarP(&o.description, "description", "d", "", "[optional] The evidence description.")
 	cmd.Flags().StringVarP(&o.buildUrl, "build-url", "b", DefaultValue(ci, "build-url"), "The url of CI pipeline that generated the evidence.")
 	cmd.Flags().StringVarP(&o.payload.EvidenceType, "evidence-type", "e", "", "The type of evidence being reported.")
+	addFingerprintFlags(cmd, o.fingerprintOptions)
 
 	err := RequireFlags(cmd, []string{"pipeline", "build-url", "evidence-type"})
 	if err != nil {
@@ -69,7 +75,7 @@ func newPullRequestEvidenceCmd(out io.Writer) *cobra.Command {
 func (o *pullRequestEvidenceOptions) run(args []string) error {
 	var err error
 	if o.sha256 == "" {
-		o.sha256, err = GetSha256Digest(o.artifactType, args[0])
+		o.sha256, err = GetSha256Digest(args[0], o.fingerprintOptions)
 		if err != nil {
 			return err
 		}
@@ -114,14 +120,14 @@ func getPullRequestsFromBitbucketApi(workspace, repository, commit, username, pa
 	if err != nil {
 		return pullRequestsEvidence, false, err
 	}
-	if response.StatusCode == 200 {
+	if response.Resp.StatusCode == 200 {
 		isCompliant, pullRequestsEvidence, err = parseBitbucketResponse(commit, password, username, response)
 		if err != nil {
 			return pullRequestsEvidence, isCompliant, err
 		}
-	} else if response.StatusCode == 202 {
+	} else if response.Resp.StatusCode == 202 {
 		return pullRequestsEvidence, isCompliant, fmt.Errorf("repository pull requests are still being indexed, please retry")
-	} else if response.StatusCode == 404 {
+	} else if response.Resp.StatusCode == 404 {
 		return pullRequestsEvidence, isCompliant, fmt.Errorf("repository does not exist or pull requests are not indexed." +
 			"Please make sure Pull Request Commit Links app is installed")
 	} else {
@@ -157,7 +163,7 @@ func parseBitbucketResponse(commit, password, username string, response *request
 	if len(pullRequestsEvidence) > 0 {
 		isCompliant = true
 	} else {
-		return isCompliant, pullRequestsEvidence, fmt.Errorf("No pull requests found for given commit %s", commit)
+		return isCompliant, pullRequestsEvidence, fmt.Errorf("no pull requests found for given commit %s", commit)
 	}
 	return isCompliant, pullRequestsEvidence, nil
 }
@@ -170,7 +176,7 @@ func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, username, password
 	if err != nil {
 		return evidence, err
 	}
-	if response.StatusCode == 200 {
+	if response.Resp.StatusCode == 200 {
 		var responseData map[string]interface{}
 		err := json.Unmarshal([]byte(response.Body), &responseData)
 		if err != nil {
@@ -198,7 +204,7 @@ func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, username, password
 		evidence.Approvers = approvers
 
 	} else {
-		return evidence, fmt.Errorf("failed to get PR details, got HTTP status %d. Please review repository permissions", response.StatusCode)
+		return evidence, fmt.Errorf("failed to get PR details, got HTTP status %d. Please review repository permissions", response.Resp.StatusCode)
 	}
 	return evidence, nil
 }

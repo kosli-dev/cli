@@ -76,7 +76,7 @@ func (o *environmentReportServerOptions) run(args []string) error {
 	if err != nil {
 		return err
 	}
-	requestBody := &requests.ServerEnvRequest{
+	requestBody := &server.ServerEnvRequest{
 		Artifacts: artifacts,
 		Type:      "server",
 		Id:        o.id,

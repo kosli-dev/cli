@@ -31,6 +31,18 @@ func (suite *RequestsTestSuite) SetupSuite() {
 		Get("/no-go/").
 		Reply(404).
 		BodyString("")
+
+	suite.fakeService.NewHandler().
+		Get("/v2/").
+		Handle(func(w http.ResponseWriter, r *http.Request, rh *httpfake.Request) {
+			allHeaders := ""
+			for k, v := range r.Header {
+				for _, singleV := range v {
+					allHeaders += k + ":" + singleV + " "
+				}
+			}
+			fmt.Fprintf(w, "%s", allHeaders)
+		})
 }
 
 // shutdown the fake service after the suite execution
@@ -48,11 +60,17 @@ func (suite *RequestsTestSuite) TestSendPayload() {
 		method     string
 	}
 
+	type want struct {
+		body       string
+		statusCode int
+	}
+
 	for _, t := range []struct {
 		name        string
 		args        args
 		expectError bool
-		want        *HTTPResponse
+		nilResponse bool
+		want        want
 	}{
 		{
 			name: "PUT request works",
@@ -65,9 +83,9 @@ func (suite *RequestsTestSuite) TestSendPayload() {
 				method:     http.MethodPut,
 			},
 			expectError: false,
-			want: &HTTPResponse{
-				Body:       `{"sha": "8b4fd747df6882b897aa514af7b40571a7508cc78a8d48ae2c12f9f4bcb1598f","name": "artifact"}`,
-				StatusCode: 201,
+			want: want{
+				body:       `{"sha": "8b4fd747df6882b897aa514af7b40571a7508cc78a8d48ae2c12f9f4bcb1598f","name": "artifact"}`,
+				statusCode: 201,
 			},
 		},
 		{
@@ -105,18 +123,79 @@ func (suite *RequestsTestSuite) TestSendPayload() {
 				method:     http.MethodGet,
 			},
 			expectError: false,
-			want:        nil,
+			nilResponse: true,
 		},
 	} {
 		suite.Run(t.name, func() {
 			resp, err := SendPayload(t.args.payload, t.args.url, "", t.args.token, t.args.maxRetries, t.args.dryRun, t.args.method, logrus.New())
 			if t.expectError {
 				require.Errorf(suite.T(), err, "error was expected but got none")
+			} else if t.nilResponse {
+				var expected *HTTPResponse
+				require.Equal(suite.T(), expected, resp, "response is expected to be nil")
 			} else {
 				require.NoErrorf(suite.T(), err, "error was not expected, but got: %v", err)
-				require.Equal(suite.T(), t.want, resp, fmt.Sprintf("want: %v -- got: %v", t.want, resp))
-				// require.Equal(suite.T(), t.want.StatusCode, resp.StatusCode, fmt.Sprintf("Status Code ** want: %v -- got: %v", t.want.StatusCode, resp.StatusCode))
+				require.Equal(suite.T(), t.want.body, resp.Body, fmt.Sprintf("want: %v -- got: %v", t.want.body, resp.Body))
+				require.Equal(suite.T(), t.want.statusCode, resp.Resp.StatusCode, fmt.Sprintf("Status Code ** want: %v -- got: %v", t.want.statusCode, resp.Resp.StatusCode))
 
+			}
+		})
+	}
+}
+
+func (suite *RequestsTestSuite) TestDoRequestWithToken() {
+	type args struct {
+		payload      []byte
+		url          string
+		token        string
+		maxRetries   int
+		method       string
+		extraHeaders map[string]string
+	}
+
+	for _, t := range []struct {
+		name        string
+		args        args
+		expectError bool
+		wants       []string
+	}{
+		{
+			name: "Autherization token is passed in correctly in http request header",
+			args: args{
+				payload:      []byte{},
+				url:          suite.fakeService.ResolveURL("/v2/"),
+				token:        "secret",
+				maxRetries:   3,
+				method:       http.MethodGet,
+				extraHeaders: map[string]string{},
+			},
+			expectError: false,
+			wants:       []string{"Authorization:Bearer secret"},
+		},
+		{
+			name: "Extra headers are passed correctly in http request",
+			args: args{
+				payload:      []byte{},
+				url:          suite.fakeService.ResolveURL("/v2/"),
+				token:        "secret",
+				maxRetries:   3,
+				method:       http.MethodGet,
+				extraHeaders: map[string]string{"Foo": "bar"},
+			},
+			expectError: false,
+			wants:       []string{"Authorization:Bearer secret", "Foo:bar"},
+		},
+	} {
+		suite.Run(t.name, func() {
+			resp, err := DoRequestWithToken(t.args.payload, t.args.url, t.args.token, t.args.maxRetries,
+				t.args.method, t.args.extraHeaders, logrus.New())
+			if t.expectError {
+				require.Errorf(suite.T(), err, "error was expected but got none")
+			} else {
+				require.NoErrorf(suite.T(), err, "error was not expected, but got: %v", err)
+				for _, want := range t.wants {
+					require.Contains(suite.T(), resp.Body, want, fmt.Sprintf("want: %v -- got: %v", want, resp.Body))
+				}
 			}
 		})
 	}

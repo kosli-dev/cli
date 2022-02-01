@@ -10,6 +10,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 )
 
+// EcsEnvRequest represents the PUT request body to be sent to merkely from ECS
+type EcsEnvRequest struct {
+	Artifacts []*EcsTaskData `json:"artifacts"`
+	Type      string         `json:"type"`
+	Id        string         `json:"id"`
+}
+
 // EcsTaskData represents the harvested ECS task data
 type EcsTaskData struct {
 	TaskArn   string            `json:"taskArn"`
