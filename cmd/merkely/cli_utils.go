@@ -198,6 +198,7 @@ func getDockerRegistryAPIToken(providerInfo *registryProviderEndpoints, username
 		form := urlPackage.Values{}
 		form.Add("username", username)
 		form.Add("scope", "member-of-groups:readers")
+		form.Add("expires_in", "60")
 		res, err = requests.DoBasicAuthRequest([]byte{}, form, url, username, password, 3, http.MethodPost, map[string]string{}, logrus.New())
 	} else {
 		url := fmt.Sprintf("%s/token?scope=repository:%s:pull&service=%s", providerInfo.authApi, imageName, providerInfo.service)
