@@ -110,12 +110,12 @@ func MerkelyGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(
 	}
 
 	if cmd.Runnable() {
-		buf.WriteString(fmt.Sprintf("```\n%s\n```\n\n", cmd.UseLine()))
+		buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", cmd.UseLine()))
 	}
 
 	if len(cmd.Example) > 0 {
 		buf.WriteString("### Examples\n\n")
-		buf.WriteString(fmt.Sprintf("```\n%s\n```\n\n", cmd.Example))
+		buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", cmd.Example))
 	}
 
 	if err := printOptions(buf, cmd, name); err != nil {
