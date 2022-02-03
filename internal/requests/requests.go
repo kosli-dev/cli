@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"strings"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"github.com/sirupsen/logrus"
@@ -25,6 +27,21 @@ func getRetryableHttpClient(maxAPIRetries int, logger *logrus.Logger) *http.Clie
 	return retryClient.StandardClient()
 }
 
+// createFormRequest returns an http request with form data encoded in the request body
+func createFormRequest(method, url string, form url.Values, additionalHeaders map[string]string) (*http.Request, error) {
+	req, err := http.NewRequest(method, url, strings.NewReader(form.Encode()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create %s request to %s : %v", method, url, err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	for k, v := range additionalHeaders {
+		req.Header.Set(k, v)
+	}
+
+	return req, nil
+}
+
 // createRequest returns an http request with a payload
 func createRequest(method, url string, jsonBytes []byte, additionalHeaders map[string]string) (*http.Request, error) {
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonBytes))
@@ -41,11 +58,18 @@ func createRequest(method, url string, jsonBytes []byte, additionalHeaders map[s
 }
 
 // DoBasicAuthRequest sends an HTTP request with basic auth to a URL and returns the response body and status code
-func DoBasicAuthRequest(jsonBytes []byte, url, username, password string,
+func DoBasicAuthRequest(jsonBytes []byte, form url.Values, url, username, password string,
 	maxAPIRetries int, method string, additionalHeaders map[string]string, logger *logrus.Logger) (*HTTPResponse, error) {
 	client := getRetryableHttpClient(maxAPIRetries, logger)
 
-	req, err := createRequest(method, url, jsonBytes, additionalHeaders)
+	var req *http.Request
+	var err error
+	if form != nil {
+		req, err = createFormRequest(method, url, form, additionalHeaders)
+	} else {
+		req, err = createRequest(method, url, jsonBytes, additionalHeaders)
+	}
+
 	if err != nil {
 		return &HTTPResponse{}, err
 	}
@@ -128,7 +152,7 @@ func SendPayload(payload interface{}, url, username, token string, maxRetries in
 			logger.Info("****** Sending the payload to the API ******")
 			logger.Info(string(jsonBytes))
 		}
-		resp, err = DoBasicAuthRequest(jsonBytes, url, username, token, maxRetries, method, map[string]string{}, logger)
+		resp, err = DoBasicAuthRequest(jsonBytes, nil, url, username, token, maxRetries, method, map[string]string{}, logger)
 		if err != nil {
 			return resp, err
 		}
