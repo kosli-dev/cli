@@ -146,9 +146,6 @@ func DockerImageSha256(imageName string) (string, error) {
 // remote docker registry
 func RemoteDockerImageSha256(imageName, imageTag, registryEndPoint, registryToken string) (string, error) {
 	dockerHeaders := map[string]string{"Accept": "application/vnd.docker.distribution.manifest.v2+json"}
-	if !strings.Contains(imageName, "/") {
-		imageName = fmt.Sprintf("library/%s", imageName)
-	}
 	res, err := requests.DoRequestWithToken([]byte{}, registryEndPoint+"/"+imageName+"/"+"manifests/"+imageTag, registryToken, 3, http.MethodGet, dockerHeaders, logrus.New())
 
 	if err != nil {

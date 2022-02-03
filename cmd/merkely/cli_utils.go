@@ -228,6 +228,11 @@ func GetSha256Digest(artifactName string, o *fingerprintOptions) (string, error)
 			if len(nameSlice) < 2 {
 				nameSlice = append(nameSlice, "latest")
 			}
+
+			if !strings.Contains(nameSlice[0], "/") {
+				nameSlice[0] = fmt.Sprintf("library/%s", nameSlice[0])
+			}
+
 			token := ""
 			if !strings.Contains(providerInfo.mainApi, "jfrog.io") {
 				token, err = getDockerRegistryAPIToken(providerInfo, o.registryUsername, o.registryPassword, nameSlice[0])
