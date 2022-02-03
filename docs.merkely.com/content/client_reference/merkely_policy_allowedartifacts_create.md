@@ -1,30 +1,34 @@
 ---
-title: "merkely fingerprint"
+title: "merkely policy allowedartifacts create"
 ---
 
-## merkely fingerprint
+## merkely policy allowedartifacts create
 
-Print the SHA256 fingerprint of an artifact.
+Add an artifact to an environment's allowlist. 
 
 ### Synopsis
 
 
-Print the SHA256 fingerprint of an artifact. Requires artifact type flag to be set.
-Artifact type can be one of: "file" for files, "dir" for directories, "docker" for docker images.
-
+   Add an artifact to an environment's allowlist. 
+   The artifact SHA256 fingerprint is calculated and reported 
+   or, alternatively, can be provided directly. 
+   
 
 ```shell
-merkely fingerprint [flags]
+merkely policy allowedartifacts create ARTIFACT-NAME-OR-PATH [flags]
 ```
 
 ### Options
 
 ```
   -t, --artifact-type string       The type of the artifact to calculate its SHA256 fingerprint.
-  -h, --help                       help for fingerprint
+  -e, --environment string         The environment name for which the artifact is allowlisted.
+  -h, --help                       help for create
+      --reason string              The reason why this artifact is allowlisted.
       --registry-password string   The docker registry password or access token.
       --registry-provider string   The docker registry provider or url.
       --registry-username string   The docker registry username.
+  -s, --sha256 string              The SHA256 fingerprint for the artifact. Only required if you don't specify --artifact-type.
 ```
 
 ### Options inherited from parent commands
