@@ -224,25 +224,36 @@ func GetSha256Digest(artifactName string, o *fingerprintOptions) (string, error)
 			if err != nil {
 				return "", err
 			}
+
 			nameSlice := strings.Split(artifactName, ":")
 			if len(nameSlice) < 2 {
 				nameSlice = append(nameSlice, "latest")
 			}
+			imageName := nameSlice[0]
+			imageTag := nameSlice[1]
 
-			if !strings.Contains(nameSlice[0], "/") {
-				nameSlice[0] = fmt.Sprintf("library/%s", nameSlice[0])
+			if strings.Contains(nameSlice[0], "/") {
+				strSlice := strings.Split(nameSlice[0], "/")
+				urlOrRepo := strSlice[0]
+				if strings.Contains(urlOrRepo, ".") {
+					imageName = strings.TrimPrefix(nameSlice[0], urlOrRepo+"/")
+				}
+			}
+
+			if !strings.Contains(imageName, "/") && o.registryProvider == "dockerhub" {
+				imageName = fmt.Sprintf("library/%s", imageName)
 			}
 
 			token := ""
 			if !strings.Contains(providerInfo.mainApi, "jfrog.io") {
-				token, err = getDockerRegistryAPIToken(providerInfo, o.registryUsername, o.registryPassword, nameSlice[0])
+				token, err = getDockerRegistryAPIToken(providerInfo, o.registryUsername, o.registryPassword, imageName)
 				if err != nil {
 					return "", err
 				}
 			} else {
 				token = o.registryPassword
 			}
-			fingerprint, err = digest.RemoteDockerImageSha256(nameSlice[0], nameSlice[1], providerInfo.mainApi, token)
+			fingerprint, err = digest.RemoteDockerImageSha256(imageName, imageTag, providerInfo.mainApi, token)
 
 		} else {
 			fingerprint, err = digest.DockerImageSha256(artifactName)
