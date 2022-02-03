@@ -3,7 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	urlPackage "net/url"
 	"os"
 	"reflect"
 	"strings"
@@ -189,6 +191,39 @@ func getRegistryEndpoint(url string) (*registryProviderEndpoints, error) {
 // getDockerRegistryAPIToken returns a short-lived read-only api token for a docker registry api
 func getDockerRegistryAPIToken(providerInfo *registryProviderEndpoints, username, password, imageName string) (string, error) {
 	url := fmt.Sprintf("%s/token?scope=repository:%s:pull&service=%s", providerInfo.authApi, imageName, providerInfo.service)
+	if strings.Contains(providerInfo.service, "jfrog") {
+		url = "https://" + providerInfo.service + "/artifactory/api/security/token"
+
+		form := urlPackage.Values{}
+		form.Add("username", username)
+		form.Add("scope", "member-of-groups:readers")
+		req, _ := http.NewRequest("POST", url, strings.NewReader(form.Encode()))
+
+		req.PostForm = form
+		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+		req.SetBasicAuth(username, password)
+
+		client := http.Client{}
+
+		resp, err := client.Do(req)
+
+		if err != nil {
+			return "", fmt.Errorf("failed to send %s request to %s : %v", "POST", url, err)
+		}
+
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return "", fmt.Errorf("failed to read response from %s request to %s : %v", "POST", url, err)
+		}
+
+		if resp.StatusCode != 200 && resp.StatusCode != 201 {
+			return "", fmt.Errorf("request failed with status code %d: %s", resp.StatusCode, string(body))
+		}
+
+		fmt.Println(string(body))
+	}
+
 	res, err := requests.DoBasicAuthRequest([]byte{}, url, username, password, 3, http.MethodGet, map[string]string{}, logrus.New())
 
 	if err != nil {
@@ -244,15 +279,11 @@ func GetSha256Digest(artifactName string, o *fingerprintOptions) (string, error)
 				imageName = fmt.Sprintf("library/%s", imageName)
 			}
 
-			token := ""
-			if !strings.Contains(providerInfo.mainApi, "jfrog.io") {
-				token, err = getDockerRegistryAPIToken(providerInfo, o.registryUsername, o.registryPassword, imageName)
-				if err != nil {
-					return "", err
-				}
-			} else {
-				token = o.registryPassword
+			token, err := getDockerRegistryAPIToken(providerInfo, o.registryUsername, o.registryPassword, imageName)
+			if err != nil {
+				return "", err
 			}
+
 			fingerprint, err = digest.RemoteDockerImageSha256(imageName, imageTag, providerInfo.mainApi, token)
 
 		} else {
