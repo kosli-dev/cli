@@ -9,6 +9,7 @@ require (
 	github.com/containerd/containerd v1.5.8 // indirect
 	github.com/docker/docker v20.10.10+incompatible
 	github.com/go-git/go-git/v5 v5.4.2
+	github.com/google/go-github/v42 v42.0.0
 	github.com/hashicorp/go-retryablehttp v0.6.8
 	github.com/joshdk/go-junit v0.0.0-20210226021600-6145f504ca0d
 	github.com/maxcnunes/httpfake v1.2.4
@@ -19,6 +20,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.0
 	github.com/stretchr/testify v1.7.0
+	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	k8s.io/api v0.22.3
 	k8s.io/apimachinery v0.22.3
 	k8s.io/client-go v0.22.3

@@ -20,6 +20,7 @@ func newArtifactEvidenceCmd(out io.Writer) *cobra.Command {
 		newGenericEvidenceCmd(out),
 		newTestEvidenceCmd(out),
 		newPullRequestEvidenceCmd(out),
+		newPullRequestEvidenceGithubCmd(out),
 	)
 
 	return cmd
