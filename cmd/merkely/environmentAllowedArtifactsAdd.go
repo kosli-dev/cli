@@ -26,7 +26,7 @@ func newAllowedArtifactsCreateCmd(out io.Writer) *cobra.Command {
 	o := new(allowedArtifactsCreationOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "create ARTIFACT-NAME-OR-PATH",
+		Use:   "add ARTIFACT-NAME-OR-PATH",
 		Short: "Add an artifact to an environment's allowlist. ",
 		Long:  allowedArtifactsCreationDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
