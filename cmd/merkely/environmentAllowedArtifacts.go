@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const allowedArtifactsDesc = `All Merkely allowedartifacts policy operations.`
+const allowedArtifactsDesc = `All Merkely environment allowedartifacts operations.`
 
 func newAllowedArtifactsCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
