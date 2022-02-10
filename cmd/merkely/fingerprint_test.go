@@ -101,9 +101,39 @@ func (suite *FingerprintTestSuite) TestRun() {
 func (suite *FingerprintTestSuite) TestFingerprintCmd() {
 	tests := []cmdTestCase{
 		{
-			name: "file fingerprint",
-			cmd:  "fingerprint --artifact-type file testdata/file1",
-			//golden: "output/install.txt",
+			name:   "file fingerprint",
+			cmd:    "fingerprint --artifact-type file testdata/file1",
+			golden: "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+		},
+		{
+			name:   "dir fingerprint",
+			cmd:    "fingerprint --artifact-type dir testdata",
+			golden: "a0b019f292a7b00b24390e0e1f405b03c0e7cc2ac9748481fd8e7bfd9263c74a",
+		},
+		{
+			name:   "docker fingerprint",
+			cmd:    "fingerprint --artifact-type docker alpine@sha256:e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
+			golden: "e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
+		},
+		{
+			name:      "non-existing file fingerprint",
+			cmd:       "fingerprint --artifact-type file not-existing.txt",
+			wantError: true,
+		},
+		{
+			name:      "missing required --artifact-type flag",
+			cmd:       "fingerprint testdata/file1",
+			wantError: true,
+		},
+		{
+			name:      "missing required registry flags",
+			cmd:       "fingerprint --artifact-type docker --registry-provider dockerhub merkely/change",
+			wantError: true,
+		},
+		{
+			name:      "setting registry flags with non-docker artifact-type casues an error",
+			cmd:       "fingerprint --artifact-type file --registry-provider dockerhub --registry-username user --registry-password pass merkely/change",
+			wantError: true,
 		},
 	}
 	runTestCmd(suite.T(), tests)

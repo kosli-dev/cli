@@ -528,14 +528,26 @@ func (suite *CliUtilsTestSuite) TestValidateRegisteryFlags() {
 		{
 			name: "registry flags are valid",
 			options: &fingerprintOptions{
+				artifactType:     "docker",
 				registryProvider: "dockerhub",
 				registryUsername: "user",
 				registryPassword: "pass",
 			},
 		},
 		{
+			name: "non-docker type with registry flags set casues an error",
+			options: &fingerprintOptions{
+				artifactType:     "file",
+				registryProvider: "dockerhub",
+				registryUsername: "user",
+				registryPassword: "pass",
+			},
+			expectError: true,
+		},
+		{
 			name: "missing username causes an error",
 			options: &fingerprintOptions{
+				artifactType:     "docker",
 				registryProvider: "dockerhub",
 				registryPassword: "pass",
 			},
@@ -544,6 +556,7 @@ func (suite *CliUtilsTestSuite) TestValidateRegisteryFlags() {
 		{
 			name: "missing password causes an error",
 			options: &fingerprintOptions{
+				artifactType:     "docker",
 				registryProvider: "dockerhub",
 				registryUsername: "user",
 			},
@@ -552,6 +565,7 @@ func (suite *CliUtilsTestSuite) TestValidateRegisteryFlags() {
 		{
 			name: "missing provider causes an error 1",
 			options: &fingerprintOptions{
+				artifactType:     "docker",
 				registryUsername: "user",
 				registryPassword: "pass",
 			},
@@ -560,6 +574,7 @@ func (suite *CliUtilsTestSuite) TestValidateRegisteryFlags() {
 		{
 			name: "missing provider causes an error 2",
 			options: &fingerprintOptions{
+				artifactType:     "docker",
 				registryUsername: "user",
 			},
 			expectError: true,
@@ -567,6 +582,7 @@ func (suite *CliUtilsTestSuite) TestValidateRegisteryFlags() {
 		{
 			name: "missing provider causes an error 3",
 			options: &fingerprintOptions{
+				artifactType:     "docker",
 				registryPassword: "pass",
 			},
 			expectError: true,
