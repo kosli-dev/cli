@@ -23,7 +23,7 @@ jobs:
 
   build:
     needs: [pre-build]
-    uses: merkely-development/reporter/.github/workflows/build.yml@d282cdc121fc6b93ef7b353811675d6c4660dd0e
+    uses: merkely-development/reporter/.github/workflows/build.yml@622090aef2a6d682ef23f6ff73b52382d613f847
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
       platforms: linux/amd64,linux/arm64
