@@ -5,37 +5,40 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/merkely-development/reporter/internal/requests"
 	"github.com/spf13/cobra"
 )
 
-type pullRequestEvidenceOptions struct {
+type pullRequestEvidenceBitbucketOptions struct {
 	fingerprintOptions *fingerprintOptions
 	sha256             string // This is calculated or provided by the user
 	pipelineName       string
 	description        string
 	buildUrl           string
-	provider           string
 	payload            EvidencePayload
+	bbUsername         string
+	bbPassword         string
+	bbWorkspace        string
+	commit             string
+	repository         string
 }
 
-type PrEvidence struct {
+type BitbucketPrEvidence struct {
 	PullRequestMergeCommit string `json:"pullRequestMergeCommit"`
 	PullRequestURL         string `json:"pullRequestURL"`
 	PullRequestState       string `json:"pullRequestState"`
 	Approvers              string `json:"approvers"`
 }
 
-func newPullRequestEvidenceCmd(out io.Writer) *cobra.Command {
-	o := new(pullRequestEvidenceOptions)
+func newPullRequestEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
+	o := new(pullRequestEvidenceBitbucketOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "pullrequest ARTIFACT-NAME-OR-PATH",
-		Aliases: []string{"pull-request", "pr"},
-		Short:   "Report a pull request evidence for an artifact in a Merkely pipeline.",
+		Use:     "bitbucket-pullrequest ARTIFACT-NAME-OR-PATH",
+		Aliases: []string{"bb-pr", "bitbucket-pr"},
+		Short:   "Report a Bitbucket pull request evidence for an artifact in a Merkely pipeline.",
 		Long:    controlPullRequestDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -56,7 +59,12 @@ func newPullRequestEvidenceCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVar(&o.provider, "provider", "bitbucket", "The source code repository provider name. Options are [bitbucket].")
+	cmd.Flags().StringVar(&o.bbUsername, "bitbucket-username", "", "Bitbucket user name.")
+	cmd.Flags().StringVar(&o.bbPassword, "bitbucket-password", "", "Bitbucket password.")
+	cmd.Flags().StringVar(&o.bbWorkspace, "bitbucket-workspace", DefaultValue(ci, "workspace"), "Bitbucket workspace.")
+	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), "Git commit for which to find pull request evidence.")
+	cmd.Flags().StringVar(&o.repository, "repository", DefaultValue(ci, "repository"), "Git repository.")
+
 	cmd.Flags().StringVarP(&o.sha256, "sha256", "s", "", "The SHA256 fingerprint for the artifact. Only required if you don't specify --artifact-type.")
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", "The Merkely pipeline name.")
 	cmd.Flags().StringVarP(&o.description, "description", "d", "", "[optional] The evidence description.")
@@ -64,7 +72,8 @@ func newPullRequestEvidenceCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.EvidenceType, "evidence-type", "e", "", "The type of evidence being reported.")
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 
-	err := RequireFlags(cmd, []string{"pipeline", "build-url", "evidence-type"})
+	err := RequireFlags(cmd, []string{"bitbucket-username", "bitbucket-password",
+		"bitbucket-workspace", "commit", "repository", "pipeline", "build-url", "evidence-type"})
 	if err != nil {
 		log.Fatalf("failed to configure required flags: %v", err)
 	}
@@ -72,7 +81,7 @@ func newPullRequestEvidenceCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *pullRequestEvidenceOptions) run(args []string) error {
+func (o *pullRequestEvidenceBitbucketOptions) run(args []string) error {
 	var err error
 	if o.sha256 == "" {
 		o.sha256, err = GetSha256Digest(args[0], o.fingerprintOptions)
@@ -82,7 +91,8 @@ func (o *pullRequestEvidenceOptions) run(args []string) error {
 	}
 
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s", global.Host, global.Owner, o.pipelineName, o.sha256)
-	pullRequestsEvidence, isCompliant, err := getPullRequestForCurrentCommit()
+	pullRequestsEvidence, isCompliant, err := getPullRequestsFromBitbucketApi(o.bbWorkspace,
+		o.repository, o.commit, o.bbUsername, o.bbPassword)
 	if err != nil {
 		return err
 	}
@@ -100,18 +110,9 @@ func (o *pullRequestEvidenceOptions) run(args []string) error {
 	return err
 }
 
-func getPullRequestForCurrentCommit() ([]*PrEvidence, bool, error) {
-	workspace := os.Getenv("BITBUCKET_WORKSPACE")
-	repository := os.Getenv("BITBUCKET_REPO_SLUG")
-	commit := os.Getenv("BITBUCKET_COMMIT")
-	user := os.Getenv("BITBUCKET_API_USER")
-	password := os.Getenv("BITBUCKET_API_TOKEN")
-	return getPullRequestsFromBitbucketApi(workspace, repository, commit, user, password)
-}
-
-func getPullRequestsFromBitbucketApi(workspace, repository, commit, username, password string) ([]*PrEvidence, bool, error) {
+func getPullRequestsFromBitbucketApi(workspace, repository, commit, username, password string) ([]*BitbucketPrEvidence, bool, error) {
 	isCompliant := false
-	pullRequestsEvidence := []*PrEvidence{}
+	pullRequestsEvidence := []*BitbucketPrEvidence{}
 
 	url := fmt.Sprintf("https://api.bitbucket.org/2.0/repositories/%s/%s/commit/%s/pullrequests", workspace, repository, commit)
 	log.Debug("Getting pull requests from " + url)
@@ -136,9 +137,9 @@ func getPullRequestsFromBitbucketApi(workspace, repository, commit, username, pa
 	return pullRequestsEvidence, isCompliant, nil
 }
 
-func parseBitbucketResponse(commit, password, username string, response *requests.HTTPResponse) (bool, []*PrEvidence, error) {
+func parseBitbucketResponse(commit, password, username string, response *requests.HTTPResponse) (bool, []*BitbucketPrEvidence, error) {
 	log.Debug("Pull requests response: " + response.Body)
-	pullRequestsEvidence := []*PrEvidence{}
+	pullRequestsEvidence := []*BitbucketPrEvidence{}
 	isCompliant := false
 	var responseData map[string]interface{}
 	err := json.Unmarshal([]byte(response.Body), &responseData)
@@ -168,9 +169,9 @@ func parseBitbucketResponse(commit, password, username string, response *request
 	return isCompliant, pullRequestsEvidence, nil
 }
 
-func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, username, password, commit string) (*PrEvidence, error) {
+func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, username, password, commit string) (*BitbucketPrEvidence, error) {
 	log.Debug("Getting pull request details for" + prApiUrl)
-	evidence := &PrEvidence{}
+	evidence := &BitbucketPrEvidence{}
 	response, err := requests.SendPayload([]byte{}, prApiUrl, username, password,
 		global.MaxAPIRetries, false, http.MethodGet, log)
 	if err != nil {

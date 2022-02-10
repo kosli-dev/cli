@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 
 	gh "github.com/google/go-github/v42/github"
@@ -21,17 +20,28 @@ type pullRequestEvidenceGithubOptions struct {
 	pipelineName       string
 	description        string
 	buildUrl           string
-	provider           string
 	payload            EvidencePayload
+	ghToken            string
+	ghOwner            string
+	commit             string
+	repository         string
+}
+
+type GithubPrEvidence struct {
+	PullRequestMergeCommit string `json:"pullRequestMergeCommit"`
+	PullRequestURL         string `json:"pullRequestURL"`
+	PullRequestState       string `json:"pullRequestState"`
+	Approvers              string `json:"approvers"`
 }
 
 func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestEvidenceGithubOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "githubpr ARTIFACT-NAME-OR-PATH",
-		Short: "Report a pull request evidence from Github for an artifact in a Merkely pipeline.",
-		Long:  controlPullRequestGithubDesc(),
+		Use:     "github-pullrequest ARTIFACT-NAME-OR-PATH",
+		Aliases: []string{"gh-pr", "github-pr"},
+		Short:   "Report a Github pull request evidence for an artifact in a Merkely pipeline.",
+		Long:    controlPullRequestGithubDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -51,7 +61,11 @@ func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVar(&o.provider, "provider", "bitbucket", "The source code repository provider name. Options are [bitbucket].")
+	cmd.Flags().StringVar(&o.ghToken, "github-token", "", "Github token.")
+	cmd.Flags().StringVar(&o.ghOwner, "github-org", DefaultValue(ci, "owner"), "Github organization.")
+	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), "Git commit for which to find pull request evidence.")
+	cmd.Flags().StringVar(&o.repository, "repository", DefaultValue(ci, "repository"), "Git repository.")
+
 	cmd.Flags().StringVarP(&o.sha256, "sha256", "s", "", "The SHA256 fingerprint for the artifact. Only required if you don't specify --artifact-type.")
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", "The Merkely pipeline name.")
 	cmd.Flags().StringVarP(&o.description, "description", "d", "", "[optional] The evidence description.")
@@ -59,7 +73,8 @@ func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.EvidenceType, "evidence-type", "e", "", "The type of evidence being reported.")
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 
-	err := RequireFlags(cmd, []string{"pipeline", "build-url", "evidence-type"})
+	err := RequireFlags(cmd, []string{"github-token", "github-org", "commit",
+		"repository", "pipeline", "build-url", "evidence-type"})
 	if err != nil {
 		log.Fatalf("failed to configure required flags: %v", err)
 	}
@@ -77,7 +92,7 @@ func (o *pullRequestEvidenceGithubOptions) run(args []string) error {
 	}
 
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s", global.Host, global.Owner, o.pipelineName, o.sha256)
-	pullRequestsEvidence, isCompliant, err := getGithubPullRequests()
+	pullRequestsEvidence, isCompliant, err := o.getGithubPullRequests()
 	if err != nil {
 		return err
 	}
@@ -93,36 +108,36 @@ func (o *pullRequestEvidenceGithubOptions) run(args []string) error {
 	return err
 }
 
-func getGithubPullRequests() ([]*PrEvidence, bool, error) {
-	owner := os.Getenv("GITHUB_REPOSITORY_OWNER")
-	longRepository := os.Getenv("GITHUB_REPOSITORY")
+func (o *pullRequestEvidenceGithubOptions) getGithubPullRequests() ([]*GithubPrEvidence, bool, error) {
+	owner := o.ghOwner
 	// Get repository name from 'owner/repository_name' string
-	repository := strings.Split(longRepository, "/")[1]
-	commit := os.Getenv("GITHUB_SHA")
-	token := os.Getenv("GITHUB_TOKEN")
+	repository := strings.Split(o.repository, "/")[1]
+	commit := o.commit
 
-	pullRequestsEvidence := []*PrEvidence{}
+	pullRequestsEvidence := []*GithubPrEvidence{}
 	isCompliant := false
 
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: token},
+		&oauth2.Token{AccessToken: o.ghToken},
 	)
 	tc := oauth2.NewClient(ctx, ts)
 
 	client := gh.NewClient(tc)
-	pullrequests, _, err := client.PullRequests.ListPullRequestsWithCommit(ctx, owner, repository, commit, &gh.PullRequestListOptions{})
+	pullrequests, _, err := client.PullRequests.ListPullRequestsWithCommit(ctx, owner, repository,
+		commit, &gh.PullRequestListOptions{})
 	if err != nil {
 		return pullRequestsEvidence, isCompliant, err
 	}
 
 	for _, pullrequest := range pullrequests {
-		evidence := &PrEvidence{}
+		evidence := &GithubPrEvidence{}
 		evidence.PullRequestURL = pullrequest.GetHTMLURL()
 		evidence.PullRequestMergeCommit = pullrequest.GetMergeCommitSHA()
 		evidence.PullRequestState = pullrequest.GetState()
 
-		approvers, err := getPullRequestApprovers(client, ctx, owner, repository, pullrequest.GetNumber())
+		approvers, err := getPullRequestApprovers(client, ctx, owner, repository,
+			pullrequest.GetNumber())
 		if err != nil {
 			return pullRequestsEvidence, isCompliant, err
 		}

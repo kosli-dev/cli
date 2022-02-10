@@ -29,11 +29,15 @@ var supportedCIs = []string{bitbucket, github, teamcity}
 var ciTemplates = map[string]map[string]string{
 	github: {
 		"git-commit": "${GITHUB_SHA}",
+		"repository": "${GITHUB_REPOSITORY}",
+		"owner":      "${GITHUB_REPOSITORY_OWNER}",
 		"commit-url": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}",
 		"build-url":  "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}",
 	},
 	bitbucket: {
 		"git-commit": "${BITBUCKET_COMMIT}",
+		"repository": "${BITBUCKET_REPO_SLUG}",
+		"workspace":  "${BITBUCKET_WORKSPACE}",
 		"commit-url": "https://bitbucket.org/${BITBUCKET_WORKSPACE}/${BITBUCKET_REPO_SLUG}/commits/${BITBUCKET_COMMIT}",
 		"build-url":  "https://bitbucket.org/${BITBUCKET_WORKSPACE}/${BITBUCKET_REPO_SLUG}/addon/pipelines/home#!/results/${BITBUCKET_BUILD_NUMBER}",
 	},
