@@ -32,8 +32,8 @@ func newVersionCmd(out io.Writer) *cobra.Command {
 		Short: "Print the client version information",
 		Long:  versionDesc,
 		Args:  NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(out)
+		Run: func(cmd *cobra.Command, args []string) {
+			o.run(out)
 		},
 	}
 
@@ -42,9 +42,8 @@ func newVersionCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *versionOptions) run(out io.Writer) error {
-	fmt.Fprintln(out, formatVersion(o.short))
-	return nil
+func (o *versionOptions) run(out io.Writer) {
+	fmt.Fprint(out, formatVersion(o.short))
 }
 
 func formatVersion(short bool) string {

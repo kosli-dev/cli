@@ -12,6 +12,7 @@ require (
 	github.com/google/go-github/v42 v42.0.0
 	github.com/hashicorp/go-retryablehttp v0.6.8
 	github.com/joshdk/go-junit v0.0.0-20210226021600-6145f504ca0d
+	github.com/mattn/go-shellwords v1.0.3
 	github.com/maxcnunes/httpfake v1.2.4
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/sergi/go-diff v1.2.0 // indirect

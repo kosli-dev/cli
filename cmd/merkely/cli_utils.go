@@ -334,6 +334,9 @@ func ValidateArtifactArg(args []string, artifactType, inputSha256 string, always
 // ValidateRegisteryFlags validates that you provide all registery information necessary for
 // remote digest.
 func ValidateRegisteryFlags(o *fingerprintOptions) error {
+	if o.artifactType != "docker" && (o.registryPassword != "" || o.registryUsername != "") {
+		return fmt.Errorf("--registry-provider, --registry-username and registry-password are only applicable when --artifact-type is 'dcoker'")
+	}
 	if o.registryProvider != "" && (o.registryPassword == "" || o.registryUsername == "") {
 		return fmt.Errorf("both --registry-username and registry-password are required when --registry-provider is used")
 	}
