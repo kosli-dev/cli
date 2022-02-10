@@ -111,7 +111,8 @@ func (o *pullRequestEvidenceGithubOptions) run(args []string) error {
 func (o *pullRequestEvidenceGithubOptions) getGithubPullRequests() ([]*GithubPrEvidence, bool, error) {
 	owner := o.ghOwner
 	// Get repository name from 'owner/repository_name' string
-	repository := strings.Split(o.repository, "/")[1]
+	repoNameParts := strings.Split(o.repository, "/")
+	repository := repoNameParts[len(repoNameParts)-1]
 	commit := o.commit
 
 	pullRequestsEvidence := []*GithubPrEvidence{}
