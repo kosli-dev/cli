@@ -9,10 +9,11 @@ Print the client version information
 ### Synopsis
 
 
-Show the version for Merkely CLI.
-This will print a representation the version of Merkely CLI.
+Print the version for Merkely CLI.
+
 The output will look something like this:
 version.BuildInfo{Version:"v0.0.1", GitCommit:"fe51cd1e31e6a202cba7dead9552a6d418ded79a", GitTreeState:"clean", GoVersion:"go1.16.3"}
+
 - Version is the semantic version of the release.
 - GitCommit is the SHA for the commit that this version was built from.
 - GitTreeState is "clean" if there are no local code changes when this binary was
@@ -27,7 +28,8 @@ merkely version [flags]
 ### Options
 
 ```
-  -h, --help   help for version
+  -h, --help    help for version
+  -s, --short   only print the version number
 ```
 
 ### Options inherited from parent commands
