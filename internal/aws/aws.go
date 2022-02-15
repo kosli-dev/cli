@@ -67,10 +67,6 @@ func AWSCredentials(id, secret string) *credentials.Credentials {
 
 // GetS3Digest returns a digest of the S3 bucket content
 func GetS3Digest(bucket string, creds *credentials.Credentials, region string) (string, error) {
-	// os.Setenv("AWS_ACCESS_KEY", "AKIAZBDGATEJNDR46JX3")
-	// os.Setenv("AWS_SECRET_KEY", "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")
-	// os.Setenv("AWS_REGION", "eu-central-1")
-
 	awsConfig := &aws.Config{Credentials: creds, Region: aws.String(region)}
 	s3Session, err := session.NewSession(awsConfig)
 	if err != nil {
