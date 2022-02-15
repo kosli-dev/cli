@@ -4,16 +4,20 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ecs"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/merkely-development/reporter/internal/digest"
+	"github.com/merkely-development/reporter/internal/utils"
+	"github.com/sirupsen/logrus"
 )
 
 // EcsEnvRequest represents the PUT request body to be sent to merkely from ECS
@@ -53,38 +57,79 @@ func NewAWSClient() (*ecs.Client, error) {
 	return ecs.NewFromConfig(cfg), nil
 }
 
+func AWSCredentials(id, secret string) *credentials.Credentials {
+	creds := credentials.NewEnvCredentials()
+	if _, err := creds.Get(); err != nil {
+		creds = credentials.NewStaticCredentials(id, secret, "")
+	}
+	return creds
+}
+
 // GetS3Digest returns a digest of the S3 bucket content
-func GetS3Digest(client *ecs.Client, bucket string) (string, error) {
-	os.Setenv("AWS_ACCESS_KEY", "")
-	os.Setenv("AWS_SECRET_KEY", "")
+func GetS3Digest(bucket string, creds *credentials.Credentials, region string) (string, error) {
+	// os.Setenv("AWS_ACCESS_KEY", "AKIAZBDGATEJNDR46JX3")
+	// os.Setenv("AWS_SECRET_KEY", "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")
+	// os.Setenv("AWS_REGION", "eu-central-1")
 
-	item := "Chart.yaml"
-
-	file, err := os.Create(item)
+	awsConfig := &aws.Config{Credentials: creds, Region: aws.String(region)}
+	s3Session, err := session.NewSession(awsConfig)
 	if err != nil {
-		fmt.Println(err)
+		return "", err
+	}
+
+	svc := s3.New(s3Session)
+	input := &s3.ListObjectsInput{
+		Bucket: aws.String(bucket),
+	}
+
+	result, err := svc.ListObjects(input)
+	if err != nil {
+		return "", err
+	}
+	tempDirName, err := os.MkdirTemp(".", "bucketContent")
+	if err != nil {
+		return "", err
+	}
+	defer os.RemoveAll(tempDirName)
+
+	downloaderSession, err := session.NewSession(awsConfig)
+	if err != nil {
+		return "", err
+	}
+	downloader := s3manager.NewDownloader(downloaderSession)
+	for _, object := range result.Contents {
+		err := downloadFileFromBucket(downloader, tempDirName, *object.Key, bucket)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	sha256, err := digest.DirSha256(tempDirName, logrus.New())
+	if err != nil {
+		return "", err
+	}
+
+	return sha256, nil
+}
+
+func downloadFileFromBucket(downloader *s3manager.Downloader, dirName, key, bucket string) error {
+	file, err := utils.CreateFile(filepath.Join(dirName, key))
+	if err != nil {
+		return err
 	}
 	defer file.Close()
 
-	sess, _ := session.NewSession(&aws.Config{Region: aws.String("eu-central-1")})
-	downloader := s3manager.NewDownloader(sess)
 	numBytes, err := downloader.Download(file,
 		&s3.GetObjectInput{
 			Bucket: aws.String(bucket),
-			Key:    aws.String("k8s-reporter/" + item),
+			Key:    aws.String(key),
 		})
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
-
 	fmt.Println("Downloaded", file.Name(), numBytes, "bytes")
 
-	sha256, err := digest.FileSha256(item)
-	if err != nil {
-		return "", err
-	} else {
-		return sha256, nil
-	}
+	return nil
 }
 
 // GetEcsTasksData returns a list of tasks data for an ECS cluster or service

@@ -19,7 +19,10 @@ merkely environment report s3 prod --api-token 1234 --owner exampleOrg
 `
 
 type environmentReportS3Options struct {
-	bucket string
+	bucket    string
+	accessKey string
+	secretKey string
+	region    string
 }
 
 func newEnvironmentReportS3Cmd(out io.Writer) *cobra.Command {
@@ -49,7 +52,10 @@ func newEnvironmentReportS3Cmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.bucket, "bucket", "C", "", "The name of the S3 cluster.")
+	cmd.Flags().StringVarP(&o.bucket, "bucket", "C", "", "The name of the S3 bucket.")
+	cmd.Flags().StringVar(&o.accessKey, "access-key", "", "The AWS access key")
+	cmd.Flags().StringVar(&o.secretKey, "secret-key", "", "The AWS secret key")
+	cmd.Flags().StringVar(&o.region, "region", "", "The AWS region")
 
 	err := RequireFlags(cmd, []string{"bucket"})
 	if err != nil {
@@ -63,14 +69,12 @@ func (o *environmentReportS3Options) run(args []string) error {
 	// envName := args[0]
 
 	// url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
-	client, err := aws.NewAWSClient()
+	creds := aws.AWSCredentials(o.accessKey, o.secretKey)
+	sha256, err := aws.GetS3Digest(o.bucket, creds, o.region)
 	if err != nil {
 		return err
 	}
-
-	sha256, err := aws.GetS3Digest(client, o.bucket)
-
-	fmt.Printf("Sha256: %s", sha256)
+	fmt.Printf("Sha256: %s\n", sha256)
 
 	// tasksData, err := aws.GetEcsTasksData(client, o.cluster, o.serviceName)
 	// if err != nil {
