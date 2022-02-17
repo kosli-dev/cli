@@ -53,15 +53,15 @@ func newEnvironmentReportK8SCmd(out io.Writer) *cobra.Command {
 		Example: environmentReportK8SExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
-				return fmt.Errorf("only environment name argument is allowed")
+				return ErrorAfterPrintingHelp(cmd, "only env-name argument is allowed")
 			}
 			if len(args) == 0 || args[0] == "" {
-				return fmt.Errorf("environment name is required")
+				return ErrorAfterPrintingHelp(cmd, "env-name argument is required")
 			}
 
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
-				return err
+				return ErrorAfterPrintingHelp(cmd, err.Error())
 			}
 
 			return nil

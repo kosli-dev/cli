@@ -16,14 +16,14 @@ func newApprovalRequestCmd(out io.Writer) *cobra.Command {
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
-				return err
+				return ErrorAfterPrintingHelp(cmd, err.Error())
 			}
 
 			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.ArtifactSha256, false)
 			if err != nil {
-				return err
+				return ErrorAfterPrintingHelp(cmd, err.Error())
 			}
-			return ValidateRegisteryFlags(o.fingerprintOptions)
+			return ValidateRegisteryFlags(cmd, o.fingerprintOptions)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args, true)

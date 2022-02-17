@@ -36,11 +36,11 @@ func newEnvironmentDeclareCmd(out io.Writer) *cobra.Command {
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
-				return err
+				return ErrorAfterPrintingHelp(cmd, err.Error())
 			}
 
-			if payload.Type != "ECS" && payload.Type != "K8S" && payload.Type != "server" {
-				return fmt.Errorf("%s is not a valid environment type", payload.Type)
+			if payload.Type != "ECS" && payload.Type != "K8S" && payload.Type != "server" && payload.Type != "S3" {
+				return ErrorAfterPrintingHelp(cmd, fmt.Sprintf("%s is not a valid environment type", payload.Type))
 			}
 
 			return nil
@@ -56,7 +56,7 @@ func newEnvironmentDeclareCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&payload.Name, "name", "n", "", "The name of environment.")
-	cmd.Flags().StringVarP(&payload.Type, "environment-type", "t", "", "The type of environment. Valid options are: [K8S, ECS, server]")
+	cmd.Flags().StringVarP(&payload.Type, "environment-type", "t", "", "The type of environment. Valid options are: [K8S, ECS, server, S3]")
 	cmd.Flags().StringVarP(&payload.Description, "description", "d", "", "[optional] The environment description.")
 
 	err := RequireFlags(cmd, []string{"name", "environment-type"})

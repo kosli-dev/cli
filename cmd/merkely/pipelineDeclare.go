@@ -64,7 +64,7 @@ func newPipelineDeclareCmd(out io.Writer) *cobra.Command {
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
-				return err
+				return ErrorAfterPrintingHelp(cmd, err.Error())
 			}
 
 			if o.pipefile != "" {
@@ -72,12 +72,12 @@ func newPipelineDeclareCmd(out io.Writer) *cobra.Command {
 				// as they both have defaults.
 				// When a pipefile is provided, the flags are ignored anyway
 				if o.payload.Description != "" || o.payload.Name != "" {
-					return fmt.Errorf("--pipefile cannot be used together with any of" +
+					return ErrorAfterPrintingHelp(cmd, "--pipefile cannot be used together with any of"+
 						" --description, --pipeline flags")
 				}
 			} else {
 				if o.payload.Name == "" {
-					return fmt.Errorf("--pipeline is required when you are not using --pipefile")
+					return ErrorAfterPrintingHelp(cmd, "--pipeline is required when you are not using --pipefile")
 				}
 			}
 

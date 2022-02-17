@@ -589,7 +589,7 @@ func (suite *CliUtilsTestSuite) TestValidateRegisteryFlags() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			err := ValidateRegisteryFlags(t.options)
+			err := ValidateRegisteryFlags(&cobra.Command{}, t.options)
 			if t.expectError {
 				require.Errorf(suite.T(), err, "error was expected but got none")
 			} else {
