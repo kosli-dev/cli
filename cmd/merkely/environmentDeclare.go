@@ -39,13 +39,12 @@ func newEnvironmentDeclareCmd(out io.Writer) *cobra.Command {
 				return ErrorAfterPrintingHelp(cmd, err.Error())
 			}
 
-			if payload.Type != "ECS" && payload.Type != "K8S" && payload.Type != "server" && payload.Type != "S3" {
-				return ErrorAfterPrintingHelp(cmd, fmt.Sprintf("%s is not a valid environment type", payload.Type))
-			}
-
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if payload.Type != "ECS" && payload.Type != "K8S" && payload.Type != "server" && payload.Type != "S3" {
+				return fmt.Errorf("%s is not a valid environment type", payload.Type)
+			}
 			payload.Owner = global.Owner
 			url := fmt.Sprintf("%s/api/v1/environments/%s/", global.Host, global.Owner)
 

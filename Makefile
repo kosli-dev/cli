@@ -54,11 +54,12 @@ build: deps vet ## Build the binary
 .PHONY: build
 
 test_unit: deps vet ## Run unit tests
+	@docker-compose down || true
 	@docker-compose up -d
+	@docker exec merkely-server /demo/create_test_users.py
 	@go test -v -cover -p=1 -coverprofile=coverage.out ./...
 	@go tool cover -func=coverage.out
 	@go tool cover -html=coverage.out
-	@docker-compose down
 .PHONY: test_unit
 
 docker: deps vet lint
