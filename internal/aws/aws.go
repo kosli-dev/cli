@@ -34,6 +34,19 @@ type EcsTaskData struct {
 	StartedAt int64             `json:"creationTimestamp"`
 }
 
+// S3EnvRequest represents the PUT request body to be sent to merkely from a server
+type S3EnvRequest struct {
+	Artifacts []*S3Data `json:"artifacts"`
+	Type      string    `json:"type"`
+	Id        string    `json:"id"`
+}
+
+// S3Data represents the harvested server artifacts data
+type S3Data struct {
+	Digests               map[string]string `json:"digests"`
+	LastModifiedTimestamp int64             `json:"creationTimestamp"`
+}
+
 // NewEcsTaskData creates a NewEcsTaskData object from an ECS task
 func NewEcsTaskData(taskArn string, digests map[string]string, startedAt time.Time) *EcsTaskData {
 
@@ -65,12 +78,13 @@ func AWSCredentials(id, secret string) *credentials.Credentials {
 	return creds
 }
 
-// GetS3Digest returns a digest of the S3 bucket content
-func GetS3Digest(bucket string, creds *credentials.Credentials, region string) (string, error) {
+// GetS3Data returns a digest of the S3 bucket content
+func GetS3Data(bucket string, creds *credentials.Credentials, region string) ([]*S3Data, error) {
+	s3Data := []*S3Data{}
 	awsConfig := &aws.Config{Credentials: creds, Region: aws.String(region)}
 	s3Session, err := session.NewSession(awsConfig)
 	if err != nil {
-		return "", err
+		return s3Data, err
 	}
 
 	svc := s3.New(s3Session)
@@ -80,32 +94,37 @@ func GetS3Digest(bucket string, creds *credentials.Credentials, region string) (
 
 	result, err := svc.ListObjects(input)
 	if err != nil {
-		return "", err
+		return s3Data, err
 	}
 	tempDirName, err := os.MkdirTemp(".", "bucketContent")
 	if err != nil {
-		return "", err
+		return s3Data, err
 	}
 	defer os.RemoveAll(tempDirName)
 
 	downloaderSession, err := session.NewSession(awsConfig)
 	if err != nil {
-		return "", err
+		return s3Data, err
 	}
 	downloader := s3manager.NewDownloader(downloaderSession)
+	lastModifiedTime := result.Contents[0].LastModified
 	for _, object := range result.Contents {
 		err := downloadFileFromBucket(downloader, tempDirName, *object.Key, bucket)
+		if object.LastModified.After(*lastModifiedTime) {
+			lastModifiedTime = object.LastModified
+		}
 		if err != nil {
-			return "", err
+			return s3Data, err
 		}
 	}
 
 	sha256, err := digest.DirSha256(tempDirName, logrus.New())
 	if err != nil {
-		return "", err
+		return s3Data, err
 	}
+	s3Data = append(s3Data, &S3Data{Digests: map[string]string{bucket: sha256}, LastModifiedTimestamp: lastModifiedTime.Unix()})
 
-	return sha256, nil
+	return s3Data, nil
 }
 
 func downloadFileFromBucket(downloader *s3manager.Downloader, dirName, key, bucket string) error {

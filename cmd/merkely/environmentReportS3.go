@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"io"
+	"net/http"
 
 	"github.com/merkely-development/reporter/internal/aws"
+	"github.com/merkely-development/reporter/internal/requests"
 	"github.com/spf13/cobra"
 )
 
@@ -29,6 +31,7 @@ func newEnvironmentReportS3Cmd(out io.Writer) *cobra.Command {
 	o := new(environmentReportS3Options)
 	cmd := &cobra.Command{
 		Use:     "s3 env-name",
+		Aliases: []string{"S3"},
 		Short:   "Report artifact from AWS S3 bucket to Merkely.",
 		Long:    environmentReportS3Desc,
 		Example: environmentReportS3Example,
@@ -66,28 +69,21 @@ func newEnvironmentReportS3Cmd(out io.Writer) *cobra.Command {
 }
 
 func (o *environmentReportS3Options) run(args []string) error {
-	// envName := args[0]
+	envName := args[0]
 
-	// url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
+	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
 	creds := aws.AWSCredentials(o.accessKey, o.secretKey)
-	sha256, err := aws.GetS3Digest(o.bucket, creds, o.region)
+	s3Data, err := aws.GetS3Data(o.bucket, creds, o.region)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Sha256: %s\n", sha256)
+	requestBody := &aws.S3EnvRequest{
+		Artifacts: s3Data,
+		Type:      "S3",
+		Id:        envName,
+	}
 
-	// tasksData, err := aws.GetEcsTasksData(client, o.cluster, o.serviceName)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// requestBody := &aws.EcsEnvRequest{
-	// 	Artifacts: tasksData,
-	// 	Type:      "S3",
-	// 	Id:        o.id,
-	// }
-
-	// _, err = requests.SendPayload(requestBody, url, "", global.ApiToken,
-	// 	global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+	_, err = requests.SendPayload(requestBody, url, "", global.ApiToken,
+		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
 	return err
 }
