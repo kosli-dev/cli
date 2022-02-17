@@ -35,7 +35,7 @@ merkely pipeline deployment report ARTIFACT-NAME-OR-PATH [flags]
 
 ```
   -t, --artifact-type string       The type of the artifact to calculate its SHA256 fingerprint.
-  -b, --build-url string           The url of CI pipeline that built the artifact. (default "https://github.com/merkely-development/cli/actions/runs/1847906195")
+  -b, --build-url string           The url of CI pipeline that built the artifact. (default "https://github.com/merkely-development/cli/actions/runs/1858697748")
   -d, --description string         [optional] The artifact description.
   -e, --environment string         The environment name.
   -h, --help                       help for report
