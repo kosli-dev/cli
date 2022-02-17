@@ -1,37 +1,39 @@
 ---
-title: "merkely environment declare"
+title: "merkely environment report s3"
 ---
 
-## merkely environment declare
+## merkely environment report s3
 
-Declare or update a Merkely environment
+Report artifact from AWS S3 bucket to Merkely.
 
 ### Synopsis
 
 
-Declare or update a Merkely environment.
+Report the artifact deployed in an AWS S3 bucket and their digests 
+and reports it to Merkely. 
 
 
 ```shell
-merkely environment declare [flags]
+merkely environment report s3 env-name [flags]
 ```
 
 ### Examples
 
 ```shell
 
-* declare (or update) a Merkely environment:
-merkely environment declare --api-token 1234 --owner test --name newEnv --environment-type K8S --description "my new env"
+* report what's running in an AWS S3 bucket:
+merkely environment report s3 prod --api-token 1234 --owner exampleOrg
 
 ```
 
 ### Options
 
 ```
-  -d, --description string        [optional] The environment description.
-  -t, --environment-type string   The type of environment. Valid options are: [K8S, ECS, server, S3]
-  -h, --help                      help for declare
-  -n, --name string               The name of environment.
+      --access-key string   The AWS access key
+  -C, --bucket string       The name of the S3 bucket.
+  -h, --help                help for s3
+      --region string       The AWS region
+      --secret-key string   The AWS secret key
 ```
 
 ### Options inherited from parent commands

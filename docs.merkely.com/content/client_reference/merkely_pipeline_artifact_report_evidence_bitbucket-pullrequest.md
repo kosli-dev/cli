@@ -37,8 +37,8 @@ merkely pipeline artifact report evidence bitbucket-pullrequest ARTIFACT-NAME-OR
       --bitbucket-password string    Bitbucket password.
       --bitbucket-username string    Bitbucket user name.
       --bitbucket-workspace string   Bitbucket workspace.
-  -b, --build-url string             The url of CI pipeline that generated the evidence. (default "https://github.com/merkely-development/cli/actions/runs/1858697748")
-      --commit string                Git commit for which to find pull request evidence. (default "81e68bf9da24970c6a6e8e51ed4dc1afc62d9c09")
+  -b, --build-url string             The url of CI pipeline that generated the evidence. (default "https://github.com/merkely-development/cli/actions/runs/1859276331")
+      --commit string                Git commit for which to find pull request evidence. (default "c9fe3e38941ddbd0c4177efd0c7d1a8b0af926d1")
   -d, --description string           [optional] The evidence description.
   -e, --evidence-type string         The type of evidence being reported.
   -h, --help                         help for bitbucket-pullrequest
