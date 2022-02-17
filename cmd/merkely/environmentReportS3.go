@@ -55,7 +55,7 @@ func newEnvironmentReportS3Cmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.bucket, "bucket", "C", "", "The name of the S3 bucket.")
+	cmd.Flags().StringVar(&o.bucket, "bucket", "", "The name of the S3 bucket.")
 	cmd.Flags().StringVar(&o.accessKey, "access-key", "", "The AWS access key")
 	cmd.Flags().StringVar(&o.secretKey, "secret-key", "", "The AWS secret key")
 	cmd.Flags().StringVar(&o.region, "region", "", "The AWS region")
