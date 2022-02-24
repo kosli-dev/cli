@@ -14,8 +14,13 @@ Declare or update a Merkely environment.
 `
 
 const enviromentDeclareExample = `
-* declare (or update) a Merkely environment:
-merkely environment declare --api-token 1234 --owner test --name newEnv --environment-type K8S --description "my new env"
+# declare (or update) a Merkely environment:
+merkely environment declare 
+	--name yourEnvironmentName \
+	--environment-type K8S \
+	--description "my new env" \
+	--api-token yourAPIToken \
+	--owner yourOrgName 
 `
 
 type CreateEnvironmentPayload struct {

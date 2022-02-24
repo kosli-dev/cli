@@ -19,21 +19,35 @@ and report them to Merkely.
 `
 
 const environmentReportK8SExample = `
-* report what's running in an entire cluster using kubeconfig at $HOME/.kube/config:
-merkely environment report k8s prod --api-token 1234 --owner exampleOrg --id prod-cluster
+# report what is running in an entire cluster using kubeconfig at $HOME/.kube/config:
+merkely environment report k8s yourEnvironmentName \
+	--api-token yourAPIToken \
+	--owner yourOrgName
 
-* report what's running in an entire cluster using kubeconfig at $HOME/.kube/config 
-(with global flags defined in environment or in  a config file):
-merkely environment report  k8s prod
+# report what is running in an entire cluster using kubeconfig at $HOME/.kube/config 
+(with global flags defined in environment or in a config file):
+export MERKELY_API_TOKEN=yourAPIToken
+export MERKELY_OWNER=yourOrgName
 
-* report what's running in an entire cluster excluding some namespaces using kubeconfig at $HOME/.kube/config:
-merkely environment report k8s prod -x kube-system,utilities
+merkely environment report k8s prod
 
-* report what's running in a given namespace in the cluster using kubeconfig at $HOME/.kube/config:
-merkely environment report k8s prod -n prod-namespace
+# report what is running in an entire cluster excluding some namespaces using kubeconfig at $HOME/.kube/config:
+merkely environment report k8s yourEnvironmentName \
+    --exclude-namespace kube-system,utilities \
+	--api-token yourAPIToken \
+	--owner yourOrgName
 
-* report what's running in a cluster using kubeconfig at a custom path:
-merkely environment report k8s prod -k /path/to/kube/config
+# report what is running in a given namespace in the cluster using kubeconfig at $HOME/.kube/config:
+merkely environment report k8s yourEnvironmentName \
+	--namespace your-namespace \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# report what is running in a cluster using kubeconfig at a custom path:
+merkely environment report k8s yourEnvironmentName \
+	--kubeconfig /path/to/kube/config \
+	--api-token yourAPIToken \
+	--owner yourOrgName
 `
 
 type environmentReportK8SOptions struct {
@@ -74,8 +88,6 @@ func newEnvironmentReportK8SCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.kubeconfig, "kubeconfig", "k", defaultKubeConfigPath(), "The kubeconfig path for the target cluster.")
 	cmd.Flags().StringSliceVarP(&o.namespaces, "namespace", "n", []string{}, "The comma separated list of namespaces regex patterns to report artifacts info from. Can't be used together with --exclude-namespace.")
 	cmd.Flags().StringSliceVarP(&o.excludeNamespaces, "exclude-namespace", "x", []string{}, "The comma separated list of namespaces regex patterns NOT to report artifacts info from. Can't be used together with --namespace.")
-	cmd.Flags().StringVarP(&o.id, "id", "i", "", "The unique identifier of the source infrastructure of the report (e.g. the K8S cluster/namespace name). If not set, it is defaulted to environment name.")
-
 	return cmd
 }
 

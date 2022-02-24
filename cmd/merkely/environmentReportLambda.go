@@ -15,11 +15,25 @@ Report the artifact deployed in an AWS Lambda and its digest to Merkely.
 `
 
 const environmentReportLambdaExample = `
-* report what's running in the latest version AWS Lambda function:
-merkely environment report lambda myEnvironment --function-name lambda-test --api-token 1234 --owner exampleOrg
+# report what is running in the latest version AWS Lambda function (AWS auth provided in env variables):
+export AWS_REGION=yourAWSRegion
+export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
+export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
-* report what's running in a specific version of an AWS Lambda function:
-merkely environment report lambda myEnvironment --function-name lambda-test --version 1 --api-token 1234 --owner exampleOrg
+merkely environment report lambda myEnvironment \
+	--function-name yourFunctionName \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# report what is running in a specific version of an AWS Lambda function (AWS auth provided in flags):
+merkely environment report lambda myEnvironment \
+	--function-name yourFunctionName \
+	--function-version yourFunctionVersion \
+	--aws-key-id yourAWSAccessKeyID \
+	--aws-secret-key yourAWSSecretAccessKey \
+	--aws-region yourAWSRegion \
+	--api-token yourAPIToken \
+	--owner yourOrgName
 `
 
 type environmentReportLambdaOptions struct {
@@ -58,10 +72,10 @@ func newEnvironmentReportLambdaCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&o.functionName, "function-name", "", "The name of the AWS Lambda function.")
-	cmd.Flags().StringVar(&o.functionVersion, "version", "", "[optional] The version of the AWS Lambda function.")
-	cmd.Flags().StringVar(&o.accessKey, "access-key", "", "The AWS access key")
-	cmd.Flags().StringVar(&o.secretKey, "secret-key", "", "The AWS secret key")
-	cmd.Flags().StringVar(&o.region, "region", "", "The AWS region")
+	cmd.Flags().StringVar(&o.functionVersion, "function-version", "", "[optional] The version of the AWS Lambda function.")
+	cmd.Flags().StringVar(&o.accessKey, "aws-key-id", "", "The AWS access key ID")
+	cmd.Flags().StringVar(&o.secretKey, "aws-secret-key", "", "The AWS secret key")
+	cmd.Flags().StringVar(&o.region, "aws-region", "", "The AWS region")
 
 	err := RequireFlags(cmd, []string{"function-name"})
 	if err != nil {

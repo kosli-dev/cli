@@ -16,8 +16,11 @@ and report them to Merkely.
 `
 
 const environmentReportServerExample = `
-* report directory artifacts running in a server at a list of paths:
-merkely environment report server prod --api-token 1234 --owner exampleOrg --id prod-server --paths a/b/c, e/f/g
+# report directory artifacts running in a server at a list of paths:
+merkely environment report server yourEnvironmentName \
+	--paths a/b/c, e/f/g \
+	--api-token yourAPIToken \
+	--owner yourOrgName  
 `
 
 type environmentReportServerOptions struct {
@@ -54,7 +57,6 @@ func newEnvironmentReportServerCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringSliceVarP(&o.paths, "paths", "p", []string{}, "The comma separated list of artifact directories.")
-	cmd.Flags().StringVarP(&o.id, "id", "i", "", "The unique identifier of the source infrastructure of the report (e.g. the K8S cluster/namespace name). If not set, it is defaulted to environment name.")
 
 	err := RequireFlags(cmd, []string{"paths"})
 	if err != nil {

@@ -19,18 +19,25 @@ The pipefile contains the pipeline metadata and compliance policy.
 `
 
 const pipelineDeclareExample = `
-* create/update a Merkely pipeline without a pipefile:
-merkely pipeline declare --pipeline myPipe --description desc \
-   --visibility private --template artifact,evidence-type1,evidence-type2 \
-   --owner owner-name --api-token topSecret
+# create/update a Merkely pipeline without a pipefile:
+merkely pipeline declare \
+	--pipeline yourPipelineName \
+	--description yourPipelineDescription \
+    --visibility private OR public \
+	--template artifact,evidence-type1,evidence-type2 \
+	--api-token yourAPIToken \
+	--owner yourOrgName
 
-* create/update a Merkely pipeline with a pipefile (this is a legacy way which will be removed in the future):
-merkely pipeline declare --owner owner-name --api-token topSecret --pipefile /path/to/pipefile.json
+# create/update a Merkely pipeline with a pipefile (this is a legacy way which will be removed in the future):
+merkely pipeline declare \
+	--pipefile /path/to/pipefile.json \
+	--api-token yourAPIToken \
+	--owner yourOrgName
 
-* The pipefile format is:
+The pipefile format is:
 {
-    "name": "myPipe",
-    "description": "pipeline short description",
+    "name": "yourPipelineName",
+    "description": "yourPipelinedescription",
     "visibility": "public or private",
     "template": [
         "artifact",

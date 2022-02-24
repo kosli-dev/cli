@@ -25,13 +25,43 @@ type EvidencePayload struct {
 	Contents     map[string]interface{} `json:"contents"`
 }
 
+const artifactEvidenceGenericExample = `
+# report a generic evidence about an artifact using an available Sha256 digest:
+merkely pipeline artifact report evidence generic \
+	--sha256 yourSha256 \
+	--evidence-type yourEvidenceType \
+	--pipeline yourPipelineName \
+	--build-url https://exampleci.com \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# report a generic evidence about a pre-built docker image:
+merkely pipeline artifact report evidence generic yourDockerImageName \
+	--artifact-type docker \
+	--evidence-type yourEvidenceType \
+	--pipeline yourPipelineName \
+	--build-url https://exampleci.com \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# report a generic evidence about a directory artifact:
+merkely pipeline artifact report evidence generic /path/to/your/dir \
+	--artifact-type dir \
+	--evidence-type yourEvidenceType \
+	--pipeline yourPipelineName \
+	--build-url https://exampleci.com \
+	--api-token yourAPIToken \
+	--owner yourOrgName		
+`
+
 func newGenericEvidenceCmd(out io.Writer) *cobra.Command {
 	o := new(genericEvidenceOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "generic ARTIFACT-NAME-OR-PATH",
-		Short: "Report a generic evidence to an artifact in a Merkely pipeline. ",
-		Long:  genericEvidenceDesc(),
+		Use:     "generic [ARTIFACT-NAME-OR-PATH]",
+		Short:   "Report a generic evidence to an artifact in a Merkely pipeline. ",
+		Example: artifactEvidenceGenericExample,
+		Long:    genericEvidenceDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {

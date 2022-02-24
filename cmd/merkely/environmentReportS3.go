@@ -15,8 +15,24 @@ Report the artifact deployed in an AWS S3 bucket and its digest to Merkely.
 `
 
 const environmentReportS3Example = `
-* report what's running in an AWS S3 bucket:
-merkely environment report s3 myEnvironment --bucket myBucket --api-token 1234 --owner exampleOrg
+# report what is running in an AWS S3 bucket (AWS auth provided in env variables):
+export AWS_REGION=yourAWSRegion
+export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
+export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
+
+merkely environment report s3 yourEnvironmentName \
+	--bucket yourBucketName \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# report what is running in an AWS S3 bucket (AWS auth provided in flags):
+merkely environment report s3 yourEnvironmentName \
+	--bucket yourBucketName \
+	--aws-key-id yourAWSAccessKeyID \
+	--aws-secret-key yourAWSSecretAccessKey \
+	--aws-region yourAWSRegion \
+	--api-token yourAPIToken \
+	--owner yourOrgName	
 `
 
 type environmentReportS3Options struct {
@@ -55,9 +71,9 @@ func newEnvironmentReportS3Cmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&o.bucket, "bucket", "", "The name of the S3 bucket.")
-	cmd.Flags().StringVar(&o.accessKey, "access-key", "", "The AWS access key")
-	cmd.Flags().StringVar(&o.secretKey, "secret-key", "", "The AWS secret key")
-	cmd.Flags().StringVar(&o.region, "region", "", "The AWS region")
+	cmd.Flags().StringVar(&o.accessKey, "aws-key-id", "", "The AWS access key ID")
+	cmd.Flags().StringVar(&o.secretKey, "aws-secret-key", "", "The AWS secret key")
+	cmd.Flags().StringVar(&o.region, "aws-region", "", "The AWS region")
 
 	err := RequireFlags(cmd, []string{"bucket"})
 	if err != nil {

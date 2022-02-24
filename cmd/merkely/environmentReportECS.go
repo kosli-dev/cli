@@ -16,8 +16,14 @@ and report them to Merkely.
 `
 
 const environmentReportECSExample = `
-* report what's running in an entire AWS ECS cluster:
-merkely environment report ecs prod --api-token 1234 --owner exampleOrg
+# report what is running in an entire AWS ECS cluster:
+export AWS_REGION=yourAWSRegion
+export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
+export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
+
+merkely environment report ecs yourEnvironmentName \
+	--api-token yourAPIToken \
+	--owner yourOrgName
 `
 
 type environmentReportECSOptions struct {
@@ -55,9 +61,6 @@ func newEnvironmentReportECSCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVarP(&o.cluster, "cluster", "C", "", "The name of the ECS cluster.")
 	cmd.Flags().StringVarP(&o.serviceName, "service-name", "s", "", "The name of the ECS service.")
-	cmd.Flags().StringVarP(&o.id, "id", "i", "", "The unique identifier of the source infrastructure of the report (e.g. the ECS cluster/service name)."+
-		"If not set, it is defaulted based on the following order: --service-name, --cluster, environment name.")
-
 	return cmd
 }
 
