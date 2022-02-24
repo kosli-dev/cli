@@ -11,13 +11,12 @@ import (
 )
 
 const environmentReportS3Desc = `
-Report the artifact deployed in an AWS S3 bucket and their digests 
-and reports it to Merkely. 
+Report the artifact deployed in an AWS S3 bucket and its digest to Merkely. 
 `
 
 const environmentReportS3Example = `
 * report what's running in an AWS S3 bucket:
-merkely environment report s3 prod --api-token 1234 --owner exampleOrg
+merkely environment report s3 myEnvironment --bucket myBucket --api-token 1234 --owner exampleOrg
 `
 
 type environmentReportS3Options struct {

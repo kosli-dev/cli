@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/merkely-development/reporter/internal/digest"
@@ -41,8 +42,21 @@ type S3EnvRequest struct {
 	Id        string    `json:"id"`
 }
 
-// S3Data represents the harvested server artifacts data
+// LambdaEnvRequest represents the PUT request body to be sent to merkely from a server
+type LambdaEnvRequest struct {
+	Artifacts []*LambdaData `json:"artifacts"`
+	Type      string        `json:"type"`
+	Id        string        `json:"id"`
+}
+
+// S3Data represents the harvested S3 artifacts data
 type S3Data struct {
+	Digests               map[string]string `json:"digests"`
+	LastModifiedTimestamp int64             `json:"creationTimestamp"`
+}
+
+// LambdaData represents the harvested Lambda artifacts data
+type LambdaData struct {
 	Digests               map[string]string `json:"digests"`
 	LastModifiedTimestamp int64             `json:"creationTimestamp"`
 }
@@ -78,7 +92,39 @@ func AWSCredentials(id, secret string) *credentials.Credentials {
 	return creds
 }
 
-// GetS3Data returns a digest of the S3 bucket content
+// GetLambdaPackageData returns a digest and metadata of a Lambda function package
+func GetLambdaPackageData(functionName, functionVersion string, creds *credentials.Credentials, region string) ([]*LambdaData, error) {
+	lambdaData := []*LambdaData{}
+	awsConfig := &aws.Config{Credentials: creds, Region: aws.String(region)}
+	lambdaSession, err := session.NewSession(awsConfig)
+	if err != nil {
+		return lambdaData, err
+	}
+	svc := lambda.New(lambdaSession)
+
+	input := &lambda.GetFunctionConfigurationInput{
+		FunctionName: aws.String(functionName),
+	}
+	if functionVersion != "" {
+		input.Qualifier = aws.String(functionVersion)
+	}
+
+	result, err := svc.GetFunctionConfiguration(input)
+	if err != nil {
+		return lambdaData, err
+	}
+
+	layout := "2006-01-02T15:04:05.000+0000"
+	lastModifiedTimestamp, err := time.Parse(layout, *result.LastModified)
+
+	if err != nil {
+		return lambdaData, err
+	}
+	lambdaData = append(lambdaData, &LambdaData{Digests: map[string]string{functionName: *result.CodeSha256}, LastModifiedTimestamp: lastModifiedTimestamp.Unix()})
+	return lambdaData, nil
+}
+
+// GetS3Data returns a digest and metadata of the S3 bucket content
 func GetS3Data(bucket string, creds *credentials.Credentials, region string) ([]*S3Data, error) {
 	s3Data := []*S3Data{}
 	awsConfig := &aws.Config{Credentials: creds, Region: aws.String(region)}
