@@ -83,7 +83,7 @@ func (o *environmentReportLambdaOptions) run(args []string) error {
 
 	requestBody := &aws.LambdaEnvRequest{
 		Artifacts: lambdaData,
-		Type:      "Lambda",
+		Type:      "lambda",
 		Id:        envName,
 	}
 
