@@ -148,7 +148,7 @@ func (o *pullRequestEvidenceGithubOptions) getGithubPullRequests() ([]*GithubPrE
 	if len(pullRequestsEvidence) > 0 {
 		isCompliant = true
 	} else {
-		return pullRequestsEvidence, isCompliant, fmt.Errorf("no pull requests found for given commit %s", commit)
+		log.Info("No pull requests found for given commit: " + commit)
 	}
 	return pullRequestsEvidence, isCompliant, nil
 }
