@@ -20,6 +20,10 @@ func main() {
 		log.Fatalf("Error: %+v", err)
 	}
 	if err := cmd.Execute(); err != nil {
+		if global.DryRun {
+			log.Infof("Encountered an error but --dry-run is enabled. Exiting with 0 exit code.")
+			os.Exit(0)
+		}
 		os.Exit(1)
 	}
 }
