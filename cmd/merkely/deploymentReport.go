@@ -28,7 +28,7 @@ func newDeploymentReportCmd(out io.Writer) *cobra.Command {
 	o := new(deploymentReportOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "report ARTIFACT-NAME-OR-PATH",
+		Use:   "report [ARTIFACT-NAME-OR-PATH]",
 		Short: "Report a deployment to Merkely. ",
 		Long:  deploymentReportDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {

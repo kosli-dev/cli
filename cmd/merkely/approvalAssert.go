@@ -20,7 +20,7 @@ func newApprovalAssertCmd(out io.Writer) *cobra.Command {
 	o := new(approvalAssertOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "assert ARTIFACT-NAME-OR-PATH",
+		Use:   "assert [ARTIFACT-NAME-OR-PATH]",
 		Short: "Assert if an artifact in Merkely has been approved for deployment.",
 		Long:  approvalAssertDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {

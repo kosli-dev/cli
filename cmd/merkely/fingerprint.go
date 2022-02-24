@@ -15,7 +15,7 @@ Artifact type can be one of: "file" for files, "dir" for directories, "docker" f
 func newFingerprintCmd(out io.Writer) *cobra.Command {
 	o := new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "fingerprint",
+		Use:   "fingerprint [ARTIFACT-NAME-OR-PATH]",
 		Short: "Print the SHA256 fingerprint of an artifact.",
 		Long:  fingerprintDesc,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

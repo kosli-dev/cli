@@ -10,7 +10,7 @@ func newApprovalRequestCmd(out io.Writer) *cobra.Command {
 	o := new(approvalReportOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "request ARTIFACT-NAME-OR-PATH",
+		Use:   "request [ARTIFACT-NAME-OR-PATH]",
 		Short: "Request an approval for deploying an artifact in Merkely. ",
 		Long:  approvalRequestDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {

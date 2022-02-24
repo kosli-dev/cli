@@ -37,7 +37,7 @@ func newPullRequestEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestEvidenceBitbucketOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "bitbucket-pullrequest ARTIFACT-NAME-OR-PATH",
+		Use:     "bitbucket-pullrequest [ARTIFACT-NAME-OR-PATH]",
 		Aliases: []string{"bb-pr", "bitbucket-pr"},
 		Short:   "Report a Bitbucket pull request evidence for an artifact in a Merkely pipeline.",
 		Long:    controlPullRequestDesc(),

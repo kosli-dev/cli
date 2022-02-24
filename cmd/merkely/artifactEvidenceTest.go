@@ -26,7 +26,7 @@ func newTestEvidenceCmd(out io.Writer) *cobra.Command {
 	o := new(testEvidenceOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "test ARTIFACT-NAME-OR-PATH",
+		Use:   "test [ARTIFACT-NAME-OR-PATH]",
 		Short: "Report a JUnit test evidence to an artifact in a Merkely pipeline. ",
 		Long:  testEvidenceDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
