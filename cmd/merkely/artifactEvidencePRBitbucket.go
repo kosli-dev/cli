@@ -23,6 +23,7 @@ type pullRequestEvidenceBitbucketOptions struct {
 	bbWorkspace        string
 	commit             string
 	repository         string
+	assert             bool
 }
 
 type BitbucketPrEvidence struct {
@@ -70,6 +71,7 @@ func newPullRequestEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.description, "description", "d", "", "[optional] The evidence description.")
 	cmd.Flags().StringVarP(&o.buildUrl, "build-url", "b", DefaultValue(ci, "build-url"), "The url of CI pipeline that generated the evidence.")
 	cmd.Flags().StringVarP(&o.payload.EvidenceType, "evidence-type", "e", "", "The type of evidence being reported.")
+	cmd.Flags().BoolVar(&o.assert, "assert", false, "Fail if no pull requests found for the given commit.")
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 
 	err := RequireFlags(cmd, []string{"bitbucket-username", "bitbucket-password",
@@ -92,7 +94,7 @@ func (o *pullRequestEvidenceBitbucketOptions) run(args []string) error {
 
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s", global.Host, global.Owner, o.pipelineName, o.sha256)
 	pullRequestsEvidence, isCompliant, err := getPullRequestsFromBitbucketApi(o.bbWorkspace,
-		o.repository, o.commit, o.bbUsername, o.bbPassword)
+		o.repository, o.commit, o.bbUsername, o.bbPassword, o.assert)
 	if err != nil {
 		return err
 	}
@@ -110,7 +112,7 @@ func (o *pullRequestEvidenceBitbucketOptions) run(args []string) error {
 	return err
 }
 
-func getPullRequestsFromBitbucketApi(workspace, repository, commit, username, password string) ([]*BitbucketPrEvidence, bool, error) {
+func getPullRequestsFromBitbucketApi(workspace, repository, commit, username, password string, assert bool) ([]*BitbucketPrEvidence, bool, error) {
 	isCompliant := false
 	pullRequestsEvidence := []*BitbucketPrEvidence{}
 
@@ -122,7 +124,7 @@ func getPullRequestsFromBitbucketApi(workspace, repository, commit, username, pa
 		return pullRequestsEvidence, false, err
 	}
 	if response.Resp.StatusCode == 200 {
-		isCompliant, pullRequestsEvidence, err = parseBitbucketResponse(commit, password, username, response)
+		isCompliant, pullRequestsEvidence, err = parseBitbucketResponse(commit, password, username, response, assert)
 		if err != nil {
 			return pullRequestsEvidence, isCompliant, err
 		}
@@ -137,7 +139,7 @@ func getPullRequestsFromBitbucketApi(workspace, repository, commit, username, pa
 	return pullRequestsEvidence, isCompliant, nil
 }
 
-func parseBitbucketResponse(commit, password, username string, response *requests.HTTPResponse) (bool, []*BitbucketPrEvidence, error) {
+func parseBitbucketResponse(commit, password, username string, response *requests.HTTPResponse, assert bool) (bool, []*BitbucketPrEvidence, error) {
 	log.Debug("Pull requests response: " + response.Body)
 	pullRequestsEvidence := []*BitbucketPrEvidence{}
 	isCompliant := false
@@ -164,6 +166,9 @@ func parseBitbucketResponse(commit, password, username string, response *request
 	if len(pullRequestsEvidence) > 0 {
 		isCompliant = true
 	} else {
+		if assert {
+			return isCompliant, pullRequestsEvidence, fmt.Errorf("no pull requests found for the given commit: %s", commit)
+		}
 		log.Info("No pull requests found for given commit: " + commit)
 	}
 	return isCompliant, pullRequestsEvidence, nil

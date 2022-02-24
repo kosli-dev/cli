@@ -25,6 +25,7 @@ type pullRequestEvidenceGithubOptions struct {
 	ghOwner            string
 	commit             string
 	repository         string
+	assert             bool
 }
 
 type GithubPrEvidence struct {
@@ -71,6 +72,7 @@ func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.description, "description", "d", "", "[optional] The evidence description.")
 	cmd.Flags().StringVarP(&o.buildUrl, "build-url", "b", DefaultValue(ci, "build-url"), "The url of CI pipeline that generated the evidence.")
 	cmd.Flags().StringVarP(&o.payload.EvidenceType, "evidence-type", "e", "", "The type of evidence being reported.")
+	cmd.Flags().BoolVar(&o.assert, "assert", false, "Fail if no pull requests found for the given commit.")
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 
 	err := RequireFlags(cmd, []string{"github-token", "github-org", "commit",
@@ -148,6 +150,9 @@ func (o *pullRequestEvidenceGithubOptions) getGithubPullRequests() ([]*GithubPrE
 	if len(pullRequestsEvidence) > 0 {
 		isCompliant = true
 	} else {
+		if o.assert {
+			return pullRequestsEvidence, isCompliant, fmt.Errorf("no pull requests found for the given commit: %s", commit)
+		}
 		log.Info("No pull requests found for given commit: " + commit)
 	}
 	return pullRequestsEvidence, isCompliant, nil
