@@ -11,6 +11,22 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const approvalReportDesc = `Approve a deployment of an artifact in Merkely. 
+The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
+`
+
+const approvalReportExample = `# Report that a file artifact has been approved for deployment.
+# The approval is for the last 5 git commits
+merkely pipeline approval report FILE.tgz \
+	--api-token yourAPIToken \
+	--owner yourOrgName \
+	--pipeline yourPipelineName \
+	--artifact-type file \
+	--description "An optional description for the approval" \
+	--newest-commit $(git rev-parse HEAD) \
+	--oldest-commit $(git rev-parse HEAD~5)
+`
+
 type approvalReportOptions struct {
 	fingerprintOptions *fingerprintOptions
 	pipelineName       string
@@ -33,9 +49,10 @@ func newApprovalReportCmd(out io.Writer) *cobra.Command {
 	o := new(approvalReportOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "report [ARTIFACT-NAME-OR-PATH]",
-		Short: "Report approval of deploying an artifact in Merkely. ",
-		Long:  approvalReportDesc(),
+		Use:     "report [ARTIFACT-NAME-OR-PATH]",
+		Short:   "Report approval of deploying an artifact in Merkely. ",
+		Long:    approvalReportDesc,
+		Example: approvalReportExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -106,13 +123,6 @@ func (o *approvalReportOptions) run(args []string, request bool) error {
 	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
 		global.MaxAPIRetries, global.DryRun, http.MethodPost, log)
 	return err
-}
-
-func approvalReportDesc() string {
-	return `
-   Approve a deployment of an artifact in Merkely. 
-   The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
-   `
 }
 
 // listCommitsBetween list all commits that have happened between two commits in a git repo
