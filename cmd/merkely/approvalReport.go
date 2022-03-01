@@ -34,7 +34,7 @@ merkely pipeline approval report \
 	--api-token yourAPIToken \
 	--owner yourOrgName \
 	--pipeline yourPipelineName \
-	--sha256 yourCalculatedSha256
+	--sha256 yourSha256
 	--description "An optional description for the approval" \
 	--newest-commit $(git rev-parse HEAD) \
 	--oldest-commit $(git rev-parse HEAD~5)

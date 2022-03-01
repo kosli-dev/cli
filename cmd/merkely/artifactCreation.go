@@ -33,8 +33,8 @@ merkely pipeline artifact report creation FILE.tgz \
 --owner yourOrgName \
 --pipeline yourPipelineName \
 --artifact-type file \
---build-url yourUrlToTheBuild \
---commit-url yourUrlToTheCommit \
+--build-url https://exampleci.com \
+--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
 --git-commit yourCommitShaThatThisArtifactWasBuiltFrom
 
 # Report that an artifact with a sha256 has been created for a pipeline
@@ -42,9 +42,9 @@ merkely pipeline artifact report creation \
 --api-token yourApiToken \
 --owner yourOrgName \
 --pipeline yourPipelineName \
---sha256 yourCalculatedSha256 \
---build-url yourUrlToTheBuild \
---commit-url yourUrlToTheCommit \
+--sha256 yourSha256 \
+--build-url https://exampleci.com \
+--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
 --git-commit yourCommitShaThatThisArtifactWasBuiltFrom
 `
 

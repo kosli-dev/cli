@@ -28,7 +28,7 @@ merkely pipeline approval assert FILE.tgz \
 		--api-token yourAPIToken \
 		--owner yourOrgName \
 		--pipeline yourPipelineName \
-		--sha256 yourCalculatedSha256
+		--sha256 yourSha256
 `
 
 type approvalAssertOptions struct {

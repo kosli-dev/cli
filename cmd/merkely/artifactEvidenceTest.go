@@ -22,13 +22,36 @@ type testEvidenceOptions struct {
 	payload            EvidencePayload
 }
 
+const testEvidenceExample = `
+# report a JUnit test evidence about a file artifact:
+merkely pipeline artifact report evidence test FILE.tgz \
+	--artifact-type file \
+	--evidence-type yourEvidenceType \
+	--pipeline yourPipelineName \
+	--build-url https://exampleci.com \
+	--api-token yourAPIToken \
+	--owner yourOrgName	\
+	--results-dir yourFolderWithJUnitResults
+
+# report a JUnit test evidence about an artifact using an available Sha256 digest:
+merkely pipeline artifact report evidence test \
+	--sha256 yourSha256 \
+	--evidence-type yourEvidenceType \
+	--pipeline yourPipelineName \
+	--build-url https://exampleci.com \
+	--api-token yourAPIToken \
+	--owner yourOrgName	\
+	--results-dir yourFolderWithJUnitResults
+`
+
 func newTestEvidenceCmd(out io.Writer) *cobra.Command {
 	o := new(testEvidenceOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "test [ARTIFACT-NAME-OR-PATH]",
-		Short: "Report a JUnit test evidence to an artifact in a Merkely pipeline. ",
-		Long:  testEvidenceDesc(),
+		Use:     "test [ARTIFACT-NAME-OR-PATH]",
+		Short:   "Report a JUnit test evidence to an artifact in a Merkely pipeline. ",
+		Long:    testEvidenceDesc(),
+		Example: testEvidenceExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
