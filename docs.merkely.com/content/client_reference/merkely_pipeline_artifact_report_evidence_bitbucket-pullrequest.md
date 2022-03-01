@@ -27,18 +27,19 @@ Report a Bitbucket pull request evidence for an artifact in a Merkely pipeline.
 	|---------------------------------------------------------------------------
 
 ```shell
-merkely pipeline artifact report evidence bitbucket-pullrequest ARTIFACT-NAME-OR-PATH [flags]
+merkely pipeline artifact report evidence bitbucket-pullrequest [ARTIFACT-NAME-OR-PATH] [flags]
 ```
 
 ### Options
 
 ```
-  -t, --artifact-type string         The type of the artifact to calculate its SHA256 fingerprint.
+  -t, --artifact-type string         The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]
+      --assert                       Fail if no pull requests found for the given commit.
       --bitbucket-password string    Bitbucket password.
       --bitbucket-username string    Bitbucket user name.
       --bitbucket-workspace string   Bitbucket workspace.
-  -b, --build-url string             The url of CI pipeline that generated the evidence. (default "https://github.com/merkely-development/cli/actions/runs/1859276331")
-      --commit string                Git commit for which to find pull request evidence. (default "c9fe3e38941ddbd0c4177efd0c7d1a8b0af926d1")
+  -b, --build-url string             The url of CI pipeline that generated the evidence. (default "https://github.com/merkely-development/cli/actions/runs/1915357107")
+      --commit string                Git commit for which to find pull request evidence. (default "db7e69d466d9958ec7ce9574f3c5b042ef903f63")
   -d, --description string           [optional] The evidence description.
   -e, --evidence-type string         The type of evidence being reported.
   -h, --help                         help for bitbucket-pullrequest
@@ -55,7 +56,7 @@ merkely pipeline artifact report evidence bitbucket-pullrequest ARTIFACT-NAME-OR
 ```
   -a, --api-token string      The merkely API token.
   -c, --config-file string    [optional] The merkely config file path. (default "merkely")
-  -D, --dry-run               Whether to send the request to the endpoint or just log it in stdout.
+  -D, --dry-run               Whether to run in dry-run mode. When enabled, data is not sent to Merkely and the CLI exits with 0 exit code regardless of errors.
   -H, --host string           The merkely endpoint. (default "https://app.merkely.com")
   -r, --max-api-retries int   How many times should API calls be retried when the API host is not reachable. (default 3)
   -o, --owner string          The merkely user or organization.

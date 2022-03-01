@@ -1,54 +1,56 @@
 ---
-title: "merkely environment report s3"
+title: "merkely environment report lambda"
 ---
 
-## merkely environment report s3
+## merkely environment report lambda
 
-Report artifact from AWS S3 bucket to Merkely.
+Report artifact from AWS Lambda to Merkely.
 
 ### Synopsis
 
 
-Report the artifact deployed in an AWS S3 bucket and its digest to Merkely. 
+Report the artifact deployed in an AWS Lambda and its digest to Merkely. 
 
 
 ```shell
-merkely environment report s3 env-name [flags]
+merkely environment report lambda env-name [flags]
 ```
 
 ### Examples
 
 ```shell
 
-# report what is running in an AWS S3 bucket (AWS auth provided in env variables):
+# report what is running in the latest version AWS Lambda function (AWS auth provided in env variables):
 export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
-merkely environment report s3 yourEnvironmentName \
-	--bucket yourBucketName \
+merkely environment report lambda myEnvironment \
+	--function-name yourFunctionName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
-# report what is running in an AWS S3 bucket (AWS auth provided in flags):
-merkely environment report s3 yourEnvironmentName \
-	--bucket yourBucketName \
+# report what is running in a specific version of an AWS Lambda function (AWS auth provided in flags):
+merkely environment report lambda myEnvironment \
+	--function-name yourFunctionName \
+	--function-version yourFunctionVersion \
 	--aws-key-id yourAWSAccessKeyID \
 	--aws-secret-key yourAWSSecretAccessKey \
 	--aws-region yourAWSRegion \
 	--api-token yourAPIToken \
-	--owner yourOrgName	
+	--owner yourOrgName
 
 ```
 
 ### Options
 
 ```
-      --aws-key-id string       The AWS access key ID
-      --aws-region string       The AWS region
-      --aws-secret-key string   The AWS secret key
-      --bucket string           The name of the S3 bucket.
-  -h, --help                    help for s3
+      --aws-key-id string         The AWS access key ID
+      --aws-region string         The AWS region
+      --aws-secret-key string     The AWS secret key
+      --function-name string      The name of the AWS Lambda function.
+      --function-version string   [optional] The version of the AWS Lambda function.
+  -h, --help                      help for lambda
 ```
 
 ### Options inherited from parent commands

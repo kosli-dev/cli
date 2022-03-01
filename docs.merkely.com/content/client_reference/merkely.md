@@ -26,7 +26,7 @@ Environment variables:
 ```
   -a, --api-token string      The merkely API token.
   -c, --config-file string    [optional] The merkely config file path. (default "merkely")
-  -D, --dry-run               Whether to send the request to the endpoint or just log it in stdout.
+  -D, --dry-run               Whether to run in dry-run mode. When enabled, data is not sent to Merkely and the CLI exits with 0 exit code regardless of errors.
   -h, --help                  help for merkely
   -H, --host string           The merkely endpoint. (default "https://app.merkely.com")
   -r, --max-api-retries int   How many times should API calls be retried when the API host is not reachable. (default 3)

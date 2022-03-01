@@ -27,14 +27,40 @@ Report a JUnit test evidence to an artifact in a Merkely pipeline.
 	|---------------------------------------------------------------------------
 
 ```shell
-merkely pipeline artifact report evidence test ARTIFACT-NAME-OR-PATH [flags]
+merkely pipeline artifact report evidence test [ARTIFACT-NAME-OR-PATH] [flags]
+```
+
+### Examples
+
+```shell
+
+# report a JUnit test evidence about a file artifact:
+merkely pipeline artifact report evidence test FILE.tgz \
+	--artifact-type file \
+	--evidence-type yourEvidenceType \
+	--pipeline yourPipelineName \
+	--build-url https://exampleci.com \
+	--api-token yourAPIToken \
+	--owner yourOrgName	\
+	--results-dir yourFolderWithJUnitResults
+
+# report a JUnit test evidence about an artifact using an available Sha256 digest:
+merkely pipeline artifact report evidence test \
+	--sha256 yourSha256 \
+	--evidence-type yourEvidenceType \
+	--pipeline yourPipelineName \
+	--build-url https://exampleci.com \
+	--api-token yourAPIToken \
+	--owner yourOrgName	\
+	--results-dir yourFolderWithJUnitResults
+
 ```
 
 ### Options
 
 ```
-  -t, --artifact-type string       The type of the artifact to calculate its SHA256 fingerprint.
-  -b, --build-url string           The url of CI pipeline that generated the evidence. (default "https://github.com/merkely-development/cli/actions/runs/1859276331")
+  -t, --artifact-type string       The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]
+  -b, --build-url string           The url of CI pipeline that generated the evidence. (default "https://github.com/merkely-development/cli/actions/runs/1915357107")
   -d, --description string         [optional] The evidence description.
   -e, --evidence-type string       The type of evidence being reported.
   -h, --help                       help for test
@@ -52,7 +78,7 @@ merkely pipeline artifact report evidence test ARTIFACT-NAME-OR-PATH [flags]
 ```
   -a, --api-token string      The merkely API token.
   -c, --config-file string    [optional] The merkely config file path. (default "merkely")
-  -D, --dry-run               Whether to send the request to the endpoint or just log it in stdout.
+  -D, --dry-run               Whether to run in dry-run mode. When enabled, data is not sent to Merkely and the CLI exits with 0 exit code regardless of errors.
   -H, --host string           The merkely endpoint. (default "https://app.merkely.com")
   -r, --max-api-retries int   How many times should API calls be retried when the API host is not reachable. (default 3)
   -o, --owner string          The merkely user or organization.

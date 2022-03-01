@@ -21,18 +21,25 @@ merkely pipeline declare [flags]
 
 ```shell
 
-* create/update a Merkely pipeline without a pipefile:
-merkely pipeline declare --pipeline myPipe --description desc \
-   --visibility private --template artifact,evidence-type1,evidence-type2 \
-   --owner owner-name --api-token topSecret
+# create/update a Merkely pipeline without a pipefile:
+merkely pipeline declare \
+	--pipeline yourPipelineName \
+	--description yourPipelineDescription \
+    --visibility private OR public \
+	--template artifact,evidence-type1,evidence-type2 \
+	--api-token yourAPIToken \
+	--owner yourOrgName
 
-* create/update a Merkely pipeline with a pipefile (this is a legacy way which will be removed in the future):
-merkely pipeline declare --owner owner-name --api-token topSecret --pipefile /path/to/pipefile.json
+# create/update a Merkely pipeline with a pipefile (this is a legacy way which will be removed in the future):
+merkely pipeline declare \
+	--pipefile /path/to/pipefile.json \
+	--api-token yourAPIToken \
+	--owner yourOrgName
 
-* The pipefile format is:
+The pipefile format is:
 {
-    "name": "myPipe",
-    "description": "pipeline short description",
+    "name": "yourPipelineName",
+    "description": "yourPipelinedescription",
     "visibility": "public or private",
     "template": [
         "artifact",
@@ -59,7 +66,7 @@ merkely pipeline declare --owner owner-name --api-token topSecret --pipefile /pa
 ```
   -a, --api-token string      The merkely API token.
   -c, --config-file string    [optional] The merkely config file path. (default "merkely")
-  -D, --dry-run               Whether to send the request to the endpoint or just log it in stdout.
+  -D, --dry-run               Whether to run in dry-run mode. When enabled, data is not sent to Merkely and the CLI exits with 0 exit code regardless of errors.
   -H, --host string           The merkely endpoint. (default "https://app.merkely.com")
   -r, --max-api-retries int   How many times should API calls be retried when the API host is not reachable. (default 3)
   -o, --owner string          The merkely user or organization.

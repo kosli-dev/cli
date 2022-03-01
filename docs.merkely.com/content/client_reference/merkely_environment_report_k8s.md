@@ -21,21 +21,35 @@ merkely environment report k8s [-n namespace | -x namespace]... [-k /path/to/kub
 
 ```shell
 
-* report what's running in an entire cluster using kubeconfig at $HOME/.kube/config:
-merkely environment report k8s prod --api-token 1234 --owner exampleOrg --id prod-cluster
+# report what is running in an entire cluster using kubeconfig at $HOME/.kube/config:
+merkely environment report k8s yourEnvironmentName \
+	--api-token yourAPIToken \
+	--owner yourOrgName
 
-* report what's running in an entire cluster using kubeconfig at $HOME/.kube/config 
-(with global flags defined in environment or in  a config file):
-merkely environment report  k8s prod
+# report what is running in an entire cluster using kubeconfig at $HOME/.kube/config 
+(with global flags defined in environment or in a config file):
+export MERKELY_API_TOKEN=yourAPIToken
+export MERKELY_OWNER=yourOrgName
 
-* report what's running in an entire cluster excluding some namespaces using kubeconfig at $HOME/.kube/config:
-merkely environment report k8s prod -x kube-system,utilities
+merkely environment report k8s yourEnvironmentName
 
-* report what's running in a given namespace in the cluster using kubeconfig at $HOME/.kube/config:
-merkely environment report k8s prod -n prod-namespace
+# report what is running in an entire cluster excluding some namespaces using kubeconfig at $HOME/.kube/config:
+merkely environment report k8s yourEnvironmentName \
+    --exclude-namespace kube-system,utilities \
+	--api-token yourAPIToken \
+	--owner yourOrgName
 
-* report what's running in a cluster using kubeconfig at a custom path:
-merkely environment report k8s prod -k /path/to/kube/config
+# report what is running in a given namespace in the cluster using kubeconfig at $HOME/.kube/config:
+merkely environment report k8s yourEnvironmentName \
+	--namespace your-namespace \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# report what is running in a cluster using kubeconfig at a custom path:
+merkely environment report k8s yourEnvironmentName \
+	--kubeconfig /path/to/kube/config \
+	--api-token yourAPIToken \
+	--owner yourOrgName
 
 ```
 
@@ -44,7 +58,6 @@ merkely environment report k8s prod -k /path/to/kube/config
 ```
   -x, --exclude-namespace strings   The comma separated list of namespaces regex patterns NOT to report artifacts info from. Can't be used together with --namespace.
   -h, --help                        help for k8s
-  -i, --id string                   The unique identifier of the source infrastructure of the report (e.g. the K8S cluster/namespace name). If not set, it is defaulted to environment name.
   -k, --kubeconfig string           The kubeconfig path for the target cluster.
   -n, --namespace strings           The comma separated list of namespaces regex patterns to report artifacts info from. Can't be used together with --exclude-namespace.
 ```
@@ -54,7 +67,7 @@ merkely environment report k8s prod -k /path/to/kube/config
 ```
   -a, --api-token string      The merkely API token.
   -c, --config-file string    [optional] The merkely config file path. (default "merkely")
-  -D, --dry-run               Whether to send the request to the endpoint or just log it in stdout.
+  -D, --dry-run               Whether to run in dry-run mode. When enabled, data is not sent to Merkely and the CLI exits with 0 exit code regardless of errors.
   -H, --host string           The merkely endpoint. (default "https://app.merkely.com")
   -r, --max-api-retries int   How many times should API calls be retried when the API host is not reachable. (default 3)
   -o, --owner string          The merkely user or organization.

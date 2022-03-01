@@ -21,8 +21,11 @@ merkely environment report server [-p /path/of/artifacts/directory] [-i infrastr
 
 ```shell
 
-* report directory artifacts running in a server at a list of paths:
-merkely environment report server prod --api-token 1234 --owner exampleOrg --id prod-server --paths a/b/c, e/f/g
+# report directory artifacts running in a server at a list of paths:
+merkely environment report server yourEnvironmentName \
+	--paths a/b/c, e/f/g \
+	--api-token yourAPIToken \
+	--owner yourOrgName  
 
 ```
 
@@ -30,7 +33,6 @@ merkely environment report server prod --api-token 1234 --owner exampleOrg --id 
 
 ```
   -h, --help            help for server
-  -i, --id string       The unique identifier of the source infrastructure of the report (e.g. the K8S cluster/namespace name). If not set, it is defaulted to environment name.
   -p, --paths strings   The comma separated list of artifact directories.
 ```
 
@@ -39,7 +41,7 @@ merkely environment report server prod --api-token 1234 --owner exampleOrg --id 
 ```
   -a, --api-token string      The merkely API token.
   -c, --config-file string    [optional] The merkely config file path. (default "merkely")
-  -D, --dry-run               Whether to send the request to the endpoint or just log it in stdout.
+  -D, --dry-run               Whether to run in dry-run mode. When enabled, data is not sent to Merkely and the CLI exits with 0 exit code regardless of errors.
   -H, --host string           The merkely endpoint. (default "https://app.merkely.com")
   -r, --max-api-retries int   How many times should API calls be retried when the API host is not reachable. (default 3)
   -o, --owner string          The merkely user or organization.

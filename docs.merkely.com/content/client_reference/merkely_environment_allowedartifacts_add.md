@@ -21,7 +21,7 @@ merkely environment allowedartifacts add ARTIFACT-NAME-OR-PATH [flags]
 ### Options
 
 ```
-  -t, --artifact-type string       The type of the artifact to calculate its SHA256 fingerprint.
+  -t, --artifact-type string       The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]
   -e, --environment string         The environment name for which the artifact is allowlisted.
   -h, --help                       help for add
       --reason string              The reason why this artifact is allowlisted.
@@ -36,7 +36,7 @@ merkely environment allowedartifacts add ARTIFACT-NAME-OR-PATH [flags]
 ```
   -a, --api-token string      The merkely API token.
   -c, --config-file string    [optional] The merkely config file path. (default "merkely")
-  -D, --dry-run               Whether to send the request to the endpoint or just log it in stdout.
+  -D, --dry-run               Whether to run in dry-run mode. When enabled, data is not sent to Merkely and the CLI exits with 0 exit code regardless of errors.
   -H, --host string           The merkely endpoint. (default "https://app.merkely.com")
   -r, --max-api-retries int   How many times should API calls be retried when the API host is not reachable. (default 3)
   -o, --owner string          The merkely user or organization.

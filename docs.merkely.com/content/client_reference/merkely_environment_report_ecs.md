@@ -21,8 +21,14 @@ merkely environment report ecs env-name [flags]
 
 ```shell
 
-* report what's running in an entire AWS ECS cluster:
-merkely environment report ecs prod --api-token 1234 --owner exampleOrg
+# report what is running in an entire AWS ECS cluster:
+export AWS_REGION=yourAWSRegion
+export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
+export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
+
+merkely environment report ecs yourEnvironmentName \
+	--api-token yourAPIToken \
+	--owner yourOrgName
 
 ```
 
@@ -31,7 +37,6 @@ merkely environment report ecs prod --api-token 1234 --owner exampleOrg
 ```
   -C, --cluster string        The name of the ECS cluster.
   -h, --help                  help for ecs
-  -i, --id string             The unique identifier of the source infrastructure of the report (e.g. the ECS cluster/service name).If not set, it is defaulted based on the following order: --service-name, --cluster, environment name.
   -s, --service-name string   The name of the ECS service.
 ```
 
@@ -40,7 +45,7 @@ merkely environment report ecs prod --api-token 1234 --owner exampleOrg
 ```
   -a, --api-token string      The merkely API token.
   -c, --config-file string    [optional] The merkely config file path. (default "merkely")
-  -D, --dry-run               Whether to send the request to the endpoint or just log it in stdout.
+  -D, --dry-run               Whether to run in dry-run mode. When enabled, data is not sent to Merkely and the CLI exits with 0 exit code regardless of errors.
   -H, --host string           The merkely endpoint. (default "https://app.merkely.com")
   -r, --max-api-retries int   How many times should API calls be retried when the API host is not reachable. (default 3)
   -o, --owner string          The merkely user or organization.
