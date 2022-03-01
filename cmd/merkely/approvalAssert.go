@@ -10,16 +10,25 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const approvalAssertDesc = `Assert if an artifact in Merkely has been approved for deployment.
+const approvalAssertDesc = `
+Assert if an artifact in Merkely has been approved for deployment.
 The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
 `
 
-const approvalAssertExample = `# Assert that a file artifact has been approved
+const approvalAssertExample = `
+# Assert that a file artifact has been approved
 merkely pipeline approval assert FILE.tgz \
 	--api-token yourAPIToken \
 	--owner yourOrgName \
 	--pipeline yourPipelineName \
 	--artifact-type file
+
+# Assert that an artifact with a sha256 has been approved
+	merkely pipeline approval assert \
+		--api-token yourAPIToken \
+		--owner yourOrgName \
+		--pipeline yourPipelineName \
+		--sha256 yourCalculatedSha256
 `
 
 type approvalAssertOptions struct {

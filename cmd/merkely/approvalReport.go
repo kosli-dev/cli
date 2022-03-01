@@ -11,11 +11,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const approvalReportDesc = `Approve a deployment of an artifact in Merkely. 
+const approvalReportDesc = `
+Approve a deployment of an artifact in Merkely. 
 The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
 `
 
-const approvalReportExample = `# Report that a file artifact has been approved for deployment.
+const approvalReportExample = `
+# Report that a file artifact has been approved for deployment.
 # The approval is for the last 5 git commits
 merkely pipeline approval report FILE.tgz \
 	--api-token yourAPIToken \
@@ -25,6 +27,18 @@ merkely pipeline approval report FILE.tgz \
 	--description "An optional description for the approval" \
 	--newest-commit $(git rev-parse HEAD) \
 	--oldest-commit $(git rev-parse HEAD~5)
+
+# Report that an artifact with a sha256 has been approved for deployment.
+# The approval is for the last 5 git commits
+merkely pipeline approval report \
+	--api-token yourAPIToken \
+	--owner yourOrgName \
+	--pipeline yourPipelineName \
+	--sha256 yourCalculatedSha256
+	--description "An optional description for the approval" \
+	--newest-commit $(git rev-parse HEAD) \
+	--oldest-commit $(git rev-parse HEAD~5)
+
 `
 
 type approvalReportOptions struct {

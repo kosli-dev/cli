@@ -29,7 +29,7 @@ merkely environment report k8s yourEnvironmentName \
 export MERKELY_API_TOKEN=yourAPIToken
 export MERKELY_OWNER=yourOrgName
 
-merkely environment report k8s prod
+merkely environment report k8s yourEnvironmentName
 
 # report what is running in an entire cluster excluding some namespaces using kubeconfig at $HOME/.kube/config:
 merkely environment report k8s yourEnvironmentName \
