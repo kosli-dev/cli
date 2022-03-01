@@ -26,13 +26,36 @@ type ArtifactPayload struct {
 	CommitUrl   string `json:"commit_url"`
 }
 
+const artifactCreationExample = `
+# Report that a file artifact has been created for a pipeline
+merkely pipeline artifact report creation FILE.tgz \
+--api-token yourApiToken \
+--owner yourOrgName \
+--pipeline yourPipelineName \
+--artifact-type file \
+--build-url yourUrlToTheBuild \
+--commit-url yourUrlToTheCommit \
+--git-commit yourCommitShaThatThisArtifactWasBuiltFrom
+
+# Report that an artifact with a sha256 has been created for a pipeline
+merkely pipeline artifact report creation \
+--api-token yourApiToken \
+--owner yourOrgName \
+--pipeline yourPipelineName \
+--sha256 yourCalculatedSha256 \
+--build-url yourUrlToTheBuild \
+--commit-url yourUrlToTheCommit \
+--git-commit yourCommitShaThatThisArtifactWasBuiltFrom
+`
+
 func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 	o := new(artifactCreationOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "creation ARTIFACT-NAME-OR-PATH",
-		Short: "Report an artifact creation to a Merkely pipeline. ",
-		Long:  artifactCreationDesc(),
+		Use:     "creation ARTIFACT-NAME-OR-PATH",
+		Short:   "Report an artifact creation to a Merkely pipeline. ",
+		Long:    artifactCreationDesc(),
+		Example: artifactCreationExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {

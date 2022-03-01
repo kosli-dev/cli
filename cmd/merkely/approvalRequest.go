@@ -6,13 +6,43 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const approvalRequestDesc = `
+Request an approval of a deployment of an artifact in Merkely. The request should be reviewed in Merkely UI.
+The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
+`
+
+const approvalRequestExample = `
+# Request that a file artifact needs approval.
+# The approval is for the last 5 git commits
+merkely pipeline approval request FILE.tgz \
+	--api-token yourAPIToken \
+	--owner yourOrgName \
+	--pipeline yourPipelineName \
+	--artifact-type file \
+	--description "An optional description for the requested approval" \
+	--newest-commit $(git rev-parse HEAD) \
+	--oldest-commit $(git rev-parse HEAD~5)
+
+# Request that an artifact with a sha256 needs approval.
+# The approval is for the last 5 git commits
+merkely pipeline approval request \
+	--api-token yourAPIToken \
+	--owner yourOrgName \
+	--pipeline yourPipelineName \
+	--sha256 yourCalculatedSha256 \
+	--description "An optional description for the requested approval" \
+	--newest-commit $(git rev-parse HEAD) \
+	--oldest-commit $(git rev-parse HEAD~5)	
+`
+
 func newApprovalRequestCmd(out io.Writer) *cobra.Command {
 	o := new(approvalReportOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "request [ARTIFACT-NAME-OR-PATH]",
-		Short: "Request an approval for deploying an artifact in Merkely. ",
-		Long:  approvalRequestDesc(),
+		Use:     "request [ARTIFACT-NAME-OR-PATH]",
+		Short:   "Request an approval for deploying an artifact in Merkely. ",
+		Long:    approvalRequestDesc,
+		Example: approvalRequestExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -45,11 +75,4 @@ func newApprovalRequestCmd(out io.Writer) *cobra.Command {
 	}
 
 	return cmd
-}
-
-func approvalRequestDesc() string {
-	return `
-   Request an approval of a deployment of an artifact in Merkely. The request should be reviewed in Merkely UI.
-   The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
-   `
 }
