@@ -2,6 +2,8 @@ package aws
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -120,7 +122,18 @@ func GetLambdaPackageData(functionName, functionVersion string, creds *credentia
 	if err != nil {
 		return lambdaData, err
 	}
-	lambdaData = append(lambdaData, &LambdaData{Digests: map[string]string{functionName: *result.CodeSha256}, LastModifiedTimestamp: lastModifiedTimestamp.Unix()})
+
+	fmt.Printf("result: %v\n", result)
+
+	sha256base64, err := base64.StdEncoding.DecodeString(*result.CodeSha256)
+	if err != nil {
+		return nil, err
+	}
+
+	sha256hex := hex.EncodeToString(sha256base64)
+
+	lambdaData = append(lambdaData, &LambdaData{Digests: map[string]string{functionName: sha256hex}, LastModifiedTimestamp: lastModifiedTimestamp.Unix()})
+
 	return lambdaData, nil
 }
 
