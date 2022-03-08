@@ -121,7 +121,7 @@ func (o *environmentReportK8SOptions) run(args []string) error {
 }
 
 func defaultKubeConfigPath() string {
-	if _, ok := os.LookupEnv("DEV"); ok { // used for docs generation
+	if _, ok := os.LookupEnv("DOCS"); ok { // used for docs generation
 		return "$HOME/.kube/config"
 	}
 	home, err := homedir.Dir()

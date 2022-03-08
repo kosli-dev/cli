@@ -82,9 +82,13 @@ func WhichCI() string {
 }
 
 // DefaultValue looks up the default value of a given flag in a given CI tool
+// if the DOCS env variable is set, return empty string to avoid
+// having irrelevant defaults in the docs
 func DefaultValue(ci, flag string) string {
-	if v, ok := ciTemplates[ci][flag]; ok {
-		return os.ExpandEnv(v)
+	if _, ok := os.LookupEnv("DOCS"); !ok {
+		if v, ok := ciTemplates[ci][flag]; ok {
+			return os.ExpandEnv(v)
+		}
 	}
 	return ""
 }
