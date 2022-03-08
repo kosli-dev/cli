@@ -33,6 +33,9 @@ const (
 	// The environment variable prefix of all environment variables bound to our command line flags.
 	// For example, --namespace is bound to MERKELY_NAMESPACE.
 	envPrefix = "MERKELY"
+
+	// the following constants are used in the docs/help
+	sha256Desc = "The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly."
 )
 
 var global *GlobalOpts
