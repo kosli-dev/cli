@@ -58,7 +58,7 @@ merkely environment report k8s yourEnvironmentName \
 ```
   -x, --exclude-namespace strings   The comma separated list of namespaces regex patterns NOT to report artifacts info from. Can't be used together with --namespace.
   -h, --help                        help for k8s
-  -k, --kubeconfig string           The kubeconfig path for the target cluster.
+  -k, --kubeconfig string           The kubeconfig path for the target cluster. (default "$HOME/.kube/config")
   -n, --namespace strings           The comma separated list of namespaces regex patterns to report artifacts info from. Can't be used together with --exclude-namespace.
 ```
 

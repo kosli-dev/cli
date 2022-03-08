@@ -9,9 +9,8 @@ Request an approval for deploying an artifact in Merkely.
 ### Synopsis
 
 
-Request an approval of a deployment of an artifact in Merkely. The request should be reviewed in Merkely UI.
-The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
-
+Request an approval of a deployment of an artifact in Merkely. The request should be reviewed in Merkely UI. 
+The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly.
 
 ```shell
 merkely pipeline approval request [ARTIFACT-NAME-OR-PATH] [flags]
