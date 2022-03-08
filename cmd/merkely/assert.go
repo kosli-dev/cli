@@ -18,6 +18,7 @@ func newAssertCmd(out io.Writer) *cobra.Command {
 	// Add subcommands
 	cmd.AddCommand(
 		newAssertPullRequestBitbucketCmd(out),
+		newAssertPullRequestGithubCmd(out),
 	)
 
 	return cmd
