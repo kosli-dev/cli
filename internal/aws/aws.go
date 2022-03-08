@@ -123,11 +123,9 @@ func GetLambdaPackageData(functionName, functionVersion string, creds *credentia
 		return lambdaData, err
 	}
 
-	fmt.Printf("result: %v\n", result)
-
 	sha256base64, err := base64.StdEncoding.DecodeString(*result.CodeSha256)
 	if err != nil {
-		return nil, err
+		return lambdaData, err
 	}
 
 	sha256hex := hex.EncodeToString(sha256base64)
