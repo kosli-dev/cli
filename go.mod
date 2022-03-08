@@ -88,4 +88,4 @@ replace github.com/opencontainers/image-spec => github.com/opencontainers/image-
 
 replace github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.3
 
-replace github.com/containerd/containerd => github.com/containerd/containerd v1.5.9
+replace github.com/containerd/containerd => github.com/containerd/containerd v1.5.10
