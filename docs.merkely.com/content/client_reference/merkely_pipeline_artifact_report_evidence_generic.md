@@ -67,7 +67,7 @@ merkely pipeline artifact report evidence generic /path/to/your/dir \
 
 ```
   -t, --artifact-type string       The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]
-  -b, --build-url string           The url of CI pipeline that generated the evidence.
+  -b, --build-url string           The url of CI pipeline that generated the evidence. (default "https://github.com/merkely-development/cli/actions/runs/1950470174")
   -C, --compliant                  Whether the evidence is compliant or not. (default true)
   -d, --description string         [optional] The evidence description.
   -e, --evidence-type string       The type of evidence being reported.

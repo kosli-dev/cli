@@ -38,8 +38,8 @@ merkely pipeline artifact report evidence bitbucket-pullrequest [ARTIFACT-NAME-O
       --bitbucket-password string    Bitbucket password.
       --bitbucket-username string    Bitbucket user name.
       --bitbucket-workspace string   Bitbucket workspace.
-  -b, --build-url string             The url of CI pipeline that generated the evidence.
-      --commit string                Git commit for which to find pull request evidence.
+  -b, --build-url string             The url of CI pipeline that generated the evidence. (default "https://github.com/merkely-development/cli/actions/runs/1950470174")
+      --commit string                Git commit for which to find pull request evidence. (default "b72323e971c39ccdc8f211d32592ddd18952060e")
   -d, --description string           [optional] The evidence description.
   -e, --evidence-type string         The type of evidence being reported.
   -h, --help                         help for bitbucket-pullrequest
@@ -47,7 +47,7 @@ merkely pipeline artifact report evidence bitbucket-pullrequest [ARTIFACT-NAME-O
       --registry-password string     The docker registry password or access token.
       --registry-provider string     The docker registry provider or url.
       --registry-username string     The docker registry username.
-      --repository string            Git repository.
+      --repository string            Git repository. (default "merkely-development/cli")
   -s, --sha256 string                The SHA256 fingerprint for the artifact. Only required if you don't specify --artifact-type.
 ```
 

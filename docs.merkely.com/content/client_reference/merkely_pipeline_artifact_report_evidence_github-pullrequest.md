@@ -35,18 +35,18 @@ merkely pipeline artifact report evidence github-pullrequest [ARTIFACT-NAME-OR-P
 ```
   -t, --artifact-type string       The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]
       --assert                     Fail if no pull requests found for the given commit.
-  -b, --build-url string           The url of CI pipeline that generated the evidence.
-      --commit string              Git commit for which to find pull request evidence.
+  -b, --build-url string           The url of CI pipeline that generated the evidence. (default "https://github.com/merkely-development/cli/actions/runs/1950470174")
+      --commit string              Git commit for which to find pull request evidence. (default "b72323e971c39ccdc8f211d32592ddd18952060e")
   -d, --description string         [optional] The evidence description.
   -e, --evidence-type string       The type of evidence being reported.
-      --github-org string          Github organization.
+      --github-org string          Github organization. (default "merkely-development")
       --github-token string        Github token.
   -h, --help                       help for github-pullrequest
   -p, --pipeline string            The Merkely pipeline name.
       --registry-password string   The docker registry password or access token.
       --registry-provider string   The docker registry provider or url.
       --registry-username string   The docker registry username.
-      --repository string          Git repository.
+      --repository string          Git repository. (default "merkely-development/cli")
   -s, --sha256 string              The SHA256 fingerprint for the artifact. Only required if you don't specify --artifact-type.
 ```
 
