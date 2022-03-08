@@ -68,6 +68,7 @@ docker: deps vet lint
 
 docs: build
 	@export DEV=true
+	@rm docs.merkely.com/content/client_reference/merkely*
 	@./merkely docs --dir docs.merkely.com/content/client_reference
 .PHONY: docs
 
@@ -91,3 +92,9 @@ helm-docs: helm-lint
 	@cd charts/k8s-reporter &&  docker run --rm --volume "$(PWD):/helm-docs" jnorwood/helm-docs:latest --template-files README.md.gotmpl,_templates.gotmpl --output-file README.md
 	@cd charts/k8s-reporter &&  docker run --rm --volume "$(PWD):/helm-docs" jnorwood/helm-docs:latest --template-files README.md.gotmpl,_templates.gotmpl --output-file ../../docs.merkely.com/content/helm/helm_chart.md
 .PHONY: helm-docs
+
+release:
+	@git remote update
+	@git status -uno | grep --silent "Your branch is up to date" || (echo "ERROR: your branch is NOT up to date with remote" && return 1)
+	git tag -a $(tag) -m"$(tag)"
+	git push origin $(tag)

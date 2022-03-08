@@ -66,11 +66,11 @@ merkely pipeline artifact report creation \
 
 ```
   -t, --artifact-type string       The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]
-  -b, --build-url string           The url of CI pipeline that built the artifact. (default "https://github.com/merkely-development/cli/actions/runs/1915357107")
-  -u, --commit-url string          The url for the git commit that created the artifact. (default "https://github.com/merkely-development/cli/commit/db7e69d466d9958ec7ce9574f3c5b042ef903f63")
+  -b, --build-url string           The url of CI pipeline that built the artifact.
+  -u, --commit-url string          The url for the git commit that created the artifact.
   -C, --compliant                  Whether the artifact is compliant or not. (default true)
   -d, --description string         [optional] The artifact description.
-  -g, --git-commit string          The git commit from which the artifact was created. (default "db7e69d466d9958ec7ce9574f3c5b042ef903f63")
+  -g, --git-commit string          The git commit from which the artifact was created.
   -h, --help                       help for creation
   -p, --pipeline string            The Merkely pipeline name.
       --registry-password string   The docker registry password or access token.
