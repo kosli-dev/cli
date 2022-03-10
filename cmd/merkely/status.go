@@ -31,9 +31,9 @@ func run(out io.Writer) error {
 	url := fmt.Sprintf("%s/ready", global.Host)
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", "", global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
 	if err != nil {
-		log.Info("Down")
+		fmt.Print("Down")
 	} else {
-		log.Info(response.Body)
+		fmt.Print(response.Body)
 	}
 	return nil
 }

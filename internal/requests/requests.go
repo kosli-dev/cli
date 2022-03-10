@@ -20,7 +20,7 @@ type HTTPResponse struct {
 func getRetryableHttpClient(maxAPIRetries int, logger *logrus.Logger) *http.Client {
 	retryClient := retryablehttp.NewClient()
 	retryClient.RetryMax = maxAPIRetries
-	retryClient.Logger = logger
+	retryClient.Logger = nil
 	// return a standard *http.Client from the retryable client
 	return retryClient.StandardClient()
 }
