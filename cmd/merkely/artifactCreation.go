@@ -79,7 +79,7 @@ func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", "The Merkely pipeline name.")
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", "[optional] The artifact description.")
 	cmd.Flags().StringVarP(&o.payload.GitCommit, "git-commit", "g", DefaultValue(ci, "git-commit"), "The git commit from which the artifact was created.")
-	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), "The url of CI pipeline that built the artifact.")
+	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), "The url of CI pipeline that built the artifact. (defaulted in some CIs: https://docs.merkely.com/ci-defaults)")
 	cmd.Flags().StringVarP(&o.payload.CommitUrl, "commit-url", "u", DefaultValue(ci, "commit-url"), "The url for the git commit that created the artifact.")
 	cmd.Flags().BoolVarP(&o.payload.IsCompliant, "compliant", "C", true, "Whether the artifact is compliant or not.")
 	addFingerprintFlags(cmd, o.fingerprintOptions)
