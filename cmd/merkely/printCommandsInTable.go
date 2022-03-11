@@ -71,13 +71,13 @@ func CommandsInTable(f *pflag.FlagSet) string {
 		}
 
 		line += usage
-		if !flag.defaultIsZeroValue() {
-			if flag.Value.Type() == "string" {
-				line += fmt.Sprintf(" (default %q)", flag.DefValue)
-			} else {
-				line += fmt.Sprintf(" (default %s)", flag.DefValue)
-			}
+		// if !flag.defaultIsZeroValue() {
+		if flag.Value.Type() == "string" {
+			line += fmt.Sprintf(" (default %q)", flag.DefValue)
+		} else {
+			line += fmt.Sprintf(" (default %s)", flag.DefValue)
 		}
+		// }
 		if len(flag.Deprecated) != 0 {
 			line += fmt.Sprintf(" (DEPRECATED: %s)", flag.Deprecated)
 		}
@@ -85,44 +85,14 @@ func CommandsInTable(f *pflag.FlagSet) string {
 		lines = append(lines, line)
 	})
 
+	fmt.Printf("printed lines: %v", lines)
 	for _, line := range lines {
 		sidx := strings.Index(line, "\x00")
-		spacing := strings.Repeat(" ", maxlen-sidx)
+		// spacing := strings.Repeat(" ", maxlen-sidx)
 		// maxlen + 2 comes from + 1 for the \x00 and + 1 for the (deliberate) off-by-one in maxlen-sidx
-		fmt.Fprintln(buf, line[:sidx], spacing, wrap(maxlen+2, cols, line[sidx+1:]))
+		// fmt.Fprintln(buf, line[:sidx], spacing, wrap(maxlen+2, 0, line[sidx+1:]))
+		fmt.Fprintln(buf, "| ", line[:sidx], " | ", line[sidx+1:], " |")
 	}
 
 	return buf.String()
-}
-
-// defaultIsZeroValue returns true if the default value for this flag represents
-// a zero value.
-func defaultIsZeroValue(f *pflag.Flag) bool {
-	switch f.Value.(type) {
-	case boolFlag:
-		return f.DefValue == "false"
-	case *durationValue:
-		// Beginning in Go 1.7, duration zero values are "0s"
-		return f.DefValue == "0" || f.DefValue == "0s"
-	case *intValue, *int8Value, *int32Value, *int64Value, *uintValue, *uint8Value, *uint16Value, *uint32Value, *uint64Value, *countValue, *float32Value, *float64Value:
-		return f.DefValue == "0"
-	case *stringValue:
-		return f.DefValue == ""
-	case *ipValue, *ipMaskValue, *ipNetValue:
-		return f.DefValue == "<nil>"
-	case *intSliceValue, *stringSliceValue, *stringArrayValue:
-		return f.DefValue == "[]"
-	default:
-		switch f.Value.String() {
-		case "false":
-			return true
-		case "<nil>":
-			return true
-		case "":
-			return true
-		case "0":
-			return true
-		}
-		return false
-	}
 }
