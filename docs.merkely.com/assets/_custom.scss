@@ -75,3 +75,25 @@ aside.book-menu .book-menu-content {
         }
     }
 }
+
+.markdown table {
+    width: 100%;
+    display: table;
+
+    tr {
+        background-color: transparent !important;
+        th {
+            color: $merkely-medium-blue;
+            border: 0;
+        }
+    
+        td {
+            border: 0px;
+        }
+    }
+
+    td:first-child {
+        width: 275px;
+        font-family: 'Roboto Mono', monospace;
+    }
+}
