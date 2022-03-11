@@ -135,7 +135,6 @@ func printOptions(buf *bytes.Buffer, cmd *cobra.Command, name string) error {
 		buf.WriteString("### Options\n")
 		buf.WriteString("| Flag | Description |\n")
 		buf.WriteString("| :--- | :--- |\n")
-		// flags.PrintDefaults()
 		usages := CommandsInTable(flags)
 		fmt.Fprint(buf, usages)
 		buf.WriteString("\n\n")
@@ -144,9 +143,12 @@ func printOptions(buf *bytes.Buffer, cmd *cobra.Command, name string) error {
 	parentFlags := cmd.InheritedFlags()
 	parentFlags.SetOutput(buf)
 	if parentFlags.HasAvailableFlags() {
-		buf.WriteString("### Options inherited from parent commands\n\n```\n")
-		parentFlags.PrintDefaults()
-		buf.WriteString("```\n\n")
+		buf.WriteString("### Options inherited from parent commands\n")
+		buf.WriteString("| Flag | Description |\n")
+		buf.WriteString("| :--- | :--- |\n")
+		usages := CommandsInTable(parentFlags)
+		fmt.Fprint(buf, usages)
+		buf.WriteString("\n\n")
 	}
 	return nil
 }

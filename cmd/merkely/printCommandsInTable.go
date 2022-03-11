@@ -71,7 +71,6 @@ func CommandsInTable(f *pflag.FlagSet) string {
 		lines = append(lines, line)
 	})
 
-	fmt.Printf("printed lines: %v", lines)
 	for _, line := range lines {
 		sidx := strings.Index(line, "\x00")
 		fmt.Fprintln(buf, "| ", line[:sidx], " | ", line[sidx+1:], " |")
