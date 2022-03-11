@@ -128,11 +128,6 @@ func MerkelyGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(
 	return err
 }
 
-// func PrintDefaults(f *pflag.FlagSet) {
-// 	usages := CommandsInTable(f)
-// 	fmt.Fprint(f.out(), usages)
-// }
-
 func printOptions(buf *bytes.Buffer, cmd *cobra.Command, name string) error {
 	flags := cmd.NonInheritedFlags()
 	flags.SetOutput(buf)
