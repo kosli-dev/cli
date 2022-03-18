@@ -92,7 +92,7 @@ func testEvidenceDesc() string {
 	return `
    Report a JUnit test evidence to an artifact in a Merkely pipeline. 
    The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
-   ` + GetCIDefaultsTemplates(supportedCIs, []string{"build-url"})
+   `
 }
 
 func (o *testEvidenceOptions) run(args []string) error {

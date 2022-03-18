@@ -79,22 +79,32 @@ aside.book-menu .book-menu-content {
 .markdown table {
     width: 100%;
     display: table;
+    background-color: #272822;
+    color: #f8f8f2;
+    border-radius: 0.25rem;
 
     tr {
         background-color: transparent !important;
         th {
-            color: $merkely-medium-blue;
+            color: $merkely-lavender-blue;
             border: 0;
+            display: none;
         }
     
         td {
             border: 0px;
             word-break: break-all;
+            a, a:hover, a:visited {
+                color: $merkely-lavender-blue;
+            }
         }
+
     }
 
     td:first-child {
         width: 275px;
+        font-size: 14px;
+        font-weight: bold;
         font-family: 'Roboto Mono', monospace;
     }
 }

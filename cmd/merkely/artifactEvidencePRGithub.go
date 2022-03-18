@@ -177,5 +177,5 @@ func controlPullRequestGithubDesc() string {
 	return `
    Check if a pull request exists for an artifact and report the pull-request evidence to the artifact in Merkely. 
    The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
-   ` + GetCIDefaultsTemplates(supportedCIs, []string{"build-url"})
+   `
 }

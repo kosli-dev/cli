@@ -92,5 +92,5 @@ func deploymentReportDesc() string {
    Report a deployment of an artifact to an environment in Merkely. 
    The artifact SHA256 fingerprint is calculated and reported 
    or,alternatively, can be provided directly. 
-   ` + GetCIDefaultsTemplates(supportedCIs, []string{"build-url"})
+   `
 }
