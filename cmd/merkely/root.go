@@ -36,6 +36,28 @@ const (
 
 	// the following constants are used in the docs/help
 	sha256Desc = "The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly."
+
+	// flags
+	sha256Flag              = "The SHA256 fingerprint for the artifact. Only required if you don't specify --artifact-type."
+	pipelineNameFlag        = "The Merkely pipeline name."
+	oldestCommitFlag        = "The source commit sha for the oldest change in the deployment."
+	newestCommitFlag        = "The source commit sha for the newest change in the deployment."
+	repoRootFlag            = "The directory where the source git repository is volume-mounted."
+	approvalDescriptionFlag = "[optional] The approval description."
+	artifactDescriptionFlag = "[optional] The artifact description."
+	evidenceDescriptionFlag = "[optional] The evidence description."
+	approvalUserDataFlag    = "[optional] The path to a JSON file containing additional data you would like to attach to this approval."
+	evidenceUserDataFlag    = "[optional] The path to a JSON file containing additional data you would like to attach to this evidence."
+	gitCommitFlag           = "The git commit from which the artifact was created."
+	buildUrlFlag            = "The url of CI pipeline that built the artifact. (defaulted in some CIs: https://docs.merkely.com/ci-defaults)"
+	commitUrlFlag           = "The url for the git commit that created the artifact."
+	evidenceBuildUrlFlag    = "The url of CI pipeline that generated the evidence."
+	compliantFlag           = "Whether the artifact is compliant or not."
+	evidenceCompliantFlag   = "Whether the evidence is compliant or not."
+	evidenceTypeFlag        = "The type of evidence being reported."
+	bbUsernameFlag          = "Bitbucket user name."
+	bbPasswordFlag          = "Bitbucket password."
+	bbWorkspaceFlag         = "Bitbucket workspace."
 )
 
 var global *GlobalOpts
