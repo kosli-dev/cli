@@ -30,7 +30,7 @@ func newStatusCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVar(&o.assert, "assert", false, "Exit with non-zero code if Merkely server is not responding.")
+	cmd.Flags().BoolVar(&o.assert, "assert", false, assertStatusFlag)
 
 	return cmd
 }

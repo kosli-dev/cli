@@ -71,13 +71,13 @@ func newTestEvidenceCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVarP(&o.sha256, "sha256", "s", "", "The SHA256 fingerprint for the artifact. Only required if you don't specify --type.")
-	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", "The Merkely pipeline name.")
-	cmd.Flags().StringVarP(&o.description, "description", "d", "", "[optional] The evidence description.")
-	cmd.Flags().StringVarP(&o.buildUrl, "build-url", "b", DefaultValue(ci, "build-url"), "The url of CI pipeline that generated the evidence.")
-	cmd.Flags().StringVarP(&o.testResultsDir, "results-dir", "R", "/data/junit/", "The folder with JUnit test results.")
-	cmd.Flags().StringVarP(&o.payload.EvidenceType, "evidence-type", "e", "", "The type of evidence being reported.")
-	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", "[optional] The path to a JSON file containing additional data you would like to attach to this evidence.")
+	cmd.Flags().StringVarP(&o.sha256, "sha256", "s", "", sha256Flag)
+	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
+	cmd.Flags().StringVarP(&o.description, "description", "d", "", evidenceDescriptionFlag)
+	cmd.Flags().StringVarP(&o.buildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
+	cmd.Flags().StringVarP(&o.testResultsDir, "results-dir", "R", "/data/junit/", resultsDirFlag)
+	cmd.Flags().StringVarP(&o.payload.EvidenceType, "evidence-type", "e", "", evidenceTypeFlag)
+	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 
 	err := RequireFlags(cmd, []string{"pipeline", "build-url", "evidence-type"})

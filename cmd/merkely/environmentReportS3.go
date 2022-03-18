@@ -70,10 +70,10 @@ func newEnvironmentReportS3Cmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&o.bucket, "bucket", "", "The name of the S3 bucket.")
-	cmd.Flags().StringVar(&o.accessKey, "aws-key-id", "", "The AWS access key ID")
-	cmd.Flags().StringVar(&o.secretKey, "aws-secret-key", "", "The AWS secret key")
-	cmd.Flags().StringVar(&o.region, "aws-region", "", "The AWS region")
+	cmd.Flags().StringVar(&o.bucket, "bucket", "", bucketNameFlag)
+	cmd.Flags().StringVar(&o.accessKey, "aws-key-id", "", awsKeyIdFlag)
+	cmd.Flags().StringVar(&o.secretKey, "aws-secret-key", "", awsSecretKeyFlag)
+	cmd.Flags().StringVar(&o.region, "aws-region", "", awsRegionFlag)
 
 	err := RequireFlags(cmd, []string{"bucket"})
 	if err != nil {

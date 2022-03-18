@@ -38,26 +38,69 @@ const (
 	sha256Desc = "The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly."
 
 	// flags
+	apiTokenFlag            = "The merkely API token."
+	ownerFlag               = "The merkely user or organization."
+	hostFlag                = "The merkely endpoint."
+	dryRunFlag              = "Whether to run in dry-run mode. When enabled, data is not sent to Merkely and the CLI exits with 0 exit code regardless of errors."
+	maxAPIRetryFlag         = "How many times should API calls be retried when the API host is not reachable."
+	configFileFlag          = "[optional] The merkely config file path."
+	verboseFlag             = "Print verbose logs to stdout."
 	sha256Flag              = "The SHA256 fingerprint for the artifact. Only required if you don't specify --artifact-type."
+	artifactTypeFlag        = "The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]"
 	pipelineNameFlag        = "The Merkely pipeline name."
+	newPipelineFlag         = "The name of the pipeline to be created or updated."
+	pipefileFlag            = "[deprecated] The path to the JSON pipefile."
+	environmentNameFlag     = "The environment name."
+	newEnvNameFlag          = "The name of environment to be created."
+	newEnvTypeFlag          = "The type of environment. Valid options are: [K8S, ECS, server, S3]"
+	envAllowListFlag        = "The environment name for which the artifact is allowlisted."
+	reasonFlag              = "The reason why this artifact is allowlisted."
 	oldestCommitFlag        = "The source commit sha for the oldest change in the deployment."
 	newestCommitFlag        = "The source commit sha for the newest change in the deployment."
 	repoRootFlag            = "The directory where the source git repository is volume-mounted."
 	approvalDescriptionFlag = "[optional] The approval description."
 	artifactDescriptionFlag = "[optional] The artifact description."
 	evidenceDescriptionFlag = "[optional] The evidence description."
+	envDescriptionFlag      = "[optional] The environment description."
+	pipelineDescriptionFlag = "[optional] The Merkely pipeline description."
+	visibilityFlag          = "The visibility of the Merkely pipeline. Options are [public, private]."
+	templateFlag            = "The comma-separated list of required compliance controls names."
 	approvalUserDataFlag    = "[optional] The path to a JSON file containing additional data you would like to attach to this approval."
 	evidenceUserDataFlag    = "[optional] The path to a JSON file containing additional data you would like to attach to this evidence."
+	deploymentUserDataFlag  = "[optional] The path to a JSON file containing additional data you would like to attach to this deployment."
 	gitCommitFlag           = "The git commit from which the artifact was created."
+	evidenceBuildUrlFlag    = "The url of CI pipeline that generated the evidence."
 	buildUrlFlag            = "The url of CI pipeline that built the artifact. (defaulted in some CIs: https://docs.merkely.com/ci-defaults)"
 	commitUrlFlag           = "The url for the git commit that created the artifact."
-	evidenceBuildUrlFlag    = "The url of CI pipeline that generated the evidence."
 	compliantFlag           = "Whether the artifact is compliant or not."
 	evidenceCompliantFlag   = "Whether the evidence is compliant or not."
 	evidenceTypeFlag        = "The type of evidence being reported."
 	bbUsernameFlag          = "Bitbucket user name."
 	bbPasswordFlag          = "Bitbucket password."
 	bbWorkspaceFlag         = "Bitbucket workspace."
+	commitPREvidenceFlag    = "Git commit for which to find pull request evidence."
+	repositoryFlag          = "Git repository."
+	assertPREvidenceFlag    = "Exit with non-zero code if no pull requests found for the given commit."
+	assertStatusFlag        = "Exit with non-zero code if Merkely server is not responding."
+	githubTokenFlag         = "Github token."
+	githubOrgFlag           = "Github organization."
+	registryProviderFlag    = "The docker registry provider or url."
+	registryUsernameFlag    = "The docker registry username."
+	registryPasswordFlag    = "The docker registry password or access token."
+	resultsDirFlag          = "The path to a folder with JUnit test results."
+	ecsClusterFlag          = "The name of the ECS cluster."
+	ecsServiceFlag          = "The name of the ECS service."
+	kubeconfigFlag          = "The kubeconfig path for the target cluster."
+	namespaceFlag           = "The comma separated list of namespaces regex patterns to report artifacts info from. Can't be used together with --exclude-namespace."
+	excludeNamespaceFlag    = "The comma separated list of namespaces regex patterns NOT to report artifacts info from. Can't be used together with --namespace."
+	functionNameFlag        = "The name of the AWS Lambda function."
+	functionVersionFlag     = "[optional] The version of the AWS Lambda function."
+	awsKeyIdFlag            = "The AWS access key ID"
+	awsSecretKeyFlag        = "The AWS secret key"
+	awsRegionFlag           = "The AWS region"
+	bucketNameFlag          = "The name of the S3 bucket."
+	pathsFlag               = "The comma separated list of artifact directories."
+	shortFlag               = "only print the version number"
 )
 
 var global *GlobalOpts
@@ -94,13 +137,13 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 			return nil
 		},
 	}
-	cmd.PersistentFlags().StringVarP(&global.ApiToken, "api-token", "a", "", "The merkely API token.")
-	cmd.PersistentFlags().StringVarP(&global.Owner, "owner", "o", "", "The merkely user or organization.")
-	cmd.PersistentFlags().StringVarP(&global.Host, "host", "H", "https://app.merkely.com", "The merkely endpoint.")
-	cmd.PersistentFlags().BoolVarP(&global.DryRun, "dry-run", "D", false, "Whether to run in dry-run mode. When enabled, data is not sent to Merkely and the CLI exits with 0 exit code regardless of errors.")
-	cmd.PersistentFlags().IntVarP(&global.MaxAPIRetries, "max-api-retries", "r", maxAPIRetries, "How many times should API calls be retried when the API host is not reachable.")
-	cmd.PersistentFlags().StringVarP(&global.ConfigFile, "config-file", "c", defaultConfigFilename, "[optional] The merkely config file path.")
-	cmd.PersistentFlags().BoolVarP(&global.Verbose, "verbose", "v", false, "Print verbose logs to stdout.")
+	cmd.PersistentFlags().StringVarP(&global.ApiToken, "api-token", "a", "", apiTokenFlag)
+	cmd.PersistentFlags().StringVarP(&global.Owner, "owner", "o", "", ownerFlag)
+	cmd.PersistentFlags().StringVarP(&global.Host, "host", "H", "https://app.merkely.com", hostFlag)
+	cmd.PersistentFlags().BoolVarP(&global.DryRun, "dry-run", "D", false, dryRunFlag)
+	cmd.PersistentFlags().IntVarP(&global.MaxAPIRetries, "max-api-retries", "r", maxAPIRetries, maxAPIRetryFlag)
+	cmd.PersistentFlags().StringVarP(&global.ConfigFile, "config-file", "c", defaultConfigFilename, configFileFlag)
+	cmd.PersistentFlags().BoolVarP(&global.Verbose, "verbose", "v", false, verboseFlag)
 
 	// Add subcommands
 	cmd.AddCommand(

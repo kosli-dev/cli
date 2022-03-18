@@ -59,8 +59,8 @@ func newEnvironmentReportECSCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.cluster, "cluster", "C", "", "The name of the ECS cluster.")
-	cmd.Flags().StringVarP(&o.serviceName, "service-name", "s", "", "The name of the ECS service.")
+	cmd.Flags().StringVarP(&o.cluster, "cluster", "C", "", ecsClusterFlag)
+	cmd.Flags().StringVarP(&o.serviceName, "service-name", "s", "", ecsServiceFlag)
 	return cmd
 }
 

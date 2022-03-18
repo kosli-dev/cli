@@ -56,7 +56,7 @@ func newEnvironmentReportServerCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringSliceVarP(&o.paths, "paths", "p", []string{}, "The comma separated list of artifact directories.")
+	cmd.Flags().StringSliceVarP(&o.paths, "paths", "p", []string{}, pathsFlag)
 
 	err := RequireFlags(cmd, []string{"paths"})
 	if err != nil {

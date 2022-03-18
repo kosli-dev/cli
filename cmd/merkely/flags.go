@@ -10,8 +10,8 @@ type fingerprintOptions struct {
 }
 
 func addFingerprintFlags(cmd *cobra.Command, o *fingerprintOptions) {
-	cmd.Flags().StringVarP(&o.artifactType, "artifact-type", "t", "", "The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]")
-	cmd.Flags().StringVar(&o.registryProvider, "registry-provider", "", "The docker registry provider or url.")
-	cmd.Flags().StringVar(&o.registryUsername, "registry-username", "", "The docker registry username.")
-	cmd.Flags().StringVar(&o.registryPassword, "registry-password", "", "The docker registry password or access token.")
+	cmd.Flags().StringVarP(&o.artifactType, "artifact-type", "t", "", artifactTypeFlag)
+	cmd.Flags().StringVar(&o.registryProvider, "registry-provider", "", registryProviderFlag)
+	cmd.Flags().StringVar(&o.registryUsername, "registry-username", "", registryUsernameFlag)
+	cmd.Flags().StringVar(&o.registryPassword, "registry-password", "", registryPasswordFlag)
 }

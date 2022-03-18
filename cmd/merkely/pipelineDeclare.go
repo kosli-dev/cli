@@ -95,11 +95,11 @@ func newPipelineDeclareCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&o.payload.Name, "pipeline", "", "The name of the pipeline to be created or updated.")
-	cmd.Flags().StringVar(&o.pipefile, "pipefile", "", "[deprecated] The path to the JSON pipefile.")
-	cmd.Flags().StringVar(&o.payload.Description, "description", "", "[optional] The Merkely pipeline description.")
-	cmd.Flags().StringVar(&o.payload.Visibility, "visibility", "private", "The visibility of the Merkely pipeline. Options are [public, private].")
-	cmd.Flags().StringSliceVarP(&o.payload.Template, "template", "t", []string{"artifact"}, "The comma-separated list of required compliance controls names.")
+	cmd.Flags().StringVar(&o.payload.Name, "pipeline", "", newPipelineFlag)
+	cmd.Flags().StringVar(&o.pipefile, "pipefile", "", pipefileFlag)
+	cmd.Flags().StringVar(&o.payload.Description, "description", "", pipelineDescriptionFlag)
+	cmd.Flags().StringVar(&o.payload.Visibility, "visibility", "private", visibilityFlag)
+	cmd.Flags().StringSliceVarP(&o.payload.Template, "template", "t", []string{"artifact"}, templateFlag)
 
 	return cmd
 }

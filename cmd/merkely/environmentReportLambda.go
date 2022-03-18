@@ -71,11 +71,11 @@ func newEnvironmentReportLambdaCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&o.functionName, "function-name", "", "The name of the AWS Lambda function.")
-	cmd.Flags().StringVar(&o.functionVersion, "function-version", "", "[optional] The version of the AWS Lambda function.")
-	cmd.Flags().StringVar(&o.accessKey, "aws-key-id", "", "The AWS access key ID")
-	cmd.Flags().StringVar(&o.secretKey, "aws-secret-key", "", "The AWS secret key")
-	cmd.Flags().StringVar(&o.region, "aws-region", "", "The AWS region")
+	cmd.Flags().StringVar(&o.functionName, "function-name", "", functionNameFlag)
+	cmd.Flags().StringVar(&o.functionVersion, "function-version", "", functionVersionFlag)
+	cmd.Flags().StringVar(&o.accessKey, "aws-key-id", "", awsKeyIdFlag)
+	cmd.Flags().StringVar(&o.secretKey, "aws-secret-key", "", awsSecretKeyFlag)
+	cmd.Flags().StringVar(&o.region, "aws-region", "", awsRegionFlag)
 
 	err := RequireFlags(cmd, []string{"function-name"})
 	if err != nil {

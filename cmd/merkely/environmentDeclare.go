@@ -59,9 +59,9 @@ func newEnvironmentDeclareCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&payload.Name, "name", "n", "", "The name of environment.")
-	cmd.Flags().StringVarP(&payload.Type, "environment-type", "t", "", "The type of environment. Valid options are: [K8S, ECS, server, S3]")
-	cmd.Flags().StringVarP(&payload.Description, "description", "d", "", "[optional] The environment description.")
+	cmd.Flags().StringVarP(&payload.Name, "name", "n", "", newEnvNameFlag)
+	cmd.Flags().StringVarP(&payload.Type, "environment-type", "t", "", newEnvTypeFlag)
+	cmd.Flags().StringVarP(&payload.Description, "description", "d", "", envDescriptionFlag)
 
 	err := RequireFlags(cmd, []string{"name", "environment-type"})
 	if err != nil {

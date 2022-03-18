@@ -26,10 +26,10 @@ func newAssertPullRequestGithubCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVar(&o.ghToken, "github-token", "", "Github token.")
-	cmd.Flags().StringVar(&o.ghOwner, "github-org", DefaultValue(ci, "owner"), "Github organization.")
-	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), "Git commit for which to find pull request evidence.")
-	cmd.Flags().StringVar(&o.repository, "repository", DefaultValue(ci, "repository"), "Git repository.")
+	cmd.Flags().StringVar(&o.ghToken, "github-token", "", githubTokenFlag)
+	cmd.Flags().StringVar(&o.ghOwner, "github-org", DefaultValue(ci, "owner"), githubOrgFlag)
+	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
+	cmd.Flags().StringVar(&o.repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
 
 	err := RequireFlags(cmd, []string{"github-token", "github-org", "commit", "repository"})
 	if err != nil {

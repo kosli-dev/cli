@@ -28,11 +28,11 @@ func newAssertPullRequestBitbucketCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVar(&o.bbUsername, "bitbucket-username", "", "Bitbucket user name.")
-	cmd.Flags().StringVar(&o.bbPassword, "bitbucket-password", "", "Bitbucket password.")
-	cmd.Flags().StringVar(&o.bbWorkspace, "bitbucket-workspace", DefaultValue(ci, "workspace"), "Bitbucket workspace.")
-	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), "Git commit for which to find pull request evidence.")
-	cmd.Flags().StringVar(&o.repository, "repository", DefaultValue(ci, "repository"), "Git repository.")
+	cmd.Flags().StringVar(&o.bbUsername, "bitbucket-username", "", bbUsernameFlag)
+	cmd.Flags().StringVar(&o.bbPassword, "bitbucket-password", "", bbPasswordFlag)
+	cmd.Flags().StringVar(&o.bbWorkspace, "bitbucket-workspace", DefaultValue(ci, "workspace"), bbWorkspaceFlag)
+	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
+	cmd.Flags().StringVar(&o.repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
 
 	err := RequireFlags(cmd, []string{"bitbucket-username", "bitbucket-password",
 		"bitbucket-workspace", "commit", "repository"})

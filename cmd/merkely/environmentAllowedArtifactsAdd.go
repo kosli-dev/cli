@@ -47,9 +47,9 @@ func newAllowedArtifactsCreateCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.payload.Sha256, "sha256", "s", "", "The SHA256 fingerprint for the artifact. Only required if you don't specify --artifact-type.")
-	cmd.Flags().StringVarP(&o.payload.Environment, "environment", "e", "", "The environment name for which the artifact is allowlisted.")
-	cmd.Flags().StringVar(&o.payload.Reason, "reason", "", "The reason why this artifact is allowlisted.")
+	cmd.Flags().StringVarP(&o.payload.Sha256, "sha256", "s", "", sha256Flag)
+	cmd.Flags().StringVarP(&o.payload.Environment, "environment", "e", "", envAllowListFlag)
+	cmd.Flags().StringVar(&o.payload.Reason, "reason", "", reasonFlag)
 
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 
