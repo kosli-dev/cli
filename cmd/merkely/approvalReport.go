@@ -12,32 +12,31 @@ import (
 )
 
 const approvalReportDesc = `
-Approve a deployment of an artifact in Merkely. 
-The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
-`
+Report to Merkely an approval of deploying an artifact.
+` + sha256Desc
 
 const approvalReportExample = `
-# Report that a file artifact has been approved for deployment.
+# Report that a file type artifact has been approved for deployment.
 # The approval is for the last 5 git commits
 merkely pipeline approval report FILE.tgz \
 	--api-token yourAPIToken \
-	--owner yourOrgName \
-	--pipeline yourPipelineName \
 	--artifact-type file \
 	--description "An optional description for the approval" \
 	--newest-commit $(git rev-parse HEAD) \
-	--oldest-commit $(git rev-parse HEAD~5)
+	--oldest-commit $(git rev-parse HEAD~5) \
+	--owner yourOrgName \
+	--pipeline yourPipelineName 
 
-# Report that an artifact with a sha256 has been approved for deployment.
+# Report that an artifact with a provided fingerprint (sha256) has been approved for deployment.
 # The approval is for the last 5 git commits
 merkely pipeline approval report \
 	--api-token yourAPIToken \
+	--description "An optional description for the approval" \
+	--newest-commit $(git rev-parse HEAD) \
+	--oldest-commit $(git rev-parse HEAD~5) \
 	--owner yourOrgName \
 	--pipeline yourPipelineName \
 	--sha256 yourSha256
-	--description "An optional description for the approval" \
-	--newest-commit $(git rev-parse HEAD) \
-	--oldest-commit $(git rev-parse HEAD~5)
 
 `
 
@@ -64,7 +63,7 @@ func newApprovalReportCmd(out io.Writer) *cobra.Command {
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:     "report [ARTIFACT-NAME-OR-PATH]",
-		Short:   "Report approval of deploying an artifact in Merkely. ",
+		Short:   "Report to Merkely an approval of deploying an artifact. ",
 		Long:    approvalReportDesc,
 		Example: approvalReportExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

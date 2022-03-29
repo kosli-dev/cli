@@ -35,7 +35,7 @@ const (
 	envPrefix = "MERKELY"
 
 	// the following constants are used in the docs/help
-	sha256Desc = "The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly."
+	sha256Desc = "The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag)."
 
 	// flags
 	apiTokenFlag            = "The merkely API token."

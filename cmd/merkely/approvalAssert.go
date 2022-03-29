@@ -11,19 +11,19 @@ import (
 )
 
 const approvalAssertDesc = `
-Assert if an artifact in Merkely has been approved for deployment.
-The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
-`
+Assert if an artifact in Merkely has been approved for deployment. Exits with non-zero code if artifact has not been approved.
+` + sha256Desc
 
 const approvalAssertExample = `
-# Assert that a file artifact has been approved
+# Assert that a file tyoe artifact has been approved
 merkely pipeline approval assert FILE.tgz \
 	--api-token yourAPIToken \
+	--artifact-type file \
 	--owner yourOrgName \
-	--pipeline yourPipelineName \
-	--artifact-type file
+	--pipeline yourPipelineName 
 
-# Assert that an artifact with a sha256 has been approved
+
+# Assert that an artifact with a provided fingerprint (sha256) has been approved
 	merkely pipeline approval assert \
 		--api-token yourAPIToken \
 		--owner yourOrgName \
@@ -106,7 +106,7 @@ func (o *approvalAssertOptions) run(args []string) error {
 	state, ok := approvals[len(approvals)-1]["state"].(string)
 	if ok && state == "APPROVED" {
 		approvalNumber := approvals[len(approvals)-1]["release_number"]
-		log.Infof("artifact with sha256 %s is approved in approval no. [%v]", o.sha256, approvalNumber)
+		log.Infof("artifact with sha256 %s is approved (approval no. [%v])", o.sha256, approvalNumber)
 		return nil
 	} else {
 		return fmt.Errorf("artifact with sha256 %s is not approved", o.sha256)

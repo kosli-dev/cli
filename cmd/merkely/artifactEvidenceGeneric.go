@@ -26,32 +26,33 @@ type EvidencePayload struct {
 }
 
 const artifactEvidenceGenericExample = `
-# report a generic evidence about an artifact using an available Sha256 digest:
-merkely pipeline artifact report evidence generic \
-	--sha256 yourSha256 \
-	--evidence-type yourEvidenceType \
-	--pipeline yourPipelineName \
-	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
-	--owner yourOrgName
-
 # report a generic evidence about a pre-built docker image:
 merkely pipeline artifact report evidence generic yourDockerImageName \
+	--api-token yourAPIToken \
 	--artifact-type docker \
-	--evidence-type yourEvidenceType \
-	--pipeline yourPipelineName \
 	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
-	--owner yourOrgName
+	--evidence-type yourEvidenceType \
+	--owner yourOrgName \
+	--pipeline yourPipelineName 
 
-# report a generic evidence about a directory artifact:
+# report a generic evidence about a directory type artifact:
 merkely pipeline artifact report evidence generic /path/to/your/dir \
-	--artifact-type dir \
-	--evidence-type yourEvidenceType \
-	--pipeline yourPipelineName \
-	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
-	--owner yourOrgName		
+	--artifact-type dir \
+	--build-url https://exampleci.com \
+	--evidence-type yourEvidenceType \
+	--owner yourOrgName	\
+	--pipeline yourPipelineName 
+
+
+# report a generic evidence about an artifact with a provided fingerprint (sha256)
+merkely pipeline artifact report evidence generic \
+	--api-token yourAPIToken \
+	--build-url https://exampleci.com \	
+	--evidence-type yourEvidenceType \
+	--owner yourOrgName \
+	--pipeline yourPipelineName \
+	--sha256 yourSha256
 `
 
 func newGenericEvidenceCmd(out io.Writer) *cobra.Command {
@@ -124,7 +125,6 @@ func (o *genericEvidenceOptions) run(args []string) error {
 
 func genericEvidenceDesc() string {
 	return `
-   Report a generic evidence to an artifact in a Merkely pipeline. 
-   The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
-   `
+   Report a generic evidence to an artifact to a Merkely pipeline. 
+   ` + sha256Desc
 }

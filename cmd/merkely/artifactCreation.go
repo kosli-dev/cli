@@ -27,25 +27,25 @@ type ArtifactPayload struct {
 }
 
 const artifactCreationExample = `
-# Report that a file artifact has been created for a pipeline
+# Report to a Merkely pipeline that a file type artifact has been created
 merkely pipeline artifact report creation FILE.tgz \
 --api-token yourApiToken \
---owner yourOrgName \
---pipeline yourPipelineName \
 --artifact-type file \
 --build-url https://exampleci.com \
 --commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
---git-commit yourCommitShaThatThisArtifactWasBuiltFrom
+--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
+--owner yourOrgName \
+--pipeline yourPipelineName 
 
-# Report that an artifact with a sha256 has been created for a pipeline
+# Report to a Merkely pipeline that an artifact with a provided fingerprint (sha256) has been created
 merkely pipeline artifact report creation \
 --api-token yourApiToken \
---owner yourOrgName \
---pipeline yourPipelineName \
---sha256 yourSha256 \
 --build-url https://exampleci.com \
 --commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
---git-commit yourCommitShaThatThisArtifactWasBuiltFrom
+--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
+--owner yourOrgName \
+--pipeline yourPipelineName \
+--sha256 yourSha256 
 `
 
 func newArtifactCreationCmd(out io.Writer) *cobra.Command {
@@ -117,8 +117,6 @@ func (o *artifactCreationOptions) run(args []string) error {
 
 func artifactCreationDesc() string {
 	return `
-   Report an artifact creation to a pipeline in Merkely. 
-   The artifact SHA256 fingerprint is calculated and reported 
-   or, alternatively, can be provided directly. 
-   `
+   Report an artifact creation to a Merkely pipeline. 
+   ` + sha256Desc
 }

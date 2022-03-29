@@ -7,31 +7,31 @@ import (
 )
 
 const approvalRequestDesc = `
-Request an approval of a deployment of an artifact in Merkely. The request should be reviewed in Merkely UI. 
+Request in Merkely an approval of a deployment of an artifact. The request should be reviewed in Merkely UI. 
 ` + sha256Desc
 
 const approvalRequestExample = `
-# Request that a file artifact needs approval.
+# Request that a file type artifact needs approval.
 # The approval is for the last 5 git commits
 merkely pipeline approval request FILE.tgz \
 	--api-token yourAPIToken \
-	--owner yourOrgName \
-	--pipeline yourPipelineName \
 	--artifact-type file \
 	--description "An optional description for the requested approval" \
 	--newest-commit $(git rev-parse HEAD) \
-	--oldest-commit $(git rev-parse HEAD~5)
+	--oldest-commit $(git rev-parse HEAD~5) \
+	--owner yourOrgName \
+	--pipeline yourPipelineName 
 
-# Request that an artifact with a sha256 needs approval.
+# Request and approval for an artifact with a provided fingerprint (sha256).
 # The approval is for the last 5 git commits
 merkely pipeline approval request \
 	--api-token yourAPIToken \
-	--owner yourOrgName \
-	--pipeline yourPipelineName \
-	--sha256 yourSha256 \
 	--description "An optional description for the requested approval" \
 	--newest-commit $(git rev-parse HEAD) \
-	--oldest-commit $(git rev-parse HEAD~5)	
+	--oldest-commit $(git rev-parse HEAD~5)	\
+	--owner yourOrgName \
+	--pipeline yourPipelineName \
+	--sha256 yourSha256 
 `
 
 func newApprovalRequestCmd(out io.Writer) *cobra.Command {
@@ -39,7 +39,7 @@ func newApprovalRequestCmd(out io.Writer) *cobra.Command {
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:     "request [ARTIFACT-NAME-OR-PATH]",
-		Short:   "Request an approval for deploying an artifact in Merkely. ",
+		Short:   "Request in Merkely an approval of a deployment of an artifact. ",
 		Long:    approvalRequestDesc,
 		Example: approvalRequestExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
