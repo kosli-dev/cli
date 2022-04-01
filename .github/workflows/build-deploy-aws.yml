@@ -13,6 +13,7 @@ jobs:
     runs-on: [ubuntu-latest]
     outputs:
       image_tag: ${{ steps.prepare.outputs.image_tag }}
+      image_uri: ${{ steps.prepare.outputs.image_uri }}
       tagged_image: ${{ steps.prepare.outputs.tagged_image }}
     defaults:
       run:
@@ -30,13 +31,19 @@ jobs:
             image_tag="$(echo ${{ github.sha }})"
           fi
           image_tag=$(echo ${image_tag//[^a-zA-Z0-9_.-]/-} | head -c7)
-          tagged_image=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.eu-central-1.amazonaws.com/merkely-cli:${image_tag}
+          image_uri=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.eu-central-1.amazonaws.com/merkely
+          tagged_image=${image_uri}:${image_tag}
           echo ::set-output name=image_tag::"$image_tag"
+          echo ::set-output name=image_uri::"$image_uri"
           echo ::set-output name=tagged_image::"$tagged_image"
 
   build:
     name: Build
     runs-on: ubuntu-20.04
+    needs: prepare
+    permissions:
+      id-token: write
+      contents: write
     steps:
 
     - uses: actions/checkout@v2
