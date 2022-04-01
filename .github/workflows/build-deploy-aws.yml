@@ -75,8 +75,8 @@ jobs:
         version: v1.29
         args: --timeout=5m
 
-    - name: Run tests
-      run: make test_unit
+    #- name: Run tests
+    #  run: make test_unit
 
     # Login to ECR - output of this step will be used by the later steps. Search for steps.login-ecr.outputs to see where
     - name: Login to Amazon ECR
