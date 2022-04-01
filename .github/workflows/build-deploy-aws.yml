@@ -31,7 +31,7 @@ jobs:
             image_tag="$(echo ${{ github.sha }})"
           fi
           image_tag=$(echo ${image_tag//[^a-zA-Z0-9_.-]/-} | head -c7)
-          image_uri=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.eu-central-1.amazonaws.com/merkely
+          image_uri=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.eu-central-1.amazonaws.com/merkely-cli
           tagged_image=${image_uri}:${image_tag}
           echo ::set-output name=image_tag::"$image_tag"
           echo ::set-output name=image_uri::"$image_uri"
