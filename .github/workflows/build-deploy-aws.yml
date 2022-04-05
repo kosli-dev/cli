@@ -69,21 +69,20 @@ jobs:
         role-duration-seconds: 2400
         role-session-name: ${{ github.event.repository.name }}
 
-    #- name: Run golangci-lint
-    #  uses: golangci/golangci-lint-action@v2
-    #  with:
-    #    version: v1.29
-    #    args: --timeout=5m
+    - name: Run golangci-lint
+      uses: golangci/golangci-lint-action@v2
+      with:
+        version: v1.45
+        args: --timeout=5m
 
     # Login to ECR - output of this step will be used by the later steps. Search for steps.login-ecr.outputs to see where
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Run tests
-      env:
-        MERKELY_IMAGE_URI: "${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.eu-central-1.amazonaws.com/merkely-cli:latest"
-      run: make test_unit
+    #- name: Run tests
+    #  env:
+    #  run: make test_unit
 
     # Build and push docker image to ECR
     - name: Build and push Docker image

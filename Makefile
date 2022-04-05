@@ -1,14 +1,6 @@
 export CGO_ENABLED=0
 export GO111MODULE=on
 
-# We use IMAGE_URI env var to be able to run tests for images that are stored in different 
-# docker registries (google and aws). If this env var is not set, google registry is used by default.
-#if test -z ${MERKELY_IMAGE_URI+y}
-#then
-#		export MERKELY_IMAGE_URI=ghcr.io/merkely-development/merkely:latest
-#fi
-[ -v ${MERKELY_IMAGE_URI} ] && export MERKELY_IMAGE_URI=ghcr.io/merkely-development/merkely:latest
-
 LDFLAGS := -w -s
 
 GIT_COMMIT = $(shell git rev-parse HEAD)
