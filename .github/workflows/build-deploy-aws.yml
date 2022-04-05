@@ -1,0 +1,174 @@
+name: Build and deploy to AWS
+
+on:
+  push:
+
+env: 
+  AWS_REGION: eu-central-1
+  AWS_ACCOUNT_ID: 772819027869
+
+jobs:
+  prepare:
+    name: prepare
+    runs-on: [ubuntu-latest]
+    outputs:
+      image_tag: ${{ steps.prepare.outputs.image_tag }}
+      image_uri: ${{ steps.prepare.outputs.image_uri }}
+      tagged_image: ${{ steps.prepare.outputs.tagged_image }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Prepare
+        id: prepare
+        run: |
+          if [[ ${{ github.event_name }} == "pull_request" ]]; then 
+            image_tag="$(echo ${{ github.event.pull_request.head.sha }})"
+          else
+            image_tag="$(echo ${{ github.sha }})"
+          fi
+          image_tag=$(echo ${image_tag//[^a-zA-Z0-9_.-]/-} | head -c7)
+          image_uri=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.eu-central-1.amazonaws.com/merkely-cli
+          tagged_image=${image_uri}:${image_tag}
+          echo ::set-output name=image_tag::"$image_tag"
+          echo ::set-output name=image_uri::"$image_uri"
+          echo ::set-output name=tagged_image::"$tagged_image"
+
+  build:
+    name: Build
+    runs-on: ubuntu-20.04
+    needs: prepare
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-go@v2
+      with:
+        go-version: '^1.16.4'
+
+    # Set up QEMU emulator to allow building multi-arch images
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v1
+
+    # This is the a separate action that sets up buildx (buildkit) runner
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    # Configure AWS credentials
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/GithubActionsRole
+        aws-region: ${{ env.AWS_REGION }}
+        role-duration-seconds: 2400
+        role-session-name: ${{ github.event.repository.name }}
+
+    - name: Run golangci-lint
+      uses: golangci/golangci-lint-action@v2
+      with:
+        version: v1.45
+        args: --timeout=5m
+
+    # Login to ECR - output of this step will be used by the later steps. Search for steps.login-ecr.outputs to see where
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    #- name: Run tests
+    #  env:
+    #  run: make test_unit
+
+    # Build and push docker image to ECR
+    - name: Build and push Docker image
+      id: docker_build
+      uses: docker/build-push-action@v2
+      with:
+        push: true
+        tags: ${{ needs.prepare.outputs.tagged_image }}
+        platforms: linux/amd64
+        cache-from: type=registry,ref=${{ needs.prepare.outputs.image_uri }}:buildcache
+        cache-to: type=inline,mode=max
+
+    #- name: Slack Notification on Failure
+    #  if: ${{ failure() }}
+    #  uses: rtCamp/action-slack-notify@v2
+    #  env:
+    #    SLACK_CHANNEL: ${{ secrets.slack_channel }}
+    #    SLACK_COLOR: ${{ job.status }}
+    #    SLACK_TITLE: Build Failed in Client repository
+    #    SLACK_USERNAME: GithubActions
+    #    SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
+
+  # deploy to staging environment
+  deploy-staging:
+    needs: [prepare, build]
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-20.04
+    permissions:
+      id-token: write
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      # Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/GithubActionsRole
+          aws-region: ${{ env.AWS_REGION }}
+          role-duration-seconds: 2400
+          role-session-name: ${{ github.event.repository.name }}
+
+      # Install terraform
+      - name: Setup terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.1.5
+
+      # Initialize
+      - name: Terraform init
+        working-directory: deployment/terraform/
+        run: terraform init -backend=false
+
+      # Validate
+      - name: Terraform validate
+        working-directory: deployment/terraform/
+        run: terraform validate -no-color
+
+      # Check terraform specs format
+      - name: Terraform fmt
+        working-directory: deployment/terraform/
+        run: terraform fmt --recursive -check=true
+
+      # Run terraform plan, save plan to file
+      - name: Terraform plan
+        env: 
+          TF_VAR_TAGGED_IMAGE: ${{ needs.prepare.outputs.tagged_image }}
+        working-directory: deployment/terraform/
+        run: ./tf.sh plan -no-color -out plan.tfplan
+
+      - name: Terraform apply
+        working-directory: deployment/terraform/
+        env:
+          TF_AUTO_APPLY_SAVED_PLAN: true
+          TF_SKIP_BACKEND_INIT: true
+        run: ./tf.sh apply plan.tfplan
+
+      #- name: Slack Notification for Deployment
+      #  uses: rtCamp/action-slack-notify@v2
+      #  env:
+      #    SLACK_CHANNEL: ${{ secrets.MERKELY_SLACK_CI_DEPLOYMENTS_CHANNEL }}
+      #    SLACK_COLOR: ${{ job.status }}
+      #    SLACK_TITLE: Utilities Deployment ${{ job.status }}
+      #    SLACK_MESSAGE: ${{ job.status }}
+      #    SLACK_USERNAME: GithubActions
+      #    SLACK_WEBHOOK: ${{ secrets.MERKELY_SLACK_CI_DEPLOYMENTS_WEBHOOK }}
