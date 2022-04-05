@@ -69,11 +69,11 @@ jobs:
         role-duration-seconds: 2400
         role-session-name: ${{ github.event.repository.name }}
 
-    - name: Run golangci-lint
-      uses: golangci/golangci-lint-action@v2
-      with:
-        version: v1.29
-        args: --timeout=5m
+    #- name: Run golangci-lint
+    #  uses: golangci/golangci-lint-action@v2
+    #  with:
+    #    version: v1.29
+    #    args: --timeout=5m
 
     # Login to ECR - output of this step will be used by the later steps. Search for steps.login-ecr.outputs to see where
     - name: Login to Amazon ECR

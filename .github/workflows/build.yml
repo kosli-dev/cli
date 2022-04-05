@@ -49,11 +49,11 @@ jobs:
         username: ${{ secrets.ghcr_user }}
         password: ${{ secrets.ghcr_token }}    
 
-    - name: Run golangci-lint
-      uses: golangci/golangci-lint-action@v2
-      with:
-        version: v1.29
-        args: --timeout=5m
+    #- name: Run golangci-lint
+    #  uses: golangci/golangci-lint-action@v2
+    #  with:
+    #    version: v1.29
+    #    args: --timeout=5m
 
     - name: Run tests
       run: make test_unit
