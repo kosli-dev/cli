@@ -82,7 +82,7 @@ jobs:
 
     - name: Run tests
       env:
-        MERKELY_IMAGE_URI
+        MERKELY_IMAGE_URI: "${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.eu-central-1.amazonaws.com/merkely-cli:latest"
       run: make test_unit
 
     # Build and push docker image to ECR
