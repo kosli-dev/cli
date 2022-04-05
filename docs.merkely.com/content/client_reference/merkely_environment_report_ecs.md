@@ -17,22 +17,7 @@ and report them to Merkely.
 merkely environment report ecs env-name [flags]
 ```
 
-### Examples
-
-```shell
-
-# report what is running in an entire AWS ECS cluster:
-export AWS_REGION=yourAWSRegion
-export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
-export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
-
-merkely environment report ecs yourEnvironmentName \
-	--api-token yourAPIToken \
-	--owner yourOrgName
-
-```
-
-### Options
+### Flags
 | Flag | Description |
 | :--- | :--- |
 |    -C, --cluster string  |  The name of the ECS cluster.  |
@@ -51,4 +36,19 @@ merkely environment report ecs yourEnvironmentName \
 |    -o, --owner string  |  The merkely user or organization.  |
 |    -v, --verbose  |  Print verbose logs to stdout.  |
 
+
+### Examples
+
+```shell
+
+# report what is running in an entire AWS ECS cluster:
+export AWS_REGION=yourAWSRegion
+export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
+export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
+
+merkely environment report ecs yourEnvironmentName \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+```
 

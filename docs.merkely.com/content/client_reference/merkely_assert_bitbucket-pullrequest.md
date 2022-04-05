@@ -15,7 +15,7 @@ Assert if a Bitbucket pull request for the commit which produces an artifact exi
 merkely assert bitbucket-pullrequest [flags]
 ```
 
-### Options
+### Flags
 | Flag | Description |
 | :--- | :--- |
 |        --bitbucket-password string  |  Bitbucket password.  |

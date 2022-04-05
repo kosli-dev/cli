@@ -17,6 +17,29 @@ The pipefile contains the pipeline metadata and compliance policy.
 merkely pipeline declare [flags]
 ```
 
+### Flags
+| Flag | Description |
+| :--- | :--- |
+|        --description string  |  [optional] The Merkely pipeline description.  |
+|    -h, --help  |  help for declare  |
+|        --pipefile string  |  [deprecated] The path to the JSON pipefile.  |
+|        --pipeline string  |  The name of the pipeline to be created or updated.  |
+|    -t, --template strings  |  The comma-separated list of required compliance controls names. (default [artifact])  |
+|        --visibility string  |  The visibility of the Merkely pipeline. Options are [public, private]. (default "private")  |
+
+
+### Options inherited from parent commands
+| Flag | Description |
+| :--- | :--- |
+|    -a, --api-token string  |  The merkely API token.  |
+|    -c, --config-file string  |  [optional] The merkely config file path. (default "merkely")  |
+|    -D, --dry-run  |  Whether to run in dry-run mode. When enabled, data is not sent to Merkely and the CLI exits with 0 exit code regardless of errors.  |
+|    -H, --host string  |  The merkely endpoint. (default "https://app.merkely.com")  |
+|    -r, --max-api-retries int  |  How many times should API calls be retried when the API host is not reachable. (default 3)  |
+|    -o, --owner string  |  The merkely user or organization.  |
+|    -v, --verbose  |  Print verbose logs to stdout.  |
+
+
 ### Examples
 
 ```shell
@@ -49,27 +72,4 @@ The pipefile format is:
 }
 
 ```
-
-### Options
-| Flag | Description |
-| :--- | :--- |
-|        --description string  |  [optional] The Merkely pipeline description.  |
-|    -h, --help  |  help for declare  |
-|        --pipefile string  |  [deprecated] The path to the JSON pipefile.  |
-|        --pipeline string  |  The name of the pipeline to be created or updated.  |
-|    -t, --template strings  |  The comma-separated list of required compliance controls names. (default [artifact])  |
-|        --visibility string  |  The visibility of the Merkely pipeline. Options are [public, private]. (default "private")  |
-
-
-### Options inherited from parent commands
-| Flag | Description |
-| :--- | :--- |
-|    -a, --api-token string  |  The merkely API token.  |
-|    -c, --config-file string  |  [optional] The merkely config file path. (default "merkely")  |
-|    -D, --dry-run  |  Whether to run in dry-run mode. When enabled, data is not sent to Merkely and the CLI exits with 0 exit code regardless of errors.  |
-|    -H, --host string  |  The merkely endpoint. (default "https://app.merkely.com")  |
-|    -r, --max-api-retries int  |  How many times should API calls be retried when the API host is not reachable. (default 3)  |
-|    -o, --owner string  |  The merkely user or organization.  |
-|    -v, --verbose  |  Print verbose logs to stdout.  |
-
 

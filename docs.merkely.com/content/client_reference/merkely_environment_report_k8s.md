@@ -17,6 +17,27 @@ and report them to Merkely.
 merkely environment report k8s [-n namespace | -x namespace]... [-k /path/to/kube/config] [-i infrastructure-identifier] env-name [flags]
 ```
 
+### Flags
+| Flag | Description |
+| :--- | :--- |
+|    -x, --exclude-namespace strings  |  The comma separated list of namespaces regex patterns NOT to report artifacts info from. Can't be used together with --namespace.  |
+|    -h, --help  |  help for k8s  |
+|    -k, --kubeconfig string  |  The kubeconfig path for the target cluster. (default "$HOME/.kube/config")  |
+|    -n, --namespace strings  |  The comma separated list of namespaces regex patterns to report artifacts info from. Can't be used together with --exclude-namespace.  |
+
+
+### Options inherited from parent commands
+| Flag | Description |
+| :--- | :--- |
+|    -a, --api-token string  |  The merkely API token.  |
+|    -c, --config-file string  |  [optional] The merkely config file path. (default "merkely")  |
+|    -D, --dry-run  |  Whether to run in dry-run mode. When enabled, data is not sent to Merkely and the CLI exits with 0 exit code regardless of errors.  |
+|    -H, --host string  |  The merkely endpoint. (default "https://app.merkely.com")  |
+|    -r, --max-api-retries int  |  How many times should API calls be retried when the API host is not reachable. (default 3)  |
+|    -o, --owner string  |  The merkely user or organization.  |
+|    -v, --verbose  |  Print verbose logs to stdout.  |
+
+
 ### Examples
 
 ```shell
@@ -52,25 +73,4 @@ merkely environment report k8s yourEnvironmentName \
 	--owner yourOrgName
 
 ```
-
-### Options
-| Flag | Description |
-| :--- | :--- |
-|    -x, --exclude-namespace strings  |  The comma separated list of namespaces regex patterns NOT to report artifacts info from. Can't be used together with --namespace.  |
-|    -h, --help  |  help for k8s  |
-|    -k, --kubeconfig string  |  The kubeconfig path for the target cluster. (default "$HOME/.kube/config")  |
-|    -n, --namespace strings  |  The comma separated list of namespaces regex patterns to report artifacts info from. Can't be used together with --exclude-namespace.  |
-
-
-### Options inherited from parent commands
-| Flag | Description |
-| :--- | :--- |
-|    -a, --api-token string  |  The merkely API token.  |
-|    -c, --config-file string  |  [optional] The merkely config file path. (default "merkely")  |
-|    -D, --dry-run  |  Whether to run in dry-run mode. When enabled, data is not sent to Merkely and the CLI exits with 0 exit code regardless of errors.  |
-|    -H, --host string  |  The merkely endpoint. (default "https://app.merkely.com")  |
-|    -r, --max-api-retries int  |  How many times should API calls be retried when the API host is not reachable. (default 3)  |
-|    -o, --owner string  |  The merkely user or organization.  |
-|    -v, --verbose  |  Print verbose logs to stdout.  |
-
 

@@ -9,44 +9,23 @@ Assert if an artifact in Merkely has been approved for deployment.
 ### Synopsis
 
 
-Assert if an artifact in Merkely has been approved for deployment.
-The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
-
+Assert if an artifact in Merkely has been approved for deployment. Exits with non-zero code if artifact has not been approved.
+The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag).
 
 ```shell
 merkely pipeline approval assert [ARTIFACT-NAME-OR-PATH] [flags]
 ```
 
-### Examples
-
-```shell
-
-# Assert that a file artifact has been approved
-merkely pipeline approval assert FILE.tgz \
-	--api-token yourAPIToken \
-	--owner yourOrgName \
-	--pipeline yourPipelineName \
-	--artifact-type file
-
-# Assert that an artifact with a sha256 has been approved
-	merkely pipeline approval assert \
-		--api-token yourAPIToken \
-		--owner yourOrgName \
-		--pipeline yourPipelineName \
-		--sha256 yourSha256
-
-```
-
-### Options
+### Flags
 | Flag | Description |
 | :--- | :--- |
-|    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]  |
+|    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify 'sha256'  |
 |    -h, --help  |  help for assert  |
 |    -p, --pipeline string  |  The Merkely pipeline name.  |
 |        --registry-password string  |  The docker registry password or access token.  |
 |        --registry-provider string  |  The docker registry provider or url.  |
 |        --registry-username string  |  The docker registry username.  |
-|    -s, --sha256 string  |  The SHA256 fingerprint for the artifact to be approved. Only required if you don't specify --type.  |
+|    -s, --sha256 string  |  The SHA256 fingerprint for the artifact. Only required if you don't specify 'artifact-type'.  |
 
 
 ### Options inherited from parent commands
@@ -60,4 +39,25 @@ merkely pipeline approval assert FILE.tgz \
 |    -o, --owner string  |  The merkely user or organization.  |
 |    -v, --verbose  |  Print verbose logs to stdout.  |
 
+
+### Examples
+
+```shell
+
+# Assert that a file tyoe artifact has been approved
+merkely pipeline approval assert FILE.tgz \
+	--api-token yourAPIToken \
+	--artifact-type file \
+	--owner yourOrgName \
+	--pipeline yourPipelineName 
+
+
+# Assert that an artifact with a provided fingerprint (sha256) has been approved
+	merkely pipeline approval assert \
+		--api-token yourAPIToken \
+		--owner yourOrgName \
+		--pipeline yourPipelineName \
+		--sha256 yourSha256
+
+```
 

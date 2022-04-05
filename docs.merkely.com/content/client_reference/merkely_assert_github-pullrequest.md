@@ -15,7 +15,7 @@ Assert if a Github pull request for the commit which produces an artifact exists
 merkely assert github-pullrequest [flags]
 ```
 
-### Options
+### Flags
 | Flag | Description |
 | :--- | :--- |
 |        --commit string  |  Git commit for which to find pull request evidence.  |

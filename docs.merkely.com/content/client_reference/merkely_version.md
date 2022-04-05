@@ -25,7 +25,7 @@ version.BuildInfo{Version:"v0.0.1", GitCommit:"fe51cd1e31e6a202cba7dead9552a6d41
 merkely version [flags]
 ```
 
-### Options
+### Flags
 | Flag | Description |
 | :--- | :--- |
 |    -h, --help  |  help for version  |

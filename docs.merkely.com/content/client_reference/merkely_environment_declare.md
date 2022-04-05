@@ -16,27 +16,13 @@ Declare or update a Merkely environment.
 merkely environment declare [flags]
 ```
 
-### Examples
-
-```shell
-
-# declare (or update) a Merkely environment:
-merkely environment declare 
-	--name yourEnvironmentName \
-	--environment-type K8S \
-	--description "my new env" \
-	--api-token yourAPIToken \
-	--owner yourOrgName 
-
-```
-
-### Options
+### Flags
 | Flag | Description |
 | :--- | :--- |
 |    -d, --description string  |  [optional] The environment description.  |
 |    -t, --environment-type string  |  The type of environment. Valid options are: [K8S, ECS, server, S3]  |
 |    -h, --help  |  help for declare  |
-|    -n, --name string  |  The name of environment.  |
+|    -n, --name string  |  The name of environment to be created.  |
 
 
 ### Options inherited from parent commands
@@ -50,4 +36,18 @@ merkely environment declare
 |    -o, --owner string  |  The merkely user or organization.  |
 |    -v, --verbose  |  Print verbose logs to stdout.  |
 
+
+### Examples
+
+```shell
+
+# declare (or update) a Merkely environment:
+merkely environment declare 
+	--name yourEnvironmentName \
+	--environment-type K8S \
+	--description "my new env" \
+	--api-token yourAPIToken \
+	--owner yourOrgName 
+
+```
 

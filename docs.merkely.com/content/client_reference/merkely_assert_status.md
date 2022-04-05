@@ -1,27 +1,26 @@
 ---
-title: "merkely status"
+title: "merkely assert status"
 ---
 
-## merkely status
+## merkely assert status
 
 
-Check the status of Merkely server.
+Assert the status of Merkely server. Exits with non-zero code if Merkely server down.
 
 
 ### Synopsis
 
 
-Check the status of Merkely server.
+Assert the status of Merkely server. Exits with non-zero code if Merkely server down.
 
 
 ```shell
-merkely status [flags]
+merkely assert status [flags]
 ```
 
 ### Flags
 | Flag | Description |
 | :--- | :--- |
-|        --assert  |  Exit with non-zero code if Merkely server is not responding.  |
 |    -h, --help  |  help for status  |
 
 

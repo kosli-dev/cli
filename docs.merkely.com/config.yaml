@@ -4,6 +4,14 @@ title: 'Merkely developer documentation'
 
 theme: "book"
 
+markup:
+  goldmark:
+    extensions:
+      typographer: false
+  # blackFriday:
+  #   smartDashes: false
+  # defaultMarkdownHandler: blackFriday
+
 params:
   BookSection: '/'
   BookToC: false

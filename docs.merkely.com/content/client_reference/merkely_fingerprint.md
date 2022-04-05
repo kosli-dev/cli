@@ -17,10 +17,10 @@ Artifact type can be one of: "file" for files, "dir" for directories, "docker" f
 merkely fingerprint [ARTIFACT-NAME-OR-PATH] [flags]
 ```
 
-### Options
+### Flags
 | Flag | Description |
 | :--- | :--- |
-|    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]  |
+|    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify 'sha256'  |
 |    -h, --help  |  help for fingerprint  |
 |        --registry-password string  |  The docker registry password or access token.  |
 |        --registry-provider string  |  The docker registry provider or url.  |

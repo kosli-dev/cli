@@ -11,6 +11,7 @@ The Merkely evidence reporting CLI.
 The Merkely evidence reporting CLI.
 
 Environment variables:
+
 | Name                               | Description                                                                       |
 |------------------------------------|-----------------------------------------------------------------------------------|
 | $MERKELY_API_TOKEN                 | set the Merkely API token.                                                        |
@@ -21,7 +22,7 @@ Environment variables:
 | $MERKELY_CONFIG_FILE               | set the path to Merkely config file where you can set your options.               |         
 
 
-### Options
+### Flags
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The merkely API token.  |

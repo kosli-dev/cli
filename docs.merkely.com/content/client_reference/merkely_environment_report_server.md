@@ -17,19 +17,7 @@ and report them to Merkely.
 merkely environment report server [-p /path/of/artifacts/directory] [-i infrastructure-identifier] env-name [flags]
 ```
 
-### Examples
-
-```shell
-
-# report directory artifacts running in a server at a list of paths:
-merkely environment report server yourEnvironmentName \
-	--paths a/b/c, e/f/g \
-	--api-token yourAPIToken \
-	--owner yourOrgName  
-
-```
-
-### Options
+### Flags
 | Flag | Description |
 | :--- | :--- |
 |    -h, --help  |  help for server  |
@@ -47,4 +35,16 @@ merkely environment report server yourEnvironmentName \
 |    -o, --owner string  |  The merkely user or organization.  |
 |    -v, --verbose  |  Print verbose logs to stdout.  |
 
+
+### Examples
+
+```shell
+
+# report directory artifacts running in a server at a list of paths:
+merkely environment report server yourEnvironmentName \
+	--paths a/b/c, e/f/g \
+	--api-token yourAPIToken \
+	--owner yourOrgName  
+
+```
 

@@ -15,6 +15,7 @@ import (
 var globalUsage = `The Merkely evidence reporting CLI.
 
 Environment variables:
+
 | Name                               | Description                                                                       |
 |------------------------------------|-----------------------------------------------------------------------------------|
 | $MERKELY_API_TOKEN                 | set the Merkely API token.                                                        |
