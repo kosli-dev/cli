@@ -21,7 +21,7 @@ variable "mem_limit" {
 
 variable "logs_retention_in_days" {
   type    = number
-  default = 90
+  default = 14
 }
 
 variable "TAGGED_IMAGE" {
