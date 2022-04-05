@@ -75,13 +75,15 @@ jobs:
         version: v1.29
         args: --timeout=5m
 
-    #- name: Run tests
-    #  run: make test_unit
-
     # Login to ECR - output of this step will be used by the later steps. Search for steps.login-ecr.outputs to see where
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Run tests
+      env:
+        MERKELY_IMAGE_URI
+      run: make test_unit
 
     # Build and push docker image to ECR
     - name: Build and push Docker image
@@ -155,12 +157,12 @@ jobs:
         working-directory: deployment/terraform/
         run: ./tf.sh plan -no-color -out plan.tfplan
 
-      #- name: Terraform apply
-      #  working-directory: deployment/terraform/
-      #  env:
-      #    TF_AUTO_APPLY_SAVED_PLAN: true
-      #    TF_SKIP_BACKEND_INIT: true
-      #  run: ./tf.sh apply plan.tfplan
+      - name: Terraform apply
+        working-directory: deployment/terraform/
+        env:
+          TF_AUTO_APPLY_SAVED_PLAN: true
+          TF_SKIP_BACKEND_INIT: true
+        run: ./tf.sh apply plan.tfplan
 
       #- name: Slack Notification for Deployment
       #  uses: rtCamp/action-slack-notify@v2

@@ -6,7 +6,7 @@ registry:
     - 5000:5000
 
 server:
-    image: ghcr.io/merkely-development/merkely:latest
+    image: ${MERKELY_IMAGE_URI}
     container_name: merkely-server
     ports: 
       - 8001:8001 
