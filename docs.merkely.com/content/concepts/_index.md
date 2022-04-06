@@ -1,6 +1,6 @@
 ---
 title: Concepts
 bookCollapseSection: true
-weight: 1
+weight: 2
 ---
 # Concepts
