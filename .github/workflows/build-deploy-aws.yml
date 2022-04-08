@@ -40,6 +40,8 @@ jobs:
     name: Build
     runs-on: ubuntu-20.04
     needs: prepare
+    env: 
+      AWS_ACCOUNT_ID: 772819027869
     permissions:
       id-token: write
       contents: write
