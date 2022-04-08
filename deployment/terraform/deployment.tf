@@ -33,7 +33,7 @@ resource "aws_ecs_task_definition" "this" {
     {
       name      = "${var.app_name}-${var.env}"
       image     = var.TAGGED_IMAGE
-      command   = ["merkely", "environment", "report", "ecs", "staging-aws", "-C", "merkely", "--owner", "compliancedb"]
+      command   = ["merkely", "environment", "report", "ecs", "${var.merkely_env}", "-C", "merkely", "--owner", "compliancedb"]
       cpu       = var.cpu_limit
       memory    = var.mem_limit
       essential = true
