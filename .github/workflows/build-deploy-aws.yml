@@ -10,6 +10,8 @@ jobs:
   prepare:
     name: prepare
     runs-on: [ubuntu-latest]
+    env: 
+      AWS_ACCOUNT_ID: 772819027869
     outputs:
       image_tag: ${{ steps.prepare.outputs.image_tag }}
       image_uri: ${{ steps.prepare.outputs.image_uri }}
@@ -155,7 +157,7 @@ jobs:
       # Run terraform plan, save plan to file
       - name: Terraform plan
         env: 
-          TF_VAR_TAGGED_IMAGE: ${{ needs.prepare.outputs.tagged_image }}
+          TF_VAR_TAGGED_IMAGE: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.eu-central-1.amazonaws.com/merkely-cli:${{ needs.prepare.outputs.image_tag }}
         working-directory: deployment/terraform/
         run: ./tf.sh plan -no-color -out plan.tfplan
 
@@ -225,7 +227,7 @@ jobs:
       # Run terraform plan, save plan to file
       - name: Terraform plan
         env: 
-          TF_VAR_TAGGED_IMAGE: ${{ needs.prepare.outputs.tagged_image }}
+          TF_VAR_TAGGED_IMAGE: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.eu-central-1.amazonaws.com/merkely-cli:${{ needs.prepare.outputs.image_tag }}
         working-directory: deployment/terraform/
         run: ./tf.sh plan -no-color -out plan.tfplan
 
