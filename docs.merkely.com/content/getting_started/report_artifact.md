@@ -21,7 +21,7 @@ As it was in the case of reporting environment, we need to download Merkely CLI 
 
 Here is a complete workflow that takes care of CLI download, **pipeline** creation and docker image build and reports it to the Merkely **pipeline**. Remember to replace *MERKELY_OWNER* variable value with your Merkely username.
 
-Below you'll find comments about Merkely specific parts of the workflow.
+Below the complete workflow you'll find comments about specific parts of it.
 
 
 ```
@@ -38,6 +38,7 @@ env:
   IMAGE: ewelinawilkosz/github-k8s-demo
   MERKELY_OWNER: demo
   MERKELY_PIPELINE: github-k8s-demo
+  MERKELY_ENVIRONMENT: github-k8s-test
   MERKELY_CLI_VERSION: "1.5.0"
 
 jobs:
@@ -47,7 +48,7 @@ jobs:
     outputs:
       tag: ${{ steps.prep.outputs.tag }}
       tagged-image: ${{ steps.prep.outputs.tagged-image }}
-      #image-digest: ${{ steps.digest-prep.outputs.image-digest }}
+      image-digest: ${{ steps.digest-prep.outputs.image-digest }}
 
     steps:
     # checkout code
@@ -61,10 +62,9 @@ jobs:
         TAG=$(echo $GITHUB_SHA | head -c7)
         TAGGED_IMAGE=${{ env.IMAGE }}:${TAG}
         echo "TAG=${TAG}" >> ${GITHUB_ENV}
-        echo "TAGGED_IMAGE=${TAGGED_IMAGE}" >> ${GITHUB_ENV}        
+        echo "TAGGED_IMAGE=${TAGGED_IMAGE}" >> ${GITHUB_ENV}
         echo ::set-output name=tag::${TAG}
         echo ::set-output name=tagged-image::${TAGGED_IMAGE}
-       
   
     # This is the a separate action that sets up buildx (buildkit) runner
     - name: Set up Docker Buildx
@@ -82,41 +82,36 @@ jobs:
       with:
         push: true
         tags: ${{ env.TAGGED_IMAGE }}
-        cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
-        cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
+        no-cache: true
 
-    # - name: Make the image digest available for following steps
-    #   id: digest-prep
-    #   run: |
-    #     ARTIFACT_SHA=$( echo ${{ steps.docker_build.outputs.digest }} | sed 's/.*://')
-    #     echo "DIGEST=$ARTIFACT_SHA" >> ${GITHUB_ENV}
-    #     echo ::set-output name=image-digest::${ARTIFACT_SHA}
+    - name: Make the image digest available for following steps
+      id: digest-prep
+      run: |
+        ARTIFACT_SHA=$( echo ${{ steps.docker_build.outputs.digest }} | sed 's/.*://')
+        echo "DIGEST=$ARTIFACT_SHA" >> ${GITHUB_ENV}
+        echo ::set-output name=image-digest::${ARTIFACT_SHA}
 
-    # - name: Download Merkely cli client
-    #   id: download-merkely-cli
-    #   run: |
-    #     wget https://github.com/merkely-development/cli/releases/download/v${{ env.MERKELY_CLI_VERSION }}/merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz
-    #     tar -xf merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz merkely
+    - name: Download Merkely cli client
+      id: download-merkely-cli
+      run: |
+        wget https://github.com/merkely-development/cli/releases/download/v${{ env.MERKELY_CLI_VERSION }}/merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz
+        tar -xf merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz merkely  
 
-    # - name: Declare pipeline in Merkely (staging)
-    #   env:
-    #     MERKELY_API_TOKEN: ${{ secrets.MERKELY_API_TOKEN }}
-    #   run: 
-    #     ./merkely pipeline declare 
-    #       --description "Merkely server" 
-    #       --pipeline ${{ env.MERKELY_PIPELINE }} 
-    #       --template "artifact"
+    - name: Declare pipeline in Merkely (staging)
+      env:
+        MERKELY_API_TOKEN: ${{ secrets.MERKELY_API_TOKEN }}
+      run: 
+        ./merkely pipeline declare 
+          --description "Merkely server" 
+          --pipeline ${{ env.MERKELY_PIPELINE }} 
+          --template "artifact"
 
-
-    # - name: Report Docker image in Merkely (production)
-    #   env:
-    #     MERKELY_API_TOKEN: ${{ secrets.MERKELY_API_TOKEN }}
-    #   run: 
-    #     ./merkely pipeline artifact report creation ${{ env.TAGGED_IMAGE }}
-    #       --sha256 ${{ env.DIGEST }} 
-
-
-
+    - name: Report Docker image in Merkely (production)
+      env:
+        MERKELY_API_TOKEN: ${{ secrets.MERKELY_API_TOKEN }}
+      run: 
+        ./merkely pipeline artifact report creation ${{ env.TAGGED_IMAGE }}
+          --sha256 ${{ env.DIGEST }}
 
   # deploy review environment
   deploy:
@@ -146,10 +141,25 @@ jobs:
     - name: Ensure review env namespace
       run: |
         kubectl get namespace ${{ env.NAMESPACE }} || kubectl create namespace ${{ env.NAMESPACE }}
-    
+      
     - name: Deploy
       run: |
         sed -i 's/TAG/${{ needs.build-report.outputs.tag }}/g' k8s/deployment.yaml
         kubectl apply -f k8s/deployment.yaml -n ${{ env.NAMESPACE }} 
+
 ```
 
+Once the workflow runs succesfully, you should see it reported in Merkely **github-k8s-demo pipeline**:
+
+![Compliant artifact with no deployments](/images/artifact-list.png)
+
+With more details once you click on it:
+  
+![Compliant artifact with no deployments](/images/artifact-no-deployment.png)
+
+You will also notice a change in the state of your **github-k8s-test** environment (if the environment reporting workflow run successfully): it is still incompliant, but now the artifact running there has provenance so we know how it was build:
+
+![Incompliant environment, artifact with provenance](/images/env-provenance.png)
+
+
+Now that your aritfact reporting works the only thing missing part is reporting the deployment.

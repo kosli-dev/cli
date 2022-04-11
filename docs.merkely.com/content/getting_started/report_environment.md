@@ -88,10 +88,15 @@ jobs:
         ./merkely environment report k8s --kubeconfig ${{ env.KUBECONFIG }} -n ${{ env.NAMESPACE }} ${{ env.MERKELY_ENVIRONMENT }}
 ```
 
-Once the pipeline runs successfully, and there is already something running in your cluster, you will see the information about it in **github-k8s-test** environment in Merkely (You'll find it under **Environments** section).  
+Once the workflow runs successfully, and there is already something running in your cluster, you will see the information about it in **github-k8s-test** environment in Merkely (You'll find it under **Environments** section).  
 If there is nothing running in your cluster we'll build and deploy an artifact in the next step.
+
+Here is what you should see in your **github-k8s-test environment** in Merkely if the pipeline succeedes (triggered either by cron or - if you don't want to wait - manually):
+
+![Incompliant environment, artifact with no provenance](/images/env-no-provenance.png)
 
 Reporting an **environment** is an easy way to get the answer to a question like: "What is running in production?". 
 So, naturally, the next thing you may want to figure out is: "Is it verified?".
 
-For now, whatever is running there, will be incompliant since we don't know anything else about the artifact just yet, but reporting your artifacts to Merkely will solve that for us.
+For now, whatever is running there, will be incompliant since we don't know anything else about the artifact just yet, but reporting your artifacts to Merkely will take us one step further.
+
