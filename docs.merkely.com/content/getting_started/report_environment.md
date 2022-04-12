@@ -8,7 +8,7 @@ weight: 10
 ## Create an environment in Merkely
 
 The first thing we need to configure is an **environment** in [Merkely](https://app.merkely.com).  
-Merkely **Environment** is where you'll be reporting the state of your actual environments, like *staging* or *production*. 
+Merkely **Environments** is where you'll be reporting the state of your actual environments, like *staging* or *production*. 
 
 When you log in to Merkely the **Environments** page is the first thing you see. If you clicked around before reading this guide you'll find a link to **Environments** on the left side of the window in Merkely.
 
