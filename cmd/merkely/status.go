@@ -42,9 +42,9 @@ func (o *statusOptions) run(out io.Writer) error {
 		if o.assert {
 			return fmt.Errorf("Merkely server %s is unresponsive", global.Host)
 		}
-		fmt.Print("Down")
+		out.Write([]byte("Down"))
 	} else {
-		fmt.Print(response.Body)
+		out.Write([]byte(response.Body))
 	}
 	return nil
 }
