@@ -14,7 +14,7 @@ When you log in to Merkely the **Environments** page is the first thing you see.
 
 Click the "Add environment" button to create a new Merkely **environment**. On the next page you'll have to select the type - for the purpose of this guide we'll use 'Kubernetes cluster'.
 
-Next, you need to give your **environment** a name - it doesn't have to be the same name you use for the actual environment, but it certainly helps to identify it in the future. In this guide we'll use **test-env** as the name of the **environment**.
+Next, you need to give your **environment** a name - it doesn't have to be the same name you use for the actual environment, but it certainly helps to identify it in the future. In this guide we'll use **github-k8s-test** as the name of the **environment**.
 You also need to provide the description of the environment. You'll find this helpful as the number of your environments increases.
 
 Click "Save Environment" and you're ready to move on to the next step.
@@ -34,7 +34,7 @@ You can run the [command](https://docs.merkely.com/client_reference/merkely_envi
 
 There is a few things you'll need to adjust in the workflow below, so it can work for you:
 
-* `K8S_CLUSTER_NAME` and `K8S_GCP_ZONE` should refer to your cluster setup and `NAMESPACE` should refer to a namespace you want to deploy your application to
+* `K8S_CLUSTER_NAME` and `K8S_GCP_ZONE` should refer to your cluster setup and `NAMESPACE` should refer to a namespace you will to deploy your application to
 * `MERKELY_OWNER` is your Merkely username (wchich will be the same as the GitHub account you used to log into Merkely)
 
 With these ready you can try to run the following workflow:
@@ -91,7 +91,7 @@ jobs:
 Once the workflow runs successfully, and there is already something running in your cluster, you will see the information about it in **github-k8s-test** environment in Merkely (You'll find it under **Environments** section).  
 If there is nothing running in your cluster we'll build and deploy an artifact in the next step.
 
-Here is what you should see in your **github-k8s-test environment** in Merkely if the pipeline succeedes (triggered either by cron or - if you don't want to wait - manually):
+If you had something running in given namespace, here is what you should see in your **github-k8s-test environment** in Merkely if the pipeline succeedes (triggered either by cron or - if you don't want to wait - manually). The name of the artifact will likely be a different one:
 
 ![Incompliant environment, artifact with no provenance](/images/env-no-provenance.png)
 

@@ -5,24 +5,29 @@ weight: 20
 
 # Report Artifact
 
-Every time you build an **artifact** - in our case a Docker image - you can store and easily access all the information you have about it in Merkely. We call it *reporting an **artifact***.
+Every time you build an **artifact** - in our case a Docker image - you can store (and easily access) all the information you have about it in Merkely. We call it *reporting an **artifact***.
 
 Artifacts in Merkely are reported to Merkely **Pipelines**. You can find the **Pipelines** section just below **Environments**.
 
 ## Create a pipeline
 
-To report an **artifact** from your GitHub workflow you need to create a Merkely **pipeline** first. Every time your workflow builds a Docker image it will be reported to the same Merkely **pipeline**.  
-Merkely **pipeline** has to exist before you can start reporting **artifacts** to it, and you can make the creation a part of the build workflow. (It's safe - rerunning **pipeline** creation command won't erase existing entries.)  
-In this guide we're creating a Merkely **pipeline** called **test-pipeline** and that's the name you'll see in the code.
+To report an **artifact** from your GitHub workflow you need to create a Merkely **pipeline** first. Every time your workflow builds a new version of Docker image it will be reported to the same Merkely **pipeline**.  
+Merkely **pipeline** has to exist before you can start reporting **artifacts** to it, and you can make the creation of a **pipeline** a part of the build workflow. (It's safe - rerunning **pipeline** creation command won't erase existing entries.)  
+In this guide we're creating a Merkely **pipeline** called **github-k8s-demo** and that's the name you'll see in the code.
 
 As it was in the case of reporting environment, we need to download Merkely CLI in the workflow, to be able to run the commands. 
 
 ## Report an artifact
 
-Here is a complete workflow that takes care of CLI download, **pipeline** creation and docker image build and reports it to the Merkely **pipeline**. Remember to replace *MERKELY_OWNER* variable value with your Merkely username.
+Here is a complete workflow that takes care of CLI download, **pipeline** creation and docker image build and reports it to the Merkely **pipeline**. 
 
-Below the complete workflow you'll find comments about specific parts of it.
+Remember:
+* `K8S_CLUSTER_NAME`, `K8S_GCP_ZONE` and `NAMESPACE` should be the same you used in **Report Environment** step
+* `IMAGE` should contain your dockerhub username (instead of our colleague's Ewelina username). You also need to use the correct username in *Login to hub.docker.com* step
+* `MERKELY_OWNER` should be the same your Merkely username.
 
+
+In the workflow you'll find comments about specific parts of it.
 
 ```
 name: Build and Deploy
@@ -32,10 +37,14 @@ on:
 
 
 env: 
+  # gke k8s cluster variables
   K8S_CLUSTER_NAME: merkely-dev
   K8S_GCP_ZONE: europe-west1
   NAMESPACE: github-k8s-demo
+  # name of the docker image to build, replace with the name 
+  # that will contain your dockerhub id
   IMAGE: ewelinawilkosz/github-k8s-demo
+  # merkely variables - will be picked up by commands
   MERKELY_OWNER: demo
   MERKELY_PIPELINE: github-k8s-demo
   MERKELY_ENVIRONMENT: github-k8s-test
@@ -45,6 +54,7 @@ jobs:
   build-report:
     runs-on: ubuntu-20.04
 
+    # outputs to be passed on to 'deploy' job below
     outputs:
       tag: ${{ steps.prep.outputs.tag }}
       tagged-image: ${{ steps.prep.outputs.tagged-image }}
@@ -70,7 +80,8 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
 
-    - name: Login to GitHub Container Registry
+    # use your own username and cofigured token to log into dockerhub
+    - name: Login to hub.docker.com
       uses: docker/login-action@v1
       with:
         username: ewelinawilkosz
@@ -84,6 +95,7 @@ jobs:
         tags: ${{ env.TAGGED_IMAGE }}
         no-cache: true
 
+    # the digest will be passed to merkely commands using 'sha256' flags
     - name: Make the image digest available for following steps
       id: digest-prep
       run: |
@@ -97,7 +109,7 @@ jobs:
         wget https://github.com/merkely-development/cli/releases/download/v${{ env.MERKELY_CLI_VERSION }}/merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz
         tar -xf merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz merkely  
 
-    - name: Declare pipeline in Merkely (staging)
+    - name: Declare pipeline in Merkely
       env:
         MERKELY_API_TOKEN: ${{ secrets.MERKELY_API_TOKEN }}
       run: 
@@ -106,7 +118,7 @@ jobs:
           --pipeline ${{ env.MERKELY_PIPELINE }} 
           --template "artifact"
 
-    - name: Report Docker image in Merkely (production)
+    - name: Report Docker image in Merkely
       env:
         MERKELY_API_TOKEN: ${{ secrets.MERKELY_API_TOKEN }}
       run: 
@@ -141,12 +153,11 @@ jobs:
     - name: Ensure review env namespace
       run: |
         kubectl get namespace ${{ env.NAMESPACE }} || kubectl create namespace ${{ env.NAMESPACE }}
-      
+    
     - name: Deploy
       run: |
         sed -i 's/TAG/${{ needs.build-report.outputs.tag }}/g' k8s/deployment.yaml
-        kubectl apply -f k8s/deployment.yaml -n ${{ env.NAMESPACE }} 
-
+        kubectl apply -f k8s/deployment.yaml -n ${{ env.NAMESPACE }}
 ```
 
 Once the workflow runs succesfully, you should see it reported in Merkely **github-k8s-demo pipeline**:
@@ -157,7 +168,7 @@ With more details once you click on it:
   
 ![Compliant artifact with no deployments](/images/artifact-no-deployment.png)
 
-You will also notice a change in the state of your **github-k8s-test** environment (if the environment reporting workflow run successfully): it is still incompliant, but now the artifact running there has provenance so we know how it was build:
+You will also notice a change in the state of your **github-k8s-test** environment (if the environment reporting workflow run successfully): it is still incompliant, but now the artifact running there has provenance (you can see the name of Merkely **pipeline: github-k8s-demo** that the artifact was reported to, in a grey, pill shaped field) so we can check how it was build:
 
 ![Incompliant environment, artifact with provenance](/images/env-provenance.png)
 
