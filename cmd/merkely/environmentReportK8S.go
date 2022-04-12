@@ -9,7 +9,7 @@ import (
 
 	"github.com/merkely-development/reporter/internal/kube"
 	"github.com/merkely-development/reporter/internal/requests"
-	"github.com/mitchellh/go-homedir"
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 )
 
