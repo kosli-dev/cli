@@ -37,14 +37,18 @@ func newStatusCmd(out io.Writer) *cobra.Command {
 
 func (o *statusOptions) run(out io.Writer) error {
 	url := fmt.Sprintf("%s/ready", global.Host)
+	var outErr error
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", "", global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
 	if err != nil {
 		if o.assert {
-			return fmt.Errorf("Merkely server %s is unresponsive", global.Host)
+			return fmt.Errorf("merkely server %s is unresponsive", global.Host)
 		}
-		out.Write([]byte("Down"))
+		_, outErr = out.Write([]byte("Down"))
 	} else {
-		out.Write([]byte(response.Body))
+		_, outErr = out.Write([]byte(response.Body))
+	}
+	if outErr != nil {
+		return outErr
 	}
 	return nil
 }
