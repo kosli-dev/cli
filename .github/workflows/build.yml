@@ -50,9 +50,9 @@ jobs:
         password: ${{ secrets.ghcr_token }}    
 
     - name: Run golangci-lint
-      uses: golangci/golangci-lint-action@v2
+      uses: golangci/golangci-lint-action@v3
       with:
-        version: v1.29
+        version: v1.39
         args: --timeout=5m
 
     - name: Run tests
