@@ -24,7 +24,7 @@ In our example we use Google Cloud to host k8s cluster and we rely on `google-gi
 Create following Actions Secrets in your repository on GitHub:
 * **MERKELY_API_TOKEN** - you can find the Merkely API Token under your profile at https://app.merkely.com/ (click on your avatar in the right top corner of the window and select 'Profile')
 * **GCP_K8S_CREDENTIALS** - service account credentials (.json file), with k8s access permissions
-* **DOCKERHUB_TOKEN** - your DockerHub Access Token for your (you can create one under *Account Settings* > *Security*)
+* **DOCKERHUB_TOKEN** - your DockerHub Access Token (you can create one at hub.docker.com, under *Account Settings* > *Security*)
 
 
 
