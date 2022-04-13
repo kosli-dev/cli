@@ -1,26 +1,26 @@
 # Use eventbridge rule to trigger ECS task execution
-resource "aws_cloudwatch_event_rule" "this" {
-  name        = "run-reporter"
-  description = "Execute Merkely reporter ECS task"
-
-  schedule_expression = "cron(* * * * ? *)"
-}
-
-resource "aws_cloudwatch_event_target" "ecs_scheduled_task" {
-  arn      = data.aws_ecs_cluster.this.arn
-  rule     = aws_cloudwatch_event_rule.this.name
-  role_arn = aws_iam_role.ecs_events.arn
-
-  ecs_target {
-    task_count          = 1
-    task_definition_arn = aws_ecs_task_definition.this.arn
-    launch_type         = "EC2"
-    network_configuration {
-      subnets         = local.private_subnets
-      security_groups = [module.sg.security_group_id]
-    }
-  }
-}
+#resource "aws_cloudwatch_event_rule" "this" {
+#  name        = "run-reporter"
+#  description = "Execute Merkely reporter ECS task"
+#
+#  schedule_expression = "cron(* * * * ? *)"
+#}
+#
+#resource "aws_cloudwatch_event_target" "ecs_scheduled_task" {
+#  arn      = data.aws_ecs_cluster.this.arn
+#  rule     = aws_cloudwatch_event_rule.this.name
+#  role_arn = aws_iam_role.ecs_events.arn
+#
+#  ecs_target {
+#    task_count          = 1
+#    task_definition_arn = aws_ecs_task_definition.this.arn
+#    launch_type         = "EC2"
+#    network_configuration {
+#      subnets         = local.private_subnets
+#      security_groups = [module.sg.security_group_id]
+#    }
+#  }
+#}
 
 resource "aws_ecs_task_definition" "this" {
   family                   = var.app_name
