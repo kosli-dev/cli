@@ -1,5 +1,19 @@
-variable "aws_region" {
-  type = string
+variable "reporter_apps" {
+  type = map(any)
+  default = {
+    staging = {
+      merkely_host = "https://staging.app.merkely.com"
+      cpu_limit = 100
+      mem_limit = 450
+      mem_reservation = 64
+    }
+    prod = {
+      merkely_host = "https://app.merkely.com"
+      cpu_limit = 100
+      mem_limit = 450
+      mem_reservation = 64
+    }
+  }
 }
 
 variable "env" {
@@ -15,19 +29,6 @@ variable "app_name" {
   default = "merkely-cli"
 }
 
-variable "cpu_limit" {
-  type = number
-}
-
-variable "mem_limit" {
-  type = number
-}
-
-variable "logs_retention_in_days" {
-  type    = number
-  default = 14
-}
-
 variable "ecr_replication_targets" {
   type    = list(map(string))
   default = []
@@ -38,12 +39,11 @@ variable "ecr_replication_origin" {
   default = ""
 }
 
+variable "ecs_sluster_name" {
+  type    = string
+  default = "merkely-reporter"
+}
+
 variable "TAGGED_IMAGE" {
   type = string
 }
-
-# App variables
-variable "MERKELY_HOST" {
-  type = string
-}
-

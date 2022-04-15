@@ -9,7 +9,3 @@ data "aws_ssm_parameter" "vpc_private_subnets" {
 data "aws_ssm_parameter" "vpc_id" {
   name = "vpc_id"
 }
-
-data "aws_ecs_cluster" "this" {
-  cluster_name = var.ecs_sluster_name
-}

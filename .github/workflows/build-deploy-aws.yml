@@ -181,7 +181,7 @@ jobs:
   # deploy to staging environment
   deploy-prod:
     needs: [prepare, build]
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/prod' }}
     runs-on: ubuntu-20.04
     env: 
       AWS_ACCOUNT_ID: 358426185766

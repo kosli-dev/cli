@@ -38,11 +38,25 @@ data "aws_iam_policy_document" "ecs_list_allow" {
     sid    = "ECSList"
     effect = "Allow"
     actions = [
-      "ecs:ListTasks",
-      "ecs:DescribeTasks"
+      "ecs:ListClusters",
+      "ecs:ListServices",
+      "ecs:ListTasks"
     ]
     resources = [
       "*"
+    ]
+  }
+  statement {
+    sid = "ECSDescribe"
+    actions = [
+      "ecs:DescribeServices",
+      "ecs:DescribeTasks",
+      "ecs:DescribeClusters",
+    ]
+    resources = [
+      "arn:aws:ecs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:cluster/*",
+      "arn:aws:ecs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:service/*",
+      "arn:aws:ecs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:task/*",
     ]
   }
 }
@@ -128,11 +142,11 @@ resource "aws_iam_role_policy" "ecs_events_run_task_with_any_role" {
                 "ecs:RunTask"
             ],
             "Resource": [
-                "arn:aws:ecs:*:${data.aws_caller_identity.current.account_id}:task-definition/${var.app_name}:*"
+                "arn:aws:ecs:*:${data.aws_caller_identity.current.account_id}:task-definition/${var.app_name}*:*"
             ],
             "Condition": {
                 "ArnLike": {
-                    "ecs:cluster": "arn:aws:ecs:*:${data.aws_caller_identity.current.account_id}:cluster/merkely"
+                    "ecs:cluster": "${data.aws_ecs_cluster.this.arn}"
                 }
             }
         }
