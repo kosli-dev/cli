@@ -36,8 +36,8 @@ resource "aws_ecs_task_definition" "this" {
       command   = ["merkely", "environment", "report", "ecs", "${var.merkely_env}", "-C", "merkely", "--owner", "compliancedb"]
       essential = true
 
-      cpu       = var.cpu_limit
-      memory    = var.mem_limit
+      cpu               = var.cpu_limit
+      memory            = var.mem_limit
       memoryReservation = var.mem_reservation
       environment = [
         {

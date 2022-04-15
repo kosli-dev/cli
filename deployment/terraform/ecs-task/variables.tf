@@ -1,5 +1,5 @@
 variable "app_name" {
-  type    = string
+  type = string
 }
 
 variable "env" {
@@ -16,23 +16,23 @@ variable "subnets" {
 }
 
 variable "ecs_cluster_arn" {
-  type    = string
+  type = string
 }
 
 variable "ecs_events_role_arn" {
-  type    = string
+  type = string
 }
 
 variable "task_sg" {
-  type    = string
+  type = string
 }
 
 variable "execution_role_arn" {
-  type    = string
+  type = string
 }
 
 variable "task_role_arn" {
-  type    = string
+  type = string
 }
 
 variable "cpu_limit" {
