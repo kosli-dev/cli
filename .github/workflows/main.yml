@@ -36,9 +36,27 @@ jobs:
   
   deploy-staging:
     needs: [pre-build, build]
-    #if: ${{ github.ref == 'refs/heads/main' }}
-    uses: merkely-development/reporter/.github/workflows/deploy.yml@deploy-aws-main-wrkflow
+    if: ${{ github.ref == 'refs/heads/main' }}
+    uses: merkely-development/reporter/.github/workflows/deploy.yml@main
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
       AWS_ACCOUNT_ID: 772819027869
+      AWS_REGION: eu-central-1
+
+  deploy-prod:
+    needs: [pre-build]
+    if: ${{ github.ref == 'refs/heads/prod' }}
+    uses: merkely-development/reporter/.github/workflows/deploy.yml@main
+    with:
+      tag: ${{ needs.pre-build.outputs.tag }}
+      AWS_ACCOUNT_ID: 358426185766
+      AWS_REGION: eu-central-1
+
+  deploy-dnb:
+    needs: [pre-build]
+    if: ${{ github.ref == 'refs/heads/prod' }}
+    uses: merkely-development/reporter/.github/workflows/deploy.yml@main
+    with:
+      tag: ${{ needs.pre-build.outputs.tag }}
+      AWS_ACCOUNT_ID: 439218355407
       AWS_REGION: eu-central-1
