@@ -37,7 +37,7 @@ jobs:
       ghcr_token: ${{ secrets.GHCR_TOKEN }}
   
   deploy-staging:
-    needs: [pre-build]
+    needs: [pre-build, build]
     #if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-20.04
     env: 
