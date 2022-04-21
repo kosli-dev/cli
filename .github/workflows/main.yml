@@ -5,9 +5,6 @@ on:
     branches:
       - '**'
 
-env: 
-  AWS_REGION: eu-central-1
-
 jobs:
   pre-build:
     runs-on: ubuntu-20.04
@@ -26,6 +23,7 @@ jobs:
 
   build:
     needs: [pre-build]
+    if: ${{ github.ref != 'refs/heads/prod' }}
     uses: merkely-development/reporter/.github/workflows/build.yml@main
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
@@ -39,68 +37,8 @@ jobs:
   deploy-staging:
     needs: [pre-build, build]
     #if: ${{ github.ref == 'refs/heads/main' }}
-    runs-on: ubuntu-20.04
-    env: 
+    uses: merkely-development/reporter/.github/workflows/deploy.yml@deploy-aws-main-wrkflow
+    with:
+      tag: ${{ needs.pre-build.outputs.tag }}
       AWS_ACCOUNT_ID: 772819027869
-    permissions:
-      id-token: write
-      contents: write
-
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 1
-
-      # Configure AWS credentials
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/GithubActionsRole
-          aws-region: ${{ env.AWS_REGION }}
-          role-duration-seconds: 2400
-          role-session-name: ${{ github.event.repository.name }}
-
-      # Install terraform
-      - name: Setup terraform
-        uses: hashicorp/setup-terraform@v1
-        with:
-          terraform_version: 1.1.5
-
-      # Initialize
-      - name: Terraform init
-        working-directory: deployment/terraform/
-        run: terraform init -backend=false
-
-      # Validate
-      - name: Terraform validate
-        working-directory: deployment/terraform/
-        run: terraform validate -no-color
-
-      # Check terraform specs format
-      - name: Terraform fmt
-        working-directory: deployment/terraform/
-        run: terraform fmt --recursive -check=true
-
-      # Run terraform plan, save plan to file
-      - name: Terraform plan
-        env: 
-          TF_VAR_IMAGE_TAG: ${{ needs.pre-build.outputs.tag }}
-        working-directory: deployment/terraform/
-        run: ./tf.sh plan -no-color -out plan.tfplan
-
-      - name: Terraform apply
-        working-directory: deployment/terraform/
-        env:
-          TF_AUTO_APPLY_SAVED_PLAN: true
-          TF_SKIP_BACKEND_INIT: true
-        run: ./tf.sh apply plan.tfplan
-
-      #- name: Slack Notification for Deployment
-      #  uses: rtCamp/action-slack-notify@v2
-      #  env:
-      #    SLACK_CHANNEL: ${{ secrets.MERKELY_SLACK_CI_DEPLOYMENTS_CHANNEL }}
-      #    SLACK_COLOR: ${{ job.status }}
-      #    SLACK_TITLE: Utilities Deployment ${{ job.status }}
-      #    SLACK_MESSAGE: ${{ job.status }}
-      #    SLACK_USERNAME: GithubActions
-      #    SLACK_WEBHOOK: ${{ secrets.MERKELY_SLACK_CI_DEPLOYMENTS_WEBHOOK }}
+      AWS_REGION: eu-central-1
