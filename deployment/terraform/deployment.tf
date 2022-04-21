@@ -14,6 +14,6 @@ module "reporter_app" {
   cpu_limit           = each.value.cpu_limit
   mem_limit           = each.value.mem_limit
   mem_reservation     = each.value.mem_reservation
-  tagged_image        = var.TAGGED_IMAGE
+  image_tag           = var.IMAGE_TAG
   secret_prefix       = local.secret_prefix
 }

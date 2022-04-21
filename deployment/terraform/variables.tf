@@ -44,6 +44,6 @@ variable "ecs_sluster_name" {
   default = "merkely-reporter"
 }
 
-variable "TAGGED_IMAGE" {
+variable "IMAGE_TAG" {
   type = string
 }

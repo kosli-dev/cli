@@ -52,7 +52,7 @@ variable "logs_retention_in_days" {
   default = 14
 }
 
-variable "tagged_image" {
+variable "image_tag" {
   type = string
 }
 

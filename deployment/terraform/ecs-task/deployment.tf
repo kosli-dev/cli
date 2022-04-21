@@ -32,7 +32,7 @@ resource "aws_ecs_task_definition" "this" {
   container_definitions = jsonencode([
     {
       name      = "${var.app_name}-${var.env}"
-      image     = var.tagged_image
+      image     = "ghcr.io/merkely-development/${var.app_name}:${var.image_tag}"
       command   = ["merkely", "environment", "report", "ecs", "${var.merkely_env}", "-C", "merkely", "--owner", "compliancedb"]
       essential = true
 
