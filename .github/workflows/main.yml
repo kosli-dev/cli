@@ -43,6 +43,15 @@ jobs:
       AWS_ACCOUNT_ID: 772819027869
       AWS_REGION: eu-central-1
 
+  deploy-azure-staging:
+    needs: [pre-build]
+    if: ${{ github.ref == 'refs/heads/main' }}
+    uses: merkely-development/reporter/.github/workflows/deploy.yml@main
+    with:
+      tag: ${{ needs.pre-build.outputs.tag }}
+      AWS_ACCOUNT_ID: 749993776354
+      AWS_REGION: eu-central-1
+
   deploy-prod:
     needs: [pre-build]
     if: ${{ github.ref == 'refs/heads/prod' }}

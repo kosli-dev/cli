@@ -29,16 +29,6 @@ variable "app_name" {
   default = "merkely-cli"
 }
 
-variable "ecr_replication_targets" {
-  type    = list(map(string))
-  default = []
-}
-
-variable "ecr_replication_origin" {
-  type    = string
-  default = ""
-}
-
 variable "ecs_sluster_name" {
   type    = string
   default = "merkely-reporter"
