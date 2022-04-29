@@ -44,7 +44,7 @@ jobs:
       AWS_REGION: eu-central-1
 
   deploy-azure-staging:
-    needs: [pre-build]
+    needs: [pre-build, build]
     if: ${{ github.ref == 'refs/heads/main' }}
     uses: merkely-development/reporter/.github/workflows/deploy.yml@main
     with:
