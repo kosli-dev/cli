@@ -4,13 +4,13 @@ variable "reporter_apps" {
     staging = {
       merkely_host    = "https://staging.app.merkely.com"
       cpu_limit       = 100
-      mem_limit       = 450
+      mem_limit       = 400
       mem_reservation = 64
     }
     prod = {
       merkely_host    = "https://app.merkely.com"
       cpu_limit       = 100
-      mem_limit       = 450
+      mem_limit       = 400
       mem_reservation = 64
     }
   }

@@ -15,10 +15,6 @@ resource "aws_cloudwatch_event_target" "ecs_scheduled_task" {
     task_count          = 1
     task_definition_arn = aws_ecs_task_definition.this.arn
     launch_type         = "EC2"
-    network_configuration {
-      subnets         = var.subnets
-      security_groups = [var.task_sg]
-    }
   }
 }
 
@@ -26,7 +22,7 @@ resource "aws_ecs_task_definition" "this" {
   family                   = "${var.app_name}-${var.env}"
   task_role_arn            = var.task_role_arn
   execution_role_arn       = var.execution_role_arn
-  network_mode             = "awsvpc"
+  network_mode             = "bridge"
   requires_compatibilities = ["EC2"]
 
   container_definitions = jsonencode([
