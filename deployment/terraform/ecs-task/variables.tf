@@ -23,10 +23,6 @@ variable "ecs_events_role_arn" {
   type = string
 }
 
-variable "task_sg" {
-  type = string
-}
-
 variable "execution_role_arn" {
   type = string
 }

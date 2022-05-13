@@ -8,7 +8,6 @@ module "reporter_app" {
   merkely_env         = var.merkely_env
   merkely_host        = each.value.merkely_host
   ecs_events_role_arn = aws_iam_role.ecs_events.arn
-  task_sg             = module.sg.security_group_id
   task_role_arn       = aws_iam_role.task.arn
   execution_role_arn  = aws_iam_role.exec.arn
   cpu_limit           = each.value.cpu_limit
