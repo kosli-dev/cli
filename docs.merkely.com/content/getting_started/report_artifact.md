@@ -11,15 +11,15 @@ Artifacts in Merkely are reported to Merkely **Pipelines**. You can find the **P
 
 ## Create a pipeline
 
-To report an **artifact** from your GitHub workflow you need to create a Merkely **pipeline** first. Every time your workflow builds a new version of Docker image it will be reported to the same Merkely **pipeline**.  
-Merkely **pipeline** has to exist before you can start reporting **artifacts** to it, and you can make the creation of a **pipeline** a part of the build workflow. (It's safe - rerunning **pipeline** creation command won't erase existing entries.)  
+To report an **artifact** from your GitHub workflow you need to create a Merkely **pipeline** first. Every time your workflow builds a new version of Docker image it will be reported to the same Merkely **pipeline**.
+Merkely **pipeline** has to exist before you can start reporting **artifacts** to it, and you can make the creation of a **pipeline** a part of the build workflow. (It's safe - rerunning **pipeline** creation command won't erase existing entries.)
 In this guide we're creating a Merkely **pipeline** called **github-k8s-demo** and that's the name you'll see in the code.
 
-As it was in the case of reporting environment, we need to download Merkely CLI in the workflow, to be able to run the commands. 
+As it was in the case of reporting environment, we need to download Merkely CLI in the workflow, to be able to run the commands.
 
 ## Report an artifact
 
-Here is a complete workflow that takes care of CLI download, **pipeline** creation and docker image build and reports it to the Merkely **pipeline**. 
+Here is a complete workflow that takes care of CLI download, **pipeline** creation and docker image build and reports it to the Merkely **pipeline**.
 
 Remember:
 * `K8S_CLUSTER_NAME`, `K8S_GCP_ZONE` and `NAMESPACE` should be the same you used in **Report Environment** step
@@ -36,12 +36,12 @@ on:
   push:
 
 
-env: 
+env:
   # gke k8s cluster variables
   K8S_CLUSTER_NAME: merkely-dev
   K8S_GCP_ZONE: europe-west1
   NAMESPACE: github-k8s-demo
-  # name of the docker image to build, replace with the name 
+  # name of the docker image to build, replace with the name
   # that will contain your dockerhub id
   IMAGE: ewelinawilkosz/github-k8s-demo
   # merkely variables - will be picked up by commands
@@ -75,7 +75,7 @@ jobs:
         echo "TAGGED_IMAGE=${TAGGED_IMAGE}" >> ${GITHUB_ENV}
         echo ::set-output name=tag::${TAG}
         echo ::set-output name=tagged-image::${TAGGED_IMAGE}
-  
+
     # This is the a separate action that sets up buildx (buildkit) runner
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
@@ -107,21 +107,21 @@ jobs:
       id: download-merkely-cli
       run: |
         wget https://github.com/merkely-development/cli/releases/download/v${{ env.MERKELY_CLI_VERSION }}/merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz
-        tar -xf merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz merkely  
+        tar -xf merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz merkely
 
     - name: Declare pipeline in Merkely
       env:
         MERKELY_API_TOKEN: ${{ secrets.MERKELY_API_TOKEN }}
-      run: 
-        ./merkely pipeline declare 
-          --description "Merkely server" 
-          --pipeline ${{ env.MERKELY_PIPELINE }} 
+      run:
+        ./merkely pipeline declare
+          --description "Merkely server"
+          --pipeline ${{ env.MERKELY_PIPELINE }}
           --template "artifact"
 
     - name: Report Docker image in Merkely
       env:
         MERKELY_API_TOKEN: ${{ secrets.MERKELY_API_TOKEN }}
-      run: 
+      run:
         ./merkely pipeline artifact report creation ${{ env.TAGGED_IMAGE }}
           --sha256 ${{ env.DIGEST }}
 
@@ -148,12 +148,12 @@ jobs:
 
     - uses: azure/setup-kubectl@v1
       id: install-kubectl
-      
+
     # The KUBECONFIG env var is automatically exported and picked up by kubectl.
     - name: Ensure review env namespace
       run: |
         kubectl get namespace ${{ env.NAMESPACE }} || kubectl create namespace ${{ env.NAMESPACE }}
-    
+
     - name: Deploy
       run: |
         sed -i 's/TAG/${{ needs.build-report.outputs.tag }}/g' k8s/deployment.yaml
@@ -165,7 +165,7 @@ Once the workflow runs succesfully, you should see it reported in Merkely **gith
 ![Compliant artifact with no deployments](/images/artifact-list.png)
 
 With more details once you click on it:
-  
+
 ![Compliant artifact with no deployments](/images/artifact-no-deployment.png)
 
 You will also notice a change in the state of your **github-k8s-test** environment (if the environment reporting workflow run successfully): it is still incompliant, but now the artifact running there has provenance (you can see the name of Merkely **pipeline: github-k8s-demo** that the artifact was reported to, in a grey, pill shaped field) so we can check how it was build:
