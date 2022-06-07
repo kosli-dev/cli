@@ -51,6 +51,7 @@ deps: ## Install depdendencies. Runs `go get` internally.
 
 build: deps vet ## Build the binary
 	@go build -o merkely -ldflags '$(LDFLAGS)' ./cmd/merkely/
+	@go build -o kosli -ldflags '$(LDFLAGS)' ./cmd/merkely/
 .PHONY: build
 
 test_unit: deps vet ## Run unit tests
