@@ -74,7 +74,7 @@ test_unit: deps vet ensure_network ## Run unit tests
 	@docker-compose down || true
 	@docker-compose up -d
 	./mongo/ip_wait.sh localhost:8001
-	@docker exec merkely-server /demo/create_test_users.py
+	@docker exec cli_merkely_server /demo/create_test_users.py
 	@go test -v -cover -p=1 -coverprofile=coverage.out ./...
 	@go tool cover -func=coverage.out
 	@go tool cover -html=coverage.out

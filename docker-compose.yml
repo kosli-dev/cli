@@ -6,7 +6,7 @@ networks:
 
 services:
   registry:
-    container_name: cli-registry
+    container_name: cli_registry
     restart: always
     image: registry:2
     ports:
@@ -16,7 +16,7 @@ services:
     networks: [ cli_net ]
     depends_on: [ mongo_rs_initiate ]
     image: ghcr.io/merkely-development/merkely:latest
-    container_name: merkely-server
+    container_name: cli_merkely_server
     ports: ["8001:8001"]
 
   mongo_rs_initiate:
@@ -24,19 +24,19 @@ services:
     image: merkely-mongo-rs
     build:
       context: ./mongo
-    container_name: mongo_rs_initiate
+    container_name: cli_mongo_rs_initiate
     init: true
-    depends_on: [ mongo1 ]
+    depends_on: [ mongo ]
     env_file: [ "./mongo/mongo.env" ]
     command: "./mongo/rs_initiate.sh"
 
-  mongo1:
+  mongo:
     networks: [ cli_net ]
-    hostname: mongo1
+    hostname: mongo
     image: merkely-mongo-rs
     build:
       context: ./mongo
-    container_name: mongo1
+    container_name: cli_mongo
     init: true
     stop_signal: SIGINT
     env_file: [ "./mongo/mongo.env" ]
