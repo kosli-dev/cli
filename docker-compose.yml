@@ -1,12 +1,14 @@
-registry:
-  container_name: cli-registry
-  restart: always
-  image: registry:2
-  ports:
-    - 5000:5000
+version: '3'
+services:
+  registry:
+    container_name: cli-registry
+    restart: always
+    image: registry:2
+    ports:
+      - 5000:5000
 
-server:
-    image: ghcr.io/merkely-development/merkely:latest
-    container_name: merkely-server
-    ports: 
-      - 8001:8001 
+  server:
+      image: ghcr.io/merkely-development/merkely:latest
+      container_name: merkely-server
+      ports: 
+        - 8001:8001 
