@@ -1,7 +1,6 @@
 /reporter
 /merkely
 /kosli
-*.env
 TODO
 merkely.yaml
 dist/
