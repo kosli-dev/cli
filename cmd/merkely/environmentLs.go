@@ -26,13 +26,18 @@ func newEnvironmentLsCmd(out io.Writer) *cobra.Command {
 		Use:   "ls",
 		Short: environmentLsDesc,
 		Long:  environmentLsDesc,
-		Args:  NoArgs,
+		// Args:  NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(out)
 		},
 	}
 
 	cmd.Flags().BoolVarP(&o.long, "long", "l", false, environmentLongFlag)
+
+	// Add subcommands
+	cmd.AddCommand(
+		newSnapshotLsCmd(out),
+	)
 
 	return cmd
 }
