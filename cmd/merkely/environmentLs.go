@@ -16,7 +16,7 @@ List environments.
 `
 
 type environmentLsOptions struct {
-	// assert bool
+	long bool
 }
 
 func newEnvironmentLsCmd(out io.Writer) *cobra.Command {
@@ -31,7 +31,7 @@ func newEnvironmentLsCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	// cmd.Flags().BoolVar(&o.assert, "assert", false, assertStatusFlag)
+	cmd.Flags().BoolVarP(&o.long, "long", "l", false, environmentLongFlag)
 
 	return cmd
 }
@@ -54,8 +54,15 @@ func (o *environmentLsOptions) run(out io.Writer) error {
 			return err
 		}
 
+		if o.long {
+			fmt.Printf("%-15s %s\n", "NAME", "TYPE")
+		}
 		for _, env := range envs {
-			fmt.Println(env["name"])
+			if o.long {
+				fmt.Printf("%-15s %s\n", env["name"], env["type"])
+			} else {
+				fmt.Println(env["name"])
+			}
 		}
 	}
 	if outErr != nil {

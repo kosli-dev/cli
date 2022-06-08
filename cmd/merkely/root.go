@@ -52,6 +52,7 @@ const (
 	newPipelineFlag         = "The name of the pipeline to be created or updated."
 	pipefileFlag            = "[deprecated] The path to the JSON pipefile."
 	environmentNameFlag     = "The environment name."
+	environmentLongFlag     = "Print long environment info."
 	newEnvNameFlag          = "The name of environment to be created."
 	newEnvTypeFlag          = "The type of environment. Valid options are: [K8S, ECS, server, S3]"
 	envAllowListFlag        = "The environment name for which the artifact is allowlisted."
