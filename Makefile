@@ -67,9 +67,13 @@ build_release: check_dirty add_test_tag
 	goreleaser release --skip-publish
 	@git tag -d v0.0.99 2> /dev/null || true
 
-test_unit: deps vet ## Run unit tests
+ensure_network:
+	docker network inspect cli_net > /dev/null || docker network create --driver bridge cli_net
+
+test_unit: deps vet ensure_network ## Run unit tests
 	@docker-compose down || true
 	@docker-compose up -d
+	./mongo/ip_wait.sh localhost:8001
 	@docker exec merkely-server /demo/create_test_users.py
 	@go test -v -cover -p=1 -coverprofile=coverage.out ./...
 	@go tool cover -func=coverage.out
