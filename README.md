@@ -6,3 +6,15 @@ This CLI is used to report the images of workloads running in an environment bac
 
 See the [docs](https://docs.merkely.com/client_reference/)
 
+## Linting the code
+
+`make lint`
+
+
+## Building the code
+
+`make build`
+
+## Testing the code
+
+`make test_unit`
