@@ -54,6 +54,19 @@ build: deps vet ## Build the binary
 	@go build -o kosli -ldflags '$(LDFLAGS)' ./cmd/merkely/
 .PHONY: build
 
+check_dirty:
+	@git diff-index --quiet HEAD --  || echo "Cannot test release with dirty git repo"
+	@git diff-index --quiet HEAD -- 
+
+add_test_tag:
+	@git tag -d v0.0.99 2> /dev/null || true
+	@git tag v0.0.99
+
+build_release: check_dirty add_test_tag
+	rm -rf dist/
+	goreleaser release --skip-publish
+	@git tag -d v0.0.99 2> /dev/null || true
+
 test_unit: deps vet ## Run unit tests
 	@docker-compose down || true
 	@docker-compose up -d

@@ -3,7 +3,28 @@ before:
   hooks:
   - go mod tidy
 builds:
-  - binary: merkely
+  - id: merkely
+    binary: merkely
+    ldflags: 
+      - -w -s
+      - -X github.com/merkely-development/reporter/internal/version.version={{ .Tag }}
+      - -X github.com/merkely-development/reporter/internal/version.gitCommit={{ .FullCommit }}
+      - -X github.com/merkely-development/reporter/internal/version.gitTreeState=clean
+      - -extldflags "-static"
+    env:
+      - CGO_ENABLED=0
+      - GO111MODULE=on
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+      - arm
+    main: ./cmd/merkely/
+  - id: kosli
+    binary: kosli
     ldflags: 
       - -w -s
       - -X github.com/merkely-development/reporter/internal/version.version={{ .Tag }}
