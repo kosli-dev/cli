@@ -118,6 +118,9 @@ func showJson(response *requests.HTTPResponse) error {
 	}
 
 	res, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		return err
+	}
 	fmt.Println(string(res))
 
 	return nil
