@@ -12,18 +12,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentLsDesc = `
-List environments.
-`
+const environmentLsDesc = `List environments.`
 
 type environmentLsOptions struct {
 	long bool
+	json bool
 }
 
 func newEnvironmentLsCmd(out io.Writer) *cobra.Command {
 	o := new(environmentLsOptions)
 	cmd := &cobra.Command{
-		Use:   "ls",
+		Use:   "ls [ENVIRONMENT-NAME]",
 		Short: environmentLsDesc,
 		Long:  environmentLsDesc,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -39,14 +38,14 @@ func newEnvironmentLsCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().BoolVarP(&o.long, "long", "l", false, environmentLongFlag)
+	cmd.Flags().BoolVarP(&o.json, "json", "j", false, environmentJsonFlag)
 
 	return cmd
 }
 
 func (o *environmentLsOptions) run(out io.Writer, args []string) error {
 	if len(args) > 0 {
-		snapshotLsCmd := newSnapshotLsCmd(out)
-		return snapshotLsCmd.RunE(snapshotLsCmd, args)
+		return snapshotLs(out, o, args)
 	}
 
 	url := fmt.Sprintf("%s/api/v1/environments/%s/", global.Host, global.Owner)
@@ -56,6 +55,12 @@ func (o *environmentLsOptions) run(out io.Writer, args []string) error {
 	if err != nil {
 		return fmt.Errorf("merkely server %s is unresponsive", global.Host)
 	}
+
+	if o.json {
+		fmt.Println(response.Body)
+		return nil
+	}
+
 	var envs []map[string]interface{}
 	err = json.Unmarshal([]byte(response.Body), &envs)
 	if err != nil {

@@ -10,16 +10,7 @@ import (
 
 	"github.com/merkely-development/reporter/internal/requests"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 )
-
-const snapshotLsDesc = `
-List snapshot.
-`
-
-type snapshotLsOptions struct {
-	// long bool
-}
 
 type Annotation struct {
 	Type string `json:"type"`
@@ -67,29 +58,18 @@ type SnapshotType struct {
 	Type string `json:"type"`
 }
 
-func newSnapshotLsCmd(out io.Writer) *cobra.Command {
-	o := new(snapshotLsOptions)
-	cmd := &cobra.Command{
-		Use:   "snap",
-		Short: snapshotLsDesc,
-		Long:  snapshotLsDesc,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(out, args)
-		},
-	}
-
-	// cmd.Flags().BoolVarP(&o.long, "long", "l", false, environmentLongFlag)
-
-	return cmd
-}
-
-func (o *snapshotLsOptions) run(out io.Writer, args []string) error {
+func snapshotLs(out io.Writer, o *environmentLsOptions, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, args[0])
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
 
 	if err != nil {
 		return fmt.Errorf("merkely server %s is unresponsive", global.Host)
+	}
+
+	if o.json {
+		fmt.Println(response.Body)
+		return nil
 	}
 
 	var snapshotType SnapshotType
