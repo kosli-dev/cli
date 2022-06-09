@@ -86,6 +86,6 @@ replace k8s.io/sample-controller => k8s.io/sample-controller v0.22.3
 
 replace github.com/opencontainers/image-spec => github.com/opencontainers/image-spec v1.0.2
 
-replace github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.3
+replace github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.2
 
-replace github.com/containerd/containerd => github.com/containerd/containerd v1.5.10
+replace github.com/containerd/containerd => github.com/containerd/containerd v1.5.13
