@@ -50,5 +50,5 @@ func formatVersion(short bool) string {
 	if short {
 		return version.GetVersion()
 	}
-	return fmt.Sprintf("%#v", version.Get())
+	return fmt.Sprintf("%#v\n", version.Get())
 }
