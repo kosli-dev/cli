@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/merkely-development/reporter/internal/requests"
@@ -97,12 +98,15 @@ func (o *snapshotLsOptions) run(out io.Writer, args []string) error {
 		}
 
 		// fmt.Println(response.Body)
-
-		fmt.Printf("%-8s %-30s %-65s %-26s %-10s\n", "COMMIT", "IMAGE", "SHA256", "SINCE", "REPLICAS")
+		formatStringHead := "%-8s %-30s %-10s %-19s %-26s %-10s\n"
+		formatStringLine := "%-8s %-30s %-10s %-19s %-26s %-10d\n"
+		fmt.Printf(formatStringHead, "COMMIT", "IMAGE", "TAG", "SHA256", "SINCE", "REPLICAS")
 
 		for _, artifact := range snapshot.Artifacts {
 			since := time.Unix(artifact.CreationTimestamp[0], 0).Format(time.RFC3339)
-			fmt.Printf("%-8s %-30s %-65s %-26s %d\n", "xxxx", artifact.Name, artifact.Sha256, since, len(artifact.CreationTimestamp))
+			artifactSplit := strings.Split(artifact.Name, ":")
+			shortSha := artifact.Sha256[:7] + "..." + artifact.Sha256[64-7:]
+			fmt.Printf(formatStringLine, "xxxx", artifactSplit[0], artifactSplit[1], shortSha, since, len(artifact.CreationTimestamp))
 		}
 
 		// if o.long {
