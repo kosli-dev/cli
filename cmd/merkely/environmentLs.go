@@ -28,21 +28,21 @@ func newEnvironmentLsCmd(out io.Writer) *cobra.Command {
 		Long:  environmentLsDesc,
 		// Args:  NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(out)
+			return o.run(out, args)
 		},
 	}
 
 	cmd.Flags().BoolVarP(&o.long, "long", "l", false, environmentLongFlag)
 
-	// Add subcommands
-	cmd.AddCommand(
-		newSnapshotLsCmd(out),
-	)
-
 	return cmd
 }
 
-func (o *environmentLsOptions) run(out io.Writer) error {
+func (o *environmentLsOptions) run(out io.Writer, args []string) error {
+	if len(args) > 0 {
+		snapshotLsCmd := newSnapshotLsCmd(out)
+		return snapshotLsCmd.RunE(snapshotLsCmd, args)
+	}
+
 	url := fmt.Sprintf("%s/api/v1/environments/%s/", global.Host, global.Owner)
 	var outErr error
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,

@@ -38,7 +38,7 @@ func newSnapshotLsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *snapshotLsOptions) run(out io.Writer, args []string) error {
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/snapshots/-1", global.Host, global.Owner, args[0])
+	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, args[0])
 	var outErr error
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
