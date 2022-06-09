@@ -43,9 +43,9 @@ func (o *statusOptions) run(out io.Writer) error {
 		if o.assert {
 			return fmt.Errorf("merkely server %s is unresponsive", global.Host)
 		}
-		_, outErr = out.Write([]byte("Down"))
+		_, outErr = out.Write([]byte("Down\n"))
 	} else {
-		_, outErr = out.Write([]byte(response.Body))
+		_, outErr = out.Write([]byte(response.Body + "\n"))
 	}
 	if outErr != nil {
 		return outErr

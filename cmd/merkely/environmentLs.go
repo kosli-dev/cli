@@ -26,7 +26,13 @@ func newEnvironmentLsCmd(out io.Writer) *cobra.Command {
 		Use:   "ls",
 		Short: environmentLsDesc,
 		Long:  environmentLsDesc,
-		// Args:  NoArgs,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			if err != nil {
+				return ErrorAfterPrintingHelp(cmd, err.Error())
+			}
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(out, args)
 		},
