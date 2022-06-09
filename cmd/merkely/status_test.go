@@ -18,7 +18,7 @@ func (suite *StatusTestSuite) TestStatusCmd() {
 		{
 			name:   "default",
 			cmd:    "status",
-			golden: "OK",
+			golden: "OK\n",
 		}, {
 			name:      "assert fail",
 			cmd:       "status --assert --host 123",

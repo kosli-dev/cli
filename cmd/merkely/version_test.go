@@ -20,7 +20,7 @@ func (suite *VersionTestSuite) TestVersionCmd() {
 		{
 			name:   "default",
 			cmd:    "version",
-			golden: fmt.Sprintf("version.BuildInfo{Version:\"main\", GitCommit:\"\", GitTreeState:\"\", GoVersion:\"%s\"}", runtime.Version()),
+			golden: fmt.Sprintf("version.BuildInfo{Version:\"main\", GitCommit:\"\", GitTreeState:\"\", GoVersion:\"%s\"}\n", runtime.Version()),
 		}, {
 			name:   "short",
 			cmd:    "version --short",

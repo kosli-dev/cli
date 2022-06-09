@@ -85,16 +85,11 @@ func newSnapshotLsCmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotLsOptions) run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, args[0])
-	var outErr error
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
 
 	if err != nil {
-		// if o.assert {
-		// 	return fmt.Errorf("merkely server %s is unresponsive", global.Host)
-		// }
-		_, outErr = out.Write([]byte(err.Error()))
-		return outErr
+		return fmt.Errorf("merkely server %s is unresponsive", global.Host)
 	}
 
 	var snapshotType SnapshotType
@@ -102,7 +97,6 @@ func (o *snapshotLsOptions) run(out io.Writer, args []string) error {
 	if err != nil {
 		return err
 	}
-	// fmt.Println(response.Body)
 
 	if snapshotType.Type == "K8S" || snapshotType.Type == "ECS" {
 		return showK8sEcs(response)

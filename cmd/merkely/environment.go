@@ -10,9 +10,10 @@ const environmentDesc = `All environments operations in Merkely.`
 
 func newEnvironmentCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "environment",
-		Short: environmentDesc,
-		Long:  environmentDesc,
+		Use:     "environment",
+		Aliases: []string{"env"},
+		Short:   environmentDesc,
+		Long:    environmentDesc,
 	}
 
 	// Add subcommands
