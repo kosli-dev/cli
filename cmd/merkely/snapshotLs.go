@@ -17,7 +17,7 @@ List snapshot.
 `
 
 type snapshotLsOptions struct {
-	long bool
+	// long bool
 }
 
 func newSnapshotLsCmd(out io.Writer) *cobra.Command {
