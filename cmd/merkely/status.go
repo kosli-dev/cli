@@ -11,7 +11,7 @@ import (
 )
 
 const statusDesc = `
-Check the status of Merkely server.
+Check the status of Kosli server.
 `
 
 type statusOptions struct {

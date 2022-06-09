@@ -7,7 +7,7 @@ import (
 )
 
 const assertStatusDesc = `
-Assert the status of Merkely server. Exits with non-zero code if Merkely server down.
+Assert the status of Kosli server. Exits with non-zero code if Kosli server down.
 `
 
 func newAssertStatusCmd(out io.Writer) *cobra.Command {

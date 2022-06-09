@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const deploymentDesc = `All deployment operations in a Merkely pipeline.`
+const deploymentDesc = `All deployment operations in a Kosli pipeline.`
 
 func newDeploymentCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{

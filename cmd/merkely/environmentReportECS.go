@@ -12,7 +12,7 @@ import (
 
 const environmentReportECSDesc = `
 List the artifacts deployed in an AWS ECS cluster and their digests 
-and report them to Merkely. 
+and report them to Kosli. 
 `
 
 const environmentReportECSExample = `
@@ -36,7 +36,7 @@ func newEnvironmentReportECSCmd(out io.Writer) *cobra.Command {
 	o := new(environmentReportECSOptions)
 	cmd := &cobra.Command{
 		Use:     "ecs env-name",
-		Short:   "Report images data from AWS ECS cluster to Merkely.",
+		Short:   "Report images data from AWS ECS cluster to Kosli.",
 		Long:    environmentReportECSDesc,
 		Example: environmentReportECSExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

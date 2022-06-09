@@ -15,12 +15,12 @@ import (
 
 const environmentReportK8SDesc = `
 List the artifacts deployed in the k8s environment and their digests 
-and report them to Merkely. 
+and report them to Kosli. 
 `
 
 const environmentReportK8SExample = `
 # report what is running in an entire cluster using kubeconfig at $HOME/.kube/config:
-merkely environment report k8s yourEnvironmentName \
+kosli environment report k8s yourEnvironmentName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
@@ -29,22 +29,22 @@ merkely environment report k8s yourEnvironmentName \
 export MERKELY_API_TOKEN=yourAPIToken
 export MERKELY_OWNER=yourOrgName
 
-merkely environment report k8s yourEnvironmentName
+kosli environment report k8s yourEnvironmentName
 
 # report what is running in an entire cluster excluding some namespaces using kubeconfig at $HOME/.kube/config:
-merkely environment report k8s yourEnvironmentName \
+kosli environment report k8s yourEnvironmentName \
     --exclude-namespace kube-system,utilities \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
 # report what is running in a given namespace in the cluster using kubeconfig at $HOME/.kube/config:
-merkely environment report k8s yourEnvironmentName \
+kosli environment report k8s yourEnvironmentName \
 	--namespace your-namespace \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
 # report what is running in a cluster using kubeconfig at a custom path:
-merkely environment report k8s yourEnvironmentName \
+kosli environment report k8s yourEnvironmentName \
 	--kubeconfig /path/to/kube/config \
 	--api-token yourAPIToken \
 	--owner yourOrgName
@@ -61,7 +61,7 @@ func newEnvironmentReportK8SCmd(out io.Writer) *cobra.Command {
 	o := new(environmentReportK8SOptions)
 	cmd := &cobra.Command{
 		Use:     "k8s [-n namespace | -x namespace]... [-k /path/to/kube/config] [-i infrastructure-identifier] env-name",
-		Short:   "Report images data from specific namespace(s) or entire cluster to Merkely.",
+		Short:   "Report images data from specific namespace(s) or entire cluster to Kosli.",
 		Long:    environmentReportK8SDesc,
 		Aliases: []string{"kubernetes"},
 		Example: environmentReportK8SExample,

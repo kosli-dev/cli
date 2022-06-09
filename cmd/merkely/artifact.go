@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const artifactDesc = `All artifacts operations in a Merkely pipeline.`
+const artifactDesc = `All artifacts operations in a Kosli pipeline.`
 
 func newArtifactCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{

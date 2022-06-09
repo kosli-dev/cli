@@ -1,6 +1,6 @@
-# Merkely Reporter
+# Kosli Reporter
 
-This CLI is used to report the images of workloads running in an environment back to kosli.
+This CLI is used to report and query the images of workloads running in an environment back to kosli.
 
 ## Usage 
 
@@ -15,6 +15,3 @@ See the [docs](https://docs.merkely.com/client_reference/)
 
 `make build`
 
-## Testing the code
-
-`make test_unit`

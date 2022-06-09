@@ -52,10 +52,10 @@ func DoBasicAuthRequest(jsonBytes []byte, url, username, password string,
 	}
 
 	if username == "" {
-		// when communicating with Merkely, apiToken is sent as username
+		// when communicating with Kosli, apiToken is sent as username
 		// (passed to doRequest() as password)
 		username = password
-		// when communicating with Merkely, password should be "unset"
+		// when communicating with Kosli, password should be "unset"
 		password = "unset"
 	}
 	req.SetBasicAuth(username, password)

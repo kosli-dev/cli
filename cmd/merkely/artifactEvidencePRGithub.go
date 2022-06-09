@@ -41,7 +41,7 @@ func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "github-pullrequest [ARTIFACT-NAME-OR-PATH]",
 		Aliases: []string{"gh-pr", "github-pr"},
-		Short:   "Report a Github pull request evidence for an artifact in a Merkely pipeline.",
+		Short:   "Report a Github pull request evidence for an artifact in a Kosli pipeline.",
 		Long:    controlPullRequestGithubDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -175,7 +175,7 @@ func getPullRequestApprovers(client *gh.Client, context context.Context, owner, 
 
 func controlPullRequestGithubDesc() string {
 	return `
-   Check if a pull request exists for an artifact and report the pull-request evidence to the artifact in Merkely. 
+   Check if a pull request exists for an artifact and report the pull-request evidence to the artifact in Kosli. 
    The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
    `
 }

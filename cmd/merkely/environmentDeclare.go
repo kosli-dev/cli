@@ -10,12 +10,12 @@ import (
 )
 
 const enviromentDeclareDesc = `
-Declare or update a Merkely environment.
+Declare or update a Kosli environment.
 `
 
 const enviromentDeclareExample = `
-# declare (or update) a Merkely environment:
-merkely environment declare 
+# declare (or update) a Kosli environment:
+kosli environment declare 
 	--name yourEnvironmentName \
 	--environment-type K8S \
 	--description "my new env" \
@@ -34,7 +34,7 @@ func newEnvironmentDeclareCmd(out io.Writer) *cobra.Command {
 	payload := new(CreateEnvironmentPayload)
 	cmd := &cobra.Command{
 		Use:     "declare",
-		Short:   "Declare or update a Merkely environment",
+		Short:   "Declare or update a Kosli environment",
 		Long:    enviromentDeclareDesc,
 		Example: enviromentDeclareExample,
 		Args:    NoArgs,

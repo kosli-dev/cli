@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentDesc = `All environments operations in Merkely.`
+const environmentDesc = `All environments operations in Kosli.`
 
 func newEnvironmentCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{

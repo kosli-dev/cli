@@ -11,7 +11,7 @@ import (
 )
 
 const environmentReportLambdaDesc = `
-Report the artifact deployed in an AWS Lambda and its digest to Merkely. 
+Report the artifact deployed in an AWS Lambda and its digest to Kosli. 
 `
 
 const environmentReportLambdaExample = `
@@ -20,13 +20,13 @@ export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
-merkely environment report lambda myEnvironment \
+kosli environment report lambda myEnvironment \
 	--function-name yourFunctionName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
 # report what is running in a specific version of an AWS Lambda function (AWS auth provided in flags):
-merkely environment report lambda myEnvironment \
+kosli environment report lambda myEnvironment \
 	--function-name yourFunctionName \
 	--function-version yourFunctionVersion \
 	--aws-key-id yourAWSAccessKeyID \
@@ -48,7 +48,7 @@ func newEnvironmentReportLambdaCmd(out io.Writer) *cobra.Command {
 	o := new(environmentReportLambdaOptions)
 	cmd := &cobra.Command{
 		Use:     "lambda env-name",
-		Short:   "Report artifact from AWS Lambda to Merkely.",
+		Short:   "Report artifact from AWS Lambda to Kosli.",
 		Long:    environmentReportLambdaDesc,
 		Example: environmentReportLambdaExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

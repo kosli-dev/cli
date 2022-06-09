@@ -39,7 +39,7 @@ func newPullRequestEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "bitbucket-pullrequest [ARTIFACT-NAME-OR-PATH]",
 		Aliases: []string{"bb-pr", "bitbucket-pr"},
-		Short:   "Report a Bitbucket pull request evidence for an artifact in a Merkely pipeline.",
+		Short:   "Report a Bitbucket pull request evidence for an artifact in a Kosli pipeline.",
 		Long:    controlPullRequestDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -217,7 +217,7 @@ func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, username, password
 
 func controlPullRequestDesc() string {
 	return `
-   Check if a pull request exists for an artifact and report the pull-request evidence to the artifact in Merkely. 
+   Check if a pull request exists for an artifact and report the pull-request evidence to the artifact in Kosli. 
    The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
    `
 }

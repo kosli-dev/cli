@@ -12,18 +12,18 @@ import (
 	"github.com/spf13/viper"
 )
 
-var globalUsage = `The Merkely evidence reporting CLI.
+var globalUsage = `The Kosli evidence reporting CLI.
 
 Environment variables:
 
 | Name                               | Description                                                                       |
 |------------------------------------|-----------------------------------------------------------------------------------|
-| $MERKELY_API_TOKEN                 | set the Merkely API token.                                                        |
-| $MERKELY_OWNER                     | set the Merkely Pipeline Owner.                                                   |
-| $MERKELY_HOST                      | set the Merkely host.                                                             |
-| $MERKELY_DRY_RUN                   | indicate whether or not Merkely CLI is running in Dry Run mode.                   |
+| $MERKELY_API_TOKEN                 | set the Kosli API token.                                                        |
+| $MERKELY_OWNER                     | set the Kosli Pipeline Owner.                                                   |
+| $MERKELY_HOST                      | set the Kosli host.                                                             |
+| $MERKELY_DRY_RUN                   | indicate whether or not Kosli CLI is running in Dry Run mode.                   |
 | $MERKELY_MAX_API_RETRIES           | set the maximum number of API calling retries when the API host is not reachable. |
-| $MERKELY_CONFIG_FILE               | set the path to Merkely config file where you can set your options.               |         
+| $MERKELY_CONFIG_FILE               | set the path to Kosli config file where you can set your options.               |         
 `
 
 const (
@@ -39,16 +39,16 @@ const (
 	sha256Desc = "The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag)."
 
 	// flags
-	apiTokenFlag            = "The merkely API token."
-	ownerFlag               = "The merkely user or organization."
-	hostFlag                = "The merkely endpoint."
-	dryRunFlag              = "Whether to run in dry-run mode. When enabled, data is not sent to Merkely and the CLI exits with 0 exit code regardless of errors."
+	apiTokenFlag            = "The Kosli API token."
+	ownerFlag               = "The Kosli user or organization."
+	hostFlag                = "The Kosli endpoint."
+	dryRunFlag              = "Whether to run in dry-run mode. When enabled, data is not sent to Kosli and the CLI exits with 0 exit code regardless of errors."
 	maxAPIRetryFlag         = "How many times should API calls be retried when the API host is not reachable."
-	configFileFlag          = "[optional] The merkely config file path."
+	configFileFlag          = "[optional] The Kosli config file path."
 	verboseFlag             = "Print verbose logs to stdout."
 	sha256Flag              = "The SHA256 fingerprint for the artifact. Only required if you don't specify 'artifact-type'."
 	artifactTypeFlag        = "The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify 'sha256'"
-	pipelineNameFlag        = "The Merkely pipeline name."
+	pipelineNameFlag        = "The Kosli pipeline name."
 	newPipelineFlag         = "The name of the pipeline to be created or updated."
 	pipefileFlag            = "[deprecated] The path to the JSON pipefile."
 	environmentNameFlag     = "The environment name."
@@ -65,8 +65,8 @@ const (
 	artifactDescriptionFlag = "[optional] The artifact description."
 	evidenceDescriptionFlag = "[optional] The evidence description."
 	envDescriptionFlag      = "[optional] The environment description."
-	pipelineDescriptionFlag = "[optional] The Merkely pipeline description."
-	visibilityFlag          = "The visibility of the Merkely pipeline. Options are [public, private]."
+	pipelineDescriptionFlag = "[optional] The Kosli pipeline description."
+	visibilityFlag          = "The visibility of the Kosli pipeline. Options are [public, private]."
 	templateFlag            = "The comma-separated list of required compliance controls names."
 	approvalUserDataFlag    = "[optional] The path to a JSON file containing additional data you would like to attach to this approval."
 	evidenceUserDataFlag    = "[optional] The path to a JSON file containing additional data you would like to attach to this evidence."
@@ -84,7 +84,7 @@ const (
 	commitPREvidenceFlag    = "Git commit for which to find pull request evidence."
 	repositoryFlag          = "Git repository."
 	assertPREvidenceFlag    = "Exit with non-zero code if no pull requests found for the given commit."
-	assertStatusFlag        = "Exit with non-zero code if Merkely server is not responding."
+	assertStatusFlag        = "Exit with non-zero code if Kosli server is not responding."
 	githubTokenFlag         = "Github token."
 	githubOrgFlag           = "Github organization."
 	registryProviderFlag    = "The docker registry provider or url."
@@ -121,8 +121,8 @@ type GlobalOpts struct {
 func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	global = new(GlobalOpts)
 	cmd := &cobra.Command{
-		Use:              "merkely",
-		Short:            "The Merkely evidence reporting CLI.",
+		Use:              "kosli",
+		Short:            "The Kosli CLI.",
 		Long:             globalUsage,
 		SilenceUsage:     true,
 		TraverseChildren: true,

@@ -12,7 +12,7 @@ import (
 )
 
 const approvalReportDesc = `
-Report to Merkely an approval of deploying an artifact.
+Report to Kosli an approval of deploying an artifact.
 ` + sha256Desc
 
 const approvalReportExample = `
@@ -63,7 +63,7 @@ func newApprovalReportCmd(out io.Writer) *cobra.Command {
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:     "report [ARTIFACT-NAME-OR-PATH]",
-		Short:   "Report to Merkely an approval of deploying an artifact. ",
+		Short:   "Report to Kosli an approval of deploying an artifact. ",
 		Long:    approvalReportDesc,
 		Example: approvalReportExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

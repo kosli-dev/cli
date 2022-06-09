@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const approvalDesc = `All approvals operations in a Merkely pipeline.`
+const approvalDesc = `All approvals operations in a Kosli pipeline.`
 
 func newApprovalCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{

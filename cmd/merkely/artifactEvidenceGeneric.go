@@ -60,7 +60,7 @@ func newGenericEvidenceCmd(out io.Writer) *cobra.Command {
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:     "generic [ARTIFACT-NAME-OR-PATH]",
-		Short:   "Report a generic evidence to an artifact in a Merkely pipeline. ",
+		Short:   "Report a generic evidence to an artifact in a Kosli pipeline. ",
 		Example: artifactEvidenceGenericExample,
 		Long:    genericEvidenceDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -125,6 +125,6 @@ func (o *genericEvidenceOptions) run(args []string) error {
 
 func genericEvidenceDesc() string {
 	return `
-   Report a generic evidence to an artifact to a Merkely pipeline. 
+   Report a generic evidence to an artifact to a Kosli pipeline. 
    ` + sha256Desc
 }

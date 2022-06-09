@@ -11,7 +11,7 @@ import (
 )
 
 const approvalAssertDesc = `
-Assert if an artifact in Merkely has been approved for deployment. Exits with non-zero code if artifact has not been approved.
+Assert if an artifact in Kosli has been approved for deployment. Exits with non-zero code if artifact has not been approved.
 ` + sha256Desc
 
 const approvalAssertExample = `
@@ -42,7 +42,7 @@ func newApprovalAssertCmd(out io.Writer) *cobra.Command {
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:     "assert [ARTIFACT-NAME-OR-PATH]",
-		Short:   "Assert if an artifact in Merkely has been approved for deployment.",
+		Short:   "Assert if an artifact in Kosli has been approved for deployment.",
 		Long:    approvalAssertDesc,
 		Example: approvalAssertExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

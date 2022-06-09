@@ -29,7 +29,7 @@ func newDeploymentReportCmd(out io.Writer) *cobra.Command {
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:   "report [ARTIFACT-NAME-OR-PATH]",
-		Short: "Report a deployment to Merkely. ",
+		Short: "Report a deployment to Kosli. ",
 		Long:  deploymentReportDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -89,7 +89,7 @@ func (o *deploymentReportOptions) run(args []string) error {
 
 func deploymentReportDesc() string {
 	return `
-   Report a deployment of an artifact to an environment in Merkely. 
+   Report a deployment of an artifact to an environment in Kosli. 
    The artifact SHA256 fingerprint is calculated and reported 
    or,alternatively, can be provided directly. 
    `

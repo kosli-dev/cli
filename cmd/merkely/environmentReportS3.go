@@ -11,7 +11,7 @@ import (
 )
 
 const environmentReportS3Desc = `
-Report the artifact deployed in an AWS S3 bucket and its digest to Merkely. 
+Report the artifact deployed in an AWS S3 bucket and its digest to Kosli. 
 `
 
 const environmentReportS3Example = `
@@ -20,13 +20,13 @@ export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
-merkely environment report s3 yourEnvironmentName \
+kosli environment report s3 yourEnvironmentName \
 	--bucket yourBucketName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
 # report what is running in an AWS S3 bucket (AWS auth provided in flags):
-merkely environment report s3 yourEnvironmentName \
+kosli environment report s3 yourEnvironmentName \
 	--bucket yourBucketName \
 	--aws-key-id yourAWSAccessKeyID \
 	--aws-secret-key yourAWSSecretAccessKey \
@@ -47,7 +47,7 @@ func newEnvironmentReportS3Cmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "s3 env-name",
 		Aliases: []string{"S3"},
-		Short:   "Report artifact from AWS S3 bucket to Merkely.",
+		Short:   "Report artifact from AWS S3 bucket to Kosli.",
 		Long:    environmentReportS3Desc,
 		Example: environmentReportS3Example,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

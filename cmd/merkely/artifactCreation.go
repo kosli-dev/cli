@@ -27,8 +27,8 @@ type ArtifactPayload struct {
 }
 
 const artifactCreationExample = `
-# Report to a Merkely pipeline that a file type artifact has been created
-merkely pipeline artifact report creation FILE.tgz \
+# Report to a Kosli pipeline that a file type artifact has been created
+kosli pipeline artifact report creation FILE.tgz \
 --api-token yourApiToken \
 --artifact-type file \
 --build-url https://exampleci.com \
@@ -37,8 +37,8 @@ merkely pipeline artifact report creation FILE.tgz \
 --owner yourOrgName \
 --pipeline yourPipelineName 
 
-# Report to a Merkely pipeline that an artifact with a provided fingerprint (sha256) has been created
-merkely pipeline artifact report creation \
+# Report to a Kosli pipeline that an artifact with a provided fingerprint (sha256) has been created
+kosli pipeline artifact report creation \
 --api-token yourApiToken \
 --build-url https://exampleci.com \
 --commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
@@ -53,7 +53,7 @@ func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:     "creation ARTIFACT-NAME-OR-PATH",
-		Short:   "Report an artifact creation to a Merkely pipeline. ",
+		Short:   "Report an artifact creation to a Kosli pipeline. ",
 		Long:    artifactCreationDesc(),
 		Example: artifactCreationExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -117,6 +117,6 @@ func (o *artifactCreationOptions) run(args []string) error {
 
 func artifactCreationDesc() string {
 	return `
-   Report an artifact creation to a Merkely pipeline. 
+   Report an artifact creation to a Kosli pipeline. 
    ` + sha256Desc
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const assertDesc = `All Merkely assertion commands. Return non-zero exit code if the assertion fails.`
+const assertDesc = `All Kosli assertion commands. Return non-zero exit code if the assertion fails.`
 
 func newAssertCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{

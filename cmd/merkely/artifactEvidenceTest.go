@@ -49,7 +49,7 @@ func newTestEvidenceCmd(out io.Writer) *cobra.Command {
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:     "test [ARTIFACT-NAME-OR-PATH]",
-		Short:   "Report a JUnit test evidence to an artifact in a Merkely pipeline. ",
+		Short:   "Report a JUnit test evidence to an artifact in a Kosli pipeline. ",
 		Long:    testEvidenceDesc(),
 		Example: testEvidenceExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -90,7 +90,7 @@ func newTestEvidenceCmd(out io.Writer) *cobra.Command {
 
 func testEvidenceDesc() string {
 	return `
-   Report a JUnit test evidence to an artifact in a Merkely pipeline. 
+   Report a JUnit test evidence to an artifact in a Kosli pipeline. 
    The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
    `
 }

@@ -14,7 +14,7 @@ import (
 )
 
 const docsDesc = `
-Generate documentation files for Merkely CLI.
+Generate documentation files for Kosli CLI.
 This command can generate documentation in the following formats: Markdown.
 `
 

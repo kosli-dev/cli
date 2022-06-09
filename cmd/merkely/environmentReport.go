@@ -7,13 +7,13 @@ import (
 )
 
 const environmentReportDesc = `
-Report artifacts running in an environemt to Merkely.
+Report artifacts running in an environemt to Kosli.
 `
 
 func newEnvironmentReportCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "report",
-		Short: "Report artifacts running in an environemt to Merkely.",
+		Short: "Report artifacts running in an environemt to Kosli.",
 		Long:  environmentReportDesc,
 	}
 

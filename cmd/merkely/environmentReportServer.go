@@ -12,12 +12,12 @@ import (
 
 const environmentReportServerDesc = `
 List the artifacts deployed in a server environment and their digests 
-and report them to Merkely. 
+and report them to Kosli. 
 `
 
 const environmentReportServerExample = `
 # report directory artifacts running in a server at a list of paths:
-merkely environment report server yourEnvironmentName \
+kosli environment report server yourEnvironmentName \
 	--paths a/b/c, e/f/g \
 	--api-token yourAPIToken \
 	--owner yourOrgName  
@@ -32,7 +32,7 @@ func newEnvironmentReportServerCmd(out io.Writer) *cobra.Command {
 	o := new(environmentReportServerOptions)
 	cmd := &cobra.Command{
 		Use:     "server [-p /path/of/artifacts/directory] [-i infrastructure-identifier] env-name",
-		Short:   "Report directory or file artifacts data in the given list of paths to Merkely.",
+		Short:   "Report directory or file artifacts data in the given list of paths to Kosli.",
 		Long:    environmentReportServerDesc,
 		Aliases: []string{"directories"},
 		Example: environmentReportServerExample,

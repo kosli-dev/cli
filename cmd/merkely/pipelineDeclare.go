@@ -14,13 +14,13 @@ import (
 )
 
 const pipelineDeclareDesc = `
-Declare or update a Merkely pipeline by providing a JSON pipefile or by providing pipeline parameters in flags. 
+Declare or update a Kosli pipeline by providing a JSON pipefile or by providing pipeline parameters in flags. 
 The pipefile contains the pipeline metadata and compliance policy.
 `
 
 const pipelineDeclareExample = `
-# create/update a Merkely pipeline without a pipefile:
-merkely pipeline declare \
+# create/update a Kosli pipeline without a pipefile:
+kosli pipeline declare \
 	--pipeline yourPipelineName \
 	--description yourPipelineDescription \
     --visibility private OR public \
@@ -28,8 +28,8 @@ merkely pipeline declare \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
-# create/update a Merkely pipeline with a pipefile (this is a legacy way which will be removed in the future):
-merkely pipeline declare \
+# create/update a Kosli pipeline with a pipefile (this is a legacy way which will be removed in the future):
+kosli pipeline declare \
 	--pipefile /path/to/pipefile.json \
 	--api-token yourAPIToken \
 	--owner yourOrgName
@@ -64,7 +64,7 @@ func newPipelineDeclareCmd(out io.Writer) *cobra.Command {
 	o := new(pipelineDeclareOptions)
 	cmd := &cobra.Command{
 		Use:     "declare",
-		Short:   "Declare or update a Merkely pipeline",
+		Short:   "Declare or update a Kosli pipeline",
 		Long:    pipelineDeclareDesc,
 		Example: pipelineDeclareExample,
 		Args:    NoArgs,
