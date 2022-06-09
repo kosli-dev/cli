@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -58,6 +59,15 @@ type SnapshotType struct {
 	Type string `json:"type"`
 }
 
+type ArtifactJsonOut struct {
+	Commit       string `json:"commit"`
+	CommitUrl    string `json:"commit-url"`
+	Image        string `json:"image"`
+	Sha256       string `json:"sha256"`
+	Replicas     int    `json:"replicas"`
+	RunningSince string `json:"running-since"`
+}
+
 func snapshotLs(out io.Writer, o *environmentLsOptions, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, args[0])
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
@@ -68,8 +78,7 @@ func snapshotLs(out io.Writer, o *environmentLsOptions, args []string) error {
 	}
 
 	if o.json {
-		fmt.Println(response.Body)
-		return nil
+		return showJson(response)
 	}
 
 	var snapshotType SnapshotType
@@ -79,14 +88,42 @@ func snapshotLs(out io.Writer, o *environmentLsOptions, args []string) error {
 	}
 
 	if snapshotType.Type == "K8S" || snapshotType.Type == "ECS" {
-		return showK8sEcs(response)
+		return showK8sEcsList(response)
 	} else if snapshotType.Type == "server" {
-		return showServer(response)
+		return showServerList(response)
 	}
 	return nil
 }
 
-func showK8sEcs(response *requests.HTTPResponse) error {
+func showJson(response *requests.HTTPResponse) error {
+	var snapshot Snapshot
+	err := json.Unmarshal([]byte(response.Body), &snapshot)
+	if err != nil {
+		return err
+	}
+	var result []ArtifactJsonOut
+	for _, artifact := range snapshot.Artifacts {
+		var artifactJsonOut ArtifactJsonOut
+		artifactJsonOut.Commit = "xxx"
+		artifactJsonOut.CommitUrl = "zzz"
+		artifactJsonOut.Image = artifact.Name
+		artifactJsonOut.Sha256 = artifact.Sha256
+		artifactJsonOut.Replicas = len(artifact.CreationTimestamp)
+		sort.Slice(artifact.CreationTimestamp, func(i, j int) bool {
+			return artifact.CreationTimestamp[i] < artifact.CreationTimestamp[j]
+		})
+		oldestTimestamp := artifact.CreationTimestamp[0]
+		artifactJsonOut.RunningSince = time.Unix(oldestTimestamp, 0).Format(time.RFC3339)
+		result = append(result, artifactJsonOut)
+	}
+
+	res, err := json.MarshalIndent(result, "", "  ")
+	fmt.Println(string(res))
+
+	return nil
+}
+
+func showK8sEcsList(response *requests.HTTPResponse) error {
 	var snapshot Snapshot
 	err := json.Unmarshal([]byte(response.Body), &snapshot)
 	if err != nil {
@@ -121,7 +158,7 @@ func showK8sEcs(response *requests.HTTPResponse) error {
 	return nil
 }
 
-func showServer(response *requests.HTTPResponse) error {
+func showServerList(response *requests.HTTPResponse) error {
 	var snapshot Snapshot
 	err := json.Unmarshal([]byte(response.Body), &snapshot)
 	if err != nil {
