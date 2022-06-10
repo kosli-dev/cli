@@ -96,9 +96,9 @@ func snapshotLs(out io.Writer, o *environmentLsOptions, args []string) error {
 	}
 
 	if snapshotType.Type == "K8S" || snapshotType.Type == "ECS" {
-		return showK8sEcsList(response)
+		return showK8sEcsList(response, o)
 	} else if snapshotType.Type == "server" {
-		return showServerList(response)
+		return showServerList(response, o)
 	}
 	return nil
 }
@@ -137,7 +137,7 @@ func showJson(response *requests.HTTPResponse) error {
 	return nil
 }
 
-func showK8sEcsList(response *requests.HTTPResponse) error {
+func showK8sEcsList(response *requests.HTTPResponse, o *environmentLsOptions) error {
 	var snapshot Snapshot
 	err := json.Unmarshal([]byte(response.Body), &snapshot)
 	if err != nil {
@@ -155,19 +155,23 @@ func showK8sEcsList(response *requests.HTTPResponse) error {
 		since := time.Unix(artifact.CreationTimestamp[0], 0).Format(time.RFC3339)
 		artifactNameSplit := strings.Split(artifact.Name, ":")
 		artifactName := artifactNameSplit[0]
-		if len(artifactName) > 40 {
+		if len(artifactName) > 40 && !o.long {
 			artifactName = artifactName[:18] + "..." + artifactName[len(artifactName)-19:]
 		}
 		artifactTag := ""
 		if len(artifactNameSplit) > 1 {
 			artifactTag = artifactNameSplit[1]
-			if len(artifactTag) > 10 {
+			if len(artifactTag) > 10 && !o.long {
 				artifactTag = artifactTag[:10]
 			}
 		}
 		shortSha := ""
 		if len(artifact.Sha256) == 64 {
-			shortSha = artifact.Sha256[:7] + "..." + artifact.Sha256[64-7:]
+			if o.long {
+				shortSha = artifact.Sha256
+			} else {
+				shortSha = artifact.Sha256[:7] + "..." + artifact.Sha256[64-7:]
+			}
 		}
 		fmt.Printf(formatStringLine, "xxxx", artifactName, artifactTag, shortSha, since, len(artifact.CreationTimestamp))
 	}
@@ -175,7 +179,7 @@ func showK8sEcsList(response *requests.HTTPResponse) error {
 	return nil
 }
 
-func showServerList(response *requests.HTTPResponse) error {
+func showServerList(response *requests.HTTPResponse, o *environmentLsOptions) error {
 	var snapshot Snapshot
 	err := json.Unmarshal([]byte(response.Body), &snapshot)
 	if err != nil {
@@ -192,12 +196,16 @@ func showServerList(response *requests.HTTPResponse) error {
 		}
 		since := time.Unix(artifact.CreationTimestamp[0], 0).Format(time.RFC3339)
 		artifactName := artifact.Name
-		if len(artifactName) > 40 {
+		if len(artifactName) > 40 && !o.long {
 			artifactName = artifactName[:18] + "..." + artifactName[len(artifactName)-19:]
 		}
 		shortSha := ""
 		if len(artifact.Sha256) == 64 {
-			shortSha = artifact.Sha256[:7] + "..." + artifact.Sha256[64-7:]
+			if o.long {
+				shortSha = artifact.Sha256
+			} else {
+				shortSha = artifact.Sha256[:7] + "..." + artifact.Sha256[64-7:]
+			}
 		}
 		fmt.Printf(formatStringLine, "xxxx", artifactName, shortSha, since, artifact.Annotation.Now)
 	}
