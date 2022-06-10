@@ -41,7 +41,7 @@ func PushDockerImage(imageName string) error {
 	}
 
 	authConfig := types.AuthConfig{
-		ServerAddress: "http://localhost:5000/",
+		ServerAddress: "http://localhost:5001/",
 	}
 	authConfigBytes, _ := json.Marshal(authConfig)
 	authConfigEncoded := base64.URLEncoding.EncodeToString(authConfigBytes)
