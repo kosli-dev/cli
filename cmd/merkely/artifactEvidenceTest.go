@@ -24,7 +24,7 @@ type testEvidenceOptions struct {
 
 const testEvidenceExample = `
 # report a JUnit test evidence about a file artifact:
-merkely pipeline artifact report evidence test FILE.tgz \
+kosli pipeline artifact report evidence test FILE.tgz \
 	--artifact-type file \
 	--evidence-type yourEvidenceType \
 	--pipeline yourPipelineName \
@@ -34,7 +34,7 @@ merkely pipeline artifact report evidence test FILE.tgz \
 	--results-dir yourFolderWithJUnitResults
 
 # report a JUnit test evidence about an artifact using an available Sha256 digest:
-merkely pipeline artifact report evidence test \
+kosli pipeline artifact report evidence test \
 	--sha256 yourSha256 \
 	--evidence-type yourEvidenceType \
 	--pipeline yourPipelineName \

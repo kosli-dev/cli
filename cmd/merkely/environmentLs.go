@@ -53,7 +53,7 @@ func (o *environmentLsOptions) run(out io.Writer, args []string) error {
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
 
 	if err != nil {
-		return fmt.Errorf("merkely server %s is unresponsive", global.Host)
+		return fmt.Errorf("kosli server %s is unresponsive", global.Host)
 	}
 
 	if o.json {

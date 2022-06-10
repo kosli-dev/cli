@@ -41,7 +41,7 @@ func (o *statusOptions) run(out io.Writer) error {
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", "", global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
 	if err != nil {
 		if o.assert {
-			return fmt.Errorf("merkely server %s is unresponsive", global.Host)
+			return fmt.Errorf("kosli server %s is unresponsive", global.Host)
 		}
 		_, outErr = out.Write([]byte("Down\n"))
 	} else {

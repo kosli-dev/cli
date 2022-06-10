@@ -21,7 +21,7 @@ export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
-merkely environment report ecs yourEnvironmentName \
+kosli environment report ecs yourEnvironmentName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 `

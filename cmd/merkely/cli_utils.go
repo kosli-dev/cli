@@ -26,7 +26,7 @@ const unknown = "Unknown"
 // supportedCIs the set of CI tools that are supported for defaulting
 var supportedCIs = []string{bitbucket, github, teamcity}
 
-// ciTemplates a map of merkely flags and corresponding default templates in supported CI tools
+// ciTemplates a map of kosli flags and corresponding default templates in supported CI tools
 var ciTemplates = map[string]map[string]string{
 	github: {
 		"git-commit": "${GITHUB_SHA}",

@@ -1,7 +1,7 @@
 ---
-title: Merkely Commands
+title: Kosli Commands
 bookCollapseSection: true
 weight: 3
 ---
 
-# Merkely Client Reference
+# Kosli Client Reference

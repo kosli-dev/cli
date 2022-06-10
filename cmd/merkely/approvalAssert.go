@@ -16,7 +16,7 @@ Assert if an artifact in Kosli has been approved for deployment. Exits with non-
 
 const approvalAssertExample = `
 # Assert that a file tyoe artifact has been approved
-merkely pipeline approval assert FILE.tgz \
+kosli pipeline approval assert FILE.tgz \
 	--api-token yourAPIToken \
 	--artifact-type file \
 	--owner yourOrgName \
@@ -24,11 +24,11 @@ merkely pipeline approval assert FILE.tgz \
 
 
 # Assert that an artifact with a provided fingerprint (sha256) has been approved
-	merkely pipeline approval assert \
-		--api-token yourAPIToken \
-		--owner yourOrgName \
-		--pipeline yourPipelineName \
-		--sha256 yourSha256
+kosli pipeline approval assert \
+	--api-token yourAPIToken \
+	--owner yourOrgName \
+	--pipeline yourPipelineName \
+	--sha256 yourSha256
 `
 
 type approvalAssertOptions struct {

@@ -87,15 +87,15 @@ func MereklyGenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender,
 		if _, err := io.WriteString(f, filePrepender(filename)); err != nil {
 			return err
 		}
-		if err := MerkelyGenMarkdownCustom(cmd, f, linkHandler); err != nil {
+		if err := KosliGenMarkdownCustom(cmd, f, linkHandler); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-// MerkelyGenMarkdownCustom creates custom markdown output.
-func MerkelyGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string) string) error {
+// KosliGenMarkdownCustom creates custom markdown output.
+func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string) string) error {
 	cmd.InitDefaultHelpCmd()
 	cmd.InitDefaultHelpFlag()
 

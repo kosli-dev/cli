@@ -51,7 +51,7 @@ kosli pipeline approval report [ARTIFACT-NAME-OR-PATH] [flags]
 
 # Report that a file type artifact has been approved for deployment.
 # The approval is for the last 5 git commits
-merkely pipeline approval report FILE.tgz \
+kosli pipeline approval report FILE.tgz \
 	--api-token yourAPIToken \
 	--artifact-type file \
 	--description "An optional description for the approval" \
@@ -62,7 +62,7 @@ merkely pipeline approval report FILE.tgz \
 
 # Report that an artifact with a provided fingerprint (sha256) has been approved for deployment.
 # The approval is for the last 5 git commits
-merkely pipeline approval report \
+kosli pipeline approval report \
 	--api-token yourAPIToken \
 	--description "An optional description for the approval" \
 	--newest-commit $(git rev-parse HEAD) \

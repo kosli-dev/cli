@@ -5,26 +5,26 @@ weight: 20
 
 # Report Artifact
 
-Every time you build an **artifact** - in our case a Docker image - you can store (and easily access) all the information you have about it in Merkely. We call it *reporting an **artifact***.
+Every time you build an **artifact** - in our case a Docker image - you can store (and easily access) all the information you have about it in Kosli. We call it *reporting an **artifact***.
 
-Artifacts in Merkely are reported to Merkely **Pipelines**. You can find the **Pipelines** section just below **Environments**.
+Artifacts in Kosli are reported to Kosli **Pipelines**. You can find the **Pipelines** section just below **Environments**.
 
 ## Create a pipeline
 
-To report an **artifact** from your GitHub workflow you need to create a Merkely **pipeline** first. Every time your workflow builds a new version of Docker image it will be reported to the same Merkely **pipeline**.
-Merkely **pipeline** has to exist before you can start reporting **artifacts** to it, and you can make the creation of a **pipeline** a part of the build workflow. (It's safe - rerunning **pipeline** creation command won't erase existing entries.)
-In this guide we're creating a Merkely **pipeline** called **github-k8s-demo** and that's the name you'll see in the code.
+To report an **artifact** from your GitHub workflow you need to create a Kosli **pipeline** first. Every time your workflow builds a new version of Docker image it will be reported to the same Kosli **pipeline**.
+Kosli **pipeline** has to exist before you can start reporting **artifacts** to it, and you can make the creation of a **pipeline** a part of the build workflow. (It's safe - rerunning **pipeline** creation command won't erase existing entries.)
+In this guide we're creating a Kosli **pipeline** called **github-k8s-demo** and that's the name you'll see in the code.
 
-As it was in the case of reporting environment, we need to download Merkely CLI in the workflow, to be able to run the commands.
+As it was in the case of reporting environment, we need to download Kosli CLI in the workflow, to be able to run the commands.
 
 ## Report an artifact
 
-Here is a complete workflow that takes care of CLI download, **pipeline** creation and docker image build and reports it to the Merkely **pipeline**.
+Here is a complete workflow that takes care of CLI download, **pipeline** creation and docker image build and reports it to the MerKoslikely **pipeline**.
 
 Remember:
 * `K8S_CLUSTER_NAME`, `K8S_GCP_ZONE` and `NAMESPACE` should be the same you used in **Report Environment** step
 * `IMAGE` should contain your dockerhub username (instead of our colleague's Ewelina username). You also need to use the correct username in *Login to hub.docker.com* step
-* `MERKELY_OWNER` should be the same your Merkely username.
+* `MERKELY_OWNER` should be the same your Kosli username.
 
 
 In the workflow you'll find comments about specific parts of it.
@@ -44,7 +44,7 @@ env:
   # name of the docker image to build, replace with the name
   # that will contain your dockerhub id
   IMAGE: ewelinawilkosz/github-k8s-demo
-  # merkely variables - will be picked up by commands
+  # kosli variables - will be picked up by commands
   MERKELY_OWNER: demo
   MERKELY_PIPELINE: github-k8s-demo
   MERKELY_ENVIRONMENT: github-k8s-test
@@ -95,7 +95,7 @@ jobs:
         tags: ${{ env.TAGGED_IMAGE }}
         no-cache: true
 
-    # the digest will be passed to merkely commands using 'sha256' flags
+    # the digest will be passed to kosli commands using 'sha256' flags
     - name: Make the image digest available for following steps
       id: digest-prep
       run: |
@@ -103,26 +103,26 @@ jobs:
         echo "DIGEST=$ARTIFACT_SHA" >> ${GITHUB_ENV}
         echo ::set-output name=image-digest::${ARTIFACT_SHA}
 
-    - name: Download Merkely cli client
-      id: download-merkely-cli
+    - name: Download Kosli cli client
+      id: download-kosli-cli
       run: |
         wget https://github.com/merkely-development/cli/releases/download/v${{ env.MERKELY_CLI_VERSION }}/merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz
-        tar -xf merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz merkely
+        tar -xf merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz kosli
 
-    - name: Declare pipeline in Merkely
+    - name: Declare pipeline in Kosli
       env:
         MERKELY_API_TOKEN: ${{ secrets.MERKELY_API_TOKEN }}
       run:
-        ./merkely pipeline declare
-          --description "Merkely server"
+        ./kosli pipeline declare
+          --description "Kosli server"
           --pipeline ${{ env.MERKELY_PIPELINE }}
           --template "artifact"
 
-    - name: Report Docker image in Merkely
+    - name: Report Docker image in Kosli
       env:
         MERKELY_API_TOKEN: ${{ secrets.MERKELY_API_TOKEN }}
       run:
-        ./merkely pipeline artifact report creation ${{ env.TAGGED_IMAGE }}
+        ./kosli pipeline artifact report creation ${{ env.TAGGED_IMAGE }}
           --sha256 ${{ env.DIGEST }}
 
   # deploy review environment
@@ -160,7 +160,7 @@ jobs:
         kubectl apply -f k8s/deployment.yaml -n ${{ env.NAMESPACE }}
 ```
 
-Once the workflow runs succesfully, you should see it reported in Merkely **github-k8s-demo pipeline**:
+Once the workflow runs succesfully, you should see it reported in Kosli **github-k8s-demo pipeline**:
 
 ![Compliant artifact with no deployments](/images/artifact-list.png)
 
@@ -168,7 +168,7 @@ With more details once you click on it:
 
 ![Compliant artifact with no deployments](/images/artifact-no-deployment.png)
 
-You will also notice a change in the state of your **github-k8s-test** environment (if the environment reporting workflow run successfully): it is still incompliant, but now the artifact running there has provenance (you can see the name of Merkely **pipeline: github-k8s-demo** that the artifact was reported to, in a grey, pill shaped field) so we can check how it was build:
+You will also notice a change in the state of your **github-k8s-test** environment (if the environment reporting workflow run successfully): it is still incompliant, but now the artifact running there has provenance (you can see the name of Kosli **pipeline: github-k8s-demo** that the artifact was reported to, in a grey, pill shaped field) so we can check how it was build:
 
 ![Incompliant environment, artifact with provenance](/images/env-provenance.png)
 

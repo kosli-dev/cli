@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// ServerEnvRequest represents the PUT request body to be sent to merkely from a server
+// ServerEnvRequest represents the PUT request body to be sent to kosli from a server
 type ServerEnvRequest struct {
 	Artifacts []*ServerData `json:"artifacts"`
 	Type      string        `json:"type"`

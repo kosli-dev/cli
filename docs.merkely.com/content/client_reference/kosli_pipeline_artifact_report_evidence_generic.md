@@ -50,7 +50,7 @@ kosli pipeline artifact report evidence generic [ARTIFACT-NAME-OR-PATH] [flags]
 ```shell
 
 # report a generic evidence about a pre-built docker image:
-merkely pipeline artifact report evidence generic yourDockerImageName \
+kosli pipeline artifact report evidence generic yourDockerImageName \
 	--api-token yourAPIToken \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
@@ -59,7 +59,7 @@ merkely pipeline artifact report evidence generic yourDockerImageName \
 	--pipeline yourPipelineName 
 
 # report a generic evidence about a directory type artifact:
-merkely pipeline artifact report evidence generic /path/to/your/dir \
+kosli pipeline artifact report evidence generic /path/to/your/dir \
 	--api-token yourAPIToken \
 	--artifact-type dir \
 	--build-url https://exampleci.com \
@@ -69,7 +69,7 @@ merkely pipeline artifact report evidence generic /path/to/your/dir \
 
 
 # report a generic evidence about an artifact with a provided fingerprint (sha256)
-merkely pipeline artifact report evidence generic \
+kosli pipeline artifact report evidence generic \
 	--api-token yourAPIToken \
 	--build-url https://exampleci.com \	
 	--evidence-type yourEvidenceType \
