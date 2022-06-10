@@ -364,5 +364,5 @@ func prettyJson(rawJson string) (string, error) {
 	if error != nil {
 		return "", error
 	}
-	return string(prettyJSON.Bytes()), nil
+	return prettyJSON.String(), nil
 }

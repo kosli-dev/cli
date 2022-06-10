@@ -78,7 +78,7 @@ func snapshotLs(out io.Writer, o *environmentLsOptions, args []string) error {
 	}
 
 	if o.json {
-		if o.json {
+		if o.long {
 			pj, err := prettyJson(response.Body)
 			if err != nil {
 				return err
@@ -111,12 +111,15 @@ func showJson(response *requests.HTTPResponse) error {
 	}
 	var result []ArtifactJsonOut
 	for _, artifact := range snapshot.Artifacts {
+		if artifact.Annotation.Now == 0 {
+			continue
+		}
 		var artifactJsonOut ArtifactJsonOut
 		artifactJsonOut.Commit = "xxx"
 		artifactJsonOut.CommitUrl = "zzz"
 		artifactJsonOut.Image = artifact.Name
 		artifactJsonOut.Sha256 = artifact.Sha256
-		artifactJsonOut.Replicas = len(artifact.CreationTimestamp)
+		artifactJsonOut.Replicas = artifact.Annotation.Now
 		sort.Slice(artifact.CreationTimestamp, func(i, j int) bool {
 			return artifact.CreationTimestamp[i] < artifact.CreationTimestamp[j]
 		})
@@ -146,6 +149,9 @@ func showK8sEcsList(response *requests.HTTPResponse) error {
 	fmt.Printf(formatStringHead, "COMMIT", "IMAGE", "TAG", "SHA256", "SINCE", "REPLICAS")
 
 	for _, artifact := range snapshot.Artifacts {
+		if artifact.Annotation.Now == 0 {
+			continue
+		}
 		since := time.Unix(artifact.CreationTimestamp[0], 0).Format(time.RFC3339)
 		artifactNameSplit := strings.Split(artifact.Name, ":")
 		artifactName := artifactNameSplit[0]
@@ -181,6 +187,9 @@ func showServerList(response *requests.HTTPResponse) error {
 	fmt.Printf(formatStringHead, "COMMIT", "IMAGE", "SHA256", "SINCE", "REPLICAS")
 
 	for _, artifact := range snapshot.Artifacts {
+		if artifact.Annotation.Now == 0 {
+			continue
+		}
 		since := time.Unix(artifact.CreationTimestamp[0], 0).Format(time.RFC3339)
 		artifactName := artifact.Name
 		if len(artifactName) > 40 {
@@ -190,7 +199,7 @@ func showServerList(response *requests.HTTPResponse) error {
 		if len(artifact.Sha256) == 64 {
 			shortSha = artifact.Sha256[:7] + "..." + artifact.Sha256[64-7:]
 		}
-		fmt.Printf(formatStringLine, "xxxx", artifactName, shortSha, since, len(artifact.CreationTimestamp))
+		fmt.Printf(formatStringLine, "xxxx", artifactName, shortSha, since, artifact.Annotation.Now)
 	}
 
 	return nil
