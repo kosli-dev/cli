@@ -57,7 +57,11 @@ func (o *environmentLsOptions) run(out io.Writer, args []string) error {
 	}
 
 	if o.json {
-		fmt.Println(response.Body)
+		pj, err := prettyJson(response.Body)
+		if err != nil {
+			return err
+		}
+		fmt.Println(pj)
 		return nil
 	}
 

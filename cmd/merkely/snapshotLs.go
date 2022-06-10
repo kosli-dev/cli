@@ -78,6 +78,14 @@ func snapshotLs(out io.Writer, o *environmentLsOptions, args []string) error {
 	}
 
 	if o.json {
+		if o.json {
+			pj, err := prettyJson(response.Body)
+			if err != nil {
+				return err
+			}
+			fmt.Println(pj)
+			return nil
+		}
 		return showJson(response)
 	}
 

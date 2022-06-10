@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -354,4 +355,14 @@ func ValidateRegisteryFlags(cmd *cobra.Command, o *fingerprintOptions) error {
 func ErrorAfterPrintingHelp(cmd *cobra.Command, errMsg string) error {
 	fmt.Println("Use: " + cmd.UseLine())
 	return fmt.Errorf(errMsg)
+}
+
+// Convert json to nice printable format
+func prettyJson(rawJson string) (string, error) {
+	var prettyJSON bytes.Buffer
+	error := json.Indent(&prettyJSON, []byte(rawJson), "", "  ")
+	if error != nil {
+		return "", error
+	}
+	return string(prettyJSON.Bytes()), nil
 }
