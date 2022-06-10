@@ -1,19 +1,19 @@
 ---
-title: "merkely environment report lambda"
+title: "kosli environment report lambda"
 ---
 
-## merkely environment report lambda
+## kosli environment report lambda
 
-Report artifact from AWS Lambda to Merkely.
+Report artifact from AWS Lambda to Kosli.
 
 ### Synopsis
 
 
-Report the artifact deployed in an AWS Lambda and its digest to Merkely. 
+Report the artifact deployed in an AWS Lambda and its digest to Kosli. 
 
 
 ```shell
-merkely environment report lambda env-name [flags]
+kosli environment report lambda env-name [flags]
 ```
 
 ### Flags
@@ -30,12 +30,12 @@ merkely environment report lambda env-name [flags]
 ### Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
-|    -a, --api-token string  |  The merkely API token.  |
-|    -c, --config-file string  |  [optional] The merkely config file path. (default "merkely")  |
-|    -D, --dry-run  |  Whether to run in dry-run mode. When enabled, data is not sent to Merkely and the CLI exits with 0 exit code regardless of errors.  |
-|    -H, --host string  |  The merkely endpoint. (default "https://app.merkely.com")  |
+|    -a, --api-token string  |  The Kosli API token.  |
+|    -c, --config-file string  |  [optional] The Kosli config file path. (default "merkely")  |
+|    -D, --dry-run  |  Whether to run in dry-run mode. When enabled, data is not sent to Kosli and the CLI exits with 0 exit code regardless of errors.  |
+|    -H, --host string  |  The Kosli endpoint. (default "https://app.merkely.com")  |
 |    -r, --max-api-retries int  |  How many times should API calls be retried when the API host is not reachable. (default 3)  |
-|    -o, --owner string  |  The merkely user or organization.  |
+|    -o, --owner string  |  The Kosli user or organization.  |
 |    -v, --verbose  |  Print verbose logs to stdout.  |
 
 
@@ -48,13 +48,13 @@ export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
-merkely environment report lambda myEnvironment \
+kosli environment report lambda myEnvironment \
 	--function-name yourFunctionName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
 # report what is running in a specific version of an AWS Lambda function (AWS auth provided in flags):
-merkely environment report lambda myEnvironment \
+kosli environment report lambda myEnvironment \
 	--function-name yourFunctionName \
 	--function-version yourFunctionVersion \
 	--aws-key-id yourAWSAccessKeyID \
