@@ -1,20 +1,20 @@
 ---
-title: "merkely environment report k8s"
+title: "kosli environment report k8s"
 ---
 
-## merkely environment report k8s
+## kosli environment report k8s
 
-Report images data from specific namespace(s) or entire cluster to Merkely.
+Report images data from specific namespace(s) or entire cluster to Kosli.
 
 ### Synopsis
 
 
 List the artifacts deployed in the k8s environment and their digests 
-and report them to Merkely. 
+and report them to Kosli. 
 
 
 ```shell
-merkely environment report k8s [-n namespace | -x namespace]... [-k /path/to/kube/config] [-i infrastructure-identifier] env-name [flags]
+kosli environment report k8s [-n namespace | -x namespace]... [-k /path/to/kube/config] [-i infrastructure-identifier] env-name [flags]
 ```
 
 ### Flags
@@ -29,12 +29,12 @@ merkely environment report k8s [-n namespace | -x namespace]... [-k /path/to/kub
 ### Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
-|    -a, --api-token string  |  The merkely API token.  |
-|    -c, --config-file string  |  [optional] The merkely config file path. (default "merkely")  |
-|    -D, --dry-run  |  Whether to run in dry-run mode. When enabled, data is not sent to Merkely and the CLI exits with 0 exit code regardless of errors.  |
-|    -H, --host string  |  The merkely endpoint. (default "https://app.merkely.com")  |
+|    -a, --api-token string  |  The Kosli API token.  |
+|    -c, --config-file string  |  [optional] The Kosli config file path. (default "merkely")  |
+|    -D, --dry-run  |  Whether to run in dry-run mode. When enabled, data is not sent to Kosli and the CLI exits with 0 exit code regardless of errors.  |
+|    -H, --host string  |  The Kosli endpoint. (default "https://app.merkely.com")  |
 |    -r, --max-api-retries int  |  How many times should API calls be retried when the API host is not reachable. (default 3)  |
-|    -o, --owner string  |  The merkely user or organization.  |
+|    -o, --owner string  |  The Kosli user or organization.  |
 |    -v, --verbose  |  Print verbose logs to stdout.  |
 
 
@@ -43,7 +43,7 @@ merkely environment report k8s [-n namespace | -x namespace]... [-k /path/to/kub
 ```shell
 
 # report what is running in an entire cluster using kubeconfig at $HOME/.kube/config:
-merkely environment report k8s yourEnvironmentName \
+kosli environment report k8s yourEnvironmentName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
@@ -52,22 +52,22 @@ merkely environment report k8s yourEnvironmentName \
 export MERKELY_API_TOKEN=yourAPIToken
 export MERKELY_OWNER=yourOrgName
 
-merkely environment report k8s yourEnvironmentName
+kosli environment report k8s yourEnvironmentName
 
 # report what is running in an entire cluster excluding some namespaces using kubeconfig at $HOME/.kube/config:
-merkely environment report k8s yourEnvironmentName \
+kosli environment report k8s yourEnvironmentName \
     --exclude-namespace kube-system,utilities \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
 # report what is running in a given namespace in the cluster using kubeconfig at $HOME/.kube/config:
-merkely environment report k8s yourEnvironmentName \
+kosli environment report k8s yourEnvironmentName \
 	--namespace your-namespace \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
 # report what is running in a cluster using kubeconfig at a custom path:
-merkely environment report k8s yourEnvironmentName \
+kosli environment report k8s yourEnvironmentName \
 	--kubeconfig /path/to/kube/config \
 	--api-token yourAPIToken \
 	--owner yourOrgName
