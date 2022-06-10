@@ -55,10 +55,6 @@ type Snapshot struct {
 	Compliant bool
 }
 
-type SnapshotType struct {
-	Type string `json:"type"`
-}
-
 type ArtifactJsonOut struct {
 	Commit       string `json:"commit"`
 	CommitUrl    string `json:"commit-url"`
@@ -78,32 +74,22 @@ func snapshotLs(out io.Writer, o *environmentLsOptions, args []string) error {
 	}
 
 	if o.json {
-		if o.long {
-			pj, err := prettyJson(response.Body)
-			if err != nil {
-				return err
-			}
-			fmt.Println(pj)
-			return nil
-		}
-		return showJson(response)
+		return showJson(response, o)
 	}
 
-	var snapshotType SnapshotType
-	err = json.Unmarshal([]byte(response.Body), &snapshotType)
-	if err != nil {
-		return err
-	}
-
-	if snapshotType.Type == "K8S" || snapshotType.Type == "ECS" {
-		return showK8sEcsList(response, o)
-	} else if snapshotType.Type == "server" {
-		return showServerList(response, o)
-	}
-	return nil
+	return showList(response, o)
 }
 
-func showJson(response *requests.HTTPResponse) error {
+func showJson(response *requests.HTTPResponse, o *environmentLsOptions) error {
+	if o.long {
+		pj, err := prettyJson(response.Body)
+		if err != nil {
+			return err
+		}
+		fmt.Println(pj)
+		return nil
+	}
+
 	var snapshot Snapshot
 	err := json.Unmarshal([]byte(response.Body), &snapshot)
 	if err != nil {
@@ -137,16 +123,26 @@ func showJson(response *requests.HTTPResponse) error {
 	return nil
 }
 
-func showK8sEcsList(response *requests.HTTPResponse, o *environmentLsOptions) error {
+func showList(response *requests.HTTPResponse, o *environmentLsOptions) error {
 	var snapshot Snapshot
 	err := json.Unmarshal([]byte(response.Body), &snapshot)
 	if err != nil {
 		return err
 	}
 
-	formatStringHead := "%-7s  %-40s  %-10s  %-17s  %-25s  %-10s\n"
-	formatStringLine := "%-7s  %-40s  %-10s  %-17s  %-25s  %-10d\n"
-	fmt.Printf(formatStringHead, "COMMIT", "IMAGE", "TAG", "SHA256", "SINCE", "REPLICAS")
+	var hasType bool
+	var formatStringLine string
+	if snapshot.Type == "K8S" || snapshot.Type == "ECS" {
+		hasType = true
+		formatStringHead := "%-7s  %-40s  %-10s  %-17s  %-25s  %-10s\n"
+		formatStringLine = "%-7s  %-40s  %-10s  %-17s  %-25s  %-10d\n"
+		fmt.Printf(formatStringHead, "COMMIT", "IMAGE", "TAG", "SHA256", "SINCE", "REPLICAS")
+	} else if snapshot.Type == "server" {
+		hasType = false
+		formatStringHead := "%-7s  %-40s  %-17s  %-25s  %-10s\n"
+		formatStringLine = "%-7s  %-40s %s  %-17s  %-25s  %-10d\n"
+		fmt.Printf(formatStringHead, "COMMIT", "IMAGE", "SHA256", "SINCE", "REPLICAS")
+	}
 
 	for _, artifact := range snapshot.Artifacts {
 		if artifact.Annotation.Now == 0 {
@@ -159,10 +155,12 @@ func showK8sEcsList(response *requests.HTTPResponse, o *environmentLsOptions) er
 			artifactName = artifactName[:18] + "..." + artifactName[len(artifactName)-19:]
 		}
 		artifactTag := ""
-		if len(artifactNameSplit) > 1 {
-			artifactTag = artifactNameSplit[1]
-			if len(artifactTag) > 10 && !o.long {
-				artifactTag = artifactTag[:10]
+		if hasType {
+			if len(artifactNameSplit) > 1 {
+				artifactTag = artifactNameSplit[1]
+				if len(artifactTag) > 10 && !o.long {
+					artifactTag = artifactTag[:10]
+				}
 			}
 		}
 		shortSha := ""
@@ -174,40 +172,6 @@ func showK8sEcsList(response *requests.HTTPResponse, o *environmentLsOptions) er
 			}
 		}
 		fmt.Printf(formatStringLine, "xxxx", artifactName, artifactTag, shortSha, since, len(artifact.CreationTimestamp))
-	}
-
-	return nil
-}
-
-func showServerList(response *requests.HTTPResponse, o *environmentLsOptions) error {
-	var snapshot Snapshot
-	err := json.Unmarshal([]byte(response.Body), &snapshot)
-	if err != nil {
-		return err
-	}
-
-	formatStringHead := "%-7s  %-40s  %-17s  %-25s  %-10s\n"
-	formatStringLine := "%-7s  %-40s  %-17s  %-25s  %-10d\n"
-	fmt.Printf(formatStringHead, "COMMIT", "IMAGE", "SHA256", "SINCE", "REPLICAS")
-
-	for _, artifact := range snapshot.Artifacts {
-		if artifact.Annotation.Now == 0 {
-			continue
-		}
-		since := time.Unix(artifact.CreationTimestamp[0], 0).Format(time.RFC3339)
-		artifactName := artifact.Name
-		if len(artifactName) > 40 && !o.long {
-			artifactName = artifactName[:18] + "..." + artifactName[len(artifactName)-19:]
-		}
-		shortSha := ""
-		if len(artifact.Sha256) == 64 {
-			if o.long {
-				shortSha = artifact.Sha256
-			} else {
-				shortSha = artifact.Sha256[:7] + "..." + artifact.Sha256[64-7:]
-			}
-		}
-		fmt.Printf(formatStringLine, "xxxx", artifactName, shortSha, since, artifact.Annotation.Now)
 	}
 
 	return nil
