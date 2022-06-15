@@ -132,20 +132,7 @@ func showList(response *requests.HTTPResponse, o *environmentLsOptions) error {
 		return err
 	}
 
-	var hasType bool
-	var formatStringLine string
-	if snapshot.Type == "K8S" || snapshot.Type == "ECS" {
-		hasType = true
-		formatStringHead := "%-7s  %-40s  %-10s  %-17s  %-25s  %-10s\n"
-		formatStringLine = "%-7s  %-40s  %-10s  %-17s  %-25s  %-10d\n"
-		fmt.Printf(formatStringHead, "COMMIT", "IMAGE", "TAG", "SHA256", "SINCE", "REPLICAS")
-	} else if snapshot.Type == "server" {
-		hasType = false
-		formatStringHead := "%-7s  %-40s  %-17s  %-25s  %-10s\n"
-		formatStringLine = "%-7s  %-40s %s  %-17s  %-25s  %-10d\n"
-		fmt.Printf(formatStringHead, "COMMIT", "IMAGE", "SHA256", "SINCE", "REPLICAS")
-	}
-
+	hasType, formatStringLine := getFormatStrings(&snapshot)
 	for _, artifact := range snapshot.Artifacts {
 		if artifact.Annotation.Now == 0 {
 			continue
@@ -186,4 +173,23 @@ func showList(response *requests.HTTPResponse, o *environmentLsOptions) error {
 	}
 
 	return nil
+}
+
+func getFormatStrings(snapshot *Snapshot) (bool, string) {
+	var hasType bool
+	var formatStringHead string
+	var formatStringLine string
+	if snapshot.Type == "K8S" || snapshot.Type == "ECS" {
+		hasType = true
+		formatStringHead = "%-7s  %-40s  %-10s  %-17s  %-25s  %-10s\n"
+		formatStringLine = "%-7s  %-40s  %-10s  %-17s  %-25s  %-10d\n"
+		fmt.Printf(formatStringHead, "COMMIT", "IMAGE", "TAG", "SHA256", "SINCE", "REPLICAS")
+	} else if snapshot.Type == "server" {
+		hasType = false
+		formatStringHead = "%-7s  %-40s  %-17s  %-25s  %-10s\n"
+		formatStringLine = "%-7s  %-40s %s  %-17s  %-25s  %-10d\n"
+		fmt.Printf(formatStringHead, "COMMIT", "IMAGE", "SHA256", "SINCE", "REPLICAS")
+	}
+	// TODO: add default handling of unknown snapshot type
+	return hasType, formatStringLine
 }
