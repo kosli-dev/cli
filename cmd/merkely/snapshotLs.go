@@ -132,24 +132,19 @@ func showList(response *requests.HTTPResponse, o *environmentLsOptions) error {
 		return err
 	}
 
-	hasType, formatStringLine := getFormatStrings(&snapshot)
+	hasTag, formatStringLine := getFormatStrings(&snapshot, o.long)
 	for _, artifact := range snapshot.Artifacts {
 		if artifact.Annotation.Now == 0 {
 			continue
 		}
 		since := time.Unix(artifact.CreationTimestamp[0], 0).Format(time.RFC3339)
-		artifactNameSplit := strings.Split(artifact.Name, ":")
-		artifactName := artifactNameSplit[0]
+		artifactName, artifactTag := splitImageName(artifact.Name)
 		if len(artifactName) > 40 && !o.long {
 			artifactName = artifactName[:18] + "..." + artifactName[len(artifactName)-19:]
 		}
-		artifactTag := ""
-		if hasType {
-			if len(artifactNameSplit) > 1 {
-				artifactTag = artifactNameSplit[1]
-				if len(artifactTag) > 10 && !o.long {
-					artifactTag = artifactTag[:10]
-				}
+		if hasTag {
+			if len(artifactTag) > 10 && !o.long {
+				artifactTag = artifactTag[:10]
 			}
 		}
 		shortSha := ""
@@ -175,21 +170,55 @@ func showList(response *requests.HTTPResponse, o *environmentLsOptions) error {
 	return nil
 }
 
-func getFormatStrings(snapshot *Snapshot) (bool, string) {
-	var hasType bool
+func getFormatStrings(snapshot *Snapshot, longOption bool) (bool, string) {
+	var hasTag bool
 	var formatStringHead string
 	var formatStringLine string
+	maxCommitLength := 7
+	maxImageLength := 40
+	maxTagLength := 10
+	maxSha256Length := 17
+
+	if longOption {
+		maxImageLength = 0
+		maxTagLength = 0
+		for _, artifact := range snapshot.Artifacts {
+			artifactName, artifactTag := splitImageName(artifact.Name)
+			if len(artifactName) > maxImageLength {
+				maxImageLength = len(artifactName)
+			}
+			if len(artifactTag) > maxTagLength {
+				maxTagLength = len(artifactTag)
+			}
+		}
+		maxCommitLength = 40
+		maxSha256Length = 64
+	}
+
 	if snapshot.Type == "K8S" || snapshot.Type == "ECS" {
-		hasType = true
-		formatStringHead = "%-7s  %-40s  %-10s  %-17s  %-25s  %-10s\n"
-		formatStringLine = "%-7s  %-40s  %-10s  %-17s  %-25s  %-10d\n"
+		hasTag = true
+		fmt.Println(maxImageLength)
+		formatStringHead = fmt.Sprintf("%%-%ds  %%-%ds  %%-%ds  %%-%ds  %%-25s  %%-10s\n", maxCommitLength, maxImageLength, maxTagLength, maxSha256Length)
+		formatStringLine = fmt.Sprintf("%%-%ds  %%-%ds  %%-%ds  %%-%ds  %%-25s  %%-10d\n", maxCommitLength, maxImageLength, maxTagLength, maxSha256Length)
 		fmt.Printf(formatStringHead, "COMMIT", "IMAGE", "TAG", "SHA256", "SINCE", "REPLICAS")
 	} else if snapshot.Type == "server" {
-		hasType = false
-		formatStringHead = "%-7s  %-40s  %-17s  %-25s  %-10s\n"
-		formatStringLine = "%-7s  %-40s %s  %-17s  %-25s  %-10d\n"
+		hasTag = false
+		formatStringHead = fmt.Sprintf("%%-%ds  %%-%ds  %%-%ds  %%-25s  %%-10s\n", maxCommitLength, maxImageLength, maxSha256Length)
+		formatStringLine = fmt.Sprintf("%%-%ds  %%-%ds %%s %%-%ds  %%-25s  %%-10d\n", maxCommitLength, maxImageLength, maxSha256Length)
 		fmt.Printf(formatStringHead, "COMMIT", "IMAGE", "SHA256", "SINCE", "REPLICAS")
 	}
 	// TODO: add default handling of unknown snapshot type
-	return hasType, formatStringLine
+	return hasTag, formatStringLine
+}
+
+func splitImageName(imageName string) (string, string) {
+	// TODO: properly parse the image name to get tag
+	// https://github.com/cyber-dojo/runner/blob/e98bc280c5349cb2919acecb0dfbfefa1ac4e5c3/src/docker/image_name.rb
+	artifactNameSplit := strings.Split(imageName, ":")
+	artifactName := artifactNameSplit[0]
+	artifactTag := ""
+	if len(artifactNameSplit) > 1 {
+		artifactTag = artifactNameSplit[1]
+	}
+	return artifactName, artifactTag
 }
