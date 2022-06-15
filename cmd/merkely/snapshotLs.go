@@ -40,6 +40,8 @@ type Artifact struct {
 	Compliant         bool
 	Deployments       []int
 	Sha256            string
+	Git_commit        string
+	Commit_url        string
 	CreationTimestamp []int64
 	Pods              map[string]PodContent
 	Annotation        Annotation
@@ -101,8 +103,8 @@ func showJson(response *requests.HTTPResponse, o *environmentLsOptions) error {
 			continue
 		}
 		var artifactJsonOut ArtifactJsonOut
-		artifactJsonOut.Commit = "xxx"
-		artifactJsonOut.CommitUrl = "zzz"
+		artifactJsonOut.Commit = artifact.Git_commit
+		artifactJsonOut.CommitUrl = artifact.Commit_url
 		artifactJsonOut.Image = artifact.Name
 		artifactJsonOut.Sha256 = artifact.Sha256
 		artifactJsonOut.Replicas = artifact.Annotation.Now
@@ -171,7 +173,16 @@ func showList(response *requests.HTTPResponse, o *environmentLsOptions) error {
 				shortSha = artifact.Sha256[:7] + "..." + artifact.Sha256[64-7:]
 			}
 		}
-		fmt.Printf(formatStringLine, "xxxx", artifactName, artifactTag, shortSha, since, len(artifact.CreationTimestamp))
+		gitCommit := "N/A"
+		if artifact.Git_commit != "" {
+			if o.long {
+				gitCommit = artifact.Git_commit
+			} else {
+				gitCommit = artifact.Git_commit[:7]
+			}
+		}
+
+		fmt.Printf(formatStringLine, gitCommit, artifactName, artifactTag, shortSha, since, len(artifact.CreationTimestamp))
 	}
 
 	return nil
