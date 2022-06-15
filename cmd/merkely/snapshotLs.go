@@ -36,12 +36,12 @@ type PodContent struct {
 
 type Artifact struct {
 	Name              string
-	Pipeline_name     string
+	PipelineName      string `json:"pipeline_name"`
 	Compliant         bool
 	Deployments       []int
 	Sha256            string
-	Git_commit        string
-	Commit_url        string
+	GitCommit         string `json:"git_commit"`
+	CommitUrl         string `json:"commit_url"`
 	CreationTimestamp []int64
 	Pods              map[string]PodContent
 	Annotation        Annotation
@@ -51,19 +51,19 @@ type Snapshot struct {
 	Index     int
 	Timestamp float32
 	Type      string `json:"type"`
-	User_id   string
-	User_name string
+	UserId    string `json:"user_id"`
+	UserName  string `json:"user_name"`
 	Artifacts []Artifact
 	Compliant bool
 }
 
 type ArtifactJsonOut struct {
-	Commit       string `json:"commit"`
-	CommitUrl    string `json:"commit-url"`
+	GitCommit    string `json:"git_commit"`
+	CommitUrl    string `json:"commit_url"`
 	Image        string `json:"image"`
 	Sha256       string `json:"sha256"`
 	Replicas     int    `json:"replicas"`
-	RunningSince string `json:"running-since"`
+	RunningSince string `json:"running_since"`
 }
 
 func snapshotLs(out io.Writer, o *environmentLsOptions, args []string) error {
@@ -103,8 +103,8 @@ func showJson(response *requests.HTTPResponse, o *environmentLsOptions) error {
 			continue
 		}
 		var artifactJsonOut ArtifactJsonOut
-		artifactJsonOut.Commit = artifact.Git_commit
-		artifactJsonOut.CommitUrl = artifact.Commit_url
+		artifactJsonOut.GitCommit = artifact.GitCommit
+		artifactJsonOut.CommitUrl = artifact.CommitUrl
 		artifactJsonOut.Image = artifact.Name
 		artifactJsonOut.Sha256 = artifact.Sha256
 		artifactJsonOut.Replicas = artifact.Annotation.Now
@@ -156,11 +156,11 @@ func showList(response *requests.HTTPResponse, o *environmentLsOptions) error {
 			}
 		}
 		gitCommit := "N/A"
-		if artifact.Git_commit != "" {
+		if artifact.GitCommit != "" {
 			if o.long {
-				gitCommit = artifact.Git_commit
+				gitCommit = artifact.GitCommit
 			} else {
-				gitCommit = artifact.Git_commit[:7]
+				gitCommit = artifact.GitCommit[:7]
 			}
 		}
 
