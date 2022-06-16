@@ -11,6 +11,7 @@ import (
 
 	"github.com/merkely-development/reporter/internal/requests"
 	"github.com/sirupsen/logrus"
+	"github.com/xeonx/timeago"
 )
 
 type Annotation struct {
@@ -137,7 +138,9 @@ func showList(response *requests.HTTPResponse, o *environmentLsOptions) error {
 		if artifact.Annotation.Now == 0 {
 			continue
 		}
-		since := time.Unix(artifact.CreationTimestamp[0], 0).Format(time.RFC3339)
+		timestamp := time.Unix(artifact.CreationTimestamp[0], 0)
+		timeago.English.Max = 36 * timeago.Month
+		since := timeago.English.Format(timestamp)
 		artifactName, artifactTag := splitImageName(artifact.Name)
 		if len(artifactName) > 40 && !o.long {
 			artifactName = artifactName[:18] + "..." + artifactName[len(artifactName)-19:]
