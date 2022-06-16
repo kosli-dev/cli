@@ -52,7 +52,7 @@ helm upgrade [RELEASE-NAME] merkely/k8s-reporter
 | cronSchedule | string | `"*/5 * * * *"` | the cron schedule at which the reporter is triggered to report to Merkely   |
 | fullnameOverride | string | `""` | overrides the fullname used for the created k8s resources. It has higher precedence than `nameOverride` |
 | image.pullPolicy | string | `"IfNotPresent"` | the merkely reporter image pull policy |
-| image.repository | string | `"ghcr.io/merkely-development/merkely-cli"` | the merkely reporter image repository |
+| image.repository | string | `"ghcr.io/kosli-dev/merkely-cli"` | the merkely reporter image repository |
 | image.tag | string | `"v1.1.0"` | the merkely reporter image tag, overrides the image tag whose default is the chart appVersion. |
 | merkelyApiToken.secretKey | string | `""` | the name of the key in the secret data which containts the Merkely API token |
 | merkelyApiToken.secretName | string | `""` | the name of the secret containing the Merkely API token |

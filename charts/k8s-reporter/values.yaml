@@ -4,7 +4,7 @@
 
 image:
   # -- the merkely reporter image repository
-  repository: ghcr.io/merkely-development/merkely-cli
+  repository: ghcr.io/kosli-dev/merkely-cli
   # -- the merkely reporter image pull policy
   pullPolicy: IfNotPresent
   # -- the merkely reporter image tag, overrides the image tag whose default is the chart appVersion.
