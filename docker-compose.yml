@@ -15,7 +15,7 @@ services:
   server:
     networks: [ cli_net ]
     depends_on: [ mongo_rs_initiate ]
-    image: ghcr.io/merkely-development/merkely:latest
+    image: ghcr.io/kosli-dev/merkely:latest
     container_name: cli_merkely_server
     ports: ["8001:8001"]
 
