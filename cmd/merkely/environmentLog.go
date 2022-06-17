@@ -16,7 +16,8 @@ const environmentLogDesc = `Show log of snapshots.`
 
 type environmentLogOptions struct {
 	// long bool
-	json bool
+	json   bool
+	number int64
 }
 
 // type EnvironmentDiffPayload struct {
@@ -44,12 +45,14 @@ func newEnvironmentLogCmd(out io.Writer) *cobra.Command {
 
 	// cmd.Flags().BoolVarP(&o.long, "long", "l", false, environmentLongFlag)
 	cmd.Flags().BoolVarP(&o.json, "json", "j", false, environmentJsonFlag)
+	cmd.Flags().Int64VarP(&o.number, "number", "n", 5, environmentJsonFlag)
 
 	return cmd
 }
 
 func (o *environmentLogOptions) run(out io.Writer, args []string) error {
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/log/0/5", global.Host, global.Owner, args[0])
+	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/log/0/%d",
+		global.Host, global.Owner, args[0], o.number)
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
 
@@ -70,7 +73,7 @@ func (o *environmentLogOptions) run(out io.Writer, args []string) error {
 			return err
 		}
 
-		fmt.Printf("SNAPSHOT  FROM  TO\n")
+		fmt.Printf("SNAPSHOT  FROM                       TO\n")
 		for _, snapshot := range snapshots {
 			tsFromStr := time.Unix(int64(snapshot["from"].(float64)), 0).Format(time.RFC3339)
 			tsToStr := "now"
