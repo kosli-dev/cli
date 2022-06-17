@@ -1,7 +1,7 @@
 # Use eventbridge rule to trigger ECS task execution
 resource "aws_cloudwatch_event_rule" "this" {
   name        = "run-reporter-${var.env}"
-  description = "Execute Merkely ${var.env} reporter ECS task"
+  description = "Execute Kosli ${var.env} reporter ECS task"
 
   schedule_expression = "cron(* * * * ? *)"
 }
@@ -28,8 +28,8 @@ resource "aws_ecs_task_definition" "this" {
   container_definitions = jsonencode([
     {
       name      = "${var.app_name}-${var.env}"
-      image     = "ghcr.io/kosli-dev/${var.app_name}:${var.image_tag}"
-      command   = ["merkely", "environment", "report", "ecs", "${var.merkely_env}", "-C", "merkely", "--owner", "compliancedb"]
+      image     = "ghcr.io/merkely-development/cli:${var.image_tag}"
+      command   = ["kosli", "environment", "report", "ecs", "${var.merkely_env}", "-C", "merkely", "--owner", "compliancedb"]
       essential = true
 
       cpu               = var.cpu_limit
