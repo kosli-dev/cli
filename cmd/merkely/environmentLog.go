@@ -70,11 +70,15 @@ func (o *environmentLogOptions) run(out io.Writer, args []string) error {
 			return err
 		}
 
-		fmt.Printf("SNAPSHOT  FROM\n")
+		fmt.Printf("SNAPSHOT  FROM  TO\n")
 		for _, snapshot := range snapshots {
-			tsFrom := time.Unix(int64(snapshot["from"].(float64)), 0).Format(time.RFC3339)
+			tsFromStr := time.Unix(int64(snapshot["from"].(float64)), 0).Format(time.RFC3339)
+			tsToStr := "now"
+			if snapshot["to"].(float64) != 0.0 {
+				tsToStr = time.Unix(int64(snapshot["to"].(float64)), 0).Format(time.RFC3339)
+			}
 			index := int64(snapshot["index"].(float64))
-			fmt.Printf("%-8d  %s\n", index, tsFrom)
+			fmt.Printf("%-8d  %s  %s\n", index, tsFromStr, tsToStr)
 		}
 
 	}
