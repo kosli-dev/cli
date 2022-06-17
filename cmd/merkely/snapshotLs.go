@@ -200,7 +200,6 @@ func getFormatStrings(snapshot *Snapshot, longOption bool) (bool, string) {
 
 	if snapshot.Type == "K8S" || snapshot.Type == "ECS" {
 		hasTag = true
-		fmt.Println(maxImageLength)
 		formatStringHead = fmt.Sprintf("%%-%ds  %%-%ds  %%-%ds  %%-%ds  %%-25s  %%-10s\n", maxCommitLength, maxImageLength, maxTagLength, maxSha256Length)
 		formatStringLine = fmt.Sprintf("%%-%ds  %%-%ds  %%-%ds  %%-%ds  %%-25s  %%-10d\n", maxCommitLength, maxImageLength, maxTagLength, maxSha256Length)
 		fmt.Printf(formatStringHead, "COMMIT", "IMAGE", "TAG", "SHA256", "SINCE", "REPLICAS")

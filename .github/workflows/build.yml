@@ -20,7 +20,7 @@ on:
         required: true         
 
 env:
-  IMAGE: ghcr.io/kosli-dev/merkely-cli
+  IMAGE: ghcr.io/kosli-dev/cli
 
 jobs:
   build:

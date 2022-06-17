@@ -24,7 +24,7 @@ jobs:
   build:
     needs: [pre-build]
     if: ${{ github.ref != 'refs/heads/prod' }}
-    uses: merkely-development/reporter/.github/workflows/build.yml@main
+    uses: kosli-dev/cli/.github/workflows/build.yml@main
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
       platforms: linux/amd64
@@ -37,7 +37,7 @@ jobs:
   deploy-staging:
     needs: [pre-build, build]
     if: ${{ github.ref == 'refs/heads/main' }}
-    uses: merkely-development/reporter/.github/workflows/deploy.yml@main
+    uses: kosli-dev/cli/.github/workflows/deploy.yml@main
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
       AWS_ACCOUNT_ID: 772819027869
@@ -46,7 +46,7 @@ jobs:
   deploy-azure-staging:
     needs: [pre-build, build]
     if: ${{ github.ref == 'refs/heads/main' }}
-    uses: merkely-development/reporter/.github/workflows/deploy.yml@main
+    uses: kosli-dev/cli/.github/workflows/deploy.yml@main
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
       AWS_ACCOUNT_ID: 749993776354
@@ -55,7 +55,7 @@ jobs:
   deploy-prod:
     needs: [pre-build]
     if: ${{ github.ref == 'refs/heads/prod' }}
-    uses: merkely-development/reporter/.github/workflows/deploy.yml@main
+    uses: kosli-dev/cli/.github/workflows/deploy.yml@main
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
       AWS_ACCOUNT_ID: 358426185766
@@ -64,7 +64,7 @@ jobs:
   deploy-dnb:
     needs: [pre-build]
     if: ${{ github.ref == 'refs/heads/prod' }}
-    uses: merkely-development/reporter/.github/workflows/deploy.yml@main
+    uses: kosli-dev/cli/.github/workflows/deploy.yml@main
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
       AWS_ACCOUNT_ID: 439218355407
@@ -73,7 +73,7 @@ jobs:
   deploy-stacc:
     needs: [pre-build]
     if: ${{ github.ref == 'refs/heads/prod' }}
-    uses: merkely-development/reporter/.github/workflows/deploy.yml@main
+    uses: kosli-dev/cli/.github/workflows/deploy.yml@main
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
       AWS_ACCOUNT_ID: 310739635274
