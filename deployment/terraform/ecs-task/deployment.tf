@@ -28,7 +28,7 @@ resource "aws_ecs_task_definition" "this" {
   container_definitions = jsonencode([
     {
       name      = "${var.app_name}-${var.env}"
-      image     = "ghcr.io/merkely-development/cli:${var.image_tag}"
+      image     = "ghcr.io/kosli-dev/cli:${var.image_tag}"
       command   = ["kosli", "environment", "report", "ecs", "${var.merkely_env}", "-C", "merkely", "--owner", "compliancedb"]
       essential = true
 
