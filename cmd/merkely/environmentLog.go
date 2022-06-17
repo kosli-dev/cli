@@ -10,6 +10,7 @@ import (
 	"github.com/merkely-development/reporter/internal/requests"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/xeonx/timeago"
 )
 
 const environmentLogDesc = `Show log of snapshots.`
@@ -73,15 +74,19 @@ func (o *environmentLogOptions) run(out io.Writer, args []string) error {
 			return err
 		}
 
-		fmt.Printf("SNAPSHOT  FROM                       TO\n")
+		fmt.Printf("SNAPSHOT  FROM                       TO                         DURATION\n")
 		for _, snapshot := range snapshots {
 			tsFromStr := time.Unix(int64(snapshot["from"].(float64)), 0).Format(time.RFC3339)
 			tsToStr := "now"
 			if snapshot["to"].(float64) != 0.0 {
 				tsToStr = time.Unix(int64(snapshot["to"].(float64)), 0).Format(time.RFC3339)
 			}
+			timeago.English.Max = 36 * timeago.Month
+			timeago.English.PastSuffix = ""
+			durationNs := time.Duration(int64(snapshot["duration"].(float64)) * 1e9)
+			duration := timeago.English.FormatRelativeDuration(durationNs)
 			index := int64(snapshot["index"].(float64))
-			fmt.Printf("%-8d  %s  %s\n", index, tsFromStr, tsToStr)
+			fmt.Printf("%-8d  %s  %-25s  %s\n", index, tsFromStr, tsToStr, duration)
 		}
 
 	}
