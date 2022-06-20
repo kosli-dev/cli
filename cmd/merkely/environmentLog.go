@@ -74,7 +74,7 @@ func (o *environmentLogOptions) run(out io.Writer, args []string) error {
 			return err
 		}
 
-		fmt.Printf("SNAPSHOT  FROM                       TO                         DURATION\n")
+		fmt.Printf("%-8s  %-25s  %-25s  %s", "SNAPSHOT", "FROM", "TO", "DURATION\n")
 		for _, snapshot := range snapshots {
 			tsFromStr := time.Unix(int64(snapshot["from"].(float64)), 0).Format(time.RFC3339)
 			tsToStr := "now"
