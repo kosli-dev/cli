@@ -29,7 +29,7 @@ resource "aws_ecs_task_definition" "this" {
     {
       name      = "${var.app_name}-${var.env}"
       image     = "ghcr.io/kosli-dev/cli:${var.image_tag}"
-      command   = ["kosli", "environment", "report", "ecs", "${var.merkely_env}", "-C", "merkely", "--owner", "compliancedb"]
+      command   = ["merkely", "environment", "report", "ecs", "${var.merkely_env}", "-C", "merkely", "--owner", "compliancedb"]
       essential = true
 
       cpu               = var.cpu_limit
