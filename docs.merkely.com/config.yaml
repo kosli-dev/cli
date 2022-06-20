@@ -1,6 +1,6 @@
-baseURL: 'https://docs.merkely.com'
+baseURL: 'https://docs.kosli.com'
 languageCode: 'en-us'
-title: 'Merkely developer documentation'
+title: 'Kosli developer documentation'
 
 theme: "book"
 
