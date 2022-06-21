@@ -2,7 +2,7 @@
 
 // @import "plugins/numbered";
 body {
-    background-color: $merkely-light-blue;
+    background-color: $neutral-200;
 }
 
 main.container {
@@ -32,25 +32,25 @@ aside.book-menu .book-menu-content {
 }
 
 .book-menu .book-menu-content {
-    background-color: $merkely-light-blue;
+    background-color: $neutral-200;
 }
 
 .book-search input {
-    background-color: $merkely-white;
-    border: 1px solid $merkely-dark-blue;
+    background-color: $neutral-100;
+    border: 1px solid $blue-500;
 }
 
 .book-page {
-    background-color: $merkely-white;
+    background-color: $neutral-100;
 }
 
 .top-header {
     position: fixed;
     top: 0;
     width: 100%;
-    background-color: $merkely-dark-blue;
+    background-color: $blue-500;
     height: $top-header-height;
-    color: $merkely-white;
+    color: $neutral-100;
 
     .container {
         height: $top-header-height;
@@ -73,7 +73,7 @@ aside.book-menu .book-menu-content {
         .back-to-site {
             margin: 1.8rem 0;
             a {
-                color: $merkely-white;
+                color: $neutral-100;
                 display: block;
                 padding-left: 1.5rem;
             }
@@ -91,7 +91,7 @@ aside.book-menu .book-menu-content {
     tr {
         background-color: transparent !important;
         th {
-            color: $merkely-lavender-blue;
+            color: $blue-200;
             border: 0;
             display: none;
         }
@@ -100,7 +100,7 @@ aside.book-menu .book-menu-content {
             border: 0px;
             word-break: break-all;
             a, a:hover, a:visited {
-                color: $merkely-lavender-blue;
+                color: $blue-200;
             }
         }
 

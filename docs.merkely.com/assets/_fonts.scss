@@ -95,19 +95,19 @@ code {
   h1, h2, h3 {
     font-family: 'Proxima Nova', sans-serif;
     font-weight: 600 !important;
-    color: $merkely-dark-blue;
+    color: $blue-500;
   }
 }
 
 a, a:hover, a:visited {
-  color: $merkely-medium-blue;
+  color: $blue-100;
 }
 
 .book-menu {
   font-size: 1rem;
 
   a {
-    color: $merkely-lavender-blue;
+    color: $blue-200;
     font-family: 'Proxima Nova', sans-serif;
   }
 
@@ -116,7 +116,7 @@ a, a:hover, a:visited {
       color: black;
     }
     a:hover, a.active {
-      color: $merkely-medium-blue;
+      color: $blue-100;
     }
     a.active {
       font-weight: 600;
@@ -124,11 +124,11 @@ a, a:hover, a:visited {
   }
 
   a:hover {
-    color: $merkely-medium-blue;
+    color: $blue-100;
   }
 
   a.active {
-    color: $merkely-medium-blue;
+    color: $blue-100;
     font-weight: 600;
   }
 }
