@@ -1,66 +1,99 @@
-/* roboto-regular - latin */
+/* proxima-nova regular - latin */
 @font-face {
-  font-family: 'Roboto';
+  font-family: 'Proxima Nova';
   font-style: normal;
   font-weight: 400;
-  font-display: swap;
   src: local(''),
-       url('fonts/roboto-v27-latin-regular.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
-       url('fonts/roboto-v27-latin-regular.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+       url('../fonts/proximanova/proximanova-regular-webfont.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+       url('../fonts/proximanova/proximanova-regular-webfont.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }
-/* roboto-700 - latin */
+/* proxima-nova semibold - latin */
 @font-face {
-  font-family: 'Roboto';
+  font-family: 'Proxima Nova';
+  font-style: normal;
+  font-weight: 600;
+  src: local(''),
+       url('../fonts/proximanova/proximanova-semibold-webfont.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+       url('../fonts/proximanova/proximanova-semibold-webfont.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+/* proxima-nova bold - latin */
+@font-face {
+  font-family: 'Proxima Nova';
   font-style: normal;
   font-weight: 700;
-  font-display: swap;
   src: local(''),
-       url('fonts/roboto-v27-latin-700.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
-       url('fonts/roboto-v27-latin-700.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+       url('../fonts/proximanova/proximanova-bold-webfont.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+       url('../fonts/proximanova/proximanova-bold-webfont.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }
 
-/* roboto-mono-regular - latin */
+/* ibm-plex-sans-regular - latin */
 @font-face {
-  font-family: 'Roboto Mono';
+  font-family: 'IBM Plex Sans';
   font-style: normal;
   font-weight: 400;
-  font-display: swap;
   src: local(''),
-       url('fonts/roboto-mono-v13-latin-regular.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
-       url('fonts/roboto-mono-v13-latin-regular.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+       url('../fonts/ibmplex/ibm-plex-sans-v14-latin-regular.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+       url('../fonts/ibmplex/ibm-plex-sans-v14-latin-regular.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }
-
-/* poppins-regular - latin */
+/* ibm-plex-sans-500 - latin */
 @font-face {
-  font-family: 'Poppins';
+  font-family: 'IBM Plex Sans';
   font-style: normal;
-  font-weight: 400;
-  font-display: swap;
+  font-weight: 500;
   src: local(''),
-       url('fonts/Poppins-Regular.ttf') format('truetype');
+       url('../fonts/ibmplex/ibm-plex-sans-v14-latin-500.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+       url('../fonts/ibmplex/ibm-plex-sans-v14-latin-500.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }
-
-/* poppins-semi-bold - latin */
+/* ibm-plex-sans-600 - latin */
 @font-face {
-  font-family: 'Poppins';
-  font-style: semi-bold;
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
   font-weight: 600;
-  font-display: swap;
   src: local(''),
-       url('fonts/Poppins-SemiBold.ttf') format('truetype');
+       url('../fonts/ibmplex/ibm-plex-sans-v14-latin-600.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+       url('../fonts/ibmplex/ibm-plex-sans-v14-latin-600.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+/* ibm-plex-sans-700 - latin */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 700;
+  src: local(''),
+       url('../fonts/ibmplex/ibm-plex-sans-v14-latin-700.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+       url('../fonts/ibmplex/ibm-plex-sans-v14-latin-700.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+/* ibm-plex-serif-regular - latin */
+@font-face {
+  font-family: 'IBM Plex Serif';
+  font-style: normal;
+  font-weight: 400;
+  src: local(''),
+       url('../fonts/ibmplex/ibm-plex-serif-v15-latin-regular.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+       url('../fonts/ibmplex/ibm-plex-serif-v15-latin-regular.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+/* ibm-plex-mono-regular - latin */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  src: local(''),
+       url('../fonts/ibmplex/ibm-plex-mono-v12-latin-regular.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+       url('../fonts/ibmplex/ibm-plex-mono-v12-latin-regular.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }
 
 body {
-  font-family: 'Roboto', sans-serif;
+  font-family: 'IBM Plex Sans', sans-serif;
 }
 
 code {
-  font-family: 'Roboto Mono', monospace;
+  font-family: 'IBM Plex Mono ', monospace;
 }
 
 .markdown {
   h1, h2, h3 {
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Proxima Nova', sans-serif;
     font-weight: 600 !important;
     color: $merkely-dark-blue;
   }
@@ -75,11 +108,11 @@ a, a:hover, a:visited {
 
   a {
     color: $merkely-lavender-blue;
+    font-family: 'Proxima Nova', sans-serif;
   }
 
   label {
     a {
-      font-family: 'Poppins', sans-serif;
       color: black;
     }
     a:hover, a.active {
