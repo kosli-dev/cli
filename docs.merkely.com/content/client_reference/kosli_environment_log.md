@@ -1,24 +1,25 @@
 ---
-title: "kosli environment diff"
+title: "kosli environment log"
 ---
 
-## kosli environment diff
+## kosli environment log
 
-Diff snapshots.
+Show log of snapshots.
 
 ### Synopsis
 
-Diff snapshots.
+Show log of snapshots.
 
 ```shell
-kosli environment diff [ENVIRONMENT-NAME] [flags]
+kosli environment log [ENVIRONMENT-NAME] [flags]
 ```
 
 ### Flags
 | Flag | Description |
 | :--- | :--- |
-|    -h, --help  |  help for diff  |
+|    -h, --help  |  help for log  |
 |    -j, --json  |  Print environment info as json.  |
+|    -n, --number int  |  Print environment info as json. (default 5)  |
 
 
 ### Options inherited from parent commands
