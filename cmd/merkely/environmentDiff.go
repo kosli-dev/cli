@@ -23,9 +23,10 @@ type EnvironmentDiffPayload struct {
 }
 
 type EnvironmentDiffResponse struct {
-	Sha256 string   `json:"sha256"`
-	Name   string   `json:"name"`
-	Pods   []string `json:"pods"`
+	Sha256    string   `json:"sha256"`
+	Name      string   `json:"name"`
+	CommitUrl string   `json:"commit_url"`
+	Pods      []string `json:"pods"`
 }
 
 func newEnvironmentDiffCmd(out io.Writer) *cobra.Command {
@@ -91,18 +92,35 @@ func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
 	colorRed := "\033[31m"
 	colorGreen := "\033[32m"
 
-	fmt.Print(colorRed)
-	for _, entry := range diffs["-"] {
-		fmt.Printf("- %s\n", entry.Name)
-		fmt.Printf("  %s\n", entry.Sha256)
+	removalCount := len(diffs["-"])
+	additionCount := len(diffs["+"])
+
+	if removalCount > 0 {
+		fmt.Print(colorRed)
+		for _, entry := range diffs["-"] {
+			fmt.Printf("- %s\n", entry.Name)
+			fmt.Printf("  %s\n", entry.Sha256)
+			if entry.CommitUrl != "" {
+				fmt.Printf("  %s\n", entry.CommitUrl)
+			}
+		}
+		fmt.Print(colorReset)
 	}
-	fmt.Print(colorReset)
-	fmt.Println()
-	fmt.Print(colorGreen)
-	for _, entry := range diffs["+"] {
-		fmt.Printf("+ %s\n", entry.Name)
-		fmt.Printf("  %s\n", entry.Sha256)
+
+	if removalCount > 0 && additionCount > 0 {
+		fmt.Println()
 	}
-	fmt.Print(colorReset)
+
+	if additionCount > 0 {
+		fmt.Print(colorGreen)
+		for _, entry := range diffs["+"] {
+			fmt.Printf("+ %s\n", entry.Name)
+			fmt.Printf("  %s\n", entry.Sha256)
+			if entry.CommitUrl != "" {
+				fmt.Printf("  %s\n", entry.CommitUrl)
+			}
+		}
+		fmt.Print(colorReset)
+	}
 	return nil
 }
