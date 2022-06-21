@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,12 +14,18 @@ const environmentDiffDesc = `Diff snapshots.`
 
 type environmentDiffOptions struct {
 	// long bool
-	// json bool
+	json bool
 }
 
 type EnvironmentDiffPayload struct {
 	Snappish1 string `json:"snappish1"`
 	Snappish2 string `json:"snappish2"`
+}
+
+type EnvironmentDiffResponse struct {
+	Sha256 string   `json:"sha256"`
+	Name   string   `json:"name"`
+	Pods   []string `json:"pods"`
 }
 
 func newEnvironmentDiffCmd(out io.Writer) *cobra.Command {
@@ -40,7 +47,7 @@ func newEnvironmentDiffCmd(out io.Writer) *cobra.Command {
 	}
 
 	// cmd.Flags().BoolVarP(&o.long, "long", "l", false, environmentLongFlag)
-	// cmd.Flags().BoolVarP(&o.json, "json", "j", false, environmentJsonFlag)
+	cmd.Flags().BoolVarP(&o.json, "json", "j", false, environmentJsonFlag)
 
 	return cmd
 }
@@ -51,8 +58,8 @@ func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
 	}
 
 	payload := new(EnvironmentDiffPayload)
-	payload.Snappish1 = args[0] // + "^0"
-	payload.Snappish2 = args[1] // + "^1"
+	payload.Snappish1 = args[0]
+	payload.Snappish2 = args[1]
 
 	url := fmt.Sprintf("%s/api/v1/env-diff/%s/", global.Host, global.Owner)
 	// response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
@@ -65,10 +72,37 @@ func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
 		return fmt.Errorf("kosli server %s is unresponsive", global.Host)
 	}
 
-	pj, err := prettyJson(response.Body)
+	if o.json {
+		pj, err := prettyJson(response.Body)
+		if err != nil {
+			return err
+		}
+		fmt.Println(pj)
+		return nil
+	}
+
+	var diffs map[string][]EnvironmentDiffResponse
+	err = json.Unmarshal([]byte(response.Body), &diffs)
 	if err != nil {
 		return err
 	}
-	fmt.Println(pj)
+
+	colorReset := "\033[0m"
+	colorRed := "\033[31m"
+	colorGreen := "\033[32m"
+
+	fmt.Print(colorRed)
+	for _, entry := range diffs["-"] {
+		fmt.Printf("- %s\n", entry.Name)
+		fmt.Printf("  %s\n", entry.Sha256)
+	}
+	fmt.Print(colorReset)
+	fmt.Println()
+	fmt.Print(colorGreen)
+	for _, entry := range diffs["+"] {
+		fmt.Printf("+ %s\n", entry.Name)
+		fmt.Printf("  %s\n", entry.Sha256)
+	}
+	fmt.Print(colorReset)
 	return nil
 }
