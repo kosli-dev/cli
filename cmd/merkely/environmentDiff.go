@@ -46,13 +46,13 @@ func newEnvironmentDiffCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
-	if len(args) == 0 {
-		return fmt.Errorf("At least one snappish required")
+	if len(args) < 2 {
+		return fmt.Errorf("Two snappish required")
 	}
 
 	payload := new(EnvironmentDiffPayload)
-	payload.Snappish1 = args[0] + "^0"
-	payload.Snappish2 = args[0] + "^1"
+	payload.Snappish1 = args[0] // + "^0"
+	payload.Snappish2 = args[1] // + "^1"
 
 	url := fmt.Sprintf("%s/api/v1/env-diff/%s/", global.Host, global.Owner)
 	// response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
