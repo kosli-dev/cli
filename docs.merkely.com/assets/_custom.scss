@@ -57,6 +57,11 @@ aside.book-menu .book-menu-content {
         .docs-logo {        
             width: 16rem;
             padding: 1.5rem 1.2rem 1.2rem;
+            text-align: center;
+
+            img {
+                height: 100%;
+            }
         }
 
         .separator {
