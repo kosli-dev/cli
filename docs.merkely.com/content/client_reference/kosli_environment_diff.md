@@ -11,7 +11,7 @@ Diff snapshots.
 Diff snapshots.
 
 ```shell
-kosli environment diff [ENVIRONMENT-NAME] [flags]
+kosli environment diff [SNAPPISH_1] [SNAPPISH_2] [flags]
 ```
 
 ### Flags
