@@ -32,7 +32,7 @@ type EnvironmentDiffResponse struct {
 func newEnvironmentDiffCmd(out io.Writer) *cobra.Command {
 	o := new(environmentDiffOptions)
 	cmd := &cobra.Command{
-		Use:   "diff [ENVIRONMENT-NAME]",
+		Use:   "diff [SNAPPISH_1] [SNAPPISH_2]",
 		Short: environmentDiffDesc,
 		Long:  environmentDiffDesc,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -103,6 +103,9 @@ func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
 			if entry.CommitUrl != "" {
 				fmt.Printf("  %s\n", entry.CommitUrl)
 			}
+			if len(entry.Pods) > 0 {
+				fmt.Printf("  pods:%s\n", entry.Pods)
+			}
 		}
 		fmt.Print(colorReset)
 	}
@@ -118,6 +121,9 @@ func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
 			fmt.Printf("  %s\n", entry.Sha256)
 			if entry.CommitUrl != "" {
 				fmt.Printf("  %s\n", entry.CommitUrl)
+			}
+			if len(entry.Pods) > 0 {
+				fmt.Printf("  pods:%s\n", entry.Pods)
 			}
 		}
 		fmt.Print(colorReset)
