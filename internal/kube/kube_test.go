@@ -189,7 +189,7 @@ func (suite *KubeTestSuite) TestFilterNamespaces() {
 			expectError: true,
 		},
 		{
-			name: "invlaid patterns return error",
+			name: "invalid patterns return error",
 			args: args{
 				nsList: []corev1.Namespace{
 					{ObjectMeta: metav1.ObjectMeta{Name: "ns1"}},

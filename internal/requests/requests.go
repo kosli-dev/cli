@@ -125,10 +125,6 @@ func SendPayload(payload interface{}, url, username, token string, maxRetries in
 		logger.Info("############### THIS IS A DRY-RUN  ###############")
 		logger.Info(string(jsonBytes))
 	} else {
-		if method != http.MethodGet {
-			logger.Info("****** Sending the payload to the API ******")
-			logger.Info(string(jsonBytes))
-		}
 		resp, err = DoBasicAuthRequest(jsonBytes, url, username, token, maxRetries, method, map[string]string{}, logger)
 		if err != nil {
 			return resp, err
