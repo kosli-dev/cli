@@ -15,7 +15,7 @@ BINARY_VERSION ?= ${GIT_TAG}
 
 # Only set Version if building a tag or VERSION is set
 ifneq ($(BINARY_VERSION),)
-	LDFLAGS += -X github.com/merkely-development/reporter/internal/version.version=${BINARY_VERSION}
+	LDFLAGS += -X github.com/kosli-dev/cli/internal/version.version=${BINARY_VERSION}
 endif
 
 VERSION_METADATA = unreleased
@@ -24,9 +24,9 @@ ifneq ($(GIT_TAG),)
 	VERSION_METADATA =
 endif
 
-LDFLAGS += -X github.com/merkely-development/reporter/internal/version.metadata=${VERSION_METADATA}
-LDFLAGS += -X github.com/merkely-development/reporter/internal/version.gitCommit=${GIT_COMMIT}
-LDFLAGS += -X github.com/merkely-development/reporter/internal/version.gitTreeState=${GIT_DIRTY}
+LDFLAGS += -X github.com/kosli-dev/cli/internal/version.metadata=${VERSION_METADATA}
+LDFLAGS += -X github.com/kosli-dev/cli/internal/version.gitCommit=${GIT_COMMIT}
+LDFLAGS += -X github.com/kosli-dev/cli/internal/version.gitTreeState=${GIT_DIRTY}
 LDFLAGS += -extldflags "-static"
 
 ldflags:
