@@ -68,7 +68,7 @@ type ArtifactJsonOut struct {
 }
 
 func snapshotLs(out io.Writer, o *environmentLsOptions, args []string) error {
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, args[0])
+	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/snapshots/-1", global.Host, global.Owner, args[0])
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
 
