@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/merkely-development/reporter/internal/requests"
+	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/sirupsen/logrus"
 	"github.com/xeonx/timeago"
 )

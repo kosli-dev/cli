@@ -13,9 +13,9 @@ To follow the "Getting Started" guide you'll need to set up a few things:
 4. hub.docker.com account
 
 ## GitHub
-If you want to use out workflow examples, there's a few things you need to configure in your GitHub repository - you can fork the [github-k8s-demo repository](https://github.com/merkely-development/github-k8s-demo), create your own from scratch, or use an already existing project. 
+If you want to use out workflow examples, there's a few things you need to configure in your GitHub repository - you can fork the [github-k8s-demo repository](https://github.com/kosli-dev/github-k8s-demo), create your own from scratch, or use an already existing project. 
 
-Workflows in [github-k8s-demo repository](https://github.com/merkely-development/github-k8s-demo) are complete version of workflows we're developing in this guide.
+Workflows in [github-k8s-demo repository](https://github.com/kosli-dev/github-k8s-demo) are complete version of workflows we're developing in this guide.
 
 In our example we use Google Cloud to host k8s cluster and we rely on `google-github-actions/get-gke-credentials` action to authenticate to GKE cluster via a `kubeconfig` file. If you're hosting your k8s cluster somewhere you need to use a different action.
 

@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/merkely-development/reporter/internal/requests"
+	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 

@@ -11,9 +11,9 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/merkely-development/reporter/internal/digest"
-	"github.com/merkely-development/reporter/internal/requests"
-	"github.com/merkely-development/reporter/internal/utils"
+	"github.com/kosli-dev/cli/internal/digest"
+	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/kosli-dev/cli/internal/utils"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

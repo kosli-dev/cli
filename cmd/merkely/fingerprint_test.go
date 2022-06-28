@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/merkely-development/reporter/internal/utils"
+	"github.com/kosli-dev/cli/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"

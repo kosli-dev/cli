@@ -17,7 +17,7 @@ The chart allows you to create a Kubernetes cronjob and all its necessary RBAC t
 You can install the Merkely reporter Helm chart from source code:
 
 ```shell
-git clone https://github.com/merkely-development/reporter.git
+git clone https://github.com/kosli-dev/cli.git
 cd reporter/charts/k8s-reporter
 helm install [RELEASE-NAME] . -f [VALUES-FILE-PATH]
 ```

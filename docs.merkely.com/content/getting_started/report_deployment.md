@@ -15,7 +15,7 @@ We'll extend the workflow from previos section with two steps, to add the report
     - name: Download Kosli cli client
       id: download-merkely-cli
       run: |
-        wget https://github.com/merkely-development/cli/releases/download/v${{ env.MERKELY_CLI_VERSION }}/merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz
+        wget https://github.com/kosli-dev/cli/releases/download/v${{ env.MERKELY_CLI_VERSION }}/merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz
         tar -xf merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz kosli 
 
     - name: Report deployment
@@ -26,7 +26,7 @@ We'll extend the workflow from previos section with two steps, to add the report
           --sha256 ${{ needs.build-report.outputs.image-digest }} 
 ```
 
-The [main.yml](https://github.com/merkely-development/github-k8s-demo/blob/main/.github/workflows/main.yml) workflow in the [github-k8s-demo](https://github.com/merkely-development/github-k8s-demo) repository is a complete workflow for reporting an artifact and deployment to Kosli.
+The [main.yml](https://github.com/kosli-dev/github-k8s-demo/blob/main/.github/workflows/main.yml) workflow in the [github-k8s-demo](https://github.com/kosli-dev/github-k8s-demo) repository is a complete workflow for reporting an artifact and deployment to Kosli.
 
 Once the pipeline runs succesfully you should see new entry in your **github-k8s-demo pipeline** in Kosli, this time with **deployment** linked in the last column:
 

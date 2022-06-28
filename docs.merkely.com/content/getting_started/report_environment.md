@@ -25,7 +25,7 @@ Time to implement an actual reporting of what's running in your k8s cluster - wh
 
 ### CLI
 
-You report the environment using [Kosli CLI tool](https://github.com/merkely-development/cli/releases).  
+You report the environment using [Kosli CLI tool](https://github.com/kosli-dev/cli/releases).  
 You need to download a correct package depending on the architecture of the machine you use to run the CLI. 
 
 You can run the [command](https://docs.merkely.com/client_reference/merkely_environment_report_k8s/) manually on any machine that can access your k8s cluster, but it is much better to automate the reporting from the start, and we'll use GitHub Actions for that.
@@ -67,7 +67,7 @@ jobs:
     - name: Download Kosli cli client
       id: download-merkely-cli
       run: |
-        wget https://github.com/merkely-development/cli/releases/download/v${{ env.MERKELY_CLI_VERSION }}/merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz
+        wget https://github.com/kosli-dev/cli/releases/download/v${{ env.MERKELY_CLI_VERSION }}/merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz
         tar -xf merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz kosli
 
     - name: auth

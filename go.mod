@@ -1,4 +1,4 @@
-module github.com/merkely-development/reporter
+module github.com/kosli-dev/cli
 
 go 1.13
 

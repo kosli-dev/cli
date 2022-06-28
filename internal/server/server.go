@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/merkely-development/reporter/internal/digest"
+	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/sirupsen/logrus"
 )
 

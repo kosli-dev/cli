@@ -18,8 +18,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/merkely-development/reporter/internal/digest"
-	"github.com/merkely-development/reporter/internal/utils"
+	"github.com/kosli-dev/cli/internal/digest"
+	"github.com/kosli-dev/cli/internal/utils"
 	"github.com/sirupsen/logrus"
 )
 

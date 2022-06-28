@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/docker/docker/client"
-	"github.com/merkely-development/reporter/internal/requests"
+	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/sirupsen/logrus"
 )
 

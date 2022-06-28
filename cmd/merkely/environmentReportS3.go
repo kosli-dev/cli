@@ -5,8 +5,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/merkely-development/reporter/internal/aws"
-	"github.com/merkely-development/reporter/internal/requests"
+	"github.com/kosli-dev/cli/internal/aws"
+	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 

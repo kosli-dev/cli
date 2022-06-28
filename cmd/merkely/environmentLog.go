@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/merkely-development/reporter/internal/requests"
+	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/xeonx/timeago"

@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	gh "github.com/google/go-github/v42/github"
-	"github.com/merkely-development/reporter/internal/requests"
+	"github.com/kosli-dev/cli/internal/requests"
 	"golang.org/x/oauth2"
 
 	"github.com/spf13/cobra"
