@@ -78,3 +78,12 @@ jobs:
       tag: ${{ needs.pre-build.outputs.tag }}
       AWS_ACCOUNT_ID: 310739635274
       AWS_REGION: eu-central-1
+
+  deploy-stacc:
+    needs: [pre-build]
+    if: ${{ github.ref == 'refs/heads/prod' }}
+    uses: kosli-dev/cli/.github/workflows/deploy.yml@main
+    with:
+      tag: ${{ needs.pre-build.outputs.tag }}
+      AWS_ACCOUNT_ID: 344617554234
+      AWS_REGION: eu-central-1
