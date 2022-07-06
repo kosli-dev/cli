@@ -79,7 +79,7 @@ jobs:
       AWS_ACCOUNT_ID: 310739635274
       AWS_REGION: eu-central-1
 
-  deploy-stacc:
+  deploy-modulr:
     needs: [pre-build]
     if: ${{ github.ref == 'refs/heads/prod' }}
     uses: kosli-dev/cli/.github/workflows/deploy.yml@main
