@@ -86,7 +86,7 @@ module "reporter_lambda" {
 
   create_package = false
 
-  image_uri    = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com/ecr-public/kosli/kosli-reporter:${var.REPORTER_TAG}"
+  image_uri    = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com/ecr-public/c5t5r3f3/kosli-reporter:${var.REPORTER_TAG}"
   package_type = "Image"
 
   image_config_command = ["merkely", "environment", "report", "ecs", "${var.merkely_env}", "-C", "merkely", "--owner", "compliancedb"]
