@@ -64,7 +64,7 @@ jobs:
       uses: aws-actions/configure-aws-credentials@v1
       with:
         role-to-assume: arn:aws:iam::${{ inputs.AWS_ACCOUNT_ID }}:role/GithubActionsRole
-        aws-region: ${{ inputs.AWS_REGION }}
+        aws-region: us-east-1 #${{ inputs.AWS_REGION }}
         role-duration-seconds: 2400
         role-session-name: ${{ github.event.repository.name }}
 
