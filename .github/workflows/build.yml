@@ -86,8 +86,8 @@ jobs:
       with:
         push: true
         tags: "${{ steps.login-ecr-public.outputs.registry }}/kosli/kosli-reporter:${{ inputs.tag }},${{ steps.login-ecr-public.outputs.registry }}/kosli/kosli-reporter:latest"
-        cache-from: type=registry,ref=${{ steps.login-ecr-public.outputs.registry }}/kosli/kosli-reporter:latest
-        cache-to: type=inline,mode=max
+        #cache-from: type=registry,ref=${{ steps.login-ecr-public.outputs.registry }}/kosli/kosli-reporter:latest
+        #cache-to: type=inline,mode=max
         build-args: |
           COMMIT_SHA=${{ github.sha }}
 
