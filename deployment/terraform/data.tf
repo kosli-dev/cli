@@ -10,6 +10,10 @@ data "aws_ssm_parameter" "vpc_id" {
   name = "vpc_id"
 }
 
+data "aws_ssm_parameter" "oidc_role_arn" {
+  name = "oidc_role_arn"
+}
+
 data "aws_ecs_cluster" "this" {
   cluster_name = var.ecs_sluster_name
 }

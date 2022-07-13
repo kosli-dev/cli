@@ -27,6 +27,12 @@ variable "merkely_env" {
 variable "app_name" {
   type    = string
   default = "merkely-cli"
+  #default = "kosli-reporter"
+}
+
+variable "app_name_lambda" {
+  type    = string
+  default = "kosli-reporter"
 }
 
 variable "ecs_sluster_name" {
@@ -34,6 +40,16 @@ variable "ecs_sluster_name" {
   default = "merkely-reporter"
 }
 
+variable "create_public_ecr" {
+  type    = bool
+  default = false
+}
+
 variable "IMAGE_TAG" {
   type = string
+}
+
+variable "REPORTER_TAG" {
+  type = string
+  default = "test"
 }
