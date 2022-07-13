@@ -64,14 +64,17 @@ jobs:
       uses: aws-actions/configure-aws-credentials@v1
       with:
         role-to-assume: arn:aws:iam::${{ inputs.AWS_ACCOUNT_ID }}:role/GithubActionsRole
-        aws-region: us-east-1 #${{ inputs.AWS_REGION }}
+        aws-region: ${{ inputs.AWS_REGION }}
         role-duration-seconds: 2400
         role-session-name: ${{ github.event.repository.name }}
 
     - name: Login to Amazon ECR Public
+      id: login-ecr-public
       uses: aws-actions/amazon-ecr-login@v1.5.0
       with:
         registry-type: 'public'
+      env:
+        AWS_REGION: us-east-1
 
     - name: Build, tag, and push docker image to Amazon ECR Public
       uses: docker/build-push-action@v2
