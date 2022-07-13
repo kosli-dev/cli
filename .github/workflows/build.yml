@@ -27,7 +27,6 @@ on:
 
 env:
   IMAGE: ghcr.io/kosli-dev/cli
-  IMAGE_ECR: public.ecr.aws/c5t5r3f3/kosli-reporter
 
 jobs:
   build:
@@ -56,37 +55,37 @@ jobs:
         username: ${{ secrets.ghcr_user }}
         password: ${{ secrets.ghcr_token }}    
 
-    # Push docker image to ECR 
+    # # Push docker image to ECR 
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        role-to-assume: arn:aws:iam::${{ inputs.AWS_ACCOUNT_ID }}:role/GithubActionsRole
-        aws-region: ${{ inputs.AWS_REGION }}
-        role-duration-seconds: 2400
-        role-session-name: ${{ github.event.repository.name }}
+    # - name: Configure AWS credentials
+    #   uses: aws-actions/configure-aws-credentials@v1
+    #   with:
+    #     role-to-assume: arn:aws:iam::${{ inputs.AWS_ACCOUNT_ID }}:role/GithubActionsRole
+    #     aws-region: ${{ inputs.AWS_REGION }}
+    #     role-duration-seconds: 2400
+    #     role-session-name: ${{ github.event.repository.name }}
 
-    - name: Login to Amazon ECR Public
-      uses: aws-actions/amazon-ecr-login@v1.5.0
-      with:
-        registry-type: 'public'
+    # - name: Login to Amazon ECR Public
+    #   uses: aws-actions/amazon-ecr-login@v1.5.0
+    #   with:
+    #     registry-type: 'public'
 
-    - name: Build, tag, and push docker image to Amazon ECR Public
-      uses: docker/build-push-action@v2
-      env:
-        REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
-        REGISTRY_ALIAS: kosli
-        REPOSITORY: kosli-reporter
-        IMAGE_TAG: ${{ github.sha }}
-      with:
-        push: true
-        tags: "${{ steps.login-ecr-public.outputs.registry }}/kosli/kosli-reporter:${{ inputs.tag }},${{ steps.login-ecr-public.outputs.registry }}/kosli/kosli-reporter:latest"
-        cache-from: type=registry,ref=${{ steps.login-ecr-public.outputs.registry }}/kosli/kosli-reporter:latest
-        cache-to: type=inline,mode=max
-        build-args: |
-          COMMIT_SHA=${{ github.sha }}
+    # - name: Build, tag, and push docker image to Amazon ECR Public
+    #   uses: docker/build-push-action@v2
+    #   env:
+    #     REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
+    #     REGISTRY_ALIAS: kosli
+    #     REPOSITORY: kosli-reporter
+    #     IMAGE_TAG: ${{ github.sha }}
+    #   with:
+    #     push: true
+    #     tags: "${{ steps.login-ecr-public.outputs.registry }}/kosli/kosli-reporter:${{ inputs.tag }},${{ steps.login-ecr-public.outputs.registry }}/kosli/kosli-reporter:latest"
+    #     cache-from: type=registry,ref=${{ steps.login-ecr-public.outputs.registry }}/kosli/kosli-reporter:latest
+    #     cache-to: type=inline,mode=max
+    #     build-args: |
+    #       COMMIT_SHA=${{ github.sha }}
 
-    ################################
+    # ################################
 
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v3
