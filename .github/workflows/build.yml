@@ -115,4 +115,5 @@ jobs:
         SLACK_COLOR: ${{ job.status }}
         SLACK_TITLE: Build Failed in Client repository
         SLACK_USERNAME: GithubActions
-        SLACK_WEBHOOK: ${{ secrets.slack_webhook }}         
+        SLACK_WEBHOOK: ${{ secrets.slack_webhook }}  
+       
