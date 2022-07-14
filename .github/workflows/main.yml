@@ -5,8 +5,6 @@ on:
     branches:
       - '**'
 
-env:
-  REGISTRY_ALIAS: c5t5r3f3
 jobs:
   pre-build:
     runs-on: ubuntu-20.04
@@ -32,7 +30,7 @@ jobs:
       platforms: linux/amd64
       AWS_ACCOUNT_ID: 772819027869
       AWS_REGION: eu-central-1
-      REGISTRY_ALIAS: ${{ env.REGISTRY_ALIAS }}
+      REGISTRY_ALIAS: c5t5r3f3
     secrets:
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
       slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
@@ -47,7 +45,7 @@ jobs:
       tag: ${{ needs.pre-build.outputs.tag }}
       AWS_ACCOUNT_ID: 772819027869
       AWS_REGION: eu-central-1
-      REGISTRY_ALIAS: ${{ env.REGISTRY_ALIAS }}
+      REGISTRY_ALIAS: c5t5r3f3
 
   deploy-azure-staging:
     needs: [pre-build, build]
@@ -57,7 +55,7 @@ jobs:
       tag: ${{ needs.pre-build.outputs.tag }}
       AWS_ACCOUNT_ID: 749993776354
       AWS_REGION: eu-central-1
-      REGISTRY_ALIAS: ${{ env.REGISTRY_ALIAS }}
+      REGISTRY_ALIAS: c5t5r3f3
 
   deploy-prod:
     needs: [pre-build]
@@ -67,7 +65,7 @@ jobs:
       tag: ${{ needs.pre-build.outputs.tag }}
       AWS_ACCOUNT_ID: 358426185766
       AWS_REGION: eu-central-1
-      REGISTRY_ALIAS: ${{ env.REGISTRY_ALIAS }}
+      REGISTRY_ALIAS: c5t5r3f3
 
   deploy-dnb:
     needs: [pre-build]
@@ -77,7 +75,7 @@ jobs:
       tag: ${{ needs.pre-build.outputs.tag }}
       AWS_ACCOUNT_ID: 439218355407
       AWS_REGION: eu-central-1
-      REGISTRY_ALIAS: ${{ env.REGISTRY_ALIAS }}
+      REGISTRY_ALIAS: c5t5r3f3
 
   deploy-stacc:
     needs: [pre-build]
@@ -87,7 +85,7 @@ jobs:
       tag: ${{ needs.pre-build.outputs.tag }}
       AWS_ACCOUNT_ID: 310739635274
       AWS_REGION: eu-central-1
-      REGISTRY_ALIAS: ${{ env.REGISTRY_ALIAS }}
+      REGISTRY_ALIAS: c5t5r3f3
 
   deploy-modulr:
     needs: [pre-build]
@@ -97,4 +95,4 @@ jobs:
       tag: ${{ needs.pre-build.outputs.tag }}
       AWS_ACCOUNT_ID: 344617554234
       AWS_REGION: eu-central-1
-      REGISTRY_ALIAS: ${{ env.REGISTRY_ALIAS }}
+      REGISTRY_ALIAS: c5t5r3f3
