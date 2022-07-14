@@ -1,11 +1,11 @@
 resource "aws_ecrpublic_repository" "this" {
-  count   = var.create_public_ecr ? 1 : 0
+  count    = var.create_public_ecr ? 1 : 0
   provider = aws.us-east-1
 
   repository_name = var.app_name_lambda
 
   catalog_data {
-    about_text        = var.app_name_lambda
+    about_text = var.app_name_lambda
     #architectures     = ["ARM"]
     #description       = "Description"
     #logo_image_blob   = filebase64(image.png)
@@ -15,8 +15,8 @@ resource "aws_ecrpublic_repository" "this" {
 }
 
 resource "aws_ecrpublic_repository_policy" "this" {
-  count   = var.create_public_ecr ? 1 : 0
-  provider = aws.us-east-1
+  count           = var.create_public_ecr ? 1 : 0
+  provider        = aws.us-east-1
   repository_name = aws_ecrpublic_repository.this[0].repository_name
   policy          = data.aws_iam_policy_document.ecr_public_write.json
 }
@@ -43,14 +43,14 @@ data "aws_iam_policy_document" "ecr_public_write" {
       "ecr:DeleteRepository",
       "ecr:BatchDeleteImage",
       "ecr:SetRepositoryPolicy",
-      "ecr:DeleteRepositoryPolicy"  
+      "ecr:DeleteRepositoryPolicy"
     ]
   }
 }
 
 locals {
   principals_identifiers = setunion(data.aws_iam_roles.roles_admin.arns, [data.aws_ssm_parameter.oidc_role_arn.value])
-  
+
 }
 
 data "aws_iam_roles" "roles_admin" {

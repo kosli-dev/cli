@@ -22,7 +22,7 @@ data "aws_ssm_parameter" "merkely_api_token" {
 }
 
 resource "aws_ecr_repository" "this" {
-  name = "${var.app_name_lambda}"
+  name = var.app_name_lambda
   image_scanning_configuration {
     scan_on_push = "true"
   }
@@ -79,7 +79,7 @@ module "reporter_lambda" {
   version = "3.3.1"
 
   attach_policy_json = true
-  policy_json = data.aws_iam_policy_document.ecs_list_allow.json
+  policy_json        = data.aws_iam_policy_document.ecs_list_allow.json
 
   function_name = "${var.app_name_lambda}-${each.key}"
   description   = "Send reports to the Kosli app"
@@ -91,11 +91,11 @@ module "reporter_lambda" {
 
   image_config_command = ["merkely", "environment", "report", "ecs", "${var.merkely_env}", "-C", "merkely", "--owner", "compliancedb"]
 
-  role_name     = "${var.app_name_lambda}-${each.key}"
-  timeout       = 30
+  role_name = "${var.app_name_lambda}-${each.key}"
+  timeout   = 30
 
   environment_variables = {
-    MERKELY_HOST = each.value.merkely_host
+    MERKELY_HOST      = each.value.merkely_host
     MERKELY_API_TOKEN = data.aws_ssm_parameter.merkely_api_token.value
   }
 
