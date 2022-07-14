@@ -15,6 +15,9 @@ on:
       AWS_REGION:
         required: true
         type: string
+      REGISTRY_ALIAS:
+        required: true
+        type: string
     secrets:
       slack_channel:
         required: true
@@ -27,7 +30,6 @@ on:
 
 env:
   IMAGE: ghcr.io/kosli-dev/cli
-  REGISTRY_ALIAS: c5t5r3f3
 
 jobs:
   build:
@@ -99,15 +101,6 @@ jobs:
         build-args: |
           COMMIT_SHA=${{ github.sha }}
     
-    # Pull image to force it appearance in the private ECR registry, so we can use it for Lambda-reporter
-    - name: Login to Amazon ECR private
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
-
-    - name: Pull from ECR private
-      run: |
-        docker pull ${{ inputs.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.AWS_REGION }}.amazonaws.com/ecr-public/${{ env.REGISTRY_ALIAS }}/kosli-reporter:${{ inputs.tag }}
-
     # Push image to the GHCR 
     - name: Build and push Docker image
       id: docker_build

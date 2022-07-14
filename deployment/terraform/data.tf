@@ -11,7 +11,8 @@ data "aws_ssm_parameter" "vpc_id" {
 }
 
 data "aws_ssm_parameter" "oidc_role_arn" {
-  name = "oidc_role_arn"
+  count = var.create_public_ecr ? 1 : 0
+  name  = "oidc_role_arn"
 }
 
 data "aws_ecs_cluster" "this" {

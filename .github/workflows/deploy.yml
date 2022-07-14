@@ -12,6 +12,9 @@ on:
       AWS_REGION:
         required: true
         type: string
+      REGISTRY_ALIAS:
+        required: true
+        type: string
 
 jobs:
   deploy:
@@ -33,6 +36,15 @@ jobs:
           aws-region: ${{ inputs.AWS_REGION }}
           role-duration-seconds: 2400
           role-session-name: ${{ github.event.repository.name }}
+
+      # Pull image to force it appearance in the private ECR registry, so we can use it for Lambda-reporter
+      - name: Login to Amazon ECR private
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Pull from ECR private
+        run: |
+          docker pull ${{ inputs.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.AWS_REGION }}.amazonaws.com/ecr-public/${{ inputs.REGISTRY_ALIAS }}/kosli-reporter:${{ inputs.tag }}
 
       # Install terraform
       - name: Setup terraform
