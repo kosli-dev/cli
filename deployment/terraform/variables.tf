@@ -50,5 +50,5 @@ variable "IMAGE_TAG" {
 }
 
 variable "REPORTER_TAG" {
-  type    = string
+  type = string
 }

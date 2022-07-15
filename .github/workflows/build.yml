@@ -100,17 +100,6 @@ jobs:
         cache-to: type=inline,mode=max
         build-args: |
           COMMIT_SHA=${{ github.sha }}
-    
-    # Push image to the GHCR 
-    - name: Build and push Docker image
-      id: docker_build
-      uses: docker/build-push-action@v2
-      with:
-        push: true
-        tags: ${{ env.IMAGE }}:${{ inputs.tag }}
-        platforms: ${{ inputs.platforms }}
-        cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
-        cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max 
 
     - name: Slack Notification on Failure
       if: ${{ failure() }}

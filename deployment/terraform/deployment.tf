@@ -23,11 +23,11 @@ resource "aws_ecr_pull_through_cache_rule" "this" {
 }
 
 module "lambda_reporter" {
-  for_each            = var.reporter_apps
-  source              = "./lambda-reporter"
-  name                = "${var.app_name_lambda}-${each.key}"
-  merkely_env         = var.merkely_env
-  merkely_host        = each.value.merkely_host
-  REPORTER_TAG        = var.REPORTER_TAG
-  tags                = module.tags.result
+  for_each     = var.reporter_apps
+  source       = "./lambda-reporter"
+  name         = "${var.app_name_lambda}-${each.key}"
+  merkely_env  = var.merkely_env
+  merkely_host = each.value.merkely_host
+  REPORTER_TAG = var.REPORTER_TAG
+  tags         = module.tags.result
 }

@@ -6,8 +6,8 @@ resource "aws_cloudwatch_event_rule" "cron_every_minute" {
 }
 
 resource "aws_cloudwatch_event_target" "lambda_reporter" {
-  arn      = module.reporter_lambda.lambda_function_arn
-  rule     = aws_cloudwatch_event_rule.cron_every_minute.name
+  arn       = module.reporter_lambda.lambda_function_arn
+  rule      = aws_cloudwatch_event_rule.cron_every_minute.name
   target_id = module.reporter_lambda.lambda_function_name
 }
 
@@ -42,16 +42,16 @@ module "reporter_lambda" {
       source_arn = aws_cloudwatch_event_rule.cron_every_minute.arn
     }
   }
-  
+
   cloudwatch_logs_retention_in_days = 7
 
   # To do: integrate aws-lambda-go to the kosli cli so lambda events are processed correctly
   # https://docs.aws.amazon.com/lambda/latest/dg/go-image.html
   # https://docs.aws.amazon.com/lambda/latest/dg/golang-handler.html
   # Set maximum_retry_attempts to 0 to avoid function run retries due to incorrect exit code
-  create_async_event_config = true
+  create_async_event_config    = true
   maximum_event_age_in_seconds = 60
-  maximum_retry_attempts = 0
+  maximum_retry_attempts       = 0
 
   tags = var.tags
 }
