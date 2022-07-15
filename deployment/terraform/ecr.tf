@@ -2,10 +2,10 @@ resource "aws_ecrpublic_repository" "this" {
   count    = var.create_public_ecr ? 1 : 0
   provider = aws.us-east-1
 
-  repository_name = var.app_name_lambda
+  repository_name = "${var.app_name_lambda}-reporter"
 
   catalog_data {
-    about_text = var.app_name_lambda
+    about_text = "${var.app_name_lambda}-reporter"
   }
 }
 

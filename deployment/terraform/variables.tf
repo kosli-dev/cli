@@ -32,7 +32,7 @@ variable "app_name" {
 
 variable "app_name_lambda" {
   type    = string
-  default = "kosli-reporter"
+  default = "kosli"
 }
 
 variable "ecs_sluster_name" {
@@ -51,5 +51,4 @@ variable "IMAGE_TAG" {
 
 variable "REPORTER_TAG" {
   type    = string
-  default = "test"
 }
