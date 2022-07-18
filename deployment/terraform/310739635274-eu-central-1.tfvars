@@ -1,2 +1,2 @@
-env         = "stacc"
-merkely_env = "stacc"
+env       = "stacc"
+kosli_env = "stacc"

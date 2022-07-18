@@ -15,10 +15,10 @@ provider "aws" {
 module "tags" {
   source            = "fivexl/tag-generator/aws"
   version           = "2.0.0"
-  prefix            = "merkely-cli"
+  prefix            = "kosli-cli"
   terraform_managed = "1"
-  environment_name  = var.env
-  data_owner        = "merkely"
+  environment_name  = var.kosli_env
+  data_owner        = "kosli"
   data_pci          = "0"
   data_phi          = "0"
   data_pii          = "0"

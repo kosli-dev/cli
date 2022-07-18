@@ -1,2 +1,2 @@
-env         = "dnb"
-merkely_env = "dnb-aws"
+env       = "dnb-aws"
+kosli_env = "dnb"

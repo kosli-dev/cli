@@ -1,2 +1,2 @@
-env         = "modulr"
-merkely_env = "modulr"
+env       = "modulr"
+kosli_env = "modulr"

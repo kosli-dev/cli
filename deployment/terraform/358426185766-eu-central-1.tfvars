@@ -1,2 +1,2 @@
-env         = "prod"
-merkely_env = "prod-aws"
+env       = "prod-aws"
+kosli_env = "prod"

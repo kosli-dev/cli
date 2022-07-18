@@ -18,4 +18,4 @@ FROM alpine:${ALPINE_VERSION} as base
 
 RUN apk add --update --no-cache git openssh bash
 
-COPY --from=builder /go/src/merkely/merkely /bin/merkely
+COPY --from=builder /go/src/merkely/merkely /bin/kosli

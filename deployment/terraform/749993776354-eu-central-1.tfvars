@@ -1,2 +1,2 @@
-env         = "azure-staging"
-merkely_env = "azure-staging-aws"
+env       = "azure-staging-aws"
+kosli_env = "azure-staging"

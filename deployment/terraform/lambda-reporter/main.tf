@@ -24,7 +24,7 @@ module "reporter_lambda" {
   image_uri    = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com/ecr-public/c5t5r3f3/kosli-reporter:${var.REPORTER_TAG}"
   package_type = "Image"
 
-  image_config_command = ["merkely", "environment", "report", "ecs", "${var.merkely_env}", "-C", "merkely", "--owner", "compliancedb"]
+  image_config_command = ["kosli", "environment", "report", "ecs", "${var.env}", "-C", "${var.ecs_cluster}", "--owner", "${var.kosli_user}"]
 
   role_name      = var.name
   timeout        = 30
@@ -32,8 +32,8 @@ module "reporter_lambda" {
   publish        = true
 
   environment_variables = {
-    MERKELY_HOST      = var.merkely_host
-    MERKELY_API_TOKEN = data.aws_ssm_parameter.merkely_api_token.value
+    MERKELY_HOST      = var.kosli_host
+    MERKELY_API_TOKEN = data.aws_ssm_parameter.kosli_api_token.value
   }
 
   allowed_triggers = {
@@ -43,7 +43,7 @@ module "reporter_lambda" {
     }
   }
 
-  cloudwatch_logs_retention_in_days = 7
+  cloudwatch_logs_retention_in_days = var.cloudwatch_logs_retention_in_days
 
   # To do: integrate aws-lambda-go to the kosli cli so lambda events are processed correctly
   # https://docs.aws.amazon.com/lambda/latest/dg/go-image.html
