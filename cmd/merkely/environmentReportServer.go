@@ -31,7 +31,7 @@ type environmentReportServerOptions struct {
 func newEnvironmentReportServerCmd(out io.Writer) *cobra.Command {
 	o := new(environmentReportServerOptions)
 	cmd := &cobra.Command{
-		Use:     "server [-p /path/of/artifacts/directory] [-i infrastructure-identifier] env-name",
+		Use:     "server ENVIRONMENT-NAME",
 		Short:   "Report directory or file artifacts data in the given list of paths to Kosli.",
 		Long:    environmentReportServerDesc,
 		Aliases: []string{"directories"},

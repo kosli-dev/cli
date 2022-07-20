@@ -35,7 +35,7 @@ type environmentReportECSOptions struct {
 func newEnvironmentReportECSCmd(out io.Writer) *cobra.Command {
 	o := new(environmentReportECSOptions)
 	cmd := &cobra.Command{
-		Use:     "ecs env-name",
+		Use:     "ecs ENVIRONMENT-NAME",
 		Short:   "Report images data from AWS ECS cluster to Kosli.",
 		Long:    environmentReportECSDesc,
 		Example: environmentReportECSExample,

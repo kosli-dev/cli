@@ -32,7 +32,7 @@ type EnvironmentDiffResponse struct {
 func newEnvironmentDiffCmd(out io.Writer) *cobra.Command {
 	o := new(environmentDiffOptions)
 	cmd := &cobra.Command{
-		Use:   "diff [SNAPPISH_1] [SNAPPISH_2]",
+		Use:   "diff SNAPPISH_1 SNAPPISH_2",
 		Short: environmentDiffDesc,
 		Long:  environmentDiffDesc,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

@@ -29,7 +29,7 @@ type environmentLogOptions struct {
 func newEnvironmentLogCmd(out io.Writer) *cobra.Command {
 	o := new(environmentLogOptions)
 	cmd := &cobra.Command{
-		Use:   "log [ENVIRONMENT-NAME]",
+		Use:   "log ENVIRONMENT-NAME",
 		Short: environmentLogDesc,
 		Long:  environmentLogDesc,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

@@ -47,7 +47,7 @@ type environmentReportLambdaOptions struct {
 func newEnvironmentReportLambdaCmd(out io.Writer) *cobra.Command {
 	o := new(environmentReportLambdaOptions)
 	cmd := &cobra.Command{
-		Use:     "lambda env-name",
+		Use:     "lambda ENVIRONMENT-NAME",
 		Short:   "Report artifact from AWS Lambda to Kosli.",
 		Long:    environmentReportLambdaDesc,
 		Example: environmentReportLambdaExample,

@@ -60,7 +60,7 @@ type environmentReportK8SOptions struct {
 func newEnvironmentReportK8SCmd(out io.Writer) *cobra.Command {
 	o := new(environmentReportK8SOptions)
 	cmd := &cobra.Command{
-		Use:     "k8s [-n namespace | -x namespace]... [-k /path/to/kube/config] [-i infrastructure-identifier] env-name",
+		Use:     "k8s ENVIRONMENT-NAME",
 		Short:   "Report images data from specific namespace(s) or entire cluster to Kosli.",
 		Long:    environmentReportK8SDesc,
 		Aliases: []string{"kubernetes"},

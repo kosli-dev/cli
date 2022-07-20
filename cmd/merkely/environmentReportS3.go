@@ -45,7 +45,7 @@ type environmentReportS3Options struct {
 func newEnvironmentReportS3Cmd(out io.Writer) *cobra.Command {
 	o := new(environmentReportS3Options)
 	cmd := &cobra.Command{
-		Use:     "s3 env-name",
+		Use:     "s3 ENVIRONMENT-NAME",
 		Aliases: []string{"S3"},
 		Short:   "Report artifact from AWS S3 bucket to Kosli.",
 		Long:    environmentReportS3Desc,
