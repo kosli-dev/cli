@@ -29,23 +29,23 @@ type ArtifactPayload struct {
 const artifactCreationExample = `
 # Report to a Kosli pipeline that a file type artifact has been created
 kosli pipeline artifact report creation FILE.tgz \
---api-token yourApiToken \
---artifact-type file \
---build-url https://exampleci.com \
---commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
---git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
---owner yourOrgName \
---pipeline yourPipelineName 
+	--api-token yourApiToken \
+	--artifact-type file \
+	--build-url https://exampleci.com \
+	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
+	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
+	--owner yourOrgName \
+	--pipeline yourPipelineName 
 
 # Report to a Kosli pipeline that an artifact with a provided fingerprint (sha256) has been created
 kosli pipeline artifact report creation \
---api-token yourApiToken \
---build-url https://exampleci.com \
---commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
---git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
---owner yourOrgName \
---pipeline yourPipelineName \
---sha256 yourSha256 
+	--api-token yourApiToken \
+	--build-url https://exampleci.com \
+	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
+	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
+	--owner yourOrgName \
+	--pipeline yourPipelineName \
+	--sha256 yourSha256 
 `
 
 func newArtifactCreationCmd(out io.Writer) *cobra.Command {
