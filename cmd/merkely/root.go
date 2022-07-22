@@ -15,25 +15,18 @@ import (
 var globalUsage = `The Kosli evidence reporting CLI.
 
 Environment variables:
-
-| Name                               | Description                                                                       |
-|------------------------------------|-----------------------------------------------------------------------------------|
-| $MERKELY_API_TOKEN                 | set the Kosli API token.                                                        |
-| $MERKELY_OWNER                     | set the Kosli Pipeline Owner.                                                   |
-| $MERKELY_HOST                      | set the Kosli host.                                                             |
-| $MERKELY_DRY_RUN                   | indicate whether or not Kosli CLI is running in Dry Run mode.                   |
-| $MERKELY_MAX_API_RETRIES           | set the maximum number of API calling retries when the API host is not reachable. |
-| $MERKELY_CONFIG_FILE               | set the path to Kosli config file where you can set your options.               |         
+You can set any flag from an environment variable by capitalizing it in snake case and adding the KOSLI_ prefix.
+For example, to set --api-token from an environment variable, you can export KOSLI_API_TOKEN
 `
 
 const (
 	maxAPIRetries = 3
 	// The name of our config file, without the file extension because viper supports many different config file languages.
-	defaultConfigFilename = "merkely"
+	defaultConfigFilename = "kosli"
 
 	// The environment variable prefix of all environment variables bound to our command line flags.
-	// For example, --namespace is bound to MERKELY_NAMESPACE.
-	envPrefix = "MERKELY"
+	// For example, --namespace is bound to KOSLI_NAMESPACE.
+	envPrefix = "KOSLI"
 
 	// the following constants are used in the docs/help
 	sha256Desc = "The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag)."
@@ -142,7 +135,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	}
 	cmd.PersistentFlags().StringVarP(&global.ApiToken, "api-token", "a", "", apiTokenFlag)
 	cmd.PersistentFlags().StringVarP(&global.Owner, "owner", "o", "", ownerFlag)
-	cmd.PersistentFlags().StringVarP(&global.Host, "host", "H", "https://app.merkely.com", hostFlag)
+	cmd.PersistentFlags().StringVarP(&global.Host, "host", "H", "https://app.kosli.com", hostFlag)
 	cmd.PersistentFlags().BoolVarP(&global.DryRun, "dry-run", "D", false, dryRunFlag)
 	cmd.PersistentFlags().IntVarP(&global.MaxAPIRetries, "max-api-retries", "r", maxAPIRetries, maxAPIRetryFlag)
 	cmd.PersistentFlags().StringVarP(&global.ConfigFile, "config-file", "c", defaultConfigFilename, configFileFlag)
@@ -157,7 +150,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		newEnvironmentCmd(out),
 		newAssertCmd(out),
 		newStatusCmd(out),
-		// Hidden documentation generator command: 'merkely docs'
+		// Hidden documentation generator command: 'kosli docs'
 		newDocsCmd(out),
 	)
 
@@ -196,7 +189,7 @@ func initializeConfig(cmd *cobra.Command) error {
 	}
 	// When we bind flags to environment variables expect that the
 	// environment variables are prefixed, e.g. a flag like --namespace
-	// binds to an environment variable MERKELY_NAMESPACE. This helps
+	// binds to an environment variable KOSLI_NAMESPACE. This helps
 	// avoid conflicts.
 	v.SetEnvPrefix(envPrefix)
 
@@ -215,7 +208,7 @@ func initializeConfig(cmd *cobra.Command) error {
 func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 	cmd.Flags().VisitAll(func(f *pflag.Flag) {
 		// Environment variables can't have dashes in them, so bind them to their equivalent
-		// keys with underscores, e.g. --kube-config to MERKELY_KUBE_CONFIG
+		// keys with underscores, e.g. --kube-config to KOSLI_KUBE_CONFIG
 		if strings.Contains(f.Name, "-") {
 			envVarSuffix := strings.ToUpper(strings.ReplaceAll(f.Name, "-", "_"))
 			if err := v.BindEnv(f.Name, fmt.Sprintf("%s_%s", envPrefix, envVarSuffix)); err != nil {

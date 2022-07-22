@@ -47,7 +47,7 @@ reporterConfig:
   dryRun: false
 
 # env:
-#   MERKELY_HOST: staging.app.merkely.com
+#   KOSLI_HOST: staging.app.kosli.com
 
 # -- any custom annotations to be added to the cronjob
 podAnnotations: {}
