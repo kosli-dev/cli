@@ -58,7 +58,7 @@ func (o *environmentLogOptions) run(out io.Writer, args []string) error {
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
 
 	if err != nil {
-		return fmt.Errorf("kosli server %s is unresponsive %s", global.Host, err)
+		return err
 	}
 
 	if o.json {
