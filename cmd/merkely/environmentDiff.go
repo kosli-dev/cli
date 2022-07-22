@@ -70,7 +70,7 @@ func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
 		global.MaxAPIRetries, global.DryRun, http.MethodGet, log)
 
 	if err != nil {
-		return fmt.Errorf("kosli server %s is unresponsive", global.Host)
+		return err
 	}
 
 	if o.json {
