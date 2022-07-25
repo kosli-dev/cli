@@ -88,26 +88,27 @@ func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
-	colorReset := "\033[0m"
-	colorRed := "\033[31m"
-	colorGreen := "\033[32m"
+	colorRed := "\033[31m%s\033[0m"
+	colorGreen := "\033[32m%s\033[0m"
 
 	removalCount := len(diffs["-"])
 	additionCount := len(diffs["+"])
 
 	if removalCount > 0 {
-		fmt.Print(colorRed)
 		for _, entry := range diffs["-"] {
-			fmt.Printf("- %s\n", entry.Name)
-			fmt.Printf("  %s\n", entry.Sha256)
+			fmt.Printf(colorRed, "- Name: ")
+			fmt.Printf("  %s\n", entry.Name)
+			fmt.Printf(colorRed, "  Sha256: ")
+			fmt.Printf("%s\n", entry.Sha256)
 			if entry.CommitUrl != "" {
-				fmt.Printf("  %s\n", entry.CommitUrl)
+				fmt.Printf(colorRed, "  Commit: ")
+				fmt.Printf("%s\n", entry.CommitUrl)
 			}
 			if len(entry.Pods) > 0 {
-				fmt.Printf("  pods:%s\n", entry.Pods)
+				fmt.Printf(colorRed, "  Pods: ")
+				fmt.Printf("  %s\n", entry.Pods)
 			}
 		}
-		fmt.Print(colorReset)
 	}
 
 	if removalCount > 0 && additionCount > 0 {
@@ -115,18 +116,20 @@ func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
 	}
 
 	if additionCount > 0 {
-		fmt.Print(colorGreen)
 		for _, entry := range diffs["+"] {
-			fmt.Printf("+ %s\n", entry.Name)
-			fmt.Printf("  %s\n", entry.Sha256)
+			fmt.Printf(colorGreen, "+ Name: ")
+			fmt.Printf("  %s\n", entry.Name)
+			fmt.Printf(colorGreen, "  Sha256: ")
+			fmt.Printf("%s\n", entry.Sha256)
 			if entry.CommitUrl != "" {
-				fmt.Printf("  %s\n", entry.CommitUrl)
+				fmt.Printf(colorGreen, "  Commit: ")
+				fmt.Printf("%s\n", entry.CommitUrl)
 			}
 			if len(entry.Pods) > 0 {
-				fmt.Printf("  pods:%s\n", entry.Pods)
+				fmt.Printf(colorGreen, "  Pods: ")
+				fmt.Printf("  %s\n", entry.Pods)
 			}
 		}
-		fmt.Print(colorReset)
 	}
 	return nil
 }
