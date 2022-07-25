@@ -1,5 +1,5 @@
 {{ define "extra.longdescription" -}}
-The chart allows you to create a Kubernetes cronjob and all its necessary RBAC to report running images to Merkely at a given cron schedule.  
+The chart allows you to create a Kubernetes cronjob and all its necessary RBAC to report running images to Kosli at a given cron schedule.  
 {{- end }}
 
 {{ define "extra.prerequisites" -}}
@@ -14,7 +14,7 @@ The chart allows you to create a Kubernetes cronjob and all its necessary RBAC t
 
 ### Installing from source
 
-You can install the Merkely reporter Helm chart from source code:
+You can install the Kosli reporter Helm chart from source code:
 
 ```shell 
 git clone https://github.com/kosli-dev/cli.git
@@ -27,9 +27,9 @@ helm install [RELEASE-NAME] . -f [VALUES-FILE-PATH]
 To install this chart via the Helm chart repository:
 
 ```shell 
-helm repo add merkely https://charts.merkely.com/
+helm repo add kosli https://charts.merkely.com/
 helm repo update
-helm install [RELEASE-NAME] merkely/k8s-reporter -f [VALUES-FILE-PATH]
+helm install [RELEASE-NAME] kosli/k8s-reporter -f [VALUES-FILE-PATH]
 ```
 {{- end }}
 
@@ -45,7 +45,7 @@ helm upgrade [RELEASE-NAME] .
 ### Upgrading from the Helm chart repository
 
 ```shell
-helm upgrade [RELEASE-NAME] merkely/k8s-reporter 
+helm upgrade [RELEASE-NAME] kosli/k8s-reporter 
 ```
 {{- end }}
 

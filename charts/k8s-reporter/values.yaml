@@ -3,11 +3,11 @@
 # Declare variables to be passed into your templates.
 
 image:
-  # -- the merkely reporter image repository
+  # -- the kosli reporter image repository
   repository: ghcr.io/kosli-dev/merkely-cli
-  # -- the merkely reporter image pull policy
+  # -- the kosli reporter image pull policy
   pullPolicy: IfNotPresent
-  # -- the merkely reporter image tag, overrides the image tag whose default is the chart appVersion.
+  # -- the kosli reporter image tag, overrides the image tag whose default is the chart appVersion.
   tag: "v1.1.0"
 
 # -- overrides the name used for the created k8s resources. If `fullnameOverride` is provided, it has higher precedence than this one
@@ -24,26 +24,26 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
-# -- the cron schedule at which the reporter is triggered to report to Merkely  
+# -- the cron schedule at which the reporter is triggered to report to kosli  
 cronSchedule: "*/5 * * * *"
 
-merkelyApiToken:
-  # -- the name of the secret containing the Merkely API token
+kosliApiToken:
+  # -- the name of the secret containing the kosli API token
   secretName: ""
-  # -- the name of the key in the secret data which containts the Merkely API token
+  # -- the name of the key in the secret data which containts the kosli API token
   secretKey: ""
 
 reporterConfig:
-  # -- the name of the Merkely owner (Org)
-  merkelyOwner: ""
-  # -- the name of Merkely environment that the k8s cluster/namespace correlates to
-  merkelyEnvironmentName: ""
+  # -- the name of the kosli owner (Org)
+  kosliOwner: ""
+  # -- the name of kosli environment that the k8s cluster/namespace correlates to
+  kosliEnvironmentName: ""
   # -- the namespaces which represent the environment.
   # It is a comma separated list of namespace name regex patterns.
   # e.g. `^prod$,^dev-*` reports for the `prod` namespace and any namespace that starts with `dev-`
   # leave this unset if you want to report what is running in the entire cluster
   namespaces: ""
-  # -- whether the dry run mode is enabled or not. In dry run mode, the reporter logs the reports to stdout and does not send them to Merkely.
+  # -- whether the dry run mode is enabled or not. In dry run mode, the reporter logs the reports to stdout and does not send them to kosli.
   dryRun: false
 
 # env:

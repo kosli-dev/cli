@@ -5,9 +5,9 @@ on:
     branches:
       - main
     paths:  
-      - 'docs.merkely.com/**'
-      - '!docs.merkely.com/content/client_reference/**'
-      - '!docs.merkely.com/content/helm/**'
+      - 'docs.kosli.com/**'
+      - '!docs.kosli.com/content/client_reference/**'
+      - '!docs.kosli.com/content/helm/**'
   workflow_run:
     workflows: ["helm chart", "release"]
     types:
@@ -29,11 +29,11 @@ jobs:
           extended: true
 
       - name: Build
-        run: cd docs.merkely.com && hugo --minify
+        run: cd docs.kosli.com && hugo --minify
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         if: github.ref == 'refs/heads/main'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs.merkely.com/public
+          publish_dir: ./docs.kosli.com/public

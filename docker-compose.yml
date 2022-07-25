@@ -16,12 +16,12 @@ services:
     networks: [ cli_net ]
     depends_on: [ mongo_rs_initiate ]
     image: ghcr.io/kosli-dev/merkely:latest
-    container_name: cli_merkely_server
+    container_name: cli_kosli_server
     ports: ["8001:8001"]
 
   mongo_rs_initiate:
     networks: [ cli_net ]
-    image: merkely-mongo-rs
+    image: kosli-mongo-rs
     build:
       context: ./mongo
     container_name: cli_mongo_rs_initiate
@@ -33,7 +33,7 @@ services:
   mongo:
     networks: [ cli_net ]
     hostname: mongo
-    image: merkely-mongo-rs
+    image: kosli-mongo-rs
     build:
       context: ./mongo
     container_name: cli_mongo

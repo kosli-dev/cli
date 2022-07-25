@@ -7,7 +7,7 @@ FROM golang:${GO_VERSION}-alpine${ALPINE_VERSION} as builder
 
 RUN apk add --update --no-cache git bash make
 
-WORKDIR /go/src/merkely
+WORKDIR /go/src/kosli
 
 COPY . .
 
@@ -18,4 +18,4 @@ FROM alpine:${ALPINE_VERSION} as base
 
 RUN apk add --update --no-cache git openssh bash
 
-COPY --from=builder /go/src/merkely/merkely /bin/kosli
+COPY --from=builder /go/src/kosli/kosli /bin/kosli

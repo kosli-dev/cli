@@ -82,7 +82,7 @@ func (suite *FingerprintTestSuite) TestRun() {
 		{
 			name:          "Fingerprinting a non-available docker image fails",
 			opts:          fingerprintOptions{artifactType: "docker"},
-			args:          []string{"library/merkely"},
+			args:          []string{"library/kosli"},
 			errorExpected: true,
 		},
 	} {

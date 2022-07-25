@@ -50,8 +50,7 @@ deps: ## Install depdendencies. Runs `go get` internally.
 .PHONY: deps
 
 build: deps vet ## Build the binary
-	@go build -o merkely -ldflags '$(LDFLAGS)' ./cmd/merkely/
-	@go build -o kosli -ldflags '$(LDFLAGS)' ./cmd/merkely/
+	@go build -o kosli -ldflags '$(LDFLAGS)' ./cmd/kosli/
 .PHONY: build
 
 check_dirty:
@@ -74,19 +73,19 @@ test_unit: deps vet ensure_network ## Run unit tests
 	@docker-compose down || true
 	@docker-compose up -d
 	./mongo/ip_wait.sh localhost:8001
-	@docker exec cli_merkely_server /demo/create_test_users.py
+	@docker exec cli_kosli_server /demo/create_test_users.py
 	@go test -v -cover -p=1 -coverprofile=coverage.out ./...
 	@go tool cover -func=coverage.out
 	@go tool cover -html=coverage.out
 .PHONY: test_unit
 
 docker: deps vet lint
-	@docker build -t merkely-cli .
+	@docker build -t kosli-cli .
 .PHONY: docker
 
 docs: build
-	@rm -f docs.merkely.com/content/client_reference/merkely*
-	@export DOCS=true && ./merkely docs --dir docs.merkely.com/content/client_reference
+	@rm -f docs.kosli.com/content/client_reference/kosli*
+	@export DOCS=true && ./kosli docs --dir docs.kosli.com/content/client_reference
 .PHONY: docs
 
 licenses:
@@ -98,7 +97,7 @@ licenses:
 .PHONY: licenses
 
 hugo: docs helm-docs
-	cd docs.merkely.com && hugo server --minify
+	cd docs.kosli.com && hugo server --minify
 .PHONY: hugo
 
 helm-lint: 
@@ -107,7 +106,7 @@ helm-lint:
 
 helm-docs: helm-lint
 	@cd charts/k8s-reporter &&  docker run --rm --volume "$(PWD):/helm-docs" jnorwood/helm-docs:latest --template-files README.md.gotmpl,_templates.gotmpl --output-file README.md
-	@cd charts/k8s-reporter &&  docker run --rm --volume "$(PWD):/helm-docs" jnorwood/helm-docs:latest --template-files README.md.gotmpl,_templates.gotmpl --output-file ../../docs.merkely.com/content/helm/helm_chart.md
+	@cd charts/k8s-reporter &&  docker run --rm --volume "$(PWD):/helm-docs" jnorwood/helm-docs:latest --template-files README.md.gotmpl,_templates.gotmpl --output-file ../../docs.kosli.com/content/helm/helm_chart.md
 .PHONY: helm-docs
 
 release:
