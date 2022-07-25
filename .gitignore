@@ -3,6 +3,7 @@
 /kosli
 TODO
 merkely.yaml
+kosli.yaml
 dist/
 coverage.out
 coverage.html
