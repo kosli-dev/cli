@@ -70,7 +70,7 @@
 
   code {
     padding: 0 $padding-4;
-    background: var(--gray-200);
+    background: transparent;
     border-radius: $border-radius;
     font-size: 0.875em;
   }
@@ -103,18 +103,45 @@
   }
 
   table {
+    width: 100%;
+    display: table;
+    background-color: #272822;
+    color: #f8f8f2;
+    border-radius: 0.25rem;
     overflow: auto;
-    display: block;
     border-spacing: 0;
     border-collapse: collapse;
     margin-top: $padding-16;
     margin-bottom: $padding-16;
 
-    tr th,
-    tr td {
-      padding: $padding-8 $padding-16;
-      border: $padding-1 solid var(--gray-200);
+    tr {
+      background-color: transparent !important;
+      th {
+          color: $blue-200;
+          border: 0;
+          display: none;
+      }
+  
+      td {
+          border: 0px;
+          word-break: normal;
+          a, a:hover, a:visited {
+              color: $blue-200;
+          }
+      }
+
+      th, td {
+        padding: $padding-8 $padding-16;
+      }
     }
+
+    td:first-child {
+      width: 275px;
+      font-size: 14px;
+      font-weight: bold;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
 
     tr:nth-child(2n) {
       background: var(--gray-100);
