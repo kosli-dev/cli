@@ -23,26 +23,6 @@ builds:
       - arm64
       - arm
     main: ./cmd/kosli/
-  - id: kosli
-    binary: kosli
-    ldflags: 
-      - -w -s
-      - -X github.com/kosli-dev/cli/internal/version.version={{ .Tag }}
-      - -X github.com/kosli-dev/cli/internal/version.gitCommit={{ .FullCommit }}
-      - -X github.com/kosli-dev/cli/internal/version.gitTreeState=clean
-      - -extldflags "-static"
-    env:
-      - CGO_ENABLED=0
-      - GO111MODULE=on
-    goos:
-      - darwin
-      - linux
-      - windows
-    goarch:
-      - amd64
-      - arm64
-      - arm
-    main: ./cmd/kosli/
 
 archives:
   -
