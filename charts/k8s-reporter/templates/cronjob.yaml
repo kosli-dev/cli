@@ -20,7 +20,7 @@ spec:
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
             imagePullPolicy: {{ .Values.image.pullPolicy }}
             env:
-              - name: MERKELY_API_TOKEN
+              - name: KOSLI_API_TOKEN
                 valueFrom:
                   secretKeyRef:
                     name: {{ required ".Values.kosliApiToken.secretName is required." .Values.kosliApiToken.secretName }}
@@ -32,7 +32,7 @@ spec:
             command:
             - /bin/sh
             - -c
-            - merkely environment report k8s {{ required ".Values.reporterConfig.kosliEnvironmentName is required" .Values.reporterConfig.kosliEnvironmentName }} {{ if .Values.reporterConfig.namespaces }}--namespace {{ .Values.reporterConfig.namespaces | quote }} {{ end }} --owner {{ required ".Values.reporterConfig.kosliOwner is required" .Values.reporterConfig.kosliOwner }} {{ if .Values.reporterConfig.dryRun }}--dry-run{{ end }}
+            - kosli environment report k8s {{ required ".Values.reporterConfig.kosliEnvironmentName is required" .Values.reporterConfig.kosliEnvironmentName }} {{ if .Values.reporterConfig.namespaces }}--namespace {{ .Values.reporterConfig.namespaces | quote }} {{ end }} --owner {{ required ".Values.reporterConfig.kosliOwner is required" .Values.reporterConfig.kosliOwner }} {{ if .Values.reporterConfig.dryRun }}--dry-run{{ end }}
             resources:
 {{ toYaml .Values.resources | indent 14 }}
           restartPolicy: Never
