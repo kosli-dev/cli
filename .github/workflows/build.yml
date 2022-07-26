@@ -95,7 +95,7 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
       with:
         push: true
-        tags: "${{ steps.login-ecr-public.outputs.registry }}/${{ inputs.REGISTRY_ALIAS }}/kosli-reporter:${{ inputs.tag }},${{ steps.login-ecr-public.outputs.registry }}/${{ inputs.REGISTRY_ALIAS }}/kosli-reporter:latest"
+        tags: "${{ steps.login-ecr-public.outputs.registry }}/${{ inputs.REGISTRY_ALIAS }}/kosli-reporter:${{ inputs.tag }},${{ steps.login-ecr-public.outputs.registry }}/${{ inputs.REGISTRY_ALIAS }}/kosli-reporter:latest,${{ env.IMAGE }}:${{ inputs.tag }}"
         cache-from: type=registry,ref=${{ steps.login-ecr-public.outputs.registry }}/kosli/kosli-reporter:latest
         cache-to: type=inline,mode=max
         build-args: |
