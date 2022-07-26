@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
+	"github.com/xeonx/timeago"
 )
 
 const environmentDiffDesc = `Diff snapshots.`
@@ -23,10 +25,11 @@ type EnvironmentDiffPayload struct {
 }
 
 type EnvironmentDiffResponse struct {
-	Sha256    string   `json:"sha256"`
-	Name      string   `json:"name"`
-	CommitUrl string   `json:"commit_url"`
-	Pods      []string `json:"pods"`
+	Sha256              string   `json:"sha256"`
+	Name                string   `json:"name"`
+	CommitUrl           string   `json:"commit_url"`
+	MostRecentTimestamp int64    `json:"most_recent_timestamp"`
+	Pods                []string `json:"pods"`
 }
 
 func newEnvironmentDiffCmd(out io.Writer) *cobra.Command {
@@ -88,26 +91,12 @@ func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
-	colorRed := "\033[31m%s\033[0m"
-	colorGreen := "\033[32m%s\033[0m"
-
 	removalCount := len(diffs["-"])
 	additionCount := len(diffs["+"])
 
 	if removalCount > 0 {
 		for _, entry := range diffs["-"] {
-			fmt.Printf(colorRed, "- Name: ")
-			fmt.Printf("  %s\n", entry.Name)
-			fmt.Printf(colorRed, "  Sha256: ")
-			fmt.Printf("%s\n", entry.Sha256)
-			if entry.CommitUrl != "" {
-				fmt.Printf(colorRed, "  Commit: ")
-				fmt.Printf("%s\n", entry.CommitUrl)
-			}
-			if len(entry.Pods) > 0 {
-				fmt.Printf(colorRed, "  Pods: ")
-				fmt.Printf("  %s\n", entry.Pods)
-			}
+			printDiffEntry(true, entry)
 		}
 	}
 
@@ -117,19 +106,37 @@ func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
 
 	if additionCount > 0 {
 		for _, entry := range diffs["+"] {
-			fmt.Printf(colorGreen, "+ Name: ")
-			fmt.Printf("  %s\n", entry.Name)
-			fmt.Printf(colorGreen, "  Sha256: ")
-			fmt.Printf("%s\n", entry.Sha256)
-			if entry.CommitUrl != "" {
-				fmt.Printf(colorGreen, "  Commit: ")
-				fmt.Printf("%s\n", entry.CommitUrl)
-			}
-			if len(entry.Pods) > 0 {
-				fmt.Printf(colorGreen, "  Pods: ")
-				fmt.Printf("  %s\n", entry.Pods)
-			}
+			printDiffEntry(false, entry)
 		}
 	}
 	return nil
+}
+
+func printDiffEntry(removal bool, entry EnvironmentDiffResponse) {
+	colorRed := "\033[31m%s\033[0m"
+	colorGreen := "\033[32m%s\033[0m"
+	color := colorGreen
+	sign := "+"
+	if removal {
+		color = colorRed
+		sign = "-"
+	}
+
+	fmt.Printf(color, sign+" Name: ")
+	fmt.Printf("  %s\n", entry.Name)
+	fmt.Printf(color, "  Sha256: ")
+	fmt.Printf("%s\n", entry.Sha256)
+	if entry.CommitUrl != "" {
+		fmt.Printf(color, "  Commit: ")
+		fmt.Printf("%s\n", entry.CommitUrl)
+	}
+	if len(entry.Pods) > 0 {
+		fmt.Printf(color, "  Pods: ")
+		fmt.Printf("  %s\n", entry.Pods)
+	}
+	fmt.Printf(color, "  Started: ")
+	timestamp := time.Unix(entry.MostRecentTimestamp, 0)
+	timeago.English.Max = 36 * timeago.Month
+	since := timeago.English.Format(timestamp)
+	fmt.Printf("%s \u2022 %s\n", time.Unix(entry.MostRecentTimestamp, 0).Format(time.RFC822), since)
 }
