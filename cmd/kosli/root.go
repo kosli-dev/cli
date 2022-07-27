@@ -44,6 +44,7 @@ const (
 	pipelineNameFlag        = "The Kosli pipeline name."
 	newPipelineFlag         = "The name of the pipeline to be created or updated."
 	pipelineJsonFlag        = "[optional] Print pipeline info as json."
+	jsonOutputFlag          = "[optional] Print output as json."
 	pipefileFlag            = "[deprecated] The path to the JSON pipefile."
 	environmentNameFlag     = "The environment name."
 	environmentLongFlag     = "[optional] Print long environment info."
