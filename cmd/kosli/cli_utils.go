@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	urlPackage "net/url"
 	"os"
 	"reflect"
 	"strings"
+	"text/tabwriter"
 	"unicode"
 
 	"github.com/kosli-dev/cli/internal/digest"
@@ -365,4 +367,19 @@ func prettyJson(rawJson string) (string, error) {
 		return "", error
 	}
 	return prettyJSON.String(), nil
+}
+
+//printTable prints data in a tabular format. Takes header titles in a string slice
+// and rows as a slice of strings
+func printTable(out io.Writer, header []string, rows []string) {
+	w := new(tabwriter.Writer)
+
+	// Format in tab-separated columns with a tab stop of 8.
+	w.Init(out, 5, 12, 3, ' ', 0)
+	fmt.Fprintln(w, strings.Join(header, "\t"))
+
+	for _, row := range rows {
+		fmt.Fprintln(w, row)
+	}
+	w.Flush()
 }

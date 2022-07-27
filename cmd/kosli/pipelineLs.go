@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"text/tabwriter"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/sirupsen/logrus"
@@ -44,13 +43,6 @@ func newPipelineLsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *pipelineLsOptions) run(out io.Writer) error {
-
-	w := new(tabwriter.Writer)
-
-	// Format in tab-separated columns with a tab stop of 8.
-	w.Init(out, 5, 12, 3, ' ', 0)
-	fmt.Fprintln(w, "NAME\tDESCRIPTION\tVISIBILITY")
-
 	url := fmt.Sprintf("%s/api/v1/projects/%s/", global.Host, global.Owner)
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
@@ -74,11 +66,13 @@ func (o *pipelineLsOptions) run(out io.Writer) error {
 		return err
 	}
 
+	header := []string{"NAME", "DESCRIPTION", "VISIBILITY"}
+	rows := []string{}
 	for _, pipeline := range pipelines {
 		row := fmt.Sprintf("%s\t%s\t%s", pipeline["name"], pipeline["description"], pipeline["visibility"])
-		fmt.Fprintln(w, row)
+		rows = append(rows, row)
 	}
-	w.Flush()
+	printTable(out, header, rows)
 
 	return nil
 }
