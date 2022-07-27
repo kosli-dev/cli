@@ -66,6 +66,11 @@ func (o *pipelineLsOptions) run(out io.Writer) error {
 		return err
 	}
 
+	if len(pipelines) == 0 {
+		out.Write([]byte("No pipelines found\n"))
+		return nil
+	}
+
 	header := []string{"NAME", "DESCRIPTION", "VISIBILITY"}
 	rows := []string{}
 	for _, pipeline := range pipelines {

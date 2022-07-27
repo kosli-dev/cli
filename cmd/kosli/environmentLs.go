@@ -22,9 +22,10 @@ type environmentLsOptions struct {
 func newEnvironmentLsCmd(out io.Writer) *cobra.Command {
 	o := new(environmentLsOptions)
 	cmd := &cobra.Command{
-		Use:   "ls [ENVIRONMENT-NAME]",
-		Short: environmentLsDesc,
-		Long:  environmentLsDesc,
+		Use:     "ls [ENVIRONMENT-NAME]",
+		Aliases: []string{"list"},
+		Short:   environmentLsDesc,
+		Long:    environmentLsDesc,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -71,11 +72,15 @@ func (o *environmentLsOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
-	if o.long {
-		fmt.Printf("%-15s %-10s %-27s %s\n", "NAME", "TYPE", "LAST REPORT", "LAST MODIFIED")
+	if len(envs) == 0 {
+		out.Write([]byte("No environments found\n"))
+		return nil
 	}
-	for _, env := range envs {
-		if o.long {
+
+	if o.long {
+		header := []string{"NAME", "TYPE", "LAST REPORT", "LAST MODIFIED"}
+		rows := []string{}
+		for _, env := range envs {
 			last_reported_str := ""
 			last_reported_at := env["last_reported_at"]
 			if last_reported_at != nil {
@@ -86,9 +91,13 @@ func (o *environmentLsOptions) run(out io.Writer, args []string) error {
 			if last_modified_at != nil {
 				last_modified_str = time.Unix(int64(last_modified_at.(float64)), 0).Format(time.RFC3339)
 			}
-			fmt.Printf("%-15s %-10s %-27s %s\n", env["name"], env["type"], last_reported_str, last_modified_str)
-		} else {
-			fmt.Println(env["name"])
+			row := fmt.Sprintf("%s\t%s\t%s\t%s", env["name"], env["type"], last_reported_str, last_modified_str)
+			rows = append(rows, row)
+		}
+		printTable(out, header, rows)
+	} else {
+		for _, env := range envs {
+			out.Write([]byte(env["name"].(string) + "\n"))
 		}
 	}
 
