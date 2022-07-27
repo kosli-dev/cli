@@ -67,7 +67,7 @@ func (o *pipelineLsOptions) run(out io.Writer) error {
 	}
 
 	if len(pipelines) == 0 {
-		_, err := out.Write([]byte("No pipelines found\n"))
+		_, err := out.Write([]byte("No pipelines were found\n"))
 		if err != nil {
 			return err
 		}

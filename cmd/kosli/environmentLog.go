@@ -37,6 +37,9 @@ func newEnvironmentLogCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorAfterPrintingHelp(cmd, err.Error())
 			}
+			if len(args) < 1 {
+				return ErrorAfterPrintingHelp(cmd, "environment name argument is required")
+			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -74,7 +77,16 @@ func (o *environmentLogOptions) run(out io.Writer, args []string) error {
 			return err
 		}
 
-		fmt.Printf("%-8s  %-25s  %-25s  %s", "SNAPSHOT", "FROM", "TO", "DURATION\n")
+		if len(snapshots) == 0 {
+			_, err := out.Write([]byte("No environment snapshots were found\n"))
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+
+		header := []string{"SNAPSHOT", "FROM", "TO", "DURATION"}
+		rows := []string{}
 		for _, snapshot := range snapshots {
 			tsFromStr := time.Unix(int64(snapshot["from"].(float64)), 0).Format(time.RFC3339)
 			tsToStr := "now"
@@ -86,9 +98,10 @@ func (o *environmentLogOptions) run(out io.Writer, args []string) error {
 			durationNs := time.Duration(int64(snapshot["duration"].(float64)) * 1e9)
 			duration := timeago.English.FormatRelativeDuration(durationNs)
 			index := int64(snapshot["index"].(float64))
-			fmt.Printf("%-8d  %s  %-25s  %s\n", index, tsFromStr, tsToStr, duration)
+			row := fmt.Sprintf("%d\t%s\t%s\t%s", index, tsFromStr, tsToStr, duration)
+			rows = append(rows, row)
 		}
-
+		printTable(out, header, rows)
 	}
 
 	return nil
