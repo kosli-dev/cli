@@ -58,7 +58,7 @@ func newEnvironmentDiffCmd(out io.Writer) *cobra.Command {
 
 func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
 	if len(args) < 2 {
-		return fmt.Errorf("Two snappish required")
+		return fmt.Errorf("two snappish required")
 	}
 
 	payload := new(EnvironmentDiffPayload)
