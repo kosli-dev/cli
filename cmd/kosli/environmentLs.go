@@ -73,7 +73,10 @@ func (o *environmentLsOptions) run(out io.Writer, args []string) error {
 	}
 
 	if len(envs) == 0 {
-		out.Write([]byte("No environments found\n"))
+		_, err := out.Write([]byte("No environments found\n"))
+		if err != nil {
+			return err
+		}
 		return nil
 	}
 
@@ -97,7 +100,10 @@ func (o *environmentLsOptions) run(out io.Writer, args []string) error {
 		printTable(out, header, rows)
 	} else {
 		for _, env := range envs {
-			out.Write([]byte(env["name"].(string) + "\n"))
+			_, err := out.Write([]byte(env["name"].(string) + "\n"))
+			if err != nil {
+				return err
+			}
 		}
 	}
 

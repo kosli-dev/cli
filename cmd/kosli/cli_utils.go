@@ -362,9 +362,9 @@ func ErrorAfterPrintingHelp(cmd *cobra.Command, errMsg string) error {
 // Convert json to nice printable format
 func prettyJson(rawJson string) (string, error) {
 	var prettyJSON bytes.Buffer
-	error := json.Indent(&prettyJSON, []byte(rawJson), "", "  ")
-	if error != nil {
-		return "", error
+	err := json.Indent(&prettyJSON, []byte(rawJson), "", "  ")
+	if err != nil {
+		return "", err
 	}
 	return prettyJSON.String(), nil
 }
@@ -375,7 +375,7 @@ func printTable(out io.Writer, header []string, rows []string) {
 	w := new(tabwriter.Writer)
 
 	// Format in tab-separated columns with a tab stop of 8.
-	w.Init(out, 5, 12, 3, ' ', 0)
+	w.Init(out, 5, 12, 2, ' ', 0)
 	fmt.Fprintln(w, strings.Join(header, "\t"))
 
 	for _, row := range rows {

@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/kosli-dev/cli/internal/requests"
@@ -68,19 +67,19 @@ type ArtifactJsonOut struct {
 }
 
 func snapshotLs(out io.Writer, o *environmentLsOptions, args []string) error {
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/snapshots/-1", global.Host, global.Owner, args[0])
+	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, args[0])
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
 
 	if err != nil {
-		return fmt.Errorf("kosli server %s is unresponsive", global.Host)
+		return err
 	}
 
 	if o.json {
 		return showJson(response, o)
 	}
 
-	return showList(response, o)
+	return showList(response, o, out)
 }
 
 func showJson(response *requests.HTTPResponse, o *environmentLsOptions) error {
@@ -89,7 +88,7 @@ func showJson(response *requests.HTTPResponse, o *environmentLsOptions) error {
 		if err != nil {
 			return err
 		}
-		fmt.Println(pj)
+		fmt.Print(pj)
 		return nil
 	}
 
@@ -97,6 +96,11 @@ func showJson(response *requests.HTTPResponse, o *environmentLsOptions) error {
 	err := json.Unmarshal([]byte(response.Body), &snapshot)
 	if err != nil {
 		return err
+	}
+	// check if the snapshot is empty by checking one of its elements
+	if snapshot.Type == "" {
+		fmt.Println("{}")
+		return nil
 	}
 	var result []ArtifactJsonOut
 	for _, artifact := range snapshot.Artifacts {
@@ -126,14 +130,25 @@ func showJson(response *requests.HTTPResponse, o *environmentLsOptions) error {
 	return nil
 }
 
-func showList(response *requests.HTTPResponse, o *environmentLsOptions) error {
+func showList(response *requests.HTTPResponse, o *environmentLsOptions, out io.Writer) error {
 	var snapshot Snapshot
 	err := json.Unmarshal([]byte(response.Body), &snapshot)
 	if err != nil {
 		return err
 	}
 
-	hasTag, formatStringLine := getFormatStrings(&snapshot, o.long)
+	// check if the snapshot is empty by checking one of its elements
+	if snapshot.Type == "" {
+		_, err := out.Write([]byte("No running artifacts were reported\n"))
+		if err != nil {
+			return err
+		}
+		return nil
+
+	}
+
+	header := []string{"COMMIT", "ARTIFACT", "SHA256", "RUNNING_SINCE", "REPLICAS"}
+	rows := []string{}
 	for _, artifact := range snapshot.Artifacts {
 		if artifact.Annotation.Now == 0 {
 			continue
@@ -141,86 +156,29 @@ func showList(response *requests.HTTPResponse, o *environmentLsOptions) error {
 		timestamp := time.Unix(artifact.CreationTimestamp[0], 0)
 		timeago.English.Max = 36 * timeago.Month
 		since := timeago.English.Format(timestamp)
-		artifactName, artifactTag := splitImageName(artifact.Name)
-		if len(artifactName) > 40 && !o.long {
-			artifactName = artifactName[:18] + "..." + artifactName[len(artifactName)-19:]
+		if len(artifact.Name) > 50 && !o.long {
+			artifact.Name = artifact.Name[:18] + "..." + artifact.Name[len(artifact.Name)-19:]
 		}
-		if hasTag {
-			if len(artifactTag) > 10 && !o.long {
-				artifactTag = artifactTag[:10]
-			}
-		}
-		shortSha := ""
-		if len(artifact.Sha256) == 64 {
-			if o.long {
-				shortSha = artifact.Sha256
-			} else {
-				shortSha = artifact.Sha256[:7] + "..." + artifact.Sha256[64-7:]
-			}
-		}
+
+		// shortSha := ""
+		// if len(artifact.Sha256) == 64 {
+		// 	if o.long {
+		// 		shortSha = artifact.Sha256
+		// 	} else {
+		// 		shortSha = artifact.Sha256[:7] + "..." + artifact.Sha256[64-7:]
+		// 	}
+		// }
 		gitCommit := "N/A"
 		if artifact.GitCommit != "" {
-			if o.long {
-				gitCommit = artifact.GitCommit
-			} else {
-				gitCommit = artifact.GitCommit[:7]
-			}
+			// if o.long {
+			// 	gitCommit = artifact.GitCommit
+			// } else {
+			gitCommit = artifact.GitCommit[:7]
+			// }
 		}
-
-		fmt.Printf(formatStringLine, gitCommit, artifactName, artifactTag, shortSha, since, len(artifact.CreationTimestamp))
+		row := fmt.Sprintf("%s\t%s\t%s\t%s\t%d", gitCommit, artifact.Name, artifact.Sha256, since, len(artifact.CreationTimestamp))
+		rows = append(rows, row)
 	}
-
+	printTable(out, header, rows)
 	return nil
-}
-
-func getFormatStrings(snapshot *Snapshot, longOption bool) (bool, string) {
-	var hasTag bool
-	var formatStringHead string
-	var formatStringLine string
-	maxCommitLength := 7
-	maxImageLength := 40
-	maxTagLength := 10
-	maxSha256Length := 17
-
-	if longOption {
-		maxImageLength = 0
-		maxTagLength = 0
-		for _, artifact := range snapshot.Artifacts {
-			artifactName, artifactTag := splitImageName(artifact.Name)
-			if len(artifactName) > maxImageLength {
-				maxImageLength = len(artifactName)
-			}
-			if len(artifactTag) > maxTagLength {
-				maxTagLength = len(artifactTag)
-			}
-		}
-		maxCommitLength = 40
-		maxSha256Length = 64
-	}
-
-	if snapshot.Type == "K8S" || snapshot.Type == "ECS" {
-		hasTag = true
-		formatStringHead = fmt.Sprintf("%%-%ds  %%-%ds  %%-%ds  %%-%ds  %%-25s  %%-10s\n", maxCommitLength, maxImageLength, maxTagLength, maxSha256Length)
-		formatStringLine = fmt.Sprintf("%%-%ds  %%-%ds  %%-%ds  %%-%ds  %%-25s  %%-10d\n", maxCommitLength, maxImageLength, maxTagLength, maxSha256Length)
-		fmt.Printf(formatStringHead, "COMMIT", "IMAGE", "TAG", "SHA256", "SINCE", "REPLICAS")
-	} else if snapshot.Type == "server" {
-		hasTag = false
-		formatStringHead = fmt.Sprintf("%%-%ds  %%-%ds  %%-%ds  %%-25s  %%-10s\n", maxCommitLength, maxImageLength, maxSha256Length)
-		formatStringLine = fmt.Sprintf("%%-%ds  %%-%ds %%s %%-%ds  %%-25s  %%-10d\n", maxCommitLength, maxImageLength, maxSha256Length)
-		fmt.Printf(formatStringHead, "COMMIT", "IMAGE", "SHA256", "SINCE", "REPLICAS")
-	}
-	// TODO: add default handling of unknown snapshot type
-	return hasTag, formatStringLine
-}
-
-func splitImageName(imageName string) (string, string) {
-	// TODO: properly parse the image name to get tag
-	// https://github.com/cyber-dojo/runner/blob/e98bc280c5349cb2919acecb0dfbfefa1ac4e5c3/src/docker/image_name.rb
-	artifactNameSplit := strings.Split(imageName, ":")
-	artifactName := artifactNameSplit[0]
-	artifactTag := ""
-	if len(artifactNameSplit) > 1 {
-		artifactTag = artifactNameSplit[1]
-	}
-	return artifactName, artifactTag
 }
