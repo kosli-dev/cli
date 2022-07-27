@@ -78,7 +78,6 @@ func (o *pipelineLsOptions) run(out io.Writer) error {
 		row := fmt.Sprintf("%s\t%s\t%s", pipeline["name"], pipeline["description"], pipeline["visibility"])
 		fmt.Fprintln(w, row)
 	}
-	fmt.Fprintln(w)
 	w.Flush()
 
 	return nil
