@@ -18,6 +18,7 @@ func newArtifactCmd(out io.Writer) *cobra.Command {
 	// Add subcommands
 	cmd.AddCommand(
 		newArtifactReportCmd(out),
+		newArtifactGetCmd(out),
 	)
 
 	return cmd
