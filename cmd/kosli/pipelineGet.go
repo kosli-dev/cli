@@ -5,14 +5,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/xeonx/timeago"
 )
 
 const pipelineGetDesc = `Get the metadata of a single pipeline`
@@ -77,14 +74,11 @@ func (o *pipelineGetOptions) run(out io.Writer, args []string) error {
 	template := fmt.Sprintf("%s", pipeline["template"])
 	template = strings.Replace(template, " ", ", ", -1)
 	fmt.Printf("Template: %s\n", template)
-	timeago.English.Max = 36 * timeago.Month
-	timestampFloat, err := strconv.ParseFloat(pipeline["last_deployment_at"].(string), 64)
+	lastDeployedAt, err := formattedTimestamp(pipeline["last_deployment_at"])
 	if err != nil {
 		return err
 	}
-	timestamp := time.Unix(int64(timestampFloat), 0)
-	last_deployment_at := timeago.English.Format(timestamp)
-	fmt.Printf("Last deployment at: %s \u2022 %s\n", timestamp.Format(time.RFC822), last_deployment_at)
+	fmt.Printf("Last deployment at: %s\n", lastDeployedAt)
 
 	return nil
 }

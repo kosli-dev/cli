@@ -9,8 +9,10 @@ import (
 	urlPackage "net/url"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"text/tabwriter"
+	"time"
 	"unicode"
 
 	"github.com/kosli-dev/cli/internal/digest"
@@ -18,6 +20,7 @@ import (
 	"github.com/kosli-dev/cli/internal/utils"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/xeonx/timeago"
 )
 
 const bitbucket = "Bitbucket"
@@ -382,4 +385,29 @@ func printTable(out io.Writer, header []string, rows []string) {
 		fmt.Fprintln(w, row)
 	}
 	w.Flush()
+}
+
+//formattedTimestamp formats a float timestamp into something like "01 Apr 22 14:20 CEST • 4 months ago"
+// time is formatted using RFC822
+func formattedTimestamp(timestamp interface{}) (string, error) {
+	var intTimestamp int64
+	switch t := timestamp.(type) {
+	case int64:
+		intTimestamp = timestamp.(int64)
+	case float64:
+		intTimestamp = int64(timestamp.(float64))
+	case string:
+		floatTimestamp, err := strconv.ParseFloat(timestamp.(string), 64)
+		if err != nil {
+			return "", err
+		}
+		intTimestamp = int64(floatTimestamp)
+	default:
+		return "", fmt.Errorf("unsupported timestamp type %s", t)
+	}
+
+	timeago.English.Max = 36 * timeago.Month
+	unixTime := time.Unix(intTimestamp, 0)
+	timeAgoFormat := timeago.English.Format(unixTime)
+	return fmt.Sprintf("%s \u2022 %s", unixTime.Format(time.RFC822), timeAgoFormat), nil
 }

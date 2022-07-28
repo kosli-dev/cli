@@ -80,20 +80,10 @@ func (o *artifactGetOptions) run(out io.Writer, args []string) error {
 	fmt.Printf("Git commit: %s\n", artifactData["git_commit"].(string))
 	fmt.Printf("Build URL: %s\n", artifactData["build_url"].(string))
 	fmt.Printf("Commit URL: %s\n", artifactData["commit_url"].(string))
-	fmt.Printf("Created at: %f\n", artifactData["logged_at"].(float64))
-	// fmt.Printf("Description: %s\n", pipeline["description"])
-	// fmt.Printf("Visibility: %s\n", pipeline["visibility"])
-	// template := fmt.Sprintf("%s", pipeline["template"])
-	// template = strings.Replace(template, " ", ", ", -1)
-	// fmt.Printf("Template: %s\n", template)
-	// timeago.English.Max = 36 * timeago.Month
-	// timestampFloat, err := strconv.ParseFloat(pipeline["last_deployment_at"].(string), 64)
-	// if err != nil {
-	// 	return err
-	// }
-	// timestamp := time.Unix(int64(timestampFloat), 0)
-	// last_deployment_at := timeago.English.Format(timestamp)
-	// fmt.Printf("Last deployment at: %s \u2022 %s\n", timestamp.Format(time.RFC822), last_deployment_at)
-
+	createdAt, err := formattedTimestamp(artifactData["logged_at"])
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Created at: %s\n", createdAt)
 	return nil
 }
