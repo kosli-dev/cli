@@ -68,8 +68,16 @@ func (o *artifactGetOptions) run(out io.Writer, args []string) error {
 		return nil
 	}
 
-	approvalUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/approvals/", global.Host, global.Owner, o.pipelineName, args[0])
-	approvalResponse, err := requests.DoBasicAuthRequest([]byte{}, approvalUrl, "", global.ApiToken,
+	approvalsUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/approvals/", global.Host, global.Owner, o.pipelineName, args[0])
+	approvalsResponse, err := requests.DoBasicAuthRequest([]byte{}, approvalsUrl, "", global.ApiToken,
+		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
+
+	if err != nil {
+		return err
+	}
+
+	deploymentsUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/deployments/", global.Host, global.Owner, o.pipelineName, args[0])
+	deploymentsResponse, err := requests.DoBasicAuthRequest([]byte{}, deploymentsUrl, "", global.ApiToken,
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
 
 	if err != nil {
@@ -83,7 +91,13 @@ func (o *artifactGetOptions) run(out io.Writer, args []string) error {
 	}
 
 	var approvals []map[string]interface{}
-	err = json.Unmarshal([]byte(approvalResponse.Body), &approvals)
+	err = json.Unmarshal([]byte(approvalsResponse.Body), &approvals)
+	if err != nil {
+		return err
+	}
+
+	var deployments []map[string]interface{}
+	err = json.Unmarshal([]byte(deploymentsResponse.Body), &deployments)
 	if err != nil {
 		return err
 	}
@@ -101,6 +115,7 @@ func (o *artifactGetOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 	rows = append(rows, fmt.Sprintf("Created at:\t%s", createdAt))
+
 	rows = append(rows, "Approvals:")
 	for _, approval := range approvals {
 		timestamp, err := formattedTimestamp(approval["last_modified_at"])
@@ -109,6 +124,28 @@ func (o *artifactGetOptions) run(out io.Writer, args []string) error {
 		}
 		approvalRow := fmt.Sprintf("\t#%d  %s  Last modified: %s", int64(approval["release_number"].(float64)), approval["state"].(string), timestamp)
 		rows = append(rows, approvalRow)
+	}
+
+	rows = append(rows, "Deployments:")
+	for _, deployment := range deployments {
+		deploymentState := deployment["running_state"].(map[string]interface{})
+		state := deploymentState["state"].(string)
+		stateTimestamp := deploymentState["timestamp"].(float64)
+		stateString := ""
+		if state == "deploying" {
+			stateString = "Deploying"
+		} else if state == "running" {
+			stateString = fmt.Sprintf("Running since %f", stateTimestamp)
+		} else if state == "exited" {
+			stateString = fmt.Sprintf("Exited on %f", stateTimestamp)
+		}
+
+		deploymentRow := fmt.Sprintf("\t#%d Reported deployment to %s at %f (%s)",
+			int64(deployment["deployment_id"].(float64)),
+			deployment["environment"].(string),
+			deployment["created_at"].(float64),
+			stateString)
+		rows = append(rows, deploymentRow)
 	}
 
 	printTable(out, []string{}, rows)
