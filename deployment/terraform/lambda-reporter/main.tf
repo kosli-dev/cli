@@ -32,8 +32,8 @@ module "reporter_lambda" {
   publish        = true
 
   environment_variables = {
-    MERKELY_HOST      = var.kosli_host
-    MERKELY_API_TOKEN = data.aws_ssm_parameter.kosli_api_token.value
+    KOSLI_HOST      = var.kosli_host
+    KOSLI_API_TOKEN = data.aws_ssm_parameter.kosli_api_token.value
   }
 
   allowed_triggers = {
