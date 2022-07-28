@@ -68,22 +68,39 @@ func (o *artifactGetOptions) run(out io.Writer, args []string) error {
 		return nil
 	}
 
+	approvalUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/approvals/", global.Host, global.Owner, o.pipelineName, args[0])
+	approvalResponse, err := requests.DoBasicAuthRequest([]byte{}, approvalUrl, "", global.ApiToken,
+		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
+
+	if err != nil {
+		return err
+	}
+
 	var artifact map[string]interface{}
 	err = json.Unmarshal([]byte(response.Body), &artifact)
 	if err != nil {
 		return err
 	}
 
+	var approvals []map[string]interface{}
+	err = json.Unmarshal([]byte(approvalResponse.Body), &approvals)
+	if err != nil {
+		return err
+	}
+
 	artifactData := artifact["evidence"].(map[string]interface{})["artifact"].(map[string]interface{})
-	fmt.Printf("Name: %s\n", artifactData["filename"].(string))
-	fmt.Printf("State: %s\n", artifact["state"].(string))
-	fmt.Printf("Git commit: %s\n", artifactData["git_commit"].(string))
-	fmt.Printf("Build URL: %s\n", artifactData["build_url"].(string))
-	fmt.Printf("Commit URL: %s\n", artifactData["commit_url"].(string))
+
+	rows := []string{}
+	rows = append(rows, fmt.Sprintf("Name:\t%s", artifactData["filename"].(string)))
+	rows = append(rows, fmt.Sprintf("State:\t%s", artifact["state"].(string)))
+	rows = append(rows, fmt.Sprintf("Git commit:\t%s", artifactData["git_commit"].(string)))
+	rows = append(rows, fmt.Sprintf("Build URL:\t%s", artifactData["build_url"].(string)))
+	rows = append(rows, fmt.Sprintf("Commit URL:\t%s", artifactData["commit_url"].(string)))
 	createdAt, err := formattedTimestamp(artifactData["logged_at"])
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Created at: %s\n", createdAt)
+	rows = append(rows, fmt.Sprintf("Created at:\t%s", createdAt))
+	printTable(out, []string{}, rows)
 	return nil
 }

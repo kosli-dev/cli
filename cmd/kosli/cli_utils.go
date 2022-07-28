@@ -379,8 +379,9 @@ func printTable(out io.Writer, header []string, rows []string) {
 
 	// Format in tab-separated columns with a tab stop of 8.
 	w.Init(out, 5, 12, 2, ' ', 0)
-	fmt.Fprintln(w, strings.Join(header, "\t"))
-
+	if len(header) > 0 {
+		fmt.Fprintln(w, strings.Join(header, "\t"))
+	}
 	for _, row := range rows {
 		fmt.Fprintln(w, row)
 	}
