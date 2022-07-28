@@ -403,6 +403,8 @@ func formattedTimestamp(timestamp interface{}, short bool) (string, error) {
 			return "", err
 		}
 		intTimestamp = int64(floatTimestamp)
+	case nil:
+		return "N/A", nil
 	default:
 		return "", fmt.Errorf("unsupported timestamp type %s", t)
 	}
