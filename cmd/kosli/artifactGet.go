@@ -102,7 +102,8 @@ func (o *artifactGetOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
-	artifactData := artifact["evidence"].(map[string]interface{})["artifact"].(map[string]interface{})
+	evidenceMap := artifact["evidence"].(map[string]interface{})
+	artifactData := evidenceMap["artifact"].(map[string]interface{})
 
 	rows := []string{}
 	rows = append(rows, fmt.Sprintf("Name:\t%s", artifactData["filename"].(string)))
@@ -163,6 +164,22 @@ func (o *artifactGetOptions) run(out io.Writer, args []string) error {
 		}
 	} else {
 		rows = append(rows, "Deployments:\tNone")
+	}
+
+	rows = append(rows, "Evidence:")
+	for _, evidenceName := range artifact["template"].([]interface{}) {
+		if evidenceName != "artifact" {
+			if v, ok := evidenceMap[evidenceName.(string)]; !ok {
+				rows = append(rows, fmt.Sprintf("\t%s:\tMISSING", evidenceName))
+			} else {
+				evidenceData := v.(map[string]interface{})
+				isCompliant := "COMPLIANT"
+				if !evidenceData["is_compliant"].(bool) {
+					isCompliant = "INCOMPLIANT"
+				}
+				rows = append(rows, fmt.Sprintf("\t%s:\t%s", evidenceName, isCompliant))
+			}
+		}
 	}
 
 	printTable(out, []string{}, rows)
