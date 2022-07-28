@@ -101,6 +101,16 @@ func (o *artifactGetOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 	rows = append(rows, fmt.Sprintf("Created at:\t%s", createdAt))
+	rows = append(rows, "Approvals:")
+	for _, approval := range approvals {
+		timestamp, err := formattedTimestamp(approval["last_modified_at"])
+		if err != nil {
+			return err
+		}
+		approvalRow := fmt.Sprintf("\t#%d  %s  Last modified: %s", int64(approval["release_number"].(float64)), approval["state"].(string), timestamp)
+		rows = append(rows, approvalRow)
+	}
+
 	printTable(out, []string{}, rows)
 	return nil
 }
