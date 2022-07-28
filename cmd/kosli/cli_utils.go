@@ -390,7 +390,7 @@ func printTable(out io.Writer, header []string, rows []string) {
 
 //formattedTimestamp formats a float timestamp into something like "01 Apr 22 14:20 CEST • 4 months ago"
 // time is formatted using RFC822
-func formattedTimestamp(timestamp interface{}) (string, error) {
+func formattedTimestamp(timestamp interface{}, short bool) (string, error) {
 	var intTimestamp int64
 	switch t := timestamp.(type) {
 	case int64:
@@ -407,8 +407,12 @@ func formattedTimestamp(timestamp interface{}) (string, error) {
 		return "", fmt.Errorf("unsupported timestamp type %s", t)
 	}
 
-	timeago.English.Max = 36 * timeago.Month
 	unixTime := time.Unix(intTimestamp, 0)
-	timeAgoFormat := timeago.English.Format(unixTime)
-	return fmt.Sprintf("%s \u2022 %s", unixTime.Format(time.RFC822), timeAgoFormat), nil
+	if short {
+		return fmt.Sprintf("%s", unixTime.Format(time.RFC822)), nil
+	} else {
+		timeago.English.Max = 36 * timeago.Month
+		timeAgoFormat := timeago.English.Format(unixTime)
+		return fmt.Sprintf("%s \u2022 %s", unixTime.Format(time.RFC822), timeAgoFormat), nil
+	}
 }

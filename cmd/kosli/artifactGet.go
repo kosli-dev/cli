@@ -110,42 +110,59 @@ func (o *artifactGetOptions) run(out io.Writer, args []string) error {
 	rows = append(rows, fmt.Sprintf("Git commit:\t%s", artifactData["git_commit"].(string)))
 	rows = append(rows, fmt.Sprintf("Build URL:\t%s", artifactData["build_url"].(string)))
 	rows = append(rows, fmt.Sprintf("Commit URL:\t%s", artifactData["commit_url"].(string)))
-	createdAt, err := formattedTimestamp(artifactData["logged_at"])
+	createdAt, err := formattedTimestamp(artifactData["logged_at"], false)
 	if err != nil {
 		return err
 	}
 	rows = append(rows, fmt.Sprintf("Created at:\t%s", createdAt))
 
-	rows = append(rows, "Approvals:")
-	for _, approval := range approvals {
-		timestamp, err := formattedTimestamp(approval["last_modified_at"])
-		if err != nil {
-			return err
+	if len(approvals) > 0 {
+		rows = append(rows, "Approvals:")
+		for _, approval := range approvals {
+			timestamp, err := formattedTimestamp(approval["last_modified_at"], true)
+			if err != nil {
+				return err
+			}
+			approvalRow := fmt.Sprintf("\t#%d  %s  Last modified: %s", int64(approval["release_number"].(float64)), approval["state"].(string), timestamp)
+			rows = append(rows, approvalRow)
 		}
-		approvalRow := fmt.Sprintf("\t#%d  %s  Last modified: %s", int64(approval["release_number"].(float64)), approval["state"].(string), timestamp)
-		rows = append(rows, approvalRow)
+	} else {
+		rows = append(rows, fmt.Sprintf("Approvals:\tNone"))
 	}
 
-	rows = append(rows, "Deployments:")
-	for _, deployment := range deployments {
-		deploymentState := deployment["running_state"].(map[string]interface{})
-		state := deploymentState["state"].(string)
-		stateTimestamp := deploymentState["timestamp"].(float64)
-		stateString := ""
-		if state == "deploying" {
-			stateString = "Deploying"
-		} else if state == "running" {
-			stateString = fmt.Sprintf("Running since %f", stateTimestamp)
-		} else if state == "exited" {
-			stateString = fmt.Sprintf("Exited on %f", stateTimestamp)
-		}
+	if len(deployments) > 0 {
+		rows = append(rows, "Deployments:")
+		for _, deployment := range deployments {
+			deploymentState := deployment["running_state"].(map[string]interface{})
+			state := deploymentState["state"].(string)
+			stateTimestamp, err := formattedTimestamp(deploymentState["timestamp"], true)
+			if err != nil {
+				return err
+			}
 
-		deploymentRow := fmt.Sprintf("\t#%d Reported deployment to %s at %f (%s)",
-			int64(deployment["deployment_id"].(float64)),
-			deployment["environment"].(string),
-			deployment["created_at"].(float64),
-			stateString)
-		rows = append(rows, deploymentRow)
+			stateString := ""
+			if state == "deploying" {
+				stateString = "Deploying"
+			} else if state == "running" {
+				stateString = fmt.Sprintf("Running since %s", stateTimestamp)
+			} else if state == "exited" {
+				stateString = fmt.Sprintf("Exited on %s", stateTimestamp)
+			}
+
+			createdAtTimestamp, err := formattedTimestamp(deployment["created_at"], true)
+			if err != nil {
+				return err
+			}
+
+			deploymentRow := fmt.Sprintf("\t#%d Reported deployment to %s at %s (%s)",
+				int64(deployment["deployment_id"].(float64)),
+				deployment["environment"].(string),
+				createdAtTimestamp,
+				stateString)
+			rows = append(rows, deploymentRow)
+		}
+	} else {
+		rows = append(rows, fmt.Sprintf("Deployments:\tNone"))
 	}
 
 	printTable(out, []string{}, rows)

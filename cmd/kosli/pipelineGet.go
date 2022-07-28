@@ -74,7 +74,7 @@ func (o *pipelineGetOptions) run(out io.Writer, args []string) error {
 	template := fmt.Sprintf("%s", pipeline["template"])
 	template = strings.Replace(template, " ", ", ", -1)
 	fmt.Printf("Template: %s\n", template)
-	lastDeployedAt, err := formattedTimestamp(pipeline["last_deployment_at"])
+	lastDeployedAt, err := formattedTimestamp(pipeline["last_deployment_at"], false)
 	if err != nil {
 		return err
 	}
