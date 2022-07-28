@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const artifactGetDesc = `Get artifact from specified pipeline`
+const artifactGetDesc = `Get artifact from a specified pipeline`
 
 type artifactGetOptions struct {
 	json         bool
@@ -30,7 +30,7 @@ func newArtifactGetCmd(out io.Writer) *cobra.Command {
 				return ErrorAfterPrintingHelp(cmd, err.Error())
 			}
 			if len(args) < 1 {
-				return ErrorAfterPrintingHelp(cmd, "pipeline name argument is required")
+				return ErrorAfterPrintingHelp(cmd, "artifact digest argument is required")
 			}
 			return nil
 		},
