@@ -409,7 +409,7 @@ func formattedTimestamp(timestamp interface{}, short bool) (string, error) {
 
 	unixTime := time.Unix(intTimestamp, 0)
 	if short {
-		return fmt.Sprintf("%s", unixTime.Format(time.RFC822)), nil
+		return unixTime.Format(time.RFC822), nil
 	} else {
 		timeago.English.Max = 36 * timeago.Month
 		timeAgoFormat := timeago.English.Format(unixTime)

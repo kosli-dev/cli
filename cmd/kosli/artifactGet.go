@@ -127,7 +127,7 @@ func (o *artifactGetOptions) run(out io.Writer, args []string) error {
 			rows = append(rows, approvalRow)
 		}
 	} else {
-		rows = append(rows, fmt.Sprintf("Approvals:\tNone"))
+		rows = append(rows, "Approvals:\tNone")
 	}
 
 	if len(deployments) > 0 {
@@ -140,7 +140,7 @@ func (o *artifactGetOptions) run(out io.Writer, args []string) error {
 				return err
 			}
 
-			stateString := ""
+			stateString := "Runtime state unknown"
 			if state == "deploying" {
 				stateString = "Deploying"
 			} else if state == "running" {
@@ -162,7 +162,7 @@ func (o *artifactGetOptions) run(out io.Writer, args []string) error {
 			rows = append(rows, deploymentRow)
 		}
 	} else {
-		rows = append(rows, fmt.Sprintf("Deployments:\tNone"))
+		rows = append(rows, "Deployments:\tNone")
 	}
 
 	printTable(out, []string{}, rows)
