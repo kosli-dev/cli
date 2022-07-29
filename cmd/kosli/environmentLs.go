@@ -38,7 +38,7 @@ func newEnvironmentLsCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVarP(&o.long, "long", "l", false, environmentLongFlag)
+	// cmd.Flags().BoolVarP(&o.long, "long", "l", false, environmentLongFlag)
 	cmd.Flags().BoolVarP(&o.json, "json", "j", false, environmentJsonFlag)
 
 	return cmd
@@ -80,32 +80,23 @@ func (o *environmentLsOptions) run(out io.Writer, args []string) error {
 		return nil
 	}
 
-	if o.long {
-		header := []string{"NAME", "TYPE", "LAST REPORT", "LAST MODIFIED"}
-		rows := []string{}
-		for _, env := range envs {
-			last_reported_str := ""
-			last_reported_at := env["last_reported_at"]
-			if last_reported_at != nil {
-				last_reported_str = time.Unix(int64(last_reported_at.(float64)), 0).Format(time.RFC3339)
-			}
-			last_modified_str := ""
-			last_modified_at := env["last_modified_at"]
-			if last_modified_at != nil {
-				last_modified_str = time.Unix(int64(last_modified_at.(float64)), 0).Format(time.RFC3339)
-			}
-			row := fmt.Sprintf("%s\t%s\t%s\t%s", env["name"], env["type"], last_reported_str, last_modified_str)
-			rows = append(rows, row)
+	header := []string{"NAME", "TYPE", "LAST REPORT", "LAST MODIFIED"}
+	rows := []string{}
+	for _, env := range envs {
+		last_reported_str := ""
+		last_reported_at := env["last_reported_at"]
+		if last_reported_at != nil {
+			last_reported_str = time.Unix(int64(last_reported_at.(float64)), 0).Format(time.RFC3339)
 		}
-		printTable(out, header, rows)
-	} else {
-		for _, env := range envs {
-			_, err := out.Write([]byte(env["name"].(string) + "\n"))
-			if err != nil {
-				return err
-			}
+		last_modified_str := ""
+		last_modified_at := env["last_modified_at"]
+		if last_modified_at != nil {
+			last_modified_str = time.Unix(int64(last_modified_at.(float64)), 0).Format(time.RFC3339)
 		}
+		row := fmt.Sprintf("%s\t%s\t%s\t%s", env["name"], env["type"], last_reported_str, last_modified_str)
+		rows = append(rows, row)
 	}
+	printTable(out, header, rows)
 
 	return nil
 }
