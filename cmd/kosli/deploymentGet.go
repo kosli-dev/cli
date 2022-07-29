@@ -76,13 +76,36 @@ func (o *deploymentGetOptions) run(out io.Writer, args []string) error {
 
 	rows := []string{}
 	rows = append(rows, fmt.Sprintf("ID:\t%d", int64(deployment["deployment_id"].(float64))))
-	rows = append(rows, fmt.Sprintf("Artifact:\t%s", deployment["artifact_sha256"].(string)))
-	rows = append(rows, fmt.Sprintf("Environment:\t%s", deployment["environment"].(string)))
+	rows = append(rows, fmt.Sprintf("Artifact SHA256:\t%s", deployment["artifact_sha256"].(string)))
+	rows = append(rows, fmt.Sprintf("Artifact name:\t%s", deployment["artifact_name"].(string)))
+	rows = append(rows, fmt.Sprintf("Build URL:\t%s", deployment["build_url"].(string)))
 	createdAt, err := formattedTimestamp(deployment["created_at"], false)
 	if err != nil {
 		return err
 	}
 	rows = append(rows, fmt.Sprintf("Created at:\t%s", createdAt))
+	rows = append(rows, fmt.Sprintf("Environment:\t%s", deployment["environment"].(string)))
+
+	deploymentState := deployment["running_state"].(map[string]interface{})
+	state := deploymentState["state"].(string)
+	stateTimestamp, err := formattedTimestamp(deploymentState["timestamp"], true)
+	if err != nil {
+		return err
+	}
+
+	stateString := "Runtime state unknown"
+	if state == "deploying" {
+		stateString = "Deploying"
+	} else if state == "running" {
+		stateString = fmt.Sprintf("The artifact running since %s", stateTimestamp)
+	} else if state == "exited" {
+		stateString = fmt.Sprintf("The artifact exited on %s", stateTimestamp)
+	}
+
+	deploymentRow := fmt.Sprintf("Runtime state:\t%s",
+		stateString)
+	rows = append(rows, deploymentRow)
+
 	printTable(out, []string{}, rows)
 	return nil
 }
