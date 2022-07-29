@@ -83,15 +83,6 @@ func snapshotLs(out io.Writer, o *environmentLsOptions, args []string) error {
 }
 
 func showJson(response *requests.HTTPResponse, o *environmentLsOptions) error {
-	if o.long {
-		pj, err := prettyJson(response.Body)
-		if err != nil {
-			return err
-		}
-		fmt.Print(pj)
-		return nil
-	}
-
 	var snapshot Snapshot
 	err := json.Unmarshal([]byte(response.Body), &snapshot)
 	if err != nil {
@@ -156,25 +147,13 @@ func showList(response *requests.HTTPResponse, o *environmentLsOptions, out io.W
 		timestamp := time.Unix(artifact.CreationTimestamp[0], 0)
 		timeago.English.Max = 36 * timeago.Month
 		since := timeago.English.Format(timestamp)
-		if len(artifact.Name) > 50 && !o.long {
+		if len(artifact.Name) > 50 {
 			artifact.Name = artifact.Name[:18] + "..." + artifact.Name[len(artifact.Name)-19:]
 		}
 
-		// shortSha := ""
-		// if len(artifact.Sha256) == 64 {
-		// 	if o.long {
-		// 		shortSha = artifact.Sha256
-		// 	} else {
-		// 		shortSha = artifact.Sha256[:7] + "..." + artifact.Sha256[64-7:]
-		// 	}
-		// }
 		gitCommit := "N/A"
 		if artifact.GitCommit != "" {
-			// if o.long {
-			// 	gitCommit = artifact.GitCommit
-			// } else {
 			gitCommit = artifact.GitCommit[:7]
-			// }
 		}
 		row := fmt.Sprintf("%s\t%s\t%s\t%s\t%d", gitCommit, artifact.Name, artifact.Sha256, since, len(artifact.CreationTimestamp))
 		rows = append(rows, row)

@@ -15,7 +15,6 @@ import (
 const environmentLsDesc = `List environments.`
 
 type environmentLsOptions struct {
-	long bool
 	json bool
 }
 
@@ -38,7 +37,6 @@ func newEnvironmentLsCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	// cmd.Flags().BoolVarP(&o.long, "long", "l", false, environmentLongFlag)
 	cmd.Flags().BoolVarP(&o.json, "json", "j", false, environmentJsonFlag)
 
 	return cmd

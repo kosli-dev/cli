@@ -68,17 +68,22 @@ func (o *pipelineGetOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
-	fmt.Printf("Name: %s\n", pipeline["name"])
-	fmt.Printf("Description: %s\n", pipeline["description"])
-	fmt.Printf("Visibility: %s\n", pipeline["visibility"])
-	template := fmt.Sprintf("%s", pipeline["template"])
-	template = strings.Replace(template, " ", ", ", -1)
-	fmt.Printf("Template: %s\n", template)
+	header := []string{}
+	rows := []string{}
+
 	lastDeployedAt, err := formattedTimestamp(pipeline["last_deployment_at"], false)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Last deployment at: %s\n", lastDeployedAt)
+	template := fmt.Sprintf("%s", pipeline["template"])
+	template = strings.Replace(template, " ", ", ", -1)
 
+	rows = append(rows, fmt.Sprintf("Name:\t%s", pipeline["name"]))
+	rows = append(rows, fmt.Sprintf("Description:\t%s", pipeline["description"]))
+	rows = append(rows, fmt.Sprintf("Visibility:\t%s", pipeline["visibility"]))
+	rows = append(rows, fmt.Sprintf("Template:\t%s", template))
+	rows = append(rows, fmt.Sprintf("Last Deployment At:\t%s", lastDeployedAt))
+
+	printTable(out, header, rows)
 	return nil
 }

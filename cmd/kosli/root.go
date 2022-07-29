@@ -47,7 +47,6 @@ const (
 	jsonOutputFlag          = "[optional] Print output as json."
 	pipefileFlag            = "[deprecated] The path to the JSON pipefile."
 	environmentNameFlag     = "The environment name."
-	environmentLongFlag     = "[optional] Print long environment info."
 	environmentJsonFlag     = "[optional] Print environment info as json."
 	newEnvNameFlag          = "The name of environment to be created."
 	newEnvTypeFlag          = "The type of environment. Valid types are: [K8S, ECS, server, S3, lambda]."
