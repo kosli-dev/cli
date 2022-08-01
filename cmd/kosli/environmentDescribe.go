@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentGetDesc = `Get an environment metadata.`
+const environmentGetDesc = `Describe an environment metadata.`
 
 type environmentGetOptions struct {
 	json bool
@@ -20,16 +20,17 @@ type environmentGetOptions struct {
 func newEnvironmentGetCmd(out io.Writer) *cobra.Command {
 	o := new(environmentGetOptions)
 	cmd := &cobra.Command{
-		Use:   "get [ENVIRONMENT-NAME]",
-		Short: environmentGetDesc,
-		Long:  environmentGetDesc,
+		Use:     "describe [ENVIRONMENT-NAME]",
+		Aliases: []string{"get"},
+		Short:   environmentGetDesc,
+		Long:    environmentGetDesc,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
-				return ErrorAfterPrintingHelp(cmd, err.Error())
+				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			if len(args) < 1 {
-				return ErrorAfterPrintingHelp(cmd, "environment name argument is required")
+				return ErrorBeforePrintingUsage(cmd, "environment name argument is required")
 			}
 			return nil
 		},
@@ -65,17 +66,6 @@ func (o *environmentGetOptions) run(out io.Writer, args []string) error {
 	if err != nil {
 		return err
 	}
-
-	// last_reported_str := ""
-	// last_reported_at := env["last_reported_at"]
-	// if last_reported_at != nil {
-	// 	last_reported_str = time.Unix(int64(last_reported_at.(float64)), 0).Format(time.RFC3339)
-	// }
-	// last_modified_str := ""
-	// last_modified_at := env["last_modified_at"]
-	// if last_modified_at != nil {
-	// 	last_modified_str = time.Unix(int64(last_modified_at.(float64)), 0).Format(time.RFC3339)
-	// }
 
 	lastReportedAt, err := formattedTimestamp(env["last_reported_at"], false)
 	if err != nil {

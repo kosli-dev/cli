@@ -27,10 +27,10 @@ func newDeploymentGetCmd(out io.Writer) *cobra.Command {
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
-				return ErrorAfterPrintingHelp(cmd, err.Error())
+				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			if len(args) < 1 {
-				return ErrorAfterPrintingHelp(cmd, "deployment ID argument is required")
+				return ErrorBeforePrintingUsage(cmd, "deployment ID argument is required")
 			}
 			return nil
 		},

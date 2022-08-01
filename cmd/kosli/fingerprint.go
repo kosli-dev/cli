@@ -20,10 +20,10 @@ func newFingerprintCmd(out io.Writer) *cobra.Command {
 		Long:  fingerprintDesc,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
-				return ErrorAfterPrintingHelp(cmd, "only one argument (docker image name or file/dir path) is allowed")
+				return ErrorBeforePrintingUsage(cmd, "only one argument (docker image name or file/dir path) is allowed")
 			}
 			if len(args) == 0 || args[0] == "" {
-				return ErrorAfterPrintingHelp(cmd, "docker image name or file/dir path is required")
+				return ErrorBeforePrintingUsage(cmd, "docker image name or file/dir path is required")
 			}
 
 			return ValidateRegisteryFlags(cmd, o)

@@ -21,14 +21,15 @@ type environmentLsOptions struct {
 func newEnvironmentLsCmd(out io.Writer) *cobra.Command {
 	o := new(environmentLsOptions)
 	cmd := &cobra.Command{
-		Use:     "ls [ENVIRONMENT-NAME]",
+		Use:     "ls",
 		Aliases: []string{"list"},
 		Short:   environmentLsDesc,
 		Long:    environmentLsDesc,
+		Args:    NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
-				return ErrorAfterPrintingHelp(cmd, err.Error())
+				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			return nil
 		},
@@ -43,9 +44,6 @@ func newEnvironmentLsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *environmentLsOptions) run(out io.Writer, args []string) error {
-	if len(args) > 0 {
-		return snapshotLs(out, o, args)
-	}
 
 	url := fmt.Sprintf("%s/api/v1/environments/%s/", global.Host, global.Owner)
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,

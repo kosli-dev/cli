@@ -154,7 +154,7 @@ func GetFlagFromVarName(varName string) string {
 func NoArgs(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		return fmt.Errorf(
-			"%q accepts no arguments\n\nUsage:  %s",
+			"%q accepts no arguments\nUsage: %s",
 			cmd.CommandPath(),
 			cmd.UseLine(),
 		)
@@ -345,21 +345,24 @@ func ValidateArtifactArg(args []string, artifactType, inputSha256 string, always
 // remote digest.
 func ValidateRegisteryFlags(cmd *cobra.Command, o *fingerprintOptions) error {
 	if o.artifactType != "docker" && (o.registryPassword != "" || o.registryUsername != "") {
-		return ErrorAfterPrintingHelp(cmd, "--registry-provider, --registry-username and registry-password are only applicable when --artifact-type is 'docker'")
+		return ErrorBeforePrintingUsage(cmd, "--registry-provider, --registry-username and registry-password are only applicable when --artifact-type is 'docker'")
 	}
 	if o.registryProvider != "" && (o.registryPassword == "" || o.registryUsername == "") {
-		return ErrorAfterPrintingHelp(cmd, "both --registry-username and registry-password are required when --registry-provider is used")
+		return ErrorBeforePrintingUsage(cmd, "both --registry-username and registry-password are required when --registry-provider is used")
 	}
 	if o.registryProvider == "" && (o.registryPassword != "" || o.registryUsername != "") {
-		return ErrorAfterPrintingHelp(cmd, "--registry-username and registry-password are only used when --registry-provider is used")
+		return ErrorBeforePrintingUsage(cmd, "--registry-username and registry-password are only used when --registry-provider is used")
 	}
 	return nil
 }
 
-// ErrorAfterPrintingHelp
-func ErrorAfterPrintingHelp(cmd *cobra.Command, errMsg string) error {
-	fmt.Println("Use: " + cmd.UseLine())
-	return fmt.Errorf(errMsg)
+// ErrorBeforePrintingUsage
+func ErrorBeforePrintingUsage(cmd *cobra.Command, errMsg string) error {
+	return fmt.Errorf(
+		"%s\nUsage: %s",
+		errMsg,
+		cmd.UseLine(),
+	)
 }
 
 // Convert json to nice printable format

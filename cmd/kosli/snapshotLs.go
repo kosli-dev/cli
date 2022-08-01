@@ -5,69 +5,59 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"sort"
 	"time"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 	"github.com/xeonx/timeago"
 )
 
-type Annotation struct {
-	Type string `json:"type"`
-	Was  int
-	Now  int
+const snapshotLsDesc = `List all snapshots for an environment.`
+
+type snapshotLsOptions struct {
+	json   bool
+	number int64
 }
 
-type Owner struct {
-	ApiVersion         string
-	Kind               string
-	Name               string
-	Uid                string
-	Controller         bool
-	BlockOwnerDeletion bool
+func newSnapshotLsCmd(out io.Writer) *cobra.Command {
+	o := new(snapshotLsOptions)
+	cmd := &cobra.Command{
+		Use:     "ls ENVIRONMENT-NAME",
+		Aliases: []string{"list"},
+		Short:   snapshotLsDesc,
+		Long:    snapshotLsDesc,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			if err != nil {
+				return ErrorBeforePrintingUsage(cmd, err.Error())
+			}
+			if len(args) < 1 {
+				return ErrorBeforePrintingUsage(cmd, "environment name argument is required")
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return o.run(out, args)
+		},
+	}
+
+	cmd.Flags().BoolVarP(&o.json, "json", "j", false, environmentJsonFlag)
+	cmd.Flags().Int64VarP(&o.number, "number", "n", 5, environmentJsonFlag)
+
+	return cmd
 }
 
-type PodContent struct {
-	Namespace         string
-	CreationTimestamp int64
-	Owners            []Owner
-}
-
-type Artifact struct {
-	Name              string
-	PipelineName      string `json:"pipeline_name"`
-	Compliant         bool
-	Deployments       []int
-	Sha256            string
-	GitCommit         string `json:"git_commit"`
-	CommitUrl         string `json:"commit_url"`
-	CreationTimestamp []int64
-	Pods              map[string]PodContent
-	Annotation        Annotation
-}
-
-type Snapshot struct {
-	Index     int
-	Timestamp float32
-	Type      string `json:"type"`
-	UserId    string `json:"user_id"`
-	UserName  string `json:"user_name"`
-	Artifacts []Artifact
-	Compliant bool
-}
-
-type ArtifactJsonOut struct {
-	GitCommit    string `json:"git_commit"`
-	CommitUrl    string `json:"commit_url"`
-	Image        string `json:"image"`
-	Sha256       string `json:"sha256"`
-	Replicas     int    `json:"replicas"`
-	RunningSince string `json:"running_since"`
-}
-
-func snapshotLs(out io.Writer, o *environmentLsOptions, args []string) error {
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, args[0])
+func (o *snapshotLsOptions) run(out io.Writer, args []string) error {
+	if o.number <= 0 {
+		_, err := out.Write([]byte("No environment snapshots were requested\n"))
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/log/0/%d",
+		global.Host, global.Owner, args[0], o.number)
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
 
@@ -76,88 +66,44 @@ func snapshotLs(out io.Writer, o *environmentLsOptions, args []string) error {
 	}
 
 	if o.json {
-		return showJson(response, o)
-	}
-
-	return showList(response, o, out)
-}
-
-func showJson(response *requests.HTTPResponse, o *environmentLsOptions) error {
-	var snapshot Snapshot
-	err := json.Unmarshal([]byte(response.Body), &snapshot)
-	if err != nil {
-		return err
-	}
-	// check if the snapshot is empty by checking one of its elements
-	if snapshot.Type == "" {
-		fmt.Println("{}")
-		return nil
-	}
-	var result []ArtifactJsonOut
-	for _, artifact := range snapshot.Artifacts {
-		if artifact.Annotation.Now == 0 {
-			continue
-		}
-		var artifactJsonOut ArtifactJsonOut
-		artifactJsonOut.GitCommit = artifact.GitCommit
-		artifactJsonOut.CommitUrl = artifact.CommitUrl
-		artifactJsonOut.Image = artifact.Name
-		artifactJsonOut.Sha256 = artifact.Sha256
-		artifactJsonOut.Replicas = artifact.Annotation.Now
-		sort.Slice(artifact.CreationTimestamp, func(i, j int) bool {
-			return artifact.CreationTimestamp[i] < artifact.CreationTimestamp[j]
-		})
-		oldestTimestamp := artifact.CreationTimestamp[0]
-		artifactJsonOut.RunningSince = time.Unix(oldestTimestamp, 0).Format(time.RFC3339)
-		result = append(result, artifactJsonOut)
-	}
-
-	res, err := json.MarshalIndent(result, "", "  ")
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(res))
-
-	return nil
-}
-
-func showList(response *requests.HTTPResponse, o *environmentLsOptions, out io.Writer) error {
-	var snapshot Snapshot
-	err := json.Unmarshal([]byte(response.Body), &snapshot)
-	if err != nil {
-		return err
-	}
-
-	// check if the snapshot is empty by checking one of its elements
-	if snapshot.Type == "" {
-		_, err := out.Write([]byte("No running artifacts were reported\n"))
+		pj, err := prettyJson(response.Body)
 		if err != nil {
 			return err
 		}
-		return nil
+		fmt.Println(pj)
+	} else {
+		var snapshots []map[string]interface{}
+		err = json.Unmarshal([]byte(response.Body), &snapshots)
+		if err != nil {
+			return err
+		}
 
+		if len(snapshots) == 0 {
+			_, err := out.Write([]byte("No environment snapshots were found\n"))
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+
+		header := []string{"SNAPSHOT", "FROM", "TO", "DURATION"}
+		rows := []string{}
+		for _, snapshot := range snapshots {
+			tsFromStr := time.Unix(int64(snapshot["from"].(float64)), 0).Format(time.RFC3339)
+			tsToStr := "now"
+			if snapshot["to"].(float64) != 0.0 {
+				tsToStr = time.Unix(int64(snapshot["to"].(float64)), 0).Format(time.RFC3339)
+			}
+			timeago.English.Max = 36 * timeago.Month
+			timeago.English.PastSuffix = ""
+			durationNs := time.Duration(int64(snapshot["duration"].(float64)) * 1e9)
+			duration := timeago.English.FormatRelativeDuration(durationNs)
+			index := int64(snapshot["index"].(float64))
+			row := fmt.Sprintf("%d\t%s\t%s\t%s", index, tsFromStr, tsToStr, duration)
+			rows = append(rows, row)
+		}
+		printTable(out, header, rows)
 	}
 
-	header := []string{"COMMIT", "ARTIFACT", "SHA256", "RUNNING_SINCE", "REPLICAS"}
-	rows := []string{}
-	for _, artifact := range snapshot.Artifacts {
-		if artifact.Annotation.Now == 0 {
-			continue
-		}
-		timestamp := time.Unix(artifact.CreationTimestamp[0], 0)
-		timeago.English.Max = 36 * timeago.Month
-		since := timeago.English.Format(timestamp)
-		if len(artifact.Name) > 50 {
-			artifact.Name = artifact.Name[:18] + "..." + artifact.Name[len(artifact.Name)-19:]
-		}
-
-		gitCommit := "N/A"
-		if artifact.GitCommit != "" {
-			gitCommit = artifact.GitCommit[:7]
-		}
-		row := fmt.Sprintf("%s\t%s\t%s\t%s\t%d", gitCommit, artifact.Name, artifact.Sha256, since, len(artifact.CreationTimestamp))
-		rows = append(rows, row)
-	}
-	printTable(out, header, rows)
 	return nil
 }

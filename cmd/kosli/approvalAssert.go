@@ -48,12 +48,12 @@ func newApprovalAssertCmd(out io.Writer) *cobra.Command {
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
-				return ErrorAfterPrintingHelp(cmd, err.Error())
+				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
 			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.sha256, false)
 			if err != nil {
-				return ErrorAfterPrintingHelp(cmd, err.Error())
+				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			return ValidateRegisteryFlags(cmd, o.fingerprintOptions)
 

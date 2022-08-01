@@ -28,7 +28,7 @@ func newPipelineLsCmd(out io.Writer) *cobra.Command {
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
-				return ErrorAfterPrintingHelp(cmd, err.Error())
+				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			return nil
 		},

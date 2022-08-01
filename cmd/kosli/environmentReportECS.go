@@ -41,15 +41,15 @@ func newEnvironmentReportECSCmd(out io.Writer) *cobra.Command {
 		Example: environmentReportECSExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
-				return ErrorAfterPrintingHelp(cmd, "only env-name argument is allowed")
+				return ErrorBeforePrintingUsage(cmd, "only env-name argument is allowed")
 			}
 			if len(args) == 0 || args[0] == "" {
-				return ErrorAfterPrintingHelp(cmd, "env-name argument is required")
+				return ErrorBeforePrintingUsage(cmd, "env-name argument is required")
 			}
 
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
-				return ErrorAfterPrintingHelp(cmd, err.Error())
+				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
 			return nil
