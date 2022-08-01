@@ -26,8 +26,8 @@ kosli environment report k8s yourEnvironmentName \
 
 # report what is running in an entire cluster using kubeconfig at $HOME/.kube/config 
 (with global flags defined in environment or in a config file):
-export MERKELY_API_TOKEN=yourAPIToken
-export MERKELY_OWNER=yourOrgName
+export KOSLI_API_TOKEN=yourAPIToken
+export KOSLI_OWNER=yourOrgName
 
 kosli environment report k8s yourEnvironmentName
 

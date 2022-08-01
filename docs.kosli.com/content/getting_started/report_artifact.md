@@ -19,7 +19,7 @@ As it was in the case of reporting environment, we need to download Kosli CLI in
 
 ## Report an artifact
 
-Here is a complete workflow that takes care of CLI download, **pipeline** creation and docker image build and reports it to the MerKoslikely **pipeline**.
+Here is a complete workflow that takes care of CLI download, **pipeline** creation and docker image build and reports it to the Kosli **pipeline**.
 
 Remember:
 * `K8S_CLUSTER_NAME`, `K8S_GCP_ZONE` and `NAMESPACE` should be the same you used in **Report Environment** step
@@ -80,7 +80,7 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
 
-    # use your own username and cofigured token to log into dockerhub
+    # use your own username and configured token to log into dockerhub
     - name: Login to hub.docker.com
       uses: docker/login-action@v1
       with:
@@ -168,9 +168,9 @@ With more details once you click on it:
 
 ![Compliant artifact with no deployments](/images/artifact-no-deployment.png)
 
-You will also notice a change in the state of your **github-k8s-test** environment (if the environment reporting workflow run successfully): it is still incompliant, but now the artifact running there has provenance (you can see the name of Kosli **pipeline: github-k8s-demo** that the artifact was reported to, in a grey, pill shaped field) so we can check how it was build:
+You will also notice a change in the state of your **github-k8s-test** environment (if the environment reporting workflow ran successfully): it is still incompliant, but now the artifact running there has provenance (you can see the name of Kosli **pipeline: github-k8s-demo** that the artifact was reported to, in a grey, pill shaped field) so we can check how it was built:
 
 ![Incompliant environment, artifact with provenance](/images/env-provenance.png)
 
 
-Now that your aritfact reporting works the only thing missing part is reporting the deployment.
+Now that your aritfact reporting works the only thing missing is reporting the deployment.

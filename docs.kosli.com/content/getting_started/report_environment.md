@@ -7,7 +7,7 @@ weight: 10
 
 ## Create an environment in Kosli
 
-The first thing we need to configure is an **environment** in [Kosli](https://app.merkely.com).  
+The first thing we need to configure is an **environment** in [Kosli](https://app.kosli.com).  
 Kosli **Environments** is where you'll be reporting the state of your actual environments, like *staging* or *production*. 
 
 When you log in to Kosli the **Environments** page is the first thing you see. If you clicked around before reading this guide you'll find a link to **Environments** on the left side of the window in Kosli.
@@ -35,7 +35,7 @@ You can run the [command](https://docs.kosli.com/client_reference/merkely_enviro
 There is a few things you'll need to adjust in the workflow below, so it can work for you:
 
 * `K8S_CLUSTER_NAME` and `K8S_GCP_ZONE` should refer to your cluster setup and `NAMESPACE` should refer to a namespace you will to deploy your application to
-* `MERKELY_OWNER` is your Kosli username (wchich will be the same as the GitHub account you used to log into Kosli)
+* `MERKELY_OWNER` is your Kosli username (which will be the same as the GitHub account you used to log into Kosli)
 
 With these ready you can try to run the following workflow:
 
@@ -91,7 +91,7 @@ jobs:
 Once the workflow runs successfully, and there is already something running in your cluster, you will see the information about it in **github-k8s-test** environment in Kosli (You'll find it under **Environments** section).  
 If there is nothing running in your cluster we'll build and deploy an artifact in the next step.
 
-If you had something running in given namespace, here is what you should see in your **github-k8s-test environment** in Kosli if the pipeline succeedes (triggered either by cron or - if you don't want to wait - manually). The name of the artifact will likely be a different one:
+If you had something running in the given namespace, here is what you should see in your **github-k8s-test environment** in Kosli if the pipeline succeeds (triggered either by cron or - if you don't want to wait - manually). The name of the artifact will likely be a different one:
 
 ![Incompliant environment, artifact with no provenance](/images/env-no-provenance.png)
 
