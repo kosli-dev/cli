@@ -1,4 +1,4 @@
-apiVersion: batch/v1beta1
+apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: {{ include "reporter.fullname" . }}
@@ -20,7 +20,7 @@ spec:
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
             imagePullPolicy: {{ .Values.image.pullPolicy }}
             env:
-              - name: KOSLI_API_TOKEN
+              - name: MERKELY_API_TOKEN
                 valueFrom:
                   secretKeyRef:
                     name: {{ required ".Values.kosliApiToken.secretName is required." .Values.kosliApiToken.secretName }}
