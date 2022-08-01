@@ -1,6 +1,7 @@
 name: helm chart
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'charts/**'
@@ -8,6 +9,9 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write
+      contents: write
     steps:
       - uses: actions/checkout@v2
         with:
