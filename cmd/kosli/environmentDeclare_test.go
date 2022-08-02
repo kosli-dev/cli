@@ -29,13 +29,13 @@ func (suite *EnvironmentDeclareTestSuite) TestEnvironmentDeclareCmd() {
 			wantError: true,
 			name:      "missing --owner flag causes an error",
 			cmd:       "environment declare --name newEnv --environment-type S3 --description \"my new env\" -H http://localhost:8001 -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
-			golden:    "Error: --owner is not set\nUsage: kosli environment declare [flags]",
+			golden:    "Error: --owner is not set\nUsage: kosli environment declare [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "missing --api-token flag causes an error",
 			cmd:       "environment declare --name newEnv --environment-type S3 --description \"my new env\" -o cyber-dojo -H http://localhost:8001",
-			golden:    "Error: --api-token is not set\nUsage: kosli environment declare [flags]",
+			golden:    "Error: --api-token is not set\nUsage: kosli environment declare [flags]\n",
 		},
 		{
 			wantError: true,
