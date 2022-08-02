@@ -5,19 +5,18 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/xeonx/timeago"
 )
 
 const artifactLsDesc = `List a number of artifacts in a pipeline.`
 
 type artifactLsOptions struct {
-	json   bool
-	number int64
+	json       bool
+	pageNumber int64
+	pageLimit  int64
 }
 
 func newArtifactLsCmd(out io.Writer) *cobra.Command {
@@ -33,7 +32,7 @@ func newArtifactLsCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			if len(args) < 1 {
-				return ErrorBeforePrintingUsage(cmd, "environment name argument is required")
+				return ErrorBeforePrintingUsage(cmd, "pipeline name argument is required")
 			}
 			return nil
 		},
@@ -43,24 +42,24 @@ func newArtifactLsCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().BoolVarP(&o.json, "json", "j", false, environmentJsonFlag)
-	cmd.Flags().Int64VarP(&o.number, "number", "n", 5, environmentJsonFlag)
+	cmd.Flags().Int64VarP(&o.pageNumber, "page-number", "n", 1, pageNumberFlag)
+	cmd.Flags().Int64VarP(&o.pageLimit, "page-limit", "l", 15, pageLimitFlag)
 
 	return cmd
 }
 
 func (o *artifactLsOptions) run(out io.Writer, args []string) error {
-	if o.number <= 0 {
+	if o.pageNumber <= 0 {
 		_, err := out.Write([]byte("No artifacts were requested\n"))
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/log/0/%d",
-		global.Host, global.Owner, args[0], o.number)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%d/%d",
+		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit)
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
-
 	if err != nil {
 		return err
 	}
@@ -71,39 +70,47 @@ func (o *artifactLsOptions) run(out io.Writer, args []string) error {
 			return err
 		}
 		fmt.Println(pj)
-	} else {
-		var artifacts []map[string]interface{}
-		err = json.Unmarshal([]byte(response.Body), &artifacts)
+		return nil
+	}
+
+	var artifacts []map[string]interface{}
+	err = json.Unmarshal([]byte(response.Body), &artifacts)
+	if err != nil {
+		return err
+	}
+
+	if len(artifacts) == 0 {
+		_, err := out.Write([]byte("No artifacts were found\n"))
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	header := []string{"COMMIT", "ARTIFACT", "STATE", "CREATED_AT"}
+	rows := []string{}
+	for _, artifact := range artifacts {
+		evidenceMap := artifact["evidence"].(map[string]interface{})
+		artifactData := evidenceMap["artifact"].(map[string]interface{})
+
+		gitCommit := artifactData["git_commit"].(string)[:7]
+		artifactName := artifactData["filename"].(string)
+		// if len(artifactName) > 50 {
+		// 	artifactName = artifactName[:18] + "..." + artifactName[len(artifactName)-19:]
+		// }
+		artifactDigest := artifactData["sha256"].(string)
+		artifactState := artifact["state"].(string)
+		createdAt, err := formattedTimestamp(artifact["created_at"], true)
 		if err != nil {
 			return err
 		}
 
-		if len(artifacts) == 0 {
-			_, err := out.Write([]byte("No artifacts were found\n"))
-			if err != nil {
-				return err
-			}
-			return nil
-		}
-
-		header := []string{"SNAPSHOT", "FROM", "TO", "DURATION"}
-		rows := []string{}
-		for _, artifact := range artifacts {
-			tsFromStr := time.Unix(int64(artifact["from"].(float64)), 0).Format(time.RFC3339)
-			tsToStr := "now"
-			if artifact["to"].(float64) != 0.0 {
-				tsToStr = time.Unix(int64(artifact["to"].(float64)), 0).Format(time.RFC3339)
-			}
-			timeago.English.Max = 36 * timeago.Month
-			timeago.English.PastSuffix = ""
-			durationNs := time.Duration(int64(artifact["duration"].(float64)) * 1e9)
-			duration := timeago.English.FormatRelativeDuration(durationNs)
-			index := int64(artifact["index"].(float64))
-			row := fmt.Sprintf("%d\t%s\t%s\t%s", index, tsFromStr, tsToStr, duration)
-			rows = append(rows, row)
-		}
-		printTable(out, header, rows)
+		row := fmt.Sprintf("%s\tName: %s\t%s\t%s", gitCommit, artifactName, artifactState, createdAt)
+		rows = append(rows, row)
+		row = fmt.Sprintf("\tSHA256: %s\t\n", artifactDigest)
+		rows = append(rows, row)
 	}
+	printTable(out, header, rows)
 
 	return nil
 }

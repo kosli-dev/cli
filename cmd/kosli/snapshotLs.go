@@ -43,7 +43,7 @@ func newSnapshotLsCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().BoolVarP(&o.json, "json", "j", false, environmentJsonFlag)
-	cmd.Flags().Int64VarP(&o.number, "number", "n", 5, environmentJsonFlag)
+	cmd.Flags().Int64VarP(&o.number, "number", "n", 5, resultLimitFlag)
 
 	return cmd
 }
