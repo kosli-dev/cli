@@ -89,11 +89,18 @@ func (o *snapshotLsOptions) run(out io.Writer, args []string) error {
 		header := []string{"SNAPSHOT", "FROM", "TO", "DURATION"}
 		rows := []string{}
 		for _, snapshot := range snapshots {
-			tsFromStr := time.Unix(int64(snapshot["from"].(float64)), 0).Format(time.RFC3339)
+			tsFromStr, err := formattedTimestamp(snapshot["from"], true)
+			if err != nil {
+				return err
+			}
 			tsToStr := "now"
 			if snapshot["to"].(float64) != 0.0 {
-				tsToStr = time.Unix(int64(snapshot["to"].(float64)), 0).Format(time.RFC3339)
+				tsToStr, err = formattedTimestamp(snapshot["to"], true)
+				if err != nil {
+					return err
+				}
 			}
+
 			timeago.English.Max = 36 * timeago.Month
 			timeago.English.PastSuffix = ""
 			durationNs := time.Duration(int64(snapshot["duration"].(float64)) * 1e9)
