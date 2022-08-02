@@ -13,20 +13,20 @@ import (
 	"github.com/xeonx/timeago"
 )
 
-const snapshotLsDesc = `List all snapshots for an environment.`
+const artifactLsDesc = `List a number of artifacts in a pipeline.`
 
-type snapshotLsOptions struct {
+type artifactLsOptions struct {
 	json   bool
 	number int64
 }
 
-func newSnapshotLsCmd(out io.Writer) *cobra.Command {
-	o := new(snapshotLsOptions)
+func newArtifactLsCmd(out io.Writer) *cobra.Command {
+	o := new(artifactLsOptions)
 	cmd := &cobra.Command{
-		Use:     "ls ENVIRONMENT-NAME",
+		Use:     "ls PIPELINE-NAME",
 		Aliases: []string{"list"},
-		Short:   snapshotLsDesc,
-		Long:    snapshotLsDesc,
+		Short:   artifactLsDesc,
+		Long:    artifactLsDesc,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -48,9 +48,9 @@ func newSnapshotLsCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *snapshotLsOptions) run(out io.Writer, args []string) error {
+func (o *artifactLsOptions) run(out io.Writer, args []string) error {
 	if o.number <= 0 {
-		_, err := out.Write([]byte("No environment snapshots were requested\n"))
+		_, err := out.Write([]byte("No artifacts were requested\n"))
 		if err != nil {
 			return err
 		}
@@ -72,14 +72,14 @@ func (o *snapshotLsOptions) run(out io.Writer, args []string) error {
 		}
 		fmt.Println(pj)
 	} else {
-		var snapshots []map[string]interface{}
-		err = json.Unmarshal([]byte(response.Body), &snapshots)
+		var artifacts []map[string]interface{}
+		err = json.Unmarshal([]byte(response.Body), &artifacts)
 		if err != nil {
 			return err
 		}
 
-		if len(snapshots) == 0 {
-			_, err := out.Write([]byte("No environment snapshots were found\n"))
+		if len(artifacts) == 0 {
+			_, err := out.Write([]byte("No artifacts were found\n"))
 			if err != nil {
 				return err
 			}
@@ -88,17 +88,17 @@ func (o *snapshotLsOptions) run(out io.Writer, args []string) error {
 
 		header := []string{"SNAPSHOT", "FROM", "TO", "DURATION"}
 		rows := []string{}
-		for _, snapshot := range snapshots {
-			tsFromStr := time.Unix(int64(snapshot["from"].(float64)), 0).Format(time.RFC3339)
+		for _, artifact := range artifacts {
+			tsFromStr := time.Unix(int64(artifact["from"].(float64)), 0).Format(time.RFC3339)
 			tsToStr := "now"
-			if snapshot["to"].(float64) != 0.0 {
-				tsToStr = time.Unix(int64(snapshot["to"].(float64)), 0).Format(time.RFC3339)
+			if artifact["to"].(float64) != 0.0 {
+				tsToStr = time.Unix(int64(artifact["to"].(float64)), 0).Format(time.RFC3339)
 			}
 			timeago.English.Max = 36 * timeago.Month
 			timeago.English.PastSuffix = ""
-			durationNs := time.Duration(int64(snapshot["duration"].(float64)) * 1e9)
+			durationNs := time.Duration(int64(artifact["duration"].(float64)) * 1e9)
 			duration := timeago.English.FormatRelativeDuration(durationNs)
-			index := int64(snapshot["index"].(float64))
+			index := int64(artifact["index"].(float64))
 			row := fmt.Sprintf("%d\t%s\t%s\t%s", index, tsFromStr, tsToStr, duration)
 			rows = append(rows, row)
 		}
