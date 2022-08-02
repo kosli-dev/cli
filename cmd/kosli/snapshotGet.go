@@ -12,19 +12,37 @@ type snapshotGetOptions struct {
 	json bool
 }
 
+const snapshotGetExample = `
+# get the latest snapshot of an environment:
+kosli snapshot get yourEnvironmentName
+	--api-token yourAPIToken \
+	--owner yourOrgName 
+
+# get the SECOND latest snapshot of an environment:
+kosli snapshot get yourEnvironmentName~1
+	--api-token yourAPIToken \
+	--owner yourOrgName 
+
+# get the snapshot number 23 of an environment:
+kosli snapshot get yourEnvironmentName#23
+	--api-token yourAPIToken \
+	--owner yourOrgName 
+`
+
 func newSnapshotGetCmd(out io.Writer) *cobra.Command {
 	o := new(snapshotGetOptions)
 	cmd := &cobra.Command{
-		Use:   "get ENVIRONMENT-NAME",
-		Short: snapshotGetDesc,
-		Long:  snapshotGetDesc,
+		Use:     "get ENVIRONMENT-NAME-OR-EXPRESSION",
+		Short:   snapshotGetDesc,
+		Long:    snapshotGetDesc,
+		Example: snapshotGetExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			if len(args) < 1 {
-				return ErrorBeforePrintingUsage(cmd, "environment name argument is required")
+				return ErrorBeforePrintingUsage(cmd, "environment name/expression argument is required")
 			}
 			return nil
 		},

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"sort"
 	"time"
 
@@ -67,7 +68,7 @@ type ArtifactJsonOut struct {
 }
 
 func getSnapshot(out io.Writer, o *snapshotGetOptions, args []string) error {
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, args[0])
+	url := fmt.Sprintf("%s/api/v1/snapshots/%s/%s", global.Host, global.Owner, url.QueryEscape(args[0]))
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
 

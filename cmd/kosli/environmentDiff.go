@@ -66,8 +66,6 @@ func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
 	payload.Snappish2 = args[1]
 
 	url := fmt.Sprintf("%s/api/v1/env-diff/%s/", global.Host, global.Owner)
-	// response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
-	// 	global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
 
 	response, err := requests.SendPayload(payload, url, "", global.ApiToken,
 		global.MaxAPIRetries, global.DryRun, http.MethodGet, log)
