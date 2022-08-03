@@ -38,7 +38,7 @@ func newEnvironmentLsCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVarP(&o.json, "json", "j", false, environmentJsonFlag)
+	cmd.Flags().BoolVarP(&o.json, "json", "j", false, jsonOutputFlag)
 
 	return cmd
 }

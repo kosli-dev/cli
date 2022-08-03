@@ -43,11 +43,9 @@ const (
 	artifactTypeFlag        = "[conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256'."
 	pipelineNameFlag        = "The Kosli pipeline name."
 	newPipelineFlag         = "The name of the pipeline to be created or updated."
-	pipelineJsonFlag        = "[optional] Print pipeline info as json."
 	jsonOutputFlag          = "[optional] Print output as json."
 	pipefileFlag            = "[deprecated] The path to the JSON pipefile."
 	environmentNameFlag     = "The environment name."
-	environmentJsonFlag     = "[optional] Print environment info as json."
 	pageNumberFlag          = "[defaulted] The page number of a reponse."
 	pageLimitFlag           = "[defaulted] The number of elements per page."
 	resultLimitFlag         = "[defaulted] The number of elements to display."
@@ -155,9 +153,10 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		newSnapshotCmd(out),
 		newAssertCmd(out),
 		newStatusCmd(out),
+		newArtifactReadCmd(out),
+		newDeploymentReadCmd(out),
 		// Hidden documentation generator command: 'kosli docs'
 		newDocsCmd(out),
-		newArtifactReadCmd(out),
 	)
 
 	return cmd, nil

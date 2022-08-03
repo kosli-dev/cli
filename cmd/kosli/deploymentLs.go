@@ -11,21 +11,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const artifactLsDesc = `List a number of artifacts in a pipeline.`
+const deploymentLsDesc = `List a number of deployments in a pipeline.`
 
-type artifactLsOptions struct {
+type deploymentsLsOptions struct {
 	json       bool
 	pageNumber int64
 	pageLimit  int64
 }
 
-func newArtifactLsCmd(out io.Writer) *cobra.Command {
-	o := new(artifactLsOptions)
+func newDeploymentLsCmd(out io.Writer) *cobra.Command {
+	o := new(deploymentsLsOptions)
 	cmd := &cobra.Command{
 		Use:     "ls PIPELINE-NAME",
 		Aliases: []string{"list"},
-		Short:   artifactLsDesc,
-		Long:    artifactLsDesc,
+		Short:   deploymentLsDesc,
+		Long:    deploymentLsDesc,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -33,6 +33,9 @@ func newArtifactLsCmd(out io.Writer) *cobra.Command {
 			}
 			if len(args) < 1 {
 				return ErrorBeforePrintingUsage(cmd, "pipeline name argument is required")
+			}
+			if o.pageNumber <= 0 {
+				return ErrorBeforePrintingUsage(cmd, "page number must be a positive integer")
 			}
 			return nil
 		},
@@ -48,15 +51,8 @@ func newArtifactLsCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *artifactLsOptions) run(out io.Writer, args []string) error {
-	if o.pageNumber <= 0 {
-		_, err := out.Write([]byte("No artifacts were requested\n"))
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%d/%d",
+func (o *deploymentsLsOptions) run(out io.Writer, args []string) error {
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/%d/%d",
 		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit)
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
@@ -73,37 +69,36 @@ func (o *artifactLsOptions) run(out io.Writer, args []string) error {
 		return nil
 	}
 
-	var artifacts []map[string]interface{}
-	err = json.Unmarshal([]byte(response.Body), &artifacts)
+	var deployments []map[string]interface{}
+	err = json.Unmarshal([]byte(response.Body), &deployments)
 	if err != nil {
 		return err
 	}
 
-	if len(artifacts) == 0 {
-		_, err := out.Write([]byte("No artifacts were found\n"))
+	if len(deployments) == 0 {
+		msg := "No deployments were found"
+		if o.pageNumber != 1 {
+			msg = fmt.Sprintf("%s at page number %d", msg, o.pageNumber)
+		}
+		_, err := out.Write([]byte(msg + ".\n"))
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 
-	header := []string{"COMMIT", "ARTIFACT", "STATE", "CREATED_AT"}
+	header := []string{"ID", "ARTIFACT", "ENVIRONMENT", "REPORTED_AT"}
 	rows := []string{}
-	for _, artifact := range artifacts {
-		evidenceMap := artifact["evidence"].(map[string]interface{})
-		artifactData := evidenceMap["artifact"].(map[string]interface{})
-
-		gitCommit := artifactData["git_commit"].(string)[:7]
-		artifactName := artifactData["filename"].(string)
-
-		artifactDigest := artifactData["sha256"].(string)
-		artifactState := artifact["state"].(string)
-		createdAt, err := formattedTimestamp(artifact["created_at"], true)
+	for _, deployment := range deployments {
+		deploymentId := int(deployment["deployment_id"].(float64))
+		artifactName := deployment["artifact_name"].(string)
+		artifactDigest := deployment["artifact_sha256"].(string)
+		environment := deployment["environment"].(string)
+		createdAt, err := formattedTimestamp(deployment["created_at"], true)
 		if err != nil {
 			return err
 		}
-
-		row := fmt.Sprintf("%s\tName: %s\t%s\t%s", gitCommit, artifactName, artifactState, createdAt)
+		row := fmt.Sprintf("%d\tName: %s\t%s\t%s", deploymentId, artifactName, environment, createdAt)
 		rows = append(rows, row)
 		row = fmt.Sprintf("\tSHA256: %s\t\n", artifactDigest)
 		rows = append(rows, row)

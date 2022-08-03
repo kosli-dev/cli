@@ -37,7 +37,7 @@ func newPipelineLsCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVarP(&o.json, "json", "j", false, pipelineJsonFlag)
+	cmd.Flags().BoolVarP(&o.json, "json", "j", false, jsonOutputFlag)
 
 	return cmd
 }
