@@ -63,6 +63,7 @@ type ArtifactJsonOut struct {
 	CommitUrl    string `json:"commit_url"`
 	Image        string `json:"image"`
 	Sha256       string `json:"sha256"`
+	Pipeline     string `json:"pipeline"`
 	Replicas     int    `json:"replicas"`
 	RunningSince string `json:"running_since"`
 }
@@ -104,6 +105,7 @@ func showJson(response *requests.HTTPResponse) error {
 		artifactJsonOut.CommitUrl = artifact.CommitUrl
 		artifactJsonOut.Image = artifact.Name
 		artifactJsonOut.Sha256 = artifact.Sha256
+		artifactJsonOut.Pipeline = artifact.PipelineName
 		artifactJsonOut.Replicas = artifact.Annotation.Now
 		sort.Slice(artifact.CreationTimestamp, func(i, j int) bool {
 			return artifact.CreationTimestamp[i] < artifact.CreationTimestamp[j]
