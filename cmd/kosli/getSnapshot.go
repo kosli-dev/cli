@@ -150,9 +150,6 @@ func showList(response *requests.HTTPResponse, out io.Writer) error {
 		timestamp := time.Unix(artifact.CreationTimestamp[0], 0)
 		timeago.English.Max = 36 * timeago.Month
 		since := timeago.English.Format(timestamp)
-		if len(artifact.Name) > 50 {
-			artifact.Name = artifact.Name[:18] + "..." + artifact.Name[len(artifact.Name)-19:]
-		}
 
 		gitCommit := "N/A"
 		if artifact.GitCommit != "" {

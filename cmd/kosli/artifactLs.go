@@ -95,9 +95,7 @@ func (o *artifactLsOptions) run(out io.Writer, args []string) error {
 
 		gitCommit := artifactData["git_commit"].(string)[:7]
 		artifactName := artifactData["filename"].(string)
-		// if len(artifactName) > 50 {
-		// 	artifactName = artifactName[:18] + "..." + artifactName[len(artifactName)-19:]
-		// }
+
 		artifactDigest := artifactData["sha256"].(string)
 		artifactState := artifact["state"].(string)
 		createdAt, err := formattedTimestamp(artifact["created_at"], true)
