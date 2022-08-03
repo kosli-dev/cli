@@ -139,7 +139,7 @@ func showList(response *requests.HTTPResponse, out io.Writer) error {
 
 	}
 
-	header := []string{"COMMIT", "ARTIFACT", "SHA256", "RUNNING_SINCE", "REPLICAS"}
+	header := []string{"COMMIT", "ARTIFACT", "SHA256", "PIPELINE", "RUNNING_SINCE", "REPLICAS"}
 	rows := []string{}
 	for _, artifact := range snapshot.Artifacts {
 		if artifact.Annotation.Now == 0 {
@@ -156,7 +156,13 @@ func showList(response *requests.HTTPResponse, out io.Writer) error {
 		if artifact.GitCommit != "" {
 			gitCommit = artifact.GitCommit[:7]
 		}
-		row := fmt.Sprintf("%s\t%s\t%s\t%s\t%d", gitCommit, artifact.Name, artifact.Sha256, since, len(artifact.CreationTimestamp))
+
+		pipelineName := "N/A"
+		if artifact.PipelineName != "" {
+			pipelineName = artifact.PipelineName
+		}
+
+		row := fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%d", gitCommit, artifact.Name, artifact.Sha256, pipelineName, since, len(artifact.CreationTimestamp))
 		rows = append(rows, row)
 	}
 	printTable(out, header, rows)
