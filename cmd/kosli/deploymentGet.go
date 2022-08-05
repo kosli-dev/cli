@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const deploymentGetDesc = `Get deployment from a specified pipeline`
+const deploymentGetDesc = `Get a deployment from a specified pipeline`
 
 type deploymentGetOptions struct {
 	json         bool
