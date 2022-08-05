@@ -99,6 +99,20 @@ func (o *approvalGetOptions) run(out io.Writer, args []string) error {
 		rows = append(rows, "Reviews:\tNone")
 	}
 
+	commits := approval["src_commit_list"].([]interface{})
+	if len(reviews) > 0 {
+		rows = append(rows, "Changes:")
+		for _, commit := range commits {
+			convertedCommit := commit.(map[string]interface{})
+			commitRow := fmt.Sprintf("\tGit commit:%s", convertedCommit["commit_sha"].(string))
+			rows = append(rows, commitRow)
+			commitRow = fmt.Sprintf("\tProduced artifact digest:%s\n", convertedCommit["artifact_digest"].(string))
+			rows = append(rows, commitRow)
+		}
+	} else {
+		rows = append(rows, "Changes:\tNone")
+	}
+
 	printTable(out, []string{}, rows)
 	return nil
 }
