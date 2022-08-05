@@ -11,21 +11,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const deploymentLsDesc = `List a number of deployments in a pipeline.`
+const approvalLsDesc = `List a number of approvals in a pipeline.`
 
-type deploymentLsOptions struct {
+type approvalLsOptions struct {
 	json       bool
 	pageNumber int64
 	pageLimit  int64
 }
 
-func newDeploymentLsCmd(out io.Writer) *cobra.Command {
-	o := new(deploymentLsOptions)
+func newApprovalLsCmd(out io.Writer) *cobra.Command {
+	o := new(approvalLsOptions)
 	cmd := &cobra.Command{
 		Use:     "ls PIPELINE-NAME",
 		Aliases: []string{"list"},
-		Short:   deploymentLsDesc,
-		Long:    deploymentLsDesc,
+		Short:   approvalLsDesc,
+		Long:    approvalLsDesc,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -51,8 +51,8 @@ func newDeploymentLsCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *deploymentLsOptions) run(out io.Writer, args []string) error {
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/%d/%d",
+func (o *approvalLsOptions) run(out io.Writer, args []string) error {
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/approvals/%d/%d",
 		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit)
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
@@ -69,14 +69,14 @@ func (o *deploymentLsOptions) run(out io.Writer, args []string) error {
 		return nil
 	}
 
-	var deployments []map[string]interface{}
-	err = json.Unmarshal([]byte(response.Body), &deployments)
+	var approvals []map[string]interface{}
+	err = json.Unmarshal([]byte(response.Body), &approvals)
 	if err != nil {
 		return err
 	}
 
-	if len(deployments) == 0 {
-		msg := "No deployments were found"
+	if len(approvals) == 0 {
+		msg := "No approvals were found"
 		if o.pageNumber != 1 {
 			msg = fmt.Sprintf("%s at page number %d", msg, o.pageNumber)
 		}
@@ -87,18 +87,18 @@ func (o *deploymentLsOptions) run(out io.Writer, args []string) error {
 		return nil
 	}
 
-	header := []string{"ID", "ARTIFACT", "ENVIRONMENT", "REPORTED_AT"}
+	header := []string{"ID", "ARTIFACT", "STATE", "LAST_MODIFIED_AT"}
 	rows := []string{}
-	for _, deployment := range deployments {
-		deploymentId := int(deployment["deployment_id"].(float64))
-		artifactName := deployment["artifact_name"].(string)
-		artifactDigest := deployment["artifact_sha256"].(string)
-		environment := deployment["environment"].(string)
-		createdAt, err := formattedTimestamp(deployment["created_at"], true)
+	for _, approval := range approvals {
+		approvalId := int(approval["release_number"].(float64))
+		artifactName := approval["artifact_name"].(string)
+		approvalState := approval["state"].(string)
+		artifactDigest := approval["base_artifact"].(string)
+		lastModifiedAt, err := formattedTimestamp(approval["last_modified_at"], true)
 		if err != nil {
 			return err
 		}
-		row := fmt.Sprintf("%d\tName: %s\t%s\t%s", deploymentId, artifactName, environment, createdAt)
+		row := fmt.Sprintf("%d\tName: %s\t%s\t%s", approvalId, artifactName, approvalState, lastModifiedAt)
 		rows = append(rows, row)
 		row = fmt.Sprintf("\tSHA256: %s\t\n", artifactDigest)
 		rows = append(rows, row)
