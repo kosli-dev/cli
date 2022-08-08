@@ -26,6 +26,7 @@ type EnvironmentDiffPayload struct {
 
 type EnvironmentDiffResponse struct {
 	Sha256              string   `json:"sha256"`
+	Pipeline            string   `json:"pipeline"`
 	Name                string   `json:"name"`
 	CommitUrl           string   `json:"commit_url"`
 	MostRecentTimestamp int64    `json:"most_recent_timestamp"`
@@ -124,9 +125,19 @@ func printDiffEntry(removal bool, entry EnvironmentDiffResponse) {
 	fmt.Printf("  %s\n", entry.Name)
 	fmt.Printf(color, "  Sha256: ")
 	fmt.Printf("%s\n", entry.Sha256)
+	if entry.Pipeline != "" {
+		fmt.Printf(color, "  Pipeline: ")
+		fmt.Printf("%s\n", entry.Pipeline)
+	} else {
+		fmt.Printf(color, "  Pipeline: ")
+		fmt.Printf("Unknown\n")
+	}
 	if entry.CommitUrl != "" {
 		fmt.Printf(color, "  Commit: ")
 		fmt.Printf("%s\n", entry.CommitUrl)
+	} else {
+		fmt.Printf(color, "  Commit: ")
+		fmt.Printf("Unknown\n")
 	}
 	if len(entry.Pods) > 0 {
 		fmt.Printf(color, "  Pods: ")
