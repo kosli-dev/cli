@@ -28,14 +28,14 @@ Time to implement an actual reporting of what's running in your k8s cluster - wh
 You report the environment using [Kosli CLI tool](https://github.com/kosli-dev/cli/releases).  
 You need to download a correct package depending on the architecture of the machine you use to run the CLI. 
 
-You can run the [command](https://docs.kosli.com/client_reference/merkely_environment_report_k8s/) manually on any machine that can access your k8s cluster, but it is much better to automate the reporting from the start, and we'll use GitHub Actions for that.
+You can run the [command](https://docs.kosli.com/client_reference/kosli_environment_report_k8s/) manually on any machine that can access your k8s cluster, but it is much better to automate the reporting from the start, and we'll use GitHub Actions for that.
 
 ### GitHub workflow
 
 There is a few things you'll need to adjust in the workflow below, so it can work for you:
 
 * `K8S_CLUSTER_NAME` and `K8S_GCP_ZONE` should refer to your cluster setup and `NAMESPACE` should refer to a namespace you will to deploy your application to
-* `MERKELY_OWNER` is your Kosli username (which will be the same as the GitHub account you used to log into Kosli)
+* `KOSLI_OWNER` is your Kosli username (which will be the same as the GitHub account you used to log into Kosli)
 
 With these ready you can try to run the following workflow:
 
@@ -51,12 +51,12 @@ on:
   workflow_dispatch:
 
 env:
-  K8S_CLUSTER_NAME: merkely-dev
+  K8S_CLUSTER_NAME: kosli-dev
   K8S_GCP_ZONE: europe-west1
   NAMESPACE: github-k8s-demo
-  MERKELY_OWNER: demo
-  MERKELY_ENVIRONMENT: github-k8s-test
-  MERKELY_CLI_VERSION: "1.5.0"
+  KOSLI_OWNER: demo
+  KOSLI_ENVIRONMENT: github-k8s-test
+  KOSLI_CLI_VERSION: "2.0.0"
 
 jobs:
   report-env:
@@ -65,10 +65,10 @@ jobs:
     steps:
 
     - name: Download Kosli cli client
-      id: download-merkely-cli
+      id: download-kosli-cli
       run: |
-        wget https://github.com/kosli-dev/cli/releases/download/v${{ env.MERKELY_CLI_VERSION }}/merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz
-        tar -xf merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz kosli
+        wget https://github.com/kosli-dev/cli/releases/download/v${{ env.KOSLI_CLI_VERSION }}/kosli_${{ env.KOSLI_CLI_VERSION }}_linux_amd64.tar.gz
+        tar -xf kosli_${{ env.KOSLI_CLI_VERSION }}_linux_amd64.tar.gz kosli
 
     - name: auth
       uses: google-github-actions/auth@v0.4.0
@@ -83,9 +83,9 @@ jobs:
 
     - name: report to Kosli
       env:
-        MERKELY_API_TOKEN: ${{ secrets.MERKELY_API_TOKEN }}
+        KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
       run:
-        ./merkely environment report k8s --kubeconfig ${{ env.KUBECONFIG }} -n ${{ env.NAMESPACE }} ${{ env.MERKELY_ENVIRONMENT }}
+        ./kosli environment report k8s --kubeconfig ${{ env.KUBECONFIG }} -n ${{ env.NAMESPACE }} ${{ env.KOSLI_ENVIRONMENT }}
 ```
 
 Once the workflow runs successfully, and there is already something running in your cluster, you will see the information about it in **github-k8s-test** environment in Kosli (You'll find it under **Environments** section).  

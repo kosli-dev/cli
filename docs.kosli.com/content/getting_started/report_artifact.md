@@ -24,7 +24,7 @@ Here is a complete workflow that takes care of CLI download, **pipeline** creati
 Remember:
 * `K8S_CLUSTER_NAME`, `K8S_GCP_ZONE` and `NAMESPACE` should be the same you used in **Report Environment** step
 * `IMAGE` should contain your dockerhub username (instead of our colleague's Ewelina username). You also need to use the correct username in *Login to hub.docker.com* step
-* `MERKELY_OWNER` should be the same your Kosli username.
+* `KOSLI_OWNER` should be the same your Kosli username.
 
 
 In the workflow you'll find comments about specific parts of it.
@@ -38,17 +38,17 @@ on:
 
 env:
   # gke k8s cluster variables
-  K8S_CLUSTER_NAME: merkely-dev
+  K8S_CLUSTER_NAME: kosli-dev
   K8S_GCP_ZONE: europe-west1
   NAMESPACE: github-k8s-demo
   # name of the docker image to build, replace with the name
   # that will contain your dockerhub id
   IMAGE: ewelinawilkosz/github-k8s-demo
   # kosli variables - will be picked up by commands
-  MERKELY_OWNER: demo
-  MERKELY_PIPELINE: github-k8s-demo
-  MERKELY_ENVIRONMENT: github-k8s-test
-  MERKELY_CLI_VERSION: "1.5.0"
+  KOSLI_OWNER: demo
+  KOSLI_PIPELINE: github-k8s-demo
+  KOSLI_ENVIRONMENT: github-k8s-test
+  KOSLI_CLI_VERSION: "2.0.0"
 
 jobs:
   build-report:
@@ -106,21 +106,21 @@ jobs:
     - name: Download Kosli cli client
       id: download-kosli-cli
       run: |
-        wget https://github.com/kosli-dev/cli/releases/download/v${{ env.MERKELY_CLI_VERSION }}/merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz
-        tar -xf merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz kosli
+        wget https://github.com/kosli-dev/cli/releases/download/v${{ env.KOSLI_CLI_VERSION }}/kosli_${{ env.KOSLI_CLI_VERSION }}_linux_amd64.tar.gz
+        tar -xf kosli_${{ env.KOSLI_CLI_VERSION }}_linux_amd64.tar.gz kosli
 
     - name: Declare pipeline in Kosli
       env:
-        MERKELY_API_TOKEN: ${{ secrets.MERKELY_API_TOKEN }}
+        KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
       run:
         ./kosli pipeline declare
           --description "Kosli server"
-          --pipeline ${{ env.MERKELY_PIPELINE }}
+          --pipeline ${{ env.KOSLI_PIPELINE }}
           --template "artifact"
 
     - name: Report Docker image in Kosli
       env:
-        MERKELY_API_TOKEN: ${{ secrets.MERKELY_API_TOKEN }}
+        KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
       run:
         ./kosli pipeline artifact report creation ${{ env.TAGGED_IMAGE }}
           --sha256 ${{ env.DIGEST }}

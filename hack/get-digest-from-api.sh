@@ -39,7 +39,7 @@ curl \
     --silent -X GET -vvv -k \
     --header "Accept: application/vnd.docker.distribution.manifest.v2+json" \
     --header "Authorization: Bearer $token" \
-    "https://ghcr.io/v2/merkely-development/merkely-cli/manifests/75405a0" \
+    "https://ghcr.io/v2/kosli-dev/merkely-cli/manifests/75405a0" \
      2>&1 \
     | grep "< docker-content-digest"
 

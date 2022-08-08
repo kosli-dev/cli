@@ -13,14 +13,14 @@ We'll extend the workflow from previos section with two steps, to add the report
 
 ``` 
     - name: Download Kosli cli client
-      id: download-merkely-cli
+      id: download-kosli-cli
       run: |
-        wget https://github.com/kosli-dev/cli/releases/download/v${{ env.MERKELY_CLI_VERSION }}/merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz
-        tar -xf merkely_${{ env.MERKELY_CLI_VERSION }}_linux_amd64.tar.gz kosli 
+        wget https://github.com/kosli-dev/cli/releases/download/v${{ env.KOSLI_CLI_VERSION }}/kosli_${{ env.KOSLI_CLI_VERSION }}_linux_amd64.tar.gz
+        tar -xf kosli_${{ env.KOSLI_CLI_VERSION }}_linux_amd64.tar.gz kosli 
 
     - name: Report deployment
       env:
-        MERKELY_API_TOKEN: ${{ secrets.MERKELY_API_TOKEN }}
+        KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
       run: 
         ./kosli pipeline deployment report ${{ needs.build-report.outputs.tagged-image }}
           --sha256 ${{ needs.build-report.outputs.image-digest }} 
@@ -40,6 +40,6 @@ This time it should be compliant - which means we know where the artifact is com
 
 In our example, *deployment* is part of the same workflow as *build*. In real life you may want to deploy in a seperate pipeline, especially if you're deploying to your production environment. Once you learn how to use Kosli with this example it should be easier to add required steps to your existing workflows, wherever you need them. 
 
-Visit [Kosli Commands](/client_reference) section to learn more about available Merkeli CLI commands.
+Visit [Kosli Commands](/client_reference) section to learn more about available Kosli CLI commands.
 
 
