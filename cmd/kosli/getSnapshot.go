@@ -163,8 +163,9 @@ func showList(response *requests.HTTPResponse, out io.Writer) error {
 
 		row := fmt.Sprintf("%s\tName: %s\t%s\t%s\t%d", gitCommit, artifact.Name, pipelineName, since, len(artifact.CreationTimestamp))
 		rows = append(rows, row)
-		row = fmt.Sprintf("\tSHA256: %s\t\n", artifact.Sha256)
+		row = fmt.Sprintf("\tSHA256: %s\t\t\t", artifact.Sha256)
 		rows = append(rows, row)
+		rows = append(rows, "\t\t\t\t")
 	}
 	printTable(out, header, rows)
 	return nil

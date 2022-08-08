@@ -100,8 +100,9 @@ func (o *deploymentLsOptions) run(out io.Writer, args []string) error {
 		}
 		row := fmt.Sprintf("%d\tName: %s\t%s\t%s", deploymentId, artifactName, environment, createdAt)
 		rows = append(rows, row)
-		row = fmt.Sprintf("\tSHA256: %s\t\n", artifactDigest)
+		row = fmt.Sprintf("\tSHA256: %s\t\t", artifactDigest)
 		rows = append(rows, row)
+		rows = append(rows, "\t\t\t")
 	}
 	printTable(out, header, rows)
 
