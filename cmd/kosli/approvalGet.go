@@ -110,8 +110,19 @@ func (o *approvalGetOptions) run(out io.Writer, args []string) error {
 			convertedCommit := commit.(map[string]interface{})
 			commitRow := fmt.Sprintf("\tGit commit:%s", convertedCommit["commit_sha"].(string))
 			rows = append(rows, commitRow)
-			commitRow = fmt.Sprintf("\tProduced artifact digest:%s\n", convertedCommit["artifact_digest"].(string))
-			rows = append(rows, commitRow)
+			artifact_digests := convertedCommit["artifact_digests"].([]interface{})
+			if len(artifact_digests) == 0 {
+				commitRow = "\tNo artifacts produced from this commit"
+				rows = append(rows, commitRow)
+			} else {
+				commitRow = "\tProduced artifact digest(s):"
+				rows = append(rows, commitRow)
+				for _, digest := range artifact_digests {
+					digestRow := fmt.Sprintf("\t\t%s", digest)
+					rows = append(rows, digestRow)
+				}
+
+			}
 		}
 	} else {
 		rows = append(rows, "Changes:\tNone")
