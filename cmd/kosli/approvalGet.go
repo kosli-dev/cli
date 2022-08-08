@@ -92,7 +92,11 @@ func (o *approvalGetOptions) run(out io.Writer, args []string) error {
 			if convertedReview["approved_by"] != nil {
 				approvedBy = convertedReview["approved_by"].(string)
 			}
-			reviewRow := fmt.Sprintf("\t%s By: %s", convertedReview["state"].(string), approvedBy)
+			createdAt, err := formattedTimestamp(convertedReview["timestamp"], true)
+			if err != nil {
+				return err
+			}
+			reviewRow := fmt.Sprintf("\t%s By: %s on %s", convertedReview["state"].(string), approvedBy, createdAt)
 			rows = append(rows, reviewRow)
 		}
 	} else {
