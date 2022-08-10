@@ -17,12 +17,12 @@ func (suite *EnvironmentDeclareTestSuite) TestEnvironmentDeclareCmd() {
 	tests := []cmdTestCase{
 		{
 			name:   "declare S3 env",
-			cmd:    "environment declare --name newEnv --environment-type S3 --description \"my new env\" -H http://localhost:8001 -o cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
+			cmd:    "environment declare --name newEnv --environment-type S3 --description \"my new env\" -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
 			golden: "",
 		},
 		{
 			name:   "redeclaring an env updates its metadata",
-			cmd:    "environment declare --name newEnv --environment-type S3 --description \"changed description\" -H http://localhost:8001 -o cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
+			cmd:    "environment declare --name newEnv --environment-type S3 --description \"changed description\" -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
 			golden: "",
 		},
 		{
@@ -34,25 +34,25 @@ func (suite *EnvironmentDeclareTestSuite) TestEnvironmentDeclareCmd() {
 		{
 			wantError: true,
 			name:      "missing --api-token flag causes an error",
-			cmd:       "environment declare --name newEnv --environment-type S3 --description \"my new env\" -o cyber-dojo -H http://localhost:8001",
+			cmd:       "environment declare --name newEnv --environment-type S3 --description \"my new env\" --owner cyber-dojo -H http://localhost:8001",
 			golden:    "Error: --api-token is not set\nUsage: kosli environment declare [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "unknown --environment-type causes an error",
-			cmd:       "environment declare --name newEnv --environment-type UNKNOWN --description \"my new env\" -H http://localhost:8001 -o cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
+			cmd:       "environment declare --name newEnv --environment-type UNKNOWN --description \"my new env\" -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
 			golden:    "Error: UNKNOWN is not a valid environment type\n",
 		},
 		{
 			wantError: true,
 			name:      "missing --name causes an error",
-			cmd:       "environment declare --environment-type S3 --description \"my new env\" -H http://localhost:8001 -o cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
+			cmd:       "environment declare --environment-type S3 --description \"my new env\" -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
 			golden:    "Error: required flag(s) \"name\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "missing --environment-type causes an error",
-			cmd:       "environment declare --name newEnv --description \"my new env\" -H http://localhost:8001 -o cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
+			cmd:       "environment declare --name newEnv --description \"my new env\" -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
 			golden:    "Error: required flag(s) \"environment-type\" not set\n",
 		},
 	}
