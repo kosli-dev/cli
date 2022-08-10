@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -365,19 +364,19 @@ func ErrorBeforePrintingUsage(cmd *cobra.Command, errMsg string) error {
 	)
 }
 
-// Convert json to nice printable format
-func prettyJson(rawJson string) (string, error) {
-	var prettyJSON bytes.Buffer
-	err := json.Indent(&prettyJSON, []byte(rawJson), "", "  ")
-	if err != nil {
-		return "", err
-	}
-	return prettyJSON.String(), nil
-}
+// // Convert json to nice printable format
+// func prettyJson(rawJson string) (string, error) {
+// 	var prettyJSON bytes.Buffer
+// 	err := json.Indent(&prettyJSON, []byte(rawJson), "", "  ")
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	return prettyJSON.String(), nil
+// }
 
-//printTable prints data in a tabular format. Takes header titles in a string slice
+//tabFormattedPrint prints data in a tabular format. Takes header titles in a string slice
 // and rows as a slice of strings
-func printTable(out io.Writer, header []string, rows []string) {
+func tabFormattedPrint(out io.Writer, header []string, rows []string) {
 	w := new(tabwriter.Writer)
 
 	// Format in tab-separated columns with a tab stop of 8.

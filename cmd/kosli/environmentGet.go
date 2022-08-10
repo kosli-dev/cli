@@ -6,24 +6,24 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
-const environmentGetDesc = `Describe an environment metadata.`
+const environmentGetDesc = `Get an environment metadata.`
 
 type environmentGetOptions struct {
-	json bool
+	output string
 }
 
 func newEnvironmentGetCmd(out io.Writer) *cobra.Command {
 	o := new(environmentGetOptions)
 	cmd := &cobra.Command{
-		Use:     "describe [ENVIRONMENT-NAME]",
-		Aliases: []string{"get"},
-		Short:   environmentGetDesc,
-		Long:    environmentGetDesc,
+		Use:   "get [ENVIRONMENT-NAME]",
+		Short: environmentGetDesc,
+		Long:  environmentGetDesc,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -39,7 +39,7 @@ func newEnvironmentGetCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVarP(&o.json, "json", "j", false, jsonOutputFlag)
+	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 
 	return cmd
 }
@@ -52,17 +52,16 @@ func (o *environmentGetOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
-	if o.json {
-		pj, err := prettyJson(response.Body)
-		if err != nil {
-			return err
-		}
-		fmt.Println(pj)
-		return nil
-	}
+	return output.FormattedPrint(response.Body, o.output, out, 0,
+		map[string]output.FormatOutputFunc{
+			"table": printEnvironmentAsTable,
+			"json":  output.PrintJson,
+		})
+}
 
+func printEnvironmentAsTable(raw string, out io.Writer, page int) error {
 	var env map[string]interface{}
-	err = json.Unmarshal([]byte(response.Body), &env)
+	err := json.Unmarshal([]byte(raw), &env)
 	if err != nil {
 		return err
 	}
@@ -87,7 +86,7 @@ func (o *environmentGetOptions) run(out io.Writer, args []string) error {
 	rows = append(rows, fmt.Sprintf("State:\t%s", state))
 	rows = append(rows, fmt.Sprintf("Last Reported At:\t%s", lastReportedAt))
 
-	printTable(out, header, rows)
+	tabFormattedPrint(out, header, rows)
 
 	return nil
 }

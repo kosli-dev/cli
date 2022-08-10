@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -14,7 +15,7 @@ import (
 const deploymentGetDesc = `Get a deployment from a specified pipeline`
 
 type deploymentGetOptions struct {
-	json         bool
+	output       string
 	pipelineName string
 }
 
@@ -40,7 +41,7 @@ func newDeploymentGetCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
-	cmd.Flags().BoolVarP(&o.json, "json", "j", false, jsonOutputFlag)
+	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 
 	err := RequireFlags(cmd, []string{"pipeline"})
 	if err != nil {
@@ -59,17 +60,16 @@ func (o *deploymentGetOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
-	if o.json {
-		pj, err := prettyJson(response.Body)
-		if err != nil {
-			return err
-		}
-		fmt.Println(pj)
-		return nil
-	}
+	return output.FormattedPrint(response.Body, o.output, out, 0,
+		map[string]output.FormatOutputFunc{
+			"table": printDeploymentAsTable,
+			"json":  output.PrintJson,
+		})
+}
 
+func printDeploymentAsTable(raw string, out io.Writer, page int) error {
 	var deployment map[string]interface{}
-	err = json.Unmarshal([]byte(response.Body), &deployment)
+	err := json.Unmarshal([]byte(raw), &deployment)
 	if err != nil {
 		return err
 	}
@@ -106,6 +106,6 @@ func (o *deploymentGetOptions) run(out io.Writer, args []string) error {
 		stateString)
 	rows = append(rows, deploymentRow)
 
-	printTable(out, []string{}, rows)
+	tabFormattedPrint(out, []string{}, rows)
 	return nil
 }

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -15,7 +16,7 @@ import (
 const environmentLsDesc = `List environments.`
 
 type environmentLsOptions struct {
-	json bool
+	output string
 }
 
 func newEnvironmentLsCmd(out io.Writer) *cobra.Command {
@@ -38,7 +39,7 @@ func newEnvironmentLsCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVarP(&o.json, "json", "j", false, jsonOutputFlag)
+	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 
 	return cmd
 }
@@ -53,17 +54,16 @@ func (o *environmentLsOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
-	if o.json {
-		pj, err := prettyJson(response.Body)
-		if err != nil {
-			return err
-		}
-		fmt.Println(pj)
-		return nil
-	}
+	return output.FormattedPrint(response.Body, o.output, out, 0,
+		map[string]output.FormatOutputFunc{
+			"table": printEnvListAsTable,
+			"json":  output.PrintJson,
+		})
+}
 
+func printEnvListAsTable(raw string, out io.Writer, page int) error {
 	var envs []map[string]interface{}
-	err = json.Unmarshal([]byte(response.Body), &envs)
+	err := json.Unmarshal([]byte(raw), &envs)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,6 @@ func (o *environmentLsOptions) run(out io.Writer, args []string) error {
 		row := fmt.Sprintf("%s\t%s\t%s\t%s", env["name"], env["type"], last_reported_str, last_modified_str)
 		rows = append(rows, row)
 	}
-	printTable(out, header, rows)
-
+	tabFormattedPrint(out, header, rows)
 	return nil
 }

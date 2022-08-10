@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -14,9 +15,9 @@ import (
 const approvalLsDesc = `List a number of approvals in a pipeline.`
 
 type approvalLsOptions struct {
-	json       bool
-	pageNumber int64
-	pageLimit  int64
+	output     string
+	pageNumber int
+	pageLimit  int
 }
 
 func newApprovalLsCmd(out io.Writer) *cobra.Command {
@@ -44,9 +45,9 @@ func newApprovalLsCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVarP(&o.json, "json", "j", false, jsonOutputFlag)
-	cmd.Flags().Int64VarP(&o.pageNumber, "page-number", "n", 1, pageNumberFlag)
-	cmd.Flags().Int64VarP(&o.pageLimit, "page-limit", "l", 15, pageLimitFlag)
+	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
+	cmd.Flags().IntVarP(&o.pageNumber, "page-number", "n", 1, pageNumberFlag)
+	cmd.Flags().IntVarP(&o.pageLimit, "page-limit", "l", 15, pageLimitFlag)
 
 	return cmd
 }
@@ -60,30 +61,27 @@ func (o *approvalLsOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
-	if o.json {
-		pj, err := prettyJson(response.Body)
-		if err != nil {
-			return err
-		}
-		fmt.Println(pj)
-		return nil
-	}
+	return output.FormattedPrint(response.Body, o.output, out, o.pageNumber,
+		map[string]output.FormatOutputFunc{
+			"table": printApprovalListAsTable,
+			"json":  output.PrintJson,
+		})
 
+}
+
+func printApprovalListAsTable(raw string, out io.Writer, page int) error {
 	var approvals []map[string]interface{}
-	err = json.Unmarshal([]byte(response.Body), &approvals)
+	err := json.Unmarshal([]byte(raw), &approvals)
 	if err != nil {
 		return err
 	}
 
 	if len(approvals) == 0 {
 		msg := "No approvals were found"
-		if o.pageNumber != 1 {
-			msg = fmt.Sprintf("%s at page number %d", msg, o.pageNumber)
+		if page != 1 {
+			msg = fmt.Sprintf("%s at page number %d", msg, page)
 		}
-		_, err := out.Write([]byte(msg + ".\n"))
-		if err != nil {
-			return err
-		}
+		fmt.Fprintln(out, msg)
 		return nil
 	}
 
@@ -104,7 +102,7 @@ func (o *approvalLsOptions) run(out io.Writer, args []string) error {
 		rows = append(rows, row)
 		rows = append(rows, "\t\t\t")
 	}
-	printTable(out, header, rows)
+	tabFormattedPrint(out, header, rows)
 
 	return nil
 }

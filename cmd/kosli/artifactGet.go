@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -14,7 +15,7 @@ import (
 const artifactGetDesc = `Get artifact from a specified pipeline`
 
 type artifactGetOptions struct {
-	json         bool
+	output       string
 	pipelineName string
 }
 
@@ -40,7 +41,7 @@ func newArtifactGetCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
-	cmd.Flags().BoolVarP(&o.json, "json", "j", false, jsonOutputFlag)
+	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 
 	err := RequireFlags(cmd, []string{"pipeline"})
 	if err != nil {
@@ -52,20 +53,11 @@ func newArtifactGetCmd(out io.Writer) *cobra.Command {
 
 func (o *artifactGetOptions) run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s", global.Host, global.Owner, o.pipelineName, args[0])
-	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
+	artifactResponse, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
 
 	if err != nil {
 		return err
-	}
-
-	if o.json {
-		pj, err := prettyJson(response.Body)
-		if err != nil {
-			return err
-		}
-		fmt.Println(pj)
-		return nil
 	}
 
 	approvalsUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/approvals/", global.Host, global.Owner, o.pipelineName, args[0])
@@ -84,20 +76,33 @@ func (o *artifactGetOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
+	switch o.output {
+	case "table":
+		return printArtifactAsTable(artifactResponse.Body, approvalsResponse.Body, deploymentsResponse.Body, out)
+	case "json":
+		return output.PrintJson(artifactResponse.Body, out, 0)
+	default:
+		return fmt.Errorf("unsupported output format: %s", o.output)
+	}
+
+}
+
+func printArtifactAsTable(artifactRaw, approvalsRaw, deploymentsRaw string, out io.Writer) error {
+
 	var artifact map[string]interface{}
-	err = json.Unmarshal([]byte(response.Body), &artifact)
+	err := json.Unmarshal([]byte(artifactRaw), &artifact)
 	if err != nil {
 		return err
 	}
 
 	var approvals []map[string]interface{}
-	err = json.Unmarshal([]byte(approvalsResponse.Body), &approvals)
+	err = json.Unmarshal([]byte(approvalsRaw), &approvals)
 	if err != nil {
 		return err
 	}
 
 	var deployments []map[string]interface{}
-	err = json.Unmarshal([]byte(deploymentsResponse.Body), &deployments)
+	err = json.Unmarshal([]byte(deploymentsRaw), &deployments)
 	if err != nil {
 		return err
 	}
@@ -182,6 +187,7 @@ func (o *artifactGetOptions) run(out io.Writer, args []string) error {
 		}
 	}
 
-	printTable(out, []string{}, rows)
+	tabFormattedPrint(out, []string{}, rows)
 	return nil
+
 }

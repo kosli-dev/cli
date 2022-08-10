@@ -167,6 +167,6 @@ func showList(response *requests.HTTPResponse, out io.Writer) error {
 		rows = append(rows, row)
 		rows = append(rows, "\t\t\t\t")
 	}
-	printTable(out, header, rows)
+	tabFormattedPrint(out, header, rows)
 	return nil
 }

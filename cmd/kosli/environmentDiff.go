@@ -5,18 +5,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 
+	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
-	"github.com/xeonx/timeago"
 )
 
 const environmentDiffDesc = `Diff snapshots.`
 
 type environmentDiffOptions struct {
-	// long bool
-	json bool
+	output string
 }
 
 type EnvironmentDiffPayload struct {
@@ -44,6 +42,9 @@ func newEnvironmentDiffCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
+			if len(args) < 2 {
+				return ErrorBeforePrintingUsage(cmd, "two snappish required")
+			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -51,16 +52,12 @@ func newEnvironmentDiffCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	// cmd.Flags().BoolVarP(&o.long, "long", "l", false, environmentLongFlag)
-	cmd.Flags().BoolVarP(&o.json, "json", "j", false, jsonOutputFlag)
+	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 
 	return cmd
 }
 
 func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
-	if len(args) < 2 {
-		return fmt.Errorf("two snappish required")
-	}
 
 	payload := new(EnvironmentDiffPayload)
 	payload.Snappish1 = args[0]
@@ -75,17 +72,16 @@ func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
-	if o.json {
-		pj, err := prettyJson(response.Body)
-		if err != nil {
-			return err
-		}
-		fmt.Println(pj)
-		return nil
-	}
+	return output.FormattedPrint(response.Body, o.output, out, 0,
+		map[string]output.FormatOutputFunc{
+			"table": printEnvironmentDiffAsTable,
+			"json":  output.PrintJson,
+		})
+}
 
+func printEnvironmentDiffAsTable(raw string, out io.Writer, page int) error {
 	var diffs map[string][]EnvironmentDiffResponse
-	err = json.Unmarshal([]byte(response.Body), &diffs)
+	err := json.Unmarshal([]byte(raw), &diffs)
 	if err != nil {
 		return err
 	}
@@ -95,7 +91,10 @@ func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
 
 	if removalCount > 0 {
 		for _, entry := range diffs["-"] {
-			printDiffEntry(true, entry)
+			err := printDiffEntry(true, entry)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -105,13 +104,16 @@ func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
 
 	if additionCount > 0 {
 		for _, entry := range diffs["+"] {
-			printDiffEntry(false, entry)
+			err := printDiffEntry(false, entry)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
-func printDiffEntry(removal bool, entry EnvironmentDiffResponse) {
+func printDiffEntry(removal bool, entry EnvironmentDiffResponse) error {
 	colorRed := "\033[31m%s\033[0m"
 	colorGreen := "\033[32m%s\033[0m"
 	color := colorGreen
@@ -144,8 +146,10 @@ func printDiffEntry(removal bool, entry EnvironmentDiffResponse) {
 		fmt.Printf("  %s\n", entry.Pods)
 	}
 	fmt.Printf(color, "  Started: ")
-	timestamp := time.Unix(entry.MostRecentTimestamp, 0)
-	timeago.English.Max = 36 * timeago.Month
-	since := timeago.English.Format(timestamp)
-	fmt.Printf("%s \u2022 %s\n", time.Unix(entry.MostRecentTimestamp, 0).Format(time.RFC822), since)
+	timestamp, err := formattedTimestamp(entry.MostRecentTimestamp, false)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%s\n", timestamp)
+	return nil
 }
