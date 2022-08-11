@@ -74,7 +74,7 @@ test_integration: deps vet ensure_network ## Run tests
 	@docker-compose down || true
 	@docker-compose up -d
 	./mongo/ip_wait.sh localhost:8001
-	@docker exec cli_kosli_server /demo/init/create_demo_users_and_orgs.sh
+	@docker exec cli_kosli_server /demo/create_test_users.py
 	@go test -v -cover -p=1 -coverprofile=coverage.out ./...
 	@go tool cover -func=coverage.out
 	@go tool cover -html=coverage.out
