@@ -116,6 +116,60 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 			cmd:       "artifact get --pipeline newPipe 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments,
 			golden:    "",
 		},
+
+		// Report approval
+		{
+			wantError: false,
+			name:      "report approval",
+			cmd:       "pipeline approval report --repo-root ../.. --pipeline newPipe --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0 --oldest-commit HEAD" + defaultKosliArguments,
+			golden:    "",
+		},
+
+		// Request approval
+		{
+			wantError: false,
+			name:      "request approval",
+			cmd:       "pipeline approval request --repo-root ../.. --pipeline newPipe --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf --oldest-commit HEAD" + defaultKosliArguments,
+			golden:    "",
+		},
+
+		// Assert approval
+		{
+			wantError: false,
+			name:      "assert an approved approval does not fail",
+			cmd:       "pipeline approval assert --pipeline newPipe --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultKosliArguments,
+			golden:    "",
+		},
+
+		{
+			wantError: true,
+			name:      "assert a pending approval fails",
+			cmd:       "pipeline approval assert --pipeline newPipe --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments,
+			golden:    "",
+		},
+
+		// list approvals
+		{
+			wantError: false,
+			name:      "list approvals",
+			cmd:       "approval ls newPipe" + defaultKosliArguments,
+			golden:    "",
+		},
+
+		// Get an approval
+		{
+			wantError: false,
+			name:      "get an approval",
+			cmd:       "approval get 2 --pipeline newPipe" + defaultKosliArguments,
+			golden:    "",
+		},
+
+		{
+			wantError: true,
+			name:      "get a non-existing approval fails",
+			cmd:       "approval get 20 --pipeline newPipe" + defaultKosliArguments,
+			golden:    "",
+		},
 	}
 	runTestCmd(suite.T(), tests)
 }
