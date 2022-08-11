@@ -69,16 +69,24 @@ build_release: check_dirty add_test_tag
 ensure_network:
 	docker network inspect cli_net > /dev/null || docker network create --driver bridge cli_net
 
-test_integration: deps vet ensure_network ## Run tests
+test_integration_setup:
 	./bin/docker_login_aws.sh staging
 	@docker-compose down || true
 	@docker-compose up -d
 	./mongo/ip_wait.sh localhost:8001
 	@docker exec cli_kosli_server /demo/create_test_users.py
+
+
+test_integration: deps vet ensure_network test_integration_setup ## Run tests
 	@go test -v -cover -p=1 -coverprofile=coverage.out ./...
 	@go tool cover -func=coverage.out
 	@go tool cover -html=coverage.out
 .PHONY: test_integration
+
+
+test_integration_single:
+	@go test -v -p=1 ./... -run "${TARGET}"
+
 
 docker: deps vet lint
 	@docker build -t kosli-cli .

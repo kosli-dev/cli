@@ -14,6 +14,9 @@ type EnvironmentDeclareTestSuite struct {
 }
 
 func (suite *EnvironmentDeclareTestSuite) TestEnvironmentDeclareCmd() {
+
+	defaultKosliArguments := " -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ"
+
 	tests := []cmdTestCase{
 		{
 			name:   "declare S3 env",
@@ -54,6 +57,45 @@ func (suite *EnvironmentDeclareTestSuite) TestEnvironmentDeclareCmd() {
 			name:      "missing --environment-type causes an error",
 			cmd:       "environment declare --name newEnv --description \"my new env\" -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
 			golden:    "Error: required flag(s) \"environment-type\" not set\n",
+		},
+		// Environment ls tests
+		{
+			wantError: false,
+			name:      "kosli env ls command lists newEnv does not return error",
+			cmd:       "env ls" + defaultKosliArguments,
+			golden:    "",
+		},
+		{
+			wantError: false,
+			name:      "kosli env ls --output json command does not return error",
+			cmd:       "env ls --output json" + defaultKosliArguments,
+			golden:    "",
+		},
+		{
+			wantError: false,
+			name:      "kosli env ls --output table command does not return error",
+			cmd:       "env ls --output table" + defaultKosliArguments,
+			golden:    "",
+		},
+		{
+			wantError: true,
+			name:      "kosli env ls --output text command does return error",
+			cmd:       "env ls --output text" + defaultKosliArguments,
+			golden:    "",
+		},
+
+		// Environment env get tests
+		{
+			wantError: false,
+			name:      "kosli env get newEnv command does not return error",
+			cmd:       "env get newEnv" + defaultKosliArguments,
+			golden:    "",
+		},
+		{
+			wantError: false,
+			name:      "kosli env get newEnv --output json command does not return error",
+			cmd:       "env get newEnv --output json" + defaultKosliArguments,
+			golden:    "",
 		},
 	}
 	runTestCmd(suite.T(), tests)
