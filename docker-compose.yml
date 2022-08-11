@@ -15,7 +15,8 @@ services:
   server:
     networks: [ cli_net ]
     depends_on: [ mongo_rs_initiate ]
-    image: ghcr.io/kosli-dev/merkely:latest
+    image: 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:latest
+    env_file: [ "./mongo/mongo.env" ]
     container_name: cli_kosli_server
     ports: ["8001:8001"]
 
@@ -26,17 +27,17 @@ services:
       context: ./mongo
     container_name: cli_mongo_rs_initiate
     init: true
-    depends_on: [ mongo ]
+    depends_on: [ mongo1 ]
     env_file: [ "./mongo/mongo.env" ]
-    command: "./mongo/rs_initiate.sh"
+    command: "/mongo/rs_initiate.sh"
 
-  mongo:
+  mongo1:
     networks: [ cli_net ]
-    hostname: mongo
+    hostname: mongo1
     image: kosli-mongo-rs
     build:
       context: ./mongo
-    container_name: cli_mongo
+    container_name: mongo1
     init: true
     stop_signal: SIGINT
     env_file: [ "./mongo/mongo.env" ]

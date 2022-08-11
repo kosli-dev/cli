@@ -70,6 +70,7 @@ ensure_network:
 	docker network inspect cli_net > /dev/null || docker network create --driver bridge cli_net
 
 test_unit: deps vet ensure_network ## Run unit tests
+	./bin/docker_login_aws.sh staging
 	@docker-compose down || true
 	@docker-compose up -d
 	./mongo/ip_wait.sh localhost:8001

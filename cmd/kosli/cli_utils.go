@@ -364,17 +364,7 @@ func ErrorBeforePrintingUsage(cmd *cobra.Command, errMsg string) error {
 	)
 }
 
-// // Convert json to nice printable format
-// func prettyJson(rawJson string) (string, error) {
-// 	var prettyJSON bytes.Buffer
-// 	err := json.Indent(&prettyJSON, []byte(rawJson), "", "  ")
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	return prettyJSON.String(), nil
-// }
-
-//tabFormattedPrint prints data in a tabular format. Takes header titles in a string slice
+// tabFormattedPrint prints data in a tabular format. Takes header titles in a string slice
 // and rows as a slice of strings
 func tabFormattedPrint(out io.Writer, header []string, rows []string) {
 	w := new(tabwriter.Writer)
@@ -390,7 +380,7 @@ func tabFormattedPrint(out io.Writer, header []string, rows []string) {
 	w.Flush()
 }
 
-//formattedTimestamp formats a float timestamp into something like "01 Apr 22 14:20 CEST • 4 months ago"
+// formattedTimestamp formats a float timestamp into something like "01 Apr 22 14:20 CEST • 4 months ago"
 // time is formatted using RFC822
 func formattedTimestamp(timestamp interface{}, short bool) (string, error) {
 	var intTimestamp int64

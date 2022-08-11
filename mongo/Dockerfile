@@ -1,9 +1,4 @@
-# Mongo version matches the 'tag:' in utilities/values-files/mongodb-values.yaml
-# image: bitnami/mongodb:4.4.12-debian-10-r35
-# Mongo has very specific ownership/permissions requirements on the cert file.
-
-FROM mongo:4.4.12
-RUN echo 1
+FROM mongo:4.0
 WORKDIR /mongo
 COPY . .
 RUN chmod 400 key.cert
