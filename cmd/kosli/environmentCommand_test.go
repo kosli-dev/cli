@@ -24,6 +24,7 @@ func (suite *EnvironmentCommandTestSuite) TestEnvironmentCommandCmd() {
 			golden: "",
 		},
 		{
+			// TODO: Is this realy updating the environment?
 			name:   "redeclaring an env updates its metadata",
 			cmd:    "environment declare --name newEnv --environment-type S3 --description \"changed description\" -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
 			golden: "",
@@ -97,46 +98,6 @@ func (suite *EnvironmentCommandTestSuite) TestEnvironmentCommandCmd() {
 			cmd:       "env get newEnv --output json" + defaultKosliArguments,
 			golden:    "",
 		},
-
-		// // Pipeline ls tests
-		// {
-		// 	wantError: false,
-		// 	name:      "kosli pipeline ls command does not return error",
-		// 	cmd:       "pipeline ls" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
-		// {
-		// 	wantError: false,
-		// 	name:      "kosli pipeline ls --output json command does not return error",
-		// 	cmd:       "pipeline ls --output json" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
-		// {
-		// 	wantError: false,
-		// 	name:      "kosli pipeline ls --output table command does not return error",
-		// 	cmd:       "pipeline ls --output table" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
-		// {
-		// 	wantError: true,
-		// 	name:      "kosli pipeline ls --output text command does return error",
-		// 	cmd:       "pipeline ls --output text" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
-
-		// // Pipeline pipeline get tests
-		// {
-		// 	wantError: false,
-		// 	name:      "kosli pipeline get newEnv command does not return error",
-		// 	cmd:       "pipeline get newEnv" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
-		// {
-		// 	wantError: false,
-		// 	name:      "kosli pipeline get newEnv --output json command does not return error",
-		// 	cmd:       "pipeline get newEnv --output json" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
 	}
 	runTestCmd(suite.T(), tests)
 }
