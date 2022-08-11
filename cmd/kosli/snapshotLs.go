@@ -9,7 +9,6 @@ import (
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/xeonx/timeago"
 )
@@ -17,8 +16,9 @@ import (
 const snapshotLsDesc = `List all snapshots for an environment.`
 
 type snapshotLsOptions struct {
-	output string
-	number int
+	output     string
+	pageNumber int
+	pageLimit  int
 }
 
 func newSnapshotLsCmd(out io.Writer) *cobra.Command {
@@ -44,20 +44,21 @@ func newSnapshotLsCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
-	cmd.Flags().IntVarP(&o.number, "number", "n", 5, resultLimitFlag)
+	cmd.Flags().IntVarP(&o.pageNumber, "page-number", "n", 1, pageNumberFlag)
+	cmd.Flags().IntVarP(&o.pageLimit, "page-limit", "l", 15, pageLimitFlag)
 
 	return cmd
 }
 
 func (o *snapshotLsOptions) run(out io.Writer, args []string) error {
-	if o.number <= 0 {
+	if o.pageNumber <= 0 || o.pageLimit <= 0 {
 		fmt.Fprint(out, "No environment snapshots were requested\n")
 		return nil
 	}
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/log/0/%d",
-		global.Host, global.Owner, args[0], o.number)
-	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
+	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/snapshots/%d/%d",
+		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit)
+	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
+		global.MaxAPIRetries, global.DryRun, http.MethodGet, log)
 	if err != nil {
 		return err
 	}

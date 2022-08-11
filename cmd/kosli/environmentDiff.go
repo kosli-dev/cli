@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -15,11 +16,6 @@ const environmentDiffDesc = `Diff snapshots.`
 
 type environmentDiffOptions struct {
 	output string
-}
-
-type EnvironmentDiffPayload struct {
-	Snappish1 string `json:"snappish1"`
-	Snappish2 string `json:"snappish2"`
 }
 
 type EnvironmentDiffResponse struct {
@@ -43,7 +39,7 @@ func newEnvironmentDiffCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			if len(args) < 2 {
-				return ErrorBeforePrintingUsage(cmd, "two snappish required")
+				return ErrorBeforePrintingUsage(cmd, "two snappishes required")
 			}
 			return nil
 		},
@@ -58,16 +54,11 @@ func newEnvironmentDiffCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
+	url := fmt.Sprintf("%s/api/v1/env-diff/%s/?snappish1=%s&snappish2=%s",
+		global.Host, global.Owner, url.QueryEscape(args[0]), url.QueryEscape(args[1]))
 
-	payload := new(EnvironmentDiffPayload)
-	payload.Snappish1 = args[0]
-	payload.Snappish2 = args[1]
-
-	url := fmt.Sprintf("%s/api/v1/env-diff/%s/", global.Host, global.Owner)
-
-	response, err := requests.SendPayload(payload, url, "", global.ApiToken,
+	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, global.DryRun, http.MethodGet, log)
-
 	if err != nil {
 		return err
 	}

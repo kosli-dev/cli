@@ -9,7 +9,6 @@ import (
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -47,9 +46,8 @@ func newEnvironmentLsCmd(out io.Writer) *cobra.Command {
 func (o *environmentLsOptions) run(out io.Writer, args []string) error {
 
 	url := fmt.Sprintf("%s/api/v1/environments/%s/", global.Host, global.Owner)
-	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
-
+	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
+		global.MaxAPIRetries, global.DryRun, http.MethodGet, log)
 	if err != nil {
 		return err
 	}
