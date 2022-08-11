@@ -73,6 +73,10 @@ jobs:
     - name: Login to Amazon ECR public
       id: login-ecr-public
       uses: aws-actions/amazon-ecr-login@v1.5.0
+      with:
+        registry-type: 'public'
+      env:
+        AWS_REGION: us-east-1
 
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v3
@@ -81,7 +85,7 @@ jobs:
         args: --timeout=5m -v
 
     - name: Run tests
-      run: make test_unit
+      run: make test_integration
 
     - name: Build, tag, and push docker image to Amazon ECR Public
       uses: docker/build-push-action@v2
