@@ -9,11 +9,11 @@ import (
 // Define the suite, and absorb the built-in basic suite
 // functionality from testify - including a T() method which
 // returns the current testing context
-type EnvironmentDeclareTestSuite struct {
+type EnvironmentCommandTestSuite struct {
 	suite.Suite
 }
 
-func (suite *EnvironmentDeclareTestSuite) TestEnvironmentDeclareCmd() {
+func (suite *EnvironmentCommandTestSuite) TestEnvironmentCommandCmd() {
 
 	defaultKosliArguments := " -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ"
 
@@ -97,12 +97,52 @@ func (suite *EnvironmentDeclareTestSuite) TestEnvironmentDeclareCmd() {
 			cmd:       "env get newEnv --output json" + defaultKosliArguments,
 			golden:    "",
 		},
+
+		// // Pipeline ls tests
+		// {
+		// 	wantError: false,
+		// 	name:      "kosli pipeline ls command does not return error",
+		// 	cmd:       "pipeline ls" + defaultKosliArguments,
+		// 	golden:    "",
+		// },
+		// {
+		// 	wantError: false,
+		// 	name:      "kosli pipeline ls --output json command does not return error",
+		// 	cmd:       "pipeline ls --output json" + defaultKosliArguments,
+		// 	golden:    "",
+		// },
+		// {
+		// 	wantError: false,
+		// 	name:      "kosli pipeline ls --output table command does not return error",
+		// 	cmd:       "pipeline ls --output table" + defaultKosliArguments,
+		// 	golden:    "",
+		// },
+		// {
+		// 	wantError: true,
+		// 	name:      "kosli pipeline ls --output text command does return error",
+		// 	cmd:       "pipeline ls --output text" + defaultKosliArguments,
+		// 	golden:    "",
+		// },
+
+		// // Pipeline pipeline get tests
+		// {
+		// 	wantError: false,
+		// 	name:      "kosli pipeline get newEnv command does not return error",
+		// 	cmd:       "pipeline get newEnv" + defaultKosliArguments,
+		// 	golden:    "",
+		// },
+		// {
+		// 	wantError: false,
+		// 	name:      "kosli pipeline get newEnv --output json command does not return error",
+		// 	cmd:       "pipeline get newEnv --output json" + defaultKosliArguments,
+		// 	golden:    "",
+		// },
 	}
 	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
-func TestEnvironmentDeclareTestSuite(t *testing.T) {
-	suite.Run(t, new(EnvironmentDeclareTestSuite))
+func TestEnvironmentCommandTestSuite(t *testing.T) {
+	suite.Run(t, new(EnvironmentCommandTestSuite))
 }
