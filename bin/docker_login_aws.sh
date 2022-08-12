@@ -33,8 +33,10 @@ main()
         exit 0
     fi
     login_aws ${AWS_SERVER_NAME} || die "Failed to do 'aws sso login' for '${AWS_SERVER_NAME}'"
-    get_vault_credentials ${AWS_SERVER_NAME} || die "Failed to create vault credentials for '${AWS_SERVER_NAME}'"
-    docker_login ${AWS_SERVER_NAME} || die "Failed to do docker login to '${AWS_SERVER_NAME}'"
+    if ! is_vault_credentials_valid ${AWS_SERVER_NAME}; then
+        get_vault_credentials ${AWS_SERVER_NAME} || die "Failed to create vault credentials for '${AWS_SERVER_NAME}'"
+        docker_login ${AWS_SERVER_NAME} || die "Failed to do docker login to '${AWS_SERVER_NAME}'"
+    fi
 }
 
 main "$@"

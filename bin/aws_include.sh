@@ -100,7 +100,7 @@ get_task_id()
       | head -n 1 | sed 's#^.*/##'
 }
 
-get_vault_credentials()
+is_vault_credentials_valid()
 {
     local awsServerName=$1; shift
     local awsVaultEnvFile=${AWS_VAULT_ENV_FILE_BASE}_${awsServerName}
@@ -119,8 +119,23 @@ get_vault_credentials()
         local now=$(date +%s)
         if [ ${now} -lt ${expirationTime} ]; then
             source ${awsVaultEnvFile}
-            return
+            return 0
         fi
+    fi
+    return 1
+}
+
+get_vault_credentials()
+{
+    local awsServerName=$1; shift
+    local awsVaultEnvFile=${AWS_VAULT_ENV_FILE_BASE}_${awsServerName}
+
+    # In the users home directory there is a file with the AWS_ variables needed to
+    # use the ecs-cli tool. We check the expiration date to see if we can reuse the
+    # variables.
+
+    if is_vault_credentials_valid ${awsServerName}; then
+        return 0
     fi
 
     make_vault_credentials ${awsServerName}
