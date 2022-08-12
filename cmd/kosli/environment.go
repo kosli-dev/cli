@@ -24,6 +24,7 @@ func newEnvironmentCmd(out io.Writer) *cobra.Command {
 		newEnvironmentDiffCmd(out),
 		newAllowedArtifactsCmd(out),
 		newEnvironmentGetCmd(out),
+		newEnvironmentEventsLogCmd(out),
 	)
 
 	return cmd
