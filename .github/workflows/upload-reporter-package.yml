@@ -1,9 +1,21 @@
 name: Upload reporter lambda package to S3
 
 on:
-  push:
-    branches:
-      - 'reporter-upload-package-workflow'
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+      AWS_ACCOUNT_ID:
+        required: true
+        type: string
+      AWS_REGION:
+        required: true
+        type: string
+      s3_name:
+        required: true
+        type: string
+        
 
 jobs:
   upload:
@@ -25,6 +37,6 @@ jobs:
     - name: Upload reporter lambda package
       id: upload-reporter-lambda-package
       env:
-        TAG: v1.5.9
-        S3_NAME: reporter-lambda-dacef8339fbd41ce31c346f854a85d0c74f7c4e8
+        TAG: ${{ inputs.tag }}
+        S3_NAME: ${{ inputs.s3_name }}
       run: ./bin/upload_reporter_package.sh

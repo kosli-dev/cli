@@ -1,0 +1,16 @@
+name: Upload reporter lambda package to S3
+
+on:
+  push:
+    branches:
+      - 'reporter-upload-package-workflow'
+
+jobs:
+  upload:
+    #needs: [docs-gen]
+    #uses: kosli-dev/cli/.github/workflows/build.yml@main
+    uses: kosli-dev/cli/.github/workflows/build.yml@reporter-upload-package-workflow
+    with:
+      #tag: ${{ needs.pre-build.outputs.tag }}
+      tag: v1.5.9
+      s3_name: reporter-lambda-dacef8339fbd41ce31c346f854a85d0c74f7c4e8
