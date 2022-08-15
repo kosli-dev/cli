@@ -9,7 +9,6 @@ import (
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -19,12 +18,13 @@ type environmentEventsLogOptions struct {
 	output     string
 	pageNumber int
 	pageLimit  int
+	reverse    bool
 }
 
 func newEnvironmentEventsLogCmd(out io.Writer) *cobra.Command {
 	o := new(environmentEventsLogOptions)
 	cmd := &cobra.Command{
-		Use:   "log SNAPPISH_1 [SNAPPISH_2]",
+		Use:   "log ENV_NAME [INTERVAL]",
 		Short: environmentEventsLogDesc,
 		Long:  environmentEventsLogDesc,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -33,7 +33,10 @@ func newEnvironmentEventsLogCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			if len(args) < 1 {
-				return ErrorBeforePrintingUsage(cmd, "SNAPPISH_1 argument is required")
+				return ErrorBeforePrintingUsage(cmd, "ENV_NAME argument is required")
+			}
+			if len(args) > 2 {
+				return ErrorBeforePrintingUsage(cmd, "command accepts maximum 2 arguments")
 			}
 			if o.pageNumber <= 0 {
 				return ErrorBeforePrintingUsage(cmd, "page number must be a positive integer")
@@ -48,15 +51,20 @@ func newEnvironmentEventsLogCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	cmd.Flags().IntVarP(&o.pageNumber, "page-number", "n", 1, pageNumberFlag)
 	cmd.Flags().IntVarP(&o.pageLimit, "page-limit", "l", 15, pageLimitFlag)
+	cmd.Flags().BoolVar(&o.reverse, "reverse", false, reverseFlag)
 
 	return cmd
 }
 
 func (o *environmentEventsLogOptions) run(out io.Writer, args []string) error {
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/log/%d/%d?from=%s&to=%s",
-		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit, url.QueryEscape(args[0]), url.QueryEscape(args[1]))
-	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
+	interval := ""
+	if len(args) > 1 {
+		interval = args[1]
+	}
+	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/log?page=%d&per_page=%d&interval=%s&reverse=%t",
+		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit, url.QueryEscape(interval), o.reverse)
+	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
+		global.MaxAPIRetries, global.DryRun, http.MethodGet, log)
 	if err != nil {
 		return err
 	}
@@ -99,10 +107,10 @@ func printEnvironmentEventsLogAsTable(raw string, out io.Writer, page int) error
 			return err
 		}
 		pipeline := event["pipeline"].(string)
-		deploymentsList := event["deployments"].([]int64)
+		deploymentsList := event["deployments"].([]interface{})
 		deployments := ""
 		for _, deployment := range deploymentsList {
-			deployments += fmt.Sprintf("#%d ", deployment)
+			deployments += fmt.Sprintf("#%d ", int64(deployment.(float64)))
 		}
 
 		row := fmt.Sprintf("#%d\tArtifact: %s\t%s\t%s", snapshotIndex, artifactName, pipeline, deployments)

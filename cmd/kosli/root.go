@@ -100,6 +100,7 @@ const (
 	bucketNameFlag          = "The name of the S3 bucket."
 	pathsFlag               = "The comma separated list of artifact directories."
 	shortFlag               = "[optional] Print only the Kosli cli version number."
+	reverseFlag             = "[defaulted] Reverse the order of output list."
 )
 
 var global *GlobalOpts
