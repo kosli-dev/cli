@@ -1,2 +1,2 @@
-env               = "staging-aws"
-kosli_env         = "staging"
+env       = "staging-aws"
+kosli_env = "staging"

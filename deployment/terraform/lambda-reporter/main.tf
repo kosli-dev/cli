@@ -27,10 +27,10 @@ module "reporter_lambda" {
   attach_policy_json = true
   policy_json        = data.aws_iam_policy_document.ecs_list_allow.json
 
-  function_name = "reporter-${var.name}"
-  description   = "Send reports to the Kosli app"
-  handler = "function.handler"
-  runtime = "provided"
+  function_name          = "reporter-${var.name}"
+  description            = "Send reports to the Kosli app"
+  handler                = "function.handler"
+  runtime                = "provided"
   local_existing_package = data.null_data_source.downloaded_package.outputs["filename"]
 
   role_name      = var.name
@@ -41,9 +41,9 @@ module "reporter_lambda" {
   environment_variables = {
     MERKELY_HOST      = var.kosli_host
     MERKELY_API_TOKEN = data.aws_ssm_parameter.kosli_api_token.value
-    ENV = var.env
-    ECS_CLUSTER = var.ecs_cluster
-    KOSLI_USER = var.kosli_user
+    ENV               = var.env
+    ECS_CLUSTER       = var.ecs_cluster
+    KOSLI_USER        = var.kosli_user
   }
 
   allowed_triggers = {

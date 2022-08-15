@@ -3,7 +3,7 @@ variable "env" {
 }
 
 variable "name" {
-  type    = string
+  type = string
 }
 
 variable "kosli_cli_version" {
@@ -21,8 +21,8 @@ variable "kosli_host" {
 }
 
 variable "reporter_releases_host" {
-  type        = string
-  default     = "https://reporter-releases.kosli.com"
+  type    = string
+  default = "https://reporter-releases.kosli.com"
 }
 
 variable "ecs_cluster" {
