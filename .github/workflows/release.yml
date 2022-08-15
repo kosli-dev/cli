@@ -78,3 +78,12 @@ jobs:
           default_author: github_actor
           message: 'Update docs'
           pull_strategy: 'NO-PULL'
+
+  upload-reporter-lambda-package:
+    needs: [pre-build, docs-gen]
+    uses: kosli-dev/cli/.github/workflows/upload-reporter-package.yml@main
+    with:
+      tag: ${{ needs.pre-build.outputs.tag }}
+      s3_name: reporter-lambda-dacef8339fbd41ce31c346f854a85d0c74f7c4e8
+      AWS_ACCOUNT_ID: 772819027869
+      AWS_REGION: eu-central-1
