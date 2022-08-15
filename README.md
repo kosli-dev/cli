@@ -1,6 +1,9 @@
 # Kosli Reporter
 
-This CLI is used to report and query the images of workloads running in an environment back to kosli.
+This CLI is used to report DevOps change events to Kosli and query them.
+
+## Status
+Kosli is still in beta
 
 ## Usage 
 
