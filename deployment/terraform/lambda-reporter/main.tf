@@ -1,14 +1,23 @@
-resource "aws_cloudwatch_event_rule" "cron_every_minute" {
-  name        = "run-${var.name}-lambda-reporter"
-  description = "Execute ${var.name} lambda reporter"
-
-  schedule_expression = "cron(* * * * ? *)"
+locals {
+  package_url = "${var.reporter_releases_host}/kosli_lambda_${var.kosli_cli_version}.zip"
+  downloaded  = "downloaded_package_${md5(local.package_url)}.zip"
 }
 
-resource "aws_cloudwatch_event_target" "lambda_reporter" {
-  arn       = module.reporter_lambda.lambda_function_arn
-  rule      = aws_cloudwatch_event_rule.cron_every_minute.name
-  target_id = module.reporter_lambda.lambda_function_name
+resource "null_resource" "download_package" {
+  triggers = {
+    downloaded = local.downloaded
+  }
+
+  provisioner "local-exec" {
+    command = "curl -L -o ${local.downloaded} ${local.package_url}"
+  }
+}
+
+data "null_data_source" "downloaded_package" {
+  inputs = {
+    id       = null_resource.download_package.id
+    filename = local.downloaded
+  }
 }
 
 module "reporter_lambda" {
@@ -20,11 +29,9 @@ module "reporter_lambda" {
 
   function_name = "reporter-${var.name}"
   description   = "Send reports to the Kosli app"
-
-  image_uri    = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com/ecr-public/c5t5r3f3/kosli-reporter:${var.REPORTER_TAG}"
-  package_type = "Image"
-
-  image_config_command = ["kosli", "environment", "report", "ecs", "${var.env}", "-C", "${var.ecs_cluster}", "--owner", "${var.kosli_user}"]
+  handler = "function.handler"
+  runtime = "provided"
+  local_existing_package = data.null_data_source.downloaded_package.outputs["filename"]
 
   role_name      = var.name
   timeout        = 30
@@ -32,8 +39,11 @@ module "reporter_lambda" {
   publish        = true
 
   environment_variables = {
-    KOSLI_HOST      = var.kosli_host
-    KOSLI_API_TOKEN = data.aws_ssm_parameter.kosli_api_token.value
+    MERKELY_HOST      = var.kosli_host
+    MERKELY_API_TOKEN = data.aws_ssm_parameter.kosli_api_token.value
+    ENV = var.env
+    ECS_CLUSTER = var.ecs_cluster
+    KOSLI_USER = var.kosli_user
   }
 
   allowed_triggers = {
@@ -44,14 +54,6 @@ module "reporter_lambda" {
   }
 
   cloudwatch_logs_retention_in_days = var.cloudwatch_logs_retention_in_days
-
-  # To do: integrate aws-lambda-go to the kosli cli so lambda events are processed correctly
-  # https://docs.aws.amazon.com/lambda/latest/dg/go-image.html
-  # https://docs.aws.amazon.com/lambda/latest/dg/golang-handler.html
-  # Set maximum_retry_attempts to 0 to avoid function run retries due to incorrect exit code
-  create_async_event_config    = true
-  maximum_event_age_in_seconds = 60
-  maximum_retry_attempts       = 0
 
   tags = var.tags
 }

@@ -1,18 +1,8 @@
-variable "reporter_apps" {
+variable "kosli_hosts" {
   type = map(any)
   default = {
-    staging = {
-      kosli_host      = "https://staging.app.kosli.com"
-      cpu_limit       = 100
-      mem_limit       = 400
-      mem_reservation = 64
-    }
-    prod = {
-      kosli_host      = "https://app.kosli.com"
-      cpu_limit       = 100
-      mem_limit       = 400
-      mem_reservation = 64
-    }
+    staging = "https://staging.app.kosli.com"
+    prod = "https://app.kosli.com"
   }
 }
 
@@ -27,18 +17,4 @@ variable "kosli_env" {
 variable "app_name" {
   type    = string
   default = "kosli"
-}
-
-variable "ecs_sluster_name" {
-  type    = string
-  default = "merkely-reporter"
-}
-
-variable "create_public_ecr" {
-  type    = bool
-  default = false
-}
-
-variable "REPORTER_TAG" {
-  type = string
 }

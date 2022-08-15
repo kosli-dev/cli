@@ -1,3 +1,5 @@
+*.zip
+
 # Terraform
 **/.terraform/*
 .terraform.*
