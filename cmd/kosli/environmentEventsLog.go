@@ -61,7 +61,7 @@ func (o *environmentEventsLogOptions) run(out io.Writer, args []string) error {
 	if len(args) > 1 {
 		interval = args[1]
 	}
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/log?page=%d&per_page=%d&interval=%s&reverse=%t",
+	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/events/?page=%d&per_page=%d&interval=%s&reverse=%t",
 		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit, url.QueryEscape(interval), o.reverse)
 	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, global.DryRun, http.MethodGet, log)

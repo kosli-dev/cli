@@ -8,7 +8,6 @@ import (
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -46,17 +45,17 @@ func newDeploymentLsCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
-	cmd.Flags().IntVarP(&o.pageNumber, "page-number", "n", 1, pageNumberFlag)
-	cmd.Flags().IntVarP(&o.pageLimit, "page-limit", "l", 15, pageLimitFlag)
+	cmd.Flags().IntVar(&o.pageNumber, "page", 1, pageNumberFlag)
+	cmd.Flags().IntVarP(&o.pageLimit, "page-limit", "n", 15, pageLimitFlag)
 
 	return cmd
 }
 
 func (o *deploymentLsOptions) run(out io.Writer, args []string) error {
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/%d/%d",
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/?page=%d&per_page=%d",
 		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit)
-	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
+	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
+		global.MaxAPIRetries, global.DryRun, http.MethodGet, log)
 	if err != nil {
 		return err
 	}
