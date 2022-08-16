@@ -21,7 +21,6 @@ type ArtifactPayload struct {
 	Filename    string `json:"filename"`
 	Description string `json:"description"`
 	GitCommit   string `json:"git_commit"`
-	IsCompliant bool   `json:"is_compliant"`
 	BuildUrl    string `json:"build_url"`
 	CommitUrl   string `json:"commit_url"`
 }
@@ -81,7 +80,6 @@ func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.GitCommit, "git-commit", "g", DefaultValue(ci, "git-commit"), gitCommitFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), buildUrlFlag)
 	cmd.Flags().StringVarP(&o.payload.CommitUrl, "commit-url", "u", DefaultValue(ci, "commit-url"), commitUrlFlag)
-	cmd.Flags().BoolVarP(&o.payload.IsCompliant, "compliant", "C", true, compliantFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 
 	err := RequireFlags(cmd, []string{"pipeline", "git-commit", "build-url", "commit-url"})

@@ -77,12 +77,9 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 	}
 
 	if artifactData["state"].(string) == "COMPLIANT" {
-		_, outErr := out.Write([]byte("artifact is COMPLIANT\n"))
-		if outErr != nil {
-			return outErr
-		}
+		fmt.Fprintln(out, "COMPLIANT")
 	} else {
-		return fmt.Errorf("artifact is %s", artifactData["state"].(string))
+		return fmt.Errorf("%s", artifactData["state"].(string))
 	}
 
 	return nil
