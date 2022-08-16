@@ -21,23 +21,23 @@ jobs:
         echo "TAG=${TAG}" >> ${GITHUB_ENV}
         echo ::set-output name=tag::${TAG}
 
-  build:
-    needs: [pre-build]
-    if: ${{ github.ref != 'refs/heads/prod' }}
-    uses: kosli-dev/cli/.github/workflows/build.yml@main
-    with:
-      tag: ${{ needs.pre-build.outputs.tag }}
-      platforms: linux/amd64
-      AWS_ACCOUNT_ID: 772819027869
-      AWS_REGION: eu-central-1
-    secrets:
-      slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
-      slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
-      ghcr_user: ${{ secrets.GHCR_USER }}
-      ghcr_token: ${{ secrets.GHCR_TOKEN }}
+  #build:
+  #  needs: [pre-build]
+  #  if: ${{ github.ref != 'refs/heads/prod' }}
+  #  uses: kosli-dev/cli/.github/workflows/build.yml@main
+  #  with:
+  #    tag: ${{ needs.pre-build.outputs.tag }}
+  #    platforms: linux/amd64
+  #    AWS_ACCOUNT_ID: 772819027869
+  #    AWS_REGION: eu-central-1
+  #  secrets:
+  #    slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
+  #    slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
+  #    ghcr_user: ${{ secrets.GHCR_USER }}
+  #    ghcr_token: ${{ secrets.GHCR_TOKEN }}
   
   upload-reporter-package-staging:
-    needs: [build]
+    needs: [pre-build, build]
     #if: ${{ github.ref == 'refs/heads/main' }}
     if: ${{ github.ref == 'refs/heads/repo-dispatch' }}
     #uses: kosli-dev/cli/.github/workflows/upload-reporter-package.yml@main
