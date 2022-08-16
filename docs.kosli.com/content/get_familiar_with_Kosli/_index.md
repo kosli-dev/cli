@@ -37,11 +37,11 @@ $ git add *src
 $ git commit -m "Version one of web and database"
 $ cd ..
 
-# We build our SW with
+# Build our SW with
 $ echo "web version $(cat code/web.src)" > build/web_$(cat code/web.src).bin
 $ echo "database version $(cat code/db.src)" > build/db_$(cat code/db.src).bin
 
-# We deploy our buit SW to our server with
+# Deploy our buit SW to our server with
 $ rm -f server/web_*; cp build/web_$(cat code/web.src).bin server/
 $ rm -f server/db_*; cp build/db_$(cat code/db.src).bin server/
 ``` 
@@ -72,7 +72,7 @@ To get the kosli token go to https://app.kosli.com, log in using your github acc
 
 To follow the examples make sure you have followed the instructions in Local setup
 
-Explain the concept
+TODO: Explain the concept
 
 ### Create a Kosli environment
 
@@ -89,6 +89,13 @@ You can immediately verify that the Kosli environment was created:
 $ kosli environment ls
 NAME        TYPE    LAST REPORT  LAST MODIFIED
 production  server               2022-08-16T07:53:43+02:00
+
+$ kosli environment get production
+Name:              production
+Type:              server
+Description:       Production server (for kosli guide)
+State:             INCOMPLIANT
+Last Reported At:  16 Aug 22 07:58 CEST • 25 seconds ago
 ```
 
 
@@ -121,7 +128,7 @@ N/A     Name: /tmp/try-kosli/server/db_1.bin                                    
 
 Typically a server would report which SW that is running periodically. The Kosli app
 generates a new snapshot if the SW changes, so resending the same environment report
-several times will not resolve in duplication of a snapshot.
+several times will not lead to duplication of a snapshot.
 ```shell
 $ kosli environment report server production --paths $(ls server/web_*bin),$(ls server/db_*.bin)
 $ kosli snapshot get production
@@ -135,13 +142,17 @@ N/A     Name: /tmp/try-kosli/server/db_1.bin                                    
 
 We simulate a change of the web application from version 1 to version 2
 ```shell
+# Update src
 $ echo "2" > code/web.src
 $ cd code
 $ git add web.src
 $ git commit -m "Version two of web"
 $ cd ..
+# Build
 $ echo web version $(cat code/web.src) > build/web_$(cat code/web.src).bin
+# Deploy to server
 $ rm -f server/web_*; cp build/web_$(cat code/web.src).bin server/
+# Report what is now running on server
 $ kosli environment report server production --paths $(ls server/web_*bin),$(ls server/db_*.bin)
 ```
 
@@ -177,7 +188,7 @@ N/A     Name: /tmp/try-kosli/server/db_1.bin                                    
 
 ## Pipelines
 
-Explain the concept
+TODO: Explain the concept
 
 To follow the examples make sure you have followed the instructions in Local setup
 
@@ -202,7 +213,7 @@ $ kosli pipeline declare \
     --template artifact
 ```
 
-You can immediately verify that the Kosli pipeline was created:
+You can immediately verify that the Kosli pipelines were created:
 ```shell
 $ kosli pipeline ls
 NAME             DESCRIPTION                        VISIBILITY
@@ -213,13 +224,13 @@ web-server       pipeline to build web-server       private
 
 ### Build artifacts and report them to Kosli
 
-We "build" some new SW based on the source code
+We "build" some SW based on the source code
 ```shell
 $ echo "web version $(cat code/web.src)" > build/web_$(cat code/web.src).bin
 $ echo "database version $(cat code/db.src)" > build/db_$(cat code/db.src).bin
 ```
 
-We can now report that we have built the web database applications
+We can now report that we have built the web and database applications
 ```shell
 $ kosli pipeline artifact report creation build/web_$(cat code/web.src).bin \
     --pipeline web-server \
@@ -244,7 +255,7 @@ COMMIT   ARTIFACT                                                               
          SHA256: cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746             
 ```
 
-We do the same for the database
+And one for the *database-server* pipeline
 ```shell
 $ kosli artifact ls database-server
 COMMIT   ARTIFACT                                                                  STATE      CREATED_AT
@@ -257,7 +268,7 @@ COMMIT   ARTIFACT                                                               
 
 We assume the user has done both Environments and Pipelines first.
 
-Explain the concept
+TODO: Explain the concept
 
 ### Deploy SW to server and report the deployment to Kosli
 
