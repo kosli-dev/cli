@@ -37,7 +37,8 @@ jobs:
   #    ghcr_token: ${{ secrets.GHCR_TOKEN }}
   
   upload-reporter-package-staging:
-    needs: [pre-build, build]
+    #needs: [pre-build, build]
+    needs: [pre-build]
     #if: ${{ github.ref == 'refs/heads/main' }}
     if: ${{ github.ref == 'refs/heads/repo-dispatch' }}
     #uses: kosli-dev/cli/.github/workflows/upload-reporter-package.yml@main
