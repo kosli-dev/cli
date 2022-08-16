@@ -71,7 +71,6 @@ const (
 	evidenceBuildUrlFlag    = "The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
 	buildUrlFlag            = "The url of CI pipeline that built the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
 	commitUrlFlag           = "The url for the git commit that created the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
-	compliantFlag           = "[defaulted] Whether the artifact is compliant or not."
 	evidenceCompliantFlag   = "[defaulted] Whether the evidence is compliant or not."
 	evidenceTypeFlag        = "The type of evidence being reported."
 	bbUsernameFlag          = "Bitbucket user name."

@@ -44,8 +44,8 @@ func newSnapshotLsCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
-	cmd.Flags().IntVarP(&o.pageNumber, "page-number", "n", 1, pageNumberFlag)
-	cmd.Flags().IntVarP(&o.pageLimit, "page-limit", "l", 15, pageLimitFlag)
+	cmd.Flags().IntVar(&o.pageNumber, "page", 1, pageNumberFlag)
+	cmd.Flags().IntVarP(&o.pageLimit, "page-limit", "n", 15, pageLimitFlag)
 
 	return cmd
 }
@@ -55,7 +55,7 @@ func (o *snapshotLsOptions) run(out io.Writer, args []string) error {
 		fmt.Fprint(out, "No environment snapshots were requested\n")
 		return nil
 	}
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/snapshots/%d/%d",
+	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/snapshots/?page=%d&per_page=%d",
 		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit)
 	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, global.DryRun, http.MethodGet, log)
