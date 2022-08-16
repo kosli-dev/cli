@@ -39,6 +39,7 @@ https://raw.githubusercontent.com/kosli-dev/cli/main/simulation_commands.bash
 
 or from the command line with
 ```shell
+cd /tmp
 wget https://raw.githubusercontent.com/kosli-dev/cli/main/simulation_commands.bash
 TODO: curl.....
 ```
@@ -54,7 +55,7 @@ $ type create_git_repo_in_tmp
 create_git_repo_in_tmp is a function
 create_git_repo_in_tmp () 
 { 
-    cd /tmp;
+    pushd /tmp;
     mkdir try-kosli;
     ...
 ```
@@ -133,7 +134,7 @@ Last Reported At:  16 Aug 22 07:58 CEST • 25 seconds ago
 We simulate a report from our server by reporting two dummy files for the web and
 database applications.
 ```shell
-$ kosli environment report server production --paths $(ls server/web_*bin),$(ls server/db_*.bin)
+$ kosli environment report server production --paths $(ls /tmp/try-kosli/server/web_*bin),$(ls /tmp/try-kosli/server/db_*.bin)
 ```
 
 We can see that the server has started, and how long it has run.
@@ -158,7 +159,7 @@ Typically a server periodically sends a snapshot of what is currently running to
 only stores the new snapshot if the snapshot changes, so resending the same environment report
 several times will not lead to duplication of snapshots.
 ```shell
-$ kosli environment report server production --paths $(ls server/web_*bin),$(ls server/db_*.bin)
+$ kosli environment report server production --paths $(ls /tmp/try-kosli/server/web_*bin),$(ls /tmp/try-kosli/server/db_*.bin)
 $ kosli snapshot get production
 COMMIT  ARTIFACT                                                                  PIPELINE  RUNNING_SINCE  REPLICAS
 N/A     Name: /tmp/try-kosli/server/web_1.bin                                     N/A       2 minutes ago  1
@@ -177,7 +178,7 @@ $ simulate_deployment
 
 Report what is now running on server
 ```shell
-$ kosli environment report server production --paths $(ls server/web_*bin),$(ls server/db_*.bin)
+$ kosli environment report server production --paths $(ls /tmp/try-kosli/server/web_*bin),$(ls /tmp/try-kosli/server/db_*.bin)
 ```
 
 We can see we have created a new snapshot.
@@ -273,19 +274,19 @@ $ simulate_build
 We can now report we have built the web and database applications. We are using
 a dummy `--build-url`, in real life it would be a CI build URL.
 ```shell
-$ kosli pipeline artifact report creation build/web_$(cat code/web.src).bin \
+$ kosli pipeline artifact report creation /tmp/try-kosli/build/web_$(cat /tmp/try-kosli/code/web.src).bin \
     --pipeline web-server \
     --artifact-type file \
     --build-url file://dummy \
     --commit-url file:///tmp/try-kosli/code \
-    --git-commit $(cd code; git rev-parse HEAD)
+    --git-commit $(cd /tmp/try-kosli/code; git rev-parse HEAD)
 
-$ kosli pipeline artifact report creation build/db_$(cat code/db.src).bin \
+$ kosli pipeline artifact report creation /tmp/try-kosli/build/db_$(cat /tmp/try-kosli/code/db.src).bin \
     --pipeline database-server \
     --artifact-type file \
     --build-url file://dummy \
     --commit-url file:///tmp/try-kosli/code \
-    --git-commit $(cd code; git rev-parse HEAD)
+    --git-commit $(cd /tmp/try-kosli/code; git rev-parse HEAD)
 ```
 
 We can see we have built one artifact in our *web-server* pipeline
@@ -336,12 +337,12 @@ $ simulate_deployment
 
 Report to Kosli that the SW has been deployed
 ```shell
-$ kosli pipeline deployment report  build/web_$(cat code/web.src).bin \
+$ kosli pipeline deployment report  /tmp/try-kosli/build/web_$(cat /tmp/try-kosli/code/web.src).bin \
     --pipeline web-server \
     --artifact-type file \
     --build-url file://dummy \
     --environment production \
-    --description "Web server version $(cat code/web.src)"
+    --description "Web server version $(cat /tmp/try-kosli/code/web.src)"
 ```
 
 We can verify the deployment with
