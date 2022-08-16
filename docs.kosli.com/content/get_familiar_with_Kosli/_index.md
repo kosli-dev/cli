@@ -39,8 +39,8 @@ https://raw.githubusercontent.com/kosli-dev/cli/main/simulation_commands.bash
 
 or from the command line with
 ```shell
-cd /tmp
-wget https://raw.githubusercontent.com/kosli-dev/cli/main/simulation_commands.bash
+$ cd /tmp
+$ wget https://raw.githubusercontent.com/kosli-dev/cli/main/simulation_commands.bash
 TODO: curl.....
 ```
 
@@ -67,7 +67,7 @@ $ simulate_build
 $ simulate_deployment
 ``` 
 
-While going through the getting started guid, feel free to explore the
+While going through the getting started guide, feel free to explore the
 functionality by updating the source code, building and deploying new versions.
 
 
@@ -120,6 +120,7 @@ $ kosli environment ls
 NAME        TYPE    LAST REPORT  LAST MODIFIED
 production  server               2022-08-16T07:53:43+02:00
 
+TODO: No report at this time
 $ kosli environment get production
 Name:              production
 Type:              server
@@ -134,7 +135,9 @@ Last Reported At:  16 Aug 22 07:58 CEST • 25 seconds ago
 We simulate a report from our server by reporting two dummy files for the web and
 database applications.
 ```shell
-$ kosli environment report server production --paths $(ls /tmp/try-kosli/server/web_*bin),$(ls /tmp/try-kosli/server/db_*.bin)
+$ kosli environment report server production \
+    --paths /tmp/try-kosli/server/web_*bin \
+    --paths /tmp/try-kosli/server/db_*.bin
 ```
 
 We can see that the server has started, and how long it has run.
@@ -159,7 +162,9 @@ Typically a server periodically sends a snapshot of what is currently running to
 only stores the new snapshot if the snapshot changes, so resending the same environment report
 several times will not lead to duplication of snapshots.
 ```shell
-$ kosli environment report server production --paths $(ls /tmp/try-kosli/server/web_*bin),$(ls /tmp/try-kosli/server/db_*.bin)
+$ kosli environment report server production \
+    --paths /tmp/try-kosli/server/web_*bin \
+    --paths /tmp/try-kosli/server/db_*.bin
 $ kosli snapshot get production
 COMMIT  ARTIFACT                                                                  PIPELINE  RUNNING_SINCE  REPLICAS
 N/A     Name: /tmp/try-kosli/server/web_1.bin                                     N/A       2 minutes ago  1
@@ -178,7 +183,9 @@ $ simulate_deployment
 
 Report what is now running on server
 ```shell
-$ kosli environment report server production --paths $(ls /tmp/try-kosli/server/web_*bin),$(ls /tmp/try-kosli/server/db_*.bin)
+$ kosli environment report server production \
+    --paths /tmp/try-kosli/server/web_*bin \
+    --paths /tmp/try-kosli/server/db_*.bin
 ```
 
 We can see we have created a new snapshot.
@@ -335,9 +342,9 @@ Simulate deploying our SW to the server
 $ simulate_deployment
 ```
 
-Report to Kosli that the SW has been deployed
+Report to Kosli that the web SW has been deployed.
 ```shell
-$ kosli pipeline deployment report  /tmp/try-kosli/build/web_$(cat /tmp/try-kosli/code/web.src).bin \
+$ kosli pipeline deployment report /tmp/try-kosli/build/web_$(cat /tmp/try-kosli/code/web.src).bin \
     --pipeline web-server \
     --artifact-type file \
     --build-url file://dummy \
