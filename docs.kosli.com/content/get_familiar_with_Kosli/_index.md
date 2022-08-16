@@ -1,10 +1,10 @@
 ---
-title: Get familiar with Kosli
-bookCollapseSection: true
+title: Get Familiar with Kosli
+bookCollapseSection: false
 weight: 1
 ---
 
-# Get familiar with Kosli
+# Get Familiar with Kosli
 
 Kosli konsists of a database with a WEB UI to store information about the
 SW you build and run in your runtime environment, and a Kosli CLI

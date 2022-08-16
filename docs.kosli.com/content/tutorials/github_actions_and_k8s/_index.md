@@ -1,5 +1,5 @@
 ---
-title: Getting Started
+title: GitHub Actions and k8s
 bookCollapseSection: true
 weight: 1
 ---
