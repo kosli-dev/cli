@@ -1,27 +1,24 @@
 ---
-title: "kosli environment report server"
+title: "kosli environment get"
 ---
 
-## kosli environment report server
+## kosli environment get
 
-Report directory or file artifacts data in the given list of paths to Kosli.
+Get an environment metadata.
 
 ### Synopsis
 
-
-List the artifacts deployed in a server environment and their digests 
-and report them to Kosli. 
-
+Get an environment metadata.
 
 ```shell
-kosli environment report server ENVIRONMENT-NAME [flags]
+kosli environment get [ENVIRONMENT-NAME] [flags]
 ```
 
 ### Flags
 | Flag | Description |
 | :--- | :--- |
-|    -h, --help  |  help for server  |
-|    -p, --paths strings  |  The comma separated list of artifact directories.  |
+|    -h, --help  |  help for get  |
+|    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 
 
 ### Options inherited from parent commands
@@ -35,16 +32,4 @@ kosli environment report server ENVIRONMENT-NAME [flags]
 |        --owner string  |  The Kosli user or organization.  |
 |    -v, --verbose  |  [optional] Print verbose logs to stdout.  |
 
-
-### Examples
-
-```shell
-
-# report directory artifacts running in a server at a list of paths:
-kosli environment report server yourEnvironmentName \
-	--paths a/b/c, e/f/g \
-	--api-token yourAPIToken \
-	--owner yourOrgName  
-
-```
 

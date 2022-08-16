@@ -1,27 +1,25 @@
 ---
-title: "kosli environment report server"
+title: "kosli approval get"
 ---
 
-## kosli environment report server
+## kosli approval get
 
-Report directory or file artifacts data in the given list of paths to Kosli.
+Get an approval from a specified pipeline
 
 ### Synopsis
 
-
-List the artifacts deployed in a server environment and their digests 
-and report them to Kosli. 
-
+Get an approval from a specified pipeline
 
 ```shell
-kosli environment report server ENVIRONMENT-NAME [flags]
+kosli approval get APPROVAL-ID [flags]
 ```
 
 ### Flags
 | Flag | Description |
 | :--- | :--- |
-|    -h, --help  |  help for server  |
-|    -p, --paths strings  |  The comma separated list of artifact directories.  |
+|    -h, --help  |  help for get  |
+|    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
+|    -p, --pipeline string  |  The Kosli pipeline name.  |
 
 
 ### Options inherited from parent commands
@@ -35,16 +33,4 @@ kosli environment report server ENVIRONMENT-NAME [flags]
 |        --owner string  |  The Kosli user or organization.  |
 |    -v, --verbose  |  [optional] Print verbose logs to stdout.  |
 
-
-### Examples
-
-```shell
-
-# report directory artifacts running in a server at a list of paths:
-kosli environment report server yourEnvironmentName \
-	--paths a/b/c, e/f/g \
-	--api-token yourAPIToken \
-	--owner yourOrgName  
-
-```
 

@@ -1,27 +1,24 @@
 ---
-title: "kosli environment report server"
+title: "kosli snapshot get"
 ---
 
-## kosli environment report server
+## kosli snapshot get
 
-Report directory or file artifacts data in the given list of paths to Kosli.
+Get a specific environment snapshot.
 
 ### Synopsis
 
-
-List the artifacts deployed in a server environment and their digests 
-and report them to Kosli. 
-
+Get a specific environment snapshot.
 
 ```shell
-kosli environment report server ENVIRONMENT-NAME [flags]
+kosli snapshot get ENVIRONMENT-NAME-OR-EXPRESSION [flags]
 ```
 
 ### Flags
 | Flag | Description |
 | :--- | :--- |
-|    -h, --help  |  help for server  |
-|    -p, --paths strings  |  The comma separated list of artifact directories.  |
+|    -h, --help  |  help for get  |
+|    -j, --json  |  [optional] Print output as json.  |
 
 
 ### Options inherited from parent commands
@@ -40,11 +37,20 @@ kosli environment report server ENVIRONMENT-NAME [flags]
 
 ```shell
 
-# report directory artifacts running in a server at a list of paths:
-kosli environment report server yourEnvironmentName \
-	--paths a/b/c, e/f/g \
+# get the latest snapshot of an environment:
+kosli snapshot get yourEnvironmentName
 	--api-token yourAPIToken \
-	--owner yourOrgName  
+	--owner yourOrgName 
+
+# get the SECOND latest snapshot of an environment:
+kosli snapshot get yourEnvironmentName~1
+	--api-token yourAPIToken \
+	--owner yourOrgName 
+
+# get the snapshot number 23 of an environment:
+kosli snapshot get yourEnvironmentName#23
+	--api-token yourAPIToken \
+	--owner yourOrgName 
 
 ```
 

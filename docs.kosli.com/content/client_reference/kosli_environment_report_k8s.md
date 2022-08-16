@@ -14,28 +14,28 @@ and report them to Kosli.
 
 
 ```shell
-kosli environment report k8s [-n namespace | -x namespace]... [-k /path/to/kube/config] [-i infrastructure-identifier] env-name [flags]
+kosli environment report k8s ENVIRONMENT-NAME [flags]
 ```
 
 ### Flags
 | Flag | Description |
 | :--- | :--- |
-|    -x, --exclude-namespace strings  |  The comma separated list of namespaces regex patterns NOT to report artifacts info from. Can't be used together with --namespace.  |
+|    -x, --exclude-namespace strings  |  [conditional] The comma separated list of namespaces regex patterns NOT to report artifacts info from. Can't be used together with --namespace.  |
 |    -h, --help  |  help for k8s  |
-|    -k, --kubeconfig string  |  The kubeconfig path for the target cluster. (default "$HOME/.kube/config")  |
-|    -n, --namespace strings  |  The comma separated list of namespaces regex patterns to report artifacts info from. Can't be used together with --exclude-namespace.  |
+|    -k, --kubeconfig string  |  [defaulted] The kubeconfig path for the target cluster. (default "$HOME/.kube/config")  |
+|    -n, --namespace strings  |  [conditional] The comma separated list of namespaces regex patterns to report artifacts info from. Can't be used together with --exclude-namespace.  |
 
 
 ### Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
-|    -c, --config-file string  |  [optional] The Kosli config file path. (default "merkely")  |
-|    -D, --dry-run  |  Whether to run in dry-run mode. When enabled, data is not sent to Kosli and the CLI exits with 0 exit code regardless of errors.  |
-|    -H, --host string  |  The Kosli endpoint. (default "https://app.merkely.com")  |
-|    -r, --max-api-retries int  |  How many times should API calls be retried when the API host is not reachable. (default 3)  |
-|    -o, --owner string  |  The Kosli user or organization.  |
-|    -v, --verbose  |  Print verbose logs to stdout.  |
+|    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
+|    -D, --dry-run  |  [optional] Whether to run in dry-run mode. When enabled, data is not sent to Kosli and the CLI exits with 0 exit code regardless of errors.  |
+|    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
+|    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
+|        --owner string  |  The Kosli user or organization.  |
+|    -v, --verbose  |  [optional] Print verbose logs to stdout.  |
 
 
 ### Examples
@@ -49,8 +49,8 @@ kosli environment report k8s yourEnvironmentName \
 
 # report what is running in an entire cluster using kubeconfig at $HOME/.kube/config 
 (with global flags defined in environment or in a config file):
-export MERKELY_API_TOKEN=yourAPIToken
-export MERKELY_OWNER=yourOrgName
+export KOSLI_API_TOKEN=yourAPIToken
+export KOSLI_OWNER=yourOrgName
 
 kosli environment report k8s yourEnvironmentName
 

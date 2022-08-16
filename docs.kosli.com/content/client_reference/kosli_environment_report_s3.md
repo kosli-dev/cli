@@ -13,15 +13,15 @@ Report the artifact deployed in an AWS S3 bucket and its digest to Kosli.
 
 
 ```shell
-kosli environment report s3 env-name [flags]
+kosli environment report s3 ENVIRONMENT-NAME [flags]
 ```
 
 ### Flags
 | Flag | Description |
 | :--- | :--- |
-|        --aws-key-id string  |  The AWS access key ID  |
-|        --aws-region string  |  The AWS region  |
-|        --aws-secret-key string  |  The AWS secret key  |
+|        --aws-key-id string  |  The AWS access key ID.  |
+|        --aws-region string  |  The AWS region.  |
+|        --aws-secret-key string  |  The AWS secret key.  |
 |        --bucket string  |  The name of the S3 bucket.  |
 |    -h, --help  |  help for s3  |
 
@@ -30,12 +30,12 @@ kosli environment report s3 env-name [flags]
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
-|    -c, --config-file string  |  [optional] The Kosli config file path. (default "merkely")  |
-|    -D, --dry-run  |  Whether to run in dry-run mode. When enabled, data is not sent to Kosli and the CLI exits with 0 exit code regardless of errors.  |
-|    -H, --host string  |  The Kosli endpoint. (default "https://app.merkely.com")  |
-|    -r, --max-api-retries int  |  How many times should API calls be retried when the API host is not reachable. (default 3)  |
-|    -o, --owner string  |  The Kosli user or organization.  |
-|    -v, --verbose  |  Print verbose logs to stdout.  |
+|    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
+|    -D, --dry-run  |  [optional] Whether to run in dry-run mode. When enabled, data is not sent to Kosli and the CLI exits with 0 exit code regardless of errors.  |
+|    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
+|    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
+|        --owner string  |  The Kosli user or organization.  |
+|    -v, --verbose  |  [optional] Print verbose logs to stdout.  |
 
 
 ### Examples
