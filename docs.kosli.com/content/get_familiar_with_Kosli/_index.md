@@ -6,17 +6,30 @@ weight: 1
 
 # Get familiar with Kosli
 
-Here you will learn what is Kosli and how to start using it. 
-You don't need CI system to start with. Local code (and a git repository later) and terminal are enough. 
+Kosli konsists of a database with a WEB UI to store information about the
+SW you build and run in your runtime environment, and a Kosli CLI
+used to report to and query the database.
 
-### Things to prepare
+Typically all the reporting will be done as part of your CI and runtime systems.
+In the getting started you don't need any of this. Local code, git and terminal are enough.
 
-#### CLI
+The Kosli CLI is tool agnostics and can run on any major platform (Linux, Mac, Windows).
+Kosli does not require you to change your existing process.
+
+The purpose of this guide is to familiarize you with the Kosli tool and concepts.
+
+When you are done with the guide you should be able to start adding Kosli to
+your CI system and runtime environment.
+
+
+## Things to prepare
+
+### CLI
 
 The `kosli` tool can be downloaded from: https://github.com/kosli-dev/cli/releases
 Put it in a location you'll be running it from (as `./kosli`) or add it to your PATH so you can use it anywhere (as `kosli`)
 
-#### Local setup
+### Local setup
 
 For these examples we have a very basic settup with source code, build system and
 a server "running" the SW.
@@ -51,7 +64,7 @@ functionality by updating the source code, build and deploy new versions
 to server.
 
 
-#### Use of environment variables
+### Use of environment variables
 
 All the kosli commands contains some common
 flags `--api-token` and `--owner`. By setting
@@ -68,13 +81,22 @@ To get the kosli token go to https://app.kosli.com, log in using your github acc
 
 
 
-## Environment
+# Environment
+
+A Kosli environment is a repository for storing information about
+what SW is running in your runtime environment (server, Kubernetes cluster, AWS, ...)
+We use one Kosli environment per runtime environment. 
+
+A typical setup can be that you report what is running on the 
+staging server and on the production server. To report what is 
+running you run the Kosli CLI command periodically. The Kosli CLI will
+detect the version of the SW you are currently running and report
+it to the Kosli environment.
+
+
+## Create a Kosli environment
 
 To follow the examples make sure you have followed the instructions in Local setup
-
-TODO: Explain the concept
-
-### Create a Kosli environment
 
 We create a Kosli environment where we can report what SW are running on our server.
 ```shell
@@ -99,7 +121,7 @@ Last Reported At:  16 Aug 22 07:58 CEST • 25 seconds ago
 ```
 
 
-### Report the SW running in your environment
+## Report the SW running in your environment
 
 We simulate a report from our server by reporting two dummy files for the web and
 database application.
@@ -148,10 +170,13 @@ $ cd code
 $ git add web.src
 $ git commit -m "Version two of web"
 $ cd ..
+
 # Build
 $ echo web version $(cat code/web.src) > build/web_$(cat code/web.src).bin
+
 # Deploy to server
 $ rm -f server/web_*; cp build/web_$(cat code/web.src).bin server/
+
 # Report what is now running on server
 $ kosli environment report server production --paths $(ls server/web_*bin),$(ls server/db_*.bin)
 ```
@@ -186,13 +211,26 @@ N/A     Name: /tmp/try-kosli/server/db_1.bin                                    
 ```
 
 
-## Pipelines
+# Pipelines
 
-TODO: Explain the concept
+A Kosli pipeline is a repository for storing the results of your build system.
+The output of the build system is called and *artifact* in Kosli. This can be
+a application, docker image, documentation, filesystem and so on.
+
+Some organizations have a CI system where one CI pipeline builds one 
+artifact, some have a CI system where one CI pipeline builds several
+artifacts. For both cases we use one Kosli pipeline for each artifact.
+We use Kosli CLI to report information about the creation of an
+artifact to the Kosli pipeline.
+
+A Kosli pipeline can also be used to store any information related to 
+the artifact that you have built. Like test results, manual approvals, 
+pull-request and so on.
+
+
+## Create a Kosli pipeline
 
 To follow the examples make sure you have followed the instructions in Local setup
-
-### Create a Kosli pipeline
 
 We create a Kosli pipeline where we can report what SW our CI system
 is building. Since we are building two applications we are making
@@ -222,7 +260,7 @@ web-server       pipeline to build web-server       private
 ```
 
 
-### Build artifacts and report them to Kosli
+## Build artifacts and report them to Kosli
 
 We "build" some SW based on the source code
 ```shell
@@ -263,14 +301,35 @@ COMMIT   ARTIFACT                                                               
          SHA256: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af             
 ```
 
+We can also get detailed information about each artifact that has been reported.
+```shell
+$ kosli artifact get --pipeline database-server 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af
+Name:         db_1.bin
+State:        COMPLIANT
+Git commit:   518737485e5150ee6255a1c74749997d380c1708
+Build URL:    link_to_your_ci_system
+Commit URL:   link_to_your_source_repository
+Created at:   16 Aug 22 08:01 CEST • 2 hours ago
+Approvals:    None
+Deployments:  None
+Evidence:
+```
 
-## Deployments
+
+# Deployments
+
+To link the artifact you report to Kosli pipeline to the
+artifact you reported running to a Kosli environment we use a Kosli
+deployment. So a Kosli deployment is telling which environment
+a given aritfact is supose to run in.
+
+We use the Kosli CLI to report when we deploy an artifact to
+a given environment.
+
+
+## Deploy SW to server and report the deployment to Kosli
 
 We assume the user has done both Environments and Pipelines first.
-
-TODO: Explain the concept
-
-### Deploy SW to server and report the deployment to Kosli
 
 We "deploy" our SW by copying it over to the server
 ```shell
@@ -306,7 +365,7 @@ Runtime state:    The artifact running since 16 Aug 22 07:58 CEST
 ```
 
 
-## For developers
+# For developers
 You can extract all the commands to execute from this document by running
 ```shell
 cat docs.kosli.com/content/get_familiar_with_Kosli/_index.md | sed -e :a -e '/\\$/N; s/\\\n//; ta' | egrep '^\$ ' | sed "s/^..//" 
