@@ -21,23 +21,34 @@ Put it in a location you'll be running it from (as `./kosli`) or add it to your 
 For these examples we have a very basic settup with source code, build system and
 a server "running" the SW.
 
-```
+```shell
 $ mkdir try-kosli
 $ cd try-kosli
-$ mkdir code server
+$ mkdir code server build
 
-# Make our source code
+# Create version 1 of our source code
 $ echo "1" > code/web.src
 $ echo "1" > code/db.src
 
+# Create a git repository of the source code
+$ cd code
+$ git init
+$ git add *src
+$ git commit -m "Version one of web and database"
+$ cd ..
+
 # We build our SW with
-$ echo web version $(cat code/web.src) > code/web_$(cat code/web.src).bin
-$ echo database version $(cat code/db.src) > code/db_$(cat code/db.src).bin
+$ echo "web version $(cat code/web.src)" > build/web_$(cat code/web.src).bin
+$ echo "database version $(cat code/db.src)" > build/db_$(cat code/db.src).bin
 
 # We deploy our buit SW to our server with
-$ rm server/web_*; cp code/web_$(cat code/web.src).bin server/
-$ rm server/db_*; cp code/db_$(cat code/db.src).bin server/
+$ rm -f server/web_*; cp build/web_$(cat code/web.src).bin server/
+$ rm -f server/db_*; cp build/db_$(cat code/db.src).bin server/
 ``` 
+
+While going through the getting started guids, feel free to explore the
+functionality by updating the source code, build and deploy new versions
+to server.
 
 
 #### Use of environment variables
@@ -66,7 +77,7 @@ Explain the concept
 ### Create a Kosli environment
 
 We create a Kosli environment where we can report what SW are running on our server.
-```
+```shell
 $ kosli environment declare \
     --name production \
     --environment-type server \
@@ -74,10 +85,10 @@ $ kosli environment declare \
 ```
 
 You can immediately verify that the Kosli environment was created:
-```
+```shell
 $ kosli environment ls
 NAME        TYPE    LAST REPORT  LAST MODIFIED
-production  server               2022-08-15T10:08:08+02:00
+production  server               2022-08-16T07:53:43+02:00
 ```
 
 
@@ -85,79 +96,83 @@ production  server               2022-08-15T10:08:08+02:00
 
 We simulate a report from our server by reporting two dummy files for the web and
 database application.
-```
+```shell
 $ kosli environment report server production --paths $(ls server/web_*bin),$(ls server/db_*.bin)
 ```
 
 We can see that the current server SW was started, and for how long it has ran.
-```
+```shell
 $ kosli snapshot ls production
 SNAPSHOT  FROM                  TO   DURATION
-1         15 Aug 22 10:25 CEST  now  4 seconds
+1         16 Aug 22 07:54 CEST  now  11 seconds
 ```
 
 We can get a more detailed view of the SW that is currently
 running on the server.
-```
+```shell
 $ kosli snapshot get production
 COMMIT  ARTIFACT                                                                  PIPELINE  RUNNING_SINCE  REPLICAS
-N/A     Name: /tmp/try-kosli/server/db_1.bin                                      N/A       8 minutes ago  1
-        SHA256: 0e0c5f77db75f32bbe908b70e15f4cb02921d0334bb521775f3c3c3c244df477                           
-                                                                                                           
-N/A     Name: /tmp/try-kosli/server/web_1.bin                                     N/A       8 minutes ago  1
+N/A     Name: /tmp/try-kosli/server/web_1.bin                                     N/A       2 minutes ago  1
         SHA256: a7a87c332500a40f9a01b811ec75f51b40188a3dabd205feb0fa7c3eafb25fbe                           
+                                                                                                           
+N/A     Name: /tmp/try-kosli/server/db_1.bin                                      N/A       2 minutes ago  1
+        SHA256: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af                           
 ```
 
 Typically a server would report which SW that is running periodically. The Kosli app
 generates a new snapshot if the SW changes, so resending the same environment report
 several times will not resolve in duplication of a snapshot.
-```
+```shell
 $ kosli environment report server production --paths $(ls server/web_*bin),$(ls server/db_*.bin)
 $ kosli snapshot get production
-COMMIT  ARTIFACT                                                                  PIPELINE  RUNNING_SINCE   REPLICAS
-N/A     Name: /tmp/try-kosli/server/db_1.bin                                      N/A       10 minutes ago  1
-        SHA256: 0e0c5f77db75f32bbe908b70e15f4cb02921d0334bb521775f3c3c3c244df477                            
-                                                                                                            
-N/A     Name: /tmp/try-kosli/server/web_1.bin                                     N/A       10 minutes ago  1
-        SHA256: a7a87c332500a40f9a01b811ec75f51b40188a3dabd205feb0fa7c3eafb25fbe                            
+COMMIT  ARTIFACT                                                                  PIPELINE  RUNNING_SINCE  REPLICAS
+N/A     Name: /tmp/try-kosli/server/web_1.bin                                     N/A       2 minutes ago  1
+        SHA256: a7a87c332500a40f9a01b811ec75f51b40188a3dabd205feb0fa7c3eafb25fbe                           
+                                                                                                           
+N/A     Name: /tmp/try-kosli/server/db_1.bin                                      N/A       2 minutes ago  1
+        SHA256: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af                           
 ```
 
 We simulate a change of the web application from version 1 to version 2
-```
-$ echo 2 > code/web.src
-$ echo web version $(cat code/web.src) > code/web_$(cat code/web.src).bin
+```shell
+$ echo "2" > code/web.src
+$ cd code
+$ git add web.src
+$ git commit -m "Version two of web"
+$ cd ..
+$ echo web version $(cat code/web.src) > build/web_$(cat code/web.src).bin
+$ rm -f server/web_*; cp build/web_$(cat code/web.src).bin server/
 $ kosli environment report server production --paths $(ls server/web_*bin),$(ls server/db_*.bin)
 ```
 
 We now see that we have created a new snapshot and that we are now running web version 2.
-```
+```shell
 $ kosli snapshot ls production
 SNAPSHOT  FROM                  TO                    DURATION
-2         15 Aug 22 13:44 CEST  now                   11 seconds
-1         15 Aug 22 13:30 CEST  15 Aug 22 13:44 CEST  13 minutes
+2         16 Aug 22 07:58 CEST  now                   9 seconds
+1         16 Aug 22 07:54 CEST  16 Aug 22 07:58 CEST  4 minutes
 
 $ kosli snapshot get production
 COMMIT  ARTIFACT                                                                  PIPELINE  RUNNING_SINCE       REPLICAS
-N/A     Name: /tmp/try-kosli/server/web_2.bin                                     N/A       about a minute ago  1
-        SHA256: cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746                                
-                                                                                                                
-N/A     Name: /tmp/try-kosli/server/db_1.bin                                      N/A       15 minutes ago      1
-        SHA256: 0e0c5f77db75f32bbe908b70e15f4cb02921d0334bb521775f3c3c3c244df477                                
+N/A     Name: /tmp/try-kosli/server/web_2.bin                                     N/A       39 seconds ago  1
+        SHA256: cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746                            
+                                                                                                            
+N/A     Name: /tmp/try-kosli/server/db_1.bin                                      N/A       6 minutes ago   1
+        SHA256: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af                            
 ```                    
 
 Using environment name always refer to the latest snapshot. We can use the 
 Kosli CLI to check which version of the SW that was running in previous snapshots.
 Here we look at what was running in snapshot #1 in production
-```
+```shell
 $ kosli snapshot get production#1
-COMMIT  ARTIFACT                                                                  PIPELINE  RUNNING_SINCE   REPLICAS
-N/A     Name: /tmp/try-kosli/server/db_1.bin                                      N/A       18 minutes ago  1
-        SHA256: 0e0c5f77db75f32bbe908b70e15f4cb02921d0334bb521775f3c3c3c244df477                            
-                                                                                                            
-N/A     Name: /tmp/try-kosli/server/web_1.bin                                     N/A       19 minutes ago  1
-        SHA256: a7a87c332500a40f9a01b811ec75f51b40188a3dabd205feb0fa7c3eafb25fbe                          
+COMMIT  ARTIFACT                                                                  PIPELINE  RUNNING_SINCE  REPLICAS
+N/A     Name: /tmp/try-kosli/server/web_1.bin                                     N/A       7 minutes ago  1
+        SHA256: a7a87c332500a40f9a01b811ec75f51b40188a3dabd205feb0fa7c3eafb25fbe                           
+                                                                                                           
+N/A     Name: /tmp/try-kosli/server/db_1.bin                                      N/A       7 minutes ago  1
+        SHA256: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af                           
 ```
-
 
 
 ## Pipelines
@@ -188,8 +203,7 @@ $ kosli pipeline declare \
 ```
 
 You can immediately verify that the Kosli pipeline was created:
-
-```
+```shell
 $ kosli pipeline ls
 NAME             DESCRIPTION                        VISIBILITY
 database-server  pipeline to build database-server  private
@@ -200,41 +214,41 @@ web-server       pipeline to build web-server       private
 ### Build artifacts and report them to Kosli
 
 We "build" some new SW based on the source code
-```
-$ echo web version $(cat code/web.src) > code/web_$(cat code/web.src).bin
-$ echo database version $(cat code/db.src) > code/db_$(cat code/db.src).bin
+```shell
+$ echo "web version $(cat code/web.src)" > build/web_$(cat code/web.src).bin
+$ echo "database version $(cat code/db.src)" > build/db_$(cat code/db.src).bin
 ```
 
 We can now report that we have built the web database applications
-```
-$ kosli pipeline artifact report creation code/web_$(cat code/web.src).bin \
+```shell
+$ kosli pipeline artifact report creation build/web_$(cat code/web.src).bin \
     --pipeline web-server \
     --artifact-type file \
     --build-url link_to_your_ci_system \
     --commit-url link_to_your_source_repository \
-    --git-commit fdac8a54
+    --git-commit $(cd code; git rev-parse HEAD)
 
-$ kosli pipeline artifact report creation code/db_$(cat code/db.src).bin \
+$ kosli pipeline artifact report creation build/db_$(cat code/db.src).bin \
     --pipeline database-server \
     --artifact-type file \
     --build-url link_to_your_ci_system \
     --commit-url link_to_your_source_repository \
-    --git-commit fdac8a54
+    --git-commit $(cd code; git rev-parse HEAD)
 ```
 
 We can see that we have built one artifact in our *web-server* pipeline
-```
+```shell
 $ kosli artifact ls web-server
 COMMIT   ARTIFACT                                                                  STATE      CREATED_AT
-fdac8a5  Name: web_1.bin                                                           COMPLIANT  15 Aug 22 14:23 CEST
-         SHA256: a7a87c332500a40f9a01b811ec75f51b40188a3dabd205feb0fa7c3eafb25fbe             
+5187374  Name: web_2.bin                                                           COMPLIANT  16 Aug 22 08:00 CEST
+         SHA256: cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746             
 ```
 
 We do the same for the database
-```
+```shell
 $ kosli artifact ls database-server
 COMMIT   ARTIFACT                                                                  STATE      CREATED_AT
-fdac8a5  Name: db_1.bin                                                            COMPLIANT  15 Aug 22 14:35 CEST
+5187374  Name: db_1.bin                                                            COMPLIANT  16 Aug 22 08:01 CEST
          SHA256: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af             
 ```
 
@@ -248,14 +262,14 @@ Explain the concept
 ### Deploy SW to server and report the deployment to Kosli
 
 We "deploy" our SW by copying it over to the server
-```
-$ cp code/web_$(cat code/web.src).bin server/
-$ cp code/db_$(cat code/db.src).bin server/
+```shell
+$ cp build/web_$(cat code/web.src).bin server/
+$ cp build/db_$(cat code/db.src).bin server/
 ```
 
 Now we report to Kosli that the SW has been deployed
-```
-$ kosli pipeline deployment report  code/web_$(cat code/web.src).bin \
+```shell
+$ kosli pipeline deployment report  build/web_$(cat code/web.src).bin \
     --pipeline web-server \
     --artifact-type file \
     --build-url link_to_your_ci_system \
@@ -264,18 +278,25 @@ $ kosli pipeline deployment report  code/web_$(cat code/web.src).bin \
 ```
 
 We can verify the deployment with
-```
+```shell
 $ kosli deployment ls web-server
 ID   ARTIFACT                                                                  ENVIRONMENT  REPORTED_AT
-1    Name: web_1.bin                                                           production   15 Aug 22 14:47 CEST
-     SHA256: a7a87c332500a40f9a01b811ec75f51b40188a3dabd205feb0fa7c3eafb25fbe               
+1    Name: web_2.bin                                                           production   16 Aug 22 08:02 CEST
+     SHA256: cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746               
 
 $ kosli deployment get --pipeline web-server 1
 ID:               1
-Artifact SHA256:  a7a87c332500a40f9a01b811ec75f51b40188a3dabd205feb0fa7c3eafb25fbe
-Artifact name:    web_1.bin
+Artifact SHA256:  cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746
+Artifact name:    web_2.bin
 Build URL:        link_to_your_ci_system
-Created at:       15 Aug 22 14:47 CEST • 2 minutes ago
+Created at:       16 Aug 22 08:02 CEST • 32 seconds ago
 Environment:      production
-Runtime state:    The artifact exited on 15 Aug 22 13:44 CEST
+Runtime state:    The artifact running since 16 Aug 22 07:58 CEST
+```
+
+
+## For developers
+You can extract all the commands to execute from this document by running
+```shell
+cat docs.kosli.com/content/get_familiar_with_Kosli/_index.md | sed -e :a -e '/\\$/N; s/\\\n//; ta' | egrep '^\$ ' | sed "s/^..//" 
 ```
