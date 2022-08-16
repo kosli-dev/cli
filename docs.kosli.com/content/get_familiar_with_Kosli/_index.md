@@ -6,7 +6,7 @@ weight: 1
 
 # Get Familiar with Kosli
 
-Kosli konsists of a database with a WEB UI to store information about the
+Kosli consists of a database with a WEB UI to store information about the
 SW you build and run in your runtime environment, and a Kosli CLI
 used to report to and query the database.
 
