@@ -32,33 +32,38 @@ Put it in a location you'll be running it from (as `./kosli`) or add it to your 
 ### Local setup
 
 For these examples we are simulating a system with source code, build and a running server.
+We have a script to help you run these simulations so you don't need to type so many commands.
 
+You can download the file from here:
+https://raw.githubusercontent.com/kosli-dev/cli/main/simulation_commands.bash
+
+or from the command line with
 ```shell
-$ cd /tmp
-$ mkdir try-kosli
-$ cd try-kosli
-$ mkdir code server build
+wget https://raw.githubusercontent.com/kosli-dev/cli/main/simulation_commands.bash
+TODO: curl.....
+```
 
-# Create version 1 of our source code
-$ echo "1" > code/web.src
-$ echo "1" > code/db.src
+Source the simulation commands so you can use them later on in the examples.
+```shell
+$ source simulation_commands.bash
+```
 
-# Create a git repository of the source code
-$ cd code
-$ git init --quite
-$ git config user.name <put any name here>
-$ git config user.email <put any email address here>
-$ git add *src
-$ git commit -m "Version one of web and database"
-$ cd ..
+To see what a command (eg create_git_repo_in_tmp) in the simulation is actually doing run 
+```shell
+$ type create_git_repo_in_tmp
+create_git_repo_in_tmp is a function
+create_git_repo_in_tmp () 
+{ 
+    cd /tmp;
+    mkdir try-kosli;
+    ...
+```
 
-# Simulate building our SW
-$ echo "web version $(cat code/web.src)" > build/web_$(cat code/web.src).bin
-$ echo "database version $(cat code/db.src)" > build/db_$(cat code/db.src).bin
-
-# Simulate deploying our SW to the server
-$ rm -f server/web_*; cp build/web_$(cat code/web.src).bin server/
-$ rm -f server/db_*; cp build/db_$(cat code/db.src).bin server/
+Create the git repo and simulate a build and deployment to server.
+```shell
+$ create_git_repo_in_tmp
+$ simulate_build
+$ simulate_deployment
 ``` 
 
 While going through the getting started guid, feel free to explore the
@@ -163,23 +168,15 @@ N/A     Name: /tmp/try-kosli/server/db_1.bin                                    
         SHA256: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af                           
 ```
 
-We simulate a change of the web application from version 1 to version 2
+We simulate an update of the web application to a new version, build and deploy it
 ```shell
-# Update src
-$ echo "2" > code/web.src
-$ cd code
-$ git add web.src
-$ git commit -m "Version two of web"
-$ cd ..
+$ update_web_src
+$ simulate_build
+$ simulate_deployment
+```
 
-# Simulate building our SW
-$ echo "web version $(cat code/web.src)" > build/web_$(cat code/web.src).bin
-$ echo "database version $(cat code/db.src)" > build/db_$(cat code/db.src).bin
-
-# Simulate deploying our SW to the server
-$ rm -f server/web_*; cp build/web_$(cat code/web.src).bin server/
-
-# Report what is now running on server
+Report what is now running on server
+```shell
 $ kosli environment report server production --paths $(ls server/web_*bin),$(ls server/db_*.bin)
 ```
 
@@ -270,8 +267,7 @@ web-server       pipeline to build web-server       private
 
 Simulate building our SW
 ```shell
-$ echo "web version $(cat code/web.src)" > build/web_$(cat code/web.src).bin
-$ echo "database version $(cat code/db.src)" > build/db_$(cat code/db.src).bin
+$ simulate_build
 ```
 
 We can now report we have built the web and database applications. We are using
@@ -335,8 +331,7 @@ being deployed to a given runtime environment.
 
 Simulate deploying our SW to the server
 ```shell
-$ cp build/web_$(cat code/web.src).bin server/
-$ cp build/db_$(cat code/db.src).bin server/
+$ simulate_deployment
 ```
 
 Report to Kosli that the SW has been deployed
