@@ -86,6 +86,15 @@ export KOSLI_OWNER=<put your github username here>
 
 To get the kosli API token go to https://app.kosli.com, log in using your github account, and go to your Profile (you'll find it if you click on your avatar in the top right corner of the page)
 
+### Web interface
+
+As you go throgh the guide you can also check the state of the project from
+the [web interface](https://app.kosli.com).
+
+In the upper left corner there is a house icon. Next to it you can select
+which organization you want to view. All users have a personal organization
+that has the same name as your github login name. In addition you can be
+members of organizations that are shared within a company.
 
 
 # Environment
@@ -127,6 +136,10 @@ State:             N/A
 Last Reported At:  N/A
 ```
 
+In the web interface you can select the **Environments** menu on the left.
+It will show you that you have a production environment and that
+no reports has been received.
+
 
 ## Report the SW running in your environment
 
@@ -155,6 +168,10 @@ N/A     Name: /tmp/try-kosli/server/web_1.bin                                   
 N/A     Name: /tmp/try-kosli/server/db_1.bin                                      N/A       2 minutes ago  1
         SHA256: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af                           
 ```
+
+If you refresh the environment page in the web browser you can see that we have
+a time-stamp for when the environment changed. Pressing the *production* link
+gives you a detailed view of what is running now.
 
 Typically a server periodically sends a snapshot of what is currently running to Kosli. Kosli
 only stores the new snapshot if the snapshot changes, so resending the same environment report
@@ -219,6 +236,9 @@ N/A     Name: /tmp/try-kosli/server/db_1.bin                                    
         SHA256: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af                           
 ```
 
+In the web interface you should now also be able to see 2 snapshots. The Log
+menu should show what changed in snapshot 1 and snapshot 2.
+
 
 # Pipelines
 
@@ -267,6 +287,11 @@ NAME             DESCRIPTION                        VISIBILITY
 database-server  pipeline to build database-server  private
 web-server       pipeline to build web-server       private
 ```
+
+In the web interface you can select the **Pipelines** menu on the left.
+It will show you that you have a *web-server* and *database-server* pipeline.
+If you press either of the pipelines they will show that no artifacts has
+been created the pipeline.
 
 
 ## Build artifacts and report them to Kosli
@@ -324,6 +349,9 @@ Deployments:  None
 Evidence:
 ```
 
+In the web interface you can select the database-server pipeline and then the db_1.bin
+artifact to get more details.
+
 
 # Deployments
 
@@ -369,6 +397,9 @@ Created at:       16 Aug 22 08:02 CEST • 32 seconds ago
 Environment:      production
 Runtime state:    The artifact running since 16 Aug 22 07:58 CEST
 ```
+
+If you select the web_2.bin artifact in the web interface it will show
+that it was part of Deployment #1 to production environment.
 
 
 # For developers
