@@ -81,7 +81,7 @@ jobs:
           message: 'Update docs'
           pull_strategy: 'NO-PULL'
 
-  upload-reporter-lambda-package:
+  upload-reporter-package-prod:
     needs: [pre-build, docs-gen]
     uses: kosli-dev/cli/.github/workflows/upload-reporter-package.yml@main
     with:
@@ -89,3 +89,15 @@ jobs:
       s3_name: reporter-lambda-dacef8339fbd41ce31c346f854a85d0c74f7c4e8
       AWS_ACCOUNT_ID: 772819027869
       AWS_REGION: eu-central-1
+
+  deploy-production-reporters:
+    runs-on: ubuntu-20.04
+    needs: [pre-build, upload-reporter-package-prod]
+    steps:
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
+          repository: kosli-dev/kosli-reporter
+          event-type: deploy-reporter
+          client-payload: '{"env": "production", "tag": "${{ needs.pre-build.outputs.tag }}"}'
