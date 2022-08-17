@@ -40,8 +40,7 @@ https://raw.githubusercontent.com/kosli-dev/cli/main/simulation_commands.bash
 or from the command line with
 ```shell
 $ cd /tmp
-$ wget https://raw.githubusercontent.com/kosli-dev/cli/main/simulation_commands.bash
-TODO: curl.....
+$ curl -O https://raw.githubusercontent.com/kosli-dev/cli/main/simulation_commands.bash
 ```
 
 Source the simulation commands so you can use them later on in the examples.
@@ -120,13 +119,12 @@ $ kosli environment ls
 NAME        TYPE    LAST REPORT  LAST MODIFIED
 production  server               2022-08-16T07:53:43+02:00
 
-TODO: No report at this time
 $ kosli environment get production
 Name:              production
 Type:              server
 Description:       Production server (for kosli getting started)
-State:             INCOMPLIANT
-Last Reported At:  16 Aug 22 07:58 CEST • 25 seconds ago
+State:             N/A
+Last Reported At:  N/A
 ```
 
 
