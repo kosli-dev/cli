@@ -61,4 +61,4 @@ jobs:
           token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
           repository: kosli-dev/kosli-reporter
           event-type: deploy-reporter
-          client-payload: '{"ref": "${{ github.ref }}", "tag": "${{ needs.pre-build.outputs.tag }}"}'
+          client-payload: '{"env": "staging", "tag": "${{ needs.pre-build.outputs.tag }}"}'
