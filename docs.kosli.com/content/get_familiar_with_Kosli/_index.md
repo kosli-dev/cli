@@ -88,13 +88,13 @@ To get the kosli API token go to https://app.kosli.com, log in using your github
 
 ### Web interface
 
-As you go throgh the guide you can also check the state of the project from
+As you go through the guide you can also check your progress from
 the [web interface](https://app.kosli.com).
 
 In the upper left corner there is a house icon. Next to it you can select
-which organization you want to view. All users have a personal organization
-that has the same name as your github login name. In addition you can be
-members of organizations that are shared within a company.
+which organization you want to view. Your personal organization
+has the same name as your github login name, and is the organization you will
+be using in this guide.
 
 
 # Environment
@@ -137,8 +137,8 @@ Last Reported At:  N/A
 ```
 
 In the web interface you can select the **Environments** menu on the left.
-It will show you that you have a production environment and that
-no reports has been received.
+It will show you that you have a *production* environment and that
+no reports have been received.
 
 
 ## Report the SW running in your environment
@@ -237,7 +237,7 @@ N/A     Name: /tmp/try-kosli/server/db_1.bin                                    
 ```
 
 In the web interface you should now also be able to see 2 snapshots. The Log
-menu should show what changed in snapshot 1 and snapshot 2.
+tab (TODO: add icon) should show what changed in snapshot 1 and snapshot 2.
 
 
 # Pipelines
@@ -290,8 +290,8 @@ web-server       pipeline to build web-server       private
 
 In the web interface you can select the **Pipelines** menu on the left.
 It will show you that you have a *web-server* and *database-server* pipeline.
-If you press either of the pipelines they will show that no artifacts has
-been created the pipeline.
+If you press either of the pipelines they will show that no artifacts have
+been reported for the pipelines.
 
 
 ## Build artifacts and report them to Kosli
@@ -349,7 +349,7 @@ Deployments:  None
 Evidence:
 ```
 
-In the web interface you can select the database-server pipeline and then the db_1.bin
+In the web interface you can select the *database-server* pipeline and then the *db_1.bin*
 artifact to get more details.
 
 
@@ -398,8 +398,8 @@ Environment:      production
 Runtime state:    The artifact running since 16 Aug 22 07:58 CEST
 ```
 
-If you select the web_2.bin artifact in the web interface it will show
-that it was part of Deployment #1 to production environment.
+If you select the *web_2.bin* artifact in the web interface it will show
+that it was part of Deployment #1 to *production* environment.
 
 
 # For developers
