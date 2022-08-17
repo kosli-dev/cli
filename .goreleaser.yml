@@ -16,12 +16,12 @@ builds:
       - GO111MODULE=on
     goos:
       - darwin
-      - linux
-      - windows
+      # - linux
+      # - windows
     goarch:
-      - amd64
+      # - amd64
       - arm64
-      - arm
+      # - arm
     main: ./cmd/kosli/
 
 archives:
