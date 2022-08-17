@@ -9,12 +9,6 @@ on:
       platforms:
         required: true
         type: string
-      AWS_ACCOUNT_ID:
-        required: true
-        type: string
-      AWS_REGION:
-        required: true
-        type: string
     secrets:
       slack_channel:
         required: true
@@ -56,19 +50,19 @@ jobs:
       with:
         registry: ghcr.io
         username: ${{ secrets.ghcr_user }}
-        password: ${{ secrets.ghcr_token }}    
+        password: ${{ secrets.ghcr_token }}  
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
+    # Push image to the GHCR 
+    - name: Build and push Docker image
+      id: docker_build
+      uses: docker/build-push-action@v2
       with:
-        role-to-assume: arn:aws:iam::${{ inputs.AWS_ACCOUNT_ID }}:role/GithubActionsRole
-        aws-region: ${{ inputs.AWS_REGION }}
-        role-duration-seconds: 2400
-        role-session-name: ${{ github.event.repository.name }}
+        push: true
+        tags: ${{ env.IMAGE }}:${{ inputs.tag }}
+        platforms: ${{ inputs.platforms }}
+        cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
+        cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max  
 
-    - name: Login to Amazon ECR private
-      id: login-ecr-private
-      uses: aws-actions/amazon-ecr-login@v1.5.0
 
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v3
@@ -79,16 +73,6 @@ jobs:
     - name: Run tests
       run: make test_integration
 
-    - name: Build and push Docker image
-      id: docker_build
-      uses: docker/build-push-action@v2
-      with:
-        push: true
-        tags: ${{ env.IMAGE }}:${{ inputs.tag }}
-        platforms: ${{ inputs.platforms }}
-        cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
-        cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max 
-        
     - name: Slack Notification on Failure
       if: ${{ failure() }}
       uses: rtCamp/action-slack-notify@v2
@@ -98,4 +82,3 @@ jobs:
         SLACK_TITLE: Build Failed in Client repository
         SLACK_USERNAME: GithubActions
         SLACK_WEBHOOK: ${{ secrets.slack_webhook }}  
-       
