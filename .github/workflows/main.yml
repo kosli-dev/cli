@@ -50,6 +50,7 @@ jobs:
       AWS_REGION: eu-central-1
 
   deploy-staging-reporters:
+    runs-on: ubuntu-20.04
     needs: [pre-build, upload-reporter-package-staging]
     #if: ${{ github.ref == 'refs/heads/main' }}
     if: ${{ github.ref == 'refs/heads/repo-dispatch' }}
