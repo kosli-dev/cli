@@ -22,14 +22,19 @@ When you are done with the guide you should be able to start adding Kosli to
 your CI system and runtime environment.
 
 
-## Things to prepare
+## Installing Kosli CLI
 
-### CLI
+If you have [Homebrew](https://brew.sh/) (available on MacOS, Linux or Windows Subsystem for Linux), 
+you can install the Kosli CLI by running: 
 
-The Kosli CLI can be downloaded from: https://github.com/kosli-dev/cli/releases
+```shell
+$ brew install kosli-dev/tap/kosli
+```
+
+Alternatively, the Kosli CLI can be downloaded from: https://github.com/kosli-dev/cli/releases
 Put it in a location you'll be running it from (as `./kosli`) or add it to your PATH so you can use it anywhere (as `kosli`)
 
-### Local setup
+## Preparing the tutorial
 
 For these examples we are simulating a system with source code, build and a running server.
 We have a script to help you run these simulations so you don't need to type so many commands.
@@ -70,7 +75,7 @@ While going through the getting started guide, feel free to explore the
 functionality by updating the source code, building and deploying new versions.
 
 
-### Use of environment variables
+## Using environment variables
 
 All the kosli commands contain some common
 flags `--api-token` and `--owner`. By setting
@@ -86,10 +91,10 @@ export KOSLI_OWNER=<put your github username here>
 
 To get the kosli API token go to https://app.kosli.com, log in using your github account, and go to your Profile (you'll find it if you click on your avatar in the top right corner of the page)
 
-### Web interface
+## Using a web browser
 
-As you go through the guide you can also check your progress from
-the [web interface](https://app.kosli.com).
+As you go through the guide you can also check your progress from 
+[your browser](https://app.kosli.com).
 
 In the upper left corner there is a house icon. Next to it you can select
 which organization you want to view. Your personal organization
@@ -110,7 +115,7 @@ detect the version of the SW you are currently running and report
 it to the Kosli environment.
 
 
-## Create a Kosli environment
+## Creating a Kosli environment
 
 To follow the examples make sure you have followed the instructions in Local setup
 
@@ -141,7 +146,7 @@ It will show you that you have a *production* environment and that
 no reports have been received.
 
 
-## Report the SW running in your environment
+## Reporting the SW running in your environment
 
 We simulate a report from our server by reporting two dummy files for the web and
 database applications.
@@ -257,7 +262,7 @@ the artifact you have built, like test results, manual approvals,
 pull-requests and so on.
 
 
-## Create a Kosli pipeline
+## Creating a Kosli pipeline
 
 To follow the examples make sure you have followed the instructions in Local setup.
 
@@ -294,7 +299,7 @@ If you press either of the pipelines they will show that no artifacts have
 been reported for the pipelines.
 
 
-## Build artifacts and report them to Kosli
+## Building artifacts and reporting them to Kosli
 
 Simulate building our SW
 ```shell
@@ -361,7 +366,7 @@ A Kosli deployment command is used to indicate an aritfact is
 being deployed to a given runtime environment. 
 
 
-## Deploy SW to server and report the deployment to Kosli
+## Deploying SW to the server and reporting the deployment to Kosli
 
 Simulate deploying our SW to the server
 ```shell
