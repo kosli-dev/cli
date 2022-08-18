@@ -1,38 +1,8 @@
 ---
-title: Get Familiar with Kosli
+title: Simulating a DevOps system
 bookCollapseSection: false
 weight: 1
 ---
-
-# Get Familiar with Kosli
-
-Kosli stores information about the SW you build in CI pipelines
-and run in your runtime environment. The Kosli CLI is used for reporting
-and querying the information.
-
-Typically all the reporting will be done as part of your CI and runtime systems.
-In the getting started you don't need any of this. Local code, git and a terminal are enough.
-
-The Kosli CLI is tool agnostic and can run on any major platform (Linux, Mac, Windows).
-Kosli does not require you to change your existing process.
-
-The purpose of this guide is to familiarize you with the Kosli CLI and concepts.
-
-When you are done with the guide you should be able to start adding Kosli to
-your CI system and runtime environment.
-
-
-## Installing Kosli CLI
-
-If you have [Homebrew](https://brew.sh/) (available on MacOS, Linux or Windows Subsystem for Linux), 
-you can install the Kosli CLI by running: 
-
-```shell
-$ brew install kosli-dev/tap/kosli
-```
-
-Alternatively, the Kosli CLI can be downloaded from: https://github.com/kosli-dev/cli/releases
-Put it in a location you'll be running it from (as `./kosli`) or add it to your PATH so you can use it anywhere (as `kosli`)
 
 ## Preparing the tutorial
 
@@ -73,33 +43,6 @@ $ simulate_deployment
 
 While going through the getting started guide, feel free to explore the
 functionality by updating the source code, building and deploying new versions.
-
-
-## Using environment variables
-
-All the kosli commands contain some common
-flags `--api-token` and `--owner`. By setting
-these as environment variables we don't need to specify them. 
-
-You do this by capitalizing the flag in snake case and adding the `KOSLI_` prefix. 
-For example, to set `--api-token xx` from an environment variable, you can `export KOSLI_API_TOKEN=xx`, etc:
-
-```shell
-export KOSLI_API_TOKEN=<put your kosli API token here>
-export KOSLI_OWNER=<put your github username here>
-```
-
-To get the kosli API token go to https://app.kosli.com, log in using your github account, and go to your Profile (you'll find it if you click on your avatar in the top right corner of the page)
-
-## Using a web browser
-
-As you go through the guide you can also check your progress from 
-[your browser](https://app.kosli.com).
-
-In the upper left corner there is a house icon. Next to it you can select
-which organization you want to view. Your personal organization
-has the same name as your github login name, and is the organization you will
-be using in this guide.
 
 
 # Environment
@@ -178,8 +121,8 @@ If you refresh the environment page in the web browser you can see that we have
 a time-stamp for when the environment changed. Pressing the *production* link
 gives you a detailed view of what is running now.
 
-Typically a server periodically sends a snapshot of what is currently running to Kosli. Kosli
-only stores the new snapshot if the snapshot changes, so resending the same environment report
+Typically a server periodically sends a report of what is currently running to Kosli. Kosli
+only creates a new snapshot if the report has changes compared to previous snapshot, so resending the same environment report
 several times will not lead to duplication of snapshots.
 ```shell
 $ kosli environment report server production \
@@ -227,7 +170,7 @@ N/A     Name: /tmp/try-kosli/server/db_1.bin                                    
         SHA256: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af                            
 ```                    
 
-Here, using the bare environment name (eg production) always refer to the latest snapshot
+Here, using the bare environment name (eg production) always refers to the latest snapshot
 in that environment. We can also use the 
 Kosli CLI to check what was running in previous snapshots.
 Here we look at what was running in snapshot #1 in production.
