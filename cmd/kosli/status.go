@@ -10,9 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const statusDesc = `
-Check the status of Kosli server.
-`
+const statusDesc = `Check the status of Kosli server.`
 
 type statusOptions struct {
 	assert bool
