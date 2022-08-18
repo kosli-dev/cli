@@ -9,6 +9,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/sirupsen/logrus"
 	"github.com/xeonx/timeago"
@@ -77,16 +78,16 @@ func getSnapshot(out io.Writer, o *snapshotGetOptions, args []string) error {
 		return err
 	}
 
-	if o.json {
-		return showJson(response)
-	}
-
-	return showList(response, out)
+	return output.FormattedPrint(response.Body, o.output, out, 0,
+		map[string]output.FormatOutputFunc{
+			"table": printSnapshotAsTable,
+			"json":  printSnapshotAsJson,
+		})
 }
 
-func showJson(response *requests.HTTPResponse) error {
+func printSnapshotAsJson(raw string, out io.Writer, page int) error {
 	var snapshot Snapshot
-	err := json.Unmarshal([]byte(response.Body), &snapshot)
+	err := json.Unmarshal([]byte(raw), &snapshot)
 	if err != nil {
 		return err
 	}
@@ -124,9 +125,9 @@ func showJson(response *requests.HTTPResponse) error {
 	return nil
 }
 
-func showList(response *requests.HTTPResponse, out io.Writer) error {
+func printSnapshotAsTable(raw string, out io.Writer, page int) error {
 	var snapshot Snapshot
-	err := json.Unmarshal([]byte(response.Body), &snapshot)
+	err := json.Unmarshal([]byte(raw), &snapshot)
 	if err != nil {
 		return err
 	}

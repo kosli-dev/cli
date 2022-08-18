@@ -9,7 +9,7 @@ import (
 const snapshotGetDesc = `Get a specific environment snapshot.`
 
 type snapshotGetOptions struct {
-	json bool
+	output string
 }
 
 const snapshotGetExample = `
@@ -51,7 +51,7 @@ func newSnapshotGetCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVarP(&o.json, "json", "j", false, jsonOutputFlag)
+	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 
 	return cmd
 }
