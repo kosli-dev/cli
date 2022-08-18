@@ -18,7 +18,7 @@ kosli snapshot get ENVIRONMENT-NAME-OR-EXPRESSION [flags]
 | Flag | Description |
 | :--- | :--- |
 |    -h, --help  |  help for get  |
-|    -j, --json  |  [optional] Print output as json.  |
+|    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 
 
 ### Options inherited from parent commands

@@ -4,15 +4,11 @@ title: "kosli status"
 
 ## kosli status
 
-
 Check the status of Kosli server.
-
 
 ### Synopsis
 
-
 Check the status of Kosli server.
-
 
 ```shell
 kosli status [flags]
