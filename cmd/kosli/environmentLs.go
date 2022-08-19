@@ -47,7 +47,7 @@ func (o *environmentLsOptions) run(out io.Writer, args []string) error {
 
 	url := fmt.Sprintf("%s/api/v1/environments/%s/", global.Host, global.Owner)
 	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodGet, log)
+		global.MaxAPIRetries, false, http.MethodGet, log)
 	if err != nil {
 		return err
 	}

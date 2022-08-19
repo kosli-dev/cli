@@ -58,7 +58,7 @@ func (o *snapshotLsOptions) run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/snapshots/?page=%d&per_page=%d",
 		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit)
 	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodGet, log)
+		global.MaxAPIRetries, false, http.MethodGet, log)
 	if err != nil {
 		return err
 	}

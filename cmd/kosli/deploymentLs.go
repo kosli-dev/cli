@@ -55,7 +55,7 @@ func (o *deploymentLsOptions) run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/?page=%d&per_page=%d",
 		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit)
 	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodGet, log)
+		global.MaxAPIRetries, false, http.MethodGet, log)
 	if err != nil {
 		return err
 	}

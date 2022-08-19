@@ -58,7 +58,7 @@ func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
 		global.Host, global.Owner, url.QueryEscape(args[0]), url.QueryEscape(args[1]))
 
 	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodGet, log)
+		global.MaxAPIRetries, false, http.MethodGet, log)
 	if err != nil {
 		return err
 	}
