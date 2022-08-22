@@ -17,9 +17,7 @@ func newSnapshotCmd(out io.Writer) *cobra.Command {
 	}
 
 	// Add subcommands
-	cmd.AddCommand(
-		newSnapshotLsCmd(out),
-	)
+	cmd.AddCommand()
 
 	return cmd
 }

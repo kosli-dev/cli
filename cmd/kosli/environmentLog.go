@@ -13,21 +13,21 @@ import (
 	"github.com/xeonx/timeago"
 )
 
-const snapshotLsDesc = `List all snapshots for an environment.`
+const environmentLogDesc = `List snapshots for an environment.`
 
-type snapshotLsOptions struct {
+type environmentLogOptions struct {
 	output     string
 	pageNumber int
 	pageLimit  int
 }
 
-func newSnapshotLsCmd(out io.Writer) *cobra.Command {
-	o := new(snapshotLsOptions)
+func newEnvironmentLogCmd(out io.Writer) *cobra.Command {
+	o := new(environmentLogOptions)
 	cmd := &cobra.Command{
-		Use:     "ls ENVIRONMENT-NAME",
+		Use:     "log ENVIRONMENT-NAME",
 		Aliases: []string{"list"},
-		Short:   snapshotLsDesc,
-		Long:    snapshotLsDesc,
+		Short:   environmentLogDesc,
+		Long:    environmentLogDesc,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -50,7 +50,7 @@ func newSnapshotLsCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *snapshotLsOptions) run(out io.Writer, args []string) error {
+func (o *environmentLogOptions) run(out io.Writer, args []string) error {
 	if o.pageNumber <= 0 || o.pageLimit <= 0 {
 		fmt.Fprint(out, "No environment snapshots were requested\n")
 		return nil
