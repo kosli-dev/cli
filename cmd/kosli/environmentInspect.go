@@ -11,18 +11,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentGetDesc = `Get an environment metadata.`
+const environmentInspectDesc = `Inspect an environment metadata.`
 
-type environmentGetOptions struct {
+type environmentInspectOptions struct {
 	output string
 }
 
-func newEnvironmentGetCmd(out io.Writer) *cobra.Command {
-	o := new(environmentGetOptions)
+func newEnvironmentInspectCmd(out io.Writer) *cobra.Command {
+	o := new(environmentInspectOptions)
 	cmd := &cobra.Command{
-		Use:   "get [ENVIRONMENT-NAME]",
-		Short: environmentGetDesc,
-		Long:  environmentGetDesc,
+		Use:   "inspect [ENVIRONMENT-NAME]",
+		Short: environmentInspectDesc,
+		Long:  environmentInspectDesc,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -43,7 +43,7 @@ func newEnvironmentGetCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *environmentGetOptions) run(out io.Writer, args []string) error {
+func (o *environmentInspectOptions) run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/environments/%s/%s", global.Host, global.Owner, args[0])
 	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, false, http.MethodGet, log)
