@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentDesc = `All environments operations in Kosli.`
+const environmentDesc = `All environment operations in Kosli.`
 
 func newEnvironmentCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
@@ -25,6 +25,7 @@ func newEnvironmentCmd(out io.Writer) *cobra.Command {
 		newAllowedArtifactsCmd(out),
 		newEnvironmentInspectCmd(out),
 		newEnvironmentEventsLogCmd(out),
+		newEnvironmentGetCmd(out),
 	)
 
 	return cmd

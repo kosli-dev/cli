@@ -69,7 +69,7 @@ type ArtifactJsonOut struct {
 	RunningSince string `json:"running_since"`
 }
 
-func getSnapshot(out io.Writer, o *snapshotGetOptions, args []string) error {
+func getSnapshot(out io.Writer, o *environmentGetOptions, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/environments/%s/snapshots/%s", global.Host, global.Owner, url.QueryEscape(args[0]))
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
