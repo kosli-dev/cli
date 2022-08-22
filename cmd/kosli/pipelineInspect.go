@@ -13,18 +13,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const pipelineGetDesc = `Get the metadata of a single pipeline`
+const pipelineInspectDesc = `Inspect the metadata of a single pipeline`
 
-type pipelineGetOptions struct {
+type pipelineInspectOptions struct {
 	output string
 }
 
-func newPipelineGetCmd(out io.Writer) *cobra.Command {
-	o := new(pipelineGetOptions)
+func newPipelineInspectCmd(out io.Writer) *cobra.Command {
+	o := new(pipelineInspectOptions)
 	cmd := &cobra.Command{
-		Use:   "get PIPELINE-NAME",
-		Short: pipelineGetDesc,
-		Long:  pipelineGetDesc,
+		Use:   "inspect PIPELINE-NAME",
+		Short: pipelineInspectDesc,
+		Long:  pipelineInspectDesc,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -45,7 +45,7 @@ func newPipelineGetCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *pipelineGetOptions) run(out io.Writer, args []string) error {
+func (o *pipelineInspectOptions) run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s", global.Host, global.Owner, args[0])
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())

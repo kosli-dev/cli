@@ -10,9 +10,10 @@ const pipelineDesc = `All Kosli pipelines operations.`
 
 func newPipelineCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "pipeline",
-		Short: pipelineDesc,
-		Long:  pipelineDesc,
+		Use:     "pipeline",
+		Aliases: []string{"pipe"},
+		Short:   pipelineDesc,
+		Long:    pipelineDesc,
 	}
 
 	// Add subcommands
@@ -22,7 +23,7 @@ func newPipelineCmd(out io.Writer) *cobra.Command {
 		newApprovalCmd(out),
 		newDeploymentCmd(out),
 		newPipelineLsCmd(out),
-		newPipelineGetCmd(out),
+		newPipelineInspectCmd(out),
 	)
 
 	return cmd
