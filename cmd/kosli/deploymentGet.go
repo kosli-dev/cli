@@ -78,7 +78,11 @@ func printDeploymentAsTable(raw string, out io.Writer, page int) error {
 	rows = append(rows, fmt.Sprintf("ID:\t%d", int64(deployment["deployment_id"].(float64))))
 	rows = append(rows, fmt.Sprintf("Artifact SHA256:\t%s", deployment["artifact_sha256"].(string)))
 	rows = append(rows, fmt.Sprintf("Artifact name:\t%s", deployment["artifact_name"].(string)))
-	rows = append(rows, fmt.Sprintf("Build URL:\t%s", deployment["build_url"].(string)))
+	buildURL := "N/A"
+	if deployment["build_url"] != nil {
+		buildURL = deployment["build_url"].(string)
+	}
+	rows = append(rows, fmt.Sprintf("Build URL:\t%s", buildURL))
 	createdAt, err := formattedTimestamp(deployment["created_at"], false)
 	if err != nil {
 		return err
@@ -93,7 +97,7 @@ func printDeploymentAsTable(raw string, out io.Writer, page int) error {
 		return err
 	}
 
-	stateString := "Runtime state unknown"
+	stateString := "Unknown"
 	if state == "deploying" {
 		stateString = "Deploying"
 	} else if state == "running" {
