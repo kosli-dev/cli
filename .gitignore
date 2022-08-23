@@ -13,3 +13,4 @@ pipe.json
 **/.DS_Store
 .vscode/
 docs.kosli.com/resources/_gen/*
+*.tar.gz
