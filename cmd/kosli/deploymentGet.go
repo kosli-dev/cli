@@ -5,33 +5,50 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 const deploymentGetDesc = `Get a deployment from a specified pipeline`
 
+const deploymentGetExample = `
+# get the latest deployment in a pipeline
+kosli deployment get yourPipelineName \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# get previous deployment in a pipeline
+kosli deployment get yourPipelineName~1 \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# get the 10th deployment in a pipeline
+kosli deployment get yourPipelineName#10 \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+`
+
 type deploymentGetOptions struct {
-	output       string
-	pipelineName string
+	output string
 }
 
 func newDeploymentGetCmd(out io.Writer) *cobra.Command {
 	o := new(deploymentGetOptions)
 	cmd := &cobra.Command{
-		Use:   "get DEPLOYMENT-ID",
-		Short: deploymentGetDesc,
-		Long:  deploymentGetDesc,
+		Use:     "get SNAPPISH",
+		Short:   deploymentGetDesc,
+		Long:    deploymentGetDesc,
+		Example: deploymentGetExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			if len(args) < 1 {
-				return ErrorBeforePrintingUsage(cmd, "deployment ID argument is required")
+				return ErrorBeforePrintingUsage(cmd, "snappish argument is required")
 			}
 			return nil
 		},
@@ -40,22 +57,15 @@ func newDeploymentGetCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
-
-	err := RequireFlags(cmd, []string{"pipeline"})
-	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
-	}
 
 	return cmd
 }
 
 func (o *deploymentGetOptions) run(out io.Writer, args []string) error {
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/%s", global.Host, global.Owner, o.pipelineName, args[0])
-	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
-
+	kurl := fmt.Sprintf("%s/api/v1/projects/%s/deployment/?snappish=%s", global.Host, global.Owner, url.QueryEscape(args[0]))
+	response, err := requests.SendPayload([]byte{}, kurl, "", global.ApiToken,
+		global.MaxAPIRetries, false, http.MethodGet, log)
 	if err != nil {
 		return err
 	}
