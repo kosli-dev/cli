@@ -16,6 +16,7 @@ const environmentEventsLogDesc = `List a number of environment events.`
 
 type environmentEventsLogOptions struct {
 	output     string
+	long       bool
 	pageNumber int
 	pageLimit  int
 	reverse    bool
@@ -49,8 +50,9 @@ func newEnvironmentEventsLogCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
-	cmd.Flags().IntVarP(&o.pageNumber, "page-number", "n", 1, pageNumberFlag)
-	cmd.Flags().IntVarP(&o.pageLimit, "page-limit", "l", 15, pageLimitFlag)
+	cmd.Flags().BoolVarP(&o.long, "long", "l", false, longFlag)
+	cmd.Flags().IntVar(&o.pageNumber, "page", 1, pageNumberFlag)
+	cmd.Flags().IntVarP(&o.pageLimit, "page-limit", "n", 15, pageLimitFlag)
 	cmd.Flags().BoolVar(&o.reverse, "reverse", false, reverseFlag)
 
 	return cmd
@@ -61,19 +63,27 @@ func (o *environmentEventsLogOptions) run(out io.Writer, args []string) error {
 	if len(args) > 1 {
 		interval = args[1]
 	}
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/events/?page=%d&per_page=%d&interval=%s&reverse=%t",
-		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit, url.QueryEscape(interval), o.reverse)
-	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, false, http.MethodGet, log)
-	if err != nil {
-		return err
-	}
 
-	return output.FormattedPrint(response.Body, o.output, out, o.pageNumber,
-		map[string]output.FormatOutputFunc{
-			"table": printEnvironmentEventsLogAsTable,
-			"json":  output.PrintJson,
-		})
+	if o.long {
+		url := fmt.Sprintf("%s/api/v1/environments/%s/%s/events/?page=%d&per_page=%d&interval=%s&reverse=%t",
+			global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit, url.QueryEscape(interval), o.reverse)
+		response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
+			global.MaxAPIRetries, false, http.MethodGet, log)
+		if err != nil {
+			return err
+		}
+		return output.FormattedPrint(response.Body, o.output, out, o.pageNumber,
+			map[string]output.FormatOutputFunc{
+				"table": printEnvironmentEventsLogAsTable,
+				"json":  output.PrintJson,
+			})
+	} else {
+		err := o.getSnapshotsList(out, args)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 }
 
 func printEnvironmentEventsLogAsTable(raw string, out io.Writer, page int) error {

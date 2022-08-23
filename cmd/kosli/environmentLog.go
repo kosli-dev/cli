@@ -9,48 +9,10 @@ import (
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
-	"github.com/spf13/cobra"
 	"github.com/xeonx/timeago"
 )
 
-const environmentLogDesc = `List snapshots for an environment.`
-
-type environmentLogOptions struct {
-	output     string
-	pageNumber int
-	pageLimit  int
-}
-
-func newEnvironmentLogCmd(out io.Writer) *cobra.Command {
-	o := new(environmentLogOptions)
-	cmd := &cobra.Command{
-		Use:     "log ENVIRONMENT-NAME",
-		Aliases: []string{"list"},
-		Short:   environmentLogDesc,
-		Long:    environmentLogDesc,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
-			if err != nil {
-				return ErrorBeforePrintingUsage(cmd, err.Error())
-			}
-			if len(args) < 1 {
-				return ErrorBeforePrintingUsage(cmd, "environment name argument is required")
-			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(out, args)
-		},
-	}
-
-	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
-	cmd.Flags().IntVar(&o.pageNumber, "page", 1, pageNumberFlag)
-	cmd.Flags().IntVarP(&o.pageLimit, "page-limit", "n", 15, pageLimitFlag)
-
-	return cmd
-}
-
-func (o *environmentLogOptions) run(out io.Writer, args []string) error {
+func (o *environmentEventsLogOptions) getSnapshotsList(out io.Writer, args []string) error {
 	if o.pageNumber <= 0 || o.pageLimit <= 0 {
 		fmt.Fprint(out, "No environment snapshots were requested\n")
 		return nil
