@@ -81,13 +81,13 @@ test_integration_setup:
 
 test_integration: deps vet ensure_network test_integration_setup ## Run tests except too slow ones
 	@gotestsum -- --short -p=1 -coverprofile=cover.out ./...
-	@go tool cover -html=coverage.out
+	@go tool cover -html=cover.out
 .PHONY: test_integration
 
 
 test_integration_full: deps vet ensure_network test_integration_setup ## Run all tests
 	@gotestsum -- -p=1 -coverprofile=cover.out ./...
-	@go tool cover -func=coverage.out
+	@go tool cover -func=cover.out
 .PHONY: test_integration_full
 
 
