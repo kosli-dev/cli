@@ -48,7 +48,7 @@ func newDeploymentGetCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			if len(args) < 1 {
-				return ErrorBeforePrintingUsage(cmd, "snappish argument is required")
+				return ErrorBeforePrintingUsage(cmd, "SNAPPISH argument is required")
 			}
 			return nil
 		},

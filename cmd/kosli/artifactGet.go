@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -14,24 +16,31 @@ import (
 
 const artifactGetDesc = `Get artifact from a specified pipeline`
 
+const artifactGetExample = `
+# get an artifact with a given SHA256 in a pipeline
+kosli artifact get yourPipelineName@yourSHA256 \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+`
+
 type artifactGetOptions struct {
-	output       string
-	pipelineName string
+	output string
 }
 
 func newArtifactGetCmd(out io.Writer) *cobra.Command {
 	o := new(artifactGetOptions)
 	cmd := &cobra.Command{
-		Use:   "get ARTIFACT-DIGEST",
-		Short: artifactGetDesc,
-		Long:  artifactGetDesc,
+		Use:     "get SNAPPISH",
+		Short:   artifactGetDesc,
+		Long:    artifactGetDesc,
+		Example: artifactGetExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			if len(args) < 1 {
-				return ErrorBeforePrintingUsage(cmd, "artifact digest argument is required")
+				return ErrorBeforePrintingUsage(cmd, "SNAPPISH argument is required")
 			}
 			return nil
 		},
@@ -40,27 +49,25 @@ func newArtifactGetCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
-
-	err := RequireFlags(cmd, []string{"pipeline"})
-	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
-	}
 
 	return cmd
 }
 
 func (o *artifactGetOptions) run(out io.Writer, args []string) error {
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s", global.Host, global.Owner, o.pipelineName, args[0])
-	artifactResponse, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
-
+	kurl := fmt.Sprintf("%s/api/v1/projects/%s/artifact/?snappish=%s", global.Host, global.Owner, url.QueryEscape(args[0]))
+	artifactResponse, err := requests.SendPayload([]byte{}, kurl, "", global.ApiToken,
+		global.MaxAPIRetries, false, http.MethodGet, log)
 	if err != nil {
 		return err
 	}
-
-	approvalsUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/approvals/", global.Host, global.Owner, o.pipelineName, args[0])
+	snappishParts := strings.SplitN(args[0], "@", 2)
+	pipelineName := snappishParts[0]
+	sha256 := ""
+	if len(snappishParts) == 2 {
+		sha256 = snappishParts[1]
+	}
+	approvalsUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/approvals/", global.Host, global.Owner, pipelineName, sha256)
 	approvalsResponse, err := requests.DoBasicAuthRequest([]byte{}, approvalsUrl, "", global.ApiToken,
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
 
@@ -68,7 +75,7 @@ func (o *artifactGetOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
-	deploymentsUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/deployments/", global.Host, global.Owner, o.pipelineName, args[0])
+	deploymentsUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/deployments/", global.Host, global.Owner, pipelineName, sha256)
 	deploymentsResponse, err := requests.DoBasicAuthRequest([]byte{}, deploymentsUrl, "", global.ApiToken,
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
 
