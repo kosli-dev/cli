@@ -6,11 +6,9 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -56,45 +54,20 @@ func newArtifactGetCmd(out io.Writer) *cobra.Command {
 
 func (o *artifactGetOptions) run(out io.Writer, args []string) error {
 	kurl := fmt.Sprintf("%s/api/v1/projects/%s/artifact/?snappish=%s", global.Host, global.Owner, url.QueryEscape(args[0]))
-	artifactResponse, err := requests.SendPayload([]byte{}, kurl, "", global.ApiToken,
+	response, err := requests.SendPayload([]byte{}, kurl, "", global.ApiToken,
 		global.MaxAPIRetries, false, http.MethodGet, log)
 	if err != nil {
 		return err
 	}
-	snappishParts := strings.SplitN(args[0], "@", 2)
-	pipelineName := snappishParts[0]
-	sha256 := ""
-	if len(snappishParts) == 2 {
-		sha256 = snappishParts[1]
-	}
-	approvalsUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/approvals/", global.Host, global.Owner, pipelineName, sha256)
-	approvalsResponse, err := requests.DoBasicAuthRequest([]byte{}, approvalsUrl, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
 
-	if err != nil {
-		return err
-	}
-
-	deploymentsUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/deployments/", global.Host, global.Owner, pipelineName, sha256)
-	deploymentsResponse, err := requests.DoBasicAuthRequest([]byte{}, deploymentsUrl, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
-
-	if err != nil {
-		return err
-	}
-
-	switch o.output {
-	case "table":
-		return printArtifactAsTable(artifactResponse.Body, approvalsResponse.Body, deploymentsResponse.Body, out)
-	case "json":
-		return output.PrintJson(artifactResponse.Body, out, 0)
-	default:
-		return fmt.Errorf("unsupported output format: %s", o.output)
-	}
-
+	return output.FormattedPrint(response.Body, o.output, out, 0,
+		map[string]output.FormatOutputFunc{
+			"table": printArtifactAsTable,
+			"json":  output.PrintJson,
+		})
 }
 
-func printArtifactAsTable(artifactRaw, approvalsRaw, deploymentsRaw string, out io.Writer) error {
+func printArtifactAsTable(artifactRaw string, out io.Writer, pageNumber int) error {
 
 	var artifact map[string]interface{}
 	err := json.Unmarshal([]byte(artifactRaw), &artifact)
@@ -102,17 +75,8 @@ func printArtifactAsTable(artifactRaw, approvalsRaw, deploymentsRaw string, out 
 		return err
 	}
 
-	var approvals []map[string]interface{}
-	err = json.Unmarshal([]byte(approvalsRaw), &approvals)
-	if err != nil {
-		return err
-	}
-
-	var deployments []map[string]interface{}
-	err = json.Unmarshal([]byte(deploymentsRaw), &deployments)
-	if err != nil {
-		return err
-	}
+	approvals := artifact["approvals"].([]interface{})
+	deployments := artifact["deployments"].([]interface{})
 
 	evidenceMap := artifact["evidence"].(map[string]interface{})
 	artifactData := evidenceMap["artifact"].(map[string]interface{})
@@ -131,7 +95,8 @@ func printArtifactAsTable(artifactRaw, approvalsRaw, deploymentsRaw string, out 
 
 	if len(approvals) > 0 {
 		rows = append(rows, "Approvals:")
-		for _, approval := range approvals {
+		for _, rawApproval := range approvals {
+			approval := rawApproval.(map[string]interface{})
 			timestamp, err := formattedTimestamp(approval["last_modified_at"], true)
 			if err != nil {
 				return err
@@ -145,7 +110,8 @@ func printArtifactAsTable(artifactRaw, approvalsRaw, deploymentsRaw string, out 
 
 	if len(deployments) > 0 {
 		rows = append(rows, "Deployments:")
-		for _, deployment := range deployments {
+		for _, rawDeployment := range deployments {
+			deployment := rawDeployment.(map[string]interface{})
 			deploymentState := deployment["running_state"].(map[string]interface{})
 			state := deploymentState["state"].(string)
 			stateTimestamp, err := formattedTimestamp(deploymentState["timestamp"], true)
@@ -153,7 +119,7 @@ func printArtifactAsTable(artifactRaw, approvalsRaw, deploymentsRaw string, out 
 				return err
 			}
 
-			stateString := "Runtime state unknown"
+			stateString := "Unknown"
 			if state == "deploying" {
 				stateString = "Deploying"
 			} else if state == "running" {
