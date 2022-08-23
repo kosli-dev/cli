@@ -75,13 +75,20 @@ test_integration_setup:
 	@docker-compose up -d
 	./mongo/ip_wait.sh localhost:8001
 	@docker exec cli_kosli_server /demo/create_test_users.py
+	@go install gotest.tools/gotestsum@latest
 
 
-test_integration: deps vet ensure_network test_integration_setup ## Run tests
-	@go test -v -cover -p=1 -coverprofile=coverage.out ./...
-	@go tool cover -func=coverage.out
+
+test_integration: deps vet ensure_network test_integration_setup ## Run tests except too slow ones
+	@gotestsum -- --short -p=1 -coverprofile=cover.out ./...
 	@go tool cover -html=coverage.out
 .PHONY: test_integration
+
+
+test_integration_full: deps vet ensure_network test_integration_setup ## Run all tests
+	@gotestsum -- -p=1 -coverprofile=cover.out ./...
+	@go tool cover -func=coverage.out
+.PHONY: test_integration_full
 
 
 test_integration_single:

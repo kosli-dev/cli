@@ -284,5 +284,9 @@ func (suite *KubeTestSuite) createPod(namespace string, pod *corev1.Pod) {
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestKubeTestSuite(t *testing.T) {
+	if testing.Short() {
+		t.Skip("too slow for testing.Short")
+	}
+
 	suite.Run(t, new(KubeTestSuite))
 }

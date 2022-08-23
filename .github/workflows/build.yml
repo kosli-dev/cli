@@ -71,7 +71,7 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v1.5.0
 
     - name: Run tests
-      run: make test_integration
+      run: make test_integration_full
 
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v1
