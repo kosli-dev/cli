@@ -76,14 +76,14 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		// Pipeline pipeline get tests
 		{
 			wantError: false,
-			name:      "kosli pipeline get newPipe command does not return error",
-			cmd:       "pipeline get newPipe" + defaultKosliArguments,
+			name:      "kosli pipeline inspect newPipe command does not return error",
+			cmd:       "pipeline inspect newPipe" + defaultKosliArguments,
 			golden:    "",
 		},
 		{
 			wantError: false,
-			name:      "kosli pipeline get newPipe --output json command does not return error",
-			cmd:       "pipeline get newPipe --output json" + defaultKosliArguments,
+			name:      "kosli pipeline inspect newPipe --output json command does not return error",
+			cmd:       "pipeline inspect newPipe --output json" + defaultKosliArguments,
 			golden:    "",
 		},
 

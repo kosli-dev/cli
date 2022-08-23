@@ -88,14 +88,14 @@ func (suite *EnvironmentCommandTestSuite) TestEnvironmentCommandCmd() {
 		// Environment env get tests
 		{
 			wantError: false,
-			name:      "kosli env get newEnv command does not return error",
-			cmd:       "env get newEnv" + defaultKosliArguments,
+			name:      "kosli env inspect newEnv command does not return error",
+			cmd:       "env inspect newEnv" + defaultKosliArguments,
 			golden:    "",
 		},
 		{
 			wantError: false,
-			name:      "kosli env get newEnv --output json command does not return error",
-			cmd:       "env get newEnv --output json" + defaultKosliArguments,
+			name:      "kosli env inspect newEnv --output json command does not return error",
+			cmd:       "env inspect newEnv --output json" + defaultKosliArguments,
 			golden:    "",
 		},
 	}
