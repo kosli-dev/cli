@@ -80,3 +80,17 @@ aside.book-menu .book-menu-content {
         }
     }
 }
+
+.command {
+    position: relative;
+    code.language-shell::before {
+        content: "$ ";
+    }
+    &::after {
+        content: "copy";
+        position: absolute;
+        right: 0;
+        top: 0;
+        color: #fff;
+    }
+}

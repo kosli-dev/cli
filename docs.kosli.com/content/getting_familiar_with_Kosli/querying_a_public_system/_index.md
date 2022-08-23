@@ -1,16 +1,22 @@
 ---
 title: Querying a public system
 bookCollapseSection: false
-weight: 1
+weight: 2
+draft: true
 ---
 
 # Cyber-dojo introduction
 
+THIS DOES NOT WORK YET!! We need to get the API-KEY for an open source project working.
+
+
+Use your own API-TOKEN and use `cyber-dojo` as `KOSLI_OWNER`.
 ```shell
 export KOSLI_API_TOKEN=<put your kosli API token here>
 export KOSLI_OWNER=cyber-dojo
 ```
 
+List the environments that are available for `cyber-dojo`
 ```shell
 kosli env ls 
 ```
@@ -19,6 +25,7 @@ NAME      TYPE  LAST REPORT                LAST MODIFIED
 aws-beta  ECS   2022-08-18T09:57:13+02:00  2022-08-18T09:57:13+02:00
 aws-prod  ECS                              2022-08-12T15:12:44+02:00
 ```
+
 
 We can find out all the running artifacts in the current `prod` environment snapshot:
 ```shell

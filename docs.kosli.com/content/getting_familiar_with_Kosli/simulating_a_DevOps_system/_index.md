@@ -1,10 +1,12 @@
 ---
 title: Simulating a DevOps system
 bookCollapseSection: false
-weight: 1
+weight: 3
 ---
 
-## Preparing the tutorial
+<!-- https://medium.com/pragmatic-programmers/displaying-shell-command-code-blocks-in-hugo-d50691096772 -->
+
+# Preparing the tutorial
 
 For these examples we are simulating a system with source code, build and a running server.
 We have a script to help you run these simulations so you don't need to type so many commands.
@@ -45,6 +47,20 @@ While going through the getting started guide, feel free to explore the
 functionality by updating the source code, building and deploying new versions.
 
 
+{{< hint info >}}
+## Using a web browser
+
+As you go through the guide you can also check your progress from 
+[your browser](https://app.kosli.com).
+
+In the upper left corner there is a house icon. Next to it you can select
+which organization you want to view. Your personal organization
+has the same name as your github login name, and is the organization you will
+be using in this guide.
+{{< /hint >}}
+
+
+
 # Environment
 
 A Kosli environment stores information about
@@ -72,7 +88,11 @@ $ kosli environment declare \
 
 You can immediately verify that the Kosli environment was created:
 ```shell
-$ kosli environment ls
+kosli environment ls
+```
+
+Response:
+```shell
 NAME        TYPE    LAST REPORT  LAST MODIFIED
 production  server               2022-08-16T07:53:43+02:00
 
@@ -83,6 +103,7 @@ Description:       Production server (for kosli getting started)
 State:             N/A
 Last Reported At:  N/A
 ```
+
 
 In the web interface you can select the **Environments** menu on the left.
 It will show you that you have a *production* environment and that
