@@ -72,6 +72,7 @@ ensure_network:
 test_integration_setup:
 	./bin/docker_login_aws.sh staging
 	@docker-compose down || true
+	@docker rmi -f 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:latest || true
 	@docker-compose up -d
 	./mongo/ip_wait.sh localhost:8001
 	@docker exec cli_kosli_server /demo/create_test_users.py
