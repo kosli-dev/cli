@@ -4,14 +4,14 @@ title: "kosli environment get"
 
 ## kosli environment get
 
-Get an environment metadata.
+Get a specific environment snapshot.
 
 ### Synopsis
 
-Get an environment metadata.
+Get a specific environment snapshot.
 
 ```shell
-kosli environment get [ENVIRONMENT-NAME] [flags]
+kosli environment get ENVIRONMENT-NAME-OR-EXPRESSION [flags]
 ```
 
 ### Flags
@@ -32,4 +32,25 @@ kosli environment get [ENVIRONMENT-NAME] [flags]
 |        --owner string  |  The Kosli user or organization.  |
 |    -v, --verbose  |  [optional] Print verbose logs to stdout.  |
 
+
+### Examples
+
+```shell
+
+# get the latest snapshot of an environment:
+kosli environment get yourEnvironmentName
+	--api-token yourAPIToken \
+	--owner yourOrgName 
+
+# get the SECOND latest snapshot of an environment:
+kosli environment get yourEnvironmentName~1
+	--api-token yourAPIToken \
+	--owner yourOrgName 
+
+# get the snapshot number 23 of an environment:
+kosli environment get yourEnvironmentName#23
+	--api-token yourAPIToken \
+	--owner yourOrgName 
+
+```
 

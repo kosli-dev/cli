@@ -1,26 +1,24 @@
 ---
-title: "kosli snapshot ls"
+title: "kosli environment inspect"
 ---
 
-## kosli snapshot ls
+## kosli environment inspect
 
-List all snapshots for an environment.
+Inspect an environment metadata.
 
 ### Synopsis
 
-List all snapshots for an environment.
+Inspect an environment metadata.
 
 ```shell
-kosli snapshot ls ENVIRONMENT-NAME [flags]
+kosli environment inspect [ENVIRONMENT-NAME] [flags]
 ```
 
 ### Flags
 | Flag | Description |
 | :--- | :--- |
-|    -h, --help  |  help for ls  |
+|    -h, --help  |  help for inspect  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
-|        --page int  |  [defaulted] The page number of a reponse. (default 1)  |
-|    -n, --page-limit int  |  [defaulted] The number of elements per page. (default 15)  |
 
 
 ### Options inherited from parent commands

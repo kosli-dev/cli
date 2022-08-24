@@ -11,7 +11,7 @@ Get a deployment from a specified pipeline
 Get a deployment from a specified pipeline
 
 ```shell
-kosli deployment get DEPLOYMENT-ID [flags]
+kosli deployment get SNAPPISH [flags]
 ```
 
 ### Flags
@@ -19,7 +19,6 @@ kosli deployment get DEPLOYMENT-ID [flags]
 | :--- | :--- |
 |    -h, --help  |  help for get  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
-|    -p, --pipeline string  |  The Kosli pipeline name.  |
 
 
 ### Options inherited from parent commands
@@ -33,4 +32,25 @@ kosli deployment get DEPLOYMENT-ID [flags]
 |        --owner string  |  The Kosli user or organization.  |
 |    -v, --verbose  |  [optional] Print verbose logs to stdout.  |
 
+
+### Examples
+
+```shell
+
+# get the latest deployment in a pipeline
+kosli deployment get yourPipelineName \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# get previous deployment in a pipeline
+kosli deployment get yourPipelineName~1 \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# get the 10th deployment in a pipeline
+kosli deployment get yourPipelineName#10 \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+```
 

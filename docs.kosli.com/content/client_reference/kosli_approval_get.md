@@ -11,7 +11,7 @@ Get an approval from a specified pipeline
 Get an approval from a specified pipeline
 
 ```shell
-kosli approval get APPROVAL-ID [flags]
+kosli approval get SNAPPISH [flags]
 ```
 
 ### Flags
@@ -19,7 +19,6 @@ kosli approval get APPROVAL-ID [flags]
 | :--- | :--- |
 |    -h, --help  |  help for get  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
-|    -p, --pipeline string  |  The Kosli pipeline name.  |
 
 
 ### Options inherited from parent commands
@@ -33,4 +32,25 @@ kosli approval get APPROVAL-ID [flags]
 |        --owner string  |  The Kosli user or organization.  |
 |    -v, --verbose  |  [optional] Print verbose logs to stdout.  |
 
+
+### Examples
+
+```shell
+
+# get the latest approval in a pipeline
+kosli approval get yourPipelineName \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# get previous approval in a pipeline
+kosli approval get yourPipelineName~1 \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# get the 10th approval in a pipeline
+kosli approval get yourPipelineName#10 \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+```
 

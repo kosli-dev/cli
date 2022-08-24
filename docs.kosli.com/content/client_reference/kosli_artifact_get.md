@@ -11,7 +11,7 @@ Get artifact from a specified pipeline
 Get artifact from a specified pipeline
 
 ```shell
-kosli artifact get ARTIFACT-DIGEST [flags]
+kosli artifact get SNAPPISH [flags]
 ```
 
 ### Flags
@@ -19,7 +19,6 @@ kosli artifact get ARTIFACT-DIGEST [flags]
 | :--- | :--- |
 |    -h, --help  |  help for get  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
-|    -p, --pipeline string  |  The Kosli pipeline name.  |
 
 
 ### Options inherited from parent commands
@@ -33,4 +32,15 @@ kosli artifact get ARTIFACT-DIGEST [flags]
 |        --owner string  |  The Kosli user or organization.  |
 |    -v, --verbose  |  [optional] Print verbose logs to stdout.  |
 
+
+### Examples
+
+```shell
+
+# get an artifact with a given SHA256 in a pipeline
+kosli artifact get yourPipelineName@yourSHA256 \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+```
 
