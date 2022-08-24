@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"github.com/sirupsen/logrus"
@@ -72,7 +73,14 @@ func DoBasicAuthRequest(jsonBytes []byte, url, username, password string,
 	}
 
 	if resp.StatusCode != 200 && resp.StatusCode != 201 {
-		return &HTTPResponse{}, fmt.Errorf("request failed with status code %d: %s", resp.StatusCode, string(body))
+		var respBody map[string]string
+		err := json.Unmarshal([]byte(body), &respBody)
+		if err != nil {
+			return &HTTPResponse{}, err
+		}
+
+		cleanedErrorMessage := strings.Split(respBody["message"], "You have requested")[0]
+		return &HTTPResponse{}, fmt.Errorf(cleanedErrorMessage)
 	}
 
 	return &HTTPResponse{
