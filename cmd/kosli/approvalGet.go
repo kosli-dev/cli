@@ -5,33 +5,50 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 const approvalGetDesc = `Get an approval from a specified pipeline`
 
+const approvalGetExample = `
+# get the latest approval in a pipeline
+kosli approval get yourPipelineName \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# get previous approval in a pipeline
+kosli approval get yourPipelineName~1 \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# get the 10th approval in a pipeline
+kosli approval get yourPipelineName#10 \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+`
+
 type approvalGetOptions struct {
-	output       string
-	pipelineName string
+	output string
 }
 
 func newApprovalGetCmd(out io.Writer) *cobra.Command {
 	o := new(approvalGetOptions)
 	cmd := &cobra.Command{
-		Use:   "get APPROVAL-ID",
-		Short: approvalGetDesc,
-		Long:  approvalGetDesc,
+		Use:     "get SNAPPISH",
+		Short:   approvalGetDesc,
+		Long:    approvalGetDesc,
+		Example: approvalGetExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			if len(args) < 1 {
-				return ErrorBeforePrintingUsage(cmd, "approval ID argument is required")
+				return ErrorBeforePrintingUsage(cmd, "approval SNAPPISH argument is required")
 			}
 			return nil
 		},
@@ -40,21 +57,14 @@ func newApprovalGetCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
-
-	err := RequireFlags(cmd, []string{"pipeline"})
-	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
-	}
-
 	return cmd
 }
 
 func (o *approvalGetOptions) run(out io.Writer, args []string) error {
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/approvals/%s", global.Host, global.Owner, o.pipelineName, args[0])
-	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
+	kurl := fmt.Sprintf("%s/api/v1/projects/%s/approval/?snappish=%s", global.Host, global.Owner, url.QueryEscape(args[0]))
+	response, err := requests.DoBasicAuthRequest([]byte{}, kurl, "", global.ApiToken,
+		global.MaxAPIRetries, http.MethodGet, map[string]string{}, log)
 	if err != nil {
 		return err
 	}
