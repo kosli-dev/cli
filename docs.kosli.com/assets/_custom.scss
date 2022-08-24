@@ -84,7 +84,12 @@ aside.book-menu .book-menu-content {
 .command {
     cursor: pointer;
     code.language-shell::before {
-        content: "$ ";
+        content: "bash";
+        position: absolute;
+        right: 8px;
+        top: -15px;
+        font-size: 8px;
+        color: #272822;
     }
     position: relative;
     &::after {
