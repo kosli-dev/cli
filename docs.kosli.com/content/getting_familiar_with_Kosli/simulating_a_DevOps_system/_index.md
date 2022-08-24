@@ -15,7 +15,7 @@ You can download the file from here:
 https://raw.githubusercontent.com/kosli-dev/cli/main/simulation_commands.bash
 
 or from the command line with
-```shell {.command .multiple}
+```shell {.command}
 cd /tmp
 curl -O https://raw.githubusercontent.com/kosli-dev/cli/main/simulation_commands.bash
 ```
@@ -39,7 +39,7 @@ create_git_repo_in_tmp ()
 ```
 
 Create the git repo and simulate a build and deployment to server.
-```shell {.command .multiple}
+```shell {.command}
 create_git_repo_in_tmp
 simulate_build
 simulate_deployment
@@ -171,7 +171,7 @@ N/A     Name: /tmp/try-kosli/server/db_1.bin                                    
 ```
 
 We simulate an update of the web application to a new version, build and deploy it
-```shell {.command .multiple}
+```shell {.command}
 update_web_src
 simulate_build
 simulate_deployment
