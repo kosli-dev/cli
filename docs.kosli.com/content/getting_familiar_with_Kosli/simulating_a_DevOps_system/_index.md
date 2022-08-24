@@ -15,19 +15,21 @@ You can download the file from here:
 https://raw.githubusercontent.com/kosli-dev/cli/main/simulation_commands.bash
 
 or from the command line with
-```shell
-$ cd /tmp
-$ curl -O https://raw.githubusercontent.com/kosli-dev/cli/main/simulation_commands.bash
+```shell {.command .multiple}
+cd /tmp
+curl -O https://raw.githubusercontent.com/kosli-dev/cli/main/simulation_commands.bash
 ```
 
 Source the simulation commands so you can use them later on in the examples.
-```shell
-$ source simulation_commands.bash
+```shell {.command}
+source simulation_commands.bash
 ```
 
 To see what a command (eg create_git_repo_in_tmp) in the simulation is actually doing run 
+```shell {.command}
+type create_git_repo_in_tmp
+```
 ```shell
-$ type create_git_repo_in_tmp
 create_git_repo_in_tmp is a function
 create_git_repo_in_tmp () 
 { 
@@ -37,10 +39,10 @@ create_git_repo_in_tmp ()
 ```
 
 Create the git repo and simulate a build and deployment to server.
-```shell
-$ create_git_repo_in_tmp
-$ simulate_build
-$ simulate_deployment
+```shell {.command .multiple}
+create_git_repo_in_tmp
+simulate_build
+simulate_deployment
 ``` 
 
 While going through the getting started guide, feel free to explore the
@@ -79,24 +81,26 @@ it to the Kosli environment.
 To follow the examples make sure you have followed the instructions in Local setup
 
 We create a Kosli environment.
-```shell
-$ kosli environment declare \
+```shell {.command}
+kosli environment declare \
     --name production \
     --environment-type server \
     --description "Production server (for kosli getting started)"
 ```
 
 You can immediately verify that the Kosli environment was created:
-```shell
+```shell {.command}
 kosli environment ls
 ```
-
-Response:
 ```shell
 NAME        TYPE    LAST REPORT  LAST MODIFIED
 production  server               2022-08-16T07:53:43+02:00
+```
 
-$ kosli environment get production
+```shell {.command}
+kosli environment get production
+```
+```shell
 Name:              production
 Type:              server
 Description:       Production server (for kosli getting started)
@@ -114,22 +118,26 @@ no reports have been received.
 
 We simulate a report from our server by reporting two dummy files for the web and
 database applications.
-```shell
-$ kosli environment report server production \
+```shell {.command}
+kosli environment report server production \
     --paths /tmp/try-kosli/server/web_*bin \
     --paths /tmp/try-kosli/server/db_*.bin
 ```
 
 We can see that the server has started, and how long it has run.
+```shell {.command}
+kosli snapshot ls production
+```
 ```shell
-$ kosli snapshot ls production
 SNAPSHOT  FROM                  TO   DURATION
 1         16 Aug 22 07:54 CEST  now  11 seconds
 ```
 
 We can get a more detailed view of what is currently running on the server.
+```shell {.command}
+kosli snapshot get production
+```
 ```shell
-$ kosli snapshot get production
 COMMIT  ARTIFACT                                                                  PIPELINE  RUNNING_SINCE  REPLICAS
 N/A     Name: /tmp/try-kosli/server/web_1.bin                                     N/A       2 minutes ago  1
         SHA256: a7a87c332500a40f9a01b811ec75f51b40188a3dabd205feb0fa7c3eafb25fbe                           
@@ -145,11 +153,15 @@ gives you a detailed view of what is running now.
 Typically a server periodically sends a report of what is currently running to Kosli. Kosli
 only creates a new snapshot if the report has changes compared to previous snapshot, so resending the same environment report
 several times will not lead to duplication of snapshots.
-```shell
-$ kosli environment report server production \
+```shell {.command}
+kosli environment report server production \
     --paths /tmp/try-kosli/server/web_*bin \
     --paths /tmp/try-kosli/server/db_*.bin
-$ kosli snapshot get production
+```
+```shell {.command}
+kosli snapshot get production
+```
+```shell
 COMMIT  ARTIFACT                                                                  PIPELINE  RUNNING_SINCE  REPLICAS
 N/A     Name: /tmp/try-kosli/server/web_1.bin                                     N/A       2 minutes ago  1
         SHA256: a7a87c332500a40f9a01b811ec75f51b40188a3dabd205feb0fa7c3eafb25fbe                           
@@ -159,30 +171,34 @@ N/A     Name: /tmp/try-kosli/server/db_1.bin                                    
 ```
 
 We simulate an update of the web application to a new version, build and deploy it
-```shell
-$ update_web_src
-$ simulate_build
-$ simulate_deployment
+```shell {.command .multiple}
+update_web_src
+simulate_build
+simulate_deployment
 ```
 
 Report what is now running on server
-```shell
-$ kosli environment report server production \
+```shell {.command}
+kosli environment report server production \
     --paths /tmp/try-kosli/server/web_*bin \
     --paths /tmp/try-kosli/server/db_*.bin
 ```
 
 We can see we have created a new snapshot.
+```shell {.command}
+kosli snapshot ls production
+```
 ```shell
-$ kosli snapshot ls production
 SNAPSHOT  FROM                  TO                    DURATION
 2         16 Aug 22 07:58 CEST  now                   9 seconds
 1         16 Aug 22 07:54 CEST  16 Aug 22 07:58 CEST  4 minutes
 ```
 
 We can see that we are currently running web version 2 in production.
+```shell {.command}
+kosli snapshot get production
+```
 ```shell
-$ kosli snapshot get production
 COMMIT  ARTIFACT                                                                  PIPELINE  RUNNING_SINCE   REPLICAS
 N/A     Name: /tmp/try-kosli/server/web_2.bin                                     N/A       39 seconds ago  1
         SHA256: cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746                            
@@ -195,8 +211,10 @@ Here, using the bare environment name (eg production) always refers to the lates
 in that environment. We can also use the 
 Kosli CLI to check what was running in previous snapshots.
 Here we look at what was running in snapshot #1 in production.
+```shell {.command}
+kosli snapshot get production#1
+```
 ```shell
-$ kosli snapshot get production#1
 COMMIT  ARTIFACT                                                                  PIPELINE  RUNNING_SINCE  REPLICAS
 N/A     Name: /tmp/try-kosli/server/web_1.bin                                     N/A       7 minutes ago  1
         SHA256: a7a87c332500a40f9a01b811ec75f51b40188a3dabd205feb0fa7c3eafb25fbe                           
@@ -235,14 +253,15 @@ is building. Since we are building two applications we are making
 two Kosli pipelines `web-server` and `database-server`.
 
 Create your new pipelines:
-```shell
-$ kosli pipeline declare \
+```shell {.command}
+kosli pipeline declare \
     --pipeline web-server \
     --description "pipeline to build web-server" \
     --visibility private \
     --template artifact
-
-$ kosli pipeline declare \
+```
+```shell {.command}
+kosli pipeline declare \
     --pipeline database-server \
     --description "pipeline to build database-server" \
     --visibility private \
@@ -250,8 +269,10 @@ $ kosli pipeline declare \
 ```
 
 You can immediately verify the Kosli pipelines were created:
+```shell {.command}
+kosli pipeline ls
+```
 ```shell
-$ kosli pipeline ls
 NAME             DESCRIPTION                        VISIBILITY
 database-server  pipeline to build database-server  private
 web-server       pipeline to build web-server       private
@@ -266,21 +287,22 @@ been reported for the pipelines.
 ## Building artifacts and reporting them to Kosli
 
 Simulate building our SW
-```shell
-$ simulate_build
+```shell {.command}
+simulate_build
 ```
 
 We can now report we have built the web and database applications. We are using
 a dummy `--build-url`, in real life it would be a CI build URL.
-```shell
-$ kosli pipeline artifact report creation /tmp/try-kosli/build/web_$(cat /tmp/try-kosli/code/web.src).bin \
+```shell {.command}
+kosli pipeline artifact report creation /tmp/try-kosli/build/web_$(cat /tmp/try-kosli/code/web.src).bin \
     --pipeline web-server \
     --artifact-type file \
     --build-url file://dummy \
     --commit-url file:///tmp/try-kosli/code \
     --git-commit $(cd /tmp/try-kosli/code; git rev-parse HEAD)
-
-$ kosli pipeline artifact report creation /tmp/try-kosli/build/db_$(cat /tmp/try-kosli/code/db.src).bin \
+```
+```shell {.command}
+kosli pipeline artifact report creation /tmp/try-kosli/build/db_$(cat /tmp/try-kosli/code/db.src).bin \
     --pipeline database-server \
     --artifact-type file \
     --build-url file://dummy \
@@ -289,24 +311,30 @@ $ kosli pipeline artifact report creation /tmp/try-kosli/build/db_$(cat /tmp/try
 ```
 
 We can see we have built one artifact in our *web-server* pipeline
+```shell {.command}
+kosli artifact ls web-server
+```
 ```shell
-$ kosli artifact ls web-server
 COMMIT   ARTIFACT                                                                  STATE      CREATED_AT
 5187374  Name: web_2.bin                                                           COMPLIANT  16 Aug 22 08:00 CEST
          SHA256: cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746             
 ```
 
 And one for the *database-server* pipeline
+```shell {.command}
+kosli artifact ls database-server
+```
 ```shell
-$ kosli artifact ls database-server
 COMMIT   ARTIFACT                                                                  STATE      CREATED_AT
 5187374  Name: db_1.bin                                                            COMPLIANT  16 Aug 22 08:01 CEST
          SHA256: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af             
 ```
 
 We can also get detailed information about each artifact that has been reported.
+```shell {.command}
+kosli artifact get --pipeline database-server 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af
+```
 ```shell
-$ kosli artifact get --pipeline database-server 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af
 Name:         db_1.bin
 State:        COMPLIANT
 Git commit:   518737485e5150ee6255a1c74749997d380c1708
@@ -333,13 +361,13 @@ being deployed to a given runtime environment.
 ## Deploying SW to the server and reporting the deployment to Kosli
 
 Simulate deploying our SW to the server
-```shell
-$ simulate_deployment
+```shell {.command}
+simulate_deployment
 ```
 
 Report to Kosli that the web SW has been deployed.
-```shell
-$ kosli pipeline deployment report /tmp/try-kosli/build/web_$(cat /tmp/try-kosli/code/web.src).bin \
+```shell {.command}
+kosli pipeline deployment report /tmp/try-kosli/build/web_$(cat /tmp/try-kosli/code/web.src).bin \
     --pipeline web-server \
     --artifact-type file \
     --build-url file://dummy \
@@ -348,16 +376,20 @@ $ kosli pipeline deployment report /tmp/try-kosli/build/web_$(cat /tmp/try-kosli
 ```
 
 We can verify the deployment with
+```shell {.command}
+kosli deployment ls web-server
+```
 ```shell
-$ kosli deployment ls web-server
 ID   ARTIFACT                                                                  ENVIRONMENT  REPORTED_AT
 1    Name: web_2.bin                                                           production   16 Aug 22 08:02 CEST
      SHA256: cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746               
 ```
 
 We can also get detailed information about a deployment.
+```shell {.command}
+kosli deployment get --pipeline web-server 1
+```
 ```shell
-$ kosli deployment get --pipeline web-server 1
 ID:               1
 Artifact SHA256:  cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746
 Artifact name:    web_2.bin
@@ -371,8 +403,8 @@ If you select the *web_2.bin* artifact in the web interface it will show
 that it was part of Deployment #1 to *production* environment.
 
 
-# For developers
+<!-- # For developers
 You can extract all the commands to execute from this document by running
-```shell
-cat docs.kosli.com/content/get_familiar_with_Kosli/_index.md | sed -e :a -e '/\\$/N; s/\\\n//; ta' | egrep '^\$ ' | sed "s/^..//" 
-```
+```shell {.command}
+cat docs.kosli.com/content/getting_familiar_with_Kosli/simulating_a_DevOps_system/_index.md | sed -e :a -e '/\\$/N; s/\\\n//; ta' | egrep '^\$ ' | sed "s/^..//" 
+``` -->

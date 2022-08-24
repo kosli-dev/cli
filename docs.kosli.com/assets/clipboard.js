@@ -9,12 +9,12 @@
     selection.addRange(range);
   }
 
-  document.querySelectorAll("pre code").forEach(code => {
+  document.querySelectorAll("div.command").forEach(code => {
     code.addEventListener("click", function (event) {
-      select(code.parentElement);
+      // select(code.parentElement);
 
       if (navigator.clipboard) {
-        navigator.clipboard.writeText(code.parentElement.textContent);
+        navigator.clipboard.writeText(code.textContent);
       }
     });
   });

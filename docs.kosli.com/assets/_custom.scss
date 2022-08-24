@@ -82,15 +82,27 @@ aside.book-menu .book-menu-content {
 }
 
 .command {
-    position: relative;
+    cursor: pointer;
     code.language-shell::before {
         content: "$ ";
     }
+    position: relative;
     &::after {
-        content: "copy";
         position: absolute;
-        right: 0;
-        top: 0;
-        color: #fff;
+        top: 8px;
+        right: 8px;
+        content: "";
+        height: 24px;
+        width: 24px;
+        background-image: url("/images/copy-icon.png");
+        background-repeat: no-repeat;
+    }    
+    &:hover::after {
+        opacity: 0.7;        
+    }
+    &:hover code {
+        opacity: 0.7;
     }
 }
+
+
