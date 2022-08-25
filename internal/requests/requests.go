@@ -64,7 +64,9 @@ func DoBasicAuthRequest(jsonBytes []byte, url, username, password string,
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return &HTTPResponse{}, fmt.Errorf("failed to send %s request to %s : %v", method, url, err)
+		// TODO: add more details when verbose flag is set
+		// You get here if there is no response from the server (e.g. 500)
+		return &HTTPResponse{}, fmt.Errorf("failed to send request. Gave up retrying")
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
