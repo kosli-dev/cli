@@ -91,6 +91,17 @@ aside.book-menu .book-menu-content {
         font-size: 8px;
         color: #272822;
     }
+    .copiedText {
+        opacity: 0;
+        position: absolute;
+        right: 8px;
+        top: 30px;
+        color: #fff;
+        transition: opacity 0.2s;
+        &.visible {
+            opacity: 100;
+        }
+    }
     position: relative;
     &::after {
         position: absolute;
