@@ -173,7 +173,7 @@ nfpms:
     # version_metadata: git
 
     # Version Release.
-    release: 1
+    # release: 1
 
     # Section.
     section: misc
@@ -200,8 +200,8 @@ nfpms:
     # GoReleaser will automatically add the binaries.
     contents:
       # Basic file that applies to all packagers
-      - src: dist/kosli_linux_amd64_v1/kosli
-        dst: /usr/local/bin/kosli
+      # - src: dist/kosli_linux_amd64_v1/kosli
+      #   dst: /usr/local/bin/kosli
 
       # Simple config file
       # - src: path/to/local/foo.conf
@@ -220,8 +220,8 @@ nfpms:
       #   type: "config|noreplace"
 
       # The src and dst attributes also supports name templates
-      # - src: path/{{ .Os }}-{{ .Arch }}/bar.conf
-      #   dst: /etc/foo/bar-{{ .ProjectName }}.conf
+      - src: dist/kosli_{{ .Os }}-{{ .Arch }}/
+        dst: /usr/local/bin/kosli
 
       # These files are not actually present in the package, but the file names
       # are added to the package header. From the RPM directives documentation:
