@@ -7,7 +7,8 @@
     tag.classList.add("copiedText");
     code.addEventListener("click", function (event) {
       if (navigator.clipboard) {
-        navigator.clipboard.writeText(code.textContent);
+        let commandText = code.querySelector("code")
+        navigator.clipboard.writeText(commandText.innerText);
         tag.classList.add("visible");
         setTimeout(() => {
           tag.classList.remove("visible");        
