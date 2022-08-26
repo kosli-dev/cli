@@ -99,7 +99,8 @@ nfpms:
       amd64: amd64_v1
       darwin: darwin
       linux: linux
-      # arm: arm64
+      arm64: arm64
+      arm6:  arm_6
 
     # Your app's vendor.
     # Default is empty.
