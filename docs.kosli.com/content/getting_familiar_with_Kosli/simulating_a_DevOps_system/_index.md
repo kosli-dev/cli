@@ -98,7 +98,7 @@ production  server               2022-08-16T07:53:43+02:00
 ```
 
 ```shell {.command}
-kosli environment get production
+kosli environment inspect production
 ```
 ```shell
 Name:              production
@@ -126,7 +126,7 @@ kosli environment report server production \
 
 We can see that the server has started, and how long it has run.
 ```shell {.command}
-kosli snapshot ls production
+kosli environment log production
 ```
 ```shell
 SNAPSHOT  FROM                  TO   DURATION
@@ -135,7 +135,7 @@ SNAPSHOT  FROM                  TO   DURATION
 
 We can get a more detailed view of what is currently running on the server.
 ```shell {.command}
-kosli snapshot get production
+kosli environment get production
 ```
 ```shell
 COMMIT  ARTIFACT                                                                  PIPELINE  RUNNING_SINCE  REPLICAS
@@ -159,15 +159,11 @@ kosli environment report server production \
     --paths /tmp/try-kosli/server/db_*.bin
 ```
 ```shell {.command}
-kosli snapshot get production
+kosli environment log production
 ```
 ```shell
-COMMIT  ARTIFACT                                                                  PIPELINE  RUNNING_SINCE  REPLICAS
-N/A     Name: /tmp/try-kosli/server/web_1.bin                                     N/A       2 minutes ago  1
-        SHA256: a7a87c332500a40f9a01b811ec75f51b40188a3dabd205feb0fa7c3eafb25fbe                           
-                                                                                                           
-N/A     Name: /tmp/try-kosli/server/db_1.bin                                      N/A       2 minutes ago  1
-        SHA256: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af                           
+SNAPSHOT  FROM                  TO   DURATION
+1         16 Aug 22 07:54 CEST  now  11 seconds
 ```
 
 We simulate an update of the web application to a new version, build and deploy it
@@ -186,7 +182,7 @@ kosli environment report server production \
 
 We can see we have created a new snapshot.
 ```shell {.command}
-kosli snapshot ls production
+kosli environment log production
 ```
 ```shell
 SNAPSHOT  FROM                  TO                    DURATION
@@ -196,7 +192,7 @@ SNAPSHOT  FROM                  TO                    DURATION
 
 We can see that we are currently running web version 2 in production.
 ```shell {.command}
-kosli snapshot get production
+kosli environment get production
 ```
 ```shell
 COMMIT  ARTIFACT                                                                  PIPELINE  RUNNING_SINCE   REPLICAS
@@ -212,7 +208,7 @@ in that environment. We can also use the
 Kosli CLI to check what was running in previous snapshots.
 Here we look at what was running in snapshot #1 in production.
 ```shell {.command}
-kosli snapshot get production#1
+kosli environment get production#1
 ```
 ```shell
 COMMIT  ARTIFACT                                                                  PIPELINE  RUNNING_SINCE  REPLICAS
@@ -223,8 +219,11 @@ N/A     Name: /tmp/try-kosli/server/db_1.bin                                    
         SHA256: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af                           
 ```
 
+<!---
+TODO: add icon of the log tab in the text below
+-->
 In the web interface you should now also be able to see 2 snapshots. The Log
-tab (TODO: add icon) should show what changed in snapshot 1 and snapshot 2.
+tab should show what changed in snapshot 1 and snapshot 2.
 
 
 # Pipelines
@@ -332,7 +331,7 @@ COMMIT   ARTIFACT                                                               
 
 We can also get detailed information about each artifact that has been reported.
 ```shell {.command}
-kosli artifact get --pipeline database-server 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af
+kosli artifact get database-server@0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af
 ```
 ```shell
 Name:         db_1.bin
@@ -387,7 +386,7 @@ ID   ARTIFACT                                                                  E
 
 We can also get detailed information about a deployment.
 ```shell {.command}
-kosli deployment get --pipeline web-server 1
+kosli deployment get web-server#1
 ```
 ```shell
 ID:               1
