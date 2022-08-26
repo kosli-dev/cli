@@ -221,7 +221,7 @@ nfpms:
       #   type: "config|noreplace"
 
       # The src and dst attributes also supports name templates
-      - src: dist/kosli_{{ .Os }}-{{ .Arch }}/
+      - src: dist/kosli_{{ .Os }}_{{ .Arch }}/
         dst: /usr/local/bin/kosli
 
       # These files are not actually present in the package, but the file names
