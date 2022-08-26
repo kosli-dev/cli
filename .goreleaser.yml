@@ -102,6 +102,7 @@ nfpms:
       arm64: arm64
       arm6:  arm_6
       arm: arm64
+      armhf: arm_6
 
     # Your app's vendor.
     # Default is empty.
