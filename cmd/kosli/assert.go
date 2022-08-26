@@ -21,6 +21,7 @@ func newAssertCmd(out io.Writer) *cobra.Command {
 		newAssertPullRequestGithubCmd(out),
 		newAssertStatusCmd(out),
 		newAssertArtifactCmd(out),
+		newAssertEnvironmentCmd(out),
 	)
 
 	return cmd
