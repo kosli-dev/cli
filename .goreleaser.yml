@@ -97,10 +97,9 @@ nfpms:
     # Default is empty.
     replacements:
       amd64: amd64_v1
-      386: 32-bit
       darwin: darwin
       linux: linux
-      arm: arm64
+      # arm: arm64
 
     # Your app's vendor.
     # Default is empty.
