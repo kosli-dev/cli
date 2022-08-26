@@ -96,10 +96,10 @@ nfpms:
     # Values are the respective replacements.
     # Default is empty.
     replacements:
-      amd64: 64-bit
+      amd64: amd64_v1
       386: 32-bit
-      darwin: macOS
-      linux: Tux
+      darwin: darwin
+      linux: linux
 
     # Your app's vendor.
     # Default is empty.
