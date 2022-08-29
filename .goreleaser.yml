@@ -137,7 +137,7 @@ publishers:
     ids:
       - kosli
     dir: "{{ dir .ArtifactPath }}"
-    cmd: curl -F package=@{{ .ArtifactName }} https://{{ .Env.FURY_TOKEN }}@apt.fury.io/kosli/
+    cmd: curl -F package=@{{ .ArtifactName }} https://{{ .Env.FURY_TOKEN }}@push.fury.io/kosli/
 
 
 # # .goreleaser.yaml
