@@ -34,24 +34,19 @@ ldflags:
 
 fmt: ## Reformat package sources
 	@go fmt ./...
-.PHONY: fmt
 
 lint:
 	@docker run --rm -v $(PWD):/app -w /app golangci/golangci-lint:v1.39-alpine golangci-lint run --timeout=5m  -v ./...
-.PHONY: lint
 
 vet: fmt
 	@go vet ./...
-.PHONY: vet
 
 deps: ## Install depdendencies. Runs `go get` internally.
 	@GOFLAGS="" go mod download
 	@GOFLAGS="" go mod tidy
-.PHONY: deps
 
 build: deps vet ## Build the binary
 	@go build -o kosli -ldflags '$(LDFLAGS)' ./cmd/kosli/
-.PHONY: build
 
 check_dirty:
 	@git diff-index --quiet HEAD --  || echo "Cannot test release with dirty git repo"
@@ -83,13 +78,16 @@ test_integration_setup:
 test_integration: deps vet ensure_network test_integration_setup ## Run tests except too slow ones
 	@gotestsum -- --short -p=1 -coverprofile=cover.out ./...
 	@go tool cover -html=cover.out
-.PHONY: test_integration
 
 
 test_integration_full: deps vet ensure_network test_integration_setup ## Run all tests
 	@gotestsum -- -p=1 -coverprofile=cover.out ./...
 	@go tool cover -func=cover.out
-.PHONY: test_integration_full
+
+
+test_integration_no_setup: 
+	@gotestsum -- --short -p=1 -coverprofile=cover.out ./...
+	@go tool cover -html=cover.out
 
 
 test_integration_single:
@@ -102,12 +100,10 @@ test_docs: deps vet ensure_network test_integration_setup
 
 docker: deps vet lint
 	@docker build -t kosli-cli .
-.PHONY: docker
 
 docs: build
 	@rm -f docs.kosli.com/content/client_reference/kosli*
 	@export DOCS=true && ./kosli docs --dir docs.kosli.com/content/client_reference
-.PHONY: docs
 
 licenses:
 	@rm -rf licenses || true
@@ -115,20 +111,16 @@ licenses:
 	@go-licenses save ./... --save_path="licenses/" || true
 	$(eval DATA := $(shell go-licenses csv ./...))
 	@echo $(DATA) | tr " " "\n" > licenses/licenses.csv
-.PHONY: licenses
 
 hugo: docs helm-docs
 	cd docs.kosli.com && hugo server --minify
-.PHONY: hugo
 
 helm-lint: 
 	@cd charts/k8s-reporter && helm lint .
-.PHONY: helm-lint
 
 helm-docs: helm-lint
 	@cd charts/k8s-reporter &&  docker run --rm --volume "$(PWD):/helm-docs" jnorwood/helm-docs:latest --template-files README.md.gotmpl,_templates.gotmpl --output-file README.md
 	@cd charts/k8s-reporter &&  docker run --rm --volume "$(PWD):/helm-docs" jnorwood/helm-docs:latest --template-files README.md.gotmpl,_templates.gotmpl --output-file ../../docs.kosli.com/content/helm/helm_chart.md
-.PHONY: helm-docs
 
 release:
 	@git remote update
