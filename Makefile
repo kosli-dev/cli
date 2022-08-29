@@ -58,7 +58,7 @@ add_test_tag:
 
 build_release: check_dirty add_test_tag
 	rm -rf dist/
-	goreleaser release --debug
+	goreleaser release --skip-publish --debug
 	@git tag -d v0.0.99 2> /dev/null || true
 
 ensure_network:
