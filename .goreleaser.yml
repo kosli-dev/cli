@@ -130,7 +130,16 @@ nfpms:
       - src: dist/kosli_{{ .Os }}_{{ .Arch }}/kosli
         dst: /usr/local/bin/kosli
 
-     
+publishers:
+  - name: fury.io
+    # by specifying `packages` id here goreleaser will only use this publisher
+    # with artifacts identified by this id
+    ids:
+      - kosli
+    dir: "{{ dir .ArtifactPath }}"
+    cmd: curl -F package=@{{ .ArtifactName }} https://{{ .Env.FURY_TOKEN }}@apt.fury.io/kosli/
+
+
 # # .goreleaser.yaml
 # release:
 #   # Repo in which the release will be created.
