@@ -34,44 +34,44 @@ archives:
         format: zip
 
 
-brews:
-  -
-    # GitHub/GitLab repository to push the formula to
-    tap:
-      owner: kosli-dev
-      name: homebrew-tap
-      branch: main
+# brews:
+#   -
+#     # GitHub/GitLab repository to push the formula to
+#     tap:
+#       owner: kosli-dev
+#       name: homebrew-tap
+#       branch: main
 
-    url_template: "https://github.com/kosli-dev/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+#     url_template: "https://github.com/kosli-dev/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
 
-    # The project name and current git tag are used in the format string.
-    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+#     # The project name and current git tag are used in the format string.
+#     commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
 
-    folder: Formula
+#     folder: Formula
 
-    homepage: "https://kosli.com/"
-    description: "A CLI client for reporting compliance events to  https://kosli.com"
-    license: "MIT"
+#     homepage: "https://kosli.com/"
+#     description: "A CLI client for reporting compliance events to  https://kosli.com"
+#     license: "MIT"
 
-    # Packages your package depends on.
-    dependencies:
-      - name: go
+#     # Packages your package depends on.
+#     dependencies:
+#       - name: go
 
-    # So you can `brew test` your formula.
-    # Default is empty.
-    test: |
-      system "#{bin}/kosli", "version"
-      version_output = shell_output(bin/"kosli version 2>&1")
-      assert_match "GitTreeState:\"clean\"", version_output
+#     # So you can `brew test` your formula.
+#     # Default is empty.
+#     test: |
+#       system "#{bin}/kosli", "version"
+#       version_output = shell_output(bin/"kosli version 2>&1")
+#       assert_match "GitTreeState:\"clean\"", version_output
 
-      if build.stable?
-        revision = stable.specs[:revision]
-        assert_match "GitCommit:\"#{revision}\"", version_output
-        assert_match "Version:\"v#{version}\"", version_output
-      end
+#       if build.stable?
+#         revision = stable.specs[:revision]
+#         assert_match "GitCommit:\"#{revision}\"", version_output
+#         assert_match "Version:\"v#{version}\"", version_output
+#       end
 
-    install: |
-      bin.install "kosli"
+#     install: |
+#       bin.install "kosli"
 
 
 # docs for nfpm can be found here:  https://goreleaser.com/customization/nfpm/
