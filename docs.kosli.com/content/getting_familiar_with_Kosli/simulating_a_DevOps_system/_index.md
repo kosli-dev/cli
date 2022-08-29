@@ -404,6 +404,4 @@ that it was part of Deployment #1 to *production* environment.
 
 <!-- # For developers
 You can extract all the commands to execute from this document by running
-```shell {.command}
-cat docs.kosli.com/content/getting_familiar_with_Kosli/simulating_a_DevOps_system/_index.md | sed -e :a -e '/\\$/N; s/\\\n//; ta' | egrep '^\$ ' | sed "s/^..//" 
-``` -->
+sed -n '/^```/,/^```/ p' < docs.kosli.com/content/getting_familiar_with_Kosli/simulating_a_DevOps_system/_index.md | sed '/``` -->
