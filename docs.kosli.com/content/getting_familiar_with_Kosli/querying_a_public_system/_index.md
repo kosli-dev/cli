@@ -2,7 +2,7 @@
 title: Querying a public system
 bookCollapseSection: false
 weight: 2
-draft: false
+draft: true
 ---
 
 # Cyber-dojo introduction
