@@ -32,7 +32,9 @@ export KOSLI_API_TOKEN=<put your kosli API token here>
 export KOSLI_OWNER=<put your github username here>
 ```
 
-To get the kosli API token go to https://app.kosli.com, log in using your github account, and go to your Profile (you'll find it if you click on your avatar in the top right corner of the page)
+## Getting your Kosli API token
+
+To get the kosli API token go to https://app.kosli.com, log in using your github account, and go to your Profile (you'll find it by clicking on your avatar in the top right corner of the page).
 
 
 
