@@ -7,6 +7,8 @@ weight: 1
 
 ## Installing Kosli CLI
 
+This guide shows you how to install the Kosli CLI. Kosli CLI can be installed from package managers or pre-built binaries.
+
 {{< tabs "installKosli" >}}
 
 {{< tab "Homebrew" >}}
@@ -68,7 +70,16 @@ sudo mv kosli /usr/local/bin/kosli
 
 {{< /tabs >}}
 
+## Verify the installation worked
 
+To verify that Kosli CLI is successfully installed run the command below.
+```shell {.command}
+kosli version
+```
+The expected output should be similar to the one below
+```
+version.BuildInfo{Version:"v0.1.10", GitCommit:"9c623f1e6c293235ddc8de1e347bf99a1b356e48", GitTreeState:"clean", GoVersion:"go1.17.11"}
+```
 
 ## Using environment variables
 
