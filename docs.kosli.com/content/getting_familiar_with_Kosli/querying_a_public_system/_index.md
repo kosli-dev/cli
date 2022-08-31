@@ -25,7 +25,7 @@ after a Cyber-dojo git commit:
 
 # Getting started
 
-If you want to you can run the actual commands in this tutorial in a terminal in a docker container or
+If you want to you can run the actual commands in this tutorial in a terminal. Either in a docker container or
 on your local machine.
 You need to:
 * [Install Kosli](../installation)
@@ -35,19 +35,6 @@ You need to:
 export KOSLI_API_TOKEN=<put your kosli API token here>
 export KOSLI_OWNER=cyber-dojo
 ```
-<!-- 
-You can verify your comand with:
-```shell {.command}
-kosli env ls 
-```
-```shell
-NAME      TYPE  LAST REPORT                LAST MODIFIED
-aws-beta  ECS   2022-08-30T13:18:42+02:00  2022-08-30T13:18:42+02:00
-aws-prod  ECS   2022-08-30T13:18:28+02:00  2022-08-30T13:18:28+02:00
-beta      K8S   2022-06-15T11:39:59+02:00  2022-06-15T11:39:59+02:00
-prod      K8S   2022-06-15T11:40:01+02:00  2022-06-15T11:40:01+02:00
-``` -->
-
 
 # Pipeline events
 
@@ -83,7 +70,7 @@ In this case we have a Kosli pipeline named `runner`.
 Lets find out which artifact was built from this commit.
 <!-- kosli artifact get runner@9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625 -->
 ```shell {.command}
-kosli artifact get runner{commit=16d9990}
+kosli artifact get runner:16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
 ```
 
 ```shell
@@ -103,15 +90,24 @@ Evidence:
 
 We can see the Name of the artifact, including version number. Cyber-dojo uses the short commit
 sha as version number, but semantic or no versioning can also be used.
-TODO: State COMPLIANT??
-The Build and Commit URL points back to the source code and the build system. We can see
-when the artifact was built and that there are no Approvals for this artifact.
-This artifact was deployed to both aws-beta and aws-prod and exited 2 days later.
+<!-- TODO: State COMPLIANT?? -->
+The Build and Commit URLs point back to the source code and the build system. We can see
+when the artifact was built. 
+<!-- There are no Approvals for this artifact. -->
+This artifact was deployed to both aws-beta and aws-prod on 22nd of August and exited 2 days later.
+The artifact has attached evidence for branch-coverage. This evidence was reported from the CI-pipeline.
 
+<!-- 
+TODO:
+Do we want a command so we can get a list of snapshots that a given artifact was running in?
+kosli env get aws-prod@9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625 
+-->
+
+<!-- 
 TODO:
 We need a `kosli artifact get runner{commit=16d9990}` command
 The output of the command that is listed here is missing the artifact sha. Should it also
 contain a URL to the artifact?
 https://app.merkely.com/cyber-dojo/pipelines/runner/artifacts/9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
 
-
+ -->
