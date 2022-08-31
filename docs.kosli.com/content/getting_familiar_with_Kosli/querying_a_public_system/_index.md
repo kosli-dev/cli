@@ -75,6 +75,7 @@ kosli artifact get runner:16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
 
 ```shell
 Name:        cyberdojo/runner:16d9990
+SHA256:      9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
 State:       COMPLIANT
 Git commit:  16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
 Build URL:   https://github.com/cyber-dojo/runner/actions/runs/2902808452
@@ -90,6 +91,7 @@ Evidence:
 
 We can see the Name of the artifact, including version number. Cyber-dojo uses the short commit
 sha as version number, but semantic or no versioning can also be used.
+The SHA256 of the artifact.
 <!-- TODO: State COMPLIANT?? -->
 The Build and Commit URLs point back to the source code and the build system. We can see
 when the artifact was built. 
@@ -104,10 +106,23 @@ kosli env get aws-prod@9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bc
 -->
 
 <!-- 
-TODO:
-We need a `kosli artifact get runner{commit=16d9990}` command
-The output of the command that is listed here is missing the artifact sha. Should it also
-contain a URL to the artifact?
-https://app.merkely.com/cyber-dojo/pipelines/runner/artifacts/9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
+This we would like to show the users:
+- Kosli gives developers without access to production environment information about what is running.
+- Detect that a new "bit-coin miner" is running in your environment.
+- Detect that an unexpected version of an artifact is running.
+- Commit makes the server stop working. Use kosli env diff to find out what artifact changed.
+It would be good if we had two versions of prod where there are several artifacts that change.
+- Kosli could detect that a deployment did not start to run.
+- Find out when/where a given commit is running.
+- See what SW is/was running where which is useful in debugging.
+  I detect from the web page that there is something wrong with 'saver'. I then want to know
+  which version of 'saver' is running now.
+- We see that staging has stopped working, but prod is still OK. We do a kosli env diff and
+  kosli env log to find out what services has changed.
+- List which version of 'saver' is running across all environments.
+
+Problems:
+- Not every commit generates an artifact. If you only build after 10 commits then 9 will not
+be visible.
 
  -->
