@@ -19,6 +19,10 @@ const artifactGetExample = `
 kosli artifact get yourPipelineName@yourSHA256 \
 	--api-token yourAPIToken \
 	--owner yourOrgName
+# get an artifact with a given commit SHA256 in a pipeline
+kosli artifact get yourPipelineName:yourCommitSHA256 \
+	--api-token yourAPIToken \
+	--owner yourOrgName
 `
 
 type artifactGetOptions struct {
