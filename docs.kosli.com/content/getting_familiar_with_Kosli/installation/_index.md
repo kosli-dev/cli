@@ -21,7 +21,7 @@ brew install kosli-dev/tap/kosli
 {{< /tab >}}
 
 {{< tab "APT" >}}
-If you are using Ubuntu or Debian Linux, you can install the Kosli CLI by running the following commands:
+If you are using Ubuntu or Debian Linux, you can install the Kosli CLI by running:
 ```shell {.command}
 sudo sh -c 'echo "deb [trusted=yes] https://apt.fury.io/kosli/ /"  > /etc/apt/sources.list.d/fury.list'
 # if you are on a clean debian container/machine, you will need to install ca-certificates, otherwise ignore that step
@@ -33,7 +33,7 @@ sudo apt install kosli
 {{< /tab >}}
 
 {{< tab "YUM" >}}
-If you have RedHat Linux, you can use YUM to install the Kosli CLI.
+If you have RedHat Linux, you can use YUM to install the Kosli CLI by running.
 ```shell {.command}
 cat <<EOT >> /etc/yum.repos.d/kosli.repo
 [kosli]
@@ -57,7 +57,7 @@ yum install kosli
 {{< /tab >}}
 
 {{< tab "Curl" >}}
-Alternatively, the Kosli CLI binary can be downloaded from [GitHub](https://github.com/kosli-dev/cli/releases)
+You can download the Kosli CLI from [GitHub](https://github.com/kosli-dev/cli/releases).
 Make sure to choose the correct tar file for your system.
 
 For example, on Mac with AMD:
@@ -65,8 +65,15 @@ For example, on Mac with AMD:
 curl -L https://github.com/kosli-dev/cli/releases/download/v0.1.10/kosli_0.1.10_darwin_amd64.tar.gz | tar zx
 sudo mv kosli /usr/local/bin/kosli
 ```
-
 {{< /tab >}}
+
+{{< tab "Docker" >}}
+You can run the Kosli CLI in a docker container by running:
+```shell {.command}
+docker run -it ghcr.io/kosli-dev/cli:v0.1.10 bash
+```
+{{< /tab >}}
+
 
 {{< /tabs >}}
 

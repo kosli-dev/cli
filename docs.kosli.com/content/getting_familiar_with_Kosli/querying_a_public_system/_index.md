@@ -25,7 +25,8 @@ after a Cyber-dojo git commit:
 
 # Getting started
 
-If you want to you can run the actual commands in this tutorial in a bash terminal.
+If you want to you can run the actual commands in this tutorial in a terminal in a docker container or
+on your local machine.
 You need to:
 * [Install Kosli](../installation)
 * [Sign up to Kosli with Github](https://app.kosli.com)
