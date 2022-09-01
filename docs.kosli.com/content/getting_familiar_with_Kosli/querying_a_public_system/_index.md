@@ -8,11 +8,11 @@ draft: true
 # Cyber-dojo introduction
 
 [Cyber-dojo](https://cyber-dojo.org) is an open source platform where teams can practice TDD in
-many different languages without any installation.
+many different languages directly from the browser without any installation.
 
-Cyber-dojo has a standard micro service architecture with a dozen or so git repositories
+Cyber-dojo has a standard microservice architecture with a dozen or so git repositories
 (eg [web](https://github.com/cyber-dojo/web), [runner](https://github.com/cyber-dojo/runner)).
-Each git repository has its own CI pipeline producing a docker image.
+Each git repository has its own CI pipeline producing a public docker image.
 
 These docker images run in two AWS environments called [aws-beta](https://app.merkely.com/cyber-dojo/environments/aws-beta)
 and [aws-prod](https://app.merkely.com/cyber-dojo/environments/aws-prod).
@@ -25,26 +25,28 @@ after a Cyber-dojo git commit:
 
 # Getting started
 
-If you want to you can run the actual commands in this tutorial in a terminal. Either in a docker container or
+You can run the actual commands in this tutorial in a terminal. Either in a docker container or
 on your local machine.
 You need to:
 * [Install Kosli](../installation)
-* [Sign up to Kosli with Github](https://app.kosli.com)
-* [Get your Kosli API token](../installation#getting-your-kosli-api-token) and set the following environment variables:
+* [Sign up to Kosli with Github](https://app.kosli.com) so you have a Kosli API token.
+* [Get your Kosli API token](../installation#getting-your-kosli-api-token)
+* Set the KOSLI_API_TOKEN environment variable. You need this to authenticate.
 ```shell {.command}
 export KOSLI_API_TOKEN=<put your kosli API token here>
+```
+* Set the KOSLI_OWNER environment variable to `cyber-dojo`. cyber-dojo
+is a public Kosli organization and is readable by any authenticated user. 
+```shell {.command}
 export KOSLI_OWNER=cyber-dojo
 ```
 
 # Pipeline events
 
-We will follow a git commit [16d9990](https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4) 
-to the `runner` repository through its CI-pipeline.
-
-The name of a git repository, CI-pipeline and Kosli pipeline does not need to match. But it makes
-life a lot easier if the relationship is clear.
-
-We can list the Kosli pipelines so we can match up the name with the git repository name.
+The `kosli` cli automatically uses the `KOSLI_API_TOKEN` to authenticate,
+and the `KOSLI_OWNER` environment variable to specify a Kosli organization. 
+So with these two environment variables set, you can list the 
+`cyber-dojo` CI pipelines reporting to Kosli. 
 
 ```shell {.command}
 kosli pipeline ls
@@ -65,7 +67,11 @@ shas                    UX for git+image shas               public
 web                     UX for practicing TDD               public
 ```
 
-In this case we have a Kosli pipeline named `runner`.
+The name of a Kosli pipeline does not need to match the name of a git
+repository - but it helps if the relationship is clear.
+
+We will follow the git commit [16d9990](https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4) 
+to the `runner` repository through its CI-pipeline.
 
 Lets find out which artifact was built from this commit.
 <!-- kosli artifact get runner@9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625 -->
@@ -88,16 +94,23 @@ Deployments:
 Evidence:
      branch-coverage:  COMPLIANT
 ```
+<!-- I think it makes sense for these to be printed with the two URLs in swapped order -->
+<!-- and for the Evidence to come before Approvals -->
 
-We can see the Name of the artifact, including version number. Cyber-dojo uses the short commit
-sha as version number, but semantic or no versioning can also be used.
-The SHA256 of the artifact.
-<!-- TODO: State COMPLIANT?? -->
-The Build and Commit URLs point back to the source code and the build system. We can see
-when the artifact was built. 
-<!-- There are no Approvals for this artifact. -->
-This artifact was deployed to both aws-beta and aws-prod on 22nd of August and exited 2 days later.
-The artifact has attached evidence for branch-coverage. This evidence was reported from the CI-pipeline.
+We can see:
+* Name: The name of the docker image. Its :tag is the short-sha of 
+the git commit. Kosli also supports pipelines building other kinds of artifacts, such 
+as zip files.
+* SHA256: Kosli knows how to 'fingerprint' any kind of artifact to create a unique tamper-proof digest.  
+* State.  
+* Commit URL: You can follow this link to the actual commit on Github. 
+* Build URL: You can follow this link to the actual Github Action for this commit.
+* Created at: The artifact was created on 22nd August 2022, at 11:35 CEST.
+<!-- It is unfortunate that the day is the same as the year (22). Do we want to print 2022? -->
+<!-- There are no Approvals for this artifact. Should we simply not show this? -->
+* Deployments. The artifact was deployed to `aws-beta` on 22nd August, and to `aws-prod` one minute later.
+It exited both `aws-beta` and `aws-prod` 2 days later at the times given.
+* Evidence. The artifact has attached evidence for branch-coverage. This evidence was reported from the CI-pipeline.
 
 <!-- 
 TODO:
