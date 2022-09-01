@@ -25,6 +25,10 @@ after a Cyber-dojo git commit:
 
 # Getting started
 
+<!-- When I try to run `docker pull ghcr.io/kosli-dev/cli:v0.1.10` I get
+     Error response from daemon: Head "https://ghcr.io/v2/kosli-dev/cli/manifests/v0.1.10": denied: denied
+-->
+
 You can run the actual commands in this tutorial in a terminal. Either in a docker container or
 on your local machine.
 You need to:
