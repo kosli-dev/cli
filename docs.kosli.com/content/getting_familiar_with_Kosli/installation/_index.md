@@ -70,7 +70,7 @@ sudo mv kosli /usr/local/bin/kosli
 {{< tab "Docker" >}}
 You can run the Kosli CLI in a docker container by running:
 ```shell {.command}
-docker run -it ghcr.io/kosli-dev/cli:v0.1.10 bash
+docker run -it --rm ghcr.io/kosli-dev/cli:v0.1.10 bash
 ```
 {{< /tab >}}
 
