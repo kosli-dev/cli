@@ -95,8 +95,12 @@ Evidence:
             branch-coverage:  COMPLIANT
 Approvals:  None
 Deployments:
-     #18 Reported deployment to aws-beta at Mon, 22 Aug 2022 11:37:15 CEST (Exited on Wed, 24 Aug 2022 18:05:22 CEST)
-     #19 Reported deployment to aws-prod at Mon, 22 Aug 2022 11:38:19 CEST (Exited on Wed, 24 Aug 2022 18:12:14 CEST)
+     #18 Deployed from Pipeline runner to aws-beta at Mon, 22 Aug 2022 11:37:15 CEST
+     #19 Deployed from Pipeline runner to aws-prod at Mon, 22 Aug 2022 11:38:19 CEST     
+     Started in Environment aws-beta#83 at ...
+     Started in Environment aws-prod#92 at ...
+     Exited from Environment aws-beta#87 at ... (ran for 2 hours, 10 minutes)
+     Exited from Environment aws-prod#104 at ... (ran for 2 hours)                 
 ```
 
 We can see:
@@ -113,6 +117,14 @@ as zip files.
 a manual approval of an artifact before deployment.
 * Deployments. The artifact was deployed to `aws-beta` on 22nd August, and to `aws-prod` one minute later.
 It exited both `aws-beta` and `aws-prod` 2 days later at the times given.
+
+
+<!--
+Here we do
+kosli env get aws-prod#104
+to see what other services it was running in
+and whether the whole env was compliant
+-->
 
 <!-- 
 TODO:
