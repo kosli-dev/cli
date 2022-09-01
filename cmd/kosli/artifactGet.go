@@ -87,6 +87,7 @@ func printArtifactsAsTable(artifactRaw string, out io.Writer, pageNumber int) er
 	if err != nil {
 		return err
 	}
+	separator := ""
 	for _, artifact := range artifacts {
 		approvals := artifact["approvals"].([]interface{})
 		deployments := artifact["deployments"].([]interface{})
@@ -97,15 +98,31 @@ func printArtifactsAsTable(artifactRaw string, out io.Writer, pageNumber int) er
 		rows := []string{}
 		rows = append(rows, fmt.Sprintf("Name:\t%s", artifactData["filename"].(string)))
 		rows = append(rows, fmt.Sprintf("SHA256:\t%s", artifactData["sha256"].(string)))
-		rows = append(rows, fmt.Sprintf("State:\t%s", artifact["state"].(string)))
-		rows = append(rows, fmt.Sprintf("Git commit:\t%s", artifactData["git_commit"].(string)))
-		rows = append(rows, fmt.Sprintf("Build URL:\t%s", artifactData["build_url"].(string)))
-		rows = append(rows, fmt.Sprintf("Commit URL:\t%s", artifactData["commit_url"].(string)))
 		createdAt, err := formattedTimestamp(artifactData["logged_at"], false)
 		if err != nil {
 			return err
 		}
-		rows = append(rows, fmt.Sprintf("Created at:\t%s", createdAt))
+		rows = append(rows, fmt.Sprintf("Created on:\t%s", createdAt))
+		rows = append(rows, fmt.Sprintf("Git commit:\t%s", artifactData["git_commit"].(string)))
+		rows = append(rows, fmt.Sprintf("Commit URL:\t%s", artifactData["commit_url"].(string)))
+		rows = append(rows, fmt.Sprintf("Build URL:\t%s", artifactData["build_url"].(string)))
+
+		rows = append(rows, fmt.Sprintf("State:\t%s", artifact["state"].(string)))
+		rows = append(rows, "Evidence:")
+		for _, evidenceName := range artifact["template"].([]interface{}) {
+			if evidenceName != "artifact" {
+				if v, ok := evidenceMap[evidenceName.(string)]; !ok {
+					rows = append(rows, fmt.Sprintf("    %s:\tMISSING", evidenceName))
+				} else {
+					evidenceData := v.(map[string]interface{})
+					isCompliant := "COMPLIANT"
+					if !evidenceData["is_compliant"].(bool) {
+						isCompliant = "INCOMPLIANT"
+					}
+					rows = append(rows, fmt.Sprintf("    %s:\t%s", evidenceName, isCompliant))
+				}
+			}
+		}
 
 		if len(approvals) > 0 {
 			rows = append(rows, "Approvals:")
@@ -115,11 +132,11 @@ func printArtifactsAsTable(artifactRaw string, out io.Writer, pageNumber int) er
 				if err != nil {
 					return err
 				}
-				approvalRow := fmt.Sprintf("\t#%d  %s  Last modified: %s", int64(approval["release_number"].(float64)), approval["state"].(string), timestamp)
+				approvalRow := fmt.Sprintf("    #%d  %s  Last modified: %s", int64(approval["release_number"].(float64)), approval["state"].(string), timestamp)
 				rows = append(rows, approvalRow)
 			}
 		} else {
-			rows = append(rows, "Approvals:\tNone")
+			rows = append(rows, "Approvals:   None")
 		}
 
 		if len(deployments) > 0 {
@@ -147,7 +164,7 @@ func printArtifactsAsTable(artifactRaw string, out io.Writer, pageNumber int) er
 					return err
 				}
 
-				deploymentRow := fmt.Sprintf("\t#%d Reported deployment to %s at %s (%s)",
+				deploymentRow := fmt.Sprintf("    #%d Reported deployment to %s at %s (%s)",
 					int64(deployment["deployment_id"].(float64)),
 					deployment["environment"].(string),
 					createdAtTimestamp,
@@ -155,25 +172,10 @@ func printArtifactsAsTable(artifactRaw string, out io.Writer, pageNumber int) er
 				rows = append(rows, deploymentRow)
 			}
 		} else {
-			rows = append(rows, "Deployments:\tNone")
+			rows = append(rows, "Deployments: None")
 		}
-
-		rows = append(rows, "Evidence:")
-		for _, evidenceName := range artifact["template"].([]interface{}) {
-			if evidenceName != "artifact" {
-				if v, ok := evidenceMap[evidenceName.(string)]; !ok {
-					rows = append(rows, fmt.Sprintf("\t%s:\tMISSING", evidenceName))
-				} else {
-					evidenceData := v.(map[string]interface{})
-					isCompliant := "COMPLIANT"
-					if !evidenceData["is_compliant"].(bool) {
-						isCompliant = "INCOMPLIANT"
-					}
-					rows = append(rows, fmt.Sprintf("\t%s:\t%s", evidenceName, isCompliant))
-				}
-			}
-		}
-
+		fmt.Print(separator)
+		separator = "\n"
 		tabFormattedPrint(out, []string{}, rows)
 	}
 	return nil

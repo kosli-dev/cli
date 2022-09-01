@@ -86,35 +86,33 @@ kosli artifact get runner:16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
 ```shell
 Name:        cyberdojo/runner:16d9990
 SHA256:      9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
-State:       COMPLIANT
+Created on:  Mon, 22 Aug 2022 11:34:59 CEST • 10 days ago
 Git commit:  16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
-Build URL:   https://github.com/cyber-dojo/runner/actions/runs/2902808452
 Commit URL:  https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
-Created at:  22 Aug 22 11:35 CEST • 8 days ago
-Approvals:   None
-Deployments:
-     #18 Reported deployment to aws-beta at 22 Aug 22 11:37 CEST (Exited on 24 Aug 22 18:05 CEST)
-     #19 Reported deployment to aws-prod at 22 Aug 22 11:38 CEST (Exited on 24 Aug 22 18:12 CEST)
+Build URL:   https://github.com/cyber-dojo/runner/actions/runs/2902808452
+State:       COMPLIANT
 Evidence:
-     branch-coverage:  COMPLIANT
+            branch-coverage:  COMPLIANT
+Approvals:  None
+Deployments:
+     #18 Reported deployment to aws-beta at Mon, 22 Aug 2022 11:37:15 CEST (Exited on Wed, 24 Aug 2022 18:05:22 CEST)
+     #19 Reported deployment to aws-prod at Mon, 22 Aug 2022 11:38:19 CEST (Exited on Wed, 24 Aug 2022 18:12:14 CEST)
 ```
-<!-- I think it makes sense for these to be printed with the two URLs in swapped order -->
-<!-- and for the Evidence to come before Approvals -->
 
 We can see:
 * Name: The name of the docker image. Its :tag is the short-sha of 
 the git commit. Kosli also supports pipelines building other kinds of artifacts, such 
 as zip files.
 * SHA256: Kosli knows how to 'fingerprint' any kind of artifact to create a unique tamper-proof digest.  
-* State.  
+* Created on: The artifact was created on 22nd August 2022, at 11:35 CEST.
 * Commit URL: You can follow this link to the actual commit on Github. 
 * Build URL: You can follow this link to the actual Github Action for this commit.
-* Created at: The artifact was created on 22nd August 2022, at 11:35 CEST.
-<!-- It is unfortunate that the day is the same as the year (22). Do we want to print 2022? -->
-<!-- There are no Approvals for this artifact. Should we simply not show this? -->
+* State: COMPLIANT means that the promised evidence for this artifact has been provided.
+* Evidence. The artifact has attached evidence for `branch-coverage`. This evidence was reported from the CI-pipeline.
+* Approvals: The `runner` service has continuous deployment; it requires no manual approval step. Kosli also supports
+a manual approval of an artifact before deployment.
 * Deployments. The artifact was deployed to `aws-beta` on 22nd August, and to `aws-prod` one minute later.
 It exited both `aws-beta` and `aws-prod` 2 days later at the times given.
-* Evidence. The artifact has attached evidence for branch-coverage. This evidence was reported from the CI-pipeline.
 
 <!-- 
 TODO:

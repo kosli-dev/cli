@@ -380,8 +380,8 @@ func tabFormattedPrint(out io.Writer, header []string, rows []string) {
 	w.Flush()
 }
 
-// formattedTimestamp formats a float timestamp into something like "01 Apr 22 14:20 CEST • 4 months ago"
-// time is formatted using RFC822
+// formattedTimestamp formats a float timestamp into something like "Mon, 22 Aug 2022 11:34:59 CEST • 10 days ago"
+// time is formatted using RFC1123
 func formattedTimestamp(timestamp interface{}, short bool) (string, error) {
 	var intTimestamp int64
 	switch t := timestamp.(type) {
@@ -403,10 +403,10 @@ func formattedTimestamp(timestamp interface{}, short bool) (string, error) {
 
 	unixTime := time.Unix(intTimestamp, 0)
 	if short {
-		return unixTime.Format(time.RFC822), nil
+		return unixTime.Format(time.RFC1123), nil
 	} else {
 		timeago.English.Max = 36 * timeago.Month
 		timeAgoFormat := timeago.English.Format(unixTime)
-		return fmt.Sprintf("%s \u2022 %s", unixTime.Format(time.RFC822), timeAgoFormat), nil
+		return fmt.Sprintf("%s \u2022 %s", unixTime.Format(time.RFC1123), timeAgoFormat), nil
 	}
 }
