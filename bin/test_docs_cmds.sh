@@ -19,7 +19,7 @@ echo "export KOSLI_API_TOKEN=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNz
 echo ""  >> ${TEST_FILE}
 
 # Extract all shell commands from md file and append to test file
-sed -n '/^```.*command/,/^```/ p' < ${MD_FILE} | sed '/^```/ d'  >> ${TEST_FILE}
+sed -n '/^```.*command/,/^```/ p' < ${MD_FILE} | sed '/^```/ d;/put your kosli/ d'  >> ${TEST_FILE}
 
 # Chmod and execute the test file
 chmod 755 ${TEST_FILE}
