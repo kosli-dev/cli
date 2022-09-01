@@ -135,21 +135,34 @@ kosli env get aws-prod@9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bc
 <!-- 
 This we would like to show the users:
 - Kosli gives developers without access to production environment information about what is running.
-- Detect that a new "bit-coin miner" is running in your environment.
-- Detect that an unexpected version of an artifact is running.
+- Detect that a new "bit-coin miner" is running in your environment. Rogue artifact detection.
+- Kosli can show that a deployment is reported, but artifact didn't start. Find this in artifact view.
+- Kosli can show that an artifact started, but no deployment was reported for it.
+- Detect an artifact that is missing evidence is running in an environment
+
 - Commit makes the server stop working. Use kosli env diff to find out what artifact changed.
-It would be good if we had two versions of prod where there are several artifacts that change.
-- Kosli could detect that a deployment did not start to run.
-- Find out when/where a given commit is running.
+It would be good if we had two versions of env where there are several artifacts that change.
+(with easter egg)
+
+(- Find out when/where a given commit is running.)
+
 - See what SW is/was running where which is useful in debugging.
   I detect from the web page that there is something wrong with 'saver'. I then want to know
-  which version of 'saver' is running now.
-- We see that staging has stopped working, but prod is still OK. We do a kosli env diff and
-  kosli env log to find out what services has changed.
+  which version of 'saver' is running now. I want to know what git commit is running.
 - List which version of 'saver' is running across all environments.
+
+- We see that beta.cyberdojo.org is not working as expected, but prod is still OK. We do a kosli env diff and
+  kosli env log to find out what services has changed.
+
+- Change of K8S infrastructure broke both cyber dojo environments. The fix was to manually change 3 of the
+  services on prod. Beta was not fixed and was down for a long period. We might not be able to detect this.
 
 Problems:
 - Not every commit generates an artifact. If you only build after 10 commits then 9 will not
 be visible.
+
+Things we can do later:
+- Find which artifact this "unknown commit" is part of. So we need the git history.
+- Kosli can show that an older deployment is running than that is declared. roll-back
 
  -->
