@@ -86,21 +86,23 @@ kosli artifact get runner:16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
 ```shell
 Name:        cyberdojo/runner:16d9990
 SHA256:      9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
-Created on:  Mon, 22 Aug 2022 11:34:59 CEST • 10 days ago
+Created on:  Mon, 22 Aug 2022 11:35:00 CEST • 11 days ago
 Git commit:  16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
 Commit URL:  https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
 Build URL:   https://github.com/cyber-dojo/runner/actions/runs/2902808452
 State:       COMPLIANT
-Evidence:
-            branch-coverage:  COMPLIANT
-Approvals:  None
-Deployments:
-     #18 Deployed from Pipeline runner to aws-beta at Mon, 22 Aug 2022 11:37:15 CEST
-     #19 Deployed from Pipeline runner to aws-prod at Mon, 22 Aug 2022 11:38:19 CEST     
-     Started in Environment aws-beta#83 at ...
-     Started in Environment aws-prod#92 at ...
-     Exited from Environment aws-beta#87 at ... (ran for 2 hours, 10 minutes)
-     Exited from Environment aws-prod#104 at ... (ran for 2 hours)                 
+History:
+    Artifact created                           Mon, 22 Aug 2022 11:35:00 CEST
+    branch-coverage evidence received          Mon, 22 Aug 2022 11:36:02 CEST
+    Deployment #18 to aws-beta environment     Mon, 22 Aug 2022 11:37:17 CEST
+    Deployment #19 to aws-prod environment     Mon, 22 Aug 2022 11:38:21 CEST
+    Reported running in aws-beta environment   Mon, 22 Aug 2022 11:38:28 CEST
+    Reported running in aws-prod environment   Mon, 22 Aug 2022 11:39:22 CEST
+    Reported running in aws-beta environment   Wed, 24 Aug 2022 18:03:42 CEST
+    No longer running in aws-beta environment  Wed, 24 Aug 2022 18:05:42 CEST
+    Reported running in aws-prod environment   Wed, 24 Aug 2022 18:10:28 CEST
+    No longer running in aws-prod environment  Wed, 24 Aug 2022 18:12:28 CEST
+            
 ```
 
 We can see:
@@ -112,11 +114,14 @@ as zip files.
 * Commit URL: You can follow this link to the actual commit on Github. 
 * Build URL: You can follow this link to the actual Github Action for this commit.
 * State: COMPLIANT means that the promised evidence for this artifact has been provided.
-* Evidence. The artifact has attached evidence for `branch-coverage`. This evidence was reported from the CI-pipeline.
-* Approvals: The `runner` service has continuous deployment; it requires no manual approval step. Kosli also supports
-a manual approval of an artifact before deployment.
-* Deployments. The artifact was deployed to `aws-beta` on 22nd August, and to `aws-prod` one minute later.
-It exited both `aws-beta` and `aws-prod` 2 days later at the times given.
+* History: This shows the history of the artifact:
+   * Artifact was created on on 22nd August.
+   * The artifact has attached evidence for `branch-coverage`. This evidence was reported from the CI-pipeline.
+   * The CI-pipeline reported that the artifact would be deployed to `aws-beta` on 22nd August, and to `aws-prod` one minute later.
+   * The artifact was reported to run in `aws-beta` and `aws-prod` a minute later.
+   * The artifact exited both `aws-beta` and `aws-prod` 2 days later at the times given.
+
+
 
 
 <!--
