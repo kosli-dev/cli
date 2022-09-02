@@ -82,6 +82,10 @@ Let's find out which artifact was built from this commit.
 kosli artifact get runner:16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
 ```
 
+<!-- JJ: When I try the above I get
+    Error: json: cannot unmarshal array into Go value of type map[string]interface {}
+-->
+
 ```shell
 Name:        cyberdojo/runner:16d9990
 SHA256:      9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
@@ -105,7 +109,17 @@ History:
             
 ```
 
-<!-- Here we could mention the URL for seeing this in app.kosli.com 
+<!-- JJ: There is plenty of scope for making various words in the text below into URLs
+-->
+
+<!-- JJ: The text after this output does not mention that this shows
+     the artifact running in aws-beta *twice* (84/117)
+     and in aws-prod *twice* (65/94)
+     Do we want to mention that as a third interesting thing? 
+     I suspect we are missing some "No longer running" reports here...
+-->
+
+<!-- JJ: Here we could mention the URL for seeing this in app.kosli.com 
      where `aws-prod#65` etc are clickable links (hopefully)!
 -->
 
@@ -189,7 +203,7 @@ The first (from commit `16d9990`) has three instances (replicas).
 This is as expected; the `runner` service bears the brunt of cyber-dojo's load.
 The second (from commit `85d83c6`) has only one instance.
 What is going on?
-Let's look at `aws-prod`s *next* snapshot:
+Let's look at the snapshot *after* `aws-prod#65`:
 
 ```shell {.command}
 kosli env get aws-prod#66
@@ -220,18 +234,29 @@ kosli env diff aws-prod#65 aws-prod#66
   Commit: https://github.com/cyber-dojo/runner/commit/85d83c6ab8e0ce800baeef3dfa4fa9f6eee338a4
   Started: Sat, 20 Aug 2022 22:32:43 CEST • 13 days ago
 ```
-The minus sign in front of the name indicates `runner:85d83c6` has exited (as expected). 
-A plus sign would indicate a newly started service.
+The minus sign in front of the name indicates `eeb0cfc` stopped.
+This was the end of the blue-green deployment.
+
+Let's go backwards in time a little and look at the previous diff:
+
+```shell {.command}
+kosli env diff aws-prod#64 aws-prod#65
+```
+
+```shell
++ Name:   274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990
+  Sha256: 9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
+  Pipeline: runner
+  Commit: https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
+  Started: 22 Aug 22 10:39 BST • 11 days ago
+```
+
+The plus sign in front of the name indicates `9af401c` started.
+This was the beginning of the blue-green deployment.
 
 
 <!--
 Do we want to mention the whole env being compliant?
--->
-
-<!-- 
-TODO:
-Do we want a command so we can get a list of snapshots that a given artifact was running in?
-kosli env get aws-prod@9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625 
 -->
 
 <!-- 
