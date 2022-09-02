@@ -89,9 +89,6 @@ func printArtifactsAsTable(artifactRaw string, out io.Writer, pageNumber int) er
 	}
 	separator := ""
 	for _, artifact := range artifacts {
-		approvals := artifact["approvals"].([]interface{})
-		deployments := artifact["deployments"].([]interface{})
-
 		evidenceMap := artifact["evidence"].(map[string]interface{})
 		artifactData := evidenceMap["artifact"].(map[string]interface{})
 
@@ -108,72 +105,95 @@ func printArtifactsAsTable(artifactRaw string, out io.Writer, pageNumber int) er
 		rows = append(rows, fmt.Sprintf("Build URL:\t%s", artifactData["build_url"].(string)))
 
 		rows = append(rows, fmt.Sprintf("State:\t%s", artifact["state"].(string)))
-		rows = append(rows, "Evidence:")
-		for _, evidenceName := range artifact["template"].([]interface{}) {
-			if evidenceName != "artifact" {
-				if v, ok := evidenceMap[evidenceName.(string)]; !ok {
-					rows = append(rows, fmt.Sprintf("    %s:\tMISSING", evidenceName))
-				} else {
-					evidenceData := v.(map[string]interface{})
-					isCompliant := "COMPLIANT"
-					if !evidenceData["is_compliant"].(bool) {
-						isCompliant = "INCOMPLIANT"
-					}
-					rows = append(rows, fmt.Sprintf("    %s:\t%s", evidenceName, isCompliant))
-				}
-			}
-		}
 
-		if len(approvals) > 0 {
-			rows = append(rows, "Approvals:")
-			for _, rawApproval := range approvals {
-				approval := rawApproval.(map[string]interface{})
-				timestamp, err := formattedTimestamp(approval["last_modified_at"], true)
+		// TODO: Remove this if no one has an objection. Info is covered by history
+		// rows = append(rows, "Evidence:")
+		// for _, evidenceName := range artifact["template"].([]interface{}) {
+		// 	if evidenceName != "artifact" {
+		// 		if v, ok := evidenceMap[evidenceName.(string)]; !ok {
+		// 			rows = append(rows, fmt.Sprintf("    %s:\tMISSING", evidenceName))
+		// 		} else {
+		// 			evidenceData := v.(map[string]interface{})
+		// 			isCompliant := "COMPLIANT"
+		// 			if !evidenceData["is_compliant"].(bool) {
+		// 				isCompliant = "INCOMPLIANT"
+		// 			}
+		// 			rows = append(rows, fmt.Sprintf("    %s:\t%s", evidenceName, isCompliant))
+		// 		}
+		// 	}
+		// }
+
+		// TODO: Remove this if no one has an objection. Info is covered by history
+		// approvals := artifact["approvals"].([]interface{})
+		// if len(approvals) > 0 {
+		// 	rows = append(rows, "Approvals:")
+		// 	for _, rawApproval := range approvals {
+		// 		approval := rawApproval.(map[string]interface{})
+		// 		timestamp, err := formattedTimestamp(approval["last_modified_at"], true)
+		// 		if err != nil {
+		// 			return err
+		// 		}
+		// 		approvalRow := fmt.Sprintf("    #%d  %s  Last modified: %s", int64(approval["release_number"].(float64)), approval["state"].(string), timestamp)
+		// 		rows = append(rows, approvalRow)
+		// 	}
+		// } else {
+		// 	rows = append(rows, "Approvals:   None")
+		// }
+
+		// TODO: Remove this if no one has an objection. Info is covered by history
+		// deployments := artifact["deployments"].([]interface{})
+		// if len(deployments) > 0 {
+		// 	rows = append(rows, "Deployments:")
+		// 	for _, rawDeployment := range deployments {
+		// 		deployment := rawDeployment.(map[string]interface{})
+		// 		deploymentState := deployment["running_state"].(map[string]interface{})
+		// 		state := deploymentState["state"].(string)
+		// 		stateTimestamp, err := formattedTimestamp(deploymentState["timestamp"], true)
+		// 		if err != nil {
+		// 			return err
+		// 		}
+
+		// 		stateString := "Unknown"
+		// 		if state == "deploying" {
+		// 			stateString = "Deploying"
+		// 		} else if state == "running" {
+		// 			stateString = fmt.Sprintf("Running since %s", stateTimestamp)
+		// 		} else if state == "exited" {
+		// 			stateString = fmt.Sprintf("Exited on %s", stateTimestamp)
+		// 		}
+
+		// 		createdAtTimestamp, err := formattedTimestamp(deployment["created_at"], true)
+		// 		if err != nil {
+		// 			return err
+		// 		}
+
+		// 		deploymentRow := fmt.Sprintf("    #%d Reported deployment to %s at %s (%s)",
+		// 			int64(deployment["deployment_id"].(float64)),
+		// 			deployment["environment"].(string),
+		// 			createdAtTimestamp,
+		// 			stateString)
+		// 		rows = append(rows, deploymentRow)
+		// 	}
+		// } else {
+		// 	rows = append(rows, "Deployments: None")
+		// }
+
+		history := artifact["history"].([]interface{})
+		if len(history) > 0 {
+			rows = append(rows, "History:")
+			for _, rawHistory := range history {
+				event := rawHistory.(map[string]interface{})
+				//eventType := event["type"]
+				eventString := event["event"]
+				eventTimestamp, err := formattedTimestamp(event["timestamp"], true)
 				if err != nil {
 					return err
 				}
-				approvalRow := fmt.Sprintf("    #%d  %s  Last modified: %s", int64(approval["release_number"].(float64)), approval["state"].(string), timestamp)
-				rows = append(rows, approvalRow)
+				historyRow := fmt.Sprintf("    %s\t%s", eventString, eventTimestamp)
+				rows = append(rows, historyRow)
 			}
-		} else {
-			rows = append(rows, "Approvals:   None")
 		}
 
-		if len(deployments) > 0 {
-			rows = append(rows, "Deployments:")
-			for _, rawDeployment := range deployments {
-				deployment := rawDeployment.(map[string]interface{})
-				deploymentState := deployment["running_state"].(map[string]interface{})
-				state := deploymentState["state"].(string)
-				stateTimestamp, err := formattedTimestamp(deploymentState["timestamp"], true)
-				if err != nil {
-					return err
-				}
-
-				stateString := "Unknown"
-				if state == "deploying" {
-					stateString = "Deploying"
-				} else if state == "running" {
-					stateString = fmt.Sprintf("Running since %s", stateTimestamp)
-				} else if state == "exited" {
-					stateString = fmt.Sprintf("Exited on %s", stateTimestamp)
-				}
-
-				createdAtTimestamp, err := formattedTimestamp(deployment["created_at"], true)
-				if err != nil {
-					return err
-				}
-
-				deploymentRow := fmt.Sprintf("    #%d Reported deployment to %s at %s (%s)",
-					int64(deployment["deployment_id"].(float64)),
-					deployment["environment"].(string),
-					createdAtTimestamp,
-					stateString)
-				rows = append(rows, deploymentRow)
-			}
-		} else {
-			rows = append(rows, "Deployments: None")
-		}
 		fmt.Print(separator)
 		separator = "\n"
 		tabFormattedPrint(out, []string{}, rows)
