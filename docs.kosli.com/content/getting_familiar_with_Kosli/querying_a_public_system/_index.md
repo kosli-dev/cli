@@ -82,10 +82,6 @@ Let's find out which artifact was built from this commit.
 kosli artifact get runner:16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
 ```
 
-<!-- JJ: When I try the above I get
-    Error: json: cannot unmarshal array into Go value of type map[string]interface {}
--->
-
 ```shell
 Name:        cyberdojo/runner:16d9990
 SHA256:      9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
