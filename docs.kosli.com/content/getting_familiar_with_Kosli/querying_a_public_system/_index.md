@@ -92,16 +92,17 @@ Commit URL:  https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087a
 Build URL:   https://github.com/cyber-dojo/runner/actions/runs/2902808452
 State:       COMPLIANT
 History:
-    Artifact created                           Mon, 22 Aug 2022 11:35:00 CEST
-    branch-coverage evidence received          Mon, 22 Aug 2022 11:36:02 CEST
-    Deployment #18 to aws-beta environment     Mon, 22 Aug 2022 11:37:17 CEST
-    Deployment #19 to aws-prod environment     Mon, 22 Aug 2022 11:38:21 CEST
-    Reported running in aws-beta environment   Mon, 22 Aug 2022 11:38:28 CEST
-    Reported running in aws-prod environment   Mon, 22 Aug 2022 11:39:22 CEST
-    Reported running in aws-beta environment   Wed, 24 Aug 2022 18:03:42 CEST
-    No longer running in aws-beta environment  Wed, 24 Aug 2022 18:05:42 CEST
-    Reported running in aws-prod environment   Wed, 24 Aug 2022 18:10:28 CEST
-    No longer running in aws-prod environment  Wed, 24 Aug 2022 18:12:28 CEST
+    Artifact created                               Mon, 22 Aug 2022 11:35:00 CEST
+    branch-coverage evidence received              Mon, 22 Aug 2022 11:36:02 CEST
+    Deployment #18 to aws-beta environment         Mon, 22 Aug 2022 11:37:17 CEST
+    Deployment #19 to aws-prod environment         Mon, 22 Aug 2022 11:38:21 CEST
+    Reported running in aws-beta#84 environment    Mon, 22 Aug 2022 11:38:28 CEST
+    Reported running in aws-prod#65 environment    Mon, 22 Aug 2022 11:39:22 CEST
+    Reported running in aws-beta#117 environment   Wed, 24 Aug 2022 18:03:42 CEST
+    No longer running in aws-beta#119 environment  Wed, 24 Aug 2022 18:05:42 CEST
+    Reported running in aws-prod#94 environment    Wed, 24 Aug 2022 18:10:28 CEST
+    No longer running in aws-prod#96 environment   Wed, 24 Aug 2022 18:12:28 CEST
+
             
 ```
 
@@ -122,6 +123,65 @@ as zip files.
    * The artifact exited both `aws-beta` and `aws-prod` 2 days later at the times given.
 
 
+# Environment events
+
+Cyber-dojo have set up AWS to run a lambda function (same as cron job) periodically. The lambda function
+collects the version and finger print for services running and report them to Kosli. If the report of what
+is currently running is changing from last report Kosli generates a new snapshot. So the list
+of snapshots for an environment describes all the changes to a runtime environment.
+
+We have seen that our commit was deployed to `aws-prod` on 22nd of August and that it was reported
+running in the `aws-prod` environment in snapshot number 65. We can show all the services that was
+running in that snapshot
+
+```shell {.command}
+kosli env get aws-prod#65
+```
+
+```shell
+COMMIT   ARTIFACT                                                                              PIPELINE                RUNNING_SINCE  REPLICAS
+16d9990  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990                  runner                  11 days ago    3
+         SHA256: 9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625                                                     
+                                                                                                                                      
+7c45272  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/shas:7c45272                    shas                    11 days ago    1
+         SHA256: 76c442c04283c4ca1af22d882750eb960cf53c0aa041bbdb2db9df2f2c1282be
+
+...
+
+85d83c6  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:85d83c6                  runner                  13 days ago    1
+         SHA256: eeb0cfc9ee7f69fbd9531d5b8c1e8d22a8de119e2a422344a714a868e9a8bfec                                                     
+                                                                                                                                      
+1a2b170  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/differ:1a2b170                  differ                  13 days ago    1
+         SHA256: d8440b94f7f9174c180324ceafd4148360d9d7c916be2b910f132c58b8a943ae                                                     
+                                                                                                                             
+```
+
+We see that we are actually running two versions of `runner` at this point in time. This is due to blue-green
+deployment. In the next snapshot the runner:85d83c6 has stopped.
+
+```shell {.command}
+kosli env get aws-prod#66
+```
+```shell
+COMMIT   ARTIFACT                                                                              PIPELINE                RUNNING_SINCE  REPLICAS
+16d9990  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990                  runner                  11 days ago    3
+         SHA256: 9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625                                                     
+...
+```
+
+A more convenient way to find out what changed between snapshot 65 and 66 is to use the Kosli diff tool
+```shell {.command}
+kosli env diff aws-prod#65 aws-prod#66
+```
+```shell
+- Name:   274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:85d83c6
+  Sha256: eeb0cfc9ee7f69fbd9531d5b8c1e8d22a8de119e2a422344a714a868e9a8bfec
+  Pipeline: runner
+  Commit: https://github.com/cyber-dojo/runner/commit/85d83c6ab8e0ce800baeef3dfa4fa9f6eee338a4
+  Started: Sat, 20 Aug 2022 22:32:43 CEST • 13 days ago
+```
+The minus sign in front of the name indicates a process that has stopped. A plus sign indicates a service that
+has started.
 
 
 <!--
