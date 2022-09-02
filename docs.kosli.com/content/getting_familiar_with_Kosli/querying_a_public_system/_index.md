@@ -2,58 +2,68 @@
 title: Querying a public system
 bookCollapseSection: false
 weight: 2
-draft: true
+draft: false
 ---
 
-In this tutorial you'll learn how Kosli tracks "life after git". 
-You'll use the Kosli cli to "follow" a commit to a git repository that is part
-of the [cyber-dojo](https://cyber-dojo.org) open source project.
-You see the dynamic events related to:
+# Overview
+
+In this tutorial you'll learn how Kosli tracks "life after git"
+by running `kosli` CLI commands that "follow" a commit to a git repository.
+You'll see the dynamic events related to:
 * Its CI-pipeline (eg building docker image, running unit tests, deploying, etc)
 * Its AWS runtime environments (eg blue-green rollover, instance scaling, etc)
 
-# Cyber-dojo Introduction
-
-cyber-dojo is an open source platform where teams can practice TDD (in
-many languages) directly from a browser without any installation.
-
-cyber-dojo has a standard microservice architecture with a dozen git repositories
-(eg [web](https://github.com/cyber-dojo/web), [runner](https://github.com/cyber-dojo/runner)).
-Each git repository has its own Github Actions CI pipeline producing a docker image.
-
-These docker images run in two AWS environments whose Kosli names are 
+The git repository you'll be using is part of the 
+[cyber-dojo](https://cyber-dojo.org) open source project.  
+* [https://cyber-dojo.org](https://cyber-dojo.org) is an open source platform where teams 
+practice TDD (in many languages) without any installation.  
+* cyber-dojo has a microservice architecture with a dozen git repositories
+(eg [web](https://github.com/cyber-dojo/web), [runner](https://github.com/cyber-dojo/runner)).  
+* Each git repository has its own Github Actions CI pipeline producing a docker image.
+* These docker images run in two AWS environments whose Kosli names are 
 [aws-beta](https://app.kosli.com/cyber-dojo/environments/aws-beta)
 and [aws-prod](https://app.kosli.com/cyber-dojo/environments/aws-prod).
 
 
 # Getting Ready
 
-You run the Kosli CLI commands in this tutorial in a terminal, either in a docker container or
-directly on your local machine.
 You need to:
-* [Install the Kosli cli](../installation)
-* [Sign up to Kosli with Github](https://app.kosli.com) so you have a Kosli API token.
-* [Get your Kosli API token](../installation#getting-your-kosli-api-token)
-* Set the KOSLI_API_TOKEN environment variable. You need this to authenticate.
-```shell {.command}
-export KOSLI_API_TOKEN=<put your kosli API token here>
-```
-* Set the KOSLI_OWNER environment variable to `cyber-dojo`. cyber-dojo
-is a public Kosli organization and is readable by any authenticated user. 
-```shell {.command}
-export KOSLI_OWNER=cyber-dojo
-```
+* [Install the `kosli` CLI](../installation).  
+  You run the Kosli CLI commands in this tutorial in a terminal, either in a docker container or
+  directly on your local machine.
+* [Sign up to Kosli at https://app.kosli.com with Github](https://app.kosli.com).  
+  Signed in users get their own Kosli API token.
+* [Get your Kosli API token](../installation#getting-your-kosli-api-token) and set 
+  the KOSLI_API_TOKEN environment variable.  
+  The `kosli` CLI uses this to authenticate you.
+  ```shell {.command}
+  export KOSLI_API_TOKEN=<paste your kosli API token here>
+  ```
+* Set the KOSLI_OWNER environment variable to `cyber-dojo`.   
+  The Kosli `cyber-dojo` organization is public so its readable by any authenticated user.   
+  Setting it means you don't have to type `--owner cyber-dojo` every time you run a `kosli` CLI query.
+  ```shell {.command}
+  export KOSLI_OWNER=cyber-dojo
+  ```
+ 
+<!-- We could skip setting the KOSLI_OWNER env var.
+     Can we assume all users will be copy/pasting to run the commands?
+-->
+
 
 # CI Pipeline Events
 
-The `kosli` cli automatically uses the `KOSLI_API_TOKEN` to authenticate,
-and the `KOSLI_OWNER` environment variable to specify a Kosli organization. 
 Let's start by confirming that all 12 `cyber-dojo` repositories have
-a CI pipeline reporting to Kosli. 
+a CI pipeline reporting to Kosli:
 
 ```shell {.command}
 kosli pipeline ls
 ```
+<!-- We want the terminal-output to be visually
+distinct to the terminal-input you copy/paste from.
+Eg different colour background, no syntax highlighting
+-->
+
 ```shell
 NAME                    DESCRIPTION                         VISIBILITY
 creator                 UX for Group/Kata creation          public
@@ -70,13 +80,14 @@ shas                    UX for git+image shas               public
 web                     UX for practicing TDD               public
 ```
 
-The name of a Kosli pipeline does not have to match the name of a git
-repository - but it helps if the relationship is clear.
+<!-- The name of a Kosli pipeline does not have to match the name of a git
+repository - but it helps if the relationship is clear. -->
 
-We will follow the git commit [16d9990](https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4) 
+Let's find out which artifact was built from commit
+[16d9990](https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4)
 to the `runner` repository.
 
-Let's find out which artifact was built from this commit.
+<!-- Would be really nice if we had commit completion here -->
 
 ```shell {.command}
 kosli artifact get runner:16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
@@ -105,67 +116,78 @@ History:
             
 ```
 
-<!-- JJ: There is plenty of scope for making various words in the text below into URLs
+<!-- There is plenty of scope for making various words in the text below into URLs
 -->
 
-<!-- JJ: The text after this output does not mention that this shows
+<!-- The text after this output does not mention that this shows
      the artifact running in aws-beta *twice* (84/117)
      and in aws-prod *twice* (65/94)
      Do we want to mention that as a third interesting thing? 
      I suspect we are missing some "No longer running" reports here...
 -->
 
-<!-- JJ: Here we could mention the URL for seeing this in app.kosli.com 
+<!-- Here we could mention the URL for seeing this in app.kosli.com 
      where `aws-prod#65` etc are clickable links (hopefully)!
 -->
 
 We can see:
-* Name: The name of the docker image `cyberdojo/runner:16d9990`. Its image registry defaults to
-`dockerhub`. Its :tag is the short-sha of the git commit. Kosli also supports pipelines building other 
-kinds of artifacts (eg zip files).
-* SHA256: Kosli knows how to 'fingerprint' any kind of artifact to create a unique tamper-proof digest.
-  Note that the first seven characters of the 64 character digest are `9af401c`.
-* Created on: The artifact was created on 22nd August 2022, at 11:35 CEST.
-* Commit URL: cyber-dojo's git repositories are public; you can follow this link 
-  to the actual commit on Github. 
-* Build URL: Again, you can follow this link to the actual Github Action for this commit.
-* State: COMPLIANT means that all the promised evidence for the artifact was provided before deployment.
-* History:
-   * Artifact was created on the 22nd August.
-     This report came from a simple call to `kosli` in the CI pipeline yml, just after
-     the docker image is built.
-   * The artifact has attached evidence for `branch-coverage`. 
-     This evidence is also reported with a call to `kosli` in exactly the same way, right after 
-     the tests pass and the coverage stats are generated.
-   * The artifact started deploying to `aws-beta` on 22nd August, and to `aws-prod` one minute later.
-     Again, a call to `kosli` reported this just before the terraform deployments.  
-     The `runner` service uses Continuous Deployment; if the tests pass the artifact 
-     is deployed *directly* to both runtime environments without a manual approval step.
-     Some cyber-dojo services (eg web) do have a manual approval step, and Kosli supports this.
-   * The artifact was reported running in the `aws-beta` and `aws-prod` environments a minute later.
-   * The artifact was reported exited both `aws-beta` and `aws-prod` 2 days later at the times given.
-     These last two reports came from calls to `kosli` running inside the environments. 
+* **Name**: The name of the docker image is `cyberdojo/runner:16d9990`. Its image registry is defaulted to
+`dockerhub`. Its :tag is the short-sha of the git commit.  
+* **SHA256**: The `kosli` CLI knows how to 'fingerprint' any kind of artifact (docker images, zip files, etc) 
+  to create a unique tamper-proof SHA. 
+  Later on you'll be referring back to this SHA - so note that the first seven characters of 
+  this 64 character SHA are `9af401c`.
+* **Created on**: The artifact was created on 22nd August 2022, at 11:35 CEST.
+* **Commit URL**: You can follow [https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4](https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4) 
+  to the actual commit on Github since cyber-dojo's git repositories are public.
+* **Build URL**: Again, you can follow [https://github.com/cyber-dojo/runner/actions/runs/2902808452](https://github.com/cyber-dojo/runner/actions/runs/2902808452) 
+  to the actual Github Action for this commit.
+* **State**: COMPLIANT means that all the promised evidence for the artifact (see `branch-coverage` next) 
+  was provided before deployment.
+* **History**:
+   * The artifact was created on the 22nd August at 11:35:00 CEST.
+     This report came from a simple call to the `kosli` CLI in the CI pipeline yml, just after
+     the docker image was built.
+   * The artifact has `branch-coverage` evidence. 
+     This evidence was also reported with a call to the `kosli` CLI in exactly the same way, right after 
+     the tests passed and the coverage stats were generated.
+   * The artifact started deploying to `aws-beta` on 22nd August 11:37:17 CEST, and to `aws-prod` 
+     just over one minute later.
+     Again, a call to the `kosli` CLI reported this just before the actual terraform deployments.  
+     The `runner` service uses [Continuous Delivery](https://en.wikipedia.org/wiki/Continuous_delivery); 
+     if the tests pass the artifact is [blue-green deployed](https://en.wikipedia.org/wiki/Blue-green_deployment) to 
+     both its runtime environments *without* a manual approval step.
+     Some cyber-dojo services (eg web) have a manual approval step, and Kosli supports this.
+   * The artifact was reported running in the `aws-beta` and `aws-prod` environments shortly after.
+   * The artifact was reported exited both `aws-beta` and `aws-prod` at the times given.
+     
+These last two reports came from calls to the`kosli` CLI running *inside* its runtime environments. 
 
+# Runtime Environment Snapshots
 
-# Runtime Environment Events
+<!-- add a link to the yml that runs the lambda. Ask Artem where it is! -->
 
-cyber-dojo runs `kosli` from inside the AWS runtime environments
+<!-- mention that you are getting all this information 
+     without having to know anything about AWS, nor how to
+     get the secrets needed. 
+-->
+
+cyber-dojo runs the `kosli` CLI from inside its AWS runtime environments
 using a lambda function. The lambda function periodically fingerprints 
 all the running services and sends a "snapshot" of what is *actually*
-running to Kosli. If the snapshot is different to the previous snapshot 
-Kosli saves it.
+running to [https://app.kosli.com](https://app.kosli.com). 
+If the snapshot is different to the previous snapshot it is saved.
 
-The History tells us the docker image our commit produced was first seen running
-in `aws-beta` in that environments `84`th snapshot, and 
-in `aws-prod` in that environments `65`th snapshot.
+The **History** tells us the docker image our commit produced was first seen running
+in `aws-beta` in that environment's `84`'th snapshot, and 
+in `aws-prod` in that environment's `65`'th snapshot.
 
-Let's get the whole of `aws-prod`'s `65`th snapshot
+Let's get the whole of `aws-prod`'s `65`'th snapshot:
 
 ```shell {.command}
 kosli env get aws-prod#65
 ```
 
-Some output ...elided for brevity:
 ```shell
 COMMIT   ARTIFACT                                                                              PIPELINE                RUNNING_SINCE  REPLICAS
 16d9990  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990                  runner                  11 days ago    3
@@ -173,7 +195,9 @@ COMMIT   ARTIFACT                                                               
                                                                                                                                       
 7c45272  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/shas:7c45272                    shas                    11 days ago    1
          SHA256: 76c442c04283c4ca1af22d882750eb960cf53c0aa041bbdb2db9df2f2c1282be
-...
+
+...some output elided...
+
 85d83c6  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:85d83c6                  runner                  13 days ago    1
          SHA256: eeb0cfc9ee7f69fbd9531d5b8c1e8d22a8de119e2a422344a714a868e9a8bfec                                                     
                                                                                                                                       
@@ -181,24 +205,26 @@ COMMIT   ARTIFACT                                                               
          SHA256: d8440b94f7f9174c180324ceafd4148360d9d7c916be2b910f132c58b8a943ae                                                                                                                                                                                  
 ```
 
-This output reveals two interesting things:
+This output reveals some interesting things:
 
-First, the name of the first artifact is `274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990`
-and *not* `cyberdojo/runner:16d9990` as earlier reported! However, we can see the
-commit is the same (`16d9990`) and, more importantly, the SHA256 (from `kosli`s fingerprinting)
-is also the same (`9af401c...`).
+The name of the first artifact is `274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990`
+and *not* `cyberdojo/runner:16d9990` as seen earlier! However, we can see the
+commit is the same (`16d9990`) and, more importantly, the SHA256 is also the same (`9af401c...`).
 Why the difference?
-Answer: cyber-dojo is an open source project; its git repositories are
-public, and the docker images it builds are saved to a public registry (`dockerhub`). 
-However, the images running inside the `aws-beta` and `aws-prod` environments 
-(which support the `https://cyber-dojo.org` web site) are *private* and are pulled from
-a different *private* registry (`274425519734.dkr.ecr.eu-central-1.amazonaws.com`).
+Answer: cyber-dojo's docker images are first saved to a public registry (`dockerhub`)
+so anyone can run their own cyber-dojo web site.
+However, the images running inside its `aws-beta` and `aws-prod` 
+environments (which support the `https://cyber-dojo.org` web site) are are pulled from
+a *private* registry (`274425519734.dkr.ecr.eu-central-1.amazonaws.com`).
+But the identical SHA256 proves it is the same image with two different names.
 
-Second, there were *two* versions of `runner` at this point in time! 
-The first (from commit `16d9990`) has three instances (replicas). 
+Also, there were *two* versions of `runner` at this point in time! 
+The first (from commit `16d9990`) has three replicas (you may need
+to scroll to the right to see the replica information). 
 This is as expected; the `runner` service bears the brunt of cyber-dojo's load.
-The second (from commit `85d83c6`) has only one instance.
+The second (from commit `85d83c6`) has only one replica.
 What is going on?
+
 Let's look at the snapshot *after* `aws-prod#65`:
 
 ```shell {.command}
@@ -212,12 +238,14 @@ COMMIT   ARTIFACT                                                               
 ...
 ```
 
-We still see the three instances of `runner` from commit `16d9990`.
-But the one instance of `runner` from commit `85d83c6` is no longer listed.
-It stopped running.
-We are seeing a blue-green deployment, mid-flight, in the wild!
+We still see the three instances of `runner:16d9990`.
+But the one instance of `runner:85d83c6` is no longer listed.
+Between `aws-prod#65` and `aws-prod#66` it stopped running.
+We were seeing a blue-green deployment, mid-flight!
 
-We can also find out what changed between snapshot `65` and `66` of `aws-prod`: 
+# Snapshot Diffs
+
+Let's find out what's *different* between the `aws-prod#65` and `aws-prod#66` snapshots: 
 
 ```shell {.command}
 kosli env diff aws-prod#65 aws-prod#66
@@ -230,10 +258,10 @@ kosli env diff aws-prod#65 aws-prod#66
   Commit: https://github.com/cyber-dojo/runner/commit/85d83c6ab8e0ce800baeef3dfa4fa9f6eee338a4
   Started: Sat, 20 Aug 2022 22:32:43 CEST • 13 days ago
 ```
-The minus sign in front of the name indicates `eeb0cfc` stopped.
-This was the end of the blue-green deployment.
+The minus sign in front of Name indicates `runner:eeb0cfc` stopped.
+This was the *end* of the blue-green deployment.
 
-Let's go backwards in time a little and look at the previous diff:
+Let's go backwards in time a little and look at the *previous* diff:
 
 ```shell {.command}
 kosli env diff aws-prod#64 aws-prod#65
@@ -247,13 +275,36 @@ kosli env diff aws-prod#64 aws-prod#65
   Started: 22 Aug 22 10:39 BST • 11 days ago
 ```
 
-The plus sign in front of the name indicates `9af401c` started.
-This was the beginning of the blue-green deployment.
+The plus sign in front of Name indicates `runner:9af401c` started.
+This was the *beginning* of the blue-green deployment.
 
+# Snapshot diffs across environments!
 
-<!--
-Do we want to mention the whole env being compliant?
+The name of an environment without a snapshot number (or the `#` character)
+specifies that environment's *latest* snapshot. (You can also use `#-1` if
+you want to be explicit).
+
+Let's see if there is any different between `aws-beta` and `aws-prod` right now:
+
+```shell {.command}
+kosli env diff aws-beta aws-prod
+```
+
+You'll probably get no output here, meaning there is no difference.
+But if, for example, there is a current deployment to a cyber-dojo 
+repositories awaiting a manual approval then 
+something will be running in `aws-beta` but not in `aws-prod`
+and you *will* see a difference. 
+
+<!-- add example of two specific snappishes where this was forced/simulated.
+    Make the git commit lead to an Easter egg with a nice comment/git-message. 
 -->
+
+If someone has somehow managed to run a rogue service in one of the
+environments (but not the other) that will show up in a diff.
+
+<!-- add an example of this that is again forced/simulated -->
+
 
 <!-- 
 This we would like to show the users:
@@ -262,7 +313,7 @@ This we would like to show the users:
 - Kosli can show that a deployment is reported, but artifact didn't start. Find this in artifact view.
 - Kosli can show that an artifact started, but no deployment was reported for it.
 - Detect an artifact that is missing evidence is running in an environment
-
+- Do we want to mention the whole env being compliant?
 - Commit makes the server stop working. Use kosli env diff to find out what artifact changed.
 It would be good if we had two versions of env where there are several artifacts that change.
 (with easter egg)
