@@ -154,9 +154,9 @@ We can see:
    * The artifact started deploying to `aws-beta` on 22nd August 11:37:17 CEST, and to `aws-prod` 
      just over one minute later.
      Again, a call to the `kosli` CLI reported this just before the actual terraform deployments.  
-     The `runner` service uses [Continuous Delivery](https://en.wikipedia.org/wiki/Continuous_delivery); 
-     if the tests pass the artifact is [blue-green deployed](https://en.wikipedia.org/wiki/Blue-green_deployment) to 
-     both its runtime environments *without* a manual approval step.
+     The `runner` service uses [Continuous Deployment](https://en.wikipedia.org/wiki/Continuous_deployment); 
+     if the tests pass the artifact is [blue-green deployed](https://en.wikipedia.org/wiki/Blue-green_deployment) 
+     to both its runtime environments *without* any manual approval steps.
      Some cyber-dojo services (eg web) have a manual approval step, and Kosli supports this.
    * The artifact was reported running in the `aws-beta` and `aws-prod` environments shortly after.
    * The artifact was reported exited both `aws-beta` and `aws-prod` at the times given.
