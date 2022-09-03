@@ -22,7 +22,7 @@ brew install kosli-dev/tap/kosli
 {{< /tab >}}
 
 {{< tab "APT" >}}
-If you are using Ubuntu or Debian Linux, you can install the Kosli CLI by running:
+If you are using Ubuntu or Debian Linux, you can use APT to install the Kosli CLI by running:
 ```shell {.command}
 sudo sh -c 'echo "deb [trusted=yes] https://apt.fury.io/kosli/ /"  > /etc/apt/sources.list.d/fury.list'
 # if you are on a clean debian container/machine, you will need to install ca-certificates, otherwise ignore that step
@@ -45,6 +45,7 @@ gpgcheck=0
 EOT
 ```
 If you get mirrorlist errors (likely if you are on a clean centos container):
+
 ```shell {.command}
 cd /etc/yum.repos.d/
 sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
@@ -89,24 +90,27 @@ The expected output should be similar to this:
 version.BuildInfo{Version:"v0.1.10", GitCommit:"9c623f1e6c293235ddc8de1e347bf99a1b356e48", GitTreeState:"clean", GoVersion:"go1.17.11"}
 ```
 
+## Getting your Kosli API token
+
+<!-- Put this in a separate page? -->
+<!-- Add screen shot here? -->
+
+To get the kosli API token go to https://app.kosli.com, log in using your github account, and go to your Profile (you'll find it by clicking on your avatar in the top right corner of the page).
+
 ## Using environment variables
 
-The `--api-token` and `--owner` flags are used in all `kosli` CLI commands.
-By setting these as environment variables we don't need to explicitly specify them. 
+<!-- Put this in a separate page? -->
 
-You do this by capitalizing the flag in snake case and adding the `KOSLI_` prefix. 
-For example, to set `--api-token xx` from an environment variable, you can `export KOSLI_API_TOKEN=xx`, etc:
+The `--api-token` (and `--owner`) flags are used in every `kosli` CLI commands.
+You can set these as environment variables, and avoid retyping them every time.
+
+You do this by capitalizing the flag in snake case and adding the `KOSLI_` prefix.
+For example, do a one-time `export KOSLI_API_TOKEN=xx` instead of
+repeatedly typing `--api-token xx`.
 
 ```shell
 export KOSLI_API_TOKEN=<put your kosli API token here>
-export KOSLI_OWNER=<put your github username here>
 ```
-
-## Getting your Kosli API token
-
-<!-- Add screen shot here -->
-
-To get the kosli API token go to https://app.kosli.com, log in using your github account, and go to your Profile (you'll find it by clicking on your avatar in the top right corner of the page).
 
 
 

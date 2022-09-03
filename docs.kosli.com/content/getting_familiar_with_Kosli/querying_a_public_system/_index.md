@@ -7,10 +7,13 @@ draft: true
 
 <!-- Split this tutorial into two?
      1. Title=Following a git commit 
-        The story here could be we pretend the reader themselves
-        contributed the commit to the cyber-dojo runner repo?
      2. Title=Tracking a production incident
         The stories here would be simulated incidents with Easter-eggs comments.
+-->
+
+<!-- For the "following a git commit" story could be we pretend the reader themselves
+     contributed the commit to the cyber-dojo runner repo?
+     Then all text would use the word "YOUR" ...? 
 -->
 
 # Overview
