@@ -5,31 +5,36 @@ weight: 2
 draft: true
 ---
 
-# Overview
-
-In this tutorial you'll learn how Kosli tracks "life after git"
-by running `kosli` CLI commands that "follow" a git commit.
-You'll see the dynamic events from:
-* Its CI-pipeline (eg building docker image, running unit tests, deploying, etc)
-* Its AWS runtime environments (eg blue-green rollover, instance scaling, etc)
-
 <!-- Split this tutorial into two?
      1. Title=Following a git commit 
         The story here could be we pretend the reader themselves
-        contributed the commit to thea cyber-dojo runner repo?
-     2. Title=Tracking a production incident 
+        contributed the commit to the cyber-dojo runner repo?
+     2. Title=Tracking a production incident
+        The stories here would be simulated incidents with Easter-eggs comments.
 -->
 
-<!-- Some of the URLs need to open in their own tab -->
+# Overview
 
-The git repository you'll be using is part of the 
-[cyber-dojo](https://cyber-dojo.org) open source project.  
+In this tutorial you'll learn how Kosli tracks "life after git"
+by running `kosli` CLI commands to "follow" a git commit.
+You'll see dynamic events from:
+* CI-pipelines (eg building docker image, running unit tests, deploying, etc)
+* AWS runtime environments (eg blue-green rollover, instance scaling, etc)
+
+<!-- Some of the URLs would be better if they opened in their own tab.
+     We've looked into this and it does not seem to be supported in MarkDown
+     https://stackoverflow.com/questions/4425198/can-i-create-links-with-target-blank-in-markdown
+-->
+
+The project you'll be using is the **cyber-dojo** open source project.
+<!-- I want a better word than "using" but I can't think what it is -->
+
 * [https://cyber-dojo.org](https://cyber-dojo.org) is an open source platform where teams 
 practice TDD (in many languages) without any installation.  
 * cyber-dojo has a microservice architecture with a dozen git repositories
 (eg [web](https://github.com/cyber-dojo/web), [runner](https://github.com/cyber-dojo/runner)).  
 * Each git repository has its own Github Actions CI pipeline producing a docker image.
-* These docker images run in two AWS environments whose Kosli names are 
+* These docker images run in two AWS environments named 
 [aws-beta](https://app.kosli.com/cyber-dojo/environments/aws-beta)
 and [aws-prod](https://app.kosli.com/cyber-dojo/environments/aws-prod).
 
@@ -41,33 +46,26 @@ and [aws-prod](https://app.kosli.com/cyber-dojo/environments/aws-prod).
 -->
 
 You need to:
-* [Install the `kosli` CLI](../installation).  
-  You run the Kosli CLI commands in this tutorial in a terminal, either in a docker container or
-  directly on your local machine.
-* [Sign up to Kosli at https://app.kosli.com with Github](https://app.kosli.com).  
-  Signed in users get their own Kosli API token.
-* [Get your Kosli API token](../installation#getting-your-kosli-api-token) and set 
-  the KOSLI_API_TOKEN environment variable.  
+* [Install the `kosli` CLI](../installation).
+* [Verify the installation worked](../installation#verify-the-installation-worked).
+* [Sign up to Kosli at https://app.kosli.com with Github](https://app.kosli.com).
+* [Get your Kosli API token](../installation#getting-your-kosli-api-token).
+* Set the KOSLI_API_TOKEN environment variable.  
   The `kosli` CLI uses this to authenticate you.
   ```shell {.command}
   export KOSLI_API_TOKEN=<paste your kosli API token here>
   ```
 * Set the KOSLI_OWNER environment variable to `cyber-dojo`.   
   The Kosli `cyber-dojo` organization is public so its readable by any authenticated user.   
-  Setting it means you don't have to type `--owner cyber-dojo` every time you run a `kosli` CLI query.
   ```shell {.command}
   export KOSLI_OWNER=cyber-dojo
   ```
 
-<!-- Simplify the above so each step is simply a link to a dedicated page for that step.
-     At the moment a lot of the KOSLI env-var information is duplicated.
-     Add a last step that links to a page for checking the CLI is setup correctly.
--->
-
 # Pipeline events
 
-Let's use the `kosli` CLI to find out
-which `cyber-dojo` repositories have a CI pipeline reporting to https://app.kosli.com
+<!-- Do we want this `kosli pipeline ls` ? Does it add much value? -->
+
+Find out which `cyber-dojo` repositories have a CI pipeline reporting to https://app.kosli.com:
 
 ```shell {.command}
 kosli pipeline ls
@@ -98,9 +96,9 @@ web                     UX for practicing TDD               public
 <!-- The name of a Kosli pipeline does not have to match the name of a git
 repository - but it helps if the relationship is clear. -->
 
-Now let's find out which artifact was built from commit
+Find the artifact built from commit
 [16d9990](https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4)
-to the `runner` repository.
+to cyber-dojo's `runner` repository:
 
 <!-- Would be really nice if we had commit completion here so we could use 
      kosli artifact get runner:16d9990
@@ -132,8 +130,8 @@ History:
     No longer running in aws-prod#96 environment   Wed, 24 Aug 2022 18:12:28 CEST
 ```
 
-<!-- Should we reorder the lines of this output a bit; based
-     on the developer centric focus. Starting with the commit?
+<!-- Should we re-order the lines of this output a bit; based
+     on the developer centric focus - starting with the commit?
 
 Git commit:  16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
 Commit URL:  https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
@@ -158,7 +156,7 @@ Created on:  Mon, 22 Aug 2022 11:35:00 CEST • 11 days ago
      `#14` takes you to that deployment event
 -->
 
-Let's look at this output in detail:
+Look at this output in detail:
 
 * **Name**: The name of the docker image is `cyberdojo/runner:16d9990`. Its image registry is defaulted to
 `dockerhub`. Its :tag is the short-sha of the git commit.  
@@ -196,7 +194,11 @@ cyber-dojo's AWS runtime environments.
 # Environment Snapshots
 
 <!-- make [lambda function] text a link to the yml that runs the lambda.
-     Ask Artem where the yml is for this!
+     I think this is
+     https://github.com/cyber-dojo/merkely-environment-reporter/tree/main/deployment/terraform/lambda-reporter
+     Check with Artem
+     If it is maybe do this after the repo has been renamed to
+     kosli-environment-reporter
 -->
 
 <!-- At some point mention that you are getting all this information 
@@ -214,7 +216,7 @@ The previous **History** tells us the docker image our commit produced was first
 in `aws-beta` in that environment's `84`'th snapshot, and 
 in `aws-prod` in that environment's `65`'th snapshot.
 
-Let's get the whole of `aws-prod`'s `65`'th snapshot:
+Get the whole of `aws-prod`'s `65`'th snapshot:
 
 ```shell {.command}
 kosli env get aws-prod#65
@@ -259,7 +261,7 @@ This is as expected; the `runner` service bears the brunt of cyber-dojo's load.
 The second (from commit `85d83c6`) has only one replica.
 What is going on?
 
-Let's look at the snapshot *after* `aws-prod#65`:
+Look at the snapshot *after* `aws-prod#65`:
 
 ```shell {.command}
 kosli env get aws-prod#66
@@ -281,13 +283,17 @@ We were seeing the blue-green deployment, mid-flight!
 
 # Diffing snapshots
 
-Let's find out what's *different* between the `aws-prod#65` and `aws-prod#66` snapshots: 
+Find out what's *different* between the `aws-prod#65` and `aws-prod#66` snapshots: 
 
 ```shell {.command}
 kosli env diff aws-prod#65 aws-prod#66
 ```
 
 You will see:
+
+<!-- Can we colour this red as it actually appears?
+     Use a screenshot?
+-->
 
 ```shell
 - Name:   274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:85d83c6
@@ -296,16 +302,20 @@ You will see:
   Commit: https://github.com/cyber-dojo/runner/commit/85d83c6ab8e0ce800baeef3dfa4fa9f6eee338a4
   Started: Sat, 20 Aug 2022 22:32:43 CEST • 13 days ago
 ```
-The minus sign in front of Name indicates `runner:eeb0cfc` stopped.
+The minus sign in front of **Name:** indicates `runner:85d83c6` stopped.
 This was the *end* of the blue-green deployment.
 
-Let's go backwards in time a little and look at the *previous* diff:
+Go backwards in time a little and look at the *previous* diff:
 
 ```shell {.command}
 kosli env diff aws-prod#64 aws-prod#65
 ```
 
 You will see:
+
+<!-- Can we colour this green as it actually appears? 
+     Use a screenshot?
+-->
 
 ```shell
 + Name:   274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990
@@ -315,7 +325,7 @@ You will see:
   Started: 22 Aug 22 10:39 BST • 11 days ago
 ```
 
-The plus sign in front of Name indicates `runner:9af401c` started.
+The plus sign in front of **Name:** indicates `runner:16d9990` started.
 This was the *beginning* of the blue-green deployment.
 
 # Diffing snapshots across environments!
@@ -324,7 +334,7 @@ The name of an environment without a snapshot number (or the `#` character)
 specifies that environment's *latest* snapshot. (You can also use `#-1` if
 you want to be explicit).
 
-Let's see if there is any different between `aws-beta` and `aws-prod` right now:
+Is there any different between `aws-beta` and `aws-prod` right now?
 
 ```shell {.command}
 kosli env diff aws-beta aws-prod
@@ -336,7 +346,7 @@ repository awaiting a manual approval then
 something will be running in `aws-beta` but not in `aws-prod`
 and you'll see this difference. 
 
-<!-- add example of two specific snappishes where this happened or was forced/simulated.
+<!-- Add example of two specific snappishes where this happened or was forced/simulated.
     Make the git commit lead to an Easter-egg with a nice comment/git-message. 
     Maybe the Easter-egg could be the answer to a riddle
     and at the USA conferences we could have a biggish prize for the first person

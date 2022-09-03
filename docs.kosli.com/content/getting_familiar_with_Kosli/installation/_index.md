@@ -7,8 +7,9 @@ weight: 1
 
 ## Installing Kosli CLI
 
-This guide shows you how to install the Kosli CLI. Kosli CLI can be installed from package managers or pre-built binaries.
-
+Kosli CLI can be installed from package managers, 
+by Curling pre-built binaries, or by running inside a Docker container.  
+We recommend using a Docker container for the tutorials.
 {{< tabs "installKosli" >}}
 
 {{< tab "Homebrew" >}}
@@ -33,7 +34,7 @@ sudo apt install kosli
 {{< /tab >}}
 
 {{< tab "YUM" >}}
-If you have RedHat Linux, you can use YUM to install the Kosli CLI by running.
+If you have RedHat Linux, you can use YUM to install the Kosli CLI by running:
 ```shell {.command}
 cat <<EOT >> /etc/yum.repos.d/kosli.repo
 [kosli]
@@ -79,20 +80,19 @@ docker run -it --rm ghcr.io/kosli-dev/cli:v0.1.10 bash
 
 ## Verify the installation worked
 
-To verify that Kosli CLI is successfully installed run the command below.
+To verify that `kosli` CLI is successfully installed run the command below:
 ```shell {.command}
 kosli version
 ```
-The expected output should be similar to the one below
+The expected output should be similar to this:
 ```
 version.BuildInfo{Version:"v0.1.10", GitCommit:"9c623f1e6c293235ddc8de1e347bf99a1b356e48", GitTreeState:"clean", GoVersion:"go1.17.11"}
 ```
 
 ## Using environment variables
 
-All the kosli commands contain some common
-flags `--api-token` and `--owner`. By setting
-these as environment variables we don't need to specify them. 
+The `--api-token` and `--owner` flags are used in all `kosli` CLI commands.
+By setting these as environment variables we don't need to explicitly specify them. 
 
 You do this by capitalizing the flag in snake case and adding the `KOSLI_` prefix. 
 For example, to set `--api-token xx` from an environment variable, you can `export KOSLI_API_TOKEN=xx`, etc:
@@ -103,6 +103,8 @@ export KOSLI_OWNER=<put your github username here>
 ```
 
 ## Getting your Kosli API token
+
+<!-- Add screen shot here -->
 
 To get the kosli API token go to https://app.kosli.com, log in using your github account, and go to your Profile (you'll find it by clicking on your avatar in the top right corner of the page).
 
