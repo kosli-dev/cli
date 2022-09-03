@@ -2,16 +2,21 @@
 title: Querying a public system
 bookCollapseSection: false
 weight: 2
-draft: false
+draft: true
 ---
 
 # Overview
 
 In this tutorial you'll learn how Kosli tracks "life after git"
-by running `kosli` CLI commands that "follow" a commit to a git repository.
+by running `kosli` CLI commands that "follow" a git commit.
 You'll see the dynamic events related to:
 * Its CI-pipeline (eg building docker image, running unit tests, deploying, etc)
 * Its AWS runtime environments (eg blue-green rollover, instance scaling, etc)
+
+<!-- The overview could mention 2 basic things
+     1. following a git commit "forwards" 
+     2. following "something wrong in production" backwards to a git commit
+-->
 
 The git repository you'll be using is part of the 
 [cyber-dojo](https://cyber-dojo.org) open source project.  
@@ -25,7 +30,7 @@ practice TDD (in many languages) without any installation.
 and [aws-prod](https://app.kosli.com/cyber-dojo/environments/aws-prod).
 
 
-# Getting Ready
+# Getting ready
 
 You need to:
 * [Install the `kosli` CLI](../installation).  
@@ -45,13 +50,8 @@ You need to:
   ```shell {.command}
   export KOSLI_OWNER=cyber-dojo
   ```
- 
-<!-- We could skip setting the KOSLI_OWNER env var.
-     Can we assume all users will be copy/pasting to run the commands?
--->
 
-
-# CI Pipeline Events
+# Pipeline events
 
 Let's start by confirming that all 12 `cyber-dojo` repositories have
 a CI pipeline reporting to Kosli:
@@ -112,22 +112,32 @@ History:
     No longer running in aws-beta#119 environment  Wed, 24 Aug 2022 18:05:42 CEST
     Reported running in aws-prod#94 environment    Wed, 24 Aug 2022 18:10:28 CEST
     No longer running in aws-prod#96 environment   Wed, 24 Aug 2022 18:12:28 CEST
-
-            
 ```
+
+<!-- Should we reorder the lines of this output a bit; based
+     on the developer centric focus. Start with the commit?
+
+Git commit:  16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
+Commit URL:  https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
+Build URL:   https://github.com/cyber-dojo/runner/actions/runs/2902808452
+Artifact Name:  cyberdojo/runner:16d9990
+Artifact SHA256: 9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
+Created on:  Mon, 22 Aug 2022 11:35:00 CEST • 11 days ago
+-->
 
 <!-- There is plenty of scope for making various words in the text below into URLs
 -->
 
-<!-- The text after this output does not mention that this shows
-     the artifact running in aws-beta *twice* (84/117)
-     and in aws-prod *twice* (65/94)
+<!-- We do not comment on the output showing the artifact running TWICE 
+      - in aws-beta (84/117)
+      - in aws-prod (65/94)
      Do we want to mention that as a third interesting thing? 
-     I suspect we are missing some "No longer running" reports here...
+     Are missing some "No longer running" reports here...?
 -->
 
-<!-- Here we could mention the URL for seeing this in app.kosli.com 
-     where `aws-prod#65` etc are clickable links (hopefully)!
+<!-- We could create clickable app.kosli.com URLs in the text, eg
+     `aws-prod#65` takes you to that snapshot
+     `#14` takes you to that deployment event
 -->
 
 We can see:
@@ -161,9 +171,10 @@ We can see:
    * The artifact was reported running in the `aws-beta` and `aws-prod` environments shortly after.
    * The artifact was reported exited both `aws-beta` and `aws-prod` at the times given.
      
-These last two reports came from calls to the`kosli` CLI running *inside* its runtime environments. 
+These last two events were reports by the `kosli` CLI running *inside* 
+cyber-dojo's AWS runtime environments. 
 
-# Runtime Environment Snapshots
+# Environment Snapshots
 
 <!-- add a link to the yml that runs the lambda. Ask Artem where it is! -->
 
@@ -243,7 +254,7 @@ But the one instance of `runner:85d83c6` is no longer listed.
 Between `aws-prod#65` and `aws-prod#66` it stopped running.
 We were seeing a blue-green deployment, mid-flight!
 
-# Snapshot Diffs
+# Diffing snapshots
 
 Let's find out what's *different* between the `aws-prod#65` and `aws-prod#66` snapshots: 
 
@@ -278,7 +289,7 @@ kosli env diff aws-prod#64 aws-prod#65
 The plus sign in front of Name indicates `runner:9af401c` started.
 This was the *beginning* of the blue-green deployment.
 
-# Snapshot diffs across environments!
+# Diffing snapshots across environments!
 
 The name of an environment without a snapshot number (or the `#` character)
 specifies that environment's *latest* snapshot. (You can also use `#-1` if
