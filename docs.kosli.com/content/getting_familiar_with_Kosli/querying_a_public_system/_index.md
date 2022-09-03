@@ -13,10 +13,14 @@ You'll see the dynamic events from:
 * Its CI-pipeline (eg building docker image, running unit tests, deploying, etc)
 * Its AWS runtime environments (eg blue-green rollover, instance scaling, etc)
 
-<!-- The overview could mention 2 basic things
-     1. following a git commit "forwards" 
-     2. following "something wrong in production" backwards to a git commit
+<!-- Split this tutorial into two?
+     1. Title=Following a git commit 
+        The story here could be we pretend the reader themselves
+        contributed the commit to thea cyber-dojo runner repo?
+     2. Title=Tracking a production incident 
 -->
+
+<!-- Some of the URLs need to open in their own tab -->
 
 The git repository you'll be using is part of the 
 [cyber-dojo](https://cyber-dojo.org) open source project.  
@@ -32,7 +36,7 @@ and [aws-prod](https://app.kosli.com/cyber-dojo/environments/aws-prod).
 
 # Getting ready
 
-<!-- the copy/paste text is always a single command.
+<!-- the copy/paste text is always a single command in this tutorial.
      Can we use CSS to add a leading $ prompt that is not copied?
 -->
 
@@ -55,10 +59,15 @@ You need to:
   export KOSLI_OWNER=cyber-dojo
   ```
 
+<!-- Simplify the above so each step is simply a link to a dedicated page for that step.
+     At the moment a lot of the KOSLI env-var information is duplicated.
+     Add a last step that links to a page for checking the CLI is setup correctly.
+-->
+
 # Pipeline events
 
-Let's check the `kosli` CLI is setup correctly by confirming 
-all 12 `cyber-dojo` repositories have a CI pipeline reporting to https://app.kosli.com
+Let's use the `kosli` CLI to find out
+which `cyber-dojo` repositories have a CI pipeline reporting to https://app.kosli.com
 
 ```shell {.command}
 kosli pipeline ls
@@ -68,7 +77,7 @@ distinct to the terminal-input you copy/paste from.
 Eg different colour background, no syntax highlighting
 -->
 
-You should see this:
+You will see:
 
 ```shell
 NAME                    DESCRIPTION                         VISIBILITY
@@ -93,7 +102,9 @@ Now let's find out which artifact was built from commit
 [16d9990](https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4)
 to the `runner` repository.
 
-<!-- Would be really nice if we had commit completion here -->
+<!-- Would be really nice if we had commit completion here so we could use 
+     kosli artifact get runner:16d9990
+-->
 
 ```shell {.command}
 kosli artifact get runner:16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
@@ -122,7 +133,7 @@ History:
 ```
 
 <!-- Should we reorder the lines of this output a bit; based
-     on the developer centric focus. Start with the commit?
+     on the developer centric focus. Starting with the commit?
 
 Git commit:  16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
 Commit URL:  https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
@@ -184,9 +195,11 @@ cyber-dojo's AWS runtime environments.
 
 # Environment Snapshots
 
-<!-- add a link to the yml that runs the lambda. Ask Artem where it is! -->
+<!-- make [lambda function] text a link to the yml that runs the lambda.
+     Ask Artem where the yml is for this!
+-->
 
-<!-- mention that you are getting all this information 
+<!-- At some point mention that you are getting all this information 
      without having to know anything about AWS, nor how to
      get the secrets needed. 
 -->
@@ -264,7 +277,7 @@ COMMIT   ARTIFACT                                                               
 We still see the three instances of `runner:16d9990`.
 But the one instance of `runner:85d83c6` is no longer listed.
 Between `aws-prod#65` and `aws-prod#66` it stopped running.
-We were seeing a blue-green deployment, mid-flight!
+We were seeing the blue-green deployment, mid-flight!
 
 # Diffing snapshots
 
