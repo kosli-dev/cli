@@ -9,7 +9,7 @@ draft: true
 
 In this tutorial you'll learn how Kosli tracks "life after git"
 by running `kosli` CLI commands that "follow" a git commit.
-You'll see the dynamic events related to:
+You'll see the dynamic events from:
 * Its CI-pipeline (eg building docker image, running unit tests, deploying, etc)
 * Its AWS runtime environments (eg blue-green rollover, instance scaling, etc)
 
@@ -32,6 +32,10 @@ and [aws-prod](https://app.kosli.com/cyber-dojo/environments/aws-prod).
 
 # Getting ready
 
+<!-- the copy/paste text is always a single command.
+     Can we use CSS to add a leading $ prompt that is not copied?
+-->
+
 You need to:
 * [Install the `kosli` CLI](../installation).  
   You run the Kosli CLI commands in this tutorial in a terminal, either in a docker container or
@@ -53,8 +57,8 @@ You need to:
 
 # Pipeline events
 
-Let's start by confirming that all 12 `cyber-dojo` repositories have
-a CI pipeline reporting to Kosli:
+Let's check the `kosli` CLI is setup correctly by confirming 
+all 12 `cyber-dojo` repositories have a CI pipeline reporting to https://app.kosli.com
 
 ```shell {.command}
 kosli pipeline ls
@@ -63,6 +67,8 @@ kosli pipeline ls
 distinct to the terminal-input you copy/paste from.
 Eg different colour background, no syntax highlighting
 -->
+
+You should see this:
 
 ```shell
 NAME                    DESCRIPTION                         VISIBILITY
@@ -83,7 +89,7 @@ web                     UX for practicing TDD               public
 <!-- The name of a Kosli pipeline does not have to match the name of a git
 repository - but it helps if the relationship is clear. -->
 
-Let's find out which artifact was built from commit
+Now let's find out which artifact was built from commit
 [16d9990](https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4)
 to the `runner` repository.
 
@@ -92,6 +98,7 @@ to the `runner` repository.
 ```shell {.command}
 kosli artifact get runner:16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
 ```
+You will see:
 
 ```shell
 Name:        cyberdojo/runner:16d9990
@@ -135,12 +142,13 @@ Created on:  Mon, 22 Aug 2022 11:35:00 CEST • 11 days ago
      Are missing some "No longer running" reports here...?
 -->
 
-<!-- We could create clickable app.kosli.com URLs in the text, eg
+<!-- We could mention and create clickable app.kosli.com URLs in the text, eg
      `aws-prod#65` takes you to that snapshot
      `#14` takes you to that deployment event
 -->
 
-We can see:
+Let's look at this output in detail:
+
 * **Name**: The name of the docker image is `cyberdojo/runner:16d9990`. Its image registry is defaulted to
 `dockerhub`. Its :tag is the short-sha of the git commit.  
 * **SHA256**: The `kosli` CLI knows how to 'fingerprint' any kind of artifact (docker images, zip files, etc) 
@@ -171,7 +179,7 @@ We can see:
    * The artifact was reported running in the `aws-beta` and `aws-prod` environments shortly after.
    * The artifact was reported exited both `aws-beta` and `aws-prod` at the times given.
      
-These last two events were reports by the `kosli` CLI running *inside* 
+These last two events were reported by the `kosli` CLI running *inside* 
 cyber-dojo's AWS runtime environments. 
 
 # Environment Snapshots
@@ -189,7 +197,7 @@ all the running services and sends a "snapshot" of what is *actually*
 running to [https://app.kosli.com](https://app.kosli.com). 
 If the snapshot is different to the previous snapshot it is saved.
 
-The **History** tells us the docker image our commit produced was first seen running
+The previous **History** tells us the docker image our commit produced was first seen running
 in `aws-beta` in that environment's `84`'th snapshot, and 
 in `aws-prod` in that environment's `65`'th snapshot.
 
@@ -198,6 +206,8 @@ Let's get the whole of `aws-prod`'s `65`'th snapshot:
 ```shell {.command}
 kosli env get aws-prod#65
 ```
+
+You will see:
 
 ```shell
 COMMIT   ARTIFACT                                                                              PIPELINE                RUNNING_SINCE  REPLICAS
@@ -242,6 +252,8 @@ Let's look at the snapshot *after* `aws-prod#65`:
 kosli env get aws-prod#66
 ```
 
+You will see:
+
 ```shell
 COMMIT   ARTIFACT                                                                              PIPELINE                RUNNING_SINCE  REPLICAS
 16d9990  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990                  runner                  11 days ago    3
@@ -262,6 +274,8 @@ Let's find out what's *different* between the `aws-prod#65` and `aws-prod#66` sn
 kosli env diff aws-prod#65 aws-prod#66
 ```
 
+You will see:
+
 ```shell
 - Name:   274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:85d83c6
   Sha256: eeb0cfc9ee7f69fbd9531d5b8c1e8d22a8de119e2a422344a714a868e9a8bfec
@@ -277,6 +291,8 @@ Let's go backwards in time a little and look at the *previous* diff:
 ```shell {.command}
 kosli env diff aws-prod#64 aws-prod#65
 ```
+
+You will see:
 
 ```shell
 + Name:   274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990
@@ -303,12 +319,15 @@ kosli env diff aws-beta aws-prod
 
 You'll probably get no output here, meaning there is no difference.
 But if, for example, there is a current deployment to a cyber-dojo 
-repositories awaiting a manual approval then 
+repository awaiting a manual approval then 
 something will be running in `aws-beta` but not in `aws-prod`
-and you *will* see a difference. 
+and you'll see this difference. 
 
-<!-- add example of two specific snappishes where this was forced/simulated.
-    Make the git commit lead to an Easter egg with a nice comment/git-message. 
+<!-- add example of two specific snappishes where this happened or was forced/simulated.
+    Make the git commit lead to an Easter-egg with a nice comment/git-message. 
+    Maybe the Easter-egg could be the answer to a riddle
+    and at the USA conferences we could have a biggish prize for the first person
+    who follows this tutorial and finds the answer to the riddle.
 -->
 
 If someone has somehow managed to run a rogue service in one of the
