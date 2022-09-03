@@ -50,13 +50,13 @@ and [aws-prod](https://app.kosli.com/cyber-dojo/environments/aws-prod).
 
 You need to:
 * [Install the `kosli` CLI](../installation).
-* [Verify the installation worked](../installation#verify-the-installation-worked).
+* [Verify the installation worked](../installation#verifying-the-installation-worked).
 * [Sign up to Kosli at https://app.kosli.com with Github](https://app.kosli.com).
 * [Get your Kosli API token](../installation#getting-your-kosli-api-token).
 * Set the KOSLI_API_TOKEN environment variable.  
   The `kosli` CLI uses this to authenticate you.
   ```shell {.command}
-  export KOSLI_API_TOKEN=<paste your kosli API token here>
+  export KOSLI_API_TOKEN=<paste-your-kosli-API-token-here>
   ```
 * Set the KOSLI_OWNER environment variable to `cyber-dojo`.   
   The Kosli `cyber-dojo` organization is public so its readable by any authenticated user.   

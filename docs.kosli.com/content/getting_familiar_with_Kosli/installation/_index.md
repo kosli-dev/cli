@@ -5,7 +5,7 @@ weight: 1
 ---
 
 
-## Installing Kosli CLI
+## Installing the Kosli CLI
 
 Kosli CLI can be installed from package managers, 
 by Curling pre-built binaries, or by running inside a Docker container.  
@@ -22,19 +22,18 @@ brew install kosli-dev/tap/kosli
 {{< /tab >}}
 
 {{< tab "APT" >}}
-If you are using Ubuntu or Debian Linux, you can use APT to install the Kosli CLI by running:
+On Ubuntu or Debian Linux, you can use APT to install the Kosli CLI by running:
 ```shell {.command}
 sudo sh -c 'echo "deb [trusted=yes] https://apt.fury.io/kosli/ /"  > /etc/apt/sources.list.d/fury.list'
-# if you are on a clean debian container/machine, you will need to install ca-certificates, otherwise ignore that step
+# On a clean debian container/machine, you need ca-certificates
 sudo apt install ca-certificates
-
 sudo apt update
 sudo apt install kosli
 ```
 {{< /tab >}}
 
 {{< tab "YUM" >}}
-If you have RedHat Linux, you can use YUM to install the Kosli CLI by running:
+On RedHat Linux, you can use YUM to install the Kosli CLI by running:
 ```shell {.command}
 cat <<EOT >> /etc/yum.repos.d/kosli.repo
 [kosli]
@@ -59,9 +58,8 @@ yum install kosli
 {{< /tab >}}
 
 {{< tab "Curl" >}}
-You can download the Kosli CLI from [GitHub](https://github.com/kosli-dev/cli/releases).
-Make sure to choose the correct tar file for your system.
-
+You can download the Kosli CLI from [GitHub](https://github.com/kosli-dev/cli/releases).  
+Make sure to choose the correct tar file for your system.  
 For example, on Mac with AMD:
 ```shell {.command}
 curl -L https://github.com/kosli-dev/cli/releases/download/v0.1.10/kosli_0.1.10_darwin_amd64.tar.gz | tar zx
@@ -70,7 +68,7 @@ sudo mv kosli /usr/local/bin/kosli
 {{< /tab >}}
 
 {{< tab "Docker" >}}
-You can run the Kosli CLI in a docker container by running:
+You can run the Kosli CLI in this docker container:
 ```shell {.command}
 docker run -it --rm ghcr.io/kosli-dev/cli:v0.1.10 bash
 ```
@@ -79,9 +77,10 @@ docker run -it --rm ghcr.io/kosli-dev/cli:v0.1.10 bash
 
 {{< /tabs >}}
 
-## Verify the installation worked
 
-To verify that `kosli` CLI is successfully installed run the command below:
+## Verifying the installation worked
+
+Run this command:
 ```shell {.command}
 kosli version
 ```
@@ -95,22 +94,37 @@ version.BuildInfo{Version:"v0.1.10", GitCommit:"9c623f1e6c293235ddc8de1e347bf99a
 <!-- Put this in a separate page? -->
 <!-- Add screen shot here? -->
 
-To get the kosli API token go to https://app.kosli.com, log in using your github account, and go to your Profile (you'll find it by clicking on your avatar in the top right corner of the page).
+* Go to https://app.kosli.com
+* Log in using your github account
+* Open your Profile page (click on your avatar in the top right corner of the page).
 
 ## Using environment variables
 
 <!-- Put this in a separate page? -->
 
-The `--api-token` (and `--owner`) flags are used in every `kosli` CLI commands.
-You can set these as environment variables, and avoid retyping them every time.
+The `--api-token` and `--owner` flags are used in every `kosli` CLI command.  
+Rather than retyping these every time you run `kosli`, you can set them as environment variables.
 
-You do this by capitalizing the flag in snake case and adding the `KOSLI_` prefix.
-For example, do a one-time `export KOSLI_API_TOKEN=xx` instead of
-repeatedly typing `--api-token xx`.
+Simply capitalize the flag in snake case and add the `KOSLI_` prefix.  
+For example, after this:
 
 ```shell
-export KOSLI_API_TOKEN=<put your kosli API token here>
+export KOSLI_API_TOKEN=abcdefg
+export KOSLI_OWNER=cyber-dojo
 ```
+
+Then instead of:
+
+```shell
+kosli pipeline ls --api-token abcdefg --owner cyber-dojo 
+```
+
+You can use:
+
+```shell
+kosli pipeline ls 
+```
+
 
 
 
