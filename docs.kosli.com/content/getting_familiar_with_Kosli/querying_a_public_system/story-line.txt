@@ -1,0 +1,53 @@
+How about if the story starts like this...
+
+     - Once upon a time (at Mon, 22 Aug 2022 11:35:00 CEST to be precise)!
+
+     - You were working with a friend called Artem
+       on an open source project called cyber-dojo.
+       [Here we have a pull-out saying cyber-dojo is real and what it is]
+
+           Why bring Artem into the story?
+           1. In the story we say that after you and Artem discover
+              the problem that Artem makes a git commit. And Artem DID make the commit.
+           2. It could be a useful writing device.
+              For example, in the text we explain why the pipeline report
+              shows the artifact in the dockerhub registry, but the environment
+              report shows the (same) artifact in a DIFFERENT aws registry.
+              The story could be that Artem remembers why and explains it to you.
+
+     - You ran this kosli command
+         $ kosli env get aws-prod
+
+         COMMIT   ARTIFACT                                                                              PIPELINE                RUNNING_SINCE  REPLICAS
+         ...
+         85d83c6  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:85d83c6                  runner                  14 days ago    1
+             SHA256: eeb0cfc9ee7f69fbd9531d5b8c1e8d22a8de119e2a422344a714a868e9a8bfec
+
+           At this point we have not yet introduced snapshots.
+           Maybe we could more info right at the start...
+
+            * CI-pipelines (eg building docker image, running unit tests, deploying, etc)
+              Add intro text here
+            * AWS runtime environments (eg blue-green rollover, instance scaling, etc)
+              Add intro text here
+
+     - You notice in the output that runner has 1 replica, when it should have 3.
+       (I genuinely did notice this using kosli, from the UX)
+       This might also be a good point to highlight that
+       they are getting this output without any personal access to the production environment.
+
+     - Artem fixes this by making a commit to runner
+       (This is the actual commit that Artem DID make)
+       https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
+
+
+A problem with this story-based approach is that the commands
+you WOULD have typed would have been, eg
+
+      $ kosli env get aws-prod
+
+but, of course, to go back in time and see the same output now, you need:
+
+      $ kosli env get aws-prod#65
+
+

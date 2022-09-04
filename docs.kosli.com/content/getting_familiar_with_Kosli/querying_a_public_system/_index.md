@@ -29,37 +29,7 @@ see dynamic events from:
      https://stackoverflow.com/questions/4425198/can-i-create-links-with-target-blank-in-markdown
 -->
 
-The project you'll be using is the **cyber-dojo** open source project.
-
-<!-- I want a better word than "using" but I can't think what it is.-->
-
-<!-- Here, could we instead ask the reader to pretend that...
-     - They were a contributor to the cyber-dojo project
-       (Then all text would use the word "YOUR")
-     - It was Mon, 22 Aug 2022 11:35:00 CEST
-     - They ran this kosli command
-         $ kosli env get aws-prod#64
-    
-         COMMIT   ARTIFACT                                                                              PIPELINE                RUNNING_SINCE  REPLICAS
-         ...
-         85d83c6  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:85d83c6                  runner                  14 days ago    1
-             SHA256: eeb0cfc9ee7f69fbd9531d5b8c1e8d22a8de119e2a422344a714a868e9a8bfec
-
-     - They noticed that runner had 1 replica, when it should have 3.
-       (I genuinely did notice this using kosli, from the UX)
-     - They fixed this by making the actual commit to runner 
-       https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
-       (This commit was made by Artem and they will of course see this.
-       Maybe we could pretend they were pairing with Artem?)
-
-     I feel the above is better than the intro using 
-     $ kosli pipeline ls
-
-     If we go with this then they will be typing
-     $ kosli env get aws-prod#64
-     before we've introduced snapshots.
--->
-
+This tutorial is based around the **cyber-dojo** project.
 
 * [https://cyber-dojo.org](https://cyber-dojo.org) is an open source platform where teams 
 practice TDD (in many languages) without any installation.  
@@ -96,8 +66,6 @@ You need to:
 # Pipeline events
 
 <!-- Do we want this `kosli pipeline ls` ? Does it add much value? 
-     Especially if we are pretending the reader contributed the
-     git commit we are looking at.
 -->
 
 Find out which `cyber-dojo` repositories have a CI pipeline reporting to https://app.kosli.com:
