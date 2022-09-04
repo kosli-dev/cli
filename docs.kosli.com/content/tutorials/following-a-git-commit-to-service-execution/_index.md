@@ -13,7 +13,7 @@ draft: true
      traced an incident caused by eg, a change to the network configuration, 
 -->
 
-<!-- The book "Developer Marketing Does Not Exist" suggests 
+<!-- The book "Developer Marketing Does Not Exist" by Adam DuVander suggests 
      this tutorial content structure (p49)
      1. Explain the context
      2. Show the end result
@@ -25,8 +25,8 @@ draft: true
         In this tutorial" then you might have skipped ahead."
      These were our exact first three words!
      I've tried to add initial context.
-
-     I think we are also still missing step 4.
+     I think we are still missing step 2 (see below)
+     I think we are still missing step 4.
 -->
 
 # Following a git commit to service execution
@@ -54,6 +54,11 @@ cyber-dojo's `runner` service performs most of its heavy lifting and
 should run with three replicas. Due to an oversight (whilst switching from K8S to AWS)
 it was running with just one replica. You will follow the commit that fixed this.
 
+<!-- Maybe here address step 2 from Adam's book
+     and say that you'll be confident the problem was fixed
+     without any knowledge of AWS nor access to its secrets.
+-->
+
 <!-- Some of the URLs would be better if they opened in their own tab.
      We've looked into this and it does not seem to be supported in MarkDown
      https://stackoverflow.com/questions/4425198/can-i-create-links-with-target-blank-in-markdown
@@ -76,7 +81,8 @@ You need to:
   export KOSLI_API_TOKEN=<paste-your-kosli-API-token-here>
   ```
 * Set the KOSLI_OWNER environment variable to `cyber-dojo`.   
-  The Kosli `cyber-dojo` organization is public so its readable by any authenticated user.   
+  The Kosli `cyber-dojo` organization is public so any authenticated user 
+  can read its data.   
   ```shell {.command}
   export KOSLI_OWNER=cyber-dojo
   ```
@@ -268,10 +274,6 @@ Note:
 * There are now three instances of `runner:16d9990`. We have proof the git commit has worked.  
   Note: you may need to scroll to the right to see the replica information.
 
-<!-- Maybe here mention that you are getting all this information 
-     without having to know anything about AWS, nor how to
-     get the secrets needed. 
--->
 <!-- Maybe also add that if you want proof it was running with a single instance
      before this blue-green roll-over, then you can run:
      $ kosli env get aws-prod#64
