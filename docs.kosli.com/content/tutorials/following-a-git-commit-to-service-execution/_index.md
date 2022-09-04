@@ -23,32 +23,25 @@ draft: true
      Quoting from the book...
        "If you find the first three words of your tutorial are
         In this tutorial" then you might have skipped ahead."
-     And these are our exact first three words!
-     I think we need some motivation about WHY following a
-     git commit/push is a valuable thing... 
+     These were our exact first three words!
+     I've tried to add initial context.
 
-     I think we are also currently missing step 4.
+     I think we are also still missing step 4.
 -->
 
 # Following a git commit to service execution
 
 ## Overview
 
-In this tutorial you'll learn how Kosli tracks "life after git"!
-You'll run `kosli` CLI commands and see the dynamic events that
-occurred after an actual git commit was pushed:
+In this tutorial you'll learn how Kosli tracks "life after git"
+and shows you events from:
+* CI-pipelines (eg, building the docker image, running the unit tests, deploying, etc)
+* runtime environments (eg, the blue-green rollover, instance scaling, etc)
 
-* in CI-pipelines (building a docker image, running unit tests, deploying, etc)
-* in AWS runtime environments (blue-green rollover, instance scaling, etc)
+You'll follow an actual git commit to an open-source project called **cyber-dojo**:
 
-<!-- Some of the URLs would be better if they opened in their own tab.
-     We've looked into this and it does not seem to be supported in MarkDown
-     https://stackoverflow.com/questions/4425198/can-i-create-links-with-target-blank-in-markdown
--->
-
-This tutorial is based around the **cyber-dojo** project:
-
-* [https://cyber-dojo.org](https://cyber-dojo.org) is an open source platform where teams 
+<!-- These bullet points could go in a pull-out -->
+* [https://cyber-dojo.org](https://cyber-dojo.org) is a web platform where teams 
 practice TDD (in many languages) without any installation.  
 * cyber-dojo has a microservice architecture with a dozen git repositories
 (eg [web](https://github.com/cyber-dojo/web), [runner](https://github.com/cyber-dojo/runner)).  
@@ -57,6 +50,14 @@ practice TDD (in many languages) without any installation.
 [aws-beta](https://app.kosli.com/cyber-dojo/environments/aws-beta)
 and [aws-prod](https://app.kosli.com/cyber-dojo/environments/aws-prod).
 
+cyber-dojo's `runner` service performs most of its heavy lifting and
+should run with three replicas. Due to an oversight (whilst switching from K8S to AWS)
+it was running with just one replica. You will follow the commit that fixed this.
+
+<!-- Some of the URLs would be better if they opened in their own tab.
+     We've looked into this and it does not seem to be supported in MarkDown
+     https://stackoverflow.com/questions/4425198/can-i-create-links-with-target-blank-in-markdown
+-->
 
 ## Getting ready
 
@@ -119,16 +120,13 @@ repository - but it helps if the relationship is clear.
 -->
 
 
-The `runner` service performs most of the heavy lifting on 
-[https://cyber-dojo.org](https://cyber-dojo.org) and
-should run with three replicas. Due to an oversight (whilst switching from K8S to AWS)
-it was running with just one replica. You will follow commit
-[16d9990](https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4)
-which fixed this.
-
 <!-- Would be really nice if we had commit completion here so we could use 
      kosli artifact get runner:16d9990
 -->
+
+The commit which fixed the problem was 
+[16d9990](https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4)
+in the `runner` repository. Following this commit using the `kosli` command:
 
 ```shell {.command}
 kosli artifact get runner:16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
@@ -265,7 +263,7 @@ COMMIT   ARTIFACT                                                               
          SHA256: d8440b94f7f9174c180324ceafd4148360d9d7c916be2b910f132c58b8a943ae                                                                                                                                                                                  
 ```
 
-This output reveals:
+Note:
 
 * There are now three instances of `runner:16d9990`. We have proof the git commit has worked.  
   Note: you may need to scroll to the right to see the replica information.
