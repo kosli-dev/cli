@@ -303,9 +303,8 @@ a *private* registry (`274425519734.dkr.ecr.eu-central-1.amazonaws.com`).
 But the identical SHA256 proves it is the same image with two different names.
 
 * There were *two* versions of `runner` at this point in time! 
-The first (from commit `16d9990`) has three replicas. 
-This is as expected; the `runner` service bears the brunt of cyber-dojo's load.
-The second (from commit `85d83c6`) has only one replica.
+The first, with three replicas (to fix the problem),   
+but also a second (from commit `85d83c6`) with only one replica.
 What is going on?
 
 Look at the snapshot *after* `aws-prod#65`:
@@ -326,7 +325,7 @@ COMMIT   ARTIFACT                                                               
 We still see the three instances of `runner:16d9990`.
 But the one instance of `runner:85d83c6` is no longer listed.
 Between `aws-prod#65` and `aws-prod#66` it stopped running.
-This is a very rarely seen event - a mid-flight blue-green deployment!
+We were seeing a mid-flight blue-green deployment!
 
 ## Diffing snapshots
 
