@@ -19,7 +19,15 @@ draft: true
      2. Show the end result
      3. Walk through the steps
      4. Help them take the next step
-     I think we are currently missing step 4.
+
+     Quoting from the book...
+       "If you find the first three words of your tutorial are
+        In this tutorial" then you might have skipped ahead."
+     And these are our exact first three words!
+     I think we need some motivation about WHY following a
+     git commit/push is a valuable thing... 
+
+     I think we are also currently missing step 4.
 -->
 
 # Following a git commit to service execution
@@ -74,18 +82,19 @@ You need to:
 
 ## Pipeline events
 
-<!-- Do we want this `kosli pipeline ls` ? Does it add much value? 
--->
+<!-- Do we want this `kosli pipeline ls` ? 
+     Does it add much value?
+     For now I have assumed not.
 
 Find out which `cyber-dojo` repositories have a CI pipeline reporting to https://app.kosli.com:
 
 ```shell {.command}
 kosli pipeline ls
 ```
-<!-- We want the terminal-output to be visually
+
+We want the terminal-output to be visually
 distinct to the terminal-input you copy/paste from.
 Eg different colour background, no syntax highlighting
--->
 
 You will see:
 
@@ -105,12 +114,17 @@ shas                    UX for git+image shas               public
 web                     UX for practicing TDD               public
 ```
 
-<!-- The name of a Kosli pipeline does not have to match the name of a git
-repository - but it helps if the relationship is clear. -->
+The name of a Kosli pipeline does not have to match the name of a git
+repository - but it helps if the relationship is clear. 
+-->
 
-Find the artifact built from commit
+
+The `runner` service performs most of the heavy lifting on 
+[https://cyber-dojo.org](https://cyber-dojo.org) and
+should run with three replicas. Due to an oversight (whilst switching from K8S to AWS)
+it was running with just one replica. You will follow commit
 [16d9990](https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4)
-to cyber-dojo's `runner` repository:
+which fixed this.
 
 <!-- Would be really nice if we had commit completion here so we could use 
      kosli artifact get runner:16d9990
@@ -174,8 +188,6 @@ Look at this output in detail:
 `dockerhub`. Its :tag is the short-sha of the git commit.  
 * **SHA256**: The `kosli` CLI knows how to 'fingerprint' any kind of artifact (docker images, zip files, etc) 
   to create a unique tamper-proof SHA. 
-  Later on you'll be referring back to this SHA - so note that the first seven characters of 
-  this 64 character SHA are `9af401c`.
 * **Created on**: The artifact was created on 22nd August 2022, at 11:35 CEST.
 * **Commit URL**: You can follow [https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4](https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4) 
   to the actual commit on Github since cyber-dojo's git repositories are public.
@@ -211,11 +223,6 @@ cyber-dojo's AWS runtime environments.
      Check with Artem
      If it is maybe do this after the repo has been renamed to
      kosli-environment-reporter
--->
-
-<!-- At some point mention that you are getting all this information 
-     without having to know anything about AWS, nor how to
-     get the secrets needed. 
 -->
 
 cyber-dojo runs the `kosli` CLI from inside its AWS runtime environments
@@ -258,9 +265,21 @@ COMMIT   ARTIFACT                                                               
          SHA256: d8440b94f7f9174c180324ceafd4148360d9d7c916be2b910f132c58b8a943ae                                                                                                                                                                                  
 ```
 
-This output reveals some interesting things:
+This output reveals:
 
-The name of the first artifact is `274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990`
+* There are now three instances of `runner:16d9990`. We have proof the git commit has worked.  
+  Note: you may need to scroll to the right to see the replica information.
+
+<!-- Maybe here mention that you are getting all this information 
+     without having to know anything about AWS, nor how to
+     get the secrets needed. 
+-->
+<!-- Maybe also add that if you want proof it was running with a single instance
+     before this blue-green roll-over, then you can run:
+     $ kosli env get aws-prod#64
+-->
+
+* The name of the first artifact is `274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990`
 and *not* `cyberdojo/runner:16d9990` as seen earlier! However, we can see the
 commit is the same (`16d9990`) and, more importantly, the SHA256 is also the same (`9af401c...`).
 Why the difference?
@@ -271,9 +290,8 @@ environments (which support the `https://cyber-dojo.org` web site) are are pulle
 a *private* registry (`274425519734.dkr.ecr.eu-central-1.amazonaws.com`).
 But the identical SHA256 proves it is the same image with two different names.
 
-Also, there were *two* versions of `runner` at this point in time! 
-The first (from commit `16d9990`) has three replicas (you may need
-to scroll to the right to see the replica information). 
+* There were *two* versions of `runner` at this point in time! 
+The first (from commit `16d9990`) has three replicas. 
 This is as expected; the `runner` service bears the brunt of cyber-dojo's load.
 The second (from commit `85d83c6`) has only one replica.
 What is going on?
@@ -296,9 +314,15 @@ COMMIT   ARTIFACT                                                               
 We still see the three instances of `runner:16d9990`.
 But the one instance of `runner:85d83c6` is no longer listed.
 Between `aws-prod#65` and `aws-prod#66` it stopped running.
-You were seeing the blue-green deployment, mid-flight!
+This is a very rarely seen event - a mid-flight blue-green deployment!
 
 ## Diffing snapshots
+
+<!-- Here we can add some motivation for using the env diff command.
+     Viz, making it easier to see ONLY the *effect* of the git commit.
+     There are many services, most of which are not affected, but an
+     `env get` lists them all.
+-->
 
 Find out what's *different* between the `aws-prod#65` and `aws-prod#66` snapshots: 
 
@@ -357,6 +381,8 @@ This was the *beginning* of the blue-green deployment.
 -->
 
 ## Diffing snapshots across environments!
+
+<!-- This is really part of a separate tutorial -->
 
 The name of an environment without a snapshot number (or the `#` character)
 specifies that environment's *latest* snapshot. (You can also use `#-1` if
