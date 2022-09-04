@@ -336,6 +336,17 @@ You will see:
 The plus sign in front of **Name:** indicates `runner:16d9990` started.
 This was the *beginning* of the blue-green deployment.
 
+<!-- Note that this diff output does NOT tell us how many instances of
+     runner:16d9990 were running. Should it?
+     Suppose this was a 2->3 scaling event?
+-->
+
+<-- Could we use the kosli CLI now to show the snapshot where
+    runner:85d83c6 was initially running with only one instance?
+    Again aws-prod#65 isn't really good enough since that could be
+    mid-scaling event.
+-->
+
 # Diffing snapshots across environments!
 
 The name of an environment without a snapshot number (or the `#` character)
