@@ -1,35 +1,44 @@
 ---
-title: Querying a public system
+title: Following a git commit to service execution
 bookCollapseSection: false
 weight: 2
 draft: true
 ---
 
-<!-- ?Make this a tutorial just for:
-     1. Title?=Following a git commit to service execution
-
-     ?Create a second tutorial for: 
+<!-- Create a SECOND tutorial for: 
      2. Title?=Tracing a production incident back to git commits
         The stories here would be simulated incidents with Easter-eggs comments.
 
-     Ultimately it would be nice to have a third tutorial which
+     Ultimately it would be nice to have a THIRD tutorial which
      traced an incident caused by eg, a change to the network configuration, 
 -->
 
-# Overview
+<!-- The book "Developer Marketing Does Not Exist" suggests 
+     this tutorial content structure (p49)
+     1. Explain the context
+     2. Show the end result
+     3. Walk through the steps
+     4. Help them take the next step
+     I think we are currently missing step 4.
+-->
+
+# Following a git commit to service execution
+
+## Overview
 
 In this tutorial you'll learn how Kosli tracks "life after git"!
-You'll run `kosli` CLI commands to "follow" an actual git commit and
-see dynamic events from:
-* CI-pipelines (eg building docker image, running unit tests, deploying, etc)
-* AWS runtime environments (eg blue-green rollover, instance scaling, etc)
+You'll run `kosli` CLI commands and see the dynamic events that
+occurred after an actual git commit was pushed:
+
+* in CI-pipelines (building a docker image, running unit tests, deploying, etc)
+* in AWS runtime environments (blue-green rollover, instance scaling, etc)
 
 <!-- Some of the URLs would be better if they opened in their own tab.
      We've looked into this and it does not seem to be supported in MarkDown
      https://stackoverflow.com/questions/4425198/can-i-create-links-with-target-blank-in-markdown
 -->
 
-This tutorial is based around the **cyber-dojo** project.
+This tutorial is based around the **cyber-dojo** project:
 
 * [https://cyber-dojo.org](https://cyber-dojo.org) is an open source platform where teams 
 practice TDD (in many languages) without any installation.  
@@ -41,7 +50,7 @@ practice TDD (in many languages) without any installation.
 and [aws-prod](https://app.kosli.com/cyber-dojo/environments/aws-prod).
 
 
-# Getting ready
+## Getting ready
 
 <!-- the copy/paste text is always a single command in this tutorial.
      Can we use CSS to add a leading $ prompt that is not copied?
@@ -63,7 +72,7 @@ You need to:
   export KOSLI_OWNER=cyber-dojo
   ```
 
-# Pipeline events
+## Pipeline events
 
 <!-- Do we want this `kosli pipeline ls` ? Does it add much value? 
 -->
@@ -194,7 +203,7 @@ Look at this output in detail:
 These last two events were reported by the `kosli` CLI running *inside* 
 cyber-dojo's AWS runtime environments. 
 
-# Environment Snapshots
+## Environment Snapshots
 
 <!-- make [lambda function] text a link to the yml that runs the lambda.
      I think this is
@@ -289,7 +298,7 @@ But the one instance of `runner:85d83c6` is no longer listed.
 Between `aws-prod#65` and `aws-prod#66` it stopped running.
 You were seeing the blue-green deployment, mid-flight!
 
-# Diffing snapshots
+## Diffing snapshots
 
 Find out what's *different* between the `aws-prod#65` and `aws-prod#66` snapshots: 
 
@@ -347,7 +356,7 @@ This was the *beginning* of the blue-green deployment.
     mid-scaling event.
 -->
 
-# Diffing snapshots across environments!
+## Diffing snapshots across environments!
 
 The name of an environment without a snapshot number (or the `#` character)
 specifies that environment's *latest* snapshot. (You can also use `#-1` if
