@@ -5,22 +5,22 @@ weight: 2
 draft: true
 ---
 
-<!-- Split this tutorial into two?
-     1. Title=Following a git commit 
-     2. Title=Tracking a production incident
-        The stories here would be simulated incidents with Easter-eggs comments.
--->
+<!-- ?Make this a tutorial just for:
+     1. Title?=Following a git commit to service execution
 
-<!-- For the "following a git commit" story could be we pretend the reader themselves
-     contributed the commit to the cyber-dojo runner repo?
-     Then all text would use the word "YOUR" ...? 
+     ?Create a second tutorial for: 
+     2. Title?=Tracing a production incident back to git commits
+        The stories here would be simulated incidents with Easter-eggs comments.
+
+     Ultimately it would be nice to have a third tutorial which
+     traced an incident caused by eg, a change to the network configuration, 
 -->
 
 # Overview
 
-In this tutorial you'll learn how Kosli tracks "life after git"
-by running `kosli` CLI commands to "follow" a git commit.
-You'll see dynamic events from:
+In this tutorial you'll learn how Kosli tracks "life after git"!
+You'll run `kosli` CLI commands to "follow" an actual git commit and
+see dynamic events from:
 * CI-pipelines (eg building docker image, running unit tests, deploying, etc)
 * AWS runtime environments (eg blue-green rollover, instance scaling, etc)
 
@@ -30,7 +30,36 @@ You'll see dynamic events from:
 -->
 
 The project you'll be using is the **cyber-dojo** open source project.
-<!-- I want a better word than "using" but I can't think what it is -->
+
+<!-- I want a better word than "using" but I can't think what it is.-->
+
+<!-- Here, could we instead ask the reader to pretend that...
+     - They were a contributor to the cyber-dojo project
+       (Then all text would use the word "YOUR")
+     - It was Mon, 22 Aug 2022 11:35:00 CEST
+     - They ran this kosli command
+         $ kosli env get aws-prod#64
+    
+         COMMIT   ARTIFACT                                                                              PIPELINE                RUNNING_SINCE  REPLICAS
+         ...
+         85d83c6  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:85d83c6                  runner                  14 days ago    1
+             SHA256: eeb0cfc9ee7f69fbd9531d5b8c1e8d22a8de119e2a422344a714a868e9a8bfec
+
+     - They noticed that runner had 1 replica, when it should have 3.
+       (I genuinely did notice this using kosli, from the UX)
+     - They fixed this by making the actual commit to runner 
+       https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
+       (This commit was made by Artem and they will of course see this.
+       Maybe we could pretend they were pairing with Artem?)
+
+     I feel the above is better than the intro using 
+     $ kosli pipeline ls
+
+     If we go with this then they will be typing
+     $ kosli env get aws-prod#64
+     before we've introduced snapshots.
+-->
+
 
 * [https://cyber-dojo.org](https://cyber-dojo.org) is an open source platform where teams 
 practice TDD (in many languages) without any installation.  
@@ -66,7 +95,10 @@ You need to:
 
 # Pipeline events
 
-<!-- Do we want this `kosli pipeline ls` ? Does it add much value? -->
+<!-- Do we want this `kosli pipeline ls` ? Does it add much value? 
+     Especially if we are pretending the reader contributed the
+     git commit we are looking at.
+-->
 
 Find out which `cyber-dojo` repositories have a CI pipeline reporting to https://app.kosli.com:
 
@@ -219,6 +251,11 @@ The previous **History** tells us the docker image our commit produced was first
 in `aws-beta` in that environment's `84`'th snapshot, and 
 in `aws-prod` in that environment's `65`'th snapshot.
 
+<!-- We can add
+If your replica-count fix has worked then the runner service will show three replicas
+in snapshot `aws-prod#65`.
+-->
+
 Get the whole of `aws-prod`'s `65`'th snapshot:
 
 ```shell {.command}
@@ -282,7 +319,7 @@ COMMIT   ARTIFACT                                                               
 We still see the three instances of `runner:16d9990`.
 But the one instance of `runner:85d83c6` is no longer listed.
 Between `aws-prod#65` and `aws-prod#66` it stopped running.
-We were seeing the blue-green deployment, mid-flight!
+You were seeing the blue-green deployment, mid-flight!
 
 # Diffing snapshots
 
