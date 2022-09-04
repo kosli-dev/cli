@@ -60,8 +60,15 @@ should run with three replicas. Due to an oversight (whilst switching from K8S t
 it was running with just one replica. You will follow the commit that fixed this.
 
 <!-- Maybe here address step 2 from Adam's book
-     and say that you'll be confident the problem was fixed
-     without any knowledge of AWS nor access to its secrets.
+     and say that at the end of the tutorial you'll be confident the 
+     problem was fixed without any knowledge of or access to cyber-dojo AWS 
+     runtime environments nor knowledge of the secrets giving access to those environments.
+
+     Maybe ask the reader if they have such access?
+     If they don't how would they know the problem was actually fixed?
+     Would they have to ask someone else?
+
+     This dev-but-not-ops-access feels like the general context of this tutorial.
 -->
 
 <!-- Some of the URLs would be better if they opened in their own tab.
