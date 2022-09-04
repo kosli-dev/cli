@@ -26,12 +26,17 @@ draft: true
      These were our exact first three words!
      I've tried to add initial context.
      I think we are still missing step 2 (see below)
-     I think we are still missing step 4.
+     I think we are still missing step 4, which should probably
+       be a simple link to the next tutorial.
 -->
 
 # Following a git commit to service execution
 
 ## Overview
+
+<!-- Time the tutorial and say
+In this 5 minute tutorial you'll learn...
+-->
 
 In this tutorial you'll learn how Kosli tracks "life after git"
 and shows you events from:
