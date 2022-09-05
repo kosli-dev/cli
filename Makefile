@@ -113,7 +113,7 @@ licenses:
 	@echo $(DATA) | tr " " "\n" > licenses/licenses.csv
 
 hugo: docs helm-docs
-	cd docs.kosli.com && hugo server --minify --port=1515
+	cd docs.kosli.com && hugo server --minify --buildDrafts --port=1515
 
 helm-lint: 
 	@cd charts/k8s-reporter && helm lint .
