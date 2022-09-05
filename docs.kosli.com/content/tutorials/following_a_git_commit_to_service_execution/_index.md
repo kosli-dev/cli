@@ -235,8 +235,8 @@ Let's look at this output in detail:
    * The artifact has `branch-coverage` evidence. 
      This evidence was also reported with a call to the `kosli` CLI in exactly the same way, right after 
      the tests passed and the coverage stats were generated.
-   * The artifact was deployed to `aws-beta` on 22nd August 11:37:17 CEST, and to `aws-prod` 
-     just over one minute later.
+   * The artifact was deployed to [aws-beta](https://app.merkely.com/cyber-dojo/pipelines/runner/deployments/18) on 22nd August 11:37:17 CEST, and to [aws-prod](https://app.merkely.com/cyber-dojo/pipelines/runner/deployments/19)
+     a minute later.
      Again, a call to the `kosli` CLI reported this just before the actual terraform deployments.  
      The `runner` service uses [Continuous Deployment](https://en.wikipedia.org/wiki/Continuous_deployment); 
      if the tests pass the artifact is [blue-green deployed](https://en.wikipedia.org/wiki/Blue-green_deployment) 
@@ -248,6 +248,9 @@ Let's look at this output in detail:
 These last two events were reported by the `kosli` CLI running *inside* 
 cyber-dojo's AWS runtime environments. 
 
+The information about this artifact is also available through the [web interface](https://app.merkely.com/cyber-dojo/pipelines/runner/artifacts/9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625).
+
+
 ## Environment Snapshots
 
 <!-- make [lambda function] text a link to the yml that runs the lambda.
@@ -257,23 +260,22 @@ cyber-dojo's AWS runtime environments.
      If it is maybe do this after the repo has been renamed to
      kosli-environment-reporter
 -->
+A Kosli environment stores information about what software is running in your actual runtime environment (server, Kubernetes cluster, AWS, ...). We use one Kosli environment per runtime environment.
 
-cyber-dojo runs the `kosli` CLI from inside its AWS runtime environments
+Cyber-dojo runs the `kosli` CLI from inside its AWS runtime environments
 using a lambda function. The lambda function periodically fingerprints 
-all the running services and sends a "snapshot" of what is *actually*
-running to [https://app.kosli.com](https://app.kosli.com). 
-If the snapshot is different to the previous snapshot it is saved.
+all the running services and reports them to Kosli.
 
-The previous **History** tells us the docker image our commit produced was first seen running
-in `aws-beta` in that environment's `84`'th snapshot, and 
-in `aws-prod` in that environment's `65`'th snapshot.
+If a change is detect a snapshot of the environment is saved.
+
+The **History** of the artifact tells us our artifact started running in snapshot #84 of `aws-beta` and #65 of `aws-prod`.
 
 <!-- We can add
 If your replica-count fix has worked then the runner service will show three replicas
 in snapshot `aws-prod#65`.
 -->
 
-Get the whole of `aws-prod`'s `65`'th snapshot:
+Show what was running in `aws-prod` snapshot #65:
 
 ```shell {.command}
 kosli env get aws-prod#65
@@ -282,20 +284,20 @@ kosli env get aws-prod#65
 You will see:
 
 ```console
-COMMIT   ARTIFACT                                                                              PIPELINE                RUNNING_SINCE  REPLICAS
-16d9990  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990                  runner                  11 days ago    3
-         SHA256: 9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625                                                     
-                                                                                                                                      
-7c45272  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/shas:7c45272                    shas                    11 days ago    1
+COMMIT   ARTIFACT                                                                    PIPELINE   RUNNING_SINCE  REPLICAS
+16d9990  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990        runner     11 days ago    3
+         SHA256: 9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625                              
+
+7c45272  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/shas:7c45272          shas       11 days ago    1
          SHA256: 76c442c04283c4ca1af22d882750eb960cf53c0aa041bbdb2db9df2f2c1282be
 
 ...some output elided...
 
-85d83c6  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:85d83c6                  runner                  13 days ago    1
-         SHA256: eeb0cfc9ee7f69fbd9531d5b8c1e8d22a8de119e2a422344a714a868e9a8bfec                                                     
-                                                                                                                                      
-1a2b170  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/differ:1a2b170                  differ                  13 days ago    1
-         SHA256: d8440b94f7f9174c180324ceafd4148360d9d7c916be2b910f132c58b8a943ae                                                                                                                                                                                  
+85d83c6  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:85d83c6        runner     13 days ago    1
+         SHA256: eeb0cfc9ee7f69fbd9531d5b8c1e8d22a8de119e2a422344a714a868e9a8bfec                              
+ 
+1a2b170  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/differ:1a2b170        differ     13 days ago    1
+         SHA256: d8440b94f7f9174c180324ceafd4148360d9d7c916be2b910f132c58b8a943ae
 ```
 
 Note:
@@ -308,7 +310,10 @@ Note:
      $ kosli env get aws-prod#64
 -->
 
-* The name of the first artifact is `274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990`
+<!--
+Tore Simon: This is most likely too details for what we are doing.
+
+ * The name of the first artifact is `274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990`
 and *not* `cyberdojo/runner:16d9990` as seen earlier! However, we can see the
 commit is the same (`16d9990`) and, more importantly, the SHA256 is also the same (`9af401c...`).
 Why the difference?
@@ -317,7 +322,7 @@ so anyone can run their own cyber-dojo web site.
 However, the images running inside its `aws-beta` and `aws-prod` 
 environments (which support the `https://cyber-dojo.org` web site) are are pulled from
 a *private* registry (`274425519734.dkr.ecr.eu-central-1.amazonaws.com`).
-But the identical SHA256 proves it is the same image with two different names.
+But the identical SHA256 proves it is the same image with two different names. -->
 
 * There were *two* versions of `runner` at this point in time! 
 The first, with three replicas (to fix the problem),   
@@ -333,9 +338,9 @@ kosli env get aws-prod#66
 You will see:
 
 ```console
-COMMIT   ARTIFACT                                                                              PIPELINE                RUNNING_SINCE  REPLICAS
-16d9990  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990                  runner                  11 days ago    3
-         SHA256: 9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625                                                     
+COMMIT   ARTIFACT                                                                   PIPELINE   RUNNING_SINCE  REPLICAS
+16d9990  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990       runner     11 days ago    3
+         SHA256: 9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625 
 ...
 ```
 
@@ -387,7 +392,7 @@ You will see:
      Use a screenshot?
 -->
 
-```shell
+```console
 + Name:   274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990
   Sha256: 9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
   Pipeline: runner
