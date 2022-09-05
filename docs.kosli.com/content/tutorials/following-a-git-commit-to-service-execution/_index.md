@@ -104,6 +104,8 @@ You need to:
 <!-- Do we want this `kosli pipeline ls` ? 
      Does it add much value?
      For now I have assumed not.
+Tore: I think we should have it. It introduces the Kosli Pipeline concept, and makes the
+user understand why we are calling `runner:`
 
 Find out which `cyber-dojo` repositories have a CI pipeline reporting to https://app.kosli.com:
 
@@ -142,6 +144,7 @@ repository - but it helps if the relationship is clear.
      kosli artifact get runner:16d9990
 -->
 
+<!-- Tore: This sentence starts a little in the middle at the moment -->
 The commit which fixed the problem was 
 [16d9990](https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4)
 in the `runner` repository. Following this commit using the `kosli` command:
@@ -174,6 +177,8 @@ History:
 
 <!-- Should we re-order the lines of this output a bit; based
      on the developer centric focus - starting with the commit?
+Tore: Although we did this query based on commit we are getting back
+an artifact, so I think we should keep the artifact specific things first.
 
 Git commit:  16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
 Commit URL:  https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
@@ -184,9 +189,11 @@ Created on:  Mon, 22 Aug 2022 11:35:00 CEST • 11 days ago
 -->
 
 <!-- There is plenty of scope for making various words in the text below into URLs
+Tore: At the same time this is a CLI, so personally prefer the output to be text.
 -->
 
 <!-- We do not comment on the output showing the artifact running TWICE 
+Tore: Yes we should. But I don't know the answer.
       - in aws-beta (84/117)
       - in aws-prod (65/94)
      Do we want to mention that as a third interesting thing? 
@@ -345,6 +352,7 @@ You will see:
 
 <!-- Can we colour this red as it actually appears?
      Use a screenshot?
+Tore: Simon pleas help us :-)
 -->
 
 ```shell
@@ -385,7 +393,7 @@ This was the *beginning* of the blue-green deployment.
      Suppose this was a 2->3 scaling event?
 -->
 
-<-- Could we use the kosli CLI now to show the snapshot where
+<!-- Could we use the kosli CLI now to show the snapshot where
     runner:85d83c6 was initially running with only one instance?
     Again aws-prod#65 isn't really good enough since that could be
     mid-scaling event.
@@ -398,6 +406,7 @@ This was the *beginning* of the blue-green deployment.
 The name of an environment without a snapshot number (or the `#` character)
 specifies that environment's *latest* snapshot. (You can also use `#-1` if
 you want to be explicit).
+<!-- Tore: I thought it was #NOW that is the explicit of latest -->
 
 Is there any different between `aws-beta` and `aws-prod` right now?
 
