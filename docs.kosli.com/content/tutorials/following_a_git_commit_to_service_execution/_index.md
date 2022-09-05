@@ -104,19 +104,25 @@ You need to:
 Tore: I think we should have it. It introduces the Kosli Pipeline concept, and makes the
 user understand why we are calling `runner:`
 
+Simon: I agree with Tore. I think it would be helpful to give more context to cyber-dojo's project.
+ie: here are the repositories pipelines for it, here are the environments they deploy to
+-->
+
+### Listing pipelines
+
 Find out which `cyber-dojo` repositories have a CI pipeline reporting to https://app.kosli.com:
 
 ```shell {.command}
 kosli pipeline ls
 ```
 
-We want the terminal-output to be visually
+<!-- We want the terminal-output to be visually
 distinct to the terminal-input you copy/paste from.
-Eg different colour background, no syntax highlighting
+Eg different colour background, no syntax highlighting -->
 
 You will see:
 
-```shell
+```console
 NAME                    DESCRIPTION                         VISIBILITY
 creator                 UX for Group/Kata creation          public
 custom-start-points     Custom exercises choices            public
@@ -134,24 +140,24 @@ web                     UX for practicing TDD               public
 
 The name of a Kosli pipeline does not have to match the name of a git
 repository - but it helps if the relationship is clear. 
--->
 
+### Following the artifact
 
 <!-- Would be really nice if we had commit completion here so we could use 
      kosli artifact get runner:16d9990
 -->
 
-<!-- Tore: This sentence starts a little in the middle at the moment -->
+The runner service, only had one instance running instead of three.
 The commit which fixed the problem was 
 [16d9990](https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4)
-in the `runner` repository. Following this commit using the `kosli` command:
+in the `runner` repository. We can follow this commit using the `kosli` command:
 
 ```shell {.command}
 kosli artifact get runner:16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
 ```
 You will see:
 
-```shell
+```console
 Name:        cyberdojo/runner:16d9990
 SHA256:      9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
 Created on:  Mon, 22 Aug 2022 11:35:00 CEST • 11 days ago
@@ -176,6 +182,7 @@ History:
      on the developer centric focus - starting with the commit?
 Tore: Although we did this query based on commit we are getting back
 an artifact, so I think we should keep the artifact specific things first.
+Simon: I agree with Tore
 
 Git commit:  16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
 Commit URL:  https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
@@ -195,6 +202,12 @@ Tore: Yes we should. But I don't know the answer.
       - in aws-prod (65/94)
      Do we want to mention that as a third interesting thing? 
      Are missing some "No longer running" reports here...?
+
+Simon: It seems that there is a change in number of instances running, which the diff
+outputs as "artifact reported running" in the artifact history, instead of a change in
+number of instances (scaled down from 3 to 1)
+The diff also does not show the change in number of instances
+See issue: https://github.com/kosli-dev/merkely/issues/369
 -->
 
 <!-- We could mention and create clickable app.kosli.com URLs in the text, eg
@@ -202,16 +215,16 @@ Tore: Yes we should. But I don't know the answer.
      `#14` takes you to that deployment event
 -->
 
-Look at this output in detail:
+Let's look at this output in detail:
 
 * **Name**: The name of the docker image is `cyberdojo/runner:16d9990`. Its image registry is defaulted to
 `dockerhub`. Its :tag is the short-sha of the git commit.  
 * **SHA256**: The `kosli` CLI knows how to 'fingerprint' any kind of artifact (docker images, zip files, etc) 
   to create a unique tamper-proof SHA. 
 * **Created on**: The artifact was created on 22nd August 2022, at 11:35 CEST.
-* **Commit URL**: You can follow [https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4](https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4) 
+* **Commit URL**: You can follow [the commit URL](https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4) 
   to the actual commit on Github since cyber-dojo's git repositories are public.
-* **Build URL**: Again, you can follow [https://github.com/cyber-dojo/runner/actions/runs/2902808452](https://github.com/cyber-dojo/runner/actions/runs/2902808452) 
+* **Build URL**: Again, you can follow [the build URL](https://github.com/cyber-dojo/runner/actions/runs/2902808452) 
   to the actual Github Action for this commit.
 * **State**: COMPLIANT means that all the promised evidence for the artifact (see `branch-coverage` next) 
   was provided before deployment.
@@ -222,7 +235,7 @@ Look at this output in detail:
    * The artifact has `branch-coverage` evidence. 
      This evidence was also reported with a call to the `kosli` CLI in exactly the same way, right after 
      the tests passed and the coverage stats were generated.
-   * The artifact started deploying to `aws-beta` on 22nd August 11:37:17 CEST, and to `aws-prod` 
+   * The artifact was deployed to `aws-beta` on 22nd August 11:37:17 CEST, and to `aws-prod` 
      just over one minute later.
      Again, a call to the `kosli` CLI reported this just before the actual terraform deployments.  
      The `runner` service uses [Continuous Deployment](https://en.wikipedia.org/wiki/Continuous_deployment); 
@@ -268,7 +281,7 @@ kosli env get aws-prod#65
 
 You will see:
 
-```shell
+```console
 COMMIT   ARTIFACT                                                                              PIPELINE                RUNNING_SINCE  REPLICAS
 16d9990  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990                  runner                  11 days ago    3
          SHA256: 9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625                                                     
@@ -319,7 +332,7 @@ kosli env get aws-prod#66
 
 You will see:
 
-```shell
+```console
 COMMIT   ARTIFACT                                                                              PIPELINE                RUNNING_SINCE  REPLICAS
 16d9990  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990                  runner                  11 days ago    3
          SHA256: 9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625                                                     
@@ -352,7 +365,7 @@ You will see:
 Tore: Simon pleas help us :-)
 -->
 
-```shell
+```console
 - Name:   274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:85d83c6
   Sha256: eeb0cfc9ee7f69fbd9531d5b8c1e8d22a8de119e2a422344a714a868e9a8bfec
   Pipeline: runner
