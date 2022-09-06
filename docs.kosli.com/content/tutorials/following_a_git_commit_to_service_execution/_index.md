@@ -26,8 +26,7 @@ draft: true
 
 ## Overview
 
-In this 5 minute tutorial you'll learn how Kosli tracks "life after git"
-and shows you events from:
+In this 5 minute tutorial you'll learn how Kosli tracks "life after git" and shows you events from:
 * CI-pipelines (eg, building the docker image, running the unit tests, deploying, etc)
 * runtime environments (eg, the blue-green rollover, instance scaling, etc)
 
@@ -36,9 +35,8 @@ cyber-dojo's `runner` service performs most of its heavy lifting and
 should run with three replicas. Due to an oversight (whilst switching from K8S to AWS)
 it was running with just one replica. You will follow the commit that fixed this.
 
-<!-- Some of the URLs would be better if they opened in their own tab.
-     We've looked into this and it does not seem to be supported in MarkDown
-     https://stackoverflow.com/questions/4425198/can-i-create-links-with-target-blank-in-markdown
+<!-- Do we want to explicitly mention seeing into the runtime environment did not require
+     knowledge any secrets nor how to navigate cloud console
 -->
 
 ## Getting ready
@@ -168,10 +166,10 @@ Some cyber-dojo services (eg web) have a manual approval step, and Kosli support
 
 ## Environment Snapshots
 
-A Kosli environment stores information about what software is running in your actual runtime environment (eg server, Kubernetes cluster, AWS, ...).
+Kosli environments store information about what is running in your actual runtime environments (eg server, Kubernetes cluster, AWS, ...).
 We use one Kosli environment per runtime environment.
 
-The Kosli CLI periodically fingerprints  all the running artifacts in a runtime environment and reports them to Kosli.
+The Kosli CLI periodically fingerprints all the running artifacts in a runtime environment and reports them to Kosli.
 If a change is detected, a snapshot of the environment is saved.
 
 {{< hint info >}}
@@ -246,6 +244,10 @@ The plus sign in front of **Name:** indicates `runner:16d9990` started.
 
 We have seen how Kosli can follow a git commit on its way into production,
 and provide information about the artifacts history.
+
+<!-- Do we want to explicitly mention seeing into the runtime environment did not require
+     knowledge any secrets nor how to navigate cloud console
+-->
 
 Next, we will find how to trace a production incident back to a git commit.
 
