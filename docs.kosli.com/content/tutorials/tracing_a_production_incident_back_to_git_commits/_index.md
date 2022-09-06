@@ -11,6 +11,42 @@ draft: true
 
 -->
 
+![Beta cyber-dojo is down with a 500](/images/cyber-dojo-500.png)
+
+The command below will probably give you a different output since the two environments have moved on after this incident 
+(the incident has been resolved with new commits which created new deployments).
+```
+kosli env diff aws-beta aws-prod
+- Name:   244531986313.dkr.ecr.eu-central-1.amazonaws.com/web:c3ada4d
+  Sha256: 480735698cb9e468bb16c4265fedb7507640d236b3ab53cf2e3ec09d3bd72063
+  Pipeline: web
+  Commit: https://github.com/cyber-dojo/web/commit/c3ada4dbd6bb9a66c27f24cec4b5a4c25cf9ce2b
+  Started: Tue, 06 Sep 2022 10:28:40 CEST • 13 minutes ago
+
++ Name:   274425519734.dkr.ecr.eu-central-1.amazonaws.com/web:6b1b6bc
+  Sha256: d4ab88ce200e88a07eda3c33fb18d7051a586e6b8e900fcea1063a13c4506446
+  Pipeline: web
+  Commit: https://github.com/cyber-dojo/web/commit/6b1b6bc45af830836838db8644d1388726d8f381
+  Started: Fri, 02 Sep 2022 05:32:00 CEST • 4 days ago
+```
+
+```
+kosli artifact get web@d4ab88ce200e88a07eda3c33fb18d7051a586e6b8e900fcea1063a13c4506446
+Name:        cyberdojo/web:6b1b6bc
+SHA256:      d4ab88ce200e88a07eda3c33fb18d7051a586e6b8e900fcea1063a13c4506446
+Created on:  Fri, 02 Sep 2022 05:26:52 CEST • 4 days ago
+Git commit:  6b1b6bc45af830836838db8644d1388726d8f381
+Commit URL:  https://github.com/cyber-dojo/web/commit/6b1b6bc45af830836838db8644d1388726d8f381
+Build URL:   https://github.com/cyber-dojo/web/actions/runs/2976432579
+State:       COMPLIANT
+History:
+    Artifact created                               Fri, 02 Sep 2022 05:26:52 CEST
+    Deployment #48 to aws-beta environment         Fri, 02 Sep 2022 05:28:07 CEST
+    Started running in aws-beta#181 environment    Fri, 02 Sep 2022 05:29:42 CEST
+    Deployment #49 to aws-prod environment         Fri, 02 Sep 2022 05:31:08 CEST
+    Started running in aws-prod#160 environment    Fri, 02 Sep 2022 05:32:28 CEST
+    No longer running in aws-beta#187 environment  Tue, 06 Sep 2022 10:30:42 CEST
+```
 <!-- 
 Assume that we are continuing after the following a git commit so we don't need to
 explain what cyber dojo is.
