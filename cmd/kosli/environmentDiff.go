@@ -24,8 +24,8 @@ type EnvironmentDiffResponse struct {
 	Name                string   `json:"name"`
 	CommitUrl           string   `json:"commit_url"`
 	MostRecentTimestamp int64    `json:"most_recent_timestamp"`
-	InstancesS1         int64    `json:"instances_s1"`
-	InstancesS2         int64    `json:"instances_s2"`
+	S1InstanceCount     int64    `json:"s1_instance_count"`
+	S2InstanceCount     int64    `json:"s2_instance_count"`
 	Pods                []string `json:"pods"`
 }
 
@@ -124,7 +124,7 @@ func printEnvironmentDiffAsTable(snappish1, snappish2, raw string, out io.Writer
 			if err != nil {
 				return err
 			}
-			fmt.Printf("    Instances: scaled from %d to %d\n", entry.InstancesS1, entry.InstancesS2)
+			fmt.Printf("    Instances: scaled from %d to %d\n", entry.S1InstanceCount, entry.S2InstanceCount)
 		}
 	}
 
