@@ -56,8 +56,10 @@ func newEnvironmentDiffCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
+	snappish1 := args[0]
+	snappish2 := args[1]
 	url := fmt.Sprintf("%s/api/v1/env-diff/%s/?snappish1=%s&snappish2=%s",
-		global.Host, global.Owner, url.QueryEscape(args[0]), url.QueryEscape(args[1]))
+		global.Host, global.Owner, url.QueryEscape(snappish1), url.QueryEscape(snappish2))
 
 	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, false, http.MethodGet, log)
@@ -65,96 +67,80 @@ func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
+	wrapper := func(raw string, out io.Writer, page int) error {
+		return printEnvironmentDiffAsTable(snappish1, snappish2, raw, out, page)
+	}
+
 	return output.FormattedPrint(response.Body, o.output, out, 0,
 		map[string]output.FormatOutputFunc{
-			"table": printEnvironmentDiffAsTable,
+			"table": wrapper,
 			"json":  output.PrintJson,
 		})
 }
 
-func printEnvironmentDiffAsTable(raw string, out io.Writer, page int) error {
+func printEnvironmentDiffAsTable(snappish1, snappish2, raw string, out io.Writer, page int) error {
 	var diffs map[string][]EnvironmentDiffResponse
 	err := json.Unmarshal([]byte(raw), &diffs)
 	if err != nil {
 		return err
 	}
 
-	colorRed := "\033[31m%s\033[0m"
-	colorGreen := "\033[32m%s\033[0m"
-	noColor := "%s"
+	s1Count := len(diffs[snappish1])
+	s2Count := len(diffs[snappish2])
 
-	removalCount := len(diffs["-"])
-	additionCount := len(diffs["+"])
-	changedCount := len(diffs["0"])
-
-	if removalCount > 0 {
-		for _, entry := range diffs["-"] {
-			err := printDiffEntry(colorRed, "-", entry)
+	if s1Count > 0 {
+		fmt.Printf("%s only\n", snappish1)
+		for _, entry := range diffs[snappish1] {
+			err := printOnlyEntry(entry)
 			if err != nil {
 				return err
 			}
 		}
 	}
 
-	if removalCount > 0 && additionCount > 0 {
+	if s1Count > 0 && s2Count > 0 {
 		fmt.Println()
 	}
 
-	if additionCount > 0 {
-		for _, entry := range diffs["+"] {
-			err := printDiffEntry(colorGreen, "+", entry)
+	if s2Count > 0 {
+		fmt.Printf("%s only\n", snappish2)
+		for _, entry := range diffs[snappish2] {
+			err := printOnlyEntry(entry)
 			if err != nil {
 				return err
 			}
-		}
-	}
-
-	if changedCount > 0 && (additionCount > 0 || removalCount > 0) {
-		fmt.Println()
-	}
-
-	if changedCount > 0 {
-		for _, entry := range diffs["0"] {
-			err := printDiffEntry(noColor, " ", entry)
-			if err != nil {
-				return err
-			}
-			fmt.Printf("  Instances: ")
-			fmt.Printf("scaled from %d to %d\n", entry.InstancesS1, entry.InstancesS2)
 		}
 	}
 
 	return nil
 }
 
-func printDiffEntry(color string, sign string, entry EnvironmentDiffResponse) error {
-	fmt.Printf(color, sign+" Name: ")
-	fmt.Printf("  %s\n", entry.Name)
-	fmt.Printf(color, "  Sha256: ")
-	fmt.Printf("%s\n", entry.Sha256)
+func printOnlyEntry(entry EnvironmentDiffResponse) error {
+	fmt.Printf("  Name: %s\n", entry.Name)
+
+	fmt.Printf("  Sha256: %s\n", entry.Sha256)
+
 	if entry.Pipeline != "" {
-		fmt.Printf(color, "  Pipeline: ")
-		fmt.Printf("%s\n", entry.Pipeline)
+		fmt.Printf("  Pipeline: %s\n", entry.Pipeline)
 	} else {
-		fmt.Printf(color, "  Pipeline: ")
-		fmt.Printf("Unknown\n")
+		fmt.Printf("  Pipeline: Unknown\n")
 	}
+
 	if entry.CommitUrl != "" {
-		fmt.Printf(color, "  Commit: ")
-		fmt.Printf("%s\n", entry.CommitUrl)
+		fmt.Printf("  Commit: %s\n", entry.CommitUrl)
 	} else {
-		fmt.Printf(color, "  Commit: ")
-		fmt.Printf("Unknown\n")
+		fmt.Printf("  Commit: Unknown\n")
 	}
+
 	if len(entry.Pods) > 0 {
-		fmt.Printf(color, "  Pods: ")
-		fmt.Printf("  %s\n", entry.Pods)
+		fmt.Printf("  Pods: %s\n", entry.Pods)
 	}
-	fmt.Printf(color, "  Started: ")
+
 	timestamp, err := formattedTimestamp(entry.MostRecentTimestamp, false)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s\n", timestamp)
+	fmt.Printf("  Started: %s\n", timestamp)
+
 	return nil
 }
