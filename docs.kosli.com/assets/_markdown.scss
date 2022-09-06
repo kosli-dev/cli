@@ -73,6 +73,8 @@
     background: transparent;
     border-radius: $border-radius;
     font-size: 0.875em;
+    background-color: $black-400;
+    border: 1px solid $black-300;
   }
 
   pre {
@@ -84,6 +86,7 @@
     code {
       padding: 0;
       background: none;
+      border: 0;
     }
   }
 

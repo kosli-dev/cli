@@ -5,11 +5,6 @@ weight: 2
 draft: true
 ---
 
-<!-- 
-     Ultimately it would be nice to have a THIRD tutorial which
-     traced an incident caused by eg, a change to the network configuration, 
--->
-
 <!-- The book "Developer Marketing Does Not Exist" by Adam DuVander suggests 
      this tutorial content structure (p49)
      1. Explain the context
@@ -31,11 +26,7 @@ draft: true
 
 ## Overview
 
-<!-- Time the tutorial and say
-In this 5 minute tutorial you'll learn...
--->
-
-In this tutorial you'll learn how Kosli tracks "life after git"
+In this 5 minute tutorial you'll learn how Kosli tracks "life after git"
 and shows you events from:
 * CI-pipelines (eg, building the docker image, running the unit tests, deploying, etc)
 * runtime environments (eg, the blue-green rollover, instance scaling, etc)
@@ -45,28 +36,12 @@ cyber-dojo's `runner` service performs most of its heavy lifting and
 should run with three replicas. Due to an oversight (whilst switching from K8S to AWS)
 it was running with just one replica. You will follow the commit that fixed this.
 
-<!-- Maybe here address step 2 from Adam's book
-     and say that at the end of the tutorial you'll be confident the 
-     problem was fixed without any knowledge of or access to cyber-dojo AWS 
-     runtime environments nor knowledge of the secrets giving access to those environments.
-
-     Maybe ask the reader if they have such access?
-     If they don't how would they know the problem was actually fixed?
-     Would they have to ask someone else?
-
-     This dev-but-not-ops-access feels like the general context of this tutorial.
--->
-
 <!-- Some of the URLs would be better if they opened in their own tab.
      We've looked into this and it does not seem to be supported in MarkDown
      https://stackoverflow.com/questions/4425198/can-i-create-links-with-target-blank-in-markdown
 -->
 
 ## Getting ready
-
-<!-- the copy/paste text is always a single command in this tutorial.
-     Can we use CSS to add a leading $ prompt that is not copied?
--->
 
 You need to:
 * [Install the `kosli` CLI](../installation).
@@ -87,27 +62,13 @@ You need to:
 
 ## Pipeline events
 
-<!-- Do we want this `kosli pipeline ls` ? 
-     Does it add much value?
-     For now I have assumed not.
-Tore: I think we should have it. It introduces the Kosli Pipeline concept, and makes the
-user understand why we are calling `runner:`
-
-Simon: I agree with Tore. I think it would be helpful to give more context to cyber-dojo's project.
-ie: here are the repositories pipelines for it, here are the environments they deploy to
--->
-
 ### Listing pipelines
 
-Find out which `cyber-dojo` repositories have a CI pipeline reporting to https://app.kosli.com:
+Find out which `cyber-dojo` repositories have a CI pipeline reporting to [Kosli](https://app.kosli.com):
 
 ```shell {.command}
 kosli pipeline ls
 ```
-
-<!-- We want the terminal-output to be visually
-distinct to the terminal-input you copy/paste from.
-Eg different colour background, no syntax highlighting -->
 
 You will see:
 
@@ -129,21 +90,17 @@ web                     UX for practicing TDD               public
 
 {{< hint info >}}
 ## cyber-dojo overview
-* [https://cyber-dojo.org](https://cyber-dojo.org) is a web platform where teams 
-practice TDD (in many languages) without any installation.  
+* [cyber-dojo](https://cyber-dojo.org) is a web platform where teams 
+practice TDD without any installation.  
 * These docker images run in two AWS environments named 
 [aws-beta](https://app.kosli.com/cyber-dojo/environments/aws-beta)
 and [aws-prod](https://app.kosli.com/cyber-dojo/environments/aws-prod).
 * cyber-dojo has a microservice architecture with a dozen git repositories.
-* Each git repository has its own Github Actions CI pipeline producing a docker image as you can see above.
+* Each git repository has its own Github Actions CI pipeline producing a docker image as listed above.
 {{< /hint >}}
 
 
 ### Following the artifact
-
-<!-- Would be really nice if we had commit completion here so we could use 
-     kosli artifact get runner:16d9990
--->
 
 The runner service, only had one instance running instead of three.
 The commit which fixed the problem was 
@@ -176,11 +133,6 @@ History:
     No longer running in aws-prod#93 environment         Wed, 24 Aug 2022 18:12:14 CEST
 ```
 
-<!-- We could mention and create clickable app.kosli.com URLs in the text, eg
-     `aws-prod#65` takes you to that snapshot
-     `#14` takes you to that deployment event
--->
-
 Let's look at this output in detail:
 
 * **Name**: The name of the docker image is `cyberdojo/runner:16d9990`. Its image registry is defaulted to
@@ -190,9 +142,9 @@ Let's look at this output in detail:
 * **Created on**: The artifact was created on 22nd August 2022, at 11:35 CEST.
 * **Commit URL**: You can follow [the commit URL](https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4) 
   to the actual commit on Github since cyber-dojo's git repositories are public.
-* **Build URL**: Again, you can follow [the build URL](https://github.com/cyber-dojo/runner/actions/runs/2902808452) 
+* **Build URL**: You can follow [the build URL](https://github.com/cyber-dojo/runner/actions/runs/2902808452) 
   to the actual Github Action for this commit.
-* **State**: COMPLIANT means that all the promised evidence for the artifact (see `branch-coverage` next) 
+* **State**: COMPLIANT means that all the promised evidence for the artifact (in this case `branch-coverage`) 
   was provided before deployment.
 * **History**:
    * **CI pipeline events**
@@ -216,35 +168,28 @@ Some cyber-dojo services (eg web) have a manual approval step, and Kosli support
 
 ## Environment Snapshots
 
-<!-- make [lambda function] text a link to the yml that runs the lambda.
-     I think this is
-     https://github.com/cyber-dojo/merkely-environment-reporter/tree/main/deployment/terraform/lambda-reporter
-     Check with Artem
-     If it is maybe do this after the repo has been renamed to
-     kosli-environment-reporter
--->
-A Kosli environment stores information about what software is running in your actual runtime environment (server, Kubernetes cluster, AWS, ...). We use one Kosli environment per runtime environment.
+A Kosli environment stores information about what software is running in your actual runtime environment (eg server, Kubernetes cluster, AWS, ...).
+We use one Kosli environment per runtime environment.
 
+The Kosli CLI periodically fingerprints  all the running artifacts in a runtime environment and reports them to Kosli.
+If a change is detected, a snapshot of the environment is saved.
+
+{{< hint info >}}
 Cyber-dojo runs the `kosli` CLI from inside its AWS runtime environments
-using a lambda function. The lambda function periodically fingerprints 
-all the running services and reports them to Kosli.
+using a [lambda function](https://github.com/cyber-dojo/merkely-environment-reporter/tree/main/deployment/terraform/lambda-reporter)
+to report the running services to Kosli.
+{{< /hint >}}
 
-If a change is detect a snapshot of the environment is saved.
 
-The **History** of the artifact tells us our artifact started running in snapshot #84 of `aws-beta` and #65 of `aws-prod`.
+The **History** of the artifact tells us our artifact started running in snapshot #65 of `aws-prod`.
 
-<!-- We can add
-If your replica-count fix has worked then the runner service will show three replicas
-in snapshot `aws-prod#65`.
--->
-
-Show what was running in `aws-prod` snapshot #65:
+We query Kosli to see what was running in `aws-prod` snapshot #65:
 
 ```shell {.command}
 kosli env get aws-prod#65
 ```
 
-You will see:
+The output will be:
 
 ```console
 COMMIT   ARTIFACT                                                                    PIPELINE   RUNNING_SINCE  REPLICAS
@@ -263,97 +208,31 @@ COMMIT   ARTIFACT                                                               
          SHA256: d8440b94f7f9174c180324ceafd4148360d9d7c916be2b910f132c58b8a943ae
 ```
 
-Note:
+We see that in this snapshot, the `runner:16d9990` artifact is indeed running with 3 replicas.
+We have proof the git commit has worked. 
 
-* There are now three instances of `runner:16d9990`. We have proof the git commit has worked.  
-  Note: you may need to scroll to the right to see the replica information.
+{{< hint info >}}
+## Blue-green deployment
+There were *two* versions of `runner` at this point in time! 
+The first, with three replicas (to fix the problem), but also a second (from commit `85d83c6`) with only one replica.
 
-<!-- Maybe also add that if you want proof it was running with a single instance
-     before this blue-green roll-over, then you can run:
-     $ kosli env get aws-prod#64
--->
-
-<!--
-Tore Simon: This is most likely too details for what we are doing.
-
- * The name of the first artifact is `274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990`
-and *not* `cyberdojo/runner:16d9990` as seen earlier! However, we can see the
-commit is the same (`16d9990`) and, more importantly, the SHA256 is also the same (`9af401c...`).
-Why the difference?
-Answer: cyber-dojo's docker images are first saved to a public registry (`dockerhub`)
-so anyone can run their own cyber-dojo web site.
-However, the images running inside its `aws-beta` and `aws-prod` 
-environments (which support the `https://cyber-dojo.org` web site) are are pulled from
-a *private* registry (`274425519734.dkr.ecr.eu-central-1.amazonaws.com`).
-But the identical SHA256 proves it is the same image with two different names. -->
-
-* There were *two* versions of `runner` at this point in time! 
-The first, with three replicas (to fix the problem),   
-but also a second (from commit `85d83c6`) with only one replica.
-What is going on?
-
-Look at the snapshot *after* `aws-prod#65`:
-
-```shell {.command}
-kosli env get aws-prod#66
-```
-
-You will see:
-
-```console
-COMMIT   ARTIFACT                                                                   PIPELINE   RUNNING_SINCE  REPLICAS
-16d9990  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990       runner     11 days ago    3
-         SHA256: 9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625 
-...
-```
-
-We still see the three instances of `runner:16d9990`.
-But the one instance of `runner:85d83c6` is no longer listed.
-Between `aws-prod#65` and `aws-prod#66` it stopped running.
-We were seeing a mid-flight blue-green deployment!
+This is because we are in the middle of a **blue-green deployment**.
+`runner:85d83c6` is about to be stopped, it will not be reported in
+snapshot `aws-prod#66`.
+{{< /hint >}}
 
 ## Diffing snapshots
 
-<!-- Here we can add some motivation for using the env diff command.
-     Viz, making it easier to see ONLY the *effect* of the git commit.
-     There are many services, most of which are not affected, but an
-     `env get` lists them all.
--->
+Kosli's `env diff` command allows you to see differences between two versions of your
+runtime environment.
 
-Find out what's *different* between the `aws-prod#65` and `aws-prod#66` snapshots: 
-
-```shell {.command}
-kosli env diff aws-prod#65 aws-prod#66
-```
-
-You will see:
-
-<!-- Can we colour this red as it actually appears?
-     Use a screenshot?
-Tore: Simon pleas help us :-)
--->
-
-```console
-- Name:   274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:85d83c6
-  Sha256: eeb0cfc9ee7f69fbd9531d5b8c1e8d22a8de119e2a422344a714a868e9a8bfec
-  Pipeline: runner
-  Commit: https://github.com/cyber-dojo/runner/commit/85d83c6ab8e0ce800baeef3dfa4fa9f6eee338a4
-  Started: Sat, 20 Aug 2022 22:32:43 CEST • 13 days ago
-```
-The minus sign in front of **Name:** indicates `runner:85d83c6` stopped.
-This was the *end* of the blue-green deployment.
-
-Go backwards in time a little and look at the *previous* diff:
+Let's find out what's *different* between the `aws-prod#64` and `aws-prod#65` snapshots: 
 
 ```shell {.command}
 kosli env diff aws-prod#64 aws-prod#65
 ```
 
-You will see:
-
-<!-- Can we colour this green as it actually appears? 
-     Use a screenshot?
--->
+The response will be:
 
 ```console
 + Name:   274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990
@@ -364,16 +243,11 @@ You will see:
 ```
 
 The plus sign in front of **Name:** indicates `runner:16d9990` started.
-This was the *beginning* of the blue-green deployment.
 
-<!-- Note that this diff output does NOT tell us how many instances of
-     runner:16d9990 were running. Should it?
-     Suppose this was a 2->3 scaling event?
--->
+We have seen how Kosli can follow a git commit on its way into production,
+and provide information about the artifacts history.
 
-<!-- Could we use the kosli CLI now to show the snapshot where
-    runner:85d83c6 was initially running with only one instance?
-    Again aws-prod#65 isn't really good enough since that could be
-    mid-scaling event.
--->
+Next, we will find how to trace a production incident back to a git commit.
 
+{{< button relref="/installation" >}}< Previous{{< /button >}}
+{{< button relref="/tracing_a_production_incident_back_to_git_commits" >}}Next >{{< /button >}}
