@@ -1,7 +1,7 @@
 ---
 title: Simulating a DevOps system
 bookCollapseSection: false
-weight: 3
+weight: 4
 ---
 
 <!-- https://medium.com/pragmatic-programmers/displaying-shell-command-code-blocks-in-hugo-d50691096772 -->

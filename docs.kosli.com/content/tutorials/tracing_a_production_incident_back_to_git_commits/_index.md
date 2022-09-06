@@ -1,7 +1,7 @@
 ---
 title: Tracing a production incident back to git commits
 bookCollapseSection: false
-weight: 4
+weight: 3
 draft: true
 ---
 
