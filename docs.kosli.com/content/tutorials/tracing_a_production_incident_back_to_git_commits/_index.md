@@ -5,11 +5,7 @@ weight: 3
 draft: true
 ---
 
-<!-- Create a SECOND tutorial for: 
-     2. Title?=Tracing a production incident back to git commits
-        The stories here would be simulated incidents with Easter-eggs comments.
-
--->
+<!-- Add Easter-eggs comments? -->
 
 ![Prod cyber-dojo is down with a 500](/images/cyber-dojo-prod-500-large.png)
 ![Prod cyber-dojo is down with a 500](/images/cyber-dojo-prod-500-small.png)
@@ -18,6 +14,7 @@ draft: true
 ```shell {.command}
 kosli env diff aws-prod~1 aws-prod
 ```
+Drop this and start with env log
 -->
 
 ```shell {.command}
@@ -43,8 +40,9 @@ SNAPSHOT  FROM                            TO                              DURATI
 163       Fri, 02 Sep 2022 05:37:28 CEST  Fri, 02 Sep 2022 19:27:28 CEST  14 hours
 ```
 
-The ouput for the command above will show more than 177 snapshots because `aws-prod` has moved on since this incident 
-(it has been resolved with new commits which have created new deployments).
+The output for the command above will show more than 177 snapshots because 
+`aws-prod` has moved on since this incident (it has been resolved with new 
+commits which have created new deployments).
 
 We look at the diff between the most recent snapshots at this moment:
 
@@ -87,23 +85,36 @@ This tells us artifact `creator:b7a5908` has started running in the `aws-prod` e
 
 Now follow the commit URL.
 
-<!--  TODO: fix cyber-dojo creator repo from the hacks we did to simulate bug -->
+<!-- FROM here down is the old tutorial which used the web repo -->
 
-
-
-
-
-
-
-
+<!--
 {{< hint info >}}
 To actually see the same output we had when this document was written run
 ```shell {.command}
 kosli env diff aws-beta#189 aws-prod#169
 ```
 {{< \hint >}}
+-->
 
-<!-- We should return the fully expanded snappish as the key in the json -->
+<!-- We should return the fully expanded snappish as the key in the json?
+     Eg, this
+     $ kosli env diff aws-beta aws-prod
+     could print
+
+aws-beta#189 only
+  Name: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/web:c3ada4d
+    Sha256: 480735698cb9e468bb16c4265fedb7507640d236b3ab53cf2e3ec09d3bd72063
+    Pipeline: web
+    Commit: https://github.com/cyber-dojo/web/commit/c3ada4dbd6bb9a66c27f24cec4b5a4c25cf9ce2b
+    Started: Tue, 06 Sep 2022 10:28:40 CEST • 4 hours ago
+
+aws-prod#169 only
+  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/web:6b1b6bc
+    Sha256: d4ab88ce200e88a07eda3c33fb18d7051a586e6b8e900fcea1063a13c4506446
+    Pipeline: web
+    Commit: https://github.com/cyber-dojo/web/commit/6b1b6bc45af830836838db8644d1388726d8f381
+    Started: Fri, 02 Sep 2022 05:32:00 CEST • 4 days ago
+-->
 
 ```console
 aws-beta only
@@ -120,8 +131,6 @@ aws-prod only
     Commit: https://github.com/cyber-dojo/web/commit/6b1b6bc45af830836838db8644d1388726d8f381
     Started: Fri, 02 Sep 2022 05:32:00 CEST • 4 days ago
 ```
-
-
 
 
 ```shell {.command}
