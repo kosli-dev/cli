@@ -24,8 +24,8 @@ type EnvironmentDiffResponse struct {
 	Name                string   `json:"name"`
 	CommitUrl           string   `json:"commit_url"`
 	MostRecentTimestamp int64    `json:"most_recent_timestamp"`
-	InstancesS1         int64    `json:"instances_s1"`
-	InstancesS2         int64    `json:"instances_s2"`
+	S1InstanceCount     int64    `json:"s1_instance_count"`
+	S2InstanceCount     int64    `json:"s2_instance_count"`
 	Pods                []string `json:"pods"`
 }
 
@@ -87,6 +87,7 @@ func printEnvironmentDiffAsTable(snappish1, snappish2, raw string, out io.Writer
 
 	s1Count := len(diffs[snappish1])
 	s2Count := len(diffs[snappish2])
+	changedCount := len(diffs["0"])
 
 	if s1Count > 0 {
 		fmt.Printf("%s only\n", snappish1)
@@ -112,35 +113,50 @@ func printEnvironmentDiffAsTable(snappish1, snappish2, raw string, out io.Writer
 		}
 	}
 
+	if changedCount > 0 && (s1Count > 0 || s2Count > 0) {
+		fmt.Println()
+	}
+
+	if changedCount > 0 {
+		fmt.Printf("%s -> %s scaling\n", snappish1, snappish2)
+		for _, entry := range diffs["0"] {
+			err := printOnlyEntry(entry)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("    Instances: scaled from %d to %d\n", entry.S1InstanceCount, entry.S2InstanceCount)
+		}
+	}
+
 	return nil
 }
 
 func printOnlyEntry(entry EnvironmentDiffResponse) error {
 	fmt.Printf("  Name: %s\n", entry.Name)
 
-	fmt.Printf("  Sha256: %s\n", entry.Sha256)
+	fmt.Printf("    Sha256: %s\n", entry.Sha256)
 
 	if entry.Pipeline != "" {
-		fmt.Printf("  Pipeline: %s\n", entry.Pipeline)
+		fmt.Printf("    Pipeline: %s\n", entry.Pipeline)
 	} else {
-		fmt.Printf("  Pipeline: Unknown\n")
+		fmt.Printf("    Pipeline: Unknown\n")
 	}
 
 	if entry.CommitUrl != "" {
-		fmt.Printf("  Commit: %s\n", entry.CommitUrl)
+		fmt.Printf("    Commit: %s\n", entry.CommitUrl)
 	} else {
-		fmt.Printf("  Commit: Unknown\n")
+		fmt.Printf("    Commit: Unknown\n")
 	}
 
 	if len(entry.Pods) > 0 {
-		fmt.Printf("  Pods: %s\n", entry.Pods)
+		fmt.Printf("    Pods: %s\n", entry.Pods)
 	}
 
 	timestamp, err := formattedTimestamp(entry.MostRecentTimestamp, false)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("  Started: %s\n", timestamp)
+	fmt.Printf("    Started: %s\n", timestamp)
 
 	return nil
 }
