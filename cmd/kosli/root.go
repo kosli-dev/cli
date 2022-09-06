@@ -51,7 +51,7 @@ const (
 	newEnvNameFlag          = "The name of environment to be created."
 	newEnvTypeFlag          = "The type of environment. Valid types are: [K8S, ECS, server, S3, lambda]."
 	envAllowListFlag        = "The environment name for which the artifact is allowlisted."
-	reasonFlag              = "[optional] The reason why this artifact is allowlisted."
+	reasonFlag              = "The reason why this artifact is allowlisted."
 	oldestCommitFlag        = "The source commit sha for the oldest change in the deployment."
 	newestCommitFlag        = "[defaulted] The source commit sha for the newest change in the deployment."
 	repoRootFlag            = "The directory where the source git repository is volume-mounted."
