@@ -14,9 +14,6 @@ draft: true
 ![Prod cyber-dojo is down with a 500](/images/cyber-dojo-prod-500-large.png)
 ![Prod cyber-dojo is down with a 500](/images/cyber-dojo-prod-500-small.png)
 
-The command below will probably give you a different output since the environment has moved on since this incident 
-(it has been resolved with new commits which created new deployments).
-
 <!--
 ```shell {.command}
 kosli env diff aws-prod~1 aws-prod
@@ -28,70 +25,69 @@ kosli env log aws-prod
 ```
 
 ```console
-SNAPSHOT  FROM                           TO                             DURATION
-173       Tue, 06 Sep 2022 14:53:14 BST  now                            27 minutes
-172       Tue, 06 Sep 2022 14:52:14 BST  Tue, 06 Sep 2022 14:53:14 BST  59 seconds
-171       Tue, 06 Sep 2022 14:28:14 BST  Tue, 06 Sep 2022 14:52:14 BST  24 minutes
-170       Tue, 06 Sep 2022 14:27:14 BST  Tue, 06 Sep 2022 14:28:14 BST  59 seconds
-169       Mon, 05 Sep 2022 07:00:14 BST  Tue, 06 Sep 2022 14:27:14 BST  one day
-168       Mon, 05 Sep 2022 06:59:14 BST  Mon, 05 Sep 2022 07:00:14 BST  about a minute
-167       Sun, 04 Sep 2022 02:11:14 BST  Mon, 05 Sep 2022 06:59:14 BST  one day
-166       Sun, 04 Sep 2022 02:10:14 BST  Sun, 04 Sep 2022 02:11:14 BST  about a minute
-165       Fri, 02 Sep 2022 18:28:14 BST  Sun, 04 Sep 2022 02:10:14 BST  one day
-164       Fri, 02 Sep 2022 18:27:14 BST  Fri, 02 Sep 2022 18:28:14 BST  59 seconds
-163       Fri, 02 Sep 2022 04:37:14 BST  Fri, 02 Sep 2022 18:27:14 BST  14 hours
-162       Fri, 02 Sep 2022 04:36:14 BST  Fri, 02 Sep 2022 04:37:14 BST  about a minute
-161       Fri, 02 Sep 2022 04:33:14 BST  Fri, 02 Sep 2022 04:36:14 BST  3 minutes
-160       Fri, 02 Sep 2022 04:32:14 BST  Fri, 02 Sep 2022 04:33:14 BST  59 seconds
-159       Thu, 01 Sep 2022 15:48:14 BST  Fri, 02 Sep 2022 04:32:14 BST  13 hours
+SNAPSHOT  FROM                            TO                              DURATION
+177       Tue, 06 Sep 2022 16:53:28 CEST  now                             3 minutes
+176       Tue, 06 Sep 2022 16:52:28 CEST  Tue, 06 Sep 2022 16:53:28 CEST  59 seconds
+175       Tue, 06 Sep 2022 16:43:28 CEST  Tue, 06 Sep 2022 16:52:28 CEST  9 minutes
+174       Tue, 06 Sep 2022 16:42:28 CEST  Tue, 06 Sep 2022 16:43:28 CEST  59 seconds
+173       Tue, 06 Sep 2022 15:53:28 CEST  Tue, 06 Sep 2022 16:42:28 CEST  49 minutes
+172       Tue, 06 Sep 2022 15:52:28 CEST  Tue, 06 Sep 2022 15:53:28 CEST  about a minute
+171       Tue, 06 Sep 2022 15:28:27 CEST  Tue, 06 Sep 2022 15:52:28 CEST  24 minutes
+170       Tue, 06 Sep 2022 15:27:28 CEST  Tue, 06 Sep 2022 15:28:27 CEST  59 seconds
+169       Mon, 05 Sep 2022 08:00:28 CEST  Tue, 06 Sep 2022 15:27:28 CEST  one day
+168       Mon, 05 Sep 2022 07:59:28 CEST  Mon, 05 Sep 2022 08:00:28 CEST  about a minute
+167       Sun, 04 Sep 2022 03:11:28 CEST  Mon, 05 Sep 2022 07:59:28 CEST  one day
+166       Sun, 04 Sep 2022 03:10:28 CEST  Sun, 04 Sep 2022 03:11:28 CEST  59 seconds
+165       Fri, 02 Sep 2022 19:28:28 CEST  Sun, 04 Sep 2022 03:10:28 CEST  one day
+164       Fri, 02 Sep 2022 19:27:28 CEST  Fri, 02 Sep 2022 19:28:28 CEST  59 seconds
+163       Fri, 02 Sep 2022 05:37:28 CEST  Fri, 02 Sep 2022 19:27:28 CEST  14 hours
 ```
 
-We look at the diff between the most recent snapshots:
+The ouput for the command above will show more than 177 snapshots because `aws-prod` has moved on since this incident 
+(it has been resolved with new commits which have created new deployments).
+
+We look at the diff between the most recent snapshots at this moment:
 
 ```shell {.command}
-kosli env diff aws-prod#172 aws-prod#173
+kosli env diff aws-prod#176 aws-prod#177
 ```
 
 ```console
-aws-prod#172 only
-  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/creator:8424009
-  Sha256: 13d00ddc1efad12da68977a233f743fa2ac347eec46c3f6e577491e91aecbd33
-  Pipeline: creator
-  Commit: https://github.com/cyber-dojo/creator/commit/8424009165691ea9b4c1d2a033fdd75a8aebdcfa
-  Started: Thu, 01 Sep 2022 15:25:53 BST • 5 days ago
+aws-prod#176 only
+  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/creator:31dee35
+    Sha256: 5d1c926530213dadd5c9fcbf59c8822da56e32a04b0f9c774d7cdde3cf6ba66d
+    Pipeline: creator
+    Commit: https://github.com/cyber-dojo/creator/commit/31dee357844ab2f58a40d16f945dc5e35dcd6bc0
+    Started: Tue, 06 Sep 2022 16:41:44 CEST • 15 minutes ago
 ```
 
-This tells us artifact `creator:8424009` is no longer running in the `aws-prod` environment.
+This tells us artifact `creator:31dee35` is no longer running in the `aws-prod` environment.
 
 <!-- We maybe want to make this even more obvious -->
 
 We look at the diff between the previous snapshots:
 
 ```shell {.command}
-kosli env diff aws-prod#171 aws-prod#172
+kosli env diff aws-prod#175 aws-prod#176
 ```
 
 ```console
-aws-prod#172 only
-  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/creator:dc92adc
-  Sha256: 44294271dcb3e9224a7401fa1ac4fa036186fef512b44a84492f58820d2b052f
-  Pipeline: creator
-  Commit: https://github.com/cyber-dojo/creator/commit/dc92adcc7d17f246a4b993b6dc95a826ca1dd0f8
-  Started: Tue, 06 Sep 2022 14:51:38 BST • 33 minutes ago
+aws-prod#176 only
+  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/creator:b7a5908
+    Sha256: 860ad172ace5aee03e6a1e3492a88b3315ecac2a899d4f159f43ca7314290d5a
+    Pipeline: creator
+    Commit: https://github.com/cyber-dojo/creator/commit/b7a590836cf140e17da3f01eadd5eca17d9efc65
+    Started: Tue, 06 Sep 2022 16:52:03 CEST • 6 minutes ago
 ```
 <!-- Do we want the label for Commit: to be Commit URL: to match the
      label you see in a `kosli artifact get` command
 -->
 
-This tells us artifact `creator:dc92adc` has started running in the `aws-prod` environment.
+This tells us artifact `creator:b7a5908` has started running in the `aws-prod` environment.
 
 Now follow the commit URL.
 
-<!-- What we see now is not the actual commit we want to see
-     because we had to make several changes to actually get the
-     artifact through the creator pipeline.
--->
-
+<!--  TODO: fix cyber-dojo creator repo from the hacks we did to simulate bug -->
 
 
 
