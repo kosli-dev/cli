@@ -24,6 +24,8 @@ type EnvironmentDiffResponse struct {
 	Name                string   `json:"name"`
 	CommitUrl           string   `json:"commit_url"`
 	MostRecentTimestamp int64    `json:"most_recent_timestamp"`
+	InstancesS1         int64    `json:"instances_s1"`
+	InstancesS2         int64    `json:"instances_s2"`
 	Pods                []string `json:"pods"`
 }
 
@@ -77,12 +79,17 @@ func printEnvironmentDiffAsTable(raw string, out io.Writer, page int) error {
 		return err
 	}
 
+	colorRed := "\033[31m%s\033[0m"
+	colorGreen := "\033[32m%s\033[0m"
+	noColor := "%s"
+
 	removalCount := len(diffs["-"])
 	additionCount := len(diffs["+"])
+	changedCount := len(diffs["0"])
 
 	if removalCount > 0 {
 		for _, entry := range diffs["-"] {
-			err := printDiffEntry(true, entry)
+			err := printDiffEntry(colorRed, "-", entry)
 			if err != nil {
 				return err
 			}
@@ -95,25 +102,32 @@ func printEnvironmentDiffAsTable(raw string, out io.Writer, page int) error {
 
 	if additionCount > 0 {
 		for _, entry := range diffs["+"] {
-			err := printDiffEntry(false, entry)
+			err := printDiffEntry(colorGreen, "+", entry)
 			if err != nil {
 				return err
 			}
 		}
 	}
+
+	if changedCount > 0 && (additionCount > 0 || removalCount > 0) {
+		fmt.Println()
+	}
+
+	if changedCount > 0 {
+		for _, entry := range diffs["0"] {
+			err := printDiffEntry(noColor, " ", entry)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("  Instances: ")
+			fmt.Printf("scaled from %d to %d\n", entry.InstancesS1, entry.InstancesS2)
+		}
+	}
+
 	return nil
 }
 
-func printDiffEntry(removal bool, entry EnvironmentDiffResponse) error {
-	colorRed := "\033[31m%s\033[0m"
-	colorGreen := "\033[32m%s\033[0m"
-	color := colorGreen
-	sign := "+"
-	if removal {
-		color = colorRed
-		sign = "-"
-	}
-
+func printDiffEntry(color string, sign string, entry EnvironmentDiffResponse) error {
 	fmt.Printf(color, sign+" Name: ")
 	fmt.Printf("  %s\n", entry.Name)
 	fmt.Printf(color, "  Sha256: ")
