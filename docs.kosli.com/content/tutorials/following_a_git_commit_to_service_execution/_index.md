@@ -40,18 +40,7 @@ and shows you events from:
 * CI-pipelines (eg, building the docker image, running the unit tests, deploying, etc)
 * runtime environments (eg, the blue-green rollover, instance scaling, etc)
 
-You'll follow an actual git commit to an open-source project called **cyber-dojo**:
-
-<!-- These bullet points could go in a pull-out -->
-* [https://cyber-dojo.org](https://cyber-dojo.org) is a web platform where teams 
-practice TDD (in many languages) without any installation.  
-* cyber-dojo has a microservice architecture with a dozen git repositories
-(eg [web](https://github.com/cyber-dojo/web), [runner](https://github.com/cyber-dojo/runner)).  
-* Each git repository has its own Github Actions CI pipeline producing a docker image.
-* These docker images run in two AWS environments named 
-[aws-beta](https://app.kosli.com/cyber-dojo/environments/aws-beta)
-and [aws-prod](https://app.kosli.com/cyber-dojo/environments/aws-prod).
-
+You'll follow an actual git commit to an open-source project called **cyber-dojo**.
 cyber-dojo's `runner` service performs most of its heavy lifting and
 should run with three replicas. Due to an oversight (whilst switching from K8S to AWS)
 it was running with just one replica. You will follow the commit that fixed this.
@@ -138,8 +127,17 @@ shas                    UX for git+image shas               public
 web                     UX for practicing TDD               public
 ```
 
-The name of a Kosli pipeline does not have to match the name of a git
-repository - but it helps if the relationship is clear. 
+{{< hint info >}}
+## cyber-dojo overview
+* [https://cyber-dojo.org](https://cyber-dojo.org) is a web platform where teams 
+practice TDD (in many languages) without any installation.  
+* These docker images run in two AWS environments named 
+[aws-beta](https://app.kosli.com/cyber-dojo/environments/aws-beta)
+and [aws-prod](https://app.kosli.com/cyber-dojo/environments/aws-prod).
+* cyber-dojo has a microservice architecture with a dozen git repositories.
+* Each git repository has its own Github Actions CI pipeline producing a docker image as you can see above.
+{{< /hint >}}
+
 
 ### Following the artifact
 
@@ -153,7 +151,7 @@ The commit which fixed the problem was
 in the `runner` repository. We can follow this commit using the `kosli` command:
 
 ```shell {.command}
-kosli artifact get runner:16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
+kosli artifact get runner:16d9990
 ```
 You will see:
 
@@ -178,38 +176,6 @@ History:
     No longer running in aws-prod#93 environment         Wed, 24 Aug 2022 18:12:14 CEST
 ```
 
-<!-- Should we re-order the lines of this output a bit; based
-     on the developer centric focus - starting with the commit?
-Tore: Although we did this query based on commit we are getting back
-an artifact, so I think we should keep the artifact specific things first.
-Simon: I agree with Tore
-
-Git commit:  16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
-Commit URL:  https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
-Build URL:   https://github.com/cyber-dojo/runner/actions/runs/2902808452
-Artifact Name:  cyberdojo/runner:16d9990
-Artifact SHA256: 9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
-Created on:  Mon, 22 Aug 2022 11:35:00 CEST • 11 days ago
--->
-
-<!-- There is plenty of scope for making various words in the text below into URLs
-Tore: At the same time this is a CLI, so personally prefer the output to be text.
--->
-
-<!-- We do not comment on the output showing the artifact running TWICE 
-Tore: Yes we should. But I don't know the answer.
-      - in aws-beta (84/117)
-      - in aws-prod (65/94)
-     Do we want to mention that as a third interesting thing? 
-     Are missing some "No longer running" reports here...?
-
-Simon: It seems that there is a change in number of instances running, which the diff
-outputs as "artifact reported running" in the artifact history, instead of a change in
-number of instances (scaled down from 3 to 1)
-The diff also does not show the change in number of instances
-See issue: https://github.com/kosli-dev/merkely/issues/369
--->
-
 <!-- We could mention and create clickable app.kosli.com URLs in the text, eg
      `aws-prod#65` takes you to that snapshot
      `#14` takes you to that deployment event
@@ -229,27 +195,24 @@ Let's look at this output in detail:
 * **State**: COMPLIANT means that all the promised evidence for the artifact (see `branch-coverage` next) 
   was provided before deployment.
 * **History**:
-   * The artifact was created on the 22nd August at 11:35:00 CEST.
-     This report came from a simple call to the `kosli` CLI in the CI pipeline yml, just after
-     the docker image was built.
-   * The artifact has `branch-coverage` evidence. 
-     This evidence was also reported with a call to the `kosli` CLI in exactly the same way, right after 
-     the tests passed and the coverage stats were generated.
-   * The artifact was deployed to [aws-beta](https://app.merkely.com/cyber-dojo/pipelines/runner/deployments/18) on 22nd August 11:37:17 CEST, and to [aws-prod](https://app.merkely.com/cyber-dojo/pipelines/runner/deployments/19)
+   * **CI pipeline events**
+      * The artifact was **created** on the 22nd August at 11:35:00 CEST.
+      * The artifact has `branch-coverage` **evidence**. 
+      * The artifact was **deployed** to [aws-beta](https://app.merkely.com/cyber-dojo/pipelines/runner/deployments/18) on 22nd  August 11:37:17 CEST, and to [aws-prod](https://app.merkely.com/cyber-dojo/pipelines/runner/deployments/19)
      a minute later.
-     Again, a call to the `kosli` CLI reported this just before the actual terraform deployments.  
-     The `runner` service uses [Continuous Deployment](https://en.wikipedia.org/wiki/Continuous_deployment); 
-     if the tests pass the artifact is [blue-green deployed](https://en.wikipedia.org/wiki/Blue-green_deployment) 
-     to both its runtime environments *without* any manual approval steps.
-     Some cyber-dojo services (eg web) have a manual approval step, and Kosli supports this.
-   * The artifact was reported running in the `aws-beta` and `aws-prod` environments shortly after.
-   * The artifact was reported exited both `aws-beta` and `aws-prod` at the times given.
+   * **Runtime environment events**
+      * The artifact was reported **running** in both environments.
+      * The artifact's number of running instances **scaled down**.
+      * The artifact was reported **exited**.
      
-These last two events were reported by the `kosli` CLI running *inside* 
-cyber-dojo's AWS runtime environments. 
-
 The information about this artifact is also available through the [web interface](https://app.merkely.com/cyber-dojo/pipelines/runner/artifacts/9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625).
 
+{{< hint info >}}
+The `runner` service uses [Continuous Deployment](https://en.wikipedia.org/wiki/Continuous_deployment); 
+if the tests pass the artifact is [blue-green deployed](https://en.wikipedia.org/wiki/Blue-green_deployment) 
+to both its runtime environments *without* any manual approval steps.
+Some cyber-dojo services (eg web) have a manual approval step, and Kosli supports this.
+{{< /hint >}}
 
 ## Environment Snapshots
 
