@@ -24,7 +24,7 @@ kosli environment allowedartifacts add ARTIFACT-NAME-OR-PATH [flags]
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256'.  |
 |    -e, --environment string  |  The environment name for which the artifact is allowlisted.  |
 |    -h, --help  |  help for add  |
-|        --reason string  |  [optional] The reason why this artifact is allowlisted.  |
+|        --reason string  |  The reason why this artifact is allowlisted.  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
