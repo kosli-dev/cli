@@ -229,12 +229,13 @@ The response will be:
 ```plaintext {.light-console}
 only present in aws-prod#65
 
-  Name:   274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990
+  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990
   Sha256: 9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
   Pipeline: runner
   Commit: https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
-  Started: 22 Aug 22 10:39 BST • 11 days ago
+  Started: Mon, 22 Aug 2022 11:39:17 CEST • 15 days ago
 ```
+
 <!-- Do we want the label for Commit: to be Commit URL: to match the
      label you see in a `kosli artifact get` command
 -->
