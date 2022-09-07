@@ -239,6 +239,9 @@ The response will be:
   Commit: https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
   Started: 22 Aug 22 10:39 BST • 11 days ago
 ```
+<!-- Do we want the label for Commit: to be Commit URL: to match the
+     label you see in a `kosli artifact get` command
+-->
 
 The plus sign in front of **Name:** indicates `runner:16d9990` started.
 
