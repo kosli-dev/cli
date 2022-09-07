@@ -7,6 +7,8 @@ draft: true
 
 <!-- Add Easter-eggs comments? -->
 
+<!-- Check for inconsistent use of we/you -->
+
 # Tracing a production incident back to git commits
 
 <!-- In the previous tutorial we said "5 minute tutorial" -->
