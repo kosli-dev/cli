@@ -8,10 +8,9 @@ draft: true
 <!-- Add Easter-eggs comments? -->
 
 # Tracing a production incident back to git commits
+In this short tutorial you'll learn how Kosli helps Cyber-dojo to track a production incident back to git commits.
 
-Something went wrong!
-
-[https://cyber-dojo.org](https://cyber-dojo.org) is displaying a 500 error. 
+Something went wrong and [https://cyber-dojo.org](https://cyber-dojo.org) is displaying a 500 error! 
 
 {{< figure src="/images/cyber-dojo-prod-500-large.png" alt="Prod cyber-dojo is down with a 500" width="90%" >}}
 
