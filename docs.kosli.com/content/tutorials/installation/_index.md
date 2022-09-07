@@ -85,7 +85,7 @@ Run this command:
 kosli version
 ```
 The expected output should be similar to this:
-```
+```plaintext {.light-console}
 version.BuildInfo{Version:"v0.1.10", GitCommit:"9c623f1e6c293235ddc8de1e347bf99a1b356e48", GitTreeState:"clean", GoVersion:"go1.17.11"}
 ```
 
@@ -108,20 +108,20 @@ Rather than retyping these every time you run `kosli`, you can set them as envir
 Simply capitalize the flag in snake case and add the `KOSLI_` prefix.  
 For example, after this:
 
-```shell
+```shell {.command}
 export KOSLI_API_TOKEN=abcdefg
 export KOSLI_OWNER=cyber-dojo
 ```
 
 Then instead of:
 
-```shell
+```shell {.command}
 kosli pipeline ls --api-token abcdefg --owner cyber-dojo 
 ```
 
 You can use:
 
-```shell
+```shell {.command}
 kosli pipeline ls 
 ```
 

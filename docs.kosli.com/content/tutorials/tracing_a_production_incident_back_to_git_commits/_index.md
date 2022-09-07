@@ -31,7 +31,7 @@ You will see more than 177 snapshots because
 `aws-prod` has moved on since this incident (it has been resolved with new 
 commits which have created new deployments).
 
-```console
+```plaintext {.light-console}
 SNAPSHOT  EVENT                                                                      PIPELINE  DEPLOYMENTS
 #177      Artifact: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/creator:31dee35  creator   #87 
           SHA256: 5d1c926530213dadd5c9fcbf59c8822da56e32a04b0f9c774d7cdde3cf6ba66d             
@@ -67,7 +67,7 @@ Let's learn more about this artifact.
 kosli artifact get creator@860ad172ace5aee03e6a1e3492a88b3315ecac2a899d4f159f43ca7314290d5a
 ```
 
-```console
+```plaintext {.light-console}
 Name:        cyberdojo/creator:b7a5908
 SHA256:      860ad172ace5aee03e6a1e3492a88b3315ecac2a899d4f159f43ca7314290d5a
 Created on:  Tue, 06 Sep 2022 16:48:07 CEST • 21 hours ago

@@ -81,6 +81,13 @@ aside.book-menu .book-menu-content {
     }
 }
 
+.light-console pre {
+    background-color: $blue-400 !important;
+    code {
+        color: black;
+    }
+}
+
 .command {
     cursor: pointer;
     code.language-shell::before {

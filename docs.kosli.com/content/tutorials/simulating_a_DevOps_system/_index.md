@@ -29,7 +29,7 @@ To see what a command (eg create_git_repo_in_tmp) in the simulation is actually 
 ```shell {.command}
 type create_git_repo_in_tmp
 ```
-```shell
+```plaintext {.light-console}
 create_git_repo_in_tmp is a function
 create_git_repo_in_tmp () 
 { 
@@ -92,7 +92,8 @@ You can immediately verify that the Kosli environment was created:
 ```shell {.command}
 kosli environment ls
 ```
-```shell
+
+```plaintext {.light-console}
 NAME        TYPE    LAST REPORT  LAST MODIFIED
 production  server               2022-08-16T07:53:43+02:00
 ```
@@ -100,7 +101,8 @@ production  server               2022-08-16T07:53:43+02:00
 ```shell {.command}
 kosli environment inspect production
 ```
-```shell
+
+```plaintext {.light-console}
 Name:              production
 Type:              server
 Description:       Production server (for kosli getting started)
@@ -128,7 +130,7 @@ We can see that the server has started, and how long it has run.
 ```shell {.command}
 kosli environment log production
 ```
-```shell
+```plaintext {.light-console}
 SNAPSHOT  FROM                  TO   DURATION
 1         16 Aug 22 07:54 CEST  now  11 seconds
 ```
@@ -137,7 +139,7 @@ We can get a more detailed view of what is currently running on the server.
 ```shell {.command}
 kosli environment get production
 ```
-```shell
+```plaintext {.light-console}
 COMMIT  ARTIFACT                                                                  PIPELINE  RUNNING_SINCE  REPLICAS
 N/A     Name: /tmp/try-kosli/server/web_1.bin                                     N/A       2 minutes ago  1
         SHA256: a7a87c332500a40f9a01b811ec75f51b40188a3dabd205feb0fa7c3eafb25fbe                           
@@ -161,7 +163,7 @@ kosli environment report server production \
 ```shell {.command}
 kosli environment log production
 ```
-```shell
+```plaintext {.light-console}
 SNAPSHOT  FROM                  TO   DURATION
 1         16 Aug 22 07:54 CEST  now  11 seconds
 ```
@@ -184,7 +186,8 @@ We can see we have created a new snapshot.
 ```shell {.command}
 kosli environment log production
 ```
-```shell
+
+```plaintext {.light-console}
 SNAPSHOT  FROM                  TO                    DURATION
 2         16 Aug 22 07:58 CEST  now                   9 seconds
 1         16 Aug 22 07:54 CEST  16 Aug 22 07:58 CEST  4 minutes
@@ -194,7 +197,8 @@ We can see that we are currently running web version 2 in production.
 ```shell {.command}
 kosli environment get production
 ```
-```shell
+
+```plaintext {.light-console}
 COMMIT  ARTIFACT                                                                  PIPELINE  RUNNING_SINCE   REPLICAS
 N/A     Name: /tmp/try-kosli/server/web_2.bin                                     N/A       39 seconds ago  1
         SHA256: cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746                            
@@ -210,7 +214,8 @@ Here we look at what was running in snapshot #1 in production.
 ```shell {.command}
 kosli environment get production#1
 ```
-```shell
+
+```plaintext {.light-console}
 COMMIT  ARTIFACT                                                                  PIPELINE  RUNNING_SINCE  REPLICAS
 N/A     Name: /tmp/try-kosli/server/web_1.bin                                     N/A       7 minutes ago  1
         SHA256: a7a87c332500a40f9a01b811ec75f51b40188a3dabd205feb0fa7c3eafb25fbe                           
@@ -259,6 +264,7 @@ kosli pipeline declare \
     --visibility private \
     --template artifact
 ```
+
 ```shell {.command}
 kosli pipeline declare \
     --pipeline database-server \
@@ -271,7 +277,8 @@ You can immediately verify the Kosli pipelines were created:
 ```shell {.command}
 kosli pipeline ls
 ```
-```shell
+
+```plaintext {.light-console}
 NAME             DESCRIPTION                        VISIBILITY
 database-server  pipeline to build database-server  private
 web-server       pipeline to build web-server       private
@@ -300,6 +307,7 @@ kosli pipeline artifact report creation /tmp/try-kosli/build/web_$(cat /tmp/try-
     --commit-url file:///tmp/try-kosli/code \
     --git-commit $(cd /tmp/try-kosli/code; git rev-parse HEAD)
 ```
+
 ```shell {.command}
 kosli pipeline artifact report creation /tmp/try-kosli/build/db_$(cat /tmp/try-kosli/code/db.src).bin \
     --pipeline database-server \
@@ -313,7 +321,8 @@ We can see we have built one artifact in our *web-server* pipeline
 ```shell {.command}
 kosli artifact ls web-server
 ```
-```shell
+
+```plaintext {.light-console}
 COMMIT   ARTIFACT                                                                  STATE      CREATED_AT
 5187374  Name: web_2.bin                                                           COMPLIANT  16 Aug 22 08:00 CEST
          SHA256: cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746             
@@ -323,7 +332,8 @@ And one for the *database-server* pipeline
 ```shell {.command}
 kosli artifact ls database-server
 ```
-```shell
+
+```plaintext {.light-console}
 COMMIT   ARTIFACT                                                                  STATE      CREATED_AT
 5187374  Name: db_1.bin                                                            COMPLIANT  16 Aug 22 08:01 CEST
          SHA256: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af             
@@ -333,7 +343,8 @@ We can also get detailed information about each artifact that has been reported.
 ```shell {.command}
 kosli artifact get database-server@0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af
 ```
-```shell
+
+```plaintext {.light-console}
 Name:         db_1.bin
 State:        COMPLIANT
 Git commit:   518737485e5150ee6255a1c74749997d380c1708
@@ -378,7 +389,8 @@ We can verify the deployment with
 ```shell {.command}
 kosli deployment ls web-server
 ```
-```shell
+
+```plaintext {.light-console}
 ID   ARTIFACT                                                                  ENVIRONMENT  REPORTED_AT
 1    Name: web_2.bin                                                           production   16 Aug 22 08:02 CEST
      SHA256: cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746               
@@ -388,7 +400,8 @@ We can also get detailed information about a deployment.
 ```shell {.command}
 kosli deployment get web-server#1
 ```
-```shell
+
+```plaintext {.light-console}
 ID:               1
 Artifact SHA256:  cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746
 Artifact name:    web_2.bin

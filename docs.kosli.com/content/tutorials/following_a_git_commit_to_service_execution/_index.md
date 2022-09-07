@@ -70,7 +70,7 @@ kosli pipeline ls
 
 You will see:
 
-```console
+```plaintext {.light-console}
 NAME                    DESCRIPTION                         VISIBILITY
 creator                 UX for Group/Kata creation          public
 custom-start-points     Custom exercises choices            public
@@ -110,7 +110,7 @@ kosli artifact get runner:16d9990
 ```
 You will see:
 
-```console
+```plaintext {.light-console}
 Name:        cyberdojo/runner:16d9990
 SHA256:      9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
 Created on:  Mon, 22 Aug 2022 11:34:59 CEST • 15 days ago
@@ -189,7 +189,7 @@ kosli env get aws-prod#65
 
 The output will be:
 
-```console
+```plaintext {.light-console}
 COMMIT   ARTIFACT                                                                    PIPELINE   RUNNING_SINCE  REPLICAS
 16d9990  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990        runner     11 days ago    3
          SHA256: 9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625                              
@@ -232,7 +232,7 @@ kosli env diff aws-prod#64 aws-prod#65
 
 The response will be:
 
-```console
+```plaintext {.light-console}
 + Name:   274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990
   Sha256: 9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
   Pipeline: runner
