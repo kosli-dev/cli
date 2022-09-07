@@ -95,8 +95,14 @@ version.BuildInfo{Version:"v0.1.10", GitCommit:"9c623f1e6c293235ddc8de1e347bf99a
 <!-- Add screen shot here? -->
 
 * Go to https://app.kosli.com
-* Log in using your github account
+* Log in or sign up using your github account
 * Open your Profile page (click on your avatar in the top right corner of the page).
+
+### Set the KOSLI_API_TOKEN environment variable.  
+The `kosli` CLI uses this to authenticate you.
+```shell {.command}
+export KOSLI_API_TOKEN=<paste-your-kosli-API-token-here>
+```
 
 ## Using environment variables
 

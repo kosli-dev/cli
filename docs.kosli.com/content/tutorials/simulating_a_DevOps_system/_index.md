@@ -1,14 +1,23 @@
 ---
 title: Simulating a DevOps system
 bookCollapseSection: false
-weight: 4
+weight: 3
 ---
 
-<!-- https://medium.com/pragmatic-programmers/displaying-shell-command-code-blocks-in-hugo-d50691096772 -->
-
 # Preparing the tutorial
+To follow the tutorial you need to:
+* [Install the `kosli` CLI](../../installation).
+* [Get your Kosli API token](../../installation#getting-your-kosli-api-token).
+* Set the KOSLI_API_TOKEN environment variable.  
+  ```shell {.command}
+  export KOSLI_API_TOKEN=<paste-your-kosli-API-token-here>
+  ```
+* Set the KOSLI_OWNER environment variable to your Kosli organization name.   
+  ```shell {.command}
+  export KOSLI_OWNER=<paste-your-kosli-organization-name>
+  ```
 
-For these examples we are simulating a system with source code, build and a running server.
+For this tutorial we are simulating a system with source code, build and a running server.
 We have a script to help you run these simulations so you don't need to type so many commands.
 
 You can download the file from here:
@@ -66,13 +75,13 @@ be using in this guide.
 # Environment
 
 A Kosli environment stores information about
-what SW is running in your actual runtime environment (server, Kubernetes cluster, AWS, ...)
+what software is running in your actual runtime environment (server, Kubernetes cluster, AWS, ...)
 We use one Kosli environment per runtime environment. 
 
 A typical setup reports what is running on the 
 staging server and on the production server. To report what is 
 running you run the Kosli CLI command periodically. The Kosli CLI will
-detect the version of the SW you are currently running and report
+detect the version of the software you are currently running and report
 it to the Kosli environment.
 
 
@@ -116,7 +125,7 @@ It will show you that you have a *production* environment and that
 no reports have been received.
 
 
-## Reporting the SW running in your environment
+## Reporting the software running in your environment
 
 We simulate a report from our server by reporting two dummy files for the web and
 database applications.
@@ -252,7 +261,7 @@ pull-requests and so on.
 
 To follow the examples make sure you have followed the instructions in Local setup.
 
-We create a Kosli pipeline where we can report what SW our CI system
+We create a Kosli pipeline where we can report what software our CI system
 is building. Since we are building two applications we are making
 two Kosli pipelines `web-server` and `database-server`.
 
@@ -292,7 +301,7 @@ been reported for the pipelines.
 
 ## Building artifacts and reporting them to Kosli
 
-Simulate building our SW
+Simulate building our software
 ```shell {.command}
 simulate_build
 ```
@@ -368,14 +377,14 @@ A Kosli deployment command is used to indicate an aritfact is
 being deployed to a given runtime environment. 
 
 
-## Deploying SW to the server and reporting the deployment to Kosli
+## Deploying software to the server and reporting the deployment to Kosli
 
-Simulate deploying our SW to the server
+Simulate deploying our software to the server
 ```shell {.command}
 simulate_deployment
 ```
 
-Report to Kosli that the web SW has been deployed.
+Report to Kosli that the web software has been deployed.
 ```shell {.command}
 kosli pipeline deployment report /tmp/try-kosli/build/web_$(cat /tmp/try-kosli/code/web.src).bin \
     --pipeline web-server \

@@ -1,7 +1,7 @@
 ---
 title: Following a git commit to service execution
 bookCollapseSection: false
-weight: 2
+weight: 1
 draft: true
 ---
 
@@ -42,15 +42,9 @@ it was running with just one replica. You will follow the commit that fixed this
 ## Getting ready
 
 You need to:
-* [Install the `kosli` CLI](../installation).
-* [Verify the installation worked](../installation#verifying-the-installation-worked).
-* [Sign up to Kosli at https://app.kosli.com with Github](https://app.kosli.com).
-* [Get your Kosli API token](../installation#getting-your-kosli-api-token).
-* Set the KOSLI_API_TOKEN environment variable.  
-  The `kosli` CLI uses this to authenticate you.
-  ```shell {.command}
-  export KOSLI_API_TOKEN=<paste-your-kosli-API-token-here>
-  ```
+* [Install the `kosli` CLI](../../installation).
+* [Get your Kosli API token](../../installation#getting-your-kosli-api-token).
+* [Set the KOSLI_API_TOKEN environment variable](../../installation#set-the-kosli_api_token-environment-variable).
 * Set the KOSLI_OWNER environment variable to `cyber-dojo`.   
   The Kosli `cyber-dojo` organization is public so any authenticated user 
   can read its data.   
@@ -233,7 +227,9 @@ kosli env diff aws-prod#64 aws-prod#65
 The response will be:
 
 ```plaintext {.light-console}
-+ Name:   274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990
+only present in aws-prod#65
+
+  Name:   274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990
   Sha256: 9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
   Pipeline: runner
   Commit: https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
@@ -243,10 +239,10 @@ The response will be:
      label you see in a `kosli artifact get` command
 -->
 
-The plus sign in front of **Name:** indicates `runner:16d9990` started.
+The ouput above shows that `runner:16d9990` started running in snapshot 65 of `aws-prod` environment.
 
 We have seen how Kosli can follow a git commit on its way into production,
-and provide information about the artifacts history.
+and provide information about the artifacts history, without any access to cyber-dojo's `aws-prod` environment.
 
 <!-- Do we want to explicitly mention seeing into the runtime environment did not require
      knowledge any secrets nor how to navigate cloud console
@@ -254,5 +250,4 @@ and provide information about the artifacts history.
 
 Next, we will find how to trace a production incident back to a git commit.
 
-{{< button relref="/installation" >}}< Previous{{< /button >}}
 {{< button relref="/tracing_a_production_incident_back_to_git_commits" >}}Next >{{< /button >}}

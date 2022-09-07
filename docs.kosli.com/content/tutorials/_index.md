@@ -6,7 +6,7 @@ weight: 1
 
 # Tutorials
 
-Kosli stores information about the SW you build in CI pipelines
+Kosli stores information about the software you build in CI pipelines
 and run in your runtime environment. The Kosli CLI is used for reporting
 and querying the information.
 

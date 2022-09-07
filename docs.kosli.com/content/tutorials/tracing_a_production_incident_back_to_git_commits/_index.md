@@ -1,7 +1,7 @@
 ---
 title: Tracing a production incident back to git commits
 bookCollapseSection: false
-weight: 3
+weight: 2
 draft: true
 ---
 
@@ -113,7 +113,7 @@ It would be good if we had two versions of env where there are several artifacts
 
 (- Find out when/where a given commit is running.)
 
-- See what SW is/was running where which is useful in debugging.
+- See what software is/was running where which is useful in debugging.
   I detect from the web page that there is something wrong with 'saver'. I then want to know
   which version of 'saver' is running now. I want to know what git commit is running.
 - List which version of 'saver' is running across all environments.
