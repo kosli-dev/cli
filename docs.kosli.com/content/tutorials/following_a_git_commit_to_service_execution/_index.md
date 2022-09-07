@@ -84,11 +84,11 @@ web                     UX for practicing TDD               public
 ## cyber-dojo overview
 * [cyber-dojo](https://cyber-dojo.org) is a web platform where teams 
 practice TDD without any installation.  
+* cyber-dojo has a microservice architecture with a dozen git repositories.
+* Each git repository has its own Github Actions CI pipeline producing a docker image.
 * These docker images run in two AWS environments named 
 [aws-beta](https://app.kosli.com/cyber-dojo/environments/aws-beta)
 and [aws-prod](https://app.kosli.com/cyber-dojo/environments/aws-prod).
-* cyber-dojo has a microservice architecture with a dozen git repositories.
-* Each git repository has its own Github Actions CI pipeline producing a docker image as listed above.
 {{< /hint >}}
 
 
