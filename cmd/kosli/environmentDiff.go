@@ -21,7 +21,7 @@ type environmentDiffOptions struct {
 type EnvironmentDiffResponse struct {
 	Snappish1 DiffSnappishItem `json:"snappish1"`
 	Snappish2 DiffSnappishItem `json:"snappish2"`
-	Changed   []DiffArtifact   `json:"0"`
+	Changed   DiffSnappishItem `json:"changed"`
 }
 
 type DiffSnappishItem struct {
@@ -98,7 +98,7 @@ func printEnvironmentDiffAsTable(snappish1, snappish2, raw string, out io.Writer
 
 	s1Artifacts := diffs.Snappish1.Artifacts
 	s2Artifacts := diffs.Snappish2.Artifacts
-	changedArtifacts := diffs.Changed
+	changedArtifacts := diffs.Changed.Artifacts
 	s1Count := len(s1Artifacts)
 	s2Count := len(s2Artifacts)
 	changedCount := len(changedArtifacts)
