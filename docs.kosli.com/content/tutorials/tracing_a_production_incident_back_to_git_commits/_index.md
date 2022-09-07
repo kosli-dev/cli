@@ -8,6 +8,9 @@ draft: true
 <!-- Add Easter-eggs comments? -->
 
 # Tracing a production incident back to git commits
+
+<!-- In the previous tutorial we said "5 minute tutorial" -->
+
 In this short tutorial you'll learn how Kosli helps Cyber-dojo to track a production incident back to git commits.
 
 Something went wrong and [https://cyber-dojo.org](https://cyber-dojo.org) is displaying a 500 error! 
@@ -85,6 +88,11 @@ History:
 ## Follow to the commit
 
 You can follow the [commit URL](https://github.com/cyber-dojo/creator/commit/b7a590836cf140e17da3f01eadd5eca17d9efc65).
+
+<!-- This png file shows the commit message (at the top)
+     "See an error get deployed right through to prod"
+     Ooops. We should probably take another screen shot without this
+-->
 
 {{< figure src="/images/cyber-dojo-github-diff.png" alt="cyber-dojo github diff" width="500" >}}
 
