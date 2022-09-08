@@ -240,7 +240,7 @@ only present in aws-prod#65
      label you see in a `kosli artifact get` command
 -->
 
-The ouput above shows that `runner:16d9990` started running in snapshot 65 of `aws-prod` environment.
+The output above shows that `runner:16d9990` started running in snapshot 65 of `aws-prod` environment.
 
 We have seen how Kosli can follow a git commit on its way into production,
 and provide information about the artifacts history, without any access to cyber-dojo's `aws-prod` environment.
@@ -249,6 +249,11 @@ and provide information about the artifacts history, without any access to cyber
      knowledge any secrets nor how to navigate cloud console
 -->
 
-Next, we will find how to trace a production incident back to a git commit.
+### See also the other tutorials:
+- [Tracing a production incident back to git commits](../tracing_a_production_incident_back_to_git_commits/)
+- [Simulating a DevOps system](../simulating_a_devops_system/)
 
-{{< button relref="/tracing_a_production_incident_back_to_git_commits" >}}Next >{{< /button >}}
+
+<!-- Next, we will find how to trace a production incident back to a git commit.
+
+{{< button relref="/tracing_a_production_incident_back_to_git_commits" >}}Next >{{< /button >}} -->

@@ -423,7 +423,6 @@ Runtime state:    The artifact running since 16 Aug 22 07:58 CEST
 If you select the *web_2.bin* artifact in the web interface it will show
 that it was part of Deployment #1 to *production* environment.
 
-
-<!-- # For developers
-You can extract all the commands to execute from this document by running
-sed -n '/^```/,/^```/ p' < docs.kosli.com/content/tutorials/simulating_a_DevOps_system/_index.md | sed '/``` -->
+### See also the other tutorials:
+- [Following a git commit to runtime environments](../following_a_git_commit_to_runtime_environments/)
+- [Tracing a production incident back to git commits](../tracing_a_production_incident_back_to_git_commits/)
