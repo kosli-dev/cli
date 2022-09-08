@@ -109,7 +109,7 @@ Either way, this is clearly the problem because there is no function called `res
 
 We were able to trace the problem back to a specific commit without any access to cyber-dojo's `aws-prod` environment.
 
-{{< button relref="/following_a_git_commit_to_service_execution" >}}< Previous{{< /button >}}
+{{< button relref="/following_a_git_commit_to_runtime_environments" >}}< Previous{{< /button >}}
 {{< button relref="/simulating_a_devops_system" >}}Next >{{< /button >}}
 
 <!-- 

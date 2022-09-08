@@ -1,5 +1,5 @@
 ---
-title: Following a git commit to service execution
+title: Following a git commit to runtime environments
 bookCollapseSection: false
 weight: 1
 draft: true
@@ -22,7 +22,7 @@ draft: true
        be a simple link to the next tutorial.
 -->
 
-# Following a git commit to service execution
+# Following a git commit to runtime environments
 
 ## Overview
 
