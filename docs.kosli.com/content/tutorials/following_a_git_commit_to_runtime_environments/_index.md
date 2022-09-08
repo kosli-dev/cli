@@ -2,7 +2,7 @@
 title: Following a git commit to runtime environments
 bookCollapseSection: false
 weight: 1
-draft: true
+draft: false
 ---
 
 <!-- The book "Developer Marketing Does Not Exist" by Adam DuVander suggests 

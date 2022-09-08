@@ -2,7 +2,7 @@
 title: Tracing a production incident back to git commits
 bookCollapseSection: false
 weight: 2
-draft: true
+draft: false
 ---
 
 <!-- Add Easter-eggs comments? -->
