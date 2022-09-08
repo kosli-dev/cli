@@ -33,7 +33,11 @@ kosli env log aws-prod --long
 
 You will see more than 177 snapshots because 
 `aws-prod` has moved on since this incident (it has been resolved with new 
-commits which have created new deployments).
+commits which have created new deployments). To get the same output as we have
+you can set the interval for the command
+```shell {.command}
+kosli env log aws-prod --long 175..177
+```
 
 ```plaintext {.light-console}
 SNAPSHOT  EVENT                                                                      PIPELINE  DEPLOYMENTS
@@ -79,7 +83,7 @@ Git commit:  b7a590836cf140e17da3f01eadd5eca17d9efc65
 Commit URL:  https://github.com/cyber-dojo/creator/commit/b7a590836cf140e17da3f01eadd5eca17d9efc65
 Build URL:   https://github.com/cyber-dojo/creator/actions/runs/3001102984
 State:       COMPLIANT
-History:
+History:  
     Artifact created                               Tue, 06 Sep 2022 16:48:07 CEST
     Deployment #88 to aws-beta environment         Tue, 06 Sep 2022 16:49:59 CEST
     Deployment #89 to aws-prod environment         Tue, 06 Sep 2022 16:51:12 CEST
