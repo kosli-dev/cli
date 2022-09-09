@@ -35,19 +35,13 @@ cyber-dojo's `runner` service performs most of its heavy lifting and
 should run with three replicas. Due to an oversight (whilst switching from K8S to AWS)
 it was running with just one replica. You will follow the commit that fixed this.
 
-<!-- Do we want to explicitly mention seeing into the runtime environment did not require
-     knowledge any secrets nor how to navigate cloud console
--->
-
 ## Getting ready
 
 You need to:
 * [Install the `kosli` CLI](../../installation).
 * [Get your Kosli API token](../../installation#getting-your-kosli-api-token).
 * [Set the KOSLI_API_TOKEN environment variable](../../installation#set-the-kosli_api_token-environment-variable).
-* Set the KOSLI_OWNER environment variable to `cyber-dojo`.   
-  The Kosli `cyber-dojo` organization is public so any authenticated user 
-  can read its data.   
+* Set the KOSLI_OWNER environment variable to `cyber-dojo` (the Kosli `cyber-dojo` organization is public so any authenticated user can read its data):
   ```shell {.command}
   export KOSLI_OWNER=cyber-dojo
   ```
@@ -97,7 +91,7 @@ and [aws-prod](https://app.kosli.com/cyber-dojo/environments/aws-prod).
 The runner service, only had one instance running instead of three.
 The commit which fixed the problem was 
 [16d9990](https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4)
-in the `runner` repository. We can follow this commit using the `kosli` command:
+in the `runner` repository. Follow this commit using the `kosli` command:
 
 ```shell {.command}
 kosli artifact get runner:16d9990
@@ -173,9 +167,9 @@ to report the running services to Kosli.
 {{< /hint >}}
 
 
-The **History** of the artifact tells us our artifact started running in snapshot #65 of `aws-prod`.
+The **History** of the artifact tells you your artifact started running in snapshot #65 of `aws-prod`.
 
-We query Kosli to see what was running in `aws-prod` snapshot #65:
+You query Kosli to see what was running in `aws-prod` snapshot #65:
 
 ```shell {.command}
 kosli env get aws-prod#65
@@ -200,15 +194,15 @@ COMMIT   ARTIFACT                                                               
          SHA256: d8440b94f7f9174c180324ceafd4148360d9d7c916be2b910f132c58b8a943ae
 ```
 
-We see that in this snapshot, the `runner:16d9990` artifact is indeed running with 3 replicas.
-We have proof the git commit has worked. 
+You see in this snapshot, the `runner:16d9990` artifact is indeed running with 3 replicas.
+You have proof the git commit has worked. 
 
 {{< hint info >}}
 ## Blue-green deployment
 There were *two* versions of `runner` at this point in time! 
 The first, with three replicas (to fix the problem), but also a second (from commit `85d83c6`) with only one replica.
 
-This is because we are in the middle of a **blue-green deployment**.
+You are seeing a **blue-green deployment** happening;
 `runner:85d83c6` is about to be stopped, it will not be reported in
 snapshot `aws-prod#66`.
 {{< /hint >}}
@@ -242,18 +236,9 @@ only present in aws-prod#65
 
 The output above shows that `runner:16d9990` started running in snapshot 65 of `aws-prod` environment.
 
-We have seen how Kosli can follow a git commit on its way into production,
+You have seen how Kosli can follow a git commit on its way into production,
 and provide information about the artifacts history, without any access to cyber-dojo's `aws-prod` environment.
-
-<!-- Do we want to explicitly mention seeing into the runtime environment did not require
-     knowledge any secrets nor how to navigate cloud console
--->
 
 ### See also the other tutorials:
 - [Tracing a production incident back to git commits](../tracing_a_production_incident_back_to_git_commits/)
 - [Simulating a DevOps system](../simulating_a_devops_system/)
-
-
-<!-- Next, we will find how to trace a production incident back to a git commit.
-
-{{< button relref="/tracing_a_production_incident_back_to_git_commits" >}}Next >{{< /button >}} -->

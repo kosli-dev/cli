@@ -7,13 +7,9 @@ draft: false
 
 <!-- Add Easter-eggs comments? -->
 
-<!-- Check for inconsistent use of we/you -->
-
 # Tracing a production incident back to git commits
 
-<!-- In the previous tutorial we said "5 minute tutorial" -->
-
-In this short tutorial you'll learn how Kosli helps Cyber-dojo to track a production incident back to git commits.
+In this 5 minute tutorial you'll learn how Kosli helps Cyber-dojo to track a production incident back to git commits.
 
 Something went wrong and [https://cyber-dojo.org](https://cyber-dojo.org) is displaying a 500 error! 
 
@@ -25,7 +21,7 @@ It was working an hour ago. What has happened in the last hour?
 
 [https://cyber-dojo.org](https://cyber-dojo.org) is running in an AWS environment
 that reports to Kosli as `aws-prod`.  
-You can get a log of this environment's changes.
+Get a log of this environment's changes:
 
 ```shell {.command}
 kosli env log aws-prod --long
@@ -34,7 +30,8 @@ kosli env log aws-prod --long
 You will see more than 177 snapshots because 
 `aws-prod` has moved on since this incident (it has been resolved with new 
 commits which have created new deployments). To get the same output as we have
-you can set the interval for the command
+you can set the interval for the command:
+
 ```shell {.command}
 kosli env log aws-prod --long 175..177
 ```
@@ -54,22 +51,22 @@ SNAPSHOT  EVENT                                                                 
 ```
 
 These two snapshots belong to the same blue-green deployment.
-We see artifact `creator:b7a5908` starting in snapshot #176, and artifact
+You see artifact `creator:b7a5908` starting in snapshot #176, and artifact
 `creator:31dee35` exiting in snapshot #177.
 
 {{< hint info >}}
-### How do we know we are seeing a blue-green deployment?
-We know that these two snapshot events:
+### How do you know you are seeing a blue-green deployment?
+Because these two snapshot events:
 - relate to the same pipeline
 - are close in time
 {{< /hint >}}
 
 ## Dig into the artifact
 
-We are interested in #176, showing the newly running artifact, `creator:b7a5908`,
+You are interested in #176, showing the newly running artifact, `creator:b7a5908`,
 whos sha256 is `860ad172ace5aee03e6a1e3492a88b3315ecac2a899d4f159f43ca7314290d5a`.
 
-Let's learn more about this artifact.
+Let's learn more about this artifact:
 
 ```shell {.command}
 kosli artifact get creator@860ad172ace5aee03e6a1e3492a88b3315ecac2a899d4f159f43ca7314290d5a
@@ -95,19 +92,14 @@ History:
 
 You can follow the [commit URL](https://github.com/cyber-dojo/creator/commit/b7a590836cf140e17da3f01eadd5eca17d9efc65).
 
-<!-- This png file shows the commit message (at the top)
-     "See an error get deployed right through to prod"
-     Ooops. We should probably take another screen shot without this
--->
-
 {{< figure src="/images/cyber-dojo-github-diff.png" alt="cyber-dojo github diff" width="500" >}}
 
 The incident was caused by a simple typo in the `app.rb` file!
 
 Perhaps someone accidentally inserted the "s" while trying to save the file?
-Either way, this is clearly the problem because there is no function called `responds_to`.
+Either way, this is clearly the problem because the function is called `respond_to` without the `s`.
 
-We were able to trace the problem back to a specific commit without any access to cyber-dojo's `aws-prod` environment.
+You were able to trace the problem back to a specific commit without any access to cyber-dojo's `aws-prod` environment.
 
 ### See also the other tutorials:
 - [Following a git commit to runtime environments](../following_a_git_commit_to_runtime_environments/)

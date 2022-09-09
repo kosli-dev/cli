@@ -8,33 +8,36 @@ weight: 3
 To follow the tutorial you need to:
 * [Install the `kosli` CLI](../../installation).
 * [Get your Kosli API token](../../installation#getting-your-kosli-api-token).
-* Set the KOSLI_API_TOKEN environment variable.  
+* Set the KOSLI_API_TOKEN environment variable:
   ```shell {.command}
   export KOSLI_API_TOKEN=<paste-your-kosli-API-token-here>
   ```
-* Set the KOSLI_OWNER environment variable to your Kosli organization name.   
+* Set the KOSLI_OWNER environment variable to your Kosli organization name:
   ```shell {.command}
   export KOSLI_OWNER=<paste-your-kosli-organization-name>
   ```
 
-For this tutorial we are simulating a system with source code, build and a running server.
-We have a script to help you run these simulations so you don't need to type so many commands.
+For this tutorial you will simulate a system with source code, a build system, and a running server.
+There is a script to help you run these simulations so you don't need to type so many commands.
 
-You can download the file from here:
+You can download the script from here:
 https://raw.githubusercontent.com/kosli-dev/cli/main/simulation_commands.bash
 
-or from the command line with
+or from the command line with:
+
 ```shell {.command}
 cd /tmp
 curl -O https://raw.githubusercontent.com/kosli-dev/cli/main/simulation_commands.bash
 ```
 
-Source the simulation commands so you can use them later on in the examples.
+Source the simulation commands so you can use them later on in the examples:
+
 ```shell {.command}
 source simulation_commands.bash
 ```
 
-To see what a command (eg create_git_repo_in_tmp) in the simulation is actually doing run 
+To see what a command (eg create_git_repo_in_tmp) in the simulation is actually doing run:
+
 ```shell {.command}
 type create_git_repo_in_tmp
 ```
@@ -47,7 +50,8 @@ create_git_repo_in_tmp ()
     ...
 ```
 
-Create the git repo and simulate a build and deployment to server.
+Create the git repo and simulate a build and deployment to server:
+
 ```shell {.command}
 create_git_repo_in_tmp
 simulate_build
@@ -76,7 +80,6 @@ be using in this guide.
 
 A Kosli environment stores information about
 what software is running in your actual runtime environment (server, Kubernetes cluster, AWS, ...)
-We use one Kosli environment per runtime environment. 
 
 A typical setup reports what is running on the 
 staging server and on the production server. To report what is 
@@ -89,7 +92,8 @@ it to the Kosli environment.
 
 To follow the examples make sure you have followed the instructions in Local setup
 
-We create a Kosli environment.
+Create a Kosli environment:
+
 ```shell {.command}
 kosli environment declare \
     --name production \
@@ -98,6 +102,7 @@ kosli environment declare \
 ```
 
 You can immediately verify that the Kosli environment was created:
+
 ```shell {.command}
 kosli environment ls
 ```
@@ -127,15 +132,17 @@ no reports have been received.
 
 ## Reporting the software running in your environment
 
-We simulate a report from our server by reporting two dummy files for the web and
-database applications.
+Simulate a report from your server by reporting two dummy files for the web and
+database applications:
+
 ```shell {.command}
 kosli environment report server production \
     --paths /tmp/try-kosli/server/web_*bin \
     --paths /tmp/try-kosli/server/db_*.bin
 ```
 
-We can see that the server has started, and how long it has run.
+You can see that the server has started, and how long it has run:
+
 ```shell {.command}
 kosli environment log production
 ```
@@ -144,7 +151,8 @@ SNAPSHOT  FROM                  TO   DURATION
 1         16 Aug 22 07:54 CEST  now  11 seconds
 ```
 
-We can get a more detailed view of what is currently running on the server.
+Get a more detailed view of what is currently running on the server:
+
 ```shell {.command}
 kosli environment get production
 ```
@@ -157,13 +165,16 @@ N/A     Name: /tmp/try-kosli/server/db_1.bin                                    
         SHA256: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af                           
 ```
 
-If you refresh the environment page in the web browser you can see that we have
+If you refresh the environment page in the web browser you can see that there is
 a time-stamp for when the environment changed. Pressing the *production* link
 gives you a detailed view of what is running now.
 
 Typically a server periodically sends a report of what is currently running to Kosli. Kosli
 only creates a new snapshot if the report has changes compared to previous snapshot, so resending the same environment report
 several times will not lead to duplication of snapshots.
+
+Send an environment report:
+
 ```shell {.command}
 kosli environment report server production \
     --paths /tmp/try-kosli/server/web_*bin \
@@ -177,21 +188,24 @@ SNAPSHOT  FROM                  TO   DURATION
 1         16 Aug 22 07:54 CEST  now  11 seconds
 ```
 
-We simulate an update of the web application to a new version, build and deploy it
+Simulate an update of the web application to a new version, build and deploy it:
+
 ```shell {.command}
 update_web_src
 simulate_build
 simulate_deployment
 ```
 
-Report what is now running on server
+Report what is now running on server:
+
 ```shell {.command}
 kosli environment report server production \
     --paths /tmp/try-kosli/server/web_*bin \
     --paths /tmp/try-kosli/server/db_*.bin
 ```
 
-We can see we have created a new snapshot.
+You can see Kosli has created a new snapshot:
+
 ```shell {.command}
 kosli environment log production
 ```
@@ -202,7 +216,8 @@ SNAPSHOT  FROM                  TO                    DURATION
 1         16 Aug 22 07:54 CEST  16 Aug 22 07:58 CEST  4 minutes
 ```
 
-We can see that we are currently running web version 2 in production.
+You can see that you are currently running web version 2 in production:
+
 ```shell {.command}
 kosli environment get production
 ```
@@ -217,9 +232,10 @@ N/A     Name: /tmp/try-kosli/server/db_1.bin                                    
 ```                    
 
 Here, using the bare environment name (eg production) always refers to the latest snapshot
-in that environment. We can also use the 
+in that environment. You can also use the 
 Kosli CLI to check what was running in previous snapshots.
-Here we look at what was running in snapshot #1 in production.
+Find what was running in snapshot #1 in production:
+
 ```shell {.command}
 kosli environment get production#1
 ```
@@ -246,10 +262,12 @@ A Kosli pipeline stores information about what happens in your build system.
 The output of the build system is called an *artifact* in Kosli. This can be
 an application, docker image, documentation, filesystem and so on.
 
+<!-- TODO: Do we need this??
 Some organizations have a CI system where one CI pipeline builds one 
 artifact, some have a CI system where one CI pipeline builds several
-artifacts. For both cases we use one Kosli pipeline for each artifact.
-We use the Kosli CLI to report information about the creation of an
+artifacts. For both cases you use one Kosli pipeline for each artifact. -->
+
+You use the Kosli CLI to report information about the creation of an
 artifact to the Kosli pipeline.
 
 A Kosli pipeline can also be used to store any information related to 
@@ -261,11 +279,12 @@ pull-requests and so on.
 
 To follow the examples make sure you have followed the instructions in Local setup.
 
-We create a Kosli pipeline where we can report what software our CI system
-is building. Since we are building two applications we are making
+Create a Kosli pipeline where you can report what software your CI system
+is building. Since you are building two applications you are making
 two Kosli pipelines `web-server` and `database-server`.
 
 Create your new pipelines:
+
 ```shell {.command}
 kosli pipeline declare \
     --pipeline web-server \
@@ -283,6 +302,7 @@ kosli pipeline declare \
 ```
 
 You can immediately verify the Kosli pipelines were created:
+
 ```shell {.command}
 kosli pipeline ls
 ```
@@ -301,13 +321,15 @@ been reported for the pipelines.
 
 ## Building artifacts and reporting them to Kosli
 
-Simulate building our software
+Simulate building your software:
+
 ```shell {.command}
 simulate_build
 ```
 
-We can now report we have built the web and database applications. We are using
-a dummy `--build-url`, in real life it would be a CI build URL.
+Report you have built the web and database applications. You are using
+a dummy `--build-url`, in real life it would be a CI build URL:
+
 ```shell {.command}
 kosli pipeline artifact report creation /tmp/try-kosli/build/web_$(cat /tmp/try-kosli/code/web.src).bin \
     --pipeline web-server \
@@ -326,7 +348,8 @@ kosli pipeline artifact report creation /tmp/try-kosli/build/db_$(cat /tmp/try-k
     --git-commit $(cd /tmp/try-kosli/code; git rev-parse HEAD)
 ```
 
-We can see we have built one artifact in our *web-server* pipeline
+You can see you have built one artifact in your *web-server* pipeline:
+
 ```shell {.command}
 kosli artifact ls web-server
 ```
@@ -337,7 +360,8 @@ COMMIT   ARTIFACT                                                               
          SHA256: cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746             
 ```
 
-And one for the *database-server* pipeline
+And one for the *database-server* pipeline:
+
 ```shell {.command}
 kosli artifact ls database-server
 ```
@@ -348,7 +372,8 @@ COMMIT   ARTIFACT                                                               
          SHA256: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af             
 ```
 
-We can also get detailed information about each artifact that has been reported.
+You can also get detailed information about each artifact that has been reported:
+
 ```shell {.command}
 kosli artifact get database-server@0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af
 ```
@@ -371,20 +396,20 @@ artifact to get more details.
 
 # Deployments
 
-We assume the user has done both Environments and Pipelines first.
-
-A Kosli deployment command is used to indicate an aritfact is
+A Kosli deployment command is used to indicate an artifact is
 being deployed to a given runtime environment. 
 
 
 ## Deploying software to the server and reporting the deployment to Kosli
 
-Simulate deploying our software to the server
+Simulate deploying your software to the server:
+
 ```shell {.command}
 simulate_deployment
 ```
 
-Report to Kosli that the web software has been deployed.
+Report to Kosli that the web software has been deployed:
+
 ```shell {.command}
 kosli pipeline deployment report /tmp/try-kosli/build/web_$(cat /tmp/try-kosli/code/web.src).bin \
     --pipeline web-server \
@@ -394,7 +419,8 @@ kosli pipeline deployment report /tmp/try-kosli/build/web_$(cat /tmp/try-kosli/c
     --description "Web server version $(cat /tmp/try-kosli/code/web.src)"
 ```
 
-We can verify the deployment with
+You can verify the deployment with:
+
 ```shell {.command}
 kosli deployment ls web-server
 ```
@@ -405,7 +431,8 @@ ID   ARTIFACT                                                                  E
      SHA256: cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746               
 ```
 
-We can also get detailed information about a deployment.
+Get detailed information about a deployment:
+
 ```shell {.command}
 kosli deployment get web-server#1
 ```
