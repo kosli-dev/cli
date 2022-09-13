@@ -37,14 +37,14 @@ kosli env log aws-prod --long 175..177
 ```
 
 ```plaintext {.light-console}
-SNAPSHOT  EVENT                                                                      PIPELINE  DEPLOYMENTS
-#177      Artifact: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/creator:31dee35  creator   #87 
-          SHA256: 5d1c926530213dadd5c9fcbf59c8822da56e32a04b0f9c774d7cdde3cf6ba66d             
+SNAPSHOT  EVENT                                                                          PIPELINE  DEPLOYMENTS
+#177      Artifact: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/creator:31dee35      creator   #87 
+          Fingerprint: 5d1c926530213dadd5c9fcbf59c8822da56e32a04b0f9c774d7cdde3cf6ba66d             
           Description: 1 instance stopped running (from 1 to 0).                               
           Reported at: Tue, 06 Sep 2022 16:53:28 CEST                                          
                                                                                                
-#176      Artifact: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/creator:b7a5908  creator   #89 
-          SHA256: 860ad172ace5aee03e6a1e3492a88b3315ecac2a899d4f159f43ca7314290d5a             
+#176      Artifact: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/creator:b7a5908      creator   #89 
+          Fingerprint: 860ad172ace5aee03e6a1e3492a88b3315ecac2a899d4f159f43ca7314290d5a             
           Description: 1 instance started running (from 0 to 1).                               
           Reported at: Tue, 06 Sep 2022 16:52:28 CEST
 ...
@@ -54,17 +54,10 @@ These two snapshots belong to the same blue-green deployment.
 You see artifact `creator:b7a5908` starting in snapshot #176, and artifact
 `creator:31dee35` exiting in snapshot #177.
 
-{{< hint info >}}
-### How do you know you are seeing a blue-green deployment?
-Because these two snapshot events:
-- relate to the same pipeline
-- are close in time
-{{< /hint >}}
-
 ## Dig into the artifact
 
 You are interested in #176, showing the newly running artifact, `creator:b7a5908`,
-whos sha256 is `860ad172ace5aee03e6a1e3492a88b3315ecac2a899d4f159f43ca7314290d5a`.
+whose sha256 is `860ad172ace5aee03e6a1e3492a88b3315ecac2a899d4f159f43ca7314290d5a`.
 
 Let's learn more about this artifact:
 
@@ -74,7 +67,7 @@ kosli artifact get creator@860ad172ace5aee03e6a1e3492a88b3315ecac2a899d4f159f43c
 
 ```plaintext {.light-console}
 Name:        cyberdojo/creator:b7a5908
-SHA256:      860ad172ace5aee03e6a1e3492a88b3315ecac2a899d4f159f43ca7314290d5a
+Fingerprint: 860ad172ace5aee03e6a1e3492a88b3315ecac2a899d4f159f43ca7314290d5a
 Created on:  Tue, 06 Sep 2022 16:48:07 CEST • 21 hours ago
 Git commit:  b7a590836cf140e17da3f01eadd5eca17d9efc65
 Commit URL:  https://github.com/cyber-dojo/creator/commit/b7a590836cf140e17da3f01eadd5eca17d9efc65

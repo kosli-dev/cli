@@ -157,12 +157,12 @@ Get a more detailed view of what is currently running on the server:
 kosli environment get production
 ```
 ```plaintext {.light-console}
-COMMIT  ARTIFACT                                                                  PIPELINE  RUNNING_SINCE  REPLICAS
-N/A     Name: /tmp/try-kosli/server/web_1.bin                                     N/A       2 minutes ago  1
-        SHA256: a7a87c332500a40f9a01b811ec75f51b40188a3dabd205feb0fa7c3eafb25fbe                           
+COMMIT  ARTIFACT                                                                       PIPELINE  RUNNING_SINCE  REPLICAS
+N/A     Name: /tmp/try-kosli/server/web_1.bin                                          N/A       2 minutes ago  1
+        Fingerprint: a7a87c332500a40f9a01b811ec75f51b40188a3dabd205feb0fa7c3eafb25fbe                           
                                                                                                            
-N/A     Name: /tmp/try-kosli/server/db_1.bin                                      N/A       2 minutes ago  1
-        SHA256: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af                           
+N/A     Name: /tmp/try-kosli/server/db_1.bin                                           N/A       2 minutes ago  1
+        Fingerprint: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af                           
 ```
 
 If you refresh the environment page in the web browser you can see that there is
@@ -223,12 +223,12 @@ kosli environment get production
 ```
 
 ```plaintext {.light-console}
-COMMIT  ARTIFACT                                                                  PIPELINE  RUNNING_SINCE   REPLICAS
-N/A     Name: /tmp/try-kosli/server/web_2.bin                                     N/A       39 seconds ago  1
-        SHA256: cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746                            
+COMMIT  ARTIFACT                                                                       PIPELINE  RUNNING_SINCE   REPLICAS
+N/A     Name: /tmp/try-kosli/server/web_2.bin                                          N/A       39 seconds ago  1
+        Fingerprint: cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746                            
                                                                                                             
-N/A     Name: /tmp/try-kosli/server/db_1.bin                                      N/A       6 minutes ago   1
-        SHA256: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af                            
+N/A     Name: /tmp/try-kosli/server/db_1.bin                                           N/A       6 minutes ago   1
+        Fingerprint: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af                            
 ```                    
 
 Here, using the bare environment name (eg production) always refers to the latest snapshot
@@ -241,12 +241,12 @@ kosli environment get production#1
 ```
 
 ```plaintext {.light-console}
-COMMIT  ARTIFACT                                                                  PIPELINE  RUNNING_SINCE  REPLICAS
-N/A     Name: /tmp/try-kosli/server/web_1.bin                                     N/A       7 minutes ago  1
-        SHA256: a7a87c332500a40f9a01b811ec75f51b40188a3dabd205feb0fa7c3eafb25fbe                           
+COMMIT  ARTIFACT                                                                       PIPELINE  RUNNING_SINCE  REPLICAS
+N/A     Name: /tmp/try-kosli/server/web_1.bin                                          N/A       7 minutes ago  1
+        Fingerprint: a7a87c332500a40f9a01b811ec75f51b40188a3dabd205feb0fa7c3eafb25fbe                           
                                                                                                            
-N/A     Name: /tmp/try-kosli/server/db_1.bin                                      N/A       7 minutes ago  1
-        SHA256: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af                           
+N/A     Name: /tmp/try-kosli/server/db_1.bin                                           N/A       7 minutes ago  1
+        Fingerprint: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af                           
 ```
 
 <!---
@@ -355,9 +355,9 @@ kosli artifact ls web-server
 ```
 
 ```plaintext {.light-console}
-COMMIT   ARTIFACT                                                                  STATE      CREATED_AT
-5187374  Name: web_2.bin                                                           COMPLIANT  16 Aug 22 08:00 CEST
-         SHA256: cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746             
+COMMIT   ARTIFACT                                                                       STATE      CREATED_AT
+5187374  Name: web_2.bin                                                                COMPLIANT  16 Aug 22 08:00 CEST
+         Fingerprint: cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746             
 ```
 
 And one for the *database-server* pipeline:
@@ -367,9 +367,9 @@ kosli artifact ls database-server
 ```
 
 ```plaintext {.light-console}
-COMMIT   ARTIFACT                                                                  STATE      CREATED_AT
-5187374  Name: db_1.bin                                                            COMPLIANT  16 Aug 22 08:01 CEST
-         SHA256: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af             
+COMMIT   ARTIFACT                                                                        STATE      CREATED_AT
+5187374  Name: db_1.bin                                                                  COMPLIANT  16 Aug 22 08:01 CEST
+         Fingerprint: 0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af             
 ```
 
 You can also get detailed information about each artifact that has been reported:
@@ -426,9 +426,9 @@ kosli deployment ls web-server
 ```
 
 ```plaintext {.light-console}
-ID   ARTIFACT                                                                  ENVIRONMENT  REPORTED_AT
-1    Name: web_2.bin                                                           production   16 Aug 22 08:02 CEST
-     SHA256: cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746               
+ID   ARTIFACT                                                                        ENVIRONMENT  REPORTED_AT
+1    Name: web_2.bin                                                                 production   16 Aug 22 08:02 CEST
+     Fingerprint: cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746               
 ```
 
 Get detailed information about a deployment:
@@ -438,13 +438,13 @@ kosli deployment get web-server#1
 ```
 
 ```plaintext {.light-console}
-ID:               1
-Artifact SHA256:  cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746
-Artifact name:    web_2.bin
-Build URL:        file://dummy
-Created at:       16 Aug 22 08:02 CEST • 32 seconds ago
-Environment:      production
-Runtime state:    The artifact running since 16 Aug 22 07:58 CEST
+ID:                    1
+Artifact fingerprint:  cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746
+Artifact name:         web_2.bin
+Build URL:             file://dummy
+Created at:            16 Aug 22 08:02 CEST • 32 seconds ago
+Environment:           production
+Runtime state:         The artifact running since 16 Aug 22 07:58 CEST
 ```
 
 If you select the *web_2.bin* artifact in the web interface it will show
