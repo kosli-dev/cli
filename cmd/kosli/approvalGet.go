@@ -86,7 +86,7 @@ func printApprovalAsTable(raw string, out io.Writer, page int) error {
 
 	rows := []string{}
 	rows = append(rows, fmt.Sprintf("ID:\t%d", int64(approval["release_number"].(float64))))
-	rows = append(rows, fmt.Sprintf("Artifact SHA256:\t%s", approval["base_artifact"].(string)))
+	rows = append(rows, fmt.Sprintf("Artifact fingerprint:\t%s", approval["base_artifact"].(string)))
 	rows = append(rows, fmt.Sprintf("Artifact name:\t%s", approval["artifact_name"].(string)))
 	rows = append(rows, fmt.Sprintf("State:\t%s", approval["state"].(string)))
 	lastModifiedAt, err := formattedTimestamp(approval["last_modified_at"], false)
@@ -126,7 +126,7 @@ func printApprovalAsTable(raw string, out io.Writer, page int) error {
 				commitRow = "\tNo artifacts produced from this commit"
 				rows = append(rows, commitRow)
 			} else {
-				commitRow = "\tProduced artifact digest(s):"
+				commitRow = "\tProduced artifact fingerprint(s):"
 				rows = append(rows, commitRow)
 				for _, digest := range artifact_digests {
 					digestRow := fmt.Sprintf("\t\t%s", digest)

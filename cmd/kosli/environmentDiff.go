@@ -157,7 +157,7 @@ func printOnlyEntry(entry DiffArtifact) error {
 	fmt.Println()
 	fmt.Printf("    Name: %s\n", entry.Name)
 
-	fmt.Printf("    Sha256: %s\n", entry.Sha256)
+	fmt.Printf("    Fingerprint: %s\n", entry.Sha256)
 
 	if entry.Pipeline != "" {
 		fmt.Printf("    Pipeline: %s\n", entry.Pipeline)

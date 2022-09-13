@@ -99,13 +99,13 @@ kosli artifact get runner:16d9990
 You will see:
 
 ```plaintext {.light-console}
-Name:        cyberdojo/runner:16d9990
-SHA256:      9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
-Created on:  Mon, 22 Aug 2022 11:34:59 CEST • 15 days ago
-Git commit:  16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
-Commit URL:  https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
-Build URL:   https://github.com/cyber-dojo/runner/actions/runs/2902808452
-State:       COMPLIANT
+Name:         cyberdojo/runner:16d9990
+Fingerprint:  9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
+Created on:   Mon, 22 Aug 2022 11:34:59 CEST • 15 days ago
+Git commit:   16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
+Commit URL:   https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
+Build URL:    https://github.com/cyber-dojo/runner/actions/runs/2902808452
+State:        COMPLIANT
 History:
     Artifact created                                     Mon, 22 Aug 2022 11:34:59 CEST
     branch-coverage evidence received                    Mon, 22 Aug 2022 11:36:00 CEST

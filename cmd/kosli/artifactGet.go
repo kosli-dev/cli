@@ -94,7 +94,7 @@ func printArtifactsAsTable(artifactRaw string, out io.Writer, pageNumber int) er
 
 		rows := []string{}
 		rows = append(rows, fmt.Sprintf("Name:\t%s", artifactData["filename"].(string)))
-		rows = append(rows, fmt.Sprintf("SHA256:\t%s", artifactData["sha256"].(string)))
+		rows = append(rows, fmt.Sprintf("Fingerprint:\t%s", artifactData["sha256"].(string)))
 		createdAt, err := formattedTimestamp(artifactData["logged_at"], false)
 		if err != nil {
 			return err

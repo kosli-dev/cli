@@ -86,7 +86,7 @@ func printDeploymentAsTable(raw string, out io.Writer, page int) error {
 
 	rows := []string{}
 	rows = append(rows, fmt.Sprintf("ID:\t%d", int64(deployment["deployment_id"].(float64))))
-	rows = append(rows, fmt.Sprintf("Artifact SHA256:\t%s", deployment["artifact_sha256"].(string)))
+	rows = append(rows, fmt.Sprintf("Artifact fingerprint:\t%s", deployment["artifact_sha256"].(string)))
 	rows = append(rows, fmt.Sprintf("Artifact name:\t%s", deployment["artifact_name"].(string)))
 	buildURL := "N/A"
 	if deployment["build_url"] != nil {

@@ -125,7 +125,7 @@ func printEnvironmentEventsLogAsTable(raw string, out io.Writer, page int) error
 
 		row := fmt.Sprintf("#%d\tArtifact: %s\t%s\t%s", snapshotIndex, artifactName, pipeline, deployments)
 		rows = append(rows, row)
-		row = fmt.Sprintf("\tSHA256: %s\t\t", sha256)
+		row = fmt.Sprintf("\tFingerprint: %s\t\t", sha256)
 		rows = append(rows, row)
 		row = fmt.Sprintf("\tDescription: %s\t\t", description)
 		rows = append(rows, row)

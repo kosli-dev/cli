@@ -97,7 +97,7 @@ func printApprovalListAsTable(raw string, out io.Writer, page int) error {
 		}
 		row := fmt.Sprintf("%d\tName: %s\t%s\t%s", approvalId, artifactName, approvalState, lastModifiedAt)
 		rows = append(rows, row)
-		row = fmt.Sprintf("\tSHA256: %s\t\t", artifactDigest)
+		row = fmt.Sprintf("\tFingerprint: %s\t\t", artifactDigest)
 		rows = append(rows, row)
 		rows = append(rows, "\t\t\t")
 	}
