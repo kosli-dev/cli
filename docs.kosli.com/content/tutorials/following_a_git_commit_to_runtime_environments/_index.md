@@ -122,15 +122,14 @@ History:
 Let's look at this output in detail:
 
 * **Name**: The name of the docker image is `cyberdojo/runner:16d9990`. Its image registry is defaulted to
-`dockerhub`. Its :tag is the short-sha of the git commit.  
-* **SHA256**: The `kosli` CLI knows how to 'fingerprint' any kind of artifact (docker images, zip files, etc) 
-  to create a unique tamper-proof SHA. 
+`dockerhub`. Its :tag is the short-sha of the git commit.
+* **Fingerprint**: The unique tamper-proof SHA256 fingerprint of the artifact.
 * **Created on**: The artifact was created on 22nd August 2022, at 11:35 CEST.
 * **Commit URL**: You can follow [the commit URL](https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4) 
   to the actual commit on Github since cyber-dojo's git repositories are public.
-* **Build URL**: You can follow [the build URL](https://github.com/cyber-dojo/runner/actions/runs/2902808452) 
+* **Build URL**: You can follow [the build URL](https://github.com/cyber-dojo/runner/actions/runs/2902808452)
   to the actual Github Action for this commit.
-* **State**: COMPLIANT means that all the promised evidence for the artifact (in this case `branch-coverage`) 
+* **State**: COMPLIANT means that all the promised evidence for the artifact (in this case `branch-coverage`)
   was provided before deployment.
 * **History**:
    * **CI pipeline events**
@@ -178,20 +177,20 @@ kosli env get aws-prod#65
 The output will be:
 
 ```plaintext {.light-console}
-COMMIT   ARTIFACT                                                                    PIPELINE   RUNNING_SINCE  REPLICAS
-16d9990  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990        runner     11 days ago    3
-         SHA256: 9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625                              
-
-7c45272  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/shas:7c45272          shas       11 days ago    1
-         SHA256: 76c442c04283c4ca1af22d882750eb960cf53c0aa041bbdb2db9df2f2c1282be
+COMMIT   ARTIFACT                                                                         PIPELINE   RUNNING_SINCE  REPLICAS
+16d9990  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990             runner     11 days ago    3
+         Fingerprint: 9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625                              
+                                                                                                    
+7c45272  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/shas:7c45272               shas       11 days ago    1
+         Fingerprint: 76c442c04283c4ca1af22d882750eb960cf53c0aa041bbdb2db9df2f2c1282be                              
 
 ...some output elided...
 
-85d83c6  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:85d83c6        runner     13 days ago    1
-         SHA256: eeb0cfc9ee7f69fbd9531d5b8c1e8d22a8de119e2a422344a714a868e9a8bfec                              
- 
-1a2b170  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/differ:1a2b170        differ     13 days ago    1
-         SHA256: d8440b94f7f9174c180324ceafd4148360d9d7c916be2b910f132c58b8a943ae
+85d83c6  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:85d83c6             runner     13 days ago    1
+         Fingerprint: eeb0cfc9ee7f69fbd9531d5b8c1e8d22a8de119e2a422344a714a868e9a8bfec                              
+                                                                                                  
+1a2b170  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/differ:1a2b170             differ     13 days ago    1
+         Fingerprint: d8440b94f7f9174c180324ceafd4148360d9d7c916be2b910f132c58b8a943ae                              
 ```
 
 You see in this snapshot, the `runner:16d9990` artifact is indeed running with 3 replicas.
@@ -221,18 +220,14 @@ kosli env diff aws-prod#64 aws-prod#65
 The response will be:
 
 ```plaintext {.light-console}
-only present in aws-prod#65
-
-  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990
-  Sha256: 9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
-  Pipeline: runner
-  Commit: https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
-  Started: Mon, 22 Aug 2022 11:39:17 CEST • 15 days ago
+Only present in aws-prod#65
+                   
+     Name:         274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990
+     Fingerprint:  9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
+     Pipeline:     runner
+     Commit URL:   https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
+     Started:      Mon, 22 Aug 2022 11:39:17 CEST • 15 days ago
 ```
-
-<!-- Do we want the label for Commit: to be Commit URL: to match the
-     label you see in a `kosli artifact get` command
--->
 
 The output above shows that `runner:16d9990` started running in snapshot 65 of `aws-prod` environment.
 

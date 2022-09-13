@@ -105,12 +105,12 @@ func printEnvironmentDiffAsTable(snappish1, snappish2, raw string, out io.Writer
 
 	if s1Count > 0 {
 		if snappish1 == diffs.Snappish1.SnapshotID {
-			fmt.Printf("only present in %s\n", snappish1)
+			fmt.Printf("Only present in %s\n", snappish1)
 		} else {
-			fmt.Printf("only present in %s (snapshot: %s)\n", snappish1, diffs.Snappish1.SnapshotID)
+			fmt.Printf("Only present in %s (snapshot: %s)\n", snappish1, diffs.Snappish1.SnapshotID)
 		}
 		for _, entry := range s1Artifacts {
-			err := printOnlyEntry(entry)
+			err := printOnlyEntry(entry, out)
 			if err != nil {
 				return err
 			}
@@ -118,17 +118,17 @@ func printEnvironmentDiffAsTable(snappish1, snappish2, raw string, out io.Writer
 	}
 
 	if s1Count > 0 && s2Count > 0 {
-		fmt.Println("------------")
+		fmt.Println()
 	}
 
 	if s2Count > 0 {
 		if snappish2 == diffs.Snappish2.SnapshotID {
-			fmt.Printf("only present in %s\n", snappish2)
+			fmt.Printf("Only present in %s\n", snappish2)
 		} else {
-			fmt.Printf("only present in %s (snapshot: %s)\n", snappish2, diffs.Snappish2.SnapshotID)
+			fmt.Printf("Only present in %s (snapshot: %s)\n", snappish2, diffs.Snappish2.SnapshotID)
 		}
 		for _, entry := range s2Artifacts {
-			err := printOnlyEntry(entry)
+			err := printOnlyEntry(entry, out)
 			if err != nil {
 				return err
 			}
@@ -136,13 +136,13 @@ func printEnvironmentDiffAsTable(snappish1, snappish2, raw string, out io.Writer
 	}
 
 	if changedCount > 0 && (s1Count > 0 || s2Count > 0) {
-		fmt.Println("------------")
+		fmt.Println()
 	}
 
 	if changedCount > 0 {
 		fmt.Printf("%s -> %s scaling\n", snappish1, snappish2)
 		for _, entry := range changedArtifacts {
-			err := printOnlyEntry(entry)
+			err := printOnlyEntry(entry, out)
 			if err != nil {
 				return err
 			}
@@ -153,33 +153,34 @@ func printEnvironmentDiffAsTable(snappish1, snappish2, raw string, out io.Writer
 	return nil
 }
 
-func printOnlyEntry(entry DiffArtifact) error {
-	fmt.Println()
-	fmt.Printf("    Name: %s\n", entry.Name)
-
-	fmt.Printf("    Fingerprint: %s\n", entry.Sha256)
+func printOnlyEntry(entry DiffArtifact, out io.Writer) error {
+	rows := []string{}
+	rows = append(rows, "\t\t")
+	rows = append(rows, fmt.Sprintf("\tName:\t%s", entry.Name))
+	rows = append(rows, fmt.Sprintf("\tFingerprint:\t%s", entry.Sha256))
 
 	if entry.Pipeline != "" {
-		fmt.Printf("    Pipeline: %s\n", entry.Pipeline)
+		rows = append(rows, fmt.Sprintf("\tPipeline:\t%s", entry.Pipeline))
 	} else {
-		fmt.Printf("    Pipeline: Unknown\n")
+		rows = append(rows, "\tPipeline:\tUnknown")
 	}
 
 	if entry.CommitUrl != "" {
-		fmt.Printf("    Commit: %s\n", entry.CommitUrl)
+		rows = append(rows, fmt.Sprintf("\tCommit URL:\t%s", entry.CommitUrl))
 	} else {
-		fmt.Printf("    Commit: Unknown\n")
+		rows = append(rows, fmt.Sprintf("\tCommit URL:\tUnknown"))
 	}
 
 	if len(entry.Pods) > 0 {
-		fmt.Printf("    Pods: %s\n", entry.Pods)
+		rows = append(rows, fmt.Sprintf("\tPods:\t%s", entry.Pods))
 	}
 
 	timestamp, err := formattedTimestamp(entry.MostRecentTimestamp, false)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("    Started: %s\n", timestamp)
+	rows = append(rows, fmt.Sprintf("\tStarted:\t%s", timestamp))
 
+	tabFormattedPrint(out, []string{}, rows)
 	return nil
 }
