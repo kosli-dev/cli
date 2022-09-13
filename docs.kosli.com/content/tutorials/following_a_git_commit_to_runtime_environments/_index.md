@@ -32,7 +32,7 @@ In this 5 minute tutorial you'll learn how Kosli tracks "life after git" and sho
 
 You'll follow an actual git commit to an open-source project called **cyber-dojo**. 
 In our example cyber-dojo’s `runner` service should run with three replicas. However, due an oversight while switching
-from Google Kubernetes Engine (GKE) to AWS Elastice Container Service (ECS), it was running with just one replica. 
+from Google Kubernetes Engine (GKE) to AWS Elastic Container Service (ECS), it was running with just one replica. 
 You will follow the commit that fixed this. 
 
 ## Getting ready
