@@ -168,7 +168,7 @@ func printOnlyEntry(entry DiffArtifact, out io.Writer) error {
 	if entry.CommitUrl != "" {
 		rows = append(rows, fmt.Sprintf("\tCommit URL:\t%s", entry.CommitUrl))
 	} else {
-		rows = append(rows, fmt.Sprintf("\tCommit URL:\tUnknown"))
+		rows = append(rows, "\tCommit URL:\tUnknown")
 	}
 
 	if len(entry.Pods) > 0 {
