@@ -30,10 +30,10 @@ In this 5 minute tutorial you'll learn how Kosli tracks "life after git" and sho
 * CI-pipelines (eg, building the docker image, running the unit tests, deploying, etc)
 * runtime environments (eg, the blue-green rollover, instance scaling, etc)
 
-You'll follow an actual git commit to an open-source project called **cyber-dojo**.
-cyber-dojo's `runner` service performs most of its heavy lifting and
-should run with three replicas. Due to an oversight (whilst switching from K8S to AWS)
-it was running with just one replica. You will follow the commit that fixed this.
+You'll follow an actual git commit to an open-source project called **cyber-dojo**. 
+In our example cyber-dojo’s `runner` service should run with three replicas. However, due an oversight while switching
+from Google Kubernetes Engine (GKE) to AWS Elastice Container Service (ECS), it was running with just one replica. 
+You will follow the commit that fixed this. 
 
 ## Getting ready
 
@@ -101,22 +101,22 @@ You will see:
 ```plaintext {.light-console}
 Name:         cyberdojo/runner:16d9990
 Fingerprint:  9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
-Created on:   Mon, 22 Aug 2022 11:34:59 CEST • 15 days ago
+Created on:   Mon, 22 Aug 2022 11:35:00 CEST • 15 days ago
 Git commit:   16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
 Commit URL:   https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
 Build URL:    https://github.com/cyber-dojo/runner/actions/runs/2902808452
 State:        COMPLIANT
 History:
-    Artifact created                                     Mon, 22 Aug 2022 11:34:59 CEST
-    branch-coverage evidence received                    Mon, 22 Aug 2022 11:36:00 CEST
-    Deployment #18 to aws-beta environment               Mon, 22 Aug 2022 11:37:15 CEST
-    Deployment #19 to aws-prod environment               Mon, 22 Aug 2022 11:38:19 CEST
-    Started running in aws-beta#83 environment           Mon, 22 Aug 2022 11:38:30 CEST
-    Started running in aws-prod#63 environment           Mon, 22 Aug 2022 11:39:45 CEST
-    Scaled down from 3 to 2 in aws-beta#117 environment  Wed, 24 Aug 2022 18:04:22 CEST
-    No longer running in aws-beta#118 environment        Wed, 24 Aug 2022 18:05:22 CEST
-    Scaled down from 3 to 1 in aws-prod#91 environment   Wed, 24 Aug 2022 18:10:14 CEST
-    No longer running in aws-prod#93 environment         Wed, 24 Aug 2022 18:12:14 CEST
+    Artifact created                                     Mon, 22 Aug 2022 11:35:00 CEST
+    branch-coverage evidence received                    Mon, 22 Aug 2022 11:36:02 CEST
+    Deployment #18 to aws-beta environment               Mon, 22 Aug 2022 11:37:17 CEST
+    Deployment #19 to aws-prod environment               Mon, 22 Aug 2022 11:38:21 CEST
+    Started running in aws-beta#84 environment           Mon, 22 Aug 2022 11:38:28 CEST
+    Started running in aws-prod#65 environment           Mon, 22 Aug 2022 11:39:22 CEST
+    Scaled down from 3 to 2 in aws-beta#117 environment  Wed, 24 Aug 2022 18:03:42 CEST
+    No longer running in aws-beta#119 environment        Wed, 24 Aug 2022 18:05:42 CEST
+    Scaled down from 3 to 1 in aws-prod#94 environment   Wed, 24 Aug 2022 18:10:28 CEST
+    No longer running in aws-prod#96 environment         Wed, 24 Aug 2022 18:12:28 CEST
 ```
 
 Let's look at this output in detail:
@@ -157,7 +157,7 @@ Kosli environments store information about what is running in your actual runtim
 We use one Kosli environment per runtime environment.
 
 The Kosli CLI periodically fingerprints all the running artifacts in a runtime environment and reports them to Kosli.
-If a change is detected, a snapshot of the environment is saved.
+Whenever a change is detected, a snapshot of the environment is saved.
 
 {{< hint info >}}
 Cyber-dojo runs the `kosli` CLI from inside its AWS runtime environments
@@ -199,10 +199,10 @@ You have proof the git commit has worked.
 {{< hint info >}}
 ## Blue-green deployment
 There were *two* versions of `runner` at this point in time! 
-The first, with three replicas (to fix the problem), but also a second (from commit `85d83c6`) with only one replica.
+The first had three replicas (to fix the problem), but there was also a second (from commit `85d83c6`) with only one replica.
 
 You are seeing a **blue-green deployment** happening;
-`runner:85d83c6` is about to be stopped, it will not be reported in
+`runner:85d83c6` is about to be stopped and will not be reported in
 snapshot `aws-prod#66`.
 {{< /hint >}}
 

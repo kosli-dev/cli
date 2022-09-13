@@ -9,9 +9,10 @@ draft: false
 
 # Tracing a production incident back to git commits
 
-In this 5 minute tutorial you'll learn how Kosli helps Cyber-dojo to track a production incident back to git commits.
+In this 5 minute tutorial you'll learn how Kosli can track a production incident in Cyber-dojo back to git commits.
 
-Something went wrong and [https://cyber-dojo.org](https://cyber-dojo.org) is displaying a 500 error! 
+Something has gone wrong and [https://cyber-dojo.org](https://cyber-dojo.org) is displaying a 500 error!
+
 
 {{< figure src="/images/cyber-dojo-prod-500-large.png" alt="Prod cyber-dojo is down with a 500" width="90%" >}}
 
@@ -57,7 +58,7 @@ You see artifact `creator:b7a5908` starting in snapshot #176, and artifact
 ## Dig into the artifact
 
 You are interested in #176, showing the newly running artifact, `creator:b7a5908`,
-whose sha256 is `860ad172ace5aee03e6a1e3492a88b3315ecac2a899d4f159f43ca7314290d5a`.
+with SHA256 fingerprint `860ad172ace5aee03e6a1e3492a88b3315ecac2a899d4f159f43ca7314290d5a`.
 
 Let's learn more about this artifact:
 
