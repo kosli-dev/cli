@@ -58,12 +58,12 @@ You see artifact `creator:b7a5908` starting in snapshot #176, and artifact
 ## Dig into the artifact
 
 You are interested in #176, showing the newly running artifact, `creator:b7a5908`,
-with SHA256 fingerprint `860ad172ace5aee03e6a1e3492a88b3315ecac2a899d4f159f43ca7314290d5a`.
+with the fingerprint starting `860ad17`.
 
 Let's learn more about this artifact:
 
 ```shell {.command}
-kosli artifact get creator@860ad172ace5aee03e6a1e3492a88b3315ecac2a899d4f159f43ca7314290d5a
+kosli artifact get creator@860ad17
 ```
 
 ```plaintext {.light-console}
