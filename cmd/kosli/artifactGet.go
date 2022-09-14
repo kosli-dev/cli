@@ -73,7 +73,7 @@ func (o *artifactGetOptions) run(out io.Writer, args []string) error {
 
 func printArtifactAsTableWrapper(artifactRaw string, out io.Writer, pageNumber int) error {
 	// TODO: we have this function for backward compatibility with API.
-	// API returns array when querrying with commmit and returns single map for sha256.
+	// API returns array when querying with commit and returns single map for sha256.
 	// In the future, the return json should always be an array
 	if artifactRaw[0] != '[' {
 		artifactRaw = "[" + artifactRaw + "]"

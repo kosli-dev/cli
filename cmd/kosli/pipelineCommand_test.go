@@ -25,7 +25,7 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 			golden: "",
 		},
 		{
-			name:   "redeclaring a pipeline updates its metadata",
+			name:   "re-declaring a pipeline updates its metadata",
 			cmd:    "pipeline declare --pipeline newPipe --description \"changed description\" -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
 			golden: "",
 		},
@@ -117,7 +117,7 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 			golden:    "",
 		},
 
-		// TODO: decouple approval tests and make them independant
+		// TODO: decouple approval tests and make them independent
 		// Report approval
 		// {
 		// 	wantError: false,
