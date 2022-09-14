@@ -1,15 +1,16 @@
 ---
-title: "Defaulted command flags from CI"
+title: "Defaulted Kosli command flags from CI variables"
+weight: 2
 ---
 
-## Defaulted command flags from CI
+## Defaulted Kosli command flags from CI variables
 
 The following flags are defaulted as follows in the CI list below:
 
 {{< tabs "uniqueid" >}}
 
 {{< tab "Bitbucket Cloud" >}}
-| Flag | Description |
+| Flag | Default |
 | :--- | :--- |
 | --build-url | https://bitbucket&#46;org/${BITBUCKET_WORKSPACE}/${BITBUCKET_REPO_SLUG}/addon/pipelines/home#!/results/${BITBUCKET_BUILD_NUMBER} |
 | --commit-url | https://bitbucket&#46;org/${BITBUCKET_WORKSPACE}/${BITBUCKET_REPO_SLUG}/commits/${BITBUCKET_COMMIT} |
@@ -20,7 +21,7 @@ The following flags are defaulted as follows in the CI list below:
 {{< /tab >}}
 
 {{< tab "Github" >}}
-| Flag | Description |
+| Flag | Default |
 | :--- | :--- |
 | --build-url | ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID} |
 | --commit-url | ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA} |
@@ -32,7 +33,7 @@ The following flags are defaulted as follows in the CI list below:
 {{< /tab >}}
 
 {{< tab "Teamcity" >}}
-| Flag | Description |
+| Flag | Default |
 | :--- | :--- |
 | --git-commit | ${BUILD_VCS_NUMBER} |
 {{< /tab >}}
