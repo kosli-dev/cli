@@ -160,17 +160,17 @@ jobs:
         kubectl apply -f k8s/deployment.yaml -n ${{ env.NAMESPACE }}
 ```
 
-Once the workflow runs succesfully, you should see it reported in Kosli **github-k8s-demo pipeline**:
+Once the workflow runs successfully, you should see it reported in Kosli **github-k8s-demo pipeline**:
 
-![Compliant artifact with no deployments](/images/artifact-list.png)
+![Compliant artifact with no deployments](../../../static/images/artifact-list.png)
 
 With more details once you click on it:
 
-![Compliant artifact with no deployments](/images/artifact-no-deployment.png)
+![Compliant artifact with no deployments](../../../static/images/artifact-no-deployment.png)
 
 You will also notice a change in the state of your **github-k8s-test** environment (if the environment reporting workflow ran successfully): it is still incompliant, but now the artifact running there has provenance (you can see the name of Kosli **pipeline: github-k8s-demo** that the artifact was reported to, in a grey, pill shaped field) so we can check how it was built:
 
-![Incompliant environment, artifact with provenance](/images/env-provenance.png)
+![Incompliant environment, artifact with provenance](../../../static/images/env-provenance.png)
 
 
-Now that your aritfact reporting works the only thing missing is reporting the deployment.
+Now that your artifact reporting works the only thing missing is reporting the deployment.

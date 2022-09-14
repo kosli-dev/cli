@@ -127,3 +127,6 @@ release:
 	@git status -uno | grep --silent "Your branch is up to date" || (echo "ERROR: your branch is NOT up to date with remote" && return 1)
 	git tag -a $(tag) -m"$(tag)"
 	git push origin $(tag)
+
+check-links:
+	@docker run -v ${PWD}:/tmp:ro --rm -i --entrypoint '' ghcr.io/tcort/markdown-link-check:stable /bin/sh -c 'find /tmp/docs.kosli.com/content -name \*.md -print0 | xargs -0 -n1 markdown-link-check -q -c /tmp/link-checker-config.json'
