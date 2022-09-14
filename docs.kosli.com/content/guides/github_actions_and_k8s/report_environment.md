@@ -93,7 +93,7 @@ If there is nothing running in your cluster we'll build and deploy an artifact i
 
 If you had something running in the given namespace, here is what you should see in your **github-k8s-test environment** in Kosli if the pipeline succeeds (triggered either by cron or - if you don't want to wait - manually). The name of the artifact will likely be a different one:
 
-![Incompliant environment, artifact with no provenance](../../../static/images/env-no-provenance.png)
+![Incompliant environment, artifact with no provenance](/images/env-no-provenance.png)
 
 Reporting an **environment** is an easy way to get the answer to a question like: "What is running in production?". 
 So, naturally, the next thing you may want to figure out is: "Is it verified?".

@@ -5,6 +5,9 @@
       },
       {
         "pattern": "^https://bitbucket"
+      },
+      {
+        "pattern": "^/images"
       }
     ]
   }

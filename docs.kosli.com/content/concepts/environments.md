@@ -7,4 +7,4 @@ weight: 2
 
 Environments in Kosli provide a place to track how your systems change over time.
 
-![Diagram of Environment Reporting](../../static/images/environments.svg)
+![Diagram of Environment Reporting](/images/environments.svg)
