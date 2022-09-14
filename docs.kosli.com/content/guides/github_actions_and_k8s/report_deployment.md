@@ -12,11 +12,11 @@ The missing piece is figuring out how your artifact ended up in the environment,
 We'll extend the workflow from previous section with two steps, to add the reporting at the end the `deploy` job:
 
 ``` 
-    - name: Download Kosli cli client
-      id: download-kosli-cli
-      run: |
-        wget https://github.com/kosli-dev/cli/releases/download/v${{ env.KOSLI_CLI_VERSION }}/kosli_${{ env.KOSLI_CLI_VERSION }}_linux_amd64.tar.gz
-        tar -xf kosli_${{ env.KOSLI_CLI_VERSION }}_linux_amd64.tar.gz kosli 
+    - name: setup-kosli-cli
+      uses: kosli-dev/setup-cli-action@v1
+      with:
+        version:
+          ${{ env.KOSLI_CLI_VERSION }} 
 
     - name: Report deployment
       env:
