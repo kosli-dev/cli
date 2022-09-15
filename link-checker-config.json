@@ -1,13 +1,16 @@
 {
-    "ignorePatterns": [
-      {
-        "pattern": "^https://app.kosli.com"
-      },
-      {
-        "pattern": "^https://bitbucket"
-      },
-      {
-        "pattern": "^/images"
-      }
-    ]
-  }
+  "ignorePatterns": [
+    {
+      "pattern": "^https://app.kosli.com"
+    },
+    {
+      "pattern": "^https://bitbucket"
+    },
+    {
+      "pattern": "^/images"
+    },
+    {
+      "pattern": "^/ci-defaults"
+    }
+  ]
+}
