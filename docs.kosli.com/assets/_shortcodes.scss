@@ -38,6 +38,10 @@
     display: flex;
     flex-wrap: wrap;
 
+    &.col-no-wrap td {
+      white-space: nowrap;
+    }
+
     label {
       display: inline-block;
       padding: $padding-8 $padding-16;
@@ -51,6 +55,7 @@
       border-top: $padding-1 solid var(--gray-100);
       padding: $padding-16;
       display: none;
+      overflow: scroll;
     }
 
     input[type="radio"]:checked + label {

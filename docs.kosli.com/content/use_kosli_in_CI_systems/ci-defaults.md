@@ -9,7 +9,7 @@ aliases:
 
 The following flags are defaulted as follows in the CI list below:
 
-{{< tabs "uniqueid" >}}
+{{< tabs "ci-defaults" "col-no-wrap" >}}
 
 {{< tab "Bitbucket Cloud" >}}
 | Flag | Default |
