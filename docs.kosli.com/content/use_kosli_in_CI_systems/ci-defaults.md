@@ -2,7 +2,7 @@
 title: "Defaulted Kosli command flags from CI variables"
 weight: 2
 aliases:
-    - /ci-defaults
+    - /ci-defaults  # To keep short URL in docs and help in the CLI
 ---
 
 ## Defaulted Kosli command flags from CI variables
@@ -31,7 +31,6 @@ The following flags are defaulted as follows in the CI list below:
 | --git-commit | ${GITHUB_SHA} |
 | --repository | ${GITHUB_REPOSITORY} |
 | --github-org | ${GITHUB_REPOSITORY_OWNER} |
-
 {{< /tab >}}
 
 {{< tab "Teamcity" >}}
