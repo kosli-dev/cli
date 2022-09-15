@@ -1,6 +1,8 @@
 ---
 title: "Defaulted Kosli command flags from CI variables"
 weight: 2
+aliases:
+    - /ci-defaults
 ---
 
 ## Defaulted Kosli command flags from CI variables
