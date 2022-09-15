@@ -10,7 +10,7 @@
       "pattern": "^/images"
     },
     {
-      "pattern": "^/ci-defaults"
+      "pattern": "docs.kosli.com/ci-defaults"
     }
   ]
 }
