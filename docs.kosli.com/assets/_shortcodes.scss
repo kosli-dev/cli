@@ -40,6 +40,10 @@
 
     &.col-no-wrap td {
       white-space: nowrap;
+
+      &:first-child {
+        width: 25px;
+      }
     }
 
     label {
