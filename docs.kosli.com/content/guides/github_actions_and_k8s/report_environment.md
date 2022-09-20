@@ -7,32 +7,25 @@ weight: 10
 
 ## Create an environment in Kosli
 
-The first thing we need to configure is an **environment** in [Kosli](https://app.kosli.com).  
+The first thing we need to do is creating an **environment** in [Kosli](https://app.kosli.com). 
 Kosli **Environments** is where you'll be reporting the state of your actual environments, like *staging* or *production*. 
+You can either create an environment with [Kosli CLI](../../installation/_index.md)) or via the web UI. We will use the CLI in this guide.
 
-When you log in to Kosli the **Environments** page is the first thing you see. If you clicked around before reading this guide you'll find a link to **Environments** on the left side of the window in Kosli.
-
-Click the "Add environment" button to create a new Kosli **environment**. On the next page you'll have to select the type - for the purpose of this guide we'll use 'Kubernetes cluster'.
-
-Next, you need to give your **environment** a name - it doesn't have to be the same name you use for the actual environment, but it certainly helps to identify it in the future. In this guide we'll use **github-k8s-test** as the name of the **environment**.
+You need a name for your **environment** - it doesn't have to be the same name you use for the actual environment, but it certainly helps to identify it in the future. In this guide we'll use **github-k8s-test** as the name of the **environment**.
 You also need to provide the description of the environment. You'll find this helpful as the number of your environments increases.
 
-Click "Save Environment" and you're ready to move on to the next step.
+```shell {.command}
+kosli env declare --name github-k8s-test --environment-type K8S --description "k8s and github actions demo" --api-token <your-api-token> --owner <your-github-username>
+```
 
 ## Report an environment
 
-Time to implement an actual reporting of what's running in your k8s cluster - which means we need to reach out to the cluster and check which docker images were used to run the containers that are currently up in given namespace. 
-
-### CLI
-
-You report the environment using [Kosli CLI tool](https://github.com/kosli-dev/cli/releases).  
-You need to download a correct package depending on the architecture of the machine you use to run the CLI. 
-
-You can run the [command](https://docs.kosli.com/client_reference/kosli_environment_report_k8s/) manually on any machine that can access your k8s cluster, but it is much better to automate the reporting from the start, and we'll use GitHub Actions for that.
+Time to implement an actual reporting of what's running in your k8s cluster - which means we need to reach out to the cluster and check which docker images were used to run the containers that are currently up in a given namespace. 
+You can run the [k8s environment report command](https://docs.kosli.com/client_reference/kosli_environment_report_k8s/) manually on any machine that can access your k8s cluster, but it is much better to automate the reporting from the start, and we'll use GitHub Actions for that.
 
 ### GitHub workflow
 
-There is a few things you'll need to adjust in the workflow below, so it can work for you:
+There are a few things you'll need to adjust in the workflow below, so it can work for you:
 
 * `K8S_CLUSTER_NAME` and `K8S_GCP_ZONE` should refer to your cluster setup and `NAMESPACE` should refer to a namespace you will to deploy your application to
 * `KOSLI_OWNER` is your Kosli username (which will be the same as the GitHub account you used to log into Kosli)
