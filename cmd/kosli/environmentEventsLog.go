@@ -95,14 +95,7 @@ func printEnvironmentEventsLogAsTable(raw string, out io.Writer, page int) error
 	}
 
 	if len(events) == 0 {
-		msg := "No environment events were found"
-		if page != 1 {
-			msg = fmt.Sprintf("%s at page number %d", msg, page)
-		}
-		_, err := out.Write([]byte(msg + ".\n"))
-		if err != nil {
-			return err
-		}
+		fmt.Fprintf(out, "No environment events were found at page number %d\n", page)
 		return nil
 	}
 	header := []string{"SNAPSHOT", "EVENT", "PIPELINE", "DEPLOYMENTS"}

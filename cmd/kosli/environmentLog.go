@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/kosli-dev/cli/internal/output"
@@ -17,15 +18,21 @@ func (o *environmentEventsLogOptions) getSnapshotsList(out io.Writer, args []str
 		fmt.Fprint(out, "No environment snapshots were requested\n")
 		return nil
 	}
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/snapshots/?page=%d&per_page=%d",
-		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit)
+
+	interval := ""
+	if len(args) > 1 {
+		interval = args[1]
+	}
+
+	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/snapshots/?page=%d&per_page=%d&interval=%s&reverse=%t",
+		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit, url.QueryEscape(interval), o.reverse)
 	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, false, http.MethodGet, log)
 	if err != nil {
 		return err
 	}
 
-	return output.FormattedPrint(response.Body, o.output, out, 0,
+	return output.FormattedPrint(response.Body, o.output, out, o.pageNumber,
 		map[string]output.FormatOutputFunc{
 			"table": printSnapshotsListAsTable,
 			"json":  output.PrintJson,
@@ -40,10 +47,7 @@ func printSnapshotsListAsTable(raw string, out io.Writer, page int) error {
 	}
 
 	if len(snapshots) == 0 {
-		_, err := out.Write([]byte("No environment snapshots were found\n"))
-		if err != nil {
-			return err
-		}
+		fmt.Fprintf(out, "No environment snapshots were found at page %d\n", page)
 		return nil
 	}
 
