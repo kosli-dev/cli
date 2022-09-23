@@ -19,12 +19,12 @@ type environmentDiffOptions struct {
 }
 
 type EnvironmentDiffResponse struct {
-	Snappish1 DiffSnappishItem `json:"snappish1"`
-	Snappish2 DiffSnappishItem `json:"snappish2"`
-	Changed   DiffSnappishItem `json:"changed"`
+	Snappish1 DiffItem `json:"snappish1"`
+	Snappish2 DiffItem `json:"snappish2"`
+	Changed   DiffItem `json:"changed"`
 }
 
-type DiffSnappishItem struct {
+type DiffItem struct {
 	SnapshotID string         `json:"snapshot_id"`
 	Artifacts  []DiffArtifact `json:"artifacts"`
 }
@@ -146,7 +146,6 @@ func printEnvironmentDiffAsTable(snappish1, snappish2, raw string, out io.Writer
 			if err != nil {
 				return err
 			}
-			fmt.Printf("    Instances: scaled from %d to %d", entry.S1InstanceCount, entry.S2InstanceCount)
 		}
 	}
 
@@ -180,6 +179,10 @@ func printOnlyEntry(entry DiffArtifact, out io.Writer) error {
 		return err
 	}
 	rows = append(rows, fmt.Sprintf("\tStarted:\t%s", timestamp))
+
+	if entry.S1InstanceCount != 0 && entry.S2InstanceCount != 0 {
+		rows = append(rows, fmt.Sprintf("\tInstances:\tscaled from %d to %d", entry.S1InstanceCount, entry.S2InstanceCount))
+	}
 
 	tabFormattedPrint(out, []string{}, rows)
 	return nil
