@@ -272,7 +272,7 @@ artifact to the Kosli pipeline.
 
 A Kosli pipeline can also be used to store any information related to 
 the artifact you have built, like test results, manual approvals, 
-pull-requests and so on.
+pull-requests, and so on.
 
 
 ## Creating a Kosli pipeline
