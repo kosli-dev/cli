@@ -18,7 +18,7 @@ To follow the tutorial you need to:
   ```
 
 For this tutorial you will simulate a system with source code, a build system, and a running server.
-There is a script to help you run these simulations so you don't need to type so many commands.
+There is a script to help you run these simulations, so you won't need to type too many commands.
 
 You can download the script from here:
 https://raw.githubusercontent.com/kosli-dev/cli/main/simulation_commands.bash
@@ -50,7 +50,7 @@ create_git_repo_in_tmp ()
     ...
 ```
 
-Create the git repo and simulate a build and deployment to server:
+Create the git repo and simulate a build and deployment to the server:
 
 ```shell {.command}
 create_git_repo_in_tmp
@@ -58,7 +58,7 @@ simulate_build
 simulate_deployment
 ``` 
 
-While going through the getting started guide, feel free to explore the
+While you're going through the getting started guide feel free to explore the
 functionality by updating the source code, building and deploying new versions.
 
 
@@ -79,7 +79,7 @@ be using in this guide.
 # Environment
 
 A Kosli environment stores information about
-what software is running in your actual runtime environment (server, Kubernetes cluster, AWS, ...)
+what software is running in your actual runtime environment (server, Kubernetes cluster, AWS, etc.)
 
 A typical setup reports what is running on the 
 staging server and on the production server. To report what is 
@@ -141,7 +141,7 @@ kosli environment report server production \
     --paths /tmp/try-kosli/server/db_*.bin
 ```
 
-You can see that the server has started, and how long it has run:
+You can see that the server has started, and how long it has been running for:
 
 ```shell {.command}
 kosli environment log production
@@ -166,11 +166,11 @@ N/A     Name: /tmp/try-kosli/server/db_1.bin                                    
 ```
 
 If you refresh the environment page in the web browser you can see that there is
-a time-stamp for when the environment changed. Pressing the *production* link
+a timestamp for when the environment changed. Pressing the *production* link
 gives you a detailed view of what is running now.
 
-Typically a server periodically sends a report of what is currently running to Kosli. Kosli
-only creates a new snapshot if the report has changes compared to previous snapshot, so resending the same environment report
+Typically, a server periodically sends a report of what is currently running to Kosli. But Kosli
+will only create a new snapshot if the report shows changes compared to the previous snapshot, so resending the same environment report
 several times will not lead to duplication of snapshots.
 
 Send an environment report:
@@ -196,7 +196,7 @@ simulate_build
 simulate_deployment
 ```
 
-Report what is now running on server:
+Report what is now running on the server:
 
 ```shell {.command}
 kosli environment report server production \
@@ -260,7 +260,7 @@ tab should show what changed in snapshot 1 and snapshot 2.
 
 A Kosli pipeline stores information about what happens in your build system.
 The output of the build system is called an *artifact* in Kosli. This can be
-an application, docker image, documentation, filesystem and so on.
+an application, a docker image, documentation, a filesystem, etc.
 
 <!-- TODO: Do we need this??
 Some organizations have a CI system where one CI pipeline builds one 
@@ -272,7 +272,7 @@ artifact to the Kosli pipeline.
 
 A Kosli pipeline can also be used to store any information related to 
 the artifact you have built, like test results, manual approvals, 
-pull-requests and so on.
+pull-requests, and so on.
 
 
 ## Creating a Kosli pipeline
@@ -280,7 +280,7 @@ pull-requests and so on.
 To follow the examples make sure you have followed the instructions in Local setup.
 
 Create a Kosli pipeline where you can report what software your CI system
-is building. Since you are building two applications you are making
+is building. You are building two applications, so make
 two Kosli pipelines `web-server` and `database-server`.
 
 Create your new pipelines:
@@ -301,7 +301,7 @@ kosli pipeline declare \
     --template artifact
 ```
 
-You can immediately verify the Kosli pipelines were created:
+You can immediately verify that the Kosli pipelines were created:
 
 ```shell {.command}
 kosli pipeline ls
@@ -315,7 +315,7 @@ web-server       pipeline to build web-server       private
 
 In the web interface you can select the **Pipelines** menu on the left.
 It will show you that you have a *web-server* and *database-server* pipeline.
-If you press either of the pipelines they will show that no artifacts have
+If you select either of the pipelines they will show that no artifacts have
 been reported for the pipelines.
 
 
@@ -327,8 +327,8 @@ Simulate building your software:
 simulate_build
 ```
 
-Report you have built the web and database applications. You are using
-a dummy `--build-url`, in real life it would be a CI build URL:
+Report that you have built the web and database applications. You are using
+a dummy `--build-url`, but in reality it would be a CI build URL:
 
 ```shell {.command}
 kosli pipeline artifact report creation /tmp/try-kosli/build/web_$(cat /tmp/try-kosli/code/web.src).bin \
