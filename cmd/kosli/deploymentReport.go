@@ -28,9 +28,10 @@ func newDeploymentReportCmd(out io.Writer) *cobra.Command {
 	o := new(deploymentReportOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "report [ARTIFACT-NAME-OR-PATH]",
-		Short: "Report a deployment to Kosli. ",
-		Long:  deploymentReportDesc(),
+		Use:        "report [ARTIFACT-NAME-OR-PATH]",
+		Short:      "Report a deployment to Kosli. ",
+		Long:       deploymentReportDesc(),
+		Deprecated: "use \"kosli expect deployment\" instead.",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
