@@ -1,12 +1,12 @@
 ---
-title: Tutorials
+title: Why Kosli
 bookCollapseSection: true
-weight: 1
+weight: 10
 ---
+# Why Kosli
 
-# Tutorials
-
-These tutorials will familiarize you with the Kosli CLI and its concepts.
+In these tutorials we present use cases that should clarify why and how
+Kosli can help you with your software development process.
 
 Kosli stores information about the software you build in your CI pipelines 
 and run in your runtime environment. The Kosli CLI is used for reporting and 
@@ -20,8 +20,3 @@ The `kosli` CLI is tool agnostic and can run on any major platform
 process.
 
 Let’s get started!
-
-<!--
-When you are done with the guide you should be able to start adding Kosli to
-your CI system and runtime environment.
--->

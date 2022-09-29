@@ -5,6 +5,9 @@ title: 'Kosli developer documentation'
 theme: "book"
 
 markup:
+  tableOfContents:
+    startLevel: 2
+    endLevel: 2
   goldmark:
     extensions:
       typographer: false
@@ -14,4 +17,4 @@ markup:
 
 params:
   BookSection: '/'
-  BookToC: false
+  BookToC: true

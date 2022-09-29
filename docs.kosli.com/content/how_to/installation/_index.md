@@ -1,7 +1,7 @@
 ---
-title: Installing the Kosli CLI
+title: Install Kosli
 bookCollapseSection: false
-weight: 1
+weight: 10
 ---
 
 

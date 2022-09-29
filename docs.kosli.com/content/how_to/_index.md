@@ -1,6 +1,6 @@
 ---
-title: Helm
+title: How to
 bookCollapseSection: true
-weight: 50
+weight: 30
 ---
-# Helm
+# How to
