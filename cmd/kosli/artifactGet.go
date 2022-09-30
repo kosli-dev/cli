@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -106,6 +107,28 @@ func printArtifactsAsTable(artifactRaw string, out io.Writer, pageNumber int) er
 
 		rows = append(rows, fmt.Sprintf("State:\t%s", artifact["state"].(string)))
 
+		runningInEnvs := artifact["running"].([]interface{})
+		if len(runningInEnvs) > 0 {
+			runningInEnvNames := []string{}
+			for _, envDataInterface := range runningInEnvs {
+				envData := envDataInterface.(map[string]interface{})
+				runningInEnvNames = append(runningInEnvNames,
+					fmt.Sprintf("%s#%.0f", envData["environment_name"].(string), envData["snapshot_index"].(float64)))
+			}
+			rows = append(rows, fmt.Sprintf("Running in environments:\t%s", strings.Join(runningInEnvNames, ", ")))
+		}
+
+		exitedInEnvs := artifact["exited"].([]interface{})
+		if len(exitedInEnvs) > 0 {
+			exitedInEnvNames := []string{}
+			for _, envDataInterface := range exitedInEnvs {
+				envData := envDataInterface.(map[string]interface{})
+				exitedInEnvNames = append(exitedInEnvNames,
+					fmt.Sprintf("%s#%.0f", envData["environment_name"].(string), envData["snapshot_index"].(float64)))
+			}
+			rows = append(rows, fmt.Sprintf("Exited from environments:\t%s", strings.Join(exitedInEnvNames, ", ")))
+		}
+
 		// TODO: Remove this if no one has an objection. Info is covered by history
 		// rows = append(rows, "Evidence:")
 		// for _, evidenceName := range artifact["template"].([]interface{}) {
@@ -123,67 +146,11 @@ func printArtifactsAsTable(artifactRaw string, out io.Writer, pageNumber int) er
 		// 	}
 		// }
 
-		// TODO: Remove this if no one has an objection. Info is covered by history
-		// approvals := artifact["approvals"].([]interface{})
-		// if len(approvals) > 0 {
-		// 	rows = append(rows, "Approvals:")
-		// 	for _, rawApproval := range approvals {
-		// 		approval := rawApproval.(map[string]interface{})
-		// 		timestamp, err := formattedTimestamp(approval["last_modified_at"], true)
-		// 		if err != nil {
-		// 			return err
-		// 		}
-		// 		approvalRow := fmt.Sprintf("    #%d  %s  Last modified: %s", int64(approval["release_number"].(float64)), approval["state"].(string), timestamp)
-		// 		rows = append(rows, approvalRow)
-		// 	}
-		// } else {
-		// 	rows = append(rows, "Approvals:   None")
-		// }
-
-		// TODO: Remove this if no one has an objection. Info is covered by history
-		// deployments := artifact["deployments"].([]interface{})
-		// if len(deployments) > 0 {
-		// 	rows = append(rows, "Deployments:")
-		// 	for _, rawDeployment := range deployments {
-		// 		deployment := rawDeployment.(map[string]interface{})
-		// 		deploymentState := deployment["running_state"].(map[string]interface{})
-		// 		state := deploymentState["state"].(string)
-		// 		stateTimestamp, err := formattedTimestamp(deploymentState["timestamp"], true)
-		// 		if err != nil {
-		// 			return err
-		// 		}
-
-		// 		stateString := "Unknown"
-		// 		if state == "deploying" {
-		// 			stateString = "Deploying"
-		// 		} else if state == "running" {
-		// 			stateString = fmt.Sprintf("Running since %s", stateTimestamp)
-		// 		} else if state == "exited" {
-		// 			stateString = fmt.Sprintf("Exited on %s", stateTimestamp)
-		// 		}
-
-		// 		createdAtTimestamp, err := formattedTimestamp(deployment["created_at"], true)
-		// 		if err != nil {
-		// 			return err
-		// 		}
-
-		// 		deploymentRow := fmt.Sprintf("    #%d Reported deployment to %s at %s (%s)",
-		// 			int64(deployment["deployment_id"].(float64)),
-		// 			deployment["environment"].(string),
-		// 			createdAtTimestamp,
-		// 			stateString)
-		// 		rows = append(rows, deploymentRow)
-		// 	}
-		// } else {
-		// 	rows = append(rows, "Deployments: None")
-		// }
-
 		history := artifact["history"].([]interface{})
 		if len(history) > 0 {
 			rows = append(rows, "History:")
 			for _, rawHistory := range history {
 				event := rawHistory.(map[string]interface{})
-				//eventType := event["type"]
 				eventString := event["event"]
 				eventTimestamp, err := formattedTimestamp(event["timestamp"], true)
 				if err != nil {
@@ -199,5 +166,4 @@ func printArtifactsAsTable(artifactRaw string, out io.Writer, pageNumber int) er
 		tabFormattedPrint(out, []string{}, rows)
 	}
 	return nil
-
 }
