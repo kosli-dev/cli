@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,16 +14,18 @@ import (
 type artifactCreationOptions struct {
 	fingerprintOptions *fingerprintOptions
 	pipelineName       string
+	srcRepoRoot        string
 	payload            ArtifactPayload
 }
 
 type ArtifactPayload struct {
-	Sha256      string `json:"sha256"`
-	Filename    string `json:"filename"`
-	Description string `json:"description"`
-	GitCommit   string `json:"git_commit"`
-	BuildUrl    string `json:"build_url"`
-	CommitUrl   string `json:"commit_url"`
+	Sha256      string   `json:"sha256"`
+	Filename    string   `json:"filename"`
+	Description string   `json:"description"`
+	GitCommit   string   `json:"git_commit"`
+	BuildUrl    string   `json:"build_url"`
+	CommitUrl   string   `json:"commit_url"`
+	CommitsList []string `json:commits_list`
 }
 
 const artifactCreationExample = `
@@ -80,6 +83,7 @@ func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.GitCommit, "git-commit", "g", DefaultValue(ci, "git-commit"), gitCommitFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), buildUrlFlag)
 	cmd.Flags().StringVarP(&o.payload.CommitUrl, "commit-url", "u", DefaultValue(ci, "commit-url"), commitUrlFlag)
+	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", repoRootFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 
 	err := RequireFlags(cmd, []string{"pipeline", "git-commit", "build-url", "commit-url"})
@@ -106,9 +110,33 @@ func (o *artifactCreationOptions) run(args []string) error {
 		}
 	}
 
+	previousCommitUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/previous_commit",
+		global.Host, global.Owner, o.pipelineName, o.payload.Sha256)
+
+	response, err := requests.DoBasicAuthRequest([]byte{}, previousCommitUrl, "", global.ApiToken,
+		global.MaxAPIRetries, http.MethodGet, map[string]string{}, log)
+	if err != nil {
+		return err
+	}
+
+	var previousCommitResponse map[string]interface{}
+	err = json.Unmarshal([]byte(response.Body), &previousCommitResponse)
+	if err != nil {
+		return err
+	}
+	if previousCommitResponse["previous_commit"] != nil {
+		previousCommit := previousCommitResponse["previous_commit"].(string)
+		o.payload.CommitsList, err = listCommitsBetween(o.srcRepoRoot, previousCommit, o.payload.GitCommit)
+		if err != nil {
+			return err
+		}
+	} else {
+		o.payload.CommitsList = []string{}
+	}
+
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/", global.Host, global.Owner, o.pipelineName)
 
-	_, err := requests.SendPayload(o.payload, url, "", global.ApiToken,
+	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
 		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
 	return err
 }
