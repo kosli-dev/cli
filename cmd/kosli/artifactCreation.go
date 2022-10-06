@@ -121,7 +121,7 @@ func (o *artifactCreationOptions) run(args []string) error {
 		}
 	}
 
-	previousCommitUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/previous_commit",
+	previousCommitUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/latest_commit",
 		global.Host, global.Owner, o.pipelineName, o.payload.Sha256)
 
 	response, err := requests.DoBasicAuthRequest([]byte{}, previousCommitUrl, "", global.ApiToken,
@@ -137,8 +137,8 @@ func (o *artifactCreationOptions) run(args []string) error {
 	}
 
 	o.payload.CommitsList = []*ArtifactCommit{}
-	if previousCommitResponse["previous_commit"] != nil {
-		previousCommit := previousCommitResponse["previous_commit"].(string)
+	if previousCommitResponse["latest_commit"] != nil {
+		previousCommit := previousCommitResponse["latest_commit"].(string)
 		o.payload.CommitsList, err = listCommitsBetween(o.srcRepoRoot, previousCommit, o.payload.GitCommit)
 		if err != nil {
 			return err

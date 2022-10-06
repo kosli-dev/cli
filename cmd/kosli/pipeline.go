@@ -24,6 +24,7 @@ func newPipelineCmd(out io.Writer) *cobra.Command {
 		newDeploymentCmd(out),
 		newPipelineLsCmd(out),
 		newPipelineInspectCmd(out),
+		newPipelineBackfillArtifactCommits(out),
 	)
 
 	return cmd
