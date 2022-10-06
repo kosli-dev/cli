@@ -41,19 +41,19 @@ kosli pipeline approval report \
 type approvalReportOptions struct {
 	fingerprintOptions *fingerprintOptions
 	pipelineName       string
-	// oldestSrcCommit    string
-	// newestSrcCommit    string
-	// srcRepoRoot        string
-	userDataFile string
-	payload      ApprovalPayload
+	oldestSrcCommit    string
+	newestSrcCommit    string
+	srcRepoRoot        string
+	userDataFile       string
+	payload            ApprovalPayload
 }
 
 type ApprovalPayload struct {
-	ArtifactSha256 string `json:"artifact_sha256"`
-	Description    string `json:"description"`
-	// CommitList     []string               `json:"src_commit_list"`
-	Reviews  []map[string]string    `json:"approvals"`
-	UserData map[string]interface{} `json:"user_data"`
+	ArtifactSha256 string                 `json:"artifact_sha256"`
+	Description    string                 `json:"description"`
+	CommitList     []string               `json:"src_commit_list"`
+	Reviews        []map[string]string    `json:"approvals"`
+	UserData       map[string]interface{} `json:"user_data"`
 }
 
 func newApprovalReportCmd(out io.Writer) *cobra.Command {
@@ -75,7 +75,6 @@ func newApprovalReportCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			return ValidateRegisteryFlags(cmd, o.fingerprintOptions)
-
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args, false)
@@ -86,13 +85,12 @@ func newApprovalReportCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", approvalDescriptionFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", approvalUserDataFlag)
-	// cmd.Flags().StringVar(&o.oldestSrcCommit, "oldest-commit", "", oldestCommitFlag)
-	// cmd.Flags().StringVar(&o.newestSrcCommit, "newest-commit", "HEAD", newestCommitFlag)
-	// cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", repoRootFlag)
+	cmd.Flags().StringVar(&o.oldestSrcCommit, "oldest-commit", "", oldestCommitFlag)
+	cmd.Flags().StringVar(&o.newestSrcCommit, "newest-commit", "HEAD", newestCommitFlag)
+	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", repoRootFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 
-	// err := RequireFlags(cmd, []string{"pipeline", "oldest-commit"})
-	err := RequireFlags(cmd, []string{"pipeline"})
+	err := RequireFlags(cmd, []string{"pipeline", "oldest-commit"})
 	if err != nil {
 		log.Fatalf("failed to configure required flags: %v", err)
 	}
@@ -127,10 +125,14 @@ func (o *approvalReportOptions) run(args []string, request bool) error {
 	if err != nil {
 		return err
 	}
-	// o.payload.CommitList, err = listCommitsBetween(o.srcRepoRoot, o.oldestSrcCommit, o.newestSrcCommit)
-	// if err != nil {
-	// 	return err
-	// }
+	listCommitsRich, err := listCommitsBetween(o.srcRepoRoot, o.oldestSrcCommit, o.newestSrcCommit)
+	if err != nil {
+		return err
+	}
+
+	for _, commit := range listCommitsRich {
+		o.payload.CommitList = append(o.payload.CommitList, commit.Sha1)
+	}
 
 	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
 		global.MaxAPIRetries, global.DryRun, http.MethodPost, log)

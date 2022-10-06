@@ -81,7 +81,6 @@ func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			return ValidateRegisteryFlags(cmd, o.fingerprintOptions)
-
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)
@@ -152,9 +151,6 @@ func (o *artifactCreationOptions) run(args []string) error {
 	}
 
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/", global.Host, global.Owner, o.pipelineName)
-
-	list, _ := json.MarshalIndent(o.payload.CommitsList, "", "  ")
-	fmt.Printf("%s\n", string(list))
 	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
 		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
 	return err
@@ -205,7 +201,6 @@ func listCommitsBetween(repoRoot, oldest, newest string) ([]*ArtifactCommit, err
 	oldestHash, err := repo.ResolveRevision(plumbing.Revision(oldest))
 	if err != nil {
 		return commits, fmt.Errorf("failed to resolve %s: %v", oldest, err)
-
 	}
 	log.Debugf("This is the newest commit hash %s", newestHash.String())
 	log.Debugf("This is the oldest commit hash %s", oldestHash.String())
