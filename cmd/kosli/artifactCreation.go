@@ -1,11 +1,15 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"path/filepath"
+	"strings"
 
+	git "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -13,16 +17,27 @@ import (
 type artifactCreationOptions struct {
 	fingerprintOptions *fingerprintOptions
 	pipelineName       string
+	srcRepoRoot        string
 	payload            ArtifactPayload
 }
 
 type ArtifactPayload struct {
-	Sha256      string `json:"sha256"`
-	Filename    string `json:"filename"`
-	Description string `json:"description"`
-	GitCommit   string `json:"git_commit"`
-	BuildUrl    string `json:"build_url"`
-	CommitUrl   string `json:"commit_url"`
+	Sha256      string            `json:"sha256"`
+	Filename    string            `json:"filename"`
+	Description string            `json:"description"`
+	GitCommit   string            `json:"git_commit"`
+	BuildUrl    string            `json:"build_url"`
+	CommitUrl   string            `json:"commit_url"`
+	RepoUrl     string            `json:"repo_url"`
+	CommitsList []*ArtifactCommit `json:"commits_list"`
+}
+
+type ArtifactCommit struct {
+	Sha1      string `json:"sha1"`
+	Message   string `json:"message"`
+	Author    string `json:"author"`
+	Timestamp int64  `json:"timestamp"`
+	Branch    string `json:"branch"`
 }
 
 const artifactCreationExample = `
@@ -80,6 +95,7 @@ func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.GitCommit, "git-commit", "g", DefaultValue(ci, "git-commit"), gitCommitFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), buildUrlFlag)
 	cmd.Flags().StringVarP(&o.payload.CommitUrl, "commit-url", "u", DefaultValue(ci, "commit-url"), commitUrlFlag)
+	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", repoRootFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 
 	err := RequireFlags(cmd, []string{"pipeline", "git-commit", "build-url", "commit-url"})
@@ -106,9 +122,40 @@ func (o *artifactCreationOptions) run(args []string) error {
 		}
 	}
 
+	previousCommitUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/previous_commit",
+		global.Host, global.Owner, o.pipelineName, o.payload.Sha256)
+
+	response, err := requests.DoBasicAuthRequest([]byte{}, previousCommitUrl, "", global.ApiToken,
+		global.MaxAPIRetries, http.MethodGet, map[string]string{}, log)
+	if err != nil {
+		return err
+	}
+
+	var previousCommitResponse map[string]interface{}
+	err = json.Unmarshal([]byte(response.Body), &previousCommitResponse)
+	if err != nil {
+		return err
+	}
+
+	o.payload.CommitsList = []*ArtifactCommit{}
+	if previousCommitResponse["previous_commit"] != nil {
+		previousCommit := previousCommitResponse["previous_commit"].(string)
+		o.payload.CommitsList, err = listCommitsBetween(o.srcRepoRoot, previousCommit, o.payload.GitCommit)
+		if err != nil {
+			return err
+		}
+	}
+
+	o.payload.RepoUrl, err = getRepoUrl(o.srcRepoRoot)
+	if err != nil {
+		return err
+	}
+
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/", global.Host, global.Owner, o.pipelineName)
 
-	_, err := requests.SendPayload(o.payload, url, "", global.ApiToken,
+	list, _ := json.MarshalIndent(o.payload.CommitsList, "", "  ")
+	fmt.Printf("%s\n", string(list))
+	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
 		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
 	return err
 }
@@ -117,4 +164,75 @@ func artifactCreationDesc() string {
 	return `
    Report an artifact creation to a Kosli pipeline. 
    ` + sha256Desc
+}
+
+func getRepoUrl(repoRoot string) (string, error) {
+	repo, err := git.PlainOpen(repoRoot)
+	if err != nil {
+		return "", fmt.Errorf("failed to open git repository at %s: %v",
+			repoRoot, err)
+	}
+	repoRemote, err := repo.Remote("origin") // TODO: We hard code this for now. Should we have a flag to set it from the cmdline?
+	if err != nil {
+		return "", fmt.Errorf("failed to get remote('origin') git repository at %s: %v",
+			repoRoot, err)
+	}
+	return repoRemote.Config().URLs[0], nil
+}
+
+// listCommitsBetween list all commits that have happened between two commits in a git repo
+func listCommitsBetween(repoRoot, oldest, newest string) ([]*ArtifactCommit, error) {
+	commits := []*ArtifactCommit{}
+	repo, err := git.PlainOpen(repoRoot)
+	if err != nil {
+		return commits, fmt.Errorf("failed to open git repository at %s: %v",
+			repoRoot, err)
+	}
+
+	branch := ""
+	head, err := repo.Head()
+	if err != nil {
+		return commits, fmt.Errorf("failed to get the current HEAD of the git repository: %v", err)
+	}
+	if head.Name().IsBranch() {
+		branch = head.Name().Short()
+	}
+
+	newestHash, err := repo.ResolveRevision(plumbing.Revision(newest))
+	if err != nil {
+		return commits, fmt.Errorf("failed to resolve %s: %v", newest, err)
+	}
+	oldestHash, err := repo.ResolveRevision(plumbing.Revision(oldest))
+	if err != nil {
+		return commits, fmt.Errorf("failed to resolve %s: %v", oldest, err)
+
+	}
+	log.Debugf("This is the newest commit hash %s", newestHash.String())
+	log.Debugf("This is the oldest commit hash %s", oldestHash.String())
+
+	commitsIter, err := repo.Log(&git.LogOptions{From: *newestHash, Order: git.LogOrderCommitterTime})
+	if err != nil {
+		return commits, fmt.Errorf("failed to git log: %v", err)
+	}
+
+	for ok := true; ok; {
+		commit, err := commitsIter.Next()
+		if err != nil {
+			return commits, fmt.Errorf("failed to get next commit: %v", err)
+		}
+		if commit.Hash != *oldestHash {
+			currentCommit := &ArtifactCommit{
+				Sha1:      commit.Hash.String(),
+				Message:   strings.TrimSpace(commit.Message),
+				Author:    commit.Author.String(),
+				Timestamp: commit.Author.When.UTC().Unix(),
+				Branch:    branch,
+			}
+			commits = append(commits, currentCommit)
+		} else {
+			break
+		}
+	}
+
+	return commits, nil
 }
