@@ -28,6 +28,7 @@ type ArtifactPayload struct {
 	GitCommit   string            `json:"git_commit"`
 	BuildUrl    string            `json:"build_url"`
 	CommitUrl   string            `json:"commit_url"`
+	RepoUrl     string            `json:"repo_url"`
 	CommitsList []*ArtifactCommit `json:"commits_list"`
 }
 
@@ -145,6 +146,11 @@ func (o *artifactCreationOptions) run(args []string) error {
 		}
 	}
 
+	o.payload.RepoUrl, err = getRepoUrl(o.srcRepoRoot)
+	if err != nil {
+		return err
+	}
+
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/", global.Host, global.Owner, o.pipelineName)
 
 	list, _ := json.MarshalIndent(o.payload.CommitsList, "", "  ")
@@ -158,6 +164,20 @@ func artifactCreationDesc() string {
 	return `
    Report an artifact creation to a Kosli pipeline. 
    ` + sha256Desc
+}
+
+func getRepoUrl(repoRoot string) (string, error) {
+	repo, err := git.PlainOpen(repoRoot)
+	if err != nil {
+		return "", fmt.Errorf("failed to open git repository at %s: %v",
+			repoRoot, err)
+	}
+	repoRemote, err := repo.Remote("origin") // TODO: We hard code this for now. Should we have a flag to set it from the cmdline?
+	if err != nil {
+		return "", fmt.Errorf("failed to get remote('origin') git repository at %s: %v",
+			repoRoot, err)
+	}
+	return repoRemote.Config().URLs[0], nil
 }
 
 // listCommitsBetween list all commits that have happened between two commits in a git repo
