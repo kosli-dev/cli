@@ -11,9 +11,8 @@ import (
 )
 
 type pipelineBackfillArtifactCommitsOptions struct {
-	pipelineName string
-	srcRepoRoot  string
-	payload      ArtifactCommitsBackfillPayload
+	srcRepoRoot string
+	payload     ArtifactCommitsBackfillPayload
 }
 
 type ArtifactCommitsBackfillPayload struct {
@@ -90,56 +89,65 @@ func (o *pipelineBackfillArtifactCommitsOptions) run(args []string) error {
 		return err
 	}
 
-	artifactsRaw, err := getPipelineArtifacts(pipelineName)
-	if err != nil {
-		return err
-	}
-
-	for _, artifactRaw := range artifactsRaw {
-		evidenceMap := artifactRaw["evidence"].(map[string]interface{})
-		artifactData := evidenceMap["artifact"].(map[string]interface{})
-		gitCommit := artifactData["git_commit"].(string)
-		artifactDigest := artifactData["sha256"].(string)
-
-		previousCommitUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/previous_commit",
-			global.Host, global.Owner, o.pipelineName, artifactDigest)
-
-		response, err := requests.DoBasicAuthRequest([]byte{}, previousCommitUrl, "", global.ApiToken,
-			global.MaxAPIRetries, http.MethodGet, map[string]string{}, log)
+	pageNumber := 0
+	for {
+		pageNumber += 1
+		artifactsRaw, err := getPipelineArtifacts(pipelineName, pageNumber)
 		if err != nil {
 			return err
 		}
-
-		var previousCommitResponse map[string]interface{}
-		err = json.Unmarshal([]byte(response.Body), &previousCommitResponse)
-		if err != nil {
-			return err
+		if len(artifactsRaw) == 0 {
+			return nil
 		}
+		for _, artifactRaw := range artifactsRaw {
+			evidenceMap := artifactRaw["evidence"].(map[string]interface{})
+			artifactData := evidenceMap["artifact"].(map[string]interface{})
+			gitCommit := artifactData["git_commit"].(string)
+			artifactDigest := artifactData["sha256"].(string)
+			fmt.Printf("Digest: %s. git commit: %s \n", artifactDigest, gitCommit)
 
-		o.payload.CommitsList = []*ArtifactCommit{}
-		if previousCommitResponse["previous_commit"] != nil {
-			previousCommit := previousCommitResponse["previous_commit"].(string)
-			o.payload.CommitsList, err = listCommitsBetween(o.srcRepoRoot, previousCommit, gitCommit)
+			previousCommitUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/previous_commit",
+				global.Host, global.Owner, pipelineName, artifactDigest)
+
+			response, err := requests.DoBasicAuthRequest([]byte{}, previousCommitUrl, "", global.ApiToken,
+				global.MaxAPIRetries, http.MethodGet, map[string]string{}, log)
+			if err != nil {
+				return err
+			}
+
+			var previousCommitResponse map[string]interface{}
+			err = json.Unmarshal([]byte(response.Body), &previousCommitResponse)
+			if err != nil {
+				return err
+			}
+
+			o.payload.CommitsList = []*ArtifactCommit{}
+			if previousCommitResponse["previous_commit"] != nil {
+				previousCommit := previousCommitResponse["previous_commit"].(string)
+				fmt.Printf("Previous commit: %s\n", previousCommit)
+				o.payload.CommitsList, err = listCommitsBetween(o.srcRepoRoot, previousCommit, gitCommit)
+				if err != nil {
+					return err
+				}
+				for _, commitData := range o.payload.CommitsList {
+					fmt.Printf("	Commit sha1: %s\n", commitData.Sha1)
+				}
+			}
+
+			url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/backfill_commits", global.Host, global.Owner, pipelineName, artifactDigest)
+			_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
+				global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
 			if err != nil {
 				return err
 			}
 		}
-
-		url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/backfill_commits", global.Host, global.Owner, o.pipelineName, artifactDigest)
-		_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
-			global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
-		if err != nil {
-			return err
-		}
 	}
-
-	return err
 }
 
-func getPipelineArtifacts(pipelineName string) ([]map[string]interface{}, error) {
+func getPipelineArtifacts(pipelineName string, pageNumber int) ([]map[string]interface{}, error) {
 	var artifacts []map[string]interface{}
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/?page=%d&per_page=%d",
-		global.Host, global.Owner, pipelineName, 1, 15)
+		global.Host, global.Owner, pipelineName, pageNumber, 15)
 	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, false, http.MethodGet, log)
 	if err != nil {
