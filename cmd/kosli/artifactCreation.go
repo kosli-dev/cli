@@ -6,7 +6,10 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
+	"strings"
 
+	git "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -19,13 +22,21 @@ type artifactCreationOptions struct {
 }
 
 type ArtifactPayload struct {
-	Sha256      string   `json:"sha256"`
-	Filename    string   `json:"filename"`
-	Description string   `json:"description"`
-	GitCommit   string   `json:"git_commit"`
-	BuildUrl    string   `json:"build_url"`
-	CommitUrl   string   `json:"commit_url"`
-	CommitsList []string `json:commits_list`
+	Sha256      string            `json:"sha256"`
+	Filename    string            `json:"filename"`
+	Description string            `json:"description"`
+	GitCommit   string            `json:"git_commit"`
+	BuildUrl    string            `json:"build_url"`
+	CommitUrl   string            `json:"commit_url"`
+	CommitsList []*ArtifactCommit `json:"commits_list"`
+}
+
+type ArtifactCommit struct {
+	Sha1      string `json:"sha1"`
+	Message   string `json:"message"`
+	Author    string `json:"author"`
+	Timestamp int64  `json:"timestamp"`
+	Branch    string `json:"branch"`
 }
 
 const artifactCreationExample = `
@@ -124,18 +135,20 @@ func (o *artifactCreationOptions) run(args []string) error {
 	if err != nil {
 		return err
 	}
+
+	o.payload.CommitsList = []*ArtifactCommit{}
 	if previousCommitResponse["previous_commit"] != nil {
 		previousCommit := previousCommitResponse["previous_commit"].(string)
 		o.payload.CommitsList, err = listCommitsBetween(o.srcRepoRoot, previousCommit, o.payload.GitCommit)
 		if err != nil {
 			return err
 		}
-	} else {
-		o.payload.CommitsList = []string{}
 	}
 
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/", global.Host, global.Owner, o.pipelineName)
 
+	list, _ := json.MarshalIndent(o.payload.CommitsList, "", "  ")
+	fmt.Printf("%s\n", string(list))
 	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
 		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
 	return err
@@ -145,4 +158,61 @@ func artifactCreationDesc() string {
 	return `
    Report an artifact creation to a Kosli pipeline. 
    ` + sha256Desc
+}
+
+// listCommitsBetween list all commits that have happened between two commits in a git repo
+func listCommitsBetween(repoRoot, oldest, newest string) ([]*ArtifactCommit, error) {
+	commits := []*ArtifactCommit{}
+	repo, err := git.PlainOpen(repoRoot)
+	if err != nil {
+		return commits, fmt.Errorf("failed to open git repository at %s: %v",
+			repoRoot, err)
+	}
+
+	branch := ""
+	head, err := repo.Head()
+	if err != nil {
+		return commits, fmt.Errorf("failed to get the current HEAD of the git repository: %v", err)
+	}
+	if head.Name().IsBranch() {
+		branch = head.Name().Short()
+	}
+
+	newestHash, err := repo.ResolveRevision(plumbing.Revision(newest))
+	if err != nil {
+		return commits, fmt.Errorf("failed to resolve %s: %v", newest, err)
+	}
+	oldestHash, err := repo.ResolveRevision(plumbing.Revision(oldest))
+	if err != nil {
+		return commits, fmt.Errorf("failed to resolve %s: %v", oldest, err)
+
+	}
+	log.Debugf("This is the newest commit hash %s", newestHash.String())
+	log.Debugf("This is the oldest commit hash %s", oldestHash.String())
+
+	commitsIter, err := repo.Log(&git.LogOptions{From: *newestHash, Order: git.LogOrderCommitterTime})
+	if err != nil {
+		return commits, fmt.Errorf("failed to git log: %v", err)
+	}
+
+	for ok := true; ok; {
+		commit, err := commitsIter.Next()
+		if err != nil {
+			return commits, fmt.Errorf("failed to get next commit: %v", err)
+		}
+		if commit.Hash != *oldestHash {
+			currentCommit := &ArtifactCommit{
+				Sha1:      commit.Hash.String(),
+				Message:   strings.TrimSpace(commit.Message),
+				Author:    commit.Author.String(),
+				Timestamp: commit.Author.When.UTC().Unix(),
+				Branch:    branch,
+			}
+			commits = append(commits, currentCommit)
+		} else {
+			break
+		}
+	}
+
+	return commits, nil
 }
