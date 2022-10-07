@@ -173,7 +173,13 @@ func getRepoUrl(repoRoot string) (string, error) {
 		return "", fmt.Errorf("failed to get remote('origin') git repository at %s: %v",
 			repoRoot, err)
 	}
-	return repoRemote.Config().URLs[0], nil
+	remoteUrl := repoRemote.Config().URLs[0]
+	if strings.HasPrefix(remoteUrl, "git@") {
+		remoteUrl = strings.Replace(remoteUrl, ":", "/", 1)
+		remoteUrl = strings.Replace(remoteUrl, "git@", "https://", 1)
+		remoteUrl = strings.TrimSuffix(remoteUrl, ".git")
+	}
+	return remoteUrl, nil
 }
 
 // listCommitsBetween list all commits that have happened between two commits in a git repo
