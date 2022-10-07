@@ -177,8 +177,8 @@ func getRepoUrl(repoRoot string) (string, error) {
 	if strings.HasPrefix(remoteUrl, "git@") {
 		remoteUrl = strings.Replace(remoteUrl, ":", "/", 1)
 		remoteUrl = strings.Replace(remoteUrl, "git@", "https://", 1)
-		remoteUrl = strings.TrimSuffix(remoteUrl, ".git")
 	}
+	remoteUrl = strings.TrimSuffix(remoteUrl, ".git")
 	return remoteUrl, nil
 }
 
