@@ -42,7 +42,7 @@ type ArtifactCommitsBackfillPayload struct {
 // 	--sha256 yourSha256
 // `
 
-func newPipelineBackfillArtifactCommits(out io.Writer) *cobra.Command {
+func newPipelineBackfillArtifactCommitsCmd(out io.Writer) *cobra.Command {
 	o := new(pipelineBackfillArtifactCommitsOptions)
 	cmd := &cobra.Command{
 		Use:   "backfill-commits PIPELINE-NAME",
