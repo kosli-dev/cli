@@ -294,9 +294,9 @@ func GetSha256Digest(artifactName string, o *fingerprintOptions) (string, error)
 }
 
 // LoadUserData reads a user data file and validates that it contains JSON
-func LoadUserData(filepath string) (map[string]interface{}, error) {
+func LoadUserData(filepath string) (interface{}, error) {
 	var err error
-	result := make(map[string]interface{})
+	var result interface{}
 	content := `{}`
 	if filepath != "" {
 		content, err = utils.LoadFileContent(filepath)

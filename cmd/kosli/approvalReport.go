@@ -49,11 +49,11 @@ type approvalReportOptions struct {
 }
 
 type ApprovalPayload struct {
-	ArtifactSha256 string                 `json:"artifact_sha256"`
-	Description    string                 `json:"description"`
-	CommitList     []string               `json:"src_commit_list"`
-	Reviews        []map[string]string    `json:"approvals"`
-	UserData       map[string]interface{} `json:"user_data"`
+	ArtifactSha256 string              `json:"artifact_sha256"`
+	Description    string              `json:"description"`
+	CommitList     []string            `json:"src_commit_list"`
+	Reviews        []map[string]string `json:"approvals"`
+	UserData       interface{}         `json:"user_data"`
 }
 
 func newApprovalReportCmd(out io.Writer) *cobra.Command {
