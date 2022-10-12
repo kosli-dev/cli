@@ -17,11 +17,11 @@ type deploymentReportOptions struct {
 }
 
 type DeploymentPayload struct {
-	Sha256      string                 `json:"artifact_sha256"`
-	Description string                 `json:"description"`
-	Environment string                 `json:"environment"`
-	UserData    map[string]interface{} `json:"user_data"`
-	BuildUrl    string                 `json:"build_url"`
+	Sha256      string      `json:"artifact_sha256"`
+	Description string      `json:"description"`
+	Environment string      `json:"environment"`
+	UserData    interface{} `json:"user_data"`
+	BuildUrl    string      `json:"build_url"`
 }
 
 func newDeploymentReportCmd(out io.Writer) *cobra.Command {

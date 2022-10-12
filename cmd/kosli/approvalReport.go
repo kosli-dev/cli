@@ -5,8 +5,6 @@ import (
 	"io"
 	"net/http"
 
-	git "github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -51,11 +49,11 @@ type approvalReportOptions struct {
 }
 
 type ApprovalPayload struct {
-	ArtifactSha256 string                 `json:"artifact_sha256"`
-	Description    string                 `json:"description"`
-	CommitList     []string               `json:"src_commit_list"`
-	Reviews        []map[string]string    `json:"approvals"`
-	UserData       map[string]interface{} `json:"user_data"`
+	ArtifactSha256 string              `json:"artifact_sha256"`
+	Description    string              `json:"description"`
+	CommitList     []string            `json:"src_commit_list"`
+	Reviews        []map[string]string `json:"approvals"`
+	UserData       interface{}         `json:"user_data"`
 }
 
 func newApprovalReportCmd(out io.Writer) *cobra.Command {
@@ -77,7 +75,6 @@ func newApprovalReportCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			return ValidateRegisteryFlags(cmd, o.fingerprintOptions)
-
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args, false)
@@ -128,54 +125,16 @@ func (o *approvalReportOptions) run(args []string, request bool) error {
 	if err != nil {
 		return err
 	}
-	o.payload.CommitList, err = listCommitsBetween(o.srcRepoRoot, o.oldestSrcCommit, o.newestSrcCommit)
+	listCommitsRich, err := listCommitsBetween(o.srcRepoRoot, o.oldestSrcCommit, o.newestSrcCommit)
 	if err != nil {
 		return err
+	}
+
+	for _, commit := range listCommitsRich {
+		o.payload.CommitList = append(o.payload.CommitList, commit.Sha1)
 	}
 
 	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
 		global.MaxAPIRetries, global.DryRun, http.MethodPost, log)
 	return err
-}
-
-// listCommitsBetween list all commits that have happened between two commits in a git repo
-func listCommitsBetween(repoRoot, oldest, newest string) ([]string, error) {
-	repo, err := git.PlainOpen(repoRoot)
-	if err != nil {
-		return []string{}, fmt.Errorf("failed to open git repository at %s: %v",
-			repoRoot, err)
-	}
-
-	newestHash, err := repo.ResolveRevision(plumbing.Revision(newest))
-	if err != nil {
-		return []string{}, fmt.Errorf("failed to resolve %s: %v", newest, err)
-	}
-	oldestHash, err := repo.ResolveRevision(plumbing.Revision(oldest))
-	if err != nil {
-		return []string{}, fmt.Errorf("failed to resolve %s: %v", oldest, err)
-
-	}
-	log.Debugf("This is the newest commit hash %s", newestHash.String())
-	log.Debugf("This is the oldest commit hash %s", oldestHash.String())
-
-	commits := []string{}
-
-	commitsIter, err := repo.Log(&git.LogOptions{From: *newestHash, Order: git.LogOrderCommitterTime})
-	if err != nil {
-		return []string{}, fmt.Errorf("failed to git log: %v", err)
-	}
-
-	for ok := true; ok; {
-		commit, err := commitsIter.Next()
-		if err != nil {
-			return []string{}, fmt.Errorf("failed to get next commit: %v", err)
-		}
-		if commit.Hash != *oldestHash {
-			commits = append(commits, commit.Hash.String())
-		} else {
-			break
-		}
-	}
-
-	return commits, nil
 }

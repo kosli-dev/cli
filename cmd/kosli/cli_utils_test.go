@@ -344,20 +344,27 @@ func (suite *CliUtilsTestSuite) TestLoadUserData() {
 		create   bool
 	}
 	for _, t := range []struct {
-		name         string
-		args         args
-		expectError  bool
-		wantedLength int
+		name        string
+		args        args
+		expectError bool
 	}{
 		{
-			name: "a valid JSON file.",
+			name: "a valid JSON file with an object.",
 			args: args{
 				filename: "test1.json",
 				content:  "{\"key\": \"value\"}",
 				create:   true,
 			},
-			expectError:  false,
-			wantedLength: 1,
+			expectError: false,
+		},
+		{
+			name: "a valid JSON file with a list.",
+			args: args{
+				filename: "test_list.json",
+				content:  "[{\"key\": \"value\"}]",
+				create:   true,
+			},
+			expectError: false,
 		},
 		{
 			name: "a not valid JSON file.",
@@ -366,8 +373,7 @@ func (suite *CliUtilsTestSuite) TestLoadUserData() {
 				content:  "No json",
 				create:   true,
 			},
-			expectError:  true,
-			wantedLength: 0,
+			expectError: true,
 		},
 		{
 			name: "a non existing file returns an error.",
@@ -376,8 +382,7 @@ func (suite *CliUtilsTestSuite) TestLoadUserData() {
 				content:  "No json",
 				create:   false,
 			},
-			expectError:  true,
-			wantedLength: 0,
+			expectError: true,
 		},
 	} {
 		suite.Run(t.name, func() {
@@ -393,12 +398,11 @@ func (suite *CliUtilsTestSuite) TestLoadUserData() {
 				require.NoErrorf(suite.T(), err, "error writing content to test file %s", t.args.filename)
 			}
 
-			data, err := LoadUserData(filepath.Join(tmpDir, t.args.filename))
+			_, err = LoadUserData(filepath.Join(tmpDir, t.args.filename))
 			if t.expectError {
 				require.Errorf(suite.T(), err, "TestLoadUserData: error was expected but got none.")
 			} else {
 				require.NoErrorf(suite.T(), err, "TestLoadUserData: got an error but was not expecting one:  %v", err)
-				require.Len(suite.T(), data, t.wantedLength, fmt.Sprintf("TestLoadUserData: %s , got: %v -- want: %v", t.name, len(data), t.wantedLength))
 			}
 		})
 	}
