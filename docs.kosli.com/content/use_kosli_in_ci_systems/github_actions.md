@@ -6,7 +6,7 @@ weight: 1
 ## Github Actions
 
 To use Kosli in [Github Actions](https://docs.github.com/en/actions) workflows, you can use the kosli [CLI setup action](https://github.com/marketplace/actions/setup-kosli-cli) to install the CLI on your Github Actions Runner.
-Then, you can use all the [CLI commands](https://docs.kosli.com/client_reference/) in your workflows.
+Then, you can use all the [CLI commands](/client_references) in your workflows.
 
 Here is an example Github Actions workflow snippet using the Kosli declare pipeline command:
 

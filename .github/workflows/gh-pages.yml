@@ -22,13 +22,13 @@ jobs:
         with:
           fetch-depth: 0    # Fetch all history for .GitInfo and .Lastmod
     
-      - name: link checking
-        uses: gaurav-nelson/github-action-markdown-link-check@v1
-        with:
-          use-quiet-mode: 'yes'
-          use-verbose-mode: 'yes'
-          folder-path: 'docs.kosli.com/content/'
-          config-file: 'link-checker-config.json'  
+      # - name: link checking
+      #   uses: gaurav-nelson/github-action-markdown-link-check@v1
+      #   with:
+      #     use-quiet-mode: 'yes'
+      #     use-verbose-mode: 'yes'
+      #     folder-path: 'docs.kosli.com/content/'
+      #     config-file: 'link-checker-config.json'  
 
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v2
@@ -38,6 +38,14 @@ jobs:
 
       - name: Build
         run: cd docs.kosli.com && hugo --minify
+
+      - name: Check links without using an artifact
+        uses: danielfdickinson/link-check-action-hugo-dfd@v0.3
+        with:
+          canonical-root: "https://docs.kosli.com/"
+          upload-logs-as: logs-non-artifact-run
+          upload-logs-retention: 1
+          use-existing-workspace: "true"
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
