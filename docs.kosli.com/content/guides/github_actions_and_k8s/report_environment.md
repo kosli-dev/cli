@@ -9,7 +9,7 @@ weight: 10
 
 The first thing we need to do is creating an **environment** in [Kosli](https://app.kosli.com). 
 Kosli **Environments** is where you'll be reporting the state of your actual environments, like *staging* or *production*. 
-You can either create an environment with [Kosli CLI](../../installation/_index.md)) or via the web UI. We will use the CLI in this guide.
+You can either create an environment with [Kosli CLI](../../installation)) or via the web UI. We will use the CLI in this guide.
 
 You need a name for your **environment** - it doesn't have to be the same name you use for the actual environment, but it certainly helps to identify it in the future. In this guide we'll use **github-k8s-test** as the name of the **environment**.
 You also need to provide the description of the environment. You'll find this helpful as the number of your environments increases.
