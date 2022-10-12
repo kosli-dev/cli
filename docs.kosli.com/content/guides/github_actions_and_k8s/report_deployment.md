@@ -40,6 +40,6 @@ This time it should be compliant - which means we know where the artifact is com
 
 In our example, *deployment* is part of the same workflow as *build*. In real life you may want to deploy in a separate pipeline, especially if you're deploying to your production environment. Once you learn how to use Kosli with this example it should be easier to add required steps to your existing workflows, wherever you need them. 
 
-Visit [Kosli Commands](../client_reference) section to learn more about available Kosli CLI commands.
+Visit [Kosli Commands](https://docs.kosli.com/client_reference) section to learn more about available Kosli CLI commands.
 
 
