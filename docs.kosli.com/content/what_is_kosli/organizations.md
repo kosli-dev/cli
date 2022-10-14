@@ -3,7 +3,7 @@ title: 'Organizations'
 weight: 10
 ---
 
-# Organizations
+## Organizations
 
 Organization in Kosli owns Kosli pipelines and environments - which means only members of the organization can get access to them.
 By default, when you sign up to Kosli, a personal organization is created for you and the name of the organization matches your user name. Only you can access your personal organization.
