@@ -1,15 +1,18 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 
+	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
 type searchOptions struct {
+	output string
 }
 
 // const artifactCreationExample = `
@@ -37,8 +40,8 @@ type searchOptions struct {
 func newSearchCmd(out io.Writer) *cobra.Command {
 	o := new(searchOptions)
 	cmd := &cobra.Command{
-		Use:   "search GIT-COMMIT",
-		Short: "Search for a git commit in Kosli.",
+		Use:   "search GIT-COMMIT|FINGERPRINT",
+		Short: "Search for a git commit or artifact fingerprint in Kosli.",
 		// Example: artifactCreationExample,
 		Hidden: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -47,28 +50,47 @@ func newSearchCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			if len(args) < 1 {
-				return ErrorBeforePrintingUsage(cmd, "git commit argument is required")
+				return ErrorBeforePrintingUsage(cmd, "git commit or artifact fingerprint argument is required")
 			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(args)
+			return o.run(out, args)
 		},
 	}
+
+	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
+
 	return cmd
 }
 
-func (o *searchOptions) run(args []string) error {
+func (o *searchOptions) run(out io.Writer, args []string) error {
 	var err error
-	commit := args[0]
+	search_value := args[0]
 
-	url := fmt.Sprintf("%s/api/v1/%s/commits/%s", global.Host, global.Owner, commit)
+	url := fmt.Sprintf("%s/api/v1/search/%s/sha/%s", global.Host, global.Owner, search_value)
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, log)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(response.Body)
+	return output.FormattedPrint(response.Body, o.output, out, 0,
+		map[string]output.FormatOutputFunc{
+			"table": printSearchAsTableWrapper,
+			"json":  output.PrintJson,
+		})
+}
+
+func printSearchAsTableWrapper(artifactRaw string, out io.Writer, pageNumber int) error {
+	var searchResult map[string][]interface{}
+	err := json.Unmarshal([]byte(artifactRaw), &searchResult)
+	if err != nil {
+		return err
+	}
+	fmt.Println(len(searchResult["artifacts_for_commit"]))
+	fmt.Println(len(searchResult["artifacts_for_fingerprint"]))
+	fmt.Println(len(searchResult["environment_events_for_no_provenance_artifacts"]))
+	fmt.Println(len(searchResult["allowlist"]))
 	return nil
 }
