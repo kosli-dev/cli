@@ -24,6 +24,7 @@ func newEnvironmentReportCmd(out io.Writer) *cobra.Command {
 		newEnvironmentReportServerCmd(out),
 		newEnvironmentReportS3Cmd(out),
 		newEnvironmentReportLambdaCmd(out),
+		newEnvironmentReportDockerCmd(out),
 	)
 
 	return cmd
