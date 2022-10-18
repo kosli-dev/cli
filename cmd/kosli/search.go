@@ -82,14 +82,26 @@ func (o *searchOptions) run(out io.Writer, args []string) error {
 		})
 }
 
-func printSearchAsTableWrapper(artifactRaw string, out io.Writer, pageNumber int) error {
-	var searchResult map[string][]interface{}
-	err := json.Unmarshal([]byte(artifactRaw), &searchResult)
+func printSearchAsTableWrapper(responseRaw string, out io.Writer, pageNumber int) error {
+	var searchResult map[string][]map[string]interface{}
+	err := json.Unmarshal([]byte(responseRaw), &searchResult)
 	if err != nil {
 		return err
 	}
-	fmt.Println(len(searchResult["artifacts_for_commit"]))
-	fmt.Println(len(searchResult["artifacts_for_fingerprint"]))
+	if len(searchResult["artifacts_for_commit"]) > 0 {
+		fmt.Printf("Found the following artifact(s) for commit:\n")
+		err = printArtifactsJsonAsTable(searchResult["artifacts_for_commit"], out, pageNumber)
+		if err != nil {
+			return err
+		}
+	}
+	if len(searchResult["artifacts_for_fingerprint"]) > 0 {
+		fmt.Printf("Found the following artifact(s) for fingerprint:\n")
+		err = printArtifactsJsonAsTable(searchResult["artifacts_for_fingerprint"], out, pageNumber)
+		if err != nil {
+			return err
+		}
+	}
 	fmt.Println(len(searchResult["environment_events_for_no_provenance_artifacts"]))
 	fmt.Println(len(searchResult["allowlist"]))
 	return nil

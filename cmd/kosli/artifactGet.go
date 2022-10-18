@@ -88,6 +88,10 @@ func printArtifactsAsTable(artifactRaw string, out io.Writer, pageNumber int) er
 	if err != nil {
 		return err
 	}
+	return printArtifactsJsonAsTable(artifacts, out, pageNumber)
+}
+
+func printArtifactsJsonAsTable(artifacts []map[string]interface{}, out io.Writer, pageNumber int) error {
 	separator := ""
 	for _, artifact := range artifacts {
 		evidenceMap := artifact["evidence"].(map[string]interface{})
