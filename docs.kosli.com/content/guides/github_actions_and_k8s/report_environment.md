@@ -7,7 +7,7 @@ weight: 10
 
 ## Create an environment in Kosli
 
-The first thing we need to do is creating an **environment** in [Kosli](https://app.kosli.com). 
+The first thing we need to do is creating an **environment** in [Kosli](https://app.kolsi.com). 
 Kosli **Environments** is where you'll be reporting the state of your actual environments, like *staging* or *production*. 
 You can either create an environment with [Kosli CLI](/installation)) or via the web UI. We will use the CLI in this guide.
 
