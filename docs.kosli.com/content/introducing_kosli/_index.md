@@ -1,7 +1,7 @@
 ---
-title: What is Kosli
+title: Introducing Kosli
 bookCollapseSection: true
-weight: 20
+weight: 10
 ---
 # What is Kosli
 

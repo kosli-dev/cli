@@ -1,7 +1,7 @@
 ---
-title: Why Kosli
+title: Use cases
 bookCollapseSection: true
-weight: 10
+weight: 40
 ---
 # Why Kosli
 
