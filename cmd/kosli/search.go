@@ -15,6 +15,19 @@ type searchOptions struct {
 	output string
 }
 
+type SearchResponse struct {
+	ResolvedTo              ResolvedToBody           `json:"resolved_to"`
+	ArtifactsForCommit      []map[string]interface{} `json:"artifacts_for_commit"`
+	ArtifactsForFingerprint []map[string]interface{} `json:"artifacts_for_fingerprint"`
+	EnvironmentEvents       []map[string]interface{} `json:"environment_events_for_no_provenance_artifacts"`
+	Allowlist               []map[string]interface{} `json:"allowlist"`
+}
+
+type ResolvedToBody struct {
+	FullMatch string `json:"full_match"`
+	Type      string `json:"type"`
+}
+
 // const artifactCreationExample = `
 // # Report to a Kosli pipeline that a file type artifact has been created
 // kosli pipeline artifact report creation FILE.tgz \
@@ -83,36 +96,42 @@ func (o *searchOptions) run(out io.Writer, args []string) error {
 }
 
 func printSearchAsTableWrapper(responseRaw string, out io.Writer, pageNumber int) error {
-	var searchResult map[string][]map[string]interface{}
+	var searchResult SearchResponse
 	err := json.Unmarshal([]byte(responseRaw), &searchResult)
 	if err != nil {
 		return err
 	}
-	if len(searchResult["artifacts_for_commit"]) > 0 {
-		fmt.Fprintf(out, "Found the following artifact(s) for commit:\n")
-		err = printArtifactsJsonAsTable(searchResult["artifacts_for_commit"], out, pageNumber)
+	fullMatch := searchResult.ResolvedTo.FullMatch
+	if searchResult.ResolvedTo.Type == "git_commit" {
+		fmt.Fprintf(out, "Search result resolved to commit %s\n", fullMatch)
+	} else {
+		fmt.Fprintf(out, "Search result resolved to fingerpint %s\n", fullMatch)
+	}
+	if len(searchResult.ArtifactsForCommit) > 0 {
+		fmt.Fprintf(out, "Found the following artifact(s) for commit\n")
+		err = printArtifactsJsonAsTable(searchResult.ArtifactsForCommit, out, pageNumber)
 		if err != nil {
 			return err
 		}
 	}
-	if len(searchResult["artifacts_for_fingerprint"]) > 0 {
-		fmt.Fprintf(out, "Found the following artifact(s) for fingerprint:\n")
-		err = printArtifactsJsonAsTable(searchResult["artifacts_for_fingerprint"], out, pageNumber)
+	if len(searchResult.ArtifactsForFingerprint) > 0 {
+		fmt.Fprintf(out, "Found the following artifact(s) for fingerprint\n")
+		err = printArtifactsJsonAsTable(searchResult.ArtifactsForFingerprint, out, pageNumber)
 		if err != nil {
 			return err
 		}
 	}
-	if len(searchResult["environment_events_for_no_provenance_artifacts"]) > 0 {
-		fmt.Fprintf(out, "Found the following artifact(s) with no provenance in environments:\n")
+	if len(searchResult.EnvironmentEvents) > 0 {
+		fmt.Fprintf(out, "Found the following environment events for artifact with no provenance\n")
 		// TODO: print out env name to which an event belongs to
-		err = printEventsForSingleFingerprintAsTable(searchResult["environment_events_for_no_provenance_artifacts"], out)
+		err = printEventsForSingleFingerprintAsTable(searchResult.EnvironmentEvents, out)
 		if err != nil {
 			return err
 		}
 	}
-	if len(searchResult["allowlist"]) > 0 {
-		fmt.Fprintf(out, "Found allowlisted artifacts for fingerprint:\n")
-		err = printAllowlistAsTable(searchResult["allowlist"], out)
+	if len(searchResult.Allowlist) > 0 {
+		fmt.Fprintf(out, "Found allowlisted artifacts for fingerprint\n")
+		err = printAllowlistAsTable(searchResult.Allowlist, out)
 		if err != nil {
 			return err
 		}
