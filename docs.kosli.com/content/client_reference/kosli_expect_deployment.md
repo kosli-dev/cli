@@ -1,21 +1,21 @@
 ---
-title: "kosli pipeline deployment report"
+title: "kosli expect deployment"
 ---
 
-## kosli pipeline deployment report
+## kosli expect deployment
 
-Report a deployment to Kosli. 
+Expect a deployment to an environment in Kosli.
 
 ### Synopsis
 
 
-   Report a deployment of an artifact to an environment in Kosli. 
+   Expect a deployment of an artifact to an environment in Kosli. 
    The artifact SHA256 fingerprint is calculated and reported 
-   or,alternatively, can be provided directly. 
+   or, alternatively, can be provided directly. 
    
 
 ```shell
-kosli pipeline deployment report [ARTIFACT-NAME-OR-PATH] [flags]
+kosli expect deployment [ARTIFACT-NAME-OR-PATH] [flags]
 ```
 
 ### Flags
@@ -25,7 +25,7 @@ kosli pipeline deployment report [ARTIFACT-NAME-OR-PATH] [flags]
 |    -b, --build-url string  |  The url of CI pipeline that built the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -d, --description string  |  [optional] The artifact description.  |
 |    -e, --environment string  |  The environment name.  |
-|    -h, --help  |  help for report  |
+|    -h, --help  |  help for deployment  |
 |    -p, --pipeline string  |  The Kosli pipeline name.  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
