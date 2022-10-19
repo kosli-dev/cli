@@ -15,18 +15,18 @@ type EnvironmentCommandTestSuite struct {
 
 func (suite *EnvironmentCommandTestSuite) TestEnvironmentCommandCmd() {
 
-	defaultKosliArguments := " -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ"
+	defaultKosliArguments := " -H http://localhost:8001 --owner docs-cmd-test-user -a eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY"
 
 	tests := []cmdTestCase{
 		{
 			name:   "declare S3 env",
-			cmd:    "environment declare --name newEnv --environment-type S3 --description \"my new env\" -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
+			cmd:    "environment declare --name newEnv --environment-type S3 --description \"my new env\" " + defaultKosliArguments,
 			golden: "",
 		},
 		{
 			// TODO: Is this realy updating the environment?
 			name:   "redeclaring an env updates its metadata",
-			cmd:    "environment declare --name newEnv --environment-type S3 --description \"changed description\" -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
+			cmd:    "environment declare --name newEnv --environment-type S3 --description \"changed description\" " + defaultKosliArguments,
 			golden: "",
 		},
 		{

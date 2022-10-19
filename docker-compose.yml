@@ -40,6 +40,7 @@ services:
     container_name: mongo1
     init: true
     stop_signal: SIGINT
+    ports: ["27017:27017"]
     env_file: [ "./mongo/mongo.env" ]
     tmpfs: [ /tmp, /data/db ]
 
