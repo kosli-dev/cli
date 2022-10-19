@@ -99,6 +99,7 @@ func printArtifactsJsonAsTable(artifacts []map[string]interface{}, out io.Writer
 
 		rows := []string{}
 		rows = append(rows, fmt.Sprintf("Name:\t%s", artifactData["filename"].(string)))
+		rows = append(rows, fmt.Sprintf("Pipeline:\t%s", artifact["pipeline_name"].(string)))
 		rows = append(rows, fmt.Sprintf("Fingerprint:\t%s", artifactData["sha256"].(string)))
 		createdAt, err := formattedTimestamp(artifactData["logged_at"], false)
 		if err != nil {
