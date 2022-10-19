@@ -105,7 +105,7 @@ func printSearchAsTableWrapper(responseRaw string, out io.Writer, pageNumber int
 	if searchResult.ResolvedTo.Type == "git_commit" {
 		fmt.Fprintf(out, "Search result resolved to commit %s\n", fullMatch)
 	} else {
-		fmt.Fprintf(out, "Search result resolved to fingerpint %s\n", fullMatch)
+		fmt.Fprintf(out, "Search result resolved to artifact with fingerprint %s\n", fullMatch)
 	}
 	if len(searchResult.ArtifactsForCommit) > 0 {
 		fmt.Fprintf(out, "Found the following artifact(s) for commit\n")
@@ -115,14 +115,15 @@ func printSearchAsTableWrapper(responseRaw string, out io.Writer, pageNumber int
 		}
 	}
 	if len(searchResult.ArtifactsForFingerprint) > 0 {
-		fmt.Fprintf(out, "Found the following artifact(s) for fingerprint\n")
+		fmt.Fprintf(out, "Found the following artifact\n")
 		err = printArtifactsJsonAsTable(searchResult.ArtifactsForFingerprint, out, pageNumber)
 		if err != nil {
 			return err
 		}
 	}
 	if len(searchResult.EnvironmentEvents) > 0 {
-		fmt.Fprintf(out, "Found the following environment events for artifact with no provenance\n")
+		fmt.Fprintf(out, "Artifact has no provenance\n")
+		fmt.Fprintf(out, "Found the following environment events for artifact:\n")
 		// TODO: print out env name to which an event belongs to
 		err = printEventsForSingleFingerprintAsTable(searchResult.EnvironmentEvents, out)
 		if err != nil {
@@ -130,7 +131,7 @@ func printSearchAsTableWrapper(responseRaw string, out io.Writer, pageNumber int
 		}
 	}
 	if len(searchResult.Allowlist) > 0 {
-		fmt.Fprintf(out, "Found allowlisted artifacts for fingerprint\n")
+		fmt.Fprintf(out, "Allowlist rules for artifact:\n")
 		err = printAllowlistAsTable(searchResult.Allowlist, out)
 		if err != nil {
 			return err
