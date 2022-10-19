@@ -1,7 +1,8 @@
-#!/bin/bash -Eeu
+#!/usr/bin/env bash
+set -Eeu
 
 readonly IP_ADDRESS="${1}"
-readonly MAX_TRIES=10
+readonly MAX_TRIES=20
 
 # If the server fails to become ready after MAX_TRIES, fail the make target.
 # Do not retry endlessly as this can easily burn through hours of CI minutes.
@@ -16,5 +17,11 @@ for try in $(seq 1 ${MAX_TRIES}); do
   fi
 done
 echo "Failed ${IP_ADDRESS} readiness"
-docker logs mongo1
+echo "############### Mongo LOGS ###############"
+echo
+docker container logs mongo1
+echo 
+echo "############### APPLICATION LOGS ###############"
+echo
+docker container logs cli_kosli_server || true
 exit 1
