@@ -39,17 +39,25 @@ jobs:
       - name: Build
         run: cd docs.kosli.com && hugo --minify
 
-      - name: Check links without using an artifact
-        uses: danielfdickinson/link-check-action-hugo-dfd@v0.3
-        with:
-          canonical-root: "https://docs.kosli.com/"
-          upload-logs-as: logs-non-artifact-run
-          upload-logs-retention: 1
-          use-existing-workspace: "true"
-
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         if: github.ref == 'refs/heads/main'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs.kosli.com/public
+
+      - name: Run htmltest
+        uses: wjdp/htmltest-action@master
+        with:
+          config: .htmltest.yml
+
+
+      - name: Slack Notification on Failure
+        if: ${{ failure() }}
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: ${{ secrets.KOSLI_STATIC_SITES_NOTIFICATIONS_CHANNEL }}
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_TITLE: Docs site publishing workflow failed. Maybe links are broken!
+          SLACK_USERNAME: GithubActions
+          SLACK_WEBHOOK: ${{ secrets.KOSLI_STATIC_SITES_NOTIFICATIONS_WEBHOOK }}

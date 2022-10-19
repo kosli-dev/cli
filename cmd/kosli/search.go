@@ -82,15 +82,88 @@ func (o *searchOptions) run(out io.Writer, args []string) error {
 		})
 }
 
-func printSearchAsTableWrapper(artifactRaw string, out io.Writer, pageNumber int) error {
-	var searchResult map[string][]interface{}
-	err := json.Unmarshal([]byte(artifactRaw), &searchResult)
+func printSearchAsTableWrapper(responseRaw string, out io.Writer, pageNumber int) error {
+	var searchResult map[string][]map[string]interface{}
+	err := json.Unmarshal([]byte(responseRaw), &searchResult)
 	if err != nil {
 		return err
 	}
-	fmt.Println(len(searchResult["artifacts_for_commit"]))
-	fmt.Println(len(searchResult["artifacts_for_fingerprint"]))
-	fmt.Println(len(searchResult["environment_events_for_no_provenance_artifacts"]))
-	fmt.Println(len(searchResult["allowlist"]))
+	if len(searchResult["artifacts_for_commit"]) > 0 {
+		fmt.Fprintf(out, "Found the following artifact(s) for commit:\n")
+		err = printArtifactsJsonAsTable(searchResult["artifacts_for_commit"], out, pageNumber)
+		if err != nil {
+			return err
+		}
+	}
+	if len(searchResult["artifacts_for_fingerprint"]) > 0 {
+		fmt.Fprintf(out, "Found the following artifact(s) for fingerprint:\n")
+		err = printArtifactsJsonAsTable(searchResult["artifacts_for_fingerprint"], out, pageNumber)
+		if err != nil {
+			return err
+		}
+	}
+	if len(searchResult["environment_events_for_no_provenance_artifacts"]) > 0 {
+		fmt.Fprintf(out, "Found the following artifact(s) with no provenance in environments:\n")
+		// TODO: print out env name to which an event belongs to
+		err = printEventsForSingleFingerprintAsTable(searchResult["environment_events_for_no_provenance_artifacts"], out)
+		if err != nil {
+			return err
+		}
+	}
+	if len(searchResult["allowlist"]) > 0 {
+		fmt.Fprintf(out, "Found allowlisted artifacts for fingerprint:\n")
+		err = printAllowlistAsTable(searchResult["allowlist"], out)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func printEventsForSingleFingerprintAsTable(events []map[string]interface{}, out io.Writer) error {
+	if len(events) == 0 {
+		fmt.Fprintf(out, "	No events were found")
+		return nil
+	}
+	header := []string{"ENVIRONMENT", "EVENT", "REPORTED AT"}
+	rows := []string{}
+	for _, event := range events {
+		env_name := fmt.Sprintf("%s#%d", event["environment_name"], int(event["snapshot_index"].(float64)))
+		description := event["description"]
+		reportedAt, err := formattedTimestamp(event["reported_at"], false)
+		if err != nil {
+			return err
+		}
+		rows = append(rows, fmt.Sprintf("%s\t%s\t%s", env_name, description, reportedAt))
+	}
+	rows = append(rows, "\t\t") // These tabs are required for alignment
+	tabFormattedPrint(out, header, rows)
+	return nil
+}
+
+func printAllowlistAsTable(allowlist []map[string]interface{}, out io.Writer) error {
+	if len(allowlist) == 0 {
+		fmt.Fprintf(out, "	No artifacts in allowlist were found")
+		return nil
+	}
+
+	header := []string{"STATE", "ENVIRONMENT", "DESCRIPTION", "USER", "CREATED AT"}
+	rows := []string{}
+	for _, artifact := range allowlist {
+		state := "Active"
+		if !artifact["active"].(bool) {
+			state = "Revoked"
+		}
+		env_name := artifact["env_name"]
+		description := artifact["description"]
+		user := artifact["user_name"]
+		createdAt, err := formattedTimestamp(artifact["timestamp"], true)
+		if err != nil {
+			return err
+		}
+		rows = append(rows, fmt.Sprintf("%s\t%s\t%s\t%s\t%s", state, env_name, description, user, createdAt))
+	}
+	rows = append(rows, "\t\t\t\t") // These tabs are required for alignment
+	tabFormattedPrint(out, header, rows)
 	return nil
 }
