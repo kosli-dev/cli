@@ -2,6 +2,8 @@
 title: Use Kosli in CI Systems
 bookCollapseSection: false
 weight: 20
+aliases:
+    - /ci-defaults  # To keep short URL in docs and help in the CLI
 ---
 
 # Use Kosli in CI Systems
