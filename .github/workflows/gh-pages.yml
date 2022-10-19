@@ -22,13 +22,13 @@ jobs:
         with:
           fetch-depth: 0    # Fetch all history for .GitInfo and .Lastmod
     
-      - name: link checking
-        uses: gaurav-nelson/github-action-markdown-link-check@v1
-        with:
-          use-quiet-mode: 'yes'
-          use-verbose-mode: 'yes'
-          folder-path: 'docs.kosli.com/content/'
-          config-file: 'link-checker-config.json'  
+      # - name: link checking
+      #   uses: gaurav-nelson/github-action-markdown-link-check@v1
+      #   with:
+      #     use-quiet-mode: 'yes'
+      #     use-verbose-mode: 'yes'
+      #     folder-path: 'docs.kosli.com/content/'
+      #     config-file: 'link-checker-config.json'  
 
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v2
@@ -45,3 +45,19 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs.kosli.com/public
+
+      - name: Run htmltest
+        uses: wjdp/htmltest-action@master
+        with:
+          config: .htmltest.yml
+
+
+      - name: Slack Notification on Failure
+        if: ${{ failure() }}
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: ${{ secrets.KOSLI_STATIC_SITES_NOTIFICATIONS_CHANNEL }}
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_TITLE: Docs site publishing workflow failed. Maybe links are broken!
+          SLACK_USERNAME: GithubActions
+          SLACK_WEBHOOK: ${{ secrets.KOSLI_STATIC_SITES_NOTIFICATIONS_WEBHOOK }}

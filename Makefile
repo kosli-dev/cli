@@ -101,7 +101,7 @@ test_docs: deps vet ensure_network test_integration_setup
 docker: deps vet lint
 	@docker build -t kosli-cli .
 
-docs: build
+docs: helm-docs build
 	@rm -f docs.kosli.com/content/client_reference/kosli*
 	@export DOCS=true && ./kosli docs --dir docs.kosli.com/content/client_reference
 
@@ -112,7 +112,7 @@ licenses:
 	$(eval DATA := $(shell go-licenses csv ./...))
 	@echo $(DATA) | tr " " "\n" > licenses/licenses.csv
 
-hugo: docs helm-docs
+hugo: docs 
 	cd docs.kosli.com && hugo server --minify --buildDrafts --port=1515
 
 helm-lint: 
@@ -128,5 +128,9 @@ release:
 	git tag -a $(tag) -m"$(tag)"
 	git push origin $(tag)
 
-check-links:
-	@docker run -v ${PWD}:/tmp:ro --rm -i --entrypoint '' ghcr.io/tcort/markdown-link-check:stable /bin/sh -c 'find /tmp/docs.kosli.com/content -name \*.md -print0 | xargs -0 -n1 markdown-link-check -q -c /tmp/link-checker-config.json'
+# check-links:
+# 	@docker run -v ${PWD}:/tmp:ro --rm -i --entrypoint '' ghcr.io/tcort/markdown-link-check:stable /bin/sh -c 'find /tmp/docs.kosli.com/content -name \*.md -print0 | xargs -0 -n1 markdown-link-check -q -c /tmp/link-checker-config.json'
+
+check-links: 
+	@cd docs.kosli.com && hugo --minify
+	@docker run -v ${PWD}:/test --rm wjdp/htmltest -c .htmltest.yml -l 1

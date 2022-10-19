@@ -9,14 +9,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type deploymentReportOptions struct {
+type expectDeploymentOptions struct {
 	fingerprintOptions *fingerprintOptions
 	pipelineName       string
 	userDataFile       string
-	payload            DeploymentPayload
+	payload            ExpectDeploymentPayload
 }
 
-type DeploymentPayload struct {
+type ExpectDeploymentPayload struct {
 	Sha256      string      `json:"artifact_sha256"`
 	Description string      `json:"description"`
 	Environment string      `json:"environment"`
@@ -24,14 +24,13 @@ type DeploymentPayload struct {
 	BuildUrl    string      `json:"build_url"`
 }
 
-func newDeploymentReportCmd(out io.Writer) *cobra.Command {
-	o := new(deploymentReportOptions)
+func newExpectDeploymentCmd(out io.Writer) *cobra.Command {
+	o := new(expectDeploymentOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:        "report [ARTIFACT-NAME-OR-PATH]",
-		Short:      "Report a deployment to Kosli. ",
-		Long:       deploymentReportDesc(),
-		Deprecated: "use \"kosli expect deployment\" instead.",
+		Use:   "deployment [ARTIFACT-NAME-OR-PATH]",
+		Short: "Expect a deployment to an environment in Kosli.",
+		Long:  expectDeploymentDesc(),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -67,7 +66,7 @@ func newDeploymentReportCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *deploymentReportOptions) run(args []string) error {
+func (o *expectDeploymentOptions) run(args []string) error {
 	var err error
 	if o.payload.Sha256 == "" {
 		o.payload.Sha256, err = GetSha256Digest(args[0], o.fingerprintOptions)
@@ -88,10 +87,10 @@ func (o *deploymentReportOptions) run(args []string) error {
 	return err
 }
 
-func deploymentReportDesc() string {
+func expectDeploymentDesc() string {
 	return `
-   Report a deployment of an artifact to an environment in Kosli. 
+   Expect a deployment of an artifact to an environment in Kosli. 
    The artifact SHA256 fingerprint is calculated and reported 
-   or,alternatively, can be provided directly. 
+   or, alternatively, can be provided directly. 
    `
 }
