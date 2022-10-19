@@ -62,7 +62,7 @@ jobs:
 
     steps:
     # checkout code
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 1
 
@@ -73,12 +73,12 @@ jobs:
         TAGGED_IMAGE=${{ env.IMAGE }}:${TAG}
         echo "TAG=${TAG}" >> ${GITHUB_ENV}
         echo "TAGGED_IMAGE=${TAGGED_IMAGE}" >> ${GITHUB_ENV}
-        echo ::set-output name=tag::${TAG}
-        echo ::set-output name=tagged-image::${TAGGED_IMAGE}
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
+        echo "tagged-image=$TAGGED_IMAGE" >> $GITHUB_OUTPUT
 
     # This is the a separate action that sets up buildx (buildkit) runner
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
+      uses: docker/setup-buildx-action@v2
 
     # use your own username and configured token to log into dockerhub
     - name: Login to hub.docker.com
@@ -89,7 +89,7 @@ jobs:
 
     - name: Build and push Docker image
       id: docker_build
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v3
       with:
         push: true
         tags: ${{ env.TAGGED_IMAGE }}
@@ -101,7 +101,8 @@ jobs:
       run: |
         ARTIFACT_SHA=$( echo ${{ steps.docker_build.outputs.digest }} | sed 's/.*://')
         echo "DIGEST=$ARTIFACT_SHA" >> ${GITHUB_ENV}
-        echo ::set-output name=image-digest::${ARTIFACT_SHA}
+        echo "image-digest=$ARTIFACT_SHA" >> $GITHUB_OUTPUT
+
 
     - name: setup-kosli-cli
       uses: kosli-dev/setup-cli-action@v1
@@ -131,7 +132,7 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 1
 
