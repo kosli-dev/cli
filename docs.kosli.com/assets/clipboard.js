@@ -1,7 +1,7 @@
 (function () {
   document.querySelectorAll("div.command").forEach(code => {
     let tag = document.createElement("div");
-    let text = document.createTextNode("Copied!")
+    let text = document.createTextNode("copied!")
     tag.appendChild(text);
     code.appendChild(tag);
     tag.classList.add("copiedText");
