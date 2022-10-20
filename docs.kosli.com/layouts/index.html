@@ -2,12 +2,12 @@
 
 <!-- hero -->
 {{ with .Params.hero }}
-<div class="hero book-columns flex align-center">
+<div class="hero book-columns flex flex-wrap align-center">
     <div class="flex-even">
         <h1>{{ .title }}</h1>
         <a href="{{ .url }}">{{ .link_text }}</a>
     </div>
-    <div class="flex-even">
+    <div class="flex-even text-center">
         <img src="{{ .image }}" alt="{{ .alt_text }}">
     </div>
 </div>

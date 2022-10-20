@@ -6,6 +6,7 @@
         font-weight: 700;
         font-size: 60px;
         line-height: 72px;
+        margin-top: 0;
     }
 
     a {
@@ -15,6 +16,10 @@
         &:hover {
             text-decoration: none;
         }
+    }
+
+    img {
+        max-width: 100%;
     }
 }
 
@@ -41,3 +46,12 @@
         }
     }
 }
+
+@media only screen and (max-width: 1100px) {
+    .hero {
+        .flex-even {
+           min-width: 100%;
+           padding: $spacing-xs;
+        }
+    }
+  }
