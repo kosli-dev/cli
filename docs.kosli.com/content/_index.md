@@ -19,9 +19,9 @@ sections:
           alt_text: Quick start icon
           link_text: View >
           url: /getting_started/
-        - title: Kosli concepts
+        - title: Introducing Kosli
           image: /images/home/home-concepts.svg
-          alt_text: Kosli concepts icon
+          alt_text: Introducing Kosli icon
           link_text: View >
           url: /introducing_kosli/
         - title: Kosli pipelines
@@ -39,11 +39,11 @@ sections:
           alt_text: Command reference icon
           link_text: View >
           url: /client_reference/
-        - title: Fingerprint concept
+        - title: Fingerprint
           image: /images/home/home-fingerprint.svg
-          alt_text: Fingerprint concept icon
+          alt_text: Fingerprint icon
           link_text: View >
-          url: "#"
+          url: "/introducing_kosli/fingerprint/"
         - title: Use cases
           image: /images/home/home-use-cases.svg
           alt_text: Use cases icon
