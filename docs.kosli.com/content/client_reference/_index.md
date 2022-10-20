@@ -1,7 +1,7 @@
 ---
-title: Kosli Commands
+title: Reference
 bookCollapseSection: true
-weight: 4
+weight: 50
 ---
 
 # Kosli Client Reference

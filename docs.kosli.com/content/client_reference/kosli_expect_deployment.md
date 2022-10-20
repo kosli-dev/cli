@@ -1,19 +1,21 @@
 ---
-title: "kosli pipeline artifact report creation"
+title: "kosli expect deployment"
 ---
 
-## kosli pipeline artifact report creation
+## kosli expect deployment
 
-Report an artifact creation to a Kosli pipeline. 
+Expect a deployment to an environment in Kosli.
 
 ### Synopsis
 
 
-   Report an artifact creation to a Kosli pipeline. 
-   The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag).
+   Expect a deployment of an artifact to an environment in Kosli. 
+   The artifact SHA256 fingerprint is calculated and reported 
+   or, alternatively, can be provided directly. 
+   
 
 ```shell
-kosli pipeline artifact report creation ARTIFACT-NAME-OR-PATH [flags]
+kosli expect deployment [ARTIFACT-NAME-OR-PATH] [flags]
 ```
 
 ### Flags
@@ -21,16 +23,15 @@ kosli pipeline artifact report creation ARTIFACT-NAME-OR-PATH [flags]
 | :--- | :--- |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256'.  |
 |    -b, --build-url string  |  The url of CI pipeline that built the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|    -u, --commit-url string  |  The url for the git commit that created the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -d, --description string  |  [optional] The artifact description.  |
-|    -g, --git-commit string  |  The git commit from which the artifact was created. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|    -h, --help  |  help for creation  |
+|    -e, --environment string  |  The environment name.  |
+|    -h, --help  |  help for deployment  |
 |    -p, --pipeline string  |  The Kosli pipeline name.  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
-|        --repo-root string  |  The directory where the source git repository is volume-mounted. (default ".")  |
 |    -s, --sha256 string  |  [conditional] The SHA256 fingerprint for the artifact. Only required if you don't specify '--artifact-type'.  |
+|    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to this deployment.  |
 
 
 ### Options inherited from parent commands
@@ -44,30 +45,4 @@ kosli pipeline artifact report creation ARTIFACT-NAME-OR-PATH [flags]
 |        --owner string  |  The Kosli user or organization.  |
 |    -v, --verbose  |  [optional] Print verbose logs to stdout.  |
 
-
-### Examples
-
-```shell
-
-# Report to a Kosli pipeline that a file type artifact has been created
-kosli pipeline artifact report creation FILE.tgz \
-	--api-token yourApiToken \
-	--artifact-type file \
-	--build-url https://exampleci.com \
-	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
-	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
-	--owner yourOrgName \
-	--pipeline yourPipelineName 
-
-# Report to a Kosli pipeline that an artifact with a provided fingerprint (sha256) has been created
-kosli pipeline artifact report creation \
-	--api-token yourApiToken \
-	--build-url https://exampleci.com \
-	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
-	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
-	--owner yourOrgName \
-	--pipeline yourPipelineName \
-	--sha256 yourSha256 
-
-```
 

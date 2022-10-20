@@ -38,6 +38,14 @@
   margin: 0 auto;
 }
 
+.mb-s {
+  margin-bottom: $spacing-s;
+}
+
+.m-xs {
+  margin: $spacing-xs;
+}
+
 .text-center {
   text-align: center;
 }

@@ -1,0 +1,39 @@
+{{ define "main" }}
+
+<!-- hero -->
+{{ with .Params.hero }}
+<div class="hero book-columns flex flex-wrap align-center">
+    <div class="flex-even">
+        <h1>{{ .title }}</h1>
+        <a href="{{ .url }}">{{ .link_text }}</a>
+    </div>
+    <div class="flex-even text-center">
+        <img src="{{ .image }}" alt="{{ .alt_text }}">
+    </div>
+</div>
+{{ end }}
+
+<p class="body-1">
+    {{ .Params.paragraph }}
+</p>
+
+{{ with .Params.sections }}
+<div>
+    <h2>{{ .title }}</h2>
+
+    <div class="book-columns flex flex-wrap">
+        {{ range .blocks }}
+        <div class="flex-even m-xs">
+            <div class="card">
+                <img src="{{ .image }}" alt="{{ .alt_text }}">
+                <h3 class="h4-style">{{ .title }}</h3>
+                <a href="{{ .url }}">{{ .link_text }}</a>
+            </div>
+        </div>
+        {{ end }}
+    </div>
+
+</div>
+{{ end }}
+
+{{ end }}
