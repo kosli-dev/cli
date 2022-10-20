@@ -2,8 +2,7 @@
 title: 'Pipelines'
 weight: 30
 ---
-
-## Pipelines
+# Pipelines
 
 Pipelines in Kosli provide a place to report and track artifact status and related events from your CI pipelines.
 

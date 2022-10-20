@@ -2,8 +2,7 @@
 title: 'Environments'
 weight: 20
 ---
-
-## Environments
+# Environments
 
 Environments in Kosli provide a place to track how your systems change over time.
 

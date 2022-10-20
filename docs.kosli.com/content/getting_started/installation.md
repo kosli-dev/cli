@@ -1,11 +1,9 @@
 ---
 title: Install Kosli
 bookCollapseSection: false
-weight: 10
+weight: 20
 ---
-
-
-## Installing the Kosli CLI
+# Installing the Kosli CLI
 
 Kosli CLI can be installed from package managers, 
 by Curling pre-built binaries, or by running inside a Docker container.  

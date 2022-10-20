@@ -1,6 +1,6 @@
 ---
 title: Helm
 bookCollapseSection: true
-weight: 50
+weight: 60
 ---
 # Helm

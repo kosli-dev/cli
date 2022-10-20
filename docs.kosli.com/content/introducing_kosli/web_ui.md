@@ -2,8 +2,7 @@
 title: 'Web UI'
 weight: 50
 ---
-
-## Web UI
+# Web UI
 
 [app.kosli.com](https://app.kosli.com) is an easy way to monitor the status of your environments and pipelines. All you need to log in is a GitHub account.
 

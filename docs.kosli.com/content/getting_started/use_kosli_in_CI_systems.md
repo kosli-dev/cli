@@ -1,11 +1,10 @@
 ---
 title: Use Kosli in CI Systems
 bookCollapseSection: false
-weight: 20
+weight: 30
 aliases:
     - /ci-defaults  # To keep short URL in docs and help in the CLI
 ---
-
 # Use Kosli in CI Systems
 
 This section provides how-to guides showing you how to use Kosli to report changes from
