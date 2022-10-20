@@ -1,0 +1,40 @@
+.hero {
+    background-color: $blue-300;
+    padding: $spacing-s;
+
+    h1 {
+        font-weight: 700;
+        font-size: 60px;
+        line-height: 72px;
+    }
+
+    a {
+        color: $neutral-100;
+        text-decoration: underline;
+        font-weight: 700;
+        &:hover {
+            text-decoration: none;
+        }
+    }
+}
+
+.card {
+    background-color: $neutral-200;
+    padding: $spacing-s;
+    margin: $spacing-xs;
+    height: 100%;
+    border-radius: 8px;
+
+    img {
+        width: 100%;
+    }
+
+    a {
+        font-weight: 700;
+        text-decoration: underline;
+        color: $blue-100;
+        &:hover {
+            text-decoration: none;
+        }
+    }
+}

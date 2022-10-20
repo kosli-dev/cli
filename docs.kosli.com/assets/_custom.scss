@@ -133,4 +133,20 @@ aside.book-toc .book-toc-content {
     }
 }
 
+.col-3 {
+    width: 25%;
+}
+
+@media only screen and (max-width: 1100px) {
+    .col-3 {
+        width: 33%;
+    }
+}
+
+@media only screen and (max-width: 600px) {
+    .col-3 {
+        width: 50%;
+    }
+}
+
 

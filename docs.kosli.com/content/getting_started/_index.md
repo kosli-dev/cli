@@ -2,8 +2,10 @@
 title: Getting started
 bookCollapseSection: true
 weight: 20
+aliases:
+    - /getting_started
 ---
-## Getting started
+# Getting started
 
 A typical use of Kosli follows a scenario:
 
