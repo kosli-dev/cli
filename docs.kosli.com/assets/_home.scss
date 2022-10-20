@@ -21,9 +21,10 @@
 .card {
     background-color: $neutral-200;
     padding: $spacing-s;
-    margin: $spacing-xs;
     height: 100%;
     border-radius: 8px;
+    display: flex;
+    flex-direction: column;
 
     img {
         width: 100%;
@@ -33,6 +34,8 @@
         font-weight: 700;
         text-decoration: underline;
         color: $blue-100;
+        display: block;
+        margin-top: auto;
         &:hover {
             text-decoration: none;
         }

@@ -39,7 +39,11 @@
 }
 
 .mb-s {
-  margin-bottom: $spacing-s
+  margin-bottom: $spacing-s;
+}
+
+.m-xs {
+  margin: $spacing-xs;
 }
 
 .text-center {
