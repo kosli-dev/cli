@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -26,6 +27,11 @@ type SearchResponse struct {
 type ResolvedToBody struct {
 	FullMatch string `json:"full_match"`
 	Type      string `json:"type"`
+}
+
+type HistoryEvent struct {
+	Description string
+	Timestamp   float64
 }
 
 // const artifactCreationExample = `
@@ -121,14 +127,30 @@ func printSearchAsTableWrapper(responseRaw string, out io.Writer, pageNumber int
 			return err
 		}
 	}
+
+	historyEvents := []HistoryEvent{}
+
 	if len(searchResult.EnvironmentEvents) > 0 {
 		fmt.Fprintf(out, "Artifact has no provenance\n")
 		fmt.Fprintf(out, "Found the following environment events for artifact:\n")
 		// TODO: print out env name to which an event belongs to
-		err = printEventsForSingleFingerprintAsTable(searchResult.EnvironmentEvents, out)
+		// err = printEventsForSingleFingerprintAsTable(searchResult.EnvironmentEvents, out)
+		events, err := getHistoryEventsForSingleFingerprint(searchResult.EnvironmentEvents)
 		if err != nil {
 			return err
 		}
+		historyEvents = append(historyEvents, events...)
+
+		header := []string{}
+		rows := []string{}
+		for _, event := range historyEvents {
+			createdAt, err := formattedTimestamp(event.Timestamp, true)
+			if err != nil {
+				createdAt = "bad timestamp"
+			}
+			rows = append(rows, fmt.Sprintf("    %s\t%s", event.Description, createdAt))
+		}
+		tabFormattedPrint(out, header, rows)
 	}
 	if len(searchResult.Allowlist) > 0 {
 		fmt.Fprintf(out, "Allowlist rules for artifact:\n")
@@ -137,7 +159,48 @@ func printSearchAsTableWrapper(responseRaw string, out io.Writer, pageNumber int
 			return err
 		}
 	}
+
 	return nil
+}
+
+func timestampToFloat64(timestamp interface{}) (float64, error) {
+	var floatTimestamp float64
+	switch t := timestamp.(type) {
+	case int64:
+		floatTimestamp = float64(timestamp.(int64))
+	case float64:
+		floatTimestamp = timestamp.(float64)
+	case string:
+		var err error
+		floatTimestamp, err = strconv.ParseFloat(timestamp.(string), 64)
+		if err != nil {
+			return 0.0, err
+		}
+	case nil:
+		return 0.0, nil
+	default:
+		return 0.0, fmt.Errorf("unsupported timestamp type %s", t)
+	}
+	return floatTimestamp, nil
+}
+
+func getHistoryEventsForSingleFingerprint(events []map[string]interface{}) ([]HistoryEvent, error) {
+	historyEvents := []HistoryEvent{}
+	for _, event := range events {
+		env_name := fmt.Sprintf("%s#%d", event["environment_name"], int(event["snapshot_index"].(float64)))
+		description := event["description"]
+		timestamp, err := timestampToFloat64(event["reported_at"])
+		if err != nil {
+			return nil, err
+		}
+
+		historyEvent := HistoryEvent{
+			Description: fmt.Sprintf("%s in %s", description, env_name),
+			Timestamp:   timestamp,
+		}
+		historyEvents = append(historyEvents, historyEvent)
+	}
+	return historyEvents, nil
 }
 
 func printEventsForSingleFingerprintAsTable(events []map[string]interface{}, out io.Writer) error {
@@ -150,7 +213,7 @@ func printEventsForSingleFingerprintAsTable(events []map[string]interface{}, out
 	for _, event := range events {
 		env_name := fmt.Sprintf("%s#%d", event["environment_name"], int(event["snapshot_index"].(float64)))
 		description := event["description"]
-		reportedAt, err := formattedTimestamp(event["reported_at"], false)
+		reportedAt, err := formattedTimestamp(event["reported_at"], true)
 		if err != nil {
 			return err
 		}
