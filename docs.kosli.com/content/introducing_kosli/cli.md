@@ -5,7 +5,7 @@ weight: 40
 # CLI
 
 In order to [record environments](/how_to/record), [artifacts and events](/how_to/connect) to Kosli you need to use [Kosli CLI](https://github.com/kosli-dev/cli). 
-The same tool can be used to [query](/how_to/query) Kosli and find out all you need to know about your runtime environments and artifacts.
+The same tool can be used to [search](/how_to/search) Kosli and find out all you need to know about your runtime environments and artifacts.
 
 Our CLI in an open source tool written in go and it's available for a number of different platforms.
 

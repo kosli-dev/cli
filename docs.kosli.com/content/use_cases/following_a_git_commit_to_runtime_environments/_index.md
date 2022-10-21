@@ -38,9 +38,9 @@ You will follow the commit that fixed this.
 ## Getting ready
 
 You need to:
-* [Install the `kosli` CLI](../../installation).
-* [Get your Kosli API token](../../installation#getting-your-kosli-api-token).
-* [Set the KOSLI_API_TOKEN environment variable](../../installation#set-the-kosli_api_token-environment-variable).
+* [Install the `kosli` CLI](/getting_started/installation/).
+* [Get your Kosli API token](/getting_started/installation#getting-your-kosli-api-token).
+* [Set the KOSLI_API_TOKEN environment variable](/getting_started/installation#set-the-kosli_api_token-environment-variable).
 * Set the KOSLI_OWNER environment variable to `cyber-dojo` (the Kosli `cyber-dojo` organization is public so any authenticated user can read its data):
   ```shell {.command}
   export KOSLI_OWNER=cyber-dojo

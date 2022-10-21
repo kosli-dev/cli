@@ -24,7 +24,7 @@ Once your Kosli pipeline is in place you can start reporting artifacts and evide
 
 ![Diagram of Pipeline Reporting](/images/pipelines.svg)
 
-A number of required flags may be defaulted to a set of environment variables, depending on the CI system you use. Check [How to use Kosli in CI Systems](/how_to/use_kosli_in_ci_systems/) for more details.
+A number of required flags may be defaulted to a set of environment variables, depending on the CI system you use. Check [How to use Kosli in CI Systems](/getting_started/use_kosli_in_ci_systems/) for more details.
 
 <!-- 
 TODO: 

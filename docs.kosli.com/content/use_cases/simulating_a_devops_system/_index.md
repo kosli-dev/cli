@@ -6,8 +6,8 @@ weight: 3
 
 # Preparing the tutorial
 To follow the tutorial you need to:
-* [Install the `kosli` CLI](../../installation).
-* [Get your Kosli API token](../../installation#getting-your-kosli-api-token).
+* [Install the `kosli` CLI](/getting_started/installation).
+* [Get your Kosli API token](/getting_started/installation#getting-your-kosli-api-token).
 * Set the KOSLI_API_TOKEN environment variable:
   ```shell {.command}
   export KOSLI_API_TOKEN=<paste-your-kosli-API-token-here>
