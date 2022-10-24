@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"strconv"
 
 	"github.com/kosli-dev/cli/internal/output"
@@ -155,6 +156,11 @@ func printSearchAsTableWrapper(responseRaw string, out io.Writer, pageNumber int
 		fmt.Fprintf(out, "Found the following environment events for artifact:\n")
 		header := []string{}
 		rows := []string{}
+
+		sort.Slice(historyEvents, func(i, j int) bool {
+			return historyEvents[i].Timestamp < historyEvents[j].Timestamp
+		})
+
 		for _, event := range historyEvents {
 			createdAt, err := formattedTimestamp(event.Timestamp, true)
 			if err != nil {
