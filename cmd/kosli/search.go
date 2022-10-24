@@ -115,7 +115,12 @@ func printSearchAsTableWrapper(responseRaw string, out io.Writer, pageNumber int
 		fmt.Fprintf(out, "Search result resolved to artifact with fingerprint %s\n", fullMatch)
 	}
 	if len(searchResult.ArtifactsForCommit) > 0 {
-		fmt.Fprintf(out, "Found the following artifact(s) for commit\n")
+		numArtifacts := len(searchResult.ArtifactsForCommit)
+		plural := ""
+		if numArtifacts > 1 {
+			plural = "s"
+		}
+		fmt.Fprintf(out, "Found %d artifact%s for commit\n", numArtifacts, plural)
 		err = printArtifactsJsonAsTable(searchResult.ArtifactsForCommit, out, pageNumber)
 		if err != nil {
 			return err
