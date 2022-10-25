@@ -157,6 +157,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		newApprovalReadCmd(out),
 		newExpectCmd(out),
 		newSearchCmd(out),
+		newCompletionCmd(out),
 		// Hidden documentation generator command: 'kosli docs'
 		newDocsCmd(out),
 	)
