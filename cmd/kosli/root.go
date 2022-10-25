@@ -54,7 +54,7 @@ const (
 	reasonFlag              = "The reason why this artifact is allowlisted."
 	oldestCommitFlag        = "The source commit sha for the oldest change in the deployment."
 	newestCommitFlag        = "[defaulted] The source commit sha for the newest change in the deployment."
-	repoRootFlag            = "The directory where the source git repository is volume-mounted."
+	repoRootFlag            = "[defaulted] The directory where the source git repository is volume-mounted."
 	approvalDescriptionFlag = "[optional] The approval description."
 	artifactDescriptionFlag = "[optional] The artifact description."
 	evidenceDescriptionFlag = "[optional] The evidence description."
