@@ -170,8 +170,8 @@ func getRepoUrl(repoRoot string) (string, error) {
 	}
 	repoRemote, err := repo.Remote("origin") // TODO: We hard code this for now. Should we have a flag to set it from the cmdline?
 	if err != nil {
-		return "", fmt.Errorf("failed to get remote('origin') git repository at %s: %v",
-			repoRoot, err)
+		fmt.Printf("Warning: Repo URL will not be reported since there is no remote('origin') in git repository (%s)\n", repoRoot)
+		return "", nil
 	}
 	remoteUrl := repoRemote.Config().URLs[0]
 	if strings.HasPrefix(remoteUrl, "git@") {
