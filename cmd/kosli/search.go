@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"sort"
 	"strconv"
 
 	"github.com/kosli-dev/cli/internal/output"
@@ -18,11 +17,18 @@ type searchOptions struct {
 }
 
 type SearchResponse struct {
-	ResolvedTo              ResolvedToBody           `json:"resolved_to"`
-	ArtifactsForCommit      []map[string]interface{} `json:"artifacts_for_commit"`
-	ArtifactsForFingerprint []map[string]interface{} `json:"artifacts_for_fingerprint"`
-	EnvironmentEvents       []map[string]interface{} `json:"environment_events_for_no_provenance_artifacts"`
-	Allowlist               []map[string]interface{} `json:"allowlist"`
+	ResolvedTo ResolvedToBody   `json:"resolved_to"`
+	Artifacts  []SearchArtifact `json:"artifacts"`
+	// ArtifactsForCommit      []map[string]interface{} `json:"artifacts_for_commit"`
+	// ArtifactsForFingerprint []map[string]interface{} `json:"artifacts_for_fingerprint"`
+	// EnvironmentEvents       []map[string]interface{} `json:"environment_events_for_no_provenance_artifacts"`
+	// Allowlist               []map[string]interface{} `json:"allowlist"`
+}
+
+type SearchArtifact struct {
+	Fingerprint string                   `json:"fingerprint"`
+	Name        string                   `json:"name"`
+	History     []map[string]interface{} `json:"history"`
 }
 
 type ResolvedToBody struct {
@@ -114,65 +120,75 @@ func printSearchAsTableWrapper(responseRaw string, out io.Writer, pageNumber int
 	} else {
 		fmt.Fprintf(out, "Search result resolved to artifact with fingerprint %s\n", fullMatch)
 	}
-	if len(searchResult.ArtifactsForCommit) > 0 {
-		numArtifacts := len(searchResult.ArtifactsForCommit)
-		plural := ""
-		if numArtifacts > 1 {
-			plural = "s"
-		}
-		fmt.Fprintf(out, "Found %d artifact%s for commit\n", numArtifacts, plural)
-		err = printArtifactsJsonAsTable(searchResult.ArtifactsForCommit, out, pageNumber)
-		if err != nil {
-			return err
-		}
-	}
-	if len(searchResult.ArtifactsForFingerprint) > 0 {
-		fmt.Fprintf(out, "Found the following artifact\n")
-		err = printArtifactsJsonAsTable(searchResult.ArtifactsForFingerprint, out, pageNumber)
-		if err != nil {
-			return err
-		}
+
+	rows := []string{}
+	for _, artifact := range searchResult.Artifacts {
+
+		rows = append(rows, fmt.Sprintf("Name:\t%s", artifact.Name))
+		rows = append(rows, fmt.Sprintf("Fingerprint:\t%s", artifact.Fingerprint))
+
 	}
 
-	historyEvents := []HistoryEvent{}
-	printHistory := false
+	tabFormattedPrint(out, []string{}, rows)
+	// if len(searchResult.ArtifactsForCommit) > 0 {
+	// 	numArtifacts := len(searchResult.ArtifactsForCommit)
+	// 	plural := ""
+	// 	if numArtifacts > 1 {
+	// 		plural = "s"
+	// 	}
+	// 	fmt.Fprintf(out, "Found %d artifact%s for commit\n", numArtifacts, plural)
+	// 	err = printArtifactsJsonAsTable(searchResult.ArtifactsForCommit, out, pageNumber)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
+	// if len(searchResult.ArtifactsForFingerprint) > 0 {
+	// 	fmt.Fprintf(out, "Found the following artifact\n")
+	// 	err = printArtifactsJsonAsTable(searchResult.ArtifactsForFingerprint, out, pageNumber)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
-	if len(searchResult.EnvironmentEvents) > 0 {
-		fmt.Fprintf(out, "Artifact has no provenance\n")
-		events, err := getHistoryEventsForSingleFingerprint(searchResult.EnvironmentEvents)
-		if err != nil {
-			return err
-		}
-		historyEvents = append(historyEvents, events...)
-		printHistory = true
-	}
-	if len(searchResult.Allowlist) > 0 {
-		events, err := getHistoryEventsForAllowlist(searchResult.Allowlist)
-		if err != nil {
-			return err
-		}
-		historyEvents = append(historyEvents, events...)
-		printHistory = true
-	}
+	// historyEvents := []HistoryEvent{}
+	// printHistory := false
 
-	if printHistory {
-		fmt.Fprintf(out, "Found the following environment events for artifact:\n")
-		header := []string{}
-		rows := []string{}
+	// if len(searchResult.EnvironmentEvents) > 0 {
+	// 	fmt.Fprintf(out, "Artifact has no provenance\n")
+	// 	events, err := getHistoryEventsForSingleFingerprint(searchResult.EnvironmentEvents)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	historyEvents = append(historyEvents, events...)
+	// 	printHistory = true
+	// }
+	// if len(searchResult.Allowlist) > 0 {
+	// 	events, err := getHistoryEventsForAllowlist(searchResult.Allowlist)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	historyEvents = append(historyEvents, events...)
+	// 	printHistory = true
+	// }
 
-		sort.Slice(historyEvents, func(i, j int) bool {
-			return historyEvents[i].Timestamp < historyEvents[j].Timestamp
-		})
+	// if printHistory {
+	// 	fmt.Fprintf(out, "Found the following environment events for artifact:\n")
+	// 	header := []string{}
+	// 	rows := []string{}
 
-		for _, event := range historyEvents {
-			createdAt, err := formattedTimestamp(event.Timestamp, true)
-			if err != nil {
-				createdAt = "bad timestamp"
-			}
-			rows = append(rows, fmt.Sprintf("    %s\t%s", event.Description, createdAt))
-		}
-		tabFormattedPrint(out, header, rows)
-	}
+	// 	sort.Slice(historyEvents, func(i, j int) bool {
+	// 		return historyEvents[i].Timestamp < historyEvents[j].Timestamp
+	// 	})
+
+	// 	for _, event := range historyEvents {
+	// 		createdAt, err := formattedTimestamp(event.Timestamp, true)
+	// 		if err != nil {
+	// 			createdAt = "bad timestamp"
+	// 		}
+	// 		rows = append(rows, fmt.Sprintf("    %s\t%s", event.Description, createdAt))
+	// 	}
+	// 	tabFormattedPrint(out, header, rows)
+	// }
 
 	return nil
 }
