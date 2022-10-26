@@ -31,15 +31,26 @@ The change could be for example:
 * a number of instances of the services has changed
 * a compliance status of the artifact has changed
 
-<!-- 
-TODO:
-
 ## Snapshots
+
+Snapshot represents a reported status of your runtime environment at a given time. When you click on the name of a specific environment on **Environments** page at [app.kosli.com](https://app.kosli.com) you are taken to the latest snapshot. You can use the arrow buttons to browse older snapshots. 
+
+Once snapshot is reported it can't be modified, that is to secure the integrity of data. Every time the environment report indicates changes in the runtime environment or in the artifact status a new snapshot is created.
 
 ## Compliant Environment
 
+Environment is **compliant** when:
+1. All the artifacts running in it have provenance and are compliant themselves OR they were [allow-listed](#allow-list)
+2. All the artifacts running in it are reported as [deployed](/client_reference/kosli_expect_deployment/) to a given environment
+
+If you're environment is not compliant check the latest snapshot for more detailed info - each unnkown or incompliant artifacts will be marked and the reason for the incompliancy will be provided
+
 ## Allow list 
--->
+
+Not all the artifacts that run in your environment must be built by you - these may be publicly available artifacts, or artifacts provided by external vendors. In such case you will likely have no information about these artifacts reported to Kosli. 
+
+These artifact will by default be marked with "No provenance" red label and it will affect the compliancy of the whole environment. If you know how and why these artifact are present in your environment you can add them to Allow-list by clicking a button on the snapshot page, or using [kosli environment allowedartifacts add](/client_reference/kosli_environment_allowedartifacts_add/) command
+
 
 
 
