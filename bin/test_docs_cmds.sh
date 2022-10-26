@@ -9,7 +9,7 @@ echo "#!/usr/bin/env bash" > ${TEST_FILE}
 echo "set -e" >> ${TEST_FILE}
 echo "set -x" >> ${TEST_FILE}
 
-# Clean up for the simulating_a_DevOps_system test
+# Clean up for the simulating_a_devops_system test
 echo "rm -rf /tmp/try-kosli" >> ${TEST_FILE}
 
 # Export cli commands
