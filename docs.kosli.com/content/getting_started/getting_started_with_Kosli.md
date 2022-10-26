@@ -1,6 +1,7 @@
 ---
 title: Getting started with Kosli
 bookCollapseSection: false
+description: osiadjosaidjosaidjosaidjs katerina's text
 weight: 10
 # aliases:
 #     - /getting_started
