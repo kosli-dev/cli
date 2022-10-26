@@ -141,7 +141,7 @@ func (o *artifactCreationOptions) run(args []string) error {
 		previousCommit := previousCommitResponse["latest_commit"].(string)
 		o.payload.CommitsList, err = listCommitsBetween(o.srcRepoRoot, previousCommit, o.payload.GitCommit)
 		if err != nil {
-			return err
+			fmt.Printf("Warning: %s\n", err)
 		}
 	}
 
