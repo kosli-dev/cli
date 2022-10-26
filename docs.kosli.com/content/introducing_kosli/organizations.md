@@ -1,5 +1,7 @@
 ---
-title: 'Organizations'
+title: Organizations
+seo_title: Organizations
+description: Organization in Kosli owns Kosli pipelines and environments
 weight: 10
 ---
 # Organizations

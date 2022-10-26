@@ -4,9 +4,23 @@
 <meta name="theme-color" content="#FFFFFF">
 <meta name="color-scheme" content="light dark">
 
-{{- template "_internal/opengraph.html" . -}}
+{{ with .Params.image }}
+  <meta property="og:image" content="{{ . | absURL }}" />
+  <meta name="twitter:image" content="{{ . | absURL }}" />
+  {{ else }}
+  <meta property="og:image" content="{{ site.Params.default_social_thumb | absURL }}" />
+  <meta name="twitter:image" content="{{ site.Params.default_social_thumb | absURL }}" />
+{{ end }}
+<meta property="og:title" content="{{ .Params.seo_title }}">
+<meta property="og:description" content="{{ .Params.description }}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ .Permalink }}">
 
-<title>{{ partial "docs/html-head-title" . }}</title>
+{{ if .Params.seo_title }}
+		<title>{{ .Params.seo_title }}</title>
+	{{ else }}
+    <title>{{ .Title }}</title>
+  {{ end }}
 
 {{ "<!--Favicon-->" | safeHTML }}
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">

@@ -15,6 +15,7 @@ markup:
   #   smartDashes: false
   # defaultMarkdownHandler: blackFriday
 
-params:
+Params:
   BookSection: '/'
   BookToC: true
+  default_social_thumb: /images/kosli.jpg
