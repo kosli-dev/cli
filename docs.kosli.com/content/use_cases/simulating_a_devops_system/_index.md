@@ -336,6 +336,7 @@ kosli pipeline artifact report creation /tmp/try-kosli/build/web_$(cat /tmp/try-
     --artifact-type file \
     --build-url file://dummy \
     --commit-url file:///tmp/try-kosli/code \
+    --repo-root /tmp/try-kosli/code \
     --git-commit $(cd /tmp/try-kosli/code; git rev-parse HEAD)
 ```
 
@@ -345,6 +346,7 @@ kosli pipeline artifact report creation /tmp/try-kosli/build/db_$(cat /tmp/try-k
     --artifact-type file \
     --build-url file://dummy \
     --commit-url file:///tmp/try-kosli/code \
+    --repo-root /tmp/try-kosli/code \
     --git-commit $(cd /tmp/try-kosli/code; git rev-parse HEAD)
 ```
 
@@ -402,21 +404,21 @@ being deployed to a given runtime environment.
 
 ## Deploying software to the server and reporting the deployment to Kosli
 
-Simulate deploying your software to the server:
+Report to Kosli that the web software is expected to be deployed:
 
 ```shell {.command}
-simulate_deployment
-```
-
-Report to Kosli that the web software has been deployed:
-
-```shell {.command}
-kosli pipeline deployment report /tmp/try-kosli/build/web_$(cat /tmp/try-kosli/code/web.src).bin \
+kosli expect deployment /tmp/try-kosli/build/web_$(cat /tmp/try-kosli/code/web.src).bin \
     --pipeline web-server \
     --artifact-type file \
     --build-url file://dummy \
     --environment production \
     --description "Web server version $(cat /tmp/try-kosli/code/web.src)"
+```
+
+Simulate deploying your software to the server:
+
+```shell {.command}
+simulate_deployment
 ```
 
 You can verify the deployment with:

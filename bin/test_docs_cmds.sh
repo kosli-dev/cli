@@ -4,6 +4,8 @@ set -e
 MD_FILE=$1
 TEST_FILE=/tmp/test_docs_cmd.sh
 
+[ -f ${MD_FILE} ] || exit 9
+
 # Create test file
 echo "#!/usr/bin/env bash" > ${TEST_FILE}
 echo "set -e" >> ${TEST_FILE}

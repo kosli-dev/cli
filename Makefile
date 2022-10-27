@@ -95,7 +95,7 @@ test_integration_single:
 
 
 test_docs: deps vet ensure_network test_integration_setup
-	./bin/test_docs_cmds.sh docs.kosli.com/content/tutorials/simulating_a_devops_system/_index.md
+	./bin/test_docs_cmds.sh docs.kosli.com/content/use_cases/simulating_a_devops_system/_index.md
 
 
 docker: deps vet lint
