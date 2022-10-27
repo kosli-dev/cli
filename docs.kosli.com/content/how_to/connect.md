@@ -117,7 +117,7 @@ kosli pipeline artifact report evidence test \
 	--results-dir yourFolderWithJUnitResults
 ```
 
-[junit test](http://localhost:1515/client_reference/kosli_pipeline_artifact_report_evidence_test/) 
+[junit test](/client_reference/kosli_pipeline_artifact_report_evidence_test/) 
 
 ### Generic
 

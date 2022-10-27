@@ -10,42 +10,51 @@ Generate completion script
 
 To load completions:
 
-Bash:
+  ### Bash
 
+```
   $ source <(kosli completion bash)
+```
+  To load completions for each session, execute once:  
 
-  # To load completions for each session, execute once:
-  # Linux:
+  On Linux:
+  ```
   $ kosli completion bash > /etc/bash_completion.d/kosli
-  # macOS:
+  ``` 
+  On macOS:
+  ```
   $ kosli completion bash > $(brew --prefix)/etc/bash_completion.d/kosli
+  ```
+  ### Zsh
 
-Zsh:
-
-  # If shell completion is not already enabled in your environment,
-  # you will need to enable it.  You can execute the following once:
-
+  If shell completion is not already enabled in your environment,  
+you will need to enable it.  You can execute the following once:
+  ```
   $ echo "autoload -U compinit; compinit" >> ~/.zshrc
-
-  # To load completions for each session, execute once:
+  ```
+  To load completions for each session, execute once:
+  ```
   $ kosli completion zsh > "${fpath[1]}/_kosli"
+  ```
+  You will need to start a new shell for this setup to take effect.
 
-  # You will need to start a new shell for this setup to take effect.
-
-fish:
-
+  ### fish
+  ```
   $ kosli completion fish | source
-
-  # To load completions for each session, execute once:
+  ```
+  To load completions for each session, execute once:
+  ``` 
   $ kosli completion fish > ~/.config/fish/completions/kosli.fish
-
-PowerShell:
-
+  ```
+  ### PowerShell
+  ```
   PS> kosli completion powershell | Out-String | Invoke-Expression
-
-  # To load completions for every new session, run:
-  PS> kosli completion powershell > kosli.ps1
-  # and source this file from your PowerShell profile.
+  ```
+ To load completions for every new session, run:
+ ```
+ PS> kosli completion powershell > kosli.ps1
+ ``` 
+ and source this file from your PowerShell profile.
 
 
 ```shell
