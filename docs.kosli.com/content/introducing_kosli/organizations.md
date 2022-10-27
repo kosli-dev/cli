@@ -13,9 +13,9 @@ You can also create shared organizations, and invite other Kosli users as member
 
 ## Shared organization
 
-To create a shared organization click on your profile picture (or avatar) in the top right corner of [app.kosli.com](https://app.kosli.com) and select "Add an organization". You'd be asked to provide the name and the description of your organization. After you click "Create Ogranization" button the new organization is ready. After the page reloads you'll see the "Settings" page for the new organization. 
+To create a shared organization click on your profile picture (or avatar) in the top right corner of [app.kosli.com](https://app.kosli.com) and select "Add an organization". You'd be asked to provide the name and the description of your organization. After you click "Create Organization" button the new organization is ready. After the page reloads you'll see the "Settings" page for the new organization. 
 
-You can switch betwen organizations using dropdown menu in the top left corner of the page, under Kosli logo. 
+You can switch between organizations using dropdown menu in the top left corner of the page, under Kosli logo. 
 
 ## Shared organization members 
 

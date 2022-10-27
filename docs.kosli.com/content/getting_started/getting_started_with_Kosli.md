@@ -102,7 +102,7 @@ The missing piece is making sure you know how your artifact ended up in the envi
 ```shell {.command}
 kosli pipeline deployment report <your artifact name> \
     --sha256 <your artifact fingerprint> \
-    --build-url <deplpyment build url> \
+    --build-url <deployment build url> \
     --api-token <your-api-token> \
     --owner <your-github-username> \
     --environment <kosli environment to report to>

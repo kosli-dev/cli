@@ -5,11 +5,11 @@ weight: 30
 ---
 # Record your environments in Kosli
 
-Recording the status of runtime environments it's one of the fundamental features of Kosli. Our CLI detects artifacts running in givent environment and reports the information to Kosli. 
+Recording the status of runtime environments it's one of the fundamental features of Kosli. Our CLI detects artifacts running in given environment and reports the information to Kosli. 
 
 If the list of running artifacts is different than what was reported previously a new snapshot is created. Snapshots are immutable and can't be tampered with.
 
-There is range of `kosli environment report [...]` commands, allowing you to report a variety of environments. To record a current status of your environment you simnply run on of them. You can do it manually but typically recording commands would run automatically, e.g. via a cron job or scheduled CI job.
+There is range of `kosli environment report [...]` commands, allowing you to report a variety of environments. To record a current status of your environment you simply run on of them. You can do it manually but typically recording commands would run automatically, e.g. via a cron job or scheduled CI job.
 
 ## Record docker environment
 
@@ -61,7 +61,7 @@ kosli environment report k8s yourEnvironmentName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
-# report what is running in a given namesoace using kubeconfig at a custom path:
+# report what is running in a given namespace using kubeconfig at a custom path:
 kosli environment report k8s yourEnvironmentName \
 	--kubeconfig /path/to/kubeconfig \
 	--namespace your-namespace \

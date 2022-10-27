@@ -14,13 +14,13 @@ Once your Kosli pipeline is in place you can start reporting artifacts and evide
 
 ![Diagram of Pipeline Reporting](/images/pipelines.svg)
 
-A number of required flags may be defaulted to a set of environment variables, depending on the CI system you use. Check [How to use Kosli in CI Systems](/getting_started/use_kosli_in_ci_systems/) for more details. All of the flaga can be represented by [environment variables](/introducing_kosli/cli/#environment-variables)
+A number of required flags may be defaulted to a set of environment variables, depending on the CI system you use. Check [How to use Kosli in CI Systems](/getting_started/use_kosli_in_ci_systems/) for more details. All of the flags can be represented by [environment variables](/introducing_kosli/cli/#environment-variables)
 
 ## Artifacts
 
 Whatever you produce during your build process can be an artifact - a binary file, an archive, a folder, a docker image... sometimes you don't produce anything new while "building" and the complete code can be your artifact. 
 
-Best practice is to create Kosli pipeline for each type of artifact - e.g. if your CI pipeline prpduces 3 separate artifacts (that could be 3 different binaries for three different platforms) you'd create 3 different Kosli pipelines to report artifacts and evidences. 
+Best practice is to create Kosli pipeline for each type of artifact - e.g. if your CI pipeline produces 3 separate artifacts (that could be 3 different binaries for three different platforms) you'd create 3 different Kosli pipelines to report artifacts and evidences. 
 
 ## Evidences
 

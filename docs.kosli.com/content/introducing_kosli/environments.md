@@ -43,7 +43,7 @@ Environment is **compliant** when:
 1. All the artifacts running in it have provenance and are compliant themselves OR they were [allow-listed](#allow-list)
 2. All the artifacts running in it are reported as [deployed](/client_reference/kosli_expect_deployment/) to a given environment
 
-If you're environment is not compliant check the latest snapshot for more detailed info - each unnkown or incompliant artifacts will be marked and the reason for the incompliancy will be provided
+If you're environment is not compliant check the latest snapshot for more detailed info - each unknown or incompliant artifacts will be marked and the reason for the incompliancy will be provided
 
 ## Allow list 
 
