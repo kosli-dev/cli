@@ -9,7 +9,9 @@ Recording the status of runtime environments it's one of the fundamental feature
 
 If the list of running artifacts is different than what was reported previously a new snapshot is created. Snapshots are immutable and can't be tampered with.
 
-There is range of `kosli environment report [...]` commands, allowing you to report a variety of environments. To record a current status of your environment you simply run on of them. You can do it manually but typically recording commands would run automatically, e.g. via a cron job or scheduled CI job.
+There is range of `kosli environment report [...]` commands, allowing you to report a variety of environments. To record a current status of your environment you simply run one of them. You can do it manually but typically recording commands would run automatically, e.g. via a cron job or scheduled CI job.
+
+Remember to [create an environment](/getting_started/getting_started_with_kosli/#record-environment) in Kosli before you start reporting, and when reporting make sure the type of the Kosli environment matches the type of the runtime environment you're reporting.
 
 ## Record docker environment
 
@@ -20,7 +22,7 @@ The command has to be run on the actual docker host, to be able to detect runnin
 
 ```
 kosli environment report docker yourEnvironmentName \
-	--api-token yourAPIToken \r
+	--api-token yourAPIToken \
 	--owner yourOrgName
 ```
 
@@ -50,8 +52,11 @@ Details [here](/client_reference/kosli_environment_report_ecs/)
 
 ## Record k8s environment
 
-Run `kosli environment report k8s` to report images data from specific namespace(s) or entire cluster to Kosli.  
-The command can be run anywhere and requires `kubeconfig` to be able to connect to the cluster (you can skip providing the location of `kubeconfig` if it resides in default `$HOME/.kube/config` folder).
+Run `kosli environment report k8s` to report images data from specific namespace(s) or entire cluster to Kosli. You can also select multiple namespaces to report from (using `--namespace` and comma separated list when running a command) or use `--exclude-namespace` to report from a whole cluster except the namespaces from the comma spearated list given to the flag
+
+The command can be run anywhere and requires `kubeconfig` file to be able to connect to the cluster (you can skip providing the location of `kubeconfig` if it resides in default `$HOME/.kube/config` folder).
+
+You can also choose to run it from within the cluster - use our [helm chart](/helm/helm_chart/) to install the reporter as a cron job. `kubeconfig` won't be need in that case.
 
 ### Example
 
@@ -135,10 +140,17 @@ Details [here](/client_reference/kosli_environment_report_s3/)
 
 ## Record server environment
 
-Run `kosli environment report server` to report directory or file artifacts data in the given list of paths to Kosli.  
+Run `kosli environment report server` to report directory or file artifacts from the given list of paths to Kosli.  
 The command has to be run on the actual server (physical or vm), to be able to detect artifacts. 
 
-Use `--paths` flag to provide a comma separated list of directories and files you want to be reported. Keep in mind that each directory will be treated as a single artifact and in order to make sure they are correctly identified in Kosli they should also be reported as a single artifact.
+Use `--paths` flag to provide a comma separated list of directories and files you want to be reported. Keep in mind that each directory will be treated as a single artifact and in order to make sure they are correctly identified in Kosli they should also be reported to Kosli pipeline as a single artifact.
+
+For example, if you provide a following list: `--paths /home/server/web, /home/monitor.exe, /home/server/calculator` kosli will calculate fingerprints and report as running 3 artifacts to Kosli:
+* directory `web`
+* directory `calculator` 
+* file `monitor.exe`
+
+And it will try to find matching artifacts reported to any pipeline belonging to the same organization as the environment.
 
 ### Example 
 
