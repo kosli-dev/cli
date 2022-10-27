@@ -111,7 +111,7 @@ func printSearchAsTableWrapper(responseRaw string, out io.Writer, pageNumber int
 		return err
 	}
 	fullMatch := searchResult.ResolvedTo.FullMatch
-	if searchResult.ResolvedTo.Type == "git_commit" {
+	if searchResult.ResolvedTo.Type == "commit" {
 		fmt.Fprintf(out, "Search result resolved to commit %s\n", fullMatch)
 	} else {
 		fmt.Fprintf(out, "Search result resolved to artifact with fingerprint %s\n", fullMatch)
