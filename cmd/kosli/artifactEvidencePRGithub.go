@@ -146,6 +146,17 @@ func (o *pullRequestEvidenceGithubOptions) getGithubPullRequests() ([]*GithubPrE
 		}
 		evidence.Approvers = approvers
 		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
+
+		// Code to test out if we can find the author of the last commit
+		// and compare it with the approvers
+		lastCommit := pullrequest.Head.GetSHA()
+		commit, _, err := client.Git.GetCommit(ctx, owner, repository, lastCommit)
+		if err == nil {
+			fmt.Println(approvers)
+			fmt.Println("xxxxxxxxxxx")
+			fmt.Println(commit.Author)
+			fmt.Println("xxxxxxxxxxx")
+		}
 	}
 	if len(pullRequestsEvidence) > 0 {
 		isCompliant = true
