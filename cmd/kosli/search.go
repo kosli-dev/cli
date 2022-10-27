@@ -123,10 +123,16 @@ func printSearchAsTableWrapper(responseRaw string, out io.Writer, pageNumber int
 
 	rows := []string{}
 	for _, artifact := range searchResult.Artifacts {
-
 		rows = append(rows, fmt.Sprintf("Name:\t%s", artifact.Name))
 		rows = append(rows, fmt.Sprintf("Fingerprint:\t%s", artifact.Fingerprint))
-
+		rows = append(rows, "History:")
+		for _, event := range artifact.History {
+			timestampHuman, err := formattedTimestamp(event["timestamp"], true)
+			if err != nil {
+				timestampHuman = "bad timestamp"
+			}
+			rows = append(rows, fmt.Sprintf("    %s\t%s", event["event"], timestampHuman))
+		}
 	}
 
 	tabFormattedPrint(out, []string{}, rows)
