@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/kosli-dev/cli/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -31,6 +32,9 @@ type BitbucketPrEvidence struct {
 	PullRequestURL         string `json:"pullRequestURL"`
 	PullRequestState       string `json:"pullRequestState"`
 	Approvers              string `json:"approvers"`
+	LastCommit             string `json:"lastCommit"`
+	LastCommitter          string `json:"lastCommitter"`
+	SelfApproved           bool   `json:"selfApproved"`
 }
 
 func newPullRequestEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
@@ -124,7 +128,7 @@ func getPullRequestsFromBitbucketApi(workspace, repository, commit, username, pa
 		return pullRequestsEvidence, false, err
 	}
 	if response.Resp.StatusCode == 200 {
-		isCompliant, pullRequestsEvidence, err = parseBitbucketResponse(commit, password, username, response, assert)
+		isCompliant, pullRequestsEvidence, err = parseBitbucketResponse(commit, workspace, repository, password, username, response, assert)
 		if err != nil {
 			return pullRequestsEvidence, isCompliant, err
 		}
@@ -139,7 +143,7 @@ func getPullRequestsFromBitbucketApi(workspace, repository, commit, username, pa
 	return pullRequestsEvidence, isCompliant, nil
 }
 
-func parseBitbucketResponse(commit, password, username string, response *requests.HTTPResponse, assert bool) (bool, []*BitbucketPrEvidence, error) {
+func parseBitbucketResponse(commit, workspace, repository, password, username string, response *requests.HTTPResponse, assert bool) (bool, []*BitbucketPrEvidence, error) {
 	log.Debug("Pull requests response: " + response.Body)
 	pullRequestsEvidence := []*BitbucketPrEvidence{}
 	isCompliant := false
@@ -157,7 +161,7 @@ func parseBitbucketResponse(commit, password, username string, response *request
 		linksInterface := pr["links"].(map[string]interface{})
 		apiLinkMap := linksInterface["self"].(map[string]interface{})
 		htmlLinkMap := linksInterface["html"].(map[string]interface{})
-		evidence, err := getPullRequestDetailsFromBitbucket(apiLinkMap["href"].(string), htmlLinkMap["href"].(string), username, password, commit)
+		evidence, err := getPullRequestDetailsFromBitbucket(apiLinkMap["href"].(string), htmlLinkMap["href"].(string), workspace, repository, username, password, commit)
 		if err != nil {
 			return false, pullRequestsEvidence, err
 		}
@@ -174,8 +178,8 @@ func parseBitbucketResponse(commit, password, username string, response *request
 	return isCompliant, pullRequestsEvidence, nil
 }
 
-func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, username, password, commit string) (*BitbucketPrEvidence, error) {
-	log.Debug("Getting pull request details for" + prApiUrl)
+func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, workspace, repository, username, password, commit string) (*BitbucketPrEvidence, error) {
+	log.Debug("Getting pull request details for " + prApiUrl)
 	evidence := &BitbucketPrEvidence{}
 	response, err := requests.SendPayload([]byte{}, prApiUrl, username, password,
 		global.MaxAPIRetries, false, http.MethodGet, log)
@@ -193,26 +197,60 @@ func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, username, password
 		evidence.PullRequestMergeCommit = commit
 		evidence.PullRequestState = responseData["state"].(string)
 		participants := responseData["participants"].([]interface{})
-		approvers := ""
+		approvers := []string{}
 
 		if len(participants) > 0 {
 			for _, participantInterface := range participants {
 				p := participantInterface.(map[string]interface{})
 				if p["approved"].(bool) {
 					user := p["user"].(map[string]interface{})
-					approvers = approvers + user["display_name"].(string) + ","
+					approvers = append(approvers, user["display_name"].(string))
 				}
 			}
-			approvers = strings.TrimSuffix(approvers, ",")
 		} else {
 			log.Debug("No approvers found")
 		}
-		evidence.Approvers = approvers
-
+		evidence.Approvers = strings.Join(approvers, ",")
+		prID := int(responseData["id"].(float64))
+		evidence.LastCommit, evidence.LastCommitter, err = getBitbucketPRLastCommit(workspace, repository, username, password, prID)
+		if err != nil {
+			return evidence, err
+		}
+		if utils.Contains(approvers, evidence.LastCommitter) {
+			evidence.SelfApproved = true
+		}
 	} else {
 		return evidence, fmt.Errorf("failed to get PR details, got HTTP status %d. Please review repository permissions", response.Resp.StatusCode)
 	}
 	return evidence, nil
+}
+
+func getBitbucketPRLastCommit(workspace, repository, username, password string, prID int) (string, string, error) {
+	url := fmt.Sprintf("https://api.bitbucket.org/2.0/repositories/%s/%s/pullrequests/%d/commits", workspace, repository, prID)
+	log.Debug("Getting pull requests commits from" + url)
+	response, err := requests.SendPayload([]byte{}, url, username, password,
+		global.MaxAPIRetries, false, http.MethodGet, log)
+	if err != nil {
+		return "", "", err
+	}
+
+	if response.Resp.StatusCode == 200 {
+		var responseData map[string]interface{}
+		err := json.Unmarshal([]byte(response.Body), &responseData)
+		if err != nil {
+			return "", "", err
+		}
+		prCommits := responseData["values"].([]interface{})
+
+		// the first commit is the merge commit
+		// TODO: is it safe to always to get the second commit?
+		lastCommit := prCommits[1].(map[string]interface{})
+		lastAuthor := lastCommit["author"].(map[string]interface{})
+		return lastCommit["hash"].(string), lastAuthor["user"].(map[string]interface{})["display_name"].(string), nil
+
+	} else {
+		return "", "", fmt.Errorf("failed to get PR commits, got HTTP status %d", response.Resp.StatusCode)
+	}
 }
 
 func controlPullRequestDesc() string {

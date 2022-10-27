@@ -9,6 +9,7 @@ import (
 
 	gh "github.com/google/go-github/v42/github"
 	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/kosli-dev/cli/internal/utils"
 	"golang.org/x/oauth2"
 
 	"github.com/spf13/cobra"
@@ -33,6 +34,9 @@ type GithubPrEvidence struct {
 	PullRequestURL         string `json:"pullRequestURL"`
 	PullRequestState       string `json:"pullRequestState"`
 	Approvers              string `json:"approvers"`
+	LastCommit             string `json:"lastCommit"`
+	LastCommitter          string `json:"lastCommitter"`
+	SelfApproved           bool   `json:"selfApproved"`
 }
 
 func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
@@ -57,7 +61,7 @@ func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(args)
+			return o.run(out, args)
 		},
 	}
 
@@ -84,7 +88,7 @@ func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *pullRequestEvidenceGithubOptions) run(args []string) error {
+func (o *pullRequestEvidenceGithubOptions) run(out io.Writer, args []string) error {
 	var err error
 	if o.sha256 == "" {
 		o.sha256, err = GetSha256Digest(args[0], o.fingerprintOptions)
@@ -104,6 +108,8 @@ func (o *pullRequestEvidenceGithubOptions) run(args []string) error {
 	o.payload.Contents["url"] = o.buildUrl
 	o.payload.Contents["description"] = o.description
 	o.payload.Contents["source"] = pullRequestsEvidence
+
+	fmt.Fprintf(out, "found %d pull request(s) for commit: %s", len(pullRequestsEvidence), o.commit)
 
 	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
 		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
@@ -144,18 +150,18 @@ func (o *pullRequestEvidenceGithubOptions) getGithubPullRequests() ([]*GithubPrE
 		if err != nil {
 			return pullRequestsEvidence, isCompliant, err
 		}
-		evidence.Approvers = approvers
+		evidence.Approvers = strings.Join(approvers, ",")
 		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
 
-		// Code to test out if we can find the author of the last commit
-		// and compare it with the approvers
 		lastCommit := pullrequest.Head.GetSHA()
 		commit, _, err := client.Git.GetCommit(ctx, owner, repository, lastCommit)
-		if err == nil {
-			fmt.Println(approvers)
-			fmt.Println("xxxxxxxxxxx")
-			fmt.Println(commit.Author)
-			fmt.Println("xxxxxxxxxxx")
+		if err != nil {
+			return pullRequestsEvidence, isCompliant, err
+		}
+		evidence.LastCommit = lastCommit
+		evidence.LastCommitter = commit.GetAuthor().GetName()
+		if utils.Contains(approvers, evidence.LastCommitter) {
+			evidence.SelfApproved = true
 		}
 	}
 	if len(pullRequestsEvidence) > 0 {
@@ -169,18 +175,17 @@ func (o *pullRequestEvidenceGithubOptions) getGithubPullRequests() ([]*GithubPrE
 	return pullRequestsEvidence, isCompliant, nil
 }
 
-func getPullRequestApprovers(client *gh.Client, context context.Context, owner, repo string, number int) (string, error) {
-	approvers := ""
+func getPullRequestApprovers(client *gh.Client, context context.Context, owner, repo string, number int) ([]string, error) {
+	approvers := []string{}
 	reviews, _, err := client.PullRequests.ListReviews(context, owner, repo, number, &gh.ListOptions{})
 	if err != nil {
 		return approvers, err
 	}
 	for _, r := range reviews {
 		if r.GetState() == "APPROVED" {
-			approvers = approvers + r.GetUser().GetLogin() + ","
+			approvers = append(approvers, r.GetUser().GetLogin())
 		}
 	}
-	approvers = strings.TrimSuffix(approvers, ",")
 	return approvers, nil
 }
 
