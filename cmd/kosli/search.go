@@ -21,9 +21,15 @@ type SearchResponse struct {
 }
 
 type SearchArtifact struct {
-	Fingerprint string                   `json:"fingerprint"`
-	Name        string                   `json:"name"`
-	History     []map[string]interface{} `json:"history"`
+	Fingerprint     string                   `json:"fingerprint"`
+	Name            string                   `json:"name"`
+	Pipeline        string                   `json:"pipeline"`
+	Commit          string                   `json:"git_commit"`
+	HasProvenance   bool                     `json:"has_provenance"`
+	CommitURL       string                   `json:"commit_url"`
+	BuildURL        string                   `json:"build_url"`
+	ComplianceState string                   `json:"compliance_state"`
+	History         []map[string]interface{} `json:"history"`
 }
 
 type ResolvedToBody struct {
@@ -115,6 +121,15 @@ func printSearchAsTableWrapper(responseRaw string, out io.Writer, pageNumber int
 	for _, artifact := range searchResult.Artifacts {
 		rows = append(rows, fmt.Sprintf("Name:\t%s", artifact.Name))
 		rows = append(rows, fmt.Sprintf("Fingerprint:\t%s", artifact.Fingerprint))
+		rows = append(rows, fmt.Sprintf("Has provenance:\t%t", artifact.HasProvenance))
+		if artifact.HasProvenance {
+			rows = append(rows, fmt.Sprintf("Pipeline:\t%s", artifact.Pipeline))
+			rows = append(rows, fmt.Sprintf("Git commit:\t%s", artifact.Commit))
+			rows = append(rows, fmt.Sprintf("Commit URL:\t%s", artifact.CommitURL))
+			rows = append(rows, fmt.Sprintf("Build URL:\t%s", artifact.BuildURL))
+			rows = append(rows, fmt.Sprintf("Compliance state:\t%s", artifact.ComplianceState))
+		}
+
 		rows = append(rows, "History:")
 		for _, event := range artifact.History {
 			timestampHuman, err := formattedTimestamp(event["timestamp"], true)
