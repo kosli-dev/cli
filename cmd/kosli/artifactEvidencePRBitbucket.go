@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -208,7 +209,7 @@ func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, workspace, reposit
 		} else {
 			log.Debug("No approvers found")
 		}
-		// evidence.Approvers = strings.Join(approvers, ",")
+		evidence.Approvers = strings.Join(approvers, ",")
 		// prID := int(responseData["id"].(float64))
 		// evidence.LastCommit, evidence.LastCommitter, err = getBitbucketPRLastCommit(workspace, repository, username, password, prID)
 		// if err != nil {
@@ -223,33 +224,33 @@ func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, workspace, reposit
 	return evidence, nil
 }
 
-func getBitbucketPRLastCommit(workspace, repository, username, password string, prID int) (string, string, error) {
-	url := fmt.Sprintf("https://api.bitbucket.org/2.0/repositories/%s/%s/pullrequests/%d/commits", workspace, repository, prID)
-	log.Debug("Getting pull requests commits from" + url)
-	response, err := requests.SendPayload([]byte{}, url, username, password,
-		global.MaxAPIRetries, false, http.MethodGet, log)
-	if err != nil {
-		return "", "", err
-	}
+// func getBitbucketPRLastCommit(workspace, repository, username, password string, prID int) (string, string, error) {
+// 	url := fmt.Sprintf("https://api.bitbucket.org/2.0/repositories/%s/%s/pullrequests/%d/commits", workspace, repository, prID)
+// 	log.Debug("Getting pull requests commits from" + url)
+// 	response, err := requests.SendPayload([]byte{}, url, username, password,
+// 		global.MaxAPIRetries, false, http.MethodGet, log)
+// 	if err != nil {
+// 		return "", "", err
+// 	}
 
-	if response.Resp.StatusCode == 200 {
-		var responseData map[string]interface{}
-		err := json.Unmarshal([]byte(response.Body), &responseData)
-		if err != nil {
-			return "", "", err
-		}
-		prCommits := responseData["values"].([]interface{})
+// 	if response.Resp.StatusCode == 200 {
+// 		var responseData map[string]interface{}
+// 		err := json.Unmarshal([]byte(response.Body), &responseData)
+// 		if err != nil {
+// 			return "", "", err
+// 		}
+// 		prCommits := responseData["values"].([]interface{})
 
-		// the first commit is the merge commit
-		// TODO: is it safe to always to get the second commit?
-		lastCommit := prCommits[1].(map[string]interface{})
-		lastAuthor := lastCommit["author"].(map[string]interface{})
-		return lastCommit["hash"].(string), lastAuthor["user"].(map[string]interface{})["display_name"].(string), nil
+// 		// the first commit is the merge commit
+// 		// TODO: is it safe to always to get the second commit?
+// 		lastCommit := prCommits[1].(map[string]interface{})
+// 		lastAuthor := lastCommit["author"].(map[string]interface{})
+// 		return lastCommit["hash"].(string), lastAuthor["user"].(map[string]interface{})["display_name"].(string), nil
 
-	} else {
-		return "", "", fmt.Errorf("failed to get PR commits, got HTTP status %d", response.Resp.StatusCode)
-	}
-}
+// 	} else {
+// 		return "", "", fmt.Errorf("failed to get PR commits, got HTTP status %d", response.Resp.StatusCode)
+// 	}
+// }
 
 func controlPullRequestDesc() string {
 	return `
