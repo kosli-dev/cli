@@ -9,7 +9,6 @@ import (
 
 	gh "github.com/google/go-github/v42/github"
 	"github.com/kosli-dev/cli/internal/requests"
-	"github.com/kosli-dev/cli/internal/utils"
 	"golang.org/x/oauth2"
 
 	"github.com/spf13/cobra"
@@ -34,9 +33,9 @@ type GithubPrEvidence struct {
 	PullRequestURL         string `json:"pullRequestURL"`
 	PullRequestState       string `json:"pullRequestState"`
 	Approvers              string `json:"approvers"`
-	LastCommit             string `json:"lastCommit"`
-	LastCommitter          string `json:"lastCommitter"`
-	SelfApproved           bool   `json:"selfApproved"`
+	// LastCommit             string `json:"lastCommit"`
+	// LastCommitter          string `json:"lastCommitter"`
+	// SelfApproved           bool   `json:"selfApproved"`
 }
 
 func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
@@ -153,16 +152,16 @@ func (o *pullRequestEvidenceGithubOptions) getGithubPullRequests() ([]*GithubPrE
 		evidence.Approvers = strings.Join(approvers, ",")
 		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
 
-		lastCommit := pullrequest.Head.GetSHA()
-		commit, _, err := client.Git.GetCommit(ctx, owner, repository, lastCommit)
-		if err != nil {
-			return pullRequestsEvidence, isCompliant, err
-		}
-		evidence.LastCommit = lastCommit
-		evidence.LastCommitter = commit.GetAuthor().GetName()
-		if utils.Contains(approvers, evidence.LastCommitter) {
-			evidence.SelfApproved = true
-		}
+		// lastCommit := pullrequest.Head.GetSHA()
+		// commit, _, err := client.Git.GetCommit(ctx, owner, repository, lastCommit)
+		// if err != nil {
+		// 	return pullRequestsEvidence, isCompliant, err
+		// }
+		// evidence.LastCommit = lastCommit
+		// evidence.LastCommitter = commit.GetAuthor().GetName()
+		// if utils.Contains(approvers, evidence.LastCommitter) {
+		// 	evidence.SelfApproved = true
+		// }
 	}
 	if len(pullRequestsEvidence) > 0 {
 		isCompliant = true
