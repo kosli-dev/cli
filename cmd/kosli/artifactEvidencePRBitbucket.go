@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/kosli-dev/cli/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -30,9 +32,9 @@ type BitbucketPrEvidence struct {
 	PullRequestURL         string `json:"pullRequestURL"`
 	PullRequestState       string `json:"pullRequestState"`
 	Approvers              string `json:"approvers"`
-	// LastCommit             string `json:"lastCommit"`
-	// LastCommitter          string `json:"lastCommitter"`
-	// SelfApproved           bool   `json:"selfApproved"`
+	LastCommit             string `json:"lastCommit"`
+	LastCommitter          string `json:"lastCommitter"`
+	SelfApproved           bool   `json:"selfApproved"`
 }
 
 func newPullRequestEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
@@ -208,15 +210,15 @@ func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, workspace, reposit
 		} else {
 			log.Debug("No approvers found")
 		}
-		// evidence.Approvers = strings.Join(approvers, ",")
-		// prID := int(responseData["id"].(float64))
-		// evidence.LastCommit, evidence.LastCommitter, err = getBitbucketPRLastCommit(workspace, repository, username, password, prID)
-		// if err != nil {
-		// 	return evidence, err
-		// }
-		// if utils.Contains(approvers, evidence.LastCommitter) {
-		// 	evidence.SelfApproved = true
-		// }
+		evidence.Approvers = strings.Join(approvers, ",")
+		prID := int(responseData["id"].(float64))
+		evidence.LastCommit, evidence.LastCommitter, err = getBitbucketPRLastCommit(workspace, repository, username, password, prID)
+		if err != nil {
+			return evidence, err
+		}
+		if utils.Contains(approvers, evidence.LastCommitter) {
+			evidence.SelfApproved = true
+		}
 	} else {
 		return evidence, fmt.Errorf("failed to get PR details, got HTTP status %d. Please review repository permissions", response.Resp.StatusCode)
 	}
