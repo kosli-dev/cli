@@ -10,7 +10,7 @@ weight: 10
 A typical use of Kosli follows a scenario:
 
 1. Record the state of your runtime environments
-1. Connect the data from you pipelines 
+1. Connect the data from your pipelines 
 1. Search in Kosli to get the whole picture
 
 We'll be using Kosli CLI to run all the commands. You can find installation instruction [here](/getting_started/installation).
