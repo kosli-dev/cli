@@ -242,12 +242,6 @@ body[dir="rtl"] .book-menu {
   padding-top: $padding-16;
   font-size: $font-size-14;
 
-  img {
-    height: 1em;
-    width: 1em;
-    margin-inline-end: $padding-8;
-  }
-
   a {
     font-weight: bold;
   }
@@ -255,6 +249,17 @@ body[dir="rtl"] .book-menu {
   hr {
     border: 0;
     border-top: 1px solid $neutral-400;
+  }
+
+  .secondary-footer {
+    padding-top: $padding-8;
+    a {
+      font-weight:400;
+      color: #000;
+      &:hover {
+        text-decoration: underline;
+      }
+    }
   }
 
 }
