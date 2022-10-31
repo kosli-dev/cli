@@ -247,6 +247,16 @@ body[dir="rtl"] .book-menu {
     width: 1em;
     margin-inline-end: $padding-8;
   }
+
+  a {
+    font-weight: bold;
+  }
+
+  hr {
+    border: 0;
+    border-top: 1px solid $neutral-400;
+  }
+
 }
 
 .book-comments {

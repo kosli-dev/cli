@@ -1,0 +1,46 @@
+
+<hr>
+
+<div class="flex justify-between">
+
+  <div class="flex-even" style="padding-right: 80px;">
+    <h3 class="h5-style">
+      Get started for FREE!<br>
+      Sign up GitHub.<br>
+      Easy!
+    </h3>
+    <a class="btn btn-main" href="https://app.kosli.com" target="_blank">
+      Sign up
+    </a>
+  </div>
+
+  <div class="flex-even" style="padding-right: 80px;">
+    <h3 class="h5-style">Share your feedback on the docs so we can make them easier for you to use</h3>
+    <a href="https://www.kosli.com/community/" target="_blank" class="btn btn-secondary">
+      Join the Slack Community
+    </a>
+  </div>
+
+  <div class="flex-even" style="padding-right: 80px;">
+    <h3 class="h5-style">Stuck with something?</h3>
+    <p>
+      We have an open Slack channel where you can get in touch with the Kosli team and other users.
+    </p>
+    <p>
+      <a href="https://www.kosli.com/community/" target="_blank">Ask the Kosli Slack community</a>
+    </p>
+    <p>
+      <a href="info@kosli.com">Email support</a>
+    </p>
+  </div>
+
+  
+</div>
+
+<hr>
+
+
+{{ $script := resources.Get "clipboard.js" | resources.Minify }}
+{{ with $script.Content }}
+  <script>{{ . | safeJS }}</script>
+{{ end }}
