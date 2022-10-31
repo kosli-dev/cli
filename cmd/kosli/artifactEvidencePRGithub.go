@@ -108,7 +108,7 @@ func (o *pullRequestEvidenceGithubOptions) run(out io.Writer, args []string) err
 	o.payload.Contents["description"] = o.description
 	o.payload.Contents["source"] = pullRequestsEvidence
 
-	fmt.Fprintf(out, "found %d pull request(s) for commit: %s", len(pullRequestsEvidence), o.commit)
+	fmt.Fprintf(out, "found %d pull request(s) for commit: %s\n", len(pullRequestsEvidence), o.commit)
 
 	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
 		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
@@ -153,12 +153,13 @@ func (o *pullRequestEvidenceGithubOptions) getGithubPullRequests() ([]*GithubPrE
 		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
 
 		// lastCommit := pullrequest.Head.GetSHA()
-		// commit, _, err := client.Git.GetCommit(ctx, owner, repository, lastCommit)
+		// opts := gh.ListOptions{}
+		// commit, _, err := client.Repositories.GetCommit(ctx, owner, repository, lastCommit, &opts)
 		// if err != nil {
 		// 	return pullRequestsEvidence, isCompliant, err
 		// }
 		// evidence.LastCommit = lastCommit
-		// evidence.LastCommitter = commit.GetAuthor().GetName()
+		// evidence.LastCommitter = commit.GetAuthor().GetLogin()
 		// if utils.Contains(approvers, evidence.LastCommitter) {
 		// 	evidence.SelfApproved = true
 		// }
