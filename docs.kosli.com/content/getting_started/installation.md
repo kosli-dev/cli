@@ -102,31 +102,31 @@ The `kosli` CLI uses this to authenticate you.
 export KOSLI_API_TOKEN=<paste-your-kosli-API-token-here>
 ```
 
-## Using environment variables
+### Using environment variables
 
 <!-- Put this in a separate page? -->
 
 The `--api-token` and `--owner` flags are used in every `kosli` CLI command.  
 Rather than retyping these every time you run `kosli`, you can set them as environment variables.
 
-Simply capitalize the flag in snake case and add the `KOSLI_` prefix.  
-For example, after this:
+Capitalize the words in the flag, replacing dashes with underscores, and add the `KOSLI_` prefix. For example, `--api-token` becomes `KOSLI_API_TOKEN`.
 
+By setting the environment variables,
 ```shell {.command}
 export KOSLI_API_TOKEN=abcdefg
 export KOSLI_OWNER=cyber-dojo
 ```
 
-Then instead of:
-
-```shell {.command}
-kosli pipeline ls --api-token abcdefg --owner cyber-dojo 
-```
-
-You can use:
+you can use
 
 ```shell {.command}
 kosli pipeline ls 
+```
+
+instead of
+
+```shell {.command}
+kosli pipeline ls --api-token abcdefg --owner cyber-dojo 
 ```
 
 
