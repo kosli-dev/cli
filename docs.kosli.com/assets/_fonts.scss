@@ -104,12 +104,13 @@ a, a:hover, a:visited {
 
   a {
     color: $blue-200;
-    font-family: 'Proxima Nova', sans-serif;
+    font-family: 'IBM Plex Sans', sans-serif;
   }
 
   label {
     a {
       color: black;
+      font-weight: 500;
     }
     a:hover, a.active {
       color: $blue-100;

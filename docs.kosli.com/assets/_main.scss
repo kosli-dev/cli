@@ -52,9 +52,6 @@ aside nav ul {
     opacity: 0.5;
   }
 
-  ul {
-    padding-inline-start: $padding-16;
-  }
 }
 
 ul.pagination {
@@ -119,12 +116,29 @@ ul.pagination {
   }
 
   input.toggle + label::after {
-    content: "▸";
+    content: "";
+    background-image: url("/images/chevron-nav.svg");
+    background-repeat: no-repeat;
+    width: 24px;
+    height: 24px;
+    background-position-x: right;
   }
 
   input.toggle:checked + label::after {
-    content: "▾";
+    transform: rotate(90deg);
   }
+
+  ul ul {
+    li a {
+      padding-left: 0.8rem;
+      font-size: $font-size-14;
+      border-left: 3px solid transparent;
+      &.active {
+        border-color: $blue-100;
+      }
+    }
+  }
+
 }
 
 // for RTL support
