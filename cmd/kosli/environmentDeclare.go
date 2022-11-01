@@ -47,7 +47,11 @@ func newEnvironmentDeclareCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if payload.Type != "ECS" && payload.Type != "K8S" && payload.Type != "server" && payload.Type != "S3" {
+			if payload.Type != "ECS" &&
+				payload.Type != "K8S" &&
+				payload.Type != "server" &&
+				payload.Type != "S3" &&
+				payload.Type != "docker" {
 				return fmt.Errorf("%s is not a valid environment type", payload.Type)
 			}
 			payload.Owner = global.Owner
