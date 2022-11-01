@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -174,6 +175,15 @@ func initializeConfig(cmd *cobra.Command) error {
 	v := viper.New()
 
 	// If provided, extract the custom config file dir and name
+
+	// handle passing the config file as an env variable.
+	// we load the config file before we bind env vars to flags,
+	// so we check for the config file env var separately here
+	if global.ConfigFile == defaultConfigFilename {
+		if path, exists := os.LookupEnv("KOSLI_CONFIG_FILE"); exists {
+			global.ConfigFile = path
+		}
+	}
 	dir, file := filepath.Split(global.ConfigFile)
 	file = strings.TrimSuffix(file, filepath.Ext(file))
 
