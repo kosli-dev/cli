@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,6 +17,12 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/sirupsen/logrus"
+)
+
+var (
+	// ErrRepoDigestUnavailable returned when repo digest is not available.
+	ErrRepoDigestUnavailable = errors.New("repo digest unavailable for the image," +
+		"has it been pushed to or pulled from a registry?")
 )
 
 // DirSha256 returns sha256 digest of a directory
@@ -122,7 +129,7 @@ func FileSha256(filepath string) (string, error) {
 }
 
 // DockerImageSha256 returns a sha256 digest of a docker image. It requires
-// the docker deamon to be accessible and the docker image to be locally present.
+// the docker daemon to be accessible and the docker image to be locally present.
 // The docker image must have been pushed into a registry to have a digest.
 func DockerImageSha256(imageName string) (string, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
@@ -138,7 +145,7 @@ func DockerImageSha256(imageName string) (string, error) {
 		fingerprint := strings.Split(repoDigests[0], "@sha256:")[1]
 		return fingerprint, nil
 	} else {
-		return "", fmt.Errorf("failed to get a digest for the image, has it been pushed to a registry?")
+		return "", ErrRepoDigestUnavailable
 	}
 }
 
