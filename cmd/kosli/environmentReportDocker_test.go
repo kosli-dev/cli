@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/utils"
@@ -20,50 +18,48 @@ type EnvironmentReportDockerTestSuite struct {
 }
 
 func (suite *EnvironmentReportDockerTestSuite) TearDownSuite() {
-	for _, id := range suite.CreatedContainerIDs {
-		err := utils.RemoveDockerContainer(id)
-		require.NoError(suite.T(), err, "removing the docker container should pass")
-	}
+	// for _, id := range suite.CreatedContainerIDs {
+	// 	fmt.Println("clean up container " + id)
+	// 	err := utils.RemoveDockerContainer(id)
+	// 	require.NoError(suite.T(), err, "removing the docker container should pass")
+	// }
 }
 
 func (suite *EnvironmentReportDockerTestSuite) TestCreateDockerArtifactsData() {
-	type want struct {
-		sha256      string
-		expectError bool
-	}
 	for _, t := range []struct {
-		name      string
-		imageName string
-		want      want
+		name           string
+		imageName      string
+		expectedSha256 string
 	}{
 		{
-			name:      "DockerArtifactsData contains the right image digest",
-			imageName: "library/alpine@sha256:e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
-			want: want{
-				sha256: "e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
-			},
+			name:           "DockerArtifactsData contains the right image digest",
+			imageName:      "library/alpine@sha256:e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
+			expectedSha256: "e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
 		},
 	} {
 		suite.Run(t.name, func() {
 			containerID, err := utils.RunDockerContainer(t.imageName)
+
 			require.NoError(suite.T(), err, "TestCreateDockerArtifactsData: running a container should pass")
 			suite.CreatedContainerIDs = append(suite.CreatedContainerIDs, containerID)
 
-			data, err := CreateDockerArtifactsData()
-			if t.want.expectError {
-				require.Error(suite.T(), err, "TestCreateDockerArtifactsData: error expected but did not happen")
-			} else {
-				require.NoError(suite.T(), err, "TestCreateDockerArtifactsData: error happened but it is not expected")
-			}
-
-			for _, item := range data {
-				name, _, _ := strings.Cut(t.imageName, "@sha256:")
-				if v, ok := item.Digests[name]; ok {
-					assert.Equal(suite.T(), t.want.sha256, v, fmt.Sprintf("TestCreateDockerArtifactsData: want %s -- got %s", t.want.sha256, v))
-				}
-			}
+			// wait for container
+			assert.Contains(suite.T(), suite.containerDigests(), t.expectedSha256)
 		})
 	}
+}
+
+func (suite *EnvironmentReportDockerTestSuite) containerDigests() []string {
+	data, err := CreateDockerArtifactsData()
+	require.NoError(suite.T(), err, "TestCreateDockerArtifactsData: error happened but it is not expected")
+
+	actualDigests := []string{}
+	for _, item := range data {
+		for _, digest := range item.Digests {
+			actualDigests = append(actualDigests, digest)
+		}
+	}
+	return actualDigests
 }
 
 // In order for 'go test' to run this suite, we need to create

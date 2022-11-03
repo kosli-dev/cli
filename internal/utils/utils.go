@@ -95,6 +95,7 @@ func RunDockerContainer(imageName string) (string, error) {
 	ctx := context.Background()
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 		Image: "alpine",
+		Cmd:   []string{"sleep", "360"},
 	}, nil, nil, nil, "")
 
 	if err != nil {
