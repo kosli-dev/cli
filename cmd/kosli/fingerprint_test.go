@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"github.com/kosli-dev/cli/cmd/kosli/test_support"
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/utils"
@@ -17,15 +18,13 @@ type FingerprintTestSuite struct {
 	suite.Suite
 }
 
-const imageName = "library/alpine@sha256:e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5"
-
 func (suite *FingerprintTestSuite) SetupSuite() {
-	err := utils.PullDockerImage(imageName)
+	err := utils.PullDockerImage(test_support.ImageName)
 	require.NoError(suite.T(), err, "pulling the docker image should pass")
 }
 
 func (suite *FingerprintTestSuite) TearDownSuite() {
-	err := utils.RemoveDockerImage(imageName)
+	err := utils.RemoveDockerImage(test_support.ImageName)
 	require.NoError(suite.T(), err, "removing the docker image should pass")
 }
 

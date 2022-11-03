@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"github.com/kosli-dev/cli/cmd/kosli/test_support"
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/utils"
@@ -17,12 +19,16 @@ type EnvironmentReportDockerTestSuite struct {
 	CreatedContainerIDs []string
 }
 
+func (suite *EnvironmentReportDockerTestSuite) SetupSuite() {
+	err := utils.PullDockerImage(test_support.ImageName)
+	require.NoError(suite.T(), err, "pulling the docker image should pass")
+}
+
 func (suite *EnvironmentReportDockerTestSuite) TearDownSuite() {
-	// for _, id := range suite.CreatedContainerIDs {
-	// 	fmt.Println("clean up container " + id)
-	// 	err := utils.RemoveDockerContainer(id)
-	// 	require.NoError(suite.T(), err, "removing the docker container should pass")
-	// }
+	for _, id := range suite.CreatedContainerIDs {
+		err := utils.RemoveDockerContainer(id)
+		require.NoError(suite.T(), err, fmt.Sprintf("RemoveDockerContainer: %s", id))
+	}
 }
 
 func (suite *EnvironmentReportDockerTestSuite) TestCreateDockerArtifactsData() {
@@ -38,9 +44,12 @@ func (suite *EnvironmentReportDockerTestSuite) TestCreateDockerArtifactsData() {
 		},
 	} {
 		suite.Run(t.name, func() {
+			err := utils.PullDockerImage(t.imageName)
+			require.NoError(suite.T(), err, fmt.Sprintf("PullDockerImage: %s", t.imageName))
+
 			containerID, err := utils.RunDockerContainer(t.imageName)
 
-			require.NoError(suite.T(), err, "TestCreateDockerArtifactsData: running a container should pass")
+			require.NoError(suite.T(), err, fmt.Sprintf("RunDockerContainer for %s", t.imageName))
 			suite.CreatedContainerIDs = append(suite.CreatedContainerIDs, containerID)
 
 			// wait for container
@@ -51,7 +60,7 @@ func (suite *EnvironmentReportDockerTestSuite) TestCreateDockerArtifactsData() {
 
 func (suite *EnvironmentReportDockerTestSuite) containerDigests() []string {
 	data, err := CreateDockerArtifactsData()
-	require.NoError(suite.T(), err, "TestCreateDockerArtifactsData: error happened but it is not expected")
+	require.NoError(suite.T(), err, "TestCreateDockerArtifactsData: CreateDockerArtifactsData")
 
 	actualDigests := []string{}
 	for _, item := range data {
