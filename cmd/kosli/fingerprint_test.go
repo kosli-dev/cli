@@ -5,7 +5,6 @@ import (
 	"github.com/kosli-dev/cli/cmd/kosli/test_support"
 	"testing"
 
-	"github.com/kosli-dev/cli/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -19,13 +18,7 @@ type FingerprintTestSuite struct {
 }
 
 func (suite *FingerprintTestSuite) SetupSuite() {
-	err := utils.PullDockerImage(test_support.ImageName)
-	require.NoError(suite.T(), err, "pulling the docker image should pass")
-}
-
-func (suite *FingerprintTestSuite) TearDownSuite() {
-	err := utils.RemoveDockerImage(test_support.ImageName)
-	require.NoError(suite.T(), err, "removing the docker image should pass")
+	test_support.PullExampleImage(suite.T())
 }
 
 func (suite *FingerprintTestSuite) TestRun() {

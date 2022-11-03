@@ -20,8 +20,7 @@ type EnvironmentReportDockerTestSuite struct {
 }
 
 func (suite *EnvironmentReportDockerTestSuite) SetupSuite() {
-	err := utils.PullDockerImage(test_support.ImageName)
-	require.NoError(suite.T(), err, "pulling the docker image should pass")
+	test_support.PullExampleImage(suite.T())
 }
 
 func (suite *EnvironmentReportDockerTestSuite) TearDownSuite() {
@@ -39,30 +38,29 @@ func (suite *EnvironmentReportDockerTestSuite) TestCreateDockerArtifactsData() {
 	}{
 		{
 			name:           "DockerArtifactsData contains the right image digest",
-			imageName:      "library/alpine@sha256:e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
+			imageName:      test_support.ImageName,
 			expectedSha256: "e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
 		},
 	} {
 		suite.Run(t.name, func() {
-			err := utils.PullDockerImage(t.imageName)
-			require.NoError(suite.T(), err, fmt.Sprintf("PullDockerImage: %s", t.imageName))
+			suite.withRunningContainer(t.imageName)
 
-			containerID, err := utils.RunDockerContainer(t.imageName)
-
-			require.NoError(suite.T(), err, fmt.Sprintf("RunDockerContainer for %s", t.imageName))
-			suite.CreatedContainerIDs = append(suite.CreatedContainerIDs, containerID)
-
-			// wait for container
 			assert.Contains(suite.T(), suite.containerDigests(), t.expectedSha256)
 		})
 	}
 }
 
+func (suite *EnvironmentReportDockerTestSuite) withRunningContainer(imageName string) {
+	containerID, err := utils.RunDockerContainer(imageName)
+	require.NoError(suite.T(), err, fmt.Sprintf("RunDockerContainer for %s", imageName))
+	suite.CreatedContainerIDs = append(suite.CreatedContainerIDs, containerID)
+}
+
 func (suite *EnvironmentReportDockerTestSuite) containerDigests() []string {
 	data, err := CreateDockerArtifactsData()
-	require.NoError(suite.T(), err, "TestCreateDockerArtifactsData: CreateDockerArtifactsData")
+	require.NoError(suite.T(), err, "CreateDockerArtifactsData")
 
-	actualDigests := []string{}
+	var actualDigests []string
 	for _, item := range data {
 		for _, digest := range item.Digests {
 			actualDigests = append(actualDigests, digest)
