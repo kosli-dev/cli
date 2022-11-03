@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 )
 
@@ -83,6 +84,34 @@ func RemoveDockerImage(imageName string) error {
 	}
 
 	return nil
+}
+
+// RunDockerContainer runs a docker container and returns its ID or returns an error
+func RunDockerContainer(imageName string) (string, error) {
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return "", err
+	}
+	ctx := context.Background()
+	resp, err := cli.ContainerCreate(ctx, &container.Config{
+		Image: "alpine",
+	}, nil, nil, nil, "")
+
+	if err != nil {
+		return "", err
+	}
+	containerID := resp.ID
+	return containerID, cli.ContainerStart(ctx, containerID, types.ContainerStartOptions{})
+}
+
+// RemoveDockerContainer remove a docker container or returns an error
+func RemoveDockerContainer(containerID string) error {
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return err
+	}
+
+	return cli.ContainerRemove(context.Background(), containerID, types.ContainerRemoveOptions{Force: true})
 }
 
 // Contains checks if a string is contained in a string slice
