@@ -37,34 +37,11 @@ type ResolvedToBody struct {
 	Type      string `json:"type"`
 }
 
-// const artifactCreationExample = `
-// # Report to a Kosli pipeline that a file type artifact has been created
-// kosli pipeline artifact report creation FILE.tgz \
-// 	--api-token yourApiToken \
-// 	--artifact-type file \
-// 	--build-url https://exampleci.com \
-// 	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
-// 	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
-// 	--owner yourOrgName \
-// 	--pipeline yourPipelineName
-
-// # Report to a Kosli pipeline that an artifact with a provided fingerprint (sha256) has been created
-// kosli pipeline artifact report creation \
-// 	--api-token yourApiToken \
-// 	--build-url https://exampleci.com \
-// 	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
-// 	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
-// 	--owner yourOrgName \
-// 	--pipeline yourPipelineName \
-// 	--sha256 yourSha256
-// `
-
 func newSearchCmd(out io.Writer) *cobra.Command {
 	o := new(searchOptions)
 	cmd := &cobra.Command{
-		Use:   "search GIT-COMMIT|FINGERPRINT",
-		Short: "Search for a git commit or artifact fingerprint in Kosli.",
-		// Example: artifactCreationExample,
+		Use:    "search GIT-COMMIT|FINGERPRINT",
+		Short:  "Search for a git commit or artifact fingerprint in Kosli.",
 		Hidden: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
