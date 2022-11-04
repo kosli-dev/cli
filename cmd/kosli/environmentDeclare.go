@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -47,17 +48,16 @@ func newEnvironmentDeclareCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if payload.Type != "ECS" &&
-				payload.Type != "K8S" &&
-				payload.Type != "server" &&
-				payload.Type != "S3" &&
-				payload.Type != "docker" {
-				return fmt.Errorf("%s is not a valid environment type", payload.Type)
+			var err error
+			payload.Type, err = parseEnvType(payload.Type)
+			if err != nil {
+				return err
 			}
+
 			payload.Owner = global.Owner
 			url := fmt.Sprintf("%s/api/v1/environments/%s/", global.Host, global.Owner)
 
-			_, err := requests.SendPayload(payload, url, "", global.ApiToken,
+			_, err = requests.SendPayload(payload, url, "", global.ApiToken,
 				global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
 			return err
 		},
@@ -73,4 +73,25 @@ func newEnvironmentDeclareCmd(out io.Writer) *cobra.Command {
 	}
 
 	return cmd
+}
+
+// parseEnvType validates the env type and returns the exact casing
+// the server accepts
+func parseEnvType(input string) (string, error) {
+	switch lowerInput := strings.ToLower(input); lowerInput {
+	case "k8s":
+		return "K8S", nil
+	case "ecs":
+		return "ECS", nil
+	case "s3":
+		return "S3", nil
+	case "server":
+		return "server", nil
+	case "lambda":
+		return "lambda", nil
+	case "docker":
+		return "docker", nil
+	default:
+		return "", fmt.Errorf("%s is not a valid environment type", input)
+	}
 }
