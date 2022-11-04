@@ -19,7 +19,7 @@ kosli artifact ls PIPELINE-NAME [flags]
 | :--- | :--- |
 |    -h, --help  |  help for ls  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
-|        --page int  |  [defaulted] The page number of a reponse. (default 1)  |
+|        --page int  |  [defaulted] The page number of a response. (default 1)  |
 |    -n, --page-limit int  |  [defaulted] The number of elements per page. (default 15)  |
 
 

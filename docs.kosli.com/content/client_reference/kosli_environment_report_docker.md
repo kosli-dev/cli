@@ -4,13 +4,16 @@ title: "kosli environment report docker"
 
 ## kosli environment report docker
 
+
 Report running containers data from docker host to Kosli.
+
 
 ### Synopsis
 
 
-List the artifacts running as containers and their digests 
-and report them to Kosli. 
+Report the running containers on the docker host, their image digests 
+,and creation timestamp to Kosli. Containers running images that have not
+been pushed to or pulled from a registry will be ignored.
 
 
 ```shell

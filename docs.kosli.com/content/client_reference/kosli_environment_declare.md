@@ -20,7 +20,7 @@ kosli environment declare [flags]
 | Flag | Description |
 | :--- | :--- |
 |    -d, --description string  |  [optional] The environment description.  |
-|    -t, --environment-type string  |  The type of environment. Valid types are: [K8S, ECS, server, S3, lambda].  |
+|    -t, --environment-type string  |  The type of environment. Valid types are: [K8S, ECS, server, S3, lambda, docker].  |
 |    -h, --help  |  help for declare  |
 |    -n, --name string  |  The name of environment to be created.  |
 
