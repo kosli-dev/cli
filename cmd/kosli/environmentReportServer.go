@@ -18,7 +18,7 @@ and report them to Kosli.
 const environmentReportServerExample = `
 # report directory artifacts running in a server at a list of paths:
 kosli environment report server yourEnvironmentName \
-	--paths a/b/c, e/f/g \
+	--paths a/b/c,e/f/g \
 	--api-token yourAPIToken \
 	--owner yourOrgName  
 `

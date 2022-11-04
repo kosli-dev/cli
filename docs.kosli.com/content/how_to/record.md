@@ -156,7 +156,7 @@ And it will try to find matching artifacts reported to any pipeline belonging to
 
 ```
 kosli environment report server yourEnvironmentName \
-	--paths a/b/c, e/f/g \
+	--paths a/b/c,e/f/g \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 ```
