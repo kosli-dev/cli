@@ -20,7 +20,7 @@ spec:
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
             imagePullPolicy: {{ .Values.image.pullPolicy }}
             env:
-              - name: MERKELY_API_TOKEN
+              - name: KOSLI_API_TOKEN
                 valueFrom:
                   secretKeyRef:
                     name: {{ required ".Values.kosliApiToken.secretName is required." .Values.kosliApiToken.secretName }}

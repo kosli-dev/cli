@@ -8,7 +8,7 @@ image:
   # -- the kosli reporter image pull policy
   pullPolicy: IfNotPresent
   # -- the kosli reporter image tag, overrides the image tag whose default is the chart appVersion.
-  tag: "v1.5.9"
+  tag: "v0.1.18"
 
 # -- overrides the name used for the created k8s resources. If `fullnameOverride` is provided, it has higher precedence than this one
 nameOverride: ""
@@ -30,7 +30,7 @@ cronSchedule: "*/5 * * * *"
 kosliApiToken:
   # -- the name of the secret containing the kosli API token
   secretName: ""
-  # -- the name of the key in the secret data which containts the kosli API token
+  # -- the name of the key in the secret data which contains the kosli API token
   secretKey: ""
 
 reporterConfig:
@@ -47,7 +47,7 @@ reporterConfig:
   dryRun: false
 
 # env:
-#   KOSLI_HOST: staging.app.kosli.com
+#   KOSLI_HOST: https://staging.app.kosli.com
 
 # -- any custom annotations to be added to the cronjob
 podAnnotations: {}
