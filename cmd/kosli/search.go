@@ -37,12 +37,31 @@ type ResolvedToBody struct {
 	Type      string `json:"type"`
 }
 
+const searchExample = `
+# Search for a git commit in Kosli
+kosli search YOUR_GIT_COMMIT \
+	--api-token yourApiToken \
+	--owner yourOrgName
+
+# Search for an artifact fingerprint in Kosli
+kosli search YOUR_FINGERPRINT \
+	--api-token yourApiToken \
+	--owner yourOrgName
+`
+
+const searchShortDesc = `Search for a git commit or artifact fingerprint in Kosli.`
+
+const searchLongDesc = searchShortDesc + ` 
+You can use short git commit or artifact fingerprint shas, but you must provide at least 5 characters.
+`
+
 func newSearchCmd(out io.Writer) *cobra.Command {
 	o := new(searchOptions)
 	cmd := &cobra.Command{
-		Use:    "search GIT-COMMIT|FINGERPRINT",
-		Short:  "Search for a git commit or artifact fingerprint in Kosli.",
-		Hidden: true,
+		Use:     "search GIT-COMMIT|FINGERPRINT",
+		Short:   searchShortDesc,
+		Long:    searchLongDesc,
+		Example: searchExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {

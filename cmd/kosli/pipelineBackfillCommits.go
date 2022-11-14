@@ -20,35 +20,11 @@ type ArtifactCommitsBackfillPayload struct {
 	CommitsList []*ArtifactCommit `json:"git_commit_list"`
 }
 
-// const artifactCreationExample = `
-// # Report to a Kosli pipeline that a file type artifact has been created
-// kosli pipeline artifact report creation FILE.tgz \
-// 	--api-token yourApiToken \
-// 	--artifact-type file \
-// 	--build-url https://exampleci.com \
-// 	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
-// 	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
-// 	--owner yourOrgName \
-// 	--pipeline yourPipelineName
-
-// # Report to a Kosli pipeline that an artifact with a provided fingerprint (sha256) has been created
-// kosli pipeline artifact report creation \
-// 	--api-token yourApiToken \
-// 	--build-url https://exampleci.com \
-// 	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
-// 	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
-// 	--owner yourOrgName \
-// 	--pipeline yourPipelineName \
-// 	--sha256 yourSha256
-// `
-
 func newPipelineBackfillArtifactCommitsCmd(out io.Writer) *cobra.Command {
 	o := new(pipelineBackfillArtifactCommitsOptions)
 	cmd := &cobra.Command{
-		Use:   "backfill-commits PIPELINE-NAME",
-		Short: "Calculate and report the changelog of each artifact in a Kosli pipeline.",
-		// Long:    pipelineBackfillArtifactCommitsDesc(),
-		// Example: artifactCreationExample,
+		Use:    "backfill-commits PIPELINE-NAME",
+		Short:  "Calculate and report the changelog of each artifact in a Kosli pipeline.",
 		Hidden: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
