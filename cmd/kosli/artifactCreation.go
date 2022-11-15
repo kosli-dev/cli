@@ -3,11 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-git/go-git/v5/plumbing/object"
 	"io"
 	"net/http"
 	"path/filepath"
 	"strings"
+
+	"github.com/go-git/go-git/v5/plumbing/object"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -34,11 +35,12 @@ type ArtifactPayload struct {
 }
 
 type ArtifactCommit struct {
-	Sha1      string `json:"sha1"`
-	Message   string `json:"message"`
-	Author    string `json:"author"`
-	Timestamp int64  `json:"timestamp"`
-	Branch    string `json:"branch"`
+	Sha1      string   `json:"sha1"`
+	Message   string   `json:"message"`
+	Author    string   `json:"author"`
+	Timestamp int64    `json:"timestamp"`
+	Branch    string   `json:"branch"`
+	Parents   []string `json:"parents"`
 }
 
 const artifactCreationExample = `
@@ -144,24 +146,29 @@ func (o *artifactCreationOptions) run(args []string) error {
 	return err
 }
 
+// changeLog attempts to collect the changelog list of commits for an artifact,
+// the changelog is all commits between current commit and the commit from which the latest artifact in Kosli
+// was created.
+// If collecting the changelog fails (e.g. if git history has been rewritten), the changelog only
+// contains the a single commit info which is the current commit
 func changeLog(o *artifactCreationOptions, previousCommit string) ([]*ArtifactCommit, error) {
 	if previousCommit != "" {
 		commitsList, err := listCommitsBetween(o.srcRepoRoot, previousCommit, o.payload.GitCommit)
 		if err != nil {
 			fmt.Printf("Warning: %s\n", err)
-		}
-		if len(commitsList) > 0 {
+		} else {
 			return commitsList, nil
 		}
 	}
 
 	currentArtifactCommit, err := o.currentArtifactCommit()
 	if err != nil {
-		return []*ArtifactCommit{}, err
+		return []*ArtifactCommit{}, fmt.Errorf("could not retrieve current git commit for %s: %v", o.payload.GitCommit, err)
 	}
 	return []*ArtifactCommit{currentArtifactCommit}, nil
 }
 
+// previousCommit retrieves the git commit of the latest artifact for a pipeline in Kosli
 func previousCommit(o *artifactCreationOptions) (string, error) {
 	previousCommitUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/latest_commit",
 		global.Host, global.Owner, o.pipelineName, o.payload.Sha256)
@@ -214,6 +221,7 @@ func artifactCreationDesc() string {
    ` + sha256Desc
 }
 
+// getRepoUrl returns HTTPS URL for the `origin` remote of a repo
 func getRepoUrl(repoRoot string) (string, error) {
 	repo, err := git.PlainOpen(repoRoot)
 	if err != nil {
@@ -281,16 +289,24 @@ func listCommitsBetween(repoRoot, oldest, newest string) ([]*ArtifactCommit, err
 	return commits, nil
 }
 
+// asArtifactCommit returns an ArtifactCommit from a git Commit
 func asArtifactCommit(commit *object.Commit, branchName string) *ArtifactCommit {
+	var commitParents []string
+	for _, h := range commit.ParentHashes {
+		commitParents = append(commitParents, h.String())
+	}
 	return &ArtifactCommit{
 		Sha1:      commit.Hash.String(),
 		Message:   strings.TrimSpace(commit.Message),
 		Author:    commit.Author.String(),
 		Timestamp: commit.Author.When.UTC().Unix(),
 		Branch:    branchName,
+		Parents:   commitParents,
 	}
 }
 
+// branchName returns the current branch name on a repository,
+// or an error if the repo head is not on a branch
 func branchName(repo *git.Repository) (string, error) {
 	head, err := repo.Head()
 	if err != nil {
