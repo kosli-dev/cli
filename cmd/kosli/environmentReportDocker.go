@@ -16,22 +16,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentReportDockerShortDesc = `
-Report running containers data from docker host to Kosli.
-`
+const environmentReportDockerShortDesc = `Report running containers data from docker host to Kosli.`
 
-const environmentReportDockerDesc = `
-Report the running containers on the docker host, their image digests 
-,and creation timestamp to Kosli. Containers running images that have not
-been pushed to or pulled from a registry will be ignored.
-`
+const environmentReportDockerDesc = `Report the running containers on the docker host, their image digests, 
+and creation timestamp to Kosli. Containers running images that have not
+been pushed to or pulled from a registry will be ignored.`
 
-const environmentReportDockerExample = `
-# report what is running in a docker host:
+const environmentReportDockerExample = `# report what is running in a docker host:
 kosli environment report docker yourEnvironmentName \
 	--api-token yourAPIToken \
-	--owner yourOrgName
-`
+	--owner yourOrgName`
 
 type environmentReportDockerOptions struct {
 }

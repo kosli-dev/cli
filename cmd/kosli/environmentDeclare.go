@@ -10,11 +10,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const enviromentDeclareDesc = `
+const environmentDeclareDesc = `
 Declare or update a Kosli environment.
 `
 
-const enviromentDeclareExample = `
+const environmentDeclareExample = `
 # declare (or update) a Kosli environment:
 kosli environment declare 
 	--name yourEnvironmentName \
@@ -35,9 +35,9 @@ func newEnvironmentDeclareCmd(out io.Writer) *cobra.Command {
 	payload := new(CreateEnvironmentPayload)
 	cmd := &cobra.Command{
 		Use:     "declare",
-		Short:   "Declare or update a Kosli environment",
-		Long:    enviromentDeclareDesc,
-		Example: enviromentDeclareExample,
+		Short:   "Declare a Kosli environment",
+		Long:    environmentDeclareDesc,
+		Example: environmentDeclareExample,
 		Args:    NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
