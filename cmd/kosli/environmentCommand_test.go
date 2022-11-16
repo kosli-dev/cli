@@ -24,8 +24,13 @@ func (suite *EnvironmentCommandTestSuite) TestEnvironmentCommandCmd() {
 			golden: "",
 		},
 		{
-			// TODO: Is this realy updating the environment?
-			name:   "redeclaring an env updates its metadata",
+			name:   "declare env with case-insensitive type",
+			cmd:    "environment declare --name newK8SEnv --environment-type k8s --description \"my new env\" " + defaultKosliArguments,
+			golden: "",
+		},
+		{
+			// TODO: Is this really updating the environment?
+			name:   "re-declaring an env updates its metadata",
 			cmd:    "environment declare --name newEnv --environment-type S3 --description \"changed description\" " + defaultKosliArguments,
 			golden: "",
 		},
@@ -44,19 +49,19 @@ func (suite *EnvironmentCommandTestSuite) TestEnvironmentCommandCmd() {
 		{
 			wantError: true,
 			name:      "unknown --environment-type causes an error",
-			cmd:       "environment declare --name newEnv --environment-type UNKNOWN --description \"my new env\" -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
-			golden:    "Error: UNKNOWN is not a valid environment type\n",
+			cmd:       "environment declare --name newEnv --environment-type UNKNOWN --description \"my new env\" " + defaultKosliArguments,
+			golden:    "Error: Environment type 'UNKNOWN' is not supported. Type must be one of ['K8S', 'ECS', 'S3', 'lambda', 'server', 'docker']\n",
 		},
 		{
 			wantError: true,
 			name:      "missing --name causes an error",
-			cmd:       "environment declare --environment-type S3 --description \"my new env\" -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
+			cmd:       "environment declare --environment-type S3 --description \"my new env\" " + defaultKosliArguments,
 			golden:    "Error: required flag(s) \"name\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "missing --environment-type causes an error",
-			cmd:       "environment declare --name newEnv --description \"my new env\" -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
+			cmd:       "environment declare --name newEnv --description \"my new env\" " + defaultKosliArguments,
 			golden:    "Error: required flag(s) \"environment-type\" not set\n",
 		},
 		// Environment ls tests
