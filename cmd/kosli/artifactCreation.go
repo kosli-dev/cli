@@ -149,17 +149,16 @@ func changeLog(o *artifactCreationOptions, previousCommit string) ([]*ArtifactCo
 		if err != nil {
 			fmt.Printf("Warning: %s\n", err)
 		}
-		return commitsList, nil
+		if len(commitsList) > 0 {
+			return commitsList, nil
+		}
 	}
 
-	if len(o.payload.CommitsList) == 0 {
-		currentArtifactCommit, err := o.currentArtifactCommit()
-		if err != nil {
-			return []*ArtifactCommit{}, err
-		}
-		return []*ArtifactCommit{currentArtifactCommit}, nil
+	currentArtifactCommit, err := o.currentArtifactCommit()
+	if err != nil {
+		return []*ArtifactCommit{}, err
 	}
-	return []*ArtifactCommit{}, nil
+	return []*ArtifactCommit{currentArtifactCommit}, nil
 }
 
 func previousCommit(o *artifactCreationOptions) (string, error) {
@@ -271,7 +270,7 @@ func listCommitsBetween(repoRoot, oldest, newest string) ([]*ArtifactCommit, err
 		return commits, fmt.Errorf("failed to git log: %v", err)
 	}
 
-	for true {
+	for {
 		commit, err := commitsIter.Next()
 		if err != nil {
 			return commits, fmt.Errorf("failed to get next commit: %v", err)
