@@ -96,7 +96,7 @@ version.BuildInfo{Version:"v0.1.10", GitCommit:"9c623f1e6c293235ddc8de1e347bf99a
 * Log in or sign up using your github account
 * Open your Profile page (click on your avatar in the top right corner of the page).
 
-### Using environment variables
+## Using environment variables
 
 <!-- Put this in a separate page? -->
 

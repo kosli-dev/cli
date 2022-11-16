@@ -110,7 +110,7 @@ no reports have been received.
 ### Reporting artifacts to Kosli
 
 Typically, you would build an artifact in your CI system. 
-The quickstart-docker repository contains a `docker-compose.yml` file which uses an [nginx](nginx.org) docker image 
+The quickstart-docker repository contains a `docker-compose.yml` file which uses an [nginx](https://nginx.org/) docker image 
 which you will be using as your artifact in this tutorial instead.
 
 Pull the docker image - Kosli CLI needs the artifact to be locally present to 

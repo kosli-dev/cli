@@ -11,7 +11,7 @@ If the list of running artifacts is different than what was reported previously 
 
 There is range of `kosli environment report [...]` commands, allowing you to report a variety of environments. To record a current status of your environment you simply run one of them. You can do it manually but typically recording commands would run automatically, e.g. via a cron job or scheduled CI job.
 
-Remember to [create an environment](/getting_started/getting_started_with_kosli/#record-environment) in Kosli before you start reporting, and when reporting make sure the type of the Kosli environment matches the type of the runtime environment you're reporting.
+Remember to [create an environment](/getting_started/getting_started_with_kosli/#creating-a-kosli-environment) in Kosli before you start reporting, and when reporting make sure the type of the Kosli environment matches the type of the runtime environment you're reporting.
 
 ## Record docker environment
 
