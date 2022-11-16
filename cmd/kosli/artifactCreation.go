@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"io"
 	"net/http"
 	"path/filepath"
@@ -204,13 +205,7 @@ func (o *artifactCreationOptions) currentArtifactCommit() (*ArtifactCommit, erro
 		return &ArtifactCommit{}, fmt.Errorf("could not retrieve commit for %s: %v", *currentHash, err)
 	}
 
-	return &ArtifactCommit{
-		Sha1:      currentCommit.Hash.String(),
-		Message:   strings.TrimSpace(currentCommit.Message),
-		Author:    currentCommit.Author.String(),
-		Timestamp: currentCommit.Author.When.UTC().Unix(),
-		Branch:    branchName,
-	}, nil
+	return asArtifactCommit(currentCommit, branchName), nil
 }
 
 func artifactCreationDesc() string {
@@ -276,13 +271,7 @@ func listCommitsBetween(repoRoot, oldest, newest string) ([]*ArtifactCommit, err
 			return commits, fmt.Errorf("failed to get next commit: %v", err)
 		}
 		if commit.Hash != *oldestHash {
-			currentCommit := &ArtifactCommit{
-				Sha1:      commit.Hash.String(),
-				Message:   strings.TrimSpace(commit.Message),
-				Author:    commit.Author.String(),
-				Timestamp: commit.Author.When.UTC().Unix(),
-				Branch:    branchName,
-			}
+			currentCommit := asArtifactCommit(commit, branchName)
 			commits = append(commits, currentCommit)
 		} else {
 			break
@@ -290,6 +279,16 @@ func listCommitsBetween(repoRoot, oldest, newest string) ([]*ArtifactCommit, err
 	}
 
 	return commits, nil
+}
+
+func asArtifactCommit(commit *object.Commit, branchName string) *ArtifactCommit {
+	return &ArtifactCommit{
+		Sha1:      commit.Hash.String(),
+		Message:   strings.TrimSpace(commit.Message),
+		Author:    commit.Author.String(),
+		Timestamp: commit.Author.When.UTC().Unix(),
+		Branch:    branchName,
+	}
 }
 
 func branchName(repo *git.Repository) (string, error) {
