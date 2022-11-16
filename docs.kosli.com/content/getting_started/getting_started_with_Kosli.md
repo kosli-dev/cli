@@ -12,6 +12,16 @@ track what artifacts are running in your runtime environments.
 
 This tutorial uses the `docker` Kosli environment type, but the same steps can be applied to other supported environment types.
 
+{{< hint info >}}
+As you go through the guide you can also check your progress from 
+[your browser](https://app.kosli.com).
+
+In the upper left corner there is a house icon. Next to it you can select
+which organization you want to view. Your personal organization
+has the same name as your github login name, and is the organization (in the context of Kosli CLI called "owner") you will
+be using in this guide.
+{{< /hint >}}
+
 ## Prerequisites
 
 To follow the tutorial, you will need to:
@@ -30,15 +40,7 @@ To follow the tutorial, you will need to:
     cd quickstart-docker-example
     ```
 
-{{< hint info >}}
-As you go through the guide you can also check your progress from 
-[your browser](https://app.kosli.com).
 
-In the upper left corner there is a house icon. Next to it you can select
-which organization you want to view. Your personal organization
-has the same name as your github login name, and is the organization you will
-be using in this guide.
-{{< /hint >}}
 
 ## Kosli setup
 

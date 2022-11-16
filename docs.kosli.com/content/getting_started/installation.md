@@ -96,12 +96,6 @@ version.BuildInfo{Version:"v0.1.10", GitCommit:"9c623f1e6c293235ddc8de1e347bf99a
 * Log in or sign up using your github account
 * Open your Profile page (click on your avatar in the top right corner of the page).
 
-### Set the KOSLI_API_TOKEN environment variable.  
-The `kosli` CLI uses this to authenticate you.
-```shell {.command}
-export KOSLI_API_TOKEN=<paste-your-kosli-API-token-here>
-```
-
 ### Using environment variables
 
 <!-- Put this in a separate page? -->
@@ -109,9 +103,9 @@ export KOSLI_API_TOKEN=<paste-your-kosli-API-token-here>
 The `--api-token` and `--owner` flags are used in every `kosli` CLI command.  
 Rather than retyping these every time you run `kosli`, you can set them as environment variables.
 
-Capitalize the words in the flag, replacing dashes with underscores, and add the `KOSLI_` prefix. For example, `--api-token` becomes `KOSLI_API_TOKEN`.
+The owner is the name of the organization you intend to use - it is either your private organization, which has exactly the same name as your GitHub username, or a shared orgnazation (if you created or have been invited to one).
 
-By setting the environment variables,
+By setting the environment variables:
 ```shell {.command}
 export KOSLI_API_TOKEN=abcdefg
 export KOSLI_OWNER=cyber-dojo
@@ -129,6 +123,7 @@ instead of
 kosli pipeline ls --api-token abcdefg --owner cyber-dojo 
 ```
 
+You can represent **ANY** flag as an environment variable. To do that you need to capitalize the words in the flag, replacing dashes with underscores, and add the `KOSLI_` prefix. For example, `--api-token` becomes `KOSLI_API_TOKEN`.
 
 
 
