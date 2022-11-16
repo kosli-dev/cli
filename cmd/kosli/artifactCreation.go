@@ -121,28 +121,25 @@ func (o *artifactCreationOptions) run(args []string) error {
 		}
 	}
 
-	previousCommitUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/latest_commit",
-		global.Host, global.Owner, o.pipelineName, o.payload.Sha256)
-
-	response, err := requests.DoBasicAuthRequest([]byte{}, previousCommitUrl, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{}, log)
-	if err != nil {
-		return err
-	}
-
-	var previousCommitResponse map[string]interface{}
-	err = json.Unmarshal([]byte(response.Body), &previousCommitResponse)
+	previousCommit, err := previousCommit(o)
 	if err != nil {
 		return err
 	}
 
 	o.payload.CommitsList = []*ArtifactCommit{}
-	if previousCommitResponse["latest_commit"] != nil {
-		previousCommit := previousCommitResponse["latest_commit"].(string)
+	if previousCommit != "" {
 		o.payload.CommitsList, err = listCommitsBetween(o.srcRepoRoot, previousCommit, o.payload.GitCommit)
 		if err != nil {
 			fmt.Printf("Warning: %s\n", err)
 		}
+	}
+
+	if len(o.payload.CommitsList) == 0 {
+		currentArtifactCommit, err := o.currentArtifactCommit()
+		if err != nil {
+			return err
+		}
+		o.payload.CommitsList = append(o.payload.CommitsList, currentArtifactCommit)
 	}
 
 	o.payload.RepoUrl, err = getRepoUrl(o.srcRepoRoot)
@@ -154,6 +151,58 @@ func (o *artifactCreationOptions) run(args []string) error {
 	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
 		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
 	return err
+}
+
+func previousCommit(o *artifactCreationOptions) (string, error) {
+	previousCommitUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/latest_commit",
+		global.Host, global.Owner, o.pipelineName, o.payload.Sha256)
+
+	response, err := requests.DoBasicAuthRequest([]byte{}, previousCommitUrl, "", global.ApiToken,
+		global.MaxAPIRetries, http.MethodGet, map[string]string{}, log)
+	if err != nil {
+		return "", err
+	}
+
+	var previousCommitResponse map[string]interface{}
+	err = json.Unmarshal([]byte(response.Body), &previousCommitResponse)
+	if err != nil {
+		return "", err
+	}
+	previousCommit := previousCommitResponse["latest_commit"]
+	if previousCommit == nil {
+		return "", nil
+	} else {
+		return previousCommit.(string), nil
+	}
+}
+
+func (o *artifactCreationOptions) currentArtifactCommit() (*ArtifactCommit, error) {
+	repo, err := git.PlainOpen(o.srcRepoRoot)
+	if err != nil {
+		return &ArtifactCommit{}, fmt.Errorf("failed to open git repository at %s: %v", o.srcRepoRoot, err)
+	}
+
+	branchName, err := branchName(repo)
+	if err != nil {
+		return &ArtifactCommit{}, err
+	}
+
+	currentHash, err := repo.ResolveRevision(plumbing.Revision(o.payload.GitCommit))
+	if err != nil {
+		return &ArtifactCommit{}, fmt.Errorf("failed to resolve %s: %v", o.payload.GitCommit, err)
+	}
+	currentCommit, err := repo.CommitObject(*currentHash)
+	if err != nil {
+		return &ArtifactCommit{}, fmt.Errorf("could not retrieve commit for %s: %v", *currentHash, err)
+	}
+
+	return &ArtifactCommit{
+		Sha1:      currentCommit.Hash.String(),
+		Message:   strings.TrimSpace(currentCommit.Message),
+		Author:    currentCommit.Author.String(),
+		Timestamp: currentCommit.Author.When.UTC().Unix(),
+		Branch:    branchName,
+	}, nil
 }
 
 func artifactCreationDesc() string {
@@ -191,13 +240,9 @@ func listCommitsBetween(repoRoot, oldest, newest string) ([]*ArtifactCommit, err
 			repoRoot, err)
 	}
 
-	branch := ""
-	head, err := repo.Head()
+	branchName, err := branchName(repo)
 	if err != nil {
-		return commits, fmt.Errorf("failed to get the current HEAD of the git repository: %v", err)
-	}
-	if head.Name().IsBranch() {
-		branch = head.Name().Short()
+		return commits, err
 	}
 
 	newestHash, err := repo.ResolveRevision(plumbing.Revision(newest))
@@ -208,6 +253,7 @@ func listCommitsBetween(repoRoot, oldest, newest string) ([]*ArtifactCommit, err
 	if err != nil {
 		return commits, fmt.Errorf("failed to resolve %s: %v", oldest, err)
 	}
+
 	log.Debugf("This is the newest commit hash %s", newestHash.String())
 	log.Debugf("This is the oldest commit hash %s", oldestHash.String())
 
@@ -227,7 +273,7 @@ func listCommitsBetween(repoRoot, oldest, newest string) ([]*ArtifactCommit, err
 				Message:   strings.TrimSpace(commit.Message),
 				Author:    commit.Author.String(),
 				Timestamp: commit.Author.When.UTC().Unix(),
-				Branch:    branch,
+				Branch:    branchName,
 			}
 			commits = append(commits, currentCommit)
 		} else {
@@ -236,4 +282,15 @@ func listCommitsBetween(repoRoot, oldest, newest string) ([]*ArtifactCommit, err
 	}
 
 	return commits, nil
+}
+
+func branchName(repo *git.Repository) (string, error) {
+	head, err := repo.Head()
+	if err != nil {
+		return "", fmt.Errorf("failed to get the current HEAD of the git repository: %v", err)
+	}
+	if head.Name().IsBranch() {
+		return head.Name().Short(), nil
+	}
+	return "", nil
 }
