@@ -8,7 +8,7 @@
     code.addEventListener("click", function (event) {
       if (navigator.clipboard) {
         let commandText = code.querySelector("code")
-        navigator.clipboard.writeText(commandText.innerText);
+        navigator.clipboard.writeText(commandText.textContent);
         tag.classList.add("visible");
         setTimeout(() => {
           tag.classList.remove("visible");        
