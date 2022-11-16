@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	git "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -62,6 +62,7 @@ kosli pipeline artifact report creation \
 	--sha256 yourSha256 
 `
 
+//goland:noinspection GoUnusedParameter
 func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 	o := new(artifactCreationOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
@@ -126,20 +127,9 @@ func (o *artifactCreationOptions) run(args []string) error {
 		return err
 	}
 
-	o.payload.CommitsList = []*ArtifactCommit{}
-	if previousCommit != "" {
-		o.payload.CommitsList, err = listCommitsBetween(o.srcRepoRoot, previousCommit, o.payload.GitCommit)
-		if err != nil {
-			fmt.Printf("Warning: %s\n", err)
-		}
-	}
-
-	if len(o.payload.CommitsList) == 0 {
-		currentArtifactCommit, err := o.currentArtifactCommit()
-		if err != nil {
-			return err
-		}
-		o.payload.CommitsList = append(o.payload.CommitsList, currentArtifactCommit)
+	o.payload.CommitsList, err = changeLog(o, previousCommit)
+	if err != nil {
+		return err
 	}
 
 	o.payload.RepoUrl, err = getRepoUrl(o.srcRepoRoot)
@@ -151,6 +141,25 @@ func (o *artifactCreationOptions) run(args []string) error {
 	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
 		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
 	return err
+}
+
+func changeLog(o *artifactCreationOptions, previousCommit string) ([]*ArtifactCommit, error) {
+	if previousCommit != "" {
+		commitsList, err := listCommitsBetween(o.srcRepoRoot, previousCommit, o.payload.GitCommit)
+		if err != nil {
+			fmt.Printf("Warning: %s\n", err)
+		}
+		return commitsList, nil
+	}
+
+	if len(o.payload.CommitsList) == 0 {
+		currentArtifactCommit, err := o.currentArtifactCommit()
+		if err != nil {
+			return []*ArtifactCommit{}, err
+		}
+		return []*ArtifactCommit{currentArtifactCommit}, nil
+	}
+	return []*ArtifactCommit{}, nil
 }
 
 func previousCommit(o *artifactCreationOptions) (string, error) {
@@ -233,7 +242,7 @@ func getRepoUrl(repoRoot string) (string, error) {
 
 // listCommitsBetween list all commits that have happened between two commits in a git repo
 func listCommitsBetween(repoRoot, oldest, newest string) ([]*ArtifactCommit, error) {
-	commits := []*ArtifactCommit{}
+	var commits []*ArtifactCommit
 	repo, err := git.PlainOpen(repoRoot)
 	if err != nil {
 		return commits, fmt.Errorf("failed to open git repository at %s: %v",
@@ -262,7 +271,7 @@ func listCommitsBetween(repoRoot, oldest, newest string) ([]*ArtifactCommit, err
 		return commits, fmt.Errorf("failed to git log: %v", err)
 	}
 
-	for ok := true; ok; {
+	for true {
 		commit, err := commitsIter.Next()
 		if err != nil {
 			return commits, fmt.Errorf("failed to get next commit: %v", err)
