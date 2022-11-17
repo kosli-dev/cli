@@ -20,16 +20,16 @@
     {{ with .Params.sections }}
     <div>
         <h2>{{ .title }}</h2>
-
-        <div class="book-columns flex flex-wrap">
+        
+        <div class="home-grid">
             {{ range .blocks }}
-            <div class="flex-even m-xs">
+            <!-- <div class="m-xs"> -->
                 <div class="card">
                     <img src="{{ .image }}" alt="{{ .alt_text }}">
                     <h3 class="h4-style">{{ .title }}</h3>
                     <a href="{{ .url }}">{{ .link_text }}</a>
                 </div>
-            </div>
+            <!-- </div> -->
             {{ end }}
         </div>
 

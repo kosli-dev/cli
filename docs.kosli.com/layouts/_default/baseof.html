@@ -15,10 +15,10 @@
     </aside>
 
     <div class="book-page">
+      <header class="book-header">
+        {{ template "header" . }} <!-- Mobile layout header -->
+      </header>
       <div class="content-container">
-        <header class="book-header">
-          {{ template "header" . }} <!-- Mobile layout header -->
-        </header>
   
         {{ partial "docs/inject/content-before" . }}
         {{ template "main" . }} <!-- Page Content -->

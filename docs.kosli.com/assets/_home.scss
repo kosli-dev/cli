@@ -47,6 +47,15 @@
     }
 }
 
+.home-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-xs;
+    h3 {
+        font-size: 16px
+    }
+}
+
 @media only screen and (max-width: 1100px) {
     .hero {
         .flex-even {
@@ -55,3 +64,22 @@
         }
     }
   }
+
+  @media only screen and (min-width: $mobile-breakpoint) {
+    .home-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: $spacing-xs;
+        h3 {
+            font-size: 20px
+        }
+    }
+}
+
+@media only screen and (min-width: $tablet-breakpoint) {
+    .home-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: $spacing-xs;
+    }
+}
