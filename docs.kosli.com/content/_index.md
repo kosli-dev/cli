@@ -2,6 +2,7 @@
 title: Welcome to Kosli Docs 
 seo_title: Welcome to Kosli Docs 
 description: Don’t spend hours searching for broken commits and manual changes. Get to the bottom of incidents faster with Kosli.
+hideToC: true
 
 hero:
     title: Welcome to Kosli Docs

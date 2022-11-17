@@ -4,17 +4,13 @@ title: "kosli environment report docker"
 
 ## kosli environment report docker
 
-
 Report running containers data from docker host to Kosli.
-
 
 ### Synopsis
 
-
-Report the running containers on the docker host, their image digests 
-,and creation timestamp to Kosli. Containers running images that have not
+Report the running containers on the docker host, their image digests, 
+and creation timestamp to Kosli. Containers running images that have not
 been pushed to or pulled from a registry will be ignored.
-
 
 ```shell
 kosli environment report docker ENVIRONMENT-NAME [flags]
@@ -41,11 +37,9 @@ kosli environment report docker ENVIRONMENT-NAME [flags]
 ### Examples
 
 ```shell
-
 # report what is running in a docker host:
 kosli environment report docker yourEnvironmentName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
-
 ```
 

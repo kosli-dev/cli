@@ -4,7 +4,7 @@ title: "kosli environment declare"
 
 ## kosli environment declare
 
-Declare or update a Kosli environment
+Declare a Kosli environment
 
 ### Synopsis
 

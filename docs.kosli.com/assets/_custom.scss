@@ -9,6 +9,13 @@ h1, h2, h3, h4, h5, h6 {
     scroll-margin-top: 80px;
 }
 
+.toc-title {
+    font-weight: 600;
+    color: $black-100;
+    margin-bottom: 1rem;
+    font-size: 14px;
+}
+
 main.container {
     min-height: calc(100vh - #{$top-header-height});
     position: relative;
@@ -23,7 +30,6 @@ aside.book-menu .book-menu-content {
 
 aside.book-toc .book-toc-content {
     position: fixed;
-    top: $top-header-height;
     padding-top: 2rem;
 }
 
@@ -52,6 +58,11 @@ aside.book-toc .book-toc-content {
 
 .book-page {
     background-color: $neutral-100;
+}
+
+.content-container {
+    display: flex;
+    flex: 1 0 auto;
 }
 
 .top-header {

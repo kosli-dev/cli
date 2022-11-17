@@ -2,4 +2,7 @@
     ul {
         padding-inline-start: 0;
     }
+    &>ul {
+        padding-left: 1rem;
+    }
 }
