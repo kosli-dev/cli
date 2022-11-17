@@ -403,6 +403,7 @@ body[dir="rtl"] .book-menu {
       &>div {
         width: auto;
         max-width: 250px;
+        justify-self: start;
       }
   }
 }
