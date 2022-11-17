@@ -269,6 +269,16 @@ body[dir="rtl"] .book-menu {
     border-top: 1px solid $neutral-400;
   }
 
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: $spacing-s;
+    &>div {
+      width: 250px;
+      justify-self: center;
+    }
+  }
+
   .secondary-footer {
     padding-top: $padding-8;
     a {
@@ -384,5 +394,15 @@ body[dir="rtl"] .book-menu {
   .book-menu .book-menu-content,
   .book-toc .book-toc-content {
     padding: $padding-16 * 2 $padding-16;
+  }
+}
+
+@media only screen and (min-width: $mobile-breakpoint) {
+  .book-footer .footer-grid {
+      grid-template-columns: 1fr 1fr 1fr;
+      &>div {
+        width: auto;
+        max-width: 250px;
+      }
   }
 }
