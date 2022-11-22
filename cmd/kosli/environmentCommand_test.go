@@ -103,6 +103,34 @@ func (suite *EnvironmentCommandTestSuite) TestEnvironmentCommandCmd() {
 			cmd:       "env inspect newEnv --output json" + defaultKosliArguments,
 			golden:    "",
 		},
+
+		// Environment rename tests
+		{
+			name:   "rename: create initial environment",
+			cmd:    "environment declare --name firstEnvName --environment-type S3 --description \"first environment\" " + defaultKosliArguments,
+			golden: "",
+		},
+		{
+			name:   "rename: rename from firstEnvName to secondEnvName",
+			cmd:    "environment rename firstEnvName secondEnvName" + defaultKosliArguments,
+			golden: "",
+		},
+		{
+			name:   "rename: can get env based on firstEnvName",
+			cmd:    "env inspect firstEnvName" + defaultKosliArguments,
+			golden: "",
+		},
+		{
+			name:   "rename: can get env based on secondEnvName",
+			cmd:    "env inspect secondEnvName" + defaultKosliArguments,
+			golden: "",
+		},
+		{
+			wantError: true,
+			name:      "rename: cannot rename a non existing environment",
+			cmd:       "environment rename unknownEnvName someOtherEnvName" + defaultKosliArguments,
+			golden:    "",
+		},
 	}
 	runTestCmd(suite.T(), tests)
 }
