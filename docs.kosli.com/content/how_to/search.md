@@ -11,7 +11,7 @@ Visit [Reference](/client_reference/) to learn more about how to run each comman
 
 The same CLI you use to record and connect your changes can be use to search for and browse information in Kosli.
 
-To make it easier to run Kosli search command with the CLI you can export the `owner` and `api-token` as environment variables, so you don't have to provide them every time you run commands. This approach is valid for [any flag](/introducing_kosli/cli/#environment-variables) 
+To make it easier to run Kosli search commands with the CLI you can export the `owner` and `api-token` as environment variables, so you don't have to provide them every time you run commands. This approach is valid for [any flag](/introducing_kosli/cli/#environment-variables) 
 
 
 ```
@@ -25,6 +25,34 @@ the Kosli cyber-dojo organization is public so any authenticated user can read i
 ```
 export KOSLI_OWNER=cyber-dojo
 ```
+
+## Search with git commit sha
+
+You can use `kosli search` command to find out if Kosli knows of any artifact that was build using that commit - both short and full shas are accepted:
+
+```
+$ kosli search 0f5c9e1
+Search result resolved to commit 0f5c9e19c4d4f948d19ce4c8495b2a44745cda96
+Name:              cyberdojo/web:0f5c9e1
+Fingerprint:       62e1d2909cc59193b31bfd120276fcb8ba5e42dd6becd873218a41e4ce022505
+Has provenance:    true
+Pipeline:          web
+Git commit:        0f5c9e19c4d4f948d19ce4c8495b2a44745cda96
+Commit URL:        https://github.com/cyber-dojo/web/commit/0f5c9e19c4d4f948d19ce4c8495b2a44745cda96
+Build URL:         https://github.com/cyber-dojo/web/actions/runs/3021563461
+Compliance state:  COMPLIANT
+History:
+    Artifact created                                   Fri, 09 Sep 2022 11:59:50 CEST
+    Deployment #59 to aws-beta environment             Fri, 09 Sep 2022 12:01:12 CEST
+    Started running in aws-beta#217 environment        Fri, 09 Sep 2022 12:02:42 CEST
+    Deployment #60 to aws-prod environment             Fri, 09 Sep 2022 12:06:37 CEST
+    Started running in aws-prod#202 environment        Fri, 09 Sep 2022 12:07:28 CEST
+    Scaled up from 1 to 3 in aws-prod#203 environment  Fri, 09 Sep 2022 12:08:28 CEST
+    No longer running in aws-beta#222 environment      Sat, 10 Sep 2022 08:44:42 CEST
+    No longer running in aws-prod#210 environment      Sat, 10 Sep 2022 08:49:28 CEST
+```
+
+The information returned by `kosli search` - like Pipeline, Fingerprint or History - can be used to run more dedicated searches in Kosli. 
 
 ## Search for a pipeline
 
