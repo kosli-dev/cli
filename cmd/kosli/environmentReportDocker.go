@@ -94,8 +94,7 @@ func CreateDockerArtifactsData() ([]*server.ServerData, error) {
 
 	for _, c := range containers {
 		digests := make(map[string]string)
-		imageID := strings.TrimPrefix(c.ImageID, "sha256:")
-		digests[c.Image], err = digest.DockerImageSha256(imageID)
+		digests[c.Image], err = digest.DockerImageSha256(c.Image)
 		if err != nil {
 			if errors.Is(err, digest.ErrRepoDigestUnavailable) {
 				containerName := strings.TrimPrefix(c.Names[0], "/")
