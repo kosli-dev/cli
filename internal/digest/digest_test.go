@@ -478,6 +478,120 @@ func (suite *DigestTestSuite) TestRemoteDockerImageSha256() {
 	}
 }
 
+func (suite *DigestTestSuite) TestExtractImageDigestFromRepoDigest() {
+	type want struct {
+		sha256      string
+		expectError bool
+	}
+	for _, t := range []struct {
+		name        string
+		imageID     string
+		repoDigests []string
+		want        want
+	}{
+		{
+			name:        "empty image ID should cause an error",
+			imageID:     "",
+			repoDigests: []string{"example@sha256:afcc7f1ac1b49db317a7196c902e61c6c3c4607d63599ee1a82d702d249a0ccb"},
+			want: want{
+				expectError: true,
+			},
+		},
+		{
+			name:        "empty repoDigests should cause an error",
+			imageID:     "example",
+			repoDigests: []string{},
+			want: want{
+				expectError: true,
+			},
+		},
+		{
+			name:        "if repoDigests has only item, the digest is returned from it",
+			imageID:     "example",
+			repoDigests: []string{"example@sha256:afcc7f1ac1b49db317a7196c902e61c6c3c4607d63599ee1a82d702d249a0ccb"},
+			want: want{
+				sha256: "afcc7f1ac1b49db317a7196c902e61c6c3c4607d63599ee1a82d702d249a0ccb",
+			},
+		},
+		{
+			name:    "if imageID is an ID (not a name), the returned digest is the first item in repoDigests",
+			imageID: "12adea71a33bcce0925f5b2e951992cc2d8b69f4051122e93d5c35000e9b9e28",
+			repoDigests: []string{
+				"example@sha256:afcc7f1ac1b49db317a7196c902e61c6c3c4607d63599ee1a82d702d249a0ccb",
+				"internal.registry.example.com:5000/example@sha256:b69959407d21e8a062e0416bf13405bb2b71ed7a84dde4158ebafacfa06f5578",
+			},
+			want: want{
+				sha256: "afcc7f1ac1b49db317a7196c902e61c6c3c4607d63599ee1a82d702d249a0ccb",
+			},
+		},
+		{
+			name:    "if repoDigests has multiple items and image ID is a name, the matching digest is returned",
+			imageID: "alpine",
+			repoDigests: []string{
+				"alpine@sha256:e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
+				"localhost:5001/local-registry/alpine@sha256:afcc7f1ac1b49db317a7196c902e61c6c3c4607d63599ee1a82d702d249a0ccb",
+			},
+			want: want{
+				sha256: "e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
+			},
+		},
+		{
+			name:    "for dockerhub images, the library prefix does is skipped from the image name",
+			imageID: "library/alpine",
+			repoDigests: []string{
+				"alpine@sha256:e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
+				"localhost:5001/local-registry/alpine@sha256:afcc7f1ac1b49db317a7196c902e61c6c3c4607d63599ee1a82d702d249a0ccb",
+			},
+			want: want{
+				sha256: "e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
+			},
+		},
+		{
+			name:    "if the image ID is a name and it contains the sha256, the sha256 is skipped from the image name",
+			imageID: "alpine@sha256:e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
+			repoDigests: []string{
+				"alpine@sha256:e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
+				"localhost:5001/local-registry/alpine@sha256:afcc7f1ac1b49db317a7196c902e61c6c3c4607d63599ee1a82d702d249a0ccb",
+			},
+			want: want{
+				sha256: "e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
+			},
+		},
+		{
+			name:    "if the image ID is a name and it contains the tag, the tag is skipped from the image name",
+			imageID: "alpine:v1",
+			repoDigests: []string{
+				"alpine@sha256:e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
+				"localhost:5001/local-registry/alpine@sha256:afcc7f1ac1b49db317a7196c902e61c6c3c4607d63599ee1a82d702d249a0ccb",
+			},
+			want: want{
+				sha256: "e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
+			},
+		},
+		{
+			name:    "when the image name does not have a match in repoDigests, an error is returned",
+			imageID: "example",
+			repoDigests: []string{
+				"alpine@sha256:e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
+				"localhost:5001/local-registry/alpine@sha256:afcc7f1ac1b49db317a7196c902e61c6c3c4607d63599ee1a82d702d249a0ccb",
+			},
+			want: want{
+				expectError: true,
+			},
+		},
+	} {
+		suite.Run(t.name, func() {
+			actual, err := extractImageDigestFromRepoDigest(t.imageID, t.repoDigests)
+			if t.want.expectError {
+				require.Errorf(suite.T(), err, "TestExtractImageDigestFromRepoDigest: error was expected")
+			} else {
+				require.NoErrorf(suite.T(), err, "TestExtractImageDigestFromRepoDigest: error was NOT expected")
+				assert.Equal(suite.T(), t.want.sha256, actual, fmt.Sprintf("TestExtractImageDigestFromRepoDigest: want %s -- got %s", t.want.sha256, actual))
+			}
+		})
+	}
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestDigestTestSuite(t *testing.T) {

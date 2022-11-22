@@ -21,7 +21,7 @@ import (
 
 var (
 	// ErrRepoDigestUnavailable returned when repo digest is not available.
-	ErrRepoDigestUnavailable = errors.New("repo digest unavailable for the image," +
+	ErrRepoDigestUnavailable = errors.New("repo digest unavailable for the image, " +
 		"has it been pushed to or pulled from a registry?")
 )
 
@@ -128,25 +128,49 @@ func FileSha256(filepath string) (string, error) {
 	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
-// DockerImageSha256 returns a sha256 digest of a docker image. It requires
-// the docker daemon to be accessible and the docker image to be locally present.
+// DockerImageSha256 returns a sha256 digest of a docker image.
+// imageID can be the image name or ID
+// It requires the docker daemon to be accessible and the docker image to be locally present.
 // The docker image must have been pushed into a registry to have a digest.
-func DockerImageSha256(imageName string) (string, error) {
+func DockerImageSha256(imageID string) (string, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return "", err
 	}
-	imageInspect, _, err := cli.ImageInspectWithRaw(context.Background(), imageName)
+	imageInspect, _, err := cli.ImageInspectWithRaw(context.Background(), imageID)
 	if err != nil {
 		return "", err
 	}
 	repoDigests := imageInspect.RepoDigests
-	if len(repoDigests) > 0 {
-		fingerprint := strings.Split(repoDigests[0], "@sha256:")[1]
-		return fingerprint, nil
-	} else {
+	return extractImageDigestFromRepoDigest(imageID, repoDigests)
+}
+
+// extractImageDigestFromRepoDigest finds the corresponding digest for an imageName in a list of repoDigests
+// imageID can be image name or ID
+func extractImageDigestFromRepoDigest(imageID string, repoDigests []string) (string, error) {
+	if len(repoDigests) == 0 || imageID == "" {
 		return "", ErrRepoDigestUnavailable
 	}
+	if len(repoDigests) == 1 {
+		return strings.Split(repoDigests[0], "@sha256:")[1], nil
+	}
+	// if the imageID is an ID not a name, there is no way to select
+	// a digest from multiple repoDigests entries, so we take the first one
+	if err := ValidateDigest(imageID); err == nil && len(repoDigests) > 0 {
+		return strings.Split(repoDigests[0], "@sha256:")[1], nil
+	}
+
+	// if imageName contains the tag, starts with library or has @sha256, clean it
+	imageID = strings.TrimPrefix(imageID, "library/")
+	imageID = strings.Split(imageID, ":")[0]
+	imageID = strings.TrimSuffix(imageID, "@sha256")
+
+	for _, r := range repoDigests {
+		if strings.HasPrefix(r, imageID) {
+			return strings.Split(r, "@sha256:")[1], nil
+		}
+	}
+	return "", ErrRepoDigestUnavailable
 }
 
 // requestManifestFromRegistry makes an API request to a remote registry to get image manifest
