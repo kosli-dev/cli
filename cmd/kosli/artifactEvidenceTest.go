@@ -62,7 +62,7 @@ func newTestEvidenceCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
-			return ValidateRegisteryFlags(cmd, o.fingerprintOptions)
+			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
 
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {

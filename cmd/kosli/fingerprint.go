@@ -26,7 +26,7 @@ func newFingerprintCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, "docker image name or file/dir path is required")
 			}
 
-			return ValidateRegisteryFlags(cmd, o)
+			return ValidateRegistryFlags(cmd, o)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args, out)

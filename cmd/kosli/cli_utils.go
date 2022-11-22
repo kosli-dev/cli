@@ -340,9 +340,9 @@ func ValidateArtifactArg(args []string, artifactType, inputSha256 string, always
 	return nil
 }
 
-// ValidateRegisteryFlags validates that you provide all registery information necessary for
+// ValidateRegistryFlags validates that you provide all registry information necessary for
 // remote digest.
-func ValidateRegisteryFlags(cmd *cobra.Command, o *fingerprintOptions) error {
+func ValidateRegistryFlags(cmd *cobra.Command, o *fingerprintOptions) error {
 	if o.artifactType != "docker" && (o.registryPassword != "" || o.registryUsername != "") {
 		return ErrorBeforePrintingUsage(cmd, "--registry-provider, --registry-username and registry-password are only applicable when --artifact-type is 'docker'")
 	}
