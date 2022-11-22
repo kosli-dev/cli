@@ -24,7 +24,7 @@ func newPipelineBackfillArtifactCommitsCmd(out io.Writer) *cobra.Command {
 	o := new(pipelineBackfillArtifactCommitsOptions)
 	cmd := &cobra.Command{
 		Use:    "backfill-commits PIPELINE-NAME",
-		Short:  "Calculate and report the changelog of each artifact in a Kosli pipeline.",
+		Short:  "Collect and report the changelog of each artifact in a Kosli pipeline.",
 		Hidden: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -37,7 +37,7 @@ func newPipelineBackfillArtifactCommitsCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(args)
+			return o.run(out, args)
 		},
 	}
 
@@ -51,13 +51,13 @@ func newPipelineBackfillArtifactCommitsCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *pipelineBackfillArtifactCommitsOptions) run(args []string) error {
+func (o *pipelineBackfillArtifactCommitsOptions) run(out io.Writer, args []string) error {
 	// Get all artifacts for a pipeline
 	// find repo URL
 	// for each artifact,
-	// find the commit of the previous artifact
-	// get the commit list
-	// send a backfill request
+	// 1) find the commit of the previous artifact
+	// 2) get the commit list
+	// 3) send a backfill request
 	var err error
 	pipelineName := args[0]
 	o.payload.RepoUrl, err = getRepoUrl(o.srcRepoRoot)
@@ -80,7 +80,7 @@ func (o *pipelineBackfillArtifactCommitsOptions) run(args []string) error {
 			artifactData := evidenceMap["artifact"].(map[string]interface{})
 			gitCommit := artifactData["git_commit"].(string)
 			artifactDigest := artifactData["sha256"].(string)
-			fmt.Printf("Digest: %s. git commit: %s \n", artifactDigest, gitCommit)
+			fmt.Fprintf(out, "Digest: %s -- git commit: %s \n", artifactDigest, gitCommit)
 
 			previousCommitUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/previous_commit",
 				global.Host, global.Owner, pipelineName, artifactDigest)
@@ -98,16 +98,19 @@ func (o *pipelineBackfillArtifactCommitsOptions) run(args []string) error {
 			}
 
 			o.payload.CommitsList = []*ArtifactCommit{}
+			previousCommit := ""
 			if previousCommitResponse["previous_commit"] != nil {
-				previousCommit := previousCommitResponse["previous_commit"].(string)
-				fmt.Printf("Previous commit: %s\n", previousCommit)
-				o.payload.CommitsList, err = listCommitsBetween(o.srcRepoRoot, previousCommit, gitCommit)
-				if err != nil {
-					return err
-				}
-				for _, commitData := range o.payload.CommitsList {
-					fmt.Printf("	Commit sha1: %s\n", commitData.Sha1)
-				}
+				previousCommit = previousCommitResponse["previous_commit"].(string)
+				fmt.Fprintf(out, "Previous commit: %s\n", previousCommit)
+			}
+
+			o.payload.CommitsList, err = changeLog(o.srcRepoRoot, gitCommit, previousCommit)
+			if err != nil {
+				return err
+			}
+
+			for _, commitData := range o.payload.CommitsList {
+				fmt.Fprintf(out, "	Commit sha1: %s\n", commitData.Sha1)
 			}
 
 			url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/backfill_commits", global.Host, global.Owner, pipelineName, artifactDigest)
@@ -120,6 +123,7 @@ func (o *pipelineBackfillArtifactCommitsOptions) run(args []string) error {
 	}
 }
 
+// getPipelineArtifacts returns artifacts from a pipeline
 func getPipelineArtifacts(pipelineName string, pageNumber int) ([]map[string]interface{}, error) {
 	var artifacts []map[string]interface{}
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/?page=%d&per_page=%d",
