@@ -10,7 +10,7 @@ import (
 )
 
 const environmentRenameDesc = `
-Rename a Kosli environment.
+The environment will remain available under its old name until that name is taken by another environment.
 `
 
 const environmentRenameExample = `
