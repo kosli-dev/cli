@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -29,6 +30,8 @@ type SearchArtifact struct {
 	CommitURL       string                   `json:"commit_url"`
 	BuildURL        string                   `json:"build_url"`
 	ComplianceState string                   `json:"compliance_state"`
+	RunningIn       []string                 `json:"running_in"`
+	ExitedFrom      []string                 `json:"exited_from"`
 	History         []map[string]interface{} `json:"history"`
 }
 
@@ -126,6 +129,8 @@ func printSearchAsTableWrapper(responseRaw string, out io.Writer, pageNumber int
 			rows = append(rows, fmt.Sprintf("Compliance state:\t%s", artifact.ComplianceState))
 		}
 
+		rows = append(rows, fmt.Sprintf("Running in:\t[ %s ]", strings.Join(artifact.RunningIn, ", ")))
+		rows = append(rows, fmt.Sprintf("Exited from:\t[ %s ]", strings.Join(artifact.ExitedFrom, ", ")))
 		rows = append(rows, "History:")
 		for _, event := range artifact.History {
 			timestampHuman, err := formattedTimestamp(event["timestamp"], true)
