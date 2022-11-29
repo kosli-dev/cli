@@ -102,14 +102,13 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 
 		// Report artifacts
 		{
-			// Commit sha b7d4571 is tag: v0.1.21
 			wantError: false,
 			name:      "report artifact 1",
 			cmd:       "pipeline artifact report creation FooBar_1 --git-commit " + headHash + " --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 		{
-			// Commit 758c36c is the one after b7d4571
+			// Git commit SHA has to be the same as the previous one so we test that an empty commit list is reported correctly
 			wantError: false,
 			name:      "report artifact 2",
 			cmd:       "pipeline artifact report creation FooBar_2 --git-commit " + headHash + " --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
@@ -137,7 +136,7 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		{
 			wantError: false,
 			name:      "report approval",
-			cmd:       "pipeline approval report --pipeline newPipe --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0 --oldest-commit HEAD" + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "pipeline approval report --pipeline newPipe --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0 --oldest-commit HEAD~2" + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 
@@ -145,7 +144,7 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		{
 			wantError: false,
 			name:      "request approval",
-			cmd:       "pipeline approval request --pipeline newPipe --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf --oldest-commit HEAD" + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "pipeline approval request --pipeline newPipe --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf --oldest-commit HEAD~2" + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 
