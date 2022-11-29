@@ -130,6 +130,8 @@ func (o *approvalReportOptions) run(args []string, request bool) error {
 		return err
 	}
 
+	// Need this line to make sure an empty list is converted to [] and not null in SendPayload
+	o.payload.CommitList = make([]string, 0)
 	for _, commit := range listCommitsRich {
 		o.payload.CommitList = append(o.payload.CommitList, commit.Sha1)
 	}

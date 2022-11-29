@@ -16,7 +16,8 @@ type PipelineCommandTestSuite struct {
 func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 
 	defaultKosliArguments := " -H http://localhost:8001 --owner docs-cmd-test-user -a eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY"
-	// defaultArtifactArguments := " --pipeline newPipe --build-url www.yr.no --commit-url www.nrk.no"
+	defaultArtifactArguments := " --pipeline newPipe --build-url www.yr.no --commit-url www.nrk.no"
+	defaultRepoRoot := " --repo-root ../.. "
 
 	tests := []cmdTestCase{
 		{
@@ -87,92 +88,92 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 			golden:    "",
 		},
 
-		// reporting artifacts requires a git repo (for commits list calculation)
+		// Report artifacts
+		{
+			// Commit sha b7d4571 is tag: v0.1.21
+			wantError: false,
+			name:      "report artifact 1",
+			cmd:       "pipeline artifact report creation FooBar_1 --git-commit b7d4571b7ad46d05c69cd8331331a5ce43c15cc4 --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			golden:    "",
+		},
+		{
+			// Commit 758c36c is the one after b7d4571
+			wantError: false,
+			name:      "report artifact 2",
+			cmd:       "pipeline artifact report creation FooBar_2 --git-commit 758c36c404459ce5a065acb326e0c9e15563e415 --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			golden:    "",
+		},
 
-		// // Report artifacts
-		// {
-		// 	wantError: false,
-		// 	name:      "report artifact 1",
-		// 	cmd:       "pipeline artifact report creation FooBar_1 --git-commit 80c2d2a --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultArtifactArguments + defaultKosliArguments,
-		// 	golden:    "",
-		// },
-		// {
-		// 	wantError: false,
-		// 	name:      "report artifact 2",
-		// 	cmd:       "pipeline artifact report creation FooBar_2 --git-commit ab483b9 --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultArtifactArguments + defaultKosliArguments,
-		// 	golden:    "",
-		// },
+		// List artifacts
+		{
+			wantError: false,
+			name:      "list artifacts",
+			cmd:       "artifact ls newPipe" + defaultKosliArguments,
+			golden:    "",
+		},
 
-		// // List artifacts
-		// {
-		// 	wantError: false,
-		// 	name:      "list artifacts",
-		// 	cmd:       "artifact ls newPipe" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
-
-		// // Get artifact
-		// {
-		// 	wantError: false,
-		// 	name:      "get artifact",
-		// 	cmd:       "artifact get newPipe@4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
+		// Get artifact
+		{
+			wantError: false,
+			name:      "get artifact",
+			cmd:       "artifact get newPipe@4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments,
+			golden:    "",
+		},
 
 		// TODO: decouple approval tests and make them independent
 		// Report approval
-		// {
-		// 	wantError: false,
-		// 	name:      "report approval",
-		// 	cmd:       "pipeline approval report --repo-root ../.. --pipeline newPipe --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0 --oldest-commit HEAD" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
+		{
+			wantError: false,
+			name:      "report approval",
+			cmd:       "pipeline approval report --pipeline newPipe --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0 --oldest-commit HEAD" + defaultKosliArguments + defaultRepoRoot,
+			golden:    "",
+		},
 
-		// // Request approval
-		// {
-		// 	wantError: false,
-		// 	name:      "request approval",
-		// 	cmd:       "pipeline approval request --repo-root ../.. --pipeline newPipe --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf --oldest-commit HEAD" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
+		// Request approval
+		{
+			wantError: false,
+			name:      "request approval",
+			cmd:       "pipeline approval request --pipeline newPipe --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf --oldest-commit HEAD" + defaultKosliArguments + defaultRepoRoot,
+			golden:    "",
+		},
 
-		// // Assert approval
-		// {
-		// 	wantError: false,
-		// 	name:      "assert an approved approval does not fail",
-		// 	cmd:       "pipeline approval assert --pipeline newPipe --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
+		// Assert approval
+		{
+			wantError: false,
+			name:      "assert an approved approval does not fail",
+			cmd:       "pipeline approval assert --pipeline newPipe --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultKosliArguments,
+			golden:    "",
+		},
 
-		// {
-		// 	wantError: true,
-		// 	name:      "assert a pending approval fails",
-		// 	cmd:       "pipeline approval assert --pipeline newPipe --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
+		{
+			wantError: true,
+			name:      "assert a pending approval fails",
+			cmd:       "pipeline approval assert --pipeline newPipe --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments,
+			golden:    "",
+		},
 
-		// // list approvals
-		// {
-		// 	wantError: false,
-		// 	name:      "list approvals",
-		// 	cmd:       "approval ls newPipe" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
+		// list approvals
+		{
+			wantError: false,
+			name:      "list approvals",
+			cmd:       "approval ls newPipe" + defaultKosliArguments,
+			golden:    "",
+		},
 
-		// // Get an approval
-		// {
-		// 	wantError: false,
-		// 	name:      "get an approval",
-		// 	cmd:       "approval get 2 --pipeline newPipe" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
+		// Get an approval
+		{
+			wantError: false,
+			name:      "get an approval",
+			cmd:       "approval get newPipe#2" + defaultKosliArguments,
+			golden:    "",
+		},
 
-		// {
-		// 	wantError: true,
-		// 	name:      "get a non-existing approval fails",
-		// 	cmd:       "approval get 20 --pipeline newPipe" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
+		{
+			wantError: true,
+			name:      "get a non-existing approval fails",
+			cmd:       "approval get newPipe#20" + defaultKosliArguments,
+			golden:    "",
+		},
 	}
 	runTestCmd(suite.T(), tests)
 }
