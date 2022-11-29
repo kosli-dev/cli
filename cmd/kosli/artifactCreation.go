@@ -240,7 +240,11 @@ func getRepoUrl(repoRoot string) (string, error) {
 
 // listCommitsBetween list all commits that have happened between two commits in a git repo
 func listCommitsBetween(repoRoot, oldest, newest string) ([]*ArtifactCommit, error) {
-	var commits []*ArtifactCommit
+	// Using 'var commits []*ArtifactCommit' will make '[]' convert to 'null' when converting to json
+	// which will fail on the server side.
+	// Using 'commits := make([]*ArtifactCommit, 0)' will make '[]' convert to '[]' when converting to json
+	// See issue #522
+	commits := make([]*ArtifactCommit, 0)
 	repo, err := git.PlainOpen(repoRoot)
 	if err != nil {
 		return commits, fmt.Errorf("failed to open git repository at %s: %v",
