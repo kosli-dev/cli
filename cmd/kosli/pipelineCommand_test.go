@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/go-git/go-git/v5"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -14,10 +16,20 @@ type PipelineCommandTestSuite struct {
 }
 
 func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
-
 	defaultKosliArguments := " -H http://localhost:8001 --owner docs-cmd-test-user -a eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY"
 	defaultArtifactArguments := " --pipeline newPipe --build-url www.yr.no --commit-url www.nrk.no"
 	defaultRepoRoot := " --repo-root ../.. "
+
+	repo, err := git.PlainOpen("../..")
+	if err != nil {
+		suite.T().Fatal(fmt.Errorf("failed to open git repository at %s: %v", "../..", err))
+	}
+	// headHash, err := repo.ResolveRevision(plumbing.Revision("HEAD"))
+	repoHead, err := repo.Head()
+	if err != nil {
+		suite.T().Fatal(fmt.Errorf("failed to resolve revision %s: %v", "HEAD", err))
+	}
+	headHash := repoHead.Hash().String()
 
 	tests := []cmdTestCase{
 		{
@@ -93,14 +105,14 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 			// Commit sha b7d4571 is tag: v0.1.21
 			wantError: false,
 			name:      "report artifact 1",
-			cmd:       "pipeline artifact report creation FooBar_1 --git-commit b7d4571b7ad46d05c69cd8331331a5ce43c15cc4 --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "pipeline artifact report creation FooBar_1 --git-commit " + headHash + " --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 		{
 			// Commit 758c36c is the one after b7d4571
 			wantError: false,
 			name:      "report artifact 2",
-			cmd:       "pipeline artifact report creation FooBar_2 --git-commit 758c36c404459ce5a065acb326e0c9e15563e415 --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "pipeline artifact report creation FooBar_2 --git-commit " + headHash + " --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 
