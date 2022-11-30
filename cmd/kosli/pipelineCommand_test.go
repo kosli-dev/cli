@@ -103,16 +103,57 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		// Report artifacts
 		{
 			wantError: false,
-			name:      "report artifact 1",
+			name:      "report artifact with sha256",
 			cmd:       "pipeline artifact report creation FooBar_1 --git-commit " + headHash + " --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 		{
-			// Git commit SHA has to be the same as the previous one so we test that an empty commit list is reported correctly
 			wantError: false,
-			name:      "report artifact 2",
+			name:      "report different artifact with same git commit",
 			cmd:       "pipeline artifact report creation FooBar_2 --git-commit " + headHash + " --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
+		},
+		{
+			wantError: false,
+			name:      "report artifact file",
+			cmd:       "pipeline artifact report creation testdata/file1 --artifact-type file --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			golden:    "",
+		},
+		{
+			wantError: false,
+			name:      "report artifact dir",
+			cmd:       "pipeline artifact report creation testdata/folder1 --artifact-type dir --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			golden:    "",
+		},
+		{
+			wantError: true,
+			name:      "report artifact missing --owner",
+			cmd:       "pipeline artifact report creation testdata/folder1 --artifact-type dir --git-commit " + headHash + defaultArtifactArguments + defaultRepoRoot,
+			golden:    "",
+		},
+		{
+			wantError: true,
+			name:      "report artifact missing --artifact-type",
+			cmd:       "pipeline artifact report creation testdata/folder1 --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			golden:    "",
+		},
+		{
+			wantError: true,
+			name:      "report artifact missing --git-commit",
+			cmd:       "pipeline artifact report creation testdata/folder1 --artifact-type dir " + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			golden:    "Error: required flag(s) \"git-commit\" not set\n",
+		},
+		{
+			wantError: true,
+			name:      "report artifact file with non existing file name",
+			cmd:       "pipeline artifact report creation thisIsNotAFile --artifact-type file --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			golden:    "Error: open thisIsNotAFile: no such file or directory\n",
+		},
+		{
+			wantError: true,
+			name:      "report artifact wrong --",
+			cmd:       "pipeline artifact report creation testdata/file1 --repo-root . --artifact-type file --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments,
+			golden:    "Error: could not retrieve current git commit for " + headHash + ": failed to open git repository at .: repository does not exist\n",
 		},
 
 		// List artifacts
@@ -136,7 +177,7 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		{
 			wantError: false,
 			name:      "report approval",
-			cmd:       "pipeline approval report --pipeline newPipe --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0 --oldest-commit HEAD~1" + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "pipeline approval report --pipeline newPipe --oldest-commit HEAD~1 --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 
@@ -144,7 +185,7 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		{
 			wantError: false,
 			name:      "request approval",
-			cmd:       "pipeline approval request --pipeline newPipe --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf --oldest-commit HEAD~1" + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "pipeline approval request --pipeline newPipe --oldest-commit HEAD --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 
