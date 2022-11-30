@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
+	"github.com/kosli-dev/cli/internal/version"
 	"github.com/sirupsen/logrus"
 )
 
@@ -33,6 +34,7 @@ func createRequest(method, url string, jsonBytes []byte, additionalHeaders map[s
 		return nil, fmt.Errorf("failed to create %s request to %s : %v", method, url, err)
 	}
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	req.Header.Set("User-Agent", "Kosli/"+version.GetVersion())
 
 	for k, v := range additionalHeaders {
 		req.Header.Set(k, v)

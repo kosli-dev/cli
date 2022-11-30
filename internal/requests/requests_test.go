@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/version"
 	"github.com/maxcnunes/httpfake"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
@@ -199,6 +200,12 @@ func (suite *RequestsTestSuite) TestDoRequestWithToken() {
 			}
 		})
 	}
+}
+
+func (suite *RequestsTestSuite) TestCreateRequest() {
+	httpReq, err := createRequest("GET", "https://www.nrk.no", []byte{}, map[string]string{})
+	require.NoErrorf(suite.T(), err, "error was not expected, but got: %v", err)
+	require.Equal(suite.T(), httpReq.Header.Get("User-Agent"), "Kosli/"+version.GetVersion())
 }
 
 // In order for 'go test' to run this suite, we need to create
