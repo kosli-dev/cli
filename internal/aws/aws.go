@@ -19,8 +19,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/kosli-dev/cli/internal/digest"
+	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/utils"
-	"github.com/sirupsen/logrus"
 )
 
 // EcsEnvRequest represents the PUT request body to be sent to kosli from ECS
@@ -136,7 +136,7 @@ func GetLambdaPackageData(functionName, functionVersion string, creds *credentia
 }
 
 // GetS3Data returns a digest and metadata of the S3 bucket content
-func GetS3Data(bucket string, creds *credentials.Credentials, region string) ([]*S3Data, error) {
+func GetS3Data(bucket string, creds *credentials.Credentials, region string, logger *logger.Logger) ([]*S3Data, error) {
 	s3Data := []*S3Data{}
 	awsConfig := &aws.Config{Credentials: creds, Region: aws.String(region)}
 	s3Session, err := session.NewSession(awsConfig)
@@ -175,7 +175,7 @@ func GetS3Data(bucket string, creds *credentials.Credentials, region string) ([]
 		}
 	}
 
-	sha256, err := digest.DirSha256(tempDirName, logrus.New())
+	sha256, err := digest.DirSha256(tempDirName, logger)
 	if err != nil {
 		return s3Data, err
 	}

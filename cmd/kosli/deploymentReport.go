@@ -61,7 +61,7 @@ func newDeploymentReportCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{"pipeline", "build-url", "environment"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd
@@ -84,7 +84,7 @@ func (o *deploymentReportOptions) run(args []string) error {
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/", global.Host, global.Owner, o.pipelineName)
 
 	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPost, log)
+		global.MaxAPIRetries, global.DryRun, http.MethodPost)
 	return err
 }
 

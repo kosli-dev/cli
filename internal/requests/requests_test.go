@@ -8,7 +8,6 @@ import (
 
 	"github.com/kosli-dev/cli/internal/version"
 	"github.com/maxcnunes/httpfake"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -128,7 +127,7 @@ func (suite *RequestsTestSuite) TestSendPayload() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			resp, err := SendPayload(t.args.payload, t.args.url, "", t.args.token, t.args.maxRetries, t.args.dryRun, t.args.method, logrus.New())
+			resp, err := SendPayload(t.args.payload, t.args.url, "", t.args.token, t.args.maxRetries, t.args.dryRun, t.args.method)
 			if t.expectError {
 				require.Errorf(suite.T(), err, "error was expected but got none")
 			} else if t.nilResponse {
@@ -189,7 +188,7 @@ func (suite *RequestsTestSuite) TestDoRequestWithToken() {
 	} {
 		suite.Run(t.name, func() {
 			resp, err := DoRequestWithToken(t.args.payload, t.args.url, t.args.token, t.args.maxRetries,
-				t.args.method, t.args.extraHeaders, logrus.New())
+				t.args.method, t.args.extraHeaders)
 			if t.expectError {
 				require.Errorf(suite.T(), err, "error was expected but got none")
 			} else {

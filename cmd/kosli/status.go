@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/kosli-dev/cli/internal/requests"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -36,7 +35,7 @@ func newStatusCmd(out io.Writer) *cobra.Command {
 func (o *statusOptions) run(out io.Writer) error {
 	url := fmt.Sprintf("%s/ready", global.Host)
 	var outErr error
-	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", "", global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
+	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", "", global.MaxAPIRetries, http.MethodGet, map[string]string{})
 	if err != nil {
 		if o.assert {
 			return fmt.Errorf("kosli server %s is unresponsive", global.Host)

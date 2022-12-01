@@ -44,7 +44,7 @@ func newEnvironmentRenameCmd(out io.Writer) *cobra.Command {
 			url := fmt.Sprintf("%s/api/v1/environments/%s/%s/rename", global.Host, global.Owner, args[0])
 			payload.NewName = args[1]
 			_, err := requests.SendPayload(payload, url, "", global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+				global.MaxAPIRetries, global.DryRun, http.MethodPut)
 			return err
 		},
 	}

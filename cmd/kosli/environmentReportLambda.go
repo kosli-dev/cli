@@ -79,7 +79,7 @@ func newEnvironmentReportLambdaCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{"function-name"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd
@@ -102,6 +102,6 @@ func (o *environmentReportLambdaOptions) run(args []string) error {
 	}
 
 	_, err = requests.SendPayload(requestBody, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+		global.MaxAPIRetries, global.DryRun, http.MethodPut)
 	return err
 }

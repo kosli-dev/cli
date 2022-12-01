@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/kosli-dev/cli/internal/requests"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -49,7 +48,7 @@ func newAssertArtifactCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{"pipeline"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd
@@ -65,7 +64,7 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 	}
 
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s", global.Host, global.Owner, o.pipelineName, o.sha256)
-	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken, global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
+	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken, global.MaxAPIRetries, http.MethodGet, map[string]string{})
 	if err != nil {
 		return err
 	}

@@ -77,7 +77,7 @@ func newEnvironmentReportS3Cmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{"bucket"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd
@@ -88,7 +88,7 @@ func (o *environmentReportS3Options) run(args []string) error {
 
 	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
 	creds := aws.AWSCredentials(o.accessKey, o.secretKey)
-	s3Data, err := aws.GetS3Data(o.bucket, creds, o.region)
+	s3Data, err := aws.GetS3Data(o.bucket, creds, o.region, logger)
 	if err != nil {
 		return err
 	}
@@ -99,6 +99,6 @@ func (o *environmentReportS3Options) run(args []string) error {
 	}
 
 	_, err = requests.SendPayload(requestBody, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+		global.MaxAPIRetries, global.DryRun, http.MethodPut)
 	return err
 }

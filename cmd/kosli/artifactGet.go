@@ -60,7 +60,7 @@ func newArtifactGetCmd(out io.Writer) *cobra.Command {
 func (o *artifactGetOptions) run(out io.Writer, args []string) error {
 	kurl := fmt.Sprintf("%s/api/v1/projects/%s/artifact/?snappish=%s", global.Host, global.Owner, url.QueryEscape(args[0]))
 	response, err := requests.SendPayload([]byte{}, kurl, "", global.ApiToken,
-		global.MaxAPIRetries, false, http.MethodGet, log)
+		global.MaxAPIRetries, false, http.MethodGet)
 	if err != nil {
 		return err
 	}

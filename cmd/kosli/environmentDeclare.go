@@ -51,7 +51,7 @@ func newEnvironmentDeclareCmd(out io.Writer) *cobra.Command {
 			url := fmt.Sprintf("%s/api/v1/environments/%s/", global.Host, global.Owner)
 
 			_, err := requests.SendPayload(payload, url, "", global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+				global.MaxAPIRetries, global.DryRun, http.MethodPut)
 			return err
 		},
 	}
@@ -62,7 +62,7 @@ func newEnvironmentDeclareCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{"name", "environment-type"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd

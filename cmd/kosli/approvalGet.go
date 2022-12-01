@@ -64,7 +64,7 @@ func newApprovalGetCmd(out io.Writer) *cobra.Command {
 func (o *approvalGetOptions) run(out io.Writer, args []string) error {
 	kurl := fmt.Sprintf("%s/api/v1/projects/%s/approval/?snappish=%s", global.Host, global.Owner, url.QueryEscape(args[0]))
 	response, err := requests.DoBasicAuthRequest([]byte{}, kurl, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{}, log)
+		global.MaxAPIRetries, http.MethodGet, map[string]string{})
 	if err != nil {
 		return err
 	}

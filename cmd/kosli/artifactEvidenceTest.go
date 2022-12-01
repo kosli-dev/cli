@@ -82,7 +82,7 @@ func newTestEvidenceCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{"pipeline", "build-url", "evidence-type"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd
@@ -118,7 +118,7 @@ func (o *testEvidenceOptions) run(args []string) error {
 	}
 
 	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+		global.MaxAPIRetries, global.DryRun, http.MethodPut)
 	return err
 }
 

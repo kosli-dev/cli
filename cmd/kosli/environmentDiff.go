@@ -73,7 +73,7 @@ func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
 		global.Host, global.Owner, url.QueryEscape(snappish1), url.QueryEscape(snappish2))
 
 	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, false, http.MethodGet, log)
+		global.MaxAPIRetries, false, http.MethodGet)
 	if err != nil {
 		return err
 	}

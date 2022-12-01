@@ -92,7 +92,7 @@ func newApprovalReportCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{"pipeline", "oldest-commit"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd
@@ -137,6 +137,6 @@ func (o *approvalReportOptions) run(args []string, request bool) error {
 	}
 
 	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPost, log)
+		global.MaxAPIRetries, global.DryRun, http.MethodPost)
 	return err
 }

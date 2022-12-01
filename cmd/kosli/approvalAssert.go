@@ -69,7 +69,7 @@ func newApprovalAssertCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{"pipeline"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd
@@ -87,7 +87,7 @@ func (o *approvalAssertOptions) run(args []string) error {
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/approvals/", global.Host, global.Owner, o.pipelineName, o.sha256)
 
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{}, log)
+		global.MaxAPIRetries, http.MethodGet, map[string]string{})
 
 	if err != nil {
 		return err
@@ -106,7 +106,7 @@ func (o *approvalAssertOptions) run(args []string) error {
 	state, ok := approvals[len(approvals)-1]["state"].(string)
 	if ok && state == "APPROVED" {
 		approvalNumber := approvals[len(approvals)-1]["release_number"]
-		log.Infof("artifact with sha256 %s is approved (approval no. [%v])", o.sha256, approvalNumber)
+		logger.Info("artifact with sha256 %s is approved (approval no. [%v])", o.sha256, approvalNumber)
 		return nil
 	} else {
 		return fmt.Errorf("artifact with sha256 %s is not approved", o.sha256)

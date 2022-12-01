@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"github.com/kosli-dev/cli/internal/version"
-	"github.com/sirupsen/logrus"
 )
 
 // HTTPResponse is a wrapper of http.Response with ready-extracted string body
@@ -19,10 +19,9 @@ type HTTPResponse struct {
 	Resp *http.Response
 }
 
-func getRetryableHttpClient(maxAPIRetries int, logger *logrus.Logger) *http.Client {
+func getRetryableHttpClient(maxAPIRetries int) *http.Client {
 	retryClient := retryablehttp.NewClient()
 	retryClient.RetryMax = maxAPIRetries
-	retryClient.Logger = nil
 	// return a standard *http.Client from the retryable client
 	return retryClient.StandardClient()
 }
@@ -45,8 +44,8 @@ func createRequest(method, url string, jsonBytes []byte, additionalHeaders map[s
 
 // DoBasicAuthRequest sends an HTTP request with basic auth to a URL and returns the response body and status code
 func DoBasicAuthRequest(jsonBytes []byte, url, username, password string,
-	maxAPIRetries int, method string, additionalHeaders map[string]string, logger *logrus.Logger) (*HTTPResponse, error) {
-	client := getRetryableHttpClient(maxAPIRetries, logger)
+	maxAPIRetries int, method string, additionalHeaders map[string]string) (*HTTPResponse, error) {
+	client := getRetryableHttpClient(maxAPIRetries)
 
 	req, err := createRequest(method, url, jsonBytes, additionalHeaders)
 
@@ -95,8 +94,8 @@ func DoBasicAuthRequest(jsonBytes []byte, url, username, password string,
 
 // DoRequestWithToken sends an HTTP request with auth token to a URL and returns the response body and status code
 func DoRequestWithToken(jsonBytes []byte, url, token string,
-	maxAPIRetries int, method string, additionalHeaders map[string]string, logger *logrus.Logger) (*HTTPResponse, error) {
-	client := getRetryableHttpClient(maxAPIRetries, logger)
+	maxAPIRetries int, method string, additionalHeaders map[string]string) (*HTTPResponse, error) {
+	client := getRetryableHttpClient(maxAPIRetries)
 
 	additionalHeaders["Authorization"] = fmt.Sprintf("Bearer %s", token)
 	req, err := createRequest(method, url, jsonBytes, additionalHeaders)
@@ -126,7 +125,7 @@ func DoRequestWithToken(jsonBytes []byte, url, token string,
 }
 
 // SendPayload sends a JSON payload to a URL
-func SendPayload(payload interface{}, url, username, token string, maxRetries int, dryRun bool, method string, logger *logrus.Logger) (*HTTPResponse, error) {
+func SendPayload(payload interface{}, url, username, token string, maxRetries int, dryRun bool, method string) (*HTTPResponse, error) {
 	var resp *HTTPResponse
 	jsonBytes, err := json.MarshalIndent(payload, "", "    ")
 	if err != nil {
@@ -134,10 +133,10 @@ func SendPayload(payload interface{}, url, username, token string, maxRetries in
 	}
 
 	if dryRun {
-		logger.Info("############### THIS IS A DRY-RUN  ###############")
-		logger.Info(string(jsonBytes))
+		log.Println("############### THIS IS A DRY-RUN  ###############")
+		log.Println(string(jsonBytes))
 	} else {
-		resp, err = DoBasicAuthRequest(jsonBytes, url, username, token, maxRetries, method, map[string]string{}, logger)
+		resp, err = DoBasicAuthRequest(jsonBytes, url, username, token, maxRetries, method, map[string]string{})
 		if err != nil {
 			return resp, err
 		}

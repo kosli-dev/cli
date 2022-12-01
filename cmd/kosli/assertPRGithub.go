@@ -20,7 +20,7 @@ func newAssertPullRequestGithubCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			log.Infof("found [%d] pull request(s) in Github for commit: %s", len(pullRequestsEvidence), o.commit)
+			logger.Info("found [%d] pull request(s) in Github for commit: %s", len(pullRequestsEvidence), o.commit)
 			return nil
 		},
 	}
@@ -33,7 +33,7 @@ func newAssertPullRequestGithubCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{"github-token", "github-org", "commit", "repository"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd

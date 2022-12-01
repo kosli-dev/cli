@@ -104,7 +104,7 @@ func (o *environmentReportK8SOptions) run(args []string) error {
 	if err != nil {
 		return err
 	}
-	podsData, err := kube.GetPodsData(o.namespaces, o.excludeNamespaces, clientset, log)
+	podsData, err := kube.GetPodsData(o.namespaces, o.excludeNamespaces, clientset, logger)
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func (o *environmentReportK8SOptions) run(args []string) error {
 	}
 
 	_, err = requests.SendPayload(requestBody, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+		global.MaxAPIRetries, global.DryRun, http.MethodPut)
 	return err
 }
 

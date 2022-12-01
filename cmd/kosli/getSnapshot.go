@@ -11,7 +11,6 @@ import (
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
-	"github.com/sirupsen/logrus"
 	"github.com/xeonx/timeago"
 )
 
@@ -72,7 +71,7 @@ type ArtifactJsonOut struct {
 func getSnapshot(out io.Writer, o *environmentGetOptions, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/environments/%s/snapshots/%s", global.Host, global.Owner, url.QueryEscape(args[0]))
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
+		global.MaxAPIRetries, http.MethodGet, map[string]string{})
 
 	if err != nil {
 		return err

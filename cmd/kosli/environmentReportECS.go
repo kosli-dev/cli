@@ -92,6 +92,6 @@ func (o *environmentReportECSOptions) run(args []string) error {
 	}
 
 	_, err = requests.SendPayload(requestBody, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+		global.MaxAPIRetries, global.DryRun, http.MethodPut)
 	return err
 }

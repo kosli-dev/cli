@@ -17,7 +17,6 @@ import (
 	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/utils"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/xeonx/timeago"
 )
@@ -214,10 +213,10 @@ func getDockerRegistryAPIToken(providerInfo *registryProviderEndpoints, username
 		form.Add("expires_in", "60")
 		res, err = requests.DoBasicAuthRequest([]byte("username="+username+"&scope=member-of-groups:readers&expires_in=60"),
 			url, username, password, 3, http.MethodPost,
-			map[string]string{"Content-Type": "application/x-www-form-urlencoded"}, logrus.New())
+			map[string]string{"Content-Type": "application/x-www-form-urlencoded"})
 	} else {
 		url := fmt.Sprintf("%s/token?scope=repository:%s:pull&service=%s", providerInfo.authApi, imageName, providerInfo.service)
-		res, err = requests.DoBasicAuthRequest([]byte{}, url, username, password, 3, http.MethodGet, map[string]string{}, logrus.New())
+		res, err = requests.DoBasicAuthRequest([]byte{}, url, username, password, 3, http.MethodGet, map[string]string{})
 	}
 
 	if err != nil {
@@ -245,7 +244,7 @@ func GetSha256Digest(artifactName string, o *fingerprintOptions) (string, error)
 	case "file":
 		fingerprint, err = digest.FileSha256(artifactName)
 	case "dir":
-		fingerprint, err = digest.DirSha256(artifactName, log)
+		fingerprint, err = digest.DirSha256(artifactName, logger)
 	case "docker":
 		if o.registryProvider != "" {
 			var providerInfo *registryProviderEndpoints

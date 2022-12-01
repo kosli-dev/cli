@@ -81,7 +81,7 @@ func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 	err := RequireFlags(cmd, []string{"github-token", "github-org", "commit",
 		"repository", "pipeline", "build-url", "evidence-type"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd
@@ -111,7 +111,7 @@ func (o *pullRequestEvidenceGithubOptions) run(out io.Writer, args []string) err
 	fmt.Fprintf(out, "found %d pull request(s) for commit: %s\n", len(pullRequestsEvidence), o.commit)
 
 	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+		global.MaxAPIRetries, global.DryRun, http.MethodPut)
 	return err
 }
 
@@ -170,7 +170,7 @@ func (o *pullRequestEvidenceGithubOptions) getGithubPullRequests() ([]*GithubPrE
 		if o.assert {
 			return pullRequestsEvidence, isCompliant, fmt.Errorf("no pull requests found for the given commit: %s", commit)
 		}
-		log.Info("No pull requests found for given commit: " + commit)
+		logger.Info("No pull requests found for given commit: " + commit)
 	}
 	return pullRequestsEvidence, isCompliant, nil
 }

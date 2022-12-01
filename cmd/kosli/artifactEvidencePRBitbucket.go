@@ -80,7 +80,7 @@ func newPullRequestEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 	err := RequireFlags(cmd, []string{"bitbucket-username", "bitbucket-password",
 		"bitbucket-workspace", "commit", "repository", "pipeline", "build-url", "evidence-type"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd
@@ -111,7 +111,7 @@ func (o *pullRequestEvidenceBitbucketOptions) run(args []string) error {
 	}
 
 	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+		global.MaxAPIRetries, global.DryRun, http.MethodPut)
 	return err
 }
 
@@ -120,9 +120,9 @@ func getPullRequestsFromBitbucketApi(workspace, repository, commit, username, pa
 	pullRequestsEvidence := []*BitbucketPrEvidence{}
 
 	url := fmt.Sprintf("https://api.bitbucket.org/2.0/repositories/%s/%s/commit/%s/pullrequests", workspace, repository, commit)
-	log.Debug("Getting pull requests from " + url)
+	logger.Debug("Getting pull requests from " + url)
 	response, err := requests.SendPayload([]byte{}, url, username, password,
-		global.MaxAPIRetries, false, http.MethodGet, log)
+		global.MaxAPIRetries, false, http.MethodGet)
 	if err != nil {
 		return pullRequestsEvidence, false, err
 	}
@@ -143,7 +143,7 @@ func getPullRequestsFromBitbucketApi(workspace, repository, commit, username, pa
 }
 
 func parseBitbucketResponse(commit, workspace, repository, password, username string, response *requests.HTTPResponse, assert bool) (bool, []*BitbucketPrEvidence, error) {
-	log.Debug("Pull requests response: " + response.Body)
+	logger.Debug("Pull requests response: " + response.Body)
 	pullRequestsEvidence := []*BitbucketPrEvidence{}
 	isCompliant := false
 	var responseData map[string]interface{}
@@ -172,16 +172,16 @@ func parseBitbucketResponse(commit, workspace, repository, password, username st
 		if assert {
 			return isCompliant, pullRequestsEvidence, fmt.Errorf("no pull requests found for the given commit: %s", commit)
 		}
-		log.Info("No pull requests found for given commit: " + commit)
+		logger.Info("No pull requests found for given commit: " + commit)
 	}
 	return isCompliant, pullRequestsEvidence, nil
 }
 
 func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, workspace, repository, username, password, commit string) (*BitbucketPrEvidence, error) {
-	log.Debug("Getting pull request details for " + prApiUrl)
+	logger.Debug("Getting pull request details for " + prApiUrl)
 	evidence := &BitbucketPrEvidence{}
 	response, err := requests.SendPayload([]byte{}, prApiUrl, username, password,
-		global.MaxAPIRetries, false, http.MethodGet, log)
+		global.MaxAPIRetries, false, http.MethodGet)
 	if err != nil {
 		return evidence, err
 	}
@@ -207,7 +207,7 @@ func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, workspace, reposit
 				}
 			}
 		} else {
-			log.Debug("No approvers found")
+			logger.Debug("No approvers found")
 		}
 		evidence.Approvers = strings.Join(approvers, ",")
 		// prID := int(responseData["id"].(float64))

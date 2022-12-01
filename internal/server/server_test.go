@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/sirupsen/logrus"
+	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -126,7 +126,7 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsData() {
 				}
 			}
 
-			serverData, err := CreateServerArtifactsData(paths, logrus.New())
+			serverData, err := CreateServerArtifactsData(paths, logger.NewLogger(os.Stdout, false))
 			require.NoErrorf(suite.T(), err, "error creating server artifact data: %v", err)
 
 			digestsList := []map[string]string{}
@@ -194,7 +194,7 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsDataWithFiles() {
 				suite.createFileWithContent(path, t.args.content)
 			}
 
-			serverData, err := CreateServerArtifactsData(paths, logrus.New())
+			serverData, err := CreateServerArtifactsData(paths, logger.NewLogger(os.Stdout, false))
 			if t.expectError {
 				require.Errorf(suite.T(), err, "was expecting error during creating server artifact data but got none")
 			} else {
@@ -226,7 +226,7 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsDataInvalid() {
 
 	paths := []string{"a/b/c"}
 
-	_, err := CreateServerArtifactsData(paths, logrus.New())
+	_, err := CreateServerArtifactsData(paths, logger.NewLogger(os.Stdout, false))
 	require.Errorf(suite.T(), err, "error was expected")
 }
 

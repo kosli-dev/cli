@@ -8,7 +8,6 @@ import (
 	"net/url"
 
 	"github.com/kosli-dev/cli/internal/requests"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -41,7 +40,7 @@ func run(out io.Writer, args []string) error {
 	var err error
 
 	url := fmt.Sprintf("%s/api/v1/environments/%s/snapshots/%s", global.Host, global.Owner, url.QueryEscape(args[0]))
-	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken, global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
+	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken, global.MaxAPIRetries, http.MethodGet, map[string]string{})
 	if err != nil {
 		return err
 	}

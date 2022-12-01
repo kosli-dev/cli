@@ -60,7 +60,7 @@ func newEnvironmentReportServerCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{"paths"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd
@@ -74,7 +74,7 @@ func (o *environmentReportServerOptions) run(args []string) error {
 
 	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
 
-	artifacts, err := server.CreateServerArtifactsData(o.paths, log)
+	artifacts, err := server.CreateServerArtifactsData(o.paths, logger)
 	if err != nil {
 		return err
 	}
@@ -85,7 +85,7 @@ func (o *environmentReportServerOptions) run(args []string) error {
 	}
 
 	_, err = requests.SendPayload(requestBody, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+		global.MaxAPIRetries, global.DryRun, http.MethodPut)
 	return err
 
 }

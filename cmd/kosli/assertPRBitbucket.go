@@ -37,7 +37,7 @@ func newAssertPullRequestBitbucketCmd(out io.Writer) *cobra.Command {
 	err := RequireFlags(cmd, []string{"bitbucket-username", "bitbucket-password",
 		"bitbucket-workspace", "commit", "repository"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd
@@ -49,7 +49,7 @@ func (o *assertPullRequestBitbucketOptions) run(args []string) error {
 	if err != nil {
 		return err
 	}
-	log.Infof("found [%d] pull request(s) in Bitbucket for commit: %s", len(pullRequestsEvidence), o.commit)
+	logger.Info("found [%d] pull request(s) in Bitbucket for commit: %s", len(pullRequestsEvidence), o.commit)
 	return nil
 }
 

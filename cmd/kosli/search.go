@@ -91,7 +91,7 @@ func (o *searchOptions) run(out io.Writer, args []string) error {
 
 	url := fmt.Sprintf("%s/api/v1/search/%s/sha/%s", global.Host, global.Owner, search_value)
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{}, log)
+		global.MaxAPIRetries, http.MethodGet, map[string]string{})
 	if err != nil {
 		return err
 	}

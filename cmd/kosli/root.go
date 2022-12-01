@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -168,10 +168,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 }
 
 func initializeConfig(cmd *cobra.Command) error {
-	if global.Verbose {
-		log.Level = logrus.DebugLevel
-	}
-
+	logger = log.NewLogger(os.Stdout, global.Verbose)
 	v := viper.New()
 
 	// If provided, extract the custom config file dir and name
@@ -231,7 +228,7 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 		if strings.Contains(f.Name, "-") {
 			envVarSuffix := strings.ToUpper(strings.ReplaceAll(f.Name, "-", "_"))
 			if err := v.BindEnv(f.Name, fmt.Sprintf("%s_%s", envPrefix, envVarSuffix)); err != nil {
-				log.Fatalf("failed to bind viper to env variable: %v", err)
+				logger.Error("failed to bind viper to env variable: %v", err)
 			}
 		}
 
@@ -239,7 +236,7 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 		if !f.Changed && v.IsSet(f.Name) {
 			val := v.Get(f.Name)
 			if err := cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val)); err != nil {
-				log.Fatalf("failed to set flag: %v", err)
+				logger.Error("failed to set flag: %v", err)
 			}
 		}
 	})

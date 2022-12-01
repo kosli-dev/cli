@@ -114,13 +114,13 @@ func (o *pipelineDeclareOptions) run(args []string) error {
 		pipePayload.Owner = global.Owner
 		o.payload.Template = injectArtifactIntoTemplateIfNotExisting(pipePayload.Template)
 		_, err = requests.SendPayload(pipePayload, url, "", global.ApiToken,
-			global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+			global.MaxAPIRetries, global.DryRun, http.MethodPut)
 		return err
 	} else {
 		o.payload.Owner = global.Owner
 		o.payload.Template = injectArtifactIntoTemplateIfNotExisting(o.payload.Template)
 		_, err := requests.SendPayload(o.payload, url, "", global.ApiToken,
-			global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+			global.MaxAPIRetries, global.DryRun, http.MethodPut)
 		return err
 	}
 }

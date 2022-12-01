@@ -8,7 +8,6 @@ import (
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -46,7 +45,7 @@ func newPipelineLsCmd(out io.Writer) *cobra.Command {
 func (o *pipelineLsOptions) run(out io.Writer) error {
 	url := fmt.Sprintf("%s/api/v1/projects/%s/", global.Host, global.Owner)
 	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
+		global.MaxAPIRetries, http.MethodGet, map[string]string{})
 
 	if err != nil {
 		return err

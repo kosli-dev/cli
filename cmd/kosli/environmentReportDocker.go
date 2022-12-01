@@ -76,7 +76,7 @@ func (o *environmentReportDockerOptions) run(args []string) error {
 	}
 
 	_, err = requests.SendPayload(requestBody, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+		global.MaxAPIRetries, global.DryRun, http.MethodPut)
 	return err
 }
 
@@ -98,7 +98,7 @@ func CreateDockerArtifactsData() ([]*server.ServerData, error) {
 		if err != nil {
 			if errors.Is(err, digest.ErrRepoDigestUnavailable) {
 				containerName := strings.TrimPrefix(c.Names[0], "/")
-				log.Infof("ignoring container '%s' as it uses an image with no repo digest", containerName)
+				logger.Info("ignoring container '%s' as it uses an image with no repo digest", containerName)
 				continue
 			}
 			return result, err

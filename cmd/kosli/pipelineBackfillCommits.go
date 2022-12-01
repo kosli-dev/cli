@@ -45,7 +45,7 @@ func newPipelineBackfillArtifactCommitsCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{"repo-root"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd
@@ -86,7 +86,7 @@ func (o *pipelineBackfillArtifactCommitsOptions) run(out io.Writer, args []strin
 				global.Host, global.Owner, pipelineName, artifactDigest)
 
 			response, err := requests.DoBasicAuthRequest([]byte{}, previousCommitUrl, "", global.ApiToken,
-				global.MaxAPIRetries, http.MethodGet, map[string]string{}, log)
+				global.MaxAPIRetries, http.MethodGet, map[string]string{})
 			if err != nil {
 				return err
 			}
@@ -115,7 +115,7 @@ func (o *pipelineBackfillArtifactCommitsOptions) run(out io.Writer, args []strin
 
 			url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/backfill_commits", global.Host, global.Owner, pipelineName, artifactDigest)
 			_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+				global.MaxAPIRetries, global.DryRun, http.MethodPut)
 			if err != nil {
 				return err
 			}
@@ -129,7 +129,7 @@ func getPipelineArtifacts(pipelineName string, pageNumber int) ([]map[string]int
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/?page=%d&per_page=%d",
 		global.Host, global.Owner, pipelineName, pageNumber, 15)
 	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, false, http.MethodGet, log)
+		global.MaxAPIRetries, false, http.MethodGet)
 	if err != nil {
 		return artifacts, err
 	}

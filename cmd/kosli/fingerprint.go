@@ -36,7 +36,7 @@ func newFingerprintCmd(out io.Writer) *cobra.Command {
 	addFingerprintFlags(cmd, o)
 	err := RequireFlags(cmd, []string{"artifact-type"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 	return cmd
 }

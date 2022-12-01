@@ -103,7 +103,7 @@ func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{"pipeline", "git-commit", "build-url", "commit-url"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd
@@ -142,7 +142,7 @@ func (o *artifactCreationOptions) run(args []string) error {
 
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/", global.Host, global.Owner, o.pipelineName)
 	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+		global.MaxAPIRetries, global.DryRun, http.MethodPut)
 	return err
 }
 
@@ -174,7 +174,7 @@ func latestCommit(pipelineName, fingerprint string) (string, error) {
 		global.Host, global.Owner, pipelineName, fingerprint)
 
 	response, err := requests.DoBasicAuthRequest([]byte{}, latestCommitUrl, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{}, log)
+		global.MaxAPIRetries, http.MethodGet, map[string]string{})
 	if err != nil {
 		return "", err
 	}
@@ -265,8 +265,8 @@ func listCommitsBetween(repoRoot, oldest, newest string) ([]*ArtifactCommit, err
 		return commits, fmt.Errorf("failed to resolve %s: %v", oldest, err)
 	}
 
-	log.Debugf("This is the newest commit hash %s", newestHash.String())
-	log.Debugf("This is the oldest commit hash %s", oldestHash.String())
+	logger.Debug("This is the newest commit hash %s", newestHash.String())
+	logger.Debug("This is the oldest commit hash %s", oldestHash.String())
 
 	commitsIter, err := repo.Log(&git.LogOptions{From: *newestHash, Order: git.LogOrderCommitterTime})
 	if err != nil {
