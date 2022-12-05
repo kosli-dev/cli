@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/kosli-dev/cli/internal/gitview"
 	"io"
 
 	"github.com/spf13/cobra"
@@ -39,21 +40,22 @@ func newCommitsCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
+//goland:noinspection GoUnusedParameter
 func (o *commitsOptions) run(args []string, out io.Writer) error {
 
-	gitRepository, err := gitRepository(".")
+	gitView, err := gitview.New(".")
 	if err != nil {
 		return err
 	}
 
-	commits, err := listCommitsBetween(gitRepository, o.oldestSrcCommit, o.newestSrcCommit)
+	commits, err := gitView.CommitsBetween(o.oldestSrcCommit, o.newestSrcCommit)
 	if err != nil {
 		return err
 	}
 	for _, commit := range commits {
-		fmt.Fprintf(out, "%s\n", commit.Sha1)
-		fmt.Fprintf(out, "%s %s %s %d\n", commit.Branch, commit.Author, commit.Message, commit.Timestamp)
-		fmt.Fprint(out, "\n")
+		_, _ = fmt.Fprintf(out, "%s\n", commit.Sha1)
+		_, _ = fmt.Fprintf(out, "%s %s %s %d\n", commit.Branch, commit.Author, commit.Message, commit.Timestamp)
+		_, _ = fmt.Fprint(out, "\n")
 	}
 	return nil
 }
