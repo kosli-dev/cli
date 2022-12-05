@@ -17,6 +17,11 @@ type ArtifactCommit struct {
 	Parents   []string `json:"parents"`
 }
 
+//
+// This type should replace all direct access to the git library
+// Currently, artifactCreation.go and pipelineBackfillCommits.go
+//
+
 type GitView struct {
 	repositoryRoot string
 	repository     *git.Repository
