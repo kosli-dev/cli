@@ -125,7 +125,13 @@ func (o *approvalReportOptions) run(args []string, request bool) error {
 	if err != nil {
 		return err
 	}
-	listCommitsRich, err := listCommitsBetween(o.srcRepoRoot, o.oldestSrcCommit, o.newestSrcCommit)
+
+	gitRepository, err := gitRepository(o.srcRepoRoot)
+	if err != nil {
+		return err
+	}
+
+	listCommitsRich, err := listCommitsBetween(gitRepository, o.oldestSrcCommit, o.newestSrcCommit)
 	if err != nil {
 		return err
 	}

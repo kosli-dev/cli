@@ -135,12 +135,12 @@ func (o *artifactCreationOptions) run(args []string) error {
 		return err
 	}
 
-	o.payload.CommitsList, err = changeLog(o.srcRepoRoot, o.payload.GitCommit, previousCommit)
+	o.payload.CommitsList, err = changeLog(gitRepository, o.payload.GitCommit, previousCommit)
 	if err != nil {
 		return err
 	}
 
-	o.payload.RepoUrl, err = getRepoUrl(o.srcRepoRoot)
+	o.payload.RepoUrl, err = getRepoUrl(gitRepository, o.srcRepoRoot)
 	if err != nil {
 		return err
 	}
@@ -156,9 +156,9 @@ func (o *artifactCreationOptions) run(args []string) error {
 // was created.
 // If collecting the changelog fails (e.g. if git history has been rewritten), the changelog only
 // contains the single commit info which is the current commit
-func changeLog(srcRepoRoot, currentCommit, previousCommit string) ([]*ArtifactCommit, error) {
+func changeLog(gitRepository *git.Repository, currentCommit, previousCommit string) ([]*ArtifactCommit, error) {
 	if previousCommit != "" {
-		commitsList, err := listCommitsBetween(srcRepoRoot, previousCommit, currentCommit)
+		commitsList, err := listCommitsBetween(gitRepository, previousCommit, currentCommit)
 		if err != nil {
 			fmt.Printf("Warning: %s\n", err)
 		} else {
@@ -166,7 +166,7 @@ func changeLog(srcRepoRoot, currentCommit, previousCommit string) ([]*ArtifactCo
 		}
 	}
 
-	currentArtifactCommit, err := newArtifactCommitFromGitCommit(srcRepoRoot, currentCommit)
+	currentArtifactCommit, err := newArtifactCommitFromGitCommit(gitRepository, currentCommit)
 	if err != nil {
 		return []*ArtifactCommit{}, fmt.Errorf("could not retrieve current git commit for %s: %v", currentCommit, err)
 	}
@@ -199,11 +199,7 @@ func latestCommit(pipelineName, fingerprint, branchName string) (string, error) 
 
 // newArtifactCommitFromGitCommit returns an ArtifactCommit object from a git commit
 // the gitCommit can be a revision: e.g. HEAD or HEAD~2 etc
-func newArtifactCommitFromGitCommit(srcRepoRoot, gitCommit string) (*ArtifactCommit, error) {
-	repo, err := git.PlainOpen(srcRepoRoot)
-	if err != nil {
-		return &ArtifactCommit{}, fmt.Errorf("failed to open git repository at %s: %v", srcRepoRoot, err)
-	}
+func newArtifactCommitFromGitCommit(repo *git.Repository, gitCommit string) (*ArtifactCommit, error) {
 
 	branchName, err := branchName(repo)
 	if err != nil {
@@ -223,12 +219,7 @@ func newArtifactCommitFromGitCommit(srcRepoRoot, gitCommit string) (*ArtifactCom
 }
 
 // getRepoUrl returns HTTPS URL for the `origin` remote of a repo
-func getRepoUrl(repoRoot string) (string, error) {
-	repo, err := git.PlainOpen(repoRoot)
-	if err != nil {
-		return "", fmt.Errorf("failed to open git repository at %s: %v",
-			repoRoot, err)
-	}
+func getRepoUrl(repo *git.Repository, repoRoot string) (string, error) {
 	repoRemote, err := repo.Remote("origin") // TODO: We hard code this for now. Should we have a flag to set it from the cmdline?
 	if err != nil {
 		fmt.Printf("Warning: Repo URL will not be reported since there is no remote('origin') in git repository (%s)\n", repoRoot)
@@ -252,17 +243,12 @@ func getCurrentBranch(repo *git.Repository) string {
 }
 
 // listCommitsBetween list all commits that have happened between two commits in a git repo
-func listCommitsBetween(repoRoot, oldest, newest string) ([]*ArtifactCommit, error) {
+func listCommitsBetween(repo *git.Repository, oldest, newest string) ([]*ArtifactCommit, error) {
 	// Using 'var commits []*ArtifactCommit' will make '[]' convert to 'null' when converting to json
 	// which will fail on the server side.
 	// Using 'commits := make([]*ArtifactCommit, 0)' will make '[]' convert to '[]' when converting to json
 	// See issue #522
 	commits := make([]*ArtifactCommit, 0)
-	repo, err := git.PlainOpen(repoRoot)
-	if err != nil {
-		return commits, fmt.Errorf("failed to open git repository at %s: %v",
-			repoRoot, err)
-	}
 
 	branchName, err := branchName(repo)
 	if err != nil {

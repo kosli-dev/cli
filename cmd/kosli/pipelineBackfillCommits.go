@@ -60,7 +60,13 @@ func (o *pipelineBackfillArtifactCommitsOptions) run(out io.Writer, args []strin
 	// 3) send a backfill request
 	var err error
 	pipelineName := args[0]
-	o.payload.RepoUrl, err = getRepoUrl(o.srcRepoRoot)
+
+	gitRepository, err := gitRepository(o.srcRepoRoot)
+	if err != nil {
+		return err
+	}
+
+	o.payload.RepoUrl, err = getRepoUrl(gitRepository, o.srcRepoRoot)
 	if err != nil {
 		return err
 	}
@@ -104,7 +110,7 @@ func (o *pipelineBackfillArtifactCommitsOptions) run(out io.Writer, args []strin
 				fmt.Fprintf(out, "Previous commit: %s\n", previousCommit)
 			}
 
-			o.payload.CommitsList, err = changeLog(o.srcRepoRoot, gitCommit, previousCommit)
+			o.payload.CommitsList, err = changeLog(gitRepository, gitCommit, previousCommit)
 			if err != nil {
 				return err
 			}

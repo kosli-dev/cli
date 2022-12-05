@@ -40,7 +40,13 @@ func newCommitsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *commitsOptions) run(args []string, out io.Writer) error {
-	commits, err := listCommitsBetween(".", o.oldestSrcCommit, o.newestSrcCommit)
+
+	gitRepository, err := gitRepository(".")
+	if err != nil {
+		return err
+	}
+
+	commits, err := listCommitsBetween(gitRepository, o.oldestSrcCommit, o.newestSrcCommit)
 	if err != nil {
 		return err
 	}
