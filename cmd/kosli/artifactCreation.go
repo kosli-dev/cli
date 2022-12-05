@@ -125,7 +125,7 @@ func (o *artifactCreationOptions) run(args []string) error {
 		}
 	}
 
-	previousCommit, err := latestCommit(o.pipelineName, o.payload.Sha256)
+	previousCommit, err := latestCommit(o.pipelineName, o.payload.Sha256, getCurrentBranch(o.srcRepoRoot))
 	if err != nil {
 		return err
 	}
@@ -169,9 +169,9 @@ func changeLog(srcRepoRoot, currentCommit, previousCommit string) ([]*ArtifactCo
 }
 
 // latestCommit retrieves the git commit of the latest artifact for a pipeline in Kosli
-func latestCommit(pipelineName, fingerprint string) (string, error) {
-	latestCommitUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/latest_commit",
-		global.Host, global.Owner, pipelineName, fingerprint)
+func latestCommit(pipelineName, fingerprint, branchName string) (string, error) {
+	latestCommitUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/latest_commit%s",
+		global.Host, global.Owner, pipelineName, fingerprint, asBranchParameter(branchName))
 
 	response, err := requests.DoBasicAuthRequest([]byte{}, latestCommitUrl, "", global.ApiToken,
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, log)
@@ -236,6 +236,19 @@ func getRepoUrl(repoRoot string) (string, error) {
 	}
 	remoteUrl = strings.TrimSuffix(remoteUrl, ".git")
 	return remoteUrl, nil
+}
+
+func getCurrentBranch(repoRoot string) string {
+	repo, err := git.PlainOpen(repoRoot)
+	if err != nil {
+		return ""
+	}
+
+	branchName, err := branchName(repo)
+	if err != nil {
+		return ""
+	}
+	return branchName
 }
 
 // listCommitsBetween list all commits that have happened between two commits in a git repo
@@ -316,6 +329,13 @@ func branchName(repo *git.Repository) (string, error) {
 		return head.Name().Short(), nil
 	}
 	return "", nil
+}
+
+func asBranchParameter(branchName string) string {
+	if branchName != "" {
+		return fmt.Sprintf("?branch=%s", branchName)
+	}
+	return ""
 }
 
 func artifactCreationDesc() string {
