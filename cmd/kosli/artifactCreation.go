@@ -125,7 +125,12 @@ func (o *artifactCreationOptions) run(args []string) error {
 		}
 	}
 
-	previousCommit, err := latestCommit(o.pipelineName, o.payload.Sha256, getCurrentBranch(o.srcRepoRoot))
+	gitRepository, err := gitRepository(o.srcRepoRoot)
+	if err != nil {
+		return err
+	}
+
+	previousCommit, err := latestCommit(o.pipelineName, o.payload.Sha256, getCurrentBranch(gitRepository))
 	if err != nil {
 		return err
 	}
@@ -238,12 +243,7 @@ func getRepoUrl(repoRoot string) (string, error) {
 	return remoteUrl, nil
 }
 
-func getCurrentBranch(repoRoot string) string {
-	repo, err := git.PlainOpen(repoRoot)
-	if err != nil {
-		return ""
-	}
-
+func getCurrentBranch(repo *git.Repository) string {
 	branchName, err := branchName(repo)
 	if err != nil {
 		return ""
@@ -300,6 +300,14 @@ func listCommitsBetween(repoRoot, oldest, newest string) ([]*ArtifactCommit, err
 	}
 
 	return commits, nil
+}
+
+func gitRepository(srcRepoRoot string) (*git.Repository, error) {
+	repo, err := git.PlainOpen(srcRepoRoot)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open git repository at %s: %v", srcRepoRoot, err)
+	}
+	return repo, nil
 }
 
 // asArtifactCommit returns an ArtifactCommit from a git Commit object
