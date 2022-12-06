@@ -17,11 +17,8 @@ type ArtifactCommit struct {
 	Parents   []string `json:"parents"`
 }
 
-//
-// This type should replace all direct access to the git library
-// Currently, artifactCreation.go and pipelineBackfillCommits.go
-//
-
+// GitView
+// A read-only view of a git repository.
 type GitView struct {
 	repositoryRoot string
 	repository     *git.Repository
@@ -50,7 +47,7 @@ func (gv *GitView) CommitsBetween(oldest, newest string) ([]*ArtifactCommit, err
 	// See issue #522
 	commits := make([]*ArtifactCommit, 0)
 
-	branchName, err := gv.branchName()
+	branchName, err := gv.BranchName()
 	if err != nil {
 		return commits, err
 	}
@@ -88,9 +85,48 @@ func (gv *GitView) CommitsBetween(oldest, newest string) ([]*ArtifactCommit, err
 	return commits, nil
 }
 
-// branchName returns the current branch name on a repository,
+// RepoUrl returns HTTPS URL for the `origin` remote of a repo
+func (gv *GitView) RepoUrl() (string, error) {
+	repoRemote, err := gv.repository.Remote("origin") // TODO: We hard code this for now. Should we have a flag to set it from the cmdline? 2022-12-06
+	if err != nil {
+		fmt.Printf("Warning: Repo URL will not be reported since there is no remote('origin') in git repository (%s)\n", gv.repositoryRoot)
+		return "", nil
+	}
+	remoteUrl := repoRemote.Config().URLs[0]
+	if strings.HasPrefix(remoteUrl, "git@") {
+		remoteUrl = strings.Replace(remoteUrl, ":", "/", 1)
+		remoteUrl = strings.Replace(remoteUrl, "git@", "https://", 1)
+	}
+	remoteUrl = strings.TrimSuffix(remoteUrl, ".git")
+	return remoteUrl, nil
+}
+
+// ChangeLog attempts to collect the changelog list of commits for an artifact,
+// the changelog is all commits between current commit and the commit from which the previous artifact in Kosli
+// was created.
+// If collecting the changelog fails (e.g. if git history has been rewritten), the changelog only
+// contains the single commit info which is the current commit
+
+func (gv *GitView) ChangeLog(currentCommit, previousCommit string) ([]*ArtifactCommit, error) {
+	if previousCommit != "" {
+		commitsList, err := gv.CommitsBetween(previousCommit, currentCommit)
+		if err != nil {
+			fmt.Printf("Warning: %s\n", err)
+		} else {
+			return commitsList, nil
+		}
+	}
+
+	currentArtifactCommit, err := gv.newArtifactCommitFromGitCommit(currentCommit)
+	if err != nil {
+		return []*ArtifactCommit{}, fmt.Errorf("could not retrieve current git commit for %s: %v", currentCommit, err)
+	}
+	return []*ArtifactCommit{currentArtifactCommit}, nil
+}
+
+// BranchName returns the current branch name on a repository,
 // or an error if the repo head is not on a branch
-func (gv *GitView) branchName() (string, error) {
+func (gv *GitView) BranchName() (string, error) {
 	head, err := gv.repository.Head()
 	if err != nil {
 		return "", fmt.Errorf("failed to get the current HEAD of the git repository: %v", err)
@@ -101,11 +137,31 @@ func (gv *GitView) branchName() (string, error) {
 	return "", nil
 }
 
+// newArtifactCommitFromGitCommit returns an ArtifactCommit object from a git commit
+// the gitCommit can be a revision: e.g. HEAD or HEAD~2 etc
+func (gv *GitView) newArtifactCommitFromGitCommit(gitCommit string) (*ArtifactCommit, error) {
+	branchName, err := gv.BranchName()
+	if err != nil {
+		return &ArtifactCommit{}, err
+	}
+
+	currentHash, err := gv.repository.ResolveRevision(plumbing.Revision(gitCommit))
+	if err != nil {
+		return &ArtifactCommit{}, fmt.Errorf("failed to resolve %s: %v", gitCommit, err)
+	}
+	currentCommit, err := gv.repository.CommitObject(*currentHash)
+	if err != nil {
+		return &ArtifactCommit{}, fmt.Errorf("could not retrieve commit for %s: %v", *currentHash, err)
+	}
+
+	return asArtifactCommit(currentCommit, branchName), nil
+}
+
 // asArtifactCommit returns an ArtifactCommit from a git Commit object
 func asArtifactCommit(commit *object.Commit, branchName string) *ArtifactCommit {
 	var commitParents []string
-	for _, h := range commit.ParentHashes {
-		commitParents = append(commitParents, h.String())
+	for _, hash := range commit.ParentHashes {
+		commitParents = append(commitParents, hash.String())
 	}
 	return &ArtifactCommit{
 		Sha1:      commit.Hash.String(),

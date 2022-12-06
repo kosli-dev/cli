@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kosli-dev/cli/internal/gitview"
 	"io"
 	"net/http"
 
@@ -16,8 +17,8 @@ type pipelineBackfillArtifactCommitsOptions struct {
 }
 
 type ArtifactCommitsBackfillPayload struct {
-	RepoUrl     string            `json:"repo_url"`
-	CommitsList []*ArtifactCommit `json:"git_commit_list"`
+	RepoUrl     string                    `json:"repo_url"`
+	CommitsList []*gitview.ArtifactCommit `json:"git_commit_list"`
 }
 
 func newPipelineBackfillArtifactCommitsCmd(out io.Writer) *cobra.Command {
@@ -61,12 +62,12 @@ func (o *pipelineBackfillArtifactCommitsOptions) run(out io.Writer, args []strin
 	var err error
 	pipelineName := args[0]
 
-	gitRepository, err := gitRepository(o.srcRepoRoot)
+	gitView, err := gitview.New(o.srcRepoRoot)
 	if err != nil {
 		return err
 	}
 
-	o.payload.RepoUrl, err = getRepoUrl(gitRepository, o.srcRepoRoot)
+	o.payload.RepoUrl, err = gitView.RepoUrl()
 	if err != nil {
 		return err
 	}
@@ -86,7 +87,7 @@ func (o *pipelineBackfillArtifactCommitsOptions) run(out io.Writer, args []strin
 			artifactData := evidenceMap["artifact"].(map[string]interface{})
 			gitCommit := artifactData["git_commit"].(string)
 			artifactDigest := artifactData["sha256"].(string)
-			fmt.Fprintf(out, "Digest: %s -- git commit: %s \n", artifactDigest, gitCommit)
+			_, _ = fmt.Fprintf(out, "Digest: %s -- git commit: %s \n", artifactDigest, gitCommit)
 
 			previousCommitUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/previous_commit",
 				global.Host, global.Owner, pipelineName, artifactDigest)
@@ -103,20 +104,13 @@ func (o *pipelineBackfillArtifactCommitsOptions) run(out io.Writer, args []strin
 				return err
 			}
 
-			o.payload.CommitsList = []*ArtifactCommit{}
-			previousCommit := ""
-			if previousCommitResponse["previous_commit"] != nil {
-				previousCommit = previousCommitResponse["previous_commit"].(string)
-				fmt.Fprintf(out, "Previous commit: %s\n", previousCommit)
-			}
-
-			o.payload.CommitsList, err = changeLog(gitRepository, gitCommit, previousCommit)
+			o.payload.CommitsList, err = gitView.ChangeLog(gitCommit, previousCommit(out, previousCommitResponse))
 			if err != nil {
 				return err
 			}
 
 			for _, commitData := range o.payload.CommitsList {
-				fmt.Fprintf(out, "	Commit sha1: %s\n", commitData.Sha1)
+				_, _ = fmt.Fprintf(out, "	Commit sha1: %s\n", commitData.Sha1)
 			}
 
 			url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/backfill_commits", global.Host, global.Owner, pipelineName, artifactDigest)
@@ -127,6 +121,15 @@ func (o *pipelineBackfillArtifactCommitsOptions) run(out io.Writer, args []strin
 			}
 		}
 	}
+}
+
+func previousCommit(out io.Writer, previousCommitResponse map[string]interface{}) string {
+	previousCommit := ""
+	if previousCommitResponse["previous_commit"] != nil {
+		previousCommit = previousCommitResponse["previous_commit"].(string)
+		_, _ = fmt.Fprintf(out, "Previous commit: %s\n", previousCommit)
+	}
+	return previousCommit
 }
 
 // getPipelineArtifacts returns artifacts from a pipeline

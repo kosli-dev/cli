@@ -3,17 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kosli-dev/cli/internal/gitview"
+	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/spf13/cobra"
 	"io"
 	"net/http"
 	"path/filepath"
-	"strings"
-
-	"github.com/go-git/go-git/v5/plumbing/object"
-
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/kosli-dev/cli/internal/requests"
-	"github.com/spf13/cobra"
 )
 
 type artifactCreationOptions struct {
@@ -24,23 +19,14 @@ type artifactCreationOptions struct {
 }
 
 type ArtifactPayload struct {
-	Sha256      string            `json:"sha256"`
-	Filename    string            `json:"filename"`
-	Description string            `json:"description"`
-	GitCommit   string            `json:"git_commit"`
-	BuildUrl    string            `json:"build_url"`
-	CommitUrl   string            `json:"commit_url"`
-	RepoUrl     string            `json:"repo_url"`
-	CommitsList []*ArtifactCommit `json:"commits_list"`
-}
-
-type ArtifactCommit struct {
-	Sha1      string   `json:"sha1"`
-	Message   string   `json:"message"`
-	Author    string   `json:"author"`
-	Timestamp int64    `json:"timestamp"`
-	Branch    string   `json:"branch"`
-	Parents   []string `json:"parents"`
+	Sha256      string                    `json:"sha256"`
+	Filename    string                    `json:"filename"`
+	Description string                    `json:"description"`
+	GitCommit   string                    `json:"git_commit"`
+	BuildUrl    string                    `json:"build_url"`
+	CommitUrl   string                    `json:"commit_url"`
+	RepoUrl     string                    `json:"repo_url"`
+	CommitsList []*gitview.ArtifactCommit `json:"commits_list"`
 }
 
 const artifactCreationExample = `
@@ -125,22 +111,22 @@ func (o *artifactCreationOptions) run(args []string) error {
 		}
 	}
 
-	gitRepository, err := gitRepository(o.srcRepoRoot)
+	gitView, err := gitview.New(o.srcRepoRoot)
 	if err != nil {
 		return err
 	}
 
-	previousCommit, err := latestCommit(o.pipelineName, o.payload.Sha256, getCurrentBranch(gitRepository))
+	previousCommit, err := o.latestCommit(currentBranch(gitView))
 	if err != nil {
 		return err
 	}
 
-	o.payload.CommitsList, err = changeLog(gitRepository, o.payload.GitCommit, previousCommit)
+	o.payload.CommitsList, err = gitView.ChangeLog(o.payload.GitCommit, previousCommit)
 	if err != nil {
 		return err
 	}
 
-	o.payload.RepoUrl, err = getRepoUrl(gitRepository, o.srcRepoRoot)
+	o.payload.RepoUrl, err = gitView.RepoUrl()
 	if err != nil {
 		return err
 	}
@@ -151,32 +137,11 @@ func (o *artifactCreationOptions) run(args []string) error {
 	return err
 }
 
-// changeLog attempts to collect the changelog list of commits for an artifact,
-// the changelog is all commits between current commit and the commit from which the previous artifact in Kosli
-// was created.
-// If collecting the changelog fails (e.g. if git history has been rewritten), the changelog only
-// contains the single commit info which is the current commit
-func changeLog(gitRepository *git.Repository, currentCommit, previousCommit string) ([]*ArtifactCommit, error) {
-	if previousCommit != "" {
-		commitsList, err := listCommitsBetween(gitRepository, previousCommit, currentCommit)
-		if err != nil {
-			fmt.Printf("Warning: %s\n", err)
-		} else {
-			return commitsList, nil
-		}
-	}
-
-	currentArtifactCommit, err := newArtifactCommitFromGitCommit(gitRepository, currentCommit)
-	if err != nil {
-		return []*ArtifactCommit{}, fmt.Errorf("could not retrieve current git commit for %s: %v", currentCommit, err)
-	}
-	return []*ArtifactCommit{currentArtifactCommit}, nil
-}
-
 // latestCommit retrieves the git commit of the latest artifact for a pipeline in Kosli
-func latestCommit(pipelineName, fingerprint, branchName string) (string, error) {
-	latestCommitUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/latest_commit%s",
-		global.Host, global.Owner, pipelineName, fingerprint, asBranchParameter(branchName))
+func (o *artifactCreationOptions) latestCommit(branchName string) (string, error) {
+	latestCommitUrl := fmt.Sprintf(
+		"%s/api/v1/projects/%s/%s/artifacts/%s/latest_commit%s",
+		global.Host, global.Owner, o.pipelineName, o.payload.Sha256, asBranchParameter(branchName))
 
 	response, err := requests.DoBasicAuthRequest([]byte{}, latestCommitUrl, "", global.ApiToken,
 		global.MaxAPIRetries, http.MethodGet, map[string]string{}, log)
@@ -197,132 +162,9 @@ func latestCommit(pipelineName, fingerprint, branchName string) (string, error) 
 	}
 }
 
-// newArtifactCommitFromGitCommit returns an ArtifactCommit object from a git commit
-// the gitCommit can be a revision: e.g. HEAD or HEAD~2 etc
-func newArtifactCommitFromGitCommit(repo *git.Repository, gitCommit string) (*ArtifactCommit, error) {
-
-	branchName, err := branchName(repo)
-	if err != nil {
-		return &ArtifactCommit{}, err
-	}
-
-	currentHash, err := repo.ResolveRevision(plumbing.Revision(gitCommit))
-	if err != nil {
-		return &ArtifactCommit{}, fmt.Errorf("failed to resolve %s: %v", gitCommit, err)
-	}
-	currentCommit, err := repo.CommitObject(*currentHash)
-	if err != nil {
-		return &ArtifactCommit{}, fmt.Errorf("could not retrieve commit for %s: %v", *currentHash, err)
-	}
-
-	return asArtifactCommit(currentCommit, branchName), nil
-}
-
-// getRepoUrl returns HTTPS URL for the `origin` remote of a repo
-func getRepoUrl(repo *git.Repository, repoRoot string) (string, error) {
-	repoRemote, err := repo.Remote("origin") // TODO: We hard code this for now. Should we have a flag to set it from the cmdline?
-	if err != nil {
-		fmt.Printf("Warning: Repo URL will not be reported since there is no remote('origin') in git repository (%s)\n", repoRoot)
-		return "", nil
-	}
-	remoteUrl := repoRemote.Config().URLs[0]
-	if strings.HasPrefix(remoteUrl, "git@") {
-		remoteUrl = strings.Replace(remoteUrl, ":", "/", 1)
-		remoteUrl = strings.Replace(remoteUrl, "git@", "https://", 1)
-	}
-	remoteUrl = strings.TrimSuffix(remoteUrl, ".git")
-	return remoteUrl, nil
-}
-
-func getCurrentBranch(repo *git.Repository) string {
-	branchName, err := branchName(repo)
-	if err != nil {
-		return ""
-	}
+func currentBranch(gv *gitview.GitView) string {
+	branchName, _ := gv.BranchName()
 	return branchName
-}
-
-// listCommitsBetween list all commits that have happened between two commits in a git repo
-func listCommitsBetween(repo *git.Repository, oldest, newest string) ([]*ArtifactCommit, error) {
-	// Using 'var commits []*ArtifactCommit' will make '[]' convert to 'null' when converting to json
-	// which will fail on the server side.
-	// Using 'commits := make([]*ArtifactCommit, 0)' will make '[]' convert to '[]' when converting to json
-	// See issue #522
-	commits := make([]*ArtifactCommit, 0)
-
-	branchName, err := branchName(repo)
-	if err != nil {
-		return commits, err
-	}
-
-	newestHash, err := repo.ResolveRevision(plumbing.Revision(newest))
-	if err != nil {
-		return commits, fmt.Errorf("failed to resolve %s: %v", newest, err)
-	}
-	oldestHash, err := repo.ResolveRevision(plumbing.Revision(oldest))
-	if err != nil {
-		return commits, fmt.Errorf("failed to resolve %s: %v", oldest, err)
-	}
-
-	log.Debugf("This is the newest commit hash %s", newestHash.String())
-	log.Debugf("This is the oldest commit hash %s", oldestHash.String())
-
-	commitsIter, err := repo.Log(&git.LogOptions{From: *newestHash, Order: git.LogOrderCommitterTime})
-	if err != nil {
-		return commits, fmt.Errorf("failed to git log: %v", err)
-	}
-
-	for {
-		commit, err := commitsIter.Next()
-		if err != nil {
-			return commits, fmt.Errorf("failed to get next commit: %v", err)
-		}
-		if commit.Hash != *oldestHash {
-			currentCommit := asArtifactCommit(commit, branchName)
-			commits = append(commits, currentCommit)
-		} else {
-			break
-		}
-	}
-
-	return commits, nil
-}
-
-func gitRepository(srcRepoRoot string) (*git.Repository, error) {
-	repo, err := git.PlainOpen(srcRepoRoot)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open git repository at %s: %v", srcRepoRoot, err)
-	}
-	return repo, nil
-}
-
-// asArtifactCommit returns an ArtifactCommit from a git Commit object
-func asArtifactCommit(commit *object.Commit, branchName string) *ArtifactCommit {
-	var commitParents []string
-	for _, h := range commit.ParentHashes {
-		commitParents = append(commitParents, h.String())
-	}
-	return &ArtifactCommit{
-		Sha1:      commit.Hash.String(),
-		Message:   strings.TrimSpace(commit.Message),
-		Author:    commit.Author.String(),
-		Timestamp: commit.Author.When.UTC().Unix(),
-		Branch:    branchName,
-		Parents:   commitParents,
-	}
-}
-
-// branchName returns the current branch name on a repository,
-// or an error if the repo head is not on a branch
-func branchName(repo *git.Repository) (string, error) {
-	head, err := repo.Head()
-	if err != nil {
-		return "", fmt.Errorf("failed to get the current HEAD of the git repository: %v", err)
-	}
-	if head.Name().IsBranch() {
-		return head.Name().Short(), nil
-	}
-	return "", nil
 }
 
 func asBranchParameter(branchName string) string {
