@@ -17,7 +17,9 @@ var globalUsage = `The Kosli evidence reporting CLI.
 
 Environment variables:
 You can set any flag from an environment variable by capitalizing it in snake case and adding the KOSLI_ prefix.
-For example, to set --api-token from an environment variable, you can export KOSLI_API_TOKEN
+For example, to set --api-token from an environment variable, you can export KOSLI_API_TOKEN=YOUR_API_TOKEN.
+
+Setting the API token to DRY_RUN sets the --dry-run flag.
 `
 
 const (
@@ -36,7 +38,7 @@ const (
 	apiTokenFlag            = "The Kosli API token."
 	ownerFlag               = "The Kosli user or organization."
 	hostFlag                = "[defaulted] The Kosli endpoint."
-	dryRunFlag              = "[optional] Whether to run in dry-run mode. When enabled, data is not sent to Kosli and the CLI exits with 0 exit code regardless of errors."
+	dryRunFlag              = "[optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors."
 	maxAPIRetryFlag         = "[defaulted] How many times should API calls be retried when the API host is not reachable."
 	configFileFlag          = "[optional] The Kosli config file path."
 	verboseFlag             = "[optional] Print verbose logs to stdout."
@@ -114,6 +116,7 @@ type GlobalOpts struct {
 	Verbose       bool
 }
 
+//goland:noinspection GoUnusedParameter
 func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	global = new(GlobalOpts)
 	cmd := &cobra.Command{
