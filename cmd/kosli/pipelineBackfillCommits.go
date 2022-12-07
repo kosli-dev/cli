@@ -3,9 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kosli-dev/cli/internal/gitview"
 	"io"
 	"net/http"
+
+	"github.com/kosli-dev/cli/internal/gitview"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
