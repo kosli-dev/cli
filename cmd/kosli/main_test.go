@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"os"
 	"testing"
 
 	shellwords "github.com/mattn/go-shellwords"
@@ -43,6 +44,11 @@ func executeCommandC(cmd string) (*cobra.Command, string, error) {
 // runTestCmd runs a table of cmd test cases
 func runTestCmd(t *testing.T, tests []cmdTestCase) {
 	t.Helper()
+	for _, key := range [...]string{"KOSLI_API_TOKEN", "KOSLI_OWNER"} {
+		if os.Getenv(key) != "" {
+			t.Errorf("Environment variable %s should not be set when running tests ", key)
+		}
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Logf("running cmd: %s", tt.cmd)
