@@ -10,11 +10,13 @@ The Kosli CLI.
 
 The Kosli Command Line Interface (CLI) for reporting and querying evidence.
 
-Environment variables:
-You can set any flag from an environment variable by capitalizing it in snake case and adding the `KOSLI_` prefix.
-For example, to set `--api-token` from an environment variable, you can export KOSLI_API_TOKEN=*YOUR_API_TOKEN*
-
-Setting the API token to "DRY_RUN" sets the `--dry-run` flag.
+> _Environment variables_:
+> You can set any flag from an environment variable by capitalizing it in snake case and adding the `KOSLI_` prefix.
+> 
+> For example, to set `--api-token` from an environment variable, you can export KOSLI_API_TOKEN=*YOUR_API_TOKEN*.
+> 
+> Boolean flags, such as KOSLI_DRY_RUN, can be set to True or False (case insensitive). 
+  
 
 ### Flags
 | Flag | Description                                                                                                                                         |
