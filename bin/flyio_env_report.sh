@@ -1,5 +1,4 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
 
 SCRIPT_NAME=flyio_env_report.sh
 ENV_NAME=""
@@ -48,16 +47,17 @@ loud_curl()
   local -r OUTPUT_FILE=$(mktemp)
   set +e
   HTTP_CODE=$(curl --header 'Content-Type: application/json' \
-       --user ${API_TOKEN}:unused \
+       --user "${API_TOKEN}":unused \
        --output "${OUTPUT_FILE}" \
        --write-out "%{http_code}" \
        --request "${TYPE}" \
        --silent \
        --data "${JSON_PAYLOAD}" \
-       ${URL})
+       "${URL}")
   set -e
   >&2 cat "${OUTPUT_FILE}"
   if [[ ${HTTP_CODE} -lt 200 || ${HTTP_CODE} -gt 299 ]] ; then
+      echo "Output at ${OUTPUT_FILE}"
       exit 22
   fi
   rm "${OUTPUT_FILE}"
@@ -69,36 +69,29 @@ main()
 {
     check_arguments "$@"
     local image=$(flyctl image show --json)
-    local name=$(echo ${image} | jq .Repository | sed 's/"//g')
-    local tag=$(echo ${image} | jq .Tag | sed 's/"//g')
-    local fingerprint=$(echo ${image} | jq .Digest | sed "s/sha256://" | sed 's/"//g')
+    local name=$(echo "${image}" | jq .Repository | sed 's/"//g')
+    local tag=$(echo "${image}" | jq .Tag | sed 's/"//g')
+    local fingerprint=$(echo "${image}" | jq .Digest | sed "s/sha256://" | sed 's/"//g')
 
     local status=$(flyctl status --json)
-    local createdAtStr=$(echo ${status} | jq .Allocations[0].CreatedAt | sed 's/"//g')
+    local createdAtStr=$(echo "${status}" | jq .Allocations[0].CreatedAt | sed 's/"//g')
 
     if [ $(uname) = "Linux" ]; then
-        local createdAt=$(date --date=${createdAtStr} +%s)
+        local createdAt=$(date --date="${createdAtStr}" +%s)
     else
-        local createdAt=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" ${createdAtStr} +%s)
+        local createdAt=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "${createdAtStr}" +%s)
     fi
 
-    ENV_NAME="stress-env"
+    ENV_NAME="server-staging"
+    OWNER="test-organization"
 
     local json_data=$( jq -n \
                   --arg nameTag "${name}:${tag}" \
                   --arg fp "$fingerprint" \
-                  --arg ts "$createdAt" \
+                  --argjson ts "$createdAt" \
                   --arg envName "$ENV_NAME" \
                   '{artifacts: [{digests: {($nameTag): $fp}, creationTimestamp: $ts}], type: "server", id: $envName}')
-
-    echo $json_data
-
-    # loud_curl \
-    #     POST \
-    #     "${HOST}/api/v1/environments/${OWNER}/${envName}/data"
-
-
-    
+    loud_curl PUT "http://localhost/api/v1/environments/${OWNER}/${ENV_NAME}/data" "${json_data}"
 }
 
 main "$@"
