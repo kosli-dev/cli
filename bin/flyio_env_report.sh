@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
 SCRIPT_NAME=flyio_env_report.sh
-ENV_NAME=""
+
+USAGE="$SCRIPT_NAME [options] <protocol://hostname> <owner> <environment-name>"
+
 
 die()
 {
@@ -12,29 +14,34 @@ die()
 print_help()
 {
     cat <<EOF
-Usage: $SCRIPT_NAME [options] <environment-name>
-
-This is a template for a bash script
-
+Usage: "$USAGE"
 Options are:
-  -h          Print this help menu
+  -h          Print this help message
 EOF
 }
 
 check_arguments()
 {
     while getopts "h" opt; do
-	case $opt in
-            h)
-		print_help
-		exit 1
-		;;
-            \?)
-		echo "Invalid option: -$OPTARG" >&2
-		exit 1
-		;;
-	esac
+      case $opt in
+        h)
+        print_help
+        exit 1
+        ;;
+        \?)
+        echo "Invalid option: -$OPTARG" >&2
+        exit 1
+        ;;
+      esac
     done
+
+    if [ ! $# -eq 3 ]; then
+        die "Not enough arguments: $USAGE"
+    fi
+
+    HOST=$1
+    OWNER=$2
+    ENV_NAME=$3
 }
 
 loud_curl()
@@ -82,16 +89,13 @@ main()
         local createdAt=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "${createdAtStr}" +%s)
     fi
 
-    ENV_NAME="server-staging"
-    OWNER="test-organization"
-
     local json_data=$( jq -n \
                   --arg nameTag "${name}:${tag}" \
                   --arg fp "$fingerprint" \
                   --argjson ts "$createdAt" \
                   --arg envName "$ENV_NAME" \
                   '{artifacts: [{digests: {($nameTag): $fp}, creationTimestamp: $ts}], type: "server", id: $envName}')
-    loud_curl PUT "http://localhost/api/v1/environments/${OWNER}/${ENV_NAME}/data" "${json_data}"
+    loud_curl PUT "${HOST}/api/v1/environments/${OWNER}/${ENV_NAME}/data" "${json_data}"
 }
 
 main "$@"
