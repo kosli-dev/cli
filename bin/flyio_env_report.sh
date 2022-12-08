@@ -54,7 +54,7 @@ loud_curl()
   local -r OUTPUT_FILE=$(mktemp)
   set +e
   HTTP_CODE=$(curl --header 'Content-Type: application/json' \
-       --user "${API_TOKEN}":unused \
+       --user "${KOSLI_API_TOKEN}":unused \
        --output "${OUTPUT_FILE}" \
        --write-out "%{http_code}" \
        --request "${TYPE}" \
