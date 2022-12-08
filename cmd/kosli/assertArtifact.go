@@ -23,7 +23,7 @@ func newAssertArtifactCmd(out io.Writer) *cobra.Command {
 	o := &assertArtifactOptions{}
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "artifact",
+		Use:   "artifact ARTIFACT-NAME-OR-PATH",
 		Short: assertArtifactDesc,
 		Long:  assertArtifactDesc,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
