@@ -1,3 +1,7 @@
+---
+title: Kubernetes Reporter Helm Chart
+---
+
 # k8s-reporter
 
 ![Version: 1.1.0](https://img.shields.io/badge/Version-1.1.0-informational?style=flat-square)
