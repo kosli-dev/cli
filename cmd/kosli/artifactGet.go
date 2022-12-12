@@ -13,18 +13,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const artifactGetDesc = `Get artifact from a specified pipeline`
+const artifactGetDescShort = `Get artifact from a specified pipeline.`
 
-const artifactGetExample = `
-# get an artifact with a given SHA256 in a pipeline
-kosli artifact get yourPipelineName@yourSHA256 \
+const artifactGetDesc = artifactGetDescShort + `
+Specify SNAPPISH by:
+	pipelineName@<fingerprint>  artifact with a given fingerprint
+	pipelineName:<commit_sha>   artifact with a given commit SHA`
+
+const artifactGetExample = `# get an artifact with a given fingerprint from a pipeline
+kosli artifact get pipelineName@fingerprint \
 	--api-token yourAPIToken \
-	--owner yourOrgName
-# get an artifact with a given commit SHA256 in a pipeline
-kosli artifact get yourPipelineName:yourCommitSHA256 \
+	--owner orgName
+# get an artifact with a given commit SHA from a pipeline
+kosli artifact get pipelineName:commitSHA \
 	--api-token yourAPIToken \
-	--owner yourOrgName
-`
+	--owner orgName`
 
 type artifactGetOptions struct {
 	output string
@@ -34,7 +37,7 @@ func newArtifactGetCmd(out io.Writer) *cobra.Command {
 	o := new(artifactGetOptions)
 	cmd := &cobra.Command{
 		Use:     "get SNAPPISH",
-		Short:   artifactGetDesc,
+		Short:   artifactGetDescShort,
 		Long:    artifactGetDesc,
 		Example: artifactGetExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

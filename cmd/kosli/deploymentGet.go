@@ -12,24 +12,28 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const deploymentGetDesc = `Get a deployment from a specified pipeline`
+const deploymentGetDescShort = `Get a deployment from a specified pipeline.`
 
-const deploymentGetExample = `
-# get the latest deployment in a pipeline
-kosli deployment get yourPipelineName \
-	--api-token yourAPIToken \
-	--owner yourOrgName
+const deploymentGetDesc = deploymentGetDescShort + `
+Specify SNAPPISH by:
+	pipelineName~<N>  N'th behind the latest deployment
+	pipelineName#<N>  deployment number N
+	pipelineName      the latest deployment`
 
-# get previous deployment in a pipeline
-kosli deployment get yourPipelineName~1 \
+const deploymentGetExample = `# get previous deployment in a pipeline
+kosli deployment get pipelineName~1 \
 	--api-token yourAPIToken \
-	--owner yourOrgName
+	--owner orgName
 
 # get the 10th deployment in a pipeline
-kosli deployment get yourPipelineName#10 \
+kosli deployment get pipelineName#10 \
 	--api-token yourAPIToken \
-	--owner yourOrgName
-`
+	--owner orgName
+
+# get the latest deployment in a pipeline
+kosli deployment get pipelineName \
+	--api-token yourAPIToken \
+	--owner orgName`
 
 type deploymentGetOptions struct {
 	output string
@@ -39,7 +43,7 @@ func newDeploymentGetCmd(out io.Writer) *cobra.Command {
 	o := new(deploymentGetOptions)
 	cmd := &cobra.Command{
 		Use:     "get SNAPPISH",
-		Short:   deploymentGetDesc,
+		Short:   deploymentGetDescShort,
 		Long:    deploymentGetDesc,
 		Example: deploymentGetExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

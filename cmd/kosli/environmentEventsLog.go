@@ -12,7 +12,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentEventsLogDesc = `List a number of environment events.`
+const environmentEventsLogDescShort = `List a number of environment events.`
+
+const environmentEventsLogDesc = environmentEventsLogDescShort + `
+Specify an INTERVAL between two snapshot expressions with <expression>..<expression>.
+Expressions can be:
+	~N   N'th behind the latest snapshot
+	N    snapshot number N
+	NOW  the latest snapshot
+Either expression can be omitted to default to NOW.`
 
 type environmentEventsLogOptions struct {
 	output     string
@@ -26,7 +34,7 @@ func newEnvironmentEventsLogCmd(out io.Writer) *cobra.Command {
 	o := new(environmentEventsLogOptions)
 	cmd := &cobra.Command{
 		Use:   "log ENV_NAME [INTERVAL]",
-		Short: environmentEventsLogDesc,
+		Short: environmentEventsLogDescShort,
 		Long:  environmentEventsLogDesc,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -87,7 +95,6 @@ func (o *environmentEventsLogOptions) run(out io.Writer, args []string) error {
 }
 
 func printEnvironmentEventsLogAsTable(raw string, out io.Writer, page int) error {
-
 	var events []map[string]interface{}
 	err := json.Unmarshal([]byte(raw), &events)
 	if err != nil {

@@ -6,14 +6,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentGetDesc = `Get a specific environment snapshot.`
+const environmentGetDescShort = `Get a specific environment snapshot.`
+
+const environmentGetDesc = environmentGetDescShort + `
+Specify SNAPPISH by:
+	environmentName~<N>  N'th behind the latest snapshot
+	environmentName#<N>  snapshot number N
+	environmentName      the latest snapshot`
 
 type environmentGetOptions struct {
 	output string
 }
 
-const environmentGetExample = `
-# get the latest snapshot of an environment:
+const environmentGetExample = `# get the latest snapshot of an environment:
 kosli environment get yourEnvironmentName
 	--api-token yourAPIToken \
 	--owner yourOrgName 
@@ -26,14 +31,13 @@ kosli environment get yourEnvironmentName~1
 # get the snapshot number 23 of an environment:
 kosli environment get yourEnvironmentName#23
 	--api-token yourAPIToken \
-	--owner yourOrgName 
-`
+	--owner yourOrgName `
 
 func newEnvironmentGetCmd(out io.Writer) *cobra.Command {
 	o := new(environmentGetOptions)
 	cmd := &cobra.Command{
 		Use:     "get ENVIRONMENT-NAME-OR-EXPRESSION",
-		Short:   environmentGetDesc,
+		Short:   environmentGetDescShort,
 		Long:    environmentGetDesc,
 		Example: environmentGetExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

@@ -12,24 +12,28 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const approvalGetDesc = `Get an approval from a specified pipeline`
+const approvalGetDescShort = `Get an approval from a specified pipeline.`
 
-const approvalGetExample = `
-# get the latest approval in a pipeline
-kosli approval get yourPipelineName \
-	--api-token yourAPIToken \
-	--owner yourOrgName
+const approvalGetDesc = approvalGetDescShort + `
+Specify SNAPPISH by:
+	pipelineName~<N>  N'th behind the latest approval
+	pipelineName#<N>  approval number N
+	pipelineName      the latest approval`
 
-# get previous approval in a pipeline
-kosli approval get yourPipelineName~1 \
+const approvalGetExample = `# get previous approval from a pipeline
+kosli approval get pipelineName~1 \
 	--api-token yourAPIToken \
-	--owner yourOrgName
+	--owner orgName
 
-# get the 10th approval in a pipeline
-kosli approval get yourPipelineName#10 \
+# get the 10th approval from a pipeline
+kosli approval get pipelineName#10 \
 	--api-token yourAPIToken \
-	--owner yourOrgName
-`
+	--owner orgName
+
+# get the latest approval from a pipeline
+kosli approval get pipelineName \
+	--api-token yourAPIToken \
+	--owner orgName`
 
 type approvalGetOptions struct {
 	output string
@@ -39,7 +43,7 @@ func newApprovalGetCmd(out io.Writer) *cobra.Command {
 	o := new(approvalGetOptions)
 	cmd := &cobra.Command{
 		Use:     "get SNAPPISH",
-		Short:   approvalGetDesc,
+		Short:   approvalGetDescShort,
 		Long:    approvalGetDesc,
 		Example: approvalGetExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -74,7 +78,6 @@ func (o *approvalGetOptions) run(out io.Writer, args []string) error {
 			"table": printApprovalAsTable,
 			"json":  output.PrintJson,
 		})
-
 }
 
 func printApprovalAsTable(raw string, out io.Writer, page int) error {
