@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/sirupsen/logrus"
@@ -65,8 +66,8 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 		}
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s", global.Host, global.Owner, o.pipelineName, o.sha256)
-	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken, global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
+	kurl := fmt.Sprintf("%s/api/v1/projects/%s/artifact/?snappish=%s@%s", global.Host, global.Owner, o.pipelineName, o.sha256)
+	response, err := requests.DoBasicAuthRequest([]byte{}, kurl, "", global.ApiToken, global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
 	if err != nil {
 		return err
 	}
@@ -80,7 +81,8 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 	if artifactData["state"].(string) == "COMPLIANT" {
 		fmt.Fprintln(out, "COMPLIANT")
 	} else {
-		return fmt.Errorf("%s", artifactData["state"].(string))
+		fmt.Fprintln(out, artifactData["state"].(string))
+		os.Exit(1)
 	}
 
 	return nil
