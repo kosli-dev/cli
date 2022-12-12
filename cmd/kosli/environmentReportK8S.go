@@ -88,6 +88,7 @@ func newEnvironmentReportK8SCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.kubeconfig, "kubeconfig", "k", defaultKubeConfigPath(), kubeconfigFlag)
 	cmd.Flags().StringSliceVarP(&o.namespaces, "namespace", "n", []string{}, namespaceFlag)
 	cmd.Flags().StringSliceVarP(&o.excludeNamespaces, "exclude-namespace", "x", []string{}, excludeNamespaceFlag)
+	addDryRunFlag(cmd)
 	return cmd
 }
 

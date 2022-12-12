@@ -56,6 +56,7 @@ func newEnvironmentReportDockerCmd(out io.Writer) *cobra.Command {
 			return o.run(args)
 		},
 	}
+	addDryRunFlag(cmd)
 	return cmd
 }
 

@@ -33,6 +33,7 @@ func newAssertEnvironmentCmd(out io.Writer) *cobra.Command {
 			return run(out, args)
 		},
 	}
+	addDryRunFlag(cmd)
 
 	return cmd
 }

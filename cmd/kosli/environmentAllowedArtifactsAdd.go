@@ -50,8 +50,8 @@ func newAllowedArtifactsCreateCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.Sha256, "sha256", "s", "", sha256Flag)
 	cmd.Flags().StringVarP(&o.payload.Environment, "environment", "e", "", envAllowListFlag)
 	cmd.Flags().StringVar(&o.payload.Reason, "reason", "", reasonFlag)
-
 	addFingerprintFlags(cmd, o.fingerprintOptions)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"environment", "reason"})
 	if err != nil {

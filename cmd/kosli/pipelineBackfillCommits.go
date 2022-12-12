@@ -44,6 +44,7 @@ func newPipelineBackfillArtifactCommitsCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", repoRootFlag)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"repo-root"})
 	if err != nil {

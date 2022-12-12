@@ -74,6 +74,7 @@ func newEnvironmentReportS3Cmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.accessKey, "aws-key-id", "", awsKeyIdFlag)
 	cmd.Flags().StringVar(&o.secretKey, "aws-secret-key", "", awsSecretKeyFlag)
 	cmd.Flags().StringVar(&o.region, "aws-region", "", awsRegionFlag)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"bucket"})
 	if err != nil {

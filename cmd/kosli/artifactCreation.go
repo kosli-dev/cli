@@ -3,12 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kosli-dev/cli/internal/gitview"
-	"github.com/kosli-dev/cli/internal/requests"
-	"github.com/spf13/cobra"
 	"io"
 	"net/http"
 	"path/filepath"
+
+	"github.com/kosli-dev/cli/internal/gitview"
+	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/spf13/cobra"
 )
 
 type artifactCreationOptions struct {
@@ -86,6 +87,7 @@ func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.CommitUrl, "commit-url", "u", DefaultValue(ci, "commit-url"), commitUrlFlag)
 	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", repoRootFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"pipeline", "git-commit", "build-url", "commit-url"})
 	if err != nil {

@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/kosli-dev/cli/internal/gitview"
 	"io"
 	"net/http"
+
+	"github.com/kosli-dev/cli/internal/gitview"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -91,6 +92,7 @@ func newApprovalReportCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.newestSrcCommit, "newest-commit", "HEAD", newestCommitFlag)
 	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", repoRootFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"pipeline", "oldest-commit"})
 	if err != nil {

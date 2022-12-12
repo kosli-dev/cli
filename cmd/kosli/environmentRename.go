@@ -48,5 +48,6 @@ func newEnvironmentRenameCmd(out io.Writer) *cobra.Command {
 			return err
 		},
 	}
+	addDryRunFlag(cmd)
 	return cmd
 }

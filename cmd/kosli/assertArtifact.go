@@ -46,6 +46,7 @@ func newAssertArtifactCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.sha256, "sha256", "s", "", sha256Flag)
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"pipeline"})
 	if err != nil {

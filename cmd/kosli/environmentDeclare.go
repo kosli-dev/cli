@@ -59,6 +59,7 @@ func newEnvironmentDeclareCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&payload.Name, "name", "n", "", newEnvNameFlag)
 	cmd.Flags().StringVarP(&payload.Type, "environment-type", "t", "", newEnvTypeFlag)
 	cmd.Flags().StringVarP(&payload.Description, "description", "d", "", envDescriptionFlag)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"name", "environment-type"})
 	if err != nil {

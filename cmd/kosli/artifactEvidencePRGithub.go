@@ -77,6 +77,7 @@ func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.EvidenceType, "evidence-type", "e", "", evidenceTypeFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"github-token", "github-org", "commit",
 		"repository", "pipeline", "build-url", "evidence-type"})
