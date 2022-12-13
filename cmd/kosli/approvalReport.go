@@ -5,12 +5,15 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/kosli-dev/cli/internal/gitview"
+
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
-const approvalReportShortDesc = `Report an approval of deploying an artifact to Kosli. `
-const approvalReportLongDesc = approvalReportShortDesc + sha256Desc
+const approvalReportShortDesc = `Report an approval of deploying an artifact to Kosli.`
+const approvalReportLongDesc = approvalReportShortDesc + `
+` + sha256Desc
 
 const approvalReportExample = `
 # Report that a file type artifact has been approved for deployment.
@@ -54,6 +57,7 @@ type ApprovalPayload struct {
 	UserData       interface{}         `json:"user_data"`
 }
 
+//goland:noinspection GoUnusedParameter
 func newApprovalReportCmd(out io.Writer) *cobra.Command {
 	o := new(approvalReportOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
@@ -87,6 +91,7 @@ func newApprovalReportCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.newestSrcCommit, "newest-commit", "HEAD", newestCommitFlag)
 	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", repoRootFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"pipeline", "oldest-commit"})
 	if err != nil {
@@ -98,43 +103,24 @@ func newApprovalReportCmd(out io.Writer) *cobra.Command {
 
 func (o *approvalReportOptions) run(args []string, request bool) error {
 	var err error
-	if o.payload.ArtifactSha256 == "" {
-		o.payload.ArtifactSha256, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
-		if err != nil {
-			return err
-		}
+	o.payload.ArtifactSha256, err = o.payloadArtifactSHA256(args)
+	if err != nil {
+		return err
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/approvals/", global.Host, global.Owner, o.pipelineName)
-	requestOrNot := ""
-	if !request {
-		o.payload.Reviews = []map[string]string{
-			{
-				"state":        "APPROVED",
-				"comment":      o.payload.Description,
-				"approved_by":  "External",
-				"approval_url": "undefined",
-			},
-		}
-		requestOrNot = " request"
-	} else {
-		o.payload.Reviews = []map[string]string{}
-	}
+	o.payload.Reviews = o.payloadReviews(request)
 
 	o.payload.UserData, err = LoadUserData(o.userDataFile)
 	if err != nil {
 		return err
 	}
-	listCommitsRich, err := listCommitsBetween(o.srcRepoRoot, o.oldestSrcCommit, o.newestSrcCommit)
+
+	o.payload.CommitList, err = o.payloadCommitList()
 	if err != nil {
 		return err
 	}
 
-	// Need this line to make sure an empty list is converted to [] and not null in SendPayload
-	o.payload.CommitList = make([]string, 0)
-	for _, commit := range listCommitsRich {
-		o.payload.CommitList = append(o.payload.CommitList, commit.Sha1)
-	}
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/approvals/", global.Host, global.Owner, o.pipelineName)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPost,
@@ -145,7 +131,60 @@ func (o *approvalReportOptions) run(args []string, request bool) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("approval%s created for artifact: %s", requestOrNot, o.payload.ArtifactSha256)
+		logger.Info("approval created for artifact: %s", o.payload.ArtifactSha256)
 	}
 	return err
+}
+
+func (o *approvalReportOptions) payloadArtifactSHA256(args []string) (string, error) {
+	if o.payload.ArtifactSha256 == "" {
+		sha256, err := GetSha256Digest(args[0], o.fingerprintOptions, logger)
+		if err != nil {
+			return sha256, err
+		}
+		return sha256, nil
+	}
+	return o.payload.ArtifactSha256, nil
+}
+
+func (o *approvalReportOptions) payloadReviews(request bool) []map[string]string {
+	if !request {
+		return []map[string]string{
+			{
+				"state":        "APPROVED",
+				"comment":      o.payload.Description,
+				"approved_by":  "External",
+				"approval_url": "undefined",
+			},
+		}
+	} else {
+		return []map[string]string{}
+	}
+}
+
+func (o *approvalReportOptions) payloadCommitList() ([]string, error) {
+	commits, err := o.commitsHistory()
+	if err != nil {
+		return nil, err
+	}
+
+	// Need this line to make sure an empty list is converted to [] and not null in SendPayload
+	commitList := make([]string, 0)
+	for _, commit := range commits {
+		commitList = append(commitList, commit.Sha1)
+	}
+	return commitList, nil
+}
+
+func (o *approvalReportOptions) commitsHistory() ([]*gitview.ArtifactCommit, error) {
+	gitView, err := gitview.New(o.srcRepoRoot)
+	if err != nil {
+		return nil, err
+	}
+
+	commits, err := gitView.CommitsBetween(o.oldestSrcCommit, o.newestSrcCommit, logger)
+	if err != nil {
+		return nil, err
+	}
+	return commits, nil
 }

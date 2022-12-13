@@ -10,12 +10,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentReportLambdaShortDesc = `Report the artifact deployed in an AWS Lambda and its digest to Kosli. `
+const environmentReportLambdaShortDesc = `Report the artifact deployed in an AWS Lambda and its digest to Kosli.`
 
 const environmentReportLambdaLongDesc = environmentReportLambdaShortDesc + `
 To authenticate to AWS, you can either export the AWS env vars or use the command flags to pass them.
-See the examples below.
-`
+See the examples below.s`
 
 const environmentReportLambdaExample = `
 # report what is running in the latest version AWS Lambda function (AWS auth provided in env variables):
@@ -70,6 +69,7 @@ func newEnvironmentReportLambdaCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.functionName, "function-name", "", functionNameFlag)
 	cmd.Flags().StringVar(&o.functionVersion, "function-version", "", functionVersionFlag)
 	addAWSAuthFlags(cmd, o.awsAuthOptions)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"function-name"})
 	if err != nil {

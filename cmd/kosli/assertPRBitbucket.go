@@ -16,7 +16,8 @@ type assertPullRequestBitbucketOptions struct {
 
 const assertPRBitbucketShortDesc = `Assert if a Bitbucket pull request for a git commit exists. `
 
-const assertPRBitbucketLongDesc = assertPRBitbucketShortDesc + `The command exits with non-zero exit code 
+const assertPRBitbucketLongDesc = assertPRBitbucketShortDesc + `
+The command exits with non-zero exit code 
 if no pull requests were found for the commit.`
 
 const assertPRBitbucketExample = `
@@ -48,6 +49,7 @@ func newAssertPullRequestBitbucketCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.bbWorkspace, "bitbucket-workspace", DefaultValue(ci, "workspace"), bbWorkspaceFlag)
 	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
 	cmd.Flags().StringVar(&o.repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"bitbucket-username", "bitbucket-password",
 		"bitbucket-workspace", "commit", "repository"})

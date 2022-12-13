@@ -151,9 +151,9 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		},
 		{
 			wantError: true,
-			name:      "report artifact wrong --",
+			name:      "report artifact wrong --repo-root",
 			cmd:       "pipeline artifact report creation testdata/file1 --repo-root . --artifact-type file --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments,
-			golden:    "Error: could not retrieve current git commit for " + headHash + ": failed to open git repository at .: repository does not exist\n",
+			golden:    "Error: failed to open git repository at .: repository does not exist\n",
 		},
 
 		// List artifacts

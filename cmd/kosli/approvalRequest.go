@@ -6,9 +6,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const approvalRequestShortDesc = `Request an approval of a deployment of an artifact in Kosli. `
-const approvalRequestLongDesc = approvalRequestShortDesc + `The request should be reviewed in Kosli UI. 
-` + sha256Desc
+const approvalRequestShortDesc = `Request an approval of a deployment of an artifact in Kosli.`
+const approvalRequestLongDesc = approvalRequestShortDesc + `
+The request should be reviewed in Kosli UI.` + sha256Desc
 
 const approvalRequestExample = `
 # Request that a file type artifact needs approval.
@@ -67,6 +67,7 @@ func newApprovalRequestCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.newestSrcCommit, "newest-commit", "HEAD", newestCommitFlag)
 	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", repoRootFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"pipeline", "oldest-commit"})
 	if err != nil {

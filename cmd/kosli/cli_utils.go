@@ -111,6 +111,10 @@ func RequireFlags(cmd *cobra.Command, flagNames []string) error {
 	return nil
 }
 
+func addDryRunFlag(cmd *cobra.Command) {
+	cmd.PersistentFlags().BoolVarP(&global.DryRun, "dry-run", "D", false, dryRunFlag)
+}
+
 // RequireGlobalFlags validates that a set of global fields have been assigned a value
 func RequireGlobalFlags(global *GlobalOpts, fields []string) error {
 	v := reflect.ValueOf(*global)

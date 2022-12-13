@@ -27,3 +27,7 @@ func addAWSAuthFlags(cmd *cobra.Command, o *awsAuthOptions) {
 	cmd.Flags().StringVar(&o.secretKey, "aws-secret-key", "", awsSecretKeyFlag)
 	cmd.Flags().StringVar(&o.region, "aws-region", "", awsRegionFlag)
 }
+
+func addDryRunFlag(cmd *cobra.Command) {
+	cmd.PersistentFlags().BoolVarP(&global.DryRun, "dry-run", "D", false, dryRunFlag)
+}

@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/kosli-dev/cli/internal/gitview"
+
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -16,8 +18,8 @@ type pipelineBackfillArtifactCommitsOptions struct {
 }
 
 type ArtifactCommitsBackfillPayload struct {
-	RepoUrl     string            `json:"repo_url"`
-	CommitsList []*ArtifactCommit `json:"git_commit_list"`
+	RepoUrl     string                    `json:"repo_url"`
+	CommitsList []*gitview.ArtifactCommit `json:"git_commit_list"`
 }
 
 func newPipelineBackfillArtifactCommitsCmd(out io.Writer) *cobra.Command {
@@ -40,6 +42,7 @@ func newPipelineBackfillArtifactCommitsCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", repoRootFlag)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"repo-root"})
 	if err != nil {
@@ -58,7 +61,13 @@ func (o *pipelineBackfillArtifactCommitsOptions) run(out io.Writer, args []strin
 	// 3) send a backfill request
 	var err error
 	pipelineName := args[0]
-	o.payload.RepoUrl, err = getRepoUrl(o.srcRepoRoot)
+
+	gitView, err := gitview.New(o.srcRepoRoot)
+	if err != nil {
+		return err
+	}
+
+	o.payload.RepoUrl, err = gitView.RepoUrl()
 	if err != nil {
 		return err
 	}
@@ -99,14 +108,7 @@ func (o *pipelineBackfillArtifactCommitsOptions) run(out io.Writer, args []strin
 				return err
 			}
 
-			o.payload.CommitsList = []*ArtifactCommit{}
-			previousCommit := ""
-			if previousCommitResponse["previous_commit"] != nil {
-				previousCommit = previousCommitResponse["previous_commit"].(string)
-				logger.Debug("Previous commit: %s\n", previousCommit)
-			}
-
-			o.payload.CommitsList, err = changeLog(o.srcRepoRoot, gitCommit, previousCommit)
+			o.payload.CommitsList, err = gitView.ChangeLog(gitCommit, previousCommit(previousCommitResponse), logger)
 			if err != nil {
 				return err
 			}
@@ -131,6 +133,15 @@ func (o *pipelineBackfillArtifactCommitsOptions) run(out io.Writer, args []strin
 			return err
 		}
 	}
+}
+
+func previousCommit(previousCommitResponse map[string]interface{}) string {
+	previousCommit := ""
+	if previousCommitResponse["previous_commit"] != nil {
+		previousCommit = previousCommitResponse["previous_commit"].(string)
+		logger.Debug("Previous commit: %s", previousCommit)
+	}
+	return previousCommit
 }
 
 // getPipelineArtifacts returns artifacts from a pipeline

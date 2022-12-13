@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentRenameShortDesc = `Rename a Kosli environment. `
+const environmentRenameShortDesc = `Rename a Kosli environment.`
 
 const environmentRenameLongDesc = environmentRenameShortDesc + `
 The environment will remain available under its old name until that name is taken by another environment.
@@ -60,5 +60,6 @@ func newEnvironmentRenameCmd(out io.Writer) *cobra.Command {
 			return err
 		},
 	}
+	addDryRunFlag(cmd)
 	return cmd
 }

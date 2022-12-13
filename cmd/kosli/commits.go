@@ -3,6 +3,8 @@ package main
 import (
 	"io"
 
+	"github.com/kosli-dev/cli/internal/gitview"
+
 	"github.com/spf13/cobra"
 )
 
@@ -36,8 +38,15 @@ func newCommitsCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
+//goland:noinspection GoUnusedParameter
 func (o *commitsOptions) run(args []string, out io.Writer) error {
-	commits, err := listCommitsBetween(".", o.oldestSrcCommit, o.newestSrcCommit)
+
+	gitView, err := gitview.New(".")
+	if err != nil {
+		return err
+	}
+
+	commits, err := gitView.CommitsBetween(o.oldestSrcCommit, o.newestSrcCommit, logger)
 	if err != nil {
 		return err
 	}

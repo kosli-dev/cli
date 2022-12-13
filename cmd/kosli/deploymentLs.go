@@ -13,7 +13,8 @@ import (
 
 const deploymentLsShortDesc = `List deployments in a pipeline.`
 
-const deploymentLsLongDesc = deploymentLsShortDesc + `The results are paginated and ordered from latests to oldest. 
+const deploymentLsLongDesc = deploymentLsShortDesc + `
+The results are paginated and ordered from latests to oldest. 
 By default, the page limit is 15 deployments per page.
 `
 const deploymentLsExample = `

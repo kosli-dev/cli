@@ -5,14 +5,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
-const assertArtifactShortDesc = `Assert the compliance status of an artifact in Kosli. `
+const assertArtifactShortDesc = `Assert the compliance status of an artifact in Kosli.`
 
-const assertArtifactLongDesc = assertArtifactShortDesc + `Exits with non-zero code if the artifact has a non-compliant status.`
+const assertArtifactLongDesc = assertArtifactShortDesc + `
+Exits with non-zero code if the artifact has a non-compliant status.`
 
 const assertArtifactExample = `
 # fail if an artifact has a non-compliant status (using the artifact fingerprint)
@@ -64,6 +66,7 @@ func newAssertArtifactCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.sha256, "sha256", "s", "", sha256Flag)
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"pipeline"})
 	if err != nil {
@@ -82,7 +85,7 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 		}
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s", global.Host, global.Owner, o.pipelineName, o.sha256)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/artifact/?snappish=%s@%s", global.Host, global.Owner, o.pipelineName, o.sha256)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,
@@ -103,7 +106,8 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 	if artifactData["state"].(string) == "COMPLIANT" {
 		logger.Info("COMPLIANT")
 	} else {
-		return fmt.Errorf("%s", artifactData["state"].(string))
+		fmt.Fprintln(out, artifactData["state"].(string))
+		os.Exit(1)
 	}
 
 	return nil

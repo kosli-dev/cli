@@ -38,9 +38,10 @@ type GithubPrEvidence struct {
 	// SelfApproved           bool   `json:"selfApproved"`
 }
 
-const pullRequestEvidenceGithubShortDesc = `Report a Github pull request evidence for an artifact in a Kosli pipeline. `
+const pullRequestEvidenceGithubShortDesc = `Report a Github pull request evidence for an artifact in a Kosli pipeline.`
 
-const pullRequestEvidenceGithubLongDesc = pullRequestEvidenceBitbucketShortDesc + `It checks if a pull request exists for the artifact (based on its git commit) and report the pull-request evidence to the artifact in Kosli. 
+const pullRequestEvidenceGithubLongDesc = pullRequestEvidenceBitbucketShortDesc + `
+It checks if a pull request exists for the artifact (based on its git commit) and report the pull-request evidence to the artifact in Kosli. 
 ` + sha256Desc
 
 const pullRequestEvidenceGithubExample = `
@@ -112,6 +113,7 @@ func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.EvidenceType, "evidence-type", "e", "", evidenceTypeFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"github-token", "github-org", "commit",
 		"repository", "pipeline", "build-url", "evidence-type"})

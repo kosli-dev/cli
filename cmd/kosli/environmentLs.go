@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentLsDesc = `List environments. `
+const environmentLsDesc = `List environments.`
 
 type environmentLsOptions struct {
 	output string

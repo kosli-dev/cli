@@ -12,7 +12,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentDiffDesc = `Diff snapshots.`
+const environmentDiffDescShort = `Diff snapshots.`
+
+const environmentDiffDesc = environmentDiffDescShort + `
+Specify SNAPPISH_1 and SNAPPISH_2 by:
+	environmentName~<N>  N'th behind the latest snapshot
+	environmentName#<N>  snapshot number N
+	environmentName      the latest snapshot`
+
+const environmentDiffExample = `# compare the third latest snapshot in an environment to the latest
+kosli environment diff envName~3 envName \
+	--api-token yourAPIToken \
+	--owner orgName
+	
+# compare two different environments of the same type
+kosli environment diff envName1 envName2 \
+	--api-token yourAPIToken \
+	--owner orgName`
 
 type environmentDiffOptions struct {
 	output string
@@ -43,10 +59,11 @@ type DiffArtifact struct {
 func newEnvironmentDiffCmd(out io.Writer) *cobra.Command {
 	o := new(environmentDiffOptions)
 	cmd := &cobra.Command{
-		Use:   "diff SNAPPISH_1 SNAPPISH_2",
-		Short: environmentDiffDesc,
-		Long:  environmentDiffDesc,
-		Args:  cobra.ExactArgs(2),
+		Use:     "diff SNAPPISH_1 SNAPPISH_2",
+		Short:   environmentDiffDescShort,
+		Long:    environmentDiffDesc,
+		Example: environmentDiffExample,
+		Args:    cobra.ExactArgs(2),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {

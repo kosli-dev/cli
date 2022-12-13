@@ -16,9 +16,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentReportDockerShortDesc = `Report running containers data from docker host to Kosli. `
+const environmentReportDockerShortDesc = `Report running containers data from docker host to Kosli.`
 
-const environmentReportDockerLongDesc = environmentReportDockerShortDesc + ` The reported data includes container image digests 
+const environmentReportDockerLongDesc = environmentReportDockerShortDesc + `
+The reported data includes container image digests 
 and creation timestamps. Containers running images which have not
 been pushed to or pulled from a registry will be ignored.`
 
@@ -51,6 +52,7 @@ func newEnvironmentReportDockerCmd(out io.Writer) *cobra.Command {
 			return o.run(args)
 		},
 	}
+	addDryRunFlag(cmd)
 	return cmd
 }
 

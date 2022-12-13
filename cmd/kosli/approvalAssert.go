@@ -10,9 +10,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const approvalAssertShortDesc = `Assert if an artifact in Kosli has been approved for deployment. `
+const approvalAssertShortDesc = `Assert if an artifact in Kosli has been approved for deployment.`
 
-const approvalAssertLongDesc = approvalAssertShortDesc + `Exits with non-zero code if artifact has not been approved.
+const approvalAssertLongDesc = approvalAssertShortDesc + `
+Exits with non-zero code if artifact has not been approved.
 ` + sha256Desc
 
 const approvalAssertExample = `
@@ -67,6 +68,7 @@ func newApprovalAssertCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.sha256, "sha256", "s", "", sha256Flag)
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"pipeline"})
 	if err != nil {

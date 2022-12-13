@@ -13,12 +13,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentReportK8SShortDesc = `Report running pods data from K8S cluster or namespace(s) to Kosli. `
+const environmentReportK8SShortDesc = `Report running pods data from K8S cluster or namespace(s) to Kosli.`
 
 const environmentReportK8SLongDesc = environmentReportK8SShortDesc + `
 The reported data includes pod container images digests and creation timestamps. You can customize the scope of reporting
-to include or exclude namespaces.
-`
+to include or exclude namespaces.`
 
 const environmentReportK8SExample = `
 # report what is running in an entire cluster using kubeconfig at $HOME/.kube/config:
@@ -83,6 +82,7 @@ func newEnvironmentReportK8SCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.kubeconfig, "kubeconfig", "k", defaultKubeConfigPath(), kubeconfigFlag)
 	cmd.Flags().StringSliceVarP(&o.namespaces, "namespace", "n", []string{}, namespaceFlag)
 	cmd.Flags().StringSliceVarP(&o.excludeNamespaces, "exclude-namespace", "x", []string{}, excludeNamespaceFlag)
+	addDryRunFlag(cmd)
 	return cmd
 }
 

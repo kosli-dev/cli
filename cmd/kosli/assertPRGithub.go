@@ -6,9 +6,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const assertPRGithubShortDesc = `Assert if a Github pull request for a git commit exists. `
+const assertPRGithubShortDesc = `Assert if a Github pull request for a git commit exists.`
 
-const assertPRGithubLongDesc = assertPRGithubShortDesc + `The command exits with non-zero exit code 
+const assertPRGithubLongDesc = assertPRGithubShortDesc + `
+The command exits with non-zero exit code 
 if no pull requests were found for the commit.`
 
 const assertPRGithubExample = `
@@ -45,6 +46,7 @@ func newAssertPullRequestGithubCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.ghOwner, "github-org", DefaultValue(ci, "owner"), githubOrgFlag)
 	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
 	cmd.Flags().StringVar(&o.repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"github-token", "github-org", "commit", "repository"})
 	if err != nil {

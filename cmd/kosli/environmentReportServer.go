@@ -49,6 +49,7 @@ func newEnvironmentReportServerCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringSliceVarP(&o.paths, "paths", "p", []string{}, pathsFlag)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"paths"})
 	if err != nil {

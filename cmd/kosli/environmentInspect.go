@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentInspectDesc = `Inspect an environment metadata. `
+const environmentInspectDesc = `Inspect an environment metadata.`
 
 type environmentInspectOptions struct {
 	output string

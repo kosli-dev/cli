@@ -25,9 +25,10 @@ type EvidencePayload struct {
 	Contents     map[string]interface{} `json:"contents"`
 }
 
-const artifactEvidenceGenericShortDesc = `Report a generic evidence to an artifact in a Kosli pipeline. `
+const artifactEvidenceGenericShortDesc = `Report a generic evidence to an artifact in a Kosli pipeline.`
 
-const artifactEvidenceGenericLongDesc = artifactEvidenceGenericShortDesc + sha256Desc
+const artifactEvidenceGenericLongDesc = artifactEvidenceGenericShortDesc + `
+` + sha256Desc
 
 const artifactEvidenceGenericExample = `
 # report a generic evidence about a pre-built docker image:
@@ -47,7 +48,6 @@ kosli pipeline artifact report evidence generic /path/to/your/dir \
 	--evidence-type yourEvidenceType \
 	--owner yourOrgName	\
 	--pipeline yourPipelineName 
-
 
 # report a generic evidence about an artifact with a provided fingerprint (sha256)
 kosli pipeline artifact report evidence generic \
@@ -94,6 +94,7 @@ func newGenericEvidenceCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.EvidenceType, "evidence-type", "e", "", evidenceTypeFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"pipeline", "build-url", "evidence-type"})
 	if err != nil {

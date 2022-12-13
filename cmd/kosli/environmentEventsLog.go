@@ -12,10 +12,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentEventsLogShortDesc = `List environment events. `
+const environmentEventsLogShortDesc = `List environment events.`
 
-const environmentEventsLogLongDesc = environmentEventsLogShortDesc + `The results are paginated and ordered from latests to oldest. 
+const environmentEventsLogLongDesc = environmentEventsLogShortDesc + `
+The results are paginated and ordered from latests to oldest. 
 By default, the page limit is 15 events per page.
+
+You can optionally specify an INTERVAL between two snapshot expressions with <expression>..<expression>.
+Expressions can be:
+	~N   N'th behind the latest snapshot
+	N    snapshot number N
+	NOW  the latest snapshot
+Either expression can be omitted to default to NOW.
 `
 
 const environmentEventsLogExample = `
@@ -112,7 +120,6 @@ func (o *environmentEventsLogOptions) run(out io.Writer, args []string) error {
 }
 
 func printEnvironmentEventsLogAsTable(raw string, out io.Writer, page int) error {
-
 	var events []map[string]interface{}
 	err := json.Unmarshal([]byte(raw), &events)
 	if err != nil {

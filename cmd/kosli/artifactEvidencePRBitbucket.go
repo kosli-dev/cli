@@ -36,9 +36,10 @@ type BitbucketPrEvidence struct {
 	// SelfApproved           bool   `json:"selfApproved"`
 }
 
-const pullRequestEvidenceBitbucketShortDesc = `Report a Bitbucket pull request evidence for an artifact in a Kosli pipeline. `
+const pullRequestEvidenceBitbucketShortDesc = `Report a Bitbucket pull request evidence for an artifact in a Kosli pipeline.`
 
-const pullRequestEvidenceBitbucketLongDesc = pullRequestEvidenceBitbucketShortDesc + `It checks if a pull request exists for the artifact (based on its git commit) and report the pull-request evidence to the artifact in Kosli. 
+const pullRequestEvidenceBitbucketLongDesc = pullRequestEvidenceBitbucketShortDesc + `
+It checks if a pull request exists for the artifact (based on its git commit) and report the pull-request evidence to the artifact in Kosli. 
 ` + sha256Desc
 
 const pullRequestEvidenceBitbucketExample = `
@@ -113,6 +114,7 @@ func newPullRequestEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.EvidenceType, "evidence-type", "e", "", evidenceTypeFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"bitbucket-username", "bitbucket-password",
 		"bitbucket-workspace", "commit", "repository", "pipeline", "build-url", "evidence-type"})

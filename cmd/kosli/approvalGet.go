@@ -17,29 +17,28 @@ const approvalGetLongDesc = approvalGetShortDesc + `
 The expected argument is an expression to specify the approval to get.
 It has the format <PIPELINE_NAME>[SEPARATOR][INTEGER_REFERENCE]
 
-Separators can be:
-- '#' to specify exact approval number N.
-- '~' to get N-th behind the latest approval.
+Specify SNAPPISH by:
+	pipelineName~<N>  N'th behind the latest approval
+	pipelineName#<N>  approval number N
+	pipelineName      the latest approval
 
-Examples of valid expressions are: pipe (latest approval), pipe#10 (approval number 10), pipe~2 (the third latest approval)
-`
+Examples of valid expressions are: pipe (latest approval), pipe#10 (approval number 10), pipe~2 (the third latest approval)`
 
 const approvalGetExample = `
-# get the latest approval in a pipeline
-kosli approval get yourPipelineName \
+# get second behind the latest approval from a pipeline
+kosli approval get pipelineName~1 \
 	--api-token yourAPIToken \
-	--owner yourOrgName
+	--owner orgName
 
-# get the second latest approval in a pipeline
-kosli approval get yourPipelineName~1 \
+# get the 10th approval from a pipeline
+kosli approval get pipelineName#10 \
 	--api-token yourAPIToken \
-	--owner yourOrgName
+	--owner orgName
 
-# get the 10th approval in a pipeline
-kosli approval get yourPipelineName#10 \
+# get the latest approval from a pipeline
+kosli approval get pipelineName \
 	--api-token yourAPIToken \
-	--owner yourOrgName
-`
+	--owner orgName`
 
 type approvalGetOptions struct {
 	output string
@@ -87,7 +86,6 @@ func (o *approvalGetOptions) run(out io.Writer, args []string) error {
 			"table": printApprovalAsTable,
 			"json":  output.PrintJson,
 		})
-
 }
 
 func printApprovalAsTable(raw string, out io.Writer, page int) error {

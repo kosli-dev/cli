@@ -24,9 +24,10 @@ type DeploymentPayload struct {
 	BuildUrl    string      `json:"build_url"`
 }
 
-const deploymentReportShortDesc = `Report a deployment of an artifact to an environment to Kosli. `
+const deploymentReportShortDesc = `Report a deployment of an artifact to an environment to Kosli.`
 
-const deploymentReportLongDesc = deploymentReportShortDesc + sha256Desc
+const deploymentReportLongDesc = deploymentReportShortDesc + `
+` + sha256Desc
 
 func newDeploymentReportCmd(out io.Writer) *cobra.Command {
 	o := new(deploymentReportOptions)
@@ -62,6 +63,7 @@ func newDeploymentReportCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), buildUrlFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", deploymentUserDataFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"pipeline", "build-url", "environment"})
 	if err != nil {

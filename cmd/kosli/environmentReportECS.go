@@ -10,10 +10,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentReportECSShortDesc = `Report running containers data from AWS ECS cluster or service to Kosli. `
+const environmentReportECSShortDesc = `Report running containers data from AWS ECS cluster or service to Kosli.`
 const environmentReportECSLongDesc = environmentReportECSShortDesc + `
-The reported data includes container image digests and creation timestamps.
-`
+The reported data includes container image digests and creation timestamps.`
 
 const environmentReportECSExample = `
 # report what is running in an entire AWS ECS cluster:
@@ -65,6 +64,7 @@ func newEnvironmentReportECSCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVarP(&o.cluster, "cluster", "C", "", ecsClusterFlag)
 	cmd.Flags().StringVarP(&o.serviceName, "service-name", "s", "", ecsServiceFlag)
+	addDryRunFlag(cmd)
 	return cmd
 }
 

@@ -22,9 +22,10 @@ type testEvidenceOptions struct {
 	payload            EvidencePayload
 }
 
-const testEvidenceShortDesc = `Report a JUnit test evidence to an artifact in a Kosli pipeline. `
+const testEvidenceShortDesc = `Report a JUnit test evidence to an artifact in a Kosli pipeline.`
 
-const testEvidenceLongDesc = testEvidenceShortDesc + sha256Desc
+const testEvidenceLongDesc = testEvidenceShortDesc + `
+` + sha256Desc
 
 const testEvidenceExample = `
 # report a JUnit test evidence about a file artifact:
@@ -83,6 +84,7 @@ func newTestEvidenceCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.EvidenceType, "evidence-type", "e", "", evidenceTypeFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"pipeline", "build-url", "evidence-type"})
 	if err != nil {

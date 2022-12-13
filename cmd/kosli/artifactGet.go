@@ -22,24 +22,21 @@ In case of using the git commit, it is possible to get multiple artifacts matchi
 The expected argument is an expression to specify the artifact to get.
 It has the format <PIPELINE_NAME><SEPARATOR><COMMIT_SHA1|ARTIFACT_SHA256> 
 
-Separators can be:
-- '@' to specify an artifact fingerprint. The fingerprint can be short or complete.
-- ':' to specify a commit SHA1. The commit sha can be short or complete.
+Specify SNAPPISH by:
+	pipelineName@<fingerprint>  artifact with a given fingerprint. The fingerprint can be short or complete.
+	pipelineName:<commit_sha>   artifact with a given commit SHA. The commit sha can be short or complete.
 
 Examples of valid expressions are: pipe@184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0, pipe:110d048bf1fce72ba546cbafc4427fb21b958dee
 `
 
-const artifactGetExample = `
-# get an artifact with a given SHA256 in a pipeline
-kosli artifact get yourPipelineName@yourSHA256 \
+const artifactGetExample = `# get an artifact with a given fingerprint from a pipeline
+kosli artifact get pipelineName@fingerprint \
 	--api-token yourAPIToken \
-	--owner yourOrgName
-
-# get an artifact with a given commit SHA256 in a pipeline
-kosli artifact get yourPipelineName:yourCommitSHA256 \
+	--owner orgName
+# get an artifact with a given commit SHA from a pipeline
+kosli artifact get pipelineName:commitSHA \
 	--api-token yourAPIToken \
-	--owner yourOrgName
-`
+	--owner orgName`
 
 type artifactGetOptions struct {
 	output string

@@ -11,9 +11,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const assertEnvironmentShortDesc = `Assert the compliance status of an environment in Kosli. `
+const assertEnvironmentShortDesc = `Assert the compliance status of an environment in Kosli.`
 
-const assertEnvironmentLongDesc = assertEnvironmentShortDesc + `Exits with non-zero code if the environment has a non-compliant status.
+const assertEnvironmentLongDesc = assertEnvironmentShortDesc + `
+Exits with non-zero code if the environment has a non-compliant status.
 The expected argument is an expression to specify the specific environment snapshot to assert.
 It has the format <ENVIRONMENT_NAME>[SEPARATOR][SNAPSHOT_REFERENCE] 
 
@@ -52,6 +53,7 @@ func newAssertEnvironmentCmd(out io.Writer) *cobra.Command {
 			return run(out, args)
 		},
 	}
+	addDryRunFlag(cmd)
 
 	return cmd
 }

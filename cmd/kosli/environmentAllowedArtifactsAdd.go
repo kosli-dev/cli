@@ -22,9 +22,10 @@ type AllowlistPayload struct {
 	Environment string `json:"environment_name"`
 }
 
-const allowedArtifactCreateShortDesc = `Add an artifact to an environment's allowlist. `
+const allowedArtifactCreateShortDesc = `Add an artifact to an environment's allowlist.`
 
-const allowedArtifactCreateLongDesc = allowedArtifactCreateShortDesc + sha256Desc
+const allowedArtifactCreateLongDesc = allowedArtifactCreateShortDesc + `
+` + sha256Desc
 
 func newAllowedArtifactsCreateCmd(out io.Writer) *cobra.Command {
 	o := new(allowedArtifactsCreationOptions)
@@ -54,8 +55,8 @@ func newAllowedArtifactsCreateCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.Sha256, "sha256", "s", "", sha256Flag)
 	cmd.Flags().StringVarP(&o.payload.Environment, "environment", "e", "", envAllowListFlag)
 	cmd.Flags().StringVar(&o.payload.Reason, "reason", "", reasonFlag)
-
 	addFingerprintFlags(cmd, o.fingerprintOptions)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"environment", "reason"})
 	if err != nil {

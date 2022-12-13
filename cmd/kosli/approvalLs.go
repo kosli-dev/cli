@@ -12,7 +12,8 @@ import (
 )
 
 const approvalLsShortDesc = `List approvals in a pipeline.`
-const approvalLsLongDesc = approvalLsShortDesc + ` The results are paginated and ordered from latests to oldest. 
+const approvalLsLongDesc = approvalLsShortDesc + `
+The results are paginated and ordered from latests to oldest. 
 By default, the page limit is 15 approvals per page.  
 `
 
