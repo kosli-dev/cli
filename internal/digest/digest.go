@@ -173,9 +173,18 @@ func extractImageDigestFromRepoDigest(imageID string, repoDigests []string) (str
 }
 
 // requestManifestFromRegistry makes an API request to a remote registry to get image manifest
-func requestManifestFromRegistry(registryEndPoint, imageName, imageTag, registryToken string, dockerHeaders map[string]string) (*requests.HTTPResponse, error) {
-	res, err := requests.DoRequestWithToken([]byte{}, registryEndPoint+"/"+imageName+"/"+"manifests/"+imageTag, registryToken, 3, http.MethodGet, dockerHeaders)
-
+func requestManifestFromRegistry(registryEndPoint, imageName, imageTag, registryToken string,
+	dockerHeaders map[string]string, logger *logger.Logger) (*requests.HTTPResponse, error) {
+	// res, err := requests.DoRequestWithToken([]byte{}, registryEndPoint+"/"+imageName+"/"+"manifests/"+imageTag, registryToken, 3, http.MethodGet, dockerHeaders)
+	url := registryEndPoint + "/" + imageName + "/" + "manifests/" + imageTag
+	reqParams := &requests.RequestParams{
+		Method:            http.MethodGet,
+		URL:               url,
+		Token:             registryToken,
+		AdditionalHeaders: dockerHeaders,
+	}
+	kosliClient := requests.NewKosliClient(1, logger.DebugEnabled, logger)
+	res, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return res, fmt.Errorf("failed to get docker digest from registry %v", err)
 	}
@@ -185,7 +194,7 @@ func requestManifestFromRegistry(registryEndPoint, imageName, imageTag, registry
 
 // RemoteDockerImageSha256 returns a sha256 digest of a docker image by reading it from
 // remote docker registry
-func RemoteDockerImageSha256(imageName, imageTag, registryEndPoint, registryToken string) (string, error) {
+func RemoteDockerImageSha256(imageName, imageTag, registryEndPoint, registryToken string, logger *logger.Logger) (string, error) {
 	// Some docker images have Manifest list, aka “fat manifest” which combines
 	// image manifests for one or more platforms. Other images don't have such manifest.
 	// The response Content-Type header specifies whether an image has it or not.
@@ -197,7 +206,7 @@ func RemoteDockerImageSha256(imageName, imageTag, registryEndPoint, registryToke
 	var err error
 
 	dockerHeaders := map[string]string{"Accept": v2FatManifestType}
-	res, err = requestManifestFromRegistry(registryEndPoint, imageName, imageTag, registryToken, dockerHeaders)
+	res, err = requestManifestFromRegistry(registryEndPoint, imageName, imageTag, registryToken, dockerHeaders, logger)
 	if err != nil {
 		return "", err
 	}
@@ -206,7 +215,7 @@ func RemoteDockerImageSha256(imageName, imageTag, registryEndPoint, registryToke
 	if responseContentType != v2FatManifestType {
 		dockerHeaders = map[string]string{"Accept": v2ManifestType}
 
-		res, err = requestManifestFromRegistry(registryEndPoint, imageName, imageTag, registryToken, dockerHeaders)
+		res, err = requestManifestFromRegistry(registryEndPoint, imageName, imageTag, registryToken, dockerHeaders, logger)
 		if err != nil {
 			return "", err
 		}

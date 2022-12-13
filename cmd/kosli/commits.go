@@ -1,15 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"io"
 
 	"github.com/spf13/cobra"
 )
 
-const commitsDesc = `
-Print a list of commits within a range.
-`
+const commitsDesc = `Print a list of commits within a range.`
 
 type commitsOptions struct {
 	oldestSrcCommit string
@@ -20,10 +17,10 @@ func newCommitsCmd(out io.Writer) *cobra.Command {
 	o := new(commitsOptions)
 	cmd := &cobra.Command{
 		Use:    "commits",
-		Short:  "Print the a list of commits between two commits.",
+		Short:  commitsDesc,
 		Long:   commitsDesc,
 		Hidden: true,
-		Args:   NoArgs,
+		Args:   cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args, out)
 		},
@@ -45,9 +42,8 @@ func (o *commitsOptions) run(args []string, out io.Writer) error {
 		return err
 	}
 	for _, commit := range commits {
-		fmt.Fprintf(out, "%s\n", commit.Sha1)
-		fmt.Fprintf(out, "%s %s %s %d\n", commit.Branch, commit.Author, commit.Message, commit.Timestamp)
-		fmt.Fprint(out, "\n")
+		logger.Info(commit.Sha1)
+		logger.Info("%s %s %s %d", commit.Branch, commit.Author, commit.Message, commit.Timestamp)
 	}
 	return nil
 }

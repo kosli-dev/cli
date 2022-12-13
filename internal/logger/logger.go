@@ -8,25 +8,25 @@ import (
 )
 
 type Logger struct {
-	debug   bool
-	Out     io.Writer
-	warnLog *log.Logger
-	infoLog *log.Logger
-	errLog  *log.Logger
+	DebugEnabled bool
+	Out          io.Writer
+	warnLog      *log.Logger
+	infoLog      *log.Logger
+	errLog       *log.Logger
 }
 
 func NewLogger(out io.Writer, debug bool) *Logger {
 	return &Logger{
-		debug:   debug,
-		Out:     out,
-		warnLog: log.New(os.Stderr, "", 0),
-		errLog:  log.New(os.Stderr, "", 0),
-		infoLog: log.New(out, "", 0),
+		DebugEnabled: debug,
+		Out:          out,
+		warnLog:      log.New(os.Stderr, "", 0),
+		errLog:       log.New(os.Stderr, "", 0),
+		infoLog:      log.New(out, "", 0),
 	}
 }
 
 func (l *Logger) Debug(format string, v ...interface{}) {
-	if l.debug {
+	if l.DebugEnabled {
 		format = fmt.Sprintf("[debug] %s\n", format)
 		err := l.infoLog.Output(2, fmt.Sprintf(format, v...))
 		if err != nil {

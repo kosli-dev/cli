@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentLsDesc = `List environments.`
+const environmentLsDesc = `List environments. `
 
 type environmentLsOptions struct {
 	output string
@@ -25,7 +25,7 @@ func newEnvironmentLsCmd(out io.Writer) *cobra.Command {
 		Aliases: []string{"list"},
 		Short:   environmentLsDesc,
 		Long:    environmentLsDesc,
-		Args:    NoArgs,
+		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -44,10 +44,14 @@ func newEnvironmentLsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *environmentLsOptions) run(out io.Writer, args []string) error {
-
 	url := fmt.Sprintf("%s/api/v1/environments/%s/", global.Host, global.Owner)
-	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, false, http.MethodGet)
+
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodGet,
+		URL:      url,
+		Password: global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return err
 	}
@@ -67,10 +71,7 @@ func printEnvListAsTable(raw string, out io.Writer, page int) error {
 	}
 
 	if len(envs) == 0 {
-		_, err := out.Write([]byte("No environments found\n"))
-		if err != nil {
-			return err
-		}
+		logger.Info("no environments found")
 		return nil
 	}
 

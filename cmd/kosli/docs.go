@@ -13,8 +13,9 @@ import (
 	"github.com/spf13/cobra/doc"
 )
 
-const docsDesc = `
-Generate documentation files for Kosli CLI.
+const docsShortDesc = `Generate documentation files for Kosli CLI. `
+
+const docsLongDesc = docsShortDesc + `
 This command can generate documentation in the following formats: Markdown.
 `
 
@@ -29,10 +30,10 @@ func newDocsCmd(out io.Writer) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:    "docs",
-		Short:  "generate documentation as markdown",
-		Long:   docsDesc,
+		Short:  docsShortDesc,
+		Long:   docsLongDesc,
 		Hidden: true,
-		Args:   NoArgs,
+		Args:   cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.topCmd = cmd.Root()
 			return o.run()

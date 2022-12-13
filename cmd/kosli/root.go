@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	log "github.com/kosli-dev/cli/internal/logger"
+	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -40,6 +41,7 @@ const (
 	maxAPIRetryFlag         = "[defaulted] How many times should API calls be retried when the API host is not reachable."
 	configFileFlag          = "[optional] The Kosli config file path."
 	verboseFlag             = "[optional] Print verbose logs to stdout."
+	debugFlag               = "[optional] Print debug logs to stdout."
 	sha256Flag              = "[conditional] The SHA256 fingerprint for the artifact. Only required if you don't specify '--artifact-type'."
 	artifactTypeFlag        = "[conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256'."
 	pipelineNameFlag        = "The Kosli pipeline name."
@@ -112,6 +114,7 @@ type GlobalOpts struct {
 	MaxAPIRetries int
 	ConfigFile    string
 	Verbose       bool
+	Debug         bool
 }
 
 func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
@@ -124,7 +127,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		TraverseChildren: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// You can bind cobra and viper in a few locations, but PersistencePreRunE on the root command works well
-			err := initializeConfig(cmd)
+			err := initialize(cmd, out)
 			if err != nil {
 				return err
 			}
@@ -142,7 +145,10 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	cmd.PersistentFlags().BoolVarP(&global.DryRun, "dry-run", "D", false, dryRunFlag)
 	cmd.PersistentFlags().IntVarP(&global.MaxAPIRetries, "max-api-retries", "r", maxAPIRetries, maxAPIRetryFlag)
 	cmd.PersistentFlags().StringVarP(&global.ConfigFile, "config-file", "c", defaultConfigFilename, configFileFlag)
-	cmd.PersistentFlags().BoolVarP(&global.Verbose, "verbose", "v", false, verboseFlag)
+	cmd.PersistentFlags().BoolVarP(&global.Debug, "verbose", "v", false, verboseFlag)
+	cmd.PersistentFlags().BoolVar(&global.Debug, "debug", false, verboseFlag)
+
+	cmd.PersistentFlags().MarkDeprecated("verbose", "use --debug instead")
 
 	// Add subcommands
 	cmd.AddCommand(
@@ -167,8 +173,9 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	return cmd, nil
 }
 
-func initializeConfig(cmd *cobra.Command) error {
-	logger = log.NewLogger(os.Stdout, global.Verbose)
+func initialize(cmd *cobra.Command, out io.Writer) error {
+	logger = log.NewLogger(out, global.Debug)
+	kosliClient = requests.NewKosliClient(global.MaxAPIRetries, global.Debug, logger)
 	v := viper.New()
 
 	// If provided, extract the custom config file dir and name

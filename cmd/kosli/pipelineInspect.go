@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const pipelineInspectDesc = `Inspect the metadata of a single pipeline`
+const pipelineInspectDesc = `Inspect the metadata of a specific pipeline.`
 
 type pipelineInspectOptions struct {
 	output string
@@ -24,13 +24,11 @@ func newPipelineInspectCmd(out io.Writer) *cobra.Command {
 		Use:   "inspect PIPELINE-NAME",
 		Short: pipelineInspectDesc,
 		Long:  pipelineInspectDesc,
+		Args:  cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
-			}
-			if len(args) < 1 {
-				return ErrorBeforePrintingUsage(cmd, "pipeline name argument is required")
 			}
 			return nil
 		},
@@ -46,9 +44,13 @@ func newPipelineInspectCmd(out io.Writer) *cobra.Command {
 
 func (o *pipelineInspectOptions) run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s", global.Host, global.Owner, args[0])
-	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{})
 
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodGet,
+		URL:      url,
+		Password: global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return err
 	}

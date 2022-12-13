@@ -12,7 +12,31 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentEventsLogDesc = `List a number of environment events.`
+const environmentEventsLogShortDesc = `List environment events. `
+
+const environmentEventsLogLongDesc = environmentEventsLogShortDesc + `The results are paginated and ordered from latests to oldest. 
+By default, the page limit is 15 events per page.
+`
+
+const environmentEventsLogExample = `
+# list the last 15 events for an environment:
+kosli environment log yourEnvironmentName \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# list the last 30 events for an environment:
+kosli environment log yourEnvironmentName \
+	--page-limit 30 \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# list the last 30 events for an environment (in JSON):
+kosli environment log yourEnvironmentName \
+	--page-limit 30 \
+	--api-token yourAPIToken \
+	--owner yourOrgName \
+	--output json
+`
 
 type environmentEventsLogOptions struct {
 	output     string
@@ -25,19 +49,15 @@ type environmentEventsLogOptions struct {
 func newEnvironmentEventsLogCmd(out io.Writer) *cobra.Command {
 	o := new(environmentEventsLogOptions)
 	cmd := &cobra.Command{
-		Use:   "log ENV_NAME [INTERVAL]",
-		Short: environmentEventsLogDesc,
-		Long:  environmentEventsLogDesc,
+		Use:     "log ENV_NAME [INTERVAL]",
+		Short:   environmentEventsLogShortDesc,
+		Long:    environmentEventsLogLongDesc,
+		Example: environmentEventsLogExample,
+		Args:    cobra.MatchAll(cobra.MaximumNArgs(2), cobra.MinimumNArgs(1)),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
-			}
-			if len(args) < 1 {
-				return ErrorBeforePrintingUsage(cmd, "ENV_NAME argument is required")
-			}
-			if len(args) > 2 {
-				return ErrorBeforePrintingUsage(cmd, "command accepts maximum 2 arguments")
 			}
 			if o.pageNumber <= 0 {
 				return ErrorBeforePrintingUsage(cmd, "page number must be a positive integer")
@@ -67,8 +87,13 @@ func (o *environmentEventsLogOptions) run(out io.Writer, args []string) error {
 	if o.long {
 		url := fmt.Sprintf("%s/api/v1/environments/%s/%s/events/?page=%d&per_page=%d&interval=%s&reverse=%t",
 			global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit, url.QueryEscape(interval), o.reverse)
-		response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
-			global.MaxAPIRetries, false, http.MethodGet)
+
+		reqParams := &requests.RequestParams{
+			Method:   http.MethodGet,
+			URL:      url,
+			Password: global.ApiToken,
+		}
+		response, err := kosliClient.Do(reqParams)
 		if err != nil {
 			return err
 		}
@@ -95,7 +120,7 @@ func printEnvironmentEventsLogAsTable(raw string, out io.Writer, page int) error
 	}
 
 	if len(events) == 0 {
-		fmt.Fprintf(out, "No environment events were found at page number %d\n", page)
+		logger.Info("no environment events were found at page number %d", page)
 		return nil
 	}
 	header := []string{"SNAPSHOT", "EVENT", "PIPELINE", "DEPLOYMENTS"}

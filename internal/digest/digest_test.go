@@ -466,7 +466,8 @@ func (suite *DigestTestSuite) TestRemoteDockerImageSha256() {
 				err = utils.PushDockerImage(localImage)
 				require.NoErrorf(suite.T(), err, "TestRemoteDockerImageSha256: test image should be pushable")
 			}
-			actual, err := RemoteDockerImageSha256(t.localImageName, t.localImageTag, "http://localhost:5001/v2", "secret")
+			actual, err := RemoteDockerImageSha256(t.localImageName, t.localImageTag, "http://localhost:5001/v2", "secret",
+				logger.NewLogger(os.Stdout, false))
 			if t.want.expectError {
 				require.Errorf(suite.T(), err, "TestRemoteDockerImageSha256: error was expected")
 			} else {

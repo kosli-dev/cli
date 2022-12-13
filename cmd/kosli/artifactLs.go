@@ -11,7 +11,30 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const artifactLsDesc = `List a number of artifacts in a pipeline.`
+const artifactLsShortDesc = `List artifacts in a pipeline. `
+
+const artifactLsLongDesc = artifactLsShortDesc + `The results are paginated and ordered from latests to oldest. 
+By default, the page limit is 15 artifacts per page.
+`
+const artifactLsExample = `
+# list the last 15 artifacts for a pipeline:
+kosli artifact list yourPipelineName \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# list the last 30 artifacts for a pipeline:
+kosli artifact list yourPipelineName \
+	--page-limit 30 \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# list the last 30 artifacts for a pipeline (in JSON):
+kosli artifact list yourPipelineName \
+	--page-limit 30 \
+	--api-token yourAPIToken \
+	--owner yourOrgName \
+	--output json
+`
 
 type artifactLsOptions struct {
 	output     string
@@ -24,15 +47,14 @@ func newArtifactLsCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "ls PIPELINE-NAME",
 		Aliases: []string{"list"},
-		Short:   artifactLsDesc,
-		Long:    artifactLsDesc,
+		Short:   artifactLsShortDesc,
+		Long:    artifactLsLongDesc,
+		Example: artifactLsExample,
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
-			}
-			if len(args) < 1 {
-				return ErrorBeforePrintingUsage(cmd, "pipeline name argument is required")
 			}
 			return nil
 		},
@@ -50,16 +72,18 @@ func newArtifactLsCmd(out io.Writer) *cobra.Command {
 
 func (o *artifactLsOptions) run(out io.Writer, args []string) error {
 	if o.pageNumber <= 0 {
-		_, err := out.Write([]byte("No artifacts were requested\n"))
-		if err != nil {
-			return err
-		}
+		logger.Info("no artifacts were requested")
 		return nil
 	}
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/?page=%d&per_page=%d",
 		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit)
-	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, false, http.MethodGet)
+
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodGet,
+		URL:      url,
+		Password: global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return err
 	}
@@ -79,11 +103,11 @@ func printArtifactsListAsTable(raw string, out io.Writer, page int) error {
 	}
 
 	if len(artifacts) == 0 {
-		msg := "No artifacts were found"
+		msg := "no artifacts were found"
 		if page != 1 {
 			msg = fmt.Sprintf("%s at page number %d", msg, page)
 		}
-		fmt.Fprintln(out, msg)
+		logger.Info(msg)
 		return nil
 	}
 

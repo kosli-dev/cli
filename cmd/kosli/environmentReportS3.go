@@ -10,8 +10,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentReportS3Desc = `
-Report the artifact deployed in an AWS S3 bucket and its digest to Kosli. 
+const environmentReportS3ShortDesc = `Report an artifact deployed in AWS S3 bucket to Kosli. `
+
+const environmentReportS3LongDesc = environmentReportS3ShortDesc + `
+To authenticate to AWS, you can either export the AWS env vars or use the command flags to pass them.
+See the examples below.
 `
 
 const environmentReportS3Example = `
@@ -36,28 +39,21 @@ kosli environment report s3 yourEnvironmentName \
 `
 
 type environmentReportS3Options struct {
-	bucket    string
-	accessKey string
-	secretKey string
-	region    string
+	bucket         string
+	awsAuthOptions *awsAuthOptions
 }
 
 func newEnvironmentReportS3Cmd(out io.Writer) *cobra.Command {
 	o := new(environmentReportS3Options)
+	o.awsAuthOptions = new(awsAuthOptions)
 	cmd := &cobra.Command{
 		Use:     "s3 ENVIRONMENT-NAME",
 		Aliases: []string{"S3"},
-		Short:   "Report artifact from AWS S3 bucket to Kosli.",
-		Long:    environmentReportS3Desc,
+		Short:   environmentReportS3ShortDesc,
+		Long:    environmentReportS3LongDesc,
 		Example: environmentReportS3Example,
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 1 {
-				return ErrorBeforePrintingUsage(cmd, "only env-name argument is allowed")
-			}
-			if len(args) == 0 || args[0] == "" {
-				return ErrorBeforePrintingUsage(cmd, "env-name argument is required")
-			}
-
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
@@ -71,9 +67,7 @@ func newEnvironmentReportS3Cmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&o.bucket, "bucket", "", bucketNameFlag)
-	cmd.Flags().StringVar(&o.accessKey, "aws-key-id", "", awsKeyIdFlag)
-	cmd.Flags().StringVar(&o.secretKey, "aws-secret-key", "", awsSecretKeyFlag)
-	cmd.Flags().StringVar(&o.region, "aws-region", "", awsRegionFlag)
+	addAWSAuthFlags(cmd, o.awsAuthOptions)
 
 	err := RequireFlags(cmd, []string{"bucket"})
 	if err != nil {
@@ -87,18 +81,27 @@ func (o *environmentReportS3Options) run(args []string) error {
 	envName := args[0]
 
 	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
-	creds := aws.AWSCredentials(o.accessKey, o.secretKey)
-	s3Data, err := aws.GetS3Data(o.bucket, creds, o.region, logger)
+	creds := aws.AWSCredentials(o.awsAuthOptions.accessKey, o.awsAuthOptions.secretKey)
+	s3Data, err := aws.GetS3Data(o.bucket, creds, o.awsAuthOptions.region, logger)
 	if err != nil {
 		return err
 	}
-	requestBody := &aws.S3EnvRequest{
+	payload := &aws.S3EnvRequest{
 		Artifacts: s3Data,
 		Type:      "S3",
 		Id:        envName,
 	}
 
-	_, err = requests.SendPayload(requestBody, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPut)
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodPut,
+		URL:      url,
+		Payload:  payload,
+		DryRun:   global.DryRun,
+		Password: global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
+	if err == nil && !global.DryRun {
+		logger.Info("bucket %s was reported to environment %s", o.bucket, envName)
+	}
 	return err
 }

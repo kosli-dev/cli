@@ -16,13 +16,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentReportDockerShortDesc = `Report running containers data from docker host to Kosli.`
+const environmentReportDockerShortDesc = `Report running containers data from docker host to Kosli. `
 
-const environmentReportDockerDesc = `Report the running containers on the docker host, their image digests, 
-and creation timestamp to Kosli. Containers running images that have not
+const environmentReportDockerLongDesc = environmentReportDockerShortDesc + ` The reported data includes container image digests 
+and creation timestamps. Containers running images which have not
 been pushed to or pulled from a registry will be ignored.`
 
-const environmentReportDockerExample = `# report what is running in a docker host:
+const environmentReportDockerExample = `
+# report what is running in a docker host:
 kosli environment report docker yourEnvironmentName \
 	--api-token yourAPIToken \
 	--owner yourOrgName`
@@ -35,16 +36,10 @@ func newEnvironmentReportDockerCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "docker ENVIRONMENT-NAME",
 		Short:   environmentReportDockerShortDesc,
-		Long:    environmentReportDockerDesc,
+		Long:    environmentReportDockerLongDesc,
 		Example: environmentReportDockerExample,
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 1 {
-				return ErrorBeforePrintingUsage(cmd, "only env-name argument is allowed")
-			}
-			if len(args) == 0 || args[0] == "" {
-				return ErrorBeforePrintingUsage(cmd, "env-name argument is required")
-			}
-
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
@@ -69,14 +64,23 @@ func (o *environmentReportDockerOptions) run(args []string) error {
 		return err
 	}
 
-	requestBody := &server.ServerEnvRequest{
+	payload := &server.ServerEnvRequest{
 		Artifacts: artifacts,
 		Type:      "docker",
 		Id:        envName,
 	}
 
-	_, err = requests.SendPayload(requestBody, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPut)
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodPut,
+		URL:      url,
+		Payload:  payload,
+		DryRun:   global.DryRun,
+		Password: global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
+	if err == nil && !global.DryRun {
+		logger.Info("[%d] containers were reported to environment %s", len(payload.Artifacts), envName)
+	}
 	return err
 }
 

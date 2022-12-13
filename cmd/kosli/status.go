@@ -9,7 +9,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const statusDesc = `Check the status of Kosli server.`
+const statusShortDesc = `Check the status of Kosli server. `
+
+const statusLongDesc = statusShortDesc + `
+The status is logged and the command always exits with 0 exit code.
+If you like to assert the Kosli server status, you can use the --assert flag or the "kosli assert status" command.`
 
 type statusOptions struct {
 	assert bool
@@ -19,9 +23,9 @@ func newStatusCmd(out io.Writer) *cobra.Command {
 	o := new(statusOptions)
 	cmd := &cobra.Command{
 		Use:   "status",
-		Short: statusDesc,
-		Long:  statusDesc,
-		Args:  NoArgs,
+		Short: statusShortDesc,
+		Long:  statusLongDesc,
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(out)
 		},
@@ -34,18 +38,20 @@ func newStatusCmd(out io.Writer) *cobra.Command {
 
 func (o *statusOptions) run(out io.Writer) error {
 	url := fmt.Sprintf("%s/ready", global.Host)
-	var outErr error
-	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", "", global.MaxAPIRetries, http.MethodGet, map[string]string{})
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodGet,
+		URL:      url,
+		Password: global.ApiToken,
+	}
+
+	response, err := kosliClient.Do(reqParams)
 	if err != nil {
 		if o.assert {
 			return fmt.Errorf("kosli server %s is unresponsive", global.Host)
 		}
-		_, outErr = out.Write([]byte("Down\n"))
+		logger.Info("Kosli is Down")
 	} else {
-		_, outErr = out.Write([]byte(response.Body + "\n"))
-	}
-	if outErr != nil {
-		return outErr
+		logger.Info(response.Body)
 	}
 	return nil
 }

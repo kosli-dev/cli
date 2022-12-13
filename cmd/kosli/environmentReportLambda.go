@@ -10,8 +10,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentReportLambdaDesc = `
-Report the artifact deployed in an AWS Lambda and its digest to Kosli. 
+const environmentReportLambdaShortDesc = `Report the artifact deployed in an AWS Lambda and its digest to Kosli. `
+
+const environmentReportLambdaLongDesc = environmentReportLambdaShortDesc + `
+To authenticate to AWS, you can either export the AWS env vars or use the command flags to pass them.
+See the examples below.
 `
 
 const environmentReportLambdaExample = `
@@ -39,26 +42,19 @@ kosli environment report lambda myEnvironment \
 type environmentReportLambdaOptions struct {
 	functionName    string
 	functionVersion string
-	accessKey       string
-	secretKey       string
-	region          string
+	awsAuthOptions  *awsAuthOptions
 }
 
 func newEnvironmentReportLambdaCmd(out io.Writer) *cobra.Command {
 	o := new(environmentReportLambdaOptions)
+	o.awsAuthOptions = new(awsAuthOptions)
 	cmd := &cobra.Command{
 		Use:     "lambda ENVIRONMENT-NAME",
-		Short:   "Report artifact from AWS Lambda to Kosli.",
-		Long:    environmentReportLambdaDesc,
+		Short:   environmentReportLambdaShortDesc,
+		Long:    environmentReportLambdaLongDesc,
 		Example: environmentReportLambdaExample,
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 1 {
-				return ErrorBeforePrintingUsage(cmd, "only env-name argument is allowed")
-			}
-			if len(args) == 0 || args[0] == "" {
-				return ErrorBeforePrintingUsage(cmd, "env-name argument is required")
-			}
-
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
@@ -73,9 +69,7 @@ func newEnvironmentReportLambdaCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVar(&o.functionName, "function-name", "", functionNameFlag)
 	cmd.Flags().StringVar(&o.functionVersion, "function-version", "", functionVersionFlag)
-	cmd.Flags().StringVar(&o.accessKey, "aws-key-id", "", awsKeyIdFlag)
-	cmd.Flags().StringVar(&o.secretKey, "aws-secret-key", "", awsSecretKeyFlag)
-	cmd.Flags().StringVar(&o.region, "aws-region", "", awsRegionFlag)
+	addAWSAuthFlags(cmd, o.awsAuthOptions)
 
 	err := RequireFlags(cmd, []string{"function-name"})
 	if err != nil {
@@ -89,19 +83,28 @@ func (o *environmentReportLambdaOptions) run(args []string) error {
 	envName := args[0]
 
 	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
-	creds := aws.AWSCredentials(o.accessKey, o.secretKey)
-	lambdaData, err := aws.GetLambdaPackageData(o.functionName, o.functionVersion, creds, o.region)
+	creds := aws.AWSCredentials(o.awsAuthOptions.accessKey, o.awsAuthOptions.secretKey)
+	lambdaData, err := aws.GetLambdaPackageData(o.functionName, o.functionVersion, creds, o.awsAuthOptions.region)
 	if err != nil {
 		return err
 	}
 
-	requestBody := &aws.LambdaEnvRequest{
+	payload := &aws.LambdaEnvRequest{
 		Artifacts: lambdaData,
 		Type:      "lambda",
 		Id:        envName,
 	}
 
-	_, err = requests.SendPayload(requestBody, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPut)
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodPut,
+		URL:      url,
+		Payload:  payload,
+		DryRun:   global.DryRun,
+		Password: global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
+	if err == nil && !global.DryRun {
+		logger.Info("%s lambda function was reported to environment %s", o.functionName, envName)
+	}
 	return err
 }

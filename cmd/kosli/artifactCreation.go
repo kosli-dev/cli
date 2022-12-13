@@ -43,6 +43,10 @@ type ArtifactCommit struct {
 	Parents   []string `json:"parents"`
 }
 
+const artifactCreationShortDesc = `Report an artifact creation to a Kosli pipeline. `
+
+const artifactCreationLongDesc = artifactCreationShortDesc + sha256Desc
+
 const artifactCreationExample = `
 # Report to a Kosli pipeline that a file type artifact has been created
 kosli pipeline artifact report creation FILE.tgz \
@@ -55,7 +59,7 @@ kosli pipeline artifact report creation FILE.tgz \
 	--pipeline yourPipelineName 
 
 # Report to a Kosli pipeline that an artifact with a provided fingerprint (sha256) has been created
-kosli pipeline artifact report creation \
+kosli pipeline artifact report creation ANOTHER_FILE.txt \
 	--api-token yourApiToken \
 	--build-url https://exampleci.com \
 	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
@@ -65,14 +69,13 @@ kosli pipeline artifact report creation \
 	--sha256 yourSha256 
 `
 
-//goland:noinspection GoUnusedParameter
 func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 	o := new(artifactCreationOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:     "creation ARTIFACT-NAME-OR-PATH",
-		Short:   "Report an artifact creation to a Kosli pipeline. ",
-		Long:    artifactCreationDesc(),
+		Short:   artifactCreationShortDesc,
+		Long:    artifactCreationLongDesc,
 		Example: artifactCreationExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -114,7 +117,7 @@ func (o *artifactCreationOptions) run(args []string) error {
 		o.payload.Filename = args[0]
 	} else {
 		var err error
-		o.payload.Sha256, err = GetSha256Digest(args[0], o.fingerprintOptions)
+		o.payload.Sha256, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
 			return err
 		}
@@ -141,8 +144,18 @@ func (o *artifactCreationOptions) run(args []string) error {
 	}
 
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/", global.Host, global.Owner, o.pipelineName)
-	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPut)
+
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodPut,
+		URL:      url,
+		Payload:  o.payload,
+		DryRun:   global.DryRun,
+		Password: global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
+	if err == nil && !global.DryRun {
+		logger.Info("artifact %s was reported with fingerprint: %s", o.payload.Filename, o.payload.Sha256)
+	}
 	return err
 }
 
@@ -155,7 +168,7 @@ func changeLog(srcRepoRoot, currentCommit, previousCommit string) ([]*ArtifactCo
 	if previousCommit != "" {
 		commitsList, err := listCommitsBetween(srcRepoRoot, previousCommit, currentCommit)
 		if err != nil {
-			fmt.Printf("Warning: %s\n", err)
+			logger.Warning(err.Error())
 		} else {
 			return commitsList, nil
 		}
@@ -173,8 +186,12 @@ func latestCommit(pipelineName, fingerprint string) (string, error) {
 	latestCommitUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/latest_commit",
 		global.Host, global.Owner, pipelineName, fingerprint)
 
-	response, err := requests.DoBasicAuthRequest([]byte{}, latestCommitUrl, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{})
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodGet,
+		URL:      latestCommitUrl,
+		Password: global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return "", err
 	}
@@ -186,8 +203,10 @@ func latestCommit(pipelineName, fingerprint string) (string, error) {
 	}
 	latestCommit := latestCommitResponse["latest_commit"]
 	if latestCommit == nil {
+		logger.Debug("no previous artifacts were found for pipeline: %s", pipelineName)
 		return "", nil
 	} else {
+		logger.Debug("latest artifact for pipeline: %s has the git commit: %s", pipelineName, latestCommit.(string))
 		return latestCommit.(string), nil
 	}
 }
@@ -226,7 +245,7 @@ func getRepoUrl(repoRoot string) (string, error) {
 	}
 	repoRemote, err := repo.Remote("origin") // TODO: We hard code this for now. Should we have a flag to set it from the cmdline?
 	if err != nil {
-		fmt.Printf("Warning: Repo URL will not be reported since there is no remote('origin') in git repository (%s)\n", repoRoot)
+		logger.Warning("Repo URL will not be reported since there is no remote('origin') in git repository (%s)\n", repoRoot)
 		return "", nil
 	}
 	remoteUrl := repoRemote.Config().URLs[0]
@@ -265,8 +284,8 @@ func listCommitsBetween(repoRoot, oldest, newest string) ([]*ArtifactCommit, err
 		return commits, fmt.Errorf("failed to resolve %s: %v", oldest, err)
 	}
 
-	logger.Debug("This is the newest commit hash %s", newestHash.String())
-	logger.Debug("This is the oldest commit hash %s", oldestHash.String())
+	logger.Debug("newest commit hash %s", newestHash.String())
+	logger.Debug("oldest commit hash %s", oldestHash.String())
 
 	commitsIter, err := repo.Log(&git.LogOptions{From: *newestHash, Order: git.LogOrderCommitterTime})
 	if err != nil {
@@ -286,6 +305,7 @@ func listCommitsBetween(repoRoot, oldest, newest string) ([]*ArtifactCommit, err
 		}
 	}
 
+	logger.Debug("parsed %d commits between newest and oldest commits", len(commits))
 	return commits, nil
 }
 
@@ -316,10 +336,4 @@ func branchName(repo *git.Repository) (string, error) {
 		return head.Name().Short(), nil
 	}
 	return "", nil
-}
-
-func artifactCreationDesc() string {
-	return `
-   Report an artifact creation to a Kosli pipeline. 
-   ` + sha256Desc
 }

@@ -6,14 +6,29 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const assertPRGithubShortDesc = `Assert if a Github pull request for a git commit exists. `
+
+const assertPRGithubLongDesc = assertPRGithubShortDesc + `The command exits with non-zero exit code 
+if no pull requests were found for the commit.`
+
+const assertPRGithubExample = `
+kosli assert github-pullrequest  \
+	--github-token yourGithubToken \
+	--github-org yourGithubOrg \
+	--commit yourArtifactGitCommit \
+	--commit yourGitCommit \
+	--repository yourGithubGitRepository
+`
+
 func newAssertPullRequestGithubCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestEvidenceGithubOptions)
 	cmd := &cobra.Command{
 		Use:     "github-pullrequest",
 		Aliases: []string{"gh-pr", "github-pr"},
-		Short:   "Assert if a Github pull request for the commit which produces an artifact exists.",
-		Long:    assertGHPullRequestDesc(),
-		Args:    NoArgs,
+		Short:   assertPRGithubShortDesc,
+		Long:    assertPRGithubLongDesc,
+		Example: assertPRGithubExample,
+		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.assert = true
 			pullRequestsEvidence, _, err := o.getGithubPullRequests()
@@ -37,9 +52,4 @@ func newAssertPullRequestGithubCmd(out io.Writer) *cobra.Command {
 	}
 
 	return cmd
-}
-
-func assertGHPullRequestDesc() string {
-	return `
-   Check if a pull request exists in Github for an artifact (based on the git commit that produced it) and fail if it does not. `
 }

@@ -29,8 +29,8 @@ func newExpectDeploymentCmd(out io.Writer) *cobra.Command {
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:   "deployment [ARTIFACT-NAME-OR-PATH]",
-		Short: "Expect a deployment to an environment in Kosli.",
-		Long:  expectDeploymentDesc(),
+		Short: deploymentReportShortDesc,
+		Long:  deploymentReportLongDesc,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -69,7 +69,7 @@ func newExpectDeploymentCmd(out io.Writer) *cobra.Command {
 func (o *expectDeploymentOptions) run(args []string) error {
 	var err error
 	if o.payload.Sha256 == "" {
-		o.payload.Sha256, err = GetSha256Digest(args[0], o.fingerprintOptions)
+		o.payload.Sha256, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
 			return err
 		}
@@ -82,15 +82,16 @@ func (o *expectDeploymentOptions) run(args []string) error {
 
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/", global.Host, global.Owner, o.pipelineName)
 
-	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPost)
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodPost,
+		URL:      url,
+		Payload:  o.payload,
+		DryRun:   global.DryRun,
+		Password: global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
+	if err == nil && !global.DryRun {
+		logger.Info("deployment of artifact %s was reported to: %s", o.payload.Sha256, o.payload.Environment)
+	}
 	return err
-}
-
-func expectDeploymentDesc() string {
-	return `
-   Expect a deployment of an artifact to an environment in Kosli. 
-   The artifact SHA256 fingerprint is calculated and reported 
-   or, alternatively, can be provided directly. 
-   `
 }

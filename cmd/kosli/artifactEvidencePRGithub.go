@@ -38,14 +38,49 @@ type GithubPrEvidence struct {
 	// SelfApproved           bool   `json:"selfApproved"`
 }
 
+const pullRequestEvidenceGithubShortDesc = `Report a Github pull request evidence for an artifact in a Kosli pipeline. `
+
+const pullRequestEvidenceGithubLongDesc = pullRequestEvidenceBitbucketShortDesc + `It checks if a pull request exists for the artifact (based on its git commit) and report the pull-request evidence to the artifact in Kosli. 
+` + sha256Desc
+
+const pullRequestEvidenceGithubExample = `
+# report a pull request evidence to kosli for a docker image
+kosli pipeline artifact report evidence github-pullrequest yourDockerImageName \
+	--artifact-type docker \
+	--build-url https://exampleci.com \
+	--evidence-type yourEvidenceType \
+	--pipeline yourPipelineName \
+	--github-token yourGithubToken \
+	--github-org yourGithubOrg \
+	--commit yourArtifactGitCommit \
+	--repository yourGithubGitRepository \
+	--owner yourOrgName \
+	--api-token yourAPIToken
+	
+# fail if a pull request does not exist for your artifact
+kosli pipeline artifact report evidence github-pullrequest yourDockerImageName \
+	--artifact-type docker \
+	--build-url https://exampleci.com \
+	--evidence-type yourEvidenceType \
+	--pipeline yourPipelineName \
+	--github-token yourGithubToken \
+	--github-org yourGithubOrg \
+	--commit yourArtifactGitCommit \
+	--repository yourGithubGitRepository \
+	--owner yourOrgName \
+	--api-token yourAPIToken \
+	--assert
+`
+
 func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestEvidenceGithubOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:     "github-pullrequest [ARTIFACT-NAME-OR-PATH]",
 		Aliases: []string{"gh-pr", "github-pr"},
-		Short:   "Report a Github pull request evidence for an artifact in a Kosli pipeline.",
-		Long:    controlPullRequestGithubDesc(),
+		Short:   pullRequestEvidenceGithubShortDesc,
+		Long:    pullRequestEvidenceGithubLongDesc,
+		Example: pullRequestEvidenceGithubExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -90,7 +125,7 @@ func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 func (o *pullRequestEvidenceGithubOptions) run(out io.Writer, args []string) error {
 	var err error
 	if o.sha256 == "" {
-		o.sha256, err = GetSha256Digest(args[0], o.fingerprintOptions)
+		o.sha256, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
 			return err
 		}
@@ -108,10 +143,19 @@ func (o *pullRequestEvidenceGithubOptions) run(out io.Writer, args []string) err
 	o.payload.Contents["description"] = o.description
 	o.payload.Contents["source"] = pullRequestsEvidence
 
-	fmt.Fprintf(out, "found %d pull request(s) for commit: %s\n", len(pullRequestsEvidence), o.commit)
+	logger.Debug("found %d pull request(s) for commit: %s\n", len(pullRequestsEvidence), o.commit)
 
-	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPut)
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodPut,
+		URL:      url,
+		Payload:  o.payload,
+		DryRun:   global.DryRun,
+		Password: global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
+	if err == nil && !global.DryRun {
+		logger.Info("github pull request evidence is reported to artifact: %s", o.sha256)
+	}
 	return err
 }
 
@@ -170,7 +214,7 @@ func (o *pullRequestEvidenceGithubOptions) getGithubPullRequests() ([]*GithubPrE
 		if o.assert {
 			return pullRequestsEvidence, isCompliant, fmt.Errorf("no pull requests found for the given commit: %s", commit)
 		}
-		logger.Info("No pull requests found for given commit: " + commit)
+		logger.Info("no pull requests found for given commit: " + commit)
 	}
 	return pullRequestsEvidence, isCompliant, nil
 }
@@ -187,11 +231,4 @@ func getPullRequestApprovers(client *gh.Client, context context.Context, owner, 
 		}
 	}
 	return approvers, nil
-}
-
-func controlPullRequestGithubDesc() string {
-	return `
-   Check if a pull request exists for an artifact and report the pull-request evidence to the artifact in Kosli. 
-   The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
-   `
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentInspectDesc = `Inspect an environment metadata.`
+const environmentInspectDesc = `Inspect an environment metadata. `
 
 type environmentInspectOptions struct {
 	output string
@@ -20,16 +20,14 @@ type environmentInspectOptions struct {
 func newEnvironmentInspectCmd(out io.Writer) *cobra.Command {
 	o := new(environmentInspectOptions)
 	cmd := &cobra.Command{
-		Use:   "inspect [ENVIRONMENT-NAME]",
+		Use:   "inspect ENVIRONMENT-NAME",
 		Short: environmentInspectDesc,
 		Long:  environmentInspectDesc,
+		Args:  cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
-			}
-			if len(args) < 1 {
-				return ErrorBeforePrintingUsage(cmd, "environment name argument is required")
 			}
 			return nil
 		},
@@ -45,8 +43,13 @@ func newEnvironmentInspectCmd(out io.Writer) *cobra.Command {
 
 func (o *environmentInspectOptions) run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/environments/%s/%s", global.Host, global.Owner, args[0])
-	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, false, http.MethodGet)
+
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodGet,
+		URL:      url,
+		Password: global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return err
 	}

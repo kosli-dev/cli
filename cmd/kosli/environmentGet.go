@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentGetDesc = `Get a specific environment snapshot.`
+const environmentGetDesc = `Get a specific environment snapshot. `
 
 type environmentGetOptions struct {
 	output string
@@ -36,13 +36,11 @@ func newEnvironmentGetCmd(out io.Writer) *cobra.Command {
 		Short:   environmentGetDesc,
 		Long:    environmentGetDesc,
 		Example: environmentGetExample,
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
-			}
-			if len(args) < 1 {
-				return ErrorBeforePrintingUsage(cmd, "environment name/expression argument is required")
 			}
 			return nil
 		},

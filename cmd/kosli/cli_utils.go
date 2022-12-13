@@ -15,6 +15,7 @@ import (
 	"unicode"
 
 	"github.com/kosli-dev/cli/internal/digest"
+	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/utils"
 	"github.com/spf13/cobra"
@@ -97,7 +98,7 @@ func DefaultValue(ci, flag string) string {
 	return ""
 }
 
-// RequireFlags decalres a list of flags as required for a given command
+// RequireFlags declares a list of flags as required for a given command
 func RequireFlags(cmd *cobra.Command, flagNames []string) error {
 	for _, name := range flagNames {
 		if cmd.Flags().Lookup(name).DefValue == "" {
@@ -148,18 +149,6 @@ func GetFlagFromVarName(varName string) string {
 	return result
 }
 
-// NoArgs returns an error if any args are included.
-func NoArgs(cmd *cobra.Command, args []string) error {
-	if len(args) > 0 {
-		return fmt.Errorf(
-			"%q accepts no arguments\nUsage: %s",
-			cmd.CommandPath(),
-			cmd.UseLine(),
-		)
-	}
-	return nil
-}
-
 type registryProviderEndpoints struct {
 	mainApi string
 	authApi string
@@ -183,7 +172,6 @@ func getRegistryEndpointForProvider(provider string) (*registryProviderEndpoints
 
 	default:
 		return getRegistryEndpoint(provider)
-		// return &registryProviderEndpoints{}, fmt.Errorf("%s is not a supported docker registry provider", provider)
 	}
 
 }
@@ -211,12 +199,25 @@ func getDockerRegistryAPIToken(providerInfo *registryProviderEndpoints, username
 		form.Add("username", username)
 		form.Add("scope", "member-of-groups:readers")
 		form.Add("expires_in", "60")
-		res, err = requests.DoBasicAuthRequest([]byte("username="+username+"&scope=member-of-groups:readers&expires_in=60"),
-			url, username, password, 3, http.MethodPost,
-			map[string]string{"Content-Type": "application/x-www-form-urlencoded"})
+
+		reqParams := &requests.RequestParams{
+			Method:            http.MethodPost,
+			URL:               url,
+			Payload:           form.Encode(),
+			Username:          username,
+			Password:          password,
+			AdditionalHeaders: map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
+		}
+		res, err = kosliClient.Do(reqParams)
 	} else {
 		url := fmt.Sprintf("%s/token?scope=repository:%s:pull&service=%s", providerInfo.authApi, imageName, providerInfo.service)
-		res, err = requests.DoBasicAuthRequest([]byte{}, url, username, password, 3, http.MethodGet, map[string]string{})
+		reqParams := &requests.RequestParams{
+			Method:   http.MethodGet,
+			URL:      url,
+			Username: username,
+			Password: password,
+		}
+		res, err = kosliClient.Do(reqParams)
 	}
 
 	if err != nil {
@@ -237,7 +238,7 @@ func getDockerRegistryAPIToken(providerInfo *registryProviderEndpoints, username
 
 // GetSha256Digest calculates the sha256 digest of an artifact.
 // Supported artifact types are: dir, file, docker
-func GetSha256Digest(artifactName string, o *fingerprintOptions) (string, error) {
+func GetSha256Digest(artifactName string, o *fingerprintOptions, logger *log.Logger) (string, error) {
 	var err error
 	var fingerprint string
 	switch o.artifactType {
@@ -277,7 +278,7 @@ func GetSha256Digest(artifactName string, o *fingerprintOptions) (string, error)
 				return "", err
 			}
 
-			fingerprint, err = digest.RemoteDockerImageSha256(imageName, imageTag, providerInfo.mainApi, token)
+			fingerprint, err = digest.RemoteDockerImageSha256(imageName, imageTag, providerInfo.mainApi, token, logger)
 			if err != nil {
 				return "", err
 			}
@@ -289,6 +290,7 @@ func GetSha256Digest(artifactName string, o *fingerprintOptions) (string, error)
 		return "", fmt.Errorf("%s is not a supported artifact type", o.artifactType)
 	}
 
+	logger.Debug("calculated fingerprint: %s for artifact: %s", fingerprint, artifactName)
 	return fingerprint, err
 }
 
@@ -310,6 +312,7 @@ func LoadUserData(filepath string) (interface{}, error) {
 	if err != nil {
 		return result, err
 	}
+	logger.Debug("loaded user data file content from: %s", filepath)
 	return result, nil
 }
 

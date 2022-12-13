@@ -10,7 +10,25 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const assertArtifactDesc = `Assert the compliance status of an artifact in Kosli. Exits with non-zero code if the artifact has a non-compliant status.`
+const assertArtifactShortDesc = `Assert the compliance status of an artifact in Kosli. `
+
+const assertArtifactLongDesc = assertArtifactShortDesc + `Exits with non-zero code if the artifact has a non-compliant status.`
+
+const assertArtifactExample = `
+# fail if an artifact has a non-compliant status (using the artifact fingerprint)
+kosli assert artifact \
+	--sha256 184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0 \
+	--pipeline yourPipelineName \
+	--api-token yourAPIToken \
+	--owner yourOrgName 
+
+# fail if an artifact has a non-compliant status (using the artifact name and type)
+kosli assert artifact library/nginx:1.21 \
+	--artifact-type docker \
+	--pipeline yourPipelineName \
+	--api-token yourAPIToken \
+	--owner yourOrgName 
+`
 
 type assertArtifactOptions struct {
 	fingerprintOptions *fingerprintOptions
@@ -22,9 +40,10 @@ func newAssertArtifactCmd(out io.Writer) *cobra.Command {
 	o := &assertArtifactOptions{}
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "artifact",
-		Short: assertArtifactDesc,
-		Long:  assertArtifactDesc,
+		Use:     "artifact [ARTIFACT-NAME-OR-PATH]",
+		Short:   assertArtifactShortDesc,
+		Long:    assertArtifactLongDesc,
+		Example: assertArtifactExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -57,14 +76,20 @@ func newAssertArtifactCmd(out io.Writer) *cobra.Command {
 func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 	var err error
 	if o.sha256 == "" {
-		o.sha256, err = GetSha256Digest(args[0], o.fingerprintOptions)
+		o.sha256, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
 			return err
 		}
 	}
 
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s", global.Host, global.Owner, o.pipelineName, o.sha256)
-	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken, global.MaxAPIRetries, http.MethodGet, map[string]string{})
+
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodGet,
+		URL:      url,
+		Password: global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return err
 	}
@@ -76,7 +101,7 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 	}
 
 	if artifactData["state"].(string) == "COMPLIANT" {
-		fmt.Fprintln(out, "COMPLIANT")
+		logger.Info("COMPLIANT")
 	} else {
 		return fmt.Errorf("%s", artifactData["state"].(string))
 	}

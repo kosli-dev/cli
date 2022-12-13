@@ -10,9 +10,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentReportECSDesc = `
-List the artifacts deployed in an AWS ECS cluster and their digests 
-and report them to Kosli. 
+const environmentReportECSShortDesc = `Report running containers data from AWS ECS cluster or service to Kosli. `
+const environmentReportECSLongDesc = environmentReportECSShortDesc + `
+The reported data includes container image digests and creation timestamps.
 `
 
 const environmentReportECSExample = `
@@ -22,6 +22,17 @@ export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
 kosli environment report ecs yourEnvironmentName \
+	--cluster yourECSClusterName \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# report what is running in a specific AWS ECS service:
+export AWS_REGION=yourAWSRegion
+export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
+export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
+
+kosli environment report ecs yourEnvironmentName \
+	--service-name yourECSServiceName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 `
@@ -36,22 +47,15 @@ func newEnvironmentReportECSCmd(out io.Writer) *cobra.Command {
 	o := new(environmentReportECSOptions)
 	cmd := &cobra.Command{
 		Use:     "ecs ENVIRONMENT-NAME",
-		Short:   "Report images data from AWS ECS cluster to Kosli.",
-		Long:    environmentReportECSDesc,
+		Short:   environmentReportECSShortDesc,
+		Long:    environmentReportECSLongDesc,
 		Example: environmentReportECSExample,
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 1 {
-				return ErrorBeforePrintingUsage(cmd, "only env-name argument is allowed")
-			}
-			if len(args) == 0 || args[0] == "" {
-				return ErrorBeforePrintingUsage(cmd, "env-name argument is required")
-			}
-
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
-
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -85,13 +89,22 @@ func (o *environmentReportECSOptions) run(args []string) error {
 		return err
 	}
 
-	requestBody := &aws.EcsEnvRequest{
+	payload := &aws.EcsEnvRequest{
 		Artifacts: tasksData,
 		Type:      "ECS",
 		Id:        o.id,
 	}
 
-	_, err = requests.SendPayload(requestBody, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPut)
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodPut,
+		URL:      url,
+		Payload:  payload,
+		DryRun:   global.DryRun,
+		Password: global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
+	if err == nil && !global.DryRun {
+		logger.Info("[%d] containers were reported to environment %s", len(payload.Artifacts), envName)
+	}
 	return err
 }

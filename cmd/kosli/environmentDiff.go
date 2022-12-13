@@ -46,13 +46,11 @@ func newEnvironmentDiffCmd(out io.Writer) *cobra.Command {
 		Use:   "diff SNAPPISH_1 SNAPPISH_2",
 		Short: environmentDiffDesc,
 		Long:  environmentDiffDesc,
+		Args:  cobra.ExactArgs(2),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
-			}
-			if len(args) < 2 {
-				return ErrorBeforePrintingUsage(cmd, "two snappishes required")
 			}
 			return nil
 		},
@@ -72,8 +70,12 @@ func (o *environmentDiffOptions) run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/env-diff/%s/?snappish1=%s&snappish2=%s",
 		global.Host, global.Owner, url.QueryEscape(snappish1), url.QueryEscape(snappish2))
 
-	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, false, http.MethodGet)
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodGet,
+		URL:      url,
+		Password: global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return err
 	}

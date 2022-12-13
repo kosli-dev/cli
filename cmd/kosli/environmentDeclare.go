@@ -9,12 +9,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentDeclareDesc = `
-Declare or update a Kosli environment.
-`
+const environmentDeclareDesc = `Declare a Kosli environment. `
 
 const environmentDeclareExample = `
-# declare (or update) a Kosli environment:
+# declare a Kosli environment:
 kosli environment declare 
 	--name yourEnvironmentName \
 	--environment-type K8S \
@@ -34,10 +32,10 @@ func newEnvironmentDeclareCmd(out io.Writer) *cobra.Command {
 	payload := new(CreateEnvironmentPayload)
 	cmd := &cobra.Command{
 		Use:     "declare",
-		Short:   "Declare a Kosli environment",
+		Short:   environmentDeclareDesc,
 		Long:    environmentDeclareDesc,
 		Example: environmentDeclareExample,
-		Args:    NoArgs,
+		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -50,8 +48,17 @@ func newEnvironmentDeclareCmd(out io.Writer) *cobra.Command {
 			payload.Owner = global.Owner
 			url := fmt.Sprintf("%s/api/v1/environments/%s/", global.Host, global.Owner)
 
-			_, err := requests.SendPayload(payload, url, "", global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, http.MethodPut)
+			reqParams := &requests.RequestParams{
+				Method:   http.MethodPut,
+				URL:      url,
+				Payload:  payload,
+				DryRun:   global.DryRun,
+				Password: global.ApiToken,
+			}
+			_, err := kosliClient.Do(reqParams)
+			if err == nil && !global.DryRun {
+				logger.Info("environment %s was created", payload.Name)
+			}
 			return err
 		},
 	}

@@ -15,3 +15,15 @@ func addFingerprintFlags(cmd *cobra.Command, o *fingerprintOptions) {
 	cmd.Flags().StringVar(&o.registryUsername, "registry-username", "", registryUsernameFlag)
 	cmd.Flags().StringVar(&o.registryPassword, "registry-password", "", registryPasswordFlag)
 }
+
+type awsAuthOptions struct {
+	accessKey string
+	secretKey string
+	region    string
+}
+
+func addAWSAuthFlags(cmd *cobra.Command, o *awsAuthOptions) {
+	cmd.Flags().StringVar(&o.accessKey, "aws-key-id", "", awsKeyIdFlag)
+	cmd.Flags().StringVar(&o.secretKey, "aws-secret-key", "", awsSecretKeyFlag)
+	cmd.Flags().StringVar(&o.region, "aws-region", "", awsRegionFlag)
+}

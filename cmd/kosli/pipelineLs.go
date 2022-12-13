@@ -24,7 +24,7 @@ func newPipelineLsCmd(out io.Writer) *cobra.Command {
 		Aliases: []string{"list"},
 		Short:   pipelineLsDesc,
 		Long:    pipelineLsDesc,
-		Args:    NoArgs,
+		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -44,9 +44,13 @@ func newPipelineLsCmd(out io.Writer) *cobra.Command {
 
 func (o *pipelineLsOptions) run(out io.Writer) error {
 	url := fmt.Sprintf("%s/api/v1/projects/%s/", global.Host, global.Owner)
-	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{})
 
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodGet,
+		URL:      url,
+		Password: global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return err
 	}
@@ -66,10 +70,7 @@ func printPipelinesListAsTable(raw string, out io.Writer, page int) error {
 	}
 
 	if len(pipelines) == 0 {
-		_, err := out.Write([]byte("No pipelines were found\n"))
-		if err != nil {
-			return err
-		}
+		logger.Info("no pipelines were found")
 		return nil
 	}
 

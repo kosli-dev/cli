@@ -24,7 +24,7 @@ func (suite *VersionTestSuite) TestVersionCmd() {
 		}, {
 			name:   "short",
 			cmd:    "version --short",
-			golden: "main",
+			golden: "main\n",
 		},
 	}
 	runTestCmd(suite.T(), tests)

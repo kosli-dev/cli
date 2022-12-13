@@ -36,14 +36,51 @@ type BitbucketPrEvidence struct {
 	// SelfApproved           bool   `json:"selfApproved"`
 }
 
+const pullRequestEvidenceBitbucketShortDesc = `Report a Bitbucket pull request evidence for an artifact in a Kosli pipeline. `
+
+const pullRequestEvidenceBitbucketLongDesc = pullRequestEvidenceBitbucketShortDesc + `It checks if a pull request exists for the artifact (based on its git commit) and report the pull-request evidence to the artifact in Kosli. 
+` + sha256Desc
+
+const pullRequestEvidenceBitbucketExample = `
+# report a pull request evidence to kosli for a docker image
+kosli pipeline artifact report evidence bitbucket-pullrequest yourDockerImageName \
+	--artifact-type docker \
+	--build-url https://exampleci.com \
+	--evidence-type yourEvidenceType \
+	--pipeline yourPipelineName \
+	--bitbucket-username yourBitbucketUsername \
+	--bitbucket-password yourBitbucketPassword \
+	--bitbucket-workspace yourBitbucketWorkspace \
+	--commit yourArtifactGitCommit \
+	--repository yourBitbucketGitRepository \
+	--owner yourOrgName \
+	--api-token yourAPIToken
+	
+# fail if a pull request does not exist for your artifact
+kosli pipeline artifact report evidence bitbucket-pullrequest yourDockerImageName \
+	--artifact-type docker \
+	--build-url https://exampleci.com \
+	--evidence-type yourEvidenceType \
+	--pipeline yourPipelineName \
+	--bitbucket-username yourBitbucketUsername \
+	--bitbucket-password yourBitbucketPassword \
+	--bitbucket-workspace yourBitbucketWorkspace \
+	--commit yourArtifactGitCommit \
+	--repository yourBitbucketGitRepository \
+	--owner yourOrgName \
+	--api-token yourAPIToken \
+	--assert
+`
+
 func newPullRequestEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestEvidenceBitbucketOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:     "bitbucket-pullrequest [ARTIFACT-NAME-OR-PATH]",
 		Aliases: []string{"bb-pr", "bitbucket-pr"},
-		Short:   "Report a Bitbucket pull request evidence for an artifact in a Kosli pipeline.",
-		Long:    controlPullRequestDesc(),
+		Short:   pullRequestEvidenceBitbucketShortDesc,
+		Long:    pullRequestEvidenceBitbucketLongDesc,
+		Example: pullRequestEvidenceBitbucketExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -89,7 +126,7 @@ func newPullRequestEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 func (o *pullRequestEvidenceBitbucketOptions) run(args []string) error {
 	var err error
 	if o.sha256 == "" {
-		o.sha256, err = GetSha256Digest(args[0], o.fingerprintOptions)
+		o.sha256, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
 			return err
 		}
@@ -110,8 +147,19 @@ func (o *pullRequestEvidenceBitbucketOptions) run(args []string) error {
 		return err
 	}
 
-	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPut)
+	logger.Debug("found %d pull request(s) for commit: %s\n", len(pullRequestsEvidence), o.commit)
+
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodPut,
+		URL:      url,
+		Payload:  o.payload,
+		DryRun:   global.DryRun,
+		Password: global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
+	if err == nil && !global.DryRun {
+		logger.Info("bitbucket pull request evidence is reported to artifact: %s", o.sha256)
+	}
 	return err
 }
 
@@ -120,9 +168,15 @@ func getPullRequestsFromBitbucketApi(workspace, repository, commit, username, pa
 	pullRequestsEvidence := []*BitbucketPrEvidence{}
 
 	url := fmt.Sprintf("https://api.bitbucket.org/2.0/repositories/%s/%s/commit/%s/pullrequests", workspace, repository, commit)
-	logger.Debug("Getting pull requests from " + url)
-	response, err := requests.SendPayload([]byte{}, url, username, password,
-		global.MaxAPIRetries, false, http.MethodGet)
+	logger.Debug("getting pull requests from " + url)
+
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodGet,
+		URL:      url,
+		Username: username,
+		Password: password,
+	}
+	response, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return pullRequestsEvidence, false, err
 	}
@@ -143,7 +197,7 @@ func getPullRequestsFromBitbucketApi(workspace, repository, commit, username, pa
 }
 
 func parseBitbucketResponse(commit, workspace, repository, password, username string, response *requests.HTTPResponse, assert bool) (bool, []*BitbucketPrEvidence, error) {
-	logger.Debug("Pull requests response: " + response.Body)
+	logger.Debug("pull requests response: " + response.Body)
 	pullRequestsEvidence := []*BitbucketPrEvidence{}
 	isCompliant := false
 	var responseData map[string]interface{}
@@ -172,16 +226,22 @@ func parseBitbucketResponse(commit, workspace, repository, password, username st
 		if assert {
 			return isCompliant, pullRequestsEvidence, fmt.Errorf("no pull requests found for the given commit: %s", commit)
 		}
-		logger.Info("No pull requests found for given commit: " + commit)
+		logger.Info("no pull requests found for given commit: " + commit)
 	}
 	return isCompliant, pullRequestsEvidence, nil
 }
 
 func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, workspace, repository, username, password, commit string) (*BitbucketPrEvidence, error) {
-	logger.Debug("Getting pull request details for " + prApiUrl)
+	logger.Debug("getting pull request details for " + prApiUrl)
 	evidence := &BitbucketPrEvidence{}
-	response, err := requests.SendPayload([]byte{}, prApiUrl, username, password,
-		global.MaxAPIRetries, false, http.MethodGet)
+
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodGet,
+		URL:      prApiUrl,
+		Username: username,
+		Password: password,
+	}
+	response, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return evidence, err
 	}
@@ -207,7 +267,7 @@ func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, workspace, reposit
 				}
 			}
 		} else {
-			logger.Debug("No approvers found")
+			logger.Debug("no approvers found")
 		}
 		evidence.Approvers = strings.Join(approvers, ",")
 		// prID := int(responseData["id"].(float64))
@@ -251,10 +311,3 @@ func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, workspace, reposit
 // 		return "", "", fmt.Errorf("failed to get PR commits, got HTTP status %d", response.Resp.StatusCode)
 // 	}
 // }
-
-func controlPullRequestDesc() string {
-	return `
-   Check if a pull request exists for an artifact and report the pull-request evidence to the artifact in Kosli. 
-   The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
-   `
-}
