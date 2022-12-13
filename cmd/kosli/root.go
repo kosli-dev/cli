@@ -148,9 +148,12 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	cmd.PersistentFlags().IntVarP(&global.MaxAPIRetries, "max-api-retries", "r", maxAPIRetries, maxAPIRetryFlag)
 	cmd.PersistentFlags().StringVarP(&global.ConfigFile, "config-file", "c", defaultConfigFilename, configFileFlag)
 	cmd.PersistentFlags().BoolVarP(&global.Debug, "verbose", "v", false, verboseFlag)
-	cmd.PersistentFlags().BoolVar(&global.Debug, "debug", false, verboseFlag)
+	cmd.PersistentFlags().BoolVar(&global.Debug, "debug", false, debugFlag)
 
-	cmd.PersistentFlags().MarkDeprecated("verbose", "use --debug instead")
+	err := cmd.PersistentFlags().MarkDeprecated("verbose", "use --debug instead")
+	if err != nil {
+		return cmd, err
+	}
 
 	// Add subcommands
 	cmd.AddCommand(
