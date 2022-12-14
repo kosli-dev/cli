@@ -11,7 +11,6 @@ import (
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
-	"github.com/sirupsen/logrus"
 	"github.com/xeonx/timeago"
 )
 
@@ -71,9 +70,13 @@ type ArtifactJsonOut struct {
 
 func getSnapshot(out io.Writer, o *environmentGetOptions, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/environments/%s/snapshots/%s", global.Host, global.Owner, url.QueryEscape(args[0]))
-	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{}, logrus.New())
 
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodGet,
+		URL:      url,
+		Password: global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return err
 	}
@@ -134,12 +137,8 @@ func printSnapshotAsTable(raw string, out io.Writer, page int) error {
 
 	// check if the snapshot is empty by checking one of its elements
 	if snapshot.Type == "" {
-		_, err := out.Write([]byte("No running artifacts were reported\n"))
-		if err != nil {
-			return err
-		}
+		logger.Info("no running artifacts were reported")
 		return nil
-
 	}
 
 	header := []string{"COMMIT", "ARTIFACT", "PIPELINE", "RUNNING_SINCE", "REPLICAS"}

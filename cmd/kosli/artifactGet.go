@@ -13,12 +13,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const artifactGetDescShort = `Get artifact from a specified pipeline.`
+const artifactGetShortDesc = `Get artifact from a specified pipeline`
 
-const artifactGetDesc = artifactGetDescShort + `
+const artifactGetLongDesc = artifactGetShortDesc + `
+You can get an artifact by its fingerprint or by its git commit sha.
+In case of using the git commit, it is possible to get multiple artifacts matching the git commit.
+
+The expected argument is an expression to specify the artifact to get.
+It has the format <PIPELINE_NAME><SEPARATOR><COMMIT_SHA1|ARTIFACT_SHA256> 
+
 Specify SNAPPISH by:
-	pipelineName@<fingerprint>  artifact with a given fingerprint
-	pipelineName:<commit_sha>   artifact with a given commit SHA`
+	pipelineName@<fingerprint>  artifact with a given fingerprint. The fingerprint can be short or complete.
+	pipelineName:<commit_sha>   artifact with a given commit SHA. The commit sha can be short or complete.
+
+Examples of valid expressions are: pipe@184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0, pipe:110d048bf1fce72ba546cbafc4427fb21b958dee
+`
 
 const artifactGetExample = `# get an artifact with a given fingerprint from a pipeline
 kosli artifact get pipelineName@fingerprint \
@@ -37,16 +46,14 @@ func newArtifactGetCmd(out io.Writer) *cobra.Command {
 	o := new(artifactGetOptions)
 	cmd := &cobra.Command{
 		Use:     "get SNAPPISH",
-		Short:   artifactGetDescShort,
-		Long:    artifactGetDesc,
+		Short:   artifactGetShortDesc,
+		Long:    artifactGetLongDesc,
 		Example: artifactGetExample,
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
-			}
-			if len(args) < 1 {
-				return ErrorBeforePrintingUsage(cmd, "SNAPPISH argument is required")
 			}
 			return nil
 		},
@@ -61,9 +68,14 @@ func newArtifactGetCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *artifactGetOptions) run(out io.Writer, args []string) error {
-	kurl := fmt.Sprintf("%s/api/v1/projects/%s/artifact/?snappish=%s", global.Host, global.Owner, url.QueryEscape(args[0]))
-	response, err := requests.SendPayload([]byte{}, kurl, "", global.ApiToken,
-		global.MaxAPIRetries, false, http.MethodGet, log)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/artifact/?snappish=%s", global.Host, global.Owner, url.QueryEscape(args[0]))
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodGet,
+		URL:      url,
+		Password: global.ApiToken,
+	}
+
+	response, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return err
 	}

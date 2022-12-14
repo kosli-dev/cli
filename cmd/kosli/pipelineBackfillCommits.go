@@ -28,13 +28,11 @@ func newPipelineBackfillArtifactCommitsCmd(out io.Writer) *cobra.Command {
 		Use:    "backfill-commits PIPELINE-NAME",
 		Short:  "Collect and report the changelog of each artifact in a Kosli pipeline.",
 		Hidden: true,
+		Args:   cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
-			}
-			if len(args) < 1 {
-				return ErrorBeforePrintingUsage(cmd, "pipeline name argument is required")
 			}
 			return nil
 		},
@@ -48,7 +46,7 @@ func newPipelineBackfillArtifactCommitsCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{"repo-root"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd
@@ -89,13 +87,17 @@ func (o *pipelineBackfillArtifactCommitsOptions) run(out io.Writer, args []strin
 			artifactData := evidenceMap["artifact"].(map[string]interface{})
 			gitCommit := artifactData["git_commit"].(string)
 			artifactDigest := artifactData["sha256"].(string)
-			_, _ = fmt.Fprintf(out, "Digest: %s -- git commit: %s \n", artifactDigest, gitCommit)
+			logger.Debug("Digest: %s -- git commit: %s \n", artifactDigest, gitCommit)
 
 			previousCommitUrl := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/previous_commit",
 				global.Host, global.Owner, pipelineName, artifactDigest)
 
-			response, err := requests.DoBasicAuthRequest([]byte{}, previousCommitUrl, "", global.ApiToken,
-				global.MaxAPIRetries, http.MethodGet, map[string]string{}, log)
+			previousCommitReqParams := &requests.RequestParams{
+				Method:   http.MethodGet,
+				URL:      previousCommitUrl,
+				Password: global.ApiToken,
+			}
+			response, err := kosliClient.Do(previousCommitReqParams)
 			if err != nil {
 				return err
 			}
@@ -106,30 +108,38 @@ func (o *pipelineBackfillArtifactCommitsOptions) run(out io.Writer, args []strin
 				return err
 			}
 
-			o.payload.CommitsList, err = gitView.ChangeLog(gitCommit, previousCommit(out, previousCommitResponse))
+			o.payload.CommitsList, err = gitView.ChangeLog(gitCommit, previousCommit(previousCommitResponse), logger)
 			if err != nil {
 				return err
 			}
 
 			for _, commitData := range o.payload.CommitsList {
-				_, _ = fmt.Fprintf(out, "	Commit sha1: %s\n", commitData.Sha1)
+				logger.Debug("	Commit sha1: %s\n", commitData.Sha1)
 			}
 
 			url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/backfill_commits", global.Host, global.Owner, pipelineName, artifactDigest)
-			_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
-			if err != nil {
-				return err
+
+			reqParams := &requests.RequestParams{
+				Method:   http.MethodPut,
+				URL:      url,
+				Payload:  o.payload,
+				DryRun:   global.DryRun,
+				Password: global.ApiToken,
 			}
+			_, err = kosliClient.Do(reqParams)
+			if err == nil && !global.DryRun {
+				logger.Info("[%d] commits reported for artifact %s", len(o.payload.CommitsList), artifactDigest)
+			}
+			return err
 		}
 	}
 }
 
-func previousCommit(out io.Writer, previousCommitResponse map[string]interface{}) string {
+func previousCommit(previousCommitResponse map[string]interface{}) string {
 	previousCommit := ""
 	if previousCommitResponse["previous_commit"] != nil {
 		previousCommit = previousCommitResponse["previous_commit"].(string)
-		_, _ = fmt.Fprintf(out, "Previous commit: %s\n", previousCommit)
+		logger.Debug("Previous commit: %s", previousCommit)
 	}
 	return previousCommit
 }
@@ -139,8 +149,13 @@ func getPipelineArtifacts(pipelineName string, pageNumber int) ([]map[string]int
 	var artifacts []map[string]interface{}
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/?page=%d&per_page=%d",
 		global.Host, global.Owner, pipelineName, pageNumber, 15)
-	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, false, http.MethodGet, log)
+
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodGet,
+		URL:      url,
+		Password: global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return artifacts, err
 	}

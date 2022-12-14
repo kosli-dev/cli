@@ -10,18 +10,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentReportServerDesc = `
-List the artifacts deployed in a server environment and their digests 
-and report them to Kosli. 
-`
+const environmentReportServerShortDesc = `Report artifacts running in a server environment to Kosli.`
+
+const environmentReportServerLongDesc = environmentReportServerShortDesc + `
+You can report directory or file artifacts in one or more server paths.`
 
 const environmentReportServerExample = `
 # report directory artifacts running in a server at a list of paths:
 kosli environment report server yourEnvironmentName \
 	--paths a/b/c,e/f/g \
 	--api-token yourAPIToken \
-	--owner yourOrgName  
-`
+	--owner yourOrgName  `
 
 type environmentReportServerOptions struct {
 	paths []string
@@ -32,23 +31,16 @@ func newEnvironmentReportServerCmd(out io.Writer) *cobra.Command {
 	o := new(environmentReportServerOptions)
 	cmd := &cobra.Command{
 		Use:     "server ENVIRONMENT-NAME",
-		Short:   "Report directory or file artifacts data in the given list of paths to Kosli.",
-		Long:    environmentReportServerDesc,
+		Short:   environmentReportServerShortDesc,
+		Long:    environmentReportServerLongDesc,
 		Aliases: []string{"directories"},
+		Args:    cobra.ExactArgs(1),
 		Example: environmentReportServerExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 1 {
-				return ErrorBeforePrintingUsage(cmd, "only env-name argument is allowed")
-			}
-			if len(args) == 0 || args[0] == "" {
-				return ErrorBeforePrintingUsage(cmd, "env-name argument is required")
-			}
-
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
-
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -61,7 +53,7 @@ func newEnvironmentReportServerCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{"paths"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd
@@ -75,18 +67,27 @@ func (o *environmentReportServerOptions) run(args []string) error {
 
 	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
 
-	artifacts, err := server.CreateServerArtifactsData(o.paths, log)
+	artifacts, err := server.CreateServerArtifactsData(o.paths, logger)
 	if err != nil {
 		return err
 	}
-	requestBody := &server.ServerEnvRequest{
+	payload := &server.ServerEnvRequest{
 		Artifacts: artifacts,
 		Type:      "server",
 		Id:        o.id,
 	}
 
-	_, err = requests.SendPayload(requestBody, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodPut,
+		URL:      url,
+		Payload:  payload,
+		DryRun:   global.DryRun,
+		Password: global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
+	if err == nil && !global.DryRun {
+		logger.Info("[%d] artifacts were reported to environment %s", len(payload.Artifacts), envName)
+	}
 	return err
 
 }

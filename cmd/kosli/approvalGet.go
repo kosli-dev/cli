@@ -12,15 +12,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const approvalGetDescShort = `Get an approval from a specified pipeline.`
+const approvalGetShortDesc = `Get an approval from a specified pipeline.`
+const approvalGetLongDesc = approvalGetShortDesc + `
+The expected argument is an expression to specify the approval to get.
+It has the format <PIPELINE_NAME>[SEPARATOR][INTEGER_REFERENCE]
 
-const approvalGetDesc = approvalGetDescShort + `
 Specify SNAPPISH by:
 	pipelineName~<N>  N'th behind the latest approval
 	pipelineName#<N>  approval number N
-	pipelineName      the latest approval`
+	pipelineName      the latest approval
 
-const approvalGetExample = `# get previous approval from a pipeline
+Examples of valid expressions are: pipe (latest approval), pipe#10 (approval number 10), pipe~2 (the third latest approval)`
+
+const approvalGetExample = `
+# get second behind the latest approval from a pipeline
 kosli approval get pipelineName~1 \
 	--api-token yourAPIToken \
 	--owner orgName
@@ -43,16 +48,14 @@ func newApprovalGetCmd(out io.Writer) *cobra.Command {
 	o := new(approvalGetOptions)
 	cmd := &cobra.Command{
 		Use:     "get SNAPPISH",
-		Short:   approvalGetDescShort,
-		Long:    approvalGetDesc,
+		Short:   approvalGetShortDesc,
+		Long:    approvalGetLongDesc,
 		Example: approvalGetExample,
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
-			}
-			if len(args) < 1 {
-				return ErrorBeforePrintingUsage(cmd, "approval SNAPPISH argument is required")
 			}
 			return nil
 		},
@@ -66,9 +69,14 @@ func newApprovalGetCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *approvalGetOptions) run(out io.Writer, args []string) error {
-	kurl := fmt.Sprintf("%s/api/v1/projects/%s/approval/?snappish=%s", global.Host, global.Owner, url.QueryEscape(args[0]))
-	response, err := requests.DoBasicAuthRequest([]byte{}, kurl, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{}, log)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/approval/?snappish=%s", global.Host, global.Owner, url.QueryEscape(args[0]))
+
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodGet,
+		URL:      url,
+		Password: global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return err
 	}

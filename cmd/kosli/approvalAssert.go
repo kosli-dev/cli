@@ -10,12 +10,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const approvalAssertDesc = `
-Assert if an artifact in Kosli has been approved for deployment. Exits with non-zero code if artifact has not been approved.
+const approvalAssertShortDesc = `Assert if an artifact in Kosli has been approved for deployment.`
+
+const approvalAssertLongDesc = approvalAssertShortDesc + `
+Exits with non-zero code if artifact has not been approved.
 ` + sha256Desc
 
 const approvalAssertExample = `
-# Assert that a file tyoe artifact has been approved
+# Assert that a file type artifact has been approved
 kosli pipeline approval assert FILE.tgz \
 	--api-token yourAPIToken \
 	--artifact-type file \
@@ -42,8 +44,8 @@ func newApprovalAssertCmd(out io.Writer) *cobra.Command {
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:     "assert [ARTIFACT-NAME-OR-PATH]",
-		Short:   "Assert if an artifact in Kosli has been approved for deployment.",
-		Long:    approvalAssertDesc,
+		Short:   approvalAssertShortDesc,
+		Long:    approvalAssertLongDesc,
 		Example: approvalAssertExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -70,7 +72,7 @@ func newApprovalAssertCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{"pipeline"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd
@@ -79,7 +81,7 @@ func newApprovalAssertCmd(out io.Writer) *cobra.Command {
 func (o *approvalAssertOptions) run(args []string) error {
 	var err error
 	if o.sha256 == "" {
-		o.sha256, err = GetSha256Digest(args[0], o.fingerprintOptions)
+		o.sha256, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
 			return err
 		}
@@ -87,9 +89,12 @@ func (o *approvalAssertOptions) run(args []string) error {
 
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/approvals/", global.Host, global.Owner, o.pipelineName, o.sha256)
 
-	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{}, log)
-
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodGet,
+		URL:      url,
+		Password: global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return err
 	}
@@ -107,7 +112,7 @@ func (o *approvalAssertOptions) run(args []string) error {
 	state, ok := approvals[len(approvals)-1]["state"].(string)
 	if ok && state == "APPROVED" {
 		approvalNumber := approvals[len(approvals)-1]["release_number"]
-		log.Infof("artifact with sha256 %s is approved (approval no. [%v])", o.sha256, approvalNumber)
+		logger.Info("artifact with sha256 %s is approved (approval no. [%v])", o.sha256, approvalNumber)
 		return nil
 	} else {
 		return fmt.Errorf("artifact with sha256 %s is not approved", o.sha256)

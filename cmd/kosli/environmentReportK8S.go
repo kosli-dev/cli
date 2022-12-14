@@ -13,10 +13,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentReportK8SDesc = `
-List the artifacts deployed in the k8s environment and their digests 
-and report them to Kosli. 
-`
+const environmentReportK8SShortDesc = `Report running pods data from K8S cluster or namespace(s) to Kosli.`
+
+const environmentReportK8SLongDesc = environmentReportK8SShortDesc + `
+The reported data includes pod container images digests and creation timestamps. You can customize the scope of reporting
+to include or exclude namespaces.`
 
 const environmentReportK8SExample = `
 # report what is running in an entire cluster using kubeconfig at $HOME/.kube/config:
@@ -61,23 +62,16 @@ func newEnvironmentReportK8SCmd(out io.Writer) *cobra.Command {
 	o := new(environmentReportK8SOptions)
 	cmd := &cobra.Command{
 		Use:     "k8s ENVIRONMENT-NAME",
-		Short:   "Report images data from specific namespace(s) or entire cluster to Kosli.",
-		Long:    environmentReportK8SDesc,
+		Short:   environmentReportK8SShortDesc,
+		Long:    environmentReportK8SLongDesc,
 		Aliases: []string{"kubernetes"},
 		Example: environmentReportK8SExample,
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 1 {
-				return ErrorBeforePrintingUsage(cmd, "only env-name argument is allowed")
-			}
-			if len(args) == 0 || args[0] == "" {
-				return ErrorBeforePrintingUsage(cmd, "env-name argument is required")
-			}
-
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
-
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -105,19 +99,28 @@ func (o *environmentReportK8SOptions) run(args []string) error {
 	if err != nil {
 		return err
 	}
-	podsData, err := kube.GetPodsData(o.namespaces, o.excludeNamespaces, clientset, log)
+	podsData, err := kube.GetPodsData(o.namespaces, o.excludeNamespaces, clientset, logger)
 	if err != nil {
 		return err
 	}
 
-	requestBody := &kube.K8sEnvRequest{
+	payload := &kube.K8sEnvRequest{
 		Artifacts: podsData,
 		Type:      "K8S",
 		Id:        o.id,
 	}
 
-	_, err = requests.SendPayload(requestBody, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodPut,
+		URL:      url,
+		Payload:  payload,
+		DryRun:   global.DryRun,
+		Password: global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
+	if err == nil && !global.DryRun {
+		logger.Info("[%d] pods were reported to environment %s", len(payload.Artifacts), envName)
+	}
 	return err
 }
 

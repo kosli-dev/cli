@@ -6,7 +6,7 @@ require (
 	github.com/aws/aws-sdk-go v1.40.17
 	github.com/aws/aws-sdk-go-v2/config v1.6.0
 	github.com/aws/aws-sdk-go-v2/service/ecs v1.7.0
-	github.com/containerd/containerd v1.5.8 // indirect
+	github.com/containerd/containerd v1.5.16 // indirect
 	github.com/docker/distribution v2.8.0+incompatible // indirect
 	github.com/docker/docker v20.10.10+incompatible
 	github.com/go-git/go-git/v5 v5.4.2
@@ -17,7 +17,6 @@ require (
 	github.com/maxcnunes/httpfake v1.2.4
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/sergi/go-diff v1.2.0 // indirect
-	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.0
@@ -88,5 +87,3 @@ replace k8s.io/sample-controller => k8s.io/sample-controller v0.22.3
 replace github.com/opencontainers/image-spec => github.com/opencontainers/image-spec v1.0.2
 
 replace github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.2
-
-replace github.com/containerd/containerd => github.com/containerd/containerd v1.5.13

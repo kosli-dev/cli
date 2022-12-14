@@ -9,7 +9,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentRenameDesc = `
+const environmentRenameShortDesc = `Rename a Kosli environment.`
+
+const environmentRenameLongDesc = environmentRenameShortDesc + `
 The environment will remain available under its old name until that name is taken by another environment.
 `
 
@@ -28,8 +30,8 @@ func newEnvironmentRenameCmd(out io.Writer) *cobra.Command {
 	payload := new(RenameEnvironmentPayload)
 	cmd := &cobra.Command{
 		Use:     "rename OLD_NAME NEW_NAME",
-		Short:   "Rename a Kosli environment",
-		Long:    environmentRenameDesc,
+		Short:   environmentRenameShortDesc,
+		Long:    environmentRenameLongDesc,
 		Example: environmentRenameExample,
 		Args:    cobra.MinimumNArgs(2),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -43,8 +45,18 @@ func newEnvironmentRenameCmd(out io.Writer) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			url := fmt.Sprintf("%s/api/v1/environments/%s/%s/rename", global.Host, global.Owner, args[0])
 			payload.NewName = args[1]
-			_, err := requests.SendPayload(payload, url, "", global.ApiToken,
-				global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+
+			reqParams := &requests.RequestParams{
+				Method:   http.MethodPut,
+				URL:      url,
+				Payload:  payload,
+				DryRun:   global.DryRun,
+				Password: global.ApiToken,
+			}
+			_, err := kosliClient.Do(reqParams)
+			if err == nil && !global.DryRun {
+				logger.Info("environment %s was renamed to %s", args[0], payload.NewName)
+			}
 			return err
 		},
 	}

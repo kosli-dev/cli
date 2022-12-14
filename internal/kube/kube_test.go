@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
@@ -149,7 +149,7 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 				}
 			}
 			// Get pods data
-			podsData, err := GetPodsData(t.args.includePatterns, t.args.excludePatterns, suite.clientset, logrus.New())
+			podsData, err := GetPodsData(t.args.includePatterns, t.args.excludePatterns, suite.clientset, logger.NewLogger(os.Stdout, false))
 			require.NoErrorf(suite.T(), err, "error getting pods data for test %s", t.name)
 			actual := []*comparablePodData{}
 			for _, pd := range podsData {

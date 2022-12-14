@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	log "github.com/kosli-dev/cli/internal/logger"
+	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,6 +20,13 @@ import (
 // returns the current testing context
 type CliUtilsTestSuite struct {
 	suite.Suite
+}
+
+func (suite *CliUtilsTestSuite) SetupSuite() {
+	logger = log.NewLogger(os.Stdout, false)
+	kosliClient = requests.NewKosliClient(1, false, logger)
+	require.NotNil(suite.T(), logger, "logger should not be nil")
+	require.NotNil(suite.T(), kosliClient, "kosliClient should not be nil")
 }
 
 // All methods that begin with "Test" are run as tests within a
@@ -204,44 +213,6 @@ func (suite *CliUtilsTestSuite) TestGetFlagFromVarName() {
 	}
 }
 
-func (suite *CliUtilsTestSuite) TestNoArgs() {
-	type args struct {
-		cmd     *cobra.Command
-		cmdArgs []string
-	}
-	for _, t := range []struct {
-		name        string
-		args        args
-		expectError bool
-	}{
-		{
-			name: "providing no cmd args does not throw an error.",
-			args: args{
-				cmd:     &cobra.Command{},
-				cmdArgs: []string{},
-			},
-			expectError: false,
-		},
-		{
-			name: "providing cmd args throws an error.",
-			args: args{
-				cmd:     &cobra.Command{},
-				cmdArgs: []string{"arg1"},
-			},
-			expectError: true,
-		},
-	} {
-		suite.Run(t.name, func() {
-			err := NoArgs(t.args.cmd, t.args.cmdArgs)
-			if t.expectError {
-				require.Errorf(suite.T(), err, "TestNoArgs: error was expected but got none.")
-			} else {
-				require.NoErrorf(suite.T(), err, "TestNoArgs: got an error but was not expecting one:  %v", err)
-			}
-		})
-	}
-}
-
 func (suite *CliUtilsTestSuite) TestGetCIDefaultsTemplates() {
 	text := GetCIDefaultsTemplates(supportedCIs, []string{"git-commit"})
 	require.NotEmpty(suite.T(), text, "TestGetCIDefaultsTemplates: returned string should not be empty")
@@ -326,7 +297,8 @@ func (suite *CliUtilsTestSuite) TestGetSha256Digest() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			fingerprint, err := GetSha256Digest(t.args.artifactName, t.args.fingerprintOptions)
+			fingerprint, err := GetSha256Digest(t.args.artifactName, t.args.fingerprintOptions,
+				log.NewLogger(os.Stdout, false))
 			if t.expectError {
 				require.Errorf(suite.T(), err, "TestGetSha256Digest: error was expected but got none.")
 			} else {

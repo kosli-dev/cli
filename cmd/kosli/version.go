@@ -8,9 +8,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const versionDesc = `
-Print the version for Kosli CLI.
-
+const versionShortDesc = `Print the version of Kosli CLI.`
+const versionLongDesc = versionShortDesc + `
 The output will look something like this:
 version.BuildInfo{Version:"v0.0.1", GitCommit:"fe51cd1e31e6a202cba7dead9552a6d418ded79a", GitTreeState:"clean", GoVersion:"go1.16.3"}
 
@@ -29,9 +28,9 @@ func newVersionCmd(out io.Writer) *cobra.Command {
 	o := new(versionOptions)
 	cmd := &cobra.Command{
 		Use:   "version",
-		Short: "Print the client version information",
-		Long:  versionDesc,
-		Args:  NoArgs,
+		Short: versionShortDesc,
+		Long:  versionLongDesc,
+		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			o.run(out)
 		},
@@ -43,12 +42,12 @@ func newVersionCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *versionOptions) run(out io.Writer) {
-	fmt.Fprint(out, formatVersion(o.short))
+	logger.Info(formatVersion(o.short))
 }
 
 func formatVersion(short bool) string {
 	if short {
 		return version.GetVersion()
 	}
-	return fmt.Sprintf("%#v\n", version.Get())
+	return fmt.Sprintf("%#v", version.Get())
 }

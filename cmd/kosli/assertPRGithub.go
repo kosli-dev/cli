@@ -6,21 +6,37 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const assertPRGithubShortDesc = `Assert if a Github pull request for a git commit exists.`
+
+const assertPRGithubLongDesc = assertPRGithubShortDesc + `
+The command exits with non-zero exit code 
+if no pull requests were found for the commit.`
+
+const assertPRGithubExample = `
+kosli assert github-pullrequest  \
+	--github-token yourGithubToken \
+	--github-org yourGithubOrg \
+	--commit yourArtifactGitCommit \
+	--commit yourGitCommit \
+	--repository yourGithubGitRepository
+`
+
 func newAssertPullRequestGithubCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestEvidenceGithubOptions)
 	cmd := &cobra.Command{
 		Use:     "github-pullrequest",
 		Aliases: []string{"gh-pr", "github-pr"},
-		Short:   "Assert if a Github pull request for the commit which produces an artifact exists.",
-		Long:    assertGHPullRequestDesc(),
-		Args:    NoArgs,
+		Short:   assertPRGithubShortDesc,
+		Long:    assertPRGithubLongDesc,
+		Example: assertPRGithubExample,
+		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.assert = true
 			pullRequestsEvidence, _, err := o.getGithubPullRequests()
 			if err != nil {
 				return err
 			}
-			log.Infof("found [%d] pull request(s) in Github for commit: %s", len(pullRequestsEvidence), o.commit)
+			logger.Info("found [%d] pull request(s) in Github for commit: %s", len(pullRequestsEvidence), o.commit)
 			return nil
 		},
 	}
@@ -34,13 +50,8 @@ func newAssertPullRequestGithubCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{"github-token", "github-org", "commit", "repository"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd
-}
-
-func assertGHPullRequestDesc() string {
-	return `
-   Check if a pull request exists in Github for an artifact (based on the git commit that produced it) and fail if it does not. `
 }

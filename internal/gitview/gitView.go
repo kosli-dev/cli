@@ -2,10 +2,12 @@ package gitview
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"strings"
+	"github.com/kosli-dev/cli/internal/logger"
 )
 
 type ArtifactCommit struct {
@@ -40,7 +42,7 @@ func New(repositoryRoot string) (*GitView, error) {
 }
 
 // CommitsBetween list all commits that have happened between two commits in a git repo
-func (gv *GitView) CommitsBetween(oldest, newest string) ([]*ArtifactCommit, error) {
+func (gv *GitView) CommitsBetween(oldest, newest string, logger *logger.Logger) ([]*ArtifactCommit, error) {
 	// Using 'var commits []*ArtifactCommit' will make '[]' convert to 'null' when converting to json
 	// which will fail on the server side.
 	// Using 'commits := make([]*ArtifactCommit, 0)' will make '[]' convert to '[]' when converting to json
@@ -61,8 +63,8 @@ func (gv *GitView) CommitsBetween(oldest, newest string) ([]*ArtifactCommit, err
 		return commits, fmt.Errorf("failed to resolve %s: %v", oldest, err)
 	}
 
-	//log.Debugf("This is the newest commit hash %s", newestHash.String())
-	//log.Debugf("This is the oldest commit hash %s", oldestHash.String())
+	logger.Debug("newest commit hash %s", newestHash.String())
+	logger.Debug("oldest commit hash %s", oldestHash.String())
 
 	commitsIter, err := gv.repository.Log(&git.LogOptions{From: *newestHash, Order: git.LogOrderCommitterTime})
 	if err != nil {
@@ -81,7 +83,7 @@ func (gv *GitView) CommitsBetween(oldest, newest string) ([]*ArtifactCommit, err
 			break
 		}
 	}
-
+	logger.Debug("parsed %d commits between newest and oldest commits", len(commits))
 	return commits, nil
 }
 
@@ -107,9 +109,9 @@ func (gv *GitView) RepoUrl() (string, error) {
 // If collecting the changelog fails (e.g. if git history has been rewritten), the changelog only
 // contains the single commit info which is the current commit
 
-func (gv *GitView) ChangeLog(currentCommit, previousCommit string) ([]*ArtifactCommit, error) {
+func (gv *GitView) ChangeLog(currentCommit, previousCommit string, logger *logger.Logger) ([]*ArtifactCommit, error) {
 	if previousCommit != "" {
-		commitsList, err := gv.CommitsBetween(previousCommit, currentCommit)
+		commitsList, err := gv.CommitsBetween(previousCommit, currentCommit, logger)
 		if err != nil {
 			fmt.Printf("Warning: %s\n", err)
 		} else {

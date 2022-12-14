@@ -14,14 +14,30 @@ type assertPullRequestBitbucketOptions struct {
 	repository  string
 }
 
+const assertPRBitbucketShortDesc = `Assert if a Bitbucket pull request for a git commit exists. `
+
+const assertPRBitbucketLongDesc = assertPRBitbucketShortDesc + `
+The command exits with non-zero exit code 
+if no pull requests were found for the commit.`
+
+const assertPRBitbucketExample = `
+kosli assert bitbucket-pullrequest  \
+	--bitbucket-username yourBitbucketUsername \
+	--bitbucket-password yourBitbucketPassword \
+	--bitbucket-workspace yourBitbucketWorkspace \
+	--commit yourGitCommit \
+	--repository yourBitbucketGitRepository
+`
+
 func newAssertPullRequestBitbucketCmd(out io.Writer) *cobra.Command {
 	o := new(assertPullRequestBitbucketOptions)
 	cmd := &cobra.Command{
 		Use:     "bitbucket-pullrequest",
 		Aliases: []string{"bb-pr", "bitbucket-pr"},
-		Short:   "Assert if a Bitbucket pull request for the commit which produces an artifact exists.",
-		Long:    assertBBPullRequestDesc(),
-		Args:    NoArgs,
+		Short:   assertPRBitbucketShortDesc,
+		Long:    assertPRBitbucketLongDesc,
+		Example: assertPRBitbucketExample,
+		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)
 		},
@@ -38,7 +54,7 @@ func newAssertPullRequestBitbucketCmd(out io.Writer) *cobra.Command {
 	err := RequireFlags(cmd, []string{"bitbucket-username", "bitbucket-password",
 		"bitbucket-workspace", "commit", "repository"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd
@@ -50,11 +66,6 @@ func (o *assertPullRequestBitbucketOptions) run(args []string) error {
 	if err != nil {
 		return err
 	}
-	log.Infof("found [%d] pull request(s) in Bitbucket for commit: %s", len(pullRequestsEvidence), o.commit)
+	logger.Info("found [%d] pull request(s) in Bitbucket for commit: %s", len(pullRequestsEvidence), o.commit)
 	return nil
-}
-
-func assertBBPullRequestDesc() string {
-	return `
-   Check if a pull request exists in Bitbucket for an artifact (based on the git commit that produced it) and fail if it does not. `
 }

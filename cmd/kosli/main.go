@@ -3,25 +3,23 @@ package main
 import (
 	"os"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/kosli-dev/cli/internal/logger"
+	"github.com/kosli-dev/cli/internal/requests"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
-var log = logrus.New()
+var logger *log.Logger
+var kosliClient *requests.Client
 
 func main() {
 	out := os.Stdout
-	log.Out = out
-	log.Formatter = &logrus.TextFormatter{
-		DisableTimestamp: true,
-	}
 	cmd, err := newRootCmd(out, os.Args[1:])
 	if err != nil {
-		log.Fatalf("Error: %+v", err)
+		logger.Error("%+v", err)
 	}
 	if err := cmd.Execute(); err != nil {
 		if global.DryRun {
-			log.Infof("Encountered an error but --dry-run is enabled. Exiting with 0 exit code.")
+			logger.Warning("Encountered an error but --dry-run is enabled. Exiting with 0 exit code.")
 			os.Exit(0)
 		}
 		os.Exit(1)

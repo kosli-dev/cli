@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const approvalReportDesc = `
-Report to Kosli an approval of deploying an artifact.
+const approvalReportShortDesc = `Report an approval of deploying an artifact to Kosli.`
+const approvalReportLongDesc = approvalReportShortDesc + `
 ` + sha256Desc
 
 const approvalReportExample = `
@@ -37,7 +37,6 @@ kosli pipeline approval report \
 	--owner yourOrgName \
 	--pipeline yourPipelineName \
 	--sha256 yourSha256
-
 `
 
 type approvalReportOptions struct {
@@ -64,8 +63,8 @@ func newApprovalReportCmd(out io.Writer) *cobra.Command {
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:     "report [ARTIFACT-NAME-OR-PATH]",
-		Short:   "Report to Kosli an approval of deploying an artifact. ",
-		Long:    approvalReportDesc,
+		Short:   approvalReportShortDesc,
+		Long:    approvalReportLongDesc,
 		Example: approvalReportExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -96,7 +95,7 @@ func newApprovalReportCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{"pipeline", "oldest-commit"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd
@@ -123,14 +122,23 @@ func (o *approvalReportOptions) run(args []string, request bool) error {
 
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/approvals/", global.Host, global.Owner, o.pipelineName)
 
-	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPost, log)
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodPost,
+		URL:      url,
+		Payload:  o.payload,
+		DryRun:   global.DryRun,
+		Password: global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
+	if err == nil && !global.DryRun {
+		logger.Info("approval created for artifact: %s", o.payload.ArtifactSha256)
+	}
 	return err
 }
 
 func (o *approvalReportOptions) payloadArtifactSHA256(args []string) (string, error) {
 	if o.payload.ArtifactSha256 == "" {
-		sha256, err := GetSha256Digest(args[0], o.fingerprintOptions)
+		sha256, err := GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
 			return sha256, err
 		}
@@ -174,7 +182,7 @@ func (o *approvalReportOptions) commitsHistory() ([]*gitview.ArtifactCommit, err
 		return nil, err
 	}
 
-	commits, err := gitView.CommitsBetween(o.oldestSrcCommit, o.newestSrcCommit)
+	commits, err := gitView.CommitsBetween(o.oldestSrcCommit, o.newestSrcCommit, logger)
 	if err != nil {
 		return nil, err
 	}

@@ -30,6 +30,11 @@ type ArtifactPayload struct {
 	CommitsList []*gitview.ArtifactCommit `json:"commits_list"`
 }
 
+const artifactCreationShortDesc = `Report an artifact creation to a Kosli pipeline.`
+
+const artifactCreationLongDesc = artifactCreationShortDesc + `
+` + sha256Desc
+
 const artifactCreationExample = `
 # Report to a Kosli pipeline that a file type artifact has been created
 kosli pipeline artifact report creation FILE.tgz \
@@ -42,7 +47,7 @@ kosli pipeline artifact report creation FILE.tgz \
 	--pipeline yourPipelineName 
 
 # Report to a Kosli pipeline that an artifact with a provided fingerprint (sha256) has been created
-kosli pipeline artifact report creation \
+kosli pipeline artifact report creation ANOTHER_FILE.txt \
 	--api-token yourApiToken \
 	--build-url https://exampleci.com \
 	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
@@ -52,14 +57,13 @@ kosli pipeline artifact report creation \
 	--sha256 yourSha256 
 `
 
-//goland:noinspection GoUnusedParameter
 func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 	o := new(artifactCreationOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:     "creation ARTIFACT-NAME-OR-PATH",
-		Short:   "Report an artifact creation to a Kosli pipeline. ",
-		Long:    artifactCreationDesc(),
+		Short:   artifactCreationShortDesc,
+		Long:    artifactCreationLongDesc,
 		Example: artifactCreationExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -91,7 +95,7 @@ func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{"pipeline", "git-commit", "build-url", "commit-url"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd
@@ -102,7 +106,7 @@ func (o *artifactCreationOptions) run(args []string) error {
 		o.payload.Filename = args[0]
 	} else {
 		var err error
-		o.payload.Sha256, err = GetSha256Digest(args[0], o.fingerprintOptions)
+		o.payload.Sha256, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
 			return err
 		}
@@ -123,7 +127,7 @@ func (o *artifactCreationOptions) run(args []string) error {
 		return err
 	}
 
-	o.payload.CommitsList, err = gitView.ChangeLog(o.payload.GitCommit, previousCommit)
+	o.payload.CommitsList, err = gitView.ChangeLog(o.payload.GitCommit, previousCommit, logger)
 	if err != nil {
 		return err
 	}
@@ -134,8 +138,18 @@ func (o *artifactCreationOptions) run(args []string) error {
 	}
 
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/", global.Host, global.Owner, o.pipelineName)
-	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodPut,
+		URL:      url,
+		Payload:  o.payload,
+		DryRun:   global.DryRun,
+		Password: global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
+	if err == nil && !global.DryRun {
+		logger.Info("artifact %s was reported with fingerprint: %s", o.payload.Filename, o.payload.Sha256)
+	}
 	return err
 }
 
@@ -145,8 +159,12 @@ func (o *artifactCreationOptions) latestCommit(branchName string) (string, error
 		"%s/api/v1/projects/%s/%s/artifacts/%s/latest_commit%s",
 		global.Host, global.Owner, o.pipelineName, o.payload.Sha256, asBranchParameter(branchName))
 
-	response, err := requests.DoBasicAuthRequest([]byte{}, latestCommitUrl, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{}, log)
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodGet,
+		URL:      latestCommitUrl,
+		Password: global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return "", err
 	}
@@ -158,8 +176,10 @@ func (o *artifactCreationOptions) latestCommit(branchName string) (string, error
 	}
 	latestCommit := latestCommitResponse["latest_commit"]
 	if latestCommit == nil {
+		logger.Debug("no previous artifacts were found for pipeline: %s", o.pipelineName)
 		return "", nil
 	} else {
+		logger.Debug("latest artifact for pipeline: %s has the git commit: %s", o.pipelineName, latestCommit.(string))
 		return latestCommit.(string), nil
 	}
 }
@@ -174,10 +194,4 @@ func asBranchParameter(branchName string) string {
 		return fmt.Sprintf("?branch=%s", branchName)
 	}
 	return ""
-}
-
-func artifactCreationDesc() string {
-	return `
-   Report an artifact creation to a Kosli pipeline. 
-   ` + sha256Desc
 }

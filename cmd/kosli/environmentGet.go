@@ -6,6 +6,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type environmentGetOptions struct {
+	output string
+}
+
 const environmentGetDescShort = `Get a specific environment snapshot.`
 
 const environmentGetDesc = environmentGetDescShort + `
@@ -13,10 +17,6 @@ Specify SNAPPISH by:
 	environmentName~<N>  N'th behind the latest snapshot
 	environmentName#<N>  snapshot number N
 	environmentName      the latest snapshot`
-
-type environmentGetOptions struct {
-	output string
-}
 
 const environmentGetExample = `# get the latest snapshot of an environment:
 kosli environment get yourEnvironmentName
@@ -40,13 +40,11 @@ func newEnvironmentGetCmd(out io.Writer) *cobra.Command {
 		Short:   environmentGetDescShort,
 		Long:    environmentGetDesc,
 		Example: environmentGetExample,
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
-			}
-			if len(args) < 1 {
-				return ErrorBeforePrintingUsage(cmd, "environment name/expression argument is required")
 			}
 			return nil
 		},

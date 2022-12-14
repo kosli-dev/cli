@@ -6,9 +6,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const approvalRequestDesc = `
-Request in Kosli an approval of a deployment of an artifact. The request should be reviewed in Kosli UI. 
-` + sha256Desc
+const approvalRequestShortDesc = `Request an approval of a deployment of an artifact in Kosli.`
+const approvalRequestLongDesc = approvalRequestShortDesc + `
+The request should be reviewed in Kosli UI.` + sha256Desc
 
 const approvalRequestExample = `
 # Request that a file type artifact needs approval.
@@ -39,8 +39,8 @@ func newApprovalRequestCmd(out io.Writer) *cobra.Command {
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:     "request [ARTIFACT-NAME-OR-PATH]",
-		Short:   "Request in Kosli an approval of a deployment of an artifact. ",
-		Long:    approvalRequestDesc,
+		Short:   approvalRequestShortDesc,
+		Long:    approvalRequestLongDesc,
 		Example: approvalRequestExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -71,7 +71,7 @@ func newApprovalRequestCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{"pipeline", "oldest-commit"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd

@@ -52,11 +52,10 @@ kosli search YOUR_FINGERPRINT \
 	--owner yourOrgName
 `
 
-const searchShortDesc = `Search for a git commit or artifact fingerprint in Kosli.`
+const searchShortDesc = `Search for a git commit or an artifact fingerprint in Kosli.`
 
 const searchLongDesc = searchShortDesc + ` 
-You can use short git commit or artifact fingerprint shas, but you must provide at least 5 characters.
-`
+You can use short git commit or artifact fingerprint shas, but you must provide at least 5 characters.`
 
 func newSearchCmd(out io.Writer) *cobra.Command {
 	o := new(searchOptions)
@@ -65,13 +64,11 @@ func newSearchCmd(out io.Writer) *cobra.Command {
 		Short:   searchShortDesc,
 		Long:    searchLongDesc,
 		Example: searchExample,
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
-			}
-			if len(args) < 1 {
-				return ErrorBeforePrintingUsage(cmd, "git commit or artifact fingerprint argument is required")
 			}
 			return nil
 		},
@@ -90,8 +87,13 @@ func (o *searchOptions) run(out io.Writer, args []string) error {
 	search_value := args[0]
 
 	url := fmt.Sprintf("%s/api/v1/search/%s/sha/%s", global.Host, global.Owner, search_value)
-	response, err := requests.DoBasicAuthRequest([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, http.MethodGet, map[string]string{}, log)
+
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodGet,
+		URL:      url,
+		Password: global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return err
 	}
@@ -111,9 +113,9 @@ func printSearchAsTableWrapper(responseRaw string, out io.Writer, pageNumber int
 	}
 	fullMatch := searchResult.ResolvedTo.FullMatch
 	if searchResult.ResolvedTo.Type == "commit" {
-		fmt.Fprintf(out, "Search result resolved to commit %s\n", fullMatch)
+		logger.Info("Search result resolved to commit %s", fullMatch)
 	} else {
-		fmt.Fprintf(out, "Search result resolved to artifact with fingerprint %s\n", fullMatch)
+		logger.Info("Search result resolved to artifact with fingerprint %s", fullMatch)
 	}
 
 	rows := []string{}

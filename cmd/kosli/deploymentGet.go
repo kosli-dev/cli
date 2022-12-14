@@ -46,13 +46,11 @@ func newDeploymentGetCmd(out io.Writer) *cobra.Command {
 		Short:   deploymentGetDescShort,
 		Long:    deploymentGetDesc,
 		Example: deploymentGetExample,
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
-			}
-			if len(args) < 1 {
-				return ErrorBeforePrintingUsage(cmd, "deployment SNAPPISH argument is required")
 			}
 			return nil
 		},
@@ -67,9 +65,14 @@ func newDeploymentGetCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *deploymentGetOptions) run(out io.Writer, args []string) error {
-	kurl := fmt.Sprintf("%s/api/v1/projects/%s/deployment/?snappish=%s", global.Host, global.Owner, url.QueryEscape(args[0]))
-	response, err := requests.SendPayload([]byte{}, kurl, "", global.ApiToken,
-		global.MaxAPIRetries, false, http.MethodGet, log)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/deployment/?snappish=%s", global.Host, global.Owner, url.QueryEscape(args[0]))
+
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodGet,
+		URL:      url,
+		Password: global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return err
 	}

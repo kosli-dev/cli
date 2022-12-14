@@ -15,7 +15,7 @@ import (
 
 func (o *environmentEventsLogOptions) getSnapshotsList(out io.Writer, args []string) error {
 	if o.pageNumber <= 0 || o.pageLimit <= 0 {
-		fmt.Fprint(out, "No environment snapshots were requested\n")
+		logger.Info("no environment snapshots were requested")
 		return nil
 	}
 
@@ -26,8 +26,13 @@ func (o *environmentEventsLogOptions) getSnapshotsList(out io.Writer, args []str
 
 	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/snapshots/?page=%d&per_page=%d&interval=%s&reverse=%t",
 		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit, url.QueryEscape(interval), o.reverse)
-	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, false, http.MethodGet, log)
+
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodGet,
+		URL:      url,
+		Password: global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return err
 	}
@@ -47,7 +52,7 @@ func printSnapshotsListAsTable(raw string, out io.Writer, page int) error {
 	}
 
 	if len(snapshots) == 0 {
-		fmt.Fprintf(out, "No environment snapshots were found at page %d\n", page)
+		logger.Info("no environment snapshots were found at page %d", page)
 		return nil
 	}
 

@@ -15,8 +15,8 @@ import (
 	"strings"
 
 	"github.com/docker/docker/client"
+	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -26,8 +26,8 @@ var (
 )
 
 // DirSha256 returns sha256 digest of a directory
-func DirSha256(dirPath string, logger *logrus.Logger) (string, error) {
-	logger.Debugf("Input path: %v", filepath.Base(dirPath))
+func DirSha256(dirPath string, logger *logger.Logger) (string, error) {
+	logger.Debug("Input path: %v", filepath.Base(dirPath))
 	info, err := os.Stat(dirPath)
 	if err != nil {
 		return "", err
@@ -56,8 +56,7 @@ func DirSha256(dirPath string, logger *logrus.Logger) (string, error) {
 }
 
 // prepareDirContentSha256 calculates a sha256 digest for a directory content
-func prepareDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, logger *logrus.Logger) error {
-
+func prepareDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, logger *logger.Logger) error {
 	files, err := ioutil.ReadDir(dirPath)
 	if err != nil {
 		return err
@@ -69,21 +68,21 @@ func prepareDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, logge
 			return err
 		}
 
-		pathed_entry := filepath.Join(dirPath, f.Name())
+		pathedEntry := filepath.Join(dirPath, f.Name())
 
 		if f.IsDir() {
-			logger.Debugf("dirname: %s -- dirname digest: %v", pathed_entry, nameSha256)
-			err := prepareDirContentSha256(digestsFile, pathed_entry, tmpDir, logger)
+			logger.Debug("dirname: %s -- dirname digest: %v", pathedEntry, nameSha256)
+			err := prepareDirContentSha256(digestsFile, pathedEntry, tmpDir, logger)
 			if err != nil {
 				return err
 			}
 		} else {
-			logger.Debugf("filename: %s -- filename digest: %s", pathed_entry, nameSha256)
-			fileContentSha256, err := FileSha256(pathed_entry)
+			logger.Debug("filename: %s -- filename digest: %s", pathedEntry, nameSha256)
+			fileContentSha256, err := FileSha256(pathedEntry)
 			if err != nil {
 				return err
 			}
-			logger.Debugf("filename: %s -- content digest: %s", pathed_entry, fileContentSha256)
+			logger.Debug("filename: %s -- content digest: %s", pathedEntry, fileContentSha256)
 			if _, err := digestsFile.Write([]byte(fileContentSha256)); err != nil {
 				return err
 			}
@@ -174,9 +173,18 @@ func extractImageDigestFromRepoDigest(imageID string, repoDigests []string) (str
 }
 
 // requestManifestFromRegistry makes an API request to a remote registry to get image manifest
-func requestManifestFromRegistry(registryEndPoint, imageName, imageTag, registryToken string, dockerHeaders map[string]string) (*requests.HTTPResponse, error) {
-	res, err := requests.DoRequestWithToken([]byte{}, registryEndPoint+"/"+imageName+"/"+"manifests/"+imageTag, registryToken, 3, http.MethodGet, dockerHeaders, logrus.New())
-
+func requestManifestFromRegistry(registryEndPoint, imageName, imageTag, registryToken string,
+	dockerHeaders map[string]string, logger *logger.Logger) (*requests.HTTPResponse, error) {
+	// res, err := requests.DoRequestWithToken([]byte{}, registryEndPoint+"/"+imageName+"/"+"manifests/"+imageTag, registryToken, 3, http.MethodGet, dockerHeaders)
+	url := registryEndPoint + "/" + imageName + "/" + "manifests/" + imageTag
+	reqParams := &requests.RequestParams{
+		Method:            http.MethodGet,
+		URL:               url,
+		Token:             registryToken,
+		AdditionalHeaders: dockerHeaders,
+	}
+	kosliClient := requests.NewKosliClient(1, logger.DebugEnabled, logger)
+	res, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return res, fmt.Errorf("failed to get docker digest from registry %v", err)
 	}
@@ -186,7 +194,7 @@ func requestManifestFromRegistry(registryEndPoint, imageName, imageTag, registry
 
 // RemoteDockerImageSha256 returns a sha256 digest of a docker image by reading it from
 // remote docker registry
-func RemoteDockerImageSha256(imageName, imageTag, registryEndPoint, registryToken string) (string, error) {
+func RemoteDockerImageSha256(imageName, imageTag, registryEndPoint, registryToken string, logger *logger.Logger) (string, error) {
 	// Some docker images have Manifest list, aka “fat manifest” which combines
 	// image manifests for one or more platforms. Other images don't have such manifest.
 	// The response Content-Type header specifies whether an image has it or not.
@@ -198,7 +206,7 @@ func RemoteDockerImageSha256(imageName, imageTag, registryEndPoint, registryToke
 	var err error
 
 	dockerHeaders := map[string]string{"Accept": v2FatManifestType}
-	res, err = requestManifestFromRegistry(registryEndPoint, imageName, imageTag, registryToken, dockerHeaders)
+	res, err = requestManifestFromRegistry(registryEndPoint, imageName, imageTag, registryToken, dockerHeaders, logger)
 	if err != nil {
 		return "", err
 	}
@@ -207,7 +215,7 @@ func RemoteDockerImageSha256(imageName, imageTag, registryEndPoint, registryToke
 	if responseContentType != v2FatManifestType {
 		dockerHeaders = map[string]string{"Accept": v2ManifestType}
 
-		res, err = requestManifestFromRegistry(registryEndPoint, imageName, imageTag, registryToken, dockerHeaders)
+		res, err = requestManifestFromRegistry(registryEndPoint, imageName, imageTag, registryToken, dockerHeaders, logger)
 		if err != nil {
 			return "", err
 		}

@@ -22,6 +22,11 @@ type testEvidenceOptions struct {
 	payload            EvidencePayload
 }
 
+const testEvidenceShortDesc = `Report a JUnit test evidence to an artifact in a Kosli pipeline.`
+
+const testEvidenceLongDesc = testEvidenceShortDesc + `
+` + sha256Desc
+
 const testEvidenceExample = `
 # report a JUnit test evidence about a file artifact:
 kosli pipeline artifact report evidence test FILE.tgz \
@@ -49,8 +54,8 @@ func newTestEvidenceCmd(out io.Writer) *cobra.Command {
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:     "test [ARTIFACT-NAME-OR-PATH]",
-		Short:   "Report a JUnit test evidence to an artifact in a Kosli pipeline. ",
-		Long:    testEvidenceDesc(),
+		Short:   testEvidenceShortDesc,
+		Long:    testEvidenceLongDesc,
 		Example: testEvidenceExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -83,23 +88,16 @@ func newTestEvidenceCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{"pipeline", "build-url", "evidence-type"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd
 }
 
-func testEvidenceDesc() string {
-	return `
-   Report a JUnit test evidence to an artifact in a Kosli pipeline. 
-   The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
-   `
-}
-
 func (o *testEvidenceOptions) run(args []string) error {
 	var err error
 	if o.sha256 == "" {
-		o.sha256, err = GetSha256Digest(args[0], o.fingerprintOptions)
+		o.sha256, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
 			return err
 		}
@@ -118,8 +116,19 @@ func (o *testEvidenceOptions) run(args []string) error {
 		return err
 	}
 
-	_, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+	// _, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
+	// 	global.MaxAPIRetries, global.DryRun, http.MethodPut)
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodPut,
+		URL:      url,
+		Payload:  o.payload,
+		DryRun:   global.DryRun,
+		Password: global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
+	if err == nil && !global.DryRun {
+		logger.Info("test evidence is reported to artifact: %s", o.sha256)
+	}
 	return err
 }
 

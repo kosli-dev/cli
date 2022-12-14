@@ -11,7 +11,31 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const approvalLsDesc = `List a number of approvals in a pipeline.`
+const approvalLsShortDesc = `List approvals in a pipeline.`
+const approvalLsLongDesc = approvalLsShortDesc + `
+The results are paginated and ordered from latests to oldest. 
+By default, the page limit is 15 approvals per page.  
+`
+
+const approvalLsExample = `
+# list the last 15 approvals for a pipeline:
+kosli approval list yourPipelineName \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# list the last 30 approvals for a pipeline:
+kosli approval list yourPipelineName \
+	--page-limit 30 \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# list the last 30 approvals for a pipeline (in JSON):
+kosli approval list yourPipelineName \
+	--page-limit 30 \
+	--api-token yourAPIToken \
+	--owner yourOrgName \
+	--output json
+`
 
 type approvalLsOptions struct {
 	output     string
@@ -24,16 +48,16 @@ func newApprovalLsCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "ls PIPELINE-NAME",
 		Aliases: []string{"list"},
-		Short:   approvalLsDesc,
-		Long:    approvalLsDesc,
+		Short:   approvalLsShortDesc,
+		Long:    approvalLsLongDesc,
+		Example: approvalLsExample,
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
-			if len(args) < 1 {
-				return ErrorBeforePrintingUsage(cmd, "pipeline name argument is required")
-			}
+
 			if o.pageNumber <= 0 {
 				return ErrorBeforePrintingUsage(cmd, "page number must be a positive integer")
 			}
@@ -54,8 +78,13 @@ func newApprovalLsCmd(out io.Writer) *cobra.Command {
 func (o *approvalLsOptions) run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/approvals/?page=%d&per_page=%d",
 		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit)
-	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, false, http.MethodGet, log)
+
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodGet,
+		URL:      url,
+		Password: global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return err
 	}

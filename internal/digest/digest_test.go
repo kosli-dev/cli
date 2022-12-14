@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/utils"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -251,7 +251,7 @@ func (suite *DigestTestSuite) TestDirSha256() {
 				}
 			}
 
-			sha256, err := DirSha256(dirPath, logrus.New())
+			sha256, err := DirSha256(dirPath, logger.NewLogger(os.Stdout, false))
 			require.NoErrorf(suite.T(), err, "error creating digest for test dir %s", dirPath)
 
 			assert.Equal(suite.T(), t.want, sha256, fmt.Sprintf("TestDirSha256: %s , got: %v -- want: %v", t.name, sha256, t.want))
@@ -304,7 +304,7 @@ func (suite *DigestTestSuite) TestDirSha256Validation() {
 				suite.createFileWithContent(dirPath, "")
 			}
 
-			_, err := DirSha256(dirPath, logrus.New())
+			_, err := DirSha256(dirPath, logger.NewLogger(os.Stdout, false))
 			if t.errExpected {
 				require.Errorf(suite.T(), err, "TestDirSha256Validation: error was expected")
 			}
@@ -466,7 +466,8 @@ func (suite *DigestTestSuite) TestRemoteDockerImageSha256() {
 				err = utils.PushDockerImage(localImage)
 				require.NoErrorf(suite.T(), err, "TestRemoteDockerImageSha256: test image should be pushable")
 			}
-			actual, err := RemoteDockerImageSha256(t.localImageName, t.localImageTag, "http://localhost:5001/v2", "secret")
+			actual, err := RemoteDockerImageSha256(t.localImageName, t.localImageTag, "http://localhost:5001/v2", "secret",
+				logger.NewLogger(os.Stdout, false))
 			if t.want.expectError {
 				require.Errorf(suite.T(), err, "TestRemoteDockerImageSha256: error was expected")
 			} else {

@@ -22,13 +22,18 @@ type AllowlistPayload struct {
 	Environment string `json:"environment_name"`
 }
 
+const allowedArtifactCreateShortDesc = `Add an artifact to an environment's allowlist.`
+
+const allowedArtifactCreateLongDesc = allowedArtifactCreateShortDesc + `
+` + sha256Desc
+
 func newAllowedArtifactsCreateCmd(out io.Writer) *cobra.Command {
 	o := new(allowedArtifactsCreationOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:   "add ARTIFACT-NAME-OR-PATH",
-		Short: "Add an artifact to an environment's allowlist. ",
-		Long:  allowedArtifactsCreationDesc(),
+		Short: allowedArtifactCreateShortDesc,
+		Long:  allowedArtifactCreateLongDesc,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -55,7 +60,7 @@ func newAllowedArtifactsCreateCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{"environment", "reason"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 
 	return cmd
@@ -66,7 +71,7 @@ func (o *allowedArtifactsCreationOptions) run(args []string) error {
 		o.payload.Filename = args[0]
 	} else {
 		var err error
-		o.payload.Sha256, err = GetSha256Digest(args[0], o.fingerprintOptions)
+		o.payload.Sha256, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
 			return err
 		}
@@ -79,15 +84,16 @@ func (o *allowedArtifactsCreationOptions) run(args []string) error {
 
 	url := fmt.Sprintf("%s/api/v1/policies/%s/allowedartifacts/", global.Host, global.Owner)
 
-	_, err := requests.SendPayload(o.payload, url, "", global.ApiToken,
-		global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodPut,
+		URL:      url,
+		Payload:  o.payload,
+		DryRun:   global.DryRun,
+		Password: global.ApiToken,
+	}
+	_, err := kosliClient.Do(reqParams)
+	if err == nil && !global.DryRun {
+		logger.Info("artifact %s was allow listed in environment: %s", o.payload.Sha256, o.payload.Environment)
+	}
 	return err
-}
-
-func allowedArtifactsCreationDesc() string {
-	return `
-   Add an artifact to an environment's allowlist. 
-   The artifact SHA256 fingerprint is calculated and reported 
-   or, alternatively, can be provided directly. 
-   `
 }

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/kosli-dev/cli/internal/digest"
-	"github.com/sirupsen/logrus"
+	"github.com/kosli-dev/cli/internal/logger"
 )
 
 // ServerEnvRequest represents the PUT request body to be sent to kosli from a server
@@ -23,7 +23,7 @@ type ServerData struct {
 }
 
 // CreateServerArtifactsData creates a list of ServerData for server artifacts at given paths
-func CreateServerArtifactsData(paths []string, logger *logrus.Logger) ([]*ServerData, error) {
+func CreateServerArtifactsData(paths []string, logger *logger.Logger) ([]*ServerData, error) {
 	result := []*ServerData{}
 	for _, p := range paths {
 		digests := make(map[string]string)

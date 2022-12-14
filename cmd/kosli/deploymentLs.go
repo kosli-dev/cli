@@ -11,7 +11,31 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const deploymentLsDesc = `List a number of deployments in a pipeline.`
+const deploymentLsShortDesc = `List deployments in a pipeline.`
+
+const deploymentLsLongDesc = deploymentLsShortDesc + `
+The results are paginated and ordered from latests to oldest. 
+By default, the page limit is 15 deployments per page.
+`
+const deploymentLsExample = `
+# list the last 15 deployments for a pipeline:
+kosli deployment list yourPipelineName \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# list the last 30 deployments for a pipeline:
+kosli deployment list yourPipelineName \
+	--page-limit 30 \
+	--api-token yourAPIToken \
+	--owner yourOrgName
+
+# list the last 30 deployments for a pipeline (in JSON):
+kosli deployment list yourPipelineName \
+	--page-limit 30 \
+	--api-token yourAPIToken \
+	--owner yourOrgName \
+	--output json
+`
 
 type deploymentLsOptions struct {
 	output     string
@@ -24,15 +48,14 @@ func newDeploymentLsCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "ls PIPELINE-NAME",
 		Aliases: []string{"list"},
-		Short:   deploymentLsDesc,
-		Long:    deploymentLsDesc,
+		Short:   deploymentLsShortDesc,
+		Long:    deploymentLsLongDesc,
+		Example: deploymentLsExample,
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
-			}
-			if len(args) < 1 {
-				return ErrorBeforePrintingUsage(cmd, "pipeline name argument is required")
 			}
 			if o.pageNumber <= 0 {
 				return ErrorBeforePrintingUsage(cmd, "page number must be a positive integer")
@@ -54,8 +77,13 @@ func newDeploymentLsCmd(out io.Writer) *cobra.Command {
 func (o *deploymentLsOptions) run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/?page=%d&per_page=%d",
 		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit)
-	response, err := requests.SendPayload([]byte{}, url, "", global.ApiToken,
-		global.MaxAPIRetries, false, http.MethodGet, log)
+
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodGet,
+		URL:      url,
+		Password: global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
 	if err != nil {
 		return err
 	}
@@ -80,10 +108,7 @@ func printDeploymentsListAsTable(raw string, out io.Writer, page int) error {
 		if page != 1 {
 			msg = fmt.Sprintf("%s at page number %d", msg, page)
 		}
-		_, err := out.Write([]byte(msg + ".\n"))
-		if err != nil {
-			return err
-		}
+		logger.Info(msg + ".")
 		return nil
 	}
 

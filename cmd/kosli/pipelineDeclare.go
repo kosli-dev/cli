@@ -13,10 +13,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const pipelineDeclareDesc = `
-Declare or update a Kosli pipeline by providing a JSON pipefile or by providing pipeline parameters in flags. 
-The pipefile contains the pipeline metadata and compliance policy.
-`
+const pipelineDeclareShortDesc = `Create or update a Kosli pipeline.`
+
+const pipelineDeclareLongDesc = pipelineDeclareShortDesc + `
+You can provide a JSON pipefile or specify pipeline parameters in flags. 
+The pipefile contains the pipeline metadata and compliance policy (template).`
 
 const pipelineDeclareExample = `
 # create/update a Kosli pipeline without a pipefile:
@@ -37,7 +38,7 @@ kosli pipeline declare \
 The pipefile format is:
 {
     "name": "yourPipelineName",
-    "description": "yourPipelinedescription",
+    "description": "yourPipelineDescription",
     "visibility": "public or private",
     "template": [
         "artifact",
@@ -64,10 +65,10 @@ func newPipelineDeclareCmd(out io.Writer) *cobra.Command {
 	o := new(pipelineDeclareOptions)
 	cmd := &cobra.Command{
 		Use:     "declare",
-		Short:   "Declare or update a Kosli pipeline",
-		Long:    pipelineDeclareDesc,
+		Short:   pipelineDeclareShortDesc,
+		Long:    pipelineDeclareLongDesc,
 		Example: pipelineDeclareExample,
-		Args:    NoArgs,
+		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -106,24 +107,29 @@ func newPipelineDeclareCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *pipelineDeclareOptions) run(args []string) error {
+	var err error
 	url := fmt.Sprintf("%s/api/v1/projects/%s/", global.Host, global.Owner)
 	if o.pipefile != "" {
-		pipePayload, err := loadPipefile(o.pipefile)
+		o.payload, err = loadPipefile(o.pipefile)
 		if err != nil {
 			return err
 		}
-		pipePayload.Owner = global.Owner
-		o.payload.Template = injectArtifactIntoTemplateIfNotExisting(pipePayload.Template)
-		_, err = requests.SendPayload(pipePayload, url, "", global.ApiToken,
-			global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
-		return err
-	} else {
-		o.payload.Owner = global.Owner
-		o.payload.Template = injectArtifactIntoTemplateIfNotExisting(o.payload.Template)
-		_, err := requests.SendPayload(o.payload, url, "", global.ApiToken,
-			global.MaxAPIRetries, global.DryRun, http.MethodPut, log)
-		return err
 	}
+	o.payload.Owner = global.Owner
+	o.payload.Template = injectArtifactIntoTemplateIfNotExisting(o.payload.Template)
+
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodPut,
+		URL:      url,
+		Payload:  o.payload,
+		DryRun:   global.DryRun,
+		Password: global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
+	if err == nil && !global.DryRun {
+		logger.Info("pipeline '%s' created", o.payload.Name)
+	}
+	return err
 }
 
 // injectArtifactIntoTemplateIfNotExisting injects 'artifact' into the template if it is not there.

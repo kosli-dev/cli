@@ -1,16 +1,14 @@
 package main
 
 import (
-	"fmt"
-	"github.com/kosli-dev/cli/internal/gitview"
 	"io"
+
+	"github.com/kosli-dev/cli/internal/gitview"
 
 	"github.com/spf13/cobra"
 )
 
-const commitsDesc = `
-Print a list of commits within a range.
-`
+const commitsDesc = `Print a list of commits within a range.`
 
 type commitsOptions struct {
 	oldestSrcCommit string
@@ -21,10 +19,10 @@ func newCommitsCmd(out io.Writer) *cobra.Command {
 	o := new(commitsOptions)
 	cmd := &cobra.Command{
 		Use:    "commits",
-		Short:  "Print the a list of commits between two commits.",
+		Short:  commitsDesc,
 		Long:   commitsDesc,
 		Hidden: true,
-		Args:   NoArgs,
+		Args:   cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args, out)
 		},
@@ -35,7 +33,7 @@ func newCommitsCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{"oldest-commit"})
 	if err != nil {
-		log.Fatalf("failed to configure required flags: %v", err)
+		logger.Error("failed to configure required flags: %v", err)
 	}
 	return cmd
 }
@@ -48,14 +46,13 @@ func (o *commitsOptions) run(args []string, out io.Writer) error {
 		return err
 	}
 
-	commits, err := gitView.CommitsBetween(o.oldestSrcCommit, o.newestSrcCommit)
+	commits, err := gitView.CommitsBetween(o.oldestSrcCommit, o.newestSrcCommit, logger)
 	if err != nil {
 		return err
 	}
 	for _, commit := range commits {
-		_, _ = fmt.Fprintf(out, "%s\n", commit.Sha1)
-		_, _ = fmt.Fprintf(out, "%s %s %s %d\n", commit.Branch, commit.Author, commit.Message, commit.Timestamp)
-		_, _ = fmt.Fprint(out, "\n")
+		logger.Info(commit.Sha1)
+		logger.Info("%s %s %s %d", commit.Branch, commit.Author, commit.Message, commit.Timestamp)
 	}
 	return nil
 }
