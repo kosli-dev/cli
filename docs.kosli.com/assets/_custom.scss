@@ -35,6 +35,10 @@ aside.book-toc .book-toc-content {
     top: 80px;
 }
 
+.markdown {
+    flex-grow: 1;
+}
+
 .markdown pre {
     background-color: #272822;
     color: #f8f8f2;
