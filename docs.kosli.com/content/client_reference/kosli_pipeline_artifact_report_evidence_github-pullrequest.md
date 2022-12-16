@@ -8,10 +8,9 @@ Report a Github pull request evidence for an artifact in a Kosli pipeline.
 
 ### Synopsis
 
-
-   Check if a pull request exists for an artifact and report the pull-request evidence to the artifact in Kosli. 
-   The artifact SHA256 fingerprint is calculated or alternatively it can be provided directly. 
-   
+Report a Bitbucket pull request evidence for an artifact in a Kosli pipeline.
+It checks if a pull request exists for the artifact (based on its git commit) and report the pull-request evidence to the artifact in Kosli. 
+The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag).
 
 ```shell
 kosli pipeline artifact report evidence github-pullrequest [ARTIFACT-NAME-OR-PATH] [flags]
@@ -25,6 +24,7 @@ kosli pipeline artifact report evidence github-pullrequest [ARTIFACT-NAME-OR-PAT
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --commit string  |  Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -d, --description string  |  [optional] The evidence description.  |
+|    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -e, --evidence-type string  |  The type of evidence being reported.  |
 |        --github-org string  |  Github organization.  |
 |        --github-token string  |  Github token.  |
@@ -42,10 +42,42 @@ kosli pipeline artifact report evidence github-pullrequest [ARTIFACT-NAME-OR-PAT
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
 |    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
-|    -D, --dry-run  |  [optional] Whether to run in dry-run mode. When enabled, data is not sent to Kosli and the CLI exits with 0 exit code regardless of errors.  |
+|        --debug  |  [optional] Print debug logs to stdout.  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --owner string  |  The Kosli user or organization.  |
-|    -v, --verbose  |  [optional] Print verbose logs to stdout.  |
 
+
+### Examples
+
+```shell
+
+# report a pull request evidence to kosli for a docker image
+kosli pipeline artifact report evidence github-pullrequest yourDockerImageName \
+	--artifact-type docker \
+	--build-url https://exampleci.com \
+	--evidence-type yourEvidenceType \
+	--pipeline yourPipelineName \
+	--github-token yourGithubToken \
+	--github-org yourGithubOrg \
+	--commit yourArtifactGitCommit \
+	--repository yourGithubGitRepository \
+	--owner yourOrgName \
+	--api-token yourAPIToken
+	
+# fail if a pull request does not exist for your artifact
+kosli pipeline artifact report evidence github-pullrequest yourDockerImageName \
+	--artifact-type docker \
+	--build-url https://exampleci.com \
+	--evidence-type yourEvidenceType \
+	--pipeline yourPipelineName \
+	--github-token yourGithubToken \
+	--github-org yourGithubOrg \
+	--commit yourArtifactGitCommit \
+	--repository yourGithubGitRepository \
+	--owner yourOrgName \
+	--api-token yourAPIToken \
+	--assert
+
+```
 

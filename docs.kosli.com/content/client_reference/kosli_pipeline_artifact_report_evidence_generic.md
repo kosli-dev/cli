@@ -4,13 +4,12 @@ title: "kosli pipeline artifact report evidence generic"
 
 ## kosli pipeline artifact report evidence generic
 
-Report a generic evidence to an artifact in a Kosli pipeline. 
+Report a generic evidence to an artifact in a Kosli pipeline.
 
 ### Synopsis
 
-
-   Report a generic evidence to an artifact to a Kosli pipeline. 
-   The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag).
+Report a generic evidence to an artifact in a Kosli pipeline.
+The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag).
 
 ```shell
 kosli pipeline artifact report evidence generic [ARTIFACT-NAME-OR-PATH] [flags]
@@ -23,6 +22,7 @@ kosli pipeline artifact report evidence generic [ARTIFACT-NAME-OR-PATH] [flags]
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -C, --compliant  |  [defaulted] Whether the evidence is compliant or not. (default true)  |
 |    -d, --description string  |  [optional] The evidence description.  |
+|    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -e, --evidence-type string  |  The type of evidence being reported.  |
 |    -h, --help  |  help for generic  |
 |    -p, --pipeline string  |  The Kosli pipeline name.  |
@@ -38,11 +38,10 @@ kosli pipeline artifact report evidence generic [ARTIFACT-NAME-OR-PATH] [flags]
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
 |    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
-|    -D, --dry-run  |  [optional] Whether to run in dry-run mode. When enabled, data is not sent to Kosli and the CLI exits with 0 exit code regardless of errors.  |
+|        --debug  |  [optional] Print debug logs to stdout.  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --owner string  |  The Kosli user or organization.  |
-|    -v, --verbose  |  [optional] Print verbose logs to stdout.  |
 
 
 ### Examples
@@ -66,7 +65,6 @@ kosli pipeline artifact report evidence generic /path/to/your/dir \
 	--evidence-type yourEvidenceType \
 	--owner yourOrgName	\
 	--pipeline yourPipelineName 
-
 
 # report a generic evidence about an artifact with a provided fingerprint (sha256)
 kosli pipeline artifact report evidence generic \

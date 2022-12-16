@@ -4,12 +4,13 @@ title: "kosli assert github-pullrequest"
 
 ## kosli assert github-pullrequest
 
-Assert if a Github pull request for the commit which produces an artifact exists.
+Assert if a Github pull request for a git commit exists.
 
 ### Synopsis
 
-
-   Check if a pull request exists in Github for an artifact (based on the git commit that produced it) and fail if it does not. 
+Assert if a Github pull request for a git commit exists.
+The command exits with non-zero exit code 
+if no pull requests were found for the commit.
 
 ```shell
 kosli assert github-pullrequest [flags]
@@ -19,6 +20,7 @@ kosli assert github-pullrequest [flags]
 | Flag | Description |
 | :--- | :--- |
 |        --commit string  |  Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |        --github-org string  |  Github organization.  |
 |        --github-token string  |  Github token.  |
 |    -h, --help  |  help for github-pullrequest  |
@@ -30,10 +32,22 @@ kosli assert github-pullrequest [flags]
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
 |    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
-|    -D, --dry-run  |  [optional] Whether to run in dry-run mode. When enabled, data is not sent to Kosli and the CLI exits with 0 exit code regardless of errors.  |
+|        --debug  |  [optional] Print debug logs to stdout.  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --owner string  |  The Kosli user or organization.  |
-|    -v, --verbose  |  [optional] Print verbose logs to stdout.  |
 
+
+### Examples
+
+```shell
+
+kosli assert github-pullrequest  \
+	--github-token yourGithubToken \
+	--github-org yourGithubOrg \
+	--commit yourArtifactGitCommit \
+	--commit yourGitCommit \
+	--repository yourGithubGitRepository
+
+```
 

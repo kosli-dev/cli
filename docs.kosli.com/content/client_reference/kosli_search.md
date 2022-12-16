@@ -4,13 +4,12 @@ title: "kosli search"
 
 ## kosli search
 
-Search for a git commit or artifact fingerprint in Kosli.
+Search for a git commit or an artifact fingerprint in Kosli.
 
 ### Synopsis
 
-Search for a git commit or artifact fingerprint in Kosli. 
+Search for a git commit or an artifact fingerprint in Kosli. 
 You can use short git commit or artifact fingerprint shas, but you must provide at least 5 characters.
-
 
 ```shell
 kosli search GIT-COMMIT|FINGERPRINT [flags]
@@ -28,11 +27,10 @@ kosli search GIT-COMMIT|FINGERPRINT [flags]
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
 |    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
-|    -D, --dry-run  |  [optional] Whether to run in dry-run mode. When enabled, data is not sent to Kosli and the CLI exits with 0 exit code regardless of errors.  |
+|        --debug  |  [optional] Print debug logs to stdout.  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --owner string  |  The Kosli user or organization.  |
-|    -v, --verbose  |  [optional] Print verbose logs to stdout.  |
 
 
 ### Examples

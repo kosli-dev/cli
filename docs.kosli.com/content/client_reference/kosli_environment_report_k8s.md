@@ -4,14 +4,13 @@ title: "kosli environment report k8s"
 
 ## kosli environment report k8s
 
-Report images data from specific namespace(s) or entire cluster to Kosli.
+Report running pods data from K8S cluster or namespace(s) to Kosli.
 
 ### Synopsis
 
-
-List the artifacts deployed in the k8s environment and their digests 
-and report them to Kosli. 
-
+Report running pods data from K8S cluster or namespace(s) to Kosli.
+The reported data includes pod container images digests and creation timestamps. You can customize the scope of reporting
+to include or exclude namespaces.
 
 ```shell
 kosli environment report k8s ENVIRONMENT-NAME [flags]
@@ -20,6 +19,7 @@ kosli environment report k8s ENVIRONMENT-NAME [flags]
 ### Flags
 | Flag | Description |
 | :--- | :--- |
+|    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -x, --exclude-namespace strings  |  [conditional] The comma separated list of namespaces regex patterns NOT to report artifacts info from. Can't be used together with --namespace.  |
 |    -h, --help  |  help for k8s  |
 |    -k, --kubeconfig string  |  [defaulted] The kubeconfig path for the target cluster. (default "$HOME/.kube/config")  |
@@ -31,11 +31,10 @@ kosli environment report k8s ENVIRONMENT-NAME [flags]
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
 |    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
-|    -D, --dry-run  |  [optional] Whether to run in dry-run mode. When enabled, data is not sent to Kosli and the CLI exits with 0 exit code regardless of errors.  |
+|        --debug  |  [optional] Print debug logs to stdout.  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --owner string  |  The Kosli user or organization.  |
-|    -v, --verbose  |  [optional] Print verbose logs to stdout.  |
 
 
 ### Examples

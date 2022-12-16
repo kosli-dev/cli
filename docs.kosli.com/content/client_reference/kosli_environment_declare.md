@@ -4,13 +4,11 @@ title: "kosli environment declare"
 
 ## kosli environment declare
 
-Declare a Kosli environment
+Declare a Kosli environment.
 
 ### Synopsis
 
-
-Declare or update a Kosli environment.
-
+Declare a Kosli environment.
 
 ```shell
 kosli environment declare [flags]
@@ -20,6 +18,7 @@ kosli environment declare [flags]
 | Flag | Description |
 | :--- | :--- |
 |    -d, --description string  |  [optional] The environment description.  |
+|    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -t, --environment-type string  |  The type of environment. Valid types are: [K8S, ECS, server, S3, lambda, docker].  |
 |    -h, --help  |  help for declare  |
 |    -n, --name string  |  The name of environment to be created.  |
@@ -30,18 +29,17 @@ kosli environment declare [flags]
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
 |    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
-|    -D, --dry-run  |  [optional] Whether to run in dry-run mode. When enabled, data is not sent to Kosli and the CLI exits with 0 exit code regardless of errors.  |
+|        --debug  |  [optional] Print debug logs to stdout.  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --owner string  |  The Kosli user or organization.  |
-|    -v, --verbose  |  [optional] Print verbose logs to stdout.  |
 
 
 ### Examples
 
 ```shell
 
-# declare (or update) a Kosli environment:
+# declare a Kosli environment:
 kosli environment declare 
 	--name yourEnvironmentName \
 	--environment-type K8S \

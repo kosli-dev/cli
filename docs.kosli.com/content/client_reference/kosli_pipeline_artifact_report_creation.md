@@ -4,13 +4,12 @@ title: "kosli pipeline artifact report creation"
 
 ## kosli pipeline artifact report creation
 
-Report an artifact creation to a Kosli pipeline. 
+Report an artifact creation to a Kosli pipeline.
 
 ### Synopsis
 
-
-   Report an artifact creation to a Kosli pipeline. 
-   The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag).
+Report an artifact creation to a Kosli pipeline.
+The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag).
 
 ```shell
 kosli pipeline artifact report creation ARTIFACT-NAME-OR-PATH [flags]
@@ -23,6 +22,7 @@ kosli pipeline artifact report creation ARTIFACT-NAME-OR-PATH [flags]
 |    -b, --build-url string  |  The url of CI pipeline that built the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -u, --commit-url string  |  The url for the git commit that created the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -d, --description string  |  [optional] The artifact description.  |
+|    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -g, --git-commit string  |  The git commit from which the artifact was created. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -h, --help  |  help for creation  |
 |    -p, --pipeline string  |  The Kosli pipeline name.  |
@@ -38,11 +38,10 @@ kosli pipeline artifact report creation ARTIFACT-NAME-OR-PATH [flags]
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
 |    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
-|    -D, --dry-run  |  [optional] Whether to run in dry-run mode. When enabled, data is not sent to Kosli and the CLI exits with 0 exit code regardless of errors.  |
+|        --debug  |  [optional] Print debug logs to stdout.  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --owner string  |  The Kosli user or organization.  |
-|    -v, --verbose  |  [optional] Print verbose logs to stdout.  |
 
 
 ### Examples
@@ -60,7 +59,7 @@ kosli pipeline artifact report creation FILE.tgz \
 	--pipeline yourPipelineName 
 
 # Report to a Kosli pipeline that an artifact with a provided fingerprint (sha256) has been created
-kosli pipeline artifact report creation \
+kosli pipeline artifact report creation ANOTHER_FILE.txt \
 	--api-token yourApiToken \
 	--build-url https://exampleci.com \
 	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \

@@ -4,13 +4,13 @@ title: "kosli environment report lambda"
 
 ## kosli environment report lambda
 
-Report artifact from AWS Lambda to Kosli.
+Report the artifact deployed in an AWS Lambda and its digest to Kosli.
 
 ### Synopsis
 
-
-Report the artifact deployed in an AWS Lambda and its digest to Kosli. 
-
+Report the artifact deployed in an AWS Lambda and its digest to Kosli.
+To authenticate to AWS, you can either export the AWS env vars or use the command flags to pass them.
+See the examples below.s
 
 ```shell
 kosli environment report lambda ENVIRONMENT-NAME [flags]
@@ -22,6 +22,7 @@ kosli environment report lambda ENVIRONMENT-NAME [flags]
 |        --aws-key-id string  |  The AWS access key ID.  |
 |        --aws-region string  |  The AWS region.  |
 |        --aws-secret-key string  |  The AWS secret key.  |
+|    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |        --function-name string  |  The name of the AWS Lambda function.  |
 |        --function-version string  |  [optional] The version of the AWS Lambda function.  |
 |    -h, --help  |  help for lambda  |
@@ -32,11 +33,10 @@ kosli environment report lambda ENVIRONMENT-NAME [flags]
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
 |    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
-|    -D, --dry-run  |  [optional] Whether to run in dry-run mode. When enabled, data is not sent to Kosli and the CLI exits with 0 exit code regardless of errors.  |
+|        --debug  |  [optional] Print debug logs to stdout.  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --owner string  |  The Kosli user or organization.  |
-|    -v, --verbose  |  [optional] Print verbose logs to stdout.  |
 
 
 ### Examples

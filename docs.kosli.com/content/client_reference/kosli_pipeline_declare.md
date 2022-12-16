@@ -4,14 +4,13 @@ title: "kosli pipeline declare"
 
 ## kosli pipeline declare
 
-Declare or update a Kosli pipeline
+Create or update a Kosli pipeline.
 
 ### Synopsis
 
-
-Declare or update a Kosli pipeline by providing a JSON pipefile or by providing pipeline parameters in flags. 
-The pipefile contains the pipeline metadata and compliance policy.
-
+Create or update a Kosli pipeline.
+You can provide a JSON pipefile or specify pipeline parameters in flags. 
+The pipefile contains the pipeline metadata and compliance policy (template).
 
 ```shell
 kosli pipeline declare [flags]
@@ -21,6 +20,7 @@ kosli pipeline declare [flags]
 | Flag | Description |
 | :--- | :--- |
 |        --description string  |  [optional] The Kosli pipeline description.  |
+|    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -h, --help  |  help for declare  |
 |        --pipefile string  |  [deprecated] The path to the JSON pipefile.  |
 |        --pipeline string  |  The name of the pipeline to be created or updated.  |
@@ -33,11 +33,10 @@ kosli pipeline declare [flags]
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
 |    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
-|    -D, --dry-run  |  [optional] Whether to run in dry-run mode. When enabled, data is not sent to Kosli and the CLI exits with 0 exit code regardless of errors.  |
+|        --debug  |  [optional] Print debug logs to stdout.  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --owner string  |  The Kosli user or organization.  |
-|    -v, --verbose  |  [optional] Print verbose logs to stdout.  |
 
 
 ### Examples
@@ -62,7 +61,7 @@ kosli pipeline declare \
 The pipefile format is:
 {
     "name": "yourPipelineName",
-    "description": "yourPipelinedescription",
+    "description": "yourPipelineDescription",
     "visibility": "public or private",
     "template": [
         "artifact",
