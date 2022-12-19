@@ -106,7 +106,7 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 	if artifactData["state"].(string) == "COMPLIANT" {
 		logger.Info("COMPLIANT")
 	} else {
-		fmt.Fprintln(out, artifactData["state"].(string))
+		fmt.Fprintf(out, "%s: %s\n", artifactData["state"].(string), artifactData["state_info"].(string))
 		os.Exit(1)
 	}
 
