@@ -161,7 +161,7 @@ func (gv *GitView) newArtifactCommitFromGitCommit(gitCommit string) (*ArtifactCo
 
 // asArtifactCommit returns an ArtifactCommit from a git Commit object
 func asArtifactCommit(commit *object.Commit, branchName string) *ArtifactCommit {
-	var commitParents []string
+	commitParents := []string{}
 	for _, hash := range commit.ParentHashes {
 		commitParents = append(commitParents, hash.String())
 	}
