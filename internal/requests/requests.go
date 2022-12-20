@@ -118,13 +118,13 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 		c.Logger.Debug("request made to %s and got status %d", req.URL, resp.StatusCode)
 
 		if resp.StatusCode != 200 && resp.StatusCode != 201 {
-			var respBody map[string]string
+			var respBody map[string]interface{}
 			err := json.Unmarshal([]byte(body), &respBody)
 			if err != nil {
 				return &HTTPResponse{}, err
 			}
 
-			cleanedErrorMessage := strings.Split(respBody["message"], "You have requested")[0]
+			cleanedErrorMessage := strings.Split(respBody["message"].(string), "You have requested")[0]
 			return nil, fmt.Errorf(cleanedErrorMessage)
 		}
 		return &HTTPResponse{string(body), resp}, nil
