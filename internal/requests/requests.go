@@ -124,7 +124,14 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 				return &HTTPResponse{}, err
 			}
 
-			cleanedErrorMessage := strings.Split(respBody["message"].(string), "You have requested")[0]
+			cleanedErrorMessage := ""
+			message, ok := respBody["message"]
+			if ok {
+				cleanedErrorMessage = strings.Split(message.(string), "You have requested")[0]
+			} else {
+				cleanedErrorMessage = fmt.Sprintf("%v", respBody)
+			}
+
 			return nil, fmt.Errorf(cleanedErrorMessage)
 		}
 		return &HTTPResponse{string(body), resp}, nil
