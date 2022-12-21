@@ -14,9 +14,9 @@ import (
 )
 
 type EvidenceJUnitPayload struct {
-    // TODO: Put version in payload
-    // TODO: Put Sha256 in payload
-    // TODO: Say whether sha256 is for artifact or commit (later) in payload
+	// TODO: Put version in payload
+	// TODO: Put Sha256 in payload
+	// TODO: Say whether sha256 is for artifact or commit (later) in payload
 	EvidenceName string          `json:"name"`
 	BuildUrl     string          `json:"build_url"`
 	JUnitResults []*JUnitResults `json:"junit_results"`
