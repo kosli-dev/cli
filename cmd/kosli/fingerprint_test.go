@@ -43,7 +43,7 @@ func (suite *FingerprintTestSuite) TestFingerprintCmd() {
 		},
 		{
 			name:      "docker fingerprint fails when the image is NOT available",
-			cmd:       "fingerprint --artifact-type docker nginx",
+			cmd:       "fingerprint --artifact-type docker nginx-not-existing",
 			wantError: true,
 		},
 		{
