@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -12,29 +14,27 @@ import (
 )
 
 type EvidenceJUnitPayload struct {
-    EvidenceName string        `json:"name"`
-    BuildUrl     string        `json:"build_url"`
-    JUnitResults JUnitResults  `json:"junit_results"`
-    UserData     interface{}   `json:"user_data"`
+	EvidenceName string          `json:"name"`
+	BuildUrl     string          `json:"build_url"`
+	JUnitResults []*JUnitResults `json:"junit_results"`
+	UserData     interface{}     `json:"user_data"`
 }
 
 type JUnitResults struct {
-    Name      string  `json:"name"`
-    Failures  int     `json:"failures"`
-    Errors    int     `json:"errors"`
-    Skipped   int     `json:"skipped"`
-    Total     int     `json:"total"`
-    Duration  float32 `json:"duration"`
-    Timestamp int64   `json:"timestamp"`
+	Name      string  `json:"name"`
+	Failures  int     `json:"failures"`
+	Errors    int     `json:"errors"`
+	Skipped   int     `json:"skipped"`
+	Total     int     `json:"total"`
+	Duration  float64 `json:"duration"`
+	Timestamp float64 `json:"timestamp"`
 }
 
 type junitEvidenceOptions struct {
 	fingerprintOptions *fingerprintOptions
 	sha256             string // This is calculated or provided by the user
 	pipelineName       string
-	description        string
 	testResultsDir     string
-	buildUrl           string
 	userDataFile       string
 	payload            EvidenceJUnitPayload
 }
@@ -74,7 +74,7 @@ func newJUnitEvidenceCmd(out io.Writer) *cobra.Command {
 		Short:   junitEvidenceShortDesc,
 		Long:    junitEvidenceLongDesc,
 		Example: junitEvidenceExample,
-		Hidden: true,
+		Hidden:  true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -119,26 +119,17 @@ func (o *junitEvidenceOptions) run(args []string) error {
 			return err
 		}
 	}
-
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s", global.Host, global.Owner, o.pipelineName, o.sha256)
-	o.payload.Contents = map[string]interface{}{}
-
-	// o.payload.Contents["is_compliant"], err = isCompliantTestsDir(o.testResultsDir)
-	// if err != nil {
-	//	return err
-	//}
-
-	o.payload.Contents["url"] = o.buildUrl
-	o.payload.Contents["description"] = o.description
-	//o.payload.Contents["user_data"], err = LoadUserData(o.userDataFile)
-
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/%s/junit", global.Host, global.Owner, o.pipelineName, o.sha256)
 	o.payload.UserData, err = LoadUserData(o.userDataFile)
 	if err != nil {
 		return err
 	}
 
-	// _, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
-	// 	global.MaxAPIRetries, global.DryRun, http.MethodPut)
+	o.payload.JUnitResults, err = ingestJunitDir(o.testResultsDir)
+	if err != nil {
+		return err
+	}
+
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPut,
 		URL:      url,
@@ -148,28 +139,52 @@ func (o *junitEvidenceOptions) run(args []string) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("test evidence is reported to artifact: %s", o.sha256)
+		logger.Info("junit test evidence is reported to artifact: %s", o.sha256)
 	}
 	return err
 }
 
-func isCompliantTestsDir(testResultsDir string) (bool, error) {
+func ingestJunitDir(testResultsDir string) ([]*JUnitResults, error) {
+	results := []*JUnitResults{}
 	suites, err := junit.IngestDir(testResultsDir)
 	if err != nil {
-		return false, err
+		return results, err
 	}
 
 	if len(suites) == 0 {
-		return false, fmt.Errorf("no tests found in %s directory", testResultsDir)
+		return results, fmt.Errorf("no tests found in %s directory", testResultsDir)
 	}
 
 	for _, suite := range suites {
-		for _, test := range suite.Tests {
-			if test.Status == junit.StatusFailed || test.Status == junit.StatusError {
-				return false, nil
-			}
+		errors, err := strconv.Atoi(suite.Properties["errors"])
+		if err != nil {
+			return results, err
 		}
+		failures, err := strconv.Atoi(suite.Properties["failures"])
+		if err != nil {
+			return results, err
+		}
+		duration, err := strconv.ParseFloat(suite.Properties["time"], 64)
+		if err != nil {
+			return results, err
+		}
+		timestamp, err := time.Parse("2006-01-02T15:04:05.999999", suite.Properties["timestamp"])
+		if err != nil {
+			return results, err
+		}
+
+		suiteResult := &JUnitResults{
+			Name:      suite.Name,
+			Duration:  duration,
+			Total:     suite.Totals.Tests,
+			Skipped:   suite.Totals.Skipped,
+			Errors:    errors,
+			Failures:  failures,
+			Timestamp: float64(timestamp.UTC().Unix()),
+		}
+		logger.Debug("parsed <testsuite> result: %+v", suiteResult)
+		results = append(results, suiteResult)
 	}
 
-	return true, nil
+	return results, nil
 }
