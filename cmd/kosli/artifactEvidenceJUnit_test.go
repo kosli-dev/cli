@@ -20,7 +20,7 @@ func (suite *ArtifactEvidenceJUnitCommandTestSuite) TestArtifactEvidenceJUnitCom
 	tests := []cmdTestCase{
 		{
 			name:   "report JUnit test evidence",
-			cmd:    "pipeline artifact report evidence junit --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0 --name junit-result --pipeline FooBarPipeline --build-url example.com --results-dir testdata --dry-run" + defaultKosliArguments,
+			cmd:    "pipeline artifact report evidence junit --fingerprint 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0 --name junit-result --pipeline FooBarPipeline --build-url example.com --results-dir testdata --dry-run" + defaultKosliArguments,
 			golden: "",
 		},
 	}

@@ -105,6 +105,7 @@ const (
 	longFlag                = "[optional] Print detailed output."
 	reverseFlag             = "[defaulted] Reverse the order of output list."
 	evidenceNameFlag        = "The name of the evidence"
+	fingerprintFlag         = "[conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'."
 )
 
 var global *GlobalOpts

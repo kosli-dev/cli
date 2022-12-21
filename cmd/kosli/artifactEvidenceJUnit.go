@@ -14,6 +14,9 @@ import (
 )
 
 type EvidenceJUnitPayload struct {
+    // TODO: Put version in payload
+    // TODO: Put Sha256 in payload
+    // TODO: Say whether sha256 is for artifact or commit (later) in payload
 	EvidenceName string          `json:"name"`
 	BuildUrl     string          `json:"build_url"`
 	JUnitResults []*JUnitResults `json:"junit_results"`
@@ -32,7 +35,7 @@ type JUnitResults struct {
 
 type junitEvidenceOptions struct {
 	fingerprintOptions *fingerprintOptions
-	sha256             string // This is calculated or provided by the user
+	fingerprint        string // This is calculated or provided by the user
 	pipelineName       string
 	testResultsDir     string
 	userDataFile       string
@@ -57,7 +60,7 @@ kosli pipeline artifact report evidence junit FILE.tgz \
 
 # report JUnit test evidence about an artifact using an available Sha256 digest:
 kosli pipeline artifact report evidence junit \
-	--sha256 yourSha256 \
+	--fingerprint yourSha256 \
 	--name yourEvidenceName \
 	--pipeline yourPipelineName \
 	--build-url https://exampleci.com \
@@ -81,7 +84,7 @@ func newJUnitEvidenceCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
-			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.sha256, false)
+			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.fingerprint, false)
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -94,7 +97,7 @@ func newJUnitEvidenceCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVarP(&o.sha256, "sha256", "s", "", sha256Flag)
+	cmd.Flags().StringVarP(&o.fingerprint, "fingerprint", "f", "", fingerprintFlag)
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
 	cmd.Flags().StringVarP(&o.testResultsDir, "results-dir", "R", "/data/junit/", resultsDirFlag)
@@ -113,13 +116,13 @@ func newJUnitEvidenceCmd(out io.Writer) *cobra.Command {
 
 func (o *junitEvidenceOptions) run(args []string) error {
 	var err error
-	if o.sha256 == "" {
-		o.sha256, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
+	if o.fingerprint == "" {
+		o.fingerprint, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
 			return err
 		}
 	}
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/%s/junit", global.Host, global.Owner, o.pipelineName, o.sha256)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/%s/junit", global.Host, global.Owner, o.pipelineName, o.fingerprint)
 	o.payload.UserData, err = LoadUserData(o.userDataFile)
 	if err != nil {
 		return err
@@ -139,7 +142,7 @@ func (o *junitEvidenceOptions) run(args []string) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("junit test evidence is reported to artifact: %s", o.sha256)
+		logger.Info("junit test evidence is reported to artifact: %s", o.fingerprint)
 	}
 	return err
 }
