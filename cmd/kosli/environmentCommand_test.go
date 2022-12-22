@@ -29,6 +29,12 @@ func (suite *EnvironmentCommandTestSuite) TestEnvironmentCommandCmd() {
 			golden: "",
 		},
 		{
+			wantError: true,
+			name:      "declare env with illegal name",
+			cmd:       "environment declare --name foo_bar --environment-type S3 --description \"my new env\" " + defaultKosliArguments,
+			golden:    "Error: Input payload validation failed: map[name:'foo_bar' does not match '^[a-zA-Z][a-zA-Z0-9\\\\-]*$']\n",
+		},
+		{
 			// TODO: Is this really updating the environment?
 			name:   "re-declaring an env updates its metadata",
 			cmd:    "environment declare --name newEnv --environment-type S3 --description \"changed description\" " + defaultKosliArguments,
