@@ -124,10 +124,18 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 				return &HTTPResponse{}, err
 			}
 
+			// Error response from kosli application SW contains a "message"
+			// Error response from the API schema validation contains a "message" and a list of "errors"
 			cleanedErrorMessage := ""
 			message, ok := respBody["message"]
 			if ok {
-				cleanedErrorMessage = strings.Split(message.(string), "You have requested")[0]
+				errors, ok := respBody["errors"]
+				if ok {
+					cleanedErrorMessage = strings.Split(message.(string), "You have requested")[0] +
+						": " + fmt.Sprintf("%v", errors)
+				} else {
+					cleanedErrorMessage = strings.Split(message.(string), "You have requested")[0]
+				}
 			} else {
 				cleanedErrorMessage = fmt.Sprintf("%v", respBody)
 			}
