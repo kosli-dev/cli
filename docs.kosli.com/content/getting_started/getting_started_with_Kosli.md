@@ -1,14 +1,13 @@
 ---
-title: Quick start
+title: Learning Kosli
 bookCollapseSection: false
 weight: 10
 ---
 
-# Getting started with Kosli
+# Learning Kosli
 
-In this tutorial, you will see how Kosli allows you to follow a source code change to runtime environments.
-You will use Kosli to record build and deployment events, and to
-track what artifacts are running in your runtime environments. 
+In this tutorial, you'll learn how Kosli allows you to follow a source code change to runtime environments.
+You'll set up a `docker`environment, use Kosli to record build and deployment events, and track what artifacts are running in your runtime environments. 
 
 This tutorial uses the `docker` Kosli environment type, but the same steps can be applied to other supported environment types.
 
