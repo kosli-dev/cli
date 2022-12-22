@@ -92,7 +92,7 @@ func newPipelineDeclareCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(args)
+			return o.run()
 		},
 	}
 
@@ -106,7 +106,7 @@ func newPipelineDeclareCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *pipelineDeclareOptions) run(args []string) error {
+func (o *pipelineDeclareOptions) run() error {
 	var err error
 	url := fmt.Sprintf("%s/api/v1/projects/%s/", global.Host, global.Owner)
 	if o.pipefile != "" {
