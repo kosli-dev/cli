@@ -116,8 +116,6 @@ func (o *testEvidenceOptions) run(args []string) error {
 		return err
 	}
 
-	// _, err = requests.SendPayload(o.payload, url, "", global.ApiToken,
-	// 	global.MaxAPIRetries, global.DryRun, http.MethodPut)
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPut,
 		URL:      url,
