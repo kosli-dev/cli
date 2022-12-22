@@ -15,7 +15,6 @@ import (
 
 type EvidenceJUnitPayload struct {
 	// TODO: Put version in payload
-	CommitSha           string          `json:"commit_sha"`
 	ArtifactFingerprint string          `json:"artifact_fingerprint"`
 	EvidenceName        string          `json:"name"`
 	BuildUrl            string          `json:"build_url"`
