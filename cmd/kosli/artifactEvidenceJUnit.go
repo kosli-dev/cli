@@ -99,7 +99,7 @@ func newJUnitEvidenceCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.fingerprint, "fingerprint", "f", "", fingerprintFlag)
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
-	cmd.Flags().StringVarP(&o.testResultsDir, "results-dir", "R", "/data/junit/", resultsDirFlag)
+	cmd.Flags().StringVarP(&o.testResultsDir, "results-dir", "R", ".", resultsDirFlag)
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
