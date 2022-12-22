@@ -121,7 +121,6 @@ type GlobalOpts struct {
 	Debug         bool
 }
 
-//goland:noinspection GoUnusedParameter
 func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	global = new(GlobalOpts)
 	cmd := &cobra.Command{
