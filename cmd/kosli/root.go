@@ -128,6 +128,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		Short:            "The Kosli CLI.",
 		Long:             globalUsage,
 		SilenceUsage:     true,
+		SilenceErrors:    true,
 		TraverseChildren: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// You can bind cobra and viper in a few locations, but PersistencePreRunE on the root command works well
