@@ -27,7 +27,7 @@ Same error will pop up if you're trying to use a command that is not present in 
 
 ## Usage
 
-### Do I have to type down all the flags all the time? 
+### Do I have to provide all the flags all the time? 
 
 A number of flags won't change their values often (or at all) between commands, like `--owner` or `api-token`.  Some will differ between e.g. workflows, like `--pipeline`. You can define them as environment variable to avoid unnecessary redundancy. Check [Environment variables](/introducing_kosli/cli/#environment-variables) section to learn more.
 
@@ -39,7 +39,7 @@ There is a few ways you can enable dry run mode
 1. use `--dry-run` flag (no value needed) to enable it per command
 1. set `KOSLI_API_TOKEN` environment variable to `DRY_RUN` to enable it globally (e.g. in your terminal or CI)
 
-### What is config file?
+### What is the `--config-file` flag?
 
 A config file is an alternative for using Kosli flags or Environment variables. Usually you'd use config file for the values that rarely change - like api token or owner, but you can represent all Kosli flags with config file. The key for each value is the same as the flag name, capitalized, so `--api-token` would become `API-TOKEN`, and `--owner` would become `OWNER`, etc. 
 
@@ -73,4 +73,4 @@ When calling Kosli command you can skip file extension. For example, to list env
 $ kosli environment ls --config-file kosli-conf
 ```
 
-`--config-file` deafults to `kosli`, so if you name your file `kosli.<yaml|toml|json>` and the file is in the same location as where you run Kosli commands from, you can skip the `--config-file` altogether.
+`--config-file` defaults to `kosli`, so if you name your file `kosli.<yaml|toml|json>` and the file is in the same location as where you run Kosli commands from, you can skip the `--config-file` altogether.
