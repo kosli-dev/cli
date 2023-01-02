@@ -27,7 +27,7 @@ func (suite *ArtifactEvidenceJUnitCommandTestSuite) SetupTest() {
 		},
 		{
 			name: "create an artifact",
-			cmd: `pipeline artifact report creation FooBar_1 --git-commit 19c4e7a2665fe7f26f2ddbf0328898cc87b0b267 --sha256 ` + suite.artifactFingerprint + `
+			cmd: `pipeline artifact report creation FooBar_1 --git-commit HEAD --sha256 ` + suite.artifactFingerprint + `
 			          --pipeline ` + suite.pipelineName + ` --build-url www.yr.no --commit-url www.nrk.no --repo-root ../..` + suite.defaultKosliArguments,
 		},
 	}
