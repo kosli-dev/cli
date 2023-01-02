@@ -251,7 +251,7 @@ func (suite *DigestTestSuite) TestDirSha256() {
 				}
 			}
 
-			sha256, err := DirSha256(dirPath, logger.NewLogger(os.Stdout, false))
+			sha256, err := DirSha256(dirPath, logger.NewStandardLogger())
 			require.NoErrorf(suite.T(), err, "error creating digest for test dir %s", dirPath)
 
 			assert.Equal(suite.T(), t.want, sha256, fmt.Sprintf("TestDirSha256: %s , got: %v -- want: %v", t.name, sha256, t.want))
@@ -304,7 +304,7 @@ func (suite *DigestTestSuite) TestDirSha256Validation() {
 				suite.createFileWithContent(dirPath, "")
 			}
 
-			_, err := DirSha256(dirPath, logger.NewLogger(os.Stdout, false))
+			_, err := DirSha256(dirPath, logger.NewStandardLogger())
 			if t.errExpected {
 				require.Errorf(suite.T(), err, "TestDirSha256Validation: error was expected")
 			}
@@ -467,7 +467,7 @@ func (suite *DigestTestSuite) TestRemoteDockerImageSha256() {
 				require.NoErrorf(suite.T(), err, "TestRemoteDockerImageSha256: test image should be pushable")
 			}
 			actual, err := RemoteDockerImageSha256(t.localImageName, t.localImageTag, "http://localhost:5001/v2", "secret",
-				logger.NewLogger(os.Stdout, false))
+				logger.NewStandardLogger())
 			if t.want.expectError {
 				require.Errorf(suite.T(), err, "TestRemoteDockerImageSha256: error was expected")
 			} else {

@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	log "github.com/kosli-dev/cli/internal/logger"
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,13 +19,6 @@ import (
 // returns the current testing context
 type CliUtilsTestSuite struct {
 	suite.Suite
-}
-
-func (suite *CliUtilsTestSuite) SetupSuite() {
-	logger = log.NewLogger(os.Stdout, false)
-	kosliClient = requests.NewKosliClient(1, false, logger)
-	require.NotNil(suite.T(), logger, "logger should not be nil")
-	require.NotNil(suite.T(), kosliClient, "kosliClient should not be nil")
 }
 
 // All methods that begin with "Test" are run as tests within a
@@ -298,7 +290,7 @@ func (suite *CliUtilsTestSuite) TestGetSha256Digest() {
 	} {
 		suite.Run(t.name, func() {
 			fingerprint, err := GetSha256Digest(t.args.artifactName, t.args.fingerprintOptions,
-				log.NewLogger(os.Stdout, false))
+				log.NewStandardLogger())
 			if t.expectError {
 				require.Errorf(suite.T(), err, "TestGetSha256Digest: error was expected but got none.")
 			} else {

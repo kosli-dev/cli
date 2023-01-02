@@ -15,14 +15,26 @@ type Logger struct {
 	errLog       *log.Logger
 }
 
-func NewLogger(out io.Writer, debug bool) *Logger {
+func NewStandardLogger() *Logger {
+	return NewLogger(os.Stdout, os.Stderr, false)
+}
+
+func NewLogger(infoOut, errOut io.Writer, debug bool) *Logger {
 	return &Logger{
 		DebugEnabled: debug,
-		Out:          out,
-		warnLog:      log.New(os.Stderr, "", 0),
-		errLog:       log.New(os.Stderr, "", 0),
-		infoLog:      log.New(out, "", 0),
+		Out:          infoOut,
+		warnLog:      log.New(errOut, "", 0),
+		errLog:       log.New(errOut, "", 0),
+		infoLog:      log.New(infoOut, "", 0),
 	}
+}
+
+func (l *Logger) SetErrOut(out io.Writer) {
+	l.errLog.SetOutput(out)
+}
+
+func (l *Logger) SetInfoOut(out io.Writer) {
+	l.infoLog.SetOutput(out)
 }
 
 func (l *Logger) Debug(format string, v ...interface{}) {
@@ -36,12 +48,12 @@ func (l *Logger) Debug(format string, v ...interface{}) {
 }
 
 func (l *Logger) Warning(format string, v ...interface{}) {
-	format = fmt.Sprintf("[Warning] %s\n", format)
+	format = fmt.Sprintf("[warning] %s\n", format)
 	l.warnLog.Printf(format, v...)
 }
 
 func (l *Logger) Error(format string, v ...interface{}) {
-	format = fmt.Sprintf("[Error] %s\n", format)
+	format = fmt.Sprintf("Error: %s\n", format)
 	l.errLog.Fatalf(format, v...)
 }
 

@@ -149,7 +149,7 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 				}
 			}
 			// Get pods data
-			podsData, err := GetPodsData(t.args.includePatterns, t.args.excludePatterns, suite.clientset, logger.NewLogger(os.Stdout, false))
+			podsData, err := GetPodsData(t.args.includePatterns, t.args.excludePatterns, suite.clientset, logger.NewStandardLogger())
 			require.NoErrorf(suite.T(), err, "error getting pods data for test %s", t.name)
 			actual := []*comparablePodData{}
 			for _, pd := range podsData {

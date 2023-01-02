@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -181,7 +180,8 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 }
 
 func initialize(cmd *cobra.Command, out io.Writer) error {
-	logger = log.NewLogger(out, global.Debug)
+	logger.DebugEnabled = global.Debug
+	logger.SetInfoOut(out) // needed to allow tests to overwrite the logger output stream
 	kosliClient = requests.NewKosliClient(global.MaxAPIRetries, global.Debug, logger)
 	v := viper.New()
 
