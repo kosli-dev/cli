@@ -47,6 +47,8 @@ func (gv *GitView) CommitsBetween(oldest, newest string, logger *logger.Logger) 
 	// which will fail on the server side.
 	// Using 'commits := make([]*ArtifactCommit, 0)' will make '[]' convert to '[]' when converting to json
 	// See issue #522
+
+	//TODO: check why this behaves weird, comment in server#556
 	commits := make([]*ArtifactCommit, 0)
 
 	branchName, err := gv.BranchName()
