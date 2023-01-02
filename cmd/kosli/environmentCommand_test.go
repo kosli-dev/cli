@@ -24,9 +24,10 @@ func (suite *EnvironmentCommandTestSuite) TestEnvironmentCommandCmd() {
 			golden: "",
 		},
 		{
-			name:   "declare env with case-insensitive type",
-			cmd:    "environment declare --name newK8SEnv --environment-type k8s --description \"my new env\" " + defaultKosliArguments,
-			golden: "",
+			wantError: true,
+			name:      "declare env with wrong case of type is rejected",
+			cmd:       "environment declare --name newK8SEnv --environment-type k8s --description \"my new env\" " + defaultKosliArguments,
+			golden:    "Error: Input payload validation failed: map[type:'k8s' is not one of ['K8S', 'ECS', 'S3', 'lambda', 'server', 'docker']]\n",
 		},
 		{
 			wantError: true,
@@ -56,7 +57,7 @@ func (suite *EnvironmentCommandTestSuite) TestEnvironmentCommandCmd() {
 			wantError: true,
 			name:      "unknown --environment-type causes an error",
 			cmd:       "environment declare --name newEnv --environment-type UNKNOWN --description \"my new env\" " + defaultKosliArguments,
-			golden:    "Error: Environment type 'UNKNOWN' is not supported. Type must be one of ['K8S', 'ECS', 'S3', 'lambda', 'server', 'docker']\n",
+			golden:    "Error: Input payload validation failed: map[type:'UNKNOWN' is not one of ['K8S', 'ECS', 'S3', 'lambda', 'server', 'docker']]\n",
 		},
 		{
 			wantError: true,
