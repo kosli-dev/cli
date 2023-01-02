@@ -56,7 +56,7 @@ Run `kosli environment report k8s` to report images data from specific namespace
 
 The command can be run anywhere and requires `kubeconfig` file to be able to connect to the cluster (you can skip providing the location of `kubeconfig` if it resides in default `$HOME/.kube/config` folder).
 
-You can also choose to run it from within the cluster - use our [helm chart](/helm/helm_chart/) to install the reporter as a cron job. `kubeconfig` won't be need in that case.
+You can also choose to run it from within the cluster - use our [helm chart](/helm/) to install the reporter as a cron job. `kubeconfig` won't be need in that case.
 
 ### Example
 
