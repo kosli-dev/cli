@@ -32,7 +32,7 @@ jobs:
           rm helm-docs.dep
           cd charts/k8s-reporter 
           helm-docs --template-files README.md.gotmpl,_templates.gotmpl --output-file README.md 
-          helm-docs --template-files README.md.gotmpl,_templates.gotmpl --output-file ../../docs.kosli.com/content/helm/helm_chart.md
+          helm-docs --template-files README.md.gotmpl,_templates.gotmpl --output-file ../../docs.kosli.com/content/helm/_index.md
 
       - name: Helm Package
         run: helm package charts/k8s-reporter --destination package
