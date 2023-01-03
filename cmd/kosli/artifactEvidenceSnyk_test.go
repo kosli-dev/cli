@@ -48,19 +48,30 @@ func (suite *ArtifactEvidenceSnykCommandTestSuite) TestArtifactEvidenceSnykComma
 			cmd: `pipeline artifact report evidence snyk --fingerprint ` + suite.artifactFingerprint + ` --name snyk-result --pipeline ` + suite.pipelineName + `
 			          --build-url example.com --scan-results testdata/foo.json` + suite.defaultKosliArguments,
 			wantError: true,
+			golden:    "Error: open testdata/foo.json: no such file or directory\n",
+		},
+		{
+			name: "report Snyk scan evidence with missing scan-results flag",
+			cmd: `pipeline artifact report evidence snyk --fingerprint ` + suite.artifactFingerprint + ` --name snyk-result --pipeline ` + suite.pipelineName + `
+			          --build-url example.com` + suite.defaultKosliArguments,
+			wantError: true,
+			golden:    "Error: required flag(s) \"scan-results\" not set\n",
 		},
 		{
 			name: "report Snyk scan evidence with missing name flag",
 			cmd: `pipeline artifact report evidence snyk --fingerprint ` + suite.artifactFingerprint + ` --pipeline ` + suite.pipelineName + `
 			          --build-url example.com --scan-results testdata/snyk_scan_example.json` + suite.defaultKosliArguments,
 			wantError: true,
+			golden:    "Error: required flag(s) \"name\" not set\n",
 		},
 		{
 			name: "report Snyk scan evidence with a missing pipeline",
 			cmd: `pipeline artifact report evidence snyk --fingerprint ` + suite.artifactFingerprint + ` --name snyk-result
 			          --build-url example.com --scan-results testdata/snyk_scan_example.json` + suite.defaultKosliArguments,
 			wantError: true,
+			golden:    "Error: required flag(s) \"pipeline\" not set\n",
 		},
+		// We can not test missing --build-url flag since the CI system provides this by default
 	}
 	runTestCmd(suite.T(), tests)
 }

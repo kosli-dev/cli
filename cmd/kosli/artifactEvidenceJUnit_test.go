@@ -59,22 +59,18 @@ func (suite *ArtifactEvidenceJUnitCommandTestSuite) TestArtifactEvidenceJUnitCom
 		{
 			name: "report JUnit test evidence with missing name flag",
 			cmd: `pipeline artifact report evidence junit --fingerprint ` + suite.artifactFingerprint + ` --pipeline ` + suite.pipelineName + `
-			          --build-url example.com --results-dir testdata/folder1` + suite.defaultKosliArguments,
+			          --build-url example.com --results-dir testdata` + suite.defaultKosliArguments,
 			wantError: true,
-		},
-		{
-			name: "report JUnit test evidence with missing build-url",
-			cmd: `pipeline artifact report evidence junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result --pipeline ` + suite.pipelineName + `
-			          --results-dir testdata/folder1` + suite.defaultKosliArguments,
-			wantError: true,
-			golden:    "Error: required flag(s) \"build-url\" not set\n",
+			golden:    "Error: required flag(s) \"name\" not set\n",
 		},
 		{
 			name: "report JUnit test evidence with a missing pipeline",
 			cmd: `pipeline artifact report evidence junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result
-			          --build-url example.com --results-dir testdata/folder1` + suite.defaultKosliArguments,
+			          --build-url example.com --results-dir testdata` + suite.defaultKosliArguments,
 			wantError: true,
+			golden:    "Error: required flag(s) \"pipeline\" not set\n",
 		},
+		// We can not test missing --build-url flag since the CI system provides this by default
 	}
 	runTestCmd(suite.T(), tests)
 }
