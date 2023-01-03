@@ -40,7 +40,7 @@ type GithubPrEvidence struct {
 
 const pullRequestEvidenceGithubShortDesc = `Report a Github pull request evidence for an artifact in a Kosli pipeline.`
 
-const pullRequestEvidenceGithubLongDesc = pullRequestEvidenceBitbucketShortDesc + `
+const pullRequestEvidenceGithubLongDesc = pullRequestEvidenceGithubShortDesc + `
 It checks if a pull request exists for the artifact (based on its git commit) and report the pull-request evidence to the artifact in Kosli. 
 ` + sha256Desc
 
