@@ -67,6 +67,7 @@ func (suite *ArtifactEvidenceJUnitCommandTestSuite) TestArtifactEvidenceJUnitCom
 			cmd: `pipeline artifact report evidence junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result --pipeline ` + suite.pipelineName + `
 			          --results-dir testdata/folder1` + suite.defaultKosliArguments,
 			wantError: true,
+			golden:    "Error: required flag(s) \"build-url\" not set\n",
 		},
 		{
 			name: "report JUnit test evidence with a missing pipeline",

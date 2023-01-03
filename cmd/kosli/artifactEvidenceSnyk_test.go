@@ -56,12 +56,6 @@ func (suite *ArtifactEvidenceSnykCommandTestSuite) TestArtifactEvidenceSnykComma
 			wantError: true,
 		},
 		{
-			name: "report Snyk scan evidence with missing build-url",
-			cmd: `pipeline artifact report evidence snyk --fingerprint ` + suite.artifactFingerprint + ` --name snyk-result --pipeline ` + suite.pipelineName + `
-			        --scan-results testdata/snyk_scan_example.json` + suite.defaultKosliArguments,
-			wantError: true,
-		},
-		{
 			name: "report Snyk scan evidence with a missing pipeline",
 			cmd: `pipeline artifact report evidence snyk --fingerprint ` + suite.artifactFingerprint + ` --name snyk-result
 			          --build-url example.com --scan-results testdata/snyk_scan_example.json` + suite.defaultKosliArguments,
