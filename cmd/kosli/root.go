@@ -88,6 +88,7 @@ const (
 	registryUsernameFlag    = "[conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry."
 	registryPasswordFlag    = "[conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry."
 	resultsDirFlag          = "[defaulted] The path to a folder with JUnit test results."
+	snykJsonResultsFileFlag = "The path to Snyk scan results Json file."
 	ecsClusterFlag          = "The name of the ECS cluster."
 	ecsServiceFlag          = "The name of the ECS service."
 	kubeconfigFlag          = "[defaulted] The kubeconfig path for the target cluster."
