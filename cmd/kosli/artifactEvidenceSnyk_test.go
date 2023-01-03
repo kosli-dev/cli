@@ -43,37 +43,30 @@ func (suite *ArtifactEvidenceSnykCommandTestSuite) TestArtifactEvidenceSnykComma
 			          --build-url example.com --scan-results testdata/snyk_scan_example.json` + suite.defaultKosliArguments,
 			golden: "snyk scan evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
-		// {
-		// 	name: "report JUnit test evidence with non-existing results dir",
-		// 	cmd: `pipeline artifact report evidence junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result --pipeline ` + suite.pipelineName + `
-		// 	          --build-url example.com --results-dir foo` + suite.defaultKosliArguments,
-		// 	wantError: true,
-		// },
-		// {
-		// 	name: "report JUnit test evidence with a results dir that does not contain any results",
-		// 	cmd: `pipeline artifact report evidence junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result --pipeline ` + suite.pipelineName + `
-		// 	          --build-url example.com --results-dir testdata/folder1` + suite.defaultKosliArguments,
-		// 	wantError: true,
-		// 	golden:    "Error: no tests found in testdata/folder1 directory\n",
-		// },
-		// {
-		// 	name: "report JUnit test evidence with missing name flag",
-		// 	cmd: `pipeline artifact report evidence junit --fingerprint ` + suite.artifactFingerprint + ` --pipeline ` + suite.pipelineName + `
-		// 	          --build-url example.com --results-dir testdata/folder1` + suite.defaultKosliArguments,
-		// 	wantError: true,
-		// },
-		// {
-		// 	name: "report JUnit test evidence with missing build-url",
-		// 	cmd: `pipeline artifact report evidence junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result --pipeline ` + suite.pipelineName + `
-		// 	          --results-dir testdata/folder1` + suite.defaultKosliArguments,
-		// 	wantError: true,
-		// },
-		// {
-		// 	name: "report JUnit test evidence with a missing pipeline",
-		// 	cmd: `pipeline artifact report evidence junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result
-		// 	          --build-url example.com --results-dir testdata/folder1` + suite.defaultKosliArguments,
-		// 	wantError: true,
-		// },
+		{
+			name: "report Snyk scan evidence with non-existing scan-results",
+			cmd: `pipeline artifact report evidence snyk --fingerprint ` + suite.artifactFingerprint + ` --name snyk-result --pipeline ` + suite.pipelineName + `
+			          --build-url example.com --scan-results testdata/foo.json` + suite.defaultKosliArguments,
+			wantError: true,
+		},
+		{
+			name: "report Snyk scan evidence with missing name flag",
+			cmd: `pipeline artifact report evidence snyk --fingerprint ` + suite.artifactFingerprint + ` --pipeline ` + suite.pipelineName + `
+			          --build-url example.com --scan-results testdata/snyk_scan_example.json` + suite.defaultKosliArguments,
+			wantError: true,
+		},
+		{
+			name: "report Snyk scan evidence with missing build-url",
+			cmd: `pipeline artifact report evidence snyk --fingerprint ` + suite.artifactFingerprint + ` --name snyk-result --pipeline ` + suite.pipelineName + `
+			        --scan-results testdata/snyk_scan_example.json` + suite.defaultKosliArguments,
+			wantError: true,
+		},
+		{
+			name: "report Snyk scan evidence with a missing pipeline",
+			cmd: `pipeline artifact report evidence snyk --fingerprint ` + suite.artifactFingerprint + ` --name snyk-result
+			          --build-url example.com --scan-results testdata/snyk_scan_example.json` + suite.defaultKosliArguments,
+			wantError: true,
+		},
 	}
 	runTestCmd(suite.T(), tests)
 }
