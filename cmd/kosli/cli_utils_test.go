@@ -362,7 +362,7 @@ func (suite *CliUtilsTestSuite) TestLoadUserData() {
 				require.NoErrorf(suite.T(), err, "error writing content to test file %s", t.args.filename)
 			}
 
-			_, err = LoadUserData(filepath.Join(tmpDir, t.args.filename))
+			_, err = LoadJsonData(filepath.Join(tmpDir, t.args.filename))
 			if t.expectError {
 				require.Errorf(suite.T(), err, "TestLoadUserData: error was expected but got none.")
 			} else {

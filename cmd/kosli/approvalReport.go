@@ -110,7 +110,7 @@ func (o *approvalReportOptions) run(args []string, request bool) error {
 
 	o.payload.Reviews = o.payloadReviews(request)
 
-	o.payload.UserData, err = LoadUserData(o.userDataFile)
+	o.payload.UserData, err = LoadJsonData(o.userDataFile)
 	if err != nil {
 		return err
 	}

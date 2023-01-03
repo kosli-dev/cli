@@ -118,7 +118,7 @@ func (o *genericEvidenceOptions) run(args []string) error {
 	o.payload.Contents["is_compliant"] = o.isCompliant
 	o.payload.Contents["url"] = o.buildUrl
 	o.payload.Contents["description"] = o.description
-	o.payload.Contents["user_data"], err = LoadUserData(o.userDataFile)
+	o.payload.Contents["user_data"], err = LoadJsonData(o.userDataFile)
 	if err != nil {
 		return err
 	}

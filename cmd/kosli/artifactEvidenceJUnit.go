@@ -124,7 +124,7 @@ func (o *junitEvidenceOptions) run(args []string) error {
 		o.payload.ArtifactFingerprint = o.fingerprint
 	}
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/junit/", global.Host, global.Owner, o.pipelineName)
-	o.payload.UserData, err = LoadUserData(o.userDataFile)
+	o.payload.UserData, err = LoadJsonData(o.userDataFile)
 	if err != nil {
 		return err
 	}

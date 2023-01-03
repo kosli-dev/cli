@@ -82,7 +82,7 @@ func (o *deploymentReportOptions) run(args []string) error {
 		}
 	}
 
-	o.payload.UserData, err = LoadUserData(o.userDataFile)
+	o.payload.UserData, err = LoadJsonData(o.userDataFile)
 	if err != nil {
 		return err
 	}

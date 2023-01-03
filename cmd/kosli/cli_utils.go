@@ -294,8 +294,8 @@ func GetSha256Digest(artifactName string, o *fingerprintOptions, logger *log.Log
 	return fingerprint, err
 }
 
-// LoadUserData reads a user data file and validates that it contains JSON
-func LoadUserData(filepath string) (interface{}, error) {
+// LoadJsonData loads json data from a file
+func LoadJsonData(filepath string) (interface{}, error) {
 	var err error
 	var result interface{}
 	content := `{}`
@@ -307,12 +307,12 @@ func LoadUserData(filepath string) (interface{}, error) {
 		if !utils.IsJSON(content) {
 			return result, fmt.Errorf("%s does not contain a valid JSON", filepath)
 		}
+		logger.Debug("loaded user data file content from: %s", filepath)
 	}
 	err = json.Unmarshal([]byte(content), &result)
 	if err != nil {
 		return result, err
 	}
-	logger.Debug("loaded user data file content from: %s", filepath)
 	return result, nil
 }
 
