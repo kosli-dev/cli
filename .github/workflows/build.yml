@@ -118,6 +118,10 @@ jobs:
         version:
           ${{ env.KOSLI_CLI_VERSION }}
 
+    
+    - name: setup Snyk
+      uses: snyk/actions/setup@master
+
 
     - name: Declare Kosli pipeline
       env:
