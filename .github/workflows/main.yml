@@ -27,7 +27,7 @@ jobs:
     uses: kosli-dev/cli/.github/workflows/build.yml@main
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
-      platforms: linux/amd64
+      platforms: linux/amd64,linux/arm64
       AWS_ACCOUNT_ID: 772819027869
       AWS_REGION: eu-central-1
     secrets:

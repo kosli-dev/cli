@@ -104,7 +104,7 @@ jobs:
         cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max    
 
 
-    - name: Make the image digest available for following steps
+    - name: Make the image fingerprint available for following steps
       run: |
         ARTIFACT_SHA=$( echo ${{ steps.docker_build.outputs.digest }} | sed 's/.*://')
         echo "FINGERPRINT=$ARTIFACT_SHA" >> ${GITHUB_ENV}
