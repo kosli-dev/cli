@@ -27,6 +27,11 @@ on:
 
 env:
   IMAGE: ghcr.io/kosli-dev/cli
+  KOSLI_OWNER: compliancedb
+  KOSLI_PIPELINE: cli
+  KOSLI_CLI_VERSION: "0.1.30"
+  # KOSLI_DRY_RUN: "True"
+
 
 jobs:
   build:
@@ -54,7 +59,7 @@ jobs:
     # This is the a separate action that sets up buildx (buildkit) runner
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2 
-  
+
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v3
       with:
@@ -104,3 +109,29 @@ jobs:
         SLACK_TITLE: Build Failed in Client repository
         SLACK_USERNAME: GithubActions
         SLACK_WEBHOOK: ${{ secrets.slack_webhook }}  
+
+
+    - name: setup-kosli-cli
+      uses: kosli-dev/setup-cli-action@v1
+      with:
+        version:
+          ${{ env.KOSLI_CLI_VERSION }}
+
+
+    - name: Declare Kosli pipeline
+      env:
+        KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
+      run: 
+        kosli pipeline declare 
+          --description "Kosli CLI" 
+          --pipeline ${{ env.KOSLI_PIPELINE }} 
+          --template "artifact"
+
+
+    - name: Report Docker image to Kosli
+      env:
+        KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
+      run: 
+        kosli pipeline artifact report creation
+           ${{ env.IMAGE }}:${{ inputs.tag }}
+           --artifact-type=docker
