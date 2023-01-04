@@ -35,6 +35,7 @@ jobs:
       slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
       ghcr_user: ${{ secrets.GHCR_USER }}
       ghcr_token: ${{ secrets.GHCR_TOKEN }}
+      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
   
   upload-reporter-package-staging:
     needs: [pre-build, build]
