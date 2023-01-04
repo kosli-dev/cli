@@ -103,6 +103,13 @@ jobs:
         cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
         cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max    
 
+
+    - name: Make the image digest available for following steps
+      run: |
+        ARTIFACT_SHA=$( echo ${{ steps.docker_build.outputs.digest }} | sed 's/.*://')
+        echo "FINGERPRINT=$ARTIFACT_SHA" >> ${GITHUB_ENV}
+
+
     - name: Slack Notification on Failure
       if: ${{ failure() }}
       uses: rtCamp/action-slack-notify@v2
@@ -140,4 +147,4 @@ jobs:
       run: 
         kosli pipeline artifact report creation
            ${{ env.IMAGE }}:${{ inputs.tag }}
-           --artifact-type=docker
+           --sha256=${{ env.FINGERPRINT }}
