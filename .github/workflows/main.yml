@@ -36,6 +36,7 @@ jobs:
       ghcr_user: ${{ secrets.GHCR_USER }}
       ghcr_token: ${{ secrets.GHCR_TOKEN }}
       kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
+      snyk_token: ${{ secrets.SNYK_TOKEN }}
   
   upload-reporter-package-staging:
     needs: [pre-build, build]
