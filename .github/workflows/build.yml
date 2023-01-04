@@ -110,17 +110,6 @@ jobs:
         echo "FINGERPRINT=$ARTIFACT_SHA" >> ${GITHUB_ENV}
 
 
-    - name: Slack Notification on Failure
-      if: ${{ failure() }}
-      uses: rtCamp/action-slack-notify@v2
-      env:
-        SLACK_CHANNEL: ${{ secrets.slack_channel }}
-        SLACK_COLOR: ${{ job.status }}
-        SLACK_TITLE: Build Failed in Client repository
-        SLACK_USERNAME: GithubActions
-        SLACK_WEBHOOK: ${{ secrets.slack_webhook }}  
-
-
     - name: setup-kosli-cli
       uses: kosli-dev/setup-cli-action@v1
       with:
@@ -136,7 +125,7 @@ jobs:
       run: 
         kosli pipeline declare 
           --description "Kosli CLI" 
-          --template "artifact"
+          --template "artifact,snyk-code-scan,snyk-docker-scan"
 
 
     - name: Report Docker image to Kosli
@@ -148,3 +137,62 @@ jobs:
         kosli pipeline artifact report creation
            ${{ env.IMAGE }}:${{ inputs.tag }}
            --sha256=${{ env.FINGERPRINT }}
+
+
+    - name: Run Snyk to check source code for vulnerabilities
+      continue-on-error: true
+      env:
+        # In order to use the Snyk Action you will need to have a Snyk API token.
+        # More details in https://github.com/snyk/actions#getting-your-snyk-token
+        # or you can signup for free at https://snyk.io/login
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      run: 
+          snyk test --json-file-output=snyk-code.json
+
+
+    - name: Report Snyk CODE scan results evidence to Kosli
+      env:
+        KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
+        KOSLI_OWNER: compliancedb
+        KOSLI_PIPELINE: cli
+      run: 
+        kosli pipeline artifact report evidence snyk 
+          ${{ env.IMAGE }}:${{ inputs.tag }}
+            --fingerprint ${{ env.FINGERPRINT }}
+            --name snyk-code-scan
+            --scan-results snyk-code.json
+
+
+    - name: Run Snyk to check Docker image for vulnerabilities
+      continue-on-error: true
+      env:
+        # In order to use the Snyk Action you will need to have a Snyk API token.
+        # More details in https://github.com/snyk/actions#getting-your-snyk-token
+        # or you can signup for free at https://snyk.io/login
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      run: 
+          snyk container test ${{ needs.prepare.outputs.tagged_image }} --file=Dockerfile --json-file-output=snyk-docker.json
+
+
+    - name: Report Snyk DOCKER scan results evidence to Kosli
+      env:
+        KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
+        KOSLI_OWNER: compliancedb
+        KOSLI_PIPELINE: cli
+      run: 
+        kosli pipeline artifact report evidence snyk 
+          ${{ env.IMAGE }}:${{ inputs.tag }}
+            --fingerprint ${{ env.FINGERPRINT }}
+            --name snyk-docker-scan
+            --scan-results snyk-docker.json
+
+
+    - name: Slack Notification on Failure
+      if: ${{ failure() }}
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_CHANNEL: ${{ secrets.slack_channel }}
+        SLACK_COLOR: ${{ job.status }}
+        SLACK_TITLE: Build Failed in Client repository
+        SLACK_USERNAME: GithubActions
+        SLACK_WEBHOOK: ${{ secrets.slack_webhook }}  
