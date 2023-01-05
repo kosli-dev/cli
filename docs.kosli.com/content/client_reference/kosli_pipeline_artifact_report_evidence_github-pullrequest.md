@@ -8,7 +8,7 @@ Report a Github pull request evidence for an artifact in a Kosli pipeline.
 
 ### Synopsis
 
-Report a Bitbucket pull request evidence for an artifact in a Kosli pipeline.
+Report a Github pull request evidence for an artifact in a Kosli pipeline.
 It checks if a pull request exists for the artifact (based on its git commit) and report the pull-request evidence to the artifact in Kosli. 
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag).
 
