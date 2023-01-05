@@ -1,8 +1,10 @@
 ---
-title: 'CLI'
+title: 'Kosli parts'
 weight: 40
 ---
-# CLI
+# Kosli parts
+
+## CLI
 
 In order to [record environments](/how_to/record), [artifacts and events](/how_to/connect) to Kosli you need to use [Kosli CLI](https://github.com/kosli-dev/cli). 
 The same tool can be used to [search](/how_to/search) Kosli and find out all you need to know about your runtime environments and artifacts.
@@ -11,7 +13,7 @@ Our CLI in an open source tool written in go and it's available for a number of 
 
 To learn more about to install Kosli CLI click [here](/getting_started/installation)
 
-## Usage
+### Usage
 
 <!-- TODO:
 
@@ -29,7 +31,7 @@ Some of the flags are **defaulted**, and the default value will be always printe
 
 Depending on the CI tool you are using some of the flags (including required ones) may also be defaulted, depending on the environment variables provided by the tool. If the flag is defaulted in your CI you don't have to provide it in the command. [Here](/ci-defaults) you can find more details about flags defaulted depending on CI.
 
-## Environment variables
+### Environment variables
 
 Each flag can be provided directly or represented with environment variable. In order to represent a flag with environment variable you need to create a variable with a `KOSLI_` prefix, followed by the flag name capitalized and internal dashes replaced by underscores, e.g.:
 
@@ -37,3 +39,18 @@ Each flag can be provided directly or represented with environment variable. In 
 * `--owner` can be represented by `KOSLI_OWNER`
 
 etc.
+
+## Web UI
+
+[app.kosli.com](https://app.kosli.com) is an easy way to monitor the status of your environments and pipelines. All you need to log in is a GitHub account.
+
+![app.kosli.com](/images/app.png)
+
+On the left of the page you can see the menu where you can:
+
+1. Switch to another organization using dropdown menu
+2. Switch to the Environments or the Pipelines view
+3. Enter organization settings page
+4. Access this documentation page
+
+In the top right corner of the page you will see your GitHub avatar where you can access your profile settings (containing your Kosli api key). You'll also find there a link to the page where you can create a shared organization and links to [cyber-dojo demo project](https://app.kosli.com/cyber-dojo/environments/) and to log out. 

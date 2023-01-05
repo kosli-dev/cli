@@ -1,10 +1,15 @@
 ---
-title: Frequently asked questions
+title: FAQ
 bookCollapseSection: False
 weight: 60
 ---
 
 # Frequently asked questions
+
+If you can't find the answer you're looking for please:
+
+* email us [here](mailto:info@kosli.com)
+* join our slack community [here](https://join.slack.com/t/koslicommunity/shared_invite/zt-1dlchm3s7-DEP6TKjP3Mr58OZVB3hCBw)
 
 ## Errors
 

@@ -1,5 +1,5 @@
 ---
-title: Search
+title: Searching and exporting in Kosli
 bookCollapseSection: false
 weight: 50
 ---

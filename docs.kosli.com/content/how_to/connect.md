@@ -1,5 +1,5 @@
 ---
-title: Connect
+title: Reporting in Kosli
 bookCollapseSection: false
 weight: 40
 ---

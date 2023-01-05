@@ -1,5 +1,5 @@
 ---
-title: Use Kosli in CI Systems
+title: CI/CD
 bookCollapseSection: false
 weight: 30
 aliases:
