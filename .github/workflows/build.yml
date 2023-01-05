@@ -177,7 +177,7 @@ jobs:
         # or you can signup for free at https://snyk.io/login
         SNYK_TOKEN: ${{ secrets.snyk_token }}
       run: 
-          snyk container test ${{ needs.prepare.outputs.tagged_image }} --file=Dockerfile --json-file-output=snyk-docker.json
+          snyk container test  ${{ env.IMAGE }}:${{ inputs.tag }} --file=Dockerfile --json-file-output=snyk-docker.json
 
 
     - name: Report Snyk DOCKER scan results evidence to Kosli
