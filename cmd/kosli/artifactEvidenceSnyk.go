@@ -109,7 +109,7 @@ func (o *snykEvidenceOptions) run(args []string) error {
 	} else {
 		o.payload.ArtifactFingerprint = o.fingerprint
 	}
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/snyk/", global.Host, global.Owner, o.pipelineName)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/snyk", global.Host, global.Owner, o.pipelineName)
 	o.payload.UserData, err = LoadJsonData(o.userDataFile)
 	if err != nil {
 		return err
