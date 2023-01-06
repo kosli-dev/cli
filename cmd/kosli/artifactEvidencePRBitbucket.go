@@ -200,7 +200,6 @@ func getPullRequestsFromBitbucketApi(workspace, repository, commit, username, pa
 }
 
 func parseBitbucketResponse(commit, workspace, repository, password, username string, response *requests.HTTPResponse, assert bool) ([]*PrEvidence, error) {
-	logger.Debug("pull requests response: " + response.Body)
 	pullRequestsEvidence := []*PrEvidence{}
 	var responseData map[string]interface{}
 	err := json.Unmarshal([]byte(response.Body), &responseData)
