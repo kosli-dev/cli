@@ -148,7 +148,7 @@ func (o *pullRequestEvidenceBitbucketOptions) run(args []string) error {
 	if err != nil {
 		return err
 	}
-	o.payload.GitProvider = "github"
+	o.payload.GitProvider = "bitbucket"
 	o.payload.PullRequests = pullRequestsEvidence
 
 	logger.Debug("found %d pull request(s) for commit: %s\n", len(pullRequestsEvidence), o.commit)
