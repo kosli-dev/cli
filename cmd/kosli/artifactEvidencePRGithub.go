@@ -14,25 +14,30 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type PullRequestEvidencePayload struct {
+	TypedEvidencePayload
+	GitProvider  string        `json:"git_provider"`
+	PullRequests []*PrEvidence `json:"pull_requests"`
+}
+
 type pullRequestEvidenceGithubOptions struct {
 	fingerprintOptions *fingerprintOptions
-	sha256             string // This is calculated or provided by the user
 	pipelineName       string
 	description        string
-	buildUrl           string
-	payload            EvidencePayload
+	payload            PullRequestEvidencePayload
 	ghToken            string
 	ghOwner            string
 	commit             string
 	repository         string
 	assert             bool
+	userDataFile       string
 }
 
-type GithubPrEvidence struct {
-	PullRequestMergeCommit string `json:"pullRequestMergeCommit"`
-	PullRequestURL         string `json:"pullRequestURL"`
-	PullRequestState       string `json:"pullRequestState"`
-	Approvers              string `json:"approvers"`
+type PrEvidence struct {
+	MergeCommit string   `json:"merge_commit"`
+	URL         string   `json:"url"`
+	State       string   `json:"state"`
+	Approvers   []string `json:"approvers"`
 	// LastCommit             string `json:"lastCommit"`
 	// LastCommitter          string `json:"lastCommitter"`
 	// SelfApproved           bool   `json:"selfApproved"`
@@ -49,7 +54,7 @@ const pullRequestEvidenceGithubExample = `
 kosli pipeline artifact report evidence github-pullrequest yourDockerImageName \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
-	--evidence-type yourEvidenceType \
+	--name yourEvidenceName \
 	--pipeline yourPipelineName \
 	--github-token yourGithubToken \
 	--github-org yourGithubOrg \
@@ -62,7 +67,7 @@ kosli pipeline artifact report evidence github-pullrequest yourDockerImageName \
 kosli pipeline artifact report evidence github-pullrequest yourDockerImageName \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
-	--evidence-type yourEvidenceType \
+	--name yourEvidenceName \
 	--pipeline yourPipelineName \
 	--github-token yourGithubToken \
 	--github-org yourGithubOrg \
@@ -88,7 +93,7 @@ func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
-			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.sha256, false)
+			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.ArtifactFingerprint, false)
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -106,17 +111,33 @@ func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
 	cmd.Flags().StringVar(&o.repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
 
-	cmd.Flags().StringVarP(&o.sha256, "sha256", "s", "", sha256Flag)
+	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "sha256", "s", "", sha256Flag)
+	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "f", "", sha256Flag)
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
 	cmd.Flags().StringVarP(&o.description, "description", "d", "", evidenceDescriptionFlag)
-	cmd.Flags().StringVarP(&o.buildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
-	cmd.Flags().StringVarP(&o.payload.EvidenceType, "evidence-type", "e", "", evidenceTypeFlag)
+	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
+	cmd.Flags().StringVarP(&o.payload.EvidenceName, "evidence-type", "e", "", evidenceTypeFlag)
+	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
+	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"github-token", "github-org", "commit",
-		"repository", "pipeline", "build-url", "evidence-type"})
+	err := cmd.Flags().MarkDeprecated("evidence-type", "use --name instead")
+	if err != nil {
+		logger.Error("failed to configure deprecated flag: %v", err)
+	}
+	err = cmd.Flags().MarkDeprecated("description", "description is no longer used")
+	if err != nil {
+		logger.Error("failed to configure deprecated flag: %v", err)
+	}
+	err = cmd.Flags().MarkDeprecated("sha256", "use --fingerprint instead")
+	if err != nil {
+		logger.Error("failed to configure deprecated flag: %v", err)
+	}
+
+	err = RequireFlags(cmd, []string{"github-token", "github-org", "commit",
+		"repository", "pipeline", "build-url"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
@@ -126,24 +147,27 @@ func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 
 func (o *pullRequestEvidenceGithubOptions) run(out io.Writer, args []string) error {
 	var err error
-	if o.sha256 == "" {
-		o.sha256, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
+	if o.payload.ArtifactFingerprint == "" {
+		o.payload.ArtifactFingerprint, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
 			return err
 		}
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s", global.Host, global.Owner, o.pipelineName, o.sha256)
-	pullRequestsEvidence, isCompliant, err := o.getGithubPullRequests()
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/pull_request", global.Host, global.Owner, o.pipelineName)
+	// Get repository name from 'owner/repository_name' string
+	o.repository = extractRepoName(o.repository)
+	pullRequestsEvidence, err := o.getGithubPullRequests()
 	if err != nil {
 		return err
 	}
 
-	o.payload.Contents = map[string]interface{}{}
-	o.payload.Contents["is_compliant"] = isCompliant
-	o.payload.Contents["url"] = o.buildUrl
-	o.payload.Contents["description"] = o.description
-	o.payload.Contents["source"] = pullRequestsEvidence
+	o.payload.UserData, err = LoadJsonData(o.userDataFile)
+	if err != nil {
+		return err
+	}
+	o.payload.GitProvider = "github"
+	o.payload.PullRequests = pullRequestsEvidence
 
 	logger.Debug("found %d pull request(s) for commit: %s\n", len(pullRequestsEvidence), o.commit)
 
@@ -156,74 +180,95 @@ func (o *pullRequestEvidenceGithubOptions) run(out io.Writer, args []string) err
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("github pull request evidence is reported to artifact: %s", o.sha256)
+		logger.Info("github pull request evidence is reported to artifact: %s", o.payload.ArtifactFingerprint)
 	}
 	return err
 }
 
-func (o *pullRequestEvidenceGithubOptions) getGithubPullRequests() ([]*GithubPrEvidence, bool, error) {
-	owner := o.ghOwner
-	// Get repository name from 'owner/repository_name' string
-	repoNameParts := strings.Split(o.repository, "/")
-	repository := repoNameParts[len(repoNameParts)-1]
-	commit := o.commit
+func (o *pullRequestEvidenceGithubOptions) getGithubPullRequests() ([]*PrEvidence, error) {
+	pullRequestsEvidence := []*PrEvidence{}
 
-	pullRequestsEvidence := []*GithubPrEvidence{}
-	isCompliant := false
-
-	ctx := context.Background()
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: o.ghToken},
-	)
-	tc := oauth2.NewClient(ctx, ts)
-
-	client := gh.NewClient(tc)
-	pullrequests, _, err := client.PullRequests.ListPullRequestsWithCommit(ctx, owner, repository,
-		commit, &gh.PullRequestListOptions{})
+	pullrequests, err := pullRequestsForCommit(o.ghToken, o.ghOwner, o.repository, o.commit)
 	if err != nil {
-		return pullRequestsEvidence, isCompliant, err
+		return pullRequestsEvidence, err
 	}
 
 	for _, pullrequest := range pullrequests {
-		evidence := &GithubPrEvidence{}
-		evidence.PullRequestURL = pullrequest.GetHTMLURL()
-		evidence.PullRequestMergeCommit = pullrequest.GetMergeCommitSHA()
-		evidence.PullRequestState = pullrequest.GetState()
-
-		approvers, err := getPullRequestApprovers(client, ctx, owner, repository,
-			pullrequest.GetNumber())
+		evidence, err := o.newPREvidence(pullrequest)
 		if err != nil {
-			return pullRequestsEvidence, isCompliant, err
+			return pullRequestsEvidence, err
 		}
-		evidence.Approvers = strings.Join(approvers, ",")
 		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
 
-		// lastCommit := pullrequest.Head.GetSHA()
-		// opts := gh.ListOptions{}
-		// commit, _, err := client.Repositories.GetCommit(ctx, owner, repository, lastCommit, &opts)
-		// if err != nil {
-		// 	return pullRequestsEvidence, isCompliant, err
-		// }
-		// evidence.LastCommit = lastCommit
-		// evidence.LastCommitter = commit.GetAuthor().GetLogin()
-		// if utils.Contains(approvers, evidence.LastCommitter) {
-		// 	evidence.SelfApproved = true
-		// }
 	}
-	if len(pullRequestsEvidence) > 0 {
-		isCompliant = true
-	} else {
+	if len(pullRequestsEvidence) == 0 {
 		if o.assert {
-			return pullRequestsEvidence, isCompliant, fmt.Errorf("no pull requests found for the given commit: %s", commit)
+			return pullRequestsEvidence, fmt.Errorf("no pull requests found for the given commit: %s", o.commit)
 		}
-		logger.Info("no pull requests found for given commit: " + commit)
+		logger.Info("no pull requests found for given commit: " + o.commit)
 	}
-	return pullRequestsEvidence, isCompliant, nil
+	return pullRequestsEvidence, nil
 }
 
-func getPullRequestApprovers(client *gh.Client, context context.Context, owner, repo string, number int) ([]string, error) {
+// newPREvidence creates an evidence from a github pull request
+func (o *pullRequestEvidenceGithubOptions) newPREvidence(pullrequest *gh.PullRequest) (*PrEvidence, error) {
+	evidence := &PrEvidence{}
+	evidence.URL = pullrequest.GetHTMLURL()
+	evidence.MergeCommit = pullrequest.GetMergeCommitSHA()
+	evidence.State = pullrequest.GetState()
+
+	approvers, err := getPullRequestApprovers(o.ghToken, o.ghOwner, o.repository,
+		pullrequest.GetNumber())
+	if err != nil {
+		return evidence, err
+	}
+	evidence.Approvers = approvers
+	return evidence, nil
+
+	// lastCommit := pullrequest.Head.GetSHA()
+	// opts := gh.ListOptions{}
+	// commit, _, err := client.Repositories.GetCommit(ctx, owner, repository, lastCommit, &opts)
+	// if err != nil {
+	// 	return pullRequestsEvidence, isCompliant, err
+	// }
+	// evidence.LastCommit = lastCommit
+	// evidence.LastCommitter = commit.GetAuthor().GetLogin()
+	// if utils.Contains(approvers, evidence.LastCommitter) {
+	// 	evidence.SelfApproved = true
+	// }
+}
+
+// pullRequestsForCommit returns a list of pull requests for a specific commit
+func pullRequestsForCommit(ghToken, ghOwner, repository, commit string) ([]*gh.PullRequest, error) {
+	ctx := context.Background()
+	client := newGithubClient(ctx, ghToken)
+	pullrequests, _, err := client.PullRequests.ListPullRequestsWithCommit(ctx, ghOwner, repository,
+		commit, &gh.PullRequestListOptions{})
+	return pullrequests, err
+}
+
+// newGithubClient returns Github client with a token and context
+func newGithubClient(ctx context.Context, ghToken string) *gh.Client {
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: ghToken},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+	client := gh.NewClient(tc)
+	return client
+}
+
+// extractRepoName returns repository name from 'owner/repository_name' string
+func extractRepoName(fullRepositoryName string) string {
+	repoNameParts := strings.Split(fullRepositoryName, "/")
+	repository := repoNameParts[len(repoNameParts)-1]
+	return repository
+}
+
+func getPullRequestApprovers(ghToken, ghOwner, repo string, number int) ([]string, error) {
 	approvers := []string{}
-	reviews, _, err := client.PullRequests.ListReviews(context, owner, repo, number, &gh.ListOptions{})
+	ctx := context.Background()
+	client := newGithubClient(ctx, ghToken)
+	reviews, _, err := client.PullRequests.ListReviews(ctx, ghOwner, repo, number, &gh.ListOptions{})
 	if err != nil {
 		return approvers, err
 	}

@@ -32,7 +32,7 @@ func newAssertPullRequestGithubCmd(out io.Writer) *cobra.Command {
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.assert = true
-			pullRequestsEvidence, _, err := o.getGithubPullRequests()
+			pullRequestsEvidence, err := o.getGithubPullRequests()
 			if err != nil {
 				return err
 			}

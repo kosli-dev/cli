@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -13,27 +12,16 @@ import (
 
 type pullRequestEvidenceBitbucketOptions struct {
 	fingerprintOptions *fingerprintOptions
-	sha256             string // This is calculated or provided by the user
 	pipelineName       string
 	description        string
-	buildUrl           string
-	payload            EvidencePayload
+	payload            PullRequestEvidencePayload
 	bbUsername         string
 	bbPassword         string
 	bbWorkspace        string
 	commit             string
 	repository         string
 	assert             bool
-}
-
-type BitbucketPrEvidence struct {
-	PullRequestMergeCommit string `json:"pullRequestMergeCommit"`
-	PullRequestURL         string `json:"pullRequestURL"`
-	PullRequestState       string `json:"pullRequestState"`
-	Approvers              string `json:"approvers"`
-	// LastCommit             string `json:"lastCommit"`
-	// LastCommitter          string `json:"lastCommitter"`
-	// SelfApproved           bool   `json:"selfApproved"`
+	userDataFile       string
 }
 
 const pullRequestEvidenceBitbucketShortDesc = `Report a Bitbucket pull request evidence for an artifact in a Kosli pipeline.`
@@ -47,7 +35,7 @@ const pullRequestEvidenceBitbucketExample = `
 kosli pipeline artifact report evidence bitbucket-pullrequest yourDockerImageName \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
-	--evidence-type yourEvidenceType \
+	--name yourEvidenceName \
 	--pipeline yourPipelineName \
 	--bitbucket-username yourBitbucketUsername \
 	--bitbucket-password yourBitbucketPassword \
@@ -61,7 +49,7 @@ kosli pipeline artifact report evidence bitbucket-pullrequest yourDockerImageNam
 kosli pipeline artifact report evidence bitbucket-pullrequest yourDockerImageName \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
-	--evidence-type yourEvidenceType \
+	--name yourEvidenceName \
 	--pipeline yourPipelineName \
 	--bitbucket-username yourBitbucketUsername \
 	--bitbucket-password yourBitbucketPassword \
@@ -88,7 +76,7 @@ func newPullRequestEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
-			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.sha256, false)
+			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.ArtifactFingerprint, false)
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -107,17 +95,32 @@ func newPullRequestEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
 	cmd.Flags().StringVar(&o.repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
 
-	cmd.Flags().StringVarP(&o.sha256, "sha256", "s", "", sha256Flag)
+	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "sha256", "s", "", sha256Flag)
+	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "f", "", sha256Flag)
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
 	cmd.Flags().StringVarP(&o.description, "description", "d", "", evidenceDescriptionFlag)
-	cmd.Flags().StringVarP(&o.buildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
-	cmd.Flags().StringVarP(&o.payload.EvidenceType, "evidence-type", "e", "", evidenceTypeFlag)
+	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
+	cmd.Flags().StringVarP(&o.payload.EvidenceName, "evidence-type", "e", "", evidenceTypeFlag)
+	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
+	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"bitbucket-username", "bitbucket-password",
-		"bitbucket-workspace", "commit", "repository", "pipeline", "build-url", "evidence-type"})
+	err := cmd.Flags().MarkDeprecated("evidence-type", "use --name instead")
+	if err != nil {
+		logger.Error("failed to configure deprecated flag: %v", err)
+	}
+	err = cmd.Flags().MarkDeprecated("description", "description is no longer used")
+	if err != nil {
+		logger.Error("failed to configure deprecated flag: %v", err)
+	}
+	err = cmd.Flags().MarkDeprecated("sha256", "use --fingerprint instead")
+	if err != nil {
+		logger.Error("failed to configure deprecated flag: %v", err)
+	}
+	err = RequireFlags(cmd, []string{"bitbucket-username", "bitbucket-password",
+		"bitbucket-workspace", "commit", "repository", "pipeline", "build-url"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
@@ -127,27 +130,26 @@ func newPullRequestEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 
 func (o *pullRequestEvidenceBitbucketOptions) run(args []string) error {
 	var err error
-	if o.sha256 == "" {
-		o.sha256, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
+	if o.payload.ArtifactFingerprint == "" {
+		o.payload.ArtifactFingerprint, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
 			return err
 		}
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s", global.Host, global.Owner, o.pipelineName, o.sha256)
-	pullRequestsEvidence, isCompliant, err := getPullRequestsFromBitbucketApi(o.bbWorkspace,
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/pull_request", global.Host, global.Owner, o.pipelineName)
+	pullRequestsEvidence, err := getPullRequestsFromBitbucketApi(o.bbWorkspace,
 		o.repository, o.commit, o.bbUsername, o.bbPassword, o.assert)
 	if err != nil {
 		return err
 	}
-	o.payload.Contents = map[string]interface{}{}
-	o.payload.Contents["is_compliant"] = isCompliant
-	o.payload.Contents["url"] = o.buildUrl
-	o.payload.Contents["description"] = o.description
-	o.payload.Contents["source"] = pullRequestsEvidence
+
+	o.payload.UserData, err = LoadJsonData(o.userDataFile)
 	if err != nil {
 		return err
 	}
+	o.payload.GitProvider = "bitbucket"
+	o.payload.PullRequests = pullRequestsEvidence
 
 	logger.Debug("found %d pull request(s) for commit: %s\n", len(pullRequestsEvidence), o.commit)
 
@@ -160,14 +162,13 @@ func (o *pullRequestEvidenceBitbucketOptions) run(args []string) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("bitbucket pull request evidence is reported to artifact: %s", o.sha256)
+		logger.Info("bitbucket pull request evidence is reported to artifact: %s", o.payload.ArtifactFingerprint)
 	}
 	return err
 }
 
-func getPullRequestsFromBitbucketApi(workspace, repository, commit, username, password string, assert bool) ([]*BitbucketPrEvidence, bool, error) {
-	isCompliant := false
-	pullRequestsEvidence := []*BitbucketPrEvidence{}
+func getPullRequestsFromBitbucketApi(workspace, repository, commit, username, password string, assert bool) ([]*PrEvidence, error) {
+	pullRequestsEvidence := []*PrEvidence{}
 
 	url := fmt.Sprintf("https://api.bitbucket.org/2.0/repositories/%s/%s/commit/%s/pullrequests", workspace, repository, commit)
 	logger.Debug("getting pull requests from " + url)
@@ -180,36 +181,34 @@ func getPullRequestsFromBitbucketApi(workspace, repository, commit, username, pa
 	}
 	response, err := kosliClient.Do(reqParams)
 	if err != nil {
-		return pullRequestsEvidence, false, err
+		return pullRequestsEvidence, err
 	}
 	if response.Resp.StatusCode == 200 {
-		isCompliant, pullRequestsEvidence, err = parseBitbucketResponse(commit, workspace, repository, password, username, response, assert)
+		pullRequestsEvidence, err = parseBitbucketResponse(commit, workspace, repository, password, username, response, assert)
 		if err != nil {
-			return pullRequestsEvidence, isCompliant, err
+			return pullRequestsEvidence, err
 		}
 	} else if response.Resp.StatusCode == 202 {
-		return pullRequestsEvidence, isCompliant, fmt.Errorf("repository pull requests are still being indexed, please retry")
+		return pullRequestsEvidence, fmt.Errorf("repository pull requests are still being indexed, please retry")
 	} else if response.Resp.StatusCode == 404 {
-		return pullRequestsEvidence, isCompliant, fmt.Errorf("repository does not exist or pull requests are not indexed." +
+		return pullRequestsEvidence, fmt.Errorf("repository does not exist or pull requests are not indexed." +
 			"Please make sure Pull Request Commit Links app is installed")
 	} else {
-		return pullRequestsEvidence, isCompliant, fmt.Errorf("failed to get pull requests from Bitbucket: %v", response.Body)
+		return pullRequestsEvidence, fmt.Errorf("failed to get pull requests from Bitbucket: %v", response.Body)
 	}
-	return pullRequestsEvidence, isCompliant, nil
+	return pullRequestsEvidence, nil
 }
 
-func parseBitbucketResponse(commit, workspace, repository, password, username string, response *requests.HTTPResponse, assert bool) (bool, []*BitbucketPrEvidence, error) {
-	logger.Debug("pull requests response: " + response.Body)
-	pullRequestsEvidence := []*BitbucketPrEvidence{}
-	isCompliant := false
+func parseBitbucketResponse(commit, workspace, repository, password, username string, response *requests.HTTPResponse, assert bool) ([]*PrEvidence, error) {
+	pullRequestsEvidence := []*PrEvidence{}
 	var responseData map[string]interface{}
 	err := json.Unmarshal([]byte(response.Body), &responseData)
 	if err != nil {
-		return isCompliant, pullRequestsEvidence, err
+		return pullRequestsEvidence, err
 	}
 	pullRequests, ok := responseData["values"].([]interface{})
 	if !ok {
-		return isCompliant, pullRequestsEvidence, nil
+		return pullRequestsEvidence, nil
 	}
 	for _, prInterface := range pullRequests {
 		pr := prInterface.(map[string]interface{})
@@ -218,24 +217,22 @@ func parseBitbucketResponse(commit, workspace, repository, password, username st
 		htmlLinkMap := linksInterface["html"].(map[string]interface{})
 		evidence, err := getPullRequestDetailsFromBitbucket(apiLinkMap["href"].(string), htmlLinkMap["href"].(string), workspace, repository, username, password, commit)
 		if err != nil {
-			return false, pullRequestsEvidence, err
+			return pullRequestsEvidence, err
 		}
 		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
 	}
-	if len(pullRequestsEvidence) > 0 {
-		isCompliant = true
-	} else {
+	if len(pullRequestsEvidence) == 0 {
 		if assert {
-			return isCompliant, pullRequestsEvidence, fmt.Errorf("no pull requests found for the given commit: %s", commit)
+			return pullRequestsEvidence, fmt.Errorf("no pull requests found for the given commit: %s", commit)
 		}
 		logger.Info("no pull requests found for given commit: " + commit)
 	}
-	return isCompliant, pullRequestsEvidence, nil
+	return pullRequestsEvidence, nil
 }
 
-func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, workspace, repository, username, password, commit string) (*BitbucketPrEvidence, error) {
+func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, workspace, repository, username, password, commit string) (*PrEvidence, error) {
 	logger.Debug("getting pull request details for " + prApiUrl)
-	evidence := &BitbucketPrEvidence{}
+	evidence := &PrEvidence{}
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,
@@ -254,9 +251,9 @@ func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, workspace, reposit
 			return evidence, err
 		}
 
-		evidence.PullRequestURL = prHtmlLink
-		evidence.PullRequestMergeCommit = commit
-		evidence.PullRequestState = responseData["state"].(string)
+		evidence.URL = prHtmlLink
+		evidence.MergeCommit = commit
+		evidence.State = responseData["state"].(string)
 		participants := responseData["participants"].([]interface{})
 		approvers := []string{}
 
@@ -271,7 +268,7 @@ func getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, workspace, reposit
 		} else {
 			logger.Debug("no approvers found")
 		}
-		evidence.Approvers = strings.Join(approvers, ",")
+		evidence.Approvers = approvers
 		// prID := int(responseData["id"].(float64))
 		// evidence.LastCommit, evidence.LastCommitter, err = getBitbucketPRLastCommit(workspace, repository, username, password, prID)
 		// if err != nil {
