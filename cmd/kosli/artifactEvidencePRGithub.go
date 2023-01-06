@@ -155,6 +155,8 @@ func (o *pullRequestEvidenceGithubOptions) run(out io.Writer, args []string) err
 	}
 
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/pull_request/", global.Host, global.Owner, o.pipelineName)
+	// Get repository name from 'owner/repository_name' string
+	o.repository = extractRepoName(o.repository)
 	pullRequestsEvidence, _, err := o.getGithubPullRequests()
 	if err != nil {
 		return err
@@ -184,67 +186,92 @@ func (o *pullRequestEvidenceGithubOptions) run(out io.Writer, args []string) err
 }
 
 func (o *pullRequestEvidenceGithubOptions) getGithubPullRequests() ([]*GithubPrEvidence, bool, error) {
-	owner := o.ghOwner
-	// Get repository name from 'owner/repository_name' string
-	repoNameParts := strings.Split(o.repository, "/")
-	repository := repoNameParts[len(repoNameParts)-1]
-	commit := o.commit
-
 	pullRequestsEvidence := []*GithubPrEvidence{}
 	isCompliant := false
 
-	ctx := context.Background()
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: o.ghToken},
-	)
-	tc := oauth2.NewClient(ctx, ts)
-
-	client := gh.NewClient(tc)
-	pullrequests, _, err := client.PullRequests.ListPullRequestsWithCommit(ctx, owner, repository,
-		commit, &gh.PullRequestListOptions{})
+	pullrequests, err := pullRequestsForCommit(o.ghToken, o.ghOwner, o.repository, o.commit)
 	if err != nil {
 		return pullRequestsEvidence, isCompliant, err
 	}
 
 	for _, pullrequest := range pullrequests {
-		evidence := &GithubPrEvidence{}
-		evidence.URL = pullrequest.GetHTMLURL()
-		evidence.MergeCommit = pullrequest.GetMergeCommitSHA()
-		evidence.State = pullrequest.GetState()
-
-		evidence.Approvers, err = getPullRequestApprovers(client, ctx, owner, repository,
-			pullrequest.GetNumber())
+		evidence, err := o.newPREvidence(pullrequest)
 		if err != nil {
 			return pullRequestsEvidence, isCompliant, err
 		}
 		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
 
-		// lastCommit := pullrequest.Head.GetSHA()
-		// opts := gh.ListOptions{}
-		// commit, _, err := client.Repositories.GetCommit(ctx, owner, repository, lastCommit, &opts)
-		// if err != nil {
-		// 	return pullRequestsEvidence, isCompliant, err
-		// }
-		// evidence.LastCommit = lastCommit
-		// evidence.LastCommitter = commit.GetAuthor().GetLogin()
-		// if utils.Contains(approvers, evidence.LastCommitter) {
-		// 	evidence.SelfApproved = true
-		// }
 	}
 	if len(pullRequestsEvidence) > 0 {
 		isCompliant = true
 	} else {
 		if o.assert {
-			return pullRequestsEvidence, isCompliant, fmt.Errorf("no pull requests found for the given commit: %s", commit)
+			return pullRequestsEvidence, isCompliant, fmt.Errorf("no pull requests found for the given commit: %s", o.commit)
 		}
-		logger.Info("no pull requests found for given commit: " + commit)
+		logger.Info("no pull requests found for given commit: " + o.commit)
 	}
 	return pullRequestsEvidence, isCompliant, nil
 }
 
-func getPullRequestApprovers(client *gh.Client, context context.Context, owner, repo string, number int) ([]string, error) {
+// newPREvidence creates an evidence from a github pull request
+func (o *pullRequestEvidenceGithubOptions) newPREvidence(pullrequest *gh.PullRequest) (*GithubPrEvidence, error) {
+	evidence := &GithubPrEvidence{}
+	evidence.URL = pullrequest.GetHTMLURL()
+	evidence.MergeCommit = pullrequest.GetMergeCommitSHA()
+	evidence.State = pullrequest.GetState()
+
+	approvers, err := getPullRequestApprovers(o.ghToken, o.ghOwner, o.repository,
+		pullrequest.GetNumber())
+	if err != nil {
+		return evidence, err
+	}
+	evidence.Approvers = approvers
+	return evidence, nil
+
+	// lastCommit := pullrequest.Head.GetSHA()
+	// opts := gh.ListOptions{}
+	// commit, _, err := client.Repositories.GetCommit(ctx, owner, repository, lastCommit, &opts)
+	// if err != nil {
+	// 	return pullRequestsEvidence, isCompliant, err
+	// }
+	// evidence.LastCommit = lastCommit
+	// evidence.LastCommitter = commit.GetAuthor().GetLogin()
+	// if utils.Contains(approvers, evidence.LastCommitter) {
+	// 	evidence.SelfApproved = true
+	// }
+}
+
+// pullRequestsForCommit returns a list of pull requests for a specific commit
+func pullRequestsForCommit(ghToken, ghOwner, repository, commit string) ([]*gh.PullRequest, error) {
+	ctx := context.Background()
+	client := newGithubClient(ctx, ghToken)
+	pullrequests, _, err := client.PullRequests.ListPullRequestsWithCommit(ctx, ghOwner, repository,
+		commit, &gh.PullRequestListOptions{})
+	return pullrequests, err
+}
+
+// newGithubClient returns Github client with a token and context
+func newGithubClient(ctx context.Context, ghToken string) *gh.Client {
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: ghToken},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+	client := gh.NewClient(tc)
+	return client
+}
+
+// extractRepoName returns repository name from 'owner/repository_name' string
+func extractRepoName(fullRepositoryName string) string {
+	repoNameParts := strings.Split(fullRepositoryName, "/")
+	repository := repoNameParts[len(repoNameParts)-1]
+	return repository
+}
+
+func getPullRequestApprovers(ghToken, ghOwner, repo string, number int) ([]string, error) {
 	approvers := []string{}
-	reviews, _, err := client.PullRequests.ListReviews(context, owner, repo, number, &gh.ListOptions{})
+	ctx := context.Background()
+	client := newGithubClient(ctx, ghToken)
+	reviews, _, err := client.PullRequests.ListReviews(ctx, ghOwner, repo, number, &gh.ListOptions{})
 	if err != nil {
 		return approvers, err
 	}
