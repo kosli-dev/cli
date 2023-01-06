@@ -24,7 +24,7 @@ jobs:
   test:
     needs: [pre-build]
     if: ${{ github.ref != 'refs/heads/prod' }}
-    uses: kosli-dev/cli/.github/workflows/test.yml@optimize-ci
+    uses: kosli-dev/cli/.github/workflows/test.yml@main
     with:
       AWS_ACCOUNT_ID: 772819027869
       AWS_REGION: eu-central-1
@@ -35,7 +35,7 @@ jobs:
   docker:
     needs: [pre-build, test]
     if: ${{ github.ref != 'refs/heads/prod' }}
-    uses: kosli-dev/cli/.github/workflows/docker.yml@optimize-ci
+    uses: kosli-dev/cli/.github/workflows/docker.yml@main
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
       platforms: linux/amd64
