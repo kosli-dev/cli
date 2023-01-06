@@ -14,17 +14,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type PullRequestEvidenceGithubPayload struct {
+type PullRequestEvidencePayload struct {
 	TypedEvidencePayload
-	GitProvider  string              `json:"git_provider"`
-	PullRequests []*GithubPrEvidence `json:"pull_requests"`
+	GitProvider  string        `json:"git_provider"`
+	PullRequests []*PrEvidence `json:"pull_requests"`
 }
 
 type pullRequestEvidenceGithubOptions struct {
 	fingerprintOptions *fingerprintOptions
 	pipelineName       string
 	description        string
-	payload            PullRequestEvidenceGithubPayload
+	payload            PullRequestEvidencePayload
 	ghToken            string
 	ghOwner            string
 	commit             string
@@ -33,7 +33,7 @@ type pullRequestEvidenceGithubOptions struct {
 	userDataFile       string
 }
 
-type GithubPrEvidence struct {
+type PrEvidence struct {
 	MergeCommit string   `json:"merge_commit"`
 	URL         string   `json:"url"`
 	State       string   `json:"state"`
@@ -137,7 +137,7 @@ func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 	}
 
 	err = RequireFlags(cmd, []string{"github-token", "github-org", "commit",
-		"repository", "pipeline", "build-url", "evidence-type"})
+		"repository", "pipeline", "build-url"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
@@ -154,10 +154,10 @@ func (o *pullRequestEvidenceGithubOptions) run(out io.Writer, args []string) err
 		}
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/pull_request/", global.Host, global.Owner, o.pipelineName)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/pull_request", global.Host, global.Owner, o.pipelineName)
 	// Get repository name from 'owner/repository_name' string
 	o.repository = extractRepoName(o.repository)
-	pullRequestsEvidence, _, err := o.getGithubPullRequests()
+	pullRequestsEvidence, err := o.getGithubPullRequests()
 	if err != nil {
 		return err
 	}
@@ -185,37 +185,34 @@ func (o *pullRequestEvidenceGithubOptions) run(out io.Writer, args []string) err
 	return err
 }
 
-func (o *pullRequestEvidenceGithubOptions) getGithubPullRequests() ([]*GithubPrEvidence, bool, error) {
-	pullRequestsEvidence := []*GithubPrEvidence{}
-	isCompliant := false
+func (o *pullRequestEvidenceGithubOptions) getGithubPullRequests() ([]*PrEvidence, error) {
+	pullRequestsEvidence := []*PrEvidence{}
 
 	pullrequests, err := pullRequestsForCommit(o.ghToken, o.ghOwner, o.repository, o.commit)
 	if err != nil {
-		return pullRequestsEvidence, isCompliant, err
+		return pullRequestsEvidence, err
 	}
 
 	for _, pullrequest := range pullrequests {
 		evidence, err := o.newPREvidence(pullrequest)
 		if err != nil {
-			return pullRequestsEvidence, isCompliant, err
+			return pullRequestsEvidence, err
 		}
 		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
 
 	}
-	if len(pullRequestsEvidence) > 0 {
-		isCompliant = true
-	} else {
+	if len(pullRequestsEvidence) == 0 {
 		if o.assert {
-			return pullRequestsEvidence, isCompliant, fmt.Errorf("no pull requests found for the given commit: %s", o.commit)
+			return pullRequestsEvidence, fmt.Errorf("no pull requests found for the given commit: %s", o.commit)
 		}
 		logger.Info("no pull requests found for given commit: " + o.commit)
 	}
-	return pullRequestsEvidence, isCompliant, nil
+	return pullRequestsEvidence, nil
 }
 
 // newPREvidence creates an evidence from a github pull request
-func (o *pullRequestEvidenceGithubOptions) newPREvidence(pullrequest *gh.PullRequest) (*GithubPrEvidence, error) {
-	evidence := &GithubPrEvidence{}
+func (o *pullRequestEvidenceGithubOptions) newPREvidence(pullrequest *gh.PullRequest) (*PrEvidence, error) {
+	evidence := &PrEvidence{}
 	evidence.URL = pullrequest.GetHTMLURL()
 	evidence.MergeCommit = pullrequest.GetMergeCommitSHA()
 	evidence.State = pullrequest.GetState()
