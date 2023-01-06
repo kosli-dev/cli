@@ -32,7 +32,7 @@ on:
 
 env:
   IMAGE: ghcr.io/kosli-dev/cli
-  KOSLI_CLI_VERSION: "0.1.30"
+  KOSLI_CLI_VERSION: "0.1.31"
   # KOSLI_DRY_RUN: "True"
   # Ordinarily we declare KOSLI_OWNER and KOSLI_PIPELINE here but
   # this interferes with the CLI integration tests
