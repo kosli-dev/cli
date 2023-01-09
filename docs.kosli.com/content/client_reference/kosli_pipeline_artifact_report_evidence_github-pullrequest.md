@@ -23,18 +23,18 @@ kosli pipeline artifact report evidence github-pullrequest [ARTIFACT-NAME-OR-PAT
 |        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --commit string  |  Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|    -d, --description string  |  [optional] The evidence description.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|    -e, --evidence-type string  |  The type of evidence being reported.  |
+|    -f, --fingerprint string  |  [conditional] The SHA256 fingerprint for the artifact. Only required if you don't specify '--artifact-type'.  |
 |        --github-org string  |  Github organization.  |
 |        --github-token string  |  Github token.  |
 |    -h, --help  |  help for github-pullrequest  |
+|    -n, --name string  |  The name of the evidence  |
 |    -p, --pipeline string  |  The Kosli pipeline name.  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --repository string  |  Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|    -s, --sha256 string  |  [conditional] The SHA256 fingerprint for the artifact. Only required if you don't specify '--artifact-type'.  |
+|    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to this evidence.  |
 
 
 ### Options inherited from parent commands
@@ -56,7 +56,7 @@ kosli pipeline artifact report evidence github-pullrequest [ARTIFACT-NAME-OR-PAT
 kosli pipeline artifact report evidence github-pullrequest yourDockerImageName \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
-	--evidence-type yourEvidenceType \
+	--name yourEvidenceName \
 	--pipeline yourPipelineName \
 	--github-token yourGithubToken \
 	--github-org yourGithubOrg \
@@ -69,7 +69,7 @@ kosli pipeline artifact report evidence github-pullrequest yourDockerImageName \
 kosli pipeline artifact report evidence github-pullrequest yourDockerImageName \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
-	--evidence-type yourEvidenceType \
+	--name yourEvidenceName \
 	--pipeline yourPipelineName \
 	--github-token yourGithubToken \
 	--github-org yourGithubOrg \
