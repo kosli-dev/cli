@@ -172,9 +172,16 @@ func ingestJunitDir(testResultsDir string) ([]*JUnitResults, error) {
 		if err != nil {
 			return results, err
 		}
+
+		// There is no official schema for the timestamp in the junit xml
+		// This one comes from pytest
 		timestamp, err := time.Parse("2006-01-02T15:04:05.999999", suite.Properties["timestamp"])
 		if err != nil {
-			return results, err
+			// This one comes from Ruby minitest
+			timestamp, err = time.Parse("2006-01-02T15:04:05+00:00", suite.Properties["timestamp"])
+			if err != nil {
+				return results, err
+			}
 		}
 
 		suiteResult := &JUnitResults{
