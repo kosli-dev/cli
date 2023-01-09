@@ -33,7 +33,7 @@ jobs:
       slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
 
   docker:
-    needs: [test]
+    needs: [test, pre-build]
     if: ${{ github.ref != 'refs/heads/prod' }}
     uses: kosli-dev/cli/.github/workflows/docker.yml@main
     with:
