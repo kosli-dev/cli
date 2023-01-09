@@ -21,10 +21,21 @@ jobs:
         echo "TAG=${TAG}" >> ${GITHUB_ENV}
         echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-  build:
+  test:
     needs: [pre-build]
     if: ${{ github.ref != 'refs/heads/prod' }}
-    uses: kosli-dev/cli/.github/workflows/build.yml@main
+    uses: kosli-dev/cli/.github/workflows/test.yml@main
+    with:
+      AWS_ACCOUNT_ID: 772819027869
+      AWS_REGION: eu-central-1
+    secrets:
+      slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
+      slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
+
+  docker:
+    needs: [pre-build, test]
+    if: ${{ github.ref != 'refs/heads/prod' }}
+    uses: kosli-dev/cli/.github/workflows/docker.yml@main
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
       platforms: linux/amd64
@@ -39,7 +50,7 @@ jobs:
       snyk_token: ${{ secrets.SNYK_TOKEN }}
   
   upload-reporter-package-staging:
-    needs: [pre-build, build]
+    needs: [pre-build, test]
     if: ${{ github.ref == 'refs/heads/main' }}
     uses: kosli-dev/cli/.github/workflows/upload-reporter-package.yml@main
     with:

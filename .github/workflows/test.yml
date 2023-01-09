@@ -1,0 +1,67 @@
+name: Test
+
+on:
+  workflow_call:
+    inputs:
+      AWS_ACCOUNT_ID:
+        required: true
+        type: string
+      AWS_REGION:
+        required: true
+        type: string
+    secrets:
+      slack_channel:
+        required: true
+      slack_webhook:
+        required: true       
+
+
+jobs:
+  test:
+    name: Lint & Test
+    runs-on: ubuntu-20.04
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+
+    - uses: actions/checkout@v3
+      with:
+        # We need depth of 3 for the unit testing. 
+        # For commit-lists we want more so we get 30
+        fetch-depth: 30
+    
+    - uses: actions/setup-go@v3
+      with:
+        go-version: '1.17.11'
+    
+    - name: Run golangci-lint
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: v1.39
+        args: --timeout=5m -v
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1-node16
+      with:
+        role-to-assume: arn:aws:iam::${{ inputs.AWS_ACCOUNT_ID }}:role/GithubActionsRole
+        aws-region: ${{ inputs.AWS_REGION }}
+        role-duration-seconds: 2400
+        role-session-name: ${{ github.event.repository.name }}
+
+    - name: Login to Amazon ECR private
+      id: login-ecr-private
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Run tests
+      run: make test_integration_full
+
+    - name: Slack Notification on Failure
+      if: ${{ failure() }}
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_CHANNEL: ${{ secrets.slack_channel }}
+        SLACK_COLOR: ${{ job.status }}
+        SLACK_TITLE: Test & Lint Failed in CLI repository
+        SLACK_USERNAME: GithubActions
+        SLACK_WEBHOOK: ${{ secrets.slack_webhook }} 
