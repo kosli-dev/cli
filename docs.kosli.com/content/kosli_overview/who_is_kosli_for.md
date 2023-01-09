@@ -1,6 +1,6 @@
 ---
 title: 'Who is Kosli for?'
-weight: 30
+weight: 130
 ---
 # Who is Kosli for?
 

@@ -1,7 +1,7 @@
 ---
 title: How to
 bookCollapseSection: true
-weight: 40
+weight: 400
 ---
 # How to
 

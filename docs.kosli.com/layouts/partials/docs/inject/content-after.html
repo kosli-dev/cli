@@ -1,0 +1,20 @@
+{{ $reversePages := .Site.RegularPages.Reverse }}
+
+<div class="justify-between flex flex-wrap navigation-buttons">
+    <div>
+        {{with $reversePages.Prev . }}
+            <div class="nav-title">Previous</div>
+            <div><a href="{{.RelPermalink}}"> « {{.Title}}</a></div>    
+        {{end}}
+    </div>
+    <div>
+        {{with $reversePages.Next . }}
+            <div class="nav-title text-right">Next</div>
+            <div><a href="{{.RelPermalink}}">{{.Title}} » </a></div>      
+        {{end}}
+    </div>
+</div>
+
+
+
+

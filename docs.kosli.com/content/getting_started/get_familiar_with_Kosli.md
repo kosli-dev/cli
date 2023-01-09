@@ -1,7 +1,7 @@
 ---
 title: Get familiar with Kosli
 bookCollapseSection: false
-weight: 20
+weight: 220
 ---
 
 # Get familiar with Kosli

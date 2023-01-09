@@ -1,6 +1,6 @@
 ---
 title: 'Kosli integrations'
-weight: 50
+weight: 150
 ---
 # Kosli integrations
 

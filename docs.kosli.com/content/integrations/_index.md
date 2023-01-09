@@ -1,5 +1,5 @@
 ---
 title: Kosli integrations
 bookCollapseSection: true
-weight: 20
+weight: 300
 ---

@@ -1,7 +1,7 @@
 ---
 title: FAQ
-bookCollapseSection: False
-weight: 60
+bookCollapseSection: false
+weight: 700
 ---
 
 # Frequently asked questions

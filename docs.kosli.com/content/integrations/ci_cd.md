@@ -1,7 +1,7 @@
 ---
 title: CI/CD
 bookCollapseSection: false
-weight: 30
+weight: 310
 aliases:
     - /ci-defaults  # To keep short URL in docs and help in the CLI
 ---

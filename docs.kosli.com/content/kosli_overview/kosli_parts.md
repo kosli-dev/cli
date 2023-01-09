@@ -1,6 +1,6 @@
 ---
 title: 'Kosli parts'
-weight: 40
+weight: 140
 ---
 # Kosli parts
 

@@ -1,7 +1,7 @@
 ---
 title: Simulating a DevOps system
 bookCollapseSection: false
-weight: 3
+weight: 530
 ---
 
 # Preparing the tutorial

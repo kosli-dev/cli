@@ -1,7 +1,7 @@
 ---
 title: Reference
 bookCollapseSection: true
-weight: 50
+weight: 600
 ---
 
 # Kosli Client Reference

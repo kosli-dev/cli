@@ -1,6 +1,6 @@
 ---
 title: 'How does Kosli work?'
-weight: 20
+weight: 120
 ---
 # How does Kosli work?
 

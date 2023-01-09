@@ -152,3 +152,18 @@ aside.book-toc .book-toc-content {
 .markdown table code {
     background-color: $black-200; 
 }
+
+.navigation-buttons {
+    margin-top: 60px;
+
+    a {
+        font-weight: bold;
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    .nav-title {
+        margin-bottom: 5px;
+    }
+}

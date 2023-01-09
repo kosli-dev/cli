@@ -1,7 +1,7 @@
 ---
 title: Getting started
 bookCollapseSection: true
-weight: 20
+weight: 200
 aliases:
     - /getting_started
 ---

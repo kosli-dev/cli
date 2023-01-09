@@ -1,6 +1,6 @@
 ---
 title: 'Kosli pricing'
-weight: 60
+weight: 160
 ---
 # Kosli pricing
 
