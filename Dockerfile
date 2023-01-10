@@ -11,6 +11,8 @@ WORKDIR /go/src/kosli
 
 COPY . .
 
+RUN make deps && make vet
+
 RUN make build
 
 ### Final Image ###
