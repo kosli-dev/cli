@@ -81,7 +81,7 @@ test_integration: deps vet ensure_network test_integration_setup ## Run tests ex
 
 
 test_integration_full: deps vet ensure_network test_integration_setup ## Run all tests
-	@~/go/bin/gotestsum -- -p=1 -coverprofile=cover.out ./...
+	@export TESTS=true && ~/go/bin/gotestsum -- -p=1 -coverprofile=cover.out ./...
 	@go tool cover -func=cover.out
 
 

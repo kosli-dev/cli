@@ -62,9 +62,10 @@ func (suite *CliUtilsTestSuite) TestWhichCI() {
 
 func (suite *CliUtilsTestSuite) TestDefaultValue() {
 	type args struct {
-		ci      string
-		flag    string
-		envVars map[string]string
+		ci               string
+		flag             string
+		envVars          map[string]string
+		unsetTestsEnvVar bool
 	}
 	for _, t := range []struct {
 		name string
@@ -74,9 +75,10 @@ func (suite *CliUtilsTestSuite) TestDefaultValue() {
 		{
 			name: "Lookup an existing default for Github.",
 			args: args{
-				ci:      github,
-				flag:    "git-commit",
-				envVars: map[string]string{"GITHUB_SHA": "some-sha"},
+				ci:               github,
+				flag:             "git-commit",
+				envVars:          map[string]string{"GITHUB_SHA": "some-sha"},
+				unsetTestsEnvVar: true,
 			},
 			want: "some-sha",
 		},
@@ -90,6 +92,7 @@ func (suite *CliUtilsTestSuite) TestDefaultValue() {
 					"BITBUCKET_REPO_SLUG": "example_slug",
 					"BITBUCKET_COMMIT":    "example_commit",
 				},
+				unsetTestsEnvVar: true,
 			},
 			want: "https://bitbucket.org/example_space/example_slug/commits/example_commit",
 		},
@@ -101,33 +104,64 @@ func (suite *CliUtilsTestSuite) TestDefaultValue() {
 				envVars: map[string]string{
 					"BUILD_VCS_NUMBER": "example_commit",
 				},
+				unsetTestsEnvVar: true,
 			},
 			want: "example_commit",
 		},
 		{
 			name: "Lookup a non-existing default for Github.",
 			args: args{
-				ci:      github,
-				flag:    "non-existing",
-				envVars: map[string]string{},
+				ci:               github,
+				flag:             "non-existing",
+				envVars:          map[string]string{},
+				unsetTestsEnvVar: true,
 			},
 			want: "",
 		},
 		{
 			name: "Lookup a default for unknown ci.",
 			args: args{
-				ci:      unknown,
-				flag:    "non-existing",
-				envVars: map[string]string{},
+				ci:               unknown,
+				flag:             "non-existing",
+				envVars:          map[string]string{},
+				unsetTestsEnvVar: true,
+			},
+			want: "",
+		},
+		{
+			name: "Lookup a default when DOCS env var is set returns empty string.",
+			args: args{
+				ci:               github,
+				flag:             "git-commit",
+				envVars:          map[string]string{"DOCS": "True", "GITHUB_SHA": "some-sha"},
+				unsetTestsEnvVar: true,
+			},
+			want: "",
+		},
+		{
+			name: "Lookup a default when TESTS env var is set returns empty string.",
+			args: args{
+				ci:      github,
+				flag:    "git-commit",
+				envVars: map[string]string{"TESTS": "True", "GITHUB_SHA": "some-sha"},
 			},
 			want: "",
 		},
 	} {
 		suite.Run(t.name, func() {
+			value, testMode := os.LookupEnv("TESTS")
+			if t.args.unsetTestsEnvVar && testMode {
+				err := os.Unsetenv("TESTS")
+				require.NoError(suite.T(), err, "should have unset TESTS env var without error")
+			}
 			suite.setEnvVars(t.args.envVars)
 			actual := DefaultValue(t.args.ci, t.args.flag)
-			// clean up
+			// clean up any env vars we set from the test case
 			suite.unsetEnvVars(t.args.envVars)
+			// recover TESTS env variable to its original state before the test
+			if testMode {
+				os.Setenv("TESTS", value)
+			}
 			assert.Equal(suite.T(), t.want, actual, fmt.Sprintf("TestDefaultValue: %s , got: %v -- want: %v", t.name, actual, t.want))
 		})
 	}

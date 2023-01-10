@@ -34,7 +34,7 @@ func (suite *ArtifactEvidenceSnykCommandTestSuite) SetupTest() {
 	runTestCmd(suite.T(), tests)
 }
 
-func (suite *ArtifactEvidenceSnykCommandTestSuite) TestArtifactEvidenceSnykCommandCmd() {
+func (suite *ArtifactEvidenceSnykCommandTestSuite) TestArtifactEvidenceSnykCmd() {
 
 	tests := []cmdTestCase{
 		{
@@ -71,7 +71,13 @@ func (suite *ArtifactEvidenceSnykCommandTestSuite) TestArtifactEvidenceSnykComma
 			wantError: true,
 			golden:    "Error: required flag(s) \"pipeline\" not set\n",
 		},
-		// We can not test missing --build-url flag since the CI system provides this by default
+		{
+			name: "report Snyk scan evidence with a missing build-url",
+			cmd: `pipeline artifact report evidence snyk --fingerprint ` + suite.artifactFingerprint + ` --pipeline ` + suite.pipelineName + `
+			         --name snyk-result --scan-results testdata/snyk_scan_example.json` + suite.defaultKosliArguments,
+			wantError: true,
+			golden:    "Error: required flag(s) \"build-url\" not set\n",
+		},
 	}
 	runTestCmd(suite.T(), tests)
 }
