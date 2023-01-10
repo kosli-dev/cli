@@ -15,7 +15,9 @@ on:
       slack_webhook:
         required: true
       github_access_token:
-        required: true       
+        required: true 
+      bitbucket_password:
+        required: true      
 
 
 jobs:
@@ -58,6 +60,7 @@ jobs:
     - name: Run tests
       env:
         KOSLI_GITHUB_TOKEN: ${{ secrets.github_access_token }}
+        KOSLI_BITBUCKET_PASSWORD: ${{ secrets.bitbucket_password }}
       run: make test_integration_full
 
     - name: Slack Notification on Failure
