@@ -107,18 +107,15 @@ func newPullRequestEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
-	err := cmd.Flags().MarkDeprecated("evidence-type", "use --name instead")
+	err := DeprecateFlags(cmd, map[string]string{
+		"evidence-type": "use --name instead",
+		"description":   "description is no longer used",
+		"sha256":        "use --fingerprint instead",
+	})
 	if err != nil {
-		logger.Error("failed to configure deprecated flag: %v", err)
+		logger.Error("failed to configure deprecated flags: %v", err)
 	}
-	err = cmd.Flags().MarkDeprecated("description", "description is no longer used")
-	if err != nil {
-		logger.Error("failed to configure deprecated flag: %v", err)
-	}
-	err = cmd.Flags().MarkDeprecated("sha256", "use --fingerprint instead")
-	if err != nil {
-		logger.Error("failed to configure deprecated flag: %v", err)
-	}
+
 	err = RequireFlags(cmd, []string{"bitbucket-username", "bitbucket-password",
 		"bitbucket-workspace", "commit", "repository", "pipeline", "build-url"})
 	if err != nil {

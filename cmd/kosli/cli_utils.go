@@ -102,6 +102,17 @@ func DefaultValue(ci, flag string) string {
 	return ""
 }
 
+// DeprecateFlags declares a list of flags as deprecated for a given command
+func DeprecateFlags(cmd *cobra.Command, flags map[string]string) error {
+	for name, message := range flags {
+		err := cmd.Flags().MarkDeprecated(name, message)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // RequireFlags declares a list of flags as required for a given command
 func RequireFlags(cmd *cobra.Command, flagNames []string) error {
 	for _, name := range flagNames {
