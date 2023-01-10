@@ -14,7 +14,7 @@ on:
         required: true
       slack_webhook:
         required: true
-      github_token:
+      github_access_token:
         required: true       
 
 
@@ -57,7 +57,7 @@ jobs:
 
     - name: Run tests
       env:
-        KOSLI_GITHUB_TOKEN: ${{ secrets.github_token }}
+        KOSLI_GITHUB_TOKEN: ${{ secrets.github_access_token }}
       run: make test_integration_full
 
     - name: Slack Notification on Failure
