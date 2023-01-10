@@ -123,9 +123,9 @@ func (suite *GithubTestSuite) TestGetPullRequestApprovers() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			token, ok := os.LookupEnv("GITHUB_TOKEN")
+			token, ok := os.LookupEnv("KOSLI_GITHUB_TOKEN")
 			if !ok {
-				suite.T().Logf("skipping %s as GITHUB_TOKEN is unset in environment", suite.T().Name())
+				suite.T().Logf("skipping %s as KOSLI_GITHUB_TOKEN is unset in environment", suite.T().Name())
 				suite.T().Skip("requires github token")
 			}
 			approvers, err := GetPullRequestApprovers(token, t.ghOwner, t.repository, t.number)

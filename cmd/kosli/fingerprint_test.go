@@ -3,8 +3,6 @@ package main
 import (
 	"testing"
 
-	"github.com/kosli-dev/cli/cmd/kosli/test_support"
-
 	"github.com/stretchr/testify/suite"
 )
 
@@ -16,7 +14,7 @@ type FingerprintTestSuite struct {
 }
 
 func (suite *FingerprintTestSuite) SetupSuite() {
-	test_support.PullExampleImage(suite.T())
+	PullExampleImage(suite.T())
 }
 
 func (suite *FingerprintTestSuite) TestFingerprintCmd() {
