@@ -1,15 +1,13 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 
 	gh "github.com/google/go-github/v42/github"
+	ghUtils "github.com/kosli-dev/cli/internal/github"
 	"github.com/kosli-dev/cli/internal/requests"
-	"golang.org/x/oauth2"
 
 	"github.com/spf13/cobra"
 )
@@ -188,7 +186,7 @@ func (o *pullRequestEvidenceGithubOptions) run(out io.Writer, args []string) err
 func (o *pullRequestEvidenceGithubOptions) getGithubPullRequests() ([]*PrEvidence, error) {
 	pullRequestsEvidence := []*PrEvidence{}
 
-	pullrequests, err := pullRequestsForCommit(o.ghToken, o.ghOwner, o.repository, o.commit)
+	pullrequests, err := ghUtils.PullRequestsForCommit(o.ghToken, o.ghOwner, o.repository, o.commit)
 	if err != nil {
 		return pullRequestsEvidence, err
 	}
@@ -217,7 +215,7 @@ func (o *pullRequestEvidenceGithubOptions) newPREvidence(pullrequest *gh.PullReq
 	evidence.MergeCommit = pullrequest.GetMergeCommitSHA()
 	evidence.State = pullrequest.GetState()
 
-	approvers, err := getPullRequestApprovers(o.ghToken, o.ghOwner, o.repository,
+	approvers, err := ghUtils.GetPullRequestApprovers(o.ghToken, o.ghOwner, o.repository,
 		pullrequest.GetNumber())
 	if err != nil {
 		return evidence, err
@@ -236,46 +234,4 @@ func (o *pullRequestEvidenceGithubOptions) newPREvidence(pullrequest *gh.PullReq
 	// if utils.Contains(approvers, evidence.LastCommitter) {
 	// 	evidence.SelfApproved = true
 	// }
-}
-
-// pullRequestsForCommit returns a list of pull requests for a specific commit
-func pullRequestsForCommit(ghToken, ghOwner, repository, commit string) ([]*gh.PullRequest, error) {
-	ctx := context.Background()
-	client := newGithubClient(ctx, ghToken)
-	pullrequests, _, err := client.PullRequests.ListPullRequestsWithCommit(ctx, ghOwner, repository,
-		commit, &gh.PullRequestListOptions{})
-	return pullrequests, err
-}
-
-// newGithubClient returns Github client with a token and context
-func newGithubClient(ctx context.Context, ghToken string) *gh.Client {
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: ghToken},
-	)
-	tc := oauth2.NewClient(ctx, ts)
-	client := gh.NewClient(tc)
-	return client
-}
-
-// extractRepoName returns repository name from 'owner/repository_name' string
-func extractRepoName(fullRepositoryName string) string {
-	repoNameParts := strings.Split(fullRepositoryName, "/")
-	repository := repoNameParts[len(repoNameParts)-1]
-	return repository
-}
-
-func getPullRequestApprovers(ghToken, ghOwner, repo string, number int) ([]string, error) {
-	approvers := []string{}
-	ctx := context.Background()
-	client := newGithubClient(ctx, ghToken)
-	reviews, _, err := client.PullRequests.ListReviews(ctx, ghOwner, repo, number, &gh.ListOptions{})
-	if err != nil {
-		return approvers, err
-	}
-	for _, r := range reviews {
-		if r.GetState() == "APPROVED" {
-			approvers = append(approvers, r.GetUser().GetLogin())
-		}
-	}
-	return approvers, nil
 }

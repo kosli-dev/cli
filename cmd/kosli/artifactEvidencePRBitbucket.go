@@ -137,6 +137,9 @@ func (o *pullRequestEvidenceBitbucketOptions) run(args []string) error {
 		}
 	}
 
+	// Get repository name from 'owner/repository_name' string
+	o.repository = extractRepoName(o.repository)
+
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/pull_request", global.Host, global.Owner, o.pipelineName)
 	pullRequestsEvidence, err := getPullRequestsFromBitbucketApi(o.bbWorkspace,
 		o.repository, o.commit, o.bbUsername, o.bbPassword, o.assert)
