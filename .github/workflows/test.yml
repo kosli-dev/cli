@@ -13,6 +13,8 @@ on:
       slack_channel:
         required: true
       slack_webhook:
+        required: true
+      github_token:
         required: true       
 
 
@@ -54,6 +56,8 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v1
 
     - name: Run tests
+      env:
+        KOSLI_GITHUB_TOKEN: ${{ secrets.github_token }}
       run: make test_integration_full
 
     - name: Slack Notification on Failure

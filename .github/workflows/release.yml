@@ -29,6 +29,7 @@ jobs:
       AWS_ACCOUNT_ID: 772819027869
       AWS_REGION: eu-central-1
     secrets:
+      github_token: ${{ secrets.KOSLI_GITHUB_TOKEN }}
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
       slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
 
