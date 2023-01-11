@@ -1,10 +1,12 @@
 package requests
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/version"
 	"github.com/maxcnunes/httpfake"
 	"github.com/stretchr/testify/require"
@@ -29,19 +31,23 @@ func (suite *RequestsTestSuite) SetupSuite() {
 	suite.fakeService.NewHandler().
 		Get("/no-go/").
 		Reply(404).
-		BodyString("")
-
+		BodyString(`{"message": "resource not found"}`)
 	suite.fakeService.NewHandler().
-		Get("/v2/").
-		Handle(func(w http.ResponseWriter, r *http.Request, rh *httpfake.Request) {
-			allHeaders := ""
-			for k, v := range r.Header {
-				for _, singleV := range v {
-					allHeaders += k + ":" + singleV + " "
-				}
-			}
-			fmt.Fprintf(w, "%s", allHeaders)
-		})
+		Get("/bad-request1/").
+		Reply(400).
+		BodyString(`{"message": "Input payload validation failed", "errors": [{"name":"'123foo' does not match '^[a-zA-Z][a-zA-Z0-9\\-]*$'"}]}`)
+	suite.fakeService.NewHandler().
+		Get("/bad-request2/").
+		Reply(400).
+		BodyString(`{"error": "random error"}`)
+	suite.fakeService.NewHandler().
+		Get("/denied/").
+		Reply(403).
+		BodyString(`"Denied"`)
+	suite.fakeService.NewHandler().
+		Get("/fail/").
+		Reply(500).
+		BodyString("server broken")
 }
 
 // shutdown the fake service after the suite execution
@@ -49,161 +55,237 @@ func (suite *RequestsTestSuite) TearDownSuite() {
 	suite.fakeService.Close()
 }
 
-// func (suite *RequestsTestSuite) TestSendPayload() {
-// 	type args struct {
-// 		payload    interface{}
-// 		url        string
-// 		token      string
-// 		maxRetries int
-// 		dryRun     bool
-// 		method     string
-// 	}
+func (suite *RequestsTestSuite) TestNewKosliClient() {
+	for _, t := range []struct {
+		name       string
+		maxRetries int
+		debug      bool
+	}{
+		{
+			name:       "client is created with expected settings 1",
+			maxRetries: 1,
+			debug:      true,
+		},
+		{
+			name:       "client is created with expected settings 2",
+			maxRetries: 3,
+			debug:      false,
+		},
+	} {
+		suite.Run(t.name, func() {
+			client := NewKosliClient(t.maxRetries, t.debug, logger.NewStandardLogger())
+			require.NotNil(suite.T(), client)
+			require.Equal(suite.T(), t.maxRetries, client.MaxAPIRetries)
+			require.Equal(suite.T(), t.debug, client.Debug)
+		})
+	}
+}
 
-// 	type want struct {
-// 		body       string
-// 		statusCode int
-// 	}
+func (suite *RequestsTestSuite) TestNewHttpRequest() {
+	for _, t := range []struct {
+		name      string
+		params    *RequestParams
+		wantError bool
+	}{
+		{
+			name: "request with token",
+			params: &RequestParams{
+				Method: http.MethodGet,
+				URL:    "https://google.com",
+				Token:  "secret",
+			},
+		},
+		{
+			name: "request with user/pass",
+			params: &RequestParams{
+				Method:   http.MethodGet,
+				URL:      "https://google.com",
+				Username: "user",
+				Password: "password",
+			},
+		},
+		{
+			name: "request with password only (like Kosli requests)",
+			params: &RequestParams{
+				Method:   http.MethodGet,
+				URL:      "https://google.com",
+				Password: "password",
+			},
+		},
+		{
+			name: "request with additional headers",
+			params: &RequestParams{
+				Method:   http.MethodGet,
+				URL:      "https://google.com",
+				Username: "user",
+				Password: "password",
+				AdditionalHeaders: map[string]string{
+					"HEADER1": "VALUE1",
+					"HEADER2": "VALUE2",
+				},
+			},
+		},
+		{
+			name: "request with valid payload",
+			params: &RequestParams{
+				Method:   http.MethodGet,
+				URL:      "https://google.com",
+				Username: "user",
+				Password: "password",
+				Payload:  "test payload",
+			},
+		},
+		{
+			name: "request with invalid URL (starts with space) causes an error",
+			params: &RequestParams{
+				Method: http.MethodGet,
+				URL:    " https://google.com",
+				Token:  "secret",
+			},
+			wantError: true,
+		},
+	} {
+		suite.Run(t.name, func() {
+			req, err := t.params.newHTTPRequest()
+			if t.wantError {
+				require.Error(suite.T(), err)
+			} else {
+				require.NoError(suite.T(), err)
+				require.Equal(suite.T(), t.params.Method, req.Method)
+				require.Equal(suite.T(), "Kosli/"+version.GetVersion(), req.UserAgent())
+				require.Equal(suite.T(), "application/json; charset=utf-8", req.Header.Get("Content-Type"))
+				if t.params.Username != "" || t.params.Password != "" {
+					user, pass, ok := req.BasicAuth()
+					require.True(suite.T(), ok)
+					if t.params.Username == "" {
+						require.Equal(suite.T(), t.params.Username, pass)
+						require.Equal(suite.T(), t.params.Password, "unset")
+					} else {
+						require.Equal(suite.T(), t.params.Username, user)
+						require.Equal(suite.T(), t.params.Password, pass)
+					}
+				}
+				if t.params.Token != "" {
+					require.Equal(suite.T(), fmt.Sprintf("Bearer %s", t.params.Token), req.Header.Get("Authorization"))
+				}
+				for k, v := range t.params.AdditionalHeaders {
+					require.Equal(suite.T(), v, req.Header.Get(k))
+				}
+			}
+		})
+	}
+}
 
-// 	for _, t := range []struct {
-// 		name        string
-// 		args        args
-// 		expectError bool
-// 		nilResponse bool
-// 		want        want
-// 	}{
-// 		{
-// 			name: "PUT request works",
-// 			args: args{
-// 				payload:    bytes.NewBuffer([]byte(`{"sha": "8b4fd747df6882b897aa514af7b40571a7508cc78a8d48ae2c12f9f4bcb1598f"}`)),
-// 				url:        suite.fakeService.ResolveURL("/artifacts/1"),
-// 				token:      "secret",
-// 				maxRetries: 3,
-// 				dryRun:     false,
-// 				method:     http.MethodPut,
-// 			},
-// 			expectError: false,
-// 			want: want{
-// 				body:       `{"sha": "8b4fd747df6882b897aa514af7b40571a7508cc78a8d48ae2c12f9f4bcb1598f","name": "artifact"}`,
-// 				statusCode: 201,
-// 			},
-// 		},
-// 		{
-// 			name: "invalid JSON payload throws an error",
-// 			args: args{
-// 				payload:    func() string { return "string" },
-// 				url:        suite.fakeService.ResolveURL("/artifacts/1"),
-// 				token:      "secret",
-// 				maxRetries: 3,
-// 				dryRun:     false,
-// 				method:     http.MethodPut,
-// 			},
-// 			expectError: true,
-// 		},
-// 		{
-// 			name: "non-existing endpoint throws an error",
-// 			args: args{
-// 				payload:    bytes.NewBuffer([]byte(`{"sha": "8b4fd747df6882b897aa514af7b40571a7508cc78a8d48ae2c12f9f4bcb1598f"}`)),
-// 				url:        suite.fakeService.ResolveURL("/no-go/"),
-// 				token:      "secret",
-// 				maxRetries: 3,
-// 				dryRun:     false,
-// 				method:     http.MethodGet,
-// 			},
-// 			expectError: true,
-// 		},
-// 		{
-// 			name: "dry-run to non-existing endpoint does not throw an error",
-// 			args: args{
-// 				payload:    bytes.NewBuffer([]byte(`{"sha": "8b4fd747df6882b897aa514af7b40571a7508cc78a8d48ae2c12f9f4bcb1598f"}`)),
-// 				url:        suite.fakeService.ResolveURL("/no-go/"),
-// 				token:      "secret",
-// 				maxRetries: 3,
-// 				dryRun:     true,
-// 				method:     http.MethodGet,
-// 			},
-// 			expectError: false,
-// 			nilResponse: true,
-// 		},
-// 	} {
-// 		suite.Run(t.name, func() {
-// 			resp, err := SendPayload(t.args.payload, t.args.url, "", t.args.token, t.args.maxRetries, t.args.dryRun, t.args.method)
-// 			if t.expectError {
-// 				require.Errorf(suite.T(), err, "error was expected but got none")
-// 			} else if t.nilResponse {
-// 				var expected *HTTPResponse
-// 				require.Equal(suite.T(), expected, resp, "response is expected to be nil")
-// 			} else {
-// 				require.NoErrorf(suite.T(), err, "error was not expected, but got: %v", err)
-// 				require.Equal(suite.T(), t.want.body, resp.Body, fmt.Sprintf("want: %v -- got: %v", t.want.body, resp.Body))
-// 				require.Equal(suite.T(), t.want.statusCode, resp.Resp.StatusCode, fmt.Sprintf("Status Code ** want: %v -- got: %v", t.want.statusCode, resp.Resp.StatusCode))
+func (suite *RequestsTestSuite) TestDo() {
+	for _, t := range []struct {
+		name             string
+		params           *RequestParams
+		wantError        bool
+		expectedLog      string
+		expectedErrorMsg string
+		expectedBody     string
+	}{
+		{
+			name: "GET request to cyber-dojo with fake password",
+			params: &RequestParams{
+				Method:   http.MethodGet,
+				URL:      "https://app.kosli.com/api/v1/environments/cyber-dojo/",
+				Password: "secret",
+			},
+		},
+		{
+			name: "PUT request to fake server",
+			params: &RequestParams{
+				Method: http.MethodPut,
+				URL:    suite.fakeService.ResolveURL("/artifacts/1"),
+			},
+			expectedBody: `{"sha": "8b4fd747df6882b897aa514af7b40571a7508cc78a8d48ae2c12f9f4bcb1598f","name": "artifact"}`,
+		},
+		{
+			name: "GET request to 404 endpoint",
+			params: &RequestParams{
+				Method: http.MethodGet,
+				URL:    suite.fakeService.ResolveURL("/no-go/"),
+			},
+			wantError:        true,
+			expectedErrorMsg: "resource not found",
+		},
+		{
+			name: "GET request to 500 endpoint",
+			params: &RequestParams{
+				Method: http.MethodGet,
+				URL:    suite.fakeService.ResolveURL("/fail/"),
+			},
+			wantError:        true,
+			expectedErrorMsg: fmt.Sprintf("Get \"%s\": GET %s giving up after 2 attempt(s)", suite.fakeService.ResolveURL("/fail/"), suite.fakeService.ResolveURL("/fail/")),
+		},
+		{
+			name: "GET request with invalid URL causes an error",
+			params: &RequestParams{
+				Method:   http.MethodGet,
+				URL:      "  https://app.kosli.com/api/v1/environments/cyber-dojo/foo",
+				Password: "secret",
+			},
+			wantError:        true,
+			expectedErrorMsg: "failed to create a GET request to   https://app.kosli.com/api/v1/environments/cyber-dojo/foo : failed to create GET request to   https://app.kosli.com/api/v1/environments/cyber-dojo/foo : parse \"  https://app.kosli.com/api/v1/environments/cyber-dojo/foo\": first path segment in URL cannot contain colon",
+		},
+		{
+			name: "GET request to cyber-dojo with dry-run",
+			params: &RequestParams{
+				Method:   http.MethodGet,
+				URL:      "https://app.kosli.com/api/v1/environments/cyber-dojo/",
+				Password: "secret",
+				DryRun:   true,
+				Payload:  "some payload",
+			},
+			expectedLog: "############### THIS IS A DRY-RUN  ###############\nthis is the payload that would be sent in real run: \n \"some payload\"\n",
+		},
+		{
+			name: "GET request to 400 endpoint with message and errors in response",
+			params: &RequestParams{
+				Method: http.MethodGet,
+				URL:    suite.fakeService.ResolveURL("/bad-request1/"),
+			},
+			wantError:        true,
+			expectedErrorMsg: "Input payload validation failed: [map[name:'123foo' does not match '^[a-zA-Z][a-zA-Z0-9\\-]*$']]",
+		},
+		{
+			name: "GET request to 400 endpoint with no message in response",
+			params: &RequestParams{
+				Method: http.MethodGet,
+				URL:    suite.fakeService.ResolveURL("/bad-request2/"),
+			},
+			wantError:        true,
+			expectedErrorMsg: "map[error:random error]",
+		},
+		{
+			name: "GET request to 403 endpoint",
+			params: &RequestParams{
+				Method: http.MethodGet,
+				URL:    suite.fakeService.ResolveURL("/denied/"),
+			},
+			wantError:        true,
+			expectedErrorMsg: "Denied",
+		},
+	} {
+		suite.Run(t.name, func() {
+			buf := new(bytes.Buffer)
+			client := NewKosliClient(1, false, logger.NewLogger(buf, buf, false))
+			resp, err := client.Do(t.params)
+			if t.wantError {
+				require.Error(suite.T(), err)
+				require.Equal(suite.T(), t.expectedErrorMsg, err.Error())
+			} else {
+				require.NoError(suite.T(), err)
+				output := buf.String()
+				require.Equal(suite.T(), t.expectedLog, output)
+				if t.expectedBody != "" {
+					require.Equal(suite.T(), t.expectedBody, resp.Body)
+				}
 
-// 			}
-// 		})
-// 	}
-// }
-
-// func (suite *RequestsTestSuite) TestDoRequestWithToken() {
-// 	type args struct {
-// 		payload      []byte
-// 		url          string
-// 		token        string
-// 		maxRetries   int
-// 		method       string
-// 		extraHeaders map[string]string
-// 	}
-
-// 	for _, t := range []struct {
-// 		name        string
-// 		args        args
-// 		expectError bool
-// 		wants       []string
-// 	}{
-// 		{
-// 			name: "Autherization token is passed in correctly in http request header",
-// 			args: args{
-// 				payload:      []byte{},
-// 				url:          suite.fakeService.ResolveURL("/v2/"),
-// 				token:        "secret",
-// 				maxRetries:   3,
-// 				method:       http.MethodGet,
-// 				extraHeaders: map[string]string{},
-// 			},
-// 			expectError: false,
-// 			wants:       []string{"Authorization:Bearer secret"},
-// 		},
-// 		{
-// 			name: "Extra headers are passed correctly in http request",
-// 			args: args{
-// 				payload:      []byte{},
-// 				url:          suite.fakeService.ResolveURL("/v2/"),
-// 				token:        "secret",
-// 				maxRetries:   3,
-// 				method:       http.MethodGet,
-// 				extraHeaders: map[string]string{"Foo": "bar"},
-// 			},
-// 			expectError: false,
-// 			wants:       []string{"Authorization:Bearer secret", "Foo:bar"},
-// 		},
-// 	} {
-// 		suite.Run(t.name, func() {
-// 			resp, err := DoRequestWithToken(t.args.payload, t.args.url, t.args.token, t.args.maxRetries,
-// 				t.args.method, t.args.extraHeaders)
-// 			if t.expectError {
-// 				require.Errorf(suite.T(), err, "error was expected but got none")
-// 			} else {
-// 				require.NoErrorf(suite.T(), err, "error was not expected, but got: %v", err)
-// 				for _, want := range t.wants {
-// 					require.Contains(suite.T(), resp.Body, want, fmt.Sprintf("want: %v -- got: %v", want, resp.Body))
-// 				}
-// 			}
-// 		})
-// 	}
-// }
-
-func (suite *RequestsTestSuite) TestCreateRequest() {
-	httpReq, err := createRequest("GET", "https://www.nrk.no", []byte{}, map[string]string{})
-	require.NoErrorf(suite.T(), err, "error was not expected, but got: %v", err)
-	require.Equal(suite.T(), httpReq.Header.Get("User-Agent"), "Kosli/"+version.GetVersion())
+			}
+		})
+	}
 }
 
 // In order for 'go test' to run this suite, we need to create
