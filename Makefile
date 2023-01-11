@@ -77,6 +77,7 @@ test_integration_setup:
 
 test_integration: deps vet ensure_network test_integration_setup ## Run tests except too slow ones
 	@~/go/bin/gotestsum -- --short -p=1 -coverprofile=cover.out ./...
+	@go tool cover -func=cover.out | grep total:
 	@go tool cover -html=cover.out
 
 
