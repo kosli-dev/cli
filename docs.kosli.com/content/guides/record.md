@@ -26,7 +26,7 @@ kosli environment report docker yourEnvironmentName \
 	--owner yourOrgName
 ```
 
-Details [here](/client_reference/kosli_environment_report_docker/)
+More details in [`kosli environment report docker` reference](/client_reference/kosli_environment_report_docker/)
 
 ## Record ecs environment
 

@@ -1,5 +1,5 @@
 ---
-title: Use cases
+title: Tutorials
 bookCollapseSection: true
 weight: 500
 ---

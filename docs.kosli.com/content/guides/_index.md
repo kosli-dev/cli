@@ -1,5 +1,5 @@
 ---
-title: How to
+title: Guides
 bookCollapseSection: true
 weight: 400
 ---
