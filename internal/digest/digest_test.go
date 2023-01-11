@@ -2,7 +2,6 @@ package digest
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -25,7 +24,7 @@ type DigestTestSuite struct {
 // create a new tmpDir before each test
 func (suite *DigestTestSuite) SetupTest() {
 	var err error
-	suite.tmpDir, err = ioutil.TempDir("", "testDir")
+	suite.tmpDir, err = os.MkdirTemp("", "testDir")
 	require.NoError(suite.T(), err, "error creating a temporary test directory")
 }
 

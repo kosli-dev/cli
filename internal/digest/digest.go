@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -36,7 +35,7 @@ func DirSha256(dirPath string, logger *logger.Logger) (string, error) {
 		return "", fmt.Errorf("%s is not a directory", dirPath)
 	}
 
-	tmpDir, err := ioutil.TempDir("", "*")
+	tmpDir, err := os.MkdirTemp("", "*")
 	if err != nil {
 		return "", err
 	}
@@ -57,7 +56,7 @@ func DirSha256(dirPath string, logger *logger.Logger) (string, error) {
 
 // prepareDirContentSha256 calculates a sha256 digest for a directory content
 func prepareDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, logger *logger.Logger) error {
-	files, err := ioutil.ReadDir(dirPath)
+	files, err := os.ReadDir(dirPath)
 	if err != nil {
 		return err
 	}

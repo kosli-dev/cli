@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -156,7 +155,7 @@ func loadPipefile(pipefilePath string) (PipelinePayload, error) {
 	if err != nil {
 		return pipe, fmt.Errorf("failed to open pipefile: %v", err)
 	}
-	byteValue, _ := ioutil.ReadAll(jsonFile)
+	byteValue, _ := io.ReadAll(jsonFile)
 
 	err = json.Unmarshal(byteValue, &pipe)
 	if err != nil {

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"reflect"
 	"strings"
@@ -97,7 +97,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 
 	if p.DryRun {
 		c.Logger.Info("############### THIS IS A DRY-RUN  ###############")
-		reqBody, err := ioutil.ReadAll(req.Body)
+		reqBody, err := io.ReadAll(req.Body)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read request body to %s : %v", req.URL, err)
 		}
@@ -111,7 +111,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 		}
 
 		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read response from %s request to %s : %v", req.Method, req.URL, err)
 		}

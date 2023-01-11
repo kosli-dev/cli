@@ -3,7 +3,6 @@ package kube
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -41,7 +40,7 @@ func (suite *KubeTestSuite) SetupSuite() {
 	suite.provider = cluster.NewProvider(cluster.ProviderWithDocker())
 	err := suite.provider.Create(suite.clusterName, createOptions)
 	require.NoError(suite.T(), err, "creating test k8s cluster failed")
-	suite.tmpDir, err = ioutil.TempDir("", "testDir")
+	suite.tmpDir, err = os.MkdirTemp("", "testDir")
 	require.NoError(suite.T(), err, "error creating a temporary test directory")
 	suite.kubeConfigPath = filepath.Join(suite.tmpDir, "kubeconfig")
 	err = suite.provider.ExportKubeConfig(suite.clusterName, suite.kubeConfigPath)

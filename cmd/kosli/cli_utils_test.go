@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -384,7 +383,7 @@ func (suite *CliUtilsTestSuite) TestLoadUserData() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			tmpDir, err := ioutil.TempDir("", "testDir")
+			tmpDir, err := os.MkdirTemp("", "testDir")
 			require.NoError(suite.T(), err, "error creating a temporary test directory")
 			defer os.RemoveAll(tmpDir)
 

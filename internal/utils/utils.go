@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -127,7 +126,7 @@ func Contains(s []string, e string) bool {
 
 // LoadFileContent loads file content
 func LoadFileContent(filepath string) (string, error) {
-	data, err := ioutil.ReadFile(filepath)
+	data, err := os.ReadFile(filepath)
 	if err != nil {
 		return "", err
 	}
