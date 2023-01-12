@@ -14,7 +14,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/kubernetes/test/e2e/framework"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 	"sigs.k8s.io/kind/pkg/cluster"
 )
@@ -47,8 +46,6 @@ func (suite *KubeTestSuite) SetupSuite() {
 	require.NoError(suite.T(), err, "exporting kubeconfig failed")
 	ctx := context.Background()
 	suite.clientset = suite.getK8sClient(ctx)
-	err = framework.WaitForAllNodesSchedulable(suite.clientset, 100*time.Second)
-	require.NoError(suite.T(), err, "waiting for cluster nodes to become schedulable failed")
 }
 
 // delete the KIND cluster and the tmp dir after the suite execution
