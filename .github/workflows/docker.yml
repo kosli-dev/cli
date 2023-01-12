@@ -156,3 +156,30 @@ jobs:
             --fingerprint ${{ env.FINGERPRINT }}
             --name snyk-code-scan
             --scan-results snyk-code.json
+
+    
+    - name: Run Snyk to scan the Docker image for vulnerabilities
+      continue-on-error: true
+      env:
+        # In order to use the Snyk Action you will need to have a Snyk API token.
+        # More details in https://github.com/snyk/actions#getting-your-snyk-token
+        # or you can signup for free at https://snyk.io/login
+        SNYK_TOKEN: ${{ secrets.snyk_token }}
+      run: 
+          snyk container test ${{ env.IMAGE }}:${{ inputs.tag }} 
+             --file=Dockerfile 
+             --json-file-output=snyk-docker.json
+
+
+    - name: Report Snyk Docker scan results evidence to Kosli
+      env:
+        KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
+        KOSLI_OWNER: compliancedb
+        KOSLI_PIPELINE: cli
+      run: 
+        kosli pipeline artifact report evidence snyk 
+          ${{ env.IMAGE }}:${{ inputs.tag }}
+            --fingerprint ${{ env.FINGERPRINT }}
+            --name snyk-docker-scan
+            --scan-results snyk-docker.json
+
