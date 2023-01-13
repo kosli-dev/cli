@@ -29,7 +29,7 @@ type snykEvidenceOptions struct {
 
 const snykEvidenceShortDesc = `Report Snyk vulnerability scan evidence for an artifact in a Kosli pipeline.`
 
-const snykEvidenceLongDesc = testEvidenceShortDesc + `
+const snykEvidenceLongDesc = snykEvidenceShortDesc + `
 ` + sha256Desc
 
 const snykEvidenceExample = `

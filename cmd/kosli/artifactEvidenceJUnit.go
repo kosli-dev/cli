@@ -43,7 +43,7 @@ type junitEvidenceOptions struct {
 
 const junitEvidenceShortDesc = `Report JUnit test evidence for an artifact in a Kosli pipeline.`
 
-const junitEvidenceLongDesc = testEvidenceShortDesc + `
+const junitEvidenceLongDesc = junitEvidenceShortDesc + `
 ` + sha256Desc
 
 const junitEvidenceExample = `
