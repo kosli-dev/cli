@@ -1,8 +1,8 @@
 ---
-title: 'Kosli parts'
+title: 'Kosli tools'
 weight: 140
 ---
-# Kosli parts
+# Kosli tools
 
 ## CLI
 

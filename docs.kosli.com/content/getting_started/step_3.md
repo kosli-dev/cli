@@ -26,7 +26,7 @@ To retrieve your API Token:
 The `--api-token` and `--owner` flags are used in every `kosli` CLI command.  
 Rather than retyping these every time you run `kosli`, you can set them as environment variables.
 
-The owner is the name of the organization you intend to use - it is either your private organization, which has exactly the same name as your GitHub username, or a shared orgnazation (if you created or have been invited to one).
+The owner is the name of the organization you intend to use - it is either your private organization, which has exactly the same name as your GitHub username, or a shared organization (if you created or have been invited to one).
 
 By setting the environment variables:
 ```shell {.command}
