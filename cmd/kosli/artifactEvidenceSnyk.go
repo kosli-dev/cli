@@ -62,7 +62,6 @@ func newSnykEvidenceCmd(out io.Writer) *cobra.Command {
 		Short:   snykEvidenceShortDesc,
 		Long:    snykEvidenceLongDesc,
 		Example: snykEvidenceExample,
-		Hidden:  true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
