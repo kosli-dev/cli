@@ -13,7 +13,7 @@ Exits with non-zero code if artifact has not been approved.
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag).
 
 ```shell
-kosli pipeline approval assert [ARTIFACT-NAME-OR-PATH] [flags]
+kosli pipeline approval assert [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ### Flags

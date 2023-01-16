@@ -12,7 +12,7 @@ Report a JUnit test evidence to an artifact in a Kosli pipeline.
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag).
 
 ```shell
-kosli pipeline artifact report evidence test [ARTIFACT-NAME-OR-PATH] [flags]
+kosli pipeline artifact report evidence test [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ### Flags

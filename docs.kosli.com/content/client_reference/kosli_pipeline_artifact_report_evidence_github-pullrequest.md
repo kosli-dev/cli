@@ -13,7 +13,7 @@ It checks if a pull request exists for the artifact (based on its git commit) an
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag).
 
 ```shell
-kosli pipeline artifact report evidence github-pullrequest [ARTIFACT-NAME-OR-PATH] [flags]
+kosli pipeline artifact report evidence github-pullrequest [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ### Flags

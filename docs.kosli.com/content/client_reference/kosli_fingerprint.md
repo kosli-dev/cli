@@ -13,7 +13,7 @@ Requires artifact type flag to be set.
 Artifact type can be one of: "file" for files, "dir" for directories, "docker" for docker images.
 
 ```shell
-kosli fingerprint ARTIFACT-NAME-OR-PATH [flags]
+kosli fingerprint {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 ```
 
 ### Flags

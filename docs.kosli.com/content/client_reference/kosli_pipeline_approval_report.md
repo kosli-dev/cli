@@ -12,7 +12,7 @@ Report an approval of deploying an artifact to Kosli.
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag).
 
 ```shell
-kosli pipeline approval report [ARTIFACT-NAME-OR-PATH] [flags]
+kosli pipeline approval report [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ### Flags

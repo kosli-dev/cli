@@ -12,7 +12,7 @@ Report an artifact creation to a Kosli pipeline.
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag).
 
 ```shell
-kosli pipeline artifact report creation ARTIFACT-NAME-OR-PATH [flags]
+kosli pipeline artifact report creation {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 ```
 
 ### Flags

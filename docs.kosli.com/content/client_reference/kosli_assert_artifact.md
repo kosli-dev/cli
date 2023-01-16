@@ -12,7 +12,7 @@ Assert the compliance status of an artifact in Kosli.
 Exits with non-zero code if the artifact has a non-compliant status.
 
 ```shell
-kosli assert artifact [ARTIFACT-NAME-OR-PATH] [flags]
+kosli assert artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ### Flags

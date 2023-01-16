@@ -12,7 +12,7 @@ Report a deployment of an artifact to an environment to Kosli.
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag).
 
 ```shell
-kosli expect deployment [ARTIFACT-NAME-OR-PATH] [flags]
+kosli expect deployment [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ### Flags
