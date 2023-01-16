@@ -57,12 +57,13 @@ func (gv *GitView) CommitsBetween(oldest, newest string, logger *logger.Logger) 
 	}
 
 	newestHash, err := gv.repository.ResolveRevision(plumbing.Revision(newest))
+	hint := "The commit does not exist in the git repository.\nThis may be caused by insufficient git clone depth."
 	if err != nil {
-		return commits, fmt.Errorf("failed to resolve %s: %v", newest, err)
+		return commits, fmt.Errorf("failed to resolve git reference %s\n%s", newest, hint)
 	}
 	oldestHash, err := gv.repository.ResolveRevision(plumbing.Revision(oldest))
 	if err != nil {
-		return commits, fmt.Errorf("failed to resolve %s: %v", oldest, err)
+		return commits, fmt.Errorf("failed to resolve git reference %s\n%s", oldest, hint)
 	}
 
 	logger.Debug("newest commit hash %s", newestHash.String())
