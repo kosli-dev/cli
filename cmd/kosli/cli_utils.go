@@ -334,7 +334,23 @@ func LoadJsonData(filepath string) (interface{}, error) {
 // ValidateArtifactArg validates the artifact name or path argument
 func ValidateArtifactArg(args []string, artifactType, inputSha256 string, alwaysRequireArtifactName bool) error {
 	if len(args) > 1 {
-		return fmt.Errorf("only one argument (docker image name or file/dir path) is allowed")
+		suppliedArgs := ""
+		separator := ""
+		argsWithLeadingSpace := false
+		for _, arg := range args {
+			if arg == " " {
+				argsWithLeadingSpace = true
+			}
+			suppliedArgs += separator + `"` + arg + `"`
+			separator = ", "
+		}
+		errMsg := []string{}
+		errMsg = append(errMsg, "only one argument (docker image name or file/dir path) is allowed.")
+		errMsg = append(errMsg, fmt.Sprintf("The %d supplied arguments are: [%v]", len(args), suppliedArgs))
+		if argsWithLeadingSpace {
+			errMsg = append(errMsg, "Arguments with a leading space are probably caused by a lone backslash that has a space after it.")
+		}
+		return fmt.Errorf(strings.Join(errMsg, "\n"))
 	}
 
 	if len(args) == 0 || args[0] == "" {

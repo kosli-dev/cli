@@ -469,6 +469,13 @@ func (suite *CliUtilsTestSuite) TestValidateArtifactArg() {
 			expectError:               false,
 			alwaysRequireArtifactName: false,
 		},
+		{
+			name:                      "arguments with leading space cause a more detailed error message",
+			args:                      []string{"/tmp", " "},
+			inputSha256:               "8b4fd747df6882b897aa514af7b40571a7508cc78a8d48ae2c12f9f4bcb1598f",
+			expectError:               true,
+			alwaysRequireArtifactName: true,
+		},
 	} {
 		suite.Run(t.name, func() {
 			err := ValidateArtifactArg(t.args, t.artifactType, t.inputSha256, t.alwaysRequireArtifactName)
