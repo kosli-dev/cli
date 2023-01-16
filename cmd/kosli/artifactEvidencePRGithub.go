@@ -80,7 +80,7 @@ func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestEvidenceGithubOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "github-pullrequest [ARTIFACT-NAME-OR-PATH]",
+		Use:     "github-pullrequest [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Aliases: []string{"gh-pr", "github-pr"},
 		Short:   pullRequestEvidenceGithubShortDesc,
 		Long:    pullRequestEvidenceGithubLongDesc,

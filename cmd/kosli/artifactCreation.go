@@ -61,7 +61,7 @@ func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 	o := new(artifactCreationOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "creation ARTIFACT-NAME-OR-PATH",
+		Use:     "creation {IMAGE-NAME | FILE-PATH | DIR-PATH}",
 		Short:   artifactCreationShortDesc,
 		Long:    artifactCreationLongDesc,
 		Example: artifactCreationExample,

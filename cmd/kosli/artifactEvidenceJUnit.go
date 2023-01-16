@@ -72,7 +72,7 @@ func newJUnitEvidenceCmd(out io.Writer) *cobra.Command {
 	o := new(junitEvidenceOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "junit [ARTIFACT-NAME-OR-PATH]",
+		Use:     "junit [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Short:   junitEvidenceShortDesc,
 		Long:    junitEvidenceLongDesc,
 		Example: junitEvidenceExample,

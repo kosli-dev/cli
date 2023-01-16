@@ -42,7 +42,7 @@ func newAssertArtifactCmd(out io.Writer) *cobra.Command {
 	o := &assertArtifactOptions{}
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "artifact [ARTIFACT-NAME-OR-PATH]",
+		Use:     "artifact [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Short:   assertArtifactShortDesc,
 		Long:    assertArtifactLongDesc,
 		Example: assertArtifactExample,

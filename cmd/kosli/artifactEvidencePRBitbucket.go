@@ -65,7 +65,7 @@ func newPullRequestEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestEvidenceBitbucketOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "bitbucket-pullrequest [ARTIFACT-NAME-OR-PATH]",
+		Use:     "bitbucket-pullrequest [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Aliases: []string{"bb-pr", "bitbucket-pr"},
 		Short:   pullRequestEvidenceBitbucketShortDesc,
 		Long:    pullRequestEvidenceBitbucketLongDesc,

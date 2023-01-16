@@ -64,7 +64,7 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePR
 			cmd: `pipeline artifact report evidence bitbucket-pullrequest --fingerprint ` + suite.artifactFingerprint + ` --name bb-pr --pipeline ` + suite.pipelineName + `
 			          --build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69 --api-token foo --host bar`,
 			golden: "Error: --owner is not set\n" +
-				"Usage: kosli pipeline artifact report evidence bitbucket-pullrequest [ARTIFACT-NAME-OR-PATH] [flags]\n",
+				"Usage: kosli pipeline artifact report evidence bitbucket-pullrequest [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
@@ -93,7 +93,7 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePR
 			cmd: `pipeline artifact report evidence bitbucket-pullrequest artifactNameArg --name bb-pr --pipeline ` + suite.pipelineName + `
 					  --build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69` + suite.defaultKosliArguments,
 			golden: "Error: either --artifact-type or --sha256 must be specified\n" +
-				"Usage: kosli pipeline artifact report evidence bitbucket-pullrequest [ARTIFACT-NAME-OR-PATH] [flags]\n",
+				"Usage: kosli pipeline artifact report evidence bitbucket-pullrequest [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,

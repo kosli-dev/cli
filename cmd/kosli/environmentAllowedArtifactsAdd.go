@@ -31,7 +31,7 @@ func newAllowedArtifactsCreateCmd(out io.Writer) *cobra.Command {
 	o := new(allowedArtifactsCreationOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "add ARTIFACT-NAME-OR-PATH",
+		Use:   "add {IMAGE-NAME | FILE-PATH | DIR-PATH}",
 		Short: allowedArtifactCreateShortDesc,
 		Long:  allowedArtifactCreateLongDesc,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

@@ -43,7 +43,7 @@ func newApprovalAssertCmd(out io.Writer) *cobra.Command {
 	o := new(approvalAssertOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "assert [ARTIFACT-NAME-OR-PATH]",
+		Use:     "assert [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Short:   approvalAssertShortDesc,
 		Long:    approvalAssertLongDesc,
 		Example: approvalAssertExample,

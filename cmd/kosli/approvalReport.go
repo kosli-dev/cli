@@ -62,7 +62,7 @@ func newApprovalReportCmd(out io.Writer) *cobra.Command {
 	o := new(approvalReportOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "report [ARTIFACT-NAME-OR-PATH]",
+		Use:     "report [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Short:   approvalReportShortDesc,
 		Long:    approvalReportLongDesc,
 		Example: approvalReportExample,

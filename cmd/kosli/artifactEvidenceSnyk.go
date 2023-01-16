@@ -58,7 +58,7 @@ func newSnykEvidenceCmd(out io.Writer) *cobra.Command {
 	o := new(snykEvidenceOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "snyk [ARTIFACT-NAME-OR-PATH]",
+		Use:     "snyk [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Short:   snykEvidenceShortDesc,
 		Long:    snykEvidenceLongDesc,
 		Example: snykEvidenceExample,

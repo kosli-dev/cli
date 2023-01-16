@@ -70,7 +70,7 @@ func newGenericEvidenceCmd(out io.Writer) *cobra.Command {
 	o := new(genericEvidenceOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "generic [ARTIFACT-NAME-OR-PATH]",
+		Use:     "generic [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Short:   artifactEvidenceGenericShortDesc,
 		Long:    artifactEvidenceGenericLongDesc,
 		Example: artifactEvidenceGenericExample,

@@ -15,7 +15,7 @@ Artifact type can be one of: "file" for files, "dir" for directories, "docker" f
 func newFingerprintCmd(out io.Writer) *cobra.Command {
 	o := new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "fingerprint ARTIFACT-NAME-OR-PATH",
+		Use:   "fingerprint {IMAGE-NAME | FILE-PATH | DIR-PATH}",
 		Short: fingerprintShortDesc,
 		Long:  fingerprintLongDesc,
 		Args:  cobra.ExactArgs(1),

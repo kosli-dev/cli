@@ -64,7 +64,7 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 			cmd: `pipeline artifact report evidence github-pullrequest --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --pipeline ` + suite.pipelineName + `
 			          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6 --api-token foo --host bar`,
 			golden: "Error: --owner is not set\n" +
-				"Usage: kosli pipeline artifact report evidence github-pullrequest [ARTIFACT-NAME-OR-PATH] [flags]\n",
+				"Usage: kosli pipeline artifact report evidence github-pullrequest [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
@@ -93,7 +93,7 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 			cmd: `pipeline artifact report evidence github-pullrequest artifactNameArg --name gh-pr --pipeline ` + suite.pipelineName + `
 					  --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			golden: "Error: either --artifact-type or --sha256 must be specified\n" +
-				"Usage: kosli pipeline artifact report evidence github-pullrequest [ARTIFACT-NAME-OR-PATH] [flags]\n",
+				"Usage: kosli pipeline artifact report evidence github-pullrequest [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
