@@ -77,16 +77,16 @@ func (gv *GitView) CommitsBetween(oldest, newest string, logger *logger.Logger) 
 	for {
 		commit, err := commitsIter.Next()
 		if err != nil {
-			return commits, fmt.Errorf("failed to get next commit: %v", err)
+			return commits, fmt.Errorf("failed to get next git commit: %v\n%s", err, hint)
 		}
 		if commit.Hash != *oldestHash {
-			currentCommit := asArtifactCommit(commit, branchName)
-			commits = append(commits, currentCommit)
+			nextCommit := asArtifactCommit(commit, branchName)
+			commits = append(commits, nextCommit)
 		} else {
 			break
 		}
 	}
-	logger.Debug("parsed %d commits between newest and oldest commits", len(commits))
+	logger.Debug("parsed %d commits between newest and oldest git commits", len(commits))
 	return commits, nil
 }
 
