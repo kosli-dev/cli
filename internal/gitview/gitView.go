@@ -109,14 +109,14 @@ func (gv *GitView) RepoUrl() (string, error) {
 // ChangeLog attempts to collect the changelog list of commits for an artifact,
 // the changelog is all commits between current commit and the commit from which the previous artifact in Kosli
 // was created.
-// If collecting the changelog fails (e.g. if git history has been rewritten), the changelog only
-// contains the single commit info which is the current commit
+// If collecting the changelog fails (e.g. if git history has been rewritten, or the clone depth is too shallow),
+// the changelog only contains the single commit info which is the current commit
 
 func (gv *GitView) ChangeLog(currentCommit, previousCommit string, logger *logger.Logger) ([]*ArtifactCommit, error) {
 	if previousCommit != "" {
 		commitsList, err := gv.CommitsBetween(previousCommit, currentCommit, logger)
 		if err != nil {
-			fmt.Printf("Warning: %s\n", err)
+			logger.Warning(err)
 		} else {
 			return commitsList, nil
 		}
