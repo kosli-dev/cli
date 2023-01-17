@@ -1,9 +1,9 @@
 /* You can add custom styles here. */
 
 // @import "plugins/numbered";
-body {
-    background-color: $neutral-200;
-}
+// body {
+//     background-color: $neutral-200;
+// }
 
 h1, h2, h3, h4, h5, h6 {
     scroll-margin-top: 80px;
@@ -17,7 +17,12 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 14px;
 }
 
+.container {
+    max-width: 100%;
+}
+
 main.container {
+    max-width: 100%;
     min-height: calc(100vh - #{$top-header-height});
     position: relative;
     top: $top-header-height;
@@ -64,6 +69,9 @@ aside.book-toc .book-toc-content {
 
 .book-page {
     background-color: $neutral-100;
+    max-width: 95rem;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .content-container {
