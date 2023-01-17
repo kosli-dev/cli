@@ -7,6 +7,7 @@
 
 h1, h2, h3, h4, h5, h6 {
     scroll-margin-top: 80px;
+    font-weight: 500;
 }
 
 .toc-title {
@@ -47,6 +48,12 @@ aside.book-toc .book-toc-content {
 .markdown pre {
     background-color: #272822;
     color: #f8f8f2;
+}
+
+.markdown img {
+    border-radius: 7px;
+    box-shadow: rgba(0, 0, 0, 0.2) 0px 5px 15px;
+    margin: 1rem;
 }
 
 .book-brand {
