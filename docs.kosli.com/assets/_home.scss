@@ -24,7 +24,7 @@
 }
 
 .card {
-    background-color: $neutral-200;
+    // background-color: $neutral-200;
     padding: $spacing-s;
     height: 100%;
     border-radius: 8px;
@@ -32,7 +32,7 @@
     flex-direction: column;
 
     img {
-        width: 100%;
+        width: 50px;
     }
 
     a {
