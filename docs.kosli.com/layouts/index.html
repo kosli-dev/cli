@@ -1,17 +1,6 @@
 {{ define "main" }}
-<article>
-    <!-- hero -->
-    {{ with .Params.hero }}
-    <div class="hero book-columns flex flex-wrap align-center">
-        <div class="flex-even">
-            <h1>{{ .title }}</h1>
-            <a href="{{ .url }}">{{ .link_text }}</a>
-        </div>
-        <div class="flex-even text-center">
-            <img src="{{ .image }}" alt="{{ .alt_text }}">
-        </div>
-    </div>
-    {{ end }}
+<article class="markdown">
+    <h1>{{ .Params.hero.title }}</h1>
 
     <p class="body-1">
         {{ .Params.paragraph }}
