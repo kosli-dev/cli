@@ -112,7 +112,10 @@ licenses:
 	$(eval DATA := $(shell go-licenses csv ./...))
 	@echo $(DATA) | tr " " "\n" > licenses/licenses.csv
 
-hugo: docs 
+hugo: docs
+	cd docs.kosli.com && hugo server --minify --buildDrafts --port=1515
+
+hugo-local:
 	cd docs.kosli.com && hugo server --minify --buildDrafts --port=1515
 
 helm-lint: 
