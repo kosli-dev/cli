@@ -91,8 +91,8 @@ test_integration_no_setup:
 	@go tool cover -html=cover.out
 
 
-test_integration_single:
-	@go test -v -p=1 ./... -run "${TARGET}"
+test_integration_single: test_integration_setup
+	@~/go/bin/gotestsum -- -p=1 ./... -run "${TARGET}"
 
 
 test_docs: deps vet ensure_network test_integration_setup
