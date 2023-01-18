@@ -69,23 +69,34 @@ func (gv *GitView) CommitsBetween(oldest, newest string, logger *logger.Logger) 
 	logger.Debug("newest commit hash %s", newestHash.String())
 	logger.Debug("oldest commit hash %s", oldestHash.String())
 
-	commitsIter, err := gv.repository.Log(&git.LogOptions{From: *newestHash, Order: git.LogOrderCommitterTime})
-	if err != nil {
-		return commits, fmt.Errorf("failed to git log: %v", err)
+	if oldestHash.String() == newestHash.String() {
+		commitObject, err := gv.repository.CommitObject(*newestHash)
+		if err != nil {
+			return commits, err
+		}
+		commit := asArtifactCommit(commitObject, branchName)
+		commits = append(commits, commit)
+
+	} else {
+		commitsIter, err := gv.repository.Log(&git.LogOptions{From: *newestHash, Order: git.LogOrderCommitterTime})
+		if err != nil {
+			return commits, fmt.Errorf("failed to git log: %v", err)
+		}
+
+		for {
+			commit, err := commitsIter.Next()
+			if err != nil {
+				return commits, fmt.Errorf("failed to get next git commit: %v\n%s", err, hint)
+			}
+			if commit.Hash != *oldestHash {
+				nextCommit := asArtifactCommit(commit, branchName)
+				commits = append(commits, nextCommit)
+			} else {
+				break
+			}
+		}
 	}
 
-	for {
-		commit, err := commitsIter.Next()
-		if err != nil {
-			return commits, fmt.Errorf("failed to get next git commit: %v\n%s", err, hint)
-		}
-		if commit.Hash != *oldestHash {
-			nextCommit := asArtifactCommit(commit, branchName)
-			commits = append(commits, nextCommit)
-		} else {
-			break
-		}
-	}
 	logger.Debug("parsed %d commits between newest and oldest git commits", len(commits))
 	return commits, nil
 }
