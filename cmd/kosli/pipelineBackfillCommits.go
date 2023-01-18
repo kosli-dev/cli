@@ -18,8 +18,8 @@ type pipelineBackfillArtifactCommitsOptions struct {
 }
 
 type ArtifactCommitsBackfillPayload struct {
-	RepoUrl     string                    `json:"repo_url"`
-	CommitsList []*gitview.ArtifactCommit `json:"git_commit_list"`
+	RepoUrl     string                `json:"repo_url"`
+	CommitsList []*gitview.CommitInfo `json:"git_commit_list"`
 }
 
 func newPipelineBackfillArtifactCommitsCmd(out io.Writer) *cobra.Command {

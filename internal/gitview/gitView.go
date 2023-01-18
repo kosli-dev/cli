@@ -10,7 +10,7 @@ import (
 	"github.com/kosli-dev/cli/internal/logger"
 )
 
-type ArtifactCommit struct {
+type CommitInfo struct {
 	Sha1      string   `json:"sha1"`
 	Message   string   `json:"message"`
 	Author    string   `json:"author"`
@@ -26,10 +26,9 @@ type GitView struct {
 	repository     *git.Repository
 }
 
-// Open opens a git repository from the given path. It detects if the
+// New opens a git repository from the given path. It detects if the
 // repository is bare or a normal one. If the path doesn't contain a valid
 // repository ErrRepositoryNotExists is returned
-
 func New(repositoryRoot string) (*GitView, error) {
 	repository, err := git.PlainOpen(repositoryRoot)
 	if err != nil {
@@ -42,14 +41,12 @@ func New(repositoryRoot string) (*GitView, error) {
 }
 
 // CommitsBetween list all commits that have happened between two commits in a git repo
-func (gv *GitView) CommitsBetween(oldest, newest string, logger *logger.Logger) ([]*ArtifactCommit, error) {
+func (gv *GitView) CommitsBetween(oldest, newest string, logger *logger.Logger) ([]*CommitInfo, error) {
 	// Using 'var commits []*ArtifactCommit' will make '[]' convert to 'null' when converting to json
 	// which will fail on the server side.
 	// Using 'commits := make([]*ArtifactCommit, 0)' will make '[]' convert to '[]' when converting to json
 	// See issue #522
-
-	//TODO: check why this behaves weird, comment in server#556
-	commits := make([]*ArtifactCommit, 0)
+	commits := make([]*CommitInfo, 0)
 
 	branchName, err := gv.BranchName()
 	if err != nil {
@@ -74,7 +71,7 @@ func (gv *GitView) CommitsBetween(oldest, newest string, logger *logger.Logger) 
 		if err != nil {
 			return commits, err
 		}
-		commit := asArtifactCommit(commitObject, branchName)
+		commit := asCommitInfo(commitObject, branchName)
 		commits = append(commits, commit)
 
 	} else {
@@ -89,7 +86,7 @@ func (gv *GitView) CommitsBetween(oldest, newest string, logger *logger.Logger) 
 				return commits, fmt.Errorf("failed to get next git commit: %v\n%s", err, hint)
 			}
 			if commit.Hash != *oldestHash {
-				nextCommit := asArtifactCommit(commit, branchName)
+				nextCommit := asCommitInfo(commit, branchName)
 				commits = append(commits, nextCommit)
 			} else {
 				break
@@ -122,8 +119,7 @@ func (gv *GitView) RepoUrl() (string, error) {
 // was created.
 // If collecting the changelog fails (e.g. if git history has been rewritten, or the clone depth is too shallow),
 // the changelog only contains the single commit info which is the current commit
-
-func (gv *GitView) ChangeLog(currentCommit, previousCommit string, logger *logger.Logger) ([]*ArtifactCommit, error) {
+func (gv *GitView) ChangeLog(currentCommit, previousCommit string, logger *logger.Logger) ([]*CommitInfo, error) {
 	if previousCommit != "" {
 		commitsList, err := gv.CommitsBetween(previousCommit, currentCommit, logger)
 		if err != nil {
@@ -133,11 +129,11 @@ func (gv *GitView) ChangeLog(currentCommit, previousCommit string, logger *logge
 		}
 	}
 
-	currentArtifactCommit, err := gv.newArtifactCommitFromGitCommit(currentCommit)
+	currentArtifactCommit, err := gv.newCommitInfoFromGitCommit(currentCommit)
 	if err != nil {
-		return []*ArtifactCommit{}, fmt.Errorf("could not retrieve current git commit for %s: %v", currentCommit, err)
+		return []*CommitInfo{}, fmt.Errorf("could not retrieve current git commit for %s: %v", currentCommit, err)
 	}
-	return []*ArtifactCommit{currentArtifactCommit}, nil
+	return []*CommitInfo{currentArtifactCommit}, nil
 }
 
 // BranchName returns the current branch name on a repository,
@@ -153,33 +149,33 @@ func (gv *GitView) BranchName() (string, error) {
 	return "", nil
 }
 
-// newArtifactCommitFromGitCommit returns an ArtifactCommit object from a git commit
-// the gitCommit can be a revision: e.g. HEAD or HEAD~2 etc
-func (gv *GitView) newArtifactCommitFromGitCommit(gitCommit string) (*ArtifactCommit, error) {
+// newCommitInfoFromGitCommit returns an ArtifactCommit object from a git commit
+// the gitCommit can be SHA1 or a revision: e.g. HEAD or HEAD~2 etc
+func (gv *GitView) newCommitInfoFromGitCommit(gitCommit string) (*CommitInfo, error) {
 	branchName, err := gv.BranchName()
 	if err != nil {
-		return &ArtifactCommit{}, err
+		return &CommitInfo{}, err
 	}
 
 	currentHash, err := gv.repository.ResolveRevision(plumbing.Revision(gitCommit))
 	if err != nil {
-		return &ArtifactCommit{}, fmt.Errorf("failed to resolve %s: %v", gitCommit, err)
+		return &CommitInfo{}, fmt.Errorf("failed to resolve %s: %v", gitCommit, err)
 	}
 	currentCommit, err := gv.repository.CommitObject(*currentHash)
 	if err != nil {
-		return &ArtifactCommit{}, fmt.Errorf("could not retrieve commit for %s: %v", *currentHash, err)
+		return &CommitInfo{}, fmt.Errorf("could not retrieve commit for %s: %v", *currentHash, err)
 	}
 
-	return asArtifactCommit(currentCommit, branchName), nil
+	return asCommitInfo(currentCommit, branchName), nil
 }
 
-// asArtifactCommit returns an ArtifactCommit from a git Commit object
-func asArtifactCommit(commit *object.Commit, branchName string) *ArtifactCommit {
+// asCommitInfo returns an ArtifactCommit from a git Commit object
+func asCommitInfo(commit *object.Commit, branchName string) *CommitInfo {
 	commitParents := []string{}
 	for _, hash := range commit.ParentHashes {
 		commitParents = append(commitParents, hash.String())
 	}
-	return &ArtifactCommit{
+	return &CommitInfo{
 		Sha1:      commit.Hash.String(),
 		Message:   strings.TrimSpace(commit.Message),
 		Author:    commit.Author.String(),
