@@ -131,10 +131,22 @@ func initializeRepoAndCommit(repoPath string, commitsNumber int) (*git.Repositor
 		if err != nil {
 			return repo, w, err
 		}
-		newFile.Write([]byte("this is a dummy line"))
-		newFile.Close()
-		w.Add(filePath)
-		w.Commit(fmt.Sprintf("Added file %d", i), &git.CommitOptions{})
+		_, err = newFile.Write([]byte("this is a dummy line"))
+		if err != nil {
+			return repo, w, err
+		}
+		err = newFile.Close()
+		if err != nil {
+			return repo, w, err
+		}
+		_, err = w.Add(filePath)
+		if err != nil {
+			return repo, w, err
+		}
+		_, err = w.Commit(fmt.Sprintf("Added file %d", i), &git.CommitOptions{})
+		if err != nil {
+			return repo, w, err
+		}
 	}
 
 	return repo, w, nil
