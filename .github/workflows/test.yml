@@ -61,7 +61,11 @@ jobs:
       env:
         KOSLI_GITHUB_TOKEN: ${{ secrets.github_access_token }}
         KOSLI_BITBUCKET_PASSWORD: ${{ secrets.bitbucket_password }}
-      run: make test_integration_full
+      run: |
+        # some tests use git operations, therefore the git author on the CI VM needs to be set
+        git config --global user.name "John Doe"
+        git config --global user.email johndoe@example.com
+        make test_integration_full
 
     - name: Slack Notification on Failure
       if: ${{ failure() }}
