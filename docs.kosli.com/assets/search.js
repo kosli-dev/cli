@@ -86,6 +86,9 @@
 
       results.appendChild(li);
     });
+
+    // tabToResults();
+
   }
 
   /**
@@ -97,4 +100,18 @@
     div.innerHTML = content;
     return div.firstChild;
   }
+
+  // const tabToResults = () => {
+  //   input.addEventListener("keyup", (event) => {
+  //     const foundResults = document.querySelector('#book-search-results');
+  //     let numResults = foundResults.childElementCount;
+  //     if (event.key === "Tab" && numResults > 0) {
+  //       console.log(numResults)
+  //       event.preventDefault;
+  //       const firstResult = foundResults.querySelector("a");
+  //       firstResult.focus();
+  //       numResults = 0
+  //     }
+  //   });
+  // }
 })();
