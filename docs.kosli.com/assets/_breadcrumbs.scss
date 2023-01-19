@@ -1,7 +1,32 @@
 .breadcrumbs {
     list-style-type: none;
     display: flex;
+    align-items: center;
     padding-inline-start: 0 !important;
+
+    a:hover {
+        text-decoration: underline;
+    }
+
+    li {
+        display: flex;
+        align-items: center;
+        font-size: 0.8em;
+    }
+
+    .active {
+        font-weight: bold;
+    }
+
+    li:first-child::before {
+        content: "";
+        display: inline-block;
+        width: 15px;
+        height: 15px;
+        background-image: url("/images/icons/home-icon.svg");
+        background-size: contain;
+        margin-right: 0.5rem;
+    }
 
     li:not(:last-child)::after {
         content: "/";

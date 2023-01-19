@@ -1,15 +1,17 @@
 
 <ul class="breadcrumbs">
     {{- range .Ancestors.Reverse }}
-        <li><a href="{{ .Permalink }}">
+        <li>
+            <a href="{{ .Permalink }}">
             {{ if eq .RelPermalink "/"}}
                 Home
             {{ else }}
                 {{ .Title }}
             {{ end }}
-        </a></li>
+        </a>
+    </li>
     {{- end }}
     <li class="active" aria-current="page">
-        <a href="{{ .Permalink }}">{{ .Title }}</a>
+        {{ .Title }}
     </li>
 </ul>

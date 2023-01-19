@@ -19,7 +19,6 @@
         {{ template "header" . }} <!-- Mobile layout header -->
       </header>
       <div class="content-container">
-  
         {{ template "main" . }} <!-- Page Content -->
 
         {{ if default true (default .Site.Params.BookToC .Params.BookToC) }}
