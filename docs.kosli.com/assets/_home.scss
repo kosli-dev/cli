@@ -29,7 +29,6 @@
     border-radius: 8px;
     display: flex;
     flex-direction: column;
-    padding-bottom: $spacing-xs;
 
     p {
         margin-top: 0;
@@ -54,7 +53,7 @@
 .home-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: $spacing-s;
+    gap: $spacing-m $spacing-s;
     h3 {
         font-size: 16px
     }
