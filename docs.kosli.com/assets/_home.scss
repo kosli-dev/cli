@@ -25,11 +25,11 @@
 
 .card {
     // background-color: $neutral-200;
-    padding: $spacing-s;
     height: 100%;
     border-radius: 8px;
     display: flex;
     flex-direction: column;
+    padding-bottom: $spacing-xs;
 
     p {
         margin-top: 0;
@@ -54,7 +54,7 @@
 .home-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: $spacing-xs;
+    gap: $spacing-s;
     h3 {
         font-size: 16px
     }
@@ -64,7 +64,7 @@
     .hero {
         .flex-even {
            min-width: 100%;
-           padding: $spacing-xs;
+           padding: $spacing-s;
         }
     }
 }
@@ -73,7 +73,6 @@
     .home-grid {
         display: grid;
         grid-template-columns: 1fr 1fr 1fr;
-        gap: $spacing-xs;
         h3 {
             font-size: 20px
         }
@@ -84,6 +83,5 @@
     .home-grid {
         display: grid;
         grid-template-columns: 1fr 1fr 1fr 1fr;
-        gap: $spacing-xs;
     }
 }

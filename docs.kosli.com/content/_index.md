@@ -63,7 +63,7 @@ sections:
           image: /images/home/home-community.svg
           alt_text: Slack community icon
           description: Learn how to use Kosli with simple examples
-          link_text: Join Kosli Community >
+          link_text: Join the Kosli Community >
           url: https://www.kosli.com/community/
           new_page: true
         
