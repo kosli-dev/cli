@@ -102,16 +102,20 @@ func (gv *GitView) CommitsBetween(oldest, newest string, logger *logger.Logger) 
 func (gv *GitView) RepoUrl() (string, error) {
 	repoRemote, err := gv.repository.Remote("origin") // TODO: We hard code this for now. Should we have a flag to set it from the cmdline? 2022-12-06
 	if err != nil {
-		fmt.Printf("Warning: Repo URL will not be reported since there is no remote('origin') in git repository (%s)\n", gv.repositoryRoot)
-		return "", nil
+		return "", fmt.Errorf("remote('origin') is not found in git repository: %s", gv.repositoryRoot)
 	}
-	remoteUrl := repoRemote.Config().URLs[0]
+	remoteUrl := extractRepoURLFromRemote(repoRemote.Config().URLs[0])
+	return remoteUrl, nil
+}
+
+// extractRepoURLFromRemote converts an SSH or http remote into a URL
+func extractRepoURLFromRemote(remoteUrl string) string {
 	if strings.HasPrefix(remoteUrl, "git@") {
 		remoteUrl = strings.Replace(remoteUrl, ":", "/", 1)
 		remoteUrl = strings.Replace(remoteUrl, "git@", "https://", 1)
 	}
 	remoteUrl = strings.TrimSuffix(remoteUrl, ".git")
-	return remoteUrl, nil
+	return remoteUrl
 }
 
 // ChangeLog attempts to collect the changelog list of commits for an artifact,
@@ -157,16 +161,16 @@ func (gv *GitView) newCommitInfoFromGitCommit(gitCommit string) (*CommitInfo, er
 		return &CommitInfo{}, err
 	}
 
-	currentHash, err := gv.repository.ResolveRevision(plumbing.Revision(gitCommit))
+	hash, err := gv.repository.ResolveRevision(plumbing.Revision(gitCommit))
 	if err != nil {
-		return &CommitInfo{}, fmt.Errorf("failed to resolve %s: %v", gitCommit, err)
+		return &CommitInfo{}, fmt.Errorf("failed to resolve git reference %s: %v", gitCommit, err)
 	}
-	currentCommit, err := gv.repository.CommitObject(*currentHash)
+	commit, err := gv.repository.CommitObject(*hash)
 	if err != nil {
-		return &CommitInfo{}, fmt.Errorf("could not retrieve commit for %s: %v", *currentHash, err)
+		return &CommitInfo{}, fmt.Errorf("could not retrieve commit for %s: %v", *hash, err)
 	}
 
-	return asCommitInfo(currentCommit, branchName), nil
+	return asCommitInfo(commit, branchName), nil
 }
 
 // asCommitInfo returns an ArtifactCommit from a git Commit object

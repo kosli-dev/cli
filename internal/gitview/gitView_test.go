@@ -37,6 +37,20 @@ func (suite *GitViewTestSuite) AfterTest() {
 	require.NoErrorf(suite.T(), err, "error cleaning up the temporary test directory %s", suite.tmpDir)
 }
 
+func (suite *GitViewTestSuite) TestNewGitView() {
+	dirPath := filepath.Join(suite.tmpDir, "repoName")
+	_, worktree, err := initializeRepoAndCommit(dirPath, 1)
+	require.NoError(suite.T(), err)
+
+	gv, err := New(worktree.Filesystem.Root())
+	require.NoError(suite.T(), err)
+	require.NotNil(suite.T(), gv)
+	require.Equal(suite.T(), worktree.Filesystem.Root(), gv.repositoryRoot)
+
+	_, err = New(filepath.Join(suite.tmpDir, "non-existing"))
+	require.Error(suite.T(), err)
+}
+
 func (suite *GitViewTestSuite) TestCommitsBetween() {
 	for i, t := range []struct {
 		name                    string
@@ -68,7 +82,7 @@ func (suite *GitViewTestSuite) TestCommitsBetween() {
 			expectedNumberOfCommits: 2,
 		},
 		{
-			name:                    "can list commits when the repo has 3 commits and newest != oldest",
+			name:                    "can list commits when the repo has 4 commits and newest != oldest",
 			commitsNumber:           4,
 			newestCommit:            "HEAD",
 			oldestCommit:            "HEAD~1",
@@ -106,6 +120,146 @@ func (suite *GitViewTestSuite) TestCommitsBetween() {
 			}
 		})
 	}
+}
+
+func (suite *GitViewTestSuite) TestChangeLog() {
+	for i, t := range []struct {
+		name                    string
+		currentCommit           string
+		previousCommit          string
+		commitsNumber           int
+		expectedNumberOfCommits int
+		expectError             bool
+	}{
+		{
+			name:                    "can get changelog when the repo has only one commit and current == previous",
+			commitsNumber:           1,
+			currentCommit:           "HEAD",
+			previousCommit:          "HEAD",
+			expectedNumberOfCommits: 1,
+		},
+		{
+			name:                    "can get changelog when the repo has 3 commits and current == previous",
+			commitsNumber:           3,
+			currentCommit:           "HEAD",
+			previousCommit:          "HEAD",
+			expectedNumberOfCommits: 1,
+		},
+		{
+			name:                    "can get changelog when the repo has 3 commits and current != previous",
+			commitsNumber:           3,
+			currentCommit:           "HEAD",
+			previousCommit:          "HEAD~2",
+			expectedNumberOfCommits: 2,
+		},
+		{
+			name:                    "can get changelog when the repo has 4 commits and current != previous",
+			commitsNumber:           4,
+			currentCommit:           "HEAD",
+			previousCommit:          "HEAD~1",
+			expectedNumberOfCommits: 1,
+		},
+		{
+			name:                    "when previous commit cannot be resolved, the current commit alone is returned",
+			commitsNumber:           1,
+			currentCommit:           "HEAD",
+			previousCommit:          "HEAD~2",
+			expectedNumberOfCommits: 1,
+		},
+		{
+			name:           "fails when current commit cannot be resolved",
+			commitsNumber:  1,
+			currentCommit:  "HEAD~2",
+			previousCommit: "HEAD",
+			expectError:    true,
+		},
+		{
+			name:                    "can get changelog when previous commit is not supplied",
+			commitsNumber:           2,
+			currentCommit:           "HEAD",
+			expectedNumberOfCommits: 1,
+		},
+	} {
+		suite.Run(t.name, func() {
+			repoName := fmt.Sprintf("test-%d", i)
+			dirPath := filepath.Join(suite.tmpDir, repoName)
+			_, worktree, err := initializeRepoAndCommit(dirPath, t.commitsNumber)
+			require.NoErrorf(suite.T(), err, "error creating test repository %s", repoName)
+			// suite.T().Logf("repo dir is: %s", worktree.Filesystem.Root())
+
+			gv, err := New(worktree.Filesystem.Root())
+			require.NoError(suite.T(), err)
+			commitsInfo, err := gv.ChangeLog(t.currentCommit, t.previousCommit, suite.logger)
+			if t.expectError {
+				require.Error(suite.T(), err)
+			} else {
+				require.Len(suite.T(), commitsInfo, t.expectedNumberOfCommits)
+			}
+		})
+	}
+}
+
+func (suite *GitViewTestSuite) TestRepoURL() {
+	dirPath := filepath.Join(suite.tmpDir, "repoName")
+	_, worktree, err := initializeRepoAndCommit(dirPath, 1)
+	require.NoError(suite.T(), err)
+
+	gv, err := New(worktree.Filesystem.Root())
+	require.NoError(suite.T(), err)
+	// the created repo does not have origin remote yet
+	_, err = gv.RepoUrl()
+	require.Error(suite.T(), err)
+	expectedError := fmt.Sprintf("remote('origin') is not found in git repository: %s", gv.repositoryRoot)
+	require.Equal(suite.T(), expectedError, err.Error())
+}
+
+func (suite *GitViewTestSuite) TestExtractRepoURLFromRemote() {
+	for _, t := range []struct {
+		name      string
+		remoteURL string
+		want      string
+	}{
+		{
+			name:      "SSH remote",
+			remoteURL: "git@github.com:kosli-dev/cli.git",
+			want:      "https://github.com/kosli-dev/cli",
+		},
+		{
+			name:      "HTTP remote",
+			remoteURL: "https://github.com/kosli-dev/cli.git",
+			want:      "https://github.com/kosli-dev/cli",
+		},
+	} {
+		suite.Run(t.name, func() {
+			actual := extractRepoURLFromRemote(t.remoteURL)
+			require.Equal(suite.T(), t.want, actual)
+		})
+	}
+}
+
+func (suite *GitViewTestSuite) TestNewCommitInfoFromGitCommit() {
+	dirPath := filepath.Join(suite.tmpDir, "repoName")
+	_, worktree, err := initializeRepoAndCommit(dirPath, 1)
+	require.NoError(suite.T(), err)
+
+	gv, err := New(worktree.Filesystem.Root())
+	require.NoError(suite.T(), err)
+
+	_, err = gv.newCommitInfoFromGitCommit("58a9461c5a42d83bd5731485a72ddae542ac99d8")
+	require.Error(suite.T(), err)
+	expected := "failed to resolve git reference 58a9461c5a42d83bd5731485a72ddae542ac99d8: reference not found"
+	require.Equal(suite.T(), expected, err.Error())
+
+	_, err = gv.newCommitInfoFromGitCommit("HEAD~2")
+	require.Error(suite.T(), err)
+	expected = "failed to resolve git reference HEAD~2: EOF"
+	require.Equal(suite.T(), expected, err.Error())
+
+	ci, err := gv.newCommitInfoFromGitCommit("HEAD")
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), "Added file 1", ci.Message)
+	require.Equal(suite.T(), "master", ci.Branch)
+	require.Empty(suite.T(), ci.Parents)
 }
 
 func initializeRepoAndCommit(repoPath string, commitsNumber int) (*git.Repository, *git.Worktree, error) {

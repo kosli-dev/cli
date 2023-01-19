@@ -134,7 +134,7 @@ func (o *artifactCreationOptions) run(args []string) error {
 
 	o.payload.RepoUrl, err = gitView.RepoUrl()
 	if err != nil {
-		return err
+		logger.Warning("Repo URL will not be reported, %s", err.Error())
 	}
 
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/", global.Host, global.Owner, o.pipelineName)

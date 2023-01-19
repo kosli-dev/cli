@@ -69,7 +69,7 @@ func (o *pipelineBackfillArtifactCommitsOptions) run(out io.Writer, args []strin
 
 	o.payload.RepoUrl, err = gitView.RepoUrl()
 	if err != nil {
-		return err
+		logger.Warning("Repo URL will not be reported, %s", err.Error())
 	}
 
 	pageNumber := 0
