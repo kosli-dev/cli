@@ -40,6 +40,14 @@ Each flag can be provided directly or represented with environment variable. In 
 
 etc.
 
+### Dry run
+
+You can use dry run to disable reporting to app.kosli.com - e.g. if you're just trying things out, or troubleshooting (dry run will print the payload cli would send in a non dry run mode). 
+
+Here are two possible ways of enabling a dry run:
+1. use `--dry-run` flag (no value needed) to enable it per command
+1. set `KOSLI_API_TOKEN` environment variable to `DRY_RUN` to enable it globally (e.g. in your terminal or CI)
+
 ## Web UI
 
 [app.kosli.com](https://app.kosli.com) is an easy way to monitor the status of your environments and pipelines. All you need to log in is a GitHub account.

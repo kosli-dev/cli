@@ -127,6 +127,8 @@ Whenever a given artifact is ready to be deployed you may need an additional man
 
 See [kosli pipeline approval report](/client_reference/kosli_pipeline_approval_report/) and [kosli pipeline approval request](/client_reference/kosli_pipeline_approval_request/) for more details. 
 
+{{< hint warning >}}
+
 ### Quick note about a commit list
 
 When reporting or requesting an approval one has to keep in mind that `oldest-commit` has to be an ancestor of `newest-commit`. 
@@ -151,6 +153,8 @@ steps:
       with:
         fetch-depth: 0
 ```
+
+{{< /hint >}}
 
 ## Deployments
 

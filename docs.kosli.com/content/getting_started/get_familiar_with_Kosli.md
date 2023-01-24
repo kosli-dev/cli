@@ -6,7 +6,9 @@ weight: 220
 
 # Get familiar with Kosli
 
-The following guide is not a real life use case for Kosli - usually you'd run Kosli in your CI and remote environments. But this is the easiest and quickest way to try Kosli out and understand it's features. So you can try it out using just your local machine and `docker`. In our *How to* and *Kosli integrations* sections you'll find all the information needed to run it in actual projects.
+The following guide is the easiest and quickest way to try Kosli out and understand it's features. But is not a real life use case for Kosli - usually you'd run Kosli in your CI and remote environments.  
+
+So you can try it out using just your local machine and `docker`. In our ***Guides*** and ***Kosli integrations*** sections you'll find all the information needed to run it in actual projects.
 
 In this tutorial, you'll learn how Kosli allows you to follow a source code change to runtime environments.
 You'll set up a `docker` environment, use Kosli to record build and deployment events, and track what artifacts are running in your runtime environments. 

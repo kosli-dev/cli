@@ -56,15 +56,15 @@ The change could be for example:
 
 Snapshot represents a reported status of your runtime environment at a given time. When you click on the name of a specific environment on **Environments** page at [app.kosli.com](https://app.kosli.com) you are taken to the latest snapshot. You can use the arrow buttons to browse older snapshots. 
 
-Once snapshot is reported it can't be modified, that is to secure the integrity of data. Every time the environment report indicates changes in the runtime environment or in the artifact status a new snapshot is created.
+Once snapshot is reported it can't be modified, that is to secure the integrity of data. Every time the environment report indicates changes in the runtime environment or in the artifact status, a new snapshot is created.
 
 ### Compliant Environment
 
-Environment is **compliant** when:
-1. All the artifacts running in it have provenance and are compliant themselves OR they were [allow-listed](#allow-list)
+Environment is **compliant** when two following conditions are met:
+1. All the artifacts running in it have provenance (are reported to Kosli) and are compliant themselves OR they were [allow-listed](#allow-list)
 2. All the artifacts running in it are reported as [deployed](/client_reference/kosli_expect_deployment/) to a given environment
 
-If you're environment is not compliant check the latest snapshot for more detailed info - each unknown or incompliant artifacts will be marked and the reason for the incompliancy will be provided
+If your environment is not compliant check the latest snapshot for more detailed info - each unknown or incompliant artifacts will be marked and the reason for the incompliancy will be provided
 
 ### Allow list 
 
@@ -74,17 +74,17 @@ These artifact will by default be marked with "No provenance" red label and it w
 
 ## What are the pipelines
 
-Pipelines in Kosli provide a place to report and track artifact status and related events from your CI pipelines.
+Pipelines in Kosli provide a place to report and track artifacts status and related events from your CI pipelines.
 
 You can create Kosli pipeline using our cli with **[kosli pipeline declare](/client_reference/kosli_pipeline_declare/)** command. 
 
-It's normal practice to add your pipeline declaring command to your build pipeline. It's perfectly fine to run it every time you run a build. You can also change your template over time, for example by adding new control. It won't affect the compliancy of artifacts reported before the change of the template.
+You can run the cli command manually e.g. using your own computer, but it's also ok to add your pipeline declaring command to your build pipeline. It's perfectly fine to run it every time you run a build. You can also change your [template](/kosli_overview/how_does_kosli_work/#template) over time, for example by adding new control. It won't affect the compliancy of artifacts reported before the change of the template.
 
 Once your Kosli pipeline is in place you can start reporting artifacts and evidences of all the events you want to report (matching declared template) from your CI pipelines. Kosli cli provides a variety of commands to make it possible: 
 
 ![Diagram of Pipeline Reporting](/images/pipelines.svg)
 
-A number of required flags may be defaulted to a set of environment variables, depending on the CI system you use. Check [How to use Kosli in CI Systems](/getting_started/use_kosli_in_ci_systems/) for more details. All of the flags can be represented by [environment variables](/introducing_kosli/cli/#environment-variables)
+A number of required flags may be defaulted to a set of environment variables, depending on the CI system you use. Check [How to use Kosli in CI Systems](/integrations/ci_cd/) for more details. All of the flags can be represented by [environment variables](/kosli_overview/kosli_tools/#environment-variables)
 
 ### Artifacts
 
@@ -94,7 +94,7 @@ Best practice is to create Kosli pipeline for each type of artifact - e.g. if yo
 
 ### Template
 
-When declaring a pipeline you need to provide a template - a list of required controls (evidences) you require for your artifact in order for the artifact to become compliant. That could be for example:
+When declaring a pipeline you need to provide a template - a list of expected controls (evidences) you require for your artifact in order for the artifact to become compliant. That could be for example:
 * existing pull request
 * code coverage report
 * integration test
@@ -108,7 +108,7 @@ Whenever an event related to your artifact happens and you want to report an evi
 
 You can report absolutely anything as evidence. If there is no support for your specific type of evidence, you can use [generic evidence type](/client_reference/kosli_pipeline_artifact_report_evidence_generic/).
 
-Evidences are reported as compliant if the cli determined them as compliant (e.g. analyzing JUnit or Snyk test results). For generic evidences you can implement your own mechanism to determine compliancy status and use `--compliant=false` if you want to send an evidence as non-compliant. 
+Evidences are reported as compliant if Kosli determines them as compliant (e.g. analyzing JUnit or Snyk test results). For generic evidences you can implement your own mechanism to determine compliancy status and use `--compliant=false` in your evidence reporting command, if you want to send an evidence as non-compliant. 
 
 There is a number of types of evidences with a dedicated support:
 * [bitbucket](client_reference/kosli_pipeline_artifact_report_evidence_bitbucket-pullrequest/) and [github](/client_reference/kosli_pipeline_artifact_report_evidence_github-pullrequest/) pull request - verify and report if a pull request exists for a commit used to build your artifact
@@ -122,26 +122,26 @@ Each artifact you report to Kosli will be displayed as being in one of three sta
 
 #### Compliant
 
-When your artifact was reported to kosli together with **all** the required (as defined in the template) evidences reported as ***compliant***, it will be displayed in you Kosli Pipeline as **Compliant** artifact: 
+When your artifact was reported to kosli together with **all** the required (as defined in the template) evidences reported as ***compliant***, it will be displayed in your Kosli Pipeline as **Compliant** artifact: 
 
 {{<figure src="/images/artifact-compliant.png" alt="Environment, Snapshot #1" width="900">}}
 
 #### Non-Compliant
 
-When your artifact was reported to kosli together with **all** the required (as defined in the template) evidences, with **at least one** of these evidences reported as ***non-compliant***, it will be displayed in you Kosli Pipeline as **Non-compliant** artifact: 
+When your artifact was reported to kosli together with **all** the required (as defined in the template) evidences, with **at least one** of these evidences reported as ***non-compliant***, it will be displayed in your Kosli Pipeline as **Non-compliant** artifact: 
 
 {{<figure src="/images/artifact-non-compliant.png" alt="Environment, Snapshot #1" width="900">}}
 
 #### Incomplete
 
-When your artifact was reported to kosli but **not all** the required (as defined in the template) evidences were reported yet, it will be displayed in you Kosli Pipeline as **Incomplete** artifact: 
+When your artifact was reported to kosli but **not all** the required (as defined in the template) evidences were reported yet, it will be displayed in your Kosli Pipeline as **Incomplete** artifact: 
 
 {{<figure src="/images/artifact-incomplete.png" alt="Environment, Snapshot #1" width="900">}}
 
 
 ### Deployments
 
-No matter if you deploy your artifacts from your build pipeline, or do you have a separate one for that purpose, you should report to Kosli that you expect an artifact to start running in an environment. You do that using [kosli expect deployment](/client_reference/kosli_expect_deployment/) command. Environment that you're deploying to has to be specified, so if you deploy to more than one environment you need to report each deployment separately
+No matter if you deploy your artifacts from your build pipeline, or you have a separate one for that purpose, you should report to Kosli that you expect an artifact to start running in an environment. You do that using [kosli expect deployment](/client_reference/kosli_expect_deployment/) command. Environment that you're deploying to has to be specified, so if you deploy to more than one environment you need to report each deployment separately
 
 ## What are the fingerprints 
 

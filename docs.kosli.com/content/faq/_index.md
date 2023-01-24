@@ -30,17 +30,46 @@ Error: unknown flag: --artifact-type
 The flag is spelled correctly, but there is a typo in deploymen**c**t.
 Same error will pop up if you're trying to use a command that is not present in the version of kosli cli you are using.
 
+### zsh: no such user or named directory
+
+When running commands with argument starting with `~` you can encounter following problem:
+
+```shell {.command}
+kosli env log prod ~3..NOW
+```
+```plaintext {.light-console}
+zsh: no such user or named directory: 3..NOW
+```
+
+To help zshell interpret the argument correctly, wrap in in quotation marks (single or double): 
+```shell {.command}
+kosli env log prod '~3..NOW'
+```
+or
+```shell {.command}
+kosli env log prod "~3..NOW"
+```
+
 ## Usage
+
+### Where can I find API documentation?
+
+At this point our API is not publicly available. The reason for this is that we are introducing a lot of changes and we can't guarantee the API endpoint you use will stay the same.  
+That will change in the future.
+
+### Do you support uploading a spdx or sbom as evidence?
+
+We are working on providing that functionality in a near future.
 
 ### Do I have to provide all the flags all the time? 
 
-A number of flags won't change their values often (or at all) between commands, like `--owner` or `api-token`.  Some will differ between e.g. workflows, like `--pipeline`. You can define them as environment variable to avoid unnecessary redundancy. Check [Environment variables](/introducing_kosli/cli/#environment-variables) section to learn more.
+A number of flags won't change their values often (or at all) between commands, like `--owner` or `api-token`.  Some will differ between e.g. workflows, like `--pipeline`. You can define them as environment variable to avoid unnecessary redundancy. Check [Environment variables](/kosli_overview/kosli_tools/#environment-variables) section to learn more.
 
 ### What is dry run and how to use it?
 
 You can use dry run to disable writing to app.kosli.com - e.g. if you're just trying things out, or troubleshooting (dry run will print the payload cli would send in a non dry run mode). 
 
-There is a few ways you can enable dry run mode
+Here are two possible ways of enabling a dry run:
 1. use `--dry-run` flag (no value needed) to enable it per command
 1. set `KOSLI_API_TOKEN` environment variable to `DRY_RUN` to enable it globally (e.g. in your terminal or CI)
 
