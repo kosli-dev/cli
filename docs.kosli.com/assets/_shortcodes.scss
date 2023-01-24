@@ -103,6 +103,7 @@
 
   // {{< hint >}}
   .book-hint {
+    padding: 1.5rem;
     @each $name, $color in $hint-colors {
       &.#{$name} {
         border-color: $color;
