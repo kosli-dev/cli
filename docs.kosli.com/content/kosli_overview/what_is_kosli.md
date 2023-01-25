@@ -1,31 +1,49 @@
 ---
-title: 'How does Kosli work?'
+title: 'What is Kosli?'
 weight: 120
 ---
-# How does Kosli work?
+# What is Kosli?
 
-## What is an organization
+Kosli records data from your CI pipelines and runtime environments, allowing you to query life after git from the command line.
 
-Organization in Kosli owns Kosli pipelines and environments - which means only members of the organization can get access to them.
+Below you can read about what elements Kosli consists of.
+
+## Organization
+
+Organization in Kosli "owns" Kosli pipelines and environments - which means only members of each organization can get access to environments and pipelines that belong to the organization.
 By default, when you sign up to Kosli, a personal organization is created for you and the name of the organization matches your user name. Only you can access your personal organization.
-
-You can also create shared organizations, and invite other Kosli users as members, so they can see and report to your Kosli pipelines and environments.
 
 ### Shared organization
 
-To create a shared organization click on your profile picture (or avatar) in the top right corner of [app.kosli.com](https://app.kosli.com) and select "Add an organization". You'd be asked to provide the name and the description of your organization. After you click "Create Organization" button the new organization is ready. After the page reloads you'll see the "Settings" page for the new organization. 
+To collaborate with more people (a team or a whole company) you can create shared organizations, and invite other Kosli users as members, so they can see and report to your Kosli pipelines and environments.
 
+To create a shared organization click on your profile picture (or avatar) in the top right corner of [app.kosli.com](https://app.kosli.com) and select "Add an organization". 
+
+{{<figure src="/images/add-org.png" alt="Add an organization" width="250">}}
+
+
+You'd be asked to provide the name and the description of your organization. After you click "Create Organization" button the new organization is ready. 
+
+{{<figure src="/images/add-org-form.png" alt="New organization form" width="900">}}
+
+After the page reloads you'll see the "Settings" page for the new organization. 
 You can switch between organizations using dropdown menu in the top left corner of the page, under Kosli logo. 
+
+{{<figure src="/images/select-org.png" alt="org page" width="900">}}
+
 
 ### Shared organization members 
 
-To add users to your shared organization make sure you have the right organization selected from the dropdown menu and click "Settings". Here you can add users: click on "Add member" button, provide a github username of the user you'd like to share organization with, and select desired role:
+To add users to your shared organization make sure you have the right organization selected from the dropdown menu and click "Settings".  
+Here you can add users: click on "Add member" button, provide a github username of the user you'd like to share organization with, and select desired role:
 * member can create Kosli pipelines and environments, report to and read from them
 * admin can do the same things member can plus they can also add and remove users from the organization 
 
-## What are the environments
+## Environments
 
 Environments in Kosli provide a place to track how your systems change over time.
+
+{{<figure src="/images/envs.png" alt="Environments" width="900">}}
 
 Each runtime environment you'd like to track in Kosli should have its own Kosli environment created - e.g. if you use k8s cluster to host **qa**, **staging** and **production** versions of your product you create 3 separate environments for those in Kosli. 
 
@@ -37,8 +55,10 @@ Kosli supports different type of runtime environments and the reporting command 
 * Physical/virtual server
 
 You can create Kosli environment using:
-* "Add new environment" button under "Environments" section on [app.kosli.com](https://app.kosli.com) 
 * cli with **[kosli environment declare](/client_reference/kosli_environment_declare/)** command
+* "Add new environment" button under "Environments" section on [app.kosli.com](https://app.kosli.com) that will take you to environment creation form:
+
+{{<figure src="/images/new-env-form.png" alt="Add environment form" width="900">}}
 
 Once the Kosli environment is ready you can start reporting the status of your actual runtime environment using one of the **kosli environment report ...** commands - check [client reference](/client_reference) for details
 
@@ -49,12 +69,17 @@ It makes sense to automate reporting - via cronjob or using your CI. It's up to 
 The change could be for example:
 * a new artifact started running
 * an artifact stopped running
+* an artifact was restarted
 * a number of instances of the services has changed
 * a compliance status of the artifact has changed
 
 ### Snapshots
 
-Snapshot represents a reported status of your runtime environment at a given time. When you click on the name of a specific environment on **Environments** page at [app.kosli.com](https://app.kosli.com) you are taken to the latest snapshot. You can use the arrow buttons to browse older snapshots. 
+Snapshot represents a reported status of your runtime environment at a given time. When you click on the name of a specific environment on **Environments** page at [app.kosli.com](https://app.kosli.com) you are taken to the latest snapshot. 
+
+{{<figure src="/images/snapshot-467.png" alt="Snapshot 467" width="900">}}
+
+You can use the arrow buttons on the right hand side above running artifacts list to browse older snapshots. 
 
 Once snapshot is reported it can't be modified, that is to secure the integrity of data. Every time the environment report indicates changes in the runtime environment or in the artifact status, a new snapshot is created.
 
@@ -72,7 +97,7 @@ Not all the artifacts that run in your environment must be built by you - these 
 
 These artifact will by default be marked with "No provenance" red label and it will affect the compliancy of the whole environment. If you know how and why these artifact are present in your environment you can add them to Allow-list by clicking a button on the snapshot page, or using [kosli environment allowedartifacts add](/client_reference/kosli_environment_allowedartifacts_add/) command
 
-## What are the pipelines
+## Pipelines
 
 Pipelines in Kosli provide a place to report and track artifacts status and related events from your CI pipelines.
 
@@ -143,7 +168,7 @@ When your artifact was reported to kosli but **not all** the required (as define
 
 No matter if you deploy your artifacts from your build pipeline, or you have a separate one for that purpose, you should report to Kosli that you expect an artifact to start running in an environment. You do that using [kosli expect deployment](/client_reference/kosli_expect_deployment/) command. Environment that you're deploying to has to be specified, so if you deploy to more than one environment you need to report each deployment separately
 
-## What are the fingerprints 
+## Fingerprints 
 
 Every time artifact is reported to Kosli a SHA256 digest of it is calculated. It doesn't matter if the artifact is a single file, a directory or a docker image - we can always calculate SHA256. 
 
