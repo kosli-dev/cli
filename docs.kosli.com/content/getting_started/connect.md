@@ -1,7 +1,7 @@
 ---
-title: Reporting in Kosli
+title: "Part 2: Reporting in Kosli"
 bookCollapseSection: false
-weight: 420
+weight: 230
 ---
 # Connect your pipeline events
 

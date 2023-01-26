@@ -1,8 +1,8 @@
 ---
-title: 'Kosli tools'
+title: 'How to use Kosli?'
 weight: 140
 ---
-# Kosli tools
+# How to use Kosli?
 
 ## CLI
 

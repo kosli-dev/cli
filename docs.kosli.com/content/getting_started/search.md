@@ -1,7 +1,7 @@
 ---
-title: Searching and exporting in Kosli
+title: "Part 3: Searching and exporting in Kosli"
 bookCollapseSection: false
-weight: 430
+weight: 240
 ---
 # Get your artifacts and environments information from Kosli
 

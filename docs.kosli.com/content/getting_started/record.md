@@ -1,7 +1,7 @@
 ---
-title: Environments in Kosli
+title: "Part 1: Environments in Kosli"
 bookCollapseSection: false
-weight: 410
+weight: 220
 ---
 # Record your environments in Kosli
 
