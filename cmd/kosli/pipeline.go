@@ -20,6 +20,7 @@ func newPipelineCmd(out io.Writer) *cobra.Command {
 	cmd.AddCommand(
 		newPipelineDeclareCmd(out),
 		newArtifactCmd(out),
+		newCommitCmd(out),
 		newApprovalCmd(out),
 		newDeploymentCmd(out),
 		newPipelineLsCmd(out),

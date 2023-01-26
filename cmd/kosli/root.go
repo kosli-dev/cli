@@ -104,8 +104,9 @@ const (
 	shortFlag               = "[optional] Print only the Kosli cli version number."
 	longFlag                = "[optional] Print detailed output."
 	reverseFlag             = "[defaulted] Reverse the order of output list."
-	evidenceNameFlag        = "The name of the evidence"
+	evidenceNameFlag        = "The name of the evidence."
 	fingerprintFlag         = "[conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'."
+	evidenceCommit          = "The git commit SHA1 for which the evidence belongs."
 )
 
 var global *GlobalOpts
