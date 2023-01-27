@@ -1,9 +1,9 @@
 ---
-title: "Part 3: Searching and exporting in Kosli"
+title: "Part 8: Querying"
 bookCollapseSection: false
-weight: 240
+weight: 280
 ---
-# Get your artifacts and environments information from Kosli
+# Part 8: Querying
 
 All the information stored in Kosli may be helpful both for operations and development. A set of `get`, `ls`, `log` and `inspect` commands allows you to quickly access the information about your environments, artifacts and deployments, without leaving your development environment.
 

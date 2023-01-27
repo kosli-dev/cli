@@ -1,9 +1,9 @@
 ---
-title: "Part 1: Environments in Kosli"
+title: "Part 2: Environments in Kosli"
 bookCollapseSection: false
 weight: 220
 ---
-# Record your environments in Kosli
+# Part 2: Environments in Kosli
 
 Recording the status of runtime environments it's one of the fundamental features of Kosli. Kosli records the status of runtime environments by detecting artifacts running in any given environment and reporting the information.
 
@@ -77,6 +77,11 @@ To see the list of all your environments, just click on the "Environments" again
 
 {{<figure src="/images/env-list.png" alt="Environments" width="900">}}
 
+## Report an environment
+
+{{< tabs "env-reports" "col-no-wrap" >}}
+
+{{< tab "docker" >}}
 ## Record docker environment
 
 Run `kosli environment report docker` to report running containers data from docker host to Kosli.  
@@ -91,7 +96,9 @@ kosli environment report docker docs-demo-docker
 [1] containers were reported to environment quickstart
 ```
 More details in [`kosli environment report docker` reference](/client_reference/kosli_environment_report_docker/)
+{{< /tab >}}
 
+{{< tab "ecs" >}}
 ## Record ecs environment
 
 Run `kosli environment report ecs` to report images data from AWS ECS cluster to Kosli.  
@@ -113,7 +120,9 @@ kosli environment report ecs yourEnvironmentName \
 ```
 
 More details in [`kosli environment report ecs` reference](/client_reference/kosli_environment_report_ecs/)
+{{< /tab >}}
 
+{{< tab "k8s" >}}
 ## Record k8s environment
 
 Run `kosli environment report k8s` to report images data from specific namespace(s) or entire cluster to Kosli. You can also select multiple namespaces to report from (using `--namespace` and comma separated list when running a command) or use `--exclude-namespace` to report from a whole cluster except the namespaces from the comma spearated list given to the flag
@@ -140,7 +149,9 @@ kosli environment report k8s yourEnvironmentName \
 ```
 
 More details in [`kosli environment report k8s` reference](/client_reference/kosli_environment_report_k8s/)
+{{< /tab >}}
 
+{{< tab "lambda" >}}
 ## Record lambda environment
 
 Run `kosli environment report lambda` to report artifact from AWS Lambda to Kosli.  
@@ -171,7 +182,9 @@ kosli environment report lambda myEnvironment \
 ```
 
 More details in [`kosli environment report lambda` reference](/client_reference/kosli_environment_report_lambda/)
+{{< /tab >}}
 
+{{< tab "s3" >}}
 ## Record s3 environment
 
 Run `kosli environment report s3` to report artifact from AWS S3 bucket to Kosli.  
@@ -201,7 +214,9 @@ kosli environment report s3 yourEnvironmentName \
 ```
 
 More details in [`kosli environment report s3` reference](/client_reference/kosli_environment_report_s3/)
+{{< /tab >}}
 
+{{< tab "server" >}}
 ## Record server environment
 
 Run `kosli environment report server` to report directory or file artifacts from the given list of paths to Kosli.  
@@ -226,5 +241,14 @@ kosli environment report server docs-demo-server --paths build/index.html
 ```
 
 More details in [`kosli environment report server` reference](/client_reference/kosli_environment_report_server/)
+{{< /tab >}}
+
+{{< /tabs >}}
+
+
+
+
+
+
 
 
