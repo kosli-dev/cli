@@ -107,6 +107,7 @@ const (
 	evidenceNameFlag        = "The name of the evidence."
 	fingerprintFlag         = "[conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'."
 	evidenceCommit          = "The git commit SHA1 for which the evidence belongs."
+	pipelinesFlag           = "The comma separated list of pipelines for which a commit evidence belongs."
 )
 
 var global *GlobalOpts
@@ -164,6 +165,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		newVersionCmd(out),
 		newFingerprintCmd(out),
 		newPipelineCmd(out),
+		newCommitCmd(out),
 		newEnvironmentCmd(out),
 		newAssertCmd(out),
 		newStatusCmd(out),
