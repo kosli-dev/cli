@@ -21,8 +21,22 @@
     return
   }
 
+  // const tabToResults2 = (event) => {
+  //   let numResults = foundResults.childElementCount;
+  //   if (event.key === "Tab" && numResults > 0) {
+  //     event.preventDefault;
+  //     const foundResults = document.querySelector('#book-search-results');
+  //     console.log("tab");
+  //     console.log(numResults)
+  //     const firstResult = foundResults.firstChild.querySelector("a");
+  //     firstResult.focus();
+  //     numResults = 0
+  //   }
+  // }
+
   input.addEventListener('focus', init);
   input.addEventListener('keyup', search);
+  input.addEventListener('keydown', tabToResults2);
 
   document.addEventListener('keypress', focusSearchFieldOnKeyPress);
 
@@ -101,17 +115,38 @@
     return div.firstChild;
   }
 
-  // const tabToResults = () => {
-  //   input.addEventListener("keyup", (event) => {
-  //     const foundResults = document.querySelector('#book-search-results');
-  //     let numResults = foundResults.childElementCount;
-  //     if (event.key === "Tab" && numResults > 0) {
-  //       console.log(numResults)
-  //       event.preventDefault;
-  //       const firstResult = foundResults.querySelector("a");
-  //       firstResult.focus();
-  //       numResults = 0
-  //     }
-  //   });
-  // }
+  function tabToResults() {
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Tab") {
+        event.preventDefault();
+        const foundResults = document.querySelector('#book-search-results');
+        let firstResult = foundResults.firstChild.querySelector("a");
+        console.log(`After tab: ${firstResult}`);
+        let numResults = foundResults.childElementCount;
+        if (numResults > 0) {
+          console.log(firstResult);
+          firstResult.focus();
+        } else {
+          console.log("inside else");
+        }
+      }
+    });
+  }
+
+  function tabToResults2(event) {
+    if (event.key === "Tab") {
+      event.preventDefault();
+      const foundResults = document.querySelector('#book-search-results');
+      let firstResult = foundResults.firstChild.querySelector("a");
+      console.log(`After tab: ${firstResult}`);
+      let numResults = foundResults.childElementCount;
+      if (numResults > 0) {
+        console.log(firstResult);
+        firstResult.focus();
+      } else {
+        console.log("inside else");
+      }
+    }
+  }
+
 })();

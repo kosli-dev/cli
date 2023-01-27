@@ -78,9 +78,11 @@
 
 {{ define "main" }}
   <article class="markdown">
-    {{ partial "breadcrumbs" . }}
-    {{ partial "docs/inject/content-before" . }}
-    {{- .Content -}}
+    <div>
+      {{ partial "breadcrumbs" . }}
+      {{ partial "docs/inject/content-before" . }}
+      {{- .Content -}}
+    </div>
     {{ partial "docs/inject/content-after" . }}
   </article>
 {{ end }}

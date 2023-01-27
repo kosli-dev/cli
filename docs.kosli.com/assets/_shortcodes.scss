@@ -110,5 +110,34 @@
         background-color: rgba($color, 0.1);
       }
     }
+
+    :is(h2, h3, h4, h5) {
+      display: flex;
+      align-items: center;
+      &:before {
+        content: '';
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        background-size: cover;
+        margin-right: 1rem;
+      }
+    }
+
+    &.info :is(h2, h3, h4, h5):before {
+      background-image: url('/images/icons/kosli-info-blue.svg');
+    }
+
+    &.warning :is(h2, h3, h4, h5):before {
+      background-image: url('/images/icons/kosli-info-yellow.svg');
+    }
+
+    &.danger :is(h2, h3, h4, h5):before {
+      background-image: url('/images/icons/kosli-info-red.svg');
+    }
+    
+    &.success :is(h2, h3, h4, h5):before {
+      background-image: url('/images/icons/kosli-info-green.svg');
+    }
   }
 }

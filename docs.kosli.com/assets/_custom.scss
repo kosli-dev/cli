@@ -42,6 +42,9 @@ aside.book-toc .book-toc-content {
 }
 
 .markdown {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     flex-grow: 1;
 }
 
