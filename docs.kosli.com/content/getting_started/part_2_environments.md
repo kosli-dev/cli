@@ -85,7 +85,8 @@ To see the list of all your environments, just click on the "Environments" again
 ## Record docker environment
 
 Run `kosli environment report docker` to report running containers data from docker host to Kosli.  
-The command has to be run on the actual docker host, to be able to detect running containers.
+
+**Were to run:** The command has to be run on the actual docker host, to be able to detect running containers.
 
 ### Example
 
@@ -102,7 +103,8 @@ More details in [`kosli environment report docker` reference](/client_reference/
 ## Record ecs environment
 
 Run `kosli environment report ecs` to report images data from AWS ECS cluster to Kosli.  
-The command requires following environment variables to be set, to be able to connect to AWS:
+
+**Were to run:**  The command can be run anywhere and requires following environment variables to be set, to be able to connect to AWS:
 * `AWS_REGION`
 * `AWS_ACCESS_KEY_ID`
 * `AWS_SECRET_ACCESS_KEY`
@@ -127,7 +129,7 @@ More details in [`kosli environment report ecs` reference](/client_reference/kos
 
 Run `kosli environment report k8s` to report images data from specific namespace(s) or entire cluster to Kosli. You can also select multiple namespaces to report from (using `--namespace` and comma separated list when running a command) or use `--exclude-namespace` to report from a whole cluster except the namespaces from the comma spearated list given to the flag
 
-The command can be run anywhere and requires `kubeconfig` file to be able to connect to the cluster (you can skip providing the location of `kubeconfig` if it resides in default `$HOME/.kube/config` folder).
+**Were to run:**  The command can be run anywhere and requires `kubeconfig` file to be able to connect to the cluster (you can skip providing the location of `kubeconfig` if it resides in default `$HOME/.kube/config` folder).
 
 You can also choose to run it from within the cluster - use our [helm chart](/helm/) to install the reporter as a cron job. `kubeconfig` won't be need in that case.
 
@@ -155,7 +157,8 @@ More details in [`kosli environment report k8s` reference](/client_reference/kos
 ## Record lambda environment
 
 Run `kosli environment report lambda` to report artifact from AWS Lambda to Kosli.  
-You can use either flags or environment variables to provide AWS secrets.
+
+**Were to run:**  The command can be run anywhere. You can use either flags or environment variables to provide AWS secrets.
 
 ### Example
 
@@ -188,7 +191,8 @@ More details in [`kosli environment report lambda` reference](/client_reference/
 ## Record s3 environment
 
 Run `kosli environment report s3` to report artifact from AWS S3 bucket to Kosli.  
-You can use either flags or environment variables to provide AWS secrets.
+
+**Were to run:**  The command can be run anywhere. You can use either flags or environment variables to provide AWS secrets.
 
 ### Example
 
@@ -220,7 +224,8 @@ More details in [`kosli environment report s3` reference](/client_reference/kosl
 ## Record server environment
 
 Run `kosli environment report server` to report directory or file artifacts from the given list of paths to Kosli.  
-The command has to be run on the actual server (physical or vm), to be able to detect artifacts. 
+
+**Were to run:**  The command has to be run on the actual server (physical or vm), to be able to detect artifacts. 
 
 Use `--paths` flag to provide a comma separated list of directories and files you want to be reported. Keep in mind that each directory will be treated as a single artifact and in order to make sure they are correctly identified in Kosli they should also be reported to Kosli pipeline as a single artifact.
 
