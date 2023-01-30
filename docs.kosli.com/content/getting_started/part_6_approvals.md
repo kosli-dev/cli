@@ -7,7 +7,7 @@ weight: 260
 
 ## Report approvals
 
-Whenever a given artifact is ready to be deployed you may need an additional manual approval from authorized person. This is something that can't alway be automated, but you can use Kosli to request such an approval, and later record it, so the information about decisions made outside of your CI system won't be lost. The list of commits between current and previous approval will be generated, which allows you to track a set of changes that are being approved.
+Whenever a given artifact is ready to be deployed you may need an additional manual approval from an authorized person. This is something that can't alway be automated, but you can use Kosli to request such an approval, and later record it, so the information about decisions made outside of your CI system won't be lost. The list of commits between current and previous approval will be generated, which allows you to track a set of changes that are being approved.
 
 See [kosli pipeline approval report](/client_reference/kosli_pipeline_approval_report/) and [kosli pipeline approval request](/client_reference/kosli_pipeline_approval_request/) for more details. 
 

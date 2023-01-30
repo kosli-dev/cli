@@ -47,7 +47,7 @@ Environments in Kosli provide a place to track how your systems change over time
 
 Each runtime environment you'd like to track in Kosli should have its own Kosli environment created - e.g. if you use k8s cluster to host **qa**, **staging** and **production** versions of your product you create 3 separate environments for those in Kosli. 
 
-Kosli supports different type of runtime environments and the reporting command varies for each:
+Kosli supports different types of runtime environments and the reporting command varies for each:
 * Kubernetes cluster (k8s)
 * Amazon ECS
 * Amazon S3

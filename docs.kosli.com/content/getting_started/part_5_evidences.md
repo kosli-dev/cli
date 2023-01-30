@@ -15,13 +15,15 @@ Currently we support following types of evidences:
 
 If you use GitHub or Bitbucket you can use Kosli to verify if the merge commit you used to build your artifact comes from a pull request. Remember to add the pull request evidence to your [pipeline template](/how_to/connect/#create-a-pipeline) and use the same label for `--evidence-type` you provided in a `template` 
 
-If there is no pull request for given commit the evidence will be reported as incompliant and the pipeline will continue. You can choose to fail the pipeline altogether in case pull request is missing - use `--assert` flag to do that.
+> note that -currently- the status of the PR does NOT impact the compliance status of the evidence.
+
+If there is no pull request for a given commit, the evidence will be reported as incompliant and the pipeline will continue. You can choose to fail the pipeline altogether in case pull request is missing by using the `--assert` flag.
 
 There are two different commands for that, depending on your CI.
 
 For GitHub: [kosli pipeline artifact report evidence github-pullrequest](/client_reference/kosli_pipeline_artifact_report_evidence_github-pullrequest/) along regular flags, you need to provide:
 * `--github-org`
-* `--github-token` your	Github personal access token.
+* `--github-token` your	Github personal access token with permissions to read PRs.
 
 
 For Bitbucket: [kosli pipeline artifact report evidence bitbucket-pullrequest](/client_reference/kosli_pipeline_artifact_report_evidence_bitbucket-pullrequest/) along regular flags, you need to provide:
@@ -32,7 +34,7 @@ For Bitbucket: [kosli pipeline artifact report evidence bitbucket-pullrequest](/
 
 ### JUnit test 
 
-If you use JUnit to run your test you can use `kosli pipeline artifact report evidence test` command to analyze the results and provide it to Kosli. Remember to add the junit test evidence to your [pipeline template](/how_to/connect/#create-a-pipeline) and use the same label for `--evidence-type` you provided in a `template` 
+If you produce your test results in JUnit format, you can use `kosli pipeline artifact report evidence test` command to analyze the results and report it to Kosli. Remember to add the junit test evidence to your [pipeline template](/how_to/connect/#create-a-pipeline) and use the same label for `--evidence-type` you provided in a `template` 
 
 ### Example
 
