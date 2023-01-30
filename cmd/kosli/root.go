@@ -141,7 +141,17 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 				global.DryRun = true
 			}
 
-			return nil
+			// If the user types "--description $variable --sha256 ..." and $variable is "" then Cobra
+			// will assign --sha256 as the value of --description, and give a very misleading error message.
+			// So we do some extra checking to tell the user about this.
+			var flagError error = nil
+			cmd.Flags().VisitAll(func(f *pflag.Flag) {
+				if strings.HasPrefix(f.Value.String(), "-") {
+					flagError = fmt.Errorf("flag '--%s' has value '%s' which is illegal", f.Name, f.Value.String())
+				}
+			})
+
+			return flagError
 		},
 	}
 	cmd.PersistentFlags().StringVarP(&global.ApiToken, "api-token", "a", "", apiTokenFlag)
