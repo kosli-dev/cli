@@ -12,9 +12,7 @@ import (
 
 const environmentReportS3ShortDesc = `Report an artifact deployed in AWS S3 bucket to Kosli.`
 
-const environmentReportS3LongDesc = environmentReportS3ShortDesc + `
-To authenticate to AWS, you can either export the AWS env vars or use the command flags to pass them.
-See the examples below.`
+const environmentReportS3LongDesc = environmentReportS3ShortDesc + awsAuthDesc
 
 const environmentReportS3Example = `
 # report what is running in an AWS S3 bucket (AWS auth provided in env variables):
@@ -39,12 +37,12 @@ kosli environment report s3 yourEnvironmentName \
 
 type environmentReportS3Options struct {
 	bucket         string
-	awsAuthOptions *awsAuthOptions
+	awsStaticCreds *aws.AWSStaticCreds
 }
 
 func newEnvironmentReportS3Cmd(out io.Writer) *cobra.Command {
 	o := new(environmentReportS3Options)
-	o.awsAuthOptions = new(awsAuthOptions)
+	o.awsStaticCreds = new(aws.AWSStaticCreds)
 	cmd := &cobra.Command{
 		Use:     "s3 ENVIRONMENT-NAME",
 		Aliases: []string{"S3"},
@@ -66,7 +64,7 @@ func newEnvironmentReportS3Cmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&o.bucket, "bucket", "", bucketNameFlag)
-	addAWSAuthFlags(cmd, o.awsAuthOptions)
+	addAWSAuthFlags(cmd, o.awsStaticCreds)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"bucket"})
@@ -80,8 +78,8 @@ func newEnvironmentReportS3Cmd(out io.Writer) *cobra.Command {
 func (o *environmentReportS3Options) run(args []string) error {
 	envName := args[0]
 	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
-	creds := aws.AWSCredentials(o.awsAuthOptions.accessKey, o.awsAuthOptions.secretKey)
-	s3Data, err := aws.GetS3Data(o.bucket, creds, o.awsAuthOptions.region, logger)
+
+	s3Data, err := o.awsStaticCreds.GetS3Data(o.bucket, logger)
 	if err != nil {
 		return err
 	}
