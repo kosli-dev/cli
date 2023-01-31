@@ -1,6 +1,5 @@
 .search-results {
     position: fixed;
-    display: none;
     left: 256px;
     top: 85px;
     background-color: #f7f9fc;
@@ -24,8 +23,8 @@
     }
 }
 
-.search-results:not(:empty) {
-    display: block;
+.search-results:empty {
+    display: none;
 }
 
 @media only screen and (max-width: $mobile-breakpoint) {
