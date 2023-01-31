@@ -40,5 +40,16 @@ Once your reporting is up and running you'll see the results under "Environments
 
 {{<figure src="/images/env-reporting.png" alt="Environments at app.kosli.com" width="900">}}
 
-<!-- ## Reporting pipelines -->
+## Reporting artifacts
 
+All artifact/evidence reporting commands are described in details in [Part 3: Pipelines](/getting_started/part_3_pipelines/) and following sections. And you can find a complete syntax in [Kosli Client Reference](/client_reference/).
+
+Before you start reporting you need to [create a pipeline](/getting_started/part_3_pipelines/#create-a-pipeline) in Kosli. Common practice is to have one Kosli pipeline per artifact type. E.g. if your CI pipeline produces one binary you'd report all builds of that binary to ONE Kosli pipeline. If the same CI pipeline was also producing a docker image or any other artifact you'd report it as an artifact to ANOTHER Kosli pipeline. 
+
+Once your Kosli pipelines are ready you can start reporting your [artifacts](/getting_started/part_4_artifacts/) and artifact related events ([evidences](/getting_started/part_5_evidences/), [approvals](/getting_started/part_6_approvals/), [deployments](/getting_started/part_7_deployments/)).
+
+You can report artifacts and events from wherever you want - including your own machine - but the common practice is to report it from CI immediately after it happens (or, in case of [`kosli expect deployment`](/client_reference/kosli_expect_deployment/) command, right before the deployment starts).
+
+When reporting artifact and artifact related events, kosli needs to figure out what's the fingerprint of the artifact the report belongs to.  
+
+It can determine that in two ways:
