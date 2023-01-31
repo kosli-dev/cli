@@ -53,3 +53,5 @@ You can report artifacts and events from wherever you want - including your own 
 [comment]: <> (When reporting artifact and artifact related events, kosli needs to figure out what's the fingerprint of the artifact the report belongs to.)  
 
 [comment]: <> (It can determine that in two ways:)
+* if you provide a name or path to the artifact, relative to the location from which you run 
+
