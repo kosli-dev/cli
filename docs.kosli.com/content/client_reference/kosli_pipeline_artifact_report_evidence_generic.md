@@ -18,7 +18,7 @@ kosli pipeline artifact report evidence generic [IMAGE-NAME | FILE-PATH | DIR-PA
 ### Flags
 | Flag | Description |
 | :--- | :--- |
-|    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256'.  |
+|    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256' or '--fingerprint'.  |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -C, --compliant  |  [defaulted] Whether the evidence is compliant or not. (default true)  |
 |    -d, --description string  |  [optional] The evidence description.  |
