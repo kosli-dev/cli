@@ -44,7 +44,7 @@ type junitEvidenceOptions struct {
 const junitEvidenceShortDesc = `Report JUnit test evidence for an artifact in a Kosli pipeline.`
 
 const junitEvidenceLongDesc = junitEvidenceShortDesc + `
-` + sha256Desc
+` + fingerprintDesc
 
 const junitEvidenceExample = `
 # report JUnit test evidence about a file artifact:

@@ -32,8 +32,9 @@ const (
 	envPrefix = "KOSLI"
 
 	// the following constants are used in the docs/help
-	sha256Desc  = "The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag)."
-	awsAuthDesc = `
+	fingerprintDesc = "The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag)."
+	sha256Desc      = "The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag)."
+	awsAuthDesc     = `
 To authenticate to AWS, you can either: 
 	1) provide the AWS static credentials via flags or by exporting the equivalent KOSLI env vars (e.g. KOSLI_AWS_KEY_ID)
 	2) export the AWS env vars (e.g. AWS_ACCESS_KEY_ID).
@@ -52,7 +53,7 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 	verboseFlag             = "[optional] Print verbose logs to stdout."
 	debugFlag               = "[optional] Print debug logs to stdout."
 	sha256Flag              = "[conditional] The SHA256 fingerprint for the artifact. Only required if you don't specify '--artifact-type'."
-	artifactTypeFlag        = "[conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256'."
+	artifactTypeFlag        = "[conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256' or '--fingerprint'."
 	pipelineNameFlag        = "The Kosli pipeline name."
 	newPipelineFlag         = "The name of the pipeline to be created or updated."
 	outputFlag              = "[defaulted] The format of the output. Valid formats are: [table, json]."
