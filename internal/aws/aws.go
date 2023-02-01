@@ -148,22 +148,34 @@ func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionName, functionVe
 		return lambdaData, err
 	}
 
-	layout := "2006-01-02T15:04:05.000+0000"
-	lastModifiedTimestamp, err := time.Parse(layout, *function.LastModified)
+	lastModifiedTimestamp, err := formatLambdaLastModified(*function.LastModified)
 	if err != nil {
 		return lambdaData, err
 	}
 
-	sha256base64, err := base64.StdEncoding.DecodeString(*function.CodeSha256)
+	sha256hex, err := decodeLambdaFingerprint(*function.CodeSha256)
 	if err != nil {
 		return lambdaData, err
 	}
-
-	sha256hex := hex.EncodeToString(sha256base64)
 
 	lambdaData = append(lambdaData, &LambdaData{Digests: map[string]string{functionName: sha256hex}, LastModifiedTimestamp: lastModifiedTimestamp.Unix()})
 
 	return lambdaData, nil
+}
+
+// formatLambdaLastModified converts string lastModified to time object
+func formatLambdaLastModified(lastModified string) (time.Time, error) {
+	layout := "2006-01-02T15:04:05.000+0000"
+	return time.Parse(layout, lastModified)
+}
+
+// decodeLambdaFingerprint decodes a base64 lambda function fingerprint
+func decodeLambdaFingerprint(fingerprint string) (string, error) {
+	sha256base64, err := base64.StdEncoding.DecodeString(fingerprint)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(sha256base64), nil
 }
 
 // GetS3Data returns a digest and metadata of the S3 bucket content
