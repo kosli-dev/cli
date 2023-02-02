@@ -12,7 +12,7 @@ import (
 
 const environmentReportECSShortDesc = `Report running containers data from AWS ECS cluster or service to Kosli.`
 const environmentReportECSLongDesc = environmentReportECSShortDesc + `
-The reported data includes container image digests and creation timestamps.`
+The reported data includes container image digests and creation timestamps.` + awsAuthDesc
 
 const environmentReportECSExample = `
 # report what is running in an entire AWS ECS cluster:
@@ -34,16 +34,27 @@ kosli environment report ecs yourEnvironmentName \
 	--service-name yourECSServiceName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
+
+# report what is running in in a specific AWS ECS service (AWS auth provided in flags):
+kosli environment report ecs yourEnvironmentName \
+	--service-name yourECSServiceName \
+	--aws-key-id yourAWSAccessKeyID \
+	--aws-secret-key yourAWSSecretAccessKey \
+	--aws-region yourAWSRegion \
+	--api-token yourAPIToken \
+	--owner yourOrgName
 `
 
 type environmentReportECSOptions struct {
-	cluster     string
-	serviceName string
-	id          string
+	cluster        string
+	serviceName    string
+	id             string
+	awsStaticCreds *aws.AWSStaticCreds
 }
 
 func newEnvironmentReportECSCmd(out io.Writer) *cobra.Command {
 	o := new(environmentReportECSOptions)
+	o.awsStaticCreds = new(aws.AWSStaticCreds)
 	cmd := &cobra.Command{
 		Use:     "ecs ENVIRONMENT-NAME",
 		Short:   environmentReportECSShortDesc,
@@ -64,6 +75,7 @@ func newEnvironmentReportECSCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVarP(&o.cluster, "cluster", "C", "", ecsClusterFlag)
 	cmd.Flags().StringVarP(&o.serviceName, "service-name", "s", "", ecsServiceFlag)
+	addAWSAuthFlags(cmd, o.awsStaticCreds)
 	addDryRunFlag(cmd)
 	return cmd
 }
@@ -80,11 +92,8 @@ func (o *environmentReportECSOptions) run(args []string) error {
 		}
 	}
 	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
-	client, err := aws.NewAWSClient()
-	if err != nil {
-		return err
-	}
-	tasksData, err := aws.GetEcsTasksData(client, o.cluster, o.serviceName)
+
+	tasksData, err := o.awsStaticCreds.GetEcsTasksData(o.cluster, o.serviceName)
 	if err != nil {
 		return err
 	}

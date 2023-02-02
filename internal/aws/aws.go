@@ -4,20 +4,18 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/hex"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	s3manager "github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/ecs"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/service/lambda"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/utils"
@@ -65,7 +63,6 @@ type LambdaData struct {
 
 // NewEcsTaskData creates a NewEcsTaskData object from an ECS task
 func NewEcsTaskData(taskArn string, digests map[string]string, startedAt time.Time) *EcsTaskData {
-
 	return &EcsTaskData{
 		TaskArn:   taskArn,
 		Digests:   digests,
@@ -73,83 +70,127 @@ func NewEcsTaskData(taskArn string, digests map[string]string, startedAt time.Ti
 	}
 }
 
-// NewAWSClient creates an AWS client from:
-// 1) Environment Variables
-// 2) Shared Configuration
-// 3) Shared Credentials files.
-func NewAWSClient() (*ecs.Client, error) {
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+// AWSStaticCreds represents static creds provided by user
+type AWSStaticCreds struct {
+	AccessKeyID     string
+	SecretAccessKey string
+	Region          string
+}
+
+// GetConfigOptFns returns a slice of config loading options functions based on
+// user-provided static creds
+func (s *AWSStaticCreds) GetConfigOptFns() []func(*config.LoadOptions) error {
+	optFns := []func(*config.LoadOptions) error{}
+	if s.Region != "" {
+		optFns = append(optFns, config.WithRegion(s.Region))
+	}
+	if s.AccessKeyID != "" && s.SecretAccessKey != "" {
+		optFns = append(optFns, config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(s.AccessKeyID, s.SecretAccessKey, "")))
+	}
+	return optFns
+}
+
+// NewAWSConfigFromEnvOrFlags returns an AWS config that can be used to construct
+// AWS service clients.
+// Credentials for config can be sourced from multiple sources, in this order:
+// 1) static credentials (from CLI flags or KOSLI env vars), if provided
+// 2) AWS Environment variables
+// 3) Shared AWS Configuration/Credentials files (see https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html)
+// more details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials
+func (staticCreds *AWSStaticCreds) NewAWSConfigFromEnvOrFlags() (aws.Config, error) {
+	return config.LoadDefaultConfig(context.TODO(), staticCreds.GetConfigOptFns()...)
+}
+
+// NewS3Client returns a new S3 API client
+func (staticCreds *AWSStaticCreds) NewS3Client() (*s3.Client, error) {
+	cfg, err := staticCreds.NewAWSConfigFromEnvOrFlags()
 	if err != nil {
 		return nil, err
 	}
+	return s3.NewFromConfig(cfg), nil
+}
 
+// NewLambdaClient returns a new Lambda API client
+func (staticCreds *AWSStaticCreds) NewLambdaClient() (*lambda.Client, error) {
+	cfg, err := staticCreds.NewAWSConfigFromEnvOrFlags()
+	if err != nil {
+		return nil, err
+	}
+	return lambda.NewFromConfig(cfg), nil
+}
+
+// NewECSClient returns a new ECS API client
+func (staticCreds *AWSStaticCreds) NewECSClient() (*ecs.Client, error) {
+	cfg, err := staticCreds.NewAWSConfigFromEnvOrFlags()
+	if err != nil {
+		return nil, err
+	}
 	return ecs.NewFromConfig(cfg), nil
 }
 
-func AWSCredentials(id, secret string) *credentials.Credentials {
-	creds := credentials.NewEnvCredentials()
-	if _, err := creds.Get(); err != nil {
-		creds = credentials.NewStaticCredentials(id, secret, "")
-	}
-	return creds
-}
-
 // GetLambdaPackageData returns a digest and metadata of a Lambda function package
-func GetLambdaPackageData(functionName, functionVersion string, creds *credentials.Credentials, region string) ([]*LambdaData, error) {
+func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionName, functionVersion string) ([]*LambdaData, error) {
 	lambdaData := []*LambdaData{}
-	awsConfig := &aws.Config{Credentials: creds, Region: aws.String(region)}
-	lambdaSession, err := session.NewSession(awsConfig)
+	client, err := staticCreds.NewLambdaClient()
 	if err != nil {
 		return lambdaData, err
 	}
-	svc := lambda.New(lambdaSession)
 
-	input := &lambda.GetFunctionConfigurationInput{
+	params := &lambda.GetFunctionConfigurationInput{
 		FunctionName: aws.String(functionName),
 	}
 	if functionVersion != "" {
-		input.Qualifier = aws.String(functionVersion)
+		params.Qualifier = aws.String(functionVersion)
 	}
 
-	result, err := svc.GetFunctionConfiguration(input)
+	function, err := client.GetFunctionConfiguration(context.TODO(), params)
 	if err != nil {
 		return lambdaData, err
 	}
 
-	layout := "2006-01-02T15:04:05.000+0000"
-	lastModifiedTimestamp, err := time.Parse(layout, *result.LastModified)
-
+	lastModifiedTimestamp, err := formatLambdaLastModified(*function.LastModified)
 	if err != nil {
 		return lambdaData, err
 	}
 
-	sha256base64, err := base64.StdEncoding.DecodeString(*result.CodeSha256)
+	sha256hex, err := decodeLambdaFingerprint(*function.CodeSha256)
 	if err != nil {
 		return lambdaData, err
 	}
-
-	sha256hex := hex.EncodeToString(sha256base64)
 
 	lambdaData = append(lambdaData, &LambdaData{Digests: map[string]string{functionName: sha256hex}, LastModifiedTimestamp: lastModifiedTimestamp.Unix()})
 
 	return lambdaData, nil
 }
 
+// formatLambdaLastModified converts string lastModified to time object
+func formatLambdaLastModified(lastModified string) (time.Time, error) {
+	layout := "2006-01-02T15:04:05.000+0000"
+	return time.Parse(layout, lastModified)
+}
+
+// decodeLambdaFingerprint decodes a base64 lambda function fingerprint
+func decodeLambdaFingerprint(fingerprint string) (string, error) {
+	sha256base64, err := base64.StdEncoding.DecodeString(fingerprint)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(sha256base64), nil
+}
+
 // GetS3Data returns a digest and metadata of the S3 bucket content
-func GetS3Data(bucket string, creds *credentials.Credentials, region string, logger *logger.Logger) ([]*S3Data, error) {
+func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, logger *logger.Logger) ([]*S3Data, error) {
 	s3Data := []*S3Data{}
-	awsConfig := &aws.Config{Credentials: creds, Region: aws.String(region)}
-	s3Session, err := session.NewSession(awsConfig)
+	client, err := staticCreds.NewS3Client()
 	if err != nil {
 		return s3Data, err
 	}
 
-	svc := s3.New(s3Session)
-	input := &s3.ListObjectsInput{
+	params := &s3.ListObjectsInput{
 		Bucket: aws.String(bucket),
 	}
 
-	result, err := svc.ListObjects(input)
+	objects, err := client.ListObjects(context.TODO(), params)
 	if err != nil {
 		return s3Data, err
 	}
@@ -159,14 +200,10 @@ func GetS3Data(bucket string, creds *credentials.Credentials, region string, log
 	}
 	defer os.RemoveAll(tempDirName)
 
-	downloaderSession, err := session.NewSession(awsConfig)
-	if err != nil {
-		return s3Data, err
-	}
-	downloader := s3manager.NewDownloader(downloaderSession)
-	lastModifiedTime := result.Contents[0].LastModified
-	for _, object := range result.Contents {
-		err := downloadFileFromBucket(downloader, tempDirName, *object.Key, bucket)
+	downloader := s3manager.NewDownloader(client)
+	lastModifiedTime := objects.Contents[0].LastModified
+	for _, object := range objects.Contents {
+		err := downloadFileFromBucket(downloader, tempDirName, *object.Key, bucket, logger)
 		if object.LastModified.After(*lastModifiedTime) {
 			lastModifiedTime = object.LastModified
 		}
@@ -184,14 +221,14 @@ func GetS3Data(bucket string, creds *credentials.Credentials, region string, log
 	return s3Data, nil
 }
 
-func downloadFileFromBucket(downloader *s3manager.Downloader, dirName, key, bucket string) error {
+func downloadFileFromBucket(downloader *s3manager.Downloader, dirName, key, bucket string, logger *logger.Logger) error {
 	file, err := utils.CreateFile(filepath.Join(dirName, key))
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	numBytes, err := downloader.Download(file,
+	numBytes, err := downloader.Download(context.TODO(), file,
 		&s3.GetObjectInput{
 			Bucket: aws.String(bucket),
 			Key:    aws.String(key),
@@ -199,13 +236,13 @@ func downloadFileFromBucket(downloader *s3manager.Downloader, dirName, key, buck
 	if err != nil {
 		return err
 	}
-	fmt.Println("Downloaded", file.Name(), numBytes, "bytes")
+	logger.Debug("downloaded", file.Name(), numBytes, "bytes")
 
 	return nil
 }
 
 // GetEcsTasksData returns a list of tasks data for an ECS cluster or service
-func GetEcsTasksData(client *ecs.Client, cluster string, serviceName string) ([]*EcsTaskData, error) {
+func (staticCreds *AWSStaticCreds) GetEcsTasksData(cluster string, serviceName string) ([]*EcsTaskData, error) {
 	listInput := &ecs.ListTasksInput{}
 	descriptionInput := &ecs.DescribeTasksInput{}
 	tasksData := []*EcsTaskData{}
@@ -215,6 +252,11 @@ func GetEcsTasksData(client *ecs.Client, cluster string, serviceName string) ([]
 	if cluster != "" {
 		listInput.Cluster = aws.String(cluster)
 		descriptionInput.Cluster = aws.String(cluster)
+	}
+
+	client, err := staticCreds.NewECSClient()
+	if err != nil {
+		return tasksData, err
 	}
 
 	list, err := client.ListTasks(context.Background(), listInput)

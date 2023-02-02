@@ -9,7 +9,7 @@ Report Snyk vulnerability scan evidence for an artifact in a Kosli pipeline.
 ### Synopsis
 
 Report Snyk vulnerability scan evidence for an artifact in a Kosli pipeline.
-The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag).
+The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell
 kosli pipeline artifact report evidence snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
@@ -18,7 +18,7 @@ kosli pipeline artifact report evidence snyk [IMAGE-NAME | FILE-PATH | DIR-PATH]
 ### Flags
 | Flag | Description |
 | :--- | :--- |
-|    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256'.  |
+|    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256' or '--fingerprint'.  |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -f, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'.  |

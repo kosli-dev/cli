@@ -9,8 +9,13 @@ Report the artifact deployed in an AWS Lambda and its digest to Kosli.
 ### Synopsis
 
 Report the artifact deployed in an AWS Lambda and its digest to Kosli.
-To authenticate to AWS, you can either export the AWS env vars or use the command flags to pass them.
-See the examples below.s
+To authenticate to AWS, you can either: 
+	1) provide the AWS static credentials via flags or by exporting the equivalent KOSLI env vars (e.g. KOSLI_AWS_KEY_ID)
+	2) export the AWS env vars (e.g. AWS_ACCESS_KEY_ID).
+	3) Use a shared config/credentials file under the $HOME/.aws
+Option 1 takes highest precedence, while option 3 is the lowest.
+More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials
+	
 
 ```shell
 kosli environment report lambda ENVIRONMENT-NAME [flags]
@@ -21,7 +26,7 @@ kosli environment report lambda ENVIRONMENT-NAME [flags]
 | :--- | :--- |
 |        --aws-key-id string  |  The AWS access key ID.  |
 |        --aws-region string  |  The AWS region.  |
-|        --aws-secret-key string  |  The AWS secret key.  |
+|        --aws-secret-key string  |  The AWS secret access key.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |        --function-name string  |  The name of the AWS Lambda function.  |
 |        --function-version string  |  [optional] The version of the AWS Lambda function.  |
@@ -48,13 +53,13 @@ export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
-kosli environment report lambda myEnvironment \
+kosli environment report lambda yourEnvironmentName \
 	--function-name yourFunctionName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
 # report what is running in a specific version of an AWS Lambda function (AWS auth provided in flags):
-kosli environment report lambda myEnvironment \
+kosli environment report lambda yourEnvironmentName \
 	--function-name yourFunctionName \
 	--function-version yourFunctionVersion \
 	--aws-key-id yourAWSAccessKeyID \
