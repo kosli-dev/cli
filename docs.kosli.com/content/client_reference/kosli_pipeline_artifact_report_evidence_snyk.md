@@ -23,7 +23,7 @@ kosli pipeline artifact report evidence snyk [IMAGE-NAME | FILE-PATH | DIR-PATH]
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -f, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'.  |
 |    -h, --help  |  help for snyk  |
-|    -n, --name string  |  The name of the evidence  |
+|    -n, --name string  |  The name of the evidence.  |
 |    -p, --pipeline string  |  The Kosli pipeline name.  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
