@@ -108,7 +108,7 @@ Pipelines in Kosli provide a place to report and track artifacts status and rela
 
 You can create Kosli pipeline using our cli with **[kosli pipeline declare](/client_reference/kosli_pipeline_declare/)** command. 
 
-You can run the cli command manually e.g. using your own computer, but it's also ok to add your pipeline declaring command to your build pipeline. It's perfectly fine to run it every time you run a build. You can also change your [template](/kosli_overview/how_does_kosli_work/#template) over time, for example by adding new control. It won't affect the compliancy of artifacts reported before the change of the template.
+You can run the cli command manually e.g. using your own computer, but it's also ok to add your pipeline declaring command to your build pipeline. It's perfectly fine to run it every time you run a build. You can also change your [template](/kosli_overview/what_is_kosli/#template) over time, for example by adding new control. It won't affect the compliancy of artifacts reported before the change of the template.
 
 Once your Kosli pipeline is in place you can start reporting artifacts and evidences of all the events you want to report (matching declared template) from your CI pipelines. Kosli cli provides a variety of commands to make it possible: 
 
@@ -133,7 +133,7 @@ When declaring a pipeline you need to provide a template - a list of expected co
 
 Whenever an event related to your artifact happens and you want to report an evidence, you need to tell Kosli which artifact the evidence refers to. You can do it in two ways:
 
-1. You can use `--artifact-type` flag and provide an artifact as an argument to evidence reporting commands (given artifact needs to be available from the location the command is run, so it can be used to calculate artifacts [fingerprint](/kosli_overview/how_does_kosli_work/#what-are-the-fingerprints))
+1. You can use `--artifact-type` flag and provide an artifact as an argument to evidence reporting commands (given artifact needs to be available from the location the command is run, so it can be used to calculate artifacts [fingerprint](/kosli_overview/what_is_kosli/#fingerprints))
 1. You can use `--fingerprint` (or `--sha256` for older versions of kosli cli) to provide previously calculated fingerprint of the artifact 
 
 You can report absolutely anything as evidence. If there is no support for your specific type of evidence, you can use [generic evidence type](/client_reference/kosli_pipeline_artifact_report_evidence_generic/).
@@ -141,7 +141,7 @@ You can report absolutely anything as evidence. If there is no support for your 
 Evidences are reported as compliant if Kosli determines them as compliant (e.g. analyzing JUnit or Snyk test results). For generic evidences you can implement your own mechanism to determine compliancy status and use `--compliant=false` in your evidence reporting command, if you want to send an evidence as non-compliant. 
 
 There are a number of types of evidences with dedicated support:
-* [bitbucket](client_reference/kosli_pipeline_artifact_report_evidence_bitbucket-pullrequest/) and [github](/client_reference/kosli_pipeline_artifact_report_evidence_github-pullrequest/) pull request - verify and report if a pull request exists for a commit used to build your artifact
+* [bitbucket](/client_reference/kosli_pipeline_artifact_report_evidence_bitbucket-pullrequest/) and [github](/client_reference/kosli_pipeline_artifact_report_evidence_github-pullrequest/) pull request - verify and report if a pull request exists for a commit used to build your artifact
 * [junit](/client_reference/kosli_pipeline_artifact_report_evidence_junit/) - report the result of your unit test (requires results as XML in JUnit format)
 * [snyk](/client_reference/kosli_pipeline_artifact_report_evidence_snyk/) - report Snyk vulnerability scan 
 
