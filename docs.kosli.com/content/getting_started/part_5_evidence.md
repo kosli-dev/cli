@@ -1,11 +1,11 @@
 ---
-title: "Part 5: Evidences"
+title: "Part 5: Evidence"
 bookCollapseSection: false
 weight: 250
 ---
-# Part 5: Evidences
+# Part 5: Evidence
 
-## Report evidences
+## Report evidence
 
 Whenever an event related to one of your evidences happens you should report it to Kosli. 
 
