@@ -9,7 +9,7 @@ All the information stored in Kosli may be helpful both for operations and devel
 
 Visit [Reference](/client_reference/) to learn more about how to run each command.
 
-The same CLI you use to record and connect your changes can be use to search for and browse information in Kosli.
+The same CLI you use to record and connect your changes can be used to search for and browse information in Kosli.
 
 To make it easier to run Kosli search commands with the CLI you can export the `owner` and `api-token` as environment variables, so you don't have to provide them every time you run commands. This approach is valid for [any flag](/introducing_kosli/cli/#environment-variables) 
 
@@ -56,7 +56,7 @@ The information returned by `kosli search` - like Pipeline, Fingerprint or Histo
 
 ## Search for a pipeline
 
-When you search in Kosli you often need to refer to a specific pipeline. If you don't remember all the pipelines' names it is easy to find with `kosli pipeline ls` command:
+When you search in Kosli you often need to refer to a specific pipeline. If you don't remember all the pipelines' names it is easy to list them with `kosli pipeline ls` command:
 
 ```
 % kosli pipeline ls 
@@ -107,7 +107,7 @@ aa0a3d3  Name: cyberdojo/creator:aa0a3d3           COMPLIANT   Fri, 09 Sep 2022 
 
 The output of the command is shortened above, for readability purposes. 
 
-The amount of artifacts may be really long and by default you can see last 15 artifacts - the first page of the result list. You can use `-n` flag to limit the amount of artifacts displayed per page, and `--page` to select which page of the result list you want to see.
+The amount of artifacts may be really long and by default you can see the last 15 artifacts - the first page of the result list. You can use `-n` flag to limit the amount of artifacts displayed per page, and `--page` to select which page of the result list you want to see.
 
 E.g. to see last five artifacts you'd use:
 ```
@@ -125,7 +125,7 @@ kosli artifact ls creator --output json
 ```
 ## Get artifact
 
-To get a more detailed information about a given artifact use `kosli artifact get`. To identify the artifact you need to use:
+To get more detailed information about a given artifact use `kosli artifact get`. To identify the artifact you need to use:
 * pipeline name followed by `@` and artifact fingerprint
 OR
 * pipeline name followed by `:` and commit sha
@@ -246,7 +246,7 @@ SNAPSHOT  FROM                            TO                              DURATI
 252       Mon, 10 Oct 2022 08:47:42 CEST  Thu, 13 Oct 2022 09:04:42 CEST  3 days
 ```
 
-Byt default you can see the last 15 changes to the environment. You can choose to only print e.g. last 3 events (`-n` flag) and have a more detailed output (`--long` flag):
+By default you can see the last 15 changes to the environment. You can choose to only print e.g. last 3 events (`-n` flag) and have a more detailed output (`--long` flag):
 
 ```
 $ kosli environment log aws-beta --long -n 3
@@ -267,7 +267,7 @@ SNAPSHOT  EVENT                                                                 
           Reported at: Wed, 19 Oct 2022 09:46:42 CEST  
 ```
 
-You can also use *interval* expression, like `262..264` (to see specified snapshot list) , or `~4..NOW` (to get a list of snapshots starting from 4 behind a currently running one and the current one)
+You can also use an *interval* expression, like `262..264` (to see specified snapshot list) , or `~4..NOW` (to get a list of snapshots starting from 4 behind a currently running one and the current one)
 
 ```
 $ kosli environment log aws-beta 262..264
@@ -287,7 +287,7 @@ SNAPSHOT  FROM                            TO                              DURATI
 
 ## Get a snapshot 
 
-To have a look at what is or was running in a given snapshot use `kosli environment get` command. You can use just the environment name as the argument, which will give you the latest snapshot, add `#` and snapshot name, to get a specific one, or `~n` where *n* is a number a number, to get *n-th* snapshot behind a current one:
+To have a look at what is or was running in a given snapshot use `kosli environment get` command. You can use just the environment name as the argument, which will give you the latest snapshot, add `#` and snapshot number, to get a specific one, or `~n` where *n* is a number, to get *n-th* snapshot behind a current one:
 
 ``` 
 $ kosli environment get aws-beta
@@ -327,9 +327,9 @@ COMMIT   ARTIFACT                                                               
 
 ```
 
-The same expressions (with `#` and `~`) can be used to reference snapshots when diffing environment
+The same expressions (with `#` and `~`) can be used to reference snapshots when diffing environment.
 
-In the example below there was only one difference between snapshots: one new artifact started running in latest snapshot 
+In the example below there was only one difference between snapshots: one new artifact started running in the latest snapshot. 
 
 ```
 $ kosli environment diff aws-beta aws-beta~1

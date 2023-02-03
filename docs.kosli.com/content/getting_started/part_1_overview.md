@@ -26,7 +26,7 @@ No matter the order you chose for implementing Kosli in you development process,
 
 ## Reporting environments
 
-All environment reporting commands are described in details in [Part 2: Environments in Kosli](/getting_started/part_2_environments/) section. And you can find a complete syntax in [Kosli Client Reference](/client_reference/).
+All environment reporting commands are described in detail in [Part 2: Environments in Kosli](/getting_started/part_2_environments/) section. And you can find a complete syntax in [Kosli Client Reference](/client_reference/).
 
 Before you start reporting you need to [create an environment](/getting_started/part_2_environments/#create-an-environment) in Kosli. You should have a separate Kosli environment for each runtime environment you're reporting.
 
@@ -42,7 +42,7 @@ Once your reporting is up and running you'll see the results under "Environments
 
 ## Reporting artifacts
 
-All artifact/evidence reporting commands are described in details in [Part 3: Pipelines](/getting_started/part_3_pipelines/) and following sections. And you can find a complete syntax in [Kosli Client Reference](/client_reference/).
+All artifact/evidence reporting commands are described in detail in [Part 3: Pipelines](/getting_started/part_3_pipelines/) and following sections. And you can find a complete syntax in [Kosli Client Reference](/client_reference/).
 
 Before you start reporting you need to [create a pipeline](/getting_started/part_3_pipelines/#create-a-pipeline) in Kosli. Common practice is to have one Kosli pipeline per artifact type. E.g. if your CI pipeline produces one binary you'd report all builds of that binary to ONE Kosli pipeline. If the same CI pipeline was also producing a docker image or any other artifact you'd report it as an artifact to ANOTHER Kosli pipeline. 
 
@@ -50,6 +50,6 @@ Once your Kosli pipelines are ready you can start reporting your [artifacts](/ge
 
 You can report artifacts and events from wherever you want - including your own machine - but the common practice is to report it from CI immediately after it happens (or, in case of [`kosli expect deployment`](/client_reference/kosli_expect_deployment/) command, right before the deployment starts).
 
-When reporting artifact and artifact related events, kosli needs to figure out what's the fingerprint of the artifact the report belongs to.  
+[comment]: <> (When reporting artifact and artifact related events, kosli needs to figure out what's the fingerprint of the artifact the report belongs to.)  
 
-It can determine that in two ways:
+[comment]: <> (It can determine that in two ways:)

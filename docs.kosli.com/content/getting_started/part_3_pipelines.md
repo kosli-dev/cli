@@ -9,7 +9,7 @@ Kosli allows you to connect the development world (commits, builds, tests, appro
 
 ## Create a pipeline
 
-In order to be able to report artifacts to Kosli you need to create a Kosli [pipeline](/introducing_kosli/pipelines) first. When you create a pipeline you also define expected controls - a list of evidences you need to be reported in order for the artifact to become compliant. Use `--template` flag to provide the list of requirements. 
+To report artifacts to Kosli you need to create a Kosli [pipeline](/introducing_kosli/pipelines) first. When you create a pipeline you also define expected controls - a list of evidences you need to be reported in order for the artifact to become compliant. Use the `--template` flag to provide the list of requirements. 
 
 Later, when reporting an evidence for a specific control you will use the same name you used in the template to identify which evidence you are reporting.
 

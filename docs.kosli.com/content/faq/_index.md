@@ -63,19 +63,19 @@ We are working on providing that functionality in a near future.
 
 ### Do I have to provide all the flags all the time? 
 
-A number of flags won't change their values often (or at all) between commands, like `--owner` or `api-token`.  Some will differ between e.g. workflows, like `--pipeline`. You can define them as environment variable to avoid unnecessary redundancy. Check [Environment variables](/kosli_overview/kosli_tools/#environment-variables) section to learn more.
+A number of flags won't change their values often (or at all) between commands, like `--owner` or `--api-token`.  Some will differ between e.g. workflows, like `--pipeline`. You can define them as environment variable to avoid unnecessary redundancy. Check [Environment variables](/kosli_overview/kosli_tools/#environment-variables) section to learn more.
 
 ### What is dry run and how to use it?
 
 You can use dry run to disable writing to app.kosli.com - e.g. if you're just trying things out, or troubleshooting (dry run will print the payload cli would send in a non dry run mode). 
 
 Here are two possible ways of enabling a dry run:
-1. use `--dry-run` flag (no value needed) to enable it per command
-1. set `KOSLI_API_TOKEN` environment variable to `DRY_RUN` to enable it globally (e.g. in your terminal or CI)
+1. use the `--dry-run` flag (no value needed) to enable it per command
+1. set the `KOSLI_API_TOKEN` environment variable to `DRY_RUN` to enable it globally (e.g. in your terminal or CI)
 
 ### What is the `--config-file` flag?
 
-A config file is an alternative for using Kosli flags or Environment variables. Usually you'd use config file for the values that rarely change - like api token or owner, but you can represent all Kosli flags with config file. The key for each value is the same as the flag name, capitalized, so `--api-token` would become `API-TOKEN`, and `--owner` would become `OWNER`, etc. 
+A config file is an alternative for using Kosli flags or Environment variables. Usually you'd use a config file for the values that rarely change - like api token or owner, but you can represent all Kosli flags with config file. The key for each value is the same as the flag name, capitalized, so `--api-token` would become `API-TOKEN`, and `--owner` would become `OWNER`, etc. 
 
 You can use JSON, YAML or TOML format for your config file. 
 

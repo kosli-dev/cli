@@ -139,7 +139,7 @@ version.BuildInfo{Version:"v0.1.10", GitCommit:"9c623f1e6c293235ddc8de1e347bf99a
 <!-- Put this in a separate page? -->
 <!-- Add screen shot here? -->
 
-To be able to run Kosli commands (from your local machine, but the same goes for any CI/CD system you use) you need to use Kosli API Token to be able to authenticate. It's a common practice to configure the token as an environment variable (or e.g. a secret in GitHub Actions or Bitbucket, etc)
+To be able to run Kosli commands (from your local machine, but the same goes for any CI/CD system you use) you need a Kosli API Token to be able to authenticate. It's a common practice to configure the token as an environment variable (or e.g. a secret in GitHub Actions or Bitbucket, etc)
 
 To retrieve your API Token:
 
@@ -209,7 +209,7 @@ been reported yet.
 ## Step 5: Create a Kosli environment
 
 A Kosli *environment* stores snapshots containing information about
-the software artifacts that you are running in your runtime environments.
+the software artifacts you are running in your runtime environments.
 
 Create a Kosli environment:
 
@@ -243,7 +243,7 @@ Typically, you would build an artifact in your CI system.
 The quickstart-docker repository contains a `docker-compose.yml` file which uses an [nginx](https://nginx.org/) docker image 
 which you will be using as your artifact in this tutorial instead.
 
-Pull the docker image - Kosli CLI needs the artifact to be locally present to 
+Pull the docker image - the Kosli CLI needs the artifact to be locally present to 
 generate a "fingerprint" to identify it:
 
 ```shell {.command}
@@ -262,7 +262,7 @@ nginx        1.21      8f05d7383593   5 months ago   134MB
 
 Now you can report the artifact to Kosli. 
 This tutorial uses a dummy value for the `--build-url` flag, in a real installation 
-this would be a link to a build service (e.g. Github Actions).
+this would be a defaulted link to a build service (e.g. Github Actions).
 
 ```shell {.command}
 kosli pipeline artifact report creation nginx:1.21 \
@@ -333,7 +333,7 @@ Report all the docker containers running on your machine to Kosli:
 ```shell {.command}
 kosli environment report docker quickstart
 ```
-You can confirm that this has created an environment snapshot:
+You can confirm this has created an environment snapshot:
 ```shell {.command}
 kosli environment log quickstart
 ```

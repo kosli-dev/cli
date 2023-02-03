@@ -15,7 +15,7 @@ See [kosli pipeline approval report](/client_reference/kosli_pipeline_approval_r
 
 ### Quick note about a commit list
 
-When reporting or requesting an approval one has to keep in mind that `oldest-commit` has to be an ancestor of `newest-commit`. 
+When reporting or requesting an approval keep in mind that `oldest-commit` has to be an ancestor of `newest-commit`. 
 
 It's easy to verify locally in the repository using:
 ```shell {.command}
@@ -29,7 +29,7 @@ Exit code 0 means `oldest-commit` is an ancestor of `newest-commit` and your kos
 
 To be able to trace back the history of your commits we need a complete repository history to be available - in your CI pipelines it'll likely mean you have to explicitly check out the whole history (many CI tools checkout just a latest version by default).
 
-In GitHub Actions you'd need to modify the checkout step by adding fetch-depth option:
+In GitHub Actions you'd need to modify the checkout step by adding fetch-depth option (zero means full depth):
 
 ```
 steps:

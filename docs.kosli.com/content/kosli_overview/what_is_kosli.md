@@ -10,7 +10,7 @@ Below you can read about what elements Kosli consists of.
 
 ## Organization
 
-Organization in Kosli "owns" Kosli pipelines and environments - which means only members of each organization can get access to environments and pipelines that belong to the organization.
+An Organization in Kosli "owns" Kosli pipelines and environments - which means only members of each organization can get access to environments and pipelines that belong to the organization.
 By default, when you sign up to Kosli, a personal organization is created for you and the name of the organization matches your user name. Only you can access your personal organization.
 
 ### Shared organization
@@ -54,15 +54,15 @@ Kosli supports different types of runtime environments and the reporting command
 * Amazon Lambda
 * Physical/virtual server
 
-You can create Kosli environment using:
-* cli with **[kosli environment declare](/client_reference/kosli_environment_declare/)** command
-* "Add new environment" button under "Environments" section on [app.kosli.com](https://app.kosli.com) that will take you to environment creation form:
+You can create a Kosli environment using:
+* The cli's **[kosli environment declare](/client_reference/kosli_environment_declare/)** command
+* The "Add new environment" button under the "Environments" section on [app.kosli.com](https://app.kosli.com) that will take you to environment creation form:
 
 {{<figure src="/images/new-env-form.png" alt="Add environment form" width="900">}}
 
 Once the Kosli environment is ready you can start reporting the status of your actual runtime environment using one of the **kosli environment report ...** commands - check [client reference](/client_reference) for details
 
-It makes sense to automate reporting - via cronjob or using your CI. It's up to you to decide how often you want the reports to keep coming. Once the cronjob or CI are set to use **kosli environment report ...** command, every time a change in your runtime environment happens a new snapshot capturing current state of the environment will be created. 
+It makes sense to automate reporting - via a cronjob or using your CI. It's up to you to decide how often you want the reports to keep coming. Once the cronjob or CI are set to use the **kosli environment report ...** command, every time a change in your runtime environment happens a new snapshot capturing the current state of the environment will be created. 
 
 ![Diagram of Environment Reporting](/images/environments.svg)
 
@@ -75,17 +75,17 @@ The change could be for example:
 
 ### Snapshots
 
-Snapshot represents a reported status of your runtime environment at a given time. When you click on the name of a specific environment on **Environments** page at [app.kosli.com](https://app.kosli.com) you are taken to the latest snapshot. 
+A Snapshot represents a reported status of your runtime environment at a given time. When you click on the name of a specific environment on the **Environments** page at [app.kosli.com](https://app.kosli.com) you are taken to the latest snapshot. 
 
 {{<figure src="/images/snapshot-467.png" alt="Snapshot 467" width="900">}}
 
-You can use the arrow buttons on the right hand side above running artifacts list to browse older snapshots. 
+You can use the arrow buttons on the right hand side above the running artifacts list to browse older snapshots. 
 
 Once snapshot is reported it can't be modified, that is to secure the integrity of data. Every time the environment report indicates changes in the runtime environment or in the artifact status, a new snapshot is created.
 
 ### Compliant Environment
 
-Environment is **compliant** when two following conditions are met:
+An Environment is **compliant** when two following conditions are met:
 1. All the artifacts running in it have provenance (are reported to Kosli) and are compliant themselves OR they were [allow-listed](#allow-list)
 2. All the artifacts running in it are reported as [deployed](/client_reference/kosli_expect_deployment/) to a given environment
 
@@ -100,7 +100,7 @@ If your environment is not compliant check the latest snapshot for more detailed
 
 Not all the artifacts that run in your environment must be built by you - these may be publicly available artifacts, or artifacts provided by external vendors. In such case you will likely have no information about these artifacts reported to Kosli. 
 
-These artifact will by default be marked with "No provenance" red label and it will affect the compliancy of the whole environment. If you know how and why these artifact are present in your environment you can add them to Allow-list by clicking a button on the snapshot page, or using [kosli environment allowedartifacts add](/client_reference/kosli_environment_allowedartifacts_add/) command
+These artifact will by default be marked with "No provenance" red label and it will affect the compliancy of the whole environment. If you know how and why these artifact are present in your environment you can add them to the Allow-list by clicking a button on the snapshot page, or using [kosli environment allowedartifacts add](/client_reference/kosli_environment_allowedartifacts_add/) command
 
 ## Pipelines
 
@@ -114,7 +114,7 @@ Once your Kosli pipeline is in place you can start reporting artifacts and evide
 
 ![Diagram of Pipeline Reporting](/images/pipelines.svg)
 
-A number of required flags may be defaulted to a set of environment variables, depending on the CI system you use. Check [How to use Kosli in CI Systems](/integrations/ci_cd/) for more details. All of the flags can be represented by [environment variables](/kosli_overview/kosli_tools/#environment-variables)
+A number of required flags may be defaulted to a set of environment variables, depending on the CI system you use. Check [How to use Kosli in CI Systems](/integrations/ci_cd/) for more details. All flags can be represented by [environment variables](/kosli_overview/kosli_tools/#environment-variables)
 
 ### Artifacts
 
@@ -140,9 +140,9 @@ You can report absolutely anything as evidence. If there is no support for your 
 
 Evidences are reported as compliant if Kosli determines them as compliant (e.g. analyzing JUnit or Snyk test results). For generic evidences you can implement your own mechanism to determine compliancy status and use `--compliant=false` in your evidence reporting command, if you want to send an evidence as non-compliant. 
 
-There is a number of types of evidences with a dedicated support:
+There are a number of types of evidences with dedicated support:
 * [bitbucket](client_reference/kosli_pipeline_artifact_report_evidence_bitbucket-pullrequest/) and [github](/client_reference/kosli_pipeline_artifact_report_evidence_github-pullrequest/) pull request - verify and report if a pull request exists for a commit used to build your artifact
-* [junit](/client_reference/kosli_pipeline_artifact_report_evidence_junit/) - report the result of your unit test (requires results as JSON in JUnit format)
+* [junit](/client_reference/kosli_pipeline_artifact_report_evidence_junit/) - report the result of your unit test (requires results as XML in JUnit format)
 * [snyk](/client_reference/kosli_pipeline_artifact_report_evidence_snyk/) - report Snyk vulnerability scan 
 
 
@@ -171,12 +171,12 @@ When your artifact was reported to kosli but **not all** the required (as define
 
 ### Deployments
 
-No matter if you deploy your artifacts from your build pipeline, or you have a separate one for that purpose, you should report to Kosli that you expect an artifact to start running in an environment. You do that using [kosli expect deployment](/client_reference/kosli_expect_deployment/) command. Environment that you're deploying to has to be specified, so if you deploy to more than one environment you need to report each deployment separately
+No matter if you deploy your artifacts from your build pipeline, or you have a separate one for that purpose, you should report to Kosli that you expect an artifact to start running in an environment. You do that using [kosli expect deployment](/client_reference/kosli_expect_deployment/) command. The Environment you're deploying to has to be specified, so if you deploy to more than one environment you need to report each deployment separately
 
 ## Fingerprints 
 
 Every time artifact is reported to Kosli a SHA256 digest of it is calculated. It doesn't matter if the artifact is a single file, a directory or a docker image - we can always calculate SHA256. 
 
-Fingerprints are used to connect the information recorded in Kosli - about environments, deployments and approval - to matching artifact. 
+Fingerprints are used to connect the information recorded in Kosli - about environments, deployments and approval - to a matching artifact. 
 
-You can also use Kosli CLI to calculated the fingerprint of any artifact locally. See [kosli fingerprint](/client_reference/kosli_fingerprint/) for more details.
+You can also use Kosli CLI to calculate the fingerprint of any artifact locally. See [kosli fingerprint](/client_reference/kosli_fingerprint/) for more details.

@@ -6,12 +6,12 @@ weight: 140
 
 ## CLI
 
-In order to [record environments](/how_to/record), [artifacts and events](/how_to/connect) to Kosli you need to use [Kosli CLI](https://github.com/kosli-dev/cli). 
-The same tool can be used to [search](/how_to/search) Kosli and find out all you need to know about your runtime environments and artifacts.
+In order to [record environments](/how_to/record), [artifacts and events](/how_to/connect) to Kosli you need to use the [Kosli CLI](https://github.com/kosli-dev/cli). 
+The CLI can be used to [search](/how_to/search) Kosli and find out all you need to know about your runtime environments and artifacts.
 
-Our CLI in an open source tool written in go and it's available for a number of different platforms.
+Our CLI is an open source tool written in go and it's available for a number of different platforms.
 
-To learn more about to install Kosli CLI click [here](/getting_started/installation)
+To learn more about how to install Kosli CLI click [here](/getting_started/installation)
 
 ### Usage
 
@@ -19,17 +19,17 @@ To learn more about to install Kosli CLI click [here](/getting_started/installat
 
 explain kosli version and kosli status commands -->
 
-[Reference](/client_reference/) section contains all the information you may need to run Kosli CLI. 
+The [Reference](/client_reference/) section contains all the information you may need to run the Kosli CLI. 
 
-Most of the commands require a number of flags. Some of them are **required**, some are **optional** - you don't need to use them if you don't want to and some are **conditional** - you need to use it if a certain conditions occurs, e.g.:
+Most of the commands require a number of flags. Some of them are **required**, some are **optional** - you don't need to use them if you don't want to and some are **conditional** - you need to use them if a certain conditions occurs, e.g.:
 * if you use `--sha256` flag it means you provide artifact's fingerprint on your own and we don't need to calculate it, so the flag `--artifact-type` is not needed
-* if you want to read docker digest from registry without pulling the image you need to provide registry information: `--registry-password`, `--registry-username` and `--registry-provider`
+* if you want to read a docker digest from registry without pulling the image you need to provide registry information: `--registry-password`, `--registry-username` and `--registry-provider`
 
 Each conditional flag is explained in its description.
 
-Some of the flags are **defaulted**, and the default value will be always printed in the description. You can skip the flag if the default value is what you chose to use.
+Some of the flags are **defaulted**, and the default value will be always printed in the description. You can skip the flag if the default value is what you choose to use.
 
-Depending on the CI tool you are using some of the flags (including required ones) may also be defaulted, depending on the environment variables provided by the tool. If the flag is defaulted in your CI you don't have to provide it in the command. [Here](/ci-defaults) you can find more details about flags defaulted depending on CI.
+Depending on the CI tool you are using, some of the flags (including required ones) may also be defaulted, depending on the environment variables provided by the tool. If the flag is defaulted in your CI you don't have to provide it in the command. [Here](/ci-defaults) you can find more details about flags defaulted depending on CI.
 
 ### Environment variables
 
@@ -42,11 +42,11 @@ etc.
 
 ### Dry run
 
-You can use dry run to disable reporting to app.kosli.com - e.g. if you're just trying things out, or troubleshooting (dry run will print the payload cli would send in a non dry run mode). 
+You can use dry run to disable reporting to app.kosli.com - e.g. if you're just trying things out, or troubleshooting (dry run will print the payload the cli would send in a non dry run mode). 
 
-Here are two possible ways of enabling a dry run:
-1. use `--dry-run` flag (no value needed) to enable it per command
-1. set `KOSLI_API_TOKEN` environment variable to `DRY_RUN` to enable it globally (e.g. in your terminal or CI)
+Here are two ways of enabling a dry run:
+1. use the `--dry-run` flag (no value needed) to enable it per command
+1. set the `KOSLI_API_TOKEN` environment variable to `DRY_RUN` to enable it globally (e.g. in your terminal or CI)
 
 ## Web UI
 

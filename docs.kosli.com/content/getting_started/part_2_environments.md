@@ -9,11 +9,11 @@ Recording the status of runtime environments is one of the fundamental features 
 
 If the list of running artifacts is different than what was reported previously a new snapshot is created. Snapshots are immutable and can't be tampered with.
 
-There is range of `kosli environment report [...]` commands, allowing you to report a variety of environments. To record a current status of your environment you simply run one of them. You can do it manually but typically recording commands would run automatically, e.g. via a cron job or scheduled CI job.
+There is range of `kosli environment report [...]` commands, allowing you to report a variety of environments. To record the current status of your environment you simply run one of them. You can do it manually but typically recording commands would run automatically, e.g. via a cron job or scheduled CI job.
 
-In all the commands below we skip required `--api-token` and `owner` flags - these can be easily configured via [config file](/faq/#what-is-the---config-file-flag) or [environment variables](/getting_started/step_3/#using-environment-variables) so you don't have type them over and over again.
+In all the commands below we skip required `--api-token` and `--owner` flags - these can be easily configured via [config file](/faq/#what-is-the---config-file-flag) or [environment variables](/getting_started/step_3/#using-environment-variables) so you don't have type them over and over again.
 
-After you started reporting, you can - at any point - check exactly what is running in your environment using CLI command:
+After you started reporting, you can - at any point - check exactly what is running in your environment using the CLI command:
 
 ```shell {.command}
 kosli environment get quickstart
@@ -24,15 +24,15 @@ N/A     Name: nginx@sha256:0047b7(...))59cce6d40291ccfb4e039f5dc7efd33286  N/A  
         Fingerprint: 0047b729188(...)959cce6d40291ccfb4e039f5dc7efd33286                                 
 ```
 
-Or with UI, by clicking at the name of the environment (after selecting "Environments" in the left hand side menu):
+Or in the UI, by clicking at the name of the environment (after selecting "Environments" in the left hand side menu):
 
 {{<figure src="/images/env-snap-1.png" alt="Environment, Snapshot #1" width="900">}}
 
 ## Create an environment
 
-A Kosli *environment* stores snapshots containing information about the software artifacts that you are running in your runtime environments. 
+A Kosli *environment* stores snapshots containing information about the software artifacts that are running in your runtime environments. 
 
-Before you start reporting what's running in your environments you need to create an environment in Kosli and make sure it matches the type of the environment you'll be reporting, e.g. `docker` or `k8s`. You can see all the available environment types in help text for `--environment-type` flag in  [`kosli environment declare`](/client_reference/kosli_environment_declare/) command. 
+Before you start reporting what's running in your environments you need to create an environment in Kosli and make sure it matches the type of the environment you'll be reporting, e.g. `docker` or `k8s`. You can see all the available environment types in the help text for the `--environment-type` flag in the [`kosli environment declare`](/client_reference/kosli_environment_declare/) command. 
 
 ### Example
 
@@ -48,7 +48,7 @@ kosli environment declare \
 environment quickstart was created
 ```
 
-You can verify that the Kosli environment was created:
+You can verify that the Kosli environment called *quickstart* was created:
 
 ```shell {.command}
 kosli environment ls
@@ -71,7 +71,7 @@ Fill in the form - type, name and a description - and click "Save Environment" b
 
 {{<figure src="/images/save-env.png" alt="Save Environment" width="650">}}
 
-After the new environment is created you'll be redirected to its page - with "No events have been found for [...]" message. Once you start reporting your actual runtime environment to Kosli you'll see all the events (like which artifacts started or stopped running) listed on that page.
+After the new environment is created you'll be redirected to its page - with "No events have been found for [...]" message. Once you start reporting your actual runtime environment to Kosli you'll see all the events (such as which artifacts started or stopped running) listed on that page.
 
 To see the list of all your environments, just click on the "Environments" again
 
@@ -86,7 +86,7 @@ To see the list of all your environments, just click on the "Environments" again
 
 Run `kosli environment report docker` to report running containers data from docker host to Kosli.  
 
-**Were to run:** The command has to be run on the actual docker host, to be able to detect running containers.
+**Where to run:** The command has to be run on the actual docker host, to be able to detect running containers.
 
 ### Example
 

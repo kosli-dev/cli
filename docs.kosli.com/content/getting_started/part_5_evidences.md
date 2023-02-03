@@ -19,14 +19,14 @@ If you use GitHub or Bitbucket you can use Kosli to verify if the merge commit y
 
 If there is no pull request for a given commit, the evidence will be reported as incompliant and the pipeline will continue. You can choose to fail the pipeline altogether in case pull request is missing by using the `--assert` flag.
 
-There are two different commands for that, depending on your CI.
+There are two different pull request commands, depending on your CI.
 
-For GitHub: [kosli pipeline artifact report evidence github-pullrequest](/client_reference/kosli_pipeline_artifact_report_evidence_github-pullrequest/) along regular flags, you need to provide:
+For GitHub: [kosli pipeline artifact report evidence github-pullrequest](/client_reference/kosli_pipeline_artifact_report_evidence_github-pullrequest/) along with the regular flags, you need to provide:
 * `--github-org`
 * `--github-token` your	Github personal access token with permissions to read PRs.
 
 
-For Bitbucket: [kosli pipeline artifact report evidence bitbucket-pullrequest](/client_reference/kosli_pipeline_artifact_report_evidence_bitbucket-pullrequest/) along regular flags, you need to provide:
+For Bitbucket: [kosli pipeline artifact report evidence bitbucket-pullrequest](/client_reference/kosli_pipeline_artifact_report_evidence_bitbucket-pullrequest/) along with the regular flags, you need to provide:
 *  `--bitbucket-password` - you need to use an api token which is the "App password" you create under "Personal Settings", keep in mind that api tokens you create under "Manage account" won't work for basic auth
 * `--bitbucket-username` - you cannot user your email address you use to log in, you have an actual username under "Personal Settings") 
 * `--bitbucket-workspace`
