@@ -13,7 +13,7 @@ Currently we support following types of evidences:
 
 ### Pull request
 
-If you use GitHub or Bitbucket you can use Kosli to verify if the merge commit you used to build your artifact comes from a pull request. Remember to add the pull request evidence to your [pipeline template](/how_to/connect/#create-a-pipeline) and use the same label for `--evidence-type` you provided in a `template` 
+If you use GitHub or Bitbucket you can use Kosli to verify if the merge commit you used to build your artifact comes from a pull request. Remember to add the pull request evidence to your [pipeline template](/kosli_overview/what_is_kosli/#template) and use the same label for `--evidence-type` you provided in a `template` 
 
 > note that -currently- the status of the PR does NOT impact the compliance status of the evidence.
 
@@ -34,7 +34,7 @@ For Bitbucket: [kosli pipeline artifact report evidence bitbucket-pullrequest](/
 
 ### JUnit test 
 
-If you produce your test results in JUnit format, you can use `kosli pipeline artifact report evidence test` command to analyze the results and report it to Kosli. Remember to add the junit test evidence to your [pipeline template](/how_to/connect/#create-a-pipeline) and use the same label for `--evidence-type` you provided in a `template` 
+If you produce your test results in JUnit format, you can use `kosli pipeline artifact report evidence test` command to analyze the results and report it to Kosli. Remember to add the junit test evidence to your [pipeline template](/kosli_overview/what_is_kosli/#template) and use the same label for `--evidence-type` you provided in a `template` 
 
 ### Example
 
@@ -60,7 +60,7 @@ kosli pipeline artifact report evidence test \
 	--results-dir yourFolderWithJUnitResults
 ```
 
-[junit test](/client_reference/kosli_pipeline_artifact_report_evidence_test/) 
+See [kosli pipeline artifact report evidence junit](/client_reference/kosli_pipeline_artifact_report_evidence_test/) for more details. 
 
 ### Generic
 

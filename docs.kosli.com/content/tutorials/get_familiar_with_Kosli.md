@@ -30,7 +30,7 @@ be using in this guide.
 To follow the tutorial, you will need to:
 
 - Install both `Docker` and `docker-compose`.
-- [Install the Kosli CLI](/getting_started/installation) and [set the `KOSLI_API_TOKEN` and `KOSLI_OWNER` environment variables](/getting_started/installation#getting-your-kosli-api-token).
+- [Install the Kosli CLI](/kosli_overview/kosli_tools/#installing-the-kosli-cli) and [set the `KOSLI_API_TOKEN` and `KOSLI_OWNER` environment variables](/kosli_overview/kosli_tools/#getting-your-kosli-api-token).
 - You can check your Kosli set up by running: 
     ```shell {.command}
     kosli pipeline ls
@@ -391,4 +391,4 @@ History:
     Started running in quickstart#1 environment  Tue, 01 Nov 2022 15:55:49 CET
 ```
 
-Visit [Search](/how_to/search/) section to learn more
+Visit [Part 8: Querying](/getting_started/part_8_querying/) section to learn more

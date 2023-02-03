@@ -15,7 +15,7 @@ If you use shallow clone in your CI, Kosli won't be able to generate the changel
 
 The fingerprint (sha256 checksum of the file/directory/docker image) of the artifact will be stored in Kosli. The fingerprint can't be changed, it becomes a unique identifier of the artifact in Kosli, used - among other things - to connect it with the recorded environment. Fingerprints of all the running artifacts, recorded with the Kosli CLI are also stored and compared with fingerprints of the artifacts you have built and reported to Kosli so you always know if you're running things you have no provenance for. 
 
-Some of the required flags will be automatically resolved if you're using one of the [supported CI systems](/getting_started/use_kosli_in_ci_systems/).
+Some of the required flags will be automatically resolved if you're using one of the [supported CI systems](/integrations/ci_cd/).
 
 ### Example 
 
