@@ -95,7 +95,7 @@ The expected output should be similar to this:
 version.BuildInfo{Version:"v0.1.10", GitCommit:"9c623f1e6c293235ddc8de1e347bf99a1b356e48", GitTreeState:"clean", GoVersion:"go1.17.11"}
 ```
 
-### Usage
+#### Usage
 
 <!-- TODO:
 
@@ -113,7 +113,7 @@ Some of the flags are **defaulted**, and the default value will be always printe
 
 Depending on the CI tool you are using, some of the flags (including required ones) may also be defaulted, depending on the environment variables provided by the tool. If the flag is defaulted in your CI you don't have to provide it in the command. [Here](/ci-defaults) you can find more details about flags defaulted depending on CI.
 
-### Environment variables
+#### Environment variables
 
 Each flag can be provided directly or represented with environment variable. In order to represent a flag with environment variable you need to create a variable with a `KOSLI_` prefix, followed by the flag name capitalized and internal dashes replaced by underscores, e.g.:
 
@@ -136,7 +136,43 @@ etc.
 
 {{< /hint >}}
 
-### Dry run
+#### Config file
+
+A config file is an alternative for using Kosli flags or Environment variables. Usually you'd use a config file for the values that rarely change - like api token or owner, but you can represent all Kosli flags with config file. The key for each value is the same as the flag name, capitalized, so `--api-token` would become `API-TOKEN`, and `--owner` would become `OWNER`, etc. 
+
+You can use JSON, YAML or TOML format for your config file. 
+
+If you want to keep certain Kosli configuration in a file use `--config-file` flag when running Kosli commands to let the cli tool know where to look for the file. The path given to `--config-file` flag should be a path relative to the location you're running kosli from. The file needs a valid format and extension, e.g.:
+
+**kosli-conf.json:**
+```
+{
+  "OWNER": "my-org",
+  "API-TOKEN": "123456abcdef"
+}
+```
+
+**kosli-conf.yaml:**
+```
+OWNER: "my-org"
+API-TOKEN: "123456abcdef"
+```
+
+**kosli-conf.toml:**
+```
+OWNER = "my-org"
+API-TOKEN = "123456abcdef"
+```
+
+When calling Kosli command you can skip file extension. For example, to list environments with `owner` and `api-token` in the configuration file you would run:
+
+```
+$ kosli environment ls --config-file kosli-conf
+```
+
+`--config-file` defaults to `kosli`, so if you name your file `kosli.<yaml|toml|json>` and the file is in the same location as where you run Kosli commands from, you can skip the `--config-file` altogether.
+
+#### Dry run
 
 You can use dry run to disable reporting to app.kosli.com - e.g. if you're just trying things out, or troubleshooting (dry run will print the payload the cli would send in a non dry run mode). 
 
