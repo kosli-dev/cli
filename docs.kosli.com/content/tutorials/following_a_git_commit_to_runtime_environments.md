@@ -38,9 +38,9 @@ You will follow the commit that fixed this.
 ## Getting ready
 
 You need to:
-* [Install the `kosli` CLI](/getting_started/installation/).
-* [Get your Kosli API token](/getting_started/installation#getting-your-kosli-api-token).
-* [Set the KOSLI_API_TOKEN environment variable](/getting_started/installation#using-environment-variables).
+* [Install the `kosli` CLI](/kosli_overview/kosli_tools/#installing-the-kosli-cli).
+* [Get your Kosli API token](/kosli_overview/kosli_tools/#getting-your-kosli-api-token).
+* [Set the KOSLI_API_TOKEN environment variable](/kosli_overview/kosli_tools/#environment-variables).
 * Set the KOSLI_OWNER environment variable to `cyber-dojo` (the Kosli `cyber-dojo` organization is public so any authenticated user can read its data):
   ```shell {.command}
   export KOSLI_OWNER=cyber-dojo
@@ -135,14 +135,14 @@ Let's look at this output in detail:
    * **CI pipeline events**
       * The artifact was **created** on the 22nd August at 11:35:00 CEST.
       * The artifact has `branch-coverage` **evidence**. 
-      * The artifact was **deployed** to [aws-beta](https://app.merkely.com/cyber-dojo/pipelines/runner/deployments/18) on 22nd  August 11:37:17 CEST, and to [aws-prod](https://app.merkely.com/cyber-dojo/pipelines/runner/deployments/19)
+      * The artifact was **deployed** to [aws-beta](https://app.kosli.com/cyber-dojo/pipelines/runner/deployments/18) on 22nd  August 11:37:17 CEST, and to [aws-prod](https://app.kosli.com/cyber-dojo/pipelines/runner/deployments/19)
      a minute later.
    * **Runtime environment events**
       * The artifact was reported **running** in both environments.
       * The artifact's number of running instances **scaled down**.
       * The artifact was reported **exited**.
      
-The information about this artifact is also available through the [web interface](https://app.merkely.com/cyber-dojo/pipelines/runner/artifacts/9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625).
+The information about this artifact is also available through the [web interface](https://app.kosli.com/cyber-dojo/pipelines/runner/artifacts/9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625).
 
 {{< hint info >}}
 The `runner` service uses [Continuous Deployment](https://en.wikipedia.org/wiki/Continuous_deployment); 
@@ -233,7 +233,3 @@ The output above shows that `runner:16d9990` started running in snapshot 65 of `
 
 You have seen how Kosli can follow a git commit on its way into production,
 and provide information about the artifacts history, without any access to cyber-dojo's `aws-prod` environment.
-
-### See also the other tutorials:
-- [Tracing a production incident back to git commits](../tracing_a_production_incident_back_to_git_commits/)
-- [Simulating a DevOps system](../simulating_a_devops_system/)

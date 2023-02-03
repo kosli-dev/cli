@@ -95,11 +95,6 @@ Either way, this is clearly the problem because the function is called `respond_
 
 You were able to trace the problem back to a specific commit without any access to cyber-dojo's `aws-prod` environment.
 
-### See also the other tutorials:
-- [Following a git commit to runtime environments](../following_a_git_commit_to_runtime_environments/)
-- [Simulating a DevOps system](../simulating_a_devops_system/)
-
-
 <!-- 
 This we would like to show the users:
 - Kosli gives developers without access to production environment information about what is running.

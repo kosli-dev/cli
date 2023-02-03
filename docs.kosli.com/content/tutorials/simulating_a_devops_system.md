@@ -6,8 +6,8 @@ weight: 530
 
 # Preparing the tutorial
 To follow the tutorial you need to:
-* [Install the `kosli` CLI](/getting_started/installation).
-* [Get your Kosli API token](/getting_started/installation#getting-your-kosli-api-token).
+* [Install the `kosli` CLI](/kosli_overview/kosli_tools/#installing-the-kosli-cli).
+* [Get your Kosli API token](/kosli_overview/kosli_tools/#getting-your-kosli-api-token).
 * Set the KOSLI_API_TOKEN environment variable:
   ```shell {.command}
   export KOSLI_API_TOKEN=<paste-your-kosli-API-token-here>
@@ -451,7 +451,3 @@ Runtime state:         The artifact running since 16 Aug 22 07:58 CEST
 
 If you select the *web_2.bin* artifact in the web interface it will show
 that it was part of Deployment #1 to *production* environment.
-
-### See also the other tutorials:
-- [Following a git commit to runtime environments](../following_a_git_commit_to_runtime_environments/)
-- [Tracing a production incident back to git commits](../tracing_a_production_incident_back_to_git_commits/)

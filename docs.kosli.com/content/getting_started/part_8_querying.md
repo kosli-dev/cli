@@ -11,7 +11,7 @@ Visit [Reference](/client_reference/) to learn more about how to run each comman
 
 The same CLI you use to record and connect your changes can be used to search for and browse information in Kosli.
 
-To make it easier to run Kosli search commands with the CLI you can export the `owner` and `api-token` as environment variables, so you don't have to provide them every time you run commands. This approach is valid for [any flag](/introducing_kosli/cli/#environment-variables) 
+To make it easier to run Kosli search commands with the CLI you can export the `owner` and `api-token` as environment variables, so you don't have to provide them every time you run commands. This approach is valid for [any flag](/kosli_overview/kosli_tools/#environment-variables) 
 
 
 ```
