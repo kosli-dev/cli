@@ -17,48 +17,36 @@ paragraph: >
 sections:
     title: Dive right in…
     blocks:
-        - title: Quick start guide
-          image: /images/home/home-quickstart.svg
-          alt_text: Quick start icon
-          description: Learn how to use Kosli with simple examples
-          link_text: View >
-          url: /getting_started/
         - title: Introducing Kosli
           image: /images/home/home-concepts.svg
           alt_text: Introducing Kosli icon
           description: Learn how to use Kosli with simple examples
           link_text: View >
-          url: /introducing_kosli/
-        - title: Kosli pipelines
-          image: /images/home/home-pipelines.svg
-          alt_text: Kosli pipelines icon
-          description: Learn how to use Kosli with simple examples
-          link_text: View >
-          url: /introducing_kosli/pipelines/
+          url: /kosli_overview/what_is_kosli/
         - title: Kosli environments
           image: /images/home/home-environments.svg
           alt_text: Kosli environments icon
           description: Learn how to use Kosli with simple examples
           link_text: View >
-          url: /introducing_kosli/environments/
+          url: /getting_started/part_2_environments/
+        - title: Kosli pipelines
+          image: /images/home/home-pipelines.svg
+          alt_text: Kosli pipelines icon
+          description: Learn how to use Kosli with simple examples
+          link_text: View >
+          url: /getting_started/part_3_pipelines/
+        - title: Get familiar with Kosli
+          image: /images/home/home-quickstart.svg
+          alt_text: Use cases icon
+          description: Learn how to use Kosli with simple examples
+          link_text: View >
+          url: /tutorials/get_familiar_with_kosli/
         - title: Command reference
           image: /images/home/home-commands.svg
           alt_text: Command reference icon
           description: Learn how to use Kosli with simple examples
           link_text: View >
           url: /client_reference/
-        - title: Fingerprint
-          image: /images/home/home-fingerprint.svg
-          alt_text: Fingerprint icon
-          description: Learn how to use Kosli with simple examples
-          link_text: View >
-          url: "/introducing_kosli/fingerprint/"
-        - title: Use cases
-          image: /images/home/home-use-cases.svg
-          alt_text: Use cases icon
-          description: Learn how to use Kosli with simple examples
-          link_text: View >
-          url: /use_cases/
         - title: Support on Slack
           image: /images/home/home-community.svg
           alt_text: Slack community icon

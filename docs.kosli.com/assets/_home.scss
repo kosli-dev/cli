@@ -77,10 +77,3 @@
         }
     }
 }
-
-@media only screen and (min-width: $tablet-breakpoint) {
-    .home-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr 1fr;
-    }
-}
