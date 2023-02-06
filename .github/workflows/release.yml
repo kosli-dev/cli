@@ -6,7 +6,7 @@ on:
       - 'v*' 
 
 env: 
-  GO_VERSION: 1.17.11
+  GO_VERSION: 1.19.5
 
 jobs:
   pre-build:
@@ -21,24 +21,38 @@ jobs:
       id: tag
       uses: dawidd6/action-get-tag@v1
 
-  build:
+  test:
     needs: [pre-build]
-    uses: kosli-dev/cli/.github/workflows/build.yml@main
+    if: ${{ github.ref != 'refs/heads/prod' }}
+    uses: kosli-dev/cli/.github/workflows/test.yml@main
+    with:
+      AWS_ACCOUNT_ID: 772819027869
+      AWS_REGION: eu-central-1
+    secrets:
+      github_access_token: ${{ secrets.KOSLI_GITHUB_TOKEN }}
+      bitbucket_password: ${{ secrets.KOSLI_BITBUCKET_PASSWORD }}
+      slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
+      slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
+
+  docker:
+    needs: [test, pre-build]
+    if: ${{ github.ref != 'refs/heads/prod' }}
+    uses: kosli-dev/cli/.github/workflows/docker.yml@main
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
-      platforms: linux/amd64,linux/arm64
+      platforms: linux/amd64
       AWS_ACCOUNT_ID: 772819027869
       AWS_REGION: eu-central-1
     secrets:
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
-      slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }}
+      slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
       ghcr_user: ${{ secrets.GHCR_USER }}
       ghcr_token: ${{ secrets.GHCR_TOKEN }}
       kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}
 
   goreleaser:
-    needs: [build]
+    needs: [test]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -85,7 +99,7 @@ jobs:
           pull_strategy: 'NO-PULL'
 
   upload-reporter-package-prod:
-    needs: [pre-build, docs-gen]
+    needs: [pre-build, goreleaser]
     uses: kosli-dev/cli/.github/workflows/upload-reporter-package.yml@main
     with:
       tag: ${{ needs.pre-build.outputs.tag }}

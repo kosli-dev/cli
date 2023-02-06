@@ -3,7 +3,6 @@ package kube
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -15,7 +14,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/kubernetes/test/e2e/framework"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 	"sigs.k8s.io/kind/pkg/cluster"
 )
@@ -41,15 +39,13 @@ func (suite *KubeTestSuite) SetupSuite() {
 	suite.provider = cluster.NewProvider(cluster.ProviderWithDocker())
 	err := suite.provider.Create(suite.clusterName, createOptions)
 	require.NoError(suite.T(), err, "creating test k8s cluster failed")
-	suite.tmpDir, err = ioutil.TempDir("", "testDir")
+	suite.tmpDir, err = os.MkdirTemp("", "testDir")
 	require.NoError(suite.T(), err, "error creating a temporary test directory")
 	suite.kubeConfigPath = filepath.Join(suite.tmpDir, "kubeconfig")
 	err = suite.provider.ExportKubeConfig(suite.clusterName, suite.kubeConfigPath)
 	require.NoError(suite.T(), err, "exporting kubeconfig failed")
 	ctx := context.Background()
 	suite.clientset = suite.getK8sClient(ctx)
-	err = framework.WaitForAllNodesSchedulable(suite.clientset, 100*time.Second)
-	require.NoError(suite.T(), err, "waiting for cluster nodes to become schedulable failed")
 }
 
 // delete the KIND cluster and the tmp dir after the suite execution

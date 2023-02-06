@@ -9,8 +9,13 @@ Report an artifact deployed in AWS S3 bucket to Kosli.
 ### Synopsis
 
 Report an artifact deployed in AWS S3 bucket to Kosli.
-To authenticate to AWS, you can either export the AWS env vars or use the command flags to pass them.
-See the examples below.
+To authenticate to AWS, you can either: 
+	1) provide the AWS static credentials via flags or by exporting the equivalent KOSLI env vars (e.g. KOSLI_AWS_KEY_ID)
+	2) export the AWS env vars (e.g. AWS_ACCESS_KEY_ID).
+	3) Use a shared config/credentials file under the $HOME/.aws
+Option 1 takes highest precedence, while option 3 is the lowest.
+More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials
+	
 
 ```shell
 kosli environment report s3 ENVIRONMENT-NAME [flags]
@@ -21,7 +26,7 @@ kosli environment report s3 ENVIRONMENT-NAME [flags]
 | :--- | :--- |
 |        --aws-key-id string  |  The AWS access key ID.  |
 |        --aws-region string  |  The AWS region.  |
-|        --aws-secret-key string  |  The AWS secret key.  |
+|        --aws-secret-key string  |  The AWS secret access key.  |
 |        --bucket string  |  The name of the S3 bucket.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -h, --help  |  help for s3  |

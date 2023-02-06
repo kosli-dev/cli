@@ -18,8 +18,8 @@ type pipelineBackfillArtifactCommitsOptions struct {
 }
 
 type ArtifactCommitsBackfillPayload struct {
-	RepoUrl     string                    `json:"repo_url"`
-	CommitsList []*gitview.ArtifactCommit `json:"git_commit_list"`
+	RepoUrl     string                `json:"repo_url"`
+	CommitsList []*gitview.CommitInfo `json:"git_commit_list"`
 }
 
 func newPipelineBackfillArtifactCommitsCmd(out io.Writer) *cobra.Command {
@@ -69,7 +69,7 @@ func (o *pipelineBackfillArtifactCommitsOptions) run(out io.Writer, args []strin
 
 	o.payload.RepoUrl, err = gitView.RepoUrl()
 	if err != nil {
-		return err
+		logger.Warning("Repo URL will not be reported, %s", err.Error())
 	}
 
 	pageNumber := 0

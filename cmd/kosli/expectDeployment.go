@@ -28,7 +28,7 @@ func newExpectDeploymentCmd(out io.Writer) *cobra.Command {
 	o := new(expectDeploymentOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "deployment [ARTIFACT-NAME-OR-PATH]",
+		Use:   "deployment [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Short: deploymentReportShortDesc,
 		Long:  deploymentReportLongDesc,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

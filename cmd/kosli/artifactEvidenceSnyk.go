@@ -29,8 +29,8 @@ type snykEvidenceOptions struct {
 
 const snykEvidenceShortDesc = `Report Snyk vulnerability scan evidence for an artifact in a Kosli pipeline.`
 
-const snykEvidenceLongDesc = testEvidenceShortDesc + `
-` + sha256Desc
+const snykEvidenceLongDesc = snykEvidenceShortDesc + `
+` + fingerprintDesc
 
 const snykEvidenceExample = `
 # report Snyk vulnerability scan evidence about a file artifact:
@@ -58,11 +58,10 @@ func newSnykEvidenceCmd(out io.Writer) *cobra.Command {
 	o := new(snykEvidenceOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "snyk [ARTIFACT-NAME-OR-PATH]",
+		Use:     "snyk [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Short:   snykEvidenceShortDesc,
 		Long:    snykEvidenceLongDesc,
 		Example: snykEvidenceExample,
-		Hidden:  true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -109,7 +108,7 @@ func (o *snykEvidenceOptions) run(args []string) error {
 	} else {
 		o.payload.ArtifactFingerprint = o.fingerprint
 	}
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/snyk/", global.Host, global.Owner, o.pipelineName)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/snyk", global.Host, global.Owner, o.pipelineName)
 	o.payload.UserData, err = LoadJsonData(o.userDataFile)
 	if err != nil {
 		return err

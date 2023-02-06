@@ -32,7 +32,16 @@ const (
 	envPrefix = "KOSLI"
 
 	// the following constants are used in the docs/help
-	sha256Desc = "The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag)."
+	fingerprintDesc = "The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag)."
+	sha256Desc      = "The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag)."
+	awsAuthDesc     = `
+To authenticate to AWS, you can either: 
+	1) provide the AWS static credentials via flags or by exporting the equivalent KOSLI env vars (e.g. KOSLI_AWS_KEY_ID)
+	2) export the AWS env vars (e.g. AWS_ACCESS_KEY_ID).
+	3) Use a shared config/credentials file under the $HOME/.aws
+Option 1 takes highest precedence, while option 3 is the lowest.
+More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials
+	`
 
 	// flags
 	apiTokenFlag            = "The Kosli API token."
@@ -44,7 +53,7 @@ const (
 	verboseFlag             = "[optional] Print verbose logs to stdout."
 	debugFlag               = "[optional] Print debug logs to stdout."
 	sha256Flag              = "[conditional] The SHA256 fingerprint for the artifact. Only required if you don't specify '--artifact-type'."
-	artifactTypeFlag        = "[conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256'."
+	artifactTypeFlag        = "[conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256' or '--fingerprint'."
 	pipelineNameFlag        = "The Kosli pipeline name."
 	newPipelineFlag         = "The name of the pipeline to be created or updated."
 	outputFlag              = "[defaulted] The format of the output. Valid formats are: [table, json]."
@@ -97,15 +106,17 @@ const (
 	functionNameFlag        = "The name of the AWS Lambda function."
 	functionVersionFlag     = "[optional] The version of the AWS Lambda function."
 	awsKeyIdFlag            = "The AWS access key ID."
-	awsSecretKeyFlag        = "The AWS secret key."
+	awsSecretKeyFlag        = "The AWS secret access key."
 	awsRegionFlag           = "The AWS region."
 	bucketNameFlag          = "The name of the S3 bucket."
 	pathsFlag               = "The comma separated list of artifact directories."
 	shortFlag               = "[optional] Print only the Kosli cli version number."
 	longFlag                = "[optional] Print detailed output."
 	reverseFlag             = "[defaulted] Reverse the order of output list."
-	evidenceNameFlag        = "The name of the evidence"
+	evidenceNameFlag        = "The name of the evidence."
 	fingerprintFlag         = "[conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'."
+	evidenceCommit          = "The git commit SHA1 for which the evidence belongs."
+	pipelinesFlag           = "The comma separated list of pipelines for which a commit evidence belongs."
 )
 
 var global *GlobalOpts
@@ -141,7 +152,17 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 				global.DryRun = true
 			}
 
-			return nil
+			// If the user types "--description $variable --sha256 ..." and $variable is "" then Cobra
+			// will assign --sha256 as the value of --description, and give a very misleading error message.
+			// So we do some extra checking to tell the user about this.
+			var flagError error = nil
+			cmd.Flags().VisitAll(func(f *pflag.Flag) {
+				if strings.HasPrefix(f.Value.String(), "-") {
+					flagError = fmt.Errorf("flag '--%s' has value '%s' which is illegal", f.Name, f.Value.String())
+				}
+			})
+
+			return flagError
 		},
 	}
 	cmd.PersistentFlags().StringVarP(&global.ApiToken, "api-token", "a", "", apiTokenFlag)
@@ -163,6 +184,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		newVersionCmd(out),
 		newFingerprintCmd(out),
 		newPipelineCmd(out),
+		newCommitCmd(out),
 		newEnvironmentCmd(out),
 		newAssertCmd(out),
 		newStatusCmd(out),

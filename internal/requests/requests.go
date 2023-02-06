@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"reflect"
 	"strings"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
@@ -66,6 +67,9 @@ func (p *RequestParams) newHTTPRequest() (*http.Request, error) {
 
 	// token authorization has higher precedence over basic auth
 	if p.Token != "" {
+		if len(p.AdditionalHeaders) == 0 {
+			p.AdditionalHeaders = make(map[string]string)
+		}
 		p.AdditionalHeaders["Authorization"] = fmt.Sprintf("Bearer %s", p.Token)
 	} else if p.Username != "" || p.Password != "" {
 		if p.Username == "" {
@@ -86,17 +90,14 @@ func (p *RequestParams) newHTTPRequest() (*http.Request, error) {
 }
 
 func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
-	if c == nil {
-		return nil, fmt.Errorf("XXXXXX")
-	}
 	req, err := p.newHTTPRequest()
 	if err != nil {
-		return nil, fmt.Errorf("failed to create a %s request to %s : %v", req.Method, req.URL, err)
+		return nil, fmt.Errorf("failed to create a %s request to %s : %v", p.Method, p.URL, err)
 	}
 
 	if p.DryRun {
 		c.Logger.Info("############### THIS IS A DRY-RUN  ###############")
-		reqBody, err := ioutil.ReadAll(req.Body)
+		reqBody, err := io.ReadAll(req.Body)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read request body to %s : %v", req.URL, err)
 		}
@@ -110,7 +111,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 		}
 
 		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read response from %s request to %s : %v", req.Method, req.URL, err)
 		}
@@ -118,86 +119,33 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 		c.Logger.Debug("request made to %s and got status %d", req.URL, resp.StatusCode)
 
 		if resp.StatusCode != 200 && resp.StatusCode != 201 {
-			var respBody map[string]interface{}
+			var respBody interface{}
 			err := json.Unmarshal([]byte(body), &respBody)
 			if err != nil {
 				return &HTTPResponse{}, err
 			}
-
-			// Error response from kosli application SW contains a "message"
-			// Error response from the API schema validation contains a "message" and a list of "errors"
 			cleanedErrorMessage := ""
-			message, ok := respBody["message"]
-			if ok {
-				errors, ok := respBody["errors"]
+			if reflect.ValueOf(respBody).Kind() == reflect.String {
+				cleanedErrorMessage = respBody.(string)
+			} else if reflect.ValueOf(respBody).Kind() == reflect.Map {
+				// Error response from kosli application SW contains a "message"
+				// Error response from the API schema validation contains a "message" and a list of "errors"
+				respBodyMap := respBody.(map[string]interface{})
+				message, ok := respBodyMap["message"]
 				if ok {
-					cleanedErrorMessage = strings.Split(message.(string), "You have requested")[0] +
-						": " + fmt.Sprintf("%v", errors)
+					errors, ok := respBodyMap["errors"]
+					if ok {
+						cleanedErrorMessage = strings.Split(message.(string), "You have requested")[0] +
+							": " + fmt.Sprintf("%v", errors)
+					} else {
+						cleanedErrorMessage = strings.Split(message.(string), "You have requested")[0]
+					}
 				} else {
-					cleanedErrorMessage = strings.Split(message.(string), "You have requested")[0]
+					cleanedErrorMessage = fmt.Sprintf("%s", respBodyMap)
 				}
-			} else {
-				cleanedErrorMessage = fmt.Sprintf("%v", respBody)
 			}
-
 			return nil, fmt.Errorf(cleanedErrorMessage)
 		}
 		return &HTTPResponse{string(body), resp}, nil
 	}
 }
-
-// func getRetryableHttpClient(maxAPIRetries int) *http.Client {
-// 	retryClient := retryablehttp.NewClient()
-// 	retryClient.RetryMax = maxAPIRetries
-// 	retryClient.Logger = nil
-// 	// return a standard *http.Client from the retryable client
-// 	return retryClient.StandardClient()
-// }
-
-// createRequest returns an http request with a payload
-func createRequest(method, url string, jsonBytes []byte, additionalHeaders map[string]string) (*http.Request, error) {
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonBytes))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create %s request to %s : %v", method, url, err)
-	}
-	req.Header.Set("Content-Type", "application/json; charset=utf-8")
-	req.Header.Set("User-Agent", "Kosli/"+version.GetVersion())
-
-	for k, v := range additionalHeaders {
-		req.Header.Set(k, v)
-	}
-
-	return req, nil
-}
-
-// DoRequestWithToken sends an HTTP request with auth token to a URL and returns the response body and status code
-// func DoRequestWithToken(jsonBytes []byte, url, token string,
-// 	maxAPIRetries int, method string, additionalHeaders map[string]string) (*HTTPResponse, error) {
-// 	client := getRetryableHttpClient(maxAPIRetries)
-
-// 	additionalHeaders["Authorization"] = fmt.Sprintf("Bearer %s", token)
-// 	req, err := createRequest(method, url, jsonBytes, additionalHeaders)
-// 	if err != nil {
-// 		return &HTTPResponse{}, err
-// 	}
-
-// 	resp, err := client.Do(req)
-// 	if err != nil {
-// 		return &HTTPResponse{}, fmt.Errorf("failed to send %s request to %s : %v", method, url, err)
-// 	}
-
-// 	defer resp.Body.Close()
-// 	body, err := ioutil.ReadAll(resp.Body)
-// 	if err != nil {
-// 		return &HTTPResponse{}, fmt.Errorf("failed to read response from %s request to %s : %v", method, url, err)
-// 	}
-
-// 	if resp.StatusCode != 200 && resp.StatusCode != 201 {
-// 		return &HTTPResponse{}, fmt.Errorf("request failed with status code %d: %s", resp.StatusCode, string(body))
-// 	}
-
-// 	return &HTTPResponse{
-// 		Body: string(body),
-// 		Resp: resp,
-// 	}, nil
-// }

@@ -53,7 +53,7 @@ func newTestEvidenceCmd(out io.Writer) *cobra.Command {
 	o := new(testEvidenceOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "test [ARTIFACT-NAME-OR-PATH]",
+		Use:     "test [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Short:   testEvidenceShortDesc,
 		Long:    testEvidenceLongDesc,
 		Example: testEvidenceExample,

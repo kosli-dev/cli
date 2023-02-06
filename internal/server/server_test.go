@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -24,7 +23,7 @@ type ServerTestSuite struct {
 // create a new tmpDir before each test
 func (suite *ServerTestSuite) SetupTest() {
 	var err error
-	suite.tmpDir, err = ioutil.TempDir("", "testDir")
+	suite.tmpDir, err = os.MkdirTemp("", "testDir")
 	require.NoError(suite.T(), err, "error creating a temporary test directory")
 }
 

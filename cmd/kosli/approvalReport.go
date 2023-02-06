@@ -57,12 +57,11 @@ type ApprovalPayload struct {
 	UserData       interface{}         `json:"user_data"`
 }
 
-//goland:noinspection GoUnusedParameter
 func newApprovalReportCmd(out io.Writer) *cobra.Command {
 	o := new(approvalReportOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "report [ARTIFACT-NAME-OR-PATH]",
+		Use:     "report [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Short:   approvalReportShortDesc,
 		Long:    approvalReportLongDesc,
 		Example: approvalReportExample,
@@ -176,7 +175,7 @@ func (o *approvalReportOptions) payloadCommitList() ([]string, error) {
 	return commitList, nil
 }
 
-func (o *approvalReportOptions) commitsHistory() ([]*gitview.ArtifactCommit, error) {
+func (o *approvalReportOptions) commitsHistory() ([]*gitview.CommitInfo, error) {
 	gitView, err := gitview.New(o.srcRepoRoot)
 	if err != nil {
 		return nil, err

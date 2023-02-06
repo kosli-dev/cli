@@ -89,13 +89,28 @@ func WhichCI() string {
 // DefaultValue looks up the default value of a given flag in a given CI tool
 // if the DOCS env variable is set, return empty string to avoid
 // having irrelevant defaults in the docs
+// if the TESTS env variable is set, return empty string to allow
+// testing missing flags in CI
 func DefaultValue(ci, flag string) string {
-	if _, ok := os.LookupEnv("DOCS"); !ok {
+	_, ok1 := os.LookupEnv("DOCS")
+	_, ok2 := os.LookupEnv("TESTS")
+	if !ok1 && !ok2 {
 		if v, ok := ciTemplates[ci][flag]; ok {
 			return os.ExpandEnv(v)
 		}
 	}
 	return ""
+}
+
+// DeprecateFlags declares a list of flags as deprecated for a given command
+func DeprecateFlags(cmd *cobra.Command, flags map[string]string) error {
+	for name, message := range flags {
+		err := cmd.Flags().MarkDeprecated(name, message)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // RequireFlags declares a list of flags as required for a given command
@@ -319,7 +334,23 @@ func LoadJsonData(filepath string) (interface{}, error) {
 // ValidateArtifactArg validates the artifact name or path argument
 func ValidateArtifactArg(args []string, artifactType, inputSha256 string, alwaysRequireArtifactName bool) error {
 	if len(args) > 1 {
-		return fmt.Errorf("only one argument (docker image name or file/dir path) is allowed")
+		suppliedArgs := ""
+		separator := ""
+		argsWithLeadingSpace := false
+		for _, arg := range args {
+			if arg == " " {
+				argsWithLeadingSpace = true
+			}
+			suppliedArgs += separator + `"` + arg + `"`
+			separator = ", "
+		}
+		errMsg := []string{}
+		errMsg = append(errMsg, "only one argument (docker image name or file/dir path) is allowed.")
+		errMsg = append(errMsg, fmt.Sprintf("The %d supplied arguments are: [%v]", len(args), suppliedArgs))
+		if argsWithLeadingSpace {
+			errMsg = append(errMsg, "Arguments with a leading space are probably caused by a lone backslash that has a space after it.")
+		}
+		return fmt.Errorf(strings.Join(errMsg, "\n"))
 	}
 
 	if len(args) == 0 || args[0] == "" {
@@ -411,4 +442,11 @@ func formattedTimestamp(timestamp interface{}, short bool) (string, error) {
 		timeAgoFormat := timeago.English.Format(unixTime)
 		return fmt.Sprintf("%s \u2022 %s", unixTime.Format(time.RFC1123), timeAgoFormat), nil
 	}
+}
+
+// extractRepoName returns repository name from 'owner/repository_name' string
+func extractRepoName(fullRepositoryName string) string {
+	repoNameParts := strings.Split(fullRepositoryName, "/")
+	repository := repoNameParts[len(repoNameParts)-1]
+	return repository
 }

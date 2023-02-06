@@ -25,6 +25,13 @@ type EvidencePayload struct {
 	Contents     map[string]interface{} `json:"contents"`
 }
 
+type TypedEvidencePayload struct {
+	ArtifactFingerprint string      `json:"artifact_fingerprint"`
+	EvidenceName        string      `json:"name"`
+	BuildUrl            string      `json:"build_url"`
+	UserData            interface{} `json:"user_data"`
+}
+
 const artifactEvidenceGenericShortDesc = `Report a generic evidence to an artifact in a Kosli pipeline.`
 
 const artifactEvidenceGenericLongDesc = artifactEvidenceGenericShortDesc + `
@@ -63,7 +70,7 @@ func newGenericEvidenceCmd(out io.Writer) *cobra.Command {
 	o := new(genericEvidenceOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "generic [ARTIFACT-NAME-OR-PATH]",
+		Use:     "generic [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Short:   artifactEvidenceGenericShortDesc,
 		Long:    artifactEvidenceGenericLongDesc,
 		Example: artifactEvidenceGenericExample,

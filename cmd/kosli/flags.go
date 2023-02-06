@@ -1,6 +1,9 @@
 package main
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/kosli-dev/cli/internal/aws"
+	"github.com/spf13/cobra"
+)
 
 type fingerprintOptions struct {
 	artifactType     string
@@ -16,16 +19,10 @@ func addFingerprintFlags(cmd *cobra.Command, o *fingerprintOptions) {
 	cmd.Flags().StringVar(&o.registryPassword, "registry-password", "", registryPasswordFlag)
 }
 
-type awsAuthOptions struct {
-	accessKey string
-	secretKey string
-	region    string
-}
-
-func addAWSAuthFlags(cmd *cobra.Command, o *awsAuthOptions) {
-	cmd.Flags().StringVar(&o.accessKey, "aws-key-id", "", awsKeyIdFlag)
-	cmd.Flags().StringVar(&o.secretKey, "aws-secret-key", "", awsSecretKeyFlag)
-	cmd.Flags().StringVar(&o.region, "aws-region", "", awsRegionFlag)
+func addAWSAuthFlags(cmd *cobra.Command, o *aws.AWSStaticCreds) {
+	cmd.Flags().StringVar(&o.AccessKeyID, "aws-key-id", "", awsKeyIdFlag)
+	cmd.Flags().StringVar(&o.SecretAccessKey, "aws-secret-key", "", awsSecretKeyFlag)
+	cmd.Flags().StringVar(&o.Region, "aws-region", "", awsRegionFlag)
 }
 
 func addDryRunFlag(cmd *cobra.Command) {

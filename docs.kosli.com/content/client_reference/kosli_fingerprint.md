@@ -13,13 +13,13 @@ Requires artifact type flag to be set.
 Artifact type can be one of: "file" for files, "dir" for directories, "docker" for docker images.
 
 ```shell
-kosli fingerprint ARTIFACT-NAME-OR-PATH [flags]
+kosli fingerprint {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 ```
 
 ### Flags
 | Flag | Description |
 | :--- | :--- |
-|    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256'.  |
+|    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256' or '--fingerprint'.  |
 |    -h, --help  |  help for fingerprint  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |

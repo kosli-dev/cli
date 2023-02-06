@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/kosli-dev/cli/cmd/kosli/test_support"
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/utils"
@@ -20,7 +19,7 @@ type EnvironmentReportDockerTestSuite struct {
 }
 
 func (suite *EnvironmentReportDockerTestSuite) SetupSuite() {
-	test_support.PullExampleImage(suite.T())
+	PullExampleImage(suite.T())
 }
 
 func (suite *EnvironmentReportDockerTestSuite) TearDownSuite() {
@@ -38,7 +37,7 @@ func (suite *EnvironmentReportDockerTestSuite) TestCreateDockerArtifactsData() {
 	}{
 		{
 			name:           "DockerArtifactsData contains the right image digest",
-			imageName:      test_support.ImageName,
+			imageName:      ImageName,
 			expectedSha256: "e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
 		},
 	} {

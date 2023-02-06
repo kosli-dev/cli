@@ -1,0 +1,80 @@
+name: Test
+
+on:
+  workflow_call:
+    inputs:
+      AWS_ACCOUNT_ID:
+        required: true
+        type: string
+      AWS_REGION:
+        required: true
+        type: string
+    secrets:
+      slack_channel:
+        required: true
+      slack_webhook:
+        required: true
+      github_access_token:
+        required: true 
+      bitbucket_password:
+        required: true      
+
+
+jobs:
+  test:
+    name: Lint & Test
+    runs-on: ubuntu-20.04
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+
+    - uses: actions/checkout@v3
+      with:
+        # We need depth of 3 for the unit testing. 
+        # For commit-lists we want more so we get 30
+        fetch-depth: 30
+    
+    - uses: actions/setup-go@v3
+      with:
+        go-version: '1.19.5'
+    
+    - name: Run golangci-lint
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: v1.50
+        args: --timeout=5m -v
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1-node16
+      with:
+        role-to-assume: arn:aws:iam::${{ inputs.AWS_ACCOUNT_ID }}:role/GithubActionsRole
+        aws-region: ${{ inputs.AWS_REGION }}
+        role-duration-seconds: 2400
+        role-session-name: ${{ github.event.repository.name }}
+
+    - name: Login to Amazon ECR private
+      id: login-ecr-private
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Run tests
+      env:
+        KOSLI_GITHUB_TOKEN: ${{ secrets.github_access_token }}
+        KOSLI_BITBUCKET_PASSWORD: ${{ secrets.bitbucket_password }}
+        KOSLI_AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+        KOSLI_AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
+      run: |
+        # some tests use git operations, therefore the git author on the CI VM needs to be set
+        git config --global user.name "John Doe"
+        git config --global user.email johndoe@example.com
+        make test_integration_full
+
+    - name: Slack Notification on Failure
+      if: ${{ failure() }}
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_CHANNEL: ${{ secrets.slack_channel }}
+        SLACK_COLOR: ${{ job.status }}
+        SLACK_TITLE: Test & Lint Failed in CLI repository
+        SLACK_USERNAME: GithubActions
+        SLACK_WEBHOOK: ${{ secrets.slack_webhook }} 

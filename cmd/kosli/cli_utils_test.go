@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -62,9 +61,10 @@ func (suite *CliUtilsTestSuite) TestWhichCI() {
 
 func (suite *CliUtilsTestSuite) TestDefaultValue() {
 	type args struct {
-		ci      string
-		flag    string
-		envVars map[string]string
+		ci               string
+		flag             string
+		envVars          map[string]string
+		unsetTestsEnvVar bool
 	}
 	for _, t := range []struct {
 		name string
@@ -74,9 +74,10 @@ func (suite *CliUtilsTestSuite) TestDefaultValue() {
 		{
 			name: "Lookup an existing default for Github.",
 			args: args{
-				ci:      github,
-				flag:    "git-commit",
-				envVars: map[string]string{"GITHUB_SHA": "some-sha"},
+				ci:               github,
+				flag:             "git-commit",
+				envVars:          map[string]string{"GITHUB_SHA": "some-sha"},
+				unsetTestsEnvVar: true,
 			},
 			want: "some-sha",
 		},
@@ -90,6 +91,7 @@ func (suite *CliUtilsTestSuite) TestDefaultValue() {
 					"BITBUCKET_REPO_SLUG": "example_slug",
 					"BITBUCKET_COMMIT":    "example_commit",
 				},
+				unsetTestsEnvVar: true,
 			},
 			want: "https://bitbucket.org/example_space/example_slug/commits/example_commit",
 		},
@@ -101,33 +103,64 @@ func (suite *CliUtilsTestSuite) TestDefaultValue() {
 				envVars: map[string]string{
 					"BUILD_VCS_NUMBER": "example_commit",
 				},
+				unsetTestsEnvVar: true,
 			},
 			want: "example_commit",
 		},
 		{
 			name: "Lookup a non-existing default for Github.",
 			args: args{
-				ci:      github,
-				flag:    "non-existing",
-				envVars: map[string]string{},
+				ci:               github,
+				flag:             "non-existing",
+				envVars:          map[string]string{},
+				unsetTestsEnvVar: true,
 			},
 			want: "",
 		},
 		{
 			name: "Lookup a default for unknown ci.",
 			args: args{
-				ci:      unknown,
-				flag:    "non-existing",
-				envVars: map[string]string{},
+				ci:               unknown,
+				flag:             "non-existing",
+				envVars:          map[string]string{},
+				unsetTestsEnvVar: true,
+			},
+			want: "",
+		},
+		{
+			name: "Lookup a default when DOCS env var is set returns empty string.",
+			args: args{
+				ci:               github,
+				flag:             "git-commit",
+				envVars:          map[string]string{"DOCS": "True", "GITHUB_SHA": "some-sha"},
+				unsetTestsEnvVar: true,
+			},
+			want: "",
+		},
+		{
+			name: "Lookup a default when TESTS env var is set returns empty string.",
+			args: args{
+				ci:      github,
+				flag:    "git-commit",
+				envVars: map[string]string{"TESTS": "True", "GITHUB_SHA": "some-sha"},
 			},
 			want: "",
 		},
 	} {
 		suite.Run(t.name, func() {
+			value, testMode := os.LookupEnv("TESTS")
+			if t.args.unsetTestsEnvVar && testMode {
+				err := os.Unsetenv("TESTS")
+				require.NoError(suite.T(), err, "should have unset TESTS env var without error")
+			}
 			suite.setEnvVars(t.args.envVars)
 			actual := DefaultValue(t.args.ci, t.args.flag)
-			// clean up
+			// clean up any env vars we set from the test case
 			suite.unsetEnvVars(t.args.envVars)
+			// recover TESTS env variable to its original state before the test
+			if testMode {
+				os.Setenv("TESTS", value)
+			}
 			assert.Equal(suite.T(), t.want, actual, fmt.Sprintf("TestDefaultValue: %s , got: %v -- want: %v", t.name, actual, t.want))
 		})
 	}
@@ -350,7 +383,7 @@ func (suite *CliUtilsTestSuite) TestLoadUserData() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			tmpDir, err := ioutil.TempDir("", "testDir")
+			tmpDir, err := os.MkdirTemp("", "testDir")
 			require.NoError(suite.T(), err, "error creating a temporary test directory")
 			defer os.RemoveAll(tmpDir)
 
@@ -436,6 +469,13 @@ func (suite *CliUtilsTestSuite) TestValidateArtifactArg() {
 			expectError:               false,
 			alwaysRequireArtifactName: false,
 		},
+		{
+			name:                      "arguments with leading space cause a more detailed error message",
+			args:                      []string{"/tmp", " "},
+			inputSha256:               "8b4fd747df6882b897aa514af7b40571a7508cc78a8d48ae2c12f9f4bcb1598f",
+			expectError:               true,
+			alwaysRequireArtifactName: true,
+		},
 	} {
 		suite.Run(t.name, func() {
 			err := ValidateArtifactArg(t.args, t.artifactType, t.inputSha256, t.alwaysRequireArtifactName)
@@ -487,7 +527,7 @@ func (suite *CliUtilsTestSuite) TestGetRegistryEndpointForProvider() {
 	}
 }
 
-func (suite *CliUtilsTestSuite) TestValidateRegisteryFlags() {
+func (suite *CliUtilsTestSuite) TestValidateRegistryFlags() {
 	for _, t := range []struct {
 		name        string
 		options     *fingerprintOptions
@@ -563,6 +603,30 @@ func (suite *CliUtilsTestSuite) TestValidateRegisteryFlags() {
 			} else {
 				require.NoErrorf(suite.T(), err, "error was NOT expected but got %v", err)
 			}
+		})
+	}
+}
+
+func (suite *CliUtilsTestSuite) TestExtractRepoName() {
+	for _, t := range []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "full repo name (including org) is separated",
+			input: "kosli-dev/cli",
+			want:  "cli",
+		},
+		{
+			name:  "short repo name is returned as is",
+			input: "cli",
+			want:  "cli",
+		},
+	} {
+		suite.Run(t.name, func() {
+			repo := extractRepoName(t.input)
+			require.Equalf(suite.T(), t.want, repo, "expected %s but got %s", t.want, repo)
 		})
 	}
 }

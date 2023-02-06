@@ -61,7 +61,7 @@ func newAssertPullRequestBitbucketCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *assertPullRequestBitbucketOptions) run(args []string) error {
-	pullRequestsEvidence, _, err := getPullRequestsFromBitbucketApi(o.bbWorkspace,
+	pullRequestsEvidence, err := getPullRequestsFromBitbucketApi(o.bbWorkspace,
 		o.repository, o.commit, o.bbUsername, o.bbPassword, true)
 	if err != nil {
 		return err

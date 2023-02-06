@@ -36,7 +36,7 @@ fmt: ## Reformat package sources
 	@go fmt ./...
 
 lint:
-	@docker run --rm -v $(PWD):/app -w /app golangci/golangci-lint:v1.39-alpine golangci-lint run --timeout=5m  -v ./...
+	@docker run --rm -v $(PWD):/app -w /app golangci/golangci-lint:v1.50-alpine golangci-lint run --timeout=5m  -v ./...
 
 vet: fmt
 	@go vet ./...
@@ -77,11 +77,12 @@ test_integration_setup:
 
 test_integration: deps vet ensure_network test_integration_setup ## Run tests except too slow ones
 	@~/go/bin/gotestsum -- --short -p=1 -coverprofile=cover.out ./...
+	@go tool cover -func=cover.out | grep total:
 	@go tool cover -html=cover.out
 
 
 test_integration_full: deps vet ensure_network test_integration_setup ## Run all tests
-	@~/go/bin/gotestsum -- -p=1 -coverprofile=cover.out ./...
+	@export TESTS=true && ~/go/bin/gotestsum -- -p=1 -coverprofile=cover.out ./...
 	@go tool cover -func=cover.out
 
 
@@ -90,8 +91,8 @@ test_integration_no_setup:
 	@go tool cover -html=cover.out
 
 
-test_integration_single:
-	@go test -v -p=1 ./... -run "${TARGET}"
+test_integration_single: test_integration_setup
+	@~/go/bin/gotestsum -- -p=1 ./... -run "${TARGET}"
 
 
 test_docs: deps vet ensure_network test_integration_setup

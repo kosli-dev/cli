@@ -33,7 +33,7 @@ func newDeploymentReportCmd(out io.Writer) *cobra.Command {
 	o := new(deploymentReportOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:        "report [ARTIFACT-NAME-OR-PATH]",
+		Use:        "report [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Short:      deploymentReportShortDesc,
 		Long:       deploymentReportLongDesc,
 		Deprecated: "use \"kosli expect deployment\" instead.",

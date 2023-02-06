@@ -180,7 +180,7 @@ You can represent **ANY** flag as an environment variable. To do that you need t
 
 A Kosli *pipeline* stores information about what happens in your build system.
 The output of the build system is called an *artifact* in Kosli. An artifact could be, for example,
-an application binary, a docker image, documentation, or a file. 
+an application binary, a docker image, a directory, or a file. 
 
 Start by creating a new Kosli pipeline:
 

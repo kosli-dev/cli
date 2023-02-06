@@ -20,14 +20,14 @@ type artifactCreationOptions struct {
 }
 
 type ArtifactPayload struct {
-	Sha256      string                    `json:"sha256"`
-	Filename    string                    `json:"filename"`
-	Description string                    `json:"description"`
-	GitCommit   string                    `json:"git_commit"`
-	BuildUrl    string                    `json:"build_url"`
-	CommitUrl   string                    `json:"commit_url"`
-	RepoUrl     string                    `json:"repo_url"`
-	CommitsList []*gitview.ArtifactCommit `json:"commits_list"`
+	Sha256      string                `json:"sha256"`
+	Filename    string                `json:"filename"`
+	Description string                `json:"description"`
+	GitCommit   string                `json:"git_commit"`
+	BuildUrl    string                `json:"build_url"`
+	CommitUrl   string                `json:"commit_url"`
+	RepoUrl     string                `json:"repo_url"`
+	CommitsList []*gitview.CommitInfo `json:"commits_list"`
 }
 
 const artifactCreationShortDesc = `Report an artifact creation to a Kosli pipeline.`
@@ -61,7 +61,7 @@ func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 	o := new(artifactCreationOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "creation ARTIFACT-NAME-OR-PATH",
+		Use:     "creation {IMAGE-NAME | FILE-PATH | DIR-PATH}",
 		Short:   artifactCreationShortDesc,
 		Long:    artifactCreationLongDesc,
 		Example: artifactCreationExample,
@@ -134,7 +134,7 @@ func (o *artifactCreationOptions) run(args []string) error {
 
 	o.payload.RepoUrl, err = gitView.RepoUrl()
 	if err != nil {
-		return err
+		logger.Warning("Repo URL will not be reported, %s", err.Error())
 	}
 
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/", global.Host, global.Owner, o.pipelineName)

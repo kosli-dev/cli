@@ -12,13 +12,13 @@ Assert the compliance status of an artifact in Kosli.
 Exits with non-zero code if the artifact has a non-compliant status.
 
 ```shell
-kosli assert artifact [ARTIFACT-NAME-OR-PATH] [flags]
+kosli assert artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ### Flags
 | Flag | Description |
 | :--- | :--- |
-|    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256'.  |
+|    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256' or '--fingerprint'.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -h, --help  |  help for artifact  |
 |    -p, --pipeline string  |  The Kosli pipeline name.  |
