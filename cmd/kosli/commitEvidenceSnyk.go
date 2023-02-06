@@ -9,55 +9,55 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type CommitEvidenceJUnitPayload struct {
-	CommitSHA    string          `json:"commit_sha"`
-	Pipelines    []string        `json:"pipelines,omitempty"`
-	EvidenceName string          `json:"name"`
-	BuildUrl     string          `json:"build_url"`
-	JUnitResults []*JUnitResults `json:"junit_results"`
-	UserData     interface{}     `json:"user_data"`
+type CommitEvidenceSnykPayload struct {
+	CommitSHA    string      `json:"commit_sha"`
+	Pipelines    []string    `json:"pipelines,omitempty"`
+	EvidenceName string      `json:"name"`
+	BuildUrl     string      `json:"build_url"`
+	SnykResults  interface{} `json:"snyk_results"`
+	UserData     interface{} `json:"user_data"`
 }
 
-type junitCommitEvidenceOptions struct {
-	testResultsDir string
-	userDataFile   string
-	payload        CommitEvidenceJUnitPayload
+type snykCommitEvidenceOptions struct {
+	snykJsonFile string
+	userDataFile string
+	payload      CommitEvidenceSnykPayload
 }
 
-const junitCommitEvidenceShortDesc = `Report JUnit test evidence for a commit in a Kosli pipeline.`
+const snykCommitEvidenceShortDesc = `Report Snyk evidence for a commit in a Kosli pipeline.`
 
-const junitCommitEvidenceLongDesc = junitEvidenceShortDesc
+const snykCommitEvidenceLongDesc = snykEvidenceShortDesc
 
-const junitCommitEvidenceExample = `
-# report JUnit test evidence for a commit related to one Kosli pipeline:
-kosli commit report evidence junit \
+const snykCommitEvidenceExample = `
+# report Snyk evidence for a commit related to one Kosli pipeline:
+kosli commit report evidence snyk \
 	--commit yourGitCommitSha1 \
 	--name yourEvidenceName \
 	--pipelines yourPipelineName \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
 	--owner yourOrgName	\
-	--results-dir yourFolderWithJUnitResults
+	--scan-results yourSnykJSONScanResults
 
-# report JUnit test evidence for a commit related to multiple Kosli pipelines:
-kosli commit report evidence junit \
+# report Snyk evidence for a commit related to multiple Kosli pipelines:
+kosli commit report evidence snyk \
 	--commit yourGitCommitSha1 \
 	--name yourEvidenceName \
 	--pipelines yourFirstPipelineName,yourSecondPipelineName \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
 	--owner yourOrgName	\
-	--results-dir yourFolderWithJUnitResults
+	--scan-results yourSnykJSONScanResults
 `
 
-func newJUnitCommitEvidenceCmd(out io.Writer) *cobra.Command {
-	o := new(junitCommitEvidenceOptions)
+func newSnykCommitEvidenceCmd(out io.Writer) *cobra.Command {
+	o := new(snykCommitEvidenceOptions)
 	cmd := &cobra.Command{
-		Use:     "junit",
+		Use:     "snyk",
 		Hidden:  true,
-		Short:   junitCommitEvidenceShortDesc,
-		Long:    junitCommitEvidenceLongDesc,
-		Example: junitCommitEvidenceExample,
+		Short:   snykCommitEvidenceShortDesc,
+		Long:    snykCommitEvidenceLongDesc,
+		Example: snykCommitEvidenceExample,
 		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -75,7 +75,7 @@ func newJUnitCommitEvidenceCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.payload.CommitSHA, "commit", "", evidenceCommit)
 	cmd.Flags().StringSliceVarP(&o.payload.Pipelines, "pipelines", "p", []string{}, pipelinesFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
-	cmd.Flags().StringVarP(&o.testResultsDir, "results-dir", "R", ".", resultsDirFlag)
+	cmd.Flags().StringVarP(&o.snykJsonFile, "scan-results", "R", ".", snykJsonResultsFileFlag)
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
 	addDryRunFlag(cmd)
@@ -88,15 +88,15 @@ func newJUnitCommitEvidenceCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *junitCommitEvidenceOptions) run(args []string) error {
+func (o *snykCommitEvidenceOptions) run(args []string) error {
 	var err error
-	url := fmt.Sprintf("%s/api/v1/projects/%s/commit/evidence/junit", global.Host, global.Owner)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/commit/evidence/snyk", global.Host, global.Owner)
 	o.payload.UserData, err = LoadJsonData(o.userDataFile)
 	if err != nil {
 		return err
 	}
 
-	o.payload.JUnitResults, err = ingestJunitDir(o.testResultsDir)
+	o.payload.SnykResults, err = LoadJsonData(o.snykJsonFile)
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func (o *junitCommitEvidenceOptions) run(args []string) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("junit test evidence is reported to commit: %s", o.payload.CommitSHA)
+		logger.Info("snyk scan evidence is reported to commit: %s", o.payload.CommitSHA)
 	}
 	return err
 }
