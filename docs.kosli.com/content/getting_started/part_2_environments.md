@@ -11,17 +11,20 @@ If the list of running artifacts is different than what was reported previously 
 
 There is range of `kosli environment report [...]` commands, allowing you to report a variety of environments. To record the current status of your environment you simply run one of them. You can do it manually but typically recording commands would run automatically, e.g. via a cron job or scheduled CI job.
 
+
+{{< hint warning >}}
 In all the commands below we skip required `--api-token` and `--owner` flags - these can be easily configured via [config file](/kosli_overview/kosli_tools/#config-file) or [environment variables](/kosli_overview/kosli_tools/#environment-variables) so you don't have type them over and over again.
+{{< /hint >}}
+
 
 After you started reporting, you can - at any point - check exactly what is running in your environment using the CLI command:
 
 ```shell {.command}
-kosli environment get quickstart
-```
-```plaintext {.light-console}
-COMMIT  ARTIFACT                                                                             PIPELINE  RUNNING_SINCE  REPLICAS
+$ kosli environment get quickstart
+
+COMMIT  ARTIFACT                                                           PIPELINE  RUNNING_SINCE  REPLICAS
 N/A     Name: nginx@sha256:0047b7(...))59cce6d40291ccfb4e039f5dc7efd33286  N/A       7 days ago     1
-        Fingerprint: 0047b729188(...)959cce6d40291ccfb4e039f5dc7efd33286                                 
+        Fingerprint: 0047b729188(...)959cce6d40291ccfb4e039f5dc7efd33286   
 ```
 
 Or in the UI, by clicking at the name of the environment (after selecting "Environments" in the left hand side menu):
@@ -39,22 +42,21 @@ Before you start reporting what's running in your environments you need to creat
 #### CLI
 
 ```shell {.command}
-kosli environment declare \
+$ kosli environment declare \
     --name quickstart \
     --environment-type docker \
     --description "quickstart environment for tutorial"
+
+environment quickstart was created
 ```
 ```plaintext {.light-console}
-environment quickstart was created
 ```
 
 You can verify that the Kosli environment called *quickstart* was created:
 
 ```shell {.command}
-kosli environment ls
-```
+$ kosli environment ls
 
-```plaintext {.light-console}
 NAME        TYPE    LAST REPORT  LAST MODIFIED
 quickstart  docker               2022-11-01T15:30:56+01:00
 ```
@@ -90,12 +92,12 @@ Run `kosli environment report docker` to report running containers data from doc
 
 ### Example
 
-```
-kosli environment report docker docs-demo-docker
-```
-```plaintext {.light-console}
+```shell {.command}
+$ kosli environment report docker docs-demo-docker
+
 [1] containers were reported to environment quickstart
 ```
+
 More details in [`kosli environment report docker` reference](/client_reference/kosli_environment_report_docker/)
 {{< /tab >}}
 
@@ -104,21 +106,25 @@ More details in [`kosli environment report docker` reference](/client_reference/
 
 Run `kosli environment report ecs` to report images data from AWS ECS cluster to Kosli.  
 
-**Were to run:**  The command can be run anywhere and requires following environment variables to be set, to be able to connect to AWS:
-* `AWS_REGION`
-* `AWS_ACCESS_KEY_ID`
-* `AWS_SECRET_ACCESS_KEY`
+**Were to run:**  The command can be run anywhere.  
+To authenticate to AWS, you can either: 
+1. provide the AWS static credentials via flags or by exporting the equivalent KOSLI env vars (e.g. KOSLI_AWS_KEY_ID)
+2. export the AWS env vars (e.g. AWS_ACCESS_KEY_ID).
+3. Use a shared config/credentials file under the $HOME/.aws  
+
+Option 1 takes highest precedence, while option 3 is the lowest.
+
 
 ### Example
 
-```
-export AWS_REGION=yourAWSRegion
-export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
-export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
+```shell {.command}
+$ kosli environment report ecs ecs-prod \
+	--cluster prod-cluster
+	--aws-key-id *** \
+	--aws-secret-key *** \
+	--aws-region eu-central-1 
 
-kosli environment report ecs yourEnvironmentName \
-	--api-token yourAPIToken \
-	--owner yourOrgName
+[2] containers were reported to environment ecs-prod
 ```
 
 More details in [`kosli environment report ecs` reference](/client_reference/kosli_environment_report_ecs/)
@@ -158,30 +164,24 @@ More details in [`kosli environment report k8s` reference](/client_reference/kos
 
 Run `kosli environment report lambda` to report artifact from AWS Lambda to Kosli.  
 
-**Were to run:**  The command can be run anywhere. You can use either flags or environment variables to provide AWS secrets.
+**Were to run:**  The command can be run anywhere.   
+To authenticate to AWS, you can either: 
+1. provide the AWS static credentials via flags or by exporting the equivalent KOSLI env vars (e.g. KOSLI_AWS_KEY_ID)
+2. export the AWS env vars (e.g. AWS_ACCESS_KEY_ID).
+3. Use a shared config/credentials file under the $HOME/.aws  
+
+Option 1 takes highest precedence, while option 3 is the lowest.
 
 ### Example
 
-```
-# report what is running in the latest version AWS Lambda function (AWS auth provided in env variables):
-export AWS_REGION=yourAWSRegion
-export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
-export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
+```shell {.command}
+$ kosli environment report lambda lambda-prod \
+	--function-name reporter-kosli-prod \
+	--aws-key-id *** \
+	--aws-secret-key *** \
+	--aws-region eu-central-1 
 
-kosli environment report lambda myEnvironment \
-	--function-name yourFunctionName \
-	--api-token yourAPIToken \
-	--owner yourOrgName
-
-# report what is running in a specific version of an AWS Lambda function (AWS auth provided in flags):
-kosli environment report lambda myEnvironment \
-	--function-name yourFunctionName \
-	--function-version yourFunctionVersion \
-	--aws-key-id yourAWSAccessKeyID \
-	--aws-secret-key yourAWSSecretAccessKey \
-	--aws-region yourAWSRegion \
-	--api-token yourAPIToken \
-	--owner yourOrgName
+reporter-app-prod lambda function was reported to environment lambda-prod
 ```
 
 More details in [`kosli environment report lambda` reference](/client_reference/kosli_environment_report_lambda/)
@@ -192,29 +192,24 @@ More details in [`kosli environment report lambda` reference](/client_reference/
 
 Run `kosli environment report s3` to report artifact from AWS S3 bucket to Kosli.  
 
-**Were to run:**  The command can be run anywhere. You can use either flags or environment variables to provide AWS secrets.
+**Were to run:**  The command can be run anywhere.   
+To authenticate to AWS, you can either: 
+1. provide the AWS static credentials via flags or by exporting the equivalent KOSLI env vars (e.g. KOSLI_AWS_KEY_ID)
+2. export the AWS env vars (e.g. AWS_ACCESS_KEY_ID).
+3. Use a shared config/credentials file under the $HOME/.aws  
+
+Option 1 takes highest precedence, while option 3 is the lowest.
 
 ### Example
 
-```
-# report what is running in an AWS S3 bucket (AWS auth provided in env variables):
-export AWS_REGION=yourAWSRegion
-export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
-export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
+```shell {.command}
+$ kosli environment report s3 s3-prod \
+ 	--bucket app-public \
+	--aws-key-id *** \
+	--aws-secret-key *** \
+	--aws-region eu-central-1 
 
-kosli environment report s3 yourEnvironmentName \
-	--bucket yourBucketName \
-	--api-token yourAPIToken \
-	--owner yourOrgName
-
-# report what is running in an AWS S3 bucket (AWS auth provided in flags):
-kosli environment report s3 yourEnvironmentName \
-	--bucket yourBucketName \
-	--aws-key-id yourAWSAccessKeyID \
-	--aws-secret-key yourAWSSecretAccessKey \
-	--aws-region yourAWSRegion \
-	--api-token yourAPIToken \
-	--owner yourOrgName
+bucket app-public was reported to environment s3-prod
 ```
 
 More details in [`kosli environment report s3` reference](/client_reference/kosli_environment_report_s3/)
@@ -239,10 +234,9 @@ And it will try to find matching artifacts reported to any pipeline belonging to
 ### Example 
 
 ```shell {.command}
-kosli environment report server docs-demo-server --paths build/index.html 
-```
-```plaintext {.light-console}
-[1] artifacts were reported to environment docs-demo-server                               
+$ kosli environment report server docs-demo-server --paths build/index.html 
+
+[1] artifacts were reported to environment docs-demo-server       
 ```
 
 More details in [`kosli environment report server` reference](/client_reference/kosli_environment_report_server/)
