@@ -7,9 +7,13 @@ weight: 230
 
 Kosli allows you to connect the development world (commits, builds, tests, approvals, deployments) with what’s happening in operations. There is a variety of commands that let you report all the necessary information to Kosli and - relying on automatically calculated fingerprints of your artifacts - match it with the environments.
 
+{{< hint warning >}}
+In all the commands below we skip required `--api-token` and `--owner` flags - these can be easily configured via [config file](/kosli_overview/kosli_tools/#config-file) or [environment variables](/kosli_overview/kosli_tools/#environment-variables) so you don't have type them over and over again.
+{{< /hint >}}
+
 ## Create a pipeline
 
-To report artifacts to Kosli you need to create a Kosli [pipeline](/kosli_overview/what_is_kosli/#pipelines) first. When you create a pipeline you also define expected controls - a list of evidences you need to be reported in order for the artifact to become compliant. Use the `--template` flag to provide the list of requirements. 
+To report artifacts to Kosli you need to create a Kosli [pipeline](/kosli_overview/what_is_kosli/#pipelines) first. When you create a pipeline you also define a [template](/kosli_overview/what_is_kosli/#template) - a list of evidences (controls) you need to be reported in order for the artifact to become compliant. Use the `--template` flag to provide the list of controls. 
 
 Later, when reporting an evidence for a specific control you will use the same name you used in the template to identify which evidence you are reporting.
 
@@ -18,12 +22,11 @@ It is a normal practice to include `kosli pipeline declare` command in the same 
 ### Example
 
 ```
-# create/update a Kosli pipeline
-kosli pipeline declare \
-	--pipeline yourPipelineName \
-	--description yourPipelineDescription \
-  	--visibility private OR public \
-	--template artifact,unit-test,pull-request,code-coverage \
-	--api-token yourAPIToken \
-	--owner yourOrgName
+$ kosli pipeline declare \
+	--pipeline project-a \
+	--description "Project A artifacts" \
+	--template artifact,unit-test,pull-request,code-coverage
+
+pipeline 'project-a' created
 ```
+See [kosli pipeline declare](/client_reference/kosli_pipeline_declare/) for more details. 

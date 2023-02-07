@@ -6,6 +6,8 @@ weight: 120
 
 Kosli records data from your CI pipelines and runtime environments, allowing you to query life after git from the command line.
 
+{{<figure src="/images/kosli-overview-docs.jpg" alt="Kosli overview" width="1000">}}
+
 Below you can read about what elements Kosli consists of.
 
 ## Organization

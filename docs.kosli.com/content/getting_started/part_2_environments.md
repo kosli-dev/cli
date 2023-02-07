@@ -49,8 +49,6 @@ $ kosli environment declare \
 
 environment quickstart was created
 ```
-```plaintext {.light-console}
-```
 
 You can verify that the Kosli environment called *quickstart* was created:
 

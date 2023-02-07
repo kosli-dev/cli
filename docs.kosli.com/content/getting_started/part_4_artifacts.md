@@ -20,26 +20,15 @@ Some of the required flags will be automatically resolved if you're using one of
 ### Example 
 
 ```
-# Report to a Kosli pipeline that a file type artifact has been created
-kosli pipeline artifact report creation FILE.tgz \
-	--api-token yourApiToken \
+$ kosli pipeline artifact report creation kosli \
 	--artifact-type file \
 	--build-url https://exampleci.com \
-	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
-	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
-	--owner yourOrgName \
-	--pipeline yourPipelineName 
+	--commit-url https://github.com/YourOrg/YourProject/commit/e67f2f2b121f9325ebf166b7b3c707f73cb48b14 \
+	--git-commit e67f2f2b121f9325ebf166b7b3c707f73cb48b14 \
+	--pipeline project-a 
 
-# Report to a Kosli pipeline that an artifact with a provided fingerprint (sha256) has been created
-kosli pipeline artifact report creation \
-	--api-token yourApiToken \
-	--build-url https://exampleci.com \
-	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
-	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
-	--owner yourOrgName \
-	--pipeline yourPipelineName \
-	--sha256 yourSha256 
-  ```
+artifact kosli was reported with fingerprint: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
+```
 
 See [kosli pipeline artifact report creation](/client_reference/kosli_pipeline_artifact_report_creation/) for more details. 
 
