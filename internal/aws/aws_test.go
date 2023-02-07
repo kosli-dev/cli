@@ -256,20 +256,6 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 		wantErr         bool
 	}{
 		{
-			name:         "not having credentials will fail",
-			creds:        &AWSStaticCreds{},
-			functionName: "reporter-kosli-prod",
-			wantErr:      true,
-		},
-		{
-			name: "when providing region alone, still fails due to missing credentials",
-			creds: &AWSStaticCreds{
-				Region: "eu-central-1",
-			},
-			functionName: "reporter-kosli-prod",
-			wantErr:      true,
-		},
-		{
 			name: "invalid credentials causes an error",
 			creds: &AWSStaticCreds{
 				Region:          "eu-central-1",
@@ -286,6 +272,15 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			},
 			functionName:   "reporter-kosli-prod",
 			requireEnvVars: true,
+		},
+		{
+			name: "providing the wrong region causes a failure",
+			creds: &AWSStaticCreds{
+				Region: "ap-south-1",
+			},
+			functionName:   "reporter-kosli-prod",
+			requireEnvVars: true,
+			wantErr:        true,
 		},
 		{
 			name: "can get lambda function data from name and version",
@@ -324,20 +319,6 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 		wantErr         bool
 	}{
 		{
-			name:       "not having credentials will fail",
-			creds:      &AWSStaticCreds{},
-			bucketName: "kosli-cli-public",
-			wantErr:    true,
-		},
-		{
-			name: "when providing region alone, still fails due to missing credentials",
-			creds: &AWSStaticCreds{
-				Region: "eu-central-1",
-			},
-			bucketName: "kosli-cli-public",
-			wantErr:    true,
-		},
-		{
 			name: "invalid credentials causes an error",
 			creds: &AWSStaticCreds{
 				Region:          "eu-central-1",
@@ -346,6 +327,15 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 			},
 			bucketName: "kosli-cli-public",
 			wantErr:    true,
+		},
+		{
+			name: "providing wrong region causes an error",
+			creds: &AWSStaticCreds{
+				Region: "ap-south-1",
+			},
+			bucketName:     "kosli-cli-public",
+			requireEnvVars: true,
+			wantErr:        true,
 		},
 		{
 			name: "can get S3 bucket data",
@@ -383,20 +373,6 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 		wantErr           bool
 	}{
 		{
-			name:        "not having credentials will fail",
-			creds:       &AWSStaticCreds{},
-			clusterName: "merkely",
-			wantErr:     true,
-		},
-		{
-			name: "when providing region alone, still fails due to missing credentials",
-			creds: &AWSStaticCreds{
-				Region: "eu-central-1",
-			},
-			clusterName: "merkely",
-			wantErr:     true,
-		},
-		{
 			name: "invalid credentials causes an error",
 			creds: &AWSStaticCreds{
 				Region:          "eu-central-1",
@@ -414,6 +390,16 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 			clusterName:       "merkely",
 			numberOfArtifacts: 2,
 			requireEnvVars:    true,
+		},
+		{
+			name: "providing the wrong region causes an error",
+			creds: &AWSStaticCreds{
+				Region: "ap-south-1",
+			},
+			clusterName:       "merkely",
+			numberOfArtifacts: 2,
+			requireEnvVars:    true,
+			wantErr:           true,
 		},
 		{
 			name: "can get ECS data with cluster name and service name",
