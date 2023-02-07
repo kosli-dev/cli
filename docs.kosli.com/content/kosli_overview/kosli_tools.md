@@ -68,7 +68,7 @@ You can download the Kosli CLI from [GitHub](https://github.com/kosli-dev/cli/re
 Make sure to choose the correct tar file for your system.  
 For example, on Mac with AMD:
 ```shell {.command}
-curl -L https://github.com/kosli-dev/cli/releases/download/v0.1.10/kosli_0.1.10_darwin_amd64.tar.gz | tar zx
+curl -L https://github.com/kosli-dev/cli/releases/download/v0.1.35/kosli_0.1.35_darwin_amd64.tar.gz | tar zx
 sudo mv kosli /usr/local/bin/kosli
 ```
 {{< /tab >}}
@@ -76,7 +76,7 @@ sudo mv kosli /usr/local/bin/kosli
 {{< tab "Docker" >}}
 You can run the Kosli CLI in this docker container:
 ```shell {.command}
-docker run -it --rm ghcr.io/kosli-dev/cli:v0.1.10 bash
+docker run -it --rm ghcr.io/kosli-dev/cli:v0.1.35 bash
 ```
 {{< /tab >}}
 
@@ -92,7 +92,7 @@ kosli version
 ```
 The expected output should be similar to this:
 ```plaintext {.light-console}
-version.BuildInfo{Version:"v0.1.10", GitCommit:"9c623f1e6c293235ddc8de1e347bf99a1b356e48", GitTreeState:"clean", GoVersion:"go1.17.11"}
+version.BuildInfo{Version:"v0.1.35", GitCommit:"4058e8932ec093c28f553177e41c906940114866", GitTreeState:"clean", GoVersion:"go1.19.5"}
 ```
 
 #### Usage
