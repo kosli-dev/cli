@@ -5,13 +5,11 @@ weight: 250
 ---
 # Part 5: Evidence
 
-## Report evidence
-
 Whenever an event related to one of your evidences happens you should report it to Kosli. 
 
 Currently we support following types of evidences:
 
-### Pull request
+## Pull request evidence
 
 If you use GitHub or Bitbucket you can use Kosli to verify if the merge commit you used to build your artifact comes from a pull request. Remember to add the pull request evidence to your [pipeline template](/kosli_overview/what_is_kosli/#template) and use the same label for `--evidence-type` you provided in a `template` 
 
@@ -28,10 +26,10 @@ For GitHub: [kosli pipeline artifact report evidence github-pullrequest](/client
 
 For Bitbucket: [kosli pipeline artifact report evidence bitbucket-pullrequest](/client_reference/kosli_pipeline_artifact_report_evidence_bitbucket-pullrequest/) along with the regular flags, you need to provide:
 *  `--bitbucket-password` - you need to use an api token which is the "App password" you create under "Personal Settings", keep in mind that api tokens you create under "Manage account" won't work for basic auth
-* `--bitbucket-username` - you cannot user your email address you use to log in, you have an actual username under "Personal Settings") 
+* `--bitbucket-username` - you cannot user your email address you use to log in, you have an actual username under "Personal Settings" 
 * `--bitbucket-workspace`
 
-#### Example
+### Example
  
 ```
 $ kosli pipeline artifact report evidence github-pullrequest project-a-app.bin \
@@ -45,39 +43,64 @@ $ kosli pipeline artifact report evidence github-pullrequest project-a-app.bin \
 
 github pull request evidence is reported to artifact: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
 ```
+See [kosli pipeline artifact report evidence bitbucket-pullrequest](/client_reference/kosli_pipeline_artifact_report_evidence_bitbucket-pullrequest/) or See [kosli pipeline artifact report evidence github-pullrequest](/client_reference/kosli_pipeline_artifact_report_evidence_github-pullrequest/) for more details. 
+for more details. 
 
+## JUnit test evidence
 
-### JUnit test 
+If you produce your test results in JUnit format, you can use `kosli pipeline artifact report evidence junit` command to analyze the results and report it to Kosli. Remember to add the junit test evidence to your [pipeline template](/kosli_overview/what_is_kosli/#template) and use the same label for `--evidence-type` you provided in a `template`.
 
-If you produce your test results in JUnit format, you can use `kosli pipeline artifact report evidence test` command to analyze the results and report it to Kosli. Remember to add the junit test evidence to your [pipeline template](/kosli_overview/what_is_kosli/#template) and use the same label for `--evidence-type` you provided in a `template` 
-
-### Snyk scan
+Use `--results-dir` flag to provide the location of the folder with your junit test results
 
 ### Example
-
+ 
 ```
-# report a JUnit test evidence about a file artifact:
-kosli pipeline artifact report evidence test FILE.tgz \
+$ kosli pipeline artifact report evidence junit project-a-app.bin \
+	--pipeline project-a \
 	--artifact-type file \
-	--evidence-type yourEvidenceType \
-	--pipeline yourPipelineName \
 	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
-	--owner yourOrgName	\
-	--results-dir yourFolderWithJUnitResults
+	--name unit-test \
+	--results-dir tests
 
-# report a JUnit test evidence about an artifact using an available Sha256 digest:
-kosli pipeline artifact report evidence test \
-	--sha256 yourSha256 \
-	--evidence-type yourEvidenceType \
-	--pipeline yourPipelineName \
-	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
-	--owner yourOrgName	\
-	--results-dir yourFolderWithJUnitResults
+junit test evidence is reported to artifact: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
 ```
+See [kosli pipeline artifact report evidence junit](/client_reference/kosli_pipeline_artifact_report_evidence_junit/) for more details. 
 
-See [kosli pipeline artifact report evidence junit](/client_reference/kosli_pipeline_artifact_report_evidence_test/) for more details. 
+## Snyk scan evidence
 
-### Generic
+To report results of scan security scan use `kosli pipeline artifact report evidence junit` command to analyze the results and report it to Kosli. Remember to add the snyk scan evidence to your [pipeline template](/kosli_overview/what_is_kosli/#template) and use the same label for `--evidence-type` you provided in a `template`.
 
+Use `--scan-results` flag to provide the location of the json file with your snyk scan results
+
+### Example
+ 
+```
+$ kosli pipeline artifact report evidence snyk project-a-app.bin \
+	--pipeline project-a \
+	--artifact-type file \
+	--build-url https://exampleci.com \
+	--name snyk \
+	--scan-results snyk_scam.json 
+
+snyk scan evidence is reported to artifact: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
+```
+See [kosli pipeline artifact report evidence snyk](/client_reference/kosli_pipeline_artifact_report_evidence_snyk/) for more details. 
+
+## Generic evidence
+
+If Kosli doesn't support the type of the evidence you'd like to attach, you can use [kosli pipeline artifact report evidence generic](/client_reference/kosli_pipeline_artifact_report_evidence_generic/) command to report such evidence. Remember to add the evidence to your [pipeline template](/kosli_overview/what_is_kosli/#template) and use the same label for `--evidence-type` you provided in a `template`.
+
+Use `--compliant=false` if you want to report given evidence as non-compliant.
+### Example
+ 
+```
+$ kosli pipeline artifact report evidence generic project-a-app.bin \
+	--pipeline project-a \
+	--artifact-type file \
+	--build-url https://exampleci.com \
+	--evidence-type code-coverage \
+	--compliant=false
+
+generic evidence 'code-coverage' is reported to artifact: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
+```
+See [kosli pipeline artifact report evidence generic](/client_reference/kosli_pipeline_artifact_report_evidence_generic/) for more details. 

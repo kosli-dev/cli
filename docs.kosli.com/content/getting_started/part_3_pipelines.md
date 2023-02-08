@@ -25,7 +25,7 @@ It is a normal practice to include `kosli pipeline declare` command in the same 
 $ kosli pipeline declare \
 	--pipeline project-a \
 	--description "Project A artifacts" \
-	--template artifact,unit-test,pull-request,code-coverage
+	--template artifact,unit-test,pull-request,snyk,code-coverage
 
 pipeline 'project-a' created
 ```
