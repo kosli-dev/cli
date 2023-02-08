@@ -80,6 +80,9 @@ func newPullRequestEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
+			if o.payload.EvidenceName == "" {
+				return fmt.Errorf("--name is required")
+			}
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
 
 		},

@@ -68,6 +68,13 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 		},
 		{
 			wantError: true,
+			name:      "report Github PR evidence fails when both --name and --evidence-type are missing",
+			cmd: `pipeline artifact report evidence github-pullrequest --fingerprint ` + suite.artifactFingerprint + ` --pipeline ` + suite.pipelineName + `
+			          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6 --api-token foo --host bar`,
+			golden: "Error: --name is required\n",
+		},
+		{
+			wantError: true,
 			name:      "report Github PR evidence fails when --github-org is missing",
 			cmd: `pipeline artifact report evidence github-pullrequest --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --pipeline ` + suite.pipelineName + `
 			          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
