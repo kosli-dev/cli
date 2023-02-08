@@ -176,53 +176,29 @@ func (o *pullRequestEvidenceGitlabOptions) getGitlabPullRequests() ([]*PrEvidenc
 	if err != nil {
 		return pullRequestsEvidence, err
 	}
+	for _, mergerequest := range mergerequests {
+		evidence, err := o.newPREvidence(mergerequest)
+		if err != nil {
+			return pullRequestsEvidence, err
+		}
+		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
 
-	fmt.Println(mergerequests[0].MergeCommitSHA)
-	fmt.Println(mergerequests[0].State)
-	fmt.Println(mergerequests[0].WebURL)
-	fmt.Println(mergerequests[0])
-
-	// for _, mergerequest := range mergerequests {
-	// 	evidence, err := o.newPREvidence(mergerequest)
-	// 	if err != nil {
-	// 		return pullRequestsEvidence, err
-	// 	}
-	// 	pullRequestsEvidence = append(pullRequestsEvidence, evidence)
-
-	// }
-	// if len(pullRequestsEvidence) == 0 {
-	// 	if o.assert {
-	// 		return pullRequestsEvidence, fmt.Errorf("no pull requests found for the given commit: %s", o.commit)
-	// 	}
-	// 	logger.Info("no pull requests found for given commit: " + o.commit)
-	// }
+	}
+	if len(pullRequestsEvidence) == 0 {
+		if o.assert {
+			return pullRequestsEvidence, fmt.Errorf("no pull requests found for the given commit: %s", o.commit)
+		}
+		logger.Info("no pull requests found for given commit: " + o.commit)
+	}
 	return pullRequestsEvidence, nil
 }
 
-// newPREvidence creates an evidence from a github pull request
-// func (o *pullRequestEvidenceGitlabOptions) newPREvidence(mergerequest *gitlab.MergeRequest) (*PrEvidence, error) {
-// 	evidence := &PrEvidence{}
-// 	evidence.URL = mergerequest.
-// 	evidence.MergeCommit = mergerequest.MergeCommitSHA
-// 	evidence.State = mergerequest.State
-
-// 	approvers, err := ghUtils.GetPullRequestApprovers(o.ghToken, o.ghOwner, o.repository,
-// 		pullrequest.GetNumber())
-// 	if err != nil {
-// 		return evidence, err
-// 	}
-// 	evidence.Approvers = approvers
-// 	return evidence, nil
-
-// lastCommit := pullrequest.Head.GetSHA()
-// opts := gh.ListOptions{}
-// commit, _, err := client.Repositories.GetCommit(ctx, owner, repository, lastCommit, &opts)
-// if err != nil {
-// 	return pullRequestsEvidence, isCompliant, err
-// }
-// evidence.LastCommit = lastCommit
-// evidence.LastCommitter = commit.GetAuthor().GetLogin()
-// if utils.Contains(approvers, evidence.LastCommitter) {
-// 	evidence.SelfApproved = true
-// }
-// }
+// newPREvidence creates an evidence from a gitlab merge request
+func (o *pullRequestEvidenceGitlabOptions) newPREvidence(mergerequest *gitlab.MergeRequest) (*PrEvidence, error) {
+	evidence := &PrEvidence{}
+	evidence.URL = mergerequest.WebURL
+	evidence.MergeCommit = mergerequest.MergeCommitSHA
+	evidence.State = mergerequest.State
+	evidence.Approvers = []string{}
+	return evidence, nil
+}
