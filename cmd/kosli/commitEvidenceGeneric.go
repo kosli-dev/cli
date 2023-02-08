@@ -9,55 +9,58 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type CommitEvidenceSnykPayload struct {
+type CommitEvidenceGenericPayload struct {
 	CommitSHA    string      `json:"commit_sha"`
 	Pipelines    []string    `json:"pipelines,omitempty"`
+	Description  string      `json:"description,omitempty"`
+	Compliant    bool        `json:"is_compliant"`
 	EvidenceName string      `json:"name"`
 	BuildUrl     string      `json:"build_url"`
-	SnykResults  interface{} `json:"snyk_results"`
-	UserData     interface{} `json:"user_data"`
+	UserData     interface{} `json:"user_data,omitempty"`
 }
 
-type snykCommitEvidenceOptions struct {
-	snykJsonFile string
+type genericCommitEvidenceOptions struct {
 	userDataFile string
-	payload      CommitEvidenceSnykPayload
+	payload      CommitEvidenceGenericPayload
 }
 
-const snykCommitEvidenceShortDesc = `Report Snyk evidence for a commit in a Kosli pipeline.`
+const genericCommitEvidenceShortDesc = `Report Generic evidence for a commit in a Kosli pipeline.`
 
-const snykCommitEvidenceLongDesc = snykCommitEvidenceShortDesc
+const genericCommitEvidenceLongDesc = genericCommitEvidenceShortDesc
 
-const snykCommitEvidenceExample = `
-# report Snyk evidence for a commit related to one Kosli pipeline:
-kosli commit report evidence snyk \
+const genericCommitEvidenceExample = `
+# report Generic evidence for a commit related to one Kosli pipeline:
+kosli commit report evidence generic \
 	--commit yourGitCommitSha1 \
 	--name yourEvidenceName \
+	--description "some description" \
+	--compliant \
 	--pipelines yourPipelineName \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
-	--owner yourOrgName	\
-	--scan-results yourSnykJSONScanResults
+	--owner yourOrgName
 
-# report Snyk evidence for a commit related to multiple Kosli pipelines:
-kosli commit report evidence snyk \
+# report Generic evidence for a commit related to multiple Kosli pipelines with user-data:
+kosli commit report evidence generic \
 	--commit yourGitCommitSha1 \
 	--name yourEvidenceName \
+	--description "some description" \
+	--compliant \
 	--pipelines yourFirstPipelineName,yourSecondPipelineName \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
-	--owner yourOrgName	\
-	--scan-results yourSnykJSONScanResults
+	--owner yourOrgName \
+	--user-data /path/to/json/file.json
 `
 
-func newSnykCommitEvidenceCmd(out io.Writer) *cobra.Command {
-	o := new(snykCommitEvidenceOptions)
+func newGenericCommitEvidenceCmd(out io.Writer) *cobra.Command {
+	o := new(genericCommitEvidenceOptions)
 	cmd := &cobra.Command{
-		Use:     "snyk",
+		Use:     "generic",
 		Hidden:  true,
-		Short:   snykCommitEvidenceShortDesc,
-		Long:    snykCommitEvidenceLongDesc,
-		Example: snykCommitEvidenceExample,
+		Short:   genericCommitEvidenceShortDesc,
+		Long:    genericCommitEvidenceLongDesc,
+		Example: genericCommitEvidenceExample,
 		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -75,7 +78,8 @@ func newSnykCommitEvidenceCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.payload.CommitSHA, "commit", "", evidenceCommit)
 	cmd.Flags().StringSliceVarP(&o.payload.Pipelines, "pipelines", "p", []string{}, pipelinesFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
-	cmd.Flags().StringVarP(&o.snykJsonFile, "scan-results", "R", ".", snykJsonResultsFileFlag)
+	cmd.Flags().BoolVarP(&o.payload.Compliant, "compliant", "C", false, evidenceCompliantFlag)
+	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", evidenceDescriptionFlag)
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
 	addDryRunFlag(cmd)
@@ -88,15 +92,10 @@ func newSnykCommitEvidenceCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *snykCommitEvidenceOptions) run(args []string) error {
+func (o *genericCommitEvidenceOptions) run(args []string) error {
 	var err error
-	url := fmt.Sprintf("%s/api/v1/projects/%s/commit/evidence/snyk", global.Host, global.Owner)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/commit/evidence/generic", global.Host, global.Owner)
 	o.payload.UserData, err = LoadJsonData(o.userDataFile)
-	if err != nil {
-		return err
-	}
-
-	o.payload.SnykResults, err = LoadJsonData(o.snykJsonFile)
 	if err != nil {
 		return err
 	}
@@ -110,7 +109,7 @@ func (o *snykCommitEvidenceOptions) run(args []string) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("snyk scan evidence is reported to commit: %s", o.payload.CommitSHA)
+		logger.Info("generic evidence is reported to commit: %s", o.payload.CommitSHA)
 	}
 	return err
 }

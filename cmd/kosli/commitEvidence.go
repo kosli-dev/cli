@@ -19,6 +19,7 @@ func newCommitEvidenceCmd(out io.Writer) *cobra.Command {
 	cmd.AddCommand(
 		newJUnitCommitEvidenceCmd(out),
 		newSnykCommitEvidenceCmd(out),
+		newGenericCommitEvidenceCmd(out),
 	)
 
 	return cmd
