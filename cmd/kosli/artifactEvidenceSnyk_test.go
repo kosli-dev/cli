@@ -18,7 +18,7 @@ type ArtifactEvidenceSnykCommandTestSuite struct {
 
 func (suite *ArtifactEvidenceSnykCommandTestSuite) SetupTest() {
 	suite.defaultKosliArguments = " -H http://localhost:8001 --owner docs-cmd-test-user -a eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY"
-	suite.artifactFingerprint = "847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa2"
+	suite.artifactFingerprint = "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
 	suite.pipelineName = "snyk-test"
 	tests := []cmdTestCase{
 		{
@@ -38,8 +38,14 @@ func (suite *ArtifactEvidenceSnykCommandTestSuite) TestArtifactEvidenceSnykCmd()
 
 	tests := []cmdTestCase{
 		{
-			name: "report Snyk test evidence works",
+			name: "report Snyk test evidence works (using --fingerprint)",
 			cmd: `pipeline artifact report evidence snyk --fingerprint ` + suite.artifactFingerprint + ` --name snyk-result --pipeline ` + suite.pipelineName + `
+			          --build-url example.com --scan-results testdata/snyk_scan_example.json` + suite.defaultKosliArguments,
+			golden: "snyk scan evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
+		},
+		{
+			name: "report Snyk test evidence works (using --artifact-type)",
+			cmd: `pipeline artifact report evidence snyk testdata/file1 --artifact-type file --name snyk-result --pipeline ` + suite.pipelineName + `
 			          --build-url example.com --scan-results testdata/snyk_scan_example.json` + suite.defaultKosliArguments,
 			golden: "snyk scan evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},

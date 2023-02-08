@@ -18,7 +18,7 @@ type ArtifactEvidenceJUnitCommandTestSuite struct {
 
 func (suite *ArtifactEvidenceJUnitCommandTestSuite) SetupTest() {
 	suite.defaultKosliArguments = " -H http://localhost:8001 --owner docs-cmd-test-user -a eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY"
-	suite.artifactFingerprint = "847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0"
+	suite.artifactFingerprint = "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
 	suite.pipelineName = "junit-test"
 	tests := []cmdTestCase{
 		{
@@ -38,8 +38,14 @@ func (suite *ArtifactEvidenceJUnitCommandTestSuite) TestArtifactEvidenceJUnitCom
 
 	tests := []cmdTestCase{
 		{
-			name: "report JUnit test evidence works",
+			name: "report JUnit test evidence works (using --fingerprint)",
 			cmd: `pipeline artifact report evidence junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result --pipeline ` + suite.pipelineName + `
+			          --build-url example.com --results-dir testdata` + suite.defaultKosliArguments,
+			golden: "junit test evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
+		},
+		{
+			name: "report JUnit test evidence works (using --artifact-type)",
+			cmd: `pipeline artifact report evidence junit testdata/file1 --artifact-type file --name junit-result --pipeline ` + suite.pipelineName + `
 			          --build-url example.com --results-dir testdata` + suite.defaultKosliArguments,
 			golden: "junit test evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},

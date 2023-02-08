@@ -142,7 +142,7 @@ func (o *junitEvidenceOptions) run(args []string) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("junit test evidence is reported to artifact: %s", o.fingerprint)
+		logger.Info("junit test evidence is reported to artifact: %s", o.payload.ArtifactFingerprint)
 	}
 	return err
 }
