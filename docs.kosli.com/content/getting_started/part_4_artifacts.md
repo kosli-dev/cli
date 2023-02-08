@@ -7,7 +7,7 @@ weight: 240
 
 ## Report artifacts
 
-To report an artifact to Kosli, you need its SHA256 fingerprint. You can either provide the fingerprint yourself, or let Kosli CLI calculate it for you. 
+To report an artifact to Kosli, you need its SHA256 fingerprint. You can either provide the fingerprint yourself, or let Kosli CLI calculate it for you - we'll need the artifact available while running reporting command to do that. 
 You also need to provide the name of the Kosli pipeline you want to report the artifact to.
 
 You also should have long enough git history in your local git repo clone to let Kosli calculate the artifact's changelog (the list of commits from the new artifact back to the previous artifact in the same Kosli pipeline).
@@ -20,14 +20,14 @@ Some of the required flags will be automatically resolved if you're using one of
 ### Example 
 
 ```
-$ kosli pipeline artifact report creation kosli \
+$ kosli pipeline artifact report creation project-a-app.bin \
 	--artifact-type file \
 	--build-url https://exampleci.com \
-	--commit-url https://github.com/YourOrg/YourProject/commit/e67f2f2b121f9325ebf166b7b3c707f73cb48b14 \
+	--commit-url https://github.com/ProjectA/ProjectAApp/commit/e67f2f2b121f9325ebf166b7b3c707f73cb48b14 \
 	--git-commit e67f2f2b121f9325ebf166b7b3c707f73cb48b14 \
 	--pipeline project-a 
 
-artifact kosli was reported with fingerprint: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
+artifact project-a-app.bin was reported with fingerprint: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
 ```
 
 See [kosli pipeline artifact report creation](/client_reference/kosli_pipeline_artifact_report_creation/) for more details. 

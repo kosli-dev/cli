@@ -31,10 +31,27 @@ For Bitbucket: [kosli pipeline artifact report evidence bitbucket-pullrequest](/
 * `--bitbucket-username` - you cannot user your email address you use to log in, you have an actual username under "Personal Settings") 
 * `--bitbucket-workspace`
 
+#### Example
+ 
+```
+$ kosli pipeline artifact report evidence github-pullrequest project-a-app.bin \
+	--artifact-type file \
+	--build-url https://exampleci.com \
+	--name pull-request \
+	--pipeline project-a \
+	--github-token *** \
+	--github-org ProjectA \
+	--commit e67f2f2b121f9325ebf166b7b3c707f73cb48b14 
+
+github pull request evidence is reported to artifact: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
+```
+
 
 ### JUnit test 
 
 If you produce your test results in JUnit format, you can use `kosli pipeline artifact report evidence test` command to analyze the results and report it to Kosli. Remember to add the junit test evidence to your [pipeline template](/kosli_overview/what_is_kosli/#template) and use the same label for `--evidence-type` you provided in a `template` 
+
+### Snyk scan
 
 ### Example
 
