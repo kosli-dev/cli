@@ -70,7 +70,7 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePR
 			wantError: true,
 			name:      "report Bitbucket PR evidence fails when both --name and --evidence-type are missing",
 			cmd: `pipeline artifact report evidence bitbucket-pullrequest --fingerprint ` + suite.artifactFingerprint + ` --pipeline ` + suite.pipelineName + `
-			          --build-url example.com --repository cli --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69 --api-token foo --host bar`,
+			          --build-url example.com --repository cli --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69` + suite.defaultKosliArguments,
 			golden: "Error: --name is required\n",
 		},
 		{
