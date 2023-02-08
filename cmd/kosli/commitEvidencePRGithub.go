@@ -35,7 +35,7 @@ const pullRequestCommitEvidenceGithubShortDesc = `Report a Github pull request e
 
 const pullRequestCommitEvidenceGithubLongDesc = pullRequestCommitEvidenceGithubShortDesc + `
 It checks if a pull request exists for a commit and report the pull-request evidence to the commit in Kosli. 
-` + sha256Desc
+`
 
 const pullRequestCommitEvidenceGithubExample = `
 # report a pull request commit evidence to Kosli
@@ -50,7 +50,7 @@ kosli commit report evidence github-pullrequest \
 	--owner yourOrgName \
 	--api-token yourAPIToken
 	
-# fail if a pull request does not exist for your artifact
+# fail if a pull request does not exist for your commit
 kosli commit report evidence github-pullrequest \
 	--commit yourGitCommitSha1 \
 	--repository yourGithubGitRepository \
@@ -97,7 +97,6 @@ func newPullRequestCommitEvidenceGithubCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
-
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{
