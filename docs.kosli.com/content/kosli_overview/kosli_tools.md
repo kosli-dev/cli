@@ -104,8 +104,8 @@ explain kosli version and kosli status commands -->
 The [Reference](/client_reference/) section contains all the information you may need to run the Kosli CLI. 
 
 Most of the commands require a number of flags. Some of them are **required**, some are **optional** - you don't need to use them if you don't want to and some are **conditional** - you need to use them if a certain conditions occurs, e.g.:
-* if you use `--sha256` flag it means you provide artifact's fingerprint on your own and we don't need to calculate it, so the flag `--artifact-type` is not needed
-* if you want to read a docker digest from registry without pulling the image you need to provide registry information: `--registry-password`, `--registry-username` and `--registry-provider`
+* if you use `--sha256` flag it means you provide the artifact's fingerprint on your own and we don't need to calculate it, so the flag `--artifact-type` is not needed
+* if you want to read a docker digest from a registry without pulling the image you need to provide registry information: `--registry-password`, `--registry-username` and `--registry-provider`
 
 Each conditional flag is explained in its description.
 
