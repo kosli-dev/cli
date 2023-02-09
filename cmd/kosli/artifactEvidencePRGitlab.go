@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 
+	"github.com/kosli-dev/cli/internal/gitlab"
 	"github.com/kosli-dev/cli/internal/requests"
-	gitlab "github.com/xanzy/go-gitlab"
+	gitlabSDK "github.com/xanzy/go-gitlab"
 
 	"github.com/spf13/cobra"
 )
@@ -17,11 +17,8 @@ type pullRequestEvidenceGitlabOptions struct {
 	pipelineName       string
 	description        string
 	payload            PullRequestEvidencePayload
-	glToken            string
-	glOwner            string
-	glBaseURL          string
+	gitlabConfig       *gitlab.GitlabConfig
 	commit             string
-	repository         string
 	assert             bool
 	userDataFile       string
 }
@@ -39,6 +36,20 @@ kosli pipeline artifact report evidence gitlab-mergerequest yourDockerImageName 
 	--build-url https://exampleci.com \
 	--name yourEvidenceName \
 	--pipeline yourPipelineName \
+	--gitlab-token yourGitlabToken \
+	--gitlab-org yourGitlabOrg \
+	--commit yourArtifactGitCommit \
+	--repository yourGithubGitRepository \
+	--owner yourOrgName \
+	--api-token yourAPIToken
+
+# report a merge request evidence (from an on-prem Gitlab) to kosli for a docker image 
+kosli pipeline artifact report evidence gitlab-mergerequest yourDockerImageName \
+	--artifact-type docker \
+	--build-url https://exampleci.com \
+	--name yourEvidenceName \
+	--pipeline yourPipelineName \
+	--gitlab-base-url https://gitlab.example.org \
 	--gitlab-token yourGitlabToken \
 	--gitlab-org yourGitlabOrg \
 	--commit yourArtifactGitCommit \
@@ -64,6 +75,7 @@ kosli pipeline artifact report evidence gitlab-mergerequest yourDockerImageName 
 func newPullRequestEvidenceGitlabCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestEvidenceGitlabOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
+	o.gitlabConfig = new(gitlab.GitlabConfig)
 	cmd := &cobra.Command{
 		Use:     "gitlab-mergerequest [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Short:   pullRequestEvidenceGitlabShortDesc,
@@ -93,11 +105,11 @@ func newPullRequestEvidenceGitlabCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVar(&o.glToken, "gitlab-token", "", gitlabTokenFlag)
-	cmd.Flags().StringVar(&o.glOwner, "gitlab-org", "", gitlabOrgFlag)
-	cmd.Flags().StringVar(&o.glBaseURL, "gitlab-base-url", "", gitlabBaseURLFlag)
+	cmd.Flags().StringVar(&o.gitlabConfig.Token, "gitlab-token", "", gitlabTokenFlag)
+	cmd.Flags().StringVar(&o.gitlabConfig.Org, "gitlab-org", "", gitlabOrgFlag)
+	cmd.Flags().StringVar(&o.gitlabConfig.BaseURL, "gitlab-base-url", "", gitlabBaseURLFlag)
 	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
-	cmd.Flags().StringVar(&o.repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
+	cmd.Flags().StringVar(&o.gitlabConfig.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
 	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "sha256", "s", "", sha256Flag)
 	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "f", "", sha256Flag)
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
@@ -138,8 +150,6 @@ func (o *pullRequestEvidenceGitlabOptions) run(out io.Writer, args []string) err
 	}
 
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/pull_request", global.Host, global.Owner, o.pipelineName)
-	// Get repository name from 'owner/repository_name' string
-	o.repository = extractRepoName(o.repository)
 	pullRequestsEvidence, err := o.getGitlabPullRequests()
 	if err != nil {
 		return err
@@ -170,30 +180,19 @@ func (o *pullRequestEvidenceGitlabOptions) run(out io.Writer, args []string) err
 
 func (o *pullRequestEvidenceGitlabOptions) getGitlabPullRequests() ([]*PrEvidence, error) {
 	pullRequestsEvidence := []*PrEvidence{}
-
-	project := o.glOwner + "/" + o.repository
-
-	clientOptFns := []gitlab.ClientOptionFunc{}
-	if o.glBaseURL != "" {
-		clientOptFns = append(clientOptFns, gitlab.WithBaseURL(o.glBaseURL))
-	}
-
-	client, err := gitlab.NewClient(o.glToken, clientOptFns...)
-	if err != nil {
-		log.Fatalf("failed to create Gitlab client: %v", err)
-	}
-	mergerequests, _, err := client.Commits.ListMergeRequestsByCommit(project, o.commit)
+	o.gitlabConfig.MergeRequestsForCommit(o.commit)
+	mrs, err := o.gitlabConfig.MergeRequestsForCommit(o.commit)
 	if err != nil {
 		return pullRequestsEvidence, err
 	}
-	for _, mergerequest := range mergerequests {
-		evidence, err := o.newPREvidence(mergerequest)
+	for _, mr := range mrs {
+		evidence, err := o.newPREvidence(mr)
 		if err != nil {
 			return pullRequestsEvidence, err
 		}
 		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
-
 	}
+
 	if len(pullRequestsEvidence) == 0 {
 		if o.assert {
 			return pullRequestsEvidence, fmt.Errorf("no merge requests found for the given commit: %s", o.commit)
@@ -204,11 +203,15 @@ func (o *pullRequestEvidenceGitlabOptions) getGitlabPullRequests() ([]*PrEvidenc
 }
 
 // newPREvidence creates an evidence from a gitlab merge request
-func (o *pullRequestEvidenceGitlabOptions) newPREvidence(mergerequest *gitlab.MergeRequest) (*PrEvidence, error) {
+func (o *pullRequestEvidenceGitlabOptions) newPREvidence(mr *gitlabSDK.MergeRequest) (*PrEvidence, error) {
 	evidence := &PrEvidence{}
-	evidence.URL = mergerequest.WebURL
-	evidence.MergeCommit = mergerequest.MergeCommitSHA
-	evidence.State = mergerequest.State
-	evidence.Approvers = []string{} // TODO: add actual approvers
+	evidence.URL = mr.WebURL
+	evidence.MergeCommit = mr.MergeCommitSHA
+	evidence.State = mr.State
+	approvers, err := o.gitlabConfig.GetMergeRequestApprovers(mr.IID)
+	if err != nil {
+		return evidence, err
+	}
+	evidence.Approvers = approvers
 	return evidence, nil
 }
