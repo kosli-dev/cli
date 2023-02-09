@@ -104,7 +104,9 @@ Not all the artifacts that run in your environment must be built by you - these 
 
 These artifact will by default be marked with "No provenance" red label and it will affect the compliancy of the whole environment. If you know how and why these artifact are present in your environment you can add them to the Allow-list by clicking a button on the snapshot page, or using [kosli environment allowedartifacts add](/client_reference/kosli_environment_allowedartifacts_add/) command
 
-## Pipelines
+## Pipelines and Artifacts
+
+### Pipelines
 
 Pipelines in Kosli provide a place to report and track artifacts status and related events from your CI pipelines.
 
@@ -120,11 +122,16 @@ A number of required flags may be defaulted to a set of environment variables, d
 
 ### Artifacts
 
+{{<figure src="/images/artifact-view.png" alt="Artifact view" width="1000">}}
+
 Whatever you produce during your build process can be an artifact - a binary file, an archive, a folder, a docker image... sometimes you don't produce anything new while "building" and the complete code can be your artifact. 
 
 Best practice is to create Kosli pipeline for each type of artifact - e.g. if your CI pipeline produces 3 separate artifacts (that could be 3 different binaries for three different platforms) you'd create 3 different Kosli pipelines to report artifacts and evidence. 
 
 ### Template
+
+{{<figure src="/images/artifact-evidence.png" alt="Artifact evidence" width="600">}}
+
 
 When declaring a pipeline you need to provide a template - a list of expected controls (evidence) you require for your artifact in order for the artifact to become compliant. That could be for example:
 * existing pull request
@@ -147,7 +154,13 @@ There are a number of types of evidence with dedicated support:
 * [junit](/client_reference/kosli_pipeline_artifact_report_evidence_junit/) - report the result of your unit test (requires results as XML in JUnit format)
 * [snyk](/client_reference/kosli_pipeline_artifact_report_evidence_snyk/) - report Snyk vulnerability scan 
 
+### History
 
+{{<figure src="/images/artifact-history.png" alt="Artifact evidence" width="600">}}
+
+On the bottom of an artifact page you can see the artifact timeline: when it was created, when evidence, approval and deployment were reported, and when the artifact was reported running in each environment.
+
+When you report event related to specific environment (expected deployment or environment report) the timeline branches out, for each environment. From now on events relating to environment will have different colors - it makes it easier to follow artifacts history in each environment. 
 ### Compliant artifact
 
 Each artifact you report to Kosli will be displayed as being in one of three states in your Kosli pipeline: compliant, non-compliant or incomplete. That status is not reserved for software development in regulated industries. It tells you how far in the process your artifact got and if there are any troubles detected.

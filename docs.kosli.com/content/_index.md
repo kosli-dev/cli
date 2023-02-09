@@ -20,7 +20,7 @@ sections:
         - title: What is Kosli
           image: /images/home/home-concepts.svg
           alt_text: Introducing Kosli icon
-          description: Learn about what Kosli consists of
+          description: Read about what Kosli consists of and what it offers
           link_text: View >
           url: /kosli_overview/what_is_kosli/
         - title: Kosli environments
