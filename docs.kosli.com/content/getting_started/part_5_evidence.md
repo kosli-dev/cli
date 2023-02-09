@@ -5,9 +5,9 @@ weight: 250
 ---
 # Part 5: Evidence
 
-Whenever an event related to one of your evidences happens you should report it to Kosli. 
+Whenever an event related to a required evidence happens you should report it to Kosli. 
 
-Currently we support following types of evidences:
+Currently we support following types of evidence:
 
 ## Pull request evidence
 

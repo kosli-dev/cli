@@ -13,7 +13,7 @@ In all the commands below we skip required `--api-token` and `--owner` flags - t
 
 ## Create a pipeline
 
-To report artifacts to Kosli you need to create a Kosli [pipeline](/kosli_overview/what_is_kosli/#pipelines) first. When you create a pipeline you also define a [template](/kosli_overview/what_is_kosli/#template) - a list of evidences (controls) you need to be reported in order for the artifact to become compliant. Use the `--template` flag to provide the list of controls. 
+To report artifacts to Kosli you need to create a Kosli [pipeline](/kosli_overview/what_is_kosli/#pipelines) first. When you create a pipeline you also define a [template](/kosli_overview/what_is_kosli/#template) - a list of types of evidence (controls) you need to be reported in order for the artifact to become compliant. Use the `--template` flag to provide the list of controls. 
 
 Later, when reporting an evidence for a specific control you will use the same name you used in the template to identify which evidence you are reporting.
 

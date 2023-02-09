@@ -112,7 +112,7 @@ You can create Kosli pipeline using our cli with **[kosli pipeline declare](/cli
 
 You can run the cli command manually e.g. using your own computer, but it's also ok to add your pipeline declaring command to your build pipeline. It's perfectly fine to run it every time you run a build. You can also change your [template](/kosli_overview/what_is_kosli/#template) over time, for example by adding new control. It won't affect the compliancy of artifacts reported before the change of the template.
 
-Once your Kosli pipeline is in place you can start reporting artifacts and evidences of all the events you want to report (matching declared template) from your CI pipelines. Kosli cli provides a variety of commands to make it possible: 
+Once your Kosli pipeline is in place you can start reporting artifacts and evidence of all the events you want to report (matching declared template) from your CI pipelines. Kosli cli provides a variety of commands to make it possible: 
 
 ![Diagram of Pipeline Reporting](/images/pipelines.svg)
 
@@ -122,11 +122,11 @@ A number of required flags may be defaulted to a set of environment variables, d
 
 Whatever you produce during your build process can be an artifact - a binary file, an archive, a folder, a docker image... sometimes you don't produce anything new while "building" and the complete code can be your artifact. 
 
-Best practice is to create Kosli pipeline for each type of artifact - e.g. if your CI pipeline produces 3 separate artifacts (that could be 3 different binaries for three different platforms) you'd create 3 different Kosli pipelines to report artifacts and evidences. 
+Best practice is to create Kosli pipeline for each type of artifact - e.g. if your CI pipeline produces 3 separate artifacts (that could be 3 different binaries for three different platforms) you'd create 3 different Kosli pipelines to report artifacts and evidence. 
 
 ### Template
 
-When declaring a pipeline you need to provide a template - a list of expected controls (evidences) you require for your artifact in order for the artifact to become compliant. That could be for example:
+When declaring a pipeline you need to provide a template - a list of expected controls (evidence) you require for your artifact in order for the artifact to become compliant. That could be for example:
 * existing pull request
 * code coverage report
 * integration test
@@ -140,9 +140,9 @@ Whenever an event related to your artifact happens and you want to report an evi
 
 You can report absolutely anything as evidence. If there is no support for your specific type of evidence, you can use [generic evidence type](/client_reference/kosli_pipeline_artifact_report_evidence_generic/).
 
-Evidences are reported as compliant if Kosli determines them as compliant (e.g. analyzing JUnit or Snyk test results). For generic evidences you can implement your own mechanism to determine compliancy status and use `--compliant=false` in your evidence reporting command, if you want to send an evidence as non-compliant. 
+Evidence is reported as compliant if Kosli determines it as compliant (e.g. analyzing JUnit or Snyk test results). For generic evidence you can implement your own mechanism to determine compliancy status and use `--compliant=false` in your evidence reporting command, if you want to send an evidence as non-compliant. 
 
-There are a number of types of evidences with dedicated support:
+There are a number of types of evidence with dedicated support:
 * [bitbucket](/client_reference/kosli_pipeline_artifact_report_evidence_bitbucket-pullrequest/) and [github](/client_reference/kosli_pipeline_artifact_report_evidence_github-pullrequest/) pull request - verify and report if a pull request exists for a commit used to build your artifact
 * [junit](/client_reference/kosli_pipeline_artifact_report_evidence_junit/) - report the result of your unit test (requires results as XML in JUnit format)
 * [snyk](/client_reference/kosli_pipeline_artifact_report_evidence_snyk/) - report Snyk vulnerability scan 
@@ -154,19 +154,19 @@ Each artifact you report to Kosli will be displayed as being in one of three sta
 
 #### Compliant
 
-When your artifact was reported to kosli together with **all** the required (as defined in the template) evidences reported as ***compliant***, it will be displayed in your Kosli Pipeline as **Compliant** artifact: 
+When your artifact was reported to kosli together with **all** the required (as defined in the template) evidence reported as ***compliant***, it will be displayed in your Kosli Pipeline as **Compliant** artifact: 
 
 {{<figure src="/images/artifact-compliant.png" alt="Environment, Snapshot #1" width="900">}}
 
 #### Non-Compliant
 
-When your artifact was reported to kosli together with **all** the required (as defined in the template) evidences, with **at least one** of these evidences reported as ***non-compliant***, it will be displayed in your Kosli Pipeline as **Non-compliant** artifact: 
+When your artifact was reported to kosli together with **all** the required (as defined in the template) evidence, with **at least one** of the evidence reported as ***non-compliant***, it will be displayed in your Kosli Pipeline as **Non-compliant** artifact: 
 
 {{<figure src="/images/artifact-non-compliant.png" alt="Environment, Snapshot #1" width="900">}}
 
 #### Incomplete
 
-When your artifact was reported to kosli but **not all** the required (as defined in the template) evidences were reported yet, it will be displayed in your Kosli Pipeline as **Incomplete** artifact: 
+When your artifact was reported to kosli but **not all** the required (as defined in the template) evidence was reported yet, it will be displayed in your Kosli Pipeline as **Incomplete** artifact: 
 
 {{<figure src="/images/artifact-incomplete.png" alt="Environment, Snapshot #1" width="900">}}
 
