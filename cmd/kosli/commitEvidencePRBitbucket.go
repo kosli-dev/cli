@@ -49,7 +49,7 @@ kosli commit report evidence bitbucket-pullrequest \
 	--pipelines yourPipelineName \
 	--build-url https://exampleci.com \
 	--owner yourOrgName \
-	--api-token yourAPIToken
+	--api-token yourAPIToken \
 	--assert
 `
 

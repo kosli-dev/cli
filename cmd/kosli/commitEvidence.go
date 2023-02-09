@@ -22,6 +22,7 @@ func newCommitEvidenceCmd(out io.Writer) *cobra.Command {
 		newGenericCommitEvidenceCmd(out),
 		newPullRequestCommitEvidenceGithubCmd(out),
 		newPullRequestCommitEvidenceBitbucketCmd(out),
+		newPullRequestCommitEvidenceGitlabCmd(out),
 	)
 
 	return cmd
