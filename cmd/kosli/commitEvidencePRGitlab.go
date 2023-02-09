@@ -8,7 +8,6 @@ import (
 	"github.com/kosli-dev/cli/internal/gitlab"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
-	gitlabSDK "github.com/xanzy/go-gitlab"
 )
 
 type pullRequestCommitEvidenceGitlabOptions struct {
@@ -100,7 +99,7 @@ func (o *pullRequestCommitEvidenceGitlabOptions) run(args []string) error {
 	var err error
 
 	url := fmt.Sprintf("%s/api/v1/projects/%s/commit/evidence/pull_request", global.Host, global.Owner)
-	pullRequestsEvidence, err := o.getGitlabPullRequests()
+	pullRequestsEvidence, err := getGitlabPullRequests(o.gitlabConfig, o.payload.CommitSHA, o.assert)
 	if err != nil {
 		return err
 	}
@@ -126,41 +125,4 @@ func (o *pullRequestCommitEvidenceGitlabOptions) run(args []string) error {
 		logger.Info("gitlab merge request evidence is reported to commit: %s", o.payload.CommitSHA)
 	}
 	return err
-}
-
-func (o *pullRequestCommitEvidenceGitlabOptions) getGitlabPullRequests() ([]*PrEvidence, error) {
-	pullRequestsEvidence := []*PrEvidence{}
-	mrs, err := o.gitlabConfig.MergeRequestsForCommit(o.payload.CommitSHA)
-	if err != nil {
-		return pullRequestsEvidence, err
-	}
-	for _, mr := range mrs {
-		evidence, err := o.newPREvidence(mr)
-		if err != nil {
-			return pullRequestsEvidence, err
-		}
-		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
-	}
-
-	if len(pullRequestsEvidence) == 0 {
-		if o.assert {
-			return pullRequestsEvidence, fmt.Errorf("no merge requests found for the given commit: %s", o.payload.CommitSHA)
-		}
-		logger.Info("no merge requests found for given commit: " + o.payload.CommitSHA)
-	}
-	return pullRequestsEvidence, nil
-}
-
-// newPREvidence creates an evidence from a gitlab merge request
-func (o *pullRequestCommitEvidenceGitlabOptions) newPREvidence(mr *gitlabSDK.MergeRequest) (*PrEvidence, error) {
-	evidence := &PrEvidence{}
-	evidence.URL = mr.WebURL
-	evidence.MergeCommit = mr.MergeCommitSHA
-	evidence.State = mr.State
-	approvers, err := o.gitlabConfig.GetMergeRequestApprovers(mr.IID)
-	if err != nil {
-		return evidence, err
-	}
-	evidence.Approvers = approvers
-	return evidence, nil
 }

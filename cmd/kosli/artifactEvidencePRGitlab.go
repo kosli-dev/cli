@@ -151,7 +151,7 @@ func (o *pullRequestEvidenceGitlabOptions) run(out io.Writer, args []string) err
 	}
 
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/pull_request", global.Host, global.Owner, o.pipelineName)
-	pullRequestsEvidence, err := o.getGitlabPullRequests()
+	pullRequestsEvidence, err := getGitlabPullRequests(o.gitlabConfig, o.commit, o.assert)
 	if err != nil {
 		return err
 	}
@@ -179,14 +179,14 @@ func (o *pullRequestEvidenceGitlabOptions) run(out io.Writer, args []string) err
 	return err
 }
 
-func (o *pullRequestEvidenceGitlabOptions) getGitlabPullRequests() ([]*PrEvidence, error) {
+func getGitlabPullRequests(gitlabConfig *gitlab.GitlabConfig, commit string, assert bool) ([]*PrEvidence, error) {
 	pullRequestsEvidence := []*PrEvidence{}
-	mrs, err := o.gitlabConfig.MergeRequestsForCommit(o.commit)
+	mrs, err := gitlabConfig.MergeRequestsForCommit(commit)
 	if err != nil {
 		return pullRequestsEvidence, err
 	}
 	for _, mr := range mrs {
-		evidence, err := o.newPREvidence(mr)
+		evidence, err := newPRGitlabEvidence(mr, gitlabConfig)
 		if err != nil {
 			return pullRequestsEvidence, err
 		}
@@ -194,21 +194,21 @@ func (o *pullRequestEvidenceGitlabOptions) getGitlabPullRequests() ([]*PrEvidenc
 	}
 
 	if len(pullRequestsEvidence) == 0 {
-		if o.assert {
-			return pullRequestsEvidence, fmt.Errorf("no merge requests found for the given commit: %s", o.commit)
+		if assert {
+			return pullRequestsEvidence, fmt.Errorf("no merge requests found for the given commit: %s", commit)
 		}
-		logger.Info("no merge requests found for given commit: " + o.commit)
+		logger.Info("no merge requests found for given commit: " + commit)
 	}
 	return pullRequestsEvidence, nil
 }
 
-// newPREvidence creates an evidence from a gitlab merge request
-func (o *pullRequestEvidenceGitlabOptions) newPREvidence(mr *gitlabSDK.MergeRequest) (*PrEvidence, error) {
+// newPRGitlabEvidence creates an evidence from a gitlab merge request
+func newPRGitlabEvidence(mr *gitlabSDK.MergeRequest, gitlabConfig *gitlab.GitlabConfig) (*PrEvidence, error) {
 	evidence := &PrEvidence{}
 	evidence.URL = mr.WebURL
 	evidence.MergeCommit = mr.MergeCommitSHA
 	evidence.State = mr.State
-	approvers, err := o.gitlabConfig.GetMergeRequestApprovers(mr.IID)
+	approvers, err := gitlabConfig.GetMergeRequestApprovers(mr.IID)
 	if err != nil {
 		return evidence, err
 	}

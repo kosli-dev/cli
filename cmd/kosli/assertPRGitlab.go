@@ -34,7 +34,7 @@ func newAssertPullRequestGitlabCmd(out io.Writer) *cobra.Command {
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.assert = true
-			pullRequestsEvidence, err := o.getGitlabPullRequests()
+			pullRequestsEvidence, err := getGitlabPullRequests(o.gitlabConfig, o.commit, true)
 			if err != nil {
 				return err
 			}
