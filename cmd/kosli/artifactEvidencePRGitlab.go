@@ -180,7 +180,6 @@ func (o *pullRequestEvidenceGitlabOptions) run(out io.Writer, args []string) err
 
 func (o *pullRequestEvidenceGitlabOptions) getGitlabPullRequests() ([]*PrEvidence, error) {
 	pullRequestsEvidence := []*PrEvidence{}
-	o.gitlabConfig.MergeRequestsForCommit(o.commit)
 	mrs, err := o.gitlabConfig.MergeRequestsForCommit(o.commit)
 	if err != nil {
 		return pullRequestsEvidence, err
