@@ -13,16 +13,6 @@ type GitlabConfig struct {
 	Repository string
 }
 
-// NewGitlabConfig returns a new GitlabConfig
-func NewGitlabConfig(token, org, repository, baseURL string) *GitlabConfig {
-	return &GitlabConfig{
-		Token:      token,
-		BaseURL:    baseURL,
-		Org:        org,
-		Repository: repository,
-	}
-}
-
 // GetClientOptFns creates a list of ClientOptionFunc
 func (c *GitlabConfig) GetClientOptFns() []gitlab.ClientOptionFunc {
 	clientOptFns := []gitlab.ClientOptionFunc{}
@@ -43,7 +33,7 @@ func (c *GitlabConfig) NewGitlabClientFromToken() (*gitlab.Client, error) {
 
 // projectID returns a project ID that can be
 // used when making calls to Gitlab API
-func (c *GitlabConfig) projectID() string {
+func (c *GitlabConfig) ProjectID() string {
 	return fmt.Sprintf("%s/%s", c.Org, c.Repository)
 }
 
@@ -55,7 +45,7 @@ func (c *GitlabConfig) MergeRequestsForCommit(commit string) ([]*gitlab.MergeReq
 		return mrs, err
 	}
 
-	mrs, _, err = client.Commits.ListMergeRequestsByCommit(c.projectID(), commit)
+	mrs, _, err = client.Commits.ListMergeRequestsByCommit(c.ProjectID(), commit)
 	if err != nil {
 		return mrs, err
 	}
@@ -69,7 +59,7 @@ func (c *GitlabConfig) GetMergeRequestApprovers(mrIID int) ([]string, error) {
 	if err != nil {
 		return approvers, err
 	}
-	approvals, _, err := client.MergeRequestApprovals.GetConfiguration(c.projectID(), mrIID)
+	approvals, _, err := client.MergeRequestApprovals.GetConfiguration(c.ProjectID(), mrIID)
 	if err != nil {
 		return approvers, err
 	}
