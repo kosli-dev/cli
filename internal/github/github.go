@@ -8,7 +8,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// NewGithubClient returns Github client with a token and context
+// NewGithubClientFromToken returns Github client with a token and context
 func NewGithubClientFromToken(ctx context.Context, ghToken string) *gh.Client {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: ghToken},
