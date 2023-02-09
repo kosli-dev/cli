@@ -97,7 +97,6 @@ func newPullRequestEvidenceGitlabCmd(out io.Writer) *cobra.Command {
 				return fmt.Errorf("--name is required")
 			}
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
-
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(out, args)
@@ -131,8 +130,10 @@ func newPullRequestEvidenceGitlabCmd(out io.Writer) *cobra.Command {
 		logger.Error("failed to configure deprecated flags: %v", err)
 	}
 
-	err = RequireFlags(cmd, []string{"gitlab-token", "gitlab-org", "commit",
-		"repository", "pipeline", "build-url"})
+	err = RequireFlags(cmd, []string{
+		"gitlab-token", "gitlab-org", "commit",
+		"repository", "pipeline", "build-url",
+	})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
