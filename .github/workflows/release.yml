@@ -30,6 +30,7 @@ jobs:
       AWS_REGION: eu-central-1
     secrets:
       github_access_token: ${{ secrets.KOSLI_GITHUB_TOKEN }}
+      gitlab_access_token: ${{ secrets.KOSLI_GITLAB_TOKEN }}
       bitbucket_password: ${{ secrets.KOSLI_BITBUCKET_PASSWORD }}
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
       slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
