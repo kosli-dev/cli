@@ -15,7 +15,6 @@ import (
 type pullRequestEvidenceGitlabOptions struct {
 	fingerprintOptions *fingerprintOptions
 	pipelineName       string
-	description        string
 	payload            PullRequestEvidencePayload
 	gitlabConfig       *gitlab.GitlabConfig
 	commit             string
