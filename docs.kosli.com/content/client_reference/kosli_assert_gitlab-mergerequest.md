@@ -1,30 +1,29 @@
 ---
-title: "kosli assert bitbucket-pullrequest"
+title: "kosli assert gitlab-mergerequest"
 ---
 
-## kosli assert bitbucket-pullrequest
+## kosli assert gitlab-mergerequest
 
-Assert if a Bitbucket pull request for a git commit exists. 
+Assert if a Gitlab pull request for a git commit exists.
 
 ### Synopsis
 
-Assert if a Bitbucket pull request for a git commit exists. 
+Assert if a Gitlab pull request for a git commit exists.
 The command exits with non-zero exit code 
 if no pull requests were found for the commit.
 
 ```shell
-kosli assert bitbucket-pullrequest [flags]
+kosli assert gitlab-mergerequest [flags]
 ```
 
 ### Flags
 | Flag | Description |
 | :--- | :--- |
-|        --bitbucket-password string  |  Bitbucket App password. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#authentication for more details.  |
-|        --bitbucket-username string  |  Bitbucket username.  |
-|        --bitbucket-workspace string  |  Bitbucket workspace ID.  |
 |        --commit string  |  Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|    -h, --help  |  help for bitbucket-pullrequest  |
+|        --gitlab-org string  |  Gitlab organization.  |
+|        --gitlab-token string  |  Gitlab token.  |
+|    -h, --help  |  help for gitlab-mergerequest  |
 |        --repository string  |  Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 
 
@@ -43,12 +42,12 @@ kosli assert bitbucket-pullrequest [flags]
 
 ```shell
 
-kosli assert bitbucket-pullrequest  \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
-	--bitbucket-workspace yourBitbucketWorkspace \
+kosli assert gitlab-mergerequest \
+	--github-token yourGithubToken \
+	--github-org yourGithubOrg \
+	--commit yourArtifactGitCommit \
 	--commit yourGitCommit \
-	--repository yourBitbucketGitRepository
+	--repository yourGithubGitRepository
 
 ```
 

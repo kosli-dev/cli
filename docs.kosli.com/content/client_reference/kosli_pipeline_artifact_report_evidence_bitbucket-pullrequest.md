@@ -21,9 +21,9 @@ kosli pipeline artifact report evidence bitbucket-pullrequest [IMAGE-NAME | FILE
 | :--- | :--- |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256' or '--fingerprint'.  |
 |        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
-|        --bitbucket-password string  |  Bitbucket password.  |
-|        --bitbucket-username string  |  Bitbucket user name.  |
-|        --bitbucket-workspace string  |  Bitbucket workspace.  |
+|        --bitbucket-password string  |  Bitbucket App password. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#authentication for more details.  |
+|        --bitbucket-username string  |  Bitbucket username.  |
+|        --bitbucket-workspace string  |  Bitbucket workspace ID.  |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --commit string  |  Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
