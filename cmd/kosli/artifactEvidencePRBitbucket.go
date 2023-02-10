@@ -76,13 +76,20 @@ func newPullRequestEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
+			err = MuXRequiredFlags(cmd, []string{"name", "evidence-type"}, true)
+			if err != nil {
+				return err
+			}
+			err = MuXRequiredFlags(cmd, []string{"sha256", "fingerprint"}, false)
+			if err != nil {
+				return err
+			}
+
 			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.ArtifactFingerprint, false)
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
-			if o.payload.EvidenceName == "" {
-				return fmt.Errorf("--name is required")
-			}
+
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
 
 		},

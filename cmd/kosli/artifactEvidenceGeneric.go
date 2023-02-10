@@ -86,8 +86,14 @@ func newGenericEvidenceCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
-			if o.payload.EvidenceName == "" {
-				return fmt.Errorf("--name is required")
+			err = MuXRequiredFlags(cmd, []string{"name", "evidence-type"}, true)
+			if err != nil {
+				return err
+			}
+
+			err = MuXRequiredFlags(cmd, []string{"sha256", "fingerprint"}, false)
+			if err != nil {
+				return err
 			}
 
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)

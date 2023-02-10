@@ -126,6 +126,37 @@ func RequireFlags(cmd *cobra.Command, flagNames []string) error {
 	return nil
 }
 
+// MuXRequiredFlags returns an error if more than one or none (if atLeastOne is true) of
+// mutually-exclusive required flags are set
+func MuXRequiredFlags(cmd *cobra.Command, flagNames []string, atLeastOne bool) error {
+	flagsSet := 0
+	for _, name := range flagNames {
+		flag := cmd.Flags().Lookup(name)
+		if flag.Changed {
+			flagsSet++
+			if flagsSet > 1 {
+				return fmt.Errorf("only one of %s is allowed", JoinFlagNames(flagNames))
+			}
+		}
+	}
+	if atLeastOne {
+		if flagsSet == 0 {
+			return fmt.Errorf("at least one of %s is required", JoinFlagNames(flagNames))
+		}
+	}
+	return nil
+}
+
+// JoinFlagNames returns a comma-separated string of flag names with "--" prefix
+// from a list of plain names
+func JoinFlagNames(flagNames []string) string {
+	posixFlagNames := []string{}
+	for _, flagName := range flagNames {
+		posixFlagNames = append(posixFlagNames, fmt.Sprintf("--%s", flagName))
+	}
+	return strings.Join(posixFlagNames, ", ")
+}
+
 // RequireGlobalFlags validates that a set of global fields have been assigned a value
 func RequireGlobalFlags(global *GlobalOpts, fields []string) error {
 	v := reflect.ValueOf(*global)
@@ -334,19 +365,17 @@ func LoadJsonData(filepath string) (interface{}, error) {
 // ValidateArtifactArg validates the artifact name or path argument
 func ValidateArtifactArg(args []string, artifactType, inputSha256 string, alwaysRequireArtifactName bool) error {
 	if len(args) > 1 {
-		suppliedArgs := ""
-		separator := ""
+		suppliedArgs := []string{}
 		argsWithLeadingSpace := false
 		for _, arg := range args {
 			if arg == " " {
 				argsWithLeadingSpace = true
 			}
-			suppliedArgs += separator + `"` + arg + `"`
-			separator = ", "
+			suppliedArgs = append(suppliedArgs, arg)
 		}
 		errMsg := []string{}
 		errMsg = append(errMsg, "only one argument (docker image name or file/dir path) is allowed.")
-		errMsg = append(errMsg, fmt.Sprintf("The %d supplied arguments are: [%v]", len(args), suppliedArgs))
+		errMsg = append(errMsg, fmt.Sprintf("The %d supplied arguments are: [%v]", len(args), strings.Join(suppliedArgs, ", ")))
 		if argsWithLeadingSpace {
 			errMsg = append(errMsg, "Arguments with a leading space are probably caused by a lone backslash that has a space after it.")
 		}

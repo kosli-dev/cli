@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
-	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/kosli-dev/cli/internal/testHelpers"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -21,11 +20,7 @@ type ArtifactEvidencePRBitbucketCommandTestSuite struct {
 }
 
 func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) SetupTest() {
-	_, ok := os.LookupEnv("KOSLI_BITBUCKET_PASSWORD")
-	if !ok {
-		suite.T().Logf("skipping %s as KOSLI_BITBUCKET_PASSWORD is unset in environment", suite.T().Name())
-		suite.T().Skip("requires bitbucket password")
-	}
+	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_BITBUCKET_PASSWORD"})
 
 	suite.pipelineName = "bitbucket-pr"
 	suite.artifactFingerprint = "847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0"
@@ -35,7 +30,7 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
-	kosliClient = requests.NewKosliClient(1, false, log.NewStandardLogger())
+	kosliClient = requests.NewKosliClient(1, false, logger)
 
 	CreatePipeline(suite.pipelineName, suite.T())
 	CreateArtifact(suite.pipelineName, suite.artifactFingerprint, "foobar", suite.T())
@@ -71,7 +66,7 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePR
 			name:      "report Bitbucket PR evidence fails when both --name and --evidence-type are missing",
 			cmd: `pipeline artifact report evidence bitbucket-pullrequest --fingerprint ` + suite.artifactFingerprint + ` --pipeline ` + suite.pipelineName + `
 			          --build-url example.com --repository cli --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69` + suite.defaultKosliArguments,
-			golden: "Error: --name is required\n",
+			golden: "Error: at least one of --name, --evidence-type is required\n",
 		},
 		{
 			wantError: true,
@@ -145,6 +140,14 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePR
 					  --user-data non-existing.json
 			          --build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69` + suite.defaultKosliArguments,
 			golden: "Error: open non-existing.json: no such file or directory\n",
+		},
+		{
+			wantError: true,
+			name:      "report Bitbucket PR evidence fails when both --name and --evidence-type are set",
+			cmd: `pipeline artifact report evidence bitbucket-pullrequest --fingerprint ` + suite.artifactFingerprint + ` --name bb-pr --evidence-type bb-pr --pipeline ` + suite.pipelineName + `
+			          --build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69` + suite.defaultKosliArguments,
+			golden: "Flag --evidence-type has been deprecated, use --name instead\n" +
+				"Error: only one of --name, --evidence-type is allowed\n",
 		},
 	}
 

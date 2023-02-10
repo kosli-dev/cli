@@ -13,8 +13,11 @@ import (
 var logger *log.Logger
 var kosliClient *requests.Client
 
-func main() {
+func init() {
 	logger = log.NewStandardLogger()
+}
+
+func main() {
 	cmd, err := newRootCmd(logger.Out, os.Args[1:])
 	if err != nil {
 		logger.Error(err.Error())

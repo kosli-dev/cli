@@ -54,14 +54,6 @@ func (suite *ArtifactEvidencePRGitlabCommandTestSuite) TestArtifactEvidencePRGit
 			golden: "gitlab merge request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
 		{
-			name: "report Gitlab PR evidence works with deprecated flags",
-			cmd: `pipeline artifact report evidence gitlab-mergerequest --sha256 ` + suite.artifactFingerprint + ` --evidence-type gl-pr --pipeline ` + suite.pipelineName + `
-			          --build-url example.com --gitlab-org ewelinawilkosz  --repository merkely-gitlab-demo --commit e6510880aecdc05d79104d937e1adb572bd91911` + suite.defaultKosliArguments,
-			golden: "Flag --sha256 has been deprecated, use --fingerprint instead\n" +
-				"Flag --evidence-type has been deprecated, use --name instead\n" +
-				"gitlab merge request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
-		},
-		{
 			wantError: true,
 			name:      "report Gitlab PR evidence fails when --owner is missing",
 			cmd: `pipeline artifact report evidence gitlab-mergerequest --fingerprint ` + suite.artifactFingerprint + ` --name gl-pr --pipeline ` + suite.pipelineName + `
@@ -71,10 +63,10 @@ func (suite *ArtifactEvidencePRGitlabCommandTestSuite) TestArtifactEvidencePRGit
 		},
 		{
 			wantError: true,
-			name:      "report Gitlab PR evidence fails when both --name and --evidence-type are missing",
+			name:      "report Gitlab PR evidence fails when both --name and --gitlab-org are missing",
 			cmd: `pipeline artifact report evidence gitlab-mergerequest --fingerprint ` + suite.artifactFingerprint + ` --pipeline ` + suite.pipelineName + `
 			          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
-			golden: "Error: --name is required\n",
+			golden: "Error: required flag(s) \"gitlab-org\", \"name\" not set\n",
 		},
 		{
 			wantError: true,

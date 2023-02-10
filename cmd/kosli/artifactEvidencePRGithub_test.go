@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/kosli-dev/cli/internal/testHelpers"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -21,11 +21,7 @@ type ArtifactEvidencePRGithubCommandTestSuite struct {
 }
 
 func (suite *ArtifactEvidencePRGithubCommandTestSuite) SetupTest() {
-	_, ok := os.LookupEnv("KOSLI_GITHUB_TOKEN")
-	if !ok {
-		suite.T().Logf("skipping %s as KOSLI_GITHUB_TOKEN is unset in environment", suite.T().Name())
-		suite.T().Skip("requires github token")
-	}
+	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_GITHUB_TOKEN"})
 
 	suite.pipelineName = "github-pr"
 	suite.artifactFingerprint = "847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0"
@@ -71,7 +67,7 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 			name:      "report Github PR evidence fails when both --name and --evidence-type are missing",
 			cmd: `pipeline artifact report evidence github-pullrequest --fingerprint ` + suite.artifactFingerprint + ` --pipeline ` + suite.pipelineName + `
 			          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
-			golden: "Error: --name is required\n",
+			golden: "Error: at least one of --name, --evidence-type is required\n",
 		},
 		{
 			wantError: true,

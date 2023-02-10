@@ -78,6 +78,7 @@ func newPullRequestEvidenceGitlabCmd(out io.Writer) *cobra.Command {
 	o.gitlabConfig = new(gitlab.GitlabConfig)
 	cmd := &cobra.Command{
 		Use:     "gitlab-mergerequest [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Aliases: []string{"gl-mr", "gitlab-mr"},
 		Short:   pullRequestEvidenceGitlabShortDesc,
 		Long:    pullRequestEvidenceGitlabLongDesc,
 		Example: pullRequestEvidenceGitlabExample,
@@ -93,9 +94,6 @@ func newPullRequestEvidenceGitlabCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
-			if o.payload.EvidenceName == "" {
-				return fmt.Errorf("--name is required")
-			}
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -109,29 +107,17 @@ func newPullRequestEvidenceGitlabCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.gitlabConfig.BaseURL, "gitlab-base-url", "", gitlabBaseURLFlag)
 	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
 	cmd.Flags().StringVar(&o.gitlabConfig.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
-	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "sha256", "s", "", sha256Flag)
 	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "f", "", sha256Flag)
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
-	cmd.Flags().StringVarP(&o.description, "description", "d", "", evidenceDescriptionFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
-	cmd.Flags().StringVarP(&o.payload.EvidenceName, "evidence-type", "e", "", evidenceTypeFlag)
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
-	err := DeprecateFlags(cmd, map[string]string{
-		"evidence-type": "use --name instead",
-		"description":   "description is no longer used",
-		"sha256":        "use --fingerprint instead",
-	})
-	if err != nil {
-		logger.Error("failed to configure deprecated flags: %v", err)
-	}
-
-	err = RequireFlags(cmd, []string{
-		"gitlab-token", "gitlab-org", "commit",
+	err := RequireFlags(cmd, []string{
+		"gitlab-token", "gitlab-org", "commit", "name",
 		"repository", "pipeline", "build-url",
 	})
 	if err != nil {

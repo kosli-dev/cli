@@ -652,3 +652,75 @@ func (suite *CliUtilsTestSuite) unsetEnvVars(envVars map[string]string) {
 func TestCliUtilsTestSuite(t *testing.T) {
 	suite.Run(t, new(CliUtilsTestSuite))
 }
+
+func (suite *CliUtilsTestSuite) TestMuXRequiredFlags() {
+	tests := []struct {
+		name       string
+		flagNames  []string
+		atLeastOne bool
+		wantErr    bool
+		setFlags   int
+	}{
+		{
+			name:      "you can't set both mutually exclusive flags",
+			flagNames: []string{"flag1", "flag2"},
+			wantErr:   true,
+			setFlags:  2,
+		},
+		{
+			name:       "you can set one of TWO mutually exclusive flags when one is strictly required",
+			flagNames:  []string{"flag1", "flag2", "flag3"},
+			setFlags:   1,
+			atLeastOne: true,
+		},
+		{
+			name:       "it is okay to not set any of TWO mutually exclusive flags when atLeastOne is false",
+			flagNames:  []string{"flag1", "flag2"},
+			setFlags:   0,
+			atLeastOne: false,
+		},
+		{
+			name:      "you can set one of THREE mutually exclusive flags",
+			flagNames: []string{"flag1", "flag2", "flag3"},
+			setFlags:  1,
+		},
+		{
+			name:      "you can't set all mutually exclusive flags",
+			flagNames: []string{"flag1", "flag2", "flag3"},
+			wantErr:   true,
+			setFlags:  3,
+		},
+		{
+			name:      "you can't set more than one of mutually exclusive flags",
+			flagNames: []string{"flag1", "flag2", "flag3"},
+			wantErr:   true,
+			setFlags:  2,
+		},
+		{
+			name:       "an error is returned when none of the mutually exclusive flags are set",
+			flagNames:  []string{"flag1", "flag2"},
+			wantErr:    true,
+			setFlags:   0,
+			atLeastOne: true,
+		},
+	}
+	for _, t := range tests {
+		suite.Run(t.name, func() {
+			cmd := &cobra.Command{}
+			var var1, var2, var3 string
+			cmd.Flags().StringVar(&var1, "flag1", "", "")
+			cmd.Flags().StringVar(&var2, "flag2", "", "")
+			cmd.Flags().StringVar(&var3, "flag3", "", "")
+
+			for i := 0; i < t.setFlags; i++ {
+				cmd.Flags().Lookup(t.flagNames[i]).Changed = true
+			}
+			err := MuXRequiredFlags(cmd, t.flagNames, t.atLeastOne)
+			if t.wantErr {
+				require.Error(suite.T(), err)
+			} else {
+				require.NoError(suite.T(), err)
+			}
+		})
+	}
+}

@@ -70,7 +70,7 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) TestArtifactEvidenceGeneri
 			          --build-url example.com %s`,
 				suite.artifactFingerprint, suite.pipelineName, suite.defaultKosliArguments),
 			wantError: true,
-			golden:    "Error: --name is required\n",
+			golden:    "Error: at least one of --name, --evidence-type is required\n",
 		},
 		{
 			name: "report Generic test evidence fails if --sha256, --fingerprint and --artifact-type are missing ",
