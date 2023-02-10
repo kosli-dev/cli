@@ -38,6 +38,17 @@ The following flags are defaulted as follows in the CI list below:
 | --github-org | ${GITHUB_REPOSITORY_OWNER} |
 {{< /tab >}}
 
+{{< tab "Gitlab" >}}
+| Flag | Default |
+| :--- | :--- |
+| --build-url | ${CI_JOB_URL} |
+| --commit-url | ${CI_PROJECT_URL}/-/commit/${CI_COMMIT_SHA} |
+| --commit | ${CI_COMMIT_SHA} |
+| --git-commit | ${CI_COMMIT_SHA} |
+| --repository | ${CI_PROJECT_NAME} |
+| --gitlab-org | ${CI_PROJECT_NAMESPACE} |
+{{< /tab >}}
+
 {{< tab "Teamcity" >}}
 | Flag | Default |
 | :--- | :--- |
