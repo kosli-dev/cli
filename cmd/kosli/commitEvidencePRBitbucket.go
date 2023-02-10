@@ -89,7 +89,7 @@ func newPullRequestCommitEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{
 		"bitbucket-username", "bitbucket-password", "bitbucket-workspace",
-		"commit", "repository", "pipelines", "build-url",
+		"commit", "repository", "pipelines", "build-url", "name",
 	})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)

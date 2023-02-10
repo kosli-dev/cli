@@ -52,6 +52,13 @@ func (suite *CommitEvidencePRGitlabCommandTestSuite) TestCommitEvidencePRGitlabC
 		},
 		{
 			wantError: true,
+			name:      "report Gitlab PR evidence fails when --name is missing",
+			cmd: `commit report evidence gitlab-mergerequest --pipelines ` + suite.pipelineName + `
+			          --build-url example.com --gitlab-org ewelinawilkosz  --repository merkely-gitlab-demo --commit e6510880aecdc05d79104d937e1adb572bd91911` + suite.defaultKosliArguments,
+			golden: "Error: required flag(s) \"name\" not set\n",
+		},
+		{
+			wantError: true,
 			name:      "report Gitlab PR evidence fails when --owner is missing",
 			cmd: `commit report evidence gitlab-mergerequest --name gl-pr --pipelines ` + suite.pipelineName + `
 			          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6 --api-token foo --host bar`,

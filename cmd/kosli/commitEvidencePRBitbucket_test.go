@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/kosli-dev/cli/internal/testHelpers"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -20,11 +20,7 @@ type CommitEvidencePRBitbucketCommandTestSuite struct {
 }
 
 func (suite *CommitEvidencePRBitbucketCommandTestSuite) SetupTest() {
-	_, ok := os.LookupEnv("KOSLI_BITBUCKET_PASSWORD")
-	if !ok {
-		suite.T().Logf("skipping %s as KOSLI_BITBUCKET_PASSWORD is unset in environment", suite.T().Name())
-		suite.T().Skip("requires bitbucket password")
-	}
+	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_BITBUCKET_PASSWORD"})
 
 	suite.pipelineNames = "bitbucket-pr"
 	global = &GlobalOpts{
@@ -53,6 +49,13 @@ func (suite *CommitEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePRBi
 					--build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69 --api-token foo --host bar`,
 			golden: "Error: --owner is not set\n" +
 				"Usage: kosli commit report evidence bitbucket-pullrequest [flags]\n",
+		},
+		{
+			wantError: true,
+			name:      "report Bitbucket PR evidence fails when --name is missing",
+			cmd: `commit report evidence bitbucket-pullrequest --pipelines ` + suite.pipelineNames + `
+					--build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69` + suite.defaultKosliArguments,
+			golden: "Error: required flag(s) \"name\" not set\n",
 		},
 		{
 			wantError: true,

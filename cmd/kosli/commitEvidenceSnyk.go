@@ -75,12 +75,12 @@ func newSnykCommitEvidenceCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.payload.CommitSHA, "commit", "", evidenceCommit)
 	cmd.Flags().StringSliceVarP(&o.payload.Pipelines, "pipelines", "p", []string{}, pipelinesFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
-	cmd.Flags().StringVarP(&o.snykJsonFile, "scan-results", "R", ".", snykJsonResultsFileFlag)
+	cmd.Flags().StringVarP(&o.snykJsonFile, "scan-results", "R", "", snykJsonResultsFileFlag)
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"commit", "build-url", "name"})
+	err := RequireFlags(cmd, []string{"commit", "build-url", "name", "scan-results"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}

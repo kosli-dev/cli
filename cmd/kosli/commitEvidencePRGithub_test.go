@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/kosli-dev/cli/internal/testHelpers"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -20,11 +20,7 @@ type CommitEvidencePRGithubCommandTestSuite struct {
 }
 
 func (suite *CommitEvidencePRGithubCommandTestSuite) SetupTest() {
-	_, ok := os.LookupEnv("KOSLI_GITHUB_TOKEN")
-	if !ok {
-		suite.T().Logf("skipping %s as KOSLI_GITHUB_TOKEN is unset in environment", suite.T().Name())
-		suite.T().Skip("requires github token")
-	}
+	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_GITHUB_TOKEN"})
 
 	suite.pipelineNames = "github-pr"
 	global = &GlobalOpts{
@@ -53,6 +49,13 @@ func (suite *CommitEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGithu
 			          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6 --api-token foo --host bar`,
 			golden: "Error: --owner is not set\n" +
 				"Usage: kosli commit report evidence github-pullrequest [flags]\n",
+		},
+		{
+			wantError: true,
+			name:      "report Github PR evidence fails when --name is missing",
+			cmd: `commit report evidence github-pullrequest --pipelines ` + suite.pipelineNames + ` --github-org kosli-dev
+			          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
+			golden: "Error: required flag(s) \"name\" not set\n",
 		},
 		{
 			wantError: true,

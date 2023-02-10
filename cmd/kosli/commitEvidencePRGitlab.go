@@ -86,7 +86,7 @@ func newPullRequestCommitEvidenceGitlabCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{
 		"gitlab-token", "gitlab-org", "commit",
-		"repository", "pipelines", "build-url",
+		"repository", "pipelines", "build-url", "name",
 	})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
