@@ -18,4 +18,4 @@ markup:
 Params:
   BookSection: '/'
   BookToC: true
-  default_social_thumb: /images/kosli.jpg
+  default_social_thumb: /kosli-logo.svg
