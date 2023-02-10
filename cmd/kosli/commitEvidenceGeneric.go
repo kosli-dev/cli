@@ -57,7 +57,6 @@ func newGenericCommitEvidenceCmd(out io.Writer) *cobra.Command {
 	o := new(genericCommitEvidenceOptions)
 	cmd := &cobra.Command{
 		Use:     "generic",
-		Hidden:  true,
 		Short:   genericCommitEvidenceShortDesc,
 		Long:    genericCommitEvidenceLongDesc,
 		Example: genericCommitEvidenceExample,

@@ -54,7 +54,6 @@ func newSnykCommitEvidenceCmd(out io.Writer) *cobra.Command {
 	o := new(snykCommitEvidenceOptions)
 	cmd := &cobra.Command{
 		Use:     "snyk",
-		Hidden:  true,
 		Short:   snykCommitEvidenceShortDesc,
 		Long:    snykCommitEvidenceLongDesc,
 		Example: snykCommitEvidenceExample,

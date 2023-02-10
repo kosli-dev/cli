@@ -30,7 +30,6 @@ func newAssertPullRequestGitlabCmd(out io.Writer) *cobra.Command {
 		Short:   assertPRGitlabShortDesc,
 		Long:    assertPRGitlabLongDesc,
 		Example: assertPRGitlabExample,
-		Hidden:  true,
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.assert = true

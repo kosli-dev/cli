@@ -54,7 +54,6 @@ func newJUnitCommitEvidenceCmd(out io.Writer) *cobra.Command {
 	o := new(junitCommitEvidenceOptions)
 	cmd := &cobra.Command{
 		Use:     "junit",
-		Hidden:  true,
 		Short:   junitCommitEvidenceShortDesc,
 		Long:    junitCommitEvidenceLongDesc,
 		Example: junitCommitEvidenceExample,

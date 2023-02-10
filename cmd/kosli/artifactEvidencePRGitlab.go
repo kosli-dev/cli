@@ -81,7 +81,6 @@ func newPullRequestEvidenceGitlabCmd(out io.Writer) *cobra.Command {
 		Short:   pullRequestEvidenceGitlabShortDesc,
 		Long:    pullRequestEvidenceGitlabLongDesc,
 		Example: pullRequestEvidenceGitlabExample,
-		Hidden:  true,
 		Args:    cobra.MaximumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
