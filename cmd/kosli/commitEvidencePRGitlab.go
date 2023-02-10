@@ -5,13 +5,13 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/kosli-dev/cli/internal/gitlab"
+	gitlabUtils "github.com/kosli-dev/cli/internal/gitlab"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
 type pullRequestCommitEvidenceGitlabOptions struct {
-	gitlabConfig *gitlab.GitlabConfig
+	gitlabConfig *gitlabUtils.GitlabConfig
 	assert       bool
 	userDataFile string
 	payload      PullRequestCommitEvidencePayload
@@ -51,7 +51,7 @@ kosli commit report evidence gitlab-mergerequest \
 
 func newPullRequestCommitEvidenceGitlabCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestCommitEvidenceGitlabOptions)
-	o.gitlabConfig = new(gitlab.GitlabConfig)
+	o.gitlabConfig = new(gitlabUtils.GitlabConfig)
 	cmd := &cobra.Command{
 		Use:     "gitlab-mergerequest",
 		Short:   pullRequestCommitEvidenceGitlabShortDesc,
@@ -71,7 +71,7 @@ func newPullRequestCommitEvidenceGitlabCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	cmd.Flags().StringVar(&o.gitlabConfig.Token, "gitlab-token", "", gitlabTokenFlag)
-	cmd.Flags().StringVar(&o.gitlabConfig.Org, "gitlab-org", "", gitlabOrgFlag)
+	cmd.Flags().StringVar(&o.gitlabConfig.Org, "gitlab-org", DefaultValue(ci, "namespace"), gitlabOrgFlag)
 	cmd.Flags().StringVar(&o.gitlabConfig.BaseURL, "gitlab-base-url", "", gitlabBaseURLFlag)
 	cmd.Flags().StringVar(&o.gitlabConfig.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
 	cmd.Flags().StringVar(&o.payload.CommitSHA, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)

@@ -22,10 +22,13 @@ import (
 	"github.com/xeonx/timeago"
 )
 
-const bitbucket = "Bitbucket"
-const github = "Github"
-const teamcity = "Teamcity"
-const unknown = "Unknown"
+const (
+	bitbucket = "Bitbucket"
+	github    = "Github"
+	teamcity  = "Teamcity"
+	gitlab    = "Gitlab"
+	unknown   = "Unknown"
+)
 
 // supportedCIs the set of CI tools that are supported for defaulting
 var supportedCIs = []string{bitbucket, github, teamcity}
@@ -48,6 +51,13 @@ var ciTemplates = map[string]map[string]string{
 	},
 	teamcity: {
 		"git-commit": "${BUILD_VCS_NUMBER}",
+	},
+	gitlab: {
+		"git-commit": "${CI_COMMIT_SHA}",
+		"repository": "${CI_PROJECT_NAME}",
+		"build-url":  "${CI_JOB_URL}",
+		"commit-url": "${CI_PROJECT_URL}/-/commit/${CI_COMMIT_SHA}",
+		"namespace":  "${CI_PROJECT_NAMESPACE}",
 	},
 }
 
@@ -81,6 +91,8 @@ func WhichCI() string {
 		return github
 	} else if _, ok := os.LookupEnv("TEAMCITY_VERSION"); ok {
 		return teamcity
+	} else if _, ok := os.LookupEnv("GITLAB_CI"); ok {
+		return gitlab
 	} else {
 		return unknown
 	}
@@ -219,7 +231,6 @@ func getRegistryEndpointForProvider(provider string) (*registryProviderEndpoints
 	default:
 		return getRegistryEndpoint(provider)
 	}
-
 }
 
 func getRegistryEndpoint(url string) (*registryProviderEndpoints, error) {

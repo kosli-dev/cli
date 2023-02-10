@@ -3,7 +3,7 @@ package main
 import (
 	"io"
 
-	"github.com/kosli-dev/cli/internal/gitlab"
+	gitlabUtils "github.com/kosli-dev/cli/internal/gitlab"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +24,7 @@ kosli assert gitlab-mergerequest \
 
 func newAssertPullRequestGitlabCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestEvidenceGitlabOptions)
-	o.gitlabConfig = new(gitlab.GitlabConfig)
+	o.gitlabConfig = new(gitlabUtils.GitlabConfig)
 	cmd := &cobra.Command{
 		Use:     "gitlab-mergerequest",
 		Short:   assertPRGitlabShortDesc,
@@ -44,7 +44,7 @@ func newAssertPullRequestGitlabCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	cmd.Flags().StringVar(&o.gitlabConfig.Token, "gitlab-token", "", gitlabTokenFlag)
-	cmd.Flags().StringVar(&o.gitlabConfig.Org, "gitlab-org", "", gitlabOrgFlag)
+	cmd.Flags().StringVar(&o.gitlabConfig.Org, "gitlab-org", DefaultValue(ci, "namespace"), gitlabOrgFlag)
 	cmd.Flags().StringVar(&o.gitlabConfig.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
 	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
 	addDryRunFlag(cmd)

@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/kosli-dev/cli/internal/gitlab"
+	gitlabUtils "github.com/kosli-dev/cli/internal/gitlab"
 	"github.com/kosli-dev/cli/internal/requests"
 	gitlabSDK "github.com/xanzy/go-gitlab"
 
@@ -16,7 +16,7 @@ type pullRequestEvidenceGitlabOptions struct {
 	fingerprintOptions *fingerprintOptions
 	pipelineName       string
 	payload            PullRequestEvidencePayload
-	gitlabConfig       *gitlab.GitlabConfig
+	gitlabConfig       *gitlabUtils.GitlabConfig
 	commit             string
 	assert             bool
 	userDataFile       string
@@ -74,7 +74,7 @@ kosli pipeline artifact report evidence gitlab-mergerequest yourDockerImageName 
 func newPullRequestEvidenceGitlabCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestEvidenceGitlabOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
-	o.gitlabConfig = new(gitlab.GitlabConfig)
+	o.gitlabConfig = new(gitlabUtils.GitlabConfig)
 	cmd := &cobra.Command{
 		Use:     "gitlab-mergerequest [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Aliases: []string{"gl-mr", "gitlab-mr"},
@@ -101,7 +101,7 @@ func newPullRequestEvidenceGitlabCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	cmd.Flags().StringVar(&o.gitlabConfig.Token, "gitlab-token", "", gitlabTokenFlag)
-	cmd.Flags().StringVar(&o.gitlabConfig.Org, "gitlab-org", "", gitlabOrgFlag)
+	cmd.Flags().StringVar(&o.gitlabConfig.Org, "gitlab-org", DefaultValue(ci, "namespace"), gitlabOrgFlag)
 	cmd.Flags().StringVar(&o.gitlabConfig.BaseURL, "gitlab-base-url", "", gitlabBaseURLFlag)
 	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
 	cmd.Flags().StringVar(&o.gitlabConfig.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
@@ -163,7 +163,7 @@ func (o *pullRequestEvidenceGitlabOptions) run(out io.Writer, args []string) err
 	return err
 }
 
-func getGitlabPullRequests(gitlabConfig *gitlab.GitlabConfig, commit string, assert bool) ([]*PrEvidence, error) {
+func getGitlabPullRequests(gitlabConfig *gitlabUtils.GitlabConfig, commit string, assert bool) ([]*PrEvidence, error) {
 	pullRequestsEvidence := []*PrEvidence{}
 	mrs, err := gitlabConfig.MergeRequestsForCommit(commit)
 	if err != nil {
@@ -187,7 +187,7 @@ func getGitlabPullRequests(gitlabConfig *gitlab.GitlabConfig, commit string, ass
 }
 
 // newPRGitlabEvidence creates an evidence from a gitlab merge request
-func newPRGitlabEvidence(mr *gitlabSDK.MergeRequest, gitlabConfig *gitlab.GitlabConfig) (*PrEvidence, error) {
+func newPRGitlabEvidence(mr *gitlabSDK.MergeRequest, gitlabConfig *gitlabUtils.GitlabConfig) (*PrEvidence, error) {
 	evidence := &PrEvidence{}
 	evidence.URL = mr.WebURL
 	evidence.MergeCommit = mr.MergeCommitSHA
