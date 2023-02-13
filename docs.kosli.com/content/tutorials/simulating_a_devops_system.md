@@ -36,18 +36,21 @@ Source the simulation commands so you can use them later on in the examples:
 source simulation_commands.bash
 ```
 
-To see what a command (eg `create_git_repo_in_tmp`) in the simulation is actually doing run:
+To see what a command (eg `create_git_repo_in_tmp`) in the simulation is actually doing run
+(in zsh you will need `type -f create_git_repo_in_tmp`):
 
 ```shell {.command}
 type create_git_repo_in_tmp
 ```
 ```plaintext {.light-console}
 create_git_repo_in_tmp is a function
-create_git_repo_in_tmp () 
+create_git_repo_in_tmp ()
 { 
-    pushd /tmp;
-    mkdir try-kosli;
+    pushd /tmp
+    mkdir try-kosli
     ...
+	popd
+}
 ```
 
 Create the git repo and simulate a build and deployment to the server:
