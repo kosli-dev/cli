@@ -186,7 +186,7 @@ func getGitlabPullRequests(gitlabConfig *gitlabUtils.GitlabConfig, commit string
 	return pullRequestsEvidence, nil
 }
 
-// newPRGitlabEvidence creates an evidence from a gitlab merge request
+// newPRGitlabEvidence creates evidence from a gitlab merge request
 func newPRGitlabEvidence(mr *gitlabSDK.MergeRequest, gitlabConfig *gitlabUtils.GitlabConfig) (*PrEvidence, error) {
 	evidence := &PrEvidence{}
 	evidence.URL = mr.WebURL

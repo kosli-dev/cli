@@ -172,7 +172,7 @@ func (o *pullRequestCommitEvidenceGithubOptions) getGithubPullRequests() ([]*PrE
 	return pullRequestsEvidence, nil
 }
 
-// newPREvidence creates an evidence from a github pull request
+// newPREvidence creates evidence from a github pull request
 func (o *pullRequestCommitEvidenceGithubOptions) newPREvidence(pullrequest *gh.PullRequest) (*PrEvidence, error) {
 	evidence := &PrEvidence{}
 	evidence.URL = pullrequest.GetHTMLURL()
