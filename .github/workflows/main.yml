@@ -42,8 +42,6 @@ jobs:
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
       platforms: linux/amd64
-      AWS_ACCOUNT_ID: 772819027869
-      AWS_REGION: eu-central-1
     secrets:
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
       slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
