@@ -88,7 +88,7 @@ and [aws-prod](https://app.kosli.com/cyber-dojo/environments/aws-prod).
 
 ### Following the artifact
 
-The runner service, only had one instance running instead of three.
+The runner service had one instance running instead of three.
 The commit which fixed the problem was 
 [16d9990](https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4)
 in the `runner` repository. Follow this commit using the `kosli` command:
