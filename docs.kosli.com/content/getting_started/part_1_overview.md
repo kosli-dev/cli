@@ -19,7 +19,7 @@ You can start with reporting your **artifacts** from your **pipelines** and get 
 Once both pipelines and environment are in place you get a full picture - Kosli automatically connects the status of your runtime environments and reported artifacts so you can easily see when not qualified or suspicious artifacts made their way to your environments.
 
 What does *"using Kosli"* really mean? It boils down to running [Kosli CLI](/kosli_overview/kosli_tools/#cli) commands:
-* whenever an event related to your code or artifact happens in you CI pipeline - eg.: build, code coverage, static code analysis, security scan, etc (whatever your [template](/kosli_overview/what_is_kosli/#template) requires)
+* whenever an event related to your code or artifact happens in your CI pipeline - eg.: build, code coverage, static code analysis, security scan, etc (whatever your [template](/kosli_overview/what_is_kosli/#template) requires)
 * scheduled to monitor environment - e.g.: as a cron job in your environment, or with CI pipeline (depending on the type of the environment you may need to run it in the actual environment or from any machine able to connect to it)
 
 No matter the order you chose for implementing Kosli in you development process, the end result will be the same, so feel free to start with either environments or pipelines. In this overview we'll explain environments first, before moving to pipelines.
@@ -30,7 +30,7 @@ All environment reporting commands are described in detail in [Part 2: Environme
 
 Before you start reporting you need to [create an environment](/getting_started/part_2_environments/#create-an-environment) in Kosli. You should have a separate Kosli environment for each runtime environment you're reporting.
 
-What does *"reporting environment"* mean? You can learn more about the concept in [Environments](/kosli_overview/what_is_kosli/#environments).
+What does *"reporting environments"* mean? You can learn more about the concept in [Environments](/kosli_overview/what_is_kosli/#environments).
 
 In practice it means running a cli command. Depending on the type of your environment you would run this command:
 * **in your CI**, or on any machine able to access the environment: for *ecs*, *lambda*, *s3* and *k8s* environment types
