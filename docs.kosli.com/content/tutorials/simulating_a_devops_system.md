@@ -4,8 +4,8 @@ bookCollapseSection: false
 weight: 530
 ---
 
-# Preparing the tutorial
-To follow the tutorial you need to:
+# Simulating a DevOps system
+To follow the simulation you need to:
 * [Install the `kosli` CLI](/kosli_overview/kosli_tools/#installing-the-kosli-cli).
 * [Get your Kosli API token](/kosli_overview/kosli_tools/#getting-your-kosli-api-token).
 * Set the KOSLI_API_TOKEN environment variable:
@@ -17,7 +17,7 @@ To follow the tutorial you need to:
   export KOSLI_OWNER=<paste-your-kosli-organization-name>
   ```
 
-For this tutorial you will simulate a system with source code, a build system, and a running server.
+You will simulate a system with source code, a build system, and a running server.
 There is a script to help you run these simulations, so you won't need to type too many commands.
 
 You can download the script from here:
@@ -36,7 +36,7 @@ Source the simulation commands so you can use them later on in the examples:
 source simulation_commands.bash
 ```
 
-To see what a command (eg create_git_repo_in_tmp) in the simulation is actually doing run:
+To see what a command (eg `create_git_repo_in_tmp`) in the simulation is actually doing run:
 
 ```shell {.command}
 type create_git_repo_in_tmp
@@ -58,8 +58,8 @@ simulate_build
 simulate_deployment
 ``` 
 
-While you're going through the getting started guide feel free to explore the
-functionality by updating the source code, building and deploying new versions.
+Feel free to explore the functionality by updating the source code, 
+building and deploying new versions.
 
 
 {{< hint info >}}
@@ -90,7 +90,8 @@ it to the Kosli environment.
 
 ## Creating a Kosli environment
 
-To follow the examples make sure you have followed the instructions in Local setup
+[comment]: <> To follow the examples make sure you have 
+[comment]: <> followed the instructions in Local setup 
 
 Create a Kosli environment:
 
@@ -101,7 +102,7 @@ kosli environment declare \
     --description "Production server (for kosli getting started)"
 ```
 
-You can immediately verify that the Kosli environment was created:
+You can immediately verify the Kosli environment was created:
 
 ```shell {.command}
 kosli environment ls
@@ -277,7 +278,8 @@ pull-requests, and so on.
 
 ## Creating a Kosli pipeline
 
-To follow the examples make sure you have followed the instructions in Local setup.
+[comment]: <> To follow the examples make sure you have followed 
+[comment]: <> the instructions in Local setup.
 
 Create a Kosli pipeline where you can report what software your CI system
 is building. You are building two applications, so make
@@ -398,8 +400,8 @@ artifact to get more details.
 
 # Deployments
 
-A Kosli deployment command is used to indicate an artifact is
-being deployed to a given runtime environment. 
+The Kosli expect deployment command is used to indicate an artifact is
+about to be deployed to a given runtime environment. 
 
 
 ## Deploying software to the server and reporting the deployment to Kosli
