@@ -5,8 +5,9 @@ weight: 250
 ---
 # Part 5: Evidence
 
-Whenever an event related to a required evidence happens you should report it to Kosli. 
-You can report an evidence to either an artifact or a git commit. Evidence on a given git commit will get automatically 
+Whenever an event related to required evidence happens you should report it to Kosli. 
+You can report evidence to either a git commit or an artifact. 
+Evidence reported against a git commit will be automatically 
 attached to any artifact produced from that git commit. 
 
 Currently we support following types of evidence:
