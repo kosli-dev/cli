@@ -79,7 +79,7 @@ be using in this guide.
 
 
 
-# Environment
+# Environments
 
 A Kosli environment stores information about
 what software is running in your actual runtime environment (server, Kubernetes cluster, AWS, etc.)
