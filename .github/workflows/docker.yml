@@ -72,10 +72,6 @@ jobs:
         role-duration-seconds: 2400
         role-session-name: ${{ github.event.repository.name }}
 
-    - name: Login to Amazon ECR private
-      id: login-ecr-private
-      uses: aws-actions/amazon-ecr-login@v1
-
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v1
       with:
