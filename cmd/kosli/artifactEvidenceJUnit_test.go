@@ -76,6 +76,15 @@ func (suite *ArtifactEvidenceJUnitCommandTestSuite) TestArtifactEvidenceJUnitCom
 			wantError: true,
 			golden:    "Error: required flag(s) \"pipeline\" not set\n",
 		},
+		{
+			name: "report JUnit test evidence with maven-surefire XML that seems to lack a timestamp on the <testsuite>",
+			cmd: `pipeline artifact report evidence junit --fingerprint ` + suite.artifactFingerprint +
+				` --name junit-result --pipeline ` + suite.pipelineName +
+				` --build-url example.com --results-dir testdata/junit` + suite.defaultKosliArguments,
+			wantError: true,
+			golden:    "Error: XXXXXXXX\n",
+		},
+
 		// We can not test missing --build-url flag since the CI system provides this by default
 	}
 	runTestCmd(suite.T(), tests)
