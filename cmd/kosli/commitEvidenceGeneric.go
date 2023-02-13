@@ -108,7 +108,7 @@ func (o *genericCommitEvidenceOptions) run(args []string) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("generic evidence is reported to commit: %s", o.payload.CommitSHA)
+		logger.Info("generic evidence '%s' is reported to commit: %s", o.payload.EvidenceName, o.payload.CommitSHA)
 	}
 	return err
 }
