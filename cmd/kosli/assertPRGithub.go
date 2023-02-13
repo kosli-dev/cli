@@ -44,6 +44,7 @@ func newAssertPullRequestGithubCmd(out io.Writer) *cobra.Command {
 	ci := WhichCI()
 	cmd.Flags().StringVar(&o.ghToken, "github-token", "", githubTokenFlag)
 	cmd.Flags().StringVar(&o.ghOwner, "github-org", DefaultValue(ci, "owner"), githubOrgFlag)
+	cmd.Flags().StringVar(&o.baseURL, "github-base-url", "", githubBaseURLFlag)
 	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
 	cmd.Flags().StringVar(&o.repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
 	addDryRunFlag(cmd)

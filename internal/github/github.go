@@ -9,19 +9,28 @@ import (
 )
 
 // NewGithubClientFromToken returns Github client with a token and context
-func NewGithubClientFromToken(ctx context.Context, ghToken string) *gh.Client {
+func NewGithubClientFromToken(ctx context.Context, ghToken string, baseURL string) (*gh.Client, error) {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: ghToken},
 	)
 	tc := oauth2.NewClient(ctx, ts)
-	client := gh.NewClient(tc)
-	return client
+	if baseURL != "" {
+		client, err := gh.NewEnterpriseClient(baseURL, baseURL, tc)
+		if err != nil {
+			return nil, err
+		}
+		return client, nil
+	}
+	return gh.NewClient(tc), nil
 }
 
 // PullRequestsForCommit returns a list of pull requests for a specific commit
-func PullRequestsForCommit(ghToken, ghOwner, repository, commit string) ([]*gh.PullRequest, error) {
+func PullRequestsForCommit(ghToken, ghOwner, repository, commit, baseURL string) ([]*gh.PullRequest, error) {
 	ctx := context.Background()
-	client := NewGithubClientFromToken(ctx, ghToken)
+	client, err := NewGithubClientFromToken(ctx, ghToken, baseURL)
+	if err != nil {
+		return []*gh.PullRequest{}, err
+	}
 
 	pullrequests, _, err := client.PullRequests.ListPullRequestsWithCommit(ctx, ghOwner, repository,
 		commit, &gh.PullRequestListOptions{})
@@ -29,10 +38,13 @@ func PullRequestsForCommit(ghToken, ghOwner, repository, commit string) ([]*gh.P
 }
 
 // GetPullRequestApprovers returns a list of approvers for a given pull request
-func GetPullRequestApprovers(ghToken, ghOwner, repository string, number int) ([]string, error) {
+func GetPullRequestApprovers(ghToken, ghOwner, repository string, number int, baseURL string) ([]string, error) {
 	approvers := []string{}
 	ctx := context.Background()
-	client := NewGithubClientFromToken(ctx, ghToken)
+	client, err := NewGithubClientFromToken(ctx, ghToken, baseURL)
+	if err != nil {
+		return approvers, err
+	}
 	reviews, _, err := client.PullRequests.ListReviews(ctx, ghOwner, repository, number, &gh.ListOptions{})
 	if err != nil {
 		return approvers, err

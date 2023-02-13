@@ -26,7 +26,8 @@ func (suite *GithubTestSuite) TestNewGithubClientFromToken() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			client := NewGithubClientFromToken(context.Background(), t.token)
+			client, err := NewGithubClientFromToken(context.Background(), t.token, "")
+			require.NoErrorf(suite.T(), err, "was NOT expecting error but got: %s", err)
 			require.NotNilf(suite.T(), client, "client should not be nil")
 		})
 	}
@@ -70,14 +71,13 @@ func (suite *GithubTestSuite) TestPullRequestsForCommit() {
 				suite.T().Logf("skipping %s as KOSLI_GITHUB_TOKEN is unset in environment", suite.T().Name())
 				suite.T().Skip("requires github token")
 			}
-			prs, err := PullRequestsForCommit(token, t.ghOwner, t.repository, t.commit)
+			prs, err := PullRequestsForCommit(token, t.ghOwner, t.repository, t.commit, "")
 			if t.result.wantError {
 				require.Errorf(suite.T(), err, "expected an error but got: %s", err)
 			} else {
 				require.NoErrorf(suite.T(), err, "was NOT expecting error but got: %s", err)
 				require.Lenf(suite.T(), prs, t.result.numberOfPRs, "expected %d PRs but got %d", t.result.numberOfPRs, len(prs))
 			}
-
 		})
 	}
 }
@@ -128,7 +128,7 @@ func (suite *GithubTestSuite) TestGetPullRequestApprovers() {
 				suite.T().Logf("skipping %s as KOSLI_GITHUB_TOKEN is unset in environment", suite.T().Name())
 				suite.T().Skip("requires github token")
 			}
-			approvers, err := GetPullRequestApprovers(token, t.ghOwner, t.repository, t.number)
+			approvers, err := GetPullRequestApprovers(token, t.ghOwner, t.repository, t.number, "")
 			if t.result.wantError {
 				require.Errorf(suite.T(), err, "expected an error but got: %s", err)
 			} else {
@@ -136,7 +136,6 @@ func (suite *GithubTestSuite) TestGetPullRequestApprovers() {
 				require.ElementsMatchf(suite.T(), t.result.approvers, approvers, "want approvers: %v, got approvers: %v",
 					t.result.approvers, approvers)
 			}
-
 		})
 	}
 }

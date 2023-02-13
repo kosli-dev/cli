@@ -24,6 +24,7 @@ type pullRequestEvidenceGithubOptions struct {
 	description        string
 	payload            PullRequestEvidencePayload
 	ghToken            string
+	baseURL            string
 	ghOwner            string
 	commit             string
 	repository         string
@@ -105,7 +106,6 @@ func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
-
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(out, args)
@@ -117,6 +117,7 @@ func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.ghOwner, "github-org", DefaultValue(ci, "owner"), githubOrgFlag)
 	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
 	cmd.Flags().StringVar(&o.repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
+	cmd.Flags().StringVar(&o.baseURL, "github-base-url", "", githubBaseURLFlag)
 
 	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "sha256", "s", "", sha256Flag)
 	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "f", "", sha256Flag)
@@ -139,8 +140,10 @@ func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 		logger.Error("failed to configure deprecated flags: %v", err)
 	}
 
-	err = RequireFlags(cmd, []string{"github-token", "github-org", "commit",
-		"repository", "pipeline", "build-url"})
+	err = RequireFlags(cmd, []string{
+		"github-token", "github-org", "commit",
+		"repository", "pipeline", "build-url",
+	})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
@@ -191,7 +194,7 @@ func (o *pullRequestEvidenceGithubOptions) run(out io.Writer, args []string) err
 func (o *pullRequestEvidenceGithubOptions) getGithubPullRequests() ([]*PrEvidence, error) {
 	pullRequestsEvidence := []*PrEvidence{}
 
-	pullrequests, err := ghUtils.PullRequestsForCommit(o.ghToken, o.ghOwner, o.repository, o.commit)
+	pullrequests, err := ghUtils.PullRequestsForCommit(o.ghToken, o.ghOwner, o.repository, o.commit, o.baseURL)
 	if err != nil {
 		return pullRequestsEvidence, err
 	}
@@ -221,7 +224,7 @@ func (o *pullRequestEvidenceGithubOptions) newPREvidence(pullrequest *gh.PullReq
 	evidence.State = pullrequest.GetState()
 
 	approvers, err := ghUtils.GetPullRequestApprovers(o.ghToken, o.ghOwner, o.repository,
-		pullrequest.GetNumber())
+		pullrequest.GetNumber(), o.baseURL)
 	if err != nil {
 		return evidence, err
 	}

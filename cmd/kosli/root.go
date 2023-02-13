@@ -96,6 +96,7 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 	githubOrgFlag           = "Github organization. (defaulted if you are running in GitHub Actions: https://docs.kosli.com/ci-defaults )."
 	gitlabOrgFlag           = "Gitlab organization. (defaulted if you are running in Gitlab Pipelines: https://docs.kosli.com/ci-defaults )."
 	gitlabBaseURLFlag       = "[optional] Gitlab base URL (only needed for on-prem Gitlab installations)."
+	githubBaseURLFlag       = "[optional] GitHub base URL (only needed for GitHub Enterprise installations)."
 	registryProviderFlag    = "[conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry."
 	registryUsernameFlag    = "[conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry."
 	registryPasswordFlag    = "[conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry."

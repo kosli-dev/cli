@@ -26,6 +26,7 @@ type pullRequestCommitEvidenceGithubOptions struct {
 	ghToken      string
 	ghOwner      string
 	repository   string
+	baseURL      string
 	assert       bool
 	userDataFile string
 	payload      PullRequestCommitEvidencePayload
@@ -90,6 +91,7 @@ func newPullRequestCommitEvidenceGithubCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.ghToken, "github-token", "", githubTokenFlag)
 	cmd.Flags().StringVar(&o.ghOwner, "github-org", DefaultValue(ci, "owner"), githubOrgFlag)
 	cmd.Flags().StringVar(&o.repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
+	cmd.Flags().StringVar(&o.baseURL, "github-base-url", "", githubBaseURLFlag)
 	cmd.Flags().StringVar(&o.payload.CommitSHA, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
 
 	cmd.Flags().StringSliceVarP(&o.payload.Pipelines, "pipelines", "p", []string{}, pipelinesFlag)
@@ -148,7 +150,7 @@ func (o *pullRequestCommitEvidenceGithubOptions) run(out io.Writer, args []strin
 func (o *pullRequestCommitEvidenceGithubOptions) getGithubPullRequests() ([]*PrEvidence, error) {
 	pullRequestsEvidence := []*PrEvidence{}
 
-	pullrequests, err := ghUtils.PullRequestsForCommit(o.ghToken, o.ghOwner, o.repository, o.payload.CommitSHA)
+	pullrequests, err := ghUtils.PullRequestsForCommit(o.ghToken, o.ghOwner, o.repository, o.payload.CommitSHA, o.baseURL)
 	if err != nil {
 		return pullRequestsEvidence, err
 	}
@@ -178,7 +180,7 @@ func (o *pullRequestCommitEvidenceGithubOptions) newPREvidence(pullrequest *gh.P
 	evidence.State = pullrequest.GetState()
 
 	approvers, err := ghUtils.GetPullRequestApprovers(o.ghToken, o.ghOwner, o.repository,
-		pullrequest.GetNumber())
+		pullrequest.GetNumber(), o.baseURL)
 	if err != nil {
 		return evidence, err
 	}
