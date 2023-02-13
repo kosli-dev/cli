@@ -28,7 +28,7 @@ Error: unknown flag: --artifact-type
 ```
 
 The flag is spelled correctly, but there is a typo in deploymen**c**t.
-Same error will pop up if you're trying to use a command that is not present in the version of kosli cli you are using.
+The same error will pop up if you're trying to use a command that is not present in the version of the kosli CLI you are using.
 
 ### zsh: no such user or named directory
 
@@ -67,7 +67,7 @@ A number of flags won't change their values often (or at all) between commands, 
 
 ### What is dry run and how to use it?
 
-You can use dry run to disable writing to app.kosli.com - e.g. if you're just trying things out, or troubleshooting (dry run will print the payload cli would send in a non dry run mode). 
+You can use dry run to disable writing to app.kosli.com - e.g. if you're just trying things out, or troubleshooting (dry run will print the payload the CLI would send in a non dry run mode). 
 
 Here are two possible ways of enabling a dry run:
 1. use the `--dry-run` flag (no value needed) to enable it per command
@@ -79,7 +79,7 @@ A config file is an alternative for using Kosli flags or Environment variables. 
 
 You can use JSON, YAML or TOML format for your config file. 
 
-If you want to keep certain Kosli configuration in a file use `--config-file` flag when running Kosli commands to let the cli tool know where to look for the file. The path given to `--config-file` flag should be a path relative to the location you're running kosli from. The file needs a valid format and extension, e.g.:
+If you want to keep certain Kosli configuration in a file use `--config-file` flag when running Kosli commands to let the CLI know where to look for the file. The path given to `--config-file` flag should be a path relative to the location you're running kosli from. The file needs a valid format and extension, e.g.:
 
 **kosli-conf.json:**
 ```

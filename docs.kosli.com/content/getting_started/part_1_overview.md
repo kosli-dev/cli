@@ -32,7 +32,7 @@ Before you start reporting you need to [create an environment](/getting_started/
 
 What does *"reporting environments"* mean? You can learn more about the concept in [Environments](/kosli_overview/what_is_kosli/#environments).
 
-In practice it means running a cli command. Depending on the type of your environment you would run this command:
+In practice it means running a CLI command. Depending on the type of your environment you would run this command:
 * **in your CI**, or on any machine able to access the environment: for *ecs*, *lambda*, *s3* and *k8s* environment types
 * **on the actual machine** (or vm) that serves as your environment: for *server*, *docker*, *k8s* environment types (use [helm chart](/helm) to install Kosli reporter as a cronjob)
 

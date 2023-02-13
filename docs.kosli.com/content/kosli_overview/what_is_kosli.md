@@ -57,7 +57,7 @@ Kosli supports different types of runtime environments and the reporting command
 * Physical/virtual server
 
 You can create a Kosli environment using:
-* The cli's **[kosli environment declare](/client_reference/kosli_environment_declare/)** command
+* The CLI's **[kosli environment declare](/client_reference/kosli_environment_declare/)** command
 * The "Add new environment" button under the "Environments" section on [app.kosli.com](https://app.kosli.com) that will take you to environment creation form:
 
 {{<figure src="/images/new-env-form.png" alt="Add environment form" width="900">}}
@@ -110,11 +110,11 @@ These artifact will by default be marked with "No provenance" red label and it w
 
 Pipelines in Kosli provide a place to report and track artifacts status and related events from your CI pipelines.
 
-You can create Kosli pipeline using our cli with **[kosli pipeline declare](/client_reference/kosli_pipeline_declare/)** command. 
+You can create Kosli pipeline using our CLI with **[kosli pipeline declare](/client_reference/kosli_pipeline_declare/)** command. 
 
-You can run the cli command manually e.g. using your own computer, but it's also ok to add your pipeline declaring command to your build pipeline. It's perfectly fine to run it every time you run a build. You can also change your [template](/kosli_overview/what_is_kosli/#template) over time, for example by adding new control. It won't affect the compliancy of artifacts reported before the change of the template.
+You can run the CLI command manually e.g. using your own computer, but it's also ok to add your pipeline declaring command to your build pipeline. It's perfectly fine to run it every time you run a build. You can also change your [template](/kosli_overview/what_is_kosli/#template) over time, for example by adding new control. It won't affect the compliancy of artifacts reported before the change of the template.
 
-Once your Kosli pipeline is in place you can start reporting artifacts and evidence of all the events you want to report (matching declared template) from your CI pipelines. Kosli cli provides a variety of commands to make it possible: 
+Once your Kosli pipeline is in place you can start reporting artifacts and evidence of all the events you want to report (matching declared template) from your CI pipelines. Kosli CLI provides a variety of commands to make it possible: 
 
 ![Diagram of Pipeline Reporting](/images/pipelines.svg)
 
@@ -143,7 +143,7 @@ When declaring a pipeline you need to provide a template - a list of expected co
 Whenever an event related to your artifact happens and you want to report an evidence, you need to tell Kosli which artifact the evidence refers to. You can do it in two ways:
 
 1. You can use `--artifact-type` flag and provide an artifact as an argument to evidence reporting commands (given artifact needs to be available from the location the command is run, so it can be used to calculate artifacts [fingerprint](/kosli_overview/what_is_kosli/#fingerprints))
-1. You can use `--fingerprint` (or `--sha256` for older versions of kosli cli) to provide previously calculated fingerprint of the artifact 
+1. You can use `--fingerprint` (or `--sha256` for older versions of kosli CLI) to provide previously calculated fingerprint of the artifact 
 
 You can report absolutely anything as evidence. If there is no support for your specific type of evidence, you can use [generic evidence type](/client_reference/kosli_pipeline_artifact_report_evidence_generic/).
 

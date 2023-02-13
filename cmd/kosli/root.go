@@ -114,7 +114,7 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 	awsRegionFlag           = "The AWS region."
 	bucketNameFlag          = "The name of the S3 bucket."
 	pathsFlag               = "The comma separated list of artifact directories."
-	shortFlag               = "[optional] Print only the Kosli cli version number."
+	shortFlag               = "[optional] Print only the Kosli CLI version number."
 	longFlag                = "[optional] Print detailed output."
 	reverseFlag             = "[defaulted] Reverse the order of output list."
 	evidenceNameFlag        = "The name of the evidence."

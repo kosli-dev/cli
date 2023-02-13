@@ -142,7 +142,7 @@ A config file is an alternative for using Kosli flags or Environment variables. 
 
 You can use JSON, YAML or TOML format for your config file. 
 
-If you want to keep certain Kosli configuration in a file use `--config-file` flag when running Kosli commands to let the cli tool know where to look for the file. The path given to `--config-file` flag should be a path relative to the location you're running kosli from. The file needs a valid format and extension, e.g.:
+If you want to keep certain Kosli configuration in a file use `--config-file` flag when running Kosli commands to let the CLI tool know where to look for the file. The path given to `--config-file` flag should be a path relative to the location you're running kosli from. The file needs a valid format and extension, e.g.:
 
 **kosli-conf.json:**
 ```
