@@ -71,7 +71,7 @@ func newSnykCommitEvidenceCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVar(&o.payload.CommitSHA, "commit", "", evidenceCommit)
+	cmd.Flags().StringVar(&o.payload.CommitSHA, "commit", DefaultValue(ci, "git-commit"), evidenceCommitFlag)
 	cmd.Flags().StringSliceVarP(&o.payload.Pipelines, "pipelines", "p", []string{}, pipelinesFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
 	cmd.Flags().StringVarP(&o.snykJsonFile, "scan-results", "R", "", snykJsonResultsFileFlag)

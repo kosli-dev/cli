@@ -93,8 +93,8 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 	assertStatusFlag        = "[optional] Exit with non-zero code if Kosli server is not responding."
 	githubTokenFlag         = "Github token."
 	gitlabTokenFlag         = "Gitlab token."
-	githubOrgFlag           = "Github organization."
-	gitlabOrgFlag           = "Gitlab organization."
+	githubOrgFlag           = "Github organization. (defaulted if you are running in GitHub Actions: https://docs.kosli.com/ci-defaults )."
+	gitlabOrgFlag           = "Gitlab organization. (defaulted if you are running in Gitlab Pipelines: https://docs.kosli.com/ci-defaults )."
 	gitlabBaseURLFlag       = "[optional] Gitlab base URL (only needed for on-prem Gitlab installations)."
 	registryProviderFlag    = "[conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry."
 	registryUsernameFlag    = "[conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry."
@@ -118,7 +118,7 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 	reverseFlag             = "[defaulted] Reverse the order of output list."
 	evidenceNameFlag        = "The name of the evidence."
 	fingerprintFlag         = "[conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'."
-	evidenceCommit          = "The git commit SHA1 for which the evidence belongs."
+	evidenceCommitFlag      = "The git commit SHA1 for which the evidence belongs. (defaulted in some CIs: https://docs.kosli.com/ci-defaults)."
 	pipelinesFlag           = "The comma separated list of pipelines for which a commit evidence belongs."
 )
 
