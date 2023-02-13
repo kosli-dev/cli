@@ -190,8 +190,8 @@ No matter if you deploy your artifacts from your build pipeline, or you have a s
 
 ## Fingerprints 
 
-Every time artifact is reported to Kosli a SHA256 digest of it is calculated. It doesn't matter if the artifact is a single file, a directory or a docker image - we can always calculate SHA256. 
+Every time an artifact is reported to Kosli its SHA256 digest of it is calculated. It doesn't matter if the artifact is a single file, a directory or a docker image - we can always calculate its SHA256. 
 
 Fingerprints are used to connect the information recorded in Kosli - about environments, deployments and approval - to a matching artifact. 
 
-You can also use Kosli CLI to calculate the fingerprint of any artifact locally. See [kosli fingerprint](/client_reference/kosli_fingerprint/) for more details.
+You can also use the Kosli CLI to calculate the fingerprint of any artifact locally. See [kosli fingerprint](/client_reference/kosli_fingerprint/) for more details.
