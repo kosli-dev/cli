@@ -29,7 +29,7 @@ type JUnitResults struct {
 	Skipped   int     `json:"skipped"`
 	Total     int     `json:"total"`
 	Duration  float64 `json:"duration"`
-	Timestamp float64 `json:"timestamp"`
+	Timestamp float64 `json:"timestamp,omitempty"`
 }
 
 type junitEvidenceOptions struct {
@@ -87,7 +87,6 @@ func newJUnitEvidenceCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
-
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)
@@ -174,13 +173,18 @@ func ingestJunitDir(testResultsDir string) ([]*JUnitResults, error) {
 
 		// There is no official schema for the timestamp in the junit xml
 		// This one comes from pytest
-		timestamp, err := time.Parse("2006-01-02T15:04:05.999999", suite.Properties["timestamp"])
+		createdAt, err := time.Parse("2006-01-02T15:04:05.999999", suite.Properties["timestamp"])
 		if err != nil {
 			// This one comes from Ruby minitest
-			timestamp, err = time.Parse("2006-01-02T15:04:05+00:00", suite.Properties["timestamp"])
-			if err != nil {
-				return results, err
-			}
+			createdAt, err = time.Parse("2006-01-02T15:04:05+00:00", suite.Properties["timestamp"])
+		}
+
+		// maven surefire plugin generates Junit xml with no timestamp
+		var timestamp float64
+		if err == nil {
+			timestamp = float64(createdAt.UTC().Unix())
+		} else {
+			timestamp = 0.0
 		}
 
 		suiteResult := &JUnitResults{
@@ -190,7 +194,7 @@ func ingestJunitDir(testResultsDir string) ([]*JUnitResults, error) {
 			Skipped:   suite.Totals.Skipped,
 			Errors:    errors,
 			Failures:  failures,
-			Timestamp: float64(timestamp.UTC().Unix()),
+			Timestamp: timestamp,
 		}
 		logger.Debug("parsed <testsuite> result: %+v", suiteResult)
 		results = append(results, suiteResult)
