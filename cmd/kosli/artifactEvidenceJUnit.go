@@ -171,19 +171,22 @@ func ingestJunitDir(testResultsDir string) ([]*JUnitResults, error) {
 			return results, err
 		}
 
-		// There is no official schema for the timestamp in the junit xml
-		// This one comes from pytest
-		createdAt, err := time.Parse("2006-01-02T15:04:05.999999", suite.Properties["timestamp"])
-		if err != nil {
-			// This one comes from Ruby minitest
-			createdAt, err = time.Parse("2006-01-02T15:04:05+00:00", suite.Properties["timestamp"])
-		}
-
-		// maven surefire plugin generates Junit xml with no timestamp
 		var timestamp float64
-		if err == nil {
+		// There is no official schema for the timestamp in the junit xml
+		suite_timestamp := suite.Properties["timestamp"]
+		if suite_timestamp != "" {
+			// This one comes from pytest
+			createdAt, err := time.Parse("2006-01-02T15:04:05.999999", suite_timestamp)
+			if err != nil {
+				// This one comes from Ruby minitest
+				createdAt, err = time.Parse("2006-01-02T15:04:05+00:00", suite_timestamp)
+				if err != nil {
+					return results, err
+				}
+			}
 			timestamp = float64(createdAt.UTC().Unix())
 		} else {
+			// maven surefire plugin generates Junit xml with no timestamp
 			timestamp = 0.0
 		}
 
