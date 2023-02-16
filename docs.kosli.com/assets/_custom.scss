@@ -185,3 +185,16 @@ aside.book-toc .book-toc-content {
         margin-bottom: 5px;
     }
 }
+
+.docs-version-selector {
+    margin-left: auto;
+    margin-right: 3rem;
+    align-self: center;
+
+    select {
+        margin-left: 3rem;
+        border: 0;
+        border-radius: 3px;
+        padding: 5px;
+    }
+}

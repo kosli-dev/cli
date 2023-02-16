@@ -72,6 +72,18 @@
   <script>{{ . | safeJS }}</script>
 {{ end }}
 
+<script>
+  function chooseDocsVersion(option) {
+    let url = '';
+    if (option.value == 'latest') {
+      url = 'https://docs.kosli.com/'
+    } else {
+      url = 'https://' + option.value + '--kosli-docs.netlify.app/';
+    }
+    window.location.href = url;
+  }
+</script>
+
 {{ $reference_pages := where $.Site.Pages "Section" "client_reference" }}
 {{ range $reference_pages }}
   {{ if eq .Permalink $.Permalink }}
