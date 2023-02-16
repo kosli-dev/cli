@@ -93,9 +93,6 @@ it to the Kosli environment.
 
 ## Creating a Kosli environment
 
-[comment]: <> To follow the examples make sure you have 
-[comment]: <> followed the instructions in Local setup 
-
 Create a Kosli environment:
 
 ```shell {.command}
@@ -280,9 +277,6 @@ pull-requests, and so on.
 
 
 ## Creating a Kosli pipeline
-
-[comment]: <> To follow the examples make sure you have followed 
-[comment]: <> the instructions in Local setup.
 
 Create a Kosli pipeline where you can report what software your CI system
 is building. You are building two applications, so make

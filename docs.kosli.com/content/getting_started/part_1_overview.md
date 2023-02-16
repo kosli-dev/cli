@@ -50,8 +50,3 @@ Once your Kosli pipelines are ready you can start reporting your [artifacts](/ge
 
 You can report artifacts and events from wherever you want - including your own machine - but the common practice is to report it from CI immediately after it happens (or, in case of [`kosli expect deployment`](/client_reference/kosli_expect_deployment/) command, right before the deployment starts).
 
-[comment]: <> (When reporting artifact and artifact related events, kosli needs to figure out what's the fingerprint of the artifact the report belongs to.)  
-
-[comment]: <> (It can determine that in two ways:)
-[comment]: <> (if you provide a name or path to the artifact, relative to the location from which you run )
-
