@@ -125,7 +125,7 @@ kosli artifact ls creator --output json
 ```
 ## Get artifact
 
-To get more detailed information about a given artifact use `kosli artifact get`. To identify the artifact you need to use:
+To get more detailed information about a given artifact use `kosli get artifact`. To identify the artifact you need to use:
 * pipeline name followed by `@` and artifact fingerprint
 OR
 * pipeline name followed by `:` and commit sha
@@ -134,9 +134,9 @@ Both are available in the output of `kosli artifact ls` command
 
 ```
 # search for artifact by its fingerprint
-$ kosli artifact get creator@817a72609041c51cd2a3bbbcbeb048c687677986b5a273399c6938b5e6aa1ded
+$ kosli get artifact creator@817a72609041c51cd2a3bbbcbeb048c687677986b5a273399c6938b5e6aa1ded
 Name:                     cyberdojo/creator:344430d
-Pipeline:                 creator
+Flow:                     creator
 Fingerprint:              817a72609041c51cd2a3bbbcbeb048c687677986b5a273399c6938b5e6aa1ded
 Created on:               Wed, 14 Sep 2022 10:48:09 CEST • 2 months ago
 Git commit:               344430d530d26068aa1f39760a9c094c989382f3
@@ -165,9 +165,9 @@ History:
     Started running in aws-prod#259 environment    Fri, 21 Oct 2022 11:05:28 CEST
 
 # search for artifact by its commit sha
-$ kosli artifact get creator:344430d
+$ kosli get artifact creator:344430d
 Name:                     cyberdojo/creator:344430d
-Pipeline:                 creator
+Flow:                     creator
 Fingerprint:              817a72609041c51cd2a3bbbcbeb048c687677986b5a273399c6938b5e6aa1ded
 Created on:               Wed, 14 Sep 2022 10:48:09 CEST • 2 months ago
 Git commit:               344430d530d26068aa1f39760a9c094c989382f3

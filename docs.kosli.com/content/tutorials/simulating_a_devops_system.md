@@ -376,7 +376,7 @@ COMMIT   ARTIFACT                                                               
 You can also get detailed information about each artifact that has been reported:
 
 ```shell {.command}
-kosli artifact get database-server@0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af
+kosli get artifact database-server@0efde582a933f011c3ae9007467a7f973a874517093e9a5a05ea55476f7c91af
 ```
 
 ```plaintext {.light-console}

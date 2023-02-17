@@ -13,42 +13,43 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const artifactGetShortDesc = `Get artifact from a specified pipeline`
+const getArtifactShortDesc = `Get artifact from a specified flow`
 
-const artifactGetLongDesc = artifactGetShortDesc + `
+const getArtifactLongDesc = getArtifactShortDesc + `
 You can get an artifact by its fingerprint or by its git commit sha.
 In case of using the git commit, it is possible to get multiple artifacts matching the git commit.
 
 The expected argument is an expression to specify the artifact to get.
-It has the format <PIPELINE_NAME><SEPARATOR><COMMIT_SHA1|ARTIFACT_SHA256> 
+It has the format <FLOW_NAME><SEPARATOR><COMMIT_SHA1|ARTIFACT_SHA256> 
 
 Specify SNAPPISH by:
-	pipelineName@<fingerprint>  artifact with a given fingerprint. The fingerprint can be short or complete.
-	pipelineName:<commit_sha>   artifact with a given commit SHA. The commit sha can be short or complete.
+	flowName@<fingerprint>  artifact with a given fingerprint. The fingerprint can be short or complete.
+	flowName:<commit_sha>   artifact with a given commit SHA. The commit sha can be short or complete.
 
-Examples of valid expressions are: pipe@184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0, pipe:110d048bf1fce72ba546cbafc4427fb21b958dee
+Examples of valid expressions are: flow@184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0, flow:110d048bf1fce72ba546cbafc4427fb21b958dee
 `
 
-const artifactGetExample = `# get an artifact with a given fingerprint from a pipeline
-kosli artifact get pipelineName@fingerprint \
+const getArtifactExample = `# get an artifact with a given fingerprint from a flow
+kosli get artifact flowName@fingerprint \
 	--api-token yourAPIToken \
 	--owner orgName
-# get an artifact with a given commit SHA from a pipeline
-kosli artifact get pipelineName:commitSHA \
+
+# get an artifact with a given commit SHA from a flow
+kosli get artifact flowName:commitSHA \
 	--api-token yourAPIToken \
 	--owner orgName`
 
-type artifactGetOptions struct {
+type getArtifactOptions struct {
 	output string
 }
 
-func newArtifactGetCmd(out io.Writer) *cobra.Command {
-	o := new(artifactGetOptions)
+func newGetArtifactCmd(out io.Writer) *cobra.Command {
+	o := new(getArtifactOptions)
 	cmd := &cobra.Command{
-		Use:     "get SNAPPISH",
-		Short:   artifactGetShortDesc,
-		Long:    artifactGetLongDesc,
-		Example: artifactGetExample,
+		Use:     "artifact SNAPPISH",
+		Short:   getArtifactShortDesc,
+		Long:    getArtifactLongDesc,
+		Example: getArtifactExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -67,7 +68,7 @@ func newArtifactGetCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *artifactGetOptions) run(out io.Writer, args []string) error {
+func (o *getArtifactOptions) run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/projects/%s/artifact/?snappish=%s", global.Host, global.Owner, url.QueryEscape(args[0]))
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,
@@ -114,7 +115,7 @@ func printArtifactsJsonAsTable(artifacts []map[string]interface{}, out io.Writer
 
 		rows := []string{}
 		rows = append(rows, fmt.Sprintf("Name:\t%s", artifactData["filename"].(string)))
-		rows = append(rows, fmt.Sprintf("Pipeline:\t%s", artifact["pipeline_name"].(string)))
+		rows = append(rows, fmt.Sprintf("Flow:\t%s", artifact["pipeline_name"].(string)))
 		rows = append(rows, fmt.Sprintf("Fingerprint:\t%s", artifactData["sha256"].(string)))
 		createdAt, err := formattedTimestamp(artifactData["logged_at"], false)
 		if err != nil {

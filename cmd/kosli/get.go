@@ -18,6 +18,7 @@ func newGetCmd(out io.Writer) *cobra.Command {
 	// Add subcommands
 	cmd.AddCommand(
 		newGetFlowCmd(out),
+		newGetArtifactCmd(out),
 	)
 	return cmd
 }

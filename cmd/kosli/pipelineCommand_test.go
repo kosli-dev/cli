@@ -168,7 +168,7 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		{
 			wantError: false,
 			name:      "get artifact",
-			cmd:       "artifact get newFlow@4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments,
+			cmd:       "get artifact newFlow@4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments,
 			golden:    "",
 		},
 
