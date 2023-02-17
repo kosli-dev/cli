@@ -17,7 +17,6 @@ type ApprovalReportTestSuite struct {
 }
 
 func (suite *ApprovalReportTestSuite) SetupTest() {
-
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Owner:    "docs-cmd-test-user",
@@ -31,9 +30,8 @@ func (suite *ApprovalReportTestSuite) SetupTest() {
 	logger = log.NewStandardLogger()
 	kosliClient = requests.NewKosliClient(1, false, logger)
 
-	CreatePipeline(suite.pipelineName, suite.T())
+	CreateFlow(suite.pipelineName, suite.T())
 	CreateArtifact(suite.pipelineName, suite.artifactFingerprint, "foobar", suite.T())
-
 }
 
 func (suite *ApprovalReportTestSuite) TestApprovalReportCmd() {

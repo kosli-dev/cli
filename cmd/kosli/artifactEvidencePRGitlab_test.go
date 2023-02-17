@@ -34,7 +34,7 @@ func (suite *ArtifactEvidencePRGitlabCommandTestSuite) SetupTest() {
 	logger = log.NewStandardLogger()
 	kosliClient = requests.NewKosliClient(1, false, logger)
 
-	CreatePipeline(suite.pipelineName, suite.T())
+	CreateFlow(suite.pipelineName, suite.T())
 	CreateArtifact(suite.pipelineName, suite.artifactFingerprint, "foobar", suite.T())
 }
 

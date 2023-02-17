@@ -31,7 +31,7 @@ func (suite *CommitEvidencePRGitlabCommandTestSuite) SetupTest() {
 
 	kosliClient = requests.NewKosliClient(1, false, logger)
 
-	CreatePipeline(suite.pipelineName, suite.T())
+	CreateFlow(suite.pipelineName, suite.T())
 }
 
 func (suite *CommitEvidencePRGitlabCommandTestSuite) TestCommitEvidencePRGitlabCmd() {

@@ -30,7 +30,7 @@ func (suite *CommitEvidenceGenericCommandTestSuite) SetupTest() {
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
 	kosliClient = requests.NewKosliClient(1, false, log.NewStandardLogger())
 
-	CreatePipeline(suite.pipelineNames, suite.T())
+	CreateFlow(suite.pipelineNames, suite.T())
 }
 
 func (suite *CommitEvidenceGenericCommandTestSuite) TestCommitEvidenceGenericCommandCmd() {

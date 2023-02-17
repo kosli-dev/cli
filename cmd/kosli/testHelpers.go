@@ -15,18 +15,18 @@ func PullExampleImage(t *testing.T) {
 	require.NoError(t, err, fmt.Sprintf("pulling example image %s should work without error", ImageName))
 }
 
-// CreatePipeline creates a pipeline on the server
-func CreatePipeline(pipelineName string, t *testing.T) {
+// CreateFlow creates a flow on the server
+func CreateFlow(flowName string, t *testing.T) {
 	o := &pipelineDeclareOptions{
 		payload: PipelinePayload{
-			Name:        pipelineName,
-			Description: "test pipeline",
+			Name:        flowName,
+			Description: "test flow",
 			Visibility:  "private",
 		},
 	}
 
 	err := o.run()
-	require.NoError(t, err, "pipeline should be created without error")
+	require.NoError(t, err, "flow should be created without error")
 }
 
 // CreateArtifact creates an artifact on the server

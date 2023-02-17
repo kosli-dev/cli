@@ -33,7 +33,7 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) SetupTest() {
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
 	kosliClient = requests.NewKosliClient(1, false, log.NewStandardLogger())
 
-	CreatePipeline(suite.pipelineName, suite.T())
+	CreateFlow(suite.pipelineName, suite.T())
 	CreateArtifact(suite.pipelineName, suite.artifactFingerprint, "foobar", suite.T())
 }
 
