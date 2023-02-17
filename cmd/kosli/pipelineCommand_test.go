@@ -17,7 +17,7 @@ type PipelineCommandTestSuite struct {
 
 func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 	defaultKosliArguments := " -H http://localhost:8001 --owner docs-cmd-test-user -a eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY"
-	defaultArtifactArguments := " --pipeline newFlow --build-url www.yr.no --commit-url www.nrk.no"
+	defaultArtifactArguments := " --flow newFlow --build-url www.yr.no --commit-url www.nrk.no"
 	defaultRepoRoot := " --repo-root ../.. "
 
 	repo, err := git.PlainOpen("../..")
@@ -104,55 +104,55 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		{
 			wantError: false,
 			name:      "report artifact with sha256",
-			cmd:       "pipeline artifact report creation FooBar_1 --git-commit " + headHash + " --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "report artifact FooBar_1 --git-commit " + headHash + " --fingerprint 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 		{
 			wantError: false,
 			name:      "report different artifact with same git commit",
-			cmd:       "pipeline artifact report creation FooBar_2 --git-commit " + headHash + " --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "report artifact FooBar_2 --git-commit " + headHash + " --fingerprint 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 		{
 			wantError: false,
 			name:      "report artifact file",
-			cmd:       "pipeline artifact report creation testdata/file1 --artifact-type file --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "report artifact testdata/file1 --artifact-type file --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 		{
 			wantError: false,
 			name:      "report artifact dir",
-			cmd:       "pipeline artifact report creation testdata/folder1 --artifact-type dir --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "report artifact testdata/folder1 --artifact-type dir --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 		{
 			wantError: true,
 			name:      "report artifact missing --owner",
-			cmd:       "pipeline artifact report creation testdata/folder1 --artifact-type dir --git-commit " + headHash + defaultArtifactArguments + defaultRepoRoot,
+			cmd:       "report artifact testdata/folder1 --artifact-type dir --git-commit " + headHash + defaultArtifactArguments + defaultRepoRoot,
 			golden:    "",
 		},
 		{
 			wantError: true,
 			name:      "report artifact missing --artifact-type",
-			cmd:       "pipeline artifact report creation testdata/folder1 --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "report artifact testdata/folder1 --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 		{
 			wantError: true,
 			name:      "report artifact missing --git-commit",
-			cmd:       "pipeline artifact report creation testdata/folder1 --artifact-type dir " + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "report artifact testdata/folder1 --artifact-type dir " + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
 			golden:    "Error: required flag(s) \"git-commit\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report artifact file with non existing file name",
-			cmd:       "pipeline artifact report creation thisIsNotAFile --artifact-type file --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "report artifact thisIsNotAFile --artifact-type file --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
 			golden:    "Error: open thisIsNotAFile: no such file or directory\n",
 		},
 		{
 			wantError: true,
 			name:      "report artifact wrong --repo-root",
-			cmd:       "pipeline artifact report creation testdata/file1 --repo-root . --artifact-type file --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments,
+			cmd:       "report artifact testdata/file1 --repo-root . --artifact-type file --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments,
 			golden:    "Error: failed to open git repository at .: repository does not exist\n",
 		},
 

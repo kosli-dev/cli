@@ -55,6 +55,7 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 	sha256Flag              = "[conditional] The SHA256 fingerprint for the artifact. Only required if you don't specify '--artifact-type'."
 	artifactTypeFlag        = "[conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256' or '--fingerprint'."
 	pipelineNameFlag        = "The Kosli pipeline name."
+	flowNameFlag            = "The Kosli flow name."
 	newPipelineFlag         = "The name of the pipeline to be created or updated."
 	outputFlag              = "[defaulted] The format of the output. Valid formats are: [table, json]."
 	pipefileFlag            = "[deprecated] The path to the JSON pipefile."
@@ -204,6 +205,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 
 		// New syntax commands
 		newGetCmd(out),
+		newReportCmd(out),
 	)
 
 	return cmd, nil

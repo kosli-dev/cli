@@ -28,13 +28,13 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) SetupTest() {
 		},
 		{
 			name: "create first artifact",
-			cmd: `pipeline artifact report creation FooBar_1 --git-commit HEAD --sha256 ` + suite.artifactFingerprint + `
-			          --pipeline ` + suite.pipelineName + ` --build-url www.yr.no --commit-url www.nrk.no --repo-root ../..` + suite.defaultKosliArguments,
+			cmd: `report artifact FooBar_1 --git-commit HEAD --fingerprint ` + suite.artifactFingerprint + `
+			          --flow ` + suite.pipelineName + ` --build-url www.yr.no --commit-url www.nrk.no --repo-root ../..` + suite.defaultKosliArguments,
 		},
 		{
 			name: "create second artifact",
-			cmd: `pipeline artifact report creation testdata --git-commit HEAD --artifact-type dir ` + `
-			          --pipeline ` + suite.pipelineName + ` --build-url www.yr.no --commit-url www.nrk.no --repo-root ../..` + suite.defaultKosliArguments,
+			cmd: `report artifact testdata --git-commit HEAD --artifact-type dir ` + `
+			          --flow ` + suite.pipelineName + ` --build-url www.yr.no --commit-url www.nrk.no --repo-root ../..` + suite.defaultKosliArguments,
 		},
 	}
 	runTestCmd(suite.T(), tests)

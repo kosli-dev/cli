@@ -12,17 +12,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type artifactCreationOptions struct {
+type reportArtifactOptions struct {
 	fingerprintOptions *fingerprintOptions
-	pipelineName       string
+	flowName           string
 	srcRepoRoot        string
 	payload            ArtifactPayload
 }
 
 type ArtifactPayload struct {
-	Sha256      string                `json:"sha256"`
+	Fingerprint string                `json:"sha256"`
 	Filename    string                `json:"filename"`
-	Description string                `json:"description"`
 	GitCommit   string                `json:"git_commit"`
 	BuildUrl    string                `json:"build_url"`
 	CommitUrl   string                `json:"commit_url"`
@@ -30,48 +29,48 @@ type ArtifactPayload struct {
 	CommitsList []*gitview.CommitInfo `json:"commits_list"`
 }
 
-const artifactCreationShortDesc = `Report an artifact creation to a Kosli pipeline.`
+const reportArtifactShortDesc = `Report an artifact creation to a Kosli flow.`
 
-const artifactCreationLongDesc = artifactCreationShortDesc + `
+const reportArtifactLongDesc = reportArtifactShortDesc + `
 ` + sha256Desc
 
-const artifactCreationExample = `
-# Report to a Kosli pipeline that a file type artifact has been created
-kosli pipeline artifact report creation FILE.tgz \
+const reportArtifactExample = `
+# Report to a Kosli flow that a file type artifact has been created
+kosli report artifact FILE.tgz \
 	--api-token yourApiToken \
 	--artifact-type file \
 	--build-url https://exampleci.com \
 	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
 	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
 	--owner yourOrgName \
-	--pipeline yourPipelineName 
+	--flow yourFlowName 
 
-# Report to a Kosli pipeline that an artifact with a provided fingerprint (sha256) has been created
-kosli pipeline artifact report creation ANOTHER_FILE.txt \
+# Report to a Kosli flow that an artifact with a provided fingerprint (sha256) has been created
+kosli report artifact ANOTHER_FILE.txt \
 	--api-token yourApiToken \
 	--build-url https://exampleci.com \
 	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
 	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
 	--owner yourOrgName \
-	--pipeline yourPipelineName \
-	--sha256 yourSha256 
+	--flow yourFlowName \
+	--fingerprint yourFingerprint 
 `
 
-func newArtifactCreationCmd(out io.Writer) *cobra.Command {
-	o := new(artifactCreationOptions)
+func newReportArtifactCmd(out io.Writer) *cobra.Command {
+	o := new(reportArtifactOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "creation {IMAGE-NAME | FILE-PATH | DIR-PATH}",
-		Short:   artifactCreationShortDesc,
-		Long:    artifactCreationLongDesc,
-		Example: artifactCreationExample,
+		Use:     "artifact {IMAGE-NAME | FILE-PATH | DIR-PATH}",
+		Short:   reportArtifactShortDesc,
+		Long:    reportArtifactLongDesc,
+		Example: reportArtifactExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
-			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.Sha256, true)
+			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.Fingerprint, true)
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -83,9 +82,8 @@ func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVarP(&o.payload.Sha256, "sha256", "s", "", sha256Flag)
-	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
-	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", artifactDescriptionFlag)
+	cmd.Flags().StringVarP(&o.payload.Fingerprint, "fingerprint", "F", "", fingerprintFlag)
+	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.payload.GitCommit, "git-commit", "g", DefaultValue(ci, "git-commit"), gitCommitFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), buildUrlFlag)
 	cmd.Flags().StringVarP(&o.payload.CommitUrl, "commit-url", "u", DefaultValue(ci, "commit-url"), commitUrlFlag)
@@ -93,7 +91,7 @@ func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"pipeline", "git-commit", "build-url", "commit-url"})
+	err := RequireFlags(cmd, []string{"flow", "git-commit", "build-url", "commit-url"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
@@ -101,12 +99,12 @@ func newArtifactCreationCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *artifactCreationOptions) run(args []string) error {
-	if o.payload.Sha256 != "" {
+func (o *reportArtifactOptions) run(args []string) error {
+	if o.payload.Fingerprint != "" {
 		o.payload.Filename = args[0]
 	} else {
 		var err error
-		o.payload.Sha256, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
+		o.payload.Fingerprint, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
 			return err
 		}
@@ -137,7 +135,7 @@ func (o *artifactCreationOptions) run(args []string) error {
 		logger.Warning("Repo URL will not be reported, %s", err.Error())
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/", global.Host, global.Owner, o.pipelineName)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/", global.Host, global.Owner, o.flowName)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPut,
@@ -148,16 +146,16 @@ func (o *artifactCreationOptions) run(args []string) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("artifact %s was reported with fingerprint: %s", o.payload.Filename, o.payload.Sha256)
+		logger.Info("artifact %s was reported with fingerprint: %s", o.payload.Filename, o.payload.Fingerprint)
 	}
 	return err
 }
 
 // latestCommit retrieves the git commit of the latest artifact for a pipeline in Kosli
-func (o *artifactCreationOptions) latestCommit(branchName string) (string, error) {
+func (o *reportArtifactOptions) latestCommit(branchName string) (string, error) {
 	latestCommitUrl := fmt.Sprintf(
 		"%s/api/v1/projects/%s/%s/artifacts/%s/latest_commit%s",
-		global.Host, global.Owner, o.pipelineName, o.payload.Sha256, asBranchParameter(branchName))
+		global.Host, global.Owner, o.flowName, o.payload.Fingerprint, asBranchParameter(branchName))
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,
@@ -176,10 +174,10 @@ func (o *artifactCreationOptions) latestCommit(branchName string) (string, error
 	}
 	latestCommit := latestCommitResponse["latest_commit"]
 	if latestCommit == nil {
-		logger.Debug("no previous artifacts were found for pipeline: %s", o.pipelineName)
+		logger.Debug("no previous artifacts were found for flow: %s", o.flowName)
 		return "", nil
 	} else {
-		logger.Debug("latest artifact for pipeline: %s has the git commit: %s", o.pipelineName, latestCommit.(string))
+		logger.Debug("latest artifact for flow: %s has the git commit: %s", o.flowName, latestCommit.(string))
 		return latestCommit.(string), nil
 	}
 }

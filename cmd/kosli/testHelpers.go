@@ -30,15 +30,15 @@ func CreatePipeline(pipelineName string, t *testing.T) {
 }
 
 // CreateArtifact creates an artifact on the server
-func CreateArtifact(pipelineName, artifactFingerprint, artifactName string, t *testing.T) {
-	o := &artifactCreationOptions{
-		srcRepoRoot:  "../..",
-		pipelineName: pipelineName,
+func CreateArtifact(flowName, artifactFingerprint, artifactName string, t *testing.T) {
+	o := &reportArtifactOptions{
+		srcRepoRoot: "../..",
+		flowName:    flowName,
 		payload: ArtifactPayload{
-			Sha256:    artifactFingerprint,
-			GitCommit: "HEAD",
-			BuildUrl:  "www.yr.no",
-			CommitUrl: " www.nrk.no",
+			Fingerprint: artifactFingerprint,
+			GitCommit:   "HEAD",
+			BuildUrl:    "www.yr.no",
+			CommitUrl:   " www.nrk.no",
 		},
 	}
 
