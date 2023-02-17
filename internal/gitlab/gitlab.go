@@ -3,6 +3,7 @@ package gitlab
 import (
 	"fmt"
 
+	"github.com/kosli-dev/cli/internal/types"
 	"github.com/xanzy/go-gitlab"
 )
 
@@ -35,6 +36,36 @@ func (c *GitlabConfig) NewGitlabClientFromToken() (*gitlab.Client, error) {
 // used when making calls to Gitlab API
 func (c *GitlabConfig) ProjectID() string {
 	return fmt.Sprintf("%s/%s", c.Org, c.Repository)
+}
+
+func (c *GitlabConfig) PREvidenceForCommit(commit string) ([]*types.PREvidence, error) {
+	pullRequestsEvidence := []*types.PREvidence{}
+	mrs, err := c.MergeRequestsForCommit(commit)
+	if err != nil {
+		return pullRequestsEvidence, err
+	}
+	for _, mr := range mrs {
+		evidence, err := c.newPRGitlabEvidence(mr)
+		if err != nil {
+			return pullRequestsEvidence, err
+		}
+		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
+	}
+	return pullRequestsEvidence, nil
+}
+
+func (c *GitlabConfig) newPRGitlabEvidence(mr *gitlab.MergeRequest) (*types.PREvidence, error) {
+	evidence := &types.PREvidence{
+		URL:         mr.WebURL,
+		MergeCommit: mr.MergeCommitSHA,
+		State:       mr.State,
+	}
+	approvers, err := c.GetMergeRequestApprovers(mr.IID)
+	if err != nil {
+		return evidence, err
+	}
+	evidence.Approvers = approvers
+	return evidence, nil
 }
 
 // MergeRequestsForCommit returns a list of MRs for a given commit

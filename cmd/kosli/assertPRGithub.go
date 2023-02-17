@@ -3,8 +3,14 @@ package main
 import (
 	"io"
 
+	ghUtils "github.com/kosli-dev/cli/internal/github"
 	"github.com/spf13/cobra"
 )
+
+type assertPullRequestGithubOptions struct {
+	githubConfig *ghUtils.GithubConfig
+	commit       string
+}
 
 const assertPRGithubShortDesc = `Assert if a Github pull request for a git commit exists.`
 
@@ -22,7 +28,8 @@ kosli assert github-pullrequest  \
 `
 
 func newAssertPullRequestGithubCmd(out io.Writer) *cobra.Command {
-	o := new(pullRequestEvidenceGithubOptions)
+	o := new(assertPullRequestGithubOptions)
+	o.githubConfig = new(ghUtils.GithubConfig)
 	cmd := &cobra.Command{
 		Use:     "github-pullrequest",
 		Aliases: []string{"gh-pr", "github-pr"},
@@ -31,22 +38,13 @@ func newAssertPullRequestGithubCmd(out io.Writer) *cobra.Command {
 		Example: assertPRGithubExample,
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			o.assert = true
-			pullRequestsEvidence, err := o.getGithubPullRequests()
-			if err != nil {
-				return err
-			}
-			logger.Info("found [%d] pull request(s) in Github for commit: %s", len(pullRequestsEvidence), o.commit)
-			return nil
+			return o.run(args)
 		},
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVar(&o.ghToken, "github-token", "", githubTokenFlag)
-	cmd.Flags().StringVar(&o.ghOwner, "github-org", DefaultValue(ci, "owner"), githubOrgFlag)
-	cmd.Flags().StringVar(&o.baseURL, "github-base-url", "", githubBaseURLFlag)
+	addGithubFlags(cmd, o.githubConfig, ci)
 	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
-	cmd.Flags().StringVar(&o.repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"github-token", "github-org", "commit", "repository"})
@@ -55,4 +53,13 @@ func newAssertPullRequestGithubCmd(out io.Writer) *cobra.Command {
 	}
 
 	return cmd
+}
+
+func (o *assertPullRequestGithubOptions) run(args []string) error {
+	pullRequestsEvidence, err := getPullRequestsEvidence(o.githubConfig, o.commit, true)
+	if err != nil {
+		return err
+	}
+	logger.Info("found [%d] pull request(s) in Github for commit: %s", len(pullRequestsEvidence), o.commit)
+	return nil
 }

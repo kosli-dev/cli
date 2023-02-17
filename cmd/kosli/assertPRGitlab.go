@@ -7,6 +7,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type assertPullRequestGitlabOptions struct {
+	gitlabConfig *gitlabUtils.GitlabConfig
+	commit       string
+}
+
 const assertPRGitlabShortDesc = `Assert if a Gitlab pull request for a git commit exists.`
 
 const assertPRGitlabLongDesc = assertPRGitlabShortDesc + `
@@ -23,7 +28,7 @@ kosli assert gitlab-mergerequest \
 `
 
 func newAssertPullRequestGitlabCmd(out io.Writer) *cobra.Command {
-	o := new(pullRequestEvidenceGitlabOptions)
+	o := new(assertPullRequestGitlabOptions)
 	o.gitlabConfig = new(gitlabUtils.GitlabConfig)
 	cmd := &cobra.Command{
 		Use:     "gitlab-mergerequest",
@@ -32,21 +37,12 @@ func newAssertPullRequestGitlabCmd(out io.Writer) *cobra.Command {
 		Example: assertPRGitlabExample,
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			o.assert = true
-			pullRequestsEvidence, err := getGitlabPullRequests(o.gitlabConfig, o.commit, true)
-			if err != nil {
-				return err
-			}
-			logger.Info("found [%d] pull request(s) in Gitlab for commit: %s", len(pullRequestsEvidence), o.commit)
-			return nil
+			return o.run(args)
 		},
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVar(&o.gitlabConfig.Token, "gitlab-token", "", gitlabTokenFlag)
-	cmd.Flags().StringVar(&o.gitlabConfig.Org, "gitlab-org", DefaultValue(ci, "namespace"), gitlabOrgFlag)
-	cmd.Flags().StringVar(&o.gitlabConfig.BaseURL, "gitlab-base-url", "", gitlabBaseURLFlag)
-	cmd.Flags().StringVar(&o.gitlabConfig.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
+	addGitlabFlags(cmd, o.gitlabConfig, ci)
 	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
 	addDryRunFlag(cmd)
 
@@ -58,4 +54,13 @@ func newAssertPullRequestGitlabCmd(out io.Writer) *cobra.Command {
 	}
 
 	return cmd
+}
+
+func (o *assertPullRequestGitlabOptions) run(args []string) error {
+	pullRequestsEvidence, err := getPullRequestsEvidence(o.gitlabConfig, o.commit, true)
+	if err != nil {
+		return err
+	}
+	logger.Info("found [%d] pull request(s) in Gitlab for commit: %s", len(pullRequestsEvidence), o.commit)
+	return nil
 }

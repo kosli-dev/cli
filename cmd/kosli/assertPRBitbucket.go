@@ -3,15 +3,13 @@ package main
 import (
 	"io"
 
+	bbUtils "github.com/kosli-dev/cli/internal/bitbucket"
 	"github.com/spf13/cobra"
 )
 
 type assertPullRequestBitbucketOptions struct {
-	bbUsername  string
-	bbPassword  string
-	bbWorkspace string
-	commit      string
-	repository  string
+	bbConfig *bbUtils.Config
+	commit   string
 }
 
 const assertPRBitbucketShortDesc = `Assert if a Bitbucket pull request for a git commit exists. `
@@ -31,6 +29,9 @@ kosli assert bitbucket-pullrequest  \
 
 func newAssertPullRequestBitbucketCmd(out io.Writer) *cobra.Command {
 	o := new(assertPullRequestBitbucketOptions)
+	o.bbConfig = new(bbUtils.Config)
+	o.bbConfig.Logger = logger
+	o.bbConfig.KosliClient = kosliClient
 	cmd := &cobra.Command{
 		Use:     "bitbucket-pullrequest",
 		Aliases: []string{"bb-pr", "bitbucket-pr"},
@@ -44,11 +45,8 @@ func newAssertPullRequestBitbucketCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVar(&o.bbUsername, "bitbucket-username", "", bbUsernameFlag)
-	cmd.Flags().StringVar(&o.bbPassword, "bitbucket-password", "", bbPasswordFlag)
-	cmd.Flags().StringVar(&o.bbWorkspace, "bitbucket-workspace", DefaultValue(ci, "workspace"), bbWorkspaceFlag)
+	addBitbucketFlags(cmd, o.bbConfig, ci)
 	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
-	cmd.Flags().StringVar(&o.repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"bitbucket-username", "bitbucket-password",
@@ -61,8 +59,7 @@ func newAssertPullRequestBitbucketCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *assertPullRequestBitbucketOptions) run(args []string) error {
-	pullRequestsEvidence, err := getPullRequestsFromBitbucketApi(o.bbWorkspace,
-		o.repository, o.commit, o.bbUsername, o.bbPassword, true)
+	pullRequestsEvidence, err := getPullRequestsEvidence(o.bbConfig, o.commit, true)
 	if err != nil {
 		return err
 	}

@@ -607,30 +607,6 @@ func (suite *CliUtilsTestSuite) TestValidateRegistryFlags() {
 	}
 }
 
-func (suite *CliUtilsTestSuite) TestExtractRepoName() {
-	for _, t := range []struct {
-		name  string
-		input string
-		want  string
-	}{
-		{
-			name:  "full repo name (including org) is separated",
-			input: "kosli-dev/cli",
-			want:  "cli",
-		},
-		{
-			name:  "short repo name is returned as is",
-			input: "cli",
-			want:  "cli",
-		},
-	} {
-		suite.Run(t.name, func() {
-			repo := extractRepoName(t.input)
-			require.Equalf(suite.T(), t.want, repo, "expected %s but got %s", t.want, repo)
-		})
-	}
-}
-
 // setEnvVars sets env variables
 func (suite *CliUtilsTestSuite) setEnvVars(envVars map[string]string) {
 	for key, value := range envVars {

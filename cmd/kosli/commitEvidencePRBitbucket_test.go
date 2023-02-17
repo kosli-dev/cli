@@ -40,7 +40,7 @@ func (suite *CommitEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePRBi
 			name: "report Bitbucket PR evidence works",
 			cmd: `commit report evidence bitbucket-pullrequest --name bb-pr --pipelines ` + suite.pipelineNames + `
 					--build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69` + suite.defaultKosliArguments,
-			golden: "bitbucket pull request commit evidence is reported to commit: 2492011ef04a9da09d35be706cf6a4c5bc6f1e69\n",
+			golden: "bitbucket pull request evidence is reported to commit: 2492011ef04a9da09d35be706cf6a4c5bc6f1e69\n",
 		},
 		{
 			wantError: true,
@@ -98,7 +98,7 @@ func (suite *CommitEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePRBi
 			cmd: `commit report evidence bitbucket-pullrequest --name bb-pr --pipelines ` + suite.pipelineNames + `
 			          --build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit cb6ec5fcbb25b1ebe4859d35ab7995ab973f894c` + suite.defaultKosliArguments,
 			golden: "no pull requests found for given commit: cb6ec5fcbb25b1ebe4859d35ab7995ab973f894c\n" +
-				"bitbucket pull request commit evidence is reported to commit: cb6ec5fcbb25b1ebe4859d35ab7995ab973f894c\n",
+				"bitbucket pull request evidence is reported to commit: cb6ec5fcbb25b1ebe4859d35ab7995ab973f894c\n",
 		},
 		{
 			wantError: true,

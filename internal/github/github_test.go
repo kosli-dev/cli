@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/testHelpers"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -17,18 +18,89 @@ type GithubTestSuite struct {
 // suite.
 func (suite *GithubTestSuite) TestNewGithubClientFromToken() {
 	for _, t := range []struct {
-		name  string
-		token string
+		name    string
+		token   string
+		baseURL string
 	}{
 		{
 			name:  "when provided a token, a client is created.",
 			token: "some_fake_token",
 		},
+		{
+			name:    "when baseURL and token are provided, a client is created.",
+			token:   "some_fake_token",
+			baseURL: "https://github.example.com",
+		},
 	} {
 		suite.Run(t.name, func() {
-			client, err := NewGithubClientFromToken(context.Background(), t.token, "")
+			client, err := NewGithubClientFromToken(context.Background(), t.token, t.baseURL)
 			require.NoErrorf(suite.T(), err, "was NOT expecting error but got: %s", err)
 			require.NotNilf(suite.T(), client, "client should not be nil")
+		})
+	}
+}
+
+func (suite *GithubTestSuite) TestPREvidenceForCommit() {
+	type result struct {
+		wantError   bool
+		numberOfPRs int
+	}
+	for _, t := range []struct {
+		name           string
+		config         *GithubConfig
+		commit         string
+		requireEnvVars bool // indicates that a test case needs real credentials from env vars
+		result         result
+	}{
+		{
+			name:   "invalid token causes an error",
+			commit: "73d7fee2f31ade8e1a9c456c324255212c30c2a6",
+			config: &GithubConfig{
+				Token:      "some_fake_token",
+				Org:        "kosli-dev",
+				Repository: "cli",
+			},
+			result: result{
+				wantError: true,
+			},
+		},
+		{
+			name: "can list pull requests for a commit.",
+			config: &GithubConfig{
+				Org:        "kosli-dev",
+				Repository: "cli",
+			},
+			commit:         "73d7fee2f31ade8e1a9c456c324255212c30c2a6",
+			requireEnvVars: true,
+			result: result{
+				numberOfPRs: 1,
+			},
+		},
+		{
+			name: "non-existing commit will cause an error.",
+			config: &GithubConfig{
+				Org:        "kosli-dev",
+				Repository: "cli",
+			},
+			commit:         "73d7fee2f31ade8e1a9c456c324255212c3tf45a",
+			requireEnvVars: true,
+			result: result{
+				wantError: true,
+			},
+		},
+	} {
+		suite.Run(t.name, func() {
+			if t.requireEnvVars {
+				testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_GITHUB_TOKEN"})
+				t.config.Token = os.Getenv("KOSLI_GITHUB_TOKEN")
+			}
+			prs, err := t.config.PREvidenceForCommit(t.commit)
+			if t.result.wantError {
+				require.Errorf(suite.T(), err, "expected an error but got: %s", err)
+			} else {
+				require.NoErrorf(suite.T(), err, "was NOT expecting error but got: %s", err)
+				require.Len(suite.T(), prs, t.result.numberOfPRs)
+			}
 		})
 	}
 }
@@ -66,12 +138,15 @@ func (suite *GithubTestSuite) TestPullRequestsForCommit() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			token, ok := os.LookupEnv("KOSLI_GITHUB_TOKEN")
-			if !ok {
-				suite.T().Logf("skipping %s as KOSLI_GITHUB_TOKEN is unset in environment", suite.T().Name())
-				suite.T().Skip("requires github token")
+			testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_GITHUB_TOKEN"})
+			token := os.Getenv("KOSLI_GITHUB_TOKEN")
+			c := &GithubConfig{
+				Token:      token,
+				Org:        t.ghOwner,
+				Repository: t.repository,
 			}
-			prs, err := PullRequestsForCommit(token, t.ghOwner, t.repository, t.commit, "")
+
+			prs, err := c.PullRequestsForCommit(t.commit)
 			if t.result.wantError {
 				require.Errorf(suite.T(), err, "expected an error but got: %s", err)
 			} else {
@@ -123,12 +198,14 @@ func (suite *GithubTestSuite) TestGetPullRequestApprovers() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			token, ok := os.LookupEnv("KOSLI_GITHUB_TOKEN")
-			if !ok {
-				suite.T().Logf("skipping %s as KOSLI_GITHUB_TOKEN is unset in environment", suite.T().Name())
-				suite.T().Skip("requires github token")
+			testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_GITHUB_TOKEN"})
+			token := os.Getenv("KOSLI_GITHUB_TOKEN")
+			c := &GithubConfig{
+				Token:      token,
+				Org:        t.ghOwner,
+				Repository: t.repository,
 			}
-			approvers, err := GetPullRequestApprovers(token, t.ghOwner, t.repository, t.number, "")
+			approvers, err := c.GetPullRequestApprovers(t.number)
 			if t.result.wantError {
 				require.Errorf(suite.T(), err, "expected an error but got: %s", err)
 			} else {

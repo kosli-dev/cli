@@ -1,23 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"io"
-	"net/http"
 
-	"github.com/kosli-dev/cli/internal/requests"
+	bbUtils "github.com/kosli-dev/cli/internal/bitbucket"
 	"github.com/spf13/cobra"
 )
-
-type pullRequestCommitEvidenceBitbucketOptions struct {
-	bbUsername   string
-	bbPassword   string
-	bbWorkspace  string
-	repository   string
-	assert       bool
-	userDataFile string
-	payload      PullRequestCommitEvidencePayload
-}
 
 const pullRequestCommitEvidenceBitbucketShortDesc = `Report a Bitbucket pull request evidence for a commit in a Kosli pipeline.`
 
@@ -54,7 +42,13 @@ kosli commit report evidence bitbucket-pullrequest \
 `
 
 func newPullRequestCommitEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
-	o := new(pullRequestCommitEvidenceBitbucketOptions)
+	config := new(bbUtils.Config)
+	config.Logger = logger
+	config.KosliClient = kosliClient
+
+	o := new(pullRequestCommitOptions)
+	o.retriever = config
+
 	cmd := &cobra.Command{
 		Use:     "bitbucket-pullrequest",
 		Aliases: []string{"bb-pr", "bitbucket-pr"},
@@ -69,21 +63,14 @@ func newPullRequestCommitEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			o.retriever.(*bbUtils.Config).Assert = o.assert
 			return o.run(args)
 		},
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVar(&o.bbUsername, "bitbucket-username", "", bbUsernameFlag)
-	cmd.Flags().StringVar(&o.bbPassword, "bitbucket-password", "", bbPasswordFlag)
-	cmd.Flags().StringVar(&o.bbWorkspace, "bitbucket-workspace", DefaultValue(ci, "workspace"), bbWorkspaceFlag)
-	cmd.Flags().StringVar(&o.repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
-	cmd.Flags().StringVar(&o.payload.CommitSHA, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
-
-	cmd.Flags().StringSliceVarP(&o.payload.Pipelines, "pipelines", "p", []string{}, pipelinesFlag)
-	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
-	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
-	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
+	addBitbucketFlags(cmd, o.retriever.(*bbUtils.Config), ci)
+	addCommitPRFlags(cmd, o, ci)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
 	addDryRunFlag(cmd)
 
@@ -96,41 +83,4 @@ func newPullRequestCommitEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 	}
 
 	return cmd
-}
-
-func (o *pullRequestCommitEvidenceBitbucketOptions) run(args []string) error {
-	var err error
-
-	// Get repository name from 'owner/repository_name' string
-	o.repository = extractRepoName(o.repository)
-
-	url := fmt.Sprintf("%s/api/v1/projects/%s/commit/evidence/pull_request", global.Host, global.Owner)
-
-	pullRequestsEvidence, err := getPullRequestsFromBitbucketApi(o.bbWorkspace,
-		o.repository, o.payload.CommitSHA, o.bbUsername, o.bbPassword, o.assert)
-	if err != nil {
-		return err
-	}
-
-	o.payload.UserData, err = LoadJsonData(o.userDataFile)
-	if err != nil {
-		return err
-	}
-	o.payload.GitProvider = "bitbucket"
-	o.payload.PullRequests = pullRequestsEvidence
-
-	logger.Debug("found %d pull request(s) for commit: %s\n", len(pullRequestsEvidence), o.payload.CommitSHA)
-
-	reqParams := &requests.RequestParams{
-		Method:   http.MethodPut,
-		URL:      url,
-		Payload:  o.payload,
-		DryRun:   global.DryRun,
-		Password: global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("bitbucket pull request commit evidence is reported to commit: %s", o.payload.CommitSHA)
-	}
-	return err
 }

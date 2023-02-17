@@ -12,6 +12,13 @@ const fingerprintLongDesc = fingerprintShortDesc + `
 Requires artifact type flag to be set.
 Artifact type can be one of: "file" for files, "dir" for directories, "docker" for docker images.`
 
+type fingerprintOptions struct {
+	artifactType     string
+	registryProvider string
+	registryUsername string
+	registryPassword string
+}
+
 func newFingerprintCmd(out io.Writer) *cobra.Command {
 	o := new(fingerprintOptions)
 	cmd := &cobra.Command{

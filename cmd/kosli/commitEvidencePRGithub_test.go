@@ -40,7 +40,7 @@ func (suite *CommitEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGithu
 			name: "report Github PR evidence works",
 			cmd: `commit report evidence github-pullrequest --name gh-pr --pipelines ` + suite.pipelineNames + `
 			          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
-			golden: "github pull request commit evidence is reported to commit: 73d7fee2f31ade8e1a9c456c324255212c30c2a6\n",
+			golden: "github pull request evidence is reported to commit: 73d7fee2f31ade8e1a9c456c324255212c30c2a6\n",
 		},
 		{
 			wantError: true,
@@ -97,7 +97,7 @@ func (suite *CommitEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGithu
 			cmd: `commit report evidence github-pullrequest --name gh-pr --pipelines ` + suite.pipelineNames + `
 			          --build-url example.com --github-org kosli-dev --repository cli --commit 9bca2c44eaf221a79fb18a1a11bdf2997adaf870` + suite.defaultKosliArguments,
 			golden: "no pull requests found for given commit: 9bca2c44eaf221a79fb18a1a11bdf2997adaf870\n" +
-				"github pull request commit evidence is reported to commit: 9bca2c44eaf221a79fb18a1a11bdf2997adaf870\n",
+				"github pull request evidence is reported to commit: 9bca2c44eaf221a79fb18a1a11bdf2997adaf870\n",
 		},
 		{
 			wantError: true,

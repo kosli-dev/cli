@@ -1,0 +1,161 @@
+package main
+
+import (
+	"fmt"
+	"io"
+	"net/http"
+	"reflect"
+
+	bbUtils "github.com/kosli-dev/cli/internal/bitbucket"
+	ghUtils "github.com/kosli-dev/cli/internal/github"
+	gitlabUtils "github.com/kosli-dev/cli/internal/gitlab"
+	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/kosli-dev/cli/internal/types"
+)
+
+type PullRequestArtifactEvidencePayload struct {
+	TypedEvidencePayload
+	GitProvider  string              `json:"git_provider"`
+	PullRequests []*types.PREvidence `json:"pull_requests"`
+}
+
+type PullRequestCommitEvidencePayload struct {
+	TypedEvidencePayload
+	Pipelines    []string            `json:"pipelines,omitempty"`
+	GitProvider  string              `json:"git_provider"`
+	PullRequests []*types.PREvidence `json:"pull_requests"`
+}
+
+type pullRequestArtifactOptions struct {
+	fingerprintOptions *fingerprintOptions
+	pipelineName       string
+	payload            PullRequestArtifactEvidencePayload
+	retriever          interface{}
+	commit             string
+	userDataFile       string
+	assert             bool
+	// deprecated options
+	description string
+}
+
+func (o *pullRequestArtifactOptions) getRetriever() types.PRRetriever {
+	return o.retriever.(types.PRRetriever)
+}
+
+func (o *pullRequestArtifactOptions) run(out io.Writer, args []string) error {
+	var err error
+	if o.payload.ArtifactFingerprint == "" {
+		o.payload.ArtifactFingerprint, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
+		if err != nil {
+			return err
+		}
+	}
+
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/pull_request", global.Host, global.Owner, o.pipelineName)
+	pullRequestsEvidence, err := getPullRequestsEvidence(o.getRetriever(), o.commit, o.assert)
+	if err != nil {
+		return err
+	}
+
+	o.payload.PullRequests = pullRequestsEvidence
+	o.payload.UserData, err = LoadJsonData(o.userDataFile)
+	if err != nil {
+		return err
+	}
+
+	label := ""
+	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
+
+	logger.Debug("found %d %s(s) for commit: %s\n", len(pullRequestsEvidence), label, o.commit)
+
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodPut,
+		URL:      url,
+		Payload:  o.payload,
+		DryRun:   global.DryRun,
+		Password: global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
+	if err == nil && !global.DryRun {
+		logger.Info("%s %s evidence is reported to artifact: %s", o.payload.GitProvider, label, o.payload.ArtifactFingerprint)
+	}
+	return err
+}
+
+func getGitProviderAndLabel(retriever interface{}) (string, string) {
+	label := "pull request"
+	provider := ""
+	t := reflect.TypeOf(retriever)
+	switch t {
+	case reflect.TypeOf(&gitlabUtils.GitlabConfig{}):
+		provider = "gitlab"
+		label = "merge request"
+	case reflect.TypeOf(&ghUtils.GithubConfig{}):
+		provider = "github"
+	case reflect.TypeOf(&bbUtils.Config{}):
+		provider = "bitbucket"
+	}
+	return provider, label
+}
+
+type pullRequestCommitOptions struct {
+	payload      PullRequestCommitEvidencePayload
+	retriever    interface{}
+	userDataFile string
+	assert       bool
+}
+
+func (o *pullRequestCommitOptions) getRetriever() types.PRRetriever {
+	return o.retriever.(types.PRRetriever)
+}
+
+func (o *pullRequestCommitOptions) run(args []string) error {
+	url := fmt.Sprintf("%s/api/v1/projects/%s/commit/evidence/pull_request", global.Host, global.Owner)
+
+	pullRequestsEvidence, err := getPullRequestsEvidence(o.getRetriever(), o.payload.CommitSHA, o.assert)
+	if err != nil {
+		return err
+	}
+
+	o.payload.UserData, err = LoadJsonData(o.userDataFile)
+	if err != nil {
+		return err
+	}
+	o.payload.PullRequests = pullRequestsEvidence
+	label := ""
+	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
+
+	logger.Debug("found %d %s(s) for commit: %s\n", len(pullRequestsEvidence), label, o.payload.CommitSHA)
+
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodPut,
+		URL:      url,
+		Payload:  o.payload,
+		DryRun:   global.DryRun,
+		Password: global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
+	if err == nil && !global.DryRun {
+		logger.Info("%s %s evidence is reported to commit: %s", o.payload.GitProvider, label, o.payload.CommitSHA)
+	}
+	return err
+}
+
+func getPullRequestsEvidence(retriever types.PRRetriever, commit string, assert bool) ([]*types.PREvidence, error) {
+	pullRequestsEvidence, err := retriever.PREvidenceForCommit(commit)
+	if err != nil {
+		return pullRequestsEvidence, err
+	}
+	if len(pullRequestsEvidence) == 0 {
+		name := "pull requests"
+		if reflect.TypeOf(retriever) == reflect.TypeOf(&gitlabUtils.GitlabConfig{}) {
+			name = "merge requests"
+		}
+
+		if assert {
+			return pullRequestsEvidence, fmt.Errorf("no %s found for the given commit: %s", name, commit)
+		}
+		logger.Info("no %s found for given commit: %s", name, commit)
+	}
+	return pullRequestsEvidence, nil
+}

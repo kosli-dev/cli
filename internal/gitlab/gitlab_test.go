@@ -150,6 +150,81 @@ func (suite *GitlabTestSuite) TestMergeRequestsForCommit() {
 	}
 }
 
+func (suite *GitlabTestSuite) TestPREvidenceForCommit() {
+	type result struct {
+		wantError   bool
+		numberOfPRs int
+	}
+	for _, t := range []struct {
+		name           string
+		commit         string
+		gitlabConfig   *GitlabConfig
+		requireEnvVars bool // indicates that a test case needs real credentials from env vars
+		result         result
+	}{
+		{
+			name:   "invalid token causes an error",
+			commit: "ab4979c426d2d8e77586cfaaf32a7d50a1439bfa",
+			gitlabConfig: &GitlabConfig{
+				Token: "some_fake_token",
+			},
+			result: result{
+				wantError: true,
+			},
+		},
+		{
+			name:   "valid token and commit with an MR find one MR",
+			commit: "e6510880aecdc05d79104d937e1adb572bd91911",
+			gitlabConfig: &GitlabConfig{
+				Org:        "ewelinawilkosz",
+				Repository: "merkely-gitlab-demo",
+			},
+			requireEnvVars: true,
+			result: result{
+				numberOfPRs: 1,
+			},
+		},
+		{
+			name:   "valid token and commit with no MRs find no MRs",
+			commit: "2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6",
+			gitlabConfig: &GitlabConfig{
+				Org:        "ewelinawilkosz",
+				Repository: "merkely-gitlab-demo",
+			},
+			requireEnvVars: true,
+			result: result{
+				numberOfPRs: 0,
+			},
+		},
+		{
+			name:   "valid token and wrong commit causes an error",
+			commit: "ab4979c426d2d8e77586cfaaf32a7d50a1439bfa",
+			gitlabConfig: &GitlabConfig{
+				Org:        "ewelinawilkosz",
+				Repository: "merkely-gitlab-demo",
+			},
+			requireEnvVars: true,
+			result: result{
+				wantError: true,
+			},
+		},
+	} {
+		suite.Run(t.name, func() {
+			if t.requireEnvVars {
+				testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_GITLAB_TOKEN"})
+				t.gitlabConfig.Token = os.Getenv("KOSLI_GITLAB_TOKEN")
+			}
+			prs, err := t.gitlabConfig.PREvidenceForCommit(t.commit)
+			if t.result.wantError {
+				require.Error(suite.T(), err)
+			} else {
+				require.NoError(suite.T(), err)
+				require.Len(suite.T(), prs, t.result.numberOfPRs)
+			}
+		})
+	}
+}
+
 func (suite *GitlabTestSuite) TestGetMergeRequestApprovers() {
 	type result struct {
 		wantError bool
