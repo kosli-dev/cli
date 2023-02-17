@@ -64,8 +64,8 @@ jobs:
         KOSLI_GITHUB_TOKEN: ${{ secrets.github_access_token }}
         KOSLI_GITLAB_TOKEN: ${{ secrets.gitlab_access_token }}
         KOSLI_BITBUCKET_PASSWORD: ${{ secrets.bitbucket_password }}
-        KOSLI_AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
-        KOSLI_AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
+        KOSLI_AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
+        KOSLI_AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
       run: |
         # some tests use git operations, therefore the git author on the CI VM needs to be set
         git config --global user.name "John Doe"
