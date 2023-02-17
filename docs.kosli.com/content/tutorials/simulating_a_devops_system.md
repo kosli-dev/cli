@@ -435,7 +435,7 @@ ID   ARTIFACT                                                                   
 Get detailed information about a deployment:
 
 ```shell {.command}
-kosli deployment get web-server#1
+kosli get deployment web-server#1
 ```
 
 ```plaintext {.light-console}

@@ -19,6 +19,7 @@ func newGetCmd(out io.Writer) *cobra.Command {
 	cmd.AddCommand(
 		newGetFlowCmd(out),
 		newGetArtifactCmd(out),
+		newGetDeploymentCmd(out),
 	)
 	return cmd
 }

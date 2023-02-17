@@ -18,7 +18,6 @@ func newDeploymentReadCmd(out io.Writer) *cobra.Command {
 	// Add subcommands
 	cmd.AddCommand(
 		newDeploymentLsCmd(out),
-		newDeploymentGetCmd(out),
 	)
 
 	return cmd
