@@ -12,18 +12,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const pipelineInspectDesc = `Inspect the metadata of a specific pipeline.`
+const getFlowDesc = `Inspect the metadata of a specific flow.`
 
-type pipelineInspectOptions struct {
+type getFlowOptions struct {
 	output string
 }
 
-func newPipelineInspectCmd(out io.Writer) *cobra.Command {
-	o := new(pipelineInspectOptions)
+func newGetFlowCmd(out io.Writer) *cobra.Command {
+	o := new(getFlowOptions)
 	cmd := &cobra.Command{
-		Use:   "inspect PIPELINE-NAME",
-		Short: pipelineInspectDesc,
-		Long:  pipelineInspectDesc,
+		Use:   "flow FLOW-NAME",
+		Short: getFlowDesc,
+		Long:  getFlowDesc,
 		Args:  cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -42,8 +42,10 @@ func newPipelineInspectCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *pipelineInspectOptions) run(out io.Writer, args []string) error {
+func (o *getFlowOptions) run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s", global.Host, global.Owner, args[0])
+	// new URL will be
+	// url := fmt.Sprintf("%s/api/v2/flows/%s/%s", global.Host, global.Owner, args[0])
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,
@@ -57,14 +59,14 @@ func (o *pipelineInspectOptions) run(out io.Writer, args []string) error {
 
 	return output.FormattedPrint(response.Body, o.output, out, 0,
 		map[string]output.FormatOutputFunc{
-			"table": printPipelineAsTable,
+			"table": printFlowAsTable,
 			"json":  output.PrintJson,
 		})
 }
 
-func printPipelineAsTable(raw string, out io.Writer, page int) error {
-	var pipeline map[string]interface{}
-	err := json.Unmarshal([]byte(raw), &pipeline)
+func printFlowAsTable(raw string, out io.Writer, page int) error {
+	var flow map[string]interface{}
+	err := json.Unmarshal([]byte(raw), &flow)
 	if err != nil {
 		return err
 	}
@@ -72,16 +74,16 @@ func printPipelineAsTable(raw string, out io.Writer, page int) error {
 	header := []string{}
 	rows := []string{}
 
-	lastDeployedAt, err := formattedTimestamp(pipeline["last_deployment_at"], false)
+	lastDeployedAt, err := formattedTimestamp(flow["last_deployment_at"], false)
 	if err != nil {
 		return err
 	}
-	template := fmt.Sprintf("%s", pipeline["template"])
+	template := fmt.Sprintf("%s", flow["template"])
 	template = strings.Replace(template, " ", ", ", -1)
 
-	rows = append(rows, fmt.Sprintf("Name:\t%s", pipeline["name"]))
-	rows = append(rows, fmt.Sprintf("Description:\t%s", pipeline["description"]))
-	rows = append(rows, fmt.Sprintf("Visibility:\t%s", pipeline["visibility"]))
+	rows = append(rows, fmt.Sprintf("Name:\t%s", flow["name"]))
+	rows = append(rows, fmt.Sprintf("Description:\t%s", flow["description"]))
+	rows = append(rows, fmt.Sprintf("Visibility:\t%s", flow["visibility"]))
 	rows = append(rows, fmt.Sprintf("Template:\t%s", template))
 	rows = append(rows, fmt.Sprintf("Last Deployment At:\t%s", lastDeployedAt))
 

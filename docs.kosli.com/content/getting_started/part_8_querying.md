@@ -75,10 +75,10 @@ shas                    UX for git+image shas               public
 web                     UX for practicing TDD               public
 ```
 
-And if you want to check metadata of a specific pipeline (like description or template) use `kosli pipeline inspect`
+And if you want to check metadata of a specific pipeline (like description or template) use `kosli get flow`
 
 ```
-% kosli pipeline inspect creator
+% kosli get flow creator
 Name:                creator
 Description:         UX for Group/Kata creation
 Visibility:          public

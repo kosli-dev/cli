@@ -17,7 +17,7 @@ type PipelineCommandTestSuite struct {
 
 func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 	defaultKosliArguments := " -H http://localhost:8001 --owner docs-cmd-test-user -a eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY"
-	defaultArtifactArguments := " --pipeline newPipe --build-url www.yr.no --commit-url www.nrk.no"
+	defaultArtifactArguments := " --pipeline newFlow --build-url www.yr.no --commit-url www.nrk.no"
 	defaultRepoRoot := " --repo-root ../.. "
 
 	repo, err := git.PlainOpen("../..")
@@ -34,24 +34,24 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 	tests := []cmdTestCase{
 		{
 			name:   "declare pipeline",
-			cmd:    "pipeline declare --pipeline newPipe --description \"my new pipeline\" " + defaultKosliArguments,
+			cmd:    "pipeline declare --pipeline newFlow --description \"my new pipeline\" " + defaultKosliArguments,
 			golden: "",
 		},
 		{
 			name:   "re-declaring a pipeline updates its metadata",
-			cmd:    "pipeline declare --pipeline newPipe --description \"changed description\" " + defaultKosliArguments,
+			cmd:    "pipeline declare --pipeline newFlow --description \"changed description\" " + defaultKosliArguments,
 			golden: "",
 		},
 		{
 			wantError: true,
 			name:      "missing --owner flag causes an error",
-			cmd:       "pipeline declare --pipeline newPipe --description \"my new pipeline\" -H http://localhost:8001 -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
+			cmd:       "pipeline declare --pipeline newFlow --description \"my new pipeline\" -H http://localhost:8001 -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
 			golden:    "Error: --owner is not set\nUsage: kosli pipeline declare [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "missing --api-token flag causes an error",
-			cmd:       "pipeline declare --pipeline newPipe --description \"my new pipeline\" --owner cyber-dojo -H http://localhost:8001",
+			cmd:       "pipeline declare --pipeline newFlow --description \"my new pipeline\" --owner cyber-dojo -H http://localhost:8001",
 			golden:    "Error: --api-token is not set\nUsage: kosli pipeline declare [flags]\n",
 		},
 		{
@@ -86,17 +86,17 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 			golden:    "",
 		},
 
-		// Pipeline pipeline get tests
+		// Get flow tests
 		{
 			wantError: false,
-			name:      "kosli pipeline inspect newPipe command does not return error",
-			cmd:       "pipeline inspect newPipe" + defaultKosliArguments,
+			name:      "kosli get flow newFlow command does not return error",
+			cmd:       "get flow newFlow" + defaultKosliArguments,
 			golden:    "",
 		},
 		{
 			wantError: false,
-			name:      "kosli pipeline inspect newPipe --output json command does not return error",
-			cmd:       "pipeline inspect newPipe --output json" + defaultKosliArguments,
+			name:      "kosli get flow newFlow --output json command does not return error",
+			cmd:       "get flow newFlow --output json" + defaultKosliArguments,
 			golden:    "",
 		},
 
@@ -160,7 +160,7 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		{
 			wantError: false,
 			name:      "list artifacts",
-			cmd:       "artifact ls newPipe" + defaultKosliArguments,
+			cmd:       "artifact ls newFlow" + defaultKosliArguments,
 			golden:    "",
 		},
 
@@ -168,7 +168,7 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		{
 			wantError: false,
 			name:      "get artifact",
-			cmd:       "artifact get newPipe@4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments,
+			cmd:       "artifact get newFlow@4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments,
 			golden:    "",
 		},
 
@@ -177,7 +177,7 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		{
 			wantError: false,
 			name:      "report approval",
-			cmd:       "pipeline approval report --pipeline newPipe --oldest-commit HEAD~1 --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "pipeline approval report --pipeline newFlow --oldest-commit HEAD~1 --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 
@@ -185,7 +185,7 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		{
 			wantError: false,
 			name:      "request approval",
-			cmd:       "pipeline approval request --pipeline newPipe --oldest-commit HEAD --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "pipeline approval request --pipeline newFlow --oldest-commit HEAD --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 
@@ -193,14 +193,14 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		{
 			wantError: false,
 			name:      "assert an approved approval does not fail",
-			cmd:       "pipeline approval assert --pipeline newPipe --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultKosliArguments,
+			cmd:       "pipeline approval assert --pipeline newFlow --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultKosliArguments,
 			golden:    "",
 		},
 
 		{
 			wantError: true,
 			name:      "assert a pending approval fails",
-			cmd:       "pipeline approval assert --pipeline newPipe --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments,
+			cmd:       "pipeline approval assert --pipeline newFlow --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments,
 			golden:    "",
 		},
 
@@ -208,7 +208,7 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		{
 			wantError: false,
 			name:      "list approvals",
-			cmd:       "approval ls newPipe" + defaultKosliArguments,
+			cmd:       "approval ls newFlow" + defaultKosliArguments,
 			golden:    "",
 		},
 
@@ -216,14 +216,14 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		{
 			wantError: false,
 			name:      "get an approval",
-			cmd:       "approval get newPipe#2" + defaultKosliArguments,
+			cmd:       "approval get newFlow#2" + defaultKosliArguments,
 			golden:    "",
 		},
 
 		{
 			wantError: true,
 			name:      "get a non-existing approval fails",
-			cmd:       "approval get newPipe#20" + defaultKosliArguments,
+			cmd:       "approval get newFlow#20" + defaultKosliArguments,
 			golden:    "",
 		},
 	}

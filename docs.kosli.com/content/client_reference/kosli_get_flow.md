@@ -1,23 +1,23 @@
 ---
-title: "kosli pipeline inspect"
+title: "kosli get flow"
 ---
 
-## kosli pipeline inspect
+## kosli get flow
 
-Inspect the metadata of a specific pipeline.
+Inspect the metadata of a specific flow.
 
 ### Synopsis
 
-Inspect the metadata of a specific pipeline.
+Inspect the metadata of a specific flow.
 
 ```shell
-kosli pipeline inspect PIPELINE-NAME [flags]
+kosli get flow FLOW-NAME [flags]
 ```
 
 ### Flags
 | Flag | Description |
 | :--- | :--- |
-|    -h, --help  |  help for inspect  |
+|    -h, --help  |  help for flow  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 
 
