@@ -27,7 +27,7 @@ kosli version [flags]
 | Flag | Description |
 | :--- | :--- |
 |    -h, --help  |  help for version  |
-|    -s, --short  |  [optional] Print only the Kosli CLI version number.  |
+|    -s, --short  |  [optional] Print only the Kosli cli version number.  |
 
 
 ### Options inherited from parent commands

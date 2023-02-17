@@ -21,7 +21,8 @@ kosli assert github-pullrequest [flags]
 | :--- | :--- |
 |        --commit string  |  Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|        --github-org string  |  Github organization.  |
+|        --github-base-url string  |  [optional] GitHub base URL (only needed for GitHub Enterprise installations).  |
+|        --github-org string  |  Github organization. (defaulted if you are running in GitHub Actions: https://docs.kosli.com/ci-defaults ).  |
 |        --github-token string  |  Github token.  |
 |    -h, --help  |  help for github-pullrequest  |
 |        --repository string  |  Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |

@@ -1,40 +1,35 @@
 ---
-title: "kosli pipeline artifact report evidence github-pullrequest"
+title: "kosli pipeline artifact report evidence test"
 ---
 
-## kosli pipeline artifact report evidence github-pullrequest
+## kosli pipeline artifact report evidence test
 
-Report a Github pull request evidence for an artifact in a Kosli pipeline.
+Report a JUnit test evidence to an artifact in a Kosli pipeline.
 
 ### Synopsis
 
-Report a Github pull request evidence for an artifact in a Kosli pipeline.
-It checks if a pull request exists for the artifact (based on its git commit) and report the pull-request evidence to the artifact in Kosli. 
+Report a JUnit test evidence to an artifact in a Kosli pipeline.
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag).
 
 ```shell
-kosli pipeline artifact report evidence github-pullrequest [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli pipeline artifact report evidence test [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ### Flags
 | Flag | Description |
 | :--- | :--- |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256' or '--fingerprint'.  |
-|        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|        --commit string  |  Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|    -d, --description string  |  [optional] The evidence description.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|    -f, --fingerprint string  |  [conditional] The SHA256 fingerprint for the artifact. Only required if you don't specify '--artifact-type'.  |
-|        --github-base-url string  |  [optional] GitHub base URL (only needed for GitHub Enterprise installations).  |
-|        --github-org string  |  Github organization. (defaulted if you are running in GitHub Actions: https://docs.kosli.com/ci-defaults ).  |
-|        --github-token string  |  Github token.  |
-|    -h, --help  |  help for github-pullrequest  |
-|    -n, --name string  |  The name of the evidence.  |
+|    -e, --evidence-type string  |  The type of evidence being reported.  |
+|    -h, --help  |  help for test  |
 |    -p, --pipeline string  |  The Kosli pipeline name.  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
-|        --repository string  |  Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|    -R, --results-dir string  |  [defaulted] The path to a folder with JUnit test results. (default "/data/junit/")  |
+|    -s, --sha256 string  |  [conditional] The SHA256 fingerprint for the artifact. Only required if you don't specify '--artifact-type'.  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to this evidence.  |
 
 
@@ -53,32 +48,25 @@ kosli pipeline artifact report evidence github-pullrequest [IMAGE-NAME | FILE-PA
 
 ```shell
 
-# report a pull request evidence to kosli for a docker image
-kosli pipeline artifact report evidence github-pullrequest yourDockerImageName \
-	--artifact-type docker \
-	--build-url https://exampleci.com \
-	--name yourEvidenceName \
+# report a JUnit test evidence about a file artifact:
+kosli pipeline artifact report evidence test FILE.tgz \
+	--artifact-type file \
+	--evidence-type yourEvidenceType \
 	--pipeline yourPipelineName \
-	--github-token yourGithubToken \
-	--github-org yourGithubOrg \
-	--commit yourArtifactGitCommit \
-	--repository yourGithubGitRepository \
-	--owner yourOrgName \
-	--api-token yourAPIToken
-	
-# fail if a pull request does not exist for your artifact
-kosli pipeline artifact report evidence github-pullrequest yourDockerImageName \
-	--artifact-type docker \
 	--build-url https://exampleci.com \
-	--name yourEvidenceName \
-	--pipeline yourPipelineName \
-	--github-token yourGithubToken \
-	--github-org yourGithubOrg \
-	--commit yourArtifactGitCommit \
-	--repository yourGithubGitRepository \
-	--owner yourOrgName \
 	--api-token yourAPIToken \
-	--assert
+	--owner yourOrgName	\
+	--results-dir yourFolderWithJUnitResults
+
+# report a JUnit test evidence about an artifact using an available Sha256 digest:
+kosli pipeline artifact report evidence test \
+	--sha256 yourSha256 \
+	--evidence-type yourEvidenceType \
+	--pipeline yourPipelineName \
+	--build-url https://exampleci.com \
+	--api-token yourAPIToken \
+	--owner yourOrgName	\
+	--results-dir yourFolderWithJUnitResults
 
 ```
 

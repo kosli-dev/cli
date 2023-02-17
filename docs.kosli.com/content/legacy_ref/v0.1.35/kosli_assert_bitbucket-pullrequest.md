@@ -1,30 +1,30 @@
 ---
-title: "kosli assert gitlab-mergerequest"
+title: "kosli assert bitbucket-pullrequest"
 ---
 
-## kosli assert gitlab-mergerequest
+## kosli assert bitbucket-pullrequest
 
-Assert if a Gitlab pull request for a git commit exists.
+Assert if a Bitbucket pull request for a git commit exists. 
 
 ### Synopsis
 
-Assert if a Gitlab pull request for a git commit exists.
+Assert if a Bitbucket pull request for a git commit exists. 
 The command exits with non-zero exit code 
 if no pull requests were found for the commit.
 
 ```shell
-kosli assert gitlab-mergerequest [flags]
+kosli assert bitbucket-pullrequest [flags]
 ```
 
 ### Flags
 | Flag | Description |
 | :--- | :--- |
+|        --bitbucket-password string  |  Bitbucket password.  |
+|        --bitbucket-username string  |  Bitbucket user name.  |
+|        --bitbucket-workspace string  |  Bitbucket workspace.  |
 |        --commit string  |  Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|        --gitlab-base-url string  |  [optional] Gitlab base URL (only needed for on-prem Gitlab installations).  |
-|        --gitlab-org string  |  Gitlab organization. (defaulted if you are running in Gitlab Pipelines: https://docs.kosli.com/ci-defaults ).  |
-|        --gitlab-token string  |  Gitlab token.  |
-|    -h, --help  |  help for gitlab-mergerequest  |
+|    -h, --help  |  help for bitbucket-pullrequest  |
 |        --repository string  |  Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 
 
@@ -43,12 +43,12 @@ kosli assert gitlab-mergerequest [flags]
 
 ```shell
 
-kosli assert gitlab-mergerequest \
-	--github-token yourGithubToken \
-	--github-org yourGithubOrg \
-	--commit yourArtifactGitCommit \
+kosli assert bitbucket-pullrequest  \
+	--bitbucket-username yourBitbucketUsername \
+	--bitbucket-password yourBitbucketPassword \
+	--bitbucket-workspace yourBitbucketWorkspace \
 	--commit yourGitCommit \
-	--repository yourGithubGitRepository
+	--repository yourBitbucketGitRepository
 
 ```
 

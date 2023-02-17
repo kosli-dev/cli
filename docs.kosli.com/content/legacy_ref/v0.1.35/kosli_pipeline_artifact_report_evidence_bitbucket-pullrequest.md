@@ -1,19 +1,19 @@
 ---
-title: "kosli pipeline artifact report evidence gitlab-mergerequest"
+title: "kosli pipeline artifact report evidence bitbucket-pullrequest"
 ---
 
-## kosli pipeline artifact report evidence gitlab-mergerequest
+## kosli pipeline artifact report evidence bitbucket-pullrequest
 
-Report a Gitlab merge request evidence for an artifact in a Kosli pipeline.
+Report a Bitbucket pull request evidence for an artifact in a Kosli pipeline.
 
 ### Synopsis
 
-Report a Gitlab merge request evidence for an artifact in a Kosli pipeline.
-It checks if a merge request exists for the artifact (based on its git commit) and report the merge request evidence to the artifact in Kosli. 
+Report a Bitbucket pull request evidence for an artifact in a Kosli pipeline.
+It checks if a pull request exists for the artifact (based on its git commit) and report the pull-request evidence to the artifact in Kosli. 
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag).
 
 ```shell
-kosli pipeline artifact report evidence gitlab-mergerequest [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli pipeline artifact report evidence bitbucket-pullrequest [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ### Flags
@@ -21,14 +21,14 @@ kosli pipeline artifact report evidence gitlab-mergerequest [IMAGE-NAME | FILE-P
 | :--- | :--- |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256' or '--fingerprint'.  |
 |        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
+|        --bitbucket-password string  |  Bitbucket password.  |
+|        --bitbucket-username string  |  Bitbucket user name.  |
+|        --bitbucket-workspace string  |  Bitbucket workspace.  |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --commit string  |  Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -f, --fingerprint string  |  [conditional] The SHA256 fingerprint for the artifact. Only required if you don't specify '--artifact-type'.  |
-|        --gitlab-base-url string  |  [optional] Gitlab base URL (only needed for on-prem Gitlab installations).  |
-|        --gitlab-org string  |  Gitlab organization. (defaulted if you are running in Gitlab Pipelines: https://docs.kosli.com/ci-defaults ).  |
-|        --gitlab-token string  |  Gitlab token.  |
-|    -h, --help  |  help for gitlab-mergerequest  |
+|    -h, --help  |  help for bitbucket-pullrequest  |
 |    -n, --name string  |  The name of the evidence.  |
 |    -p, --pipeline string  |  The Kosli pipeline name.  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
@@ -53,43 +53,31 @@ kosli pipeline artifact report evidence gitlab-mergerequest [IMAGE-NAME | FILE-P
 
 ```shell
 
-# report a merge request evidence to kosli for a docker image
-kosli pipeline artifact report evidence gitlab-mergerequest yourDockerImageName \
+# report a pull request evidence to kosli for a docker image
+kosli pipeline artifact report evidence bitbucket-pullrequest yourDockerImageName \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
 	--name yourEvidenceName \
 	--pipeline yourPipelineName \
-	--gitlab-token yourGitlabToken \
-	--gitlab-org yourGitlabOrg \
+	--bitbucket-username yourBitbucketUsername \
+	--bitbucket-password yourBitbucketPassword \
+	--bitbucket-workspace yourBitbucketWorkspace \
 	--commit yourArtifactGitCommit \
-	--repository yourGithubGitRepository \
-	--owner yourOrgName \
-	--api-token yourAPIToken
-
-# report a merge request evidence (from an on-prem Gitlab) to kosli for a docker image 
-kosli pipeline artifact report evidence gitlab-mergerequest yourDockerImageName \
-	--artifact-type docker \
-	--build-url https://exampleci.com \
-	--name yourEvidenceName \
-	--pipeline yourPipelineName \
-	--gitlab-base-url https://gitlab.example.org \
-	--gitlab-token yourGitlabToken \
-	--gitlab-org yourGitlabOrg \
-	--commit yourArtifactGitCommit \
-	--repository yourGithubGitRepository \
+	--repository yourBitbucketGitRepository \
 	--owner yourOrgName \
 	--api-token yourAPIToken
 	
-# fail if a merge request does not exist for your artifact
-kosli pipeline artifact report evidence gitlab-mergerequest yourDockerImageName \
+# fail if a pull request does not exist for your artifact
+kosli pipeline artifact report evidence bitbucket-pullrequest yourDockerImageName \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
 	--name yourEvidenceName \
 	--pipeline yourPipelineName \
-	--gitlab-token yourGitlabToken \
-	--gitlab-org yourGitlabOrg \
+	--bitbucket-username yourBitbucketUsername \
+	--bitbucket-password yourBitbucketPassword \
+	--bitbucket-workspace yourBitbucketWorkspace \
 	--commit yourArtifactGitCommit \
-	--repository yourGithubGitRepository \
+	--repository yourBitbucketGitRepository \
 	--owner yourOrgName \
 	--api-token yourAPIToken \
 	--assert
