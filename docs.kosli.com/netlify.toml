@@ -16,4 +16,4 @@
 [[plugins]]
 package = "netlify-plugin-checklinks"
   [plugins.inputs]
-  skipPatterns = ["https://0-1-36"]
+  skipPatterns = ["https://new-syntax"]
