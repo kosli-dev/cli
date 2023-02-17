@@ -56,8 +56,8 @@ func addArtifactPRFlags(cmd *cobra.Command, o *pullRequestArtifactOptions, ci st
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
 	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
-	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "f", "", sha256Flag)
-	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
+	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "F", "", sha256Flag)
+	cmd.Flags().StringVarP(&o.pipelineName, "flow", "f", "", pipelineNameFlag)
 }
 
 func addCommitPRFlags(cmd *cobra.Command, o *pullRequestCommitOptions, ci string) {

@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const pullRequestEvidenceGithubShortDesc = `Report a Github pull request evidence for an artifact in a Kosli pipeline.`
+const pullRequestEvidenceGithubShortDesc = `Report a Github pull request evidence for an artifact in a Kosli flow.`
 
 const pullRequestEvidenceGithubLongDesc = pullRequestEvidenceGithubShortDesc + `
 It checks if a pull request exists for the artifact (based on its git commit) and report the pull-request evidence to the artifact in Kosli. 
@@ -16,11 +16,11 @@ It checks if a pull request exists for the artifact (based on its git commit) an
 
 const pullRequestEvidenceGithubExample = `
 # report a pull request evidence to kosli for a docker image
-kosli pipeline artifact report evidence github-pullrequest yourDockerImageName \
+kosli report evidence artifact pullrequest github yourDockerImageName \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
 	--name yourEvidenceName \
-	--pipeline yourPipelineName \
+	--flow yourFlowName \
 	--github-token yourGithubToken \
 	--github-org yourGithubOrg \
 	--commit yourArtifactGitCommit \
@@ -29,11 +29,11 @@ kosli pipeline artifact report evidence github-pullrequest yourDockerImageName \
 	--api-token yourAPIToken
 	
 # fail if a pull request does not exist for your artifact
-kosli pipeline artifact report evidence github-pullrequest yourDockerImageName \
+kosli report evidence artifact pullrequest github yourDockerImageName \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
 	--name yourEvidenceName \
-	--pipeline yourPipelineName \
+	--flow yourFlowName \
 	--github-token yourGithubToken \
 	--github-org yourGithubOrg \
 	--commit yourArtifactGitCommit \
@@ -48,8 +48,8 @@ func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 	o.fingerprintOptions = new(fingerprintOptions)
 	o.retriever = new(ghUtils.GithubConfig)
 	cmd := &cobra.Command{
-		Use:     "github-pullrequest [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Aliases: []string{"gh-pr", "github-pr"},
+		Use:     "github [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Aliases: []string{"gh"},
 		Short:   pullRequestEvidenceGithubShortDesc,
 		Long:    pullRequestEvidenceGithubLongDesc,
 		Example: pullRequestEvidenceGithubExample,
@@ -62,15 +62,6 @@ func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.ArtifactFingerprint, false)
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
-			}
-			err = MuXRequiredFlags(cmd, []string{"name", "evidence-type"}, true)
-			if err != nil {
-				return err
-			}
-
-			err = MuXRequiredFlags(cmd, []string{"sha256", "fingerprint"}, false)
-			if err != nil {
-				return err
 			}
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
 		},
@@ -86,18 +77,9 @@ func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
-	err := DeprecateFlags(cmd, map[string]string{
-		"evidence-type": "use --name instead",
-		"description":   "description is no longer used",
-		"sha256":        "use --fingerprint instead",
-	})
-	if err != nil {
-		logger.Error("failed to configure deprecated flags: %v", err)
-	}
-
-	err = RequireFlags(cmd, []string{
+	err := RequireFlags(cmd, []string{
 		"github-token", "github-org", "commit",
-		"repository", "pipeline", "build-url",
+		"repository", "flow", "build-url",
 	})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)

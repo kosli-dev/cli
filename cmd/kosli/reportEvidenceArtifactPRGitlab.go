@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const pullRequestEvidenceGitlabShortDesc = `Report a Gitlab merge request evidence for an artifact in a Kosli pipeline.`
+const pullRequestEvidenceGitlabShortDesc = `Report a Gitlab merge request evidence for an artifact in a Kosli flow.`
 
 const pullRequestEvidenceGitlabLongDesc = pullRequestEvidenceGitlabShortDesc + `
 It checks if a merge request exists for the artifact (based on its git commit) and report the merge request evidence to the artifact in Kosli. 
@@ -16,11 +16,11 @@ It checks if a merge request exists for the artifact (based on its git commit) a
 
 const pullRequestEvidenceGitlabExample = `
 # report a merge request evidence to kosli for a docker image
-kosli pipeline artifact report evidence gitlab-mergerequest yourDockerImageName \
+kosli report evidence artifact mergerequest gitlab yourDockerImageName \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
 	--name yourEvidenceName \
-	--pipeline yourPipelineName \
+	--flow yourFlowName \
 	--gitlab-token yourGitlabToken \
 	--gitlab-org yourGitlabOrg \
 	--commit yourArtifactGitCommit \
@@ -29,11 +29,11 @@ kosli pipeline artifact report evidence gitlab-mergerequest yourDockerImageName 
 	--api-token yourAPIToken
 
 # report a merge request evidence (from an on-prem Gitlab) to kosli for a docker image 
-kosli pipeline artifact report evidence gitlab-mergerequest yourDockerImageName \
+kosli report evidence artifact mergerequest gitlab yourDockerImageName \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
 	--name yourEvidenceName \
-	--pipeline yourPipelineName \
+	--flow yourFlowName \
 	--gitlab-base-url https://gitlab.example.org \
 	--gitlab-token yourGitlabToken \
 	--gitlab-org yourGitlabOrg \
@@ -43,10 +43,10 @@ kosli pipeline artifact report evidence gitlab-mergerequest yourDockerImageName 
 	--api-token yourAPIToken
 	
 # fail if a merge request does not exist for your artifact
-kosli pipeline artifact report evidence gitlab-mergerequest yourDockerImageName \
+kosli report evidence artifact mergerequest gitlab yourDockerImageName \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
-	--name yourEvidenceName \
+	--flow yourFlowName \
 	--pipeline yourPipelineName \
 	--gitlab-token yourGitlabToken \
 	--gitlab-org yourGitlabOrg \
@@ -62,8 +62,8 @@ func newPullRequestEvidenceGitlabCmd(out io.Writer) *cobra.Command {
 	o.fingerprintOptions = new(fingerprintOptions)
 	o.retriever = new(gitlabUtils.GitlabConfig)
 	cmd := &cobra.Command{
-		Use:     "gitlab-mergerequest [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Aliases: []string{"gl-mr", "gitlab-mr"},
+		Use:     "gitlab [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Aliases: []string{"gl"},
 		Short:   pullRequestEvidenceGitlabShortDesc,
 		Long:    pullRequestEvidenceGitlabLongDesc,
 		Example: pullRequestEvidenceGitlabExample,
@@ -94,7 +94,7 @@ func newPullRequestEvidenceGitlabCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{
 		"gitlab-token", "gitlab-org", "commit", "name",
-		"repository", "pipeline", "build-url",
+		"repository", "flow", "build-url",
 	})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
