@@ -6,14 +6,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const reportEvidenceArtifactPRDesc = `All Kosli evidence commands.`
+const reportEvidenceArtifactPRDesc = `All Kosli commands to report pull/merge request commands.`
 
 func newReportEvidenceArtifactPRCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "pullrequest",
 		Aliases: []string{"pr", "mr", "mergerequest"},
-		Short:   reportEvidenceArtifactDesc,
-		Long:    reportEvidenceArtifactDesc,
+		Short:   reportEvidenceArtifactPRDesc,
+		Long:    reportEvidenceArtifactPRDesc,
 	}
 
 	// Add subcommands
