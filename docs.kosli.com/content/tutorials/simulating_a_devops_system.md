@@ -114,7 +114,7 @@ production  server               2022-08-16T07:53:43+02:00
 ```
 
 ```shell {.command}
-kosli environment inspect production
+kosli get environment production
 ```
 
 ```plaintext {.light-console}

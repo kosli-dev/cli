@@ -209,10 +209,10 @@ beta      K8S   2022-06-15T11:39:59+02:00  2022-06-15T11:39:59+02:00
 prod      K8S   2022-06-15T11:40:01+02:00  2022-06-15T11:40:01+02:00
 ```
 
-And inspect the metadata (including the type) of each environment:
+And get the metadata (including the type) of each environment:
 
 ```
-$ kosli environment inspect aws-beta
+$ kosli get environment aws-beta
 Name:              aws-beta
 Type:              ECS
 Description:       The ECS beta namespace

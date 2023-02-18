@@ -11,19 +11,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentInspectDesc = `Inspect an environment metadata.`
+const getEnvironmentDesc = `Get an environment's metadata.`
 
-type environmentInspectOptions struct {
+type getEnvironmentOptions struct {
 	output string
 }
 
-func newEnvironmentInspectCmd(out io.Writer) *cobra.Command {
-	o := new(environmentInspectOptions)
+func newGetEnvironmentCmd(out io.Writer) *cobra.Command {
+	o := new(getEnvironmentOptions)
 	cmd := &cobra.Command{
-		Use:   "inspect ENVIRONMENT-NAME",
-		Short: environmentInspectDesc,
-		Long:  environmentInspectDesc,
-		Args:  cobra.ExactArgs(1),
+		Use:     "environment ENVIRONMENT-NAME",
+		Aliases: []string{"env"},
+		Short:   getEnvironmentDesc,
+		Long:    getEnvironmentDesc,
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -41,7 +42,7 @@ func newEnvironmentInspectCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *environmentInspectOptions) run(out io.Writer, args []string) error {
+func (o *getEnvironmentOptions) run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/environments/%s/%s", global.Host, global.Owner, args[0])
 
 	reqParams := &requests.RequestParams{
