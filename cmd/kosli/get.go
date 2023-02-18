@@ -17,10 +17,11 @@ func newGetCmd(out io.Writer) *cobra.Command {
 
 	// Add subcommands
 	cmd.AddCommand(
-		newGetFlowCmd(out),
+		newGetApprovalCmd(out),
 		newGetArtifactCmd(out),
 		newGetDeploymentCmd(out),
 		newGetEnvironmentCmd(out),
+		newGetFlowCmd(out),
 	)
 	return cmd
 }

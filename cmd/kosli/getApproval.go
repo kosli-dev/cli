@@ -12,45 +12,45 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const approvalGetShortDesc = `Get an approval from a specified pipeline.`
-const approvalGetLongDesc = approvalGetShortDesc + `
+const getApprovalShortDesc = `Get an approval from a specified flow.`
+const getApprovalLongDesc = getApprovalShortDesc + `
 The expected argument is an expression to specify the approval to get.
-It has the format <PIPELINE_NAME>[SEPARATOR][INTEGER_REFERENCE]
+It has the format <FLOW_NAME>[SEPARATOR][INTEGER_REFERENCE]
 
 Specify SNAPPISH by:
-	pipelineName~<N>  N'th behind the latest approval
-	pipelineName#<N>  approval number N
-	pipelineName      the latest approval
+	flowName~<N>  N'th behind the latest approval
+	flowName#<N>  approval number N
+	flowName      the latest approval
 
-Examples of valid expressions are: pipe (latest approval), pipe#10 (approval number 10), pipe~2 (the third latest approval)`
+Examples of valid expressions are: flow (latest approval), flow#10 (approval number 10), flow~2 (the third latest approval)`
 
-const approvalGetExample = `
-# get second behind the latest approval from a pipeline
-kosli approval get pipelineName~1 \
+const getApprovalExample = `
+# get second behind the latest approval from a flow
+kosli get approval flowName~1 \
 	--api-token yourAPIToken \
 	--owner orgName
 
-# get the 10th approval from a pipeline
-kosli approval get pipelineName#10 \
+# get the 10th approval from a flow
+kosli get approval flowName#10 \
 	--api-token yourAPIToken \
 	--owner orgName
 
-# get the latest approval from a pipeline
-kosli approval get pipelineName \
+# get the latest approval from a flow
+kosli get approval flowName \
 	--api-token yourAPIToken \
 	--owner orgName`
 
-type approvalGetOptions struct {
+type getApprovalOptions struct {
 	output string
 }
 
-func newApprovalGetCmd(out io.Writer) *cobra.Command {
-	o := new(approvalGetOptions)
+func newGetApprovalCmd(out io.Writer) *cobra.Command {
+	o := new(getApprovalOptions)
 	cmd := &cobra.Command{
-		Use:     "get SNAPPISH",
-		Short:   approvalGetShortDesc,
-		Long:    approvalGetLongDesc,
-		Example: approvalGetExample,
+		Use:     "approval SNAPPISH",
+		Short:   getApprovalShortDesc,
+		Long:    getApprovalLongDesc,
+		Example: getApprovalExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -68,7 +68,7 @@ func newApprovalGetCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *approvalGetOptions) run(out io.Writer, args []string) error {
+func (o *getApprovalOptions) run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/projects/%s/approval/?snappish=%s", global.Host, global.Owner, url.QueryEscape(args[0]))
 
 	reqParams := &requests.RequestParams{

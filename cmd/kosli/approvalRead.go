@@ -18,7 +18,7 @@ func newApprovalReadCmd(out io.Writer) *cobra.Command {
 	// Add subcommands
 	cmd.AddCommand(
 		newApprovalLsCmd(out),
-		newApprovalGetCmd(out),
+		newGetApprovalCmd(out),
 	)
 
 	return cmd

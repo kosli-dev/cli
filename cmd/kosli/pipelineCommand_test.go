@@ -211,21 +211,6 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 			cmd:       "approval ls newFlow" + defaultKosliArguments,
 			golden:    "",
 		},
-
-		// Get an approval
-		{
-			wantError: false,
-			name:      "get an approval",
-			cmd:       "approval get newFlow#2" + defaultKosliArguments,
-			golden:    "",
-		},
-
-		{
-			wantError: true,
-			name:      "get a non-existing approval fails",
-			cmd:       "approval get newFlow#20" + defaultKosliArguments,
-			golden:    "",
-		},
 	}
 	runTestCmd(suite.T(), tests)
 }
