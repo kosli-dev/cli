@@ -35,4 +35,5 @@ jobs:
           REPO: self
           BRANCH: docs-staging
           FOLDER: docs.kosli.com
+          TARGET_DIR: docs.kosli.com
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
