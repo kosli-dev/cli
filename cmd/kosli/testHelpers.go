@@ -36,7 +36,7 @@ func CreateArtifact(flowName, artifactFingerprint, artifactName string, t *testi
 		flowName:    flowName,
 		payload: ArtifactPayload{
 			Fingerprint: artifactFingerprint,
-			GitCommit:   "HEAD",
+			GitCommit:   "6ef6fc37c373922eecd4e823cf2633326790cfe8",
 			BuildUrl:    "www.yr.no",
 			CommitUrl:   " www.nrk.no",
 		},

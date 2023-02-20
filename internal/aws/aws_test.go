@@ -2,7 +2,6 @@ package aws
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
@@ -427,10 +426,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 func skipOrSetCreds(T *testing.T, requireEnvVars bool, creds *AWSStaticCreds) {
 	if requireEnvVars {
 		// skips the test case if it requires env vars and they are not set
-		testHelpers.SkipIfEnvVarUnset(T, []string{"KOSLI_AWS_ACCESS_KEY_ID", "KOSLI_AWS_SECRET_ACCESS_KEY"})
-		// if not skipped (env vars are set), configure the creds object to use them
-		creds.AccessKeyID = os.Getenv("KOSLI_AWS_ACCESS_KEY_ID")
-		creds.SecretAccessKey = os.Getenv("KOSLI_AWS_SECRET_ACCESS_KEY")
+		testHelpers.SkipIfEnvVarUnset(T, []string{"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"})
 	}
 }
 

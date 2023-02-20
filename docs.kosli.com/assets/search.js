@@ -21,22 +21,9 @@
     return
   }
 
-  // const tabToResults2 = (event) => {
-  //   let numResults = foundResults.childElementCount;
-  //   if (event.key === "Tab" && numResults > 0) {
-  //     event.preventDefault;
-  //     const foundResults = document.querySelector('#book-search-results');
-  //     console.log("tab");
-  //     console.log(numResults)
-  //     const firstResult = foundResults.firstChild.querySelector("a");
-  //     firstResult.focus();
-  //     numResults = 0
-  //   }
-  // }
-
   input.addEventListener('focus', init);
+  input.addEventListener('focusout', hideSearch)
   input.addEventListener('keyup', search);
-  input.addEventListener('keydown', tabToResults2);
 
   document.addEventListener('keypress', focusSearchFieldOnKeyPress);
 
@@ -67,7 +54,7 @@
   }
 
   function init() {
-    input.removeEventListener('focus', init); // init once
+    // input.removeEventListener('focus', init); // init once
     input.required = true;
 
     fetch(searchDataURL)
@@ -90,6 +77,15 @@
     }
 
     const searchHits = window.bookSearchIndex.search(input.value, 10);
+
+    if (searchHits) {
+      results.style.display = "block";
+    }
+
+    if (searchHits.length === 0) {
+      results.style.display = "none";
+    }
+
     searchHits.forEach(function (page) {
       const li = element('<li><a href></a><small></small></li>');
       const a = li.querySelector('a'), small = li.querySelector('small');
@@ -100,8 +96,6 @@
 
       results.appendChild(li);
     });
-
-    // tabToResults();
 
   }
 
@@ -114,39 +108,9 @@
     div.innerHTML = content;
     return div.firstChild;
   }
-
-  function tabToResults() {
-    input.addEventListener("keydown", (event) => {
-      if (event.key === "Tab") {
-        event.preventDefault();
-        const foundResults = document.querySelector('#book-search-results');
-        let firstResult = foundResults.firstChild.querySelector("a");
-        console.log(`After tab: ${firstResult}`);
-        let numResults = foundResults.childElementCount;
-        if (numResults > 0) {
-          console.log(firstResult);
-          firstResult.focus();
-        } else {
-          console.log("inside else");
-        }
-      }
-    });
+  
+  function hideSearch() {
+    document.getElementById('book-search-results').style.display = "none";
   }
-
-  function tabToResults2(event) {
-    if (event.key === "Tab") {
-      event.preventDefault();
-      const foundResults = document.querySelector('#book-search-results');
-      let firstResult = foundResults.firstChild.querySelector("a");
-      console.log(`After tab: ${firstResult}`);
-      let numResults = foundResults.childElementCount;
-      if (numResults > 0) {
-        console.log(firstResult);
-        firstResult.focus();
-      } else {
-        console.log("inside else");
-      }
-    }
-  }
-
 })();
+

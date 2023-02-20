@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 
+	log "github.com/kosli-dev/cli/internal/logger"
+	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -17,25 +20,22 @@ type ArtifactEvidenceSnykCommandTestSuite struct {
 }
 
 func (suite *ArtifactEvidenceSnykCommandTestSuite) SetupTest() {
-	suite.defaultKosliArguments = " -H http://localhost:8001 --owner docs-cmd-test-user -a eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY"
 	suite.artifactFingerprint = "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
 	suite.pipelineName = "snyk-test"
-	tests := []cmdTestCase{
-		{
-			name: "create a pipeline",
-			cmd:  "pipeline declare --pipeline " + suite.pipelineName + " --description \"my snyk pipeline\" " + suite.defaultKosliArguments,
-		},
-		{
-			name: "create an artifact",
-			cmd: `report artifact FooBar_1 --git-commit HEAD --fingerprint ` + suite.artifactFingerprint + `
-			          --flow ` + suite.pipelineName + ` --build-url www.yr.no --commit-url www.nrk.no --repo-root ../..` + suite.defaultKosliArguments,
-		},
+
+	global = &GlobalOpts{
+		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
+		Owner:    "docs-cmd-test-user",
+		Host:     "http://localhost:8001",
 	}
-	runTestCmd(suite.T(), tests)
+	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
+	kosliClient = requests.NewKosliClient(1, false, log.NewStandardLogger())
+
+	CreateFlow(suite.pipelineName, suite.T())
+	CreateArtifact(suite.pipelineName, suite.artifactFingerprint, "FooBar_1", suite.T())
 }
 
 func (suite *ArtifactEvidenceSnykCommandTestSuite) TestArtifactEvidenceSnykCmd() {
-
 	tests := []cmdTestCase{
 		{
 			name: "report Snyk test evidence works (using --fingerprint)",

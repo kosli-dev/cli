@@ -72,17 +72,10 @@
   <script>{{ . | safeJS }}</script>
 {{ end }}
 
-<script>
-  function chooseDocsVersion(option) {
-    let url = '';
-    if (option.value == 'latest') {
-      url = 'https://docs.kosli.com/'
-    } else {
-      url = 'https://' + option.value + '--kosli-docs.netlify.app/';
-    }
-    window.location.href = url;
-  }
-</script>
+{{ $script := resources.Get "chooseDocsVersion.js" | resources.Minify }}
+{{ with $script.Content }}
+  <script>{{ . | safeJS }}</script>
+{{ end }}
 
 {{ $reference_pages := where $.Site.Pages "Section" "client_reference" }}
 {{ range $reference_pages }}

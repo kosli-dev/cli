@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	log "github.com/kosli-dev/cli/internal/logger"
+	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -18,23 +20,25 @@ type ArtifactEvidenceGenericCommandTestSuite struct {
 }
 
 func (suite *ArtifactEvidenceGenericCommandTestSuite) SetupTest() {
-	suite.defaultKosliArguments = " -H http://localhost:8001 --owner docs-cmd-test-user -a eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY"
-	suite.artifactFingerprint = "847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0"
 	suite.pipelineName = "generic-evidence"
+	suite.artifactFingerprint = "847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0"
+
+	global = &GlobalOpts{
+		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
+		Owner:    "docs-cmd-test-user",
+		Host:     "http://localhost:8001",
+	}
+	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
+	kosliClient = requests.NewKosliClient(1, false, log.NewStandardLogger())
+
+	CreateFlow(suite.pipelineName, suite.T())
+	CreateArtifact(suite.pipelineName, suite.artifactFingerprint, "FooBar_1", suite.T())
+
 	tests := []cmdTestCase{
 		{
-			name: "create a pipeline",
-			cmd:  "pipeline declare --pipeline " + suite.pipelineName + " --description \"my generic pipeline\" " + suite.defaultKosliArguments,
-		},
-		{
-			name: "create first artifact",
-			cmd: `report artifact FooBar_1 --git-commit HEAD --fingerprint ` + suite.artifactFingerprint + `
-			          --flow ` + suite.pipelineName + ` --build-url www.yr.no --commit-url www.nrk.no --repo-root ../..` + suite.defaultKosliArguments,
-		},
-		{
 			name: "create second artifact",
-			cmd: `report artifact testdata --git-commit HEAD --artifact-type dir ` + `
-			          --flow ` + suite.pipelineName + ` --build-url www.yr.no --commit-url www.nrk.no --repo-root ../..` + suite.defaultKosliArguments,
+			cmd: `pipeline artifact report creation testdata --git-commit 6ef6fc37c373922eecd4e823cf2633326790cfe8 --artifact-type dir ` + `
+			          --pipeline ` + suite.pipelineName + ` --build-url www.yr.no --commit-url www.nrk.no --repo-root ../..` + suite.defaultKosliArguments,
 		},
 	}
 	runTestCmd(suite.T(), tests)
@@ -80,8 +84,8 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) TestArtifactEvidenceGeneri
 			wantError: true,
 		},
 		{
-			name: "report Generic test evidence works when --artifact-type is provided is provided",
-			cmd: fmt.Sprintf(`report evidence artifact generic testdata --artifact-type dir --name %s --flow %s
+			name: "report Generic test evidence works when --artifact-type is provided",
+			cmd: fmt.Sprintf(`pipeline artifact report evidence generic testdata --artifact-type dir --name %s --pipeline %s
 			          --build-url example.com %s`,
 				evidenceName, suite.pipelineName, suite.defaultKosliArguments),
 		},
