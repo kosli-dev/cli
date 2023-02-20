@@ -14,7 +14,7 @@ pipe.json
 **/.DS_Store
 .vscode/
 docs.kosli.com/resources/_gen/*
-docs.kosli.com/content/client_reference/kosli_*
+docs.kosli.com/content/client_reference/kosli*
 *.tar.gz
 docs.kosli.com/public/
 tmp/
