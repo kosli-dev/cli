@@ -18,6 +18,7 @@ func newReportEvidenceArtifactCmd(out io.Writer) *cobra.Command {
 	// Add subcommands
 	cmd.AddCommand(
 		newReportEvidenceArtifactPRCmd(out),
+		newGenericEvidenceCmd(out),
 	)
 
 	return cmd

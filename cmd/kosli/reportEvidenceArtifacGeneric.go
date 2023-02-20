@@ -27,38 +27,38 @@ type GenericEvidencePayload struct {
 	Compliant   bool   `json:"is_compliant"`
 }
 
-const artifactEvidenceGenericShortDesc = `Report a generic evidence to an artifact in a Kosli pipeline.`
+const artifactEvidenceGenericShortDesc = `Report a generic evidence to an artifact in a Kosli flow.`
 
 const artifactEvidenceGenericLongDesc = artifactEvidenceGenericShortDesc + `
 ` + sha256Desc
 
 const artifactEvidenceGenericExample = `
 # report a generic evidence about a pre-built docker image:
-kosli pipeline artifact report evidence generic yourDockerImageName \
+kosli report evidence artifact generic yourDockerImageName \
 	--api-token yourAPIToken \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
-	--evidence-type yourEvidenceType \
+	--name yourEvidenceName \
 	--owner yourOrgName \
-	--pipeline yourPipelineName 
+	--flow yourFlowName 
 
 # report a generic evidence about a directory type artifact:
-kosli pipeline artifact report evidence generic /path/to/your/dir \
+kosli report evidence artifact generic /path/to/your/dir \
 	--api-token yourAPIToken \
 	--artifact-type dir \
 	--build-url https://exampleci.com \
-	--evidence-type yourEvidenceType \
+	--name yourEvidenceName \
 	--owner yourOrgName	\
-	--pipeline yourPipelineName 
+	--flow yourFlowName 
 
 # report a generic evidence about an artifact with a provided fingerprint (sha256)
-kosli pipeline artifact report evidence generic \
+kosli report evidence artifact generic \
 	--api-token yourAPIToken \
 	--build-url https://exampleci.com \	
-	--evidence-type yourEvidenceType \
+	--name yourEvidenceName \
 	--owner yourOrgName \
-	--pipeline yourPipelineName \
-	--sha256 yourSha256
+	--flow yourFlowName \
+	--fingerprint yourFingerprint
 `
 
 func newGenericEvidenceCmd(out io.Writer) *cobra.Command {
@@ -79,15 +79,6 @@ func newGenericEvidenceCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
-			err = MuXRequiredFlags(cmd, []string{"name", "evidence-type"}, true)
-			if err != nil {
-				return err
-			}
-
-			err = MuXRequiredFlags(cmd, []string{"sha256", "fingerprint"}, false)
-			if err != nil {
-				return err
-			}
 
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
 
@@ -98,27 +89,17 @@ func newGenericEvidenceCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "sha256", "s", "", sha256Flag)
 	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "f", "", sha256Flag)
-	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
+	cmd.Flags().StringVarP(&o.pipelineName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", evidenceDescriptionFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
 	cmd.Flags().BoolVarP(&o.payload.Compliant, "compliant", "C", true, evidenceCompliantFlag)
-	cmd.Flags().StringVarP(&o.payload.EvidenceName, "evidence-type", "e", "", evidenceTypeFlag)
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
-	err := DeprecateFlags(cmd, map[string]string{
-		"evidence-type": "use --name instead",
-		"sha256":        "use --fingerprint instead",
-	})
-	if err != nil {
-		logger.Error("failed to configure deprecated flags: %v", err)
-	}
-
-	err = RequireFlags(cmd, []string{"pipeline", "build-url"})
+	err := RequireFlags(cmd, []string{"flow", "build-url"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
