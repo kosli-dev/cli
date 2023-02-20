@@ -45,43 +45,43 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) TestArtifactEvidenceGeneri
 	tests := []cmdTestCase{
 		{
 			name: "report Generic test evidence works",
-			cmd: fmt.Sprintf(`pipeline artifact report evidence generic --fingerprint %s --name %s --pipeline %s
+			cmd: fmt.Sprintf(`report evidence artifact generic --fingerprint %s --name %s --flow %s
 			          --build-url example.com --compliant --description "some description" %s`,
 				suite.artifactFingerprint, evidenceName, suite.pipelineName, suite.defaultKosliArguments),
 			golden: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
 		},
 		{
 			name: "report Generic test evidence works when neither of --description nor --user-data provided",
-			cmd: fmt.Sprintf(`pipeline artifact report evidence generic --fingerprint %s --name %s --pipeline %s
+			cmd: fmt.Sprintf(`report evidence artifact generic --fingerprint %s --name %s --flow %s
 			          --build-url example.com --compliant %s`,
 				suite.artifactFingerprint, evidenceName, suite.pipelineName, suite.defaultKosliArguments),
 			golden: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
 		},
 		{
 			name: "report Generic test evidence works when neither of --description, --user-data or --compliant is provided",
-			cmd: fmt.Sprintf(`pipeline artifact report evidence generic --fingerprint %s --name %s --pipeline %s
+			cmd: fmt.Sprintf(`report evidence artifact generic --fingerprint %s --name %s --flow %s
 			          --build-url example.com %s`,
 				suite.artifactFingerprint, evidenceName, suite.pipelineName, suite.defaultKosliArguments),
 			golden: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
 		},
 		{
-			name: "report Generic test evidence fails if both --name and --evidence-type are missing",
-			cmd: fmt.Sprintf(`pipeline artifact report evidence generic --fingerprint %s --pipeline %s
+			name: "report Generic test evidence fails if --name is missing",
+			cmd: fmt.Sprintf(`report evidence artifact generic --fingerprint %s --flow %s
 			          --build-url example.com %s`,
 				suite.artifactFingerprint, suite.pipelineName, suite.defaultKosliArguments),
 			wantError: true,
-			golden:    "Error: at least one of --name, --evidence-type is required\n",
+			golden:    "Error: required flag(s) \"name\" not set\n",
 		},
 		{
-			name: "report Generic test evidence fails if --sha256, --fingerprint and --artifact-type are missing ",
-			cmd: fmt.Sprintf(`pipeline artifact report evidence generic --name %s --pipeline %s
+			name: "report Generic test evidence fails if --fingerprint and --artifact-type are missing ",
+			cmd: fmt.Sprintf(`report evidence artifact generic --name %s --flow %s
 			          --build-url example.com %s`,
 				evidenceName, suite.pipelineName, suite.defaultKosliArguments),
 			wantError: true,
 		},
 		{
 			name: "report Generic test evidence works when --artifact-type is provided is provided",
-			cmd: fmt.Sprintf(`pipeline artifact report evidence generic testdata --artifact-type dir --name %s --pipeline %s
+			cmd: fmt.Sprintf(`report evidence artifact generic testdata --artifact-type dir --name %s --flow %s
 			          --build-url example.com %s`,
 				evidenceName, suite.pipelineName, suite.defaultKosliArguments),
 		},

@@ -89,7 +89,7 @@ func newGenericEvidenceCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "f", "", sha256Flag)
+	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "F", "", sha256Flag)
 	cmd.Flags().StringVarP(&o.pipelineName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", evidenceDescriptionFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
@@ -99,7 +99,7 @@ func newGenericEvidenceCmd(out io.Writer) *cobra.Command {
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"flow", "build-url"})
+	err := RequireFlags(cmd, []string{"flow", "build-url", "name"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}

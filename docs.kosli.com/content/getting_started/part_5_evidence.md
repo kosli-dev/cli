@@ -193,7 +193,21 @@ Use `--compliant=false` if you want to report a given evidence as non-compliant.
 
 {{< tabs "generic-example" "col-no-wrap" >}}
 
-{{< tab "Artifact" >}}
+{{< tab "Artifact v2">}}
+```
+$ kosli report evidence artifact generic project-a-app.bin \
+	--flow project-a \
+	--artifact-type file \
+	--build-url https://exampleci.com \
+	--name code-coverage \
+	--compliant=false
+
+generic evidence 'code-coverage' is reported to artifact: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
+```
+See [kosli report evidence artifact generic](/client_reference/kosli_report_evidence_artifact_generic/) for more details
+{{< /tab >}}
+
+{{< tab "Artifact v0.1.x">}}
 ```
 $ kosli pipeline artifact report evidence generic project-a-app.bin \
 	--pipeline project-a \
@@ -204,6 +218,7 @@ $ kosli pipeline artifact report evidence generic project-a-app.bin \
 
 generic evidence 'code-coverage' is reported to artifact: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
 ```
+See [kosli pipeline artifact report evidence generic](/legacy_ref/v0.1.35/kosli_pipeline_artifact_report_evidence_generic/) for more details
 {{< /tab >}}
 
 {{< tab "Commit" >}}
@@ -217,6 +232,7 @@ $ kosli commit report evidence generic \
 
 generic evidence 'code-coverage' is reported to commit: e67f2f2b121f9325ebf166b7b3c707f73cb48b14
 ```
+See [kosli commit report evidence generic](/client_reference/kosli_commit_report_evidence_generic/) for more details
 {{< /tab >}}
 
 {{< /tabs >}}

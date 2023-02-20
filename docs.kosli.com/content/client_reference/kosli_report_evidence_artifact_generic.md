@@ -1,8 +1,8 @@
 ---
-title: "kosli pipeline artifact report evidence generic"
+title: "kosli report evidence artifact generic"
 ---
 
-## kosli pipeline artifact report evidence generic
+## kosli report evidence artifact generic
 
 Report a generic evidence to an artifact in a Kosli flow.
 
@@ -12,7 +12,7 @@ Report a generic evidence to an artifact in a Kosli flow.
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag).
 
 ```shell
-kosli pipeline artifact report evidence generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli report evidence artifact generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ### Flags
