@@ -104,7 +104,7 @@ For more details see:
 
 ## JUnit test evidence
 
-If you produce your test results in JUnit format, you can [report JUnit evidence to an artifact](/client_reference/kosli_pipeline_artifact_report_evidence_junit/) or
+If you produce your test results in JUnit format, you can [report JUnit evidence to an artifact](/client_reference/kosli_report_evidence_artifact_junit/) or
 [report JUnit evidence to a commit](/client_reference/kosli_commit_report_evidence_junit/). These commands will analyze the JUnit results and determine if the evidence is compliant or not.
 Remember to add the JUnit test evidence to your [pipeline template](/kosli_overview/what_is_kosli/#template) and use the same label for `--name` you provided in a `template`.
 
