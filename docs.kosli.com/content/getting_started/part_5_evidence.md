@@ -170,7 +170,21 @@ Use `--scan-results` flag to provide the location of the json file with your sny
 
 {{< tabs "snyk-example" "col-no-wrap" >}}
 
-{{< tab "Artifact" >}}
+{{< tab "Artifact v2" >}}
+```
+$ kosli report evidence artifact snyk project-a-app.bin \
+	--pipeline project-a \
+	--artifact-type file \
+	--build-url https://exampleci.com \
+	--name snyk \
+	--scan-results snyk_scam.json 
+
+snyk scan evidence is reported to artifact: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
+```
+See [kosli report evidence artifact snyk](/client_reference/kosli_report_evidence_artifact_snyk/) for more details
+{{< /tab >}}
+
+{{< tab "Artifact v1.0.x" >}}
 ```
 $ kosli pipeline artifact report evidence snyk project-a-app.bin \
 	--pipeline project-a \
@@ -181,6 +195,7 @@ $ kosli pipeline artifact report evidence snyk project-a-app.bin \
 
 snyk scan evidence is reported to artifact: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
 ```
+See [kosli pipeline artifact report evidence snyk](/legacy_ref/v0.1.35/kosli_pipeline_artifact_report_evidence_snyk/) for more details
 {{< /tab >}}
 
 {{< tab "Commit" >}}
@@ -194,13 +209,14 @@ $ kosli commit report evidence snyk \
 
 snyk scan evidence is reported to commit: e67f2f2b121f9325ebf166b7b3c707f73cb48b14
 ```
+See [kosli commit report evidence snyk](/client_reference/kosli_commit_report_evidence_snyk/) for more details
 {{< /tab >}}
 
 {{< /tabs >}}
 
 ## Generic evidence
 
-If Kosli doesn't support the type of the evidence you'd like to attach, you can [report Generic evidence to an artifact](/client_reference/kosli_pipeline_artifact_report_evidence_generic/) or
+If Kosli doesn't support the type of the evidence you'd like to attach, you can [report Generic evidence to an artifact](/client_reference/kosli_report_evidence_artifact_generic/) or
 [report Generic evidence to a commit](/client_reference/kosli_commit_report_evidence_generic/).
 Remember to add the evidence to your [pipeline template](/kosli_overview/what_is_kosli/#template) and use the same label for `--name` you provided in a `template`.
 

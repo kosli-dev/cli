@@ -27,27 +27,27 @@ type snykEvidenceOptions struct {
 	payload            EvidenceSnykPayload
 }
 
-const snykEvidenceShortDesc = `Report Snyk vulnerability scan evidence for an artifact in a Kosli pipeline.`
+const snykEvidenceShortDesc = `Report Snyk vulnerability scan evidence for an artifact in a Kosli flow.`
 
 const snykEvidenceLongDesc = snykEvidenceShortDesc + `
 ` + fingerprintDesc
 
 const snykEvidenceExample = `
 # report Snyk vulnerability scan evidence about a file artifact:
-kosli pipeline artifact report evidence snyk FILE.tgz \
+kosli report evidence artifact snyk FILE.tgz \
 	--artifact-type file \
 	--name yourEvidenceName \
-	--pipeline yourPipelineName \
+	--flow yourFlowName \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
 	--owner yourOrgName	\
 	--scan-results yourSnykJSONScanResults
 
 # report Snyk vulnerability scan evidence about an artifact using an available Sha256 digest:
-kosli pipeline artifact report evidence snyk \
+kosli report evidence artifact snyk \
 	--fingerprint yourSha256 \
 	--name yourEvidenceName \
-	--pipeline yourPipelineName \
+	--flow yourFlowName \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
 	--owner yourOrgName	\
@@ -81,8 +81,8 @@ func newSnykEvidenceCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVarP(&o.fingerprint, "fingerprint", "f", "", fingerprintFlag)
-	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
+	cmd.Flags().StringVarP(&o.fingerprint, "fingerprint", "F", "", fingerprintFlag)
+	cmd.Flags().StringVarP(&o.pipelineName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
 	cmd.Flags().StringVarP(&o.snykJsonFile, "scan-results", "R", "", snykJsonResultsFileFlag)
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
@@ -90,7 +90,7 @@ func newSnykEvidenceCmd(out io.Writer) *cobra.Command {
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"pipeline", "build-url", "name", "scan-results"})
+	err := RequireFlags(cmd, []string{"flow", "build-url", "name", "scan-results"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}

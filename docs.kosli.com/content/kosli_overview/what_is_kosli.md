@@ -57,7 +57,7 @@ Kosli supports different types of runtime environments and the reporting command
 * Physical/virtual server
 
 You can create a Kosli environment using:
-* The CLI's **[kosli environment declare](/client_reference/kosli_environment_declare/)** command
+* The CLI's **[kosli create environment](/client_reference/kosli_create_environment/)** command
 * The "Add new environment" button under the "Environments" section on [app.kosli.com](https://app.kosli.com) that will take you to environment creation form:
 
 {{<figure src="/images/new-env-form.png" alt="Add environment form" width="900">}}
@@ -145,14 +145,14 @@ Whenever an event related to your artifact happens, and you want to report it as
 1. You can use `--artifact-type` flag and provide an artifact as an argument to evidence reporting commands (given artifact needs to be available from the location the command is run, so it can be used to calculate artifacts [fingerprint](/kosli_overview/what_is_kosli/#fingerprints))
 1. You can use `--fingerprint` (or `--sha256` for older versions of kosli CLI) to provide previously calculated fingerprint of the artifact 
 
-You can report absolutely anything as evidence. If there is no support for your specific type of evidence, you can use [generic evidence type](/client_reference/kosli_pipeline_artifact_report_evidence_generic/).
+You can report absolutely anything as evidence. If there is no support for your specific type of evidence, you can use [generic evidence type](/client_reference/kosli_report_evidence_artifact_generic/).
 
 Evidence is reported as compliant if Kosli determines it as compliant (e.g. analyzing JUnit or Snyk test results). For generic evidence you can implement your own mechanism to determine compliancy status and use `--compliant=false` in your evidence reporting command, if you want to send the evidence as non-compliant. 
 
 There are a number of types of evidence with dedicated support:
 * [bitbucket](/client_reference/kosli_report_evidence_artifact_pullrequest_bitbucket/), [github](/client_reference/kosli_report_evidence_artifact_pullrequest_github/) and [gitlab](/client_reference/kosli_report_evidence_artifact_pullrequest_gitlab/) pull request - verify and report if a pull request exists for a commit used to build your artifact
 * [junit](/client_reference/kosli_report_evidence_artifact_junit/) - report the result of your unit test (requires results as XML in JUnit format)
-* [snyk](/client_reference/kosli_pipeline_artifact_report_evidence_snyk/) - report Snyk vulnerability scan 
+* [snyk](/client_reference/kosli_report_evidence_artifact_snyk/) - report Snyk vulnerability scan 
 
 ### History
 
