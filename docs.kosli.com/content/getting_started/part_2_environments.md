@@ -18,7 +18,19 @@ In all the commands below we skip required `--api-token` and `--owner` flags - t
 
 
 After you started reporting, you can - at any point - check exactly what is running in your environment using the CLI command:
+{{< tabs "commands" "col-no-wrap" >}}
 
+{{< tab "v2" >}}
+```shell {.command}
+$ kosli get environment quickstart
+
+COMMIT  ARTIFACT                                                           PIPELINE  RUNNING_SINCE  REPLICAS
+N/A     Name: nginx@sha256:0047b7(...))59cce6d40291ccfb4e039f5dc7efd33286  N/A       7 days ago     1
+        Fingerprint: 0047b729188(...)959cce6d40291ccfb4e039f5dc7efd33286   
+```
+{{< /tab >}}
+
+{{< tab "v0.1.x" >}}
 ```shell {.command}
 $ kosli environment get quickstart
 
@@ -26,6 +38,10 @@ COMMIT  ARTIFACT                                                           PIPEL
 N/A     Name: nginx@sha256:0047b7(...))59cce6d40291ccfb4e039f5dc7efd33286  N/A       7 days ago     1
         Fingerprint: 0047b729188(...)959cce6d40291ccfb4e039f5dc7efd33286   
 ```
+{{< /tab >}}
+
+{{< /tabs >}}
+
 
 Or in the UI, by clicking at the name of the environment (after selecting "Environments" in the left hand side menu):
 
@@ -40,7 +56,20 @@ Before you start reporting what's running in your environments you need to creat
 ### Example
 
 #### CLI
+{{< tabs "commands" "col-no-wrap" >}}
 
+{{< tab "v2" >}}
+```shell {.command}
+$ kosli create environment \
+    --name quickstart \
+    --environment-type docker \
+    --description "quickstart environment for tutorial"
+
+environment quickstart was created
+```
+{{< /tab >}}
+
+{{< tab "v0.1.x" >}}
 ```shell {.command}
 $ kosli environment declare \
     --name quickstart \
@@ -49,15 +78,35 @@ $ kosli environment declare \
 
 environment quickstart was created
 ```
+{{< /tab >}}
+
+{{< /tabs >}}
+
 
 You can verify that the Kosli environment called *quickstart* was created:
 
+{{< tabs "commands" "col-no-wrap" >}}
+
+{{< tab "v2" >}}
+```shell {.command}
+$ kosli ls environment
+
+NAME        TYPE    LAST REPORT  LAST MODIFIED
+quickstart  docker               2022-11-01T15:30:56+01:00
+```
+{{< /tab >}}
+
+{{< tab "v0.1.x" >}}
 ```shell {.command}
 $ kosli environment ls
 
 NAME        TYPE    LAST REPORT  LAST MODIFIED
 quickstart  docker               2022-11-01T15:30:56+01:00
 ```
+{{< /tab >}}
+
+{{< /tabs >}}
+
 
 #### UI
 

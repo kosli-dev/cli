@@ -15,11 +15,13 @@ import (
 type GetEnvironmentCommandTestSuite struct {
 	suite.Suite
 	defaultKosliArguments string
-	flowName              string
+	envName               string
+	envType               string
 }
 
 func (suite *GetEnvironmentCommandTestSuite) SetupTest() {
-	suite.flowName = "github-pr"
+	suite.envName = "get-env"
+	suite.envType = "K8S"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Owner:    "docs-cmd-test-user",
@@ -27,8 +29,7 @@ func (suite *GetEnvironmentCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
 	kosliClient = requests.NewKosliClient(1, false, log.NewStandardLogger())
-
-	CreateFlow(suite.flowName, suite.T())
+	CreateEnv(global.Owner, suite.envName, suite.envType, suite.T())
 }
 
 func (suite *GetEnvironmentCommandTestSuite) TestGetEnvironmentCmd() {
@@ -36,14 +37,26 @@ func (suite *GetEnvironmentCommandTestSuite) TestGetEnvironmentCmd() {
 		{
 			wantError: false,
 			name:      "kosli get env newEnv command does not return error",
-			cmd:       "get env newEnv" + suite.defaultKosliArguments,
+			cmd:       fmt.Sprintf("get env %s %s", suite.envName, suite.defaultKosliArguments),
 			golden:    "",
 		},
 		{
 			wantError: false,
 			name:      "kosli get env newEnv --output json command does not return error",
-			cmd:       "get environment newEnv --output json" + suite.defaultKosliArguments,
+			cmd:       fmt.Sprintf("get env %s %s --output json", suite.envName, suite.defaultKosliArguments),
 			golden:    "",
+		},
+		{
+			wantError: true,
+			name:      "trying to get non-existing env fails",
+			cmd:       "get environment non-existing" + suite.defaultKosliArguments,
+			golden:    "Error: Environment named 'non-existing' does not exist for Organization 'docs-cmd-test-user'. \n",
+		},
+		{
+			wantError: true,
+			name:      "fails when no argument (env name) provided",
+			cmd:       "get environment " + suite.defaultKosliArguments,
+			golden:    "Error: accepts 1 arg(s), received 0\n",
 		},
 	}
 

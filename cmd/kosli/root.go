@@ -205,6 +205,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 
 		// New syntax commands
 		newGetCmd(out),
+		newCreateCmd(out),
 		newReportCmd(out),
 	)
 

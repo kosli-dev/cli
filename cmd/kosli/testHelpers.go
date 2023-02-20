@@ -45,3 +45,18 @@ func CreateArtifact(flowName, artifactFingerprint, artifactName string, t *testi
 	err := o.run([]string{artifactName})
 	require.NoError(t, err, "artifact should be created without error")
 }
+
+// CreateEnv creates an env on the server
+func CreateEnv(owner, envName, envType string, t *testing.T) {
+	o := &createEnvOptions{
+		payload: CreateEnvironmentPayload{
+			Owner:       owner,
+			Name:        envName,
+			Type:        envType,
+			Description: "test env",
+		},
+	}
+
+	err := o.run()
+	require.NoError(t, err, "env should be created without error")
+}
