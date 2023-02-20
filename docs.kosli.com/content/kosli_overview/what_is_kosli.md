@@ -150,7 +150,7 @@ You can report absolutely anything as evidence. If there is no support for your 
 Evidence is reported as compliant if Kosli determines it as compliant (e.g. analyzing JUnit or Snyk test results). For generic evidence you can implement your own mechanism to determine compliancy status and use `--compliant=false` in your evidence reporting command, if you want to send the evidence as non-compliant. 
 
 There are a number of types of evidence with dedicated support:
-* [bitbucket](/client_reference/kosli_pipeline_artifact_report_evidence_bitbucket-pullrequest/) and [github](/client_reference/kosli_pipeline_artifact_report_evidence_github-pullrequest/) pull request - verify and report if a pull request exists for a commit used to build your artifact
+* [bitbucket](/client_reference/kosli_report_evidence_artifact_pullrequest_bitbucket/), [github](/client_reference/kosli_report_evidence_artifact_pullrequest_github/) and [gitlab](/client_reference/kosli_report_evidence_artifact_pullrequest_gitlab/) pull request - verify and report if a pull request exists for a commit used to build your artifact
 * [junit](/client_reference/kosli_pipeline_artifact_report_evidence_junit/) - report the result of your unit test (requires results as XML in JUnit format)
 * [snyk](/client_reference/kosli_pipeline_artifact_report_evidence_snyk/) - report Snyk vulnerability scan 
 
