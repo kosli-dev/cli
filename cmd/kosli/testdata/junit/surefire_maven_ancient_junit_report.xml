@@ -1,17 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd"
-           version="3.0"
-           name="com.$ACR_HELM_REPO.insight.EmailResourceTest"
-           time="7.213"
-           tests="7" errors="0" skipped="7" failures="0">
-
+xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd"
+version="3.0"
+name="com.$ACR_HELM_REPO.insight.EmailResourceTest"
+time="5.513"
+tests="7"
+errors="0"
+skipped="5"
+failures="0">
+  <properties>
+    <property name="java.vm.vendor" value="Oracle Corporation"/>
+    <property name="sun.arch.data.model" value="64"/>
+    <property name="java.vendor.url" value="https://java.oracle.com/"/>
+    <property name="user.timezone" value="UTC"/>
+    <property name="logging.initial-configurator.min-level" value="500"/>
+    <property name="os.name" value="Linux"/>
+    <property name="java.vm.specification.version" value="17"/>
+    <property name="sun.java.launcher" value="SUN_STANDARD"/>
+  </properties>
   <testcase name="testRootEndpoint" classname="com.$ACR_HELM_REPO.insight.EmailResourceTest" time="0">
     <skipped message="public void com.$ACR_HELM_REPO.insight.EmailResourceTest.testRootEndpoint() is @Disabled"/>
-    <system-out><![CDATA[2023-02-10 15:05:45,067 INFO  [io.quarkus] (main) quarkus-server-email 2.0.50-SNAPSHOT on JVM (powered by Quarkus 2.16.0.Final) started in 3.765s. Listening on: http://localhost:8081
-2023-02-10 15:05:45,069 INFO  [io.quarkus] (main) Profile test activated.
-2023-02-10 15:05:45,069 INFO  [io.quarkus] (main) Installed features: [cdi, hibernate-validator, mailer, micrometer, qute, resteasy-reactive, resteasy-reactive-jackson, smallrye-context-propagation, smallrye-health, smallrye-openapi, swagger-ui, vertx]
-]]></system-out>
   </testcase>
   <testcase name="testRootEndpointIncorrectTemplate" classname="com.$ACR_HELM_REPO.insight.EmailResourceTest" time="0">
     <skipped message="public void com.$ACR_HELM_REPO.insight.EmailResourceTest.testRootEndpointIncorrectTemplate() is @Disabled"/>
@@ -32,8 +40,3 @@
     <skipped message="public void com.$ACR_HELM_REPO.insight.EmailResourceTest.testRootEndpointMisspelledParameter() is @Disabled"/>
   </testcase>
 </testsuite>
-
-
-
-
-
