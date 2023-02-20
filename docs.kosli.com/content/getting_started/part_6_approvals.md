@@ -10,10 +10,6 @@ weight: 260
 Whenever a given artifact is ready to be deployed you may need an additional manual approval from an authorized person. This is something that can't alway be automated, but you can use Kosli to request such an approval, and later record it, so the information about decisions made outside of your CI system won't be lost. The list of commits between current and previous approval will be generated (based on provided values for `--newest-commit` and `--oldest-commit`), which allows you to track a set of changes that are being approved.
 
 ### Example
-
-{{< tabs "commands" "col-no-wrap" >}}
-
-{{< tab "v2" >}}
 ```
 $ kosli pipeline approval report project-a-app.bin \
   --artifact-type file \
@@ -23,22 +19,6 @@ $ kosli pipeline approval report project-a-app.bin \
   
 approval created for artifact: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
 ```
-{{< /tab >}}
-
-{{< tab "legacy" >}}
-```
-$ kosli pipeline approval report project-a-app.bin \
-  --artifact-type file \
-  --newest-commit $(git rev-parse HEAD) \
-  --oldest-commit $(git rev-parse HEAD~1) \
-  --pipeline project-a 
-  
-approval created for artifact: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
-```
-{{< /tab >}}
-
-{{< /tabs >}}
-
 
 See [kosli pipeline approval report](/client_reference/kosli_pipeline_approval_report/) and [kosli pipeline approval request](/client_reference/kosli_pipeline_approval_request/) for more details. 
 
