@@ -56,7 +56,7 @@ func (suite *CreateEnvironmentCommandTestSuite) TestCreateEnvironmentCmd() {
 		{
 			wantError: true,
 			name:      "fails when name is missing",
-			cmd:       "create env --environment-type k8s" + suite.defaultKosliArguments,
+			cmd:       "create env --environment-type K8S" + suite.defaultKosliArguments,
 			golden:    "Error: required flag(s) \"name\" not set\n",
 		},
 		{
@@ -68,13 +68,13 @@ func (suite *CreateEnvironmentCommandTestSuite) TestCreateEnvironmentCmd() {
 		{
 			wantError: true,
 			name:      "fails when arguments are provided",
-			cmd:       "create env --name newEnv1 --environment-type k8s xxx" + suite.defaultKosliArguments,
+			cmd:       "create env --name newEnv1 --environment-type K8S xxx" + suite.defaultKosliArguments,
 			golden:    "Error: unknown command \"xxx\" for \"kosli create environment\"\n",
 		},
 		{
 			wantError: true,
 			name:      "fails when name is considered invalid by the server",
-			cmd:       "create env --name foo_bar --environment-type k8s" + suite.defaultKosliArguments,
+			cmd:       "create env --name foo_bar --environment-type K8S" + suite.defaultKosliArguments,
 			golden:    "Error: Input payload validation failed: map[name:'foo_bar' does not match '^[a-zA-Z][a-zA-Z0-9\\\\-]*$']\n",
 		},
 	}

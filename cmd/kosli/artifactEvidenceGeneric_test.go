@@ -37,8 +37,8 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) SetupTest() {
 	tests := []cmdTestCase{
 		{
 			name: "create second artifact",
-			cmd: `pipeline artifact report creation testdata --git-commit 6ef6fc37c373922eecd4e823cf2633326790cfe8 --artifact-type dir ` + `
-			          --pipeline ` + suite.pipelineName + ` --build-url www.yr.no --commit-url www.nrk.no --repo-root ../..` + suite.defaultKosliArguments,
+			cmd: `report artifact testdata --git-commit 6ef6fc37c373922eecd4e823cf2633326790cfe8 --artifact-type dir ` + `
+			          --flow ` + suite.pipelineName + ` --build-url www.yr.no --commit-url www.nrk.no --repo-root ../..` + suite.defaultKosliArguments,
 		},
 	}
 	runTestCmd(suite.T(), tests)
@@ -85,7 +85,7 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) TestArtifactEvidenceGeneri
 		},
 		{
 			name: "report Generic test evidence works when --artifact-type is provided",
-			cmd: fmt.Sprintf(`pipeline artifact report evidence generic testdata --artifact-type dir --name %s --pipeline %s
+			cmd: fmt.Sprintf(`report evidence artifact generic testdata --artifact-type dir --name %s --flow %s
 			          --build-url example.com %s`,
 				evidenceName, suite.pipelineName, suite.defaultKosliArguments),
 		},

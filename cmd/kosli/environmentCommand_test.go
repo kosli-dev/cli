@@ -14,7 +14,6 @@ type EnvironmentCommandTestSuite struct {
 }
 
 func (suite *EnvironmentCommandTestSuite) TestEnvironmentCommandCmd() {
-
 	defaultKosliArguments := " -H http://localhost:8001 --owner docs-cmd-test-user -a eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY"
 
 	tests := []cmdTestCase{
@@ -100,7 +99,7 @@ func (suite *EnvironmentCommandTestSuite) TestEnvironmentCommandCmd() {
 		// Environment rename tests
 		{
 			name:   "rename: create initial environment",
-			cmd:    "environment declare --name firstEnvName --environment-type S3 --description \"first environment\" " + defaultKosliArguments,
+			cmd:    "create environment --name firstEnvName --environment-type S3 --description \"first environment\" " + defaultKosliArguments,
 			golden: "",
 		},
 		{

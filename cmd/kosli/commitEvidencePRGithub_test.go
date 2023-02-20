@@ -34,7 +34,7 @@ func (suite *CommitEvidencePRGithubCommandTestSuite) SetupTest() {
 	CreateFlow(suite.pipelineNames, suite.T())
 }
 
-func (suite *CommitEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGithubCmd() {
+func (suite *CommitEvidencePRGithubCommandTestSuite) TestCommitEvidencePRGithubCmd() {
 	tests := []cmdTestCase{
 		{
 			name: "report Github PR evidence works",

@@ -41,13 +41,13 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 	tests := []cmdTestCase{
 		{
 			name: "report Github PR evidence works with new flags (fingerprint, name ...)",
-			cmd: `pipeline artifact report evidence github-pullrequest --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.pipelineName + `
 			          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			golden: "github pull request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
 		{
 			name: "report Github PR evidence works with deprecated flags",
-			cmd: `pipeline artifact report evidence github-pullrequest --sha256 ` + suite.artifactFingerprint + ` --evidence-type gh-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest github --sha256 ` + suite.artifactFingerprint + ` --evidence-type gh-pr --flow ` + suite.pipelineName + `
 			          --description text --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			golden: "Flag --sha256 has been deprecated, use --fingerprint instead\n" +
 				"Flag --evidence-type has been deprecated, use --name instead\n" +
@@ -57,65 +57,65 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --owner is missing",
-			cmd: `pipeline artifact report evidence github-pullrequest --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --pipeline ` + suite.pipelineName + `
-			          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6 --api-token foo --host bar`,
+			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.pipelineName + `
+			          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6 --api-token foo --host bar`,
 			golden: "Error: --owner is not set\n" +
-				"Usage: kosli pipeline artifact report evidence github-pullrequest [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+				"Usage: kosli report evidence artifact pullrequest github [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when both --name and --evidence-type are missing",
-			cmd: `pipeline artifact report evidence github-pullrequest --fingerprint ` + suite.artifactFingerprint + ` --pipeline ` + suite.pipelineName + `
-			          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
+			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.pipelineName + `
+			          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			golden: "Error: at least one of --name, --evidence-type is required\n",
 		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --github-org is missing",
-			cmd: `pipeline artifact report evidence github-pullrequest --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.pipelineName + `
 			          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			golden: "Error: required flag(s) \"github-org\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --repository is missing",
-			cmd: `pipeline artifact report evidence github-pullrequest --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.pipelineName + `
 			          --build-url example.com --github-org kosli-dev --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			golden: "Error: required flag(s) \"repository\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --commit is missing",
-			cmd: `pipeline artifact report evidence github-pullrequest --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.pipelineName + `
 			          --build-url example.com --github-org kosli-dev --repository cli` + suite.defaultKosliArguments,
 			golden: "Error: required flag(s) \"commit\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when neither --fingerprint nor --artifact-type are set",
-			cmd: `pipeline artifact report evidence github-pullrequest artifactNameArg --name gh-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest github artifactNameArg --name gh-pr --flow ` + suite.pipelineName + `
 					  --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			golden: "Error: either --artifact-type or --sha256 must be specified\n" +
-				"Usage: kosli pipeline artifact report evidence github-pullrequest [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+				"Usage: kosli report evidence artifact pullrequest github [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when commit does not exist",
-			cmd: `pipeline artifact report evidence github-pullrequest --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.pipelineName + `
 			          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c3123ab` + suite.defaultKosliArguments,
 			golden: "Error: GET https://api.github.com/repos/kosli-dev/cli/commits/73d7fee2f31ade8e1a9c456c324255212c3123ab/pulls: 422 No commit found for SHA: 73d7fee2f31ade8e1a9c456c324255212c3123ab []\n",
 		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --assert is used and commit has no PRs",
-			cmd: `pipeline artifact report evidence github-pullrequest --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.pipelineName + `
 					  --assert
 			          --build-url example.com --github-org kosli-dev --repository cli --commit 9bca2c44eaf221a79fb18a1a11bdf2997adaf870` + suite.defaultKosliArguments,
 			golden: "Error: no pull requests found for the given commit: 9bca2c44eaf221a79fb18a1a11bdf2997adaf870\n",
 		},
 		{
 			name: "report Github PR evidence does not fail when commit has no PRs",
-			cmd: `pipeline artifact report evidence github-pullrequest --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.pipelineName + `
 			          --build-url example.com --github-org kosli-dev --repository cli --commit 9bca2c44eaf221a79fb18a1a11bdf2997adaf870` + suite.defaultKosliArguments,
 			golden: "no pull requests found for given commit: 9bca2c44eaf221a79fb18a1a11bdf2997adaf870\n" +
 				"github pull request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
@@ -123,21 +123,21 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when the artifact does not exist in the server",
-			cmd: `pipeline artifact report evidence github-pullrequest testdata/file1 --artifact-type file --name gh-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest github testdata/file1 --artifact-type file --name gh-pr --flow ` + suite.pipelineName + `
 			          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			golden: "Error: Artifact with fingerprint '7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in pipeline 'github-pr' belonging to 'docs-cmd-test-user'. \n",
 		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --artifact-type is unsupported",
-			cmd: `pipeline artifact report evidence github-pullrequest testdata/file1 --artifact-type unsupported --name gh-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest github testdata/file1 --artifact-type unsupported --name gh-pr --flow ` + suite.pipelineName + `
 			          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			golden: "Error: unsupported is not a supported artifact type\n",
 		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --user-data is not found",
-			cmd: `pipeline artifact report evidence github-pullrequest --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.pipelineName + `
 					  --user-data non-existing.json
 			          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			golden: "Error: open non-existing.json: no such file or directory\n",

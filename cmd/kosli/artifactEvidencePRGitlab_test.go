@@ -42,72 +42,72 @@ func (suite *ArtifactEvidencePRGitlabCommandTestSuite) TestArtifactEvidencePRGit
 	tests := []cmdTestCase{
 		{
 			name: "report Gitlab PR evidence works when no merge requests are found",
-			cmd: `pipeline artifact report evidence gitlab-mergerequest --fingerprint ` + suite.artifactFingerprint + ` --name gl-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest gitlab --fingerprint ` + suite.artifactFingerprint + ` --name gl-pr --flow ` + suite.pipelineName + `
 			          --build-url example.com --gitlab-org ewelinawilkosz  --repository merkely-gitlab-demo --commit 2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6` + suite.defaultKosliArguments,
 			golden: "no merge requests found for given commit: 2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6\n" +
 				"gitlab merge request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
 		{
 			name: "report Gitlab PR evidence works when there are merge requests",
-			cmd: `pipeline artifact report evidence gitlab-mergerequest --fingerprint ` + suite.artifactFingerprint + ` --name gl-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest gitlab --fingerprint ` + suite.artifactFingerprint + ` --name gl-pr --flow ` + suite.pipelineName + `
 			          --build-url example.com --gitlab-org ewelinawilkosz  --repository merkely-gitlab-demo --commit e6510880aecdc05d79104d937e1adb572bd91911` + suite.defaultKosliArguments,
 			golden: "gitlab merge request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
 		{
 			wantError: true,
 			name:      "report Gitlab PR evidence fails when --owner is missing",
-			cmd: `pipeline artifact report evidence gitlab-mergerequest --fingerprint ` + suite.artifactFingerprint + ` --name gl-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest gitlab --fingerprint ` + suite.artifactFingerprint + ` --name gl-pr --flow ` + suite.pipelineName + `
 			          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6 --api-token foo --host bar`,
 			golden: "Error: --owner is not set\n" +
-				"Usage: kosli pipeline artifact report evidence gitlab-mergerequest [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+				"Usage: kosli report evidence artifact pullrequest gitlab [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "report Gitlab PR evidence fails when both --name and --gitlab-org are missing",
-			cmd: `pipeline artifact report evidence gitlab-mergerequest --fingerprint ` + suite.artifactFingerprint + ` --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest gitlab --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.pipelineName + `
 			          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			golden: "Error: required flag(s) \"gitlab-org\", \"name\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Gitlab PR evidence fails when --gitlab-org is missing",
-			cmd: `pipeline artifact report evidence gitlab-mergerequest --fingerprint ` + suite.artifactFingerprint + ` --name gl-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest gitlab --fingerprint ` + suite.artifactFingerprint + ` --name gl-pr --flow ` + suite.pipelineName + `
 			          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			golden: "Error: required flag(s) \"gitlab-org\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Gitlab PR evidence fails when --repository is missing",
-			cmd: `pipeline artifact report evidence gitlab-mergerequest --fingerprint ` + suite.artifactFingerprint + ` --name gl-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest gitlab --fingerprint ` + suite.artifactFingerprint + ` --name gl-pr --flow ` + suite.pipelineName + `
 			          --build-url example.com --gitlab-org kosli-dev --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			golden: "Error: required flag(s) \"repository\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Gitlab PR evidence fails when --commit is missing",
-			cmd: `pipeline artifact report evidence gitlab-mergerequest --fingerprint ` + suite.artifactFingerprint + ` --name gl-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest gitlab --fingerprint ` + suite.artifactFingerprint + ` --name gl-pr --flow ` + suite.pipelineName + `
 			          --build-url example.com --gitlab-org kosli-dev --repository cli` + suite.defaultKosliArguments,
 			golden: "Error: required flag(s) \"commit\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Gitlab PR evidence fails when neither --fingerprint nor --artifact-type are set",
-			cmd: `pipeline artifact report evidence gitlab-mergerequest artifactNameArg --name gl-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest gitlab artifactNameArg --name gl-pr --flow ` + suite.pipelineName + `
 					  --build-url example.com --gitlab-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			golden: "Error: either --artifact-type or --sha256 must be specified\n" +
-				"Usage: kosli pipeline artifact report evidence gitlab-mergerequest [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+				"Usage: kosli report evidence artifact pullrequest gitlab [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "report Gitlab PR evidence fails when commit does not exist",
-			cmd: `pipeline artifact report evidence gitlab-mergerequest --fingerprint ` + suite.artifactFingerprint + ` --name gl-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest gitlab --fingerprint ` + suite.artifactFingerprint + ` --name gl-pr --flow ` + suite.pipelineName + `
 			          --build-url example.com --gitlab-org ewelinawilkosz --repository merkely-gitlab-demo --commit 73d7fee2f31ade8e1a9c456c324255212c3123ab` + suite.defaultKosliArguments,
 			golden: "Error: GET https://gitlab.com/api/v4/projects/ewelinawilkosz/merkely-gitlab-demo/repository/commits/73d7fee2f31ade8e1a9c456c324255212c3123ab/merge_requests: 404 {message: 404 Commit Not Found}\n",
 		},
 		{
 			wantError: true,
 			name:      "report Gitlab PR evidence fails when --assert is used and commit has no PRs",
-			cmd: `pipeline artifact report evidence gitlab-mergerequest --fingerprint ` + suite.artifactFingerprint + ` --name gl-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest gitlab --fingerprint ` + suite.artifactFingerprint + ` --name gl-pr --flow ` + suite.pipelineName + `
 					  --assert
 			          --build-url example.com --gitlab-org ewelinawilkosz --repository merkely-gitlab-demo --commit 2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6` + suite.defaultKosliArguments,
 			golden: "Error: no merge requests found for the given commit: 2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6\n",
@@ -115,21 +115,21 @@ func (suite *ArtifactEvidencePRGitlabCommandTestSuite) TestArtifactEvidencePRGit
 		{
 			wantError: true,
 			name:      "report Gitlab PR evidence fails when the artifact does not exist in the server",
-			cmd: `pipeline artifact report evidence gitlab-mergerequest testdata/file1 --artifact-type file --name gl-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest gitlab testdata/file1 --artifact-type file --name gl-pr --flow ` + suite.pipelineName + `
 			          --build-url example.com --gitlab-org ewelinawilkosz --repository merkely-gitlab-demo --commit e6510880aecdc05d79104d937e1adb572bd91911` + suite.defaultKosliArguments,
 			golden: "Error: Artifact with fingerprint '7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in pipeline 'gitlab-pr' belonging to 'docs-cmd-test-user'. \n",
 		},
 		{
 			wantError: true,
 			name:      "report Gitlab PR evidence fails when --artifact-type is unsupported",
-			cmd: `pipeline artifact report evidence gitlab-mergerequest testdata/file1 --artifact-type unsupported --name gl-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest gitlab testdata/file1 --artifact-type unsupported --name gl-pr --flow ` + suite.pipelineName + `
 			          --build-url example.com --gitlab-org ewelinawilkosz --repository merkely-gitlab-demo --commit e6510880aecdc05d79104d937e1adb572bd91911` + suite.defaultKosliArguments,
 			golden: "Error: unsupported is not a supported artifact type\n",
 		},
 		{
 			wantError: true,
 			name:      "report Gitlab PR evidence fails when --user-data is not found",
-			cmd: `pipeline artifact report evidence gitlab-mergerequest --fingerprint ` + suite.artifactFingerprint + ` --name gl-pr --pipeline ` + suite.pipelineName + `
+			cmd: `report evidence artifact pullrequest gitlab --fingerprint ` + suite.artifactFingerprint + ` --name gl-pr --flow ` + suite.pipelineName + `
 					  --user-data non-existing.json
 			          --build-url example.com --gitlab-org ewelinawilkosz --repository merkely-gitlab-demo --commit e6510880aecdc05d79104d937e1adb572bd91911` + suite.defaultKosliArguments,
 			golden: "Error: open non-existing.json: no such file or directory\n",

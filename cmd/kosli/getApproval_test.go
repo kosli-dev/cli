@@ -51,11 +51,6 @@ func (suite *GetApprovalCommandTestSuite) TestGetDeploymentCmd() {
 
 	tests := []cmdTestCase{
 		{
-			name:   "declare pipeline",
-			cmd:    "pipeline declare --pipeline " + suite.flowName + " --description \"my new pipeline\" " + suite.defaultKosliArguments,
-			golden: "",
-		},
-		{
 			wantError: false,
 			name:      "report artifact with sha256",
 			cmd:       "report artifact FooBar_1 --git-commit " + headHash + " --fingerprint 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + suite.defaultArtifactArguments + suite.defaultKosliArguments + defaultRepoRoot,
