@@ -12,32 +12,32 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const pipelineDeclareShortDesc = `Create or update a Kosli pipeline.`
+const createFlowShortDesc = `Create or update a Kosli flow.`
 
-const pipelineDeclareLongDesc = pipelineDeclareShortDesc + `
-You can provide a JSON pipefile or specify pipeline parameters in flags. 
-The pipefile contains the pipeline metadata and compliance policy (template).`
+const createFlowLongDesc = createFlowShortDesc + `
+You can provide a JSON pipefile or specify flow parameters in flags. 
+The pipefile contains the flow metadata and compliance policy (template).`
 
-const pipelineDeclareExample = `
-# create/update a Kosli pipeline without a pipefile:
-kosli pipeline declare \
-	--pipeline yourPipelineName \
-	--description yourPipelineDescription \
+const createFlowExample = `
+# create/update a Kosli flow without a pipefile:
+kosli create flow \
+	--flow yourFlowName \
+	--description yourFlowDescription \
     --visibility private OR public \
 	--template artifact,evidence-type1,evidence-type2 \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
-# create/update a Kosli pipeline with a pipefile (this is a legacy way which will be removed in the future):
-kosli pipeline declare \
+# create/update a Kosli flow with a pipefile (this is a legacy way which will be removed in the future):
+kosli create flow \
 	--pipefile /path/to/pipefile.json \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
 The pipefile format is:
 {
-    "name": "yourPipelineName",
-    "description": "yourPipelineDescription",
+    "name": "yourFlowName",
+    "description": "yourFlowDescription",
     "visibility": "public or private",
     "template": [
         "artifact",
@@ -47,12 +47,12 @@ The pipefile format is:
 }
 `
 
-type pipelineDeclareOptions struct {
+type createFlowOptions struct {
 	pipefile string
-	payload  PipelinePayload
+	payload  FlowPayload
 }
 
-type PipelinePayload struct {
+type FlowPayload struct {
 	Owner       string   `json:"owner"`
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
@@ -60,13 +60,13 @@ type PipelinePayload struct {
 	Template    []string `json:"template"`
 }
 
-func newPipelineDeclareCmd(out io.Writer) *cobra.Command {
-	o := new(pipelineDeclareOptions)
+func newCreateFlowCmd(out io.Writer) *cobra.Command {
+	o := new(createFlowOptions)
 	cmd := &cobra.Command{
-		Use:     "declare",
-		Short:   pipelineDeclareShortDesc,
-		Long:    pipelineDeclareLongDesc,
-		Example: pipelineDeclareExample,
+		Use:     "flow",
+		Short:   createFlowShortDesc,
+		Long:    createFlowLongDesc,
+		Example: createFlowExample,
 		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -74,18 +74,28 @@ func newPipelineDeclareCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
-			if o.pipefile != "" {
-				// This check does not catch if --template or --visibility is provided by the user
-				// as they both have defaults.
-				// When a pipefile is provided, the flags are ignored anyway
-				if o.payload.Description != "" || o.payload.Name != "" {
-					return ErrorBeforePrintingUsage(cmd, "--pipefile cannot be used together with any of"+
-						" --description, --pipeline flags")
-				}
-			} else {
-				if o.payload.Name == "" {
-					return ErrorBeforePrintingUsage(cmd, "--pipeline is required when you are not using --pipefile")
-				}
+			// if o.pipefile != "" {
+			// 	// This check does not catch if --template or --visibility is provided by the user
+			// 	// as they both have defaults.
+			// 	// When a pipefile is provided, the flags are ignored anyway
+			// 	if o.payload.Description != "" || o.payload.Name != "" {
+			// 		return ErrorBeforePrintingUsage(cmd, "--pipefile cannot be used together with any of"+
+			// 			" --description, --pipeline flags")
+			// 	}
+			// } else {
+			// 	if o.payload.Name == "" {
+			// 		return ErrorBeforePrintingUsage(cmd, "--pipeline is required when you are not using --pipefile")
+			// 	}
+			// }
+
+			err = MuXRequiredFlags(cmd, []string{"flow", "pipefile"}, true)
+			if err != nil {
+				return err
+			}
+
+			err = MuXRequiredFlags(cmd, []string{"description", "pipefile"}, false)
+			if err != nil {
+				return err
 			}
 
 			return nil
@@ -95,7 +105,7 @@ func newPipelineDeclareCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&o.payload.Name, "pipeline", "", newPipelineFlag)
+	cmd.Flags().StringVar(&o.payload.Name, "flow", "", newFlowFlag)
 	cmd.Flags().StringVar(&o.pipefile, "pipefile", "", pipefileFlag)
 	cmd.Flags().StringVar(&o.payload.Description, "description", "", pipelineDescriptionFlag)
 	cmd.Flags().StringVar(&o.payload.Visibility, "visibility", "private", visibilityFlag)
@@ -105,7 +115,7 @@ func newPipelineDeclareCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *pipelineDeclareOptions) run() error {
+func (o *createFlowOptions) run() error {
 	var err error
 	url := fmt.Sprintf("%s/api/v1/projects/%s/", global.Host, global.Owner)
 	if o.pipefile != "" {
@@ -126,7 +136,7 @@ func (o *pipelineDeclareOptions) run() error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("pipeline '%s' created", o.payload.Name)
+		logger.Info("flow '%s' was created", o.payload.Name)
 	}
 	return err
 }
@@ -149,8 +159,8 @@ func injectArtifactIntoTemplateIfNotExisting(template []string) []string {
 }
 
 // loadPipefile deserializes a JSON file into a PipelinePayload struct
-func loadPipefile(pipefilePath string) (PipelinePayload, error) {
-	var pipe PipelinePayload
+func loadPipefile(pipefilePath string) (FlowPayload, error) {
+	var pipe FlowPayload
 	jsonFile, err := os.Open(pipefilePath)
 	if err != nil {
 		return pipe, fmt.Errorf("failed to open pipefile: %v", err)

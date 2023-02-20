@@ -57,6 +57,7 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 	pipelineNameFlag        = "The Kosli pipeline name."
 	flowNameFlag            = "The Kosli flow name."
 	newPipelineFlag         = "The name of the pipeline to be created or updated."
+	newFlowFlag             = "The name of the flow to be created or updated."
 	outputFlag              = "[defaulted] The format of the output. Valid formats are: [table, json]."
 	pipefileFlag            = "[deprecated] The path to the JSON pipefile."
 	environmentNameFlag     = "The environment name."

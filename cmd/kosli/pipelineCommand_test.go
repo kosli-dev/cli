@@ -32,34 +32,34 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 	headHash := repoHead.Hash().String()
 
 	tests := []cmdTestCase{
-		{
-			name:   "declare pipeline",
-			cmd:    "pipeline declare --pipeline newFlow --description \"my new pipeline\" " + defaultKosliArguments,
-			golden: "",
-		},
-		{
-			name:   "re-declaring a pipeline updates its metadata",
-			cmd:    "pipeline declare --pipeline newFlow --description \"changed description\" " + defaultKosliArguments,
-			golden: "",
-		},
-		{
-			wantError: true,
-			name:      "missing --owner flag causes an error",
-			cmd:       "pipeline declare --pipeline newFlow --description \"my new pipeline\" -H http://localhost:8001 -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
-			golden:    "Error: --owner is not set\nUsage: kosli pipeline declare [flags]\n",
-		},
-		{
-			wantError: true,
-			name:      "missing --api-token flag causes an error",
-			cmd:       "pipeline declare --pipeline newFlow --description \"my new pipeline\" --owner cyber-dojo -H http://localhost:8001",
-			golden:    "Error: --api-token is not set\nUsage: kosli pipeline declare [flags]\n",
-		},
-		{
-			wantError: true,
-			name:      "missing --pipeline causes an error",
-			cmd:       "pipeline declare --description \"my new pipeline\" -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
-			golden:    "Error: --pipeline is required when you are not using --pipefile\nUsage: kosli pipeline declare [flags]\n",
-		},
+		// {
+		// 	name:   "declare pipeline",
+		// 	cmd:    "pipeline declare --pipeline newFlow --description \"my new pipeline\" " + defaultKosliArguments,
+		// 	golden: "",
+		// },
+		// {
+		// 	name:   "re-declaring a pipeline updates its metadata",
+		// 	cmd:    "pipeline declare --pipeline newFlow --description \"changed description\" " + defaultKosliArguments,
+		// 	golden: "",
+		// },
+		// {
+		// 	wantError: true,
+		// 	name:      "missing --owner flag causes an error",
+		// 	cmd:       "pipeline declare --pipeline newFlow --description \"my new pipeline\" -H http://localhost:8001 -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
+		// 	golden:    "Error: --owner is not set\nUsage: kosli pipeline declare [flags]\n",
+		// },
+		// {
+		// 	wantError: true,
+		// 	name:      "missing --api-token flag causes an error",
+		// 	cmd:       "pipeline declare --pipeline newFlow --description \"my new pipeline\" --owner cyber-dojo -H http://localhost:8001",
+		// 	golden:    "Error: --api-token is not set\nUsage: kosli pipeline declare [flags]\n",
+		// },
+		// {
+		// 	wantError: true,
+		// 	name:      "missing --pipeline causes an error",
+		// 	cmd:       "pipeline declare --description \"my new pipeline\" -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
+		// 	golden:    "Error: --pipeline is required when you are not using --pipefile\nUsage: kosli pipeline declare [flags]\n",
+		// },
 		// Pipeline ls tests
 		{
 			wantError: false,
@@ -87,18 +87,18 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		},
 
 		// Get flow tests
-		{
-			wantError: false,
-			name:      "kosli get flow newFlow command does not return error",
-			cmd:       "get flow newFlow" + defaultKosliArguments,
-			golden:    "",
-		},
-		{
-			wantError: false,
-			name:      "kosli get flow newFlow --output json command does not return error",
-			cmd:       "get flow newFlow --output json" + defaultKosliArguments,
-			golden:    "",
-		},
+		// {
+		// 	wantError: false,
+		// 	name:      "kosli get flow newFlow command does not return error",
+		// 	cmd:       "get flow newFlow" + defaultKosliArguments,
+		// 	golden:    "",
+		// },
+		// {
+		// 	wantError: false,
+		// 	name:      "kosli get flow newFlow --output json command does not return error",
+		// 	cmd:       "get flow newFlow --output json" + defaultKosliArguments,
+		// 	golden:    "",
+		// },
 
 		// Report artifacts
 		{

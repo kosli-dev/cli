@@ -17,8 +17,8 @@ func PullExampleImage(t *testing.T) {
 
 // CreateFlow creates a flow on the server
 func CreateFlow(flowName string, t *testing.T) {
-	o := &pipelineDeclareOptions{
-		payload: PipelinePayload{
+	o := &createFlowOptions{
+		payload: FlowPayload{
 			Name:        flowName,
 			Description: "test flow",
 			Visibility:  "private",
