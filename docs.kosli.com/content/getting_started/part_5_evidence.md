@@ -160,7 +160,7 @@ See [kosli commit report evidence junit](/client_reference/kosli_commit_report_e
 
 ## Snyk scan evidence
 
-To report results of a Snyk security scan, you can [report Snyk evidence to an artifact](/client_reference/kosli_pipeline_artifact_report_evidence_snyk/) or
+To report results of a Snyk security scan, you can [report Snyk evidence to an artifact](/client_reference/kosli_report_evidence_artifact_snyk/) or
 [report Snyk evidence to a commit](/client_reference/kosli_commit_report_evidence_snyk/). These commands will analyze the Snyk scan results and determine if the evidence is compliant or not.
 Remember to add the snyk scan evidence to your [pipeline template](/kosli_overview/what_is_kosli/#template) and use the same label for `--name` you provided in a `template`.
 

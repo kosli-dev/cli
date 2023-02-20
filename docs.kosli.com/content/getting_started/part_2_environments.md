@@ -51,7 +51,7 @@ Or in the UI, by clicking at the name of the environment (after selecting "Envir
 
 A Kosli *environment* stores snapshots containing information about the software artifacts that are running in your runtime environments. 
 
-Before you start reporting what's running in your environments you need to create an environment in Kosli and make sure it matches the type of the environment you'll be reporting, e.g. `docker` or `k8s`. You can see all the available environment types in the help text for the `--environment-type` flag in the [`kosli environment declare`](/client_reference/kosli_environment_declare/) command. 
+Before you start reporting what's running in your environments you need to create an environment in Kosli and make sure it matches the type of the environment you'll be reporting, e.g. `docker` or `k8s`. You can see all the available environment types in the help text for the `--environment-type` flag in the [`kosli create environment`](/client_reference/kosli_create_environment/) command. 
 
 ### Example
 
