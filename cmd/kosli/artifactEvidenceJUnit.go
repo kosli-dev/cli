@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/kosli-dev/cli/internal/requests"
@@ -158,19 +157,6 @@ func ingestJunitDir(testResultsDir string) ([]*JUnitResults, error) {
 	}
 
 	for _, suite := range suites {
-		errors, err := strconv.Atoi(suite.Properties["errors"])
-		if err != nil {
-			return results, err
-		}
-		failures, err := strconv.Atoi(suite.Properties["failures"])
-		if err != nil {
-			return results, err
-		}
-		duration, err := strconv.ParseFloat(suite.Properties["time"], 64)
-		if err != nil {
-			return results, err
-		}
-
 		var timestamp float64
 		// There is no official schema for the timestamp in the junit xml
 		suite_timestamp := suite.Properties["timestamp"]
@@ -190,13 +176,14 @@ func ingestJunitDir(testResultsDir string) ([]*JUnitResults, error) {
 			timestamp = 0.0
 		}
 
+		// The values in suite.Totals are based on the results of the tests in the suite and not in the header of the suite.
 		suiteResult := &JUnitResults{
 			Name:      suite.Name,
-			Duration:  duration,
+			Duration:  suite.Totals.Duration.Seconds(),
 			Total:     suite.Totals.Tests,
 			Skipped:   suite.Totals.Skipped,
-			Errors:    errors,
-			Failures:  failures,
+			Errors:    suite.Totals.Error,
+			Failures:  suite.Totals.Failed,
 			Timestamp: timestamp,
 		}
 		logger.Debug("parsed <testsuite> result: %+v", suiteResult)
