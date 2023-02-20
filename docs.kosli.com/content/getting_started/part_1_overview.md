@@ -3,7 +3,6 @@ title: "Part 1: Overview"
 bookCollapseSection: false
 weight: 210
 ---
-
 # Part 1: Overview
 
 Kosli is a very flexible tool - you can use it to drive a big transformation but you can also implement it without changing your existing process. 
