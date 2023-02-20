@@ -8,7 +8,7 @@ Report JUnit test evidence for a commit in a Kosli pipeline.
 
 ### Synopsis
 
-Report JUnit test evidence for an artifact in a Kosli pipeline.
+Report JUnit test evidence for an artifact in a Kosli flow.
 
 ```shell
 kosli commit report evidence junit [flags]

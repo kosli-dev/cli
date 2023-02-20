@@ -1,17 +1,17 @@
 ---
-title: "kosli environment declare"
+title: "kosli create environment"
 ---
 
-## kosli environment declare
+## kosli create environment
 
-Declare a Kosli environment.
+Create a Kosli environment.
 
 ### Synopsis
 
-Declare a Kosli environment.
+Create a Kosli environment.
 
 ```shell
-kosli environment declare [flags]
+kosli create environment [flags]
 ```
 
 ### Flags
@@ -20,7 +20,7 @@ kosli environment declare [flags]
 |    -d, --description string  |  [optional] The environment description.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -t, --environment-type string  |  The type of environment. Valid types are: [K8S, ECS, server, S3, lambda, docker].  |
-|    -h, --help  |  help for declare  |
+|    -h, --help  |  help for environment  |
 |    -n, --name string  |  The name of environment to be created.  |
 
 
@@ -39,8 +39,8 @@ kosli environment declare [flags]
 
 ```shell
 
-# declare a Kosli environment:
-kosli environment declare 
+# create a Kosli environment:
+kosli create environment 
 	--name yourEnvironmentName \
 	--environment-type K8S \
 	--description "my new env" \

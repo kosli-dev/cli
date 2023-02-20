@@ -41,27 +41,27 @@ type junitEvidenceOptions struct {
 	payload            EvidenceJUnitPayload
 }
 
-const junitEvidenceShortDesc = `Report JUnit test evidence for an artifact in a Kosli pipeline.`
+const junitEvidenceShortDesc = `Report JUnit test evidence for an artifact in a Kosli flow.`
 
 const junitEvidenceLongDesc = junitEvidenceShortDesc + `
 ` + fingerprintDesc
 
 const junitEvidenceExample = `
 # report JUnit test evidence about a file artifact:
-kosli pipeline artifact report evidence junit FILE.tgz \
+kosli report evidence artifact junit FILE.tgz \
 	--artifact-type file \
 	--name yourEvidenceName \
-	--pipeline yourPipelineName \
+	--flow yourFlowName \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
 	--owner yourOrgName	\
 	--results-dir yourFolderWithJUnitResults
 
 # report JUnit test evidence about an artifact using an available Sha256 digest:
-kosli pipeline artifact report evidence junit \
+kosli report evidence artifact junit \
 	--fingerprint yourSha256 \
 	--name yourEvidenceName \
-	--pipeline yourPipelineName \
+	--flow yourFlowName \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
 	--owner yourOrgName	\
@@ -94,8 +94,8 @@ func newJUnitEvidenceCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVarP(&o.fingerprint, "fingerprint", "f", "", fingerprintFlag)
-	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
+	cmd.Flags().StringVarP(&o.fingerprint, "fingerprint", "F", "", fingerprintFlag)
+	cmd.Flags().StringVarP(&o.pipelineName, "flow", "f", "", pipelineNameFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
 	cmd.Flags().StringVarP(&o.testResultsDir, "results-dir", "R", ".", resultsDirFlag)
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
@@ -103,7 +103,7 @@ func newJUnitEvidenceCmd(out io.Writer) *cobra.Command {
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"pipeline", "build-url", "name"})
+	err := RequireFlags(cmd, []string{"flow", "build-url", "name"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
