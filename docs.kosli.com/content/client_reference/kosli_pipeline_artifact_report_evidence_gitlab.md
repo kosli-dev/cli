@@ -1,19 +1,19 @@
 ---
-title: "kosli pipeline artifact report evidence gitlab-mergerequest"
+title: "kosli pipeline artifact report evidence gitlab"
 ---
 
-## kosli pipeline artifact report evidence gitlab-mergerequest
+## kosli pipeline artifact report evidence gitlab
 
-Report a Gitlab merge request evidence for an artifact in a Kosli pipeline.
+Report a Gitlab merge request evidence for an artifact in a Kosli flow.
 
 ### Synopsis
 
-Report a Gitlab merge request evidence for an artifact in a Kosli pipeline.
+Report a Gitlab merge request evidence for an artifact in a Kosli flow.
 It checks if a merge request exists for the artifact (based on its git commit) and report the merge request evidence to the artifact in Kosli. 
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag).
 
 ```shell
-kosli pipeline artifact report evidence gitlab-mergerequest [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli pipeline artifact report evidence gitlab [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ### Flags
@@ -24,13 +24,13 @@ kosli pipeline artifact report evidence gitlab-mergerequest [IMAGE-NAME | FILE-P
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --commit string  |  Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|    -f, --fingerprint string  |  [conditional] The SHA256 fingerprint for the artifact. Only required if you don't specify '--artifact-type'.  |
+|    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint for the artifact. Only required if you don't specify '--artifact-type'.  |
+|    -f, --flow string  |  The Kosli pipeline name.  |
 |        --gitlab-base-url string  |  [optional] Gitlab base URL (only needed for on-prem Gitlab installations).  |
 |        --gitlab-org string  |  Gitlab organization. (defaulted if you are running in Gitlab Pipelines: https://docs.kosli.com/ci-defaults ).  |
 |        --gitlab-token string  |  Gitlab token.  |
-|    -h, --help  |  help for gitlab-mergerequest  |
+|    -h, --help  |  help for gitlab  |
 |    -n, --name string  |  The name of the evidence.  |
-|    -p, --pipeline string  |  The Kosli pipeline name.  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
@@ -54,11 +54,11 @@ kosli pipeline artifact report evidence gitlab-mergerequest [IMAGE-NAME | FILE-P
 ```shell
 
 # report a merge request evidence to kosli for a docker image
-kosli pipeline artifact report evidence gitlab-mergerequest yourDockerImageName \
+kosli report evidence artifact mergerequest gitlab yourDockerImageName \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
 	--name yourEvidenceName \
-	--pipeline yourPipelineName \
+	--flow yourFlowName \
 	--gitlab-token yourGitlabToken \
 	--gitlab-org yourGitlabOrg \
 	--commit yourArtifactGitCommit \
@@ -67,11 +67,11 @@ kosli pipeline artifact report evidence gitlab-mergerequest yourDockerImageName 
 	--api-token yourAPIToken
 
 # report a merge request evidence (from an on-prem Gitlab) to kosli for a docker image 
-kosli pipeline artifact report evidence gitlab-mergerequest yourDockerImageName \
+kosli report evidence artifact mergerequest gitlab yourDockerImageName \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
 	--name yourEvidenceName \
-	--pipeline yourPipelineName \
+	--flow yourFlowName \
 	--gitlab-base-url https://gitlab.example.org \
 	--gitlab-token yourGitlabToken \
 	--gitlab-org yourGitlabOrg \
@@ -81,10 +81,10 @@ kosli pipeline artifact report evidence gitlab-mergerequest yourDockerImageName 
 	--api-token yourAPIToken
 	
 # fail if a merge request does not exist for your artifact
-kosli pipeline artifact report evidence gitlab-mergerequest yourDockerImageName \
+kosli report evidence artifact mergerequest gitlab yourDockerImageName \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
-	--name yourEvidenceName \
+	--flow yourFlowName \
 	--pipeline yourPipelineName \
 	--gitlab-token yourGitlabToken \
 	--gitlab-org yourGitlabOrg \

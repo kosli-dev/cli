@@ -1,35 +1,35 @@
 ---
-title: "kosli artifact get"
+title: "kosli get artifact"
 ---
 
-## kosli artifact get
+## kosli get artifact
 
-Get artifact from a specified pipeline
+Get artifact from a specified flow
 
 ### Synopsis
 
-Get artifact from a specified pipeline
+Get artifact from a specified flow
 You can get an artifact by its fingerprint or by its git commit sha.
 In case of using the git commit, it is possible to get multiple artifacts matching the git commit.
 
 The expected argument is an expression to specify the artifact to get.
-It has the format <PIPELINE_NAME><SEPARATOR><COMMIT_SHA1|ARTIFACT_SHA256> 
+It has the format <FLOW_NAME><SEPARATOR><COMMIT_SHA1|ARTIFACT_SHA256> 
 
 Specify SNAPPISH by:
-	pipelineName@<fingerprint>  artifact with a given fingerprint. The fingerprint can be short or complete.
-	pipelineName:<commit_sha>   artifact with a given commit SHA. The commit sha can be short or complete.
+	flowName@<fingerprint>  artifact with a given fingerprint. The fingerprint can be short or complete.
+	flowName:<commit_sha>   artifact with a given commit SHA. The commit sha can be short or complete.
 
-Examples of valid expressions are: pipe@184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0, pipe:110d048bf1fce72ba546cbafc4427fb21b958dee
+Examples of valid expressions are: flow@184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0, flow:110d048bf1fce72ba546cbafc4427fb21b958dee
 
 
 ```shell
-kosli artifact get SNAPPISH [flags]
+kosli get artifact SNAPPISH [flags]
 ```
 
 ### Flags
 | Flag | Description |
 | :--- | :--- |
-|    -h, --help  |  help for get  |
+|    -h, --help  |  help for artifact  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 
 
@@ -47,12 +47,13 @@ kosli artifact get SNAPPISH [flags]
 ### Examples
 
 ```shell
-# get an artifact with a given fingerprint from a pipeline
-kosli artifact get pipelineName@fingerprint \
+# get an artifact with a given fingerprint from a flow
+kosli get artifact flowName@fingerprint \
 	--api-token yourAPIToken \
 	--owner orgName
-# get an artifact with a given commit SHA from a pipeline
-kosli artifact get pipelineName:commitSHA \
+
+# get an artifact with a given commit SHA from a flow
+kosli get artifact flowName:commitSHA \
 	--api-token yourAPIToken \
 	--owner orgName
 ```

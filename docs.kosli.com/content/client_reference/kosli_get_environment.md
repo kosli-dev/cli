@@ -1,27 +1,23 @@
 ---
-title: "kosli deployment get"
+title: "kosli get environment"
 ---
 
-## kosli deployment get
+## kosli get environment
 
-Get a deployment from a specified pipeline.
+Get an environment's metadata.
 
 ### Synopsis
 
-Get a deployment from a specified pipeline.
-Specify SNAPPISH by:
-	pipelineName~<N>  N'th behind the latest deployment
-	pipelineName#<N>  deployment number N
-	pipelineName      the latest deployment
+Get an environment's metadata.
 
 ```shell
-kosli deployment get SNAPPISH [flags]
+kosli get environment ENVIRONMENT-NAME [flags]
 ```
 
 ### Flags
 | Flag | Description |
 | :--- | :--- |
-|    -h, --help  |  help for get  |
+|    -h, --help  |  help for environment  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 
 
@@ -35,23 +31,4 @@ kosli deployment get SNAPPISH [flags]
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --owner string  |  The Kosli user or organization.  |
 
-
-### Examples
-
-```shell
-# get previous deployment in a pipeline
-kosli deployment get pipelineName~1 \
-	--api-token yourAPIToken \
-	--owner orgName
-
-# get the 10th deployment in a pipeline
-kosli deployment get pipelineName#10 \
-	--api-token yourAPIToken \
-	--owner orgName
-
-# get the latest deployment in a pipeline
-kosli deployment get pipelineName \
-	--api-token yourAPIToken \
-	--owner orgName
-```
 

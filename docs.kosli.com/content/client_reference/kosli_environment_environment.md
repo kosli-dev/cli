@@ -1,23 +1,23 @@
 ---
-title: "kosli environment inspect"
+title: "kosli environment environment"
 ---
 
-## kosli environment inspect
+## kosli environment environment
 
-Inspect an environment metadata.
+Get an environment's metadata.
 
 ### Synopsis
 
-Inspect an environment metadata.
+Get an environment's metadata.
 
 ```shell
-kosli environment inspect ENVIRONMENT-NAME [flags]
+kosli environment environment ENVIRONMENT-NAME [flags]
 ```
 
 ### Flags
 | Flag | Description |
 | :--- | :--- |
-|    -h, --help  |  help for inspect  |
+|    -h, --help  |  help for environment  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 
 
