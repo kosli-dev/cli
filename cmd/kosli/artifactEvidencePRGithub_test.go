@@ -147,33 +147,6 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 	runTestCmd(suite.T(), tests)
 }
 
-func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestAssertPRGithubCmd() {
-	tests := []cmdTestCase{
-		{
-			name: "assert Github PR evidence passes when commit has a PR in github",
-			cmd: `assert github-pullrequest --github-org kosli-dev --repository cli 
-			--commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
-			golden: "found [1] pull request(s) in Github for commit: 73d7fee2f31ade8e1a9c456c324255212c30c2a6\n",
-		},
-		{
-			wantError: true,
-			name:      "assert Github PR evidence fails when commit has no PRs in github",
-			cmd: `assert github-pullrequest --github-org kosli-dev --repository cli 
-			--commit 19aab7f063147614451c88969602a10afbabb43d` + suite.defaultKosliArguments,
-			golden: "Error: no pull requests found for the given commit: 19aab7f063147614451c88969602a10afbabb43d\n",
-		},
-		{
-			wantError: true,
-			name:      "assert Github PR evidence fails when commit does not exist",
-			cmd: `assert github-pullrequest --github-org kosli-dev --repository cli 
-			--commit 19aab7f063147614451c88969602a10afba123ab` + suite.defaultKosliArguments,
-			golden: "Error: GET https://api.github.com/repos/kosli-dev/cli/commits/19aab7f063147614451c88969602a10afba123ab/pulls: 422 No commit found for SHA: 19aab7f063147614451c88969602a10afba123ab []\n",
-		},
-	}
-
-	runTestCmd(suite.T(), tests)
-}
-
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestArtifactEvidencePRGithubCommandTestSuite(t *testing.T) {

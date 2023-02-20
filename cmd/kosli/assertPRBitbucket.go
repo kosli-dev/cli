@@ -19,7 +19,7 @@ The command exits with non-zero exit code
 if no pull requests were found for the commit.`
 
 const assertPRBitbucketExample = `
-kosli assert bitbucket-pullrequest  \
+kosli assert pullrequest bitbucket  \
 	--bitbucket-username yourBitbucketUsername \
 	--bitbucket-password yourBitbucketPassword \
 	--bitbucket-workspace yourBitbucketWorkspace \
@@ -33,8 +33,8 @@ func newAssertPullRequestBitbucketCmd(out io.Writer) *cobra.Command {
 	o.bbConfig.Logger = logger
 	o.bbConfig.KosliClient = kosliClient
 	cmd := &cobra.Command{
-		Use:     "bitbucket-pullrequest",
-		Aliases: []string{"bb-pr", "bitbucket-pr"},
+		Use:     "bitbucket",
+		Aliases: []string{"bb"},
 		Short:   assertPRBitbucketShortDesc,
 		Long:    assertPRBitbucketLongDesc,
 		Example: assertPRBitbucketExample,

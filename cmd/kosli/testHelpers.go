@@ -60,3 +60,24 @@ func CreateEnv(owner, envName, envType string, t *testing.T) {
 	err := o.run()
 	require.NoError(t, err, "env should be created without error")
 }
+
+func ExpectDeployment(flowName, fingerprint, envName string, t *testing.T) {
+	o := &expectDeploymentOptions{
+		pipelineName: flowName,
+		payload: ExpectDeploymentPayload{
+			Sha256:      fingerprint,
+			Environment: envName,
+			BuildUrl:    "https://example.com",
+		},
+	}
+	err := o.run([]string{})
+	require.NoError(t, err, "deployment should be expected without error")
+}
+
+func ReportServerArtifactToEnv(paths []string, envName string, t *testing.T) {
+	o := &environmentReportServerOptions{
+		paths: paths,
+	}
+	err := o.run([]string{envName})
+	require.NoError(t, err, "server env should be reported without error")
+}

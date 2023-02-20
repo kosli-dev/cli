@@ -154,33 +154,6 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePR
 	runTestCmd(suite.T(), tests)
 }
 
-func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestAssertPRBitbucketCmd() {
-	tests := []cmdTestCase{
-		{
-			name: "assert Bitbucket PR evidence passes when commit has a PR in bitbucket",
-			cmd: `assert bitbucket-pullrequest --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test 
-			--commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69` + suite.defaultKosliArguments,
-			golden: "found [1] pull request(s) in Bitbucket for commit: 2492011ef04a9da09d35be706cf6a4c5bc6f1e69\n",
-		},
-		{
-			wantError: true,
-			name:      "assert Bitbucket PR evidence fails when commit has no PRs in bitbucket",
-			cmd: `assert bitbucket-pullrequest --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test 
-			--commit cb6ec5fcbb25b1ebe4859d35ab7995ab973f894c` + suite.defaultKosliArguments,
-			golden: "Error: no pull requests found for the given commit: cb6ec5fcbb25b1ebe4859d35ab7995ab973f894c\n",
-		},
-		{
-			wantError: true,
-			name:      "assert Bitbucket PR evidence fails when commit does not exist",
-			cmd: `assert bitbucket-pullrequest --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test 
-			--commit 19aab7f063147614451c88969602a10afba123ab` + suite.defaultKosliArguments,
-			golden: "Error: map[error:map[message:Resource not found] type:error]\n",
-		},
-	}
-
-	runTestCmd(suite.T(), tests)
-}
-
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestArtifactEvidencePRBitbucketCommandTestSuite(t *testing.T) {

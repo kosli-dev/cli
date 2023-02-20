@@ -397,12 +397,12 @@ func ValidateArtifactArg(args []string, artifactType, inputSha256 string, always
 		if alwaysRequireArtifactName {
 			return fmt.Errorf("docker image name or file/dir path is required")
 		} else if inputSha256 == "" {
-			return fmt.Errorf("docker image name or file/dir path is required when --sha256 is not provided")
+			return fmt.Errorf("docker image name or file/dir path is required when --fingerprint is not provided")
 		}
 	}
 
 	if artifactType == "" && inputSha256 == "" {
-		return fmt.Errorf("either --artifact-type or --sha256 must be specified")
+		return fmt.Errorf("either --artifact-type or --fingerprint must be specified")
 	}
 
 	if inputSha256 != "" {

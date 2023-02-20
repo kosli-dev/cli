@@ -12,14 +12,14 @@ type assertPullRequestGitlabOptions struct {
 	commit       string
 }
 
-const assertPRGitlabShortDesc = `Assert if a Gitlab pull request for a git commit exists.`
+const assertPRGitlabShortDesc = `Assert if a Gitlab merge request for a git commit exists.`
 
 const assertPRGitlabLongDesc = assertPRGitlabShortDesc + `
 The command exits with non-zero exit code 
-if no pull requests were found for the commit.`
+if no merge requests were found for the commit.`
 
 const assertPRGitlabExample = `
-kosli assert gitlab-mergerequest \
+kosli assert mergerequest gitlab \
 	--github-token yourGithubToken \
 	--github-org yourGithubOrg \
 	--commit yourArtifactGitCommit \
@@ -31,7 +31,8 @@ func newAssertPullRequestGitlabCmd(out io.Writer) *cobra.Command {
 	o := new(assertPullRequestGitlabOptions)
 	o.gitlabConfig = new(gitlabUtils.GitlabConfig)
 	cmd := &cobra.Command{
-		Use:     "gitlab-mergerequest",
+		Use:     "gitlab",
+		Aliases: []string{"gl"},
 		Short:   assertPRGitlabShortDesc,
 		Long:    assertPRGitlabLongDesc,
 		Example: assertPRGitlabExample,

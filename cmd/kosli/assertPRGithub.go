@@ -19,7 +19,7 @@ The command exits with non-zero exit code
 if no pull requests were found for the commit.`
 
 const assertPRGithubExample = `
-kosli assert github-pullrequest  \
+kosli assert pullrequest github \
 	--github-token yourGithubToken \
 	--github-org yourGithubOrg \
 	--commit yourArtifactGitCommit \
@@ -31,8 +31,8 @@ func newAssertPullRequestGithubCmd(out io.Writer) *cobra.Command {
 	o := new(assertPullRequestGithubOptions)
 	o.githubConfig = new(ghUtils.GithubConfig)
 	cmd := &cobra.Command{
-		Use:     "github-pullrequest",
-		Aliases: []string{"gh-pr", "github-pr"},
+		Use:     "github",
+		Aliases: []string{"gh"},
 		Short:   assertPRGithubShortDesc,
 		Long:    assertPRGithubLongDesc,
 		Example: assertPRGithubExample,
