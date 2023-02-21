@@ -68,6 +68,12 @@ func addCommitPRFlags(cmd *cobra.Command, o *pullRequestCommitOptions, ci string
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
 }
 
+func addListFlags(cmd *cobra.Command, o *listOptions) {
+	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
+	cmd.Flags().IntVar(&o.pageNumber, "page", 1, pageNumberFlag)
+	cmd.Flags().IntVarP(&o.pageLimit, "page-limit", "n", 15, pageLimitFlag)
+}
+
 type TypedEvidencePayload struct {
 	ArtifactFingerprint string      `json:"artifact_fingerprint,omitempty"`
 	CommitSHA           string      `json:"commit_sha,omitempty"`

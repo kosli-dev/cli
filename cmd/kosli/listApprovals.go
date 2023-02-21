@@ -38,16 +38,13 @@ kosli list approval yourFlowName \
 `
 
 type listApprovalsOptions struct {
-	output     string
-	pageNumber int
-	pageLimit  int
+	listOptions
 }
 
 func newListApprovalsCmd(out io.Writer) *cobra.Command {
 	o := new(listApprovalsOptions)
 	cmd := &cobra.Command{
 		Use:     "approvals FLOW-NAME",
-		Aliases: []string{"ls"},
 		Short:   listApprovalsShortDesc,
 		Long:    listApprovalsLongDesc,
 		Example: listApprovalsExample,
@@ -58,22 +55,14 @@ func newListApprovalsCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
-			if o.pageNumber <= 0 {
-				return ErrorBeforePrintingUsage(cmd, "page number must be a positive integer")
-			}
-			if o.pageLimit <= 0 {
-				return ErrorBeforePrintingUsage(cmd, "page limit must be a positive integer")
-			}
-			return nil
+			return o.validate(cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(out, args)
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
-	cmd.Flags().IntVar(&o.pageNumber, "page", 1, pageNumberFlag)
-	cmd.Flags().IntVarP(&o.pageLimit, "page-limit", "n", 15, pageLimitFlag)
+	addListFlags(cmd, &o.listOptions)
 
 	return cmd
 }

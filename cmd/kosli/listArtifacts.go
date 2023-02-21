@@ -11,44 +11,41 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const artifactLsShortDesc = `List artifacts in a pipeline. `
+const listArtifactsShortDesc = `List artifacts in a flow. `
 
-const artifactLsLongDesc = artifactLsShortDesc + `The results are paginated and ordered from latests to oldest. 
+const listArtifactsLongDesc = listArtifactsShortDesc + `The results are paginated and ordered from latests to oldest. 
 By default, the page limit is 15 artifacts per page.
 `
 const artifactLsExample = `
-# list the last 15 artifacts for a pipeline:
-kosli artifact list yourPipelineName \
+# list the last 15 artifacts for a flow:
+kosli list artifact yourFlowName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
-# list the last 30 artifacts for a pipeline:
-kosli artifact list yourPipelineName \
+# list the last 30 artifacts for a flow:
+kosli list artifact yourFlowName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
-# list the last 30 artifacts for a pipeline (in JSON):
-kosli artifact list yourPipelineName \
+# list the last 30 artifacts for a flow (in JSON):
+kosli list artifact yourFlowName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--owner yourOrgName \
 	--output json
 `
 
-type artifactLsOptions struct {
-	output     string
-	pageNumber int
-	pageLimit  int
+type listArtifactsOptions struct {
+	listOptions
 }
 
-func newArtifactLsCmd(out io.Writer) *cobra.Command {
-	o := new(artifactLsOptions)
+func newListArtifactsCmd(out io.Writer) *cobra.Command {
+	o := new(listArtifactsOptions)
 	cmd := &cobra.Command{
-		Use:     "ls PIPELINE-NAME",
-		Aliases: []string{"list"},
-		Short:   artifactLsShortDesc,
-		Long:    artifactLsLongDesc,
+		Use:     "artifacts FLOW-NAME",
+		Short:   listArtifactsShortDesc,
+		Long:    listArtifactsLongDesc,
 		Example: artifactLsExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -56,25 +53,19 @@ func newArtifactLsCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
-			return nil
+			return o.validate(cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(out, args)
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
-	cmd.Flags().IntVar(&o.pageNumber, "page", 1, pageNumberFlag)
-	cmd.Flags().IntVarP(&o.pageLimit, "page-limit", "n", 15, pageLimitFlag)
+	addListFlags(cmd, &o.listOptions)
 
 	return cmd
 }
 
-func (o *artifactLsOptions) run(out io.Writer, args []string) error {
-	if o.pageNumber <= 0 {
-		logger.Info("no artifacts were requested")
-		return nil
-	}
+func (o *listArtifactsOptions) run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/?page=%d&per_page=%d",
 		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit)
 
@@ -103,7 +94,7 @@ func printArtifactsListAsTable(raw string, out io.Writer, page int) error {
 	}
 
 	if len(artifacts) == 0 {
-		msg := "no artifacts were found"
+		msg := "No artifacts were found"
 		if page != 1 {
 			msg = fmt.Sprintf("%s at page number %d", msg, page)
 		}
