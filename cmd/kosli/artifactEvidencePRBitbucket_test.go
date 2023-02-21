@@ -45,15 +45,6 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePR
 			golden: "bitbucket pull request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
 		{
-			name: "report Bitbucket PR evidence works with deprecated flags",
-			cmd: `report evidence artifact pullrequest bitbucket --sha256 ` + suite.artifactFingerprint + ` --evidence-type bb-pr --flow ` + suite.pipelineName + `
-			          --description text --build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69` + suite.defaultKosliArguments,
-			golden: "Flag --sha256 has been deprecated, use --fingerprint instead\n" +
-				"Flag --evidence-type has been deprecated, use --name instead\n" +
-				"Flag --description has been deprecated, description is no longer used\n" +
-				"bitbucket pull request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
-		},
-		{
 			wantError: true,
 			name:      "report Bitbucket PR evidence fails when --owner is missing",
 			cmd: `report evidence artifact pullrequest bitbucket --fingerprint ` + suite.artifactFingerprint + ` --name bb-pr --flow ` + suite.pipelineName + `
@@ -63,10 +54,10 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePR
 		},
 		{
 			wantError: true,
-			name:      "report Bitbucket PR evidence fails when both --name and --evidence-type are missing",
+			name:      "report Bitbucket PR evidence fails when --name is missing",
 			cmd: `report evidence artifact pullrequest bitbucket --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.pipelineName + `
-			          --build-url example.com --repository cli --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69` + suite.defaultKosliArguments,
-			golden: "Error: at least one of --name, --evidence-type is required\n",
+			          --build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69` + suite.defaultKosliArguments,
+			golden: "Error: required flag(s) \"name\" not set\n",
 		},
 		{
 			wantError: true,
@@ -94,7 +85,7 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePR
 			name:      "report Bitbucket PR evidence fails when neither --fingerprint nor --artifact-type are set",
 			cmd: `report evidence artifact pullrequest bitbucket artifactNameArg --name bb-pr --flow ` + suite.pipelineName + `
 					  --build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69` + suite.defaultKosliArguments,
-			golden: "Error: either --artifact-type or --sha256 must be specified\n" +
+			golden: "Error: either --artifact-type or --fingerprint must be specified\n" +
 				"Usage: kosli report evidence artifact pullrequest bitbucket [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
@@ -140,14 +131,6 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePR
 					  --user-data non-existing.json
 			          --build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69` + suite.defaultKosliArguments,
 			golden: "Error: open non-existing.json: no such file or directory\n",
-		},
-		{
-			wantError: true,
-			name:      "report Bitbucket PR evidence fails when both --name and --evidence-type are set",
-			cmd: `report evidence artifact pullrequest bitbucket --fingerprint ` + suite.artifactFingerprint + ` --name bb-pr --evidence-type bb-pr --flow ` + suite.pipelineName + `
-			          --build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69` + suite.defaultKosliArguments,
-			golden: "Flag --evidence-type has been deprecated, use --name instead\n" +
-				"Error: only one of --name, --evidence-type is allowed\n",
 		},
 	}
 
