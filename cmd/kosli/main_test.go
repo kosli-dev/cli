@@ -13,10 +13,11 @@ import (
 
 // cmdTestCase describes a cmd test case.
 type cmdTestCase struct {
-	name      string
-	cmd       string
-	golden    string
-	wantError bool
+	name             string
+	cmd              string
+	golden           string
+	wantError        bool
+	additionalConfig interface{}
 }
 
 func initializeClient() {

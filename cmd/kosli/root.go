@@ -207,6 +207,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		newGetCmd(out),
 		newCreateCmd(out),
 		newReportCmd(out),
+		newDiffCmd(out),
 	)
 
 	return cmd, nil
