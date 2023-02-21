@@ -63,9 +63,9 @@ func CreateEnv(owner, envName, envType string, t *testing.T) {
 
 func ExpectDeployment(flowName, fingerprint, envName string, t *testing.T) {
 	o := &expectDeploymentOptions{
-		pipelineName: flowName,
+		flowName: flowName,
 		payload: ExpectDeploymentPayload{
-			Sha256:      fingerprint,
+			Fingerprint: fingerprint,
 			Environment: envName,
 			BuildUrl:    "https://example.com",
 		},
