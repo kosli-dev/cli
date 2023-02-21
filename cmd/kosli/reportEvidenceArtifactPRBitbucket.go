@@ -11,7 +11,7 @@ const pullRequestEvidenceBitbucketShortDesc = `Report a Bitbucket pull request e
 
 const pullRequestEvidenceBitbucketLongDesc = pullRequestEvidenceBitbucketShortDesc + `
 It checks if a pull request exists for the artifact (based on its git commit) and report the pull-request evidence to the artifact in Kosli. 
-` + sha256Desc
+` + fingerprintDesc
 
 const pullRequestEvidenceBitbucketExample = `
 # report a pull request evidence to kosli for a docker image

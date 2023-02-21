@@ -48,7 +48,7 @@ func addGitlabFlags(cmd *cobra.Command, gitlabConfig *gitlabUtils.GitlabConfig, 
 
 func addArtifactPRFlags(cmd *cobra.Command, o *pullRequestArtifactOptions, ci string, deprecatedFlags bool) {
 	if deprecatedFlags {
-		cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "sha256", "s", "", sha256Flag)
+		cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "sha256", "s", "", fingerprintFlag)
 		cmd.Flags().StringVarP(&o.description, "description", "d", "", evidenceDescriptionFlag)
 		cmd.Flags().StringVarP(&o.payload.EvidenceName, "evidence-type", "e", "", evidenceTypeFlag)
 	}
@@ -56,7 +56,7 @@ func addArtifactPRFlags(cmd *cobra.Command, o *pullRequestArtifactOptions, ci st
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
 	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
-	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "F", "", sha256Flag)
+	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "F", "", fingerprintFlag)
 	cmd.Flags().StringVarP(&o.pipelineName, "flow", "f", "", pipelineNameFlag)
 }
 

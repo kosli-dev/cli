@@ -51,7 +51,7 @@ func newExpectDeploymentCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVarP(&o.payload.Fingerprint, "fingerprint", "F", "", sha256Flag)
+	cmd.Flags().StringVarP(&o.payload.Fingerprint, "fingerprint", "F", "", fingerprintFlag)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", pipelineNameFlag)
 	cmd.Flags().StringVarP(&o.payload.Environment, "environment", "e", "", environmentNameFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", artifactDescriptionFlag)

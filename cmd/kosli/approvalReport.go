@@ -13,7 +13,7 @@ import (
 
 const approvalReportShortDesc = `Report an approval of deploying an artifact to Kosli.`
 const approvalReportLongDesc = approvalReportShortDesc + `
-` + sha256Desc
+` + fingerprintDesc
 
 const approvalReportExample = `
 # Report that a file type artifact has been approved for deployment.
@@ -82,7 +82,7 @@ func newApprovalReportCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.payload.ArtifactSha256, "sha256", "s", "", sha256Flag)
+	cmd.Flags().StringVarP(&o.payload.ArtifactSha256, "sha256", "s", "", fingerprintFlag)
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", approvalDescriptionFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", approvalUserDataFlag)

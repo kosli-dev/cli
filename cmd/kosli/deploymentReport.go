@@ -27,7 +27,7 @@ type DeploymentPayload struct {
 const deploymentReportShortDesc = `Report a deployment of an artifact to an environment to Kosli.`
 
 const deploymentReportLongDesc = deploymentReportShortDesc + `
-` + sha256Desc
+` + fingerprintDesc
 
 func newDeploymentReportCmd(out io.Writer) *cobra.Command {
 	o := new(deploymentReportOptions)
@@ -56,7 +56,7 @@ func newDeploymentReportCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVarP(&o.payload.Sha256, "sha256", "s", "", sha256Flag)
+	cmd.Flags().StringVarP(&o.payload.Sha256, "sha256", "s", "", fingerprintFlag)
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
 	cmd.Flags().StringVarP(&o.payload.Environment, "environment", "e", "", environmentNameFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", artifactDescriptionFlag)

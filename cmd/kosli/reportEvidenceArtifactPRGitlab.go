@@ -12,7 +12,7 @@ const pullRequestEvidenceGitlabShortDesc = `Report a Gitlab merge request eviden
 
 const pullRequestEvidenceGitlabLongDesc = pullRequestEvidenceGitlabShortDesc + `
 It checks if a merge request exists for the artifact (based on its git commit) and report the merge request evidence to the artifact in Kosli. 
-` + sha256Desc
+` + fingerprintDesc
 
 const pullRequestEvidenceGitlabExample = `
 # report a merge request evidence to kosli for a docker image

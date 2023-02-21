@@ -32,7 +32,7 @@ type ArtifactPayload struct {
 const reportArtifactShortDesc = `Report an artifact creation to a Kosli flow.`
 
 const reportArtifactLongDesc = reportArtifactShortDesc + `
-` + sha256Desc
+` + fingerprintDesc
 
 const reportArtifactExample = `
 # Report to a Kosli flow that a file type artifact has been created

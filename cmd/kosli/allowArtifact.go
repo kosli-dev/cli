@@ -10,37 +10,38 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type allowedArtifactsCreationOptions struct {
+type allowArtifactOptions struct {
 	fingerprintOptions *fingerprintOptions
 	payload            AllowlistPayload
 }
 
 type AllowlistPayload struct {
-	Sha256      string `json:"sha256"`
+	Fingerprint string `json:"sha256"`
 	Filename    string `json:"artifact_name"`
 	Reason      string `json:"description"`
 	Environment string `json:"environment_name"`
 }
 
-const allowedArtifactCreateShortDesc = `Add an artifact to an environment's allowlist.`
+const allowArtifactShortDesc = `Add an artifact to an environment's allowlist.`
 
-const allowedArtifactCreateLongDesc = allowedArtifactCreateShortDesc + `
-` + sha256Desc
+const allowArtifactLongDesc = allowArtifactShortDesc + `
+` + fingerprintDesc
 
-func newAllowedArtifactsCreateCmd(out io.Writer) *cobra.Command {
-	o := new(allowedArtifactsCreationOptions)
+func newAllowArtifactCmd(out io.Writer) *cobra.Command {
+	o := new(allowArtifactOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "add {IMAGE-NAME | FILE-PATH | DIR-PATH}",
-		Short: allowedArtifactCreateShortDesc,
-		Long:  allowedArtifactCreateLongDesc,
+		Use:   "artifact {IMAGE-NAME | FILE-PATH | DIR-PATH}",
+		Short: allowArtifactShortDesc,
+		Long:  allowArtifactLongDesc,
+		Args:  cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
-			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.Sha256, true)
+			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.Fingerprint, true)
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -52,7 +53,7 @@ func newAllowedArtifactsCreateCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.payload.Sha256, "sha256", "s", "", sha256Flag)
+	cmd.Flags().StringVarP(&o.payload.Fingerprint, "fingerprint", "F", "", fingerprintFlag)
 	cmd.Flags().StringVarP(&o.payload.Environment, "environment", "e", "", envAllowListFlag)
 	cmd.Flags().StringVar(&o.payload.Reason, "reason", "", reasonFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
@@ -66,12 +67,12 @@ func newAllowedArtifactsCreateCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *allowedArtifactsCreationOptions) run(args []string) error {
-	if o.payload.Sha256 != "" {
+func (o *allowArtifactOptions) run(args []string) error {
+	if o.payload.Fingerprint != "" {
 		o.payload.Filename = args[0]
 	} else {
 		var err error
-		o.payload.Sha256, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
+		o.payload.Fingerprint, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
 			return err
 		}
@@ -93,7 +94,7 @@ func (o *allowedArtifactsCreationOptions) run(args []string) error {
 	}
 	_, err := kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("artifact %s was allow listed in environment: %s", o.payload.Sha256, o.payload.Environment)
+		logger.Info("artifact %s was allow listed in environment: %s", o.payload.Fingerprint, o.payload.Environment)
 	}
 	return err
 }

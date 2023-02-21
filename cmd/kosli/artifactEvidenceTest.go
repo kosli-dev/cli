@@ -25,7 +25,7 @@ type testEvidenceOptions struct {
 const testEvidenceShortDesc = `Report a JUnit test evidence to an artifact in a Kosli pipeline.`
 
 const testEvidenceLongDesc = testEvidenceShortDesc + `
-` + sha256Desc
+` + fingerprintDesc
 
 const testEvidenceExample = `
 # report a JUnit test evidence about a file artifact:
@@ -76,7 +76,7 @@ func newTestEvidenceCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVarP(&o.sha256, "sha256", "s", "", sha256Flag)
+	cmd.Flags().StringVarP(&o.sha256, "sha256", "s", "", fingerprintFlag)
 	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
 	cmd.Flags().StringVarP(&o.description, "description", "d", "", evidenceDescriptionFlag)
 	cmd.Flags().StringVarP(&o.buildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
