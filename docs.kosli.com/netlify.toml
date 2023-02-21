@@ -13,3 +13,7 @@
 [context.branch-deploy]
   command = "HUGO_BASEURL=$DEPLOY_PRIME_URL hugo --printI18nWarnings --buildDrafts --enableGitInfo"
 
+[[plugins]]
+package = "netlify-plugin-checklinks"
+  [plugins.inputs]
+  skipPatterns = ["--kosli-docs.netlify.app"]
