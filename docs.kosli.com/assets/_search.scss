@@ -1,36 +1,4 @@
-.search-results {
-    position: fixed;
-    left: 256px;
-    top: 85px;
-    background-color: #f7f9fc;
-    box-shadow: rgba(0, 0, 0, 0.2) 0px 5px 15px;
-    border-radius: 10px;
-    z-index: 2;
-    padding: $spacing-xs $spacing-s;
-    max-width: 450px;
-    list-style: none;
-    border: 0.5px solid lightgrey;
-
-    li {
-        padding: 0.5rem 0;
-    }
-
-    a {
-        display: block;
-    }
-    small {
-        display: block;
-    }
-}
-
-.search-results:empty {
-    display: none;
-}
-
-@media only screen and (max-width: $mobile-breakpoint) {
-    .search-results {
-        left: 15px;
-        top: 130px;
-        margin-right:15px;
-    }
+.markdown .search-results {
+    list-style-type: none;
+    padding-inline-start: 0;
 }

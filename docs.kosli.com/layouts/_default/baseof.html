@@ -14,8 +14,6 @@
       </div>
     </aside>
 
-    {{ template "search_results" . }} 
-
     <div class="book-page">
       <header class="book-header">
         {{ template "header" . }} <!-- Mobile layout header -->
@@ -89,8 +87,4 @@
 
 {{ define "toc" }}
   {{ partial "docs/toc" . }}
-{{ end }}
-
-{{ define "search_results"}}
-<ul id="book-search-results" class="search-results"></ul>
 {{ end }}

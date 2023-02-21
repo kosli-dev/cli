@@ -1,4 +1,5 @@
 ---
-title: Blog Search
+title: Search
 bookhidden: true
+bookToC: false
 ---
