@@ -10,11 +10,14 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
-var logger *log.Logger
-var kosliClient *requests.Client
+var (
+	logger      *log.Logger
+	kosliClient *requests.Client
+)
 
 func init() {
 	logger = log.NewStandardLogger()
+	kosliClient = requests.NewStandardKosliClient()
 }
 
 func main() {

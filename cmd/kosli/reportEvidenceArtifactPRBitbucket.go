@@ -71,7 +71,6 @@ func newPullRequestEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 			}
 
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
-
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(out, args)
@@ -85,8 +84,10 @@ func newPullRequestEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"bitbucket-username", "bitbucket-password",
-		"bitbucket-workspace", "commit", "repository", "flow", "name", "build-url"})
+	err := RequireFlags(cmd, []string{
+		"bitbucket-username", "bitbucket-password",
+		"bitbucket-workspace", "commit", "repository", "flow", "name", "build-url",
+	})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}

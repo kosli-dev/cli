@@ -15,7 +15,6 @@ import (
 type AssertArtifactCommandTestSuite struct {
 	suite.Suite
 	defaultKosliArguments string
-	envName               string
 	flowName              string
 	artifactName          string
 	artifactPath          string
@@ -84,7 +83,6 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 	}
 
 	runTestCmd(suite.T(), tests)
-
 }
 
 // In order for 'go test' to run this suite, we need to create

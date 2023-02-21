@@ -81,6 +81,21 @@ func (suite *RequestsTestSuite) TestNewKosliClient() {
 	}
 }
 
+func (suite *RequestsTestSuite) TestNewStandardKosliClient() {
+	client := NewStandardKosliClient()
+	require.NotNil(suite.T(), client)
+
+	client.SetDebug(true)
+	require.True(suite.T(), client.Debug)
+
+	logger := logger.NewStandardLogger()
+	client.SetLogger(logger)
+	require.Equal(suite.T(), logger, client.Logger)
+
+	client.SetMaxAPIRetries(5)
+	require.Equal(suite.T(), 5, client.MaxAPIRetries)
+}
+
 func (suite *RequestsTestSuite) TestNewHttpRequest() {
 	for _, t := range []struct {
 		name      string
