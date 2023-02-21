@@ -39,7 +39,7 @@ func (suite *ListArtifactsCommandTestSuite) TestListArtifactsCmd() {
 			wantError: true,
 			name:      "non-existing flow causes an error",
 			cmd:       fmt.Sprintf(`list artifacts non-existing %s`, suite.defaultKosliArguments),
-			golden:    "Error: Pipeline called 'non-existing' does not exist for Organization 'docs-cmd-test-user'.\n",
+			golden:    "Error: Pipeline called 'non-existing' does not exist for Organization 'docs-cmd-test-user'. \n",
 		},
 		// TODO: the correct error is overwritten by the hack flag value check in root.go
 		{
@@ -57,7 +57,7 @@ func (suite *ListArtifactsCommandTestSuite) TestListArtifactsCmd() {
 		{
 			name:   "listing artifacts on an empty flow works",
 			cmd:    fmt.Sprintf(`list artifacts %s %s`, suite.flowName, suite.defaultKosliArguments),
-			golden: "No artifacts were found\n",
+			golden: "No artifacts were found.\n",
 		},
 		{
 			name:   "listing artifacts on an empty flow with --output json works",

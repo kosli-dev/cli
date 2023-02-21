@@ -191,7 +191,6 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		newEnvironmentCmd(out),
 		newAssertCmd(out),
 		newStatusCmd(out),
-		newDeploymentReadCmd(out),
 		newApprovalReadCmd(out),
 		newExpectCmd(out),
 		newSearchCmd(out),

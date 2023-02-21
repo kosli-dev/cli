@@ -11,70 +11,63 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const deploymentLsShortDesc = `List deployments in a pipeline.`
+const listDeploymentsShortDesc = `List deployments in a flow.`
 
-const deploymentLsLongDesc = deploymentLsShortDesc + `
+const listDeploymentsLongDesc = listDeploymentsShortDesc + `
 The results are paginated and ordered from latests to oldest. 
 By default, the page limit is 15 deployments per page.
 `
-const deploymentLsExample = `
-# list the last 15 deployments for a pipeline:
-kosli deployment list yourPipelineName \
+const listDeploymentsExample = `
+# list the last 15 deployments for a flow:
+kosli list deployments yourFlowName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
-# list the last 30 deployments for a pipeline:
-kosli deployment list yourPipelineName \
+# list the last 30 deployments for a flow:
+kosli list deployments yourFlowName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
-# list the last 30 deployments for a pipeline (in JSON):
-kosli deployment list yourPipelineName \
+# list the last 30 deployments for a flow (in JSON):
+kosli list deployments yourFlowName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--owner yourOrgName \
 	--output json
 `
 
-type deploymentLsOptions struct {
-	output     string
-	pageNumber int
-	pageLimit  int
+type listDeploymentsOptions struct {
+	listOptions
 }
 
-func newDeploymentLsCmd(out io.Writer) *cobra.Command {
-	o := new(deploymentLsOptions)
+func newListDeploymentsCmd(out io.Writer) *cobra.Command {
+	o := new(listDeploymentsOptions)
 	cmd := &cobra.Command{
-		Use:     "ls PIPELINE-NAME",
-		Aliases: []string{"list"},
-		Short:   deploymentLsShortDesc,
-		Long:    deploymentLsLongDesc,
-		Example: deploymentLsExample,
+		Use:     "deployments FLOW-NAME",
+		Short:   listDeploymentsShortDesc,
+		Long:    listDeploymentsLongDesc,
+		Example: listDeploymentsExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
-			if o.pageNumber <= 0 {
-				return ErrorBeforePrintingUsage(cmd, "page number must be a positive integer")
-			}
-			return nil
+
+			return o.validate(cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(out, args)
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
-	cmd.Flags().IntVar(&o.pageNumber, "page", 1, pageNumberFlag)
-	cmd.Flags().IntVarP(&o.pageLimit, "page-limit", "n", 15, pageLimitFlag)
+	addListFlags(cmd, &o.listOptions)
 
 	return cmd
 }
 
-func (o *deploymentLsOptions) run(out io.Writer, args []string) error {
+func (o *listDeploymentsOptions) run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/?page=%d&per_page=%d",
 		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit)
 

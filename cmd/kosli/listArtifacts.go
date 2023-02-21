@@ -18,18 +18,18 @@ By default, the page limit is 15 artifacts per page.
 `
 const artifactLsExample = `
 # list the last 15 artifacts for a flow:
-kosli list artifact yourFlowName \
+kosli list artifacts yourFlowName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
 # list the last 30 artifacts for a flow:
-kosli list artifact yourFlowName \
+kosli list artifacts yourFlowName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
 # list the last 30 artifacts for a flow (in JSON):
-kosli list artifact yourFlowName \
+kosli list artifacts yourFlowName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--owner yourOrgName \
@@ -98,7 +98,7 @@ func printArtifactsListAsTable(raw string, out io.Writer, page int) error {
 		if page != 1 {
 			msg = fmt.Sprintf("%s at page number %d", msg, page)
 		}
-		logger.Info(msg)
+		logger.Info(msg + ".")
 		return nil
 	}
 

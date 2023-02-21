@@ -19,18 +19,18 @@ By default, the page limit is 15 approvals per page.
 
 const listApprovalsExample = `
 # list the last 15 approvals for a flow:
-kosli list approval yourFlowName \
+kosli list approvals yourFlowName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
 # list the last 30 approvals for a flow:
-kosli list approval yourFlowName \
+kosli list approvals yourFlowName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
 # list the last 30 approvals for a flow (in JSON):
-kosli list approval yourFlowName \
+kosli list approvals yourFlowName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--owner yourOrgName \
@@ -101,7 +101,7 @@ func printApprovalListAsTable(raw string, out io.Writer, page int) error {
 		if page != 1 {
 			msg = fmt.Sprintf("%s at page number %d", msg, page)
 		}
-		fmt.Fprintln(out, msg)
+		logger.Info(msg + ".")
 		return nil
 	}
 
