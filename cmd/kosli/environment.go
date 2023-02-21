@@ -22,7 +22,6 @@ func newEnvironmentCmd(out io.Writer) *cobra.Command {
 		newEnvironmentLsCmd(out),
 		newGetEnvironmentCmd(out),
 		newEnvironmentEventsLogCmd(out),
-		newEnvironmentGetCmd(out),
 		newEnvironmentRenameCmd(out),
 	)
 
