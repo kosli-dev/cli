@@ -94,7 +94,7 @@ func (suite *ArtifactEvidencePRGitlabCommandTestSuite) TestArtifactEvidencePRGit
 			name:      "report Gitlab PR evidence fails when neither --fingerprint nor --artifact-type are set",
 			cmd: `report evidence artifact pullrequest gitlab artifactNameArg --name gl-pr --flow ` + suite.pipelineName + `
 					  --build-url example.com --gitlab-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
-			golden: "Error: either --artifact-type or --sha256 must be specified\n" +
+			golden: "Error: either --artifact-type or --fingerprint must be specified\n" +
 				"Usage: kosli report evidence artifact pullrequest gitlab [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{

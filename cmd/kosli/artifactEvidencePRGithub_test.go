@@ -46,15 +46,6 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 			golden: "github pull request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
 		{
-			name: "report Github PR evidence works with deprecated flags",
-			cmd: `report evidence artifact pullrequest github --sha256 ` + suite.artifactFingerprint + ` --evidence-type gh-pr --flow ` + suite.pipelineName + `
-			          --description text --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
-			golden: "Flag --sha256 has been deprecated, use --fingerprint instead\n" +
-				"Flag --evidence-type has been deprecated, use --name instead\n" +
-				"Flag --description has been deprecated, description is no longer used\n" +
-				"github pull request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
-		},
-		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --owner is missing",
 			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.pipelineName + `
@@ -64,10 +55,10 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 		},
 		{
 			wantError: true,
-			name:      "report Github PR evidence fails when both --name and --evidence-type are missing",
+			name:      "report Github PR evidence fails when --name is missing",
 			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.pipelineName + `
 			          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
-			golden: "Error: at least one of --name, --evidence-type is required\n",
+			golden: "Error: required flag(s) \"name\" not set\n",
 		},
 		{
 			wantError: true,
@@ -95,7 +86,7 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 			name:      "report Github PR evidence fails when neither --fingerprint nor --artifact-type are set",
 			cmd: `report evidence artifact pullrequest github artifactNameArg --name gh-pr --flow ` + suite.pipelineName + `
 					  --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
-			golden: "Error: either --artifact-type or --sha256 must be specified\n" +
+			golden: "Error: either --artifact-type or --fingerprint must be specified\n" +
 				"Usage: kosli report evidence artifact pullrequest github [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{

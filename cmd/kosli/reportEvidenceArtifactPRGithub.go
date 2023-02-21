@@ -79,7 +79,7 @@ func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{
 		"github-token", "github-org", "commit",
-		"repository", "flow", "build-url",
+		"repository", "flow", "build-url", "name",
 	})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)

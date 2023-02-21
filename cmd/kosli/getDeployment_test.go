@@ -51,13 +51,7 @@ func (suite *GetDeploymentCommandTestSuite) TestGetDeploymentCmd() {
 			wantError: true,
 			name:      "get deployment fails when flow does not exist",
 			cmd:       `get deployment foo#1` + suite.defaultKosliArguments,
-			//
-			// The golden: error message below is commented out because when the test
-			// runs its reports the actual error message differs from this, but there
-			// does not appear to be any difference...?!
-			//
-			//golden:    "Error: Pipeline called 'foo' does not exist for Organization 'docs-cmd-test-user'.\n",
-			golden: "",
+			golden:    "Error: Pipeline called 'foo' does not exist for Organization 'docs-cmd-test-user'. \n",
 		},
 	}
 
