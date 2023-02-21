@@ -24,10 +24,9 @@ jobs:
         with:
           go-version: '1.19.5'
           
-      # temporarily disable docs generation
-      # - name: Generate docs
-      #  run: |
-      #    make docs
+      - name: Generate docs
+        run: |
+          make docs
 
       # Deploy to local repo
       - name: Deploy
