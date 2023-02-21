@@ -5,8 +5,6 @@ import (
 	"testing"
 
 	"github.com/go-git/go-git/v5"
-	log "github.com/kosli-dev/cli/internal/logger"
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -29,8 +27,6 @@ func (suite *GetApprovalCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
 	suite.defaultArtifactArguments = " --flow " + suite.flowName + " --build-url www.yr.no --commit-url www.nrk.no"
-
-	kosliClient = requests.NewKosliClient(1, false, log.NewStandardLogger())
 
 	CreateFlow(suite.flowName, suite.T())
 }

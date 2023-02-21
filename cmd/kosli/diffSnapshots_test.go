@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -34,7 +33,6 @@ func (suite *DiffSnapshotsCommandTestSuite) SetupTest() {
 		Owner:    "docs-cmd-test-user",
 		Host:     "http://localhost:8001",
 	}
-	kosliClient = requests.NewKosliClient(1, false, logger)
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
 
 	CreateEnv(global.Owner, suite.envName1, "server", suite.T())

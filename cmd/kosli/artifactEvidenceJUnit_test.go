@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	log "github.com/kosli-dev/cli/internal/logger"
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -16,11 +14,11 @@ type ArtifactEvidenceJUnitCommandTestSuite struct {
 	suite.Suite
 	defaultKosliArguments string
 	artifactFingerprint   string
-	pipelineName          string
+	flowName              string
 }
 
 func (suite *ArtifactEvidenceJUnitCommandTestSuite) SetupTest() {
-	suite.pipelineName = "junit-test"
+	suite.flowName = "junit-test"
 	suite.artifactFingerprint = "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
@@ -28,49 +26,48 @@ func (suite *ArtifactEvidenceJUnitCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
-	kosliClient = requests.NewKosliClient(1, false, log.NewStandardLogger())
 
-	CreateFlow(suite.pipelineName, suite.T())
-	CreateArtifact(suite.pipelineName, suite.artifactFingerprint, "FooBar_1", suite.T())
+	CreateFlow(suite.flowName, suite.T())
+	CreateArtifact(suite.flowName, suite.artifactFingerprint, "FooBar_1", suite.T())
 }
 
 func (suite *ArtifactEvidenceJUnitCommandTestSuite) TestArtifactEvidenceJUnitCommandCmd() {
 	tests := []cmdTestCase{
 		{
 			name: "report JUnit test evidence works (using --fingerprint)",
-			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result --flow ` + suite.pipelineName + `
+			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result --flow ` + suite.flowName + `
 			          --build-url example.com --results-dir testdata` + suite.defaultKosliArguments,
 			golden: "junit test evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
 		{
 			name: "report JUnit test evidence with maven-surefire XML that lacks a timestamp on the <testsuite>",
 			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint +
-				` --name junit-result --flow ` + suite.pipelineName +
+				` --name junit-result --flow ` + suite.flowName +
 				` --build-url example.com --results-dir testdata/junit` + suite.defaultKosliArguments,
 			golden: "junit test evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
 		{
 			name: "report JUnit test evidence works (using --artifact-type)",
-			cmd: `report evidence artifact junit testdata/file1 --artifact-type file --name junit-result --flow ` + suite.pipelineName + `
+			cmd: `report evidence artifact junit testdata/file1 --artifact-type file --name junit-result --flow ` + suite.flowName + `
 			          --build-url example.com --results-dir testdata` + suite.defaultKosliArguments,
 			golden: "junit test evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
 		{
 			name: "report JUnit test evidence with non-existing results dir",
-			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result --flow ` + suite.pipelineName + `
+			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result --flow ` + suite.flowName + `
 			          --build-url example.com --results-dir foo` + suite.defaultKosliArguments,
 			wantError: true,
 		},
 		{
 			name: "report JUnit test evidence with a results dir that does not contain any results",
-			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result --flow ` + suite.pipelineName + `
+			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result --flow ` + suite.flowName + `
 			          --build-url example.com --results-dir testdata/folder1` + suite.defaultKosliArguments,
 			wantError: true,
 			golden:    "Error: no tests found in testdata/folder1 directory\n",
 		},
 		{
 			name: "report JUnit test evidence with missing name flag",
-			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.pipelineName + `
+			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + `
 			          --build-url example.com --results-dir testdata` + suite.defaultKosliArguments,
 			wantError: true,
 			golden:    "Error: required flag(s) \"name\" not set\n",
@@ -82,7 +79,6 @@ func (suite *ArtifactEvidenceJUnitCommandTestSuite) TestArtifactEvidenceJUnitCom
 			wantError: true,
 			golden:    "Error: required flag(s) \"flow\" not set\n",
 		},
-		// We can not test missing --build-url flag since the CI system provides this by default
 	}
 	runTestCmd(suite.T(), tests)
 }

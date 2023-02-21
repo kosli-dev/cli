@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -14,11 +13,11 @@ import (
 type CommitEvidenceSnykCommandTestSuite struct {
 	suite.Suite
 	defaultKosliArguments string
-	pipelineName          string
+	flowName              string
 }
 
 func (suite *CommitEvidenceSnykCommandTestSuite) SetupTest() {
-	suite.pipelineName = "snyk-test"
+	suite.flowName = "snyk-test"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Owner:    "docs-cmd-test-user",
@@ -26,36 +25,34 @@ func (suite *CommitEvidenceSnykCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
 
-	kosliClient = requests.NewKosliClient(1, false, logger)
-
-	CreateFlow(suite.pipelineName, suite.T())
+	CreateFlow(suite.flowName, suite.T())
 }
 
 func (suite *CommitEvidenceSnykCommandTestSuite) TestCommitEvidenceSnykCmd() {
 	tests := []cmdTestCase{
 		{
 			name: "report Snyk test evidence works",
-			cmd: `commit report evidence snyk --commit 239d7cee00ca341f124fa710fc694b67cdf8011b --name snyk-result --pipelines ` + suite.pipelineName + `
+			cmd: `commit report evidence snyk --commit 239d7cee00ca341f124fa710fc694b67cdf8011b --name snyk-result --pipelines ` + suite.flowName + `
 			          --build-url example.com --scan-results testdata/snyk_scan_example.json` + suite.defaultKosliArguments,
 			golden: "snyk scan evidence is reported to commit: 239d7cee00ca341f124fa710fc694b67cdf8011b\n",
 		},
 		{
 			name: "report Snyk scan evidence with non-existing scan-results",
-			cmd: `commit report evidence snyk --commit 239d7cee00ca341f124fa710fc694b67cdf8011b --name snyk-result --pipelines ` + suite.pipelineName + `
+			cmd: `commit report evidence snyk --commit 239d7cee00ca341f124fa710fc694b67cdf8011b --name snyk-result --pipelines ` + suite.flowName + `
 			          --build-url example.com --scan-results testdata/foo.json` + suite.defaultKosliArguments,
 			wantError: true,
 			golden:    "Error: open testdata/foo.json: no such file or directory\n",
 		},
 		{
 			name: "report Snyk scan evidence with missing scan-results flag",
-			cmd: `commit report evidence snyk --commit 239d7cee00ca341f124fa710fc694b67cdf8011b --name snyk-result --pipelines ` + suite.pipelineName + `
+			cmd: `commit report evidence snyk --commit 239d7cee00ca341f124fa710fc694b67cdf8011b --name snyk-result --pipelines ` + suite.flowName + `
 			          --build-url example.com` + suite.defaultKosliArguments,
 			wantError: true,
 			golden:    "Error: required flag(s) \"scan-results\" not set\n",
 		},
 		{
 			name: "report Snyk scan evidence with missing name flag",
-			cmd: `commit report evidence snyk --commit 239d7cee00ca341f124fa710fc694b67cdf8011b --pipelines ` + suite.pipelineName + `
+			cmd: `commit report evidence snyk --commit 239d7cee00ca341f124fa710fc694b67cdf8011b --pipelines ` + suite.flowName + `
 			          --build-url example.com --scan-results testdata/snyk_scan_example.json` + suite.defaultKosliArguments,
 			wantError: true,
 			golden:    "Error: required flag(s) \"name\" not set\n",
@@ -68,7 +65,7 @@ func (suite *CommitEvidenceSnykCommandTestSuite) TestCommitEvidenceSnykCmd() {
 		},
 		{
 			name: "report Snyk scan evidence with a missing build-url",
-			cmd: `commit report evidence snyk --commit 239d7cee00ca341f124fa710fc694b67cdf8011b --pipelines ` + suite.pipelineName + `
+			cmd: `commit report evidence snyk --commit 239d7cee00ca341f124fa710fc694b67cdf8011b --pipelines ` + suite.flowName + `
 			         --name snyk-result --scan-results testdata/snyk_scan_example.json` + suite.defaultKosliArguments,
 			wantError: true,
 			golden:    "Error: required flag(s) \"build-url\" not set\n",

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	log "github.com/kosli-dev/cli/internal/logger"
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/testHelpers"
 	"github.com/stretchr/testify/suite"
 )
@@ -27,7 +25,6 @@ func (suite *AssertPRGithubCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
-	kosliClient = requests.NewKosliClient(1, false, log.NewStandardLogger())
 }
 
 func (suite *AssertPRGithubCommandTestSuite) TestAssertPRGithubCmd() {

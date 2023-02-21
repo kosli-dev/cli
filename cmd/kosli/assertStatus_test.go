@@ -3,7 +3,6 @@ package main
 import (
 	"testing"
 
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -12,10 +11,6 @@ import (
 // returns the current testing context
 type AssertStatusCommandTestSuite struct {
 	suite.Suite
-}
-
-func (suite *AssertStatusCommandTestSuite) SetupTest() {
-	kosliClient = requests.NewKosliClient(1, false, logger)
 }
 
 func (suite *AssertStatusCommandTestSuite) TestAssertPRGitlabCmd() {

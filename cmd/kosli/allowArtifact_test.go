@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -16,30 +15,18 @@ type AllowArtifactCommandTestSuite struct {
 	defaultKosliArguments string
 	envName               string
 	artifactName          string
-	// artifactPath          string
-	// fingerprint string
 }
 
 func (suite *AllowArtifactCommandTestSuite) SetupTest() {
 	suite.envName = "allow-artifact-env"
 	suite.artifactName = "arti"
-	// suite.artifactPath = "testdata/folder1/hello.txt"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Owner:    "docs-cmd-test-user",
 		Host:     "http://localhost:8001",
 	}
-	kosliClient = requests.NewKosliClient(1, false, logger)
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
 
-	// CreateFlow(suite.flowName, suite.T())
-	// fingerprintOptions := &fingerprintOptions{
-	// 	artifactType: "file",
-	// }
-	// var err error
-	// suite.fingerprint, err = GetSha256Digest(suite.artifactPath, fingerprintOptions, logger)
-	// require.NoError(suite.T(), err)
-	// CreateArtifact(suite.flowName, suite.fingerprint, suite.artifactName, suite.T())
 	CreateEnv(global.Owner, suite.envName, "server", suite.T())
 }
 

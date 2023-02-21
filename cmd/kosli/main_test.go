@@ -5,8 +5,6 @@ import (
 	"os"
 	"testing"
 
-	log "github.com/kosli-dev/cli/internal/logger"
-	"github.com/kosli-dev/cli/internal/requests"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/spf13/cobra"
 )
@@ -20,11 +18,6 @@ type cmdTestCase struct {
 	additionalConfig interface{}
 }
 
-func initializeClient() {
-	logger = log.NewStandardLogger()
-	kosliClient = requests.NewKosliClient(1, false, logger)
-}
-
 // executeCommandStdinC executes a command as a user would and return the output
 func executeCommandC(cmd string) (*cobra.Command, string, error) {
 	args, err := shellwords.Parse(cmd)
@@ -33,7 +26,6 @@ func executeCommandC(cmd string) (*cobra.Command, string, error) {
 	}
 
 	buf := new(bytes.Buffer)
-	initializeClient()
 
 	root, err := newRootCmd(buf, args)
 	if err != nil {
