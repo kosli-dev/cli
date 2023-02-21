@@ -34,7 +34,7 @@ sections:
           alt_text: Pipelines and artifact reporting explained
           description: Learn how to use Kosli with docker
           link_text: View >
-          url: /getting_started/part_3_pipelines/
+          url: /getting_started/part_3_flows/
         - title: Get familiar with Kosli
           image: /images/home/home-quickstart.svg
           alt_text: Use cases icon

@@ -110,7 +110,7 @@ These artifact will by default be marked with "No provenance" red label and it w
 
 Pipelines in Kosli provide a place to report and track artifacts status and related events from your CI pipelines.
 
-You can create Kosli pipeline using our CLI with **[kosli pipeline declare](/client_reference/kosli_pipeline_declare/)** command. 
+You can create Kosli pipeline using our CLI with **[kosli create flow](/client_reference/kosli_create_flow/)** command. 
 
 You can run the CLI command manually e.g. using your own computer, but it's also ok to add your pipeline declaring command to your build pipeline. It's perfectly fine to run it every time you run a build. You can also change your [template](/kosli_overview/what_is_kosli/#template) over time, for example by adding new control. It won't affect the compliancy of artifacts reported before the change of the template.
 
