@@ -11,46 +11,46 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const approvalLsShortDesc = `List approvals in a pipeline.`
-const approvalLsLongDesc = approvalLsShortDesc + `
+const listApprovalsShortDesc = `List approvals in a flow.`
+const listApprovalsLongDesc = listApprovalsShortDesc + `
 The results are paginated and ordered from latests to oldest. 
 By default, the page limit is 15 approvals per page.  
 `
 
-const approvalLsExample = `
-# list the last 15 approvals for a pipeline:
-kosli approval list yourPipelineName \
+const listApprovalsExample = `
+# list the last 15 approvals for a flow:
+kosli list approval yourFlowName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
-# list the last 30 approvals for a pipeline:
-kosli approval list yourPipelineName \
+# list the last 30 approvals for a flow:
+kosli list approval yourFlowName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
-# list the last 30 approvals for a pipeline (in JSON):
-kosli approval list yourPipelineName \
+# list the last 30 approvals for a flow (in JSON):
+kosli list approval yourFlowName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--owner yourOrgName \
 	--output json
 `
 
-type approvalLsOptions struct {
+type listApprovalsOptions struct {
 	output     string
 	pageNumber int
 	pageLimit  int
 }
 
-func newApprovalLsCmd(out io.Writer) *cobra.Command {
-	o := new(approvalLsOptions)
+func newListApprovalsCmd(out io.Writer) *cobra.Command {
+	o := new(listApprovalsOptions)
 	cmd := &cobra.Command{
-		Use:     "ls PIPELINE-NAME",
-		Aliases: []string{"list"},
-		Short:   approvalLsShortDesc,
-		Long:    approvalLsLongDesc,
-		Example: approvalLsExample,
+		Use:     "approvals FLOW-NAME",
+		Aliases: []string{"ls"},
+		Short:   listApprovalsShortDesc,
+		Long:    listApprovalsLongDesc,
+		Example: listApprovalsExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -60,6 +60,9 @@ func newApprovalLsCmd(out io.Writer) *cobra.Command {
 
 			if o.pageNumber <= 0 {
 				return ErrorBeforePrintingUsage(cmd, "page number must be a positive integer")
+			}
+			if o.pageLimit <= 0 {
+				return ErrorBeforePrintingUsage(cmd, "page limit must be a positive integer")
 			}
 			return nil
 		},
@@ -75,7 +78,7 @@ func newApprovalLsCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *approvalLsOptions) run(out io.Writer, args []string) error {
+func (o *listApprovalsOptions) run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/approvals/?page=%d&per_page=%d",
 		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit)
 
