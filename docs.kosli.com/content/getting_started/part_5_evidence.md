@@ -115,8 +115,9 @@ $ kosli commit report evidence github-pullrequest \
 github pull request evidence is reported to commit: e67f2f2b121f9325ebf166b7b3c707f73cb48b14
 ```
 For more details see:  
-[kosli commit report evidence github-pullrequest](/client_reference/kosli_commit_report_evidence_github-pullrequest/)  
-[kosli commit report evidence bitbucket-pullrequest](/client_reference/kosli_commit_report_evidence_bitbucket-pullrequest/)
+[kosli commit report evidence github-pullrequest](/legacy_ref/v0.1.38/kosli_commit_report_evidence_github-pullrequest/)  
+[kosli commit report evidence bitbucket-pullrequest](/legacy_ref/v0.1.38/kosli_commit_report_evidence_bitbucket-pullrequest/)  
+[kosli commit report evidence gitlab-mergerequest](/legacy_ref/v0.1.38/kosli_commit_report_evidence_gitlab-mergerequest/)
 {{< /tab >}}
 
 {{< /tabs >}}

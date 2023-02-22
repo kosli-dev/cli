@@ -102,7 +102,7 @@ If your environment is not compliant check the latest snapshot for more detailed
 
 Not all the artifacts that run in your environment must be built by you - these may be publicly available artifacts, or artifacts provided by external vendors. In such case you will likely have no information about these artifacts reported to Kosli. 
 
-These artifact will by default be marked with "No provenance" red label and it will affect the compliancy of the whole environment. If you know how and why these artifact are present in your environment you can add them to the Allow-list by clicking a button on the snapshot page, or using [kosli environment allowedartifacts add](/client_reference/kosli_environment_allowedartifacts_add/) command
+These artifact will by default be marked with "No provenance" red label and it will affect the compliancy of the whole environment. If you know how and why these artifact are present in your environment you can add them to the Allow-list by clicking a button on the snapshot page, or using [kosli allow artifact](/client_reference/kosli_allow_artifact/) command
 
 ## Pipelines and Artifacts
 
