@@ -1,9 +1,17 @@
-#TableOfContents {
+.book-toc-content {
     ul {
-        padding-inline-start: 0;
+        padding-inline-start: 2;
     }
-    &>ul {
+
+    a {
+        display: inline-block;
+        border-left: 3px solid transparent;
         padding-left: 1rem;
+    }
+
+    a.active {
+        font-weight: 700;
+        border-color: var(--blue-500);
     }
 }
 
