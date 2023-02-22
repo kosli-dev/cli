@@ -3,7 +3,7 @@ name: publish docs
 on:
   push:
     branches:
-      - new-syntax
+      - main
     paths:  
       - 'docs.kosli.com/**'
       - '!docs.kosli.com/content/client_reference/**'
