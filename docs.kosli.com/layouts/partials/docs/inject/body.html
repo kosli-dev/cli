@@ -10,18 +10,7 @@
         <div class="separator">            
         </div>
 
-        <div class="docs-version-selector">
-            <select name="docsVersion" id="docsVersion" aria-label="Choose docs version" onchange="chooseDocsVersion(this)">
-                <option value="choose">-- choose version --</option>
-                <option value="latest">v0.1.36 (latest)</option>
-                {{- $legacyRef := where .Site.Pages ".Section" "==" "legacy_ref" -}}
-                {{- $legacyPage := .GetPage "/legacy_ref/"}}
-                {{ range $legacyRef }}
-                    {{ if and .IsSection (.IsDescendant $legacyPage)}}
-                    <option value="{{ .Title }}">{{ .Title }}</option>
-                    {{ end }}
-                {{ end }}
-            </select>
-        </div>
+        {{- partial "version-selector.html" . -}}
+
     </div>
 </div>
