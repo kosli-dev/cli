@@ -30,3 +30,4 @@ jobs:
           FOLDER: docs.kosli.com
           TARGET_DIR: docs.kosli.com
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MESSAGE: "Release: {msg}"

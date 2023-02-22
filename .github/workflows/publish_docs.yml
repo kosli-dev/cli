@@ -26,3 +26,4 @@ jobs:
           TARGET_DIR: docs.kosli.com
           CLEAR_GLOBS_FILE: ".clear-files"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MESSAGE: "From: {msg}"
