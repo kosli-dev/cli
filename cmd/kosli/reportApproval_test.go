@@ -33,7 +33,7 @@ func (suite *ApprovalReportTestSuite) TestApprovalReportCmd() {
 	tests := []cmdTestCase{
 		{
 			name: "report approval with a range of commits works ",
-			cmd: `pipeline approval report --sha256 ` + suite.artifactFingerprint + ` --pipeline ` + suite.flowName + ` --repo-root ../.. 
+			cmd: `report approval --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + ` --repo-root ../.. 
 			--newest-commit HEAD --oldest-commit HEAD~3` + suite.defaultKosliArguments,
 			golden: fmt.Sprintf("approval created for artifact: %s\n", suite.artifactFingerprint),
 		},

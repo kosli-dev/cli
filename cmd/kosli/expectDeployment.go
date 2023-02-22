@@ -9,6 +9,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const expectDeploymentShortDesc = `Report a deployment of an artifact to an environment to Kosli.`
+
+const expectDeploymentLongDesc = expectDeploymentShortDesc + `
+` + fingerprintDesc
+
 type expectDeploymentOptions struct {
 	fingerprintOptions *fingerprintOptions
 	flowName           string
@@ -29,8 +34,8 @@ func newExpectDeploymentCmd(out io.Writer) *cobra.Command {
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:   "deployment [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Short: deploymentReportShortDesc,
-		Long:  deploymentReportLongDesc,
+		Short: expectDeploymentShortDesc,
+		Long:  expectDeploymentLongDesc,
 		Args:  cobra.MaximumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})

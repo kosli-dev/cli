@@ -103,7 +103,7 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		// Report artifacts
 		{
 			wantError: false,
-			name:      "report artifact with sha256",
+			name:      "report artifact with fingerprint",
 			cmd:       "report artifact FooBar_1 --git-commit " + headHash + " --fingerprint 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
@@ -177,7 +177,7 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		{
 			wantError: false,
 			name:      "report approval",
-			cmd:       "pipeline approval report --pipeline newFlow --oldest-commit HEAD~1 --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "report approval --flow newFlow --oldest-commit HEAD~1 --fingerprint 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 
@@ -185,7 +185,7 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		{
 			wantError: false,
 			name:      "request approval",
-			cmd:       "pipeline approval request --pipeline newFlow --oldest-commit HEAD --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "request approval --flow newFlow --oldest-commit HEAD --fingerprint 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 
