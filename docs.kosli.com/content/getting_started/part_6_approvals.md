@@ -10,6 +10,25 @@ weight: 260
 Whenever a given artifact is ready to be deployed you may need an additional manual approval from an authorized person. This is something that can't alway be automated, but you can use Kosli to request such an approval, and later record it, so the information about decisions made outside of your CI system won't be lost. The list of commits between current and previous approval will be generated (based on provided values for `--newest-commit` and `--oldest-commit`), which allows you to track a set of changes that are being approved.
 
 ### Example
+
+
+{{< tabs "approvals" "col-no-wrap" >}}
+
+{{< tab "v2" >}}
+```
+$ kosli report approval project-a-app.bin \
+  --artifact-type file \
+  --newest-commit $(git rev-parse HEAD) \
+  --oldest-commit $(git rev-parse HEAD~1) \
+  --flow project-a 
+  
+approval created for artifact: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
+```
+
+See [kosli report approval](/client_reference/kosli_report_approval/) and [kosli request approval](/client_reference/kosli_request_approval/) for more details. 
+{{< /tab >}}
+
+{{< tab "v0.1.x" >}}
 ```
 $ kosli pipeline approval report project-a-app.bin \
   --artifact-type file \
@@ -20,7 +39,10 @@ $ kosli pipeline approval report project-a-app.bin \
 approval created for artifact: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
 ```
 
-See [kosli pipeline approval report](/client_reference/kosli_pipeline_approval_report/) and [kosli pipeline approval request](/client_reference/kosli_pipeline_approval_request/) for more details. 
+See [kosli pipeline approval report](/legacy_ref/v0.1.36/kosli_pipeline_approval_report/) and [kosli pipeline approval request](/legacy_ref/v0.1.36/kosli_pipeline_approval_request/) for more details. 
+{{< /tab >}}
+
+{{< /tabs >}}
 
 {{< hint warning >}}
 

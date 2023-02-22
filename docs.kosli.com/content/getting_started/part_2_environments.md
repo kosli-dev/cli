@@ -19,7 +19,7 @@ In all the commands below we skip required `--api-token` and `--owner` flags - t
 
 After you started reporting, you can - at any point - check exactly what is running in your environment using the CLI command:
 
-{{< tabs "reporting" "col-no-wrap" >}}
+{{< tabs "get env" "col-no-wrap" >}}
 
 {{< tab "v2" >}}
 ```shell {.command}
@@ -57,7 +57,7 @@ Before you start reporting what's running in your environments you need to creat
 ### Example
 
 #### CLI
-{{< tabs "commands" "col-no-wrap" >}}
+{{< tabs "create env" "col-no-wrap" >}}
 
 {{< tab "v2" >}}
 ```shell {.command}
@@ -86,7 +86,7 @@ environment quickstart was created
 
 You can verify that the Kosli environment called *quickstart* was created:
 
-{{< tabs "commands" "col-no-wrap" >}}
+{{< tabs "ls env" "col-no-wrap" >}}
 
 {{< tab "v2" >}}
 ```shell {.command}
@@ -146,7 +146,7 @@ $ kosli snapshot docker docs-demo-docker
 [1] containers were reported to environment quickstart
 ```
 
-More details in [`kosli snapshot docker` reference](/client_reference/kosli_snapshot_docker/)  
+More details in [kosli snapshot docker](/client_reference/kosli_snapshot_docker/) reference  
 for v0.1.x: [kosli environment report docker](/legacy_ref/v0.1.36/kosli_environment_report_docker/) 
 {{< /tab >}}
 
@@ -176,7 +176,7 @@ $ kosli snapshot ecs ecs-prod \
 [2] containers were reported to environment ecs-prod
 ```
 
-More details in [`kosli snapshot ecs` reference](/client_reference/kosli_snapshot_ecs/)  
+More details in [kosli snapshot ecs](/client_reference/kosli_snapshot_ecs/) reference  
 for v0.1.x: [kosli environment report ecs](/legacy_ref/v0.1.36/kosli_environment_report_ecs/) 
 {{< /tab >}}
 
@@ -206,7 +206,7 @@ kosli snapshot k8s yourEnvironmentName \
 
 ```
 
-More details in [`kosli snapshot k8s` reference](/client_reference/kosli_snapshot_k8s/)  
+More details in [kosli snapshot k8s](/client_reference/kosli_snapshot_k8s/) reference  
 for v0.1.x: [kosli environment report k8s](/legacy_ref/v0.1.36/kosli_environment_report_k8s/) 
 {{< /tab >}}
 
@@ -235,7 +235,7 @@ $ kosli snapshot lambda lambda-prod \
 reporter-app-prod lambda function was reported to environment lambda-prod
 ```
 
-More details in [`kosli snapshot lambda` reference](/client_reference/kosli_snapshot_lambda/)  
+More details in [kosli snapshot lambda](/client_reference/kosli_snapshot_lambda/) reference   
 for v0.1.x: [kosli environment report lambda](/legacy_ref/v0.1.36/kosli_environment_report_lambda/) 
 {{< /tab >}}
 
@@ -264,7 +264,7 @@ $ kosli snapshot s3 s3-prod \
 bucket app-public was reported to environment s3-prod
 ```
 
-More details in [`kosli snapshot s3` reference](/client_reference/kosli_snapshot_s3/)  
+More details in [kosli snapshot s3](/client_reference/kosli_snapshot_s3/) reference  
 for v0.1.x: [kosli environment report s3](/legacy_ref/v0.1.36/kosli_environment_report_s3/) 
 {{< /tab >}}
 
@@ -292,7 +292,7 @@ $ kosli snapshot server docs-demo-server --paths build/index.html
 [1] artifacts were reported to environment docs-demo-server       
 ```
 
-More details in [`kosli snapshot server` reference](/client_reference/kosli_snapshot_server/)  
+More details in [kosli snapshot server](/client_reference/kosli_snapshot_server/)reference  
 for v0.1.x: [kosli environment report server](/legacy_ref/v0.1.36/kosli_environment_report_server/) 
 {{< /tab >}}
 

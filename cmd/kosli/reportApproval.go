@@ -11,35 +11,35 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const approvalReportShortDesc = `Report an approval of deploying an artifact to Kosli.`
-const approvalReportLongDesc = approvalReportShortDesc + `
+const reportApprovalShortDesc = `Report an approval of deploying an artifact to Kosli.`
+const reportApprovalLongDesc = reportApprovalShortDesc + `
 ` + fingerprintDesc
 
-const approvalReportExample = `
+const reportApprovalExample = `
 # Report that a file type artifact has been approved for deployment.
 # The approval is for the last 5 git commits
-kosli pipeline approval report FILE.tgz \
+kosli report approval FILE.tgz \
 	--api-token yourAPIToken \
 	--artifact-type file \
 	--description "An optional description for the approval" \
 	--newest-commit $(git rev-parse HEAD) \
 	--oldest-commit $(git rev-parse HEAD~5) \
 	--owner yourOrgName \
-	--pipeline yourPipelineName 
+	--flow yourPipelineName 
 
 # Report that an artifact with a provided fingerprint (sha256) has been approved for deployment.
 # The approval is for the last 5 git commits
-kosli pipeline approval report \
+kosli report approval \
 	--api-token yourAPIToken \
 	--description "An optional description for the approval" \
 	--newest-commit $(git rev-parse HEAD) \
 	--oldest-commit $(git rev-parse HEAD~5) \
 	--owner yourOrgName \
-	--pipeline yourPipelineName \
-	--sha256 yourSha256
+	--flow yourPipelineName \
+	--fingerprint yourFingerprint
 `
 
-type approvalReportOptions struct {
+type reportApprovalOptions struct {
 	fingerprintOptions *fingerprintOptions
 	pipelineName       string
 	oldestSrcCommit    string
@@ -57,14 +57,14 @@ type ApprovalPayload struct {
 	UserData       interface{}         `json:"user_data"`
 }
 
-func newApprovalReportCmd(out io.Writer) *cobra.Command {
-	o := new(approvalReportOptions)
+func newReportApprovalCmd(out io.Writer) *cobra.Command {
+	o := new(reportApprovalOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "report [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Short:   approvalReportShortDesc,
-		Long:    approvalReportLongDesc,
-		Example: approvalReportExample,
+		Use:     "approval [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Short:   reportApprovalShortDesc,
+		Long:    reportApprovalLongDesc,
+		Example: reportApprovalExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -82,8 +82,8 @@ func newApprovalReportCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.payload.ArtifactSha256, "sha256", "s", "", fingerprintFlag)
-	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
+	cmd.Flags().StringVarP(&o.payload.ArtifactSha256, "fingerprint", "F", "", fingerprintFlag)
+	cmd.Flags().StringVarP(&o.pipelineName, "flow", "f", "", pipelineNameFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", approvalDescriptionFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", approvalUserDataFlag)
 	cmd.Flags().StringVar(&o.oldestSrcCommit, "oldest-commit", "", oldestCommitFlag)
@@ -92,7 +92,7 @@ func newApprovalReportCmd(out io.Writer) *cobra.Command {
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"pipeline", "oldest-commit"})
+	err := RequireFlags(cmd, []string{"flow", "oldest-commit"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
@@ -100,7 +100,7 @@ func newApprovalReportCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *approvalReportOptions) run(args []string, request bool) error {
+func (o *reportApprovalOptions) run(args []string, request bool) error {
 	var err error
 	o.payload.ArtifactSha256, err = o.payloadArtifactSHA256(args)
 	if err != nil {
@@ -135,7 +135,7 @@ func (o *approvalReportOptions) run(args []string, request bool) error {
 	return err
 }
 
-func (o *approvalReportOptions) payloadArtifactSHA256(args []string) (string, error) {
+func (o *reportApprovalOptions) payloadArtifactSHA256(args []string) (string, error) {
 	if o.payload.ArtifactSha256 == "" {
 		sha256, err := GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
@@ -146,7 +146,7 @@ func (o *approvalReportOptions) payloadArtifactSHA256(args []string) (string, er
 	return o.payload.ArtifactSha256, nil
 }
 
-func (o *approvalReportOptions) payloadReviews(request bool) []map[string]string {
+func (o *reportApprovalOptions) payloadReviews(request bool) []map[string]string {
 	if !request {
 		return []map[string]string{
 			{
@@ -161,7 +161,7 @@ func (o *approvalReportOptions) payloadReviews(request bool) []map[string]string
 	}
 }
 
-func (o *approvalReportOptions) payloadCommitList() ([]string, error) {
+func (o *reportApprovalOptions) payloadCommitList() ([]string, error) {
 	commits, err := o.commitsHistory()
 	if err != nil {
 		return nil, err
@@ -175,7 +175,7 @@ func (o *approvalReportOptions) payloadCommitList() ([]string, error) {
 	return commitList, nil
 }
 
-func (o *approvalReportOptions) commitsHistory() ([]*gitview.CommitInfo, error) {
+func (o *reportApprovalOptions) commitsHistory() ([]*gitview.CommitInfo, error) {
 	gitView, err := gitview.New(o.srcRepoRoot)
 	if err != nil {
 		return nil, err

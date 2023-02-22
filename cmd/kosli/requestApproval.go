@@ -6,11 +6,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const approvalRequestShortDesc = `Request an approval of a deployment of an artifact in Kosli.`
-const approvalRequestLongDesc = approvalRequestShortDesc + `
+const requestApprovalShortDesc = `Request an approval of a deployment of an artifact in Kosli.`
+const requestApprovalLongDesc = requestApprovalShortDesc + `
 The request should be reviewed in Kosli UI.` + fingerprintDesc
 
-const approvalRequestExample = `
+const requestApprovalExample = `
 # Request that a file type artifact needs approval.
 # The approval is for the last 5 git commits
 kosli pipeline approval request FILE.tgz \
@@ -20,7 +20,7 @@ kosli pipeline approval request FILE.tgz \
 	--newest-commit $(git rev-parse HEAD) \
 	--oldest-commit $(git rev-parse HEAD~5) \
 	--owner yourOrgName \
-	--pipeline yourPipelineName 
+	--flow yourPipelineName 
 
 # Request and approval for an artifact with a provided fingerprint (sha256).
 # The approval is for the last 5 git commits
@@ -30,18 +30,18 @@ kosli pipeline approval request \
 	--newest-commit $(git rev-parse HEAD) \
 	--oldest-commit $(git rev-parse HEAD~5)	\
 	--owner yourOrgName \
-	--pipeline yourPipelineName \
-	--sha256 yourSha256 
+	--flow yourPipelineName \
+	--fingerprint yourFingerprint 
 `
 
-func newApprovalRequestCmd(out io.Writer) *cobra.Command {
-	o := new(approvalReportOptions)
+func newRequestApprovalCmd(out io.Writer) *cobra.Command {
+	o := new(reportApprovalOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "request [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Short:   approvalRequestShortDesc,
-		Long:    approvalRequestLongDesc,
-		Example: approvalRequestExample,
+		Use:     "approval [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Short:   requestApprovalShortDesc,
+		Long:    requestApprovalLongDesc,
+		Example: requestApprovalExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -59,8 +59,8 @@ func newApprovalRequestCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.payload.ArtifactSha256, "sha256", "s", "", fingerprintFlag)
-	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
+	cmd.Flags().StringVarP(&o.payload.ArtifactSha256, "fingerprint", "F", "", fingerprintFlag)
+	cmd.Flags().StringVarP(&o.pipelineName, "flow", "f", "", pipelineNameFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", approvalDescriptionFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", approvalUserDataFlag)
 	cmd.Flags().StringVar(&o.oldestSrcCommit, "oldest-commit", "", oldestCommitFlag)
@@ -69,7 +69,7 @@ func newApprovalRequestCmd(out io.Writer) *cobra.Command {
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"pipeline", "oldest-commit"})
+	err := RequireFlags(cmd, []string{"flow", "oldest-commit"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}

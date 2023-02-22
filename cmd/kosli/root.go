@@ -189,7 +189,6 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		newPipelineCmd(out),
 		newAssertCmd(out),
 		newStatusCmd(out),
-		newApprovalReadCmd(out),
 		newExpectCmd(out),
 		newSearchCmd(out),
 		newCompletionCmd(out),
@@ -206,6 +205,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		newListCmd(out),
 		newRenameCmd(out),
 		newSnapshotCmd(out),
+		newRequestCmd(out),
 	)
 
 	return cmd, nil
