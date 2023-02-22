@@ -1,13 +1,10 @@
-name: publish docs
+name: publish docs - release
 
 on:
-  push:
-    branches:
-      - main
-    paths:  
-      - 'docs.kosli.com/**'
-      - '!docs.kosli.com/content/client_reference/**'
-      - '!docs.kosli.com/content/helm/**'
+  workflow_run:
+    workflows: ["helm chart", "release"]
+    types:
+      - completed
   workflow_dispatch:    
 
 jobs:
@@ -15,6 +12,14 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
+      
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '1.19.5'
+         
+      - name: Generate docs
+        run: |
+          make docs
 
       # Deploy to local repo
       - name: Deploy
@@ -24,5 +29,4 @@ jobs:
           BRANCH: docs-main
           FOLDER: docs.kosli.com
           TARGET_DIR: docs.kosli.com
-          CLEAR_GLOBS_FILE: ".clear-files"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

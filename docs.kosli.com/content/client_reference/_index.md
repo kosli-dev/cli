@@ -1,5 +1,5 @@
 ---
-title: Reference
+title: CLI Reference
 bookCollapseSection: true
 weight: 600
 ---
