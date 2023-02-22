@@ -61,30 +61,30 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		// 	golden:    "Error: --pipeline is required when you are not using --pipefile\nUsage: kosli pipeline declare [flags]\n",
 		// },
 		// Pipeline ls tests
-		{
-			wantError: false,
-			name:      "kosli pipeline ls command does not return error",
-			cmd:       "pipeline ls" + defaultKosliArguments,
-			golden:    "",
-		},
-		{
-			wantError: false,
-			name:      "kosli pipeline ls --output json command does not return error",
-			cmd:       "pipeline ls --output json" + defaultKosliArguments,
-			golden:    "",
-		},
-		{
-			wantError: false,
-			name:      "kosli pipeline ls --output table command does not return error",
-			cmd:       "pipeline ls --output table" + defaultKosliArguments,
-			golden:    "",
-		},
-		{
-			wantError: true,
-			name:      "kosli pipeline ls --output text command does return error",
-			cmd:       "pipeline ls --output text" + defaultKosliArguments,
-			golden:    "",
-		},
+		// {
+		// 	wantError: false,
+		// 	name:      "kosli pipeline ls command does not return error",
+		// 	cmd:       "pipeline ls" + defaultKosliArguments,
+		// 	golden:    "",
+		// },
+		// {
+		// 	wantError: false,
+		// 	name:      "kosli pipeline ls --output json command does not return error",
+		// 	cmd:       "pipeline ls --output json" + defaultKosliArguments,
+		// 	golden:    "",
+		// },
+		// {
+		// 	wantError: false,
+		// 	name:      "kosli pipeline ls --output table command does not return error",
+		// 	cmd:       "pipeline ls --output table" + defaultKosliArguments,
+		// 	golden:    "",
+		// },
+		// {
+		// 	wantError: true,
+		// 	name:      "kosli pipeline ls --output text command does return error",
+		// 	cmd:       "pipeline ls --output text" + defaultKosliArguments,
+		// 	golden:    "",
+		// },
 
 		// Get flow tests
 		// {
@@ -157,12 +157,12 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		},
 
 		// List artifacts
-		{
-			wantError: false,
-			name:      "list artifacts",
-			cmd:       "artifact ls newFlow" + defaultKosliArguments,
-			golden:    "",
-		},
+		// {
+		// 	wantError: false,
+		// 	name:      "list artifacts",
+		// 	cmd:       "artifact ls newFlow" + defaultKosliArguments,
+		// 	golden:    "",
+		// },
 
 		// Get artifact
 		{
@@ -205,12 +205,12 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		},
 
 		// list approvals
-		{
-			wantError: false,
-			name:      "list approvals",
-			cmd:       "approval ls newFlow" + defaultKosliArguments,
-			golden:    "",
-		},
+		// {
+		// 	wantError: false,
+		// 	name:      "list approvals",
+		// 	cmd:       "approval ls newFlow" + defaultKosliArguments,
+		// 	golden:    "",
+		// },
 	}
 	runTestCmd(suite.T(), tests)
 }

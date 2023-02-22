@@ -38,6 +38,7 @@ func newListCmd(out io.Writer) *cobra.Command {
 		newListArtifactsCmd(out),
 		newListDeploymentsCmd(out),
 		newListEnvironmentsCmd(out),
+		newListFlowsCmd(out),
 	)
 
 	return cmd

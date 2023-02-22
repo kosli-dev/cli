@@ -10,13 +10,13 @@ import (
 // Define the suite, and absorb the built-in basic suite
 // functionality from testify - including a T() method which
 // returns the current testing context
-type ListEnvironmentsCommandTestSuite struct {
+type ListFlowsCommandTestSuite struct {
 	suite.Suite
 	defaultKosliArguments string
 	acmeOrgKosliArguments string
 }
 
-func (suite *ListEnvironmentsCommandTestSuite) SetupTest() {
+func (suite *ListFlowsCommandTestSuite) SetupTest() {
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Owner:    "docs-cmd-test-user",
@@ -29,33 +29,33 @@ func (suite *ListEnvironmentsCommandTestSuite) SetupTest() {
 	suite.acmeOrgKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
 }
 
-func (suite *ListEnvironmentsCommandTestSuite) TestListEnvironmentsCmd() {
+func (suite *ListFlowsCommandTestSuite) TestListFlowsCmd() {
 	tests := []cmdTestCase{
 		{
-			name:   "listing environments works when there are envs",
-			cmd:    fmt.Sprintf(`list environments %s`, suite.defaultKosliArguments),
-			golden: "",
+			name:   "listing flows works when there are flows",
+			cmd:    fmt.Sprintf(`list flows %s`, suite.defaultKosliArguments),
+			golden: "", // some flows exist from other tests
 		},
 		{
-			name:   "listing environments works when there are no envs",
-			cmd:    fmt.Sprintf(`list environments %s`, suite.acmeOrgKosliArguments),
-			golden: "No environments were found.\n",
+			name:   "listing flows works when there are no flows",
+			cmd:    fmt.Sprintf(`list flows %s`, suite.acmeOrgKosliArguments),
+			golden: "No flows were found.\n",
 		},
 		{
-			name:   "listing environments with --output json works when there are envs",
-			cmd:    fmt.Sprintf(`list environments --output json %s`, suite.defaultKosliArguments),
-			golden: "",
+			name:   "listing flows with --output json works when there are flows",
+			cmd:    fmt.Sprintf(`list flows --output json %s`, suite.defaultKosliArguments),
+			golden: "", // some flows exist from other tests
 		},
 		{
-			name:   "listing environments with --output json works when there are no envs",
-			cmd:    fmt.Sprintf(`list environments --output json %s`, suite.acmeOrgKosliArguments),
+			name:   "listing flows with --output json works when there are no flows",
+			cmd:    fmt.Sprintf(`list flows --output json %s`, suite.acmeOrgKosliArguments),
 			golden: "[]\n",
 		},
 		{
 			wantError: true,
 			name:      "providing an argument causes an error",
-			cmd:       fmt.Sprintf(`list environments xxx %s`, suite.defaultKosliArguments),
-			golden:    "Error: unknown command \"xxx\" for \"kosli list environments\"\n",
+			cmd:       fmt.Sprintf(`list flows xxx %s`, suite.defaultKosliArguments),
+			golden:    "Error: unknown command \"xxx\" for \"kosli list flows\"\n",
 		},
 	}
 
@@ -64,6 +64,6 @@ func (suite *ListEnvironmentsCommandTestSuite) TestListEnvironmentsCmd() {
 
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
-func TestListEnvironmentsCommandTestSuite(t *testing.T) {
-	suite.Run(t, new(ListEnvironmentsCommandTestSuite))
+func TestListFlowsCommandTestSuite(t *testing.T) {
+	suite.Run(t, new(ListFlowsCommandTestSuite))
 }

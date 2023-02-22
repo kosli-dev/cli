@@ -11,20 +11,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const pipelineLsDesc = `List pipelines for an org.`
+const listFlowsDesc = `List flows for an org.`
 
-type pipelineLsOptions struct {
+type listFlowsOptions struct {
 	output string
 }
 
-func newPipelineLsCmd(out io.Writer) *cobra.Command {
-	o := new(pipelineLsOptions)
+func newListFlowsCmd(out io.Writer) *cobra.Command {
+	o := new(listFlowsOptions)
 	cmd := &cobra.Command{
-		Use:     "ls",
-		Aliases: []string{"list"},
-		Short:   pipelineLsDesc,
-		Long:    pipelineLsDesc,
-		Args:    cobra.NoArgs,
+		Use:   "flows",
+		Short: listFlowsDesc,
+		Long:  listFlowsDesc,
+		Args:  cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -42,7 +41,7 @@ func newPipelineLsCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *pipelineLsOptions) run(out io.Writer) error {
+func (o *listFlowsOptions) run(out io.Writer) error {
 	url := fmt.Sprintf("%s/api/v1/projects/%s/", global.Host, global.Owner)
 
 	reqParams := &requests.RequestParams{
@@ -57,27 +56,27 @@ func (o *pipelineLsOptions) run(out io.Writer) error {
 
 	return output.FormattedPrint(response.Body, o.output, out, 0,
 		map[string]output.FormatOutputFunc{
-			"table": printPipelinesListAsTable,
+			"table": printFlowsListAsTable,
 			"json":  output.PrintJson,
 		})
 }
 
-func printPipelinesListAsTable(raw string, out io.Writer, page int) error {
-	var pipelines []map[string]interface{}
-	err := json.Unmarshal([]byte(raw), &pipelines)
+func printFlowsListAsTable(raw string, out io.Writer, page int) error {
+	var flows []map[string]interface{}
+	err := json.Unmarshal([]byte(raw), &flows)
 	if err != nil {
 		return err
 	}
 
-	if len(pipelines) == 0 {
-		logger.Info("no pipelines were found")
+	if len(flows) == 0 {
+		logger.Info("No flows were found.")
 		return nil
 	}
 
 	header := []string{"NAME", "DESCRIPTION", "VISIBILITY"}
 	rows := []string{}
-	for _, pipeline := range pipelines {
-		row := fmt.Sprintf("%s\t%s\t%s", pipeline["name"], pipeline["description"], pipeline["visibility"])
+	for _, flow := range flows {
+		row := fmt.Sprintf("%s\t%s\t%s", flow["name"], flow["description"], flow["visibility"])
 		rows = append(rows, row)
 	}
 	tabFormattedPrint(out, header, rows)

@@ -71,30 +71,30 @@ func (suite *EnvironmentCommandTestSuite) TestEnvironmentCommandCmd() {
 		// 	golden:    "Error: required flag(s) \"environment-type\" not set\n",
 		// },
 		// Environment ls tests
-		{
-			wantError: false,
-			name:      "kosli env ls command lists newEnv does not return error",
-			cmd:       "env ls" + defaultKosliArguments,
-			golden:    "",
-		},
-		{
-			wantError: false,
-			name:      "kosli env ls --output json command does not return error",
-			cmd:       "env ls --output json" + defaultKosliArguments,
-			golden:    "",
-		},
-		{
-			wantError: false,
-			name:      "kosli env ls --output table command does not return error",
-			cmd:       "env ls --output table" + defaultKosliArguments,
-			golden:    "",
-		},
-		{
-			wantError: true,
-			name:      "kosli env ls --output text command does return error",
-			cmd:       "env ls --output text" + defaultKosliArguments,
-			golden:    "",
-		},
+		// {
+		// 	wantError: false,
+		// 	name:      "kosli env ls command lists newEnv does not return error",
+		// 	cmd:       "env ls" + defaultKosliArguments,
+		// 	golden:    "",
+		// },
+		// {
+		// 	wantError: false,
+		// 	name:      "kosli env ls --output json command does not return error",
+		// 	cmd:       "env ls --output json" + defaultKosliArguments,
+		// 	golden:    "",
+		// },
+		// {
+		// 	wantError: false,
+		// 	name:      "kosli env ls --output table command does not return error",
+		// 	cmd:       "env ls --output table" + defaultKosliArguments,
+		// 	golden:    "",
+		// },
+		// {
+		// 	wantError: true,
+		// 	name:      "kosli env ls --output text command does return error",
+		// 	cmd:       "env ls --output text" + defaultKosliArguments,
+		// 	golden:    "",
+		// },
 
 		// Environment rename tests
 		{

@@ -71,7 +71,7 @@ func printEnvListAsTable(raw string, out io.Writer, page int) error {
 	}
 
 	if len(envs) == 0 {
-		logger.Info("No environments found.")
+		logger.Info("No environments were found.")
 		return nil
 	}
 
