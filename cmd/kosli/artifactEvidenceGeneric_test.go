@@ -34,7 +34,7 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) SetupTest() {
 	tests := []cmdTestCase{
 		{
 			name: "create second artifact",
-			cmd: `report artifact testdata --git-commit 6ef6fc37c373922eecd4e823cf2633326790cfe8 --artifact-type dir ` + `
+			cmd: `report artifact testdata --git-commit 0fc1ba9876f91b215679f3649b8668085d820ab5 --artifact-type dir ` + `
 			          --flow ` + suite.pipelineName + ` --build-url www.yr.no --commit-url www.nrk.no --repo-root ../..` + suite.defaultKosliArguments,
 		},
 	}

@@ -75,7 +75,7 @@ func (suite *SearchCommandTestSuite) TestSearchCmd() {
 		},
 		{
 			name:   "can search with a git-commit that exists",
-			cmd:    fmt.Sprintf(`search 6ef6fc37c373922eecd4e823cf2633326790cfe8 %s`, suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf(`search 0fc1ba9876f91b215679f3649b8668085d820ab5 %s`, suite.defaultKosliArguments),
 			golden: "",
 		},
 		{
@@ -85,7 +85,7 @@ func (suite *SearchCommandTestSuite) TestSearchCmd() {
 		},
 		{
 			name:   "can search with a git-commit that exists using --output json",
-			cmd:    fmt.Sprintf(`search 6ef6fc37c373922eecd4e823cf2633326790cfe8 --output json %s`, suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf(`search 0fc1ba9876f91b215679f3649b8668085d820ab5 --output json %s`, suite.defaultKosliArguments),
 			golden: "",
 		},
 		{
