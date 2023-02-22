@@ -2,11 +2,9 @@
 title: "kosli environment diff"
 ---
 
-## kosli environment diff
+# kosli environment diff
 
-Diff snapshots.
-
-### Synopsis
+## Synopsis
 
 Diff snapshots.
 Specify SNAPPISH_1 and SNAPPISH_2 by:
@@ -18,14 +16,14 @@ Specify SNAPPISH_1 and SNAPPISH_2 by:
 kosli environment diff SNAPPISH_1 SNAPPISH_2 [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -h, --help  |  help for diff  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -36,7 +34,7 @@ kosli environment diff SNAPPISH_1 SNAPPISH_2 [flags]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 # compare the third latest snapshot in an environment to the latest

@@ -2,11 +2,9 @@
 title: "kosli fingerprint"
 ---
 
-## kosli fingerprint
+# kosli fingerprint
 
-Calculate the SHA256 fingerprint of an artifact.
-
-### Synopsis
+## Synopsis
 
 Calculate the SHA256 fingerprint of an artifact.
 Requires artifact type flag to be set.
@@ -16,7 +14,7 @@ Artifact type can be one of: "file" for files, "dir" for directories, "docker" f
 kosli fingerprint {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256' or '--fingerprint'.  |
@@ -26,7 +24,7 @@ kosli fingerprint {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |

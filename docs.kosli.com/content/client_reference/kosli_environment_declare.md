@@ -2,11 +2,9 @@
 title: "kosli environment declare"
 ---
 
-## kosli environment declare
+# kosli environment declare
 
-Declare a Kosli environment.
-
-### Synopsis
+## Synopsis
 
 Declare a Kosli environment.
 
@@ -14,7 +12,7 @@ Declare a Kosli environment.
 kosli environment declare [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -d, --description string  |  [optional] The environment description.  |
@@ -24,7 +22,7 @@ kosli environment declare [flags]
 |    -n, --name string  |  The name of environment to be created.  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -35,7 +33,7 @@ kosli environment declare [flags]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 

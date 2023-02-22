@@ -2,11 +2,9 @@
 title: "kosli environment report k8s"
 ---
 
-## kosli environment report k8s
+# kosli environment report k8s
 
-Report running pods data from K8S cluster or namespace(s) to Kosli.
-
-### Synopsis
+## Synopsis
 
 Report running pods data from K8S cluster or namespace(s) to Kosli.
 The reported data includes pod container images digests and creation timestamps. You can customize the scope of reporting
@@ -16,7 +14,7 @@ to include or exclude namespaces.
 kosli environment report k8s ENVIRONMENT-NAME [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
@@ -26,7 +24,7 @@ kosli environment report k8s ENVIRONMENT-NAME [flags]
 |    -n, --namespace strings  |  [conditional] The comma separated list of namespaces regex patterns to report artifacts info from. Can't be used together with --exclude-namespace.  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -37,7 +35,7 @@ kosli environment report k8s ENVIRONMENT-NAME [flags]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 

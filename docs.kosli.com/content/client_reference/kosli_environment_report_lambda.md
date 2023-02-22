@@ -2,11 +2,9 @@
 title: "kosli environment report lambda"
 ---
 
-## kosli environment report lambda
+# kosli environment report lambda
 
-Report the artifact deployed in an AWS Lambda and its digest to Kosli.
-
-### Synopsis
+## Synopsis
 
 Report the artifact deployed in an AWS Lambda and its digest to Kosli.
 To authenticate to AWS, you can either: 
@@ -21,7 +19,7 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 kosli environment report lambda ENVIRONMENT-NAME [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |        --aws-key-id string  |  The AWS access key ID.  |
@@ -33,7 +31,7 @@ kosli environment report lambda ENVIRONMENT-NAME [flags]
 |    -h, --help  |  help for lambda  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -44,7 +42,7 @@ kosli environment report lambda ENVIRONMENT-NAME [flags]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 

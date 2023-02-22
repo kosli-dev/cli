@@ -2,11 +2,9 @@
 title: "kosli environment get"
 ---
 
-## kosli environment get
+# kosli environment get
 
-Get a specific environment snapshot.
-
-### Synopsis
+## Synopsis
 
 Get a specific environment snapshot.
 Specify SNAPPISH by:
@@ -18,14 +16,14 @@ Specify SNAPPISH by:
 kosli environment get ENVIRONMENT-NAME-OR-EXPRESSION [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -h, --help  |  help for get  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -36,7 +34,7 @@ kosli environment get ENVIRONMENT-NAME-OR-EXPRESSION [flags]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 # get the latest snapshot of an environment:

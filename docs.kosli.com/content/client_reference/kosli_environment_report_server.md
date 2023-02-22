@@ -2,11 +2,9 @@
 title: "kosli environment report server"
 ---
 
-## kosli environment report server
+# kosli environment report server
 
-Report artifacts running in a server environment to Kosli.
-
-### Synopsis
+## Synopsis
 
 Report artifacts running in a server environment to Kosli.
 You can report directory or file artifacts in one or more server paths.
@@ -15,7 +13,7 @@ You can report directory or file artifacts in one or more server paths.
 kosli environment report server ENVIRONMENT-NAME [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
@@ -23,7 +21,7 @@ kosli environment report server ENVIRONMENT-NAME [flags]
 |    -p, --paths strings  |  The comma separated list of artifact directories.  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -34,7 +32,7 @@ kosli environment report server ENVIRONMENT-NAME [flags]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 

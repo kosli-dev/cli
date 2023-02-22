@@ -2,11 +2,9 @@
 title: "kosli assert github-pullrequest"
 ---
 
-## kosli assert github-pullrequest
+# kosli assert github-pullrequest
 
-Assert if a Github pull request for a git commit exists.
-
-### Synopsis
+## Synopsis
 
 Assert if a Github pull request for a git commit exists.
 The command exits with non-zero exit code 
@@ -16,7 +14,7 @@ if no pull requests were found for the commit.
 kosli assert github-pullrequest [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |        --commit string  |  Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
@@ -28,7 +26,7 @@ kosli assert github-pullrequest [flags]
 |        --repository string  |  Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -39,7 +37,7 @@ kosli assert github-pullrequest [flags]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 

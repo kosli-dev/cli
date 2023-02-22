@@ -2,11 +2,9 @@
 title: "kosli pipeline declare"
 ---
 
-## kosli pipeline declare
+# kosli pipeline declare
 
-Create or update a Kosli pipeline.
-
-### Synopsis
+## Synopsis
 
 Create or update a Kosli pipeline.
 You can provide a JSON pipefile or specify pipeline parameters in flags. 
@@ -16,7 +14,7 @@ The pipefile contains the pipeline metadata and compliance policy (template).
 kosli pipeline declare [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |        --description string  |  [optional] The Kosli pipeline description.  |
@@ -28,7 +26,7 @@ kosli pipeline declare [flags]
 |        --visibility string  |  [defaulted] The visibility of the Kosli pipeline. Valid visibilities are [public, private]. (default "private")  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -39,7 +37,7 @@ kosli pipeline declare [flags]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 

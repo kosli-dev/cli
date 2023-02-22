@@ -2,11 +2,9 @@
 title: "kosli assert status"
 ---
 
-## kosli assert status
+# kosli assert status
 
-Assert the status of Kosli server.
-
-### Synopsis
+## Synopsis
 
 Assert the status of Kosli server.
 Exits with non-zero code if Kosli server down.
@@ -15,13 +13,13 @@ Exits with non-zero code if Kosli server down.
 kosli assert status [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -h, --help  |  help for status  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |

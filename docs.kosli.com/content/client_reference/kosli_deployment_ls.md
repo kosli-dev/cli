@@ -2,11 +2,9 @@
 title: "kosli deployment ls"
 ---
 
-## kosli deployment ls
+# kosli deployment ls
 
-List deployments in a pipeline.
-
-### Synopsis
+## Synopsis
 
 List deployments in a pipeline.
 The results are paginated and ordered from latests to oldest. 
@@ -17,7 +15,7 @@ By default, the page limit is 15 deployments per page.
 kosli deployment ls PIPELINE-NAME [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -h, --help  |  help for ls  |
@@ -26,7 +24,7 @@ kosli deployment ls PIPELINE-NAME [flags]
 |    -n, --page-limit int  |  [defaulted] The number of elements per page. (default 15)  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -37,7 +35,7 @@ kosli deployment ls PIPELINE-NAME [flags]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 

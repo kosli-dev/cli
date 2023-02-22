@@ -2,11 +2,9 @@
 title: "kosli pipeline artifact report creation"
 ---
 
-## kosli pipeline artifact report creation
+# kosli pipeline artifact report creation
 
-Report an artifact creation to a Kosli pipeline.
-
-### Synopsis
+## Synopsis
 
 Report an artifact creation to a Kosli pipeline.
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag).
@@ -15,7 +13,7 @@ The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or
 kosli pipeline artifact report creation {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256' or '--fingerprint'.  |
@@ -33,7 +31,7 @@ kosli pipeline artifact report creation {IMAGE-NAME | FILE-PATH | DIR-PATH} [fla
 |    -s, --sha256 string  |  [conditional] The SHA256 fingerprint for the artifact. Only required if you don't specify '--artifact-type'.  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -44,7 +42,7 @@ kosli pipeline artifact report creation {IMAGE-NAME | FILE-PATH | DIR-PATH} [fla
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 

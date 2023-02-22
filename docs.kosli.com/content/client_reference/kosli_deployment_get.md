@@ -2,11 +2,9 @@
 title: "kosli deployment get"
 ---
 
-## kosli deployment get
+# kosli deployment get
 
-Get a deployment from a specified pipeline.
-
-### Synopsis
+## Synopsis
 
 Get a deployment from a specified pipeline.
 Specify SNAPPISH by:
@@ -18,14 +16,14 @@ Specify SNAPPISH by:
 kosli deployment get SNAPPISH [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -h, --help  |  help for get  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -36,7 +34,7 @@ kosli deployment get SNAPPISH [flags]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 # get previous deployment in a pipeline

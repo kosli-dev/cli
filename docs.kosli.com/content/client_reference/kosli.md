@@ -2,11 +2,9 @@
 title: "kosli"
 ---
 
-## kosli
+# kosli
 
-The Kosli CLI.
-
-### Synopsis
+## Synopsis
 
 The Kosli evidence reporting CLI.
 
@@ -17,7 +15,7 @@ For example, to set --api-token from an environment variable, you can export KOS
 Setting the API token to DRY_RUN sets the --dry-run flag.
 
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |

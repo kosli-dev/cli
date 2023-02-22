@@ -2,11 +2,9 @@
 title: "kosli environment log"
 ---
 
-## kosli environment log
+# kosli environment log
 
-List environment events.
-
-### Synopsis
+## Synopsis
 
 List environment events.
 The results are paginated and ordered from latests to oldest. 
@@ -24,7 +22,7 @@ Either expression can be omitted to default to NOW.
 kosli environment log ENV_NAME [INTERVAL] [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -h, --help  |  help for log  |
@@ -35,7 +33,7 @@ kosli environment log ENV_NAME [INTERVAL] [flags]
 |        --reverse  |  [defaulted] Reverse the order of output list.  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -46,7 +44,7 @@ kosli environment log ENV_NAME [INTERVAL] [flags]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 

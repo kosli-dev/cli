@@ -2,11 +2,9 @@
 title: "kosli environment inspect"
 ---
 
-## kosli environment inspect
+# kosli environment inspect
 
-Inspect an environment metadata.
-
-### Synopsis
+## Synopsis
 
 Inspect an environment metadata.
 
@@ -14,14 +12,14 @@ Inspect an environment metadata.
 kosli environment inspect ENVIRONMENT-NAME [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -h, --help  |  help for inspect  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |

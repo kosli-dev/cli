@@ -2,11 +2,9 @@
 title: "kosli commit report evidence snyk"
 ---
 
-## kosli commit report evidence snyk
+# kosli commit report evidence snyk
 
-Report Snyk evidence for a commit in a Kosli pipeline.
-
-### Synopsis
+## Synopsis
 
 Report Snyk evidence for a commit in a Kosli pipeline.
 
@@ -14,7 +12,7 @@ Report Snyk evidence for a commit in a Kosli pipeline.
 kosli commit report evidence snyk [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
@@ -27,7 +25,7 @@ kosli commit report evidence snyk [flags]
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to this evidence.  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -38,7 +36,7 @@ kosli commit report evidence snyk [flags]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 

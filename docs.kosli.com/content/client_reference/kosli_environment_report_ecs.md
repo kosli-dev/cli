@@ -2,11 +2,9 @@
 title: "kosli environment report ecs"
 ---
 
-## kosli environment report ecs
+# kosli environment report ecs
 
-Report running containers data from AWS ECS cluster or service to Kosli.
-
-### Synopsis
+## Synopsis
 
 Report running containers data from AWS ECS cluster or service to Kosli.
 The reported data includes container image digests and creation timestamps.
@@ -22,7 +20,7 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 kosli environment report ecs ENVIRONMENT-NAME [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |        --aws-key-id string  |  The AWS access key ID.  |
@@ -34,7 +32,7 @@ kosli environment report ecs ENVIRONMENT-NAME [flags]
 |    -s, --service-name string  |  The name of the ECS service.  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -45,7 +43,7 @@ kosli environment report ecs ENVIRONMENT-NAME [flags]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 

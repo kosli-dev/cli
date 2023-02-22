@@ -2,11 +2,9 @@
 title: "kosli completion"
 ---
 
-## kosli completion
+# kosli completion
 
-Generate completion script
-
-### Synopsis
+## Synopsis
 
 To load completions:
 
@@ -61,13 +59,13 @@ you will need to enable it.  You can execute the following once:
 kosli completion [bash|zsh|fish|powershell]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -h, --help  |  help for completion  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |

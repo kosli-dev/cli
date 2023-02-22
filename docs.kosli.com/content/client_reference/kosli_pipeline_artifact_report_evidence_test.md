@@ -2,11 +2,9 @@
 title: "kosli pipeline artifact report evidence test"
 ---
 
-## kosli pipeline artifact report evidence test
+# kosli pipeline artifact report evidence test
 
-Report a JUnit test evidence to an artifact in a Kosli pipeline.
-
-### Synopsis
+## Synopsis
 
 Report a JUnit test evidence to an artifact in a Kosli pipeline.
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag).
@@ -15,7 +13,7 @@ The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or
 kosli pipeline artifact report evidence test [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256' or '--fingerprint'.  |
@@ -33,7 +31,7 @@ kosli pipeline artifact report evidence test [IMAGE-NAME | FILE-PATH | DIR-PATH]
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to this evidence.  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -44,7 +42,7 @@ kosli pipeline artifact report evidence test [IMAGE-NAME | FILE-PATH | DIR-PATH]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 

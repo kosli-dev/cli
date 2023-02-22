@@ -2,11 +2,9 @@
 title: "kosli assert bitbucket-pullrequest"
 ---
 
-## kosli assert bitbucket-pullrequest
+# kosli assert bitbucket-pullrequest
 
-Assert if a Bitbucket pull request for a git commit exists. 
-
-### Synopsis
+## Synopsis
 
 Assert if a Bitbucket pull request for a git commit exists. 
 The command exits with non-zero exit code 
@@ -16,7 +14,7 @@ if no pull requests were found for the commit.
 kosli assert bitbucket-pullrequest [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |        --bitbucket-password string  |  Bitbucket App password. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#authentication for more details.  |
@@ -28,7 +26,7 @@ kosli assert bitbucket-pullrequest [flags]
 |        --repository string  |  Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -39,7 +37,7 @@ kosli assert bitbucket-pullrequest [flags]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 

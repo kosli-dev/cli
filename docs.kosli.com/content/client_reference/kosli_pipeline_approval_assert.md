@@ -2,11 +2,9 @@
 title: "kosli pipeline approval assert"
 ---
 
-## kosli pipeline approval assert
+# kosli pipeline approval assert
 
-Assert if an artifact in Kosli has been approved for deployment.
-
-### Synopsis
+## Synopsis
 
 Assert if an artifact in Kosli has been approved for deployment.
 Exits with non-zero code if artifact has not been approved.
@@ -16,7 +14,7 @@ The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or
 kosli pipeline approval assert [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256' or '--fingerprint'.  |
@@ -29,7 +27,7 @@ kosli pipeline approval assert [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |    -s, --sha256 string  |  [conditional] The SHA256 fingerprint for the artifact. Only required if you don't specify '--artifact-type'.  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -40,7 +38,7 @@ kosli pipeline approval assert [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 

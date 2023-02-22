@@ -2,11 +2,9 @@
 title: "kosli pipeline artifact report evidence github-pullrequest"
 ---
 
-## kosli pipeline artifact report evidence github-pullrequest
+# kosli pipeline artifact report evidence github-pullrequest
 
-Report a Github pull request evidence for an artifact in a Kosli pipeline.
-
-### Synopsis
+## Synopsis
 
 Report a Github pull request evidence for an artifact in a Kosli pipeline.
 It checks if a pull request exists for the artifact (based on its git commit) and report the pull-request evidence to the artifact in Kosli. 
@@ -16,7 +14,7 @@ The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or
 kosli pipeline artifact report evidence github-pullrequest [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256' or '--fingerprint'.  |
@@ -38,7 +36,7 @@ kosli pipeline artifact report evidence github-pullrequest [IMAGE-NAME | FILE-PA
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to this evidence.  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -49,7 +47,7 @@ kosli pipeline artifact report evidence github-pullrequest [IMAGE-NAME | FILE-PA
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 

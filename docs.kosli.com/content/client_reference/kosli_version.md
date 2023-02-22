@@ -2,11 +2,9 @@
 title: "kosli version"
 ---
 
-## kosli version
+# kosli version
 
-Print the version of Kosli CLI.
-
-### Synopsis
+## Synopsis
 
 Print the version of Kosli CLI.
 The output will look something like this:
@@ -23,14 +21,14 @@ version.BuildInfo{Version:"v0.0.1", GitCommit:"fe51cd1e31e6a202cba7dead9552a6d41
 kosli version [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -h, --help  |  help for version  |
 |    -s, --short  |  [optional] Print only the Kosli CLI version number.  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |

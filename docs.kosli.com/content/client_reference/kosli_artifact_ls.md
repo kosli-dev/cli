@@ -2,11 +2,9 @@
 title: "kosli artifact ls"
 ---
 
-## kosli artifact ls
+# kosli artifact ls
 
-List artifacts in a pipeline. 
-
-### Synopsis
+## Synopsis
 
 List artifacts in a pipeline. The results are paginated and ordered from latests to oldest. 
 By default, the page limit is 15 artifacts per page.
@@ -16,7 +14,7 @@ By default, the page limit is 15 artifacts per page.
 kosli artifact ls PIPELINE-NAME [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -h, --help  |  help for ls  |
@@ -25,7 +23,7 @@ kosli artifact ls PIPELINE-NAME [flags]
 |    -n, --page-limit int  |  [defaulted] The number of elements per page. (default 15)  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -36,7 +34,7 @@ kosli artifact ls PIPELINE-NAME [flags]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 

@@ -2,11 +2,9 @@
 title: "kosli assert environment"
 ---
 
-## kosli assert environment
+# kosli assert environment
 
-Assert the compliance status of an environment in Kosli.
-
-### Synopsis
+## Synopsis
 
 Assert the compliance status of an environment in Kosli.
 Exits with non-zero code if the environment has a non-compliant status.
@@ -27,14 +25,14 @@ Examples of valid expressions are:
 kosli assert environment ENVIRONMENT-NAME-OR-EXPRESSION [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -h, --help  |  help for environment  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -45,7 +43,7 @@ kosli assert environment ENVIRONMENT-NAME-OR-EXPRESSION [flags]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 

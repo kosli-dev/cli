@@ -2,11 +2,9 @@
 title: "kosli commit report evidence bitbucket-pullrequest"
 ---
 
-## kosli commit report evidence bitbucket-pullrequest
+# kosli commit report evidence bitbucket-pullrequest
 
-Report a Bitbucket pull request evidence for a commit in a Kosli pipeline.
-
-### Synopsis
+## Synopsis
 
 Report a Bitbucket pull request evidence for a commit in a Kosli pipeline.
 It checks if a pull request exists for the git commit and reports the pull-request evidence to the commit in Kosli.
@@ -15,7 +13,7 @@ It checks if a pull request exists for the git commit and reports the pull-reque
 kosli commit report evidence bitbucket-pullrequest [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
@@ -32,7 +30,7 @@ kosli commit report evidence bitbucket-pullrequest [flags]
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to this evidence.  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -43,7 +41,7 @@ kosli commit report evidence bitbucket-pullrequest [flags]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 

@@ -2,11 +2,9 @@
 title: "kosli pipeline ls"
 ---
 
-## kosli pipeline ls
+# kosli pipeline ls
 
-List pipelines for an org.
-
-### Synopsis
+## Synopsis
 
 List pipelines for an org.
 
@@ -14,14 +12,14 @@ List pipelines for an org.
 kosli pipeline ls [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -h, --help  |  help for ls  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |

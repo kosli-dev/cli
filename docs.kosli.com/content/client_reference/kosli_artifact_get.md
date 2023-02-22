@@ -2,11 +2,9 @@
 title: "kosli artifact get"
 ---
 
-## kosli artifact get
+# kosli artifact get
 
-Get artifact from a specified pipeline
-
-### Synopsis
+## Synopsis
 
 Get artifact from a specified pipeline
 You can get an artifact by its fingerprint or by its git commit sha.
@@ -26,14 +24,14 @@ Examples of valid expressions are: pipe@184c799cd551dd1d8d5c5f9a5d593b2e931f5e36
 kosli artifact get SNAPPISH [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -h, --help  |  help for get  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -44,7 +42,7 @@ kosli artifact get SNAPPISH [flags]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 # get an artifact with a given fingerprint from a pipeline

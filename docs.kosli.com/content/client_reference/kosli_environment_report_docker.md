@@ -2,11 +2,9 @@
 title: "kosli environment report docker"
 ---
 
-## kosli environment report docker
+# kosli environment report docker
 
-Report running containers data from docker host to Kosli.
-
-### Synopsis
+## Synopsis
 
 Report running containers data from docker host to Kosli.
 The reported data includes container image digests 
@@ -17,14 +15,14 @@ been pushed to or pulled from a registry will be ignored.
 kosli environment report docker ENVIRONMENT-NAME [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -h, --help  |  help for docker  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -35,7 +33,7 @@ kosli environment report docker ENVIRONMENT-NAME [flags]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 

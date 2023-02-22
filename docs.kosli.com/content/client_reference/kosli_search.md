@@ -2,11 +2,9 @@
 title: "kosli search"
 ---
 
-## kosli search
+# kosli search
 
-Search for a git commit or an artifact fingerprint in Kosli.
-
-### Synopsis
+## Synopsis
 
 Search for a git commit or an artifact fingerprint in Kosli. 
 You can use short git commit or artifact fingerprint shas, but you must provide at least 5 characters.
@@ -15,14 +13,14 @@ You can use short git commit or artifact fingerprint shas, but you must provide 
 kosli search GIT-COMMIT|FINGERPRINT [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -h, --help  |  help for search  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -33,7 +31,7 @@ kosli search GIT-COMMIT|FINGERPRINT [flags]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 

@@ -2,11 +2,9 @@
 title: "kosli commit report evidence github-pullrequest"
 ---
 
-## kosli commit report evidence github-pullrequest
+# kosli commit report evidence github-pullrequest
 
-Report a Github pull request evidence for a git commit in a Kosli pipeline.
-
-### Synopsis
+## Synopsis
 
 Report a Github pull request evidence for a git commit in a Kosli pipeline.
 It checks if a pull request exists for a commit and report the pull-request evidence to the commit in Kosli. 
@@ -16,7 +14,7 @@ It checks if a pull request exists for a commit and report the pull-request evid
 kosli commit report evidence github-pullrequest [flags]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
@@ -33,7 +31,7 @@ kosli commit report evidence github-pullrequest [flags]
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to this evidence.  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -44,7 +42,7 @@ kosli commit report evidence github-pullrequest [flags]
 |        --owner string  |  The Kosli user or organization.  |
 
 
-### Examples
+## Examples
 
 ```shell
 
