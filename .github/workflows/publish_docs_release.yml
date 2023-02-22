@@ -1,4 +1,4 @@
-name: publish docs
+name: publish docs - release
 
 on:
   workflow_run:
