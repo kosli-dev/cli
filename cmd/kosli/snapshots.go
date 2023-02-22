@@ -137,7 +137,7 @@ func printSnapshotAsTable(raw string, out io.Writer, page int) error {
 
 	// check if the snapshot is empty by checking one of its elements
 	if snapshot.Type == "" {
-		logger.Info("no running artifacts were reported")
+		logger.Info("No running artifacts were reported")
 		return nil
 	}
 
