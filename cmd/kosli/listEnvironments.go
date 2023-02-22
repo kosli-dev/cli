@@ -12,19 +12,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentLsDesc = `List environments.`
+const listEnvironmentsDesc = `List environments.`
 
 type environmentLsOptions struct {
 	output string
 }
 
-func newEnvironmentLsCmd(out io.Writer) *cobra.Command {
+func newListEnvironmentsCmd(out io.Writer) *cobra.Command {
 	o := new(environmentLsOptions)
 	cmd := &cobra.Command{
-		Use:     "ls",
-		Aliases: []string{"list"},
-		Short:   environmentLsDesc,
-		Long:    environmentLsDesc,
+		Use:     "environments",
+		Aliases: []string{"env"},
+		Short:   listEnvironmentsDesc,
+		Long:    listEnvironmentsDesc,
 		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -71,7 +71,7 @@ func printEnvListAsTable(raw string, out io.Writer, page int) error {
 	}
 
 	if len(envs) == 0 {
-		logger.Info("no environments found")
+		logger.Info("No environments found.")
 		return nil
 	}
 
