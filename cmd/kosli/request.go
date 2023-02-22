@@ -11,8 +11,8 @@ const requestDesc = `All Kosli request commands.`
 func newRequestCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "request",
-		Short: reportDesc,
-		Long:  reportDesc,
+		Short: requestDesc,
+		Long:  requestDesc,
 	}
 
 	// Add subcommands
