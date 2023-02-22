@@ -2,7 +2,7 @@ name: publish docs - release
 
 on:
   workflow_run:
-    workflows: ["helm chart", "release"]
+    workflows: ["release"]
     types:
       - completed
   workflow_dispatch:    
