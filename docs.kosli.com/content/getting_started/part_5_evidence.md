@@ -78,9 +78,9 @@ $ kosli pipeline artifact report evidence github-pullrequest project-a-app.bin \
 github pull request evidence is reported to artifact: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
 ```
 For more details see:  
-[kosli pipeline artifact report evidence github-pullrequest](/legacy_ref/v0.1.35/kosli_pipeline_artifact_report_evidence_github-pullrequest/)  
-[kosli pipeline artifact report evidence bitbucket-pullrequest](/legacy_ref/v0.1.35/kosli_pipeline_artifact_report_evidence_bitbucket-pullrequest/)  
-[kosli pipeline artifact report evidence gitlab-mergerequest](/legacy_ref/v0.1.35/kosli_pipeline_artifact_report_evidence_gitlab-mergerequest/)
+[kosli pipeline artifact report evidence github-pullrequest](/legacy_ref/v0.1.36/kosli_pipeline_artifact_report_evidence_github-pullrequest/)  
+[kosli pipeline artifact report evidence bitbucket-pullrequest](/legacy_ref/v0.1.36/kosli_pipeline_artifact_report_evidence_bitbucket-pullrequest/)  
+[kosli pipeline artifact report evidence gitlab-mergerequest](/legacy_ref/v0.1.36/kosli_pipeline_artifact_report_evidence_gitlab-mergerequest/)
 {{< /tab >}}
 
 {{< tab "Commit v2" >}}
