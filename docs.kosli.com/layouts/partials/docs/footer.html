@@ -76,3 +76,8 @@
 {{ with $script.Content }}
   <script>{{ . | safeJS }}</script>
 {{ end }}
+
+{{ $script := resources.Get "tocScroller.js" | resources.Minify }}
+{{ with $script.Content }}
+  <script>{{ . | safeJS }}</script>
+{{ end }}
