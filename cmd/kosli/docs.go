@@ -103,10 +103,9 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 	buf := new(bytes.Buffer)
 	name := cmd.CommandPath()
 
-	buf.WriteString("## " + name + "\n\n")
-	buf.WriteString(cmd.Short + "\n\n")
+	buf.WriteString("# " + name + "\n\n")
 	if len(cmd.Long) > 0 {
-		buf.WriteString("### Synopsis\n\n")
+		buf.WriteString("## Synopsis\n\n")
 		buf.WriteString(cmd.Long + "\n\n")
 	}
 
@@ -122,7 +121,7 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 	// }
 
 	if len(cmd.Example) > 0 {
-		buf.WriteString("### Examples\n\n")
+		buf.WriteString("## Examples\n\n")
 		buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", cmd.Example))
 	}
 	_, err := buf.WriteTo(w)
@@ -133,7 +132,7 @@ func printOptions(buf *bytes.Buffer, cmd *cobra.Command, name string) error {
 	flags := cmd.NonInheritedFlags()
 	flags.SetOutput(buf)
 	if flags.HasAvailableFlags() {
-		buf.WriteString("### Flags\n")
+		buf.WriteString("## Flags\n")
 		buf.WriteString("| Flag | Description |\n")
 		buf.WriteString("| :--- | :--- |\n")
 		usages := CommandsInTable(flags)
@@ -144,7 +143,7 @@ func printOptions(buf *bytes.Buffer, cmd *cobra.Command, name string) error {
 	parentFlags := cmd.InheritedFlags()
 	parentFlags.SetOutput(buf)
 	if parentFlags.HasAvailableFlags() {
-		buf.WriteString("### Options inherited from parent commands\n")
+		buf.WriteString("## Options inherited from parent commands\n")
 		buf.WriteString("| Flag | Description |\n")
 		buf.WriteString("| :--- | :--- |\n")
 		usages := CommandsInTable(parentFlags)
