@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/go-git/go-git/v5"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -13,62 +12,49 @@ import (
 // returns the current testing context
 type GetApprovalCommandTestSuite struct {
 	suite.Suite
-	defaultKosliArguments    string
-	defaultArtifactArguments string
-	flowName                 string
+	defaultKosliArguments string
+	flowName              string
+	fingerprint           string
 }
 
 func (suite *GetApprovalCommandTestSuite) SetupTest() {
-	suite.flowName = "approval-42"
+	suite.flowName = "get-approval"
+	suite.fingerprint = "7a498bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Owner:    "docs-cmd-test-user",
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
-	suite.defaultArtifactArguments = " --flow " + suite.flowName + " --build-url www.yr.no --commit-url www.nrk.no"
 
 	CreateFlow(suite.flowName, suite.T())
+	CreateArtifact(suite.flowName, suite.fingerprint, "approved-artifact", suite.T())
+	CreateApproval(suite.flowName, suite.fingerprint, suite.T())
 }
 
-func (suite *GetApprovalCommandTestSuite) TestGetDeploymentCmd() {
-	defaultRepoRoot := " --repo-root ../.. "
-
-	repo, err := git.PlainOpen("../..")
-	if err != nil {
-		suite.T().Fatal(fmt.Errorf("failed to open git repository at %s: %v", "../..", err))
-	}
-	// headHash, err := repo.ResolveRevision(plumbing.Revision("HEAD"))
-	repoHead, err := repo.Head()
-	if err != nil {
-		suite.T().Fatal(fmt.Errorf("failed to resolve revision %s: %v", "HEAD", err))
-	}
-	headHash := repoHead.Hash().String()
-
+func (suite *GetApprovalCommandTestSuite) TestGetApprovalCmd() {
 	tests := []cmdTestCase{
 		{
-			wantError: false,
-			name:      "report artifact with fingerprint",
-			cmd:       "report artifact FooBar_1 --git-commit " + headHash + " --fingerprint 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + suite.defaultArtifactArguments + suite.defaultKosliArguments + defaultRepoRoot,
-			golden:    "",
-		},
-		{
-			wantError: false,
-			name:      "report approval",
-			cmd:       "report approval --flow " + suite.flowName + " --oldest-commit HEAD~1 --fingerprint 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + suite.defaultKosliArguments + defaultRepoRoot,
-			golden:    "",
-		},
-		{
-			wantError: false,
-			name:      "get an approval",
-			cmd:       "get approval " + suite.flowName + " " + suite.defaultKosliArguments,
-			golden:    "",
+			name: "get an approval",
+			cmd:  fmt.Sprintf("get approval %s %s", suite.flowName, suite.defaultKosliArguments),
 		},
 		{
 			wantError: true,
-			name:      "get a non-existing approval fails",
-			cmd:       "get approval newFlow#20" + suite.defaultKosliArguments,
-			golden:    "",
+			name:      "get an approval with more than one argument fails",
+			cmd:       fmt.Sprintf("get approval %s xxx %s", suite.flowName, suite.defaultKosliArguments),
+			golden:    "Error: accepts 1 arg(s), received 2\n",
+		},
+		{
+			wantError: true,
+			name:      "get approval on a non-existing flow fails",
+			cmd:       "get approval get-approval-123#20" + suite.defaultKosliArguments,
+			golden:    "Error: Pipeline called 'get-approval-123' does not exist for Organization 'docs-cmd-test-user'. \n",
+		},
+		{
+			wantError: true,
+			name:      "get non-existing approval fails",
+			cmd:       fmt.Sprintf("get approval %s#23 %s", suite.flowName, suite.defaultKosliArguments),
+			golden:    "Error: Approval number '23' does not exist in pipeline 'get-approval' belonging to Organization 'docs-cmd-test-user'. \n",
 		},
 	}
 

@@ -20,7 +20,7 @@ You can get an artifact by its fingerprint or by its git commit sha.
 In case of using the git commit, it is possible to get multiple artifacts matching the git commit.
 
 The expected argument is an expression to specify the artifact to get.
-It has the format <FLOW_NAME><SEPARATOR><COMMIT_SHA1|ARTIFACT_SHA256> 
+It has the format <FLOW_NAME><SEPARATOR><COMMIT_SHA1|ARTIFACT_FINGERPRINT> 
 
 Specify SNAPPISH by:
 	flowName@<fingerprint>  artifact with a given fingerprint. The fingerprint can be short or complete.
@@ -29,7 +29,8 @@ Specify SNAPPISH by:
 Examples of valid expressions are: flow@184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0, flow:110d048bf1fce72ba546cbafc4427fb21b958dee
 `
 
-const getArtifactExample = `# get an artifact with a given fingerprint from a flow
+const getArtifactExample = `
+# get an artifact with a given fingerprint from a flow
 kosli get artifact flowName@fingerprint \
 	--api-token yourAPIToken \
 	--owner orgName

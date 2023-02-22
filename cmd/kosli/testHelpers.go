@@ -46,6 +46,37 @@ func CreateArtifact(flowName, artifactFingerprint, artifactName string, t *testi
 	require.NoError(t, err, "artifact should be created without error")
 }
 
+// CreateApproval creates an approval for an artifact in a flow
+func CreateApproval(flowName, fingerprint string, t *testing.T) {
+	o := &reportApprovalOptions{
+		payload: ApprovalPayload{
+			ArtifactFingerprint: fingerprint,
+			Description:         "some description",
+		},
+		flowName:        flowName,
+		oldestSrcCommit: "HEAD~1",
+		newestSrcCommit: "HEAD",
+		srcRepoRoot:     "../..",
+	}
+
+	err := o.run([]string{"filename"}, false)
+	require.NoError(t, err, "approval should be created without error")
+}
+
+// ExpectDeployment reports a deployment expectation of a given artifact to the server
+func ExpectDeployment(flowName, fingerprint, envName string, t *testing.T) {
+	o := &expectDeploymentOptions{
+		flowName: flowName,
+		payload: ExpectDeploymentPayload{
+			Fingerprint: fingerprint,
+			Environment: envName,
+			BuildUrl:    "https://example.com",
+		},
+	}
+	err := o.run([]string{})
+	require.NoError(t, err, "deployment should be expected without error")
+}
+
 // CreateEnv creates an env on the server
 func CreateEnv(owner, envName, envType string, t *testing.T) {
 	o := &createEnvOptions{
@@ -61,19 +92,7 @@ func CreateEnv(owner, envName, envType string, t *testing.T) {
 	require.NoError(t, err, "env should be created without error")
 }
 
-func ExpectDeployment(flowName, fingerprint, envName string, t *testing.T) {
-	o := &expectDeploymentOptions{
-		flowName: flowName,
-		payload: ExpectDeploymentPayload{
-			Fingerprint: fingerprint,
-			Environment: envName,
-			BuildUrl:    "https://example.com",
-		},
-	}
-	err := o.run([]string{})
-	require.NoError(t, err, "deployment should be expected without error")
-}
-
+// ReportServerArtifactToEnv reports files/dirs in paths as server env artifacts
 func ReportServerArtifactToEnv(paths []string, envName string, t *testing.T) {
 	o := &snapshotServerOptions{
 		paths: paths,

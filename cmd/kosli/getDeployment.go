@@ -12,15 +12,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const getDeploymentDescShort = `Get a deployment from a specified flow.`
+const getDeploymentShortDesc = `Get a deployment from a specified flow.`
 
-const GetDeploymentDesc = getDeploymentDescShort + `
+const getDeploymentLongDesc = getDeploymentShortDesc + `
 Specify SNAPPISH by:
 	flowName~<N>  N'th behind the latest deployment
 	flowName#<N>  deployment number N
 	flowName      the latest deployment`
 
-const deploymentGetExample = `# get previous deployment in a flow
+const deploymentGetExample = `
+# get previous deployment in a flow
 kosli get deployment flowName~1 \
 	--api-token yourAPIToken \
 	--owner orgName
@@ -35,16 +36,16 @@ kosli get deployment flowName \
 	--api-token yourAPIToken \
 	--owner orgName`
 
-type GetDeploymentOptions struct {
+type getDeploymentOptions struct {
 	output string
 }
 
 func newGetDeploymentCmd(out io.Writer) *cobra.Command {
-	o := new(GetDeploymentOptions)
+	o := new(getDeploymentOptions)
 	cmd := &cobra.Command{
 		Use:     "deployment SNAPPISH",
-		Short:   getDeploymentDescShort,
-		Long:    GetDeploymentDesc,
+		Short:   getDeploymentShortDesc,
+		Long:    getDeploymentLongDesc,
 		Example: deploymentGetExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -64,7 +65,7 @@ func newGetDeploymentCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *GetDeploymentOptions) run(out io.Writer, args []string) error {
+func (o *getDeploymentOptions) run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v1/projects/%s/deployment/?snappish=%s", global.Host, global.Owner, url.QueryEscape(args[0]))
 
 	reqParams := &requests.RequestParams{

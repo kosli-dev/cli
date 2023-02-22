@@ -41,7 +41,7 @@ kosli report approval \
 
 type reportApprovalOptions struct {
 	fingerprintOptions *fingerprintOptions
-	pipelineName       string
+	flowName           string
 	oldestSrcCommit    string
 	newestSrcCommit    string
 	srcRepoRoot        string
@@ -50,11 +50,11 @@ type reportApprovalOptions struct {
 }
 
 type ApprovalPayload struct {
-	ArtifactSha256 string              `json:"artifact_sha256"`
-	Description    string              `json:"description"`
-	CommitList     []string            `json:"src_commit_list"`
-	Reviews        []map[string]string `json:"approvals"`
-	UserData       interface{}         `json:"user_data"`
+	ArtifactFingerprint string              `json:"artifact_sha256"`
+	Description         string              `json:"description"`
+	CommitList          []string            `json:"src_commit_list"`
+	Reviews             []map[string]string `json:"approvals"`
+	UserData            interface{}         `json:"user_data"`
 }
 
 func newReportApprovalCmd(out io.Writer) *cobra.Command {
@@ -71,7 +71,7 @@ func newReportApprovalCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
-			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.ArtifactSha256, false)
+			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.ArtifactFingerprint, false)
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -82,8 +82,8 @@ func newReportApprovalCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.payload.ArtifactSha256, "fingerprint", "F", "", fingerprintFlag)
-	cmd.Flags().StringVarP(&o.pipelineName, "flow", "f", "", pipelineNameFlag)
+	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "F", "", fingerprintFlag)
+	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", approvalDescriptionFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", approvalUserDataFlag)
 	cmd.Flags().StringVar(&o.oldestSrcCommit, "oldest-commit", "", oldestCommitFlag)
@@ -102,7 +102,7 @@ func newReportApprovalCmd(out io.Writer) *cobra.Command {
 
 func (o *reportApprovalOptions) run(args []string, request bool) error {
 	var err error
-	o.payload.ArtifactSha256, err = o.payloadArtifactSHA256(args)
+	o.payload.ArtifactFingerprint, err = o.payloadArtifactSHA256(args)
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func (o *reportApprovalOptions) run(args []string, request bool) error {
 		return err
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/approvals/", global.Host, global.Owner, o.pipelineName)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/approvals/", global.Host, global.Owner, o.flowName)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPost,
@@ -130,20 +130,20 @@ func (o *reportApprovalOptions) run(args []string, request bool) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("approval created for artifact: %s", o.payload.ArtifactSha256)
+		logger.Info("approval created for artifact: %s", o.payload.ArtifactFingerprint)
 	}
 	return err
 }
 
 func (o *reportApprovalOptions) payloadArtifactSHA256(args []string) (string, error) {
-	if o.payload.ArtifactSha256 == "" {
+	if o.payload.ArtifactFingerprint == "" {
 		sha256, err := GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
 			return sha256, err
 		}
 		return sha256, nil
 	}
-	return o.payload.ArtifactSha256, nil
+	return o.payload.ArtifactFingerprint, nil
 }
 
 func (o *reportApprovalOptions) payloadReviews(request bool) []map[string]string {
