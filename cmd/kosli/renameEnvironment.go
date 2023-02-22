@@ -9,15 +9,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentRenameShortDesc = `Rename a Kosli environment.`
+const renameEnvironmentShortDesc = `Rename a Kosli environment.`
 
-const environmentRenameLongDesc = environmentRenameShortDesc + `
-The environment will remain available under its old name until that name is taken by another environment.
+const renameEnvironmentLongDesc = renameEnvironmentShortDesc + `
+The environment will remain accessible under its old name until that name is taken by another environment.
 `
 
-const environmentRenameExample = `
+const renameEnvironmentExample = `
 # rename a Kosli environment:
-kosli environment rename oldName newName \
+kosli rename environment oldName newName \
 	--api-token yourAPIToken \
 	--owner yourOrgName 
 `
@@ -26,14 +26,15 @@ type RenameEnvironmentPayload struct {
 	NewName string `json:"new_name"`
 }
 
-func newEnvironmentRenameCmd(out io.Writer) *cobra.Command {
+func newRenameEnvironmentCmd(out io.Writer) *cobra.Command {
 	payload := new(RenameEnvironmentPayload)
 	cmd := &cobra.Command{
-		Use:     "rename OLD_NAME NEW_NAME",
-		Short:   environmentRenameShortDesc,
-		Long:    environmentRenameLongDesc,
-		Example: environmentRenameExample,
-		Args:    cobra.MinimumNArgs(2),
+		Use:     "environment OLD_NAME NEW_NAME",
+		Aliases: []string{"env"},
+		Short:   renameEnvironmentShortDesc,
+		Long:    renameEnvironmentLongDesc,
+		Example: renameEnvironmentExample,
+		Args:    cobra.ExactArgs(2),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
