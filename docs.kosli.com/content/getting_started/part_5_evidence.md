@@ -259,7 +259,7 @@ $ kosli commit report evidence snyk \
 
 snyk scan evidence is reported to commit: e67f2f2b121f9325ebf166b7b3c707f73cb48b14
 ```
-See [kosli commit report evidence snyk](/legacy_ref/v0.1.35/kosli_commit_report_evidence_snyk/) for more details
+See [kosli commit report evidence snyk](/legacy_ref/v0.1.36/kosli_commit_report_evidence_snyk/) for more details
 {{< /tab >}}
 
 {{< /tabs >}}
