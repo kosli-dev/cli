@@ -15,11 +15,13 @@ type AllowArtifactCommandTestSuite struct {
 	defaultKosliArguments string
 	envName               string
 	artifactName          string
+	fingerprint           string
 }
 
 func (suite *AllowArtifactCommandTestSuite) SetupTest() {
 	suite.envName = "allow-artifact-env"
 	suite.artifactName = "arti"
+	suite.fingerprint = "8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef265d"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Owner:    "docs-cmd-test-user",
@@ -34,8 +36,8 @@ func (suite *AllowArtifactCommandTestSuite) TestAllowArtifactCmd() {
 	tests := []cmdTestCase{
 		{
 			name:   "allowing an artifact works with --fingerprint",
-			cmd:    fmt.Sprintf(`allow artifact %s --fingerprint 8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c  --environment %s --reason because %s`, suite.artifactName, suite.envName, suite.defaultKosliArguments),
-			golden: "artifact 8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c was allow listed in environment: allow-artifact-env\n",
+			cmd:    fmt.Sprintf(`allow artifact %s --fingerprint %s  --environment %s --reason because %s`, suite.artifactName, suite.fingerprint, suite.envName, suite.defaultKosliArguments),
+			golden: fmt.Sprintf("artifact %s was allow listed in environment: allow-artifact-env\n", suite.fingerprint),
 		},
 		{
 			name:   "allowing an artifact works with --artifact-type",
@@ -45,19 +47,19 @@ func (suite *AllowArtifactCommandTestSuite) TestAllowArtifactCmd() {
 		{
 			wantError: true,
 			name:      "allowing an artifact fails if artifact name argument is missing",
-			cmd:       fmt.Sprintf(`allow artifact --fingerprint 8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c  --environment %s --reason because %s`, suite.envName, suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf(`allow artifact --fingerprint %s  --environment %s --reason because %s`, suite.envName, suite.fingerprint, suite.defaultKosliArguments),
 			golden:    "Error: accepts 1 arg(s), received 0\n",
 		},
 		{
 			wantError: true,
 			name:      "allowing an artifact fails if --reason is missing",
-			cmd:       fmt.Sprintf(`allow artifact %s --fingerprint 8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c  --environment %s %s`, suite.artifactName, suite.envName, suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf(`allow artifact %s --fingerprint %s  --environment %s %s`, suite.artifactName, suite.fingerprint, suite.envName, suite.defaultKosliArguments),
 			golden:    "Error: required flag(s) \"reason\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "allowing an artifact fails if --environment is missing",
-			cmd:       fmt.Sprintf(`allow artifact %s --fingerprint 8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c  --reason because %s`, suite.artifactName, suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf(`allow artifact %s --fingerprint %s  --reason because %s`, suite.artifactName, suite.fingerprint, suite.defaultKosliArguments),
 			golden:    "Error: required flag(s) \"environment\" not set\n",
 		},
 		{

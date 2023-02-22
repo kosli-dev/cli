@@ -24,7 +24,7 @@ type SearchResponse struct {
 type SearchArtifact struct {
 	Fingerprint     string                   `json:"fingerprint"`
 	Name            string                   `json:"name"`
-	Pipeline        string                   `json:"pipeline"`
+	Flow            string                   `json:"pipeline"`
 	Commit          string                   `json:"git_commit"`
 	HasProvenance   bool                     `json:"has_provenance"`
 	CommitURL       string                   `json:"commit_url"`
@@ -47,7 +47,7 @@ kosli search YOUR_GIT_COMMIT \
 	--owner yourOrgName
 
 # Search for an artifact fingerprint in Kosli
-kosli search YOUR_FINGERPRINT \
+kosli search YOUR_ARTIFACT_FINGERPRINT \
 	--api-token yourApiToken \
 	--owner yourOrgName
 `
@@ -124,7 +124,7 @@ func printSearchAsTableWrapper(responseRaw string, out io.Writer, pageNumber int
 		rows = append(rows, fmt.Sprintf("Fingerprint:\t%s", artifact.Fingerprint))
 		rows = append(rows, fmt.Sprintf("Has provenance:\t%t", artifact.HasProvenance))
 		if artifact.HasProvenance {
-			rows = append(rows, fmt.Sprintf("Pipeline:\t%s", artifact.Pipeline))
+			rows = append(rows, fmt.Sprintf("Flow:\t%s", artifact.Flow))
 			rows = append(rows, fmt.Sprintf("Git commit:\t%s", artifact.Commit))
 			rows = append(rows, fmt.Sprintf("Commit URL:\t%s", artifact.CommitURL))
 			rows = append(rows, fmt.Sprintf("Build URL:\t%s", artifact.BuildURL))

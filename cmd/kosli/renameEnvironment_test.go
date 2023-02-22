@@ -39,7 +39,7 @@ func (suite *RenameEnvironmentCommandTestSuite) TestListSnapshotsCmd() {
 			wantError: true,
 			name:      "renaming environment fails if the new name is illegal",
 			cmd:       fmt.Sprintf(`rename environment %s new_illegal_name %s`, suite.envName, suite.defaultKosliArguments),
-			golden:    "Error: 'new_illegal_name' is an invalid name for environments. Valid names should start with a letter and can contain alphanumeric characters and '-'. \n",
+			golden:    "Error: 'new_illegal_name' is an invalid name for environments. Valid names should start with a letter and can contain alphanumeric characters and '-'.\n",
 		},
 		{
 			wantError: true,
