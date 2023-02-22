@@ -16,29 +16,28 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentReportDockerShortDesc = `Report running containers data from docker host to Kosli.`
+const snapshotDockerShortDesc = `Report a snapshot of running containers from docker host to Kosli.`
 
-const environmentReportDockerLongDesc = environmentReportDockerShortDesc + `
+const snapshotDockerLongDesc = snapshotDockerShortDesc + `
 The reported data includes container image digests 
 and creation timestamps. Containers running images which have not
 been pushed to or pulled from a registry will be ignored.`
 
-const environmentReportDockerExample = `
+const snapshotDockerExample = `
 # report what is running in a docker host:
-kosli environment report docker yourEnvironmentName \
+kosli snapshot docker yourEnvironmentName \
 	--api-token yourAPIToken \
 	--owner yourOrgName`
 
-type environmentReportDockerOptions struct {
-}
+type environmentReportDockerOptions struct{}
 
-func newEnvironmentReportDockerCmd(out io.Writer) *cobra.Command {
+func newSnapshotDockerCmd(out io.Writer) *cobra.Command {
 	o := new(environmentReportDockerOptions)
 	cmd := &cobra.Command{
 		Use:     "docker ENVIRONMENT-NAME",
-		Short:   environmentReportDockerShortDesc,
-		Long:    environmentReportDockerLongDesc,
-		Example: environmentReportDockerExample,
+		Short:   snapshotDockerShortDesc,
+		Long:    snapshotDockerLongDesc,
+		Example: snapshotDockerExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
