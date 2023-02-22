@@ -18,9 +18,9 @@ func newReportEvidenceArtifactPRCmd(out io.Writer) *cobra.Command {
 
 	// Add subcommands
 	cmd.AddCommand(
-		newPullRequestEvidenceBitbucketCmd(out),
-		newPullRequestEvidenceGithubCmd(out),
-		newPullRequestEvidenceGitlabCmd(out),
+		newPullRequestArtifactEvidenceBitbucketCmd(out),
+		newPullRequestArtifactEvidenceGithubCmd(out),
+		newPullRequestArtifactEvidenceGitlabCmd(out),
 	)
 
 	return cmd

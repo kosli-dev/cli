@@ -14,25 +14,25 @@ It checks if a merge request exists for the git commit and reports the merge-req
 
 const pullRequestCommitEvidenceGitlabExample = `
 # report a merge request evidence to Kosli
-kosli commit report evidence gitlab-mergerequest \
+kosli report evidence commit pullrequest gitlab \
 	--commit yourArtifactGitCommit \
 	--repository yourBitbucketGitRepository \
 	--gitlab-token yourGitlabToken \
 	--gitlab-org yourGitlabOrg \
 	--name yourEvidenceName \
-	--pipelines yourPipelineName \
+	--flow yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
 	--owner yourOrgName \
 	--api-token yourAPIToken
 	
 # fail if a pull request does not exist for your commit
-kosli commit report evidence gitlab-mergerequest \
+kosli report evidence commit pullrequest gitlab \
 	--commit yourArtifactGitCommit \
 	--repository yourBitbucketGitRepository \
 	--gitlab-token yourGitlabToken \
 	--gitlab-org yourGitlabOrg \
 	--name yourEvidenceName \
-	--pipelines yourPipelineName \
+	--flow yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
 	--owner yourOrgName \
 	--api-token yourAPIToken \
@@ -43,7 +43,8 @@ func newPullRequestCommitEvidenceGitlabCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestCommitOptions)
 	o.retriever = new(gitlabUtils.GitlabConfig)
 	cmd := &cobra.Command{
-		Use:     "gitlab-mergerequest",
+		Use:     "gitlab",
+		Aliases: []string{"gl"},
 		Short:   pullRequestCommitEvidenceGitlabShortDesc,
 		Long:    pullRequestCommitEvidenceGitlabLongDesc,
 		Example: pullRequestCommitEvidenceGitlabExample,
@@ -77,7 +78,7 @@ func newPullRequestCommitEvidenceGitlabCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{
 		"gitlab-token", "gitlab-org", "commit",
-		"repository", "pipelines", "build-url", "name",
+		"repository", "flow", "build-url", "name",
 	})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)

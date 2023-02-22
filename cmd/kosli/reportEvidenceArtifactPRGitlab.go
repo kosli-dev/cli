@@ -57,7 +57,7 @@ kosli report evidence artifact mergerequest gitlab yourDockerImageName \
 	--assert
 `
 
-func newPullRequestEvidenceGitlabCmd(out io.Writer) *cobra.Command {
+func newPullRequestArtifactEvidenceGitlabCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestArtifactOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	o.retriever = new(gitlabUtils.GitlabConfig)

@@ -7,34 +7,34 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const pullRequestCommitEvidenceBitbucketShortDesc = `Report a Bitbucket pull request evidence for a commit in a Kosli pipeline.`
+const pullRequestCommitEvidenceBitbucketShortDesc = `Report a Bitbucket pull request evidence for a commit in a Kosli flow.`
 
 const pullRequestCommitEvidenceBitbucketLongDesc = pullRequestCommitEvidenceBitbucketShortDesc + `
 It checks if a pull request exists for the git commit and reports the pull-request evidence to the commit in Kosli.`
 
 const pullRequestCommitEvidenceBitbucketExample = `
 # report a pull request evidence to Kosli
-kosli commit report evidence bitbucket-pullrequest \
+kosli report evidence commit pullrequest bitbucket \
 	--commit yourArtifactGitCommit \
 	--repository yourBitbucketGitRepository \
 	--bitbucket-username yourBitbucketUsername \
 	--bitbucket-password yourBitbucketPassword \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--name yourEvidenceName \
-	--pipelines yourPipelineName \
+	--flow yourFlowName \
 	--build-url https://exampleci.com \
 	--owner yourOrgName \
 	--api-token yourAPIToken
 	
 # fail if a pull request does not exist for your commit
-kosli commit report evidence bitbucket-pullrequest \
+kosli report evidence commit pullrequest bitbucket \
 	--commit yourArtifactGitCommit \
 	--repository yourBitbucketGitRepository \
 	--bitbucket-username yourBitbucketUsername \
 	--bitbucket-password yourBitbucketPassword \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--name yourEvidenceName \
-	--pipelines yourPipelineName \
+	--flow yourFlowName \
 	--build-url https://exampleci.com \
 	--owner yourOrgName \
 	--api-token yourAPIToken \
@@ -50,8 +50,8 @@ func newPullRequestCommitEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 	o.retriever = config
 
 	cmd := &cobra.Command{
-		Use:     "bitbucket-pullrequest",
-		Aliases: []string{"bb-pr", "bitbucket-pr"},
+		Use:     "bitbucket",
+		Aliases: []string{"bb"},
 		Short:   pullRequestCommitEvidenceBitbucketShortDesc,
 		Long:    pullRequestCommitEvidenceBitbucketLongDesc,
 		Example: pullRequestCommitEvidenceBitbucketExample,
@@ -76,7 +76,7 @@ func newPullRequestCommitEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{
 		"bitbucket-username", "bitbucket-password", "bitbucket-workspace",
-		"commit", "repository", "pipelines", "build-url", "name",
+		"commit", "repository", "flow", "build-url", "name",
 	})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)

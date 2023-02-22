@@ -43,7 +43,7 @@ kosli report evidence artifact pullrequest github yourDockerImageName \
 	--assert
 `
 
-func newPullRequestEvidenceGithubCmd(out io.Writer) *cobra.Command {
+func newPullRequestArtifactEvidenceGithubCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestArtifactOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	o.retriever = new(ghUtils.GithubConfig)

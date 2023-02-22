@@ -35,63 +35,63 @@ func (suite *CommitEvidencePRGithubCommandTestSuite) TestCommitEvidencePRGithubC
 	tests := []cmdTestCase{
 		{
 			name: "report Github PR evidence works",
-			cmd: `commit report evidence github-pullrequest --name gh-pr --pipelines ` + suite.flowNames + `
+			cmd: `report evidence commit pullrequest github --name gh-pr --flow ` + suite.flowNames + `
 			          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			golden: "github pull request evidence is reported to commit: 73d7fee2f31ade8e1a9c456c324255212c30c2a6\n",
 		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --owner is missing",
-			cmd: `commit report evidence github-pullrequest --name gh-pr --pipelines ` + suite.flowNames + `
+			cmd: `report evidence commit pullrequest github --name gh-pr --flow ` + suite.flowNames + `
 			          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6 --api-token foo --host bar`,
 			golden: "Error: --owner is not set\n" +
-				"Usage: kosli commit report evidence github-pullrequest [flags]\n",
+				"Usage: kosli report evidence commit pullrequest github [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --name is missing",
-			cmd: `commit report evidence github-pullrequest --pipelines ` + suite.flowNames + ` --github-org kosli-dev
+			cmd: `report evidence commit pullrequest github --flow ` + suite.flowNames + ` --github-org kosli-dev
 			          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			golden: "Error: required flag(s) \"name\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --github-org is missing",
-			cmd: `commit report evidence github-pullrequest --name gh-pr --pipelines ` + suite.flowNames + `
+			cmd: `report evidence commit pullrequest github --name gh-pr --flow ` + suite.flowNames + `
 			          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			golden: "Error: required flag(s) \"github-org\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --repository is missing",
-			cmd: `commit report evidence github-pullrequest --name gh-pr --pipelines ` + suite.flowNames + `
+			cmd: `report evidence commit pullrequest github --name gh-pr --flow ` + suite.flowNames + `
 			          --build-url example.com --github-org kosli-dev --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			golden: "Error: required flag(s) \"repository\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --commit is missing",
-			cmd: `commit report evidence github-pullrequest --name gh-pr --pipelines ` + suite.flowNames + `
+			cmd: `report evidence commit pullrequest github --name gh-pr --flow ` + suite.flowNames + `
 			          --build-url example.com --github-org kosli-dev --repository cli` + suite.defaultKosliArguments,
 			golden: "Error: required flag(s) \"commit\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when commit does not exist",
-			cmd: `commit report evidence github-pullrequest --name gh-pr --pipelines ` + suite.flowNames + `
+			cmd: `report evidence commit pullrequest github --name gh-pr --flow ` + suite.flowNames + `
 			          --build-url example.com --github-org kosli-dev --repository cli --commit 1111111111111111111111111111111111111111` + suite.defaultKosliArguments,
 			golden: "Error: GET https://api.github.com/repos/kosli-dev/cli/commits/1111111111111111111111111111111111111111/pulls: 422 No commit found for SHA: 1111111111111111111111111111111111111111 []\n",
 		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --assert is used and commit has no PRs",
-			cmd: `commit report evidence github-pullrequest --name gh-pr --pipelines ` + suite.flowNames + ` --assert
+			cmd: `report evidence commit pullrequest github --name gh-pr --flow ` + suite.flowNames + ` --assert
 					--build-url example.com --github-org kosli-dev --repository cli --commit 9bca2c44eaf221a79fb18a1a11bdf2997adaf870` + suite.defaultKosliArguments,
 			golden: "Error: no pull requests found for the given commit: 9bca2c44eaf221a79fb18a1a11bdf2997adaf870\n",
 		},
 		{
 			name: "report Github PR evidence does not fail when commit has no PRs",
-			cmd: `commit report evidence github-pullrequest --name gh-pr --pipelines ` + suite.flowNames + `
+			cmd: `report evidence commit pullrequest github --name gh-pr --flow ` + suite.flowNames + `
 			          --build-url example.com --github-org kosli-dev --repository cli --commit 9bca2c44eaf221a79fb18a1a11bdf2997adaf870` + suite.defaultKosliArguments,
 			golden: "no pull requests found for given commit: 9bca2c44eaf221a79fb18a1a11bdf2997adaf870\n" +
 				"github pull request evidence is reported to commit: 9bca2c44eaf221a79fb18a1a11bdf2997adaf870\n",
@@ -99,7 +99,7 @@ func (suite *CommitEvidencePRGithubCommandTestSuite) TestCommitEvidencePRGithubC
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --user-data is not found",
-			cmd: `commit report evidence github-pullrequest --name gh-pr --pipelines ` + suite.flowNames + `
+			cmd: `report evidence commit pullrequest github --name gh-pr --flow ` + suite.flowNames + `
 					  --user-data non-existing.json
 			          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			golden: "Error: open non-existing.json: no such file or directory\n",

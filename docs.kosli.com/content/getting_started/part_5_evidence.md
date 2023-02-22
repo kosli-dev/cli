@@ -23,20 +23,20 @@ If there is no pull request for a given commit, the evidence will be reported as
 There are six different pull request commands
 
 For GitHub: [report PR evidence to an artifact](/client_reference/kosli_report_evidence_artifact_pullrequest_github/) 
-or [report PR evidence to a commit](/client_reference/kosli_commit_report_evidence_github-pullrequest/) along with the regular flags, you need to provide:
+or [report PR evidence to a commit](/client_reference/kosli_report_evidence_commit_pullrequest_github/) along with the regular flags, you need to provide:
 * `--github-org`
 * `--github-token` your	Github personal access token with permissions to read PRs.
 
 
 For Bitbucket: [report PR evidence to an artifact](/client_reference/kosli_report_evidence_artifact_pullrequest_bitbucket/)
-or [report PR evidence to a commit](/client_reference/kosli_commit_report_evidence_bitbucket-pullrequest/) along with the regular flags, you need to provide:
+or [report PR evidence to a commit](/client_reference/kosli_report_evidence_commit_pullrequest_bitbucket/) along with the regular flags, you need to provide:
 *  `--bitbucket-password` - you need to use an api token which is the "App password" you create under "Personal Settings", keep in mind that api tokens you create under "Manage account" won't work for basic auth
 * `--bitbucket-username` - you cannot user your email address you use to log in, you have an actual username under "Personal Settings" 
 * `--bitbucket-workspace`
 
 For Gitlab: 
 [report PR evidence to an artifact](/client_reference/kosli_report_evidence_artifact_pullrequest_gitlab/) 
-or [report PR evidence to a commit](/client_reference/kosli_commit_report_evidence_gitlab-mergerequest/) along with the regular flags, you need to provide:
+or [report PR evidence to a commit](/client_reference/kosli_report_evidence_commit_pullrequest_gitlab/) along with the regular flags, you need to provide:
 * `--gitlab-org`
 * `--gitlab-token` your	Gitlab personal access token with permissions to read Merge requests.
 ### Example
@@ -82,7 +82,26 @@ For more details see:
 [kosli pipeline artifact report evidence bitbucket-pullrequest](/legacy_ref/v0.1.35/kosli_pipeline_artifact_report_evidence_bitbucket-pullrequest/)
 {{< /tab >}}
 
-{{< tab "Commit" >}}
+{{< tab "Commit v2" >}}
+```
+$ kosli report evidence commit  github-pullrequest \
+	--build-url https://exampleci.com \
+	--name pull-request \
+	--flow project-a \
+	--github-token *** \
+	--github-org ProjectA \
+	--repository repoB \
+	--commit e67f2f2b121f9325ebf166b7b3c707f73cb48b14 
+
+github pull request evidence is reported to commit: e67f2f2b121f9325ebf166b7b3c707f73cb48b14
+```
+For more details see:  
+[kosli report evidence commit pullrequest github](/client_reference/kosli_report_evidence_commit_pullrequest_github/)  
+[kosli report evidence commit pullrequest bitbucket](/client_reference/kosli_report_evidence_commit_pullrequest_bitbucket/)
+[kosli report evidence commit pullrequest github](/client_reference/kosli_report_evidence_commit_pullrequest_gitlab/)
+{{< /tab >}}
+
+{{< tab "Commit v0.1.x" >}}
 ```
 $ kosli commit report evidence github-pullrequest \
 	--build-url https://exampleci.com \

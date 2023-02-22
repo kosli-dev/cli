@@ -44,7 +44,7 @@ kosli report evidence artifact pullrequest bitbucket yourDockerImageName \
 	--assert
 `
 
-func newPullRequestEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
+func newPullRequestArtifactEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 	config := new(bbUtils.Config)
 	config.Logger = logger
 	config.KosliClient = kosliClient
