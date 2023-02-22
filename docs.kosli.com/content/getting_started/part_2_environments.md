@@ -9,7 +9,7 @@ Recording the status of runtime environments is one of the fundamental features 
 
 If the list of running artifacts is different than what was reported previously a new snapshot is created. Snapshots are immutable and can't be tampered with.
 
-There is range of `kosli environment report [...]` commands, allowing you to report a variety of environments. To record the current status of your environment you simply run one of them. You can do it manually but typically recording commands would run automatically, e.g. via a cron job or scheduled CI job.
+There is range of `kosli snapshot [...]` commands, allowing you to report a variety of environments. To record the current status of your environment you simply run one of them. You can do it manually but typically recording commands would run automatically, e.g. via a cron job or scheduled CI job.
 
 
 {{< hint warning >}}
@@ -18,7 +18,8 @@ In all the commands below we skip required `--api-token` and `--owner` flags - t
 
 
 After you started reporting, you can - at any point - check exactly what is running in your environment using the CLI command:
-{{< tabs "commands" "col-no-wrap" >}}
+
+{{< tabs "reporting" "col-no-wrap" >}}
 
 {{< tab "v2" >}}
 ```shell {.command}
@@ -133,25 +134,26 @@ To see the list of all your environments, just click on the "Environments" again
 {{< tab "docker" >}}
 ## Record docker environment
 
-Run `kosli environment report docker` to report running containers data from docker host to Kosli.  
+Run `kosli snapshot docker` to report running containers data from docker host to Kosli.  
 
 **Where to run:** The command has to be run on the actual docker host, to be able to detect running containers.
 
 ### Example
 
 ```shell {.command}
-$ kosli environment report docker docs-demo-docker
+$ kosli snapshot docker docs-demo-docker
 
 [1] containers were reported to environment quickstart
 ```
 
-More details in [`kosli snapshot docker` reference](/client_reference/kosli_snapshot_docker/)
+More details in [`kosli snapshot docker` reference](/client_reference/kosli_snapshot_docker/)  
+for v0.1.x: [kosli environment report docker](/legacy_ref/v0.1.36/kosli_environment_report_docker/) 
 {{< /tab >}}
 
 {{< tab "ecs" >}}
 ## Record ecs environment
 
-Run `kosli environment report ecs` to report images data from AWS ECS cluster to Kosli.  
+Run `kosli snapshot ecs` to report images data from AWS ECS cluster to Kosli.  
 
 **Were to run:**  The command can be run anywhere.  
 To authenticate to AWS, you can either: 
@@ -165,7 +167,7 @@ Option 1 takes highest precedence, while option 3 is the lowest.
 ### Example
 
 ```shell {.command}
-$ kosli environment report ecs ecs-prod \
+$ kosli snapshot ecs ecs-prod \
 	--cluster prod-cluster
 	--aws-key-id *** \
 	--aws-secret-key *** \
@@ -174,13 +176,14 @@ $ kosli environment report ecs ecs-prod \
 [2] containers were reported to environment ecs-prod
 ```
 
-More details in [`kosli environment report ecs` reference](/client_reference/kosli_environment_report_ecs/)
+More details in [`kosli snapshot ecs` reference](/client_reference/kosli_snapshot_ecs/)  
+for v0.1.x: [kosli environment report ecs](/legacy_ref/v0.1.36/kosli_environment_report_ecs/) 
 {{< /tab >}}
 
 {{< tab "k8s" >}}
 ## Record k8s environment
 
-Run `kosli environment report k8s` to report images data from specific namespace(s) or entire cluster to Kosli. You can also select multiple namespaces to report from (using `--namespace` and comma separated list when running a command) or use `--exclude-namespace` to report from a whole cluster except the namespaces from the comma spearated list given to the flag
+Run `kosli snapshot k8s` to report images data from specific namespace(s) or entire cluster to Kosli. You can also select multiple namespaces to report from (using `--namespace` and comma separated list when running a command) or use `--exclude-namespace` to report from a whole cluster except the namespaces from the comma spearated list given to the flag
 
 **Were to run:**  The command can be run anywhere and requires `kubeconfig` file to be able to connect to the cluster (you can skip providing the location of `kubeconfig` if it resides in default `$HOME/.kube/config` folder).
 
@@ -190,12 +193,12 @@ You can also choose to run it from within the cluster - use our [helm chart](/he
 
 ```
 # report what is running in an entire cluster using kubeconfig at $HOME/.kube/config:
-kosli environment report k8s yourEnvironmentName \
+kosli snapshot k8s yourEnvironmentName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
 # report what is running in a given namespace using kubeconfig at a custom path:
-kosli environment report k8s yourEnvironmentName \
+kosli snapshot k8s yourEnvironmentName \
 	--kubeconfig /path/to/kubeconfig \
 	--namespace your-namespace \
 	--api-token yourAPIToken \
@@ -203,13 +206,14 @@ kosli environment report k8s yourEnvironmentName \
 
 ```
 
-More details in [`kosli environment report k8s` reference](/client_reference/kosli_environment_report_k8s/)
+More details in [`kosli snapshot k8s` reference](/client_reference/kosli_snapshot_k8s/)  
+for v0.1.x: [kosli environment report k8s](/legacy_ref/v0.1.36/kosli_environment_report_k8s/) 
 {{< /tab >}}
 
 {{< tab "lambda" >}}
 ## Record lambda environment
 
-Run `kosli environment report lambda` to report artifact from AWS Lambda to Kosli.  
+Run `kosli snapshot lambda` to report artifact from AWS Lambda to Kosli.  
 
 **Were to run:**  The command can be run anywhere.   
 To authenticate to AWS, you can either: 
@@ -222,7 +226,7 @@ Option 1 takes highest precedence, while option 3 is the lowest.
 ### Example
 
 ```shell {.command}
-$ kosli environment report lambda lambda-prod \
+$ kosli snapshot lambda lambda-prod \
 	--function-name reporter-kosli-prod \
 	--aws-key-id *** \
 	--aws-secret-key *** \
@@ -231,13 +235,14 @@ $ kosli environment report lambda lambda-prod \
 reporter-app-prod lambda function was reported to environment lambda-prod
 ```
 
-More details in [`kosli environment report lambda` reference](/client_reference/kosli_environment_report_lambda/)
+More details in [`kosli snapshot lambda` reference](/client_reference/kosli_snapshot_lambda/)  
+for v0.1.x: [kosli environment report lambda](/legacy_ref/v0.1.36/kosli_environment_report_lambda/) 
 {{< /tab >}}
 
 {{< tab "s3" >}}
 ## Record s3 environment
 
-Run `kosli environment report s3` to report artifact from AWS S3 bucket to Kosli.  
+Run `kosli snapshot s3` to report artifact from AWS S3 bucket to Kosli.  
 
 **Were to run:**  The command can be run anywhere.   
 To authenticate to AWS, you can either: 
@@ -250,7 +255,7 @@ Option 1 takes highest precedence, while option 3 is the lowest.
 ### Example
 
 ```shell {.command}
-$ kosli environment report s3 s3-prod \
+$ kosli snapshot s3 s3-prod \
  	--bucket app-public \
 	--aws-key-id *** \
 	--aws-secret-key *** \
@@ -259,13 +264,14 @@ $ kosli environment report s3 s3-prod \
 bucket app-public was reported to environment s3-prod
 ```
 
-More details in [`kosli environment report s3` reference](/client_reference/kosli_environment_report_s3/)
+More details in [`kosli snapshot s3` reference](/client_reference/kosli_snapshot_s3/)  
+for v0.1.x: [kosli environment report s3](/legacy_ref/v0.1.36/kosli_environment_report_s3/) 
 {{< /tab >}}
 
 {{< tab "server" >}}
 ## Record server environment
 
-Run `kosli environment report server` to report directory or file artifacts from the given list of paths to Kosli.  
+Run `kosli snapshot server` to report directory or file artifacts from the given list of paths to Kosli.  
 
 **Were to run:**  The command has to be run on the actual server (physical or vm), to be able to detect artifacts. 
 
@@ -281,12 +287,13 @@ And it will try to find matching artifacts reported to any pipeline belonging to
 ### Example 
 
 ```shell {.command}
-$ kosli environment report server docs-demo-server --paths build/index.html 
+$ kosli snapshot server docs-demo-server --paths build/index.html 
 
 [1] artifacts were reported to environment docs-demo-server       
 ```
 
-More details in [`kosli environment report server` reference](/client_reference/kosli_environment_report_server/)
+More details in [`kosli snapshot server` reference](/client_reference/kosli_snapshot_server/)  
+for v0.1.x: [kosli environment report server](/legacy_ref/v0.1.36/kosli_environment_report_server/) 
 {{< /tab >}}
 
 {{< /tabs >}}

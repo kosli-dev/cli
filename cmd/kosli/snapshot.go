@@ -21,6 +21,8 @@ func newSnapshotCmd(out io.Writer) *cobra.Command {
 		newSnapshotECSCmd(out),
 		newSnapshotK8SCmd(out),
 		newSnapshotServerCmd(out),
+		newSnapshotLambdaCmd(out),
+		newSnapshotS3Cmd(out),
 	)
 
 	return cmd

@@ -75,7 +75,7 @@ func ExpectDeployment(flowName, fingerprint, envName string, t *testing.T) {
 }
 
 func ReportServerArtifactToEnv(paths []string, envName string, t *testing.T) {
-	o := &environmentReportServerOptions{
+	o := &snapshotServerOptions{
 		paths: paths,
 	}
 	err := o.run([]string{envName})

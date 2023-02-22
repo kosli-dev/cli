@@ -10,23 +10,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentReportS3ShortDesc = `Report an artifact deployed in AWS S3 bucket to Kosli.`
+const snapshotS3ShortDesc = `Report a snapshot of an artifact deployed in AWS S3 bucket to Kosli.`
 
-const environmentReportS3LongDesc = environmentReportS3ShortDesc + awsAuthDesc
+const snapshotS3LongDesc = snapshotS3ShortDesc + awsAuthDesc
 
-const environmentReportS3Example = `
+const snapshotS3Example = `
 # report what is running in an AWS S3 bucket (AWS auth provided in env variables):
 export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
-kosli environment report s3 yourEnvironmentName \
+kosli snapshot s3 yourEnvironmentName \
 	--bucket yourBucketName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
 # report what is running in an AWS S3 bucket (AWS auth provided in flags):
-kosli environment report s3 yourEnvironmentName \
+kosli snapshot s3 yourEnvironmentName \
 	--bucket yourBucketName \
 	--aws-key-id yourAWSAccessKeyID \
 	--aws-secret-key yourAWSSecretAccessKey \
@@ -35,20 +35,20 @@ kosli environment report s3 yourEnvironmentName \
 	--owner yourOrgName	
 `
 
-type environmentReportS3Options struct {
+type snapshotS3Options struct {
 	bucket         string
 	awsStaticCreds *aws.AWSStaticCreds
 }
 
-func newEnvironmentReportS3Cmd(out io.Writer) *cobra.Command {
-	o := new(environmentReportS3Options)
+func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
+	o := new(snapshotS3Options)
 	o.awsStaticCreds = new(aws.AWSStaticCreds)
 	cmd := &cobra.Command{
 		Use:     "s3 ENVIRONMENT-NAME",
 		Aliases: []string{"S3"},
-		Short:   environmentReportS3ShortDesc,
-		Long:    environmentReportS3LongDesc,
-		Example: environmentReportS3Example,
+		Short:   snapshotS3ShortDesc,
+		Long:    snapshotS3LongDesc,
+		Example: snapshotS3Example,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -75,7 +75,7 @@ func newEnvironmentReportS3Cmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *environmentReportS3Options) run(args []string) error {
+func (o *snapshotS3Options) run(args []string) error {
 	envName := args[0]
 	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
 

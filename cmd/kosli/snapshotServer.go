@@ -10,32 +10,32 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentReportServerShortDesc = `Report a snapshot of artifacts running in a server environment to Kosli.`
+const snapshotServerShortDesc = `Report a snapshot of artifacts running in a server environment to Kosli.`
 
-const environmentReportServerLongDesc = environmentReportServerShortDesc + `
+const snapshotServerLongDesc = snapshotServerShortDesc + `
 You can report directory or file artifacts in one or more server paths.`
 
-const environmentReportServerExample = `
+const snapshotServerExample = `
 # report directory artifacts running in a server at a list of paths:
 kosli snapshot server yourEnvironmentName \
 	--paths a/b/c,e/f/g \
 	--api-token yourAPIToken \
 	--owner yourOrgName  `
 
-type environmentReportServerOptions struct {
+type snapshotServerOptions struct {
 	paths []string
 	id    string
 }
 
 func newSnapshotServerCmd(out io.Writer) *cobra.Command {
-	o := new(environmentReportServerOptions)
+	o := new(snapshotServerOptions)
 	cmd := &cobra.Command{
 		Use:     "server ENVIRONMENT-NAME",
-		Short:   environmentReportServerShortDesc,
-		Long:    environmentReportServerLongDesc,
+		Short:   snapshotServerShortDesc,
+		Long:    snapshotServerLongDesc,
 		Aliases: []string{"directories"},
 		Args:    cobra.ExactArgs(1),
-		Example: environmentReportServerExample,
+		Example: snapshotServerExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -59,7 +59,7 @@ func newSnapshotServerCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *environmentReportServerOptions) run(args []string) error {
+func (o *snapshotServerOptions) run(args []string) error {
 	envName := args[0]
 	if o.id == "" {
 		o.id = envName
