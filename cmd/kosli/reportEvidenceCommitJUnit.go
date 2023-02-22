@@ -24,26 +24,26 @@ type junitCommitEvidenceOptions struct {
 	payload        CommitEvidenceJUnitPayload
 }
 
-const junitCommitEvidenceShortDesc = `Report JUnit test evidence for a commit in a Kosli pipeline.`
+const junitCommitEvidenceShortDesc = `Report JUnit test evidence for a commit in a Kosli flow.`
 
 const junitCommitEvidenceLongDesc = junitEvidenceShortDesc
 
 const junitCommitEvidenceExample = `
-# report JUnit test evidence for a commit related to one Kosli pipeline:
-kosli commit report evidence junit \
+# report JUnit test evidence for a commit related to one Kosli flow:
+kosli report evidence commit junit \
 	--commit yourGitCommitSha1 \
 	--name yourEvidenceName \
-	--pipelines yourPipelineName \
+	--flow yourFlowName \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
 	--owner yourOrgName	\
 	--results-dir yourFolderWithJUnitResults
 
-# report JUnit test evidence for a commit related to multiple Kosli pipelines:
-kosli commit report evidence junit \
+# report JUnit test evidence for a commit related to multiple Kosli flows:
+kosli report evidence commit junit \
 	--commit yourGitCommitSha1 \
 	--name yourEvidenceName \
-	--pipelines yourFirstPipelineName,yourSecondPipelineName \
+	--flow yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
 	--owner yourOrgName	\
@@ -72,7 +72,7 @@ func newJUnitCommitEvidenceCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	cmd.Flags().StringVar(&o.payload.CommitSHA, "commit", DefaultValue(ci, "git-commit"), evidenceCommitFlag)
-	cmd.Flags().StringSliceVarP(&o.payload.Pipelines, "pipelines", "p", []string{}, pipelinesFlag)
+	cmd.Flags().StringSliceVarP(&o.payload.Pipelines, "flow", "f", []string{}, pipelinesFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
 	cmd.Flags().StringVarP(&o.testResultsDir, "results-dir", "R", ".", resultsDirFlag)
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)

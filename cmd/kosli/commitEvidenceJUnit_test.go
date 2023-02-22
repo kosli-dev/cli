@@ -34,47 +34,47 @@ func (suite *CommitEvidenceJUnitCommandTestSuite) TestCommitEvidenceJUnitCommand
 	tests := []cmdTestCase{
 		{
 			name: "report JUnit test evidence works",
-			cmd: `commit report evidence junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name junit-result --pipelines ` + suite.flowNames + `
+			cmd: `report evidence commit junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name junit-result --flow ` + suite.flowNames + `
 			          --build-url example.com --results-dir testdata` + suite.defaultKosliArguments,
 			golden: "junit test evidence is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n",
 		},
 		{
 			name: "report JUnit test evidence with non-existing results dir",
-			cmd: `commit report evidence junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name junit-result --pipelines ` + suite.flowNames + `
+			cmd: `report evidence commit junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name junit-result --flow ` + suite.flowNames + `
 			          --build-url example.com --results-dir foo` + suite.defaultKosliArguments,
 			wantError: true,
 			golden:    "Error: lstat foo: no such file or directory\n",
 		},
 		{
 			name: "report JUnit test evidence with a results dir that does not contain any results",
-			cmd: `commit report evidence junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name junit-result --pipelines ` + suite.flowNames + `
+			cmd: `report evidence commit junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name junit-result --flow ` + suite.flowNames + `
 			          --build-url example.com --results-dir testdata/folder1` + suite.defaultKosliArguments,
 			wantError: true,
 			golden:    "Error: no tests found in testdata/folder1 directory\n",
 		},
 		{
 			name: "report JUnit test evidence with missing name flag",
-			cmd: `commit report evidence junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --pipelines ` + suite.flowNames + `
+			cmd: `report evidence commit junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --flow ` + suite.flowNames + `
 			          --build-url example.com --results-dir testdata` + suite.defaultKosliArguments,
 			wantError: true,
 			golden:    "Error: required flag(s) \"name\" not set\n",
 		},
 		{
-			name: "report JUnit test evidence with a missing pipelines flag",
-			cmd: `commit report evidence junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name junit-result
+			name: "report JUnit test evidence with a missing flow flag",
+			cmd: `report evidence commit junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name junit-result
 			          --build-url example.com --results-dir testdata` + suite.defaultKosliArguments,
 			golden: "junit test evidence is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n",
 		},
 		{
 			name: "report JUnit test evidence with a missing build-url",
-			cmd: `commit report evidence junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --pipelines ` + suite.flowNames + `
+			cmd: `report evidence commit junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --flow ` + suite.flowNames + `
 					--name junit-result --results-dir testdata` + suite.defaultKosliArguments,
 			wantError: true,
 			golden:    "Error: required flag(s) \"build-url\" not set\n",
 		},
 		{
 			name: "report JUnit test evidence with a missing commit flag",
-			cmd: `commit report evidence junit --pipelines ` + suite.flowNames + `
+			cmd: `report evidence commit junit --flow ` + suite.flowNames + `
 					--build-url example.com --name junit-result --results-dir testdata` + suite.defaultKosliArguments,
 			wantError: true,
 			golden:    "Error: required flag(s) \"commit\" not set\n",

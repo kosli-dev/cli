@@ -24,29 +24,29 @@ type genericCommitEvidenceOptions struct {
 	payload      CommitEvidenceGenericPayload
 }
 
-const genericCommitEvidenceShortDesc = `Report Generic evidence for a commit in a Kosli pipeline.`
+const genericCommitEvidenceShortDesc = `Report Generic evidence for a commit in a Kosli flow.`
 
 const genericCommitEvidenceLongDesc = genericCommitEvidenceShortDesc
 
 const genericCommitEvidenceExample = `
-# report Generic evidence for a commit related to one Kosli pipeline:
-kosli commit report evidence generic \
+# report Generic evidence for a commit related to one Kosli flow:
+kosli report evidence commit generic \
 	--commit yourGitCommitSha1 \
 	--name yourEvidenceName \
 	--description "some description" \
 	--compliant \
-	--pipelines yourPipelineName \
+	--flow yourFlowName \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
-# report Generic evidence for a commit related to multiple Kosli pipelines with user-data:
-kosli commit report evidence generic \
+# report Generic evidence for a commit related to multiple Kosli flows with user-data:
+kosli report evidence commit generic \
 	--commit yourGitCommitSha1 \
 	--name yourEvidenceName \
 	--description "some description" \
 	--compliant \
-	--pipelines yourFirstPipelineName,yourSecondPipelineName \
+	--flow yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
 	--owner yourOrgName \
@@ -75,7 +75,7 @@ func newGenericCommitEvidenceCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	cmd.Flags().StringVar(&o.payload.CommitSHA, "commit", DefaultValue(ci, "git-commit"), evidenceCommitFlag)
-	cmd.Flags().StringSliceVarP(&o.payload.Pipelines, "pipelines", "p", []string{}, pipelinesFlag)
+	cmd.Flags().StringSliceVarP(&o.payload.Pipelines, "flow", "f", []string{}, pipelinesFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
 	cmd.Flags().BoolVarP(&o.payload.Compliant, "compliant", "C", false, evidenceCompliantFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", evidenceDescriptionFlag)

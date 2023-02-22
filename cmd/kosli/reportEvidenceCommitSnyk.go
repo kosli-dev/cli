@@ -24,26 +24,26 @@ type snykCommitEvidenceOptions struct {
 	payload      CommitEvidenceSnykPayload
 }
 
-const snykCommitEvidenceShortDesc = `Report Snyk evidence for a commit in a Kosli pipeline.`
+const snykCommitEvidenceShortDesc = `Report Snyk evidence for a commit in a Kosli flow.`
 
 const snykCommitEvidenceLongDesc = snykCommitEvidenceShortDesc
 
 const snykCommitEvidenceExample = `
-# report Snyk evidence for a commit related to one Kosli pipeline:
-kosli commit report evidence snyk \
+# report Snyk evidence for a commit related to one Kosli flow:
+kosli report evidence commit snyk \
 	--commit yourGitCommitSha1 \
 	--name yourEvidenceName \
-	--pipelines yourPipelineName \
+	--flow yourFlowName1 \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
 	--owner yourOrgName	\
 	--scan-results yourSnykJSONScanResults
 
-# report Snyk evidence for a commit related to multiple Kosli pipelines:
-kosli commit report evidence snyk \
+# report Snyk evidence for a commit related to multiple Kosli flows:
+kosli report evidence commit snyk \
 	--commit yourGitCommitSha1 \
 	--name yourEvidenceName \
-	--pipelines yourFirstPipelineName,yourSecondPipelineName \
+	--flow yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
 	--owner yourOrgName	\
@@ -72,7 +72,7 @@ func newSnykCommitEvidenceCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	cmd.Flags().StringVar(&o.payload.CommitSHA, "commit", DefaultValue(ci, "git-commit"), evidenceCommitFlag)
-	cmd.Flags().StringSliceVarP(&o.payload.Pipelines, "pipelines", "p", []string{}, pipelinesFlag)
+	cmd.Flags().StringSliceVarP(&o.payload.Pipelines, "flow", "f", []string{}, pipelinesFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
 	cmd.Flags().StringVarP(&o.snykJsonFile, "scan-results", "R", "", snykJsonResultsFileFlag)
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)

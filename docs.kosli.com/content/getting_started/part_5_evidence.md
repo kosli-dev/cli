@@ -126,7 +126,7 @@ For more details see:
 ## JUnit test evidence
 
 If you produce your test results in JUnit format, you can [report JUnit evidence to an artifact](/client_reference/kosli_report_evidence_artifact_junit/) or
-[report JUnit evidence to a commit](/client_reference/kosli_commit_report_evidence_junit/). These commands will analyze the JUnit results and determine if the evidence is compliant or not.
+[report JUnit evidence to a commit](/client_reference/kosli_report_evidence_commit_junit/). These commands will analyze the JUnit results and determine if the evidence is compliant or not.
 Remember to add the JUnit test evidence to your [pipeline template](/kosli_overview/what_is_kosli/#template) and use the same label for `--name` you provided in a `template`.
 
 Use `--results-dir` flag to provide the location of the folder with your XML JUnit test results
@@ -163,7 +163,21 @@ junit test evidence is reported to artifact: 53c97572093cc107c0caa2906d460ccd650
 See [kosli pipeline artifact report evidence junit](/legacy_ref/v0.1.35/kosli_pipeline_artifact_report_evidence_junit/) for more details
 {{< /tab >}}
 
-{{< tab "Commit" >}}
+{{< tab "Commit v2" >}}
+```
+$ kosli report evidence commit junit \
+	--flow project-a \
+	--build-url https://exampleci.com \
+	--name unit-test \
+	--results-dir tests \
+	--commit e67f2f2b121f9325ebf166b7b3c707f73cb48b14
+
+junit test evidence is reported to commit: e67f2f2b121f9325ebf166b7b3c707f73cb48b14
+```
+See [kosli report evidence commit junit](/client_reference/kosli_report_evidence_commit_junit/) for more details
+{{< /tab >}}
+
+{{< tab "Commit v0.1.x" >}}
 ```
 $ kosli commit report evidence junit \
 	--pipelines project-a \
@@ -174,15 +188,16 @@ $ kosli commit report evidence junit \
 
 junit test evidence is reported to commit: e67f2f2b121f9325ebf166b7b3c707f73cb48b14
 ```
-See [kosli commit report evidence junit](/client_reference/kosli_commit_report_evidence_junit/) for more details
+See [kosli commit report evidence junit](/legacy_ref/v0.1.36/kosli_commit_report_evidence_junit/) for more details
 {{< /tab >}}
+
 
 {{< /tabs >}}
 
 ## Snyk scan evidence
 
 To report results of a Snyk security scan, you can [report Snyk evidence to an artifact](/client_reference/kosli_report_evidence_artifact_snyk/) or
-[report Snyk evidence to a commit](/client_reference/kosli_commit_report_evidence_snyk/). These commands will analyze the Snyk scan results and determine if the evidence is compliant or not.
+[report Snyk evidence to a commit](/client_reference/kosli_report_evidence_commit_snyk/). These commands will analyze the Snyk scan results and determine if the evidence is compliant or not.
 Remember to add the snyk scan evidence to your [pipeline template](/kosli_overview/what_is_kosli/#template) and use the same label for `--name` you provided in a `template`.
 
 Use `--scan-results` flag to provide the location of the json file with your snyk scan results
@@ -219,7 +234,21 @@ snyk scan evidence is reported to artifact: 53c97572093cc107c0caa2906d460ccd6508
 See [kosli pipeline artifact report evidence snyk](/legacy_ref/v0.1.35/kosli_pipeline_artifact_report_evidence_snyk/) for more details
 {{< /tab >}}
 
-{{< tab "Commit" >}}
+{{< tab "Commit v2" >}}
+```
+$ kosli report evidence commit snyk \
+	--flow project-a \
+	--build-url https://exampleci.com \
+	--name snyk \
+	--scan-results snyk_scam.json \
+	--commit e67f2f2b121f9325ebf166b7b3c707f73cb48b14
+
+snyk scan evidence is reported to commit: e67f2f2b121f9325ebf166b7b3c707f73cb48b14
+```
+See [kosli report evidence commit snyk](/client_reference/kosli_report_evidence_commit_snyk/) for more details
+{{< /tab >}}
+
+{{< tab "Commit v0.1.x" >}}
 ```
 $ kosli commit report evidence snyk \
 	--pipelines project-a \
@@ -230,7 +259,7 @@ $ kosli commit report evidence snyk \
 
 snyk scan evidence is reported to commit: e67f2f2b121f9325ebf166b7b3c707f73cb48b14
 ```
-See [kosli commit report evidence snyk](/client_reference/kosli_commit_report_evidence_snyk/) for more details
+See [kosli commit report evidence snyk](/legacy_ref/v0.1.35/kosli_commit_report_evidence_snyk/) for more details
 {{< /tab >}}
 
 {{< /tabs >}}
@@ -238,7 +267,7 @@ See [kosli commit report evidence snyk](/client_reference/kosli_commit_report_ev
 ## Generic evidence
 
 If Kosli doesn't support the type of the evidence you'd like to attach, you can [report Generic evidence to an artifact](/client_reference/kosli_report_evidence_artifact_generic/) or
-[report Generic evidence to a commit](/client_reference/kosli_commit_report_evidence_generic/).
+[report Generic evidence to a commit](/client_reference/kosli_report_evidence_commit_generic/).
 Remember to add the evidence to your [pipeline template](/kosli_overview/what_is_kosli/#template) and use the same label for `--name` you provided in a `template`.
 
 Use `--compliant=false` if you want to report a given evidence as non-compliant.
@@ -274,7 +303,21 @@ generic evidence 'code-coverage' is reported to artifact: 53c97572093cc107c0caa2
 See [kosli pipeline artifact report evidence generic](/legacy_ref/v0.1.35/kosli_pipeline_artifact_report_evidence_generic/) for more details
 {{< /tab >}}
 
-{{< tab "Commit" >}}
+{{< tab "Commit v2" >}}
+```
+$ kosli report evidence commit generic \
+	--flow project-a \
+	--build-url https://exampleci.com \
+	--name code-coverage \
+	--compliant=false \
+	--commit e67f2f2b121f9325ebf166b7b3c707f73cb48b14
+
+generic evidence 'code-coverage' is reported to commit: e67f2f2b121f9325ebf166b7b3c707f73cb48b14
+```
+See [kosli report evidence commit generic](/client_reference/kosli_report_evidence_commit_generic/) for more details
+{{< /tab >}}
+
+{{< tab "Commit v0.1.x" >}}
 ```
 $ kosli commit report evidence generic \
 	--pipelines project-a \
@@ -285,7 +328,7 @@ $ kosli commit report evidence generic \
 
 generic evidence 'code-coverage' is reported to commit: e67f2f2b121f9325ebf166b7b3c707f73cb48b14
 ```
-See [kosli commit report evidence generic](/client_reference/kosli_commit_report_evidence_generic/) for more details
+See [kosli commit report evidence generic](/legacy_ref/v0.1.36/kosli_commit_report_evidence_generic/) for more details
 {{< /tab >}}
 
 {{< /tabs >}}
