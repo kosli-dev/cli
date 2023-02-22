@@ -74,20 +74,6 @@ func newCreateFlowCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
-			// if o.pipefile != "" {
-			// 	// This check does not catch if --template or --visibility is provided by the user
-			// 	// as they both have defaults.
-			// 	// When a pipefile is provided, the flags are ignored anyway
-			// 	if o.payload.Description != "" || o.payload.Name != "" {
-			// 		return ErrorBeforePrintingUsage(cmd, "--pipefile cannot be used together with any of"+
-			// 			" --description, --pipeline flags")
-			// 	}
-			// } else {
-			// 	if o.payload.Name == "" {
-			// 		return ErrorBeforePrintingUsage(cmd, "--pipeline is required when you are not using --pipefile")
-			// 	}
-			// }
-
 			err = MuXRequiredFlags(cmd, []string{"flow", "pipefile"}, true)
 			if err != nil {
 				return err

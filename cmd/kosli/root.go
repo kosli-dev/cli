@@ -102,7 +102,7 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 	resultsDirFlag          = "[defaulted] The path to a folder with JUnit test results."
 	snykJsonResultsFileFlag = "The path to Snyk scan results Json file."
 	ecsClusterFlag          = "The name of the ECS cluster."
-	ecsServiceFlag          = "The name of the ECS service."
+	ecsServiceFlag          = "[optional] The name of the ECS service."
 	kubeconfigFlag          = "[defaulted] The kubeconfig path for the target cluster."
 	namespaceFlag           = "[conditional] The comma separated list of namespaces regex patterns to report artifacts info from. Can't be used together with --exclude-namespace."
 	excludeNamespaceFlag    = "[conditional] The comma separated list of namespaces regex patterns NOT to report artifacts info from. Can't be used together with --namespace."

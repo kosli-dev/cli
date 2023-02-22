@@ -10,33 +10,35 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentReportECSShortDesc = `Report running containers data from AWS ECS cluster or service to Kosli.`
-const environmentReportECSLongDesc = environmentReportECSShortDesc + `
+const snapshotECSShortDesc = `Report a snapshot of running containers in an AWS ECS cluster or service to Kosli.`
+const snapshotECSLongDesc = snapshotECSShortDesc + `
 The reported data includes container image digests and creation timestamps.` + awsAuthDesc
 
-const environmentReportECSExample = `
+const snapshotECSExample = `
 # report what is running in an entire AWS ECS cluster:
 export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
-kosli environment report ecs yourEnvironmentName \
+kosli snapshot ecs yourEnvironmentName \
 	--cluster yourECSClusterName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
-# report what is running in a specific AWS ECS service:
+# report what is running in a specific AWS ECS service within a cluster:
 export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
-kosli environment report ecs yourEnvironmentName \
+kosli snapshot ecs yourEnvironmentName \
+	--cluster yourECSClusterName \
 	--service-name yourECSServiceName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
-# report what is running in in a specific AWS ECS service (AWS auth provided in flags):
-kosli environment report ecs yourEnvironmentName \
+# report what is running in in a specific AWS ECS service within a cluster (AWS auth provided in flags):
+kosli snapshot ecs yourEnvironmentName \
+	--cluster yourECSClusterName \
 	--service-name yourECSServiceName \
 	--aws-key-id yourAWSAccessKeyID \
 	--aws-secret-key yourAWSSecretAccessKey \
@@ -45,21 +47,21 @@ kosli environment report ecs yourEnvironmentName \
 	--owner yourOrgName
 `
 
-type environmentReportECSOptions struct {
+type snapshotECSOptions struct {
 	cluster        string
 	serviceName    string
 	id             string
 	awsStaticCreds *aws.AWSStaticCreds
 }
 
-func newEnvironmentReportECSCmd(out io.Writer) *cobra.Command {
-	o := new(environmentReportECSOptions)
+func newSnapshotECSCmd(out io.Writer) *cobra.Command {
+	o := new(snapshotECSOptions)
 	o.awsStaticCreds = new(aws.AWSStaticCreds)
 	cmd := &cobra.Command{
 		Use:     "ecs ENVIRONMENT-NAME",
-		Short:   environmentReportECSShortDesc,
-		Long:    environmentReportECSLongDesc,
-		Example: environmentReportECSExample,
+		Short:   snapshotECSShortDesc,
+		Long:    snapshotECSLongDesc,
+		Example: snapshotECSExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -77,10 +79,16 @@ func newEnvironmentReportECSCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.serviceName, "service-name", "s", "", ecsServiceFlag)
 	addAWSAuthFlags(cmd, o.awsStaticCreds)
 	addDryRunFlag(cmd)
+
+	err := RequireFlags(cmd, []string{"cluster"})
+	if err != nil {
+		logger.Error("failed to configure required flags: %v", err)
+	}
+
 	return cmd
 }
 
-func (o *environmentReportECSOptions) run(args []string) error {
+func (o *snapshotECSOptions) run(args []string) error {
 	envName := args[0]
 	if o.id == "" {
 		if o.serviceName != "" {

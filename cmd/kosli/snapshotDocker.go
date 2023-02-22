@@ -29,10 +29,10 @@ kosli snapshot docker yourEnvironmentName \
 	--api-token yourAPIToken \
 	--owner yourOrgName`
 
-type environmentReportDockerOptions struct{}
+type snapshotDockerOptions struct{}
 
 func newSnapshotDockerCmd(out io.Writer) *cobra.Command {
-	o := new(environmentReportDockerOptions)
+	o := new(snapshotDockerOptions)
 	cmd := &cobra.Command{
 		Use:     "docker ENVIRONMENT-NAME",
 		Short:   snapshotDockerShortDesc,
@@ -55,7 +55,7 @@ func newSnapshotDockerCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *environmentReportDockerOptions) run(args []string) error {
+func (o *snapshotDockerOptions) run(args []string) error {
 	envName := args[0]
 
 	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
