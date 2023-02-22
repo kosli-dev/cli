@@ -145,7 +145,7 @@ $ kosli environment report docker docs-demo-docker
 [1] containers were reported to environment quickstart
 ```
 
-More details in [`kosli environment report docker` reference](/client_reference/kosli_environment_report_docker/)
+More details in [`kosli snapshot docker` reference](/client_reference/kosli_snapshot_docker/)
 {{< /tab >}}
 
 {{< tab "ecs" >}}
