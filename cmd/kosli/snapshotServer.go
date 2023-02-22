@@ -10,14 +10,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const environmentReportServerShortDesc = `Report artifacts running in a server environment to Kosli.`
+const environmentReportServerShortDesc = `Report a snapshot of artifacts running in a server environment to Kosli.`
 
 const environmentReportServerLongDesc = environmentReportServerShortDesc + `
 You can report directory or file artifacts in one or more server paths.`
 
 const environmentReportServerExample = `
 # report directory artifacts running in a server at a list of paths:
-kosli environment report server yourEnvironmentName \
+kosli snapshot server yourEnvironmentName \
 	--paths a/b/c,e/f/g \
 	--api-token yourAPIToken \
 	--owner yourOrgName  `
@@ -27,7 +27,7 @@ type environmentReportServerOptions struct {
 	id    string
 }
 
-func newEnvironmentReportServerCmd(out io.Writer) *cobra.Command {
+func newSnapshotServerCmd(out io.Writer) *cobra.Command {
 	o := new(environmentReportServerOptions)
 	cmd := &cobra.Command{
 		Use:     "server ENVIRONMENT-NAME",
