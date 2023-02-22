@@ -39,6 +39,22 @@ func NewKosliClient(maxAPIRetries int, debug bool, logger *logger.Logger) *Clien
 	}
 }
 
+func NewStandardKosliClient() *Client {
+	return NewKosliClient(3, false, logger.NewStandardLogger())
+}
+
+func (c *Client) SetDebug(debug bool) {
+	c.Debug = debug
+}
+
+func (c *Client) SetLogger(logger *logger.Logger) {
+	c.Logger = logger
+}
+
+func (c *Client) SetMaxAPIRetries(maxAPIRetries int) {
+	c.MaxAPIRetries = maxAPIRetries
+}
+
 type RequestParams struct {
 	Method            string
 	URL               string
