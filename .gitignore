@@ -17,4 +17,5 @@ docs.kosli.com/resources/_gen/*
 docs.kosli.com/content/client_reference/kosli*
 *.tar.gz
 docs.kosli.com/public/
+docs.kosli.com/.netlify
 tmp/

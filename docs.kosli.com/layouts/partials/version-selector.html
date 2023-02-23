@@ -1,5 +1,4 @@
-{{ $dataResource := (resources.Get "metadata.json").Permalink }}
-{{ $json := getJSON $dataResource }}
+{{ $json := getJSON "assets/metadata.json" }}
 {{ $currentVersion := $json.currentversion}}
 
 <div class="docs-version-selector">
