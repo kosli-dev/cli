@@ -45,6 +45,11 @@
 <script src="https://cdn.usefathom.com/script.js" data-site="AUFUAQWT" data-excluded-domains="localhost" defer></script>
 <!-- / Fathom -->
 
+{{ if in .Permalink "/legacy_ref" }}
+<meta name="robots" content="noindex">
+{{ end }}
+
+
 <!-- RSS -->
 {{- with .OutputFormats.Get "rss" -}}
   {{ printf `<link rel="%s" type="%s" href="%s" title="%s" />` .Rel .MediaType.Type .Permalink $.Site.Title | safeHTML }}
