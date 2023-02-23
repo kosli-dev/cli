@@ -41,6 +41,11 @@ func newSnapshotServerCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
+
+			if len(o.paths) == 0 {
+				return fmt.Errorf("required flag \"paths\" not set")
+			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {

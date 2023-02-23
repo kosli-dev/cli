@@ -32,15 +32,21 @@ func (suite *SnapshotServerTestSuite) TestSnapshotServerCmd() {
 	tests := []cmdTestCase{
 		{
 			wantError: false,
-			name:      "snapshot server works",
+			name:      "snapshot server works when all required flags and argument are provided",
 			cmd:       fmt.Sprintf(`snapshot server --paths testdata/file1 %s %s`, suite.envName, suite.defaultKosliArguments),
 			golden:    "[1] artifacts were reported to environment snapshot-server-env\n",
 		},
 		{
-			wantError: false,
+			wantError: true,
 			name:      "snapshot server reports [0] if --paths not given",
 			cmd:       fmt.Sprintf(`snapshot server %s %s`, suite.envName, suite.defaultKosliArguments),
-			golden:    "[0] artifacts were reported to environment snapshot-server-env\n",
+			golden:    "Error: required flag \"paths\" not set\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot server fails if two arguments are provided",
+			cmd:       fmt.Sprintf(`snapshot server %s xxx %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: accepts 1 arg(s), received 2\n",
 		},
 	}
 
