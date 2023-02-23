@@ -9,9 +9,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type genericEvidenceOptions struct {
+type reportEvidenceArtifactGenericOptions struct {
 	fingerprintOptions *fingerprintOptions
-	pipelineName       string
+	flowName           string
 	userDataFile       string
 	payload            GenericEvidencePayload
 }
@@ -27,12 +27,12 @@ type GenericEvidencePayload struct {
 	Compliant   bool   `json:"is_compliant"`
 }
 
-const artifactEvidenceGenericShortDesc = `Report a generic evidence to an artifact in a Kosli flow.`
+const reportEvidenceArtifactGenericShortDesc = `Report a generic evidence to an artifact in a Kosli flow.`
 
-const artifactEvidenceGenericLongDesc = artifactEvidenceGenericShortDesc + `
+const reportEvidenceArtifactGenericLongDesc = reportEvidenceArtifactGenericShortDesc + `
 ` + fingerprintDesc
 
-const artifactEvidenceGenericExample = `
+const reportEvidenceArtifactGenericExample = `
 # report a generic evidence about a pre-built docker image:
 kosli report evidence artifact generic yourDockerImageName \
 	--api-token yourAPIToken \
@@ -61,14 +61,14 @@ kosli report evidence artifact generic \
 	--fingerprint yourFingerprint
 `
 
-func newGenericEvidenceCmd(out io.Writer) *cobra.Command {
-	o := new(genericEvidenceOptions)
+func newReportEvidenceArtifactGenericCmd(out io.Writer) *cobra.Command {
+	o := new(reportEvidenceArtifactGenericOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:     "generic [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Short:   artifactEvidenceGenericShortDesc,
-		Long:    artifactEvidenceGenericLongDesc,
-		Example: artifactEvidenceGenericExample,
+		Short:   reportEvidenceArtifactGenericShortDesc,
+		Long:    reportEvidenceArtifactGenericLongDesc,
+		Example: reportEvidenceArtifactGenericExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -90,7 +90,7 @@ func newGenericEvidenceCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "F", "", fingerprintFlag)
-	cmd.Flags().StringVarP(&o.pipelineName, "flow", "f", "", flowNameFlag)
+	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", evidenceDescriptionFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
 	cmd.Flags().BoolVarP(&o.payload.Compliant, "compliant", "C", true, evidenceCompliantFlag)
@@ -107,7 +107,7 @@ func newGenericEvidenceCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *genericEvidenceOptions) run(args []string) error {
+func (o *reportEvidenceArtifactGenericOptions) run(args []string) error {
 	var err error
 	if o.payload.ArtifactFingerprint == "" {
 		o.payload.ArtifactFingerprint, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
@@ -116,7 +116,7 @@ func (o *genericEvidenceOptions) run(args []string) error {
 		}
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/generic", global.Host, global.Owner, o.pipelineName)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/generic", global.Host, global.Owner, o.flowName)
 
 	o.payload.UserData, err = LoadJsonData(o.userDataFile)
 	if err != nil {

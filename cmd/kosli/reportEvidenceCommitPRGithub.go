@@ -43,7 +43,7 @@ kosli report evidence commit pullrequest github \
 
 // TODO: do we need to support assert for this command? see line 74
 
-func newPullRequestCommitEvidenceGithubCmd(out io.Writer) *cobra.Command {
+func newReportEvidenceCommitPRGithubCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestCommitOptions)
 	o.retriever = new(ghUtils.GithubConfig)
 	cmd := &cobra.Command{

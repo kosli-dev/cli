@@ -11,24 +11,24 @@ import (
 
 type CommitEvidenceSnykPayload struct {
 	CommitSHA    string      `json:"commit_sha"`
-	Pipelines    []string    `json:"pipelines,omitempty"`
+	Flows        []string    `json:"pipelines,omitempty"`
 	EvidenceName string      `json:"name"`
 	BuildUrl     string      `json:"build_url"`
 	SnykResults  interface{} `json:"snyk_results"`
 	UserData     interface{} `json:"user_data"`
 }
 
-type snykCommitEvidenceOptions struct {
+type reportEvidenceCommitSnykOptions struct {
 	snykJsonFile string
 	userDataFile string
 	payload      CommitEvidenceSnykPayload
 }
 
-const snykCommitEvidenceShortDesc = `Report Snyk evidence for a commit in a Kosli flow.`
+const reportEvidenceCommitSnykShortDesc = `Report Snyk evidence for a commit in a Kosli flow.`
 
-const snykCommitEvidenceLongDesc = snykCommitEvidenceShortDesc
+const reportEvidenceCommitSnykLongDesc = reportEvidenceCommitSnykShortDesc
 
-const snykCommitEvidenceExample = `
+const reportEvidenceCommitSnykExample = `
 # report Snyk evidence for a commit related to one Kosli flow:
 kosli report evidence commit snyk \
 	--commit yourGitCommitSha1 \
@@ -50,13 +50,13 @@ kosli report evidence commit snyk \
 	--scan-results yourSnykJSONScanResults
 `
 
-func newSnykCommitEvidenceCmd(out io.Writer) *cobra.Command {
-	o := new(snykCommitEvidenceOptions)
+func newReportEvidenceCommitSnykCmd(out io.Writer) *cobra.Command {
+	o := new(reportEvidenceCommitSnykOptions)
 	cmd := &cobra.Command{
 		Use:     "snyk",
-		Short:   snykCommitEvidenceShortDesc,
-		Long:    snykCommitEvidenceLongDesc,
-		Example: snykCommitEvidenceExample,
+		Short:   reportEvidenceCommitSnykShortDesc,
+		Long:    reportEvidenceCommitSnykLongDesc,
+		Example: reportEvidenceCommitSnykExample,
 		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -72,7 +72,7 @@ func newSnykCommitEvidenceCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	cmd.Flags().StringVar(&o.payload.CommitSHA, "commit", DefaultValue(ci, "git-commit"), evidenceCommitFlag)
-	cmd.Flags().StringSliceVarP(&o.payload.Pipelines, "flow", "f", []string{}, pipelinesFlag)
+	cmd.Flags().StringSliceVarP(&o.payload.Flows, "flow", "f", []string{}, pipelinesFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
 	cmd.Flags().StringVarP(&o.snykJsonFile, "scan-results", "R", "", snykJsonResultsFileFlag)
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
@@ -87,7 +87,7 @@ func newSnykCommitEvidenceCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *snykCommitEvidenceOptions) run(args []string) error {
+func (o *reportEvidenceCommitSnykOptions) run(args []string) error {
 	var err error
 	url := fmt.Sprintf("%s/api/v1/projects/%s/commit/evidence/snyk", global.Host, global.Owner)
 	o.payload.UserData, err = LoadJsonData(o.userDataFile)

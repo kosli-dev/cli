@@ -8,13 +8,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const pullRequestEvidenceGithubShortDesc = `Report a Github pull request evidence for an artifact in a Kosli flow.`
+const reportEvidenceArtifactPRGithubShortDesc = `Report a Github pull request evidence for an artifact in a Kosli flow.`
 
-const pullRequestEvidenceGithubLongDesc = pullRequestEvidenceGithubShortDesc + `
+const reportEvidenceArtifactPRGithubLongDesc = reportEvidenceArtifactPRGithubShortDesc + `
 It checks if a pull request exists for the artifact (based on its git commit) and report the pull-request evidence to the artifact in Kosli. 
 ` + fingerprintDesc
 
-const pullRequestEvidenceGithubExample = `
+const reportEvidenceArtifactPRGithubExample = `
 # report a pull request evidence to kosli for a docker image
 kosli report evidence artifact pullrequest github yourDockerImageName \
 	--artifact-type docker \
@@ -43,16 +43,16 @@ kosli report evidence artifact pullrequest github yourDockerImageName \
 	--assert
 `
 
-func newPullRequestArtifactEvidenceGithubCmd(out io.Writer) *cobra.Command {
+func newReportEvidenceArtifactPRGithubCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestArtifactOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	o.retriever = new(ghUtils.GithubConfig)
 	cmd := &cobra.Command{
 		Use:     "github [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Aliases: []string{"gh"},
-		Short:   pullRequestEvidenceGithubShortDesc,
-		Long:    pullRequestEvidenceGithubLongDesc,
-		Example: pullRequestEvidenceGithubExample,
+		Short:   reportEvidenceArtifactPRGithubShortDesc,
+		Long:    reportEvidenceArtifactPRGithubLongDesc,
+		Example: reportEvidenceArtifactPRGithubExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {

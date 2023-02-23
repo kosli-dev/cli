@@ -7,13 +7,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const pullRequestEvidenceBitbucketShortDesc = `Report a Bitbucket pull request evidence for an artifact in a Kosli flow.`
+const reportEvidenceArtifactPRBitbucketShortDesc = `Report a Bitbucket pull request evidence for an artifact in a Kosli flow.`
 
-const pullRequestEvidenceBitbucketLongDesc = pullRequestEvidenceBitbucketShortDesc + `
+const reportEvidenceArtifactPRBitbucketLongDesc = reportEvidenceArtifactPRBitbucketShortDesc + `
 It checks if a pull request exists for the artifact (based on its git commit) and report the pull-request evidence to the artifact in Kosli. 
 ` + fingerprintDesc
 
-const pullRequestEvidenceBitbucketExample = `
+const reportEvidenceArtifactPRBitbucketExample = `
 # report a pull request evidence to kosli for a docker image
 kosli report evidence artifact pullrequest bitbucket yourDockerImageName \
 	--artifact-type docker \
@@ -44,7 +44,7 @@ kosli report evidence artifact pullrequest bitbucket yourDockerImageName \
 	--assert
 `
 
-func newPullRequestArtifactEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
+func newReportEvidenceArtifactPRBitbucketCmd(out io.Writer) *cobra.Command {
 	config := new(bbUtils.Config)
 	config.Logger = logger
 	config.KosliClient = kosliClient
@@ -56,9 +56,9 @@ func newPullRequestArtifactEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "bitbucket [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Aliases: []string{"bb"},
-		Short:   pullRequestEvidenceBitbucketShortDesc,
-		Long:    pullRequestEvidenceBitbucketLongDesc,
-		Example: pullRequestEvidenceBitbucketExample,
+		Short:   reportEvidenceArtifactPRBitbucketShortDesc,
+		Long:    reportEvidenceArtifactPRBitbucketLongDesc,
+		Example: reportEvidenceArtifactPRBitbucketExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {

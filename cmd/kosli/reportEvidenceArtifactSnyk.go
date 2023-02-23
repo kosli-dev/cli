@@ -18,21 +18,21 @@ type EvidenceSnykPayload struct {
 	UserData            interface{} `json:"user_data"`
 }
 
-type snykEvidenceOptions struct {
+type reportEvidenceArtifactSnykOptions struct {
 	fingerprintOptions *fingerprintOptions
 	fingerprint        string // This is calculated or provided by the user
-	pipelineName       string
+	flowName           string
 	snykJsonFile       string
 	userDataFile       string
 	payload            EvidenceSnykPayload
 }
 
-const snykEvidenceShortDesc = `Report Snyk vulnerability scan evidence for an artifact in a Kosli flow.`
+const reportEvidenceArtifactSnykShortDesc = `Report Snyk vulnerability scan evidence for an artifact in a Kosli flow.`
 
-const snykEvidenceLongDesc = snykEvidenceShortDesc + `
+const reportEvidenceArtifactSnykLongDesc = reportEvidenceArtifactSnykShortDesc + `
 ` + fingerprintDesc
 
-const snykEvidenceExample = `
+const reportEvidenceArtifactSnykExample = `
 # report Snyk vulnerability scan evidence about a file artifact:
 kosli report evidence artifact snyk FILE.tgz \
 	--artifact-type file \
@@ -54,14 +54,14 @@ kosli report evidence artifact snyk \
 	--scan-results yourSnykJSONScanResults
 `
 
-func newSnykEvidenceCmd(out io.Writer) *cobra.Command {
-	o := new(snykEvidenceOptions)
+func newReportEvidenceArtifactSnykCmd(out io.Writer) *cobra.Command {
+	o := new(reportEvidenceArtifactSnykOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:     "snyk [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Short:   snykEvidenceShortDesc,
-		Long:    snykEvidenceLongDesc,
-		Example: snykEvidenceExample,
+		Short:   reportEvidenceArtifactSnykShortDesc,
+		Long:    reportEvidenceArtifactSnykLongDesc,
+		Example: reportEvidenceArtifactSnykExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -82,7 +82,7 @@ func newSnykEvidenceCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	cmd.Flags().StringVarP(&o.fingerprint, "fingerprint", "F", "", fingerprintFlag)
-	cmd.Flags().StringVarP(&o.pipelineName, "flow", "f", "", flowNameFlag)
+	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
 	cmd.Flags().StringVarP(&o.snykJsonFile, "scan-results", "R", "", snykJsonResultsFileFlag)
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
@@ -98,7 +98,7 @@ func newSnykEvidenceCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *snykEvidenceOptions) run(args []string) error {
+func (o *reportEvidenceArtifactSnykOptions) run(args []string) error {
 	var err error
 	if o.fingerprint == "" {
 		o.payload.ArtifactFingerprint, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
@@ -108,7 +108,7 @@ func (o *snykEvidenceOptions) run(args []string) error {
 	} else {
 		o.payload.ArtifactFingerprint = o.fingerprint
 	}
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/snyk", global.Host, global.Owner, o.pipelineName)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/snyk", global.Host, global.Owner, o.flowName)
 	o.payload.UserData, err = LoadJsonData(o.userDataFile)
 	if err != nil {
 		return err

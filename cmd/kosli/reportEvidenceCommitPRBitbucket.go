@@ -41,7 +41,7 @@ kosli report evidence commit pullrequest bitbucket \
 	--assert
 `
 
-func newPullRequestCommitEvidenceBitbucketCmd(out io.Writer) *cobra.Command {
+func newReportEvidenceCommitPRBitbucketCmd(out io.Writer) *cobra.Command {
 	config := new(bbUtils.Config)
 	config.Logger = logger
 	config.KosliClient = kosliClient

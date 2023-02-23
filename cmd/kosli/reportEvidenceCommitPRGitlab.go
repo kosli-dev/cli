@@ -7,12 +7,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const pullRequestCommitEvidenceGitlabShortDesc = `Report a Gitlab merge request evidence for a commit in a Kosli pipeline.`
+const reportEvidenceCommitPRGitlabShortDesc = `Report a Gitlab merge request evidence for a commit in a Kosli pipeline.`
 
-const pullRequestCommitEvidenceGitlabLongDesc = pullRequestCommitEvidenceGitlabShortDesc + `
+const reportEvidenceCommitPRGitlabLongDesc = reportEvidenceCommitPRGitlabShortDesc + `
 It checks if a merge request exists for the git commit and reports the merge-request evidence to the commit in Kosli.`
 
-const pullRequestCommitEvidenceGitlabExample = `
+const reportEvidenceCommitPRGitlabExample = `
 # report a merge request evidence to Kosli
 kosli report evidence commit pullrequest gitlab \
 	--commit yourArtifactGitCommit \
@@ -39,15 +39,15 @@ kosli report evidence commit pullrequest gitlab \
 	--assert
 `
 
-func newPullRequestCommitEvidenceGitlabCmd(out io.Writer) *cobra.Command {
+func newReportEvidenceCommitPRGitlabCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestCommitOptions)
 	o.retriever = new(gitlabUtils.GitlabConfig)
 	cmd := &cobra.Command{
 		Use:     "gitlab",
 		Aliases: []string{"gl"},
-		Short:   pullRequestCommitEvidenceGitlabShortDesc,
-		Long:    pullRequestCommitEvidenceGitlabLongDesc,
-		Example: pullRequestCommitEvidenceGitlabExample,
+		Short:   reportEvidenceCommitPRGitlabShortDesc,
+		Long:    reportEvidenceCommitPRGitlabLongDesc,
+		Example: reportEvidenceCommitPRGitlabExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {

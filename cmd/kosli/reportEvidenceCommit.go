@@ -18,9 +18,9 @@ func newReportEvidenceCommitCmd(out io.Writer) *cobra.Command {
 	// Add subcommands
 	cmd.AddCommand(
 		newReportEvidenceCommitPRCmd(out),
-		newGenericCommitEvidenceCmd(out),
-		newJUnitCommitEvidenceCmd(out),
-		newSnykCommitEvidenceCmd(out),
+		newReportEvidenceCommitGenericCmd(out),
+		newReportEvidenceCommitJunitCmd(out),
+		newReportEvidenceCommitSnykCmd(out),
 	)
 
 	return cmd

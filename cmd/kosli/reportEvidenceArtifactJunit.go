@@ -31,21 +31,21 @@ type JUnitResults struct {
 	Timestamp float64 `json:"timestamp,omitempty"`
 }
 
-type junitEvidenceOptions struct {
+type reportEvidenceArtifactJunitOptions struct {
 	fingerprintOptions *fingerprintOptions
 	fingerprint        string // This is calculated or provided by the user
-	pipelineName       string
+	flowName           string
 	testResultsDir     string
 	userDataFile       string
 	payload            EvidenceJUnitPayload
 }
 
-const junitEvidenceShortDesc = `Report JUnit test evidence for an artifact in a Kosli flow.`
+const reportEvidenceArtifactJunitShortDesc = `Report JUnit test evidence for an artifact in a Kosli flow.`
 
-const junitEvidenceLongDesc = junitEvidenceShortDesc + `
+const reportEvidenceArtifactJunitLongDesc = reportEvidenceArtifactJunitShortDesc + `
 ` + fingerprintDesc
 
-const junitEvidenceExample = `
+const reportEvidenceArtifactJunitExample = `
 # report JUnit test evidence about a file artifact:
 kosli report evidence artifact junit FILE.tgz \
 	--artifact-type file \
@@ -67,14 +67,14 @@ kosli report evidence artifact junit \
 	--results-dir yourFolderWithJUnitResults
 `
 
-func newJUnitEvidenceCmd(out io.Writer) *cobra.Command {
-	o := new(junitEvidenceOptions)
+func newReportEvidenceArtifactJunitCmd(out io.Writer) *cobra.Command {
+	o := new(reportEvidenceArtifactJunitOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:     "junit [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Short:   junitEvidenceShortDesc,
-		Long:    junitEvidenceLongDesc,
-		Example: junitEvidenceExample,
+		Short:   reportEvidenceArtifactJunitShortDesc,
+		Long:    reportEvidenceArtifactJunitLongDesc,
+		Example: reportEvidenceArtifactJunitExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -94,7 +94,7 @@ func newJUnitEvidenceCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	cmd.Flags().StringVarP(&o.fingerprint, "fingerprint", "F", "", fingerprintFlag)
-	cmd.Flags().StringVarP(&o.pipelineName, "flow", "f", "", flowNameFlag)
+	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
 	cmd.Flags().StringVarP(&o.testResultsDir, "results-dir", "R", ".", resultsDirFlag)
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
@@ -110,7 +110,7 @@ func newJUnitEvidenceCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *junitEvidenceOptions) run(args []string) error {
+func (o *reportEvidenceArtifactJunitOptions) run(args []string) error {
 	var err error
 	if o.fingerprint == "" {
 		o.payload.ArtifactFingerprint, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
@@ -120,7 +120,7 @@ func (o *junitEvidenceOptions) run(args []string) error {
 	} else {
 		o.payload.ArtifactFingerprint = o.fingerprint
 	}
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/junit", global.Host, global.Owner, o.pipelineName)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/junit", global.Host, global.Owner, o.flowName)
 	o.payload.UserData, err = LoadJsonData(o.userDataFile)
 	if err != nil {
 		return err

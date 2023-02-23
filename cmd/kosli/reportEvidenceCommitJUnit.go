@@ -11,24 +11,24 @@ import (
 
 type CommitEvidenceJUnitPayload struct {
 	CommitSHA    string          `json:"commit_sha"`
-	Pipelines    []string        `json:"pipelines,omitempty"`
+	Flows        []string        `json:"pipelines,omitempty"`
 	EvidenceName string          `json:"name"`
 	BuildUrl     string          `json:"build_url"`
 	JUnitResults []*JUnitResults `json:"junit_results"`
 	UserData     interface{}     `json:"user_data"`
 }
 
-type junitCommitEvidenceOptions struct {
+type reportEvidenceCommitJunitOptions struct {
 	testResultsDir string
 	userDataFile   string
 	payload        CommitEvidenceJUnitPayload
 }
 
-const junitCommitEvidenceShortDesc = `Report JUnit test evidence for a commit in a Kosli flow.`
+const reportEvidenceCommitJunitShortDesc = `Report JUnit test evidence for a commit in a Kosli flow.`
 
-const junitCommitEvidenceLongDesc = junitEvidenceShortDesc
+const reportEvidenceCommitJunitLongDesc = reportEvidenceCommitJunitShortDesc
 
-const junitCommitEvidenceExample = `
+const reportEvidenceCommitJunitExample = `
 # report JUnit test evidence for a commit related to one Kosli flow:
 kosli report evidence commit junit \
 	--commit yourGitCommitSha1 \
@@ -50,13 +50,13 @@ kosli report evidence commit junit \
 	--results-dir yourFolderWithJUnitResults
 `
 
-func newJUnitCommitEvidenceCmd(out io.Writer) *cobra.Command {
-	o := new(junitCommitEvidenceOptions)
+func newReportEvidenceCommitJunitCmd(out io.Writer) *cobra.Command {
+	o := new(reportEvidenceCommitJunitOptions)
 	cmd := &cobra.Command{
 		Use:     "junit",
-		Short:   junitCommitEvidenceShortDesc,
-		Long:    junitCommitEvidenceLongDesc,
-		Example: junitCommitEvidenceExample,
+		Short:   reportEvidenceCommitJunitShortDesc,
+		Long:    reportEvidenceCommitJunitLongDesc,
+		Example: reportEvidenceCommitJunitExample,
 		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -72,7 +72,7 @@ func newJUnitCommitEvidenceCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	cmd.Flags().StringVar(&o.payload.CommitSHA, "commit", DefaultValue(ci, "git-commit"), evidenceCommitFlag)
-	cmd.Flags().StringSliceVarP(&o.payload.Pipelines, "flow", "f", []string{}, pipelinesFlag)
+	cmd.Flags().StringSliceVarP(&o.payload.Flows, "flow", "f", []string{}, pipelinesFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
 	cmd.Flags().StringVarP(&o.testResultsDir, "results-dir", "R", ".", resultsDirFlag)
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
@@ -87,7 +87,7 @@ func newJUnitCommitEvidenceCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *junitCommitEvidenceOptions) run(args []string) error {
+func (o *reportEvidenceCommitJunitOptions) run(args []string) error {
 	var err error
 	url := fmt.Sprintf("%s/api/v1/projects/%s/commit/evidence/junit", global.Host, global.Owner)
 	o.payload.UserData, err = LoadJsonData(o.userDataFile)

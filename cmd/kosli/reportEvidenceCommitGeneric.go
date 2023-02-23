@@ -11,7 +11,7 @@ import (
 
 type CommitEvidenceGenericPayload struct {
 	CommitSHA    string      `json:"commit_sha"`
-	Pipelines    []string    `json:"pipelines,omitempty"`
+	Flows        []string    `json:"pipelines,omitempty"`
 	Description  string      `json:"description,omitempty"`
 	Compliant    bool        `json:"is_compliant"`
 	EvidenceName string      `json:"name"`
@@ -19,16 +19,16 @@ type CommitEvidenceGenericPayload struct {
 	UserData     interface{} `json:"user_data,omitempty"`
 }
 
-type genericCommitEvidenceOptions struct {
+type reportEvidenceCommitGenericOptions struct {
 	userDataFile string
 	payload      CommitEvidenceGenericPayload
 }
 
-const genericCommitEvidenceShortDesc = `Report Generic evidence for a commit in a Kosli flow.`
+const reportEvidenceCommitGenericShortDesc = `Report Generic evidence for a commit in a Kosli flow.`
 
-const genericCommitEvidenceLongDesc = genericCommitEvidenceShortDesc
+const reportEvidenceCommitGenericLongDesc = reportEvidenceCommitGenericShortDesc
 
-const genericCommitEvidenceExample = `
+const reportEvidenceCommitGenericExample = `
 # report Generic evidence for a commit related to one Kosli flow:
 kosli report evidence commit generic \
 	--commit yourGitCommitSha1 \
@@ -53,13 +53,13 @@ kosli report evidence commit generic \
 	--user-data /path/to/json/file.json
 `
 
-func newGenericCommitEvidenceCmd(out io.Writer) *cobra.Command {
-	o := new(genericCommitEvidenceOptions)
+func newReportEvidenceCommitGenericCmd(out io.Writer) *cobra.Command {
+	o := new(reportEvidenceCommitGenericOptions)
 	cmd := &cobra.Command{
 		Use:     "generic",
-		Short:   genericCommitEvidenceShortDesc,
-		Long:    genericCommitEvidenceLongDesc,
-		Example: genericCommitEvidenceExample,
+		Short:   reportEvidenceCommitGenericShortDesc,
+		Long:    reportEvidenceCommitGenericLongDesc,
+		Example: reportEvidenceCommitGenericExample,
 		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
@@ -75,7 +75,7 @@ func newGenericCommitEvidenceCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	cmd.Flags().StringVar(&o.payload.CommitSHA, "commit", DefaultValue(ci, "git-commit"), evidenceCommitFlag)
-	cmd.Flags().StringSliceVarP(&o.payload.Pipelines, "flow", "f", []string{}, pipelinesFlag)
+	cmd.Flags().StringSliceVarP(&o.payload.Flows, "flow", "f", []string{}, pipelinesFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
 	cmd.Flags().BoolVarP(&o.payload.Compliant, "compliant", "C", false, evidenceCompliantFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", evidenceDescriptionFlag)
@@ -91,7 +91,7 @@ func newGenericCommitEvidenceCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *genericCommitEvidenceOptions) run(args []string) error {
+func (o *reportEvidenceCommitGenericOptions) run(args []string) error {
 	var err error
 	url := fmt.Sprintf("%s/api/v1/projects/%s/commit/evidence/generic", global.Host, global.Owner)
 	o.payload.UserData, err = LoadJsonData(o.userDataFile)

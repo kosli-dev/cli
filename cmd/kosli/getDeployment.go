@@ -20,7 +20,7 @@ Specify SNAPPISH by:
 	flowName#<N>  deployment number N
 	flowName      the latest deployment`
 
-const deploymentGetExample = `
+const getDeploymentExample = `
 # get previous deployment in a flow
 kosli get deployment flowName~1 \
 	--api-token yourAPIToken \
@@ -46,7 +46,7 @@ func newGetDeploymentCmd(out io.Writer) *cobra.Command {
 		Use:     "deployment SNAPPISH",
 		Short:   getDeploymentShortDesc,
 		Long:    getDeploymentLongDesc,
-		Example: deploymentGetExample,
+		Example: getDeploymentExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
