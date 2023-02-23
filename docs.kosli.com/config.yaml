@@ -19,3 +19,8 @@ Params:
   BookSection: '/'
   BookToC: true
   default_social_thumb: /kosli-docs-logo-white.svg
+
+caches:
+  getjson:
+    dir: :cacheDir/:project
+    maxAge: 30s

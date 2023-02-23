@@ -1,11 +1,11 @@
 {{ $dataResource := (resources.Get "metadata.json").Permalink }}
 {{ $json := getJSON $dataResource }}
-{{ $latestVersion := $json.latestversion}}
+{{ $currentVersion := $json.currentversion}}
 
 <div class="docs-version-selector">
     <select name="docsVersion" id="docsVersion" aria-label="Choose docs version" onchange="chooseDocsVersion(this)">
         <option value="choose">-- choose version --</option>
-        <option value="latest">{{ $latestVersion }} (latest)</option>
+        <option value="latest">{{ $currentVersion }} (latest)</option>
         {{- $legacyRef := where .Site.Pages ".Section" "==" "legacy_ref" -}}
         {{- $legacyPage := .GetPage "/legacy_ref/"}}
         {{ range $legacyRef }}
