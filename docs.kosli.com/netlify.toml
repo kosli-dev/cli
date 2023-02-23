@@ -6,6 +6,10 @@
   HUGO_VERSION = "0.110.0"
   HUGO_ENABLEGITINFO = "true"
 
+[dev]
+  command = "hugo -b http://127.0.0.1:8888/ -w --buildDrafts -F "
+  framework = "#static"
+  publish = "./public/"
 
 [context.deploy-preview]
   command = "HUGO_BASEURL=$DEPLOY_PRIME_URL hugo --printI18nWarnings --enableGitInfo"
