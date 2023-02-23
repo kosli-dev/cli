@@ -56,6 +56,10 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
+			if len(o.bucket) == 0 {
+				return fmt.Errorf("required flag \"bucket\" not set")
+			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
