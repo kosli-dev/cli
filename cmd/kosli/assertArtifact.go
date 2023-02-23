@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -106,8 +105,7 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 	if artifactData["state"].(string) == "COMPLIANT" {
 		logger.Info("COMPLIANT")
 	} else {
-		fmt.Fprintf(out, "%s: %s\n", artifactData["state"].(string), artifactData["state_info"].(string))
-		os.Exit(1)
+		return fmt.Errorf("%s: %s", artifactData["state"].(string), artifactData["state_info"].(string))
 	}
 
 	return nil

@@ -45,6 +45,12 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 	tests := []cmdTestCase{
 		{
 			wantError: true,
+			name:      "missing --owner fails",
+			cmd:       fmt.Sprintf(`assert artifact --fingerprint 8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c  --flow %s --api-token secret`, suite.flowName),
+			golden:    "Error: --owner is not set\nUsage: kosli assert artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+		},
+		{
+			wantError: true,
 			name:      "asserting a non existing artifact fails",
 			cmd:       fmt.Sprintf(`assert artifact --fingerprint 8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c  --flow %s %s`, suite.flowName, suite.defaultKosliArguments),
 			golden:    "Error: Artifact with fingerprint '8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c' does not exist in pipeline 'assert-artifact' belonging to 'docs-cmd-test-user'. \n",

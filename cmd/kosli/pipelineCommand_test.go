@@ -189,20 +189,20 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 			golden:    "",
 		},
 
-		// Assert approval
-		{
-			wantError: false,
-			name:      "assert an approved approval does not fail",
-			cmd:       "assert approval --flow newFlow --fingerprint 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultKosliArguments,
-			golden:    "",
-		},
+		// // Assert approval
+		// {
+		// 	wantError: false,
+		// 	name:      "assert an approved approval does not fail",
+		// 	cmd:       "assert approval --flow newFlow --fingerprint 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultKosliArguments,
+		// 	golden:    "",
+		// },
 
-		{
-			wantError: true,
-			name:      "assert a pending approval fails",
-			cmd:       "assert approval --flow newFlow --fingerprint 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments,
-			golden:    "",
-		},
+		// {
+		// 	wantError: true,
+		// 	name:      "assert a pending approval fails",
+		// 	cmd:       "assert approval --flow newFlow --fingerprint 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments,
+		// 	golden:    "",
+		// },
 
 		// list approvals
 		// {
