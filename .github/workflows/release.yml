@@ -74,7 +74,7 @@ jobs:
           FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
 
   docs-gen:
-    needs: [goreleaser]
+    needs: [goreleaser, pre-build]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
