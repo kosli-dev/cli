@@ -80,7 +80,7 @@ func run(out io.Writer, args []string) error {
 	}
 
 	if environmentData["compliant"].(bool) {
-		fmt.Fprintln(out, "COMPLIANT")
+		logger.Info("COMPLIANT")
 	} else {
 		return fmt.Errorf("INCOMPLIANT")
 	}

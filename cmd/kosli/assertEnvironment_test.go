@@ -21,6 +21,11 @@ type AssertEnvCommandTestSuite struct {
 	fingerprint           string
 }
 
+type assertEnvironmentTestConfig struct {
+	reportToEnv      bool
+	expectDeployment bool
+}
+
 func (suite *AssertEnvCommandTestSuite) SetupTest() {
 	suite.envName = "env-to-assert"
 	suite.flowName = "some-flow"
@@ -48,6 +53,12 @@ func (suite *AssertEnvCommandTestSuite) TestAssertEnvCmd() {
 	tests := []cmdTestCase{
 		{
 			wantError: true,
+			name:      "missing --owner fails",
+			cmd:       fmt.Sprintf(`assert env %s --api-token secret`, suite.envName),
+			golden:    "Error: --owner is not set\nUsage: kosli assert environment [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+		},
+		{
+			wantError: true,
 			name:      "asserting an empty env results in non-zero exit",
 			cmd:       fmt.Sprintf(`assert env %s %s`, suite.envName, suite.defaultKosliArguments),
 			golden:    "Error: Org: 'docs-cmd-test-user'. Snapshot 'env-to-assert#-1' resolves to 'env-to-assert#0'. len(snapshots) == 0. Indexes are 1-based\n",
@@ -59,15 +70,31 @@ func (suite *AssertEnvCommandTestSuite) TestAssertEnvCmd() {
 			golden:    "Error: Environment named 'non-existing' does not exist for Organization 'docs-cmd-test-user'\n",
 		},
 		{
-			name:   "asserting a non-empty env results in OK and zero exit",
-			cmd:    fmt.Sprintf(`assert env %s %s`, suite.envName, suite.defaultKosliArguments),
+			wantError: true,
+			name:      "asserting a non-compliant env results in INCOMPLIANT and non-zero exit",
+			cmd:       fmt.Sprintf(`assert env %s %s`, suite.envName, suite.defaultKosliArguments),
+			additionalConfig: assertEnvironmentTestConfig{
+				reportToEnv:      true,
+				expectDeployment: false,
+			},
+			golden: "Error: INCOMPLIANT\n",
+		},
+		{
+			name: "asserting a compliant env results in COMPLIANT and zero exit",
+			cmd:  fmt.Sprintf(`assert env %s %s`, suite.envName, suite.defaultKosliArguments),
+			additionalConfig: assertEnvironmentTestConfig{
+				reportToEnv:      true,
+				expectDeployment: true,
+			},
 			golden: "COMPLIANT\n",
 		},
 	}
 
 	for _, t := range tests {
-		if !t.wantError {
-			ExpectDeployment(suite.flowName, suite.fingerprint, suite.envName, suite.T())
+		if t.additionalConfig != nil && t.additionalConfig.(assertEnvironmentTestConfig).reportToEnv {
+			if t.additionalConfig.(assertEnvironmentTestConfig).expectDeployment {
+				ExpectDeployment(suite.flowName, suite.fingerprint, suite.envName, suite.T())
+			}
 			ReportServerArtifactToEnv([]string{suite.artifactPath}, suite.envName, suite.T())
 			runTestCmd(suite.T(), []cmdTestCase{t})
 		}
