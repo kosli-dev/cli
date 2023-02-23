@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
 
 class Scroller {
     static init() {
-      if(document.querySelector('.book-toc-content')) {
+      if(document.querySelector('.book-toc-content').hasChildNodes()) {
         this.tocLinks = document.querySelectorAll('.book-toc-content a');
         this.tocLinks[0].classList.add('active');
         this.headers = Array.from(this.tocLinks).map(link => {
