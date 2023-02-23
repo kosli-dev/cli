@@ -89,13 +89,19 @@ jobs:
         run: |
           make docs
 
-      - uses: EndBug/add-and-commit@v7
-        with:
-          add: 'docs.kosli.com/.'
-          branch: main
-          default_author: github_actor
-          message: 'Update docs'
-          pull_strategy: 'NO-PULL'
+      - name: Generate json
+        run: |
+          echo '{"currentversion": "${{ needs.pre-build.outputs.tag }}"}' > docs.kosli.com/assets/metadata.json
+
+      - name: Deploy
+        uses: s0/git-publish-subdir-action@develop
+        env:
+          REPO: self
+          BRANCH: docs-main
+          FOLDER: docs.kosli.com
+          TARGET_DIR: docs.kosli.com
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MESSAGE: "Release: {msg}"
 
   upload-reporter-package-prod:
     needs: [pre-build, goreleaser]
