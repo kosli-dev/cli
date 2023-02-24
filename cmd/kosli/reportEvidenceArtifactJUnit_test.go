@@ -40,6 +40,13 @@ func (suite *ArtifactEvidenceJUnitCommandTestSuite) TestArtifactEvidenceJUnitCom
 			golden: "junit test evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
 		{
+			name: "report JUnit test evidence works when --evidence-url and --evidence-fingerprint are provided",
+			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result --flow ` + suite.flowName + `
+			          --build-url example.com --results-dir testdata 
+					  --evidence-url https://example.com --evidence-fingerprint ` + suite.artifactFingerprint + suite.defaultKosliArguments,
+			golden: "junit test evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
+		},
+		{
 			name: "report JUnit test evidence with maven-surefire XML that lacks a timestamp on the <testsuite>",
 			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint +
 				` --name junit-result --flow ` + suite.flowName +

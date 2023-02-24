@@ -41,6 +41,13 @@ func (suite *ArtifactEvidenceSnykCommandTestSuite) TestArtifactEvidenceSnykCmd()
 			golden: "snyk scan evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
 		{
+			name: "report Snyk test evidence works when --evidence-url and --evidence-fingerprint are provided",
+			cmd: `report evidence artifact snyk --fingerprint ` + suite.artifactFingerprint + ` --name snyk-result --flow ` + suite.flowName + `
+			          --build-url example.com --scan-results testdata/snyk_scan_example.json 
+					  --evidence-url https://example.com --evidence-fingerprint ` + suite.artifactFingerprint + suite.defaultKosliArguments,
+			golden: "snyk scan evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
+		},
+		{
 			name: "report Snyk test evidence works (using --artifact-type)",
 			cmd: `report evidence artifact snyk testdata/file1 --artifact-type file --name snyk-result --flow ` + suite.flowName + `
 			          --build-url example.com --scan-results testdata/snyk_scan_example.json` + suite.defaultKosliArguments,

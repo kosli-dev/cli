@@ -10,13 +10,10 @@ import (
 )
 
 type CommitEvidenceGenericPayload struct {
-	CommitSHA    string      `json:"commit_sha"`
-	Flows        []string    `json:"pipelines,omitempty"`
-	Description  string      `json:"description,omitempty"`
-	Compliant    bool        `json:"is_compliant"`
-	EvidenceName string      `json:"name"`
-	BuildUrl     string      `json:"build_url"`
-	UserData     interface{} `json:"user_data,omitempty"`
+	TypedEvidencePayload
+	Flows       []string `json:"pipelines,omitempty"`
+	Description string   `json:"description,omitempty"`
+	Compliant   bool     `json:"is_compliant"`
 }
 
 type reportEvidenceCommitGenericOptions struct {
@@ -81,6 +78,8 @@ func newReportEvidenceCommitGenericCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", evidenceDescriptionFlag)
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
+	cmd.Flags().StringVar(&o.payload.EvidenceFingerprint, "evidence-fingerprint", "", evidenceFingerprintFlag)
+	cmd.Flags().StringVar(&o.payload.EvidenceURL, "evidence-url", "", evidenceFingerprintFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"commit", "build-url", "name"})

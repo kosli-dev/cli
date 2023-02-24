@@ -13,12 +13,8 @@ import (
 )
 
 type EvidenceJUnitPayload struct {
-	// TODO: Put version in payload
-	ArtifactFingerprint string          `json:"artifact_fingerprint"`
-	EvidenceName        string          `json:"name"`
-	BuildUrl            string          `json:"build_url"`
-	JUnitResults        []*JUnitResults `json:"junit_results"`
-	UserData            interface{}     `json:"user_data"`
+	TypedEvidencePayload
+	JUnitResults []*JUnitResults `json:"junit_results"`
 }
 
 type JUnitResults struct {
@@ -99,6 +95,8 @@ func newReportEvidenceArtifactJunitCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.testResultsDir, "results-dir", "R", ".", resultsDirFlag)
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
+	cmd.Flags().StringVar(&o.payload.EvidenceFingerprint, "evidence-fingerprint", "", evidenceFingerprintFlag)
+	cmd.Flags().StringVar(&o.payload.EvidenceURL, "evidence-url", "", evidenceFingerprintFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
