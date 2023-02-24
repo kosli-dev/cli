@@ -8,13 +8,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const pullRequestCommitEvidenceGithubShortDesc = `Report a Github pull request evidence for a git commit in a Kosli flow.`
+const reportEvidenceCommitPRGithubShortDesc = `Report a Github pull request evidence for a git commit in a Kosli flow.`
 
-const pullRequestCommitEvidenceGithubLongDesc = pullRequestCommitEvidenceGithubShortDesc + `
+const reportEvidenceCommitPRGithubLongDesc = reportEvidenceCommitPRGithubShortDesc + `
 It checks if a pull request exists for a commit and report the pull-request evidence to the commit in Kosli. 
 `
 
-const pullRequestCommitEvidenceGithubExample = `
+const reportEvidenceCommitPRGithubExample = `
 # report a pull request commit evidence to Kosli
 kosli report evidence commit pullrequest github \
 	--commit yourGitCommitSha1 \
@@ -49,9 +49,9 @@ func newReportEvidenceCommitPRGithubCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "github",
 		Aliases: []string{"gh"},
-		Short:   pullRequestCommitEvidenceGithubShortDesc,
-		Long:    pullRequestCommitEvidenceGithubLongDesc,
-		Example: pullRequestCommitEvidenceGithubExample,
+		Short:   reportEvidenceCommitPRGithubShortDesc,
+		Long:    reportEvidenceCommitPRGithubLongDesc,
+		Example: reportEvidenceCommitPRGithubExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {

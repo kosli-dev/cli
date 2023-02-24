@@ -7,12 +7,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const pullRequestCommitEvidenceBitbucketShortDesc = `Report a Bitbucket pull request evidence for a commit in a Kosli flow.`
+const reportEvidenceCommitPRBitbucketShortDesc = `Report a Bitbucket pull request evidence for a commit in a Kosli flow.`
 
-const pullRequestCommitEvidenceBitbucketLongDesc = pullRequestCommitEvidenceBitbucketShortDesc + `
+const reportEvidenceCommitPRBitbucketLongDesc = reportEvidenceCommitPRBitbucketShortDesc + `
 It checks if a pull request exists for the git commit and reports the pull-request evidence to the commit in Kosli.`
 
-const pullRequestCommitEvidenceBitbucketExample = `
+const reportEvidenceCommitPRBitbucketExample = `
 # report a pull request evidence to Kosli
 kosli report evidence commit pullrequest bitbucket \
 	--commit yourArtifactGitCommit \
@@ -52,9 +52,9 @@ func newReportEvidenceCommitPRBitbucketCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "bitbucket",
 		Aliases: []string{"bb"},
-		Short:   pullRequestCommitEvidenceBitbucketShortDesc,
-		Long:    pullRequestCommitEvidenceBitbucketLongDesc,
-		Example: pullRequestCommitEvidenceBitbucketExample,
+		Short:   reportEvidenceCommitPRBitbucketShortDesc,
+		Long:    reportEvidenceCommitPRBitbucketLongDesc,
+		Example: reportEvidenceCommitPRBitbucketExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
