@@ -38,7 +38,7 @@ func (suite *CommitEvidenceSnykCommandTestSuite) TestCommitEvidenceSnykCmd() {
 		},
 		{
 			name: "report Snyk test evidence works  when --evidence-url and --evidence-fingerprint are provided",
-			cmd: `report evidence commit snyk --commit 239d7cee00ca341f124fa710fc694b67cdf8011b --name snyk-result --flow ` + suite.flowName + `
+			cmd: `report evidence commit snyk --commit 239d7cee00ca341f124fa710fc694b67cdf8011b --name snyk-result --flows ` + suite.flowName + `
 			          --build-url example.com --scan-results testdata/snyk_scan_example.json 
 					  --evidence-url https://example.com --evidence-fingerprint 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0` + suite.defaultKosliArguments,
 			golden: "snyk scan evidence is reported to commit: 239d7cee00ca341f124fa710fc694b67cdf8011b\n",
