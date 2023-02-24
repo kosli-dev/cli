@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kosli-dev/cli/internal/utils"
+	"github.com/kosli-dev/cli/internal/docker"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -15,16 +15,19 @@ import (
 // returns the current testing context
 type SnapshotDockerTestSuite struct {
 	suite.Suite
-	CreatedContainerIDs []string
+	imageName           string
+	createdContainerIDs []string
 }
 
 func (suite *SnapshotDockerTestSuite) SetupSuite() {
-	PullExampleImage(suite.T())
+	suite.imageName = "library/alpine@sha256:e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5"
+	err := docker.PullDockerImage(suite.imageName)
+	require.NoError(suite.T(), err)
 }
 
 func (suite *SnapshotDockerTestSuite) TearDownSuite() {
-	for _, id := range suite.CreatedContainerIDs {
-		err := utils.RemoveDockerContainer(id)
+	for _, id := range suite.createdContainerIDs {
+		err := docker.RemoveDockerContainer(id)
 		require.NoError(suite.T(), err, fmt.Sprintf("RemoveDockerContainer: %s", id))
 	}
 }
@@ -37,7 +40,7 @@ func (suite *SnapshotDockerTestSuite) TestCreateDockerArtifactsData() {
 	}{
 		{
 			name:           "DockerArtifactsData contains the right image digest",
-			imageName:      ImageName,
+			imageName:      suite.imageName,
 			expectedSha256: "e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
 		},
 	} {
@@ -50,9 +53,9 @@ func (suite *SnapshotDockerTestSuite) TestCreateDockerArtifactsData() {
 }
 
 func (suite *SnapshotDockerTestSuite) withRunningContainer(imageName string) {
-	containerID, err := utils.RunDockerContainer(imageName)
+	containerID, err := docker.RunDockerContainer(imageName)
 	require.NoError(suite.T(), err, fmt.Sprintf("RunDockerContainer for %s", imageName))
-	suite.CreatedContainerIDs = append(suite.CreatedContainerIDs, containerID)
+	suite.createdContainerIDs = append(suite.createdContainerIDs, containerID)
 }
 
 func (suite *SnapshotDockerTestSuite) containerDigests() []string {

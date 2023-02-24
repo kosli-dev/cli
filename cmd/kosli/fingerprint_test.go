@@ -3,6 +3,8 @@ package main
 import (
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/docker"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -11,10 +13,13 @@ import (
 // returns the current testing context
 type FingerprintTestSuite struct {
 	suite.Suite
+	imageName string
 }
 
 func (suite *FingerprintTestSuite) SetupSuite() {
-	PullExampleImage(suite.T())
+	suite.imageName = "library/alpine@sha256:e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5"
+	err := docker.PullDockerImage(suite.imageName)
+	require.NoError(suite.T(), err)
 }
 
 func (suite *FingerprintTestSuite) TestFingerprintCmd() {

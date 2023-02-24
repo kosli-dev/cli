@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/docker"
 	"github.com/kosli-dev/cli/internal/logger"
-	"github.com/kosli-dev/cli/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -397,7 +397,7 @@ func (suite *DigestTestSuite) TestDockerImageSha256() {
 	} {
 		suite.Run(t.name, func() {
 			if t.pullImage {
-				err := utils.PullDockerImage(t.imageName)
+				err := docker.PullDockerImage(t.imageName)
 				require.NoErrorf(suite.T(), err, "TestDockerImageSha256: test image should be pullable")
 			}
 			actual, err := DockerImageSha256(t.imageName)
@@ -455,14 +455,14 @@ func (suite *DigestTestSuite) TestRemoteDockerImageSha256() {
 	} {
 		suite.Run(t.name, func() {
 			if t.pullImage {
-				err := utils.PullDockerImage(t.imageName)
+				err := docker.PullDockerImage(t.imageName)
 				require.NoErrorf(suite.T(), err, "TestRemoteDockerImageSha256: test image should be pullable")
 
 				localImage := fmt.Sprintf("localhost:5001/%s:%s", t.localImageName, t.localImageTag)
-				err = utils.TagDockerImage(t.imageName, localImage)
+				err = docker.TagDockerImage(t.imageName, localImage)
 				require.NoErrorf(suite.T(), err, "TestRemoteDockerImageSha256: test image should be taggable")
 
-				err = utils.PushDockerImage(localImage)
+				err = docker.PushDockerImage(localImage)
 				require.NoErrorf(suite.T(), err, "TestRemoteDockerImageSha256: test image should be pushable")
 			}
 			actual, err := RemoteDockerImageSha256(t.localImageName, t.localImageTag, "http://localhost:5001/v2", "secret",
