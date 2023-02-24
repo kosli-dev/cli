@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const reportEvidenceCommitPRBitbucketShortDesc = `Report a Bitbucket pull request evidence for a commit in a Kosli flow.`
+const reportEvidenceCommitPRBitbucketShortDesc = `Report a Bitbucket pull request evidence for a commit in Kosli flows.`
 
 const reportEvidenceCommitPRBitbucketLongDesc = reportEvidenceCommitPRBitbucketShortDesc + `
 It checks if a pull request exists for the git commit and reports the pull-request evidence to the commit in Kosli.`
@@ -21,7 +21,7 @@ kosli report evidence commit pullrequest bitbucket \
 	--bitbucket-password yourBitbucketPassword \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--name yourEvidenceName \
-	--flow yourFlowName \
+	--flows yourFlowName \
 	--build-url https://exampleci.com \
 	--owner yourOrgName \
 	--api-token yourAPIToken
@@ -34,7 +34,7 @@ kosli report evidence commit pullrequest bitbucket \
 	--bitbucket-password yourBitbucketPassword \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--name yourEvidenceName \
-	--flow yourFlowName \
+	--flows yourFlowName \
 	--build-url https://exampleci.com \
 	--owner yourOrgName \
 	--api-token yourAPIToken \
@@ -76,7 +76,7 @@ func newReportEvidenceCommitPRBitbucketCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{
 		"bitbucket-username", "bitbucket-password", "bitbucket-workspace",
-		"commit", "repository", "flow", "build-url", "name",
+		"commit", "repository", "build-url", "name",
 	})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)

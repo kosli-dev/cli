@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const reportEvidenceCommitPRGithubShortDesc = `Report a Github pull request evidence for a git commit in a Kosli flow.`
+const reportEvidenceCommitPRGithubShortDesc = `Report a Github pull request evidence for a git commit in Kosli flows.`
 
 const reportEvidenceCommitPRGithubLongDesc = reportEvidenceCommitPRGithubShortDesc + `
 It checks if a pull request exists for a commit and report the pull-request evidence to the commit in Kosli. 
@@ -22,7 +22,7 @@ kosli report evidence commit pullrequest github \
 	--github-token yourGithubToken \
 	--github-org yourGithubOrg \
 	--name yourEvidenceName \
-	--flow yourFlowName1,yourFlowName2 \
+	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
 	--owner yourOrgName \
 	--api-token yourAPIToken
@@ -34,7 +34,7 @@ kosli report evidence commit pullrequest github \
 	--github-token yourGithubToken \
 	--github-org yourGithubOrg \
 	--name yourEvidenceName \
-	--flow yourFlowName1,yourFlowName2 \
+	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
 	--owner yourOrgName \
 	--api-token yourAPIToken \
@@ -73,7 +73,7 @@ func newReportEvidenceCommitPRGithubCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{
 		"github-token", "github-org", "commit",
-		"repository", "flow", "build-url", "name",
+		"repository", "build-url", "name",
 	})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)

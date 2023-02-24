@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const reportEvidenceCommitPRGitlabShortDesc = `Report a Gitlab merge request evidence for a commit in a Kosli pipeline.`
+const reportEvidenceCommitPRGitlabShortDesc = `Report a Gitlab merge request evidence for a commit in Kosli flows.`
 
 const reportEvidenceCommitPRGitlabLongDesc = reportEvidenceCommitPRGitlabShortDesc + `
 It checks if a merge request exists for the git commit and reports the merge-request evidence to the commit in Kosli.`
@@ -20,7 +20,7 @@ kosli report evidence commit pullrequest gitlab \
 	--gitlab-token yourGitlabToken \
 	--gitlab-org yourGitlabOrg \
 	--name yourEvidenceName \
-	--flow yourFlowName1,yourFlowName2 \
+	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
 	--owner yourOrgName \
 	--api-token yourAPIToken
@@ -32,7 +32,7 @@ kosli report evidence commit pullrequest gitlab \
 	--gitlab-token yourGitlabToken \
 	--gitlab-org yourGitlabOrg \
 	--name yourEvidenceName \
-	--flow yourFlowName1,yourFlowName2 \
+	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
 	--owner yourOrgName \
 	--api-token yourAPIToken \
@@ -78,7 +78,7 @@ func newReportEvidenceCommitPRGitlabCmd(out io.Writer) *cobra.Command {
 
 	err := RequireFlags(cmd, []string{
 		"gitlab-token", "gitlab-org", "commit",
-		"repository", "flow", "build-url", "name",
+		"repository", "build-url", "name",
 	})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)

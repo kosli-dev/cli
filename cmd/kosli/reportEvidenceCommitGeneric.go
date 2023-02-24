@@ -24,7 +24,7 @@ type reportEvidenceCommitGenericOptions struct {
 	payload      CommitEvidenceGenericPayload
 }
 
-const reportEvidenceCommitGenericShortDesc = `Report Generic evidence for a commit in a Kosli flow.`
+const reportEvidenceCommitGenericShortDesc = `Report Generic evidence for a commit in Kosli flows.`
 
 const reportEvidenceCommitGenericLongDesc = reportEvidenceCommitGenericShortDesc
 
@@ -35,7 +35,7 @@ kosli report evidence commit generic \
 	--name yourEvidenceName \
 	--description "some description" \
 	--compliant \
-	--flow yourFlowName \
+	--flows yourFlowName \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
 	--owner yourOrgName
@@ -46,7 +46,7 @@ kosli report evidence commit generic \
 	--name yourEvidenceName \
 	--description "some description" \
 	--compliant \
-	--flow yourFlowName1,yourFlowName2 \
+	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
 	--owner yourOrgName \
@@ -75,7 +75,7 @@ func newReportEvidenceCommitGenericCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	cmd.Flags().StringVar(&o.payload.CommitSHA, "commit", DefaultValue(ci, "git-commit"), evidenceCommitFlag)
-	cmd.Flags().StringSliceVarP(&o.payload.Flows, "flow", "f", []string{}, pipelinesFlag)
+	cmd.Flags().StringSliceVarP(&o.payload.Flows, "flows", "f", []string{}, flowNamesFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
 	cmd.Flags().BoolVarP(&o.payload.Compliant, "compliant", "C", false, evidenceCompliantFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", evidenceDescriptionFlag)

@@ -53,6 +53,7 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 	artifactTypeFlag        = "[conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256' or '--fingerprint'."
 	pipelineNameFlag        = "The Kosli pipeline name."
 	flowNameFlag            = "The Kosli flow name."
+	flowNamesFlag           = "The comma separated list of Kosli flows."
 	newPipelineFlag         = "The name of the pipeline to be created or updated."
 	newFlowFlag             = "The name of the flow to be created or updated."
 	outputFlag              = "[defaulted] The format of the output. Valid formats are: [table, json]."

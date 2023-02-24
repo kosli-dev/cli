@@ -62,7 +62,7 @@ func addArtifactPRFlags(cmd *cobra.Command, o *pullRequestArtifactOptions, ci st
 
 func addCommitPRFlags(cmd *cobra.Command, o *pullRequestCommitOptions, ci string) {
 	cmd.Flags().StringVar(&o.payload.CommitSHA, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
-	cmd.Flags().StringSliceVarP(&o.payload.Pipelines, "flow", "f", []string{}, pipelinesFlag)
+	cmd.Flags().StringSliceVarP(&o.payload.Pipelines, "flows", "f", []string{}, flowNamesFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
