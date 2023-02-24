@@ -53,7 +53,7 @@ kosli report artifact ANOTHER_FILE.txt \
 	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
 	--owner yourOrgName \
 	--flow yourFlowName \
-	--fingerprint yourFingerprint 
+	--fingerprint yourArtifactFingerprint 
 `
 
 func newReportArtifactCmd(out io.Writer) *cobra.Command {

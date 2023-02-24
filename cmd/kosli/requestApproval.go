@@ -31,7 +31,7 @@ kosli pipeline approval request \
 	--oldest-commit $(git rev-parse HEAD~5)	\
 	--owner yourOrgName \
 	--flow yourPipelineName \
-	--fingerprint yourFingerprint 
+	--fingerprint yourArtifactFingerprint 
 `
 
 func newRequestApprovalCmd(out io.Writer) *cobra.Command {

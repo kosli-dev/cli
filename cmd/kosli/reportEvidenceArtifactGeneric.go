@@ -58,7 +58,7 @@ kosli report evidence artifact generic \
 	--name yourEvidenceName \
 	--owner yourOrgName \
 	--flow yourFlowName \
-	--fingerprint yourFingerprint
+	--fingerprint yourArtifactFingerprint
 `
 
 func newReportEvidenceArtifactGenericCmd(out io.Writer) *cobra.Command {

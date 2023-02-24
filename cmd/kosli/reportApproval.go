@@ -36,7 +36,7 @@ kosli report approval \
 	--oldest-commit $(git rev-parse HEAD~5) \
 	--owner yourOrgName \
 	--flow yourPipelineName \
-	--fingerprint yourFingerprint
+	--fingerprint yourArtifactFingerprint
 `
 
 type reportApprovalOptions struct {
