@@ -14,7 +14,6 @@ type ListSnapshotsCommandTestSuite struct {
 	suite.Suite
 	defaultKosliArguments string
 	snapshotsEnvName      string
-	eventsEnvName         string
 	firstArtifactPath     string
 	secondArtifactPath    string
 }
@@ -25,7 +24,6 @@ type listSnapshotsTestConfig struct {
 
 func (suite *ListSnapshotsCommandTestSuite) SetupTest() {
 	suite.snapshotsEnvName = "list-snapshots-env"
-	suite.eventsEnvName = "list-events-env"
 	suite.firstArtifactPath = "testdata/report.xml"
 	suite.secondArtifactPath = "testdata/file1"
 
@@ -36,7 +34,6 @@ func (suite *ListSnapshotsCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
 	CreateEnv(global.Owner, suite.snapshotsEnvName, "server", suite.T())
-	CreateEnv(global.Owner, suite.eventsEnvName, "server", suite.T())
 }
 
 func (suite *ListSnapshotsCommandTestSuite) TestListSnapshotsCmd() {
@@ -121,94 +118,6 @@ func (suite *ListSnapshotsCommandTestSuite) TestListSnapshotsCmd() {
 				// every time this is called, will add 2 more snapshots and 2 more events
 				ReportServerArtifactToEnv([]string{suite.firstArtifactPath}, suite.snapshotsEnvName, suite.T())
 				ReportServerArtifactToEnv([]string{suite.firstArtifactPath, suite.secondArtifactPath}, suite.snapshotsEnvName, suite.T())
-			}
-		}
-		runTestCmd(suite.T(), []cmdTestCase{t})
-	}
-}
-
-func (suite *ListSnapshotsCommandTestSuite) TestListEventsCmd() {
-	tests := []cmdTestCase{
-		{
-			wantError: true,
-			name:      "listing events fails when env does not exist",
-			cmd:       fmt.Sprintf(`list snapshots non-existing --show-events %s`, suite.defaultKosliArguments),
-			golden:    "Error: Environment named 'non-existing' does not exist for Organization 'docs-cmd-test-user'. \n",
-		},
-		// TODO: the correct error is overwritten by the hack flag value check in root.go
-		{
-			wantError: true,
-			name:      "listing events fails when --page is negative",
-			cmd:       fmt.Sprintf(`list snapshots %s --page -1 --show-events %s`, suite.eventsEnvName, suite.defaultKosliArguments),
-			golden:    "Error: flag '--page' has value '-1' which is illegal\n",
-		},
-		{
-			wantError: true,
-			name:      "listing events fails when --page-limit is negative",
-			cmd:       fmt.Sprintf(`list snapshots %s --page-limit -1 --show-events %s`, suite.eventsEnvName, suite.defaultKosliArguments),
-			golden:    "Error: flag '--page-limit' has value '-1' which is illegal\n",
-		},
-		{
-			wantError: true,
-			name:      "listing events fails when 3 args are provided",
-			cmd:       fmt.Sprintf(`list snapshots %s arg2 arg3 --show-events %s`, suite.eventsEnvName, suite.defaultKosliArguments),
-			golden:    "Error: accepts at most 2 arg(s), received 3\n",
-		},
-		{
-			wantError: true,
-			name:      "listing events fails when no args are provided",
-			cmd:       fmt.Sprintf(`list snapshots --show-events %s`, suite.defaultKosliArguments),
-			golden:    "Error: requires at least 1 arg(s), only received 0\n",
-		},
-		{
-			name:   "listing events works when env is empty",
-			cmd:    fmt.Sprintf(`list snapshots %s --show-events %s`, suite.eventsEnvName, suite.defaultKosliArguments),
-			golden: "No environment events were found.\n",
-		},
-		{
-			name: "listing events works when env contains snapshots",
-			cmd:  fmt.Sprintf(`list snapshots %s --show-events %s`, suite.eventsEnvName, suite.defaultKosliArguments),
-			additionalConfig: listSnapshotsTestConfig{
-				reportToEnv: true,
-			},
-		},
-		{
-			name: "listing events works with --output json when env contains snapshots",
-			cmd:  fmt.Sprintf(`list snapshots %s --show-events --output json %s`, suite.eventsEnvName, suite.defaultKosliArguments),
-			additionalConfig: listSnapshotsTestConfig{
-				reportToEnv: true,
-			},
-		},
-		{
-			name: "listing events works when env contains snapshots and NOW is provided as interval",
-			cmd:  fmt.Sprintf(`list snapshots %s NOW --show-events %s`, suite.eventsEnvName, suite.defaultKosliArguments),
-			additionalConfig: listSnapshotsTestConfig{
-				reportToEnv: true,
-			},
-		},
-		{
-			name: "listing events works when env contains snapshots and 1..2 is provided as interval",
-			cmd:  fmt.Sprintf(`list snapshots %s 1..2 --show-events %s`, suite.eventsEnvName, suite.defaultKosliArguments),
-			additionalConfig: listSnapshotsTestConfig{
-				reportToEnv: true,
-			},
-		},
-		{
-			name: "listing events in interval 1..2 with --reverse works",
-			cmd:  fmt.Sprintf(`list snapshots %s 1..2 --show-events --reverse %s`, suite.eventsEnvName, suite.defaultKosliArguments),
-			additionalConfig: listSnapshotsTestConfig{
-				reportToEnv: true,
-			},
-		},
-	}
-
-	for _, t := range tests {
-		if t.additionalConfig != nil {
-			if t.additionalConfig.(listSnapshotsTestConfig).reportToEnv {
-				// send 2 reports to create 2 snapshots
-				// every time this is called, will add 2 more snapshots and 2 more events
-				ReportServerArtifactToEnv([]string{suite.firstArtifactPath}, suite.eventsEnvName, suite.T())
-				ReportServerArtifactToEnv([]string{suite.firstArtifactPath, suite.secondArtifactPath}, suite.eventsEnvName, suite.T())
 			}
 		}
 		runTestCmd(suite.T(), []cmdTestCase{t})

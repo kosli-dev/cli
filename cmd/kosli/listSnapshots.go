@@ -18,7 +18,7 @@ const listSnapshotsShortDesc = `List environment snapshots.`
 
 const listSnapshotsLongDesc = listSnapshotsShortDesc + `
 The results are paginated and ordered from latests to oldest. 
-By default, the page limit is 15 events per page.
+By default, the page limit is 15 snapshots per page.
 
 You can optionally specify an INTERVAL between two snapshot expressions with <expression>..<expression>.
 Expressions can be:
@@ -29,18 +29,18 @@ Either expression can be omitted to default to NOW.
 `
 
 const listSnapshotsExample = `
-# list the last 15 events for an environment:
+# list the last 15 snapshots for an environment:
 kosli list snapshots yourEnvironmentName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
-# list the last 30 events for an environment:
+# list the last 30 snapshots for an environment:
 kosli list snapshots yourEnvironmentName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
-# list the last 30 events for an environment (in JSON):
+# list the last 30 snapshots for an environment (in JSON):
 kosli list snapshots yourEnvironmentName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
@@ -50,8 +50,7 @@ kosli list snapshots yourEnvironmentName \
 
 type listSnapshotsOptions struct {
 	listOptions
-	showEvents bool
-	reverse    bool
+	reverse bool
 }
 
 func newListSnapshotsCmd(out io.Writer) *cobra.Command {
@@ -76,7 +75,6 @@ func newListSnapshotsCmd(out io.Writer) *cobra.Command {
 	}
 
 	addListFlags(cmd, &o.listOptions)
-	cmd.Flags().BoolVarP(&o.showEvents, "show-events", "l", false, longFlag)
 	cmd.Flags().BoolVar(&o.reverse, "reverse", false, reverseFlag)
 
 	return cmd
@@ -89,11 +87,8 @@ func (o *listSnapshotsOptions) run(out io.Writer, args []string) error {
 		interval = args[1]
 	}
 
-	if o.showEvents {
-		return o.getEnvironmentEvents(out, envName, interval)
-	} else {
-		return o.getSnapshotsList(out, envName, interval)
-	}
+	return o.getSnapshotsList(out, envName, interval)
+
 }
 
 func (o *listSnapshotsOptions) getSnapshotsList(out io.Writer, envName, interval string) error {
@@ -159,28 +154,6 @@ func printSnapshotsListAsTable(raw string, out io.Writer, page int) error {
 	tabFormattedPrint(out, header, rows)
 
 	return nil
-}
-
-// events
-
-func (o *listSnapshotsOptions) getEnvironmentEvents(out io.Writer, envName, interval string) error {
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/events/?page=%d&per_page=%d&interval=%s&reverse=%t",
-		global.Host, global.Owner, envName, o.pageNumber, o.pageLimit, url.QueryEscape(interval), o.reverse)
-
-	reqParams := &requests.RequestParams{
-		Method:   http.MethodGet,
-		URL:      url,
-		Password: global.ApiToken,
-	}
-	response, err := kosliClient.Do(reqParams)
-	if err != nil {
-		return err
-	}
-	return output.FormattedPrint(response.Body, o.output, out, o.pageNumber,
-		map[string]output.FormatOutputFunc{
-			"table": printEnvironmentEventsLogAsTable,
-			"json":  output.PrintJson,
-		})
 }
 
 func printEnvironmentEventsLogAsTable(raw string, out io.Writer, page int) error {
