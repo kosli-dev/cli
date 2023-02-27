@@ -22,7 +22,7 @@ func newListEnvironmentsCmd(out io.Writer) *cobra.Command {
 	o := new(environmentLsOptions)
 	cmd := &cobra.Command{
 		Use:     "environments",
-		Aliases: []string{"env"},
+		Aliases: []string{"env", "envs"},
 		Short:   listEnvironmentsDesc,
 		Long:    listEnvironmentsDesc,
 		Args:    cobra.NoArgs,
