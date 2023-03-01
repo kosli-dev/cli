@@ -1,5 +1,5 @@
 <div class="top-header">
-    <div class="container flex">
+    <div class="container flex align-center justify-between">
 
         <div class="docs-logo">
             <a href="/">
@@ -7,10 +7,9 @@
             </a>
         </div>
 
-        <div class="separator">            
+        <div class="mobile-hidden">
+            {{- partial "version-selector.html" . -}}
         </div>
-
-        {{- partial "version-selector.html" . -}}
 
     </div>
 </div>
