@@ -74,8 +74,8 @@ test_integration_setup:
 	@go install gotest.tools/gotestsum@latest
 
 
-test_integration: deps vet ensure_network test_integration_setup ## Run tests except too slow ones
-	@~/go/bin/gotestsum -- --short -p=8 -coverprofile=cover.out ./...
+test_integration: deps vet ensure_network test_integration_setup ## Run tests except the too slow ones
+	@export TESTS=true && ~/go/bin/gotestsum -- --short -p=8 -coverprofile=cover.out ./...
 	@go tool cover -func=cover.out | grep total:
 	@go tool cover -html=cover.out
 
@@ -91,7 +91,7 @@ test_integration_no_setup:
 
 
 test_integration_single: test_integration_setup
-	@~/go/bin/gotestsum -- -p=4 ./... -run "${TARGET}"
+	@export TESTS=true && ~/go/bin/gotestsum -- -p=4 ./... -run "${TARGET}"
 
 
 test_docs: deps vet ensure_network test_integration_setup

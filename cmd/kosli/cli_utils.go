@@ -474,6 +474,11 @@ func formattedTimestamp(timestamp interface{}, short bool) (string, error) {
 		return "", fmt.Errorf("unsupported timestamp type %s", t)
 	}
 
+	// use a fixed timestamp when running tests
+	if _, ok := os.LookupEnv("TESTS"); ok {
+		intTimestamp = int64(1452902400)
+	}
+
 	unixTime := time.Unix(intTimestamp, 0)
 	if short {
 		return unixTime.Format(time.RFC1123), nil

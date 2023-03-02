@@ -1,13 +1,114 @@
 package main
 
 import (
+	"bytes"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
+	"github.com/mattn/go-shellwords"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 )
 
+// cmdTestCase describes a cmd test case.
+type cmdTestCase struct {
+	name             string
+	cmd              string
+	golden           string
+	goldenFile       string
+	wantError        bool
+	additionalConfig interface{}
+}
+
+// executeCommandStdinC executes a command as a user would and return the output
+func executeCommandC(cmd string) (*cobra.Command, string, error) {
+	args, err := shellwords.Parse(cmd)
+	if err != nil {
+		return nil, "", err
+	}
+
+	buf := new(bytes.Buffer)
+
+	root, err := newRootCmd(buf, args)
+	if err != nil {
+		return nil, "", err
+	}
+
+	root.SilenceErrors = false
+	root.SetOut(buf)
+	root.SetErr(buf)
+	root.SetArgs(args)
+
+	c, err := root.ExecuteC()
+	output := buf.String()
+
+	return c, output, err
+}
+
+// runTestCmd runs a table of cmd test cases
+func runTestCmd(t *testing.T, tests []cmdTestCase) {
+	t.Helper()
+	for _, key := range [...]string{"KOSLI_API_TOKEN", "KOSLI_OWNER"} {
+		if os.Getenv(key) != "" {
+			t.Errorf("Environment variable %s should not be set when running tests ", key)
+		}
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.golden != "" && tt.goldenFile != "" {
+				t.Error("golden and goldenPath cannot be set together")
+			}
+			t.Logf("running cmd: %s", tt.cmd)
+			_, out, err := executeCommandC(tt.cmd)
+			if (err != nil) != tt.wantError {
+				t.Errorf("error expectation not matched\n\n WANT error is: %t\n\n but GOT: '%v'", tt.wantError, err)
+			}
+			if tt.golden != "" {
+				if !bytes.Equal([]byte(tt.golden), []byte(out)) {
+					t.Errorf("does not match golden\n\nWANT:\n'%s'\n\nGOT:\n'%s'\n", tt.golden, out)
+				}
+			} else if tt.goldenFile != "" {
+				if err := compareAgainstFile([]byte(out), goldenPath(tt.goldenFile)); err != nil {
+					t.Error(err)
+				}
+			}
+		})
+	}
+}
+
+func goldenPath(filename string) string {
+	if filepath.IsAbs(filename) {
+		return filename
+	}
+	return filepath.Join("testdata", filename)
+}
+
+func compareAgainstFile(actual []byte, filename string) error {
+	expected, err := os.ReadFile(filename)
+	if err != nil {
+		return errors.Wrapf(err, "unable to read golden file %s", filename)
+	}
+
+	actual = normalize(actual)
+	expected = normalize(expected)
+
+	if !bytes.Equal(expected, actual) {
+		return errors.Errorf("does not match golden file %s\n\nWANT:\n'%s'\n\nGOT:\n'%s'", filename, expected, actual)
+	}
+	return nil
+}
+
+func normalize(in []byte) []byte {
+	normalized := bytes.Replace(in, []byte("\r\n"), []byte("\n"), -1)
+	return []byte(strings.TrimSpace(string(normalized)))
+}
+
 // CreateFlow creates a flow on the server
 func CreateFlow(flowName string, t *testing.T) {
+	t.Helper()
 	o := &createFlowOptions{
 		payload: FlowPayload{
 			Name:        flowName,
@@ -22,6 +123,7 @@ func CreateFlow(flowName string, t *testing.T) {
 
 // CreateArtifact creates an artifact on the server
 func CreateArtifact(flowName, artifactFingerprint, artifactName string, t *testing.T) {
+	t.Helper()
 	o := &reportArtifactOptions{
 		srcRepoRoot: "../..",
 		flowName:    flowName,
@@ -39,6 +141,7 @@ func CreateArtifact(flowName, artifactFingerprint, artifactName string, t *testi
 
 // CreateApproval creates an approval for an artifact in a flow
 func CreateApproval(flowName, fingerprint string, t *testing.T) {
+	t.Helper()
 	o := &reportApprovalOptions{
 		payload: ApprovalPayload{
 			ArtifactFingerprint: fingerprint,
@@ -56,6 +159,7 @@ func CreateApproval(flowName, fingerprint string, t *testing.T) {
 
 // ExpectDeployment reports a deployment expectation of a given artifact to the server
 func ExpectDeployment(flowName, fingerprint, envName string, t *testing.T) {
+	t.Helper()
 	o := &expectDeploymentOptions{
 		flowName: flowName,
 		payload: ExpectDeploymentPayload{
@@ -70,6 +174,7 @@ func ExpectDeployment(flowName, fingerprint, envName string, t *testing.T) {
 
 // CreateEnv creates an env on the server
 func CreateEnv(owner, envName, envType string, t *testing.T) {
+	t.Helper()
 	o := &createEnvOptions{
 		payload: CreateEnvironmentPayload{
 			Owner:       owner,
@@ -85,6 +190,7 @@ func CreateEnv(owner, envName, envType string, t *testing.T) {
 
 // ReportServerArtifactToEnv reports files/dirs in paths as server env artifacts
 func ReportServerArtifactToEnv(paths []string, envName string, t *testing.T) {
+	t.Helper()
 	o := &snapshotServerOptions{
 		paths: paths,
 	}
