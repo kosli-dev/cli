@@ -16,7 +16,6 @@ type EvidenceSnykPayload struct {
 
 type reportEvidenceArtifactSnykOptions struct {
 	fingerprintOptions *fingerprintOptions
-	fingerprint        string // This is calculated or provided by the user
 	flowName           string
 	snykJsonFile       string
 	userDataFile       string
@@ -64,7 +63,7 @@ func newReportEvidenceArtifactSnykCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
-			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.fingerprint, false)
+			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.ArtifactFingerprint, false)
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -77,14 +76,10 @@ func newReportEvidenceArtifactSnykCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVarP(&o.fingerprint, "fingerprint", "F", "", fingerprintFlag)
+	addArtifactEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
-	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
 	cmd.Flags().StringVarP(&o.snykJsonFile, "scan-results", "R", "", snykJsonResultsFileFlag)
-	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
-	cmd.Flags().StringVar(&o.payload.EvidenceFingerprint, "evidence-fingerprint", "", evidenceFingerprintFlag)
-	cmd.Flags().StringVar(&o.payload.EvidenceURL, "evidence-url", "", evidenceFingerprintFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
@@ -98,13 +93,11 @@ func newReportEvidenceArtifactSnykCmd(out io.Writer) *cobra.Command {
 
 func (o *reportEvidenceArtifactSnykOptions) run(args []string) error {
 	var err error
-	if o.fingerprint == "" {
+	if o.payload.ArtifactFingerprint == "" {
 		o.payload.ArtifactFingerprint, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
 			return err
 		}
-	} else {
-		o.payload.ArtifactFingerprint = o.fingerprint
 	}
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/snyk", global.Host, global.Owner, o.flowName)
 	o.payload.UserData, err = LoadJsonData(o.userDataFile)

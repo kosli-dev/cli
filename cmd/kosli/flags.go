@@ -46,40 +46,40 @@ func addGitlabFlags(cmd *cobra.Command, gitlabConfig *gitlabUtils.GitlabConfig, 
 	cmd.Flags().StringVar(&gitlabConfig.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
 }
 
-func addArtifactPRFlags(cmd *cobra.Command, o *pullRequestArtifactOptions, ci string, deprecatedFlags bool) {
-	if deprecatedFlags {
-		cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "sha256", "s", "", fingerprintFlag)
-		cmd.Flags().StringVarP(&o.description, "description", "d", "", evidenceDescriptionFlag)
-		cmd.Flags().StringVarP(&o.payload.EvidenceName, "evidence-type", "e", "", evidenceTypeFlag)
-	}
-	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
-	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
+func addArtifactPRFlags(cmd *cobra.Command, o *pullRequestArtifactOptions, ci string) {
+	addArtifactEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
 	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
-	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "F", "", fingerprintFlag)
-	cmd.Flags().StringVarP(&o.pipelineName, "flow", "f", "", pipelineNameFlag)
+	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
+	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
+}
+
+func addArtifactEvidenceFlags(cmd *cobra.Command, payload *TypedEvidencePayload, ci string) {
+	addEvidenceFlags(cmd, payload, ci)
+	cmd.Flags().StringVarP(&payload.ArtifactFingerprint, "fingerprint", "F", "", fingerprintFlag)
 }
 
 func addCommitPRFlags(cmd *cobra.Command, o *pullRequestCommitOptions, ci string) {
-	cmd.Flags().StringVar(&o.payload.CommitSHA, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
-	cmd.Flags().StringSliceVarP(&o.payload.Pipelines, "flows", "f", []string{}, flowNamesFlag)
-	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
-	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
+	addCommitEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
+	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
+}
+
+func addCommitEvidenceFlags(cmd *cobra.Command, payload *TypedEvidencePayload, ci string) {
+	addEvidenceFlags(cmd, payload, ci)
+	cmd.Flags().StringVar(&payload.CommitSHA, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
+	cmd.Flags().StringSliceVarP(&payload.Flows, "flows", "f", []string{}, flowNamesFlag)
+}
+
+func addEvidenceFlags(cmd *cobra.Command, payload *TypedEvidencePayload, ci string) {
+	cmd.Flags().StringVarP(&payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
+	cmd.Flags().StringVarP(&payload.EvidenceName, "name", "n", "", evidenceNameFlag)
+	cmd.Flags().StringVar(&payload.EvidenceFingerprint, "evidence-fingerprint", "", evidenceFingerprintFlag)
+	cmd.Flags().StringVar(&payload.EvidenceURL, "evidence-url", "", evidenceURLFlag)
 }
 
 func addListFlags(cmd *cobra.Command, o *listOptions) {
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	cmd.Flags().IntVar(&o.pageNumber, "page", 1, pageNumberFlag)
 	cmd.Flags().IntVarP(&o.pageLimit, "page-limit", "n", 15, pageLimitFlag)
-}
-
-type TypedEvidencePayload struct {
-	ArtifactFingerprint string      `json:"artifact_fingerprint,omitempty"`
-	CommitSHA           string      `json:"commit_sha,omitempty"`
-	EvidenceName        string      `json:"name"`
-	EvidenceURL         string      `json:"evidence_url,omitempty"`
-	EvidenceFingerprint string      `json:"evidence_fingerprint,omitempty"`
-	BuildUrl            string      `json:"build_url"`
-	UserData            interface{} `json:"user_data,omitempty"`
 }

@@ -9,15 +9,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type CommitEvidenceSnykPayload struct {
-	EvidenceSnykPayload
-	Flows []string `json:"pipelines,omitempty"`
-}
-
 type reportEvidenceCommitSnykOptions struct {
 	snykJsonFile string
 	userDataFile string
-	payload      CommitEvidenceSnykPayload
+	payload      EvidenceSnykPayload
 }
 
 const reportEvidenceCommitSnykShortDesc = `Report Snyk evidence for a commit in Kosli flows.`
@@ -67,14 +62,9 @@ func newReportEvidenceCommitSnykCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVar(&o.payload.CommitSHA, "commit", DefaultValue(ci, "git-commit"), evidenceCommitFlag)
-	cmd.Flags().StringSliceVarP(&o.payload.Flows, "flows", "f", []string{}, flowNamesFlag)
-	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
+	addCommitEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
 	cmd.Flags().StringVarP(&o.snykJsonFile, "scan-results", "R", "", snykJsonResultsFileFlag)
-	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
-	cmd.Flags().StringVar(&o.payload.EvidenceFingerprint, "evidence-fingerprint", "", evidenceFingerprintFlag)
-	cmd.Flags().StringVar(&o.payload.EvidenceURL, "evidence-url", "", evidenceFingerprintFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"commit", "build-url", "name", "scan-results"})

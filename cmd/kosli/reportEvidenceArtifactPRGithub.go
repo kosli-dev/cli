@@ -72,8 +72,7 @@ func newReportEvidenceArtifactPRGithubCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	addGithubFlags(cmd, o.getRetriever().(*ghUtils.GithubConfig), ci)
-	addArtifactPRFlags(cmd, o, ci, true)
-	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
+	addArtifactPRFlags(cmd, o, ci)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 

@@ -73,14 +73,14 @@ func newReportEvidenceArtifactPRBitbucketCmd(out io.Writer) *cobra.Command {
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			o.retriever.(*bbUtils.Config).Assert = o.assert
 			return o.run(out, args)
 		},
 	}
 
 	ci := WhichCI()
 	addBitbucketFlags(cmd, o.getRetriever().(*bbUtils.Config), ci)
-	addArtifactPRFlags(cmd, o, ci, true)
-	cmd.Flags().BoolVar(&o.getRetriever().(*bbUtils.Config).Assert, "assert", false, assertPREvidenceFlag)
+	addArtifactPRFlags(cmd, o, ci)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 

@@ -68,7 +68,6 @@ func newReportEvidenceCommitPRGithubCmd(out io.Writer) *cobra.Command {
 
 	addGithubFlags(cmd, o.retriever.(*ghUtils.GithubConfig), ci)
 	addCommitPRFlags(cmd, o, ci)
-	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{

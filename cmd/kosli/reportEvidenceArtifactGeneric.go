@@ -18,7 +18,7 @@ type reportEvidenceArtifactGenericOptions struct {
 
 type GenericEvidencePayload struct {
 	TypedEvidencePayload
-	Description string `json:"description"`
+	Description string `json:"description,omitempty"`
 	Compliant   bool   `json:"is_compliant"`
 }
 
@@ -84,14 +84,10 @@ func newReportEvidenceArtifactGenericCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "F", "", fingerprintFlag)
+	addArtifactEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", evidenceDescriptionFlag)
-	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
 	cmd.Flags().BoolVarP(&o.payload.Compliant, "compliant", "C", true, evidenceCompliantFlag)
-	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
-	cmd.Flags().StringVar(&o.payload.EvidenceFingerprint, "evidence-fingerprint", "", evidenceFingerprintFlag)
-	cmd.Flags().StringVar(&o.payload.EvidenceURL, "evidence-url", "", evidenceFingerprintFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)

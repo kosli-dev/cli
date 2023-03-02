@@ -21,7 +21,7 @@ kosli report evidence commit pullrequest bitbucket \
 	--bitbucket-password yourBitbucketPassword \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--name yourEvidenceName \
-	--flows yourFlowName \
+	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
 	--owner yourOrgName \
 	--api-token yourAPIToken
@@ -34,7 +34,7 @@ kosli report evidence commit pullrequest bitbucket \
 	--bitbucket-password yourBitbucketPassword \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--name yourEvidenceName \
-	--flows yourFlowName \
+	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
 	--owner yourOrgName \
 	--api-token yourAPIToken \
@@ -71,7 +71,6 @@ func newReportEvidenceCommitPRBitbucketCmd(out io.Writer) *cobra.Command {
 	ci := WhichCI()
 	addBitbucketFlags(cmd, o.retriever.(*bbUtils.Config), ci)
 	addCommitPRFlags(cmd, o, ci)
-	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{

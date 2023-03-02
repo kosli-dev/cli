@@ -9,16 +9,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type CommitEvidenceGenericPayload struct {
-	TypedEvidencePayload
-	Flows       []string `json:"pipelines,omitempty"`
-	Description string   `json:"description,omitempty"`
-	Compliant   bool     `json:"is_compliant"`
-}
-
 type reportEvidenceCommitGenericOptions struct {
 	userDataFile string
-	payload      CommitEvidenceGenericPayload
+	payload      GenericEvidencePayload
 }
 
 const reportEvidenceCommitGenericShortDesc = `Report Generic evidence for a commit in Kosli flows.`
@@ -71,15 +64,10 @@ func newReportEvidenceCommitGenericCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVar(&o.payload.CommitSHA, "commit", DefaultValue(ci, "git-commit"), evidenceCommitFlag)
-	cmd.Flags().StringSliceVarP(&o.payload.Flows, "flows", "f", []string{}, flowNamesFlag)
-	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
+	addCommitEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
 	cmd.Flags().BoolVarP(&o.payload.Compliant, "compliant", "C", false, evidenceCompliantFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", evidenceDescriptionFlag)
-	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
-	cmd.Flags().StringVar(&o.payload.EvidenceFingerprint, "evidence-fingerprint", "", evidenceFingerprintFlag)
-	cmd.Flags().StringVar(&o.payload.EvidenceURL, "evidence-url", "", evidenceFingerprintFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"commit", "build-url", "name"})

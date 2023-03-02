@@ -61,19 +61,8 @@ func newReportEvidenceCommitPRGitlabCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	// cmd.Flags().StringVar(&o.gitlabConfig.Token, "gitlab-token", "", gitlabTokenFlag)
-	// cmd.Flags().StringVar(&o.gitlabConfig.Org, "gitlab-org", DefaultValue(ci, "namespace"), gitlabOrgFlag)
-	// cmd.Flags().StringVar(&o.gitlabConfig.BaseURL, "gitlab-base-url", "", gitlabBaseURLFlag)
-	// cmd.Flags().StringVar(&o.gitlabConfig.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
-	// cmd.Flags().StringVar(&o.payload.CommitSHA, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
 	addGitlabFlags(cmd, o.retriever.(*gitlabUtils.GitlabConfig), ci)
 	addCommitPRFlags(cmd, o, ci)
-
-	// cmd.Flags().StringSliceVarP(&o.payload.Pipelines, "pipelines", "p", []string{}, pipelinesFlag)
-	// cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
-	// cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
-	// cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
-	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{

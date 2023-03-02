@@ -13,29 +13,24 @@ import (
 	"github.com/kosli-dev/cli/internal/types"
 )
 
-type PullRequestArtifactEvidencePayload struct {
+type PullRequestEvidencePayload struct {
 	TypedEvidencePayload
 	GitProvider  string              `json:"git_provider"`
 	PullRequests []*types.PREvidence `json:"pull_requests"`
 }
 
-type PullRequestCommitEvidencePayload struct {
-	TypedEvidencePayload
-	Pipelines    []string            `json:"pipelines,omitempty"`
-	GitProvider  string              `json:"git_provider"`
-	PullRequests []*types.PREvidence `json:"pull_requests"`
+type pullRequestOptions struct {
+	payload      PullRequestEvidencePayload
+	retriever    interface{}
+	userDataFile string
+	assert       bool
 }
 
 type pullRequestArtifactOptions struct {
 	fingerprintOptions *fingerprintOptions
-	pipelineName       string
-	payload            PullRequestArtifactEvidencePayload
-	retriever          interface{}
+	flowName           string
 	commit             string
-	userDataFile       string
-	assert             bool
-	// deprecated options
-	description string
+	pullRequestOptions
 }
 
 func (o *pullRequestArtifactOptions) getRetriever() types.PRRetriever {
@@ -51,7 +46,7 @@ func (o *pullRequestArtifactOptions) run(out io.Writer, args []string) error {
 		}
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/pull_request", global.Host, global.Owner, o.pipelineName)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/pull_request", global.Host, global.Owner, o.flowName)
 	pullRequestsEvidence, err := getPullRequestsEvidence(o.getRetriever(), o.commit, o.assert)
 	if err != nil {
 		return err
@@ -99,10 +94,7 @@ func getGitProviderAndLabel(retriever interface{}) (string, string) {
 }
 
 type pullRequestCommitOptions struct {
-	payload      PullRequestCommitEvidencePayload
-	retriever    interface{}
-	userDataFile string
-	assert       bool
+	pullRequestOptions
 }
 
 func (o *pullRequestCommitOptions) getRetriever() types.PRRetriever {
