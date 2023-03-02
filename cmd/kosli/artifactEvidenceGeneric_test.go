@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -31,13 +34,20 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) SetupTest() {
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
 	kosliClient = requests.NewKosliClient(1, false, log.NewStandardLogger())
 
-	CreatePipeline(suite.pipelineName, suite.T())
-	CreateArtifact(suite.pipelineName, suite.artifactFingerprint, "FooBar_1", suite.T())
+	t := suite.T()
+	CreatePipeline(suite.pipelineName, t)
+	CreateArtifact(suite.pipelineName, suite.artifactFingerprint, "FooBar_1", t)
 
+	repo, err := git.PlainOpen("../..")
+	require.NoError(t, err, "failed to open git repository at %s: %v", "../..", err)
+	commitPointer, err := repo.ResolveRevision(plumbing.Revision("HEAD~1"))
+	require.NoError(t, err, "failed to resolve revision %s: %v", "HEAD~1", err)
+	commitHash := commitPointer.String()
+	fmt.Print("commitHash in artifcat evidence ********* " + commitHash)
 	tests := []cmdTestCase{
 		{
 			name: "create second artifact",
-			cmd: `pipeline artifact report creation testdata --git-commit 6ef6fc37c373922eecd4e823cf2633326790cfe8 --artifact-type dir ` + `
+			cmd: `pipeline artifact report creation testdata --git-commit ` + commitHash + ` --artifact-type dir ` + `
 			          --pipeline ` + suite.pipelineName + ` --build-url www.yr.no --commit-url www.nrk.no --repo-root ../..` + suite.defaultKosliArguments,
 		},
 	}
