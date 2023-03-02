@@ -54,6 +54,8 @@ func addArtifactPRFlags(cmd *cobra.Command, o *pullRequestArtifactOptions, ci st
 	}
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
+	cmd.Flags().StringVar(&o.payload.EvidenceUrl, "evidence-url", "", evidenceUrlFlag)
+	cmd.Flags().StringVar(&o.payload.EvidenceFingerprint, "evidence-fingerprint", "", evidenceFingerprintFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
 	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
 	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "f", "", sha256Flag)
@@ -73,5 +75,7 @@ type TypedEvidencePayload struct {
 	CommitSHA           string      `json:"commit_sha,omitempty"`
 	EvidenceName        string      `json:"name"`
 	BuildUrl            string      `json:"build_url"`
+	EvidenceUrl         string      `json:"evidence_url,omitempty"`
+	EvidenceFingerprint string      `json:"evidence_fingerprint,omitempty"`
 	UserData            interface{} `json:"user_data"`
 }

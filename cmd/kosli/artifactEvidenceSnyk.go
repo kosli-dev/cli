@@ -15,6 +15,8 @@ type EvidenceSnykPayload struct {
 	EvidenceName        string      `json:"name"`
 	BuildUrl            string      `json:"build_url"`
 	SnykResults         interface{} `json:"snyk_results"`
+	EvidenceUrl         string      `json:"evidence_url,omitempty"`
+	EvidenceFingerprint string      `json:"evidence_fingerprint,omitempty"`
 	UserData            interface{} `json:"user_data"`
 }
 
@@ -86,6 +88,8 @@ func newSnykEvidenceCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
 	cmd.Flags().StringVarP(&o.snykJsonFile, "scan-results", "R", "", snykJsonResultsFileFlag)
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
+	cmd.Flags().StringVar(&o.payload.EvidenceUrl, "evidence-url", "", evidenceUrlFlag)
+	cmd.Flags().StringVar(&o.payload.EvidenceFingerprint, "evidence-fingerprint", "", evidenceFingerprintFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)

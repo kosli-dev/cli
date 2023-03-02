@@ -46,6 +46,13 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 			golden: "github pull request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
 		{
+			name: "report Github PR evidence works with evidence-url and evidence-fingerprint",
+			cmd: `pipeline artifact report evidence github-pullrequest --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --pipeline ` + suite.pipelineName + `
+			          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6
+					  --evidence-url yr.no --evidence-fingerprint deadbeef ` + suite.defaultKosliArguments,
+			golden: "github pull request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
+		},
+		{
 			name: "report Github PR evidence works with deprecated flags",
 			cmd: `pipeline artifact report evidence github-pullrequest --sha256 ` + suite.artifactFingerprint + ` --evidence-type gh-pr --pipeline ` + suite.pipelineName + `
 			          --description text --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
