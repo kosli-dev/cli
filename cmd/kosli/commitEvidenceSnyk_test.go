@@ -40,6 +40,13 @@ func (suite *CommitEvidenceSnykCommandTestSuite) TestCommitEvidenceSnykCmd() {
 			golden: "snyk scan evidence is reported to commit: 239d7cee00ca341f124fa710fc694b67cdf8011b\n",
 		},
 		{
+			name: "report Snyk test evidence works with evidence-url and evidence-fingerprint flags",
+			cmd: `commit report evidence snyk --commit 239d7cee00ca341f124fa710fc694b67cdf8011b --name snyk-result --pipelines ` + suite.pipelineName + `
+			          --build-url example.com --scan-results testdata/snyk_scan_example.json
+					--evidence-url yr.no --evidence-fingerprint 12345ba ` + suite.defaultKosliArguments,
+			golden: "snyk scan evidence is reported to commit: 239d7cee00ca341f124fa710fc694b67cdf8011b\n",
+		},
+		{
 			name: "report Snyk scan evidence with non-existing scan-results",
 			cmd: `commit report evidence snyk --commit 239d7cee00ca341f124fa710fc694b67cdf8011b --name snyk-result --pipelines ` + suite.pipelineName + `
 			          --build-url example.com --scan-results testdata/foo.json` + suite.defaultKosliArguments,

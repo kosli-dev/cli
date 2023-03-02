@@ -42,6 +42,14 @@ func (suite *CommitEvidenceJUnitCommandTestSuite) TestCommitEvidenceJUnitCommand
 			golden: "junit test evidence is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n",
 		},
 		{
+			name: "report JUnit test evidence works with evidence-url and evidence-finterprint flags",
+			cmd: `commit report evidence junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c
+					--name junit-result --pipelines ` + suite.pipelineNames + `
+					--build-url example.com --results-dir testdata
+					--evidence-url yr.no --evidence-fingerprint 123234abed` + suite.defaultKosliArguments,
+			golden: "junit test evidence is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n",
+		},
+		{
 			name: "report JUnit test evidence with non-existing results dir",
 			cmd: `commit report evidence junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name junit-result --pipelines ` + suite.pipelineNames + `
 			          --build-url example.com --results-dir foo` + suite.defaultKosliArguments,

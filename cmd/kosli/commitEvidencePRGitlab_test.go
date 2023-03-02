@@ -46,7 +46,15 @@ func (suite *CommitEvidencePRGitlabCommandTestSuite) TestCommitEvidencePRGitlabC
 		{
 			name: "report Gitlab PR evidence works when there are merge requests",
 			cmd: `commit report evidence gitlab-mergerequest --name gl-pr --pipelines ` + suite.pipelineName + `
-			          --build-url example.com --gitlab-org ewelinawilkosz  --repository merkely-gitlab-demo --commit e6510880aecdc05d79104d937e1adb572bd91911` + suite.defaultKosliArguments,
+					--build-url example.com --gitlab-org ewelinawilkosz  --repository merkely-gitlab-demo --commit e6510880aecdc05d79104d937e1adb572bd91911` + suite.defaultKosliArguments,
+			golden: "gitlab merge request evidence is reported to commit: e6510880aecdc05d79104d937e1adb572bd91911\n",
+		},
+		{
+			name: "report Gitlab PR evidence works with evidence-url and evidence-fingerprint flags",
+			cmd: `commit report evidence gitlab-mergerequest --name gl-pr --pipelines ` + suite.pipelineName + `
+					--build-url example.com --gitlab-org ewelinawilkosz  --repository merkely-gitlab-demo
+					--commit e6510880aecdc05d79104d937e1adb572bd91911
+					--evidence-url yr.no --evidence-fingerprint 12334abcd ` + suite.defaultKosliArguments,
 			golden: "gitlab merge request evidence is reported to commit: e6510880aecdc05d79104d937e1adb572bd91911\n",
 		},
 		{

@@ -43,6 +43,14 @@ func (suite *CommitEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGithu
 			golden: "github pull request evidence is reported to commit: 73d7fee2f31ade8e1a9c456c324255212c30c2a6\n",
 		},
 		{
+			name: "report Github PR evidence works with evidence-url and evidence-fingerprint",
+			cmd: `commit report evidence github-pullrequest --name gh-pr --pipelines ` + suite.pipelineNames + `
+					--build-url example.com --github-org kosli-dev --repository cli
+					--commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6
+					--evidence-url yr.no --evidence-fingerprint 123abed ` + suite.defaultKosliArguments,
+			golden: "github pull request evidence is reported to commit: 73d7fee2f31ade8e1a9c456c324255212c30c2a6\n",
+		},
+		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --owner is missing",
 			cmd: `commit report evidence github-pullrequest --name gh-pr --pipelines ` + suite.pipelineNames + `

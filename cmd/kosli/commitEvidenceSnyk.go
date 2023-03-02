@@ -10,12 +10,14 @@ import (
 )
 
 type CommitEvidenceSnykPayload struct {
-	CommitSHA    string      `json:"commit_sha"`
-	Pipelines    []string    `json:"pipelines,omitempty"`
-	EvidenceName string      `json:"name"`
-	BuildUrl     string      `json:"build_url"`
-	SnykResults  interface{} `json:"snyk_results"`
-	UserData     interface{} `json:"user_data"`
+	CommitSHA           string      `json:"commit_sha"`
+	Pipelines           []string    `json:"pipelines,omitempty"`
+	EvidenceName        string      `json:"name"`
+	BuildUrl            string      `json:"build_url"`
+	EvidenceUrl         string      `json:"evidence_url,omitempty"`
+	EvidenceFingerprint string      `json:"evidence_fingerprint,omitempty"`
+	SnykResults         interface{} `json:"snyk_results"`
+	UserData            interface{} `json:"user_data"`
 }
 
 type snykCommitEvidenceOptions struct {
@@ -76,6 +78,8 @@ func newSnykCommitEvidenceCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
 	cmd.Flags().StringVarP(&o.snykJsonFile, "scan-results", "R", "", snykJsonResultsFileFlag)
 	cmd.Flags().StringVarP(&o.payload.EvidenceName, "name", "n", "", evidenceNameFlag)
+	cmd.Flags().StringVar(&o.payload.EvidenceUrl, "evidence-url", "", evidenceUrlFlag)
+	cmd.Flags().StringVar(&o.payload.EvidenceFingerprint, "evidence-fingerprint", "", evidenceFingerprintFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
 	addDryRunFlag(cmd)
 
