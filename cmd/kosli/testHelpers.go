@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/go-git/go-git/v5"
 	"github.com/kosli-dev/cli/internal/utils"
 	"github.com/stretchr/testify/require"
 )
@@ -31,17 +32,23 @@ func CreatePipeline(pipelineName string, t *testing.T) {
 
 // CreateArtifact creates an artifact on the server
 func CreateArtifact(pipelineName, artifactFingerprint, artifactName string, t *testing.T) {
+	repo, err := git.PlainOpen("../..")
+	require.NoError(t, err, "failed to open git repository at %s: %v", "../..", err)
+	repoHead, err := repo.Head()
+	require.NoError(t, err, "failed to resolve revision %s: %v", "HEAD", err)
+	headHash := repoHead.Hash().String()
+
 	o := &artifactCreationOptions{
 		srcRepoRoot:  "../..",
 		pipelineName: pipelineName,
 		payload: ArtifactPayload{
 			Sha256:    artifactFingerprint,
-			GitCommit: "6ef6fc37c373922eecd4e823cf2633326790cfe8",
+			GitCommit: headHash,
 			BuildUrl:  "www.yr.no",
 			CommitUrl: " www.nrk.no",
 		},
 	}
 
-	err := o.run([]string{artifactName})
+	err = o.run([]string{artifactName})
 	require.NoError(t, err, "artifact should be created without error")
 }
