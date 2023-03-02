@@ -28,49 +28,53 @@ func (suite *CreateFlowCommandTestSuite) TestCreateFlowCmd() {
 	tests := []cmdTestCase{
 		{
 			wantError: true,
-			name:      "fails when arguments are provided",
-			cmd:       "create flow --flow newFlow xxx" + suite.defaultKosliArguments,
-			golden:    "Error: unknown command \"xxx\" for \"kosli create flow\"\n",
+			name:      "fails when more arguments are provided",
+			cmd:       "create flow newFlow xxx" + suite.defaultKosliArguments,
+			golden:    "Error: accepts at most 1 arg(s), received 2\n",
 		},
 		{
 			wantError: true,
 			name:      "fails when name is considered invalid by the server",
-			cmd:       "create flow --flow foo_bar" + suite.defaultKosliArguments,
+			cmd:       "create flow foo_bar" + suite.defaultKosliArguments,
 			golden:    "Error: Input payload validation failed: map[name:'foo_bar' does not match '^[a-zA-Z0-9\\\\-]+$']\n",
 		},
 		{
 			name:   "can create a flow",
-			cmd:    "create flow --flow newFlow --description \"my new flow\" " + suite.defaultKosliArguments,
+			cmd:    "create flow newFlow --description \"my new flow\" " + suite.defaultKosliArguments,
 			golden: "flow 'newFlow' was created\n",
 		},
 		{
 			name:   "re-creating a flow updates its metadata",
-			cmd:    "create flow --flow newFlow --description \"changed description\" " + suite.defaultKosliArguments,
+			cmd:    "create flow newFlow --description \"changed description\" " + suite.defaultKosliArguments,
 			golden: "flow 'newFlow' was created\n",
 		},
 		{
 			wantError: true,
 			name:      "missing --owner flag causes an error",
-			cmd:       "create flow --flow newFlow --description \"my new flow\" -H http://localhost:8001 -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
-			golden:    "Error: --owner is not set\nUsage: kosli create flow [flags]\n",
+			cmd:       "create flow newFlow --description \"my new flow\" -H http://localhost:8001 -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
+			golden:    "Error: --owner is not set\nUsage: kosli create flow [FLOW-NAME] [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "missing --api-token flag causes an error",
-			cmd:       "create flow --flow newFlow --description \"my new flow\" --owner cyber-dojo -H http://localhost:8001",
-			golden:    "Error: --api-token is not set\nUsage: kosli create flow [flags]\n",
+			cmd:       "create flow newFlow --description \"my new flow\" --owner cyber-dojo -H http://localhost:8001",
+			golden:    "Error: --api-token is not set\nUsage: kosli create flow [FLOW-NAME] [flags]\n",
 		},
 		{
 			wantError: true,
-			name:      "missing --flow and --pipefile causes an error",
+			name:      "missing name argument and --pipefile fails",
 			cmd:       "create flow --description \"my new flow\" -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
-			golden:    "Error: at least one of --flow, --pipefile is required\n",
+			golden:    "Error: flow name must be provided either as an argument or in the pipefile\n",
 		},
 		{
-			wantError: true,
-			name:      "providing both --flow and --pipefile fails",
-			cmd:       "create flow --flow newFlow --pipefile /path/to/file.json" + suite.defaultKosliArguments,
-			golden:    "Error: only one of --flow, --pipefile is allowed\n",
+			name:   "providing both name arg and --pipefile works when pipefile contains name",
+			cmd:    "create flow newFlow2 --pipefile testdata/pipe-with-name.json" + suite.defaultKosliArguments,
+			golden: "flow 'cli-test' was created\n", // the name comes from pipe-with-name.json
+		},
+		{
+			name:   "providing both name arg and --pipefile works when pipefile does not contain name",
+			cmd:    "create flow newFlow2 --pipefile testdata/pipe-nameless.json" + suite.defaultKosliArguments,
+			golden: "flow 'newFlow2' was created\n", // the name comes from the argument
 		},
 		{
 			wantError: true,

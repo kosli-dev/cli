@@ -16,7 +16,7 @@ func CreateFlow(flowName string, t *testing.T) {
 		},
 	}
 
-	err := o.run()
+	err := o.run([]string{flowName})
 	require.NoError(t, err, "flow should be created without error")
 }
 
@@ -79,7 +79,7 @@ func CreateEnv(owner, envName, envType string, t *testing.T) {
 		},
 	}
 
-	err := o.run()
+	err := o.run([]string{envName})
 	require.NoError(t, err, "env should be created without error")
 }
 

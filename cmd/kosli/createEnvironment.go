@@ -13,8 +13,7 @@ const createEnvironmentDesc = `Create a Kosli environment.`
 
 const createEnvironmentExample = `
 # create a Kosli environment:
-kosli create environment 
-	--name yourEnvironmentName \
+kosli create environment yourEnvironmentName
 	--environment-type K8S \
 	--description "my new env" \
 	--api-token yourAPIToken \
@@ -35,12 +34,12 @@ type CreateEnvironmentPayload struct {
 func newCreateEnvironmentCmd(out io.Writer) *cobra.Command {
 	o := new(createEnvOptions)
 	cmd := &cobra.Command{
-		Use:     "environment",
+		Use:     "environment ENVIRONMENT-NAME",
 		Aliases: []string{"env"},
 		Short:   createEnvironmentDesc,
 		Long:    createEnvironmentDesc,
 		Example: createEnvironmentExample,
-		Args:    cobra.NoArgs,
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -50,16 +49,15 @@ func newCreateEnvironmentCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run()
+			return o.run(args)
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.payload.Name, "name", "n", "", newEnvNameFlag)
-	cmd.Flags().StringVarP(&o.payload.Type, "environment-type", "t", "", newEnvTypeFlag)
+	cmd.Flags().StringVarP(&o.payload.Type, "type", "t", "", newEnvTypeFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", envDescriptionFlag)
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"name", "environment-type"})
+	err := RequireFlags(cmd, []string{"type"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
@@ -67,7 +65,8 @@ func newCreateEnvironmentCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *createEnvOptions) run() error {
+func (o *createEnvOptions) run(args []string) error {
+	o.payload.Name = args[0]
 	o.payload.Owner = global.Owner
 	url := fmt.Sprintf("%s/api/v1/environments/%s/", global.Host, global.Owner)
 

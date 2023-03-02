@@ -20,8 +20,7 @@ The pipefile contains the flow metadata and compliance policy (template).`
 
 const createFlowExample = `
 # create/update a Kosli flow without a pipefile:
-kosli create flow \
-	--flow yourFlowName \
+kosli create flow yourFlowName \
 	--description yourFlowDescription \
     --visibility private OR public \
 	--template artifact,evidence-type1,evidence-type2 \
@@ -29,7 +28,7 @@ kosli create flow \
 	--owner yourOrgName
 
 # create/update a Kosli flow with a pipefile (this is a legacy way which will be removed in the future):
-kosli create flow \
+kosli create flow yourFlowName \
 	--pipefile /path/to/pipefile.json \
 	--api-token yourAPIToken \
 	--owner yourOrgName
@@ -63,20 +62,15 @@ type FlowPayload struct {
 func newCreateFlowCmd(out io.Writer) *cobra.Command {
 	o := new(createFlowOptions)
 	cmd := &cobra.Command{
-		Use:     "flow",
+		Use:     "flow [FLOW-NAME]",
 		Short:   createFlowShortDesc,
 		Long:    createFlowLongDesc,
 		Example: createFlowExample,
-		Args:    cobra.NoArgs,
+		Args:    cobra.MaximumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
-			}
-
-			err = MuXRequiredFlags(cmd, []string{"flow", "pipefile"}, true)
-			if err != nil {
-				return err
 			}
 
 			err = MuXRequiredFlags(cmd, []string{"description", "pipefile"}, false)
@@ -87,11 +81,10 @@ func newCreateFlowCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run()
+			return o.run(args)
 		},
 	}
 
-	cmd.Flags().StringVar(&o.payload.Name, "flow", "", newFlowFlag)
 	cmd.Flags().StringVar(&o.pipefile, "pipefile", "", pipefileFlag)
 	cmd.Flags().StringVar(&o.payload.Description, "description", "", pipelineDescriptionFlag)
 	cmd.Flags().StringVar(&o.payload.Visibility, "visibility", "private", visibilityFlag)
@@ -101,7 +94,7 @@ func newCreateFlowCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *createFlowOptions) run() error {
+func (o *createFlowOptions) run(args []string) error {
 	var err error
 	url := fmt.Sprintf("%s/api/v1/projects/%s/", global.Host, global.Owner)
 	if o.pipefile != "" {
@@ -109,6 +102,12 @@ func (o *createFlowOptions) run() error {
 		if err != nil {
 			return err
 		}
+	}
+	if o.payload.Name == "" {
+		if len(args) == 0 {
+			return fmt.Errorf("flow name must be provided either as an argument or in the pipefile")
+		}
+		o.payload.Name = args[0]
 	}
 	o.payload.Owner = global.Owner
 	o.payload.Template = injectArtifactIntoTemplateIfNotExisting(o.payload.Template)
