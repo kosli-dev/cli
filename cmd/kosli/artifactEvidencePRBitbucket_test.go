@@ -48,7 +48,7 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePR
 			name: "report Bitbucket PR evidence works with evidence url and fingerprint flags (fingerprint, name ...)",
 			cmd: `pipeline artifact report evidence bitbucket-pullrequest --fingerprint ` + suite.artifactFingerprint +
 				` --name bb-pr --pipeline ` + suite.pipelineName +
-				`--build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz 
+				` --build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz 
 				--repository cli-test --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69
 				--evidence-url yr.no --evidence-fingerprint deadbeef ` + suite.defaultKosliArguments,
 			golden: "bitbucket pull request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
