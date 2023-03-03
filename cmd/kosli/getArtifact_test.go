@@ -56,16 +56,24 @@ func (suite *GetArtifactCommandTestSuite) TestGetArtifactCmd() {
 			golden:    "Error: accepts 1 arg(s), received 2\n",
 		},
 		{
-			name: "getting an existing artifact using fingerprint works",
-			cmd:  fmt.Sprintf(`get artifact %s@%s %s`, suite.flowName, suite.fingerprint, suite.defaultKosliArguments),
+			wantError: true,
+			name:      "missing --api-token fails",
+			cmd:       fmt.Sprintf(`get artifact %s@%s --owner orgX`, suite.flowName, suite.fingerprint),
+			golden:    "Error: --api-token is not set\nUsage: kosli get artifact SNAPPISH [flags]\n",
+		},
+		{
+			name:       "getting an existing artifact using fingerprint works",
+			cmd:        fmt.Sprintf(`get artifact %s@%s %s`, suite.flowName, suite.fingerprint, suite.defaultKosliArguments),
+			goldenFile: "output/get/get-artifact.txt",
 		},
 		{
 			name: "getting an existing artifact using fingerprint with --output json works",
 			cmd:  fmt.Sprintf(`get artifact %s@%s --output json %s`, suite.flowName, suite.fingerprint, suite.defaultKosliArguments),
 		},
 		{
-			name: "get an existing artifact using commit works",
-			cmd:  fmt.Sprintf(`get artifact %s:0fc1ba9876f91b215679f3649b8668085d820ab5 %s`, suite.flowName, suite.defaultKosliArguments),
+			name:       "get an existing artifact using commit works",
+			cmd:        fmt.Sprintf(`get artifact %s:0fc1ba9876f91b215679f3649b8668085d820ab5 %s`, suite.flowName, suite.defaultKosliArguments),
+			goldenFile: "output/get/get-artifact.txt",
 		},
 	}
 

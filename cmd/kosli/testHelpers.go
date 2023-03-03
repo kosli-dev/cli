@@ -131,7 +131,7 @@ func CreateArtifact(flowName, artifactFingerprint, artifactName string, t *testi
 			Fingerprint: artifactFingerprint,
 			GitCommit:   "0fc1ba9876f91b215679f3649b8668085d820ab5",
 			BuildUrl:    "www.yr.no",
-			CommitUrl:   " www.nrk.no",
+			CommitUrl:   "www.nrk.no",
 		},
 	}
 

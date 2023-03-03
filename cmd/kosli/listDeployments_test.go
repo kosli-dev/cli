@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -13,18 +14,37 @@ import (
 type ListDeploymentsCommandTestSuite struct {
 	suite.Suite
 	defaultKosliArguments string
-	flowName              string
+	flowName1             string
+	flowName2             string
+	artifactName          string
+	artifactPath          string
+	fingerprint           string
+	envName               string
 }
 
 func (suite *ListDeploymentsCommandTestSuite) SetupTest() {
-	suite.flowName = "list-deployments"
+	suite.flowName1 = "list-deployments-empty"
+	suite.flowName2 = "list-deployments"
+	suite.envName = "list-deployments-env"
+	suite.artifactName = "arti"
+	suite.artifactPath = "testdata/folder1/hello.txt"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Owner:    "docs-cmd-test-user",
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
-	CreateFlow(suite.flowName, suite.T())
+	CreateFlow(suite.flowName1, suite.T())
+	CreateFlow(suite.flowName2, suite.T())
+	fingerprintOptions := &fingerprintOptions{
+		artifactType: "file",
+	}
+	var err error
+	suite.fingerprint, err = GetSha256Digest(suite.artifactPath, fingerprintOptions, logger)
+	require.NoError(suite.T(), err)
+	CreateArtifact(suite.flowName2, suite.fingerprint, suite.artifactName, suite.T())
+	CreateEnv(global.Owner, suite.envName, "server", suite.T())
+	ExpectDeployment(suite.flowName2, suite.fingerprint, suite.envName, suite.T())
 }
 
 func (suite *ListDeploymentsCommandTestSuite) TestListDeploymentsCmd() {
@@ -55,14 +75,30 @@ func (suite *ListDeploymentsCommandTestSuite) TestListDeploymentsCmd() {
 			golden:    "Error: flag '--page-limit' has value '-1' which is illegal\n",
 		},
 		{
+			wantError: true,
+			name:      "missing --api-token fails",
+			cmd:       fmt.Sprintf(`list deployments %s --owner orgX`, suite.flowName1),
+			golden:    "Error: --api-token is not set\nUsage: kosli list deployments FLOW-NAME [flags]\n",
+		},
+		{
 			name:   "listing deployments on an empty flow works",
-			cmd:    fmt.Sprintf(`list deployments %s %s`, suite.flowName, suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf(`list deployments %s %s`, suite.flowName1, suite.defaultKosliArguments),
 			golden: "No deployments were found.\n",
 		},
 		{
+			name:   "listing second page of deployments on an empty flow works",
+			cmd:    fmt.Sprintf(`list deployments %s --page 2 %s`, suite.flowName1, suite.defaultKosliArguments),
+			golden: "No deployments were found at page number 2.\n",
+		},
+		{
 			name:   "listing deployments on an empty flow with --output json works",
-			cmd:    fmt.Sprintf(`list deployments %s --output json %s`, suite.flowName, suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf(`list deployments %s --output json %s`, suite.flowName1, suite.defaultKosliArguments),
 			golden: "[]\n",
+		},
+		{
+			name:       "listing deployments on a flow works",
+			cmd:        fmt.Sprintf(`list deployments %s %s`, suite.flowName2, suite.defaultKosliArguments),
+			goldenFile: "output/list/list-deployments.txt",
 		},
 	}
 

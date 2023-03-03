@@ -45,6 +45,7 @@ func newListDeploymentsCmd(out io.Writer) *cobra.Command {
 	o := new(listDeploymentsOptions)
 	cmd := &cobra.Command{
 		Use:     "deployments FLOW-NAME",
+		Aliases: []string{"deployment", "deploy"},
 		Short:   listDeploymentsShortDesc,
 		Long:    listDeploymentsLongDesc,
 		Example: listDeploymentsExample,

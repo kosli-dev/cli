@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -13,18 +14,33 @@ import (
 type ListArtifactsCommandTestSuite struct {
 	suite.Suite
 	defaultKosliArguments string
-	flowName              string
+	flowName1             string
+	flowName2             string
+	artifactName          string
+	artifactPath          string
+	fingerprint           string
 }
 
 func (suite *ListArtifactsCommandTestSuite) SetupTest() {
-	suite.flowName = "list-artifacts"
+	suite.flowName1 = "list-artifacts-empty"
+	suite.flowName2 = "list-artifacts"
+	suite.artifactName = "arti"
+	suite.artifactPath = "testdata/folder1/hello.txt"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Owner:    "docs-cmd-test-user",
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
-	CreateFlow(suite.flowName, suite.T())
+	CreateFlow(suite.flowName1, suite.T())
+	CreateFlow(suite.flowName2, suite.T())
+	fingerprintOptions := &fingerprintOptions{
+		artifactType: "file",
+	}
+	var err error
+	suite.fingerprint, err = GetSha256Digest(suite.artifactPath, fingerprintOptions, logger)
+	require.NoError(suite.T(), err)
+	CreateArtifact(suite.flowName2, suite.fingerprint, suite.artifactName, suite.T())
 }
 
 func (suite *ListArtifactsCommandTestSuite) TestListArtifactsCmd() {
@@ -56,13 +72,18 @@ func (suite *ListArtifactsCommandTestSuite) TestListArtifactsCmd() {
 		},
 		{
 			name:   "listing artifacts on an empty flow works",
-			cmd:    fmt.Sprintf(`list artifacts %s %s`, suite.flowName, suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf(`list artifacts %s %s`, suite.flowName1, suite.defaultKosliArguments),
 			golden: "No artifacts were found.\n",
 		},
 		{
 			name:   "listing artifacts on an empty flow with --output json works",
-			cmd:    fmt.Sprintf(`list artifacts %s --output json %s`, suite.flowName, suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf(`list artifacts %s --output json %s`, suite.flowName1, suite.defaultKosliArguments),
 			golden: "[]\n",
+		},
+		{
+			name:       "listing artifacts on a flow works",
+			cmd:        fmt.Sprintf(`list artifacts %s %s`, suite.flowName2, suite.defaultKosliArguments),
+			goldenFile: "output/list/list-artifacts.txt",
 		},
 	}
 

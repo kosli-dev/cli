@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/output"
@@ -137,6 +138,7 @@ func printArtifactsJsonAsTable(artifacts []map[string]interface{}, out io.Writer
 				runningInEnvNames = append(runningInEnvNames,
 					fmt.Sprintf("%s#%.0f", envData["environment_name"].(string), envData["snapshot_index"].(float64)))
 			}
+			sort.Strings(runningInEnvNames)
 			rows = append(rows, fmt.Sprintf("Running in environments:\t%s", strings.Join(runningInEnvNames, ", ")))
 		}
 
@@ -150,23 +152,6 @@ func printArtifactsJsonAsTable(artifacts []map[string]interface{}, out io.Writer
 			}
 			rows = append(rows, fmt.Sprintf("Exited from environments:\t%s", strings.Join(exitedInEnvNames, ", ")))
 		}
-
-		// TODO: Remove this if no one has an objection. Info is covered by history
-		// rows = append(rows, "Evidence:")
-		// for _, evidenceName := range artifact["template"].([]interface{}) {
-		// 	if evidenceName != "artifact" {
-		// 		if v, ok := evidenceMap[evidenceName.(string)]; !ok {
-		// 			rows = append(rows, fmt.Sprintf("    %s:\tMISSING", evidenceName))
-		// 		} else {
-		// 			evidenceData := v.(map[string]interface{})
-		// 			isCompliant := "COMPLIANT"
-		// 			if !evidenceData["is_compliant"].(bool) {
-		// 				isCompliant = "INCOMPLIANT"
-		// 			}
-		// 			rows = append(rows, fmt.Sprintf("    %s:\t%s", evidenceName, isCompliant))
-		// 		}
-		// 	}
-		// }
 
 		history := artifact["history"].([]interface{})
 		if len(history) > 0 {

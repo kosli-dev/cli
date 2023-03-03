@@ -56,6 +56,12 @@ func (suite *GetApprovalCommandTestSuite) TestGetApprovalCmd() {
 			cmd:       fmt.Sprintf("get approval %s#23 %s", suite.flowName, suite.defaultKosliArguments),
 			golden:    "Error: Approval number '23' does not exist in pipeline 'get-approval' belonging to Organization 'docs-cmd-test-user'. \n",
 		},
+		{
+			wantError: true,
+			name:      "missing --owner fails",
+			cmd:       fmt.Sprintf("get approval %s --api-token secret", suite.flowName),
+			golden:    "Error: --owner is not set\nUsage: kosli get approval SNAPPISH [flags]\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

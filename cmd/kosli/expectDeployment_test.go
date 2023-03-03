@@ -47,9 +47,15 @@ func (suite *ExpectDeploymentCommandTestSuite) SetupTest() {
 func (suite *ExpectDeploymentCommandTestSuite) TestExpectDeploymentCmd() {
 	tests := []cmdTestCase{
 		{
-			name: "expect deployment works",
+			name: "expect deployment works (with --fingerprint)",
 			cmd: fmt.Sprintf(`expect deployment --flow %s --fingerprint %s --environment %s --build-url example.com %s`,
 				suite.flowName, suite.fingerprint, suite.envName, suite.defaultKosliArguments),
+			golden: fmt.Sprintf("deployment of artifact %s was reported to: expect-deploy-env\n", suite.fingerprint),
+		},
+		{
+			name: "expect deployment works (with --artifact-type)",
+			cmd: fmt.Sprintf(`expect deployment %s --artifact-type file --flow %s --fingerprint %s --environment %s --build-url example.com %s`,
+				suite.artifactPath, suite.flowName, suite.fingerprint, suite.envName, suite.defaultKosliArguments),
 			golden: fmt.Sprintf("deployment of artifact %s was reported to: expect-deploy-env\n", suite.fingerprint),
 		},
 		{
@@ -58,6 +64,22 @@ func (suite *ExpectDeploymentCommandTestSuite) TestExpectDeploymentCmd() {
 								--user-data testdata/snyk_scan_example.json %s`,
 				suite.flowName, suite.fingerprint, suite.envName, suite.defaultKosliArguments),
 			golden: fmt.Sprintf("deployment of artifact %s was reported to: expect-deploy-env\n", suite.fingerprint),
+		},
+		{
+			wantError: true,
+			name:      "missing --owner flag causes an error",
+			cmd: fmt.Sprintf(`expect deployment --flow %s --fingerprint %s --environment %s --build-url example.com 
+			 		--api-token secret`,
+				suite.flowName, suite.fingerprint, suite.envName),
+			golden: "Error: --owner is not set\nUsage: kosli expect deployment [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+		},
+		{
+			wantError: true,
+			name:      "missing --api-token flag causes an error",
+			cmd: fmt.Sprintf(`expect deployment --flow %s --fingerprint %s --environment %s --build-url example.com 
+			 		--owner orgX`,
+				suite.flowName, suite.fingerprint, suite.envName),
+			golden: "Error: --api-token is not set\nUsage: kosli expect deployment [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,

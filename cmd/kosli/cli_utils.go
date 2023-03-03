@@ -115,15 +115,15 @@ func DefaultValue(ci, flag string) string {
 }
 
 // DeprecateFlags declares a list of flags as deprecated for a given command
-func DeprecateFlags(cmd *cobra.Command, flags map[string]string) error {
-	for name, message := range flags {
-		err := cmd.Flags().MarkDeprecated(name, message)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
+// func DeprecateFlags(cmd *cobra.Command, flags map[string]string) error {
+// 	for name, message := range flags {
+// 		err := cmd.Flags().MarkDeprecated(name, message)
+// 		if err != nil {
+// 			return err
+// 		}
+// 	}
+// 	return nil
+// }
 
 // RequireFlags declares a list of flags as required for a given command
 func RequireFlags(cmd *cobra.Command, flagNames []string) error {
@@ -480,8 +480,8 @@ func formattedTimestamp(timestamp interface{}, short bool) (string, error) {
 	// use a fixed timestamp when running tests
 	// also set timezone to UTC to make tests pass everywhere
 	if _, ok := os.LookupEnv("KOSLI_TESTS"); ok {
-		unixUTCTime := time.Unix(int64(1452902400), 0).UTC()
-		shortFormat = unixUTCTime.Format(time.RFC1123)
+		unixTime = time.Unix(int64(1452902400), 0).UTC()
+		shortFormat = unixTime.Format(time.RFC1123)
 	} else {
 		unixTime = time.Unix(intTimestamp, 0)
 		shortFormat = unixTime.Format(time.RFC1123)
