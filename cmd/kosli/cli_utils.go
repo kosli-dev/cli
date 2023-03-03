@@ -101,11 +101,11 @@ func WhichCI() string {
 // DefaultValue looks up the default value of a given flag in a given CI tool
 // if the DOCS env variable is set, return empty string to avoid
 // having irrelevant defaults in the docs
-// if the TESTS env variable is set, return empty string to allow
+// if the KOSLI_TESTS env variable is set, return empty string to allow
 // testing missing flags in CI
 func DefaultValue(ci, flag string) string {
 	_, ok1 := os.LookupEnv("DOCS")
-	_, ok2 := os.LookupEnv("TESTS")
+	_, ok2 := os.LookupEnv("KOSLI_TESTS")
 	if !ok1 && !ok2 {
 		if v, ok := ciTemplates[ci][flag]; ok {
 			return os.ExpandEnv(v)
@@ -457,6 +457,9 @@ func tabFormattedPrint(out io.Writer, header []string, rows []string) {
 // time is formatted using RFC1123
 func formattedTimestamp(timestamp interface{}, short bool) (string, error) {
 	var intTimestamp int64
+	var shortFormat string
+	var unixTime time.Time
+
 	switch t := timestamp.(type) {
 	case int64:
 		intTimestamp = timestamp.(int64)
@@ -475,16 +478,20 @@ func formattedTimestamp(timestamp interface{}, short bool) (string, error) {
 	}
 
 	// use a fixed timestamp when running tests
-	if _, ok := os.LookupEnv("TESTS"); ok {
-		intTimestamp = int64(1452902400)
+	// also set timezone to UTC to make tests pass everywhere
+	if _, ok := os.LookupEnv("KOSLI_TESTS"); ok {
+		unixUTCTime := time.Unix(int64(1452902400), 0).UTC()
+		shortFormat = unixUTCTime.Format(time.RFC1123)
+	} else {
+		unixTime = time.Unix(intTimestamp, 0)
+		shortFormat = unixTime.Format(time.RFC1123)
 	}
 
-	unixTime := time.Unix(intTimestamp, 0)
 	if short {
-		return unixTime.Format(time.RFC1123), nil
+		return shortFormat, nil
 	} else {
 		timeago.English.Max = 36 * timeago.Month
 		timeAgoFormat := timeago.English.Format(unixTime)
-		return fmt.Sprintf("%s \u2022 %s", unixTime.Format(time.RFC1123), timeAgoFormat), nil
+		return fmt.Sprintf("%s \u2022 %s", shortFormat, timeAgoFormat), nil
 	}
 }
