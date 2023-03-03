@@ -44,16 +44,6 @@ func (suite *ArtifactEvidencePRGitlabCommandTestSuite) TestArtifactEvidencePRGit
 				"gitlab merge request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
 		{
-			name: "report Gitlab PR evidence works with evidence-url and evidence-fingerprint",
-			cmd: `pipeline artifact report evidence gitlab-mergerequest --fingerprint ` + suite.artifactFingerprint +
-				` --name gl-pr --pipeline ` + suite.pipelineName +
-				` --build-url example.com --gitlab-org ewelinawilkosz  --repository merkely-gitlab-demo 
-			--commit 2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6
-			--evidence-url yr.no --evidence-fingerprint deadbeef ` + suite.defaultKosliArguments,
-			golden: "no merge requests found for given commit: 2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6\n" +
-				"gitlab merge request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
-		},
-		{
 			name: "report Gitlab PR evidence works when there are merge requests",
 			cmd: `report evidence artifact pullrequest gitlab --fingerprint ` + suite.artifactFingerprint + ` --name gl-pr --flow ` + suite.flowName + `
 			          --build-url example.com --gitlab-org ewelinawilkosz  --repository merkely-gitlab-demo --commit e6510880aecdc05d79104d937e1adb572bd91911` + suite.defaultKosliArguments,
