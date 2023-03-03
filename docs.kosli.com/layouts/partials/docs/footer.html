@@ -44,7 +44,7 @@
     <img src="/images/kosli-logo.svg" alt="Kosli Logo">
   </div>
   <div>
-    © 2022 Kosli Inc.
+    © 2023 Kosli Inc.
   </div>
   <div>
     <a href="https://www.kosli.com" target="_blank">kosli.com</a>
@@ -77,18 +77,7 @@
   <script>{{ . | safeJS }}</script>
 {{ end }}
 
-{{ $reference_pages := where $.Site.Pages "Section" "client_reference" }}
-{{ range $reference_pages }}
-  {{ if eq .Permalink $.Permalink }}
-  <script>
-    function changeHtmlTag(fromTag, toTag) {
-      let tags = document.querySelectorAll(`.markdown ${fromTag}`);
-      tags.forEach(function(tag){
-        tag.outerHTML = `<${toTag} id="${tag.id}">${tag.innerHTML}</${toTag}>`;
-      })
-    }
-    changeHtmlTag("h2", "h1");
-    changeHtmlTag("h3", "h2");
-  </script>
-  {{ end }}
+{{ $script := resources.Get "tocScroller.js" | resources.Minify }}
+{{ with $script.Content }}
+  <script>{{ . | safeJS }}</script>
 {{ end }}

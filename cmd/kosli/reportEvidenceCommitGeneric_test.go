@@ -49,6 +49,14 @@ func (suite *CommitEvidenceGenericCommandTestSuite) TestCommitEvidenceGenericCom
 			golden: fmt.Sprintf("generic evidence '%s' is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n", evidenceName),
 		},
 		{
+			name: "report Generic test evidence works with evidence-url and evidence-fingerprint flags",
+			cmd: fmt.Sprintf(`commit report evidence generic --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name %s --pipelines %s
+			          --build-url example.com --compliant --description "some description"
+					  --evidence-url example.com --evidence-fingerprint 1234 %s`,
+				evidenceName, suite.pipelineNames, suite.defaultKosliArguments),
+			golden: fmt.Sprintf("generic evidence '%s' is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n", evidenceName),
+		},
+		{
 			name: "report Generic test evidence works when neither of --description nor --user-data provided",
 			cmd: fmt.Sprintf(`report evidence commit generic --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name %s --flows %s
 			          --build-url example.com --compliant %s`,

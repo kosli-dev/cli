@@ -69,6 +69,7 @@ jobs:
       id: docker_build
       uses: docker/build-push-action@v3
       with:
+        context: .
         push: true
         tags: ${{ env.IMAGE }}:${{ inputs.tag }}
         platforms: ${{ inputs.platforms }}

@@ -112,10 +112,13 @@ licenses:
 	$(eval DATA := $(shell go-licenses csv ./...))
 	@echo $(DATA) | tr " " "\n" > licenses/licenses.csv
 
-hugo: docs
+generate-json-metadata:
+	echo '{"currentversion": "local"}' > docs.kosli.com/assets/metadata.json
+
+hugo: docs generate-json-metadata
 	cd docs.kosli.com && hugo server --minify --buildDrafts --port=1515
 
-hugo-local:
+hugo-local: generate-json-metadata
 	cd docs.kosli.com && hugo server --minify --buildDrafts --port=1515
 
 helm-lint: 

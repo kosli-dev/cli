@@ -54,5 +54,4 @@ sections:
           link_text: Join the Kosli Community >
           url: https://www.kosli.com/community/
           new_page: true
-        
 ---

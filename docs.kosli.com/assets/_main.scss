@@ -398,6 +398,7 @@ body[dir="rtl"] .book-menu {
 }
 
 @media only screen and (min-width: $mobile-breakpoint) {
+
   .book-footer .footer-grid {
       grid-template-columns: 1fr 1fr 1fr;
       &>div {
@@ -409,5 +410,11 @@ body[dir="rtl"] .book-menu {
 
   .book-page {
     padding: 2rem 3rem;
+  }
+}
+
+@media only screen and (max-width: $mobile-breakpoint) {
+  .mobile-hidden {
+    display: none;
   }
 }

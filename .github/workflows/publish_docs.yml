@@ -3,15 +3,11 @@ name: publish docs
 on:
   push:
     branches:
-      - new-syntax
+      - main
     paths:  
       - 'docs.kosli.com/**'
       - '!docs.kosli.com/content/client_reference/**'
       - '!docs.kosli.com/content/helm/**'
-  # workflow_run:
-  #   workflows: ["helm chart", "release"]
-  #   types:
-  #     - completed
   workflow_dispatch:    
 
 jobs:
@@ -19,27 +15,15 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
-      
-      - uses: actions/setup-go@v3
-        with:
-          go-version: '1.19.5'
-         
-      - name: Generate docs
-        run: |
-          make docs
 
       # Deploy to local repo
       - name: Deploy
         uses: s0/git-publish-subdir-action@develop
         env:
           REPO: self
-          BRANCH: docs-staging
+          BRANCH: docs-main
           FOLDER: docs.kosli.com
           TARGET_DIR: docs.kosli.com
-          # below line should be uncommented on main branch so the client reference is not replaced when
-          # only static content changes
-          # together with ´make docs´ disabled
-          # 
-          # and when build runs on release the ´make docs´ should be enabled AND below line commented 
-          #CLEAR_GLOBS_FILE: ".clear-files"
+          CLEAR_GLOBS_FILE: ".clear-files"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MESSAGE: "From: {msg}"

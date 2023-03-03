@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -14,11 +17,11 @@ type ArtifactEvidenceGenericCommandTestSuite struct {
 	suite.Suite
 	defaultKosliArguments string
 	artifactFingerprint   string
-	pipelineName          string
+	flowName              string
 }
 
 func (suite *ArtifactEvidenceGenericCommandTestSuite) SetupTest() {
-	suite.pipelineName = "generic-evidence"
+	suite.flowName = "generic-evidence"
 	suite.artifactFingerprint = "847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0"
 
 	global = &GlobalOpts{
@@ -28,14 +31,20 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
 
-	CreateFlow(suite.pipelineName, suite.T())
-	CreateArtifact(suite.pipelineName, suite.artifactFingerprint, "FooBar_1", suite.T())
+	t := suite.T()
+	CreateFlow(suite.flowName, t)
+	CreateArtifact(suite.flowName, suite.artifactFingerprint, "FooBar_1", t)
 
+	repo, err := git.PlainOpen("../..")
+	require.NoError(t, err, "failed to open git repository at %s: %v", "../..", err)
+	commitPointer, err := repo.ResolveRevision(plumbing.Revision("HEAD~1"))
+	require.NoError(t, err, "failed to resolve revision %s: %v", "HEAD~1", err)
+	commitHash := commitPointer.String()
 	tests := []cmdTestCase{
 		{
 			name: "create second artifact",
-			cmd: `report artifact testdata --git-commit 0fc1ba9876f91b215679f3649b8668085d820ab5 --artifact-type dir ` + `
-			          --flow ` + suite.pipelineName + ` --build-url www.yr.no --commit-url www.nrk.no --repo-root ../..` + suite.defaultKosliArguments,
+			cmd: `report artifact testdata --git-commit ` + commitHash + ` --artifact-type dir ` + `
+			          --flow ` + suite.flowName + ` --build-url www.yr.no --commit-url www.nrk.no --repo-root ../..` + suite.defaultKosliArguments,
 		},
 	}
 	runTestCmd(suite.T(), tests)
@@ -48,7 +57,7 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) TestArtifactEvidenceGeneri
 			name: "report Generic test evidence works",
 			cmd: fmt.Sprintf(`report evidence artifact generic --fingerprint %s --name %s --flow %s
 			          --build-url example.com --compliant --description "some description" %s`,
-				suite.artifactFingerprint, evidenceName, suite.pipelineName, suite.defaultKosliArguments),
+				suite.artifactFingerprint, evidenceName, suite.flowName, suite.defaultKosliArguments),
 			golden: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
 		},
 		{
@@ -56,28 +65,28 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) TestArtifactEvidenceGeneri
 			cmd: fmt.Sprintf(`report evidence artifact generic --fingerprint %s --name %s --flow %s
 			          --build-url example.com --compliant --description "some description" 
 					  --evidence-url https://example.com --evidence-fingerprint %s %s`,
-				suite.artifactFingerprint, evidenceName, suite.pipelineName, suite.artifactFingerprint, suite.defaultKosliArguments),
+				suite.artifactFingerprint, evidenceName, suite.flowName, suite.artifactFingerprint, suite.defaultKosliArguments),
 			golden: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
 		},
 		{
 			name: "report Generic test evidence works when neither of --description nor --user-data provided",
 			cmd: fmt.Sprintf(`report evidence artifact generic --fingerprint %s --name %s --flow %s
 			          --build-url example.com --compliant %s`,
-				suite.artifactFingerprint, evidenceName, suite.pipelineName, suite.defaultKosliArguments),
+				suite.artifactFingerprint, evidenceName, suite.flowName, suite.defaultKosliArguments),
 			golden: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
 		},
 		{
 			name: "report Generic test evidence works when neither of --description, --user-data or --compliant is provided",
 			cmd: fmt.Sprintf(`report evidence artifact generic --fingerprint %s --name %s --flow %s
 			          --build-url example.com %s`,
-				suite.artifactFingerprint, evidenceName, suite.pipelineName, suite.defaultKosliArguments),
+				suite.artifactFingerprint, evidenceName, suite.flowName, suite.defaultKosliArguments),
 			golden: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
 		},
 		{
 			name: "report Generic test evidence fails if --name is missing",
 			cmd: fmt.Sprintf(`report evidence artifact generic --fingerprint %s --flow %s
 			          --build-url example.com %s`,
-				suite.artifactFingerprint, suite.pipelineName, suite.defaultKosliArguments),
+				suite.artifactFingerprint, suite.flowName, suite.defaultKosliArguments),
 			wantError: true,
 			golden:    "Error: required flag(s) \"name\" not set\n",
 		},
@@ -85,14 +94,14 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) TestArtifactEvidenceGeneri
 			name: "report Generic test evidence fails if --fingerprint and --artifact-type are missing ",
 			cmd: fmt.Sprintf(`report evidence artifact generic --name %s --flow %s
 			          --build-url example.com %s`,
-				evidenceName, suite.pipelineName, suite.defaultKosliArguments),
+				evidenceName, suite.flowName, suite.defaultKosliArguments),
 			wantError: true,
 		},
 		{
 			name: "report Generic test evidence works when --artifact-type is provided",
 			cmd: fmt.Sprintf(`report evidence artifact generic testdata --artifact-type dir --name %s --flow %s
 			          --build-url example.com %s`,
-				evidenceName, suite.pipelineName, suite.defaultKosliArguments),
+				evidenceName, suite.flowName, suite.defaultKosliArguments),
 		},
 	}
 	runTestCmd(suite.T(), tests)

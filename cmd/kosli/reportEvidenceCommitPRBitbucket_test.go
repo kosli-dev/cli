@@ -40,6 +40,14 @@ func (suite *CommitEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePRBi
 			golden: "bitbucket pull request evidence is reported to commit: 2492011ef04a9da09d35be706cf6a4c5bc6f1e69\n",
 		},
 		{
+			name: "report Bitbucket PR evidence works with evidence-url and evidence-fingerprint",
+			cmd: `commit report evidence bitbucket-pullrequest --name bb-pr --pipelines ` + suite.pipelineNames + `
+					--build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz
+					--repository cli-test --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69
+					--evidence-url yr.no --evidence-fingerprint 123edab ` + suite.defaultKosliArguments,
+			golden: "bitbucket pull request evidence is reported to commit: 2492011ef04a9da09d35be706cf6a4c5bc6f1e69\n",
+		},
+		{
 			wantError: true,
 			name:      "report Bitbucket PR evidence fails when --owner is missing",
 			cmd: `report evidence commit pullrequest bitbucket --name bb-pr --flows ` + suite.flowNames + `

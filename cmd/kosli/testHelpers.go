@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-git/go-git/v5"
 	"github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -123,19 +124,24 @@ func CreateFlow(flowName string, t *testing.T) {
 
 // CreateArtifact creates an artifact on the server
 func CreateArtifact(flowName, artifactFingerprint, artifactName string, t *testing.T) {
-	t.Helper()
-	o := &reportArtifactOptions{
+	repo, err := git.PlainOpen("../..")
+	require.NoError(t, err, "failed to open git repository at %s: %v", "../..", err)
+	repoHead, err := repo.Head()
+	require.NoError(t, err, "failed to resolve revision %s: %v", "HEAD", err)
+	headHash := repoHead.Hash().String()
+
+	o := &artifactCreationOptions{
 		srcRepoRoot: "../..",
 		flowName:    flowName,
 		payload: ArtifactPayload{
 			Fingerprint: artifactFingerprint,
-			GitCommit:   "0fc1ba9876f91b215679f3649b8668085d820ab5",
+			GitCommit:   headHash,
 			BuildUrl:    "www.yr.no",
 			CommitUrl:   "www.nrk.no",
 		},
 	}
 
-	err := o.run([]string{artifactName})
+	err = o.run([]string{artifactName})
 	require.NoError(t, err, "artifact should be created without error")
 }
 
