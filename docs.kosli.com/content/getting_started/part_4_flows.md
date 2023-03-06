@@ -1,9 +1,9 @@
 ---
-title: "Part 3: Flows"
+title: "Part 4: Flows"
 bookCollapseSection: false
 weight: 230
 ---
-# Part 3: Flows
+# Part 4: Flows
 
 Kosli allows you to connect the development world (commits, builds, tests, approvals, deployments) with what’s happening in operations. There is a variety of commands that let you report all the necessary information to Kosli and - relying on automatically calculated fingerprints of your artifacts - match it with the environments.
 

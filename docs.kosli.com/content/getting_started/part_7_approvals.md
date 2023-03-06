@@ -1,9 +1,9 @@
 ---
-title: "Part 6: Approvals"
+title: "Part 7: Approvals"
 bookCollapseSection: false
 weight: 260
 ---
-# Part 6: Approvals
+# Part 7: Approvals
 
 ## Report approvals
 
