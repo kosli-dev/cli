@@ -46,7 +46,7 @@ kosli report evidence artifact pullrequest github yourDockerImageName \
 func newReportEvidenceArtifactPRGithubCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestArtifactOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
-	o.retriever = new(ghUtils.GithubConfig)
+	githubFlagsValues := new(ghUtils.GithubFlagsTempValueHolder)
 	cmd := &cobra.Command{
 		Use:     "github [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Aliases: []string{"gh"},
@@ -66,12 +66,14 @@ func newReportEvidenceArtifactPRGithubCmd(out io.Writer) *cobra.Command {
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			o.retriever = ghUtils.NewGithubConfig(githubFlagsValues.Token, githubFlagsValues.BaseURL,
+				githubFlagsValues.Org, githubFlagsValues.Repository)
 			return o.run(out, args)
 		},
 	}
 
 	ci := WhichCI()
-	addGithubFlags(cmd, o.getRetriever().(*ghUtils.GithubConfig), ci)
+	addGithubFlags(cmd, githubFlagsValues, ci)
 	addArtifactPRFlags(cmd, o, ci)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)

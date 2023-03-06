@@ -29,7 +29,7 @@ kosli assert pullrequest github \
 
 func newAssertPullRequestGithubCmd(out io.Writer) *cobra.Command {
 	o := new(assertPullRequestGithubOptions)
-	o.githubConfig = new(ghUtils.GithubConfig)
+	githubFlagsValues := new(ghUtils.GithubFlagsTempValueHolder)
 	cmd := &cobra.Command{
 		Use:     "github",
 		Aliases: []string{"gh"},
@@ -38,12 +38,14 @@ func newAssertPullRequestGithubCmd(out io.Writer) *cobra.Command {
 		Example: assertPRGithubExample,
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			o.githubConfig = ghUtils.NewGithubConfig(githubFlagsValues.Token, githubFlagsValues.BaseURL,
+				githubFlagsValues.Org, githubFlagsValues.Repository)
 			return o.run(args)
 		},
 	}
 
 	ci := WhichCI()
-	addGithubFlags(cmd, o.githubConfig, ci)
+	addGithubFlags(cmd, githubFlagsValues, ci)
 	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
 	addDryRunFlag(cmd)
 

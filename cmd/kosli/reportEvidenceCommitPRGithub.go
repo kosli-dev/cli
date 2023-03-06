@@ -45,7 +45,7 @@ kosli report evidence commit pullrequest github \
 
 func newReportEvidenceCommitPRGithubCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestCommitOptions)
-	o.retriever = new(ghUtils.GithubConfig)
+	githubFlagsValues := new(ghUtils.GithubFlagsTempValueHolder)
 	cmd := &cobra.Command{
 		Use:     "github",
 		Aliases: []string{"gh"},
@@ -60,13 +60,15 @@ func newReportEvidenceCommitPRGithubCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			o.retriever = ghUtils.NewGithubConfig(githubFlagsValues.Token, githubFlagsValues.BaseURL,
+				githubFlagsValues.Org, githubFlagsValues.Repository)
 			return o.run(args)
 		},
 	}
 
 	ci := WhichCI()
 
-	addGithubFlags(cmd, o.retriever.(*ghUtils.GithubConfig), ci)
+	addGithubFlags(cmd, githubFlagsValues, ci)
 	addCommitPRFlags(cmd, o, ci)
 	addDryRunFlag(cmd)
 
