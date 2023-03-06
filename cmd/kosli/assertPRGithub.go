@@ -56,6 +56,9 @@ func newAssertPullRequestGithubCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *assertPullRequestGithubOptions) run(args []string) error {
+	// repository name must be extracted if a user is using default value from ${GITHUB_REPOSITORY}
+	// because the value is in the format of "owner/repository"
+	o.githubConfig.Repository = extractRepoName(o.githubConfig.Repository)
 	pullRequestsEvidence, err := getPullRequestsEvidence(o.githubConfig, o.commit, true)
 	if err != nil {
 		return err

@@ -149,6 +149,12 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 			          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			golden: "Error: open non-existing.json: no such file or directory\n",
 		},
+		{
+			name: "report Github PR evidence works with --repository=owner/repo",
+			cmd: `pipeline artifact report evidence github-pullrequest --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --pipeline ` + suite.pipelineName + `
+			          --build-url example.com --github-org kosli-dev --repository kosli-dev/cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
+			golden: "github pull request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)
@@ -175,6 +181,12 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestAssertPRGithubCmd() {
 			cmd: `assert github-pullrequest --github-org kosli-dev --repository cli 
 			--commit 19aab7f063147614451c88969602a10afba123ab` + suite.defaultKosliArguments,
 			golden: "Error: GET https://api.github.com/repos/kosli-dev/cli/commits/19aab7f063147614451c88969602a10afba123ab/pulls: 422 No commit found for SHA: 19aab7f063147614451c88969602a10afba123ab []\n",
+		},
+		{
+			name: "assert Github PR evidence works with --repository=owner/repo",
+			cmd: `assert github-pullrequest --github-org kosli-dev --repository kosli-dev/cli 
+			--commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
+			golden: "found [1] pull request(s) in Github for commit: 73d7fee2f31ade8e1a9c456c324255212c30c2a6\n",
 		},
 	}
 

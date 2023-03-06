@@ -57,6 +57,10 @@ func newPullRequestCommitEvidenceGithubCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
+			// repository name must be extracted if a user is using default value from ${GITHUB_REPOSITORY}
+			// because the value is in the format of "owner/repository"
+			repoName := o.getRetriever().(*ghUtils.GithubConfig).Repository
+			o.getRetriever().(*ghUtils.GithubConfig).Repository = extractRepoName(repoName)
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {

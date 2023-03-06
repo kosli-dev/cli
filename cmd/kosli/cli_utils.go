@@ -483,3 +483,10 @@ func formattedTimestamp(timestamp interface{}, short bool) (string, error) {
 		return fmt.Sprintf("%s \u2022 %s", unixTime.Format(time.RFC1123), timeAgoFormat), nil
 	}
 }
+
+// extractRepoName returns repository name from 'owner/repository_name' string
+func extractRepoName(fullRepositoryName string) string {
+	repoNameParts := strings.Split(fullRepositoryName, "/")
+	repository := repoNameParts[len(repoNameParts)-1]
+	return repository
+}
