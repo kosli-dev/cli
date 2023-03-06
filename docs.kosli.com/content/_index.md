@@ -12,7 +12,7 @@ hero:
     alt_text: Kosli artie reading a book
 
 paragraph: >
-    Don’t spend hours searching for broken commits and manual changes. Get to the bottom of incidents faster with Kosli. Track and query every change from commit through to production. See the artifacts your pipelines are producing and how your environments are changing from the command line or browser.
+    Don’t spend hours searching for broken commits and manual changes. Get to the bottom of incidents faster with Kosli. Track and query every change from commit through to production. See the artifacts your CI pipelines are producing and how your environments are changing from the command line or browser.
 
 sections:
     title: Dive right in…
@@ -29,10 +29,10 @@ sections:
           description: Environment reporting explained
           link_text: View >
           url: /getting_started/part_2_environments/
-        - title: Kosli pipelines
+        - title: Kosli flows
           image: /images/home/home-pipelines.svg
-          alt_text: Pipelines and artifact reporting explained
-          description: Learn how to use Kosli with docker
+          alt_text: Flows and artifact reporting explained
+          description: Artifact reporting explained
           link_text: View >
           url: /getting_started/part_3_flows/
         - title: Get familiar with Kosli
