@@ -108,3 +108,25 @@ $ kosli environment ls --config-file kosli-conf
 ```
 
 `--config-file` defaults to `kosli`, so if you name your file `kosli.<yaml|toml|json>` and the file is in the same location as where you run Kosli commands from, you can skip the `--config-file` altogether.
+
+
+### Reporting same artifact and evidence multiple times
+If an artifact or evidence is reported multiple times there are a few corner cases. 
+The issues are described here.
+
+## Template
+When an artifact is reported, the template for the flow is stored together with the artifact. 
+If the template has changed between the times the same artifact is reported, it is the last 
+template that is considered the template for that artifact.
+
+## Evidence
+If a given named evidence is reported multiple times it is the compliance status of the last 
+reported version of the evidence that is considered the compliance state of that evidence.
+
+If an artifact is reported multiple times with different git-commit, we can have the same named 
+commit-evidence being attached to the artifact through multiple git-commits. It is the last
+reported version of the named commit-evidence that is considered the compliance state of that evidence.
+
+## Evidence outside the template
+If an artifact has an evidence, either commit evidence or artifact evidence, that is not 
+part of the template the artifact is non-compliant.
