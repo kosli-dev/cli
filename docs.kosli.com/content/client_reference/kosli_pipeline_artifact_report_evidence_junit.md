@@ -19,8 +19,8 @@ kosli pipeline artifact report evidence junit [IMAGE-NAME | FILE-PATH | DIR-PATH
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256' or '--fingerprint'.  |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|        --evidence-fingerprint string  |  The fingerprint of the evidence.  |
-|        --evidence-url string  |  The URL to the evidence.  |
+|        --evidence-fingerprint string  |  [optional] The fingerprint of the evidence.  |
+|        --evidence-url string  |  [optional] The URL to the evidence.  |
 |    -f, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'.  |
 |    -h, --help  |  help for junit  |
 |    -n, --name string  |  The name of the evidence.  |

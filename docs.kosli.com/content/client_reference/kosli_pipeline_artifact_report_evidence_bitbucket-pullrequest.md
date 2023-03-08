@@ -25,8 +25,8 @@ kosli pipeline artifact report evidence bitbucket-pullrequest [IMAGE-NAME | FILE
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --commit string  |  Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|        --evidence-fingerprint string  |  The fingerprint of the evidence.  |
-|        --evidence-url string  |  The URL to the evidence.  |
+|        --evidence-fingerprint string  |  [optional] The fingerprint of the evidence.  |
+|        --evidence-url string  | [optional]  The URL to the evidence.  |
 |    -f, --fingerprint string  |  [conditional] The SHA256 fingerprint for the artifact. Only required if you don't specify '--artifact-type'.  |
 |    -h, --help  |  help for bitbucket-pullrequest  |
 |    -n, --name string  |  The name of the evidence.  |

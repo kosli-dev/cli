@@ -21,8 +21,8 @@ kosli commit report evidence github-pullrequest [flags]
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --commit string  |  Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|        --evidence-fingerprint string  |  The fingerprint of the evidence.  |
-|        --evidence-url string  |  The URL to the evidence.  |
+|        --evidence-fingerprint string  |  [optional] The fingerprint of the evidence.  |
+|        --evidence-url string  |  [optional] The URL to the evidence.  |
 |        --github-base-url string  |  [optional] GitHub base URL (only needed for GitHub Enterprise installations).  |
 |        --github-org string  |  Github organization. (defaulted if you are running in GitHub Actions: https://docs.kosli.com/ci-defaults ).  |
 |        --github-token string  |  Github token.  |

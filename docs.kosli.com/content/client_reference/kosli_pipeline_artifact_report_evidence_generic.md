@@ -21,8 +21,8 @@ kosli pipeline artifact report evidence generic [IMAGE-NAME | FILE-PATH | DIR-PA
 |    -C, --compliant  |  [defaulted] Whether the evidence is compliant or not. (default true)  |
 |    -d, --description string  |  [optional] The evidence description.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|        --evidence-fingerprint string  |  The fingerprint of the evidence.  |
-|        --evidence-url string  |  The URL to the evidence.  |
+|        --evidence-fingerprint string  |  [optional] The fingerprint of the evidence.  |
+|        --evidence-url string  |  [optional] The URL to the evidence.  |
 |    -f, --fingerprint string  |  [conditional] The SHA256 fingerprint for the artifact. Only required if you don't specify '--artifact-type'.  |
 |    -h, --help  |  help for generic  |
 |    -n, --name string  |  The name of the evidence.  |
