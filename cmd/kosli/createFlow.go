@@ -1,11 +1,9 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/requests"
@@ -15,40 +13,20 @@ import (
 const createFlowShortDesc = `Create or update a Kosli flow.`
 
 const createFlowLongDesc = createFlowShortDesc + `
-You can provide a JSON pipefile or specify flow parameters in flags. 
-The pipefile contains the flow metadata and compliance policy (template).`
+You can specify flow parameters in flags.`
 
 const createFlowExample = `
-# create/update a Kosli flow without a pipefile:
+# create/update a Kosli flow:
 kosli create flow yourFlowName \
 	--description yourFlowDescription \
     --visibility private OR public \
 	--template artifact,evidence-type1,evidence-type2 \
 	--api-token yourAPIToken \
 	--owner yourOrgName
-
-# create/update a Kosli flow with a pipefile (this is a legacy way which will be removed in the future):
-kosli create flow yourFlowName \
-	--pipefile /path/to/pipefile.json \
-	--api-token yourAPIToken \
-	--owner yourOrgName
-
-The pipefile format is:
-{
-    "name": "yourFlowName",
-    "description": "yourFlowDescription",
-    "visibility": "public or private",
-    "template": [
-        "artifact",
-        "evidence-type1",
-        "evidence-type2"
-    ]
-}
 `
 
 type createFlowOptions struct {
-	pipefile string
-	payload  FlowPayload
+	payload FlowPayload
 }
 
 type FlowPayload struct {
@@ -73,7 +51,7 @@ func newCreateFlowCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
-			err = MuXRequiredFlags(cmd, []string{"description", "pipefile"}, false)
+			err = MuXRequiredFlags(cmd, []string{"description"}, false)
 			if err != nil {
 				return err
 			}
@@ -85,7 +63,6 @@ func newCreateFlowCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&o.pipefile, "pipefile", "", pipefileFlag)
 	cmd.Flags().StringVar(&o.payload.Description, "description", "", pipelineDescriptionFlag)
 	cmd.Flags().StringVar(&o.payload.Visibility, "visibility", "private", visibilityFlag)
 	cmd.Flags().StringSliceVarP(&o.payload.Template, "template", "t", []string{"artifact"}, templateFlag)
@@ -97,15 +74,10 @@ func newCreateFlowCmd(out io.Writer) *cobra.Command {
 func (o *createFlowOptions) run(args []string) error {
 	var err error
 	url := fmt.Sprintf("%s/api/v1/projects/%s/", global.Host, global.Owner)
-	if o.pipefile != "" {
-		o.payload, err = loadPipefile(o.pipefile)
-		if err != nil {
-			return err
-		}
-	}
+
 	if o.payload.Name == "" {
 		if len(args) == 0 {
-			return fmt.Errorf("flow name must be provided either as an argument or in the pipefile")
+			return fmt.Errorf("flow name must be provided as an argument")
 		}
 		o.payload.Name = args[0]
 	}
@@ -141,20 +113,4 @@ func injectArtifactIntoTemplateIfNotExisting(template []string) []string {
 		result = append(result, "artifact")
 	}
 	return result
-}
-
-// loadPipefile deserializes a JSON file into a PipelinePayload struct
-func loadPipefile(pipefilePath string) (FlowPayload, error) {
-	var pipe FlowPayload
-	jsonFile, err := os.Open(pipefilePath)
-	if err != nil {
-		return pipe, fmt.Errorf("failed to open pipefile: %v", err)
-	}
-	byteValue, _ := io.ReadAll(jsonFile)
-
-	err = json.Unmarshal(byteValue, &pipe)
-	if err != nil {
-		return pipe, fmt.Errorf("failed to unmarshal json: %v", err)
-	}
-	return pipe, nil
 }

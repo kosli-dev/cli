@@ -14,7 +14,7 @@ const createEnvironmentDesc = `Create a Kosli environment.`
 const createEnvironmentExample = `
 # create a Kosli environment:
 kosli create environment yourEnvironmentName
-	--environment-type K8S \
+	--type K8S \
 	--description "my new env" \
 	--api-token yourAPIToken \
 	--owner yourOrgName 

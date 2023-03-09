@@ -62,31 +62,9 @@ func (suite *CreateFlowCommandTestSuite) TestCreateFlowCmd() {
 		},
 		{
 			wantError: true,
-			name:      "missing name argument and --pipefile fails",
+			name:      "missing name argument fails",
 			cmd:       "create flow --description \"my new flow\" -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
-			golden:    "Error: flow name must be provided either as an argument or in the pipefile\n",
-		},
-		{
-			name:   "providing both name arg and --pipefile works when pipefile contains name",
-			cmd:    "create flow newFlow2 --pipefile testdata/pipe-with-name.json" + suite.defaultKosliArguments,
-			golden: "flow 'cli-test' was created\n", // the name comes from pipe-with-name.json
-		},
-		{
-			name:   "providing both name arg and --pipefile works when pipefile does not contain name",
-			cmd:    "create flow newFlow2 --pipefile testdata/pipe-nameless.json" + suite.defaultKosliArguments,
-			golden: "flow 'newFlow2' was created\n", // the name comes from the argument
-		},
-		{
-			wantError: true,
-			name:      "providing both --description and --pipefile fails",
-			cmd:       "create flow --description \"new flow\" --pipefile /path/to/file.json" + suite.defaultKosliArguments,
-			golden:    "Error: only one of --description, --pipefile is allowed\n",
-		},
-		{
-			wantError: true,
-			name:      "providing --pipefile with non-existing file fails",
-			cmd:       "create flow --pipefile /path/to/file.json" + suite.defaultKosliArguments,
-			golden:    "Error: failed to open pipefile: open /path/to/file.json: no such file or directory\n",
+			golden:    "Error: flow name must be provided as an argument\n",
 		},
 	}
 
