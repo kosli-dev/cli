@@ -11,9 +11,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const assertEnvironmentShortDesc = `Assert the compliance status of an environment in Kosli.`
+const assertSnapshotShortDesc = `Assert the compliance status of an environment in Kosli.`
 
-const assertEnvironmentLongDesc = assertEnvironmentShortDesc + `
+const assertSnapshotLongDesc = assertSnapshotShortDesc + `
 Exits with non-zero code if the environment has a non-compliant status.
 The expected argument is an expression to specify the specific environment snapshot to assert.
 It has the format <ENVIRONMENT_NAME>[SEPARATOR][SNAPSHOT_REFERENCE] 
@@ -28,19 +28,18 @@ Examples of valid expressions are:
 - prod~2 (third latest snapshot of prod)
 `
 
-const assertEnvironmentExample = `
-kosli assert environment prod#5 \
+const assertSnapshotExample = `
+kosli assert snapshot prod#5 \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 `
 
-func newAssertEnvironmentCmd(out io.Writer) *cobra.Command {
+func newAssertSnapshotCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "environment ENVIRONMENT-NAME-OR-EXPRESSION",
-		Aliases: []string{"env"},
-		Short:   assertEnvironmentShortDesc,
-		Long:    assertEnvironmentLongDesc,
-		Example: assertEnvironmentExample,
+		Use:     "snapshot ENVIRONMENT-NAME-OR-EXPRESSION",
+		Short:   assertSnapshotShortDesc,
+		Long:    assertSnapshotLongDesc,
+		Example: assertSnapshotExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})

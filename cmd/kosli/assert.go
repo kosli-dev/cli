@@ -20,7 +20,7 @@ func newAssertCmd(out io.Writer) *cobra.Command {
 		newAssertPRCmd(out),
 		newAssertStatusCmd(out),
 		newAssertArtifactCmd(out),
-		newAssertEnvironmentCmd(out),
+		newAssertSnapshotCmd(out),
 		newAssertApprovalCmd(out),
 	)
 

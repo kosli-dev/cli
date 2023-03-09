@@ -11,7 +11,7 @@ import (
 // Define the suite, and absorb the built-in basic suite
 // functionality from testify - including a T() method which
 // returns the current testing context
-type AssertEnvCommandTestSuite struct {
+type AssertSnapshotCommandTestSuite struct {
 	suite.Suite
 	defaultKosliArguments string
 	envName               string
@@ -21,12 +21,12 @@ type AssertEnvCommandTestSuite struct {
 	fingerprint           string
 }
 
-type assertEnvironmentTestConfig struct {
+type assertSnapshotTestConfig struct {
 	reportToEnv      bool
 	expectDeployment bool
 }
 
-func (suite *AssertEnvCommandTestSuite) SetupTest() {
+func (suite *AssertSnapshotCommandTestSuite) SetupTest() {
 	suite.envName = "env-to-assert"
 	suite.flowName = "some-flow"
 	suite.artifactName = "arti"
@@ -49,31 +49,31 @@ func (suite *AssertEnvCommandTestSuite) SetupTest() {
 	CreateArtifact(suite.flowName, suite.fingerprint, suite.artifactName, suite.T())
 }
 
-func (suite *AssertEnvCommandTestSuite) TestAssertEnvCmd() {
+func (suite *AssertSnapshotCommandTestSuite) TestAssertSnapshotCmd() {
 	tests := []cmdTestCase{
 		{
 			wantError: true,
 			name:      "missing --owner fails",
-			cmd:       fmt.Sprintf(`assert env %s --api-token secret`, suite.envName),
-			golden:    "Error: --owner is not set\nUsage: kosli assert environment [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+			cmd:       fmt.Sprintf(`assert snapshot %s --api-token secret`, suite.envName),
+			golden:    "Error: --owner is not set\nUsage: kosli assert snapshot [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "asserting an empty env results in non-zero exit",
-			cmd:       fmt.Sprintf(`assert env %s %s`, suite.envName, suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf(`assert snapshot %s %s`, suite.envName, suite.defaultKosliArguments),
 			golden:    "Error: Org: 'docs-cmd-test-user'. Snapshot 'env-to-assert#-1' resolves to 'env-to-assert#0'. len(snapshots) == 0. Indexes are 1-based\n",
 		},
 		{
 			wantError: true,
 			name:      "asserting a non existing env fails",
-			cmd:       `assert env non-existing` + suite.defaultKosliArguments,
+			cmd:       `assert snapshot non-existing` + suite.defaultKosliArguments,
 			golden:    "Error: Environment named 'non-existing' does not exist for Organization 'docs-cmd-test-user'\n",
 		},
 		{
 			wantError: true,
 			name:      "asserting a non-compliant env results in INCOMPLIANT and non-zero exit",
-			cmd:       fmt.Sprintf(`assert env %s %s`, suite.envName, suite.defaultKosliArguments),
-			additionalConfig: assertEnvironmentTestConfig{
+			cmd:       fmt.Sprintf(`assert snapshot %s %s`, suite.envName, suite.defaultKosliArguments),
+			additionalConfig: assertSnapshotTestConfig{
 				reportToEnv:      true,
 				expectDeployment: false,
 			},
@@ -81,8 +81,8 @@ func (suite *AssertEnvCommandTestSuite) TestAssertEnvCmd() {
 		},
 		{
 			name: "asserting a compliant env results in COMPLIANT and zero exit",
-			cmd:  fmt.Sprintf(`assert env %s %s`, suite.envName, suite.defaultKosliArguments),
-			additionalConfig: assertEnvironmentTestConfig{
+			cmd:  fmt.Sprintf(`assert snapshot %s %s`, suite.envName, suite.defaultKosliArguments),
+			additionalConfig: assertSnapshotTestConfig{
 				reportToEnv:      true,
 				expectDeployment: true,
 			},
@@ -91,8 +91,8 @@ func (suite *AssertEnvCommandTestSuite) TestAssertEnvCmd() {
 	}
 
 	for _, t := range tests {
-		if t.additionalConfig != nil && t.additionalConfig.(assertEnvironmentTestConfig).reportToEnv {
-			if t.additionalConfig.(assertEnvironmentTestConfig).expectDeployment {
+		if t.additionalConfig != nil && t.additionalConfig.(assertSnapshotTestConfig).reportToEnv {
+			if t.additionalConfig.(assertSnapshotTestConfig).expectDeployment {
 				ExpectDeployment(suite.flowName, suite.fingerprint, suite.envName, suite.T())
 			}
 			ReportServerArtifactToEnv([]string{suite.artifactPath}, suite.envName, suite.T())
@@ -103,6 +103,6 @@ func (suite *AssertEnvCommandTestSuite) TestAssertEnvCmd() {
 
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
-func TestAssertEnvCommandTestSuite(t *testing.T) {
-	suite.Run(t, new(AssertEnvCommandTestSuite))
+func TestAssertSnapshotCommandTestSuite(t *testing.T) {
+	suite.Run(t, new(AssertSnapshotCommandTestSuite))
 }
