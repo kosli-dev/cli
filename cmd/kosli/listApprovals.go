@@ -19,18 +19,21 @@ By default, the page limit is 15 approvals per page.
 
 const listApprovalsExample = `
 # list the last 15 approvals for a flow:
-kosli list approvals yourFlowName \
+kosli list approvals \ 
+	--flow yourFlowName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
 # list the last 30 approvals for a flow:
-kosli list approvals yourFlowName \
+kosli list approvals \
+	--flow yourFlowName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
 # list the last 30 approvals for a flow (in JSON):
-kosli list approvals yourFlowName \
+kosli list approvals \
+	--flow yourFlowName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--owner yourOrgName \
@@ -39,16 +42,17 @@ kosli list approvals yourFlowName \
 
 type listApprovalsOptions struct {
 	listOptions
+	flowName string
 }
 
 func newListApprovalsCmd(out io.Writer) *cobra.Command {
 	o := new(listApprovalsOptions)
 	cmd := &cobra.Command{
-		Use:     "approvals FLOW-NAME",
+		Use:     "approvals",
 		Short:   listApprovalsShortDesc,
 		Long:    listApprovalsLongDesc,
 		Example: listApprovalsExample,
-		Args:    cobra.ExactArgs(1),
+		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -58,18 +62,24 @@ func newListApprovalsCmd(out io.Writer) *cobra.Command {
 			return o.validate(cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(out, args)
+			return o.run(out)
 		},
 	}
 
+	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	addListFlags(cmd, &o.listOptions)
+
+	err := RequireFlags(cmd, []string{"flow"})
+	if err != nil {
+		logger.Error("failed to configure required flags: %v", err)
+	}
 
 	return cmd
 }
 
-func (o *listApprovalsOptions) run(out io.Writer, args []string) error {
+func (o *listApprovalsOptions) run(out io.Writer) error {
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/approvals/?page=%d&per_page=%d",
-		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit)
+		global.Host, global.Owner, o.flowName, o.pageNumber, o.pageLimit)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,

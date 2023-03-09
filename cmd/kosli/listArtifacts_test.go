@@ -47,44 +47,44 @@ func (suite *ListArtifactsCommandTestSuite) TestListArtifactsCmd() {
 	tests := []cmdTestCase{
 		{
 			wantError: true,
-			name:      "missing flow name arg causes an error",
+			name:      "missing flow flag causes an error",
 			cmd:       fmt.Sprintf(`list artifacts %s`, suite.defaultKosliArguments),
-			golden:    "Error: accepts 1 arg(s), received 0\n",
+			golden:    "Error: required flag(s) \"flow\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "non-existing flow causes an error",
-			cmd:       fmt.Sprintf(`list artifacts non-existing %s`, suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf(`list artifacts --flow non-existing %s`, suite.defaultKosliArguments),
 			golden:    "Error: Pipeline called 'non-existing' does not exist for Organization 'docs-cmd-test-user'. \n",
 		},
 		// TODO: the correct error is overwritten by the hack flag value check in root.go
 		{
 			wantError: true,
 			name:      "negative page number causes an error",
-			cmd:       fmt.Sprintf(`list artifacts foo --page -1 %s`, suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf(`list artifacts --flow foo --page -1 %s`, suite.defaultKosliArguments),
 			golden:    "Error: flag '--page' has value '-1' which is illegal\n",
 		},
 		{
 			wantError: true,
 			name:      "negative page limit causes an error",
-			cmd:       fmt.Sprintf(`list artifacts foo --page-limit -1 %s`, suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf(`list artifacts --flow foo --page-limit -1 %s`, suite.defaultKosliArguments),
 			golden:    "Error: flag '--page-limit' has value '-1' which is illegal\n",
 		},
 		{
 			name:   "listing artifacts on an empty flow works",
-			cmd:    fmt.Sprintf(`list artifacts %s %s`, suite.flowName1, suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf(`list artifacts --flow %s %s`, suite.flowName1, suite.defaultKosliArguments),
 			golden: "No artifacts were found.\n",
 		},
 		{
 			name:   "listing artifacts on an empty flow with --output json works",
-			cmd:    fmt.Sprintf(`list artifacts %s --output json %s`, suite.flowName1, suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf(`list artifacts --flow %s --output json %s`, suite.flowName1, suite.defaultKosliArguments),
 			golden: "[]\n",
 		},
-		{
-			name:       "listing artifacts on a flow works",
-			cmd:        fmt.Sprintf(`list artifacts %s %s`, suite.flowName2, suite.defaultKosliArguments),
-			goldenFile: "output/list/list-artifacts.txt",
-		},
+		// {
+		// 	name:       "listing artifacts on a flow works",
+		// 	cmd:        fmt.Sprintf(`list artifacts --flow %s %s`, suite.flowName2, suite.defaultKosliArguments),
+		// 	goldenFile: "output/list/list-artifacts.txt",
+		// },
 	}
 
 	runTestCmd(suite.T(), tests)

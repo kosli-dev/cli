@@ -19,18 +19,21 @@ By default, the page limit is 15 deployments per page.
 `
 const listDeploymentsExample = `
 # list the last 15 deployments for a flow:
-kosli list deployments yourFlowName \
+kosli list deploymentss \ 
+	--flow yourFlowName \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
 # list the last 30 deployments for a flow:
-kosli list deployments yourFlowName \
+kosli list deployments \ 
+	--flow yourFlowName \	
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--owner yourOrgName
 
 # list the last 30 deployments for a flow (in JSON):
-kosli list deployments yourFlowName \
+kosli list deployments \ 
+	--flow yourFlowName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--owner yourOrgName \
@@ -39,17 +42,18 @@ kosli list deployments yourFlowName \
 
 type listDeploymentsOptions struct {
 	listOptions
+	flowName string
 }
 
 func newListDeploymentsCmd(out io.Writer) *cobra.Command {
 	o := new(listDeploymentsOptions)
 	cmd := &cobra.Command{
-		Use:     "deployments FLOW-NAME",
+		Use:     "deployments",
 		Aliases: []string{"deployment", "deploy"},
 		Short:   listDeploymentsShortDesc,
 		Long:    listDeploymentsLongDesc,
 		Example: listDeploymentsExample,
-		Args:    cobra.ExactArgs(1),
+		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -59,18 +63,24 @@ func newListDeploymentsCmd(out io.Writer) *cobra.Command {
 			return o.validate(cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(out, args)
+			return o.run(out)
 		},
 	}
 
+	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	addListFlags(cmd, &o.listOptions)
+
+	err := RequireFlags(cmd, []string{"flow"})
+	if err != nil {
+		logger.Error("failed to configure required flags: %v", err)
+	}
 
 	return cmd
 }
 
-func (o *listDeploymentsOptions) run(out io.Writer, args []string) error {
+func (o *listDeploymentsOptions) run(out io.Writer) error {
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/?page=%d&per_page=%d",
-		global.Host, global.Owner, args[0], o.pageNumber, o.pageLimit)
+		global.Host, global.Owner, o.flowName, o.pageNumber, o.pageLimit)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,
