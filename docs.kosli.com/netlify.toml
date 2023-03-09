@@ -1,6 +1,7 @@
 [build]
   publish = "public"
   command = "HUGO_BASEURL=$URL hugo"
+  ignoreErrors = ["error-remote-getjson"]
 
 [build.environment]
   HUGO_VERSION = "0.110.0"
@@ -16,8 +17,6 @@
 
 [context.branch-deploy]
   command = "HUGO_BASEURL=$DEPLOY_PRIME_URL hugo --printI18nWarnings --buildDrafts --enableGitInfo"
-
-ignoreErrors = ["error-remote-getjson"]
 
 [[plugins]]
 package = "netlify-plugin-checklinks"
