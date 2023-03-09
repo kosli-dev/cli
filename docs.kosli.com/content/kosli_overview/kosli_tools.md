@@ -6,8 +6,8 @@ weight: 140
 
 ## CLI
 
-In order to [record environments](/getting_started/part_2_environments/), [artifacts](/getting_started/part_4_artifacts/) and [evidence](/getting_started/part_5_evidence/) to Kosli you need to use the [Kosli CLI](https://github.com/kosli-dev/cli). 
-The CLI can be used to [search](/getting_started/part_8_querying/) Kosli and find out all you need to know about your runtime environments and artifacts.
+In order to [record environments](/getting_started/part_3_environments/), [artifacts](/getting_started/part_5_artifacts/) and [evidence](/getting_started/part_6_evidence/) to Kosli you need to use the [Kosli CLI](https://github.com/kosli-dev/cli). 
+The CLI can be used to [search](/getting_started/part_9_querying/) Kosli and find out all you need to know about your runtime environments and artifacts.
 
 Our CLI is an open source tool written in go and it's available for a number of different platforms.
 

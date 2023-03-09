@@ -391,4 +391,4 @@ History:
     Started running in quickstart#1 environment  Tue, 01 Nov 2022 15:55:49 CET
 ```
 
-Visit [Part 8: Querying](/getting_started/part_8_querying/) section to learn more
+Visit [Part 9: Querying](/getting_started/part_9_querying/) section to learn more

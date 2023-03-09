@@ -28,13 +28,13 @@ sections:
           alt_text: Kosli environments icon
           description: Environment reporting explained
           link_text: View >
-          url: /getting_started/part_2_environments/
+          url: /getting_started/part_3_environments/
         - title: Kosli flows
           image: /images/home/home-pipelines.svg
           alt_text: Flows and artifact reporting explained
           description: Artifact reporting explained
           link_text: View >
-          url: /getting_started/part_3_flows/
+          url: /getting_started/part_4_flows/
         - title: Get familiar with Kosli
           image: /images/home/home-quickstart.svg
           alt_text: Use cases icon
