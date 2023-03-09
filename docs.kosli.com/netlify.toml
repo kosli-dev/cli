@@ -1,7 +1,6 @@
 [build]
   publish = "public"
   command = "HUGO_BASEURL=$URL hugo"
-  ignoreErrors = ["error-remote-getjson"]
 
 [build.environment]
   HUGO_VERSION = "0.110.0"
