@@ -3,7 +3,7 @@ name: publish docs
 on:
   push:
     branches:
-      - main
+      - new-syntax
     paths:  
       - 'docs.kosli.com/**'
       - '!docs.kosli.com/content/client_reference/**'
@@ -23,7 +23,7 @@ jobs:
       - name: Generate docs
         run: |
           make docs
-          
+
       # Deploy to local repo
       - name: Deploy
         uses: s0/git-publish-subdir-action@develop
