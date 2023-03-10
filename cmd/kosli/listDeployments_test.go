@@ -95,11 +95,11 @@ func (suite *ListDeploymentsCommandTestSuite) TestListDeploymentsCmd() {
 			cmd:    fmt.Sprintf(`list deployments --flow %s --output json %s`, suite.flowName1, suite.defaultKosliArguments),
 			golden: "[]\n",
 		},
-		// {
-		// 	name:       "listing deployments on a flow works",
-		// 	cmd:        fmt.Sprintf(`list deployments %s %s`, suite.flowName2, suite.defaultKosliArguments),
-		// 	goldenFile: "output/list/list-deployments.txt",
-		// },
+		{
+			name:       "listing deployments on a flow works",
+			cmd:        fmt.Sprintf(`list deployments --flow %s %s`, suite.flowName2, suite.defaultKosliArguments),
+			goldenFile: "output/list/list-deployments.txt",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

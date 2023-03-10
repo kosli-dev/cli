@@ -81,24 +81,11 @@ func (suite *ListApprovalsCommandTestSuite) TestListApprovalsCmd() {
 			cmd:    fmt.Sprintf(`list approvals --flow %s --output json %s`, suite.flowName1, suite.defaultKosliArguments),
 			golden: "[]\n",
 		},
-		// TODO: temporarily disabled due to error:
-		// WANT:
-		// 'ID   ARTIFACT                                                                       STATE     LAST_MODIFIED_AT
-		// 1    Name: arti                                                                     APPROVED  Sat, 16 Jan 2016 00:00:00 UTC
-		//      Fingerprint: fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02'
-
-		// GOT:
-		// 'ID   ARTIFACT                                                                       STATE     LAST_MODIFIED_AT
-		// 2    Name: arti                                                                     APPROVED  Thu, 09 Mar 2023 13:36:55 CET
-		//      Fingerprint: fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02
-
-		// 1    Name: arti                                                                     APPROVED  Thu, 09 Mar 2023 13:36:15 CET
-		//      Fingerprint: fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02'
-		// {
-		// 	name:       "listing approvals on a flow works",
-		// 	cmd:        fmt.Sprintf(`list approvals --flow %s %s`, suite.flowName2, suite.defaultKosliArguments),
-		// 	goldenFile: "output/list/list-approvals.txt",
-		// },
+		{
+			name:       "listing approvals on a flow works",
+			cmd:        fmt.Sprintf(`list approvals --flow %s %s`, suite.flowName2, suite.defaultKosliArguments),
+			goldenFile: "output/list/list-approvals.txt",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

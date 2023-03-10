@@ -80,11 +80,11 @@ func (suite *ListArtifactsCommandTestSuite) TestListArtifactsCmd() {
 			cmd:    fmt.Sprintf(`list artifacts --flow %s --output json %s`, suite.flowName1, suite.defaultKosliArguments),
 			golden: "[]\n",
 		},
-		// {
-		// 	name:       "listing artifacts on a flow works",
-		// 	cmd:        fmt.Sprintf(`list artifacts --flow %s %s`, suite.flowName2, suite.defaultKosliArguments),
-		// 	goldenFile: "output/list/list-artifacts.txt",
-		// },
+		{
+			name:       "listing artifacts on a flow works",
+			cmd:        fmt.Sprintf(`list artifacts --flow %s %s`, suite.flowName2, suite.defaultKosliArguments),
+			goldenFile: "output/list/list-artifacts.txt",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)
