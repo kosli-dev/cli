@@ -17,11 +17,13 @@ const logEnvironmentLongDesc = logEnvironmentShortDesc + `
 The results are paginated and ordered from latests to oldest. 
 By default, the page limit is 15 events per page.
 
-You can optionally specify an INTERVAL between two snapshot expressions with <expression>..<expression>.
+You can optionally specify an INTERVAL between two snapshot expressions with [expression]..[expression]. 
+
 Expressions can be:
-	~N   N'th behind the latest snapshot
-	N    snapshot number N
-	NOW  the latest snapshot
+* ~N   N'th behind the latest snapshot  
+* N    snapshot number N  
+* NOW  the latest snapshot  
+
 Either expression can be omitted to default to NOW.
 `
 
@@ -47,7 +49,8 @@ kosli log environment yourEnvironmentName \
 
 type logEnvironmentOptions struct {
 	listOptions
-	reverse bool
+	reverse  bool
+	interval string
 }
 
 func newLogEnvironmentCmd(out io.Writer) *cobra.Command {
@@ -58,7 +61,7 @@ func newLogEnvironmentCmd(out io.Writer) *cobra.Command {
 		Short:   logEnvironmentShortDesc,
 		Long:    logEnvironmentLongDesc,
 		Example: logEnvironmentExample,
-		Args:    cobra.MatchAll(cobra.MaximumNArgs(2), cobra.MinimumNArgs(1)),
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -72,6 +75,7 @@ func newLogEnvironmentCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
+	cmd.Flags().StringVarP(&o.interval, "interval", "i", "", intervalFlag)
 	addListFlags(cmd, &o.listOptions)
 	cmd.Flags().BoolVar(&o.reverse, "reverse", false, reverseFlag)
 
@@ -80,12 +84,8 @@ func newLogEnvironmentCmd(out io.Writer) *cobra.Command {
 
 func (o *logEnvironmentOptions) run(out io.Writer, args []string) error {
 	envName := args[0]
-	interval := ""
-	if len(args) > 1 {
-		interval = args[1]
-	}
 
-	return o.getEnvironmentEvents(out, envName, interval)
+	return o.getEnvironmentEvents(out, envName, o.interval)
 
 }
 

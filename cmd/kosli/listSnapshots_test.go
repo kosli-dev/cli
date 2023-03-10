@@ -60,14 +60,14 @@ func (suite *ListSnapshotsCommandTestSuite) TestListSnapshotsCmd() {
 		{
 			wantError: true,
 			name:      "listing snapshots fails when 3 args are provided",
-			cmd:       fmt.Sprintf(`list snapshots %s arg2 arg3 %s`, suite.snapshotsEnvName, suite.defaultKosliArguments),
-			golden:    "Error: accepts at most 2 arg(s), received 3\n",
+			cmd:       fmt.Sprintf(`list snapshots %s arg2 %s`, suite.snapshotsEnvName, suite.defaultKosliArguments),
+			golden:    "Error: accepts 1 arg(s), received 2\n",
 		},
 		{
 			wantError: true,
 			name:      "listing snapshots fails when no args are provided",
 			cmd:       fmt.Sprintf(`list snapshots %s`, suite.defaultKosliArguments),
-			golden:    "Error: requires at least 1 arg(s), only received 0\n",
+			golden:    "Error: accepts 1 arg(s), received 0\n",
 		},
 		{
 			name:   "listing snapshots works when env is empty",
@@ -90,21 +90,21 @@ func (suite *ListSnapshotsCommandTestSuite) TestListSnapshotsCmd() {
 		},
 		{
 			name: "listing snapshots works when env contains snapshots and NOW is provided as interval",
-			cmd:  fmt.Sprintf(`list snapshots %s NOW %s`, suite.snapshotsEnvName, suite.defaultKosliArguments),
+			cmd:  fmt.Sprintf(`list snapshots %s --interval NOW %s`, suite.snapshotsEnvName, suite.defaultKosliArguments),
 			additionalConfig: listSnapshotsTestConfig{
 				reportToEnv: true,
 			},
 		},
 		{
 			name: "listing snapshots works when env contains snapshots and 1..2 is provided as interval",
-			cmd:  fmt.Sprintf(`list snapshots %s 1..2 %s`, suite.snapshotsEnvName, suite.defaultKosliArguments),
+			cmd:  fmt.Sprintf(`list snapshots %s --interval 1..2 %s`, suite.snapshotsEnvName, suite.defaultKosliArguments),
 			additionalConfig: listSnapshotsTestConfig{
 				reportToEnv: true,
 			},
 		},
 		{
 			name: "listing snapshots in interval 1..2 with --reverse works",
-			cmd:  fmt.Sprintf(`list snapshots %s 1..2 --reverse %s`, suite.snapshotsEnvName, suite.defaultKosliArguments),
+			cmd:  fmt.Sprintf(`list snapshots %s --interval 1..2 --reverse %s`, suite.snapshotsEnvName, suite.defaultKosliArguments),
 			additionalConfig: listSnapshotsTestConfig{
 				reportToEnv: true,
 			},

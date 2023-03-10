@@ -55,15 +55,15 @@ func (suite *LogEnvironmentCommandTestSuite) TestLogEnvironmentCmd() {
 		},
 		{
 			wantError: true,
-			name:      "listing events fails when 3 args are provided",
-			cmd:       fmt.Sprintf(`log env %s arg2 arg3 %s`, suite.eventsEnvName, suite.defaultKosliArguments),
-			golden:    "Error: accepts at most 2 arg(s), received 3\n",
+			name:      "listing events fails when 2 args are provided",
+			cmd:       fmt.Sprintf(`log env %s arg2 %s`, suite.eventsEnvName, suite.defaultKosliArguments),
+			golden:    "Error: accepts 1 arg(s), received 2\n",
 		},
 		{
 			wantError: true,
 			name:      "listing events fails when no args are provided",
 			cmd:       fmt.Sprintf(`log env %s`, suite.defaultKosliArguments),
-			golden:    "Error: requires at least 1 arg(s), only received 0\n",
+			golden:    "Error: accepts 1 arg(s), received 0\n",
 		},
 		{
 			name:   "listing events works when env is empty",
@@ -86,21 +86,21 @@ func (suite *LogEnvironmentCommandTestSuite) TestLogEnvironmentCmd() {
 		},
 		{
 			name: "listing events works when env contains snapshots and NOW is provided as interval",
-			cmd:  fmt.Sprintf(`log env %s NOW %s`, suite.eventsEnvName, suite.defaultKosliArguments),
+			cmd:  fmt.Sprintf(`log env %s --interval NOW %s`, suite.eventsEnvName, suite.defaultKosliArguments),
 			additionalConfig: listSnapshotsTestConfig{
 				reportToEnv: true,
 			},
 		},
 		{
 			name: "listing events works when env contains snapshots and 1..2 is provided as interval",
-			cmd:  fmt.Sprintf(`log env %s 1..2 %s`, suite.eventsEnvName, suite.defaultKosliArguments),
+			cmd:  fmt.Sprintf(`log env %s --interval 1..2 %s`, suite.eventsEnvName, suite.defaultKosliArguments),
 			additionalConfig: listSnapshotsTestConfig{
 				reportToEnv: true,
 			},
 		},
 		{
 			name: "listing events in interval 1..2 with --reverse works",
-			cmd:  fmt.Sprintf(`log env %s 1..2 --reverse %s`, suite.eventsEnvName, suite.defaultKosliArguments),
+			cmd:  fmt.Sprintf(`log env %s --interval 1..2 --reverse %s`, suite.eventsEnvName, suite.defaultKosliArguments),
 			additionalConfig: listSnapshotsTestConfig{
 				reportToEnv: true,
 			},

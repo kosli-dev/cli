@@ -20,11 +20,13 @@ const listSnapshotsLongDesc = listSnapshotsShortDesc + `
 The results are paginated and ordered from latests to oldest. 
 By default, the page limit is 15 snapshots per page.
 
-You can optionally specify an INTERVAL between two snapshot expressions with <expression>..<expression>.
+You can optionally specify an INTERVAL between two snapshot expressions with [expression]..[expression]. 
+
 Expressions can be:
-	~N   N'th behind the latest snapshot
-	N    snapshot number N
-	NOW  the latest snapshot
+* ~N   N'th behind the latest snapshot  
+* N    snapshot number N  
+* NOW  the latest snapshot  
+
 Either expression can be omitted to default to NOW.
 `
 
@@ -50,17 +52,18 @@ kosli list snapshots yourEnvironmentName \
 
 type listSnapshotsOptions struct {
 	listOptions
-	reverse bool
+	reverse  bool
+	interval string
 }
 
 func newListSnapshotsCmd(out io.Writer) *cobra.Command {
 	o := new(listSnapshotsOptions)
 	cmd := &cobra.Command{
-		Use:     "snapshots ENV_NAME [INTERVAL]",
+		Use:     "snapshots ENV_NAME",
 		Short:   listSnapshotsShortDesc,
 		Long:    listSnapshotsLongDesc,
 		Example: listSnapshotsExample,
-		Args:    cobra.MatchAll(cobra.MaximumNArgs(2), cobra.MinimumNArgs(1)),
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
 			if err != nil {
@@ -74,6 +77,7 @@ func newListSnapshotsCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
+	cmd.Flags().StringVarP(&o.interval, "interval", "i", "", intervalFlag)
 	addListFlags(cmd, &o.listOptions)
 	cmd.Flags().BoolVar(&o.reverse, "reverse", false, reverseFlag)
 
@@ -82,12 +86,7 @@ func newListSnapshotsCmd(out io.Writer) *cobra.Command {
 
 func (o *listSnapshotsOptions) run(out io.Writer, args []string) error {
 	envName := args[0]
-	interval := ""
-	if len(args) > 1 {
-		interval = args[1]
-	}
-
-	return o.getSnapshotsList(out, envName, interval)
+	return o.getSnapshotsList(out, envName, o.interval)
 
 }
 
