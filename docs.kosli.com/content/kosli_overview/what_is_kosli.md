@@ -12,34 +12,8 @@ Below you can read about what elements Kosli consists of.
 
 ## Organization
 
-An Organization in Kosli "owns" Kosli flows and environments - which means only members of each organization can get access to environments and pipelines that belong to the organization.
+An Organization in Kosli "owns" Kosli flows and environments - which means only members of each organization can get access to environments and flows that belong to the organization.
 By default, when you sign up to Kosli, a personal organization is created for you and the name of the organization matches your user name. Only you can access your personal organization.
-
-### Shared organization
-
-To collaborate with more people (a team or a whole company) you can create shared organizations, and invite other Kosli users as members, so they can see and report to your Kosli flows and environments.
-
-To create a shared organization click on your profile picture (or avatar) in the top right corner of [app.kosli.com](https://app.kosli.com) and select "Add an organization". 
-
-{{<figure src="/images/add-org.png" alt="Add an organization" width="250">}}
-
-
-You'd be asked to provide the name and the description of your organization. After you click "Create Organization" button the new organization is ready. 
-
-{{<figure src="/images/add-org-form.png" alt="New organization form" width="900">}}
-
-After the page reloads you'll see the "Settings" page for the new organization. 
-You can switch between organizations using dropdown menu in the top left corner of the page, under Kosli logo. 
-
-{{<figure src="/images/select-org.png" alt="org page" width="900">}}
-
-
-### Shared organization members 
-
-To add users to your shared organization make sure you have the right organization selected from the dropdown menu and click "Settings".  
-Here you can add users: click on "Add member" button, provide a github username of the user you'd like to share organization with, and select desired role:
-* member can create Kosli flows and environments, report to and read from them
-* admin can do the same things member can plus they can also add and remove users from the organization 
 
 ## Environments
 
@@ -65,7 +39,7 @@ You can create a Kosli environment using:
 
 Once the Kosli environment is ready you can start reporting the status of your actual runtime environment using one of the **kosli snapshot ...** commands - check [client reference](/client_reference) for details
 
-It makes sense to automate reporting - via a cronjob or using your CI. It's up to you to decide how often you want the reports to keep coming. Once the cronjob or CI are set to use the **kosli snapshot ...** command, every time a change in your runtime environment happens a new snapshot capturing the current state of the environment will be created. 
+It makes sense to automate reporting - via a cronjob or using your CI. It's up to you to decide how often you want the reports to keep coming. Once the cronjob or CI pipeline are set to use the **kosli snapshot ...** command, every time a change in your runtime environment happens a new snapshot capturing the current state of the environment will be created. 
 
 ![Diagram of Environment Reporting](/images/environments.svg)
 
@@ -113,7 +87,7 @@ Flows in Kosli provide a place to report and track artifacts status and related 
 
 You can create Kosli flow using our CLI with **[kosli create flow](/client_reference/kosli_create_flow/)** command. 
 
-You can run the CLI command manually e.g. using your own computer, but it's also ok to add your flow creation command to your CI pipeline. It's perfectly fine to run it every time you run a CI pipeline. You can also change your [template](/kosli_overview/what_is_kosli/#template) over time, for example by adding new controls. It won't affect the compliance of artifacts reported before the change of the template.
+You can run the CLI command manually e.g. from a terminal on your own computer, but it's also ok to add your flow creation command to your CI pipeline. It's perfectly fine to run it every time you run a CI pipeline. You can also change your [template](/kosli_overview/what_is_kosli/#template) over time, for example by adding new controls. It won't affect the compliance of artifacts reported before the change of the template.
 
 Once your Kosli flow is in place you can start reporting artifacts and evidence of all the events you want to report (matching declared template) from your CI pipelines. Kosli CLI provides a variety of commands to make it possible: 
 
@@ -133,7 +107,6 @@ Best practice is to create Kosli flow for each type of artifact - e.g. if your C
 
 {{<figure src="/images/artifact-evidence.png" alt="Artifact evidence" width="600">}}
 
-
 When creating a Kosli flow you need to provide a template - a list of expected controls (evidence) you require for your artifact in order for the artifact to become compliant. That could be for example:
 * existing pull request
 * code coverage report
@@ -141,7 +114,7 @@ When creating a Kosli flow you need to provide a template - a list of expected c
 * unit test 
 * and more...
 
-Whenever an event related to your artifact happens, and you want to report it as evidence, you need to tell Kosli which artifact the evidence refers to. You can do it in two ways:
+Whenever an event related to your artifact happens, and you want to report it as evidence, you need to tell Kosli (using our CLI) which artifact the evidence refers to. You can do it in two ways:
 
 1. You can use `--artifact-type` flag and provide an artifact as an argument to evidence reporting commands (given artifact needs to be available from the location the command is run, so it can be used to calculate artifacts [fingerprint](/kosli_overview/what_is_kosli/#fingerprints));
 2. You can use `--fingerprint` (or `--sha256` for older versions of Kosli CLI) to provide a previously calculated fingerprint of an artifact.
@@ -165,23 +138,23 @@ When you report an event related to a specific environment (expected deployment 
 
 ### Compliant artifact
 
-Each artifact you report to Kosli will be displayed as being in one of three states in your Kosli pipeline: compliant, non-compliant or incomplete. That status is not reserved for software development in regulated industries. It tells you how far in the process your artifact got and if there are any troubles detected.
+Each artifact you report to Kosli will be displayed as being in one of three states in Kosli flow: compliant, non-compliant or incomplete. That status is not reserved for software development in regulated industries. It tells you how far in the process your artifact is and if there are any troubles detected.
 
 #### Compliant
 
-When your artifact was reported to Kosli together with **all** the required (as defined in the template) evidence reported as ***compliant***, it will be displayed in your Kosli flow as **Compliant** artifact:
+When your artifact was reported to Kosli together with **all** the required (as defined in the template) controls reported as a ***compliant*** evidence, it will be displayed in your Kosli flow as **Compliant** artifact:
 
 {{<figure src="/images/artifact-compliant.png" alt="Environment, Snapshot #1" width="900">}}
 
 #### Non-Compliant
 
-When your artifact was reported to Kosli together with **all** the required (as defined in the template) evidence, with **at least one** of the evidence reported as ***non-compliant***, it will be displayed in your Kosli flow as **Non-compliant** artifact:
+When your artifact was reported to Kosli together with **all** the required (as defined in the template) controls, with **at least one** of the evidence reported as ***non-compliant***, it will be displayed in your Kosli flow as **Non-compliant** artifact:
 
 {{<figure src="/images/artifact-non-compliant.png" alt="Environment, Snapshot #1" width="900">}}
 
 #### Incomplete
 
-When your artifact was reported to kosli but **not all** the required (as defined in the template) evidence were reported yet, it will be displayed in your Kosli flow as **Incomplete** artifact:
+When your artifact was reported to kosli but **not all** the required (as defined in the template) controls were reported yet, it will be displayed in your Kosli flow as **Incomplete** artifact:
 
 {{<figure src="/images/artifact-incomplete.png" alt="Environment, Snapshot #1" width="900">}}
 
@@ -194,6 +167,6 @@ No matter from where and how you deploy your artifacts, you should report to Kos
 
 Fingerprint is a unique identifier of an artifact. It is a calculated SHA256 hash of an artifact. It doesn't matter if the artifact is a single file, a directory or a docker image - we can always calculate its SHA256.
 
-Fingerprint is used to connect the information recorded in Kosli - about environments, deployments and approval - to a matching artifact. 
+Fingerprint is used to connect the information recorded in Kosli - about environments, deployments and approvals - to a matching artifact. 
 
 You can also use the Kosli CLI to calculate the fingerprint of any artifact locally. See [kosli fingerprint](/client_reference/kosli_fingerprint/) for more details.

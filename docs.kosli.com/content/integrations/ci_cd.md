@@ -62,7 +62,7 @@ The following flags are defaulted as follows in the CI list below:
 To use Kosli in [Github Actions](https://docs.github.com/en/actions) workflows, you can use the kosli [CLI setup action](https://github.com/marketplace/actions/setup-kosli-cli) to install the CLI on your Github Actions Runner.
 Then, you can use all the [CLI commands](/client_reference) in your workflows.
 
-Here is an example Github Actions workflow snippet using the Kosli declare pipeline command:
+Here is an example Github Actions workflow snippet using the `kosli create flow` command:
 
 ```yaml
 jobs:
@@ -74,8 +74,8 @@ jobs:
     steps:
       - name: setup kosli
         uses: kosli-dev/setup-cli-action@v1
-      - name: declare pipeline
-        run: kosli pipeline declare --pipeline my-pipeline -t pull-request,artifact,test
+      - name: create flow
+        run: kosli create flow my-flow --template pull-request,artifact,test
 ```
 
 {{< hint info >}}

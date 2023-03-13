@@ -35,7 +35,7 @@ The same error will pop up if you're trying to use a command that is not present
 When running commands with argument starting with `~` you can encounter following problem:
 
 ```shell {.command}
-kosli env log prod ~3..NOW
+kosli list snapshots prod ~3..NOW
 ```
 ```plaintext {.light-console}
 zsh: no such user or named directory: 3..NOW
@@ -43,11 +43,11 @@ zsh: no such user or named directory: 3..NOW
 
 To help zshell interpret the argument correctly, wrap in in quotation marks (single or double): 
 ```shell {.command}
-kosli env log prod '~3..NOW'
+kosli list snapshots prod '~3..NOW'
 ```
 or
 ```shell {.command}
-kosli env log prod "~3..NOW"
+kosli list snapshots prod "~3..NOW"
 ```
 
 ## Usage
@@ -56,14 +56,14 @@ kosli env log prod "~3..NOW"
 
 At this point our API is not publicly available. The reason for this is that we are introducing a lot of changes and we can't guarantee the API endpoint you use will stay the same.  
 That will change in the future.
-
+<!-- 
 ### Do you support uploading a spdx or sbom as evidence?
 
-We are working on providing that functionality in a near future.
+We are working on providing that functionality in a near future. -->
 
 ### Do I have to provide all the flags all the time? 
 
-A number of flags won't change their values often (or at all) between commands, like `--owner` or `--api-token`.  Some will differ between e.g. workflows, like `--pipeline`. You can define them as environment variable to avoid unnecessary redundancy. Check [Environment variables](/kosli_overview/kosli_tools/#environment-variables) section to learn more.
+A number of flags won't change their values often (or at all) between commands, like `--owner` or `--api-token`.  Some will differ between e.g. workflows, like `--flow`. You can define them as environment variable to avoid unnecessary redundancy. Check [Environment variables](/kosli_overview/kosli_tools/#environment-variables) section to learn more.
 
 ### What is dry run and how to use it?
 

@@ -8,12 +8,14 @@ weight: 240
 ## Report artifacts
 
 To report an artifact to Kosli, you need its SHA256 fingerprint. You can either provide the fingerprint yourself, or let Kosli CLI calculate it for you - we'll need the artifact available while running reporting command to do that. 
-You also need to provide the name of the Kosli pipeline you want to report the artifact to.
+You also need to provide the name of the Kosli flow you want to report the artifact to.
 
-You also should have long enough git history in your local git repo clone to let Kosli calculate the artifact's changelog (the list of commits from the new artifact back to the previous artifact in the same Kosli pipeline).
-If you use shallow clone in your CI, Kosli won't be able to generate the changelog but the artifact reporting will NOT fail. Kosli collects the changelog commits on best-effort basis.
+You should also have long enough git history in your local git repo clone to let Kosli calculate the artifact's changelog (the list of commits from the new artifact back to the previous artifact reported to the same Kosli flow).  
+If you use shallow clone in your CI, Kosli won't be able to generate the changelog but the artifact reporting will **NOT** fail. Kosli collects the changelog commits on best-effort basis.
 
-The fingerprint (sha256 checksum of the file/directory/docker image) of the artifact will be stored in Kosli. The fingerprint can't be changed, it becomes a unique identifier of the artifact in Kosli, used - among other things - to connect it with the recorded environment. Fingerprints of all the running artifacts, recorded with the Kosli CLI are also stored and compared with fingerprints of the artifacts you have built and reported to Kosli so you always know if you're running things you have no provenance for. 
+The fingerprint (SHA256 checksum of the file/directory/docker image) of the artifact will be stored in Kosli. The fingerprint can't be changed, it becomes a unique identifier of the artifact in Kosli, used - among other things - to connect it with the data reported from your runtime environments. 
+
+Fingerprints of all the **running** artifacts, recorded with the Kosli CLI are also stored and **compared with** fingerprints of the artifacts you have built and **reported** to Kosli so you always know if you're running things you have built or if you have no provenance for them. 
 
 Some of the required flags will be automatically resolved if you're using one of the [supported CI systems](/integrations/ci_cd/).
 

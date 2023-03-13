@@ -5,11 +5,11 @@ weight: 260
 ---
 # Part 7: Approvals
 
-## Report approvals
+Whenever a given artifact is ready to be deployed you may need an additional manual approval from an authorized person. This is something that can't always be automated, but you can use Kosli to request such an approval, and later record it, so the information about decisions made outside of your CI system won't be lost.
 
-Whenever a given artifact is ready to be deployed you may need an additional manual approval from an authorized person. This is something that can't alway be automated, but you can use Kosli to request such an approval, and later record it, so the information about decisions made outside of your CI system won't be lost. The list of commits between current and previous approval will be generated (based on provided values for `--newest-commit` and `--oldest-commit`), which allows you to track a set of changes that are being approved.
+The list of commits between current and previous approval will be generated (based on provided values for `--newest-commit` and `--oldest-commit`), which allows you to track a set of changes that are being approved.
 
-### Example
+## Example
 
 
 {{< tabs "approvals" "col-no-wrap" >}}
@@ -46,7 +46,7 @@ See [kosli pipeline approval report](/legacy_ref/v0.1.36/kosli_pipeline_approval
 
 {{< hint warning >}}
 
-### Quick note about a commit list
+## Quick note about a commit list
 
 When reporting or requesting an approval keep in mind that `oldest-commit` has to be an ancestor of `newest-commit`. 
 
