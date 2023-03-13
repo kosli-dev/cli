@@ -5,7 +5,7 @@ weight: 280
 ---
 # Part 9: Querying
 
-All the information stored in Kosli may be helpful both for operations and development. A set of `get`, `ls`, `log` and `inspect` commands allows you to quickly access the information about your environments, artifacts and deployments, without leaving your development environment.
+All the information stored in Kosli may be helpful both for operations and development. A set of `get`, `list`, `log` and `assert` commands allows you to quickly access the information about your environments, artifacts and deployments, without leaving your development environment.
 
 Visit [Reference](/client_reference/) to learn more about how to run each command.
 
@@ -54,12 +54,12 @@ History:
 
 The information returned by `kosli search` - like Pipeline, Fingerprint or History - can be used to run more dedicated searches in Kosli. 
 
-## Search for a pipeline
+## Search for a flow
 
-When you search in Kosli you often need to refer to a specific pipeline. If you don't remember all the pipelines' names it is easy to list them with `kosli pipeline ls` command:
+When you search in Kosli you often need to refer to a specific pipeline. If you don't remember all the pipelines' names it is easy to list them with `kosli list flows` command:
 
 ```
-% kosli pipeline ls 
+$ kosli list flows 
 NAME                    DESCRIPTION                         VISIBILITY
 creator                 UX for Group/Kata creation          public
 custom-start-points     Custom exercises choices            public
@@ -78,7 +78,7 @@ web                     UX for practicing TDD               public
 And if you want to check metadata of a specific pipeline (like description or template) use `kosli get flow`
 
 ```
-% kosli get flow creator
+$ kosli get flow creator
 Name:                creator
 Description:         UX for Group/Kata creation
 Visibility:          public
@@ -88,10 +88,10 @@ Last Deployment At:  Wed, 14 Sep 2022 10:51:43 CEST • one month ago
 
 ## List artifacts
 
-To find the information about artifacts reported to a specific pipeline in Kosli use `kosli artifact ls` command
+To find the information about artifacts reported to a specific pipeline in Kosli use `kosli list artifacts` command
 
 ```
-% kosli artifact ls creator
+$ kosli list artifacts --flow creator
 COMMIT   ARTIFACT                                  STATE       CREATED_AT
 344430d  Name: cyberdojo/creator:344430d           COMPLIANT   Wed, 14 Sep 2022 10:48:09 CEST
          Fingerprint: 817a72(...)6b5a273399c693             
@@ -111,24 +111,24 @@ The amount of artifacts may be really long and by default you can see the last 1
 
 E.g. to see last five artifacts you'd use:
 ```
-kosli artifact ls creator -n 5
+$ kosli list artifacts --flow creator -n 5
 ```
 
 And to see the next page:
 ```
-kosli artifact ls creator -n 5 --page 2
+$ kosli list artifacts --flow creator -n 5 --page 2
 ```
 
 You can also use the `--output` flag to change the format of the response. By default the response comes in a *table* format, but you can choose to switch to *json*:
 ```
-kosli artifact ls creator --output json
+$ kosli list artifacts --flow creator --output json
 ```
 ## Get artifact
 
 To get more detailed information about a given artifact use `kosli get artifact`. To identify the artifact you need to use:
-* pipeline name followed by `@` and artifact fingerprint
+* flow name followed by `@` and artifact fingerprint
 OR
-* pipeline name followed by `:` and commit sha
+* flow name followed by `:` and commit sha
 
 Both are available in the output of `kosli artifact ls` command
 
@@ -201,7 +201,7 @@ History:
 As is the case for pipelines and artifacts, you can list all the Kosli environments you created under your organization
 
 ```
-$ kosli environment ls
+$ kosli list environments
 NAME      TYPE  LAST REPORT                LAST MODIFIED
 aws-beta  ECS   2022-10-30T14:51:42+01:00  2022-10-30T14:51:42+01:00
 aws-prod  ECS   2022-10-30T14:51:28+01:00  2022-10-30T14:51:28+01:00
@@ -220,14 +220,12 @@ State:             COMPLIANT
 Last Reported At:  Sun, 30 Oct 2022 14:55:42 CET • 5 seconds ago
 ```
 
+## Get environment events
 
-
-When you have the name of the environment you want to dig into use `kosli environment log` to browse changes in the environment, or `kosli environment get` to have a look at a specific snapshot.
-
-## Get environment log
+When you have the name of the environment you want to dig into use `kosli list snapshots` or `kosli log environment` to browse snapshost and changes in the environment, or `kosli get snapshot` to have a look at a specific snapshot.
 
 ```
-kosli environment log aws-beta
+$ kosli list snapshots aws-beta
 SNAPSHOT  FROM                            TO                              DURATION
 266       Wed, 19 Oct 2022 09:47:42 CEST  now                             11 days
 265       Wed, 19 Oct 2022 09:46:42 CEST  Wed, 19 Oct 2022 09:47:42 CEST  59 seconds
@@ -246,10 +244,12 @@ SNAPSHOT  FROM                            TO                              DURATI
 252       Mon, 10 Oct 2022 08:47:42 CEST  Thu, 13 Oct 2022 09:04:42 CEST  3 days
 ```
 
-By default you can see the last 15 changes to the environment. You can choose to only print e.g. last 3 events (`-n` flag) and have a more detailed output (`--long` flag):
+By default you can see the last 15 changes to the environment. You can choose to only print e.g. last 3 events (`-n` flag).
+
+You can also choose to see the actual events from each snapshot, using `kosli log environment` command:
 
 ```
-$ kosli environment log aws-beta --long -n 3
+$ kosli log environment aws-beta
 SNAPSHOT  EVENT                                                                          PIPELINE   DEPLOYMENTS
 #266      Artifact: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/dashboard:d90a3e4    dashboard  #15 
           Fingerprint: dd5308fdcda117c1ff3963e192a069ae390c2fe9e10e8abfa2430224265efe98             
@@ -270,13 +270,13 @@ SNAPSHOT  EVENT                                                                 
 You can also use an *interval* expression, like `262..264` (to see specified snapshot list) , or `~4..NOW` (to get a list of snapshots starting from 4 behind a currently running one and the current one)
 
 ```
-$ kosli environment log aws-beta 262..264
+$ kosli log environment aws-beta 262..264
 SNAPSHOT  FROM                            TO                              DURATION
 264       Wed, 19 Oct 2022 09:45:42 CEST  Wed, 19 Oct 2022 09:46:42 CEST  about a minute
 263       Wed, 19 Oct 2022 09:42:42 CEST  Wed, 19 Oct 2022 09:45:42 CEST  3 minutes
 262       Wed, 19 Oct 2022 09:32:42 CEST  Wed, 19 Oct 2022 09:42:42 CEST  10 minutes
 
-$ kosli environment log aws-beta ~4..NOW
+$ kosli log environment aws-beta ~4..NOW
 SNAPSHOT  FROM                            TO                              DURATION
 266       Wed, 19 Oct 2022 09:47:42 CEST  now                             11 days
 265       Wed, 19 Oct 2022 09:46:42 CEST  Wed, 19 Oct 2022 09:47:42 CEST  59 seconds
@@ -290,7 +290,7 @@ SNAPSHOT  FROM                            TO                              DURATI
 To have a look at what is or was running in a given snapshot use `kosli environment get` command. You can use just the environment name as the argument, which will give you the latest snapshot, add `#` and snapshot number, to get a specific one, or `~n` where *n* is a number, to get *n-th* snapshot behind a current one:
 
 ``` 
-$ kosli environment get aws-beta
+$ kosli get snapshot aws-beta
 COMMIT   ARTIFACT                                                                              PIPELINE  RUNNING_SINCE  REPLICAS
 d90a3e4  Name: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/dashboard:d90a3e4               N/A       11 days ago    1
          Fingerprint: dd5308fdcda117c1ff3963e192a069ae390c2fe9e10e8abfa2430224265efe98                                  
@@ -302,7 +302,7 @@ d90a3e4  Name: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/dashboard:d90a3e4
          Fingerprint: b7fd766dd2514b2610c0c8d70d8f762de4921931f97fdd6fbbfcc9745ac3ce3b                                  
 [...]
 
-$ kosli environment get aws-beta#256
+$ kosli get snapshot aws-beta#256
 COMMIT   ARTIFACT                                                                              PIPELINE  RUNNING_SINCE  REPLICAS
 6fe0d30  Name: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/repler:6fe0d30                  N/A       16 days ago    1
          Fingerprint: a0c03099c832e4ce5f23f5e33dac9889c0b7ccd61297fffdaf1c67e7b99e6f8f                                  
@@ -314,7 +314,7 @@ d90a3e4  Name: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/dashboard:d90a3e4
          Fingerprint: b7fd766dd2514b2610c0c8d70d8f762de4921931f97fdd6fbbfcc9745ac3ce3b                                  
 [...]
 
-$ kosli environment get aws-beta~19
+$ kosli get snapshot aws-beta~19
 COMMIT   ARTIFACT                                                                              PIPELINE  RUNNING_SINCE  REPLICAS
 2e8646c  Name: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/shas:2e8646c                    N/A       one month ago  1
          Fingerprint: a3158c3e79c83905fd3613e06b8cf5a45141c50cf49d4f99de90a2d081b77771                                  
@@ -332,7 +332,7 @@ The same expressions (with `#` and `~`) can be used to reference snapshots when 
 In the example below there was only one difference between snapshots: one new artifact started running in the latest snapshot. 
 
 ```
-$ kosli environment diff aws-beta aws-beta~1
+$ kosli diff snapshots aws-beta aws-beta~1
 Only present in aws-beta (snapshot: aws-beta#266)
                    
      Name:         244531986313.dkr.ecr.eu-central-1.amazonaws.com/dashboard:d90a3e4
@@ -347,7 +347,7 @@ Only present in aws-beta (snapshot: aws-beta#266)
 You can use `diff` to compare two different environments:
 
 ```
-$ kosli environment diff aws-beta~3 aws-prod
+$ kosli diff snapshots aws-beta~3 aws-prod
 Only present in aws-prod (snapshot: aws-prod#261)
                    
      Name:         274425519734.dkr.ecr.eu-central-1.amazonaws.com/saver:8d724a1
