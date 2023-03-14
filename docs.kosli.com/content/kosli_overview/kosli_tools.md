@@ -68,7 +68,7 @@ You can download the Kosli CLI from [GitHub](https://github.com/kosli-dev/cli/re
 Make sure to choose the correct tar file for your system.  
 For example, on Mac with AMD:
 ```shell {.command}
-curl -L https://github.com/kosli-dev/cli/releases/download/v0.1.35/kosli_0.1.35_darwin_amd64.tar.gz | tar zx
+curl -L https://github.com/kosli-dev/cli/releases/download/v{{< cli-version >}}/kosli_{{< cli-version >}}_darwin_amd64.tar.gz | tar zx
 sudo mv kosli /usr/local/bin/kosli
 ```
 {{< /tab >}}
