@@ -113,7 +113,7 @@ licenses:
 	@echo $(DATA) | tr " " "\n" > licenses/licenses.csv
 
 generate-json-metadata:
-	echo '{"currentversion": "local"}' > docs.kosli.com/assets/metadata.json
+	echo '{"currentversion": "vlocal"}' > docs.kosli.com/assets/metadata.json
 
 hugo: docs generate-json-metadata
 	cd docs.kosli.com && hugo server --minify --buildDrafts --port=1515
