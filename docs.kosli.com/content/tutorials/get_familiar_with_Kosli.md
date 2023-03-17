@@ -33,7 +33,7 @@ To follow the tutorial, you will need to:
 - [Install the Kosli CLI](/kosli_overview/kosli_tools/#installing-the-kosli-cli) and [set the `KOSLI_API_TOKEN` and `KOSLI_OWNER` environment variables](/kosli_overview/kosli_tools/#getting-your-kosli-api-token).
 - You can check your Kosli set up by running: 
     ```shell {.command}
-    kosli pipeline ls
+    kosli list flows
     ```
     which should return a list of pipelines or the message "No pipelines were found".
 
@@ -165,13 +165,13 @@ export KOSLI_OWNER=cyber-dojo
 you can use
 
 ```shell {.command}
-kosli pipeline ls 
+kosli list flows 
 ```
 
 instead of
 
 ```shell {.command}
-kosli pipeline ls --api-token abcdefg --owner cyber-dojo 
+kosli list flows --api-token abcdefg --owner cyber-dojo 
 ```
 
 You can represent **ANY** flag as an environment variable. To do that you need to capitalize the words in the flag, replacing dashes with underscores, and add the `KOSLI_` prefix. For example, `--api-token` becomes `KOSLI_API_TOKEN`.
@@ -185,14 +185,13 @@ an application binary, a docker image, a directory, or a file.
 Start by creating a new Kosli pipeline:
 
 ```shell {.command}
-kosli pipeline declare \
-    --pipeline quickstart-nginx \
+kosli create flow quickstart-nginx \
     --description "Pipeline for quickstart nginx image"
 ```
 
 You can confirm that the Kosli pipeline was created by running:
 ```shell {.command}
-kosli pipeline ls
+kosli list flows
 ```
 which should produce the following output:
 ```plaintext {.light-console}
@@ -214,9 +213,8 @@ the software artifacts you are running in your runtime environments.
 Create a Kosli environment:
 
 ```shell {.command}
-kosli environment declare \
-    --name quickstart \
-    --environment-type docker \
+kosli create environment quickstart \
+    --type docker \
     --description "quickstart environment for tutorial"
 ```
 
