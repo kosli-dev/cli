@@ -35,7 +35,7 @@ To follow the tutorial, you will need to:
     ```shell {.command}
     kosli list flows
     ```
-    which should return a list of pipelines or the message "No pipelines were found".
+    which should return a list of flows or the message "No flows were found".
 
 - Clone our quickstart-docker repository:
     ```shell {.command}
@@ -176,32 +176,32 @@ kosli list flows --api-token abcdefg --owner cyber-dojo
 
 You can represent **ANY** flag as an environment variable. To do that you need to capitalize the words in the flag, replacing dashes with underscores, and add the `KOSLI_` prefix. For example, `--api-token` becomes `KOSLI_API_TOKEN`.
 
-## Step 4: Create a Kosli pipeline
+## Step 4: Create a Kosli flow
 
-A Kosli *pipeline* stores information about what happens in your build system.
+A Kosli *flow* stores information about what happens in your build system.
 The output of the build system is called an *artifact* in Kosli. An artifact could be, for example,
 an application binary, a docker image, a directory, or a file. 
 
-Start by creating a new Kosli pipeline:
+Start by creating a new Kosli flow:
 
 ```shell {.command}
 kosli create flow quickstart-nginx \
-    --description "Pipeline for quickstart nginx image"
+    --description "Flow for quickstart nginx image"
 ```
 
-You can confirm that the Kosli pipeline was created by running:
+You can confirm that the Kosli flow was created by running:
 ```shell {.command}
 kosli list flows
 ```
 which should produce the following output:
 ```plaintext {.light-console}
 NAME              DESCRIPTION                          VISIBILITY
-quickstart-nginx  Pipeline for quickstart nginx image  private
+quickstart-nginx  Flow for quickstart nginx image      private
 ```
 {{< hint info >}}
-In the web interface you can select the *Pipelines* option on the left.
-It will show you that you have a *quickstart-nginx* pipeline.
-If you select the pipeline it will show that no artifacts have
+In the web interface you can select the *Flows* option on the left.
+It will show you that you have a *quickstart-nginx* flow.
+If you select the flow it will show that no artifacts have
 been reported yet.
 {{< /hint  >}}
 
@@ -271,10 +271,10 @@ kosli report artifact nginx:1.21 \
     --git-commit 9f14efa0c91807da9a8b1d1d6332c5b3aa24a310
 ```
 
-You can verify that you have reported the artifact in your *quickstart-nginx* pipeline:
+You can verify that you have reported the artifact in your *quickstart-nginx* flow:
 
 ```shell {.command}
-kosli artifact ls quickstart-nginx
+kosli list artifacts --flow quickstart-nginx
 ```
 
 ```plaintext {.light-console}
@@ -291,7 +291,7 @@ expect to run in your environment with what is actually running, and flag any mi
 
 ```shell {.command}
 kosli expect deployment nginx:1.21 \
-    --pipeline quickstart-nginx \
+    --flow quickstart-nginx \
     --artifact-type docker \
     --build-url https://example.com \
     --environment quickstart \
@@ -301,7 +301,7 @@ kosli expect deployment nginx:1.21 \
 You can verify the deployment with:
 
 ```shell {.command}
-kosli deployment ls quickstart-nginx
+kosli list deployments --flow quickstart-nginx
 ```
 
 ```plaintext {.light-console}
@@ -329,11 +329,11 @@ CONTAINER ID  IMAGE      COMMAND                 CREATED         STATUS         
 
 Report all the docker containers running on your machine to Kosli:
 ```shell {.command}
-kosli environment report docker quickstart
+kosli snapshot docker quickstart
 ```
 You can confirm this has created an environment snapshot:
 ```shell {.command}
-kosli environment log quickstart
+kosli list snapshots quickstart
 ```
 ```plaintext {.light-console}
 SNAPSHOT  FROM                           TO   DURATION
@@ -342,16 +342,16 @@ SNAPSHOT  FROM                           TO   DURATION
 
 You can get a detailed view of all the docker containers included in the snapshot report:
 ```shell {.command}
-kosli environment get quickstart
+kosli get snapshot quickstart
 ```
 
 ```plaintext {.light-console}
-COMMIT  ARTIFACT                                                                       PIPELINE  RUNNING_SINCE  REPLICAS
-N/A     Name: nginx:1.21                                                               N/A       3 minutes ago  1
+COMMIT  ARTIFACT                                                                       FLOW  RUNNING_SINCE  REPLICAS
+N/A     Name: nginx:1.21                                                               N/A   3 minutes ago  1
         Fingerprint: 8f05d73835934b8220e1abd2f157ea4e2260b9c26f6f63a8e3975e7affa46724
 ```
 
-The `kosli environment report docker` command reports *all* the 
+The `kosli snapshot docker` command reports *all* the 
 docker containers running in your environment, equivalent to the output from 
 `docker ps`. This tutorial only shows the `nginx` container 
 in the examples.
@@ -378,7 +378,7 @@ Search result resolved to commit 9f14efa0c91807da9a8b1d1d6332c5b3aa24a310
 Name:              nginx:1.21
 Fingerprint:       2bcabc23b45489fb0885d69a06ba1d648aeda973fae7bb981bafbb884165e514
 Has provenance:    true
-Pipeline:          quickstart-nginx
+Flow:              quickstart-nginx
 Git commit:        9f14efa0c91807da9a8b1d1d6332c5b3aa24a310
 Commit URL:        https://github.com/kosli-dev/quickstart-docker-example/commit/9f14efa0c91807da9a8b1d1d6332c5b3aa24a310
 Build URL:         https://example.com
