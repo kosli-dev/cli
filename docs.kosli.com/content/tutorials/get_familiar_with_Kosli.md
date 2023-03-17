@@ -221,7 +221,7 @@ kosli create environment quickstart \
 You can verify that the Kosli environment was created:
 
 ```shell {.command}
-kosli environment ls
+kosli list environments
 ```
 
 ```plaintext {.light-console}
@@ -263,8 +263,8 @@ This tutorial uses a dummy value for the `--build-url` flag, in a real installat
 this would be a defaulted link to a build service (e.g. Github Actions).
 
 ```shell {.command}
-kosli pipeline artifact report creation nginx:1.21 \
-    --pipeline quickstart-nginx \
+kosli report artifact nginx:1.21 \
+    --flow quickstart-nginx \
     --artifact-type docker \
     --build-url https://example.com \
     --commit-url https://github.com/kosli-dev/quickstart-docker-example/commit/9f14efa0c91807da9a8b1d1d6332c5b3aa24a310 \
