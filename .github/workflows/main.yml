@@ -5,6 +5,9 @@ on:
     branches:
       - '**'
 
+concurrency:
+  group: ${{ github.workflow }} 
+
 jobs:
   pre-build:
     runs-on: ubuntu-20.04
