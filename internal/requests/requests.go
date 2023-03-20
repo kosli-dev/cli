@@ -166,12 +166,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 	}
 }
 
-func (p *RequestParams) newHTTPRequestTesting(body *bytes.Buffer) (*http.Request, error) {
-	// jsonBytes, err := json.MarshalIndent(p.Payload, "", "    ")
-	// if err != nil {
-	// 	return nil, err
-	// }
-
+func (p *RequestParams) newHTTPRequestWithFile(body *bytes.Buffer) (*http.Request, error) {
 	req, err := http.NewRequest(p.Method, p.URL, body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create %s request to %s : %v", p.Method, p.URL, err)
@@ -205,7 +200,7 @@ func (p *RequestParams) newHTTPRequestTesting(body *bytes.Buffer) (*http.Request
 }
 
 func (c *Client) DoWithFile(p *RequestParams, body *bytes.Buffer) (*HTTPResponse, error) {
-	req, err := p.newHTTPRequestTesting(body)
+	req, err := p.newHTTPRequestWithFile(body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a %s request to %s : %v", p.Method, p.URL, err)
 	}
