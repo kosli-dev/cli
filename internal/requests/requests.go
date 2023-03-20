@@ -111,6 +111,8 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 		return nil, fmt.Errorf("failed to create a %s request to %s : %v", p.Method, p.URL, err)
 	}
 
+	fmt.Println("ssss ", req.MultipartForm)
+
 	if p.DryRun {
 		c.Logger.Info("############### THIS IS A DRY-RUN  ###############")
 		reqBody, err := io.ReadAll(req.Body)
