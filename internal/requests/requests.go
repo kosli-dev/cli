@@ -82,7 +82,7 @@ func (p *RequestParams) newHTTPRequest() (*http.Request, error) {
 		p.AdditionalHeaders = make(map[string]string)
 	}
 
-	body := &bytes.Buffer{}
+	var body *bytes.Buffer
 
 	if len(p.Form) > 0 {
 		var contentType string

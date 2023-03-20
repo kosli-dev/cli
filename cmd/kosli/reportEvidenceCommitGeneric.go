@@ -15,11 +15,6 @@ type reportEvidenceCommitGenericOptions struct {
 	payload          GenericEvidencePayload
 }
 
-// type GenericEvidencePayloadWithFile struct {
-// 	GenericEvidencePayload `json:"evidence_json"`
-// 	File                   *bytes.Buffer `json:"evidence_file,omitempty"`
-// }
-
 const reportEvidenceCommitGenericShortDesc = `Report Generic evidence for a commit in Kosli flows.`
 
 const reportEvidenceCommitGenericLongDesc = reportEvidenceCommitGenericShortDesc
