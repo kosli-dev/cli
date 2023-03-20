@@ -1,23 +1,18 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
-	"mime/multipart"
 	"net/http"
-	"os"
-	"path/filepath"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
 type reportEvidenceCommitGenericOptions struct {
-	userDataFile string
-	evidenceFile string
-	payload      GenericEvidencePayload
+	userDataFile     string
+	evidenceFilePath string
+	payload          GenericEvidencePayload
 }
 
 // type GenericEvidencePayloadWithFile struct {
@@ -80,7 +75,7 @@ func newReportEvidenceCommitGenericCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", evidenceDescriptionFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
 
-	cmd.Flags().StringVar(&o.evidenceFile, "evidence-file", "", evidenceFileFlag)
+	cmd.Flags().StringVar(&o.evidenceFilePath, "evidence-file", "", evidenceFileFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"commit", "build-url", "name"})
@@ -99,66 +94,25 @@ func (o *reportEvidenceCommitGenericOptions) run(args []string) error {
 		return err
 	}
 
-	jsonBytes, err := json.MarshalIndent(o.payload, "", "    ")
-	if err != nil {
-		return err
+	form := []requests.FormItem{
+		{Type: "field", FieldName: "evidence_json", Content: o.payload},
 	}
 
-	contentType, body, err := createEvidenceMultipartForm(jsonBytes, o.evidenceFile)
-	if err != nil {
-		return err
+	if o.evidenceFilePath != "" {
+		form = append(form, requests.FormItem{Type: "file", FieldName: "evidence_file", Content: o.evidenceFilePath})
 	}
 
 	reqParams := &requests.RequestParams{
-		Method:            http.MethodPost,
-		URL:               url,
-		AdditionalHeaders: map[string]string{"Content-Type": contentType},
-		DryRun:            global.DryRun,
-		Password:          global.ApiToken,
+		Method:   http.MethodPost,
+		URL:      url,
+		Form:     form,
+		DryRun:   global.DryRun,
+		Password: global.ApiToken,
 	}
 
-	_, err = kosliClient.DoWithFile(reqParams, body)
+	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
 		logger.Info("generic evidence '%s' is reported to commit: %s", o.payload.EvidenceName, o.payload.CommitSHA)
 	}
 	return err
-}
-
-func createEvidenceMultipartForm(evidenceJson []byte, evidenceFile string) (string, *bytes.Buffer, error) {
-	body := &bytes.Buffer{}
-
-	writer := multipart.NewWriter(body)
-	defer writer.Close()
-
-	part, err := writer.CreateFormField("evidence_json")
-	if err != nil {
-		return "", body, err
-	}
-
-	_, err = part.Write(evidenceJson)
-	if err != nil {
-		return "", body, err
-	}
-
-	if evidenceFile != "" {
-		file, err := os.Open(evidenceFile)
-		if err != nil {
-			return "", body, err
-		}
-		defer file.Close()
-
-		part, err = writer.CreateFormFile("evidence_file", filepath.Base(evidenceFile))
-		if err != nil {
-			return "", body, err
-		}
-
-		_, err = io.Copy(part, file)
-		if err != nil {
-			return "", body, err
-		}
-	}
-
-	contentType := writer.FormDataContentType()
-
-	return contentType, body, nil
 }
