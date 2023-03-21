@@ -71,7 +71,7 @@ func newReportEvidenceCommitGenericCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", evidenceDescriptionFlag)
 	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
 
-	cmd.Flags().StringSliceVar(&o.evidencePaths, "evidence-paths", []string{}, evidencePathsFlag)
+	cmd.Flags().StringSliceVarP(&o.evidencePaths, "evidence-paths", "e", []string{}, evidencePathsFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"commit", "build-url", "name"})
@@ -91,13 +91,13 @@ func (o *reportEvidenceCommitGenericOptions) run(args []string) error {
 	}
 
 	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, o.evidencePaths)
-	if err != nil {
-		return err
-	}
-
 	// if we created a tar package, remove it after uploading it
 	if cleanupNeeded {
 		defer os.Remove(evidencePath)
+	}
+
+	if err != nil {
+		return err
 	}
 
 	reqParams := &requests.RequestParams{
