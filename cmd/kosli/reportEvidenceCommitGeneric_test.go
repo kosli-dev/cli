@@ -21,7 +21,7 @@ func (suite *CommitEvidenceGenericCommandTestSuite) SetupTest() {
 
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
-		Owner:    "docs-cmd-test-user",
+		Owner:    "docs-cmd-test-user-shared",
 		Host:     "http://localhost:8001",
 	}
 
@@ -34,7 +34,7 @@ func (suite *CommitEvidenceGenericCommandTestSuite) TestCommitEvidenceGenericCom
 	evidenceName := "manual-test"
 	tests := []cmdTestCase{
 		{
-			name: "report Generic test evidence works",
+			name: "report Generic test evidence works without files",
 			cmd: fmt.Sprintf(`report evidence commit generic --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name %s --flows %s
 			          --build-url example.com --compliant --description "some description" %s`,
 				evidenceName, suite.flowNames, suite.defaultKosliArguments),
@@ -47,6 +47,48 @@ func (suite *CommitEvidenceGenericCommandTestSuite) TestCommitEvidenceGenericCom
 					  --evidence-url https://example.com --evidence-fingerprint 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0 %s`,
 				evidenceName, suite.flowNames, suite.defaultKosliArguments),
 			golden: fmt.Sprintf("generic evidence '%s' is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n", evidenceName),
+		},
+		{
+			name: "report Generic test evidence works when --evidence-paths is provided and contains a single file",
+			cmd: fmt.Sprintf(`report evidence commit generic --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name %s --flows %s
+			          --build-url example.com --compliant --description "some description" 
+					  --evidence-paths testdata/file1 %s`,
+				evidenceName, suite.flowNames, suite.defaultKosliArguments),
+			golden: fmt.Sprintf("generic evidence '%s' is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n", evidenceName),
+		},
+		{
+			name: "report Generic test evidence works when --evidence-paths is provided and contains a single directory",
+			cmd: fmt.Sprintf(`report evidence commit generic --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name %s --flows %s
+			          --build-url example.com --compliant --description "some description" 
+					  --evidence-paths testdata/folder1 %s`,
+				evidenceName, suite.flowNames, suite.defaultKosliArguments),
+			golden: fmt.Sprintf("generic evidence '%s' is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n", evidenceName),
+		},
+		{
+			name: "report Generic test evidence works when --evidence-paths is provided and contains a file and a dir",
+			cmd: fmt.Sprintf(`report evidence commit generic --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name %s --flows %s
+			          --build-url example.com --compliant --description "some description" 
+					  --evidence-paths testdata/folder1,testdata/file1 %s`,
+				evidenceName, suite.flowNames, suite.defaultKosliArguments),
+			golden: fmt.Sprintf("generic evidence '%s' is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n", evidenceName),
+		},
+		{
+			wantError: true,
+			name:      "report Generic test evidence fails when --evidence-paths is provided and contains a non-existing file",
+			cmd: fmt.Sprintf(`report evidence commit generic --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name %s --flows %s
+			          --build-url example.com --compliant --description "some description" 
+					  --evidence-paths non-existing.txt %s`,
+				evidenceName, suite.flowNames, suite.defaultKosliArguments),
+			golden: "Error: stat non-existing.txt: no such file or directory\n",
+		},
+		{
+			wantError: true,
+			name:      "report Generic test evidence fails when an upload is attempted on a personal org",
+			cmd: fmt.Sprintf(`report evidence commit generic --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name %s --flows %s
+			          --build-url example.com --compliant --description "some description" 
+					  --evidence-paths testdata/folder1  --host http://localhost:8001 --owner docs-cmd-test-user  --api-token eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY`,
+				evidenceName, suite.flowNames),
+			golden: "Error: File upload not allowed: map[evidence_file:File upload not allowed for org 'docs-cmd-test-user' with current plan]\n",
 		},
 		{
 			name: "report Generic test evidence works when neither of --description nor --user-data provided",
