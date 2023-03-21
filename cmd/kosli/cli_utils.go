@@ -7,6 +7,7 @@ import (
 	"net/http"
 	urlPackage "net/url"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -18,6 +19,7 @@ import (
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/utils"
+	cp "github.com/otiai10/copy"
 	"github.com/spf13/cobra"
 	"github.com/xeonx/timeago"
 )
@@ -494,4 +496,64 @@ func formattedTimestamp(timestamp interface{}, short bool) (string, error) {
 		timeAgoFormat := timeago.English.Format(unixTime)
 		return fmt.Sprintf("%s \u2022 %s", shortFormat, timeAgoFormat), nil
 	}
+}
+
+// getPathOfEvidenceFileToUpload returns the path of an evidence file to upload based
+// on the provided evidencePaths.
+// - if one path is provided and it is a file, that path is returned as it
+// - if one path is provided and it is a directory, the directory is tarred and the
+// path of the generated tar file is returned
+// - if multiple paths are provided, they are packaged into a tar file and the
+// path of the generated tar file is returned
+func getPathOfEvidenceFileToUpload(evidencePaths []string) (string, bool, error) {
+	cleanupNeeded := false
+	if len(evidencePaths) == 0 {
+		return "", cleanupNeeded, fmt.Errorf("no evidence paths provided")
+	}
+	dirToTar := ""
+	if len(evidencePaths) == 1 {
+		ok, err := utils.IsFile(evidencePaths[0])
+		if err != nil {
+			return "", cleanupNeeded, err
+		}
+		if ok {
+			logger.Debug("file %s is provided as evidence", evidencePaths[0])
+			return evidencePaths[0], cleanupNeeded, nil
+		}
+
+		ok, err = utils.IsDir(evidencePaths[0])
+		if err != nil {
+			return "", cleanupNeeded, err
+		}
+		if ok {
+			logger.Debug("dir %s is provided as evidence. It will be tarred", evidencePaths[0])
+			dirToTar = evidencePaths[0]
+		}
+
+	} else { // there are multiple paths
+		// copy all paths to a new temp dir
+		tmpDir, err := os.MkdirTemp("", "")
+		if err != nil {
+			return "", cleanupNeeded, err
+		}
+
+		logger.Debug("[%d] paths are provided as evidence. They will be tarred from %s", len(evidencePaths), tmpDir)
+
+		for _, path := range evidencePaths {
+			err := cp.Copy(path, filepath.Join(tmpDir, filepath.Base(path)))
+			if err != nil {
+				return "", cleanupNeeded, err
+			}
+		}
+		dirToTar = tmpDir
+		defer os.RemoveAll(tmpDir)
+	}
+
+	// tar the required dir and return the path of the tar file
+	tarFilePath, err := utils.Tar(dirToTar, "evidence.tgz")
+	if err != nil {
+		return "", cleanupNeeded, err
+	}
+	cleanupNeeded = true
+	return tarFilePath, cleanupNeeded, nil
 }

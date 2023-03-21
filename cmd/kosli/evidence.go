@@ -1,5 +1,9 @@
 package main
 
+import (
+	"github.com/kosli-dev/cli/internal/requests"
+)
+
 type TypedEvidencePayload struct {
 	ArtifactFingerprint string      `json:"artifact_fingerprint,omitempty"`
 	CommitSHA           string      `json:"commit_sha,omitempty"`
@@ -9,4 +13,28 @@ type TypedEvidencePayload struct {
 	BuildUrl            string      `json:"build_url"`
 	UserData            interface{} `json:"user_data,omitempty"`
 	Flows               []string    `json:"pipelines,omitempty"`
+}
+
+// newEvidenceForm constructs a list of FormItems for an evidence
+// form submission.
+func newEvidenceForm(payload interface{}, evidencePaths []string) (
+	[]requests.FormItem, bool, string, error) {
+	form := []requests.FormItem{
+		{Type: "field", FieldName: "evidence_json", Content: payload},
+	}
+
+	var evidencePath string
+	var cleanupNeeded bool
+	var err error
+
+	if len(evidencePaths) > 0 {
+		evidencePath, cleanupNeeded, err = getPathOfEvidenceFileToUpload(evidencePaths)
+		if err != nil {
+			return form, cleanupNeeded, evidencePath, err
+		}
+		form = append(form, requests.FormItem{Type: "file", FieldName: "evidence_file", Content: evidencePath})
+		logger.Debug("evidence file %s will be uploaded", evidencePath)
+	}
+
+	return form, cleanupNeeded, evidencePath, nil
 }

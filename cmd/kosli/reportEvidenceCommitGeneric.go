@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
 type reportEvidenceCommitGenericOptions struct {
-	userDataFile     string
-	evidenceFilePath string
+	userDataFilePath string
+	evidencePaths    []string
 	payload          GenericEvidencePayload
 }
 
@@ -68,9 +69,9 @@ func newReportEvidenceCommitGenericCmd(out io.Writer) *cobra.Command {
 	addCommitEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
 	cmd.Flags().BoolVarP(&o.payload.Compliant, "compliant", "C", false, evidenceCompliantFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", evidenceDescriptionFlag)
-	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
+	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
 
-	cmd.Flags().StringVar(&o.evidenceFilePath, "evidence-file", "", evidenceFileFlag)
+	cmd.Flags().StringSliceVar(&o.evidencePaths, "evidence-paths", []string{}, evidencePathsFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"commit", "build-url", "name"})
@@ -84,17 +85,19 @@ func newReportEvidenceCommitGenericCmd(out io.Writer) *cobra.Command {
 func (o *reportEvidenceCommitGenericOptions) run(args []string) error {
 	var err error
 	url := fmt.Sprintf("%s/api/v1/projects/%s/evidence/commit/generic", global.Host, global.Owner)
-	o.payload.UserData, err = LoadJsonData(o.userDataFile)
+	o.payload.UserData, err = LoadJsonData(o.userDataFilePath)
 	if err != nil {
 		return err
 	}
 
-	form := []requests.FormItem{
-		{Type: "field", FieldName: "evidence_json", Content: o.payload},
+	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, o.evidencePaths)
+	if err != nil {
+		return err
 	}
 
-	if o.evidenceFilePath != "" {
-		form = append(form, requests.FormItem{Type: "file", FieldName: "evidence_file", Content: o.evidenceFilePath})
+	// if we created a tar package, remove it after uploading it
+	if cleanupNeeded {
+		defer os.Remove(evidencePath)
 	}
 
 	reqParams := &requests.RequestParams{
