@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -17,8 +18,9 @@ type EvidenceSnykPayload struct {
 type reportEvidenceArtifactSnykOptions struct {
 	fingerprintOptions *fingerprintOptions
 	flowName           string
-	snykJsonFile       string
-	userDataFile       string
+	snykJsonFilePath   string
+	userDataFilePath   string
+	evidencePaths      []string
 	payload            EvidenceSnykPayload
 }
 
@@ -78,8 +80,10 @@ func newReportEvidenceArtifactSnykCmd(out io.Writer) *cobra.Command {
 	ci := WhichCI()
 	addArtifactEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
-	cmd.Flags().StringVarP(&o.snykJsonFile, "scan-results", "R", "", snykJsonResultsFileFlag)
-	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
+	cmd.Flags().StringVarP(&o.snykJsonFilePath, "scan-results", "R", "", snykJsonResultsFileFlag)
+	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
+	cmd.Flags().StringSliceVarP(&o.evidencePaths, "evidence-paths", "e", []string{}, evidencePathsFlag)
+
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
@@ -99,21 +103,31 @@ func (o *reportEvidenceArtifactSnykOptions) run(args []string) error {
 			return err
 		}
 	}
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/snyk", global.Host, global.Owner, o.flowName)
-	o.payload.UserData, err = LoadJsonData(o.userDataFile)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/evidence/artifact/%s/snyk", global.Host, global.Owner, o.flowName)
+	o.payload.UserData, err = LoadJsonData(o.userDataFilePath)
 	if err != nil {
 		return err
 	}
 
-	o.payload.SnykResults, err = LoadJsonData(o.snykJsonFile)
+	o.payload.SnykResults, err = LoadJsonData(o.snykJsonFilePath)
+	if err != nil {
+		return err
+	}
+
+	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, o.evidencePaths)
+	// if we created a tar package, remove it after uploading it
+	if cleanupNeeded {
+		defer os.Remove(evidencePath)
+	}
+
 	if err != nil {
 		return err
 	}
 
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodPut,
+		Method:   http.MethodPost,
 		URL:      url,
-		Payload:  o.payload,
+		Form:     form,
 		DryRun:   global.DryRun,
 		Password: global.ApiToken,
 	}

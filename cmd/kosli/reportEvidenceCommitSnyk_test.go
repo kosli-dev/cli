@@ -20,7 +20,7 @@ func (suite *CommitEvidenceSnykCommandTestSuite) SetupTest() {
 	suite.flowName = "snyk-test"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
-		Owner:    "docs-cmd-test-user",
+		Owner:    "docs-cmd-test-user-shared",
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
@@ -42,6 +42,35 @@ func (suite *CommitEvidenceSnykCommandTestSuite) TestCommitEvidenceSnykCmd() {
 			          --build-url example.com --scan-results testdata/snyk_scan_example.json 
 					  --evidence-url https://example.com --evidence-fingerprint 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0` + suite.defaultKosliArguments,
 			golden: "snyk scan evidence is reported to commit: 239d7cee00ca341f124fa710fc694b67cdf8011b\n",
+		},
+		{
+			name: "report Snyk test evidence works when providing --evidence-paths containing a single file",
+			cmd: `report evidence commit snyk --commit 239d7cee00ca341f124fa710fc694b67cdf8011b --name snyk-result --flows ` + suite.flowName + `
+			          --build-url example.com --scan-results testdata/snyk_scan_example.json
+					  --evidence-paths testdata/file1` + suite.defaultKosliArguments,
+			golden: "snyk scan evidence is reported to commit: 239d7cee00ca341f124fa710fc694b67cdf8011b\n",
+		},
+		{
+			name: "report Snyk test evidence works when providing --evidence-paths containing a single dir",
+			cmd: `report evidence commit snyk --commit 239d7cee00ca341f124fa710fc694b67cdf8011b --name snyk-result --flows ` + suite.flowName + `
+			          --build-url example.com --scan-results testdata/snyk_scan_example.json
+					  --evidence-paths testdata/folder1` + suite.defaultKosliArguments,
+			golden: "snyk scan evidence is reported to commit: 239d7cee00ca341f124fa710fc694b67cdf8011b\n",
+		},
+		{
+			name: "report Snyk test evidence works when providing --evidence-paths containing multiple paths",
+			cmd: `report evidence commit snyk --commit 239d7cee00ca341f124fa710fc694b67cdf8011b --name snyk-result --flows ` + suite.flowName + `
+			          --build-url example.com --scan-results testdata/snyk_scan_example.json
+					  --evidence-paths testdata/file1,testdata/folder1` + suite.defaultKosliArguments,
+			golden: "snyk scan evidence is reported to commit: 239d7cee00ca341f124fa710fc694b67cdf8011b\n",
+		},
+		{
+			wantError: true,
+			name:      "report Snyk test evidence fails when providing --evidence-paths containing non-existing file",
+			cmd: `report evidence commit snyk --commit 239d7cee00ca341f124fa710fc694b67cdf8011b --name snyk-result --flows ` + suite.flowName + `
+			          --build-url example.com --scan-results testdata/snyk_scan_example.json
+					  --evidence-paths non-existing` + suite.defaultKosliArguments,
+			golden: "Error: stat non-existing: no such file or directory\n",
 		},
 		{
 			name: "report Snyk scan evidence with non-existing scan-results",

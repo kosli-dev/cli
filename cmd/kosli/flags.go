@@ -48,10 +48,11 @@ func addGitlabFlags(cmd *cobra.Command, gitlabConfig *gitlabUtils.GitlabConfig, 
 
 func addArtifactPRFlags(cmd *cobra.Command, o *pullRequestArtifactOptions, ci string) {
 	addArtifactEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
-	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
+	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
 	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
+	cmd.Flags().StringSliceVarP(&o.evidencePaths, "evidence-paths", "e", []string{}, evidencePathsFlag)
 }
 
 func addArtifactEvidenceFlags(cmd *cobra.Command, payload *TypedEvidencePayload, ci string) {
@@ -61,7 +62,8 @@ func addArtifactEvidenceFlags(cmd *cobra.Command, payload *TypedEvidencePayload,
 
 func addCommitPRFlags(cmd *cobra.Command, o *pullRequestCommitOptions, ci string) {
 	addCommitEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
-	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
+	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
+	cmd.Flags().StringSliceVarP(&o.evidencePaths, "evidence-paths", "e", []string{}, evidencePathsFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
 }
 

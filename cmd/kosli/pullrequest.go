@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"reflect"
 
 	bbUtils "github.com/kosli-dev/cli/internal/bitbucket"
@@ -20,10 +21,11 @@ type PullRequestEvidencePayload struct {
 }
 
 type pullRequestOptions struct {
-	payload      PullRequestEvidencePayload
-	retriever    interface{}
-	userDataFile string
-	assert       bool
+	payload          PullRequestEvidencePayload
+	retriever        interface{}
+	userDataFilePath string
+	evidencePaths    []string
+	assert           bool
 }
 
 type pullRequestArtifactOptions struct {
@@ -46,14 +48,14 @@ func (o *pullRequestArtifactOptions) run(out io.Writer, args []string) error {
 		}
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/pull_request", global.Host, global.Owner, o.flowName)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/evidence/artifact/%s/pull_request", global.Host, global.Owner, o.flowName)
 	pullRequestsEvidence, err := getPullRequestsEvidence(o.getRetriever(), o.commit, o.assert)
 	if err != nil {
 		return err
 	}
 
 	o.payload.PullRequests = pullRequestsEvidence
-	o.payload.UserData, err = LoadJsonData(o.userDataFile)
+	o.payload.UserData, err = LoadJsonData(o.userDataFilePath)
 	if err != nil {
 		return err
 	}
@@ -61,12 +63,22 @@ func (o *pullRequestArtifactOptions) run(out io.Writer, args []string) error {
 	label := ""
 	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
 
+	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, o.evidencePaths)
+	// if we created a tar package, remove it after uploading it
+	if cleanupNeeded {
+		defer os.Remove(evidencePath)
+	}
+
+	if err != nil {
+		return err
+	}
+
 	logger.Debug("found %d %s(s) for commit: %s\n", len(pullRequestsEvidence), label, o.commit)
 
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodPut,
+		Method:   http.MethodPost,
 		URL:      url,
-		Payload:  o.payload,
+		Form:     form,
 		DryRun:   global.DryRun,
 		Password: global.ApiToken,
 	}
@@ -102,14 +114,14 @@ func (o *pullRequestCommitOptions) getRetriever() types.PRRetriever {
 }
 
 func (o *pullRequestCommitOptions) run(args []string) error {
-	url := fmt.Sprintf("%s/api/v1/projects/%s/commit/evidence/pull_request", global.Host, global.Owner)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/evidence/commit/pull_request", global.Host, global.Owner)
 
 	pullRequestsEvidence, err := getPullRequestsEvidence(o.getRetriever(), o.payload.CommitSHA, o.assert)
 	if err != nil {
 		return err
 	}
 
-	o.payload.UserData, err = LoadJsonData(o.userDataFile)
+	o.payload.UserData, err = LoadJsonData(o.userDataFilePath)
 	if err != nil {
 		return err
 	}
@@ -117,12 +129,21 @@ func (o *pullRequestCommitOptions) run(args []string) error {
 	label := ""
 	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
 
+	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, o.evidencePaths)
+	// if we created a tar package, remove it after uploading it
+	if cleanupNeeded {
+		defer os.Remove(evidencePath)
+	}
+
+	if err != nil {
+		return err
+	}
 	logger.Debug("found %d %s(s) for commit: %s\n", len(pullRequestsEvidence), label, o.payload.CommitSHA)
 
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodPut,
+		Method:   http.MethodPost,
 		URL:      url,
-		Payload:  o.payload,
+		Form:     form,
 		DryRun:   global.DryRun,
 		Password: global.ApiToken,
 	}

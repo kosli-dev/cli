@@ -26,7 +26,7 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) SetupTest() {
 
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
-		Owner:    "docs-cmd-test-user",
+		Owner:    "docs-cmd-test-user-shared",
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
@@ -54,7 +54,7 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) TestArtifactEvidenceGeneri
 	evidenceName := "manual-test"
 	tests := []cmdTestCase{
 		{
-			name: "report Generic test evidence works",
+			name: "report Generic test evidence works without --evidence-paths",
 			cmd: fmt.Sprintf(`report evidence artifact generic --fingerprint %s --name %s --flow %s
 			          --build-url example.com --compliant --description "some description" %s`,
 				suite.artifactFingerprint, evidenceName, suite.flowName, suite.defaultKosliArguments),
@@ -66,6 +66,30 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) TestArtifactEvidenceGeneri
 			          --build-url example.com --compliant --description "some description" 
 					  --evidence-url https://example.com --evidence-fingerprint %s %s`,
 				suite.artifactFingerprint, evidenceName, suite.flowName, suite.artifactFingerprint, suite.defaultKosliArguments),
+			golden: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
+		},
+		{
+			name: "report Generic test evidence works with --evidence-paths that contains a single file",
+			cmd: fmt.Sprintf(`report evidence artifact generic --fingerprint %s --name %s --flow %s
+			          --build-url example.com --compliant --description "some description"
+					  --evidence-paths testdata/file1 %s`,
+				suite.artifactFingerprint, evidenceName, suite.flowName, suite.defaultKosliArguments),
+			golden: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
+		},
+		{
+			name: "report Generic test evidence works with --evidence-paths that contains a single dir",
+			cmd: fmt.Sprintf(`report evidence artifact generic --fingerprint %s --name %s --flow %s
+			          --build-url example.com --compliant --description "some description"
+					  --evidence-paths testdata/folder1 %s`,
+				suite.artifactFingerprint, evidenceName, suite.flowName, suite.defaultKosliArguments),
+			golden: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
+		},
+		{
+			name: "report Generic test evidence works with --evidence-paths that contains multiple paths",
+			cmd: fmt.Sprintf(`report evidence artifact generic --fingerprint %s --name %s --flow %s
+			          --build-url example.com --compliant --description "some description"
+					  --evidence-paths testdata/file1,testdata/folder1 %s`,
+				suite.artifactFingerprint, evidenceName, suite.flowName, suite.defaultKosliArguments),
 			golden: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
 		},
 		{
@@ -81,6 +105,15 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) TestArtifactEvidenceGeneri
 			          --build-url example.com %s`,
 				suite.artifactFingerprint, evidenceName, suite.flowName, suite.defaultKosliArguments),
 			golden: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
+		},
+		{
+			wantError: true,
+			name:      "report Generic test evidence fails when providing --evidence-paths that does not exist",
+			cmd: fmt.Sprintf(`report evidence artifact generic --fingerprint %s --name %s --flow %s
+			          --build-url example.com --compliant --description "some description"
+					  --evidence-paths non-existing %s`,
+				suite.artifactFingerprint, evidenceName, suite.flowName, suite.defaultKosliArguments),
+			golden: "Error: stat non-existing: no such file or directory\n",
 		},
 		{
 			name: "report Generic test evidence fails if --name is missing",

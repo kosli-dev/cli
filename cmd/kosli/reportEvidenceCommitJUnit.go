@@ -4,15 +4,17 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
 type reportEvidenceCommitJunitOptions struct {
-	testResultsDir string
-	userDataFile   string
-	payload        EvidenceJUnitPayload
+	testResultsDir   string
+	userDataFilePath string
+	evidencePaths    []string
+	payload          EvidenceJUnitPayload
 }
 
 const reportEvidenceCommitJunitShortDesc = `Report JUnit test evidence for a commit in Kosli flows.`
@@ -64,7 +66,8 @@ func newReportEvidenceCommitJunitCmd(out io.Writer) *cobra.Command {
 	ci := WhichCI()
 	addCommitEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
 	cmd.Flags().StringVarP(&o.testResultsDir, "results-dir", "R", ".", resultsDirFlag)
-	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
+	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
+	cmd.Flags().StringSliceVarP(&o.evidencePaths, "evidence-paths", "e", []string{}, evidencePathsFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"commit", "build-url", "name"})
@@ -77,8 +80,8 @@ func newReportEvidenceCommitJunitCmd(out io.Writer) *cobra.Command {
 
 func (o *reportEvidenceCommitJunitOptions) run(args []string) error {
 	var err error
-	url := fmt.Sprintf("%s/api/v1/projects/%s/commit/evidence/junit", global.Host, global.Owner)
-	o.payload.UserData, err = LoadJsonData(o.userDataFile)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/evidence/commit/junit", global.Host, global.Owner)
+	o.payload.UserData, err = LoadJsonData(o.userDataFilePath)
 	if err != nil {
 		return err
 	}
@@ -88,10 +91,20 @@ func (o *reportEvidenceCommitJunitOptions) run(args []string) error {
 		return err
 	}
 
+	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, o.evidencePaths)
+	// if we created a tar package, remove it after uploading it
+	if cleanupNeeded {
+		defer os.Remove(evidencePath)
+	}
+
+	if err != nil {
+		return err
+	}
+
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodPut,
+		Method:   http.MethodPost,
 		URL:      url,
-		Payload:  o.payload,
+		Form:     form,
 		DryRun:   global.DryRun,
 		Password: global.ApiToken,
 	}

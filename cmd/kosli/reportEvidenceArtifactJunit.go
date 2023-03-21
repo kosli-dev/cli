@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/kosli-dev/cli/internal/requests"
@@ -31,7 +32,8 @@ type reportEvidenceArtifactJunitOptions struct {
 	fingerprintOptions *fingerprintOptions
 	flowName           string
 	testResultsDir     string
-	userDataFile       string
+	userDataFilePath   string
+	evidencePaths      []string
 	payload            EvidenceJUnitPayload
 }
 
@@ -91,7 +93,9 @@ func newReportEvidenceArtifactJunitCmd(out io.Writer) *cobra.Command {
 	addArtifactEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.testResultsDir, "results-dir", "R", ".", resultsDirFlag)
-	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", evidenceUserDataFlag)
+	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
+	cmd.Flags().StringSliceVarP(&o.evidencePaths, "evidence-paths", "e", []string{}, evidencePathsFlag)
+
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
@@ -111,8 +115,8 @@ func (o *reportEvidenceArtifactJunitOptions) run(args []string) error {
 			return err
 		}
 	}
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/evidence/junit", global.Host, global.Owner, o.flowName)
-	o.payload.UserData, err = LoadJsonData(o.userDataFile)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/evidence/artifact/%s/junit", global.Host, global.Owner, o.flowName)
+	o.payload.UserData, err = LoadJsonData(o.userDataFilePath)
 	if err != nil {
 		return err
 	}
@@ -122,10 +126,20 @@ func (o *reportEvidenceArtifactJunitOptions) run(args []string) error {
 		return err
 	}
 
+	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, o.evidencePaths)
+	// if we created a tar package, remove it after uploading it
+	if cleanupNeeded {
+		defer os.Remove(evidencePath)
+	}
+
+	if err != nil {
+		return err
+	}
+
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodPut,
+		Method:   http.MethodPost,
 		URL:      url,
-		Payload:  o.payload,
+		Form:     form,
 		DryRun:   global.DryRun,
 		Password: global.ApiToken,
 	}

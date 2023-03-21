@@ -15,6 +15,12 @@ type TypedEvidencePayload struct {
 	Flows               []string    `json:"pipelines,omitempty"`
 }
 
+type GenericEvidencePayload struct {
+	TypedEvidencePayload
+	Description string `json:"description,omitempty"`
+	Compliant   bool   `json:"is_compliant"`
+}
+
 // newEvidenceForm constructs a list of FormItems for an evidence
 // form submission.
 func newEvidenceForm(payload interface{}, evidencePaths []string) (

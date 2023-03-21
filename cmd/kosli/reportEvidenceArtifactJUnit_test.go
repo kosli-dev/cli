@@ -22,7 +22,7 @@ func (suite *ArtifactEvidenceJUnitCommandTestSuite) SetupTest() {
 	suite.artifactFingerprint = "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
-		Owner:    "docs-cmd-test-user",
+		Owner:    "docs-cmd-test-user-shared",
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
@@ -47,6 +47,27 @@ func (suite *ArtifactEvidenceJUnitCommandTestSuite) TestArtifactEvidenceJUnitCom
 			golden: "junit test evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
 		{
+			name: "report JUnit test evidence works when providing --evidence-paths containing a single file",
+			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result --flow ` + suite.flowName + `
+			          --build-url example.com --results-dir testdata
+					  --evidence-paths testdata/file1` + suite.defaultKosliArguments,
+			golden: "junit test evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
+		},
+		{
+			name: "report JUnit test evidence works when providing --evidence-paths containing a single dir",
+			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result --flow ` + suite.flowName + `
+			          --build-url example.com --results-dir testdata
+					  --evidence-paths testdata/folder1` + suite.defaultKosliArguments,
+			golden: "junit test evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
+		},
+		{
+			name: "report JUnit test evidence works when providing --evidence-paths containing multiple paths",
+			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result --flow ` + suite.flowName + `
+			          --build-url example.com --results-dir testdata
+					  --evidence-paths testdata/file1,testdata/folder1` + suite.defaultKosliArguments,
+			golden: "junit test evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
+		},
+		{
 			name: "report JUnit test evidence with maven-surefire XML that lacks a timestamp on the <testsuite>",
 			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint +
 				` --name junit-result --flow ` + suite.flowName +
@@ -58,6 +79,14 @@ func (suite *ArtifactEvidenceJUnitCommandTestSuite) TestArtifactEvidenceJUnitCom
 			cmd: `report evidence artifact junit testdata/file1 --artifact-type file --name junit-result --flow ` + suite.flowName + `
 			          --build-url example.com --results-dir testdata` + suite.defaultKosliArguments,
 			golden: "junit test evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
+		},
+		{
+			wantError: true,
+			name:      "report JUnit test evidence fails when providing --evidence-paths containing non-existing file",
+			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result --flow ` + suite.flowName + `
+			          --build-url example.com --results-dir testdata
+					  --evidence-paths non-existing` + suite.defaultKosliArguments,
+			golden: "Error: stat non-existing: no such file or directory\n",
 		},
 		{
 			name: "report JUnit test evidence with non-existing results dir",
