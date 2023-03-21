@@ -21,14 +21,14 @@ kosli assert artifact \
 	--fingerprint 184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0 \
 	--flow yourFlowName \
 	--api-token yourAPIToken \
-	--owner yourOrgName 
+	--org yourOrgName 
 
 # fail if an artifact has a non-compliant status (using the artifact name and type)
 kosli assert artifact library/nginx:1.21 \
 	--artifact-type docker \
 	--flow yourFlowName \
 	--api-token yourAPIToken \
-	--owner yourOrgName 
+	--org yourOrgName 
 `
 
 type assertArtifactOptions struct {
@@ -46,7 +46,7 @@ func newAssertArtifactCmd(out io.Writer) *cobra.Command {
 		Long:    assertArtifactLongDesc,
 		Example: assertArtifactExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -84,7 +84,7 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 		}
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/artifact/?snappish=%s@%s", global.Host, global.Owner, o.flowName, o.fingerprint)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/artifact/?snappish=%s@%s", global.Host, global.Org, o.flowName, o.fingerprint)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,

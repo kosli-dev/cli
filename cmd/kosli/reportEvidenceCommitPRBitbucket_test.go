@@ -23,10 +23,10 @@ func (suite *CommitEvidencePRBitbucketCommandTestSuite) SetupTest() {
 	suite.flowNames = "bitbucket-pr"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
-		Owner:    "docs-cmd-test-user",
+		Org:      "docs-cmd-test-user",
 		Host:     "http://localhost:8001",
 	}
-	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
+	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
 	CreateFlow(suite.flowNames, suite.T())
 }
@@ -41,10 +41,10 @@ func (suite *CommitEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePRBi
 		},
 		{
 			wantError: true,
-			name:      "report Bitbucket PR evidence fails when --owner is missing",
+			name:      "report Bitbucket PR evidence fails when --org is missing",
 			cmd: `report evidence commit pullrequest bitbucket --name bb-pr --flows ` + suite.flowNames + `
 					--build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69 --api-token foo --host bar`,
-			golden: "Error: --owner is not set\n" +
+			golden: "Error: --org is not set\n" +
 				"Usage: kosli report evidence commit pullrequest bitbucket [flags]\n",
 		},
 		{

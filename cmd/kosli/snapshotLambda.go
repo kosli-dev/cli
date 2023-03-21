@@ -23,7 +23,7 @@ export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 kosli snapshot lambda yourEnvironmentName \
 	--function-name yourFunctionName \
 	--api-token yourAPIToken \
-	--owner yourOrgName
+	--org yourOrgName
 
 # report what is running in a specific version of an AWS Lambda function (AWS auth provided in flags):
 kosli snapshot lambda yourEnvironmentName \
@@ -33,7 +33,7 @@ kosli snapshot lambda yourEnvironmentName \
 	--aws-secret-key yourAWSSecretAccessKey \
 	--aws-region yourAWSRegion \
 	--api-token yourAPIToken \
-	--owner yourOrgName
+	--org yourOrgName
 `
 
 type snapshotLambdaOptions struct {
@@ -52,7 +52,7 @@ func newSnapshotLambdaCmd(out io.Writer) *cobra.Command {
 		Example: snapshotLambdaExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -80,7 +80,7 @@ func newSnapshotLambdaCmd(out io.Writer) *cobra.Command {
 func (o *snapshotLambdaOptions) run(args []string) error {
 	envName := args[0]
 
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
+	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Org, envName)
 	lambdaData, err := o.awsStaticCreds.GetLambdaPackageData(o.functionName, o.functionVersion)
 	if err != nil {
 		return err

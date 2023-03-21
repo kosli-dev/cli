@@ -23,7 +23,7 @@ const snapshotK8SExample = `
 # report what is running in an entire cluster using kubeconfig at $HOME/.kube/config:
 kosli snapshot k8s yourEnvironmentName \
 	--api-token yourAPIToken \
-	--owner yourOrgName
+	--org yourOrgName
 
 # report what is running in an entire cluster using kubeconfig at $HOME/.kube/config 
 (with global flags defined in environment or in a config file):
@@ -36,19 +36,19 @@ kosli snapshot k8s yourEnvironmentName
 kosli snapshot k8s yourEnvironmentName \
     --exclude-namespaces kube-system,utilities \
 	--api-token yourAPIToken \
-	--owner yourOrgName
+	--org yourOrgName
 
 # report what is running in a given namespace in the cluster using kubeconfig at $HOME/.kube/config:
 kosli snapshot k8s yourEnvironmentName \
 	--namespaces your-namespace \
 	--api-token yourAPIToken \
-	--owner yourOrgName
+	--org yourOrgName
 
 # report what is running in a cluster using kubeconfig at a custom path:
 kosli environment report k8s yourEnvironmentName \
 	--kubeconfig /path/to/kube/config \
 	--api-token yourAPIToken \
-	--owner yourOrgName
+	--org yourOrgName
 `
 
 type snapshotK8SOptions struct {
@@ -68,7 +68,7 @@ func newSnapshotK8SCmd(out io.Writer) *cobra.Command {
 		Example: snapshotK8SExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -91,7 +91,7 @@ func (o *snapshotK8SOptions) run(args []string) error {
 	if o.id == "" {
 		o.id = envName
 	}
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
+	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Org, envName)
 	clientset, err := kube.NewK8sClientSet(o.kubeconfig)
 	if err != nil {
 		return err

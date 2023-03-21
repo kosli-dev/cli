@@ -23,7 +23,7 @@ kosli report evidence commit pullrequest bitbucket \
 	--name yourEvidenceName \
 	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
-	--owner yourOrgName \
+	--org yourOrgName \
 	--api-token yourAPIToken
 	
 # fail if a pull request does not exist for your commit
@@ -36,7 +36,7 @@ kosli report evidence commit pullrequest bitbucket \
 	--name yourEvidenceName \
 	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
-	--owner yourOrgName \
+	--org yourOrgName \
 	--api-token yourAPIToken \
 	--assert
 `
@@ -56,7 +56,7 @@ func newReportEvidenceCommitPRBitbucketCmd(out io.Writer) *cobra.Command {
 		Long:    reportEvidenceCommitPRBitbucketLongDesc,
 		Example: reportEvidenceCommitPRBitbucketExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}

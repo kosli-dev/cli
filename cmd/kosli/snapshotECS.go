@@ -23,7 +23,7 @@ export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 kosli snapshot ecs yourEnvironmentName \
 	--cluster yourECSClusterName \
 	--api-token yourAPIToken \
-	--owner yourOrgName
+	--org yourOrgName
 
 # report what is running in a specific AWS ECS service within a cluster:
 export AWS_REGION=yourAWSRegion
@@ -34,7 +34,7 @@ kosli snapshot ecs yourEnvironmentName \
 	--cluster yourECSClusterName \
 	--service-name yourECSServiceName \
 	--api-token yourAPIToken \
-	--owner yourOrgName
+	--org yourOrgName
 
 # report what is running in in a specific AWS ECS service within a cluster (AWS auth provided in flags):
 kosli snapshot ecs yourEnvironmentName \
@@ -44,7 +44,7 @@ kosli snapshot ecs yourEnvironmentName \
 	--aws-secret-key yourAWSSecretAccessKey \
 	--aws-region yourAWSRegion \
 	--api-token yourAPIToken \
-	--owner yourOrgName
+	--org yourOrgName
 `
 
 type snapshotECSOptions struct {
@@ -64,7 +64,7 @@ func newSnapshotECSCmd(out io.Writer) *cobra.Command {
 		Example: snapshotECSExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -99,7 +99,7 @@ func (o *snapshotECSOptions) run(args []string) error {
 			o.id = envName
 		}
 	}
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
+	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Org, envName)
 
 	tasksData, err := o.awsStaticCreds.GetEcsTasksData(o.cluster, o.serviceName)
 	if err != nil {

@@ -16,7 +16,7 @@ type PipelineCommandTestSuite struct {
 }
 
 func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
-	defaultKosliArguments := " -H http://localhost:8001 --owner docs-cmd-test-user -a eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY"
+	defaultKosliArguments := " -H http://localhost:8001 --org docs-cmd-test-user -a eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY"
 	defaultArtifactArguments := " --flow newFlow --build-url www.yr.no --commit-url www.nrk.no"
 	defaultRepoRoot := " --repo-root ../.. "
 
@@ -32,73 +32,6 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 	headHash := repoHead.Hash().String()
 
 	tests := []cmdTestCase{
-		// {
-		// 	name:   "declare pipeline",
-		// 	cmd:    "pipeline declare --pipeline newFlow --description \"my new pipeline\" " + defaultKosliArguments,
-		// 	golden: "",
-		// },
-		// {
-		// 	name:   "re-declaring a pipeline updates its metadata",
-		// 	cmd:    "pipeline declare --pipeline newFlow --description \"changed description\" " + defaultKosliArguments,
-		// 	golden: "",
-		// },
-		// {
-		// 	wantError: true,
-		// 	name:      "missing --owner flag causes an error",
-		// 	cmd:       "pipeline declare --pipeline newFlow --description \"my new pipeline\" -H http://localhost:8001 -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
-		// 	golden:    "Error: --owner is not set\nUsage: kosli pipeline declare [flags]\n",
-		// },
-		// {
-		// 	wantError: true,
-		// 	name:      "missing --api-token flag causes an error",
-		// 	cmd:       "pipeline declare --pipeline newFlow --description \"my new pipeline\" --owner cyber-dojo -H http://localhost:8001",
-		// 	golden:    "Error: --api-token is not set\nUsage: kosli pipeline declare [flags]\n",
-		// },
-		// {
-		// 	wantError: true,
-		// 	name:      "missing --pipeline causes an error",
-		// 	cmd:       "pipeline declare --description \"my new pipeline\" -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
-		// 	golden:    "Error: --pipeline is required when you are not using --pipefile\nUsage: kosli pipeline declare [flags]\n",
-		// },
-		// Pipeline ls tests
-		// {
-		// 	wantError: false,
-		// 	name:      "kosli pipeline ls command does not return error",
-		// 	cmd:       "pipeline ls" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
-		// {
-		// 	wantError: false,
-		// 	name:      "kosli pipeline ls --output json command does not return error",
-		// 	cmd:       "pipeline ls --output json" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
-		// {
-		// 	wantError: false,
-		// 	name:      "kosli pipeline ls --output table command does not return error",
-		// 	cmd:       "pipeline ls --output table" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
-		// {
-		// 	wantError: true,
-		// 	name:      "kosli pipeline ls --output text command does return error",
-		// 	cmd:       "pipeline ls --output text" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
-
-		// Get flow tests
-		// {
-		// 	wantError: false,
-		// 	name:      "kosli get flow newFlow command does not return error",
-		// 	cmd:       "get flow newFlow" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
-		// {
-		// 	wantError: false,
-		// 	name:      "kosli get flow newFlow --output json command does not return error",
-		// 	cmd:       "get flow newFlow --output json" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
 
 		// Report artifacts
 		{
@@ -127,7 +60,7 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		},
 		{
 			wantError: true,
-			name:      "report artifact missing --owner",
+			name:      "report artifact missing --org",
 			cmd:       "report artifact testdata/folder1 --artifact-type dir --git-commit " + headHash + defaultArtifactArguments + defaultRepoRoot,
 			golden:    "",
 		},
@@ -156,22 +89,6 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 			golden:    "Error: failed to open git repository at .: repository does not exist\n",
 		},
 
-		// List artifacts
-		// {
-		// 	wantError: false,
-		// 	name:      "list artifacts",
-		// 	cmd:       "artifact ls newFlow" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
-
-		// Get artifact
-		// {
-		// 	wantError: false,
-		// 	name:      "get artifact",
-		// 	cmd:       "get artifact newFlow@4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
-
 		// TODO: decouple approval tests and make them independent
 		// Report approval
 		{
@@ -188,29 +105,6 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 			cmd:       "request approval --flow newFlow --oldest-commit HEAD --fingerprint 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
-
-		// // Assert approval
-		// {
-		// 	wantError: false,
-		// 	name:      "assert an approved approval does not fail",
-		// 	cmd:       "assert approval --flow newFlow --fingerprint 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
-
-		// {
-		// 	wantError: true,
-		// 	name:      "assert a pending approval fails",
-		// 	cmd:       "assert approval --flow newFlow --fingerprint 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
-
-		// list approvals
-		// {
-		// 	wantError: false,
-		// 	name:      "list approvals",
-		// 	cmd:       "approval ls newFlow" + defaultKosliArguments,
-		// 	golden:    "",
-		// },
 	}
 	runTestCmd(suite.T(), tests)
 }

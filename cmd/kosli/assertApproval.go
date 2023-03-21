@@ -21,14 +21,14 @@ const assertApprovalExample = `
 kosli assert approval FILE.tgz \
 	--api-token yourAPIToken \
 	--artifact-type file \
-	--owner yourOrgName \
+	--org yourOrgName \
 	--flow yourFlowName 
 
 
 # Assert that an artifact with a provided fingerprint (sha256) has been approved
 kosli assert approval \
 	--api-token yourAPIToken \
-	--owner yourOrgName \
+	--org yourOrgName \
 	--flow yourFlowName \
 	--fingerprint yourArtifactFingerprint
 `
@@ -48,7 +48,7 @@ func newAssertApprovalCmd(out io.Writer) *cobra.Command {
 		Long:    assertApprovalLongDesc,
 		Example: assertApprovalExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -87,7 +87,7 @@ func (o *assertApprovalOptions) run(args []string) error {
 		}
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/approvals/", global.Host, global.Owner, o.flowName, o.fingerprint)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/approvals/", global.Host, global.Org, o.flowName, o.fingerprint)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,

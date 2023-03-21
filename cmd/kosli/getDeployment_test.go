@@ -26,10 +26,10 @@ func (suite *GetDeploymentCommandTestSuite) SetupTest() {
 	suite.artifactPath = "testdata/folder1/hello.txt"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
-		Owner:    "docs-cmd-test-user",
+		Org:      "docs-cmd-test-user",
 		Host:     "http://localhost:8001",
 	}
-	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
+	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
 	CreateFlow(suite.flowName, suite.T())
 	fingerprintOptions := &fingerprintOptions{
@@ -39,7 +39,7 @@ func (suite *GetDeploymentCommandTestSuite) SetupTest() {
 	suite.fingerprint, err = GetSha256Digest(suite.artifactPath, fingerprintOptions, logger)
 	require.NoError(suite.T(), err)
 	CreateArtifact(suite.flowName, suite.fingerprint, "arti-name", suite.T())
-	CreateEnv(global.Owner, suite.envName, "server", suite.T())
+	CreateEnv(global.Org, suite.envName, "server", suite.T())
 	ExpectDeployment(suite.flowName, suite.fingerprint, suite.envName, suite.T())
 }
 
@@ -60,7 +60,7 @@ func (suite *GetDeploymentCommandTestSuite) TestGetDeploymentCmd() {
 		{
 			wantError: true,
 			name:      "get deployment fails when --api-token flag is missing",
-			cmd:       `get deployment ` + suite.flowName + `#1 --owner foo --host bar`,
+			cmd:       `get deployment ` + suite.flowName + `#1 --org foo --host bar`,
 			golden: "Error: --api-token is not set\n" +
 				"Usage: kosli get deployment SNAPPISH [flags]\n",
 		},

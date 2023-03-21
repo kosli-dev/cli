@@ -29,7 +29,7 @@ kosli report evidence commit snyk \
 	--flows yourFlowName1 \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
-	--owner yourOrgName	\
+	--org yourOrgName	\
 	--scan-results yourSnykJSONScanResults
 
 # report Snyk evidence for a commit related to multiple Kosli flows:
@@ -39,7 +39,7 @@ kosli report evidence commit snyk \
 	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
-	--owner yourOrgName	\
+	--org yourOrgName	\
 	--scan-results yourSnykJSONScanResults
 `
 
@@ -52,7 +52,7 @@ func newReportEvidenceCommitSnykCmd(out io.Writer) *cobra.Command {
 		Example: reportEvidenceCommitSnykExample,
 		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -80,7 +80,7 @@ func newReportEvidenceCommitSnykCmd(out io.Writer) *cobra.Command {
 
 func (o *reportEvidenceCommitSnykOptions) run(args []string) error {
 	var err error
-	url := fmt.Sprintf("%s/api/v1/projects/%s/evidence/commit/snyk", global.Host, global.Owner)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/evidence/commit/snyk", global.Host, global.Org)
 	o.payload.UserData, err = LoadJsonData(o.userDataFilePath)
 	if err != nil {
 		return err

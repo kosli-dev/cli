@@ -25,10 +25,10 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) SetupTest() {
 	suite.artifactFingerprint = "847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
-		Owner:    "docs-cmd-test-user",
+		Org:      "docs-cmd-test-user",
 		Host:     "http://localhost:8001",
 	}
-	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
+	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
 	CreateFlow(suite.flowName, suite.T())
 	CreateArtifact(suite.flowName, suite.artifactFingerprint, "foobar", suite.T())
@@ -44,10 +44,10 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 		},
 		{
 			wantError: true,
-			name:      "report Github PR evidence fails when --owner is missing",
+			name:      "report Github PR evidence fails when --org is missing",
 			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
 			          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6 --api-token foo --host bar`,
-			golden: "Error: --owner is not set\n" +
+			golden: "Error: --org is not set\n" +
 				"Usage: kosli report evidence artifact pullrequest github [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{

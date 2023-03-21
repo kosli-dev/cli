@@ -22,7 +22,7 @@ kosli create flow yourFlowName \
     --visibility private OR public \
 	--template artifact,evidence-type1,evidence-type2 \
 	--api-token yourAPIToken \
-	--owner yourOrgName
+	--org yourOrgName
 `
 
 type createFlowOptions struct {
@@ -30,7 +30,7 @@ type createFlowOptions struct {
 }
 
 type FlowPayload struct {
-	Owner       string   `json:"owner"`
+	Org         string   `json:"owner"`
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
 	Visibility  string   `json:"visibility"`
@@ -46,7 +46,7 @@ func newCreateFlowCmd(out io.Writer) *cobra.Command {
 		Example: createFlowExample,
 		Args:    cobra.MaximumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -73,7 +73,7 @@ func newCreateFlowCmd(out io.Writer) *cobra.Command {
 
 func (o *createFlowOptions) run(args []string) error {
 	var err error
-	url := fmt.Sprintf("%s/api/v1/projects/%s/", global.Host, global.Owner)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/", global.Host, global.Org)
 
 	if o.payload.Name == "" {
 		if len(args) == 0 {
@@ -81,7 +81,7 @@ func (o *createFlowOptions) run(args []string) error {
 		}
 		o.payload.Name = args[0]
 	}
-	o.payload.Owner = global.Owner
+	o.payload.Org = global.Org
 	o.payload.Template = injectArtifactIntoTemplateIfNotExisting(o.payload.Template)
 
 	reqParams := &requests.RequestParams{

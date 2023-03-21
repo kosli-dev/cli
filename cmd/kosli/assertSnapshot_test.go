@@ -33,12 +33,12 @@ func (suite *AssertSnapshotCommandTestSuite) SetupTest() {
 	suite.artifactPath = "testdata/folder1/hello.txt"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
-		Owner:    "docs-cmd-test-user",
+		Org:      "docs-cmd-test-user",
 		Host:     "http://localhost:8001",
 	}
-	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
+	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateEnv(global.Owner, suite.envName, "server", suite.T())
+	CreateEnv(global.Org, suite.envName, "server", suite.T())
 	CreateFlow(suite.flowName, suite.T())
 	fingerprintOptions := &fingerprintOptions{
 		artifactType: "file",
@@ -53,9 +53,9 @@ func (suite *AssertSnapshotCommandTestSuite) TestAssertSnapshotCmd() {
 	tests := []cmdTestCase{
 		{
 			wantError: true,
-			name:      "missing --owner fails",
+			name:      "missing --org fails",
 			cmd:       fmt.Sprintf(`assert snapshot %s --api-token secret`, suite.envName),
-			golden:    "Error: --owner is not set\nUsage: kosli assert snapshot [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+			golden:    "Error: --org is not set\nUsage: kosli assert snapshot [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,

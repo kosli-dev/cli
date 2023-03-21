@@ -21,11 +21,11 @@ func (suite *RenameEnvironmentCommandTestSuite) SetupTest() {
 
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
-		Owner:    "docs-cmd-test-user",
+		Org:      "docs-cmd-test-user",
 		Host:     "http://localhost:8001",
 	}
-	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
-	CreateEnv(global.Owner, suite.envName, "server", suite.T())
+	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
+	CreateEnv(global.Org, suite.envName, "server", suite.T())
 }
 
 func (suite *RenameEnvironmentCommandTestSuite) TestListSnapshotsCmd() {

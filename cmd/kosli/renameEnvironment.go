@@ -19,7 +19,7 @@ const renameEnvironmentExample = `
 # rename a Kosli environment:
 kosli rename environment oldName newName \
 	--api-token yourAPIToken \
-	--owner yourOrgName 
+	--org yourOrgName 
 `
 
 type RenameEnvironmentPayload struct {
@@ -36,7 +36,7 @@ func newRenameEnvironmentCmd(out io.Writer) *cobra.Command {
 		Example: renameEnvironmentExample,
 		Args:    cobra.ExactArgs(2),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -44,7 +44,7 @@ func newRenameEnvironmentCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			url := fmt.Sprintf("%s/api/v1/environments/%s/%s/rename", global.Host, global.Owner, args[0])
+			url := fmt.Sprintf("%s/api/v1/environments/%s/%s/rename", global.Host, global.Org, args[0])
 			payload.NewName = args[1]
 
 			reqParams := &requests.RequestParams{

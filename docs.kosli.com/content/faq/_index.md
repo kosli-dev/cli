@@ -63,7 +63,7 @@ We are working on providing that functionality in a near future. -->
 
 ### Do I have to provide all the flags all the time? 
 
-A number of flags won't change their values often (or at all) between commands, like `--owner` or `--api-token`.  Some will differ between e.g. workflows, like `--flow`. You can define them as environment variable to avoid unnecessary redundancy. Check [Environment variables](/kosli_overview/kosli_tools/#environment-variables) section to learn more.
+A number of flags won't change their values often (or at all) between commands, like `--org` or `--api-token`.  Some will differ between e.g. workflows, like `--flow`. You can define them as environment variable to avoid unnecessary redundancy. Check [Environment variables](/kosli_overview/kosli_tools/#environment-variables) section to learn more.
 
 ### What is dry run and how to use it?
 
@@ -75,7 +75,7 @@ Here are two possible ways of enabling a dry run:
 
 ### What is the `--config-file` flag?
 
-A config file is an alternative for using Kosli flags or Environment variables. Usually you'd use a config file for the values that rarely change - like api token or owner, but you can represent all Kosli flags with config file. The key for each value is the same as the flag name, capitalized, so `--api-token` would become `API-TOKEN`, and `--owner` would become `OWNER`, etc. 
+A config file is an alternative for using Kosli flags or Environment variables. Usually you'd use a config file for the values that rarely change - like api token or org, but you can represent all Kosli flags with config file. The key for each value is the same as the flag name, capitalized, so `--api-token` would become `API-TOKEN`, and `--org` would become `OWNER`, etc. 
 
 You can use JSON, YAML or TOML format for your config file. 
 
@@ -101,7 +101,7 @@ OWNER = "my-org"
 API-TOKEN = "123456abcdef"
 ```
 
-When calling Kosli command you can skip file extension. For example, to list environments with `owner` and `api-token` in the configuration file you would run:
+When calling Kosli command you can skip file extension. For example, to list environments with `org` and `api-token` in the configuration file you would run:
 
 ```
 $ kosli environment ls --config-file kosli-conf

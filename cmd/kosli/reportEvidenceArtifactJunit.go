@@ -50,7 +50,7 @@ kosli report evidence artifact junit FILE.tgz \
 	--flow yourFlowName \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
-	--owner yourOrgName	\
+	--org yourOrgName	\
 	--results-dir yourFolderWithJUnitResults
 
 # report JUnit test evidence about an artifact using an available Sha256 digest:
@@ -60,7 +60,7 @@ kosli report evidence artifact junit \
 	--flow yourFlowName \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
-	--owner yourOrgName	\
+	--org yourOrgName	\
 	--results-dir yourFolderWithJUnitResults
 `
 
@@ -73,7 +73,7 @@ func newReportEvidenceArtifactJunitCmd(out io.Writer) *cobra.Command {
 		Long:    reportEvidenceArtifactJunitLongDesc,
 		Example: reportEvidenceArtifactJunitExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -115,7 +115,7 @@ func (o *reportEvidenceArtifactJunitOptions) run(args []string) error {
 			return err
 		}
 	}
-	url := fmt.Sprintf("%s/api/v1/projects/%s/evidence/artifact/%s/junit", global.Host, global.Owner, o.flowName)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/evidence/artifact/%s/junit", global.Host, global.Org, o.flowName)
 	o.payload.UserData, err = LoadJsonData(o.userDataFilePath)
 	if err != nil {
 		return err

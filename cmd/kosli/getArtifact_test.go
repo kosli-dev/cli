@@ -26,10 +26,10 @@ func (suite *GetArtifactCommandTestSuite) SetupTest() {
 	suite.artifactPath = "testdata/folder1/hello.txt"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
-		Owner:    "docs-cmd-test-user",
+		Org:      "docs-cmd-test-user",
 		Host:     "http://localhost:8001",
 	}
-	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
+	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
 	CreateFlow(suite.flowName, suite.T())
 	fingerprintOptions := &fingerprintOptions{
@@ -58,7 +58,7 @@ func (suite *GetArtifactCommandTestSuite) TestGetArtifactCmd() {
 		{
 			wantError: true,
 			name:      "missing --api-token fails",
-			cmd:       fmt.Sprintf(`get artifact %s@%s --owner orgX`, suite.flowName, suite.fingerprint),
+			cmd:       fmt.Sprintf(`get artifact %s@%s --org orgX`, suite.flowName, suite.fingerprint),
 			golden:    "Error: --api-token is not set\nUsage: kosli get artifact SNAPPISH [flags]\n",
 		},
 		{

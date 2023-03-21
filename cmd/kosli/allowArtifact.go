@@ -36,7 +36,7 @@ func newAllowArtifactCmd(out io.Writer) *cobra.Command {
 		Long:  allowArtifactLongDesc,
 		Args:  cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -83,7 +83,7 @@ func (o *allowArtifactOptions) run(args []string) error {
 		}
 	}
 
-	url := fmt.Sprintf("%s/api/v1/policies/%s/allowedartifacts/", global.Host, global.Owner)
+	url := fmt.Sprintf("%s/api/v1/policies/%s/allowedartifacts/", global.Host, global.Org)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPut,

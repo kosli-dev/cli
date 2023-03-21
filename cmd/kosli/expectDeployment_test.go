@@ -28,10 +28,10 @@ func (suite *ExpectDeploymentCommandTestSuite) SetupTest() {
 	suite.artifactPath = "testdata/folder1/hello.txt"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
-		Owner:    "docs-cmd-test-user",
+		Org:      "docs-cmd-test-user",
 		Host:     "http://localhost:8001",
 	}
-	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
+	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
 	CreateFlow(suite.flowName, suite.T())
 	fingerprintOptions := &fingerprintOptions{
@@ -41,7 +41,7 @@ func (suite *ExpectDeploymentCommandTestSuite) SetupTest() {
 	suite.fingerprint, err = GetSha256Digest(suite.artifactPath, fingerprintOptions, logger)
 	require.NoError(suite.T(), err)
 	CreateArtifact(suite.flowName, suite.fingerprint, suite.artifactName, suite.T())
-	CreateEnv(global.Owner, suite.envName, "server", suite.T())
+	CreateEnv(global.Org, suite.envName, "server", suite.T())
 }
 
 func (suite *ExpectDeploymentCommandTestSuite) TestExpectDeploymentCmd() {
@@ -67,17 +67,17 @@ func (suite *ExpectDeploymentCommandTestSuite) TestExpectDeploymentCmd() {
 		},
 		{
 			wantError: true,
-			name:      "missing --owner flag causes an error",
+			name:      "missing --org flag causes an error",
 			cmd: fmt.Sprintf(`expect deployment --flow %s --fingerprint %s --environment %s --build-url example.com 
 			 		--api-token secret`,
 				suite.flowName, suite.fingerprint, suite.envName),
-			golden: "Error: --owner is not set\nUsage: kosli expect deployment [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+			golden: "Error: --org is not set\nUsage: kosli expect deployment [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "missing --api-token flag causes an error",
 			cmd: fmt.Sprintf(`expect deployment --flow %s --fingerprint %s --environment %s --build-url example.com 
-			 		--owner orgX`,
+			 		--org orgX`,
 				suite.flowName, suite.fingerprint, suite.envName),
 			golden: "Error: --api-token is not set\nUsage: kosli expect deployment [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},

@@ -44,12 +44,12 @@ const searchExample = `
 # Search for a git commit in Kosli
 kosli search YOUR_GIT_COMMIT \
 	--api-token yourApiToken \
-	--owner yourOrgName
+	--org yourOrgName
 
 # Search for an artifact fingerprint in Kosli
 kosli search YOUR_ARTIFACT_FINGERPRINT \
 	--api-token yourApiToken \
-	--owner yourOrgName
+	--org yourOrgName
 `
 
 const searchShortDesc = `Search for a git commit or an artifact fingerprint in Kosli.`
@@ -66,7 +66,7 @@ func newSearchCmd(out io.Writer) *cobra.Command {
 		Example: searchExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -86,7 +86,7 @@ func (o *searchOptions) run(out io.Writer, args []string) error {
 	var err error
 	search_value := args[0]
 
-	url := fmt.Sprintf("%s/api/v1/search/%s/sha/%s", global.Host, global.Owner, search_value)
+	url := fmt.Sprintf("%s/api/v1/search/%s/sha/%s", global.Host, global.Org, search_value)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,

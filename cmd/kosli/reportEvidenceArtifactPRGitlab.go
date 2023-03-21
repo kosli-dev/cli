@@ -25,7 +25,7 @@ kosli report evidence artifact mergerequest gitlab yourDockerImageName \
 	--gitlab-org yourGitlabOrg \
 	--commit yourArtifactGitCommit \
 	--repository yourGithubGitRepository \
-	--owner yourOrgName \
+	--org yourOrgName \
 	--api-token yourAPIToken
 
 # report a merge request evidence (from an on-prem Gitlab) to kosli for a docker image 
@@ -39,7 +39,7 @@ kosli report evidence artifact mergerequest gitlab yourDockerImageName \
 	--gitlab-org yourGitlabOrg \
 	--commit yourArtifactGitCommit \
 	--repository yourGithubGitRepository \
-	--owner yourOrgName \
+	--org yourOrgName \
 	--api-token yourAPIToken
 	
 # fail if a merge request does not exist for your artifact
@@ -52,7 +52,7 @@ kosli report evidence artifact mergerequest gitlab yourDockerImageName \
 	--gitlab-org yourGitlabOrg \
 	--commit yourArtifactGitCommit \
 	--repository yourGithubGitRepository \
-	--owner yourOrgName \
+	--org yourOrgName \
 	--api-token yourAPIToken \
 	--assert
 `
@@ -69,7 +69,7 @@ func newReportEvidenceArtifactPRGitlabCmd(out io.Writer) *cobra.Command {
 		Example: reportEvidenceArtifactPRGitlabExample,
 		Args:    cobra.MaximumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}

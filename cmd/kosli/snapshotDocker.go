@@ -27,7 +27,7 @@ const snapshotDockerExample = `
 # report what is running in a docker host:
 kosli snapshot docker yourEnvironmentName \
 	--api-token yourAPIToken \
-	--owner yourOrgName`
+	--org yourOrgName`
 
 type snapshotDockerOptions struct{}
 
@@ -40,7 +40,7 @@ func newSnapshotDockerCmd(out io.Writer) *cobra.Command {
 		Example: snapshotDockerExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -58,7 +58,7 @@ func newSnapshotDockerCmd(out io.Writer) *cobra.Command {
 func (o *snapshotDockerOptions) run(args []string) error {
 	envName := args[0]
 
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
+	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Org, envName)
 
 	artifacts, err := CreateDockerArtifactsData()
 	if err != nil {

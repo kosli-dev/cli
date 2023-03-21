@@ -52,7 +52,7 @@ services:
 
   minio:
     networks: [ cli_net ]
-    build: minio/Dockerfile
+    build: minio/.
     image: kosli/minio
     container_name: minio_cli
     ports: ["9000:9000", "9090:9090"]

@@ -24,12 +24,12 @@ const diffSnapshotsExample = `
 # compare the third latest snapshot in an environment to the latest
 kosli diff snapshots envName~3 envName \
 	--api-token yourAPIToken \
-	--owner orgName
+	--org orgName
 	
 # compare snapshots of two different environments of the same type
 kosli diff snapshots envName1 envName2 \
 	--api-token yourAPIToken \
-	--owner orgName`
+	--org orgName`
 
 type diffSnapshotsOptions struct {
 	output string
@@ -66,7 +66,7 @@ func newDiffSnapshotsCmd(out io.Writer) *cobra.Command {
 		Example: diffSnapshotsExample,
 		Args:    cobra.ExactArgs(2),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -86,7 +86,7 @@ func (o *diffSnapshotsOptions) run(out io.Writer, args []string) error {
 	snappish1 := args[0]
 	snappish2 := args[1]
 	url := fmt.Sprintf("%s/api/v1/env-diff/%s/?snappish1=%s&snappish2=%s",
-		global.Host, global.Owner, url.QueryEscape(snappish1), url.QueryEscape(snappish2))
+		global.Host, global.Org, url.QueryEscape(snappish1), url.QueryEscape(snappish2))
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,

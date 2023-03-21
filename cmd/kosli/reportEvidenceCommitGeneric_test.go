@@ -21,11 +21,11 @@ func (suite *CommitEvidenceGenericCommandTestSuite) SetupTest() {
 
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
-		Owner:    "docs-cmd-test-user-shared",
+		Org:      "docs-cmd-test-user-shared",
 		Host:     "http://localhost:8001",
 	}
 
-	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
+	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
 	CreateFlow(suite.flowNames, suite.T())
 }
@@ -86,7 +86,7 @@ func (suite *CommitEvidenceGenericCommandTestSuite) TestCommitEvidenceGenericCom
 			name:      "report Generic test evidence fails when an upload is attempted on a personal org",
 			cmd: fmt.Sprintf(`report evidence commit generic --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name %s --flows %s
 			          --build-url example.com --compliant --description "some description" 
-					  --evidence-paths testdata/folder1  --host http://localhost:8001 --owner docs-cmd-test-user  --api-token eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY`,
+					  --evidence-paths testdata/folder1  --host http://localhost:8001 --org docs-cmd-test-user  --api-token eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY`,
 				evidenceName, suite.flowNames),
 			golden: "Error: File upload not allowed: map[evidence_file:File upload not allowed for org 'docs-cmd-test-user' with current plan]\n",
 		},

@@ -17,7 +17,7 @@ kosli create environment yourEnvironmentName
 	--type K8S \
 	--description "my new env" \
 	--api-token yourAPIToken \
-	--owner yourOrgName 
+	--org yourOrgName 
 `
 
 type createEnvOptions struct {
@@ -25,7 +25,7 @@ type createEnvOptions struct {
 }
 
 type CreateEnvironmentPayload struct {
-	Owner       string `json:"owner"`
+	Org         string `json:"owner"`
 	Name        string `json:"name"`
 	Type        string `json:"type"`
 	Description string `json:"description"`
@@ -41,7 +41,7 @@ func newCreateEnvironmentCmd(out io.Writer) *cobra.Command {
 		Example: createEnvironmentExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -67,8 +67,8 @@ func newCreateEnvironmentCmd(out io.Writer) *cobra.Command {
 
 func (o *createEnvOptions) run(args []string) error {
 	o.payload.Name = args[0]
-	o.payload.Owner = global.Owner
-	url := fmt.Sprintf("%s/api/v1/environments/%s/", global.Host, global.Owner)
+	o.payload.Org = global.Org
+	url := fmt.Sprintf("%s/api/v1/environments/%s/", global.Host, global.Org)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPut,

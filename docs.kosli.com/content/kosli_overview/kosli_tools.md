@@ -127,7 +127,7 @@ Depending on the CI tool you are using, some of the flags (including required on
 Each flag can be provided directly or represented with an environment variable. In order to represent a flag with environment variable you need to create a variable with a `KOSLI_` prefix, followed by the flag name, with all letters capitalized and internal dashes replaced by underscores, e.g.:
 
 * `--api-token` is represented by `KOSLI_API_TOKEN` 
-* `--owner` is represented by `KOSLI_OWNER`
+* `--org` is represented by `KOSLI_ORG`
 
 
 {{< hint info >}}
@@ -145,7 +145,7 @@ Each flag can be provided directly or represented with an environment variable. 
 
 #### Config file
 
-A config file is an alternative for using Kosli flags or environment variables. Usually you'd use a config file for the values that rarely change - like api token or owner, but you can represent all Kosli flags with config file. The key for each value is the same as the flag name, capitalized, so `--api-token` would become `API-TOKEN`, and `--owner` would become `OWNER`, etc. 
+A config file is an alternative for using Kosli flags or environment variables. Usually you'd use a config file for the values that rarely change - like api token or org, but you can represent all Kosli flags with config file. The key for each value is the same as the flag name, capitalized, so `--api-token` would become `API-TOKEN`, and `--org` would become `OWNER`, etc. 
 
 You can use JSON, YAML or TOML format for your config file. 
 
@@ -171,7 +171,7 @@ OWNER = "my-org"
 API-TOKEN = "123456abcdef"
 ```
 
-When calling a Kosli CLI command you can skip file extension. For example, to list environments with `owner` and `api-token` in the configuration file you would run:
+When calling a Kosli CLI command you can skip file extension. For example, to list environments with `org` and `api-token` in the configuration file you would run:
 
 ```
 $ kosli environment ls --config-file kosli-conf

@@ -42,7 +42,7 @@ kosli report artifact FILE.tgz \
 	--build-url https://exampleci.com \
 	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
 	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
-	--owner yourOrgName \
+	--org yourOrgName \
 	--flow yourFlowName 
 
 # Report to a Kosli flow that an artifact with a provided fingerprint (sha256) has been created
@@ -51,7 +51,7 @@ kosli report artifact ANOTHER_FILE.txt \
 	--build-url https://exampleci.com \
 	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
 	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
-	--owner yourOrgName \
+	--org yourOrgName \
 	--flow yourFlowName \
 	--fingerprint yourArtifactFingerprint 
 `
@@ -65,7 +65,7 @@ func newReportArtifactCmd(out io.Writer) *cobra.Command {
 		Long:    reportArtifactLongDesc,
 		Example: reportArtifactExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -135,7 +135,7 @@ func (o *reportArtifactOptions) run(args []string) error {
 		logger.Warning("Repo URL will not be reported, %s", err.Error())
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/", global.Host, global.Owner, o.flowName)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/", global.Host, global.Org, o.flowName)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPut,
@@ -155,7 +155,7 @@ func (o *reportArtifactOptions) run(args []string) error {
 func (o *reportArtifactOptions) latestCommit(branchName string) (string, error) {
 	latestCommitUrl := fmt.Sprintf(
 		"%s/api/v1/projects/%s/%s/artifacts/%s/latest_commit%s",
-		global.Host, global.Owner, o.flowName, o.payload.Fingerprint, asBranchParameter(branchName))
+		global.Host, global.Org, o.flowName, o.payload.Fingerprint, asBranchParameter(branchName))
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,

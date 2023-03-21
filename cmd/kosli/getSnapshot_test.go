@@ -22,16 +22,16 @@ func (suite *GetSnapshotCommandTestSuite) SetupTest() {
 	suite.emptyEnvName = "get-snapshot-empty-env"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
-		Owner:    "docs-cmd-test-user",
+		Org:      "docs-cmd-test-user",
 		Host:     "http://localhost:8001",
 	}
-	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
+	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateEnv(global.Owner, suite.envName, "server", suite.T())
+	CreateEnv(global.Org, suite.envName, "server", suite.T())
 	ReportServerArtifactToEnv([]string{"testdata/folder1/hello.txt"}, suite.envName, suite.T())
 	ReportServerArtifactToEnv([]string{"testdata/file1"}, suite.envName, suite.T())
 	ReportServerArtifactToEnv([]string{"testdata/report.xml"}, suite.envName, suite.T())
-	CreateEnv(global.Owner, suite.emptyEnvName, "server", suite.T())
+	CreateEnv(global.Org, suite.emptyEnvName, "server", suite.T())
 }
 
 func (suite *GetSnapshotCommandTestSuite) TestGetSnapshotCmd() {

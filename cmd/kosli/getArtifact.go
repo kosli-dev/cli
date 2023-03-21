@@ -34,12 +34,12 @@ const getArtifactExample = `
 # get an artifact with a given fingerprint from a flow
 kosli get artifact flowName@fingerprint \
 	--api-token yourAPIToken \
-	--owner orgName
+	--org orgName
 
 # get an artifact with a given commit SHA from a flow
 kosli get artifact flowName:commitSHA \
 	--api-token yourAPIToken \
-	--owner orgName`
+	--org orgName`
 
 type getArtifactOptions struct {
 	output string
@@ -54,7 +54,7 @@ func newGetArtifactCmd(out io.Writer) *cobra.Command {
 		Example: getArtifactExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -71,7 +71,7 @@ func newGetArtifactCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *getArtifactOptions) run(out io.Writer, args []string) error {
-	url := fmt.Sprintf("%s/api/v1/projects/%s/artifact/?snappish=%s", global.Host, global.Owner, url.QueryEscape(args[0]))
+	url := fmt.Sprintf("%s/api/v1/projects/%s/artifact/?snappish=%s", global.Host, global.Org, url.QueryEscape(args[0]))
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,
 		URL:      url,

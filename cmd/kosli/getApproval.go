@@ -28,17 +28,17 @@ const getApprovalExample = `
 # get second behind the latest approval from a flow
 kosli get approval flowName~1 \
 	--api-token yourAPIToken \
-	--owner orgName
+	--org orgName
 
 # get the 10th approval from a flow
 kosli get approval flowName#10 \
 	--api-token yourAPIToken \
-	--owner orgName
+	--org orgName
 
 # get the latest approval from a flow
 kosli get approval flowName \
 	--api-token yourAPIToken \
-	--owner orgName`
+	--org orgName`
 
 type getApprovalOptions struct {
 	output string
@@ -53,7 +53,7 @@ func newGetApprovalCmd(out io.Writer) *cobra.Command {
 		Example: getApprovalExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -69,7 +69,7 @@ func newGetApprovalCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *getApprovalOptions) run(out io.Writer, args []string) error {
-	url := fmt.Sprintf("%s/api/v1/projects/%s/approval/?snappish=%s", global.Host, global.Owner, url.QueryEscape(args[0]))
+	url := fmt.Sprintf("%s/api/v1/projects/%s/approval/?snappish=%s", global.Host, global.Org, url.QueryEscape(args[0]))
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,

@@ -34,8 +34,8 @@ kosliApiToken:
   secretKey: ""
 
 reporterConfig:
-  # -- the name of the kosli owner (Org)
-  kosliOwner: ""
+  # -- the name of the kosli org
+  kosliOrg: ""
   # -- the name of kosli environment that the k8s cluster/namespace correlates to
   kosliEnvironmentName: ""
   # -- the namespaces which represent the environment.

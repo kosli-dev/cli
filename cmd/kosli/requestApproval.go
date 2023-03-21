@@ -19,7 +19,7 @@ kosli pipeline approval request FILE.tgz \
 	--description "An optional description for the requested approval" \
 	--newest-commit $(git rev-parse HEAD) \
 	--oldest-commit $(git rev-parse HEAD~5) \
-	--owner yourOrgName \
+	--org yourOrgName \
 	--flow yourPipelineName 
 
 # Request and approval for an artifact with a provided fingerprint (sha256).
@@ -29,7 +29,7 @@ kosli pipeline approval request \
 	--description "An optional description for the requested approval" \
 	--newest-commit $(git rev-parse HEAD) \
 	--oldest-commit $(git rev-parse HEAD~5)	\
-	--owner yourOrgName \
+	--org yourOrgName \
 	--flow yourPipelineName \
 	--fingerprint yourArtifactFingerprint 
 `
@@ -43,7 +43,7 @@ func newRequestApprovalCmd(out io.Writer) *cobra.Command {
 		Long:    requestApprovalLongDesc,
 		Example: requestApprovalExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}

@@ -20,7 +20,7 @@ const snapshotServerExample = `
 kosli snapshot server yourEnvironmentName \
 	--paths a/b/c,e/f/g \
 	--api-token yourAPIToken \
-	--owner yourOrgName  `
+	--org yourOrgName  `
 
 type snapshotServerOptions struct {
 	paths []string
@@ -37,7 +37,7 @@ func newSnapshotServerCmd(out io.Writer) *cobra.Command {
 		Args:    cobra.ExactArgs(1),
 		Example: snapshotServerExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -70,7 +70,7 @@ func (o *snapshotServerOptions) run(args []string) error {
 		o.id = envName
 	}
 
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
+	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Org, envName)
 
 	artifacts, err := server.CreateServerArtifactsData(o.paths, logger)
 	if err != nil {

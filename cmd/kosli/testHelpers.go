@@ -173,11 +173,11 @@ func ExpectDeployment(flowName, fingerprint, envName string, t *testing.T) {
 }
 
 // CreateEnv creates an env on the server
-func CreateEnv(owner, envName, envType string, t *testing.T) {
+func CreateEnv(org, envName, envType string, t *testing.T) {
 	t.Helper()
 	o := &createEnvOptions{
 		payload: CreateEnvironmentPayload{
-			Owner:       owner,
+			Org:         org,
 			Name:        envName,
 			Type:        envType,
 			Description: "test env",

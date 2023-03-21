@@ -25,10 +25,10 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) SetupTest() {
 	suite.artifactFingerprint = "847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
-		Owner:    "docs-cmd-test-user",
+		Org:      "docs-cmd-test-user",
 		Host:     "http://localhost:8001",
 	}
-	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
+	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
 	CreateFlow(suite.flowName, suite.T())
 	CreateArtifact(suite.flowName, suite.artifactFingerprint, "foobar", suite.T())
@@ -44,10 +44,10 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePR
 		},
 		{
 			wantError: true,
-			name:      "report Bitbucket PR evidence fails when --owner is missing",
+			name:      "report Bitbucket PR evidence fails when --org is missing",
 			cmd: `report evidence artifact pullrequest bitbucket --fingerprint ` + suite.artifactFingerprint + ` --name bb-pr --flow ` + suite.flowName + `
 			          --build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69 --api-token foo --host bar`,
-			golden: "Error: --owner is not set\n" +
+			golden: "Error: --org is not set\n" +
 				"Usage: kosli report evidence artifact pullrequest bitbucket [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{

@@ -18,10 +18,10 @@ type CreateFlowCommandTestSuite struct {
 func (suite *CreateFlowCommandTestSuite) SetupTest() {
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
-		Owner:    "docs-cmd-test-user",
+		Org:      "docs-cmd-test-user",
 		Host:     "http://localhost:8001",
 	}
-	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
+	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 }
 
 func (suite *CreateFlowCommandTestSuite) TestCreateFlowCmd() {
@@ -50,20 +50,20 @@ func (suite *CreateFlowCommandTestSuite) TestCreateFlowCmd() {
 		},
 		{
 			wantError: true,
-			name:      "missing --owner flag causes an error",
+			name:      "missing --org flag causes an error",
 			cmd:       "create flow newFlow --description \"my new flow\" -H http://localhost:8001 -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
-			golden:    "Error: --owner is not set\nUsage: kosli create flow [FLOW-NAME] [flags]\n",
+			golden:    "Error: --org is not set\nUsage: kosli create flow [FLOW-NAME] [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "missing --api-token flag causes an error",
-			cmd:       "create flow newFlow --description \"my new flow\" --owner cyber-dojo -H http://localhost:8001",
+			cmd:       "create flow newFlow --description \"my new flow\" --org cyber-dojo -H http://localhost:8001",
 			golden:    "Error: --api-token is not set\nUsage: kosli create flow [FLOW-NAME] [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "missing name argument fails",
-			cmd:       "create flow --description \"my new flow\" -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
+			cmd:       "create flow --description \"my new flow\" -H http://localhost:8001 --org cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
 			golden:    "Error: flow name must be provided as an argument\n",
 		},
 	}

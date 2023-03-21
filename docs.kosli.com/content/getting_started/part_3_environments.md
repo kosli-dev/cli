@@ -12,7 +12,7 @@ If the list of running artifacts is different than what was reported previously 
 There is range of `kosli snapshot [...]` commands, allowing you to report a variety of environments. To record the current status of your environment you simply run one of them. You can do it manually but typically recording commands would run automatically, e.g. via a cron job or scheduled CI job.
 
 {{< hint warning >}}
-In all the commands below we skip required `--api-token` and `--owner` flags - these can be easily configured via [config file](/kosli_overview/kosli_tools/#config-file) or [environment variables](/kosli_overview/kosli_tools/#environment-variables) so you don't have type them over and over again.
+In all the commands below we skip required `--api-token` and `--org` flags - these can be easily configured via [config file](/kosli_overview/kosli_tools/#config-file) or [environment variables](/kosli_overview/kosli_tools/#environment-variables) so you don't have type them over and over again.
 {{< /hint >}}
 
 After you started reporting, you can - at any point - check exactly what is running in your environment using the CLI command:
@@ -192,14 +192,14 @@ You can also choose to run it from within the cluster - use our [helm chart](/he
 # report what is running in an entire cluster using kubeconfig at $HOME/.kube/config:
 kosli snapshot k8s yourEnvironmentName \
 	--api-token yourAPIToken \
-	--owner yourOrgName
+	--org yourOrgName
 
 # report what is running in a given namespace using kubeconfig at a custom path:
 kosli snapshot k8s yourEnvironmentName \
 	--kubeconfig /path/to/kubeconfig \
 	--namespace your-namespace \
 	--api-token yourAPIToken \
-	--owner yourOrgName
+	--org yourOrgName
 
 ```
 

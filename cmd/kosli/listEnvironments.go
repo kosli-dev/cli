@@ -27,7 +27,7 @@ func newListEnvironmentsCmd(out io.Writer) *cobra.Command {
 		Long:    listEnvironmentsDesc,
 		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -44,7 +44,7 @@ func newListEnvironmentsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *environmentLsOptions) run(out io.Writer, args []string) error {
-	url := fmt.Sprintf("%s/api/v1/environments/%s/", global.Host, global.Owner)
+	url := fmt.Sprintf("%s/api/v1/environments/%s/", global.Host, global.Org)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,

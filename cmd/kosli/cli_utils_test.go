@@ -181,9 +181,9 @@ func (suite *CliUtilsTestSuite) TestRequireGlobalFlags() {
 			args: args{
 				global: &GlobalOpts{
 					ApiToken: "secret",
-					Owner:    "test",
+					Org:      "test",
 				},
-				fields: []string{"ApiToken", "Owner"},
+				fields: []string{"ApiToken", "Org"},
 			},
 			expectError: false,
 		},
@@ -191,9 +191,9 @@ func (suite *CliUtilsTestSuite) TestRequireGlobalFlags() {
 			name: "Required fields are not set.",
 			args: args{
 				global: &GlobalOpts{
-					Owner: "test",
+					Org: "test",
 				},
-				fields: []string{"ApiToken", "Owner"},
+				fields: []string{"ApiToken", "Org"},
 			},
 			expectError: true,
 		},

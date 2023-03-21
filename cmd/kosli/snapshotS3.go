@@ -23,7 +23,7 @@ export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 kosli snapshot s3 yourEnvironmentName \
 	--bucket yourBucketName \
 	--api-token yourAPIToken \
-	--owner yourOrgName
+	--org yourOrgName
 
 # report what is running in an AWS S3 bucket (AWS auth provided in flags):
 kosli snapshot s3 yourEnvironmentName \
@@ -32,7 +32,7 @@ kosli snapshot s3 yourEnvironmentName \
 	--aws-secret-key yourAWSSecretAccessKey \
 	--aws-region yourAWSRegion \
 	--api-token yourAPIToken \
-	--owner yourOrgName	
+	--org yourOrgName	
 `
 
 type snapshotS3Options struct {
@@ -51,7 +51,7 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 		Example: snapshotS3Example,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -81,7 +81,7 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotS3Options) run(args []string) error {
 	envName := args[0]
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Owner, envName)
+	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Org, envName)
 
 	s3Data, err := o.awsStaticCreds.GetS3Data(o.bucket, logger)
 	if err != nil {

@@ -24,7 +24,7 @@ kosli report approval FILE.tgz \
 	--description "An optional description for the approval" \
 	--newest-commit $(git rev-parse HEAD) \
 	--oldest-commit $(git rev-parse HEAD~5) \
-	--owner yourOrgName \
+	--org yourOrgName \
 	--flow yourPipelineName 
 
 # Report that an artifact with a provided fingerprint (sha256) has been approved for deployment.
@@ -34,7 +34,7 @@ kosli report approval \
 	--description "An optional description for the approval" \
 	--newest-commit $(git rev-parse HEAD) \
 	--oldest-commit $(git rev-parse HEAD~5) \
-	--owner yourOrgName \
+	--org yourOrgName \
 	--flow yourPipelineName \
 	--fingerprint yourArtifactFingerprint
 `
@@ -66,7 +66,7 @@ func newReportApprovalCmd(out io.Writer) *cobra.Command {
 		Long:    reportApprovalLongDesc,
 		Example: reportApprovalExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -119,7 +119,7 @@ func (o *reportApprovalOptions) run(args []string, request bool) error {
 		return err
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/approvals/", global.Host, global.Owner, o.flowName)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/approvals/", global.Host, global.Org, o.flowName)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPost,

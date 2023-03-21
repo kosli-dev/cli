@@ -38,7 +38,7 @@ func newExpectDeploymentCmd(out io.Writer) *cobra.Command {
 		Long:  expectDeploymentLongDesc,
 		Args:  cobra.MaximumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -87,7 +87,7 @@ func (o *expectDeploymentOptions) run(args []string) error {
 		return err
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/", global.Host, global.Owner, o.flowName)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/", global.Host, global.Org, o.flowName)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPost,

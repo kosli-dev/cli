@@ -30,7 +30,7 @@ kosli report evidence commit generic \
 	--flows yourFlowName \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
-	--owner yourOrgName
+	--org yourOrgName
 
 # report Generic evidence for a commit related to multiple Kosli flows with user-data:
 kosli report evidence commit generic \
@@ -41,7 +41,7 @@ kosli report evidence commit generic \
 	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
-	--owner yourOrgName \
+	--org yourOrgName \
 	--user-data /path/to/json/file.json
 `
 
@@ -54,7 +54,7 @@ func newReportEvidenceCommitGenericCmd(out io.Writer) *cobra.Command {
 		Example: reportEvidenceCommitGenericExample,
 		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -83,7 +83,7 @@ func newReportEvidenceCommitGenericCmd(out io.Writer) *cobra.Command {
 
 func (o *reportEvidenceCommitGenericOptions) run(args []string) error {
 	var err error
-	url := fmt.Sprintf("%s/api/v1/projects/%s/evidence/commit/generic", global.Host, global.Owner)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/evidence/commit/generic", global.Host, global.Org)
 	o.payload.UserData, err = LoadJsonData(o.userDataFilePath)
 	if err != nil {
 		return err

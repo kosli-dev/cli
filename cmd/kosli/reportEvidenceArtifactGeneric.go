@@ -30,7 +30,7 @@ kosli report evidence artifact generic yourDockerImageName \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
 	--name yourEvidenceName \
-	--owner yourOrgName \
+	--org yourOrgName \
 	--flow yourFlowName 
 
 # report a generic evidence about a directory type artifact:
@@ -39,7 +39,7 @@ kosli report evidence artifact generic /path/to/your/dir \
 	--artifact-type dir \
 	--build-url https://exampleci.com \
 	--name yourEvidenceName \
-	--owner yourOrgName	\
+	--org yourOrgName	\
 	--flow yourFlowName 
 
 # report a generic evidence about an artifact with a provided fingerprint (sha256)
@@ -47,7 +47,7 @@ kosli report evidence artifact generic \
 	--api-token yourAPIToken \
 	--build-url https://exampleci.com \	
 	--name yourEvidenceName \
-	--owner yourOrgName \
+	--org yourOrgName \
 	--flow yourFlowName \
 	--fingerprint yourArtifactFingerprint
 `
@@ -61,7 +61,7 @@ func newReportEvidenceArtifactGenericCmd(out io.Writer) *cobra.Command {
 		Long:    reportEvidenceArtifactGenericLongDesc,
 		Example: reportEvidenceArtifactGenericExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -107,7 +107,7 @@ func (o *reportEvidenceArtifactGenericOptions) run(args []string) error {
 		}
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/evidence/artifact/%s/generic", global.Host, global.Owner, o.flowName)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/evidence/artifact/%s/generic", global.Host, global.Org, o.flowName)
 
 	o.payload.UserData, err = LoadJsonData(o.userDataFilePath)
 	if err != nil {

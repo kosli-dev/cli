@@ -22,21 +22,21 @@ const listDeploymentsExample = `
 kosli list deploymentss \ 
 	--flow yourFlowName \
 	--api-token yourAPIToken \
-	--owner yourOrgName
+	--org yourOrgName
 
 # list the last 30 deployments for a flow:
 kosli list deployments \ 
 	--flow yourFlowName \	
 	--page-limit 30 \
 	--api-token yourAPIToken \
-	--owner yourOrgName
+	--org yourOrgName
 
 # list the last 30 deployments for a flow (in JSON):
 kosli list deployments \ 
 	--flow yourFlowName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
-	--owner yourOrgName \
+	--org yourOrgName \
 	--output json
 `
 
@@ -55,7 +55,7 @@ func newListDeploymentsCmd(out io.Writer) *cobra.Command {
 		Example: listDeploymentsExample,
 		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -80,7 +80,7 @@ func newListDeploymentsCmd(out io.Writer) *cobra.Command {
 
 func (o *listDeploymentsOptions) run(out io.Writer) error {
 	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/?page=%d&per_page=%d",
-		global.Host, global.Owner, o.flowName, o.pageNumber, o.pageLimit)
+		global.Host, global.Org, o.flowName, o.pageNumber, o.pageLimit)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,

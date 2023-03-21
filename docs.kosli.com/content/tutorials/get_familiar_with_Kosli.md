@@ -21,7 +21,7 @@ As you go through the guide you can also check your progress from
 
 In the upper left corner there is a house icon. Next to it you can select
 which organization you want to view. Your personal organization
-has the same name as your github login name, and is the organization (in the context of Kosli CLI called "owner") you will
+has the same name as your github login name, and is the organization you will
 be using in this guide.
 {{< /hint >}}
 
@@ -151,10 +151,10 @@ To retrieve your API Token:
 
 <!-- Put this in a separate page? -->
 
-The `--api-token` and `--owner` flags are used in every `kosli` CLI command.  
+The `--api-token` and `--org` flags are used in every `kosli` CLI command.  
 Rather than retyping these every time you run `kosli`, you can set them as environment variables.
 
-The owner is the name of the organization you intend to use - it is either your private organization, which has exactly the same name as your GitHub username, or a shared organization (if you created or have been invited to one).
+The org is either your private organization, which has exactly the same name as your GitHub username, or a shared organization (if you created or have been invited to one).
 
 By setting the environment variables:
 ```shell {.command}
@@ -171,7 +171,7 @@ kosli list flows
 instead of
 
 ```shell {.command}
-kosli list flows --api-token abcdefg --owner cyber-dojo 
+kosli list flows --api-token abcdefg --org cyber-dojo 
 ```
 
 You can represent **ANY** flag as an environment variable. To do that you need to capitalize the words in the flag, replacing dashes with underscores, and add the `KOSLI_` prefix. For example, `--api-token` becomes `KOSLI_API_TOKEN`.

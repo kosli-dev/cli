@@ -84,17 +84,17 @@ const getSnapshotExample = `
 # get the latest snapshot of an environment:
 kosli get snapshot yourEnvironmentName
 	--api-token yourAPIToken \
-	--owner yourOrgName 
+	--org yourOrgName 
 
 # get the SECOND latest snapshot of an environment:
 kosli get snapshot yourEnvironmentName~1
 	--api-token yourAPIToken \
-	--owner yourOrgName 
+	--org yourOrgName 
 
 # get the snapshot number 23 of an environment:
 kosli get snapshot yourEnvironmentName#23
 	--api-token yourAPIToken \
-	--owner yourOrgName `
+	--org yourOrgName `
 
 func newGetSnapshotCmd(out io.Writer) *cobra.Command {
 	o := new(environmentGetOptions)
@@ -105,7 +105,7 @@ func newGetSnapshotCmd(out io.Writer) *cobra.Command {
 		Example: getSnapshotExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -122,7 +122,7 @@ func newGetSnapshotCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *environmentGetOptions) run(out io.Writer, args []string) error {
-	url := fmt.Sprintf("%s/api/v1/environments/%s/snapshots/%s", global.Host, global.Owner, url.QueryEscape(args[0]))
+	url := fmt.Sprintf("%s/api/v1/environments/%s/snapshots/%s", global.Host, global.Org, url.QueryEscape(args[0]))
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,

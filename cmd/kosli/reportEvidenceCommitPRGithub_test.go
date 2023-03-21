@@ -23,10 +23,10 @@ func (suite *CommitEvidencePRGithubCommandTestSuite) SetupTest() {
 	suite.flowNames = "github-pr"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
-		Owner:    "docs-cmd-test-user",
+		Org:      "docs-cmd-test-user",
 		Host:     "http://localhost:8001",
 	}
-	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
+	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
 	CreateFlow(suite.flowNames, suite.T())
 }
@@ -41,10 +41,10 @@ func (suite *CommitEvidencePRGithubCommandTestSuite) TestCommitEvidencePRGithubC
 		},
 		{
 			wantError: true,
-			name:      "report Github PR evidence fails when --owner is missing",
+			name:      "report Github PR evidence fails when --org is missing",
 			cmd: `report evidence commit pullrequest github --name gh-pr --flows ` + suite.flowNames + `
 			          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6 --api-token foo --host bar`,
-			golden: "Error: --owner is not set\n" +
+			golden: "Error: --org is not set\n" +
 				"Usage: kosli report evidence commit pullrequest github [flags]\n",
 		},
 		{

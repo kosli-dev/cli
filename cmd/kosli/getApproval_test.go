@@ -22,10 +22,10 @@ func (suite *GetApprovalCommandTestSuite) SetupTest() {
 	suite.fingerprint = "7a498bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
-		Owner:    "docs-cmd-test-user",
+		Org:      "docs-cmd-test-user",
 		Host:     "http://localhost:8001",
 	}
-	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --owner %s --api-token %s", global.Host, global.Owner, global.ApiToken)
+	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
 	CreateFlow(suite.flowName, suite.T())
 	CreateArtifact(suite.flowName, suite.fingerprint, "approved-artifact", suite.T())
@@ -58,9 +58,9 @@ func (suite *GetApprovalCommandTestSuite) TestGetApprovalCmd() {
 		},
 		{
 			wantError: true,
-			name:      "missing --owner fails",
+			name:      "missing --org fails",
 			cmd:       fmt.Sprintf("get approval %s --api-token secret", suite.flowName),
-			golden:    "Error: --owner is not set\nUsage: kosli get approval SNAPPISH [flags]\n",
+			golden:    "Error: --org is not set\nUsage: kosli get approval SNAPPISH [flags]\n",
 		},
 	}
 

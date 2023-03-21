@@ -34,19 +34,19 @@ const listSnapshotsExample = `
 # list the last 15 snapshots for an environment:
 kosli list snapshots yourEnvironmentName \
 	--api-token yourAPIToken \
-	--owner yourOrgName
+	--org yourOrgName
 
 # list the last 30 snapshots for an environment:
 kosli list snapshots yourEnvironmentName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
-	--owner yourOrgName
+	--org yourOrgName
 
 # list the last 30 snapshots for an environment (in JSON):
 kosli list snapshots yourEnvironmentName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
-	--owner yourOrgName \
+	--org yourOrgName \
 	--output json
 `
 
@@ -65,7 +65,7 @@ func newListSnapshotsCmd(out io.Writer) *cobra.Command {
 		Example: listSnapshotsExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -92,7 +92,7 @@ func (o *listSnapshotsOptions) run(out io.Writer, args []string) error {
 
 func (o *listSnapshotsOptions) getSnapshotsList(out io.Writer, envName, interval string) error {
 	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/snapshots/?page=%d&per_page=%d&interval=%s&reverse=%t",
-		global.Host, global.Owner, envName, o.pageNumber, o.pageLimit, url.QueryEscape(interval), o.reverse)
+		global.Host, global.Org, envName, o.pageNumber, o.pageLimit, url.QueryEscape(interval), o.reverse)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,

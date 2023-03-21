@@ -40,7 +40,7 @@ var ciTemplates = map[string]map[string]string{
 	github: {
 		"git-commit": "${GITHUB_SHA}",
 		"repository": "${GITHUB_REPOSITORY}",
-		"owner":      "${GITHUB_REPOSITORY_OWNER}",
+		"org":        "${GITHUB_REPOSITORY_OWNER}",
 		"commit-url": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}",
 		"build-url":  "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}",
 	},

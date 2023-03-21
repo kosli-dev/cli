@@ -43,7 +43,7 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 
 	// flags
 	apiTokenFlag            = "The Kosli API token."
-	ownerFlag               = "The Kosli user or organization."
+	orgFlag                 = "The Kosli organization."
 	hostFlag                = "[defaulted] The Kosli endpoint."
 	dryRunFlag              = "[optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors."
 	maxAPIRetryFlag         = "[defaulted] How many times should API calls be retried when the API host is not reachable."
@@ -131,7 +131,7 @@ var global *GlobalOpts
 
 type GlobalOpts struct {
 	ApiToken      string
-	Owner         string
+	Org           string
 	Host          string
 	DryRun        bool
 	MaxAPIRetries int
@@ -174,7 +174,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		},
 	}
 	cmd.PersistentFlags().StringVarP(&global.ApiToken, "api-token", "a", "", apiTokenFlag)
-	cmd.PersistentFlags().StringVar(&global.Owner, "owner", "", ownerFlag)
+	cmd.PersistentFlags().StringVar(&global.Org, "org", "", orgFlag)
 	cmd.PersistentFlags().StringVarP(&global.Host, "host", "H", "https://app.kosli.com", hostFlag)
 	cmd.PersistentFlags().IntVarP(&global.MaxAPIRetries, "max-api-retries", "r", maxAPIRetries, maxAPIRetryFlag)
 	cmd.PersistentFlags().StringVarP(&global.ConfigFile, "config-file", "c", defaultConfigFilename, configFileFlag)

@@ -25,7 +25,7 @@ kosli report evidence artifact pullrequest bitbucket yourDockerImageName \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--commit yourArtifactGitCommit \
 	--repository yourBitbucketGitRepository \
-	--owner yourOrgName \
+	--org yourOrgName \
 	--api-token yourAPIToken
 	
 # fail if a pull request does not exist for your artifact
@@ -39,7 +39,7 @@ kosli report evidence artifact pullrequest bitbucket yourDockerImageName \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--commit yourArtifactGitCommit \
 	--repository yourBitbucketGitRepository \
-	--owner yourOrgName \
+	--org yourOrgName \
 	--api-token yourAPIToken \
 	--assert
 `
@@ -60,7 +60,7 @@ func newReportEvidenceArtifactPRBitbucketCmd(out io.Writer) *cobra.Command {
 		Long:    reportEvidenceArtifactPRBitbucketLongDesc,
 		Example: reportEvidenceArtifactPRBitbucketExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}

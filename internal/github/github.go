@@ -31,12 +31,12 @@ func NewGithubConfig(token, baseURL, org, repository string) *GithubConfig {
 		BaseURL: baseURL,
 		Org:     org,
 		// repository name must be extracted if a user is using default value from ${GITHUB_REPOSITORY}
-		// because the value is in the format of "owner/repository"
+		// because the value is in the format of "org/repository"
 		Repository: extractRepoName(repository),
 	}
 }
 
-// extractRepoName returns repository name from 'owner/repository_name' string
+// extractRepoName returns repository name from 'org/repository_name' string
 func extractRepoName(fullRepositoryName string) string {
 	repoNameParts := strings.Split(fullRepositoryName, "/")
 	repository := repoNameParts[len(repoNameParts)-1]

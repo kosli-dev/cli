@@ -34,7 +34,7 @@ func addBitbucketFlags(cmd *cobra.Command, bbConfig *bbUtils.Config, ci string) 
 
 func addGithubFlags(cmd *cobra.Command, githubFlagsValueHolder *ghUtils.GithubFlagsTempValueHolder, ci string) {
 	cmd.Flags().StringVar(&githubFlagsValueHolder.Token, "github-token", "", githubTokenFlag)
-	cmd.Flags().StringVar(&githubFlagsValueHolder.Org, "github-org", DefaultValue(ci, "owner"), githubOrgFlag)
+	cmd.Flags().StringVar(&githubFlagsValueHolder.Org, "github-org", DefaultValue(ci, "org"), githubOrgFlag)
 	cmd.Flags().StringVar(&githubFlagsValueHolder.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
 	cmd.Flags().StringVar(&githubFlagsValueHolder.BaseURL, "github-base-url", "", githubBaseURLFlag)
 }

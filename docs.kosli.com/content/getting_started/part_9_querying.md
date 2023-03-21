@@ -11,7 +11,7 @@ Visit [Reference](/client_reference/) to learn more about how to run each comman
 
 The same CLI you use to record and connect your changes can be used to search for and browse information in Kosli.
 
-To make it easier to run Kosli search commands with the CLI you can export the `owner` and `api-token` as environment variables, so you don't have to provide them every time you run commands. This approach is valid for [any flag](/kosli_overview/kosli_tools/#environment-variables) 
+To make it easier to run Kosli search commands with the CLI you can export the `org` and `api-token` as environment variables, so you don't have to provide them every time you run commands. This approach is valid for [any flag](/kosli_overview/kosli_tools/#environment-variables) 
 
 
 ```
@@ -19,7 +19,7 @@ export KOSLI_OWNER=yourOrganizationName
 export KOSLI_API_TOKEN=yourKosliApiToken
 ```
 
-You can try all the commands below by setting the `owner` to `cyber-dojo`.  
+You can try all the commands below by setting the `org` to `cyber-dojo`.  
 the Kosli cyber-dojo organization is public so any authenticated user can read its data:
 
 ```

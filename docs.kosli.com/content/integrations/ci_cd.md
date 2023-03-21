@@ -80,7 +80,7 @@ jobs:
 
 {{< hint info >}}
 Note that all CLI command flags can be set as environment variables by adding the the `KOSLI_` prefix and capitalizing them. 
-In the example above, both `--api-token` and `--owner` flags were set from environment variables.
+In the example above, both `--api-token` and `--org` flags were set from environment variables.
 {{< /hint >}}
 
 ### Defaulted CLI flags in Github Actions
