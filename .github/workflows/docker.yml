@@ -28,7 +28,7 @@ env:
   IMAGE: ghcr.io/kosli-dev/cli
   KOSLI_CLI_VERSION: "0.1.31"
   # KOSLI_DRY_RUN: "True"
-  # Ordinarily we declare KOSLI_OWNER and KOSLI_PIPELINE here but
+  # Ordinarily we declare KOSLI_ORG and KOSLI_FLOW here but
   # this interferes with the CLI integration tests
 
 
@@ -94,7 +94,7 @@ jobs:
       uses: snyk/actions/setup@master
 
 
-    - name: Declare Kosli pipeline
+    - name: Create Kosli flow
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
         KOSLI_OWNER: compliancedb
