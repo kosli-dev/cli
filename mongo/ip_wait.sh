@@ -22,7 +22,7 @@ echo
 echo "Failed ${URL} readiness after ${MAX_TRIES} tries"
 echo "############### Mongo LOGS ###############"
 echo
-docker container logs mongo1
+docker container logs mongo-cli-1
 echo 
 echo "############### APPLICATION LOGS ###############"
 echo

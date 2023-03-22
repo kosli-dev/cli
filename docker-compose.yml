@@ -33,29 +33,30 @@ services:
       context: ./mongo
     container_name: cli_mongo_rs_initiate
     init: true
-    depends_on: [ mongo1 ]
+    depends_on: [ mongo-cli-1 ]
     env_file: [ "./mongo/mongo.env" ]
     command: "/mongo/rs_initiate.sh"
 
-  mongo1:
+  mongo-cli-1:
     networks: [ cli_net ]
     hostname: mongo1
     image: kosli-mongo-rs
     build:
       context: ./mongo
-    container_name: mongo1
+    container_name: mongo-cli-1
     init: true
     stop_signal: SIGINT
-    ports: ["27017:27017"]
+    ports: ["27018:27017"]
     env_file: [ "./mongo/mongo.env" ]
     tmpfs: [ /tmp, /data/db ]
 
   minio:
     networks: [ cli_net ]
-    build: minio/.
+    build: 
+      context: ./minio
     image: kosli/minio
     container_name: minio_cli
-    ports: ["9000:9000", "9090:9090"]
+    ports: ["9001:9000", "9091:9090"]
     environment:
       MINIO_ROOT_USER: ROOTUSER
       MINIO_ROOT_PASSWORD: ROOTUSER

@@ -69,7 +69,7 @@ test_integration_setup:
 	@docker-compose down || true
 	@docker pull 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:latest || true
 	@docker-compose up -d
-	./mongo/ip_wait.sh localhost:9000/minio/health/live
+	./mongo/ip_wait.sh localhost:9001/minio/health/live
 	./mongo/ip_wait.sh localhost:8001/ready
 	@docker exec cli_kosli_server /demo/create_test_users.py
 	@go install gotest.tools/gotestsum@latest
