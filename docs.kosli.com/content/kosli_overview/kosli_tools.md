@@ -10,12 +10,12 @@ weight: 140
 In order to [record environments](/getting_started/part_3_environments/), [artifacts](/getting_started/part_5_artifacts/) and [evidence](/getting_started/part_6_evidence/) to Kosli you need to use the [Kosli CLI](https://github.com/kosli-dev/cli). 
 The CLI can also be used to [search](/getting_started/part_9_querying/) Kosli and find out all you need to know about your runtime environments and artifacts.
 
-Our CLI is an open source tool written in go and it's available for a number of different platforms.
+Our CLI is an open source and is available for a number of different platforms.
 
 ### Installing the Kosli CLI
 
 Kosli CLI can be installed from package managers, 
-by Curling pre-built binaries, or by running inside a Docker container.
+by Curling pre-built binaries, or can be used from the distributed Docker images.
 {{< tabs "installKosli" >}}
 
 {{< tab "Homebrew" >}}
@@ -76,12 +76,12 @@ sudo mv kosli /usr/local/bin/kosli
 {{< tab "Docker" >}}
 You can run the Kosli CLI in this docker container:
 ```shell {.command}
-docker run -it --rm ghcr.io/kosli-dev/cli:v0.1.35 bash
+docker run -it --rm ghcr.io/kosli-dev/cli:v{{< cli-version >}} bash
 ```
 {{< /tab >}}
 
 {{< tab "From source" >}}
-You can build Kosli CLI from sourcre by running:
+You can build Kosli CLI from source by running:
 ```shell {.command}
 git clone git@github.com:kosli-dev/cli.git
 cd cli
@@ -100,27 +100,17 @@ kosli version
 ```
 The expected output should be similar to this:
 ```plaintext {.light-console}
-version.BuildInfo{Version:"v0.1.35", GitCommit:"4058e8932ec093c28f553177e41c906940114866", GitTreeState:"clean", GoVersion:"go1.19.5"}
+version.BuildInfo{Version:"v{{< cli-version >}}", GitCommit:"4058e8932ec093c28f553177e41c906940114866", GitTreeState:"clean", GoVersion:"go1.19.5"}
 ```
 
 #### Usage
 
-<!-- TODO:
-
-explain kosli version and kosli status commands -->
-
 The [Reference](/client_reference/) section contains all the information you may need to run the Kosli CLI. 
 
-Most of the commands require a number of flags. Some of them are **required**, some are **optional** - you don't need to use them if you don't want to.  
-And some are **conditional** - you need to use them if certain conditions occur, e.g.:
-* if you use `--fingerprint` flag it means you provide the artifact's fingerprint on your own and we don't need to calculate it, so the flag `--artifact-type` is not needed;
-* if you want to read a docker digest from a registry without pulling the image you need to provide registry information: `--registry-password`, `--registry-username` and `--registry-provider`.
+Most of the commands require a number of flags. Some of them are **required**, others are **optional** and some are
+ **conditional** - you need to use them if certain conditions occur. Each command doc/help provides details about its flag usage. 
 
-Requirements regarding each flag are explained in flags description.
-
-Some of the flags are **defaulted**, and the default value will be always printed in the description. You can skip the flag if the default value is what you choose to use.
-
-Depending on the CI tool you are using, some of the flags (including required ones) may also be defaulted, depending on the environment variables provided by the tool. If the flag is defaulted in your CI you don't have to provide it in the command. [Here](/ci-defaults) you can find more details about flags defaulted depending on CI.
+Depending on the CI tool you are using, some of the flags (including required ones) may be defaulted, depending on the environment variables provided by the tool. If the flag is defaulted in your CI you don't have to provide it in the command. [Here](/ci-defaults) you can find more details about flags defaulted depending on CI.
 
 #### Environment variables
 
@@ -145,29 +135,30 @@ Each flag can be provided directly or represented with an environment variable. 
 
 #### Config file
 
-A config file is an alternative for using Kosli flags or environment variables. Usually you'd use a config file for the values that rarely change - like api token or org, but you can represent all Kosli flags with config file. The key for each value is the same as the flag name, capitalized, so `--api-token` would become `API-TOKEN`, and `--org` would become `OWNER`, etc. 
+A config file is an alternative for using Kosli flags or environment variables. Usually you'd use a config file for the values that rarely change - like api token or org, but you can represent all Kosli flags with config file. The key for each value is the same as the flag name, capitalized, so `--api-token` would become `API-TOKEN`, and `--org` would become `ORG`, etc. 
 
 You can use JSON, YAML or TOML format for your config file. 
 
-If you want to keep certain Kosli configuration in a file use `--config-file` flag when running Kosli commands to let the CLI tool know where to look for the file. The path given to `--config-file` flag should be a path relative to the location you're running kosli from. The file needs a valid format and extension, e.g.:
+If you want to keep certain Kosli configuration in a file use `--config-file` flag when running Kosli commands to let the CLI tool know where to look for the file. 
+The file needs a valid format and extension, e.g.:
 
 **kosli-conf.json:**
 ```
 {
-  "OWNER": "my-org",
+  "ORG": "my-org",
   "API-TOKEN": "123456abcdef"
 }
 ```
 
 **kosli-conf.yaml:**
 ```
-OWNER: "my-org"
+ORG: "my-org"
 API-TOKEN: "123456abcdef"
 ```
 
 **kosli-conf.toml:**
 ```
-OWNER = "my-org"
+ORG = "my-org"
 API-TOKEN = "123456abcdef"
 ```
 

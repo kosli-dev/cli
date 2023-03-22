@@ -19,16 +19,18 @@ If you see an error like below (or similar, with a different flag):
 ```
 Error: unknown flag: --artifact-type
 ```
-It most likely mean you misspelled a flag or a command.
+It most likely mean you misspelled a flag.
 
+### "unknown command" errors
 E.g.
 ```
 kosli expect deploymenct abc.exe --artifact-type file
-Error: unknown flag: --artifact-type
+Error: unknown command: deploymenct
+available subcommands are: deployment
 ```
 
-The flag is spelled correctly, but there is a typo in deploymen**c**t.
-The same error will pop up if you're trying to use a command that is not present in the version of the kosli CLI you are using.
+Note that there is a typo in deploymen**c**t.
+This error will pop up if you're trying to use a command that is not present in the version of the kosli CLI you are using.
 
 ### zsh: no such user or named directory
 
@@ -41,7 +43,7 @@ kosli list snapshots prod ~3..NOW
 zsh: no such user or named directory: 3..NOW
 ```
 
-To help zshell interpret the argument correctly, wrap in in quotation marks (single or double): 
+To help zshell interpret the argument correctly, wrap it in quotation marks (single or double): 
 ```shell {.command}
 kosli list snapshots prod '~3..NOW'
 ```
@@ -75,7 +77,7 @@ Here are two possible ways of enabling a dry run:
 
 ### What is the `--config-file` flag?
 
-A config file is an alternative for using Kosli flags or Environment variables. Usually you'd use a config file for the values that rarely change - like api token or org, but you can represent all Kosli flags with config file. The key for each value is the same as the flag name, capitalized, so `--api-token` would become `API-TOKEN`, and `--org` would become `OWNER`, etc. 
+A config file is an alternative for using Kosli flags or Environment variables. Usually you'd use a config file for the values that rarely change - like api token or org, but you can represent all Kosli flags with config file. The key for each value is the same as the flag name, capitalized, so `--api-token` would become `API-TOKEN`, and `--org` would become `ORG`, etc. 
 
 You can use JSON, YAML or TOML format for your config file. 
 
@@ -84,20 +86,20 @@ If you want to keep certain Kosli configuration in a file use `--config-file` fl
 **kosli-conf.json:**
 ```
 {
-  "OWNER": "my-org",
+  "ORG": "my-org",
   "API-TOKEN": "123456abcdef"
 }
 ```
 
 **kosli-conf.yaml:**
 ```
-OWNER: "my-org"
+ORG: "my-org"
 API-TOKEN: "123456abcdef"
 ```
 
 **kosli-conf.toml:**
 ```
-OWNER = "my-org"
+ORG = "my-org"
 API-TOKEN = "123456abcdef"
 ```
 
@@ -110,16 +112,16 @@ $ kosli environment ls --config-file kosli-conf
 `--config-file` defaults to `kosli`, so if you name your file `kosli.<yaml|toml|json>` and the file is in the same location as where you run Kosli commands from, you can skip the `--config-file` altogether.
 
 
-### Reporting same artifact and evidence multiple times
+### Reporting the same artifact and evidence multiple times
 If an artifact or evidence is reported multiple times there are a few corner cases. 
-The issues are described here.
+The issues are described here:
 
-## Template
+#### Template
 When an artifact is reported, the template for the flow is stored together with the artifact. 
 If the template has changed between the times the same artifact is reported, it is the last 
 template that is considered the template for that artifact.
 
-## Evidence
+#### Evidence
 If a given named evidence is reported multiple times it is the compliance status of the last 
 reported version of the evidence that is considered the compliance state of that evidence.
 
@@ -127,6 +129,6 @@ If an artifact is reported multiple times with different git-commit, we can have
 commit-evidence being attached to the artifact through multiple git-commits. It is the last
 reported version of the named commit-evidence that is considered the compliance state of that evidence.
 
-## Evidence outside the template
+#### Evidence outside the template
 If an artifact has an evidence, either commit evidence or artifact evidence, that is not 
 part of the template the artifact is non-compliant.

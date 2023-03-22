@@ -41,9 +41,9 @@ You need to:
 * [Install the `kosli` CLI](/kosli_overview/kosli_tools/#installing-the-kosli-cli).
 * [Get your Kosli API token](/kosli_overview/kosli_tools/#getting-your-kosli-api-token).
 * [Set the KOSLI_API_TOKEN environment variable](/kosli_overview/kosli_tools/#environment-variables).
-* Set the KOSLI_OWNER environment variable to `cyber-dojo` (the Kosli `cyber-dojo` organization is public so any authenticated user can read its data):
+* Set the KOSLI_ORG environment variable to `cyber-dojo` (the Kosli `cyber-dojo` organization is public so any authenticated user can read its data):
   ```shell {.command}
-  export KOSLI_OWNER=cyber-dojo
+  export KOSLI_ORG=cyber-dojo
   ```
 
 ## Pipeline events
@@ -53,7 +53,7 @@ You need to:
 Find out which `cyber-dojo` repositories have a CI pipeline reporting to [Kosli](https://app.kosli.com):
 
 ```shell {.command}
-kosli pipeline ls
+kosli ls flows
 ```
 
 You will see:
@@ -94,12 +94,13 @@ The commit which fixed the problem was
 in the `runner` repository. Follow this commit using the `kosli` command:
 
 ```shell {.command}
-kosli artifact get runner:16d9990
+kosli get artifact runner:16d9990
 ```
 You will see:
 
 ```plaintext {.light-console}
 Name:         cyberdojo/runner:16d9990
+Flow:         runner
 Fingerprint:  9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
 Created on:   Mon, 22 Aug 2022 11:35:00 CEST • 15 days ago
 Git commit:   16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
@@ -123,7 +124,8 @@ Let's look at this output in detail:
 
 * **Name**: The name of the docker image is `cyberdojo/runner:16d9990`. Its image registry is defaulted to
 `dockerhub`. Its :tag is the short-sha of the git commit.
-* **Fingerprint**: The unique tamper-proof SHA256 fingerprint of the artifact.
+* **Flow**: The name of the Kosli flow.
+* **Fingerprint**: The unique immutable SHA256 fingerprint of the artifact.
 * **Created on**: The artifact was created on 22nd August 2022, at 11:35 CEST.
 * **Commit URL**: You can follow [the commit URL](https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4) 
   to the actual commit on Github since cyber-dojo's git repositories are public.
@@ -171,7 +173,7 @@ The **History** of the artifact tells you your artifact started running in snaps
 You query Kosli to see what was running in `aws-prod` snapshot #65:
 
 ```shell {.command}
-kosli env get aws-prod#65
+kosli get snapshot aws-prod#65
 ```
 
 The output will be:
@@ -214,7 +216,7 @@ runtime environment.
 Let's find out what's *different* between the `aws-prod#64` and `aws-prod#65` snapshots: 
 
 ```shell {.command}
-kosli env diff aws-prod#64 aws-prod#65
+kosli diff snapshots aws-prod#64 aws-prod#65
 ```
 
 The response will be:

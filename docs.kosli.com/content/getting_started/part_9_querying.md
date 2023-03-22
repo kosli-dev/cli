@@ -15,7 +15,7 @@ To make it easier to run Kosli search commands with the CLI you can export the `
 
 
 ```
-export KOSLI_OWNER=yourOrganizationName
+export KOSLI_ORG=yourOrganizationName
 export KOSLI_API_TOKEN=yourKosliApiToken
 ```
 
@@ -23,7 +23,7 @@ You can try all the commands below by setting the `org` to `cyber-dojo`.
 the Kosli cyber-dojo organization is public so any authenticated user can read its data:
 
 ```
-export KOSLI_OWNER=cyber-dojo
+export KOSLI_ORG=cyber-dojo
 ```
 
 ## Search with git commit sha

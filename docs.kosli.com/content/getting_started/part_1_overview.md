@@ -9,12 +9,12 @@ Kosli is a very flexible tool - you can use it to drive a big transformation but
 
 To start using Kosli you need a [kosli account](https://app.kosli.com/sign-up).  
 {{< hint success >}}
-If you're eager to start using Kosli right away, check our ["Get familiar with Kosli"](/tutorials/get_familiar_with_kosli/) tutorials that allows you to quickly try out Kosli features without the need to spin up a separate environment. No CI required.
+If you're eager to start using Kosli right away, check our ["Get familiar with Kosli"](/tutorials/get_familiar_with_kosli/) tutorial that allows you to quickly try out Kosli features without the need to spin up a separate environment. No CI required.
 {{< /hint >}}
 
 You can start with reporting your **artifacts** from your **CI pipelines** to Kosli **flows** and get an overview of what you're building and testing. Or you can start with reporting **environments** and get an overview of what's running and where. 
 
-Once both flows and environment are in place you get a full picture - Kosli automatically connects the status of your runtime environments and reported artifacts so you can easily see when not qualified or suspicious artifacts made their way to your environments.
+Once both flows and environments are in place you get a full picture - Kosli automatically connects the status of your runtime environments and reported artifacts so you can easily see when not qualified or suspicious artifacts made their way to your environments.
 
 ## What does *"using Kosli"* really mean? 
 

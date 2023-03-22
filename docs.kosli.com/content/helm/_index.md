@@ -64,7 +64,7 @@ helm upgrade [RELEASE-NAME] kosli/k8s-reporter
 | podAnnotations | object | `{}` | any custom annotations to be added to the cronjob |
 | reporterConfig.dryRun | bool | `false` | whether the dry run mode is enabled or not. In dry run mode, the reporter logs the reports to stdout and does not send them to kosli. |
 | reporterConfig.kosliEnvironmentName | string | `""` | the name of kosli environment that the k8s cluster/namespace correlates to |
-| reporterConfig.kosliOwner | string | `""` | the name of the kosli owner (Org) |
+| reporterConfig.kosliOrg | string | `""` | the name of the kosli org |
 | reporterConfig.namespaces | string | `""` | the namespaces which represent the environment. It is a comma separated list of namespace name regex patterns. e.g. `^prod$,^dev-*` reports for the `prod` namespace and any namespace that starts with `dev-` leave this unset if you want to report what is running in the entire cluster |
 | resources.limits.cpu | string | `"100m"` | the cpu limit |
 | resources.limits.memory | string | `"256Mi"` | the memory limit |

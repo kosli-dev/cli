@@ -25,7 +25,7 @@ that reports to Kosli as `aws-prod`.
 Get a log of this environment's changes:
 
 ```shell {.command}
-kosli env log aws-prod --long
+kosli log env aws-prod
 ```
 
 You will see more than 177 snapshots because 
@@ -34,7 +34,7 @@ commits which have created new deployments). To get the same output as we have
 you can set the interval for the command:
 
 ```shell {.command}
-kosli env log aws-prod --long 175..177
+kosli log env aws-prod --interval 175..177
 ```
 
 ```plaintext {.light-console}
@@ -63,11 +63,12 @@ with the fingerprint starting `860ad17`.
 Let's learn more about this artifact:
 
 ```shell {.command}
-kosli artifact get creator@860ad17
+kosli get artifact creator@860ad17
 ```
 
 ```plaintext {.light-console}
 Name:        cyberdojo/creator:b7a5908
+Flow:        creator
 Fingerprint: 860ad172ace5aee03e6a1e3492a88b3315ecac2a899d4f159f43ca7314290d5a
 Created on:  Tue, 06 Sep 2022 16:48:07 CEST • 21 hours ago
 Git commit:  b7a590836cf140e17da3f01eadd5eca17d9efc65

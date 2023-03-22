@@ -16,7 +16,7 @@ echo "rm -rf /tmp/try-kosli" >> ${TEST_FILE}
 
 # Export cli commands
 echo "export KOSLI_HOST=http://localhost:8001"  >> ${TEST_FILE}
-echo "export KOSLI_OWNER=docs-cmd-test-user"  >> ${TEST_FILE}
+echo "export KOSLI_ORG=docs-cmd-test-user"  >> ${TEST_FILE}
 echo "export KOSLI_API_TOKEN=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY"  >> ${TEST_FILE}
 echo ""  >> ${TEST_FILE}
 

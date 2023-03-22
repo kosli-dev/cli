@@ -12,9 +12,9 @@ To follow the simulation you need to:
   ```shell {.command}
   export KOSLI_API_TOKEN=<paste-your-kosli-API-token-here>
   ```
-* Set the KOSLI_OWNER environment variable to your Kosli organization name:
+* Set the KOSLI_ORG environment variable to your Kosli organization name:
   ```shell {.command}
-  export KOSLI_OWNER=<paste-your-kosli-organization-name>
+  export KOSLI_ORG=<paste-your-kosli-organization-name>
   ```
 
 You will simulate a system with source code, a build system, and a running server.
@@ -96,7 +96,7 @@ it to the Kosli environment.
 Create a Kosli environment:
 
 ```shell {.command}
-kosli environment declare \
+kosli create environment \
     --name production \
     --environment-type server \
     --description "Production server (for kosli getting started)"
@@ -105,7 +105,7 @@ kosli environment declare \
 You can immediately verify the Kosli environment was created:
 
 ```shell {.command}
-kosli environment ls
+kosli ls environments
 ```
 
 ```plaintext {.light-console}
@@ -137,7 +137,7 @@ Simulate a report from your server by reporting two dummy files for the web and
 database applications:
 
 ```shell {.command}
-kosli environment report server production \
+kosli snapshot server production \
     --paths /tmp/try-kosli/server/web_*bin \
     --paths /tmp/try-kosli/server/db_*.bin
 ```
@@ -145,7 +145,7 @@ kosli environment report server production \
 You can see that the server has started, and how long it has been running for:
 
 ```shell {.command}
-kosli environment log production
+kosli list snapshots  production
 ```
 ```plaintext {.light-console}
 SNAPSHOT  FROM                  TO   DURATION
@@ -155,7 +155,7 @@ SNAPSHOT  FROM                  TO   DURATION
 Get a more detailed view of what is currently running on the server:
 
 ```shell {.command}
-kosli environment get production
+kosli get snapshot production
 ```
 ```plaintext {.light-console}
 COMMIT  ARTIFACT                                                                       PIPELINE  RUNNING_SINCE  REPLICAS
@@ -177,12 +177,12 @@ several times will not lead to duplication of snapshots.
 Send an environment report:
 
 ```shell {.command}
-kosli environment report server production \
+kosli snapshot server production \
     --paths /tmp/try-kosli/server/web_*bin \
     --paths /tmp/try-kosli/server/db_*.bin
 ```
 ```shell {.command}
-kosli environment log production
+kosli list snapshots production
 ```
 ```plaintext {.light-console}
 SNAPSHOT  FROM                  TO   DURATION
@@ -200,7 +200,7 @@ simulate_deployment
 Report what is now running on the server:
 
 ```shell {.command}
-kosli environment report server production \
+kosli snapshot server production \
     --paths /tmp/try-kosli/server/web_*bin \
     --paths /tmp/try-kosli/server/db_*.bin
 ```
@@ -208,7 +208,7 @@ kosli environment report server production \
 You can see Kosli has created a new snapshot:
 
 ```shell {.command}
-kosli environment log production
+kosli list snapshots production
 ```
 
 ```plaintext {.light-console}
@@ -220,7 +220,7 @@ SNAPSHOT  FROM                  TO                    DURATION
 You can see that you are currently running web version 2 in production:
 
 ```shell {.command}
-kosli environment get production
+kosli get snapshot production
 ```
 
 ```plaintext {.light-console}
@@ -238,7 +238,7 @@ Kosli CLI to check what was running in previous snapshots.
 Find what was running in snapshot #1 in production:
 
 ```shell {.command}
-kosli environment get production#1
+kosli get snapshot production#1
 ```
 
 ```plaintext {.light-console}
@@ -257,9 +257,9 @@ In the web interface you should now also be able to see 2 snapshots. The Log
 tab should show what changed in snapshot 1 and snapshot 2.
 
 
-# Pipelines
+# Flows
 
-A Kosli pipeline stores information about what happens in your build system.
+A Kosli flow stores information about what happens in your build system.
 The output of the build system is called an *artifact* in Kosli. This can be
 an application, a docker image, documentation, a filesystem, etc.
 
@@ -271,51 +271,49 @@ artifacts. For both cases you use one Kosli pipeline for each artifact. -->
 You use the Kosli CLI to report information about the creation of an
 artifact to the Kosli pipeline.
 
-A Kosli pipeline can also be used to store any information related to 
+A Kosli flow can also be used to store any information related to 
 the artifact you have built, like test results, manual approvals, 
 pull-requests, and so on.
 
 
-## Creating a Kosli pipeline
+## Creating a Kosli flow
 
-Create a Kosli pipeline where you can report what software your CI system
+Create a Kosli flow where you can report what software your CI system
 is building. You are building two applications, so make
-two Kosli pipelines `web-server` and `database-server`.
+two Kosli flows `web-server` and `database-server`.
 
 Create your new pipelines:
 
 ```shell {.command}
-kosli pipeline declare \
-    --pipeline web-server \
-    --description "pipeline to build web-server" \
+kosli create flow web-server \
+    --description "flow to build web-server" \
     --visibility private \
     --template artifact
 ```
 
 ```shell {.command}
-kosli pipeline declare \
-    --pipeline database-server \
+kosli create flow database-server \
     --description "pipeline to build database-server" \
     --visibility private \
     --template artifact
 ```
 
-You can immediately verify that the Kosli pipelines were created:
+You can immediately verify that the Kosli flows were created:
 
 ```shell {.command}
-kosli pipeline ls
+kosli ls flows
 ```
 
 ```plaintext {.light-console}
 NAME             DESCRIPTION                        VISIBILITY
-database-server  pipeline to build database-server  private
-web-server       pipeline to build web-server       private
+database-server  flow to build database-server  private
+web-server       flow to build web-server       private
 ```
 
-In the web interface you can select the **Pipelines** menu on the left.
-It will show you that you have a *web-server* and *database-server* pipeline.
-If you select either of the pipelines they will show that no artifacts have
-been reported for the pipelines.
+In the web interface you can select the **Flows** menu on the left.
+It will show you that you have a *web-server* and *database-server* flow.
+If you select either of the flows they will show that no artifacts have
+been reported for the flows.
 
 
 ## Building artifacts and reporting them to Kosli
@@ -330,8 +328,8 @@ Report that you have built the web and database applications. You are using
 a dummy `--build-url`, but in reality it would be a CI build URL:
 
 ```shell {.command}
-kosli pipeline artifact report creation /tmp/try-kosli/build/web_$(cat /tmp/try-kosli/code/web.src).bin \
-    --pipeline web-server \
+kosli report artifact /tmp/try-kosli/build/web_$(cat /tmp/try-kosli/code/web.src).bin \
+    --flow web-server \
     --artifact-type file \
     --build-url file://dummy \
     --commit-url file:///tmp/try-kosli/code \
@@ -340,8 +338,8 @@ kosli pipeline artifact report creation /tmp/try-kosli/build/web_$(cat /tmp/try-
 ```
 
 ```shell {.command}
-kosli pipeline artifact report creation /tmp/try-kosli/build/db_$(cat /tmp/try-kosli/code/db.src).bin \
-    --pipeline database-server \
+kosli report artifact /tmp/try-kosli/build/db_$(cat /tmp/try-kosli/code/db.src).bin \
+    --flow database-server \
     --artifact-type file \
     --build-url file://dummy \
     --commit-url file:///tmp/try-kosli/code \
@@ -352,7 +350,7 @@ kosli pipeline artifact report creation /tmp/try-kosli/build/db_$(cat /tmp/try-k
 You can see you have built one artifact in your *web-server* pipeline:
 
 ```shell {.command}
-kosli artifact ls web-server
+kosli ls artifacts --flow web-server
 ```
 
 ```plaintext {.light-console}
@@ -364,7 +362,7 @@ COMMIT   ARTIFACT                                                               
 And one for the *database-server* pipeline:
 
 ```shell {.command}
-kosli artifact ls database-server
+kosli ls artifacts --flow database-server
 ```
 
 ```plaintext {.light-console}
@@ -407,7 +405,7 @@ Report to Kosli that the web software is expected to be deployed:
 
 ```shell {.command}
 kosli expect deployment /tmp/try-kosli/build/web_$(cat /tmp/try-kosli/code/web.src).bin \
-    --pipeline web-server \
+    --flow web-server \
     --artifact-type file \
     --build-url file://dummy \
     --environment production \
@@ -423,7 +421,7 @@ simulate_deployment
 You can verify the deployment with:
 
 ```shell {.command}
-kosli deployment ls web-server
+kosli ls deployments --flow web-server
 ```
 
 ```plaintext {.light-console}

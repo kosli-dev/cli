@@ -51,7 +51,7 @@ func executeCommandC(cmd string) (*cobra.Command, string, error) {
 // runTestCmd runs a table of cmd test cases
 func runTestCmd(t *testing.T, tests []cmdTestCase) {
 	t.Helper()
-	for _, key := range [...]string{"KOSLI_API_TOKEN", "KOSLI_OWNER"} {
+	for _, key := range [...]string{"KOSLI_API_TOKEN", "KOSLI_ORG"} {
 		if os.Getenv(key) != "" {
 			t.Errorf("Environment variable %s should not be set when running tests ", key)
 		}
