@@ -56,7 +56,7 @@ services:
       context: ./minio
     image: kosli/minio
     container_name: minio_cli
-    ports: ["9001:9000", "9091:9090"]
+    ports: ["9010:9000", "9099:9090"]
     environment:
       MINIO_ROOT_USER: ROOTUSER
       MINIO_ROOT_PASSWORD: ROOTUSER
