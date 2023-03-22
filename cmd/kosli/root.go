@@ -123,7 +123,6 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 	evidencePathsFlag       = "[optional] The comma-separated list of paths containing supporting proof for the reported evidence. Paths can be for files or directories."
 	fingerprintFlag         = "[conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'."
 	evidenceCommitFlag      = "The git commit SHA1 for which the evidence belongs. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
-	pipelinesFlag           = "The comma separated list of pipelines for which a commit evidence belongs."
 	intervalFlag            = "[optional] expression to define specified snapshots range"
 )
 
