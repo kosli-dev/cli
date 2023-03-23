@@ -498,13 +498,13 @@ func formattedTimestamp(timestamp interface{}, short bool) (string, error) {
 	}
 }
 
-// extractRepoName returns repository name from 'owner/repository_name' string
-func extractRepoName(fullRepositoryName string) string {
-	repoNameParts := strings.Split(fullRepositoryName, "/")
-	repository := repoNameParts[len(repoNameParts)-1]
-	return repository
+// // extractRepoName returns repository name from 'owner/repository_name' string
+// func extractRepoName(fullRepositoryName string) string {
+// 	repoNameParts := strings.Split(fullRepositoryName, "/")
+// 	repository := repoNameParts[len(repoNameParts)-1]
+// 	return repository
 
-}
+// }
 
 // getPathOfEvidenceFileToUpload returns the path of an evidence file to upload based
 // on the provided evidencePaths.

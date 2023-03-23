@@ -106,7 +106,7 @@ func (suite *CommitEvidencePRGithubCommandTestSuite) TestCommitEvidencePRGithubC
 		},
 		{
 			name: "report Github PR evidence works with --repository=owner/repo",
-			cmd: `commit report evidence github-pullrequest --name gh-pr --pipelines ` + suite.pipelineNames + `
+			cmd: `commit report evidence github-pullrequest --name gh-pr --pipelines ` + suite.flowNames + `
 			          --build-url example.com --github-org kosli-dev --repository kosli-dev/cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			golden: "github pull request evidence is reported to commit: 73d7fee2f31ade8e1a9c456c324255212c30c2a6\n",
 		},
