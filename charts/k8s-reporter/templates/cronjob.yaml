@@ -32,7 +32,7 @@ spec:
             command:
             - /bin/sh
             - -c
-            - kosli snapshot k8s {{ required ".Values.reporterConfig.kosliEnvironmentName is required" .Values.reporterConfig.kosliEnvironmentName }} {{ if .Values.reporterConfig.namespaces }}--namespaces {{ .Values.reporterConfig.namespaces | quote }} {{ end }} --org {{ required ".Values.reporterConfig.kosliOrg is required" .Values.reporterConfig.kosliOrg }} {{ if .Values.reporterConfig.dryRun }}--dry-run{{ end }}
+            - kosli snapshot k8s {{ required ".Values.reporterConfig.kosliEnvironmentName is required" .Values.reporterConfig.kosliEnvironmentName }} {{ if .Values.reporterConfig.namespaces }} --namespaces {{ .Values.reporterConfig.namespaces | quote }} {{ end }} --org {{ required ".Values.reporterConfig.kosliOrg is required" .Values.reporterConfig.kosliOrg }} {{ if .Values.reporterConfig.dryRun }}--dry-run{{ end }}
             resources:
 {{ toYaml .Values.resources | indent 14 }}
           restartPolicy: Never
