@@ -32,7 +32,6 @@ const (
 
 	// the following constants are used in the docs/help
 	fingerprintDesc = "The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag)."
-	sha256Desc      = "The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --sha256 flag)."
 	awsAuthDesc     = `
 To authenticate to AWS, you can either: 
 	1) provide the AWS static credentials via flags or by exporting the equivalent KOSLI env vars (e.g. KOSLI_AWS_KEY_ID)
@@ -44,17 +43,19 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 
 	// flags
 	apiTokenFlag            = "The Kosli API token."
-	ownerFlag               = "The Kosli user or organization."
+	orgFlag                 = "The Kosli organization."
 	hostFlag                = "[defaulted] The Kosli endpoint."
 	dryRunFlag              = "[optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors."
 	maxAPIRetryFlag         = "[defaulted] How many times should API calls be retried when the API host is not reachable."
 	configFileFlag          = "[optional] The Kosli config file path."
 	verboseFlag             = "[optional] Print verbose logs to stdout."
 	debugFlag               = "[optional] Print debug logs to stdout."
-	sha256Flag              = "[conditional] The SHA256 fingerprint for the artifact. Only required if you don't specify '--artifact-type'."
 	artifactTypeFlag        = "[conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256' or '--fingerprint'."
 	pipelineNameFlag        = "The Kosli pipeline name."
+	flowNameFlag            = "The Kosli flow name."
+	flowNamesFlag           = "[defaulted] The comma separated list of Kosli flows. Defaults to all flows of the org."
 	newPipelineFlag         = "The name of the pipeline to be created or updated."
+	newFlowFlag             = "The name of the flow to be created or updated."
 	outputFlag              = "[defaulted] The format of the output. Valid formats are: [table, json]."
 	pipefileFlag            = "[deprecated] The path to the JSON pipefile."
 	environmentNameFlag     = "The environment name."
@@ -102,7 +103,7 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 	resultsDirFlag          = "[defaulted] The path to a folder with JUnit test results."
 	snykJsonResultsFileFlag = "The path to Snyk scan results Json file."
 	ecsClusterFlag          = "The name of the ECS cluster."
-	ecsServiceFlag          = "The name of the ECS service."
+	ecsServiceFlag          = "[optional] The name of the ECS service."
 	kubeconfigFlag          = "[defaulted] The kubeconfig path for the target cluster."
 	namespaceFlag           = "[conditional] The comma separated list of namespaces regex patterns to report artifacts info from. Can't be used together with --exclude-namespace."
 	excludeNamespaceFlag    = "[conditional] The comma separated list of namespaces regex patterns NOT to report artifacts info from. Can't be used together with --namespace."
@@ -117,18 +118,19 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 	longFlag                = "[optional] Print detailed output."
 	reverseFlag             = "[defaulted] Reverse the order of output list."
 	evidenceNameFlag        = "The name of the evidence."
-	evidenceUrlFlag         = "The URL to the evidence."
-	evidenceFingerprintFlag = "The fingerprint of the evidence."
+	evidenceFingerprintFlag = "[optional] The SHA256 fingerprint of the evidence file or dir."
+	evidenceURLFlag         = "[optional] The external URL where the evidence file or dir is stored."
+	evidencePathsFlag       = "[optional] The comma-separated list of paths containing supporting proof for the reported evidence. Paths can be for files or directories."
 	fingerprintFlag         = "[conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'."
 	evidenceCommitFlag      = "The git commit SHA1 for which the evidence belongs. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
-	pipelinesFlag           = "The comma separated list of pipelines for which a commit evidence belongs."
+	intervalFlag            = "[optional] expression to define specified snapshots range"
 )
 
 var global *GlobalOpts
 
 type GlobalOpts struct {
 	ApiToken      string
-	Owner         string
+	Org           string
 	Host          string
 	DryRun        bool
 	MaxAPIRetries int
@@ -171,7 +173,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		},
 	}
 	cmd.PersistentFlags().StringVarP(&global.ApiToken, "api-token", "a", "", apiTokenFlag)
-	cmd.PersistentFlags().StringVar(&global.Owner, "owner", "", ownerFlag)
+	cmd.PersistentFlags().StringVar(&global.Org, "org", "", orgFlag)
 	cmd.PersistentFlags().StringVarP(&global.Host, "host", "H", "https://app.kosli.com", hostFlag)
 	cmd.PersistentFlags().IntVarP(&global.MaxAPIRetries, "max-api-retries", "r", maxAPIRetries, maxAPIRetryFlag)
 	cmd.PersistentFlags().StringVarP(&global.ConfigFile, "config-file", "c", defaultConfigFilename, configFileFlag)
@@ -188,20 +190,25 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 
 		newVersionCmd(out),
 		newFingerprintCmd(out),
-		newPipelineCmd(out),
-		newCommitCmd(out),
-		newEnvironmentCmd(out),
 		newAssertCmd(out),
 		newStatusCmd(out),
-		newArtifactReadCmd(out),
-		newDeploymentReadCmd(out),
-		newApprovalReadCmd(out),
 		newExpectCmd(out),
 		newSearchCmd(out),
 		newCompletionCmd(out),
-		newCommitsCmd(out),
 		// Hidden documentation generator command: 'kosli docs'
 		newDocsCmd(out),
+
+		// New syntax commands
+		newGetCmd(out),
+		newCreateCmd(out),
+		newReportCmd(out),
+		newDiffCmd(out),
+		newAllowCmd(out),
+		newListCmd(out),
+		newRenameCmd(out),
+		newSnapshotCmd(out),
+		newRequestCmd(out),
+		newLogCmd(out),
 	)
 
 	return cmd, nil

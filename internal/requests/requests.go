@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 
@@ -13,6 +16,12 @@ import (
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/version"
 )
+
+type FormItem struct {
+	Type      string
+	FieldName string
+	Content   interface{}
+}
 
 // HTTPResponse is a wrapper of http.Response with ready-extracted string body
 type HTTPResponse struct {
@@ -59,6 +68,7 @@ type RequestParams struct {
 	Method            string
 	URL               string
 	Payload           interface{}
+	Form              []FormItem
 	AdditionalHeaders map[string]string
 	Username          string
 	Password          string
@@ -68,12 +78,29 @@ type RequestParams struct {
 
 // newHTTPRequest returns a customized http request based on RequestParams
 func (p *RequestParams) newHTTPRequest() (*http.Request, error) {
-	jsonBytes, err := json.MarshalIndent(p.Payload, "", "    ")
-	if err != nil {
-		return nil, err
+	if len(p.AdditionalHeaders) == 0 {
+		p.AdditionalHeaders = make(map[string]string)
 	}
 
-	req, err := http.NewRequest(p.Method, p.URL, bytes.NewBuffer(jsonBytes))
+	var body *bytes.Buffer
+
+	if len(p.Form) > 0 {
+		var contentType string
+		var err error
+		contentType, body, err = createMultipartRequestBody(p.Form)
+		if err != nil {
+			return nil, err
+		}
+		p.AdditionalHeaders["Content-Type"] = contentType
+	} else {
+		jsonBytes, err := json.MarshalIndent(p.Payload, "", "    ")
+		if err != nil {
+			return nil, err
+		}
+		body = bytes.NewBuffer(jsonBytes)
+	}
+
+	req, err := http.NewRequest(p.Method, p.URL, body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create %s request to %s : %v", p.Method, p.URL, err)
 	}
@@ -83,9 +110,6 @@ func (p *RequestParams) newHTTPRequest() (*http.Request, error) {
 
 	// token authorization has higher precedence over basic auth
 	if p.Token != "" {
-		if len(p.AdditionalHeaders) == 0 {
-			p.AdditionalHeaders = make(map[string]string)
-		}
 		p.AdditionalHeaders["Authorization"] = fmt.Sprintf("Bearer %s", p.Token)
 	} else if p.Username != "" || p.Password != "" {
 		if p.Username == "" {
@@ -103,6 +127,50 @@ func (p *RequestParams) newHTTPRequest() (*http.Request, error) {
 	}
 
 	return req, nil
+}
+
+func createMultipartRequestBody(items []FormItem) (string, *bytes.Buffer, error) {
+	body := &bytes.Buffer{}
+
+	writer := multipart.NewWriter(body)
+	defer writer.Close()
+
+	for _, item := range items {
+		if item.Type == "field" {
+			part, err := writer.CreateFormField(item.FieldName)
+			if err != nil {
+				return "", body, err
+			}
+
+			jsonBytes, err := json.MarshalIndent(item.Content, "", "    ")
+			if err != nil {
+				return "", body, err
+			}
+			_, err = part.Write(jsonBytes)
+			if err != nil {
+				return "", body, err
+			}
+		} else if item.Type == "file" {
+			filename := item.Content.(string)
+			file, err := os.Open(filename)
+			if err != nil {
+				return "", body, err
+			}
+			defer file.Close()
+
+			part, err := writer.CreateFormFile(item.FieldName, filepath.Base(filename))
+			if err != nil {
+				return "", body, err
+			}
+
+			_, err = io.Copy(part, file)
+			if err != nil {
+				return "", body, err
+			}
+		}
+	}
+	contentType := writer.FormDataContentType()
+	return contentType, body, nil
 }
 
 func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {

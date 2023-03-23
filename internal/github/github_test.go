@@ -112,14 +112,14 @@ func (suite *GithubTestSuite) TestPullRequestsForCommit() {
 	}
 	for _, t := range []struct {
 		name       string
-		ghOwner    string
+		ghOrg      string
 		repository string
 		commit     string
 		result     result
 	}{
 		{
 			name:       "can list pull requests for a commit.",
-			ghOwner:    "kosli-dev",
+			ghOrg:      "kosli-dev",
 			repository: "cli",
 			commit:     "73d7fee2f31ade8e1a9c456c324255212c30c2a6",
 			result: result{
@@ -129,7 +129,7 @@ func (suite *GithubTestSuite) TestPullRequestsForCommit() {
 		},
 		{
 			name:       "non-existing commit will cause an error.",
-			ghOwner:    "kosli-dev",
+			ghOrg:      "kosli-dev",
 			repository: "cli",
 			commit:     "73d7fee2f31ade8e1a9c456c324255212c3tf45a",
 			result: result{
@@ -142,7 +142,7 @@ func (suite *GithubTestSuite) TestPullRequestsForCommit() {
 			token := os.Getenv("KOSLI_GITHUB_TOKEN")
 			c := &GithubConfig{
 				Token:      token,
-				Org:        t.ghOwner,
+				Org:        t.ghOrg,
 				Repository: t.repository,
 			}
 
@@ -164,14 +164,14 @@ func (suite *GithubTestSuite) TestGetPullRequestApprovers() {
 	}
 	for _, t := range []struct {
 		name       string
-		ghOwner    string
+		ghOrg      string
 		repository string
 		number     int
 		result     result
 	}{
 		{
 			name:       "get an empty list for a PR without approvers",
-			ghOwner:    "kosli-dev",
+			ghOrg:      "kosli-dev",
 			repository: "cli",
 			number:     8,
 			result: result{
@@ -180,7 +180,7 @@ func (suite *GithubTestSuite) TestGetPullRequestApprovers() {
 		},
 		{
 			name:       "get the list of approvers for an approved PR",
-			ghOwner:    "kosli-dev",
+			ghOrg:      "kosli-dev",
 			repository: "cli",
 			number:     6,
 			result: result{
@@ -189,7 +189,7 @@ func (suite *GithubTestSuite) TestGetPullRequestApprovers() {
 		},
 		{
 			name:       "non-existing PR causes an error",
-			ghOwner:    "kosli-dev",
+			ghOrg:      "kosli-dev",
 			repository: "cli",
 			number:     666,
 			result: result{
@@ -202,7 +202,7 @@ func (suite *GithubTestSuite) TestGetPullRequestApprovers() {
 			token := os.Getenv("KOSLI_GITHUB_TOKEN")
 			c := &GithubConfig{
 				Token:      token,
-				Org:        t.ghOwner,
+				Org:        t.ghOrg,
 				Repository: t.repository,
 			}
 			approvers, err := c.GetPullRequestApprovers(t.number)
@@ -213,6 +213,30 @@ func (suite *GithubTestSuite) TestGetPullRequestApprovers() {
 				require.ElementsMatchf(suite.T(), t.result.approvers, approvers, "want approvers: %v, got approvers: %v",
 					t.result.approvers, approvers)
 			}
+		})
+	}
+}
+
+func (suite *GithubTestSuite) TestExtractRepoName() {
+	for _, t := range []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "full repo name (including org) is separated",
+			input: "kosli-dev/cli",
+			want:  "cli",
+		},
+		{
+			name:  "short repo name is returned as is",
+			input: "cli",
+			want:  "cli",
+		},
+	} {
+		suite.Run(t.name, func() {
+			repo := extractRepoName(t.input)
+			require.Equalf(suite.T(), t.want, repo, "expected %s but got %s", t.want, repo)
 		})
 	}
 }

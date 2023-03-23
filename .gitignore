@@ -18,5 +18,6 @@ docs.kosli.com/content/client_reference/kosli*
 *.tar.gz
 docs.kosli.com/public/
 docs.kosli.com/.netlify
+# keep it uncommented on main
 docs.kosli.com/assets/metadata.json
 tmp/

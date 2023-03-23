@@ -1,118 +1,16 @@
 package utils
 
 import (
-	"context"
-	"encoding/base64"
+	"archive/tar"
+	"compress/gzip"
 	"encoding/json"
+	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
-
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
+	"strings"
 )
-
-// PullDockerImage pulls a docker image or returns an error
-func PullDockerImage(imageName string) error {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		return err
-	}
-
-	rc, err := cli.ImagePull(context.Background(), imageName, types.ImagePullOptions{})
-	if err != nil {
-		return err
-	}
-	defer rc.Close()
-	_, err = io.Copy(os.Stdout, rc)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// PushDockerImage pushes a docker image or returns an error
-func PushDockerImage(imageName string) error {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		return err
-	}
-
-	authConfig := types.AuthConfig{
-		ServerAddress: "http://localhost:5001/",
-	}
-	authConfigBytes, _ := json.Marshal(authConfig)
-	authConfigEncoded := base64.URLEncoding.EncodeToString(authConfigBytes)
-	opts := types.ImagePushOptions{RegistryAuth: authConfigEncoded}
-
-	rc, err := cli.ImagePush(context.Background(), imageName, opts)
-	if err != nil {
-		return err
-	}
-	defer rc.Close()
-	_, err = io.Copy(os.Stdout, rc)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// TagDockerImage tags a docker image or returns an error
-func TagDockerImage(sourceName, targetName string) error {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		return err
-	}
-
-	return cli.ImageTag(context.Background(), sourceName, targetName)
-}
-
-// RemoveDockerImage deletes a docker image or return an error
-func RemoveDockerImage(imageName string) error {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		return err
-	}
-
-	_, err = cli.ImageRemove(context.Background(), imageName, types.ImageRemoveOptions{Force: true})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// RunDockerContainer runs a docker container and returns its ID or returns an error
-func RunDockerContainer(imageName string) (string, error) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		return "", err
-	}
-	ctx := context.Background()
-	resp, err := cli.ContainerCreate(ctx, &container.Config{
-		Image: imageName,
-		Cmd:   []string{"sleep", "360"},
-	}, nil, nil, nil, "")
-
-	if err != nil {
-		return "", err
-	}
-	containerID := resp.ID
-	return containerID, cli.ContainerStart(ctx, containerID, types.ContainerStartOptions{})
-}
-
-// RemoveDockerContainer remove a docker container or returns an error
-func RemoveDockerContainer(containerID string) error {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		return err
-	}
-
-	return cli.ContainerRemove(context.Background(), containerID, types.ContainerRemoveOptions{Force: true})
-}
 
 // Contains checks if a string is contained in a string slice
 func Contains(s []string, e string) bool {
@@ -145,4 +43,101 @@ func CreateFile(p string) (*os.File, error) {
 		return nil, err
 	}
 	return os.Create(p)
+}
+
+// IsFile checks if a path is a file
+func IsFile(path string) (bool, error) {
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return false, err
+	}
+
+	return fileInfo.Mode().IsRegular(), err
+}
+
+// IsDir checks if a path is a directory
+func IsDir(path string) (bool, error) {
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return false, err
+	}
+
+	return fileInfo.Mode().IsDir(), err
+}
+
+// Tar creates a tar file from src in a temp directory with the name
+// provided in tarFileName. It returns the path of the generated tar file.
+func Tar(src, tarFileName string) (string, error) {
+	// ensure the src actually exists before trying to tar it
+	if _, err := os.Stat(src); err != nil {
+		return "", fmt.Errorf("unable to tar file - %v", err.Error())
+	}
+
+	tmpDir, err := os.MkdirTemp("", "")
+	if err != nil {
+		return "", err
+	}
+
+	tarFilePath := filepath.Join(tmpDir, tarFileName)
+	f, err := os.OpenFile(tarFilePath, os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return "", err
+	}
+
+	gzw := gzip.NewWriter(f)
+	defer gzw.Close()
+
+	tw := tar.NewWriter(gzw)
+	defer tw.Close()
+
+	// walk path
+	return tarFilePath, filepath.WalkDir(src, func(path string, di fs.DirEntry, err error) error {
+
+		// return on any error
+		if err != nil {
+			return err
+		}
+
+		// return on non-regular files
+		if !di.Type().IsRegular() {
+			return nil
+		}
+
+		fi, err := di.Info()
+		if err != nil {
+			return err
+		}
+
+		// create a new dir/file header
+		header, err := tar.FileInfoHeader(fi, fi.Name())
+		if err != nil {
+			return err
+		}
+
+		// update the name to correctly reflect the desired destination when untaring
+		header.Name = strings.TrimPrefix(strings.Replace(path, src, "", -1), string(filepath.Separator))
+
+		// write the header
+		if err := tw.WriteHeader(header); err != nil {
+			return err
+		}
+
+		// open files for taring
+		f, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+
+		// copy file data into tar writer
+		if _, err := io.Copy(tw, f); err != nil {
+			return err
+		}
+
+		// manually close here after each file operation; defering would cause each file close
+		// to wait until all operations have completed.
+		f.Close()
+
+		return nil
+	})
+
 }

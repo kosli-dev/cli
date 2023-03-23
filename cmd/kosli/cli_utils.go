@@ -7,6 +7,7 @@ import (
 	"net/http"
 	urlPackage "net/url"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -18,6 +19,7 @@ import (
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/utils"
+	cp "github.com/otiai10/copy"
 	"github.com/spf13/cobra"
 	"github.com/xeonx/timeago"
 )
@@ -38,7 +40,7 @@ var ciTemplates = map[string]map[string]string{
 	github: {
 		"git-commit": "${GITHUB_SHA}",
 		"repository": "${GITHUB_REPOSITORY}",
-		"owner":      "${GITHUB_REPOSITORY_OWNER}",
+		"org":        "${GITHUB_REPOSITORY_OWNER}",
 		"commit-url": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}",
 		"build-url":  "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}",
 	},
@@ -101,11 +103,11 @@ func WhichCI() string {
 // DefaultValue looks up the default value of a given flag in a given CI tool
 // if the DOCS env variable is set, return empty string to avoid
 // having irrelevant defaults in the docs
-// if the TESTS env variable is set, return empty string to allow
+// if the KOSLI_TESTS env variable is set, return empty string to allow
 // testing missing flags in CI
 func DefaultValue(ci, flag string) string {
 	_, ok1 := os.LookupEnv("DOCS")
-	_, ok2 := os.LookupEnv("TESTS")
+	_, ok2 := os.LookupEnv("KOSLI_TESTS")
 	if !ok1 && !ok2 {
 		if v, ok := ciTemplates[ci][flag]; ok {
 			return os.ExpandEnv(v)
@@ -115,15 +117,15 @@ func DefaultValue(ci, flag string) string {
 }
 
 // DeprecateFlags declares a list of flags as deprecated for a given command
-func DeprecateFlags(cmd *cobra.Command, flags map[string]string) error {
-	for name, message := range flags {
-		err := cmd.Flags().MarkDeprecated(name, message)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
+// func DeprecateFlags(cmd *cobra.Command, flags map[string]string) error {
+// 	for name, message := range flags {
+// 		err := cmd.Flags().MarkDeprecated(name, message)
+// 		if err != nil {
+// 			return err
+// 		}
+// 	}
+// 	return nil
+// }
 
 // RequireFlags declares a list of flags as required for a given command
 func RequireFlags(cmd *cobra.Command, flagNames []string) error {
@@ -397,12 +399,12 @@ func ValidateArtifactArg(args []string, artifactType, inputSha256 string, always
 		if alwaysRequireArtifactName {
 			return fmt.Errorf("docker image name or file/dir path is required")
 		} else if inputSha256 == "" {
-			return fmt.Errorf("docker image name or file/dir path is required when --sha256 is not provided")
+			return fmt.Errorf("docker image name or file/dir path is required when --fingerprint is not provided")
 		}
 	}
 
 	if artifactType == "" && inputSha256 == "" {
-		return fmt.Errorf("either --artifact-type or --sha256 must be specified")
+		return fmt.Errorf("either --artifact-type or --fingerprint must be specified")
 	}
 
 	if inputSha256 != "" {
@@ -457,6 +459,9 @@ func tabFormattedPrint(out io.Writer, header []string, rows []string) {
 // time is formatted using RFC1123
 func formattedTimestamp(timestamp interface{}, short bool) (string, error) {
 	var intTimestamp int64
+	var shortFormat string
+	var unixTime time.Time
+
 	switch t := timestamp.(type) {
 	case int64:
 		intTimestamp = timestamp.(int64)
@@ -474,13 +479,22 @@ func formattedTimestamp(timestamp interface{}, short bool) (string, error) {
 		return "", fmt.Errorf("unsupported timestamp type %s", t)
 	}
 
-	unixTime := time.Unix(intTimestamp, 0)
+	// use a fixed timestamp when running tests
+	// also set timezone to UTC to make tests pass everywhere
+	if _, ok := os.LookupEnv("KOSLI_TESTS"); ok {
+		unixTime = time.Unix(int64(1452902400), 0).UTC()
+		shortFormat = unixTime.Format(time.RFC1123)
+	} else {
+		unixTime = time.Unix(intTimestamp, 0)
+		shortFormat = unixTime.Format(time.RFC1123)
+	}
+
 	if short {
-		return unixTime.Format(time.RFC1123), nil
+		return shortFormat, nil
 	} else {
 		timeago.English.Max = 36 * timeago.Month
 		timeAgoFormat := timeago.English.Format(unixTime)
-		return fmt.Sprintf("%s \u2022 %s", unixTime.Format(time.RFC1123), timeAgoFormat), nil
+		return fmt.Sprintf("%s \u2022 %s", shortFormat, timeAgoFormat), nil
 	}
 }
 
@@ -489,4 +503,65 @@ func extractRepoName(fullRepositoryName string) string {
 	repoNameParts := strings.Split(fullRepositoryName, "/")
 	repository := repoNameParts[len(repoNameParts)-1]
 	return repository
+
+}
+
+// getPathOfEvidenceFileToUpload returns the path of an evidence file to upload based
+// on the provided evidencePaths.
+// - if one path is provided and it is a file, that path is returned as it
+// - if one path is provided and it is a directory, the directory is tarred and the
+// path of the generated tar file is returned
+// - if multiple paths are provided, they are packaged into a tar file and the
+// path of the generated tar file is returned
+func getPathOfEvidenceFileToUpload(evidencePaths []string) (string, bool, error) {
+	cleanupNeeded := false
+	if len(evidencePaths) == 0 {
+		return "", cleanupNeeded, fmt.Errorf("no evidence paths provided")
+	}
+	dirToTar := ""
+	if len(evidencePaths) == 1 {
+		ok, err := utils.IsFile(evidencePaths[0])
+		if err != nil {
+			return "", cleanupNeeded, err
+		}
+		if ok {
+			logger.Debug("file %s is provided as evidence", evidencePaths[0])
+			return evidencePaths[0], cleanupNeeded, nil
+		}
+
+		ok, err = utils.IsDir(evidencePaths[0])
+		if err != nil {
+			return "", cleanupNeeded, err
+		}
+		if ok {
+			logger.Debug("dir %s is provided as evidence. It will be tarred", evidencePaths[0])
+			dirToTar = evidencePaths[0]
+		}
+
+	} else { // there are multiple paths
+		// copy all paths to a new temp dir
+		tmpDir, err := os.MkdirTemp("", "")
+		if err != nil {
+			return "", cleanupNeeded, err
+		}
+
+		logger.Debug("[%d] paths are provided as evidence. They will be tarred from %s", len(evidencePaths), tmpDir)
+
+		for _, path := range evidencePaths {
+			err := cp.Copy(path, filepath.Join(tmpDir, filepath.Base(path)))
+			if err != nil {
+				return "", cleanupNeeded, err
+			}
+		}
+		dirToTar = tmpDir
+		defer os.RemoveAll(tmpDir)
+	}
+
+	// tar the required dir and return the path of the tar file
+	tarFilePath, err := utils.Tar(dirToTar, "evidence.tgz")
+	if err != nil {
+		return "", cleanupNeeded, err
+	}
+	cleanupNeeded = true
+	return tarFilePath, cleanupNeeded, nil
 }

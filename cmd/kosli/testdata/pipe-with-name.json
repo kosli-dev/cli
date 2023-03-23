@@ -1,0 +1,10 @@
+{
+    "name": "cli-test",
+    "description": "test pipeline creation from cli ",
+    "visibility": "private",
+    "template": [
+        "artifact",
+        "unit-test",
+        "unit-test-coverage"
+    ]
+}

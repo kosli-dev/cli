@@ -16,8 +16,8 @@ type PipelineCommandTestSuite struct {
 }
 
 func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
-	defaultKosliArguments := " -H http://localhost:8001 --owner docs-cmd-test-user -a eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY"
-	defaultArtifactArguments := " --pipeline newPipe --build-url www.yr.no --commit-url www.nrk.no"
+	defaultKosliArguments := " -H http://localhost:8001 --org docs-cmd-test-user -a eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY"
+	defaultArtifactArguments := " --flow newFlow --build-url www.yr.no --commit-url www.nrk.no"
 	defaultRepoRoot := " --repo-root ../.. "
 
 	repo, err := git.PlainOpen("../..")
@@ -32,144 +32,61 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 	headHash := repoHead.Hash().String()
 
 	tests := []cmdTestCase{
-		{
-			name:   "declare pipeline",
-			cmd:    "pipeline declare --pipeline newPipe --description \"my new pipeline\" " + defaultKosliArguments,
-			golden: "",
-		},
-		{
-			name:   "re-declaring a pipeline updates its metadata",
-			cmd:    "pipeline declare --pipeline newPipe --description \"changed description\" " + defaultKosliArguments,
-			golden: "",
-		},
-		{
-			wantError: true,
-			name:      "missing --owner flag causes an error",
-			cmd:       "pipeline declare --pipeline newPipe --description \"my new pipeline\" -H http://localhost:8001 -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
-			golden:    "Error: --owner is not set\nUsage: kosli pipeline declare [flags]\n",
-		},
-		{
-			wantError: true,
-			name:      "missing --api-token flag causes an error",
-			cmd:       "pipeline declare --pipeline newPipe --description \"my new pipeline\" --owner cyber-dojo -H http://localhost:8001",
-			golden:    "Error: --api-token is not set\nUsage: kosli pipeline declare [flags]\n",
-		},
-		{
-			wantError: true,
-			name:      "missing --pipeline causes an error",
-			cmd:       "pipeline declare --description \"my new pipeline\" -H http://localhost:8001 --owner cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
-			golden:    "Error: --pipeline is required when you are not using --pipefile\nUsage: kosli pipeline declare [flags]\n",
-		},
-		// Pipeline ls tests
-		{
-			wantError: false,
-			name:      "kosli pipeline ls command does not return error",
-			cmd:       "pipeline ls" + defaultKosliArguments,
-			golden:    "",
-		},
-		{
-			wantError: false,
-			name:      "kosli pipeline ls --output json command does not return error",
-			cmd:       "pipeline ls --output json" + defaultKosliArguments,
-			golden:    "",
-		},
-		{
-			wantError: false,
-			name:      "kosli pipeline ls --output table command does not return error",
-			cmd:       "pipeline ls --output table" + defaultKosliArguments,
-			golden:    "",
-		},
-		{
-			wantError: true,
-			name:      "kosli pipeline ls --output text command does return error",
-			cmd:       "pipeline ls --output text" + defaultKosliArguments,
-			golden:    "",
-		},
-
-		// Pipeline pipeline get tests
-		{
-			wantError: false,
-			name:      "kosli pipeline inspect newPipe command does not return error",
-			cmd:       "pipeline inspect newPipe" + defaultKosliArguments,
-			golden:    "",
-		},
-		{
-			wantError: false,
-			name:      "kosli pipeline inspect newPipe --output json command does not return error",
-			cmd:       "pipeline inspect newPipe --output json" + defaultKosliArguments,
-			golden:    "",
-		},
 
 		// Report artifacts
 		{
 			wantError: false,
-			name:      "report artifact with sha256",
-			cmd:       "pipeline artifact report creation FooBar_1 --git-commit " + headHash + " --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			name:      "report artifact with fingerprint",
+			cmd:       "report artifact FooBar_1 --git-commit " + headHash + " --fingerprint 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 		{
 			wantError: false,
 			name:      "report different artifact with same git commit",
-			cmd:       "pipeline artifact report creation FooBar_2 --git-commit " + headHash + " --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "report artifact FooBar_2 --git-commit " + headHash + " --fingerprint 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 		{
 			wantError: false,
 			name:      "report artifact file",
-			cmd:       "pipeline artifact report creation testdata/file1 --artifact-type file --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "report artifact testdata/file1 --artifact-type file --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 		{
 			wantError: false,
 			name:      "report artifact dir",
-			cmd:       "pipeline artifact report creation testdata/folder1 --artifact-type dir --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "report artifact testdata/folder1 --artifact-type dir --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 		{
 			wantError: true,
-			name:      "report artifact missing --owner",
-			cmd:       "pipeline artifact report creation testdata/folder1 --artifact-type dir --git-commit " + headHash + defaultArtifactArguments + defaultRepoRoot,
+			name:      "report artifact missing --org",
+			cmd:       "report artifact testdata/folder1 --artifact-type dir --git-commit " + headHash + defaultArtifactArguments + defaultRepoRoot,
 			golden:    "",
 		},
 		{
 			wantError: true,
 			name:      "report artifact missing --artifact-type",
-			cmd:       "pipeline artifact report creation testdata/folder1 --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "report artifact testdata/folder1 --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 		{
 			wantError: true,
 			name:      "report artifact missing --git-commit",
-			cmd:       "pipeline artifact report creation testdata/folder1 --artifact-type dir " + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "report artifact testdata/folder1 --artifact-type dir " + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
 			golden:    "Error: required flag(s) \"git-commit\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report artifact file with non existing file name",
-			cmd:       "pipeline artifact report creation thisIsNotAFile --artifact-type file --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "report artifact thisIsNotAFile --artifact-type file --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
 			golden:    "Error: open thisIsNotAFile: no such file or directory\n",
 		},
 		{
 			wantError: true,
 			name:      "report artifact wrong --repo-root",
-			cmd:       "pipeline artifact report creation testdata/file1 --repo-root . --artifact-type file --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments,
+			cmd:       "report artifact testdata/file1 --repo-root . --artifact-type file --git-commit " + headHash + defaultArtifactArguments + defaultKosliArguments,
 			golden:    "Error: failed to open git repository at .: repository does not exist\n",
-		},
-
-		// List artifacts
-		{
-			wantError: false,
-			name:      "list artifacts",
-			cmd:       "artifact ls newPipe" + defaultKosliArguments,
-			golden:    "",
-		},
-
-		// Get artifact
-		{
-			wantError: false,
-			name:      "get artifact",
-			cmd:       "artifact get newPipe@4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments,
-			golden:    "",
 		},
 
 		// TODO: decouple approval tests and make them independent
@@ -177,7 +94,7 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		{
 			wantError: false,
 			name:      "report approval",
-			cmd:       "pipeline approval report --pipeline newPipe --oldest-commit HEAD~1 --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultKosliArguments + defaultRepoRoot,
+			cmd:       "report approval --flow newFlow --oldest-commit HEAD~1 --fingerprint 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 
@@ -185,45 +102,7 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 		{
 			wantError: false,
 			name:      "request approval",
-			cmd:       "pipeline approval request --pipeline newPipe --oldest-commit HEAD --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments + defaultRepoRoot,
-			golden:    "",
-		},
-
-		// Assert approval
-		{
-			wantError: false,
-			name:      "assert an approved approval does not fail",
-			cmd:       "pipeline approval assert --pipeline newPipe --sha256 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0" + defaultKosliArguments,
-			golden:    "",
-		},
-
-		{
-			wantError: true,
-			name:      "assert a pending approval fails",
-			cmd:       "pipeline approval assert --pipeline newPipe --sha256 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments,
-			golden:    "",
-		},
-
-		// list approvals
-		{
-			wantError: false,
-			name:      "list approvals",
-			cmd:       "approval ls newPipe" + defaultKosliArguments,
-			golden:    "",
-		},
-
-		// Get an approval
-		{
-			wantError: false,
-			name:      "get an approval",
-			cmd:       "approval get newPipe#2" + defaultKosliArguments,
-			golden:    "",
-		},
-
-		{
-			wantError: true,
-			name:      "get a non-existing approval fails",
-			cmd:       "approval get newPipe#20" + defaultKosliArguments,
+			cmd:       "request approval --flow newFlow --oldest-commit HEAD --fingerprint 4f09b9f4e4d354a42fd4599d0ef8e04daf278c967dea68741d127f21eaa1eeaf" + defaultKosliArguments + defaultRepoRoot,
 			golden:    "",
 		},
 	}

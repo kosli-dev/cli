@@ -1,54 +1,199 @@
 package main
 
 import (
-	"fmt"
+	"bytes"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
-	"github.com/go-git/go-git/v5"
-	"github.com/kosli-dev/cli/internal/utils"
+	"github.com/mattn/go-shellwords"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 )
 
-const ImageName = "library/alpine@sha256:e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5"
-
-func PullExampleImage(t *testing.T) {
-	err := utils.PullDockerImage(ImageName)
-	require.NoError(t, err, fmt.Sprintf("pulling example image %s should work without error", ImageName))
+// cmdTestCase describes a cmd test case.
+type cmdTestCase struct {
+	name             string
+	cmd              string
+	golden           string
+	goldenFile       string
+	wantError        bool
+	additionalConfig interface{}
 }
 
-// CreatePipeline creates a pipeline on the server
-func CreatePipeline(pipelineName string, t *testing.T) {
-	o := &pipelineDeclareOptions{
-		payload: PipelinePayload{
-			Name:        pipelineName,
-			Description: "test pipeline",
+// executeCommandStdinC executes a command as a user would and return the output
+func executeCommandC(cmd string) (*cobra.Command, string, error) {
+	args, err := shellwords.Parse(cmd)
+	if err != nil {
+		return nil, "", err
+	}
+
+	buf := new(bytes.Buffer)
+
+	root, err := newRootCmd(buf, args)
+	if err != nil {
+		return nil, "", err
+	}
+
+	root.SilenceErrors = false
+	root.SetOut(buf)
+	root.SetErr(buf)
+	root.SetArgs(args)
+
+	c, err := root.ExecuteC()
+	output := buf.String()
+
+	return c, output, err
+}
+
+// runTestCmd runs a table of cmd test cases
+func runTestCmd(t *testing.T, tests []cmdTestCase) {
+	t.Helper()
+	for _, key := range [...]string{"KOSLI_API_TOKEN", "KOSLI_ORG"} {
+		if os.Getenv(key) != "" {
+			t.Errorf("Environment variable %s should not be set when running tests ", key)
+		}
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.golden != "" && tt.goldenFile != "" {
+				t.Error("golden and goldenPath cannot be set together")
+			}
+			t.Logf("running cmd: %s", tt.cmd)
+			_, out, err := executeCommandC(tt.cmd)
+			if (err != nil) != tt.wantError {
+				t.Errorf("error expectation not matched\n\n WANT error is: %t\n\n but GOT: '%v'", tt.wantError, err)
+			}
+			if tt.golden != "" {
+				if !bytes.Equal([]byte(tt.golden), []byte(out)) {
+					t.Errorf("does not match golden\n\nWANT:\n'%s'\n\nGOT:\n'%s'\n", tt.golden, out)
+				}
+			} else if tt.goldenFile != "" {
+				if err := compareAgainstFile([]byte(out), goldenPath(tt.goldenFile)); err != nil {
+					t.Error(err)
+				}
+			}
+		})
+	}
+}
+
+func goldenPath(filename string) string {
+	if filepath.IsAbs(filename) {
+		return filename
+	}
+	return filepath.Join("testdata", filename)
+}
+
+func compareAgainstFile(actual []byte, filename string) error {
+	expected, err := os.ReadFile(filename)
+	if err != nil {
+		return errors.Wrapf(err, "unable to read golden file %s", filename)
+	}
+
+	actual = normalize(actual)
+	expected = normalize(expected)
+
+	if !bytes.Equal(expected, actual) {
+		return errors.Errorf("does not match golden file %s\n\nWANT:\n'%s'\n\nGOT:\n'%s'", filename, expected, actual)
+	}
+	return nil
+}
+
+func normalize(in []byte) []byte {
+	normalized := bytes.Replace(in, []byte("\r\n"), []byte("\n"), -1)
+	return []byte(strings.TrimSpace(string(normalized)))
+}
+
+// CreateFlow creates a flow on the server
+func CreateFlow(flowName string, t *testing.T) {
+	t.Helper()
+	o := &createFlowOptions{
+		payload: FlowPayload{
+			Name:        flowName,
+			Description: "test flow",
 			Visibility:  "private",
 		},
 	}
 
-	err := o.run()
-	require.NoError(t, err, "pipeline should be created without error")
+	err := o.run([]string{flowName})
+	require.NoError(t, err, "flow should be created without error")
 }
 
 // CreateArtifact creates an artifact on the server
-func CreateArtifact(pipelineName, artifactFingerprint, artifactName string, t *testing.T) {
-	repo, err := git.PlainOpen("../..")
-	require.NoError(t, err, "failed to open git repository at %s: %v", "../..", err)
-	repoHead, err := repo.Head()
-	require.NoError(t, err, "failed to resolve revision %s: %v", "HEAD", err)
-	headHash := repoHead.Hash().String()
-
-	o := &artifactCreationOptions{
-		srcRepoRoot:  "../..",
-		pipelineName: pipelineName,
+func CreateArtifact(flowName, artifactFingerprint, artifactName string, t *testing.T) {
+	t.Helper()
+	o := &reportArtifactOptions{
+		srcRepoRoot: "../..",
+		flowName:    flowName,
 		payload: ArtifactPayload{
-			Sha256:    artifactFingerprint,
-			GitCommit: headHash,
-			BuildUrl:  "www.yr.no",
-			CommitUrl: " www.nrk.no",
+			Fingerprint: artifactFingerprint,
+			GitCommit:   "0fc1ba9876f91b215679f3649b8668085d820ab5",
+			BuildUrl:    "www.yr.no",
+			CommitUrl:   "www.nrk.no",
 		},
 	}
 
-	err = o.run([]string{artifactName})
+	err := o.run([]string{artifactName})
 	require.NoError(t, err, "artifact should be created without error")
+}
+
+// CreateApproval creates an approval for an artifact in a flow
+func CreateApproval(flowName, fingerprint string, t *testing.T) {
+	t.Helper()
+	o := &reportApprovalOptions{
+		payload: ApprovalPayload{
+			ArtifactFingerprint: fingerprint,
+			Description:         "some description",
+		},
+		flowName:        flowName,
+		oldestSrcCommit: "HEAD~1",
+		newestSrcCommit: "HEAD",
+		srcRepoRoot:     "../..",
+	}
+
+	err := o.run([]string{"filename"}, false)
+	require.NoError(t, err, "approval should be created without error")
+}
+
+// ExpectDeployment reports a deployment expectation of a given artifact to the server
+func ExpectDeployment(flowName, fingerprint, envName string, t *testing.T) {
+	t.Helper()
+	o := &expectDeploymentOptions{
+		flowName: flowName,
+		payload: ExpectDeploymentPayload{
+			Fingerprint: fingerprint,
+			Environment: envName,
+			BuildUrl:    "https://example.com",
+		},
+	}
+	err := o.run([]string{})
+	require.NoError(t, err, "deployment should be expected without error")
+}
+
+// CreateEnv creates an env on the server
+func CreateEnv(org, envName, envType string, t *testing.T) {
+	t.Helper()
+	o := &createEnvOptions{
+		payload: CreateEnvironmentPayload{
+			Org:         org,
+			Name:        envName,
+			Type:        envType,
+			Description: "test env",
+		},
+	}
+
+	err := o.run([]string{envName})
+	require.NoError(t, err, "env should be created without error")
+}
+
+// ReportServerArtifactToEnv reports files/dirs in paths as server env artifacts
+func ReportServerArtifactToEnv(paths []string, envName string, t *testing.T) {
+	t.Helper()
+	o := &snapshotServerOptions{
+		paths: paths,
+	}
+	err := o.run([]string{envName})
+	require.NoError(t, err, "server env should be reported without error")
 }

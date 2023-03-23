@@ -3,6 +3,8 @@ name: helm chart
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
     paths:
       - 'charts/**'
 

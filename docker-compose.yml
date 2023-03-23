@@ -14,9 +14,15 @@ services:
 
   server:
     networks: [ cli_net ]
-    depends_on: [ mongo_rs_initiate ]
+    depends_on: [ mongo_rs_initiate, minio ]
     image: 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:latest
     env_file: [ "./mongo/mongo.env" ]
+    environment:
+      KOSLI_HOSTNAME: localhost
+      EVIDENCE_BUCKET_ENDPOINT_URL: http://minio:9000
+      EVIDENCE_BUCKET_NAME: cli-tests-evidence
+      AWS_ACCESS_KEY_ID: ROOTUSER
+      AWS_SECRET_ACCESS_KEY: ROOTUSER
     container_name: cli_kosli_server
     ports: ["8001:8001"]
 
@@ -27,21 +33,32 @@ services:
       context: ./mongo
     container_name: cli_mongo_rs_initiate
     init: true
-    depends_on: [ mongo1 ]
+    depends_on: [ mongo-cli-1 ]
     env_file: [ "./mongo/mongo.env" ]
     command: "/mongo/rs_initiate.sh"
 
-  mongo1:
+  mongo-cli-1:
     networks: [ cli_net ]
     hostname: mongo1
     image: kosli-mongo-rs
     build:
       context: ./mongo
-    container_name: mongo1
+    container_name: mongo-cli-1
     init: true
     stop_signal: SIGINT
-    ports: ["27017:27017"]
+    ports: ["27018:27017"]
     env_file: [ "./mongo/mongo.env" ]
     tmpfs: [ /tmp, /data/db ]
 
-
+  minio:
+    networks: [ cli_net ]
+    build: 
+      context: ./minio
+    image: kosli/minio
+    container_name: minio_cli
+    ports: ["9010:9000", "9099:9090"]
+    environment:
+      MINIO_ROOT_USER: ROOTUSER
+      MINIO_ROOT_PASSWORD: ROOTUSER
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["mc mb --with-lock /data/cli-tests-evidence && minio server /data --console-address ':9090'"]

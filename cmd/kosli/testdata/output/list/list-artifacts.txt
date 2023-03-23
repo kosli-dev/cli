@@ -1,0 +1,3 @@
+COMMIT   ARTIFACT                                                                       STATE      CREATED_AT
+0fc1ba9  Name: arti                                                                     COMPLIANT  Sat, 16 Jan 2016 00:00:00 UTC
+         Fingerprint: fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02

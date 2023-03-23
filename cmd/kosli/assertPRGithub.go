@@ -19,7 +19,7 @@ The command exits with non-zero exit code
 if no pull requests were found for the commit.`
 
 const assertPRGithubExample = `
-kosli assert github-pullrequest  \
+kosli assert pullrequest github \
 	--github-token yourGithubToken \
 	--github-org yourGithubOrg \
 	--commit yourArtifactGitCommit \
@@ -29,21 +29,23 @@ kosli assert github-pullrequest  \
 
 func newAssertPullRequestGithubCmd(out io.Writer) *cobra.Command {
 	o := new(assertPullRequestGithubOptions)
-	o.githubConfig = new(ghUtils.GithubConfig)
+	githubFlagsValues := new(ghUtils.GithubFlagsTempValueHolder)
 	cmd := &cobra.Command{
-		Use:     "github-pullrequest",
-		Aliases: []string{"gh-pr", "github-pr"},
+		Use:     "github",
+		Aliases: []string{"gh"},
 		Short:   assertPRGithubShortDesc,
 		Long:    assertPRGithubLongDesc,
 		Example: assertPRGithubExample,
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			o.githubConfig = ghUtils.NewGithubConfig(githubFlagsValues.Token, githubFlagsValues.BaseURL,
+				githubFlagsValues.Org, githubFlagsValues.Repository)
 			return o.run(args)
 		},
 	}
 
 	ci := WhichCI()
-	addGithubFlags(cmd, o.githubConfig, ci)
+	addGithubFlags(cmd, githubFlagsValues, ci)
 	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
 	addDryRunFlag(cmd)
 

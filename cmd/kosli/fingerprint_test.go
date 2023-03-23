@@ -3,6 +3,8 @@ package main
 import (
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/docker"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -11,10 +13,13 @@ import (
 // returns the current testing context
 type FingerprintTestSuite struct {
 	suite.Suite
+	imageName string
 }
 
 func (suite *FingerprintTestSuite) SetupSuite() {
-	PullExampleImage(suite.T())
+	suite.imageName = "library/alpine@sha256:e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5"
+	err := docker.PullDockerImage(suite.imageName)
+	require.NoError(suite.T(), err)
 }
 
 func (suite *FingerprintTestSuite) TestFingerprintCmd() {
@@ -26,8 +31,8 @@ func (suite *FingerprintTestSuite) TestFingerprintCmd() {
 		},
 		{
 			name:   "dir fingerprint",
-			cmd:    "fingerprint --artifact-type dir testdata",
-			golden: "0d2186aff2b57c7cce66855d411fc55d6969696b4f500985e3d5a25bb631e439\n",
+			cmd:    "fingerprint --artifact-type dir testdata/folder1",
+			golden: "773fd3300860454a2b065c5912c03008adb11e6a6dcf7c1c64c094ceab8f430a\n",
 		},
 		{
 			name:      "fails if type is directory but the argument is not a dir",

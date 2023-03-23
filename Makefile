@@ -69,30 +69,30 @@ test_integration_setup:
 	@docker-compose down || true
 	@docker pull 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:latest || true
 	@docker-compose up -d
-	./mongo/ip_wait.sh localhost:8001
+	./mongo/ip_wait.sh localhost:9010/minio/health/live
+	./mongo/ip_wait.sh localhost:8001/ready
 	@docker exec cli_kosli_server /demo/create_test_users.py
 	@go install gotest.tools/gotestsum@latest
 
 
-
-test_integration: deps vet ensure_network test_integration_setup ## Run tests except too slow ones
-	@~/go/bin/gotestsum -- --short -p=1 -coverprofile=cover.out ./...
+test_integration: deps vet ensure_network test_integration_setup ## Run tests except the too slow ones
+	@export KOSLI_TESTS=true && ~/go/bin/gotestsum -- --short -p=8 -coverprofile=cover.out ./...
 	@go tool cover -func=cover.out | grep total:
 	@go tool cover -html=cover.out
 
 
 test_integration_full: deps vet ensure_network test_integration_setup ## Run all tests
-	@export TESTS=true && ~/go/bin/gotestsum -- -p=1 -coverprofile=cover.out ./...
+	@export KOSLI_TESTS=true && ~/go/bin/gotestsum -- -p=8 -coverprofile=cover.out ./...
 	@go tool cover -func=cover.out
 
 
 test_integration_no_setup: 
-	@~/go/bin/gotestsum -- --short -p=1 -coverprofile=cover.out ./...
+	@~/go/bin/gotestsum -- --short -p=8 -coverprofile=cover.out ./...
 	@go tool cover -html=cover.out
 
 
 test_integration_single: test_integration_setup
-	@~/go/bin/gotestsum -- -p=1 ./... -run "${TARGET}"
+	@export KOSLI_TESTS=true && ~/go/bin/gotestsum -- -p=4 ./... -run "${TARGET}"
 
 
 test_docs: deps vet ensure_network test_integration_setup
@@ -114,7 +114,7 @@ licenses:
 	@echo $(DATA) | tr " " "\n" > licenses/licenses.csv
 
 generate-json-metadata:
-	echo '{"currentversion": "local"}' > docs.kosli.com/assets/metadata.json
+	echo '{"currentversion": "vlocal"}' > docs.kosli.com/assets/metadata.json
 
 hugo: docs generate-json-metadata
 	cd docs.kosli.com && hugo server --minify --buildDrafts --port=1515

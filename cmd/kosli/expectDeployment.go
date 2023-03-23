@@ -9,15 +9,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const expectDeploymentShortDesc = `Report a deployment of an artifact to an environment to Kosli.`
+
+const expectDeploymentLongDesc = expectDeploymentShortDesc + `
+` + fingerprintDesc
+
 type expectDeploymentOptions struct {
 	fingerprintOptions *fingerprintOptions
-	pipelineName       string
+	flowName           string
 	userDataFile       string
 	payload            ExpectDeploymentPayload
 }
 
 type ExpectDeploymentPayload struct {
-	Sha256      string      `json:"artifact_sha256"`
+	Fingerprint string      `json:"artifact_sha256"`
 	Description string      `json:"description"`
 	Environment string      `json:"environment"`
 	UserData    interface{} `json:"user_data"`
@@ -29,15 +34,16 @@ func newExpectDeploymentCmd(out io.Writer) *cobra.Command {
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
 		Use:   "deployment [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Short: deploymentReportShortDesc,
-		Long:  deploymentReportLongDesc,
+		Short: expectDeploymentShortDesc,
+		Long:  expectDeploymentLongDesc,
+		Args:  cobra.MaximumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Owner", "ApiToken"})
+			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
-			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.Sha256, false)
+			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.Fingerprint, false)
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
@@ -50,8 +56,8 @@ func newExpectDeploymentCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	cmd.Flags().StringVarP(&o.payload.Sha256, "sha256", "s", "", sha256Flag)
-	cmd.Flags().StringVarP(&o.pipelineName, "pipeline", "p", "", pipelineNameFlag)
+	cmd.Flags().StringVarP(&o.payload.Fingerprint, "fingerprint", "F", "", fingerprintFlag)
+	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.payload.Environment, "environment", "e", "", environmentNameFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", artifactDescriptionFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), buildUrlFlag)
@@ -59,7 +65,7 @@ func newExpectDeploymentCmd(out io.Writer) *cobra.Command {
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"pipeline", "build-url", "environment"})
+	err := RequireFlags(cmd, []string{"flow", "build-url", "environment"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
@@ -69,8 +75,8 @@ func newExpectDeploymentCmd(out io.Writer) *cobra.Command {
 
 func (o *expectDeploymentOptions) run(args []string) error {
 	var err error
-	if o.payload.Sha256 == "" {
-		o.payload.Sha256, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
+	if o.payload.Fingerprint == "" {
+		o.payload.Fingerprint, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
 			return err
 		}
@@ -81,7 +87,7 @@ func (o *expectDeploymentOptions) run(args []string) error {
 		return err
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/", global.Host, global.Owner, o.pipelineName)
+	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/", global.Host, global.Org, o.flowName)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPost,
@@ -92,7 +98,7 @@ func (o *expectDeploymentOptions) run(args []string) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("deployment of artifact %s was reported to: %s", o.payload.Sha256, o.payload.Environment)
+		logger.Info("deployment of artifact %s was reported to: %s", o.payload.Fingerprint, o.payload.Environment)
 	}
 	return err
 }

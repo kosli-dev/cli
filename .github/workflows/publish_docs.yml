@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
-
+      
       # Deploy to local repo
       - name: Deploy
         uses: s0/git-publish-subdir-action@develop
@@ -24,6 +24,10 @@ jobs:
           BRANCH: docs-main
           FOLDER: docs.kosli.com
           TARGET_DIR: docs.kosli.com
+          # below line should be uncommented on main branch so the client reference is not replaced when
+          # only static content changes
+          # together with ´make docs´ disabled
+          # 
+          # and when build runs on release the ´make docs´ should be enabled AND below line commented 
           CLEAR_GLOBS_FILE: ".clear-files"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MESSAGE: "From: {msg}"

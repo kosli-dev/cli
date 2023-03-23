@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+	"strings"
 
 	gh "github.com/google/go-github/v42/github"
 	"github.com/kosli-dev/cli/internal/types"
@@ -14,6 +15,32 @@ type GithubConfig struct {
 	BaseURL    string
 	Org        string
 	Repository string
+}
+
+type GithubFlagsTempValueHolder struct {
+	Token      string
+	BaseURL    string
+	Org        string
+	Repository string
+}
+
+// NewGithubConfig returns a new GithubConfig
+func NewGithubConfig(token, baseURL, org, repository string) *GithubConfig {
+	return &GithubConfig{
+		Token:   token,
+		BaseURL: baseURL,
+		Org:     org,
+		// repository name must be extracted if a user is using default value from ${GITHUB_REPOSITORY}
+		// because the value is in the format of "org/repository"
+		Repository: extractRepoName(repository),
+	}
+}
+
+// extractRepoName returns repository name from 'org/repository_name' string
+func extractRepoName(fullRepositoryName string) string {
+	repoNameParts := strings.Split(fullRepositoryName, "/")
+	repository := repoNameParts[len(repoNameParts)-1]
+	return repository
 }
 
 // NewGithubClientFromToken returns Github client with a token and context

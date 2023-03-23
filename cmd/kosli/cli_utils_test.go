@@ -138,28 +138,28 @@ func (suite *CliUtilsTestSuite) TestDefaultValue() {
 			want: "",
 		},
 		{
-			name: "Lookup a default when TESTS env var is set returns empty string.",
+			name: "Lookup a default when KOSLI_TESTS env var is set returns empty string.",
 			args: args{
 				ci:      github,
 				flag:    "git-commit",
-				envVars: map[string]string{"TESTS": "True", "GITHUB_SHA": "some-sha"},
+				envVars: map[string]string{"KOSLI_TESTS": "True", "GITHUB_SHA": "some-sha"},
 			},
 			want: "",
 		},
 	} {
 		suite.Run(t.name, func() {
-			value, testMode := os.LookupEnv("TESTS")
+			value, testMode := os.LookupEnv("KOSLI_TESTS")
 			if t.args.unsetTestsEnvVar && testMode {
-				err := os.Unsetenv("TESTS")
-				require.NoError(suite.T(), err, "should have unset TESTS env var without error")
+				err := os.Unsetenv("KOSLI_TESTS")
+				require.NoError(suite.T(), err, "should have unset KOSLI_TESTS env var without error")
 			}
 			suite.setEnvVars(t.args.envVars)
 			actual := DefaultValue(t.args.ci, t.args.flag)
 			// clean up any env vars we set from the test case
 			suite.unsetEnvVars(t.args.envVars)
-			// recover TESTS env variable to its original state before the test
+			// recover KOSLI_TESTS env variable to its original state before the test
 			if testMode {
-				os.Setenv("TESTS", value)
+				os.Setenv("KOSLI_TESTS", value)
 			}
 			assert.Equal(suite.T(), t.want, actual, fmt.Sprintf("TestDefaultValue: %s , got: %v -- want: %v", t.name, actual, t.want))
 		})
@@ -181,9 +181,9 @@ func (suite *CliUtilsTestSuite) TestRequireGlobalFlags() {
 			args: args{
 				global: &GlobalOpts{
 					ApiToken: "secret",
-					Owner:    "test",
+					Org:      "test",
 				},
-				fields: []string{"ApiToken", "Owner"},
+				fields: []string{"ApiToken", "Org"},
 			},
 			expectError: false,
 		},
@@ -191,9 +191,9 @@ func (suite *CliUtilsTestSuite) TestRequireGlobalFlags() {
 			name: "Required fields are not set.",
 			args: args{
 				global: &GlobalOpts{
-					Owner: "test",
+					Org: "test",
 				},
-				fields: []string{"ApiToken", "Owner"},
+				fields: []string{"ApiToken", "Org"},
 			},
 			expectError: true,
 		},
@@ -623,12 +623,6 @@ func (suite *CliUtilsTestSuite) unsetEnvVars(envVars map[string]string) {
 	}
 }
 
-// In order for 'go test' to run this suite, we need to create
-// a normal test function and pass our suite to suite.Run
-func TestCliUtilsTestSuite(t *testing.T) {
-	suite.Run(t, new(CliUtilsTestSuite))
-}
-
 func (suite *CliUtilsTestSuite) TestMuXRequiredFlags() {
 	tests := []struct {
 		name       string
@@ -723,4 +717,11 @@ func (suite *CliUtilsTestSuite) TestExtractRepoName() {
 			require.Equalf(suite.T(), t.want, repo, "expected %s but got %s", t.want, repo)
 		})
 	}
+
+}
+
+// In order for 'go test' to run this suite, we need to create
+// a normal test function and pass our suite to suite.Run
+func TestCliUtilsTestSuite(t *testing.T) {
+	suite.Run(t, new(CliUtilsTestSuite))
 }
