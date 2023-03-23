@@ -231,10 +231,10 @@ func ValidateDigest(sha256ToCheck string) error {
 	validSha256regex := "^([a-f0-9]{64})$"
 	r, err := regexp.Compile(validSha256regex)
 	if err != nil {
-		return fmt.Errorf("failed to validate the provided SHA256 digest")
+		return fmt.Errorf("failed to validate the provided SHA256 fingerprint")
 	}
 	if !r.MatchString(sha256ToCheck) {
-		return fmt.Errorf("%s is not a valid SHA256 digest. It should match the pattern %v", sha256ToCheck, validSha256regex)
+		return fmt.Errorf("%s is not a valid SHA256 fingerprint. It should match the pattern %v", sha256ToCheck, validSha256regex)
 	}
 	return nil
 }
