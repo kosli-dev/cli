@@ -26,7 +26,7 @@ on:
 
 env:
   IMAGE: ghcr.io/kosli-dev/cli
-  KOSLI_CLI_VERSION: "0.1.31"
+  KOSLI_CLI_VERSION: "2.0.0-rc1"
   # KOSLI_DRY_RUN: "True"
   # Ordinarily we declare KOSLI_ORG and KOSLI_FLOW here but
   # this interferes with the CLI integration tests
@@ -84,7 +84,7 @@ jobs:
 
 
     - name: setup-kosli-cli
-      uses: kosli-dev/setup-cli-action@v1
+      uses: kosli-dev/setup-cli-action@v2
       with:
         version:
           ${{ env.KOSLI_CLI_VERSION }}
@@ -97,10 +97,9 @@ jobs:
     - name: Create Kosli flow
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-        KOSLI_OWNER: compliancedb
-        KOSLI_PIPELINE: cli
+        KOSLI_ORG: compliancedb
       run: 
-        kosli pipeline declare 
+        kosli create flow cli
           --description "Kosli CLI" 
           --template "artifact,snyk-code-scan,snyk-docker-scan"
 
@@ -108,12 +107,12 @@ jobs:
     - name: Report Docker image to Kosli
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-        KOSLI_OWNER: compliancedb
-        KOSLI_PIPELINE: cli
+        KOSLI_ORG: compliancedb
       run: 
-        kosli pipeline artifact report creation
+        kosli report artifact
            ${{ env.IMAGE }}:${{ inputs.tag }}
-           --sha256=${{ env.FINGERPRINT }}
+           --fingerprint=${{ env.FINGERPRINT }}
+           --flow cli
 
 
     - name: Run Snyk to check source code for vulnerabilities
@@ -130,14 +129,14 @@ jobs:
     - name: Report Snyk CODE scan results evidence to Kosli
       env:
         KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
-        KOSLI_OWNER: compliancedb
-        KOSLI_PIPELINE: cli
+        KOSLI_ORG: compliancedb
       run: 
-        kosli pipeline artifact report evidence snyk 
+        kosli report evidence artifact snyk 
           ${{ env.IMAGE }}:${{ inputs.tag }}
             --fingerprint ${{ env.FINGERPRINT }}
             --name snyk-code-scan
             --scan-results snyk-code.json
+            --flow cli
 
     
     - name: Run Snyk to scan the Docker image for vulnerabilities
@@ -156,12 +155,12 @@ jobs:
     - name: Report Snyk Docker scan results evidence to Kosli
       env:
         KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
-        KOSLI_OWNER: compliancedb
-        KOSLI_PIPELINE: cli
+        KOSLI_ORG: compliancedb
       run: 
-        kosli pipeline artifact report evidence snyk 
+        kosli report evidence artifact snyk 
           ${{ env.IMAGE }}:${{ inputs.tag }}
             --fingerprint ${{ env.FINGERPRINT }}
             --name snyk-docker-scan
             --scan-results snyk-docker.json
+            --flow cli
 
