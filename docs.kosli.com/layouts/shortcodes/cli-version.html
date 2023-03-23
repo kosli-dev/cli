@@ -1,0 +1,1 @@
+{{ $json := getJSON "assets/metadata.json" }}{{ $currentVersion := $json.currentversion}}{{ substr $currentVersion 1 }}
