@@ -42,7 +42,7 @@ jobs:
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v3
       with:
-        version: v1.50
+        version: latest
         args: --timeout=5m -v
 
     - name: Configure AWS credentials
