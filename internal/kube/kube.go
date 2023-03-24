@@ -19,7 +19,6 @@ import (
 type K8sEnvRequest struct {
 	Artifacts []*PodData `json:"artifacts"`
 	Type      string     `json:"type"`
-	Id        string     `json:"id"`
 }
 
 // PodData represents the harvested pod data

@@ -55,7 +55,6 @@ type snapshotK8SOptions struct {
 	kubeconfig        string
 	namespaces        []string
 	excludeNamespaces []string
-	id                string
 }
 
 func newSnapshotK8SCmd(out io.Writer) *cobra.Command {
@@ -88,9 +87,6 @@ func newSnapshotK8SCmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotK8SOptions) run(args []string) error {
 	envName := args[0]
-	if o.id == "" {
-		o.id = envName
-	}
 	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Org, envName)
 	clientset, err := kube.NewK8sClientSet(o.kubeconfig)
 	if err != nil {
@@ -104,7 +100,6 @@ func (o *snapshotK8SOptions) run(args []string) error {
 	payload := &kube.K8sEnvRequest{
 		Artifacts: podsData,
 		Type:      "K8S",
-		Id:        o.id,
 	}
 
 	reqParams := &requests.RequestParams{

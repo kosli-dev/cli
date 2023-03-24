@@ -24,7 +24,6 @@ kosli snapshot server yourEnvironmentName \
 
 type snapshotServerOptions struct {
 	paths []string
-	id    string
 }
 
 func newSnapshotServerCmd(out io.Writer) *cobra.Command {
@@ -66,9 +65,6 @@ func newSnapshotServerCmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotServerOptions) run(args []string) error {
 	envName := args[0]
-	if o.id == "" {
-		o.id = envName
-	}
 
 	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Org, envName)
 
@@ -79,7 +75,6 @@ func (o *snapshotServerOptions) run(args []string) error {
 	payload := &server.ServerEnvRequest{
 		Artifacts: artifacts,
 		Type:      "server",
-		Id:        o.id,
 	}
 
 	reqParams := &requests.RequestParams{

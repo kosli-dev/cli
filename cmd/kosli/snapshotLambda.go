@@ -89,7 +89,6 @@ func (o *snapshotLambdaOptions) run(args []string) error {
 	payload := &aws.LambdaEnvRequest{
 		Artifacts: lambdaData,
 		Type:      "lambda",
-		Id:        envName,
 	}
 
 	reqParams := &requests.RequestParams{

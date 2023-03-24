@@ -68,7 +68,6 @@ func (o *snapshotDockerOptions) run(args []string) error {
 	payload := &server.ServerEnvRequest{
 		Artifacts: artifacts,
 		Type:      "docker",
-		Id:        envName,
 	}
 
 	reqParams := &requests.RequestParams{

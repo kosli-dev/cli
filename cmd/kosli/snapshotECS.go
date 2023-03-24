@@ -50,7 +50,6 @@ kosli snapshot ecs yourEnvironmentName \
 type snapshotECSOptions struct {
 	cluster        string
 	serviceName    string
-	id             string
 	awsStaticCreds *aws.AWSStaticCreds
 }
 
@@ -90,15 +89,6 @@ func newSnapshotECSCmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotECSOptions) run(args []string) error {
 	envName := args[0]
-	if o.id == "" {
-		if o.serviceName != "" {
-			o.id = o.serviceName
-		} else if o.cluster != "" {
-			o.id = o.cluster
-		} else {
-			o.id = envName
-		}
-	}
 	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Org, envName)
 
 	tasksData, err := o.awsStaticCreds.GetEcsTasksData(o.cluster, o.serviceName)
@@ -109,7 +99,6 @@ func (o *snapshotECSOptions) run(args []string) error {
 	payload := &aws.EcsEnvRequest{
 		Artifacts: tasksData,
 		Type:      "ECS",
-		Id:        o.id,
 	}
 
 	reqParams := &requests.RequestParams{

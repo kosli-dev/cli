@@ -13,7 +13,6 @@ import (
 type ServerEnvRequest struct {
 	Artifacts []*ServerData `json:"artifacts"`
 	Type      string        `json:"type"`
-	Id        string        `json:"id"`
 }
 
 // ServerData represents the harvested server artifacts data

@@ -90,7 +90,6 @@ func (o *snapshotS3Options) run(args []string) error {
 	payload := &aws.S3EnvRequest{
 		Artifacts: s3Data,
 		Type:      "S3",
-		Id:        envName,
 	}
 
 	reqParams := &requests.RequestParams{
