@@ -127,7 +127,7 @@ func printSnapshotsListAsTable(raw string, out io.Writer, page int) error {
 		return nil
 	}
 
-	header := []string{"SNAPSHOT", "FROM", "TO", "DURATION"}
+	header := []string{"SNAPSHOT", "FROM", "TO", "DURATION", "COMPLIANT"}
 	rows := []string{}
 	for _, snapshot := range snapshots {
 		tsFromStr, err := formattedTimestamp(snapshot["from"], true)
@@ -146,8 +146,9 @@ func printSnapshotsListAsTable(raw string, out io.Writer, page int) error {
 		timeago.English.PastSuffix = ""
 		durationNs := time.Duration(int64(snapshot["duration"].(float64)) * 1e9)
 		duration := timeago.English.FormatRelativeDuration(durationNs)
+		compliance := snapshot["compliant"].(bool)
 		index := int64(snapshot["index"].(float64))
-		row := fmt.Sprintf("%d\t%s\t%s\t%s", index, tsFromStr, tsToStr, duration)
+		row := fmt.Sprintf("%d\t%s\t%s\t%s\t%t", index, tsFromStr, tsToStr, duration, compliance)
 		rows = append(rows, row)
 	}
 	tabFormattedPrint(out, header, rows)
