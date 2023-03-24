@@ -13,24 +13,24 @@ The request should be reviewed in Kosli UI.` + fingerprintDesc
 const requestApprovalExample = `
 # Request that a file type artifact needs approval.
 # The approval is for the last 5 git commits
-kosli pipeline approval request FILE.tgz \
+kosli request approval FILE.tgz \
 	--api-token yourAPIToken \
 	--artifact-type file \
 	--description "An optional description for the requested approval" \
 	--newest-commit $(git rev-parse HEAD) \
 	--oldest-commit $(git rev-parse HEAD~5) \
 	--org yourOrgName \
-	--flow yourPipelineName 
+	--flow yourFlowName 
 
 # Request and approval for an artifact with a provided fingerprint (sha256).
 # The approval is for the last 5 git commits
-kosli pipeline approval request \
+kosli request approval \
 	--api-token yourAPIToken \
 	--description "An optional description for the requested approval" \
 	--newest-commit $(git rev-parse HEAD) \
 	--oldest-commit $(git rev-parse HEAD~5)	\
 	--org yourOrgName \
-	--flow yourPipelineName \
+	--flow yourFlowName \
 	--fingerprint yourArtifactFingerprint 
 `
 
@@ -60,7 +60,7 @@ func newRequestApprovalCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "F", "", fingerprintFlag)
-	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", pipelineNameFlag)
+	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", approvalDescriptionFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", approvalUserDataFlag)
 	cmd.Flags().StringVar(&o.oldestSrcCommit, "oldest-commit", "", oldestCommitFlag)
