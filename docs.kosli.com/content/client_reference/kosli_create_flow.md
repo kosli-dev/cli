@@ -16,11 +16,11 @@ kosli create flow [FLOW-NAME] [flags]
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|        --description string  |  [optional] The Kosli pipeline description.  |
+|        --description string  |  [optional] The Kosli flow description.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -h, --help  |  help for flow  |
 |    -t, --template strings  |  [defaulted] The comma-separated list of required compliance controls names. (default [artifact])  |
-|        --visibility string  |  [defaulted] The visibility of the Kosli pipeline. Valid visibilities are [public, private]. (default "private")  |
+|        --visibility string  |  [defaulted] The visibility of the Kosli flow. Valid visibilities are [public, private]. (default "private")  |
 
 
 ## Options inherited from parent commands

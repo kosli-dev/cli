@@ -16,11 +16,11 @@ kosli request approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--sha256' or '--fingerprint'.  |
+|    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
 |    -d, --description string  |  [optional] The approval description.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'.  |
-|    -f, --flow string  |  The Kosli pipeline name.  |
+|    -f, --flow string  |  The Kosli flow name.  |
 |    -h, --help  |  help for approval  |
 |        --newest-commit string  |  [defaulted] The source commit sha for the newest change in the deployment. (default "HEAD")  |
 |        --oldest-commit string  |  The source commit sha for the oldest change in the deployment.  |
@@ -48,24 +48,24 @@ kosli request approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 
 # Request that a file type artifact needs approval.
 # The approval is for the last 5 git commits
-kosli pipeline approval request FILE.tgz \
+kosli request approval FILE.tgz \
 	--api-token yourAPIToken \
 	--artifact-type file \
 	--description "An optional description for the requested approval" \
 	--newest-commit $(git rev-parse HEAD) \
 	--oldest-commit $(git rev-parse HEAD~5) \
 	--org yourOrgName \
-	--flow yourPipelineName 
+	--flow yourFlowName 
 
 # Request and approval for an artifact with a provided fingerprint (sha256).
 # The approval is for the last 5 git commits
-kosli pipeline approval request \
+kosli request approval \
 	--api-token yourAPIToken \
 	--description "An optional description for the requested approval" \
 	--newest-commit $(git rev-parse HEAD) \
 	--oldest-commit $(git rev-parse HEAD~5)	\
 	--org yourOrgName \
-	--flow yourPipelineName \
+	--flow yourFlowName \
 	--fingerprint yourArtifactFingerprint 
 
 ```
