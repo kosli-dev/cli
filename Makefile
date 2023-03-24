@@ -113,6 +113,9 @@ licenses:
 	$(eval DATA := $(shell go-licenses csv ./...))
 	@echo $(DATA) | tr " " "\n" > licenses/licenses.csv
 
+upgrade-deps:
+	@go get -u ./...
+
 generate-json-metadata:
 	echo '{"currentversion": "vlocal"}' > docs.kosli.com/assets/metadata.json
 
