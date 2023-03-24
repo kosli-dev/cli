@@ -155,6 +155,103 @@ func (suite *UtilsTestSuite) TestLoadFileContent() {
 	}
 }
 
+func (suite *UtilsTestSuite) TestCreateFile() {
+	tmpDir, err := os.MkdirTemp("", "")
+	require.NoError(suite.T(), err)
+	defer os.RemoveAll(tmpDir)
+
+	path := filepath.Join(tmpDir, "test.txt")
+	f, err := CreateFile(path)
+	require.NoError(suite.T(), err)
+	require.NotNil(suite.T(), f)
+	require.FileExists(suite.T(), path)
+}
+
+func (suite *UtilsTestSuite) TestIsFileIsDir() {
+	tmpDir, err := os.MkdirTemp("", "")
+	require.NoError(suite.T(), err)
+	defer os.RemoveAll(tmpDir)
+
+	ok, err := IsDir(tmpDir)
+	require.NoError(suite.T(), err)
+	require.True(suite.T(), ok)
+
+	path := filepath.Join(tmpDir, "test.txt")
+	_, err = CreateFile(path)
+	require.NoError(suite.T(), err)
+	require.FileExists(suite.T(), path)
+
+	ok, err = IsFile(path)
+	require.NoError(suite.T(), err)
+	require.True(suite.T(), ok)
+
+	ok, err = IsDir(path)
+	require.NoError(suite.T(), err)
+	require.False(suite.T(), ok)
+
+	nonExistingPath := filepath.Join(tmpDir, "non-existing.txt")
+	ok, err = IsFile(nonExistingPath)
+	require.Error(suite.T(), err)
+	require.False(suite.T(), ok)
+
+	nonExistingDir := "non-existing"
+	ok, err = IsDir(nonExistingDir)
+	require.Error(suite.T(), err)
+	require.False(suite.T(), ok)
+}
+
+func (suite *UtilsTestSuite) TestTar() {
+	for _, t := range []struct {
+		name            string
+		srcType         string
+		shouldCreateSrc bool
+		tarFileName     string
+		wantError       bool
+	}{
+		{
+			name:            "can tar a file",
+			srcType:         "file",
+			shouldCreateSrc: true,
+			tarFileName:     "file.tgz",
+		},
+		{
+			name:            "can tar a dir",
+			srcType:         "dir",
+			shouldCreateSrc: true,
+			tarFileName:     "dir.tgz",
+		},
+		{
+			name:            "fails when src does not exist",
+			shouldCreateSrc: false,
+			wantError:       true,
+		},
+	} {
+		suite.Run(t.name, func() {
+			path := "non-existing"
+			if t.shouldCreateSrc {
+				tmpDir, err := os.MkdirTemp("", "")
+				require.NoError(suite.T(), err)
+				defer os.RemoveAll(tmpDir)
+				path = tmpDir
+				if t.srcType == "file" {
+					path = filepath.Join(tmpDir, "some-file.txt")
+					f, err := CreateFile(path)
+					require.NoError(suite.T(), err)
+					defer f.Close()
+					f.WriteString("Hello World!")
+				}
+			}
+
+			tarPath, err := Tar(path, t.tarFileName)
+			require.True(suite.T(), t.wantError == (err != nil))
+			if !t.wantError {
+				defer os.RemoveAll(tarPath)
+				require.Equal(suite.T(), t.tarFileName, filepath.Base(tarPath))
+			}
+		})
+	}
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestUtilsTestSuite(t *testing.T) {
