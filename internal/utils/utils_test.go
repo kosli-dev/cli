@@ -238,7 +238,8 @@ func (suite *UtilsTestSuite) TestTar() {
 					f, err := CreateFile(path)
 					require.NoError(suite.T(), err)
 					defer f.Close()
-					f.WriteString("Hello World!")
+					_, err = f.WriteString("Hello World!")
+					require.NoError(suite.T(), err)
 				}
 			}
 
