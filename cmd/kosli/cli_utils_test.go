@@ -695,6 +695,62 @@ func (suite *CliUtilsTestSuite) TestMuXRequiredFlags() {
 	}
 }
 
+func (suite *CliUtilsTestSuite) TestFormattedTimestamp() {
+	tests := []struct {
+		name      string
+		timestamp interface{}
+		short     bool
+		expected  string
+		wantErr   bool
+	}{
+		{
+			name:      "can format int64 timestamp",
+			timestamp: int64(1679652243),
+			short:     true,
+			expected:  "Fri, 24 Mar 2023 10:04:03 UTC",
+		},
+		{
+			name:      "can format float64 timestamp",
+			timestamp: float64(1679652243),
+			short:     true,
+			expected:  "Fri, 24 Mar 2023 10:04:03 UTC",
+		},
+		{
+			name:      "can format string timestamp",
+			timestamp: "1679652243",
+			short:     true,
+			expected:  "Fri, 24 Mar 2023 10:04:03 UTC",
+		},
+		{
+			name:      "invalid string format for timestamp fails",
+			timestamp: "not-a-timestamp",
+			short:     true,
+			wantErr:   true,
+		},
+		{
+			name:      "nil value for timestamp returns N/A",
+			timestamp: nil,
+			short:     true,
+			expected:  "N/A",
+		},
+		{
+			name:      "unsupported format returns an error",
+			timestamp: true,
+			short:     true,
+			wantErr:   true,
+		},
+	}
+	for _, t := range tests {
+		suite.Run(t.name, func() {
+			os.Setenv("KOSLI_TESTS_FORMATTED_TIMESTAMP", "True")
+			defer os.Unsetenv("KOSLI_TESTS_FORMATTED_TIMESTAMP")
+			ts, err := formattedTimestamp(t.timestamp, t.short)
+			require.True(suite.T(), t.wantErr == (err != nil))
+			require.Equal(suite.T(), t.expected, ts)
+		})
+	}
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestCliUtilsTestSuite(t *testing.T) {

@@ -481,13 +481,16 @@ func formattedTimestamp(timestamp interface{}, short bool) (string, error) {
 
 	// use a fixed timestamp when running tests
 	// also set timezone to UTC to make tests pass everywhere
-	if _, ok := os.LookupEnv("KOSLI_TESTS"); ok {
+	_, inTests := os.LookupEnv("KOSLI_TESTS")
+	_, testingThisFunc := os.LookupEnv("KOSLI_TESTS_FORMATTED_TIMESTAMP")
+	if inTests && testingThisFunc {
+		unixTime = time.Unix(intTimestamp, 0).UTC()
+	} else if inTests {
 		unixTime = time.Unix(int64(1452902400), 0).UTC()
-		shortFormat = unixTime.Format(time.RFC1123)
 	} else {
 		unixTime = time.Unix(intTimestamp, 0)
-		shortFormat = unixTime.Format(time.RFC1123)
 	}
+	shortFormat = unixTime.Format(time.RFC1123)
 
 	if short {
 		return shortFormat, nil
@@ -497,14 +500,6 @@ func formattedTimestamp(timestamp interface{}, short bool) (string, error) {
 		return fmt.Sprintf("%s \u2022 %s", shortFormat, timeAgoFormat), nil
 	}
 }
-
-// // extractRepoName returns repository name from 'owner/repository_name' string
-// func extractRepoName(fullRepositoryName string) string {
-// 	repoNameParts := strings.Split(fullRepositoryName, "/")
-// 	repository := repoNameParts[len(repoNameParts)-1]
-// 	return repository
-
-// }
 
 // getPathOfEvidenceFileToUpload returns the path of an evidence file to upload based
 // on the provided evidencePaths.
