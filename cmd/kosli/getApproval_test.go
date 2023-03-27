@@ -60,13 +60,13 @@ func (suite *GetApprovalCommandTestSuite) TestGetApprovalCmd() {
 			wantError: true,
 			name:      "get approval on a non-existing flow fails",
 			cmd:       "get approval get-approval-123#20" + suite.defaultKosliArguments,
-			golden:    "Error: Flow called 'get-approval-123' does not exist for Organization 'docs-cmd-test-user'\n",
+			golden:    "Error: Flow called 'get-approval-123' does not exist for organization 'docs-cmd-test-user'\n",
 		},
 		{
 			wantError: true,
 			name:      "get non-existing approval fails",
 			cmd:       fmt.Sprintf("get approval %s#23 %s", suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: Approval number '23' does not exist in pipeline 'get-approval' belonging to Organization 'docs-cmd-test-user'\n",
+			golden:    "Error: Approval number '23' does not exist in flow 'get-approval' belonging to organization 'docs-cmd-test-user'\n",
 		},
 		{
 			wantError: true,

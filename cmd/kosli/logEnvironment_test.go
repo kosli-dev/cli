@@ -38,7 +38,7 @@ func (suite *LogEnvironmentCommandTestSuite) TestLogEnvironmentCmd() {
 			wantError: true,
 			name:      "listing events fails when env does not exist",
 			cmd:       fmt.Sprintf(`log env non-existing %s`, suite.defaultKosliArguments),
-			golden:    "Error: Environment named 'non-existing' does not exist for Organization 'docs-cmd-test-user'. \n",
+			golden:    "Error: Environment named 'non-existing' does not exist for organization 'docs-cmd-test-user'. \n",
 		},
 		// TODO: the correct error is overwritten by the hack flag value check in root.go
 		{

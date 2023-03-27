@@ -45,7 +45,7 @@ func (suite *RenameEnvironmentCommandTestSuite) TestListSnapshotsCmd() {
 			wantError: true,
 			name:      "renaming non-existing env fails",
 			cmd:       fmt.Sprintf(`rename environment non-existing new-name-345 %s`, suite.defaultKosliArguments),
-			golden:    "Error: Environment named 'non-existing' does not exist for Organization 'docs-cmd-test-user'. \n",
+			golden:    "Error: Environment named 'non-existing' does not exist for organization 'docs-cmd-test-user'. \n",
 		},
 		{
 			wantError: true,

@@ -47,7 +47,7 @@ func (suite *GetEnvironmentCommandTestSuite) TestGetEnvironmentCmd() {
 			wantError: true,
 			name:      "trying to get non-existing env fails",
 			cmd:       "get environment non-existing" + suite.defaultKosliArguments,
-			golden:    "Error: Environment named 'non-existing' does not exist for Organization 'docs-cmd-test-user'. \n",
+			golden:    "Error: Environment named 'non-existing' does not exist for organization 'docs-cmd-test-user'. \n",
 		},
 		{
 			wantError: true,

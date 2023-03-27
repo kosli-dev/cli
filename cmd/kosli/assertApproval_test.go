@@ -57,7 +57,7 @@ func (suite *AssertApprovalCommandTestSuite) TestAssertApprovalCmd() {
 			wantError: true,
 			name:      "asserting approval for a non existing artifact fails",
 			cmd:       fmt.Sprintf(`assert approval --fingerprint 8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c  --flow %s %s`, suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: Artifact with fingerprint '8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c' does not exist in pipeline 'assert-approval' belonging to 'docs-cmd-test-user'\n",
+			golden:    "Error: Artifact with fingerprint '8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c' does not exist in flow 'assert-approval' belonging to organization 'docs-cmd-test-user'\n",
 		},
 		{
 			wantError: true,

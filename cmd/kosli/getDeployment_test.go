@@ -69,13 +69,13 @@ func (suite *GetDeploymentCommandTestSuite) TestGetDeploymentCmd() {
 			wantError: true,
 			name:      "get deployment fails when flow does not exist",
 			cmd:       `get deployment foo#1` + suite.defaultKosliArguments,
-			golden:    "Error: Flow called 'foo' does not exist for Organization 'docs-cmd-test-user'. \n",
+			golden:    "Error: Flow called 'foo' does not exist for organization 'docs-cmd-test-user'. \n",
 		},
 		{
 			wantError: true,
 			name:      "get deployment fails when deployment does not exist",
 			cmd:       fmt.Sprintf(`get deployment %s#20 %s`, suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: Deployment number '20' does not exist in pipeline 'get-deployment' belonging to Organization 'docs-cmd-test-user'\n",
+			golden:    "Error: Deployment number '20' does not exist in flow 'get-deployment' belonging to organization 'docs-cmd-test-user'\n",
 		},
 		{
 			name:       "get deployment works with the # expression",

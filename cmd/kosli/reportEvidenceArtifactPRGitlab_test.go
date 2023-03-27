@@ -113,7 +113,7 @@ func (suite *ArtifactEvidencePRGitlabCommandTestSuite) TestArtifactEvidencePRGit
 			name:      "report Gitlab PR evidence fails when the artifact does not exist in the server",
 			cmd: `report evidence artifact pullrequest gitlab testdata/file1 --artifact-type file --name gl-pr --flow ` + suite.flowName + `
 			          --build-url example.com --gitlab-org ewelinawilkosz --repository merkely-gitlab-demo --commit e6510880aecdc05d79104d937e1adb572bd91911` + suite.defaultKosliArguments,
-			golden: "Error: Artifact with fingerprint '7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in pipeline 'gitlab-pr' belonging to 'docs-cmd-test-user'. \n",
+			golden: "Error: Artifact with fingerprint '7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'gitlab-pr' belonging to organization 'docs-cmd-test-user'. \n",
 		},
 		{
 			wantError: true,

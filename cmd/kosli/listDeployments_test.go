@@ -59,7 +59,7 @@ func (suite *ListDeploymentsCommandTestSuite) TestListDeploymentsCmd() {
 			wantError: true,
 			name:      "non-existing flow causes an error",
 			cmd:       fmt.Sprintf(`list deployments --flow non-existing %s`, suite.defaultKosliArguments),
-			golden:    "Error: Flow called 'non-existing' does not exist for Organization 'docs-cmd-test-user'\n",
+			golden:    "Error: Flow called 'non-existing' does not exist for organization 'docs-cmd-test-user'\n",
 		},
 		// TODO: the correct error is overwritten by the hack flag value check in root.go
 		{
