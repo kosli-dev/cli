@@ -148,8 +148,8 @@ func CreateApproval(flowName, fingerprint string, t *testing.T) {
 			Description:         "some description",
 		},
 		flowName:        flowName,
-		oldestSrcCommit: "HEAD~1",
-		newestSrcCommit: "HEAD",
+		oldestSrcCommit: "75690c740e7b222a3948f4f7618262a5254044e2",
+		newestSrcCommit: "cfbdba789edd14e5970405896c637dbf073ef831",
 		srcRepoRoot:     "../..",
 	}
 
