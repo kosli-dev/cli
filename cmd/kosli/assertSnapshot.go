@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -58,9 +57,11 @@ func newAssertSnapshotCmd(out io.Writer) *cobra.Command {
 }
 
 func run(out io.Writer, args []string) error {
-	var err error
-
-	url := fmt.Sprintf("%s/api/v1/environments/%s/snapshots/%s", global.Host, global.Org, url.QueryEscape(args[0]))
+	envName, id, err := handleExpressions(args[0])
+	if err != nil {
+		return err
+	}
+	url := fmt.Sprintf("%s/api/v2/snapshots/%s/%s/%d", global.Host, global.Org, envName, id)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,

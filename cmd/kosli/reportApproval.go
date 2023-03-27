@@ -50,7 +50,7 @@ type reportApprovalOptions struct {
 }
 
 type ApprovalPayload struct {
-	ArtifactFingerprint string              `json:"artifact_sha256"`
+	ArtifactFingerprint string              `json:"artifact_fingerprint"`
 	Description         string              `json:"description"`
 	CommitList          []string            `json:"src_commit_list"`
 	Reviews             []map[string]string `json:"approvals"`
@@ -119,7 +119,7 @@ func (o *reportApprovalOptions) run(args []string, request bool) error {
 		return err
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/approvals/", global.Host, global.Org, o.flowName)
+	url := fmt.Sprintf("%s/api/v2/approvals/%s/%s", global.Host, global.Org, o.flowName)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPost,

@@ -177,7 +177,6 @@ func CreateEnv(org, envName, envType string, t *testing.T) {
 	t.Helper()
 	o := &createEnvOptions{
 		payload: CreateEnvironmentPayload{
-			Org:         org,
 			Name:        envName,
 			Type:        envType,
 			Description: "test env",

@@ -87,7 +87,7 @@ func (o *assertApprovalOptions) run(args []string) error {
 		}
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/%s/approvals/", global.Host, global.Org, o.flowName, o.fingerprint)
+	url := fmt.Sprintf("%s/api/v2/artifacts/%s/%s/%s/approvals", global.Host, global.Org, o.flowName, o.fingerprint)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,

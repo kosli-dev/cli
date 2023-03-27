@@ -30,7 +30,6 @@ type createFlowOptions struct {
 }
 
 type FlowPayload struct {
-	Org         string   `json:"owner"`
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
 	Visibility  string   `json:"visibility"`
@@ -73,7 +72,7 @@ func newCreateFlowCmd(out io.Writer) *cobra.Command {
 
 func (o *createFlowOptions) run(args []string) error {
 	var err error
-	url := fmt.Sprintf("%s/api/v1/projects/%s/", global.Host, global.Org)
+	url := fmt.Sprintf("%s/api/v2/flows/%s", global.Host, global.Org)
 
 	if o.payload.Name == "" {
 		if len(args) == 0 {
@@ -81,7 +80,6 @@ func (o *createFlowOptions) run(args []string) error {
 		}
 		o.payload.Name = args[0]
 	}
-	o.payload.Org = global.Org
 	o.payload.Template = injectArtifactIntoTemplateIfNotExisting(o.payload.Template)
 
 	reqParams := &requests.RequestParams{

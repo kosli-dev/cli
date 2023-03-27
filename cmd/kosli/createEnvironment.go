@@ -25,7 +25,6 @@ type createEnvOptions struct {
 }
 
 type CreateEnvironmentPayload struct {
-	Org         string `json:"owner"`
 	Name        string `json:"name"`
 	Type        string `json:"type"`
 	Description string `json:"description"`
@@ -67,8 +66,7 @@ func newCreateEnvironmentCmd(out io.Writer) *cobra.Command {
 
 func (o *createEnvOptions) run(args []string) error {
 	o.payload.Name = args[0]
-	o.payload.Org = global.Org
-	url := fmt.Sprintf("%s/api/v1/environments/%s/", global.Host, global.Org)
+	url := fmt.Sprintf("%s/api/v2/environments/%s", global.Host, global.Org)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPut,

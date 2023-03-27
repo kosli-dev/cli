@@ -22,7 +22,7 @@ type expectDeploymentOptions struct {
 }
 
 type ExpectDeploymentPayload struct {
-	Fingerprint string      `json:"artifact_sha256"`
+	Fingerprint string      `json:"artifact_fingerprint"`
 	Description string      `json:"description"`
 	Environment string      `json:"environment"`
 	UserData    interface{} `json:"user_data"`
@@ -87,7 +87,7 @@ func (o *expectDeploymentOptions) run(args []string) error {
 		return err
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/", global.Host, global.Org, o.flowName)
+	url := fmt.Sprintf("%s/api/v2/deployments/%s/%s", global.Host, global.Org, o.flowName)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPost,
