@@ -204,7 +204,7 @@ func (suite *RequestsTestSuite) TestDo() {
 			name: "GET request to cyber-dojo with fake password",
 			params: &RequestParams{
 				Method:   http.MethodGet,
-				URL:      "https://app.kosli.com/api/v1/environments/cyber-dojo/",
+				URL:      "https://app.kosli.com/api/v2/environments/cyber-dojo",
 				Password: "secret",
 			},
 		},
@@ -238,17 +238,17 @@ func (suite *RequestsTestSuite) TestDo() {
 			name: "GET request with invalid URL causes an error",
 			params: &RequestParams{
 				Method:   http.MethodGet,
-				URL:      "  https://app.kosli.com/api/v1/environments/cyber-dojo/foo",
+				URL:      "  https://app.kosli.com/api/v2/environments/cyber-dojo/foo",
 				Password: "secret",
 			},
 			wantError:        true,
-			expectedErrorMsg: "failed to create a GET request to   https://app.kosli.com/api/v1/environments/cyber-dojo/foo : failed to create GET request to   https://app.kosli.com/api/v1/environments/cyber-dojo/foo : parse \"  https://app.kosli.com/api/v1/environments/cyber-dojo/foo\": first path segment in URL cannot contain colon",
+			expectedErrorMsg: "failed to create a GET request to   https://app.kosli.com/api/v2/environments/cyber-dojo/foo : failed to create GET request to   https://app.kosli.com/api/v2/environments/cyber-dojo/foo : parse \"  https://app.kosli.com/api/v2/environments/cyber-dojo/foo\": first path segment in URL cannot contain colon",
 		},
 		{
 			name: "GET request to cyber-dojo with dry-run",
 			params: &RequestParams{
 				Method:   http.MethodGet,
-				URL:      "https://app.kosli.com/api/v1/environments/cyber-dojo/",
+				URL:      "https://app.kosli.com/api/v2/environments/cyber-dojo",
 				Password: "secret",
 				DryRun:   true,
 				Payload:  "some payload",

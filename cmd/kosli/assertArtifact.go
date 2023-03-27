@@ -84,7 +84,7 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 		}
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/artifact/?snappish=%s@%s", global.Host, global.Org, o.flowName, o.fingerprint)
+	url := fmt.Sprintf("%s/api/v2/artifacts/%s/%s/fingerprint/%s", global.Host, global.Org, o.flowName, o.fingerprint)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,

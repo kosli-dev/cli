@@ -26,7 +26,7 @@ func (suite *GetArtifactCommandTestSuite) SetupTest() {
 	suite.artifactPath = "testdata/folder1/hello.txt"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
-		Org:      "docs-cmd-test-user",
+		Org:      "docs-cmd-test-user-shared",
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
@@ -47,7 +47,7 @@ func (suite *GetArtifactCommandTestSuite) TestGetArtifactCmd() {
 			wantError: true,
 			name:      "getting a non existing artifact fails",
 			cmd:       fmt.Sprintf(`get artifact %s@8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c %s`, suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: Artifact with fingerprint '8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c' does not exist in pipeline 'get-artifact' belonging to 'docs-cmd-test-user'. \n",
+			golden:    "Error: Artifact with fingerprint '8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c' does not exist in pipeline 'get-artifact' belonging to 'docs-cmd-test-user-shared'\n",
 		},
 		{
 			wantError: true,
@@ -59,7 +59,13 @@ func (suite *GetArtifactCommandTestSuite) TestGetArtifactCmd() {
 			wantError: true,
 			name:      "missing --api-token fails",
 			cmd:       fmt.Sprintf(`get artifact %s@%s --org orgX`, suite.flowName, suite.fingerprint),
-			golden:    "Error: --api-token is not set\nUsage: kosli get artifact SNAPPISH [flags]\n",
+			golden:    "Error: --api-token is not set\nUsage: kosli get artifact EXPRESSION [flags]\n",
+		},
+		{
+			wantError: true,
+			name:      "getting an existing artifact using an invalid expression fails",
+			cmd:       fmt.Sprintf(`get artifact %s#%s %s`, suite.flowName, suite.fingerprint, suite.defaultKosliArguments),
+			golden:    fmt.Sprintf("Error: invalid expression: %s#%s\n", suite.flowName, suite.fingerprint),
 		},
 		{
 			name:       "getting an existing artifact using fingerprint works",

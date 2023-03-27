@@ -53,7 +53,7 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 			wantError: true,
 			name:      "asserting a non existing artifact fails",
 			cmd:       fmt.Sprintf(`assert artifact --fingerprint 8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c  --flow %s %s`, suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: Artifact with fingerprint '8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c' does not exist in pipeline 'assert-artifact' belonging to 'docs-cmd-test-user'. \n",
+			golden:    "Error: Artifact with fingerprint '8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c' does not exist in pipeline 'assert-artifact' belonging to 'docs-cmd-test-user'\n",
 		},
 		{
 			name:   "asserting an existing compliant artifact (using --fingerprint) results in OK and zero exit",

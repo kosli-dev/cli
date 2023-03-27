@@ -1,14 +1,10 @@
-Name:                     arti
-Flow:                     get-artifact
-Fingerprint:              fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02
-Created on:               Sat, 16 Jan 2016 00:00:00 UTC • 2016-01-16
-Git commit:               0fc1ba9876f91b215679f3649b8668085d820ab5
-Commit URL:               www.nrk.no
-Build URL:                www.yr.no
-State:                    COMPLIANT
-Running in environments:  env-to-assert#2, env1-to-diff#1, env2-to-diff#1
+Name:         arti
+Flow:         get-artifact
+Fingerprint:  fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02
+Created on:   Sat, 16 Jan 2016 00:00:00 UTC • 2016-01-16
+Git commit:   0fc1ba9876f91b215679f3649b8668085d820ab5
+Commit URL:   www.nrk.no
+Build URL:    www.yr.no
+State:        COMPLIANT
 History:
-    Started running in env-to-assert#1 environment  Sat, 16 Jan 2016 00:00:00 UTC
-    Started running in env1-to-diff#1 environment   Sat, 16 Jan 2016 00:00:00 UTC
-    Started running in env2-to-diff#1 environment   Sat, 16 Jan 2016 00:00:00 UTC
-    Artifact created                                Sat, 16 Jan 2016 00:00:00 UTC
+    Artifact created  Sat, 16 Jan 2016 00:00:00 UTC

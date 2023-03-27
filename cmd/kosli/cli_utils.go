@@ -584,3 +584,18 @@ func handleExpressions(expression string) (string, int, error) {
 	}
 	return items[0], id, nil
 }
+
+func handleArtifactExpression(expression string) (string, string, string, error) {
+	separator := ""
+	if strings.Contains(expression, "@") {
+		separator = "@"
+	} else if strings.Contains(expression, ":") {
+		separator = ":"
+	} else {
+		return "", "", separator, fmt.Errorf("invalid expression: %s", expression)
+	}
+
+	items := strings.Split(expression, separator)
+
+	return items[0], items[1], separator, nil
+}

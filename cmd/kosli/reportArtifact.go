@@ -20,7 +20,7 @@ type reportArtifactOptions struct {
 }
 
 type ArtifactPayload struct {
-	Fingerprint string                `json:"sha256"`
+	Fingerprint string                `json:"fingerprint"`
 	Filename    string                `json:"filename"`
 	GitCommit   string                `json:"git_commit"`
 	BuildUrl    string                `json:"build_url"`
@@ -135,10 +135,10 @@ func (o *reportArtifactOptions) run(args []string) error {
 		logger.Warning("Repo URL will not be reported, %s", err.Error())
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/", global.Host, global.Org, o.flowName)
+	url := fmt.Sprintf("%s/api/v2/artifacts/%s/%s", global.Host, global.Org, o.flowName)
 
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodPut,
+		Method:   http.MethodPost,
 		URL:      url,
 		Payload:  o.payload,
 		DryRun:   global.DryRun,

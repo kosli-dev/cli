@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"sort"
 	"strings"
 
@@ -23,7 +22,7 @@ In case of using the git commit, it is possible to get multiple artifacts matchi
 The expected argument is an expression to specify the artifact to get.
 It has the format <FLOW_NAME><SEPARATOR><COMMIT_SHA1|ARTIFACT_FINGERPRINT> 
 
-Specify SNAPPISH by:
+Expression can be specified as follows:
 	flowName@<fingerprint>  artifact with a given fingerprint. The fingerprint can be short or complete.
 	flowName:<commit_sha>   artifact with a given commit SHA. The commit sha can be short or complete.
 
@@ -48,7 +47,7 @@ type getArtifactOptions struct {
 func newGetArtifactCmd(out io.Writer) *cobra.Command {
 	o := new(getArtifactOptions)
 	cmd := &cobra.Command{
-		Use:     "artifact SNAPPISH",
+		Use:     "artifact EXPRESSION",
 		Short:   getArtifactShortDesc,
 		Long:    getArtifactLongDesc,
 		Example: getArtifactExample,
@@ -71,7 +70,18 @@ func newGetArtifactCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *getArtifactOptions) run(out io.Writer, args []string) error {
-	url := fmt.Sprintf("%s/api/v1/projects/%s/artifact/?snappish=%s", global.Host, global.Org, url.QueryEscape(args[0]))
+	flowName, id, separator, err := handleArtifactExpression(args[0])
+	if err != nil {
+		return err
+	}
+	var idType string
+	if separator == "@" {
+		idType = "fingerprint"
+	} else {
+		idType = "commit_sha"
+	}
+
+	url := fmt.Sprintf("%s/api/v2/artifacts/%s/%s/%s/%s", global.Host, global.Org, flowName, idType, id)
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,
 		URL:      url,
@@ -112,21 +122,18 @@ func printArtifactsAsTable(artifactRaw string, out io.Writer, pageNumber int) er
 func printArtifactsJsonAsTable(artifacts []map[string]interface{}, out io.Writer, pageNumber int) error {
 	separator := ""
 	for _, artifact := range artifacts {
-		evidenceMap := artifact["evidence"].(map[string]interface{})
-		artifactData := evidenceMap["artifact"].(map[string]interface{})
-
 		rows := []string{}
-		rows = append(rows, fmt.Sprintf("Name:\t%s", artifactData["filename"].(string)))
-		rows = append(rows, fmt.Sprintf("Flow:\t%s", artifact["pipeline_name"].(string)))
-		rows = append(rows, fmt.Sprintf("Fingerprint:\t%s", artifactData["sha256"].(string)))
-		createdAt, err := formattedTimestamp(artifactData["logged_at"], false)
+		rows = append(rows, fmt.Sprintf("Name:\t%s", artifact["filename"].(string)))
+		rows = append(rows, fmt.Sprintf("Flow:\t%s", artifact["flow_name"].(string)))
+		rows = append(rows, fmt.Sprintf("Fingerprint:\t%s", artifact["fingerprint"].(string)))
+		createdAt, err := formattedTimestamp(artifact["created_at"], false)
 		if err != nil {
 			return err
 		}
 		rows = append(rows, fmt.Sprintf("Created on:\t%s", createdAt))
-		rows = append(rows, fmt.Sprintf("Git commit:\t%s", artifactData["git_commit"].(string)))
-		rows = append(rows, fmt.Sprintf("Commit URL:\t%s", artifactData["commit_url"].(string)))
-		rows = append(rows, fmt.Sprintf("Build URL:\t%s", artifactData["build_url"].(string)))
+		rows = append(rows, fmt.Sprintf("Git commit:\t%s", artifact["git_commit"].(string)))
+		rows = append(rows, fmt.Sprintf("Commit URL:\t%s", artifact["commit_url"].(string)))
+		rows = append(rows, fmt.Sprintf("Build URL:\t%s", artifact["build_url"].(string)))
 
 		rows = append(rows, fmt.Sprintf("State:\t%s", artifact["state"].(string)))
 
