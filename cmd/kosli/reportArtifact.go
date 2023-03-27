@@ -154,7 +154,7 @@ func (o *reportArtifactOptions) run(args []string) error {
 // latestCommit retrieves the git commit of the latest artifact for a pipeline in Kosli
 func (o *reportArtifactOptions) latestCommit(branchName string) (string, error) {
 	latestCommitUrl := fmt.Sprintf(
-		"%s/api/v1/projects/%s/%s/artifacts/%s/latest_commit%s",
+		"%s/api/v2/artifacts/%s/%s/%s/latest_commit%s",
 		global.Host, global.Org, o.flowName, o.payload.Fingerprint, asBranchParameter(branchName))
 
 	reqParams := &requests.RequestParams{

@@ -86,7 +86,7 @@ func (o *searchOptions) run(out io.Writer, args []string) error {
 	var err error
 	search_value := args[0]
 
-	url := fmt.Sprintf("%s/api/v1/search/%s/sha/%s", global.Host, global.Org, search_value)
+	url := fmt.Sprintf("%s/api/v2/search/%s/sha/%s", global.Host, global.Org, search_value)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,

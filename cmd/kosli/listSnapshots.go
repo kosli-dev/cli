@@ -91,7 +91,7 @@ func (o *listSnapshotsOptions) run(out io.Writer, args []string) error {
 }
 
 func (o *listSnapshotsOptions) getSnapshotsList(out io.Writer, envName, interval string) error {
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/snapshots/?page=%d&per_page=%d&interval=%s&reverse=%t",
+	url := fmt.Sprintf("%s/api/v2/snapshots/%s/%s?page=%d&per_page=%d&interval=%s&reverse=%t",
 		global.Host, global.Org, envName, o.pageNumber, o.pageLimit, url.QueryEscape(interval), o.reverse)
 
 	reqParams := &requests.RequestParams{

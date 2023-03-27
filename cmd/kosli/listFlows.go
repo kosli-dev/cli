@@ -42,7 +42,7 @@ func newListFlowsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *listFlowsOptions) run(out io.Writer) error {
-	url := fmt.Sprintf("%s/api/v1/projects/%s/", global.Host, global.Org)
+	url := fmt.Sprintf("%s/api/v2/flows/%s", global.Host, global.Org)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,
