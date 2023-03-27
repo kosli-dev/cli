@@ -24,7 +24,6 @@ import (
 // EcsEnvRequest represents the PUT request body to be sent to kosli from ECS
 type EcsEnvRequest struct {
 	Artifacts []*EcsTaskData `json:"artifacts"`
-	Type      string         `json:"type"`
 }
 
 // EcsTaskData represents the harvested ECS task data
@@ -37,13 +36,11 @@ type EcsTaskData struct {
 // S3EnvRequest represents the PUT request body to be sent to kosli from a server
 type S3EnvRequest struct {
 	Artifacts []*S3Data `json:"artifacts"`
-	Type      string    `json:"type"`
 }
 
 // LambdaEnvRequest represents the PUT request body to be sent to kosli from a server
 type LambdaEnvRequest struct {
 	Artifacts []*LambdaData `json:"artifacts"`
-	Type      string        `json:"type"`
 }
 
 // S3Data represents the harvested S3 artifacts data

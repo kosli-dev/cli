@@ -89,7 +89,7 @@ func newSnapshotECSCmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotECSOptions) run(args []string) error {
 	envName := args[0]
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Org, envName)
+	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/ECS", global.Host, global.Org, envName)
 
 	tasksData, err := o.awsStaticCreds.GetEcsTasksData(o.cluster, o.serviceName)
 	if err != nil {
@@ -98,7 +98,6 @@ func (o *snapshotECSOptions) run(args []string) error {
 
 	payload := &aws.EcsEnvRequest{
 		Artifacts: tasksData,
-		Type:      "ECS",
 	}
 
 	reqParams := &requests.RequestParams{

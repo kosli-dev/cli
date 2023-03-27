@@ -87,7 +87,7 @@ func newSnapshotK8SCmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotK8SOptions) run(args []string) error {
 	envName := args[0]
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Org, envName)
+	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/K8S", global.Host, global.Org, envName)
 	clientset, err := kube.NewK8sClientSet(o.kubeconfig)
 	if err != nil {
 		return err
@@ -99,7 +99,6 @@ func (o *snapshotK8SOptions) run(args []string) error {
 
 	payload := &kube.K8sEnvRequest{
 		Artifacts: podsData,
-		Type:      "K8S",
 	}
 
 	reqParams := &requests.RequestParams{

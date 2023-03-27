@@ -81,7 +81,7 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotS3Options) run(args []string) error {
 	envName := args[0]
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Org, envName)
+	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/S3", global.Host, global.Org, envName)
 
 	s3Data, err := o.awsStaticCreds.GetS3Data(o.bucket, logger)
 	if err != nil {
@@ -89,7 +89,6 @@ func (o *snapshotS3Options) run(args []string) error {
 	}
 	payload := &aws.S3EnvRequest{
 		Artifacts: s3Data,
-		Type:      "S3",
 	}
 
 	reqParams := &requests.RequestParams{

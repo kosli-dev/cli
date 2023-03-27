@@ -30,13 +30,25 @@ func (suite *GetApprovalCommandTestSuite) SetupTest() {
 	CreateFlow(suite.flowName, suite.T())
 	CreateArtifact(suite.flowName, suite.fingerprint, "approved-artifact", suite.T())
 	CreateApproval(suite.flowName, suite.fingerprint, suite.T())
+	CreateApproval(suite.flowName, suite.fingerprint, suite.T())
 }
 
 func (suite *GetApprovalCommandTestSuite) TestGetApprovalCmd() {
 	tests := []cmdTestCase{
 		{
-			name: "get an approval",
-			cmd:  fmt.Sprintf("get approval %s %s", suite.flowName, suite.defaultKosliArguments),
+			name:       "get latest approval works",
+			cmd:        fmt.Sprintf("get approval %s %s", suite.flowName, suite.defaultKosliArguments),
+			goldenFile: "output/get/get-approval-latest.txt",
+		},
+		{
+			name:       "get an approval works with # expression",
+			cmd:        fmt.Sprintf("get approval %s#1 %s", suite.flowName, suite.defaultKosliArguments),
+			goldenFile: "output/get/get-approval.txt",
+		},
+		{
+			name:       "get an approval works with ~ expression",
+			cmd:        fmt.Sprintf("get approval %s~1 %s", suite.flowName, suite.defaultKosliArguments),
+			goldenFile: "output/get/get-approval.txt",
 		},
 		{
 			wantError: true,
@@ -48,19 +60,19 @@ func (suite *GetApprovalCommandTestSuite) TestGetApprovalCmd() {
 			wantError: true,
 			name:      "get approval on a non-existing flow fails",
 			cmd:       "get approval get-approval-123#20" + suite.defaultKosliArguments,
-			golden:    "Error: Flow called 'get-approval-123' does not exist for Organization 'docs-cmd-test-user'. \n",
+			golden:    "Error: Flow called 'get-approval-123' does not exist for Organization 'docs-cmd-test-user'\n",
 		},
 		{
 			wantError: true,
 			name:      "get non-existing approval fails",
 			cmd:       fmt.Sprintf("get approval %s#23 %s", suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: Approval number '23' does not exist in pipeline 'get-approval' belonging to Organization 'docs-cmd-test-user'. \n",
+			golden:    "Error: Approval number '23' does not exist in pipeline 'get-approval' belonging to Organization 'docs-cmd-test-user'\n",
 		},
 		{
 			wantError: true,
 			name:      "missing --org fails",
 			cmd:       fmt.Sprintf("get approval %s --api-token secret", suite.flowName),
-			golden:    "Error: --org is not set\nUsage: kosli get approval SNAPPISH [flags]\n",
+			golden:    "Error: --org is not set\nUsage: kosli get approval EXPRESSION [flags]\n",
 		},
 	}
 

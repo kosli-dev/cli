@@ -44,7 +44,7 @@ func newRenameEnvironmentCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			url := fmt.Sprintf("%s/api/v1/environments/%s/%s/rename", global.Host, global.Org, args[0])
+			url := fmt.Sprintf("%s/api/v2/environments/%s/%s/rename", global.Host, global.Org, args[0])
 			payload.NewName = args[1]
 
 			reqParams := &requests.RequestParams{

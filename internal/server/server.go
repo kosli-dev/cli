@@ -12,7 +12,6 @@ import (
 // ServerEnvRequest represents the PUT request body to be sent to kosli from a server
 type ServerEnvRequest struct {
 	Artifacts []*ServerData `json:"artifacts"`
-	Type      string        `json:"type"`
 }
 
 // ServerData represents the harvested server artifacts data

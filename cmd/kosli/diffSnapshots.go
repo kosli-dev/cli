@@ -47,8 +47,8 @@ type DiffItem struct {
 }
 
 type DiffArtifact struct {
-	Fingerprint         string   `json:"sha256"`
-	Flow                string   `json:"pipeline"`
+	Fingerprint         string   `json:"fingerprint"`
+	Flow                string   `json:"flow"`
 	Name                string   `json:"name"`
 	CommitUrl           string   `json:"commit_url"`
 	MostRecentTimestamp int64    `json:"most_recent_timestamp"`
@@ -85,7 +85,7 @@ func newDiffSnapshotsCmd(out io.Writer) *cobra.Command {
 func (o *diffSnapshotsOptions) run(out io.Writer, args []string) error {
 	snappish1 := args[0]
 	snappish2 := args[1]
-	url := fmt.Sprintf("%s/api/v1/env-diff/%s/?snappish1=%s&snappish2=%s",
+	url := fmt.Sprintf("%s/api/v2/env-diff/%s?snappish1=%s&snappish2=%s",
 		global.Host, global.Org, url.QueryEscape(snappish1), url.QueryEscape(snappish2))
 
 	reqParams := &requests.RequestParams{

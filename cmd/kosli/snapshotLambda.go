@@ -80,7 +80,7 @@ func newSnapshotLambdaCmd(out io.Writer) *cobra.Command {
 func (o *snapshotLambdaOptions) run(args []string) error {
 	envName := args[0]
 
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Org, envName)
+	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/lambda", global.Host, global.Org, envName)
 	lambdaData, err := o.awsStaticCreds.GetLambdaPackageData(o.functionName, o.functionVersion)
 	if err != nil {
 		return err
@@ -88,7 +88,6 @@ func (o *snapshotLambdaOptions) run(args []string) error {
 
 	payload := &aws.LambdaEnvRequest{
 		Artifacts: lambdaData,
-		Type:      "lambda",
 	}
 
 	reqParams := &requests.RequestParams{

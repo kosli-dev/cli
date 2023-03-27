@@ -58,7 +58,7 @@ func newSnapshotDockerCmd(out io.Writer) *cobra.Command {
 func (o *snapshotDockerOptions) run(args []string) error {
 	envName := args[0]
 
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Org, envName)
+	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/docker", global.Host, global.Org, envName)
 
 	artifacts, err := CreateDockerArtifactsData()
 	if err != nil {
@@ -67,7 +67,6 @@ func (o *snapshotDockerOptions) run(args []string) error {
 
 	payload := &server.ServerEnvRequest{
 		Artifacts: artifacts,
-		Type:      "docker",
 	}
 
 	reqParams := &requests.RequestParams{

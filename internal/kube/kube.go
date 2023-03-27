@@ -18,7 +18,6 @@ import (
 // K8sEnvRequest represents the PUT request body to be sent to kosli from k8s
 type K8sEnvRequest struct {
 	Artifacts []*PodData `json:"artifacts"`
-	Type      string     `json:"type"`
 }
 
 // PodData represents the harvested pod data

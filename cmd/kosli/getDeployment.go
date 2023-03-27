@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -15,7 +14,7 @@ import (
 const getDeploymentShortDesc = `Get a deployment from a specified flow.`
 
 const getDeploymentLongDesc = getDeploymentShortDesc + `
-Specify SNAPPISH by:
+Expression can be specified as follows:
 	flowName~<N>  N'th behind the latest deployment
 	flowName#<N>  deployment number N
 	flowName      the latest deployment`
@@ -43,7 +42,7 @@ type getDeploymentOptions struct {
 func newGetDeploymentCmd(out io.Writer) *cobra.Command {
 	o := new(getDeploymentOptions)
 	cmd := &cobra.Command{
-		Use:     "deployment SNAPPISH",
+		Use:     "deployment EXPRESSION",
 		Short:   getDeploymentShortDesc,
 		Long:    getDeploymentLongDesc,
 		Example: getDeploymentExample,
@@ -66,7 +65,11 @@ func newGetDeploymentCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *getDeploymentOptions) run(out io.Writer, args []string) error {
-	url := fmt.Sprintf("%s/api/v1/projects/%s/deployment/?snappish=%s", global.Host, global.Org, url.QueryEscape(args[0]))
+	flowName, id, err := handleExpressions(args[0])
+	if err != nil {
+		return err
+	}
+	url := fmt.Sprintf("%s/api/v2/deployments/%s/%s/%d", global.Host, global.Org, flowName, id)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,
@@ -94,7 +97,7 @@ func printDeploymentAsTable(raw string, out io.Writer, page int) error {
 
 	rows := []string{}
 	rows = append(rows, fmt.Sprintf("ID:\t%d", int64(deployment["deployment_id"].(float64))))
-	rows = append(rows, fmt.Sprintf("Artifact fingerprint:\t%s", deployment["artifact_sha256"].(string)))
+	rows = append(rows, fmt.Sprintf("Artifact fingerprint:\t%s", deployment["artifact_fingerprint"].(string)))
 	rows = append(rows, fmt.Sprintf("Artifact name:\t%s", deployment["artifact_name"].(string)))
 	buildURL := "N/A"
 	if deployment["build_url"] != nil {

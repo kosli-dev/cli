@@ -560,3 +560,27 @@ func getPathOfEvidenceFileToUpload(evidencePaths []string) (string, bool, error)
 	cleanupNeeded = true
 	return tarFilePath, cleanupNeeded, nil
 }
+
+func handleExpressions(expression string) (string, int, error) {
+	separator := ""
+	if strings.Contains(expression, "~") {
+		separator = "~"
+	} else if strings.Contains(expression, "#") {
+		separator = "#"
+	} else {
+		return expression, -1, nil
+	}
+
+	items := strings.Split(expression, separator)
+	if len(items) < 2 {
+		return items[0], -1, nil
+	}
+	id, err := strconv.Atoi(items[1])
+	if err != nil {
+		return items[0], id, err
+	}
+	if separator == "~" {
+		id = (-1 * id) - 1
+	}
+	return items[0], id, nil
+}

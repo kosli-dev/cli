@@ -78,7 +78,7 @@ func newListApprovalsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *listApprovalsOptions) run(out io.Writer) error {
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/approvals/?page=%d&per_page=%d",
+	url := fmt.Sprintf("%s/api/v2/approvals/%s/%s?page=%d&per_page=%d",
 		global.Host, global.Org, o.flowName, o.pageNumber, o.pageLimit)
 
 	reqParams := &requests.RequestParams{

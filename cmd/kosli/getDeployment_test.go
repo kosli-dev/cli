@@ -41,6 +41,7 @@ func (suite *GetDeploymentCommandTestSuite) SetupTest() {
 	CreateArtifact(suite.flowName, suite.fingerprint, "arti-name", suite.T())
 	CreateEnv(global.Org, suite.envName, "server", suite.T())
 	ExpectDeployment(suite.flowName, suite.fingerprint, suite.envName, suite.T())
+	ExpectDeployment(suite.flowName, suite.fingerprint, suite.envName, suite.T())
 }
 
 func (suite *GetDeploymentCommandTestSuite) TestGetDeploymentCmd() {
@@ -62,7 +63,7 @@ func (suite *GetDeploymentCommandTestSuite) TestGetDeploymentCmd() {
 			name:      "get deployment fails when --api-token flag is missing",
 			cmd:       `get deployment ` + suite.flowName + `#1 --org foo --host bar`,
 			golden: "Error: --api-token is not set\n" +
-				"Usage: kosli get deployment SNAPPISH [flags]\n",
+				"Usage: kosli get deployment EXPRESSION [flags]\n",
 		},
 		{
 			wantError: true,
@@ -74,15 +75,22 @@ func (suite *GetDeploymentCommandTestSuite) TestGetDeploymentCmd() {
 			wantError: true,
 			name:      "get deployment fails when deployment does not exist",
 			cmd:       fmt.Sprintf(`get deployment %s#20 %s`, suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: Deployment number '20' does not exist in pipeline 'get-deployment' belonging to Organization 'docs-cmd-test-user'. \n",
+			golden:    "Error: Deployment number '20' does not exist in pipeline 'get-deployment' belonging to Organization 'docs-cmd-test-user'\n",
 		},
 		{
-			name: "get deployment works with the # expression",
-			cmd:  fmt.Sprintf(`get deployment %s#1 %s`, suite.flowName, suite.defaultKosliArguments),
+			name:       "get deployment works with the # expression",
+			cmd:        fmt.Sprintf(`get deployment %s#1 %s`, suite.flowName, suite.defaultKosliArguments),
+			goldenFile: "output/get/get-deployment.txt",
 		},
 		{
-			name: "get deployment works with just the flow name",
-			cmd:  fmt.Sprintf(`get deployment %s %s`, suite.flowName, suite.defaultKosliArguments),
+			name:       "get deployment works with the ~ expression",
+			cmd:        fmt.Sprintf(`get deployment %s~1 %s`, suite.flowName, suite.defaultKosliArguments),
+			goldenFile: "output/get/get-deployment.txt",
+		},
+		{
+			name:       "get deployment works with just the flow name",
+			cmd:        fmt.Sprintf(`get deployment %s %s`, suite.flowName, suite.defaultKosliArguments),
+			goldenFile: "output/get/get-deployment-latest.txt",
 		},
 		{
 			name: "get deployment works with --output json",

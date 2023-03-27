@@ -66,7 +66,7 @@ func newSnapshotServerCmd(out io.Writer) *cobra.Command {
 func (o *snapshotServerOptions) run(args []string) error {
 	envName := args[0]
 
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/data", global.Host, global.Org, envName)
+	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/server", global.Host, global.Org, envName)
 
 	artifacts, err := server.CreateServerArtifactsData(o.paths, logger)
 	if err != nil {
@@ -74,7 +74,6 @@ func (o *snapshotServerOptions) run(args []string) error {
 	}
 	payload := &server.ServerEnvRequest{
 		Artifacts: artifacts,
-		Type:      "server",
 	}
 
 	reqParams := &requests.RequestParams{

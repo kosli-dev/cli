@@ -48,7 +48,7 @@ func (o *pullRequestArtifactOptions) run(out io.Writer, args []string) error {
 		}
 	}
 
-	url := fmt.Sprintf("%s/api/v1/projects/%s/evidence/artifact/%s/pull_request", global.Host, global.Org, o.flowName)
+	url := fmt.Sprintf("%s/api/v2/evidence/%s/artifact/%s/pull_request", global.Host, global.Org, o.flowName)
 	pullRequestsEvidence, err := getPullRequestsEvidence(o.getRetriever(), o.commit, o.assert)
 	if err != nil {
 		return err
@@ -114,7 +114,7 @@ func (o *pullRequestCommitOptions) getRetriever() types.PRRetriever {
 }
 
 func (o *pullRequestCommitOptions) run(args []string) error {
-	url := fmt.Sprintf("%s/api/v1/projects/%s/evidence/commit/pull_request", global.Host, global.Org)
+	url := fmt.Sprintf("%s/api/v2/evidence/%s/commit/pull_request", global.Host, global.Org)
 
 	pullRequestsEvidence, err := getPullRequestsEvidence(o.getRetriever(), o.payload.CommitSHA, o.assert)
 	if err != nil {

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -17,7 +16,7 @@ const getApprovalLongDesc = getApprovalShortDesc + `
 The expected argument is an expression to specify the approval to get.
 It has the format <FLOW_NAME>[SEPARATOR][INTEGER_REFERENCE]
 
-Specify SNAPPISH by:
+the expression can be specified as follows:
 	flowName~<N>  N'th behind the latest approval
 	flowName#<N>  approval number N
 	flowName      the latest approval
@@ -47,7 +46,7 @@ type getApprovalOptions struct {
 func newGetApprovalCmd(out io.Writer) *cobra.Command {
 	o := new(getApprovalOptions)
 	cmd := &cobra.Command{
-		Use:     "approval SNAPPISH",
+		Use:     "approval EXPRESSION",
 		Short:   getApprovalShortDesc,
 		Long:    getApprovalLongDesc,
 		Example: getApprovalExample,
@@ -69,7 +68,11 @@ func newGetApprovalCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *getApprovalOptions) run(out io.Writer, args []string) error {
-	url := fmt.Sprintf("%s/api/v1/projects/%s/approval/?snappish=%s", global.Host, global.Org, url.QueryEscape(args[0]))
+	flowName, id, err := handleExpressions(args[0])
+	if err != nil {
+		return err
+	}
+	url := fmt.Sprintf("%s/api/v2/approvals/%s/%s/%d", global.Host, global.Org, flowName, id)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,
@@ -132,7 +135,7 @@ func printApprovalAsTable(raw string, out io.Writer, page int) error {
 			convertedCommit := commit.(map[string]interface{})
 			commitRow := fmt.Sprintf("\tGit commit:%s", convertedCommit["commit_sha"].(string))
 			rows = append(rows, commitRow)
-			artifact_digests := convertedCommit["artifact_digests"].([]interface{})
+			artifact_digests := convertedCommit["artifact_fingerprints"].([]interface{})
 			if len(artifact_digests) == 0 {
 				commitRow = "\tNo artifacts produced from this commit"
 				rows = append(rows, commitRow)

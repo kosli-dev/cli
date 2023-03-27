@@ -19,7 +19,7 @@ By default, the page limit is 15 deployments per page.
 `
 const listDeploymentsExample = `
 # list the last 15 deployments for a flow:
-kosli list deploymentss \ 
+kosli list deployments \ 
 	--flow yourFlowName \
 	--api-token yourAPIToken \
 	--org yourOrgName
@@ -79,7 +79,7 @@ func newListDeploymentsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *listDeploymentsOptions) run(out io.Writer) error {
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/deployments/?page=%d&per_page=%d",
+	url := fmt.Sprintf("%s/api/v2/deployments/%s/%s?page=%d&per_page=%d",
 		global.Host, global.Org, o.flowName, o.pageNumber, o.pageLimit)
 
 	reqParams := &requests.RequestParams{
@@ -121,7 +121,7 @@ func printDeploymentsListAsTable(raw string, out io.Writer, page int) error {
 	for _, deployment := range deployments {
 		deploymentId := int(deployment["deployment_id"].(float64))
 		artifactName := deployment["artifact_name"].(string)
-		artifactDigest := deployment["artifact_sha256"].(string)
+		artifactDigest := deployment["artifact_fingerprint"].(string)
 		environment := deployment["environment"].(string)
 		createdAt, err := formattedTimestamp(deployment["created_at"], true)
 		if err != nil {

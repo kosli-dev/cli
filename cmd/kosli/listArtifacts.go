@@ -76,7 +76,7 @@ func newListArtifactsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *listArtifactsOptions) run(out io.Writer) error {
-	url := fmt.Sprintf("%s/api/v1/projects/%s/%s/artifacts/?page=%d&per_page=%d",
+	url := fmt.Sprintf("%s/api/v2/artifacts/%s/%s?page=%d&per_page=%d",
 		global.Host, global.Org, o.flowName, o.pageNumber, o.pageLimit)
 
 	reqParams := &requests.RequestParams{
@@ -115,13 +115,11 @@ func printArtifactsListAsTable(raw string, out io.Writer, page int) error {
 	header := []string{"COMMIT", "ARTIFACT", "STATE", "CREATED_AT"}
 	rows := []string{}
 	for _, artifact := range artifacts {
-		evidenceMap := artifact["evidence"].(map[string]interface{})
-		artifactData := evidenceMap["artifact"].(map[string]interface{})
 
-		gitCommit := artifactData["git_commit"].(string)[:7]
-		artifactName := artifactData["filename"].(string)
+		gitCommit := artifact["git_commit"].(string)[:7]
+		artifactName := artifact["filename"].(string)
 
-		artifactDigest := artifactData["sha256"].(string)
+		artifactDigest := artifact["fingerprint"].(string)
 		artifactState := artifact["state"].(string)
 		createdAt, err := formattedTimestamp(artifact["created_at"], true)
 		if err != nil {

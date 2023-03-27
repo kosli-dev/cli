@@ -80,7 +80,7 @@ func newReportEvidenceCommitJunitCmd(out io.Writer) *cobra.Command {
 
 func (o *reportEvidenceCommitJunitOptions) run(args []string) error {
 	var err error
-	url := fmt.Sprintf("%s/api/v1/projects/%s/evidence/commit/junit", global.Host, global.Org)
+	url := fmt.Sprintf("%s/api/v2/evidence/%s/commit/junit", global.Host, global.Org)
 	o.payload.UserData, err = LoadJsonData(o.userDataFilePath)
 	if err != nil {
 		return err

@@ -16,7 +16,7 @@ type allowArtifactOptions struct {
 }
 
 type AllowlistPayload struct {
-	Fingerprint string `json:"sha256"`
+	Fingerprint string `json:"artifact_fingerprint"`
 	Filename    string `json:"artifact_name"`
 	Reason      string `json:"description"`
 	Environment string `json:"environment_name"`
@@ -83,7 +83,7 @@ func (o *allowArtifactOptions) run(args []string) error {
 		}
 	}
 
-	url := fmt.Sprintf("%s/api/v1/policies/%s/allowedartifacts/", global.Host, global.Org)
+	url := fmt.Sprintf("%s/api/v2/allowlists/%s/%s", global.Host, global.Org, o.payload.Environment)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPut,

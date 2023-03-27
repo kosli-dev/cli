@@ -1,0 +1,10 @@
+ID:                    1
+Artifact fingerprint:  7a498bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c
+Artifact name:         approved-artifact
+State:                 APPROVED
+Last modified at:      Sat, 16 Jan 2016 00:00:00 UTC • 2016-01-16
+Reviews:
+     APPROVED By: external://External on Sat, 16 Jan 2016 00:00:00 UTC
+Changes:
+     Git commit:fc280c5dcb06598c49255b868f70b4a752e8840e
+     No artifacts produced from this commit

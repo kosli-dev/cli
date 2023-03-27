@@ -92,7 +92,7 @@ func (o *logEnvironmentOptions) run(out io.Writer, args []string) error {
 // events
 
 func (o *logEnvironmentOptions) getEnvironmentEvents(out io.Writer, envName, interval string) error {
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s/events/?page=%d&per_page=%d&interval=%s&reverse=%t",
+	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/events?page=%d&per_page=%d&interval=%s&reverse=%t",
 		global.Host, global.Org, envName, o.pageNumber, o.pageLimit, url.QueryEscape(interval), o.reverse)
 
 	reqParams := &requests.RequestParams{

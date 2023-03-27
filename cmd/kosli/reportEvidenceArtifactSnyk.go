@@ -103,7 +103,7 @@ func (o *reportEvidenceArtifactSnykOptions) run(args []string) error {
 			return err
 		}
 	}
-	url := fmt.Sprintf("%s/api/v1/projects/%s/evidence/artifact/%s/snyk", global.Host, global.Org, o.flowName)
+	url := fmt.Sprintf("%s/api/v2/evidence/%s/artifact/%s/snyk", global.Host, global.Org, o.flowName)
 	o.payload.UserData, err = LoadJsonData(o.userDataFilePath)
 	if err != nil {
 		return err

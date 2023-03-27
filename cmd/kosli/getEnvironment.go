@@ -43,7 +43,7 @@ func newGetEnvironmentCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *getEnvironmentOptions) run(out io.Writer, args []string) error {
-	url := fmt.Sprintf("%s/api/v1/environments/%s/%s", global.Host, global.Org, args[0])
+	url := fmt.Sprintf("%s/api/v2/environments/%s/%s", global.Host, global.Org, args[0])
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,

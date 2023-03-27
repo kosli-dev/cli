@@ -80,7 +80,7 @@ func newReportEvidenceCommitSnykCmd(out io.Writer) *cobra.Command {
 
 func (o *reportEvidenceCommitSnykOptions) run(args []string) error {
 	var err error
-	url := fmt.Sprintf("%s/api/v1/projects/%s/evidence/commit/snyk", global.Host, global.Org)
+	url := fmt.Sprintf("%s/api/v2/evidence/%s/commit/snyk", global.Host, global.Org)
 	o.payload.UserData, err = LoadJsonData(o.userDataFilePath)
 	if err != nil {
 		return err
