@@ -47,7 +47,6 @@ kosli report evidence artifact mergerequest gitlab yourDockerImageName \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
 	--flow yourFlowName \
-	--pipeline yourPipelineName \
 	--gitlab-token yourGitlabToken \
 	--gitlab-org yourGitlabOrg \
 	--commit yourArtifactGitCommit \

@@ -25,7 +25,7 @@ kosli report approval FILE.tgz \
 	--newest-commit $(git rev-parse HEAD) \
 	--oldest-commit $(git rev-parse HEAD~5) \
 	--org yourOrgName \
-	--flow yourPipelineName 
+	--flow yourFlowName 
 
 # Report that an artifact with a provided fingerprint (sha256) has been approved for deployment.
 # The approval is for the last 5 git commits
@@ -35,7 +35,7 @@ kosli report approval \
 	--newest-commit $(git rev-parse HEAD) \
 	--oldest-commit $(git rev-parse HEAD~5) \
 	--org yourOrgName \
-	--flow yourPipelineName \
+	--flow yourFlowName \
 	--fingerprint yourArtifactFingerprint
 `
 
