@@ -188,7 +188,7 @@ func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, logger *logger.Logge
 	if err != nil {
 		return s3Data, err
 	}
-	tempDirName, err := os.MkdirTemp(".", "bucketContent")
+	tempDirName, err := os.MkdirTemp("", "bucketContent")
 	if err != nil {
 		return s3Data, err
 	}
