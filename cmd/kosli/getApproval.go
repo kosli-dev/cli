@@ -11,8 +11,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const getApprovalShortDesc = `Get an approval from a specified flow.`
-const getApprovalLongDesc = getApprovalShortDesc + `
+const (
+	getApprovalShortDesc = `Get an approval from a specified flow.`
+	getApprovalLongDesc  = getApprovalShortDesc + `
 The expected argument is an expression to specify the approval to get.
 It has the format <FLOW_NAME>[SEPARATOR][INTEGER_REFERENCE]
 
@@ -22,6 +23,7 @@ the expression can be specified as follows:
 	flowName      the latest approval
 
 Examples of valid expressions are: flow (latest approval), flow#10 (approval number 10), flow~2 (the third latest approval)`
+)
 
 const getApprovalExample = `
 # get second behind the latest approval from a flow
@@ -133,7 +135,7 @@ func printApprovalAsTable(raw string, out io.Writer, page int) error {
 		rows = append(rows, "Changes:")
 		for _, commit := range commits {
 			convertedCommit := commit.(map[string]interface{})
-			commitRow := fmt.Sprintf("\tGit commit:%s", convertedCommit["commit_sha"].(string))
+			commitRow := fmt.Sprintf("\tGit commit: %s", convertedCommit["commit_sha"].(string))
 			rows = append(rows, commitRow)
 			artifact_digests := convertedCommit["artifact_fingerprints"].([]interface{})
 			if len(artifact_digests) == 0 {

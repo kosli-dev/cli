@@ -566,21 +566,25 @@ func getPathOfEvidenceFileToUpload(evidencePaths []string) (string, bool, error)
 // and an error if the expression is invalid
 func handleExpressions(expression string) (string, int, error) {
 	separator := ""
-	if strings.Contains(expression, "~") {
+	hasTilda := strings.Contains(expression, "~")
+	hasHash := strings.Contains(expression, "#")
+	if hasTilda && hasHash {
+		return "", 0, fmt.Errorf("invalid expression: %s. Both '~' and '#' are present", expression)
+	} else if hasTilda {
 		separator = "~"
-	} else if strings.Contains(expression, "#") {
+	} else if hasHash {
 		separator = "#"
 	} else {
 		return expression, -1, nil
 	}
 
-	items := strings.Split(expression, separator)
-	if len(items) < 2 {
-		return items[0], -1, nil
+	items := strings.SplitN(expression, separator, 2)
+	if items[0] == "" {
+		return "", 0, fmt.Errorf("invalid expression: %s. Flow name is missing", expression)
 	}
 	id, err := strconv.Atoi(items[1])
 	if err != nil {
-		return items[0], id, err
+		return "", 0, fmt.Errorf("invalid expression: %s. '%s' is not an integer", expression, items[1])
 	}
 	if separator == "~" {
 		id = (-1 * id) - 1
@@ -602,6 +606,12 @@ func handleArtifactExpression(expression string) (string, string, string, error)
 	}
 
 	items := strings.Split(expression, separator)
+	if items[0] == "" {
+		return items[0], items[1], separator, fmt.Errorf("invalid expression: %s. Flow name is missing", expression)
+	}
+	if items[1] == "" {
+		return items[0], items[1], separator, fmt.Errorf("invalid expression: %s. Artifact identity is missing.", expression)
+	}
 
 	return items[0], items[1], separator, nil
 }

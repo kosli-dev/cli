@@ -792,7 +792,31 @@ func (suite *CliUtilsTestSuite) TestHandleExpressions() {
 		{
 			name:       "invalid expression causes an error",
 			expression: "hadron#abc",
-			wantName:   "hadron",
+			wantErr:    true,
+		},
+		{
+			name:       "missing flow name with # causes an error",
+			expression: "#12",
+			wantErr:    true,
+		},
+		{
+			name:       "missing flow name with ~ causes an error",
+			expression: "~12",
+			wantErr:    true,
+		},
+		{
+			name:       "invalid expression containing ~ and # causes an error",
+			expression: "hadron#2~12",
+			wantErr:    true,
+		},
+		{
+			name:       "invalid expression containing ~ and # causes an error",
+			expression: "hadron#2#3",
+			wantErr:    true,
+		},
+		{
+			name:       "invalid expression containing ~ and # causes an error",
+			expression: "hadron~2~1",
 			wantErr:    true,
 		},
 	}
