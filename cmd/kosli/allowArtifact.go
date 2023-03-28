@@ -12,6 +12,7 @@ import (
 
 type allowArtifactOptions struct {
 	fingerprintOptions *fingerprintOptions
+	environmentName    string
 	payload            AllowlistPayload
 }
 
@@ -19,7 +20,6 @@ type AllowlistPayload struct {
 	Fingerprint string `json:"artifact_fingerprint"`
 	Filename    string `json:"artifact_name"`
 	Reason      string `json:"description"`
-	Environment string `json:"environment_name"`
 }
 
 const allowArtifactShortDesc = `Add an artifact to an environment's allowlist.`
@@ -54,7 +54,7 @@ func newAllowArtifactCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.payload.Fingerprint, "fingerprint", "F", "", fingerprintFlag)
-	cmd.Flags().StringVarP(&o.payload.Environment, "environment", "e", "", envAllowListFlag)
+	cmd.Flags().StringVarP(&o.environmentName, "environment", "e", "", envAllowListFlag)
 	cmd.Flags().StringVar(&o.payload.Reason, "reason", "", reasonFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
@@ -83,7 +83,7 @@ func (o *allowArtifactOptions) run(args []string) error {
 		}
 	}
 
-	url := fmt.Sprintf("%s/api/v2/allowlists/%s/%s", global.Host, global.Org, o.payload.Environment)
+	url := fmt.Sprintf("%s/api/v2/allowlists/%s/%s", global.Host, global.Org, o.environmentName)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPut,
@@ -94,7 +94,7 @@ func (o *allowArtifactOptions) run(args []string) error {
 	}
 	_, err := kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("artifact %s was allow listed in environment: %s", o.payload.Fingerprint, o.payload.Environment)
+		logger.Info("artifact %s was allow listed in environment: %s", o.payload.Fingerprint, o.environmentName)
 	}
 	return err
 }

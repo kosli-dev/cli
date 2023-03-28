@@ -561,6 +561,9 @@ func getPathOfEvidenceFileToUpload(evidencePaths []string) (string, bool, error)
 	return tarFilePath, cleanupNeeded, nil
 }
 
+// handleExpressions parses ~ and # expressions and returns
+// a name (usually flow name), an ID (positive for fixed IDs or negative for reverse IDs),
+// and an error if the expression is invalid
 func handleExpressions(expression string) (string, int, error) {
 	separator := ""
 	if strings.Contains(expression, "~") {
@@ -585,6 +588,9 @@ func handleExpressions(expression string) (string, int, error) {
 	return items[0], id, nil
 }
 
+// handleArtifactExpression parses artifact expressions (with @ and :) and returns
+// flow name, an ID (fingerprint or commit sha), the separator found, and an error
+// if the expression is invalid
 func handleArtifactExpression(expression string) (string, string, string, error) {
 	separator := ""
 	if strings.Contains(expression, "@") {

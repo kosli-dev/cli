@@ -756,3 +756,92 @@ func (suite *CliUtilsTestSuite) TestFormattedTimestamp() {
 func TestCliUtilsTestSuite(t *testing.T) {
 	suite.Run(t, new(CliUtilsTestSuite))
 }
+
+func (suite *CliUtilsTestSuite) TestHandleExpressions() {
+	tests := []struct {
+		name       string
+		expression string
+		wantName   string
+		wantId     int
+		wantErr    bool
+	}{
+		{
+			name:       "valid expression without special characters works",
+			expression: "hadron",
+			wantName:   "hadron",
+			wantId:     -1,
+		},
+		{
+			name:       "valid expression with # works",
+			expression: "hadron#12",
+			wantName:   "hadron",
+			wantId:     12,
+		},
+		{
+			name:       "valid expression with ~ works 1",
+			expression: "hadron~1",
+			wantName:   "hadron",
+			wantId:     -2,
+		},
+		{
+			name:       "valid expression with ~ works 2",
+			expression: "hadron~2",
+			wantName:   "hadron",
+			wantId:     -3,
+		},
+		{
+			name:       "invalid expression causes an error",
+			expression: "hadron#abc",
+			wantName:   "hadron",
+			wantErr:    true,
+		},
+	}
+	for _, t := range tests {
+		suite.Run(t.name, func() {
+			name, id, err := handleExpressions(t.expression)
+			require.True(suite.T(), err != nil == t.wantErr)
+			require.Equal(suite.T(), t.wantName, name)
+			require.Equal(suite.T(), t.wantId, id)
+		})
+	}
+}
+
+func (suite *CliUtilsTestSuite) TestHandleArtifactExpression() {
+	tests := []struct {
+		name       string
+		expression string
+		wantName   string
+		wantId     string
+		wantSep    string
+		wantErr    bool
+	}{
+		{
+			name:       "expressions without fingerprint/commit sha are invalid",
+			expression: "hadron",
+			wantErr:    true,
+		},
+		{
+			name:       "valid expression with @ works",
+			expression: "hadron@bd0de77b3b982927eab0bdfcc82ff2cf3dc023e0e6a5375aad7f185baa28bd30",
+			wantName:   "hadron",
+			wantId:     "bd0de77b3b982927eab0bdfcc82ff2cf3dc023e0e6a5375aad7f185baa28bd30",
+			wantSep:    "@",
+		},
+		{
+			name:       "valid expression with : works",
+			expression: "hadron:5146ebd",
+			wantName:   "hadron",
+			wantId:     "5146ebd",
+			wantSep:    ":",
+		},
+	}
+	for _, t := range tests {
+		suite.Run(t.name, func() {
+			name, id, sep, err := handleArtifactExpression(t.expression)
+			require.True(suite.T(), err != nil == t.wantErr)
+			require.Equal(suite.T(), t.wantName, name)
+			require.Equal(suite.T(), t.wantId, id)
+			require.Equal(suite.T(), t.wantSep, sep)
+		})
+	}
+}
