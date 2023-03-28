@@ -140,3 +140,13 @@ func Tar(src, tarFileName string) (string, error) {
 		return nil
 	})
 }
+
+func CreateFileWithContent(path, content string) error {
+	file, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	_, err = file.Write([]byte(content))
+	return err
+}

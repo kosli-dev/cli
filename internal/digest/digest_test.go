@@ -8,6 +8,7 @@ import (
 
 	"github.com/kosli-dev/cli/internal/docker"
 	"github.com/kosli-dev/cli/internal/logger"
+	"github.com/kosli-dev/cli/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -313,10 +314,8 @@ func (suite *DigestTestSuite) TestDirSha256Validation() {
 }
 
 func (suite *DigestTestSuite) createFileWithContent(path, content string) {
-	file, err := os.Create(path)
-	require.NoErrorf(suite.T(), err, "error creating test file %s", path)
-	_, err = file.Write([]byte(content))
-	require.NoErrorf(suite.T(), err, "error adding content to test file %s", path)
+	err := utils.CreateFileWithContent(path, content)
+	require.NoErrorf(suite.T(), err, "error creating file %s", path)
 }
 
 func (suite *DigestTestSuite) TestValidateDigest() {

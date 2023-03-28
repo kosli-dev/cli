@@ -231,15 +231,12 @@ func (suite *UtilsTestSuite) TestTar() {
 			if t.shouldCreateSrc {
 				tmpDir, err := os.MkdirTemp("", "")
 				require.NoError(suite.T(), err)
+				suite.createFileWithContent(filepath.Join(tmpDir, "newfile.txt"), "Hello World!")
 				defer os.RemoveAll(tmpDir)
 				path = tmpDir
 				if t.srcType == "file" {
 					path = filepath.Join(tmpDir, "some-file.txt")
-					f, err := CreateFile(path)
-					require.NoError(suite.T(), err)
-					defer f.Close()
-					_, err = f.WriteString("Hello World!")
-					require.NoError(suite.T(), err)
+					suite.createFileWithContent(path, "Hello World!")
 				}
 			}
 
@@ -251,6 +248,11 @@ func (suite *UtilsTestSuite) TestTar() {
 			}
 		})
 	}
+}
+
+func (suite *UtilsTestSuite) createFileWithContent(path, content string) {
+	err := CreateFileWithContent(path, content)
+	require.NoErrorf(suite.T(), err, "error creating file %s", path)
 }
 
 // In order for 'go test' to run this suite, we need to create
