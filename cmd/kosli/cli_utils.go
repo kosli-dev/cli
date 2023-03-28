@@ -597,20 +597,24 @@ func handleExpressions(expression string) (string, int, error) {
 // if the expression is invalid
 func handleArtifactExpression(expression string) (string, string, string, error) {
 	separator := ""
-	if strings.Contains(expression, "@") {
+	hasAt := strings.Contains(expression, "@")
+	hasColon := strings.Contains(expression, ":")
+	if hasAt && hasColon {
+		return "", "", separator, fmt.Errorf("invalid expression: %s. Both '@' and ':' are present", expression)
+	} else if hasAt {
 		separator = "@"
-	} else if strings.Contains(expression, ":") {
+	} else if hasColon {
 		separator = ":"
 	} else {
-		return "", "", separator, fmt.Errorf("invalid expression: %s", expression)
+		return "", "", "", fmt.Errorf("invalid expression: %s", expression)
 	}
 
-	items := strings.Split(expression, separator)
+	items := strings.SplitN(expression, separator, 2)
 	if items[0] == "" {
-		return items[0], items[1], separator, fmt.Errorf("invalid expression: %s. Flow name is missing", expression)
+		return "", "", "", fmt.Errorf("invalid expression: %s. Flow name is missing", expression)
 	}
 	if items[1] == "" {
-		return items[0], items[1], separator, fmt.Errorf("invalid expression: %s. Artifact identity is missing.", expression)
+		return "", "", "", fmt.Errorf("invalid expression: %s. Artifact identity is missing", expression)
 	}
 
 	return items[0], items[1], separator, nil

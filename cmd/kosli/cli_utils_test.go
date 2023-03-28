@@ -810,12 +810,12 @@ func (suite *CliUtilsTestSuite) TestHandleExpressions() {
 			wantErr:    true,
 		},
 		{
-			name:       "invalid expression containing ~ and # causes an error",
+			name:       "invalid expression containing multiple #s causes an error",
 			expression: "hadron#2#3",
 			wantErr:    true,
 		},
 		{
-			name:       "invalid expression containing ~ and # causes an error",
+			name:       "invalid expression containing multiple ~s causes an error",
 			expression: "hadron~2~1",
 			wantErr:    true,
 		},
@@ -856,6 +856,35 @@ func (suite *CliUtilsTestSuite) TestHandleArtifactExpression() {
 			expression: "hadron:5146ebd",
 			wantName:   "hadron",
 			wantId:     "5146ebd",
+			wantSep:    ":",
+		},
+		{
+			name:       "missing flow name with @ causes an error",
+			expression: "@12",
+			wantErr:    true,
+		},
+		{
+			name:       "missing flow name with : causes an error",
+			expression: ":12",
+			wantErr:    true,
+		},
+		{
+			name:       "invalid expression containing @ and : causes an error",
+			expression: "hadron@xxx:yyy",
+			wantErr:    true,
+		},
+		{
+			name:       "invalid expression containing multiple @s does not cause an error", // fails on the server
+			expression: "hadron@xxx@yyy",
+			wantName:   "hadron",
+			wantId:     "xxx@yyy",
+			wantSep:    "@",
+		},
+		{
+			name:       "invalid expression containing multiple :s causes an error", // fails on the server
+			expression: "hadron:xxx:yyy",
+			wantName:   "hadron",
+			wantId:     "xxx:yyy",
 			wantSep:    ":",
 		},
 	}
