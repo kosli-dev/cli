@@ -342,9 +342,9 @@ Only present in aws-beta (snapshot: aws-beta#266)
      Started:      Wed, 19 Oct 2022 09:47:33 CEST • 11 days ago
 ```
 
-## Diff environments
+## Diff environments/snapshots
 
-You can use `diff` to compare two different environments:
+You can use `diff` to compare snapshots of two different environments or different snapshots of the same environment:
 
 ```
 $ kosli diff snapshots aws-beta~3 aws-prod

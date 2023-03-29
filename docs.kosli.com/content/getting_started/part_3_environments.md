@@ -7,50 +7,16 @@ weight: 220
 
 Recording the status of runtime environments is one of the fundamental features of Kosli. Kosli records the status of runtime environments by detecting artifacts running in any given environment and reporting the information.
 
-If the list of running artifacts is different than what was reported previously a new snapshot is created. Snapshots are immutable and can't be tampered with.
-
-There is range of `kosli snapshot [...]` commands, allowing you to report a variety of environments. To record the current status of your environment you simply run one of them. You can do it manually but typically recording commands would run automatically, e.g. via a cron job or scheduled CI job.
-
-{{< hint warning >}}
-In all the commands below we skip required `--api-token` and `--org` flags - these can be easily configured via [config file](/kosli_overview/kosli_tools/#config-file) or [environment variables](/kosli_overview/kosli_tools/#environment-variables) so you don't have type them over and over again.
-{{< /hint >}}
-
-After you started reporting, you can - at any point - check exactly what is running in your environment using the CLI command:
-
-{{< tabs "get env" "col-no-wrap" >}}
-
-{{< tab "v2" >}}
-```shell {.command}
-$ kosli get environment quickstart
-
-COMMIT  ARTIFACT                                                           PIPELINE  RUNNING_SINCE  REPLICAS
-N/A     Name: nginx@sha256:0047b7(...))59cce6d40291ccfb4e039f5dc7efd33286  N/A       7 days ago     1
-        Fingerprint: 0047b729188(...)959cce6d40291ccfb4e039f5dc7efd33286   
-```
-{{< /tab >}}
-
-{{< tab "v0.1.x" >}}
-```shell {.command}
-$ kosli environment get quickstart
-
-COMMIT  ARTIFACT                                                           PIPELINE  RUNNING_SINCE  REPLICAS
-N/A     Name: nginx@sha256:0047b7(...))59cce6d40291ccfb4e039f5dc7efd33286  N/A       7 days ago     1
-        Fingerprint: 0047b729188(...)959cce6d40291ccfb4e039f5dc7efd33286   
-```
-{{< /tab >}}
-
-{{< /tabs >}}
-
-
-Or in the UI, by clicking on the name of the environment (after selecting "Environments" in the left hand side menu):
-
-{{<figure src="/images/env-snap-1.png" alt="Environment, Snapshot #1" width="900">}}
-
 ## Create an environment
 
 A Kosli *environment* stores snapshots containing information about the software artifacts that are running in your runtime environments. 
 
 Before you start reporting what's running in your environments you need to create an environment in Kosli and make sure it matches the type of the environment you'll be reporting, e.g. `docker` or `k8s`. You can see all the available environment types in the help text for the `--environment-type` flag in the [`kosli create environment`](/client_reference/kosli_create_environment/) command. 
+
+{{< hint warning >}}
+In all the commands below we skip required `--api-token` and `--org` flags - these can be easily configured via [config file](/kosli_overview/kosli_tools/#config-file) or [environment variables](/kosli_overview/kosli_tools/#environment-variables) so you don't have type them over and over again.
+{{< /hint >}}
+
 
 ### Example
 
@@ -114,17 +80,46 @@ Make sure you've selected the organization you want to use (`docs-demo` here) an
 
 {{<figure src="/images/add-new-env.png" alt="Add new Environment" width="600">}}
 
-Fill in the form - type, name and a description - and click "Save Environment" button
-
-{{<figure src="/images/save-env.png" alt="Save Environment" width="650">}}
-
 After the new environment is created you'll be redirected to its page - with "No events have been found for [...]" message. Once you start reporting your actual runtime environment to Kosli you'll see all the events (such as which artifacts started or stopped running) listed on that page.
 
-To see the list of all your environments, just click on the "Environments" again
-
-{{<figure src="/images/env-list.png" alt="Environments" width="900">}}
-
 ## Report an environment
+
+There is range of `kosli snapshot [...]` commands, allowing you to report a variety of environments. To record the current status of your environment you simply run one of them. You can do it manually but typically recording commands would run automatically, e.g. via a cron job or scheduled CI job.
+
+Whenever an environment report is received, if the received list of running artifacts is different than what was reported previously a new snapshot is created. Snapshots are immutable and can't be tampered with.
+
+After you started reporting, you can - at any point - check exactly what is running in your environment using the CLI command:
+
+{{< tabs "get env" "col-no-wrap" >}}
+
+{{< tab "v2" >}}
+```shell {.command}
+$ kosli get environment quickstart
+
+COMMIT  ARTIFACT                                                           PIPELINE  RUNNING_SINCE  REPLICAS
+N/A     Name: nginx@sha256:0047b7(...))59cce6d40291ccfb4e039f5dc7efd33286  N/A       7 days ago     1
+        Fingerprint: 0047b729188(...)959cce6d40291ccfb4e039f5dc7efd33286   
+```
+{{< /tab >}}
+
+{{< tab "v0.1.x" >}}
+```shell {.command}
+$ kosli environment get quickstart
+
+COMMIT  ARTIFACT                                                           PIPELINE  RUNNING_SINCE  REPLICAS
+N/A     Name: nginx@sha256:0047b7(...))59cce6d40291ccfb4e039f5dc7efd33286  N/A       7 days ago     1
+        Fingerprint: 0047b729188(...)959cce6d40291ccfb4e039f5dc7efd33286   
+```
+{{< /tab >}}
+
+{{< /tabs >}}
+
+
+
+Or in the UI, by clicking on the name of the environment (after selecting "Environments" in the left hand side menu):
+
+{{<figure src="/images/env-snap-1.png" alt="Environment, Snapshot #1" width="900">}}
+
 
 {{< tabs "env-reports" "col-no-wrap" >}}
 
