@@ -41,7 +41,7 @@ kosli list deployments [flags]
 ```shell
 
 # list the last 15 deployments for a flow:
-kosli list deploymentss \ 
+kosli list deployments \ 
 	--flow yourFlowName \
 	--api-token yourAPIToken \
 	--org yourOrgName

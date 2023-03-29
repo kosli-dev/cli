@@ -10,7 +10,7 @@ Get an approval from a specified flow.
 The expected argument is an expression to specify the approval to get.
 It has the format <FLOW_NAME>[SEPARATOR][INTEGER_REFERENCE]
 
-Specify SNAPPISH by:
+the expression can be specified as follows:
 	flowName~<N>  N'th behind the latest approval
 	flowName#<N>  approval number N
 	flowName      the latest approval
@@ -18,7 +18,7 @@ Specify SNAPPISH by:
 Examples of valid expressions are: flow (latest approval), flow#10 (approval number 10), flow~2 (the third latest approval)
 
 ```shell
-kosli get approval SNAPPISH [flags]
+kosli get approval EXPRESSION [flags]
 ```
 
 ## Flags
