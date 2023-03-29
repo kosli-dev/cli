@@ -105,8 +105,6 @@ A number of required flags may be defaulted to a set of environment variables, d
 
 ### Template
 
-{{<figure src="/images/artifact-evidence.png" alt="Artifact evidence" width="600">}}
-
 When creating a Kosli flow you need to provide a template - a list of expected evidence you require for your artifact in order for the artifact to become compliant. That could be for example:
 * existing pull request
 * code coverage report
