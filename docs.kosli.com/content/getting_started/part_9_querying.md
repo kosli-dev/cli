@@ -36,7 +36,7 @@ Search result resolved to commit 0f5c9e19c4d4f948d19ce4c8495b2a44745cda96
 Name:              cyberdojo/web:0f5c9e1
 Fingerprint:       62e1d2909cc59193b31bfd120276fcb8ba5e42dd6becd873218a41e4ce022505
 Has provenance:    true
-Pipeline:          web
+Flow:              web
 Git commit:        0f5c9e19c4d4f948d19ce4c8495b2a44745cda96
 Commit URL:        https://github.com/cyber-dojo/web/commit/0f5c9e19c4d4f948d19ce4c8495b2a44745cda96
 Build URL:         https://github.com/cyber-dojo/web/actions/runs/3021563461
@@ -52,11 +52,11 @@ History:
     No longer running in aws-prod#210 environment      Sat, 10 Sep 2022 08:49:28 CEST
 ```
 
-The information returned by `kosli search` - like Pipeline, Fingerprint or History - can be used to run more dedicated searches in Kosli. 
+The information returned by `kosli search` - like Flow, Fingerprint or History - can be used to run more dedicated searches in Kosli. 
 
 ## Search for a flow
 
-When you search in Kosli you often need to refer to a specific pipeline. If you don't remember all the pipelines' names it is easy to list them with `kosli list flows` command:
+When you search in Kosli you often need to refer to a specific flow. If you don't remember all the flows' names it is easy to list them with `kosli list flows` command:
 
 ```
 $ kosli list flows 
@@ -75,7 +75,7 @@ shas                    UX for git+image shas               public
 web                     UX for practicing TDD               public
 ```
 
-And if you want to check metadata of a specific pipeline (like description or template) use `kosli get flow`
+And if you want to check metadata of a specific flow (like description or template) use `kosli get flow`
 
 ```
 $ kosli get flow creator
@@ -88,7 +88,7 @@ Last Deployment At:  Wed, 14 Sep 2022 10:51:43 CEST • one month ago
 
 ## List artifacts
 
-To find the information about artifacts reported to a specific pipeline in Kosli use `kosli list artifacts` command
+To find the information about artifacts reported to a specific flow in Kosli use `kosli list artifacts` command
 
 ```
 $ kosli list artifacts --flow creator
@@ -130,7 +130,7 @@ To get more detailed information about a given artifact use `kosli get artifact`
 OR
 * flow name followed by `:` and commit sha
 
-Both are available in the output of `kosli artifact ls` command
+Both are available in the output of `kosli list artifacts` command
 
 ```
 # search for artifact by its fingerprint
@@ -198,7 +198,7 @@ History:
 
 ## Search for an environment
 
-As is the case for pipelines and artifacts, you can list all the Kosli environments you created under your organization
+As is the case for flows and artifacts, you can list all the Kosli environments you created under your organization
 
 ```
 $ kosli list environments
@@ -222,7 +222,7 @@ Last Reported At:  Sun, 30 Oct 2022 14:55:42 CET • 5 seconds ago
 
 ## Get environment events
 
-When you have the name of the environment you want to dig into use `kosli list snapshots` or `kosli log environment` to browse snapshost and changes in the environment, or `kosli get snapshot` to have a look at a specific snapshot.
+When you have the name of the environment you want to dig into use `kosli list snapshots` or `kosli log environment` to browse snapshots and changes in the environment, or `kosli get snapshot` to have a look at a specific snapshot.
 
 ```
 $ kosli list snapshots aws-beta
@@ -250,7 +250,7 @@ You can also choose to see the actual events from each snapshot, using `kosli lo
 
 ```
 $ kosli log environment aws-beta
-SNAPSHOT  EVENT                                                                          PIPELINE   DEPLOYMENTS
+SNAPSHOT  EVENT                                                                          FLOW       DEPLOYMENTS
 #266      Artifact: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/dashboard:d90a3e4    dashboard  #15 
           Fingerprint: dd5308fdcda117c1ff3963e192a069ae390c2fe9e10e8abfa2430224265efe98             
           Description: 1 instance started running (from 0 to 1)                                     
@@ -287,11 +287,11 @@ SNAPSHOT  FROM                            TO                              DURATI
 
 ## Get a snapshot 
 
-To have a look at what is or was running in a given snapshot use `kosli environment get` command. You can use just the environment name as the argument, which will give you the latest snapshot, add `#` and snapshot number, to get a specific one, or `~n` where *n* is a number, to get *n-th* snapshot behind a current one:
+To have a look at what is or was running in a given snapshot use `kosli get snapshot` command. You can use just the environment name as the argument, which will give you the latest snapshot, add `#` and snapshot number, to get a specific one, or `~n` where *n* is a number, to get *n-th* snapshot behind a current one:
 
 ``` 
 $ kosli get snapshot aws-beta
-COMMIT   ARTIFACT                                                                              PIPELINE  RUNNING_SINCE  REPLICAS
+COMMIT   ARTIFACT                                                                              FLOW      RUNNING_SINCE  REPLICAS
 d90a3e4  Name: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/dashboard:d90a3e4               N/A       11 days ago    1
          Fingerprint: dd5308fdcda117c1ff3963e192a069ae390c2fe9e10e8abfa2430224265efe98                                  
                                                                                                                         
@@ -303,7 +303,7 @@ d90a3e4  Name: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/dashboard:d90a3e4
 [...]
 
 $ kosli get snapshot aws-beta#256
-COMMIT   ARTIFACT                                                                              PIPELINE  RUNNING_SINCE  REPLICAS
+COMMIT   ARTIFACT                                                                              FLOW      RUNNING_SINCE  REPLICAS
 6fe0d30  Name: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/repler:6fe0d30                  N/A       16 days ago    1
          Fingerprint: a0c03099c832e4ce5f23f5e33dac9889c0b7ccd61297fffdaf1c67e7b99e6f8f                                  
                                                                                                                         
@@ -315,7 +315,7 @@ d90a3e4  Name: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/dashboard:d90a3e4
 [...]
 
 $ kosli get snapshot aws-beta~19
-COMMIT   ARTIFACT                                                                              PIPELINE  RUNNING_SINCE  REPLICAS
+COMMIT   ARTIFACT                                                                              FLOW      RUNNING_SINCE  REPLICAS
 2e8646c  Name: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/shas:2e8646c                    N/A       one month ago  1
          Fingerprint: a3158c3e79c83905fd3613e06b8cf5a45141c50cf49d4f99de90a2d081b77771                                  
                                                                                                                         
@@ -337,7 +337,7 @@ Only present in aws-beta (snapshot: aws-beta#266)
                    
      Name:         244531986313.dkr.ecr.eu-central-1.amazonaws.com/dashboard:d90a3e4
      Fingerprint:  dd5308fdcda117c1ff3963e192a069ae390c2fe9e10e8abfa2430224265efe98
-     Pipeline:     dashboard
+     Flow:         dashboard
      Commit URL:   https://github.com/cyber-dojo/dashboard/commit/d90a3e481d57023816f6694ba4252342889405eb
      Started:      Wed, 19 Oct 2022 09:47:33 CEST • 11 days ago
 ```
@@ -352,19 +352,19 @@ Only present in aws-prod (snapshot: aws-prod#261)
                    
      Name:         274425519734.dkr.ecr.eu-central-1.amazonaws.com/saver:8d724a1
      Fingerprint:  3e52f9b838cbb4e31455524c908eb8dd878b2ae25144427de8160f6658ee191f
-     Pipeline:     saver
+     Flow:         saver
      Commit URL:   https://github.com/cyber-dojo/saver/commit/8d724a14c6e95947f0c56ad6af8251bca656a599
      Started:      Fri, 21 Oct 2022 11:04:59 CEST • 9 days ago
                    
      Name:         274425519734.dkr.ecr.eu-central-1.amazonaws.com/nginx:d491f5c
      Fingerprint:  4f66ab1b0a7a9f7ed064a3b1033a53ec7dd99359ff68d509ab555dcf4516b23e
-     Pipeline:     nginx
+     Flow:         nginx
      Commit URL:   https://github.com/cyber-dojo/nginx/commit/d491f5c06babe70bfebe2f9df0a9a66db7957f17
      Started:      Fri, 21 Oct 2022 11:03:53 CEST • 9 days ago
                    
      Name:         274425519734.dkr.ecr.eu-central-1.amazonaws.com/custom-start-points:8c551d3
      Fingerprint:  76ad6ffc1828d8213a39bc39c879b3c35a75d4705d1d8df5977a87a11e6ae25e
-     Pipeline:     custom-start-points
+     Flow:         custom-start-points
      Commit URL:   https://github.com/cyber-dojo/custom-start-points/commit/8c551d378051b6ef1fde7fd58aaced1047264405
      Started:      Fri, 21 Oct 2022 11:04:30 CEST • 9 days ago
 [...]
