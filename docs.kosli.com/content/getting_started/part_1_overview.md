@@ -38,7 +38,7 @@ In practice it means running a CLI command. Depending on the type of your enviro
 
 Once your reporting is up and running you'll see the results under "Environments" at [app.kosli.com](https://app.kosli.com)
 
-{{<figure src="/images/env-reporting.png" alt="Environments at app.kosli.com" width="900">}}
+{{<figure src="/images/envs.png" alt="Environments at app.kosli.com" width="900">}}
 
 ## Reporting artifacts and evidences
 

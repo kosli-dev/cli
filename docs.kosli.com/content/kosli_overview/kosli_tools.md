@@ -182,7 +182,7 @@ Here are two ways of enabling a dry run:
 
 [app.kosli.com](https://app.kosli.com) is an easy way to monitor the status of your environments and flows. All you need to log in is a GitHub account.
 
-![app.kosli.com](/images/app.png)
+{{<figure src="/images/envs.png" alt="app.kosli.com" width="900">}}
 
 On the left of the page you can see the menu where you can:
 
