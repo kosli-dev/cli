@@ -49,4 +49,3 @@ Before you start reporting you need to [create a flow](/getting_started/part_4_f
 Once your Kosli flows are ready you can start reporting your [artifacts](/getting_started/part_5_artifacts/) and artifact related events ([evidence](/getting_started/part_6_evidence/), [approvals](/getting_started/part_7_approvals/), [deployments](/getting_started/part_8_deployments/)).
 
 You can report artifacts and events from wherever you want - including your own machine - but the common practice is to report it from CI pipelines immediately after it happens (or, in case of [`kosli expect deployment`](/client_reference/kosli_expect_deployment/) command, right before the deployment starts).
-
