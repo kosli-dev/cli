@@ -24,10 +24,20 @@ jobs:
           BRANCH: docs-main
           FOLDER: docs.kosli.com
           TARGET_DIR: docs.kosli.com
-          # below line should be uncommented on main branch so the client reference is not replaced when
-          # only static content changes
-          # together with ´make docs´ disabled
-          # 
-          # and when build runs on release the ´make docs´ should be enabled AND below line commented 
+          # The action takes all the files from FOLDER on main branch and copies them to TARGET_DIR
+          # on docs-main branch. That branch contains only docs.kosli.com folder
+          #
+          # CLEAR_GLOBS_FILE is a way to define which files and folders on TARGET_DIR to delete before 
+          # copying from main, and which to keep (the ones starting with '!')
+          #
+          # In our case, cli reference md files, and docs.kosli.com/assets/metadata.json
+          # are not part of the repository - they get generated only in release workflow. 
+          # When they get generated they are also copied to docs-main branch, and we don't need to preserve 
+          # anything from previous version of docs-main branch - hence no CLEAR_GLOBS_FILE in release.yml.
+          #
+          # When we release just static content, the cli reference md files, and 
+          # docs.kosli.com/assets/metadata.json are not present, but we use CLEAR_GLOBS_FILE to preserve
+          # their versions pushed to docs-main during last release - hence CLEAR_GLOBS_FILE in
+          # publish_docs.yml, to prevent removing them before copying
           CLEAR_GLOBS_FILE: ".clear-files"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
