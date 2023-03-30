@@ -1,3 +1,4 @@
+[![codecov](https://codecov.io/gh/kosli-dev/cli/branch/main/graph/badge.svg?token=Z4Y53XIOKJ)](https://codecov.io/gh/kosli-dev/cli)
 # Kosli Reporter
 
 This CLI is used to report DevOps change events to Kosli and query them.
