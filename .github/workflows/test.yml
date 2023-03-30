@@ -68,6 +68,9 @@ jobs:
         git config --global user.email johndoe@example.com
         make test_integration_full
 
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3
+
     - name: Slack Notification on Failure
       if: ${{ failure() }}
       uses: rtCamp/action-slack-notify@v2
