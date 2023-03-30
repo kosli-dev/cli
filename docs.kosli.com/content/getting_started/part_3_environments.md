@@ -94,11 +94,11 @@ After you started reporting, you can - at any point - check exactly what is runn
 
 {{< tab "v2" >}}
 ```shell {.command}
-$ kosli get environment quickstart
+$ kosli get snapshot quickstart
 
-COMMIT  ARTIFACT                                                           PIPELINE  RUNNING_SINCE  REPLICAS
-N/A     Name: nginx@sha256:0047b7(...))59cce6d40291ccfb4e039f5dc7efd33286  N/A       7 days ago     1
-        Fingerprint: 0047b729188(...)959cce6d40291ccfb4e039f5dc7efd33286   
+COMMIT   ARTIFACT                                                                       FLOW  RUNNING_SINCE  REPLICAS
+9f14efa  Name: nginx:1.21                                                               N/A   18 hours ago   1
+         Fingerprint: 2bcabc23b45489fb0885d69a06ba1d648aeda973fae7bb981bafbb884165e514
 ```
 {{< /tab >}}
 
@@ -106,9 +106,9 @@ N/A     Name: nginx@sha256:0047b7(...))59cce6d40291ccfb4e039f5dc7efd33286  N/A  
 ```shell {.command}
 $ kosli environment get quickstart
 
-COMMIT  ARTIFACT                                                           PIPELINE  RUNNING_SINCE  REPLICAS
-N/A     Name: nginx@sha256:0047b7(...))59cce6d40291ccfb4e039f5dc7efd33286  N/A       7 days ago     1
-        Fingerprint: 0047b729188(...)959cce6d40291ccfb4e039f5dc7efd33286   
+COMMIT   ARTIFACT                                                                       FLOW  RUNNING_SINCE  REPLICAS
+9f14efa  Name: nginx:1.21                                                               N/A   18 hours ago   1
+         Fingerprint: 2bcabc23b45489fb0885d69a06ba1d648aeda973fae7bb981bafbb884165e514  
 ```
 {{< /tab >}}
 
