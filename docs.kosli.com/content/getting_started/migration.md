@@ -26,7 +26,7 @@ Keep in mind that for some commands the flag names or argument types are also up
 | kosli commit report evidence gitlab-mergerequest              | [kosli report evidence commit pullrequest gitlab](https://docs.kosli.com/client_reference/kosli_report_evidence_commit_pullrequest_gitlab/)                   |
 | kosli commit report evidence junit                            | [kosli report evidence commit junit](https://docs.kosli.com/client_reference/kosli_report_evidence_commit_junit/)                    |
 | kosli commit report evidence snyk                             | [kosli report evidence commit snyk](https://docs.kosli.com/client_reference/kosli_report_evidence_commit_snyk/)                    |
-| kosli completion                                              | [kosli completion]()https://docs.kosli.com/client_reference/kosli_completion/                                     |
+| kosli completion                                              | [kosli completion](https://docs.kosli.com/client_reference/kosli_completion/)                                     |
 | kosli deployment get                                          | [kosli get deployment](https://docs.kosli.com/client_reference/kosli_get_deployment/)                                 |
 | kosli deployment ls                                           | [kosli list deployments](https://docs.kosli.com/client_reference/kosli_list_deployments/)                                 |
 | kosli environment allowedartifacts add                        | [kosli allow artifact](https://docs.kosli.com/client_reference/kosli_allow_artifact/)                                 |
