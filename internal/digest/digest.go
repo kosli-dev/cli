@@ -41,15 +41,14 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 	if err != nil {
 		return "", err
 	}
-	// defer os.RemoveAll(tmpDir)
-	fmt.Println("tmpDir: ", tmpDir)
+	defer os.RemoveAll(tmpDir)
 
 	digestsFile, err := os.Create(filepath.Join(tmpDir, "digests"))
 	if err != nil {
 		return "", err
 	}
 	defer digestsFile.Close()
-	err = prepareDirContentSha256(digestsFile, dirPath, tmpDir, excludePaths, logger)
+	err = calculateDirContentSha256(digestsFile, dirPath, tmpDir, excludePaths, logger)
 	if err != nil {
 		return "", err
 	}
@@ -57,39 +56,39 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 	return FileSha256(digestsFile.Name())
 }
 
-// prepareDirContentSha256 calculates a sha256 digest for a directory content
-func prepareDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, excludePaths []string, logger *logger.Logger) error {
-	files, err := os.ReadDir(dirPath)
+// calculateDirContentSha256 calculates a sha256 digest for a directory content
+func calculateDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, excludePaths []string, logger *logger.Logger) error {
+	fsEntries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return err
 	}
 
-	for _, f := range files {
+	for _, entry := range fsEntries {
 
-		if utils.Contains(excludePaths, f.Name()) {
+		if utils.Contains(excludePaths, entry.Name()) {
 			continue
 		}
 
-		nameSha256, err := addNameDigest(tmpDir, f.Name(), digestsFile)
+		nameSha256, err := addNameDigest(tmpDir, entry.Name(), digestsFile)
 		if err != nil {
 			return err
 		}
 
-		pathedEntry := filepath.Join(dirPath, f.Name())
+		entryPath := filepath.Join(dirPath, entry.Name())
 
-		if f.IsDir() {
-			logger.Debug("dirname: %s -- dirname digest: %v", pathedEntry, nameSha256)
-			err := prepareDirContentSha256(digestsFile, pathedEntry, tmpDir, excludePaths, logger)
+		if entry.IsDir() {
+			logger.Debug("dirname: %s -- dirname digest: %v", entryPath, nameSha256)
+			err := calculateDirContentSha256(digestsFile, entryPath, tmpDir, excludePaths, logger)
 			if err != nil {
 				return err
 			}
 		} else {
-			logger.Debug("filename: %s -- filename digest: %s", pathedEntry, nameSha256)
-			fileContentSha256, err := FileSha256(pathedEntry)
+			logger.Debug("filename: %s -- filename digest: %s", entryPath, nameSha256)
+			fileContentSha256, err := FileSha256(entryPath)
 			if err != nil {
 				return err
 			}
-			logger.Debug("filename: %s -- content digest: %s", pathedEntry, fileContentSha256)
+			logger.Debug("filename: %s -- content digest: %s", entryPath, fileContentSha256)
 			if _, err := digestsFile.Write([]byte(fileContentSha256)); err != nil {
 				return err
 			}
@@ -100,17 +99,13 @@ func prepareDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, exclu
 
 // addNameDigest calculates the sha256 digest of the filename and adds it to the digests file
 func addNameDigest(tmpDir string, filename string, digestsFile *os.File) (string, error) {
-	file, err := os.Create(filepath.Join(tmpDir, "name"))
+	nameFilePath := filepath.Join(tmpDir, "name")
+	err := utils.CreateFileWithContent(nameFilePath, filename)
 	if err != nil {
 		return "", err
 	}
-	defer file.Close()
 
-	if _, err := file.Write([]byte(filename)); err != nil {
-		return "", err
-	}
-
-	nameSha256, err := FileSha256(filepath.Join(tmpDir, "name"))
+	nameSha256, err := FileSha256(nameFilePath)
 	if err != nil {
 		return "", err
 	}
