@@ -21,7 +21,7 @@ type ServerData struct {
 }
 
 // CreateServerArtifactsData creates a list of ServerData for server artifacts at given paths
-func CreateServerArtifactsData(paths []string, logger *logger.Logger) ([]*ServerData, error) {
+func CreateServerArtifactsData(paths, excludePaths []string, logger *logger.Logger) ([]*ServerData, error) {
 	result := []*ServerData{}
 	for _, p := range paths {
 		digests := make(map[string]string)
@@ -34,7 +34,7 @@ func CreateServerArtifactsData(paths []string, logger *logger.Logger) ([]*Server
 		if !finfo.IsDir() {
 			sha256, err = digest.FileSha256(p)
 		} else {
-			sha256, err = digest.DirSha256(p, logger)
+			sha256, err = digest.DirSha256(p, excludePaths, logger)
 		}
 
 		if err != nil {

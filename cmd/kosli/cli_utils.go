@@ -304,7 +304,7 @@ func GetSha256Digest(artifactName string, o *fingerprintOptions, logger *log.Log
 	case "file":
 		fingerprint, err = digest.FileSha256(artifactName)
 	case "dir":
-		fingerprint, err = digest.DirSha256(artifactName, logger)
+		fingerprint, err = digest.DirSha256(artifactName, o.excludePaths, logger)
 	case "docker":
 		if o.registryProvider != "" {
 			var providerInfo *registryProviderEndpoints

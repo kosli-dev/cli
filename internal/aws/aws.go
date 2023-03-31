@@ -206,7 +206,7 @@ func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, logger *logger.Logge
 		}
 	}
 
-	sha256, err := digest.DirSha256(tempDirName, logger)
+	sha256, err := digest.DirSha256(tempDirName, []string{}, logger)
 	if err != nil {
 		return s3Data, err
 	}

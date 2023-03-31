@@ -16,6 +16,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/kosli-dev/cli/internal/utils"
 )
 
 var (
@@ -25,8 +26,9 @@ var (
 )
 
 // DirSha256 returns sha256 digest of a directory
-func DirSha256(dirPath string, logger *logger.Logger) (string, error) {
+func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (string, error) {
 	logger.Debug("Input path: %v", filepath.Base(dirPath))
+	logger.Debug("Exclude paths: %s", excludePaths)
 	info, err := os.Stat(dirPath)
 	if err != nil {
 		return "", err
@@ -39,14 +41,15 @@ func DirSha256(dirPath string, logger *logger.Logger) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer os.RemoveAll(tmpDir)
+	// defer os.RemoveAll(tmpDir)
+	fmt.Println("tmpDir: ", tmpDir)
 
 	digestsFile, err := os.Create(filepath.Join(tmpDir, "digests"))
 	if err != nil {
 		return "", err
 	}
 	defer digestsFile.Close()
-	err = prepareDirContentSha256(digestsFile, dirPath, tmpDir, logger)
+	err = prepareDirContentSha256(digestsFile, dirPath, tmpDir, excludePaths, logger)
 	if err != nil {
 		return "", err
 	}
@@ -55,13 +58,18 @@ func DirSha256(dirPath string, logger *logger.Logger) (string, error) {
 }
 
 // prepareDirContentSha256 calculates a sha256 digest for a directory content
-func prepareDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, logger *logger.Logger) error {
+func prepareDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, excludePaths []string, logger *logger.Logger) error {
 	files, err := os.ReadDir(dirPath)
 	if err != nil {
 		return err
 	}
 
 	for _, f := range files {
+
+		if utils.Contains(excludePaths, f.Name()) {
+			continue
+		}
+
 		nameSha256, err := addNameDigest(tmpDir, f.Name(), digestsFile)
 		if err != nil {
 			return err
@@ -71,7 +79,7 @@ func prepareDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, logge
 
 		if f.IsDir() {
 			logger.Debug("dirname: %s -- dirname digest: %v", pathedEntry, nameSha256)
-			err := prepareDirContentSha256(digestsFile, pathedEntry, tmpDir, logger)
+			err := prepareDirContentSha256(digestsFile, pathedEntry, tmpDir, excludePaths, logger)
 			if err != nil {
 				return err
 			}

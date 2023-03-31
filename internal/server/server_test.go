@@ -126,7 +126,7 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsData() {
 				}
 			}
 
-			serverData, err := CreateServerArtifactsData(paths, logger.NewStandardLogger())
+			serverData, err := CreateServerArtifactsData(paths, []string{}, logger.NewStandardLogger())
 			require.NoErrorf(suite.T(), err, "error creating server artifact data: %v", err)
 
 			digestsList := []map[string]string{}
@@ -194,7 +194,7 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsDataWithFiles() {
 				suite.createFileWithContent(path, t.args.content)
 			}
 
-			serverData, err := CreateServerArtifactsData(paths, logger.NewStandardLogger())
+			serverData, err := CreateServerArtifactsData(paths, []string{}, logger.NewStandardLogger())
 			if t.expectError {
 				require.Errorf(suite.T(), err, "was expecting error during creating server artifact data but got none")
 			} else {
@@ -226,7 +226,7 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsDataInvalid() {
 
 	paths := []string{"a/b/c"}
 
-	_, err := CreateServerArtifactsData(paths, logger.NewStandardLogger())
+	_, err := CreateServerArtifactsData(paths, []string{}, logger.NewStandardLogger())
 	require.Errorf(suite.T(), err, "error was expected")
 }
 

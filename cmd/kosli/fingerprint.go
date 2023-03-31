@@ -17,6 +17,7 @@ type fingerprintOptions struct {
 	registryProvider string
 	registryUsername string
 	registryPassword string
+	excludePaths     []string
 }
 
 func newFingerprintCmd(out io.Writer) *cobra.Command {
@@ -35,6 +36,7 @@ func newFingerprintCmd(out io.Writer) *cobra.Command {
 	}
 
 	addFingerprintFlags(cmd, o)
+	cmd.Flags().StringSliceVarP(&o.excludePaths, "exclude", "e", []string{}, excludePathsFlag)
 	err := RequireFlags(cmd, []string{"artifact-type"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
