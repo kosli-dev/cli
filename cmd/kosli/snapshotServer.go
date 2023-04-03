@@ -23,8 +23,8 @@ kosli snapshot server yourEnvironmentName \
 	--org yourOrgName  `
 
 type snapshotServerOptions struct {
-	paths        []string
-	excludePaths []string
+	paths []string
+	// excludePaths []string
 }
 
 func newSnapshotServerCmd(out io.Writer) *cobra.Command {
@@ -54,7 +54,7 @@ func newSnapshotServerCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringSliceVarP(&o.paths, "paths", "p", []string{}, pathsFlag)
-	cmd.Flags().StringSliceVarP(&o.excludePaths, "exclude", "e", []string{}, excludePathsFlag)
+	// cmd.Flags().StringSliceVarP(&o.excludePaths, "exclude", "e", []string{}, excludePathsFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"paths"})
@@ -70,7 +70,8 @@ func (o *snapshotServerOptions) run(args []string) error {
 
 	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/server", global.Host, global.Org, envName)
 
-	artifacts, err := server.CreateServerArtifactsData(o.paths, o.excludePaths, logger)
+	// artifacts, err := server.CreateServerArtifactsData(o.paths, o.excludePaths, logger)
+	artifacts, err := server.CreateServerArtifactsData(o.paths, []string{}, logger)
 	if err != nil {
 		return err
 	}
