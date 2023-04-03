@@ -110,7 +110,23 @@
     }
   }
 
-  table {
+  &:not(.reference-page) table {
+    width: 100%;
+    th {
+      text-align: left;
+      background-color: $neutral-400;
+    }
+
+    th, td {
+      padding: 5px;
+    }
+
+    tr:nth-child(even) td {
+      background-color: $neutral-300;
+    }
+  }
+
+  &.reference-page table {
     width: 100%;
     display: table;
     background-color: #272822;

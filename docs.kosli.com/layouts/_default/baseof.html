@@ -75,7 +75,14 @@
 {{ end }}
 
 {{ define "main" }}
-  <article class="markdown">
+  {{ $reference_page := false }}
+  {{ if in .Permalink "/legacy_ref/" }}
+    {{ $reference_page = true }}
+  {{ end }}
+  {{ if in .Permalink "/client_reference/" }}
+    {{ $reference_page = true }}
+  {{ end }}
+  <article class="markdown{{ if $reference_page }} reference-page{{ end }}">
     <div>
       {{ partial "breadcrumbs" . }}
       {{ partial "docs/inject/content-before" . }}
