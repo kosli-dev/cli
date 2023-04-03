@@ -54,35 +54,6 @@ func (suite *ArtifactEvidenceSnykCommandTestSuite) TestArtifactEvidenceSnykCmd()
 			golden: "snyk scan evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
 		{
-			name: "report Snyk test evidence works when providing --evidence-paths containing a single file",
-			cmd: `report evidence artifact snyk --fingerprint ` + suite.artifactFingerprint + ` --name snyk-result --flow ` + suite.flowName + `
-			          --build-url example.com --scan-results testdata/snyk_scan_example.json
-					  --evidence-paths testdata/file1` + suite.defaultKosliArguments,
-			golden: "snyk scan evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
-		},
-		{
-			name: "report Snyk test evidence works when providing --evidence-paths containing a single dir",
-			cmd: `report evidence artifact snyk --fingerprint ` + suite.artifactFingerprint + ` --name snyk-result --flow ` + suite.flowName + `
-			          --build-url example.com --scan-results testdata/snyk_scan_example.json
-					  --evidence-paths testdata/folder1` + suite.defaultKosliArguments,
-			golden: "snyk scan evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
-		},
-		{
-			name: "report Snyk test evidence works when providing --evidence-paths containing multiple files",
-			cmd: `report evidence artifact snyk --fingerprint ` + suite.artifactFingerprint + ` --name snyk-result --flow ` + suite.flowName + `
-			          --build-url example.com --scan-results testdata/snyk_scan_example.json
-					  --evidence-paths testdata/file1,testdata/folder1` + suite.defaultKosliArguments,
-			golden: "snyk scan evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
-		},
-		{
-			wantError: true,
-			name:      "report Snyk test evidence fails when providing --evidence-paths containing non-existing file",
-			cmd: `report evidence artifact snyk --fingerprint ` + suite.artifactFingerprint + ` --name snyk-result --flow ` + suite.flowName + `
-			          --build-url example.com --scan-results testdata/snyk_scan_example.json
-					  --evidence-paths non-existing` + suite.defaultKosliArguments,
-			golden: "Error: stat non-existing: no such file or directory\n",
-		},
-		{
 			name: "report Snyk scan evidence with non-existing scan-results",
 			cmd: `report evidence artifact snyk --fingerprint ` + suite.artifactFingerprint + ` --name snyk-result --flow ` + suite.flowName + `
 			          --build-url example.com --scan-results testdata/foo.json` + suite.defaultKosliArguments,

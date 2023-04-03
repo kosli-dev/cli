@@ -24,7 +24,6 @@ type pullRequestOptions struct {
 	payload          PullRequestEvidencePayload
 	retriever        interface{}
 	userDataFilePath string
-	evidencePaths    []string
 	assert           bool
 }
 
@@ -63,7 +62,8 @@ func (o *pullRequestArtifactOptions) run(out io.Writer, args []string) error {
 	label := ""
 	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
 
-	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, o.evidencePaths)
+	// PR evidence does not have files to upload
+	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, []string{})
 	// if we created a tar package, remove it after uploading it
 	if cleanupNeeded {
 		defer os.Remove(evidencePath)
@@ -129,7 +129,8 @@ func (o *pullRequestCommitOptions) run(args []string) error {
 	label := ""
 	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
 
-	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, o.evidencePaths)
+	// PR evidence does not have files to upload
+	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, []string{})
 	// if we created a tar package, remove it after uploading it
 	if cleanupNeeded {
 		defer os.Remove(evidencePath)
