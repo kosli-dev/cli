@@ -93,6 +93,14 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) TestArtifactEvidenceGeneri
 			golden: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
 		},
 		{
+			name: "report Generic test evidence works when multiple --evidence-paths include duplicates",
+			cmd: fmt.Sprintf(`report evidence artifact generic --fingerprint %s --name %s --flow %s
+			          --build-url example.com --compliant --description "some description" 
+					  --evidence-paths testdata/file1,testdata/folder1,testdata/file1 %s`,
+				suite.artifactFingerprint, evidenceName, suite.flowName, suite.defaultKosliArguments),
+			golden: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
+		},
+		{
 			name: "report Generic test evidence works when neither of --description nor --user-data provided",
 			cmd: fmt.Sprintf(`report evidence artifact generic --fingerprint %s --name %s --flow %s
 			          --build-url example.com --compliant %s`,
