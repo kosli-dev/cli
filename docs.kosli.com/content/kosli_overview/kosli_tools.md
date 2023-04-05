@@ -105,7 +105,7 @@ version.BuildInfo{Version:"v{{< cli-version >}}", GitCommit:"4058e8932ec093c28f5
 
 #### Usage
 
-The [Reference](/client_reference/) section contains all the information you may need to run the Kosli CLI. 
+The [CLI Reference](/client_reference/) section contains all the information you may need to run the Kosli CLI. 
 
 Most of the commands require a number of flags. Some of them are **required**, others are **optional** and some are
  **conditional** - you need to use them if certain conditions occur. Each command doc/help provides details about its flag usage. 

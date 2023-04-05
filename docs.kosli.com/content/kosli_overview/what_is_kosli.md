@@ -39,7 +39,7 @@ You can create a Kosli environment using:
 
 {{<figure src="/images/new-env-form.png" alt="Add environment form" width="900">}}
 
-Once the Kosli environment is ready you can start reporting the status of your actual runtime environment using one of the **kosli snapshot ...** commands - check [client reference](/client_reference) for details.
+Once the Kosli environment is ready you can start reporting the status of your actual runtime environment using one of the **kosli snapshot ...** commands - check [CLI Reference](/client_reference) for details.
 
 Reporting your environments should be automated via a cron-like schedule. 
 It's up to you to decide how often you want the reports to keep coming, but we recommend high frequency to be able to avoid missing short lived changes. 
