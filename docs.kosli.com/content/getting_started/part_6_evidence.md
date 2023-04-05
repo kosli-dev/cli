@@ -7,8 +7,10 @@ weight: 250
 
 Whenever an event related to required evidence happens you should report it to Kosli. 
 You can report evidence to either a git commit or an artifact. 
-Evidence reported against a git commit will be automatically 
-attached to any artifact produced from that git commit. 
+
+Evidence reported against a git commit will be automatically attached to:
+* either **ALL** artifacts produced from that git commit (when `--flows` flag is **not** provided)
+* or **only** to artifacts produced from that git commit **reported to flows** provided in `--flows` flag.  
 
 If a given named evidence is reported multiple times, it is the compliance status of the 
 last reported version of the evidence that is considered the compliance state of that evidence.
