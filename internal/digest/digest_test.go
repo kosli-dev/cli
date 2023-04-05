@@ -102,8 +102,9 @@ func (suite *DigestTestSuite) TestDirSha256() {
 		children map[string]string // dir files (if entry is dir)
 	}
 	type args struct {
-		dirName    string
-		dirContent []fileSystemEntry
+		dirName      string
+		dirContent   []fileSystemEntry
+		excludePaths []string
 	}
 	for _, t := range []struct {
 		name string
@@ -189,7 +190,6 @@ func (suite *DigestTestSuite) TestDirSha256() {
 			want: "c38fbc1a99dad628142d0b7e2e05901362623d2b81e316d2cf650b08e93e0cef",
 		},
 		{
-			// this test case is replicated in change for consistency
 			name: "a dir with a nested dir has a digest.",
 			args: args{
 				dirName: "test5",
@@ -231,6 +231,62 @@ func (suite *DigestTestSuite) TestDirSha256() {
 			},
 			want: "db40d79b3a15b17ee9fcc2f49aa73736e0073de6b5a35c459268bb9a31e55139",
 		},
+		{
+			name: "excluding dirs works with nested dir",
+			args: args{
+				dirName:      "exclusion1",
+				excludePaths: []string{"*/logs"},
+				dirContent: []fileSystemEntry{
+					{
+						name:     "sample.yaml",
+						content:  "some content. And some more.",
+						children: make(map[string]string),
+					},
+					{
+						name: "nested-dir",
+						children: map[string]string{
+							"file1": "content1",
+							"file2": "content2",
+						},
+					},
+					{
+						name: "logs",
+						children: map[string]string{
+							"file1": "content1",
+						},
+					},
+				},
+			},
+			want: "5d3c17dae9e208bbb92ee04ff8342abf77cb0959764def4af3ccfe9a2109d4a7",
+		},
+		{
+			name: "excluding dirs and files works with nested dir",
+			args: args{
+				dirName:      "exclusion2",
+				excludePaths: []string{"*/logs", "*/nested-dir/file1"},
+				dirContent: []fileSystemEntry{
+					{
+						name:     "sample.yaml",
+						content:  "some content. And some more.",
+						children: make(map[string]string),
+					},
+					{
+						name: "nested-dir",
+						children: map[string]string{
+							"file1": "content1",
+							"file2": "content2",
+						},
+					},
+					{
+						name: "logs",
+						children: map[string]string{
+							"file1": "content1",
+						},
+					},
+				},
+			},
+			want: "2acbc9efc1f86f89086a9539244946839599b3639da7f4959744c20234cb4f40",
+		},
 	} {
 		suite.Run(t.name, func() {
 			dirPath := filepath.Join(suite.tmpDir, t.args.dirName)
@@ -251,7 +307,7 @@ func (suite *DigestTestSuite) TestDirSha256() {
 				}
 			}
 
-			sha256, err := DirSha256(dirPath, []string{}, logger.NewStandardLogger())
+			sha256, err := DirSha256(dirPath, t.args.excludePaths, logger.NewStandardLogger())
 			require.NoErrorf(suite.T(), err, "error creating digest for test dir %s", dirPath)
 
 			assert.Equal(suite.T(), t.want, sha256, fmt.Sprintf("TestDirSha256: %s , got: %v -- want: %v", t.name, sha256, t.want))
