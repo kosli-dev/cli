@@ -30,7 +30,7 @@ func (suite *RequestsTestSuite) SetupSuite() {
 		Reply(201).
 		BodyString(`{"sha": "8b4fd747df6882b897aa514af7b40571a7508cc78a8d48ae2c12f9f4bcb1598f","name": "artifact"}`)
 	suite.fakeService.NewHandler().
-		Get("/html").
+		Put("/html").
 		Reply(200).
 		BodyString(`<!DOCTYPE html>
 		<html lang="en"><head>
@@ -341,7 +341,7 @@ func (suite *RequestsTestSuite) TestDo() {
 			expectedErrorMsg: "Denied",
 		},
 		{
-			name: "GET request to an html endpoint fails because of invalid response",
+			name: "GET request to a PUT endpoint fails because of invalid response",
 			params: &RequestParams{
 				Method: http.MethodGet,
 				URL:    suite.fakeService.ResolveURL("/html"),
