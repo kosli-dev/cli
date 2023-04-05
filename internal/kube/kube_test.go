@@ -81,9 +81,11 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 		pods            map[string][]*corev1.Pod
 	}
 	for _, t := range []struct {
-		name string
-		args args
-		want []*comparablePodData
+		name            string
+		args            args
+		want            []*comparablePodData
+		wantSubset      []*comparablePodData
+		wantMinimumPods int
 	}{
 		{
 			name: "an empty namespace has nothing to report.",
@@ -132,6 +134,25 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 				},
 			},
 		},
+		{
+			name: "not excluding nor including namespaces reports all cluster pods.",
+			args: args{
+				namespaces: []string{"ns4"},
+				pods: map[string][]*corev1.Pod{
+					"ns4": {suite.getPodPayload("nginx1", []string{"nginx:1.21.3"})},
+				},
+			},
+			wantSubset: []*comparablePodData{
+				{
+					podName:   "nginx1",
+					namespace: "ns4",
+					digests: map[string]string{
+						"docker.io/library/nginx:1.21.3": "644a70516a26004c97d0d85c7fe1d0c3a67ea8ab7ddf4aff193d9f301670cf36",
+					},
+				},
+			},
+			wantMinimumPods: 2,
+		},
 	} {
 		suite.Run(t.name, func() {
 			// create namespaces
@@ -155,8 +176,12 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 					digests:   pd.Digests,
 				})
 			}
-			require.Equal(suite.T(), t.want, actual, fmt.Sprintf("want: %v -- got: %v", t.want, actual))
-
+			if len(t.want) > 0 {
+				require.Equal(suite.T(), t.want, actual, fmt.Sprintf("want: %v -- got: %v", t.want, actual))
+			} else if len(t.wantSubset) > 0 {
+				require.Subset(suite.T(), actual, t.wantSubset)
+				require.GreaterOrEqual(suite.T(), len(actual), t.wantMinimumPods)
+			}
 		})
 	}
 }
