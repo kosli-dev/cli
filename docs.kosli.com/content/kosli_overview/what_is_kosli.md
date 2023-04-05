@@ -45,7 +45,7 @@ Reporting your environments should be automated via a cron-like schedule.
 It's up to you to decide how often you want the reports to keep coming, but we recommend high frequency to be able to avoid missing short lived changes. 
 Every time a change in your runtime environment is reported, a new snapshot capturing the current state of the environment will be created. 
 
-![Diagram of Environment Reporting](/images/environments.svg)
+![Diagram of Environment Reporting](/images/environments-cli-v2.svg)
 
 The change could be for example:
 * a new artifact started running
@@ -99,7 +99,7 @@ For example, if your CI pipeline produces 3 separate artifacts, you'd create 3 d
 
 Once your Kosli flow is in place you can start reporting artifacts and evidence of all the events you want to report (matching declared template) from your CI pipelines. Kosli CLI provides a variety of commands to make it possible: 
 
-![Diagram of Flow Reporting](/images/pipelines.svg)
+![Diagram of Flow Reporting](/images/flows-cli-v2.svg)
 
 A number of required flags may be defaulted to a set of environment variables, depending on the CI system you use. Check [How to use Kosli in CI Systems](/integrations/ci_cd/) for more details. All flags can be represented by [environment variables](/kosli_overview/kosli_tools/#environment-variables).
 
