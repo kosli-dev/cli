@@ -7,4 +7,5 @@ Commit URL:   www.nrk.no
 Build URL:    www.yr.no
 State:        COMPLIANT
 History:
+    Commit 0fc1ba9    Sat, 16 Jan 2016 00:00:00 UTC
     Artifact created  Sat, 16 Jan 2016 00:00:00 UTC

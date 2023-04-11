@@ -104,11 +104,11 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 
 	if artifactData["state"].(string) == "COMPLIANT" {
 		logger.Info("COMPLIANT")
-		logger.Info("See more details at %s", artifactData["artifact_url"].(string))
+		logger.Info("See more details at %s", artifactData["html_url"].(string))
 	} else {
 		return fmt.Errorf("%s: %s\nSee more details at %s", artifactData["state"].(string),
 			artifactData["state_info"].(string),
-			artifactData["artifact_url"].(string))
+			artifactData["html_url"].(string))
 	}
 
 	return nil
