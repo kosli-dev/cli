@@ -13,14 +13,26 @@ import (
 const snapshotServerShortDesc = `Report a snapshot of artifacts running in a server environment to Kosli.`
 
 const snapshotServerLongDesc = snapshotServerShortDesc + `
-You can report directory or file artifacts in one or more server paths.`
+You can report directory or file artifacts in one or more server paths.
+
+` + fingerprintDirSynopsis
 
 const snapshotServerExample = `
 # report directory artifacts running in a server at a list of paths:
 kosli snapshot server yourEnvironmentName \
 	--paths a/b/c,e/f/g \
 	--api-token yourAPIToken \
-	--org yourOrgName  `
+	--org yourOrgName  
+	
+# exclude certain paths when reporting directory artifacts: 
+# the example below, any path matching [a/b/c/logs, a/b/c/*/logs, a/b/c/*/*/logs]
+# will be skipped when calculating the fingerprint
+kosli snapshot server yourEnvironmentName \
+	--paths a/b/c \
+	--exclude logs,"*/logs","*/*/logs"
+	--api-token yourAPIToken \
+	--org yourOrgName  
+`
 
 type snapshotServerOptions struct {
 	paths        []string
