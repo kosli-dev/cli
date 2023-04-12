@@ -61,7 +61,7 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 func calculateDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, excludePaths []string, logger *logger.Logger) error {
 	pathsToExclude := []string{}
 	for _, p := range excludePaths {
-		found, err := filepath.Glob(dirPath + p)
+		found, err := filepath.Glob(filepath.Join(dirPath, p))
 		if err != nil {
 			return err
 		}
@@ -94,9 +94,9 @@ func calculateDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, exc
 		}
 
 		if info.IsDir() {
-			logger.Debug("dirname: %s -- dirname digest: %v", path, nameSha256)
+			logger.Debug("dir path: %s -- dirname digest: %v", path, nameSha256)
 		} else {
-			logger.Debug("filename: %s -- filename digest: %s", path, nameSha256)
+			logger.Debug("file path: %s -- filename digest: %s", path, nameSha256)
 			fileContentSha256, err := FileSha256(path)
 			if err != nil {
 				return err

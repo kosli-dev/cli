@@ -95,12 +95,23 @@ func (suite *DigestTestSuite) TestFileSha256() {
 	}
 }
 
+type fileEntry struct {
+	name    string
+	content string
+}
+
+type dirEntry struct {
+	name  string
+	files []fileEntry
+	dirs  []dirEntry
+}
+
 func (suite *DigestTestSuite) TestDirSha256() {
 	type fileSystemEntry struct {
-		name     string
-		content  string            // file content (if entry is a file)
-		children map[string]string // dir files (if entry is dir)
+		files []fileEntry
+		dirs  []dirEntry
 	}
+
 	type args struct {
 		dirName      string
 		dirContent   []fileSystemEntry
@@ -117,9 +128,12 @@ func (suite *DigestTestSuite) TestDirSha256() {
 				dirName: "test_dir_with_one_file_with_known_content",
 				dirContent: []fileSystemEntry{
 					{
-						name:     "file.extra",
-						content:  "this is known extra content",
-						children: make(map[string]string),
+						files: []fileEntry{
+							{
+								name:    "file.extra",
+								content: "this is known extra content",
+							},
+						},
 					},
 				},
 			},
@@ -139,9 +153,12 @@ func (suite *DigestTestSuite) TestDirSha256() {
 				dirName: "test2",
 				dirContent: []fileSystemEntry{
 					{
-						name:     "sample.txt",
-						content:  "some content.",
-						children: make(map[string]string),
+						files: []fileEntry{
+							{
+								name:    "sample.txt",
+								content: "some content.",
+							},
+						},
 					},
 				},
 			},
@@ -153,9 +170,12 @@ func (suite *DigestTestSuite) TestDirSha256() {
 				dirName: "test3",
 				dirContent: []fileSystemEntry{
 					{
-						name:     "sample.txt",
-						content:  "some content. And some more.",
-						children: make(map[string]string),
+						files: []fileEntry{
+							{
+								name:    "sample.txt",
+								content: "some content. And some more.",
+							},
+						},
 					},
 				},
 			},
@@ -167,9 +187,12 @@ func (suite *DigestTestSuite) TestDirSha256() {
 				dirName: "test4",
 				dirContent: []fileSystemEntry{
 					{
-						name:     "sample.yaml",
-						content:  "some content. And some more.",
-						children: make(map[string]string),
+						files: []fileEntry{
+							{
+								name:    "sample.yaml",
+								content: "some content. And some more.",
+							},
+						},
 					},
 				},
 			},
@@ -181,9 +204,12 @@ func (suite *DigestTestSuite) TestDirSha256() {
 				dirName: "test44",
 				dirContent: []fileSystemEntry{
 					{
-						name:     "sample.yaml",
-						content:  "some content. And some more.",
-						children: make(map[string]string),
+						files: []fileEntry{
+							{
+								name:    "sample.yaml",
+								content: "some content. And some more.",
+							},
+						},
 					},
 				},
 			},
@@ -195,15 +221,26 @@ func (suite *DigestTestSuite) TestDirSha256() {
 				dirName: "test5",
 				dirContent: []fileSystemEntry{
 					{
-						name:     "sample.yaml",
-						content:  "some content. And some more.",
-						children: make(map[string]string),
-					},
-					{
-						name: "nested-dir",
-						children: map[string]string{
-							"file1": "content1",
-							"file2": "content2",
+						files: []fileEntry{
+							{
+								name:    "sample.yaml",
+								content: "some content. And some more.",
+							},
+						},
+						dirs: []dirEntry{
+							{
+								name: "nested-dir",
+								files: []fileEntry{
+									{
+										name:    "file1",
+										content: "content1",
+									},
+									{
+										name:    "file2",
+										content: "content2",
+									},
+								},
+							},
 						},
 					},
 				},
@@ -216,15 +253,26 @@ func (suite *DigestTestSuite) TestDirSha256() {
 				dirName: "test6",
 				dirContent: []fileSystemEntry{
 					{
-						name:     "sample.yaml",
-						content:  "some content. And some more.",
-						children: make(map[string]string),
-					},
-					{
-						name: "nested-dir2",
-						children: map[string]string{
-							"file1": "content1",
-							"file2": "content2",
+						files: []fileEntry{
+							{
+								name:    "sample.yaml",
+								content: "some content. And some more.",
+							},
+						},
+						dirs: []dirEntry{
+							{
+								name: "nested-dir2",
+								files: []fileEntry{
+									{
+										name:    "file1",
+										content: "content1",
+									},
+									{
+										name:    "file2",
+										content: "content2",
+									},
+								},
+							},
 						},
 					},
 				},
@@ -235,24 +283,38 @@ func (suite *DigestTestSuite) TestDirSha256() {
 			name: "excluding dirs works with nested dir",
 			args: args{
 				dirName:      "exclusion1",
-				excludePaths: []string{"*/logs"},
+				excludePaths: []string{"logs"},
 				dirContent: []fileSystemEntry{
 					{
-						name:     "sample.yaml",
-						content:  "some content. And some more.",
-						children: make(map[string]string),
-					},
-					{
-						name: "nested-dir",
-						children: map[string]string{
-							"file1": "content1",
-							"file2": "content2",
+						files: []fileEntry{
+							{
+								name:    "sample.yaml",
+								content: "some content. And some more.",
+							},
 						},
-					},
-					{
-						name: "logs",
-						children: map[string]string{
-							"file1": "content1",
+						dirs: []dirEntry{
+							{
+								name: "nested-dir",
+								files: []fileEntry{
+									{
+										name:    "file1",
+										content: "content1",
+									},
+									{
+										name:    "file2",
+										content: "content2",
+									},
+								},
+							},
+							{
+								name: "logs",
+								files: []fileEntry{
+									{
+										name:    "file1",
+										content: "content1",
+									},
+								},
+							},
 						},
 					},
 				},
@@ -263,55 +325,125 @@ func (suite *DigestTestSuite) TestDirSha256() {
 			name: "excluding dirs and files works with nested dir",
 			args: args{
 				dirName:      "exclusion2",
-				excludePaths: []string{"*/logs", "*/nested-dir/file1"},
+				excludePaths: []string{"logs", "nested-dir/file1"},
 				dirContent: []fileSystemEntry{
 					{
-						name:     "sample.yaml",
-						content:  "some content. And some more.",
-						children: make(map[string]string),
-					},
-					{
-						name: "nested-dir",
-						children: map[string]string{
-							"file1": "content1",
-							"file2": "content2",
+						files: []fileEntry{
+							{
+								name:    "sample.yaml",
+								content: "some content. And some more.",
+							},
 						},
-					},
-					{
-						name: "logs",
-						children: map[string]string{
-							"file1": "content1",
+						dirs: []dirEntry{
+							{
+								name: "nested-dir",
+								files: []fileEntry{
+									{
+										name:    "file1",
+										content: "content1",
+									},
+									{
+										name:    "file2",
+										content: "content2",
+									},
+								},
+							},
+							{
+								name: "logs",
+								files: []fileEntry{
+									{
+										name:    "file1",
+										content: "content1",
+									},
+								},
+							},
 						},
 					},
 				},
 			},
 			want: "2acbc9efc1f86f89086a9539244946839599b3639da7f4959744c20234cb4f40",
 		},
+		{
+			name: "excluding dirs using glob pattern works",
+			args: args{
+				dirName:      "exclusion3",
+				excludePaths: []string{"logs", "*/logs"},
+				dirContent: []fileSystemEntry{
+					{
+						files: []fileEntry{
+							{
+								name:    "sample.yaml",
+								content: "some content. And some more.",
+							},
+						},
+						dirs: []dirEntry{
+							{
+								name: "nested-dir",
+								files: []fileEntry{
+									{
+										name:    "file1",
+										content: "content1",
+									},
+									{
+										name:    "file2",
+										content: "content2",
+									},
+								},
+								dirs: []dirEntry{
+									{
+										name: "logs",
+										files: []fileEntry{
+											{
+												name:    "log.txt",
+												content: "this is a log",
+											},
+										},
+									},
+								},
+							},
+							{
+								name: "logs",
+								files: []fileEntry{
+									{
+										name:    "file1",
+										content: "content1",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: "5d3c17dae9e208bbb92ee04ff8342abf77cb0959764def4af3ccfe9a2109d4a7",
+		},
 	} {
 		suite.Run(t.name, func() {
-			dirPath := filepath.Join(suite.tmpDir, t.args.dirName)
-			err := os.Mkdir(dirPath, 0777)
+			topLevelPath := filepath.Join(suite.tmpDir, t.args.dirName)
+			err := os.Mkdir(topLevelPath, 0777)
 			require.NoErrorf(suite.T(), err, "error creating test dir %s", t.args.dirName)
 
 			for _, entry := range t.args.dirContent {
-				path := filepath.Join(suite.tmpDir, t.args.dirName, entry.name)
-				if len(entry.children) == 0 { // file
-					suite.createFileWithContent(path, entry.content)
-				} else { // dir
-					err := os.Mkdir(path, 0777)
-					require.NoErrorf(suite.T(), err, "error creating test dir %s", path)
-					for name, data := range entry.children {
-						filePath := filepath.Join(path, name)
-						suite.createFileWithContent(filePath, data)
-					}
-				}
+				suite.createNestedDir(topLevelPath, entry.files, entry.dirs)
 			}
 
-			sha256, err := DirSha256(dirPath, t.args.excludePaths, logger.NewStandardLogger())
-			require.NoErrorf(suite.T(), err, "error creating digest for test dir %s", dirPath)
+			sha256, err := DirSha256(topLevelPath, t.args.excludePaths, logger.NewStandardLogger())
+			require.NoErrorf(suite.T(), err, "error creating digest for test dir %s", topLevelPath)
 
 			assert.Equal(suite.T(), t.want, sha256, fmt.Sprintf("TestDirSha256: %s , got: %v -- want: %v", t.name, sha256, t.want))
 		})
+	}
+}
+
+func (suite *DigestTestSuite) createNestedDir(path string, files []fileEntry, dirs []dirEntry) {
+	for _, f := range files {
+		filePath := filepath.Join(path, f.name)
+		suite.createFileWithContent(filePath, f.content)
+	}
+	for _, d := range dirs {
+		nestedPath := filepath.Join(path, d.name)
+		err := os.Mkdir(nestedPath, 0777)
+		require.NoErrorf(suite.T(), err, "error creating nested test dir %s", nestedPath)
+		suite.createNestedDir(nestedPath, d.files, d.dirs)
 	}
 }
 
