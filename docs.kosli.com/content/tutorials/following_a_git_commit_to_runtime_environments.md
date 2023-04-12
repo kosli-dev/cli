@@ -163,7 +163,7 @@ Whenever a change is detected, a snapshot of the environment is saved.
 
 {{< hint info >}}
 Cyber-dojo runs the `kosli` CLI from inside its AWS runtime environments
-using a [lambda function](https://github.com/cyber-dojo/merkely-environment-reporter/tree/main/deployment/terraform/lambda-reporter)
+using a [lambda function](https://github.com/cyber-dojo/kosli-environment-reporter/blob/main/deployment/terraform/deployment.tf)
 to report the running services to Kosli.
 {{< /hint >}}
 
