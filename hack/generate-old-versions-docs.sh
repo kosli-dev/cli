@@ -1,5 +1,5 @@
 #!/bin/bash
-regexps=$1
+regexps="$@"
 
 rm -r ../tmp-ref/ || true
 mkdir ../tmp-ref/
@@ -17,7 +17,8 @@ do
         rm docs.kosli.com/content/client_reference/kosli* || true # this is because in some versions, we have some files that were not ignored
         make docs > /dev/null 2>&1
 
-        cp -a docs.kosli.com/content/client_reference/. ../tmp-ref/$version
+        mkdir ../tmp-ref/$version
+        cp -a docs.kosli.com/content/client_reference/. ../tmp-ref/$version/
         sed -i "" "s/CLI Reference/$version/" ../tmp-ref/$version/_index.md 
         sed -i "" "s/Reference/$version/" ../tmp-ref/$version/_index.md
         git status
