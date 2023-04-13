@@ -28,7 +28,7 @@ kosli report evidence artifact snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
-|    -R, --scan-results string  |  The path to Snyk scan results JSON file from 'snyk test' and 'snyk container test'. For paid plans, the Snyk results will be uploaded to Kosli's evidence vault.  |
+|    -R, --scan-results string  |  The path to Snyk scan results Json file. For paid plans, the Snyk results will be uploaded to Kosli's evidence vault.  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to this evidence.  |
 
 

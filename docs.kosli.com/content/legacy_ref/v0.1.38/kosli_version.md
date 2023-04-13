@@ -2,9 +2,11 @@
 title: "kosli version"
 ---
 
-# kosli version
+## kosli version
 
-## Synopsis
+Print the version of Kosli CLI.
+
+### Synopsis
 
 Print the version of Kosli CLI.
 The output will look something like this:
@@ -21,14 +23,14 @@ version.BuildInfo{Version:"v0.0.1", GitCommit:"fe51cd1e31e6a202cba7dead9552a6d41
 kosli version [flags]
 ```
 
-## Flags
+### Flags
 | Flag | Description |
 | :--- | :--- |
 |    -h, --help  |  help for version  |
 |    -s, --short  |  [optional] Print only the Kosli CLI version number.  |
 
 
-## Options inherited from parent commands
+### Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -36,6 +38,6 @@ kosli version [flags]
 |        --debug  |  [optional] Print debug logs to stdout.  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
-|        --org string  |  The Kosli organization.  |
+|        --owner string  |  The Kosli user or organization.  |
 
 
