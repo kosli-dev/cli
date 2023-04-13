@@ -14,7 +14,7 @@ do
     rm docs.kosli.com/content/client_reference/kosli* || true # this is because in some versions, we have some files that were not ignored
     make docs > /dev/null 2>&1
     cp -a docs.kosli.com/content/client_reference/. ../tmp-ref/$version
-    git reset --hard HEAD > /dev/null 2>&1
+    git stash > /dev/null 2>&1
 done
 
 echo 
