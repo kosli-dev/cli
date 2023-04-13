@@ -27,6 +27,9 @@ echo
 echo moving generated docs to legacy_ref
 echo
 
+echo list tmp folder
+ls ../tmp-ref
+
 git checkout main
 rm -r docs.kosli.com/content/legacy_ref/
 mv ../tmp-ref docs.kosli.com/content/legacy_ref
