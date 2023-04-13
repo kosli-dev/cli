@@ -9,11 +9,16 @@ cp docs.kosli.com/content/legacy_ref/_index.md ../tmp-ref/_index.md
 for version in $versions
 do 
     echo processing $version
-    echo
+    echo 
+    echo "git status"
+    git status
     git checkout $version > /dev/null 2>&1
     rm docs.kosli.com/content/client_reference/kosli* || true # this is because in some versions, we have some files that were not ignored
     make docs > /dev/null 2>&1
+    echo "git status after docs generation"
+    echo git status
     cp -a docs.kosli.com/content/client_reference/. ../tmp-ref/$version
+    git status
     git stash > /dev/null 2>&1
 done
 
