@@ -1,7 +1,7 @@
 ---
-title: CLI Reference
+title: v0.1.39
 bookCollapseSection: true
 weight: 600
 ---
 
-# Kosli Client Reference
+# Kosli Client v0.1.39
