@@ -106,6 +106,10 @@ docs: helm-docs build
 	@rm -f docs.kosli.com/content/client_reference/kosli*
 	@export DOCS=true && ./kosli docs --dir docs.kosli.com/content/client_reference
 
+legacy-ref-docs:
+	@./hack/generate-old-versions-docs.sh "v0.*"
+	@./hack/generate-old-versions-docs.sh "v2.*"
+
 licenses:
 	@rm -rf licenses || true
 	@go install github.com/google/go-licenses@latest

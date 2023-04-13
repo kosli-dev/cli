@@ -91,6 +91,7 @@ jobs:
       - name: Generate docs
         run: |
           make docs
+          make legacy-ref-docs
 
       - name: Generate json
         run: |
