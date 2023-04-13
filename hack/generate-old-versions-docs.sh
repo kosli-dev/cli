@@ -12,7 +12,7 @@ do
     echo 
     echo "git status"
     git status
-    git checkout $version > /dev/null 2>&1
+    git checkout $version 
     rm docs.kosli.com/content/client_reference/kosli* || true # this is because in some versions, we have some files that were not ignored
     make docs > /dev/null 2>&1
     echo "git status after docs generation"
