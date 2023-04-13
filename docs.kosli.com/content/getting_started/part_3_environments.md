@@ -139,7 +139,7 @@ $ kosli snapshot docker docs-demo-docker
 ```
 
 More details in [kosli snapshot docker](/client_reference/kosli_snapshot_docker/) reference  
-for v0.1.x: [kosli environment report docker](/legacy_ref/v0.1.36/kosli_environment_report_docker/) 
+for v0.1.x: [kosli environment report docker](/legacy_ref/v0.1.37/kosli_environment_report_docker/) 
 {{< /tab >}}
 
 {{< tab "ecs" >}}
@@ -169,7 +169,7 @@ $ kosli snapshot ecs ecs-prod \
 ```
 
 More details in [kosli snapshot ecs](/client_reference/kosli_snapshot_ecs/) reference  
-for v0.1.x: [kosli environment report ecs](/legacy_ref/v0.1.36/kosli_environment_report_ecs/) 
+for v0.1.x: [kosli environment report ecs](/legacy_ref/v0.1.37/kosli_environment_report_ecs/) 
 {{< /tab >}}
 
 {{< tab "k8s" >}}
@@ -199,7 +199,7 @@ kosli snapshot k8s yourEnvironmentName \
 ```
 
 More details in [kosli snapshot k8s](/client_reference/kosli_snapshot_k8s/) reference  
-for v0.1.x: [kosli environment report k8s](/legacy_ref/v0.1.36/kosli_environment_report_k8s/) 
+for v0.1.x: [kosli environment report k8s](/legacy_ref/v0.1.37/kosli_environment_report_k8s/) 
 {{< /tab >}}
 
 {{< tab "lambda" >}}
@@ -228,7 +228,7 @@ reporter-app-prod lambda function was reported to environment lambda-prod
 ```
 
 More details in [kosli snapshot lambda](/client_reference/kosli_snapshot_lambda/) reference   
-for v0.1.x: [kosli environment report lambda](/legacy_ref/v0.1.36/kosli_environment_report_lambda/) 
+for v0.1.x: [kosli environment report lambda](/legacy_ref/v0.1.37/kosli_environment_report_lambda/) 
 {{< /tab >}}
 
 {{< tab "s3" >}}
@@ -257,7 +257,7 @@ bucket app-public was reported to environment s3-prod
 ```
 
 More details in [kosli snapshot s3](/client_reference/kosli_snapshot_s3/) reference  
-for v0.1.x: [kosli environment report s3](/legacy_ref/v0.1.36/kosli_environment_report_s3/) 
+for v0.1.x: [kosli environment report s3](/legacy_ref/v0.1.37/kosli_environment_report_s3/) 
 {{< /tab >}}
 
 {{< tab "server" >}}
@@ -285,7 +285,7 @@ $ kosli snapshot server docs-demo-server --paths build/index.html
 ```
 
 More details in [kosli snapshot server](/client_reference/kosli_snapshot_server/)reference  
-for v0.1.x: [kosli environment report server](/legacy_ref/v0.1.36/kosli_environment_report_server/) 
+for v0.1.x: [kosli environment report server](/legacy_ref/v0.1.37/kosli_environment_report_server/) 
 {{< /tab >}}
 
 {{< /tabs >}}
