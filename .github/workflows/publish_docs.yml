@@ -16,6 +16,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
+      - name: Generate legacy docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          make legacy-ref-docs
+
       # Deploy to local repo
       - name: Deploy
         uses: s0/git-publish-subdir-action@develop
