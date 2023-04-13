@@ -107,7 +107,7 @@ docs: helm-docs build
 	@export DOCS=true && ./kosli docs --dir docs.kosli.com/content/client_reference
 
 legacy-ref-docs:
-	@./hack/generate-old-versions-docs.sh "v0.*" "v2.*"
+	@./hack/generate-old-versions-docs.sh "v2.*" "v0.*" 
 
 licenses:
 	@rm -rf licenses || true

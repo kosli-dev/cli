@@ -19,8 +19,6 @@ do
 
         mkdir ../tmp-ref/$version
         cp -a docs.kosli.com/content/client_reference/. ../tmp-ref/$version/
-        # sed -i "s/CLI Reference/$version/" ../tmp-ref/$version/_index.md 
-        # sed -i "s/Reference/$version/" ../tmp-ref/$version/_index.md
         { rm ../tmp-ref/$version/_index.md && awk -v version="$version" '{gsub("CLI Reference", version, $0); print}' > ../tmp-ref/$version/_index.md; } < ../tmp-ref/$version/_index.md
         { rm ../tmp-ref/$version/_index.md && awk -v version="$version" '{gsub("Reference", version, $0); print}' > ../tmp-ref/$version/_index.md; } < ../tmp-ref/$version/_index.md
         git status
