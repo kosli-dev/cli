@@ -130,5 +130,5 @@ commit-evidence being attached to the artifact through multiple git-commits. It 
 reported version of the named commit-evidence that is considered the compliance state of that evidence.
 
 #### Evidence outside the template
-If an artifact has an evidence, either commit evidence or artifact evidence, that is not 
-part of the template the artifact is non-compliant.
+If an artifact have evidence, either commit evidence or artifact evidence, that is not 
+part of the template, the state of the extra evidence will affect the overall compliance of the artifact.
