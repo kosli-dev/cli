@@ -18,6 +18,8 @@ do
         make docs > /dev/null 2>&1
 
         cp -a docs.kosli.com/content/client_reference/. ../tmp-ref/$version
+        sed -i "" "s/CLI Reference/$version/" ../tmp-ref/$version/_index.md 
+        sed -i "" "s/Reference/$version/" ../tmp-ref/$version/_index.md
         git status
         git stash > /dev/null 2>&1
     done
