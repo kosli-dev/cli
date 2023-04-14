@@ -26,6 +26,7 @@ The following flags are **defaulted** (which means you don't need to provide the
 | :--- | :--- |
 | --build-url | ${SYSTEM_COLLECTIONURI}/${SYSTEM_TEAMPROJECT}/_build/results?buildId=${BUILD_BUILDID} |
 | --commit-url | ${SYSTEM_COLLECTIONURI}/${SYSTEM_TEAMPROJECT}/_git/${BUILD_REPOSITORY_NAME}/commit/${BUILD_SOURCEVERSION} |
+| --commit | ${BUILD_SOURCEVERSION} |
 | --git-commit | ${BUILD_SOURCEVERSION} |
 | --repository | ${BUILD_REPOSITORY_NAME} |
 | --project | ${SYSTEM_TEAMPROJECT} |
