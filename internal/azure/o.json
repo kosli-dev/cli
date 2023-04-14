@@ -1,0 +1,69 @@
+{
+    "queries": [
+        {
+            "type": "lastMergeCommit",
+            "items": [
+                "5f61be8f00a01c84e491922a630c9a418c684c7a"
+            ]
+        }
+    ],
+    "results": [
+        {
+            "5f61be8f00a01c84e491922a630c9a418c684c7a": [
+                {
+                    "repository": {
+                        "id": "44450293-d394-423f-8448-ba8165ba5448",
+                        "url": "https://dev.azure.com/kosli/7a860f22-f237-451a-80fe-7c6c5cafb69d/_apis/git/repositories/44450293-d394-423f-8448-ba8165ba5448"
+                    },
+                    "pullRequestId": 1,
+                    "codeReviewId": 1,
+                    "status": "completed",
+                    "createdBy": {
+                        "displayName": "sami@merkely.onmicrosoft.com",
+                        "url": "https://spsprodweu5.vssps.visualstudio.com/A38d8a753-fb0e-4293-8d69-b7202c4a5251/_apis/Identities/1f4c6418-4ea0-6d4a-a609-5ce96d416889",
+                        "_links": {
+                            "avatar": {
+                                "href": "https://dev.azure.com/kosli/_apis/GraphProfile/MemberAvatars/aad.MWY0YzY0MTgtNGVhMC03ZDRhLWE2MDktNWNlOTZkNDE2ODg5"
+                            }
+                        },
+                        "id": "1f4c6418-4ea0-6d4a-a609-5ce96d416889",
+                        "uniqueName": "sami@merkely.onmicrosoft.com",
+                        "imageUrl": "https://dev.azure.com/kosli/_api/_common/identityImage?id=1f4c6418-4ea0-6d4a-a609-5ce96d416889",
+                        "descriptor": "aad.MWY0YzY0MTgtNGVhMC03ZDRhLWE2MDktNWNlOTZkNDE2ODg5"
+                    },
+                    "creationDate": "2023-04-13T09:44:00.9383237Z",
+                    "closedDate": "2023-04-13T09:44:45.5477257Z",
+                    "title": "Updated README.md",
+                    "description": "Updated README.md",
+                    "sourceRefName": "refs/heads/pr-branch",
+                    "targetRefName": "refs/heads/main",
+                    "mergeStatus": "succeeded",
+                    "isDraft": false,
+                    "mergeId": "fa5307ef-d7ff-45f9-a673-3700521a08c9",
+                    "lastMergeSourceCommit": {
+                        "commitId": "bdba0cfd67ae1bbf0d1d0ae3ef62d10b0255d126",
+                        "url": "https://dev.azure.com/kosli/7a860f22-f237-451a-80fe-7c6c5cafb69d/_apis/git/repositories/44450293-d394-423f-8448-ba8165ba5448/commits/bdba0cfd67ae1bbf0d1d0ae3ef62d10b0255d126"
+                    },
+                    "lastMergeTargetCommit": {
+                        "commitId": "cdc0cec29880b1a66b65ba7e044c9583934788d0",
+                        "url": "https://dev.azure.com/kosli/7a860f22-f237-451a-80fe-7c6c5cafb69d/_apis/git/repositories/44450293-d394-423f-8448-ba8165ba5448/commits/cdc0cec29880b1a66b65ba7e044c9583934788d0"
+                    },
+                    "lastMergeCommit": {
+                        "commitId": "5f61be8f00a01c84e491922a630c9a418c684c7a",
+                        "url": "https://dev.azure.com/kosli/7a860f22-f237-451a-80fe-7c6c5cafb69d/_apis/git/repositories/44450293-d394-423f-8448-ba8165ba5448/commits/5f61be8f00a01c84e491922a630c9a418c684c7a"
+                    },
+                    "url": "https://dev.azure.com/kosli/7a860f22-f237-451a-80fe-7c6c5cafb69d/_apis/git/repositories/44450293-d394-423f-8448-ba8165ba5448/pullRequests/1",
+                    "completionOptions": {
+                        "mergeCommitMessage": "Merged PR 1: Updated README.md\n\nUpdated README.md",
+                        "deleteSourceBranch": true,
+                        "mergeStrategy": "noFastForward",
+                        "transitionWorkItems": true,
+                        "autoCompleteIgnoreConfigIds": []
+                    },
+                    "supportsIterations": true,
+                    "completionQueueTime": "2023-04-13T09:44:44.6354733Z"
+                }
+            ]
+        }
+    ]
+}

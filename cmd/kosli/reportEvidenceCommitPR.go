@@ -21,6 +21,7 @@ func newReportEvidenceCommitPRCmd(out io.Writer) *cobra.Command {
 		newReportEvidenceCommitPRBitbucketCmd(out),
 		newReportEvidenceCommitPRGithubCmd(out),
 		newReportEvidenceCommitPRGitlabCmd(out),
+		newReportEvidenceCommitPRAzureCmd(out),
 	)
 
 	return cmd

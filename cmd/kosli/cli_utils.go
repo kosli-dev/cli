@@ -68,6 +68,7 @@ var ciTemplates = map[string]map[string]string{
 		"build-url":  "${SYSTEM_COLLECTIONURI}/${SYSTEM_TEAMPROJECT}/_build/results?buildId=${BUILD_BUILDID}",
 		"commit-url": "${SYSTEM_COLLECTIONURI}/${SYSTEM_TEAMPROJECT}/_git/${BUILD_REPOSITORY_NAME}/commit/${BUILD_SOURCEVERSION}",
 		// "org": "${SYSTEM_COLLECTIONID}",
+		"project": "${SYSTEM_TEAMPROJECT}",
 	},
 }
 
