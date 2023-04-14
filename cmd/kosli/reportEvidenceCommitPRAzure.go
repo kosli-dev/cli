@@ -19,24 +19,20 @@ kosli report evidence commit pullrequest azure \
 	--commit yourGitCommitSha1 \
 	--repository yourAzureGitRepository \
 	--azure-token yourAzureToken \
-	--github-org yourGithubOrg \
 	--name yourEvidenceName \
 	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
-	--org yourOrgName \
 	--api-token yourAPIToken
 	
 # fail if a pull request does not exist for your commit
-kosli report evidence commit pullrequest github \
+kosli report evidence commit pullrequest azure \
 	--commit yourGitCommitSha1 \
-	--repository yourGithubGitRepository \
-	--github-token yourGithubToken \
-	--github-org yourGithubOrg \
+	--repository yourAzureGitRepository \
+	--azure-token yourAzureToken \
 	--name yourEvidenceName \
 	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
-	--org yourOrgName \
-	--api-token yourAPIToken \
+	--api-token yourAPIToken
 	--assert
 `
 
