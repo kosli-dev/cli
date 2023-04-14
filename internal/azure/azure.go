@@ -30,11 +30,9 @@ type AzureFlagsTempValueHolder struct {
 func NewAzureConfig(token, baseURL, org, project, repository string) *AzureConfig {
 	orgURL, _ := url.JoinPath(baseURL, org)
 	return &AzureConfig{
-		Token:   token,
-		OrgURL:  orgURL,
-		Project: project,
-		// repository name must be extracted if a user is using default value from ${GITHUB_REPOSITORY}
-		// because the value is in the format of "org/repository"
+		Token:      token,
+		OrgURL:     orgURL,
+		Project:    project,
 		Repository: extractRepoName(repository),
 	}
 }
