@@ -2,6 +2,7 @@ package azure
 
 import (
 	"context"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -27,9 +28,10 @@ type AzureFlagsTempValueHolder struct {
 
 // NewAzureConfig returns a new AzureConfig
 func NewAzureConfig(token, baseURL, org, project, repository string) *AzureConfig {
+	orgURL, _ := url.JoinPath(baseURL, org)
 	return &AzureConfig{
 		Token:   token,
-		OrgURL:  baseURL + org,
+		OrgURL:  orgURL,
 		Project: project,
 		// repository name must be extracted if a user is using default value from ${GITHUB_REPOSITORY}
 		// because the value is in the format of "org/repository"
@@ -74,7 +76,10 @@ func (c *AzureConfig) PREvidenceForCommit(commit string) ([]*types.PREvidence, e
 
 func (c *AzureConfig) newPRAzureEvidence(pr git.GitPullRequest) (*types.PREvidence, error) {
 	prID := strconv.Itoa(*pr.PullRequestId)
-	url := c.OrgURL + "/" + c.Project + "/_git/" + c.Repository + "/pullrequest/" + prID
+	url, err := url.JoinPath(c.OrgURL, c.Project, "_git", c.Repository, "pullrequest", prID)
+	if err != nil {
+		return nil, err
+	}
 	evidence := &types.PREvidence{
 		URL:         url,
 		MergeCommit: *(pr.LastMergeCommit.CommitId),
@@ -96,7 +101,6 @@ func (c *AzureConfig) PullRequestsForCommit(commit string) ([]git.GitPullRequest
 		return []git.GitPullRequest{}, err
 	}
 
-	project := "kosli-azure"
 	prQuery, err := client.GetPullRequestQuery(ctx, git.GetPullRequestQueryArgs{
 		Queries: &git.GitPullRequestQuery{
 			Queries: &[]git.GitPullRequestQueryInput{
@@ -107,7 +111,7 @@ func (c *AzureConfig) PullRequestsForCommit(commit string) ([]git.GitPullRequest
 			},
 		},
 		RepositoryId: &c.Repository,
-		Project:      &project,
+		Project:      &c.Project,
 	})
 	if prQuery != nil {
 		results := prQuery.Results
@@ -129,11 +133,10 @@ func (c *AzureConfig) GetPullRequestApprovers(number int) ([]string, error) {
 		return approvers, err
 	}
 
-	project := "kosli-azure"
 	reviewers, err := client.GetPullRequestReviewers(ctx, git.GetPullRequestReviewersArgs{
 		RepositoryId:  &c.Repository,
 		PullRequestId: &number,
-		Project:       &project,
+		Project:       &c.Project,
 	})
 	if err != nil {
 		return approvers, err
