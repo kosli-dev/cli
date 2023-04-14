@@ -141,7 +141,7 @@ func (c *AzureConfig) GetPullRequestApprovers(number int) ([]string, error) {
 
 	for _, r := range *reviewers {
 		if *r.Vote == 10 {
-			approvers = append(approvers, *r.Id)
+			approvers = append(approvers, *r.DisplayName)
 		}
 	}
 	return approvers, nil
