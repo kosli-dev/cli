@@ -20,15 +20,13 @@ type AzureConfig struct {
 
 type AzureFlagsTempValueHolder struct {
 	Token      string
-	BaseURL    string
-	Org        string
+	OrgUrl     string
 	Repository string
 	Project    string
 }
 
 // NewAzureConfig returns a new AzureConfig
-func NewAzureConfig(token, baseURL, org, project, repository string) *AzureConfig {
-	orgURL, _ := url.JoinPath(baseURL, org)
+func NewAzureConfig(token, orgURL, project, repository string) *AzureConfig {
 	return &AzureConfig{
 		Token:      token,
 		OrgURL:     orgURL,

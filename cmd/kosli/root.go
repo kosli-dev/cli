@@ -93,7 +93,7 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 	githubTokenFlag         = "Github token."
 	gitlabTokenFlag         = "Gitlab token."
 	azureProjectFlag        = "Azure project.(defaulted if you are running in Azure Devops pipelines: https://docs.kosli.com/ci-defaults )."
-	azureOrgFlag            = "Azure organization. (defaulted if you are running in Azure Devops pipelines: https://docs.kosli.com/ci-defaults )."
+	azureOrgUrlFlag         = "Azure organization url. E.g. \"https://dev.azure.com/myOrg\" (defaulted if you are running in Azure Devops pipelines: https://docs.kosli.com/ci-defaults )."
 	githubOrgFlag           = "Github organization. (defaulted if you are running in GitHub Actions: https://docs.kosli.com/ci-defaults )."
 	gitlabOrgFlag           = "Gitlab organization. (defaulted if you are running in Gitlab Pipelines: https://docs.kosli.com/ci-defaults )."
 	azureBaseURLFlag        = "[optional] Azure Devops base URL."

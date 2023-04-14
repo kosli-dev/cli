@@ -42,10 +42,9 @@ func addGithubFlags(cmd *cobra.Command, githubFlagsValueHolder *ghUtils.GithubFl
 
 func addAzureFlags(cmd *cobra.Command, azureFlagsValueHolder *azUtils.AzureFlagsTempValueHolder, ci string) {
 	cmd.Flags().StringVar(&azureFlagsValueHolder.Token, "azure-token", "", azureTokenFlag)
-	cmd.Flags().StringVar(&azureFlagsValueHolder.Org, "azure-org", DefaultValue(ci, "org"), azureOrgFlag)
+	cmd.Flags().StringVar(&azureFlagsValueHolder.OrgUrl, "azure-org-url", DefaultValue(ci, "org-url"), azureOrgUrlFlag)
 	cmd.Flags().StringVar(&azureFlagsValueHolder.Project, "project", DefaultValue(ci, "project"), azureProjectFlag)
 	cmd.Flags().StringVar(&azureFlagsValueHolder.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
-	cmd.Flags().StringVar(&azureFlagsValueHolder.BaseURL, "azure-base-url", "https://dev.azure.com/", azureBaseURLFlag)
 }
 
 func addGitlabFlags(cmd *cobra.Command, gitlabConfig *gitlabUtils.GitlabConfig, ci string) {

@@ -55,8 +55,8 @@ func newReportEvidenceCommitPRAzureCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			o.retriever = azUtils.NewAzureConfig(azureFlagsValues.Token, azureFlagsValues.BaseURL,
-				azureFlagsValues.Org, azureFlagsValues.Project, azureFlagsValues.Repository)
+			o.retriever = azUtils.NewAzureConfig(azureFlagsValues.Token,
+				azureFlagsValues.OrgUrl, azureFlagsValues.Project, azureFlagsValues.Repository)
 			return o.run(args)
 		},
 	}
@@ -68,7 +68,7 @@ func newReportEvidenceCommitPRAzureCmd(out io.Writer) *cobra.Command {
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{
-		"azure-token", "azure-org", "commit",
+		"azure-token", "azure-org-url", "commit",
 		"repository", "project", "build-url", "name",
 	})
 	if err != nil {
