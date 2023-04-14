@@ -109,11 +109,14 @@ func (c *AzureConfig) PullRequestsForCommit(commit string) ([]git.GitPullRequest
 		RepositoryId: &c.Repository,
 		Project:      &c.Project,
 	})
+	if err != nil {
+		return nil, err
+	}
 	if prQuery != nil {
 		results := prQuery.Results
 		if len(*results) > 0 {
 			prsForCommit := (*results)[0][commit]
-			return prsForCommit, err
+			return prsForCommit, nil
 		}
 	}
 

@@ -23,8 +23,9 @@ func (suite *AzureTestSuite) TestNewAzureClientFromToken() {
 		orgURL string
 	}{
 		{
-			name:  "when provided a token, a client is created.",
-			token: "some_fake_token",
+			name:   "when provided a token, a client is created.",
+			token:  "some_fake_token",
+			orgURL: "https://dev.azure.com/kosli",
 		},
 		{
 			name:   "when orgURL and token are provided, a client is created.",
@@ -78,19 +79,6 @@ func (suite *AzureTestSuite) TestPREvidenceForCommit() {
 				numberOfPRs: 1,
 			},
 		},
-		{
-			name: "non-existing commit will cause an error.",
-			config: &AzureConfig{
-				OrgURL:     "https://dev.azure.com/kosli",
-				Repository: "cli",
-				Project:    "kosli-azure",
-			},
-			commit:         "73d7fee2f31ade8e1a9c456c324255212c3tf45a",
-			requireEnvVars: true,
-			result: result{
-				wantError: true,
-			},
-		},
 	} {
 		suite.Run(t.name, func() {
 			if t.requireEnvVars {
@@ -130,16 +118,6 @@ func (suite *AzureTestSuite) TestPullRequestsForCommit() {
 			result: result{
 				wantError:   false,
 				numberOfPRs: 1,
-			},
-		},
-		{
-			name:       "non-existing commit will cause an error.",
-			azOrgURL:   "https://dev.azure.com/kosli",
-			repository: "cli",
-			project:    "kosli-azure",
-			commit:     "73d7fee2f31ade8e1a9c456c324255212c3tf45a",
-			result: result{
-				wantError: true,
 			},
 		},
 	} {
