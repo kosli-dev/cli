@@ -30,7 +30,7 @@ sections:
           link_text: View >
           url: /getting_started/part_3_environments/
         - title: Kosli flows
-          image: /images/home/home-pipelines.svg
+          image: /images/home/home-flows.png
           alt_text: Flows and artifact reporting explained
           description: Artifact reporting explained
           link_text: View >
