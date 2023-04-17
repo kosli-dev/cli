@@ -30,6 +30,7 @@ The following flags are **defaulted** (which means you don't need to provide the
 | --git-commit | ${BUILD_SOURCEVERSION} |
 | --repository | ${BUILD_REPOSITORY_NAME} |
 | --project | ${SYSTEM_TEAMPROJECT} |
+| --azure-org-url | ${SYSTEM_COLLECTIONURI} |
 {{< /tab >}}
 
 {{< tab "Bitbucket Cloud" >}}
