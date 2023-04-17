@@ -18,6 +18,8 @@ on:
         required: true
       gitlab_access_token:
         required: true 
+      azure_access_token:
+        required: true 
       bitbucket_password:
         required: true      
 
@@ -61,6 +63,7 @@ jobs:
       env:
         KOSLI_GITHUB_TOKEN: ${{ secrets.github_access_token }}
         KOSLI_GITLAB_TOKEN: ${{ secrets.gitlab_access_token }}
+        KOSLI_AZURE_TOKEN: ${{ secrets.azure_access_token }}
         KOSLI_BITBUCKET_PASSWORD: ${{ secrets.bitbucket_password }}
       run: |
         # some tests use git operations, therefore the git author on the CI VM needs to be set
