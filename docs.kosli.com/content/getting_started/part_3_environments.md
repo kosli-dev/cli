@@ -267,14 +267,14 @@ Run `kosli snapshot server` to report directory or file artifacts from the given
 
 **Were to run:**  The command has to be run on the actual server (physical or vm), to be able to detect artifacts. 
 
-Use `--paths` flag to provide a comma separated list of directories and files you want to be reported. Keep in mind that each directory will be treated as a single artifact and in order to make sure they are correctly identified in Kosli they should also be reported to Kosli pipeline as a single artifact.
+Use `--paths` flag to provide a comma separated list of directories and files you want to be reported. Keep in mind that each directory will be treated as a single artifact and in order to make sure they are correctly identified in Kosli they should also be reported to Kosli flow as a single artifact.
 
 For example, if you provide a following list: `--paths /home/server/web, /home/monitor.exe, /home/server/calculator` kosli will calculate fingerprints and report as running 3 artifacts to Kosli:
 * directory `web`
 * directory `calculator` 
 * file `monitor.exe`
 
-And it will try to find matching artifacts reported to any pipeline belonging to the same organization as the environment.
+And it will try to find matching artifacts reported to any flow belonging to the same organization as the environment.
 
 ### Example 
 

@@ -27,7 +27,7 @@ draft: false
 ## Overview
 
 In this 5 minute tutorial you'll learn how Kosli tracks "life after git" and shows you events from:
-* CI-pipelines (eg, building the docker image, running the unit tests, deploying, etc)
+* CI pipelines (eg, building the docker image, running the unit tests, deploying, etc)
 * runtime environments (eg, the blue-green rollover, instance scaling, etc)
 
 You'll follow an actual git commit to an open-source project called **cyber-dojo**. 
@@ -46,9 +46,9 @@ You need to:
   export KOSLI_ORG=cyber-dojo
   ```
 
-## Pipeline events
+## CI Pipeline events
 
-### Listing pipelines
+### Listing flows
 
 Find out which `cyber-dojo` repositories have a CI pipeline reporting to [Kosli](https://app.kosli.com):
 
@@ -137,14 +137,14 @@ Let's look at this output in detail:
    * **CI pipeline events**
       * The artifact was **created** on the 22nd August at 11:35:00 CEST.
       * The artifact has `branch-coverage` **evidence**. 
-      * The artifact was **deployed** to [aws-beta](https://app.kosli.com/cyber-dojo/pipelines/runner/deployments/18) on 22nd  August 11:37:17 CEST, and to [aws-prod](https://app.kosli.com/cyber-dojo/pipelines/runner/deployments/19)
+      * The artifact was **deployed** to [aws-beta](https://app.kosli.com/cyber-dojo/flows/runner/deployments/18) on 22nd  August 11:37:17 CEST, and to [aws-prod](https://app.kosli.com/cyber-dojo/flows/runner/deployments/19)
      a minute later.
    * **Runtime environment events**
       * The artifact was reported **running** in both environments.
       * The artifact's number of running instances **scaled down**.
       * The artifact was reported **exited**.
      
-The information about this artifact is also available through the [web interface](https://app.kosli.com/cyber-dojo/pipelines/runner/artifacts/9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625).
+The information about this artifact is also available through the [web interface](https://app.kosli.com/cyber-dojo/flows/runner/artifacts/9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625).
 
 {{< hint info >}}
 The `runner` service uses [Continuous Deployment](https://en.wikipedia.org/wiki/Continuous_deployment); 
@@ -179,7 +179,7 @@ kosli get snapshot aws-prod#65
 The output will be:
 
 ```plaintext {.light-console}
-COMMIT   ARTIFACT                                                                         PIPELINE   RUNNING_SINCE  REPLICAS
+COMMIT   ARTIFACT                                                                         FLOW       RUNNING_SINCE  REPLICAS
 16d9990  Name: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990             runner     11 days ago    3
          Fingerprint: 9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625                              
                                                                                                     
@@ -226,7 +226,7 @@ Only present in aws-prod#65
                    
      Name:         274425519734.dkr.ecr.eu-central-1.amazonaws.com/runner:16d9990
      Fingerprint:  9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625
-     Pipeline:     runner
+     Flow:         runner
      Commit URL:   https://github.com/cyber-dojo/runner/commit/16d9990ad23a40eecaf087abac2a58a2d2a4b3f4
      Started:      Mon, 22 Aug 2022 11:39:17 CEST • 15 days ago
 ```
