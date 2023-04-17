@@ -13,7 +13,6 @@ import (
 type reportEvidenceCommitSnykOptions struct {
 	snykJsonFile     string
 	userDataFilePath string
-	evidencePaths    []string
 	payload          EvidenceSnykPayload
 }
 
@@ -67,7 +66,6 @@ func newReportEvidenceCommitSnykCmd(out io.Writer) *cobra.Command {
 	addCommitEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
 	cmd.Flags().StringVarP(&o.snykJsonFile, "scan-results", "R", "", snykJsonResultsFileFlag)
 	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
-	cmd.Flags().StringSliceVarP(&o.evidencePaths, "evidence-paths", "e", []string{}, evidencePathsFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"commit", "build-url", "name", "scan-results"})
@@ -91,7 +89,7 @@ func (o *reportEvidenceCommitSnykOptions) run(args []string) error {
 		return err
 	}
 
-	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, o.evidencePaths)
+	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, []string{o.snykJsonFile})
 	// if we created a tar package, remove it after uploading it
 	if cleanupNeeded {
 		defer os.Remove(evidencePath)

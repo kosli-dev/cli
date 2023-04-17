@@ -89,8 +89,11 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Generate docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           make docs
+          make legacy-ref-docs
 
       - name: Generate json
         run: |

@@ -97,7 +97,7 @@ jobs:
     - name: Create Kosli flow
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-        KOSLI_ORG: compliancedb
+        KOSLI_ORG: kosli
       run: 
         kosli create flow cli
           --description "Kosli CLI" 
@@ -107,7 +107,7 @@ jobs:
     - name: Report Docker image to Kosli
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-        KOSLI_ORG: compliancedb
+        KOSLI_ORG: kosli
       run: 
         kosli report artifact
            ${{ env.IMAGE }}:${{ inputs.tag }}
@@ -129,7 +129,7 @@ jobs:
     - name: Report Snyk CODE scan results evidence to Kosli
       env:
         KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
-        KOSLI_ORG: compliancedb
+        KOSLI_ORG: kosli
       run: 
         kosli report evidence artifact snyk 
           ${{ env.IMAGE }}:${{ inputs.tag }}
@@ -155,7 +155,7 @@ jobs:
     - name: Report Snyk Docker scan results evidence to Kosli
       env:
         KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
-        KOSLI_ORG: compliancedb
+        KOSLI_ORG: kosli
       run: 
         kosli report evidence artifact snyk 
           ${{ env.IMAGE }}:${{ inputs.tag }}

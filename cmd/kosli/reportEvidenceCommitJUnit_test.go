@@ -46,35 +46,6 @@ func (suite *CommitEvidenceJUnitCommandTestSuite) TestCommitEvidenceJUnitCommand
 			golden: "junit test evidence is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n",
 		},
 		{
-			name: "report JUnit test evidence works when providing --evidence-paths containing a single file",
-			cmd: `report evidence commit junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name junit-result --flows ` + suite.flowNames + `
-			          --build-url example.com --results-dir testdata
-					  --evidence-paths testdata/file1` + suite.defaultKosliArguments,
-			golden: "junit test evidence is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n",
-		},
-		{
-			name: "report JUnit test evidence works when providing --evidence-paths containing a single dir",
-			cmd: `report evidence commit junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name junit-result --flows ` + suite.flowNames + `
-			          --build-url example.com --results-dir testdata
-					  --evidence-paths testdata/folder1` + suite.defaultKosliArguments,
-			golden: "junit test evidence is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n",
-		},
-		{
-			name: "report JUnit test evidence works when providing --evidence-paths containing multiple paths",
-			cmd: `report evidence commit junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name junit-result --flows ` + suite.flowNames + `
-			          --build-url example.com --results-dir testdata
-					  --evidence-paths testdata/file1,testdata/folder1` + suite.defaultKosliArguments,
-			golden: "junit test evidence is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n",
-		},
-		{
-			wantError: true,
-			name:      "report JUnit test evidence fails when providing --evidence-paths containing non-existing file",
-			cmd: `report evidence commit junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name junit-result --flows ` + suite.flowNames + `
-			          --build-url example.com --results-dir testdata
-					  --evidence-paths non-existing` + suite.defaultKosliArguments,
-			golden: "Error: stat non-existing: no such file or directory\n",
-		},
-		{
 			name: "report JUnit test evidence with non-existing results dir",
 			cmd: `report evidence commit junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name junit-result --flows ` + suite.flowNames + `
 			          --build-url example.com --results-dir foo` + suite.defaultKosliArguments,

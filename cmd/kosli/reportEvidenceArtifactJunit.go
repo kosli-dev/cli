@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/kosli-dev/cli/internal/requests"
@@ -33,7 +35,6 @@ type reportEvidenceArtifactJunitOptions struct {
 	flowName           string
 	testResultsDir     string
 	userDataFilePath   string
-	evidencePaths      []string
 	payload            EvidenceJUnitPayload
 }
 
@@ -94,7 +95,6 @@ func newReportEvidenceArtifactJunitCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.testResultsDir, "results-dir", "R", ".", resultsDirFlag)
 	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
-	cmd.Flags().StringSliceVarP(&o.evidencePaths, "evidence-paths", "e", []string{}, evidencePathsFlag)
 
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
@@ -126,7 +126,13 @@ func (o *reportEvidenceArtifactJunitOptions) run(args []string) error {
 		return err
 	}
 
-	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, o.evidencePaths)
+	// prepare the files to upload as evidence. We are only interested in the actual Junit XMl files
+	junitFilenames, err := getJunitFilenames(o.testResultsDir)
+	if err != nil {
+		return err
+	}
+
+	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, junitFilenames)
 	// if we created a tar package, remove it after uploading it
 	if cleanupNeeded {
 		defer os.Remove(evidencePath)
@@ -196,4 +202,33 @@ func ingestJunitDir(testResultsDir string) ([]*JUnitResults, error) {
 	}
 
 	return results, nil
+}
+
+func getJunitFilenames(directory string) ([]string, error) {
+	var filenames []string
+
+	err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Add all regular files that end with ".xml"
+		if info.Mode().IsRegular() && strings.HasSuffix(info.Name(), ".xml") {
+			suites, err := junit.IngestFile(path)
+			if err != nil {
+				return err
+			}
+			if len(suites) > 0 {
+				filenames = append(filenames, path)
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return filenames, err
+	}
+
+	return filenames, nil
 }

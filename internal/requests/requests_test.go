@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/logger"
@@ -28,6 +29,12 @@ func (suite *RequestsTestSuite) SetupSuite() {
 		Put("/artifacts/1").
 		Reply(201).
 		BodyString(`{"sha": "8b4fd747df6882b897aa514af7b40571a7508cc78a8d48ae2c12f9f4bcb1598f","name": "artifact"}`)
+	suite.fakeService.NewHandler().
+		Put("/html").
+		Reply(200).
+		BodyString(`<!DOCTYPE html>
+		<html lang="en"><head>
+		  <meta charset="utf-8">`)
 	suite.fakeService.NewHandler().
 		Get("/no-go/").
 		Reply(404).
@@ -98,9 +105,10 @@ func (suite *RequestsTestSuite) TestNewStandardKosliClient() {
 
 func (suite *RequestsTestSuite) TestNewHttpRequest() {
 	for _, t := range []struct {
-		name      string
-		params    *RequestParams
-		wantError bool
+		name                      string
+		params                    *RequestParams
+		wantError                 bool
+		expectedContentTypePrefix string
 	}{
 		{
 			name: "request with token",
@@ -159,6 +167,53 @@ func (suite *RequestsTestSuite) TestNewHttpRequest() {
 			},
 			wantError: true,
 		},
+		{
+			name: "request with invalid payload causes an error",
+			params: &RequestParams{
+				Method:  http.MethodGet,
+				URL:     "https://google.com",
+				Token:   "secret",
+				Payload: make(chan string),
+			},
+			wantError: true,
+		},
+		{
+			name: "request with form works",
+			params: &RequestParams{
+				Method: http.MethodGet,
+				URL:    "https://google.com",
+				Token:  "secret",
+				Form: []FormItem{
+					{
+						Type:      "field",
+						FieldName: "field1",
+						Content:   "some content",
+					},
+					{
+						Type:      "file",
+						FieldName: "field2",
+						Content:   "requests.go",
+					},
+				},
+			},
+			expectedContentTypePrefix: "multipart/form-data; boundary=",
+		},
+		{
+			name: "request with form that has invalid content causes an error",
+			params: &RequestParams{
+				Method: http.MethodGet,
+				URL:    "https://google.com",
+				Token:  "secret",
+				Form: []FormItem{
+					{
+						Type:      "field",
+						FieldName: "field1",
+						Content:   make(chan string),
+					},
+				},
+			},
+			wantError: true,
+		},
 	} {
 		suite.Run(t.name, func() {
 			req, err := t.params.newHTTPRequest()
@@ -168,7 +223,10 @@ func (suite *RequestsTestSuite) TestNewHttpRequest() {
 				require.NoError(suite.T(), err)
 				require.Equal(suite.T(), t.params.Method, req.Method)
 				require.Equal(suite.T(), "Kosli/"+version.GetVersion(), req.UserAgent())
-				require.Equal(suite.T(), "application/json; charset=utf-8", req.Header.Get("Content-Type"))
+				if t.expectedContentTypePrefix == "" {
+					t.expectedContentTypePrefix = "application/json; charset=utf-8"
+				}
+				require.True(suite.T(), strings.HasPrefix(req.Header.Get("Content-Type"), t.expectedContentTypePrefix))
 				if t.params.Username != "" || t.params.Password != "" {
 					user, pass, ok := req.BasicAuth()
 					require.True(suite.T(), ok)
@@ -282,6 +340,15 @@ func (suite *RequestsTestSuite) TestDo() {
 			wantError:        true,
 			expectedErrorMsg: "Denied",
 		},
+		{
+			name: "GET request to a PUT endpoint fails because of invalid response",
+			params: &RequestParams{
+				Method: http.MethodGet,
+				URL:    suite.fakeService.ResolveURL("/html"),
+			},
+			wantError:        true,
+			expectedErrorMsg: "unexpected end of JSON input",
+		},
 	} {
 		suite.Run(t.name, func() {
 			buf := new(bytes.Buffer)
@@ -299,6 +366,72 @@ func (suite *RequestsTestSuite) TestDo() {
 				}
 
 			}
+		})
+	}
+}
+
+func (suite *RequestsTestSuite) TestCreateMultipartRequestBody() {
+	for _, t := range []struct {
+		name                      string
+		formItems                 []FormItem
+		wantError                 bool
+		expectedErrorMsg          string
+		expectedContentTypePrefix string
+	}{
+		{
+			name: "a form can be created from one item",
+			formItems: []FormItem{
+				{
+					Type:      "field",
+					FieldName: "data",
+					Content:   "some text",
+				},
+			},
+			expectedContentTypePrefix: "multipart/form-data; boundary=",
+		},
+		{
+			name: "a form can be created from multiple items",
+			formItems: []FormItem{
+				{
+					Type:      "field",
+					FieldName: "data",
+					Content:   "some text",
+				},
+				{
+					Type:      "file",
+					FieldName: "upload",
+					Content:   "requests.go",
+				},
+			},
+			expectedContentTypePrefix: "multipart/form-data; boundary=",
+		},
+		{
+			name: "a form with a non-existing file item fails",
+			formItems: []FormItem{
+				{
+					Type:      "file",
+					FieldName: "upload",
+					Content:   "non-existing",
+				},
+			},
+			wantError: true,
+		},
+		{
+			name: "a form with an invalid field content item fails",
+			formItems: []FormItem{
+				{
+					Type:      "field",
+					FieldName: "data",
+					Content:   make(chan string),
+				},
+			},
+			wantError: true,
+		},
+	} {
+		suite.Run(t.name, func() {
+			contentType, _, err := createMultipartRequestBody(t.formItems)
+			require.True(suite.T(), t.wantError == (err != nil))
+			require.True(suite.T(), strings.HasPrefix(contentType, t.expectedContentTypePrefix))
 		})
 	}
 }

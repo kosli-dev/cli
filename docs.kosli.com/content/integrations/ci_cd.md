@@ -10,9 +10,14 @@ aliases:
 This section provides how-to guides showing you how to use Kosli to report changes from
 different CI systems.
 
+{{< hint info >}}
+Note that **all** CLI command flags can be set as environment variables by adding the the `KOSLI_` prefix and capitalizing them. 
+In the example [below](/integrations/ci_cd/#use-kosli-in-github-actions), both `--api-token` and `--org` flags were set from environment variables.
+{{< /hint >}}
+
 ## Defaulted Kosli command flags from CI variables
 
-The following flags are defaulted as follows in the CI systems below:
+The following flags are **defaulted** (which means you don't need to provide the flags, they'll be automatically set to values listed below) as follows in the CI systems below:
 
 {{< tabs "ci-defaults" "col-no-wrap" >}}
 
@@ -57,6 +62,7 @@ The following flags are defaulted as follows in the CI systems below:
 
 {{< /tabs >}}
 
+
 ## Use Kosli in Github Actions
 
 To use Kosli in [Github Actions](https://docs.github.com/en/actions) workflows, you can use the kosli [CLI setup action](https://github.com/marketplace/actions/setup-kosli-cli) to install the CLI on your Github Actions Runner.
@@ -77,8 +83,3 @@ jobs:
       - name: create flow
         run: kosli create flow my-flow --template pull-request,artifact,test
 ```
-
-{{< hint info >}}
-Note that all CLI command flags can be set as environment variables by adding the the `KOSLI_` prefix and capitalizing them. 
-In the example above, both `--api-token` and `--org` flags were set from environment variables.
-{{< /hint >}}

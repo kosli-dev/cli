@@ -20,7 +20,6 @@ type reportEvidenceArtifactSnykOptions struct {
 	flowName           string
 	snykJsonFilePath   string
 	userDataFilePath   string
-	evidencePaths      []string
 	payload            EvidenceSnykPayload
 }
 
@@ -82,7 +81,6 @@ func newReportEvidenceArtifactSnykCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.snykJsonFilePath, "scan-results", "R", "", snykJsonResultsFileFlag)
 	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
-	cmd.Flags().StringSliceVarP(&o.evidencePaths, "evidence-paths", "e", []string{}, evidencePathsFlag)
 
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
@@ -114,7 +112,7 @@ func (o *reportEvidenceArtifactSnykOptions) run(args []string) error {
 		return err
 	}
 
-	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, o.evidencePaths)
+	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, []string{o.snykJsonFilePath})
 	// if we created a tar package, remove it after uploading it
 	if cleanupNeeded {
 		defer os.Remove(evidencePath)

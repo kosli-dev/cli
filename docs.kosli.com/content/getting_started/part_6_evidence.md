@@ -7,8 +7,10 @@ weight: 250
 
 Whenever an event related to required evidence happens you should report it to Kosli. 
 You can report evidence to either a git commit or an artifact. 
-Evidence reported against a git commit will be automatically 
-attached to any artifact produced from that git commit. 
+
+Evidence reported against a git commit will be automatically attached to:
+* either **ALL** artifacts produced from that git commit (when `--flows` flag is **not** provided)
+* or **only** to artifacts produced from that git commit **reported to flows** provided in `--flows` flag.  
 
 If a given named evidence is reported multiple times, it is the compliance status of the 
 last reported version of the evidence that is considered the compliance state of that evidence.
@@ -81,9 +83,9 @@ $ kosli pipeline artifact report evidence github-pullrequest project-a-app.bin \
 github pull request evidence is reported to artifact: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
 ```
 For more details see:  
-[kosli pipeline artifact report evidence github-pullrequest](/legacy_ref/v0.1.36/kosli_pipeline_artifact_report_evidence_github-pullrequest/)  
-[kosli pipeline artifact report evidence bitbucket-pullrequest](/legacy_ref/v0.1.36/kosli_pipeline_artifact_report_evidence_bitbucket-pullrequest/)  
-[kosli pipeline artifact report evidence gitlab-mergerequest](/legacy_ref/v0.1.36/kosli_pipeline_artifact_report_evidence_gitlab-mergerequest/)
+[kosli pipeline artifact report evidence github-pullrequest](/legacy_ref/v0.1.37/kosli_pipeline_artifact_report_evidence_github-pullrequest/)  
+[kosli pipeline artifact report evidence bitbucket-pullrequest](/legacy_ref/v0.1.37/kosli_pipeline_artifact_report_evidence_bitbucket-pullrequest/)  
+[kosli pipeline artifact report evidence gitlab-mergerequest](/legacy_ref/v0.1.37/kosli_pipeline_artifact_report_evidence_gitlab-mergerequest/)
 {{< /tab >}}
 
 {{< tab "Commit v2" >}}
@@ -119,9 +121,9 @@ $ kosli commit report evidence github-pullrequest \
 github pull request evidence is reported to commit: e67f2f2b121f9325ebf166b7b3c707f73cb48b14
 ```
 For more details see:  
-[kosli commit report evidence github-pullrequest](/legacy_ref/v0.1.36/kosli_commit_report_evidence_github-pullrequest/)  
-[kosli commit report evidence bitbucket-pullrequest](/legacy_ref/v0.1.36/kosli_commit_report_evidence_bitbucket-pullrequest/)  
-[kosli commit report evidence gitlab-mergerequest](/legacy_ref/v0.1.36/kosli_commit_report_evidence_gitlab-mergerequest/)
+[kosli commit report evidence github-pullrequest](/legacy_ref/v0.1.37/kosli_commit_report_evidence_github-pullrequest/)  
+[kosli commit report evidence bitbucket-pullrequest](/legacy_ref/v0.1.37/kosli_commit_report_evidence_bitbucket-pullrequest/)  
+[kosli commit report evidence gitlab-mergerequest](/legacy_ref/v0.1.37/kosli_commit_report_evidence_gitlab-mergerequest/)
 {{< /tab >}}
 
 {{< /tabs >}}
@@ -163,7 +165,7 @@ $ kosli pipeline artifact report evidence junit project-a-app.bin \
 
 junit test evidence is reported to artifact: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
 ```
-See [kosli pipeline artifact report evidence junit](/legacy_ref/v0.1.35/kosli_pipeline_artifact_report_evidence_junit/) for more details
+See [kosli pipeline artifact report evidence junit](/legacy_ref/v0.1.37/kosli_pipeline_artifact_report_evidence_junit/) for more details
 {{< /tab >}}
 
 {{< tab "Commit v2" >}}
@@ -191,7 +193,7 @@ $ kosli commit report evidence junit \
 
 junit test evidence is reported to commit: e67f2f2b121f9325ebf166b7b3c707f73cb48b14
 ```
-See [kosli commit report evidence junit](/legacy_ref/v0.1.36/kosli_commit_report_evidence_junit/) for more details
+See [kosli commit report evidence junit](/legacy_ref/v0.1.37/kosli_commit_report_evidence_junit/) for more details
 {{< /tab >}}
 
 
@@ -234,7 +236,7 @@ $ kosli pipeline artifact report evidence snyk project-a-app.bin \
 
 snyk scan evidence is reported to artifact: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
 ```
-See [kosli pipeline artifact report evidence snyk](/legacy_ref/v0.1.35/kosli_pipeline_artifact_report_evidence_snyk/) for more details
+See [kosli pipeline artifact report evidence snyk](/legacy_ref/v0.1.37/kosli_pipeline_artifact_report_evidence_snyk/) for more details
 {{< /tab >}}
 
 {{< tab "Commit v2" >}}
@@ -262,7 +264,7 @@ $ kosli commit report evidence snyk \
 
 snyk scan evidence is reported to commit: e67f2f2b121f9325ebf166b7b3c707f73cb48b14
 ```
-See [kosli commit report evidence snyk](/legacy_ref/v0.1.36/kosli_commit_report_evidence_snyk/) for more details
+See [kosli commit report evidence snyk](/legacy_ref/v0.1.37/kosli_commit_report_evidence_snyk/) for more details
 {{< /tab >}}
 
 {{< /tabs >}}
@@ -303,7 +305,7 @@ $ kosli pipeline artifact report evidence generic project-a-app.bin \
 
 generic evidence 'code-coverage' is reported to artifact: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
 ```
-See [kosli pipeline artifact report evidence generic](/legacy_ref/v0.1.35/kosli_pipeline_artifact_report_evidence_generic/) for more details
+See [kosli pipeline artifact report evidence generic](/legacy_ref/v0.1.37/kosli_pipeline_artifact_report_evidence_generic/) for more details
 {{< /tab >}}
 
 {{< tab "Commit v2" >}}
@@ -331,7 +333,7 @@ $ kosli commit report evidence generic \
 
 generic evidence 'code-coverage' is reported to commit: e67f2f2b121f9325ebf166b7b3c707f73cb48b14
 ```
-See [kosli commit report evidence generic](/legacy_ref/v0.1.36/kosli_commit_report_evidence_generic/) for more details
+See [kosli commit report evidence generic](/legacy_ref/v0.1.37/kosli_commit_report_evidence_generic/) for more details
 {{< /tab >}}
 
 {{< /tabs >}}

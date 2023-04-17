@@ -195,12 +195,13 @@ func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, logger *logger.Logge
 	defer os.RemoveAll(tempDirName)
 
 	downloader := s3manager.NewDownloader(client)
-	lastModifiedTime := objects.Contents[0].LastModified
+	var lastModifiedTime *time.Time
 	for _, object := range objects.Contents {
 		err := downloadFileFromBucket(downloader, tempDirName, *object.Key, bucket, logger)
-		if object.LastModified.After(*lastModifiedTime) {
+		if lastModifiedTime == nil || object.LastModified.After(*lastModifiedTime) {
 			lastModifiedTime = object.LastModified
 		}
+
 		if err != nil {
 			return s3Data, err
 		}

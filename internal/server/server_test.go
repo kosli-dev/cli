@@ -230,6 +230,16 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsDataInvalid() {
 	require.Errorf(suite.T(), err, "error was expected")
 }
 
+func (suite *ServerTestSuite) TestGetPathLastModifiedTimestamp() {
+	ts, err := getPathLastModifiedTimestamp("server.go")
+	require.NoError(suite.T(), err)
+	require.Greater(suite.T(), ts, int64(0))
+
+	ts, err = getPathLastModifiedTimestamp("non-existing")
+	require.Error(suite.T(), err)
+	require.Equal(suite.T(), ts, int64(0))
+}
+
 func (suite *ServerTestSuite) createFileWithContent(path, content string) {
 	err := utils.CreateFileWithContent(path, content)
 	require.NoErrorf(suite.T(), err, "error creating file %s", path)

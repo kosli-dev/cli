@@ -13,7 +13,6 @@ import (
 type reportEvidenceCommitJunitOptions struct {
 	testResultsDir   string
 	userDataFilePath string
-	evidencePaths    []string
 	payload          EvidenceJUnitPayload
 }
 
@@ -67,7 +66,6 @@ func newReportEvidenceCommitJunitCmd(out io.Writer) *cobra.Command {
 	addCommitEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
 	cmd.Flags().StringVarP(&o.testResultsDir, "results-dir", "R", ".", resultsDirFlag)
 	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
-	cmd.Flags().StringSliceVarP(&o.evidencePaths, "evidence-paths", "e", []string{}, evidencePathsFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"commit", "build-url", "name"})
@@ -91,7 +89,13 @@ func (o *reportEvidenceCommitJunitOptions) run(args []string) error {
 		return err
 	}
 
-	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, o.evidencePaths)
+	// prepare the files to upload as evidence. We are only interested in the actual Junit XMl files
+	junitFilenames, err := getJunitFilenames(o.testResultsDir)
+	if err != nil {
+		return err
+	}
+
+	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, junitFilenames)
 	// if we created a tar package, remove it after uploading it
 	if cleanupNeeded {
 		defer os.Remove(evidencePath)

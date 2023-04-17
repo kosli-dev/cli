@@ -4,4 +4,4 @@ bookCollapseSection: true
 weight: 600
 ---
 
-# Kosli Client Reference
+# CLI Reference

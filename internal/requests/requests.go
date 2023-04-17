@@ -129,6 +129,10 @@ func (p *RequestParams) newHTTPRequest() (*http.Request, error) {
 	return req, nil
 }
 
+// createMultipartRequestBody process a list of FormItem and returns
+// - the multipart form content type
+// - request body for the multipart form in the form of bytes.Buffer
+// - error, if any occurred
 func createMultipartRequestBody(items []FormItem) (string, *bytes.Buffer, error) {
 	body := &bytes.Buffer{}
 

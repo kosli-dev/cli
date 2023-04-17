@@ -30,11 +30,11 @@ func CreateServerArtifactsData(paths, excludePaths []string, logger *logger.Logg
 		if err != nil {
 			return []*ServerData{}, fmt.Errorf("failed to open path %s with error: %v", p, err)
 		}
-		var sha256 string
+		var fingerprint string
 		if !finfo.IsDir() {
-			sha256, err = digest.FileSha256(p)
+			fingerprint, err = digest.FileSha256(p)
 		} else {
-			sha256, err = digest.DirSha256(p, excludePaths, logger)
+			fingerprint, err = digest.DirSha256(p, excludePaths, logger)
 		}
 
 		if err != nil {
@@ -44,7 +44,7 @@ func CreateServerArtifactsData(paths, excludePaths []string, logger *logger.Logg
 		if err != nil {
 			return []*ServerData{}, fmt.Errorf("failed to get absolute path for %s with error: %v", p, err)
 		}
-		digests[artifactName] = sha256
+		digests[artifactName] = fingerprint
 		ts, err := getPathLastModifiedTimestamp(p)
 		if err != nil {
 			return []*ServerData{}, fmt.Errorf("failed to get last modified timestamp of path %s with error: %v", p, err)

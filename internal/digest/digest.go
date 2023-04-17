@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -27,7 +28,7 @@ var (
 
 // DirSha256 returns sha256 digest of a directory
 func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (string, error) {
-	logger.Debug("Input path: %v", filepath.Base(dirPath))
+	logger.Debug("Input path: %v", dirPath)
 	logger.Debug("Exclude paths: %s", excludePaths)
 	info, err := os.Stat(dirPath)
 	if err != nil {
@@ -58,43 +59,56 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 
 // calculateDirContentSha256 calculates a sha256 digest for a directory content
 func calculateDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, excludePaths []string, logger *logger.Logger) error {
-	fsEntries, err := os.ReadDir(dirPath)
-	if err != nil {
-		return err
+	pathsToExclude := []string{}
+	for _, p := range excludePaths {
+		found, err := filepath.Glob(filepath.Join(dirPath, p))
+		if err != nil {
+			return err
+		}
+		pathsToExclude = append(pathsToExclude, found...)
 	}
 
-	for _, entry := range fsEntries {
-
-		if utils.Contains(excludePaths, entry.Name()) {
-			continue
-		}
-
-		nameSha256, err := addNameDigest(tmpDir, entry.Name(), digestsFile)
+	return filepath.WalkDir(dirPath, func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
-		entryPath := filepath.Join(dirPath, entry.Name())
+		// skip the provided top level dir. Otherwise, the name of that dir is included in
+		// the fingerprint calculation (i.e. changing the dir name would change the fingerprint)
+		if path == dirPath {
+			return nil
+		}
 
-		if entry.IsDir() {
-			logger.Debug("dirname: %s -- dirname digest: %v", entryPath, nameSha256)
-			err := calculateDirContentSha256(digestsFile, entryPath, tmpDir, excludePaths, logger)
-			if err != nil {
-				return err
+		if utils.Contains(pathsToExclude, path) {
+			if info.IsDir() {
+				logger.Debug("skipping dir %s (and its contents) as it matches excluded paths", path)
+				return fs.SkipDir
 			}
+			logger.Debug("skipping %s as it matches excluded paths", path)
+			return nil
+		}
+
+		nameSha256, err := addNameDigest(tmpDir, info.Name(), digestsFile)
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			logger.Debug("dir path: %s -- dirname digest: %v", path, nameSha256)
 		} else {
-			logger.Debug("filename: %s -- filename digest: %s", entryPath, nameSha256)
-			fileContentSha256, err := FileSha256(entryPath)
+			logger.Debug("file path: %s -- filename digest: %s", path, nameSha256)
+			fileContentSha256, err := FileSha256(path)
 			if err != nil {
 				return err
 			}
-			logger.Debug("filename: %s -- content digest: %s", entryPath, fileContentSha256)
+			logger.Debug("filename: %s -- content digest: %s", path, fileContentSha256)
 			if _, err := digestsFile.Write([]byte(fileContentSha256)); err != nil {
 				return err
 			}
 		}
-	}
-	return nil
+
+		return nil
+	})
 }
 
 // addNameDigest calculates the sha256 digest of the filename and adds it to the digests file

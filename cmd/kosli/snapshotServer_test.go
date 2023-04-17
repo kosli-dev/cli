@@ -37,6 +37,12 @@ func (suite *SnapshotServerTestSuite) TestSnapshotServerCmd() {
 			golden:    "[1] artifacts were reported to environment snapshot-server-env\n",
 		},
 		{
+			wantError: false,
+			name:      "snapshot server works with --exclude",
+			cmd:       fmt.Sprintf(`snapshot server --paths testdata/server --exclude logs %s %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "[1] artifacts were reported to environment snapshot-server-env\n",
+		},
+		{
 			wantError: true,
 			name:      "snapshot server fails without --paths",
 			cmd:       fmt.Sprintf(`snapshot server %s %s`, suite.envName, suite.defaultKosliArguments),
