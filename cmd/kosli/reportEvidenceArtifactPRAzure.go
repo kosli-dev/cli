@@ -17,6 +17,8 @@ const reportEvidenceArtifactPRAzureExample = `
 # report a pull request evidence to kosli for a docker image
 kosli report evidence artifact pullrequest azure yourDockerImageName \
 	--artifact-type docker \
+	--azure-org-url https://dev.azure.com/myOrg \
+	--project yourAzureDevOpsProject \
 	--commit yourGitCommitSha1 \
 	--repository yourAzureGitRepository \
 	--azure-token yourAzureToken \
@@ -28,6 +30,8 @@ kosli report evidence artifact pullrequest azure yourDockerImageName \
 # fail if a pull request does not exist for your artifact
 kosli report evidence artifact pullrequest azure yourDockerImageName \
 	--artifact-type docker \
+	--azure-org-url https://dev.azure.com/myOrg \
+	--project yourAzureDevOpsProject \
 	--commit yourGitCommitSha1 \
 	--repository yourAzureGitRepository \
 	--azure-token yourAzureToken \

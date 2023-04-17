@@ -17,6 +17,8 @@ const reportEvidenceCommitPRAzureExample = `
 # report a pull request commit evidence to Kosli
 kosli report evidence commit pullrequest azure \
 	--commit yourGitCommitSha1 \
+	--azure-org-url https://dev.azure.com/myOrg \
+	--project yourAzureDevOpsProject \
 	--repository yourAzureGitRepository \
 	--azure-token yourAzureToken \
 	--name yourEvidenceName \
@@ -27,6 +29,8 @@ kosli report evidence commit pullrequest azure \
 # fail if a pull request does not exist for your commit
 kosli report evidence commit pullrequest azure \
 	--commit yourGitCommitSha1 \
+	--azure-org-url https://dev.azure.com/myOrg \
+	--project yourAzureDevOpsProject \
 	--repository yourAzureGitRepository \
 	--azure-token yourAzureToken \
 	--name yourEvidenceName \
@@ -35,8 +39,6 @@ kosli report evidence commit pullrequest azure \
 	--api-token yourAPIToken
 	--assert
 `
-
-// TODO: do we need to support assert for this command? see line 74
 
 func newReportEvidenceCommitPRAzureCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestCommitOptions)
