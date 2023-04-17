@@ -12,7 +12,7 @@ different CI systems.
 
 {{< hint info >}}
 Note that **all** CLI command flags can be set as environment variables by adding the the `KOSLI_` prefix and capitalizing them. 
-In the example [below](/integrations/ci_cd/#use-kosli-in-github-actions), both `--api-token` and `--org` flags were set from environment variables.
+In the GitHub workflow example [further down](/integrations/ci_cd/#use-kosli-in-github-actions), both `--api-token` and `--org` flags were set from environment variables.
 {{< /hint >}}
 
 ## Defaulted Kosli command flags from CI variables
