@@ -2,7 +2,7 @@
 set -Eeu
 
 readonly URL="${1}"
-readonly MAX_TRIES=50
+readonly MAX_TRIES=60
 
 echo -n "Waiting for ${URL} readiness"
 for try in $(seq 1 ${MAX_TRIES}); do

@@ -25,6 +25,10 @@ services:
       AWS_SECRET_ACCESS_KEY: ROOTUSER
     container_name: cli_kosli_server
     ports: ["8001:8001"]
+    volumes:
+      - ./server-scripts:/app/test:ro
+    tmpfs:
+      - /tmp
 
   mongo_rs_initiate:
     networks: [ cli_net ]

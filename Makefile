@@ -90,10 +90,13 @@ test_integration_no_setup:
 	@~/go/bin/gotestsum -- --short -p=8 -coverprofile=cover.out ./...
 	@go tool cover -html=cover.out
 
-
 test_integration_single: test_integration_setup
 	@export KOSLI_TESTS=true && ~/go/bin/gotestsum -- -p=4 ./... -run "${TARGET}"
 
+
+test_integration_single_no_setup: 
+	@docker exec cli_kosli_server /app/test/clean_database.py
+	@export KOSLI_TESTS=true && ~/go/bin/gotestsum -- -p=1 ./... -run "${TARGET}"
 
 test_docs: deps vet ensure_network test_integration_setup
 	./bin/test_docs_cmds.sh docs.kosli.com/content/use_cases/simulating_a_devops_system/_index.md
