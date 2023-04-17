@@ -7,6 +7,7 @@ import (
 	"os"
 	"reflect"
 
+	azUtils "github.com/kosli-dev/cli/internal/azure"
 	bbUtils "github.com/kosli-dev/cli/internal/bitbucket"
 	ghUtils "github.com/kosli-dev/cli/internal/github"
 	gitlabUtils "github.com/kosli-dev/cli/internal/gitlab"
@@ -99,6 +100,8 @@ func getGitProviderAndLabel(retriever interface{}) (string, string) {
 		label = "merge request"
 	case reflect.TypeOf(&ghUtils.GithubConfig{}):
 		provider = "github"
+	case reflect.TypeOf(&azUtils.AzureConfig{}):
+		provider = "azure"
 	case reflect.TypeOf(&bbUtils.Config{}):
 		provider = "bitbucket"
 	}

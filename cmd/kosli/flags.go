@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/kosli-dev/cli/internal/aws"
+	azUtils "github.com/kosli-dev/cli/internal/azure"
 	bbUtils "github.com/kosli-dev/cli/internal/bitbucket"
 	ghUtils "github.com/kosli-dev/cli/internal/github"
 	gitlabUtils "github.com/kosli-dev/cli/internal/gitlab"
@@ -37,6 +38,13 @@ func addGithubFlags(cmd *cobra.Command, githubFlagsValueHolder *ghUtils.GithubFl
 	cmd.Flags().StringVar(&githubFlagsValueHolder.Org, "github-org", DefaultValue(ci, "org"), githubOrgFlag)
 	cmd.Flags().StringVar(&githubFlagsValueHolder.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
 	cmd.Flags().StringVar(&githubFlagsValueHolder.BaseURL, "github-base-url", "", githubBaseURLFlag)
+}
+
+func addAzureFlags(cmd *cobra.Command, azureFlagsValueHolder *azUtils.AzureFlagsTempValueHolder, ci string) {
+	cmd.Flags().StringVar(&azureFlagsValueHolder.Token, "azure-token", "", azureTokenFlag)
+	cmd.Flags().StringVar(&azureFlagsValueHolder.OrgUrl, "azure-org-url", DefaultValue(ci, "org-url"), azureOrgUrlFlag)
+	cmd.Flags().StringVar(&azureFlagsValueHolder.Project, "project", DefaultValue(ci, "project"), azureProjectFlag)
+	cmd.Flags().StringVar(&azureFlagsValueHolder.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
 }
 
 func addGitlabFlags(cmd *cobra.Command, gitlabConfig *gitlabUtils.GitlabConfig, ci string) {

@@ -18,6 +18,7 @@ require (
 	github.com/joshdk/go-junit v1.0.0
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/maxcnunes/httpfake v1.2.4
+	github.com/microsoft/azure-devops-go-api/azuredevops v1.0.0-b5
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/otiai10/copy v1.9.0
 	github.com/pkg/errors v0.9.1

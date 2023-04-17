@@ -64,38 +64,35 @@ build_release: check_dirty add_test_tag
 ensure_network:
 	docker network inspect cli_net > /dev/null || docker network create --driver bridge cli_net
 
-test_integration_setup:
-	./bin/docker_login_aws.sh staging
-	@docker-compose down || true
-	@docker pull 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:latest || true
-	@docker-compose up -d
-	./mongo/ip_wait.sh localhost:9010/minio/health/live
-	./mongo/ip_wait.sh localhost:8001/ready
-	@docker exec cli_kosli_server /demo/create_test_users.py
+ensure_gotestsum:
 	@go install gotest.tools/gotestsum@latest
 
+test_setup: ensure_gotestsum
+	./bin/reset-or-start-server.sh
 
-test_integration: deps vet ensure_network test_integration_setup ## Run tests except the too slow ones
+test_setup_restart_server: ensure_gotestsum
+	./bin/reset-or-start-server.sh force
+
+test_integration: deps vet ensure_network test_setup ## Run tests except the too slow ones
 	@export KOSLI_TESTS=true && ~/go/bin/gotestsum -- --short -p=8 -coverprofile=cover.out ./...
 	@go tool cover -func=cover.out | grep total:
 	@go tool cover -html=cover.out
 
 
-test_integration_full: deps vet ensure_network test_integration_setup ## Run all tests
+test_integration_full: deps vet ensure_network test_setup ## Run all tests
 	@export KOSLI_TESTS=true && ~/go/bin/gotestsum -- -p=8 -coverprofile=cover.out ./...
 	@go tool cover -func=cover.out
 
 
-test_integration_no_setup: 
-	@~/go/bin/gotestsum -- --short -p=8 -coverprofile=cover.out ./...
+test_integration_restart_server: test_setup_restart_server
+	@export KOSLI_TESTS=true && ~/go/bin/gotestsum -- --short -p=8 -coverprofile=cover.out ./...
 	@go tool cover -html=cover.out
 
+test_integration_single: test_setup
+	@export KOSLI_TESTS=true && ~/go/bin/gotestsum -- -p=1 ./... -run "${TARGET}"
 
-test_integration_single: test_integration_setup
-	@export KOSLI_TESTS=true && ~/go/bin/gotestsum -- -p=4 ./... -run "${TARGET}"
 
-
-test_docs: deps vet ensure_network test_integration_setup
+test_docs: deps vet ensure_network test_setup
 	./bin/test_docs_cmds.sh docs.kosli.com/content/use_cases/simulating_a_devops_system/_index.md
 
 

@@ -25,15 +25,16 @@ import (
 )
 
 const (
-	bitbucket = "Bitbucket"
-	github    = "Github"
-	teamcity  = "Teamcity"
-	gitlab    = "Gitlab"
-	unknown   = "Unknown"
+	bitbucket   = "Bitbucket"
+	github      = "Github"
+	teamcity    = "Teamcity"
+	gitlab      = "Gitlab"
+	azureDevops = "Azure Devops"
+	unknown     = "Unknown"
 )
 
 // supportedCIs the set of CI tools that are supported for defaulting
-var supportedCIs = []string{bitbucket, github, teamcity}
+var supportedCIs = []string{bitbucket, github, teamcity, gitlab, azureDevops}
 
 // ciTemplates a map of kosli flags and corresponding default templates in supported CI tools
 var ciTemplates = map[string]map[string]string{
@@ -60,6 +61,14 @@ var ciTemplates = map[string]map[string]string{
 		"build-url":  "${CI_JOB_URL}",
 		"commit-url": "${CI_PROJECT_URL}/-/commit/${CI_COMMIT_SHA}",
 		"namespace":  "${CI_PROJECT_NAMESPACE}",
+	},
+	azureDevops: {
+		"git-commit": "${BUILD_SOURCEVERSION}",
+		"repository": "${BUILD_REPOSITORY_NAME}",
+		"build-url":  "${SYSTEM_COLLECTIONURI}/${SYSTEM_TEAMPROJECT}/_build/results?buildId=${BUILD_BUILDID}",
+		"commit-url": "${SYSTEM_COLLECTIONURI}/${SYSTEM_TEAMPROJECT}/_git/${BUILD_REPOSITORY_NAME}/commit/${BUILD_SOURCEVERSION}",
+		"org-url":    "${SYSTEM_COLLECTIONURI}",
+		"project":    "${SYSTEM_TEAMPROJECT}",
 	},
 }
 
@@ -95,6 +104,8 @@ func WhichCI() string {
 		return teamcity
 	} else if _, ok := os.LookupEnv("GITLAB_CI"); ok {
 		return gitlab
+	} else if _, ok := os.LookupEnv("TF_BUILD"); ok {
+		return azureDevops
 	} else {
 		return unknown
 	}
@@ -115,17 +126,6 @@ func DefaultValue(ci, flag string) string {
 	}
 	return ""
 }
-
-// DeprecateFlags declares a list of flags as deprecated for a given command
-// func DeprecateFlags(cmd *cobra.Command, flags map[string]string) error {
-// 	for name, message := range flags {
-// 		err := cmd.Flags().MarkDeprecated(name, message)
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
-// 	return nil
-// }
 
 // RequireFlags declares a list of flags as required for a given command
 func RequireFlags(cmd *cobra.Command, flagNames []string) error {
