@@ -158,7 +158,7 @@ Get a more detailed view of what is currently running on the server:
 kosli get snapshot production
 ```
 ```plaintext {.light-console}
-COMMIT  ARTIFACT                                                                       PIPELINE  RUNNING_SINCE  REPLICAS
+COMMIT  ARTIFACT                                                                       FLOW      RUNNING_SINCE  REPLICAS
 N/A     Name: /tmp/try-kosli/server/web_1.bin                                          N/A       2 minutes ago  1
         Fingerprint: a7a87c332500a40f9a01b811ec75f51b40188a3dabd205feb0fa7c3eafb25fbe                           
                                                                                                            
@@ -224,7 +224,7 @@ kosli get snapshot production
 ```
 
 ```plaintext {.light-console}
-COMMIT  ARTIFACT                                                                       PIPELINE  RUNNING_SINCE   REPLICAS
+COMMIT  ARTIFACT                                                                       FLOW      RUNNING_SINCE   REPLICAS
 N/A     Name: /tmp/try-kosli/server/web_2.bin                                          N/A       39 seconds ago  1
         Fingerprint: cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746                            
                                                                                                             
@@ -242,7 +242,7 @@ kosli get snapshot production#1
 ```
 
 ```plaintext {.light-console}
-COMMIT  ARTIFACT                                                                       PIPELINE  RUNNING_SINCE  REPLICAS
+COMMIT  ARTIFACT                                                                       FLOW      RUNNING_SINCE  REPLICAS
 N/A     Name: /tmp/try-kosli/server/web_1.bin                                          N/A       7 minutes ago  1
         Fingerprint: a7a87c332500a40f9a01b811ec75f51b40188a3dabd205feb0fa7c3eafb25fbe                           
                                                                                                            
@@ -269,7 +269,7 @@ artifact, some have a CI system where one CI pipeline builds several
 artifacts. For both cases you use one Kosli pipeline for each artifact. -->
 
 You use the Kosli CLI to report information about the creation of an
-artifact to the Kosli pipeline.
+artifact to the Kosli flow.
 
 A Kosli flow can also be used to store any information related to 
 the artifact you have built, like test results, manual approvals, 
@@ -282,7 +282,7 @@ Create a Kosli flow where you can report what software your CI system
 is building. You are building two applications, so make
 two Kosli flows `web-server` and `database-server`.
 
-Create your new pipelines:
+Create your new flows:
 
 ```shell {.command}
 kosli create flow web-server \
@@ -293,7 +293,7 @@ kosli create flow web-server \
 
 ```shell {.command}
 kosli create flow database-server \
-    --description "pipeline to build database-server" \
+    --description "flow to build database-server" \
     --visibility private \
     --template artifact
 ```
@@ -347,7 +347,7 @@ kosli report artifact /tmp/try-kosli/build/db_$(cat /tmp/try-kosli/code/db.src).
     --git-commit $(cd /tmp/try-kosli/code; git rev-parse HEAD)
 ```
 
-You can see you have built one artifact in your *web-server* pipeline:
+You can see you have built one artifact in your *web-server* flow:
 
 ```shell {.command}
 kosli ls artifacts --flow web-server
@@ -359,7 +359,7 @@ COMMIT   ARTIFACT                                                               
          Fingerprint: cbc92ce1291830382ec23b95efc213d6e1725b5157bcb2927d48296b61c86746             
 ```
 
-And one for the *database-server* pipeline:
+And one for the *database-server* flow:
 
 ```shell {.command}
 kosli ls artifacts --flow database-server
@@ -389,7 +389,7 @@ Deployments:  None
 Evidence:
 ```
 
-In the web interface you can select the *database-server* pipeline and then the *db_1.bin*
+In the web interface you can select the *database-server* flow and then the *db_1.bin*
 artifact to get more details.
 
 

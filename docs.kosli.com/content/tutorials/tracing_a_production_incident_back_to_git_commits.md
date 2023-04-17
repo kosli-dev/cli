@@ -38,7 +38,7 @@ kosli log env aws-prod --interval 175..177
 ```
 
 ```plaintext {.light-console}
-SNAPSHOT  EVENT                                                                          PIPELINE  DEPLOYMENTS
+SNAPSHOT  EVENT                                                                          FLOW      DEPLOYMENTS
 #177      Artifact: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/creator:31dee35      creator   #87 
           Fingerprint: 5d1c926530213dadd5c9fcbf59c8822da56e32a04b0f9c774d7cdde3cf6ba66d             
           Description: 1 instance stopped running (from 1 to 0).                               
