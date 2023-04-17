@@ -18,7 +18,9 @@ type reportEvidenceCommitJunitOptions struct {
 
 const reportEvidenceCommitJunitShortDesc = `Report JUnit test evidence for a commit in Kosli flows.`
 
-const reportEvidenceCommitJunitLongDesc = reportEvidenceCommitJunitShortDesc
+const reportEvidenceCommitJunitLongDesc = reportEvidenceCommitJunitShortDesc + `  
+All .xml files from --results-dir are parsed. If there are no failing tests and no errors the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.  
+`
 
 const reportEvidenceCommitJunitExample = `
 # report JUnit test evidence for a commit related to one Kosli flow:

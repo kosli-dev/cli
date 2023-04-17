@@ -18,7 +18,9 @@ type reportEvidenceCommitSnykOptions struct {
 
 const reportEvidenceCommitSnykShortDesc = `Report Snyk evidence for a commit in Kosli flows.`
 
-const reportEvidenceCommitSnykLongDesc = reportEvidenceCommitSnykShortDesc
+const reportEvidenceCommitSnykLongDesc = reportEvidenceCommitSnykShortDesc + `  
+Scan results .json file is parsed. If there no vulnerabilities detected the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.  
+`
 
 const reportEvidenceCommitSnykExample = `
 # report Snyk evidence for a commit related to one Kosli flow:

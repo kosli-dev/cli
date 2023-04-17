@@ -25,7 +25,8 @@ type reportEvidenceArtifactSnykOptions struct {
 
 const reportEvidenceArtifactSnykShortDesc = `Report Snyk vulnerability scan evidence for an artifact in a Kosli flow.`
 
-const reportEvidenceArtifactSnykLongDesc = reportEvidenceArtifactSnykShortDesc + `
+const reportEvidenceArtifactSnykLongDesc = reportEvidenceArtifactSnykShortDesc + `  
+Scan results .json file is parsed. If there no vulnerabilities detected the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.  
 ` + fingerprintDesc
 
 const reportEvidenceArtifactSnykExample = `
