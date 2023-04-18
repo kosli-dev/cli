@@ -2,11 +2,9 @@
 title: "kosli completion"
 ---
 
-## kosli completion
+# kosli completion
 
-Generate completion script
-
-### Synopsis
+## Synopsis
 
 To load completions:
 
@@ -61,13 +59,13 @@ you will need to enable it.  You can execute the following once:
 kosli completion [bash|zsh|fish|powershell]
 ```
 
-### Flags
+## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -h, --help  |  help for completion  |
 
 
-### Options inherited from parent commands
+## Options inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -75,6 +73,6 @@ kosli completion [bash|zsh|fish|powershell]
 |        --debug  |  [optional] Print debug logs to stdout.  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
-|        --owner string  |  The Kosli user or organization.  |
+|        --org string  |  The Kosli organization.  |
 
 

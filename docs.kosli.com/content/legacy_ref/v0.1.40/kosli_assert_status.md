@@ -27,6 +27,6 @@ kosli assert status [flags]
 |        --debug  |  [optional] Print debug logs to stdout.  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
-|        --owner string  |  The Kosli user or organization.  |
+|        --org string  |  The Kosli organization.  |
 
 

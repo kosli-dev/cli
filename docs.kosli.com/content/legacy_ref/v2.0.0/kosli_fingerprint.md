@@ -10,6 +10,13 @@ Calculate the SHA256 fingerprint of an artifact.
 Requires artifact type flag to be set.
 Artifact type can be one of: "file" for files, "dir" for directories, "docker" for docker images.
 
+Fingerprinting docker images can be done using via the local docker daemon or the fingerprint can be fetched
+from a remote registry.
+
+When fingerprinting a 'dir' artifact, you can exclude certain paths from fingerprint calculation 
+using the '--exclude' flag. Excluded paths are relative to the artifact path(s) and can be literal paths or
+glob patterns. The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match
+
 ```shell
 kosli fingerprint {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 ```

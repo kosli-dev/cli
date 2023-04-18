@@ -1,7 +1,7 @@
 ---
 title: v2.0.0
 bookCollapseSection: true
-weight: 600
+weight: 601
 ---
 
-# Kosli Client v2.0.0
+# v2.0.0
