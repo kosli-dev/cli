@@ -94,9 +94,10 @@ jobs:
       - name: Generate docs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          make docs
-          make legacy-ref-docs
+        # legacy-ref should happen first as it has the side effect of deleting generated files outside the legacy_ref
+        run: | 
+          make legacy-ref-docs 
+          make docs 
 
       - name: Generate json
         run: |
