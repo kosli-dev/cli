@@ -28,7 +28,7 @@ kosli search GIT-COMMIT|FINGERPRINT [flags]
 |        --debug  |  [optional] Print debug logs to stdout.  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
-|        --org string  |  The Kosli organization.  |
+|        --owner string  |  The Kosli user or organization.  |
 
 
 ## Examples
@@ -38,12 +38,12 @@ kosli search GIT-COMMIT|FINGERPRINT [flags]
 # Search for a git commit in Kosli
 kosli search YOUR_GIT_COMMIT \
 	--api-token yourApiToken \
-	--org yourOrgName
+	--owner yourOrgName
 
 # Search for an artifact fingerprint in Kosli
-kosli search YOUR_ARTIFACT_FINGERPRINT \
+kosli search YOUR_FINGERPRINT \
 	--api-token yourApiToken \
-	--org yourOrgName
+	--owner yourOrgName
 
 ```
 

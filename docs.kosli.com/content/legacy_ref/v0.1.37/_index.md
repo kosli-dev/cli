@@ -4,4 +4,4 @@ bookCollapseSection: true
 weight: 606
 ---
 
-# v0.1.37
+# Kosli Client v0.1.37

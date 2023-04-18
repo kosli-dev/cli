@@ -6,9 +6,7 @@ title: "kosli report evidence commit junit"
 
 ## Synopsis
 
-Report JUnit test evidence for a commit in Kosli flows.  
-All .xml files from --results-dir are parsed. If there are no failing tests and no errors the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.  
-
+Report JUnit test evidence for a commit in Kosli flows.
 
 ```shell
 kosli report evidence commit junit [flags]

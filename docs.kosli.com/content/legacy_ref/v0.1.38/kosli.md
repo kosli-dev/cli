@@ -2,9 +2,11 @@
 title: "kosli"
 ---
 
-# kosli
+## kosli
 
-## Synopsis
+The Kosli CLI.
+
+### Synopsis
 
 The Kosli evidence reporting CLI.
 
@@ -15,7 +17,7 @@ For example, to set --api-token from an environment variable, you can export KOS
 Setting the API token to DRY_RUN sets the --dry-run flag.
 
 
-## Flags
+### Flags
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
@@ -24,6 +26,6 @@ Setting the API token to DRY_RUN sets the --dry-run flag.
 |    -h, --help  |  help for kosli  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
-|        --org string  |  The Kosli organization.  |
+|        --owner string  |  The Kosli user or organization.  |
 
 

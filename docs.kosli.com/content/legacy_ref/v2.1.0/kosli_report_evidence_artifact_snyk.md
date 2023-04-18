@@ -6,8 +6,7 @@ title: "kosli report evidence artifact snyk"
 
 ## Synopsis
 
-Report Snyk vulnerability scan evidence for an artifact in a Kosli flow.  
-Scan results .json file is parsed. If there no vulnerabilities detected the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.  
+Report Snyk vulnerability scan evidence for an artifact in a Kosli flow.
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell

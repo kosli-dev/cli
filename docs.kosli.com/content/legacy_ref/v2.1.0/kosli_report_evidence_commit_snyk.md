@@ -6,9 +6,7 @@ title: "kosli report evidence commit snyk"
 
 ## Synopsis
 
-Report Snyk evidence for a commit in Kosli flows.  
-Scan results .json file is parsed. If there no vulnerabilities detected the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.  
-
+Report Snyk evidence for a commit in Kosli flows.
 
 ```shell
 kosli report evidence commit snyk [flags]
