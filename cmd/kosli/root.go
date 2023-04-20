@@ -73,6 +73,7 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 	flowDescriptionFlag     = "[optional] The Kosli flow description."
 	visibilityFlag          = "[defaulted] The visibility of the Kosli flow. Valid visibilities are [public, private]."
 	templateFlag            = "[defaulted] The comma-separated list of required compliance controls names."
+	stepsFlag               = "[defaulted] The comma-separated list of required audit trail steps names."
 	approvalUserDataFlag    = "[optional] The path to a JSON file containing additional data you would like to attach to this approval."
 	evidenceUserDataFlag    = "[optional] The path to a JSON file containing additional data you would like to attach to this evidence."
 	deploymentUserDataFlag  = "[optional] The path to a JSON file containing additional data you would like to attach to this deployment."
