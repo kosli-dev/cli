@@ -36,7 +36,7 @@ type AuditTrailPayload struct {
 func newCreateAuditTrailCmd(out io.Writer) *cobra.Command {
 	o := new(createAuditTrailOptions)
 	cmd := &cobra.Command{
-		Use:     "audit-trail [AUDIT-TRAIL-NAME]",
+		Use:     "audit-trail AUDIT-TRAIL-NAME",
 		Short:   createAuditTrailShortDesc,
 		Long:    createAuditTrailLongDesc,
 		Hidden:  true,
