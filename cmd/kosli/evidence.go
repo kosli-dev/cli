@@ -21,10 +21,17 @@ type GenericEvidencePayload struct {
 	Compliant   bool   `json:"is_compliant"`
 }
 
+type AuditTrailEvidencePayload struct {
+	ExternalId string      `json:"external_id"`
+	Step       string      `json:"step"`
+	UserData   interface{} `json:"user_data,omitempty"`
+}
+
 // newEvidenceForm constructs a list of FormItems for an evidence
 // form submission.
 func newEvidenceForm(payload interface{}, evidencePaths []string) (
-	[]requests.FormItem, bool, string, error) {
+	[]requests.FormItem, bool, string, error,
+) {
 	form := []requests.FormItem{
 		{Type: "field", FieldName: "evidence_json", Content: payload},
 	}
