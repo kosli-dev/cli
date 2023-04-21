@@ -103,7 +103,7 @@ func (o *reportEvidenceAuditTrailOptions) run(args []string) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("evidence '%s' is reported to audit trail: %s", o.payload.Step, o.auditTrailName)
+		logger.Info("evidence '%s' for external ID '%s' is reported to audit trail: %s", o.payload.Step, o.payload.ExternalId, o.auditTrailName)
 	}
 	return err
 }

@@ -19,8 +19,8 @@ type GetAuditTrailCommandTestSuite struct {
 func (suite *GetAuditTrailCommandTestSuite) SetupTest() {
 	suite.auditTrailName = "audit-trail-get-test"
 	global = &GlobalOpts{
-		ApiToken: "v3OWZiYWu9G2IMQStYg9BcPQUQ88lJNNnTJTNq8jfvmkR1C5wVpHSs7F00JcB5i6OGeUzrKt3CwRq7ndcN4TTfMeo8ASVJ5NdHpZT7DkfRfiFvm8s7GbsIHh2PtiQJYs2UoN13T8DblV5C4oKb6-yWH73h67OhotPlKfVKazR-c",
-		Org:      "acme-org",
+		ApiToken: "OwlC87d3e1YY0gmYfIPnAaA_W2JsQ7CoZh03Isw2Cb_McjmjMeht7K7vR0rA85cy02LQgWkM-jg6-gtBC11YrhcfU6GzgXe90d1QX3xFUFjT2FlqEPhkYgho1UVy4qzFYUVoKC1Lc1ZiXDjk7Bc_gvUByWIys0JNYqxJFZXmLeA",
+		Org:      "audit-trail-get-org",
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
@@ -34,7 +34,7 @@ func (suite *GetAuditTrailCommandTestSuite) TestGetAuditTrailCmd() {
 			wantError: true,
 			name:      "getting a non existing audit trail fails",
 			cmd:       fmt.Sprintf(`get audit-trail non-existing %s`, suite.defaultKosliArguments),
-			golden:    "Error: Audit Trail called 'non-existing' does not exist for organization 'acme-org'. \n",
+			golden:    "Error: Audit Trail called 'non-existing' does not exist for organization 'audit-trail-get-org'. \n",
 		},
 		{
 			wantError: true,

@@ -135,6 +135,19 @@ func CreateAuditTrail(auditTrailName string, t *testing.T) {
 	require.NoError(t, err, "audit trail should be created without error")
 }
 
+func CreateAuditTrailEvidence(auditTrailName string, t *testing.T) {
+	t.Helper()
+	o := &reportEvidenceAuditTrailOptions{
+		auditTrailName: auditTrailName,
+		payload: AuditTrailEvidencePayload{
+			ExternalId: "123",
+			Step:       "step1",
+		},
+	}
+	err := o.run([]string{})
+	require.NoError(t, err, "audit trail evidence should be created without error")
+}
+
 // CreateArtifact creates an artifact on the server
 func CreateArtifact(flowName, artifactFingerprint, artifactName string, t *testing.T) {
 	t.Helper()

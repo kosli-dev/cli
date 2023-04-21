@@ -52,13 +52,13 @@ func (suite *CreateAuditTrailCommandTestSuite) TestCreateAuditTrailCmd() {
 			wantError: true,
 			name:      "missing --org flag causes an error",
 			cmd:       "create audit-trail newAuditTrail --description \"my new audit trail\" --steps step1,step2 -H http://localhost:8001 -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
-			golden:    "Error: --org is not set\nUsage: kosli create audit-trail [AUDIT-TRAIL-NAME] [flags]\n",
+			golden:    "Error: --org is not set\nUsage: kosli create audit-trail AUDIT-TRAIL-NAME [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "missing --api-token flag causes an error",
 			cmd:       "create audit-trail newAuditTrail --description \"my new audit trail\" --steps step1,step2 --org cyber-dojo -H http://localhost:8001",
-			golden:    "Error: --api-token is not set\nUsage: kosli create audit-trail [AUDIT-TRAIL-NAME] [flags]\n",
+			golden:    "Error: --api-token is not set\nUsage: kosli create audit-trail AUDIT-TRAIL-NAME [flags]\n",
 		},
 		{
 			wantError: true,

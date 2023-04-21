@@ -52,13 +52,13 @@ func (suite *CreateFlowCommandTestSuite) TestCreateFlowCmd() {
 			wantError: true,
 			name:      "missing --org flag causes an error",
 			cmd:       "create flow newFlow --description \"my new flow\" -H http://localhost:8001 -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
-			golden:    "Error: --org is not set\nUsage: kosli create flow [FLOW-NAME] [flags]\n",
+			golden:    "Error: --org is not set\nUsage: kosli create flow FLOW-NAME [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "missing --api-token flag causes an error",
 			cmd:       "create flow newFlow --description \"my new flow\" --org cyber-dojo -H http://localhost:8001",
-			golden:    "Error: --api-token is not set\nUsage: kosli create flow [FLOW-NAME] [flags]\n",
+			golden:    "Error: --api-token is not set\nUsage: kosli create flow FLOW-NAME [flags]\n",
 		},
 		{
 			wantError: true,
