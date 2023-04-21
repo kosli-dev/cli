@@ -12,7 +12,7 @@ type assertPullRequestGitlabOptions struct {
 	commit       string
 }
 
-const assertPRGitlabShortDesc = `Assert if a Gitlab merge request for a git commit exists.`
+const assertPRGitlabShortDesc = `Assert a Gitlab merge request for a git commit exists.`
 
 const assertPRGitlabLongDesc = assertPRGitlabShortDesc + `
 The command exits with non-zero exit code 

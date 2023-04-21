@@ -13,7 +13,7 @@ import (
 
 const listArtifactsShortDesc = `List artifacts in a flow. `
 
-const listArtifactsLongDesc = listArtifactsShortDesc + `The results are paginated and ordered from latests to oldest. 
+const listArtifactsLongDesc = listArtifactsShortDesc + `The results are paginated and ordered from latest to oldest.
 By default, the page limit is 15 artifacts per page.
 `
 const artifactLsExample = `

@@ -14,7 +14,7 @@ import (
 const logEnvironmentShortDesc = `List environment events.`
 
 const logEnvironmentLongDesc = logEnvironmentShortDesc + `
-The results are paginated and ordered from latests to oldest. 
+The results are paginated and ordered from latest to oldest.
 By default, the page limit is 15 events per page.
 
 You can optionally specify an INTERVAL between two snapshot expressions with [expression]..[expression]. 

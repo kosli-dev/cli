@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const statusShortDesc = `Check the status of Kosli server. `
+const statusShortDesc = `Check the status of a Kosli server. `
 
 const statusLongDesc = statusShortDesc + `
 The status is logged and the command always exits with 0 exit code.

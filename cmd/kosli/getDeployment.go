@@ -15,9 +15,9 @@ const getDeploymentShortDesc = `Get a deployment from a specified flow.`
 
 const getDeploymentLongDesc = getDeploymentShortDesc + `
 Expression can be specified as follows:
-	flowName~<N>  N'th behind the latest deployment
-	flowName#<N>  deployment number N
-	flowName      the latest deployment`
+- flowName~<N>  N'th behind the latest deployment
+- flowName#<N>  deployment number N
+- flowName      the latest deployment`
 
 const getDeploymentExample = `
 # get previous deployment in a flow

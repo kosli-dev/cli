@@ -75,9 +75,9 @@ const getSnapshotDescShort = `Get a specific environment snapshot.`
 
 const getSnapshotDesc = getSnapshotDescShort + `
 Specify SNAPPISH by:
-	environmentName~<N>  N'th behind the latest snapshot
-	environmentName#<N>  snapshot number N
-	environmentName      the latest snapshot`
+- environmentName~<N>  N'th behind the latest snapshot
+- environmentName#<N>  snapshot number N
+- environmentName      the latest snapshot`
 
 const getSnapshotExample = `
 # get the latest snapshot of an environment:

@@ -12,7 +12,7 @@ type assertPullRequestGithubOptions struct {
 	commit       string
 }
 
-const assertPRGithubShortDesc = `Assert if a Github pull request for a git commit exists.`
+const assertPRGithubShortDesc = `Assert a Github pull request for a git commit exists.`
 
 const assertPRGithubLongDesc = assertPRGithubShortDesc + `
 The command exits with non-zero exit code 

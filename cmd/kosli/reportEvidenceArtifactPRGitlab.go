@@ -11,7 +11,7 @@ import (
 const reportEvidenceArtifactPRGitlabShortDesc = `Report a Gitlab merge request evidence for an artifact in a Kosli flow.`
 
 const reportEvidenceArtifactPRGitlabLongDesc = reportEvidenceArtifactPRGitlabShortDesc + `
-It checks if a merge request exists for the artifact (based on its git commit) and report the merge request evidence to the artifact in Kosli. 
+It checks if a merge request exists for the artifact (based on its git commit) and reports the merge request evidence to the artifact in Kosli.
 ` + fingerprintDesc
 
 const reportEvidenceArtifactPRGitlabExample = `

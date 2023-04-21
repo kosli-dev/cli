@@ -10,10 +10,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const assertApprovalShortDesc = `Assert if an artifact in Kosli has been approved for deployment.`
+const assertApprovalShortDesc = `Assert an artifact in Kosli has been approved for deployment.`
 
 const assertApprovalLongDesc = assertApprovalShortDesc + `
-Exits with non-zero code if artifact has not been approved.
+Exits with non-zero code if the artifact has not been approved.
 ` + fingerprintDesc
 
 const assertApprovalExample = `
