@@ -44,6 +44,7 @@ func newReportEvidenceAuditTrailCmd(out io.Writer) *cobra.Command {
 		Use:     "audit-trail",
 		Short:   reportEvidenceAuditTrailShortDesc,
 		Long:    reportEvidenceAuditTrailShortDesc,
+		Hidden:  true,
 		Example: reportEvidenceAuditTrailExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
