@@ -14,7 +14,7 @@ import (
 const listDeploymentsShortDesc = `List deployments in a flow.`
 
 const listDeploymentsLongDesc = listDeploymentsShortDesc + `
-The results are paginated and ordered from latests to oldest. 
+The results are paginated and ordered from latest to oldest.
 By default, the page limit is 15 deployments per page.
 `
 const listDeploymentsExample = `

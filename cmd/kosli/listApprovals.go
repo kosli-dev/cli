@@ -13,7 +13,7 @@ import (
 
 const listApprovalsShortDesc = `List approvals in a flow.`
 const listApprovalsLongDesc = listApprovalsShortDesc + `
-The results are paginated and ordered from latests to oldest. 
+The results are paginated and ordered from latest to oldest.
 By default, the page limit is 15 approvals per page.  
 `
 

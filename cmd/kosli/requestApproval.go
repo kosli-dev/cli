@@ -8,7 +8,7 @@ import (
 
 const requestApprovalShortDesc = `Request an approval of a deployment of an artifact in Kosli.`
 const requestApprovalLongDesc = requestApprovalShortDesc + `
-The request should be reviewed in Kosli UI.` + fingerprintDesc
+The request should be reviewed in the Kosli UI. ` + fingerprintDesc
 
 const requestApprovalExample = `
 # Request that a file type artifact needs approval.

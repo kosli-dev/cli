@@ -18,7 +18,7 @@ type reportEvidenceArtifactGenericOptions struct {
 	payload            GenericEvidencePayload
 }
 
-const reportEvidenceArtifactGenericShortDesc = `Report a generic evidence to an artifact in a Kosli flow.`
+const reportEvidenceArtifactGenericShortDesc = `Report generic evidence to an artifact in a Kosli flow.`
 
 const reportEvidenceArtifactGenericLongDesc = reportEvidenceArtifactGenericShortDesc + `
 ` + fingerprintDesc

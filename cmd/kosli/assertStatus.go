@@ -6,10 +6,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const assertStatusShortDesc = `Assert the status of Kosli server.`
+const assertStatusShortDesc = `Assert the status of a Kosli server.`
 
 const assertStatusLongDesc = assertStatusShortDesc + `
-Exits with non-zero code if Kosli server down.`
+Exits with non-zero code if the Kosli server down.`
 
 func newAssertStatusCmd(out io.Writer) *cobra.Command {
 	o := &statusOptions{assert: true}
