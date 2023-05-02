@@ -16,7 +16,7 @@ services:
     networks: [ cli_net ]
     depends_on: [ mongo_rs_initiate, minio ]
     # TODO: set this to the latest version before merging to main
-    image: 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:e6612dd
+    image: 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:5f52bb6
     env_file: [ "./mongo/mongo.env" ]
     environment:
       KOSLI_HOSTNAME: localhost

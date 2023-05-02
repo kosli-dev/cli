@@ -15,23 +15,25 @@ type ListWorkflowsCommandTestSuite struct {
 	atrOrgKosliArguments      string
 	atrEmptyOrgKosliArguments string
 	auditTrailName            string
+	externalId                string
 }
 
 func (suite *ListWorkflowsCommandTestSuite) SetupTest() {
 	suite.auditTrailName = "testAuditTrail"
+	suite.externalId = "testExternalId"
 	global = &GlobalOpts{
 		ApiToken: "z8qw5f3Vf1TXz10LruL8QjHrnya3Un1-InOm0jsdmUWVQuvBfNs2Yo2Whr7KA4DHn4mTiVjURBc0V9ZZ9fVEG1GVSI7YWriBJTg-7RK7a3zakymorXhiNi-6Z2M-nCXB0qdl8f1ECTfj7V0oN_JzWEREX-64_fNBbhRF97PZtiI",
-		Org:      "audit-trail-runs-org",
+		Org:      "workflows-org",
 		Host:     "http://localhost:8001",
 	}
 	suite.atrOrgKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
-	CreateAuditTrail(suite.auditTrailName, suite.T())       // create an audit trail for the audit-trail-runs-org
-	CreateWorkflowEvidence(suite.auditTrailName, suite.T()) // create workflow evidence for the audit-trail-runs-org
+	CreateAuditTrail(suite.auditTrailName, suite.T())                         // create an audit trail for the workflows-org
+	CreateWorkflowEvidence(suite.auditTrailName, suite.externalId, suite.T()) // create workflow evidence for the workflows-org
 
-	global.Org = "audit-trail-runs-empty-org"
+	global.Org = "workflows-empty-org"
 	global.ApiToken = "Fmbyc_Obhwna69rxvZVeOUS_8r-57ZCdqCK2QRfy1Q2hNzgPNjcOO1aaXmMlRT4Bts7kapjg1MXvVXwJmrCBkAx3RUtrgLvdLZZ5wZ46xRdRb0yvGrmXi08fcWqU8l9cET0oHk6TeAnK3iHq-SzP7D3_gjmZf1H9nKiEoIfsIIw"
 	suite.atrEmptyOrgKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
-	CreateAuditTrail(suite.auditTrailName, suite.T()) // create an audit trail for the audit-trail-runs-empty-org
+	CreateAuditTrail(suite.auditTrailName, suite.T()) // create an audit trail for the workflows-empty-org
 }
 
 func (suite *ListWorkflowsCommandTestSuite) TestListWorkflowsCmd() {

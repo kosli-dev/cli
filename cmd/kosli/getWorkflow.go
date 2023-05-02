@@ -12,28 +12,28 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const getAuditTrailRunShortDesc = `Get a specific audit trail run for an organization`
+const getWorkflowShortDesc = `Get a specific workflow for an organization`
 
-const getAuditTrailRunExample = `
-# get an audit trail run for an external id
-kosli get audit-trail-run externalId \
+const getWorkflowExample = `
+# get workflow for an external id
+kosli get workflow externalId \
 	--audit-trail auditTrailName \
 	--api-token yourAPIToken \
 	--org orgName
 `
 
-type getAuditTrailRunOptions struct {
+type getWorkflowOptions struct {
 	auditTrailName string
 	output         string
 }
 
-func newGetAuditTrailRunCmd(out io.Writer) *cobra.Command {
-	o := new(getAuditTrailRunOptions)
+func newGetWorkflowCmd(out io.Writer) *cobra.Command {
+	o := new(getWorkflowOptions)
 	cmd := &cobra.Command{
-		Use:     "audit-trail-run EXTERNAL-ID",
-		Short:   getAuditTrailRunShortDesc,
-		Long:    getAuditTrailRunShortDesc,
-		Example: getAuditTrailRunExample,
+		Use:     "workflow EXTERNAL-ID",
+		Short:   getWorkflowShortDesc,
+		Long:    getWorkflowShortDesc,
+		Example: getWorkflowExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
@@ -53,8 +53,8 @@ func newGetAuditTrailRunCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *getAuditTrailRunOptions) run(out io.Writer, args []string) error {
-	url := fmt.Sprintf("%s/api/v2/audit_trails/%s/%s/runs/%s", global.Host, global.Org, o.auditTrailName, args[0])
+func (o *getWorkflowOptions) run(out io.Writer, args []string) error {
+	url := fmt.Sprintf("%s/api/v2/workflows/%s/%s/workflows/%s", global.Host, global.Org, o.auditTrailName, args[0])
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,
@@ -68,39 +68,39 @@ func (o *getAuditTrailRunOptions) run(out io.Writer, args []string) error {
 
 	return output.FormattedPrint(response.Body, o.output, out, 0,
 		map[string]output.FormatOutputFunc{
-			"table": printAuditTrailRunAsTable,
+			"table": printWorkflowAsTable,
 			"json":  output.PrintJson,
 		})
 }
 
-func printAuditTrailRunAsTable(raw string, out io.Writer, page int) error {
-	var auditTrailRun map[string]interface{}
-	err := json.Unmarshal([]byte(raw), &auditTrailRun)
+func printWorkflowAsTable(raw string, out io.Writer, page int) error {
+	var workflow map[string]interface{}
+	err := json.Unmarshal([]byte(raw), &workflow)
 	if err != nil {
 		return err
 	}
 
 	header := []string{}
 	rows := []string{}
-	lastModifiedAt, err := formattedTimestamp(auditTrailRun["last_modified_at"], false)
+	lastModifiedAt, err := formattedTimestamp(workflow["last_modified_at"], false)
 	if err != nil {
 		return err
 	}
-	createdAt, err := formattedTimestamp(auditTrailRun["created_at"], false)
+	createdAt, err := formattedTimestamp(workflow["created_at"], false)
 	if err != nil {
 		return err
 	}
-	steps := fmt.Sprintf("%s", auditTrailRun["steps"])
+	steps := fmt.Sprintf("%s", workflow["steps"])
 	steps = strings.Replace(steps, " ", ", ", -1)
 
 	evidenceNames := []string{}
-	evidence := auditTrailRun["evidence"].([]interface{})
+	evidence := workflow["evidence"].([]interface{})
 	for _, e := range evidence {
 		evidenceNames = append(evidenceNames, fmt.Sprintf("%s", e.(map[string]interface{})["step"]))
 	}
 
-	rows = append(rows, fmt.Sprintf("External ID:\t%s", auditTrailRun["external_id"]))
-	rows = append(rows, fmt.Sprintf("Audit Trail:\t%s", auditTrailRun["audit_trail_name"]))
+	rows = append(rows, fmt.Sprintf("External ID:\t%s", workflow["external_id"]))
+	rows = append(rows, fmt.Sprintf("Audit Trail:\t%s", workflow["audit_trail_name"]))
 	rows = append(rows, fmt.Sprintf("Steps:\t%s", steps))
 	rows = append(rows, fmt.Sprintf("Evidence:\t%s", strings.Join(evidenceNames, ", ")))
 	rows = append(rows, fmt.Sprintf("Created At:\t%s", createdAt))

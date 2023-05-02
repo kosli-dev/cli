@@ -135,12 +135,12 @@ func CreateAuditTrail(auditTrailName string, t *testing.T) {
 	require.NoError(t, err, "audit trail should be created without error")
 }
 
-func CreateWorkflowEvidence(auditTrailName string, t *testing.T) {
+func CreateWorkflowEvidence(auditTrailName, externalId string, t *testing.T) {
 	t.Helper()
 	o := &reportEvidenceWorkflowOptions{
 		auditTrailName: auditTrailName,
 		payload: WorkflowEvidencePayload{
-			ExternalId: "123",
+			ExternalId: externalId,
 			Step:       "step1",
 		},
 	}
