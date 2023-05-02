@@ -10,26 +10,26 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type reportEvidenceAuditTrailOptions struct {
+type reportEvidenceWorkflowOptions struct {
 	auditTrailName   string
 	userDataFilePath string
 	evidencePaths    []string
-	payload          AuditTrailEvidencePayload
+	payload          WorkflowEvidencePayload
 }
 
-const reportEvidenceAuditTrailShortDesc = `Report an evidence to an audit trail in Kosli.`
+const reportEvidenceWorkflowShortDesc = `Report evidence for a workflow in Kosli.`
 
-const reportEvidenceAuditTrailExample = `
-# report an audit trail evidence:
-kosli report evidence audit-trail \
+const reportEvidenceWorkflowExample = `
+# report evidence for a workflow:
+kosli report evidence workflow \
 	--audit-trail auditTrailName \
 	--api-token yourAPIToken \
 	--external-id externalID \
 	--step step1 \
 	--org yourOrgName
 
-# report an audit trail evidence with a file:
-kosli report evidence audit-trail \
+# report evidence with a file for a workflow:
+kosli report evidence workflow \
 	--audit-trail auditTrailName \
 	--api-token yourAPIToken \
 	--external-id externalID \
@@ -38,14 +38,14 @@ kosli report evidence audit-trail \
 	--evidence-paths /path/to/your/file
 `
 
-func newReportEvidenceAuditTrailCmd(out io.Writer) *cobra.Command {
-	o := new(reportEvidenceAuditTrailOptions)
+func newReportEvidenceWorkflowCmd(out io.Writer) *cobra.Command {
+	o := new(reportEvidenceWorkflowOptions)
 	cmd := &cobra.Command{
-		Use:     "audit-trail",
-		Short:   reportEvidenceAuditTrailShortDesc,
-		Long:    reportEvidenceAuditTrailShortDesc,
+		Use:     "workflow",
+		Short:   reportEvidenceWorkflowShortDesc,
+		Long:    reportEvidenceWorkflowShortDesc,
 		Hidden:  true,
-		Example: reportEvidenceAuditTrailExample,
+		Example: reportEvidenceWorkflowExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
@@ -74,10 +74,10 @@ func newReportEvidenceAuditTrailCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *reportEvidenceAuditTrailOptions) run(args []string) error {
+func (o *reportEvidenceWorkflowOptions) run(args []string) error {
 	var err error
 	// /audit_trails/{org}/{audit_trail_name}/evidence
-	url := fmt.Sprintf("%s/api/v2/audit_trails/%s/%s/evidence", global.Host, global.Org, o.auditTrailName)
+	url := fmt.Sprintf("%s/api/v2/workflows/%s/%s/evidence", global.Host, global.Org, o.auditTrailName)
 
 	o.payload.UserData, err = LoadJsonData(o.userDataFilePath)
 	if err != nil {

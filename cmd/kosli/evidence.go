@@ -21,7 +21,7 @@ type GenericEvidencePayload struct {
 	Compliant   bool   `json:"is_compliant"`
 }
 
-type AuditTrailEvidencePayload struct {
+type WorkflowEvidencePayload struct {
 	ExternalId string      `json:"external_id"`
 	Step       string      `json:"step"`
 	UserData   interface{} `json:"user_data,omitempty"`

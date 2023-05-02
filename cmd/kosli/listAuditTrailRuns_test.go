@@ -25,8 +25,8 @@ func (suite *ListAuditTrailRunsCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.atrOrgKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
-	CreateAuditTrail(suite.auditTrailName, suite.T())         // create an audit trail for the audit-trail-runs-org
-	CreateAuditTrailEvidence(suite.auditTrailName, suite.T()) // create an audit trail evidence for the audit-trail-runs-org
+	CreateAuditTrail(suite.auditTrailName, suite.T())       // create an audit trail for the audit-trail-runs-org
+	CreateWorkflowEvidence(suite.auditTrailName, suite.T()) // create an audit trail evidence for the audit-trail-runs-org
 
 	global.Org = "audit-trail-runs-empty-org"
 	global.ApiToken = "Fmbyc_Obhwna69rxvZVeOUS_8r-57ZCdqCK2QRfy1Q2hNzgPNjcOO1aaXmMlRT4Bts7kapjg1MXvVXwJmrCBkAx3RUtrgLvdLZZ5wZ46xRdRb0yvGrmXi08fcWqU8l9cET0oHk6TeAnK3iHq-SzP7D3_gjmZf1H9nKiEoIfsIIw"

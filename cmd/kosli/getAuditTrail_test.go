@@ -34,7 +34,7 @@ func (suite *GetAuditTrailCommandTestSuite) TestGetAuditTrailCmd() {
 			wantError: true,
 			name:      "getting a non existing audit trail fails",
 			cmd:       fmt.Sprintf(`get audit-trail non-existing %s`, suite.defaultKosliArguments),
-			golden:    "Error: Audit Trail called 'non-existing' does not exist for organization 'audit-trail-get-org'. \n",
+			golden:    "Error: Audit Trail called 'non-existing' does not exist for organization 'audit-trail-get-org'\n",
 		},
 		{
 			wantError: true,

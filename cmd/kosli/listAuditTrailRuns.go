@@ -50,7 +50,7 @@ func newListAuditTrailRunsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *listAuditTrailRunsOptions) run(out io.Writer) error {
-	url := fmt.Sprintf("%s/api/v2/audit_trails/%s/%s/runs?page=%d&per_page=%d",
+	url := fmt.Sprintf("%s/api/v2/workflows/%s/%s/workflows?page=%d&per_page=%d",
 		global.Host, global.Org, o.auditTrailName, o.pageNumber, o.pageLimit)
 
 	reqParams := &requests.RequestParams{
