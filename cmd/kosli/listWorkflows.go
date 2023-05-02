@@ -11,20 +11,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const listAuditTrailRunsDesc = `List audit trail runs for an audit trail.`
+const listWorkflowsDesc = `List workflows for an audit trail.`
 
-type listAuditTrailRunsOptions struct {
+type listWorkflowsOptions struct {
 	listOptions
 	auditTrailName string
 }
 
-func newListAuditTrailRunsCmd(out io.Writer) *cobra.Command {
-	o := new(listAuditTrailRunsOptions)
+func newListWorkflowsCmd(out io.Writer) *cobra.Command {
+	o := new(listWorkflowsOptions)
 	cmd := &cobra.Command{
-		Use:    "audit-trail-runs",
+		Use:    "workflows",
 		Hidden: true,
-		Short:  listAuditTrailRunsDesc,
-		Long:   listAuditTrailRunsDesc,
+		Short:  listWorkflowsDesc,
+		Long:   listWorkflowsDesc,
 		Args:   cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
@@ -49,7 +49,7 @@ func newListAuditTrailRunsCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *listAuditTrailRunsOptions) run(out io.Writer) error {
+func (o *listWorkflowsOptions) run(out io.Writer) error {
 	url := fmt.Sprintf("%s/api/v2/workflows/%s/%s/workflows?page=%d&per_page=%d",
 		global.Host, global.Org, o.auditTrailName, o.pageNumber, o.pageLimit)
 
@@ -65,20 +65,20 @@ func (o *listAuditTrailRunsOptions) run(out io.Writer) error {
 
 	return output.FormattedPrint(response.Body, o.output, out, o.pageNumber,
 		map[string]output.FormatOutputFunc{
-			"table": printAuditTrailRunsListAsTable,
+			"table": printWorkflowsListAsTable,
 			"json":  output.PrintJson,
 		})
 }
 
-func printAuditTrailRunsListAsTable(raw string, out io.Writer, page int) error {
-	var auditTrailRuns []map[string]interface{}
-	err := json.Unmarshal([]byte(raw), &auditTrailRuns)
+func printWorkflowsListAsTable(raw string, out io.Writer, page int) error {
+	var workflows []map[string]interface{}
+	err := json.Unmarshal([]byte(raw), &workflows)
 	if err != nil {
 		return err
 	}
 
-	if len(auditTrailRuns) == 0 {
-		msg := "No audit trial runs were found"
+	if len(workflows) == 0 {
+		msg := "No workflows were found"
 		if page != 1 {
 			msg = fmt.Sprintf("%s at page number %d", msg, page)
 		}
@@ -88,20 +88,20 @@ func printAuditTrailRunsListAsTable(raw string, out io.Writer, page int) error {
 
 	header := []string{"EXTERNAL_ID", "EVIDENCE", "CREATED_AT", "LAST_MODIFIED_AT"}
 	rows := []string{}
-	for _, auditTrailRun := range auditTrailRuns {
-		externalId := auditTrailRun["external_id"].(string)
+	for _, workflow := range workflows {
+		externalId := workflow["external_id"].(string)
 		evidenceNames := []string{}
-		evidence := auditTrailRun["evidence"].([]interface{})
+		evidence := workflow["evidence"].([]interface{})
 		for _, evidenceItem := range evidence {
 			evidenceItemMap := evidenceItem.(map[string]interface{})
 			evidenceItemStep := evidenceItemMap["step"].(string)
 			evidenceNames = append(evidenceNames, evidenceItemStep)
 		}
-		createdAt, err := formattedTimestamp(auditTrailRun["created_at"], true)
+		createdAt, err := formattedTimestamp(workflow["created_at"], true)
 		if err != nil {
 			return err
 		}
-		lastModifiedAt, err := formattedTimestamp(auditTrailRun["last_modified_at"], true)
+		lastModifiedAt, err := formattedTimestamp(workflow["last_modified_at"], true)
 		if err != nil {
 			return err
 		}
