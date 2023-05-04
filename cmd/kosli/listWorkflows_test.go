@@ -28,7 +28,7 @@ func (suite *ListWorkflowsCommandTestSuite) SetupTest() {
 	}
 	suite.atrOrgKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 	CreateAuditTrail(suite.auditTrailName, suite.T())                         // create an audit trail for the workflows-org
-	CreateWorkflow(suite.auditTrailName, suite.externalId, suite.T())         // create workflow for the get-workflow-org
+	CreateWorkflow(suite.auditTrailName, suite.externalId, suite.T())         // create workflow for the workflows-org
 	CreateWorkflowEvidence(suite.auditTrailName, suite.externalId, suite.T()) // create workflow evidence for the workflows-org
 
 	global.Org = "workflows-empty-org"

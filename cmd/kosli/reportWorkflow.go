@@ -60,7 +60,7 @@ func newReportWorkflowCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *reportWorkflowOptions) run(args []string) error {
-	url := fmt.Sprintf("%s/api/v2/workflows/%s/%s/workflows/%s", global.Host, global.Org, o.auditTrailName, o.externalId)
+	url := fmt.Sprintf("%s/api/v2/workflows/%s/%s/%s", global.Host, global.Org, o.auditTrailName, o.externalId)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPost,

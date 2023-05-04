@@ -77,7 +77,7 @@ func newReportEvidenceWorkflowCmd(out io.Writer) *cobra.Command {
 func (o *reportEvidenceWorkflowOptions) run(args []string) error {
 	var err error
 	// /audit_trails/{org}/{audit_trail_name}/evidence
-	url := fmt.Sprintf("%s/api/v2/workflows/%s/%s/evidence", global.Host, global.Org, o.auditTrailName)
+	url := fmt.Sprintf("%s/api/v2/evidence/%s/workflow/%s/generic", global.Host, global.Org, o.auditTrailName)
 
 	o.payload.UserData, err = LoadJsonData(o.userDataFilePath)
 	if err != nil {

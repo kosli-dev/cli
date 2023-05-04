@@ -50,7 +50,7 @@ func newListWorkflowsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *listWorkflowsOptions) run(out io.Writer) error {
-	url := fmt.Sprintf("%s/api/v2/workflows/%s/%s/workflows?page=%d&per_page=%d",
+	url := fmt.Sprintf("%s/api/v2/workflows/%s/%s?page=%d&per_page=%d",
 		global.Host, global.Org, o.auditTrailName, o.pageNumber, o.pageLimit)
 
 	reqParams := &requests.RequestParams{
@@ -90,12 +90,10 @@ func printWorkflowsListAsTable(raw string, out io.Writer, page int) error {
 	rows := []string{}
 	for _, workflow := range workflows {
 		externalId := workflow["external_id"].(string)
-		evidenceNames := []string{}
-		evidence := workflow["evidence"].([]interface{})
-		for _, evidenceItem := range evidence {
-			evidenceItemMap := evidenceItem.(map[string]interface{})
-			evidenceItemStep := evidenceItemMap["step"].(string)
-			evidenceNames = append(evidenceNames, evidenceItemStep)
+		evidence := workflow["evidence"].(map[string]interface{})
+		evidenceNames := make([]string, 0, len(evidence))
+		for name := range evidence {
+			evidenceNames = append(evidenceNames, name)
 		}
 		createdAt, err := formattedTimestamp(workflow["created_at"], true)
 		if err != nil {

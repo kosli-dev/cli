@@ -54,7 +54,7 @@ func newGetWorkflowCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *getWorkflowOptions) run(out io.Writer, args []string) error {
-	url := fmt.Sprintf("%s/api/v2/workflows/%s/%s/workflows/%s", global.Host, global.Org, o.auditTrailName, args[0])
+	url := fmt.Sprintf("%s/api/v2/workflows/%s/%s/%s", global.Host, global.Org, o.auditTrailName, args[0])
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,
@@ -93,10 +93,10 @@ func printWorkflowAsTable(raw string, out io.Writer, page int) error {
 	steps := fmt.Sprintf("%s", workflow["steps"])
 	steps = strings.Replace(steps, " ", ", ", -1)
 
-	evidenceNames := []string{}
-	evidence := workflow["evidence"].([]interface{})
-	for _, e := range evidence {
-		evidenceNames = append(evidenceNames, fmt.Sprintf("%s", e.(map[string]interface{})["step"]))
+	evidence := workflow["evidence"].(map[string]interface{})
+	evidenceNames := make([]string, 0, len(evidence))
+	for name := range evidence {
+		evidenceNames = append(evidenceNames, name)
 	}
 
 	rows = append(rows, fmt.Sprintf("External ID:\t%s", workflow["external_id"]))
