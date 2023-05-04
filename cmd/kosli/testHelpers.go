@@ -135,6 +135,16 @@ func CreateAuditTrail(auditTrailName string, t *testing.T) {
 	require.NoError(t, err, "audit trail should be created without error")
 }
 
+func CreateWorkflow(auditTrailName, externalId string, t *testing.T) {
+	t.Helper()
+	o := &reportWorkflowOptions{
+		auditTrailName: auditTrailName,
+		externalId:     externalId,
+	}
+	err := o.run([]string{})
+	require.NoError(t, err, "workflow should be created without error")
+}
+
 func CreateWorkflowEvidence(auditTrailName, externalId string, t *testing.T) {
 	t.Helper()
 	o := &reportEvidenceWorkflowOptions{
@@ -145,7 +155,7 @@ func CreateWorkflowEvidence(auditTrailName, externalId string, t *testing.T) {
 		},
 	}
 	err := o.run([]string{})
-	require.NoError(t, err, "audit trail evidence should be created without error")
+	require.NoError(t, err, "workflow evidence should be created without error")
 }
 
 // CreateArtifact creates an artifact on the server

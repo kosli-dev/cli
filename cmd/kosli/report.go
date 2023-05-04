@@ -20,6 +20,7 @@ func newReportCmd(out io.Writer) *cobra.Command {
 		newReportArtifactCmd(out),
 		newReportEvidenceCmd(out),
 		newReportApprovalCmd(out),
+		newReportWorkflowCmd(out),
 	)
 
 	return cmd
