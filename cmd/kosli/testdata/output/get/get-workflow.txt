@@ -1,4 +1,4 @@
-External ID:       testExternalId
+ID:                testExternalId
 Audit Trail:       testGetWorkflow
 Steps:             [step1, step2]
 Evidence:          step1

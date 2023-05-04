@@ -15,8 +15,8 @@ import (
 const getWorkflowShortDesc = `Get a specific workflow for an organization`
 
 const getWorkflowExample = `
-# get workflow for an external id
-kosli get workflow externalId \
+# get workflow for an ID
+kosli get workflow yourID \
 	--audit-trail auditTrailName \
 	--api-token yourAPIToken \
 	--org orgName
@@ -30,7 +30,7 @@ type getWorkflowOptions struct {
 func newGetWorkflowCmd(out io.Writer) *cobra.Command {
 	o := new(getWorkflowOptions)
 	cmd := &cobra.Command{
-		Use:     "workflow EXTERNAL-ID",
+		Use:     "workflow ID",
 		Short:   getWorkflowShortDesc,
 		Long:    getWorkflowShortDesc,
 		Example: getWorkflowExample,
@@ -99,7 +99,7 @@ func printWorkflowAsTable(raw string, out io.Writer, page int) error {
 		evidenceNames = append(evidenceNames, name)
 	}
 
-	rows = append(rows, fmt.Sprintf("External ID:\t%s", workflow["external_id"]))
+	rows = append(rows, fmt.Sprintf("ID:\t%s", workflow["id"]))
 	rows = append(rows, fmt.Sprintf("Audit Trail:\t%s", workflow["audit_trail_name"]))
 	rows = append(rows, fmt.Sprintf("Steps:\t%s", steps))
 	rows = append(rows, fmt.Sprintf("Evidence:\t%s", strings.Join(evidenceNames, ", ")))

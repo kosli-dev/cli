@@ -24,7 +24,7 @@ const reportEvidenceWorkflowExample = `
 kosli report evidence workflow \
 	--audit-trail auditTrailName \
 	--api-token yourAPIToken \
-	--external-id externalID \
+	--id yourID \
 	--step step1 \
 	--org yourOrgName
 
@@ -32,7 +32,7 @@ kosli report evidence workflow \
 kosli report evidence workflow \
 	--audit-trail auditTrailName \
 	--api-token yourAPIToken \
-	--external-id externalID \
+	--id yourID \
 	--step step1 \
 	--org yourOrgName \
 	--evidence-paths /path/to/your/file
@@ -59,14 +59,14 @@ func newReportEvidenceWorkflowCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&o.auditTrailName, "audit-trail", "", auditTrailNameFlag)
-	cmd.Flags().StringVar(&o.payload.ExternalId, "external-id", "", externalIdFlag)
+	cmd.Flags().StringVar(&o.payload.ExternalId, "id", "", workflowIDFlag)
 	cmd.Flags().StringVar(&o.payload.Step, "step", "", stepNameFlag)
 	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
 	cmd.Flags().StringSliceVarP(&o.evidencePaths, "evidence-paths", "e", []string{}, evidencePathsFlag)
 
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"audit-trail", "external-id", "step"})
+	err := RequireFlags(cmd, []string{"audit-trail", "id", "step"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
@@ -103,7 +103,7 @@ func (o *reportEvidenceWorkflowOptions) run(args []string) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("evidence '%s' for external ID '%s' is reported to audit trail: %s", o.payload.Step, o.payload.ExternalId, o.auditTrailName)
+		logger.Info("evidence '%s' for ID '%s' is reported to audit trail: %s", o.payload.Step, o.payload.ExternalId, o.auditTrailName)
 	}
 	return err
 }

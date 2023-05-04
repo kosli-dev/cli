@@ -86,10 +86,10 @@ func printWorkflowsListAsTable(raw string, out io.Writer, page int) error {
 		return nil
 	}
 
-	header := []string{"EXTERNAL_ID", "EVIDENCE", "CREATED_AT", "LAST_MODIFIED_AT"}
+	header := []string{"ID", "EVIDENCE", "CREATED_AT", "LAST_MODIFIED_AT"}
 	rows := []string{}
 	for _, workflow := range workflows {
-		externalId := workflow["external_id"].(string)
+		externalId := workflow["id"].(string)
 		evidence := workflow["evidence"].(map[string]interface{})
 		evidenceNames := make([]string, 0, len(evidence))
 		for name := range evidence {

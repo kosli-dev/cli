@@ -14,12 +14,12 @@ type GetWorkflowCommandTestSuite struct {
 	suite.Suite
 	workflowOrgKosliArguments string
 	auditTrailName            string
-	externalId                string
+	workflowID                string
 }
 
 func (suite *GetWorkflowCommandTestSuite) SetupTest() {
 	suite.auditTrailName = "testGetWorkflow"
-	suite.externalId = "testExternalId"
+	suite.workflowID = "testExternalId"
 	global = &GlobalOpts{
 		ApiToken: "edzkHOnV23d5h6n23wspTKzv3VSdmpjQscZXNbRMA63ym4TAIiaOGeS9AEkAXO_x7RkVGvvHB_LsZUIQWtsuij1k_1nY7AuqjNrcZTWj3ww8m8E78ZvbuT-dEUjjPhYsaqr055cL8osdR1tGWEB-l-eTy4AAI0Tl0Q1nA1DY-ig",
 		Org:      "get-workflow-org",
@@ -28,8 +28,8 @@ func (suite *GetWorkflowCommandTestSuite) SetupTest() {
 
 	suite.workflowOrgKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 	CreateAuditTrail(suite.auditTrailName, suite.T())                         // create an audit trail for the get-workflow-org
-	CreateWorkflow(suite.auditTrailName, suite.externalId, suite.T())         // create workflow for the get-workflow-org
-	CreateWorkflowEvidence(suite.auditTrailName, suite.externalId, suite.T()) // create workflow evidence for the get-workflow-org
+	CreateWorkflow(suite.auditTrailName, suite.workflowID, suite.T())         // create workflow for the get-workflow-org
+	CreateWorkflowEvidence(suite.auditTrailName, suite.workflowID, suite.T()) // create workflow evidence for the get-workflow-org
 }
 
 func (suite *GetWorkflowCommandTestSuite) TestGetWorkflowCmd() {
@@ -37,26 +37,26 @@ func (suite *GetWorkflowCommandTestSuite) TestGetWorkflowCmd() {
 		{
 			name: "get workflow works",
 			cmd: fmt.Sprintf(`get workflow %s --audit-trail %s %s`,
-				suite.externalId, suite.auditTrailName, suite.workflowOrgKosliArguments),
+				suite.workflowID, suite.auditTrailName, suite.workflowOrgKosliArguments),
 			goldenFile: "output/get/get-workflow.txt",
 		},
 		{
 			wantError: true,
 			name:      "get workflow fails when there is no workflow",
 			cmd:       fmt.Sprintf(`get workflow non-existing --audit-trail %s %s`, suite.auditTrailName, suite.workflowOrgKosliArguments),
-			golden:    "Error: Workflow with external ID 'non-existing' does not exist for audit trail testGetWorkflow in organization 'get-workflow-org'\n",
+			golden:    "Error: Workflow with ID 'non-existing' does not exist for audit trail testGetWorkflow in organization 'get-workflow-org'\n",
 		},
 		{
 			name: "get workflow works with --output json when there is workflow",
 			cmd: fmt.Sprintf(`get workflow %s --audit-trail %s --output json %s`,
-				suite.externalId, suite.auditTrailName, suite.workflowOrgKosliArguments),
+				suite.workflowID, suite.auditTrailName, suite.workflowOrgKosliArguments),
 		},
 		{
 			wantError: true,
 			name:      "get workflow fails with --output json when there is no workflow",
 			cmd: fmt.Sprintf(`get workflow non-existing --audit-trail %s --output json %s`,
 				suite.auditTrailName, suite.workflowOrgKosliArguments),
-			golden: "Error: Workflow with external ID 'non-existing' does not exist for audit trail testGetWorkflow in organization 'get-workflow-org'\n",
+			golden: "Error: Workflow with ID 'non-existing' does not exist for audit trail testGetWorkflow in organization 'get-workflow-org'\n",
 		},
 	}
 

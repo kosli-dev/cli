@@ -23,7 +23,7 @@ const reportWorkflowExample = `
 kosli report workflow \
 	--audit-trail auditTrailName \
 	--api-token yourAPIToken \
-	--external-id externalID \
+	--id yourID \
 	--org yourOrgName
 `
 
@@ -48,10 +48,10 @@ func newReportWorkflowCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&o.auditTrailName, "audit-trail", "", auditTrailNameFlag)
-	cmd.Flags().StringVar(&o.externalId, "external-id", "", externalIdFlag)
+	cmd.Flags().StringVar(&o.externalId, "id", "", workflowIDFlag)
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"audit-trail", "external-id"})
+	err := RequireFlags(cmd, []string{"audit-trail", "id"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
@@ -70,7 +70,7 @@ func (o *reportWorkflowOptions) run(args []string) error {
 	}
 	_, err := kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("workflow was created in audit-trail '%s' with id '%s'", o.auditTrailName, o.externalId)
+		logger.Info("workflow was created in audit-trail '%s' with ID '%s'", o.auditTrailName, o.externalId)
 	}
 	return err
 }

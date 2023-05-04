@@ -53,7 +53,7 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 	artifactTypeFlag        = "[conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'."
 	flowNameFlag            = "The Kosli flow name."
 	auditTrailNameFlag      = "The Kosli audit trail name."
-	externalIdFlag          = "The external ID of the audit trail run."
+	workflowIDFlag          = "The ID of the workflow."
 	stepNameFlag            = "The name of the step as defined in the audit trail's steps."
 	flowNamesFlag           = "[defaulted] The comma separated list of Kosli flows. Defaults to all flows of the org."
 	newFlowFlag             = "The name of the flow to be created or updated."

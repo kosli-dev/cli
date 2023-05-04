@@ -19,7 +19,7 @@ restart_server()
 	./bin/docker_login_aws.sh staging
     docker-compose down || true
 	# TODO: set this to the latest version before merging to main
-	docker pull 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:11cd59f || true
+	docker pull 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:3446e0c || true
 	docker-compose up -d
 	./mongo/ip_wait.sh localhost:9010/minio/health/live
 	./mongo/ip_wait.sh localhost:8001/ready
