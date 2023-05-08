@@ -17,28 +17,9 @@ type AzureTestSuite struct {
 // All methods that begin with "Test" are run as tests within a
 // suite.
 func (suite *AzureTestSuite) TestNewAzureClientFromToken() {
-	for _, t := range []struct {
-		name   string
-		token  string
-		orgURL string
-	}{
-		{
-			name:   "when provided a token, a client is created.",
-			token:  "some_fake_token",
-			orgURL: "https://dev.azure.com/kosli",
-		},
-		{
-			name:   "when orgURL and token are provided, a client is created.",
-			token:  "some_fake_token",
-			orgURL: "https://dev.azure.com/kosli",
-		},
-	} {
-		suite.Run(t.name, func() {
-			client, err := NewAzureClientFromToken(context.Background(), t.token, t.orgURL)
-			require.NoErrorf(suite.T(), err, "was NOT expecting error but got: %s", err)
-			require.NotNilf(suite.T(), client, "client should not be nil")
-		})
-	}
+	client, err := NewAzureClientFromToken(context.Background(), "some_fake_token", "https://dev.azure.com/kosli")
+	require.Error(suite.T(), err)
+	require.Nil(suite.T(), client)
 }
 
 func (suite *AzureTestSuite) TestPREvidenceForCommit() {

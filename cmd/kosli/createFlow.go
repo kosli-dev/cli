@@ -39,7 +39,7 @@ type FlowPayload struct {
 func newCreateFlowCmd(out io.Writer) *cobra.Command {
 	o := new(createFlowOptions)
 	cmd := &cobra.Command{
-		Use:     "flow [FLOW-NAME]",
+		Use:     "flow FLOW-NAME",
 		Short:   createFlowShortDesc,
 		Long:    createFlowLongDesc,
 		Example: createFlowExample,
