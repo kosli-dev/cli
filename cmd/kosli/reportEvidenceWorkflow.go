@@ -61,6 +61,7 @@ func newReportEvidenceWorkflowCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.auditTrailName, "audit-trail", "", auditTrailNameFlag)
 	cmd.Flags().StringVar(&o.payload.ExternalId, "id", "", workflowIDFlag)
 	cmd.Flags().StringVar(&o.payload.Step, "step", "", stepNameFlag)
+	cmd.Flags().StringVar(&o.payload.EvidenceURL, "evidence-url", "", evidenceURLFlag)
 	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
 	cmd.Flags().StringSliceVarP(&o.evidencePaths, "evidence-paths", "e", []string{}, evidencePathsFlag)
 
@@ -76,7 +77,6 @@ func newReportEvidenceWorkflowCmd(out io.Writer) *cobra.Command {
 
 func (o *reportEvidenceWorkflowOptions) run(args []string) error {
 	var err error
-	// /audit_trails/{org}/{audit_trail_name}/evidence
 	url := fmt.Sprintf("%s/api/v2/evidence/%s/workflow/%s/generic", global.Host, global.Org, o.auditTrailName)
 
 	o.payload.UserData, err = LoadJsonData(o.userDataFilePath)
