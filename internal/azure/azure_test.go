@@ -2,6 +2,7 @@ package azure
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 
@@ -18,6 +19,8 @@ type AzureTestSuite struct {
 // suite.
 func (suite *AzureTestSuite) TestNewAzureClientFromToken() {
 	client, err := NewAzureClientFromToken(context.Background(), "some_fake_token", "https://dev.azure.com/kosli")
+	fmt.Printf("%v\n", client)
+	fmt.Printf("%v\n", err)
 	require.Error(suite.T(), err)
 	require.Nil(suite.T(), client)
 }
