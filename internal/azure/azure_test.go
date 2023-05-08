@@ -2,7 +2,6 @@ package azure
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"testing"
 
@@ -18,9 +17,7 @@ type AzureTestSuite struct {
 // All methods that begin with "Test" are run as tests within a
 // suite.
 func (suite *AzureTestSuite) TestNewAzureClientFromToken() {
-	client, err := NewAzureClientFromToken(context.Background(), "some_fake_token", "https://dev.azure.com/kosli")
-	fmt.Printf("%v\n", client)
-	fmt.Printf("%v\n", err)
+	client, err := NewAzureClientFromToken(context.Background(), "some_fake_token", "https://dev.azure.com/kosli_xxxxx")
 	require.Error(suite.T(), err)
 	require.Nil(suite.T(), client)
 }
