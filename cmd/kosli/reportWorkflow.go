@@ -34,6 +34,7 @@ func newReportWorkflowCmd(out io.Writer) *cobra.Command {
 		Short:   reportWorkflowShortDesc,
 		Long:    reportWorkflowLongDesc,
 		Example: reportWorkflowExample,
+		Hidden:  true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

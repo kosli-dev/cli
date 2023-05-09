@@ -33,6 +33,7 @@ func newGetWorkflowCmd(out io.Writer) *cobra.Command {
 		Use:     "workflow ID",
 		Short:   getWorkflowShortDesc,
 		Long:    getWorkflowShortDesc,
+		Hidden:  true,
 		Example: getWorkflowExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
