@@ -22,10 +22,11 @@ type GenericEvidencePayload struct {
 }
 
 type WorkflowEvidencePayload struct {
-	ExternalId  string      `json:"external_id"`
-	Step        string      `json:"step"`
-	EvidenceURL string      `json:"evidence_url,omitempty"`
-	UserData    interface{} `json:"user_data,omitempty"`
+	ExternalId          string      `json:"external_id"`
+	Step                string      `json:"step"`
+	EvidenceURL         string      `json:"evidence_url,omitempty"`
+	EvidenceFingerprint string      `json:"evidence_fingerprint,omitempty"`
+	UserData            interface{} `json:"user_data,omitempty"`
 }
 
 // newEvidenceForm constructs a list of FormItems for an evidence

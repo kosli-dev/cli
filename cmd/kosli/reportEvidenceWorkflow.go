@@ -62,6 +62,7 @@ func newReportEvidenceWorkflowCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.payload.ExternalId, "id", "", workflowIDFlag)
 	cmd.Flags().StringVar(&o.payload.Step, "step", "", stepNameFlag)
 	cmd.Flags().StringVar(&o.payload.EvidenceURL, "evidence-url", "", evidenceURLFlag)
+	cmd.Flags().StringVar(&o.payload.EvidenceFingerprint, "evidence-fingerprint", "", evidenceFingerprintFlag)
 	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
 	cmd.Flags().StringSliceVarP(&o.evidencePaths, "evidence-paths", "e", []string{}, evidencePathsFlag)
 
