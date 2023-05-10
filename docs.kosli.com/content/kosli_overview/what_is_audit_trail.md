@@ -1,10 +1,11 @@
 ---
-title: 'Kosli Audit trail [E]'
+title: 'Kosli Audit trail'
+experimental: true
 weight: 130
 ---
 # Kosli Audit trail
 
-{{< hint danger >}}
+{{< hint warning >}}
 **Kosli Audit trail** is an experimental feature.
 Experimental features provide early access to product functionality. These
 features may change between releases without warning, or can be removed from a 

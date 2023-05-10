@@ -54,11 +54,11 @@ func (o *docsOptions) run() error {
 			return "/client_reference/" + strings.ToLower(base) + "/"
 		}
 
-		hdrFunc := func(filename string) string {
+		hdrFunc := func(filename string, experimental bool) string {
 			base := filepath.Base(filename)
 			name := strings.TrimSuffix(base, path.Ext(base))
 			title := strings.ToLower(strings.Replace(name, "_", " ", -1))
-			return fmt.Sprintf("---\ntitle: \"%s\"\n---\n\n", title)
+			return fmt.Sprintf("---\ntitle: \"%s\"\nexperimental: %t\n---\n\n", title, experimental)
 		}
 
 		return MereklyGenMarkdownTreeCustom(o.topCmd, o.dest, hdrFunc, linkHandler)
@@ -66,7 +66,7 @@ func (o *docsOptions) run() error {
 	return doc.GenMarkdownTree(o.topCmd, o.dest)
 }
 
-func MereklyGenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender, linkHandler func(string) string) error {
+func MereklyGenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender func(string, bool) string, linkHandler func(string) string) error {
 	for _, c := range cmd.Commands() {
 		if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
 			continue
@@ -85,7 +85,7 @@ func MereklyGenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender,
 		}
 		defer f.Close()
 
-		if _, err := io.WriteString(f, filePrepender(filename)); err != nil {
+		if _, err := io.WriteString(f, filePrepender(filename, isExperimental(cmd))); err != nil {
 			return err
 		}
 		if err := KosliGenMarkdownCustom(cmd, f, linkHandler); err != nil {
@@ -106,7 +106,7 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 	buf.WriteString("# " + name + "\n\n")
 
 	if isExperimental(cmd) {
-		buf.WriteString("{{< hint danger >}}")
+		buf.WriteString("{{< hint warning >}}")
 		buf.WriteString(fmt.Sprintf("**%s** is an experimental feature. \n", name))
 		buf.WriteString("Experimental features provide early access to product functionality. These ")
 		buf.WriteString("features may change between releases without warning, or can be removed from a ")

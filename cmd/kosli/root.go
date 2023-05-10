@@ -220,7 +220,6 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 
 	cobra.AddTemplateFunc("isExperimental", isExperimental)
 	cmd.SetUsageTemplate(usageTemplate)
-	// cmd.SetHelpTemplate(usageTemplate)
 
 	return cmd, nil
 }
@@ -353,59 +352,3 @@ Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
 
 Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
 `
-
-// const usageTemplate = `Usage:
-
-// {{- if not .HasSubCommands}}  {{.UseLine}}{{end}}
-// {{- if .HasSubCommands}}  {{ .CommandPath}}{{- if .HasAvailableFlags}} [OPTIONS]{{end}} COMMAND{{end}}
-
-// {{if ne .Long ""}}{{ .Long | trim }}{{ else }}{{ .Short | trim }}{{end}}
-// {{- if isExperimental .}}
-
-// EXPERIMENTAL:
-//   {{.CommandPath}} is an experimental feature.
-//   Experimental features provide early access to product functionality. These
-//   features may change between releases without warning, or can be removed from a
-//   future release.
-
-// {{- end}}
-// {{- if hasAliases . }}
-
-// Aliases:
-//   {{ commandAliases . }}
-
-// {{- end}}
-// {{- if .HasExample}}
-
-// Examples:
-// {{ .Example }}
-
-// {{- end}}
-// {{- if .HasParent}}
-// {{- if .HasAvailableFlags}}
-
-// Flags:
-// {{ wrappedFlagUsages . | trimRightSpace}}
-
-// {{- end}}
-// {{- end}}
-// {{- if hasTopCommands .}}
-
-// Global Flags:
-// {{ wrappedFlagUsages . | trimRightSpace}}
-
-// {{- end}}
-// {{- end}}
-
-// {{- if .HasSubCommands }}
-
-// Run '{{.CommandPath}} COMMAND --help' for more information on a command.
-// {{- end}}
-// {{- if hasAdditionalHelp .}}
-
-// {{ additionalHelp . }}
-
-// {{- end}}
-// `
-
-const helpTemplate = `{{.UsageString}}`

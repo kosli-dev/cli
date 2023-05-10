@@ -24,10 +24,10 @@ $mobile-breakpoint: $menu-width + $body-min-width * 1.2 + $toc-width !default;
 $tablet-breakpoint: 1060px;
 
 $hint-colors: (
-  info: #2459D1,
-  warning: #F7C22E,
-  danger: #ED475C,
-  success: #29B57D,
+  info: $blue-100,
+  warning: $orange-100,
+  danger: $red-100,
+  success: $green-100,
 ) !default;
 
 // Themes
