@@ -15,7 +15,7 @@ const createAuditTrailLongDesc = createAuditTrailShortDesc + `
 You can specify audit trail parameters in flags.`
 
 const createAuditTrailExample = `
-# create/update a Kosli audt trail:
+# create/update a Kosli audit trail:
 kosli create audit-trail yourAuditTrailName \
 	--description yourAuditTrailDescription \
 	--steps step1,step2 \
@@ -36,12 +36,12 @@ type AuditTrailPayload struct {
 func newCreateAuditTrailCmd(out io.Writer) *cobra.Command {
 	o := new(createAuditTrailOptions)
 	cmd := &cobra.Command{
-		Use:     "audit-trail AUDIT-TRAIL-NAME",
-		Short:   createAuditTrailShortDesc,
-		Long:    createAuditTrailLongDesc,
-		Hidden:  true,
-		Example: createAuditTrailExample,
-		Args:    cobra.MaximumNArgs(1),
+		Use:         "audit-trail AUDIT-TRAIL-NAME",
+		Short:       createAuditTrailShortDesc,
+		Long:        createAuditTrailLongDesc,
+		Example:     createAuditTrailExample,
+		Annotations: map[string]string{"experimentalCLI": "true"},
+		Args:        cobra.MaximumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

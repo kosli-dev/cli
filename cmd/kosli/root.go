@@ -218,6 +218,10 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		newLogCmd(out),
 	)
 
+	cobra.AddTemplateFunc("isExperimental", isExperimental)
+	cmd.SetUsageTemplate(usageTemplate)
+	// cmd.SetHelpTemplate(usageTemplate)
+
 	return cmd, nil
 }
 
@@ -299,3 +303,109 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 		}
 	})
 }
+
+func isExperimental(cmd *cobra.Command) bool {
+	if _, ok := cmd.Annotations["experimentalCLI"]; ok {
+		return true
+	}
+	var experimental bool
+	cmd.VisitParents(func(cmd *cobra.Command) {
+		if _, ok := cmd.Annotations["experimentalCLI"]; ok {
+			experimental = true
+		}
+	})
+	return experimental
+}
+
+const usageTemplate = `{{- if isExperimental .}}EXPERIMENTAL:
+  {{.CommandPath}} is an experimental feature.
+  Experimental features provide early access to product functionality. These
+  features may change between releases without warning, or can be removed from a
+  future release.
+
+{{ end }}Usage:{{- if .Runnable}}
+  {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
+  {{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
+
+Aliases:
+  {{.NameAndAliases}}{{end}}{{if .HasExample}}
+
+Examples:
+{{.Example}}{{end}}{{if .HasAvailableSubCommands}}{{$cmds := .Commands}}{{if eq (len .Groups) 0}}
+
+Available Commands:{{range $cmds}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
+  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{else}}{{range $group := .Groups}}
+
+{{.Title}}{{range $cmds}}{{if (and (eq .GroupID $group.ID) (or .IsAvailableCommand (eq .Name "help")))}}
+  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if not .AllChildCommandsHaveGroup}}
+
+Additional Commands:{{range $cmds}}{{if (and (eq .GroupID "") (or .IsAvailableCommand (eq .Name "help")))}}
+ {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
+
+Flags:
+{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
+
+Global Flags:
+{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
+
+Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
+  {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
+
+Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
+`
+
+// const usageTemplate = `Usage:
+
+// {{- if not .HasSubCommands}}  {{.UseLine}}{{end}}
+// {{- if .HasSubCommands}}  {{ .CommandPath}}{{- if .HasAvailableFlags}} [OPTIONS]{{end}} COMMAND{{end}}
+
+// {{if ne .Long ""}}{{ .Long | trim }}{{ else }}{{ .Short | trim }}{{end}}
+// {{- if isExperimental .}}
+
+// EXPERIMENTAL:
+//   {{.CommandPath}} is an experimental feature.
+//   Experimental features provide early access to product functionality. These
+//   features may change between releases without warning, or can be removed from a
+//   future release.
+
+// {{- end}}
+// {{- if hasAliases . }}
+
+// Aliases:
+//   {{ commandAliases . }}
+
+// {{- end}}
+// {{- if .HasExample}}
+
+// Examples:
+// {{ .Example }}
+
+// {{- end}}
+// {{- if .HasParent}}
+// {{- if .HasAvailableFlags}}
+
+// Flags:
+// {{ wrappedFlagUsages . | trimRightSpace}}
+
+// {{- end}}
+// {{- end}}
+// {{- if hasTopCommands .}}
+
+// Global Flags:
+// {{ wrappedFlagUsages . | trimRightSpace}}
+
+// {{- end}}
+// {{- end}}
+
+// {{- if .HasSubCommands }}
+
+// Run '{{.CommandPath}} COMMAND --help' for more information on a command.
+// {{- end}}
+// {{- if hasAdditionalHelp .}}
+
+// {{ additionalHelp . }}
+
+// {{- end}}
+// `
+
+const helpTemplate = `{{.UsageString}}`
