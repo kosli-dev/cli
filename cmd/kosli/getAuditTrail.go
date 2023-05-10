@@ -21,11 +21,11 @@ type getAuditTrailsOptions struct {
 func newGetAuditTrailCmd(out io.Writer) *cobra.Command {
 	o := new(getAuditTrailsOptions)
 	cmd := &cobra.Command{
-		Use:    "audit-trail AUDIT-TRAIL-NAME",
-		Hidden: true,
-		Short:  getAuditTrailDesc,
-		Long:   getAuditTrailDesc,
-		Args:   cobra.ExactArgs(1),
+		Use:         "audit-trail AUDIT-TRAIL-NAME",
+		Short:       getAuditTrailDesc,
+		Long:        getAuditTrailDesc,
+		Annotations: map[string]string{"experimentalCLI": "true"},
+		Args:        cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

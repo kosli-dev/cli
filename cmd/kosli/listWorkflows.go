@@ -21,11 +21,11 @@ type listWorkflowsOptions struct {
 func newListWorkflowsCmd(out io.Writer) *cobra.Command {
 	o := new(listWorkflowsOptions)
 	cmd := &cobra.Command{
-		Use:    "workflows",
-		Hidden: true,
-		Short:  listWorkflowsDesc,
-		Long:   listWorkflowsDesc,
-		Args:   cobra.NoArgs,
+		Use:         "workflows",
+		Short:       listWorkflowsDesc,
+		Long:        listWorkflowsDesc,
+		Annotations: map[string]string{"experimentalCLI": "true"},
+		Args:        cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

@@ -1,8 +1,15 @@
 ---
-title: 'What is Audit trail?'
+title: 'Kosli Audit trail [E]'
 weight: 130
 ---
-# What is Audit trail?
+# Kosli Audit trail
+
+{{< hint danger >}}
+**Kosli Audit trail** is an experimental feature.
+Experimental features provide early access to product functionality. These
+features may change between releases without warning, or can be removed from a 
+future release.
+{{< /hint >}}
 
 An audit trail is a system for automating collecting documentation for each step of a business process.
 

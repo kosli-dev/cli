@@ -104,6 +104,16 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 	name := cmd.CommandPath()
 
 	buf.WriteString("# " + name + "\n\n")
+
+	if isExperimental(cmd) {
+		buf.WriteString("{{< hint danger >}}")
+		buf.WriteString(fmt.Sprintf("**%s** is an experimental feature. \n", name))
+		buf.WriteString("Experimental features provide early access to product functionality. These ")
+		buf.WriteString("features may change between releases without warning, or can be removed from a ")
+		buf.WriteString("future release.")
+		buf.WriteString("{{< /hint >}}\n")
+	}
+
 	if len(cmd.Long) > 0 {
 		buf.WriteString("## Synopsis\n\n")
 		buf.WriteString(cmd.Long + "\n\n")

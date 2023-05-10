@@ -30,12 +30,12 @@ type getWorkflowOptions struct {
 func newGetWorkflowCmd(out io.Writer) *cobra.Command {
 	o := new(getWorkflowOptions)
 	cmd := &cobra.Command{
-		Use:     "workflow ID",
-		Short:   getWorkflowShortDesc,
-		Long:    getWorkflowShortDesc,
-		Hidden:  true,
-		Example: getWorkflowExample,
-		Args:    cobra.ExactArgs(1),
+		Use:         "workflow ID",
+		Short:       getWorkflowShortDesc,
+		Long:        getWorkflowShortDesc,
+		Example:     getWorkflowExample,
+		Annotations: map[string]string{"experimentalCLI": "true"},
+		Args:        cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

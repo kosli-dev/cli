@@ -30,11 +30,11 @@ kosli report workflow \
 func newReportWorkflowCmd(out io.Writer) *cobra.Command {
 	o := new(reportWorkflowOptions)
 	cmd := &cobra.Command{
-		Use:     "workflow",
-		Short:   reportWorkflowShortDesc,
-		Long:    reportWorkflowLongDesc,
-		Example: reportWorkflowExample,
-		Hidden:  true,
+		Use:         "workflow",
+		Short:       reportWorkflowShortDesc,
+		Long:        reportWorkflowLongDesc,
+		Example:     reportWorkflowExample,
+		Annotations: map[string]string{"experimentalCLI": "true"},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
