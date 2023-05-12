@@ -63,7 +63,7 @@ require (
 	github.com/cloudflare/circl v1.3.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/docker/distribution v2.8.1+incompatible // indirect
+	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.10.2 // indirect
@@ -228,3 +228,5 @@ replace github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.2
 replace k8s.io/dynamic-resource-allocation => k8s.io/dynamic-resource-allocation v0.26.3
 
 replace k8s.io/kms => k8s.io/kms v0.26.3
+
+replace github.com/cloudflare/circl => github.com/cloudflare/circl v1.3.3
