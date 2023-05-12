@@ -6,7 +6,6 @@
 {{ with .Site.GetPage $bookSection }}
   {{ template "book-section-children" (dict "Section" . "CurrentPage" $) }}
 {{ end }}
-
 {{ define "book-section-children" }}{{/* (dict "Section" .Section "CurrentPage" .CurrentPage) */}}
   <ul>
     {{ range (where .Section.Pages "Params.bookhidden" "ne" true) }}
@@ -36,7 +35,7 @@
       </a>
     </label>
   {{ else if .Page.Content }}
-    <a href="{{ .Page.Permalink }}" class="{{ if $current }} active{{ end }}">
+    <a href="{{ .Page.Permalink }}" class="{{ if $current }} active{{ end }} {{ if .Page.Params.experimental }}experimental{{end}}">
       {{- partial "docs/title" .Page -}}
     </a>
   {{ else }}
