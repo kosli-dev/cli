@@ -1,7 +1,7 @@
 ---
 title: v0.1.41
 bookCollapseSection: true
-weight: 603
+weight: 604
 ---
 
 # Kosli Client v0.1.41

@@ -1,12 +1,13 @@
 ---
 title: "kosli list environments"
+experimental: false
 ---
 
 # kosli list environments
 
 ## Synopsis
 
-List environments.
+List environments for an org.
 
 ```shell
 kosli list environments [flags]

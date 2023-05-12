@@ -1,5 +1,6 @@
 ---
 title: "kosli snapshot server"
+experimental: false
 ---
 
 # kosli snapshot server

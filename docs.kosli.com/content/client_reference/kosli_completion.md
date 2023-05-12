@@ -1,5 +1,6 @@
 ---
 title: "kosli completion"
+experimental: false
 ---
 
 # kosli completion

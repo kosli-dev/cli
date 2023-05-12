@@ -1,12 +1,13 @@
 ---
 title: "kosli list artifacts"
+experimental: false
 ---
 
 # kosli list artifacts
 
 ## Synopsis
 
-List artifacts in a flow. The results are paginated and ordered from latests to oldest. 
+List artifacts in a flow. The results are paginated and ordered from latest to oldest.
 By default, the page limit is 15 artifacts per page.
 
 

@@ -1,5 +1,6 @@
 ---
 title: "kosli create flow"
+experimental: false
 ---
 
 # kosli create flow
@@ -10,7 +11,7 @@ Create or update a Kosli flow.
 You can specify flow parameters in flags.
 
 ```shell
-kosli create flow [FLOW-NAME] [flags]
+kosli create flow FLOW-NAME [flags]
 ```
 
 ## Flags

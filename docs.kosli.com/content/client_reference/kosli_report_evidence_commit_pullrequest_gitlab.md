@@ -1,12 +1,13 @@
 ---
 title: "kosli report evidence commit pullrequest gitlab"
+experimental: false
 ---
 
 # kosli report evidence commit pullrequest gitlab
 
 ## Synopsis
 
-Report a Gitlab merge request evidence for a commit in Kosli flows.
+Report Gitlab merge request evidence for a commit in Kosli flows.
 It checks if a merge request exists for the git commit and reports the merge-request evidence to the commit in Kosli.
 
 ```shell

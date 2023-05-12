@@ -1,5 +1,6 @@
 ---
 title: "kosli list deployments"
+experimental: false
 ---
 
 # kosli list deployments
@@ -7,7 +8,7 @@ title: "kosli list deployments"
 ## Synopsis
 
 List deployments in a flow.
-The results are paginated and ordered from latests to oldest. 
+The results are paginated and ordered from latest to oldest.
 By default, the page limit is 15 deployments per page.
 
 

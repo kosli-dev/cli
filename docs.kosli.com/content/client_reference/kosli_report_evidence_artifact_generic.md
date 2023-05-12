@@ -1,12 +1,13 @@
 ---
 title: "kosli report evidence artifact generic"
+experimental: false
 ---
 
 # kosli report evidence artifact generic
 
 ## Synopsis
 
-Report a generic evidence to an artifact in a Kosli flow.
+Report generic evidence to an artifact in a Kosli flow.
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell
@@ -75,6 +76,29 @@ kosli report evidence artifact generic \
 	--org yourOrgName \
 	--flow yourFlowName \
 	--fingerprint yourArtifactFingerprint
+
+# report a generic evidence about an artifact with evidence file upload
+kosli report evidence artifact generic \
+	--api-token yourAPIToken \
+	--build-url https://exampleci.com \	
+	--name yourEvidenceName \
+	--org yourOrgName \
+	--flow yourFlowName \
+	--fingerprint yourArtifactFingerprint \
+	--evidence-paths=yourEvidencePathName
+
+# report a generic evidence about an artifact with evidence file upload via API
+curl -X 'POST' \
+	'https://app.kosli.com/api/v2/evidence/yourOrgName/artifact/yourFlowName/generic' \
+	-H 'accept: application/json' \
+	-H 'Content-Type: multipart/form-data' \
+	-F 'evidence_json={
+  	  "artifact_fingerprint": "yourArtifactFingerprint",
+	  "name": "yourEvidenceName",
+      "build_url": "https://exampleci.com",
+      "is_compliant": true
+    }' \
+	-F 'evidence_file=@yourEvidencePathName'
 
 ```
 

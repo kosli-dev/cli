@@ -1,13 +1,14 @@
 ---
 title: "kosli assert status"
+experimental: false
 ---
 
 # kosli assert status
 
 ## Synopsis
 
-Assert the status of Kosli server.
-Exits with non-zero code if Kosli server down.
+Assert the status of a Kosli server.
+Exits with non-zero code if the Kosli server down.
 
 ```shell
 kosli assert status [flags]

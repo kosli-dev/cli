@@ -1,5 +1,6 @@
 ---
 title: "kosli get environment"
+experimental: false
 ---
 
 # kosli get environment

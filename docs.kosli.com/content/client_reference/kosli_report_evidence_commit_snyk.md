@@ -1,13 +1,14 @@
 ---
 title: "kosli report evidence commit snyk"
+experimental: false
 ---
 
 # kosli report evidence commit snyk
 
 ## Synopsis
 
-Report Snyk evidence for a commit in Kosli flows.  
-Scan results .json file is parsed. If there no vulnerabilities detected the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.  
+Report Snyk vulnerability scan evidence for a commit in Kosli flows.  
+The --scan-results .json file is parsed. If no vulnerabilities are detected the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
 
 
 ```shell
@@ -25,7 +26,7 @@ kosli report evidence commit snyk [flags]
 |    -f, --flows strings  |  [defaulted] The comma separated list of Kosli flows. Defaults to all flows of the org.  |
 |    -h, --help  |  help for snyk  |
 |    -n, --name string  |  The name of the evidence.  |
-|    -R, --scan-results string  |  The path to Snyk scan results JSON file from 'snyk test' and 'snyk container test'. For paid plans, the Snyk results will be uploaded to Kosli's evidence vault.  |
+|    -R, --scan-results string  |  The path to Snyk scan results JSON file from 'snyk test' and 'snyk container test'. The Snyk results will be uploaded to Kosli's evidence vault.  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to this evidence.  |
 
 

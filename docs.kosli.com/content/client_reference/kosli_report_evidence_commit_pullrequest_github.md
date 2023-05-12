@@ -1,12 +1,13 @@
 ---
 title: "kosli report evidence commit pullrequest github"
+experimental: false
 ---
 
 # kosli report evidence commit pullrequest github
 
 ## Synopsis
 
-Report a Github pull request evidence for a git commit in Kosli flows.
+Report Github pull request evidence for a git commit in Kosli flows.
 It checks if a pull request exists for a commit and report the pull-request evidence to the commit in Kosli. 
 
 

@@ -1,5 +1,6 @@
 ---
 title: "kosli get deployment"
+experimental: false
 ---
 
 # kosli get deployment
@@ -8,9 +9,9 @@ title: "kosli get deployment"
 
 Get a deployment from a specified flow.
 Expression can be specified as follows:
-	flowName~<N>  N'th behind the latest deployment
-	flowName#<N>  deployment number N
-	flowName      the latest deployment
+- flowName~<N>  N'th behind the latest deployment
+- flowName#<N>  deployment number N
+- flowName      the latest deployment
 
 ```shell
 kosli get deployment EXPRESSION [flags]

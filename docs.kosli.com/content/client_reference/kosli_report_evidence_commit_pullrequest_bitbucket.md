@@ -1,12 +1,13 @@
 ---
 title: "kosli report evidence commit pullrequest bitbucket"
+experimental: false
 ---
 
 # kosli report evidence commit pullrequest bitbucket
 
 ## Synopsis
 
-Report a Bitbucket pull request evidence for a commit in Kosli flows.
+Report Bitbucket pull request evidence for a commit in Kosli flows.
 It checks if a pull request exists for the git commit and reports the pull-request evidence to the commit in Kosli.
 
 ```shell

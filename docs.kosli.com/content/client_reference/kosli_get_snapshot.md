@@ -1,5 +1,6 @@
 ---
 title: "kosli get snapshot"
+experimental: false
 ---
 
 # kosli get snapshot
@@ -8,9 +9,9 @@ title: "kosli get snapshot"
 
 Get a specific environment snapshot.
 Specify SNAPPISH by:
-	environmentName~<N>  N'th behind the latest snapshot
-	environmentName#<N>  snapshot number N
-	environmentName      the latest snapshot
+- environmentName~<N>  N'th behind the latest snapshot
+- environmentName#<N>  snapshot number N
+- environmentName      the latest snapshot
 
 ```shell
 kosli get snapshot ENVIRONMENT-NAME-OR-EXPRESSION [flags]

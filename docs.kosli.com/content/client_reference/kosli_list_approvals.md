@@ -1,5 +1,6 @@
 ---
 title: "kosli list approvals"
+experimental: false
 ---
 
 # kosli list approvals
@@ -7,7 +8,7 @@ title: "kosli list approvals"
 ## Synopsis
 
 List approvals in a flow.
-The results are paginated and ordered from latests to oldest. 
+The results are paginated and ordered from latest to oldest.
 By default, the page limit is 15 approvals per page.  
 
 

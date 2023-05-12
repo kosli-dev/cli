@@ -1,12 +1,13 @@
 ---
 title: "kosli assert pullrequest bitbucket"
+experimental: false
 ---
 
 # kosli assert pullrequest bitbucket
 
 ## Synopsis
 
-Assert if a Bitbucket pull request for a git commit exists. 
+Assert a Bitbucket pull request for a git commit exists. 
 The command exits with non-zero exit code 
 if no pull requests were found for the commit.
 

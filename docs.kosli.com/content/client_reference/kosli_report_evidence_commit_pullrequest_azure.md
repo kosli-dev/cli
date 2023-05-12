@@ -1,12 +1,13 @@
 ---
 title: "kosli report evidence commit pullrequest azure"
+experimental: false
 ---
 
 # kosli report evidence commit pullrequest azure
 
 ## Synopsis
 
-Report an Azure Devops pull request evidence for a git commit in Kosli flows.
+Report Azure Devops pull request evidence for a git commit in Kosli flows.
 It checks if a pull request exists for a commit and report the pull-request evidence to the commit in Kosli. 
 
 

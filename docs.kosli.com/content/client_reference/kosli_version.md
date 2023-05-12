@@ -1,12 +1,13 @@
 ---
 title: "kosli version"
+experimental: false
 ---
 
 # kosli version
 
 ## Synopsis
 
-Print the version of Kosli CLI.
+Print the version of a Kosli CLI.
 The output will look something like this:
 version.BuildInfo{Version:"v0.0.1", GitCommit:"fe51cd1e31e6a202cba7dead9552a6d418ded79a", GitTreeState:"clean", GoVersion:"go1.16.3"}
 

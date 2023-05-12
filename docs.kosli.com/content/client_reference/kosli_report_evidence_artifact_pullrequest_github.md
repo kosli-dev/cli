@@ -1,5 +1,6 @@
 ---
 title: "kosli report evidence artifact pullrequest github"
+experimental: false
 ---
 
 # kosli report evidence artifact pullrequest github
@@ -7,7 +8,7 @@ title: "kosli report evidence artifact pullrequest github"
 ## Synopsis
 
 Report a Github pull request evidence for an artifact in a Kosli flow.
-It checks if a pull request exists for the artifact (based on its git commit) and report the pull-request evidence to the artifact in Kosli. 
+It checks if a pull request exists for the artifact (based on its git commit) and reports the pull-request evidence to the artifact in Kosli.
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell

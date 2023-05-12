@@ -1,12 +1,13 @@
 ---
 title: "kosli assert pullrequest github"
+experimental: false
 ---
 
 # kosli assert pullrequest github
 
 ## Synopsis
 
-Assert if a Github pull request for a git commit exists.
+Assert a Github pull request for a git commit exists.
 The command exits with non-zero exit code 
 if no pull requests were found for the commit.
 

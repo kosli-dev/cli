@@ -1,5 +1,6 @@
 ---
 title: "kosli search"
+experimental: false
 ---
 
 # kosli search

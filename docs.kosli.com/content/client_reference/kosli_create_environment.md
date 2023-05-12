@@ -1,5 +1,6 @@
 ---
 title: "kosli create environment"
+experimental: false
 ---
 
 # kosli create environment

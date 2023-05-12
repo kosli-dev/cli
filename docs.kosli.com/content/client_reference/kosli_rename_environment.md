@@ -1,5 +1,6 @@
 ---
 title: "kosli rename environment"
+experimental: false
 ---
 
 # kosli rename environment

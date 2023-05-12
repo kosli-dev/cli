@@ -1,12 +1,13 @@
 ---
 title: "kosli assert pullrequest azure"
+experimental: false
 ---
 
 # kosli assert pullrequest azure
 
 ## Synopsis
 
-Assert if a Azure DevOps pull request for a git commit exists.
+Assert a Azure DevOps pull request for a git commit exists.
 The command exits with non-zero exit code 
 if no pull requests were found for the commit.
 
