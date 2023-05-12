@@ -20,7 +20,7 @@
 }
 
 .book-menu a.experimental::after {
-    content: 'beta';
+    content: 'experimental';
     background-color: transparent;
     border: 1px solid $orange-100;
     color: $orange-100;
