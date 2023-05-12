@@ -110,7 +110,8 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 		buf.WriteString(fmt.Sprintf("**%s** is an experimental feature. \n", name))
 		buf.WriteString("Experimental features provide early access to product functionality. These ")
 		buf.WriteString("features may change between releases without warning, or can be removed from a ")
-		buf.WriteString("future release.")
+		buf.WriteString("future release.\n")
+		buf.WriteString("You can enable/disable experimental features by using the **kosli config-experimental** command.")
 		buf.WriteString("{{< /hint >}}\n")
 	}
 
