@@ -38,15 +38,27 @@ func (suite *CreateAuditTrailCommandTestSuite) TestCreateAuditTrailCmd() {
 			cmd:       "create audit-trail foo_bar --steps step1,step2" + suite.defaultKosliArguments,
 			golden:    "Error: Input payload validation failed: map[name:'foo_bar' does not match '^[a-zA-Z0-9\\\\-]+$']\n",
 		},
+		// {
+		// 	name:   "can create an audit trail",
+		// 	cmd:    "create audit-trail newAuditTrail --description \"my new audit trail\" --steps step1,step2" + suite.defaultKosliArguments,
+		// 	golden: "audit trail 'newAuditTrail' was created\n",
+		// },
 		{
-			name:   "can create an audit trail",
-			cmd:    "create audit-trail newAuditTrail --description \"my new audit trail\" --steps step1,step2" + suite.defaultKosliArguments,
-			golden: "audit trail 'newAuditTrail' was created\n",
+			wantError: true,
+			name:      "can create an audit trail",
+			cmd:       "create audit-trail newAuditTrail --description \"my new audit trail\" --steps step1,step2" + suite.defaultKosliArguments,
+			golden:    "Error: This feature is experimental. Join our Slack community for more information: https://www.kosli.com/community/\n",
 		},
+		// {
+		// 	name:   "re-creating a flow updates its metadata",
+		// 	cmd:    "create audit-trail newAuditTrail --description \"changed description\" --steps step1,step2" + suite.defaultKosliArguments,
+		// 	golden: "audit trail 'newAuditTrail' was created\n",
+		// },
 		{
-			name:   "re-creating a flow updates its metadata",
-			cmd:    "create audit-trail newAuditTrail --description \"changed description\" --steps step1,step2" + suite.defaultKosliArguments,
-			golden: "audit trail 'newAuditTrail' was created\n",
+			wantError: true,
+			name:      "re-creating a flow updates its metadata",
+			cmd:       "create audit-trail newAuditTrail --description \"changed description\" --steps step1,step2" + suite.defaultKosliArguments,
+			golden:    "Error: This feature is experimental. Join our Slack community for more information: https://www.kosli.com/community/\n",
 		},
 		{
 			wantError: true,

@@ -25,16 +25,22 @@ func (suite *GetAuditTrailCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateAuditTrail(suite.auditTrailName, suite.T())
+	// CreateAuditTrail(suite.auditTrailName, suite.T())
 }
 
 func (suite *GetAuditTrailCommandTestSuite) TestGetAuditTrailCmd() {
 	tests := []cmdTestCase{
+		// {
+		// 	wantError: true,
+		// 	name:      "getting a non existing audit trail fails",
+		// 	cmd:       fmt.Sprintf(`get audit-trail non-existing %s`, suite.defaultKosliArguments),
+		// 	golden:    "Error: Audit Trail called 'non-existing' does not exist for organization 'audit-trail-get-org'\n",
+		// },
 		{
 			wantError: true,
 			name:      "getting a non existing audit trail fails",
 			cmd:       fmt.Sprintf(`get audit-trail non-existing %s`, suite.defaultKosliArguments),
-			golden:    "Error: Audit Trail called 'non-existing' does not exist for organization 'audit-trail-get-org'\n",
+			golden:    "Error: This feature is experimental. Join our Slack community for more information: https://www.kosli.com/community/\n",
 		},
 		{
 			wantError: true,
@@ -42,15 +48,21 @@ func (suite *GetAuditTrailCommandTestSuite) TestGetAuditTrailCmd() {
 			cmd:       fmt.Sprintf(`get audit-trail non-existing xxx %s`, suite.defaultKosliArguments),
 			golden:    "Error: accepts 1 arg(s), received 2\n",
 		},
+		// {
+		// 	name:       "getting an existing audit trail works",
+		// 	cmd:        fmt.Sprintf(`get audit-trail %s %s`, suite.auditTrailName, suite.defaultKosliArguments),
+		// 	goldenFile: "output/get/get-audit-trail.txt",
+		// },
 		{
-			name:       "getting an existing audit trail works",
-			cmd:        fmt.Sprintf(`get audit-trail %s %s`, suite.auditTrailName, suite.defaultKosliArguments),
-			goldenFile: "output/get/get-audit-trail.txt",
+			wantError: true,
+			name:      "getting an existing audit trail works",
+			cmd:       fmt.Sprintf(`get audit-trail %s %s`, suite.auditTrailName, suite.defaultKosliArguments),
+			golden:    "Error: This feature is experimental. Join our Slack community for more information: https://www.kosli.com/community/\n",
 		},
-		{
-			name: "getting an existing audit trail with --output json works",
-			cmd:  fmt.Sprintf(`get audit-trail %s --output json %s`, suite.auditTrailName, suite.defaultKosliArguments),
-		},
+		// {
+		// 	name: "getting an existing audit trail with --output json works",
+		// 	cmd:  fmt.Sprintf(`get audit-trail %s --output json %s`, suite.auditTrailName, suite.defaultKosliArguments),
+		// },
 	}
 
 	runTestCmd(suite.T(), tests)

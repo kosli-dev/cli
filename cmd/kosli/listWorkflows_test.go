@@ -27,37 +27,43 @@ func (suite *ListWorkflowsCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.atrOrgKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
-	CreateAuditTrail(suite.auditTrailName, suite.T())                         // create an audit trail for the workflows-org
-	CreateWorkflow(suite.auditTrailName, suite.workflowID, suite.T())         // create workflow for the workflows-org
-	CreateWorkflowEvidence(suite.auditTrailName, suite.workflowID, suite.T()) // create workflow evidence for the workflows-org
+	// CreateAuditTrail(suite.auditTrailName, suite.T())                         // create an audit trail for the workflows-org
+	// CreateWorkflow(suite.auditTrailName, suite.workflowID, suite.T())         // create workflow for the workflows-org
+	// CreateWorkflowEvidence(suite.auditTrailName, suite.workflowID, suite.T()) // create workflow evidence for the workflows-org
 
 	global.Org = "workflows-empty-org"
 	global.ApiToken = "Fmbyc_Obhwna69rxvZVeOUS_8r-57ZCdqCK2QRfy1Q2hNzgPNjcOO1aaXmMlRT4Bts7kapjg1MXvVXwJmrCBkAx3RUtrgLvdLZZ5wZ46xRdRb0yvGrmXi08fcWqU8l9cET0oHk6TeAnK3iHq-SzP7D3_gjmZf1H9nKiEoIfsIIw"
 	suite.atrEmptyOrgKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
-	CreateAuditTrail(suite.auditTrailName, suite.T()) // create an audit trail for the workflows-empty-org
+	// CreateAuditTrail(suite.auditTrailName, suite.T()) // create an audit trail for the workflows-empty-org
 }
 
 func (suite *ListWorkflowsCommandTestSuite) TestListWorkflowsCmd() {
 	tests := []cmdTestCase{
+		// {
+		// 	name:       "listing workflows works when there are workflows",
+		// 	cmd:        fmt.Sprintf(`list workflows --audit-trail %s %s`, suite.auditTrailName, suite.atrOrgKosliArguments),
+		// 	goldenFile: "output/list/list-workflows.txt",
+		// },
+		// {
+		// 	name:   "listing workflows works when there are no workflows",
+		// 	cmd:    fmt.Sprintf(`list workflows --audit-trail %s %s`, suite.auditTrailName, suite.atrEmptyOrgKosliArguments),
+		// 	golden: "No workflows were found.\n",
+		// },
 		{
-			name:       "listing workflows works when there are workflows",
-			cmd:        fmt.Sprintf(`list workflows --audit-trail %s %s`, suite.auditTrailName, suite.atrOrgKosliArguments),
-			goldenFile: "output/list/list-workflows.txt",
+			wantError: true,
+			name:      "listing workflows works when there are no workflows",
+			cmd:       fmt.Sprintf(`list workflows --audit-trail %s %s`, suite.auditTrailName, suite.atrEmptyOrgKosliArguments),
+			golden:    "Error: This feature is experimental. Join our Slack community for more information: https://www.kosli.com/community/\n",
 		},
-		{
-			name:   "listing workflows works when there are no workflows",
-			cmd:    fmt.Sprintf(`list workflows --audit-trail %s %s`, suite.auditTrailName, suite.atrEmptyOrgKosliArguments),
-			golden: "No workflows were found.\n",
-		},
-		{
-			name: "listing workflows with --output json works when there are workflows",
-			cmd:  fmt.Sprintf(`list workflows --audit-trail %s --output json %s`, suite.auditTrailName, suite.atrOrgKosliArguments),
-		},
-		{
-			name:   "listing workflows with --output json works when there are no workflows",
-			cmd:    fmt.Sprintf(`list workflows --audit-trail %s --output json %s`, suite.auditTrailName, suite.atrEmptyOrgKosliArguments),
-			golden: "[]\n",
-		},
+		// {
+		// 	name: "listing workflows with --output json works when there are workflows",
+		// 	cmd:  fmt.Sprintf(`list workflows --audit-trail %s --output json %s`, suite.auditTrailName, suite.atrOrgKosliArguments),
+		// },
+		// {
+		// 	name:   "listing workflows with --output json works when there are no workflows",
+		// 	cmd:    fmt.Sprintf(`list workflows --audit-trail %s --output json %s`, suite.auditTrailName, suite.atrEmptyOrgKosliArguments),
+		// 	golden: "[]\n",
+		// },
 	}
 
 	runTestCmd(suite.T(), tests)

@@ -23,7 +23,7 @@ func (suite *ListAuditTrailsCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.acmeOrgKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
-	CreateAuditTrail("testAuditTrail", suite.T()) // create an audit trail for the acme-org
+	// CreateAuditTrail("testAuditTrail", suite.T()) // create an audit trail for the acme-org
 
 	global.Org = "iu-org"
 	global.ApiToken = "qM9u2_grv6pJLbACwsMMMT5LIQy82tQj2k1zjZnlXti1smnFaGwCKW4jzk0La7ae9RrSYvEwCXSsXknD6YZqd-onLaaIUUKtEn6-B6yh53vWIe9EC5u85FCbKZjFbaicp_d0Me0Zcqq_KcCgrAZRX9xggl_pBb2oaCsNdllqNjk"
@@ -32,25 +32,37 @@ func (suite *ListAuditTrailsCommandTestSuite) SetupTest() {
 
 func (suite *ListAuditTrailsCommandTestSuite) TestListAuditTrailsCmd() {
 	tests := []cmdTestCase{
+		// {
+		// 	name:       "listing audit trails works when there are audit trails",
+		// 	cmd:        fmt.Sprintf(`list audit-trails %s`, suite.acmeOrgKosliArguments),
+		// 	goldenFile: "output/list/list-audit-trails.txt",
+		// },
 		{
-			name:       "listing audit trails works when there are audit trails",
-			cmd:        fmt.Sprintf(`list audit-trails %s`, suite.acmeOrgKosliArguments),
-			goldenFile: "output/list/list-audit-trails.txt",
+			wantError: true,
+			name:      "listing audit trails works when there are audit trails",
+			cmd:       fmt.Sprintf(`list audit-trails %s`, suite.acmeOrgKosliArguments),
+			golden:    "Error: This feature is experimental. Join our Slack community for more information: https://www.kosli.com/community/\n",
 		},
+		// {
+		// 	name:   "listing audit trails works when there are no audit trails",
+		// 	cmd:    fmt.Sprintf(`list audit-trails %s`, suite.iuOrgKosliArguments),
+		// 	golden: "No audit trails were found.\n",
+		// },
 		{
-			name:   "listing audit trails works when there are no audit trails",
-			cmd:    fmt.Sprintf(`list audit-trails %s`, suite.iuOrgKosliArguments),
-			golden: "No audit trails were found.\n",
+			wantError: true,
+			name:      "listing audit trails works when there are no audit trails",
+			cmd:       fmt.Sprintf(`list audit-trails %s`, suite.iuOrgKosliArguments),
+			golden:    "Error: This feature is experimental. Join our Slack community for more information: https://www.kosli.com/community/\n",
 		},
-		{
-			name: "listing audit trails with --output json works when there are audit trails",
-			cmd:  fmt.Sprintf(`list audit-trails --output json %s`, suite.acmeOrgKosliArguments),
-		},
-		{
-			name:   "listing audit trails with --output json works when there are no audit trails",
-			cmd:    fmt.Sprintf(`list audit-trails --output json %s`, suite.iuOrgKosliArguments),
-			golden: "[]\n",
-		},
+		// {
+		// 	name: "listing audit trails with --output json works when there are audit trails",
+		// 	cmd:  fmt.Sprintf(`list audit-trails --output json %s`, suite.acmeOrgKosliArguments),
+		// },
+		// {
+		// 	name:   "listing audit trails with --output json works when there are no audit trails",
+		// 	cmd:    fmt.Sprintf(`list audit-trails --output json %s`, suite.iuOrgKosliArguments),
+		// 	golden: "[]\n",
+		// },
 		{
 			wantError: true,
 			name:      "providing an argument causes an error",
