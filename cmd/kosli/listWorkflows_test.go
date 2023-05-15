@@ -53,7 +53,7 @@ func (suite *ListWorkflowsCommandTestSuite) TestListWorkflowsCmd() {
 			wantError: true,
 			name:      "listing workflows works when there are no workflows",
 			cmd:       fmt.Sprintf(`list workflows --audit-trail %s %s`, suite.auditTrailName, suite.atrEmptyOrgKosliArguments),
-			golden:    "Error: The audit trail feature is experimental.You can enable the feature by running the following Kosli CLI command (version 2.3.1 or later):\n$ kosli enable experimental\nJoin our Slack community for more information: https://www.kosli.com/community/\n",
+			golden:    "Error: The audit trail feature is experimental. You can enable the feature by running the following Kosli CLI command (version 2.3.1 or later):\n$ kosli enable experimental\nJoin our Slack community for more information: https://www.kosli.com/community/\n",
 		},
 		// {
 		// 	name: "listing workflows with --output json works when there are workflows",

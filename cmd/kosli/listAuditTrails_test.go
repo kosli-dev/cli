@@ -41,7 +41,7 @@ func (suite *ListAuditTrailsCommandTestSuite) TestListAuditTrailsCmd() {
 			wantError: true,
 			name:      "listing audit trails works when there are audit trails",
 			cmd:       fmt.Sprintf(`list audit-trails %s`, suite.acmeOrgKosliArguments),
-			golden:    "Error: The audit trail feature is experimental.You can enable the feature by running the following Kosli CLI command (version 2.3.1 or later):\n$ kosli enable experimental\nJoin our Slack community for more information: https://www.kosli.com/community/\n",
+			golden:    "Error: The audit trail feature is experimental. You can enable the feature by running the following Kosli CLI command (version 2.3.1 or later):\n$ kosli enable experimental\nJoin our Slack community for more information: https://www.kosli.com/community/\n",
 		},
 		// {
 		// 	name:   "listing audit trails works when there are no audit trails",
@@ -52,7 +52,7 @@ func (suite *ListAuditTrailsCommandTestSuite) TestListAuditTrailsCmd() {
 			wantError: true,
 			name:      "listing audit trails works when there are no audit trails",
 			cmd:       fmt.Sprintf(`list audit-trails %s`, suite.iuOrgKosliArguments),
-			golden:    "Error: The audit trail feature is experimental.You can enable the feature by running the following Kosli CLI command (version 2.3.1 or later):\n$ kosli enable experimental\nJoin our Slack community for more information: https://www.kosli.com/community/\n",
+			golden:    "Error: The audit trail feature is experimental. You can enable the feature by running the following Kosli CLI command (version 2.3.1 or later):\n$ kosli enable experimental\nJoin our Slack community for more information: https://www.kosli.com/community/\n",
 		},
 		// {
 		// 	name: "listing audit trails with --output json works when there are audit trails",

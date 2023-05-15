@@ -50,7 +50,7 @@ func (suite *GetWorkflowCommandTestSuite) TestGetWorkflowCmd() {
 			wantError: true,
 			name:      "get workflow fails when there is no workflow",
 			cmd:       fmt.Sprintf(`get workflow non-existing --audit-trail %s %s`, suite.auditTrailName, suite.workflowOrgKosliArguments),
-			golden:    "Error: The audit trail feature is experimental.You can enable the feature by running the following Kosli CLI command (version 2.3.1 or later):\n$ kosli enable experimental\nJoin our Slack community for more information: https://www.kosli.com/community/\n",
+			golden:    "Error: The audit trail feature is experimental. You can enable the feature by running the following Kosli CLI command (version 2.3.1 or later):\n$ kosli enable experimental\nJoin our Slack community for more information: https://www.kosli.com/community/\n",
 		},
 		// {
 		// 	name: "get workflow works with --output json when there is workflow",
