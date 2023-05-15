@@ -47,7 +47,7 @@ func (suite *CreateAuditTrailCommandTestSuite) TestCreateAuditTrailCmd() {
 			wantError: true,
 			name:      "can create an audit trail",
 			cmd:       "create audit-trail newAuditTrail --description \"my new audit trail\" --steps step1,step2" + suite.defaultKosliArguments,
-			golden:    "Error: This feature is experimental. Join our Slack community for more information: https://www.kosli.com/community/\n",
+			golden:    "Error: This feature is experimental.You can enable the feature by running the following Kosli CLI command (version 2.3.1 or later):\n$ kosli enable experimental\nJoin our Slack community for more information: https://www.kosli.com/community/\n",
 		},
 		// {
 		// 	name:   "re-creating a flow updates its metadata",
@@ -58,7 +58,7 @@ func (suite *CreateAuditTrailCommandTestSuite) TestCreateAuditTrailCmd() {
 			wantError: true,
 			name:      "re-creating a flow updates its metadata",
 			cmd:       "create audit-trail newAuditTrail --description \"changed description\" --steps step1,step2" + suite.defaultKosliArguments,
-			golden:    "Error: This feature is experimental. Join our Slack community for more information: https://www.kosli.com/community/\n",
+			golden:    "Error: This feature is experimental.You can enable the feature by running the following Kosli CLI command (version 2.3.1 or later):\n$ kosli enable experimental\nJoin our Slack community for more information: https://www.kosli.com/community/\n",
 		},
 		{
 			wantError: true,
