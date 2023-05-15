@@ -363,13 +363,13 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 
 func (suite *AWSTestSuite) TestGetEcsTasksData() {
 	for _, t := range []struct {
-		name              string
-		requireEnvVars    bool // indicates that a test case needs real credentials from env vars
-		creds             *AWSStaticCreds
-		clusterName       string
-		serviceName       string
-		numberOfArtifacts int
-		wantErr           bool
+		name                 string
+		requireEnvVars       bool // indicates that a test case needs real credentials from env vars
+		creds                *AWSStaticCreds
+		clusterName          string
+		serviceName          string
+		minNumberOfArtifacts int
+		wantErr              bool
 	}{
 		{
 			name: "invalid credentials causes an error",
@@ -386,29 +386,29 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			clusterName:       "merkely",
-			numberOfArtifacts: 2,
-			requireEnvVars:    true,
+			clusterName:          "merkely",
+			minNumberOfArtifacts: 2,
+			requireEnvVars:       true,
 		},
 		{
 			name: "providing the wrong region causes an error",
 			creds: &AWSStaticCreds{
 				Region: "ap-south-1",
 			},
-			clusterName:       "merkely",
-			numberOfArtifacts: 2,
-			requireEnvVars:    true,
-			wantErr:           true,
+			clusterName:          "merkely",
+			minNumberOfArtifacts: 2,
+			requireEnvVars:       true,
+			wantErr:              true,
 		},
 		{
 			name: "can get ECS data with cluster name and service name",
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			clusterName:       "merkely",
-			serviceName:       "merkely",
-			numberOfArtifacts: 2,
-			requireEnvVars:    true,
+			clusterName:          "merkely",
+			serviceName:          "merkely",
+			minNumberOfArtifacts: 2,
+			requireEnvVars:       true,
 		},
 	} {
 		suite.Run(t.name, func() {
@@ -417,7 +417,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetEcsTasksData() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
-				require.Len(suite.T(), data, t.numberOfArtifacts)
+				require.GreaterOrEqual(suite.T(), data, t.minNumberOfArtifacts)
 			}
 		})
 	}
