@@ -417,7 +417,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetEcsTasksData() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
-				require.GreaterOrEqual(suite.T(), data, t.minNumberOfArtifacts)
+				require.GreaterOrEqual(suite.T(), len(data), t.minNumberOfArtifacts)
 			}
 		})
 	}
