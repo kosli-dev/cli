@@ -14,8 +14,6 @@ future release.
 
 An audit trail is a system for automating collecting documentation for each step of a business process.
 
-Below you can read about what elements Kosli consists of.
-
 {{< hint info >}}
 Note that **all** CLI command flags can be set as environment variables by adding the the `KOSLI_` prefix and capitalizing them. 
 In the command examples below both `--api-token` and `--org` flags were set from environment variables.
