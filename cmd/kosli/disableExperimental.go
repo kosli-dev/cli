@@ -9,11 +9,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const enableDesc = `All Kosli feature toggles commands.`
+const disableExperimentalDesc = `Disable experimental features.`
 
-type enableOptions struct {
-	enable  bool
-	disable bool
+type experimentalOptions struct {
 	payload experimentalFeaturesPayload
 }
 
@@ -21,14 +19,13 @@ type experimentalFeaturesPayload struct {
 	Enabled bool `json:"experimental_features_enabled"`
 }
 
-func newConfigExperimentalCmd(out io.Writer) *cobra.Command {
-	o := new(enableOptions)
+func newDisableExperimentalCmd(out io.Writer) *cobra.Command {
+	o := new(experimentalOptions)
 	cmd := &cobra.Command{
-		Use:    "config-experimental",
-		Short:  enableDesc,
-		Long:   enableDesc,
-		Hidden: true,
-		Args:   cobra.NoArgs,
+		Use:   "experimental",
+		Short: disableExperimentalDesc,
+		Long:  disableExperimentalDesc,
+		Args:  cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
@@ -37,25 +34,19 @@ func newConfigExperimentalCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			o.payload.Enabled = false
 			return o.run(args)
 		},
 	}
 
-	cmd.Flags().BoolVar(&o.disable, "disable", false, experimentalDisableFlag)
-	cmd.Flags().BoolVar(&o.enable, "enable", true, experimentalEnableFlag)
-
 	return cmd
 }
 
-func (o *enableOptions) run(args []string) error {
+func (o *experimentalOptions) run(args []string) error {
 	var err error
 	url := fmt.Sprintf("%s/api/v2/organizations/%s/experimental_features", global.Host, global.Org)
 	action := "enabled"
-	if o.enable {
-		o.payload.Enabled = true
-	}
-	if o.disable {
-		o.payload.Enabled = false
+	if !o.payload.Enabled {
 		action = "disabled"
 	}
 
