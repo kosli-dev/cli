@@ -7,7 +7,7 @@ experimental: true
 
 {{< hint warning >}}**kosli list workflows** is an experimental feature. 
 Experimental features provide early access to product functionality. These features may change between releases without warning, or can be removed from a future release.
-You can enable/disable experimental features by using the **kosli config-experimental** command.{{< /hint >}}
+You can enable experimental features by using the **kosli enable experimental** command.{{< /hint >}}
 ## Synopsis
 
 List workflows for an audit trail.
