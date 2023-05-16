@@ -14,8 +14,10 @@ See the [docs](https://docs.kosli.com/client_reference/)
 
 `make lint`
 
-
 ## Building the code
 
 `make build`
 
+## Building the documentation
+
+`make hugo`

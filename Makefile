@@ -99,7 +99,7 @@ test_docs: deps vet ensure_network test_setup
 docker: deps vet lint
 	@docker build -t kosli-cli .
 
-docs: helm-docs build
+cli-docs: build
 	@rm -f docs.kosli.com/content/client_reference/kosli*
 	@export DOCS=true && ./kosli docs --dir docs.kosli.com/content/client_reference
 
@@ -119,10 +119,10 @@ upgrade-deps:
 generate-json-metadata:
 	echo '{"currentversion": "vlocal"}' > docs.kosli.com/assets/metadata.json
 
-hugo: docs generate-json-metadata
+hugo: cli-docs helm-docs generate-json-metadata
 	cd docs.kosli.com && hugo server --minify --buildDrafts --port=1515
 
-hugo-local: generate-json-metadata
+hugo-local: cli-docs generate-json-metadata
 	cd docs.kosli.com && hugo server --minify --buildDrafts --port=1515
 
 helm-lint: 
