@@ -18,8 +18,7 @@ RUN make deps && make vet
 RUN make build
 
 ### Final Image ###
-FROM alpine:${ALPINE_VERSION} as base
-
-RUN apk add --update --no-cache git openssh bash
+FROM scratch
 
 COPY --from=builder /go/src/kosli/kosli /bin/kosli
+ENTRYPOINT ["/bin/kosli"]
