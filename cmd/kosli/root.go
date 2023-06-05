@@ -319,7 +319,7 @@ func isBeta(cmd *cobra.Command) bool {
 }
 
 const usageTemplate = `{{- if isBeta .}}EXPERIMENTAL:
-  {{.CommandPath}} is an beta feature.
+  {{.CommandPath}} is a beta feature.
   Beta features provide early access to product functionality. These
   features may change between releases without warning, or can be removed from a
   future release.

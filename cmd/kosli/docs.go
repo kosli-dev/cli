@@ -107,7 +107,7 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 
 	if isBeta(cmd) {
 		buf.WriteString("{{< hint warning >}}")
-		buf.WriteString(fmt.Sprintf("**%s** is an beta feature. \n", name))
+		buf.WriteString(fmt.Sprintf("**%s** is a beta feature. \n", name))
 		buf.WriteString("Beta features provide early access to product functionality. These ")
 		buf.WriteString("features may change between releases without warning, or can be removed from a ")
 		buf.WriteString("future release.\n")
