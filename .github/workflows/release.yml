@@ -97,7 +97,7 @@ jobs:
         # legacy-ref should happen first as it has the side effect of deleting generated files outside the legacy_ref
         run: | 
           make legacy-ref-docs 
-          make docs 
+          make cli-docs 
 
       - name: Generate json
         run: |
