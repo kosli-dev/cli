@@ -17,7 +17,7 @@ func newEnableCmd(out io.Writer) *cobra.Command {
 
 	// Add subcommands
 	cmd.AddCommand(
-		newEnableExperimentalCmd(out),
+		newEnableBetaCmd(out),
 	)
 
 	return cmd

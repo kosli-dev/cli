@@ -9,23 +9,28 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const disableExperimentalDesc = `Disable experimental features.`
+const disableBetaDesc = `Disable beta features for an organization.`
 
-type experimentalOptions struct {
-	payload experimentalFeaturesPayload
+const disableLongBetaDesc = disableBetaDesc + `
+Currently, the only beta feature is audit-trails.
+`
+
+type betaOptions struct {
+	payload betaFeaturesPayload
 }
 
-type experimentalFeaturesPayload struct {
+type betaFeaturesPayload struct {
 	Enabled bool `json:"experimental_features_enabled"`
 }
 
 func newDisableExperimentalCmd(out io.Writer) *cobra.Command {
-	o := new(experimentalOptions)
+	o := new(betaOptions)
 	cmd := &cobra.Command{
-		Use:   "experimental",
-		Short: disableExperimentalDesc,
-		Long:  disableExperimentalDesc,
-		Args:  cobra.NoArgs,
+		Use:     "beta",
+		Aliases: []string{"experimental"},
+		Short:   disableBetaDesc,
+		Long:    disableLongBetaDesc,
+		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
@@ -42,7 +47,7 @@ func newDisableExperimentalCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *experimentalOptions) run(args []string) error {
+func (o *betaOptions) run(args []string) error {
 	var err error
 	url := fmt.Sprintf("%s/api/v2/organizations/%s/experimental_features", global.Host, global.Org)
 	action := "enabled"
@@ -59,7 +64,7 @@ func (o *experimentalOptions) run(args []string) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("experimental features have been %s for organization: %s", action, global.Org)
+		logger.Info("beta features have been %s for organization: %s", action, global.Org)
 	}
 	return err
 }
