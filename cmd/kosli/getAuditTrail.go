@@ -24,7 +24,7 @@ func newGetAuditTrailCmd(out io.Writer) *cobra.Command {
 		Use:         "audit-trail AUDIT-TRAIL-NAME",
 		Short:       getAuditTrailDesc,
 		Long:        getAuditTrailDesc,
-		Annotations: map[string]string{"experimentalCLI": "true"},
+		Annotations: map[string]string{"betaCLI": "true"},
 		Args:        cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})

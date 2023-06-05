@@ -220,7 +220,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		newEnableCmd(out),
 	)
 
-	cobra.AddTemplateFunc("isExperimental", isExperimental)
+	cobra.AddTemplateFunc("isExperimental", isBeta)
 	cmd.SetUsageTemplate(usageTemplate)
 
 	return cmd, nil
@@ -305,20 +305,20 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 	})
 }
 
-func isExperimental(cmd *cobra.Command) bool {
-	if _, ok := cmd.Annotations["experimentalCLI"]; ok {
+func isBeta(cmd *cobra.Command) bool {
+	if _, ok := cmd.Annotations["betaCLI"]; ok {
 		return true
 	}
-	var experimental bool
+	var beta bool
 	cmd.VisitParents(func(cmd *cobra.Command) {
-		if _, ok := cmd.Annotations["experimentalCLI"]; ok {
-			experimental = true
+		if _, ok := cmd.Annotations["betaCLI"]; ok {
+			beta = true
 		}
 	})
-	return experimental
+	return beta
 }
 
-const usageTemplate = `{{- if isExperimental .}}EXPERIMENTAL:
+const usageTemplate = `{{- if isBeta .}}EXPERIMENTAL:
   {{.CommandPath}} is an beta feature.
   Beta features provide early access to product functionality. These
   features may change between releases without warning, or can be removed from a

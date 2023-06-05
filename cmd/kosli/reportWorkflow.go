@@ -34,7 +34,7 @@ func newReportWorkflowCmd(out io.Writer) *cobra.Command {
 		Short:       reportWorkflowShortDesc,
 		Long:        reportWorkflowLongDesc,
 		Example:     reportWorkflowExample,
-		Annotations: map[string]string{"experimentalCLI": "true"},
+		Annotations: map[string]string{"betaCLI": "true"},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

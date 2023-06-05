@@ -54,11 +54,11 @@ func (o *docsOptions) run() error {
 			return "/client_reference/" + strings.ToLower(base) + "/"
 		}
 
-		hdrFunc := func(filename string, experimental bool) string {
+		hdrFunc := func(filename string, beta bool) string {
 			base := filepath.Base(filename)
 			name := strings.TrimSuffix(base, path.Ext(base))
 			title := strings.ToLower(strings.Replace(name, "_", " ", -1))
-			return fmt.Sprintf("---\ntitle: \"%s\"\nexperimental: %t\n---\n\n", title, experimental)
+			return fmt.Sprintf("---\ntitle: \"%s\"\nbeta: %t\n---\n\n", title, beta)
 		}
 
 		return MereklyGenMarkdownTreeCustom(o.topCmd, o.dest, hdrFunc, linkHandler)
@@ -85,7 +85,7 @@ func MereklyGenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender 
 		}
 		defer f.Close()
 
-		if _, err := io.WriteString(f, filePrepender(filename, isExperimental(cmd))); err != nil {
+		if _, err := io.WriteString(f, filePrepender(filename, isBeta(cmd))); err != nil {
 			return err
 		}
 		if err := KosliGenMarkdownCustom(cmd, f, linkHandler); err != nil {
@@ -105,7 +105,7 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 
 	buf.WriteString("# " + name + "\n\n")
 
-	if isExperimental(cmd) {
+	if isBeta(cmd) {
 		buf.WriteString("{{< hint warning >}}")
 		buf.WriteString(fmt.Sprintf("**%s** is an beta feature. \n", name))
 		buf.WriteString("Beta features provide early access to product functionality. These ")

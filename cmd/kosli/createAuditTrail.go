@@ -40,7 +40,7 @@ func newCreateAuditTrailCmd(out io.Writer) *cobra.Command {
 		Short:       createAuditTrailShortDesc,
 		Long:        createAuditTrailLongDesc,
 		Example:     createAuditTrailExample,
-		Annotations: map[string]string{"experimentalCLI": "true"},
+		Annotations: map[string]string{"betaCLI": "true"},
 		Args:        cobra.MaximumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
