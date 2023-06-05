@@ -40,7 +40,7 @@ func (suite *GetAuditTrailCommandTestSuite) TestGetAuditTrailCmd() {
 			wantError: true,
 			name:      "getting a non existing audit trail fails",
 			cmd:       fmt.Sprintf(`get audit-trail non-existing %s`, suite.defaultKosliArguments),
-			golden:    "Error: The audit trail feature is experimental. You can enable the feature by running the following Kosli CLI command (version 2.3.1 or later):\n$ kosli enable experimental\nJoin our Slack community for more information: https://www.kosli.com/community/\n",
+			golden:    "Error: The audit trail feature is in beta. You can enable the feature by running the following Kosli CLI command (version 2.3.2 or later):\n$ kosli enable beta\nJoin our Slack community for more information: https://www.kosli.com/community/\n",
 		},
 		{
 			wantError: true,
@@ -57,7 +57,7 @@ func (suite *GetAuditTrailCommandTestSuite) TestGetAuditTrailCmd() {
 			wantError: true,
 			name:      "getting an existing audit trail works",
 			cmd:       fmt.Sprintf(`get audit-trail %s %s`, suite.auditTrailName, suite.defaultKosliArguments),
-			golden:    "Error: The audit trail feature is experimental. You can enable the feature by running the following Kosli CLI command (version 2.3.1 or later):\n$ kosli enable experimental\nJoin our Slack community for more information: https://www.kosli.com/community/\n",
+			golden:    "Error: The audit trail feature is in beta. You can enable the feature by running the following Kosli CLI command (version 2.3.2 or later):\n$ kosli enable beta\nJoin our Slack community for more information: https://www.kosli.com/community/\n",
 		},
 		// {
 		// 	name: "getting an existing audit trail with --output json works",
