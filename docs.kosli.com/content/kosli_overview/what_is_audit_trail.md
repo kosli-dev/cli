@@ -1,15 +1,15 @@
 ---
 title: 'Kosli Audit trail'
-experimental: true
+beta: true
 weight: 130
 ---
 # Kosli Audit trail
 
 {{< hint warning >}}
-**Kosli Audit trail** is an experimental feature.
-Experimental features provide early access to product functionality. These
+**Kosli Audit trail** is an beta feature.
+Beta features provide early access to product functionality. These
 features may change between releases without warning, or can be removed from a 
-future release. You can enable experimental features by using the `kosli enable experimental` command.
+future release. You can enable beta features by using the `kosli enable beta` command.
 {{< /hint >}}
 
 An audit trail is a system for automating collecting documentation for each step of a business process.
