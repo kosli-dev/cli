@@ -29,12 +29,12 @@ func (suite *AssertPRGithubCommandTestSuite) SetupTest() {
 
 func (suite *AssertPRGithubCommandTestSuite) TestAssertPRGithubCmd() {
 	tests := []cmdTestCase{
-		// {
-		// 	name: "assert Github PR evidence passes when commit has a PR in github",
-		// 	cmd: `assert pullrequest github --github-org kosli-dev --repository cli
-		// 	--commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
-		// 	golden: "found [1] pull request(s) in Github for commit: 73d7fee2f31ade8e1a9c456c324255212c30c2a6\n",
-		// },
+		{
+			name: "assert Github PR evidence passes when commit has a PR in github",
+			cmd: `assert pullrequest github --github-org kosli-dev --repository cli
+			--commit ` + testHelpers.GithubCommitWithPR() + suite.defaultKosliArguments,
+			golden: fmt.Sprintf("found [1] pull request(s) in Github for commit: %s\n", testHelpers.GithubCommitWithPR()),
+		},
 		{
 			wantError: true,
 			name:      "assert Github PR evidence fails when commit has no PRs in github",

@@ -16,6 +16,7 @@ type ArtifactEvidencePRGithubCommandTestSuite struct {
 	defaultKosliArguments string
 	artifactFingerprint   string
 	flowName              string
+	commitWithPR          string
 }
 
 func (suite *ArtifactEvidencePRGithubCommandTestSuite) SetupTest() {
@@ -29,6 +30,7 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
+	suite.commitWithPR = testHelpers.GithubCommitWithPR()
 
 	CreateFlow(suite.flowName, suite.T())
 	CreateArtifact(suite.flowName, suite.artifactFingerprint, "foobar", suite.T())
@@ -36,41 +38,41 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) SetupTest() {
 
 func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGithubCmd() {
 	tests := []cmdTestCase{
-		// {
-		// 	name: "report Github PR evidence works with new flags (fingerprint, name ...)",
-		// 	cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
-		// 	          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
-		// 	golden: "github pull request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
-		// },
-		// {
-		// 	wantError: true,
-		// 	name:      "report Github PR evidence fails when --org is missing",
-		// 	cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
-		// 	          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6 --api-token foo --host bar`,
-		// 	golden: "Error: --org is not set\n" +
-		// 		"Usage: kosli report evidence artifact pullrequest github [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
-		// },
-		// {
-		// 	wantError: true,
-		// 	name:      "report Github PR evidence fails when --name is missing",
-		// 	cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + `
-		// 	          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
-		// 	golden: "Error: required flag(s) \"name\" not set\n",
-		// },
-		// {
-		// 	wantError: true,
-		// 	name:      "report Github PR evidence fails when --github-org is missing",
-		// 	cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
-		// 	          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
-		// 	golden: "Error: required flag(s) \"github-org\" not set\n",
-		// },
-		// {
-		// 	wantError: true,
-		// 	name:      "report Github PR evidence fails when --repository is missing",
-		// 	cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
-		// 	          --build-url example.com --github-org kosli-dev --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
-		// 	golden: "Error: required flag(s) \"repository\" not set\n",
-		// },
+		{
+			name: "report Github PR evidence works with new flags (fingerprint, name ...)",
+			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
+			          --build-url example.com --github-org kosli-dev --repository cli --commit ` + suite.commitWithPR + suite.defaultKosliArguments,
+			golden: "github pull request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
+		},
+		{
+			wantError: true,
+			name:      "report Github PR evidence fails when --org is missing",
+			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
+			          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6 --api-token foo --host bar`,
+			golden: "Error: --org is not set\n" +
+				"Usage: kosli report evidence artifact pullrequest github [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+		},
+		{
+			wantError: true,
+			name:      "report Github PR evidence fails when --name is missing",
+			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + `
+			          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
+			golden: "Error: required flag(s) \"name\" not set\n",
+		},
+		{
+			wantError: true,
+			name:      "report Github PR evidence fails when --github-org is missing",
+			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
+			          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
+			golden: "Error: required flag(s) \"github-org\" not set\n",
+		},
+		{
+			wantError: true,
+			name:      "report Github PR evidence fails when --repository is missing",
+			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
+			          --build-url example.com --github-org kosli-dev --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
+			golden: "Error: required flag(s) \"repository\" not set\n",
+		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --commit is missing",
@@ -78,14 +80,14 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 			          --build-url example.com --github-org kosli-dev --repository cli` + suite.defaultKosliArguments,
 			golden: "Error: required flag(s) \"commit\" not set\n",
 		},
-		// {
-		// 	wantError: true,
-		// 	name:      "report Github PR evidence fails when neither --fingerprint nor --artifact-type are set",
-		// 	cmd: `report evidence artifact pullrequest github artifactNameArg --name gh-pr --flow ` + suite.flowName + `
-		// 			  --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
-		// 	golden: "Error: either --artifact-type or --fingerprint must be specified\n" +
-		// 		"Usage: kosli report evidence artifact pullrequest github [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
-		// },
+		{
+			wantError: true,
+			name:      "report Github PR evidence fails when neither --fingerprint nor --artifact-type are set",
+			cmd: `report evidence artifact pullrequest github artifactNameArg --name gh-pr --flow ` + suite.flowName + `
+					  --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
+			golden: "Error: either --artifact-type or --fingerprint must be specified\n" +
+				"Usage: kosli report evidence artifact pullrequest github [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when commit does not exist",
@@ -108,28 +110,28 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 			golden: "no pull requests found for given commit: 9bca2c44eaf221a79fb18a1a11bdf2997adaf870\n" +
 				"github pull request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
-		// {
-		// 	wantError: true,
-		// 	name:      "report Github PR evidence fails when the artifact does not exist in the server",
-		// 	cmd: `report evidence artifact pullrequest github testdata/file1 --artifact-type file --name gh-pr --flow ` + suite.flowName + `
-		// 	          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
-		// 	golden: "Error: Artifact with fingerprint '7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'github-pr' belonging to organization 'docs-cmd-test-user'. \n",
-		// },
-		// {
-		// 	wantError: true,
-		// 	name:      "report Github PR evidence fails when --artifact-type is unsupported",
-		// 	cmd: `report evidence artifact pullrequest github testdata/file1 --artifact-type unsupported --name gh-pr --flow ` + suite.flowName + `
-		// 	          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
-		// 	golden: "Error: unsupported is not a supported artifact type\n",
-		// },
-		// {
-		// 	wantError: true,
-		// 	name:      "report Github PR evidence fails when --user-data is not found",
-		// 	cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
-		// 			  --user-data non-existing.json
-		// 	          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
-		// 	golden: "Error: open non-existing.json: no such file or directory\n",
-		// },
+		{
+			wantError: true,
+			name:      "report Github PR evidence fails when the artifact does not exist in the server",
+			cmd: `report evidence artifact pullrequest github testdata/file1 --artifact-type file --name gh-pr --flow ` + suite.flowName + `
+			          --build-url example.com --github-org kosli-dev --repository cli --commit ` + suite.commitWithPR + suite.defaultKosliArguments,
+			golden: "Error: Artifact with fingerprint '7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'github-pr' belonging to organization 'docs-cmd-test-user'. \n",
+		},
+		{
+			wantError: true,
+			name:      "report Github PR evidence fails when --artifact-type is unsupported",
+			cmd: `report evidence artifact pullrequest github testdata/file1 --artifact-type unsupported --name gh-pr --flow ` + suite.flowName + `
+			          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
+			golden: "Error: unsupported is not a supported artifact type\n",
+		},
+		{
+			wantError: true,
+			name:      "report Github PR evidence fails when --user-data is not found",
+			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
+					  --user-data non-existing.json
+			          --build-url example.com --github-org kosli-dev --repository cli --commit ` + suite.commitWithPR + suite.defaultKosliArguments,
+			golden: "Error: open non-existing.json: no such file or directory\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

@@ -119,15 +119,17 @@ func (o *pullRequestCommitOptions) getRetriever() types.PRRetriever {
 func (o *pullRequestCommitOptions) run(args []string) error {
 	url := fmt.Sprintf("%s/api/v2/evidence/%s/commit/pull_request", global.Host, global.Org)
 
+	var err error
+	o.payload.UserData, err = LoadJsonData(o.userDataFilePath)
+	if err != nil {
+		return err
+	}
+
 	pullRequestsEvidence, err := getPullRequestsEvidence(o.getRetriever(), o.payload.CommitSHA, o.assert)
 	if err != nil {
 		return err
 	}
 
-	o.payload.UserData, err = LoadJsonData(o.userDataFilePath)
-	if err != nil {
-		return err
-	}
 	o.payload.PullRequests = pullRequestsEvidence
 	label := ""
 	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
