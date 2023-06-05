@@ -35,7 +35,7 @@
       </a>
     </label>
   {{ else if .Page.Content }}
-    <a href="{{ .Page.Permalink }}" class="{{ if $current }} active{{ end }} {{ if .Page.Params.experimental }}experimental{{end}}">
+    <a href="{{ .Page.Permalink }}" class="{{ if $current }} active{{ end }} {{ if .Page.Params.beta }}beta{{end}}">
       {{- partial "docs/title" .Page -}}
     </a>
   {{ else }}

@@ -319,8 +319,8 @@ func isExperimental(cmd *cobra.Command) bool {
 }
 
 const usageTemplate = `{{- if isExperimental .}}EXPERIMENTAL:
-  {{.CommandPath}} is an experimental feature.
-  Experimental features provide early access to product functionality. These
+  {{.CommandPath}} is an beta feature.
+  Beta features provide early access to product functionality. These
   features may change between releases without warning, or can be removed from a
   future release.
 

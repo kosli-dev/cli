@@ -19,8 +19,8 @@
     padding-left: 1.4rem;
 }
 
-.book-menu a.experimental::after {
-    content: 'experimental';
+.book-menu a.beta::after {
+    content: 'beta';
     background-color: transparent;
     border: 1px solid $orange-100;
     color: $orange-100;
