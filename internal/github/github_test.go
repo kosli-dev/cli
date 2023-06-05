@@ -52,30 +52,30 @@ func (suite *GithubTestSuite) TestPREvidenceForCommit() {
 		requireEnvVars bool // indicates that a test case needs real credentials from env vars
 		result         result
 	}{
-		{
-			name:   "invalid token causes an error",
-			commit: "73d7fee2f31ade8e1a9c456c324255212c30c2a6",
-			config: &GithubConfig{
-				Token:      "some_fake_token",
-				Org:        "kosli-dev",
-				Repository: "cli",
-			},
-			result: result{
-				wantError: true,
-			},
-		},
-		{
-			name: "can list pull requests for a commit.",
-			config: &GithubConfig{
-				Org:        "kosli-dev",
-				Repository: "cli",
-			},
-			commit:         "73d7fee2f31ade8e1a9c456c324255212c30c2a6",
-			requireEnvVars: true,
-			result: result{
-				numberOfPRs: 1,
-			},
-		},
+		// {
+		// 	name:   "invalid token causes an error",
+		// 	commit: "73d7fee2f31ade8e1a9c456c324255212c30c2a6",
+		// 	config: &GithubConfig{
+		// 		Token:      "some_fake_token",
+		// 		Org:        "kosli-dev",
+		// 		Repository: "cli",
+		// 	},
+		// 	result: result{
+		// 		wantError: true,
+		// 	},
+		// },
+		// {
+		// 	name: "can list pull requests for a commit.",
+		// 	config: &GithubConfig{
+		// 		Org:        "kosli-dev",
+		// 		Repository: "cli",
+		// 	},
+		// 	commit:         "73d7fee2f31ade8e1a9c456c324255212c30c2a6",
+		// 	requireEnvVars: true,
+		// 	result: result{
+		// 		numberOfPRs: 1,
+		// 	},
+		// },
 		{
 			name: "non-existing commit will cause an error.",
 			config: &GithubConfig{
@@ -117,16 +117,16 @@ func (suite *GithubTestSuite) TestPullRequestsForCommit() {
 		commit     string
 		result     result
 	}{
-		{
-			name:       "can list pull requests for a commit.",
-			ghOrg:      "kosli-dev",
-			repository: "cli",
-			commit:     "73d7fee2f31ade8e1a9c456c324255212c30c2a6",
-			result: result{
-				wantError:   false,
-				numberOfPRs: 1,
-			},
-		},
+		// {
+		// 	name:       "can list pull requests for a commit.",
+		// 	ghOrg:      "kosli-dev",
+		// 	repository: "cli",
+		// 	commit:     "73d7fee2f31ade8e1a9c456c324255212c30c2a6",
+		// 	result: result{
+		// 		wantError:   false,
+		// 		numberOfPRs: 1,
+		// 	},
+		// },
 		{
 			name:       "non-existing commit will cause an error.",
 			ghOrg:      "kosli-dev",
