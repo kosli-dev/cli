@@ -16,7 +16,7 @@ do
      
         git checkout $version 
         rm docs.kosli.com/content/client_reference/kosli* || true # this is because in some versions, we have some files that were not ignored
-        make cli-docs > /dev/null 2>&1
+        make cli-docs || make docs  > /dev/null 2>&1
 
         mkdir ../tmp-ref/$version
         cp -a docs.kosli.com/content/client_reference/. ../tmp-ref/$version/
