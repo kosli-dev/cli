@@ -1,6 +1,6 @@
 ---
 title: "kosli"
-experimental: false
+beta: false
 ---
 
 # kosli

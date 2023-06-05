@@ -1,6 +1,6 @@
 ---
 title: "kosli log environment"
-experimental: false
+beta: false
 ---
 
 # kosli log environment

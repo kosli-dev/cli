@@ -1,6 +1,6 @@
 ---
 title: "kosli report artifact"
-experimental: false
+beta: false
 ---
 
 # kosli report artifact

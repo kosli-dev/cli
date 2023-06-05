@@ -1,6 +1,6 @@
 ---
 title: "kosli snapshot ecs"
-experimental: false
+beta: false
 ---
 
 # kosli snapshot ecs

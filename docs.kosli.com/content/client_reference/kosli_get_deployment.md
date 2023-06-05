@@ -1,6 +1,6 @@
 ---
 title: "kosli get deployment"
-experimental: false
+beta: false
 ---
 
 # kosli get deployment

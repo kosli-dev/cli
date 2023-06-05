@@ -1,6 +1,6 @@
 ---
 title: "kosli assert snapshot"
-experimental: false
+beta: false
 ---
 
 # kosli assert snapshot

@@ -1,6 +1,6 @@
 ---
 title: "kosli assert pullrequest azure"
-experimental: false
+beta: false
 ---
 
 # kosli assert pullrequest azure

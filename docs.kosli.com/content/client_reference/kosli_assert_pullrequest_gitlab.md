@@ -1,6 +1,6 @@
 ---
 title: "kosli assert pullrequest gitlab"
-experimental: false
+beta: false
 ---
 
 # kosli assert pullrequest gitlab

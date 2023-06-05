@@ -1,6 +1,6 @@
 ---
 title: "kosli version"
-experimental: false
+beta: false
 ---
 
 # kosli version

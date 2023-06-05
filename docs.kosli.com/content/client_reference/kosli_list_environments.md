@@ -1,6 +1,6 @@
 ---
 title: "kosli list environments"
-experimental: false
+beta: false
 ---
 
 # kosli list environments

@@ -1,6 +1,6 @@
 ---
 title: "kosli expect deployment"
-experimental: false
+beta: false
 ---
 
 # kosli expect deployment

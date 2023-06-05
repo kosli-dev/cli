@@ -1,6 +1,6 @@
 ---
 title: "kosli get artifact"
-experimental: false
+beta: false
 ---
 
 # kosli get artifact

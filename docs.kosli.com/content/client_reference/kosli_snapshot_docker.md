@@ -1,6 +1,6 @@
 ---
 title: "kosli snapshot docker"
-experimental: false
+beta: false
 ---
 
 # kosli snapshot docker

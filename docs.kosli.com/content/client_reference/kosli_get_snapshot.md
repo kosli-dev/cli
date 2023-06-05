@@ -1,6 +1,6 @@
 ---
 title: "kosli get snapshot"
-experimental: false
+beta: false
 ---
 
 # kosli get snapshot

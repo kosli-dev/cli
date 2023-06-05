@@ -1,6 +1,6 @@
 ---
 title: "kosli list approvals"
-experimental: false
+beta: false
 ---
 
 # kosli list approvals

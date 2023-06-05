@@ -1,6 +1,6 @@
 ---
 title: "kosli assert pullrequest github"
-experimental: false
+beta: false
 ---
 
 # kosli assert pullrequest github

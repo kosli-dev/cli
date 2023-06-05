@@ -1,6 +1,6 @@
 ---
 title: "kosli snapshot server"
-experimental: false
+beta: false
 ---
 
 # kosli snapshot server

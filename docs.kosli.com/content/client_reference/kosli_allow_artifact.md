@@ -1,6 +1,6 @@
 ---
 title: "kosli allow artifact"
-experimental: false
+beta: false
 ---
 
 # kosli allow artifact

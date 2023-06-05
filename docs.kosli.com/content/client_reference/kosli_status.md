@@ -1,6 +1,6 @@
 ---
 title: "kosli status"
-experimental: false
+beta: false
 ---
 
 # kosli status

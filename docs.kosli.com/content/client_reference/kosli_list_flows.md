@@ -1,6 +1,6 @@
 ---
 title: "kosli list flows"
-experimental: false
+beta: false
 ---
 
 # kosli list flows

@@ -1,6 +1,6 @@
 ---
 title: "kosli list deployments"
-experimental: false
+beta: false
 ---
 
 # kosli list deployments

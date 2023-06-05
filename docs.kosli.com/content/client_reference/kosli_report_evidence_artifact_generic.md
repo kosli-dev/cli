@@ -1,6 +1,6 @@
 ---
 title: "kosli report evidence artifact generic"
-experimental: false
+beta: false
 ---
 
 # kosli report evidence artifact generic

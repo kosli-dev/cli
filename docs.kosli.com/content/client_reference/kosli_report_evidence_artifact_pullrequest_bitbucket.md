@@ -1,6 +1,6 @@
 ---
 title: "kosli report evidence artifact pullrequest bitbucket"
-experimental: false
+beta: false
 ---
 
 # kosli report evidence artifact pullrequest bitbucket

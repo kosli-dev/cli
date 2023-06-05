@@ -1,6 +1,6 @@
 ---
 title: "kosli snapshot s3"
-experimental: false
+beta: false
 ---
 
 # kosli snapshot s3

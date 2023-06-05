@@ -1,23 +1,24 @@
 ---
-title: "kosli get flow"
+title: "kosli disable beta"
 beta: false
 ---
 
-# kosli get flow
+# kosli disable beta
 
 ## Synopsis
 
-Get the metadata of a specific flow.
+Disable beta features for an organization.
+Currently, the only beta feature is audit-trails.
+
 
 ```shell
-kosli get flow FLOW-NAME [flags]
+kosli disable beta [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|    -h, --help  |  help for flow  |
-|    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
+|    -h, --help  |  help for beta  |
 
 
 ## Options inherited from parent commands

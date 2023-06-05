@@ -1,6 +1,6 @@
 ---
 title: "kosli search"
-experimental: false
+beta: false
 ---
 
 # kosli search

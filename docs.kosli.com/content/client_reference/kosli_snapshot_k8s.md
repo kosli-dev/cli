@@ -1,6 +1,6 @@
 ---
 title: "kosli snapshot k8s"
-experimental: false
+beta: false
 ---
 
 # kosli snapshot k8s

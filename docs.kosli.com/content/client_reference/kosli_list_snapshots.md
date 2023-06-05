@@ -1,6 +1,6 @@
 ---
 title: "kosli list snapshots"
-experimental: false
+beta: false
 ---
 
 # kosli list snapshots

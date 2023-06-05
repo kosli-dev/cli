@@ -1,6 +1,6 @@
 ---
 title: "kosli create flow"
-experimental: false
+beta: false
 ---
 
 # kosli create flow

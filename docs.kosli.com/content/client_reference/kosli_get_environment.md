@@ -1,6 +1,6 @@
 ---
 title: "kosli get environment"
-experimental: false
+beta: false
 ---
 
 # kosli get environment

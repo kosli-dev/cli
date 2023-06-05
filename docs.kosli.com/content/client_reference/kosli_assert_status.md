@@ -1,6 +1,6 @@
 ---
 title: "kosli assert status"
-experimental: false
+beta: false
 ---
 
 # kosli assert status

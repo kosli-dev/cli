@@ -1,6 +1,6 @@
 ---
 title: "kosli diff snapshots"
-experimental: false
+beta: false
 ---
 
 # kosli diff snapshots

@@ -1,13 +1,13 @@
 ---
 title: "kosli report evidence workflow"
-experimental: true
+beta: true
 ---
 
 # kosli report evidence workflow
 
-{{< hint warning >}}**kosli report evidence workflow** is an experimental feature. 
-Experimental features provide early access to product functionality. These features may change between releases without warning, or can be removed from a future release.
-You can enable experimental features by using the **kosli enable experimental** command.{{< /hint >}}
+{{< hint warning >}}**kosli report evidence workflow** is an beta feature. 
+Beta features provide early access to product functionality. These features may change between releases without warning, or can be removed from a future release.
+You can enable beta features by using the `kosli enable beta` command.{{< /hint >}}
 ## Synopsis
 
 Report evidence for a workflow in Kosli.

@@ -1,6 +1,6 @@
 ---
 title: "kosli fingerprint"
-experimental: false
+beta: false
 ---
 
 # kosli fingerprint

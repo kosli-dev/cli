@@ -1,6 +1,6 @@
 ---
 title: "kosli assert artifact"
-experimental: false
+beta: false
 ---
 
 # kosli assert artifact

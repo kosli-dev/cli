@@ -1,6 +1,6 @@
 ---
 title: "kosli snapshot lambda"
-experimental: false
+beta: false
 ---
 
 # kosli snapshot lambda

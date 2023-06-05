@@ -1,13 +1,13 @@
 ---
 title: "kosli get workflow"
-experimental: true
+beta: true
 ---
 
 # kosli get workflow
 
-{{< hint warning >}}**kosli get workflow** is an experimental feature. 
-Experimental features provide early access to product functionality. These features may change between releases without warning, or can be removed from a future release.
-You can enable experimental features by using the **kosli enable experimental** command.{{< /hint >}}
+{{< hint warning >}}**kosli get workflow** is an beta feature. 
+Beta features provide early access to product functionality. These features may change between releases without warning, or can be removed from a future release.
+You can enable beta features by using the `kosli enable beta` command.{{< /hint >}}
 ## Synopsis
 
 Get a specific workflow for an organization

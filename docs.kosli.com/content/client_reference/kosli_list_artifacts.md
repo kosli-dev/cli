@@ -1,6 +1,6 @@
 ---
 title: "kosli list artifacts"
-experimental: false
+beta: false
 ---
 
 # kosli list artifacts
