@@ -86,7 +86,7 @@ func goldenPath(filename string) string {
 	return filepath.Join("testdata", filename)
 }
 
-func compareTwoFile(actualFilename, expectedFilename string) error {
+func compareTwoFiles(actualFilename, expectedFilename string) error {
 	actual, err := os.ReadFile(actualFilename)
 	if err != nil {
 		return errors.Wrapf(err, "unable to read golden file %s", actualFilename)
@@ -115,7 +115,7 @@ func compareFileBytes(actual, expected []byte) error {
 	actual = normalize(actual)
 	expected = normalize(expected)
 
-	if !bytes.Equal(expected, actual) {
+	if !bytes.Equal(actual, expected) {
 		return errors.Errorf("actual does not match expected")
 	}
 	return nil

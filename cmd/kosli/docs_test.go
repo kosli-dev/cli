@@ -19,19 +19,21 @@ type DocsCommandTestSuite struct {
 func (suite *DocsCommandTestSuite) TestDocsCmd() {
 	global = &GlobalOpts{}
 	tempDirName, err := os.MkdirTemp("", "generatedDocs")
-	if err != nil {
-		suite.T().Fail()
-	}
+	require.NoError(suite.T(), err)
 	defer os.RemoveAll(tempDirName)
+
 	o := &docsOptions{
 		dest:            tempDirName,
 		topCmd:          newReportArtifactCmd(os.Stdout),
 		generateHeaders: true,
 	}
-	o.run()
+	err = o.run()
+	require.NoError(suite.T(), err)
+
 	actualFile := filepath.Join(tempDirName, "artifact.md")
 	require.FileExists(suite.T(), actualFile)
-	compareTwoFile(actualFile, goldenPath("output/docs/artifact.md"))
+	err = compareTwoFiles(actualFile, goldenPath("output/docs/artifact.md"))
+	require.NoError(suite.T(), err)
 }
 
 // In order for 'go test' to run this suite, we need to create

@@ -37,22 +37,22 @@ artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 
 # Report to a Kosli flow that a file type artifact has been created
 kosli report artifact FILE.tgz \
-        --api-token yourApiToken \
-        --artifact-type file \
-        --build-url https://exampleci.com \
-        --commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
-        --git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
-        --org yourOrgName \
-        --flow yourFlowName 
+	--api-token yourApiToken \
+	--artifact-type file \
+	--build-url https://exampleci.com \
+	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
+	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
+	--org yourOrgName \
+	--flow yourFlowName 
 
 # Report to a Kosli flow that an artifact with a provided fingerprint (sha256) has been created
 kosli report artifact ANOTHER_FILE.txt \
-        --api-token yourApiToken \
-        --build-url https://exampleci.com \
-        --commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
-        --git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
-        --org yourOrgName \
-        --flow yourFlowName \
-        --fingerprint yourArtifactFingerprint 
+	--api-token yourApiToken \
+	--build-url https://exampleci.com \
+	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
+	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
+	--org yourOrgName \
+	--flow yourFlowName \
+	--fingerprint yourArtifactFingerprint 
 
 ```
