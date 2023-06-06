@@ -220,7 +220,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		newEnableCmd(out),
 	)
 
-	cobra.AddTemplateFunc("isExperimental", isBeta)
+	cobra.AddTemplateFunc("isBeta", isBeta)
 	cmd.SetUsageTemplate(usageTemplate)
 
 	return cmd, nil
@@ -318,7 +318,7 @@ func isBeta(cmd *cobra.Command) bool {
 	return beta
 }
 
-const usageTemplate = `{{- if isBeta .}}EXPERIMENTAL:
+const usageTemplate = `{{- if isBeta .}}Beta Feature:
   {{.CommandPath}} is a beta feature.
   Beta features provide early access to product functionality. These
   features may change between releases without warning, or can be removed from a
