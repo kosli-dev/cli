@@ -5,7 +5,7 @@ beta: true
 
 # kosli report workflow
 
-{{< hint warning >}}**kosli report workflow** is an beta feature. 
+{{< hint warning >}}**kosli report workflow** is a beta feature. 
 Beta features provide early access to product functionality. These features may change between releases without warning, or can be removed from a future release.
 You can enable beta features by using the `kosli enable beta` command.{{< /hint >}}
 ## Synopsis

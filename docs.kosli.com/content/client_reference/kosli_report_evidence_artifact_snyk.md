@@ -8,7 +8,7 @@ beta: false
 ## Synopsis
 
 Report Snyk vulnerability scan evidence for an artifact in a Kosli flow.  
-The --scan-results .json file is parsed. If no vulnerabilities are detected the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
+The --scan-results .json file is parsed and uploaded to Kosli's evidence vault. If no vulnerabilities are detected the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell

@@ -5,7 +5,7 @@ beta: true
 
 # kosli list workflows
 
-{{< hint warning >}}**kosli list workflows** is an beta feature. 
+{{< hint warning >}}**kosli list workflows** is a beta feature. 
 Beta features provide early access to product functionality. These features may change between releases without warning, or can be removed from a future release.
 You can enable beta features by using the `kosli enable beta` command.{{< /hint >}}
 ## Synopsis
