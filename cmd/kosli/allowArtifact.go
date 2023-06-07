@@ -31,7 +31,7 @@ func newAllowArtifactCmd(out io.Writer) *cobra.Command {
 	o := new(allowArtifactOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "artifact {IMAGE-NAME | FILE-PATH | DIR-PATH}",
+		Use:   "artifact [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Short: allowArtifactShortDesc,
 		Long:  allowArtifactLongDesc,
 		Args:  cobra.ExactArgs(1),
@@ -46,7 +46,6 @@ func newAllowArtifactCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
-
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)

@@ -66,7 +66,7 @@ func (suite *AllowArtifactCommandTestSuite) TestAllowArtifactCmd() {
 			wantError: true,
 			name:      "allowing an artifact fails if --fingerprint and --artifact-type are missing",
 			cmd:       fmt.Sprintf(`allow artifact %s --environment %s --reason because %s`, suite.artifactName, suite.envName, suite.defaultKosliArguments),
-			golden:    "Error: either --artifact-type or --fingerprint must be specified\nUsage: kosli allow artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]\n",
+			golden:    "Error: either --artifact-type or --fingerprint must be specified\nUsage: kosli allow artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 	}
 
