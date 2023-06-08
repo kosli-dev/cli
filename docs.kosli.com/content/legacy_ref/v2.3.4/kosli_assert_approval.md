@@ -1,17 +1,18 @@
 ---
-title: "kosli allow artifact"
+title: "kosli assert approval"
 beta: false
 ---
 
-# kosli allow artifact
+# kosli assert approval
 
 ## Synopsis
 
-Add an artifact to an environment's allowlist.
+Assert an artifact in Kosli has been approved for deployment.
+Exits with non-zero code if the artifact has not been approved.
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell
-kosli allow artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli assert approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ## Flags
@@ -19,10 +20,9 @@ kosli allow artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 | :--- | :--- |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|    -e, --environment string  |  The environment name for which the artifact is allowlisted.  |
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'.  |
-|    -h, --help  |  help for artifact  |
-|        --reason string  |  The reason why this artifact is allowlisted.  |
+|    -f, --flow string  |  The Kosli flow name.  |
+|    -h, --help  |  help for approval  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
@@ -38,4 +38,25 @@ kosli allow artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
+
+## Examples
+
+```shell
+
+# Assert that a file type artifact has been approved
+kosli assert approval FILE.tgz \
+	--api-token yourAPIToken \
+	--artifact-type file \
+	--org yourOrgName \
+	--flow yourFlowName 
+
+
+# Assert that an artifact with a provided fingerprint (sha256) has been approved
+kosli assert approval \
+	--api-token yourAPIToken \
+	--org yourOrgName \
+	--flow yourFlowName \
+	--fingerprint yourArtifactFingerprint
+
+```
 

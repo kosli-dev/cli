@@ -11,7 +11,7 @@ Add an artifact to an environment's allowlist.
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell
-kosli allow artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli allow artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 ```
 
 ## Flags
