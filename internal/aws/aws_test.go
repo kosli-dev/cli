@@ -282,13 +282,23 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			wantErr:        true,
 		},
 		{
-			name: "can get lambda function data from name and version",
+			name: "can get zip package lambda function data from name and version",
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
 			functionName:    "reporter-kosli-prod",
 			functionVersion: "317",
 			wantFingerprint: "e6c3a09e822a8eac32f49a9a238bb62682083a23217b76a4c9c12188096d1b83",
+			requireEnvVars:  true,
+		},
+		{
+			name: "can get image package lambda function data from name and version",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			functionName:    "lambda-docker-test",
+			functionVersion: "1",
+			wantFingerprint: "e3e2e565788902e24d1b17c0c6bdb7dfc1cdfe6193b762482bbe982bd83a9876",
 			requireEnvVars:  true,
 		},
 	} {

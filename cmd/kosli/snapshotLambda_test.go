@@ -15,7 +15,8 @@ type SnapshotLambdaTestSuite struct {
 	suite.Suite
 	defaultKosliArguments string
 	envName               string
-	functionName          string
+	zipFunctionName       string
+	imageFunctionName     string
 }
 
 type snapshotLambdaTestConfig struct {
@@ -24,7 +25,8 @@ type snapshotLambdaTestConfig struct {
 
 func (suite *SnapshotLambdaTestSuite) SetupTest() {
 	suite.envName = "snapshot-lambda-env"
-	suite.functionName = "reporter-kosli-prod"
+	suite.zipFunctionName = "reporter-kosli-prod"
+	suite.imageFunctionName = "lambda-docker-test"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Org:      "docs-cmd-test-user",
@@ -38,20 +40,28 @@ func (suite *SnapshotLambdaTestSuite) SetupTest() {
 func (suite *SnapshotLambdaTestSuite) TestSnapshotLambdaCmd() {
 	tests := []cmdTestCase{
 		{
-			name: "snapshot lambda works with --function-name",
-			cmd:  fmt.Sprintf(`snapshot lambda %s %s --function-name %s`, suite.envName, suite.defaultKosliArguments, suite.functionName),
+			name: "snapshot lambda works with --function-name for Zip package type",
+			cmd:  fmt.Sprintf(`snapshot lambda %s %s --function-name %s`, suite.envName, suite.defaultKosliArguments, suite.zipFunctionName),
 			additionalConfig: snapshotLambdaTestConfig{
 				requireAuthToBeSet: true,
 			},
-			golden: suite.functionName + " lambda function was reported to environment " + suite.envName + "\n",
+			golden: suite.zipFunctionName + " lambda function was reported to environment " + suite.envName + "\n",
+		},
+		{
+			name: "snapshot lambda works with --function-name for Image package type",
+			cmd:  fmt.Sprintf(`snapshot lambda %s %s --function-name %s`, suite.envName, suite.defaultKosliArguments, suite.imageFunctionName),
+			additionalConfig: snapshotLambdaTestConfig{
+				requireAuthToBeSet: true,
+			},
+			golden: suite.imageFunctionName + " lambda function was reported to environment " + suite.envName + "\n",
 		},
 		{
 			name: "snapshot lambda works with --function-name and --function-version",
-			cmd:  fmt.Sprintf(`snapshot lambda %s %s --function-name %s --function-version 317`, suite.envName, suite.defaultKosliArguments, suite.functionName),
+			cmd:  fmt.Sprintf(`snapshot lambda %s %s --function-name %s --function-version 317`, suite.envName, suite.defaultKosliArguments, suite.zipFunctionName),
 			additionalConfig: snapshotLambdaTestConfig{
 				requireAuthToBeSet: true,
 			},
-			golden: suite.functionName + " lambda function was reported to environment " + suite.envName + "\n",
+			golden: suite.zipFunctionName + " lambda function was reported to environment " + suite.envName + "\n",
 		},
 		{
 			wantError: true,
@@ -71,7 +81,7 @@ func (suite *SnapshotLambdaTestSuite) TestSnapshotLambdaCmd() {
 		{
 			wantError: true,
 			name:      "snapshot lambda fails two args are set",
-			cmd:       fmt.Sprintf(`snapshot lambda %s xxx %s --function-name %s`, suite.envName, suite.defaultKosliArguments, suite.functionName),
+			cmd:       fmt.Sprintf(`snapshot lambda %s xxx %s --function-name %s`, suite.envName, suite.defaultKosliArguments, suite.zipFunctionName),
 			golden:    "Error: accepts 1 arg(s), received 2\n",
 		},
 	}

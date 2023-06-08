@@ -147,9 +147,13 @@ func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionName, functionVe
 		return lambdaData, err
 	}
 
-	sha256hex, err := decodeLambdaFingerprint(*function.CodeSha256)
-	if err != nil {
-		return lambdaData, err
+	sha256hex := *function.CodeSha256
+
+	if string(function.PackageType) == "Zip" {
+		sha256hex, err = decodeLambdaFingerprint(sha256hex)
+		if err != nil {
+			return lambdaData, err
+		}
 	}
 
 	lambdaData = append(lambdaData, &LambdaData{Digests: map[string]string{functionName: sha256hex}, LastModifiedTimestamp: lastModifiedTimestamp.Unix()})
