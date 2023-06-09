@@ -27,7 +27,8 @@ kosli snapshot lambda ENVIRONMENT-NAME [flags]
 |        --aws-region string  |  The AWS region.  |
 |        --aws-secret-key string  |  The AWS secret access key.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|        --function-names strings  |  The comma-separated list of AWS Lambda function names to be reported.  |
+|        --function-name string  |  The name of the AWS Lambda function.  |
+|        --function-version string  |  [optional] The version of the AWS Lambda function.  |
 |    -h, --help  |  help for lambda  |
 
 
@@ -46,29 +47,20 @@ kosli snapshot lambda ENVIRONMENT-NAME [flags]
 
 ```shell
 
-# report what is running in the latest version of an AWS Lambda function (AWS auth provided in env variables):
+# report what is running in the latest version AWS Lambda function (AWS auth provided in env variables):
 export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
 kosli snapshot lambda yourEnvironmentName \
-	--function-names yourFunctionName \
+	--function-name yourFunctionName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report what is running in the latest version of multiple AWS Lambda functions (AWS auth provided in env variables):
-export AWS_REGION=yourAWSRegion
-export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
-export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
-
+# report what is running in a specific version of an AWS Lambda function (AWS auth provided in flags):
 kosli snapshot lambda yourEnvironmentName \
-	--function-names yourFirstFunctionName,yourSecondFunctionName \
-	--api-token yourAPIToken \
-	--org yourOrgName
-
-# report what is running in the latest version of an AWS Lambda function (AWS auth provided in flags):
-kosli snapshot lambda yourEnvironmentName \
-	--function-names yourFunctionName \
+	--function-name yourFunctionName \
+	--function-version yourFunctionVersion \
 	--aws-key-id yourAWSAccessKeyID \
 	--aws-secret-key yourAWSSecretAccessKey \
 	--aws-region yourAWSRegion \
