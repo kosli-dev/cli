@@ -123,19 +123,34 @@ func (staticCreds *AWSStaticCreds) NewECSClient() (*ecs.Client, error) {
 }
 
 // GetLambdaPackageData returns a digest and metadata of a Lambda function package
-func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionName, functionVersion string) ([]*LambdaData, error) {
+func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionNames []string) ([]*LambdaData, error) {
 	lambdaData := []*LambdaData{}
 	client, err := staticCreds.NewLambdaClient()
 	if err != nil {
 		return lambdaData, err
 	}
 
+	for _, functionName := range functionNames {
+		oneLambdaData, err := processOneLambdaFunc(client, functionName)
+		if err != nil {
+			return lambdaData, err
+		}
+		lambdaData = append(lambdaData, oneLambdaData)
+	}
+
+	// lambdaData = append(lambdaData, &LambdaData{Digests: map[string]string{functionName: sha256hex}, LastModifiedTimestamp: lastModifiedTimestamp.Unix()})
+
+	return lambdaData, nil
+}
+
+func processOneLambdaFunc(client *lambda.Client, functionName string) (*LambdaData, error) {
+	lambdaData := &LambdaData{}
 	params := &lambda.GetFunctionConfigurationInput{
 		FunctionName: aws.String(functionName),
 	}
-	if functionVersion != "" {
-		params.Qualifier = aws.String(functionVersion)
-	}
+	// if functionVersion != "" {
+	// 	params.Qualifier = aws.String(functionVersion)
+	// }
 
 	function, err := client.GetFunctionConfiguration(context.TODO(), params)
 	if err != nil {
@@ -146,18 +161,16 @@ func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionName, functionVe
 	if err != nil {
 		return lambdaData, err
 	}
+	lambdaData.LastModifiedTimestamp = lastModifiedTimestamp.Unix()
 
-	sha256hex := *function.CodeSha256
+	lambdaData.Digests = map[string]string{functionName: *function.CodeSha256}
 
 	if string(function.PackageType) == "Zip" {
-		sha256hex, err = decodeLambdaFingerprint(sha256hex)
+		lambdaData.Digests[functionName], err = decodeLambdaFingerprint(*function.CodeSha256)
 		if err != nil {
 			return lambdaData, err
 		}
 	}
-
-	lambdaData = append(lambdaData, &LambdaData{Digests: map[string]string{functionName: sha256hex}, LastModifiedTimestamp: lastModifiedTimestamp.Unix()})
-
 	return lambdaData, nil
 }
 

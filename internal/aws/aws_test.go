@@ -246,13 +246,12 @@ func (suite *AWSTestSuite) TestAWSClients() {
 
 func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 	for _, t := range []struct {
-		name            string
-		requireEnvVars  bool // indicates that a test case needs real credentials from env vars
-		creds           *AWSStaticCreds
-		functionName    string
-		functionVersion string
-		wantFingerprint string
-		wantErr         bool
+		name             string
+		requireEnvVars   bool // indicates that a test case needs real credentials from env vars
+		creds            *AWSStaticCreds
+		functionNames    []string
+		wantFingerprints []string
+		wantErr          bool
 	}{
 		{
 			name: "invalid credentials causes an error",
@@ -261,58 +260,68 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 				AccessKeyID:     "ssss",
 				SecretAccessKey: "ssss",
 			},
-			functionName: "reporter-kosli-prod",
-			wantErr:      true,
-		},
-		{
-			name: "can get lambda function data from name alone",
-			creds: &AWSStaticCreds{
-				Region: "eu-central-1",
-			},
-			functionName:   "reporter-kosli-prod",
-			requireEnvVars: true,
+			functionNames: []string{"ewelina-test"},
+			wantErr:       true,
 		},
 		{
 			name: "providing the wrong region causes a failure",
 			creds: &AWSStaticCreds{
 				Region: "ap-south-1",
 			},
-			functionName:   "reporter-kosli-prod",
+			functionNames:  []string{"ewelina-test"},
 			requireEnvVars: true,
 			wantErr:        true,
 		},
 		{
-			name: "can get zip package lambda function data from name and version",
+			name: "can get zip package lambda function data from name",
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			functionName:    "reporter-kosli-prod",
-			functionVersion: "317",
-			wantFingerprint: "e6c3a09e822a8eac32f49a9a238bb62682083a23217b76a4c9c12188096d1b83",
-			requireEnvVars:  true,
+			functionNames:    []string{"ewelina-test"},
+			wantFingerprints: []string{"61db6a4ac396a7af4c48bc927c9d02e5a093ddc2a4c51b50d2194be436452592"},
+			requireEnvVars:   true,
 		},
 		{
-			name: "can get image package lambda function data from name and version",
+			name: "can get image package lambda function data from name",
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			functionName:    "lambda-docker-test",
-			functionVersion: "1",
-			wantFingerprint: "e3e2e565788902e24d1b17c0c6bdb7dfc1cdfe6193b762482bbe982bd83a9876",
-			requireEnvVars:  true,
+			functionNames:    []string{"lambda-docker-test"},
+			wantFingerprints: []string{"e3e2e565788902e24d1b17c0c6bdb7dfc1cdfe6193b762482bbe982bd83a9876"},
+			requireEnvVars:   true,
+		},
+		{
+			name: "can get a list of lambda functions data from names",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			functionNames: []string{"lambda-docker-test", "ewelina-test"},
+			wantFingerprints: []string{"e3e2e565788902e24d1b17c0c6bdb7dfc1cdfe6193b762482bbe982bd83a9876",
+				"61db6a4ac396a7af4c48bc927c9d02e5a093ddc2a4c51b50d2194be436452592"},
+			requireEnvVars: true,
 		},
 	} {
 		suite.Run(t.name, func() {
 			skipOrSetCreds(suite.T(), t.requireEnvVars, t.creds)
-			data, err := t.creds.GetLambdaPackageData(t.functionName, t.functionVersion)
+			data, err := t.creds.GetLambdaPackageData(t.functionNames)
 			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetLambdaPackageData() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
-				if t.wantFingerprint == "" {
-					require.Contains(suite.T(), data[0].Digests, t.functionName)
-				} else {
-					require.Equal(suite.T(), t.wantFingerprint, data[0].Digests[t.functionName])
+				matchFound := false
+			loop1:
+				for index, name := range t.functionNames {
+					for _, item := range data {
+						if fingerprint, ok := item.Digests[name]; ok {
+							if t.wantFingerprints[index] == fingerprint {
+								matchFound = true
+								break loop1
+							} else {
+								suite.T().Logf("fingerprint did not match: GOT %s -- WANT %s", fingerprint, t.wantFingerprints[index])
+							}
+						}
+					}
 				}
+				require.True(suite.T(), matchFound)
 			}
 		})
 	}

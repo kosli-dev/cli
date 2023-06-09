@@ -114,6 +114,7 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 	namespaceFlag           = "[conditional] The comma separated list of namespaces regex patterns to report artifacts info from. Can't be used together with --exclude-namespace."
 	excludeNamespaceFlag    = "[conditional] The comma separated list of namespaces regex patterns NOT to report artifacts info from. Can't be used together with --namespace."
 	functionNameFlag        = "The name of the AWS Lambda function."
+	functionNamesFlag       = "The comma-separated list of AWS Lambda function names to be reported."
 	functionVersionFlag     = "[optional] The version of the AWS Lambda function."
 	awsKeyIdFlag            = "The AWS access key ID."
 	awsSecretKeyFlag        = "The AWS secret access key."

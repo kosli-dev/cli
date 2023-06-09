@@ -140,6 +140,17 @@ func RequireFlags(cmd *cobra.Command, flagNames []string) error {
 	return nil
 }
 
+// DeprecateFlags declares a list of flags as deprecated for a given command
+func DeprecateFlags(cmd *cobra.Command, flags map[string]string) error {
+	for name, message := range flags {
+		err := cmd.Flags().MarkDeprecated(name, message)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // MuXRequiredFlags returns an error if more than one or none (if atLeastOne is true) of
 // mutually-exclusive required flags are set
 func MuXRequiredFlags(cmd *cobra.Command, flagNames []string, atLeastOne bool) error {

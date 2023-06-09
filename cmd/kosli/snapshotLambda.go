@@ -15,20 +15,29 @@ const snapshotLambdaShortDesc = `Report a snapshot of the artifact deployed in a
 const snapshotLambdaLongDesc = snapshotLambdaShortDesc + awsAuthDesc
 
 const snapshotLambdaExample = `
-# report what is running in the latest version AWS Lambda function (AWS auth provided in env variables):
+# report what is running in the latest version of an AWS Lambda function (AWS auth provided in env variables):
 export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
 kosli snapshot lambda yourEnvironmentName \
-	--function-name yourFunctionName \
+	--function-names yourFunctionName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report what is running in a specific version of an AWS Lambda function (AWS auth provided in flags):
+# report what is running in the latest version of multiple AWS Lambda functions (AWS auth provided in env variables):
+export AWS_REGION=yourAWSRegion
+export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
+export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
+
 kosli snapshot lambda yourEnvironmentName \
-	--function-name yourFunctionName \
-	--function-version yourFunctionVersion \
+	--function-names yourFirstFunctionName,yourSecondFunctionName \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# report what is running in the latest version of an AWS Lambda function (AWS auth provided in flags):
+kosli snapshot lambda yourEnvironmentName \
+	--function-names yourFunctionName \
 	--aws-key-id yourAWSAccessKeyID \
 	--aws-secret-key yourAWSSecretAccessKey \
 	--aws-region yourAWSRegion \
@@ -37,7 +46,7 @@ kosli snapshot lambda yourEnvironmentName \
 `
 
 type snapshotLambdaOptions struct {
-	functionName    string
+	functionNames   []string
 	functionVersion string
 	awsStaticCreds  *aws.AWSStaticCreds
 }
@@ -57,6 +66,11 @@ func newSnapshotLambdaCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
+			err = MuXRequiredFlags(cmd, []string{"function-name", "function-names"}, true)
+			if err != nil {
+				return err
+			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -64,14 +78,18 @@ func newSnapshotLambdaCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&o.functionName, "function-name", "", functionNameFlag)
+	cmd.Flags().StringSliceVar(&o.functionNames, "function-name", []string{}, functionNameFlag)
+	cmd.Flags().StringSliceVar(&o.functionNames, "function-names", []string{}, functionNamesFlag)
 	cmd.Flags().StringVar(&o.functionVersion, "function-version", "", functionVersionFlag)
 	addAWSAuthFlags(cmd, o.awsStaticCreds)
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"function-name"})
+	err := DeprecateFlags(cmd, map[string]string{
+		"function-name":    "use --function-names instead",
+		"function-version": "--function-version is no longer supported. It will be removed in a future release.",
+	})
 	if err != nil {
-		logger.Error("failed to configure required flags: %v", err)
+		logger.Error("failed to configure deprecated flags: %v", err)
 	}
 
 	return cmd
@@ -81,7 +99,7 @@ func (o *snapshotLambdaOptions) run(args []string) error {
 	envName := args[0]
 
 	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/lambda", global.Host, global.Org, envName)
-	lambdaData, err := o.awsStaticCreds.GetLambdaPackageData(o.functionName, o.functionVersion)
+	lambdaData, err := o.awsStaticCreds.GetLambdaPackageData(o.functionNames)
 	if err != nil {
 		return err
 	}
@@ -99,7 +117,7 @@ func (o *snapshotLambdaOptions) run(args []string) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("%s lambda function was reported to environment %s", o.functionName, envName)
+		logger.Info("%s lambda function was reported to environment %s", o.functionNames, envName)
 	}
 	return err
 }
