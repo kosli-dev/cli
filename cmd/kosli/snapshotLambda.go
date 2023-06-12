@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const snapshotLambdaShortDesc = `Report a snapshot of the artifact deployed in an AWS Lambda and its digest to Kosli.`
+const snapshotLambdaShortDesc = `Report a snapshot of artifacts deployed as one or more AWS Lambda functions and their digests to Kosli.`
 
 const snapshotLambdaLongDesc = snapshotLambdaShortDesc + awsAuthDesc
 
