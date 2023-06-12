@@ -17,18 +17,18 @@ jobs:
 
     - uses: actions/checkout@v3
 
-    - name: Get tag
-      id: tag
-      uses: dawidd6/action-get-tag@v1
+    # - name: Get tag
+    #   id: tag
+    #   uses: dawidd6/action-get-tag@v1
 
   upload-lambda-layer:
     needs: [pre-build]
     # uses: kosli-dev/cli/.github/workflows/upload-lambda-layer.yml@main
     uses: kosli-dev/cli/.github/workflows/upload-lambda-layer.yml@ci-upload-lambda-layer
     with:
-      tag: ${{ needs.pre-build.outputs.tag }}
+      # tag: ${{ needs.pre-build.outputs.tag }}
+      tag: tag=v2.4.1
       OIDC_ROLE_ARN: arn:aws:iam::772819027869:role/cli
-      # AWS_ACCOUNT_ID: 772819027869
       AWS_REGION: eu-central-1
 
   update-evidence-reporters:

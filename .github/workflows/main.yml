@@ -20,10 +20,9 @@ jobs:
     - name: Prepare
       id: prep
       run: |
-        # TAG=$(echo $GITHUB_SHA | head -c7)
-        # echo "TAG=${TAG}" >> ${GITHUB_ENV}
-        # echo "tag=$TAG" >> $GITHUB_OUTPUT
-        echo "tag=v2.4.1" >> $GITHUB_OUTPUT
+        TAG=$(echo $GITHUB_SHA | head -c7)
+        echo "TAG=${TAG}" >> ${GITHUB_ENV}
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
 
   test:
     needs: [pre-build]
