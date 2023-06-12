@@ -53,6 +53,7 @@ jobs:
             --compatible-architectures x86_64 \
             --description "Kolsi cli version: ${{ inputs.tag }}" \
             | jq .Version)
+        echo $LAYER_VERSION_NUMBER
         LAYER_VERSION_ARN=$(aws lambda add-layer-version-permission \
             --layer-name $LAYER_NAME \
             --statement-id public \
@@ -60,4 +61,5 @@ jobs:
             --principal '*' \
             --action lambda:GetLayerVersion \
             --output json | jq -r '.Statement | fromjson | .Resource')
+        echo $LAYER_VERSION_ARN
         echo "layer_version_arn=$(echo $LAYER_VERSION_ARN)" >> $GITHUB_OUTPUT
