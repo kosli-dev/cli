@@ -14,7 +14,7 @@ on:
         type: string
     outputs:
       layer_version_arn:
-        value: ${{ jobs.upload.outputs.layer_version_arn }}
+        value: ${{ jobs.upload-lambda-layer.outputs.layer_version_arn }}
 
 jobs:
   upload:
