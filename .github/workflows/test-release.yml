@@ -23,7 +23,8 @@ jobs:
 
   upload-lambda-layer:
     needs: [pre-build]
-    uses: kosli-dev/cli/.github/workflows/upload-lambda-layer.yml@main
+    # uses: kosli-dev/cli/.github/workflows/upload-lambda-layer.yml@main
+    uses: kosli-dev/cli/.github/workflows/upload-lambda-layer.yml@ci-upload-lambda-layer
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
       OIDC_ROLE_ARN: arn:aws:iam::772819027869:role/cli
