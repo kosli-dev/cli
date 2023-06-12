@@ -139,7 +139,7 @@ To represent a flag with environment variable create a variable with a `KOSLI_` 
 
 #### Config file
 
-A config file is an alternative for using Kosli flags or environment variables. 
+A config file is an alternative to using Kosli flags or environment variables. 
 Usually you'd use a config file for the values that rarely change - like api token or org, 
 but you can represent all Kosli flags in a config file. The key for each value is the same 
 as the flag name, capitalized, so `--api-token` would become `API-TOKEN`, and `--org` would 
@@ -147,8 +147,8 @@ become `ORG`, etc.
 
 You can use JSON, YAML or TOML format for your config file. 
 
-You can use `--config-file` flag when 
-running Kosli commands to let the CLI tool know where to look for a config file. 
+You can use the `--config-file` flag when 
+running Kosli commands to let the Kosli CLI know where to look for a config file. 
 The file needs a valid format and extension, e.g.:
 
 **kosli-conf.json:**
@@ -171,16 +171,16 @@ ORG = "my-org"
 API-TOKEN = "123456abcdef"
 ```
 
-When calling a Kosli CLI command you can skip file extension. For example, 
+When using the `--config-file` flag you can skip the file extension. For example, 
 to list environments with `org` and `api-token` in the configuration file you would run:
 
 ```
-$ kosli environment ls --config-file kosli-conf
+$ kosli environment ls --config-file=kosli-conf
 ```
 
-`--config-file` defaults to `kosli`, so if you name your file `kosli.<yaml|toml|json>` and 
-the file is in the same location as where you run Kosli CLI commands from, you can 
-skip the `--config-file` altogether.
+The `--config-file` flag defaults to `kosli`, so if you name your file `kosli.<yaml|toml|json>` and 
+the file is in the same location where you run Kosli CLI commands from, you can 
+skip the `--config-file` flag altogether.
 
 #### Dry run
 
