@@ -113,13 +113,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MESSAGE: "Release: {msg}"
 
-  upload-lambda-layer:
-    needs: [pre-build, goreleaser]
-    uses: kosli-dev/cli/.github/workflows/upload-lambda-layer.yml@main
-    with:
-      tag: ${{ needs.pre-build.outputs.tag }}
-      AWS_ACCOUNT_ID: 772819027869
-      AWS_REGION: eu-central-1
+  # upload-lambda-layer:
+  #   needs: [pre-build, goreleaser]
+  #   uses: kosli-dev/cli/.github/workflows/upload-lambda-layer.yml@main
+  #   with:
+  #     tag: ${{ needs.pre-build.outputs.tag }}
+  #     AWS_ACCOUNT_ID: 772819027869
+  #     AWS_REGION: eu-central-1
 
   upload-reporter-package-prod:
     needs: [pre-build, goreleaser]
