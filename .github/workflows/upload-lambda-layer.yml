@@ -38,6 +38,7 @@ jobs:
         aws-region: ${{ inputs.AWS_REGION }}
         role-duration-seconds: 900
         role-session-name: ${{ github.event.repository.name }}
+        mask-aws-account-id: false
 
     # Upload lambda layer and make iе publicly accessible
     - name: Upload Kosli bin Lambda layer
