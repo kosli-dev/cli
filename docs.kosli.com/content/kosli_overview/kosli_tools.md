@@ -110,11 +110,15 @@ The [CLI Reference](/client_reference/) section contains all the information you
 Most of the commands require a number of flags. Some of them are **required**, others are **optional** and some are
  **conditional** - you need to use them if certain conditions occur. Each command doc/help provides details about its flag usage. 
 
-Depending on the CI tool you are using, some of the flags (including required ones) may be defaulted, depending on the environment variables provided by the tool. If the flag is defaulted in your CI you don't have to provide it in the command. [Here](/ci-defaults) you can find more details about flags defaulted depending on CI.
+Some flags (including required ones) may be defaulted, depending on the environment 
+variables your CI provides. If the flag is defaulted in your CI, you don't have to 
+provide it in the command. 
+[Here](/ci-defaults) you can find details of all CI flags defaults.
 
 #### Environment variables
 
-Each flag can be provided directly or represented with an environment variable. In order to represent a flag with environment variable you need to create a variable with a `KOSLI_` prefix, followed by the flag name, with all letters capitalized and internal dashes replaced by underscores, e.g.:
+Each flag can be provided directly or represented with an environment variable. 
+To represent a flag with environment variable create a variable with a `KOSLI_` prefix, followed by the flag name, with all letters capitalized and internal dashes replaced by underscores, e.g.:
 
 * `--api-token` is represented by `KOSLI_API_TOKEN` 
 * `--org` is represented by `KOSLI_ORG`
@@ -135,11 +139,16 @@ Each flag can be provided directly or represented with an environment variable. 
 
 #### Config file
 
-A config file is an alternative for using Kosli flags or environment variables. Usually you'd use a config file for the values that rarely change - like api token or org, but you can represent all Kosli flags with config file. The key for each value is the same as the flag name, capitalized, so `--api-token` would become `API-TOKEN`, and `--org` would become `ORG`, etc. 
+A config file is an alternative to using Kosli flags or environment variables. 
+Usually you'd use a config file for the values that rarely change - like api token or org, 
+but you can represent all Kosli flags in a config file. The key for each value is the same 
+as the flag name, capitalized, so `--api-token` would become `API-TOKEN`, and `--org` would 
+become `ORG`, etc. 
 
 You can use JSON, YAML or TOML format for your config file. 
 
-If you want to keep certain Kosli configuration in a file use `--config-file` flag when running Kosli commands to let the CLI tool know where to look for the file. 
+You can use the `--config-file` flag when 
+running Kosli commands to let the Kosli CLI know where to look for a config file. 
 The file needs a valid format and extension, e.g.:
 
 **kosli-conf.json:**
@@ -162,17 +171,22 @@ ORG = "my-org"
 API-TOKEN = "123456abcdef"
 ```
 
-When calling a Kosli CLI command you can skip file extension. For example, to list environments with `org` and `api-token` in the configuration file you would run:
+When using the `--config-file` flag you can skip the file extension. For example, 
+to list environments with `org` and `api-token` in the configuration file you would run:
 
 ```
-$ kosli environment ls --config-file kosli-conf
+$ kosli environment ls --config-file=kosli-conf
 ```
 
-`--config-file` defaults to `kosli`, so if you name your file `kosli.<yaml|toml|json>` and the file is in the same location as where you run Kosli CLI commands from, you can skip the `--config-file` altogether.
+The `--config-file` flag defaults to `kosli`, so if you name your file `kosli.<yaml|toml|json>` and 
+the file is in the same location where you run Kosli CLI commands from, you can 
+skip the `--config-file` flag altogether.
 
 #### Dry run
 
-You can use dry run flag to disable reporting to app.kosli.com - e.g. if you're just trying things out, or troubleshooting (dry run will print the payload the CLI would send in a non dry run mode). 
+You can use dry run flag to disable reporting to app.kosli.com - e.g. if you're just 
+trying things out, or troubleshooting (dry run will print the payload the CLI would send 
+in a non dry run mode). 
 
 Here are two ways of enabling a dry run:
 1. use the `--dry-run` flag (no value needed) to enable it per command;
@@ -190,4 +204,8 @@ On the left of the page you can see the menu where you can:
 2. Switch to the Environments or the Flows view
 3. Enter organization settings page
 
-In the top right corner of the page you will see your GitHub avatar where you can access your profile settings (containing your Kosli API key). You'll also find there a link to the page where you can create a shared organization and links to [cyber-dojo demo project](https://app.kosli.com/cyber-dojo/environments/) and to log out.
+In the top right corner of the page you will see your GitHub avatar where you can 
+access your profile settings (containing your Kosli API key). You'll also find there a 
+link to the page where you can create a shared organization and 
+links to [cyber-dojo demo project](https://app.kosli.com/cyber-dojo/environments/) and to 
+log out.
