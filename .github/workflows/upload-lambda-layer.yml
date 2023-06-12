@@ -43,10 +43,12 @@ jobs:
       env:
         TAG: ${{ inputs.tag }}
         LAYER_NAME: kosli-bin
+        ZIP_FILE_NAME: kosli_lambda_layer.zip
       run: |
         make build
-        zip -j kosli_lambda_layer.zip kosli
-        LAYER_VERSION_NUMBER=$(aws lambda publish-layer-version kosli_lambda_layer.zip \
+        zip -j $ZIP_FILE_NAME kosli
+        LAYER_VERSION_NUMBER=$(aws lambda publish-layer-version \
+            --zip-file fileb://$ZIP_FILE_NAME \
             --layer-name $LAYER_NAME \
             --compatible-architectures x86_64 \
             --description "Kolsi cli version: ${{ inputs.tag }}" \
