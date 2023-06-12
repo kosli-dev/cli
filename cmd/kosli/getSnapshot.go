@@ -37,7 +37,7 @@ type PodContent struct {
 
 type Artifact struct {
 	Name              string
-	FlowName          string `json:"pipeline_name"`
+	FlowName          string `json:"flow_name"`
 	Compliant         bool
 	Deployments       []int
 	Fingerprint       string
@@ -61,9 +61,9 @@ type Snapshot struct {
 type ArtifactJsonOut struct {
 	GitCommit    string `json:"git_commit"`
 	CommitUrl    string `json:"commit_url"`
-	Image        string `json:"image"`
-	Fingerprint  string `json:"sha256"`
-	Flow         string `json:"pipeline"`
+	Image        string `json:"artifact"`
+	Fingerprint  string `json:"fingerprint"`
+	Flow         string `json:"flow"`
 	Replicas     int    `json:"replicas"`
 	RunningSince string `json:"running_since"`
 }
