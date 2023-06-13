@@ -18,10 +18,9 @@ fi
 jiraURL="${jiraBaseURL}${jiraKey}"
 echo "Jira ticket URL: $jiraURL"
 
-./kosli report evidence commit jira-ticket \
+./kosli report evidence commit generic \
         --build-url=http://www.example.com \
         --commit=ff475e6958f1b8d529118a0b8410428ecc2060a5 \
-        --name=jira-ticket \
+        --name=jira-ticket-generic \
         --compliant=TRUE \
-        --jira-base-url=$jiraBaseURL \
         --evidence-url=$jiraURL

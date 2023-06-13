@@ -1,13 +1,10 @@
 package jira
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
 
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
-	"github.com/kosli-dev/cli/internal/types"
 
 	"log"
 	"os/exec"
@@ -25,9 +22,7 @@ type Config struct {
 	Assert      bool
 }
 
-func getJiraTicketURL() {
-	// Define the Jira base URL
-	jiraBaseURL := "https://your-jira-instance/browse/"
+func getJiraTicketURL(jiraBaseURL string) {
 
 	// Get the current commit hash
 	commitHash, err := exec.Command("git", "rev-parse", "HEAD").Output()

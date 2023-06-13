@@ -69,6 +69,7 @@ func newReportEvidenceCommitJiraTicketCmd(out io.Writer) *cobra.Command {
 	addCommitEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
 	cmd.Flags().BoolVarP(&o.payload.Compliant, "compliant", "C", false, evidenceCompliantFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", evidenceDescriptionFlag)
+	cmd.Flags().StringVarP(&o.payload.JiraBaseURL, "jira-base-url", "j", "", jiraBaseUrlFlag)
 	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
 	cmd.Flags().StringSliceVarP(&o.evidencePaths, "evidence-paths", "e", []string{}, evidencePathsFlag)
 	addDryRunFlag(cmd)
@@ -109,7 +110,7 @@ func (o *reportEvidenceCommitJiraTicketOptions) run(args []string) error {
 
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("generic evidence '%s' is reported to commit: %s", o.payload.EvidenceName, o.payload.CommitSHA)
+		logger.Info("jira-ticket evidence '%s' is reported to commit: %s", o.payload.EvidenceName, o.payload.CommitSHA)
 	}
 	return err
 }
