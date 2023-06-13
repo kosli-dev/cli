@@ -35,11 +35,11 @@ jobs:
     runs-on: ubuntu-20.04
     needs: [upload-lambda-layer]
     steps:
-      - run: echo ${{ needs.upload-lambda-layer.outputs.layer_version_arn }}
-      # - name: Repository Dispatch
-      #   uses: peter-evans/repository-dispatch@v2
-      #   with:
-      #     token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
-      #     repository: kosli-dev/terraform-evidence-reporter
-      #     event-type: deploy-evidence-reporter
-      #     client-payload: '{"kosli_bin_lambda_layer_arn": "${{ needs.pre-build.outputs.layer_version_arn }}"}'
+      # - run: echo ${{ needs.upload-lambda-layer.outputs.layer_version_arn }}
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
+          repository: kosli-dev/terraform-evidence-reporter
+          event-type: deploy-evidence-reporter
+          client-payload: '{"layer_version_arn_kosli_bin": "${{ needs.pre-build.outputs.layer_version_arn }}"}'

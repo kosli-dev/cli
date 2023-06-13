@@ -3,7 +3,8 @@ name: Main
 on:
   push:
     branches:
-      - '**'
+      # - '**'
+      - 'do-not-run'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
