@@ -21,6 +21,7 @@ func newReportEvidenceCommitCmd(out io.Writer) *cobra.Command {
 		newReportEvidenceCommitGenericCmd(out),
 		newReportEvidenceCommitJunitCmd(out),
 		newReportEvidenceCommitSnykCmd(out),
+		newReportEvidenceCommitJiraTicketCmd(out),
 	)
 
 	return cmd

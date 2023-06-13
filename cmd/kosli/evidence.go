@@ -21,6 +21,12 @@ type GenericEvidencePayload struct {
 	Compliant   bool   `json:"is_compliant"`
 }
 
+type JiraTicketEvidencePayload struct {
+	TypedEvidencePayload
+	Description string `json:"description,omitempty"`
+	Compliant   bool   `json:"is_compliant"`
+}
+
 type WorkflowEvidencePayload struct {
 	ExternalId          string      `json:"external_id"`
 	Step                string      `json:"step"`
