@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -130,15 +131,50 @@ func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionNames []string) 
 		return lambdaData, err
 	}
 
+	var (
+		wg    sync.WaitGroup
+		mutex = &sync.Mutex{}
+	)
+
+	// run concurrently
+	errs := make(chan error, 1) // Buffered only for the first error
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // Make sure it's called to release resources even if no errors
+
 	for _, functionName := range functionNames {
-		oneLambdaData, err := processOneLambdaFunc(client, functionName)
-		if err != nil {
-			return lambdaData, err
-		}
-		lambdaData = append(lambdaData, oneLambdaData)
+		wg.Add(1)
+		go func(functionName string) {
+			defer wg.Done()
+			// Check if any error occurred in any other gorouties:
+			select {
+			case <-ctx.Done():
+				return // Error somewhere, terminate
+			default: // Default is a must to avoid blocking
+			}
+			oneLambdaData, err := processOneLambdaFunc(client, functionName)
+			if err != nil {
+				// Non-blocking send of error
+				select {
+				case errs <- err:
+				default:
+				}
+				cancel() // send cancel signal to goroutines
+				return
+			}
+
+			mutex.Lock()
+			lambdaData = append(lambdaData, oneLambdaData)
+			mutex.Unlock()
+
+		}(functionName)
+
 	}
 
-	// lambdaData = append(lambdaData, &LambdaData{Digests: map[string]string{functionName: sha256hex}, LastModifiedTimestamp: lastModifiedTimestamp.Unix()})
+	wg.Wait()
+	// Return (first) error, if any:
+	if ctx.Err() != nil {
+		return lambdaData, <-errs
+	}
 
 	return lambdaData, nil
 }
