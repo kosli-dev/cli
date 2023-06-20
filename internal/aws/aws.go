@@ -161,6 +161,7 @@ func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionNames []string) 
 		}
 
 		//outside of for loop all elements in the list are the same as the last element...
+		fmt.Println("why are they all the same?")
 		fmt.Println(lambdaData[len(lambdaData)-3])
 		fmt.Println(lambdaData[len(lambdaData)-2])
 		fmt.Println(lambdaData[len(lambdaData)-1])
