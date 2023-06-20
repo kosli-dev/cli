@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -131,49 +132,84 @@ func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionNames []string) 
 		return lambdaData, err
 	}
 
-	var (
-		wg    sync.WaitGroup
-		mutex = &sync.Mutex{}
-	)
+	if len(functionNames) == 0 {
+		oneLambdaData := &LambdaData{}
+		params := &lambda.ListFunctionsInput{}
+		listFunctionsOutput, err := client.ListFunctions(context.TODO(), params)
+		if err != nil {
+			return lambdaData, err
+		}
+		for _, function := range listFunctionsOutput.Functions {
 
-	// run concurrently
-	errs := make(chan error, 1) // Buffered only for the first error
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel() // Make sure it's called to release resources even if no errors
-
-	for _, functionName := range functionNames {
-		wg.Add(1)
-		go func(functionName string) {
-			defer wg.Done()
-			// Check if any error occurred in any other gorouties:
-			select {
-			case <-ctx.Done():
-				return // Error somewhere, terminate
-			default: // Default is a must to avoid blocking
-			}
-			oneLambdaData, err := processOneLambdaFunc(client, functionName)
+			lastModifiedTimestamp, err := formatLambdaLastModified(*function.LastModified)
 			if err != nil {
-				// Non-blocking send of error
-				select {
-				case errs <- err:
-				default:
-				}
-				cancel() // send cancel signal to goroutines
-				return
+				return lambdaData, err
 			}
+			oneLambdaData.LastModifiedTimestamp = lastModifiedTimestamp.Unix()
 
-			mutex.Lock()
+			oneLambdaData.Digests = map[string]string{*function.FunctionName: *function.CodeSha256}
+			if string(function.PackageType) == "Zip" {
+				oneLambdaData.Digests[*function.FunctionName], err = decodeLambdaFingerprint(*function.CodeSha256)
+				if err != nil {
+					return lambdaData, err
+				}
+			}
 			lambdaData = append(lambdaData, oneLambdaData)
-			mutex.Unlock()
+			fmt.Println()
+			//here you can see the data is correct
+			fmt.Println(lambdaData[len(lambdaData)-1])
+		}
 
-		}(functionName)
+		//outside of for loop all elements in the list are the same as the last element...
+		fmt.Println(lambdaData[len(lambdaData)-3])
+		fmt.Println(lambdaData[len(lambdaData)-2])
+		fmt.Println(lambdaData[len(lambdaData)-1])
 
-	}
+	} else {
+		var (
+			wg    sync.WaitGroup
+			mutex = &sync.Mutex{}
+		)
 
-	wg.Wait()
-	// Return (first) error, if any:
-	if ctx.Err() != nil {
-		return lambdaData, <-errs
+		// run concurrently
+		errs := make(chan error, 1) // Buffered only for the first error
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel() // Make sure it's called to release resources even if no errors
+
+		for _, functionName := range functionNames {
+			wg.Add(1)
+			go func(functionName string) {
+				defer wg.Done()
+				// Check if any error occurred in any other gorouties:
+				select {
+				case <-ctx.Done():
+					return // Error somewhere, terminate
+				default: // Default is a must to avoid blocking
+				}
+				oneLambdaData, err := processOneLambdaFunc(client, functionName)
+				if err != nil {
+					// Non-blocking send of error
+					select {
+					case errs <- err:
+					default:
+					}
+					cancel() // send cancel signal to goroutines
+					return
+				}
+
+				mutex.Lock()
+				lambdaData = append(lambdaData, oneLambdaData)
+				mutex.Unlock()
+
+			}(functionName)
+
+		}
+
+		wg.Wait()
+		// Return (first) error, if any:
+		if ctx.Err() != nil {
+			return lambdaData, <-errs
+		}
 	}
 
 	return lambdaData, nil
@@ -184,9 +220,6 @@ func processOneLambdaFunc(client *lambda.Client, functionName string) (*LambdaDa
 	params := &lambda.GetFunctionConfigurationInput{
 		FunctionName: aws.String(functionName),
 	}
-	// if functionVersion != "" {
-	// 	params.Qualifier = aws.String(functionVersion)
-	// }
 
 	function, err := client.GetFunctionConfiguration(context.TODO(), params)
 	if err != nil {
