@@ -8,6 +8,8 @@ GIT_SHA    = $(shell git rev-parse --short HEAD)
 GIT_TAG    = $(shell git describe --tags --abbrev=0 --exact-match 2>/dev/null)
 GIT_DIRTY  = $(shell test -n "`git status --porcelain`" && echo "dirty" || echo "clean")
 
+GOTESTSUM  = $(shell which gotestsum || echo "~/go/bin/gotestsum")
+
 ifdef VERSION
 	BINARY_VERSION = $(VERSION)
 endif
@@ -74,22 +76,22 @@ test_setup_restart_server: ensure_gotestsum
 	./bin/reset-or-start-server.sh force
 
 test_integration: deps vet ensure_network test_setup ## Run tests except the too slow ones
-	@export KOSLI_TESTS=true && ~/go/bin/gotestsum -- --short -p=8 -coverprofile=cover.out ./...
+	@export KOSLI_TESTS=true && $(GOTESTSUM) -- --short -p=8 -coverprofile=cover.out ./...
 	@go tool cover -func=cover.out | grep total:
 	@go tool cover -html=cover.out
 
 
 test_integration_full: deps vet ensure_network test_setup ## Run all tests
-	@export KOSLI_TESTS=true && ~/go/bin/gotestsum -- -p=8 -coverprofile=cover.out ./...
+	@export KOSLI_TESTS=true && $(GOTESTSUM) -- -p=8 -coverprofile=cover.out ./...
 	@go tool cover -func=cover.out
 
 
 test_integration_restart_server: test_setup_restart_server
-	@export KOSLI_TESTS=true && ~/go/bin/gotestsum -- --short -p=8 -coverprofile=cover.out ./...
+	@export KOSLI_TESTS=true && $(GOTESTSUM) -- --short -p=8 -coverprofile=cover.out ./...
 	@go tool cover -html=cover.out
 
 test_integration_single: test_setup
-	@export KOSLI_TESTS=true && ~/go/bin/gotestsum -- -p=1 ./... -run "${TARGET}"
+	@export KOSLI_TESTS=true && $(GOTESTSUM) -- -p=1 ./... -run "${TARGET}"
 
 
 test_docs: deps vet ensure_network test_setup
