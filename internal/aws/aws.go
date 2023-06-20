@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/hex"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -133,14 +132,14 @@ func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionNames []string) 
 	}
 
 	if len(functionNames) == 0 {
-		oneLambdaData := &LambdaData{}
+
 		params := &lambda.ListFunctionsInput{}
 		listFunctionsOutput, err := client.ListFunctions(context.TODO(), params)
 		if err != nil {
 			return lambdaData, err
 		}
 		for _, function := range listFunctionsOutput.Functions {
-
+			oneLambdaData := &LambdaData{}
 			lastModifiedTimestamp, err := formatLambdaLastModified(*function.LastModified)
 			if err != nil {
 				return lambdaData, err
@@ -155,16 +154,7 @@ func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionNames []string) 
 				}
 			}
 			lambdaData = append(lambdaData, oneLambdaData)
-			fmt.Println()
-			//here you can see the data is correct
-			fmt.Println(lambdaData[len(lambdaData)-1])
 		}
-
-		//outside of for loop all elements in the list are the same as the last element...
-		fmt.Println("why are they all the same?")
-		fmt.Println(lambdaData[len(lambdaData)-3])
-		fmt.Println(lambdaData[len(lambdaData)-2])
-		fmt.Println(lambdaData[len(lambdaData)-1])
 
 	} else {
 		var (
