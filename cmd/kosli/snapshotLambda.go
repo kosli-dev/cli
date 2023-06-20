@@ -66,7 +66,7 @@ func newSnapshotLambdaCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
-			err = MuXRequiredFlags(cmd, []string{"function-name", "function-names"}, true)
+			err = MuXRequiredFlags(cmd, []string{"function-name", "function-names"}, false)
 			if err != nil {
 				return err
 			}
