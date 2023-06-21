@@ -53,7 +53,7 @@ func (suite *SnapshotLambdaTestSuite) TestSnapshotLambdaCmd() {
 			additionalConfig: snapshotLambdaTestConfig{
 				requireAuthToBeSet: true,
 			},
-			golden: fmt.Sprintf("[%s] lambda function was reported to environment %s\n", suite.zipFunctionName, suite.envName),
+			golden: fmt.Sprintf("1 lambda functions were reported to environment %s\n", suite.envName),
 		},
 		{
 			name: "snapshot lambda works with --function-names taking a list of functions",
@@ -61,7 +61,7 @@ func (suite *SnapshotLambdaTestSuite) TestSnapshotLambdaCmd() {
 			additionalConfig: snapshotLambdaTestConfig{
 				requireAuthToBeSet: true,
 			},
-			golden: fmt.Sprintf("[%s %s] lambda function was reported to environment %s\n", suite.zipFunctionName, suite.imageFunctionName, suite.envName),
+			golden: fmt.Sprintf("2 lambda functions were reported to environment %s\n", suite.envName),
 		},
 		{
 			name: "snapshot lambda works with --function-names for Image package type",
@@ -69,7 +69,7 @@ func (suite *SnapshotLambdaTestSuite) TestSnapshotLambdaCmd() {
 			additionalConfig: snapshotLambdaTestConfig{
 				requireAuthToBeSet: true,
 			},
-			golden: fmt.Sprintf("[%s] lambda function was reported to environment %s\n", suite.imageFunctionName, suite.envName),
+			golden: fmt.Sprintf("1 lambda functions were reported to environment %s\n", suite.envName),
 		},
 		{
 			name: "snapshot lambda works with --function-names and deprecated --function-version which is ignored",
@@ -86,7 +86,8 @@ func (suite *SnapshotLambdaTestSuite) TestSnapshotLambdaCmd() {
 			additionalConfig: snapshotLambdaTestConfig{
 				requireAuthToBeSet: true,
 			},
-			golden: fmt.Sprintf("[%s] lambda function was reported to environment %s\n", suite.imageFunctionName, suite.envName),
+			//need support for use case when we don't know how many functions are there, regex?
+			//golden: fmt.Sprintf("1 lambda functions were reported to environment %s\n", suite.envName),
 		},
 		{
 			wantError: true,

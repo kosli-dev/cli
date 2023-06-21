@@ -117,7 +117,7 @@ func (o *snapshotLambdaOptions) run(args []string) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("%s lambda function was reported to environment %s", o.functionNames, envName)
+		logger.Info("%d lambda functions were reported to environment %s", len(lambdaData), envName)
 	}
 	return err
 }
