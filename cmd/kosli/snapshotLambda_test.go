@@ -86,8 +86,7 @@ func (suite *SnapshotLambdaTestSuite) TestSnapshotLambdaCmd() {
 			additionalConfig: snapshotLambdaTestConfig{
 				requireAuthToBeSet: true,
 			},
-			//need support for use case when we don't know how many functions are there, regex?
-			//golden: fmt.Sprintf("1 lambda functions were reported to environment %s\n", suite.envName),
+			goldenRegex: fmt.Sprintf("[0-9]+ lambda functions were reported to environment %s\n", suite.envName),
 		},
 		{
 			wantError: true,

@@ -16,6 +16,7 @@ import (
 	s3manager "github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/ecs"
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
+	"github.com/aws/aws-sdk-go-v2/service/lambda/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/logger"
@@ -123,6 +124,25 @@ func (staticCreds *AWSStaticCreds) NewECSClient() (*ecs.Client, error) {
 	return ecs.NewFromConfig(cfg), nil
 }
 
+// getAllLambdaFuncs fetches all lambda functions recursively (50 at a time) and returns a list of FunctionConfiguration
+func getAllLambdaFuncs(client *lambda.Client, nextMarker *string, allFunctions *[]types.FunctionConfiguration) (*[]types.FunctionConfiguration, error) {
+	params := &lambda.ListFunctionsInput{}
+	if nextMarker != nil {
+		params.Marker = nextMarker
+	}
+
+	listFunctionsOutput, err := client.ListFunctions(context.TODO(), params)
+	if err != nil {
+		return allFunctions, err
+	}
+
+	*allFunctions = append(*allFunctions, listFunctionsOutput.Functions...)
+	if listFunctionsOutput.NextMarker != nil {
+		getAllLambdaFuncs(client, listFunctionsOutput.NextMarker, allFunctions)
+	}
+	return allFunctions, nil
+}
+
 // GetLambdaPackageData returns a digest and metadata of a Lambda function package
 func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionNames []string) ([]*LambdaData, error) {
 	lambdaData := []*LambdaData{}
@@ -132,27 +152,12 @@ func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionNames []string) 
 	}
 
 	if len(functionNames) == 0 {
-
-		params := &lambda.ListFunctionsInput{}
-		listFunctionsOutput, err := client.ListFunctions(context.TODO(), params)
+		allFunctions, err := getAllLambdaFuncs(client, nil, &[]types.FunctionConfiguration{})
 		if err != nil {
 			return lambdaData, err
 		}
 
-		continuationToken := listFunctionsOutput.NextMarker
-
-		for continuationToken != nil {
-			listFunctionsNewOutput, err := client.ListFunctions(context.Background(), &lambda.ListFunctionsInput{Marker: continuationToken})
-			if err != nil {
-				return nil, err
-			}
-			continuationToken = listFunctionsNewOutput.NextMarker
-			listFunctionsOutput.Functions = append(listFunctionsOutput.Functions, listFunctionsNewOutput.Functions...)
-		}
-
-		for _, function := range listFunctionsOutput.Functions {
-			oneLambdaData := &LambdaData{}
-
+		for _, function := range *allFunctions {
 			oneLambdaData, err := processOneLambdaFunc(*function.LastModified, *function.CodeSha256, *function.FunctionName, string(function.PackageType))
 			if err != nil {
 				return lambdaData, err
@@ -181,7 +186,7 @@ func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionNames []string) 
 					return // Error somewhere, terminate
 				default: // Default is a must to avoid blocking
 				}
-				oneLambdaData, err := getOneLambdaFunc(client, functionName)
+				oneLambdaData, err := getAndProcessOneLambdaFunc(client, functionName)
 				if err != nil {
 					// Non-blocking send of error
 					select {
@@ -210,7 +215,8 @@ func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionNames []string) 
 	return lambdaData, nil
 }
 
-func getOneLambdaFunc(client *lambda.Client, functionName string) (*LambdaData, error) {
+// getAndProcessOneLambdaFunc get a lambda function by its name and return a LambdaData object from it
+func getAndProcessOneLambdaFunc(client *lambda.Client, functionName string) (*LambdaData, error) {
 	params := &lambda.GetFunctionConfigurationInput{
 		FunctionName: aws.String(functionName),
 	}
@@ -228,19 +234,18 @@ func getOneLambdaFunc(client *lambda.Client, functionName string) (*LambdaData, 
 	return lambdaData, nil
 }
 
-func processOneLambdaFunc(lastModified, digest, functionName, packageType string) (*LambdaData, error) {
+// processOneLambdaFunc returns LambdaData object from lambda function attributes
+func processOneLambdaFunc(lastModified, codeSha256, functionName, packageType string) (*LambdaData, error) {
 	lambdaData := &LambdaData{}
-
 	lastModifiedTimestamp, err := formatLambdaLastModified(lastModified)
 	if err != nil {
 		return lambdaData, err
 	}
 	lambdaData.LastModifiedTimestamp = lastModifiedTimestamp.Unix()
-
-	lambdaData.Digests = map[string]string{functionName: digest}
+	lambdaData.Digests = map[string]string{functionName: codeSha256}
 
 	if packageType == "Zip" {
-		lambdaData.Digests[functionName], err = decodeLambdaFingerprint(digest)
+		lambdaData.Digests[functionName], err = decodeLambdaFingerprint(codeSha256)
 		if err != nil {
 			return lambdaData, err
 		}

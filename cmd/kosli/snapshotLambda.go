@@ -12,9 +12,19 @@ import (
 
 const snapshotLambdaShortDesc = `Report a snapshot of artifacts deployed as one or more AWS Lambda functions and their digests to Kosli.`
 
-const snapshotLambdaLongDesc = snapshotLambdaShortDesc + awsAuthDesc
+const snapshotLambdaLongDesc = snapshotLambdaShortDesc + `  
+Skip --function-names to report all functions in a given AWS account.` + awsAuthDesc
 
 const snapshotLambdaExample = `
+# report all Lambda functions running in an AWS account (AWS auth provided in env variables):
+export AWS_REGION=yourAWSRegion
+export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
+export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
+
+kosli snapshot lambda yourEnvironmentName \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
 # report what is running in the latest version of an AWS Lambda function (AWS auth provided in env variables):
 export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
