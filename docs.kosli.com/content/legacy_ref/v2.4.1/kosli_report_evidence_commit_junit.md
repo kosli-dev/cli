@@ -1,18 +1,18 @@
 ---
-title: "kosli report evidence commit snyk"
+title: "kosli report evidence commit junit"
 beta: false
 ---
 
-# kosli report evidence commit snyk
+# kosli report evidence commit junit
 
 ## Synopsis
 
-Report Snyk vulnerability scan evidence for a commit in Kosli flows.  
-The --scan-results .json file is parsed. If no vulnerabilities are detected the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
+Report JUnit test evidence for a commit in Kosli flows.  
+All .xml files from --results-dir are parsed and uploaded to Kosli's evidence vault. If there are no failing tests and no errors the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
 
 
 ```shell
-kosli report evidence commit snyk [flags]
+kosli report evidence commit junit [flags]
 ```
 
 ## Flags
@@ -24,9 +24,9 @@ kosli report evidence commit snyk [flags]
 |        --evidence-fingerprint string  |  [optional] The SHA256 fingerprint of the evidence file or dir.  |
 |        --evidence-url string  |  [optional] The external URL where the evidence file or dir is stored.  |
 |    -f, --flows strings  |  [defaulted] The comma separated list of Kosli flows. Defaults to all flows of the org.  |
-|    -h, --help  |  help for snyk  |
+|    -h, --help  |  help for junit  |
 |    -n, --name string  |  The name of the evidence.  |
-|    -R, --scan-results string  |  The path to Snyk scan results JSON file from 'snyk test' and 'snyk container test'. The Snyk results will be uploaded to Kosli's evidence vault.  |
+|    -R, --results-dir string  |  [defaulted] The path to a directory with JUnit test results. The directory will be uploaded to Kosli's evidence vault. (default ".")  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to this evidence.  |
 
 
@@ -45,25 +45,25 @@ kosli report evidence commit snyk [flags]
 
 ```shell
 
-# report Snyk evidence for a commit related to one Kosli flow:
-kosli report evidence commit snyk \
+# report JUnit test evidence for a commit related to one Kosli flow:
+kosli report evidence commit junit \
 	--commit yourGitCommitSha1 \
 	--name yourEvidenceName \
-	--flows yourFlowName1 \
+	--flows yourFlowName \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
 	--org yourOrgName	\
-	--scan-results yourSnykJSONScanResults
+	--results-dir yourFolderWithJUnitResults
 
-# report Snyk evidence for a commit related to multiple Kosli flows:
-kosli report evidence commit snyk \
+# report JUnit test evidence for a commit related to multiple Kosli flows:
+kosli report evidence commit junit \
 	--commit yourGitCommitSha1 \
 	--name yourEvidenceName \
 	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
 	--org yourOrgName	\
-	--scan-results yourSnykJSONScanResults
+	--results-dir yourFolderWithJUnitResults
 
 ```
 

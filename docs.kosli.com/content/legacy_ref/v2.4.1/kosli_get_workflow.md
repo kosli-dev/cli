@@ -1,29 +1,27 @@
 ---
-title: "kosli list workflows"
+title: "kosli get workflow"
 beta: true
 ---
 
-# kosli list workflows
+# kosli get workflow
 
-{{< hint warning >}}**kosli list workflows** is an beta feature. 
+{{< hint warning >}}**kosli get workflow** is a beta feature. 
 Beta features provide early access to product functionality. These features may change between releases without warning, or can be removed from a future release.
 You can enable beta features by using the `kosli enable beta` command.{{< /hint >}}
 ## Synopsis
 
-List workflows for an audit trail.
+Get a specific workflow for an organization
 
 ```shell
-kosli list workflows [flags]
+kosli get workflow ID [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
 |        --audit-trail string  |  The Kosli audit trail name.  |
-|    -h, --help  |  help for workflows  |
+|    -h, --help  |  help for workflow  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
-|        --page int  |  [defaulted] The page number of a response. (default 1)  |
-|    -n, --page-limit int  |  [defaulted] The number of elements per page. (default 15)  |
 
 
 ## Options inherited from parent commands
@@ -36,4 +34,16 @@ kosli list workflows [flags]
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
+
+## Examples
+
+```shell
+
+# get workflow for an ID
+kosli get workflow yourID \
+	--audit-trail auditTrailName \
+	--api-token yourAPIToken \
+	--org orgName
+
+```
 

@@ -1,26 +1,29 @@
 ---
-title: "kosli list audit-trails"
+title: "kosli list workflows"
 beta: true
 ---
 
-# kosli list audit-trails
+# kosli list workflows
 
-{{< hint warning >}}**kosli list audit-trails** is an beta feature. 
+{{< hint warning >}}**kosli list workflows** is a beta feature. 
 Beta features provide early access to product functionality. These features may change between releases without warning, or can be removed from a future release.
 You can enable beta features by using the `kosli enable beta` command.{{< /hint >}}
 ## Synopsis
 
-List audit trails for an org.
+List workflows for an audit trail.
 
 ```shell
-kosli list audit-trails [flags]
+kosli list workflows [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|    -h, --help  |  help for audit-trails  |
+|        --audit-trail string  |  The Kosli audit trail name.  |
+|    -h, --help  |  help for workflows  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
+|        --page int  |  [defaulted] The page number of a response. (default 1)  |
+|    -n, --page-limit int  |  [defaulted] The number of elements per page. (default 15)  |
 
 
 ## Options inherited from parent commands
