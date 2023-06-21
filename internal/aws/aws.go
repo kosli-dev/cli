@@ -138,7 +138,10 @@ func getAllLambdaFuncs(client *lambda.Client, nextMarker *string, allFunctions *
 
 	*allFunctions = append(*allFunctions, listFunctionsOutput.Functions...)
 	if listFunctionsOutput.NextMarker != nil {
-		getAllLambdaFuncs(client, listFunctionsOutput.NextMarker, allFunctions)
+		_, err := getAllLambdaFuncs(client, listFunctionsOutput.NextMarker, allFunctions)
+		if err != nil {
+			return allFunctions, err
+		}
 	}
 	return allFunctions, nil
 }
