@@ -45,7 +45,7 @@ func (suite *SnapshotLambdaTestSuite) TestSnapshotLambdaCmd() {
 			additionalConfig: snapshotLambdaTestConfig{
 				requireAuthToBeSet: true,
 			},
-			golden: fmt.Sprintf("Flag --function-name has been deprecated, use --function-names instead\n[%s] lambda function was reported to environment %s\n", suite.zipFunctionName, suite.envName),
+			golden: fmt.Sprintf("Flag --function-name has been deprecated, use --function-names instead\n1 lambda functions were reported to environment %s\n", suite.envName),
 		},
 		{
 			name: "snapshot lambda works with --function-names for Zip package type",
@@ -77,7 +77,7 @@ func (suite *SnapshotLambdaTestSuite) TestSnapshotLambdaCmd() {
 			additionalConfig: snapshotLambdaTestConfig{
 				requireAuthToBeSet: true,
 			},
-			golden: fmt.Sprintf("Flag --function-version has been deprecated, --function-version is no longer supported. It will be removed in a future release.\n[%s] lambda function was reported to environment %s\n", suite.zipFunctionName, suite.envName),
+			golden: fmt.Sprintf("Flag --function-version has been deprecated, --function-version is no longer supported. It will be removed in a future release.\n1 lambda functions were reported to environment %s\n", suite.envName),
 		},
 		{
 			wantError: false,

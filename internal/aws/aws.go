@@ -152,18 +152,10 @@ func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionNames []string) 
 
 		for _, function := range listFunctionsOutput.Functions {
 			oneLambdaData := &LambdaData{}
-			lastModifiedTimestamp, err := formatLambdaLastModified(*function.LastModified)
+
+			oneLambdaData, err := processOneLambdaFunc(*function.LastModified, *function.CodeSha256, *function.FunctionName, string(function.PackageType))
 			if err != nil {
 				return lambdaData, err
-			}
-			oneLambdaData.LastModifiedTimestamp = lastModifiedTimestamp.Unix()
-
-			oneLambdaData.Digests = map[string]string{*function.FunctionName: *function.CodeSha256}
-			if string(function.PackageType) == "Zip" {
-				oneLambdaData.Digests[*function.FunctionName], err = decodeLambdaFingerprint(*function.CodeSha256)
-				if err != nil {
-					return lambdaData, err
-				}
 			}
 			lambdaData = append(lambdaData, oneLambdaData)
 		}
@@ -189,7 +181,7 @@ func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionNames []string) 
 					return // Error somewhere, terminate
 				default: // Default is a must to avoid blocking
 				}
-				oneLambdaData, err := processOneLambdaFunc(client, functionName)
+				oneLambdaData, err := getOneLambdaFunc(client, functionName)
 				if err != nil {
 					// Non-blocking send of error
 					select {
@@ -218,31 +210,42 @@ func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionNames []string) 
 	return lambdaData, nil
 }
 
-func processOneLambdaFunc(client *lambda.Client, functionName string) (*LambdaData, error) {
-	lambdaData := &LambdaData{}
+func getOneLambdaFunc(client *lambda.Client, functionName string) (*LambdaData, error) {
 	params := &lambda.GetFunctionConfigurationInput{
 		FunctionName: aws.String(functionName),
 	}
 
 	function, err := client.GetFunctionConfiguration(context.TODO(), params)
 	if err != nil {
+		return &LambdaData{}, err
+	}
+
+	lambdaData, err := processOneLambdaFunc(*function.LastModified, *function.CodeSha256, *function.FunctionName, string(function.PackageType))
+	if err != nil {
 		return lambdaData, err
 	}
 
-	lastModifiedTimestamp, err := formatLambdaLastModified(*function.LastModified)
+	return lambdaData, nil
+}
+
+func processOneLambdaFunc(lastModified, digest, functionName, packageType string) (*LambdaData, error) {
+	lambdaData := &LambdaData{}
+
+	lastModifiedTimestamp, err := formatLambdaLastModified(lastModified)
 	if err != nil {
 		return lambdaData, err
 	}
 	lambdaData.LastModifiedTimestamp = lastModifiedTimestamp.Unix()
 
-	lambdaData.Digests = map[string]string{functionName: *function.CodeSha256}
+	lambdaData.Digests = map[string]string{functionName: digest}
 
-	if string(function.PackageType) == "Zip" {
-		lambdaData.Digests[functionName], err = decodeLambdaFingerprint(*function.CodeSha256)
+	if packageType == "Zip" {
+		lambdaData.Digests[functionName], err = decodeLambdaFingerprint(digest)
 		if err != nil {
 			return lambdaData, err
 		}
 	}
+
 	return lambdaData, nil
 }
 
