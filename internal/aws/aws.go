@@ -138,6 +138,18 @@ func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionNames []string) 
 		if err != nil {
 			return lambdaData, err
 		}
+
+		continuationToken := listFunctionsOutput.NextMarker
+
+		for continuationToken != nil {
+			listFunctionsNewOutput, err := client.ListFunctions(context.Background(), &lambda.ListFunctionsInput{Marker: continuationToken})
+			if err != nil {
+				return nil, err
+			}
+			continuationToken = listFunctionsNewOutput.NextMarker
+			listFunctionsOutput.Functions = append(listFunctionsOutput.Functions, listFunctionsNewOutput.Functions...)
+		}
+
 		for _, function := range listFunctionsOutput.Functions {
 			oneLambdaData := &LambdaData{}
 			lastModifiedTimestamp, err := formatLambdaLastModified(*function.LastModified)
