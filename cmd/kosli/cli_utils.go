@@ -16,6 +16,7 @@ import (
 	"unicode"
 
 	"github.com/kosli-dev/cli/internal/digest"
+	"github.com/kosli-dev/cli/internal/gitview"
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/utils"
@@ -30,11 +31,12 @@ const (
 	teamcity    = "Teamcity"
 	gitlab      = "Gitlab"
 	azureDevops = "Azure Devops"
+	circleci    = "CircleCI"
 	unknown     = "Unknown"
 )
 
 // supportedCIs the set of CI tools that are supported for defaulting
-var supportedCIs = []string{bitbucket, github, teamcity, gitlab, azureDevops}
+var supportedCIs = []string{bitbucket, github, teamcity, gitlab, azureDevops, circleci}
 
 // ciTemplates a map of kosli flags and corresponding default templates in supported CI tools
 var ciTemplates = map[string]map[string]string{
@@ -69,6 +71,12 @@ var ciTemplates = map[string]map[string]string{
 		"commit-url": "${SYSTEM_COLLECTIONURI}/${SYSTEM_TEAMPROJECT}/_git/${BUILD_REPOSITORY_NAME}/commit/${BUILD_SOURCEVERSION}",
 		"org-url":    "${SYSTEM_COLLECTIONURI}",
 		"project":    "${SYSTEM_TEAMPROJECT}",
+	},
+	circleci: {
+		"git-commit": "${CIRCLE_SHA1}",
+		"repository": "${CIRCLE_PROJECT_REPONAME}",
+		"commit-url": "${CIRCLE_REPOSITORY_URL}/commit/${CIRCLE_SHA1}",
+		"build-url":  "${CIRCLE_BUILD_URL}",
 	},
 }
 
@@ -106,6 +114,8 @@ func WhichCI() string {
 		return gitlab
 	} else if _, ok := os.LookupEnv("TF_BUILD"); ok {
 		return azureDevops
+	} else if _, ok := os.LookupEnv("CIRCLECI"); ok {
+		return circleci
 	} else {
 		return unknown
 	}
@@ -121,7 +131,16 @@ func DefaultValue(ci, flag string) string {
 	_, ok2 := os.LookupEnv("KOSLI_TESTS")
 	if !ok1 && !ok2 {
 		if v, ok := ciTemplates[ci][flag]; ok {
-			return os.ExpandEnv(v)
+			result := os.ExpandEnv(v)
+			// github and gitlab use ../commit/.. , bitbucket uses ../commits/..
+			if ci == circleci && flag == "commit-url" {
+				result = gitview.ExtractRepoURLFromRemote(result)
+				if strings.Contains(result, "bitbucket.org") {
+					return strings.Replace(result, "commit", "commits", 1)
+				}
+			}
+
+			return result
 		}
 	}
 	return ""

@@ -146,6 +146,26 @@ func (suite *CliUtilsTestSuite) TestDefaultValue() {
 			},
 			want: "",
 		},
+		{
+			name: "Lookup commit-url for CircleCI with a repo from bitbucket returns correct url (with 'commits')",
+			args: args{
+				ci:               circleci,
+				flag:             "commit-url",
+				unsetTestsEnvVar: true,
+				envVars:          map[string]string{"CIRCLE_REPOSITORY_URL": "git@bitbucket.org:ewelinawilkosz/cli-test.git", "CIRCLE_SHA1": "2492011ef04a9da09d35be706cf6a4c5bc6f1e69"},
+			},
+			want: "https://bitbucket.org/ewelinawilkosz/cli-test/commits/2492011ef04a9da09d35be706cf6a4c5bc6f1e69",
+		},
+		{
+			name: "Lookup commit-url for CircleCI with a repo that is not from bitbucket returns correct url (with 'commits')",
+			args: args{
+				ci:               circleci,
+				flag:             "commit-url",
+				unsetTestsEnvVar: true,
+				envVars:          map[string]string{"CIRCLE_REPOSITORY_URL": "git@github.com:cyber-dojo/kosli-environment-reporter.git", "CIRCLE_SHA1": "84d80cd07ef86c1a5afbe69af491e5b3836a3f42"},
+			},
+			want: "https://github.com/cyber-dojo/kosli-environment-reporter/commit/84d80cd07ef86c1a5afbe69af491e5b3836a3f42",
+		},
 	} {
 		suite.Run(t.name, func() {
 			value, testMode := os.LookupEnv("KOSLI_TESTS")
