@@ -122,7 +122,7 @@ jobs:
         uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
-          repository: kosli-dev/kosli-reporter
+          repository: kosli-dev/terraform-aws-evidence-reporter
           event-type: upload-evidence-reporter-package
           # client-payload: '{"tag": "${{ needs.pre-build.outputs.tag }}"}'
           client-payload: '{"tag": "v2.5.0"}'
