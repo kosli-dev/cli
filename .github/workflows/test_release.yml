@@ -116,6 +116,7 @@ jobs:
   upload-evidence-reporter-package:
     # needs: [pre-build, goreleaser]
     needs: [pre-build]
+    runs-on: ubuntu-20.04
     steps:
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@v2
