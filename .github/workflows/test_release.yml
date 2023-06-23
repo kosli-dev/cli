@@ -1,0 +1,161 @@
+name: release
+
+on:
+  push:
+    branches:        
+      - 'ci-upload-evidence-reporter-package' 
+
+env: 
+  GO_VERSION: 1.20.2
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  pre-build:
+    runs-on: ubuntu-20.04
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+    
+    - uses: actions/checkout@v3
+
+    - name: Get tag
+      id: tag
+      uses: dawidd6/action-get-tag@v1
+
+  # test:
+  #   needs: [pre-build]
+  #   if: ${{ github.ref != 'refs/heads/prod' }}
+  #   uses: kosli-dev/cli/.github/workflows/test.yml@main
+  #   with:
+  #     AWS_ACCOUNT_ID: 772819027869
+  #     AWS_REGION: eu-central-1
+  #   secrets:
+  #     github_access_token: ${{ secrets.KOSLI_GITHUB_TOKEN }}
+  #     gitlab_access_token: ${{ secrets.KOSLI_GITLAB_TOKEN }}
+  #     azure_access_token: ${{ secrets.KOSLI_AZURE_TOKEN }}
+  #     bitbucket_password: ${{ secrets.KOSLI_BITBUCKET_PASSWORD }}
+  #     slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
+  #     slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
+
+  # docker:
+  #   needs: [test, pre-build]
+  #   if: ${{ github.ref != 'refs/heads/prod' }}
+  #   uses: kosli-dev/cli/.github/workflows/docker.yml@main
+  #   with:
+  #     tag: ${{ needs.pre-build.outputs.tag }}
+  #     platforms: linux/amd64
+  #   secrets:
+  #     slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
+  #     slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
+  #     ghcr_user: ${{ secrets.GHCR_USER }}
+  #     ghcr_token: ${{ secrets.GHCR_TOKEN }}
+  #     kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
+  #     snyk_token: ${{ secrets.SNYK_TOKEN }}
+
+  # goreleaser:
+  #   needs: [test]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #       with:
+  #         fetch-depth: 0
+
+  #     - name: Set up Go
+  #       uses: actions/setup-go@v3
+  #       with:
+  #         go-version: ${{ env.GO_VERSION }}
+
+  #     - name: Run GoReleaser
+  #       uses: goreleaser/goreleaser-action@v2
+  #       with:
+  #         version: latest
+  #         args: release --rm-dist
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
+  #         FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
+
+  # docs-gen:
+  #   needs: [goreleaser, pre-build]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #       with:
+  #         fetch-depth: 0 # needed to be able to generate legacy versions reference.
+
+  #     - name: Set up Go
+  #       uses: actions/setup-go@v3
+  #       with:
+  #         go-version: ${{ env.GO_VERSION }}
+
+  #     - name: Generate docs
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       # legacy-ref should happen first as it has the side effect of deleting generated files outside the legacy_ref
+  #       run: | 
+  #         make legacy-ref-docs 
+  #         make cli-docs 
+
+  #     - name: Generate json
+  #       run: |
+  #         echo '{"currentversion": "${{ needs.pre-build.outputs.tag }}"}' > docs.kosli.com/assets/metadata.json
+
+  #     - name: Deploy
+  #       uses: s0/git-publish-subdir-action@develop
+  #       env:
+  #         REPO: self
+  #         BRANCH: docs-main
+  #         FOLDER: docs.kosli.com
+  #         TARGET_DIR: docs.kosli.com
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #         MESSAGE: "Release: {msg}"
+
+  upload-evidence-reporter-package:
+    # needs: [pre-build, goreleaser]
+    needs: [pre-build]
+    steps:
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
+          repository: kosli-dev/kosli-reporter
+          event-type: upload-evidence-reporter-package
+          # client-payload: '{"tag": "${{ needs.pre-build.outputs.tag }}"}'
+          client-payload: '{"tag": "v2.5.0"}'
+            
+
+  # upload-reporter-package-prod:
+  #   needs: [pre-build, goreleaser]
+  #   uses: kosli-dev/cli/.github/workflows/upload-reporter-package.yml@main
+  #   with:
+  #     tag: ${{ needs.pre-build.outputs.tag }}
+  #     s3_name: reporter-lambda-dacef8339fbd41ce31c346f854a85d0c74f7c4e8
+  #     AWS_ACCOUNT_ID: 772819027869
+  #     AWS_REGION: eu-central-1
+
+  # deploy-evidence-reporters:
+  #   runs-on: ubuntu-20.04
+  #   needs: [upload-lambda-layer]
+  #   steps:
+  #     - name: Repository Dispatch
+  #       uses: peter-evans/repository-dispatch@v2
+  #       with:
+  #         token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
+  #         repository: kosli-dev/terraform-evidence-reporter
+  #         event-type: deploy-evidence-reporter
+  #         client-payload: '{"layer_version_arn_kosli_bin": "${{ needs.upload-lambda-layer.outputs.layer_version_arn }}"}'
+
+  # deploy-production-reporters:
+  #   runs-on: ubuntu-20.04
+  #   needs: [pre-build, upload-reporter-package-prod]
+  #   steps:
+  #     - name: Repository Dispatch
+  #       uses: peter-evans/repository-dispatch@v2
+  #       with:
+  #         token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
+  #         repository: kosli-dev/kosli-reporter
+  #         event-type: deploy-reporter
+  #         client-payload: '{"env": "production", "tag": "${{ needs.pre-build.outputs.tag }}"}'
