@@ -113,15 +113,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MESSAGE: "Release: {msg}"
 
-  # upload-lambda-layer:
-  #   needs: [pre-build, goreleaser]
-  #   uses: kosli-dev/cli/.github/workflows/upload-lambda-layer.yml@main
-  #   with:
-  #     tag: ${{ needs.pre-build.outputs.tag }}
-  #     OIDC_ROLE_ARN: arn:aws:iam::772819027869:role/cli
-  #     AWS_REGION: eu-central-1
+  upload-evidence-reporter-package:
+    needs: [pre-build, goreleaser]
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
+          repository: kosli-dev/terraform-aws-evidence-reporter
+          event-type: upload-evidence-reporter-package
+          client-payload: '{"tag": "${{ needs.pre-build.outputs.tag }}"}'
 
-  upload-reporter-package-prod:
+  upload-kosli-reporter-package-prod:
     needs: [pre-build, goreleaser]
     uses: kosli-dev/cli/.github/workflows/upload-reporter-package.yml@main
     with:
@@ -144,7 +148,7 @@ jobs:
 
   deploy-production-reporters:
     runs-on: ubuntu-20.04
-    needs: [pre-build, upload-reporter-package-prod]
+    needs: [pre-build, upload-kosli-reporter-package-prod]
     steps:
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@v2
