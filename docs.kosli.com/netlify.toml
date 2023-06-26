@@ -19,6 +19,3 @@
 
 [[plugins]]
 package = "netlify-plugin-checklinks"
-  [plugins.inputs]
-  skipPatterns = ["--kosli-docs.netlify.app"]
-
