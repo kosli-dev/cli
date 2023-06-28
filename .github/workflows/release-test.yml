@@ -117,6 +117,9 @@ jobs:
     # needs: [pre-build, goreleaser]
     needs: [pre-build]
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write
+      contents: read
     steps:
     - uses: actions/checkout@v3
 
