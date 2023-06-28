@@ -116,14 +116,34 @@ jobs:
   upload-evidence-reporter-package:
     needs: [pre-build, goreleaser]
     runs-on: ubuntu-20.04
+    outputs:
+      kosli_cli_version: ${{ steps.upload-package.outputs.kosli_cli_version }}
+    permissions:
+      id-token: write
+      contents: read
     steps:
-      - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@v2
-        with:
-          token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
-          repository: kosli-dev/terraform-aws-evidence-reporter
-          event-type: upload-evidence-reporter-package
-          client-payload: '{"tag": "${{ needs.pre-build.outputs.tag }}"}'
+    - uses: actions/checkout@v3
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: arn:aws:iam::${{ secrets.KOSLI_REPORTER_SOURCES_AWS_ACCOUNT_ID }}:role/${{ github.event.repository.name }}
+        aws-region: ${{ secrets.KOSLI_REPORTER_SOURCES_AWS_REGION }}
+        role-duration-seconds: 900
+        role-session-name: ${{ github.event.repository.name }}
+
+    - name: Upload evidence reporter lambda package
+      id: upload-package
+      env:
+        TAG: ${{ needs.pre-build.outputs.tag }}
+        S3_NAME: ${{ secrets.KOSLI_REPORTER_SOURCES_S3_NAME }}
+      run: |
+        KOSLI_CLI_VERSION="${TAG:1}"
+        echo "kosli_cli_version=$KOSLI_CLI_VERSION" >> $GITHUB_OUTPUT
+        curl -Lo kosli_${KOSLI_CLI_VERSION}_linux_amd64.tar.gz https://github.com/kosli-dev/cli/releases/download/${TAG}/kosli_${KOSLI_CLI_VERSION}_linux_amd64.tar.gz
+        tar -xf kosli_${KOSLI_CLI_VERSION}_linux_amd64.tar.gz -C . && rm kosli_${KOSLI_CLI_VERSION}_linux_amd64.tar.gz
+        zip -j kosli_evidence_reporter_${KOSLI_CLI_VERSION}.zip src/* kosli
+        aws s3 cp kosli_evidence_reporter_${KOSLI_CLI_VERSION}.zip s3://${{ secrets.KOSLI_REPORTER_SOURCES_S3_NAME }}/kosli_evidence_reporter_${TAG}.zip
 
   upload-kosli-reporter-package-prod:
     needs: [pre-build, goreleaser]
@@ -134,17 +154,17 @@ jobs:
       AWS_ACCOUNT_ID: 772819027869
       AWS_REGION: eu-central-1
 
-  # deploy-evidence-reporters:
-  #   runs-on: ubuntu-20.04
-  #   needs: [upload-lambda-layer]
-  #   steps:
-  #     - name: Repository Dispatch
-  #       uses: peter-evans/repository-dispatch@v2
-  #       with:
-  #         token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
-  #         repository: kosli-dev/terraform-evidence-reporter
-  #         event-type: deploy-evidence-reporter
-  #         client-payload: '{"layer_version_arn_kosli_bin": "${{ needs.upload-lambda-layer.outputs.layer_version_arn }}"}'
+  deploy-evidence-reporters:
+    runs-on: ubuntu-20.04
+    needs: [upload-evidence-reporter-package]
+    steps:
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
+          repository: kosli-dev/terraform-evidence-reporter
+          event-type: deploy-evidence-reporter
+          client-payload: '{"kosli_cli_version": "${{ needs.upload-evidence-reporter-package.outputs.kosli_cli_version }}"}'
 
   deploy-production-reporters:
     runs-on: ubuntu-20.04
