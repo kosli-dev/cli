@@ -2,10 +2,8 @@ name: Main
 
 on:
   push:
-    # branches:
-    #   - '**'
-    branches-ignore:
-      - 'ci-deploy-evidence-reporter'
+    branches:
+      - '**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
