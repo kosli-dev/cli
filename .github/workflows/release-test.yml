@@ -118,7 +118,7 @@ jobs:
     needs: [pre-build]
     runs-on: ubuntu-20.04
     outputs:
-      tag: ${{ steps.upload-evidence-lambda-package.outputs.kosli_cli_version }}
+      kosli_cli_version: ${{ steps.upload-package.outputs.kosli_cli_version }}
     permissions:
       id-token: write
       contents: read
@@ -134,7 +134,7 @@ jobs:
         role-session-name: ${{ github.event.repository.name }}
 
     - name: Upload evidence reporter lambda package
-      id: upload-evidence-lambda-package
+      id: upload-package
       env:
         # TAG: ${{ needs.pre-build.outputs.tag }}
         TAG: "v2.5.0"
@@ -166,7 +166,7 @@ jobs:
           token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
           repository: kosli-dev/terraform-evidence-reporter
           event-type: deploy-evidence-reporter
-          client-payload: '{"layer_version_arn_kosli_bin": "${{ needs.upload-evidence-reporter-package.outputs.kosli_cli_version }}"}'
+          client-payload: '{"kosli_cli_version": "${{ needs.upload-evidence-reporter-package.outputs.kosli_cli_version }}"}'
 
   # deploy-production-reporters:
   #   runs-on: ubuntu-20.04
