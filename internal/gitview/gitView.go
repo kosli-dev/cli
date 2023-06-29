@@ -104,17 +104,17 @@ func (gv *GitView) RepoUrl() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("remote('origin') is not found in git repository: %s", gv.repositoryRoot)
 	}
-	remoteUrl := extractRepoURLFromRemote(repoRemote.Config().URLs[0])
+	remoteUrl := ExtractRepoURLFromRemote(repoRemote.Config().URLs[0])
 	return remoteUrl, nil
 }
 
-// extractRepoURLFromRemote converts an SSH or http remote into a URL
-func extractRepoURLFromRemote(remoteUrl string) string {
+// ExtractRepoURLFromRemote converts an SSH or http remote into a URL
+func ExtractRepoURLFromRemote(remoteUrl string) string {
 	if strings.HasPrefix(remoteUrl, "git@") {
 		remoteUrl = strings.Replace(remoteUrl, ":", "/", 1)
 		remoteUrl = strings.Replace(remoteUrl, "git@", "https://", 1)
 	}
-	remoteUrl = strings.TrimSuffix(remoteUrl, ".git")
+	remoteUrl = strings.Replace(remoteUrl, ".git", "", 1)
 	return remoteUrl
 }
 

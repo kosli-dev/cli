@@ -54,7 +54,7 @@ jobs:
       kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}
   
-  upload-reporter-package-staging:
+  upload-kosli-reporter-package-staging:
     needs: [pre-build, test]
     if: ${{ github.ref == 'refs/heads/main' }}
     uses: kosli-dev/cli/.github/workflows/upload-reporter-package.yml@main
@@ -66,7 +66,7 @@ jobs:
 
   deploy-staging-reporters:
     runs-on: ubuntu-20.04
-    needs: [pre-build, upload-reporter-package-staging]
+    needs: [pre-build, upload-kosli-reporter-package-staging]
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
       - name: Repository Dispatch

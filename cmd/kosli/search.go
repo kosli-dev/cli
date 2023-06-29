@@ -29,6 +29,7 @@ type SearchArtifact struct {
 	HasProvenance   bool                     `json:"has_provenance"`
 	CommitURL       string                   `json:"commit_url"`
 	BuildURL        string                   `json:"build_url"`
+	ArtifactURL     string                   `json:"html_url"`
 	ComplianceState string                   `json:"compliance_state"`
 	RunningIn       []string                 `json:"running_in"`
 	ExitedFrom      []string                 `json:"exited_from"`
@@ -128,6 +129,7 @@ func printSearchAsTableWrapper(responseRaw string, out io.Writer, pageNumber int
 			rows = append(rows, fmt.Sprintf("Git commit:\t%s", artifact.Commit))
 			rows = append(rows, fmt.Sprintf("Commit URL:\t%s", artifact.CommitURL))
 			rows = append(rows, fmt.Sprintf("Build URL:\t%s", artifact.BuildURL))
+			rows = append(rows, fmt.Sprintf("Artifact URL:\t%s", artifact.ArtifactURL))
 			rows = append(rows, fmt.Sprintf("Compliance state:\t%s", artifact.ComplianceState))
 		}
 

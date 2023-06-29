@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -15,6 +16,7 @@ import (
 	s3manager "github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/ecs"
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
+	"github.com/aws/aws-sdk-go-v2/service/lambda/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/logger"
@@ -122,6 +124,28 @@ func (staticCreds *AWSStaticCreds) NewECSClient() (*ecs.Client, error) {
 	return ecs.NewFromConfig(cfg), nil
 }
 
+// getAllLambdaFuncs fetches all lambda functions recursively (50 at a time) and returns a list of FunctionConfiguration
+func getAllLambdaFuncs(client *lambda.Client, nextMarker *string, allFunctions *[]types.FunctionConfiguration) (*[]types.FunctionConfiguration, error) {
+	params := &lambda.ListFunctionsInput{}
+	if nextMarker != nil {
+		params.Marker = nextMarker
+	}
+
+	listFunctionsOutput, err := client.ListFunctions(context.TODO(), params)
+	if err != nil {
+		return allFunctions, err
+	}
+
+	*allFunctions = append(*allFunctions, listFunctionsOutput.Functions...)
+	if listFunctionsOutput.NextMarker != nil {
+		_, err := getAllLambdaFuncs(client, listFunctionsOutput.NextMarker, allFunctions)
+		if err != nil {
+			return allFunctions, err
+		}
+	}
+	return allFunctions, nil
+}
+
 // GetLambdaPackageData returns a digest and metadata of a Lambda function package
 func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionNames []string) ([]*LambdaData, error) {
 	lambdaData := []*LambdaData{}
@@ -130,47 +154,106 @@ func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionNames []string) 
 		return lambdaData, err
 	}
 
-	for _, functionName := range functionNames {
-		oneLambdaData, err := processOneLambdaFunc(client, functionName)
+	if len(functionNames) == 0 {
+		allFunctions, err := getAllLambdaFuncs(client, nil, &[]types.FunctionConfiguration{})
 		if err != nil {
 			return lambdaData, err
 		}
-		lambdaData = append(lambdaData, oneLambdaData)
-	}
 
-	// lambdaData = append(lambdaData, &LambdaData{Digests: map[string]string{functionName: sha256hex}, LastModifiedTimestamp: lastModifiedTimestamp.Unix()})
+		for _, function := range *allFunctions {
+			oneLambdaData, err := processOneLambdaFunc(*function.LastModified, *function.CodeSha256, *function.FunctionName, string(function.PackageType))
+			if err != nil {
+				return lambdaData, err
+			}
+			lambdaData = append(lambdaData, oneLambdaData)
+		}
+
+	} else {
+		var (
+			wg    sync.WaitGroup
+			mutex = &sync.Mutex{}
+		)
+
+		// run concurrently
+		errs := make(chan error, 1) // Buffered only for the first error
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel() // Make sure it's called to release resources even if no errors
+
+		for _, functionName := range functionNames {
+			wg.Add(1)
+			go func(functionName string) {
+				defer wg.Done()
+				// Check if any error occurred in any other gorouties:
+				select {
+				case <-ctx.Done():
+					return // Error somewhere, terminate
+				default: // Default is a must to avoid blocking
+				}
+				oneLambdaData, err := getAndProcessOneLambdaFunc(client, functionName)
+				if err != nil {
+					// Non-blocking send of error
+					select {
+					case errs <- err:
+					default:
+					}
+					cancel() // send cancel signal to goroutines
+					return
+				}
+
+				mutex.Lock()
+				lambdaData = append(lambdaData, oneLambdaData)
+				mutex.Unlock()
+
+			}(functionName)
+
+		}
+
+		wg.Wait()
+		// Return (first) error, if any:
+		if ctx.Err() != nil {
+			return lambdaData, <-errs
+		}
+	}
 
 	return lambdaData, nil
 }
 
-func processOneLambdaFunc(client *lambda.Client, functionName string) (*LambdaData, error) {
-	lambdaData := &LambdaData{}
+// getAndProcessOneLambdaFunc get a lambda function by its name and return a LambdaData object from it
+func getAndProcessOneLambdaFunc(client *lambda.Client, functionName string) (*LambdaData, error) {
 	params := &lambda.GetFunctionConfigurationInput{
 		FunctionName: aws.String(functionName),
 	}
-	// if functionVersion != "" {
-	// 	params.Qualifier = aws.String(functionVersion)
-	// }
 
 	function, err := client.GetFunctionConfiguration(context.TODO(), params)
+	if err != nil {
+		return &LambdaData{}, err
+	}
+
+	lambdaData, err := processOneLambdaFunc(*function.LastModified, *function.CodeSha256, *function.FunctionName, string(function.PackageType))
 	if err != nil {
 		return lambdaData, err
 	}
 
-	lastModifiedTimestamp, err := formatLambdaLastModified(*function.LastModified)
+	return lambdaData, nil
+}
+
+// processOneLambdaFunc returns LambdaData object from lambda function attributes
+func processOneLambdaFunc(lastModified, codeSha256, functionName, packageType string) (*LambdaData, error) {
+	lambdaData := &LambdaData{}
+	lastModifiedTimestamp, err := formatLambdaLastModified(lastModified)
 	if err != nil {
 		return lambdaData, err
 	}
 	lambdaData.LastModifiedTimestamp = lastModifiedTimestamp.Unix()
+	lambdaData.Digests = map[string]string{functionName: codeSha256}
 
-	lambdaData.Digests = map[string]string{functionName: *function.CodeSha256}
-
-	if string(function.PackageType) == "Zip" {
-		lambdaData.Digests[functionName], err = decodeLambdaFingerprint(*function.CodeSha256)
+	if packageType == "Zip" {
+		lambdaData.Digests[functionName], err = decodeLambdaFingerprint(codeSha256)
 		if err != nil {
 			return lambdaData, err
 		}
 	}
+
 	return lambdaData, nil
 }
 

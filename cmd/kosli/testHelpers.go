@@ -19,6 +19,7 @@ type cmdTestCase struct {
 	cmd              string
 	golden           string
 	goldenFile       string
+	goldenRegex      string
 	wantError        bool
 	additionalConfig interface{}
 }
@@ -74,6 +75,8 @@ func runTestCmd(t *testing.T, tests []cmdTestCase) {
 				if err := compareAgainstFile([]byte(out), goldenPath(tt.goldenFile)); err != nil {
 					t.Error(err)
 				}
+			} else if tt.goldenRegex != "" {
+				require.Regexp(t, tt.goldenRegex, out)
 			}
 		})
 	}

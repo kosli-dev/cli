@@ -66,6 +66,14 @@ The following flags are **defaulted** (which means you don't need to provide the
 | --gitlab-org | ${CI_PROJECT_NAMESPACE} |
 {{< /tab >}}
 
+{{< tab "CircleCI" >}}
+| Flag | Default |
+| :--- | :--- |
+| --build-url | ${CIRCLE_BUILD_URL} |
+| --commit-url | ${CIRCLE_REPOSITORY_URL}(converted to https url)/commit(s)/${CIRCLE_SHA1} |
+| --git-commit | ${CIRCLE_SHA1} |
+{{< /tab >}}
+
 {{< tab "Teamcity" >}}
 | Flag | Default |
 | :--- | :--- |

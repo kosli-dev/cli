@@ -231,7 +231,7 @@ func (suite *GitViewTestSuite) TestExtractRepoURLFromRemote() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			actual := extractRepoURLFromRemote(t.remoteURL)
+			actual := ExtractRepoURLFromRemote(t.remoteURL)
 			require.Equal(suite.T(), t.want, actual)
 		})
 	}

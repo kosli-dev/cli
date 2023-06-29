@@ -45,7 +45,7 @@ func (suite *SnapshotLambdaTestSuite) TestSnapshotLambdaCmd() {
 			additionalConfig: snapshotLambdaTestConfig{
 				requireAuthToBeSet: true,
 			},
-			golden: fmt.Sprintf("Flag --function-name has been deprecated, use --function-names instead\n[%s] lambda function was reported to environment %s\n", suite.zipFunctionName, suite.envName),
+			golden: fmt.Sprintf("Flag --function-name has been deprecated, use --function-names instead\n1 lambda functions were reported to environment %s\n", suite.envName),
 		},
 		{
 			name: "snapshot lambda works with --function-names for Zip package type",
@@ -53,7 +53,7 @@ func (suite *SnapshotLambdaTestSuite) TestSnapshotLambdaCmd() {
 			additionalConfig: snapshotLambdaTestConfig{
 				requireAuthToBeSet: true,
 			},
-			golden: fmt.Sprintf("[%s] lambda function was reported to environment %s\n", suite.zipFunctionName, suite.envName),
+			golden: fmt.Sprintf("1 lambda functions were reported to environment %s\n", suite.envName),
 		},
 		{
 			name: "snapshot lambda works with --function-names taking a list of functions",
@@ -61,7 +61,7 @@ func (suite *SnapshotLambdaTestSuite) TestSnapshotLambdaCmd() {
 			additionalConfig: snapshotLambdaTestConfig{
 				requireAuthToBeSet: true,
 			},
-			golden: fmt.Sprintf("[%s %s] lambda function was reported to environment %s\n", suite.zipFunctionName, suite.imageFunctionName, suite.envName),
+			golden: fmt.Sprintf("2 lambda functions were reported to environment %s\n", suite.envName),
 		},
 		{
 			name: "snapshot lambda works with --function-names for Image package type",
@@ -69,7 +69,7 @@ func (suite *SnapshotLambdaTestSuite) TestSnapshotLambdaCmd() {
 			additionalConfig: snapshotLambdaTestConfig{
 				requireAuthToBeSet: true,
 			},
-			golden: fmt.Sprintf("[%s] lambda function was reported to environment %s\n", suite.imageFunctionName, suite.envName),
+			golden: fmt.Sprintf("1 lambda functions were reported to environment %s\n", suite.envName),
 		},
 		{
 			name: "snapshot lambda works with --function-names and deprecated --function-version which is ignored",
@@ -77,16 +77,16 @@ func (suite *SnapshotLambdaTestSuite) TestSnapshotLambdaCmd() {
 			additionalConfig: snapshotLambdaTestConfig{
 				requireAuthToBeSet: true,
 			},
-			golden: fmt.Sprintf("Flag --function-version has been deprecated, --function-version is no longer supported. It will be removed in a future release.\n[%s] lambda function was reported to environment %s\n", suite.zipFunctionName, suite.envName),
+			golden: fmt.Sprintf("Flag --function-version has been deprecated, --function-version is no longer supported. It will be removed in a future release.\n1 lambda functions were reported to environment %s\n", suite.envName),
 		},
 		{
-			wantError: true,
-			name:      "snapshot lambda fails without neither of --function-name or --function-names",
+			wantError: false,
+			name:      "snapshot lambda without --function-names will report all lambdas in the AWS account",
 			cmd:       fmt.Sprintf(`snapshot lambda %s %s`, suite.envName, suite.defaultKosliArguments),
 			additionalConfig: snapshotLambdaTestConfig{
 				requireAuthToBeSet: true,
 			},
-			golden: "Error: at least one of --function-name, --function-names is required\n",
+			goldenRegex: fmt.Sprintf("[0-9]+ lambda functions were reported to environment %s\n", suite.envName),
 		},
 		{
 			wantError: true,

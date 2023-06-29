@@ -138,6 +138,7 @@ func printArtifactsJsonAsTable(artifacts []map[string]interface{}, out io.Writer
 		rows = append(rows, fmt.Sprintf("Git commit:\t%s", artifact["git_commit"].(string)))
 		rows = append(rows, fmt.Sprintf("Commit URL:\t%s", artifact["commit_url"].(string)))
 		rows = append(rows, fmt.Sprintf("Build URL:\t%s", artifact["build_url"].(string)))
+		rows = append(rows, fmt.Sprintf("Artifact URL:\t%s", artifact["html_url"].(string)))
 
 		rows = append(rows, fmt.Sprintf("State:\t%s", artifact["state"].(string)))
 
