@@ -16,28 +16,31 @@ type reportEvidenceCommitJiraTicketOptions struct {
 	payload          JiraTicketEvidencePayload
 }
 
-const reportEvidenceCommitJiraTicketShortDesc = `Report JiraTicket evidence for a commit in Kosli flows.`
+const reportEvidenceCommitJiraTicketShortDesc = `Report Jira ticket evidence for a commit in Kosli flows.`
 
-const reportEvidenceCommitJiraTicketLongDesc = reportEvidenceCommitJiraTicketShortDesc
+const reportEvidenceCommitJiraTicketLongDesc = reportEvidenceCommitJiraTicketShortDesc + `
+Parses the current commit message for a Jira ticket reference of the 
+form: 'one or more capital letters followed by dash and one or more digits'.
+If found and the Jira ticket exists a compliance status of True is reported.
+Otherwise a compliance status of False is reported.
+`
 
 const reportEvidenceCommitJiraTicketExample = `
-# report JiraTicket evidence for a commit related to one Kosli flow:
-kosli report evidence commit generic \
-	--commit yourGitCommitSha1 \
+# report Jira ticket evidence for a commit related to one Kosli flow:
+kosli report evidence commit jira \
 	--name yourEvidenceName \
 	--description "some description" \
-	--compliant \
+	--jira-base-url https://jira.com/xxxx \
 	--flows yourFlowName \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report JiraTicket evidence for a commit related to multiple Kosli flows with user-data:
-kosli report evidence commit generic \
-	--commit yourGitCommitSha1 \
+# report Jira ticket evidence for a commit related to multiple Kosli flows with user-data:
+kosli report evidence commit jira \
 	--name yourEvidenceName \
 	--description "some description" \
-	--compliant \
+	--jira-base-url https://jira.com/xxxx \
 	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
