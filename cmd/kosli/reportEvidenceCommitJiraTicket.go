@@ -30,7 +30,7 @@ const reportEvidenceCommitJiraTicketExample = `
 kosli report evidence commit jira \
 	--name yourEvidenceName \
 	--description "some description" \
-	--jira-base-url https://jira.com/xxxx \
+	--jira-base-url https://kosli.atlassian.net/browse/ \
 	--flows yourFlowName \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
@@ -40,7 +40,7 @@ kosli report evidence commit jira \
 kosli report evidence commit jira \
 	--name yourEvidenceName \
 	--description "some description" \
-	--jira-base-url https://jira.com/xxxx \
+	--jira-base-url https://kosli.atlassian.net/browse/ \
 	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
@@ -70,7 +70,6 @@ func newReportEvidenceCommitJiraTicketCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	addCommitEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
-	cmd.Flags().BoolVarP(&o.payload.Compliant, "compliant", "C", false, evidenceCompliantFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", evidenceDescriptionFlag)
 	cmd.Flags().StringVarP(&o.payload.JiraBaseURL, "jira-base-url", "j", "", jiraBaseUrlFlag)
 	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
