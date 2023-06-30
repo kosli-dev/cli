@@ -28,5 +28,3 @@ When the webhook is ready you can copy **Webhook URL**, go to [app.kosli.com](ht
 {{<figure src="/images/slack.png" alt="Slack webhook setting" width="900">}}
 
 Remember to click **Save** button. You can also check if it works by sending test notification, using the button under Webhook URL field.
-
-[broken link](www.dskfjksldjfiosjefiseklfnkelf.com)
