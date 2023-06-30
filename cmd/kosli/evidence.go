@@ -23,9 +23,10 @@ type GenericEvidencePayload struct {
 
 type JiraEvidencePayload struct {
 	TypedEvidencePayload
-	JiraBaseURL string `json:"jira_base_url"`
-	Description string `json:"description,omitempty"`
-	Compliant   bool   `json:"is_compliant"`
+	JiraBaseURL   string `json:"jira_base_url"`
+	JiraReference string `json:"jira_reference"`
+	Description   string `json:"description,omitempty"`
+	Compliant     bool   `json:"is_compliant"`
 }
 
 type WorkflowEvidencePayload struct {

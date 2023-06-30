@@ -28,6 +28,7 @@ Otherwise a compliance status of False is reported.
 const reportEvidenceCommitJiraExample = `
 # report Jira  evidence for a commit related to one Kosli flow:
 kosli report evidence commit jira \
+	--commit yourGitCommitSha1 \
 	--name yourEvidenceName \
 	--description "some description" \
 	--jira-base-url https://kosli.atlassian.net/browse/ \
@@ -38,6 +39,7 @@ kosli report evidence commit jira \
 
 # report Jira  evidence for a commit related to multiple Kosli flows with user-data:
 kosli report evidence commit jira \
+	--commit yourGitCommitSha1 \
 	--name yourEvidenceName \
 	--description "some description" \
 	--jira-base-url https://kosli.atlassian.net/browse/ \
@@ -51,7 +53,7 @@ kosli report evidence commit jira \
 func newReportEvidenceCommitJiraCmd(out io.Writer) *cobra.Command {
 	o := new(reportEvidenceCommitJiraOptions)
 	cmd := &cobra.Command{
-		Use:     "jira-",
+		Use:     "jira",
 		Short:   reportEvidenceCommitJiraShortDesc,
 		Long:    reportEvidenceCommitJiraLongDesc,
 		Example: reportEvidenceCommitJiraExample,
@@ -76,7 +78,7 @@ func newReportEvidenceCommitJiraCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringSliceVarP(&o.evidencePaths, "evidence-paths", "e", []string{}, evidencePathsFlag)
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"commit", "build-url", "name"})
+	err := RequireFlags(cmd, []string{"commit", "build-url", "name", "jira-base-url"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
