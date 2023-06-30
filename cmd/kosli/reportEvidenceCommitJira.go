@@ -10,23 +10,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type reportEvidenceCommitJiraTicketOptions struct {
+type reportEvidenceCommitJiraOptions struct {
 	userDataFilePath string
 	evidencePaths    []string
-	payload          JiraTicketEvidencePayload
+	payload          JiraEvidencePayload
 }
 
-const reportEvidenceCommitJiraTicketShortDesc = `Report Jira ticket evidence for a commit in Kosli flows.`
+const reportEvidenceCommitJiraShortDesc = `Report Jira  evidence for a commit in Kosli flows.`
 
-const reportEvidenceCommitJiraTicketLongDesc = reportEvidenceCommitJiraTicketShortDesc + `
-Parses the current commit message for a Jira ticket reference of the 
+const reportEvidenceCommitJiraLongDesc = reportEvidenceCommitJiraShortDesc + `
+Parses the current commit message for a Jira  reference of the 
 form: 'one or more capital letters followed by dash and one or more digits'.
-If found and the Jira ticket exists a compliance status of True is reported.
+If found and the Jira  exists a compliance status of True is reported.
 Otherwise a compliance status of False is reported.
 `
 
-const reportEvidenceCommitJiraTicketExample = `
-# report Jira ticket evidence for a commit related to one Kosli flow:
+const reportEvidenceCommitJiraExample = `
+# report Jira  evidence for a commit related to one Kosli flow:
 kosli report evidence commit jira \
 	--name yourEvidenceName \
 	--description "some description" \
@@ -36,7 +36,7 @@ kosli report evidence commit jira \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report Jira ticket evidence for a commit related to multiple Kosli flows with user-data:
+# report Jira  evidence for a commit related to multiple Kosli flows with user-data:
 kosli report evidence commit jira \
 	--name yourEvidenceName \
 	--description "some description" \
@@ -48,13 +48,13 @@ kosli report evidence commit jira \
 	--user-data /path/to/json/file.json
 `
 
-func newReportEvidenceCommitJiraTicketCmd(out io.Writer) *cobra.Command {
-	o := new(reportEvidenceCommitJiraTicketOptions)
+func newReportEvidenceCommitJiraCmd(out io.Writer) *cobra.Command {
+	o := new(reportEvidenceCommitJiraOptions)
 	cmd := &cobra.Command{
-		Use:     "jira-ticket",
-		Short:   reportEvidenceCommitJiraTicketShortDesc,
-		Long:    reportEvidenceCommitJiraTicketLongDesc,
-		Example: reportEvidenceCommitJiraTicketExample,
+		Use:     "jira-",
+		Short:   reportEvidenceCommitJiraShortDesc,
+		Long:    reportEvidenceCommitJiraLongDesc,
+		Example: reportEvidenceCommitJiraExample,
 		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
@@ -84,7 +84,7 @@ func newReportEvidenceCommitJiraTicketCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *reportEvidenceCommitJiraTicketOptions) run(args []string) error {
+func (o *reportEvidenceCommitJiraOptions) run(args []string) error {
 	var err error
 	url := fmt.Sprintf("%s/api/v2/evidence/%s/commit/generic", global.Host, global.Org)
 	o.payload.UserData, err = LoadJsonData(o.userDataFilePath)
@@ -112,7 +112,7 @@ func (o *reportEvidenceCommitJiraTicketOptions) run(args []string) error {
 
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("jira-ticket evidence '%s' is reported to commit: %s", o.payload.EvidenceName, o.payload.CommitSHA)
+		logger.Info("jira- evidence '%s' is reported to commit: %s", o.payload.EvidenceName, o.payload.CommitSHA)
 	}
 	return err
 }
