@@ -23,8 +23,10 @@ In order to receive the notifications you need to create a slack app: https://ap
 
 When your app is created add **Incoming Webhooks** feature. Once you activate it you can **Add new Webhook** to chosen slack workspace, where you can select the channel to which the notifications will be sent. 
 
-When the webhook is ready you can copy **Webhook URL**, go to [app.kosli.com](https://app.kosli.com), and paste it to **Slack Webhook** field under **Notifications** tab in **Settings** page for your organization.
+When the webhook is ready you can copy **Webhook URL**, go to [app.kosli.com](https://app.kosli.com), click on **Notifications** tab in **Settings** page for your organization. Then click **Create new notification** button and paste the webhook URL in **Slack webhook** field.
 
 {{<figure src="/images/slack.png" alt="Slack webhook setting" width="900">}}
 
 Remember to click **Save** button. You can also check if it works by sending test notification, using the button under Webhook URL field.
+
+[broken link](www.dskfjksldjfiosjefiseklfnkelf.com)
