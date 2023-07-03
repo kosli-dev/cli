@@ -245,17 +245,17 @@ func (suite *GitViewTestSuite) TestNewCommitInfoFromGitCommit() {
 	gv, err := New(worktree.Filesystem.Root())
 	require.NoError(suite.T(), err)
 
-	_, err = gv.newCommitInfoFromGitCommit("58a9461c5a42d83bd5731485a72ddae542ac99d8")
+	_, err = gv.GetCommitInfoFromCommitSHA("58a9461c5a42d83bd5731485a72ddae542ac99d8")
 	require.Error(suite.T(), err)
 	expected := "failed to resolve git reference 58a9461c5a42d83bd5731485a72ddae542ac99d8: reference not found"
 	require.Equal(suite.T(), expected, err.Error())
 
-	_, err = gv.newCommitInfoFromGitCommit("HEAD~2")
+	_, err = gv.GetCommitInfoFromCommitSHA("HEAD~2")
 	require.Error(suite.T(), err)
 	expected = "failed to resolve git reference HEAD~2: EOF"
 	require.Equal(suite.T(), expected, err.Error())
 
-	ci, err := gv.newCommitInfoFromGitCommit("HEAD")
+	ci, err := gv.GetCommitInfoFromCommitSHA("HEAD")
 	require.NoError(suite.T(), err)
 	require.Equal(suite.T(), "Added file 1", ci.Message)
 	require.Equal(suite.T(), "master", ci.Branch)

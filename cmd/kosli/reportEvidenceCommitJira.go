@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/jira"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -15,6 +16,10 @@ type reportEvidenceCommitJiraOptions struct {
 	userDataFilePath string
 	evidencePaths    []string
 	baseURL          string
+	username         string
+	apiToken         string
+	pat              string
+	srcRepoRoot      string
 	payload          JiraEvidencePayload
 }
 
@@ -63,6 +68,17 @@ func newReportEvidenceCommitJiraCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
+
+			err = MuXRequiredFlags(cmd, []string{"jira-pat", "jira-api-token"}, true)
+			if err != nil {
+				return err
+			}
+
+			err = MuXRequiredFlags(cmd, []string{"jira-pat", "jira-username"}, true)
+			if err != nil {
+				return err
+			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -72,7 +88,11 @@ func newReportEvidenceCommitJiraCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	addCommitEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
-	cmd.Flags().StringVarP(&o.baseURL, "jira-base-url", "j", "", jiraBaseUrlFlag)
+	cmd.Flags().StringVar(&o.baseURL, "jira-base-url", "", jiraBaseUrlFlag)
+	cmd.Flags().StringVar(&o.username, "jira-username", "", jiraUsernameFlag)
+	cmd.Flags().StringVar(&o.apiToken, "jira-api-token", "", jiraAPITokenFlag)
+	cmd.Flags().StringVar(&o.pat, "jira-pat", "", jiraPATFlag)
+	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", repoRootFlag)
 	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
 	cmd.Flags().StringSliceVarP(&o.evidencePaths, "evidence-paths", "e", []string{}, evidencePathsFlag)
 	addDryRunFlag(cmd)
@@ -87,17 +107,46 @@ func newReportEvidenceCommitJiraCmd(out io.Writer) *cobra.Command {
 
 func (o *reportEvidenceCommitJiraOptions) run(args []string) error {
 	var err error
+
+	jc := jira.NewJiraConfig(o.baseURL, o.username, o.apiToken, o.pat)
+
 	url := fmt.Sprintf("%s/api/v2/evidence/%s/commit/jira", global.Host, global.Org)
 	o.payload.UserData, err = LoadJsonData(o.userDataFilePath)
 	if err != nil {
 		return err
 	}
 
-	result, err := jira.GetJiraIssue(o.baseURL, "EX-1")
+	gv, err := gitview.New(o.srcRepoRoot)
 	if err != nil {
 		return err
 	}
-	o.payload.JiraResults = append(o.payload.JiraResults, result)
+
+	o.payload.CommitSHA, err = gv.ResolveRevision(o.payload.CommitSHA)
+	if err != nil {
+		return err
+	}
+
+	o.payload.JiraResults = []*jira.JiraIssueInfo{}
+
+	// Jira issue keys consist of [project-key]-[sequential-number]
+	// project key must be at least 2 characters long and start with an uppercase letter
+	// more info: https://support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/#Workingwithissues-Projectandissuekeys
+	jiraIssueKeyPattern := `[A-Z][A-Za-z]+-[0-9]+`
+
+	issueIDs, err := gv.MatchPatternInCommitMessageORBranchName(jiraIssueKeyPattern, o.payload.CommitSHA)
+	if err != nil {
+		return err
+	}
+
+	logger.Debug("the following Jira references are found in commit message or branch name: %v", issueIDs)
+
+	for _, issueID := range issueIDs {
+		result, err := jc.GetJiraIssueInfo(issueID)
+		if err != nil {
+			return err
+		}
+		o.payload.JiraResults = append(o.payload.JiraResults, result)
+	}
 
 	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, o.evidencePaths)
 	// if we created a tar package, remove it after uploading it

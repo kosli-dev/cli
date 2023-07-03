@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-git/v5"
+	"github.com/kosli-dev/cli/internal/testHelpers"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -23,6 +24,7 @@ type CommitEvidenceJiraCommandTestSuite struct {
 }
 
 func (suite *CommitEvidenceJiraCommandTestSuite) SetupTest() {
+	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_JIRA_API_TOKEN"})
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Org:      "docs-cmd-test-user-shared",
@@ -51,8 +53,10 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 	tests := []cmdTestCase{
 		{
 			name: "report Jira commit evidence with tag in start of line works",
-			cmd: `report evidence commit jira --name jira-validation ` +
-				`--jira-base-url https://kosli-test.atlassian.net  --build-url example.com` + suite.defaultKosliArguments,
+			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
+					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+					--repo-root %s
+					--build-url example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
 			golden: "jira evidence is reported to commit: ",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "EX-1 test commit",
@@ -60,8 +64,10 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 		},
 		{
 			name: "report Jira commit evidence with tag in middle of line works",
-			cmd: `report evidence commit jira --name jira-validation ` +
-				`--jira-base-url https://kosli-test.atlassian.net  --build-url example.com` + suite.defaultKosliArguments,
+			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
+				--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+				--repo-root %s
+				--build-url example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
 			golden: "jira evidence is reported to commit: ",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "Lets test EX-1 test commit",
@@ -69,61 +75,15 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 		},
 		{
 			name: "report Jira commit evidence with tag in end of line works",
-			cmd: `report evidence commit jira --name jira-validation ` +
-				`--jira-base-url https://kosli-test.atlassian.net  --build-url example.com` + suite.defaultKosliArguments,
+			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
+					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+					--repo-root %s
+					--build-url example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
 			golden: "jira evidence is reported to commit: ",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "Lets test EX-1",
 			},
 		},
-		// {
-		// 	name: "report JUnit test evidence works when --evidence-url and --evidence-fingerprint are provided",
-		// 	cmd: `report evidence commit junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name junit-result --flows ` + suite.flowNames + `
-		// 	          --build-url example.com --results-dir testdata
-		// 			  --evidence-url https://example.com --evidence-fingerprint 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0` + suite.defaultKosliArguments,
-		// 	golden: "junit test evidence is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n",
-		// },
-		// {
-		// 	name: "report JUnit test evidence with non-existing results dir",
-		// 	cmd: `report evidence commit junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name junit-result --flows ` + suite.flowNames + `
-		// 	          --build-url example.com --results-dir foo` + suite.defaultKosliArguments,
-		// 	wantError: true,
-		// 	golden:    "Error: lstat foo: no such file or directory\n",
-		// },
-		// {
-		// 	name: "report JUnit test evidence with a results dir that does not contain any results",
-		// 	cmd: `report evidence commit junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name junit-result --flows ` + suite.flowNames + `
-		// 	          --build-url example.com --results-dir testdata/folder1` + suite.defaultKosliArguments,
-		// 	wantError: true,
-		// 	golden:    "Error: no tests found in testdata/folder1 directory\n",
-		// },
-		// {
-		// 	name: "report JUnit test evidence with missing name flag",
-		// 	cmd: `report evidence commit junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --flows ` + suite.flowNames + `
-		// 	          --build-url example.com --results-dir testdata` + suite.defaultKosliArguments,
-		// 	wantError: true,
-		// 	golden:    "Error: required flag(s) \"name\" not set\n",
-		// },
-		// {
-		// 	name: "report JUnit test evidence with a missing --flows flag",
-		// 	cmd: `report evidence commit junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name junit-result
-		// 	          --build-url example.com --results-dir testdata` + suite.defaultKosliArguments,
-		// 	golden: "junit test evidence is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n",
-		// },
-		// {
-		// 	name: "report JUnit test evidence with a missing build-url",
-		// 	cmd: `report evidence commit junit --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --flows ` + suite.flowNames + `
-		// 			--name junit-result --results-dir testdata` + suite.defaultKosliArguments,
-		// 	wantError: true,
-		// 	golden:    "Error: required flag(s) \"build-url\" not set\n",
-		// },
-		// {
-		// 	name: "report JUnit test evidence with a missing commit flag",
-		// 	cmd: `report evidence commit junit --flows ` + suite.flowNames + `
-		// 			--build-url example.com --name junit-result --results-dir testdata` + suite.defaultKosliArguments,
-		// 	wantError: true,
-		// 	golden:    "Error: required flag(s) \"commit\" not set\n",
-		// },
 	}
 	for _, test := range tests {
 		msg := test.additionalConfig.(jiraTestsAdditionalConfig).commitMessage

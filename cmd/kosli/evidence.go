@@ -24,7 +24,7 @@ type GenericEvidencePayload struct {
 
 type JiraEvidencePayload struct {
 	TypedEvidencePayload
-	JiraResults []*jira.JiraIssueResult `json:"jira_results"`
+	JiraResults []*jira.JiraIssueInfo `json:"jira_results"`
 }
 
 type WorkflowEvidencePayload struct {

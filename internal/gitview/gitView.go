@@ -2,6 +2,7 @@ package gitview
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/go-git/go-git/v5"
@@ -133,7 +134,7 @@ func (gv *GitView) ChangeLog(currentCommit, previousCommit string, logger *logge
 		}
 	}
 
-	currentArtifactCommit, err := gv.newCommitInfoFromGitCommit(currentCommit)
+	currentArtifactCommit, err := gv.GetCommitInfoFromCommitSHA(currentCommit)
 	if err != nil {
 		return []*CommitInfo{}, fmt.Errorf("could not retrieve current git commit for %s: %v", currentCommit, err)
 	}
@@ -153,9 +154,9 @@ func (gv *GitView) BranchName() (string, error) {
 	return "", nil
 }
 
-// newCommitInfoFromGitCommit returns an ArtifactCommit object from a git commit
+// GetCommitInfoFromCommitSHA returns a CommitInfo object from a git commit
 // the gitCommit can be SHA1 or a revision: e.g. HEAD or HEAD~2 etc
-func (gv *GitView) newCommitInfoFromGitCommit(gitCommit string) (*CommitInfo, error) {
+func (gv *GitView) GetCommitInfoFromCommitSHA(gitCommit string) (*CommitInfo, error) {
 	branchName, err := gv.BranchName()
 	if err != nil {
 		return &CommitInfo{}, err
@@ -173,7 +174,7 @@ func (gv *GitView) newCommitInfoFromGitCommit(gitCommit string) (*CommitInfo, er
 	return asCommitInfo(commit, branchName), nil
 }
 
-// asCommitInfo returns an ArtifactCommit from a git Commit object
+// asCommitInfo returns a CommitInfo from a git Commit object
 func asCommitInfo(commit *object.Commit, branchName string) *CommitInfo {
 	commitParents := []string{}
 	for _, hash := range commit.ParentHashes {
@@ -187,4 +188,35 @@ func asCommitInfo(commit *object.Commit, branchName string) *CommitInfo {
 		Branch:    branchName,
 		Parents:   commitParents,
 	}
+}
+
+// MatchPatternInCommitMessageORBranchName returns a slice of strings matching a pattern in a commit message or branch name
+// matches lookup happens in the commit message first, and if none is found, matching against the branch name is done
+// if no matches are found in both the commit message and the branch name, an empty slice is returned
+func (gv *GitView) MatchPatternInCommitMessageORBranchName(pattern, commitSHA string) ([]string, error) {
+	commitInfo, err := gv.GetCommitInfoFromCommitSHA(commitSHA)
+	if err != nil {
+		return []string{}, err
+	}
+
+	re := regexp.MustCompile(pattern)
+	matches := re.FindAllString(commitInfo.Message, -1)
+	if matches != nil {
+		return matches, nil
+	} else {
+		matches := re.FindAllString(commitInfo.Branch, -1)
+		if matches != nil {
+			return matches, nil
+		}
+	}
+	return []string{}, nil
+}
+
+// ResolveRevision returns an explicit commit SHA1 from commit SHA or ref (e.g. HEAD~2)
+func (gv *GitView) ResolveRevision(commitSHAOrRef string) (string, error) {
+	hash, err := gv.repository.ResolveRevision(plumbing.Revision(commitSHAOrRef))
+	if err != nil {
+		return "", err
+	}
+	return hash.String(), nil
 }
