@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -33,7 +34,7 @@ func (suite *GetSnapshotCommandTestSuite) SetupTest() {
 	ReportServerArtifactToEnv([]string{"testdata/report.xml"}, suite.envName, suite.T())
 	CreateEnv(global.Org, suite.emptyEnvName, "server", suite.T())
 }
-
+//TODO: Add test for a snappish of the environemnt name
 func (suite *GetSnapshotCommandTestSuite) TestGetSnapshotCmd() {
 	tests := []cmdTestCase{
 		{
@@ -47,6 +48,10 @@ func (suite *GetSnapshotCommandTestSuite) TestGetSnapshotCmd() {
 		{
 			name: "can get the second snapshot with ~ snappish",
 			cmd:  fmt.Sprintf(`get snapshot %s~1 %s`, suite.envName, suite.defaultKosliArguments),
+		},
+		{
+			name: "can get the second snapshot with it's datetime snappish",
+			cmd:  fmt.Sprintf(`get snapshot %s@{%s} %s`, suite.envName, currentTimeAsSnappish(), suite.defaultKosliArguments),
 		},
 		{
 			wantError: true,
@@ -63,6 +68,12 @@ func (suite *GetSnapshotCommandTestSuite) TestGetSnapshotCmd() {
 	}
 
 	runTestCmd(suite.T(), tests)
+}
+
+func currentTimeAsSnappish() string {
+	nowUTC := time.Now().Local().UTC()
+
+	return nowUTC.Format("2006-01-02T15:04:05")
 }
 
 // In order for 'go test' to run this suite, we need to create
