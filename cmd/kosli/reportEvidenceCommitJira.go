@@ -119,7 +119,7 @@ func (o *reportEvidenceCommitJiraOptions) run(args []string) error {
 
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("jira evidence '%s' is reported to commit: %s", o.payload.EvidenceName, o.payload.CommitSHA)
+		logger.Info("jira evidence is reported to commit: %s", o.payload.CommitSHA)
 	}
 	return err
 }

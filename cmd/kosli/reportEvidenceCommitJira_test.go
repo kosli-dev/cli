@@ -35,6 +35,12 @@ func (suite *CommitEvidenceJiraCommandTestSuite) SetupTest() {
 	require.NoError(suite.T(), err)
 	_, suite.workTree, suite.fs, err = InitializeGitRepo(suite.tmpDir)
 	require.NoError(suite.T(), err)
+
+	CreateFlow("flow-for-jira-testing", suite.T())
+}
+
+func (suite *CommitEvidenceJiraCommandTestSuite) TearDownSuite() {
+	os.RemoveAll(suite.tmpDir)
 }
 
 type jiraTestsAdditionalConfig struct {
@@ -44,12 +50,30 @@ type jiraTestsAdditionalConfig struct {
 func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCmd() {
 	tests := []cmdTestCase{
 		{
-			name: "report Jira commit evidence works",
-			cmd: `report evidence commit jira --name ss ` +
+			name: "report Jira commit evidence with tag in start of line works",
+			cmd: `report evidence commit jira --name jira-validation ` +
 				`--jira-base-url https://kosli-test.atlassian.net  --build-url example.com` + suite.defaultKosliArguments,
 			golden: "jira evidence is reported to commit: ",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "EX-1 test commit",
+			},
+		},
+		{
+			name: "report Jira commit evidence with tag in middle of line works",
+			cmd: `report evidence commit jira --name jira-validation ` +
+				`--jira-base-url https://kosli-test.atlassian.net  --build-url example.com` + suite.defaultKosliArguments,
+			golden: "jira evidence is reported to commit: ",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "Lets test EX-1 test commit",
+			},
+		},
+		{
+			name: "report Jira commit evidence with tag in end of line works",
+			cmd: `report evidence commit jira --name jira-validation ` +
+				`--jira-base-url https://kosli-test.atlassian.net  --build-url example.com` + suite.defaultKosliArguments,
+			golden: "jira evidence is reported to commit: ",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "Lets test EX-1",
 			},
 		},
 		// {
@@ -108,8 +132,6 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 
 		test.cmd = test.cmd + " --commit " + commitSha
 		test.golden = test.golden + commitSha + "\n"
-		fmt.Println(test.cmd)
-		fmt.Println(test.golden)
 		runTestCmd(suite.T(), []cmdTestCase{test})
 	}
 }
