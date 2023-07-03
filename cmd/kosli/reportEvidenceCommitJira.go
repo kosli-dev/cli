@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/kosli-dev/cli/internal/jira"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -13,10 +14,11 @@ import (
 type reportEvidenceCommitJiraOptions struct {
 	userDataFilePath string
 	evidencePaths    []string
+	baseURL          string
 	payload          JiraEvidencePayload
 }
 
-const reportEvidenceCommitJiraShortDesc = `Report Jira  evidence for a commit in Kosli flows.`
+const reportEvidenceCommitJiraShortDesc = `Report Jira evidence for a commit in Kosli flows.`
 
 const reportEvidenceCommitJiraLongDesc = reportEvidenceCommitJiraShortDesc + `
 Parses the current commit message for a Jira  reference of the 
@@ -30,7 +32,6 @@ const reportEvidenceCommitJiraExample = `
 kosli report evidence commit jira \
 	--commit yourGitCommitSha1 \
 	--name yourEvidenceName \
-	--description "some description" \
 	--jira-base-url https://kosli.atlassian.net/browse/ \
 	--flows yourFlowName \
 	--build-url https://exampleci.com \
@@ -41,7 +42,6 @@ kosli report evidence commit jira \
 kosli report evidence commit jira \
 	--commit yourGitCommitSha1 \
 	--name yourEvidenceName \
-	--description "some description" \
 	--jira-base-url https://kosli.atlassian.net/browse/ \
 	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
@@ -72,8 +72,7 @@ func newReportEvidenceCommitJiraCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	addCommitEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
-	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", evidenceDescriptionFlag)
-	cmd.Flags().StringVarP(&o.payload.JiraBaseURL, "jira-base-url", "j", "", jiraBaseUrlFlag)
+	cmd.Flags().StringVarP(&o.baseURL, "jira-base-url", "j", "", jiraBaseUrlFlag)
 	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
 	cmd.Flags().StringSliceVarP(&o.evidencePaths, "evidence-paths", "e", []string{}, evidencePathsFlag)
 	addDryRunFlag(cmd)
@@ -88,11 +87,17 @@ func newReportEvidenceCommitJiraCmd(out io.Writer) *cobra.Command {
 
 func (o *reportEvidenceCommitJiraOptions) run(args []string) error {
 	var err error
-	url := fmt.Sprintf("%s/api/v2/evidence/%s/commit/generic", global.Host, global.Org)
+	url := fmt.Sprintf("%s/api/v2/evidence/%s/commit/jira", global.Host, global.Org)
 	o.payload.UserData, err = LoadJsonData(o.userDataFilePath)
 	if err != nil {
 		return err
 	}
+
+	result, err := jira.GetJiraIssue(o.baseURL, "EX-1")
+	if err != nil {
+		return err
+	}
+	o.payload.JiraResults = append(o.payload.JiraResults, result)
 
 	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, o.evidencePaths)
 	// if we created a tar package, remove it after uploading it
@@ -114,7 +119,7 @@ func (o *reportEvidenceCommitJiraOptions) run(args []string) error {
 
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("jira- evidence '%s' is reported to commit: %s", o.payload.EvidenceName, o.payload.CommitSHA)
+		logger.Info("jira evidence '%s' is reported to commit: %s", o.payload.EvidenceName, o.payload.CommitSHA)
 	}
 	return err
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/kosli-dev/cli/internal/jira"
 	"github.com/kosli-dev/cli/internal/requests"
 )
 
@@ -23,10 +24,7 @@ type GenericEvidencePayload struct {
 
 type JiraEvidencePayload struct {
 	TypedEvidencePayload
-	JiraBaseURL   string `json:"jira_base_url"`
-	JiraReference string `json:"jira_reference"`
-	Description   string `json:"description,omitempty"`
-	Compliant     bool   `json:"is_compliant"`
+	JiraResults []*jira.JiraIssueResult `json:"jira_results"`
 }
 
 type WorkflowEvidencePayload struct {

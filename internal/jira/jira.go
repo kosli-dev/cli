@@ -3,6 +3,7 @@ package jira
 import (
 	"fmt"
 
+	jira "github.com/andygrunwald/go-jira"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
 
@@ -20,6 +21,38 @@ type Config struct {
 	Logger      *logger.Logger
 	KosliClient *requests.Client
 	Assert      bool
+}
+
+type JiraIssueResult struct {
+	IssueID     string `json:"issue_id"`
+	IssueURL    string `json:"issue_url"`
+	IssueExists bool   `json:"issue_exists"`
+}
+
+func GetJiraIssue(jiraBaseURL, issueID string) (*JiraIssueResult, error) {
+	result := &JiraIssueResult{
+		IssueID:     issueID,
+		IssueURL:    fmt.Sprintf("%s/browse/%s", jiraBaseURL, issueID),
+		IssueExists: false,
+	}
+	tp := jira.BasicAuthTransport{
+		Username: "username",
+		Password: "top-secret",
+	}
+
+	jiraClient, err := jira.NewClient(tp.Client(), jiraBaseURL)
+	if err != nil {
+		return result, err
+	}
+	issue, _, err := jiraClient.Issue.Get(issueID, nil)
+	if err != nil {
+		return result, err
+	}
+
+	if issue != nil {
+		result.IssueExists = true
+	}
+	return result, nil
 }
 
 func getJiraTicketURL(jiraBaseURL string) {

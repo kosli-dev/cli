@@ -15,7 +15,8 @@ services:
   server:
     networks: [ cli_net ]
     depends_on: [ mongo_rs_initiate, minio ]
-    image: 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:latest
+    # image: 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:latest
+    image: 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:e3a0379
     env_file: [ "./mongo/mongo.env" ]
     environment:
       KOSLI_HOSTNAME: localhost

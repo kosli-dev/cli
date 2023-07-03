@@ -2,11 +2,18 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/osfs"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/cache"
+	"github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -255,4 +262,50 @@ func ReportServerArtifactToEnv(paths []string, envName string, t *testing.T) {
 	}
 	err := o.run([]string{envName})
 	require.NoError(t, err, "server env should be reported without error")
+}
+
+func InitializeGitRepo(repoPath string) (*git.Repository, *git.Worktree, billy.Filesystem, error) {
+	// the repo worktree filesystem. It has to be osfs so that we can give it a path
+	fs := osfs.New(repoPath)
+	// the filesystem for git database
+	storerFS := osfs.New(filepath.Join(repoPath, ".git"))
+	storer := filesystem.NewStorage(storerFS, cache.NewObjectLRUDefault())
+	// initialize the git repo at the filesystem "fs" and using "storer" as the git database
+	repo, err := git.Init(storer, fs)
+	if err != nil {
+		return repo, nil, fs, err
+	}
+
+	w, err := repo.Worktree()
+	if err != nil {
+		return repo, nil, fs, err
+	}
+
+	return repo, w, fs, nil
+}
+
+func CommitToRepo(w *git.Worktree, fs billy.Filesystem, commitMessage string) (string, error) {
+	filePath := fmt.Sprintf("file-%d.txt", time.Now().UnixNano())
+	newFile, err := fs.Create(filePath)
+	if err != nil {
+		return "", err
+	}
+	_, err = newFile.Write([]byte("this is a dummy line"))
+	if err != nil {
+		return "", err
+	}
+	err = newFile.Close()
+	if err != nil {
+		return "", err
+	}
+	_, err = w.Add(filePath)
+	if err != nil {
+		return "", err
+	}
+	hash, err := w.Commit(commitMessage, &git.CommitOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	return hash.String(), nil
 }
