@@ -52,7 +52,7 @@ func (suite *GetSnapshotCommandTestSuite) TestGetSnapshotCmd() {
 		},
 		{
 			name: "can get the second snapshot with it's datetime snappish",
-			cmd:  fmt.Sprintf(`get snapshot %s@{%s} %s`, suite.envName, currentTimeAsSnappish(), suite.defaultKosliArguments),
+			cmd:  fmt.Sprintf(`get snapshot %s@{%s} %s`, suite.envName, currentTimeForSnappish(), suite.defaultKosliArguments),
 		},
 		{
 			wantError: true,
@@ -71,10 +71,11 @@ func (suite *GetSnapshotCommandTestSuite) TestGetSnapshotCmd() {
 	runTestCmd(suite.T(), tests)
 }
 
-func currentTimeAsSnappish() string {
-	nowUTC := time.Now().Local().UTC()
+func currentTimeForSnappish() string {
+	// Add a little time as we will lose ms resolution
+	timeIn1Second := time.Now().Local().Add(time.Second * 1).UTC()
 
-	return nowUTC.Format("2006-01-02T15:04:05")
+	return timeIn1Second.Format("2006-01-02T15:04:05")
 }
 
 // In order for 'go test' to run this suite, we need to create
