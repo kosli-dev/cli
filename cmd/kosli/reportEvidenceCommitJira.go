@@ -153,7 +153,7 @@ func (o *reportEvidenceCommitJiraOptions) run(args []string) error {
 	// Jira issue keys consist of [project-key]-[sequential-number]
 	// project key must be at least 2 characters long and start with an uppercase letter
 	// more info: https://support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/#Workingwithissues-Projectandissuekeys
-	jiraIssueKeyPattern := `[A-Z][A-Za-z]+-[0-9]+`
+	jiraIssueKeyPattern := `[A-Z][A-Z0-9]{1,9}-[0-9]+`
 
 	issueIDs, err := gv.MatchPatternInCommitMessageORBranchName(jiraIssueKeyPattern, o.payload.CommitSHA)
 	if err != nil {

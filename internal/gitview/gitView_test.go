@@ -11,6 +11,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/cache"
 	"github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/kosli-dev/cli/internal/logger"
+	"github.com/kosli-dev/cli/internal/testHelpers"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -260,6 +261,78 @@ func (suite *GitViewTestSuite) TestNewCommitInfoFromGitCommit() {
 	require.Equal(suite.T(), "Added file 1", ci.Message)
 	require.Equal(suite.T(), "master", ci.Branch)
 	require.Empty(suite.T(), ci.Parents)
+}
+
+func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
+	_, workTree, fs, err := testHelpers.InitializeGitRepo(suite.tmpDir)
+	require.NoError(suite.T(), err)
+
+	for _, t := range []struct {
+		name          string
+		pattern       string
+		commitMessage string
+		wantError     bool
+		want          []string
+		commitSha     string
+	}{
+		{
+			name:          "One Jira reference found",
+			pattern:       "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			commitMessage: "EX-1 test commit",
+			want:          []string{"EX-1"},
+			wantError:     false,
+		},
+		{
+			name:          "Two Jira references found",
+			pattern:       "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			commitMessage: "EX-1 ABC-22 test commit",
+			want:          []string{"EX-1", "ABC-22"},
+			wantError:     false,
+		},
+		{
+			name:          "No Jira references found",
+			pattern:       "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			commitMessage: "test commit",
+			want:          []string{},
+			wantError:     false,
+		},
+		{
+			name:          "No Jira references found, despite something that looks similar to Jira reference",
+			pattern:       "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			commitMessage: "Ea-1 test commit",
+			want:          []string{},
+			wantError:     false,
+		},
+		{
+			name:      "Commit not found, expect an error",
+			pattern:   "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			commitSha: "3b7420d0392114794591aaefcd84d7b100b8d095",
+			wantError: true,
+		},
+		{
+			name:          "GitHub reference found",
+			pattern:       "#[0-9]+",
+			commitMessage: "#324 test commit",
+			want:          []string{"#324"},
+			wantError:     false,
+		},
+	} {
+		suite.Run(t.name, func() {
+
+			if t.commitSha == "" {
+				t.commitSha, err = testHelpers.CommitToRepo(workTree, fs, t.commitMessage)
+				require.NoError(suite.T(), err)
+			}
+
+			gitView, err := New(suite.tmpDir)
+			require.NoError(suite.T(), err)
+
+			actual, err := gitView.MatchPatternInCommitMessageORBranchName(t.pattern, t.commitSha)
+			require.True(suite.T(), (err != nil) == t.wantError)
+			require.ElementsMatch(suite.T(), t.want, actual)
+
+		})
+	}
 }
 
 func initializeRepoAndCommit(repoPath string, commitsNumber int) (*git.Repository, *git.Worktree, error) {

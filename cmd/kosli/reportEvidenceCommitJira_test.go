@@ -35,7 +35,7 @@ func (suite *CommitEvidenceJiraCommandTestSuite) SetupTest() {
 	var err error
 	suite.tmpDir, err = os.MkdirTemp("", "testDir")
 	require.NoError(suite.T(), err)
-	_, suite.workTree, suite.fs, err = InitializeGitRepo(suite.tmpDir)
+	_, suite.workTree, suite.fs, err = testHelpers.InitializeGitRepo(suite.tmpDir)
 	require.NoError(suite.T(), err)
 
 	CreateFlow("flow-for-jira-testing", suite.T())
@@ -150,7 +150,7 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 	for _, test := range tests {
 		if test.additionalConfig != nil {
 			msg := test.additionalConfig.(jiraTestsAdditionalConfig).commitMessage
-			commitSha, err := CommitToRepo(suite.workTree, suite.fs, msg)
+			commitSha, err := testHelpers.CommitToRepo(suite.workTree, suite.fs, msg)
 			require.NoError(suite.T(), err)
 
 			test.cmd = test.cmd + " --commit " + commitSha
