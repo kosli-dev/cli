@@ -28,7 +28,7 @@ artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
-|        --repo-root string  |  [defaulted] The directory where the source git repository is volume-mounted. (default ".")  |
+|        --repo-root string  |  [defaulted] The directory where the source git repository is available. (default ".")  |
 
 
 ## Examples

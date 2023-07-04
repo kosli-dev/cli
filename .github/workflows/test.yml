@@ -21,6 +21,8 @@ on:
       azure_access_token:
         required: true 
       bitbucket_password:
+        required: true
+      jira_api_token:
         required: true      
 
 
@@ -65,6 +67,7 @@ jobs:
         KOSLI_GITLAB_TOKEN: ${{ secrets.gitlab_access_token }}
         KOSLI_AZURE_TOKEN: ${{ secrets.azure_access_token }}
         KOSLI_BITBUCKET_PASSWORD: ${{ secrets.bitbucket_password }}
+        KOSLI_JIRA_API_TOKEN: ${{ secrets.jira_api_token }}
       run: |
         # some tests use git operations, therefore the git author on the CI VM needs to be set
         git config --global user.name "John Doe"

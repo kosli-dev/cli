@@ -11,6 +11,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/cache"
 	"github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/kosli-dev/cli/internal/logger"
+	"github.com/kosli-dev/cli/internal/testHelpers"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -245,21 +246,155 @@ func (suite *GitViewTestSuite) TestNewCommitInfoFromGitCommit() {
 	gv, err := New(worktree.Filesystem.Root())
 	require.NoError(suite.T(), err)
 
-	_, err = gv.newCommitInfoFromGitCommit("58a9461c5a42d83bd5731485a72ddae542ac99d8")
+	_, err = gv.GetCommitInfoFromCommitSHA("58a9461c5a42d83bd5731485a72ddae542ac99d8")
 	require.Error(suite.T(), err)
 	expected := "failed to resolve git reference 58a9461c5a42d83bd5731485a72ddae542ac99d8: reference not found"
 	require.Equal(suite.T(), expected, err.Error())
 
-	_, err = gv.newCommitInfoFromGitCommit("HEAD~2")
+	_, err = gv.GetCommitInfoFromCommitSHA("HEAD~2")
 	require.Error(suite.T(), err)
 	expected = "failed to resolve git reference HEAD~2: EOF"
 	require.Equal(suite.T(), expected, err.Error())
 
-	ci, err := gv.newCommitInfoFromGitCommit("HEAD")
+	ci, err := gv.GetCommitInfoFromCommitSHA("HEAD")
 	require.NoError(suite.T(), err)
 	require.Equal(suite.T(), "Added file 1", ci.Message)
 	require.Equal(suite.T(), "master", ci.Branch)
 	require.Empty(suite.T(), ci.Parents)
+}
+
+func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
+	_, workTree, fs, err := testHelpers.InitializeGitRepo(suite.tmpDir)
+	require.NoError(suite.T(), err)
+
+	for _, t := range []struct {
+		name          string
+		pattern       string
+		commitMessage string
+		wantError     bool
+		want          []string
+		commitSha     string
+	}{
+		{
+			name:          "One Jira reference found",
+			pattern:       "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			commitMessage: "EX-1 test commit",
+			want:          []string{"EX-1"},
+			wantError:     false,
+		},
+		{
+			name:          "Two Jira references found",
+			pattern:       "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			commitMessage: "EX-1 ABC-22 test commit",
+			want:          []string{"EX-1", "ABC-22"},
+			wantError:     false,
+		},
+		{
+			name:          "No Jira references found",
+			pattern:       "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			commitMessage: "test commit",
+			want:          []string{},
+			wantError:     false,
+		},
+		{
+			name:          "No Jira references found, despite something that looks similar to Jira reference",
+			pattern:       "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			commitMessage: "Ea-1 test commit",
+			want:          []string{},
+			wantError:     false,
+		},
+		{
+			name:      "Commit not found, expect an error",
+			pattern:   "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			commitSha: "3b7420d0392114794591aaefcd84d7b100b8d095",
+			wantError: true,
+		},
+		{
+			name:          "GitHub reference found",
+			pattern:       "#[0-9]+",
+			commitMessage: "#324 test commit",
+			want:          []string{"#324"},
+			wantError:     false,
+		},
+	} {
+		suite.Run(t.name, func() {
+
+			if t.commitSha == "" {
+				t.commitSha, err = testHelpers.CommitToRepo(workTree, fs, t.commitMessage)
+				require.NoError(suite.T(), err)
+			}
+
+			gitView, err := New(suite.tmpDir)
+			require.NoError(suite.T(), err)
+
+			actual, err := gitView.MatchPatternInCommitMessageORBranchName(t.pattern, t.commitSha)
+			require.True(suite.T(), (err != nil) == t.wantError)
+			require.ElementsMatch(suite.T(), t.want, actual)
+
+		})
+	}
+}
+
+func (suite *GitViewTestSuite) TestResolveRevision() {
+	_, workTree, fs, err := testHelpers.InitializeGitRepo(suite.tmpDir)
+	require.NoError(suite.T(), err)
+
+	FirstCommitSha, err := testHelpers.CommitToRepo(workTree, fs, "Test commit message 1")
+	require.NoError(suite.T(), err)
+
+	SecondCommitSha, err := testHelpers.CommitToRepo(workTree, fs, "Test commit message 2")
+	require.NoError(suite.T(), err)
+
+	ThirdCommitSha, err := testHelpers.CommitToRepo(workTree, fs, "Test commit message 3")
+	require.NoError(suite.T(), err)
+
+	for _, t := range []struct {
+		name           string
+		commitSHAOrRef string
+		wantError      bool
+		want           string
+	}{
+		{
+			name:           "HEAD reference resolved",
+			commitSHAOrRef: "HEAD",
+			want:           ThirdCommitSha,
+			wantError:      false,
+		},
+		{
+			name:           "~1 reference resolved",
+			commitSHAOrRef: "HEAD~1",
+			want:           SecondCommitSha,
+			wantError:      false,
+		},
+		{
+			name:           "^^ reference resolved",
+			commitSHAOrRef: "HEAD^^",
+			want:           FirstCommitSha,
+			wantError:      false,
+		},
+		{
+			name:           "Short sha reference resolved",
+			commitSHAOrRef: ThirdCommitSha[0:7],
+			want:           ThirdCommitSha,
+			wantError:      false,
+		},
+		{
+			name:           "Fail if sha not found",
+			commitSHAOrRef: "123456",
+			wantError:      true,
+		},
+	} {
+		suite.Run(t.name, func() {
+
+			gitView, err := New(suite.tmpDir)
+			require.NoError(suite.T(), err)
+
+			actual, err := gitView.ResolveRevision(t.commitSHAOrRef)
+			require.True(suite.T(), (err != nil) == t.wantError)
+			require.Equal(suite.T(), t.want, actual)
+
+		})
+	}
 }
 
 func initializeRepoAndCommit(repoPath string, commitsNumber int) (*git.Repository, *git.Worktree, error) {
