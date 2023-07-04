@@ -335,6 +335,68 @@ func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 	}
 }
 
+func (suite *GitViewTestSuite) TestResolveRevision() {
+	_, workTree, fs, err := testHelpers.InitializeGitRepo(suite.tmpDir)
+	require.NoError(suite.T(), err)
+
+	FirstCommitSha, err := testHelpers.CommitToRepo(workTree, fs, "Test commit message 1")
+	require.NoError(suite.T(), err)
+
+	SecondCommitSha, err := testHelpers.CommitToRepo(workTree, fs, "Test commit message 2")
+	require.NoError(suite.T(), err)
+
+	ThirdCommitSha, err := testHelpers.CommitToRepo(workTree, fs, "Test commit message 3")
+	require.NoError(suite.T(), err)
+
+	for _, t := range []struct {
+		name           string
+		commitSHAOrRef string
+		wantError      bool
+		want           string
+	}{
+		{
+			name:           "HEAD reference resolved",
+			commitSHAOrRef: "HEAD",
+			want:           ThirdCommitSha,
+			wantError:      false,
+		},
+		{
+			name:           "~1 reference resolved",
+			commitSHAOrRef: "HEAD~1",
+			want:           SecondCommitSha,
+			wantError:      false,
+		},
+		{
+			name:           "^^ reference resolved",
+			commitSHAOrRef: "HEAD^^",
+			want:           FirstCommitSha,
+			wantError:      false,
+		},
+		{
+			name:           "Short sha reference resolved",
+			commitSHAOrRef: ThirdCommitSha[0:7],
+			want:           ThirdCommitSha,
+			wantError:      false,
+		},
+		{
+			name:           "Fail if sha not found",
+			commitSHAOrRef: "123456",
+			wantError:      true,
+		},
+	} {
+		suite.Run(t.name, func() {
+
+			gitView, err := New(suite.tmpDir)
+			require.NoError(suite.T(), err)
+
+			actual, err := gitView.ResolveRevision(t.commitSHAOrRef)
+			require.True(suite.T(), (err != nil) == t.wantError)
+			require.Equal(suite.T(), t.want, actual)
+
+		})
+	}
+}
+
 func initializeRepoAndCommit(repoPath string, commitsNumber int) (*git.Repository, *git.Worktree, error) {
 	// the repo worktree filesystem. It has to be osfs so that we can give it a path
 	fs := osfs.New(repoPath)
