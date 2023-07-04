@@ -52,7 +52,7 @@ kosli report evidence commit jira \
 kosli report evidence commit jira \
 	--commit yourGitCommitSha1 \
 	--name yourEvidenceName \
-	--jira-base-url https://kosli.atlassian.net \
+	--jira-base-url https://jira.example.com \
 	--jira-pat yourJiraPATToken \
 	--flows yourFlowName \
 	--build-url https://exampleci.com \

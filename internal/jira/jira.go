@@ -65,6 +65,7 @@ func (jc *JiraConfig) GetJiraIssueInfo(issueID string) (*JiraIssueInfo, error) {
 	result := &JiraIssueInfo{
 		IssueID:     issueID,
 		IssueExists: false,
+		IssueURL:    fmt.Sprintf("%s/browse/%s", jc.BaseURL, issueID),
 	}
 
 	jiraClient, err := jc.NewJiraClient()
@@ -78,7 +79,6 @@ func (jc *JiraConfig) GetJiraIssueInfo(issueID string) (*JiraIssueInfo, error) {
 
 	if issue != nil {
 		result.IssueExists = true
-		result.IssueURL = fmt.Sprintf("%s/browse/%s", jc.BaseURL, issueID)
 	}
 	return result, nil
 }
