@@ -57,40 +57,64 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
 					--repo-root %s
 					--build-url example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
-			golden: "jira evidence is reported to commit: ",
+			goldenRegex: "Jira evidence is reported to commit: [0-9a-f]{40}\n.*Issues references reported:.*\n.*EX-1: issue found",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "EX-1 test commit",
 			},
 		},
 		{
-			name: "report Jira commit evidence with reference in middle of line works",
+			name: "report non existing Jira commit evidence with reference in start of line works",
 			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
+					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+					--repo-root %s
+					--build-url example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
+			goldenRegex: "Jira evidence is reported to commit: [0-9a-f]{40}\n" +
+				".*Issues references reported:.*\n.*SAMI-1: issue not found",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "SAMI-1 test commit",
+			},
+		},
+		{
+			name: "report existing and non existing Jira commit evidence with reference in midle of line works",
+			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
+					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+					--repo-root %s
+					--build-url example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
+			goldenRegex: "Jira evidence is reported to commit: [0-9a-f]{40}\n" +
+				".*Issues references reported:.*\n.*EX-1: issue found\n.*SAMI-1: issue not found",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "go EX-1 SAMI-1 test commit",
+			},
+		},
+		{
+			name: "report Jira commit evidence with reference in middle of line works",
+			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation
 				--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
 				--repo-root %s
 				--build-url example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
-			golden: "jira evidence is reported to commit: ",
+			goldenRegex: "Jira evidence is reported to commit: [0-9a-f]{40}\n.*Issues references reported:.*\n.*EX-1: issue found",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "Lets test EX-1 test commit",
 			},
 		},
 		{
 			name: "report Jira commit evidence with reference in end of line works",
-			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
+			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation
 					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
 					--repo-root %s
 					--build-url example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
-			golden: "jira evidence is reported to commit: ",
+			goldenRegex: "Jira evidence is reported to commit: [0-9a-f]{40}\n.*Issues references reported:.*\n.*EX-1: issue found",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "Lets test EX-1",
 			},
 		},
 		{
 			name: "report Jira commit evidence with a slash at the end of --jira-base-url works",
-			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
+			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation
 				--jira-base-url https://kosli-test.atlassian.net/  --jira-username tore@kosli.com
 				--repo-root %s
 				--build-url example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
-			golden: "jira evidence is reported to commit: ",
+			goldenRegex: "Jira evidence is reported to commit: [0-9a-f]{40}\n.*Issues references reported:.*\n.*EX-1: issue found",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "Lets test EX-1 test commit",
 			},
@@ -130,7 +154,6 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 			require.NoError(suite.T(), err)
 
 			test.cmd = test.cmd + " --commit " + commitSha
-			test.golden = test.golden + commitSha + "\n"
 		}
 
 		runTestCmd(suite.T(), []cmdTestCase{test})

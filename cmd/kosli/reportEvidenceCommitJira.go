@@ -173,7 +173,7 @@ func (o *reportEvidenceCommitJiraOptions) run(args []string) error {
 		if result.IssueExists {
 			issueExistLog = "issue found"
 		}
-		issueLog += fmt.Sprintf("(%s: %s) ", result.IssueID, issueExistLog)
+		issueLog += fmt.Sprintf("\n\t%s: %s", result.IssueID, issueExistLog)
 	}
 
 	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, o.evidencePaths)
