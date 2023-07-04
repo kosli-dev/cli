@@ -11,7 +11,7 @@ Report an artifact creation to a Kosli flow.
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell
-artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 ```
 
 ## Flags
