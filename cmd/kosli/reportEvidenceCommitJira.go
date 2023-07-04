@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/jira"
@@ -26,28 +27,45 @@ type reportEvidenceCommitJiraOptions struct {
 const reportEvidenceCommitJiraShortDesc = `Report Jira evidence for a commit in Kosli flows.`
 
 const reportEvidenceCommitJiraLongDesc = reportEvidenceCommitJiraShortDesc + `
-Parses the current commit message for a Jira  reference of the 
-form: 'one or more capital letters followed by dash and one or more digits'.
-If found and the Jira  exists a compliance status of True is reported.
-Otherwise a compliance status of False is reported.
+Parses the given commit's message or current branch name for Jira issue references of the 
+form: 'at least 2 characters long, starting with an uppercase letter project key followed by
+dash and one or more digits'.
+The found issue references will be checked against Jira to confirm their existence.
+The evidence is reported in all cases, and its compliance status depends on referencing
+existing Jira issues.
 `
 
 const reportEvidenceCommitJiraExample = `
-# report Jira  evidence for a commit related to one Kosli flow:
+# report Jira evidence for a commit related to one Kosli flow (with Jira Cloud):
 kosli report evidence commit jira \
 	--commit yourGitCommitSha1 \
 	--name yourEvidenceName \
-	--jira-base-url https://kosli.atlassian.net/browse/ \
+	--jira-base-url https://kosli.atlassian.net \
+	--jira-username user@domain.com \
+	--jira-api-token yourJiraAPIToken \
 	--flows yourFlowName \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report Jira  evidence for a commit related to multiple Kosli flows with user-data:
+# report Jira evidence for a commit related to one Kosli flow (with self-hosted Jira):
 kosli report evidence commit jira \
 	--commit yourGitCommitSha1 \
 	--name yourEvidenceName \
-	--jira-base-url https://kosli.atlassian.net/browse/ \
+	--jira-base-url https://kosli.atlassian.net \
+	--jira-pat yourJiraPATToken \
+	--flows yourFlowName \
+	--build-url https://exampleci.com \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# report Jira  evidence for a commit related to multiple Kosli flows with user-data (with Jira Cloud):
+kosli report evidence commit jira \
+	--commit yourGitCommitSha1 \
+	--name yourEvidenceName \
+	--jira-base-url https://kosli.atlassian.net \
+	--jira-username user@domain.com \
+	--jira-api-token yourJiraAPIToken \
 	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
@@ -107,6 +125,8 @@ func newReportEvidenceCommitJiraCmd(out io.Writer) *cobra.Command {
 
 func (o *reportEvidenceCommitJiraOptions) run(args []string) error {
 	var err error
+
+	o.baseURL = strings.TrimSuffix(o.baseURL, "/")
 
 	jc := jira.NewJiraConfig(o.baseURL, o.username, o.apiToken, o.pat)
 
