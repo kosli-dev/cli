@@ -75,9 +75,10 @@ const getSnapshotDescShort = `Get a specific environment snapshot.`
 
 const getSnapshotDesc = getSnapshotDescShort + `
 Specify SNAPPISH by:
-- environmentName~<N>  N'th behind the latest snapshot
-- environmentName#<N>  snapshot number N
-- environmentName      the latest snapshot`
+- environmentName~<N>  					N'th behind the latest snapshot
+- environmentName#<N>  					snapshot number N
+- environmentName@{YYYY-MM-DDTHH:MM:SS} snapshot at specific moment in time in UTC
+- environmentName      					the latest snapshot`
 
 const getSnapshotExample = `
 # get the latest snapshot of an environment:
@@ -93,7 +94,12 @@ kosli get snapshot yourEnvironmentName~1
 # get the snapshot number 23 of an environment:
 kosli get snapshot yourEnvironmentName#23
 	--api-token yourAPIToken \
-	--org yourOrgName `
+	--org yourOrgName 
+	
+# get an environment snapshot at midday (UTC), on valentine's day of 2023:
+kosli get snapshot yourEnvironmentName@{2023-02-14T12:00:00}
+	--api-token yourAPIToken \
+	--org yourOrgName`
 
 func newGetSnapshotCmd(out io.Writer) *cobra.Command {
 	o := new(environmentGetOptions)
