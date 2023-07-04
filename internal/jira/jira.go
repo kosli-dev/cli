@@ -44,7 +44,7 @@ func (jc *JiraConfig) NewJiraClient() (*jira.Client, error) {
 		// See "Using Personal Access Tokens"
 		// https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html
 		tp := jira.BearerAuthTransport{
-			Token: "<persona-access-token>",
+			Token: jc.PAT,
 		}
 		httpClient = tp.Client()
 
