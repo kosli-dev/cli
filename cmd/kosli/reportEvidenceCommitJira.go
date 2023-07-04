@@ -33,6 +33,8 @@ dash and one or more digits'.
 The found issue references will be checked against Jira to confirm their existence.
 The evidence is reported in all cases, and its compliance status depends on referencing
 existing Jira issues.
+If you have wrong Jira credentials or wrong Jira-base-url it will be reported as non existing Jira issue.
+This is because Jira returns same 404 error code in all cases.
 `
 
 const reportEvidenceCommitJiraExample = `
@@ -160,12 +162,18 @@ func (o *reportEvidenceCommitJiraOptions) run(args []string) error {
 
 	logger.Debug("the following Jira references are found in commit message or branch name: %v", issueIDs)
 
+	issueLog := ""
 	for _, issueID := range issueIDs {
 		result, err := jc.GetJiraIssueInfo(issueID)
 		if err != nil {
 			return err
 		}
 		o.payload.JiraResults = append(o.payload.JiraResults, result)
+		issueExistLog := "issue not found"
+		if result.IssueExists {
+			issueExistLog = "issue found"
+		}
+		issueLog += fmt.Sprintf("(%s: %s) ", result.IssueID, issueExistLog)
 	}
 
 	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, o.evidencePaths)
@@ -188,7 +196,8 @@ func (o *reportEvidenceCommitJiraOptions) run(args []string) error {
 
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("jira evidence is reported to commit: %s", o.payload.CommitSHA)
+		logger.Info("Jira evidence is reported to commit: %s", o.payload.CommitSHA)
+		logger.Info("  Issues references reported: %s", issueLog)
 	}
 	return err
 }
