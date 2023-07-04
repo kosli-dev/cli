@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"time"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -34,7 +34,8 @@ func (suite *GetSnapshotCommandTestSuite) SetupTest() {
 	ReportServerArtifactToEnv([]string{"testdata/report.xml"}, suite.envName, suite.T())
 	CreateEnv(global.Org, suite.emptyEnvName, "server", suite.T())
 }
-//TODO: Add test for a snappish of the environemnt name
+
+// TODO: Add test for a snappish of the environemnt name
 func (suite *GetSnapshotCommandTestSuite) TestGetSnapshotCmd() {
 	tests := []cmdTestCase{
 		{

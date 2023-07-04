@@ -125,7 +125,7 @@ func (o *environmentGetOptions) run(out io.Writer, args []string) error {
 	if err != nil {
 		return err
 	}
-	url := fmt.Sprintf("%s/api/v2/snapshots/%s/%s/%d", global.Host, global.Org, envName, id)
+	url := fmt.Sprintf("%s/api/v2/snapshots/%s/%s/%s", global.Host, global.Org, envName, id)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,

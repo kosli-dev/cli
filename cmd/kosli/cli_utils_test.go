@@ -782,32 +782,38 @@ func (suite *CliUtilsTestSuite) TestHandleExpressions() {
 		name       string
 		expression string
 		wantName   string
-		wantId     int
+		wantId     string
 		wantErr    bool
 	}{
 		{
 			name:       "valid expression without special characters works",
 			expression: "hadron",
 			wantName:   "hadron",
-			wantId:     -1,
+			wantId:     "-1",
 		},
 		{
 			name:       "valid expression with # works",
 			expression: "hadron#12",
 			wantName:   "hadron",
-			wantId:     12,
+			wantId:     "12",
 		},
 		{
 			name:       "valid expression with ~ works 1",
 			expression: "hadron~1",
 			wantName:   "hadron",
-			wantId:     -2,
+			wantId:     "-2",
 		},
 		{
 			name:       "valid expression with ~ works 2",
 			expression: "hadron~2",
 			wantName:   "hadron",
-			wantId:     -3,
+			wantId:     "-3",
+		},
+		{
+			name:       "valid expression with @ works",
+			expression: "hadron@{2023-07-04T11:04:02}",
+			wantName:   "hadron",
+			wantId:     "@{2023-07-04T11:04:02}",
 		},
 		{
 			name:       "invalid expression causes an error",
@@ -837,6 +843,21 @@ func (suite *CliUtilsTestSuite) TestHandleExpressions() {
 		{
 			name:       "invalid expression containing multiple ~s causes an error",
 			expression: "hadron~2~1",
+			wantErr:    true,
+		},
+		{
+			name:       "invalid expression containing ~ and @ causes an error",
+			expression: "hadron~2@1",
+			wantErr:    true,
+		},
+		{
+			name:       "invalid expression containing # and @ causes an error",
+			expression: "hadron#2@1",
+			wantErr:    true,
+		},
+		{
+			name:       "invalid expression containing ~, # and @ causes an error",
+			expression: "hadron#2@1~5",
 			wantErr:    true,
 		},
 	}
