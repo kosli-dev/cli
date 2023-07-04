@@ -52,7 +52,7 @@ type jiraTestsAdditionalConfig struct {
 func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCmd() {
 	tests := []cmdTestCase{
 		{
-			name: "report Jira commit evidence with tag in start of line works",
+			name: "report Jira commit evidence with reference in start of line works",
 			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
 					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
 					--repo-root %s
@@ -63,7 +63,7 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 			},
 		},
 		{
-			name: "report Jira commit evidence with tag in middle of line works",
+			name: "report Jira commit evidence with reference in middle of line works",
 			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
 				--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
 				--repo-root %s
@@ -74,7 +74,7 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 			},
 		},
 		{
-			name: "report Jira commit evidence with tag in end of line works",
+			name: "report Jira commit evidence with reference in end of line works",
 			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
 					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
 					--repo-root %s
@@ -84,14 +84,55 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 				commitMessage: "Lets test EX-1",
 			},
 		},
+		{
+			name: "report Jira commit evidence with a slash at the end of --jira-base-url works",
+			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
+				--jira-base-url https://kosli-test.atlassian.net/  --jira-username tore@kosli.com
+				--repo-root %s
+				--build-url example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "jira evidence is reported to commit: ",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "Lets test EX-1 test commit",
+			},
+		},
+		{
+			wantError: true,
+			name:      "report Jira commit evidence with --jira-pat and --jira-api-token fails",
+			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
+					--jira-base-url https://kosli-test.atlassian.net  --jira-api-token xxx
+					--jira-pat xxxx --repo-root %s --commit 61ab3ea22bd4264996b35bfb82869c482d9f4a06
+					--build-url example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "Error: only one of --jira-pat, --jira-api-token is allowed\n",
+		},
+		{
+			wantError: true,
+			name:      "report Jira commit evidence with missing --jira-username and --jira-pat fails",
+			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
+					--jira-base-url https://kosli-test.atlassian.net  --jira-api-token xxx
+					--repo-root %s --commit 61ab3ea22bd4264996b35bfb82869c482d9f4a06
+					--build-url example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "Error: at least one of --jira-pat, --jira-username is required\n",
+		},
+		{
+			wantError: true,
+			name:      "report Jira commit evidence with missing --commit fails",
+			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
+					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+					--repo-root %s
+					--build-url example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "Error: required flag(s) \"commit\" not set\n",
+		},
 	}
 	for _, test := range tests {
-		msg := test.additionalConfig.(jiraTestsAdditionalConfig).commitMessage
-		commitSha, err := CommitToRepo(suite.workTree, suite.fs, msg)
-		require.NoError(suite.T(), err)
+		if test.additionalConfig != nil {
+			msg := test.additionalConfig.(jiraTestsAdditionalConfig).commitMessage
+			commitSha, err := CommitToRepo(suite.workTree, suite.fs, msg)
+			require.NoError(suite.T(), err)
 
-		test.cmd = test.cmd + " --commit " + commitSha
-		test.golden = test.golden + commitSha + "\n"
+			test.cmd = test.cmd + " --commit " + commitSha
+			test.golden = test.golden + commitSha + "\n"
+		}
+
 		runTestCmd(suite.T(), []cmdTestCase{test})
 	}
 }
