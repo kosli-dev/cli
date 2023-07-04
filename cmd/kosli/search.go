@@ -61,7 +61,7 @@ You can use short git commit or artifact fingerprint shas, but you must provide 
 func newSearchCmd(out io.Writer) *cobra.Command {
 	o := new(searchOptions)
 	cmd := &cobra.Command{
-		Use:     "search GIT-COMMIT|FINGERPRINT",
+		Use:     "search {GIT-COMMIT | FINGERPRINT}",
 		Short:   searchShortDesc,
 		Long:    searchLongDesc,
 		Example: searchExample,

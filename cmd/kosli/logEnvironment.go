@@ -56,7 +56,7 @@ type logEnvironmentOptions struct {
 func newLogEnvironmentCmd(out io.Writer) *cobra.Command {
 	o := new(logEnvironmentOptions)
 	cmd := &cobra.Command{
-		Use:     "environment ENV_NAME [INTERVAL]",
+		Use:     "environment ENV_NAME",
 		Aliases: []string{"env"},
 		Short:   logEnvironmentShortDesc,
 		Long:    logEnvironmentLongDesc,

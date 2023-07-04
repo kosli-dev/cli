@@ -60,7 +60,7 @@ func newReportArtifactCmd(out io.Writer) *cobra.Command {
 	o := new(reportArtifactOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "artifact [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Use:     "artifact {IMAGE-NAME | FILE-PATH | DIR-PATH}",
 		Short:   reportArtifactShortDesc,
 		Long:    reportArtifactLongDesc,
 		Example: reportArtifactExample,
