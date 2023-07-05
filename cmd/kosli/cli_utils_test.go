@@ -871,6 +871,76 @@ func (suite *CliUtilsTestSuite) TestHandleExpressions() {
 	}
 }
 
+func (suite *CliUtilsTestSuite) TestHandleSnapshotExpressions() {
+	tests := []struct {
+		name         string
+		expression   string
+		wantName     string
+		wantFragment string
+		wantErr      bool
+	}{
+		{
+			name:         "valid expression without special characters works",
+			expression:   "hadron",
+			wantName:     "hadron",
+			wantFragment: "-1",
+		},
+		{
+			name:         "valid expression with # works",
+			expression:   "hadron#12",
+			wantName:     "hadron",
+			wantFragment: "%2312",
+		},
+		{
+			name:         "valid expression with ~ works 1",
+			expression:   "hadron~1",
+			wantName:     "hadron",
+			wantFragment: "~1",
+		},
+		{
+			name:         "valid expression with ~ works 2",
+			expression:   "hadron~2",
+			wantName:     "hadron",
+			wantFragment: "~2",
+		},
+		{
+			name:         "valid expression with @ works",
+			expression:   "hadron@{2023-07-04T11:04:02}",
+			wantName:     "hadron",
+			wantFragment: "@%7B2023-07-04T11:04:02%7D",
+		},
+		{
+			name:         "invalid expression still parsed and sent to server to handle",
+			expression:   "hadron#abc",
+			wantName:     "hadron",
+			wantFragment: "%23abc",
+		},
+		{
+			name:       "missing environment name with # causes an error",
+			expression: "#12",
+			wantErr:    true,
+		},
+		{
+			name:       "missing environment name with ~ causes an error",
+			expression: "~12",
+			wantErr:    true,
+		},
+		{
+			name:       "missing environment name with @ causes an error",
+			expression: "@12",
+			wantErr:    true,
+		},
+	}
+	for _, t := range tests {
+		suite.Run(t.name, func() {
+			name, id, err := handleSnapshotExpressions(t.expression)
+			require.True(suite.T(), err != nil == t.wantErr)
+			require.Equal(suite.T(), t.wantName, name)
+			require.Equal(suite.T(), t.wantFragment, id)
+		})
+	}
+}
+
 func (suite *CliUtilsTestSuite) TestHandleArtifactExpression() {
 	tests := []struct {
 		name       string

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	urlPackage "net/url"
 	"os"
 	"path/filepath"
@@ -626,6 +627,33 @@ func handleExpressions(expression string) (string, string, error) {
 		id = (-1 * id) - 1
 	}
 	return items[0], strconv.Itoa(id), nil
+}
+
+// handleSnapshotExpressions parses ~, # and @ expressions and returns
+// an environment name, a url encoded snapshot fragment,
+// and an error if the expression is invalid
+func handleSnapshotExpressions(expression string) (string, string, error) {
+	separator := ""
+	hasTilda := strings.Contains(expression, "~")
+	hasHash := strings.Contains(expression, "#")
+	hasAt := strings.Contains(expression, "@")
+	if (hasTilda && hasHash) || (hasTilda && hasAt) || (hasHash && hasAt) {
+		return "", "", fmt.Errorf("invalid expression: %s. Only one of '@', '~' or '#' can be present", expression)
+	} else if hasTilda {
+		separator = "~"
+	} else if hasHash {
+		separator = "#"
+	} else if hasAt {
+		separator = "@"
+	} else {
+		return expression, "-1", nil
+	}
+
+	items := strings.SplitN(expression, separator, 2)
+	if items[0] == "" {
+		return "", "", fmt.Errorf("invalid expression: %s. Environment name is missing", expression)
+	}
+	return items[0], url.PathEscape(separator + items[1]), nil
 }
 
 // handleArtifactExpression parses artifact expressions (with @ and :) and returns

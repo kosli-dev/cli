@@ -127,7 +127,7 @@ func newGetSnapshotCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *environmentGetOptions) run(out io.Writer, args []string) error {
-	envName, id, err := handleExpressions(args[0])
+	envName, id, err := handleSnapshotExpressions(args[0])
 	if err != nil {
 		return err
 	}
