@@ -69,7 +69,7 @@ func (o *getDeploymentOptions) run(out io.Writer, args []string) error {
 	if err != nil {
 		return err
 	}
-	url := fmt.Sprintf("%s/api/v2/deployments/%s/%s/%s", global.Host, global.Org, flowName, id)
+	url := fmt.Sprintf("%s/api/v2/deployments/%s/%s/%d", global.Host, global.Org, flowName, id)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,

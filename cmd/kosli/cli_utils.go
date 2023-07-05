@@ -592,41 +592,35 @@ func getPathOfEvidenceFileToUpload(evidencePaths []string) (string, bool, error)
 	return tarFilePath, cleanupNeeded, nil
 }
 
-// handleExpressions parses ~, # and @ expressions and returns
+// handleExpressions parses ~ and # expressions and returns
 // a name (usually flow name), an ID (positive for fixed IDs or negative for reverse IDs),
 // and an error if the expression is invalid
-func handleExpressions(expression string) (string, string, error) {
+func handleExpressions(expression string) (string, int, error) {
 	separator := ""
 	hasTilda := strings.Contains(expression, "~")
 	hasHash := strings.Contains(expression, "#")
-	hasAt := strings.Contains(expression, "@")
-	if (hasTilda && hasHash) || (hasTilda && hasAt) || (hasHash && hasAt) {
-		return "", "", fmt.Errorf("invalid expression: %s. Both '~' and '#' are present", expression)
+	if hasTilda && hasHash {
+		return "", 0, fmt.Errorf("invalid expression: %s. Both '~' and '#' are present", expression)
 	} else if hasTilda {
 		separator = "~"
 	} else if hasHash {
 		separator = "#"
-	} else if hasAt {
-		separator = "@"
 	} else {
-		return expression, "-1", nil
+		return expression, -1, nil
 	}
 
 	items := strings.SplitN(expression, separator, 2)
 	if items[0] == "" {
-		return "", "", fmt.Errorf("invalid expression: %s. Flow name is missing", expression)
-	}
-	if separator == "@" {
-		return items[0], "@" + items[1], nil
+		return "", 0, fmt.Errorf("invalid expression: %s. Flow name is missing", expression)
 	}
 	id, err := strconv.Atoi(items[1])
 	if err != nil {
-		return "", "", fmt.Errorf("invalid expression: %s. '%s' is not an integer", expression, items[1])
+		return "", 0, fmt.Errorf("invalid expression: %s. '%s' is not an integer", expression, items[1])
 	}
 	if separator == "~" {
 		id = (-1 * id) - 1
 	}
-	return items[0], strconv.Itoa(id), nil
+	return items[0], id, nil
 }
 
 // handleSnapshotExpressions parses ~, # and @ expressions and returns
