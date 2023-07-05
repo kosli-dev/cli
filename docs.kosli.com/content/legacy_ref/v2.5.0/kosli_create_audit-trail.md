@@ -1,26 +1,29 @@
 ---
-title: "kosli get audit-trail"
+title: "kosli create audit-trail"
 beta: true
 ---
 
-# kosli get audit-trail
+# kosli create audit-trail
 
-{{< hint warning >}}**kosli get audit-trail** is an beta feature. 
+{{< hint warning >}}**kosli create audit-trail** is a beta feature. 
 Beta features provide early access to product functionality. These features may change between releases without warning, or can be removed from a future release.
 You can enable beta features by using the `kosli enable beta` command.{{< /hint >}}
 ## Synopsis
 
-Get the metadata of a specific audit trail.
+Create or update a Kosli audit trail.
+You can specify audit trail parameters in flags.
 
 ```shell
-kosli get audit-trail AUDIT-TRAIL-NAME [flags]
+kosli create audit-trail AUDIT-TRAIL-NAME [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
+|        --description string  |  [optional] The Kosli flow description.  |
+|    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -h, --help  |  help for audit-trail  |
-|    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
+|    -s, --steps strings  |  [defaulted] The comma-separated list of required audit trail steps names.  |
 
 
 ## Options inherited from parent commands
@@ -33,4 +36,17 @@ kosli get audit-trail AUDIT-TRAIL-NAME [flags]
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
+
+## Examples
+
+```shell
+
+# create/update a Kosli audit trail:
+kosli create audit-trail yourAuditTrailName \
+	--description yourAuditTrailDescription \
+	--steps step1,step2 \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+```
 
