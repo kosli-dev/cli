@@ -13,7 +13,7 @@ type TypedEvidencePayload struct {
 	EvidenceFingerprint string      `json:"evidence_fingerprint,omitempty"`
 	BuildUrl            string      `json:"build_url"`
 	UserData            interface{} `json:"user_data,omitempty"`
-	Flows               []string    `json:"pipelines,omitempty"`
+	Flows               []string    `json:"flows,omitempty"`
 }
 
 type GenericEvidencePayload struct {
