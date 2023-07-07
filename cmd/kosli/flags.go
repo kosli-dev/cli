@@ -75,7 +75,7 @@ func addCommitPRFlags(cmd *cobra.Command, o *pullRequestCommitOptions, ci string
 
 func addCommitEvidenceFlags(cmd *cobra.Command, payload *TypedEvidencePayload, ci string) {
 	addEvidenceFlags(cmd, payload, ci)
-	cmd.Flags().StringVar(&payload.CommitSHA, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
+	cmd.Flags().StringVar(&payload.CommitSHA, "commit", DefaultValue(ci, "git-commit"), commitEvidenceFlag)
 	cmd.Flags().StringSliceVarP(&payload.Flows, "flows", "f", []string{}, flowNamesFlag)
 }
 
