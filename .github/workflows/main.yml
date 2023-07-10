@@ -5,7 +5,7 @@ on:
     # branches:
     #   - '**'
     branches-ignore:
-      - 'fix-upload-lambda-package'
+      - 'evidence-reporer-service-identity'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
