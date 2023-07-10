@@ -2,10 +2,8 @@ name: Main
 
 on:
   push:
-    # branches:
-    #   - '**'
-    branches-ignore:
-      - 'fix-upload-lambda-package'
+    branches:
+      - '**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
