@@ -13,14 +13,28 @@ function handler () {
       ./kosli report workflow --audit-trail ${KOSLI_AUDIT_TRAIL_NAME} --id ${ECS_EXEC_SESSION_ID}
   fi
 
-  # Get ECS exec session user (ARN of the IAM role that initiated the session)
-  ECS_EXEC_USER=$(echo ${EVENT_DATA} | jq -r ".detail.userIdentity.arn")
-  echo "{\"ecs_exec_role_arn\": \"${ECS_EXEC_USER}\"}" | jq . > /tmp/user-identity.json
+  # Get ECS exec session user identity (ARN of the IAM role that initiated the session)
+  ECS_EXEC_USER_IDENTITY=$(echo ${EVENT_DATA} | jq -r ".detail.userIdentity.arn")
+  echo "{\"ecs_exec_role_arn\": \"${ECS_EXEC_USER_IDENTITY}\"}" | jq . > /tmp/user-identity.json
 
-  echo "Reporting ECS exec user data to the Kosli..." 1>&2
+  echo "Reporting ECS exec user identity to the Kosli..." 1>&2
   ./kosli report evidence workflow --audit-trail ${KOSLI_AUDIT_TRAIL_NAME} \
       --user-data /tmp/user-identity.json \
       --evidence-paths /tmp/user-identity.json \
       --id ${ECS_EXEC_SESSION_ID} \
-      --step ${KOSLI_STEP_NAME}
+      --step ${KOSLI_STEP_NAME_USER_IDENTITY}
+
+  # Get ECS exec session service identity
+  ECS_EXEC_TASK_ARN=$(echo ${EVENT_DATA} | jq -r ".detail.responseElements.taskArn")
+  ECS_EXEC_CLUSTER=$(echo ${EVENT_DATA} | jq -r ".detail.requestParameters.cluster")
+  ECS_EXEC_TASK_GROUP=$(aws ecs describe-tasks --cluster ${ECS_EXEC_CLUSTER} --tasks ${ECS_EXEC_TASK_ARN} | jq ".tasks[].group")
+
+  echo "{\"ecs_exec_service_identity\": \"${ECS_EXEC_TASK_GROUP}\"}" | jq . > /tmp/service-identity.json
+
+  echo "Reporting ECS exec service identity to the Kosli..." 1>&2
+  ./kosli report evidence workflow --audit-trail ${KOSLI_AUDIT_TRAIL_NAME} \
+      --user-data /tmp/service-identity.json \
+      --evidence-paths /tmp/service-identity.json \
+      --id ${ECS_EXEC_SESSION_ID} \
+      --step ${KOSLI_STEP_NAME_SERVICE_IDENTITY}
 }
