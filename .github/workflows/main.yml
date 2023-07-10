@@ -2,10 +2,8 @@ name: Main
 
 on:
   push:
-    # branches:
-    #   - '**'
-    branches-ignore:
-      - 'evidence-reporer-service-identity'
+    branches:
+      - '**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
