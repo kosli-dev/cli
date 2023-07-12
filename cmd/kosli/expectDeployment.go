@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const expectDeploymentShortDesc = `Report a deployment of an artifact to an environment to Kosli.`
+const expectDeploymentShortDesc = `Report a deployment of an artifact to an environment to Kosli.  `
 
 const expectDeploymentLongDesc = expectDeploymentShortDesc + `
 ` + fingerprintDesc

@@ -34,11 +34,12 @@ const (
 	fingerprintDesc = "The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag)."
 	awsAuthDesc     = `
 
-To authenticate to AWS, you can either:
-	1) provide the AWS static credentials via flags or by exporting the equivalent KOSLI env vars (e.g. KOSLI_AWS_KEY_ID)
-	2) export the AWS env vars (e.g. AWS_ACCESS_KEY_ID).
-	3) Use a shared config/credentials file under the $HOME/.aws
-Option 1 takes highest precedence, while option 3 is the lowest.
+To authenticate to AWS, you can either:  
+  1) provide the AWS static credentials via flags or by exporting the equivalent KOSLI env vars (e.g. KOSLI_AWS_KEY_ID)  
+  2) export the AWS env vars (e.g. AWS_ACCESS_KEY_ID).  
+  3) Use a shared config/credentials file under the $HOME/.aws  
+  
+Option 1 takes highest precedence, while option 3 is the lowest.  
 More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials
 	`
 
@@ -95,7 +96,7 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 	bbPasswordFlag          = "Bitbucket App password. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#authentication for more details."
 	bbWorkspaceFlag         = "Bitbucket workspace ID."
 	commitPREvidenceFlag    = "Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
-	commitEvidenceFlag      = "Git commit for which to verify and attach given evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
+	commitEvidenceFlag      = "Git commit for which to verify and given evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
 	repositoryFlag          = "Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
 	assertPREvidenceFlag    = "[optional] Exit with non-zero code if no pull requests found for the given commit."
 	assertStatusFlag        = "[optional] Exit with non-zero code if Kosli server is not responding."

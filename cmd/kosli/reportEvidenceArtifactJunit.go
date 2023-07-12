@@ -38,10 +38,11 @@ type reportEvidenceArtifactJunitOptions struct {
 	payload            EvidenceJUnitPayload
 }
 
-const reportEvidenceArtifactJunitShortDesc = `Report JUnit test evidence for an artifact in a Kosli flow.`
+const reportEvidenceArtifactJunitShortDesc = `Report JUnit test evidence for an artifact in a Kosli flow.  `
 
 const reportEvidenceArtifactJunitLongDesc = reportEvidenceArtifactJunitShortDesc + `  
-All .xml files from --results-dir are parsed and uploaded to Kosli's evidence vault. If there are no failing tests and no errors the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
+All .xml files from --results-dir are parsed and uploaded to Kosli's evidence vault.  
+If there are no failing tests and no errors the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.  
 ` + fingerprintDesc
 
 const reportEvidenceArtifactJunitExample = `

@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const snapshotECSShortDesc = `Report a snapshot of running containers in an AWS ECS cluster or service to Kosli.`
+const snapshotECSShortDesc = `Report a snapshot of running containers in an AWS ECS cluster or service to Kosli.  `
 const snapshotECSLongDesc = snapshotECSShortDesc + `
 The reported data includes container image digests and creation timestamps.` + awsAuthDesc
 

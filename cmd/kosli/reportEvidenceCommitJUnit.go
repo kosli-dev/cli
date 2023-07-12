@@ -16,10 +16,11 @@ type reportEvidenceCommitJunitOptions struct {
 	payload          EvidenceJUnitPayload
 }
 
-const reportEvidenceCommitJunitShortDesc = `Report JUnit test evidence for a commit in Kosli flows.`
+const reportEvidenceCommitJunitShortDesc = `Report JUnit test evidence for a commit in Kosli flows.  `
 
 const reportEvidenceCommitJunitLongDesc = reportEvidenceCommitJunitShortDesc + `  
-All .xml files from --results-dir are parsed and uploaded to Kosli's evidence vault. If there are no failing tests and no errors the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
+All .xml files from --results-dir are parsed and uploaded to Kosli's evidence vault.  
+If there are no failing tests and no errors the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
 `
 
 const reportEvidenceCommitJunitExample = `

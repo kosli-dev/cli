@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const snapshotServerShortDesc = `Report a snapshot of artifacts running in a server environment to Kosli.`
+const snapshotServerShortDesc = `Report a snapshot of artifacts running in a server environment to Kosli.  `
 
 const snapshotServerLongDesc = snapshotServerShortDesc + `
 You can report directory or file artifacts in one or more server paths.

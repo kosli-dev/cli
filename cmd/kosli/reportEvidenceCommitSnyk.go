@@ -16,10 +16,11 @@ type reportEvidenceCommitSnykOptions struct {
 	payload          EvidenceSnykPayload
 }
 
-const reportEvidenceCommitSnykShortDesc = `Report Snyk vulnerability scan evidence for a commit in Kosli flows.`
+const reportEvidenceCommitSnykShortDesc = `Report Snyk vulnerability scan evidence for a commit in Kosli flows.  `
 
 const reportEvidenceCommitSnykLongDesc = reportEvidenceCommitSnykShortDesc + `  
-The --scan-results .json file is parsed and uploaded to Kosli's evidence vault. If no vulnerabilities are detected the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
+The --scan-results .json file is parsed and uploaded to Kosli's evidence vault.  
+If no vulnerabilities are detected the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
 `
 
 const reportEvidenceCommitSnykExample = `

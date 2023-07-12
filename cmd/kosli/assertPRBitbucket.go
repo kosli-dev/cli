@@ -12,7 +12,7 @@ type assertPullRequestBitbucketOptions struct {
 	commit   string
 }
 
-const assertPRBitbucketShortDesc = `Assert a Bitbucket pull request for a git commit exists. `
+const assertPRBitbucketShortDesc = `Assert a Bitbucket pull request for a git commit exists.  `
 
 const assertPRBitbucketLongDesc = assertPRBitbucketShortDesc + `
 The command exits with non-zero exit code 

@@ -8,10 +8,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const reportEvidenceArtifactPRGithubShortDesc = `Report a Github pull request evidence for an artifact in a Kosli flow.`
+const reportEvidenceArtifactPRGithubShortDesc = `Report a Github pull request evidence for an artifact in a Kosli flow.  `
 
 const reportEvidenceArtifactPRGithubLongDesc = reportEvidenceArtifactPRGithubShortDesc + `
-It checks if a pull request exists for the artifact (based on its git commit) and reports the pull-request evidence to the artifact in Kosli.
+It checks if a pull request exists for the artifact (based on its git commit) and reports the pull-request evidence to the artifact in Kosli.  
 ` + fingerprintDesc
 
 const reportEvidenceArtifactPRGithubExample = `

@@ -269,6 +269,39 @@ See [kosli commit report evidence snyk](/legacy_ref/v0.1.37/kosli_commit_report_
 
 {{< /tabs >}}
 
+## Jira evidence 
+
+To verify that Jira issue reference is a part of a commit message or a branch name, and report it to Kosli, you can use [kosli report evidence commit jira](/client_reference/kosli_report_evidence_commit_jira/) command. 
+
+If Jira reference is found in a commit message, that reference will be reported as evidence. If the reference is not found in the commit message, Kosli CLI will check if it's a part of a branch name.
+
+Kosli CLI will also verify and report if the detected issue reference is found and accessible on Jira (reported as compliant) or not (reported as non compliant). 
+
+
+### Example 
+
+{{< tabs "jira-example" "col-no-wrap" >}}
+
+{{< tab "Commit v2" >}}
+```
+$ kosli report evidence commit jira \
+	--commit yourGitCommitSha1 \
+	--name yourEvidenceName \
+	--jira-base-url https://kosli.atlassian.net \
+	--jira-username user@domain.com \
+	--jira-api-token yourJiraAPIToken \
+	--flows yourFlowName \
+	--build-url https://exampleci.com \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+snyk scan evidence is reported to commit: e67f2f2b121f9325ebf166b7b3c707f73cb48b14
+```
+See [kosli report evidence commit jira](/client_reference/kosli_report_evidence_commit_jira/) for more details
+{{< /tab >}}
+
+{{< /tabs >}}
+
 ## Generic evidence
 
 If Kosli doesn't support the type of the evidence you'd like to attach, you can [report Generic evidence to an artifact](/client_reference/kosli_report_evidence_artifact_generic/) or

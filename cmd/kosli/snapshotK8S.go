@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const snapshotK8SShortDesc = `Report a snapshot of running pods in a K8S cluster or namespace(s) to Kosli.`
+const snapshotK8SShortDesc = `Report a snapshot of running pods in a K8S cluster or namespace(s) to Kosli.  `
 
 const snapshotK8SLongDesc = snapshotK8SShortDesc + `
 The reported data includes pod container images digests and creation timestamps. You can customize the scope of reporting
