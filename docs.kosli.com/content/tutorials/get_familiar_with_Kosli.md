@@ -256,4 +256,4 @@ History:
     Started running in quickstart#1 environment  Tue, 01 Nov 2022 15:55:49 CET
 ```
 
-Visit the [Kosli Querying](/getting_started/part_9_querying/) guide to learn more about the search command.
+Visit the [Kosli Querying](/getting_started/querying/) guide to learn more about the search command.
