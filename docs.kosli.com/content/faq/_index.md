@@ -79,6 +79,7 @@ You can use dry run to disable writing to app.kosli.com - e.g. if you're just tr
 
 Here are two possible ways of enabling a dry run:
 1. use the `--dry-run` flag (no value needed) to enable it per command
+1. set the `KOSLI_DRY_RUN` environment variable to `true` to enable it globally (e.g. in your terminal or CI)
 1. set the `KOSLI_API_TOKEN` environment variable to `DRY_RUN` to enable it globally (e.g. in your terminal or CI)
 
 ## What is the `--config-file` flag?
