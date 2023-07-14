@@ -7,8 +7,8 @@ beta: false
 
 ## Synopsis
 
-Report a Gitlab merge request evidence for an artifact in a Kosli flow.
-It checks if a merge request exists for the artifact (based on its git commit) and reports the merge request evidence to the artifact in Kosli.
+Report a Gitlab merge request evidence for an artifact in a Kosli flow.  
+It checks if a merge request exists for the artifact (based on its git commit) and reports the merge request evidence to the artifact in Kosli.  
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell

@@ -7,7 +7,7 @@ beta: false
 
 ## Synopsis
 
-Assert the compliance status of an artifact in Kosli.
+Assert the compliance status of an artifact in Kosli.  
 Exits with non-zero code if the artifact has a non-compliant status.
 
 ```shell

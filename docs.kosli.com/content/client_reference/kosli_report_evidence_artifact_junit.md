@@ -7,8 +7,9 @@ beta: false
 
 ## Synopsis
 
-Report JUnit test evidence for an artifact in a Kosli flow.  
-All .xml files from --results-dir are parsed and uploaded to Kosli's evidence vault. If there are no failing tests and no errors the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
+Report JUnit test evidence for an artifact in a Kosli flow.    
+All .xml files from --results-dir are parsed and uploaded to Kosli's evidence vault.  
+If there are no failing tests and no errors the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.  
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell

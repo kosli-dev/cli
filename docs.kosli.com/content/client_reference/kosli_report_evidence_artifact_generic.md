@@ -7,7 +7,7 @@ beta: false
 
 ## Synopsis
 
-Report generic evidence to an artifact in a Kosli flow.
+Report generic evidence to an artifact in a Kosli flow.  
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell

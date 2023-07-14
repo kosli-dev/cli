@@ -7,8 +7,9 @@ beta: false
 
 ## Synopsis
 
-Request an approval of a deployment of an artifact in Kosli.
-The request should be reviewed in the Kosli UI. The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
+Request an approval of a deployment of an artifact in Kosli.  
+The request should be reviewed in the Kosli UI.  
+The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell
 kosli request approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]

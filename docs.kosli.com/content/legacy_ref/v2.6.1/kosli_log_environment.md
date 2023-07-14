@@ -22,7 +22,7 @@ Either expression can be omitted to default to NOW.
 
 
 ```shell
-kosli log environment ENV_NAME [INTERVAL] [flags]
+kosli log environment ENV_NAME [flags]
 ```
 
 ## Flags

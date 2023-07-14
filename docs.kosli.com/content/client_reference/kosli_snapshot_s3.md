@@ -9,11 +9,12 @@ beta: false
 
 Report a snapshot of an artifact deployed in AWS S3 bucket to Kosli.
 
-To authenticate to AWS, you can either:
-	1) provide the AWS static credentials via flags or by exporting the equivalent KOSLI env vars (e.g. KOSLI_AWS_KEY_ID)
-	2) export the AWS env vars (e.g. AWS_ACCESS_KEY_ID).
-	3) Use a shared config/credentials file under the $HOME/.aws
-Option 1 takes highest precedence, while option 3 is the lowest.
+To authenticate to AWS, you can either:  
+  1) provide the AWS static credentials via flags or by exporting the equivalent KOSLI env vars (e.g. KOSLI_AWS_KEY_ID)  
+  2) export the AWS env vars (e.g. AWS_ACCESS_KEY_ID).  
+  3) Use a shared config/credentials file under the $HOME/.aws  
+  
+Option 1 takes highest precedence, while option 3 is the lowest.  
 More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials
 	
 

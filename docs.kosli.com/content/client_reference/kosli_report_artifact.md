@@ -7,7 +7,7 @@ beta: false
 
 ## Synopsis
 
-Report an artifact creation to a Kosli flow.
+Report an artifact creation to a Kosli flow.  
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell

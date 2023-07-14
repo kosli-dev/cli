@@ -7,7 +7,7 @@ beta: false
 
 ## Synopsis
 
-Add an artifact to an environment's allowlist.
+Add an artifact to an environment's allowlist.  
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell

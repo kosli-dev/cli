@@ -7,8 +7,8 @@ beta: false
 
 ## Synopsis
 
-Check the status of a Kosli server. 
-The status is logged and the command always exits with 0 exit code.
+Check the status of a Kosli server.  
+The status is logged and the command always exits with 0 exit code.  
 If you like to assert the Kosli server status, you can use the --assert flag or the "kosli assert status" command.
 
 ```shell

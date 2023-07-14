@@ -7,7 +7,7 @@ beta: false
 
 ## Synopsis
 
-Report a snapshot of running containers from docker host to Kosli.
+Report a snapshot of running containers from docker host to Kosli.  
 The reported data includes container image digests 
 and creation timestamps. Containers running images which have not
 been pushed to or pulled from a registry will be ignored.

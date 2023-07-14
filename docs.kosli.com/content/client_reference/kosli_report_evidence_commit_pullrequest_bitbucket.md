@@ -7,7 +7,7 @@ beta: false
 
 ## Synopsis
 
-Report Bitbucket pull request evidence for a commit in Kosli flows.
+Report Bitbucket pull request evidence for a commit in Kosli flows.  
 It checks if a pull request exists for the git commit and reports the pull-request evidence to the commit in Kosli.
 
 ```shell
@@ -22,7 +22,7 @@ kosli report evidence commit pullrequest bitbucket [flags]
 |        --bitbucket-username string  |  Bitbucket username.  |
 |        --bitbucket-workspace string  |  Bitbucket workspace ID.  |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|        --commit string  |  Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|        --commit string  |  Git commit for which to verify and given evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |        --evidence-fingerprint string  |  [optional] The SHA256 fingerprint of the evidence file or dir.  |
 |        --evidence-url string  |  [optional] The external URL where the evidence file or dir is stored.  |

@@ -7,15 +7,13 @@ beta: false
 
 ## Synopsis
 
-Report Jira evidence for a commit in Kosli flows.  
+Report Jira evidence for a commit in Kosli flows.
 Parses the given commit's message or current branch name for Jira issue references of the 
-form:  
-'at least 2 characters long, starting with an uppercase letter project key followed by
-dash and one or more digits'. 
-
+form: 'at least 2 characters long, starting with an uppercase letter project key followed by
+dash and one or more digits'.
 The found issue references will be checked against Jira to confirm their existence.
 The evidence is reported in all cases, and its compliance status depends on referencing
-existing Jira issues.  
+existing Jira issues.
 If you have wrong Jira credentials or wrong Jira-base-url it will be reported as non existing Jira issue.
 This is because Jira returns same 404 error code in all cases.
 
@@ -28,7 +26,7 @@ kosli report evidence commit jira [flags]
 | Flag | Description |
 | :--- | :--- |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|        --commit string  |  Git commit for which to verify and given evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|        --commit string  |  Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |        --evidence-fingerprint string  |  [optional] The SHA256 fingerprint of the evidence file or dir.  |
 |    -e, --evidence-paths strings  |  [optional] The comma-separated list of paths containing supporting proof for the reported evidence. Paths can be for files or directories.  |

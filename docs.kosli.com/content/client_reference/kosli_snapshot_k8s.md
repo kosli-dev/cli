@@ -7,7 +7,7 @@ beta: false
 
 ## Synopsis
 
-Report a snapshot of running pods in a K8S cluster or namespace(s) to Kosli.
+Report a snapshot of running pods in a K8S cluster or namespace(s) to Kosli.  
 The reported data includes pod container images digests and creation timestamps. You can customize the scope of reporting
 to include or exclude namespaces.
 

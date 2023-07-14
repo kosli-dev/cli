@@ -7,12 +7,14 @@ beta: false
 
 ## Synopsis
 
-Report a snapshot of artifacts running in a server environment to Kosli.
+Report a snapshot of artifacts running in a server environment to Kosli.  
 You can report directory or file artifacts in one or more server paths.
 
 When fingerprinting a 'dir' artifact, you can exclude certain paths from fingerprint calculation 
-using the '--exclude' flag. Excluded paths are relative to the artifact path(s) and can be literal paths or
-glob patterns. The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match
+using the '--exclude' flag.  
+Excluded paths are relative to the artifact path(s) and can be literal paths or
+glob patterns.  
+The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match
 
 ```shell
 kosli snapshot server ENVIRONMENT-NAME [flags]

@@ -15,8 +15,10 @@ Fingerprinting docker images can be done using via the local docker daemon or th
 from a remote registry.
 
 When fingerprinting a 'dir' artifact, you can exclude certain paths from fingerprint calculation 
-using the '--exclude' flag. Excluded paths are relative to the artifact path(s) and can be literal paths or
-glob patterns. The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match
+using the '--exclude' flag.  
+Excluded paths are relative to the artifact path(s) and can be literal paths or
+glob patterns.  
+The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match
 
 ```shell
 kosli fingerprint {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]

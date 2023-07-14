@@ -7,7 +7,7 @@ beta: false
 
 ## Synopsis
 
-Search for a git commit or an artifact fingerprint in Kosli. 
+Search for a git commit or an artifact fingerprint in Kosli.   
 You can use short git commit or artifact fingerprint shas, but you must provide at least 5 characters.
 
 ```shell

@@ -7,11 +7,11 @@ beta: false
 
 ## Synopsis
 
-Diff environment snapshots.
-Specify SNAPPISH_1 and SNAPPISH_2 by:
-	environmentName~<N>  N'th behind the latest snapshot
-	environmentName#<N>  snapshot number N
-	environmentName      the latest snapshot
+Diff environment snapshots.  
+Specify SNAPPISH_1 and SNAPPISH_2 by:  
+- environmentName~<N>  N'th behind the latest snapshot  
+- environmentName#<N>  snapshot number N  
+- environmentName      the latest snapshot
 
 ```shell
 kosli diff snapshots SNAPPISH_1 SNAPPISH_2 [flags]

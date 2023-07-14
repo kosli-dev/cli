@@ -7,8 +7,8 @@ beta: false
 
 ## Synopsis
 
-Assert an artifact in Kosli has been approved for deployment.
-Exits with non-zero code if the artifact has not been approved.
+Assert an artifact in Kosli has been approved for deployment.  
+Exits with non-zero code if the artifact has not been approved.  
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell
