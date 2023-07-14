@@ -52,12 +52,22 @@ or
 kosli list snapshots prod "~3..NOW"
 ```
 
+### Github can't see KOSLI_API_TOKEN secret
+
+Secrets in Github actions are not automatically exported as environment variables. You need to add required secrets to your GITHUB environment explicitly. E.g. to make kosli_api_token secret available for all cli commands as an environment variable use following:
+
+```yaml
+env:
+  KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+```
+
 ## Usage
 
 ### Where can I find API documentation?
 
-At this point our API is not publicly available. The reason for this is that we are introducing a lot of changes and we can't guarantee the API endpoint you use will stay the same.  
-That will change in the future.
+Kosli API documentation is available for logged in Kosli users here: https://app.kosli.com/api/v2/doc/  
+You can find the link at [app.kosli.com](https://app.kosli.com) after clicking at your avatar (top-right corner of the page)
+
 <!-- 
 ### Do you support uploading a spdx or sbom as evidence?
 

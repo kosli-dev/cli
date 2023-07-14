@@ -88,7 +88,18 @@ The following flags are **defaulted** (which means you don't need to provide the
 To use Kosli in [Github Actions](https://docs.github.com/en/actions) workflows, you can use the kosli [CLI setup action](https://github.com/marketplace/actions/setup-kosli-cli) to install the CLI on your Github Actions Runner.
 Then, you can use all the [CLI commands](/client_reference) in your workflows.
 
-Here is an example Github Actions workflow snippet using the `kosli create flow` command:
+### GitHub Secrets 
+
+Keep in mind that secrets in Github actions are not automatically exported as environment variables. You need to add required secrets to your GITHUB environment explicitly. E.g. to make kosli_api_token secret available for all cli commands as an environment variable use following:
+
+```yaml
+env:
+  KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+```
+
+### Example
+
+Here is an example Github Actions workflow snippet using `kosli-dev/setup-cli-action` running `kosli create flow` command:
 
 ```yaml
 jobs:
