@@ -11,9 +11,7 @@ If you can't find the answer you're looking for please:
 * email us [here](mailto:info@kosli.com)
 * join our slack community [here](https://join.slack.com/t/koslicommunity/shared_invite/zt-1dlchm3s7-DEP6TKjP3Mr58OZVB3hCBw)
 
-## Errors
-
-### Why am I getting "unknown flag" error?
+## Why am I getting "unknown flag" error?
 
 If you see an error like below (or similar, with a different flag):
 ```
@@ -21,7 +19,7 @@ Error: unknown flag: --artifact-type
 ```
 It most likely mean you misspelled a flag.
 
-### "unknown command" errors
+## "unknown command" errors
 E.g.
 ```
 kosli expect deploymenct abc.exe --artifact-type file
@@ -32,7 +30,7 @@ available subcommands are: deployment
 Note that there is a typo in deploymen**c**t.
 This error will pop up if you're trying to use a command that is not present in the version of the kosli CLI you are using.
 
-### zsh: no such user or named directory
+## zsh: no such user or named directory
 
 When running commands with argument starting with `~` you can encounter following problem:
 
@@ -52,7 +50,7 @@ or
 kosli list snapshots prod "~3..NOW"
 ```
 
-### Github can't see KOSLI_API_TOKEN secret
+## Github can't see KOSLI_API_TOKEN secret
 
 Secrets in Github actions are not automatically exported as environment variables. You need to add required secrets to your GITHUB environment explicitly. E.g. to make kosli_api_token secret available for all cli commands as an environment variable use following:
 
@@ -61,9 +59,7 @@ env:
   KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
 ```
 
-## Usage
-
-### Where can I find API documentation?
+## Where can I find API documentation?
 
 Kosli API documentation is available for logged in Kosli users here: https://app.kosli.com/api/v2/doc/  
 You can find the link at [app.kosli.com](https://app.kosli.com) after clicking at your avatar (top-right corner of the page)
@@ -73,11 +69,11 @@ You can find the link at [app.kosli.com](https://app.kosli.com) after clicking a
 
 We are working on providing that functionality in a near future. -->
 
-### Do I have to provide all the flags all the time? 
+## Do I have to provide all the flags all the time? 
 
 A number of flags won't change their values often (or at all) between commands, like `--org` or `--api-token`.  Some will differ between e.g. workflows, like `--flow`. You can define them as environment variable to avoid unnecessary redundancy. Check [Environment variables](/kosli_overview/kosli_tools/#environment-variables) section to learn more.
 
-### What is dry run and how to use it?
+## What is dry run and how to use it?
 
 You can use dry run to disable writing to app.kosli.com - e.g. if you're just trying things out, or troubleshooting (dry run will print the payload the CLI would send in a non dry run mode). 
 
@@ -85,7 +81,7 @@ Here are two possible ways of enabling a dry run:
 1. use the `--dry-run` flag (no value needed) to enable it per command
 1. set the `KOSLI_API_TOKEN` environment variable to `DRY_RUN` to enable it globally (e.g. in your terminal or CI)
 
-### What is the `--config-file` flag?
+## What is the `--config-file` flag?
 
 A config file is an alternative for using Kosli flags or Environment variables. Usually you'd use a config file for the values that rarely change - like api token or org, but you can represent all Kosli flags with config file. The key for each value is the same as the flag name, capitalized, so `--api-token` would become `API-TOKEN`, and `--org` would become `ORG`, etc. 
 
@@ -122,16 +118,16 @@ $ kosli environment ls --config-file kosli-conf
 `--config-file` defaults to `kosli`, so if you name your file `kosli.<yaml|toml|json>` and the file is in the same location as where you run Kosli commands from, you can skip the `--config-file` altogether.
 
 
-### Reporting the same artifact and evidence multiple times
+## Reporting the same artifact and evidence multiple times
 If an artifact or evidence is reported multiple times there are a few corner cases. 
 The issues are described here:
 
-#### Template
+### Template
 When an artifact is reported, the template for the flow is stored together with the artifact. 
 If the template has changed between the times the same artifact is reported, it is the last 
 template that is considered the template for that artifact.
 
-#### Evidence
+### Evidence
 If a given named evidence is reported multiple times it is the compliance status of the last 
 reported version of the evidence that is considered the compliance state of that evidence.
 
@@ -139,6 +135,21 @@ If an artifact is reported multiple times with different git-commit, we can have
 commit-evidence being attached to the artifact through multiple git-commits. It is the last
 reported version of the named commit-evidence that is considered the compliance state of that evidence.
 
-#### Evidence outside the template
+### Evidence outside the template
 If an artifact have evidence, either commit evidence or artifact evidence, that is not 
 part of the template, the state of the extra evidence will affect the overall compliance of the artifact.
+
+## How to set compliance status of generic evidence
+
+To report generic evidence as non-compliant set `--compliance` flag to `false` using `=`, as in example:
+```
+$ kosli report evidence artifact generic server:1.0 \
+  --artifact-type docker \
+  --name test \
+  --description "generic test evidence" \
+  --compliant=false \
+  --flow server
+```
+
+Keep on mind a number of flags, usually represented with environment variables, are omitted in this example.  
+`--compliance` flag is set to `true` by default, so if you want to report generic evidence as compliant, simply skip providing the flag altogether.
