@@ -7,7 +7,7 @@ weight: 270
 
 The last important piece of information, when it comes to artifacts are deployments. Whenever you (likely with the use of your CI system) deploy an artifact to an environment you should record that information to Kosli.
 
-So when you check the status of your environments you know not only what is running there, but also that it was expected to run  there. It's an easy way of detecting unauthorized workloads and manual changes.
+So when you check the status of your environments you know, not only what is running there, but also that it was expected to run  there. It's an easy way of detecting unauthorized workloads and manual changes.
 
 ### Example
 
