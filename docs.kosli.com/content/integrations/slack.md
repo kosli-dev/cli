@@ -19,7 +19,7 @@ After you install the app you need to invite it to channel you want to be able t
 
 The next step is running `/kosli login` so you can connect your Slack user with your Kosli user.  
 
-After that you want to set up default Kosli organization, so you don't have to provide it every time you want to run `/kosli` commands from slack.  
+After that you may want to set up default Kosli organization, so you don't have to provide it every time you want to run `/kosli` commands from slack.  
 E.g. if the organization name is **my-org** you'd run `/kosli config org my-org`
 
 When all of the above is done you can run `/kosli help` to see which commands are available.
