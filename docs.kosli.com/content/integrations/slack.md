@@ -27,8 +27,8 @@ When all of the above is done you can run `/kosli help` to see which commands ar
 In case of commands referring to snapshots you can specify snapshot(s) you're interested in multiple ways:
 - environmentName~N *N'th behind the latest snapshot*
 - environmentName#N *snapshot number N*
-- environmentName@{YYYY-MM-DDTHH:MM:SS} snapshot at specific moment in time in UTC
-- environmentName the latest snapshot
+- environmentName@{YYYY-MM-DDTHH:MM:SS} *snapshot at specific moment in time in UTC*
+- environmentName *the latest snapshot*
 
 ### Example
 
