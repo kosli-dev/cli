@@ -23,10 +23,11 @@ type reportEvidenceArtifactSnykOptions struct {
 	payload            EvidenceSnykPayload
 }
 
-const reportEvidenceArtifactSnykShortDesc = `Report Snyk vulnerability scan evidence for an artifact in a Kosli flow.`
+const reportEvidenceArtifactSnykShortDesc = `Report Snyk vulnerability scan evidence for an artifact in a Kosli flow.  `
 
 const reportEvidenceArtifactSnykLongDesc = reportEvidenceArtifactSnykShortDesc + `  
-The --scan-results .json file is parsed and uploaded to Kosli's evidence vault. If no vulnerabilities are detected the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
+The --scan-results .json file is parsed and uploaded to Kosli's evidence vault.  
+If no vulnerabilities are detected the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.  
 ` + fingerprintDesc
 
 const reportEvidenceArtifactSnykExample = `

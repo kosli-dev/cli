@@ -21,6 +21,7 @@ type CommitEvidenceJiraCommandTestSuite struct {
 	tmpDir                string
 	workTree              *git.Worktree
 	fs                    billy.Filesystem
+	flowName              string
 }
 
 func (suite *CommitEvidenceJiraCommandTestSuite) SetupTest() {
@@ -38,7 +39,8 @@ func (suite *CommitEvidenceJiraCommandTestSuite) SetupTest() {
 	_, suite.workTree, suite.fs, err = testHelpers.InitializeGitRepo(suite.tmpDir)
 	require.NoError(suite.T(), err)
 
-	CreateFlow("flow-for-jira-testing", suite.T())
+	suite.flowName = "flow-for-jira-testing"
+	CreateFlow(suite.flowName, suite.T())
 }
 
 func (suite *CommitEvidenceJiraCommandTestSuite) TearDownSuite() {
@@ -57,6 +59,18 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
 					--repo-root %s
 					--build-url example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
+			goldenRegex: "Jira evidence is reported to commit: [0-9a-f]{40}\n.*Issues references reported:.*\n.*EX-1: issue found",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "EX-1 test commit",
+			},
+		},
+		{
+			name: "report Jira commit evidence with reference in start of line works for one flow",
+			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
+					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+					--repo-root %s
+					--flows %s 
+					--build-url example.com %s`, suite.tmpDir, suite.flowName, suite.defaultKosliArguments),
 			goldenRegex: "Jira evidence is reported to commit: [0-9a-f]{40}\n.*Issues references reported:.*\n.*EX-1: issue found",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "EX-1 test commit",

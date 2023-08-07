@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const reportApprovalShortDesc = `Report an approval of deploying an artifact to Kosli.`
+const reportApprovalShortDesc = `Report an approval of deploying an artifact to Kosli.  `
 const reportApprovalLongDesc = reportApprovalShortDesc + `
 ` + fingerprintDesc
 

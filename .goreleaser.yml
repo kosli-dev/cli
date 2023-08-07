@@ -37,7 +37,7 @@ archives:
 brews:
   -
     # GitHub/GitLab repository to push the formula to
-    tap:
+    repository:
       owner: kosli-dev
       name: homebrew-tap
       branch: main
@@ -81,21 +81,15 @@ nfpms:
     # You can change the file name of the package.
     #
     # Default:`{{ .PackageName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}`
-    file_name_template: "{{ .ConventionalFileName }}"
+    file_name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
 
     builds:
       - kosli
-
-    # Replacements for GOOS and GOARCH in the package name.
-    # Keys should be valid GOOSs or GOARCHs.
-    # Values are the respective replacements.
-    # Default is empty.
-    replacements:
-      amd64: amd64_v1
-      darwin: darwin
-      linux: linux
-      arm64: arm64
-      arm: arm_6
 
     vendor: Kosli Inc.
     homepage: https://kosli.com/
@@ -122,7 +116,7 @@ nfpms:
     # GoReleaser will automatically add the binaries.
     contents:
       # The src and dst attributes also supports name templates
-      - src: dist/kosli_{{ .Os }}_{{ .Arch }}/kosli
+      - src: dist/{{ .ProjectName }}_{{ .Os }}_{{ if .Amd64 }}{{ .Arch }}_v1{{ else if .Arm }}{{ .Arch }}_6{{ else }}{{ .Arch }}{{ end }}/kosli
         dst: /usr/local/bin/kosli
 
 publishers:

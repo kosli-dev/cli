@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const reportEvidenceCommitPRGitlabShortDesc = `Report Gitlab merge request evidence for a commit in Kosli flows.`
+const reportEvidenceCommitPRGitlabShortDesc = `Report Gitlab merge request evidence for a commit in Kosli flows.  `
 
 const reportEvidenceCommitPRGitlabLongDesc = reportEvidenceCommitPRGitlabShortDesc + `
 It checks if a merge request exists for the git commit and reports the merge-request evidence to the commit in Kosli.`

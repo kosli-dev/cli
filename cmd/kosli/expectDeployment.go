@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const expectDeploymentShortDesc = `Report a deployment of an artifact to an environment to Kosli.`
+const expectDeploymentShortDesc = `Report the expectation of an upcoming deployment of an artifact to an environment.  `
 
 const expectDeploymentLongDesc = expectDeploymentShortDesc + `
 ` + fingerprintDesc
@@ -98,7 +98,7 @@ func (o *expectDeploymentOptions) run(args []string) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("deployment of artifact %s was reported to: %s", o.payload.Fingerprint, o.payload.Environment)
+		logger.Info("expect deployment of artifact %s was reported to: %s", o.payload.Fingerprint, o.payload.Environment)
 	}
 	return err
 }

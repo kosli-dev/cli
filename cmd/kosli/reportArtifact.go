@@ -29,7 +29,7 @@ type ArtifactPayload struct {
 	CommitsList []*gitview.CommitInfo `json:"commits_list"`
 }
 
-const reportArtifactShortDesc = `Report an artifact creation to a Kosli flow.`
+const reportArtifactShortDesc = `Report an artifact creation to a Kosli flow.  `
 
 const reportArtifactLongDesc = reportArtifactShortDesc + `
 ` + fingerprintDesc

@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const reportEvidenceCommitPRGithubShortDesc = `Report Github pull request evidence for a git commit in Kosli flows.`
+const reportEvidenceCommitPRGithubShortDesc = `Report Github pull request evidence for a git commit in Kosli flows.  `
 
 const reportEvidenceCommitPRGithubLongDesc = reportEvidenceCommitPRGithubShortDesc + `
 It checks if a pull request exists for a commit and report the pull-request evidence to the commit in Kosli. 

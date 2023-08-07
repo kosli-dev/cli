@@ -26,13 +26,15 @@ type reportEvidenceCommitJiraOptions struct {
 
 const reportEvidenceCommitJiraShortDesc = `Report Jira evidence for a commit in Kosli flows.`
 
-const reportEvidenceCommitJiraLongDesc = reportEvidenceCommitJiraShortDesc + `
+const reportEvidenceCommitJiraLongDesc = reportEvidenceCommitJiraShortDesc + `  
 Parses the given commit's message or current branch name for Jira issue references of the 
-form: 'at least 2 characters long, starting with an uppercase letter project key followed by
-dash and one or more digits'.
+form:  
+'at least 2 characters long, starting with an uppercase letter project key followed by
+dash and one or more digits'. 
+
 The found issue references will be checked against Jira to confirm their existence.
 The evidence is reported in all cases, and its compliance status depends on referencing
-existing Jira issues.
+existing Jira issues.  
 If you have wrong Jira credentials or wrong Jira-base-url it will be reported as non existing Jira issue.
 This is because Jira returns same 404 error code in all cases.
 `

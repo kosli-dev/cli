@@ -12,13 +12,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const diffSnapshotsDescShort = `Diff environment snapshots.`
+const diffSnapshotsDescShort = `Diff environment snapshots.  `
 
 const diffSnapshotsDesc = diffSnapshotsDescShort + `
-Specify SNAPPISH_1 and SNAPPISH_2 by:
-	environmentName~<N>  N'th behind the latest snapshot
-	environmentName#<N>  snapshot number N
-	environmentName      the latest snapshot`
+Specify SNAPPISH_1 and SNAPPISH_2 by:  
+- environmentName~<N>  N'th behind the latest snapshot  
+- environmentName#<N>  snapshot number N  
+- environmentName      the latest snapshot`
 
 const diffSnapshotsExample = `
 # compare the third latest snapshot in an environment to the latest

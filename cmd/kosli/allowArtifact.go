@@ -22,7 +22,7 @@ type AllowlistPayload struct {
 	Reason      string `json:"description"`
 }
 
-const allowArtifactShortDesc = `Add an artifact to an environment's allowlist.`
+const allowArtifactShortDesc = `Add an artifact to an environment's allowlist.  `
 
 const allowArtifactLongDesc = allowArtifactShortDesc + `
 ` + fingerprintDesc

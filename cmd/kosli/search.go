@@ -53,7 +53,7 @@ kosli search YOUR_ARTIFACT_FINGERPRINT \
 	--org yourOrgName
 `
 
-const searchShortDesc = `Search for a git commit or an artifact fingerprint in Kosli.`
+const searchShortDesc = `Search for a git commit or an artifact fingerprint in Kosli.  `
 
 const searchLongDesc = searchShortDesc + ` 
 You can use short git commit or artifact fingerprint shas, but you must provide at least 5 characters.`

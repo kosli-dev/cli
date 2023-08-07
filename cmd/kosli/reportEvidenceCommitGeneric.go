@@ -16,7 +16,7 @@ type reportEvidenceCommitGenericOptions struct {
 	payload          GenericEvidencePayload
 }
 
-const reportEvidenceCommitGenericShortDesc = `Report Generic evidence for a commit in Kosli flows.`
+const reportEvidenceCommitGenericShortDesc = `Report Generic evidence for a commit in Kosli flows.  `
 
 const reportEvidenceCommitGenericLongDesc = reportEvidenceCommitGenericShortDesc
 

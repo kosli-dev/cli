@@ -12,7 +12,7 @@ type assertPullRequestAzureOptions struct {
 	commit      string
 }
 
-const assertPRAzureShortDesc = `Assert a Azure DevOps pull request for a git commit exists.`
+const assertPRAzureShortDesc = `Assert a Azure DevOps pull request for a git commit exists.  `
 
 const assertPRAzureLongDesc = assertPRAzureShortDesc + `
 The command exits with non-zero exit code 

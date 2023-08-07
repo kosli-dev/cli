@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const snapshotDockerShortDesc = `Report a snapshot of running containers from docker host to Kosli.`
+const snapshotDockerShortDesc = `Report a snapshot of running containers from docker host to Kosli.  `
 
 const snapshotDockerLongDesc = snapshotDockerShortDesc + `
 The reported data includes container image digests 
