@@ -3,21 +3,18 @@ title: Slack integration
 bookCollapseSection: false
 weight: 320
 ---
+# Kosli Slack App
 [Kosli Slack App](#kosli-slack-app) allows you to configure and receive notifications about changes in your environments
 and query Kosli about your environments and artifacts without leaving Slack window.
 
 ## Installation
 
 Visit https://slack.kosli.com to add Kosli Slack App to your Slack workspace.
-
-After you install the app you need to invite it to channel you want to be able to use `/kosli` from.  
-You can do it by typing below command in the channel:
-```
-/invite @kosli
-```
 ## Usage
 
-Now that Kosli Slack App is installed and invited to selected channel you can start using all `/kosli` commands in that channel.
+Now that Kosli Slack App is installed you can start using all `/kosli` commands in any channel.
+
+At any time you can run `/kosli help` to see which commands are available.
 
 The next step is connecting your Slack user with your Kosli user, use the command below to do that:
 ```
@@ -29,8 +26,6 @@ E.g. if the organization name is **my-org**:
 ```
 /kosli config org my-org
 ```
-
-When all of the above is done you can run `/kosli help` to see which commands are available.
 
 In case of commands referring to snapshots you can specify snapshot(s) you're interested in multiple ways:
 - environmentName~N *N'th behind the latest snapshot*
