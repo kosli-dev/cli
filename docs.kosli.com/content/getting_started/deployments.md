@@ -1,13 +1,19 @@
 ---
-title: "Part 8: Deployment Expectations"
+title: "Part 8: Deployments"
 bookCollapseSection: false
 weight: 270
 ---
-# Part 8: Deployment Expectations
+# Part 8: Deployments
 
 The last important piece of information, when it comes to artifacts are deployments. Whenever you (likely with the use of your CI system) deploy an artifact to an environment you should record that information to Kosli.
 
-So when you check the status of your environments you know, not only what is running there, but also that it was expected to run  there. It's an easy way of detecting unauthorized workloads and manual changes.
+When you check the status of your environments you want to know that what is running there was **expected** to run there. Reporting deployment expectation is an easy way of detecting unauthorized workloads and manual changes.
+
+{{< hint info >}}
+
+Run [kosli expect deployment](/client_reference/kosli_expect_deployment/) right **before** you start the actual deployment.
+
+{{< /hint >}}
 
 ### Example
 
