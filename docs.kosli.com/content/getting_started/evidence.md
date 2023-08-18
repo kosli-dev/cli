@@ -17,10 +17,12 @@ last reported version of the evidence that is considered the compliance state of
 
 ## Does Kosli store evidence?
 
-When you report evidence to Kosli, we can store related related files in Evidence Vault. That way you will always have an easy access to evidence whenever you need it, e.g. in case of an audit. Fingerpints of each evidence stored in vault will be saved alongside the evidence, to let you confirm the evidence wasn't tampered with (or detect tampering), Depending on the evidence file we will store:
+When you report evidence to Kosli, we can store related related files in Evidence Vault. That way you will always have an easy access to evidence whenever you need it, e.g. in case of an audit. Fingerpints of each evidence stored in vault will be saved alongside the evidence, which lets you confirm at any time that the evidence wasn't tampered with (or detect tampering).
+
+Depending on the evidence file we will store:
 * for **junit** evidence type: archived directory containing junit test result and the fingerprint of the directory; you can provide the path to the directory using `--results-dir` flag
 * for **snyk** evidence type: archived snyk results (in json format) and the fingerprint of the json file; you can provide the path to the snyk results json file using `--snyk-results` flag
-* for **generic** evidence type: archived directories and/or files containing evidence and the fingerprint of the directories/file; you can provide a comma-separated list of paths to evidence directories/files using `--evidence-path` 
+* for **generic** evidence type: archived directories and/or files containing evidence and the fingerprint of the directories/files; you can provide a comma-separated list of paths to evidence directories/files using `--evidence-path` 
 
 ### Can I opt out from storing evidence? 
 
