@@ -15,6 +15,26 @@ Evidence reported against a git commit will be automatically attached to:
 If a given named evidence is reported multiple times, it is the compliance status of the 
 last reported version of the evidence that is considered the compliance state of that evidence.
 
+## Does Kosli store evidence?
+
+When you report evidence to Kosli, we can store related related files in Evidence Vault. That way you will always have an easy access to evidence whenever you need it, e.g. in case of an audit. Fingerpints of each evidence stored in vault will be saved alongside the evidence, to let you confirm the evidence wasn't tampered with (or detect tampering), Depending on the evidence file we will store:
+* for **junit** evidence type: archived directory containing junit test result and the fingerprint of the directory; you can provide the path to the directory using `--results-dir` flag
+* for **snyk** evidence type: archived snyk results (in json format) and the fingerprint of the json file; you can provide the path to the snyk results json file using `--snyk-results` flag
+* for **generic** evidence type: archived directories and/or files containing evidence and the fingerprint of the directories/file; you can provide a comma-separated list of paths to evidence directories/files using `--evidence-path` 
+
+### Can I opt out from storing evidence? 
+
+You can opt out from storing evidence in Kosli Vault by skipping flags mentioned above. Kosli won't be able to determine compliancy status for junit or snyk that way, so the responsibility of determining that falls on you. To report evidence as non-compliant use `--compliant=false`, otherwise - for compliant evidence - you can skip the flag (it is set to compliant by default).
+
+You can record the location of evidence files, e.g. if you store them on your own or use another external service to do that, using `--evidence-url` flag, and record the fingerprint of evidence files using `--evidence-fingerprint`
+
+{{< hint info >}}
+
+`--evidence-url` and `--evidence-fingerprint` are only useful if you didn't use `--results-dir`, `--snyk-results` or `--evidence-path` to upload evidence to Kosli Vault
+
+{{< /hint >}}
+
+
 Currently we support following types of evidence:
 
 ## Pull request evidence
