@@ -162,7 +162,7 @@ jobs:
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@v2
         with:
-          token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
+          token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN_NEW }}
           repository: kosli-dev/terraform-evidence-reporter
           event-type: deploy-evidence-reporter
           client-payload: '{"kosli_cli_version": "${{ needs.upload-evidence-reporter-package.outputs.kosli_cli_version }}"}'
@@ -174,7 +174,7 @@ jobs:
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@v2
         with:
-          token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
+          token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN_NEW }}
           repository: kosli-dev/kosli-reporter
           event-type: deploy-reporter
           client-payload: '{"env": "production", "tag": "${{ needs.pre-build.outputs.tag }}"}'

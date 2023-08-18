@@ -73,7 +73,7 @@ jobs:
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@v2
         with:
-          token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
+          token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN_NEW }}
           repository: kosli-dev/kosli-reporter
           event-type: deploy-reporter
           client-payload: '{"env": "staging", "tag": "${{ needs.pre-build.outputs.tag }}"}'
