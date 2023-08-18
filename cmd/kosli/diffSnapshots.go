@@ -29,16 +29,24 @@ kosli diff snapshots envName~3 envName \
 # compare snapshots of two different environments of the same type
 kosli diff snapshots envName1 envName2 \
 	--api-token yourAPIToken \
+	--org orgName
+
+# show the not-changed artifacts in both snapshots
+kosli diff snapshots envName1 envName2 \
+	--show-unchanged \
+	--api-token yourAPIToken \
 	--org orgName`
 
 type diffSnapshotsOptions struct {
-	output string
+	output        string
+	showUnchanged bool
 }
 
 type DiffSnapshotsResponse struct {
 	Snappish1 DiffItem `json:"snappish1"`
 	Snappish2 DiffItem `json:"snappish2"`
 	Changed   DiffItem `json:"changed"`
+	Unchanged DiffItem `json:"not-changed"`
 }
 
 type DiffItem struct {
@@ -52,6 +60,7 @@ type DiffArtifact struct {
 	Name                string   `json:"name"`
 	CommitUrl           string   `json:"commit_url"`
 	MostRecentTimestamp int64    `json:"most_recent_timestamp"`
+	InstanceCount       int64    `json:"instance_count"`
 	S1InstanceCount     int64    `json:"s1_instance_count"`
 	S2InstanceCount     int64    `json:"s2_instance_count"`
 	Pods                []string `json:"pods"`
@@ -78,6 +87,7 @@ func newDiffSnapshotsCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
+	cmd.Flags().BoolVarP(&o.showUnchanged, "show-unchanged", "u", false, showUnchangedArtifactsFlag)
 
 	return cmd
 }
@@ -99,7 +109,7 @@ func (o *diffSnapshotsOptions) run(out io.Writer, args []string) error {
 	}
 
 	wrapper := func(raw string, out io.Writer, page int) error {
-		return printSnapshotsDiffAsTable(snappish1, snappish2, raw, out, page)
+		return printSnapshotsDiffAsTable(snappish1, snappish2, raw, o.showUnchanged, out, page)
 	}
 
 	return output.FormattedPrint(response.Body, o.output, out, 0,
@@ -109,7 +119,7 @@ func (o *diffSnapshotsOptions) run(out io.Writer, args []string) error {
 		})
 }
 
-func printSnapshotsDiffAsTable(snappish1, snappish2, raw string, out io.Writer, page int) error {
+func printSnapshotsDiffAsTable(snappish1, snappish2, raw string, showUnchanged bool, out io.Writer, page int) error {
 	var diffs DiffSnapshotsResponse
 	err := json.Unmarshal([]byte(raw), &diffs)
 	if err != nil {
@@ -119,9 +129,11 @@ func printSnapshotsDiffAsTable(snappish1, snappish2, raw string, out io.Writer, 
 	s1Artifacts := diffs.Snappish1.Artifacts
 	s2Artifacts := diffs.Snappish2.Artifacts
 	changedArtifacts := diffs.Changed.Artifacts
+	unchangedArtifacts := diffs.Unchanged.Artifacts
 	s1Count := len(s1Artifacts)
 	s2Count := len(s2Artifacts)
 	changedCount := len(changedArtifacts)
+	unchangedCount := len(unchangedArtifacts)
 
 	if s1Count > 0 {
 		if snappish1 == diffs.Snappish1.SnapshotID {
@@ -169,6 +181,20 @@ func printSnapshotsDiffAsTable(snappish1, snappish2, raw string, out io.Writer, 
 		}
 	}
 
+	if unchangedCount > 0 && showUnchanged && (s1Count > 0 || s2Count > 0 || changedCount > 0) {
+		fmt.Println()
+	}
+
+	if unchangedCount > 0 && showUnchanged {
+		fmt.Printf("Not changed in both snapshots\n")
+		for _, entry := range unchangedArtifacts {
+			err := printOnlyEntry(entry, out)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -200,6 +226,9 @@ func printOnlyEntry(entry DiffArtifact, out io.Writer) error {
 	}
 	rows = append(rows, fmt.Sprintf("\tStarted:\t%s", timestamp))
 
+	if entry.InstanceCount != 0 {
+		rows = append(rows, fmt.Sprintf("\tInstances:\t%d", entry.InstanceCount))
+	}
 	if entry.S1InstanceCount != 0 && entry.S2InstanceCount != 0 {
 		rows = append(rows, fmt.Sprintf("\tInstances:\tscaled from %d to %d", entry.S1InstanceCount, entry.S2InstanceCount))
 	}

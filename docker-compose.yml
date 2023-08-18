@@ -2,7 +2,6 @@ version: '3'
 
 networks:
   cli_net:
-    external: true
 
 services:
   registry:

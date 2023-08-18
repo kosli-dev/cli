@@ -81,6 +81,15 @@ func (suite *DiffSnapshotsCommandTestSuite) TestDiffSnapshotsCmd() {
 			},
 			golden: "",
 		},
+		{
+			name: "diffing two envs with the same snapshot with --show-unchanged enabled works",
+			cmd:  fmt.Sprintf(`diff snapshots %s %s --show-unchanged %s`, suite.envName1, suite.envName2, suite.defaultKosliArguments),
+			additionalConfig: diffSnapshotsTestConfig{
+				reportToEnv1: true,
+				reportToEnv2: true,
+			},
+			golden: "",
+		},
 	}
 
 	for _, t := range tests {
