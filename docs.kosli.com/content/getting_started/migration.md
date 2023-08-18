@@ -6,7 +6,15 @@ weight: 290
 # v0.1.x > 2.0.0 migration
 
 If you decided to migrate Kosli cli from version v0.1.x to v2.0.0 or later the table below can help you with figuring out how the commands have changed.  
-Keep in mind that for some commands the flag names or argument types are also updated, so have a look at documentation for each command before switching.
+
+{{< hint info >}}
+
+Keep in mind that for some commands the [flag names or argument types](#flagsarguments) are also updated, so have a look at documentation for each command before switching.  
+Reach out to us using [Slack](https://www.kosli.com/community/) if you find yourself in trouble.
+
+{{< /hint >}}
+
+## Commands
 
 | v0.1.x                                                        | v2.0.0                                               |
 |---------------------------------------------------------------|------------------------------------------------------|
@@ -45,6 +53,7 @@ Keep in mind that for some commands the flag names or argument types are also up
 | kosli environment report s3                                   | [kosli snapshot s3](https://docs.kosli.com/client_reference/kosli_snapshot_s3/)                                    |
 | kosli environment report server                               | [kosli snapshot server](https://docs.kosli.com/client_reference/kosli_snapshot_server/)                                |
 | kosli expect deployment                                       | [kosli expect deployment](https://docs.kosli.com/client_reference/kosli_expect_deployment/)                              |
+| kosli pipeline deployment report                              | [kosli expect deployment](https://docs.kosli.com/client_reference/kosli_expect_deployment/)                              |
 | kosli fingerprint                                             | [kosli fingerprint](https://docs.kosli.com/client_reference/kosli_fingerprint/)                                    |
 | kosli pipeline approval assert                                | [kosli assert approval](https://docs.kosli.com/client_reference/kosli_assert_approval/)                                |
 | kosli pipeline approval report                                | [kosli report approval](https://docs.kosli.com/client_reference/kosli_report_approval/)                                |
@@ -55,6 +64,7 @@ Keep in mind that for some commands the flag names or argument types are also up
 | kosli pipeline artifact report evidence github-pullrequest    | [kosli report evidence artifact pullrequest github](https://docs.kosli.com/client_reference/kosli_report_evidence_artifact_pullrequest_github/)    |
 | kosli pipeline artifact report evidence gitlab-mergerequest   | [kosli report evidence artifact pullrequest gitlab](https://docs.kosli.com/client_reference/kosli_report_evidence_artifact_pullrequest_gitlab/)    |
 | kosli pipeline artifact report evidence junit                 | [kosli report evidence artifact junit](https://docs.kosli.com/client_reference/kosli_report_evidence_artifact_junit/)                 |
+| pipeline artifact report evidence test                        | [kosli report evidence artifact junit](https://docs.kosli.com/client_reference/kosli_report_evidence_artifact_junit/)                 |
 | kosli pipeline artifact report evidence snyk                  | [kosli report evidence artifact snyk](https://docs.kosli.com/client_reference/kosli_report_evidence_artifact_snyk/)                  |
 | kosli pipeline declare                                        | [kosli create flow](https://docs.kosli.com/client_reference/kosli_create_flow/)                                    |
 | kosli pipeline inspect                                        | [kosli get flow](https://docs.kosli.com/client_reference/kosli_get_flow/)                                       |
@@ -62,3 +72,14 @@ Keep in mind that for some commands the flag names or argument types are also up
 | kosli search                                                  | [kosli search](https://docs.kosli.com/client_reference/kosli_search/)                                         |
 | kosli status                                                  | [kosli status](https://docs.kosli.com/client_reference/kosli_status/)                                         |
 | kosli version                                                 | [kosli version](https://docs.kosli.com/client_reference/kosli_version/)                                        |
+
+## Flags/Arguments
+
+| v0.1.x                                                        | v2.0.0                                               |
+|---------------------------------------------------------------|------------------------------------------------------|
+| Pipeline as argument (for some commands)               | **--flow**                              |
+|  **--owner**                                                   | **--org**           |
+|  **--sha256**                                                   | **--fingerprint**           |
+|  **--pipeline**                                                   | **--flow**           |
+|  **--pipelines**                                                   | **--flows**           |
+|  **--evidence-type**                                                   | **--name**           |
