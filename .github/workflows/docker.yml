@@ -163,4 +163,3 @@ jobs:
             --name snyk-docker-scan
             --scan-results snyk-docker.json
             --flow cli
-
