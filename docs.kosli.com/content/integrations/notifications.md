@@ -24,13 +24,13 @@ To receive Kosli notifications in Slack, you have two options:
 
 1) Using Kosli Slack App (recommended)
 
-Subscribe to Kosli notifications using the [Kosli Slack App](./slack.md). This method is recommended for a seamless integration.
+Subscribe to Kosli notifications using the [Kosli Slack App](/integrations/slack/). This method is recommended for a seamless integration.
 Use the app to create notification settings by running the `/kosli subscribe` slash command.
 
 2) Using Slack Incoming Webhooks
 
 - Create a [Slack incoming webhook](https://api.slack.com/messaging/webhooks#create_a_webhook).
-- Utilize this webhook to [create a notification settings in the Kosli UI](#create-notification-settings).
+- Utilize this webhook to [create a notification settings in the Kosli UI](/integrations/notifications/#manage-notification-settings-in-the-ui).
   
 Both approaches allow you to configure Kosli notifications in Slack, offering flexibility based on your preferences.
 
