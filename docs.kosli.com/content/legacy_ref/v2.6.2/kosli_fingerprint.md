@@ -1,34 +1,38 @@
 ---
-title: "kosli expect deployment"
+title: "kosli fingerprint"
 beta: false
 ---
 
-# kosli expect deployment
+# kosli fingerprint
 
 ## Synopsis
 
-Report the expectation of an upcoming deployment of an artifact to an environment.  
-The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
+Calculate the SHA256 fingerprint of an artifact.
+Requires artifact type flag to be set.
+Artifact type can be one of: "file" for files, "dir" for directories, "docker" for docker images.
+
+Fingerprinting docker images can be done using via the local docker daemon or the fingerprint can be fetched
+from a remote registry.
+
+When fingerprinting a 'dir' artifact, you can exclude certain paths from fingerprint calculation 
+using the '--exclude' flag.  
+Excluded paths are relative to the artifact path(s) and can be literal paths or
+glob patterns.  
+The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match
 
 ```shell
-kosli expect deployment [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli fingerprint {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
-|    -b, --build-url string  |  The url of CI pipeline that built the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|    -d, --description string  |  [optional] The artifact description.  |
-|    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|    -e, --environment string  |  The environment name.  |
-|    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'.  |
-|    -f, --flow string  |  The Kosli flow name.  |
-|    -h, --help  |  help for deployment  |
+|    -e, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting.  |
+|    -h, --help  |  help for fingerprint  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
-|    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to this deployment.  |
 
 
 ## Options inherited from parent commands

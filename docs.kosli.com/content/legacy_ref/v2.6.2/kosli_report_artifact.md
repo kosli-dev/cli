@@ -1,17 +1,17 @@
 ---
-title: "kosli expect deployment"
+title: "kosli report artifact"
 beta: false
 ---
 
-# kosli expect deployment
+# kosli report artifact
 
 ## Synopsis
 
-Report the expectation of an upcoming deployment of an artifact to an environment.  
+Report an artifact creation to a Kosli flow.  
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell
-kosli expect deployment [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli report artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 ```
 
 ## Flags
@@ -19,16 +19,16 @@ kosli expect deployment [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 | :--- | :--- |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
 |    -b, --build-url string  |  The url of CI pipeline that built the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|    -d, --description string  |  [optional] The artifact description.  |
+|    -u, --commit-url string  |  The url for the git commit that created the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|    -e, --environment string  |  The environment name.  |
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'.  |
 |    -f, --flow string  |  The Kosli flow name.  |
-|    -h, --help  |  help for deployment  |
+|    -g, --git-commit string  |  The git commit from which the artifact was created. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|    -h, --help  |  help for artifact  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
-|    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to this deployment.  |
+|        --repo-root string  |  [defaulted] The directory where the source git repository is available. (default ".")  |
 
 
 ## Options inherited from parent commands
@@ -41,4 +41,30 @@ kosli expect deployment [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
+
+## Examples
+
+```shell
+
+# Report to a Kosli flow that a file type artifact has been created
+kosli report artifact FILE.tgz \
+	--api-token yourApiToken \
+	--artifact-type file \
+	--build-url https://exampleci.com \
+	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
+	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
+	--org yourOrgName \
+	--flow yourFlowName 
+
+# Report to a Kosli flow that an artifact with a provided fingerprint (sha256) has been created
+kosli report artifact ANOTHER_FILE.txt \
+	--api-token yourApiToken \
+	--build-url https://exampleci.com \
+	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
+	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
+	--org yourOrgName \
+	--flow yourFlowName \
+	--fingerprint yourArtifactFingerprint 
+
+```
 

@@ -22,7 +22,6 @@ kosli diff snapshots SNAPPISH_1 SNAPPISH_2 [flags]
 | :--- | :--- |
 |    -h, --help  |  help for snapshots  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
-|    -u, --show-unchanged  |  [defaulted] Show the unchanged artifacts present in both snapshots within the diff output.  |
 
 
 ## Options inherited from parent commands
@@ -47,12 +46,6 @@ kosli diff snapshots envName~3 envName \
 	
 # compare snapshots of two different environments of the same type
 kosli diff snapshots envName1 envName2 \
-	--api-token yourAPIToken \
-	--org orgName
-
-# show the not-changed artifacts in both snapshots
-kosli diff snapshots envName1 envName2 \
-	--show-unchanged \
 	--api-token yourAPIToken \
 	--org orgName
 ```
