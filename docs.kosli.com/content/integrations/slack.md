@@ -1,7 +1,7 @@
 ---
 title: Slack integration
 bookCollapseSection: false
-weight: 320
+weight: 330
 ---
 # Kosli Slack App
 [Kosli Slack App](#kosli-slack-app) allows you to configure and receive notifications about changes in your environments
