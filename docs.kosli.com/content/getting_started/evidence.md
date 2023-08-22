@@ -28,7 +28,7 @@ Depending on the evidence file we will store:
 
 ### Can I opt out from storing evidence? 
 
-You can opt out from storing evidence in Kosli Vault by reporting a **generic** evidence. Kosli won't be able to determine compliance status, so the responsibility of determining that falls on you. To report evidence as non-compliant use `--compliant=false`, otherwise - for compliant evidence - you can skip the flag (it is set to compliant by default).
+You can opt out from storing evidence in Kosli Vault by reporting a **generic** evidence without using the optional `--evidence-paths` flag. Kosli won't be able to determine compliance status, so the responsibility of determining that falls on you. To report evidence as non-compliant use `--compliant=false`, otherwise - for compliant evidence - you can skip the flag (it is set to compliant by default).
 
 You can record the location of evidence files, e.g. if you store them on your own or use another external service to do that, using `--evidence-url` flag, and record the fingerprint of evidence files using `--evidence-fingerprint`
 
