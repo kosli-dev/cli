@@ -17,7 +17,9 @@ last reported version of the evidence that is considered the compliance state of
 
 ## Does Kosli store evidence?
 
-When you report evidence to Kosli, we can store related related files in Evidence Vault. That way you will always have an easy access to evidence whenever you need it, e.g. in case of an audit. Fingerpints of each evidence stored in vault will be saved alongside the evidence, which lets you confirm at any time that the evidence wasn't tampered with (or detect tampering).
+When you report evidence to Kosli, we store related files in Evidence Vault. That way you will always have an easy access to evidence whenever you need it, e.g. in case of an audit. Fingerpints of each evidence file stored in vault will be saved alongside the evidence, which lets you confirm at any time that the evidence wasn't tampered with (or detect tampering).
+
+### What exactly Kosli stores?
 
 Depending on the evidence file we will store:
 * for **junit** evidence type: archived directory containing junit test result and the fingerprint of the directory; you can provide the path to the directory using `--results-dir` flag
@@ -26,7 +28,7 @@ Depending on the evidence file we will store:
 
 ### Can I opt out from storing evidence? 
 
-You can opt out from storing evidence in Kosli Vault by skipping flags mentioned above. Kosli won't be able to determine compliancy status for junit or snyk that way, so the responsibility of determining that falls on you. To report evidence as non-compliant use `--compliant=false`, otherwise - for compliant evidence - you can skip the flag (it is set to compliant by default).
+You can opt out from storing evidence in Kosli Vault by reporting a **generic** evidence. Kosli won't be able to determine compliance status, so the responsibility of determining that falls on you. To report evidence as non-compliant use `--compliant=false`, otherwise - for compliant evidence - you can skip the flag (it is set to compliant by default).
 
 You can record the location of evidence files, e.g. if you store them on your own or use another external service to do that, using `--evidence-url` flag, and record the fingerprint of evidence files using `--evidence-fingerprint`
 
