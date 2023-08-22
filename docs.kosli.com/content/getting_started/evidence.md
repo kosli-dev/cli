@@ -21,7 +21,7 @@ When you report evidence to Kosli, we store related files in Evidence Vault. Tha
 
 ### What exactly Kosli stores?
 
-Depending on the evidence file we will store:
+Depending on the evidence type we will store:
 * for **junit** evidence type: archived directory containing junit test result and the fingerprint of the directory; you can provide the path to the directory using `--results-dir` flag
 * for **snyk** evidence type: archived snyk results (in json format) and the fingerprint of the json file; you can provide the path to the snyk results json file using `--snyk-results` flag
 * for **generic** evidence type: archived directories and/or files containing evidence and the fingerprint of the directories/files; you can provide a comma-separated list of paths to evidence directories/files using `--evidence-path` 
