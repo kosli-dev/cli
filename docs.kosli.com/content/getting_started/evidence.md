@@ -8,12 +8,28 @@ weight: 250
 Whenever an event related to required evidence happens you should report it to Kosli. 
 You can report evidence to either a git commit or an artifact. 
 
+{{< hint info >}}
+
+For Kosli to know which evidence you report you need to provide evidence name (using `--name` flag) that is matching one of the names defined in a [flow template](/getting_started/flows/#create-a-flow).
+
+{{< /hint >}}
+
+## Commit evidence vs Artifact evidence
+
+Some types of evidence naturally belong to an **artifact** - like e.g. *unit test* or *snyk scan*. Some relate to a source code itself and you can report these on a **commit** - that could be *code coverage* or *pull request*.  
+
+It's up to you to decide and if you want to attach it all to an artifact it'll work fine. But if you produce multiple artifacts from the same commit you have a possibility to report a commit evidence that will be **automatically** attached to all **artifacts** reported to **ALL or selected flows** built from that commit. That way you won't have to report the same evidence multiple times to each artifact separately.
+
+{{< hint info >}}
+
 Evidence reported against a git commit will be automatically attached to:
-* either **ALL** artifacts produced from that git commit (when `--flows` flag is **not** provided)
-* or **only** to artifacts produced from that git commit **reported to flows** provided in `--flows` flag.  
+* either **ALL** artifacts (in **ALL flows**) produced from that git commit (when `--flows` flag is **not** provided)
+* or **only** artifacts produced from that git commit **reported to flows** provided in `--flows` flag (in a comma separated list format).  
 
 If a given named evidence is reported multiple times, it is the compliance status of the 
 last reported version of the evidence that is considered the compliance state of that evidence.
+
+{{< /hint >}}
 
 ## Does Kosli store evidence?
 
