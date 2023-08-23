@@ -8,12 +8,52 @@ weight: 250
 Whenever an event related to required evidence happens you should report it to Kosli. 
 You can report evidence to either a git commit or an artifact. 
 
+{{< hint info >}}
+
+For Kosli to know which evidence you report you need to provide evidence name (using `--name` flag) that is matching one of the names defined in a [flow template](/getting_started/flows/#create-a-flow).
+
+{{< /hint >}}
+
+## Commit evidence vs Artifact evidence
+
+Some types of evidence naturally belong to an **artifact** - like e.g. *unit test* or *snyk scan*. Some relate to a source code itself and you can report these on a **commit** - that could be *code coverage* or *pull request*.  
+
+It's up to you to decide and if you want to attach it all to an artifact it'll work fine. But if you produce multiple artifacts from the same commit you have a possibility to report a commit evidence that will be **automatically** attached to all **artifacts** reported to **ALL or selected flows** built from that commit. That way you won't have to report the same evidence multiple times to each artifact separately.
+
+{{< hint info >}}
+
 Evidence reported against a git commit will be automatically attached to:
-* either **ALL** artifacts produced from that git commit (when `--flows` flag is **not** provided)
-* or **only** to artifacts produced from that git commit **reported to flows** provided in `--flows` flag.  
+* either **ALL** artifacts (in **ALL flows**) produced from that git commit (when `--flows` flag is **not** provided)
+* or **only** artifacts produced from that git commit **reported to flows** provided in `--flows` flag (in a comma separated list format).  
 
 If a given named evidence is reported multiple times, it is the compliance status of the 
 last reported version of the evidence that is considered the compliance state of that evidence.
+
+{{< /hint >}}
+
+## Does Kosli store evidence?
+
+When you report evidence to Kosli, we store related files in Evidence Vault. That way you will always have an easy access to evidence whenever you need it, e.g. in case of an audit. Fingerpints of each evidence file stored in vault will be saved alongside the evidence, which lets you confirm at any time that the evidence wasn't tampered with (or detect tampering).
+
+### What exactly Kosli stores?
+
+Depending on the evidence type we will store:
+* for **junit** evidence type: archived directory containing junit test result and the fingerprint of the directory; you can provide the path to the directory using `--results-dir` flag
+* for **snyk** evidence type: archived snyk results (in json format) and the fingerprint of the json file; you can provide the path to the snyk results json file using `--snyk-results` flag
+* for **generic** evidence type: archived directories and/or files containing evidence and the fingerprint of the directories/files; you can provide a comma-separated list of paths to evidence directories/files using `--evidence-path` 
+
+### Can I opt out from storing evidence? 
+
+You can opt out from storing evidence in Kosli Vault by reporting a **generic** evidence without using the optional `--evidence-paths` flag. Kosli won't be able to determine compliance status, so the responsibility of determining that falls on you. To report evidence as non-compliant use `--compliant=false`, otherwise - for compliant evidence - you can skip the flag (it is set to compliant by default).
+
+You can record the location of evidence files, e.g. if you store them on your own or use another external service to do that, using `--evidence-url` flag, and record the fingerprint of evidence files using `--evidence-fingerprint`
+
+{{< hint info >}}
+
+`--evidence-url` and `--evidence-fingerprint` are only useful if you didn't use `--results-dir`, `--snyk-results` or `--evidence-path` to upload evidence to Kosli Vault
+
+{{< /hint >}}
+
 
 Currently we support following types of evidence:
 
