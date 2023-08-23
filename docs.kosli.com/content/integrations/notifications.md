@@ -45,6 +45,7 @@ Custom webhook notifications empower you to implement automation workflows for "
     "org": "cyber-dojo",
     "environment": "aws-prod",
     "event_type": "ARTIFACT_STARTED",
+    "description": "1 instance started running (from 0 to 1)",
     "snapshot":  {
            "index": "1035",
            "status": "compliant",
