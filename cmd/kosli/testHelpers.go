@@ -185,8 +185,9 @@ func CreateWorkflowEvidence(auditTrailName, externalId string, t *testing.T) {
 func CreateArtifact(flowName, artifactFingerprint, artifactName string, t *testing.T) {
 	t.Helper()
 	o := &reportArtifactOptions{
-		srcRepoRoot: "../..",
-		flowName:    flowName,
+		srcRepoRoot:  "../..",
+		flowName:     flowName,
+		gitReference: "0fc1ba9876f91b215679f3649b8668085d820ab5",
 		payload: ArtifactPayload{
 			Fingerprint: artifactFingerprint,
 			GitCommit:   "0fc1ba9876f91b215679f3649b8668085d820ab5",

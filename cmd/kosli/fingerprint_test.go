@@ -32,6 +32,11 @@ func (suite *FingerprintTestSuite) TestFingerprintCmd() {
 		{
 			name:   "dir fingerprint",
 			cmd:    "fingerprint --artifact-type dir testdata/folder1",
+			golden: "c43808cb04c6e66c4c6fc1f972dd67c3b9b71c81e0a0c78730da3699922d17be\n",
+		},
+		{
+			name:   "dir fingerprint with exclude",
+			cmd:    "fingerprint --artifact-type dir testdata/folder1 -x folder2",
 			golden: "773fd3300860454a2b065c5912c03008adb11e6a6dcf7c1c64c094ceab8f430a\n",
 		},
 		{

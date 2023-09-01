@@ -66,10 +66,18 @@ func newSnapshotServerCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringSliceVarP(&o.paths, "paths", "p", []string{}, pathsFlag)
-	cmd.Flags().StringSliceVarP(&o.excludePaths, "exclude", "e", []string{}, excludePathsFlag)
+	cmd.Flags().StringSliceVarP(&o.excludePaths, "exclude", "x", []string{}, excludePathsFlag)
+	cmd.Flags().StringSliceVarP(&o.excludePaths, "e", "e", []string{}, excludePathsFlag)
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"paths"})
+	err := DeprecateFlags(cmd, map[string]string{
+		"e": "use -x instead",
+	})
+	if err != nil {
+		logger.Error("failed to configure deprecated flags: %v", err)
+	}
+
+	err = RequireFlags(cmd, []string{"paths"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}

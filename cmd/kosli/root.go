@@ -128,7 +128,7 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 	awsRegionFlag              = "The AWS region."
 	bucketNameFlag             = "The name of the S3 bucket."
 	pathsFlag                  = "The comma separated list of artifact directories."
-	excludePathsFlag           = "[optional] The comma separated list of directories and files to exclude from fingerprinting."
+	excludePathsFlag           = "[optional] The comma separated list of directories and files to exclude from fingerprinting. Only applicable for --artifact-type dir."
 	shortFlag                  = "[optional] Print only the Kosli CLI version number."
 	longFlag                   = "[optional] Print detailed output."
 	reverseFlag                = "[defaulted] Reverse the order of output list."

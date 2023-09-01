@@ -15,6 +15,7 @@ import (
 type reportArtifactOptions struct {
 	fingerprintOptions *fingerprintOptions
 	flowName           string
+	gitReference       string
 	srcRepoRoot        string
 	payload            ArtifactPayload
 }
@@ -84,11 +85,13 @@ func newReportArtifactCmd(out io.Writer) *cobra.Command {
 	ci := WhichCI()
 	cmd.Flags().StringVarP(&o.payload.Fingerprint, "fingerprint", "F", "", fingerprintFlag)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
-	cmd.Flags().StringVarP(&o.payload.GitCommit, "git-commit", "g", DefaultValue(ci, "git-commit"), gitCommitFlag)
+	cmd.Flags().StringVarP(&o.gitReference, "git-commit", "g", DefaultValue(ci, "git-commit"), gitCommitFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), buildUrlFlag)
 	cmd.Flags().StringVarP(&o.payload.CommitUrl, "commit-url", "u", DefaultValue(ci, "commit-url"), commitUrlFlag)
 	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", repoRootFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
+	// cmd.Flags().StringSliceVarP(&o.fingerprintOptions.excludePaths, "exclude", "e", []string{}, excludePathsFlag)
+
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"flow", "git-commit", "build-url", "commit-url"})
@@ -124,6 +127,13 @@ func (o *reportArtifactOptions) run(args []string) error {
 	if err != nil {
 		return err
 	}
+
+	commitObject, err := gitView.GetCommitInfoFromCommitSHA(o.gitReference)
+	if err != nil {
+		return err
+	}
+
+	o.payload.GitCommit = commitObject.Sha1
 
 	o.payload.CommitsList, err = gitView.ChangeLog(o.payload.GitCommit, previousCommit, logger)
 	if err != nil {

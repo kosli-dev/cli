@@ -14,6 +14,7 @@ func addFingerprintFlags(cmd *cobra.Command, o *fingerprintOptions) {
 	cmd.Flags().StringVar(&o.registryProvider, "registry-provider", "", registryProviderFlag)
 	cmd.Flags().StringVar(&o.registryUsername, "registry-username", "", registryUsernameFlag)
 	cmd.Flags().StringVar(&o.registryPassword, "registry-password", "", registryPasswordFlag)
+	cmd.Flags().StringSliceVarP(&o.excludePaths, "exclude", "x", []string{}, excludePathsFlag)
 }
 
 func addAWSAuthFlags(cmd *cobra.Command, o *aws.AWSStaticCreds) {

@@ -47,11 +47,19 @@ func newFingerprintCmd(out io.Writer) *cobra.Command {
 	}
 
 	addFingerprintFlags(cmd, o)
-	cmd.Flags().StringSliceVarP(&o.excludePaths, "exclude", "e", []string{}, excludePathsFlag)
+	cmd.Flags().StringSliceVarP(&o.excludePaths, "e", "e", []string{}, excludePathsFlag)
 	err := RequireFlags(cmd, []string{"artifact-type"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
+
+	err = DeprecateFlags(cmd, map[string]string{
+		"e": "use -x instead",
+	})
+	if err != nil {
+		logger.Error("failed to configure deprecated flags: %v", err)
+	}
+
 	return cmd
 }
 
