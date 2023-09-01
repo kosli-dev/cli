@@ -45,6 +45,7 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 
 	// flags
 	apiTokenFlag               = "The Kosli API token."
+	artifactName               = "[optional] Artifact display name, if different from file, image or directory name."
 	orgFlag                    = "The Kosli organization."
 	hostFlag                   = "[defaulted] The Kosli endpoint."
 	dryRunFlag                 = "[optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors."

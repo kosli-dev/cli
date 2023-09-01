@@ -17,6 +17,7 @@ type reportArtifactOptions struct {
 	flowName           string
 	gitReference       string
 	srcRepoRoot        string
+	name               string
 	payload            ArtifactPayload
 }
 
@@ -89,8 +90,8 @@ func newReportArtifactCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), buildUrlFlag)
 	cmd.Flags().StringVarP(&o.payload.CommitUrl, "commit-url", "u", DefaultValue(ci, "commit-url"), commitUrlFlag)
 	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", repoRootFlag)
+	cmd.Flags().StringVarP(&o.name, "name", "n", "", artifactName)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
-	// cmd.Flags().StringSliceVarP(&o.fingerprintOptions.excludePaths, "exclude", "e", []string{}, excludePathsFlag)
 
 	addDryRunFlag(cmd)
 
@@ -104,18 +105,28 @@ func newReportArtifactCmd(out io.Writer) *cobra.Command {
 
 func (o *reportArtifactOptions) run(args []string) error {
 	if o.payload.Fingerprint != "" {
-		o.payload.Filename = args[0]
+		if o.name != "" {
+			o.payload.Filename = o.name
+		} else {
+			o.payload.Filename = args[0]
+		}
 	} else {
 		var err error
 		o.payload.Fingerprint, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
 			return err
 		}
-		if o.fingerprintOptions.artifactType == "dir" || o.fingerprintOptions.artifactType == "file" {
-			o.payload.Filename = filepath.Base(args[0])
+
+		if o.name != "" {
+			o.payload.Filename = o.name
 		} else {
-			o.payload.Filename = args[0]
+			if o.fingerprintOptions.artifactType == "dir" || o.fingerprintOptions.artifactType == "file" {
+				o.payload.Filename = filepath.Base(args[0])
+			} else {
+				o.payload.Filename = args[0]
+			}
 		}
+
 	}
 
 	gitView, err := gitview.New(o.srcRepoRoot)
