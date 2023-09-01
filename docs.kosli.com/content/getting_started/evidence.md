@@ -16,7 +16,7 @@ For Kosli to know which evidence you report you need to provide evidence name (u
 
 ## Commit evidence vs Artifact evidence
 
-Some types of evidence naturally belong to an **artifact** - like e.g. *unit test* or *snyk scan*. Some relate to a source code itself and you can report these on a **commit** - that could be *code coverage* or *pull request*.  
+Some types of evidence naturally belong to an **artifact** - e.g. *unit test* or *snyk scan*. Some relate to the source code itself and you can report these on a **commit** - e.g. *code coverage* or *pull request*.  
 
 It's up to you to decide and if you want to attach it all to an artifact it'll work fine. But if you produce multiple artifacts from the same commit you have a possibility to report a commit evidence that will be **automatically** attached to all **artifacts** reported to **ALL or selected flows** built from that commit. That way you won't have to report the same evidence multiple times to each artifact separately.
 
@@ -33,7 +33,7 @@ last reported version of the evidence that is considered the compliance state of
 
 ## Does Kosli store evidence?
 
-When you report evidence to Kosli, we store related files in Evidence Vault. That way you will always have an easy access to evidence whenever you need it, e.g. in case of an audit. Fingerpints of each evidence file stored in vault will be saved alongside the evidence, which lets you confirm at any time that the evidence wasn't tampered with (or detect tampering).
+When you report evidence to Kosli, we store related files in the Evidence Vault. That way you will always have an easy access to the evidence whenever you need it, e.g. in case of an audit. Fingerpints of each evidence file stored in vault will be saved alongside the evidence, which lets you confirm at any time that the evidence wasn't tampered with (or detect tampering).
 
 ### What exactly Kosli stores?
 

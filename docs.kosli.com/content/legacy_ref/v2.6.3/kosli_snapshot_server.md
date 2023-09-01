@@ -24,7 +24,7 @@ kosli snapshot server ENVIRONMENT-NAME [flags]
 | Flag | Description |
 | :--- | :--- |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Only applicable for --artifact-type dir.  |
+|    -e, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting.  |
 |    -h, --help  |  help for server  |
 |    -p, --paths strings  |  The comma separated list of artifact directories.  |
 
