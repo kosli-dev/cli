@@ -104,29 +104,24 @@ func newReportArtifactCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *reportArtifactOptions) run(args []string) error {
-	if o.payload.Fingerprint != "" {
-		if o.name != "" {
-			o.payload.Filename = o.name
+
+	if o.name != "" {
+		o.payload.Filename = o.name
+	} else {
+		if o.fingerprintOptions.artifactType == "dir" || o.fingerprintOptions.artifactType == "file" {
+			o.payload.Filename = filepath.Base(args[0])
 		} else {
 			o.payload.Filename = args[0]
 		}
-	} else {
+
+	}
+
+	if o.payload.Fingerprint == "" {
 		var err error
 		o.payload.Fingerprint, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
 			return err
 		}
-
-		if o.name != "" {
-			o.payload.Filename = o.name
-		} else {
-			if o.fingerprintOptions.artifactType == "dir" || o.fingerprintOptions.artifactType == "file" {
-				o.payload.Filename = filepath.Base(args[0])
-			} else {
-				o.payload.Filename = args[0]
-			}
-		}
-
 	}
 
 	gitView, err := gitview.New(o.srcRepoRoot)
