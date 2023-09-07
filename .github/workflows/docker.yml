@@ -172,7 +172,7 @@ jobs:
         KOSLI_API_TOKEN: any-token-will-do
       run: 
         docker run -e KOSLI_API_TOKEN
-          -e KOSLI_ORG -it --rm ${{ env.IMAGE }}:${{ inputs.tag }}
+          -e KOSLI_ORG --rm ${{ env.IMAGE }}:${{ inputs.tag }}
           list environments
 
     - name: Report Docker smoke test evidence to Kosli
@@ -180,7 +180,7 @@ jobs:
         KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
         KOSLI_ORG: kosli
         SMOKE_TEST_OUTCOME: ${{ steps.smoke-test.outcome}}
-      run: 
+      run: |
         if [ $SMOKE_TEST_OUTCOME = success ]
         then
           export SMOKE_TEST_PASSED=true
