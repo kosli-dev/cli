@@ -188,9 +188,9 @@ jobs:
           export SMOKE_TEST_PASSED=false
         fi
 
-        kosli report evidence artifact generic 
-          ${{ env.IMAGE }}:${{ inputs.tag }}
-            --fingerprint ${{ env.FINGERPRINT }}
-            --name smoke-test
-            --compliant=$SMOKE_TEST_PASSED
+        kosli report evidence artifact generic \
+          ${{ env.IMAGE }}:${{ inputs.tag }} \
+            --fingerprint ${{ env.FINGERPRINT }} \
+            --name smoke-test \
+            --compliant=$SMOKE_TEST_PASSED \
             --flow cli
