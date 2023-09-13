@@ -143,8 +143,8 @@ jobs:
         echo "kosli_cli_version=$KOSLI_CLI_VERSION" >> $GITHUB_OUTPUT
         curl -Lo kosli_${KOSLI_CLI_VERSION}_linux_amd64.tar.gz https://github.com/kosli-dev/cli/releases/download/${TAG}/kosli_${KOSLI_CLI_VERSION}_linux_amd64.tar.gz
         tar -xf kosli_${KOSLI_CLI_VERSION}_linux_amd64.tar.gz -C . && rm kosli_${KOSLI_CLI_VERSION}_linux_amd64.tar.gz
-        zip -j kosli_evidence_reporter_${KOSLI_CLI_VERSION}.zip deployment/evidence-reporter-src/* kosli
-        aws s3 cp kosli_evidence_reporter_${KOSLI_CLI_VERSION}.zip s3://${{ secrets.KOSLI_REPORTER_SOURCES_S3_NAME }}/kosli_evidence_reporter_${TAG}.zip
+        zip -j evidence_reporter_${KOSLI_CLI_VERSION}.zip deployment/evidence-reporter-src/* kosli
+        aws s3 cp evidence_reporter_${KOSLI_CLI_VERSION}.zip s3://${{ secrets.KOSLI_REPORTER_SOURCES_S3_NAME }}/evidence_reporter_${TAG}.zip
 
   upload-kosli-reporter-package-prod:
     needs: [pre-build, goreleaser]
