@@ -18,6 +18,8 @@ const diffSnapshotsDesc = diffSnapshotsDescShort + `
 Specify SNAPPISH_1 and SNAPPISH_2 by:  
 - environmentName~<N>  N'th behind the latest snapshot  
 - environmentName#<N>  snapshot number N  
+- environmentName@{YYYY-MM-DDTHH:MM:SS} snapshot at specific moment in time in UTC
+- environmentName@{<N>.<hours|days|weeks|months>.ago} snapshot at a relative time
 - environmentName      the latest snapshot`
 
 const diffSnapshotsExample = `
@@ -35,7 +37,12 @@ kosli diff snapshots envName1 envName2 \
 kosli diff snapshots envName1 envName2 \
 	--show-unchanged \
 	--api-token yourAPIToken \
-	--org orgName`
+	--org orgName
+
+# compare the snapshot from 2 weeks ago in an environment to the latest
+kosli diff snapshots envName@{2.weeks.ago} envName \
+--api-token yourAPIToken \
+--org orgName`
 
 type diffSnapshotsOptions struct {
 	output        string
