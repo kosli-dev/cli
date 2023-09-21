@@ -2,13 +2,12 @@ package azure
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
 )
 
-type AzureFunctionsCredentials struct {
+type AzureStaticCredentials struct {
 	TenantId          string
 	ClientId          string
 	ClientSecret      string
@@ -16,35 +15,28 @@ type AzureFunctionsCredentials struct {
 	ResourceGroupName string
 }
 
-func (staticCreds *AzureFunctionsCredentials) GetWebAppsInfo() ([]byte, error) {
-	fmt.Printf("TenantId: %s\n", staticCreds.TenantId)
-	fmt.Printf("ClientId: %s\n", staticCreds.ClientId)
-	fmt.Printf("ClientSecret: %s\n", staticCreds.ClientSecret)
-	cred, err := azidentity.NewClientSecretCredential(staticCreds.TenantId, staticCreds.ClientId, staticCreds.ClientSecret, nil)
+func (staticCreds *AzureStaticCredentials) GetWebAppsInfo() ([]*armappservice.Site, error) {
+	credentials, err := azidentity.NewClientSecretCredential(staticCreds.TenantId, staticCreds.ClientId, staticCreds.ClientSecret, nil)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("Reached after new client secret credential\n")
 
-	appserviceClientFactory, err := armappservice.NewClientFactory(staticCreds.SubscriptionId, cred, nil)
+	appserviceClientFactory, err := armappservice.NewClientFactory(staticCreds.SubscriptionId, credentials, nil)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("Reached after new client factory\n")
 	webAppsClient := appserviceClientFactory.NewWebAppsClient()
-	fmt.Printf("Reached after new web apps client\n")
-	webappsPager := webAppsClient.NewListByResourceGroupPager(staticCreds.ResourceGroupName, nil)
-	fmt.Printf("Reached after new list by resource group pager\n")
-	var webappsArray []byte
+
 	ctx := context.Background()
+	webappsPager := webAppsClient.NewListByResourceGroupPager(staticCreds.ResourceGroupName, nil)
+
+	var webAppsInfo []*armappservice.Site
 	for webappsPager.More() {
-		fmt.Printf("Inside for loop\n")
-		var currentPageData []byte
-		webappsPager.UnmarshalJSON(currentPageData)
-		fmt.Print(currentPageData)
-		webappsArray = append(webappsArray, currentPageData...)
-		webappsPager.NextPage(ctx)
+		response, err := webappsPager.NextPage(ctx)
+		if err != nil {
+			return nil, err
+		}
+		webAppsInfo = append(webAppsInfo, response.Value...)
 	}
-	fmt.Printf("Reached after unmarshal json\n")
-	return webappsArray, nil
+	return webAppsInfo, nil
 }

@@ -17,12 +17,12 @@ const snapshotAzureFunctionsExample = ``
 type snapshotAzureFunctionsOptions struct {
 	functionNames    []string
 	functionVersion  string
-	azureCredentials *azure.AzureFunctionsCredentials
+	azureCredentials *azure.AzureStaticCredentials
 }
 
 func newSnapshotAzureFunctionsCmd(out io.Writer) *cobra.Command {
 	o := new(snapshotAzureFunctionsOptions)
-	o.azureCredentials = new(azure.AzureFunctionsCredentials)
+	o.azureCredentials = new(azure.AzureStaticCredentials)
 	cmd := &cobra.Command{
 		Use:     "azure-apps ENVIRONMENT-NAME",
 		Short:   snapshotAzureFunctionsShortDesc,
@@ -55,11 +55,18 @@ func newSnapshotAzureFunctionsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *snapshotAzureFunctionsOptions) run(args []string) error {
-	data, err := o.azureCredentials.GetWebAppsInfo()
+	webAppInfo, err := o.azureCredentials.GetWebAppsInfo()
 	if err != nil {
 		return err
 	}
-	fmt.Print(data)
+	for _, webapp := range webAppInfo {
+		fmt.Printf("Webapp name: %s\n", *webapp.Name)
+		fmt.Printf("Webapp image: %s\n", *webapp.Properties.SiteConfig.LinuxFxVersion)
+		for _, host := range webapp.Properties.EnabledHostNames {
+			fmt.Printf("Webapp host: %s\n", *host)
+		}
+
+	}
 
 	// envName := args[0]
 
