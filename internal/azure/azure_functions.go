@@ -2,8 +2,8 @@ package azure
 
 import (
 	"context"
+	"fmt"
 	"io"
-	"net/http"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
@@ -23,6 +23,7 @@ func (staticCreds *AzureStaticCredentials) GetWebAppsInfo() ([]*armappservice.Si
 		return nil, err
 	}
 
+	// Docs: https://github.com/Azure/azure-sdk-for-go/blob/main/sdk/resourcemanager/appservice/armappservice/README.md
 	appserviceClientFactory, err := armappservice.NewClientFactory(staticCreds.SubscriptionId, credentials, nil)
 	if err != nil {
 		return nil, err
@@ -43,26 +44,35 @@ func (staticCreds *AzureStaticCredentials) GetWebAppsInfo() ([]*armappservice.Si
 	return webAppsInfo, nil
 }
 
-func (staticCreds *AzureStaticCredentials) GetDockerLogs() error {
-	client := &http.Client{}
+func (staticCreds *AzureStaticCredentials) GetDockerLogs(appServiceName string) error {
+	credentials, err := azidentity.NewClientSecretCredential(staticCreds.TenantId, staticCreds.ClientId, staticCreds.ClientSecret, nil)
+	if err != nil {
+		return err
+	}
 
-	req, err := http.NewRequest("GET", "https://tsha256.scm.azurewebsites.net/api/vfs/LogFiles/2023_09_14_10-30-0-8_docker.log", nil)
+	// Docs: https://github.com/Azure/azure-sdk-for-go/blob/main/sdk/resourcemanager/appservice/armappservice/README.md
+	appserviceClientFactory, err := armappservice.NewClientFactory(staticCreds.SubscriptionId, credentials, nil)
 	if err != nil {
 		return err
 	}
-	req.SetBasicAuth(staticCreds.ClientId, staticCreds.ClientSecret)
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	if resp.Body != nil {
-		defer resp.Body.Close()
-	}
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	println(string(body))
+	webAppsClient := appserviceClientFactory.NewWebAppsClient()
 
+	ctx := context.Background()
+	fmt.Println("Getting logs for app service: ", appServiceName)
+	response, err := webAppsClient.GetContainerLogsZip(ctx, staticCreds.ResourceGroupName, appServiceName, nil)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Got logs for app service: ", appServiceName)
+	if response.Body != nil {
+		defer response.Body.Close()
+	}
+	fmt.Println("Reading logs for app service: ", appServiceName)
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return err
+	}
+	fmt.Println(len(body))
+	// fmt.Println(string(body))
 	return nil
 }
