@@ -15,16 +15,14 @@ const snapshotAzureFunctionsLongDesc = snapshotAzureFunctionsShortDesc + ``
 const snapshotAzureFunctionsExample = ``
 
 type snapshotAzureFunctionsOptions struct {
-	functionNames    []string
-	functionVersion  string
 	azureCredentials *azure.AzureStaticCredentials
 }
 
-func newSnapshotAzureFunctionsCmd(out io.Writer) *cobra.Command {
+func newSnapshotAzureWebAppsCmd(out io.Writer) *cobra.Command {
 	o := new(snapshotAzureFunctionsOptions)
 	o.azureCredentials = new(azure.AzureStaticCredentials)
 	cmd := &cobra.Command{
-		Use:     "azure-apps ENVIRONMENT-NAME",
+		Use:     "azure-webapps ENVIRONMENT-NAME",
 		Short:   snapshotAzureFunctionsShortDesc,
 		Long:    snapshotAzureFunctionsLongDesc,
 		Example: snapshotAzureFunctionsExample,
@@ -55,16 +53,22 @@ func newSnapshotAzureFunctionsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *snapshotAzureFunctionsOptions) run(args []string) error {
-	webAppInfo, err := o.azureCredentials.GetWebAppsInfo()
+	azureClient, err := o.azureCredentials.NewAzureClient()
+	if err != nil {
+		return err
+	}
+	webAppInfo, err := azureClient.GetWebAppsInfo()
 	if err != nil {
 		return err
 	}
 	for _, webapp := range webAppInfo {
 		fmt.Println("webapp: ", *webapp.Properties.SiteConfig.LinuxFxVersion, " State: ", *webapp.Properties.State)
-		err := o.azureCredentials.GetDockerLogs(*webapp.Name)
+		// webapp.Properties.State can be "Running" or "Stopped". Possibly other values as well, but haven't found them.
+		logs, err := azureClient.GetDockerLogsForWebApp(*webapp.Name)
 		if err != nil {
 			return err
 		}
+		fmt.Println("logs: ", string(logs))
 	}
 
 	// envName := args[0]
