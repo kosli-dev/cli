@@ -65,7 +65,11 @@ func (o *snapshotAzureFunctionsOptions) run(args []string) error {
 		for _, host := range webapp.Properties.EnabledHostNames {
 			fmt.Printf("Webapp host: %s\n", *host)
 		}
+	}
 
+	err = o.azureCredentials.GetDockerLogs()
+	if err != nil {
+		return err
 	}
 
 	// envName := args[0]

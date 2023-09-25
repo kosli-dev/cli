@@ -2,6 +2,8 @@ package azure
 
 import (
 	"context"
+	"io"
+	"net/http"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
@@ -39,4 +41,28 @@ func (staticCreds *AzureStaticCredentials) GetWebAppsInfo() ([]*armappservice.Si
 		webAppsInfo = append(webAppsInfo, response.Value...)
 	}
 	return webAppsInfo, nil
+}
+
+func (staticCreds *AzureStaticCredentials) GetDockerLogs() error {
+	client := &http.Client{}
+
+	req, err := http.NewRequest("GET", "https://tsha256.scm.azurewebsites.net/api/vfs/LogFiles/2023_09_14_10-30-0-8_docker.log", nil)
+	if err != nil {
+		return err
+	}
+	req.SetBasicAuth(staticCreds.ClientId, staticCreds.ClientSecret)
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	if resp.Body != nil {
+		defer resp.Body.Close()
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	println(string(body))
+
+	return nil
 }
