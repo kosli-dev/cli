@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/kosli-dev/cli/internal/azure"
@@ -59,6 +60,7 @@ func (o *snapshotAzureFunctionsOptions) run(args []string) error {
 		return err
 	}
 	for _, webapp := range webAppInfo {
+		fmt.Println("webapp: ", *webapp.Properties.SiteConfig.LinuxFxVersion, " State: ", *webapp.Properties.State)
 		err := o.azureCredentials.GetDockerLogs(*webapp.Name)
 		if err != nil {
 			return err

@@ -59,7 +59,8 @@ func (staticCreds *AzureStaticCredentials) GetDockerLogs(appServiceName string) 
 
 	ctx := context.Background()
 	fmt.Println("Getting logs for app service: ", appServiceName)
-	response, err := webAppsClient.GetContainerLogsZip(ctx, staticCreds.ResourceGroupName, appServiceName, nil)
+	// response, err := webAppsClient.GetContainerLogsZip(ctx, staticCreds.ResourceGroupName, appServiceName, nil)
+	response, err := webAppsClient.GetWebSiteContainerLogs(ctx, staticCreds.ResourceGroupName, appServiceName, nil)
 	if err != nil {
 		return err
 	}
@@ -72,7 +73,16 @@ func (staticCreds *AzureStaticCredentials) GetDockerLogs(appServiceName string) 
 	if err != nil {
 		return err
 	}
-	fmt.Println(len(body))
+	fmt.Println(string(body))
+
+	// out, err := os.Create("somelogs.zip")
+	// if err != nil {
+	// 	return err
+	// }
+	// defer out.Close()
+	// io.Copy(out, response.Body)
+
+	// fmt.Println(len(body))
 	// fmt.Println(string(body))
 	return nil
 }
