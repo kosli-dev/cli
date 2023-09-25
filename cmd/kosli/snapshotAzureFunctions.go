@@ -63,12 +63,17 @@ func (o *snapshotAzureFunctionsOptions) run(args []string) error {
 	}
 	for _, webapp := range webAppInfo {
 		fmt.Println("webapp: ", *webapp.Properties.SiteConfig.LinuxFxVersion, " State: ", *webapp.Properties.State)
-		// webapp.Properties.State can be "Running" or "Stopped". Possibly other values as well, but haven't found them.
+		// webapp.Properties.State can be "Running" or "Stopped". Possibly other values as well,
+		// but I haven't found all possible values.
 		logs, err := azureClient.GetDockerLogsForWebApp(*webapp.Name)
 		if err != nil {
 			return err
 		}
-		fmt.Println("logs: ", string(logs))
+		fingerprint, err := azure.ExractImageFingerprintFromLogs(logs)
+		if err != nil {
+			return err
+		}
+		fmt.Println("fingerprint: ", fingerprint)
 	}
 
 	// envName := args[0]

@@ -1,14 +1,14 @@
 package azure
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"io"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
 )
-
-// Docs: https://github.com/Azure/azure-sdk-for-go/blob/main/sdk/resourcemanager/appservice/armappservice/README.md
 
 type AzureStaticCredentials struct {
 	TenantId          string
@@ -29,6 +29,7 @@ func (staticCreds *AzureStaticCredentials) NewAzureClient() (*AzureClient, error
 		return nil, err
 	}
 
+	// Docs: https://github.com/Azure/azure-sdk-for-go/blob/main/sdk/resourcemanager/appservice/armappservice/README.md
 	appserviceFactory, err := armappservice.NewClientFactory(staticCreds.SubscriptionId, credentials, nil)
 	if err != nil {
 		return nil, err
@@ -76,4 +77,25 @@ func (azureClient *AzureClient) GetDockerLogsForWebApp(appServiceName string) (l
 		return nil, err
 	}
 	return body, nil
+}
+
+func ExractImageFingerprintFromLogs(logs []byte) (string, error) {
+	logsReader := bytes.NewReader(logs)
+	scanner := bufio.NewScanner(logsReader)
+	var lastDigestLine []byte
+	searchedByteLine := []byte("Digest: sha256:")
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		if bytes.Contains(line, searchedByteLine) {
+			lastDigestLine = line
+		}
+	}
+	if lastDigestLine == nil {
+		return "", nil
+	}
+
+	lastDigestLineString := string(lastDigestLine)
+	startIndex := len(lastDigestLineString) - 64
+	extractedDigest := lastDigestLineString[startIndex:]
+	return extractedDigest, nil
 }
