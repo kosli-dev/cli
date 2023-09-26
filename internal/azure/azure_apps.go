@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"sync"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
@@ -39,7 +40,6 @@ type AzureWebAppsRequest struct {
 }
 
 func (staticCreds *AzureStaticCredentials) GetWebAppsData() ([]*WebAppData, error) {
-	webAppsData := []*WebAppData{}
 	azureClient, err := staticCreds.NewAzureClient()
 	if err != nil {
 		return nil, err
@@ -48,34 +48,73 @@ func (staticCreds *AzureStaticCredentials) GetWebAppsData() ([]*WebAppData, erro
 	if err != nil {
 		return nil, err
 	}
+
+	var (
+		webAppsData []*WebAppData
+		wg          sync.WaitGroup
+		mutex       = &sync.Mutex{}
+	)
+	// run concurrently
+	errs := make(chan error, 1) // Buffered only for the first error
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // Make sure it's called to release resources even if no errors
+
 	for _, webapp := range webAppInfo {
-		if strings.ToLower(*webapp.Properties.State) != "running" {
-			continue
-		}
-
-		// get image name from "DOCKER|tookyregistry.azurecr.io/tookyregistry/tooky/sha256:cb29a6"
-		linuxFxVersion := strings.Split(*webapp.Properties.SiteConfig.LinuxFxVersion, "|")
-		imageName := linuxFxVersion[1]
-
-		var fingerprint string
-		var startedAt int64
-		if linuxFxVersion[0] == "DOCKER" {
-			logs, err := azureClient.GetDockerLogsForWebApp(*webapp.Name)
-			if err != nil {
-				return nil, err
+		wg.Add(1)
+		go func(webapp *armappservice.Site) {
+			defer wg.Done()
+			select {
+			case <-ctx.Done():
+				return // Error somewhere, terminate
+			default: // Default is a must to avoid blocking
 			}
-			fingerprint, startedAt, err = exractImageFingerprintAndStartedTimestampFromLogs(logs, *webapp.Name)
-			if err != nil {
-				return nil, err
+			if strings.ToLower(*webapp.Properties.State) != "running" {
+				cancel()
+				return
 			}
-			if fingerprint == "" || startedAt == 0 {
-				continue
-			}
-		}
+			// get image name from "DOCKER|tookyregistry.azurecr.io/tookyregistry/tooky/sha256:cb29a6"
+			linuxFxVersion := strings.Split(*webapp.Properties.SiteConfig.LinuxFxVersion, "|")
+			imageName := linuxFxVersion[1]
 
-		data := &WebAppData{*webapp.Name, map[string]string{imageName: fingerprint}, startedAt}
-		webAppsData = append(webAppsData, data)
+			var fingerprint string
+			var startedAt int64
+			if linuxFxVersion[0] == "DOCKER" {
+				logs, err := azureClient.GetDockerLogsForWebApp(*webapp.Name)
+				if err != nil {
+					select {
+					case errs <- err:
+					default:
+					}
+					cancel() // send cancel signal to goroutines
+					return
+				}
+				fingerprint, startedAt, err = exractImageFingerprintAndStartedTimestampFromLogs(logs, *webapp.Name)
+				if err != nil {
+					select {
+					case errs <- err:
+					default:
+					}
+					cancel() // send cancel signal to goroutines
+					return
+				}
+				if fingerprint == "" || startedAt == 0 {
+					cancel() // send cancel signal to goroutines
+					return
+				}
+			}
+
+			data := &WebAppData{*webapp.Name, map[string]string{imageName: fingerprint}, startedAt}
+			mutex.Lock()
+			webAppsData = append(webAppsData, data)
+			mutex.Unlock()
+		}(webapp)
 	}
+	wg.Wait()
+	// Return (first) error, if any:
+	if ctx.Err() != nil {
+		return webAppsData, <-errs
+	}
+
 	return webAppsData, nil
 }
 
