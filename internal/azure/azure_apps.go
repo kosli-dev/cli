@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
@@ -21,6 +22,56 @@ type AzureStaticCredentials struct {
 type AzureClient struct {
 	Credentials       AzureStaticCredentials
 	AppServiceFactory *armappservice.ClientFactory
+}
+
+// WebAppData represents the harvested Azure Web App data
+type WebAppData struct {
+	WebAppName string            `json:"webAppName"`
+	Digests    map[string]string `json:"digests"`
+	// StartedAt  int64             `json:"creationTimestamp"` TODO: decide where to get this from
+}
+
+// AzureWebAppsRequest represents the PUT request body to be sent to Kosli from CLI
+type AzureWebAppsRequest struct {
+	Artifacts []*WebAppData `json:"artifacts"`
+}
+
+func (staticCreds *AzureStaticCredentials) GetWebAppsData() ([]*WebAppData, error) {
+	webAppsData := []*WebAppData{}
+	azureClient, err := staticCreds.NewAzureClient()
+	if err != nil {
+		return nil, err
+	}
+	webAppInfo, err := azureClient.GetWebAppsInfo()
+	if err != nil {
+		return nil, err
+	}
+	for _, webapp := range webAppInfo {
+		if strings.ToLower(*webapp.Properties.State) != "running" {
+			continue
+		}
+		// get image name from DOCKER|tookyregistry.azurecr.io/tookyregistry/tooky/sha256:cb29a6
+		linuxFxVersion := strings.Split(*webapp.Properties.SiteConfig.LinuxFxVersion, "|")
+		imageName := linuxFxVersion[1]
+		var fingerprint string
+		if linuxFxVersion[0] == "DOCKER" {
+			logs, err := azureClient.GetDockerLogsForWebApp(*webapp.Name)
+			if err != nil {
+				return nil, err
+			}
+			fingerprint, err = exractImageFingerprintFromLogs(logs)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			// TODO: get fingerprint for non-docker images
+			fingerprint = ""
+		}
+
+		data := &WebAppData{*webapp.Name, map[string]string{imageName: fingerprint}}
+		webAppsData = append(webAppsData, data)
+	}
+	return webAppsData, nil
 }
 
 func (staticCreds *AzureStaticCredentials) NewAzureClient() (*AzureClient, error) {
@@ -67,10 +118,7 @@ func (azureClient *AzureClient) GetDockerLogsForWebApp(appServiceName string) (l
 	if err != nil {
 		return nil, err
 	}
-
-	if response.Body != nil {
-		defer response.Body.Close()
-	}
+	defer response.Body.Close()
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
@@ -79,7 +127,7 @@ func (azureClient *AzureClient) GetDockerLogsForWebApp(appServiceName string) (l
 	return body, nil
 }
 
-func ExractImageFingerprintFromLogs(logs []byte) (string, error) {
+func exractImageFingerprintFromLogs(logs []byte) (string, error) {
 	logsReader := bytes.NewReader(logs)
 	scanner := bufio.NewScanner(logsReader)
 	var lastDigestLine []byte
