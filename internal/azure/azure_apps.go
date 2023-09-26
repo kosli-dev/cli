@@ -4,11 +4,13 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
+	"github.com/aws/smithy-go/time"
 )
 
 type AzureStaticCredentials struct {
@@ -28,7 +30,7 @@ type AzureClient struct {
 type WebAppData struct {
 	WebAppName string            `json:"webAppName"`
 	Digests    map[string]string `json:"digests"`
-	// StartedAt  int64             `json:"creationTimestamp"` TODO: decide where to get this from
+	StartedAt  int64             `json:"startedAt"`
 }
 
 // AzureWebAppsRequest represents the PUT request body to be sent to Kosli from CLI
@@ -50,25 +52,28 @@ func (staticCreds *AzureStaticCredentials) GetWebAppsData() ([]*WebAppData, erro
 		if strings.ToLower(*webapp.Properties.State) != "running" {
 			continue
 		}
-		// get image name from DOCKER|tookyregistry.azurecr.io/tookyregistry/tooky/sha256:cb29a6
+
+		// get image name from "DOCKER|tookyregistry.azurecr.io/tookyregistry/tooky/sha256:cb29a6"
 		linuxFxVersion := strings.Split(*webapp.Properties.SiteConfig.LinuxFxVersion, "|")
 		imageName := linuxFxVersion[1]
+
 		var fingerprint string
+		var startedAt int64
 		if linuxFxVersion[0] == "DOCKER" {
 			logs, err := azureClient.GetDockerLogsForWebApp(*webapp.Name)
 			if err != nil {
 				return nil, err
 			}
-			fingerprint, err = exractImageFingerprintFromLogs(logs)
+			fingerprint, startedAt, err = exractImageFingerprintAndStartedTimestampFromLogs(logs, *webapp.Name)
 			if err != nil {
 				return nil, err
 			}
-		} else {
-			// TODO: get fingerprint for non-docker images
-			fingerprint = ""
+			if fingerprint == "" || startedAt == 0 {
+				continue
+			}
 		}
 
-		data := &WebAppData{*webapp.Name, map[string]string{imageName: fingerprint}}
+		data := &WebAppData{*webapp.Name, map[string]string{imageName: fingerprint}, startedAt}
 		webAppsData = append(webAppsData, data)
 	}
 	return webAppsData, nil
@@ -127,23 +132,57 @@ func (azureClient *AzureClient) GetDockerLogsForWebApp(appServiceName string) (l
 	return body, nil
 }
 
-func exractImageFingerprintFromLogs(logs []byte) (string, error) {
+func exractImageFingerprintAndStartedTimestampFromLogs(logs []byte, webAppName string) (fingerprint string, startedAt int64, error error) {
 	logsReader := bytes.NewReader(logs)
 	scanner := bufio.NewScanner(logsReader)
+
+	searchedDigestByteArray := []byte("Digest: sha256:")
+	containerStartedAtByteArray := []byte(fmt.Sprintf("for site %s initialized successfully and is ready to serve requests.", webAppName))
+
 	var lastDigestLine []byte
-	searchedByteLine := []byte("Digest: sha256:")
+	var lastStartedAtLine []byte
 	for scanner.Scan() {
 		line := scanner.Bytes()
-		if bytes.Contains(line, searchedByteLine) {
+		if bytes.Contains(line, searchedDigestByteArray) {
 			lastDigestLine = line
 		}
-	}
-	if lastDigestLine == nil {
-		return "", nil
+		if bytes.Contains(line, containerStartedAtByteArray) {
+			lastStartedAtLine = line
+		}
 	}
 
-	lastDigestLineString := string(lastDigestLine)
-	startIndex := len(lastDigestLineString) - 64
-	extractedDigest := lastDigestLineString[startIndex:]
-	return extractedDigest, nil
+	lengthOfTimestamp := 24 // example 2023-09-25T12:21:09.927Z
+	var digestLoggedAt string
+	if lastDigestLine != nil {
+		lastDigestLineString := string(lastDigestLine)
+		fingerprintStartIndex := len(lastDigestLineString) - 64
+		fingerprint = lastDigestLineString[fingerprintStartIndex:]
+		digestLoggedAt = lastDigestLineString[:lengthOfTimestamp]
+	}
+
+	var startedAtLoggedAt string
+	if lastStartedAtLine != nil {
+		startedAtLoggedAt = string(lastStartedAtLine)[:lengthOfTimestamp]
+	}
+
+	if digestLoggedAt != "" && startedAtLoggedAt != "" {
+		digestLogTime, err := time.ParseDateTime(digestLoggedAt)
+		if err != nil {
+			return "", 0, err
+		}
+		startedAtLogTime, err := time.ParseDateTime(startedAtLoggedAt)
+		if err != nil {
+			return "", 0, err
+		}
+
+		// startedAtLoggedAt must be greater than digestLoggedAt,
+		// because image pulled and build before it starts serving requests.
+		// If startedAtLoggedAt is less than digestLoggedAt, then the container is not running.
+		if startedAtLogTime.Before(digestLogTime) {
+			return "", 0, nil
+		}
+		startedAt = startedAtLogTime.Unix()
+	}
+
+	return fingerprint, startedAt, nil
 }
