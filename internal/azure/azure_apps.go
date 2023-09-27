@@ -80,7 +80,9 @@ func (staticCreds *AzureStaticCredentials) GetWebAppsData() (webAppsData []*WebA
 				cancel() // send cancel signal to goroutines
 				return
 			}
-			webAppsChan <- &data
+			if !data.IsEmpty() {
+				webAppsChan <- &data
+			}
 		}(webapp)
 	}
 
@@ -105,18 +107,31 @@ func (azureClient *AzureClient) NewWebAppData(webapp *armappservice.Site) (WebAp
 
 	var fingerprint string
 	var startedAt int64
-	if linuxFxVersion[0] == "DOCKER" {
-		logs, err := azureClient.GetDockerLogsForWebApp(*webapp.Name)
-		if err != nil {
-			return WebAppData{}, err
-		}
-		fingerprint, startedAt, err = exractImageFingerprintAndStartedTimestampFromLogs(logs, *webapp.Name)
-		if err != nil {
-			return WebAppData{}, err
-		}
+
+	if linuxFxVersion[0] != "DOCKER" {
+		//  TODO: support other types of images, for now just skip
+		return WebAppData{}, nil
+	}
+
+	logs, err := azureClient.GetDockerLogsForWebApp(*webapp.Name)
+	if err != nil {
+		return WebAppData{}, err
+	}
+	fingerprint, startedAt, err = exractImageFingerprintAndStartedTimestampFromLogs(logs, *webapp.Name)
+	if err != nil {
+		return WebAppData{}, err
+	}
+
+	if fingerprint == "" && strings.Contains(imageName, "@sha256:") {
+		// get digest from image if it is pulled by sha256 digest, ie, imageName@sha256:cb29a6edff54216aa3e1d433aa98f0d1a711d17e59004fb6e3afffe0a784e34e"
+		fingerprint = strings.Split(imageName, "@sha256:")[1]
 	}
 
 	return WebAppData{*webapp.Name, map[string]string{imageName: fingerprint}, startedAt}, nil
+}
+
+func (webapp *WebAppData) IsEmpty() bool {
+	return webapp.WebApp == "" && len(webapp.Digests) == 0 && webapp.StartedAt == 0
 }
 
 func (staticCreds *AzureStaticCredentials) NewAzureClient() (*AzureClient, error) {
