@@ -29,9 +29,9 @@ type AzureClient struct {
 
 // WebAppData represents the harvested Azure Web App data
 type WebAppData struct {
-	WebAppName string            `json:"webAppName"`
-	Digests    map[string]string `json:"digests"`
-	StartedAt  int64             `json:"startedAt"`
+	WebApp            string            `json:"webApp"`
+	Digests           map[string]string `json:"digests"`
+	CreationTimestamp int64             `json:"creationTimestamp"`
 }
 
 // AzureWebAppsRequest represents the PUT request body to be sent to Kosli from CLI
@@ -39,7 +39,7 @@ type AzureWebAppsRequest struct {
 	Artifacts []*WebAppData `json:"artifacts"`
 }
 
-func (staticCreds *AzureStaticCredentials) GetWebAppsData() ([]*WebAppData, error) {
+func (staticCreds *AzureStaticCredentials) GetWebAppsData() (webAppsData []*WebAppData, err error) {
 	azureClient, err := staticCreds.NewAzureClient()
 	if err != nil {
 		return nil, err
@@ -49,13 +49,10 @@ func (staticCreds *AzureStaticCredentials) GetWebAppsData() ([]*WebAppData, erro
 		return nil, err
 	}
 
-	var (
-		webAppsData []*WebAppData
-		wg          sync.WaitGroup
-		mutex       = &sync.Mutex{}
-	)
 	// run concurrently
+	var wg sync.WaitGroup
 	errs := make(chan error, 1) // Buffered only for the first error
+	webAppsChan := make(chan *WebAppData, len(webAppInfo))
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // Make sure it's called to release resources even if no errors
 
@@ -103,19 +100,20 @@ func (staticCreds *AzureStaticCredentials) GetWebAppsData() ([]*WebAppData, erro
 				}
 			}
 
-			data := &WebAppData{*webapp.Name, map[string]string{imageName: fingerprint}, startedAt}
-
-			mutex.Lock()
-			webAppsData = append(webAppsData, data)
-			mutex.Unlock()
+			webAppsChan <- &WebAppData{*webapp.Name, map[string]string{imageName: fingerprint}, startedAt}
 		}(webapp)
 	}
 
 	wg.Wait()
+	close(webAppsChan)
 
 	// Return (first) error, if any:
 	if ctx.Err() != nil {
 		return webAppsData, <-errs
+	}
+
+	for webApp := range webAppsChan {
+		webAppsData = append(webAppsData, webApp)
 	}
 	return webAppsData, nil
 }
