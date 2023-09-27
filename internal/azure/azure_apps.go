@@ -29,9 +29,9 @@ type AzureClient struct {
 
 // WebAppData represents the harvested Azure Web App data
 type WebAppData struct {
-	WebApp            string            `json:"webApp"`
-	Digests           map[string]string `json:"digests"`
-	CreationTimestamp int64             `json:"creationTimestamp"`
+	WebApp    string            `json:"webApp"`
+	Digests   map[string]string `json:"digests"`
+	StartedAt int64             `json:"creationTimestamp"`
 }
 
 // AzureWebAppsRequest represents the PUT request body to be sent to Kosli from CLI
@@ -70,37 +70,17 @@ func (staticCreds *AzureStaticCredentials) GetWebAppsData() (webAppsData []*WebA
 			if strings.ToLower(*webapp.Properties.State) != "running" {
 				return
 			}
-			// get image name from "DOCKER|tookyregistry.azurecr.io/tookyregistry/tooky/sha256:cb29a6"
-			linuxFxVersion := strings.Split(*webapp.Properties.SiteConfig.LinuxFxVersion, "|")
-			imageName := linuxFxVersion[1]
 
-			var fingerprint string
-			var startedAt int64
-			if linuxFxVersion[0] == "DOCKER" {
-				logs, err := azureClient.GetDockerLogsForWebApp(*webapp.Name)
-				if err != nil {
-					select {
-					case errs <- err:
-					default:
-					}
-					cancel() // send cancel signal to goroutines
-					return
+			data, err := azureClient.NewWebAppData(webapp)
+			if err != nil {
+				select {
+				case errs <- err:
+				default:
 				}
-				fingerprint, startedAt, err = exractImageFingerprintAndStartedTimestampFromLogs(logs, *webapp.Name)
-				if err != nil {
-					select {
-					case errs <- err:
-					default:
-					}
-					cancel() // send cancel signal to goroutines
-					return
-				}
-				if fingerprint == "" || startedAt == 0 {
-					return
-				}
+				cancel() // send cancel signal to goroutines
+				return
 			}
-
-			webAppsChan <- &WebAppData{*webapp.Name, map[string]string{imageName: fingerprint}, startedAt}
+			webAppsChan <- &data
 		}(webapp)
 	}
 
@@ -116,6 +96,27 @@ func (staticCreds *AzureStaticCredentials) GetWebAppsData() (webAppsData []*WebA
 		webAppsData = append(webAppsData, webApp)
 	}
 	return webAppsData, nil
+}
+
+func (azureClient *AzureClient) NewWebAppData(webapp *armappservice.Site) (WebAppData, error) {
+	// get image name from "DOCKER|tookyregistry.azurecr.io/tookyregistry/tooky/sha256:cb29a6"
+	linuxFxVersion := strings.Split(*webapp.Properties.SiteConfig.LinuxFxVersion, "|")
+	imageName := linuxFxVersion[1]
+
+	var fingerprint string
+	var startedAt int64
+	if linuxFxVersion[0] == "DOCKER" {
+		logs, err := azureClient.GetDockerLogsForWebApp(*webapp.Name)
+		if err != nil {
+			return WebAppData{}, err
+		}
+		fingerprint, startedAt, err = exractImageFingerprintAndStartedTimestampFromLogs(logs, *webapp.Name)
+		if err != nil {
+			return WebAppData{}, err
+		}
+	}
+
+	return WebAppData{*webapp.Name, map[string]string{imageName: fingerprint}, startedAt}, nil
 }
 
 func (staticCreds *AzureStaticCredentials) NewAzureClient() (*AzureClient, error) {
@@ -183,11 +184,17 @@ func exractImageFingerprintAndStartedTimestampFromLogs(logs []byte, webAppName s
 	for scanner.Scan() {
 		line := scanner.Bytes()
 		if bytes.Contains(line, searchedDigestByteArray) {
-			lastDigestLine = line
+			lastDigestLine = make([]byte, len(line))
+			copy(lastDigestLine, line)
 		}
+
 		if bytes.Contains(line, containerStartedAtByteArray) {
-			lastStartedAtLine = line
+			lastStartedAtLine = make([]byte, len(line))
+			copy(lastStartedAtLine, line)
 		}
+	}
+	if err := scanner.Err(); err != nil {
+		return "", 0, err
 	}
 
 	lengthOfTimestamp := 24 // example 2023-09-25T12:21:09.927Z
@@ -205,10 +212,12 @@ func exractImageFingerprintAndStartedTimestampFromLogs(logs []byte, webAppName s
 	}
 
 	if digestLoggedAt != "" && startedAtLoggedAt != "" {
+		digestLoggedAt = strings.TrimSpace(digestLoggedAt)
 		digestLogTime, err := time.ParseDateTime(digestLoggedAt)
 		if err != nil {
 			return "", 0, err
 		}
+		startedAtLoggedAt = strings.TrimSpace(startedAtLoggedAt)
 		startedAtLogTime, err := time.ParseDateTime(startedAtLoggedAt)
 		if err != nil {
 			return "", 0, err
@@ -218,7 +227,7 @@ func exractImageFingerprintAndStartedTimestampFromLogs(logs []byte, webAppName s
 		// because image pulled and build before it starts serving requests.
 		// If startedAtLoggedAt is less than digestLoggedAt, then the container is not running.
 		if startedAtLogTime.Before(digestLogTime) {
-			return "", 0, nil
+			return fingerprint, 0, nil
 		}
 		startedAt = startedAtLogTime.Unix()
 	}
