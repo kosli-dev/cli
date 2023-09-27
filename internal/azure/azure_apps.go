@@ -63,13 +63,14 @@ func (staticCreds *AzureStaticCredentials) GetWebAppsData() ([]*WebAppData, erro
 		wg.Add(1)
 		go func(webapp *armappservice.Site) {
 			defer wg.Done()
+
 			select {
 			case <-ctx.Done():
 				return // Error somewhere, terminate
 			default: // Default is a must to avoid blocking
 			}
+
 			if strings.ToLower(*webapp.Properties.State) != "running" {
-				cancel()
 				return
 			}
 			// get image name from "DOCKER|tookyregistry.azurecr.io/tookyregistry/tooky/sha256:cb29a6"
@@ -98,23 +99,24 @@ func (staticCreds *AzureStaticCredentials) GetWebAppsData() ([]*WebAppData, erro
 					return
 				}
 				if fingerprint == "" || startedAt == 0 {
-					cancel() // send cancel signal to goroutines
 					return
 				}
 			}
 
 			data := &WebAppData{*webapp.Name, map[string]string{imageName: fingerprint}, startedAt}
+
 			mutex.Lock()
 			webAppsData = append(webAppsData, data)
 			mutex.Unlock()
 		}(webapp)
 	}
+
 	wg.Wait()
+
 	// Return (first) error, if any:
 	if ctx.Err() != nil {
 		return webAppsData, <-errs
 	}
-
 	return webAppsData, nil
 }
 
