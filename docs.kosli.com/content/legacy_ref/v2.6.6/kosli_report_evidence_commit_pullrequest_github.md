@@ -1,32 +1,36 @@
 ---
-title: "kosli report evidence commit generic"
+title: "kosli report evidence commit pullrequest github"
 beta: false
 ---
 
-# kosli report evidence commit generic
+# kosli report evidence commit pullrequest github
 
 ## Synopsis
 
-Report Generic evidence for a commit in Kosli flows.  
+Report Github pull request evidence for a git commit in Kosli flows.  
+It checks if a pull request exists for a commit and report the pull-request evidence to the commit in Kosli. 
+
 
 ```shell
-kosli report evidence commit generic [flags]
+kosli report evidence commit pullrequest github [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
+|        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --commit string  |  Git commit for which to verify and given evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|    -C, --compliant  |  [defaulted] Whether the evidence is compliant or not.  |
-|    -d, --description string  |  [optional] The evidence description.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |        --evidence-fingerprint string  |  [optional] The SHA256 fingerprint of the evidence file or dir.  |
-|    -e, --evidence-paths strings  |  [optional] The comma-separated list of paths containing supporting proof for the reported evidence. Paths can be for files or directories. All provided proofs will be uploaded to Kosli's evidence vault.  |
 |        --evidence-url string  |  [optional] The external URL where the evidence file or dir is stored.  |
 |    -f, --flows strings  |  [defaulted] The comma separated list of Kosli flows. Defaults to all flows of the org.  |
-|    -h, --help  |  help for generic  |
+|        --github-base-url string  |  [optional] GitHub base URL (only needed for GitHub Enterprise installations).  |
+|        --github-org string  |  Github organization. (defaulted if you are running in GitHub Actions: https://docs.kosli.com/ci-defaults ).  |
+|        --github-token string  |  Github token.  |
+|    -h, --help  |  help for github  |
 |    -n, --name string  |  The name of the evidence.  |
+|        --repository string  |  Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to this evidence.  |
 
 
@@ -45,28 +49,30 @@ kosli report evidence commit generic [flags]
 
 ```shell
 
-# report Generic evidence for a commit related to one Kosli flow:
-kosli report evidence commit generic \
+# report a pull request commit evidence to Kosli
+kosli report evidence commit pullrequest github \
 	--commit yourGitCommitSha1 \
+	--repository yourGithubGitRepository \
+	--github-token yourGithubToken \
+	--github-org yourGithubOrg \
 	--name yourEvidenceName \
-	--description "some description" \
-	--compliant \
-	--flows yourFlowName \
-	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
-	--org yourOrgName
-
-# report Generic evidence for a commit related to multiple Kosli flows with user-data:
-kosli report evidence commit generic \
-	--commit yourGitCommitSha1 \
-	--name yourEvidenceName \
-	--description "some description" \
-	--compliant \
 	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
 	--org yourOrgName \
-	--user-data /path/to/json/file.json
+	--api-token yourAPIToken
+	
+# fail if a pull request does not exist for your commit
+kosli report evidence commit pullrequest github \
+	--commit yourGitCommitSha1 \
+	--repository yourGithubGitRepository \
+	--github-token yourGithubToken \
+	--github-org yourGithubOrg \
+	--name yourEvidenceName \
+	--flows yourFlowName1,yourFlowName2 \
+	--build-url https://exampleci.com \
+	--org yourOrgName \
+	--api-token yourAPIToken \
+	--assert
 
 ```
 

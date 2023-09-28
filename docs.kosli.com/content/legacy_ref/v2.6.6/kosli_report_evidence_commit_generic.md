@@ -22,7 +22,7 @@ kosli report evidence commit generic [flags]
 |    -d, --description string  |  [optional] The evidence description.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |        --evidence-fingerprint string  |  [optional] The SHA256 fingerprint of the evidence file or dir.  |
-|    -e, --evidence-paths strings  |  [optional] The comma-separated list of paths containing supporting proof for the reported evidence. Paths can be for files or directories. All provided proofs will be uploaded to Kosli's evidence vault.  |
+|    -e, --evidence-paths strings  |  [optional] The comma-separated list of paths containing supporting proof for the reported evidence. Paths can be for files or directories.  |
 |        --evidence-url string  |  [optional] The external URL where the evidence file or dir is stored.  |
 |    -f, --flows strings  |  [defaulted] The comma separated list of Kosli flows. Defaults to all flows of the org.  |
 |    -h, --help  |  help for generic  |
