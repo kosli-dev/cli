@@ -42,6 +42,14 @@ To authenticate to AWS, you can either:
 Option 1 takes highest precedence, while option 3 is the lowest.  
 More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials
 	`
+	azureAuthDesc = `
+
+To authenticate to Azure, you need to create Azure service principal with a secret  
+and provide these Azure credentials via flags or by exporting the equivalent KOSLI env vars (e.g. KOSLI_AZURE_CLIENT_ID).  
+The service principal needs to have the following permissions:  
+  1) Microsoft.Web/sites/Read  
+  2) microsoft.web/sites/containerlogs/action  
+	`
 
 	// flags
 	apiTokenFlag               = "The Kosli API token."
@@ -102,15 +110,20 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 	assertPREvidenceFlag       = "[optional] Exit with non-zero code if no pull requests found for the given commit."
 	assertStatusFlag           = "[optional] Exit with non-zero code if Kosli server is not responding."
 	azureTokenFlag             = "Azure Personal Access token."
-	githubTokenFlag            = "Github token."
-	gitlabTokenFlag            = "Gitlab token."
 	azureProjectFlag           = "Azure project.(defaulted if you are running in Azure Devops pipelines: https://docs.kosli.com/ci-defaults )."
 	azureOrgUrlFlag            = "Azure organization url. E.g. \"https://dev.azure.com/myOrg\" (defaulted if you are running in Azure Devops pipelines: https://docs.kosli.com/ci-defaults )."
-	githubOrgFlag              = "Github organization. (defaulted if you are running in GitHub Actions: https://docs.kosli.com/ci-defaults )."
-	gitlabOrgFlag              = "Gitlab organization. (defaulted if you are running in Gitlab Pipelines: https://docs.kosli.com/ci-defaults )."
 	azureBaseURLFlag           = "[optional] Azure Devops base URL."
-	gitlabBaseURLFlag          = "[optional] Gitlab base URL (only needed for on-prem Gitlab installations)."
+	azureClientIdFlag          = "Azure client ID."
+	azureClientSecretFlag      = "Azure client secret."
+	azureTenantIdFlag          = "Azure tenant ID."
+	azureSubscriptionIdFlag    = "Azure subscription ID."
+	azureResourceGroupNameFlag = "Azure resource group name."
+	githubTokenFlag            = "Github token."
+	githubOrgFlag              = "Github organization. (defaulted if you are running in GitHub Actions: https://docs.kosli.com/ci-defaults )."
 	githubBaseURLFlag          = "[optional] GitHub base URL (only needed for GitHub Enterprise installations)."
+	gitlabTokenFlag            = "Gitlab token."
+	gitlabOrgFlag              = "Gitlab organization. (defaulted if you are running in Gitlab Pipelines: https://docs.kosli.com/ci-defaults )."
+	gitlabBaseURLFlag          = "[optional] Gitlab base URL (only needed for on-prem Gitlab installations)."
 	registryProviderFlag       = "[conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry."
 	registryUsernameFlag       = "[conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry."
 	registryPasswordFlag       = "[conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry."
