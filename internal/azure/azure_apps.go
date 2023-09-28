@@ -12,6 +12,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
 	"github.com/aws/smithy-go/time"
+	"github.com/kosli-dev/cli/internal/logger"
 )
 
 type AzureStaticCredentials struct {
@@ -39,7 +40,7 @@ type AzureWebAppsRequest struct {
 	Artifacts []*WebAppData `json:"artifacts"`
 }
 
-func (staticCreds *AzureStaticCredentials) GetWebAppsData() (webAppsData []*WebAppData, err error) {
+func (staticCreds *AzureStaticCredentials) GetWebAppsData(logger *logger.Logger) (webAppsData []*WebAppData, err error) {
 	azureClient, err := staticCreds.NewAzureClient()
 	if err != nil {
 		return nil, err
@@ -47,6 +48,14 @@ func (staticCreds *AzureStaticCredentials) GetWebAppsData() (webAppsData []*WebA
 	webAppInfo, err := azureClient.GetWebAppsInfo()
 	if err != nil {
 		return nil, err
+	}
+	logger.Debug("found %d web apps in the resource group %s", len(webAppInfo), staticCreds.ResourceGroupName)
+	if logger.DebugEnabled {
+		logger.Debug("Found web apps:")
+		for _, webapp := range webAppInfo {
+			logger.Debug("  webapp name=%s, state=%s, linuxFxVersion=%s", *webapp.Name,
+				*webapp.Properties.State, *webapp.Properties.SiteConfig.LinuxFxVersion)
+		}
 	}
 
 	// run concurrently
@@ -68,10 +77,11 @@ func (staticCreds *AzureStaticCredentials) GetWebAppsData() (webAppsData []*WebA
 			}
 
 			if strings.ToLower(*webapp.Properties.State) != "running" {
+				logger.Debug("webapp %s is not running, skipping from report", *webapp.Name)
 				return
 			}
 
-			data, err := azureClient.NewWebAppData(webapp)
+			data, err := azureClient.NewWebAppData(webapp, logger)
 			if err != nil {
 				select {
 				case errs <- err:
@@ -100,7 +110,7 @@ func (staticCreds *AzureStaticCredentials) GetWebAppsData() (webAppsData []*WebA
 	return webAppsData, nil
 }
 
-func (azureClient *AzureClient) NewWebAppData(webapp *armappservice.Site) (WebAppData, error) {
+func (azureClient *AzureClient) NewWebAppData(webapp *armappservice.Site, logger *logger.Logger) (WebAppData, error) {
 	// get image name from "DOCKER|tookyregistry.azurecr.io/tookyregistry/tooky/sha256:cb29a6"
 	linuxFxVersion := strings.Split(*webapp.Properties.SiteConfig.LinuxFxVersion, "|")
 	imageName := linuxFxVersion[1]
@@ -109,23 +119,35 @@ func (azureClient *AzureClient) NewWebAppData(webapp *armappservice.Site) (WebAp
 	var startedAt int64
 
 	if linuxFxVersion[0] != "DOCKER" {
+		logger.Debug("webapp %s is not using a Docker image, skipping from report", *webapp.Name)
 		//  TODO: support other types of images, for now just skip
 		return WebAppData{}, nil
 	}
 
+	// First try to get image fingerprint from Docker logs.
+	// If it is not found, then try to get it from image name.
+	// We also need Docker logs to get startedAt timestamp.
 	logs, err := azureClient.GetDockerLogsForWebApp(*webapp.Name)
 	if err != nil {
 		return WebAppData{}, err
 	}
+
 	fingerprint, startedAt, err = exractImageFingerprintAndStartedTimestampFromLogs(logs, *webapp.Name)
 	if err != nil {
 		return WebAppData{}, err
+	}
+	if startedAt == 0 {
+		// if startedAt is 0, then the container is not running
+		logger.Debug("docker container in webapp %s is not running, skipping from report", *webapp.Name)
+		return WebAppData{}, nil
 	}
 
 	if fingerprint == "" && strings.Contains(imageName, "@sha256:") {
 		// get digest from image if it is pulled by sha256 digest, ie, imageName@sha256:cb29a6edff54216aa3e1d433aa98f0d1a711d17e59004fb6e3afffe0a784e34e"
 		fingerprint = strings.Split(imageName, "@sha256:")[1]
 	}
+
+	logger.Debug("For webapp %s found: image=%s, fingerprint=%s, startedAt=%d", *webapp.Name, imageName, fingerprint, startedAt)
 
 	return WebAppData{*webapp.Name, map[string]string{imageName: fingerprint}, startedAt}, nil
 }
@@ -242,7 +264,7 @@ func exractImageFingerprintAndStartedTimestampFromLogs(logs []byte, webAppName s
 		// because image pulled and build before it starts serving requests.
 		// If startedAtLoggedAt is less than digestLoggedAt, then the container is not running.
 		if startedAtLogTime.Before(digestLogTime) {
-			return fingerprint, 0, nil
+			return "", 0, nil
 		}
 		startedAt = startedAtLogTime.Unix()
 	}

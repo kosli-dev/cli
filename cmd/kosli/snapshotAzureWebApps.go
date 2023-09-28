@@ -10,11 +10,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const snapshotAzureFunctionsShortDesc = ``
+const snapshotAzureFunctionsShortDesc = `Report a snapshot of running Azure Web apps in an Azure resource group to Kosli.  `
 
-const snapshotAzureFunctionsLongDesc = snapshotAzureFunctionsShortDesc + ``
+const snapshotAzureFunctionsLongDesc = snapshotAzureFunctionsShortDesc + `
+The reported data includes Azure web app names, container image digests and creation timestamps.` + azureAuthDesc
 
-const snapshotAzureFunctionsExample = ``
+const snapshotAzureFunctionsExample = `
+kosli snapshot azure-webapps yourEnvironmentName \
+	--azure-client-id yourAzureClientID \
+	--azure-client-secret yourAzureClientSecret \
+	--azure-tenant-id yourAzureTenantID \
+	--azure-subscription-id yourAzureSubscriptionID \
+	--azure-resource-group-name yourAzureResourceGroupName \
+	--api-token yourAPIToken \
+	--org yourOrgName
+`
 
 type snapshotAzureFunctionsOptions struct {
 	azureStaticCredentials *azure.AzureStaticCredentials
@@ -28,6 +38,7 @@ func newSnapshotAzureWebAppsCmd(out io.Writer) *cobra.Command {
 		Short:   snapshotAzureFunctionsShortDesc,
 		Long:    snapshotAzureFunctionsLongDesc,
 		Example: snapshotAzureFunctionsExample,
+		Hidden:  true,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
@@ -41,11 +52,11 @@ func newSnapshotAzureWebAppsCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&o.azureStaticCredentials.ClientId, "azure-client-id", "", "")
-	cmd.Flags().StringVar(&o.azureStaticCredentials.ClientSecret, "azure-client-secret", "", "")
-	cmd.Flags().StringVar(&o.azureStaticCredentials.TenantId, "azure-tenant-id", "", "")
-	cmd.Flags().StringVar(&o.azureStaticCredentials.SubscriptionId, "azure-subscription-id", "", "")
-	cmd.Flags().StringVar(&o.azureStaticCredentials.ResourceGroupName, "azure-resource-group-name", "", "")
+	cmd.Flags().StringVar(&o.azureStaticCredentials.ClientId, "azure-client-id", "", azureClientIdFlag)
+	cmd.Flags().StringVar(&o.azureStaticCredentials.ClientSecret, "azure-client-secret", "", azureClientSecretFlag)
+	cmd.Flags().StringVar(&o.azureStaticCredentials.TenantId, "azure-tenant-id", "", azureTenantIdFlag)
+	cmd.Flags().StringVar(&o.azureStaticCredentials.SubscriptionId, "azure-subscription-id", "", azureSubscriptionIdFlag)
+	cmd.Flags().StringVar(&o.azureStaticCredentials.ResourceGroupName, "azure-resource-group-name", "", azureResourceGroupNameFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{
@@ -63,7 +74,7 @@ func (o *snapshotAzureFunctionsOptions) run(args []string) error {
 	envName := args[0]
 	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/azure-web-app", global.Host, global.Org, envName)
 
-	webAppsData, err := o.azureStaticCredentials.GetWebAppsData()
+	webAppsData, err := o.azureStaticCredentials.GetWebAppsData(logger)
 	if err != nil {
 		return err
 	}
