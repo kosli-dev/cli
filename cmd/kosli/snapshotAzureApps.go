@@ -10,13 +10,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const snapshotAzureFunctionsShortDesc = `Report a snapshot of running Azure Web apps in an Azure resource group to Kosli.  `
+const snapshotAzureAppsShortDesc = `Report a snapshot of running Azure service apps and function apps in an Azure resource group to Kosli.  `
 
-const snapshotAzureFunctionsLongDesc = snapshotAzureFunctionsShortDesc + `
-The reported data includes Azure web app names, container image digests and creation timestamps.` + azureAuthDesc
+const snapshotAzureAppsLongDesc = snapshotAzureAppsShortDesc + `
+The reported data includes Azure app names, container image digests and creation timestamps.` + azureAuthDesc
 
-const snapshotAzureFunctionsExample = `
-kosli snapshot azure-webapps yourEnvironmentName \
+const snapshotAzureAppsExample = `
+kosli snapshot azure-apps yourEnvironmentName \
 	--azure-client-id yourAzureClientID \
 	--azure-client-secret yourAzureClientSecret \
 	--azure-tenant-id yourAzureTenantID \
@@ -26,18 +26,18 @@ kosli snapshot azure-webapps yourEnvironmentName \
 	--org yourOrgName
 `
 
-type snapshotAzureFunctionsOptions struct {
+type snapshotAzureAppsOptions struct {
 	azureStaticCredentials *azure.AzureStaticCredentials
 }
 
-func newSnapshotAzureWebAppsCmd(out io.Writer) *cobra.Command {
-	o := new(snapshotAzureFunctionsOptions)
+func newSnapshotAzureAppsCmd(out io.Writer) *cobra.Command {
+	o := new(snapshotAzureAppsOptions)
 	o.azureStaticCredentials = new(azure.AzureStaticCredentials)
 	cmd := &cobra.Command{
-		Use:     "azure-webapps ENVIRONMENT-NAME",
-		Short:   snapshotAzureFunctionsShortDesc,
-		Long:    snapshotAzureFunctionsLongDesc,
-		Example: snapshotAzureFunctionsExample,
+		Use:     "azure-apps ENVIRONMENT-NAME",
+		Short:   snapshotAzureAppsShortDesc,
+		Long:    snapshotAzureAppsLongDesc,
+		Example: snapshotAzureAppsExample,
 		Hidden:  true,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -70,15 +70,15 @@ func newSnapshotAzureWebAppsCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *snapshotAzureFunctionsOptions) run(args []string) error {
+func (o *snapshotAzureAppsOptions) run(args []string) error {
 	envName := args[0]
 	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/azure-web-app", global.Host, global.Org, envName)
 
-	webAppsData, err := o.azureStaticCredentials.GetWebAppsData(logger)
+	webAppsData, err := o.azureStaticCredentials.GetAzureAppsData(logger)
 	if err != nil {
 		return err
 	}
-	payload := &azure.AzureWebAppsRequest{
+	payload := &azure.AzureAppsRequest{
 		Artifacts: webAppsData,
 	}
 	reqParams := &requests.RequestParams{
@@ -90,7 +90,7 @@ func (o *snapshotAzureFunctionsOptions) run(args []string) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("%d azure web apps were reported to environment %s", len(webAppsData), envName)
+		logger.Info("%d azure apps were reported to environment %s", len(webAppsData), envName)
 	}
 	return err
 }

@@ -28,46 +28,46 @@ type AzureClient struct {
 	AppServiceFactory *armappservice.ClientFactory
 }
 
-// WebAppData represents the harvested Azure Web App data
-type WebAppData struct {
-	WebApp    string            `json:"webApp"`
+// AppData represents the harvested Azure service app and function app data
+type AppData struct {
+	AppName   string            `json:"appName"`
 	Digests   map[string]string `json:"digests"`
 	StartedAt int64             `json:"creationTimestamp"`
 }
 
-// AzureWebAppsRequest represents the PUT request body to be sent to Kosli from CLI
-type AzureWebAppsRequest struct {
-	Artifacts []*WebAppData `json:"artifacts"`
+// AzureAppsRequest represents the PUT request body to be sent to Kosli from CLI
+type AzureAppsRequest struct {
+	Artifacts []*AppData `json:"artifacts"`
 }
 
-func (staticCreds *AzureStaticCredentials) GetWebAppsData(logger *logger.Logger) (webAppsData []*WebAppData, err error) {
+func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logger) (appsData []*AppData, err error) {
 	azureClient, err := staticCreds.NewAzureClient()
 	if err != nil {
 		return nil, err
 	}
-	webAppInfo, err := azureClient.GetWebAppsInfo()
+	appsInfo, err := azureClient.GetAppsListForResourceGroup()
 	if err != nil {
 		return nil, err
 	}
-	logger.Debug("found %d web apps in the resource group %s", len(webAppInfo), staticCreds.ResourceGroupName)
+	logger.Debug("found %d apps in the resource group %s", len(appsInfo), staticCreds.ResourceGroupName)
 	if logger.DebugEnabled {
-		logger.Debug("Found web apps:")
-		for _, webapp := range webAppInfo {
-			logger.Debug("  webapp name=%s, state=%s, linuxFxVersion=%s", *webapp.Name,
-				*webapp.Properties.State, *webapp.Properties.SiteConfig.LinuxFxVersion)
+		logger.Debug("Found apps:")
+		for _, app := range appsInfo {
+			logger.Debug("  app name=%s, state=%s, kind=%s, linuxFxVersion=%s", *app.Name,
+				*app.Properties.State, *app.Kind, *app.Properties.SiteConfig.LinuxFxVersion)
 		}
 	}
 
 	// run concurrently
 	var wg sync.WaitGroup
 	errs := make(chan error, 1) // Buffered only for the first error
-	webAppsChan := make(chan *WebAppData, len(webAppInfo))
+	appsChan := make(chan *AppData, len(appsInfo))
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // Make sure it's called to release resources even if no errors
 
-	for _, webapp := range webAppInfo {
+	for _, app := range appsInfo {
 		wg.Add(1)
-		go func(webapp *armappservice.Site) {
+		go func(app *armappservice.Site) {
 			defer wg.Done()
 
 			select {
@@ -76,12 +76,12 @@ func (staticCreds *AzureStaticCredentials) GetWebAppsData(logger *logger.Logger)
 			default: // Default is a must to avoid blocking
 			}
 
-			if strings.ToLower(*webapp.Properties.State) != "running" {
-				logger.Debug("webapp %s is not running, skipping from report", *webapp.Name)
+			if strings.ToLower(*app.Properties.State) != "running" {
+				logger.Debug("app %s is not running, skipping from report", *app.Name)
 				return
 			}
 
-			data, err := azureClient.NewWebAppData(webapp, logger)
+			data, err := azureClient.NewAppData(app, logger)
 			if err != nil {
 				select {
 				case errs <- err:
@@ -91,55 +91,54 @@ func (staticCreds *AzureStaticCredentials) GetWebAppsData(logger *logger.Logger)
 				return
 			}
 			if !data.IsEmpty() {
-				webAppsChan <- &data
+				appsChan <- &data
 			}
-		}(webapp)
+		}(app)
 	}
 
 	wg.Wait()
-	close(webAppsChan)
+	close(appsChan)
 
 	// Return (first) error, if any:
 	if ctx.Err() != nil {
-		return webAppsData, <-errs
+		return appsData, <-errs
 	}
 
-	for webApp := range webAppsChan {
-		webAppsData = append(webAppsData, webApp)
+	for app := range appsChan {
+		appsData = append(appsData, app)
 	}
-	return webAppsData, nil
+	return appsData, nil
 }
 
-func (azureClient *AzureClient) NewWebAppData(webapp *armappservice.Site, logger *logger.Logger) (WebAppData, error) {
+func (azureClient *AzureClient) NewAppData(app *armappservice.Site, logger *logger.Logger) (AppData, error) {
 	// get image name from "DOCKER|tookyregistry.azurecr.io/tookyregistry/tooky/sha256:cb29a6"
-	linuxFxVersion := strings.Split(*webapp.Properties.SiteConfig.LinuxFxVersion, "|")
+	linuxFxVersion := strings.Split(*app.Properties.SiteConfig.LinuxFxVersion, "|")
+	if len(linuxFxVersion) != 2 || linuxFxVersion[0] != "DOCKER" {
+		logger.Debug("app %s is not using a Docker image, skipping from report", *app.Name)
+		//  TODO: support other types of images, for now just skip
+		return AppData{}, nil
+	}
 	imageName := linuxFxVersion[1]
 
 	var fingerprint string
 	var startedAt int64
 
-	if linuxFxVersion[0] != "DOCKER" {
-		logger.Debug("webapp %s is not using a Docker image, skipping from report", *webapp.Name)
-		//  TODO: support other types of images, for now just skip
-		return WebAppData{}, nil
-	}
-
 	// First try to get image fingerprint from Docker logs.
 	// If it is not found, then try to get it from image name.
 	// We also need Docker logs to get startedAt timestamp.
-	logs, err := azureClient.GetDockerLogsForWebApp(*webapp.Name)
+	logs, err := azureClient.GetDockerLogsForApp(*app.Name)
 	if err != nil {
-		return WebAppData{}, err
+		return AppData{}, err
 	}
 
-	fingerprint, startedAt, err = exractImageFingerprintAndStartedTimestampFromLogs(logs, *webapp.Name)
+	fingerprint, startedAt, err = exractImageFingerprintAndStartedTimestampFromLogs(logs, *app.Name)
 	if err != nil {
-		return WebAppData{}, err
+		return AppData{}, err
 	}
 	if startedAt == 0 {
 		// if startedAt is 0, then the container is not running
-		logger.Debug("docker container in webapp %s is not running, skipping from report", *webapp.Name)
-		return WebAppData{}, nil
+		logger.Debug("docker container in app %s is not running, skipping from report", *app.Name)
+		return AppData{}, nil
 	}
 
 	if fingerprint == "" && strings.Contains(imageName, "@sha256:") {
@@ -147,13 +146,13 @@ func (azureClient *AzureClient) NewWebAppData(webapp *armappservice.Site, logger
 		fingerprint = strings.Split(imageName, "@sha256:")[1]
 	}
 
-	logger.Debug("For webapp %s found: image=%s, fingerprint=%s, startedAt=%d", *webapp.Name, imageName, fingerprint, startedAt)
+	logger.Debug("For app %s found: image=%s, fingerprint=%s, startedAt=%d", *app.Name, imageName, fingerprint, startedAt)
 
-	return WebAppData{*webapp.Name, map[string]string{imageName: fingerprint}, startedAt}, nil
+	return AppData{*app.Name, map[string]string{imageName: fingerprint}, startedAt}, nil
 }
 
-func (webapp *WebAppData) IsEmpty() bool {
-	return webapp.WebApp == "" && len(webapp.Digests) == 0 && webapp.StartedAt == 0
+func (app *AppData) IsEmpty() bool {
+	return app.AppName == "" && len(app.Digests) == 0 && app.StartedAt == 0
 }
 
 func (staticCreds *AzureStaticCredentials) NewAzureClient() (*AzureClient, error) {
@@ -174,29 +173,29 @@ func (staticCreds *AzureStaticCredentials) NewAzureClient() (*AzureClient, error
 	}, nil
 }
 
-func (azureClient *AzureClient) GetWebAppsInfo() ([]*armappservice.Site, error) {
+func (azureClient *AzureClient) GetAppsListForResourceGroup() ([]*armappservice.Site, error) {
 	webAppsClient := azureClient.AppServiceFactory.NewWebAppsClient()
 
 	ctx := context.Background()
-	webappsPager := webAppsClient.NewListByResourceGroupPager(azureClient.Credentials.ResourceGroupName, nil)
+	appsPager := webAppsClient.NewListByResourceGroupPager(azureClient.Credentials.ResourceGroupName, nil)
 
-	var webAppsInfo []*armappservice.Site
-	for webappsPager.More() {
-		response, err := webappsPager.NextPage(ctx)
+	var appsInfo []*armappservice.Site
+	for appsPager.More() {
+		response, err := appsPager.NextPage(ctx)
 		if err != nil {
 			return nil, err
 		}
-		webAppsInfo = append(webAppsInfo, response.Value...)
+		appsInfo = append(appsInfo, response.Value...)
 	}
-	return webAppsInfo, nil
+	return appsInfo, nil
 }
 
-func (azureClient *AzureClient) GetDockerLogsForWebApp(appServiceName string) (logs []byte, error error) {
-	webAppsClient := azureClient.AppServiceFactory.NewWebAppsClient()
+func (azureClient *AzureClient) GetDockerLogsForApp(appServiceName string) (logs []byte, error error) {
+	appsClient := azureClient.AppServiceFactory.NewWebAppsClient()
 
 	ctx := context.Background()
 
-	response, err := webAppsClient.GetWebSiteContainerLogs(ctx, azureClient.Credentials.ResourceGroupName, appServiceName, nil)
+	response, err := appsClient.GetWebSiteContainerLogs(ctx, azureClient.Credentials.ResourceGroupName, appServiceName, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -209,12 +208,12 @@ func (azureClient *AzureClient) GetDockerLogsForWebApp(appServiceName string) (l
 	return body, nil
 }
 
-func exractImageFingerprintAndStartedTimestampFromLogs(logs []byte, webAppName string) (fingerprint string, startedAt int64, error error) {
+func exractImageFingerprintAndStartedTimestampFromLogs(logs []byte, appName string) (fingerprint string, startedAt int64, error error) {
 	logsReader := bytes.NewReader(logs)
 	scanner := bufio.NewScanner(logsReader)
 
 	searchedDigestByteArray := []byte("Digest: sha256:")
-	containerStartedAtByteArray := []byte(fmt.Sprintf("for site %s initialized successfully and is ready to serve requests.", webAppName))
+	containerStartedAtByteArray := []byte(fmt.Sprintf("for site %s initialized successfully and is ready to serve requests.", appName))
 
 	var lastDigestLine []byte
 	var lastStartedAtLine []byte
