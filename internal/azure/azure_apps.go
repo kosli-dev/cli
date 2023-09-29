@@ -31,6 +31,7 @@ type AzureClient struct {
 // AppData represents the harvested Azure service app and function app data
 type AppData struct {
 	AppName   string            `json:"appName"`
+	AppKind   string            `json:"appKind"`
 	Digests   map[string]string `json:"digests"`
 	StartedAt int64             `json:"creationTimestamp"`
 }
@@ -45,6 +46,7 @@ func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logge
 	if err != nil {
 		return nil, err
 	}
+
 	appsInfo, err := azureClient.GetAppsListForResourceGroup()
 	if err != nil {
 		return nil, err
@@ -111,6 +113,8 @@ func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logge
 }
 
 func (azureClient *AzureClient) NewAppData(app *armappservice.Site, logger *logger.Logger) (AppData, error) {
+	// Construct and return AppData for the provided armappservice.Site
+
 	// get image name from "DOCKER|tookyregistry.azurecr.io/tookyregistry/tooky/sha256:cb29a6"
 	linuxFxVersion := strings.Split(*app.Properties.SiteConfig.LinuxFxVersion, "|")
 	if len(linuxFxVersion) != 2 || linuxFxVersion[0] != "DOCKER" {
@@ -148,7 +152,7 @@ func (azureClient *AzureClient) NewAppData(app *armappservice.Site, logger *logg
 
 	logger.Debug("For app %s found: image=%s, fingerprint=%s, startedAt=%d", *app.Name, imageName, fingerprint, startedAt)
 
-	return AppData{*app.Name, map[string]string{imageName: fingerprint}, startedAt}, nil
+	return AppData{*app.Name, *app.Kind, map[string]string{imageName: fingerprint}, startedAt}, nil
 }
 
 func (app *AppData) IsEmpty() bool {

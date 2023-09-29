@@ -72,7 +72,7 @@ func newSnapshotAzureAppsCmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotAzureAppsOptions) run(args []string) error {
 	envName := args[0]
-	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/azure-web-app", global.Host, global.Org, envName)
+	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/azure-apps", global.Host, global.Org, envName)
 
 	webAppsData, err := o.azureStaticCredentials.GetAzureAppsData(logger)
 	if err != nil {
