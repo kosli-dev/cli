@@ -109,6 +109,10 @@ func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logge
 	for app := range appsChan {
 		appsData = append(appsData, app)
 	}
+
+	if appsData == nil {
+		appsData = make([]*AppData, 0)
+	}
 	return appsData, nil
 }
 
