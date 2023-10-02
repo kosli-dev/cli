@@ -23,7 +23,7 @@ If you have [Homebrew](https://brew.sh/) (available on MacOS, Linux or Windows S
 you can install the Kosli CLI by running: 
 
 ```shell {.command}
-brew install kosli-dev/tap/kosli
+brew install kosli-cli
 ```
 {{< /tab >}}
 
