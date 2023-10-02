@@ -71,25 +71,25 @@ type environmentGetOptions struct {
 	output string
 }
 
-const getSnapshotDescShort = `Get a specific environment snapshot.`
+const getSnapshotDescShort = `Get a specified environment snapshot.`
 
 const getSnapshotDesc = getSnapshotDescShort + `
-ENVIRONMENT-NAME-OR-EXPRESSION can specify the specific snapshot in five ways:
+ENVIRONMENT-NAME-OR-EXPRESSION can be specified as follows:
 - environmentName
-    - the latest snapshot, at the time of the request
+    - the latest snapshot for environmentName, at the time of the request
     - e.g., **prod**
 - environmentName#N
-    - #N means snapshot number N, counting from 1
-    - e.g., **prod#42** is prod's 42nd snapshot
+    - the Nth snapshot, counting from 1
+    - e.g., **prod#42**
 - environmentName~N
-    - ~N means N behind the latest snapshot, at the time of the request
-    - e.g., **prod~5** is 5 snapshots behind the latest snapshot of prod
+    - the Nth snapshot behind the latest, at the time of the request
+    - e.g., **prod~5**
 - environmentName@{YYYY-MM-DDTHH:MM:SS}
     - the snapshot at specific moment in time in UTC
-    - e.g., **prod@{2023-10-02T12:00:00}** is prod's snapshot at midday, 2nd October 2023
+    - e.g., **prod@{2023-10-02T12:00:00}**
 - environmentName@{N.<hours|days|weeks|months>.ago}
     - the snapshot at a time relative to the time of the request
-    - e.g., **prod@{2.hours.ago}** is prod's snapshot from 2 hours ago
+    - e.g., **prod@{2.hours.ago}**
 `
 
 const getSnapshotExample = `

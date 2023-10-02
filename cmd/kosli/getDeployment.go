@@ -14,10 +14,17 @@ import (
 const getDeploymentShortDesc = `Get a deployment from a specified flow.`
 
 const getDeploymentLongDesc = getDeploymentShortDesc + `
-Expression can be specified as follows:
-- flowName~<N>  N'th behind the latest deployment
-- flowName#<N>  deployment number N
-- flowName      the latest deployment`
+EXPRESSION can be specified as follows:
+- flowName
+    - the latest deployment to flowName, at the time of the request
+    - e.g., **dashboard**
+- flowName#N
+    - the Nth deployment, counting from 1
+    - e.g., **dashboard#453**
+- flowName~N
+    - the Nth deployment behind the latest, at the time of the request
+    - e.g., **dashboard~56**
+`
 
 const getDeploymentExample = `
 # get previous deployment in a flow

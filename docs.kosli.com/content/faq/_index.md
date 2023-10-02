@@ -140,9 +140,10 @@ reported version of the named commit-evidence that is considered the compliance 
 If an artifact have evidence, either commit evidence or artifact evidence, that is not 
 part of the template, the state of the extra evidence will affect the overall compliance of the artifact.
 
-## How to set compliance status of generic evidence
+## How to set compliant status of generic evidence
 
-To report generic evidence as non-compliant set `--compliance` flag to `false` using `=`, as in example:
+The `--compliant` flag is a [boolean flag](#boolean-flags). 
+To report generic evidence as non-compliant use `--compliant=false`, as in this example:
 ```
 $ kosli report evidence artifact generic server:1.0 \
   --artifact-type docker \
@@ -154,3 +155,28 @@ $ kosli report evidence artifact generic server:1.0 \
 
 Keep on mind a number of flags, usually represented with environment variables, are omitted in this example.  
 `--compliance` flag is set to `true` by default, so if you want to report generic evidence as compliant, simply skip providing the flag altogether.
+
+## Boolean flags
+
+Flags with values can usually be specified with an `=` or with a **space** as a separator.
+For example, `--artifact-type=file` or `--artifact-type file`.
+However, an explicitly specified boolean flag value **must** use an `=`.
+For example, if you try this:
+```
+kosli report evidence artifact generic Dockerfile --artifact-type file  --compliant true ...
+```
+You will get an error stating:
+```
+Error: only one argument ... is allowed.
+The 2 supplied arguments are: [Dockerfile, true]
+```
+Here, `--artifact-type file` is parsed as if it was `--artifact-type=file`, leaving:
+```
+kosli report evidence artifact generic Dockerfile --compliant true ...
+```
+Then `--compliant` is parsed as if *implicitly* defaulting to `--compliant=true`, leaving:
+```
+kosli report evidence artifact generic Dockerfile true ...
+```
+The parser then sees `Dockerfile` and `true` as the two
+arguments to `kosli report evidence artifact generic`.
