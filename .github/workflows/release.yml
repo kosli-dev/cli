@@ -78,6 +78,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
           FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
 
+  homebrew-pr:
+    needs: [goreleaser, pre-build]
+    name: Bump Homebrew formula
+    runs-on: ubuntu-latest
+    steps:
+      - uses: mislav/bump-homebrew-formula-action@v3
+        if: ${{ !contains(github.ref, '-') }} # skip prereleases
+        with:
+          # A PR will be sent to github.com/Homebrew/homebrew-core to update this formula:
+          formula-name: kosli-cli
+        env:
+          # the personal access token should have "repo" & "workflow" scopes
+          COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
+
   docs-gen:
     needs: [goreleaser, pre-build]
     runs-on: ubuntu-latest
