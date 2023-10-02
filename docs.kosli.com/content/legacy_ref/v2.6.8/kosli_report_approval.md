@@ -1,18 +1,17 @@
 ---
-title: "kosli request approval"
+title: "kosli report approval"
 beta: false
 ---
 
-# kosli request approval
+# kosli report approval
 
 ## Synopsis
 
-Request an approval of a deployment of an artifact in Kosli.  
-The request should be reviewed in the Kosli UI.  
+Report an approval of deploying an artifact to Kosli.  
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell
-kosli request approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli report approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ## Flags
@@ -21,6 +20,7 @@ kosli request approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
 |    -d, --description string  |  [optional] The approval description.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
+|    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Only applicable for --artifact-type dir.  |
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'.  |
 |    -f, --flow string  |  The Kosli flow name.  |
 |    -h, --help  |  help for approval  |
@@ -48,27 +48,27 @@ kosli request approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 
 ```shell
 
-# Request that a file type artifact needs approval.
+# Report that a file type artifact has been approved for deployment.
 # The approval is for the last 5 git commits
-kosli request approval FILE.tgz \
+kosli report approval FILE.tgz \
 	--api-token yourAPIToken \
 	--artifact-type file \
-	--description "An optional description for the requested approval" \
+	--description "An optional description for the approval" \
 	--newest-commit $(git rev-parse HEAD) \
 	--oldest-commit $(git rev-parse HEAD~5) \
 	--org yourOrgName \
 	--flow yourFlowName 
 
-# Request and approval for an artifact with a provided fingerprint (sha256).
+# Report that an artifact with a provided fingerprint (sha256) has been approved for deployment.
 # The approval is for the last 5 git commits
-kosli request approval \
+kosli report approval \
 	--api-token yourAPIToken \
-	--description "An optional description for the requested approval" \
+	--description "An optional description for the approval" \
 	--newest-commit $(git rev-parse HEAD) \
-	--oldest-commit $(git rev-parse HEAD~5)	\
+	--oldest-commit $(git rev-parse HEAD~5) \
 	--org yourOrgName \
 	--flow yourFlowName \
-	--fingerprint yourArtifactFingerprint 
+	--fingerprint yourArtifactFingerprint
 
 ```
 
