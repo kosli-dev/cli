@@ -59,7 +59,7 @@ func newExpectDeploymentCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.Fingerprint, "fingerprint", "F", "", fingerprintFlag)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.payload.Environment, "environment", "e", "", environmentNameFlag)
-	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", artifactDescriptionFlag)
+	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", deploymentDescriptionFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), buildUrlFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", deploymentUserDataFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)

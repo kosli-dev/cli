@@ -82,6 +82,7 @@ The service principal needs to have the following permissions:
 	repoRootFlag               = "[defaulted] The directory where the source git repository is available."
 	approvalDescriptionFlag    = "[optional] The approval description."
 	artifactDescriptionFlag    = "[optional] The artifact description."
+	deploymentDescriptionFlag  = "[optional] The deployment description."
 	evidenceDescriptionFlag    = "[optional] The evidence description."
 	jiraBaseUrlFlag            = "The base url for the jira project, e.g. 'https://kosli.atlassian.net/browse/'"
 	jiraUsernameFlag           = "Jira username (for Jira Cloud)"
