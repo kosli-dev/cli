@@ -11,22 +11,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	getApprovalShortDesc = `Get an approval from a specified flow.`
-	getApprovalLongDesc  = getApprovalShortDesc + `
-The expected argument is an expression to specify the approval to get.
-It has the format <FLOW_NAME>[SEPARATOR][INTEGER_REFERENCE]
+const getApprovalShortDesc = `Get an approval from a specified flow.`
 
-The expression can be specified as follows:
-- flowName~<N>  N'th behind the latest approval
-- flowName#<N>  approval number N
-- flowName      the latest approval
-
-Examples of valid expressions are:
-- flow (latest approval)
-- flow#10 (approval number 10)
-- flow~2 (the third latest approval)`
-)
+const getApprovalLongDesc = getApprovalShortDesc + `
+EXPRESSION can be specified as follows:
+- flowName
+    - the latest approval to flowName, at the time of the request
+    - e.g., **creator**
+- flowName#N
+    - the Nth approval, counting from 1
+    - e.g., **creator#453**
+- flowName~N
+    - the Nth approval behind the latest, at the time of the request
+    - e.g., **creator~56**
+`
 
 const getApprovalExample = `
 # get second behind the latest approval from a flow
