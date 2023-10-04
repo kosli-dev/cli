@@ -37,6 +37,22 @@
 {{- $styles := resources.Get "book.scss" | resources.ExecuteAsTemplate "book.scss" . | resources.ToCSS | resources.Minify | resources.Fingerprint }}
 <link rel="stylesheet" href="{{ $styles.RelPermalink }}" {{ template "integrity" $styles }}>
 
+<!-- Cookie consent -->
+<script
+  type="text/javascript"
+  src="https://app.termly.io/embed.min.js"
+  data-auto-block="on"
+  data-master-consents-origin="https://kosli.com"
+  data-website-uuid="c98bfcd6-2f30-4f3c-b53c-d6dbd9b8c40c"
+></script>
+
+
+<script type="text/javascript">
+  window.TERMLY_CUSTOM_BLOCKING_MAP = {
+    'kosli.com': 'essential',
+  }
+</script>
+
 {{- if .Site.Params.BookServiceWorker -}}
   {{- $swJS := resources.Get "sw-register.js" | resources.ExecuteAsTemplate "sw.js" . | resources.Minify | resources.Fingerprint }}
   <script defer src="{{ $swJS.RelPermalink }}" {{ template "integrity" $swJS }}></script>
