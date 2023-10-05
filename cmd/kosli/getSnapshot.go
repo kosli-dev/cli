@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"sort"
 	"time"
 
 	"github.com/kosli-dev/cli/internal/output"
@@ -163,48 +162,8 @@ func (o *environmentGetOptions) run(out io.Writer, args []string) error {
 	return output.FormattedPrint(response.Body, o.output, out, 0,
 		map[string]output.FormatOutputFunc{
 			"table": printSnapshotAsTable,
-			"json":  printSnapshotAsJson,
+			"json":  output.PrintJson,
 		})
-}
-
-func printSnapshotAsJson(raw string, out io.Writer, page int) error {
-	var snapshot Snapshot
-	err := json.Unmarshal([]byte(raw), &snapshot)
-	if err != nil {
-		return err
-	}
-	// check if the snapshot is empty by checking one of its elements
-	if snapshot.Type == "" {
-		fmt.Println("{}")
-		return nil
-	}
-	var result []ArtifactJsonOut
-	for _, artifact := range snapshot.Artifacts {
-		if artifact.Annotation.Now == 0 {
-			continue
-		}
-		var artifactJsonOut ArtifactJsonOut
-		artifactJsonOut.GitCommit = artifact.GitCommit
-		artifactJsonOut.CommitUrl = artifact.CommitUrl
-		artifactJsonOut.Image = artifact.Name
-		artifactJsonOut.Fingerprint = artifact.Fingerprint
-		artifactJsonOut.Flow = artifact.FlowName
-		artifactJsonOut.Replicas = artifact.Annotation.Now
-		sort.Slice(artifact.CreationTimestamp, func(i, j int) bool {
-			return artifact.CreationTimestamp[i] < artifact.CreationTimestamp[j]
-		})
-		oldestTimestamp := artifact.CreationTimestamp[0]
-		artifactJsonOut.RunningSince = time.Unix(oldestTimestamp, 0).Format(time.RFC3339)
-		result = append(result, artifactJsonOut)
-	}
-
-	res, err := json.MarshalIndent(result, "", "  ")
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(res))
-
-	return nil
 }
 
 func printSnapshotAsTable(raw string, out io.Writer, page int) error {
