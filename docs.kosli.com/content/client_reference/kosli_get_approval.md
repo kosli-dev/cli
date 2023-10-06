@@ -8,18 +8,17 @@ beta: false
 ## Synopsis
 
 Get an approval from a specified flow.
-The expected argument is an expression to specify the approval to get.
-It has the format <FLOW_NAME>[SEPARATOR][INTEGER_REFERENCE]
+EXPRESSION can be specified as follows:
+- flowName
+    - the latest approval to flowName, at the time of the request
+    - e.g., **creator**
+- flowName#N
+    - the Nth approval, counting from 1
+    - e.g., **creator#453**
+- flowName~N
+    - the Nth approval behind the latest, at the time of the request
+    - e.g., **creator~56**
 
-The expression can be specified as follows:
-- flowName~<N>  N'th behind the latest approval
-- flowName#<N>  approval number N
-- flowName      the latest approval
-
-Examples of valid expressions are:
-- flow (latest approval)
-- flow#10 (approval number 10)
-- flow~2 (the third latest approval)
 
 ```shell
 kosli get approval EXPRESSION [flags]
@@ -37,7 +36,7 @@ kosli get approval EXPRESSION [flags]
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
 |    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
-|        --debug  |  [optional] Print debug logs to stdout.  |
+|        --debug  |  [optional] Print debug logs to stdout. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default false)  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |

@@ -7,23 +7,23 @@ beta: false
 
 ## Synopsis
 
-Get a specific environment snapshot.
-ENVIRONMENT-NAME-OR-EXPRESSION can specify the specific snapshot in five ways:
+Get a specified environment snapshot.
+ENVIRONMENT-NAME-OR-EXPRESSION can be specified as follows:
 - environmentName
-    - the latest snapshot, at the time of the request
+    - the latest snapshot for environmentName, at the time of the request
     - e.g., **prod**
 - environmentName#N
-    - #N means snapshot number N, counting from 1
-    - e.g., **prod#42** is prod's 42nd snapshot
+    - the Nth snapshot, counting from 1
+    - e.g., **prod#42**
 - environmentName~N
-    - ~N means N behind the latest snapshot, at the time of the request
-    - e.g., **prod~5** is 5 snapshots behind the latest snapshot of prod
+    - the Nth snapshot behind the latest, at the time of the request
+    - e.g., **prod~5**
 - environmentName@{YYYY-MM-DDTHH:MM:SS}
     - the snapshot at specific moment in time in UTC
-    - e.g., **prod@{2023-10-02T12:00:00}** is prod's snapshot at midday, 2nd October 2023
+    - e.g., **prod@{2023-10-02T12:00:00}**
 - environmentName@{N.<hours|days|weeks|months>.ago}
     - the snapshot at a time relative to the time of the request
-    - e.g., **prod@{2.hours.ago}** is prod's snapshot from 2 hours ago
+    - e.g., **prod@{2.hours.ago}**
 
 
 ```shell
@@ -42,7 +42,7 @@ kosli get snapshot ENVIRONMENT-NAME-OR-EXPRESSION [flags]
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
 |    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
-|        --debug  |  [optional] Print debug logs to stdout.  |
+|        --debug  |  [optional] Print debug logs to stdout. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default false)  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |

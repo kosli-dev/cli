@@ -26,6 +26,7 @@ kosli report artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 |    -f, --flow string  |  The Kosli flow name.  |
 |    -g, --git-commit string  |  The git commit from which the artifact was created. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -h, --help  |  help for artifact  |
+|    -n, --name string  |  [optional] Artifact display name, if different from file, image or directory name.  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
