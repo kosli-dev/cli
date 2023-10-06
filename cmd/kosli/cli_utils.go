@@ -68,8 +68,8 @@ var ciTemplates = map[string]map[string]string{
 	azureDevops: {
 		"git-commit": "${BUILD_SOURCEVERSION}",
 		"repository": "${BUILD_REPOSITORY_NAME}",
-		"build-url":  "${SYSTEM_COLLECTIONURI}/${SYSTEM_TEAMPROJECT}/_build/results?buildId=${BUILD_BUILDID}",
-		"commit-url": "${SYSTEM_COLLECTIONURI}/${SYSTEM_TEAMPROJECT}/_git/${BUILD_REPOSITORY_NAME}/commit/${BUILD_SOURCEVERSION}",
+		"build-url":  "${SYSTEM_COLLECTIONURI}${SYSTEM_TEAMPROJECT}/_build/results?buildId=${BUILD_BUILDID}",
+		"commit-url": "${SYSTEM_COLLECTIONURI}${SYSTEM_TEAMPROJECT}/_git/${BUILD_REPOSITORY_NAME}/commit/${BUILD_SOURCEVERSION}",
 		"org-url":    "${SYSTEM_COLLECTIONURI}",
 		"project":    "${SYSTEM_TEAMPROJECT}",
 	},
