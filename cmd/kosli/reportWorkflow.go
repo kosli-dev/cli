@@ -2,16 +2,20 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"net/http"
-
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
+	"io"
+	"net/http"
 )
+
+type WorkflowPayload struct {
+	Description string `json:"description"`
+}
 
 type reportWorkflowOptions struct {
 	auditTrailName string
 	externalId     string
+	payload        WorkflowPayload
 }
 
 const reportWorkflowShortDesc = `Report a workflow creation to a Kosli audit-trail.`
@@ -22,6 +26,7 @@ const reportWorkflowExample = `
 # Report to a Kosli audit-trail that a workflow has been created
 kosli report workflow \
 	--audit-trail auditTrailName \
+	--description yourWorkflowDescription \
 	--api-token yourAPIToken \
 	--id yourID \
 	--org yourOrgName
@@ -50,6 +55,7 @@ func newReportWorkflowCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVar(&o.auditTrailName, "audit-trail", "", auditTrailNameFlag)
 	cmd.Flags().StringVar(&o.externalId, "id", "", workflowIDFlag)
+	cmd.Flags().StringVar(&o.payload.Description, "description", "", workflowDescriptionFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"audit-trail", "id"})
@@ -66,6 +72,7 @@ func (o *reportWorkflowOptions) run(args []string) error {
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPost,
 		URL:      url,
+		Payload:  o.payload,
 		DryRun:   global.DryRun,
 		Password: global.ApiToken,
 	}

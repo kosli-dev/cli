@@ -221,6 +221,15 @@ func CreateApproval(flowName, fingerprint string, t *testing.T) {
 	require.NoError(t, err, "approval should be created without error")
 }
 
+// EnableBeta enables beta features for the org
+func EnableBeta(t *testing.T) {
+	t.Helper()
+	o := &betaOptions{}
+	o.payload.Enabled = true
+	err := o.run([]string{})
+	require.NoError(t, err, "beta should be enabled without error")
+}
+
 // ExpectDeployment reports a deployment expectation of a given artifact to the server
 func ExpectDeployment(flowName, fingerprint, envName string, t *testing.T) {
 	t.Helper()
