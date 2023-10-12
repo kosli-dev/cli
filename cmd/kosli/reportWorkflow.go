@@ -26,7 +26,7 @@ const reportWorkflowExample = `
 # Report to a Kosli audit-trail that a workflow has been created
 kosli report workflow \
 	--audit-trail auditTrailName \
-    --description yourWorkflowDescription \
+	--description yourWorkflowDescription \
 	--api-token yourAPIToken \
 	--id yourID \
 	--org yourOrgName
