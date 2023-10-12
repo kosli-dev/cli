@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	url2 "net/url"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -61,7 +62,8 @@ func newReportWorkflowCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *reportWorkflowOptions) run(args []string) error {
-	url := fmt.Sprintf("%s/api/v2/workflows/%s/%s/%s", global.Host, global.Org, o.auditTrailName, o.externalId)
+	encodedExternalId := url2.PathEscape(o.externalId)
+	url := fmt.Sprintf("%s/api/v2/workflows/%s/%s/%s", global.Host, global.Org, o.auditTrailName, encodedExternalId)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPost,
