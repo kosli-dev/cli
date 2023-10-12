@@ -30,6 +30,11 @@ func (suite *WorkflowReportTestSuite) SetupTest() {
 func (suite *WorkflowReportTestSuite) TestWorkflowReportCmd() {
 	tests := []cmdTestCase{
 		{
+			name:   "report workflow without description",
+			cmd:    `report workflow --audit-trail ` + suite.auditTrailName + ` --id example-31` + suite.defaultKosliArguments,
+			golden: fmt.Sprintf("workflow was created in audit-trail '%s' with ID '%s'\n", suite.auditTrailName, "example-31"),
+		},
+		{
 			name:   "report workflow with description",
 			cmd:    `report workflow --audit-trail ` + suite.auditTrailName + ` --id example-32 --description "example\!32"` + suite.defaultKosliArguments,
 			golden: fmt.Sprintf("workflow was created in audit-trail '%s' with ID '%s'\n", suite.auditTrailName, "example-32"),
