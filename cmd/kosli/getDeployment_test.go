@@ -69,7 +69,7 @@ func (suite *GetDeploymentCommandTestSuite) TestGetDeploymentCmd() {
 			wantError: true,
 			name:      "get deployment fails when flow does not exist",
 			cmd:       `get deployment foo#1` + suite.defaultKosliArguments,
-			golden:    "Error: Flow called 'foo' does not exist for organization 'docs-cmd-test-user'. \n",
+			golden:    "Error: Flow named 'foo' does not exist for organization 'docs-cmd-test-user'. \n",
 		},
 		{
 			wantError: true,

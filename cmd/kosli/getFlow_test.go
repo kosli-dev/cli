@@ -34,7 +34,7 @@ func (suite *GetFlowCommandTestSuite) TestGetFlowCmd() {
 			wantError: true,
 			name:      "getting a non existing flow fails",
 			cmd:       fmt.Sprintf(`get flow non-existing %s`, suite.defaultKosliArguments),
-			golden:    "Error: Flow called 'non-existing' does not exist for organization 'docs-cmd-test-user'\n",
+			golden:    "Error: Flow named 'non-existing' does not exist for organization 'docs-cmd-test-user'\n",
 		},
 		{
 			wantError: true,
