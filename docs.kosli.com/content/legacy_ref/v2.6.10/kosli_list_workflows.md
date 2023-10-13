@@ -1,29 +1,29 @@
 ---
-title: "kosli report workflow"
+title: "kosli list workflows"
 beta: true
 ---
 
-# kosli report workflow
+# kosli list workflows
 
-{{< hint warning >}}**kosli report workflow** is a beta feature. 
+{{< hint warning >}}**kosli list workflows** is a beta feature. 
 Beta features provide early access to product functionality. These features may change between releases without warning, or can be removed from a future release.
 You can enable beta features by using the `kosli enable beta` command.{{< /hint >}}
 ## Synopsis
 
-Report a workflow creation to a Kosli audit-trail.
+List workflows for an audit trail.
 
 ```shell
-kosli report workflow [flags]
+kosli list workflows [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
 |        --audit-trail string  |  The Kosli audit trail name.  |
-|        --description string  |  [optional] The Kosli Workflow description.  |
-|    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|    -h, --help  |  help for workflow  |
-|        --id string  |  The ID of the workflow.  |
+|    -h, --help  |  help for workflows  |
+|    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
+|        --page int  |  [defaulted] The page number of a response. (default 1)  |
+|    -n, --page-limit int  |  [defaulted] The number of elements per page. (default 15)  |
 
 
 ## Options inherited from parent commands
@@ -36,18 +36,4 @@ kosli report workflow [flags]
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
-
-## Examples
-
-```shell
-
-# Report to a Kosli audit-trail that a workflow has been created
-kosli report workflow \
-	--audit-trail auditTrailName \
-	--description yourWorkflowDescription \
-	--api-token yourAPIToken \
-	--id yourID \
-	--org yourOrgName
-
-```
 

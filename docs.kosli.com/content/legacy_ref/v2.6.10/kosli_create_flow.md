@@ -1,29 +1,27 @@
 ---
-title: "kosli report workflow"
-beta: true
+title: "kosli create flow"
+beta: false
 ---
 
-# kosli report workflow
+# kosli create flow
 
-{{< hint warning >}}**kosli report workflow** is a beta feature. 
-Beta features provide early access to product functionality. These features may change between releases without warning, or can be removed from a future release.
-You can enable beta features by using the `kosli enable beta` command.{{< /hint >}}
 ## Synopsis
 
-Report a workflow creation to a Kosli audit-trail.
+Create or update a Kosli flow.
+You can specify flow parameters in flags.
 
 ```shell
-kosli report workflow [flags]
+kosli create flow FLOW-NAME [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|        --audit-trail string  |  The Kosli audit trail name.  |
-|        --description string  |  [optional] The Kosli Workflow description.  |
+|        --description string  |  [optional] The Kosli flow description.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|    -h, --help  |  help for workflow  |
-|        --id string  |  The ID of the workflow.  |
+|    -h, --help  |  help for flow  |
+|    -t, --template strings  |  [defaulted] The comma-separated list of required compliance controls names. (default [artifact])  |
+|        --visibility string  |  [defaulted] The visibility of the Kosli flow. Valid visibilities are [public, private]. (default "private")  |
 
 
 ## Options inherited from parent commands
@@ -41,12 +39,12 @@ kosli report workflow [flags]
 
 ```shell
 
-# Report to a Kosli audit-trail that a workflow has been created
-kosli report workflow \
-	--audit-trail auditTrailName \
-	--description yourWorkflowDescription \
+# create/update a Kosli flow:
+kosli create flow yourFlowName \
+	--description yourFlowDescription \
+    --visibility private OR public \
+	--template artifact,evidence-type1,evidence-type2 \
 	--api-token yourAPIToken \
-	--id yourID \
 	--org yourOrgName
 
 ```

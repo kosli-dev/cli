@@ -1,29 +1,27 @@
 ---
-title: "kosli report workflow"
+title: "kosli get workflow"
 beta: true
 ---
 
-# kosli report workflow
+# kosli get workflow
 
-{{< hint warning >}}**kosli report workflow** is a beta feature. 
+{{< hint warning >}}**kosli get workflow** is a beta feature. 
 Beta features provide early access to product functionality. These features may change between releases without warning, or can be removed from a future release.
 You can enable beta features by using the `kosli enable beta` command.{{< /hint >}}
 ## Synopsis
 
-Report a workflow creation to a Kosli audit-trail.
+Get a specific workflow for an organization
 
 ```shell
-kosli report workflow [flags]
+kosli get workflow ID [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
 |        --audit-trail string  |  The Kosli audit trail name.  |
-|        --description string  |  [optional] The Kosli Workflow description.  |
-|    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -h, --help  |  help for workflow  |
-|        --id string  |  The ID of the workflow.  |
+|    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 
 
 ## Options inherited from parent commands
@@ -41,13 +39,11 @@ kosli report workflow [flags]
 
 ```shell
 
-# Report to a Kosli audit-trail that a workflow has been created
-kosli report workflow \
+# get workflow for an ID
+kosli get workflow yourID \
 	--audit-trail auditTrailName \
-	--description yourWorkflowDescription \
 	--api-token yourAPIToken \
-	--id yourID \
-	--org yourOrgName
+	--org orgName
 
 ```
 

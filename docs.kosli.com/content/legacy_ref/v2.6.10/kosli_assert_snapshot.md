@@ -1,29 +1,36 @@
 ---
-title: "kosli report workflow"
-beta: true
+title: "kosli assert snapshot"
+beta: false
 ---
 
-# kosli report workflow
+# kosli assert snapshot
 
-{{< hint warning >}}**kosli report workflow** is a beta feature. 
-Beta features provide early access to product functionality. These features may change between releases without warning, or can be removed from a future release.
-You can enable beta features by using the `kosli enable beta` command.{{< /hint >}}
 ## Synopsis
 
-Report a workflow creation to a Kosli audit-trail.
+Assert the compliance status of an environment in Kosli.
+Exits with non-zero code if the environment has a non-compliant status.
+The expected argument is an expression to specify the specific environment snapshot to assert.
+It has the format <ENVIRONMENT_NAME>[SEPARATOR][SNAPSHOT_REFERENCE] 
+
+Separators can be:
+- '#' to specify a specific snapshot number for the environment that is being asserted.
+- '~' to get N-th behind the latest snapshot.
+
+Examples of valid expressions are: 
+- prod (latest snapshot of prod)
+- prod#10 (snapshot number 10 of prod)
+- prod~2 (third latest snapshot of prod)
+
 
 ```shell
-kosli report workflow [flags]
+kosli assert snapshot ENVIRONMENT-NAME-OR-EXPRESSION [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|        --audit-trail string  |  The Kosli audit trail name.  |
-|        --description string  |  [optional] The Kosli Workflow description.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|    -h, --help  |  help for workflow  |
-|        --id string  |  The ID of the workflow.  |
+|    -h, --help  |  help for snapshot  |
 
 
 ## Options inherited from parent commands
@@ -41,12 +48,8 @@ kosli report workflow [flags]
 
 ```shell
 
-# Report to a Kosli audit-trail that a workflow has been created
-kosli report workflow \
-	--audit-trail auditTrailName \
-	--description yourWorkflowDescription \
+kosli assert snapshot prod#5 \
 	--api-token yourAPIToken \
-	--id yourID \
 	--org yourOrgName
 
 ```
