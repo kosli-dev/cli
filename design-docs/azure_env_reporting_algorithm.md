@@ -77,5 +77,14 @@ and the image tag is "3d346858a44df6820eaef8195008459f979f0526".
 CLI command:
 
 ```bash
+az webapp log download --name <YourAppName> --resource-group <YourResourceGroupId> --subscription <YourSubscriptionId>
+
+az webapp log deployment list --name arstan-service --resource-group KosliExperiment --subscription 1f4973e6-11b3-4259-be2f-92bd3fe0a5cf
 
 ```
+
+If successfull it will display
+```bash
+Downloaded logs to webapp_logs.zip
+``
+
