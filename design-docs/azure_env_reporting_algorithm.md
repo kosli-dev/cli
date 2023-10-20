@@ -78,13 +78,58 @@ CLI command:
 
 ```bash
 az webapp log download --name <YourAppName> --resource-group <YourResourceGroupId> --subscription <YourSubscriptionId>
-
-az webapp log deployment list --name arstan-service --resource-group KosliExperiment --subscription 1f4973e6-11b3-4259-be2f-92bd3fe0a5cf
-
 ```
 
 If successfull it will display
 ```bash
 Downloaded logs to webapp_logs.zip
-``
+```
 
+Extract the logs
+```bash
+unzip webapp_logs.zip
+```
+
+Find the last docker log.
+```bash
+ls -trl LogFiles/*docker.log
+...
+LogFiles/2023_09_28_10-30-0-141_docker.log
+```
+
+
+### Get docker information from log file
+
+The log file will contain one or more of these blocks
+```bash
+...
+2023-09-28T12:27:30.909Z INFO  - 3a9444c255ce Extracting 1KB / 1KB
+2023-09-28T12:27:31.086Z INFO  - 3a9444c255ce Pull complete
+2023-09-28T12:27:31.201Z INFO  -  Digest: sha256:1b7c84fc8a533a34ed6e8553976c6b68d97adaa1dbe6499265e7a76ac75801d4
+2023-09-28T12:27:31.250Z INFO  -  Status: Downloaded newer image for tookyregistry.azurecr.io/tookyregistry/tooky/api-image6@sha256:1b7c84fc8a533a34ed6e8553976c6b68d97adaa1dbe6499265e7a76ac75801d4
+2023-09-28T12:27:31.282Z INFO  - Pull Image successful, Time taken: 1 Minutes and 8 Seconds
+2023-09-28T12:27:33.104Z INFO  - Starting container for site
+2023-09-28T12:27:33.104Z INFO  - docker run -d -p 6693:3000 --name api-service_0_5b07493a -e WEBSITES_ENABLE_APP_SERVICE_STORAGE=false -e WEBSITES_PORT=3000 -e WEBSITE_SITE_NAME=api-service -e WEBSITE_AUTH_ENABLED=False -e WEBSITE_ROLE_INSTANCE_ID=0 -e WEBSITE_HOSTNAME=api-service.azurewebsites.net -e WEBSITE_INSTANCE_ID=e3848c4a19ed5120ac06e6c4552adf58a74475463871a23ea40c8f269e489576 -e HTTP_LOGGING_ENABLED=1 -e WEBSITE_USE_DIAGNOSTIC_SERVER=False tookyregistry.azurecr.io/tookyregistry/tooky/api-image@sha256:1b7c84fc8a533a34ed6e8553976c6b68d97adaa1dbe6499265e7a76ac75801d4  
+
+2023-09-28T12:27:36.389Z INFO  - Initiating warmup request to container api-service_0_5b07493a for site api-service
+2023-09-28T12:27:37.414Z INFO  - Container api-service_0_5b07493a for site api-service initialized successfully and is ready to serve requests.
+...
+```
+
+The import lines are
+```bash
+2023-09-28T12:27:31.201Z INFO  -  Digest: sha256:1b7c84fc8a533a34ed6e8553976c6b68d97adaa1dbe6499265e7a76ac75801d4
+2023-09-28T12:27:37.414Z INFO  - Container api-service_0_5b07493a for site api-service initialized successfully and is ready to serve requests.
+```
+
+The second line informs us that a container started successfully. When we have that we know that the previous `Digest: sha256`
+line was the sha256 of this container.
+
+
+
+<!-- 
+Notes:
+az webapp log deployment list --name arstan-service --resource-group KosliExperiment --subscription 1f4973e6-11b3-4259-be2f-92bd3fe0a5cf
+
+az webapp log deployment list --name tsha256  --resource-group EnvironmentReportingExperiment --subscription 96cdee58-1fa8-419d-a65a-7233b3465632
+ -->
