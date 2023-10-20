@@ -64,13 +64,13 @@ You will get an output similar to this:
 
 ### Check the state of an Azure app
 Only apps with state "Running" are considered for reporting, the rest are ignored.
-Only apps with linuxFxVersion starting with "DOCKER|" are considered for reporting, the rest are ignored.
+Only apps with `linuxFxVersion starting with "DOCKER|"` are considered for reporting, the rest are ignored.
 
 ### Get docker image name and tag of an Azure app
-Docker image name and tag are extracted from linuxFxVersion.
-For example, if linuxFxVersion is "DOCKER|tookyregistry.azurecr.io/tookyregistry/tooky/api-image:3d346858a44df6820eaef8195008459f979f0526",
-then the docker image name is "tookyregistry.azurecr.io/tookyregistry/tooky/api-image" 
-and the image tag is "3d346858a44df6820eaef8195008459f979f0526".
+Docker image name and tag are extracted from `linuxFxVersion`.
+For example, if `linuxFxVersion` is `DOCKER|tookyregistry.azurecr.io/tookyregistry/tooky/api-image:3d346858a44df6820eaef8195008459f979f0526`,
+then the docker image name is `tookyregistry.azurecr.io/tookyregistry/tooky/api-image`
+and the image tag is `3d346858a44df6820eaef8195008459f979f0526`.
 
 ### Get WebSite container logs for a running Azure app
 
