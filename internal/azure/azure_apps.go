@@ -51,6 +51,7 @@ func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logge
 	if err != nil {
 		return nil, err
 	}
+
 	logger.Debug("found %d apps in the resource group %s", len(appsInfo), staticCreds.ResourceGroupName)
 	if logger.DebugEnabled {
 		logger.Debug("Found apps:")
