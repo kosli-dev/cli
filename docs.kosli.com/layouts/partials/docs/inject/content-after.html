@@ -2,15 +2,15 @@
 
 <div class="justify-between flex flex-wrap navigation-buttons">
     <div>
-        {{with $reversePages.Prev . }}
+        {{if .NextInSection }}
             <div class="nav-title">Previous</div>
-            <div><a href="{{.RelPermalink}}"> « {{.Title}}</a></div>    
+            <div><a href="{{.NextInSection.RelPermalink}}">« {{.NextInSection.Title}}</a></div>      
         {{end}}
     </div>
     <div>
-        {{with $reversePages.Next . }}
+        {{if .PrevInSection }}
             <div class="nav-title text-right">Next</div>
-            <div><a href="{{.RelPermalink}}">{{.Title}} » </a></div>      
+            <div><a href="{{.PrevInSection.RelPermalink}}">{{.PrevInSection.Title}} »</a></div>    
         {{end}}
     </div>
 </div>
