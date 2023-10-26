@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"sync"
 
@@ -21,6 +22,7 @@ type AzureStaticCredentials struct {
 	ClientSecret      string
 	SubscriptionId    string
 	ResourceGroupName string
+	DownloadLogsAsZip bool
 }
 
 type AzureClient struct {
@@ -56,8 +58,10 @@ func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logge
 	if logger.DebugEnabled {
 		logger.Debug("Found apps:")
 		for _, app := range appsInfo {
-			logger.Debug("  app name=%s, state=%s, kind=%s, linuxFxVersion=%s", *app.Name,
-				*app.Properties.State, *app.Kind, *app.Properties.SiteConfig.LinuxFxVersion)
+			logger.Debug("  app Name=%s", *app.Name)
+			logger.Debug("  app %+v", app.Properties)
+			// logger.Debug("  app name=%s, state=%s, kind=%s, linuxFxVersion=%s", *app.Name,
+			// 	*app.Properties.State, *app.Kind, *app.Properties.SiteConfig.LinuxFxVersion)
 		}
 	}
 
@@ -204,17 +208,41 @@ func (azureClient *AzureClient) GetDockerLogsForApp(appServiceName string) (logs
 
 	ctx := context.Background()
 
-	response, err := appsClient.GetWebSiteContainerLogs(ctx, azureClient.Credentials.ResourceGroupName, appServiceName, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer response.Body.Close()
+	if azureClient.Credentials.DownloadLogsAsZip {
+		response, err := appsClient.GetContainerLogsZip(ctx, azureClient.Credentials.ResourceGroupName, appServiceName, nil)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println("Got logs for app service: ", appServiceName)
+		if response.Body != nil {
+			defer response.Body.Close()
+		}
+		fmt.Println("Reading logs for app service: ", appServiceName)
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			return nil, err
+		}
+		zipFileName := fmt.Sprintf("%s-logs.zip", appServiceName)
+		// TODO: write body to a file
+		fmt.Println("Writing logs for app service: ", appServiceName, " to file: ", zipFileName)
+		err = os.WriteFile("zipFileName", body, 0o644)
+		if err != nil {
+			return nil, err
+		}
+		return nil, nil
+	} else {
+		response, err := appsClient.GetWebSiteContainerLogs(ctx, azureClient.Credentials.ResourceGroupName, appServiceName, nil)
+		if err != nil {
+			return nil, err
+		}
+		defer response.Body.Close()
 
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		return nil, err
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			return nil, err
+		}
+		return body, nil
 	}
-	return body, nil
 }
 
 func exractImageFingerprintAndStartedTimestampFromLogs(logs []byte, appName string) (fingerprint string, startedAt int64, error error) {
