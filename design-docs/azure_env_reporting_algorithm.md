@@ -135,7 +135,7 @@ A script was periodically executed over a period of time. It involved multiple f
 3. Scaling events does not end up in the logs.
 4. If a function app has had no events for 10 days, it is no longer possible to get the sha256 from the log.
 5. When we started to run this script we could get the sha256 from most of the function apps in most of the environments. But not for all.
-6. We are investigating if a docker restart will fix the problem with retention `az functionapp restart`
+6. Docker restart with `az functionapp restart` triggers a new pull, restart of the container and it makes an entry in the log.
 
 
 <!-- 
