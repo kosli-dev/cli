@@ -126,6 +126,17 @@ The second line informs us that a container started successfully. When we have t
 line was the sha256 of this container.
 
 
+## Findings
+
+A script was periodically executed over a period of time. It involved multiple function apps operating as Docker containers and several servers in the setup:
+
+1. Retention period for the logs are 10 days. One of the function app had a shorter retention period. Don't know why.
+2. Deployments and errors (which leads to a restart of the container) generates sha256 events in the log.
+3. Scaling events does not end up in the logs.
+4. If a function app has had no events for 10 days, it is no longer possible to get the sha256 from the log.
+5. When we started to run this script we could get the sha256 from most of the function apps in most of the environments. But not for all.
+6. Docker restart with `az functionapp restart` triggers a new pull, restart of the container and it makes an entry in the log.
+
 
 <!-- 
 Notes:

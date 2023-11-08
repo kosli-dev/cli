@@ -129,20 +129,19 @@ func (o *reportArtifactOptions) run(args []string) error {
 		return err
 	}
 
-	previousCommit, err := o.latestCommit(currentBranch(gitView))
-	if err != nil {
-		return err
-	}
-
 	commitObject, err := gitView.GetCommitInfoFromCommitSHA(o.gitReference)
 	if err != nil {
 		return err
 	}
-
 	o.payload.GitCommit = commitObject.Sha1
 
-	o.payload.CommitsList, err = gitView.ChangeLog(o.payload.GitCommit, previousCommit, logger)
-	if err != nil {
+	previousCommit, err := o.latestCommit(currentBranch(gitView))
+	if err == nil {
+		o.payload.CommitsList, err = gitView.ChangeLog(o.payload.GitCommit, previousCommit, logger)
+		if err != nil && !global.DryRun {
+			return err
+		}
+	} else if !global.DryRun {
 		return err
 	}
 
