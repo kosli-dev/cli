@@ -39,7 +39,7 @@ $ kosli pipeline approval report project-a-app.bin \
 approval created for artifact: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
 ```
 
-See [kosli pipeline approval report](/legacy_ref/v0.1.37/kosli_pipeline_approval_report/) and [kosli pipeline approval request](/legacy_ref/v0.1.37/kosli_pipeline_approval_request/) for more details. 
+See [kosli pipeline approval report](/legacy_ref/v0.1.41/kosli_pipeline_approval_report/) and [kosli pipeline approval request](/legacy_ref/v0.1.41/kosli_pipeline_approval_request/) for more details. 
 {{< /tab >}}
 
 {{< /tabs >}}
