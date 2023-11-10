@@ -49,6 +49,7 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TearDownSuite() {
 
 type jiraTestsAdditionalConfig struct {
 	commitMessage string
+	branchName    string
 }
 
 func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCmd() {
@@ -163,6 +164,10 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 	}
 	for _, test := range tests {
 		if test.additionalConfig != nil {
+			branchName := test.additionalConfig.(jiraTestsAdditionalConfig).branchName
+			if branchName != "" {
+				testHelpers.CheckoutNewBranch(suite.workTree, branchName)
+			}
 			msg := test.additionalConfig.(jiraTestsAdditionalConfig).commitMessage
 			commitSha, err := testHelpers.CommitToRepo(suite.workTree, suite.fs, msg)
 			require.NoError(suite.T(), err)

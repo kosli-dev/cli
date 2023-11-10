@@ -2,6 +2,7 @@ package testHelpers
 
 import (
 	"fmt"
+	"github.com/go-git/go-git/v5/plumbing"
 	"os"
 	"path/filepath"
 	"testing"
@@ -76,4 +77,11 @@ func CommitToRepo(w *git.Worktree, fs billy.Filesystem, commitMessage string) (s
 	}
 
 	return hash.String(), nil
+}
+
+func CheckoutNewBranch(w *git.Worktree, branchName string) error {
+	return w.Checkout(&git.CheckoutOptions{
+		Create: true,
+		Branch: plumbing.ReferenceName(branchName),
+	})
 }
