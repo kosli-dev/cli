@@ -39,6 +39,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
+      pull-requests: read
     steps:
 
     - uses: actions/checkout@v3
@@ -101,7 +102,7 @@ jobs:
       run: 
         kosli create flow cli
           --description "Kosli CLI" 
-          --template "artifact,snyk-code-scan,snyk-docker-scan,smoke-test"
+          --template "artifact,snyk-code-scan,snyk-docker-scan,smoke-test,pull-request"
 
 
     - name: Report Docker image to Kosli
@@ -194,3 +195,14 @@ jobs:
             --name smoke-test \
             --compliant=$SMOKE_TEST_PASSED \
             --flow cli
+
+    - name: Report pull-request evidence to Kosli (production)
+      env:
+        KOSLI_NAME: "pull-request"
+        KOSLI_FINGERPRINT: ${{ env.FINGERPRINT }} 
+        KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
+        KOSLI_ORG: kosli
+        KOSLI_FLOW: cli
+      run:
+        kosli report evidence artifact pullrequest github
+          --github-token ${{ secrets.GITHUB_TOKEN }}
