@@ -1,0 +1,56 @@
+name: Auto approve
+on:
+  pull_request_target:
+    types:
+      - opened
+    branches:
+      - main
+    
+jobs:
+  auto-approve:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
+
+    steps:
+      - name: check requester
+        run: |
+          # fail job if the requester is not a member of the organization
+          is_member=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/orgs/kosli-dev/members \
+            | jq -r ".[].login" \
+            | grep -w "${{ github.event.pull_request.user.login }}")
+
+          if [[ ! is_member ]]; then
+            echo "User ${{ github.event.pull_request.user.login }} is not a member of the organization"
+            exit 1
+          fi
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v40
+
+      - name: Check non critical
+        run: |
+          ACCEPTED_PATHS="^bin/|^design-docs/"
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            echo "$file"
+            # exit as soon as a file does not match the ACCEPTED_PATHS
+            [[ "$file" =~ ${ACCEPTED_PATHS} ]] || exit 1
+          done
+
+      - name: Approve pull request
+        uses: hmarr/auto-approve-action@v3
+        with:
+          review-message: "Auto approved since only non critical files were changed"
+
+
+      - name: Merge to master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERGE_LABELS: ""
+          MERGE_METHOD: squash
+          MERGE_ERROR_FAIL: true
+        uses: pascalgn/automerge-action@v0.15.6
