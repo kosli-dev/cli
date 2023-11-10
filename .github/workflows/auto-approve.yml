@@ -18,14 +18,17 @@ jobs:
       - name: check requester
         run: |
           # fail job if the requester is not a member of the organization
-          is_member=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             https://api.github.com/orgs/kosli-dev/members \
             | jq -r ".[].login" \
-            | grep -w "${{ github.event.pull_request.user.login }}")
+            | grep -w "${{ github.event.pull_request.user.login }}"
+          result=$?
 
-          if [[ ! is_member ]]; then
-            echo "User ${{ github.event.pull_request.user.login }} is not a member of the organization"
+          if [[ $result -eq 0 ]]; then
+            echo "User ${{ github.event.pull_request.user.login }} is not a member of kosli-dev"
             exit 1
+          else 
+            echo "User ${{ github.event.pull_request.user.login }} is a member of kosli-dev"
           fi
 
       - name: Get changed files
