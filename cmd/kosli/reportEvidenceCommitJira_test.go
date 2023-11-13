@@ -173,6 +173,32 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 					--build-url example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
 			golden: "Error: required flag(s) \"commit\" not set\n",
 		},
+		{
+			wantError: true,
+			name:      "assert for non-existing Jira issue gives an error",
+			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
+					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+					--repo-root %s
+					--assert
+					--build-url example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
+			goldenRegex: "Error: missing Jira issues from references found in commit message or branch name.*",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "SAMI-1 test commit",
+			},
+		},
+		{
+			wantError: true,
+			name:      "assert for no Jira issue reference gives an error",
+			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
+					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+					--repo-root %s
+					--assert
+					--build-url example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
+			goldenRegex: "Error: no Jira references are found in commit message or branch name",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "test commit without reference",
+			},
+		},
 	}
 	for _, test := range tests {
 		funcName(test, suite)
