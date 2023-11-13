@@ -144,3 +144,5 @@ az webapp log deployment list --name arstan-service --resource-group KosliExperi
 
 az webapp log deployment list --name tsha256  --resource-group EnvironmentReportingExperiment --subscription 96cdee58-1fa8-419d-a65a-7233b3465632
  -->
+
+
