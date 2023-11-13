@@ -27,7 +27,6 @@ kosli report evidence commit jira [flags]
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|        --assert  |  [optional] Exit with non-zero code if no jira issue reference found, or jira issue does not exist, for the given commit or branch.  |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --commit string  |  Git commit for which to verify and given evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
@@ -95,20 +94,6 @@ kosli report evidence commit jira \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 	--user-data /path/to/json/file.json
-
-
-# fail if no issue reference is found, or the issue is not found in your jira instance
-kosli report evidence commit jira \
-	--commit yourGitCommitSha1 \
-	--name yourEvidenceName \
-	--jira-base-url https://kosli.atlassian.net \
-	--jira-username user@domain.com \
-	--jira-api-token yourJiraAPIToken \
-	--flows yourFlowName \
-	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
-	--org yourOrgName \
-	--assert
 
 ```
 
