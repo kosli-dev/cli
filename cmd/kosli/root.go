@@ -110,6 +110,7 @@ The service principal needs to have the following permissions:
 	commitEvidenceFlag         = "Git commit for which to verify and given evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
 	repositoryFlag             = "Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
 	assertPREvidenceFlag       = "[optional] Exit with non-zero code if no pull requests found for the given commit."
+	assertJiraEvidenceFlag     = "[optional] Exit with non-zero code if no jira issue reference found, or jira issue does not exist, for the given commit or branch."
 	assertStatusFlag           = "[optional] Exit with non-zero code if Kosli server is not responding."
 	azureTokenFlag             = "Azure Personal Access token."
 	azureProjectFlag           = "Azure project.(defaulted if you are running in Azure Devops pipelines: https://docs.kosli.com/ci-defaults )."

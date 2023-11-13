@@ -327,7 +327,7 @@ func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 			gitView, err := New(suite.tmpDir)
 			require.NoError(suite.T(), err)
 
-			actual, err := gitView.MatchPatternInCommitMessageORBranchName(t.pattern, t.commitSha)
+			actual, _, err := gitView.MatchPatternInCommitMessageORBranchName(t.pattern, t.commitSha)
 			require.True(suite.T(), (err != nil) == t.wantError)
 			require.ElementsMatch(suite.T(), t.want, actual)
 
