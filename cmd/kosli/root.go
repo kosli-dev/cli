@@ -155,8 +155,9 @@ The service principal needs to have the following permissions:
 	evidencePathsFlag          = "[optional] The comma-separated list of paths containing supporting proof for the reported evidence. Paths can be for files or directories. All provided proofs will be uploaded to Kosli's evidence vault."
 	fingerprintFlag            = "[conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'."
 	evidenceCommitFlag         = "The git commit SHA1 for which the evidence belongs. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
-	intervalFlag               = "[optional] Expression to define specified snapshots range"
+	intervalFlag               = "[optional] Expression to define specified snapshots range."
 	showUnchangedArtifactsFlag = "[defaulted] Show the unchanged artifacts present in both snapshots within the diff output."
+	approverFlag               = "[optional] The user approving an approval."
 )
 
 var global *GlobalOpts

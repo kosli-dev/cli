@@ -24,6 +24,7 @@ kosli report approval FILE.tgz \
 	--description "An optional description for the approval" \
 	--newest-commit $(git rev-parse HEAD) \
 	--oldest-commit $(git rev-parse HEAD~5) \
+	--approver username \
 	--org yourOrgName \
 	--flow yourFlowName 
 
@@ -34,6 +35,7 @@ kosli report approval \
 	--description "An optional description for the approval" \
 	--newest-commit $(git rev-parse HEAD) \
 	--oldest-commit $(git rev-parse HEAD~5) \
+	--approver username \
 	--org yourOrgName \
 	--flow yourFlowName \
 	--fingerprint yourArtifactFingerprint
@@ -47,6 +49,7 @@ type reportApprovalOptions struct {
 	srcRepoRoot        string
 	userDataFile       string
 	payload            ApprovalPayload
+	approver           string
 }
 
 type ApprovalPayload struct {
@@ -89,6 +92,7 @@ func newReportApprovalCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.oldestSrcCommit, "oldest-commit", "", oldestCommitFlag)
 	cmd.Flags().StringVar(&o.newestSrcCommit, "newest-commit", "HEAD", newestCommitFlag)
 	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", repoRootFlag)
+	cmd.Flags().StringVar(&o.approver, "approver", "", approverFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
@@ -147,12 +151,16 @@ func (o *reportApprovalOptions) payloadArtifactSHA256(args []string) (string, er
 }
 
 func (o *reportApprovalOptions) payloadReviews(request bool) []map[string]string {
+	approver := "External"
+	if o.approver != "" {
+		approver = o.approver
+	}
 	if !request {
 		return []map[string]string{
 			{
 				"state":        "APPROVED",
 				"comment":      o.payload.Description,
-				"approved_by":  "External",
+				"approved_by":  approver,
 				"approval_url": "undefined",
 			},
 		}
