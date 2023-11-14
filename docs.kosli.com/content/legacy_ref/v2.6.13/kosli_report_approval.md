@@ -17,7 +17,6 @@ kosli report approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|        --approver string  |  [optional] The user approving an approval.  |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
 |    -d, --description string  |  [optional] The approval description.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
@@ -57,7 +56,6 @@ kosli report approval FILE.tgz \
 	--description "An optional description for the approval" \
 	--newest-commit $(git rev-parse HEAD) \
 	--oldest-commit $(git rev-parse HEAD~5) \
-	--approver username \
 	--org yourOrgName \
 	--flow yourFlowName 
 
@@ -68,7 +66,6 @@ kosli report approval \
 	--description "An optional description for the approval" \
 	--newest-commit $(git rev-parse HEAD) \
 	--oldest-commit $(git rev-parse HEAD~5) \
-	--approver username \
 	--org yourOrgName \
 	--flow yourFlowName \
 	--fingerprint yourArtifactFingerprint

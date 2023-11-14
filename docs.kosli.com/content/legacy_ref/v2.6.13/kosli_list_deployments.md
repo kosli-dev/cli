@@ -1,39 +1,29 @@
 ---
-title: "kosli list snapshots"
+title: "kosli list deployments"
 beta: false
 ---
 
-# kosli list snapshots
+# kosli list deployments
 
 ## Synopsis
 
-List environment snapshots.
+List deployments in a flow.
 The results are paginated and ordered from latest to oldest.
-By default, the page limit is 15 snapshots per page.
-
-You can optionally specify an INTERVAL between two snapshot expressions with [expression]..[expression]. 
-
-Expressions can be:
-* ~N   N'th behind the latest snapshot  
-* N    snapshot number N  
-* NOW  the latest snapshot  
-
-Either expression can be omitted to default to NOW.
+By default, the page limit is 15 deployments per page.
 
 
 ```shell
-kosli list snapshots ENV_NAME [flags]
+kosli list deployments [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|    -h, --help  |  help for snapshots  |
-|    -i, --interval string  |  [optional] Expression to define specified snapshots range.  |
+|    -f, --flow string  |  The Kosli flow name.  |
+|    -h, --help  |  help for deployments  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 |        --page int  |  [defaulted] The page number of a response. (default 1)  |
 |    -n, --page-limit int  |  [defaulted] The number of elements per page. (default 15)  |
-|        --reverse  |  [defaulted] Reverse the order of output list.  |
 
 
 ## Options inherited from parent commands
@@ -51,19 +41,22 @@ kosli list snapshots ENV_NAME [flags]
 
 ```shell
 
-# list the last 15 snapshots for an environment:
-kosli list snapshots yourEnvironmentName \
+# list the last 15 deployments for a flow:
+kosli list deployments \ 
+	--flow yourFlowName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# list the last 30 snapshots for an environment:
-kosli list snapshots yourEnvironmentName \
+# list the last 30 deployments for a flow:
+kosli list deployments \ 
+	--flow yourFlowName \	
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# list the last 30 snapshots for an environment (in JSON):
-kosli list snapshots yourEnvironmentName \
+# list the last 30 deployments for a flow (in JSON):
+kosli list deployments \ 
+	--flow yourFlowName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--org yourOrgName \

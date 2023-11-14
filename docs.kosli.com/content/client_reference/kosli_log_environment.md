@@ -29,7 +29,7 @@ kosli log environment ENV_NAME [flags]
 | Flag | Description |
 | :--- | :--- |
 |    -h, --help  |  help for environment  |
-|    -i, --interval string  |  [optional] Expression to define specified snapshots range  |
+|    -i, --interval string  |  [optional] Expression to define specified snapshots range.  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 |        --page int  |  [defaulted] The page number of a response. (default 1)  |
 |    -n, --page-limit int  |  [defaulted] The number of elements per page. (default 15)  |

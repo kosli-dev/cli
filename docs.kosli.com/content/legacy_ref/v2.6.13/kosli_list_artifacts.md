@@ -1,39 +1,28 @@
 ---
-title: "kosli list snapshots"
+title: "kosli list artifacts"
 beta: false
 ---
 
-# kosli list snapshots
+# kosli list artifacts
 
 ## Synopsis
 
-List environment snapshots.
-The results are paginated and ordered from latest to oldest.
-By default, the page limit is 15 snapshots per page.
-
-You can optionally specify an INTERVAL between two snapshot expressions with [expression]..[expression]. 
-
-Expressions can be:
-* ~N   N'th behind the latest snapshot  
-* N    snapshot number N  
-* NOW  the latest snapshot  
-
-Either expression can be omitted to default to NOW.
+List artifacts in a flow. The results are paginated and ordered from latest to oldest.
+By default, the page limit is 15 artifacts per page.
 
 
 ```shell
-kosli list snapshots ENV_NAME [flags]
+kosli list artifacts [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|    -h, --help  |  help for snapshots  |
-|    -i, --interval string  |  [optional] Expression to define specified snapshots range.  |
+|    -f, --flow string  |  The Kosli flow name.  |
+|    -h, --help  |  help for artifacts  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 |        --page int  |  [defaulted] The page number of a response. (default 1)  |
 |    -n, --page-limit int  |  [defaulted] The number of elements per page. (default 15)  |
-|        --reverse  |  [defaulted] Reverse the order of output list.  |
 
 
 ## Options inherited from parent commands
@@ -51,19 +40,22 @@ kosli list snapshots ENV_NAME [flags]
 
 ```shell
 
-# list the last 15 snapshots for an environment:
-kosli list snapshots yourEnvironmentName \
+# list the last 15 artifacts for a flow:
+kosli list artifacts \
+	--flow yourFlowName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# list the last 30 snapshots for an environment:
-kosli list snapshots yourEnvironmentName \
+# list the last 30 artifacts for a flow:
+kosli list artifacts \
+	--flow yourFlowName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# list the last 30 snapshots for an environment (in JSON):
-kosli list snapshots yourEnvironmentName \
+# list the last 30 artifacts for a flow (in JSON):
+kosli list artifacts \
+	--flow yourFlowName \	
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--org yourOrgName \
