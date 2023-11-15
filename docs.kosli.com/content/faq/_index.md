@@ -8,7 +8,7 @@ weight: 700
 
 If you can't find the answer you're looking for please:
 
-* email us [here](mailto:info@kosli.com)
+* email us at [support@kosli.com](mailto:support@kosli.com)
 * join our slack community [here](https://join.slack.com/t/koslicommunity/shared_invite/zt-1dlchm3s7-DEP6TKjP3Mr58OZVB3hCBw)
 
 ## Why am I getting "unknown flag" error?
