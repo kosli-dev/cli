@@ -39,6 +39,19 @@ kosli report approval \
 	--org yourOrgName \
 	--flow yourFlowName \
 	--fingerprint yourArtifactFingerprint
+
+# Report that an artifact with a provided fingerprint (sha256) has been approved
+# for deployment to a specific environment.
+# The approval is for all commits from the previous approval of an artifact
+# to this environment up to the current commit.
+kosli report approval \
+	--api-token yourAPIToken \
+	--description "An optional description for the approval" \
+	--approver username \
+	--org yourOrgName \
+	--flow yourFlowName \
+	--fingerprint yourArtifactFingerprint \
+	--environment yourEnvironmentName
 `
 
 type reportApprovalOptions struct {
@@ -54,6 +67,7 @@ type reportApprovalOptions struct {
 
 type ApprovalPayload struct {
 	ArtifactFingerprint string              `json:"artifact_fingerprint"`
+	Environment         string              `json:"environment,omitempty"`
 	Description         string              `json:"description"`
 	CommitList          []string            `json:"src_commit_list"`
 	Reviews             []map[string]string `json:"approvals"`
@@ -74,6 +88,11 @@ func newReportApprovalCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
+			err = RequireAtLeastOneOfFlags(cmd, []string{"environment", "oldest-commit"})
+			if err != nil {
+				return err
+			}
+
 			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.ArtifactFingerprint, false)
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
@@ -86,6 +105,7 @@ func newReportApprovalCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "F", "", fingerprintFlag)
+	cmd.Flags().StringVarP(&o.payload.Environment, "environment", "e", "", environmentNameFlag)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", approvalDescriptionFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", approvalUserDataFlag)
@@ -96,7 +116,14 @@ func newReportApprovalCmd(out io.Writer) *cobra.Command {
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"flow", "oldest-commit"})
+	err := DeprecateFlags(cmd, map[string]string{
+		"oldest-commit": "use --environment and oldest commit will be calculated",
+	})
+	if err != nil {
+		logger.Error("failed to configure deprecated flags: %v", err)
+	}
+
+	err = RequireFlags(cmd, []string{"flow"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
