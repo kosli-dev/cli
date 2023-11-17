@@ -6,10 +6,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const requestApprovalShortDesc = `Request an approval of a deployment of an artifact in Kosli.  `
-const requestApprovalLongDesc = requestApprovalShortDesc + `
+const (
+	requestApprovalShortDesc = `Request an approval of a deployment of an artifact in Kosli.  `
+	requestApprovalLongDesc  = requestApprovalShortDesc + `
 The request should be reviewed in the Kosli UI.  
 ` + fingerprintDesc
+)
 
 const requestApprovalExample = `
 # Request that a file type artifact needs approval.
@@ -23,7 +25,7 @@ kosli request approval FILE.tgz \
 	--org yourOrgName \
 	--flow yourFlowName 
 
-# Request and approval for an artifact with a provided fingerprint (sha256).
+# Request an approval for an artifact with a provided fingerprint (sha256).
 # The approval is for the last 5 git commits
 kosli request approval \
 	--api-token yourAPIToken \
@@ -32,7 +34,19 @@ kosli request approval \
 	--oldest-commit $(git rev-parse HEAD~5)	\
 	--org yourOrgName \
 	--flow yourFlowName \
-	--fingerprint yourArtifactFingerprint 
+	--fingerprint yourArtifactFingerprint
+
+# Request an approval for an artifact with a provided fingerprint (sha256)
+# for deployment to a specific environment.
+# The approval is for all commits from the previous approval of an artifact
+# to this environment up to the current commit.
+kosli request approval \
+	--api-token yourAPIToken \
+	--description "An optional description for the approval" \
+	--org yourOrgName \
+	--flow yourFlowName \
+	--fingerprint yourArtifactFingerprint \
+	--environment yourEnvironmentName
 `
 
 func newRequestApprovalCmd(out io.Writer) *cobra.Command {
@@ -49,6 +63,11 @@ func newRequestApprovalCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
+			err = RequireAtLeastOneOfFlags(cmd, []string{"environment", "oldest-commit"})
+			if err != nil {
+				return err
+			}
+
 			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.ArtifactFingerprint, false)
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
@@ -61,6 +80,7 @@ func newRequestApprovalCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "F", "", fingerprintFlag)
+	cmd.Flags().StringVarP(&o.payload.Environment, "environment", "e", "", environmentNameFlag)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", approvalDescriptionFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", approvalUserDataFlag)
@@ -70,7 +90,14 @@ func newRequestApprovalCmd(out io.Writer) *cobra.Command {
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"flow", "oldest-commit"})
+	// err := DeprecateFlags(cmd, map[string]string{
+	// 	"oldest-commit": "use --environment and oldest commit will be calculated",
+	// })
+	// if err != nil {
+	// 	logger.Error("failed to configure deprecated flags: %v", err)
+	// }
+
+	err := RequireFlags(cmd, []string{"flow"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}

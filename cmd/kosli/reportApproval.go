@@ -11,9 +11,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const reportApprovalShortDesc = `Report an approval of deploying an artifact to Kosli.  `
-const reportApprovalLongDesc = reportApprovalShortDesc + `
+const (
+	reportApprovalShortDesc = `Report an approval of deploying an artifact to Kosli.  `
+	reportApprovalLongDesc  = reportApprovalShortDesc + `
 ` + fingerprintDesc
+)
 
 const reportApprovalExample = `
 # Report that a file type artifact has been approved for deployment.
@@ -118,14 +120,14 @@ func newReportApprovalCmd(out io.Writer) *cobra.Command {
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
-	err := DeprecateFlags(cmd, map[string]string{
-		"oldest-commit": "use --environment and oldest commit will be calculated",
-	})
-	if err != nil {
-		logger.Error("failed to configure deprecated flags: %v", err)
-	}
+	// err := DeprecateFlags(cmd, map[string]string{
+	// 	"oldest-commit": "use --environment and oldest commit will be calculated",
+	// })
+	// if err != nil {
+	// 	logger.Error("failed to configure deprecated flags: %v", err)
+	// }
 
-	err = RequireFlags(cmd, []string{"flow"})
+	err := RequireFlags(cmd, []string{"flow"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
