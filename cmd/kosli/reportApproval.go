@@ -66,14 +66,14 @@ type reportApprovalOptions struct {
 }
 
 type ApprovalPayload struct {
-	ArtifactFingerprint string   `json:"artifact_fingerprint"`
-	Environment         string   `json:"environment,omitempty"`
-	Description         string   `json:"description"`
-	CommitList          []string `json:"src_commit_list"`
-	// NewestCommit        string              `json:"newest_commit"`
-	OldestCommit string              `json:"oldest_commit,omitempty"`
-	Reviews      []map[string]string `json:"approvals"`
-	UserData     interface{}         `json:"user_data"`
+	ArtifactFingerprint string              `json:"artifact_fingerprint"`
+	Environment         string              `json:"environment,omitempty"`
+	Description         string              `json:"description"`
+	CommitList          []string            `json:"src_commit_list"`
+	NewestCommit        string              `json:"newest_commit"`
+	OldestCommit        string              `json:"oldest_commit,omitempty"`
+	Reviews             []map[string]string `json:"approvals"`
+	UserData            interface{}         `json:"user_data"`
 }
 
 func newReportApprovalCmd(out io.Writer) *cobra.Command {
@@ -111,7 +111,7 @@ func newReportApprovalCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", approvalDescriptionFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", approvalUserDataFlag)
-	cmd.Flags().StringVar(&o.payload.OldestCommit, "oldest-commit", "", oldestCommitFlag)
+	cmd.Flags().StringVar(&o.oldestSrcCommit, "oldest-commit", "", oldestCommitFlag)
 	cmd.Flags().StringVar(&o.newestSrcCommit, "newest-commit", "HEAD", newestCommitFlag)
 	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", repoRootFlag)
 	cmd.Flags().StringVar(&o.approver, "approver", "", approverFlag)
@@ -146,8 +146,24 @@ func (o *reportApprovalOptions) run(args []string, request bool) error {
 	if err != nil {
 		return err
 	}
+	gitView, err := gitview.New(o.srcRepoRoot)
+	if err != nil {
+		return err
+	}
 
-	o.payload.CommitList = []string{o.newestSrcCommit} // o.payloadCommitList()
+	o.payload.NewestCommit, err = gitView.ResolveRevision(o.newestSrcCommit)
+	if err != nil {
+		return err
+	}
+
+	if o.oldestSrcCommit != "" {
+		o.payload.OldestCommit, err = gitView.ResolveRevision(o.oldestSrcCommit)
+		if err != nil {
+			return err
+		}
+	}
+
+	o.payload.CommitList = []string{} // o.payloadCommitList()
 
 	url := fmt.Sprintf("%s/api/v2/approvals/%s/%s", global.Host, global.Org, o.flowName)
 
