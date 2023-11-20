@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -163,9 +164,54 @@ func (o *reportApprovalOptions) run(args []string, request bool) error {
 		if err != nil {
 			return err
 		}
-	}
+		o.payload.CommitList, err = o.payloadCommitList()
+		if err != nil {
+			return err
+		}
+	} else {
+		// Request last approved git commit from kosli server
+		url := fmt.Sprintf("%s/api/v2/approvals/%s/%s/last-approved-commit/%s", global.Host, global.Org,
+			o.flowName, o.payload.Environment)
 
-	o.payload.CommitList = []string{} // o.payloadCommitList()
+		getLastApprovedGitCommitParams := &requests.RequestParams{
+			Method:   http.MethodGet,
+			URL:      url,
+			DryRun:   false,
+			Password: global.ApiToken,
+		}
+		// error and not dry run -> print error message and return err
+		// error and dry run -> set src_commit_list to o.newestCommit do not send oldestCommit
+		// no error we get back None -> set src_commit_list to o.newestCommit do not send oldestCommit
+		// no error we get back a git commit -> call o.payloadCommitList()
+
+		lastApprovedGitCommitResponse, err := kosliClient.Do(getLastApprovedGitCommitParams)
+		if err != nil {
+			if !global.DryRun {
+				return err
+			} else {
+				o.payload.CommitList = []string{o.payload.NewestCommit}
+			}
+		} else {
+			var responseData map[string]interface{}
+			err = json.Unmarshal([]byte(lastApprovedGitCommitResponse.Body), &responseData)
+			if err != nil {
+				fmt.Println("unmarshal failed")
+				return err
+			}
+
+			if responseData["commit_sha"] != nil {
+				o.oldestSrcCommit = responseData["commit_sha"].(string)
+				o.payload.OldestCommit = o.oldestSrcCommit
+				o.payload.CommitList, err = o.payloadCommitList()
+				if err != nil {
+					return err
+				}
+			} else {
+				o.payload.CommitList = []string{o.payload.NewestCommit}
+			}
+
+		}
+	}
 
 	url := fmt.Sprintf("%s/api/v2/approvals/%s/%s", global.Host, global.Org, o.flowName)
 
