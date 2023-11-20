@@ -18,42 +18,42 @@ const (
 )
 
 const reportApprovalExample = `
-# Report that a file type artifact has been approved for deployment.
-# The approval is for the last 5 git commits
-kosli report approval FILE.tgz \
-	--api-token yourAPIToken \
-	--artifact-type file \
-	--description "An optional description for the approval" \
-	--newest-commit $(git rev-parse HEAD) \
-	--oldest-commit $(git rev-parse HEAD~5) \
-	--approver username \
-	--org yourOrgName \
-	--flow yourFlowName 
-
-# Report that an artifact with a provided fingerprint (sha256) has been approved for deployment.
-# The approval is for the last 5 git commits
+# Report that an artifact with a provided fingerprint (sha256) has been approved for 
+# deployment to environment <yourEnvironmentName>.
+# The approval is for all git commits since last approval to this environment.
 kosli report approval \
 	--api-token yourAPIToken \
 	--description "An optional description for the approval" \
-	--newest-commit $(git rev-parse HEAD) \
-	--oldest-commit $(git rev-parse HEAD~5) \
+	--environment yourEnvironmentName \
 	--approver username \
 	--org yourOrgName \
 	--flow yourFlowName \
 	--fingerprint yourArtifactFingerprint
 
-# Report that an artifact with a provided fingerprint (sha256) has been approved
-# for deployment to a specific environment.
-# The approval is for all commits from the previous approval of an artifact
-# to this environment up to the current commit.
+# Report that a file type artifact has been approved for deployment to environment <yourEnvironmentName>.
+# The approval is for all git commits since last approval to this environment.
+kosli report approval FILE.tgz \
+	--api-token yourAPIToken \
+	--artifact-type file \
+	--description "An optional description for the approval" \
+	--environment yourEnvironmentName \
+	--newest-commit HEAD \
+	--approver username \
+	--org yourOrgName \
+	--flow yourFlowName 
+
+# Report that an artifact with a provided fingerprint (sha256) has been approved for deployment.
+# The approval is for all environments.
+# The approval is for all commits since the git commit of origin/production branch.
 kosli report approval \
 	--api-token yourAPIToken \
 	--description "An optional description for the approval" \
+	--newest-commit HEAD \
+	--oldest-commit origin/production \
 	--approver username \
 	--org yourOrgName \
 	--flow yourFlowName \
-	--fingerprint yourArtifactFingerprint \
-	--environment yourEnvironmentName
+	--fingerprint yourArtifactFingerprint
 `
 
 type reportApprovalOptions struct {

@@ -14,39 +14,39 @@ The request should be reviewed in the Kosli UI.
 )
 
 const requestApprovalExample = `
-# Request that a file type artifact needs approval.
-# The approval is for the last 5 git commits
-kosli request approval FILE.tgz \
-	--api-token yourAPIToken \
-	--artifact-type file \
-	--description "An optional description for the requested approval" \
-	--newest-commit $(git rev-parse HEAD) \
-	--oldest-commit $(git rev-parse HEAD~5) \
-	--org yourOrgName \
-	--flow yourFlowName 
-
-# Request an approval for an artifact with a provided fingerprint (sha256).
-# The approval is for the last 5 git commits
+# Request an approval for an artifact with a provided fingerprint (sha256)
+# for deployment to environment <yourEnvironmentName>.
+# The approval is for all git commits since last approval to this environment.
 kosli request approval \
 	--api-token yourAPIToken \
-	--description "An optional description for the requested approval" \
-	--newest-commit $(git rev-parse HEAD) \
-	--oldest-commit $(git rev-parse HEAD~5)	\
+	--description "An optional description for the approval" \
+	--environment yourEnvironmentName \
 	--org yourOrgName \
 	--flow yourFlowName \
 	--fingerprint yourArtifactFingerprint
 
-# Request an approval for an artifact with a provided fingerprint (sha256)
-# for deployment to a specific environment.
-# The approval is for all commits from the previous approval of an artifact
-# to this environment up to the current commit.
+# Request that a file type artifact needs approval for deployment to environment <yourEnvironmentName>.
+# The approval is for all git commits since last approval to this environment.
+kosli request approval FILE.tgz \
+	--api-token yourAPIToken \
+	--artifact-type file \
+	--description "An optional description for the requested approval" \
+	--environment yourEnvironmentName \
+	--newest-commit HEAD \
+	--org yourOrgName \
+	--flow yourFlowName 
+
+# Request an approval for an artifact with a provided fingerprint (sha256).
+# The approval is for all environments.
+# The approval is for all commits since the git commit of origin/production branch.
 kosli request approval \
 	--api-token yourAPIToken \
-	--description "An optional description for the approval" \
+	--description "An optional description for the requested approval" \
+	--newest-commit HEAD \
+	--oldest-commit origin/production \
 	--org yourOrgName \
 	--flow yourFlowName \
-	--fingerprint yourArtifactFingerprint \
-	--environment yourEnvironmentName
+	--fingerprint yourArtifactFingerprint
 `
 
 func newRequestApprovalCmd(out io.Writer) *cobra.Command {
