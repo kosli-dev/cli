@@ -12,6 +12,7 @@ type ApprovalReportTestSuite struct {
 	defaultKosliArguments string
 	artifactFingerprint   string
 	flowName              string
+	envName               string
 }
 
 func (suite *ApprovalReportTestSuite) SetupTest() {
@@ -24,9 +25,11 @@ func (suite *ApprovalReportTestSuite) SetupTest() {
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 	suite.artifactFingerprint = "847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0"
 	suite.flowName = "approval-test"
+	suite.envName = "staging"
 
 	CreateFlow(suite.flowName, suite.T())
 	CreateArtifact(suite.flowName, suite.artifactFingerprint, "foobar", suite.T())
+	CreateEnv(global.Org, suite.envName, "K8S", suite.T())
 }
 
 func (suite *ApprovalReportTestSuite) TestApprovalReportCmd() {
@@ -37,6 +40,29 @@ func (suite *ApprovalReportTestSuite) TestApprovalReportCmd() {
 			--newest-commit HEAD --oldest-commit HEAD~3` + suite.defaultKosliArguments,
 			golden: fmt.Sprintf("approval created for artifact: %s\n", suite.artifactFingerprint),
 		},
+		{
+			name: "report approval with an environment name works",
+			cmd: `report approval --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + ` --repo-root ../.. 
+			--newest-commit HEAD --oldest-commit HEAD~3` + ` --environment staging` + suite.defaultKosliArguments,
+			golden: fmt.Sprintf("approval created for artifact: %s\n", suite.artifactFingerprint),
+		},
+		{
+			name: "report approval with an environment name and no oldest-commit and no newest-commit works",
+			cmd: `report approval --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + ` --repo-root ../.. ` +
+				` --environment ` + suite.envName + suite.defaultKosliArguments,
+			golden: fmt.Sprintf("approval created for artifact: %s\n", suite.artifactFingerprint),
+		},
+		{
+			wantError: true,
+			name:      "report approval with no environment name or oldest commit fails",
+			cmd: `report approval --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + ` --repo-root ../.. ` +
+				suite.defaultKosliArguments,
+			golden: "Error: at least one of --environment, --oldest-commit is required\n",
+		},
+		// Here is a case we need to investigate how to test:
+		// - Create approval with '--newest-commit HEAD~5', '--oldest-commit HEAD~7' and '--environment staging',
+		//   then create approval only with '--environment staging',
+		// 	 the resulting payload should contain a commit list of 4 commits, and an oldest_commit of HEAD~5
 	}
 	runTestCmd(suite.T(), tests)
 }

@@ -21,7 +21,7 @@ const (
 const reportApprovalExample = `
 # Report that an artifact with a provided fingerprint (sha256) has been approved for 
 # deployment to environment <yourEnvironmentName>.
-# The approval is for all git commits since last approval to this environment.
+# The approval is for all git commits since the last approval to this environment.
 kosli report approval \
 	--api-token yourAPIToken \
 	--description "An optional description for the approval" \
@@ -32,7 +32,7 @@ kosli report approval \
 	--fingerprint yourArtifactFingerprint
 
 # Report that a file type artifact has been approved for deployment to environment <yourEnvironmentName>.
-# The approval is for all git commits since last approval to this environment.
+# The approval is for all git commits since the last approval to this environment.
 kosli report approval FILE.tgz \
 	--api-token yourAPIToken \
 	--artifact-type file \
@@ -120,13 +120,6 @@ func newReportApprovalCmd(out io.Writer) *cobra.Command {
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
-	// err := DeprecateFlags(cmd, map[string]string{
-	// 	"oldest-commit": "use --environment and oldest commit will be calculated",
-	// })
-	// if err != nil {
-	// 	logger.Error("failed to configure deprecated flags: %v", err)
-	// }
-
 	err := RequireFlags(cmd, []string{"flow"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
@@ -178,16 +171,15 @@ func (o *reportApprovalOptions) run(args []string, request bool) error {
 			DryRun:   false,
 			Password: global.ApiToken,
 		}
-		// error and not dry run -> print error message and return err
-		// error and dry run -> set src_commit_list to o.newestCommit do not send oldestCommit
-		// no error we get back None -> set src_commit_list to o.newestCommit do not send oldestCommit
-		// no error we get back a git commit -> call o.payloadCommitList()
 
 		lastApprovedGitCommitResponse, err := kosliClient.Do(getLastApprovedGitCommitParams)
+
 		if err != nil {
 			if !global.DryRun {
+				// error and not dry run -> print error message and return err
 				return err
 			} else {
+				// error and dry run -> set src_commit_list to o.newestCommit do not send oldestCommit
 				o.payload.CommitList = []string{o.newestSrcCommit}
 			}
 		} else {
@@ -199,6 +191,7 @@ func (o *reportApprovalOptions) run(args []string, request bool) error {
 			}
 
 			if responseData["commit_sha"] != nil {
+				// no error we get back a git commit -> call o.payloadCommitList()
 				o.oldestSrcCommit = responseData["commit_sha"].(string)
 				o.payload.OldestCommit = o.oldestSrcCommit
 				o.payload.CommitList, err = o.payloadCommitList()
@@ -206,6 +199,7 @@ func (o *reportApprovalOptions) run(args []string, request bool) error {
 					return err
 				}
 			} else {
+				// no error we get back None -> set src_commit_list to o.newestCommit do not send oldestCommit
 				o.payload.CommitList = []string{o.newestSrcCommit}
 			}
 

@@ -16,7 +16,7 @@ The request should be reviewed in the Kosli UI.
 const requestApprovalExample = `
 # Request an approval for an artifact with a provided fingerprint (sha256)
 # for deployment to environment <yourEnvironmentName>.
-# The approval is for all git commits since last approval to this environment.
+# The approval is for all git commits since the last approval to this environment.
 kosli request approval \
 	--api-token yourAPIToken \
 	--description "An optional description for the approval" \
@@ -26,7 +26,7 @@ kosli request approval \
 	--fingerprint yourArtifactFingerprint
 
 # Request that a file type artifact needs approval for deployment to environment <yourEnvironmentName>.
-# The approval is for all git commits since last approval to this environment.
+# The approval is for all git commits since the last approval to this environment.
 kosli request approval FILE.tgz \
 	--api-token yourAPIToken \
 	--artifact-type file \
