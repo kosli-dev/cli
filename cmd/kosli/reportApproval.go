@@ -73,7 +73,6 @@ type ApprovalPayload struct {
 	Environment         string              `json:"environment,omitempty"`
 	Description         string              `json:"description"`
 	CommitList          []string            `json:"src_commit_list"`
-	NewestCommit        string              `json:"newest_commit"`
 	OldestCommit        string              `json:"oldest_commit,omitempty"`
 	Reviews             []map[string]string `json:"approvals"`
 	UserData            interface{}         `json:"user_data"`
@@ -154,7 +153,7 @@ func (o *reportApprovalOptions) run(args []string, request bool) error {
 		return err
 	}
 
-	o.payload.NewestCommit, err = gitView.ResolveRevision(o.newestSrcCommit)
+	o.newestSrcCommit, err = gitView.ResolveRevision(o.newestSrcCommit)
 	if err != nil {
 		return err
 	}
@@ -189,7 +188,7 @@ func (o *reportApprovalOptions) run(args []string, request bool) error {
 			if !global.DryRun {
 				return err
 			} else {
-				o.payload.CommitList = []string{o.payload.NewestCommit}
+				o.payload.CommitList = []string{o.newestSrcCommit}
 			}
 		} else {
 			var responseData map[string]interface{}
@@ -207,7 +206,7 @@ func (o *reportApprovalOptions) run(args []string, request bool) error {
 					return err
 				}
 			} else {
-				o.payload.CommitList = []string{o.payload.NewestCommit}
+				o.payload.CommitList = []string{o.newestSrcCommit}
 			}
 
 		}
