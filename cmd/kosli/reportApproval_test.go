@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/gitview"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -31,14 +33,25 @@ func (suite *ApprovalReportTestSuite) SetupTest() {
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 	suite.flowName = "approval-test"
 	suite.envName = "staging"
-	suite.gitCommit = "993a9a6be532ed4e7a87aab4df90a7f1b3168d63"
+	t := suite.T()
+
+	gitView, err := gitview.New("../..")
+	require.NoError(t, err, "Failed to create gitview")
+
+	suite.gitCommit, err = gitView.ResolveRevision("HEAD~5")
+	require.NoError(t, err, "Failed to get HEAD~5")
+
 	suite.artifactPath = "testdata/report.xml"
 	suite.artifactFingerprint = "c6b02fb1708fbc46e63f5074c38d17852bfa0c7bcfcdd1f877e80476e3fcb74f"
-	// _, suite.artifactFingerprint, _ = executeCommandC(fmt.Sprintf("kosli fingerprint" + suite.artifactPath + "--artifact-type file" + suite.defaultKosliArguments))
 
-	CreateFlow(suite.flowName, suite.T())
-	CreateArtifactWithCommit(suite.flowName, suite.artifactFingerprint, suite.artifactPath, suite.gitCommit, suite.T())
-	CreateEnv(global.Org, suite.envName, "server", suite.T())
+	// cmd := fmt.Sprintf("fingerprint %s --artifact-type file", suite.artifactPath)
+	// _, output, err := executeCommandC(cmd)
+	// require.NoError(t, err, "Failed to calculate fingerprint")
+	// suite.artifactFingerprint = strings.Trim(suite.artifactFingerprint, "\n")
+
+	CreateFlow(suite.flowName, t)
+	CreateArtifactWithCommit(suite.flowName, suite.artifactFingerprint, suite.artifactPath, suite.gitCommit, t)
+	CreateEnv(global.Org, suite.envName, "server", t)
 }
 
 func (suite *ApprovalReportTestSuite) TestApprovalReportCmd() {
@@ -62,11 +75,6 @@ func (suite *ApprovalReportTestSuite) TestApprovalReportCmd() {
 				suite.defaultKosliArguments,
 			golden: "Error: at least one of --environment, --oldest-commit is required\n",
 		},
-		// For the next test we have to
-		// - create a flow
-		// - create an artifact in that flow with git commit HEAD~5
-		// - (create an environment)
-		// - create snapshot that contains this artifact
 		{
 			name: "report approval with an environment name and no oldest-commit and no newest-commit works",
 			cmd: `report approval --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + ` --repo-root ../.. ` +
