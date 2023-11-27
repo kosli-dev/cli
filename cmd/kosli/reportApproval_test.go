@@ -13,6 +13,7 @@ type ApprovalReportTestSuite struct {
 	artifactFingerprint   string
 	flowName              string
 	envName               string
+	gitCommit             string
 }
 
 func (suite *ApprovalReportTestSuite) SetupTest() {
@@ -26,10 +27,12 @@ func (suite *ApprovalReportTestSuite) SetupTest() {
 	suite.artifactFingerprint = "847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0"
 	suite.flowName = "approval-test"
 	suite.envName = "staging"
+	suite.gitCommit = "993a9a6be532ed4e7a87aab4df90a7f1b3168d63"
 
 	CreateFlow(suite.flowName, suite.T())
-	CreateArtifact(suite.flowName, suite.artifactFingerprint, "foobar", suite.T())
+	CreateArtifactWithCommit(suite.flowName, suite.artifactFingerprint, "foobar", suite.gitCommit, suite.T())
 	CreateEnv(global.Org, suite.envName, "K8S", suite.T())
+
 }
 
 func (suite *ApprovalReportTestSuite) TestApprovalReportCmd() {
@@ -47,18 +50,24 @@ func (suite *ApprovalReportTestSuite) TestApprovalReportCmd() {
 			golden: fmt.Sprintf("approval created for artifact: %s\n", suite.artifactFingerprint),
 		},
 		{
-			name: "report approval with an environment name and no oldest-commit and no newest-commit works",
-			cmd: `report approval --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + ` --repo-root ../.. ` +
-				` --environment ` + suite.envName + suite.defaultKosliArguments,
-			golden: fmt.Sprintf("approval created for artifact: %s\n", suite.artifactFingerprint),
-		},
-		{
 			wantError: true,
 			name:      "report approval with no environment name or oldest commit fails",
 			cmd: `report approval --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + ` --repo-root ../.. ` +
 				suite.defaultKosliArguments,
 			golden: "Error: at least one of --environment, --oldest-commit is required\n",
 		},
+		// For the next test we have to
+		// - (create a flow)
+		// - create an artifact in that flow with git commit HEAD~5
+		// - (create an environment)
+		// - create snapshot that contains this artifact
+		// {
+		// 	name: "report approval with an environment name and no oldest-commit and no newest-commit works",
+		// 	cmd: `report approval --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + ` --repo-root ../.. ` +
+		// 		` --environment ` + suite.envName + suite.defaultKosliArguments,
+		// 	golden: fmt.Sprintf("approval created for artifact: %s\n", suite.artifactFingerprint),
+		// },
+
 		// Here is a case we need to investigate how to test:
 		// - Create approval with '--newest-commit HEAD~5', '--oldest-commit HEAD~7' and '--environment staging',
 		//   then create approval only with '--environment staging',

@@ -162,7 +162,7 @@ func (o *reportApprovalOptions) run(args []string, request bool) error {
 		}
 	} else {
 		// Request last approved git commit from kosli server
-		url := fmt.Sprintf("%s/api/v2/approvals/%s/%s/last-approved-commit/%s", global.Host, global.Org,
+		url := fmt.Sprintf("%s/api/v2/approvals/%s/%s/artifact-commit/%s", global.Host, global.Org,
 			o.flowName, o.payload.Environment)
 
 		getLastApprovedGitCommitParams := &requests.RequestParams{

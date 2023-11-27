@@ -203,6 +203,27 @@ func CreateArtifact(flowName, artifactFingerprint, artifactName string, t *testi
 	require.NoError(t, err, "artifact should be created without error")
 }
 
+func CreateArtifactWithCommit(flowName, artifactFingerprint, artifactName string, gitCommit string, t *testing.T) {
+	t.Helper()
+	o := &reportArtifactOptions{
+		srcRepoRoot: "../..",
+		flowName:    flowName,
+		//name:         "",
+		gitReference: gitCommit,
+		payload: ArtifactPayload{
+			Fingerprint: artifactFingerprint,
+			GitCommit:   gitCommit,
+			BuildUrl:    "www.yr.no",
+			CommitUrl:   "www.nrk.no",
+		},
+	}
+
+	o.fingerprintOptions = new(fingerprintOptions)
+
+	err := o.run([]string{artifactName})
+	require.NoError(t, err, "artifact should be created without error")
+}
+
 // CreateApproval creates an approval for an artifact in a flow
 func CreateApproval(flowName, fingerprint string, t *testing.T) {
 	t.Helper()
