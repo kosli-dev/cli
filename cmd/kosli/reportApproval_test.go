@@ -69,7 +69,7 @@ func (suite *ApprovalReportTestSuite) TestApprovalReportCmd() {
 		},
 		{
 			wantError: true,
-			name:      "report approval with no environment name or oldest commit fails",
+			name:      "report approval with no environment name and no oldest commit fails",
 			cmd: `report approval --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + ` --repo-root ../.. ` +
 				suite.defaultKosliArguments,
 			golden: "Error: at least one of --environment, --oldest-commit is required\n",
@@ -83,11 +83,6 @@ func (suite *ApprovalReportTestSuite) TestApprovalReportCmd() {
 				createSnapshot: true,
 			},
 		},
-
-		// Here is a case we need to investigate how to test:
-		// - Create approval with '--newest-commit HEAD~5', '--oldest-commit HEAD~7' and '--environment staging',
-		//   then create approval only with '--environment staging',
-		// 	 the resulting payload should contain a commit list of 4 commits, and an oldest_commit of HEAD~5
 	}
 	for _, t := range tests {
 		if t.additionalConfig != nil && t.additionalConfig.(reportApprovalTestConfig).createSnapshot {
@@ -95,7 +90,6 @@ func (suite *ApprovalReportTestSuite) TestApprovalReportCmd() {
 		}
 		runTestCmd(suite.T(), []cmdTestCase{t})
 	}
-	// runTestCmd(suite.T(), tests)
 }
 
 func TestApprovalReportCommandTestSuite(t *testing.T) {
