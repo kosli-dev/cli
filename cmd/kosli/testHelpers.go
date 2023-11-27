@@ -25,6 +25,8 @@ type cmdTestCase struct {
 }
 
 // executeCommandStdinC executes a command as a user would and return the output
+// this creates a new kosli command that is run, but it cannot be used in other tests
+// because newRootCmd overwrites the global options
 func executeCommandC(cmd string) (*cobra.Command, string, error) {
 	args, err := shellwords.Parse(cmd)
 	if err != nil {

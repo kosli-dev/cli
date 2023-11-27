@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -42,12 +43,10 @@ func (suite *ApprovalReportTestSuite) SetupTest() {
 	require.NoError(t, err, "Failed to get HEAD~5")
 
 	suite.artifactPath = "testdata/report.xml"
-	suite.artifactFingerprint = "c6b02fb1708fbc46e63f5074c38d17852bfa0c7bcfcdd1f877e80476e3fcb74f"
-
-	// cmd := fmt.Sprintf("fingerprint %s --artifact-type file", suite.artifactPath)
-	// _, output, err := executeCommandC(cmd)
-	// require.NoError(t, err, "Failed to calculate fingerprint")
-	// suite.artifactFingerprint = strings.Trim(suite.artifactFingerprint, "\n")
+	// We cannot get the digest of the file by running the 'kosli fingerprint' command
+	// by using executeCommandC() because this function overwrites the global options
+	suite.artifactFingerprint, err = digest.FileSha256(suite.artifactPath)
+	require.NoError(t, err, "Failed to calculate fingerprint")
 
 	CreateFlow(suite.flowName, t)
 	CreateArtifactWithCommit(suite.flowName, suite.artifactFingerprint, suite.artifactPath, suite.gitCommit, t)
