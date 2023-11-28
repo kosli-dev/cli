@@ -5,9 +5,9 @@ weight: 260
 ---
 # Part 7: Approvals
 
-Whenever a given artifact is ready to be deployed you may need an additional approval. In Kosli, an Approval means an artifact is ready to be deployed to a given [environment](/getting_started/environments/). An approval can be manually or automatically, and recorded into Kosli so the decision made outside of your CI system won't be lost.
+Whenever a given artifact is ready to be deployed you may need an additional approval. In Kosli, an Approval means an artifact is ready to be deployed to a given [environment](/getting_started/environments/). An approval can be created manually or automatically, and recorded into Kosli so the decision made outside of your CI system won't be lost.
 
-When an Approval is created for an artifact to a specific environment with the `--environment` flag, Kosli will generate a list of commits to be approved. By default, this list will contain all commits between `HEAD` and the commit of the latest artifact coming from the same [flow](/getting_started/flows/) found in the given environment. The list can also be specified by providing values for `--newest-commit` and `--oldest-commit`.
+When an Approval is created for an artifact to a specific environment with the `--environment` flag, Kosli will generate a list of commits to be approved. By default, this list will contain all commits between `HEAD` and the commit of the most recent artifact coming from the same [flow](/getting_started/flows/) found in the given environment. The list can also be specified by providing values for `--newest-commit` and `--oldest-commit`.
 
 ## Example
 
