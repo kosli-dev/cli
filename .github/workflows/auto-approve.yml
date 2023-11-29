@@ -36,21 +36,26 @@ jobs:
         uses: tj-actions/changed-files@v40
 
       - name: Check non critical
+        id: non-critical
         run: |
           ACCEPTED_PATHS="^bin/|^design-docs/"
+          CRITICAL=false
           for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
             echo "$file"
-            # exit as soon as a file does not match the ACCEPTED_PATHS
-            [[ "$file" =~ ${ACCEPTED_PATHS} ]] || exit 1
+            # set CRITICAL as true when a file does not match the ACCEPTED_PATHS
+            [[ "$file" =~ ${ACCEPTED_PATHS} ]] || CRITICAL=true
           done
+          echo "critical=${CRITICAL}" >> "$GITHUB_OUTPUT"
 
       - name: Approve pull request
+        if: ${{ steps.non-critical.outputs.critical == 'false' }}
         uses: hmarr/auto-approve-action@v3
         with:
           review-message: "Auto approved since only non critical files were changed"
 
 
       - name: Merge to master
+        if: ${{ steps.non-critical.outputs.critical == 'false' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MERGE_LABELS: ""
