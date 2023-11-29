@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	requestApprovalShortDesc = `Request an approval of a deployment of an artifact in Kosli.  `
+	requestApprovalShortDesc = `Request an approval of a deployment of an artifact to an environment in Kosli.  `
 	requestApprovalLongDesc  = requestApprovalShortDesc + `
 The request should be reviewed in the Kosli UI.  
 ` + fingerprintDesc

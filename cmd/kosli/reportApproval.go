@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	reportApprovalShortDesc = `Report an approval of deploying an artifact to Kosli.  `
+	reportApprovalShortDesc = `Report an approval of deploying an artifact to an environment to Kosli.  `
 	reportApprovalLongDesc  = reportApprovalShortDesc + `
 ` + fingerprintDesc
 )
