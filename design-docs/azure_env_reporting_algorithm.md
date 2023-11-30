@@ -138,6 +138,7 @@ A script was periodically executed over a period of time. It involved multiple f
 6. Docker restart with `az functionapp restart` triggers a new pull, restart of the container and it makes an entry in the log.
 
 
+
 <!-- 
 Notes:
 az webapp log deployment list --name arstan-service --resource-group KosliExperiment --subscription 1f4973e6-11b3-4259-be2f-92bd3fe0a5cf
