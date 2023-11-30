@@ -140,7 +140,9 @@ A script was periodically executed over a period of time. It involved multiple f
 
 <!-- 
 Notes:
-az webapp log deployment list --name arstan-service --resource-group KosliExperiment --subscription 1f4973e6-11b3-4259-be2f-92bd3fe0a5cf
+az webapp log deployment list --name arstan-service --resource-group KosliExperiment \
+    --subscription 1f4973e6-11b3-4259-be2f-92bd3fe0a5cf
 
-az webapp log deployment list --name tsha256  --resource-group EnvironmentReportingExperiment --subscription 96cdee58-1fa8-419d-a65a-7233b3465632
+az webapp log deployment list --name tsha256  --resource-group EnvironmentReportingExperiment \
+ --subscription 96cdee58-1fa8-419d-a65a-7233b3465632
  -->
