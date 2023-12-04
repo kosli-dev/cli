@@ -10,19 +10,22 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/containers/azcontainerregistry"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
 	"github.com/aws/smithy-go/time"
 	"github.com/kosli-dev/cli/internal/logger"
 )
 
 type AzureStaticCredentials struct {
-	TenantId          string
-	ClientId          string
-	ClientSecret      string
-	SubscriptionId    string
-	ResourceGroupName string
-	DownloadLogsAsZip bool
+	TenantId                 string
+	ClientId                 string
+	ClientSecret             string
+	SubscriptionId           string
+	ResourceGroupName        string
+	DownloadLogsAsZip        bool
+	AllowDigestsFromRegistry bool
 }
 
 type AzureClient struct {
@@ -32,10 +35,11 @@ type AzureClient struct {
 
 // AppData represents the harvested Azure service app and function app data
 type AppData struct {
-	AppName   string            `json:"appName"`
-	AppKind   string            `json:"appKind"`
-	Digests   map[string]string `json:"digests"`
-	StartedAt int64             `json:"creationTimestamp"`
+	AppName      string            `json:"appName"`
+	AppKind      string            `json:"appKind"`
+	DigestSource string            `json:"digestSource"`
+	Digests      map[string]string `json:"digests"`
+	StartedAt    int64             `json:"creationTimestamp"`
 }
 
 // AzureAppsRequest represents the PUT request body to be sent to Kosli from CLI
@@ -59,9 +63,6 @@ func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logge
 		logger.Debug("Found apps:")
 		for _, app := range appsInfo {
 			logger.Debug("  app Name=%s", *app.Name)
-			logger.Debug("  app %+v", app.Properties)
-			// logger.Debug("  app name=%s, state=%s, kind=%s, linuxFxVersion=%s", *app.Name,
-			// 	*app.Properties.State, *app.Kind, *app.Properties.SiteConfig.LinuxFxVersion)
 		}
 	}
 
@@ -97,6 +98,7 @@ func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logge
 				cancel() // send cancel signal to goroutines
 				return
 			}
+
 			if !data.IsEmpty() {
 				appsChan <- &data
 			}
@@ -135,33 +137,101 @@ func (azureClient *AzureClient) NewAppData(app *armappservice.Site, logger *logg
 
 	var fingerprint string
 	var startedAt int64
+	digestSource := "logs"
 
-	// First try to get image fingerprint from Docker logs.
-	// If it is not found, then try to get it from image name.
-	// We also need Docker logs to get startedAt timestamp.
-	logs, err := azureClient.GetDockerLogsForApp(*app.Name)
-	if err != nil {
-		return AppData{}, err
-	}
+	// // First try to get image fingerprint from Docker logs.
+	// // If it is not found and azureStaticCredentials.AllowDigestsFromRegistry is True,
+	// // then try to get the digest from the registry.
+	// logs, err := azureClient.GetDockerLogsForApp(*app.Name)
+	// if err != nil {
+	// 	return AppData{}, err
+	// }
+	// fingerprint, startedAt, err = exractImageFingerprintAndStartedTimestampFromLogs(logs, *app.Name)
+	// if err != nil {
+	// 	return AppData{}, err
+	// }
 
-	fingerprint, startedAt, err = exractImageFingerprintAndStartedTimestampFromLogs(logs, *app.Name)
-	if err != nil {
-		return AppData{}, err
-	}
-	if startedAt == 0 {
-		// if startedAt is 0, then the container is not running
-		logger.Debug("docker container in app %s is not running, skipping from report", *app.Name)
-		return AppData{}, nil
-	}
+	// if fingerprint == "" && azureClient.Credentials.AllowDigestsFromRegistry {
+	// 	digestSource = "registry"
+	// 	fingerprint, err = azureClient.GetImageDigestFromRegistry(imageName, logger)
+	// 	// Handle exception when image is not found in the registry but is found in the environment
+	// 	if err != nil {
+	// 		return AppData{}, err
+	// 	}
+	// }
 
-	if fingerprint == "" && strings.Contains(imageName, "@sha256:") {
-		// get digest from image if it is pulled by sha256 digest, ie, imageName@sha256:cb29a6edff54216aa3e1d433aa98f0d1a711d17e59004fb6e3afffe0a784e34e"
-		fingerprint = strings.Split(imageName, "@sha256:")[1]
+	// temp code
+	var err error
+	if azureClient.Credentials.AllowDigestsFromRegistry {
+		digestSource = "registry"
+		fingerprint, err = azureClient.GetImageDigestFromRegistry(imageName, logger)
+		// Handle exception when image is not found in the registry but is found in the environment
+		if err != nil {
+			return AppData{}, err
+		}
+		// end temp code
 	}
 
 	logger.Debug("For app %s found: image=%s, fingerprint=%s, startedAt=%d", *app.Name, imageName, fingerprint, startedAt)
 
-	return AppData{*app.Name, *app.Kind, map[string]string{imageName: fingerprint}, startedAt}, nil
+	return AppData{*app.Name, *app.Kind, digestSource, map[string]string{imageName: fingerprint}, startedAt}, nil
+}
+
+func (azureClient *AzureClient) GetImageDigestFromRegistry(imageName string, logger *logger.Logger) (digest string, err error) {
+	logger.Debug("Getting image digest from registry for image %s", imageName)
+	staticCreds := azureClient.Credentials
+	credentials, err := azidentity.NewClientSecretCredential(staticCreds.TenantId, staticCreds.ClientId, staticCreds.ClientSecret, nil)
+	if err != nil {
+		return "", err
+	}
+	registryUrl, repoName, tag := parseImageName(imageName)
+
+	client, err := azcontainerregistry.NewClient(registryUrl, credentials, nil)
+	if err != nil {
+		logger.Debug("Error creating client for registry %s", registryUrl)
+		return "", err
+	}
+	manifest, err := client.GetManifest(context.Background(), registryUrl+"/"+repoName, tag,
+		&azcontainerregistry.ClientGetManifestOptions{Accept: to.Ptr("application/vnd.docker.distribution.manifest.v2+json")})
+	if err != nil {
+		logger.Debug("Error getting manifest for registry url %s")
+		return "", err
+	}
+	var manifestData []byte
+	_, err = manifest.ManifestData.Read(manifestData)
+	if err != nil {
+		logger.Debug("Error reading manifest data for registryUrl=%s, repoName=%s, tag=%s", registryUrl, repoName, tag)
+		return "", err
+	}
+	logger.Debug("Manifest data for image %s: %s", imageName, manifestData)
+
+	return "", nil
+}
+
+func parseImageName(imageName string) (registryUrl, repoName, tag string) {
+	// Parse the image name to extract the repository name and tag
+	// Example: tookyregistry.azurecr.io/tooky/sha256:latest
+	splitFullImageName := strings.SplitN(imageName, "/", 2)
+	if len(splitFullImageName) != 2 {
+		return "", "", ""
+	}
+	registryUrl = splitFullImageName[0]
+
+	if strings.Contains(splitFullImageName[1], "@sha256:") {
+		// Example: tookyregistry.azurecr.io/tooky@sha256:cb29a6..7
+		imageNameAndTag := strings.SplitN(splitFullImageName[1], "@sha256:", 2)
+		repoName = imageNameAndTag[0]
+		tag = imageNameAndTag[1]
+	} else if strings.Contains(splitFullImageName[1], ":") {
+		imageNameAndTag := strings.SplitN(splitFullImageName[1], ":", 2)
+		repoName = imageNameAndTag[0]
+		tag = imageNameAndTag[1]
+	} else {
+		repoName = splitFullImageName[1]
+		tag = "latest"
+	}
+
+	return registryUrl, repoName, tag
 }
 
 func (app *AppData) IsEmpty() bool {
