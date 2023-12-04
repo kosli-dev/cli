@@ -42,7 +42,7 @@ $ kosli expect deployment project-a-app.bin \
 
 expect deployment of artifact 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf was reported to: server-prod
 ```
-See [kosli expect deployment](/legacy_ref/v0.1.37/kosli_expect_deployment/) for more details.
+See [kosli expect deployment](/legacy_ref/v0.1.41/kosli_expect_deployment/) for more details.
 {{< /tab >}}
 
 {{< /tabs >}}

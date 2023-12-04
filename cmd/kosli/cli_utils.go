@@ -192,6 +192,20 @@ func MuXRequiredFlags(cmd *cobra.Command, flagNames []string, atLeastOne bool) e
 	return nil
 }
 
+func RequireAtLeastOneOfFlags(cmd *cobra.Command, flagNames []string) error {
+	flagsSet := 0
+	for _, name := range flagNames {
+		flag := cmd.Flags().Lookup(name)
+		if flag.Changed {
+			flagsSet++
+		}
+	}
+	if flagsSet == 0 {
+		return fmt.Errorf("at least one of %s is required", JoinFlagNames(flagNames))
+	}
+	return nil
+}
+
 // JoinFlagNames returns a comma-separated string of flag names with "--" prefix
 // from a list of plain names
 func JoinFlagNames(flagNames []string) string {

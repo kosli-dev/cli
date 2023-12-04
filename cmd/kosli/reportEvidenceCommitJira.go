@@ -22,6 +22,7 @@ type reportEvidenceCommitJiraOptions struct {
 	pat              string
 	srcRepoRoot      string
 	payload          JiraEvidencePayload
+	assert           bool
 }
 
 const reportEvidenceCommitJiraShortDesc = `Report Jira evidence for a commit in Kosli flows.`
@@ -75,6 +76,20 @@ kosli report evidence commit jira \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 	--user-data /path/to/json/file.json
+
+
+# fail if no issue reference is found, or the issue is not found in your jira instance
+kosli report evidence commit jira \
+	--commit yourGitCommitSha1 \
+	--name yourEvidenceName \
+	--jira-base-url https://kosli.atlassian.net \
+	--jira-username user@domain.com \
+	--jira-api-token yourJiraAPIToken \
+	--flows yourFlowName \
+	--build-url https://exampleci.com \
+	--api-token yourAPIToken \
+	--org yourOrgName \
+	--assert
 `
 
 func newReportEvidenceCommitJiraCmd(out io.Writer) *cobra.Command {
@@ -117,6 +132,7 @@ func newReportEvidenceCommitJiraCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", repoRootFlag)
 	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
 	cmd.Flags().StringSliceVarP(&o.evidencePaths, "evidence-paths", "e", []string{}, evidencePathsFlag)
+	cmd.Flags().BoolVar(&o.assert, "assert", false, assertJiraEvidenceFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"commit", "build-url", "name", "jira-base-url"})
@@ -145,6 +161,7 @@ func (o *reportEvidenceCommitJiraOptions) run(args []string) error {
 		return err
 	}
 
+	logger.Debug("Resolving commit reference: %s", o.payload.CommitSHA)
 	o.payload.CommitSHA, err = gv.ResolveRevision(o.payload.CommitSHA)
 	if err != nil {
 		return err
@@ -157,14 +174,19 @@ func (o *reportEvidenceCommitJiraOptions) run(args []string) error {
 	// more info: https://support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/#Workingwithissues-Projectandissuekeys
 	jiraIssueKeyPattern := `[A-Z][A-Z0-9]{1,9}-[0-9]+`
 
-	issueIDs, err := gv.MatchPatternInCommitMessageORBranchName(jiraIssueKeyPattern, o.payload.CommitSHA)
+	issueIDs, commitInfo, err := gv.MatchPatternInCommitMessageORBranchName(jiraIssueKeyPattern, o.payload.CommitSHA)
 	if err != nil {
 		return err
 	}
-
+	logger.Debug("Checked for Jira issue references in Git commit %s on branch %s commit message:\n%s", commitInfo.Sha1, commitInfo.Branch, commitInfo.Message)
 	logger.Debug("the following Jira references are found in commit message or branch name: %v", issueIDs)
 
+	if len(issueIDs) == 0 && o.assert {
+		return fmt.Errorf("no Jira references are found in commit message or branch name")
+	}
+
 	issueLog := ""
+	issueFoundCount := 0
 	for _, issueID := range issueIDs {
 		result, err := jc.GetJiraIssueInfo(issueID)
 		if err != nil {
@@ -174,8 +196,12 @@ func (o *reportEvidenceCommitJiraOptions) run(args []string) error {
 		issueExistLog := "issue not found"
 		if result.IssueExists {
 			issueExistLog = "issue found"
+			issueFoundCount++
 		}
 		issueLog += fmt.Sprintf("\n\t%s: %s", result.IssueID, issueExistLog)
+	}
+	if issueFoundCount != len(issueIDs) && o.assert {
+		return fmt.Errorf("missing Jira issues from references found in commit message or branch name%s", issueLog)
 	}
 
 	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, o.evidencePaths)

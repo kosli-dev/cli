@@ -2,6 +2,8 @@ package testHelpers
 
 import (
 	"fmt"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/stretchr/testify/require"
 	"os"
 	"path/filepath"
 	"testing"
@@ -49,6 +51,11 @@ func InitializeGitRepo(repoPath string) (*git.Repository, *git.Worktree, billy.F
 		return repo, nil, fs, err
 	}
 
+	_, err = CommitToRepo(w, fs, "Initial Commit")
+	if err != nil {
+		return repo, w, fs, err
+	}
+
 	return repo, w, fs, nil
 }
 
@@ -76,4 +83,18 @@ func CommitToRepo(w *git.Worktree, fs billy.Filesystem, commitMessage string) (s
 	}
 
 	return hash.String(), nil
+}
+
+func CheckoutNewBranch(w *git.Worktree, branchName string) error {
+	return w.Checkout(&git.CheckoutOptions{
+		Create: true,
+		Branch: plumbing.NewBranchReferenceName(branchName),
+	})
+}
+
+func CheckoutMaster(workTree *git.Worktree, t *testing.T) {
+	err := workTree.Checkout(&git.CheckoutOptions{
+		Branch: plumbing.Master,
+	})
+	require.NoError(t, err)
 }

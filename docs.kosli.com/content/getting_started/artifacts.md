@@ -49,7 +49,7 @@ $ kosli pipeline artifact report creation project-a-app.bin \
 
 artifact project-a-app.bin was reported with fingerprint: 53c97572093cc107c0caa2906d460ccd65083a4c626f68689e57aafa34b14cbf
 ```
-See [kosli pipeline artifact report creation](/legacy_ref/v0.1.37/kosli_pipeline_artifact_report_creation/) for more details. 
+See [kosli pipeline artifact report creation](/legacy_ref/v0.1.41/kosli_pipeline_artifact_report_creation/) for more details. 
 
 {{< /tab >}}
 

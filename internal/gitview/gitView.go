@@ -193,23 +193,23 @@ func asCommitInfo(commit *object.Commit, branchName string) *CommitInfo {
 // MatchPatternInCommitMessageORBranchName returns a slice of strings matching a pattern in a commit message or branch name
 // matches lookup happens in the commit message first, and if none is found, matching against the branch name is done
 // if no matches are found in both the commit message and the branch name, an empty slice is returned
-func (gv *GitView) MatchPatternInCommitMessageORBranchName(pattern, commitSHA string) ([]string, error) {
+func (gv *GitView) MatchPatternInCommitMessageORBranchName(pattern, commitSHA string) ([]string, *CommitInfo, error) {
 	commitInfo, err := gv.GetCommitInfoFromCommitSHA(commitSHA)
 	if err != nil {
-		return []string{}, err
+		return []string{}, nil, err
 	}
 
 	re := regexp.MustCompile(pattern)
 	matches := re.FindAllString(commitInfo.Message, -1)
 	if matches != nil {
-		return matches, nil
+		return matches, commitInfo, nil
 	} else {
 		matches := re.FindAllString(commitInfo.Branch, -1)
 		if matches != nil {
-			return matches, nil
+			return matches, commitInfo, nil
 		}
 	}
-	return []string{}, nil
+	return []string{}, commitInfo, nil
 }
 
 // ResolveRevision returns an explicit commit SHA1 from commit SHA or ref (e.g. HEAD~2)

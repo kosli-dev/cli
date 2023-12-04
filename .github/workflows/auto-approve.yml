@@ -1,0 +1,65 @@
+name: Auto approve
+on:
+  pull_request_target:
+    types:
+      - opened
+    branches:
+      - main
+    
+jobs:
+  auto-approve:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
+
+    steps:
+      - name: check requester
+        run: |
+          # fail job if the requester is not a member of the organization
+
+          curl -s -H "Authorization: token ${{ secrets.READ_KOSLI_GH_ORG_MEMBERS }}" \
+            https://api.github.com/orgs/kosli-dev/members \
+            | jq -r ".[].login" \
+            | grep -w "${{ github.event.pull_request.user.login }}"
+          result=$?
+
+          if [[ $result -eq 0 ]]; then
+            echo "User ${{ github.event.pull_request.user.login }} is a member of kosli-dev"
+          else 
+            echo "User ${{ github.event.pull_request.user.login }} is not a member of kosli-dev"
+            exit 1
+          fi
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v40
+
+      - name: Check non critical
+        id: non-critical
+        run: |
+          ACCEPTED_PATHS="^bin/|^design-docs/"
+          CRITICAL=false
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            echo "$file"
+            # set CRITICAL as true when a file does not match the ACCEPTED_PATHS
+            [[ "$file" =~ ${ACCEPTED_PATHS} ]] || CRITICAL=true
+          done
+          echo "critical=${CRITICAL}" >> "$GITHUB_OUTPUT"
+
+      - name: Approve pull request
+        if: ${{ steps.non-critical.outputs.critical == 'false' }}
+        uses: hmarr/auto-approve-action@v3
+        with:
+          review-message: "Auto approved since only non critical files were changed"
+
+
+      - name: Merge to master
+        if: ${{ steps.non-critical.outputs.critical == 'false' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERGE_LABELS: ""
+          MERGE_METHOD: squash
+          MERGE_ERROR_FAIL: true
+        uses: pascalgn/automerge-action@v0.15.6

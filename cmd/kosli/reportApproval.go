@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,29 +12,46 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const reportApprovalShortDesc = `Report an approval of deploying an artifact to Kosli.  `
-const reportApprovalLongDesc = reportApprovalShortDesc + `
+const (
+	reportApprovalShortDesc = `Report an approval of deploying an artifact to an environment to Kosli.  `
+	reportApprovalLongDesc  = reportApprovalShortDesc + `
 ` + fingerprintDesc
+)
 
 const reportApprovalExample = `
-# Report that a file type artifact has been approved for deployment.
-# The approval is for the last 5 git commits
+# Report that an artifact with a provided fingerprint (sha256) has been approved for 
+# deployment to environment <yourEnvironmentName>.
+# The approval is for all git commits since the last approval to this environment.
+kosli report approval \
+	--api-token yourAPIToken \
+	--description "An optional description for the approval" \
+	--environment yourEnvironmentName \
+	--approver username \
+	--org yourOrgName \
+	--flow yourFlowName \
+	--fingerprint yourArtifactFingerprint
+
+# Report that a file type artifact has been approved for deployment to environment <yourEnvironmentName>.
+# The approval is for all git commits since the last approval to this environment.
 kosli report approval FILE.tgz \
 	--api-token yourAPIToken \
 	--artifact-type file \
 	--description "An optional description for the approval" \
-	--newest-commit $(git rev-parse HEAD) \
-	--oldest-commit $(git rev-parse HEAD~5) \
+	--environment yourEnvironmentName \
+	--newest-commit HEAD \
+	--approver username \
 	--org yourOrgName \
 	--flow yourFlowName 
 
 # Report that an artifact with a provided fingerprint (sha256) has been approved for deployment.
-# The approval is for the last 5 git commits
+# The approval is for all environments.
+# The approval is for all commits since the git commit of origin/production branch.
 kosli report approval \
 	--api-token yourAPIToken \
 	--description "An optional description for the approval" \
-	--newest-commit $(git rev-parse HEAD) \
-	--oldest-commit $(git rev-parse HEAD~5) \
+	--newest-commit HEAD \
+	--oldest-commit origin/production \
+	--approver username \
 	--org yourOrgName \
 	--flow yourFlowName \
 	--fingerprint yourArtifactFingerprint
@@ -47,12 +65,15 @@ type reportApprovalOptions struct {
 	srcRepoRoot        string
 	userDataFile       string
 	payload            ApprovalPayload
+	approver           string
 }
 
 type ApprovalPayload struct {
 	ArtifactFingerprint string              `json:"artifact_fingerprint"`
+	Environment         string              `json:"environment,omitempty"`
 	Description         string              `json:"description"`
 	CommitList          []string            `json:"src_commit_list"`
+	OldestCommit        string              `json:"oldest_commit,omitempty"`
 	Reviews             []map[string]string `json:"approvals"`
 	UserData            interface{}         `json:"user_data"`
 }
@@ -71,6 +92,11 @@ func newReportApprovalCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
+			err = RequireAtLeastOneOfFlags(cmd, []string{"environment", "oldest-commit"})
+			if err != nil {
+				return err
+			}
+
 			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.ArtifactFingerprint, false)
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
@@ -83,16 +109,18 @@ func newReportApprovalCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "F", "", fingerprintFlag)
+	cmd.Flags().StringVarP(&o.payload.Environment, "environment", "e", "", approvalEnvironmentNameFlag)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", approvalDescriptionFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", approvalUserDataFlag)
 	cmd.Flags().StringVar(&o.oldestSrcCommit, "oldest-commit", "", oldestCommitFlag)
 	cmd.Flags().StringVar(&o.newestSrcCommit, "newest-commit", "HEAD", newestCommitFlag)
 	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", repoRootFlag)
+	cmd.Flags().StringVar(&o.approver, "approver", "", approverFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"flow", "oldest-commit"})
+	err := RequireFlags(cmd, []string{"flow"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
@@ -113,10 +141,69 @@ func (o *reportApprovalOptions) run(args []string, request bool) error {
 	if err != nil {
 		return err
 	}
-
-	o.payload.CommitList, err = o.payloadCommitList()
+	gitView, err := gitview.New(o.srcRepoRoot)
 	if err != nil {
 		return err
+	}
+
+	o.newestSrcCommit, err = gitView.ResolveRevision(o.newestSrcCommit)
+	if err != nil {
+		return err
+	}
+
+	if o.oldestSrcCommit != "" {
+		o.payload.OldestCommit, err = gitView.ResolveRevision(o.oldestSrcCommit)
+		if err != nil {
+			return err
+		}
+		o.payload.CommitList, err = o.payloadCommitList()
+		if err != nil {
+			return err
+		}
+	} else {
+		// Request last approved git commit from kosli server
+		url := fmt.Sprintf("%s/api/v2/approvals/%s/%s/artifact-commit/%s", global.Host, global.Org,
+			o.flowName, o.payload.Environment)
+
+		getLastApprovedGitCommitParams := &requests.RequestParams{
+			Method:   http.MethodGet,
+			URL:      url,
+			DryRun:   false,
+			Password: global.ApiToken,
+		}
+
+		lastApprovedGitCommitResponse, err := kosliClient.Do(getLastApprovedGitCommitParams)
+
+		if err != nil {
+			if !global.DryRun {
+				// error and not dry run -> print error message and return err
+				return err
+			} else {
+				// error and dry run -> set src_commit_list to o.newestCommit do not send oldestCommit
+				o.payload.CommitList = []string{o.newestSrcCommit}
+			}
+		} else {
+			var responseData map[string]interface{}
+			err = json.Unmarshal([]byte(lastApprovedGitCommitResponse.Body), &responseData)
+			if err != nil {
+				fmt.Println("unmarshal failed")
+				return err
+			}
+
+			if responseData["commit_sha"] != nil {
+				// no error we get back a git commit -> call o.payloadCommitList()
+				o.oldestSrcCommit = responseData["commit_sha"].(string)
+				o.payload.OldestCommit = o.oldestSrcCommit
+				o.payload.CommitList, err = o.payloadCommitList()
+				if err != nil {
+					return err
+				}
+			} else {
+				// no error we get back None -> set src_commit_list to o.newestCommit do not send oldestCommit
+				o.payload.CommitList = []string{o.newestSrcCommit}
+			}
+
+		}
 	}
 
 	url := fmt.Sprintf("%s/api/v2/approvals/%s/%s", global.Host, global.Org, o.flowName)
@@ -147,12 +234,16 @@ func (o *reportApprovalOptions) payloadArtifactSHA256(args []string) (string, er
 }
 
 func (o *reportApprovalOptions) payloadReviews(request bool) []map[string]string {
+	approver := "External"
+	if o.approver != "" {
+		approver = o.approver
+	}
 	if !request {
 		return []map[string]string{
 			{
 				"state":        "APPROVED",
 				"comment":      o.payload.Description,
-				"approved_by":  "External",
+				"approved_by":  approver,
 				"approval_url": "undefined",
 			},
 		}

@@ -25,6 +25,8 @@ type cmdTestCase struct {
 }
 
 // executeCommandStdinC executes a command as a user would and return the output
+// this creates a new kosli command that is run, but it cannot be used in other tests
+// because newRootCmd overwrites the global options
 func executeCommandC(cmd string) (*cobra.Command, string, error) {
 	args, err := shellwords.Parse(cmd)
 	if err != nil {
@@ -192,6 +194,27 @@ func CreateArtifact(flowName, artifactFingerprint, artifactName string, t *testi
 		payload: ArtifactPayload{
 			Fingerprint: artifactFingerprint,
 			GitCommit:   "0fc1ba9876f91b215679f3649b8668085d820ab5",
+			BuildUrl:    "www.yr.no",
+			CommitUrl:   "www.nrk.no",
+		},
+	}
+
+	o.fingerprintOptions = new(fingerprintOptions)
+
+	err := o.run([]string{artifactName})
+	require.NoError(t, err, "artifact should be created without error")
+}
+
+func CreateArtifactWithCommit(flowName, artifactFingerprint, artifactName string, gitCommit string, t *testing.T) {
+	t.Helper()
+	o := &reportArtifactOptions{
+		srcRepoRoot: "../..",
+		flowName:    flowName,
+		//name:         "",
+		gitReference: gitCommit,
+		payload: ArtifactPayload{
+			Fingerprint: artifactFingerprint,
+			GitCommit:   gitCommit,
 			BuildUrl:    "www.yr.no",
 			CommitUrl:   "www.nrk.no",
 		},

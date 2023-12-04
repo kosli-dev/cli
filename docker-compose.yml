@@ -11,10 +11,28 @@ services:
     ports:
       - 5001:5000
 
-  server:
+  server-index:
     networks: [ cli_net ]
     depends_on: [ mongo_rs_initiate, minio ]
-    image: 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:latest
+    image: 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:c8efd7a
+    command: /app/src/documentdb/wait_till_ready_or_raise.py
+    container_name: cli_kosli_server-index
+    read_only: true
+    env_file: [ "./mongo/mongo.env" ]
+    stop_signal: SIGINT
+    tmpfs:
+      - /tmp
+
+  server:
+    networks: [ cli_net ]
+    depends_on:
+      mongo_rs_initiate:
+        condition: service_started
+      minio:
+        condition: service_started
+      server-index:
+        condition: service_completed_successfully
+    image: 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:c8efd7a
     env_file: [ "./mongo/mongo.env" ]
     environment:
       KOSLI_HOSTNAME: localhost

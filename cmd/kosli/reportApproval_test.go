@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/digest"
+	"github.com/kosli-dev/cli/internal/gitview"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -12,6 +15,13 @@ type ApprovalReportTestSuite struct {
 	defaultKosliArguments string
 	artifactFingerprint   string
 	flowName              string
+	envName               string
+	gitCommit             string
+	artifactPath          string
+}
+
+type reportApprovalTestConfig struct {
+	createSnapshot bool
 }
 
 func (suite *ApprovalReportTestSuite) SetupTest() {
@@ -22,11 +32,25 @@ func (suite *ApprovalReportTestSuite) SetupTest() {
 	}
 
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
-	suite.artifactFingerprint = "847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0"
 	suite.flowName = "approval-test"
+	suite.envName = "staging"
+	t := suite.T()
 
-	CreateFlow(suite.flowName, suite.T())
-	CreateArtifact(suite.flowName, suite.artifactFingerprint, "foobar", suite.T())
+	gitView, err := gitview.New("../..")
+	require.NoError(t, err, "Failed to create gitview")
+
+	suite.gitCommit, err = gitView.ResolveRevision("HEAD~5")
+	require.NoError(t, err, "Failed to get HEAD~5")
+
+	suite.artifactPath = "testdata/report.xml"
+	// We cannot get the digest of the file by running the 'kosli fingerprint' command
+	// by using executeCommandC() because this function overwrites the global options
+	suite.artifactFingerprint, err = digest.FileSha256(suite.artifactPath)
+	require.NoError(t, err, "Failed to calculate fingerprint")
+
+	CreateFlow(suite.flowName, t)
+	CreateArtifactWithCommit(suite.flowName, suite.artifactFingerprint, suite.artifactPath, suite.gitCommit, t)
+	CreateEnv(global.Org, suite.envName, "server", t)
 }
 
 func (suite *ApprovalReportTestSuite) TestApprovalReportCmd() {
@@ -37,8 +61,35 @@ func (suite *ApprovalReportTestSuite) TestApprovalReportCmd() {
 			--newest-commit HEAD --oldest-commit HEAD~3` + suite.defaultKosliArguments,
 			golden: fmt.Sprintf("approval created for artifact: %s\n", suite.artifactFingerprint),
 		},
+		{
+			name: "report approval with an environment name works",
+			cmd: `report approval --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + ` --repo-root ../.. 
+			--newest-commit HEAD --oldest-commit HEAD~3` + ` --environment staging` + suite.defaultKosliArguments,
+			golden: fmt.Sprintf("approval created for artifact: %s\n", suite.artifactFingerprint),
+		},
+		{
+			wantError: true,
+			name:      "report approval with no environment name and no oldest commit fails",
+			cmd: `report approval --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + ` --repo-root ../.. ` +
+				suite.defaultKosliArguments,
+			golden: "Error: at least one of --environment, --oldest-commit is required\n",
+		},
+		{
+			name: "report approval with an environment name and no oldest-commit and no newest-commit works",
+			cmd: `report approval --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + ` --repo-root ../.. ` +
+				` --environment ` + suite.envName + suite.defaultKosliArguments,
+			golden: fmt.Sprintf("approval created for artifact: %s\n", suite.artifactFingerprint),
+			additionalConfig: reportApprovalTestConfig{
+				createSnapshot: true,
+			},
+		},
 	}
-	runTestCmd(suite.T(), tests)
+	for _, t := range tests {
+		if t.additionalConfig != nil && t.additionalConfig.(reportApprovalTestConfig).createSnapshot {
+			ReportServerArtifactToEnv([]string{suite.artifactPath}, suite.envName, suite.T())
+		}
+		runTestCmd(suite.T(), []cmdTestCase{t})
+	}
 }
 
 func TestApprovalReportCommandTestSuite(t *testing.T) {
