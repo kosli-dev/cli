@@ -94,6 +94,7 @@ The service principal needs to have the following permissions:
 	workflowDescriptionFlag     = "[optional] The Kosli Workflow description."
 	visibilityFlag              = "[defaulted] The visibility of the Kosli flow. Valid visibilities are [public, private]."
 	templateFlag                = "[defaulted] The comma-separated list of required compliance controls names."
+	templateFileFlag            = "The path to a yaml template file."
 	stepsFlag                   = "[defaulted] The comma-separated list of required audit trail steps names."
 	approvalUserDataFlag        = "[optional] The path to a JSON file containing additional data you would like to attach to this approval."
 	evidenceUserDataFlag        = "[optional] The path to a JSON file containing additional data you would like to attach to this evidence."
