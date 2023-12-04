@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	urlPackage "net/url"
 	"os"
 	"path/filepath"
@@ -661,7 +660,7 @@ func handleSnapshotExpressions(expression string) (string, string, error) {
 	if items[0] == "" {
 		return "", "", fmt.Errorf("invalid expression: %s. Environment name is missing", expression)
 	}
-	return items[0], url.PathEscape(separator + items[1]), nil
+	return items[0], urlPackage.PathEscape(separator + items[1]), nil
 }
 
 // handleArtifactExpression parses artifact expressions (with @ and :) and returns

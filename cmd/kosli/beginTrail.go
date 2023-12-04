@@ -9,10 +9,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const createTrailShortDesc = `Create or update a Kosli flow trail.`
+const createTrailShortDesc = `Begin or update a Kosli flow trail.`
 
 const createTrailExample = `
-# create/update a Kosli flow trail:
+# begin/update a Kosli flow trail:
 kosli create trail yourTrailName \
 	--description yourTrailDescription \
 	--template-file /path/to/your/template/file.yml \
@@ -21,7 +21,7 @@ kosli create trail yourTrailName \
 	--org yourOrgName
 `
 
-type createTrailOptions struct {
+type beginTrailOptions struct {
 	payload      TrailPayload
 	templateFile string
 	userDataFile string
@@ -34,8 +34,8 @@ type TrailPayload struct {
 	UserData    interface{} `json:"user_data"`
 }
 
-func newCreateTrailCmd(out io.Writer) *cobra.Command {
-	o := new(createTrailOptions)
+func newBeginTrailCmd(out io.Writer) *cobra.Command {
+	o := new(beginTrailOptions)
 	cmd := &cobra.Command{
 		Use:     "trail TRAIL-NAME",
 		Hidden:  true,
@@ -73,7 +73,7 @@ func newCreateTrailCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *createTrailOptions) run(args []string) error {
+func (o *beginTrailOptions) run(args []string) error {
 	url := fmt.Sprintf("%s/api/v2/trails/%s/%s", global.Host, global.Org, o.flow)
 
 	o.payload.Name = args[0]
