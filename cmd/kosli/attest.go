@@ -18,6 +18,7 @@ func newAttestCmd(out io.Writer) *cobra.Command {
 	// Add subcommands
 	cmd.AddCommand(
 		newAttestArtifactCmd(out),
+		newAttestGenericCmd(out),
 	)
 	return cmd
 }

@@ -17,7 +17,7 @@ type CommitInfo struct {
 	Author    string   `json:"author"`
 	Timestamp int64    `json:"timestamp"`
 	Branch    string   `json:"branch"`
-	Parents   []string `json:"parents"`
+	Parents   []string `json:"parents,omitempty"`
 }
 
 // GitView
