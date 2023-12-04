@@ -21,6 +21,7 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 		newCreateFlowCmd(out),
 		newCreateAuditTrailCmd(out),
 		newCreateFlowWithTemplateCmd(out),
+		newCreateTrailCmd(out),
 	)
 	return cmd
 }

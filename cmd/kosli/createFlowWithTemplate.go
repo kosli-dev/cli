@@ -77,7 +77,7 @@ func (o *createFlowWithTemplateOptions) run(args []string) error {
 	url := fmt.Sprintf("%s/api/v2/flows/%s/template_file", global.Host, global.Org)
 
 	o.payload.Name = args[0]
-	form, err := newFlowForm(o.payload, o.TemplateFile)
+	form, err := newFlowForm(o.payload, o.TemplateFile, false)
 	if err != nil {
 		return err
 	}
@@ -98,8 +98,8 @@ func (o *createFlowWithTemplateOptions) run(args []string) error {
 
 // newFlowForm constructs a list of FormItems for a flow with a template file
 // form submission.
-func newFlowForm(payload interface{}, templateFile string) ([]requests.FormItem, error) {
-	if templateFile == "" {
+func newFlowForm(payload interface{}, templateFile string, templateRequired bool) ([]requests.FormItem, error) {
+	if templateFile == "" && templateRequired {
 		return []requests.FormItem{}, fmt.Errorf("cannot create a flow form without a template file")
 	}
 	form := []requests.FormItem{
