@@ -13,7 +13,7 @@ const createTrailShortDesc = `Begin or update a Kosli flow trail.`
 
 const createTrailExample = `
 # begin/update a Kosli flow trail:
-kosli create trail yourTrailName \
+kosli begin trail yourTrailName \
 	--description yourTrailDescription \
 	--template-file /path/to/your/template/file.yml \
 	--user-data /path/to/your/user-data/file.json \
