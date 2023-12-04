@@ -54,6 +54,7 @@ The service principal needs to have the following permissions:
 	// flags
 	apiTokenFlag                = "The Kosli API token."
 	artifactName                = "[optional] Artifact display name, if different from file, image or directory name."
+	artifactDisplayName         = "[optional] Artifact display name, if different from file, image or directory name."
 	orgFlag                     = "The Kosli organization."
 	hostFlag                    = "[defaulted] The Kosli endpoint."
 	dryRunFlag                  = "[optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors."
@@ -63,6 +64,8 @@ The service principal needs to have the following permissions:
 	debugFlag                   = "[optional] Print debug logs to stdout. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default false)"
 	artifactTypeFlag            = "[conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'."
 	flowNameFlag                = "The Kosli flow name."
+	trailNameFlag               = "The Kosli trail name."
+	templateArtifactName        = "The name of the artifact in the yml template file."
 	auditTrailNameFlag          = "The Kosli audit trail name."
 	workflowIDFlag              = "The ID of the workflow."
 	stepNameFlag                = "The name of the step as defined in the audit trail's steps."
@@ -239,6 +242,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		// New syntax commands
 		newGetCmd(out),
 		newCreateCmd(out),
+		newAttestCmd(out),
 		newReportCmd(out),
 		newDiffCmd(out),
 		newAllowCmd(out),
