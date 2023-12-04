@@ -98,7 +98,7 @@ func (o *beginTrailOptions) run(args []string) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("flow '%s' was created", o.payload.Name)
+		logger.Info("trail '%s' was created", o.payload.Name)
 	}
 	return err
 }
