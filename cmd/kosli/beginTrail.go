@@ -96,9 +96,14 @@ func (o *beginTrailOptions) run(args []string) error {
 		DryRun:   global.DryRun,
 		Password: global.ApiToken,
 	}
-	_, err = kosliClient.Do(reqParams)
+
+	res, err := kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("trail '%s' was begun", o.payload.Name)
+		verb := "begun"
+		if res.Resp.StatusCode == 200 {
+			verb = "updated"
+		}
+		logger.Info("trail '%s' was %s", o.payload.Name, verb)
 	}
 	return err
 }

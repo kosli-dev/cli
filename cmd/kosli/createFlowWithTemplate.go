@@ -89,9 +89,13 @@ func (o *createFlowWithTemplateOptions) run(args []string) error {
 		DryRun:   global.DryRun,
 		Password: global.ApiToken,
 	}
-	_, err = kosliClient.Do(reqParams)
+	res, err := kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("flow '%s' was created", o.payload.Name)
+		verb := "created"
+		if res.Resp.StatusCode == 200 {
+			verb = "updated"
+		}
+		logger.Info("flow '%s' was %s", o.payload.Name, verb)
 	}
 	return err
 }
