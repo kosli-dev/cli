@@ -237,6 +237,29 @@ func CreateArtifact(flowName, artifactFingerprint, artifactName string, t *testi
 	require.NoError(t, err, "artifact should be created without error")
 }
 
+// CreateArtifactOnTrail creates an artifact on a trail on the server
+func CreateArtifactOnTrail(flowName, trailName, step_name, artifactFingerprint, artifactName string, t *testing.T) {
+	t.Helper()
+	o := &attestArtifactOptions{
+		srcRepoRoot:  "../..",
+		flowName:     flowName,
+		gitReference: "0fc1ba9876f91b215679f3649b8668085d820ab5",
+		payload: AttestArtifactPayload{
+			Fingerprint: artifactFingerprint,
+			GitCommit:   "0fc1ba9876f91b215679f3649b8668085d820ab5",
+			BuildUrl:    "www.yr.no",
+			CommitUrl:   "www.nrk.no",
+			TrailName:   trailName,
+			Name:        step_name,
+		},
+	}
+
+	o.fingerprintOptions = new(fingerprintOptions)
+
+	err := o.run([]string{artifactName})
+	require.NoError(t, err, "artifact should be created without error")
+}
+
 func CreateArtifactWithCommit(flowName, artifactFingerprint, artifactName string, gitCommit string, t *testing.T) {
 	t.Helper()
 	o := &reportArtifactOptions{

@@ -146,7 +146,6 @@ func newAttestGenericCmd(out io.Writer) *cobra.Command {
 	}
 
 	ci := WhichCI()
-	// addArtifactEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
 	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "F", "", attestationFingerprintFlag)
 	cmd.Flags().StringVar(&o.commitSHA, "commit", DefaultValue(ci, "git-commit"), attestationCommitFlag)
 	cmd.Flags().StringVarP(&o.payload.Url, "url", "b", DefaultValue(ci, "build-url"), attestationUrlFlag)
