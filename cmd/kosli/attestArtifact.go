@@ -41,27 +41,28 @@ const attestArtifactLongDesc = attestArtifactShortDesc + `
 const attestArtifactExample = `
 # Attest to a Kosli flow that a file type artifact has been created
 kosli attest artifact FILE.tgz \
-	--api-token yourApiToken \
 	--artifact-type file \
 	--build-url https://exampleci.com \
 	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
 	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
-	--org yourOrgName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--name yourTemplateArtifactName
+	--name yourTemplateArtifactName \
+	--api-token yourApiToken \
+	--org yourOrgName
+
 
 # Attest to a Kosli flow that an artifact with a provided fingerprint (sha256) has been created
 kosli attest artifact ANOTHER_FILE.txt \
-	--api-token yourApiToken \
 	--build-url https://exampleci.com \
 	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
 	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
-	--org yourOrgName \
 	--flow yourFlowName \
 	--fingerprint yourArtifactFingerprint \
 	--trail yourTrailName \
-	--name yourTemplateArtifactName
+	--name yourTemplateArtifactName \
+	--api-token yourApiToken \
+	--org yourOrgName
 `
 
 func newAttestArtifactCmd(out io.Writer) *cobra.Command {
@@ -72,6 +73,7 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 		Short:   attestArtifactShortDesc,
 		Long:    attestArtifactLongDesc,
 		Example: attestArtifactExample,
+		Args:    cobra.MaximumNArgs(1),
 		Hidden:  true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})

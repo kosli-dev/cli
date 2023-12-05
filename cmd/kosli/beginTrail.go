@@ -9,9 +9,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const createTrailShortDesc = `Begin or update a Kosli flow trail.`
+const beginTrailShortDesc = `Begin or update a Kosli flow trail.`
 
-const createTrailExample = `
+const beginTrailExample = `
 # begin/update a Kosli flow trail:
 kosli begin trail yourTrailName \
 	--description yourTrailDescription \
@@ -39,9 +39,9 @@ func newBeginTrailCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "trail TRAIL-NAME",
 		Hidden:  true,
-		Short:   createTrailShortDesc,
-		Long:    createTrailShortDesc,
-		Example: createTrailExample,
+		Short:   beginTrailShortDesc,
+		Long:    beginTrailShortDesc,
+		Example: beginTrailExample,
 		Args:    cobra.MaximumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
