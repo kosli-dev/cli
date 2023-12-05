@@ -146,6 +146,22 @@ func CreateFlow(flowName string, t *testing.T) {
 	require.NoError(t, err, "flow should be created without error")
 }
 
+// CreateFlowWithTemplate creates a flow with a yaml template on the server
+func CreateFlowWithTemplate(flowName, templatePath string, t *testing.T) {
+	t.Helper()
+	o := &createFlowWithTemplateOptions{
+		payload: FlowWithTemplatePayload{
+			Name:        flowName,
+			Description: "test flow",
+			Visibility:  "private",
+		},
+		TemplateFile: templatePath,
+	}
+
+	err := o.run([]string{flowName})
+	require.NoError(t, err, "flow should be created without error")
+}
+
 func CreateAuditTrail(auditTrailName string, t *testing.T) {
 	t.Helper()
 	o := &createAuditTrailOptions{

@@ -29,7 +29,7 @@ func (suite *CreateFlowWithTemplateCommandTestSuite) TestCreateFlowCmd() {
 		{
 			wantError: true,
 			name:      "fails when more arguments are provided",
-			cmd:       "create flow2 newFlow xxx" + suite.defaultKosliArguments,
+			cmd:       "create flow2 newFlowWithTemplate xxx" + suite.defaultKosliArguments,
 			golden:    "Error: accepts at most 1 arg(s), received 2\n",
 		},
 		{
@@ -41,35 +41,35 @@ func (suite *CreateFlowWithTemplateCommandTestSuite) TestCreateFlowCmd() {
 		{
 			wantError: true,
 			name:      "fails when --template-file is missing",
-			cmd:       "create flow2 newFlow --description \"my new flow\" " + suite.defaultKosliArguments,
+			cmd:       "create flow2 newFlowWithTemplate --description \"my new flow\" " + suite.defaultKosliArguments,
 			golden:    "Error: required flag(s) \"template-file\" not set\n",
 		},
 		{
 			wantError:   true,
 			name:        "creating a flow with an invalid template fails",
-			cmd:         "create flow2 newFlow --template-file testdata/invalid_template.yml --description \"my new flow\" " + suite.defaultKosliArguments,
+			cmd:         "create flow2 newFlowWithTemplate --template-file testdata/invalid_template.yml --description \"my new flow\" " + suite.defaultKosliArguments,
 			goldenRegex: "Error: template file is invalid 1 validation error for Template\n.*",
 		},
 		{
-			name:   "can create a flow with a valid template works",
-			cmd:    "create flow2 newFlow --template-file testdata/valid_template.yml --description \"my new flow\" " + suite.defaultKosliArguments,
-			golden: "flow 'newFlow' was created\n",
+			name:   "can create a flow with a valid template",
+			cmd:    "create flow2 newFlowWithTemplate --template-file testdata/valid_template.yml --description \"my new flow\" " + suite.defaultKosliArguments,
+			golden: "flow 'newFlowWithTemplate' was created\n",
 		},
 		{
 			name:   "re-creating a flow updates its metadata",
-			cmd:    "create flow2 newFlow --template-file testdata/valid_template.yml --description \"changed description\" " + suite.defaultKosliArguments,
-			golden: "flow 'newFlow' was updated\n",
+			cmd:    "create flow2 newFlowWithTemplate --template-file testdata/valid_template.yml --description \"changed description\" " + suite.defaultKosliArguments,
+			golden: "flow 'newFlowWithTemplate' was updated\n",
 		},
 		{
 			wantError: true,
 			name:      "missing --org flag causes an error",
-			cmd:       "create flow2 newFlow --description \"my new flow\" -H http://localhost:8001 -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
+			cmd:       "create flow2 newFlowWithTemplate --description \"my new flow\" -H http://localhost:8001 -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
 			golden:    "Error: --org is not set\nUsage: kosli create flow2 FLOW-NAME [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "missing --api-token flag causes an error",
-			cmd:       "create flow2 newFlow --description \"my new flow\" --org cyber-dojo -H http://localhost:8001",
+			cmd:       "create flow2 newFlowWithTemplate --description \"my new flow\" --org cyber-dojo -H http://localhost:8001",
 			golden:    "Error: --api-token is not set\nUsage: kosli create flow2 FLOW-NAME [flags]\n",
 		},
 		{
