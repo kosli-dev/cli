@@ -58,7 +58,7 @@ func newSnapshotAzureAppsCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.azureStaticCredentials.SubscriptionId, "azure-subscription-id", "", azureSubscriptionIdFlag)
 	cmd.Flags().StringVar(&o.azureStaticCredentials.ResourceGroupName, "azure-resource-group-name", "", azureResourceGroupNameFlag)
 	cmd.Flags().BoolVar(&o.azureStaticCredentials.DownloadLogsAsZip, "zip", false, "Download logs from Azure as zip files")
-	cmd.Flags().BoolVar(&o.azureStaticCredentials.AllowDigestsFromRegistry, "use-registry-digests", false, "Use digests from registry instead of Azure")
+	cmd.Flags().BoolVar(&o.azureStaticCredentials.AllowDigestsFromRegistry, "use-registry", false, "Use digests from ACR as a fallback when digests are not available from app logs")
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{

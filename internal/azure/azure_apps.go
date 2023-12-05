@@ -4,13 +4,13 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 	"sync"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/containers/azcontainerregistry"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
@@ -169,8 +169,8 @@ func (azureClient *AzureClient) NewAppData(app *armappservice.Site, logger *logg
 		if err != nil {
 			return AppData{}, err
 		}
-		// end temp code
 	}
+	// end temp code
 
 	logger.Debug("For app %s found: image=%s, fingerprint=%s, startedAt=%d", *app.Name, imageName, fingerprint, startedAt)
 
@@ -178,34 +178,49 @@ func (azureClient *AzureClient) NewAppData(app *armappservice.Site, logger *logg
 }
 
 func (azureClient *AzureClient) GetImageDigestFromRegistry(imageName string, logger *logger.Logger) (digest string, err error) {
-	logger.Debug("Getting image digest from registry for image %s", imageName)
-	staticCreds := azureClient.Credentials
-	credentials, err := azidentity.NewClientSecretCredential(staticCreds.TenantId, staticCreds.ClientId, staticCreds.ClientSecret, nil)
-	if err != nil {
-		return "", err
-	}
 	registryUrl, repoName, tag := parseImageName(imageName)
 
+	credentials, err := azidentity.NewClientSecretCredential(azureClient.Credentials.TenantId,
+		azureClient.Credentials.ClientId, azureClient.Credentials.ClientSecret, nil)
+	if err != nil {
+		return "", err
+	}
+	registryUrl = fmt.Sprintf("https://%s", registryUrl)
 	client, err := azcontainerregistry.NewClient(registryUrl, credentials, nil)
 	if err != nil {
-		logger.Debug("Error creating client for registry %s", registryUrl)
 		return "", err
 	}
-	manifest, err := client.GetManifest(context.Background(), registryUrl+"/"+repoName, tag,
-		&azcontainerregistry.ClientGetManifestOptions{Accept: to.Ptr("application/vnd.docker.distribution.manifest.v2+json")})
-	if err != nil {
-		logger.Debug("Error getting manifest for registry url %s")
-		return "", err
-	}
-	var manifestData []byte
-	_, err = manifest.ManifestData.Read(manifestData)
-	if err != nil {
-		logger.Debug("Error reading manifest data for registryUrl=%s, repoName=%s, tag=%s", registryUrl, repoName, tag)
-		return "", err
-	}
-	logger.Debug("Manifest data for image %s: %s", imageName, manifestData)
 
-	return "", nil
+	manifestRes, err := client.GetManifest(context.TODO(), repoName, tag, nil)
+	if err != nil {
+		return "", err
+	}
+	reader, err := azcontainerregistry.NewDigestValidationReader(*manifestRes.DockerContentDigest, manifestRes.ManifestData)
+	if err != nil {
+		return "", err
+	}
+	manifest, err := io.ReadAll(reader)
+	if err != nil {
+		return "", err
+	}
+
+	type Config struct {
+		Digest string `json:"digest"`
+	}
+
+	type SimpleManifest struct {
+		Config Config `json:"config"`
+	}
+
+	var manifestData SimpleManifest
+	err = json.Unmarshal(manifest, &manifestData)
+	if err != nil {
+		return "", err
+	}
+
+	digest = manifestData.Config.Digest
+
+	return digest, nil
 }
 
 func parseImageName(imageName string) (registryUrl, repoName, tag string) {
@@ -219,7 +234,7 @@ func parseImageName(imageName string) (registryUrl, repoName, tag string) {
 
 	if strings.Contains(splitFullImageName[1], "@sha256:") {
 		// Example: tookyregistry.azurecr.io/tooky@sha256:cb29a6..7
-		imageNameAndTag := strings.SplitN(splitFullImageName[1], "@sha256:", 2)
+		imageNameAndTag := strings.SplitN(splitFullImageName[1], "@", 2)
 		repoName = imageNameAndTag[0]
 		tag = imageNameAndTag[1]
 	} else if strings.Contains(splitFullImageName[1], ":") {
