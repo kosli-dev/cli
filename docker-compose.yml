@@ -14,7 +14,7 @@ services:
   server-index:
     networks: [ cli_net ]
     depends_on: [ mongo_rs_initiate, minio ]
-    image: 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:c8efd7a
+    image: 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:latest
     command: /app/src/documentdb/wait_till_ready_or_raise.py
     container_name: cli_kosli_server-index
     read_only: true
@@ -32,10 +32,11 @@ services:
         condition: service_started
       server-index:
         condition: service_completed_successfully
-    image: 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:c8efd7a
+    image: 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:latest
     env_file: [ "./mongo/mongo.env" ]
     environment:
       KOSLI_HOSTNAME: localhost
+      TEST_MODE: cli
       EVIDENCE_BUCKET_ENDPOINT_URL: http://minio:9000
       EVIDENCE_BUCKET_NAME: cli-tests-evidence
       AWS_ACCESS_KEY_ID: ROOTUSER
