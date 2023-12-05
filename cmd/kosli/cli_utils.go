@@ -459,6 +459,20 @@ func ValidateArtifactArg(args []string, artifactType, inputSha256 string, always
 	return nil
 }
 
+// ValidateAttestationArtifactArg validates the artifact name or path argument and fingerprint flag
+func ValidateAttestationArtifactArg(args []string, artifactType, inputSha256 string) error {
+	if artifactType != "" && (len(args) == 0 || args[0] == "") {
+		return fmt.Errorf("artifact name argument is required when --artifact-type is set")
+	}
+
+	if inputSha256 != "" {
+		if err := digest.ValidateDigest(inputSha256); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // ValidateRegistryFlags validates that you provide all registry information necessary for
 // remote digest.
 func ValidateRegistryFlags(cmd *cobra.Command, o *fingerprintOptions) error {

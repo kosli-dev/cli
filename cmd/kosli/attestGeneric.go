@@ -14,14 +14,14 @@ import (
 )
 
 type CommonAttestationPayload struct {
-	ArtifactFingerprint string              `json:"artifact_fingerprint,omitempty"`
-	Commit              *gitview.CommitInfo `json:"git_commit_info,omitempty"`
-	AttestationName     string              `json:"step_name"`
-	TargetArtifacts     []string            `json:"target_artifacts,omitempty"`
-	EvidenceURL         string              `json:"evidence_url,omitempty"`
-	EvidenceFingerprint string              `json:"evidence_fingerprint,omitempty"`
-	Url                 string              `json:"url,omitempty"`
-	UserData            interface{}         `json:"user_data,omitempty"`
+	ArtifactFingerprint string                   `json:"artifact_fingerprint,omitempty"`
+	Commit              *gitview.BasicCommitInfo `json:"git_commit_info,omitempty"`
+	AttestationName     string                   `json:"step_name"`
+	TargetArtifacts     []string                 `json:"target_artifacts,omitempty"`
+	EvidenceURL         string                   `json:"evidence_url,omitempty"`
+	EvidenceFingerprint string                   `json:"evidence_fingerprint,omitempty"`
+	Url                 string                   `json:"url,omitempty"`
+	UserData            interface{}              `json:"user_data,omitempty"`
 }
 
 type GenericAttestationPayload struct {
@@ -119,6 +119,7 @@ func newAttestGenericCmd(out io.Writer) *cobra.Command {
 		Short:   attestGenericShortDesc,
 		Long:    attestGenericLongDesc,
 		Example: attestGenericExample,
+		Args:    cobra.MaximumNArgs(1),
 		Hidden:  true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
@@ -126,10 +127,15 @@ func newAttestGenericCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
-			// err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.ArtifactFingerprint, false)
-			// if err != nil {
-			// 	return ErrorBeforePrintingUsage(cmd, err.Error())
-			// }
+			err = MuXRequiredFlags(cmd, []string{"fingerprint", "artifact-type"}, false)
+			if err != nil {
+				return err
+			}
+
+			err = ValidateAttestationArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.ArtifactFingerprint)
+			if err != nil {
+				return ErrorBeforePrintingUsage(cmd, err.Error())
+			}
 
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
 
@@ -141,18 +147,18 @@ func newAttestGenericCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	// addArtifactEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
-	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "F", "", fingerprintFlag)
-	cmd.Flags().StringVar(&o.commitSHA, "commit", DefaultValue(ci, "git-commit"), commitEvidenceFlag)
-	cmd.Flags().StringVarP(&o.payload.Url, "url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
-	cmd.Flags().StringVarP(&o.attestationNameTemplate, "name", "n", "", evidenceNameFlag)
+	cmd.Flags().StringVarP(&o.payload.ArtifactFingerprint, "fingerprint", "F", "", attestationFingerprintFlag)
+	cmd.Flags().StringVar(&o.commitSHA, "commit", DefaultValue(ci, "git-commit"), attestationCommitFlag)
+	cmd.Flags().StringVarP(&o.payload.Url, "url", "b", DefaultValue(ci, "build-url"), attestationUrlFlag)
+	cmd.Flags().StringVarP(&o.attestationNameTemplate, "name", "n", "", attestationNameFlag)
 	cmd.Flags().StringVar(&o.payload.EvidenceFingerprint, "evidence-fingerprint", "", evidenceFingerprintFlag)
 	cmd.Flags().StringVar(&o.payload.EvidenceURL, "evidence-url", "", evidenceURLFlag)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.trailName, "trail", "T", "", trailNameFlag)
-	cmd.Flags().BoolVarP(&o.payload.Compliant, "compliant", "C", true, evidenceCompliantFlag)
-	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
+	cmd.Flags().BoolVarP(&o.payload.Compliant, "compliant", "C", true, attestationCompliantFlag)
+	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", attestationUserDataFlag)
 	cmd.Flags().StringSliceVarP(&o.evidencePaths, "evidence-paths", "e", []string{}, evidencePathsFlag)
-	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", repoRootFlag)
+	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", attestationRepoRootFlag)
 
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
@@ -193,11 +199,11 @@ func (o *attestGenericOptions) run(args []string) error {
 		if err != nil {
 			return err
 		}
-		o.payload.Commit, err = gv.GetCommitInfoFromCommitSHA(o.commitSHA)
+		commitInfo, err := gv.GetCommitInfoFromCommitSHA(o.commitSHA)
 		if err != nil {
 			return err
 		}
-		o.payload.Commit.Parents = []string{}
+		o.payload.Commit = &commitInfo.BasicCommitInfo
 	}
 
 	o.payload.UserData, err = LoadJsonData(o.userDataFilePath)
