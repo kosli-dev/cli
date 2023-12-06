@@ -90,22 +90,64 @@ func (o *pullRequestArtifactOptions) run(out io.Writer, args []string) error {
 	return err
 }
 
-func getGitProviderAndLabel(retriever interface{}) (string, string) {
-	label := "pull request"
-	provider := ""
-	t := reflect.TypeOf(retriever)
-	switch t {
-	case reflect.TypeOf(&gitlabUtils.GitlabConfig{}):
-		provider = "gitlab"
-		label = "merge request"
-	case reflect.TypeOf(&ghUtils.GithubConfig{}):
-		provider = "github"
-	case reflect.TypeOf(&azUtils.AzureConfig{}):
-		provider = "azure"
-	case reflect.TypeOf(&bbUtils.Config{}):
-		provider = "bitbucket"
+type PRAttestationPayload struct {
+	*CommonAttestationPayload
+	GitProvider  string              `json:"git_provider"`
+	PullRequests []*types.PREvidence `json:"pull_requests"`
+}
+
+type attestPROptions struct {
+	*CommonAttestationOptions
+	retriever interface{}
+	assert    bool
+	payload   PRAttestationPayload
+}
+
+func (o *attestPROptions) getRetriever() types.PRRetriever {
+	return o.retriever.(types.PRRetriever)
+}
+
+func (o *attestPROptions) run(args []string) error {
+	url := fmt.Sprintf("%s/api/v2/attestations/%s/%s/trail/%s/pull_request", global.Host, global.Org, o.flowName, o.trailName)
+
+	err := o.CommonAttestationOptions.run(args, o.payload.CommonAttestationPayload)
+	if err != nil {
+		return err
 	}
-	return provider, label
+
+	pullRequestsEvidence, err := getPullRequestsEvidence(o.getRetriever(), o.payload.Commit.Sha1, o.assert)
+	if err != nil {
+		return err
+	}
+
+	o.payload.PullRequests = pullRequestsEvidence
+
+	label := ""
+	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
+
+	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.evidencePaths)
+	if err != nil {
+		return err
+	}
+	// if we created a tar package, remove it after uploading it
+	if cleanupNeeded {
+		defer os.Remove(evidencePath)
+	}
+
+	logger.Debug("found %d %s(s) for commit: %s\n", len(pullRequestsEvidence), label, o.payload.Commit.Sha1)
+
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodPost,
+		URL:      url,
+		Form:     form,
+		DryRun:   global.DryRun,
+		Password: global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
+	if err == nil && !global.DryRun {
+		logger.Info("%s %s attestation '%s' is reported to trail: %s", o.payload.GitProvider, label, o.payload.AttestationName, o.trailName)
+	}
+	return err
 }
 
 type pullRequestCommitOptions struct {
@@ -177,4 +219,22 @@ func getPullRequestsEvidence(retriever types.PRRetriever, commit string, assert 
 		logger.Info("no %s found for given commit: %s", name, commit)
 	}
 	return pullRequestsEvidence, nil
+}
+
+func getGitProviderAndLabel(retriever interface{}) (string, string) {
+	label := "pull request"
+	provider := ""
+	t := reflect.TypeOf(retriever)
+	switch t {
+	case reflect.TypeOf(&gitlabUtils.GitlabConfig{}):
+		provider = "gitlab"
+		label = "merge request"
+	case reflect.TypeOf(&ghUtils.GithubConfig{}):
+		provider = "github"
+	case reflect.TypeOf(&azUtils.AzureConfig{}):
+		provider = "azure"
+	case reflect.TypeOf(&bbUtils.Config{}):
+		provider = "bitbucket"
+	}
+	return provider, label
 }

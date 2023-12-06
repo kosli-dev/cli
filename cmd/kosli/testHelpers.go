@@ -146,6 +146,38 @@ func CreateFlow(flowName string, t *testing.T) {
 	require.NoError(t, err, "flow should be created without error")
 }
 
+// CreateFlowWithTemplate creates a flow with a yaml template on the server
+func CreateFlowWithTemplate(flowName, templatePath string, t *testing.T) {
+	t.Helper()
+	o := &createFlowWithTemplateOptions{
+		payload: FlowWithTemplatePayload{
+			Name:        flowName,
+			Description: "test flow",
+			Visibility:  "private",
+		},
+		TemplateFile: templatePath,
+	}
+
+	err := o.run([]string{flowName})
+	require.NoError(t, err, "flow should be created without error")
+}
+
+// BeginTrail creates a trail with a yaml template on the server
+func BeginTrail(trailName, flowName, templatePath string, t *testing.T) {
+	t.Helper()
+	o := &beginTrailOptions{
+		payload: TrailPayload{
+			Name:        trailName,
+			Description: "test trail",
+		},
+		templateFile: templatePath,
+		flow:         flowName,
+	}
+
+	err := o.run([]string{trailName})
+	require.NoError(t, err, "trail should be begun without error")
+}
+
 func CreateAuditTrail(auditTrailName string, t *testing.T) {
 	t.Helper()
 	o := &createAuditTrailOptions{
@@ -196,6 +228,29 @@ func CreateArtifact(flowName, artifactFingerprint, artifactName string, t *testi
 			GitCommit:   "0fc1ba9876f91b215679f3649b8668085d820ab5",
 			BuildUrl:    "www.yr.no",
 			CommitUrl:   "www.nrk.no",
+		},
+	}
+
+	o.fingerprintOptions = new(fingerprintOptions)
+
+	err := o.run([]string{artifactName})
+	require.NoError(t, err, "artifact should be created without error")
+}
+
+// CreateArtifactOnTrail creates an artifact on a trail on the server
+func CreateArtifactOnTrail(flowName, trailName, step_name, artifactFingerprint, artifactName string, t *testing.T) {
+	t.Helper()
+	o := &attestArtifactOptions{
+		srcRepoRoot:  "../..",
+		flowName:     flowName,
+		gitReference: "0fc1ba9876f91b215679f3649b8668085d820ab5",
+		payload: AttestArtifactPayload{
+			Fingerprint: artifactFingerprint,
+			GitCommit:   "0fc1ba9876f91b215679f3649b8668085d820ab5",
+			BuildUrl:    "www.yr.no",
+			CommitUrl:   "www.nrk.no",
+			TrailName:   trailName,
+			Name:        step_name,
 		},
 	}
 

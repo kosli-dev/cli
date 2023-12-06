@@ -1,0 +1,10 @@
+version: 1
+trail:
+  attestations:
+  - name: bar
+    type: generic
+  artifacts:
+  - name: cli
+    attestations:
+    - name: foo
+      type: generic
