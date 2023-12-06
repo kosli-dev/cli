@@ -22,6 +22,7 @@ func newAttestCmd(out io.Writer) *cobra.Command {
 		newAttestGenericCmd(out),
 		newAttestSnykCmd(out),
 		newAttestJunitCmd(out),
+		newAttestJiraCmd(out),
 	)
 	return cmd
 }
