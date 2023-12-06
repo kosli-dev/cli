@@ -130,7 +130,7 @@ func (azureClient *AzureClient) NewAppData(app *armappservice.Site, logger *logg
 	linuxFxVersion := strings.Split(*app.Properties.SiteConfig.LinuxFxVersion, "|")
 	if len(linuxFxVersion) != 2 || linuxFxVersion[0] != "DOCKER" {
 		logger.Debug("app %s is not using a Docker image, skipping from report", *app.Name)
-		//  TODO: support other types of images, for now just skip
+		// TODO: support other types of images, for now just skip
 		return AppData{}, nil
 	}
 	imageName := linuxFxVersion[1]
