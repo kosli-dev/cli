@@ -11,13 +11,17 @@ import (
 	"github.com/kosli-dev/cli/internal/logger"
 )
 
+type BasicCommitInfo struct {
+	Sha1      string `json:"sha1"`
+	Message   string `json:"message"`
+	Author    string `json:"author"`
+	Timestamp int64  `json:"timestamp"`
+	Branch    string `json:"branch"`
+}
+
 type CommitInfo struct {
-	Sha1      string   `json:"sha1"`
-	Message   string   `json:"message"`
-	Author    string   `json:"author"`
-	Timestamp int64    `json:"timestamp"`
-	Branch    string   `json:"branch"`
-	Parents   []string `json:"parents"`
+	BasicCommitInfo
+	Parents []string `json:"parents"`
 }
 
 // GitView
@@ -181,12 +185,14 @@ func asCommitInfo(commit *object.Commit, branchName string) *CommitInfo {
 		commitParents = append(commitParents, hash.String())
 	}
 	return &CommitInfo{
-		Sha1:      commit.Hash.String(),
-		Message:   strings.TrimSpace(commit.Message),
-		Author:    commit.Author.String(),
-		Timestamp: commit.Author.When.UTC().Unix(),
-		Branch:    branchName,
-		Parents:   commitParents,
+		BasicCommitInfo: BasicCommitInfo{
+			Sha1:      commit.Hash.String(),
+			Message:   strings.TrimSpace(commit.Message),
+			Author:    commit.Author.String(),
+			Timestamp: commit.Author.When.UTC().Unix(),
+			Branch:    branchName,
+		},
+		Parents: commitParents,
 	}
 }
 

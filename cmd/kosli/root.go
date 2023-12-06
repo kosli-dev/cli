@@ -54,6 +54,7 @@ The service principal needs to have the following permissions:
 	// flags
 	apiTokenFlag                = "The Kosli API token."
 	artifactName                = "[optional] Artifact display name, if different from file, image or directory name."
+	artifactDisplayName         = "[optional] Artifact display name, if different from file, image or directory name."
 	orgFlag                     = "The Kosli organization."
 	hostFlag                    = "[defaulted] The Kosli endpoint."
 	dryRunFlag                  = "[optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors."
@@ -63,6 +64,8 @@ The service principal needs to have the following permissions:
 	debugFlag                   = "[optional] Print debug logs to stdout. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default false)"
 	artifactTypeFlag            = "[conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'."
 	flowNameFlag                = "The Kosli flow name."
+	trailNameFlag               = "The Kosli trail name."
+	templateArtifactName        = "The name of the artifact in the yml template file."
 	auditTrailNameFlag          = "The Kosli audit trail name."
 	workflowIDFlag              = "The ID of the workflow."
 	stepNameFlag                = "The name of the step as defined in the audit trail's steps."
@@ -91,13 +94,17 @@ The service principal needs to have the following permissions:
 	jiraPATFlag                 = "Jira personal access token (for self-hosted Jira)"
 	envDescriptionFlag          = "[optional] The environment description."
 	flowDescriptionFlag         = "[optional] The Kosli flow description."
+	trailDescriptionFlag        = "[optional] The Kosli trail description."
 	workflowDescriptionFlag     = "[optional] The Kosli Workflow description."
 	visibilityFlag              = "[defaulted] The visibility of the Kosli flow. Valid visibilities are [public, private]."
 	templateFlag                = "[defaulted] The comma-separated list of required compliance controls names."
+	templateFileFlag            = "The path to a yaml template file."
 	stepsFlag                   = "[defaulted] The comma-separated list of required audit trail steps names."
-	approvalUserDataFlag        = "[optional] The path to a JSON file containing additional data you would like to attach to this approval."
-	evidenceUserDataFlag        = "[optional] The path to a JSON file containing additional data you would like to attach to this evidence."
-	deploymentUserDataFlag      = "[optional] The path to a JSON file containing additional data you would like to attach to this deployment."
+	approvalUserDataFlag        = "[optional] The path to a JSON file containing additional data you would like to attach to the approval."
+	evidenceUserDataFlag        = "[optional] The path to a JSON file containing additional data you would like to attach to the evidence."
+	attestationUserDataFlag     = "[optional] The path to a JSON file containing additional data you would like to attach to the attestation."
+	deploymentUserDataFlag      = "[optional] The path to a JSON file containing additional data you would like to attach to the deployment."
+	trailUserDataFlag           = "[optional] The path to a JSON file containing additional data you would like to attach to the flow trail."
 	gitCommitFlag               = "The git commit from which the artifact was created. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
 	evidenceBuildUrlFlag        = "The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
 	buildUrlFlag                = "The url of CI pipeline that built the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
@@ -108,7 +115,7 @@ The service principal needs to have the following permissions:
 	bbPasswordFlag              = "Bitbucket App password. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#authentication for more details."
 	bbWorkspaceFlag             = "Bitbucket workspace ID."
 	commitPREvidenceFlag        = "Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
-	commitEvidenceFlag          = "Git commit for which to verify and given evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
+	commitEvidenceFlag          = "Git commit for which to verify a given evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
 	repositoryFlag              = "Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
 	assertPREvidenceFlag        = "[optional] Exit with non-zero code if no pull requests found for the given commit."
 	assertJiraEvidenceFlag      = "[optional] Exit with non-zero code if no jira issue reference found, or jira issue does not exist, for the given commit or branch."
@@ -159,6 +166,14 @@ The service principal needs to have the following permissions:
 	intervalFlag                = "[optional] Expression to define specified snapshots range."
 	showUnchangedArtifactsFlag  = "[defaulted] Show the unchanged artifacts present in both snapshots within the diff output."
 	approverFlag                = "[optional] The user approving an approval."
+	attestationFingerprintFlag  = "[optional] The SHA256 fingerprint of the artifact to attach the attestation to."
+	attestationCommitFlag       = "The git commit associated to the attestation. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
+	attestationUrlFlag          = "The url pointing to where the attestation came from or is related. (defaulted to the CI url in some CIs: https://docs.kosli.com/ci-defaults )."
+	attestationNameFlag         = "The name of the attestation as declared in the flow or trail yaml template."
+	attestationCompliantFlag    = "[defaulted] Whether the attestation is compliant or not. A boolean flag https://docs.kosli.com/faq/#boolean-flags"
+	attestationRepoRootFlag     = "[defaulted] The directory where the source git repository is available. Only used if --commit is used."
+	uploadJunitResultsFlag      = "[defaulted] Whether to upload the provided Junit results directory as evidence to Kosli or not."
+	attestationAssertFlag       = "[optional] Exit with non-zero code if the attestation is non-compliant"
 )
 
 var global *GlobalOpts
@@ -236,6 +251,8 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		// New syntax commands
 		newGetCmd(out),
 		newCreateCmd(out),
+		newBeginCmd(out),
+		newAttestCmd(out),
 		newReportCmd(out),
 		newDiffCmd(out),
 		newAllowCmd(out),

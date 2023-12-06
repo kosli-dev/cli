@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	urlPackage "net/url"
 	"os"
 	"path/filepath"
@@ -460,6 +459,20 @@ func ValidateArtifactArg(args []string, artifactType, inputSha256 string, always
 	return nil
 }
 
+// ValidateAttestationArtifactArg validates the artifact name or path argument and fingerprint flag
+func ValidateAttestationArtifactArg(args []string, artifactType, inputSha256 string) error {
+	if artifactType != "" && (len(args) == 0 || args[0] == "") {
+		return fmt.Errorf("artifact name argument is required when --artifact-type is set")
+	}
+
+	if inputSha256 != "" {
+		if err := digest.ValidateDigest(inputSha256); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // ValidateRegistryFlags validates that you provide all registry information necessary for
 // remote digest.
 func ValidateRegistryFlags(cmd *cobra.Command, o *fingerprintOptions) error {
@@ -661,7 +674,7 @@ func handleSnapshotExpressions(expression string) (string, string, error) {
 	if items[0] == "" {
 		return "", "", fmt.Errorf("invalid expression: %s. Environment name is missing", expression)
 	}
-	return items[0], url.PathEscape(separator + items[1]), nil
+	return items[0], urlPackage.PathEscape(separator + items[1]), nil
 }
 
 // handleArtifactExpression parses artifact expressions (with @ and :) and returns

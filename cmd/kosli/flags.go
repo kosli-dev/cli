@@ -55,6 +55,20 @@ func addGitlabFlags(cmd *cobra.Command, gitlabConfig *gitlabUtils.GitlabConfig, 
 	cmd.Flags().StringVar(&gitlabConfig.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
 }
 
+func addAttestationGithubFlags(cmd *cobra.Command, githubConfig *ghUtils.GithubConfig, ci string) {
+	cmd.Flags().StringVar(&githubConfig.Token, "github-token", "", githubTokenFlag)
+	cmd.Flags().StringVar(&githubConfig.Org, "github-org", DefaultValue(ci, "org"), githubOrgFlag)
+	cmd.Flags().StringVar(&githubConfig.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
+	cmd.Flags().StringVar(&githubConfig.BaseURL, "github-base-url", "", githubBaseURLFlag)
+}
+
+func addAttestationAzureFlags(cmd *cobra.Command, azureConfig *azUtils.AzureConfig, ci string) {
+	cmd.Flags().StringVar(&azureConfig.Token, "azure-token", "", azureTokenFlag)
+	cmd.Flags().StringVar(&azureConfig.OrgURL, "azure-org-url", DefaultValue(ci, "org-url"), azureOrgUrlFlag)
+	cmd.Flags().StringVar(&azureConfig.Project, "project", DefaultValue(ci, "project"), azureProjectFlag)
+	cmd.Flags().StringVar(&azureConfig.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
+}
+
 func addArtifactPRFlags(cmd *cobra.Command, o *pullRequestArtifactOptions, ci string) {
 	addArtifactEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
 	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
@@ -91,4 +105,21 @@ func addListFlags(cmd *cobra.Command, o *listOptions) {
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	cmd.Flags().IntVar(&o.pageNumber, "page", 1, pageNumberFlag)
 	cmd.Flags().IntVarP(&o.pageLimit, "page-limit", "n", 15, pageLimitFlag)
+}
+
+func addAttestationFlags(cmd *cobra.Command, o *CommonAttestationOptions, payload *CommonAttestationPayload, ci string) {
+	cmd.Flags().StringVarP(&payload.ArtifactFingerprint, "fingerprint", "F", "", attestationFingerprintFlag)
+	cmd.Flags().StringVar(&o.commitSHA, "commit", DefaultValue(ci, "git-commit"), attestationCommitFlag)
+	cmd.Flags().StringVarP(&payload.Url, "url", "b", DefaultValue(ci, "build-url"), attestationUrlFlag)
+	cmd.Flags().StringVarP(&o.attestationNameTemplate, "name", "n", "", attestationNameFlag)
+	cmd.Flags().StringVar(&payload.EvidenceFingerprint, "evidence-fingerprint", "", evidenceFingerprintFlag)
+	cmd.Flags().StringVar(&payload.EvidenceURL, "evidence-url", "", evidenceURLFlag)
+	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
+	cmd.Flags().StringVarP(&o.trailName, "trail", "T", "", trailNameFlag)
+	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", attestationUserDataFlag)
+	cmd.Flags().StringSliceVarP(&o.evidencePaths, "evidence-paths", "e", []string{}, evidencePathsFlag)
+	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", attestationRepoRootFlag)
+
+	addFingerprintFlags(cmd, o.fingerprintOptions)
+	addDryRunFlag(cmd)
 }
