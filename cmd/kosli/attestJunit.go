@@ -10,86 +10,87 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type SnykAttestationPayload struct {
+type JunitAttestationPayload struct {
 	*CommonAttestationPayload
-	SnykResults interface{} `json:"snyk_results"`
+	JUnitResults []*JUnitResults `json:"junit_results"`
 }
 
-type attestSnykOptions struct {
+type attestJunitOptions struct {
 	*CommonAttestationOptions
-	snykJsonFilePath string
-	payload          SnykAttestationPayload
+	testResultsDir   string
+	uploadResultsDir bool
+	payload          JunitAttestationPayload
 }
 
-const attestSnykShortDesc = `Report a snyk attestation to an artifact or a trail in a Kosli flow.  `
+const attestJunitShortDesc = `Report a junit attestation to an artifact or a trail in a Kosli flow.  `
 
-const attestSnykLongDesc = reportEvidenceArtifactGenericShortDesc + `
+const attestJunitLongDesc = reportEvidenceArtifactGenericShortDesc + `
 ` + fingerprintDesc
 
-const attestSnykExample = `
-# report a snyk attestation about a pre-built docker artifact (kosli calculates the fingerprint):
-kosli attest snyk yourDockerImageName \
+const attestJunitExample = `
+# report a junit attestation about a pre-built docker artifact (kosli calculates the fingerprint):
+kosli attest junit yourDockerImageName \
 	--artifact-type docker \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--scan-results yourSnykJSONScanResults \
+	--results-dir yourFolderWithJUnitResults \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a snyk attestation about a pre-built docker artifact (you provide the fingerprint):
-kosli attest snyk \
+# report a junit attestation about a pre-built docker artifact (you provide the fingerprint):
+kosli attest junit \
 	--fingerprint yourDockerImageFingerprint \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--scan-results yourSnykJSONScanResults \
+	--results-dir yourFolderWithJUnitResults \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a snyk attestation about a trail:
-kosli attest snyk \
+# report a junit attestation about a trail:
+kosli attest junit \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--scan-results yourSnykJSONScanResults \
+	--results-dir yourFolderWithJUnitResults \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a snyk attestation about an artifact which has not been reported yet in a trail:
-kosli attest snyk \
+# report a junit attestation about an artifact which has not been reported yet in a trail:
+kosli attest junit \
 	--name yourTemplateArtifactName.yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--scan-results yourSnykJSONScanResults \
+	--results-dir yourFolderWithJUnitResults \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a snyk attestation about a trail with an evidence file:
-kosli attest snyk \
+# report a junit attestation about a trail with an evidence file:
+kosli attest junit \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--scan-results yourSnykJSONScanResults \
+	--results-dir yourFolderWithJUnitResults \
 	--evidence-paths=yourEvidencePathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 `
 
-func newAttestSnykCmd(out io.Writer) *cobra.Command {
-	o := &attestSnykOptions{
+func newAttestJunitCmd(out io.Writer) *cobra.Command {
+	o := &attestJunitOptions{
 		CommonAttestationOptions: &CommonAttestationOptions{
 			fingerprintOptions: &fingerprintOptions{},
 		},
-		payload: SnykAttestationPayload{
+		payload: JunitAttestationPayload{
 			CommonAttestationPayload: &CommonAttestationPayload{},
 		},
 	}
 	cmd := &cobra.Command{
-		Use:     "snyk [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Short:   attestSnykShortDesc,
-		Long:    attestSnykLongDesc,
-		Example: attestSnykExample,
+		Use:     "junit [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Short:   attestJunitShortDesc,
+		Long:    attestJunitLongDesc,
+		Example: attestJunitExample,
 		Args:    cobra.MaximumNArgs(1),
 		Hidden:  true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -118,9 +119,10 @@ func newAttestSnykCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	addAttestationFlags(cmd, o.CommonAttestationOptions, o.payload.CommonAttestationPayload, ci)
-	cmd.Flags().StringVarP(&o.snykJsonFilePath, "scan-results", "R", "", snykJsonResultsFileFlag)
+	cmd.Flags().StringVarP(&o.testResultsDir, "results-dir", "R", ".", resultsDirFlag)
+	cmd.Flags().BoolVar(&o.uploadResultsDir, "upload-results", true, uploadJunitResultsFlag)
 
-	err := RequireFlags(cmd, []string{"flow", "trail", "name", "scan-results"})
+	err := RequireFlags(cmd, []string{"flow", "trail", "name"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
@@ -128,17 +130,26 @@ func newAttestSnykCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *attestSnykOptions) run(args []string) error {
-	url := fmt.Sprintf("%s/api/v2/attestations/%s/%s/trail/%s/snyk", global.Host, global.Org, o.flowName, o.trailName)
+func (o *attestJunitOptions) run(args []string) error {
+	url := fmt.Sprintf("%s/api/v2/attestations/%s/%s/trail/%s/junit", global.Host, global.Org, o.flowName, o.trailName)
 
 	err := o.CommonAttestationOptions.run(args, o.payload.CommonAttestationPayload)
 	if err != nil {
 		return err
 	}
 
-	o.payload.SnykResults, err = LoadJsonData(o.snykJsonFilePath)
+	o.payload.JUnitResults, err = ingestJunitDir(o.testResultsDir)
 	if err != nil {
 		return err
+	}
+
+	if o.uploadResultsDir {
+		// prepare the files to upload as evidence. We are only interested in the actual Junit XMl files
+		junitFilenames, err := getJunitFilenames(o.testResultsDir)
+		if err != nil {
+			return err
+		}
+		o.evidencePaths = append(o.evidencePaths, junitFilenames...)
 	}
 
 	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.evidencePaths)
@@ -159,7 +170,7 @@ func (o *attestSnykOptions) run(args []string) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("snyk attestation '%s' is reported to trail: %s", o.payload.AttestationName, o.trailName)
+		logger.Info("junit attestation '%s' is reported to trail: %s", o.payload.AttestationName, o.trailName)
 	}
 	return err
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/gitview"
@@ -68,17 +67,12 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 	return err
 }
 
-func prepareAttestationForm(payload interface{}, evidencePaths []string) ([]requests.FormItem, error) {
+func prepareAttestationForm(payload interface{}, evidencePaths []string) ([]requests.FormItem, bool, string, error) {
 	form, cleanupNeeded, evidencePath, err := newAttestationForm(payload, evidencePaths)
-	// if we created a tar package, remove it after uploading it
-	if cleanupNeeded {
-		defer os.Remove(evidencePath)
-	}
-
 	if err != nil {
-		return []requests.FormItem{}, err
+		return []requests.FormItem{}, cleanupNeeded, evidencePath, err
 	}
-	return form, nil
+	return form, cleanupNeeded, evidencePath, nil
 }
 
 func parseAttestationNameTemplate(template string) (string, string, error) {

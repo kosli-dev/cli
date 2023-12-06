@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -138,9 +139,13 @@ func (o *attestGenericOptions) run(args []string) error {
 		return err
 	}
 
-	form, err := prepareAttestationForm(o.payload, o.evidencePaths)
+	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.evidencePaths)
 	if err != nil {
 		return err
+	}
+	// if we created a tar package, remove it after uploading it
+	if cleanupNeeded {
+		defer os.Remove(evidencePath)
 	}
 
 	reqParams := &requests.RequestParams{

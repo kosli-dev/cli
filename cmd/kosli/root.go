@@ -172,6 +172,7 @@ The service principal needs to have the following permissions:
 	attestationNameFlag         = "The name of the attestation as declared in the flow or trail yaml template."
 	attestationCompliantFlag    = "[defaulted] Whether the attestation is compliant or not. A boolean flag https://docs.kosli.com/faq/#boolean-flags"
 	attestationRepoRootFlag     = "[defaulted] The directory where the source git repository is available. Only used if --commit is used."
+	uploadJunitResultsFlag      = "[defaulted] Whether to upload the provided Junit results directory as evidence to Kosli or not."
 )
 
 var global *GlobalOpts
