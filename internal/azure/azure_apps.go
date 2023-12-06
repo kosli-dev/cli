@@ -160,7 +160,7 @@ func (azureClient *AzureClient) NewAppData(app *armappservice.Site, logger *logg
 	// 	}
 	// }
 
-	// temp code
+	// tmp code
 	var err error
 	if azureClient.Credentials.AllowDigestsFromRegistry {
 		digestSource = "registry"
@@ -169,8 +169,15 @@ func (azureClient *AzureClient) NewAppData(app *armappservice.Site, logger *logg
 		if err != nil {
 			return AppData{}, err
 		}
+	} else {
+		// tmp code
+		fingerprint, startedAt, err = exractImageFingerprintAndStartedTimestampFromLogs([]byte{}, *app.Name)
+		if err != nil {
+			return AppData{}, err
+		}
+		// end tmp code
 	}
-	// end temp code
+	// end tmp code
 
 	logger.Debug("For app %s found: image=%s, fingerprint=%s, startedAt=%d", *app.Name, imageName, fingerprint, startedAt)
 
@@ -178,29 +185,36 @@ func (azureClient *AzureClient) NewAppData(app *armappservice.Site, logger *logg
 }
 
 func (azureClient *AzureClient) GetImageDigestFromRegistry(imageName string, logger *logger.Logger) (digest string, err error) {
+	logger.Debug("Start getting digest for image %s", imageName)
 	registryUrl, repoName, tag := parseImageName(imageName)
+	logger.Debug("parsed image name %s", imageName)
 
 	credentials, err := azidentity.NewClientSecretCredential(azureClient.Credentials.TenantId,
 		azureClient.Credentials.ClientId, azureClient.Credentials.ClientSecret, nil)
 	if err != nil {
+		logger.Debug("failed to create credentials for image %s", imageName)
 		return "", err
 	}
 	registryUrl = fmt.Sprintf("https://%s", registryUrl)
 	client, err := azcontainerregistry.NewClient(registryUrl, credentials, nil)
 	if err != nil {
+		logger.Debug("failed to create client for image %s", imageName)
 		return "", err
 	}
 
 	manifestRes, err := client.GetManifest(context.TODO(), repoName, tag, nil)
 	if err != nil {
+		logger.Debug("failed to get manifest for image %s", imageName)
 		return "", err
 	}
 	reader, err := azcontainerregistry.NewDigestValidationReader(*manifestRes.DockerContentDigest, manifestRes.ManifestData)
 	if err != nil {
+		logger.Debug("validation reader failed for image %s, %s, %s", imageName, *manifestRes.DockerContentDigest, manifestRes.ManifestData)
 		return "", err
 	}
 	manifest, err := io.ReadAll(reader)
 	if err != nil {
+		logger.Debug("failed to read manifest for image %s", imageName)
 		return "", err
 	}
 
@@ -215,6 +229,7 @@ func (azureClient *AzureClient) GetImageDigestFromRegistry(imageName string, log
 	var manifestData SimpleManifest
 	err = json.Unmarshal(manifest, &manifestData)
 	if err != nil {
+		logger.Debug("failed to unmarshal manifest for image %s", imageName)
 		return "", err
 	}
 
