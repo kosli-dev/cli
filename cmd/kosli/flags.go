@@ -92,3 +92,20 @@ func addListFlags(cmd *cobra.Command, o *listOptions) {
 	cmd.Flags().IntVar(&o.pageNumber, "page", 1, pageNumberFlag)
 	cmd.Flags().IntVarP(&o.pageLimit, "page-limit", "n", 15, pageLimitFlag)
 }
+
+func addAttestationFlags(cmd *cobra.Command, o *CommonAttestationOptions, payload *CommonAttestationPayload, ci string) {
+	cmd.Flags().StringVarP(&payload.ArtifactFingerprint, "fingerprint", "F", "", attestationFingerprintFlag)
+	cmd.Flags().StringVar(&o.commitSHA, "commit", DefaultValue(ci, "git-commit"), attestationCommitFlag)
+	cmd.Flags().StringVarP(&payload.Url, "url", "b", DefaultValue(ci, "build-url"), attestationUrlFlag)
+	cmd.Flags().StringVarP(&o.attestationNameTemplate, "name", "n", "", attestationNameFlag)
+	cmd.Flags().StringVar(&payload.EvidenceFingerprint, "evidence-fingerprint", "", evidenceFingerprintFlag)
+	cmd.Flags().StringVar(&payload.EvidenceURL, "evidence-url", "", evidenceURLFlag)
+	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
+	cmd.Flags().StringVarP(&o.trailName, "trail", "T", "", trailNameFlag)
+	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", attestationUserDataFlag)
+	cmd.Flags().StringSliceVarP(&o.evidencePaths, "evidence-paths", "e", []string{}, evidencePathsFlag)
+	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", attestationRepoRootFlag)
+
+	addFingerprintFlags(cmd, o.fingerprintOptions)
+	addDryRunFlag(cmd)
+}

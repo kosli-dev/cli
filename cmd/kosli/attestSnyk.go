@@ -9,24 +9,25 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type GenericAttestationPayload struct {
+type SnykAttestationPayload struct {
 	*CommonAttestationPayload
-	Compliant bool `json:"is_compliant"`
+	SnykResults interface{} `json:"snyk_results"`
 }
 
-type attestGenericOptions struct {
+type attestSnykOptions struct {
 	*CommonAttestationOptions
-	payload GenericAttestationPayload
+	snykJsonFilePath string
+	payload          SnykAttestationPayload
 }
 
-const attestGenericShortDesc = `Report a generic attestation to an artifact or a trail in a Kosli flow.  `
+const attestSnykShortDesc = `Report a snyk attestation to an artifact or a trail in a Kosli flow.  `
 
-const attestGenericLongDesc = reportEvidenceArtifactGenericShortDesc + `
+const attestSnykLongDesc = reportEvidenceArtifactGenericShortDesc + `
 ` + fingerprintDesc
 
-const attestGenericExample = `
-# report a generic attestation about a pre-built docker artifact (kosli calculates the fingerprint):
-kosli attest generic yourDockerImageName \
+const attestSnykExample = `
+# report a snyk attestation about a pre-built docker artifact (kosli calculates the fingerprint):
+kosli attest snyk yourDockerImageName \
 	--artifact-type docker \
 	--name yourAttestationName \
 	--flow yourFlowName \
@@ -34,8 +35,8 @@ kosli attest generic yourDockerImageName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a generic attestation about a pre-built docker artifact (you provide the fingerprint):
-kosli attest generic \
+# report a snyk attestation about a pre-built docker artifact (you provide the fingerprint):
+kosli attest snyk \
 	--fingerprint yourDockerImageFingerprint \
 	--name yourAttestationName \
 	--flow yourFlowName \
@@ -43,24 +44,24 @@ kosli attest generic \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a generic attestation about a trail:
-kosli attest generic \
+# report a snyk attestation about a trail:
+kosli attest snyk \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a generic attestation about an artifact which has not been reported yet in a trail:
-kosli attest generic \
+# report a snyk attestation about an artifact which has not been reported yet in a trail:
+kosli attest snyk \
 	--name yourTemplateArtifactName.yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a generic attestation about a trail with an evidence file:
-kosli attest generic \
+# report a snyk attestation about a trail with an evidence file:
+kosli attest snyk \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
@@ -68,30 +69,23 @@ kosli attest generic \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a non-compliant generic attestation about a trail:
-kosli attest generic \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--compliant=false \
-	--api-token yourAPIToken \
-	--org yourOrgName
 `
 
-func newAttestGenericCmd(out io.Writer) *cobra.Command {
-	o := &attestGenericOptions{
+func newAttestSnykCmd(out io.Writer) *cobra.Command {
+	o := &attestSnykOptions{
 		CommonAttestationOptions: &CommonAttestationOptions{
 			fingerprintOptions: &fingerprintOptions{},
 		},
-		payload: GenericAttestationPayload{
+		payload: SnykAttestationPayload{
 			CommonAttestationPayload: &CommonAttestationPayload{},
 		},
+		snykJsonFilePath: "",
 	}
 	cmd := &cobra.Command{
-		Use:     "generic [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Short:   attestGenericShortDesc,
-		Long:    attestGenericLongDesc,
-		Example: attestGenericExample,
+		Use:     "snyk [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Short:   attestSnykShortDesc,
+		Long:    attestSnykLongDesc,
+		Example: attestSnykExample,
 		Args:    cobra.MaximumNArgs(1),
 		Hidden:  true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -120,9 +114,9 @@ func newAttestGenericCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	addAttestationFlags(cmd, o.CommonAttestationOptions, o.payload.CommonAttestationPayload, ci)
-	cmd.Flags().BoolVarP(&o.payload.Compliant, "compliant", "C", true, attestationCompliantFlag)
+	cmd.Flags().StringVarP(&o.snykJsonFilePath, "scan-results", "R", "", snykJsonResultsFileFlag)
 
-	err := RequireFlags(cmd, []string{"flow", "trail", "name"})
+	err := RequireFlags(cmd, []string{"flow", "trail", "name", "scan-results"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
@@ -130,10 +124,15 @@ func newAttestGenericCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *attestGenericOptions) run(args []string) error {
-	url := fmt.Sprintf("%s/api/v2/attestations/%s/%s/trail/%s/generic", global.Host, global.Org, o.flowName, o.trailName)
+func (o *attestSnykOptions) run(args []string) error {
+	url := fmt.Sprintf("%s/api/v2/attestations/%s/%s/trail/%s/snyk", global.Host, global.Org, o.flowName, o.trailName)
 
 	err := o.CommonAttestationOptions.run(args, o.payload.CommonAttestationPayload)
+	if err != nil {
+		return err
+	}
+
+	o.payload.SnykResults, err = LoadJsonData(o.snykJsonFilePath)
 	if err != nil {
 		return err
 	}
@@ -152,7 +151,7 @@ func (o *attestGenericOptions) run(args []string) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("generic attestation '%s' is reported to trail: %s", o.payload.AttestationName, o.trailName)
+		logger.Info("snyk attestation '%s' is reported to trail: %s", o.payload.AttestationName, o.trailName)
 	}
 	return err
 }

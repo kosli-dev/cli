@@ -19,7 +19,7 @@ type AttestGenericCommandTestSuite struct {
 }
 
 func (suite *AttestGenericCommandTestSuite) SetupTest() {
-	suite.flowName = "attest-artifact"
+	suite.flowName = "attest-generic"
 	suite.trailName = "test-123"
 	suite.artifactFingerprint = "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
 	global = &GlobalOpts{
@@ -63,7 +63,7 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 			wantError: true,
 			name:      "attesting against an artifact that does not exist fails",
 			cmd:       fmt.Sprintf("attest generic --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --url example.com  %s", suite.defaultKosliArguments),
-			golden:    "Error: Artifact with fingerprint '1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'attest-artifact' belonging to organization 'docs-cmd-test-user'\n",
+			golden:    "Error: Artifact with fingerprint '1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'attest-generic' belonging to organization 'docs-cmd-test-user'\n",
 		},
 		{
 			name:   "can attest generic against an artifact using artifact name and --artifact-type",
