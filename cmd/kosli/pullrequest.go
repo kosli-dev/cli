@@ -39,6 +39,10 @@ func (o *pullRequestArtifactOptions) getRetriever() types.PRRetriever {
 	return o.retriever.(types.PRRetriever)
 }
 
+func (o *attestPROptions) getRetriever() types.PRRetriever {
+	return o.retriever.(types.PRRetriever)
+}
+
 func (o *pullRequestArtifactOptions) run(out io.Writer, args []string) error {
 	var err error
 	if o.payload.ArtifactFingerprint == "" {
