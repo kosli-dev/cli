@@ -2,12 +2,13 @@ package testHelpers
 
 import (
 	"fmt"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/stretchr/testify/require"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/stretchr/testify/require"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/osfs"
@@ -32,6 +33,15 @@ func SkipIfEnvVarUnset(T *testing.T, requiredEnvVars []string) {
 // We are now using an even older commit, which currently works.
 func GithubCommitWithPR() string {
 	return "e21a8afff429e0c87ee523d683f2438113f0a105"
+}
+
+func CloneGitRepo(url, cloneTo string) (*git.Repository, error) {
+	// the repo worktree filesystem. It has to be osfs so that we can give it a path
+	fs := osfs.New(cloneTo)
+	// the filesystem for git database
+	storerFS := osfs.New(filepath.Join(cloneTo, ".git"))
+	storer := filesystem.NewStorage(storerFS, cache.NewObjectLRUDefault())
+	return git.Clone(storer, fs, &git.CloneOptions{URL: url})
 }
 
 func InitializeGitRepo(repoPath string) (*git.Repository, *git.Worktree, billy.Filesystem, error) {
