@@ -24,7 +24,7 @@ type attestJunitOptions struct {
 
 const attestJunitShortDesc = `Report a junit attestation to an artifact or a trail in a Kosli flow.  `
 
-const attestJunitLongDesc = reportEvidenceArtifactGenericShortDesc + `
+const attestJunitLongDesc = attestJunitShortDesc + `
 ` + fingerprintDesc
 
 const attestJunitExample = `

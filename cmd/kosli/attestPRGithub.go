@@ -3,87 +3,87 @@ package main
 import (
 	"io"
 
-	gitlabUtils "github.com/kosli-dev/cli/internal/gitlab"
+	ghUtils "github.com/kosli-dev/cli/internal/github"
 	"github.com/spf13/cobra"
 )
 
-const attestPRGitlabShortDesc = `Report a Gitlab merge request attestation to an artifact or a trail in a Kosli flow.  `
+const attestPRGithubShortDesc = `Report a Github pull request attestation to an artifact or a trail in a Kosli flow.  `
 
-const attestPRGitlabLongDesc = attestPRGitlabShortDesc + `
-It checks if a merge request exists for the artifact (based on its git commit) and reports the merge request evidence to the artifact in Kosli.
+const attestPRGithubLongDesc = attestPRGithubShortDesc + `
+It checks if a pull request exists for the artifact (based on its git commit) and reports the pull-request evidence to the artifact in Kosli.
 ` + fingerprintDesc
 
-const attestPRGitlabExample = `
-# report a Gitlab merge request attestation about a pre-built docker artifact (kosli calculates the fingerprint):
-kosli attest pullrequest gitlab yourDockerImageName \
+const attestPRGithubExample = `
+# report a Github pull request attestation about a pre-built docker artifact (kosli calculates the fingerprint):
+kosli attest pullrequest github yourDockerImageName \
 	--artifact-type docker \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--gitlab-token yourGitlabToken \
-	--gitlab-org yourGitlabOrg \
+	--github-token yourGithubToken \
+	--github-org yourGithubOrg \
 	--commit yourArtifactGitCommit \
 	--repository yourGithubGitRepository \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a Gitlab merge request attestation about a pre-built docker artifact (you provide the fingerprint):
-kosli attest pullrequest gitlab \
+# report a Github pull request attestation about a pre-built docker artifact (you provide the fingerprint):
+kosli attest pullrequest github \
 	--fingerprint yourDockerImageFingerprint \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--gitlab-token yourGitlabToken \
-	--gitlab-org yourGitlabOrg \
+	--github-token yourGithubToken \
+	--github-org yourGithubOrg \
 	--commit yourArtifactGitCommit \
 	--repository yourGithubGitRepository \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a Gitlab merge request attestation about a trail:
-kosli attest pullrequest gitlab \
+# report a Github pull request attestation about a trail:
+kosli attest pullrequest github \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--gitlab-token yourGitlabToken \
-	--gitlab-org yourGitlabOrg \
+	--github-token yourGithubToken \
+	--github-org yourGithubOrg \
 	--commit yourArtifactGitCommit \
 	--repository yourGithubGitRepository \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a Gitlab merge request attestation about an artifact which has not been reported yet in a trail:
-kosli attest pullrequest gitlab \
+# report a Github pull request attestation about an artifact which has not been reported yet in a trail:
+kosli attest pullrequest github \
 	--name yourTemplateArtifactName.yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--gitlab-token yourGitlabToken \
-	--gitlab-org yourGitlabOrg \
+	--github-token yourGithubToken \
+	--github-org yourGithubOrg \
 	--commit yourArtifactGitCommit \
 	--repository yourGithubGitRepository \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a Gitlab merge request attestation about a trail with an evidence file:
-kosli attest pullrequest gitlab \
+# report a Github pull request attestation about a trail with an evidence file:
+kosli attest pullrequest github \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--gitlab-token yourGitlabToken \
-	--gitlab-org yourGitlabOrg \
+	--github-token yourGithubToken \
+	--github-org yourGithubOrg \
 	--commit yourArtifactGitCommit \
 	--repository yourGithubGitRepository \
 	--evidence-paths=yourEvidencePathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# fail if a merge request does not exist for your artifact
-kosli attest pullrequest gitlab \
+# fail if a pull request does not exist for your artifact
+kosli attest pullrequest github \
 	--name yourTemplateArtifactName.yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--gitlab-token yourGitlabToken \
-	--gitlab-org yourGitlabOrg \
+	--github-token yourGithubToken \
+	--github-org yourGithubOrg \
 	--commit yourArtifactGitCommit \
 	--repository yourGithubGitRepository \
 	--api-token yourAPIToken \
@@ -91,7 +91,7 @@ kosli attest pullrequest gitlab \
 	--assert
 `
 
-func newAttestGitlabPRCmd(out io.Writer) *cobra.Command {
+func newAttestGithubPRCmd(out io.Writer) *cobra.Command {
 	o := &attestPROptions{
 		CommonAttestationOptions: &CommonAttestationOptions{
 			fingerprintOptions: &fingerprintOptions{},
@@ -99,14 +99,14 @@ func newAttestGitlabPRCmd(out io.Writer) *cobra.Command {
 		payload: PRAttestationPayload{
 			CommonAttestationPayload: &CommonAttestationPayload{},
 		},
-		retriever: new(gitlabUtils.GitlabConfig),
+		retriever: new(ghUtils.GithubConfig),
 	}
 	cmd := &cobra.Command{
-		Use:     "gitlab [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Aliases: []string{"gl"},
-		Short:   attestPRGitlabShortDesc,
-		Long:    attestPRGitlabLongDesc,
-		Example: attestPRGitlabExample,
+		Use:     "github [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Aliases: []string{"gh"},
+		Short:   attestPRGithubShortDesc,
+		Long:    attestPRGithubLongDesc,
+		Example: attestPRGithubExample,
 		Args:    cobra.MaximumNArgs(1),
 		Hidden:  true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -135,11 +135,11 @@ func newAttestGitlabPRCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	addAttestationFlags(cmd, o.CommonAttestationOptions, o.payload.CommonAttestationPayload, ci)
-	addGitlabFlags(cmd, o.getRetriever().(*gitlabUtils.GitlabConfig), ci)
+	addAttestationGithubFlags(cmd, o.getRetriever().(*ghUtils.GithubConfig), ci)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
 
 	err := RequireFlags(cmd, []string{"flow", "trail", "name",
-		"gitlab-token", "gitlab-org", "commit", "repository"})
+		"github-token", "github-org", "commit", "repository"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}

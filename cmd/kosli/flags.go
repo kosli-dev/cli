@@ -55,6 +55,20 @@ func addGitlabFlags(cmd *cobra.Command, gitlabConfig *gitlabUtils.GitlabConfig, 
 	cmd.Flags().StringVar(&gitlabConfig.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
 }
 
+func addAttestationGithubFlags(cmd *cobra.Command, githubConfig *ghUtils.GithubConfig, ci string) {
+	cmd.Flags().StringVar(&githubConfig.Token, "github-token", "", githubTokenFlag)
+	cmd.Flags().StringVar(&githubConfig.Org, "github-org", DefaultValue(ci, "org"), githubOrgFlag)
+	cmd.Flags().StringVar(&githubConfig.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
+	cmd.Flags().StringVar(&githubConfig.BaseURL, "github-base-url", "", githubBaseURLFlag)
+}
+
+func addAttestationAzureFlags(cmd *cobra.Command, azureConfig *azUtils.AzureConfig, ci string) {
+	cmd.Flags().StringVar(&azureConfig.Token, "azure-token", "", azureTokenFlag)
+	cmd.Flags().StringVar(&azureConfig.OrgURL, "azure-org-url", DefaultValue(ci, "org-url"), azureOrgUrlFlag)
+	cmd.Flags().StringVar(&azureConfig.Project, "project", DefaultValue(ci, "project"), azureProjectFlag)
+	cmd.Flags().StringVar(&azureConfig.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
+}
+
 func addArtifactPRFlags(cmd *cobra.Command, o *pullRequestArtifactOptions, ci string) {
 	addArtifactEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
 	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)

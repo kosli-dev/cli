@@ -22,7 +22,7 @@ type attestGenericOptions struct {
 
 const attestGenericShortDesc = `Report a generic attestation to an artifact or a trail in a Kosli flow.  `
 
-const attestGenericLongDesc = reportEvidenceArtifactGenericShortDesc + `
+const attestGenericLongDesc = attestGenericShortDesc + `
 ` + fingerprintDesc
 
 const attestGenericExample = `

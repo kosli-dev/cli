@@ -20,6 +20,9 @@ func newAttestPRCmd(out io.Writer) *cobra.Command {
 	// Add subcommands
 	cmd.AddCommand(
 		newAttestGitlabPRCmd(out),
+		newAttestGithubPRCmd(out),
+		newAttestBitbucketPRCmd(out),
+		newAttestAzurePRCmd(out),
 	)
 
 	return cmd

@@ -30,7 +30,7 @@ type attestJiraOptions struct {
 
 const attestJiraShortDesc = `Report a jira attestation to an artifact or a trail in a Kosli flow.  `
 
-const attestJiraLongDesc = reportEvidenceArtifactGenericShortDesc + `
+const attestJiraLongDesc = attestJiraShortDesc + `
 Parses the given commit's message or current branch name for Jira issue references of the 
 form:  
 'at least 2 characters long, starting with an uppercase letter project key followed by

@@ -23,7 +23,7 @@ type attestSnykOptions struct {
 
 const attestSnykShortDesc = `Report a snyk attestation to an artifact or a trail in a Kosli flow.  `
 
-const attestSnykLongDesc = reportEvidenceArtifactGenericShortDesc + `
+const attestSnykLongDesc = attestSnykShortDesc + `
 ` + fingerprintDesc
 
 const attestSnykExample = `
