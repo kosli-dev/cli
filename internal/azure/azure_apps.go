@@ -4,13 +4,13 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 	"sync"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/containers/azcontainerregistry"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
@@ -35,11 +35,11 @@ type AzureClient struct {
 
 // AppData represents the harvested Azure service app and function app data
 type AppData struct {
-	AppName      string            `json:"appName"`
-	AppKind      string            `json:"appKind"`
-	DigestSource string            `json:"digestSource"`
-	Digests      map[string]string `json:"digests"`
-	StartedAt    int64             `json:"creationTimestamp"`
+	AppName           string            `json:"appName"`
+	AppKind           string            `json:"appKind"`
+	FingerprintSource string            `json:"fingerprintSource"`
+	Digests           map[string]string `json:"digests"`
+	StartedAt         int64             `json:"creationTimestamp"`
 }
 
 // AzureAppsRequest represents the PUT request body to be sent to Kosli from CLI
@@ -59,11 +59,9 @@ func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logge
 	}
 
 	logger.Debug("found %d apps in the resource group %s", len(appsInfo), staticCreds.ResourceGroupName)
-	if logger.DebugEnabled {
-		logger.Debug("Found apps:")
-		for _, app := range appsInfo {
-			logger.Debug("  app Name=%s", *app.Name)
-		}
+	logger.Debug("Found apps:")
+	for _, app := range appsInfo {
+		logger.Debug("  app Name=%s", *app.Name)
 	}
 
 	// run concurrently
@@ -130,112 +128,71 @@ func (azureClient *AzureClient) NewAppData(app *armappservice.Site, logger *logg
 	linuxFxVersion := strings.Split(*app.Properties.SiteConfig.LinuxFxVersion, "|")
 	if len(linuxFxVersion) != 2 || linuxFxVersion[0] != "DOCKER" {
 		logger.Debug("app %s is not using a Docker image, skipping from report", *app.Name)
-		// TODO: support other types of images, for now just skip
 		return AppData{}, nil
 	}
 	imageName := linuxFxVersion[1]
 
 	var fingerprint string
 	var startedAt int64
-	digestSource := "logs"
+	fingerprintSource := "DockerLogs"
 
-	// // First try to get image fingerprint from Docker logs.
-	// // If it is not found and azureStaticCredentials.AllowDigestsFromRegistry is True,
-	// // then try to get the digest from the registry.
-	// logs, err := azureClient.GetDockerLogsForApp(*app.Name)
-	// if err != nil {
-	// 	return AppData{}, err
-	// }
-	// fingerprint, startedAt, err = exractImageFingerprintAndStartedTimestampFromLogs(logs, *app.Name)
-	// if err != nil {
-	// 	return AppData{}, err
-	// }
+	// First try to get image fingerprint from Docker logs.
+	// If it is not found and azureStaticCredentials.AllowDigestsFromRegistry is True,
+	// then try to get the digest from the registry.
+	logs, err := azureClient.GetDockerLogsForApp(*app.Name, logger)
+	if err != nil {
+		return AppData{}, err
+	}
+	fingerprint, startedAt, err = exractImageFingerprintAndStartedTimestampFromLogs(logs, *app.Name)
+	if err != nil {
+		return AppData{}, err
+	}
 
-	// if fingerprint == "" && azureClient.Credentials.AllowDigestsFromRegistry {
-	// 	digestSource = "registry"
-	// 	fingerprint, err = azureClient.GetImageDigestFromRegistry(imageName, logger)
-	// 	// Handle exception when image is not found in the registry but is found in the environment
-	// 	if err != nil {
-	// 		return AppData{}, err
-	// 	}
-	// }
-
-	// tmp code
-	var err error
-	if azureClient.Credentials.AllowDigestsFromRegistry {
-		digestSource = "registry"
-		fingerprint, err = azureClient.GetImageDigestFromRegistry(imageName, logger)
+	if fingerprint == "" && azureClient.Credentials.AllowDigestsFromRegistry {
+		logger.Debug("For app %s image fingerprint not found in logs, trying to get it from registry", *app.Name)
+		fingerprintSource = "AzureRegistry"
+		fingerprint, err = azureClient.GetImageFingerprintFromRegistry(imageName, logger)
 		// Handle exception when image is not found in the registry but is found in the environment
 		if err != nil {
 			return AppData{}, err
 		}
-	} else {
-		// tmp code
-		fingerprint, startedAt, err = exractImageFingerprintAndStartedTimestampFromLogs([]byte{}, *app.Name)
-		if err != nil {
-			return AppData{}, err
-		}
-		// end tmp code
 	}
-	// end tmp code
 
 	logger.Debug("For app %s found: image=%s, fingerprint=%s, startedAt=%d", *app.Name, imageName, fingerprint, startedAt)
 
-	return AppData{*app.Name, *app.Kind, digestSource, map[string]string{imageName: fingerprint}, startedAt}, nil
+	return AppData{*app.Name, *app.Kind, fingerprintSource, map[string]string{imageName: fingerprint}, startedAt}, nil
 }
 
-func (azureClient *AzureClient) GetImageDigestFromRegistry(imageName string, logger *logger.Logger) (digest string, err error) {
-	logger.Debug("Start getting digest for image %s", imageName)
+func (azureClient *AzureClient) GetImageFingerprintFromRegistry(imageName string, logger *logger.Logger) (fingerprint string, err error) {
 	registryUrl, repoName, tag := parseImageName(imageName)
-	logger.Debug("parsed image name %s", imageName)
 
 	credentials, err := azidentity.NewClientSecretCredential(azureClient.Credentials.TenantId,
 		azureClient.Credentials.ClientId, azureClient.Credentials.ClientSecret, nil)
 	if err != nil {
-		logger.Debug("failed to create credentials for image %s", imageName)
 		return "", err
 	}
-	registryUrl = fmt.Sprintf("https://%s", registryUrl)
-	client, err := azcontainerregistry.NewClient(registryUrl, credentials, nil)
+
+	AcrClient, err := azcontainerregistry.NewClient(registryUrl, credentials, nil)
 	if err != nil {
-		logger.Debug("failed to create client for image %s", imageName)
 		return "", err
 	}
 
-	manifestRes, err := client.GetManifest(context.TODO(), repoName, tag, nil)
+	manifestRes, err := AcrClient.GetManifest(context.TODO(), repoName, tag,
+		&azcontainerregistry.ClientGetManifestOptions{Accept: to.Ptr("application/vnd.docker.distribution.manifest.v2+json")})
 	if err != nil {
-		logger.Debug("failed to get manifest for image %s", imageName)
 		return "", err
 	}
-	reader, err := azcontainerregistry.NewDigestValidationReader(*manifestRes.DockerContentDigest, manifestRes.ManifestData)
+
+	manifestPropsRes, err := AcrClient.GetManifestProperties(context.TODO(), repoName, *manifestRes.DockerContentDigest, nil)
 	if err != nil {
-		logger.Debug("validation reader failed for image %s, %s, %s", imageName, *manifestRes.DockerContentDigest, manifestRes.ManifestData)
-		return "", err
-	}
-	manifest, err := io.ReadAll(reader)
-	if err != nil {
-		logger.Debug("failed to read manifest for image %s", imageName)
 		return "", err
 	}
 
-	type Config struct {
-		Digest string `json:"digest"`
-	}
+	fingerprint = strings.TrimPrefix(*manifestPropsRes.Manifest.Digest, "sha256:")
 
-	type SimpleManifest struct {
-		Config Config `json:"config"`
-	}
+	logger.Debug("For image '%s' got fingerprint '%s' from ACR", imageName, fingerprint)
 
-	var manifestData SimpleManifest
-	err = json.Unmarshal(manifest, &manifestData)
-	if err != nil {
-		logger.Debug("failed to unmarshal manifest for image %s", imageName)
-		return "", err
-	}
-
-	digest = manifestData.Config.Digest
-
-	return digest, nil
+	return fingerprint, nil
 }
 
 func parseImageName(imageName string) (registryUrl, repoName, tag string) {
@@ -245,7 +202,8 @@ func parseImageName(imageName string) (registryUrl, repoName, tag string) {
 	if len(splitFullImageName) != 2 {
 		return "", "", ""
 	}
-	registryUrl = splitFullImageName[0]
+
+	registryUrl = fmt.Sprintf("https://%s", splitFullImageName[0])
 
 	if strings.Contains(splitFullImageName[1], "@sha256:") {
 		// Example: tookyregistry.azurecr.io/tooky@sha256:cb29a6..7
@@ -303,7 +261,7 @@ func (azureClient *AzureClient) GetAppsListForResourceGroup() ([]*armappservice.
 	return appsInfo, nil
 }
 
-func (azureClient *AzureClient) GetDockerLogsForApp(appServiceName string) (logs []byte, error error) {
+func (azureClient *AzureClient) GetDockerLogsForApp(appServiceName string, logger *logger.Logger) (logs []byte, error error) {
 	appsClient := azureClient.AppServiceFactory.NewWebAppsClient()
 
 	ctx := context.Background()
@@ -313,22 +271,23 @@ func (azureClient *AzureClient) GetDockerLogsForApp(appServiceName string) (logs
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println("Got logs for app service: ", appServiceName)
+		logger.Debug("Got logs for app service: ", appServiceName)
 		if response.Body != nil {
 			defer response.Body.Close()
 		}
-		fmt.Println("Reading logs for app service: ", appServiceName)
+		logger.Debug("Reading logs for app service: ", appServiceName)
 		body, err := io.ReadAll(response.Body)
 		if err != nil {
 			return nil, err
 		}
 		zipFileName := fmt.Sprintf("%s-logs.zip", appServiceName)
 		// TODO: write body to a file
-		fmt.Println("Writing logs for app service: ", appServiceName, " to file: ", zipFileName)
+		logger.Debug("Writing logs for app service: ", appServiceName, " to file: ", zipFileName)
 		err = os.WriteFile("zipFileName", body, 0o644)
 		if err != nil {
 			return nil, err
 		}
+		// TODO: read zip file and return logs
 		return nil, nil
 	} else {
 		response, err := appsClient.GetWebSiteContainerLogs(ctx, azureClient.Credentials.ResourceGroupName, appServiceName, nil)
