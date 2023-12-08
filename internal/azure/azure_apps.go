@@ -19,13 +19,13 @@ import (
 )
 
 type AzureStaticCredentials struct {
-	TenantId                 string
-	ClientId                 string
-	ClientSecret             string
-	SubscriptionId           string
-	ResourceGroupName        string
-	DownloadLogsAsZip        bool
-	AllowDigestsFromRegistry bool
+	TenantId          string
+	ClientId          string
+	ClientSecret      string
+	SubscriptionId    string
+	ResourceGroupName string
+	DownloadLogsAsZip bool
+	DigestsSource     string
 }
 
 type AzureClient struct {
@@ -134,25 +134,23 @@ func (azureClient *AzureClient) NewAppData(app *armappservice.Site, logger *logg
 
 	var fingerprint string
 	var startedAt int64
-	fingerprintSource := "DockerLogs"
+	var fingerprintSource string
+	var err error
 
-	// First try to get image fingerprint from Docker logs.
-	// If it is not found and azureStaticCredentials.AllowDigestsFromRegistry is True,
-	// then try to get the digest from the registry.
-	logs, err := azureClient.GetDockerLogsForApp(*app.Name, logger)
-	if err != nil {
-		return AppData{}, err
-	}
-	fingerprint, startedAt, err = exractImageFingerprintAndStartedTimestampFromLogs(logs, *app.Name)
-	if err != nil {
-		return AppData{}, err
-	}
-
-	if fingerprint == "" && azureClient.Credentials.AllowDigestsFromRegistry {
-		logger.Debug("For app %s image fingerprint not found in logs, trying to get it from registry", *app.Name)
-		fingerprintSource = "AzureRegistry"
+	if azureClient.Credentials.DigestsSource == "acr" {
+		fingerprintSource = "acr"
 		fingerprint, err = azureClient.GetImageFingerprintFromRegistry(imageName, logger)
 		// Handle exception when image is not found in the registry but is found in the environment
+		if err != nil {
+			return AppData{}, err
+		}
+	} else {
+		fingerprintSource = "DockerLogs"
+		logs, err := azureClient.GetDockerLogsForApp(*app.Name, logger)
+		if err != nil {
+			return AppData{}, err
+		}
+		fingerprint, startedAt, err = exractImageFingerprintAndStartedTimestampFromLogs(logs, *app.Name)
 		if err != nil {
 			return AppData{}, err
 		}
