@@ -43,19 +43,25 @@ To follow the tutorial, you will need to:
     cd quickstart-docker-example
     ```
 
-## Step 2: Create a Kosli trail
+## Step 2: Create a Kosli flow
 
-A Kosli *trail* stores information about what happens in your build system.
-The output of the build system is called an *artifact* in Kosli. An artifact could be, for example,
-an application binary, a docker image, a directory, or a file.
+A Kosli *flow* represents a single business-process, about which
+you want to record (attest) evidence. Different kinds of Kosli *flows* include:
+- How you build and deploy software artifacts for a specific service
+- Defining and applying changes to infrastructure
+- Recording real-time access to production servers 
+- Required steps when onboarding a new employee
 
-When attesting artifacts and evidence to a Kosli trail, each attestation must be named.
+For this tutorial we are using the first example, building deploying a software binary artifact,
+where the Flow corresponds to a git repository. 
+An artifact could be an application binary, a docker image, a directory, or a file.
+When attesting artifact information, each attestation must be named.
 These names are defined in a yml file.
-You will be using the file called `kosli_trail.yml` in the root of the git repo
+You will be using the file called `kosli.yml` in the root of the git repo
 you cloned in the previous step. Confirm this file exists by catting it:
 
 ```shell {.command}
-cat kosli_trail.yml
+cat kosli.yml
 ```
 
 which should produce the following output:
@@ -67,40 +73,46 @@ trail:
     - name: nginx
 ```
 
-A trail lives inside a Kosli flow.
-Start by creating a new Kosli flow called `quickstart-nginx`
-based on this yml file:
+Create a new Kosli flow called `quickstart-nginx`
+naming this yml file:
 
 ```shell {.command}
 kosli create flow2 quickstart-nginx \
     --description "Flow for quickstart nginx image" \
-    --template-file kosli_trail.yml
+    --template-file kosli.yml
 ```
 
-You can confirm that the Kosli flow was created by running:
+Confirm the Kosli flow called `quickstart-nginx` was created by running:
 ```shell {.command}
 kosli list flows
 ```
-which should produce the following output:
+
+which will produce the following output:
 ```plaintext {.light-console}
 NAME              DESCRIPTION                          VISIBILITY
 quickstart-nginx  Flow for quickstart nginx image      private
 ```
 {{< hint info >}}
-In the web interface you can select the *Flows* option on the left.
+In the web interface you can select *Flows* on the left.
 It will show you that you have a *quickstart-nginx* flow.
 If you select the flow it will show that no artifacts have
 been reported yet.
 {{< /hint  >}}
 
-Now create a Kosli trail, in this flow, whose name is the current git-commit:
+
+## Step 3: Create a Kosli trail
+
+A Kosli *trail* is a single, named, instance/run of a Kosli *flow*.
+
+Create a Kosli trail, in the `quickstart-nginx` flow, whose name is the repo's current git-commit:
 
 ```shell {.command}
-kosli begin trail $(git rev-parse HEAD) \
+GIT_COMMIT=$(git rev-parse HEAD)
+kosli begin trail ${GIT_COMMIT} \
     --flow quickstart-nginx
 ```
 
-## Step 3: Create a Kosli environment
+## Step 4: Create a Kosli environment
 
 A Kosli *environment* stores snapshots containing information about
 the software artifacts you are running in your runtime environment.
@@ -130,7 +142,7 @@ it will show you that you have a *quickstart* environment and that
 no reports have been received.
 {{< /hint >}}
 
-## Step 4: Attest an artifact to Kosli
+## Step 5: Attest an artifact to Kosli
 
 Typically, you would build an artifact in your CI system. 
 The quickstart-docker repository contains a `docker-compose.yml` file which uses an [nginx](https://nginx.org/) docker image 
@@ -153,15 +165,18 @@ REPOSITORY   TAG       IMAGE ID       CREATED        SIZE
 nginx        1.21      8f05d7383593   5 months ago   134MB
 ```
 
-Now you can attest the artifact to Kosli. 
+Now you can report the artifact to Kosli using the `kosli attest artifact` command. 
 This tutorial uses a dummy value for the `--build-url` flag, in a real installation 
 this would be a defaulted link to a build service (e.g. Github Actions).
+Note that the value of the `--name` flag is `nginx` which is the (only) artifact
+name defined in the `kosli.yml` file.
 
 ```shell {.command}
+GIT_COMMIT=$(git rev-parse HEAD)
 kosli attest artifact nginx:1.21 \  
     --name nginx \
     --flow quickstart-nginx \
-    --trail $(git rev-parse HEAD) \
+    --trail ${GIT_COMMIT} \
     --artifact-type docker \
     --build-url https://example.com \
     --commit-url https://github.com/kosli-dev/quickstart-docker-example/commit/9f14efa0c91807da9a8b1d1d6332c5b3aa24a310 \
@@ -180,7 +195,7 @@ COMMIT   ARTIFACT                                                               
          Fingerprint: 2bcabc23b45489fb0885d69a06ba1d648aeda973fae7bb981bafbb884165e514                 
 ```
 
-## Step 5: Report expected deployment of the artifact
+## Step 6: Report expected deployment of the artifact
 
 Before you run the nginx docker image (the artifact) on your docker host, you need to report 
 to Kosli your intention of deploying that image. This allows Kosli to match what you 
@@ -222,7 +237,7 @@ CONTAINER ID  IMAGE      COMMAND                 CREATED         STATUS         
 6330e545b532  nginx:1.21 "/docker-entrypoint.…"  35 seconds ago  Up 34 seconds  0.0.0.0:8080->80/tcp   quickstart-nginx
 ```
 
-## Step 6: Report what is running in your environment
+## Step 7: Report what is running in your environment
 
 Report all the docker containers running on your machine to Kosli:
 ```shell {.command}
@@ -259,7 +274,7 @@ that there is now a timestamp for *Last Change At* column.
 Select the *quickstart* link on left for a detailed view of what is currently running.
 {{< /hint >}}
 
-## Step 7: Searching Kosli
+## Step 8: Searching Kosli
 
 Now that you have reported your artifact and what's running in our runtime environment,
 you can use the `kosli search` command to find everything Kosli knows about an artifact or a git commit.
