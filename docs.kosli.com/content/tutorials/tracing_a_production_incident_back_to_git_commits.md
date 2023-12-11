@@ -28,14 +28,18 @@ Get a log of this environment's changes:
 kosli log env aws-prod
 ```
 
-You will see more than 177 snapshots because 
+At the time this tutorial was written the output of this command
+displayed the first page of 177 snapshots. 
+You will see the first page of considerably more than 177 snapshots because 
 `aws-prod` has moved on since this incident (it has been resolved with new 
-commits which have created new deployments). To get the same output as we have
-you can set the interval for the command:
+commits which have created new deployments). 
+To limit the output you can set the interval for the command:
 
 ```shell {.command}
-kosli log env aws-prod --interval 175..177
+kosli log env aws-prod --interval 176..177
 ```
+
+The output should be:
 
 ```plaintext {.light-console}
 SNAPSHOT  EVENT                                                                          FLOW      DEPLOYMENTS
@@ -48,7 +52,6 @@ SNAPSHOT  EVENT                                                                 
           Fingerprint: 860ad172ace5aee03e6a1e3492a88b3315ecac2a899d4f159f43ca7314290d5a             
           Description: 1 instance started running (from 0 to 1).                               
           Reported at: Tue, 06 Sep 2022 16:52:28 CEST
-...
 ```
 
 These two snapshots belong to the same blue-green deployment.
