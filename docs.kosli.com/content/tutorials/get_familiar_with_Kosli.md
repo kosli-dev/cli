@@ -145,8 +145,8 @@ no reports have been received.
 ## Step 5: Attest an artifact to Kosli
 
 Typically, you would build an artifact in your CI system. 
-The quickstart-docker repository contains a `docker-compose.yml` file which uses an [nginx](https://nginx.org/) docker image 
-which you will be using as your artifact in this tutorial instead.
+The quickstart-docker repository contains a `docker-compose.yml` file which uses an [nginx](https://nginx.org/) 
+docker image which you will be using as your artifact in this tutorial instead.
 
 Pull the docker image - the Kosli CLI needs the artifact to be locally present to 
 generate a "fingerprint" to identify it:
@@ -165,11 +165,13 @@ REPOSITORY   TAG       IMAGE ID       CREATED        SIZE
 nginx        1.21      8f05d7383593   5 months ago   134MB
 ```
 
-Now you can report the artifact to Kosli using the `kosli attest artifact` command. 
-This tutorial uses a dummy value for the `--build-url` flag, in a real installation 
-this would be a defaulted link to a build service (e.g. Github Actions).
-Note that the value of the `--name` flag is `nginx` which is the (only) artifact
-name defined in the `kosli.yml` file.
+Now report the artifact to Kosli using the `kosli attest artifact` command.
+
+Note:
+- The `--name` flag has the value `nginx` which is the (only) artifact
+name defined in the file `kosli.yml`.
+- The `--build-url` and `--commit-url` flags have dummy values;
+in a real installation these would get default values (e.g. from Github Actions).
 
 ```shell {.command}
 GIT_COMMIT=$(git rev-parse HEAD)
