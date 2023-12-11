@@ -144,11 +144,11 @@ kosli snapshot server production \
 You can see that the server has started, and how long it has been running for:
 
 ```shell {.command}
-kosli list snapshots  production
+kosli list snapshots production
 ```
 ```plaintext {.light-console}
-SNAPSHOT  FROM                  TO   DURATION
-1         16 Aug 22 07:54 CEST  now  11 seconds
+SNAPSHOT  FROM                  TO   DURATION    COMPLIANT
+1         16 Aug 22 07:54 CEST  now  11 seconds  false
 ```
 
 Get a more detailed view of what is currently running on the server:
@@ -184,8 +184,8 @@ kosli snapshot server production \
 kosli list snapshots production
 ```
 ```plaintext {.light-console}
-SNAPSHOT  FROM                  TO   DURATION
-1         16 Aug 22 07:54 CEST  now  11 seconds
+SNAPSHOT  FROM                  TO   DURATION    COMPLIANT
+1         16 Aug 22 07:54 CEST  now  11 seconds  false
 ```
 
 Simulate an update of the web application to a new version, build and deploy it:
@@ -304,7 +304,7 @@ kosli ls flows
 ```
 
 ```plaintext {.light-console}
-NAME             DESCRIPTION                        VISIBILITY
+NAME             DESCRIPTION                    VISIBILITY
 database-server  flow to build database-server  private
 web-server       flow to build web-server       private
 ```
