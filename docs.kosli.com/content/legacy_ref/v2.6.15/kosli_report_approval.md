@@ -1,32 +1,33 @@
 ---
-title: "kosli request approval"
+title: "kosli report approval"
 beta: false
 ---
 
-# kosli request approval
+# kosli report approval
 
 ## Synopsis
 
-Request an approval of a deployment of an artifact in Kosli.  
-The request should be reviewed in the Kosli UI.  
+Report an approval of deploying an artifact to an environment to Kosli.  
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell
-kosli request approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli report approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
+|        --approver string  |  [optional] The user approving an approval.  |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
 |    -d, --description string  |  [optional] The approval description.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
+|    -e, --environment string  |  [defaulted] The environment the artifact is approved for. (defaults to all environments)  |
 |    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Only applicable for --artifact-type dir.  |
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'.  |
 |    -f, --flow string  |  The Kosli flow name.  |
 |    -h, --help  |  help for approval  |
-|        --newest-commit string  |  [defaulted] The source commit sha for the newest change in the deployment. (default "HEAD")  |
-|        --oldest-commit string  |  The source commit sha for the oldest change in the deployment.  |
+|        --newest-commit string  |  [defaulted] The source commit sha for the newest change in the deployment. Can be any commit-ish. (default "HEAD")  |
+|        --oldest-commit string  |  [conditional] The source commit sha for the oldest change in the deployment. Can be any commit-ish. Only required if you don't specify '--environment'.  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
@@ -49,27 +50,42 @@ kosli request approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 
 ```shell
 
-# Request that a file type artifact needs approval.
-# The approval is for the last 5 git commits
-kosli request approval FILE.tgz \
+# Report that an artifact with a provided fingerprint (sha256) has been approved for 
+# deployment to environment <yourEnvironmentName>.
+# The approval is for all git commits since the last approval to this environment.
+kosli report approval \
+	--api-token yourAPIToken \
+	--description "An optional description for the approval" \
+	--environment yourEnvironmentName \
+	--approver username \
+	--org yourOrgName \
+	--flow yourFlowName \
+	--fingerprint yourArtifactFingerprint
+
+# Report that a file type artifact has been approved for deployment to environment <yourEnvironmentName>.
+# The approval is for all git commits since the last approval to this environment.
+kosli report approval FILE.tgz \
 	--api-token yourAPIToken \
 	--artifact-type file \
-	--description "An optional description for the requested approval" \
-	--newest-commit $(git rev-parse HEAD) \
-	--oldest-commit $(git rev-parse HEAD~5) \
+	--description "An optional description for the approval" \
+	--environment yourEnvironmentName \
+	--newest-commit HEAD \
+	--approver username \
 	--org yourOrgName \
 	--flow yourFlowName 
 
-# Request and approval for an artifact with a provided fingerprint (sha256).
-# The approval is for the last 5 git commits
-kosli request approval \
+# Report that an artifact with a provided fingerprint (sha256) has been approved for deployment.
+# The approval is for all environments.
+# The approval is for all commits since the git commit of origin/production branch.
+kosli report approval \
 	--api-token yourAPIToken \
-	--description "An optional description for the requested approval" \
-	--newest-commit $(git rev-parse HEAD) \
-	--oldest-commit $(git rev-parse HEAD~5)	\
+	--description "An optional description for the approval" \
+	--newest-commit HEAD \
+	--oldest-commit origin/production \
+	--approver username \
 	--org yourOrgName \
 	--flow yourFlowName \
-	--fingerprint yourArtifactFingerprint 
+	--fingerprint yourArtifactFingerprint
 
 ```
 

@@ -27,7 +27,7 @@ kosli report evidence workflow [flags]
 |    -h, --help  |  help for workflow  |
 |        --id string  |  The ID of the workflow.  |
 |        --step string  |  The name of the step as defined in the audit trail's steps.  |
-|    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to this evidence.  |
+|    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the evidence.  |
 
 
 ## Options inherited from parent commands

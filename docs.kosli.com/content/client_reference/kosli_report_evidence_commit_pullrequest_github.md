@@ -20,7 +20,7 @@ kosli report evidence commit pullrequest github [flags]
 | :--- | :--- |
 |        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|        --commit string  |  Git commit for which to verify and given evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|        --commit string  |  Git commit for which to verify a given evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |        --evidence-fingerprint string  |  [optional] The SHA256 fingerprint of the evidence file or dir.  |
 |        --evidence-url string  |  [optional] The external URL where the evidence file or dir is stored.  |
@@ -31,7 +31,7 @@ kosli report evidence commit pullrequest github [flags]
 |    -h, --help  |  help for github  |
 |    -n, --name string  |  The name of the evidence.  |
 |        --repository string  |  Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to this evidence.  |
+|    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the evidence.  |
 
 
 ## Options inherited from parent commands

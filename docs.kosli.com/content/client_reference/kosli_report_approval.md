@@ -32,7 +32,7 @@ kosli report approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --repo-root string  |  [defaulted] The directory where the source git repository is available. (default ".")  |
-|    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to this approval.  |
+|    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the approval.  |
 
 
 ## Options inherited from parent commands

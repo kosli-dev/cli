@@ -20,6 +20,7 @@ kosli report workflow [flags]
 | Flag | Description |
 | :--- | :--- |
 |        --audit-trail string  |  The Kosli audit trail name.  |
+|        --description string  |  [optional] The Kosli Workflow description.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -h, --help  |  help for workflow  |
 |        --id string  |  The ID of the workflow.  |
@@ -43,6 +44,7 @@ kosli report workflow [flags]
 # Report to a Kosli audit-trail that a workflow has been created
 kosli report workflow \
 	--audit-trail auditTrailName \
+	--description yourWorkflowDescription \
 	--api-token yourAPIToken \
 	--id yourID \
 	--org yourOrgName
