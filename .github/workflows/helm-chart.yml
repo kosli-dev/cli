@@ -70,4 +70,4 @@ jobs:
           branch: main
           default_author: github_actor
           message: 'Update helm docs'
-          pull: 'NO-PULL'     
+          pull: 'NO-PULL'
