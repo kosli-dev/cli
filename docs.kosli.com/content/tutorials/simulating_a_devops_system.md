@@ -96,9 +96,8 @@ it to the Kosli environment.
 Create a Kosli environment:
 
 ```shell {.command}
-kosli create environment \
-    --name production \
-    --environment-type server \
+kosli create environment production \
+    --type server \
     --description "Production server (for kosli getting started)"
 ```
 
