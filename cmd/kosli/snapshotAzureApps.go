@@ -60,7 +60,7 @@ func newSnapshotAzureAppsCmd(out io.Writer) *cobra.Command {
 			}
 
 			if o.azureStaticCredentials.DigestsSource != "acr" && o.azureStaticCredentials.DigestsSource != "logs" {
-				return ErrorBeforePrintingUsage(cmd, "invalid value for --digests-source flag. Valid values are 'acr' and 'logs'")
+				return fmt.Errorf("invalid value for --digests-source flag. Valid values are 'acr' and 'logs'")
 			}
 
 			return nil
