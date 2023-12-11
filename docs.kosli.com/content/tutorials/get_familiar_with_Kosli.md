@@ -43,17 +43,38 @@ To follow the tutorial, you will need to:
     cd quickstart-docker-example
     ```
 
-## Step 2: Create a Kosli flow
+## Step 2: Create a Kosli trail
 
-A Kosli *flow* stores information about what happens in your build system.
+A Kosli *trail* stores information about what happens in your build system.
 The output of the build system is called an *artifact* in Kosli. An artifact could be, for example,
-an application binary, a docker image, a directory, or a file. 
+an application binary, a docker image, a directory, or a file.
 
-Start by creating a new Kosli flow:
+When attesting artifacts and evidence to a Kosli trail, each attestation must be named.
+These names are defined in a yml file.
+You will be using the file called `kosli_trail.yml` in the root of the git repo
+you cloned in the previous step. Confirm this file exists by catting it:
 
 ```shell {.command}
-kosli create flow quickstart-nginx \
-    --description "Flow for quickstart nginx image"
+cat kosli_trail.yml
+```
+
+which should produce the following output:
+```plaintext {.light-console}
+version: 1
+
+trail:
+  artifacts:
+    - name: nginx
+```
+
+A trail lives inside a Kosli flow.
+Start by creating a new Kosli flow called `quickstart-nginx`
+based on this yml file:
+
+```shell {.command}
+kosli create flow2 quickstart-nginx \
+    --description "Flow for quickstart nginx image" \
+    --template-file kosli_trail.yml
 ```
 
 You can confirm that the Kosli flow was created by running:
@@ -71,6 +92,13 @@ It will show you that you have a *quickstart-nginx* flow.
 If you select the flow it will show that no artifacts have
 been reported yet.
 {{< /hint  >}}
+
+Now create a Kosli trail, in this flow, whose name is the current git-commit:
+
+```shell {.command}
+kosli begin trail $(git rev-parse HEAD) \
+    --flow quickstart-nginx
+```
 
 ## Step 3: Create a Kosli environment
 
@@ -102,7 +130,7 @@ it will show you that you have a *quickstart* environment and that
 no reports have been received.
 {{< /hint >}}
 
-## Step 4: Report artifacts to Kosli
+## Step 4: Attest an artifact to Kosli
 
 Typically, you would build an artifact in your CI system. 
 The quickstart-docker repository contains a `docker-compose.yml` file which uses an [nginx](https://nginx.org/) docker image 
@@ -125,17 +153,19 @@ REPOSITORY   TAG       IMAGE ID       CREATED        SIZE
 nginx        1.21      8f05d7383593   5 months ago   134MB
 ```
 
-Now you can report the artifact to Kosli. 
+Now you can attest the artifact to Kosli. 
 This tutorial uses a dummy value for the `--build-url` flag, in a real installation 
 this would be a defaulted link to a build service (e.g. Github Actions).
 
 ```shell {.command}
-kosli report artifact nginx:1.21 \
+kosli attest artifact nginx:1.21 \  
+    --name nginx \
     --flow quickstart-nginx \
+    --trail $(git rev-parse HEAD) \
     --artifact-type docker \
     --build-url https://example.com \
     --commit-url https://github.com/kosli-dev/quickstart-docker-example/commit/9f14efa0c91807da9a8b1d1d6332c5b3aa24a310 \
-    --git-commit 9f14efa0c91807da9a8b1d1d6332c5b3aa24a310
+    --git-commit $(git rev-parse HEAD)    
 ```
 
 You can verify that you have reported the artifact in your *quickstart-nginx* flow:
