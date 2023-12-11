@@ -171,7 +171,7 @@ Note:
 - The `--name` flag has the value `nginx` which is the (only) artifact
 name defined in the file `kosli.yml`.
 - The `--build-url` and `--commit-url` flags have dummy values;
-in a real installation these would get default values (e.g. from Github Actions).
+in a real call these would have default values (e.g. from Github Actions).
 
 ```shell {.command}
 GIT_COMMIT=$(git rev-parse HEAD)
@@ -184,6 +184,14 @@ kosli attest artifact nginx:1.21 \
     --commit-url https://github.com/kosli-dev/quickstart-docker-example/commit/9f14efa0c91807da9a8b1d1d6332c5b3aa24a310 \
     --git-commit $(git rev-parse HEAD)    
 ```
+
+<!--
+It is noticeable here that we are providing the git-commit twice;
+once for the name of the trail, and once for the actual git-commit.
+It is also noticeable that the git-commit is hard-wired to 9f14efa...
+in several places, and it will be incorrect whenever the repo gets new git
+commit (eg to add the kosli.yml file)
+-->
 
 You can verify that you have reported the artifact in your *quickstart-nginx* flow:
 
@@ -281,10 +289,10 @@ Select the *quickstart* link on left for a detailed view of what is currently ru
 Now that you have reported your artifact and what's running in our runtime environment,
 you can use the `kosli search` command to find everything Kosli knows about an artifact or a git commit.
 
-For example, you can give Kosli search the git commit SHA which you used when you reported the artifact: 
+For example, you can give Kosli search the artifact's fingerprint: 
 
 ```shell {.command}
-kosli search 9f14efa0c91807da9a8b1d1d6332c5b3aa24a310
+kosli search 9f14efa
 ```
 
 ```plaintext {.light-console}
@@ -302,5 +310,6 @@ History:
     Deployment #1 to quickstart environment      Tue, 01 Nov 2022 15:48:47 CET
     Started running in quickstart#1 environment  Tue, 01 Nov 2022 15:55:49 CET
 ```
+
 
 Visit the [Kosli Querying](/getting_started/querying/) guide to learn more about the search command.
