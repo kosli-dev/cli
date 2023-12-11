@@ -70,7 +70,7 @@ nginx                   Reverse proxy                       public
 repler                  REPL for Python images              public
 runner                  Test runner                         public
 saver                   Group/Kata model+persistence        public
-shas                    UX for git+image shas               public
+version-reporter        UX for git+image version-reporter   public
 web                     UX for practicing TDD               public
 ```
 
