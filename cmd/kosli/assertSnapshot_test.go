@@ -28,9 +28,9 @@ type assertSnapshotTestConfig struct {
 
 func (suite *AssertSnapshotCommandTestSuite) SetupTest() {
 	suite.envName = "env-to-assert"
-	suite.flowName = "some-flow"
+	suite.flowName = "assert-snapshot"
 	suite.artifactName = "arti"
-	suite.artifactPath = "testdata/folder1/hello.txt"
+	suite.artifactPath = "testdata/assert_snapshot_artifact.txt"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Org:      "docs-cmd-test-user",
