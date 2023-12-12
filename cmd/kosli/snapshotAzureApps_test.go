@@ -56,15 +56,15 @@ func (suite *SnapshotAzureAppsTestSuite) TestSnapshotAzureAppsCmd() {
 		},
 		{
 			name: "snapshot azure succeeds if all required flags are set",
-			cmd:  fmt.Sprintf(`snapshot azure %s %s %s --dry-run`, suite.envName, suite.defaultKosliArguments, suite.defaultAzureArguments),
+			cmd:  fmt.Sprintf(`snapshot azure %s %s %s`, suite.envName, suite.defaultKosliArguments, suite.defaultAzureArguments),
 		},
 		{
 			name: "snapshot azure succeeds when digests-source is set to acr if all required flags are set",
-			cmd:  fmt.Sprintf(`snapshot azure %s %s %s --digests-source acr --dry-run`, suite.envName, suite.defaultKosliArguments, suite.defaultAzureArguments),
+			cmd:  fmt.Sprintf(`snapshot azure %s %s %s --digests-source acr`, suite.envName, suite.defaultKosliArguments, suite.defaultAzureArguments),
 		},
 		{
 			name: "snapshot azure succeeds when digests-source is set to logs if all required flags are set",
-			cmd:  fmt.Sprintf(`snapshot azure %s %s %s --digests-source logs --dry-run`, suite.envName, suite.defaultKosliArguments, suite.defaultAzureArguments),
+			cmd:  fmt.Sprintf(`snapshot azure %s %s %s --digests-source logs`, suite.envName, suite.defaultKosliArguments, suite.defaultAzureArguments),
 		},
 
 		{

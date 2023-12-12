@@ -35,9 +35,9 @@ type AzureClient struct {
 
 // AppData represents the harvested Azure service app and function app data
 type AppData struct {
-	AppName       string            `json:"appName"`
-	AppKind       string            `json:"appKind"`
-	DigestsSource string            `json:"digestsSource"`
+	AppName       string            `json:"app_name"`
+	AppKind       string            `json:"app_kind"`
+	DigestsSource string            `json:"digests_source"`
 	Digests       map[string]string `json:"digests"`
 	StartedAt     int64             `json:"creationTimestamp"`
 }
