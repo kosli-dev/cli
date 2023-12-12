@@ -4,20 +4,32 @@ weight: 120
 ---
 # What is Kosli?
 
-Kosli records data from your CI pipelines and runtime environments, allowing you to query life after git from the command line.
+Kosli is a connected collection of attested evidence about any business-process. 
+Business processes instrumented with Kosli are Always-Audit-Ready.
+Some examples include:
 
+- How you build, test, and deploy software Artifacts
+- What software Artifacts are actually running in your infrastructure
+- Defining and applying changes to infrastructure
+- Recording real-time access to production servers
+- Changes to feature-flag configurations
+- Required steps when onboarding a new employee
+
+<!--
 {{<figure src="/images/kosli-overview-docs.jpg" alt="Kosli overview" width="1000">}}
+-->
 
 Below you can read about what elements Kosli consists of.
 
 ## Organization
 
-An Organization in Kosli "owns" Kosli flows and environments - which means only members of each organization can get access to environments and flows that belong to that organization.
+An Organization in Kosli "owns" Kosli flows and environments - only members of each organization 
+can access the environments and flows that belong to that organization.
 By default, when you sign up to Kosli, a personal organization is created for you and the name of the organization matches your user name. Only you can access your personal organization.
 
 ## Environments
 
-Environments in Kosli provide a place to track how your systems change over time.
+Environments in Kosli provide a place to track how your software runtime systems change over time.
 
 {{<figure src="/images/envs.png" alt="Environments" width="900">}}
 
@@ -67,7 +79,7 @@ Snapshots are append-only immutable objects. That is once a snapshot is created,
 ### Compliant Environment
 
 An Environment is **compliant** when the following conditions are met:
-1. All the artifacts running in the environment have provenance in Kosli (are reported to Kosli) and are compliant themselves OR they were [allow-listed](#allow-list);
+1. All the artifacts running in the environment have provenance (were reported in a Kosli Flow) and are compliant themselves OR they were [allow-listed](#allow-list);
 2. All the artifacts running in the environment are [expected to be deployed](/client_reference/kosli_expect_deployment/) to that environment.
 
 You will see the status of your environment on the environments list. You will also see the compliance status of each snapshot when you browse the snapshots of the environment.

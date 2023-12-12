@@ -6,13 +6,15 @@ weight: 505
 
 # Get familiar with Kosli
 
-> The following guide is the easiest and quickest way to try Kosli out and understand it's features. 
+> The following guide is the easiest and quickest way to try Kosli out and understand its features. 
 It is made to run from your local machine, but the same concepts and steps apply to using Kosli in a production setup.
 
 In this tutorial, you'll learn how Kosli allows you to follow a source code change to runtime environments.
-You'll set up a `docker` environment, use Kosli to record build and deployment events, and track what artifacts are running in your runtime environment. 
+You'll set up a `docker` environment, use Kosli to record build and deployment events, and track what 
+artifacts are running in your runtime environment. 
 
-This tutorial uses the `docker` Kosli environment type, but the same steps can be applied to other supported environment types.
+This tutorial uses the `docker` Kosli environment type, but the same steps can be applied to 
+other supported environment types.
 
 {{< hint info >}}
 As you go through the guide you can also check your progress from 
@@ -43,28 +45,33 @@ To follow the tutorial, you will need to:
     cd quickstart-docker-example
     ```
 
-## Step 2: Create a Kosli flow
+## Step 2: Create a Kosli Flow
 
-A Kosli *flow* represents a single business-process, about which
+A Kosli *Flow* represents a single business-process, about which
 you want to record (attest) evidence. Different kinds of Kosli *flows* include:
-- How you build and deploy software artifacts for a specific service
+- How you build, test, and deploy software Artifacts for a specific service
 - Defining and applying changes to infrastructure
-- Recording real-time access to production servers 
+- Recording real-time access to production servers
+- Feature-flag changes
 - Required steps when onboarding a new employee
 
-For this tutorial we are using the first example, building deploying a software binary artifact,
-where the Flow corresponds to a git repository. 
-An artifact could be an application binary, a docker image, a directory, or a file.
-When attesting artifact information, each attestation must be named.
+For this tutorial we are using the first kind:
+- the *Flow* corresponds to the git repository
+- the Artifact being built and deployed is an `nginx` docker image
+
+When attesting evidence, the target of the attestation must be named.
 These names are defined in a yml file.
-You will be using the file called `kosli.yml` in the root of the git repo
-you cloned in the previous step. Confirm this file exists by catting it:
+A prepared yml file already exists in the git repository.
+Confirm this yml file exists by catting it:
 
 ```shell {.command}
 cat kosli.yml
 ```
 
-which should produce the following output:
+You will see the following output, which specifies the
+existence of an Artifact named `nginx`:
+
+
 ```plaintext {.light-console}
 version: 1
 
@@ -73,7 +80,7 @@ trail:
     - name: nginx
 ```
 
-Create a new Kosli flow called `quickstart-nginx`
+Create a new Kosli *Flow* called `quickstart-nginx`
 naming this yml file:
 
 ```shell {.command}
@@ -83,28 +90,34 @@ kosli create flow2 quickstart-nginx \
 ```
 
 Confirm the Kosli flow called `quickstart-nginx` was created by running:
+
 ```shell {.command}
 kosli list flows
 ```
 
 which will produce the following output:
+
 ```plaintext {.light-console}
 NAME              DESCRIPTION                          VISIBILITY
 quickstart-nginx  Flow for quickstart nginx image      private
 ```
 {{< hint info >}}
 In the web interface you can select *Flows* on the left.
-It will show you that you have a *quickstart-nginx* flow.
-If you select the flow it will show that no artifacts have
+It will show you that you have a *quickstart-nginx* Flow.
+If you select the Flow it will show that no Artifacts have
 been reported yet.
 {{< /hint  >}}
 
 
-## Step 3: Create a Kosli trail
+## Step 3: Create a Kosli Trail
 
-A Kosli *trail* is a single, named, instance/run of a Kosli *flow*.
+A Kosli *Trail* is a single instance of a Kosli *Flow*.
+In this tutorial:
+- the *Flow* corresponds to a git repository
+- the *Trail* corresponds to a git-commit in the repository 
 
-Create a Kosli trail, in the `quickstart-nginx` flow, whose name is the repo's current git-commit:
+Create a Kosli *Trail*, in the `quickstart-nginx` flow, whose 
+name is the repository's current git-commit:
 
 ```shell {.command}
 GIT_COMMIT=$(git rev-parse HEAD)
@@ -114,10 +127,11 @@ kosli begin trail ${GIT_COMMIT} \
 
 ## Step 4: Create a Kosli environment
 
-A Kosli *environment* stores snapshots containing information about
-the software artifacts you are running in your runtime environment.
+A Kosli *Environment* stores snapshots containing information about
+the software Artifacts you are running in your runtime environment.
+Kosli supports many kinds of runtime environments; (server, Kubernetes cluster, AWS, etc.)  
 
-Create a Kosli environment:
+Create a Kosli *Environment* called `quickstart` whose type is `docker`:
 
 ```shell {.command}
 kosli create environment quickstart \
@@ -125,7 +139,7 @@ kosli create environment quickstart \
     --description "quickstart environment for tutorial"
 ```
 
-You can verify that the Kosli environment was created:
+You can verify that the Kosli *Environment* was created:
 
 ```shell {.command}
 kosli list environments
@@ -139,16 +153,16 @@ quickstart  docker               2022-11-01T15:30:56+01:00
 {{< hint info >}}
 If you refresh the *Environments* web page in your Kosli account, 
 it will show you that you have a *quickstart* environment and that
-no reports have been received.
+no snapshot reports have been received yet.
 {{< /hint >}}
 
-## Step 5: Attest an artifact to Kosli
+## Step 5: Attest an Artifact to Kosli
 
-Typically, you would build an artifact in your CI system. 
+Typically, you would build an Artifact in your CI system, in response to a git-commit.
 The quickstart-docker repository contains a `docker-compose.yml` file which uses an [nginx](https://nginx.org/) 
-docker image which you will be using as your artifact in this tutorial instead.
+docker image which you will be using as your Artifact in this tutorial instead.
 
-Pull the docker image - the Kosli CLI needs the artifact to be locally present to 
+Pull the docker image - the Kosli CLI needs the Artifact to be locally present to 
 generate a "fingerprint" to identify it:
 
 ```shell {.command}
@@ -169,9 +183,9 @@ Now report the artifact to Kosli using the `kosli attest artifact` command.
 
 Note:
 - The `--name` flag has the value `nginx` which is the (only) artifact
-name defined in the file `kosli.yml`.
+name defined in the `kosli.yml` file from step 2.
 - The `--build-url` and `--commit-url` flags have dummy values;
-in a real call these would have default values (e.g. from Github Actions).
+in a real call these would get default values (e.g. from Github Actions).
 
 ```shell {.command}
 GIT_COMMIT=$(git rev-parse HEAD)
@@ -193,7 +207,7 @@ in several places, and it will be incorrect whenever the repo gets new git
 commit (eg to add the kosli.yml file)
 -->
 
-You can verify that you have reported the artifact in your *quickstart-nginx* flow:
+You can verify that you have reported the Artifact in your *quickstart-nginx* flow:
 
 ```shell {.command}
 kosli list artifacts --flow quickstart-nginx
@@ -205,11 +219,11 @@ COMMIT   ARTIFACT                                                               
          Fingerprint: 2bcabc23b45489fb0885d69a06ba1d648aeda973fae7bb981bafbb884165e514                 
 ```
 
-## Step 6: Report expected deployment of the artifact
+## Step 6: Report expected deployment of the Artifact
 
-Before you run the nginx docker image (the artifact) on your docker host, you need to report 
+Before you run the nginx docker image (the Artifact) on your docker host, you need to report 
 to Kosli your intention of deploying that image. This allows Kosli to match what you 
-expect to run in your environment with what is actually running, and flag any mismatches.  
+*expect* to run in your environment with what is *actually* running, and flag any mismatches.  
 
 ```shell {.command}
 kosli expect deployment nginx:1.21 \
@@ -226,34 +240,44 @@ You can verify the deployment with:
 kosli list deployments --flow quickstart-nginx
 ```
 
+The output will include the fingerprint (starting 2bcabc) of the nginx:1.21 image:
+
 ```plaintext {.light-console}
 ID   ARTIFACT                                                                       ENVIRONMENT  REPORTED_AT
 1    Name: nginx:1.21                                                               quickstart   Tue, 01 Nov 2022 15:48:47 CET
      Fingerprint: 2bcabc23b45489fb0885d69a06ba1d648aeda973fae7bb981bafbb884165e514  
 ```
 
-Now run the artifact:
+## Step 7: Deploy the Artifact
+
+Now run the Artifact:
+
 ```shell {.command}
 docker-compose up -d
 ```
 
-You can confirm the container is running:
+Confirm the container is running:
+
 ```shell {.command}
 docker ps
 ```
 The output should include an entry similar to this:
+
 ```plaintext {.light-console}
 CONTAINER ID  IMAGE      COMMAND                 CREATED         STATUS         PORTS                  NAMES
 6330e545b532  nginx:1.21 "/docker-entrypoint.…"  35 seconds ago  Up 34 seconds  0.0.0.0:8080->80/tcp   quickstart-nginx
 ```
 
-## Step 7: Report what is running in your environment
+## Step 8: Report what is running in your environment
 
 Report all the docker containers running on your machine to Kosli:
+
 ```shell {.command}
 kosli snapshot docker quickstart
 ```
+
 You can confirm this has created an environment snapshot:
+
 ```shell {.command}
 kosli list snapshots quickstart
 ```
@@ -263,6 +287,7 @@ SNAPSHOT  FROM                           TO   DURATION
 ```
 
 You can get a detailed view of all the docker containers included in the snapshot report:
+
 ```shell {.command}
 kosli get snapshot quickstart
 ```
@@ -284,12 +309,12 @@ that there is now a timestamp for *Last Change At* column.
 Select the *quickstart* link on left for a detailed view of what is currently running.
 {{< /hint >}}
 
-## Step 8: Searching Kosli
+## Step 9: Searching Kosli
 
-Now that you have reported your artifact and what's running in our runtime environment,
-you can use the `kosli search` command to find everything Kosli knows about an artifact or a git commit.
+Now that you have reported your Artifact and what's running in your runtime environment,
+you can use the `kosli search` command to find everything Kosli knows about an Artifact or a git-commit.
 
-For example, you can give Kosli search the artifact's fingerprint: 
+For example, you can give Kosli search the git-commit whose CI run built and deployed the Artifact: 
 
 ```shell {.command}
 kosli search 9f14efa

@@ -5,6 +5,9 @@ weight: 530
 ---
 
 # Simulating a DevOps system
+
+## Pre-requisites 
+
 To follow the simulation you need to:
 * [Install the `kosli` CLI](/kosli_overview/kosli_tools/#installing-the-kosli-cli).
 * [Get your Kosli API token](/kosli_overview/kosli_tools/#getting-your-kosli-api-token).
@@ -16,10 +19,12 @@ To follow the simulation you need to:
   ```shell {.command}
   export KOSLI_ORG=<paste-your-kosli-organization-name>
   ```
+## Overview
 
-You will simulate a system with source code, a build system, and a running server.
+You will simulate a system with source code in a git repo, building a web service
+and a database service, and deploying them both to a server.
+
 There is a script to help you run these simulations, so you won't need to type too many commands.
-
 You can download the script from here:
 https://raw.githubusercontent.com/kosli-dev/cli/main/simulation_commands.bash
 
@@ -36,20 +41,18 @@ Source the simulation commands so you can use them later on in the examples:
 source simulation_commands.bash
 ```
 
-To see what a command (eg `create_git_repo_in_tmp`) in the simulation is actually doing run
-(in zsh you will need `type -f create_git_repo_in_tmp`):
+Use `type` to see what a simulation command is actually doing (in zsh you will need `type -f`):
 
 ```shell {.command}
 type create_git_repo_in_tmp
 ```
 ```plaintext {.light-console}
-create_git_repo_in_tmp is a function
 create_git_repo_in_tmp ()
 { 
-    pushd /tmp
+    pushd /tmp &> /dev/null
     mkdir try-kosli
     ...
-	popd
+	popd &> /dev/null
 }
 ```
 
@@ -78,22 +81,21 @@ be using in this guide.
 {{< /hint >}}
 
 
-
 # Environments
 
-A Kosli environment stores information about
+A Kosli *Environment* stores information about
 what software is running in your actual runtime environment (server, Kubernetes cluster, AWS, etc.)
 
-A typical setup reports what is running on the 
-staging server and on the production server. To report what is 
-running you run the Kosli CLI command periodically. The Kosli CLI will
-detect the version of the software you are currently running and report
-it to the Kosli environment.
+A typical setup reports what is running on a 
+staging server and also on a production server. To report what is 
+running you execute the Kosli CLI command periodically. The Kosli CLI will
+detect precisely what software is currently running and report
+it to the Kosli *Environment*.
 
 
-## Creating a Kosli environment
+## Creating a Kosli Environment
 
-Create a Kosli environment:
+Create a Kosli *Environment*:
 
 ```shell {.command}
 kosli create environment production \
@@ -101,7 +103,7 @@ kosli create environment production \
     --description "Production server (for kosli getting started)"
 ```
 
-You can immediately verify the Kosli environment was created:
+Verify the Kosli Environment was created:
 
 ```shell {.command}
 kosli ls environments
@@ -111,6 +113,8 @@ kosli ls environments
 NAME        TYPE    LAST REPORT  LAST MODIFIED
 production  server               2022-08-16T07:53:43+02:00
 ```
+
+Verify there are no reports to it yet:
 
 ```shell {.command}
 kosli get environment production
@@ -137,7 +141,7 @@ database applications:
 
 ```shell {.command}
 kosli snapshot server production \
-    --paths /tmp/try-kosli/server/web_*bin \
+    --paths /tmp/try-kosli/server/web_*.bin \
     --paths /tmp/try-kosli/server/db_*.bin
 ```
 
@@ -170,19 +174,23 @@ a timestamp for when the environment changed. Pressing the *production* link
 gives you a detailed view of what is running now.
 
 Typically, a server periodically sends a report of what is currently running to Kosli. But Kosli
-will only create a new snapshot if the report shows changes compared to the previous snapshot, so resending the same environment report
-several times will not lead to duplication of snapshots.
+will only create a new snapshot if the report shows changes compared to the previous snapshot, so 
+resending the same environment report several times will not lead to duplication of snapshots.
 
-Send an environment report:
+Resend the environment report:
 
 ```shell {.command}
 kosli snapshot server production \
-    --paths /tmp/try-kosli/server/web_*bin \
+    --paths /tmp/try-kosli/server/web_*.bin \
     --paths /tmp/try-kosli/server/db_*.bin
 ```
+
+Confirm there is still a single snapshot:
+
 ```shell {.command}
 kosli list snapshots production
 ```
+
 ```plaintext {.light-console}
 SNAPSHOT  FROM                  TO   DURATION    COMPLIANT
 1         16 Aug 22 07:54 CEST  now  11 seconds  false
@@ -200,7 +208,7 @@ Report what is now running on the server:
 
 ```shell {.command}
 kosli snapshot server production \
-    --paths /tmp/try-kosli/server/web_*bin \
+    --paths /tmp/try-kosli/server/web_*.bin \
     --paths /tmp/try-kosli/server/db_*.bin
 ```
 
@@ -232,8 +240,9 @@ N/A     Name: /tmp/try-kosli/server/db_1.bin                                    
 ```                    
 
 Here, using the bare environment name (eg production) always refers to the latest snapshot
-in that environment. You can also use the 
+in that Environment (currently #2). You can also use the 
 Kosli CLI to check what was running in previous snapshots.
+
 Find what was running in snapshot #1 in production:
 
 ```shell {.command}
@@ -252,20 +261,37 @@ N/A     Name: /tmp/try-kosli/server/db_1.bin                                    
 <!---
 TODO: add icon of the log tab in the text below
 -->
+
 In the web interface you should now also be able to see 2 snapshots. The Log
 tab should show what changed in snapshot 1 and snapshot 2.
 
 
 # Flows
 
+A Kosli *Flow* represents a single business-process, about which
+you want to record (attest) evidence. Different kinds of Kosli *flows* include:
+- How you build, test, and deploy software Artifacts
+- Defining and applying changes to infrastructure
+- Recording real-time access to production servers
+- Feature-flag changes
+- Required steps when onboarding a new employee
+
+For this tutorial we are simulating building and deploying two
+artifacts; a web-server and a db-server.
+
+## Creating Kosli Flows
+
+When attesting evidence, the target of the attestation must be named.
+These names are defined in a yml file.
+Prepared yml files already exist in the git repository, one
+for the web-server, called `web.yml`, and one for the db-server,
+called `db.yml`.
+
+
+<!--
 A Kosli flow stores information about what happens in your build system.
 The output of the build system is called an *artifact* in Kosli. This can be
 an application, a docker image, documentation, a filesystem, etc.
-
-<!-- TODO: Do we need this??
-Some organizations have a CI system where one CI pipeline builds one 
-artifact, some have a CI system where one CI pipeline builds several
-artifacts. For both cases you use one Kosli pipeline for each artifact. -->
 
 You use the Kosli CLI to report information about the creation of an
 artifact to the Kosli flow.
@@ -273,28 +299,23 @@ artifact to the Kosli flow.
 A Kosli flow can also be used to store any information related to 
 the artifact you have built, like test results, manual approvals, 
 pull-requests, and so on.
+-->
 
+You are building two applications, so create
+two Kosli Flows called `web-server` and `database-server`
+specifying these two yml files:
 
-## Creating a Kosli flow
-
-Create a Kosli flow where you can report what software your CI system
-is building. You are building two applications, so make
-two Kosli flows `web-server` and `database-server`.
-
-Create your new flows:
 
 ```shell {.command}
-kosli create flow web-server \
+kosli create flow2 web-server \
     --description "flow to build web-server" \
-    --visibility private \
-    --template artifact
+    --template-file try-kosli/web.yml
 ```
 
 ```shell {.command}
-kosli create flow database-server \
+kosli create flow2 database-server \
     --description "flow to build database-server" \
-    --visibility private \
-    --template artifact
+    --template-file try-kosli/db.yml
 ```
 
 You can immediately verify that the Kosli flows were created:
@@ -314,6 +335,11 @@ It will show you that you have a *web-server* and *database-server* flow.
 If you select either of the flows they will show that no artifacts have
 been reported for the flows.
 
+# Trails
+...
+
+## Creating Kosli Trails
+...
 
 ## Building artifacts and reporting them to Kosli
 
