@@ -47,6 +47,12 @@ To follow the tutorial, you will need to:
 
 ## Step 2: Create a Kosli Flow
 
+<!--
+For now an explanation of what a Kosli Flow is exists here.
+These explanations need to live at the top-level of the docs.
+What a Flow is should not appear in tutorials like this.
+-->
+
 A Kosli *Flow* represents a single business-process, about which
 you want to record (attest) evidence. Different kinds of Kosli *flows* include:
 - How you build, test, and deploy software Artifacts for a specific service
