@@ -35,11 +35,11 @@ type AzureClient struct {
 
 // AppData represents the harvested Azure service app and function app data
 type AppData struct {
-	AppName           string            `json:"appName"`
-	AppKind           string            `json:"appKind"`
-	FingerprintSource string            `json:"fingerprintSource"`
-	Digests           map[string]string `json:"digests"`
-	StartedAt         int64             `json:"creationTimestamp"`
+	AppName       string            `json:"appName"`
+	AppKind       string            `json:"appKind"`
+	DigestsSource string            `json:"digestsSource"`
+	Digests       map[string]string `json:"digests"`
+	StartedAt     int64             `json:"creationTimestamp"`
 }
 
 // AzureAppsRequest represents the PUT request body to be sent to Kosli from CLI
@@ -145,7 +145,7 @@ func (azureClient *AzureClient) NewAppData(app *armappservice.Site, logger *logg
 			return AppData{}, err
 		}
 	} else {
-		fingerprintSource = "DockerLogs"
+		fingerprintSource = "logs"
 		logs, err := azureClient.GetDockerLogsForApp(*app.Name, logger)
 		if err != nil {
 			return AppData{}, err
