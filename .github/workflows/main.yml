@@ -35,6 +35,7 @@ jobs:
       github_access_token: ${{ secrets.KOSLI_GITHUB_TOKEN }}
       gitlab_access_token: ${{ secrets.KOSLI_GITLAB_TOKEN }}
       azure_access_token: ${{ secrets.KOSLI_AZURE_TOKEN }}
+      azure_service_token: ${{ secrets.KOSLI_AZURE_SERVICE_TOKEN }}
       bitbucket_password: ${{ secrets.KOSLI_BITBUCKET_PASSWORD }}
       jira_api_token: ${{ secrets.KOSLI_JIRA_API_TOKEN }}
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
