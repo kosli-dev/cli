@@ -1,15 +1,15 @@
 ---
-title: "kosli list snapshots"
+title: "kosli log environment"
 beta: false
 ---
 
-# kosli list snapshots
+# kosli log environment
 
 ## Synopsis
 
-List environment snapshots.
+List environment events.
 The results are paginated and ordered from latest to oldest.
-By default, the page limit is 15 snapshots per page.
+By default, the page limit is 15 events per page.
 
 You can optionally specify an INTERVAL between two snapshot expressions with [expression]..[expression]. 
 
@@ -22,14 +22,14 @@ Either expression can be omitted to default to NOW.
 
 
 ```shell
-kosli list snapshots ENV_NAME [flags]
+kosli log environment ENV_NAME [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|    -h, --help  |  help for snapshots  |
-|    -i, --interval string  |  [optional] Expression to define specified snapshots range  |
+|    -h, --help  |  help for environment  |
+|    -i, --interval string  |  [optional] Expression to define specified snapshots range.  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 |        --page int  |  [defaulted] The page number of a response. (default 1)  |
 |    -n, --page-limit int  |  [defaulted] The number of elements per page. (default 15)  |
@@ -51,19 +51,19 @@ kosli list snapshots ENV_NAME [flags]
 
 ```shell
 
-# list the last 15 snapshots for an environment:
-kosli list snapshots yourEnvironmentName \
+# list the last 15 events for an environment:
+kosli log environment yourEnvironmentName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# list the last 30 snapshots for an environment:
-kosli list snapshots yourEnvironmentName \
+# list the last 30 events for an environment:
+kosli log environment yourEnvironmentName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# list the last 30 snapshots for an environment (in JSON):
-kosli list snapshots yourEnvironmentName \
+# list the last 30 events for an environment (in JSON):
+kosli log environment yourEnvironmentName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--org yourOrgName \

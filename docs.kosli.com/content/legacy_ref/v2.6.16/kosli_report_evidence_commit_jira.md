@@ -27,8 +27,9 @@ kosli report evidence commit jira [flags]
 ## Flags
 | Flag | Description |
 | :--- | :--- |
+|        --assert  |  [optional] Exit with non-zero code if no jira issue reference found, or jira issue does not exist, for the given commit or branch.  |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|        --commit string  |  Git commit for which to verify and given evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|        --commit string  |  Git commit for which to verify a given evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |        --evidence-fingerprint string  |  [optional] The SHA256 fingerprint of the evidence file or dir.  |
 |    -e, --evidence-paths strings  |  [optional] The comma-separated list of paths containing supporting proof for the reported evidence. Paths can be for files or directories. All provided proofs will be uploaded to Kosli's evidence vault.  |
@@ -41,7 +42,7 @@ kosli report evidence commit jira [flags]
 |        --jira-username string  |  Jira username (for Jira Cloud)  |
 |    -n, --name string  |  The name of the evidence.  |
 |        --repo-root string  |  [defaulted] The directory where the source git repository is available. (default ".")  |
-|    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to this evidence.  |
+|    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the evidence.  |
 
 
 ## Options inherited from parent commands
@@ -94,6 +95,20 @@ kosli report evidence commit jira \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 	--user-data /path/to/json/file.json
+
+
+# fail if no issue reference is found, or the issue is not found in your jira instance
+kosli report evidence commit jira \
+	--commit yourGitCommitSha1 \
+	--name yourEvidenceName \
+	--jira-base-url https://kosli.atlassian.net \
+	--jira-username user@domain.com \
+	--jira-api-token yourJiraAPIToken \
+	--flows yourFlowName \
+	--build-url https://exampleci.com \
+	--api-token yourAPIToken \
+	--org yourOrgName \
+	--assert
 
 ```
 
