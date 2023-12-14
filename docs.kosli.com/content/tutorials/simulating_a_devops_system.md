@@ -268,20 +268,6 @@ tab should show what changed in snapshot 1 and snapshot 2.
 
 # Flows
 
-<!--
-For now an explanation of what a Kosli Flow is exists here.
-These explanations need to live at the top-level of the docs.
-What a Flow is should not appear in tutorials like this.
--->
-
-A Kosli *Flow* represents a single business-process, about which
-you want to record (attest) evidence. Different kinds of Kosli *flows* include:
-- How you build, test, and deploy software Artifacts
-- Defining and applying changes to infrastructure
-- Recording real-time access to production servers
-- Feature-flag changes
-- Required steps when onboarding a new employee
-
 For this tutorial we are simulating building and deploying two
 artifacts; a web-server and a db-server.
 

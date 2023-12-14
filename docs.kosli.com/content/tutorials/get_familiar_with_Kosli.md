@@ -48,34 +48,21 @@ To follow the tutorial, you will need to:
 ## Step 2: Create a Kosli Flow
 
 <!--
-For now an explanation of what a Kosli Flow is exists here.
-These explanations need to live at the top-level of the docs.
-What a Flow is should not appear in tutorials like this.
--->
-
-A Kosli *Flow* represents a single business-process, about which
-you want to record (attest) evidence. Different kinds of Kosli *flows* include:
-- How you build, test, and deploy software Artifacts for a specific service
-- Defining and applying changes to infrastructure
-- Recording real-time access to production servers
-- Feature-flag changes
-- Required steps when onboarding a new employee
-
 For this tutorial we are using the first kind:
 - the *Flow* corresponds to the git repository
 - the Artifact being built and deployed is an `nginx` docker image
-
 When attesting evidence, the target of the attestation must be named.
 These names are defined in a yml file.
-A prepared yml file already exists in the git repository.
+-->
+
+The Flow's yml template-file exists in the git repository.
 Confirm this yml file exists by catting it:
 
 ```shell {.command}
 cat kosli.yml
 ```
 
-You will see the following output, which specifies the
-existence of an Artifact named `nginx`:
+You will see the following output, specifying the existence of an Artifact named `nginx`:
 
 
 ```plaintext {.light-console}
@@ -86,8 +73,7 @@ trail:
     - name: nginx
 ```
 
-Create a new Kosli *Flow* called `quickstart-nginx`
-naming this yml file:
+Create a Kosli *Flow* called `quickstart-nginx` using this yml template-file:
 
 ```shell {.command}
 kosli create flow2 quickstart-nginx \
@@ -95,7 +81,7 @@ kosli create flow2 quickstart-nginx \
     --template-file kosli.yml
 ```
 
-Confirm the Kosli flow called `quickstart-nginx` was created by running:
+Confirm the Kosli Flow called `quickstart-nginx` was created:
 
 ```shell {.command}
 kosli list flows
@@ -117,12 +103,7 @@ been reported yet.
 
 ## Step 3: Create a Kosli Trail
 
-A Kosli *Trail* is a single instance of a Kosli *Flow*.
-In this tutorial:
-- the *Flow* corresponds to a git repository
-- the *Trail* corresponds to a git-commit in the repository 
-
-Create a Kosli *Trail*, in the `quickstart-nginx` flow, whose 
+Create a Kosli *Trail*, in the `quickstart-nginx` Flow, whose 
 name is the repository's current git-commit:
 
 ```shell {.command}
@@ -131,11 +112,17 @@ kosli begin trail ${GIT_COMMIT} \
     --flow quickstart-nginx
 ```
 
+<!--
+Step to confirm the Trail exists?
+-->
+
 ## Step 4: Create a Kosli environment
 
+<!--
 A Kosli *Environment* stores snapshots containing information about
 the software Artifacts you are running in your runtime environment.
 Kosli supports many kinds of runtime environments; (server, Kubernetes cluster, AWS, etc.)  
+-->
 
 Create a Kosli *Environment* called `quickstart` whose type is `docker`:
 
