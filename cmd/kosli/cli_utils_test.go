@@ -82,6 +82,26 @@ func (suite *CliUtilsTestSuite) TestDefaultValue() {
 			want: "some-sha",
 		},
 		{
+			name: "Lookup default org for Github.",
+			args: args{
+				ci:               github,
+				flag:             "org",
+				envVars:          map[string]string{"GITHUB_REPOSITORY_OWNER": "cyber-dojo"},
+				unsetTestsEnvVar: true,
+			},
+			want: "cyber-dojo",
+		},
+		{
+			name: "Lookup default repository for Github.",
+			args: args{
+				ci:               github,
+				flag:             "repository",
+				envVars:          map[string]string{"GITHUB_REPOSITORY": "cyber-dojo/dashboard"},
+				unsetTestsEnvVar: true,
+			},
+			want: "cyber-dojo/dashboard",
+		},
+		{
 			name: "Lookup an existing default for Bitbucket.",
 			args: args{
 				ci:   bitbucket,

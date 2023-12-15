@@ -99,8 +99,8 @@ func newAttestGithubPRCmd(out io.Writer) *cobra.Command {
 		payload: PRAttestationPayload{
 			CommonAttestationPayload: &CommonAttestationPayload{},
 		},
-		retriever: new(ghUtils.GithubConfig),
 	}
+	githubFlagsValues := new(ghUtils.GithubFlagsTempValueHolder)
 	cmd := &cobra.Command{
 		Use:     "github [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Aliases: []string{"gh"},
@@ -129,13 +129,15 @@ func newAttestGithubPRCmd(out io.Writer) *cobra.Command {
 
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			o.retriever = ghUtils.NewGithubConfig(githubFlagsValues.Token, githubFlagsValues.BaseURL,
+				githubFlagsValues.Org, githubFlagsValues.Repository)
 			return o.run(args)
 		},
 	}
 
 	ci := WhichCI()
 	addAttestationFlags(cmd, o.CommonAttestationOptions, o.payload.CommonAttestationPayload, ci)
-	addAttestationGithubFlags(cmd, o.getRetriever().(*ghUtils.GithubConfig), ci)
+	addAttestationGithubFlags(cmd, githubFlagsValues, ci)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
 
 	err := RequireFlags(cmd, []string{"flow", "trail", "name",

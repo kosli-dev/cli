@@ -55,11 +55,11 @@ func addGitlabFlags(cmd *cobra.Command, gitlabConfig *gitlabUtils.GitlabConfig, 
 	cmd.Flags().StringVar(&gitlabConfig.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
 }
 
-func addAttestationGithubFlags(cmd *cobra.Command, githubConfig *ghUtils.GithubConfig, ci string) {
-	cmd.Flags().StringVar(&githubConfig.Token, "github-token", "", githubTokenFlag)
-	cmd.Flags().StringVar(&githubConfig.Org, "github-org", DefaultValue(ci, "org"), githubOrgFlag)
-	cmd.Flags().StringVar(&githubConfig.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
-	cmd.Flags().StringVar(&githubConfig.BaseURL, "github-base-url", "", githubBaseURLFlag)
+func addAttestationGithubFlags(cmd *cobra.Command, githubFlagsValueHolder *ghUtils.GithubFlagsTempValueHolder, ci string) {
+	cmd.Flags().StringVar(&githubFlagsValueHolder.Token, "github-token", "", githubTokenFlag)
+	cmd.Flags().StringVar(&githubFlagsValueHolder.Org, "github-org", DefaultValue(ci, "org"), githubOrgFlag)
+	cmd.Flags().StringVar(&githubFlagsValueHolder.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
+	cmd.Flags().StringVar(&githubFlagsValueHolder.BaseURL, "github-base-url", "", githubBaseURLFlag)
 }
 
 func addAttestationAzureFlags(cmd *cobra.Command, azureConfig *azUtils.AzureConfig, ci string) {

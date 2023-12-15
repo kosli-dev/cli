@@ -139,7 +139,6 @@ func DefaultValue(ci, flag string) string {
 					return strings.Replace(result, "commit", "commits", 1)
 				}
 			}
-
 			return result
 		}
 	}
