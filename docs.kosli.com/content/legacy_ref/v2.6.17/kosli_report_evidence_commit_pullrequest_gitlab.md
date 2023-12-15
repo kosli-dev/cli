@@ -1,18 +1,17 @@
 ---
-title: "kosli report evidence commit pullrequest github"
+title: "kosli report evidence commit pullrequest gitlab"
 beta: false
 ---
 
-# kosli report evidence commit pullrequest github
+# kosli report evidence commit pullrequest gitlab
 
 ## Synopsis
 
-Report Github pull request evidence for a git commit in Kosli flows.  
-It checks if a pull request exists for a commit and report the pull-request evidence to the commit in Kosli. 
-
+Report Gitlab merge request evidence for a commit in Kosli flows.  
+It checks if a merge request exists for the git commit and reports the merge-request evidence to the commit in Kosli.
 
 ```shell
-kosli report evidence commit pullrequest github [flags]
+kosli report evidence commit pullrequest gitlab [flags]
 ```
 
 ## Flags
@@ -20,18 +19,18 @@ kosli report evidence commit pullrequest github [flags]
 | :--- | :--- |
 |        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|        --commit string  |  Git commit for which to verify and given evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|        --commit string  |  Git commit for which to verify a given evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |        --evidence-fingerprint string  |  [optional] The SHA256 fingerprint of the evidence file or dir.  |
 |        --evidence-url string  |  [optional] The external URL where the evidence file or dir is stored.  |
 |    -f, --flows strings  |  [defaulted] The comma separated list of Kosli flows. Defaults to all flows of the org.  |
-|        --github-base-url string  |  [optional] GitHub base URL (only needed for GitHub Enterprise installations).  |
-|        --github-org string  |  Github organization. (defaulted if you are running in GitHub Actions: https://docs.kosli.com/ci-defaults ).  |
-|        --github-token string  |  Github token.  |
-|    -h, --help  |  help for github  |
+|        --gitlab-base-url string  |  [optional] Gitlab base URL (only needed for on-prem Gitlab installations).  |
+|        --gitlab-org string  |  Gitlab organization. (defaulted if you are running in Gitlab Pipelines: https://docs.kosli.com/ci-defaults ).  |
+|        --gitlab-token string  |  Gitlab token.  |
+|    -h, --help  |  help for gitlab  |
 |    -n, --name string  |  The name of the evidence.  |
 |        --repository string  |  Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to this evidence.  |
+|    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the evidence.  |
 
 
 ## Options inherited from parent commands
@@ -49,12 +48,12 @@ kosli report evidence commit pullrequest github [flags]
 
 ```shell
 
-# report a pull request commit evidence to Kosli
-kosli report evidence commit pullrequest github \
-	--commit yourGitCommitSha1 \
-	--repository yourGithubGitRepository \
-	--github-token yourGithubToken \
-	--github-org yourGithubOrg \
+# report a merge request evidence to Kosli
+kosli report evidence commit pullrequest gitlab \
+	--commit yourArtifactGitCommit \
+	--repository yourBitbucketGitRepository \
+	--gitlab-token yourGitlabToken \
+	--gitlab-org yourGitlabOrg \
 	--name yourEvidenceName \
 	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
@@ -62,11 +61,11 @@ kosli report evidence commit pullrequest github \
 	--api-token yourAPIToken
 	
 # fail if a pull request does not exist for your commit
-kosli report evidence commit pullrequest github \
-	--commit yourGitCommitSha1 \
-	--repository yourGithubGitRepository \
-	--github-token yourGithubToken \
-	--github-org yourGithubOrg \
+kosli report evidence commit pullrequest gitlab \
+	--commit yourArtifactGitCommit \
+	--repository yourBitbucketGitRepository \
+	--gitlab-token yourGitlabToken \
+	--gitlab-org yourGitlabOrg \
 	--name yourEvidenceName \
 	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
