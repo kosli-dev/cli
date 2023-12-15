@@ -105,7 +105,6 @@ func newAttestAzurePRCmd(out io.Writer) *cobra.Command {
 		payload: PRAttestationPayload{
 			CommonAttestationPayload: &CommonAttestationPayload{},
 		},
-		// retriever: new(azure.AzureConfig),
 	}
 	azureFlagsValues := new(azUtils.AzureFlagsTempValueHolder)
 	cmd := &cobra.Command{
