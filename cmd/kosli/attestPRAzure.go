@@ -3,7 +3,7 @@ package main
 import (
 	"io"
 
-	"github.com/kosli-dev/cli/internal/azure"
+	azUtils "github.com/kosli-dev/cli/internal/azure"
 	"github.com/spf13/cobra"
 )
 
@@ -105,8 +105,9 @@ func newAttestAzurePRCmd(out io.Writer) *cobra.Command {
 		payload: PRAttestationPayload{
 			CommonAttestationPayload: &CommonAttestationPayload{},
 		},
-		retriever: new(azure.AzureConfig),
+		// retriever: new(azure.AzureConfig),
 	}
+	azureFlagsValues := new(azUtils.AzureFlagsTempValueHolder)
 	cmd := &cobra.Command{
 		Use:     "azure [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Aliases: []string{"az"},
@@ -135,13 +136,15 @@ func newAttestAzurePRCmd(out io.Writer) *cobra.Command {
 
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			o.retriever = azUtils.NewAzureConfig(azureFlagsValues.Token,
+				azureFlagsValues.OrgUrl, azureFlagsValues.Project, azureFlagsValues.Repository)
 			return o.run(args)
 		},
 	}
 
 	ci := WhichCI()
 	addAttestationFlags(cmd, o.CommonAttestationOptions, o.payload.CommonAttestationPayload, ci)
-	addAttestationAzureFlags(cmd, o.getRetriever().(*azure.AzureConfig), ci)
+	addAzureFlags(cmd, azureFlagsValues, ci)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
 
 	err := RequireFlags(cmd, []string{"flow", "trail", "name",

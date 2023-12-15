@@ -137,7 +137,7 @@ func newAttestGithubPRCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	addAttestationFlags(cmd, o.CommonAttestationOptions, o.payload.CommonAttestationPayload, ci)
-	addAttestationGithubFlags(cmd, githubFlagsValues, ci)
+	addGithubFlags(cmd, githubFlagsValues, ci)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
 
 	err := RequireFlags(cmd, []string{"flow", "trail", "name",
