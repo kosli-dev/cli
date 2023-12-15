@@ -105,7 +105,7 @@ The service principal needs to have the following permissions:
 	attestationUserDataFlag     = "[optional] The path to a JSON file containing additional data you would like to attach to the attestation."
 	deploymentUserDataFlag      = "[optional] The path to a JSON file containing additional data you would like to attach to the deployment."
 	trailUserDataFlag           = "[optional] The path to a JSON file containing additional data you would like to attach to the flow trail."
-	gitCommitFlag               = "The git commit from which the artifact was created. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
+	gitCommitFlag               = "[defaulted] The git commit from which the artifact was created. (defaulted in some CIs: https://docs.kosli.com/ci-defaults, otherwise defaults to HEAD )."
 	evidenceBuildUrlFlag        = "The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
 	buildUrlFlag                = "The url of CI pipeline that built the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
 	commitUrlFlag               = "The url for the git commit that created the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."

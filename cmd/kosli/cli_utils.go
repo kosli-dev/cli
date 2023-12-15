@@ -142,6 +142,10 @@ func DefaultValue(ci, flag string) string {
 
 			return result
 		}
+		// when not in a known CI, default some values
+		if flag == "git-commit" {
+			return "HEAD"
+		}
 	}
 	return ""
 }
