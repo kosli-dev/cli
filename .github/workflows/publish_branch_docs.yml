@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
-
+      
       - name: Generate json
         run: |
           echo '{"currentversion": "staging-docs"}' > docs.kosli.com/assets/metadata.json
