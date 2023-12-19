@@ -37,4 +37,4 @@ jobs:
           # their versions pushed to docs-main during last release - hence CLEAR_GLOBS_FILE in
           # publish_docs.yml, to prevent removing them before copying
           # CLEAR_GLOBS_FILE: ".clear-files"
-          # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
