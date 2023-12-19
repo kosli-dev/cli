@@ -36,5 +36,5 @@ jobs:
           # docs.kosli.com/assets/metadata.json are not present, but we use CLEAR_GLOBS_FILE to preserve
           # their versions pushed to docs-main during last release - hence CLEAR_GLOBS_FILE in
           # publish_docs.yml, to prevent removing them before copying
-          # CLEAR_GLOBS_FILE: ".clear-files"
+          CLEAR_GLOBS_FILE: ".clear-files"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
