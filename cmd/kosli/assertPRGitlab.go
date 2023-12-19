@@ -22,7 +22,6 @@ const assertPRGitlabExample = `
 kosli assert mergerequest gitlab \
 	--github-token yourGithubToken \
 	--github-org yourGithubOrg \
-	--commit yourArtifactGitCommit \
 	--commit yourGitCommit \
 	--repository yourGithubGitRepository
 `

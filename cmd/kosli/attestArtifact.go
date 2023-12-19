@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -22,15 +21,15 @@ type attestArtifactOptions struct {
 }
 
 type AttestArtifactPayload struct {
-	Fingerprint string                `json:"fingerprint"`
-	Filename    string                `json:"filename"`
-	GitCommit   string                `json:"git_commit"`
-	BuildUrl    string                `json:"build_url"`
-	CommitUrl   string                `json:"commit_url"`
-	RepoUrl     string                `json:"repo_url"`
-	CommitsList []*gitview.CommitInfo `json:"commits_list"`
-	Name        string                `json:"step_name"`
-	TrailName   string                `json:"trail_name"`
+	Fingerprint   string                   `json:"fingerprint"`
+	Filename      string                   `json:"filename"`
+	GitCommit     string                   `json:"git_commit"`
+	GitCommitInfo *gitview.BasicCommitInfo `json:"git_commit_info"`
+	BuildUrl      string                   `json:"build_url"`
+	CommitUrl     string                   `json:"commit_url"`
+	RepoUrl       string                   `json:"repo_url"`
+	Name          string                   `json:"step_name"`
+	TrailName     string                   `json:"trail_name"`
 }
 
 const attestArtifactShortDesc = `Attest an artifact creation to a Kosli flow.  `
@@ -94,7 +93,7 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 	ci := WhichCI()
 	cmd.Flags().StringVarP(&o.payload.Fingerprint, "fingerprint", "F", "", fingerprintFlag)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
-	cmd.Flags().StringVarP(&o.gitReference, "git-commit", "g", DefaultValue(ci, "git-commit"), gitCommitFlag)
+	cmd.Flags().StringVarP(&o.gitReference, "commit", "g", DefaultValue(ci, "git-commit"), gitCommitFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), buildUrlFlag)
 	cmd.Flags().StringVarP(&o.payload.CommitUrl, "commit-url", "u", DefaultValue(ci, "commit-url"), commitUrlFlag)
 	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", repoRootFlag)
@@ -105,7 +104,7 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"trail", "flow", "name", "git-commit", "build-url", "commit-url"})
+	err := RequireFlags(cmd, []string{"trail", "flow", "name", "build-url", "commit-url"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
@@ -138,21 +137,12 @@ func (o *attestArtifactOptions) run(args []string) error {
 		return err
 	}
 
-	commitObject, err := gitView.GetCommitInfoFromCommitSHA(o.gitReference)
+	commitInfo, err := gitView.GetCommitInfoFromCommitSHA(o.gitReference)
 	if err != nil {
 		return err
 	}
-	o.payload.GitCommit = commitObject.Sha1
-
-	previousCommit, err := o.latestCommit(currentBranch(gitView))
-	if err == nil {
-		o.payload.CommitsList, err = gitView.ChangeLog(o.payload.GitCommit, previousCommit, logger)
-		if err != nil && !global.DryRun {
-			return err
-		}
-	} else if !global.DryRun {
-		return err
-	}
+	o.payload.GitCommit = commitInfo.Sha1
+	o.payload.GitCommitInfo = &commitInfo.BasicCommitInfo
 
 	o.payload.RepoUrl, err = gitView.RepoUrl()
 	if err != nil {
@@ -173,35 +163,4 @@ func (o *attestArtifactOptions) run(args []string) error {
 		logger.Info("artifact %s was attested with fingerprint: %s", o.payload.Filename, o.payload.Fingerprint)
 	}
 	return err
-}
-
-// latestCommit retrieves the git commit of the latest artifact for a flow in Kosli
-func (o *attestArtifactOptions) latestCommit(branchName string) (string, error) {
-	latestCommitUrl := fmt.Sprintf(
-		"%s/api/v2/artifacts/%s/%s/%s/latest_commit%s",
-		global.Host, global.Org, o.flowName, o.payload.Fingerprint, asBranchParameter(branchName))
-
-	reqParams := &requests.RequestParams{
-		Method:   http.MethodGet,
-		URL:      latestCommitUrl,
-		Password: global.ApiToken,
-	}
-	response, err := kosliClient.Do(reqParams)
-	if err != nil {
-		return "", err
-	}
-
-	var latestCommitResponse map[string]interface{}
-	err = json.Unmarshal([]byte(response.Body), &latestCommitResponse)
-	if err != nil {
-		return "", err
-	}
-	latestCommit := latestCommitResponse["latest_commit"]
-	if latestCommit == nil {
-		logger.Debug("no previous artifacts were found for flow: %s", o.flowName)
-		return "", nil
-	} else {
-		logger.Debug("latest artifact for flow: %s has the git commit: %s", o.flowName, latestCommit.(string))
-		return latestCommit.(string), nil
-	}
 }

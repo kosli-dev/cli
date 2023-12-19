@@ -16,12 +16,25 @@ const snapshotAzureAppsLongDesc = snapshotAzureAppsShortDesc + `
 The reported data includes Azure app names, container image digests and creation timestamps.` + azureAuthDesc
 
 const snapshotAzureAppsExample = `
-kosli snapshot azure-apps yourEnvironmentName \
+# Use Docker logs of Azure apps to get the digests for artifacts in a snapshot
+kosli snapshot azure yourEnvironmentName \
 	--azure-client-id yourAzureClientID \
 	--azure-client-secret yourAzureClientSecret \
 	--azure-tenant-id yourAzureTenantID \
 	--azure-subscription-id yourAzureSubscriptionID \
 	--azure-resource-group-name yourAzureResourceGroupName \
+	--digests-source logs \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# Use Azure Container Registry to get the digests for artifacts in a snapshot
+kosli snapshot azure yourEnvironmentName \
+	--azure-client-id yourAzureClientID \
+	--azure-client-secret yourAzureClientSecret \
+	--azure-tenant-id yourAzureTenantID \
+	--azure-subscription-id yourAzureSubscriptionID \
+	--azure-resource-group-name yourAzureResourceGroupName \
+	--digests-source acr \
 	--api-token yourAPIToken \
 	--org yourOrgName
 `
@@ -34,7 +47,7 @@ func newSnapshotAzureAppsCmd(out io.Writer) *cobra.Command {
 	o := new(snapshotAzureAppsOptions)
 	o.azureStaticCredentials = new(azure.AzureStaticCredentials)
 	cmd := &cobra.Command{
-		Use:     "azure-apps ENVIRONMENT-NAME",
+		Use:     "azure ENVIRONMENT-NAME",
 		Short:   snapshotAzureAppsShortDesc,
 		Long:    snapshotAzureAppsLongDesc,
 		Example: snapshotAzureAppsExample,
@@ -45,6 +58,11 @@ func newSnapshotAzureAppsCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
+
+			if o.azureStaticCredentials.DigestsSource != "acr" && o.azureStaticCredentials.DigestsSource != "logs" {
+				return fmt.Errorf("invalid value for --digests-source flag. Valid values are 'acr' and 'logs'")
+			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -57,6 +75,8 @@ func newSnapshotAzureAppsCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.azureStaticCredentials.TenantId, "azure-tenant-id", "", azureTenantIdFlag)
 	cmd.Flags().StringVar(&o.azureStaticCredentials.SubscriptionId, "azure-subscription-id", "", azureSubscriptionIdFlag)
 	cmd.Flags().StringVar(&o.azureStaticCredentials.ResourceGroupName, "azure-resource-group-name", "", azureResourceGroupNameFlag)
+	cmd.Flags().BoolVar(&o.azureStaticCredentials.DownloadLogsAsZip, "zip", false, "Download logs from Azure as zip files")
+	cmd.Flags().StringVar(&o.azureStaticCredentials.DigestsSource, "digests-source", "acr", azureDigestsSourceFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{

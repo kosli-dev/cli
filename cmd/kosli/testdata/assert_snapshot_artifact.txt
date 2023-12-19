@@ -1,0 +1,1 @@
+Hi. I am artifact used for testing of assert artifact.

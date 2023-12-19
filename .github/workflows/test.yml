@@ -20,6 +20,8 @@ on:
         required: true 
       azure_access_token:
         required: true 
+      azure_service_token:
+        required: true
       bitbucket_password:
         required: true
       jira_api_token:
@@ -66,6 +68,7 @@ jobs:
         KOSLI_GITHUB_TOKEN: ${{ secrets.github_access_token }}
         KOSLI_GITLAB_TOKEN: ${{ secrets.gitlab_access_token }}
         KOSLI_AZURE_TOKEN: ${{ secrets.azure_access_token }}
+        KOSLI_AZURE_CLIENT_SECRET: ${{ secrets.azure_service_token }}
         KOSLI_BITBUCKET_PASSWORD: ${{ secrets.bitbucket_password }}
         KOSLI_JIRA_API_TOKEN: ${{ secrets.jira_api_token }}
       run: |

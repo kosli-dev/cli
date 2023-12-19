@@ -347,3 +347,17 @@ func ReportServerArtifactToEnv(paths []string, envName string, t *testing.T) {
 	err := o.run([]string{envName})
 	require.NoError(t, err, "server env should be reported without error")
 }
+
+func SetEnvVars(envVars map[string]string, t *testing.T) {
+	for key, value := range envVars {
+		err := os.Setenv(key, value)
+		require.NoErrorf(t, err, "error setting env variable %s", key)
+	}
+}
+
+func UnSetEnvVars(envVars map[string]string, t *testing.T) {
+	for key := range envVars {
+		err := os.Unsetenv(key)
+		require.NoErrorf(t, err, "error unsetting env variable %s", key)
+	}
+}

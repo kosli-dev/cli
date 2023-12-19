@@ -139,8 +139,11 @@ func DefaultValue(ci, flag string) string {
 					return strings.Replace(result, "commit", "commits", 1)
 				}
 			}
-
 			return result
+		}
+		// when not in a known CI, default some values
+		if flag == "git-commit" {
+			return "HEAD"
 		}
 	}
 	return ""
