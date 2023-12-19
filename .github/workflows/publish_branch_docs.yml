@@ -9,12 +9,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Generate json
+        run: |
+          echo '{"currentversion": "staging-docs"}' > docs.kosli.com/assets/metadata.json
+
       # Deploy to local repo
       - name: Deploy
         uses: s0/git-publish-subdir-action@develop
         env:
           REPO: self
-          BRANCH: docs-update-for-trails
+          BRANCH: staging-docs
           FOLDER: docs.kosli.com
           TARGET_DIR: docs.kosli.com
           # The action takes all the files from FOLDER on main branch and copies them to TARGET_DIR
@@ -32,5 +36,5 @@ jobs:
           # docs.kosli.com/assets/metadata.json are not present, but we use CLEAR_GLOBS_FILE to preserve
           # their versions pushed to docs-main during last release - hence CLEAR_GLOBS_FILE in
           # publish_docs.yml, to prevent removing them before copying
-          CLEAR_GLOBS_FILE: ".clear-files"
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # CLEAR_GLOBS_FILE: ".clear-files"
+          # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
