@@ -1,3 +1,6 @@
+# This workflow deploys the docs from any branch to https://staging-docs--kosli-docs.netlify.app/
+# It has to be triggered manually in github actions from the branch that must be deployed
+
 name: publish branch docs
 
 on: 
