@@ -9,6 +9,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
 )
 
@@ -39,7 +40,7 @@ func PushDockerImage(imageName string) error {
 		return err
 	}
 
-	authConfig := types.AuthConfig{
+	authConfig := registry.AuthConfig{
 		ServerAddress: "http://localhost:5001/",
 	}
 	authConfigBytes, _ := json.Marshal(authConfig)
