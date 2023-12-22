@@ -298,7 +298,7 @@ func (suite *KubeTestSuite) createPod(namespace string, pod *corev1.Pod) {
 	ctx := context.Background()
 	_, err := suite.clientset.CoreV1().Pods(namespace).Create(ctx, pod, metav1.CreateOptions{})
 	require.NoErrorf(suite.T(), err, "error creating pod %s", pod.Name)
-	err = e2epod.WaitForPodNameRunningInNamespace(suite.clientset, pod.Name, namespace)
+	err = e2epod.WaitForPodNameRunningInNamespace(ctx, suite.clientset, pod.Name, namespace)
 	require.NoErrorf(suite.T(), err, "error waiting for pod %s to be running in namespace %s", pod.Name, namespace)
 }
 
