@@ -211,10 +211,6 @@ func (o *attestJiraOptions) run(args []string) error {
 	logger.Debug("Checked for Jira issue references in Git commit %s on branch %s commit message:\n%s", commitInfo.Sha1, commitInfo.Branch, commitInfo.Message)
 	logger.Debug("the following Jira references are found in commit message or branch name: %v", issueIDs)
 
-	if len(issueIDs) == 0 && o.assert {
-		return fmt.Errorf("no Jira references are found in commit message or branch name")
-	}
-
 	issueLog := ""
 	issueFoundCount := 0
 	for _, issueID := range issueIDs {
@@ -229,9 +225,6 @@ func (o *attestJiraOptions) run(args []string) error {
 			issueFoundCount++
 		}
 		issueLog += fmt.Sprintf("\n\t%s: %s", result.IssueID, issueExistLog)
-	}
-	if issueFoundCount != len(issueIDs) && o.assert {
-		return fmt.Errorf("missing Jira issues from references found in commit message or branch name%s", issueLog)
 	}
 
 	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.evidencePaths)
@@ -253,6 +246,14 @@ func (o *attestJiraOptions) run(args []string) error {
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
 		logger.Info("jira attestation '%s' is reported to trail: %s", o.payload.AttestationName, o.trailName)
+	}
+
+	if len(issueIDs) == 0 && o.assert {
+		return fmt.Errorf("no Jira references are found in commit message or branch name")
+	}
+
+	if issueFoundCount != len(issueIDs) && o.assert {
+		return fmt.Errorf("missing Jira issues from references found in commit message or branch name%s", issueLog)
 	}
 	return err
 }
