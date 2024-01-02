@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 
 	azUtils "github.com/kosli-dev/cli/internal/azure"
@@ -12,7 +13,7 @@ type assertPullRequestAzureOptions struct {
 	commit      string
 }
 
-const assertPRAzureShortDesc = `Assert a Azure DevOps pull request for a git commit exists.  `
+const assertPRAzureShortDesc = `Assert an Azure DevOps pull request for a git commit exists.  `
 
 const assertPRAzureLongDesc = assertPRAzureShortDesc + `
 The command exits with non-zero exit code 
@@ -58,9 +59,12 @@ func newAssertPullRequestAzureCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *assertPullRequestAzureOptions) run(args []string) error {
-	pullRequestsEvidence, err := getPullRequestsEvidence(o.azureConfig, o.commit, true)
+	pullRequestsEvidence, err := o.azureConfig.PREvidenceForCommit(o.commit)
 	if err != nil {
 		return err
+	}
+	if len(pullRequestsEvidence) == 0 {
+		return fmt.Errorf("assert failed: found no pull request(s) in Azure DevOps for commit: %s", o.commit)
 	}
 	logger.Info("found [%d] pull request(s) in Azure DevOps for commit: %s", len(pullRequestsEvidence), o.commit)
 	return nil
