@@ -604,7 +604,10 @@ func getPathOfEvidenceFileToUpload(evidencePaths []string) (string, bool, error)
 		logger.Debug("[%d] paths are provided as evidence. They will be tarred from %s", len(evidencePaths), tmpDir)
 
 		for _, path := range evidencePaths {
-			err := cp.Copy(path, filepath.Join(tmpDir, filepath.Base(path)))
+			err := cp.Copy(path, filepath.Join(tmpDir, path), cp.Options{
+				PreserveTimes: true,
+				PreserveOwner: true,
+			})
 			if err != nil {
 				return "", cleanupNeeded, err
 			}
