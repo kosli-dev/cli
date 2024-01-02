@@ -124,7 +124,7 @@ jobs:
         # or you can signup for free at https://snyk.io/login
         SNYK_TOKEN: ${{ secrets.snyk_token }}
       run: 
-          snyk test --json-file-output=snyk-code.json
+          snyk test --json-file-output=snyk-code.json --prune-repeated-subdependencies
 
 
     - name: Report Snyk CODE scan results evidence to Kosli
