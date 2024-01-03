@@ -96,6 +96,13 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 			golden: "Error: GET https://api.github.com/repos/kosli-dev/cli/commits/73d7fee2f31ade8e1a9c456c324255212c3123ab/pulls: 422 No commit found for SHA: 73d7fee2f31ade8e1a9c456c324255212c3123ab []\n",
 		},
 		{
+			name: "report Github PR evidence works when --assert is used and commit has a PR",
+			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
+					  --assert
+			          --build-url example.com --github-org kosli-dev --repository cli --commit ` + suite.commitWithPR + suite.defaultKosliArguments,
+			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\ngithub pull request evidence is reported to artifact: .*\n",
+		},
+		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --assert is used and commit has no PRs",
 			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
