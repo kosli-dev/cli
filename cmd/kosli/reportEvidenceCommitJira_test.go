@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/go-git/go-billy/v5"
-	"github.com/go-git/go-git/v5"
+	billy "github.com/go-git/go-billy/v5"
+	git "github.com/go-git/go-git/v5"
 	"github.com/kosli-dev/cli/internal/testHelpers"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"

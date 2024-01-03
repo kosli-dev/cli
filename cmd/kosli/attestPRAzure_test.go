@@ -67,43 +67,43 @@ func (suite *AttestAzurePRCommandTestSuite) TestAttestAzurePRCmd() {
 			name:      "attesting against an artifact that does not exist fails",
 			cmd: fmt.Sprintf(`attest pullrequest azure --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo 
 				--azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit HEAD  %s`, suite.defaultKosliArguments),
-			goldenRegex: "no pull requests found for given commit: .*\nError: Artifact with fingerprint '1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'attest-azure-pr' belonging to organization 'docs-cmd-test-user'\n",
+			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nError: Artifact with fingerprint '1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'attest-azure-pr' belonging to organization 'docs-cmd-test-user'\n",
 		},
 		{
 			name: "can attest azure pr against an artifact using artifact name and --artifact-type",
 			cmd: fmt.Sprintf(`attest pullrequest azure testdata/file1 --artifact-type file --name foo
 				--azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit HEAD %s`, suite.defaultKosliArguments),
-			goldenRegex: "no pull requests found for given commit: .*\nazure pull request attestation 'foo' is reported to trail: test-123\n",
+			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nazure pull request attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			name: "can attest azure pr against an artifact using artifact name and --artifact-type when --name does not exist in the trail template",
 			cmd: fmt.Sprintf(`attest pullrequest azure testdata/file1 --artifact-type file --name bar
 				--azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit HEAD %s`, suite.defaultKosliArguments),
-			goldenRegex: "no pull requests found for given commit: .*\nazure pull request attestation 'bar' is reported to trail: test-123\n",
+			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nazure pull request attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
 			name: "can attest azure pr against an artifact using --fingerprint",
 			cmd: fmt.Sprintf(`attest pullrequest azure --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo
 				--azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit HEAD %s`, suite.defaultKosliArguments),
-			goldenRegex: "no pull requests found for given commit: .*\nazure pull request attestation 'foo' is reported to trail: test-123\n",
+			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nazure pull request attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			name: "can attest azure pr against a trail",
 			cmd: fmt.Sprintf(`attest pullrequest azure --name bar
 				--azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit HEAD %s`, suite.defaultKosliArguments),
-			goldenRegex: "no pull requests found for given commit: .*\nazure pull request attestation 'bar' is reported to trail: test-123\n",
+			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nazure pull request attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
 			name: "can attest azure pr against a trail when name is not found in the trail template",
 			cmd: fmt.Sprintf(`attest pullrequest azure --name additional
 				--azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit HEAD %s`, suite.defaultKosliArguments),
-			goldenRegex: "no pull requests found for given commit: .*\nazure pull request attestation 'additional' is reported to trail: test-123\n",
+			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nazure pull request attestation 'additional' is reported to trail: test-123\n",
 		},
 		{
 			name: "can attest azure pr against an artifact it is created using dot syntax in --name",
 			cmd: fmt.Sprintf(`attest pullrequest azure --name cli.foo
 				--azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit HEAD %s`, suite.defaultKosliArguments),
-			goldenRegex: "no pull requests found for given commit: .*\nazure pull request attestation 'foo' is reported to trail: test-123\n",
+			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nazure pull request attestation 'foo' is reported to trail: test-123\n",
 		},
 	}
 

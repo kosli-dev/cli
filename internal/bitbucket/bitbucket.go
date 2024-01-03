@@ -21,10 +21,10 @@ type Config struct {
 }
 
 func (c *Config) PREvidenceForCommit(commit string) ([]*types.PREvidence, error) {
-	return c.getPullRequestsFromBitbucketApi(commit, c.Assert)
+	return c.getPullRequestsFromBitbucketApi(commit)
 }
 
-func (c *Config) getPullRequestsFromBitbucketApi(commit string, assert bool) ([]*types.PREvidence, error) {
+func (c *Config) getPullRequestsFromBitbucketApi(commit string) ([]*types.PREvidence, error) {
 	pullRequestsEvidence := []*types.PREvidence{}
 
 	url := fmt.Sprintf("https://api.bitbucket.org/2.0/repositories/%s/%s/commit/%s/pullrequests", c.Workspace, c.Repository, commit)
@@ -41,7 +41,7 @@ func (c *Config) getPullRequestsFromBitbucketApi(commit string, assert bool) ([]
 		return pullRequestsEvidence, err
 	}
 	if response.Resp.StatusCode == 200 {
-		pullRequestsEvidence, err = c.parseBitbucketResponse(commit, response, assert)
+		pullRequestsEvidence, err = c.parseBitbucketResponse(commit, response)
 		if err != nil {
 			return pullRequestsEvidence, err
 		}
@@ -56,7 +56,7 @@ func (c *Config) getPullRequestsFromBitbucketApi(commit string, assert bool) ([]
 	return pullRequestsEvidence, nil
 }
 
-func (c *Config) parseBitbucketResponse(commit string, response *requests.HTTPResponse, assert bool) ([]*types.PREvidence, error) {
+func (c *Config) parseBitbucketResponse(commit string, response *requests.HTTPResponse) ([]*types.PREvidence, error) {
 	pullRequestsEvidence := []*types.PREvidence{}
 	var responseData map[string]interface{}
 	err := json.Unmarshal([]byte(response.Body), &responseData)
@@ -78,11 +78,7 @@ func (c *Config) parseBitbucketResponse(commit string, response *requests.HTTPRe
 		}
 		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
 	}
-	if len(pullRequestsEvidence) == 0 {
-		if assert {
-			return pullRequestsEvidence, fmt.Errorf("no pull requests found for the given commit: %s", commit)
-		}
-	}
+
 	return pullRequestsEvidence, nil
 }
 
