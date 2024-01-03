@@ -94,6 +94,13 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePR
 			golden: "Error: map[error:map[message:Resource not found] type:error]\n",
 		},
 		{
+			name: "report Bitbucket PR evidence works when --assert is used and commit has a PR",
+			cmd: `report evidence artifact pullrequest bitbucket --fingerprint ` + suite.artifactFingerprint + ` --name bb-pr --flow ` + suite.flowName + `
+					  --assert
+			          --build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69` + suite.defaultKosliArguments,
+			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nbitbucket pull request evidence is reported to artifact: .*\n",
+		},
+		{
 			wantError: true,
 			name:      "report Bitbucket PR evidence fails when --assert is used and commit has no PRs",
 			cmd: `report evidence artifact pullrequest bitbucket --fingerprint ` + suite.artifactFingerprint + ` --name bb-pr --flow ` + suite.flowName + `

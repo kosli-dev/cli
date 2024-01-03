@@ -100,6 +100,13 @@ func (suite *ArtifactEvidencePRAzureCommandTestSuite) TestArtifactEvidencePRAzur
 			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nazure pull request evidence is reported to artifact: .*\n",
 		},
 		{
+			name: "report Azure PR evidence works when --assert is used and commit has a PR",
+			cmd: `report evidence artifact pullrequest azure --fingerprint ` + suite.artifactFingerprint + ` --name az-pr --flow ` + suite.flowName + `
+					  --assert
+			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
+			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nazure pull request evidence is reported to artifact: .*\n",
+		},
+		{
 			wantError: true,
 			name:      "report Azure PR evidence fails when --assert is used and commit has no PRs",
 			cmd: `report evidence artifact pullrequest azure --fingerprint ` + suite.artifactFingerprint + ` --name az-pr --flow ` + suite.flowName + `

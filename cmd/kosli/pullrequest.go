@@ -88,7 +88,7 @@ func (o *pullRequestArtifactOptions) run(out io.Writer, args []string) error {
 		logger.Info("%s %s evidence is reported to artifact: %s", o.payload.GitProvider, label, o.payload.ArtifactFingerprint)
 	}
 
-	if o.pullRequestOptions.assert && !global.DryRun {
+	if len(pullRequestsEvidence) == 0 && o.pullRequestOptions.assert && !global.DryRun {
 		return fmt.Errorf("assert failed: no %s found for the given commit: %s", label, o.commit)
 	}
 	return err
@@ -152,7 +152,7 @@ func (o *attestPROptions) run(args []string) error {
 		logger.Info("%s %s attestation '%s' is reported to trail: %s", o.payload.GitProvider, label, o.payload.AttestationName, o.trailName)
 	}
 
-	if o.assert && !global.DryRun {
+	if len(pullRequestsEvidence) == 0 && o.assert && !global.DryRun {
 		return fmt.Errorf("assert failed: no %s found for the given commit: %s", label, o.payload.Commit.Sha1)
 	}
 	return err
@@ -208,7 +208,7 @@ func (o *pullRequestCommitOptions) run(args []string) error {
 		logger.Info("%s %s evidence is reported to commit: %s", o.payload.GitProvider, label, o.payload.CommitSHA)
 	}
 
-	if o.pullRequestOptions.assert && !global.DryRun {
+	if len(pullRequestsEvidence) == 0 && o.pullRequestOptions.assert && !global.DryRun {
 		return fmt.Errorf("assert failed: no %s found for the given commit: %s", label, o.payload.CommitSHA)
 	}
 	return err
