@@ -74,7 +74,7 @@ func (o *pullRequestArtifactOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
-	logger.Info("found %d %s(s) for commit: %s\n", len(pullRequestsEvidence), label, o.commit)
+	logger.Info("found %d %s(s) for commit: %s", len(pullRequestsEvidence), label, o.commit)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPost,
@@ -138,7 +138,7 @@ func (o *attestPROptions) run(args []string) error {
 		defer os.Remove(evidencePath)
 	}
 
-	logger.Info("found %d %s(s) for commit: %s\n", len(pullRequestsEvidence), label, o.payload.Commit.Sha1)
+	logger.Info("found %d %s(s) for commit: %s", len(pullRequestsEvidence), label, o.payload.Commit.Sha1)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPost,
@@ -194,7 +194,7 @@ func (o *pullRequestCommitOptions) run(args []string) error {
 	if err != nil {
 		return err
 	}
-	logger.Info("found %d %s(s) for commit: %s\n", len(pullRequestsEvidence), label, o.payload.CommitSHA)
+	logger.Info("found %d %s(s) for commit: %s", len(pullRequestsEvidence), label, o.payload.CommitSHA)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPost,

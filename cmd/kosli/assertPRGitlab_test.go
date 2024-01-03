@@ -33,26 +33,26 @@ func (suite *AssertPRGitlabCommandTestSuite) TestAssertPRGitlabCmd() {
 			name: "assert Gitlab PR evidence passes when commit has a PR in gitlab",
 			cmd: `assert mergerequest gitlab --gitlab-org ewelinawilkosz --repository merkely-gitlab-demo
 			--commit e6510880aecdc05d79104d937e1adb572bd91911` + suite.defaultKosliArguments,
-			golden: "found [1] pull request(s) in Gitlab for commit: e6510880aecdc05d79104d937e1adb572bd91911\n",
+			golden: "found [1] merge request(s) in Gitlab for commit: e6510880aecdc05d79104d937e1adb572bd91911\n",
 		},
 		{
 			name: "assert Gitlab PR evidence with aliases 1",
 			cmd: `assert mr gl --gitlab-org ewelinawilkosz --repository merkely-gitlab-demo
 			--commit e6510880aecdc05d79104d937e1adb572bd91911` + suite.defaultKosliArguments,
-			golden: "found [1] pull request(s) in Gitlab for commit: e6510880aecdc05d79104d937e1adb572bd91911\n",
+			golden: "found [1] merge request(s) in Gitlab for commit: e6510880aecdc05d79104d937e1adb572bd91911\n",
 		},
 		{
 			name: "assert Gitlab PR evidence with aliases 2",
 			cmd: `assert pullrequest gitlab --gitlab-org ewelinawilkosz --repository merkely-gitlab-demo
 			--commit e6510880aecdc05d79104d937e1adb572bd91911` + suite.defaultKosliArguments,
-			golden: "found [1] pull request(s) in Gitlab for commit: e6510880aecdc05d79104d937e1adb572bd91911\n",
+			golden: "found [1] merge request(s) in Gitlab for commit: e6510880aecdc05d79104d937e1adb572bd91911\n",
 		},
 		{
 			wantError: true,
 			name:      "assert Gitlab PR evidence fails when commit has no PRs in gitlab",
 			cmd: `assert mergerequest gitlab --gitlab-org ewelinawilkosz --repository merkely-gitlab-demo
 			--commit 2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6` + suite.defaultKosliArguments,
-			golden: "Error: no merge requests found for the given commit: 2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6\n",
+			golden: "Error: assert failed: found no merge request(s) in Gitlab for commit: 2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6\n",
 		},
 		{
 			wantError: true,

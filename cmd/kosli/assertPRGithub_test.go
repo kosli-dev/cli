@@ -40,7 +40,7 @@ func (suite *AssertPRGithubCommandTestSuite) TestAssertPRGithubCmd() {
 			name:      "assert Github PR evidence fails when commit has no PRs in github",
 			cmd: `assert pullrequest github --github-org kosli-dev --repository cli 
 			--commit 19aab7f063147614451c88969602a10afbabb43d` + suite.defaultKosliArguments,
-			golden: "Error: no pull requests found for the given commit: 19aab7f063147614451c88969602a10afbabb43d\n",
+			golden: "Error: assert failed: found no pull request(s) in Github for commit: 19aab7f063147614451c88969602a10afbabb43d\n",
 		},
 		{
 			wantError: true,
