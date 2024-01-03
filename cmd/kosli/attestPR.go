@@ -14,7 +14,6 @@ func newAttestPRCmd(out io.Writer) *cobra.Command {
 		Aliases: []string{"pr", "mr", "mergerequest"},
 		Short:   attestPRDesc,
 		Long:    attestPRDesc,
-		Hidden:  true,
 	}
 
 	// Add subcommands

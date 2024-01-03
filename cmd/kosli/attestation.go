@@ -11,7 +11,7 @@ import (
 type CommonAttestationPayload struct {
 	ArtifactFingerprint string                   `json:"artifact_fingerprint,omitempty"`
 	Commit              *gitview.BasicCommitInfo `json:"git_commit_info,omitempty"`
-	AttestationName     string                   `json:"step_name"`
+	AttestationName     string                   `json:"attestation_name"`
 	TargetArtifacts     []string                 `json:"target_artifacts,omitempty"`
 	EvidenceURL         string                   `json:"evidence_url,omitempty"`
 	EvidenceFingerprint string                   `json:"evidence_fingerprint,omitempty"`

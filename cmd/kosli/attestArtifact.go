@@ -28,7 +28,7 @@ type AttestArtifactPayload struct {
 	BuildUrl      string                   `json:"build_url"`
 	CommitUrl     string                   `json:"commit_url"`
 	RepoUrl       string                   `json:"repo_url"`
-	Name          string                   `json:"step_name"`
+	Name          string                   `json:"template_reference_name"`
 	TrailName     string                   `json:"trail_name"`
 }
 
@@ -73,7 +73,6 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 		Long:    attestArtifactLongDesc,
 		Example: attestArtifactExample,
 		Args:    cobra.MaximumNArgs(1),
-		Hidden:  true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

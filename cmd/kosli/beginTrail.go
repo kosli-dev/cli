@@ -38,7 +38,6 @@ func newBeginTrailCmd(out io.Writer) *cobra.Command {
 	o := new(beginTrailOptions)
 	cmd := &cobra.Command{
 		Use:     "trail TRAIL-NAME",
-		Hidden:  true,
 		Short:   beginTrailShortDesc,
 		Long:    beginTrailShortDesc,
 		Example: beginTrailExample,
