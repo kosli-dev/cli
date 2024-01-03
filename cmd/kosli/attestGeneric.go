@@ -94,7 +94,6 @@ func newAttestGenericCmd(out io.Writer) *cobra.Command {
 		Long:    attestGenericLongDesc,
 		Example: attestGenericExample,
 		Args:    cobra.MaximumNArgs(1),
-		Hidden:  true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

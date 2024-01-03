@@ -73,7 +73,6 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 		Long:    attestArtifactLongDesc,
 		Example: attestArtifactExample,
 		Args:    cobra.MaximumNArgs(1),
-		Hidden:  true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
