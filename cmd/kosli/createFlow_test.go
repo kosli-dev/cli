@@ -30,7 +30,7 @@ func (suite *CreateFlowCommandTestSuite) TestCreateFlowCmd() {
 			wantError: true,
 			name:      "fails when more arguments are provided",
 			cmd:       "create flow newFlow xxx" + suite.defaultKosliArguments,
-			golden:    "Error: accepts at most 1 arg(s), received 2\n",
+			golden:    "Error: accepts 1 arg(s), received 2\n",
 		},
 		{
 			wantError: true,
@@ -39,14 +39,14 @@ func (suite *CreateFlowCommandTestSuite) TestCreateFlowCmd() {
 			golden:    "Error: Input payload validation failed: map[name:'foo_bar' does not match '^[a-zA-Z0-9\\\\-\\\\.]+$']\n",
 		},
 		{
-			name:   "can create a flow",
+			name:   "can create a flow (by default legacy template is used)",
 			cmd:    "create flow newFlow --description \"my new flow\" " + suite.defaultKosliArguments,
 			golden: "flow 'newFlow' was created\n",
 		},
 		{
 			name:   "re-creating a flow updates its metadata",
 			cmd:    "create flow newFlow --description \"changed description\" " + suite.defaultKosliArguments,
-			golden: "flow 'newFlow' was created\n",
+			golden: "flow 'newFlow' was updated\n",
 		},
 		{
 			wantError: true,
@@ -64,7 +64,30 @@ func (suite *CreateFlowCommandTestSuite) TestCreateFlowCmd() {
 			wantError: true,
 			name:      "missing name argument fails",
 			cmd:       "create flow --description \"my new flow\" -H http://localhost:8001 --org cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
-			golden:    "Error: flow name must be provided as an argument\n",
+			golden:    "Error: accepts 1 arg(s), received 0\n",
+		},
+		{
+			wantError: true,
+			name:      "cannot use --template and --template-file together",
+			cmd:       "create flow newFlow --description \"my new flow\" --template foo --template-file testdata/valid_template.yml" + suite.defaultKosliArguments,
+			golden:    "Error: only one of --template, --template-file is allowed\n",
+		},
+		// flows v2
+		{
+			name:   "can create a flow with a valid template",
+			cmd:    "create flow newFlowWithTemplate --template-file testdata/valid_template.yml --description \"my new flow\" " + suite.defaultKosliArguments,
+			golden: "flow 'newFlowWithTemplate' was created\n",
+		},
+		{
+			name:   "re-creating a flow (with template) updates its metadata",
+			cmd:    "create flow newFlowWithTemplate --template-file testdata/valid_template.yml --description \"changed description\" " + suite.defaultKosliArguments,
+			golden: "flow 'newFlowWithTemplate' was updated\n",
+		},
+		{
+			wantError:   true,
+			name:        "creating a flow with an invalid template fails",
+			cmd:         "create flow newFlowWithTemplate --template-file testdata/invalid_template.yml --description \"my new flow\" " + suite.defaultKosliArguments,
+			goldenRegex: "Error: template file is invalid 1 validation error for Template\n.*",
 		},
 	}
 
