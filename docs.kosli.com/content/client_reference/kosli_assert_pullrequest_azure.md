@@ -7,7 +7,7 @@ beta: false
 
 ## Synopsis
 
-Assert a Azure DevOps pull request for a git commit exists.  
+Assert an Azure DevOps pull request for a git commit exists.  
 The command exits with non-zero exit code 
 if no pull requests were found for the commit.
 

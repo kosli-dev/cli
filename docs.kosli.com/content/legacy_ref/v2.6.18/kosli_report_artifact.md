@@ -24,7 +24,7 @@ kosli report artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 |    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Only applicable for --artifact-type dir.  |
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'.  |
 |    -f, --flow string  |  The Kosli flow name.  |
-|    -g, --git-commit string  |  The git commit from which the artifact was created. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|    -g, --git-commit string  |  [defaulted] The git commit from which the artifact was created. (defaulted in some CIs: https://docs.kosli.com/ci-defaults, otherwise defaults to HEAD ).  |
 |    -h, --help  |  help for artifact  |
 |    -n, --name string  |  [optional] Artifact display name, if different from file, image or directory name.  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |

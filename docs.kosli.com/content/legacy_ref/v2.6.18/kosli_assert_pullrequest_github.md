@@ -45,7 +45,6 @@ kosli assert pullrequest github [flags]
 kosli assert pullrequest github \
 	--github-token yourGithubToken \
 	--github-org yourGithubOrg \
-	--commit yourArtifactGitCommit \
 	--commit yourGitCommit \
 	--repository yourGithubGitRepository
 
