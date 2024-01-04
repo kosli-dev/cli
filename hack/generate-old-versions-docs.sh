@@ -9,7 +9,7 @@ i=0
 for regex in $regexps 
 do
     versions=$(gh release list --repo kosli-dev/cli --exclude-pre-releases --exclude-drafts | tail -n +2 | awk '{$2 = ""; $3 = ""; print}' | grep -m 5 "${regex}")
-    versions+="\nv0.1.41"
+    versions+="v0.1.41"
     for version in $versions
     do 
         echo processing $version
