@@ -1,10 +1,17 @@
 ---
-title: "Part 9: Querying"
+title: "Part 11: Next Steps"
 bookCollapseSection: false
-weight: 280
+weight: 310
 ---
-# Part 9: Querying
+# Part 11: Next Steps
 
+In the previous chapters, you explored Kosli Flows and Environments and have reported some data to Kosli. The next steps would be to harness the benefits of your hard work. Here are a few areas to look at next:
+
+- [Querying Kosli](/tutorials/querying_kosli/)
+- [Setup Notifications on Environment changes](/integrations/notifications/)
+- [Integrate Slack and Kosli](/integrations/slack/)
+
+<!-- 
 All the information stored in Kosli may be helpful both for operations and development. A set of `get`, `list`, `log` and `assert` commands allows you to quickly access the information about your environments, artifacts and deployments, without leaving your development environment.
 
 Visit [CLI Reference](/client_reference/) to learn more about how to run each command.
@@ -368,4 +375,4 @@ Only present in aws-prod (snapshot: aws-prod#261)
      Commit URL:   https://github.com/cyber-dojo/custom-start-points/commit/8c551d378051b6ef1fde7fd58aaced1047264405
      Started:      Fri, 21 Oct 2022 11:04:30 CEST • 9 days ago
 [...]
-```
+``` -->

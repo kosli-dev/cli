@@ -1,7 +1,7 @@
 ---
 title: Welcome to Kosli Docs 
 seo_title: Welcome to Kosli Docs 
-description: Don’t spend hours searching for broken commits and manual changes. Get to the bottom of incidents faster with Kosli.
+description: Record all of the changes in your software and business processes so you can prove compliance and maintain security without slowing down.
 hideToC: true
 
 hero:
@@ -12,7 +12,7 @@ hero:
     alt_text: Kosli artie reading a book
 
 paragraph: >
-    Don’t spend hours searching for broken commits and manual changes. Get to the bottom of incidents faster with Kosli. Track and query every change from commit through to production. See the artifacts your CI pipelines are producing and how your environments are changing from the command line or browser.
+    Record all of the changes in your software and business processes so you can prove compliance and maintain security without slowing down. Track and query every change from the command line or browser.
 
 sections:
     title: Dive right in…
@@ -20,7 +20,7 @@ sections:
         - title: What is Kosli
           image: /images/home/home-concepts.svg
           alt_text: Introducing Kosli icon
-          description: Read about what Kosli consists of and what it offers
+          description: Understand what Kosli is and how it works
           link_text: View >
           url: /kosli_overview/what_is_kosli/
         - title: Kosli environments
