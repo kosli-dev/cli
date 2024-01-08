@@ -149,8 +149,8 @@ func CreateFlow(flowName string, t *testing.T) {
 // CreateFlowWithTemplate creates a flow with a yaml template on the server
 func CreateFlowWithTemplate(flowName, templatePath string, t *testing.T) {
 	t.Helper()
-	o := &createFlowWithTemplateOptions{
-		payload: FlowWithTemplatePayload{
+	o := &createFlowOptions{
+		payload: FlowPayload{
 			Name:        flowName,
 			Description: "test flow",
 			Visibility:  "private",

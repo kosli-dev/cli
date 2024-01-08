@@ -40,7 +40,7 @@ func (suite *ArtifactEvidencePRAzureCommandTestSuite) TestArtifactEvidencePRAzur
 			name: "report Azure PR evidence works with new flags (fingerprint, name ...)",
 			cmd: `report evidence artifact pullrequest azure --fingerprint ` + suite.artifactFingerprint + ` --name az-pr --flow ` + suite.flowName + `
 			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
-			golden: "azure pull request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
+			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nazure pull request evidence is reported to artifact: .*\n",
 		},
 		{
 			wantError: true,
@@ -97,7 +97,14 @@ func (suite *ArtifactEvidencePRAzureCommandTestSuite) TestArtifactEvidencePRAzur
 			name: "report Azure PR evidence does not fail when commit does not exist, empty evidence is reported instead.",
 			cmd: `report evidence artifact pullrequest azure --fingerprint ` + suite.artifactFingerprint + ` --name az-pr --flow ` + suite.flowName + `
 			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
-			golden: fmt.Sprintf("azure pull request evidence is reported to artifact: %s\n", suite.artifactFingerprint),
+			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nazure pull request evidence is reported to artifact: .*\n",
+		},
+		{
+			name: "report Azure PR evidence works when --assert is used and commit has a PR",
+			cmd: `report evidence artifact pullrequest azure --fingerprint ` + suite.artifactFingerprint + ` --name az-pr --flow ` + suite.flowName + `
+					  --assert
+			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
+			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nazure pull request evidence is reported to artifact: .*\n",
 		},
 		{
 			wantError: true,
@@ -105,21 +112,20 @@ func (suite *ArtifactEvidencePRAzureCommandTestSuite) TestArtifactEvidencePRAzur
 			cmd: `report evidence artifact pullrequest azure --fingerprint ` + suite.artifactFingerprint + ` --name az-pr --flow ` + suite.flowName + `
 					  --assert
 			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 9bca2c44eaf221a79fb18a1a11bdf2997adaf870` + suite.defaultKosliArguments,
-			golden: "Error: no pull requests found for the given commit: 9bca2c44eaf221a79fb18a1a11bdf2997adaf870\n",
+			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nazure pull request evidence is reported to artifact: .*\nError: assert failed: no pull request found for the given commit: .*\n",
 		},
 		{
 			name: "report Azure PR evidence does not fail when commit has no PRs",
 			cmd: `report evidence artifact pullrequest azure --fingerprint ` + suite.artifactFingerprint + ` --name az-pr --flow ` + suite.flowName + `
 			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 9bca2c44eaf221a79fb18a1a11bdf2997adaf870` + suite.defaultKosliArguments,
-			golden: "no pull requests found for given commit: 9bca2c44eaf221a79fb18a1a11bdf2997adaf870\n" +
-				"azure pull request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
+			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nazure pull request evidence is reported to artifact: .*\n",
 		},
 		{
 			wantError: true,
 			name:      "report Azure PR evidence fails when the artifact does not exist in the server",
 			cmd: `report evidence artifact pullrequest azure testdata/file1 --artifact-type file --name az-pr --flow ` + suite.flowName + `
 			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
-			golden: "Error: Artifact with fingerprint '7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'azure-pr' belonging to organization 'docs-cmd-test-user'. \n",
+			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nError: Artifact with fingerprint '7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'azure-pr' belonging to organization 'docs-cmd-test-user'. \n",
 		},
 		{
 			wantError: true,

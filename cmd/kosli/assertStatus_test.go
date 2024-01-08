@@ -13,7 +13,7 @@ type AssertStatusCommandTestSuite struct {
 	suite.Suite
 }
 
-func (suite *AssertStatusCommandTestSuite) TestAssertPRGitlabCmd() {
+func (suite *AssertStatusCommandTestSuite) TestAssertStatusCmd() {
 	tests := []cmdTestCase{
 		{
 			name:   "assert status works",

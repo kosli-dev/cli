@@ -28,7 +28,7 @@ type AttestArtifactPayload struct {
 	BuildUrl      string                   `json:"build_url"`
 	CommitUrl     string                   `json:"commit_url"`
 	RepoUrl       string                   `json:"repo_url"`
-	Name          string                   `json:"step_name"`
+	Name          string                   `json:"template_reference_name"`
 	TrailName     string                   `json:"trail_name"`
 }
 

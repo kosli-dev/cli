@@ -49,7 +49,7 @@ func (o *pullRequestArtifactOptions) run(out io.Writer, args []string) error {
 	}
 
 	url := fmt.Sprintf("%s/api/v2/evidence/%s/artifact/%s/pull_request", global.Host, global.Org, o.flowName)
-	pullRequestsEvidence, err := getPullRequestsEvidence(o.getRetriever(), o.commit, o.assert)
+	pullRequestsEvidence, err := o.getRetriever().PREvidenceForCommit(o.commit)
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func (o *pullRequestArtifactOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
-	logger.Debug("found %d %s(s) for commit: %s\n", len(pullRequestsEvidence), label, o.commit)
+	logger.Info("found %d %s(s) for commit: %s", len(pullRequestsEvidence), label, o.commit)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPost,
@@ -86,6 +86,10 @@ func (o *pullRequestArtifactOptions) run(out io.Writer, args []string) error {
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
 		logger.Info("%s %s evidence is reported to artifact: %s", o.payload.GitProvider, label, o.payload.ArtifactFingerprint)
+	}
+
+	if len(pullRequestsEvidence) == 0 && o.pullRequestOptions.assert && !global.DryRun {
+		return fmt.Errorf("assert failed: no %s found for the given commit: %s", label, o.commit)
 	}
 	return err
 }
@@ -115,7 +119,7 @@ func (o *attestPROptions) run(args []string) error {
 		return err
 	}
 
-	pullRequestsEvidence, err := getPullRequestsEvidence(o.getRetriever(), o.payload.Commit.Sha1, o.assert)
+	pullRequestsEvidence, err := o.getRetriever().PREvidenceForCommit(o.payload.Commit.Sha1)
 	if err != nil {
 		return err
 	}
@@ -134,7 +138,7 @@ func (o *attestPROptions) run(args []string) error {
 		defer os.Remove(evidencePath)
 	}
 
-	logger.Debug("found %d %s(s) for commit: %s\n", len(pullRequestsEvidence), label, o.payload.Commit.Sha1)
+	logger.Info("found %d %s(s) for commit: %s", len(pullRequestsEvidence), label, o.payload.Commit.Sha1)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPost,
@@ -146,6 +150,10 @@ func (o *attestPROptions) run(args []string) error {
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
 		logger.Info("%s %s attestation '%s' is reported to trail: %s", o.payload.GitProvider, label, o.payload.AttestationName, o.trailName)
+	}
+
+	if len(pullRequestsEvidence) == 0 && o.assert && !global.DryRun {
+		return fmt.Errorf("assert failed: no %s found for the given commit: %s", label, o.payload.Commit.Sha1)
 	}
 	return err
 }
@@ -167,7 +175,7 @@ func (o *pullRequestCommitOptions) run(args []string) error {
 		return err
 	}
 
-	pullRequestsEvidence, err := getPullRequestsEvidence(o.getRetriever(), o.payload.CommitSHA, o.assert)
+	pullRequestsEvidence, err := o.getRetriever().PREvidenceForCommit(o.payload.CommitSHA)
 	if err != nil {
 		return err
 	}
@@ -186,7 +194,7 @@ func (o *pullRequestCommitOptions) run(args []string) error {
 	if err != nil {
 		return err
 	}
-	logger.Debug("found %d %s(s) for commit: %s\n", len(pullRequestsEvidence), label, o.payload.CommitSHA)
+	logger.Info("found %d %s(s) for commit: %s", len(pullRequestsEvidence), label, o.payload.CommitSHA)
 
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodPost,
@@ -199,26 +207,11 @@ func (o *pullRequestCommitOptions) run(args []string) error {
 	if err == nil && !global.DryRun {
 		logger.Info("%s %s evidence is reported to commit: %s", o.payload.GitProvider, label, o.payload.CommitSHA)
 	}
+
+	if len(pullRequestsEvidence) == 0 && o.pullRequestOptions.assert && !global.DryRun {
+		return fmt.Errorf("assert failed: no %s found for the given commit: %s", label, o.payload.CommitSHA)
+	}
 	return err
-}
-
-func getPullRequestsEvidence(retriever types.PRRetriever, commit string, assert bool) ([]*types.PREvidence, error) {
-	pullRequestsEvidence, err := retriever.PREvidenceForCommit(commit)
-	if err != nil {
-		return pullRequestsEvidence, err
-	}
-	if len(pullRequestsEvidence) == 0 {
-		name := "pull requests"
-		if reflect.TypeOf(retriever) == reflect.TypeOf(&gitlabUtils.GitlabConfig{}) {
-			name = "merge requests"
-		}
-
-		if assert {
-			return pullRequestsEvidence, fmt.Errorf("no %s found for the given commit: %s", name, commit)
-		}
-		logger.Info("no %s found for given commit: %s", name, commit)
-	}
-	return pullRequestsEvidence, nil
 }
 
 func getGitProviderAndLabel(retriever interface{}) (string, string) {

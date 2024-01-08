@@ -39,7 +39,7 @@ func (suite *CommitEvidencePRGithubCommandTestSuite) TestCommitEvidencePRGithubC
 			name: "report Github PR evidence works",
 			cmd: `report evidence commit pullrequest github --name gh-pr --flows ` + suite.flowNames + `
 			          --build-url example.com --github-org kosli-dev --repository cli --commit ` + suite.commitWithPR + suite.defaultKosliArguments,
-			golden: fmt.Sprintf("github pull request evidence is reported to commit: %s\n", suite.commitWithPR),
+			golden: "found 1 pull request(s) for commit: e21a8afff429e0c87ee523d683f2438113f0a105\ngithub pull request evidence is reported to commit: e21a8afff429e0c87ee523d683f2438113f0a105\n",
 		},
 		{
 			wantError: true,
@@ -89,13 +89,13 @@ func (suite *CommitEvidencePRGithubCommandTestSuite) TestCommitEvidencePRGithubC
 			name:      "report Github PR evidence fails when --assert is used and commit has no PRs",
 			cmd: `report evidence commit pullrequest github --name gh-pr --flows ` + suite.flowNames + ` --assert
 					--build-url example.com --github-org kosli-dev --repository cli --commit 9bca2c44eaf221a79fb18a1a11bdf2997adaf870` + suite.defaultKosliArguments,
-			golden: "Error: no pull requests found for the given commit: 9bca2c44eaf221a79fb18a1a11bdf2997adaf870\n",
+			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\ngithub pull request evidence is reported to commit: .*\nError: assert failed: no pull request found for the given commit: .*\n",
 		},
 		{
 			name: "report Github PR evidence does not fail when commit has no PRs",
 			cmd: `report evidence commit pullrequest github --name gh-pr --flows ` + suite.flowNames + `
 			          --build-url example.com --github-org kosli-dev --repository cli --commit 9bca2c44eaf221a79fb18a1a11bdf2997adaf870` + suite.defaultKosliArguments,
-			golden: "no pull requests found for given commit: 9bca2c44eaf221a79fb18a1a11bdf2997adaf870\n" +
+			golden: "found 0 pull request(s) for commit: 9bca2c44eaf221a79fb18a1a11bdf2997adaf870\n" +
 				"github pull request evidence is reported to commit: 9bca2c44eaf221a79fb18a1a11bdf2997adaf870\n",
 		},
 		{
@@ -110,7 +110,7 @@ func (suite *CommitEvidencePRGithubCommandTestSuite) TestCommitEvidencePRGithubC
 			name: "report Github PR evidence works with --repository=owner/repo",
 			cmd: `report evidence commit pullrequest github --name gh-pr --flows ` + suite.flowNames + `
 			          --build-url example.com --github-org kosli-dev --repository kosli-dev/cli --commit ` + suite.commitWithPR + suite.defaultKosliArguments,
-			golden: fmt.Sprintf("github pull request evidence is reported to commit: %s\n", suite.commitWithPR),
+			golden: "found 1 pull request(s) for commit: e21a8afff429e0c87ee523d683f2438113f0a105\ngithub pull request evidence is reported to commit: e21a8afff429e0c87ee523d683f2438113f0a105\n",
 		},
 	}
 

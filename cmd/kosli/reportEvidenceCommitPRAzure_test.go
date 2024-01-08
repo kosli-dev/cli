@@ -37,7 +37,7 @@ func (suite *CommitEvidencePRAzureCommandTestSuite) TestCommitEvidencePRAzureCmd
 			name: "report Azure PR evidence works",
 			cmd: `report evidence commit pullrequest azure --name az-pr --flows ` + suite.flowNames + `
 			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
-			golden: "azure pull request evidence is reported to commit: 5f61be8f00a01c84e491922a630c9a418c684c7a\n",
+			golden: "found 1 pull request(s) for commit: 5f61be8f00a01c84e491922a630c9a418c684c7a\nazure pull request evidence is reported to commit: 5f61be8f00a01c84e491922a630c9a418c684c7a\n",
 		},
 		{
 			wantError: true,
@@ -86,7 +86,7 @@ func (suite *CommitEvidencePRAzureCommandTestSuite) TestCommitEvidencePRAzureCmd
 			name: "report Azure PR evidence does not fail when commit does not exist, empty evidence is reported instead",
 			cmd: `report evidence commit pullrequest azure --name az-pr --flows ` + suite.flowNames + `
 			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 1111111111111111111111111111111111111111` + suite.defaultKosliArguments,
-			golden: "no pull requests found for given commit: 1111111111111111111111111111111111111111\n" +
+			golden: "found 0 pull request(s) for commit: 1111111111111111111111111111111111111111\n" +
 				"azure pull request evidence is reported to commit: 1111111111111111111111111111111111111111\n",
 		},
 		{
@@ -94,14 +94,13 @@ func (suite *CommitEvidencePRAzureCommandTestSuite) TestCommitEvidencePRAzureCmd
 			name:      "report Azure PR evidence fails when --assert is used and commit has no PRs",
 			cmd: `report evidence commit pullrequest azure --name az-pr --flows ` + suite.flowNames + ` --assert
 					--build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 1a877d0c3cf4644b4225bf3eb23ced26818d685a` + suite.defaultKosliArguments,
-			golden: "Error: no pull requests found for the given commit: 1a877d0c3cf4644b4225bf3eb23ced26818d685a\n",
+			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nazure pull request evidence is reported to commit: .*\nError: assert failed: no pull request found for the given commit: .*\n",
 		},
 		{
 			name: "report Azure PR evidence does not fail when commit has no PRs",
 			cmd: `report evidence commit pullrequest azure --name az-pr --flows ` + suite.flowNames + `
 			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 1a877d0c3cf4644b4225bf3eb23ced26818d685a` + suite.defaultKosliArguments,
-			golden: "no pull requests found for given commit: 1a877d0c3cf4644b4225bf3eb23ced26818d685a\n" +
-				"azure pull request evidence is reported to commit: 1a877d0c3cf4644b4225bf3eb23ced26818d685a\n",
+			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nazure pull request evidence is reported to commit: .*\n",
 		},
 		{
 			wantError: true,

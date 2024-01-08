@@ -40,14 +40,14 @@ func (suite *AssertPRAzureCommandTestSuite) TestAssertPRAzureCmd() {
 			name:      "assert Azure PR evidence fails when commit has no PRs in Azure",
 			cmd: `assert pullrequest azure --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli 
 			--commit 58d8aad96e0dcd11ada3dc6650d23909eed336ed` + suite.defaultKosliArguments,
-			golden: "Error: no pull requests found for the given commit: 58d8aad96e0dcd11ada3dc6650d23909eed336ed\n",
+			golden: "Error: assert failed: found no pull request(s) in Azure DevOps for commit: 58d8aad96e0dcd11ada3dc6650d23909eed336ed\n",
 		},
 		{
 			wantError: true,
 			name:      "assert Azure PR evidence fails when commit does not exist",
 			cmd: `assert pullrequest azure --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli 
 			--commit c4fa4c2ce6bef984abc93be9258a85f9137ff1c9` + suite.defaultKosliArguments,
-			golden: "Error: no pull requests found for the given commit: c4fa4c2ce6bef984abc93be9258a85f9137ff1c9\n",
+			golden: "Error: assert failed: found no pull request(s) in Azure DevOps for commit: c4fa4c2ce6bef984abc93be9258a85f9137ff1c9\n",
 		},
 	}
 

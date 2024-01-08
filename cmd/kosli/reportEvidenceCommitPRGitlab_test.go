@@ -37,14 +37,14 @@ func (suite *CommitEvidencePRGitlabCommandTestSuite) TestCommitEvidencePRGitlabC
 			name: "report Gitlab PR evidence works when no merge requests are found",
 			cmd: `report evidence commit pullrequest gitlab --name gl-pr --flows ` + suite.flowName + `
 			          --build-url example.com --gitlab-org ewelinawilkosz  --repository merkely-gitlab-demo --commit 2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6` + suite.defaultKosliArguments,
-			golden: "no merge requests found for given commit: 2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6\n" +
+			golden: "found 0 merge request(s) for commit: 2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6\n" +
 				"gitlab merge request evidence is reported to commit: 2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6\n",
 		},
 		{
 			name: "report Gitlab PR evidence works when there are merge requests",
 			cmd: `report evidence commit pullrequest gitlab --name gl-pr --flows ` + suite.flowName + `
 			          --build-url example.com --gitlab-org ewelinawilkosz  --repository merkely-gitlab-demo --commit e6510880aecdc05d79104d937e1adb572bd91911` + suite.defaultKosliArguments,
-			golden: "gitlab merge request evidence is reported to commit: e6510880aecdc05d79104d937e1adb572bd91911\n",
+			golden: "found 1 merge request(s) for commit: e6510880aecdc05d79104d937e1adb572bd91911\ngitlab merge request evidence is reported to commit: e6510880aecdc05d79104d937e1adb572bd91911\n",
 		},
 		{
 			wantError: true,
@@ -95,7 +95,7 @@ func (suite *CommitEvidencePRGitlabCommandTestSuite) TestCommitEvidencePRGitlabC
 			cmd: `report evidence commit pullrequest gitlab --name gl-pr --flows ` + suite.flowName + `
 					  --assert
 			          --build-url example.com --gitlab-org ewelinawilkosz --repository merkely-gitlab-demo --commit 2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6` + suite.defaultKosliArguments,
-			golden: "Error: no merge requests found for the given commit: 2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6\n",
+			goldenRegex: "found 0 merge request\\(s\\) for commit: .*\ngitlab merge request evidence is reported to commit: .*\nError: assert failed: no merge request found for the given commit: .*\n",
 		},
 		{
 			wantError: true,

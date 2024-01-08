@@ -67,43 +67,43 @@ func (suite *AttestGithubPRCommandTestSuite) TestAttestGithubPRCmd() {
 			name:      "attesting against an artifact that does not exist fails",
 			cmd: fmt.Sprintf(`attest pullrequest github --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo 
 				--github-org kosli-dev --repository cli   %s`, suite.defaultKosliArguments),
-			golden: "Error: Artifact with fingerprint '1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'attest-github-pr' belonging to organization 'docs-cmd-test-user'\n",
+			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nError: Artifact with fingerprint '1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'attest-github-pr' belonging to organization 'docs-cmd-test-user'\n",
 		},
 		{
 			name: "can attest github pr against an artifact using artifact name and --artifact-type",
 			cmd: fmt.Sprintf(`attest pullrequest github testdata/file1 --artifact-type file --name foo 
 				--github-org kosli-dev --repository cli  %s`, suite.defaultKosliArguments),
-			golden: "github pull request attestation 'foo' is reported to trail: test-123\n",
+			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\ngithub pull request attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			name: "can attest github pr against an artifact using artifact name and --artifact-type when --name does not exist in the trail template",
 			cmd: fmt.Sprintf(`attest pullrequest github testdata/file1 --artifact-type file --name bar 
 				--github-org kosli-dev --repository cli  %s`, suite.defaultKosliArguments),
-			golden: "github pull request attestation 'bar' is reported to trail: test-123\n",
+			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\ngithub pull request attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
 			name: "can attest github pr against an artifact using --fingerprint",
 			cmd: fmt.Sprintf(`attest pullrequest github --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo 
 				--github-org kosli-dev --repository cli  %s`, suite.defaultKosliArguments),
-			golden: "github pull request attestation 'foo' is reported to trail: test-123\n",
+			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\ngithub pull request attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			name: "can attest github pr against a trail",
 			cmd: fmt.Sprintf(`attest pullrequest github --name bar 
 				--github-org kosli-dev --repository cli  %s`, suite.defaultKosliArguments),
-			golden: "github pull request attestation 'bar' is reported to trail: test-123\n",
+			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\ngithub pull request attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
 			name: "can attest github pr against a trail when name is not found in the trail template",
 			cmd: fmt.Sprintf(`attest pullrequest github --name additional 
 				--github-org kosli-dev --repository cli  %s`, suite.defaultKosliArguments),
-			golden: "github pull request attestation 'additional' is reported to trail: test-123\n",
+			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\ngithub pull request attestation 'additional' is reported to trail: test-123\n",
 		},
 		{
 			name: "can attest github pr against an artifact it is created using dot syntax in --name",
 			cmd: fmt.Sprintf(`attest pullrequest github --name cli.foo 
 				--github-org kosli-dev --repository cli  %s`, suite.defaultKosliArguments),
-			golden: "github pull request attestation 'foo' is reported to trail: test-123\n",
+			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\ngithub pull request attestation 'foo' is reported to trail: test-123\n",
 		},
 	}
 

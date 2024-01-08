@@ -40,7 +40,7 @@ func (suite *AssertPRBitbucketCommandTestSuite) TestAssertPRBitbucketCmd() {
 			name:      "assert Bitbucket PR evidence fails when commit has no PRs in bitbucket",
 			cmd: `assert pullrequest bitbucket --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test 
 			--commit cb6ec5fcbb25b1ebe4859d35ab7995ab973f894c` + suite.defaultKosliArguments,
-			golden: "Error: no pull requests found for the given commit: cb6ec5fcbb25b1ebe4859d35ab7995ab973f894c\n",
+			golden: "Error: assert failed: found no pull request(s) in Bitbucket for commit: cb6ec5fcbb25b1ebe4859d35ab7995ab973f894c\n",
 		},
 		{
 			wantError: true,

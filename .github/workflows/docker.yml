@@ -26,7 +26,7 @@ on:
 
 env:
   IMAGE: ghcr.io/kosli-dev/cli
-  KOSLI_CLI_VERSION: "2.6.5"
+  KOSLI_CLI_VERSION: "2.6.18"
   # KOSLI_DRY_RUN: "True"
   # Ordinarily we declare KOSLI_ORG and KOSLI_FLOW here but
   # this interferes with the CLI integration tests
@@ -48,7 +48,7 @@ jobs:
 
     - uses: actions/setup-go@v3
       with:
-        go-version: '1.21.1'
+        go-version: '1.21.5'
 
     # Set up QEMU emulator to allow building multi-arch images
     - name: Set up QEMU
@@ -124,7 +124,7 @@ jobs:
         # or you can signup for free at https://snyk.io/login
         SNYK_TOKEN: ${{ secrets.snyk_token }}
       run: 
-          snyk test --json-file-output=snyk-code.json
+          snyk test --json-file-output=snyk-code.json --prune-repeated-subdependencies
 
 
     - name: Report Snyk CODE scan results evidence to Kosli

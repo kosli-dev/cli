@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 
 	gitlabUtils "github.com/kosli-dev/cli/internal/gitlab"
@@ -57,10 +58,13 @@ func newAssertPullRequestGitlabCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *assertPullRequestGitlabOptions) run(args []string) error {
-	pullRequestsEvidence, err := getPullRequestsEvidence(o.gitlabConfig, o.commit, true)
+	pullRequestsEvidence, err := o.gitlabConfig.PREvidenceForCommit(o.commit)
 	if err != nil {
 		return err
 	}
-	logger.Info("found [%d] pull request(s) in Gitlab for commit: %s", len(pullRequestsEvidence), o.commit)
+	if len(pullRequestsEvidence) == 0 {
+		return fmt.Errorf("assert failed: found no merge request(s) in Gitlab for commit: %s", o.commit)
+	}
+	logger.Info("found [%d] merge request(s) in Gitlab for commit: %s", len(pullRequestsEvidence), o.commit)
 	return nil
 }

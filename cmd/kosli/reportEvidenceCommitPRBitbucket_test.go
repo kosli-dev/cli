@@ -31,13 +31,13 @@ func (suite *CommitEvidencePRBitbucketCommandTestSuite) SetupTest() {
 	CreateFlow(suite.flowNames, suite.T())
 }
 
-func (suite *CommitEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePRBitbucketCmd() {
+func (suite *CommitEvidencePRBitbucketCommandTestSuite) TestCommitEvidencePRBitbucketCmd() {
 	tests := []cmdTestCase{
 		{
 			name: "report Bitbucket PR evidence works",
 			cmd: `report evidence commit pullrequest bitbucket --name bb-pr --flows ` + suite.flowNames + `
 					--build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69` + suite.defaultKosliArguments,
-			golden: "bitbucket pull request evidence is reported to commit: 2492011ef04a9da09d35be706cf6a4c5bc6f1e69\n",
+			golden: "found 1 pull request(s) for commit: 2492011ef04a9da09d35be706cf6a4c5bc6f1e69\nbitbucket pull request evidence is reported to commit: 2492011ef04a9da09d35be706cf6a4c5bc6f1e69\n",
 		},
 		{
 			wantError: true,
@@ -88,13 +88,13 @@ func (suite *CommitEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePRBi
 			cmd: `report evidence commit pullrequest bitbucket --name bb-pr --flows ` + suite.flowNames + `
 					--assert
 					--build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit cb6ec5fcbb25b1ebe4859d35ab7995ab973f894c` + suite.defaultKosliArguments,
-			golden: "Error: no pull requests found for the given commit: cb6ec5fcbb25b1ebe4859d35ab7995ab973f894c\n",
+			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nbitbucket pull request evidence is reported to commit: .*\nError: assert failed: no pull request found for the given commit: .*\n",
 		},
 		{
 			name: "report Bitbucket PR evidence does not fail when commit has no PRs",
 			cmd: `report evidence commit pullrequest bitbucket --name bb-pr --flows ` + suite.flowNames + `
 			          --build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit cb6ec5fcbb25b1ebe4859d35ab7995ab973f894c` + suite.defaultKosliArguments,
-			golden: "no pull requests found for given commit: cb6ec5fcbb25b1ebe4859d35ab7995ab973f894c\n" +
+			golden: "found 0 pull request(s) for commit: cb6ec5fcbb25b1ebe4859d35ab7995ab973f894c\n" +
 				"bitbucket pull request evidence is reported to commit: cb6ec5fcbb25b1ebe4859d35ab7995ab973f894c\n",
 		},
 		{

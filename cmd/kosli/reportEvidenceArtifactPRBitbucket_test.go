@@ -40,7 +40,7 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePR
 			name: "report Bitbucket PR evidence works with new flags (fingerprint, name ...)",
 			cmd: `report evidence artifact pullrequest bitbucket --fingerprint ` + suite.artifactFingerprint + ` --name bb-pr --flow ` + suite.flowName + `
 			          --build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69` + suite.defaultKosliArguments,
-			golden: "bitbucket pull request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
+			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nbitbucket pull request evidence is reported to artifact: .*",
 		},
 		{
 			wantError: true,
@@ -94,26 +94,32 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePR
 			golden: "Error: map[error:map[message:Resource not found] type:error]\n",
 		},
 		{
+			name: "report Bitbucket PR evidence works when --assert is used and commit has a PR",
+			cmd: `report evidence artifact pullrequest bitbucket --fingerprint ` + suite.artifactFingerprint + ` --name bb-pr --flow ` + suite.flowName + `
+					  --assert
+			          --build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69` + suite.defaultKosliArguments,
+			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nbitbucket pull request evidence is reported to artifact: .*\n",
+		},
+		{
 			wantError: true,
 			name:      "report Bitbucket PR evidence fails when --assert is used and commit has no PRs",
 			cmd: `report evidence artifact pullrequest bitbucket --fingerprint ` + suite.artifactFingerprint + ` --name bb-pr --flow ` + suite.flowName + `
 					  --assert
 			          --build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit cb6ec5fcbb25b1ebe4859d35ab7995ab973f894c` + suite.defaultKosliArguments,
-			golden: "Error: no pull requests found for the given commit: cb6ec5fcbb25b1ebe4859d35ab7995ab973f894c\n",
+			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nbitbucket pull request evidence is reported to artifact: .*\nError: assert failed: no pull request found for the given commit: .*\n",
 		},
 		{
 			name: "report Bitbucket PR evidence does not fail when commit has no PRs",
 			cmd: `report evidence artifact pullrequest bitbucket --fingerprint ` + suite.artifactFingerprint + ` --name bb-pr --flow ` + suite.flowName + `
 			          --build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit cb6ec5fcbb25b1ebe4859d35ab7995ab973f894c` + suite.defaultKosliArguments,
-			golden: "no pull requests found for given commit: cb6ec5fcbb25b1ebe4859d35ab7995ab973f894c\n" +
-				"bitbucket pull request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
+			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nbitbucket pull request evidence is reported to artifact: .*\n",
 		},
 		{
 			wantError: true,
 			name:      "report Bitbucket PR evidence fails when the artifact does not exist in the server",
 			cmd: `report evidence artifact pullrequest bitbucket testdata/file1 --artifact-type file --name bb-pr --flow ` + suite.flowName + `
 			          --build-url example.com --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69` + suite.defaultKosliArguments,
-			golden: "Error: Artifact with fingerprint '7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'bitbucket-pr' belonging to organization 'docs-cmd-test-user'. \n",
+			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nError: Artifact with fingerprint '7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'bitbucket-pr' belonging to organization 'docs-cmd-test-user'. \n",
 		},
 		{
 			wantError: true,
