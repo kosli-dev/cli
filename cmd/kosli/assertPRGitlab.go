@@ -44,7 +44,7 @@ func newAssertPullRequestGitlabCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	addGitlabFlags(cmd, o.gitlabConfig, ci)
-	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
+	cmd.Flags().StringVar(&o.commit, "commit", DefaultValueForCommit(ci, true), commitPREvidenceFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{

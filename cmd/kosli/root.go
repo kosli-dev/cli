@@ -168,13 +168,14 @@ The service principal needs to have the following permissions:
 	showUnchangedArtifactsFlag  = "[defaulted] Show the unchanged artifacts present in both snapshots within the diff output."
 	approverFlag                = "[optional] The user approving an approval."
 	attestationFingerprintFlag  = "[optional] The SHA256 fingerprint of the artifact to attach the attestation to."
-	attestationCommitFlag       = "The git commit associated to the attestation. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
+	attestationCommitFlag       = "[optional] The git commit associated to the attestation. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
 	attestationUrlFlag          = "The url pointing to where the attestation came from or is related. (defaulted to the CI url in some CIs: https://docs.kosli.com/ci-defaults )."
 	attestationNameFlag         = "The name of the attestation as declared in the flow or trail yaml template."
 	attestationCompliantFlag    = "[defaulted] Whether the attestation is compliant or not. A boolean flag https://docs.kosli.com/faq/#boolean-flags"
 	attestationRepoRootFlag     = "[defaulted] The directory where the source git repository is available. Only used if --commit is used."
 	uploadJunitResultsFlag      = "[defaulted] Whether to upload the provided Junit results directory as evidence to Kosli or not."
 	attestationAssertFlag       = "[optional] Exit with non-zero code if the attestation is non-compliant"
+	beginTrailCommitFlag        = "[defaulted] The git commit from which the trail is begun. (defaulted in some CIs: https://docs.kosli.com/ci-defaults, otherwise defaults to HEAD )."
 )
 
 var global *GlobalOpts

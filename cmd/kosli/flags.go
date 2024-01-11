@@ -58,7 +58,7 @@ func addGitlabFlags(cmd *cobra.Command, gitlabConfig *gitlabUtils.GitlabConfig, 
 func addArtifactPRFlags(cmd *cobra.Command, o *pullRequestArtifactOptions, ci string) {
 	addArtifactEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
 	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
-	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
+	cmd.Flags().StringVar(&o.commit, "commit", DefaultValueForCommit(ci, false), commitPREvidenceFlag)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
 }
@@ -76,7 +76,7 @@ func addCommitPRFlags(cmd *cobra.Command, o *pullRequestCommitOptions, ci string
 
 func addCommitEvidenceFlags(cmd *cobra.Command, payload *TypedEvidencePayload, ci string) {
 	addEvidenceFlags(cmd, payload, ci)
-	cmd.Flags().StringVar(&payload.CommitSHA, "commit", DefaultValue(ci, "git-commit"), commitEvidenceFlag)
+	cmd.Flags().StringVar(&payload.CommitSHA, "commit", DefaultValueForCommit(ci, false), commitEvidenceFlag)
 	cmd.Flags().StringSliceVarP(&payload.Flows, "flows", "f", []string{}, flowNamesFlag)
 }
 
@@ -95,7 +95,7 @@ func addListFlags(cmd *cobra.Command, o *listOptions) {
 
 func addAttestationFlags(cmd *cobra.Command, o *CommonAttestationOptions, payload *CommonAttestationPayload, ci string) {
 	cmd.Flags().StringVarP(&payload.ArtifactFingerprint, "fingerprint", "F", "", attestationFingerprintFlag)
-	cmd.Flags().StringVarP(&o.commitSHA, "commit", "g", DefaultValue(ci, "git-commit"), attestationCommitFlag)
+	cmd.Flags().StringVarP(&o.commitSHA, "commit", "g", DefaultValueForCommit(ci, false), attestationCommitFlag)
 	cmd.Flags().StringVarP(&payload.Url, "url", "b", DefaultValue(ci, "build-url"), attestationUrlFlag)
 	cmd.Flags().StringVarP(&o.attestationNameTemplate, "name", "n", "", attestationNameFlag)
 	cmd.Flags().StringVar(&payload.EvidenceFingerprint, "evidence-fingerprint", "", evidenceFingerprintFlag)
