@@ -5,9 +5,9 @@ weight: 240
 ---
 # Part 4: Flows
 
-A Kosli Flow represents a business or software process that requires change tracking. It allows you to monitor changes across all steps within a process or focus specifically on a subset of essential steps.
+A Kosli Flow represents a business or software process that requires change tracking. It allows you to monitor changes across all steps within a process or focus specifically on a subset of critical steps.
 
-Prior to creating a Flow, it's essential to establish a `Flow Template`. This template defines the necessary steps within the business or software process represented by a Kosli Flow. The compliance of Flow trails and artifacts is assessed based on the template.
+Prior to creating a Flow, it's essential to create a `Flow Template`. This template defines the necessary steps within the business or software process represented by a Kosli Flow. The compliance of Flow trails and artifacts is assessed based on the template.
 
 {{< hint info >}}
 In all the commands below we skip the required `--api-token` and `--org` flags for brevity. These can be set as described [here](/getting_started/install#assigning-flags-via-config-files).

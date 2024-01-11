@@ -43,7 +43,7 @@ To create a personal API key:
 - Ensure to copy the generated key as it won't be retrievable later. This key serves as the authentication token.
 
 
-### API Keys rotation
+## API Keys rotation
 
 You can execute a zero-downtime API key rotation by following these steps:
 
@@ -59,15 +59,15 @@ Once the new key is in place and operational, remove or delete the old key from 
 By systematically following these steps, you can ensure a seamless API key rotation without causing any downtime or interruptions in service.
 
 
-### Using API Keys
+## Using API Keys
 
-#### In CLI
+### In CLI
 
 you can assign an API key to any CLI command by one of the following options:
 - using the `--api-token` flag
 - exporting an environment variable called `KOSLI_API_TOKEN`
 - setting it in a config file and passing the config file using `--config-file` (see [here](/getting_started/install#assigning-flags-via-config-files))
 
-#### In API
+### In API
 
 When utilizing the Kosli API directly, you can authenticate your requests using basic authentication. Set the `username` to your API key and the `password` to any string value. 

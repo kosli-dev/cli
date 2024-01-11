@@ -123,7 +123,7 @@ To assign a CLI flag using environment variables, generate a variable prefixed w
 ### Assigning flags via config files
 
 A config file is an alternative to using Kosli flags or environment variables. 
-You could use a config file for the values that rarely change - like api token or org, 
+You could use a config file for the values that rarely change - like API token or org, 
 but you can represent all Kosli flags in a config file. 
 
 Each key in the config file corresponds to the flag name, capitalized. For instance:
@@ -133,7 +133,9 @@ Each key in the config file corresponds to the flag name, capitalized. For insta
 
 Config files can be written in JSON, YAML, or TOML formats.
 
-To direct Kosli CLI to use a config file, employ the --config-file flag when executing Kosli commands. Below are examples of different config file formats:
+To direct Kosli CLI to use a config file, employ the --config-file flag when executing Kosli commands. By default, the CLI looks for a config file called `kosli.<yaml/yml/json/toml>`
+
+Below are examples of different config file formats:
 
 
 **kosli-conf.json:**
@@ -162,7 +164,3 @@ to list environments with `org` and `api-token` in the configuration file you wo
 ```
 $ kosli environment ls --config-file=kosli-conf
 ```
-
-The `--config-file` flag defaults to `kosli`, so if you name your file `kosli.<yaml|toml|json>` and 
-the file is in the same location where you run Kosli CLI commands from, you can 
-skip the `--config-file` flag altogether.

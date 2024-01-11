@@ -17,10 +17,10 @@ Depending on your process requirements, some attestations will belong to an Arti
 1. **To a trail**: the attestation belongs to a single trail and is not linked to a specific artifact.
 2. **To an Artifact**: the attestation belongs to a specific artifact.
 
-### Binding attestations to an artifact
+## Binding attestations to an artifact
 
 To bind an attestation to an artifact, you have two options:
-1. **Binging with the fingerprint**: the attestation belongs only to the artifact with that fingerprint. This requires that the artifact has already been reported to Kosli.
+1. **Binding with the fingerprint**: the attestation belongs only to the artifact with that fingerprint. This requires that the artifact has already been reported to Kosli.
 2. **Binding with template name and git commit**: the attestation belongs to any artifact that **has been or will be** reported with the specified template name and a matching git commit. For instance, if multiple artifacts are reported as `backend` from the same trail, and an attestation has been reported targeting template name `backend`. The attestation will be bound to the `backend` artifacts that has the same git commit as the attestation.
 
 

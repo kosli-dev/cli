@@ -9,9 +9,9 @@ Every time you execute a process represented by a Kosli Flow, you would initiate
 
 You have the flexibility to determine the boundaries of what you consider a single execution of your process. For instance, in a software delivery process, an execution instance might be defined by: 
 
-- git commits: the trail represents changes recorded from a single commit (as reported from CI).
-- pull request: the trail represents changes recorded throughout the life of a single pull request (can span multiple commits).
-- Jira ticket or Github issue: the trail represents changes recorded throughout the life of a single ticket/issue (can span multiple pull requests and commits).
+- **Git commits**: the trail represents changes recorded from a single commit (as reported from CI).
+- **Pull requests**: the trail represents changes recorded throughout the life of a single pull request (can span multiple commits).
+- **Jira or Github issues**: the trail represents changes recorded throughout the life of a single ticket/issue (can span multiple pull requests and commits).
 
 Each trail must possess a unique name within the Flow. This name typically follows a custom pattern, depending on how you define the scope of a single process execution.
 
@@ -20,7 +20,7 @@ Each trail must possess a unique name within the Flow. This name typically follo
 To begin a Trail, you can run a command similar to the one below:
 
 ```shell
-$ kosli being trail trail-1 --flow process-1 --description "My first trail"
+$ kosli begin trail trail-1 --flow process-1 --description "My first trail"
 ```
 
 Rerunning the command with different description or template file will update the Trail. 

@@ -5,11 +5,11 @@ weight: 260
 ---
 # Part 6: Artifacts
 
-In software processes, you typically generate one or more artifacts that are deployed or distributed, such as docker images, archives, binaries, and more. You can ensure traceability for the creation of these artifacts by attesting them to Kosli, thereby establishing an binary provenance for each one.
+In software processes, you typically generate one or more artifacts that are deployed or distributed, such as docker images, archives, binaries, etc. You can ensure traceability for the creation of these artifacts by attesting them to Kosli, thereby establishing a binary provenance for each one.
 
 ## Binary provenance
 
-Binary provenance for artifacts refers to the ability to trace and authenticate the origins, history, and journey of the artifacts throughout their lifecycle. This involves recording immutable attestations about the artifact creation, risk controls performed on it, distribution and execution/usage.
+Binary provenance for artifacts refers to the ability to trace and verify the origins, history, and journey of the artifacts throughout their lifecycle. This involves recording immutable attestations about the artifact creation, risk controls performed on it, distribution and execution/usage.
 
 Artifacts are uniquely identified by their SHA256 fingerprints. When attesting an artifact to Kosli, you have the option to either provide the fingerprint manually or allow Kosli CLI to calculate it automatically for you.
 
