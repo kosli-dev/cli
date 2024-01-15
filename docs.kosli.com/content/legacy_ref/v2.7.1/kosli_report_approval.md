@@ -1,23 +1,23 @@
 ---
-title: "kosli request approval"
+title: "kosli report approval"
 beta: false
 ---
 
-# kosli request approval
+# kosli report approval
 
 ## Synopsis
 
-Request an approval of a deployment of an artifact to an environment in Kosli.  
-The request should be reviewed in the Kosli UI.  
+Report an approval of deploying an artifact to an environment to Kosli.  
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell
-kosli request approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli report approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
+|        --approver string  |  [optional] The user approving an approval.  |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
 |    -d, --description string  |  [optional] The approval description.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
@@ -32,7 +32,7 @@ kosli request approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --repo-root string  |  [defaulted] The directory where the source git repository is available. (default ".")  |
-|    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to this approval.  |
+|    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the approval.  |
 
 
 ## Options inherited from parent commands
@@ -50,36 +50,39 @@ kosli request approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 
 ```shell
 
-# Request an approval for an artifact with a provided fingerprint (sha256)
-# for deployment to environment <yourEnvironmentName>.
+# Report that an artifact with a provided fingerprint (sha256) has been approved for 
+# deployment to environment <yourEnvironmentName>.
 # The approval is for all git commits since the last approval to this environment.
-kosli request approval \
+kosli report approval \
 	--api-token yourAPIToken \
 	--description "An optional description for the approval" \
 	--environment yourEnvironmentName \
+	--approver username \
 	--org yourOrgName \
 	--flow yourFlowName \
 	--fingerprint yourArtifactFingerprint
 
-# Request that a file type artifact needs approval for deployment to environment <yourEnvironmentName>.
+# Report that a file type artifact has been approved for deployment to environment <yourEnvironmentName>.
 # The approval is for all git commits since the last approval to this environment.
-kosli request approval FILE.tgz \
+kosli report approval FILE.tgz \
 	--api-token yourAPIToken \
 	--artifact-type file \
-	--description "An optional description for the requested approval" \
+	--description "An optional description for the approval" \
 	--environment yourEnvironmentName \
 	--newest-commit HEAD \
+	--approver username \
 	--org yourOrgName \
 	--flow yourFlowName 
 
-# Request an approval for an artifact with a provided fingerprint (sha256).
+# Report that an artifact with a provided fingerprint (sha256) has been approved for deployment.
 # The approval is for all environments.
 # The approval is for all commits since the git commit of origin/production branch.
-kosli request approval \
+kosli report approval \
 	--api-token yourAPIToken \
-	--description "An optional description for the requested approval" \
+	--description "An optional description for the approval" \
 	--newest-commit HEAD \
 	--oldest-commit origin/production \
+	--approver username \
 	--org yourOrgName \
 	--flow yourFlowName \
 	--fingerprint yourArtifactFingerprint

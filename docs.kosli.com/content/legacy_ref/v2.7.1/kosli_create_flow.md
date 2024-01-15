@@ -1,29 +1,28 @@
 ---
-title: "kosli begin trail"
+title: "kosli create flow"
 beta: false
 ---
 
-# kosli begin trail
+# kosli create flow
 
 ## Synopsis
 
-Begin or update a Kosli flow trail.
+Create or update a Kosli flow.
+You can specify flow parameters in flags.
 
 ```shell
-kosli begin trail TRAIL-NAME [flags]
+kosli create flow FLOW-NAME [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|    -g, --commit string  |  [defaulted] The git commit from which the trail is begun. (defaulted in some CIs: https://docs.kosli.com/ci-defaults, otherwise defaults to HEAD ).  |
-|        --description string  |  [optional] The Kosli trail description.  |
+|        --description string  |  [optional] The Kosli flow description.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|        --flow string  |  The Kosli flow name.  |
-|    -h, --help  |  help for trail  |
-|        --repo-root string  |  [defaulted] The directory where the source git repository is available. Only used if --commit is used. (default ".")  |
+|    -h, --help  |  help for flow  |
+|    -t, --template strings  |  [defaulted] The comma-separated list of required compliance controls names.  |
 |    -f, --template-file string  |  The path to a yaml template file.  |
-|    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the flow trail.  |
+|        --visibility string  |  [defaulted] The visibility of the Kosli flow. Valid visibilities are [public, private]. (default "private")  |
 
 
 ## Options inherited from parent commands
@@ -41,11 +40,19 @@ kosli begin trail TRAIL-NAME [flags]
 
 ```shell
 
-# begin/update a Kosli flow trail:
-kosli begin trail yourTrailName \
-	--description yourTrailDescription \
+# create/update a Kosli flow (with legacy template):
+kosli create flow yourFlowName \
+	--description yourFlowDescription \
+    --visibility private OR public \
+	--template artifact,evidence-type1,evidence-type2 \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# create/update a Kosli flow (with template file):
+kosli create flow yourFlowName \
+	--description yourFlowDescription \
+	--visibility private OR public \
 	--template-file /path/to/your/template/file.yml \
-	--user-data /path/to/your/user-data/file.json \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
