@@ -47,7 +47,7 @@ func newAssertPullRequestAzureCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	addAzureFlags(cmd, azureFlagsValues, ci)
-	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
+	cmd.Flags().StringVar(&o.commit, "commit", DefaultValueForCommit(ci, true), commitPREvidenceFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"azure-token", "azure-org-url", "project", "commit", "repository"})

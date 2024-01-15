@@ -141,12 +141,24 @@ func DefaultValue(ci, flag string) string {
 			}
 			return result
 		}
-		// when not in a known CI, default some values
-		if flag == "git-commit" {
-			return "HEAD"
-		}
 	}
 	return ""
+}
+
+// DefaultValueForCommit returns DefaultValue for 'git-commit' in
+// the given CI. Otherwise, returns HEAD if returnHead is true,
+// empty string otherwise
+func DefaultValueForCommit(ci string, returnHead bool) string {
+	value := DefaultValue(ci, "git-commit")
+	if value != "" {
+		return value
+	} else {
+		if returnHead {
+			return "HEAD"
+		} else {
+			return ""
+		}
+	}
 }
 
 // RequireFlags declares a list of flags as required for a given command

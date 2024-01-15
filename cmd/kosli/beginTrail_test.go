@@ -64,6 +64,11 @@ func (suite *BeginTrailCommandTestSuite) TestBeginTrailCmd() {
 			golden: "trail 'test-123' was updated\n",
 		},
 		{
+			name:   "can update a trail with commit",
+			cmd:    fmt.Sprintf("begin trail test-123 --flow %s --template-file testdata/valid_template.yml --commit HEAD --repo-root ../.. %s", suite.flowName, suite.defaultKosliArguments),
+			golden: "trail 'test-123' was updated\n",
+		},
+		{
 			wantError: true,
 			name:      "missing --org flag causes an error",
 			cmd:       "begin trail test-123 --flow my-modern-flow -H http://localhost:8001 -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",

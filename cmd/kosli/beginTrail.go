@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -26,12 +27,15 @@ type beginTrailOptions struct {
 	templateFile string
 	userDataFile string
 	flow         string
+	commitSHA    string
+	srcRepoRoot  string
 }
 
 type TrailPayload struct {
-	Name        string      `json:"name"`
-	Description string      `json:"description"`
-	UserData    interface{} `json:"user_data"`
+	Name        string                   `json:"name"`
+	Description string                   `json:"description"`
+	UserData    interface{}              `json:"user_data"`
+	Commit      *gitview.BasicCommitInfo `json:"git_commit_info,omitempty"`
 }
 
 func newBeginTrailCmd(out io.Writer) *cobra.Command {
@@ -58,10 +62,13 @@ func newBeginTrailCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
+	ci := WhichCI()
 	cmd.Flags().StringVar(&o.flow, "flow", "", flowNameFlag)
 	cmd.Flags().StringVar(&o.payload.Description, "description", "", trailDescriptionFlag)
 	cmd.Flags().StringVarP(&o.templateFile, "template-file", "f", "", templateFileFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", trailUserDataFlag)
+	cmd.Flags().StringVarP(&o.commitSHA, "commit", "g", DefaultValueForCommit(ci, false), beginTrailCommitFlag)
+	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", attestationRepoRootFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"flow"})
@@ -81,6 +88,18 @@ func (o *beginTrailOptions) run(args []string) error {
 	o.payload.UserData, err = LoadJsonData(o.userDataFile)
 	if err != nil {
 		return err
+	}
+
+	if o.commitSHA != "" {
+		gv, err := gitview.New(o.srcRepoRoot)
+		if err != nil {
+			return err
+		}
+		commitInfo, err := gv.GetCommitInfoFromCommitSHA(o.commitSHA)
+		if err != nil {
+			return err
+		}
+		o.payload.Commit = &commitInfo.BasicCommitInfo
 	}
 
 	form, err := newFlowForm(o.payload, o.templateFile, false)
