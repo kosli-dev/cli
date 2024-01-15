@@ -1,7 +1,7 @@
 ---
-title: v2.7.1
+title: v2.7.2
 bookCollapseSection: true
-weight: 601
+weight: 600
 ---
 
-# v2.7.1
+# v2.7.2

@@ -7,7 +7,7 @@ beta: false
 
 ## Synopsis
 
-Assert a Azure DevOps pull request for a git commit exists.  
+Assert an Azure DevOps pull request for a git commit exists.  
 The command exits with non-zero exit code 
 if no pull requests were found for the commit.
 
@@ -20,7 +20,7 @@ kosli assert pullrequest azure [flags]
 | :--- | :--- |
 |        --azure-org-url string  |  Azure organization url. E.g. "https://dev.azure.com/myOrg" (defaulted if you are running in Azure Devops pipelines: https://docs.kosli.com/ci-defaults ).  |
 |        --azure-token string  |  Azure Personal Access token.  |
-|        --commit string  |  Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|        --commit string  |  Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ). (default "HEAD")  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -h, --help  |  help for azure  |
 |        --project string  |  Azure project.(defaulted if you are running in Azure Devops pipelines: https://docs.kosli.com/ci-defaults ).  |
