@@ -18,6 +18,7 @@ func newArchiveCmd(out io.Writer) *cobra.Command {
 	// Add subcommands
 	cmd.AddCommand(
 		newArchiveFlowCmd(out),
+		newArchiveEnvironmentCmd(out),
 	)
 	return cmd
 }
