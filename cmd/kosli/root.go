@@ -48,7 +48,8 @@ To authenticate to Azure, you need to create Azure service principal with a secr
 and provide these Azure credentials via flags or by exporting the equivalent KOSLI env vars (e.g. KOSLI_AZURE_CLIENT_ID).  
 The service principal needs to have the following permissions:  
   1) Microsoft.Web/sites/Read  
-  2) microsoft.web/sites/containerlogs/action  
+  2) Microsoft.ContainerRegistry/registries/pull/read  
+
 	`
 
 	// flags
@@ -129,7 +130,7 @@ The service principal needs to have the following permissions:
 	azureTenantIdFlag           = "Azure tenant ID."
 	azureSubscriptionIdFlag     = "Azure subscription ID."
 	azureResourceGroupNameFlag  = "Azure resource group name."
-	azureDigestsSourceFlag      = "[defaulted] Where to get the digests from. Valid values are 'acr' and 'logs'. Defaults to 'acr'"
+	azureDigestsSourceFlag      = "[defaulted] Where to get the digests from. Valid values are 'acr' and 'logs'."
 	githubTokenFlag             = "Github token."
 	githubOrgFlag               = "Github organization. (defaulted if you are running in GitHub Actions: https://docs.kosli.com/ci-defaults )."
 	githubBaseURLFlag           = "[optional] GitHub base URL (only needed for GitHub Enterprise installations)."
