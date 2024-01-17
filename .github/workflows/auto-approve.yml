@@ -39,7 +39,7 @@ jobs:
       - name: Check non critical
         id: non-critical
         run: |
-          ACCEPTED_PATHS="^bin/|^design-docs/"
+          ACCEPTED_PATHS="^bin/|^design-docs/|^charts/k8s-reporter/README.md|^docs.kosli.com/content/helm/_index.md"
           CRITICAL=false
           for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
             echo "$file"
