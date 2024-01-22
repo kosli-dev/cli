@@ -12,7 +12,6 @@ different CI systems.
 
 {{< hint info >}}
 Note that **all** CLI command flags can be set as environment variables by adding the the `KOSLI_` prefix and capitalizing them. 
-In the GitHub workflow example [further down](/integrations/ci_cd/#use-kosli-in-github-actions), both `--api-token` and `--org` flags were set from environment variables.
 {{< /hint >}}
 
 ## Defaulted Kosli command flags from CI variables
@@ -114,3 +113,10 @@ jobs:
       - name: create flow
         run: kosli create flow my-flow --template pull-request,artifact,test
 ```
+
+For a complete example of a Github workflow using Kosli, please check the Kosli CLI's [own workflow](https://github.com/kosli-dev/cli/blob/main/.github/workflows/docker.yml). 
+
+
+## Use Kosli in Gitlab pipelines
+
+For a complete example of a Gitlab pipeline using Kosli, please check [this cyber-dojo pipeline](https://gitlab.com/cyber-dojo/creator/-/blob/main/.gitlab/workflows/main.yml). 
