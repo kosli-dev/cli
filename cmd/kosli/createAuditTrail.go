@@ -36,12 +36,12 @@ type AuditTrailPayload struct {
 func newCreateAuditTrailCmd(out io.Writer) *cobra.Command {
 	o := new(createAuditTrailOptions)
 	cmd := &cobra.Command{
-		Use:         "audit-trail AUDIT-TRAIL-NAME",
-		Short:       createAuditTrailShortDesc,
-		Long:        createAuditTrailLongDesc,
-		Example:     createAuditTrailExample,
-		Annotations: map[string]string{"betaCLI": "true"},
-		Args:        cobra.MaximumNArgs(1),
+		Use:        "audit-trail AUDIT-TRAIL-NAME",
+		Short:      createAuditTrailShortDesc,
+		Long:       createAuditTrailLongDesc,
+		Example:    createAuditTrailExample,
+		Deprecated: "Audit trails are deprecated. Please use Flows and Trail instead.",
+		Args:       cobra.MaximumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

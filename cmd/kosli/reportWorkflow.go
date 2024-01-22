@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/kosli-dev/cli/internal/requests"
-	"github.com/spf13/cobra"
 	"io"
 	"net/http"
+
+	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/spf13/cobra"
 )
 
 type WorkflowPayload struct {
@@ -35,11 +36,11 @@ kosli report workflow \
 func newReportWorkflowCmd(out io.Writer) *cobra.Command {
 	o := new(reportWorkflowOptions)
 	cmd := &cobra.Command{
-		Use:         "workflow",
-		Short:       reportWorkflowShortDesc,
-		Long:        reportWorkflowLongDesc,
-		Example:     reportWorkflowExample,
-		Annotations: map[string]string{"betaCLI": "true"},
+		Use:        "workflow",
+		Short:      reportWorkflowShortDesc,
+		Long:       reportWorkflowLongDesc,
+		Example:    reportWorkflowExample,
+		Deprecated: "Audit trails are deprecated. Please use Flows and Trail instead.",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

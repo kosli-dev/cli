@@ -10,9 +10,10 @@ const attestDesc = `All Kosli attest commands.`
 
 func newAttestCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "attest",
-		Short: attestDesc,
-		Long:  attestDesc,
+		Use:         "attest",
+		Short:       attestDesc,
+		Long:        attestDesc,
+		Annotations: map[string]string{"betaCLI": "true"},
 	}
 
 	// Add subcommands
