@@ -38,12 +38,12 @@ You will follow the commit that fixed this.
 ## Getting ready
 
 You need to:
-* [Install the `kosli` CLI](/kosli_overview/kosli_tools/#installing-the-kosli-cli).
-* [Get your Kosli API token](/kosli_overview/kosli_tools/#getting-your-kosli-api-token).
-* [Set the KOSLI_API_TOKEN environment variable](/kosli_overview/kosli_tools/#environment-variables).
-* Set the KOSLI_ORG environment variable to `cyber-dojo` (the Kosli `cyber-dojo` organization is public so any authenticated user can read its data):
+* [Install Kosli CLI](/getting_started/install/).
+* [Get a Kosli API token](/getting_started/service-accounts/).
+* Set the `KOSLI_ORG` environment variable to `cyber-dojo` (the Kosli `cyber-dojo` organization is public so any authenticated user can read its data) and `KOSLI_API_TOKEN` to your token:
   ```shell {.command}
   export KOSLI_ORG=cyber-dojo
+  export KOSLI_API_TOKEN=<your-api-token>
   ```
 
 ## CI Pipeline events

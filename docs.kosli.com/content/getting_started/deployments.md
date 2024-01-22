@@ -1,9 +1,9 @@
 ---
-title: "Part 8: Deployments"
+title: "Part 9: Deployments"
 bookCollapseSection: false
-weight: 270
+weight: 290
 ---
-# Part 8: Deployments
+# Part 9: Deployments
 
 The last important piece of information, when it comes to artifacts are deployments. Whenever you (likely with the use of your CI system) deploy an artifact to an environment you should record that information to Kosli.
 

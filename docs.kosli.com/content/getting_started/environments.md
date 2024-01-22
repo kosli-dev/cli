@@ -1,9 +1,9 @@
 ---
-title: "Part 3: Environments"
+title: "Part 4: Environments"
 bookCollapseSection: false
-weight: 220
+weight: 240
 ---
-# Part 3: Environments
+# Part 4: Environments
 
 Recording the status of runtime environments is one of the fundamental features of Kosli. Kosli records the status of runtime environments by detecting artifacts running in any given environment and reporting the information.
 

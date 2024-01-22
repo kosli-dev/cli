@@ -1,9 +1,9 @@
 ---
-title: "Part 6: Evidence"
+title: "Part 7: Evidence"
 bookCollapseSection: false
-weight: 250
+weight: 270
 ---
-# Part 6: Evidence
+# Part 7: Evidence
 
 Whenever an event related to required evidence happens you should report it to Kosli. 
 You can report evidence to either a git commit or an artifact. 

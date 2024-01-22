@@ -1,9 +1,9 @@
 ---
-title: "Part 5: Artifacts"
+title: "Part 6: Artifacts"
 bookCollapseSection: false
-weight: 240
+weight: 260
 ---
-# Part 5: Artifacts
+# Part 6: Artifacts
 
 ## Report artifacts
 
