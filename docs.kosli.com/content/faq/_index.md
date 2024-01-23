@@ -71,7 +71,7 @@ We are working on providing that functionality in a near future. -->
 
 ## Do I have to provide all the flags all the time? 
 
-A number of flags won't change their values often (or at all) between commands, like `--org` or `--api-token`.  Some will differ between e.g. workflows, like `--flow`. You can define them as environment variable to avoid unnecessary redundancy. Check [Environment variables](/getting_started/install/##assigning-flags-via-environment-variables) section to learn more.
+A number of flags won't change their values often (or at all) between commands, like `--org` or `--api-token`.  Some will differ between e.g. workflows, like `--flow`. You can define them as environment variable to avoid unnecessary redundancy. Check [Environment variables](/getting_started/install/#assigning-flags-via-environment-variables) section to learn more.
 
 ## What is dry run and how to use it?
 
