@@ -1,10 +1,13 @@
 ---
 title: "kosli begin trail"
-beta: false
+beta: true
+deprecated: false
 ---
 
 # kosli begin trail
 
+{{< hint warning >}}**kosli begin trail** is a beta feature. Beta features provide early access to product functionality.  These features may change between releases without warning, or can be removed in a future release.
+Please contact us to enable this feature for your organization.{{< /hint >}}
 ## Synopsis
 
 Begin or update a Kosli flow trail.

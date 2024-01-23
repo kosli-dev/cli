@@ -1,10 +1,13 @@
 ---
 title: "kosli attest artifact"
-beta: false
+beta: true
+deprecated: false
 ---
 
 # kosli attest artifact
 
+{{< hint warning >}}**kosli attest artifact** is a beta feature. Beta features provide early access to product functionality.  These features may change between releases without warning, or can be removed in a future release.
+Please contact us to enable this feature for your organization.{{< /hint >}}
 ## Synopsis
 
 Attest an artifact creation to a Kosli flow.  

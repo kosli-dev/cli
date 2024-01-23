@@ -1,6 +1,7 @@
 ---
 title: "kosli report evidence commit junit"
 beta: false
+deprecated: false
 ---
 
 # kosli report evidence commit junit

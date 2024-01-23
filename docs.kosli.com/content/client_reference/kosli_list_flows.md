@@ -1,6 +1,7 @@
 ---
 title: "kosli list flows"
 beta: false
+deprecated: false
 ---
 
 # kosli list flows

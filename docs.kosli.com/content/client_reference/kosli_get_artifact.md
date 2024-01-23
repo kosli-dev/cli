@@ -1,6 +1,7 @@
 ---
 title: "kosli get artifact"
 beta: false
+deprecated: false
 ---
 
 # kosli get artifact

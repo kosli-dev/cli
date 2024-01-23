@@ -1,6 +1,7 @@
 ---
 title: "kosli list artifacts"
 beta: false
+deprecated: false
 ---
 
 # kosli list artifacts

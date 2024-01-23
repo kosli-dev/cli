@@ -1,6 +1,7 @@
 ---
 title: "kosli assert pullrequest gitlab"
 beta: false
+deprecated: false
 ---
 
 # kosli assert pullrequest gitlab

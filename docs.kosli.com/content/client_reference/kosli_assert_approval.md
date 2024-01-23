@@ -1,6 +1,7 @@
 ---
 title: "kosli assert approval"
 beta: false
+deprecated: false
 ---
 
 # kosli assert approval

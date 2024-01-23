@@ -1,6 +1,7 @@
 ---
 title: "kosli fingerprint"
 beta: false
+deprecated: false
 ---
 
 # kosli fingerprint

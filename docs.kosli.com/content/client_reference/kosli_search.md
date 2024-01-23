@@ -1,6 +1,7 @@
 ---
 title: "kosli search"
 beta: false
+deprecated: false
 ---
 
 # kosli search

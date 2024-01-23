@@ -1,7 +1,6 @@
 ---
 title: "kosli snapshot azure"
 beta: false
-deprecated: false
 ---
 
 # kosli snapshot azure

@@ -1,24 +1,25 @@
 ---
-title: "kosli assert status"
+title: "kosli archive flow"
 beta: false
-deprecated: false
 ---
 
-# kosli assert status
+# kosli archive flow
 
 ## Synopsis
 
-Assert the status of a Kosli server.
-Exits with non-zero code if the Kosli server down.
+Archive a Kosli flow.
+The flow will no longer be visible in list of flows, data is still stored in database.
+
 
 ```shell
-kosli assert status [flags]
+kosli archive flow FLOW-NAME [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|    -h, --help  |  help for status  |
+|    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
+|    -h, --help  |  help for flow  |
 
 
 ## Options inherited from parent commands
@@ -31,4 +32,15 @@ kosli assert status [flags]
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
+
+## Examples
+
+```shell
+
+# archive a Kosli flow:
+kosli archive flow yourFlowName \
+	--api-token yourAPIToken \
+	--org yourOrgName 
+
+```
 

@@ -1,6 +1,7 @@
 ---
 title: "kosli diff snapshots"
 beta: false
+deprecated: false
 ---
 
 # kosli diff snapshots

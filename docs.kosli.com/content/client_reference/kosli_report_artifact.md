@@ -1,6 +1,7 @@
 ---
 title: "kosli report artifact"
 beta: false
+deprecated: false
 ---
 
 # kosli report artifact

@@ -1,6 +1,7 @@
 ---
 title: "kosli get flow"
 beta: false
+deprecated: false
 ---
 
 # kosli get flow

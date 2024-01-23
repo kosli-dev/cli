@@ -1,6 +1,7 @@
 ---
 title: "kosli assert pullrequest github"
 beta: false
+deprecated: false
 ---
 
 # kosli assert pullrequest github

@@ -1,10 +1,13 @@
 ---
 title: "kosli attest pullrequest github"
-beta: false
+beta: true
+deprecated: false
 ---
 
 # kosli attest pullrequest github
 
+{{< hint warning >}}**kosli attest pullrequest github** is a beta feature. Beta features provide early access to product functionality.  These features may change between releases without warning, or can be removed in a future release.
+Please contact us to enable this feature for your organization.{{< /hint >}}
 ## Synopsis
 
 Report a Github pull request attestation to an artifact or a trail in a Kosli flow.  

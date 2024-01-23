@@ -1,6 +1,7 @@
 ---
 title: "kosli report evidence artifact junit"
 beta: false
+deprecated: false
 ---
 
 # kosli report evidence artifact junit

@@ -1,6 +1,7 @@
 ---
 title: "kosli assert artifact"
 beta: false
+deprecated: false
 ---
 
 # kosli assert artifact

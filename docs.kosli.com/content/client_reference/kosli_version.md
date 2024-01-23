@@ -1,6 +1,7 @@
 ---
 title: "kosli version"
 beta: false
+deprecated: false
 ---
 
 # kosli version

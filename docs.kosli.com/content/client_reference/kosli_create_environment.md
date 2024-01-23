@@ -1,6 +1,7 @@
 ---
 title: "kosli create environment"
 beta: false
+deprecated: false
 ---
 
 # kosli create environment

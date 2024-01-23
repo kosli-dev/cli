@@ -1,6 +1,7 @@
 ---
 title: "kosli"
 beta: false
+deprecated: false
 ---
 
 # kosli

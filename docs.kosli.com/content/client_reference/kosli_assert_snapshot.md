@@ -1,6 +1,7 @@
 ---
 title: "kosli assert snapshot"
 beta: false
+deprecated: false
 ---
 
 # kosli assert snapshot

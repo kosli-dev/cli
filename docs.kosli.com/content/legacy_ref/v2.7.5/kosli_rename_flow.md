@@ -1,24 +1,25 @@
 ---
-title: "kosli assert status"
+title: "kosli rename flow"
 beta: false
-deprecated: false
 ---
 
-# kosli assert status
+# kosli rename flow
 
 ## Synopsis
 
-Assert the status of a Kosli server.
-Exits with non-zero code if the Kosli server down.
+Rename a Kosli flow.
+The flow will remain accessible under its old name until that name is taken by another flow.
+
 
 ```shell
-kosli assert status [flags]
+kosli rename flow OLD_NAME NEW_NAME [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|    -h, --help  |  help for status  |
+|    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
+|    -h, --help  |  help for flow  |
 
 
 ## Options inherited from parent commands
@@ -31,4 +32,15 @@ kosli assert status [flags]
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
+
+## Examples
+
+```shell
+
+# rename a Kosli flow:
+kosli rename flow oldName newName \
+	--api-token yourAPIToken \
+	--org yourOrgName 
+
+```
 

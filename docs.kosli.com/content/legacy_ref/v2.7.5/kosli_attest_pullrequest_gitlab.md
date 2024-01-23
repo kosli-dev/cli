@@ -1,18 +1,18 @@
 ---
-title: "kosli attest pullrequest azure"
+title: "kosli attest pullrequest gitlab"
 beta: false
 ---
 
-# kosli attest pullrequest azure
+# kosli attest pullrequest gitlab
 
 ## Synopsis
 
-Report an Azure Devops pull request attestation to an artifact or a trail in a Kosli flow.  
-It checks if a pull request exists for the artifact (based on its git commit) and reports the pull-request evidence to the artifact in Kosli.
+Report a Gitlab merge request attestation to an artifact or a trail in a Kosli flow.  
+It checks if a merge request exists for the artifact (based on its git commit) and reports the merge request evidence to the artifact in Kosli.
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell
-kosli attest pullrequest azure [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli attest pullrequest gitlab [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ## Flags
@@ -20,9 +20,7 @@ kosli attest pullrequest azure [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 | :--- | :--- |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
 |        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
-|        --azure-org-url string  |  Azure organization url. E.g. "https://dev.azure.com/myOrg" (defaulted if you are running in Azure Devops pipelines: https://docs.kosli.com/ci-defaults ).  |
-|        --azure-token string  |  Azure Personal Access token.  |
-|    -g, --commit string  |  The git commit associated to the attestation. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|    -g, --commit string  |  [optional] The git commit associated to the attestation. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |        --evidence-fingerprint string  |  [optional] The SHA256 fingerprint of the evidence file or dir.  |
 |    -e, --evidence-paths strings  |  [optional] The comma-separated list of paths containing supporting proof for the reported evidence. Paths can be for files or directories. All provided proofs will be uploaded to Kosli's evidence vault.  |
@@ -30,9 +28,11 @@ kosli attest pullrequest azure [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Only applicable for --artifact-type dir.  |
 |    -F, --fingerprint string  |  [optional] The SHA256 fingerprint of the artifact to attach the attestation to.  |
 |    -f, --flow string  |  The Kosli flow name.  |
-|    -h, --help  |  help for azure  |
+|        --gitlab-base-url string  |  [optional] Gitlab base URL (only needed for on-prem Gitlab installations).  |
+|        --gitlab-org string  |  Gitlab organization. (defaulted if you are running in Gitlab Pipelines: https://docs.kosli.com/ci-defaults ).  |
+|        --gitlab-token string  |  Gitlab token.  |
+|    -h, --help  |  help for gitlab  |
 |    -n, --name string  |  The name of the attestation as declared in the flow or trail yaml template.  |
-|        --project string  |  Azure project.(defaulted if you are running in Azure Devops pipelines: https://docs.kosli.com/ci-defaults ).  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
@@ -58,84 +58,78 @@ kosli attest pullrequest azure [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 
 ```shell
 
-# report an Azure Devops pull request attestation about a pre-built docker artifact (kosli calculates the fingerprint):
-kosli attest pullrequest azure yourDockerImageName \
+# report a Gitlab merge request attestation about a pre-built docker artifact (kosli calculates the fingerprint):
+kosli attest pullrequest gitlab yourDockerImageName \
 	--artifact-type docker \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--azure-org-url https://dev.azure.com/myOrg \
-	--project yourAzureDevOpsProject \
-	--azure-token yourAzureToken \
-	--commit yourGitCommitSha1 \
-	--repository yourAzureGitRepository \
+	--gitlab-token yourGitlabToken \
+	--gitlab-org yourGitlabOrg \
+	--commit yourArtifactGitCommit \
+	--repository yourGithubGitRepository \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report an Azure Devops pull request attestation about a pre-built docker artifact (you provide the fingerprint):
-kosli attest pullrequest azure \
+# report a Gitlab merge request attestation about a pre-built docker artifact (you provide the fingerprint):
+kosli attest pullrequest gitlab \
 	--fingerprint yourDockerImageFingerprint \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--azure-org-url https://dev.azure.com/myOrg \
-	--project yourAzureDevOpsProject \
-	--azure-token yourAzureToken \
-	--commit yourGitCommitSha1 \
-	--repository yourAzureGitRepository \
+	--gitlab-token yourGitlabToken \
+	--gitlab-org yourGitlabOrg \
+	--commit yourArtifactGitCommit \
+	--repository yourGithubGitRepository \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report an Azure Devops pull request attestation about a trail:
-kosli attest pullrequest azure \
+# report a Gitlab merge request attestation about a trail:
+kosli attest pullrequest gitlab \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--azure-org-url https://dev.azure.com/myOrg \
-	--project yourAzureDevOpsProject \
-	--azure-token yourAzureToken \
-	--commit yourGitCommitSha1 \
-	--repository yourAzureGitRepository \
+	--gitlab-token yourGitlabToken \
+	--gitlab-org yourGitlabOrg \
+	--commit yourArtifactGitCommit \
+	--repository yourGithubGitRepository \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report an Azure Devops pull request attestation about an artifact which has not been reported yet in a trail:
-kosli attest pullrequest azure \
+# report a Gitlab merge request attestation about an artifact which has not been reported yet in a trail:
+kosli attest pullrequest gitlab \
 	--name yourTemplateArtifactName.yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--azure-org-url https://dev.azure.com/myOrg \
-	--project yourAzureDevOpsProject \
-	--azure-token yourAzureToken \
-	--commit yourGitCommitSha1 \
-	--repository yourAzureGitRepository \
+	--gitlab-token yourGitlabToken \
+	--gitlab-org yourGitlabOrg \
+	--commit yourArtifactGitCommit \
+	--repository yourGithubGitRepository \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report an Azure Devops pull request attestation about a trail with an evidence file:
-kosli attest pullrequest azure \
+# report a Gitlab merge request attestation about a trail with an evidence file:
+kosli attest pullrequest gitlab \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--azure-org-url https://dev.azure.com/myOrg \
-	--project yourAzureDevOpsProject \
-	--azure-token yourAzureToken \
-	--commit yourGitCommitSha1 \
-	--repository yourAzureGitRepository \
+	--gitlab-token yourGitlabToken \
+	--gitlab-org yourGitlabOrg \
+	--commit yourArtifactGitCommit \
+	--repository yourGithubGitRepository \
 	--evidence-paths=yourEvidencePathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# fail if a pull request does not exist for your artifact
-kosli attest pullrequest azure \
+# fail if a merge request does not exist for your artifact
+kosli attest pullrequest gitlab \
 	--name yourTemplateArtifactName.yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--azure-org-url https://dev.azure.com/myOrg \
-	--project yourAzureDevOpsProject \
-	--azure-token yourAzureToken \
-	--commit yourGitCommitSha1 \
-	--repository yourAzureGitRepository \
+	--gitlab-token yourGitlabToken \
+	--gitlab-org yourGitlabOrg \
+	--commit yourArtifactGitCommit \
+	--repository yourGithubGitRepository \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 	--assert

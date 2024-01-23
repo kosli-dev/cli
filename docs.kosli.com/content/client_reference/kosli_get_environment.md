@@ -1,6 +1,7 @@
 ---
 title: "kosli get environment"
 beta: false
+deprecated: false
 ---
 
 # kosli get environment

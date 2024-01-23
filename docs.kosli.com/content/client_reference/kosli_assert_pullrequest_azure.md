@@ -1,6 +1,7 @@
 ---
 title: "kosli assert pullrequest azure"
 beta: false
+deprecated: false
 ---
 
 # kosli assert pullrequest azure

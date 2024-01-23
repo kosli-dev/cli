@@ -1,6 +1,7 @@
 ---
 title: "kosli get approval"
 beta: false
+deprecated: false
 ---
 
 # kosli get approval

@@ -1,6 +1,7 @@
 ---
 title: "kosli snapshot ecs"
 beta: false
+deprecated: false
 ---
 
 # kosli snapshot ecs

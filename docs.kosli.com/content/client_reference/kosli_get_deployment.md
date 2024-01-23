@@ -1,6 +1,7 @@
 ---
 title: "kosli get deployment"
 beta: false
+deprecated: false
 ---
 
 # kosli get deployment

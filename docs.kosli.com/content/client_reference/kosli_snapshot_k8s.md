@@ -1,6 +1,7 @@
 ---
 title: "kosli snapshot k8s"
 beta: false
+deprecated: false
 ---
 
 # kosli snapshot k8s

@@ -1,6 +1,7 @@
 ---
 title: "kosli allow artifact"
 beta: false
+deprecated: false
 ---
 
 # kosli allow artifact

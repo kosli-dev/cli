@@ -1,6 +1,7 @@
 ---
 title: "kosli report evidence artifact snyk"
 beta: false
+deprecated: false
 ---
 
 # kosli report evidence artifact snyk

@@ -1,6 +1,7 @@
 ---
 title: "kosli rename environment"
 beta: false
+deprecated: false
 ---
 
 # kosli rename environment

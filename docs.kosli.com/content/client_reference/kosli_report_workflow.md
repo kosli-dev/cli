@@ -1,13 +1,12 @@
 ---
 title: "kosli report workflow"
-beta: true
+beta: false
+deprecated: true
 ---
 
 # kosli report workflow
 
-{{< hint warning >}}**kosli report workflow** is a beta feature. 
-Beta features provide early access to product functionality. These features may change between releases without warning, or can be removed from a future release.
-You can enable beta features by using the `kosli enable beta` command.{{< /hint >}}
+{{< hint danger >}}**kosli report workflow** is a deprecated. Audit trails are deprecated. Please use Flows and Trail instead.  Deprecated commands will be removed in a future release.{{< /hint >}}
 ## Synopsis
 
 Report a workflow creation to a Kosli audit-trail.

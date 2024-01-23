@@ -1,6 +1,7 @@
 ---
 title: "kosli enable beta"
 beta: false
+deprecated: false
 ---
 
 # kosli enable beta

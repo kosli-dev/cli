@@ -1,6 +1,7 @@
 ---
 title: "kosli archive flow"
 beta: false
+deprecated: false
 ---
 
 # kosli archive flow

@@ -1,6 +1,7 @@
 ---
 title: "kosli list environments"
 beta: false
+deprecated: false
 ---
 
 # kosli list environments

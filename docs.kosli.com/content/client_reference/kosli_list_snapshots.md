@@ -1,6 +1,7 @@
 ---
 title: "kosli list snapshots"
 beta: false
+deprecated: false
 ---
 
 # kosli list snapshots

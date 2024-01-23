@@ -16,10 +16,12 @@ kosli begin trail TRAIL-NAME [flags]
 ## Flags
 | Flag | Description |
 | :--- | :--- |
+|    -g, --commit string  |  [defaulted] The git commit from which the trail is begun. (defaulted in some CIs: https://docs.kosli.com/ci-defaults, otherwise defaults to HEAD ).  |
 |        --description string  |  [optional] The Kosli trail description.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |        --flow string  |  The Kosli flow name.  |
 |    -h, --help  |  help for trail  |
+|        --repo-root string  |  [defaulted] The directory where the source git repository is available. Only used if --commit is used. (default ".")  |
 |    -f, --template-file string  |  The path to a yaml template file.  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the flow trail.  |
 

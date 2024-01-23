@@ -1,6 +1,7 @@
 ---
 title: "kosli snapshot s3"
 beta: false
+deprecated: false
 ---
 
 # kosli snapshot s3

@@ -1,6 +1,7 @@
 ---
 title: "kosli list approvals"
 beta: false
+deprecated: false
 ---
 
 # kosli list approvals

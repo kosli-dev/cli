@@ -1,6 +1,7 @@
 ---
 title: "kosli log environment"
 beta: false
+deprecated: false
 ---
 
 # kosli log environment

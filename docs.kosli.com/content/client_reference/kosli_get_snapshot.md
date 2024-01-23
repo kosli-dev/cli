@@ -1,6 +1,7 @@
 ---
 title: "kosli get snapshot"
 beta: false
+deprecated: false
 ---
 
 # kosli get snapshot

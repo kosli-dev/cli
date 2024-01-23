@@ -1,6 +1,7 @@
 ---
 title: "kosli completion"
 beta: false
+deprecated: false
 ---
 
 # kosli completion

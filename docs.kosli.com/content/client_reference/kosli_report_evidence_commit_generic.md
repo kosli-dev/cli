@@ -1,6 +1,7 @@
 ---
 title: "kosli report evidence commit generic"
 beta: false
+deprecated: false
 ---
 
 # kosli report evidence commit generic

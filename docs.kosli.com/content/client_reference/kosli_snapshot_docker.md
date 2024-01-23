@@ -1,6 +1,7 @@
 ---
 title: "kosli snapshot docker"
 beta: false
+deprecated: false
 ---
 
 # kosli snapshot docker

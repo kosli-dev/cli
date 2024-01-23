@@ -1,6 +1,7 @@
 ---
 title: "kosli snapshot lambda"
 beta: false
+deprecated: false
 ---
 
 # kosli snapshot lambda

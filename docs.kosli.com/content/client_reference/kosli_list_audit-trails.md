@@ -1,13 +1,12 @@
 ---
 title: "kosli list audit-trails"
-beta: true
+beta: false
+deprecated: true
 ---
 
 # kosli list audit-trails
 
-{{< hint warning >}}**kosli list audit-trails** is a beta feature. 
-Beta features provide early access to product functionality. These features may change between releases without warning, or can be removed from a future release.
-You can enable beta features by using the `kosli enable beta` command.{{< /hint >}}
+{{< hint danger >}}**kosli list audit-trails** is a deprecated. Audit trails are deprecated. Please use Flows and Trail instead.  Deprecated commands will be removed in a future release.{{< /hint >}}
 ## Synopsis
 
 List audit trails for an org.

@@ -1,6 +1,7 @@
 ---
 title: "kosli status"
 beta: false
+deprecated: false
 ---
 
 # kosli status

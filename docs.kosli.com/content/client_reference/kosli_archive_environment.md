@@ -1,6 +1,7 @@
 ---
 title: "kosli archive environment"
 beta: false
+deprecated: false
 ---
 
 # kosli archive environment

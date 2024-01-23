@@ -1,6 +1,7 @@
 ---
 title: "kosli list deployments"
 beta: false
+deprecated: false
 ---
 
 # kosli list deployments

@@ -1,10 +1,13 @@
 ---
 title: "kosli attest pullrequest gitlab"
-beta: false
+beta: true
+deprecated: false
 ---
 
 # kosli attest pullrequest gitlab
 
+{{< hint warning >}}**kosli attest pullrequest gitlab** is a beta feature. Beta features provide early access to product functionality.  These features may change between releases without warning, or can be removed in a future release.
+Please contact us to enable this feature for your organization.{{< /hint >}}
 ## Synopsis
 
 Report a Gitlab merge request attestation to an artifact or a trail in a Kosli flow.  

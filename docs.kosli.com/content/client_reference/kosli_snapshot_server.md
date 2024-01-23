@@ -1,6 +1,7 @@
 ---
 title: "kosli snapshot server"
 beta: false
+deprecated: false
 ---
 
 # kosli snapshot server
