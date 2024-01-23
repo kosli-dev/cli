@@ -5,9 +5,8 @@ import sys
 import os
 
 
-kosli_audit_trail_name = os.environ.get("KOSLI_AUDIT_TRAIL_NAME", "")
-kosli_step_name_user_identity = os.environ.get("KOSLI_STEP_NAME_USER_IDENTITY", "")
-kosli_step_name_service_identity = os.environ.get("KOSLI_STEP_NAME_SERVICE_IDENTITY", "")
+kosli_flow_name = os.environ.get("KOSLI_FLOW_NAME", "")
+
 
 def describe_ecs_task(cluster, task_arn):
     ecs_client = boto3.client('ecs')
@@ -19,18 +18,14 @@ def lambda_handler(event, context):
         ecs_exec_session_id = event['detail']['responseElements']['session']['sessionId']
         print(f"ECS_EXEC_SESSION_ID is {ecs_exec_session_id}", file=sys.stderr)
 
-        # Check if workflow already exists. If not - create it.
-        kosli_workflows_list = subprocess.run(['./kosli', 'list', 'workflows', 
-                                               '--audit-trail', kosli_audit_trail_name, 
-                                               '-o', 'json'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        kosli_workflows_list = kosli_workflows_list.stdout.decode('utf-8')
-        kosli_workflow_already_exists = ecs_exec_session_id in [workflow['id'] for workflow in json.loads(kosli_workflows_list)]
-        
-        if not kosli_workflow_already_exists:
-            print(f"The Kosli workflow {ecs_exec_session_id} does not yet exist, creating it...", file=sys.stderr)
-            subprocess.run(['./kosli', 'report', 'workflow', 
-                            '--audit-trail', kosli_audit_trail_name, 
-                            '--id', ecs_exec_session_id])
+        ecs_exec_principal_id = event['detail']['userIdentity']['sessionContext']['sessionIssuer']['principalId']
+
+        # Create Kosli trail (if it is already exists, it will just add a report event to the existing trail)
+        print(f'Creating Kosli trail {ecs_exec_principal_id} within {kosli_flow_name} flow.')
+    
+        kosli_client = subprocess.check_output(['./kosli', 'begin', 'trail', ecs_exec_principal_id,
+                                                '--template-file=evidence-template.yml',
+                                                f'--flow={kosli_flow_name}'])
 
         # Get and report ECS exec session user identity (ARN of the IAM role that initiated the session)
         ecs_exec_user_identity = event['detail']['userIdentity']['arn']
@@ -38,12 +33,12 @@ def lambda_handler(event, context):
             json.dump({"ecs_exec_role_arn": ecs_exec_user_identity}, user_identity_file)
 
         print("Reporting ECS exec user identity to the Kosli...", file=sys.stderr)
-        subprocess.run(['./kosli', 'report', 'evidence', 'workflow', 
-                        '--audit-trail', kosli_audit_trail_name, 
-                        '--user-data', '/tmp/user-identity.json', 
-                        '--evidence-paths', '/tmp/user-identity.json', 
-                        '--id', ecs_exec_session_id, 
-                        '--step', kosli_step_name_user_identity])
+        subprocess.run(['./kosli', 'attest', 'generic',
+                        f'--flow={kosli_flow_name}', 
+                        f'--trail={ecs_exec_principal_id}',
+                        '--name=user-identity',
+                        '--evidence-paths=/tmp/user-identity.json',
+                        '--user-data=/tmp/user-identity.json'])
 
         # Get and report ECS exec session service identity
         ecs_exec_task_arn = event['detail']['responseElements']['taskArn']
@@ -55,12 +50,12 @@ def lambda_handler(event, context):
             json.dump({"ecs_exec_service_identity": ecs_exec_task_group}, service_identity_file)
 
         print("Reporting ECS exec service identity to the Kosli...", file=sys.stderr)
-        subprocess.run(['./kosli', 'report', 'evidence', 'workflow', 
-                        '--audit-trail', kosli_audit_trail_name, 
-                        '--user-data', '/tmp/service-identity.json', 
-                        '--evidence-paths', '/tmp/service-identity.json', 
-                        '--id', ecs_exec_session_id, 
-                        '--step', kosli_step_name_service_identity])
+        subprocess.run(['./kosli', 'attest', 'generic',
+                        f'--flow={kosli_flow_name}', 
+                        f'--trail={ecs_exec_principal_id}',
+                        '--name=service-identity',
+                        '--evidence-paths=/tmp/service-identity.json',
+                        '--user-data=/tmp/service-identity.json'])
 
         return {
             'statusCode': 200,
