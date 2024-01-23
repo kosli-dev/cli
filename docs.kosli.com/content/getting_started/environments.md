@@ -14,7 +14,7 @@ A Kosli *environment* stores snapshots containing information about the software
 Before you start reporting what's running in your environments you need to create an environment in Kosli and make sure it matches the type of the environment you'll be reporting, e.g. `docker` or `k8s`. You can see all the available environment types in the help text for the `--environment-type` flag in the [`kosli create environment`](/client_reference/kosli_create_environment/) command. 
 
 {{< hint warning >}}
-In all the commands below we skip required `--api-token` and `--org` flags - these can be easily configured via [config file](/kosli_overview/kosli_tools/#config-file) or [environment variables](/kosli_overview/kosli_tools/#environment-variables) so you don't have type them over and over again.
+In all the commands below we skip required `--api-token` and `--org` flags - these can be easily configured via [config file](/getting_started/install/#assigning-flags-via-config-files) or [environment variables](/getting_started/install/#assigning-flags-via-environment-variables) so you don't have type them over and over again.
 {{< /hint >}}
 
 

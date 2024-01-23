@@ -27,7 +27,7 @@ To follow this tutorial, you will need to:
 
 - Have access to a Kubernetes cluster.
 - [Create a Kosli account](https://app.kosli.com/sign-up) if you have not got one already.
-- [Create a Kubernetes Kosli environment](getting_started/environments/#create-an-environment) named `k8s-tutorial` 
+- [Create a Kubernetes Kosli environment](/getting_started/environments/#create-an-environment) named `k8s-tutorial` 
 - [Get a Kosli API token](/getting_started/service-accounts/)
 - [Install Kosli CLI](/getting_started/install/) (only needed if you will report using CLI)
 - [Install Helm](https://helm.sh/docs/intro/install/) (only needed if you will use the Kosli helm chart)
