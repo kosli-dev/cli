@@ -1,16 +1,16 @@
 ---
-title: "Part 6: Evidence"
+title: "Part 7: Evidence"
 bookCollapseSection: false
-weight: 250
+weight: 270
 ---
-# Part 6: Evidence
+# Part 7: Evidence
 
 Whenever an event related to required evidence happens you should report it to Kosli. 
-You can report evidence to either a git commit or an artifact. 
+You can report evidence against either a git commit or an artifact. 
 
 {{< hint info >}}
 
-For Kosli to know which evidence you report you need to provide evidence name (using `--name` flag) that is matching one of the names defined in a [flow template](/getting_started/flows/#create-a-flow).
+For Kosli to know which evidence you are reporting you need to provide evidence name (using `--name` flag) that matches one of the names defined in a [flow template](/getting_started/flows/#create-a-flow).
 
 {{< /hint >}}
 
@@ -18,7 +18,7 @@ For Kosli to know which evidence you report you need to provide evidence name (u
 
 Some types of evidence naturally belong to an **artifact** - e.g. *unit test* or *snyk scan*. Some relate to the source code itself and you can report these on a **commit** - e.g. *code coverage* or *pull request*.  
 
-It's up to you to decide and if you want to attach it all to an artifact it'll work fine. But if you produce multiple artifacts from the same commit you have a possibility to report a commit evidence that will be **automatically** attached to all **artifacts** reported to **ALL or selected flows** built from that commit. That way you won't have to report the same evidence multiple times to each artifact separately.
+It's up to you to decide and if you want to attach it all to an artifact it'll work fine. But if you produce multiple artifacts from the same commit you can choose to report a commit evidence that will be **automatically** attached to all **artifacts** reported to **ALL or selected flows** built from that commit. That way you won't have to report the same evidence multiple times to each artifact separately.
 
 {{< hint info >}}
 

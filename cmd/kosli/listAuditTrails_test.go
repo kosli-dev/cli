@@ -32,42 +32,23 @@ func (suite *ListAuditTrailsCommandTestSuite) SetupTest() {
 
 func (suite *ListAuditTrailsCommandTestSuite) TestListAuditTrailsCmd() {
 	tests := []cmdTestCase{
-		// {
-		// 	name:       "listing audit trails works when there are audit trails",
-		// 	cmd:        fmt.Sprintf(`list audit-trails %s`, suite.acmeOrgKosliArguments),
-		// 	goldenFile: "output/list/list-audit-trails.txt",
-		// },
 		{
 			wantError: true,
 			name:      "listing audit trails works when there are audit trails",
 			cmd:       fmt.Sprintf(`list audit-trails %s`, suite.acmeOrgKosliArguments),
-			golden:    "Error: The audit trail feature is in beta. You can enable the feature by running the following Kosli CLI command (version 2.3.2 or later):\n$ kosli enable beta\nJoin our Slack community for more information: https://www.kosli.com/community/\n",
+			golden:    "Command \"audit-trails\" is deprecated, Audit trails are deprecated. Please use Flows and Trail instead.\nError: You don't have access to the audit trails feature. This feature has been deprecated in favour of Flows and Trails.\n",
 		},
-		// {
-		// 	name:   "listing audit trails works when there are no audit trails",
-		// 	cmd:    fmt.Sprintf(`list audit-trails %s`, suite.iuOrgKosliArguments),
-		// 	golden: "No audit trails were found.\n",
-		// },
 		{
 			wantError: true,
 			name:      "listing audit trails works when there are no audit trails",
 			cmd:       fmt.Sprintf(`list audit-trails %s`, suite.iuOrgKosliArguments),
-			golden:    "Error: The audit trail feature is in beta. You can enable the feature by running the following Kosli CLI command (version 2.3.2 or later):\n$ kosli enable beta\nJoin our Slack community for more information: https://www.kosli.com/community/\n",
+			golden:    "Command \"audit-trails\" is deprecated, Audit trails are deprecated. Please use Flows and Trail instead.\nError: You don't have access to the audit trails feature. This feature has been deprecated in favour of Flows and Trails.\n",
 		},
-		// {
-		// 	name: "listing audit trails with --output json works when there are audit trails",
-		// 	cmd:  fmt.Sprintf(`list audit-trails --output json %s`, suite.acmeOrgKosliArguments),
-		// },
-		// {
-		// 	name:   "listing audit trails with --output json works when there are no audit trails",
-		// 	cmd:    fmt.Sprintf(`list audit-trails --output json %s`, suite.iuOrgKosliArguments),
-		// 	golden: "[]\n",
-		// },
 		{
 			wantError: true,
 			name:      "providing an argument causes an error",
 			cmd:       fmt.Sprintf(`list audit-trails xxx %s`, suite.acmeOrgKosliArguments),
-			golden:    "Error: unknown command \"xxx\" for \"kosli list audit-trails\"\n",
+			golden:    "Command \"audit-trails\" is deprecated, Audit trails are deprecated. Please use Flows and Trail instead.\nError: unknown command \"xxx\" for \"kosli list audit-trails\"\n",
 		},
 	}
 

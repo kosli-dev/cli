@@ -41,11 +41,12 @@ type TrailPayload struct {
 func newBeginTrailCmd(out io.Writer) *cobra.Command {
 	o := new(beginTrailOptions)
 	cmd := &cobra.Command{
-		Use:     "trail TRAIL-NAME",
-		Short:   beginTrailShortDesc,
-		Long:    beginTrailShortDesc,
-		Example: beginTrailExample,
-		Args:    cobra.MaximumNArgs(1),
+		Use:         "trail TRAIL-NAME",
+		Short:       beginTrailShortDesc,
+		Long:        beginTrailShortDesc,
+		Example:     beginTrailExample,
+		Args:        cobra.MaximumNArgs(1),
+		Annotations: map[string]string{"betaCLI": "true"},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

@@ -1,13 +1,13 @@
 ---
-title: "Part 5: Artifacts"
+title: "Part 6: Artifacts"
 bookCollapseSection: false
-weight: 240
+weight: 260
 ---
-# Part 5: Artifacts
+# Part 6: Artifacts
 
 ## Report artifacts
 
-To report an artifact to Kosli, you need its SHA256 fingerprint. You can either provide the fingerprint yourself, or let Kosli CLI calculate it for you - we'll need the artifact available while running reporting command to do that. 
+To report an artifact to Kosli, you need its SHA256 fingerprint. You can either provide the fingerprint yourself, or let Kosli CLI calculate it for you - we'll need the artifact available while running the reporting command to do that. 
 You also need to provide the name of the Kosli flow you want to report the artifact to.
 
 You should also have long enough git history in your local git repo clone to let Kosli calculate the artifact's changelog (the list of commits from the new artifact back to the previous artifact reported to the same Kosli flow).  

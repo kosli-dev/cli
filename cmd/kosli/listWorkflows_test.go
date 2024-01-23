@@ -39,31 +39,12 @@ func (suite *ListWorkflowsCommandTestSuite) SetupTest() {
 
 func (suite *ListWorkflowsCommandTestSuite) TestListWorkflowsCmd() {
 	tests := []cmdTestCase{
-		// {
-		// 	name:       "listing workflows works when there are workflows",
-		// 	cmd:        fmt.Sprintf(`list workflows --audit-trail %s %s`, suite.auditTrailName, suite.atrOrgKosliArguments),
-		// 	goldenFile: "output/list/list-workflows.txt",
-		// },
-		// {
-		// 	name:   "listing workflows works when there are no workflows",
-		// 	cmd:    fmt.Sprintf(`list workflows --audit-trail %s %s`, suite.auditTrailName, suite.atrEmptyOrgKosliArguments),
-		// 	golden: "No workflows were found.\n",
-		// },
 		{
 			wantError: true,
 			name:      "listing workflows works when there are no workflows",
 			cmd:       fmt.Sprintf(`list workflows --audit-trail %s %s`, suite.auditTrailName, suite.atrEmptyOrgKosliArguments),
-			golden:    "Error: The audit trail feature is in beta. You can enable the feature by running the following Kosli CLI command (version 2.3.2 or later):\n$ kosli enable beta\nJoin our Slack community for more information: https://www.kosli.com/community/\n",
+			golden:    "Command \"workflows\" is deprecated, Audit trails are deprecated. Please use Flows and Trail instead.\nError: You don't have access to the audit trails feature. This feature has been deprecated in favour of Flows and Trails.\n",
 		},
-		// {
-		// 	name: "listing workflows with --output json works when there are workflows",
-		// 	cmd:  fmt.Sprintf(`list workflows --audit-trail %s --output json %s`, suite.auditTrailName, suite.atrOrgKosliArguments),
-		// },
-		// {
-		// 	name:   "listing workflows with --output json works when there are no workflows",
-		// 	cmd:    fmt.Sprintf(`list workflows --audit-trail %s --output json %s`, suite.auditTrailName, suite.atrEmptyOrgKosliArguments),
-		// 	golden: "[]\n",
-		// },
 	}
 
 	runTestCmd(suite.T(), tests)

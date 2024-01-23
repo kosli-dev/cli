@@ -270,6 +270,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	)
 
 	cobra.AddTemplateFunc("isBeta", isBeta)
+	cobra.AddTemplateFunc("isDeprecated", isDeprecated)
 	cmd.SetUsageTemplate(usageTemplate)
 
 	return cmd, nil
@@ -367,10 +368,14 @@ func isBeta(cmd *cobra.Command) bool {
 	return beta
 }
 
+func isDeprecated(cmd *cobra.Command) bool {
+	return cmd.Deprecated != ""
+}
+
 const usageTemplate = `{{- if isBeta .}}Beta Feature:
   {{.CommandPath}} is a beta feature.
   Beta features provide early access to product functionality. These
-  features may change between releases without warning, or can be removed from a
+  features may change between releases without warning, or can be removed in a
   future release.
 
 {{ end }}Usage:{{- if .Runnable}}

@@ -21,11 +21,11 @@ type listWorkflowsOptions struct {
 func newListWorkflowsCmd(out io.Writer) *cobra.Command {
 	o := new(listWorkflowsOptions)
 	cmd := &cobra.Command{
-		Use:         "workflows",
-		Short:       listWorkflowsDesc,
-		Long:        listWorkflowsDesc,
-		Annotations: map[string]string{"betaCLI": "true"},
-		Args:        cobra.NoArgs,
+		Use:        "workflows",
+		Short:      listWorkflowsDesc,
+		Long:       listWorkflowsDesc,
+		Args:       cobra.NoArgs,
+		Deprecated: "Audit trails are deprecated. Please use Flows and Trail instead.",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

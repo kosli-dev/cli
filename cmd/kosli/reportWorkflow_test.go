@@ -32,12 +32,12 @@ func (suite *WorkflowReportTestSuite) TestWorkflowReportCmd() {
 		{
 			name:   "report workflow without description",
 			cmd:    `report workflow --audit-trail ` + suite.auditTrailName + ` --id example-31` + suite.defaultKosliArguments,
-			golden: fmt.Sprintf("workflow was created in audit-trail '%s' with ID '%s'\n", suite.auditTrailName, "example-31"),
+			golden: fmt.Sprintf("Command \"workflow\" is deprecated, Audit trails are deprecated. Please use Flows and Trail instead.\nworkflow was created in audit-trail '%s' with ID '%s'\n", suite.auditTrailName, "example-31"),
 		},
 		{
 			name:   "report workflow with description",
 			cmd:    `report workflow --audit-trail ` + suite.auditTrailName + ` --id example-32 --description "example\!32"` + suite.defaultKosliArguments,
-			golden: fmt.Sprintf("workflow was created in audit-trail '%s' with ID '%s'\n", suite.auditTrailName, "example-32"),
+			golden: fmt.Sprintf("Command \"workflow\" is deprecated, Audit trails are deprecated. Please use Flows and Trail instead.\nworkflow was created in audit-trail '%s' with ID '%s'\n", suite.auditTrailName, "example-32"),
 		},
 	}
 	runTestCmd(suite.T(), tests)
