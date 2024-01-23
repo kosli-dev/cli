@@ -1,15 +1,15 @@
 ---
-title: "Part 3: Environments"
+title: "Part 4: Environments"
 bookCollapseSection: false
-weight: 220
+weight: 240
 ---
-# Part 3: Environments
+# Part 4: Environments
 
 Recording the status of runtime environments is one of the fundamental features of Kosli. Kosli records the status of runtime environments by detecting artifacts running in any given environment and reporting the information.
 
 ## Create an environment
 
-A Kosli *environment* stores snapshots containing information about the software artifacts that are running in your runtime environments. 
+A Kosli *environment* stores snapshots containing information about the software artifacts running in your runtime environments. 
 
 Before you start reporting what's running in your environments you need to create an environment in Kosli and make sure it matches the type of the environment you'll be reporting, e.g. `docker` or `k8s`. You can see all the available environment types in the help text for the `--environment-type` flag in the [`kosli create environment`](/client_reference/kosli_create_environment/) command. 
 
@@ -84,9 +84,9 @@ After the new environment is created you'll be redirected to its page - with "No
 
 ## Report an environment
 
-There is range of `kosli snapshot [...]` commands, allowing you to report a variety of environments. To record the current status of your environment you simply run one of them. You can do it manually but typically recording commands would run automatically, e.g. via a cron job or scheduled CI job.
+There is range of `kosli snapshot [...]` commands, allowing you to report a variety of environments. To record the current status of your environment you simply run one of them. You can do it manually but typically environment reports run automatically, e.g. via a cron job or scheduled CI job.
 
-Whenever an environment report is received, if the received list of running artifacts is different than what was reported previously a new snapshot is created. Snapshots are immutable and can't be tampered with.
+Whenever an environment report is received, if the received list of running artifacts is different to a previous report, a new snapshot is created. Snapshots are immutable and can't be tampered with.
 
 After you started reporting, you can - at any point - check exactly what is running in your environment using the CLI command:
 

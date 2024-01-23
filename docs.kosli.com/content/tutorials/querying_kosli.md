@@ -1,30 +1,23 @@
 ---
-title: "Part 9: Querying"
+title: "Querying Kosli"
 bookCollapseSection: false
-weight: 280
+weight: 506
 ---
-# Part 9: Querying
+
+# Querying Kosli
 
 All the information stored in Kosli may be helpful both for operations and development. A set of `get`, `list`, `log` and `assert` commands allows you to quickly access the information about your environments, artifacts and deployments, without leaving your development environment.
 
-Visit [CLI Reference](/client_reference/) to learn more about how to run each command.
+## Getting ready
 
-The same CLI you use to record and connect your changes can be used to search for and browse information in Kosli.
-
-To make it easier to run Kosli search commands with the CLI you can export the `org` and `api-token` as environment variables, so you don't have to provide them every time you run commands. This approach is valid for [any flag](/kosli_overview/kosli_tools/#environment-variables) 
-
-
-```
-export KOSLI_ORG=yourOrganizationName
-export KOSLI_API_TOKEN=yourKosliApiToken
-```
-
-You can try all the commands below by setting the `org` to `cyber-dojo`.  
-the Kosli cyber-dojo organization is public so any authenticated user can read its data:
-
-```
-export KOSLI_ORG=cyber-dojo
-```
+You need to:
+* [Install Kosli CLI](/getting_started/install/).
+* [Get a Kosli API token](/getting_started/service-accounts/).
+* Set the `KOSLI_ORG` environment variable to `cyber-dojo` (the Kosli `cyber-dojo` organization is public so any authenticated user can read its data) and `KOSLI_API_TOKEN` to your token:
+  ```shell {.command}
+  export KOSLI_ORG=cyber-dojo # cyber-dojo is a public demo org
+  export KOSLI_API_TOKEN=<your-api-token>
+  ```
 
 ## Search with git commit sha
 

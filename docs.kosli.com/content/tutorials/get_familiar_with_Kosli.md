@@ -30,7 +30,13 @@ To follow the tutorial, you will need to:
 
 - Install both `Docker` and `docker-compose`.
 - [Create a Kosli account](https://app.kosli.com/sign-up) if you have not got one already.
-- [Install the Kosli CLI](/kosli_overview/kosli_tools/#installing-the-kosli-cli) and [set the `KOSLI_API_TOKEN` and `KOSLI_ORG` environment variables](/kosli_overview/kosli_tools/#getting-your-kosli-api-token).
+- [Install Kosli CLI](/getting_started/install/).
+- [Get a Kosli API token](/getting_started/service-accounts/).
+- Set the `KOSLI_ORG` and `KOSLI_API_TOKEN` environment variables:
+  ```shell {.command}
+  export KOSLI_ORG=<your-org>
+  export KOSLI_API_TOKEN=<your-api-token>
+  ```
 - You can check your Kosli set up by running: 
     ```shell {.command}
     kosli list flows
