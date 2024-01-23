@@ -26,7 +26,7 @@ To follow this tutorial, you will need to:
 
 - Have access to AWS.
 - [Create a Kosli account](https://app.kosli.com/sign-up) if you have not got one already.
-- [Create an ECS, Lambda or S3 Kosli environment](getting_started/environments/#create-an-environment) named `aws-env-tutorial` 
+- [Create an ECS, Lambda or S3 Kosli environment](/getting_started/environments/#create-an-environment) named `aws-env-tutorial` 
 - [Get a Kosli API token](/getting_started/service-accounts/)
 - [Install Kosli CLI](/getting_started/install/) (only needed if you will report using CLI)
 - [Install Terraform](https://developer.hashicorp.com/terraform/install) (only needed if you will use the Kosli terraform module)

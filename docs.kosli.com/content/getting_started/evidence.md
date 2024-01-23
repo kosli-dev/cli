@@ -59,7 +59,7 @@ Currently we support following types of evidence:
 
 ## Pull request evidence
 
-If you use GitHub, Bitbucket or Gitlab you can use Kosli to verify if the merge commit you used to build your artifact comes from a pull request. Remember to add the pull request evidence to your [flow template](/kosli_overview/what_is_kosli/#template) and use the same label for `--name` you provided in a `template` 
+If you use GitHub, Bitbucket or Gitlab you can use Kosli to verify if the merge commit you used to build your artifact comes from a pull request. Remember to add the pull request evidence to your flow template and use the same label for `--name` you provided in a `template` 
 
 > note that -currently- the status of the PR does NOT impact the compliance status of the evidence.
 
@@ -172,7 +172,7 @@ For more details see:
 
 If you produce your test results in JUnit format, you can [report JUnit evidence to an artifact](/client_reference/kosli_report_evidence_artifact_junit/) or
 [report JUnit evidence to a commit](/client_reference/kosli_report_evidence_commit_junit/). These commands will analyze the JUnit results and determine if the evidence is compliant or not.
-Remember to add the JUnit test evidence to your [flow template](/kosli_overview/what_is_kosli/#template) and use the same label for `--name` you provided in a `template`.
+Remember to add the JUnit test evidence to your flow template and use the same label for `--name` you provided in a `template`.
 
 Use `--results-dir` flag to provide the location of the folder with your XML JUnit test results
 
@@ -243,7 +243,7 @@ See [kosli commit report evidence junit](/legacy_ref/v0.1.41/kosli_commit_report
 
 To report results of a Snyk security scan, you can [report Snyk evidence to an artifact](/client_reference/kosli_report_evidence_artifact_snyk/) or
 [report Snyk evidence to a commit](/client_reference/kosli_report_evidence_commit_snyk/). These commands will analyze the Snyk scan results and determine if the evidence is compliant or not.
-Remember to add the snyk scan evidence to your [flow template](/kosli_overview/what_is_kosli/#template) and use the same label for `--name` you provided in a `template`.
+Remember to add the snyk scan evidence to your flow template and use the same label for `--name` you provided in a `template`.
 
 Use `--scan-results` flag to provide the location of the json file with your snyk scan results
 
@@ -346,7 +346,7 @@ See [kosli report evidence commit jira](/client_reference/kosli_report_evidence_
 
 If Kosli doesn't support the type of the evidence you'd like to attach, you can [report Generic evidence to an artifact](/client_reference/kosli_report_evidence_artifact_generic/) or
 [report Generic evidence to a commit](/client_reference/kosli_report_evidence_commit_generic/).
-Remember to add the evidence to your [flow template](/kosli_overview/what_is_kosli/#template) and use the same label for `--name` you provided in a `template`.
+Remember to add the evidence to your flow template and use the same label for `--name` you provided in a `template`.
 
 Use `--compliant=false` if you want to report a given evidence as non-compliant.
 ### Example
