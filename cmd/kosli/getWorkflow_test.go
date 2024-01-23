@@ -34,36 +34,12 @@ func (suite *GetWorkflowCommandTestSuite) SetupTest() {
 
 func (suite *GetWorkflowCommandTestSuite) TestGetWorkflowCmd() {
 	tests := []cmdTestCase{
-		// {
-		// 	name: "get workflow works",
-		// 	cmd: fmt.Sprintf(`get workflow %s --audit-trail %s %s`,
-		// 		suite.workflowID, suite.auditTrailName, suite.workflowOrgKosliArguments),
-		// 	goldenFile: "output/get/get-workflow.txt",
-		// },
-		// {
-		// 	wantError: true,
-		// 	name:      "get workflow fails when there is no workflow",
-		// 	cmd:       fmt.Sprintf(`get workflow non-existing --audit-trail %s %s`, suite.auditTrailName, suite.workflowOrgKosliArguments),
-		// 	golden:    "Error: Workflow with ID 'non-existing' does not exist for audit trail testGetWorkflow in organization 'get-workflow-org'\n",
-		// },
 		{
 			wantError: true,
 			name:      "get workflow fails when there is no workflow",
 			cmd:       fmt.Sprintf(`get workflow non-existing --audit-trail %s %s`, suite.auditTrailName, suite.workflowOrgKosliArguments),
-			golden:    "Error: The audit trail feature is in beta. You can enable the feature by running the following Kosli CLI command (version 2.3.2 or later):\n$ kosli enable beta\nJoin our Slack community for more information: https://www.kosli.com/community/\n",
+			golden:    "Command \"workflow\" is deprecated, Audit trails are deprecated. Please use Flows and Trail instead.\nError: You don't have access to the audit trails feature. This feature has been deprecated in favour of Flows and Trails.\n",
 		},
-		// {
-		// 	name: "get workflow works with --output json when there is workflow",
-		// 	cmd: fmt.Sprintf(`get workflow %s --audit-trail %s --output json %s`,
-		// 		suite.workflowID, suite.auditTrailName, suite.workflowOrgKosliArguments),
-		// },
-		// {
-		// 	wantError: true,
-		// 	name:      "get workflow fails with --output json when there is no workflow",
-		// 	cmd: fmt.Sprintf(`get workflow non-existing --audit-trail %s --output json %s`,
-		// 		suite.auditTrailName, suite.workflowOrgKosliArguments),
-		// 	golden: "Error: Workflow with ID 'non-existing' does not exist for audit trail testGetWorkflow in organization 'get-workflow-org'\n",
-		// },
 	}
 
 	runTestCmd(suite.T(), tests)
