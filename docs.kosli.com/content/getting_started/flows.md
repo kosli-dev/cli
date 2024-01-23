@@ -13,7 +13,7 @@ In all the commands below we skip required `--api-token` and `--org` flags - the
 
 ## Create a flow
 
-To report artifacts to Kosli you need to create a Kosli [flow](/understand_kosli/concepts/#flows) first. When you create a flow you also define a template - a list of types of evidence (controls) you need to be reported in order for the artifact to become compliant. Use the `--template` flag to provide the list of controls. 
+To report artifacts to Kosli you need to create a Kosli [flow](understand_kosli/concepts/#flow) first. When you create a flow you also define a template - a list of types of evidence (controls) you need to be reported in order for the artifact to become compliant. Use the `--template` flag to provide the list of controls. 
 
 When reporting evidence for a specific control you use a name in the template to identify which evidence you are reporting.
 
