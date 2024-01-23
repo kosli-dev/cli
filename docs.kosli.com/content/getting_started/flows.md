@@ -8,12 +8,12 @@ weight: 250
 Kosli allows you to connect the development world (commits, builds, tests, approvals, deployments) with what’s happening in operations. There is a variety of commands that let you report all the necessary information to Kosli and - relying on automatically calculated fingerprints of your artifacts - match it with the environments.
 
 {{< hint warning >}}
-In all the commands below we skip required `--api-token` and `--org` flags - these can be easily configured via [config file](/kosli_overview/kosli_tools/#config-file) or [environment variables](/kosli_overview/kosli_tools/#environment-variables) so you don't have type them over and over again.
+In all the commands below we skip required `--api-token` and `--org` flags - these can be easily configured via [config file](/getting_started/install/#assigning-flags-via-config-files) or [environment variables](/getting_started/install/#assigning-flags-via-environment-variables) so you don't have type them over and over again.
 {{< /hint >}}
 
 ## Create a flow
 
-To report artifacts to Kosli you need to create a Kosli [flow](/kosli_overview/what_is_kosli/#flows) first. When you create a flow you also define a [template](/kosli_overview/what_is_kosli/#template) - a list of types of evidence (controls) you need to be reported in order for the artifact to become compliant. Use the `--template` flag to provide the list of controls. 
+To report artifacts to Kosli you need to create a Kosli [flow](/understand_kosli/concepts/#flows) first. When you create a flow you also define a template - a list of types of evidence (controls) you need to be reported in order for the artifact to become compliant. Use the `--template` flag to provide the list of controls. 
 
 When reporting evidence for a specific control you use a name in the template to identify which evidence you are reporting.
 
