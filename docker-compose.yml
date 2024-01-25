@@ -32,7 +32,8 @@ services:
         condition: service_started
       server-index:
         condition: service_completed_successfully
-    image: 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:latest
+    # image: 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:latest
+    image: 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:8b2127c
     env_file: [ "./mongo/mongo.env" ]
     environment:
       KOSLI_HOSTNAME: localhost
