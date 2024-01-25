@@ -87,13 +87,13 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 		{
 			wantError: true,
 			name:      "fails when both --fingerprint and --artifact-type",
-			cmd:       fmt.Sprintf("attest jira testdata/file1 --fingerprint xxxx --artifact-type file --name bar --commit HEAD --url example.com %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest jira testdata/file1 --fingerprint xxxx --artifact-type file --name bar --commit HEAD --build-url example.com %s", suite.defaultKosliArguments),
 			golden:    "Error: only one of --fingerprint, --artifact-type is allowed\n",
 		},
 		{
 			wantError: true,
 			name:      "fails when --fingerprint is not valid",
-			cmd:       fmt.Sprintf("attest jira --name foo --fingerprint xxxx --commit HEAD --url example.com --jira-username tore@kosli.com %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest jira --name foo --fingerprint xxxx --commit HEAD --build-url example.com --jira-username tore@kosli.com %s", suite.defaultKosliArguments),
 			golden:    "Error: xxxx is not a valid SHA256 fingerprint. It should match the pattern ^([a-f0-9]{64})$\nUsage: kosli attest jira [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
@@ -177,6 +177,40 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
 					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
 			golden: "jira attestation 'foo' is reported to trail: test-123\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "EX-1 test commit",
+			},
+		},
+		{
+			name: "can attest jira against a trail with attachment and external-url",
+			cmd: fmt.Sprintf(`attest jira --name bar 
+					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+					--attachments testdata/file1 --external-url foo=https://foo.com --external-url bar=https://bar.com
+					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "jira attestation 'bar' is reported to trail: test-123\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "EX-1 test commit",
+			},
+		},
+		{
+			name: "can attest jira against a trail with external-url and external-fingerprint",
+			cmd: fmt.Sprintf(`attest jira --name bar 
+					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+					--external-url foo=https://foo.com --external-fingerprint foo=7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9
+					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "jira attestation 'bar' is reported to trail: test-123\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "EX-1 test commit",
+			},
+		},
+		{
+			wantError: true,
+			name:      "fails when external-url and external-fingerprint labels don't match",
+			cmd: fmt.Sprintf(`attest jira --name bar 
+					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+					--external-url foo=https://foo.com --external-fingerprint bar=7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9
+					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "Error: bar in --external-fingerprint does not match any labels in --external-url\n",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "EX-1 test commit",
 			},

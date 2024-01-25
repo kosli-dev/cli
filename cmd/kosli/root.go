@@ -177,6 +177,10 @@ The service principal needs to have the following permissions:
 	uploadJunitResultsFlag      = "[defaulted] Whether to upload the provided Junit results directory as evidence to Kosli or not."
 	attestationAssertFlag       = "[optional] Exit with non-zero code if the attestation is non-compliant"
 	beginTrailCommitFlag        = "[defaulted] The git commit from which the trail is begun. (defaulted in some CIs: https://docs.kosli.com/ci-defaults, otherwise defaults to HEAD )."
+	attachmentsFlag             = "[optional] The comma-separated list of paths of attachments for the reported attestation. Attachments can be files or directories. All attachments are compressed and uploaded to Kosli's evidence vault."
+	externalFingerprintFlag     = "[optional] A SHA256 fingerprint of a external attachment represented by --external-url. The format is label=url. This flag can be set multiple times."
+	externalURLFlag             = "[optional] Add labeled reference URL for external attachment or resource. The format is label=url. This flag can be set multiple times. If the reference is for an attachment, you can add its fingerprint via --external-fingerprint"
+	attestationDescription      = "[optional] attestation description"
 )
 
 var global *GlobalOpts

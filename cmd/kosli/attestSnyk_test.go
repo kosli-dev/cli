@@ -50,56 +50,64 @@ func (suite *AttestSnykCommandTestSuite) TestAttestSnykCmd() {
 		{
 			wantError: true,
 			name:      "fails when both --fingerprint and --artifact-type",
-			cmd:       fmt.Sprintf("attest snyk testdata/file1 --fingerprint xxxx --artifact-type file --name bar --commit HEAD --url example.com  %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest snyk testdata/file1 --fingerprint xxxx --artifact-type file --name bar --commit HEAD --build-url example.com  %s", suite.defaultKosliArguments),
 			golden:    "Error: only one of --fingerprint, --artifact-type is allowed\n",
 		},
 		{
 			wantError: true,
 			name:      "fails when --fingerprint is not valid",
-			cmd:       fmt.Sprintf("attest snyk --name foo --fingerprint xxxx --commit HEAD --url example.com %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest snyk --name foo --fingerprint xxxx --commit HEAD --build-url example.com %s", suite.defaultKosliArguments),
 			golden:    "Error: xxxx is not a valid SHA256 fingerprint. It should match the pattern ^([a-f0-9]{64})$\nUsage: kosli attest snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "attesting against an artifact that does not exist fails",
-			cmd:       fmt.Sprintf("attest snyk --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --url example.com --scan-results testdata/snyk_scan_example.json %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest snyk --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --build-url example.com --scan-results testdata/snyk_scan_example.json %s", suite.defaultKosliArguments),
 			golden:    "Error: Artifact with fingerprint '1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'attest-snyk' belonging to organization 'docs-cmd-test-user'\n",
 		},
 		{
 			wantError: true,
 			name:      "fails when --snyk-results is missing",
-			cmd:       fmt.Sprintf("attest snyk testdata/file1 --artifact-type file --name foo --commit HEAD --url example.com %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest snyk testdata/file1 --artifact-type file --name foo --commit HEAD --build-url example.com %s", suite.defaultKosliArguments),
 			golden:    "Error: required flag(s) \"scan-results\" not set\n",
 		},
 		{
 			name:   "can attest snyk against an artifact using artifact name and --artifact-type",
-			cmd:    fmt.Sprintf("attest snyk testdata/file1 --artifact-type file --name foo --commit HEAD --url example.com --scan-results testdata/snyk_scan_example.json  %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest snyk testdata/file1 --artifact-type file --name foo --commit HEAD --build-url example.com --scan-results testdata/snyk_scan_example.json  %s", suite.defaultKosliArguments),
 			golden: "snyk attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			name:   "can attest snyk against an artifact using artifact name and --artifact-type when --name does not exist in the trail template",
-			cmd:    fmt.Sprintf("attest snyk testdata/file1 --artifact-type file --name bar --commit HEAD --url example.com --scan-results testdata/snyk_scan_example.json  %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest snyk testdata/file1 --artifact-type file --name bar --commit HEAD --build-url example.com --scan-results testdata/snyk_scan_example.json  %s", suite.defaultKosliArguments),
 			golden: "snyk attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
 			name:   "can attest snyk against an artifact using --fingerprint",
-			cmd:    fmt.Sprintf("attest snyk --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --url example.com --scan-results testdata/snyk_scan_example.json %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest snyk --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --build-url example.com --scan-results testdata/snyk_scan_example.json %s", suite.defaultKosliArguments),
 			golden: "snyk attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			name:   "can attest snyk against a trail",
-			cmd:    fmt.Sprintf("attest snyk --name bar --commit HEAD --url example.com --scan-results testdata/snyk_scan_example.json %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest snyk --name bar --commit HEAD --build-url example.com --scan-results testdata/snyk_scan_example.json %s", suite.defaultKosliArguments),
 			golden: "snyk attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
 			name:   "can attest snyk against a trail when name is not found in the trail template",
-			cmd:    fmt.Sprintf("attest snyk --name additional --commit HEAD --url example.com --scan-results testdata/snyk_scan_example.json %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest snyk --name additional --commit HEAD --build-url example.com --scan-results testdata/snyk_scan_example.json %s", suite.defaultKosliArguments),
 			golden: "snyk attestation 'additional' is reported to trail: test-123\n",
 		},
 		{
 			name:   "can attest snyk against an artifact it is created using dot syntax in --name",
-			cmd:    fmt.Sprintf("attest snyk --name cli.foo --commit HEAD --url example.com --scan-results testdata/snyk_scan_example.json %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest snyk --name cli.foo --commit HEAD --build-url example.com --scan-results testdata/snyk_scan_example.json %s", suite.defaultKosliArguments),
 			golden: "snyk attestation 'foo' is reported to trail: test-123\n",
+		},
+		{
+			name: "can attest snyk against with external-url and external-fingerprint a trail",
+			cmd: fmt.Sprintf(`attest snyk --name bar --commit HEAD --build-url example.com
+				--external-url file=https://example.com/file  --external-url other=https://other.com
+				--external-fingerprint file=7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 
+				--scan-results testdata/snyk_scan_example.json %s`, suite.defaultKosliArguments),
+			golden: "snyk attestation 'bar' is reported to trail: test-123\n",
 		},
 	}
 

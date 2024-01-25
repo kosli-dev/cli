@@ -12,12 +12,14 @@ import (
 )
 
 type attestArtifactOptions struct {
-	fingerprintOptions *fingerprintOptions
-	flowName           string
-	gitReference       string
-	srcRepoRoot        string
-	displayName        string
-	payload            AttestArtifactPayload
+	fingerprintOptions   *fingerprintOptions
+	flowName             string
+	gitReference         string
+	srcRepoRoot          string
+	displayName          string
+	payload              AttestArtifactPayload
+	externalFingerprints map[string]string
+	externalURLs         map[string]string
 }
 
 type AttestArtifactPayload struct {
@@ -30,6 +32,7 @@ type AttestArtifactPayload struct {
 	RepoUrl       string                   `json:"repo_url"`
 	Name          string                   `json:"template_reference_name"`
 	TrailName     string                   `json:"trail_name"`
+	ExternalURLs  map[string]*URLInfo      `json:"external_urls,omitempty"`
 }
 
 const attestArtifactShortDesc = `Attest an artifact creation to a Kosli flow.  `
@@ -38,7 +41,7 @@ const attestArtifactLongDesc = attestArtifactShortDesc + `
 ` + fingerprintDesc
 
 const attestArtifactExample = `
-# Attest to a Kosli flow that a file type artifact has been created
+# Attest that a file type artifact has been created, and let Kosli calculate its fingerprint
 kosli attest artifact FILE.tgz \
 	--artifact-type file \
 	--build-url https://exampleci.com \
@@ -51,17 +54,31 @@ kosli attest artifact FILE.tgz \
 	--org yourOrgName
 
 
-# Attest to a Kosli flow that an artifact with a provided fingerprint (sha256) has been created
+# Attest that an artifact has been created and provide its fingerprint (sha256) 
 kosli attest artifact ANOTHER_FILE.txt \
 	--build-url https://exampleci.com \
 	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
 	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
 	--flow yourFlowName \
-	--fingerprint yourArtifactFingerprint \
 	--trail yourTrailName \
+	--fingerprint yourArtifactFingerprint \
 	--name yourTemplateArtifactName \
 	--api-token yourApiToken \
 	--org yourOrgName
+
+	# Attest that an artifact has been created and provide external attachments
+	kosli attest artifact ANOTHER_FILE.txt \
+		--build-url https://exampleci.com \
+		--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
+		--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
+		--flow yourFlowName \
+		--trail yourTrailName \
+		--fingerprint yourArtifactFingerprint \
+		--external-url label=https://example.com/attachment \
+		--external-fingerprint label=yourExternalAttachmentFingerprint \
+		--name yourTemplateArtifactName \
+		--api-token yourApiToken \
+		--org yourOrgName
 `
 
 func newAttestArtifactCmd(out io.Writer) *cobra.Command {
@@ -100,6 +117,8 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.Name, "name", "n", "", templateArtifactName)
 	cmd.Flags().StringVarP(&o.displayName, "display-name", "N", "", artifactDisplayName)
 	cmd.Flags().StringVarP(&o.payload.TrailName, "trail", "T", "", trailNameFlag)
+	cmd.Flags().StringToStringVar(&o.externalFingerprints, "external-fingerprint", map[string]string{}, externalFingerprintFlag)
+	cmd.Flags().StringToStringVar(&o.externalURLs, "external-url", map[string]string{}, externalURLFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 
 	addDryRunFlag(cmd)
@@ -113,7 +132,7 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *attestArtifactOptions) run(args []string) error {
-
+	var err error
 	if o.displayName != "" {
 		o.payload.Filename = o.displayName
 	} else {
@@ -124,8 +143,13 @@ func (o *attestArtifactOptions) run(args []string) error {
 		}
 	}
 
+	// process external urls
+	o.payload.ExternalURLs, err = processExternalURLs(o.externalURLs, o.externalFingerprints)
+	if err != nil {
+		return err
+	}
+
 	if o.payload.Fingerprint == "" {
-		var err error
 		o.payload.Fingerprint, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
 			return err
