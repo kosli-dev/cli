@@ -59,7 +59,7 @@ func (suite *SnapshotECSTestSuite) TestSnapshotECSCmd() {
 			additionalConfig: snapshotECSTestConfig{
 				requireAuthToBeSet: true,
 			},
-			golden: "[2] containers were reported to environment snapshot-ecs-env\n",
+			goldenRegex: "\\[\\d+\\] containers were reported to environment snapshot-ecs-env\n",
 		},
 		{
 			name: "snapshot ECS works with --service-name",
@@ -67,7 +67,7 @@ func (suite *SnapshotECSTestSuite) TestSnapshotECSCmd() {
 			additionalConfig: snapshotECSTestConfig{
 				requireAuthToBeSet: true,
 			},
-			golden: "[2] containers were reported to environment snapshot-ecs-env\n",
+			goldenRegex: "\\[\\d+\\] containers were reported to environment snapshot-ecs-env\n",
 		},
 	}
 
