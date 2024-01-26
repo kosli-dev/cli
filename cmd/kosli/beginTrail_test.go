@@ -86,6 +86,11 @@ func (suite *BeginTrailCommandTestSuite) TestBeginTrailCmd() {
 			cmd:       "begin trail --flow my-modern-flow  -H http://localhost:8001 --org cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
 			golden:    "Error: trail name must be provided as an argument\n",
 		},
+		{
+			name:   "can create a trail with --origin-url and --external-url",
+			cmd:    fmt.Sprintf("begin trail test-456 --flow %s --template-file testdata/valid_template.yml --origin-url https://exampl.com --external-url jira=https://jira.kosli.com %s", suite.flowName, suite.defaultKosliArguments),
+			golden: "trail 'test-456' was begun\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

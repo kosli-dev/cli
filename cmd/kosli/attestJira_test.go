@@ -87,13 +87,13 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 		{
 			wantError: true,
 			name:      "fails when both --fingerprint and --artifact-type",
-			cmd:       fmt.Sprintf("attest jira testdata/file1 --fingerprint xxxx --artifact-type file --name bar --commit HEAD --build-url example.com %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest jira testdata/file1 --fingerprint xxxx --artifact-type file --name bar --commit HEAD --origin-url example.com %s", suite.defaultKosliArguments),
 			golden:    "Error: only one of --fingerprint, --artifact-type is allowed\n",
 		},
 		{
 			wantError: true,
 			name:      "fails when --fingerprint is not valid",
-			cmd:       fmt.Sprintf("attest jira --name foo --fingerprint xxxx --commit HEAD --build-url example.com --jira-username tore@kosli.com %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest jira --name foo --fingerprint xxxx --commit HEAD --origin-url example.com --jira-username tore@kosli.com %s", suite.defaultKosliArguments),
 			golden:    "Error: xxxx is not a valid SHA256 fingerprint. It should match the pattern ^([a-f0-9]{64})$\nUsage: kosli attest jira [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{

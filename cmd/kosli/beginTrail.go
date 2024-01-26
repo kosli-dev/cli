@@ -23,19 +23,23 @@ kosli begin trail yourTrailName \
 `
 
 type beginTrailOptions struct {
-	payload      TrailPayload
-	templateFile string
-	userDataFile string
-	flow         string
-	commitSHA    string
-	srcRepoRoot  string
+	payload              TrailPayload
+	templateFile         string
+	userDataFile         string
+	flow                 string
+	commitSHA            string
+	srcRepoRoot          string
+	externalURLs         map[string]string
+	externalFingerprints map[string]string
 }
 
 type TrailPayload struct {
-	Name        string                   `json:"name"`
-	Description string                   `json:"description"`
-	UserData    interface{}              `json:"user_data"`
-	Commit      *gitview.BasicCommitInfo `json:"git_commit_info,omitempty"`
+	Name         string                   `json:"name"`
+	Description  string                   `json:"description"`
+	UserData     interface{}              `json:"user_data"`
+	Commit       *gitview.BasicCommitInfo `json:"git_commit_info,omitempty"`
+	ExternalURLs map[string]*URLInfo      `json:"external_urls,omitempty"`
+	OriginURL    string                   `json:"origin_url,omitempty"`
 }
 
 func newBeginTrailCmd(out io.Writer) *cobra.Command {
@@ -70,6 +74,9 @@ func newBeginTrailCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", trailUserDataFlag)
 	cmd.Flags().StringVarP(&o.commitSHA, "commit", "g", DefaultValueForCommit(ci, false), beginTrailCommitFlag)
 	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", attestationRepoRootFlag)
+	cmd.Flags().StringVarP(&o.payload.OriginURL, "origin-url", "o", DefaultValue(ci, "build-url"), attestationOriginUrlFlag)
+	cmd.Flags().StringToStringVar(&o.externalFingerprints, "external-fingerprint", map[string]string{}, externalFingerprintFlag)
+	cmd.Flags().StringToStringVar(&o.externalURLs, "external-url", map[string]string{}, externalURLFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"flow"})
@@ -101,6 +108,12 @@ func (o *beginTrailOptions) run(args []string) error {
 			return err
 		}
 		o.payload.Commit = &commitInfo.BasicCommitInfo
+	}
+
+	// process external urls
+	o.payload.ExternalURLs, err = processExternalURLs(o.externalURLs, o.externalFingerprints)
+	if err != nil {
+		return err
 	}
 
 	form, err := newFlowForm(o.payload, o.templateFile, false)

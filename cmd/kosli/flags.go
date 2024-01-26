@@ -96,7 +96,7 @@ func addListFlags(cmd *cobra.Command, o *listOptions) {
 func addAttestationFlags(cmd *cobra.Command, o *CommonAttestationOptions, payload *CommonAttestationPayload, ci string) {
 	cmd.Flags().StringVarP(&payload.ArtifactFingerprint, "fingerprint", "F", "", attestationFingerprintFlag)
 	cmd.Flags().StringVarP(&o.commitSHA, "commit", "g", DefaultValueForCommit(ci, false), attestationCommitFlag)
-	cmd.Flags().StringVarP(&payload.BuildURL, "build-url", "b", DefaultValue(ci, "build-url"), attestationUrlFlag)
+	cmd.Flags().StringVarP(&payload.OriginURL, "origin-url", "o", DefaultValue(ci, "build-url"), attestationOriginUrlFlag)
 	cmd.Flags().StringVarP(&o.attestationNameTemplate, "name", "n", "", attestationNameFlag)
 	cmd.Flags().StringToStringVar(&o.externalFingerprints, "external-fingerprint", map[string]string{}, externalFingerprintFlag)
 	cmd.Flags().StringToStringVar(&o.externalURLs, "external-url", map[string]string{}, externalURLFlag)

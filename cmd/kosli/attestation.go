@@ -19,7 +19,7 @@ type CommonAttestationPayload struct {
 	AttestationName     string                   `json:"attestation_name"`
 	TargetArtifacts     []string                 `json:"target_artifacts,omitempty"`
 	ExternalURLs        map[string]*URLInfo      `json:"external_urls,omitempty"`
-	BuildURL            string                   `json:"build_url,omitempty"`
+	OriginURL           string                   `json:"origin_url,omitempty"`
 	UserData            interface{}              `json:"user_data,omitempty"`
 	Description         string                   `json:"description,omitempty"`
 }
