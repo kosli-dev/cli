@@ -12,17 +12,17 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
-  pre-build:
-    runs-on: ubuntu-20.04
-    outputs:
-      tag: ${{ steps.tag.outputs.tag }}
-    steps:
+  # pre-build:
+  #   runs-on: ubuntu-20.04
+  #   outputs:
+  #     tag: ${{ steps.tag.outputs.tag }}
+  #   steps:
     
-    - uses: actions/checkout@v3
+  #   - uses: actions/checkout@v3
 
-    - name: Get tag
-      id: tag
-      uses: dawidd6/action-get-tag@v1
+  #   - name: Get tag
+  #     id: tag
+  #     uses: dawidd6/action-get-tag@v1
 
   # test:
   #   needs: [pre-build]
@@ -131,7 +131,6 @@ jobs:
 
   evidence-reporter-upload-package-and-deploy:
     # needs: [pre-build, goreleaser]
-    needs: [pre-build]
     runs-on: ubuntu-20.04
     permissions:
       id-token: write
