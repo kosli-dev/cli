@@ -52,7 +52,7 @@ func (suite *SnapshotS3TestSuite) TestSnapshotS3Cmd() {
 			additionalConfig: snapshotS3TestConfig{
 				requireAuthToBeSet: true,
 			},
-			golden: "Error: required flag \"bucket\" not set\n",
+			golden: "Error: required flag(s) \"bucket\" not set\n",
 		},
 		{
 			wantError: true,
@@ -65,6 +65,28 @@ func (suite *SnapshotS3TestSuite) TestSnapshotS3Cmd() {
 			name:      "snapshot s3 fails two args are set",
 			cmd:       fmt.Sprintf(`snapshot s3 %s xxx %s --bucket %s`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
 			golden:    "Error: accepts 1 arg(s), received 2\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot s3 fails if --include and --exclude are set",
+			cmd:       fmt.Sprintf(`snapshot s3 %s %s --bucket %s --include foo --exclude bar`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden:    "Error: only one of --include, --exclude is allowed\n",
+		},
+		{
+			name:   "can snapshot a subset of files/dirs using --include",
+			cmd:    fmt.Sprintf(`snapshot s3 %s %s --bucket %s --include README.md`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden: "bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when --include does not match any file or dir",
+			cmd:       fmt.Sprintf(`snapshot s3 %s %s --bucket %s --include non-existing.md`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden:    "Error: no matching file or dirs in bucket: [kosli-cli-public]\n",
+		},
+		{
+			name:   "can snapshot entire bucket except a subset of files/dirs using --exclude",
+			cmd:    fmt.Sprintf(`snapshot s3 %s %s --bucket %s --exclude dummy`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden: "bucket kosli-cli-public was reported to environment snapshot-s3-env\n",
 		},
 	}
 

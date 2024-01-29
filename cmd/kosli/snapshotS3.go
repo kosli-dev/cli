@@ -10,12 +10,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const snapshotS3ShortDesc = `Report a snapshot of an artifact deployed in AWS S3 bucket to Kosli.`
+const snapshotS3ShortDesc = `Report a snapshot of the content of an AWS S3 bucket to Kosli.`
 
-const snapshotS3LongDesc = snapshotS3ShortDesc + awsAuthDesc
+const snapshotS3LongDesc = snapshotS3ShortDesc + awsAuthDesc + `
+You can report the entire bucket content, or filter some of the content using --include and --exclude.
+In all cases, the content is reported as one artifact. If you wish to report separate files/dirs within the same bucket as separate artifacts, you need to run the command twice.
+`
 
 const snapshotS3Example = `
-# report what is running in an AWS S3 bucket (AWS auth provided in env variables):
+# report the contents of an entire AWS S3 bucket (AWS auth provided in env variables):
 export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
@@ -33,10 +36,34 @@ kosli snapshot s3 yourEnvironmentName \
 	--aws-region yourAWSRegion \
 	--api-token yourAPIToken \
 	--org yourOrgName	
+
+# report a subset of contents of an AWS S3 bucket (AWS auth provided in env variables):
+export AWS_REGION=yourAWSRegion
+export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
+export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
+
+kosli snapshot s3 yourEnvironmentName \
+	--bucket yourBucketName \
+	--include file.txt,path/within/bucket \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# report contents of an entire AWS S3 bucket, except for some paths (AWS auth provided in env variables):
+export AWS_REGION=yourAWSRegion
+export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
+export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
+
+kosli snapshot s3 yourEnvironmentName \
+	--bucket yourBucketName \
+	--exclude file.txt,path/within/bucket \
+	--api-token yourAPIToken \
+	--org yourOrgName
 `
 
 type snapshotS3Options struct {
 	bucket         string
+	includePaths   []string
+	excludePaths   []string
 	awsStaticCreds *aws.AWSStaticCreds
 }
 
@@ -56,8 +83,9 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
-			if len(o.bucket) == 0 {
-				return fmt.Errorf("required flag \"bucket\" not set")
+			err = MuXRequiredFlags(cmd, []string{"include", "exclude"}, false)
+			if err != nil {
+				return err
 			}
 
 			return nil
@@ -68,6 +96,8 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&o.bucket, "bucket", "", bucketNameFlag)
+	cmd.Flags().StringSliceVarP(&o.includePaths, "include", "i", []string{}, bucketPathsFlag)
+	cmd.Flags().StringSliceVarP(&o.excludePaths, "exclude", "x", []string{}, excludeBucketPathsFlag)
 	addAWSAuthFlags(cmd, o.awsStaticCreds)
 	addDryRunFlag(cmd)
 
@@ -83,7 +113,7 @@ func (o *snapshotS3Options) run(args []string) error {
 	envName := args[0]
 	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/S3", global.Host, global.Org, envName)
 
-	s3Data, err := o.awsStaticCreds.GetS3Data(o.bucket, logger)
+	s3Data, err := o.awsStaticCreds.GetS3Data(o.bucket, o.includePaths, o.excludePaths, logger)
 	if err != nil {
 		return err
 	}
