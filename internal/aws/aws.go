@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -272,45 +273,106 @@ func decodeLambdaFingerprint(fingerprint string) (string, error) {
 	return hex.EncodeToString(sha256base64), nil
 }
 
+// shouldExcludePath checks if a bucket object should be excluded
+func shouldExcludePath(key string, includedPaths, excludedPaths []string) bool {
+	if len(includedPaths) > 0 {
+		return !objectInPaths(key, includedPaths)
+	} else if len(excludedPaths) > 0 {
+		return objectInPaths(key, excludedPaths)
+	}
+	return false
+}
+
+// containsSingleFile checks if a file contains only a single file
+func containsSingleFile(directoryPath string) (bool, string, error) {
+	files, err := os.ReadDir(directoryPath)
+	if err != nil {
+		return false, "", err
+	}
+	path := ""
+	if len(files) == 1 {
+		path = filepath.Join(directoryPath, files[0].Name())
+	}
+	return len(files) == 1 && !files[0].IsDir(), path, nil
+}
+
+func objectInPaths(key string, paths []string) bool {
+	for _, path := range paths {
+		path = strings.TrimLeft(path, "/")
+		if strings.HasPrefix(key, path) {
+			return true
+		}
+	}
+	return false
+}
+
 // GetS3Data returns a digest and metadata of the S3 bucket content
-func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, logger *logger.Logger) ([]*S3Data, error) {
+func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, excludePaths []string, logger *logger.Logger) ([]*S3Data, error) {
 	s3Data := []*S3Data{}
-	client, err := staticCreds.NewS3Client()
-	if err != nil {
-		return s3Data, err
-	}
 
-	params := &s3.ListObjectsInput{
-		Bucket: aws.String(bucket),
-	}
-
-	objects, err := client.ListObjects(context.TODO(), params)
-	if err != nil {
-		return s3Data, err
-	}
 	tempDirName, err := os.MkdirTemp("", "bucketContent")
 	if err != nil {
 		return s3Data, err
 	}
 	defer os.RemoveAll(tempDirName)
 
+	client, err := staticCreds.NewS3Client()
+	if err != nil {
+		return s3Data, err
+	}
+
+	params := &s3.ListObjectsV2Input{
+		Bucket: aws.String(bucket),
+	}
+
 	downloader := s3manager.NewDownloader(client)
 	var lastModifiedTime *time.Time
-	for _, object := range objects.Contents {
-		err := downloadFileFromBucket(downloader, tempDirName, *object.Key, bucket, logger)
-		if lastModifiedTime == nil || object.LastModified.After(*lastModifiedTime) {
-			lastModifiedTime = object.LastModified
+	paginator := s3.NewListObjectsV2Paginator(client, params)
+	for paginator.HasMorePages() {
+		objects, err := paginator.NextPage(context.TODO())
+		if err != nil {
+			return s3Data, err
 		}
 
+		for _, object := range objects.Contents {
+			if strings.HasSuffix(*object.Key, "/") { // skip folders
+				continue
+			}
+			if shouldExcludePath(*object.Key, includePaths, excludePaths) { // decide if we should skip
+				continue
+			}
+			err := downloadFileFromBucket(downloader, tempDirName, *object.Key, bucket, logger)
+			if err != nil {
+				return s3Data, err
+			}
+
+			if lastModifiedTime == nil || object.LastModified.After(*lastModifiedTime) {
+				lastModifiedTime = object.LastModified
+			}
+		}
+	}
+
+	if lastModifiedTime == nil {
+		return s3Data, fmt.Errorf("no matching file or dirs in bucket: [%s]", bucket)
+	}
+
+	fileSnapshot, filename, err := containsSingleFile(tempDirName)
+	if err != nil {
+		return s3Data, err
+	}
+	var sha256 string
+	if fileSnapshot {
+		sha256, err = digest.FileSha256(filename)
+		if err != nil {
+			return s3Data, err
+		}
+	} else {
+		sha256, err = digest.DirSha256(tempDirName, []string{}, logger)
 		if err != nil {
 			return s3Data, err
 		}
 	}
 
-	sha256, err := digest.DirSha256(tempDirName, []string{}, logger)
-	if err != nil {
-		return s3Data, err
-	}
 	s3Data = append(s3Data, &S3Data{Digests: map[string]string{bucket: sha256}, LastModifiedTimestamp: lastModifiedTime.Unix()})
 
 	return s3Data, nil

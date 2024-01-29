@@ -333,6 +333,8 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 		requireEnvVars  bool // indicates that a test case needs real credentials from env vars
 		creds           *AWSStaticCreds
 		bucketName      string
+		includePaths    []string
+		excludePaths    []string
 		wantFingerprint string
 		wantErr         bool
 	}{
@@ -356,17 +358,87 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 			wantErr:        true,
 		},
 		{
-			name: "can get S3 bucket data",
+			name: "can get S3 bucket data from entire bucket",
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
 			bucketName:     "kosli-cli-public",
 			requireEnvVars: true,
 		},
+		{
+			name: "can get S3 bucket data. includePaths is a sub-directory",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			bucketName:      "kosli-cli-public",
+			includePaths:    []string{"dummy"},
+			requireEnvVars:  true,
+			wantFingerprint: "1b7888b437ba378a9884a937552cb1f945f420c3f4201437b42e690f102ff698",
+		},
+		{
+			name: "when includePaths is not an absolute or relative paths",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			bucketName:     "kosli-cli-public",
+			includePaths:   []string{"dummy_2"},
+			requireEnvVars: true,
+			wantErr:        true,
+		},
+		{
+			name: "can get S3 bucket data. includePaths is a nested sub-directory",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			bucketName:      "kosli-cli-public",
+			includePaths:    []string{"dummy/dummy_2"},
+			requireEnvVars:  true,
+			wantFingerprint: "10ad582d09cc4554d15122900710814377df35a9ccb130826df8be666110c78d",
+		},
+		{
+			name: "includePaths is a nested sub-directory starting with slash",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			bucketName:      "kosli-cli-public",
+			includePaths:    []string{"/dummy/dummy_2"},
+			requireEnvVars:  true,
+			wantFingerprint: "10ad582d09cc4554d15122900710814377df35a9ccb130826df8be666110c78d",
+		},
+		{
+			name: "can get S3 bucket data. includePaths is a file",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			bucketName:      "kosli-cli-public",
+			includePaths:    []string{"README.md"},
+			requireEnvVars:  true,
+			wantFingerprint: "77b1b4df1eb620e05ce365e9e84d37a7e04fde8a66251c121773d013dfba0ee6",
+		},
+		{
+			name: "can get S3 bucket data. excludePaths is a file",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			bucketName:      "kosli-cli-public",
+			excludePaths:    []string{"README.md"},
+			requireEnvVars:  true,
+			wantFingerprint: "1b7888b437ba378a9884a937552cb1f945f420c3f4201437b42e690f102ff698",
+		},
+		{
+			name: "can get S3 bucket data. excludePaths is a dir",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			bucketName:      "kosli-cli-public",
+			excludePaths:    []string{"dummy"},
+			requireEnvVars:  true,
+			wantFingerprint: "77b1b4df1eb620e05ce365e9e84d37a7e04fde8a66251c121773d013dfba0ee6",
+		},
 	} {
 		suite.Run(t.name, func() {
 			skipOrSetCreds(suite.T(), t.requireEnvVars, t.creds)
-			data, err := t.creds.GetS3Data(t.bucketName, logger.NewStandardLogger())
+			data, err := t.creds.GetS3Data(t.bucketName, t.includePaths, t.excludePaths, logger.NewStandardLogger())
 			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetS3Data() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
