@@ -9,8 +9,6 @@ deprecated: false
 ## Synopsis
 
 Enable beta features for an organization.
-Currently, the only beta feature is audit-trails.
-
 
 ```shell
 kosli enable beta [flags]

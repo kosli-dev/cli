@@ -27,6 +27,8 @@ kosli attest artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 |    -N, --display-name string  |  [optional] Artifact display name, if different from file, image or directory name.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Only applicable for --artifact-type dir.  |
+|        --external-fingerprint stringToString  |  [optional] A SHA256 fingerprint of an external attachment represented by --external-url. The format is label=fingerprint. This flag can be set multiple times. There must be an external url with a matching label for each external fingerprint.  |
+|        --external-url stringToString  |  [optional] Add labeled reference URL for an external resource. The format is label=url. This flag can be set multiple times. If the resource is a file or dir, you can optionally add its fingerprint via --external-fingerprint  |
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'.  |
 |    -f, --flow string  |  The Kosli flow name.  |
 |    -h, --help  |  help for artifact  |
@@ -53,7 +55,7 @@ kosli attest artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 
 ```shell
 
-# Attest to a Kosli flow that a file type artifact has been created
+# Attest that a file type artifact has been created, and let Kosli calculate its fingerprint
 kosli attest artifact FILE.tgz \
 	--artifact-type file \
 	--build-url https://exampleci.com \
@@ -66,14 +68,28 @@ kosli attest artifact FILE.tgz \
 	--org yourOrgName
 
 
-# Attest to a Kosli flow that an artifact with a provided fingerprint (sha256) has been created
+# Attest that an artifact has been created and provide its fingerprint (sha256) 
 kosli attest artifact ANOTHER_FILE.txt \
 	--build-url https://exampleci.com \
 	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
 	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
 	--flow yourFlowName \
-	--fingerprint yourArtifactFingerprint \
 	--trail yourTrailName \
+	--fingerprint yourArtifactFingerprint \
+	--name yourTemplateArtifactName \
+	--api-token yourApiToken \
+	--org yourOrgName
+
+# Attest that an artifact has been created and provide external attachments
+kosli attest artifact ANOTHER_FILE.txt \
+	--build-url https://exampleci.com \
+	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
+	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--fingerprint yourArtifactFingerprint \
+	--external-url label=https://example.com/attachment \
+	--external-fingerprint label=yourExternalAttachmentFingerprint \
 	--name yourTemplateArtifactName \
 	--api-token yourApiToken \
 	--org yourOrgName
