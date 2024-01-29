@@ -66,19 +66,19 @@ kosli attest artifact ANOTHER_FILE.txt \
 	--api-token yourApiToken \
 	--org yourOrgName
 
-	# Attest that an artifact has been created and provide external attachments
-	kosli attest artifact ANOTHER_FILE.txt \
-		--build-url https://exampleci.com \
-		--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
-		--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
-		--flow yourFlowName \
-		--trail yourTrailName \
-		--fingerprint yourArtifactFingerprint \
-		--external-url label=https://example.com/attachment \
-		--external-fingerprint label=yourExternalAttachmentFingerprint \
-		--name yourTemplateArtifactName \
-		--api-token yourApiToken \
-		--org yourOrgName
+# Attest that an artifact has been created and provide external attachments
+kosli attest artifact ANOTHER_FILE.txt \
+	--build-url https://exampleci.com \
+	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
+	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--fingerprint yourArtifactFingerprint \
+	--external-url label=https://example.com/attachment \
+	--external-fingerprint label=yourExternalAttachmentFingerprint \
+	--name yourTemplateArtifactName \
+	--api-token yourApiToken \
+	--org yourOrgName
 `
 
 func newAttestArtifactCmd(out io.Writer) *cobra.Command {
