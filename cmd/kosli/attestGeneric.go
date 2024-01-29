@@ -138,7 +138,7 @@ func (o *attestGenericOptions) run(args []string) error {
 		return err
 	}
 
-	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.evidencePaths)
+	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.attachments)
 	if err != nil {
 		return err
 	}

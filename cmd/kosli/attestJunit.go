@@ -148,10 +148,10 @@ func (o *attestJunitOptions) run(args []string) error {
 		if err != nil {
 			return err
 		}
-		o.evidencePaths = append(o.evidencePaths, junitFilenames...)
+		o.attachments = append(o.attachments, junitFilenames...)
 	}
 
-	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.evidencePaths)
+	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.attachments)
 	if err != nil {
 		return err
 	}

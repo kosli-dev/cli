@@ -226,7 +226,7 @@ func (o *attestJiraOptions) run(args []string) error {
 		issueLog += fmt.Sprintf("\n\t%s: %s", result.IssueID, issueExistLog)
 	}
 
-	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.evidencePaths)
+	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.attachments)
 	if err != nil {
 		return err
 	}

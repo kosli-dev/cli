@@ -170,13 +170,17 @@ The service principal needs to have the following permissions:
 	approverFlag                = "[optional] The user approving an approval."
 	attestationFingerprintFlag  = "[optional] The SHA256 fingerprint of the artifact to attach the attestation to."
 	attestationCommitFlag       = "[optional] The git commit associated to the attestation. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
-	attestationUrlFlag          = "The url pointing to where the attestation came from or is related. (defaulted to the CI url in some CIs: https://docs.kosli.com/ci-defaults )."
+	attestationOriginUrlFlag    = "[optional] The url pointing to where the attestation came from or is related. (defaulted to the CI url in some CIs: https://docs.kosli.com/ci-defaults )."
 	attestationNameFlag         = "The name of the attestation as declared in the flow or trail yaml template."
 	attestationCompliantFlag    = "[defaulted] Whether the attestation is compliant or not. A boolean flag https://docs.kosli.com/faq/#boolean-flags"
 	attestationRepoRootFlag     = "[defaulted] The directory where the source git repository is available. Only used if --commit is used."
 	uploadJunitResultsFlag      = "[defaulted] Whether to upload the provided Junit results directory as evidence to Kosli or not."
 	attestationAssertFlag       = "[optional] Exit with non-zero code if the attestation is non-compliant"
 	beginTrailCommitFlag        = "[defaulted] The git commit from which the trail is begun. (defaulted in some CIs: https://docs.kosli.com/ci-defaults, otherwise defaults to HEAD )."
+	attachmentsFlag             = "[optional] The comma-separated list of paths of attachments for the reported attestation. Attachments can be files or directories. All attachments are compressed and uploaded to Kosli's evidence vault."
+	externalFingerprintFlag     = "[optional] A SHA256 fingerprint of an external attachment represented by --external-url. The format is label=fingerprint. This flag can be set multiple times. There must be an external url with a matching label for each external fingerprint."
+	externalURLFlag             = "[optional] Add labeled reference URL for an external resource. The format is label=url. This flag can be set multiple times. If the resource is a file or dir, you can optionally add its fingerprint via --external-fingerprint"
+	attestationDescription      = "[optional] attestation description"
 )
 
 var global *GlobalOpts

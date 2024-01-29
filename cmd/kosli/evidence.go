@@ -59,28 +59,3 @@ func newEvidenceForm(payload interface{}, evidencePaths []string) (
 
 	return form, cleanupNeeded, evidencePath, nil
 }
-
-// newAttestationForm constructs a list of FormItems for an evidence
-// form submission.
-func newAttestationForm(payload interface{}, evidencePaths []string) (
-	[]requests.FormItem, bool, string, error,
-) {
-	form := []requests.FormItem{
-		{Type: "field", FieldName: "data_json", Content: payload},
-	}
-
-	var evidencePath string
-	var cleanupNeeded bool
-	var err error
-
-	if len(evidencePaths) > 0 {
-		evidencePath, cleanupNeeded, err = getPathOfEvidenceFileToUpload(evidencePaths)
-		if err != nil {
-			return form, cleanupNeeded, evidencePath, err
-		}
-		form = append(form, requests.FormItem{Type: "file", FieldName: "evidence_file", Content: evidencePath})
-		logger.Debug("evidence file %s will be uploaded", evidencePath)
-	}
-
-	return form, cleanupNeeded, evidencePath, nil
-}

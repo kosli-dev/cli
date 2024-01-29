@@ -105,6 +105,13 @@ func (suite *AttestGithubPRCommandTestSuite) TestAttestGithubPRCmd() {
 				--github-org kosli-dev --repository cli  %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\ngithub pull request attestation 'foo' is reported to trail: test-123\n",
 		},
+		{
+			name: "can attest github pr with external-url and external-fingerprint against a trail ",
+			cmd: fmt.Sprintf(`attest pullrequest github --name bar 
+				--external-url file=https://example.com/file --external-fingerprint file=7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9
+				--github-org kosli-dev --repository cli  %s`, suite.defaultKosliArguments),
+			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\ngithub pull request attestation 'bar' is reported to trail: test-123\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

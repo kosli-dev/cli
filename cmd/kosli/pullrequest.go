@@ -129,7 +129,7 @@ func (o *attestPROptions) run(args []string) error {
 	label := ""
 	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
 
-	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.evidencePaths)
+	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.attachments)
 	if err != nil {
 		return err
 	}
