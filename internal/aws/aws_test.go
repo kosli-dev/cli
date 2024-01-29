@@ -260,7 +260,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 				AccessKeyID:     "ssss",
 				SecretAccessKey: "ssss",
 			},
-			functionNames: []string{"ewelina-test"},
+			functionNames: []string{"cli-tests"},
 			wantErr:       true,
 		},
 		{
@@ -268,7 +268,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			creds: &AWSStaticCreds{
 				Region: "ap-south-1",
 			},
-			functionNames:  []string{"ewelina-test"},
+			functionNames:  []string{"cli-tests"},
 			requireEnvVars: true,
 			wantErr:        true,
 		},
@@ -277,8 +277,8 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			functionNames:    []string{"ewelina-test"},
-			wantFingerprints: []string{"61db6a4ac396a7af4c48bc927c9d02e5a093ddc2a4c51b50d2194be436452592"},
+			functionNames:    []string{"cli-tests"},
+			wantFingerprints: []string{"321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"},
 			requireEnvVars:   true,
 		},
 		{
@@ -286,8 +286,8 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			functionNames:    []string{"lambda-docker-test"},
-			wantFingerprints: []string{"e3e2e565788902e24d1b17c0c6bdb7dfc1cdfe6193b762482bbe982bd83a9876"},
+			functionNames:    []string{"cli-tests-docker"},
+			wantFingerprints: []string{"e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"},
 			requireEnvVars:   true,
 		},
 		{
@@ -295,9 +295,9 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			functionNames: []string{"lambda-docker-test", "ewelina-test"},
-			wantFingerprints: []string{"e3e2e565788902e24d1b17c0c6bdb7dfc1cdfe6193b762482bbe982bd83a9876",
-				"61db6a4ac396a7af4c48bc927c9d02e5a093ddc2a4c51b50d2194be436452592"},
+			functionNames: []string{"cli-tests-docker", "cli-tests"},
+			wantFingerprints: []string{"e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e",
+				"321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"},
 			requireEnvVars: true,
 		},
 	} {
