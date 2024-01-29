@@ -10,9 +10,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const snapshotS3ShortDesc = `Report a snapshot of an artifact deployed in AWS S3 bucket to Kosli.`
+const snapshotS3ShortDesc = `Report a snapshot of the content of an AWS S3 bucket to Kosli.`
 
-const snapshotS3LongDesc = snapshotS3ShortDesc + awsAuthDesc
+const snapshotS3LongDesc = snapshotS3ShortDesc + awsAuthDesc + `
+You can report the entire bucket content, or filter some of the content using --include and --exclude.
+In all cases, the content is reported as one artifact. If you wish to report separate files/dirs within the same bucket as separate artifacts, you need to run the command twice.
+`
 
 const snapshotS3Example = `
 # report the contents of an entire AWS S3 bucket (AWS auth provided in env variables):
