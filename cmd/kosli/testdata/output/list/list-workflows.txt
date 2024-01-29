@@ -1,2 +1,0 @@
-ID              EVIDENCE  CREATED_AT                     LAST_MODIFIED_AT
-testExternalId  [step1]   Sat, 16 Jan 2016 00:00:00 UTC  Sat, 16 Jan 2016 00:00:00 UTC

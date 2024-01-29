@@ -27,14 +27,6 @@ type JiraEvidencePayload struct {
 	JiraResults []*jira.JiraIssueInfo `json:"jira_results"`
 }
 
-type WorkflowEvidencePayload struct {
-	ExternalId          string      `json:"external_id"`
-	Step                string      `json:"step"`
-	EvidenceURL         string      `json:"evidence_url,omitempty"`
-	EvidenceFingerprint string      `json:"evidence_fingerprint,omitempty"`
-	UserData            interface{} `json:"user_data,omitempty"`
-}
-
 // newEvidenceForm constructs a list of FormItems for an evidence
 // form submission.
 func newEvidenceForm(payload interface{}, evidencePaths []string) (

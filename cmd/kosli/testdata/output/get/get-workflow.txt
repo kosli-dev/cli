@@ -1,6 +1,0 @@
-ID:                testExternalId
-Audit Trail:       testGetWorkflow
-Steps:             [step1, step2]
-Evidence:          step1
-Created At:        Sat, 16 Jan 2016 00:00:00 UTC • 2016-01-16
-Last Modified At:  Sat, 16 Jan 2016 00:00:00 UTC • 2016-01-16

@@ -67,9 +67,6 @@ The service principal needs to have the following permissions:
 	flowNameFlag                = "The Kosli flow name."
 	trailNameFlag               = "The Kosli trail name."
 	templateArtifactName        = "The name of the artifact in the yml template file."
-	auditTrailNameFlag          = "The Kosli audit trail name."
-	workflowIDFlag              = "The ID of the workflow."
-	stepNameFlag                = "The name of the step as defined in the audit trail's steps."
 	flowNamesFlag               = "[defaulted] The comma separated list of Kosli flows. Defaults to all flows of the org."
 	newFlowFlag                 = "The name of the flow to be created or updated."
 	outputFlag                  = "[defaulted] The format of the output. Valid formats are: [table, json]."
@@ -96,11 +93,9 @@ The service principal needs to have the following permissions:
 	envDescriptionFlag          = "[optional] The environment description."
 	flowDescriptionFlag         = "[optional] The Kosli flow description."
 	trailDescriptionFlag        = "[optional] The Kosli trail description."
-	workflowDescriptionFlag     = "[optional] The Kosli Workflow description."
 	visibilityFlag              = "[defaulted] The visibility of the Kosli flow. Valid visibilities are [public, private]."
 	templateFlag                = "[defaulted] The comma-separated list of required compliance controls names."
 	templateFileFlag            = "The path to a yaml template file."
-	stepsFlag                   = "[defaulted] The comma-separated list of required audit trail steps names."
 	approvalUserDataFlag        = "[optional] The path to a JSON file containing additional data you would like to attach to the approval."
 	evidenceUserDataFlag        = "[optional] The path to a JSON file containing additional data you would like to attach to the evidence."
 	attestationUserDataFlag     = "[optional] The path to a JSON file containing additional data you would like to attach to the attestation."
@@ -269,8 +264,6 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		newSnapshotCmd(out),
 		newRequestCmd(out),
 		newLogCmd(out),
-		newDisableCmd(out),
-		newEnableCmd(out),
 	)
 
 	cobra.AddTemplateFunc("isBeta", isBeta)
