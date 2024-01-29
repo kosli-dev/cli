@@ -264,6 +264,8 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		newSnapshotCmd(out),
 		newRequestCmd(out),
 		newLogCmd(out),
+		newDisableCmd(out),
+		newEnableCmd(out),
 	)
 
 	cobra.AddTemplateFunc("isBeta", isBeta)
