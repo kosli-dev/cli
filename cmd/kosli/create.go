@@ -19,7 +19,6 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 	cmd.AddCommand(
 		newCreateEnvironmentCmd(out),
 		newCreateFlowCmd(out),
-		newCreateAuditTrailCmd(out),
 	)
 	return cmd
 }

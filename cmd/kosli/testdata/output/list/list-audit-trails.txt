@@ -1,2 +1,0 @@
-NAME            DESCRIPTION       STEPS
-testAuditTrail  test audit trail  [step1 step2]

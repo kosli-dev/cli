@@ -1,5 +1,0 @@
-Name:              audit-trail-get-test
-Description:       test audit trail
-Steps:             [step1, step2]
-Last Modified At:  Sat, 16 Jan 2016 00:00:00 UTC • 2016-01-16
-Created At:        Sat, 16 Jan 2016 00:00:00 UTC • 2016-01-16
