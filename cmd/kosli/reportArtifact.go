@@ -129,7 +129,7 @@ func (o *reportArtifactOptions) run(args []string) error {
 		return err
 	}
 
-	commitObject, err := gitView.GetCommitInfoFromCommitSHA(o.gitReference)
+	commitObject, err := gitView.GetCommitInfoFromCommitSHA(o.gitReference, false)
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func (o *reportArtifactOptions) run(args []string) error {
 		return err
 	}
 
-	o.payload.RepoUrl, err = gitView.RepoUrl()
+	o.payload.RepoUrl, err = gitView.RepoURL()
 	if err != nil {
 		logger.Warning("Repo URL will not be reported, %s", err.Error())
 	}

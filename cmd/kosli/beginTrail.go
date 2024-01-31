@@ -103,7 +103,7 @@ func (o *beginTrailOptions) run(args []string) error {
 		if err != nil {
 			return err
 		}
-		commitInfo, err := gv.GetCommitInfoFromCommitSHA(o.commitSHA)
+		commitInfo, err := gv.GetCommitInfoFromCommitSHA(o.commitSHA, false)
 		if err != nil {
 			return err
 		}
