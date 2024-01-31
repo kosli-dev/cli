@@ -1,9 +1,0 @@
-version: 1
-trail:
-  attestations:
-  - name: command-logs
-    type: generic
-  - name: user-identity
-    type: generic
-  - name: service-identity
-    type: generic
