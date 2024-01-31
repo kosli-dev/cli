@@ -9,6 +9,9 @@ on:
       platforms:
         required: true
         type: string
+      assert:
+        type: boolean
+        default: false
     secrets:
       slack_channel:
         required: true
@@ -124,7 +127,7 @@ jobs:
         # or you can signup for free at https://snyk.io/login
         SNYK_TOKEN: ${{ secrets.snyk_token }}
       run: 
-          snyk test --json-file-output=snyk-code.json --prune-repeated-subdependencies
+          snyk test --policy-path=.snyk  --json-file-output=snyk-code.json --prune-repeated-subdependencies
 
 
     - name: Report Snyk CODE scan results evidence to Kosli
@@ -149,7 +152,8 @@ jobs:
         SNYK_TOKEN: ${{ secrets.snyk_token }}
       run: 
           snyk container test ${{ env.IMAGE }}:${{ inputs.tag }} 
-             --file=Dockerfile 
+             --file=Dockerfile
+             --policy-path=.snyk
              --json-file-output=snyk-docker.json
 
 
@@ -206,3 +210,13 @@ jobs:
       run:
         kosli report evidence artifact pullrequest github
           --github-token ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Assert artifact in Kosli
+      if: ${{ inputs.assert }}
+      env:
+        KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+        KOSLI_ORG: kosli
+      run: 
+        kosli assert artifact flow cli
+          --fingerprint ${{ env.FINGERPRINT }}
+          --flow cli

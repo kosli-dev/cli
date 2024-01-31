@@ -48,6 +48,7 @@ jobs:
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
       platforms: linux/amd64
+      assert: true
     secrets:
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
       slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
