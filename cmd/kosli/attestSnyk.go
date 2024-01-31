@@ -71,7 +71,7 @@ kosli attest snyk \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--scan-results yourSnykJSONScanResults \
-	--evidence-paths=yourEvidencePathName \
+	--attachments=yourEvidencePathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 `

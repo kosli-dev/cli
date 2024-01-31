@@ -78,7 +78,7 @@ kosli attest pullrequest azure \
 	--azure-token yourAzureToken \
 	--commit yourGitCommitSha1 \
 	--repository yourAzureGitRepository \
-	--evidence-paths=yourEvidencePathName \
+	--attachments=yourEvidencePathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
