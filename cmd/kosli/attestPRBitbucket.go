@@ -78,7 +78,7 @@ kosli attest pullrequest bitbucket \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--commit yourArtifactGitCommit \
 	--repository yourBitbucketGitRepository \
-	--evidence-paths=yourEvidencePathName \
+	--attachments=yourEvidencePathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 

@@ -65,7 +65,7 @@ kosli attest generic \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--evidence-paths=yourEvidencePathName \
+	--attachments=yourEvidencePathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 

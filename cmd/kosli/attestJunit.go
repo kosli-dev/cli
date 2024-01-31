@@ -72,7 +72,7 @@ kosli attest junit \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--results-dir yourFolderWithJUnitResults \
-	--evidence-paths=yourEvidencePathName \
+	--attachments=yourEvidencePathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 `
