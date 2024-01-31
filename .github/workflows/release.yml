@@ -134,7 +134,7 @@ jobs:
     runs-on: ubuntu-20.04
     permissions:
       id-token: write
-      contents: read
+      contents: write
     steps:
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@v2
