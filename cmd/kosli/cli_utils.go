@@ -134,7 +134,7 @@ func DefaultValue(ci, flag string) string {
 			result := os.ExpandEnv(v)
 			// github and gitlab use ../commit/.. , bitbucket uses ../commits/..
 			if ci == circleci && flag == "commit-url" {
-				result = gitview.ExtractRepoURLFromRemote(result)
+				result, _ = gitview.ExtractRepoURLFromRemote(result)
 				if strings.Contains(result, "bitbucket.org") {
 					return strings.Replace(result, "commit", "commits", 1)
 				}

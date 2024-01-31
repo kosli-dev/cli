@@ -208,7 +208,7 @@ func (suite *GitViewTestSuite) TestRepoURL() {
 	gv, err := New(worktree.Filesystem.Root())
 	require.NoError(suite.T(), err)
 	// the created repo does not have origin remote yet
-	_, err = gv.RepoUrl()
+	_, err = gv.RepoURL()
 	require.Error(suite.T(), err)
 	expectedError := fmt.Sprintf("remote('origin') is not found in git repository: %s", gv.repositoryRoot)
 	require.Equal(suite.T(), expectedError, err.Error())
@@ -230,15 +230,95 @@ func (suite *GitViewTestSuite) TestExtractRepoURLFromRemote() {
 			remoteURL: "https://github.com/kosli-dev/cli.git",
 			want:      "https://github.com/kosli-dev/cli",
 		},
+		{
+			name:      "HTTP remote with username and password",
+			remoteURL: "https://kosli:xxx@github.com/kosli-dev/cli.git",
+			want:      "https://github.com/kosli-dev/cli",
+		},
 	} {
 		suite.Run(t.name, func() {
-			actual := ExtractRepoURLFromRemote(t.remoteURL)
+			actual, _ := ExtractRepoURLFromRemote(t.remoteURL)
 			require.Equal(suite.T(), t.want, actual)
 		})
 	}
 }
 
-func (suite *GitViewTestSuite) TestNewCommitInfoFromGitCommit() {
+func (suite *GitViewTestSuite) TestRemoveUsernamePasswordFromURL() {
+	for _, t := range []struct {
+		name      string
+		inputURL  string
+		want      string
+		wantError bool
+	}{
+		{
+			name:     "url with username",
+			inputURL: "https://kosli@dev.azure.com/kosli/kosli-azure/_git/cli",
+			want:     "https://dev.azure.com/kosli/kosli-azure/_git/cli",
+		},
+		{
+			name:     "url with username and password",
+			inputURL: "https://kosli:xxxx@dev.azure.com/kosli/kosli-azure/_git/cli",
+			want:     "https://dev.azure.com/kosli/kosli-azure/_git/cli",
+		},
+		{
+			name:     "clean url",
+			inputURL: "https://dev.azure.com/kosli/kosli-azure/_git/cli",
+			want:     "https://dev.azure.com/kosli/kosli-azure/_git/cli",
+		},
+		{
+			name:      "invalid url returns error",
+			inputURL:  "://not.a url@",
+			wantError: true,
+		},
+	} {
+		suite.Run(t.name, func() {
+			actual, err := removeUsernamePasswordFromURL(t.inputURL)
+			require.Equal(suite.T(), t.wantError, err != nil)
+			require.Equal(suite.T(), t.want, actual)
+		})
+	}
+}
+
+func (suite *GitViewTestSuite) TestGetCommitURL() {
+	for _, t := range []struct {
+		name       string
+		repoURL    string
+		commitHash string
+		want       string
+	}{
+		{
+			name:       "github",
+			repoURL:    "https://github.com/kosli-dev/cli",
+			commitHash: "089615f84caedd6280689da694e71052cbdfb84d",
+			want:       "https://github.com/kosli-dev/cli/commit/089615f84caedd6280689da694e71052cbdfb84d",
+		},
+		{
+			name:       "gitlab",
+			repoURL:    "https://gitlab.com/ewelinawilkosz/merkely-gitlab-demo",
+			commitHash: "089615f84caedd6280689da694e71052cbdfb84d",
+			want:       "https://gitlab.com/ewelinawilkosz/merkely-gitlab-demo/-/commit/089615f84caedd6280689da694e71052cbdfb84d",
+		},
+		{
+			name:       "bitbucket",
+			repoURL:    "https://bitbucket.org/ewelinawilkosz/cli-test",
+			commitHash: "089615f84caedd6280689da694e71052cbdfb84d",
+			want:       "https://bitbucket.org/ewelinawilkosz/cli-test/commits/089615f84caedd6280689da694e71052cbdfb84d",
+		},
+		{
+			name:       "azure",
+			repoURL:    "https://dev.azure.com/kosli/kosli-azure/_git/cli",
+			commitHash: "089615f84caedd6280689da694e71052cbdfb84d",
+			want:       "https://dev.azure.com/kosli/kosli-azure/_git/cli/commit/089615f84caedd6280689da694e71052cbdfb84d",
+		},
+	} {
+		suite.Run(t.name, func() {
+			actual := getCommitURL(t.repoURL, t.commitHash)
+			require.Equal(suite.T(), t.want, actual)
+		})
+	}
+}
+
+func (suite *GitViewTestSuite) TestGetCommitInfoFromCommitSHA() {
 	dirPath := filepath.Join(suite.tmpDir, "repoName")
 	_, worktree, err := initializeRepoAndCommit(dirPath, 1)
 	require.NoError(suite.T(), err)
@@ -246,21 +326,22 @@ func (suite *GitViewTestSuite) TestNewCommitInfoFromGitCommit() {
 	gv, err := New(worktree.Filesystem.Root())
 	require.NoError(suite.T(), err)
 
-	_, err = gv.GetCommitInfoFromCommitSHA("58a9461c5a42d83bd5731485a72ddae542ac99d8")
+	_, err = gv.GetCommitInfoFromCommitSHA("58a9461c5a42d83bd5731485a72ddae542ac99d8", true)
 	require.Error(suite.T(), err)
 	expected := "failed to resolve git reference 58a9461c5a42d83bd5731485a72ddae542ac99d8: reference not found"
 	require.Equal(suite.T(), expected, err.Error())
 
-	_, err = gv.GetCommitInfoFromCommitSHA("HEAD~2")
+	_, err = gv.GetCommitInfoFromCommitSHA("HEAD~2", true)
 	require.Error(suite.T(), err)
 	expected = "failed to resolve git reference HEAD~2: EOF"
 	require.Equal(suite.T(), expected, err.Error())
 
-	ci, err := gv.GetCommitInfoFromCommitSHA("HEAD")
+	commitInfo, err := gv.GetCommitInfoFromCommitSHA("HEAD", false)
 	require.NoError(suite.T(), err)
-	require.Equal(suite.T(), "Added file 1", ci.Message)
-	require.Equal(suite.T(), "master", ci.Branch)
-	require.Empty(suite.T(), ci.Parents)
+	require.Equal(suite.T(), "Added file 1", commitInfo.Message)
+	require.Equal(suite.T(), "master", commitInfo.Branch)
+	require.Empty(suite.T(), commitInfo.Parents)
+	require.Empty(suite.T(), commitInfo.URL)
 }
 
 func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {

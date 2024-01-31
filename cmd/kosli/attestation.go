@@ -63,7 +63,7 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 		if err != nil {
 			return err
 		}
-		commitInfo, err := gv.GetCommitInfoFromCommitSHA(o.commitSHA)
+		commitInfo, err := gv.GetCommitInfoFromCommitSHA(o.commitSHA, false)
 		if err != nil {
 			return err
 		}

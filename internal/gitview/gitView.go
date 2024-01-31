@@ -2,6 +2,7 @@ package gitview
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -17,6 +18,7 @@ type BasicCommitInfo struct {
 	Author    string `json:"author"`
 	Timestamp int64  `json:"timestamp"`
 	Branch    string `json:"branch"`
+	URL       string `json:"url,omitempty"`
 }
 
 type CommitInfo struct {
@@ -76,7 +78,7 @@ func (gv *GitView) CommitsBetween(oldest, newest string, logger *logger.Logger) 
 		if err != nil {
 			return commits, err
 		}
-		commit := asCommitInfo(commitObject, branchName)
+		commit := gv.asCommitInfo(commitObject, branchName, true)
 		commits = append(commits, commit)
 
 	} else {
@@ -91,7 +93,7 @@ func (gv *GitView) CommitsBetween(oldest, newest string, logger *logger.Logger) 
 				return commits, fmt.Errorf("failed to get next git commit: %v\n%s", err, hint)
 			}
 			if commit.Hash != *oldestHash {
-				nextCommit := asCommitInfo(commit, branchName)
+				nextCommit := gv.asCommitInfo(commit, branchName, true)
 				commits = append(commits, nextCommit)
 			} else {
 				break
@@ -103,24 +105,40 @@ func (gv *GitView) CommitsBetween(oldest, newest string, logger *logger.Logger) 
 	return commits, nil
 }
 
-// RepoUrl returns HTTPS URL for the `origin` remote of a repo
-func (gv *GitView) RepoUrl() (string, error) {
+// RepoURL returns HTTPS URL for the `origin` remote of a repo
+func (gv *GitView) RepoURL() (string, error) {
 	repoRemote, err := gv.repository.Remote("origin") // TODO: We hard code this for now. Should we have a flag to set it from the cmdline? 2022-12-06
 	if err != nil {
 		return "", fmt.Errorf("remote('origin') is not found in git repository: %s", gv.repositoryRoot)
 	}
-	remoteUrl := ExtractRepoURLFromRemote(repoRemote.Config().URLs[0])
-	return remoteUrl, nil
+	return ExtractRepoURLFromRemote(repoRemote.Config().URLs[0])
+}
+
+// removeUsernamePasswordFromURL removes username and password from a URL
+func removeUsernamePasswordFromURL(inputURL string) (string, error) {
+	parsedURL, err := url.Parse(inputURL)
+	if err != nil {
+		return "", err
+	}
+
+	// Remove the username and password from the User field
+	parsedURL.User = nil
+
+	return parsedURL.String(), nil
 }
 
 // ExtractRepoURLFromRemote converts an SSH or http remote into a URL
-func ExtractRepoURLFromRemote(remoteUrl string) string {
+func ExtractRepoURLFromRemote(remoteUrl string) (string, error) {
 	if strings.HasPrefix(remoteUrl, "git@") {
 		remoteUrl = strings.Replace(remoteUrl, ":", "/", 1)
 		remoteUrl = strings.Replace(remoteUrl, "git@", "https://", 1)
 	}
 	remoteUrl = strings.Replace(remoteUrl, ".git", "", 1)
-	return remoteUrl
+	remoteUrl, err := removeUsernamePasswordFromURL(remoteUrl)
+	if err != nil {
+		return "", err
+	}
+	return remoteUrl, nil
 }
 
 // ChangeLog attempts to collect the changelog list of commits for an artifact,
@@ -138,7 +156,7 @@ func (gv *GitView) ChangeLog(currentCommit, previousCommit string, logger *logge
 		}
 	}
 
-	currentArtifactCommit, err := gv.GetCommitInfoFromCommitSHA(currentCommit)
+	currentArtifactCommit, err := gv.GetCommitInfoFromCommitSHA(currentCommit, true)
 	if err != nil {
 		return []*CommitInfo{}, fmt.Errorf("could not retrieve current git commit for %s: %v", currentCommit, err)
 	}
@@ -160,7 +178,7 @@ func (gv *GitView) BranchName() (string, error) {
 
 // GetCommitInfoFromCommitSHA returns a CommitInfo object from a git commit
 // the gitCommit can be SHA1 or a revision: e.g. HEAD or HEAD~2 etc
-func (gv *GitView) GetCommitInfoFromCommitSHA(gitCommit string) (*CommitInfo, error) {
+func (gv *GitView) GetCommitInfoFromCommitSHA(gitCommit string, ignoreURL bool) (*CommitInfo, error) {
 	branchName, err := gv.BranchName()
 	if err != nil {
 		return &CommitInfo{}, err
@@ -174,16 +192,24 @@ func (gv *GitView) GetCommitInfoFromCommitSHA(gitCommit string) (*CommitInfo, er
 	if err != nil {
 		return &CommitInfo{}, fmt.Errorf("could not retrieve commit for %s: %v", *hash, err)
 	}
-
-	return asCommitInfo(commit, branchName), nil
+	return gv.asCommitInfo(commit, branchName, ignoreURL), nil
 }
 
 // asCommitInfo returns a CommitInfo from a git Commit object
-func asCommitInfo(commit *object.Commit, branchName string) *CommitInfo {
+func (gv *GitView) asCommitInfo(commit *object.Commit, branchName string, ignoreURL bool) *CommitInfo {
 	commitParents := []string{}
 	for _, hash := range commit.ParentHashes {
 		commitParents = append(commitParents, hash.String())
 	}
+
+	commitURL := ""
+	if !ignoreURL {
+		repoURL, err := gv.RepoURL()
+		if err == nil {
+			commitURL = getCommitURL(repoURL, commit.Hash.String())
+		}
+	}
+
 	return &CommitInfo{
 		BasicCommitInfo: BasicCommitInfo{
 			Sha1:      commit.Hash.String(),
@@ -191,8 +217,33 @@ func asCommitInfo(commit *object.Commit, branchName string) *CommitInfo {
 			Author:    commit.Author.String(),
 			Timestamp: commit.Author.When.UTC().Unix(),
 			Branch:    branchName,
+			URL:       commitURL,
 		},
 		Parents: commitParents,
+	}
+}
+
+// getCommitURL attempts to get a url for a commit by constructing
+// a url based on the repoURL extracted from the repo's "origin" remote
+// empty string is returned if unable to construct a url
+func getCommitURL(repoURL, commitHash string) string {
+	parsedURL, err := url.Parse(repoURL)
+	if err != nil {
+		return ""
+	}
+
+	host := parsedURL.Host
+	switch {
+	case strings.Contains(host, "github.com"):
+		return fmt.Sprintf("%s/commit/%s", repoURL, commitHash)
+	case strings.Contains(host, "gitlab.com"):
+		return fmt.Sprintf("%s/-/commit/%s", repoURL, commitHash)
+	case strings.Contains(host, "bitbucket.org"):
+		return fmt.Sprintf("%s/commits/%s", repoURL, commitHash)
+	case strings.Contains(host, "dev.azure.com"):
+		return fmt.Sprintf("%s/commit/%s", repoURL, commitHash)
+	default:
+		return ""
 	}
 }
 
@@ -200,7 +251,7 @@ func asCommitInfo(commit *object.Commit, branchName string) *CommitInfo {
 // matches lookup happens in the commit message first, and if none is found, matching against the branch name is done
 // if no matches are found in both the commit message and the branch name, an empty slice is returned
 func (gv *GitView) MatchPatternInCommitMessageORBranchName(pattern, commitSHA string) ([]string, *CommitInfo, error) {
-	commitInfo, err := gv.GetCommitInfoFromCommitSHA(commitSHA)
+	commitInfo, err := gv.GetCommitInfoFromCommitSHA(commitSHA, true)
 	if err != nil {
 		return []string{}, nil, err
 	}
