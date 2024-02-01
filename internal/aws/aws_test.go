@@ -329,14 +329,15 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 
 func (suite *AWSTestSuite) TestGetS3Data() {
 	for _, t := range []struct {
-		name            string
-		requireEnvVars  bool // indicates that a test case needs real credentials from env vars
-		creds           *AWSStaticCreds
-		bucketName      string
-		includePaths    []string
-		excludePaths    []string
-		wantFingerprint string
-		wantErr         bool
+		name             string
+		requireEnvVars   bool // indicates that a test case needs real credentials from env vars
+		creds            *AWSStaticCreds
+		bucketName       string
+		includePaths     []string
+		excludePaths     []string
+		wantFingerprint  string
+		wantArtifactName string
+		wantErr          bool
 	}{
 		{
 			name: "invalid credentials causes an error",
@@ -390,30 +391,33 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			bucketName:      "kosli-cli-public",
-			includePaths:    []string{"dummy/dummy_2"},
-			requireEnvVars:  true,
-			wantFingerprint: "10ad582d09cc4554d15122900710814377df35a9ccb130826df8be666110c78d",
+			bucketName:       "kosli-cli-public",
+			includePaths:     []string{"dummy/dummy_2"},
+			requireEnvVars:   true,
+			wantFingerprint:  "02eb06f5778c69431b4b00489074b76f05814d8170949f965ebe13a211bf682a",
+			wantArtifactName: "template.yml",
 		},
 		{
 			name: "includePaths is a nested sub-directory starting with slash",
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			bucketName:      "kosli-cli-public",
-			includePaths:    []string{"/dummy/dummy_2"},
-			requireEnvVars:  true,
-			wantFingerprint: "10ad582d09cc4554d15122900710814377df35a9ccb130826df8be666110c78d",
+			bucketName:       "kosli-cli-public",
+			includePaths:     []string{"/dummy/dummy_2"},
+			requireEnvVars:   true,
+			wantFingerprint:  "02eb06f5778c69431b4b00489074b76f05814d8170949f965ebe13a211bf682a",
+			wantArtifactName: "template.yml",
 		},
 		{
 			name: "can get S3 bucket data. includePaths is a file",
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			bucketName:      "kosli-cli-public",
-			includePaths:    []string{"README.md"},
-			requireEnvVars:  true,
-			wantFingerprint: "77b1b4df1eb620e05ce365e9e84d37a7e04fde8a66251c121773d013dfba0ee6",
+			bucketName:       "kosli-cli-public",
+			includePaths:     []string{"README.md"},
+			requireEnvVars:   true,
+			wantFingerprint:  "77b1b4df1eb620e05ce365e9e84d37a7e04fde8a66251c121773d013dfba0ee6",
+			wantArtifactName: "README.md",
 		},
 		{
 			name: "can get S3 bucket data. excludePaths is a file",
@@ -430,10 +434,11 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			bucketName:      "kosli-cli-public",
-			excludePaths:    []string{"dummy"},
-			requireEnvVars:  true,
-			wantFingerprint: "77b1b4df1eb620e05ce365e9e84d37a7e04fde8a66251c121773d013dfba0ee6",
+			bucketName:       "kosli-cli-public",
+			excludePaths:     []string{"dummy"},
+			requireEnvVars:   true,
+			wantFingerprint:  "77b1b4df1eb620e05ce365e9e84d37a7e04fde8a66251c121773d013dfba0ee6",
+			wantArtifactName: "README.md",
 		},
 	} {
 		suite.Run(t.name, func() {
@@ -442,10 +447,13 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetS3Data() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
+				if t.wantArtifactName == "" {
+					t.wantArtifactName = t.bucketName
+				}
 				if t.wantFingerprint == "" {
-					require.Contains(suite.T(), data[0].Digests, t.bucketName)
+					require.Contains(suite.T(), data[0].Digests, t.wantArtifactName)
 				} else {
-					require.Equal(suite.T(), t.wantFingerprint, data[0].Digests[t.bucketName])
+					require.Equal(suite.T(), t.wantFingerprint, data[0].Digests[t.wantArtifactName])
 				}
 			}
 		})

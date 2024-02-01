@@ -283,17 +283,28 @@ func shouldExcludePath(key string, includedPaths, excludedPaths []string) bool {
 	return false
 }
 
-// containsSingleFile checks if a file contains only a single file
+// containsSingleFile checks if a path contains only a single file
 func containsSingleFile(directoryPath string) (bool, string, error) {
 	files, err := os.ReadDir(directoryPath)
 	if err != nil {
 		return false, "", err
 	}
-	path := ""
+
 	if len(files) == 1 {
-		path = filepath.Join(directoryPath, files[0].Name())
+		fileInfo := files[0]
+
+		if fileInfo.IsDir() {
+			// If it's a directory, recursively check inside
+			subDir := filepath.Join(directoryPath, fileInfo.Name())
+			return containsSingleFile(subDir)
+		}
+
+		// If it's a file, return information about it
+		path := filepath.Join(directoryPath, fileInfo.Name())
+		return true, path, nil
 	}
-	return len(files) == 1 && !files[0].IsDir(), path, nil
+
+	return false, "", nil
 }
 
 func objectInPaths(key string, paths []string) bool {
@@ -356,16 +367,18 @@ func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, exclud
 		return s3Data, fmt.Errorf("no matching file or dirs in bucket: [%s]", bucket)
 	}
 
-	fileSnapshot, filename, err := containsSingleFile(tempDirName)
+	fileSnapshot, artifactPath, err := containsSingleFile(tempDirName)
 	if err != nil {
 		return s3Data, err
 	}
 	var sha256 string
+	artifactName := bucket
 	if fileSnapshot {
-		sha256, err = digest.FileSha256(filename)
+		sha256, err = digest.FileSha256(artifactPath)
 		if err != nil {
 			return s3Data, err
 		}
+		artifactName = filepath.Base(artifactPath)
 	} else {
 		sha256, err = digest.DirSha256(tempDirName, []string{}, logger)
 		if err != nil {
@@ -373,7 +386,7 @@ func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, exclud
 		}
 	}
 
-	s3Data = append(s3Data, &S3Data{Digests: map[string]string{bucket: sha256}, LastModifiedTimestamp: lastModifiedTime.Unix()})
+	s3Data = append(s3Data, &S3Data{Digests: map[string]string{artifactName: sha256}, LastModifiedTimestamp: lastModifiedTime.Unix()})
 
 	return s3Data, nil
 }
