@@ -175,8 +175,8 @@ The service principal needs to have the following permissions:
 	attestationAssertFlag       = "[optional] Exit with non-zero code if the attestation is non-compliant"
 	beginTrailCommitFlag        = "[defaulted] The git commit from which the trail is begun. (defaulted in some CIs: https://docs.kosli.com/ci-defaults, otherwise defaults to HEAD )."
 	attachmentsFlag             = "[optional] The comma-separated list of paths of attachments for the reported attestation. Attachments can be files or directories. All attachments are compressed and uploaded to Kosli's evidence vault."
-	externalFingerprintFlag     = "[optional] A SHA256 fingerprint of an external attachment represented by --external-url. The format is label=fingerprint. This flag can be set multiple times. There must be an external url with a matching label for each external fingerprint."
-	externalURLFlag             = "[optional] Add labeled reference URL for an external resource. The format is label=url. This flag can be set multiple times. If the resource is a file or dir, you can optionally add its fingerprint via --external-fingerprint"
+	externalFingerprintFlag     = "[optional] A SHA256 fingerprint of an external attachment represented by --external-url. The format is label=fingerprint (labels cannot contain '.' or '='). This flag can be set multiple times. There must be an external url with a matching label for each external fingerprint."
+	externalURLFlag             = "[optional] Add labeled reference URL for an external resource. The format is label=url (labels cannot contain '.' or '='). This flag can be set multiple times. If the resource is a file or dir, you can optionally add its fingerprint via --external-fingerprint"
 	attestationDescription      = "[optional] attestation description"
 )
 
