@@ -58,7 +58,7 @@ jobs:
       snyk_token: ${{ secrets.SNYK_TOKEN }}
 
   goreleaser:
-    needs: [test]
+    needs: [test, docker]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
