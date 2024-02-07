@@ -29,7 +29,7 @@ on:
 
 env:
   IMAGE: ghcr.io/kosli-dev/cli
-  KOSLI_CLI_VERSION: "2.6.18"
+  KOSLI_CLI_VERSION: "2.7.8"
   # KOSLI_DRY_RUN: "True"
   # Ordinarily we declare KOSLI_ORG and KOSLI_FLOW here but
   # this interferes with the CLI integration tests
