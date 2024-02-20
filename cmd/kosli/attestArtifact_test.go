@@ -51,10 +51,9 @@ func (suite *AttestArtifactCommandTestSuite) TestAttestArtifactCmd() {
 			golden:    "Error: xxxx is not a valid SHA256 fingerprint. It should match the pattern ^([a-f0-9]{64})$\nUsage: kosli attest artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]\n",
 		},
 		{
-			wantError: true,
-			name:      "fails when --name does not match artifact name in the template",
-			cmd:       fmt.Sprintf("attest artifact testdata/file1 --artifact-type file --name bar --commit HEAD --build-url example.com --commit-url example.com  %s", suite.defaultKosliArguments),
-			golden:    "Error: Artifact 'bar' does not exist in trail template 'test-123'.\nAvailable artifacts: cli\n",
+			name:   "works when --name does not match artifact name in the template (extra artifact)",
+			cmd:    fmt.Sprintf("attest artifact testdata/file1 --artifact-type file --name bar --commit HEAD --build-url example.com --commit-url example.com  %s", suite.defaultKosliArguments),
+			golden: "artifact file1 was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\n",
 		},
 		{
 			name:   "can attest a file artifact",

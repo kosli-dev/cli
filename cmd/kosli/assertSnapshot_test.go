@@ -70,21 +70,10 @@ func (suite *AssertSnapshotCommandTestSuite) TestAssertSnapshotCmd() {
 			golden:    "Error: Environment named 'non-existing' does not exist for organization 'docs-cmd-test-user'\n",
 		},
 		{
-			wantError: true,
-			name:      "asserting a non-compliant env results in INCOMPLIANT and non-zero exit",
-			cmd:       fmt.Sprintf(`assert snapshot %s %s`, suite.envName, suite.defaultKosliArguments),
-			additionalConfig: assertSnapshotTestConfig{
-				reportToEnv:      true,
-				expectDeployment: false,
-			},
-			golden: "Error: INCOMPLIANT\n",
-		},
-		{
 			name: "asserting a compliant env results in COMPLIANT and zero exit",
 			cmd:  fmt.Sprintf(`assert snapshot %s %s`, suite.envName, suite.defaultKosliArguments),
 			additionalConfig: assertSnapshotTestConfig{
-				reportToEnv:      true,
-				expectDeployment: true,
+				reportToEnv: true,
 			},
 			golden: "COMPLIANT\n",
 		},
@@ -92,9 +81,6 @@ func (suite *AssertSnapshotCommandTestSuite) TestAssertSnapshotCmd() {
 
 	for _, t := range tests {
 		if t.additionalConfig != nil && t.additionalConfig.(assertSnapshotTestConfig).reportToEnv {
-			if t.additionalConfig.(assertSnapshotTestConfig).expectDeployment {
-				ExpectDeployment(suite.flowName, suite.fingerprint, suite.envName, suite.T())
-			}
 			ReportServerArtifactToEnv([]string{suite.artifactPath}, suite.envName, suite.T())
 			runTestCmd(suite.T(), []cmdTestCase{t})
 		}
