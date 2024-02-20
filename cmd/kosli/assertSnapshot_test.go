@@ -22,8 +22,7 @@ type AssertSnapshotCommandTestSuite struct {
 }
 
 type assertSnapshotTestConfig struct {
-	reportToEnv      bool
-	expectDeployment bool
+	reportToEnv bool
 }
 
 func (suite *AssertSnapshotCommandTestSuite) SetupTest() {
