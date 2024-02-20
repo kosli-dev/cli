@@ -50,20 +50,20 @@ func (suite *ExpectDeploymentCommandTestSuite) TestExpectDeploymentCmd() {
 			name: "expect deployment works (with --fingerprint)",
 			cmd: fmt.Sprintf(`expect deployment --flow %s --fingerprint %s --environment %s --build-url example.com %s`,
 				suite.flowName, suite.fingerprint, suite.envName, suite.defaultKosliArguments),
-			golden: fmt.Sprintf("expect deployment of artifact %s was reported to: expect-deploy-env\n", suite.fingerprint),
+			golden: fmt.Sprintf("Command \"deployment\" is deprecated, deployment expectation is no longer required for compliance.\nexpect deployment of artifact %s was reported to: expect-deploy-env\n", suite.fingerprint),
 		},
 		{
 			name: "expect deployment works (with --artifact-type)",
 			cmd: fmt.Sprintf(`expect deployment %s --artifact-type file --flow %s --fingerprint %s --environment %s --build-url example.com %s`,
 				suite.artifactPath, suite.flowName, suite.fingerprint, suite.envName, suite.defaultKosliArguments),
-			golden: fmt.Sprintf("expect deployment of artifact %s was reported to: expect-deploy-env\n", suite.fingerprint),
+			golden: fmt.Sprintf("Command \"deployment\" is deprecated, deployment expectation is no longer required for compliance.\nexpect deployment of artifact %s was reported to: expect-deploy-env\n", suite.fingerprint),
 		},
 		{
 			name: "expect deployment works with --user-data",
 			cmd: fmt.Sprintf(`expect deployment --flow %s --fingerprint %s --environment %s --build-url example.com
 								--user-data testdata/snyk_scan_example.json %s`,
 				suite.flowName, suite.fingerprint, suite.envName, suite.defaultKosliArguments),
-			golden: fmt.Sprintf("expect deployment of artifact %s was reported to: expect-deploy-env\n", suite.fingerprint),
+			golden: fmt.Sprintf("Command \"deployment\" is deprecated, deployment expectation is no longer required for compliance.\nexpect deployment of artifact %s was reported to: expect-deploy-env\n", suite.fingerprint),
 		},
 		{
 			wantError: true,
@@ -71,7 +71,7 @@ func (suite *ExpectDeploymentCommandTestSuite) TestExpectDeploymentCmd() {
 			cmd: fmt.Sprintf(`expect deployment --flow %s --fingerprint %s --environment %s --build-url example.com
 			 		--api-token secret`,
 				suite.flowName, suite.fingerprint, suite.envName),
-			golden: "Error: --org is not set\nUsage: kosli expect deployment [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+			golden: "Command \"deployment\" is deprecated, deployment expectation is no longer required for compliance.\nError: --org is not set\nUsage: kosli expect deployment [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
@@ -79,7 +79,7 @@ func (suite *ExpectDeploymentCommandTestSuite) TestExpectDeploymentCmd() {
 			cmd: fmt.Sprintf(`expect deployment --flow %s --fingerprint %s --environment %s --build-url example.com
 			 		--org orgX`,
 				suite.flowName, suite.fingerprint, suite.envName),
-			golden: "Error: --api-token is not set\nUsage: kosli expect deployment [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+			golden: "Command \"deployment\" is deprecated, deployment expectation is no longer required for compliance.\nError: --api-token is not set\nUsage: kosli expect deployment [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
@@ -87,28 +87,28 @@ func (suite *ExpectDeploymentCommandTestSuite) TestExpectDeploymentCmd() {
 			cmd: fmt.Sprintf(`expect deployment --flow %s --fingerprint %s --environment %s --build-url example.com
 								--user-data non-existing.json %s`,
 				suite.flowName, suite.fingerprint, suite.envName, suite.defaultKosliArguments),
-			golden: "Error: open non-existing.json: no such file or directory\n",
+			golden: "Command \"deployment\" is deprecated, deployment expectation is no longer required for compliance.\nError: open non-existing.json: no such file or directory\n",
 		},
 		{
 			wantError: true,
 			name:      "expect deployment fails if --flow is missing",
 			cmd: fmt.Sprintf(`expect deployment --fingerprint %s --environment %s --build-url example.com %s`,
 				suite.fingerprint, suite.envName, suite.defaultKosliArguments),
-			golden: "Error: required flag(s) \"flow\" not set\n",
+			golden: "Command \"deployment\" is deprecated, deployment expectation is no longer required for compliance.\nError: required flag(s) \"flow\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "expect deployment fails if --environment is missing",
 			cmd: fmt.Sprintf(`expect deployment --flow %s --fingerprint %s --build-url example.com %s`,
 				suite.flowName, suite.fingerprint, suite.defaultKosliArguments),
-			golden: "Error: required flag(s) \"environment\" not set\n",
+			golden: "Command \"deployment\" is deprecated, deployment expectation is no longer required for compliance.\nError: required flag(s) \"environment\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "expect deployment fails if --build-url is missing",
 			cmd: fmt.Sprintf(`expect deployment --flow %s --fingerprint %s --environment %s %s`,
 				suite.flowName, suite.fingerprint, suite.envName, suite.defaultKosliArguments),
-			golden: "Error: required flag(s) \"build-url\" not set\n",
+			golden: "Command \"deployment\" is deprecated, deployment expectation is no longer required for compliance.\nError: required flag(s) \"build-url\" not set\n",
 		},
 	}
 
