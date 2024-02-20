@@ -142,7 +142,7 @@ func Tar(src, tarFileName string) (string, error) {
 }
 
 func CreateFileWithContent(path, content string) error {
-	file, err := os.Create(path)
+	file, err := CreateFile(path)
 	if err != nil {
 		return err
 	}
