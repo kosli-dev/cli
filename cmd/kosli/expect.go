@@ -10,9 +10,10 @@ const expectDesc = `All Kosli expect commands.`
 
 func newExpectCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "expect",
-		Short: expectDesc,
-		Long:  expectDesc,
+		Use:        "expect",
+		Short:      expectDesc,
+		Long:       expectDesc,
+		Deprecated: "all child commands are deprecated",
 	}
 
 	// Add subcommands
