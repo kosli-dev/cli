@@ -33,10 +33,11 @@ func newExpectDeploymentCmd(out io.Writer) *cobra.Command {
 	o := new(expectDeploymentOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "deployment [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Short: expectDeploymentShortDesc,
-		Long:  expectDeploymentLongDesc,
-		Args:  cobra.MaximumNArgs(1),
+		Use:        "deployment [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Short:      expectDeploymentShortDesc,
+		Long:       expectDeploymentLongDesc,
+		Args:       cobra.MaximumNArgs(1),
+		Deprecated: "deployment expectation is no longer required for compliance.",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
