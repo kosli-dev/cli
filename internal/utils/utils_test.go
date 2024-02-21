@@ -250,6 +250,65 @@ func (suite *UtilsTestSuite) TestTar() {
 	}
 }
 
+func (suite *UtilsTestSuite) TestIsPathEmpty() {
+	for _, t := range []struct {
+		name      string
+		dirOrFile string
+		empty     bool
+		wantEmpty bool
+		wantError bool
+	}{
+		{
+			name:      "empty file is checked correctly",
+			dirOrFile: "file",
+			empty:     true,
+			wantEmpty: true,
+		},
+		{
+			name:      "non-empty file is checked correctly",
+			dirOrFile: "file",
+			empty:     false,
+			wantEmpty: false,
+		},
+		{
+			name:      "empty dir is checked correctly",
+			dirOrFile: "dir",
+			empty:     true,
+			wantEmpty: true,
+		},
+		{
+			name:      "non-empty dir is checked correctly",
+			dirOrFile: "dir",
+			empty:     false,
+			wantEmpty: false,
+		},
+	} {
+		suite.Run(t.name, func() {
+			tmpDir, err := os.MkdirTemp("", "")
+			require.NoError(suite.T(), err)
+			filePath := filepath.Join(tmpDir, "newFile.txt")
+			if !t.empty {
+				suite.createFileWithContent(filePath, "Hello World!")
+			} else if t.empty && t.dirOrFile == "file" {
+				suite.createFileWithContent(filePath, "")
+			}
+
+			defer os.RemoveAll(tmpDir)
+
+			path := tmpDir
+			if t.dirOrFile == "file" {
+				path = filePath
+			}
+			result, err := IsPathEmpty(path)
+			if !t.wantError {
+				require.Equal(suite.T(), t.wantEmpty, result)
+			} else {
+				require.Error(suite.T(), err)
+			}
+		})
+	}
+}
+
 func (suite *UtilsTestSuite) createFileWithContent(path, content string) {
 	err := CreateFileWithContent(path, content)
 	require.NoErrorf(suite.T(), err, "error creating file %s", path)

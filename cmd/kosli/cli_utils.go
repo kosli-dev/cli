@@ -593,6 +593,9 @@ func getPathOfEvidenceFileToUpload(evidencePaths []string) (string, bool, error)
 			return "", cleanupNeeded, err
 		}
 		if ok {
+			if empty, err := utils.IsPathEmpty(evidencePaths[0]); empty || err != nil {
+				return "", cleanupNeeded, fmt.Errorf("file %s is empty", evidencePaths[0])
+			}
 			logger.Debug("file %s is provided as evidence", evidencePaths[0])
 			return evidencePaths[0], cleanupNeeded, nil
 		}
@@ -628,6 +631,9 @@ func getPathOfEvidenceFileToUpload(evidencePaths []string) (string, bool, error)
 		defer os.RemoveAll(tmpDir)
 	}
 
+	if empty, err := utils.IsPathEmpty(dirToTar); empty || err != nil {
+		return "", cleanupNeeded, fmt.Errorf("attachments are empty")
+	}
 	// tar the required dir and return the path of the tar file
 	tarFilePath, err := utils.Tar(dirToTar, "evidence.tgz")
 	if err != nil {

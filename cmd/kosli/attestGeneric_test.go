@@ -101,6 +101,12 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 			golden: "generic attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
+			wantError: true,
+			name:      "fails when attesting a generic attestation with attachment file that is empty",
+			cmd:       fmt.Sprintf("attest generic --name bar --attachments testdata/empty_file %s", suite.defaultKosliArguments),
+			golden:    "Error: file testdata/empty_file is empty\n",
+		},
+		{
 			name:   "can attest generic attestation with external-url against a trail",
 			cmd:    fmt.Sprintf("attest generic --name bar --external-url foo=https://foo.com %s", suite.defaultKosliArguments),
 			golden: "generic attestation 'bar' is reported to trail: test-123\n",
