@@ -218,45 +218,9 @@ COMMIT   ARTIFACT                                                               
          Fingerprint: 2bcabc23b45489fb0885d69a06ba1d648aeda973fae7bb981bafbb884165e514                 
 ```
 
-<<<<<<< HEAD
-## Step 6: Report expected deployment of the Artifact
-
-Before you run the nginx docker image (the Artifact) on your docker host, you need to report 
-to Kosli your intention of deploying that image. This allows Kosli to match what you 
-*expect* to run in your environment with what is *actually* running, and flag any mismatches.  
-
-```shell {.command}
-kosli expect deployment nginx:1.21 \
-    --flow quickstart-nginx \
-    --artifact-type docker \
-    --build-url https://example.com \
-    --environment quickstart \
-    --description "quickstart-nginx artifact deployed to quickstart env"
-```
-
-You can verify the deployment with:
-
-```shell {.command}
-kosli list deployments --flow quickstart-nginx
-```
-
-The output will include the fingerprint (starting 2bcabc) of the nginx:1.21 image:
-
-```plaintext {.light-console}
-ID   ARTIFACT                                                                       ENVIRONMENT  REPORTED_AT
-1    Name: nginx:1.21                                                               quickstart   Tue, 01 Nov 2022 15:48:47 CET
-     Fingerprint: 2bcabc23b45489fb0885d69a06ba1d648aeda973fae7bb981bafbb884165e514  
-```
-
-## Step 7: Deploy the Artifact
-
-Now run the Artifact:
-
-=======
-## Step 5: Report what is running in your environment
+## Step 6: Report what is running in your environment
 
 First, run the artifact:
->>>>>>> main
 ```shell {.command}
 docker-compose up -d
 ```
@@ -273,11 +237,6 @@ CONTAINER ID  IMAGE      COMMAND                 CREATED         STATUS         
 6330e545b532  nginx:1.21 "/docker-entrypoint.…"  35 seconds ago  Up 34 seconds  0.0.0.0:8080->80/tcp   quickstart-nginx
 ```
 
-<<<<<<< HEAD
-## Step 8: Report what is running in your environment
-
-=======
->>>>>>> main
 Report all the docker containers running on your machine to Kosli:
 
 ```shell {.command}
@@ -317,11 +276,7 @@ that there is now a timestamp for *Last Change At* column.
 Select the *quickstart* link on left for a detailed view of what is currently running.
 {{< /hint >}}
 
-<<<<<<< HEAD
-## Step 9: Searching Kosli
-=======
-## Step 6: Searching Kosli
->>>>>>> main
+## Step 7: Searching Kosli
 
 Now that you have reported your Artifact and what's running in your runtime environment,
 you can use the `kosli search` command to find everything Kosli knows about an Artifact or a git-commit.
@@ -348,9 +303,4 @@ History:
     Started running in quickstart#1 environment  Tue, 01 Nov 2022 15:55:49 CET
 ```
 
-<<<<<<< HEAD
-
-Visit the [Kosli Querying](/getting_started/querying/) guide to learn more about the search command.
-=======
 Visit the [Kosli Querying](/tutorials/querying_kosli/) guide to learn more about the search command.
->>>>>>> main
