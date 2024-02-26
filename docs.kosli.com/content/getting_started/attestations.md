@@ -77,7 +77,7 @@ You can report results of a Snyk security scan to Kosli and it will analyze the 
 Currently, only `snyk container scan` results are supported for this type. For `snyk code scan` please use the generic attestation type.
 {{< /hint >}}
 
-See [attest Snyk results o an artifact or a trail](/client_reference/kosli_attest_snyk/) for usage details and examples.
+See [attest Snyk results to an artifact or a trail](/client_reference/kosli_attest_snyk/) for usage details and examples.
 
 
 ### Jira issues

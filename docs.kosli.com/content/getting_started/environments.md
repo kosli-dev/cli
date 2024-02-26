@@ -1,9 +1,9 @@
 ---
-title: "Part 9: Environments"
+title: "Part 8: Environments"
 bookCollapseSection: false
-weight: 300
+weight: 280
 ---
-# Part 9: Environments
+# Part 8: Environments
 
 Kosli environments allow you to record the artifacts running in your runtime environments and how they change. Every time an environment change (or a set of changes) is reported, Kosli creates a new environment snapshot containing the status of the environment at a given point in time.
 
