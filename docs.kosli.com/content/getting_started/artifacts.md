@@ -9,7 +9,7 @@ In software processes, you typically generate one or more artifacts that are dep
 
 ## Binary provenance
 
-Binary provenance for artifacts refers to the ability to trace and verify the origins, history, and journey of the artifacts throughout their lifecycle. This involves recording immutable attestations about the artifact creation, risk controls performed on it, distribution and execution/usage.
+Binary provenance for artifacts refers to the ability to trace and verify the origins, history, and journey of the artifacts throughout their lifecycle. This involves recording immutable attestations about the artifact creation, risk controls performed on it, deployments, and execution/usage.
 
 Artifacts are uniquely identified by their SHA256 fingerprints. When attesting an artifact to Kosli, you have the option to either provide the fingerprint manually or allow Kosli CLI to calculate it automatically for you.
 
