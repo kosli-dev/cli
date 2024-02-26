@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/kosli-dev/cli/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -34,8 +37,9 @@ kosli create flow yourFlowName \
 `
 
 type createFlowOptions struct {
-	payload      FlowPayload
-	TemplateFile string
+	payload          FlowPayload
+	TemplateFile     string
+	UseEmptyTemplate bool
 }
 
 type FlowPayload struct {
@@ -64,6 +68,11 @@ func newCreateFlowCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
+			err = MuXRequiredFlags(cmd, []string{"template-file", "use-empty-template"}, false)
+			if err != nil {
+				return err
+			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -75,6 +84,7 @@ func newCreateFlowCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.payload.Visibility, "visibility", "private", visibilityFlag)
 	cmd.Flags().StringSliceVarP(&o.payload.Template, "template", "t", []string{}, templateFlag)
 	cmd.Flags().StringVarP(&o.TemplateFile, "template-file", "f", "", templateFileFlag)
+	cmd.Flags().BoolVar(&o.UseEmptyTemplate, "use-empty-template", false, useEmptyTemplateFlag)
 	addDryRunFlag(cmd)
 
 	return cmd
@@ -85,8 +95,22 @@ func (o *createFlowOptions) run(args []string) error {
 	var url string
 	o.payload.Name = args[0]
 
-	if o.TemplateFile != "" {
+	if o.TemplateFile != "" || o.UseEmptyTemplate {
 		url = fmt.Sprintf("%s/api/v2/flows/%s/template_file", global.Host, global.Org)
+		if o.TemplateFile == "" {
+			tmpDir, err := os.MkdirTemp("", "default-template")
+			if err != nil {
+				return fmt.Errorf("failed to create tmp directory for default template: %v", err)
+			}
+			defaultTemplatePath := filepath.Join(tmpDir, "template.yml")
+			err = utils.CreateFileWithContent(defaultTemplatePath, "version: 1")
+			if err != nil {
+				return fmt.Errorf("failed to create default template: %v", err)
+			}
+			o.TemplateFile = defaultTemplatePath
+			defer os.RemoveAll(tmpDir)
+		}
+
 		form, err := newFlowForm(o.payload, o.TemplateFile, false)
 		if err != nil {
 			return err
@@ -100,6 +124,7 @@ func (o *createFlowOptions) run(args []string) error {
 			Password: global.ApiToken,
 		}
 	} else {
+		// legacy flows
 		url = fmt.Sprintf("%s/api/v2/flows/%s", global.Host, global.Org)
 		o.payload.Template = injectArtifactIntoTemplateIfNotExisting(o.payload.Template)
 

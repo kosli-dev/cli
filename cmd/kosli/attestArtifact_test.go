@@ -51,10 +51,9 @@ func (suite *AttestArtifactCommandTestSuite) TestAttestArtifactCmd() {
 			golden:    "Error: xxxx is not a valid SHA256 fingerprint. It should match the pattern ^([a-f0-9]{64})$\nUsage: kosli attest artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]\n",
 		},
 		{
-			wantError: true,
-			name:      "fails when --name does not match artifact name in the template",
-			cmd:       fmt.Sprintf("attest artifact testdata/file1 --artifact-type file --name bar --commit HEAD --build-url example.com --commit-url example.com  %s", suite.defaultKosliArguments),
-			golden:    "Error: Artifact 'bar' does not exist in trail template 'test-123'.\nAvailable artifacts: cli\n",
+			name:   "works when --name does not match artifact name in the template (extra artifact)",
+			cmd:    fmt.Sprintf("attest artifact testdata/file1 --artifact-type file --name bar --commit HEAD --build-url example.com --commit-url example.com  %s", suite.defaultKosliArguments),
+			golden: "artifact file1 was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\n",
 		},
 		{
 			name:   "can attest a file artifact",
@@ -65,6 +64,28 @@ func (suite *AttestArtifactCommandTestSuite) TestAttestArtifactCmd() {
 			name:   "can attest an artifact with --fingerprint",
 			cmd:    fmt.Sprintf("attest artifact testdata/file1 --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name cli --commit HEAD --build-url example.com --commit-url example.com  %s", suite.defaultKosliArguments),
 			golden: "artifact testdata/file1 was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\n",
+		},
+		{
+			name:   "can attest an artifact with external urls",
+			cmd:    fmt.Sprintf("attest artifact testdata/file1 --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name cli --commit HEAD --build-url example.com --commit-url example.com --external-url jira=https://jira.kosli.com  %s", suite.defaultKosliArguments),
+			golden: "artifact testdata/file1 was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\n",
+		},
+		{
+			name:   "can attest an artifact with external urls and fingerprints",
+			cmd:    fmt.Sprintf("attest artifact testdata/file1 --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name cli --commit HEAD --build-url example.com --commit-url example.com --external-url file=https://kosli.com/file --external-fingerprint file=7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9  %s", suite.defaultKosliArguments),
+			golden: "artifact testdata/file1 was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when --external-fingerprint has more items than external urls",
+			cmd:       fmt.Sprintf("attest artifact testdata/file1 --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name cli --commit HEAD --build-url example.com --commit-url example.com --external-fingerprint file=7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9  %s", suite.defaultKosliArguments),
+			golden:    "Error: --external-fingerprints have labels that don't have a URL in --external-url\n",
+		},
+		{
+			wantError: true,
+			name:      "fails (from server) when --external-fingerprint has invalid fingerprint",
+			cmd:       fmt.Sprintf("attest artifact testdata/file1 --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name cli --commit HEAD --build-url example.com --commit-url example.com --external-url file=https://example.com --external-fingerprint file=7509e5bda0  %s", suite.defaultKosliArguments),
+			golden:    "Error: Input payload validation failed: map[external_urls.file.fingerprint:'7509e5bda0' does not match '^[a-f0-9]{64}$']\n",
 		},
 	}
 

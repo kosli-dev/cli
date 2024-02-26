@@ -260,7 +260,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 				AccessKeyID:     "ssss",
 				SecretAccessKey: "ssss",
 			},
-			functionNames: []string{"ewelina-test"},
+			functionNames: []string{"cli-tests"},
 			wantErr:       true,
 		},
 		{
@@ -268,7 +268,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			creds: &AWSStaticCreds{
 				Region: "ap-south-1",
 			},
-			functionNames:  []string{"ewelina-test"},
+			functionNames:  []string{"cli-tests"},
 			requireEnvVars: true,
 			wantErr:        true,
 		},
@@ -277,8 +277,8 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			functionNames:    []string{"ewelina-test"},
-			wantFingerprints: []string{"61db6a4ac396a7af4c48bc927c9d02e5a093ddc2a4c51b50d2194be436452592"},
+			functionNames:    []string{"cli-tests"},
+			wantFingerprints: []string{"321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"},
 			requireEnvVars:   true,
 		},
 		{
@@ -286,8 +286,8 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			functionNames:    []string{"lambda-docker-test"},
-			wantFingerprints: []string{"e3e2e565788902e24d1b17c0c6bdb7dfc1cdfe6193b762482bbe982bd83a9876"},
+			functionNames:    []string{"cli-tests-docker"},
+			wantFingerprints: []string{"e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"},
 			requireEnvVars:   true,
 		},
 		{
@@ -295,9 +295,9 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			functionNames: []string{"lambda-docker-test", "ewelina-test"},
-			wantFingerprints: []string{"e3e2e565788902e24d1b17c0c6bdb7dfc1cdfe6193b762482bbe982bd83a9876",
-				"61db6a4ac396a7af4c48bc927c9d02e5a093ddc2a4c51b50d2194be436452592"},
+			functionNames: []string{"cli-tests-docker", "cli-tests"},
+			wantFingerprints: []string{"e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e",
+				"321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"},
 			requireEnvVars: true,
 		},
 	} {
@@ -329,12 +329,15 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 
 func (suite *AWSTestSuite) TestGetS3Data() {
 	for _, t := range []struct {
-		name            string
-		requireEnvVars  bool // indicates that a test case needs real credentials from env vars
-		creds           *AWSStaticCreds
-		bucketName      string
-		wantFingerprint string
-		wantErr         bool
+		name             string
+		requireEnvVars   bool // indicates that a test case needs real credentials from env vars
+		creds            *AWSStaticCreds
+		bucketName       string
+		includePaths     []string
+		excludePaths     []string
+		wantFingerprint  string
+		wantArtifactName string
+		wantErr          bool
 	}{
 		{
 			name: "invalid credentials causes an error",
@@ -356,24 +359,101 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 			wantErr:        true,
 		},
 		{
-			name: "can get S3 bucket data",
+			name: "can get S3 bucket data from entire bucket",
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
 			bucketName:     "kosli-cli-public",
 			requireEnvVars: true,
 		},
+		{
+			name: "can get S3 bucket data. includePaths is a sub-directory",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			bucketName:      "kosli-cli-public",
+			includePaths:    []string{"dummy"},
+			requireEnvVars:  true,
+			wantFingerprint: "1b7888b437ba378a9884a937552cb1f945f420c3f4201437b42e690f102ff698",
+		},
+		{
+			name: "when includePaths is not an absolute or relative paths",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			bucketName:     "kosli-cli-public",
+			includePaths:   []string{"dummy_2"},
+			requireEnvVars: true,
+			wantErr:        true,
+		},
+		{
+			name: "can get S3 bucket data. includePaths is a nested sub-directory",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			bucketName:       "kosli-cli-public",
+			includePaths:     []string{"dummy/dummy_2"},
+			requireEnvVars:   true,
+			wantFingerprint:  "02eb06f5778c69431b4b00489074b76f05814d8170949f965ebe13a211bf682a",
+			wantArtifactName: "template.yml",
+		},
+		{
+			name: "includePaths is a nested sub-directory starting with slash",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			bucketName:       "kosli-cli-public",
+			includePaths:     []string{"/dummy/dummy_2"},
+			requireEnvVars:   true,
+			wantFingerprint:  "02eb06f5778c69431b4b00489074b76f05814d8170949f965ebe13a211bf682a",
+			wantArtifactName: "template.yml",
+		},
+		{
+			name: "can get S3 bucket data. includePaths is a file",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			bucketName:       "kosli-cli-public",
+			includePaths:     []string{"README.md"},
+			requireEnvVars:   true,
+			wantFingerprint:  "77b1b4df1eb620e05ce365e9e84d37a7e04fde8a66251c121773d013dfba0ee6",
+			wantArtifactName: "README.md",
+		},
+		{
+			name: "can get S3 bucket data. excludePaths is a file",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			bucketName:      "kosli-cli-public",
+			excludePaths:    []string{"README.md"},
+			requireEnvVars:  true,
+			wantFingerprint: "1b7888b437ba378a9884a937552cb1f945f420c3f4201437b42e690f102ff698",
+		},
+		{
+			name: "can get S3 bucket data. excludePaths is a dir",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			bucketName:       "kosli-cli-public",
+			excludePaths:     []string{"dummy"},
+			requireEnvVars:   true,
+			wantFingerprint:  "77b1b4df1eb620e05ce365e9e84d37a7e04fde8a66251c121773d013dfba0ee6",
+			wantArtifactName: "README.md",
+		},
 	} {
 		suite.Run(t.name, func() {
 			skipOrSetCreds(suite.T(), t.requireEnvVars, t.creds)
-			data, err := t.creds.GetS3Data(t.bucketName, logger.NewStandardLogger())
+			data, err := t.creds.GetS3Data(t.bucketName, t.includePaths, t.excludePaths, logger.NewStandardLogger())
 			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetS3Data() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
+				if t.wantArtifactName == "" {
+					t.wantArtifactName = t.bucketName
+				}
 				if t.wantFingerprint == "" {
-					require.Contains(suite.T(), data[0].Digests, t.bucketName)
+					require.Contains(suite.T(), data[0].Digests, t.wantArtifactName)
 				} else {
-					require.Equal(suite.T(), t.wantFingerprint, data[0].Digests[t.bucketName])
+					require.Equal(suite.T(), t.wantFingerprint, data[0].Digests[t.wantArtifactName])
 				}
 			}
 		})

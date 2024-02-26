@@ -10,23 +10,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const snapshotAzureAppsShortDesc = `Report a snapshot of running Azure service apps and function apps in an Azure resource group to Kosli.  `
+const snapshotAzureAppsShortDesc = `Report a snapshot of running Azure web apps and function apps in an Azure resource group to Kosli.  `
 
 const snapshotAzureAppsLongDesc = snapshotAzureAppsShortDesc + `
 The reported data includes Azure app names, container image digests and creation timestamps.` + azureAuthDesc
 
 const snapshotAzureAppsExample = `
-# Use Docker logs of Azure apps to get the digests for artifacts in a snapshot
-kosli snapshot azure yourEnvironmentName \
-	--azure-client-id yourAzureClientID \
-	--azure-client-secret yourAzureClientSecret \
-	--azure-tenant-id yourAzureTenantID \
-	--azure-subscription-id yourAzureSubscriptionID \
-	--azure-resource-group-name yourAzureResourceGroupName \
-	--digests-source logs \
-	--api-token yourAPIToken \
-	--org yourOrgName
-
 # Use Azure Container Registry to get the digests for artifacts in a snapshot
 kosli snapshot azure yourEnvironmentName \
 	--azure-client-id yourAzureClientID \
@@ -35,6 +24,17 @@ kosli snapshot azure yourEnvironmentName \
 	--azure-subscription-id yourAzureSubscriptionID \
 	--azure-resource-group-name yourAzureResourceGroupName \
 	--digests-source acr \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# Use Docker logs of Azure apps to get the digests for artifacts in a snapshot
+kosli snapshot azure yourEnvironmentName \
+	--azure-client-id yourAzureClientID \
+	--azure-client-secret yourAzureClientSecret \
+	--azure-tenant-id yourAzureTenantID \
+	--azure-subscription-id yourAzureSubscriptionID \
+	--azure-resource-group-name yourAzureResourceGroupName \
+	--digests-source logs \
 	--api-token yourAPIToken \
 	--org yourOrgName
 `
@@ -51,7 +51,6 @@ func newSnapshotAzureAppsCmd(out io.Writer) *cobra.Command {
 		Short:   snapshotAzureAppsShortDesc,
 		Long:    snapshotAzureAppsLongDesc,
 		Example: snapshotAzureAppsExample,
-		Hidden:  true,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})

@@ -18,6 +18,7 @@ func newRenameCmd(out io.Writer) *cobra.Command {
 	// Add subcommands
 	cmd.AddCommand(
 		newRenameEnvironmentCmd(out),
+		newRenameFlowCmd(out),
 	)
 	return cmd
 }

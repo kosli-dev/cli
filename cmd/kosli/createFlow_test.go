@@ -89,6 +89,17 @@ func (suite *CreateFlowCommandTestSuite) TestCreateFlowCmd() {
 			cmd:         "create flow newFlowWithTemplate --template-file testdata/invalid_template.yml --description \"my new flow\" " + suite.defaultKosliArguments,
 			goldenRegex: "Error: template file is invalid 1 validation error for Template\n.*",
 		},
+		{
+			wantError: true,
+			name:      "fails when both --template-file and --use-empty-template are provided",
+			cmd:       "create flow newFlowWithTemplate --use-empty-template --template-file testdata/valid_template.yml --description \"my new flow\" " + suite.defaultKosliArguments,
+			golden:    "Error: only one of --template-file, --use-empty-template is allowed\n",
+		},
+		{
+			name:   "creating a flow with --use-empty-template works",
+			cmd:    "create flow newFlowWithEmptyTemplate --use-empty-template --description \"changed description\" " + suite.defaultKosliArguments,
+			golden: "flow 'newFlowWithEmptyTemplate' was created\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

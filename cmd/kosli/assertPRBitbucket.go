@@ -47,7 +47,7 @@ func newAssertPullRequestBitbucketCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	addBitbucketFlags(cmd, o.bbConfig, ci)
-	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
+	cmd.Flags().StringVar(&o.commit, "commit", DefaultValueForCommit(ci, true), commitPREvidenceFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"bitbucket-username", "bitbucket-password",

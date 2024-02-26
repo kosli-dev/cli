@@ -47,4 +47,3 @@ Notably, change sources can originate from diverse environments, including build
 
 {{<figure src="/images/kosli-overview-docs.jpg" alt="Kosli overview" width="1000">}}
 
-

@@ -55,26 +55,3 @@ jobs:
       ghcr_token: ${{ secrets.GHCR_TOKEN }}
       kosli_api_token: ${{ secrets.KOSLI_API_TOKEN_PROD }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}
-  
-  upload-kosli-reporter-package-staging:
-    needs: [pre-build, test]
-    if: ${{ github.ref == 'refs/heads/main' }}
-    uses: kosli-dev/cli/.github/workflows/upload-reporter-package.yml@main
-    with:
-      tag: ${{ needs.pre-build.outputs.tag }}
-      s3_name: reporter-lambda-stagingdacef8339fbd41ce31c346f854a85d0c74f7c4e8
-      AWS_ACCOUNT_ID: 772819027869
-      AWS_REGION: eu-central-1
-
-  deploy-staging-reporters:
-    runs-on: ubuntu-20.04
-    needs: [pre-build, upload-kosli-reporter-package-staging]
-    if: ${{ github.ref == 'refs/heads/main' }}
-    steps:
-      - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@v2
-        with:
-          token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
-          repository: kosli-dev/kosli-reporter
-          event-type: deploy-reporter
-          client-payload: '{"env": "staging", "tag": "${{ needs.pre-build.outputs.tag }}"}'

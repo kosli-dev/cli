@@ -48,7 +48,8 @@ To authenticate to Azure, you need to create Azure service principal with a secr
 and provide these Azure credentials via flags or by exporting the equivalent KOSLI env vars (e.g. KOSLI_AZURE_CLIENT_ID).  
 The service principal needs to have the following permissions:  
   1) Microsoft.Web/sites/Read  
-  2) microsoft.web/sites/containerlogs/action  
+  2) Microsoft.ContainerRegistry/registries/pull/read  
+
 	`
 
 	// flags
@@ -66,9 +67,6 @@ The service principal needs to have the following permissions:
 	flowNameFlag                = "The Kosli flow name."
 	trailNameFlag               = "The Kosli trail name."
 	templateArtifactName        = "The name of the artifact in the yml template file."
-	auditTrailNameFlag          = "The Kosli audit trail name."
-	workflowIDFlag              = "The ID of the workflow."
-	stepNameFlag                = "The name of the step as defined in the audit trail's steps."
 	flowNamesFlag               = "[defaulted] The comma separated list of Kosli flows. Defaults to all flows of the org."
 	newFlowFlag                 = "The name of the flow to be created or updated."
 	outputFlag                  = "[defaulted] The format of the output. Valid formats are: [table, json]."
@@ -95,11 +93,10 @@ The service principal needs to have the following permissions:
 	envDescriptionFlag          = "[optional] The environment description."
 	flowDescriptionFlag         = "[optional] The Kosli flow description."
 	trailDescriptionFlag        = "[optional] The Kosli trail description."
-	workflowDescriptionFlag     = "[optional] The Kosli Workflow description."
 	visibilityFlag              = "[defaulted] The visibility of the Kosli flow. Valid visibilities are [public, private]."
 	templateFlag                = "[defaulted] The comma-separated list of required compliance controls names."
-	templateFileFlag            = "The path to a yaml template file."
-	stepsFlag                   = "[defaulted] The comma-separated list of required audit trail steps names."
+	templateFileFlag            = "[optional] The path to a yaml template file. Cannot be used together with --use-empty-template"
+	useEmptyTemplateFlag        = "Use an empty template for the flow creation without specifying a file. Cannot be used together with --template or --template-file"
 	approvalUserDataFlag        = "[optional] The path to a JSON file containing additional data you would like to attach to the approval."
 	evidenceUserDataFlag        = "[optional] The path to a JSON file containing additional data you would like to attach to the evidence."
 	attestationUserDataFlag     = "[optional] The path to a JSON file containing additional data you would like to attach to the attestation."
@@ -129,7 +126,7 @@ The service principal needs to have the following permissions:
 	azureTenantIdFlag           = "Azure tenant ID."
 	azureSubscriptionIdFlag     = "Azure subscription ID."
 	azureResourceGroupNameFlag  = "Azure resource group name."
-	azureDigestsSourceFlag      = "[defaulted] Where to get the digests from. Valid values are 'acr' and 'logs'. Defaults to 'acr'"
+	azureDigestsSourceFlag      = "[defaulted] Where to get the digests from. Valid values are 'acr' and 'logs'."
 	githubTokenFlag             = "Github token."
 	githubOrgFlag               = "Github organization. (defaulted if you are running in GitHub Actions: https://docs.kosli.com/ci-defaults )."
 	githubBaseURLFlag           = "[optional] GitHub base URL (only needed for GitHub Enterprise installations)."
@@ -153,8 +150,11 @@ The service principal needs to have the following permissions:
 	awsSecretKeyFlag            = "The AWS secret access key."
 	awsRegionFlag               = "The AWS region."
 	bucketNameFlag              = "The name of the S3 bucket."
-	pathsFlag                   = "The comma separated list of artifact directories."
+	bucketPathsFlag             = "[optional] The comma separated list of file and/or directory paths in the S3 bucket to include when fingerprinting. Cannot be used together with --exclude."
+	excludeBucketPathsFlag      = "[optional] The comma separated list of file and/or directory paths in the S3 bucket to exclude when fingerprinting. Cannot be used together with --include."
+	pathsFlag                   = "The comma separated list of absolute or relative paths of artifact directories or files. Can take glob patterns, but be aware that each matching path will be reported as an artifact."
 	excludePathsFlag            = "[optional] The comma separated list of directories and files to exclude from fingerprinting. Only applicable for --artifact-type dir."
+	serverExcludePathsFlag      = "[optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns."
 	shortFlag                   = "[optional] Print only the Kosli CLI version number."
 	longFlag                    = "[optional] Print detailed output."
 	reverseFlag                 = "[defaulted] Reverse the order of output list."
@@ -168,13 +168,18 @@ The service principal needs to have the following permissions:
 	showUnchangedArtifactsFlag  = "[defaulted] Show the unchanged artifacts present in both snapshots within the diff output."
 	approverFlag                = "[optional] The user approving an approval."
 	attestationFingerprintFlag  = "[optional] The SHA256 fingerprint of the artifact to attach the attestation to."
-	attestationCommitFlag       = "The git commit associated to the attestation. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
-	attestationUrlFlag          = "The url pointing to where the attestation came from or is related. (defaulted to the CI url in some CIs: https://docs.kosli.com/ci-defaults )."
+	attestationCommitFlag       = "[optional] The git commit associated to the attestation. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
+	attestationOriginUrlFlag    = "[optional] The url pointing to where the attestation came from or is related. (defaulted to the CI url in some CIs: https://docs.kosli.com/ci-defaults )."
 	attestationNameFlag         = "The name of the attestation as declared in the flow or trail yaml template."
 	attestationCompliantFlag    = "[defaulted] Whether the attestation is compliant or not. A boolean flag https://docs.kosli.com/faq/#boolean-flags"
 	attestationRepoRootFlag     = "[defaulted] The directory where the source git repository is available. Only used if --commit is used."
 	uploadJunitResultsFlag      = "[defaulted] Whether to upload the provided Junit results directory as evidence to Kosli or not."
 	attestationAssertFlag       = "[optional] Exit with non-zero code if the attestation is non-compliant"
+	beginTrailCommitFlag        = "[defaulted] The git commit from which the trail is begun. (defaulted in some CIs: https://docs.kosli.com/ci-defaults, otherwise defaults to HEAD )."
+	attachmentsFlag             = "[optional] The comma-separated list of paths of attachments for the reported attestation. Attachments can be files or directories. All attachments are compressed and uploaded to Kosli's evidence vault."
+	externalFingerprintFlag     = "[optional] A SHA256 fingerprint of an external attachment represented by --external-url. The format is label=fingerprint (labels cannot contain '.' or '='). This flag can be set multiple times. There must be an external url with a matching label for each external fingerprint."
+	externalURLFlag             = "[optional] Add labeled reference URL for an external resource. The format is label=url (labels cannot contain '.' or '='). This flag can be set multiple times. If the resource is a file or dir, you can optionally add its fingerprint via --external-fingerprint"
+	attestationDescription      = "[optional] attestation description"
 )
 
 var global *GlobalOpts
@@ -259,6 +264,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		newAllowCmd(out),
 		newListCmd(out),
 		newRenameCmd(out),
+		newArchiveCmd(out),
 		newSnapshotCmd(out),
 		newRequestCmd(out),
 		newLogCmd(out),
@@ -267,6 +273,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	)
 
 	cobra.AddTemplateFunc("isBeta", isBeta)
+	cobra.AddTemplateFunc("isDeprecated", isDeprecated)
 	cmd.SetUsageTemplate(usageTemplate)
 
 	return cmd, nil
@@ -364,10 +371,14 @@ func isBeta(cmd *cobra.Command) bool {
 	return beta
 }
 
+func isDeprecated(cmd *cobra.Command) bool {
+	return cmd.Deprecated != ""
+}
+
 const usageTemplate = `{{- if isBeta .}}Beta Feature:
   {{.CommandPath}} is a beta feature.
   Beta features provide early access to product functionality. These
-  features may change between releases without warning, or can be removed from a
+  features may change between releases without warning, or can be removed in a
   future release.
 
 {{ end }}Usage:{{- if .Runnable}}

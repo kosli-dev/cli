@@ -17,7 +17,7 @@ If you see an error like below (or similar, with a different flag):
 ```
 Error: unknown flag: --artifact-type
 ```
-It most likely mean you misspelled a flag.
+It most likely means you misspelled a flag.
 
 ## "unknown command" errors
 E.g.
@@ -32,7 +32,7 @@ This error will pop up if you're trying to use a command that is not present in 
 
 ## zsh: no such user or named directory
 
-When running commands with argument starting with `~` you can encounter following problem:
+When running commands with an argument starting with `~` you can encounter following problem:
 
 ```shell {.command}
 kosli list snapshots prod ~3..NOW
@@ -41,7 +41,7 @@ kosli list snapshots prod ~3..NOW
 zsh: no such user or named directory: 3..NOW
 ```
 
-To help zshell interpret the argument correctly, wrap it in quotation marks (single or double): 
+To help ZShell interpret the argument correctly, wrap it in quotation marks (single or double): 
 ```shell {.command}
 kosli list snapshots prod '~3..NOW'
 ```
@@ -52,7 +52,7 @@ kosli list snapshots prod "~3..NOW"
 
 ## Github can't see KOSLI_API_TOKEN secret
 
-Secrets in Github actions are not automatically exported as environment variables. You need to add required secrets to your GITHUB environment explicitly. E.g. to make kosli_api_token secret available for all cli commands as an environment variable use following:
+Secrets in Github actions are not automatically exported as environment variables. You need to add required secrets to your GITHUB environment explicitly. E.g. to make kosli_api_token secret available for all cli commands as an environment variable use the following:
 
 ```yaml
 env:
@@ -71,16 +71,16 @@ We are working on providing that functionality in a near future. -->
 
 ## Do I have to provide all the flags all the time? 
 
-A number of flags won't change their values often (or at all) between commands, like `--org` or `--api-token`.  Some will differ between e.g. workflows, like `--flow`. You can define them as environment variable to avoid unnecessary redundancy. Check [Environment variables](/kosli_overview/kosli_tools/#environment-variables) section to learn more.
+A number of flags won't change their values often (or at all) between commands, like `--org` or `--api-token`.  Some will differ between e.g. workflows, like `--flow`. You can define them as environment variable to avoid unnecessary redundancy. Check [Environment variables](/getting_started/install/#assigning-flags-via-environment-variables) section to learn more.
 
 ## What is dry run and how to use it?
 
 You can use dry run to disable writing to app.kosli.com - e.g. if you're just trying things out, or troubleshooting (dry run will print the payload the CLI would send in a non dry run mode). 
 
-Here are two possible ways of enabling a dry run:
+Here are three possible ways of enabling a dry run:
 1. use the `--dry-run` flag (no value needed) to enable it per command
-1. set the `KOSLI_DRY_RUN` environment variable to `true` to enable it globally (e.g. in your terminal or CI)
-1. set the `KOSLI_API_TOKEN` environment variable to `DRY_RUN` to enable it globally (e.g. in your terminal or CI)
+2. set the `KOSLI_DRY_RUN` environment variable to `true` to enable it globally (e.g. in your terminal or CI)
+3. set the `KOSLI_API_TOKEN` environment variable to `DRY_RUN` to enable it globally (e.g. in your terminal or CI)
 
 ## What is the `--config-file` flag?
 
@@ -110,7 +110,7 @@ ORG = "my-org"
 API-TOKEN = "123456abcdef"
 ```
 
-When calling Kosli command you can skip file extension. For example, to list environments with `org` and `api-token` in the configuration file you would run:
+When calling Kosli command you can skip the file extension. For example, to list environments with `org` and `api-token` in the configuration file you would run:
 
 ```
 $ kosli environment ls --config-file kosli-conf
@@ -137,7 +137,7 @@ commit-evidence being attached to the artifact through multiple git-commits. It 
 reported version of the named commit-evidence that is considered the compliance state of that evidence.
 
 ### Evidence outside the template
-If an artifact have evidence, either commit evidence or artifact evidence, that is not 
+If an artifact has evidence, either commit evidence or artifact evidence, that is not 
 part of the template, the state of the extra evidence will affect the overall compliance of the artifact.
 
 ## How to set compliant status of generic evidence
@@ -153,7 +153,7 @@ $ kosli report evidence artifact generic server:1.0 \
   --flow server
 ```
 
-Keep on mind a number of flags, usually represented with environment variables, are omitted in this example.  
+Keep in mind a number of flags, usually represented with environment variables, are omitted in this example.  
 `--compliance` flag is set to `true` by default, so if you want to report generic evidence as compliant, simply skip providing the flag altogether.
 
 ## Boolean flags

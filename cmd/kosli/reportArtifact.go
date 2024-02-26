@@ -86,7 +86,7 @@ func newReportArtifactCmd(out io.Writer) *cobra.Command {
 	ci := WhichCI()
 	cmd.Flags().StringVarP(&o.payload.Fingerprint, "fingerprint", "F", "", fingerprintFlag)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
-	cmd.Flags().StringVarP(&o.gitReference, "git-commit", "g", DefaultValue(ci, "git-commit"), gitCommitFlag)
+	cmd.Flags().StringVarP(&o.gitReference, "git-commit", "g", DefaultValueForCommit(ci, false), gitCommitFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), buildUrlFlag)
 	cmd.Flags().StringVarP(&o.payload.CommitUrl, "commit-url", "u", DefaultValue(ci, "commit-url"), commitUrlFlag)
 	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", repoRootFlag)
@@ -129,7 +129,7 @@ func (o *reportArtifactOptions) run(args []string) error {
 		return err
 	}
 
-	commitObject, err := gitView.GetCommitInfoFromCommitSHA(o.gitReference)
+	commitObject, err := gitView.GetCommitInfoFromCommitSHA(o.gitReference, false)
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func (o *reportArtifactOptions) run(args []string) error {
 		return err
 	}
 
-	o.payload.RepoUrl, err = gitView.RepoUrl()
+	o.payload.RepoUrl, err = gitView.RepoURL()
 	if err != nil {
 		logger.Warning("Repo URL will not be reported, %s", err.Error())
 	}

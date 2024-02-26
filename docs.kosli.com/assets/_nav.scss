@@ -31,3 +31,16 @@
     position: relative;
     bottom: 1px;
 }
+
+.book-menu a.deprecated::after {
+    content: 'Deprecated';
+    background-color: transparent;
+    border: 1px solid $red-100;
+    color: $red-100;
+    border-radius: 20px;
+    font-size: 0.6rem;
+    padding: 1px 6px;
+    margin-left: 5px;
+    position: relative;
+    bottom: 1px;
+}

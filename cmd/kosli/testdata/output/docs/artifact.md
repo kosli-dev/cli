@@ -1,6 +1,7 @@
 ---
 title: "artifact"
 beta: false
+deprecated: false
 ---
 
 # artifact

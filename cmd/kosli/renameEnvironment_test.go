@@ -28,7 +28,7 @@ func (suite *RenameEnvironmentCommandTestSuite) SetupTest() {
 	CreateEnv(global.Org, suite.envName, "server", suite.T())
 }
 
-func (suite *RenameEnvironmentCommandTestSuite) TestListSnapshotsCmd() {
+func (suite *RenameEnvironmentCommandTestSuite) TestRenameEnvironmentCmd() {
 	tests := []cmdTestCase{
 		{
 			name:   "can rename environment",

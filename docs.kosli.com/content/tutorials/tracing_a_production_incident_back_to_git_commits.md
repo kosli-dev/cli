@@ -18,6 +18,17 @@ Something has gone wrong and [https://cyber-dojo.org](https://cyber-dojo.org) is
 
 It was working an hour ago. What has happened in the last hour?
 
+## Getting ready
+
+You need to:
+* [Install Kosli CLI](/getting_started/install/).
+* [Get a Kosli API token](/getting_started/service-accounts/).
+* Set the `KOSLI_ORG` environment variable to `cyber-dojo` (the Kosli `cyber-dojo` organization is public so any authenticated user can read its data) and `KOSLI_API_TOKEN` to your token:
+  ```shell {.command}
+  export KOSLI_ORG=cyber-dojo
+  export KOSLI_API_TOKEN=<your-api-token>
+  ```
+
 ## Start with the environment
 
 [https://cyber-dojo.org](https://cyber-dojo.org) is running in an AWS environment

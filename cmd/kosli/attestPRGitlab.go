@@ -73,7 +73,7 @@ kosli attest pullrequest gitlab \
 	--gitlab-org yourGitlabOrg \
 	--commit yourArtifactGitCommit \
 	--repository yourGithubGitRepository \
-	--evidence-paths=yourEvidencePathName \
+	--attachments=yourEvidencePathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 

@@ -21,9 +21,25 @@ type ServerData struct {
 }
 
 // CreateServerArtifactsData creates a list of ServerData for server artifacts at given paths
+// paths and excludePaths can contain Glob patterns
+// if paths have Glob patterns, each path matching the pattern will be treated as an artifact
 func CreateServerArtifactsData(paths, excludePaths []string, logger *logger.Logger) ([]*ServerData, error) {
 	result := []*ServerData{}
+
+	pathsToInclude := []string{}
 	for _, p := range paths {
+		found, err := filepath.Glob(p)
+		if err != nil {
+			return []*ServerData{}, err
+		}
+		pathsToInclude = append(pathsToInclude, found...)
+	}
+
+	if len(pathsToInclude) == 0 {
+		return []*ServerData{}, fmt.Errorf("no matches found for %v", paths)
+	}
+
+	for _, p := range pathsToInclude {
 		digests := make(map[string]string)
 
 		finfo, err := os.Stat(p)

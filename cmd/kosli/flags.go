@@ -58,7 +58,7 @@ func addGitlabFlags(cmd *cobra.Command, gitlabConfig *gitlabUtils.GitlabConfig, 
 func addArtifactPRFlags(cmd *cobra.Command, o *pullRequestArtifactOptions, ci string) {
 	addArtifactEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
 	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
-	cmd.Flags().StringVar(&o.commit, "commit", DefaultValue(ci, "git-commit"), commitPREvidenceFlag)
+	cmd.Flags().StringVar(&o.commit, "commit", DefaultValueForCommit(ci, false), commitPREvidenceFlag)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
 }
@@ -76,7 +76,7 @@ func addCommitPRFlags(cmd *cobra.Command, o *pullRequestCommitOptions, ci string
 
 func addCommitEvidenceFlags(cmd *cobra.Command, payload *TypedEvidencePayload, ci string) {
 	addEvidenceFlags(cmd, payload, ci)
-	cmd.Flags().StringVar(&payload.CommitSHA, "commit", DefaultValue(ci, "git-commit"), commitEvidenceFlag)
+	cmd.Flags().StringVar(&payload.CommitSHA, "commit", DefaultValueForCommit(ci, false), commitEvidenceFlag)
 	cmd.Flags().StringSliceVarP(&payload.Flows, "flows", "f", []string{}, flowNamesFlag)
 }
 
@@ -95,16 +95,17 @@ func addListFlags(cmd *cobra.Command, o *listOptions) {
 
 func addAttestationFlags(cmd *cobra.Command, o *CommonAttestationOptions, payload *CommonAttestationPayload, ci string) {
 	cmd.Flags().StringVarP(&payload.ArtifactFingerprint, "fingerprint", "F", "", attestationFingerprintFlag)
-	cmd.Flags().StringVarP(&o.commitSHA, "commit", "g", DefaultValue(ci, "git-commit"), attestationCommitFlag)
-	cmd.Flags().StringVarP(&payload.Url, "url", "b", DefaultValue(ci, "build-url"), attestationUrlFlag)
+	cmd.Flags().StringVarP(&o.commitSHA, "commit", "g", DefaultValueForCommit(ci, false), attestationCommitFlag)
+	cmd.Flags().StringVarP(&payload.OriginURL, "origin-url", "o", DefaultValue(ci, "build-url"), attestationOriginUrlFlag)
 	cmd.Flags().StringVarP(&o.attestationNameTemplate, "name", "n", "", attestationNameFlag)
-	cmd.Flags().StringVar(&payload.EvidenceFingerprint, "evidence-fingerprint", "", evidenceFingerprintFlag)
-	cmd.Flags().StringVar(&payload.EvidenceURL, "evidence-url", "", evidenceURLFlag)
+	cmd.Flags().StringToStringVar(&o.externalFingerprints, "external-fingerprint", map[string]string{}, externalFingerprintFlag)
+	cmd.Flags().StringToStringVar(&o.externalURLs, "external-url", map[string]string{}, externalURLFlag)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.trailName, "trail", "T", "", trailNameFlag)
 	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", attestationUserDataFlag)
-	cmd.Flags().StringSliceVarP(&o.evidencePaths, "evidence-paths", "e", []string{}, evidencePathsFlag)
+	cmd.Flags().StringSliceVar(&o.attachments, "attachments", []string{}, attachmentsFlag)
 	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", attestationRepoRootFlag)
+	cmd.Flags().StringVar(&payload.Description, "description", "", attestationDescription)
 
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)

@@ -71,7 +71,7 @@ kosli attest snyk \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--scan-results yourSnykJSONScanResults \
-	--evidence-paths=yourEvidencePathName \
+	--attachments=yourEvidencePathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 `
@@ -140,7 +140,7 @@ func (o *attestSnykOptions) run(args []string) error {
 		return err
 	}
 
-	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.evidencePaths)
+	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.attachments)
 	if err != nil {
 		return err
 	}

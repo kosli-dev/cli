@@ -22,7 +22,7 @@ sections:
           alt_text: Introducing Kosli icon
           description: Understand what Kosli is and how it works
           link_text: View >
-          url: /kosli_overview/what_is_kosli/
+          url: /understand_kosli/what_is_kosli/
         - title: Kosli environments
           image: /images/home/home-environments.svg
           alt_text: Kosli environments icon

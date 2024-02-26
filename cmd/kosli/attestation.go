@@ -8,15 +8,20 @@ import (
 	"github.com/kosli-dev/cli/internal/requests"
 )
 
+type URLInfo struct {
+	Href        string `json:"href"`
+	Fingerprint string `json:"fingerprint,omitempty"`
+}
+
 type CommonAttestationPayload struct {
 	ArtifactFingerprint string                   `json:"artifact_fingerprint,omitempty"`
 	Commit              *gitview.BasicCommitInfo `json:"git_commit_info,omitempty"`
 	AttestationName     string                   `json:"attestation_name"`
 	TargetArtifacts     []string                 `json:"target_artifacts,omitempty"`
-	EvidenceURL         string                   `json:"evidence_url,omitempty"`
-	EvidenceFingerprint string                   `json:"evidence_fingerprint,omitempty"`
-	Url                 string                   `json:"url,omitempty"`
+	ExternalURLs        map[string]*URLInfo      `json:"external_urls,omitempty"`
+	OriginURL           string                   `json:"origin_url,omitempty"`
 	UserData            interface{}              `json:"user_data,omitempty"`
+	Description         string                   `json:"description,omitempty"`
 }
 
 type CommonAttestationOptions struct {
@@ -25,9 +30,11 @@ type CommonAttestationOptions struct {
 	flowName                string
 	trailName               string
 	userDataFilePath        string
-	evidencePaths           []string
+	attachments             []string
 	commitSHA               string
 	srcRepoRoot             string
+	externalURLs            map[string]string
+	externalFingerprints    map[string]string
 }
 
 func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestationPayload) error {
@@ -56,7 +63,7 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 		if err != nil {
 			return err
 		}
-		commitInfo, err := gv.GetCommitInfoFromCommitSHA(o.commitSHA)
+		commitInfo, err := gv.GetCommitInfoFromCommitSHA(o.commitSHA, false)
 		if err != nil {
 			return err
 		}
@@ -64,7 +71,33 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 	}
 
 	payload.UserData, err = LoadJsonData(o.userDataFilePath)
+	if err != nil {
+		return err
+	}
+
+	// process external urls
+	payload.ExternalURLs, err = processExternalURLs(o.externalURLs, o.externalFingerprints)
+
 	return err
+}
+
+func processExternalURLs(externalURLs, externalFingerprints map[string]string) (map[string]*URLInfo, error) {
+	processedExternalURLs := make(map[string]*URLInfo)
+	if len(externalFingerprints) > len(externalURLs) {
+		return processedExternalURLs, fmt.Errorf("--external-fingerprints have labels that don't have a URL in --external-url")
+	}
+
+	for label, url := range externalURLs {
+		processedExternalURLs[label] = &URLInfo{Href: url}
+	}
+	for label, fingerprint := range externalFingerprints {
+		if urlInfo, exists := processedExternalURLs[label]; exists {
+			urlInfo.Fingerprint = fingerprint
+		} else {
+			return processedExternalURLs, fmt.Errorf("%s in --external-fingerprint does not match any labels in --external-url", label)
+		}
+	}
+	return processedExternalURLs, nil
 }
 
 func prepareAttestationForm(payload interface{}, evidencePaths []string) ([]requests.FormItem, bool, string, error) {
@@ -84,4 +117,29 @@ func parseAttestationNameTemplate(template string) (string, string, error) {
 	} else {
 		return "", "", fmt.Errorf("invalid attestation name format")
 	}
+}
+
+// newAttestationForm constructs a list of FormItems for an attestation
+// form submission.
+func newAttestationForm(payload interface{}, attachments []string) (
+	[]requests.FormItem, bool, string, error,
+) {
+	form := []requests.FormItem{
+		{Type: "field", FieldName: "data_json", Content: payload},
+	}
+
+	var evidencePath string
+	var cleanupNeeded bool
+	var err error
+
+	if len(attachments) > 0 {
+		evidencePath, cleanupNeeded, err = getPathOfEvidenceFileToUpload(attachments)
+		if err != nil {
+			return form, cleanupNeeded, evidencePath, err
+		}
+		form = append(form, requests.FormItem{Type: "file", FieldName: "attachment_file", Content: evidencePath})
+		logger.Debug("evidence file %s will be uploaded", evidencePath)
+	}
+
+	return form, cleanupNeeded, evidencePath, nil
 }

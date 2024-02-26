@@ -134,19 +134,31 @@ func DefaultValue(ci, flag string) string {
 			result := os.ExpandEnv(v)
 			// github and gitlab use ../commit/.. , bitbucket uses ../commits/..
 			if ci == circleci && flag == "commit-url" {
-				result = gitview.ExtractRepoURLFromRemote(result)
+				result, _ = gitview.ExtractRepoURLFromRemote(result)
 				if strings.Contains(result, "bitbucket.org") {
 					return strings.Replace(result, "commit", "commits", 1)
 				}
 			}
 			return result
 		}
-		// when not in a known CI, default some values
-		if flag == "git-commit" {
-			return "HEAD"
-		}
 	}
 	return ""
+}
+
+// DefaultValueForCommit returns DefaultValue for 'git-commit' in
+// the given CI. Otherwise, returns HEAD if returnHead is true,
+// empty string otherwise
+func DefaultValueForCommit(ci string, returnHead bool) string {
+	value := DefaultValue(ci, "git-commit")
+	if value != "" {
+		return value
+	} else {
+		if returnHead {
+			return "HEAD"
+		} else {
+			return ""
+		}
+	}
 }
 
 // RequireFlags declares a list of flags as required for a given command

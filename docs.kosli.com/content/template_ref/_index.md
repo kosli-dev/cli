@@ -6,7 +6,7 @@ title: Flow Template Specification
 This document describes the specification for how to write your Flow Template files in [YAML](http://yaml.org/). The template file contains the following fields:
 
 ```yml
-version: The version of the specification. Allowed values are [1]. (required)
+version: The version of the specification schema. Allowed values are [1]. (required)
 trail: # the trail specification (optional)
   attestations: # what attestations are required for the trail to be compliant (optional)
   - name: the attestation name (required)
@@ -40,4 +40,3 @@ trail:
     - name: manual-ui-test
       type: generic
 ```
-

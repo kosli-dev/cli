@@ -1,14 +1,14 @@
 ---
-title: Notifications
+title: Actions
 bookCollapseSection: false
 weight: 320
 ---
 
-# Kosli Notifications 
+# Kosli Actions
 
-Kosli enables you to receive environment event notifications either on Slack or through a custom system using webhooks.
+Actions enable you to automate the execution of if-this-do-that workflows based on Kosli events. You can configure actions to either receive a Slack notification or a JSON payload on a custom webhook when certain Kosli events happen.   
 
-You have the option to receive notifications for the following events occurring in one or more environments:
+You can configure actions to be triggered by one or more of the following events occurring in one or more environments:
 
 - When a new artifact starts execution in an environment.
 - When an artifact ceases execution in an environment.
@@ -18,7 +18,7 @@ You have the option to receive notifications for the following events occurring 
 - When an environment changes from a **Non-Compliant** state to a **Compliant** state.
 
 
-# Slack Notifications
+## Slack Notifications
 
 To receive Kosli notifications in Slack, you have two options:
 
@@ -30,11 +30,11 @@ Use the app to create notification settings by running the `/kosli subscribe` sl
 2) Using Slack Incoming Webhooks
 
 - Create a [Slack incoming webhook](https://api.slack.com/messaging/webhooks#create_a_webhook).
-- Utilize this webhook to [create a notification settings in the Kosli UI](/integrations/notifications/#manage-notification-settings-in-the-ui).
+- Utilize this webhook to [create a notification settings in the Kosli UI](/integrations/actions/#manage-actions-in-the-ui).
   
 Both approaches allow you to configure Kosli notifications in Slack, offering flexibility based on your preferences.
 
-# Custom Webhook Notifications
+## Custom Webhook Notifications
 
 Custom webhook notifications empower you to implement automation workflows for "if-this-then-that" scenarios. Whenever an event that matches your specified notification settings occurs, a JSON payload, as outlined below, is transmitted to your designated custom webhook:
 
@@ -88,13 +88,10 @@ Custom webhook notifications empower you to implement automation workflows for "
 }
 ```
 
-# Manage notification settings in the UI
+# Manage Actions in the UI
 
-To manage notification settings for your organization in the Kosli UI, follow these steps:
-
-From the left menu, navigate to: Settings > Notifications.
-Within the notification settings section, you can perform the following actions:
-- Create: Generate new notification settings. Provide a meaningful name, choose the desired environments, select the event types requiring notifications, and furnish the webhook URL.
-- Delete: Remove existing notification settings that are no longer needed.
-- Update: Modify notification settings as needed.
+You can manage Actions for your organization in the Kosli UI from the `Actions` section in the left navigation menu. The Actions sections enables you to:
+- Create Notifications: Create a new notifications settings.
+- Delete Notifications: Remove existing notification settings that are no longer needed.
+- Update Notifications: Modify notification settings as needed.
 

@@ -54,11 +54,11 @@ func (o *docsOptions) run() error {
 			return "/client_reference/" + strings.ToLower(base) + "/"
 		}
 
-		hdrFunc := func(filename string, beta bool) string {
+		hdrFunc := func(filename string, beta, deprecated bool) string {
 			base := filepath.Base(filename)
 			name := strings.TrimSuffix(base, path.Ext(base))
 			title := strings.ToLower(strings.Replace(name, "_", " ", -1))
-			return fmt.Sprintf("---\ntitle: \"%s\"\nbeta: %t\n---\n\n", title, beta)
+			return fmt.Sprintf("---\ntitle: \"%s\"\nbeta: %t\ndeprecated: %t\n---\n\n", title, beta, deprecated)
 		}
 
 		return MereklyGenMarkdownTreeCustom(o.topCmd, o.dest, hdrFunc, linkHandler)
@@ -66,9 +66,10 @@ func (o *docsOptions) run() error {
 	return doc.GenMarkdownTree(o.topCmd, o.dest)
 }
 
-func MereklyGenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender func(string, bool) string, linkHandler func(string) string) error {
+func MereklyGenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender func(string, bool, bool) string, linkHandler func(string) string) error {
 	for _, c := range cmd.Commands() {
-		if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
+		// skip all unavailable commands except deprecated ones
+		if (!c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand()) && c.Deprecated == "" {
 			continue
 		}
 		if err := MereklyGenMarkdownTreeCustom(c, dir, filePrepender, linkHandler); err != nil {
@@ -85,7 +86,7 @@ func MereklyGenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender 
 		}
 		defer f.Close()
 
-		if _, err := io.WriteString(f, filePrepender(filename, isBeta(cmd))); err != nil {
+		if _, err := io.WriteString(f, filePrepender(filename, isBeta(cmd), isDeprecated(cmd))); err != nil {
 			return err
 		}
 		if err := KosliGenMarkdownCustom(cmd, f, linkHandler); err != nil {
@@ -107,11 +108,19 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 
 	if isBeta(cmd) {
 		buf.WriteString("{{< hint warning >}}")
-		buf.WriteString(fmt.Sprintf("**%s** is a beta feature. \n", name))
-		buf.WriteString("Beta features provide early access to product functionality. These ")
-		buf.WriteString("features may change between releases without warning, or can be removed from a ")
+		buf.WriteString(fmt.Sprintf("**%s** is a beta feature. ", name))
+		buf.WriteString("Beta features provide early access to product functionality.  ")
+		buf.WriteString("These features may change between releases without warning, or can be removed in a ")
 		buf.WriteString("future release.\n")
-		buf.WriteString("You can enable beta features by using the `kosli enable beta` command.")
+		buf.WriteString("Please contact us to enable this feature for your organization.")
+		// buf.WriteString("You can enable beta features by using the `kosli enable beta` command.")
+		buf.WriteString("{{< /hint >}}\n")
+	}
+
+	if isDeprecated(cmd) {
+		buf.WriteString("{{< hint danger >}}")
+		buf.WriteString(fmt.Sprintf("**%s** is a deprecated. %s  ", name, cmd.Deprecated))
+		buf.WriteString("Deprecated commands will be removed in a future release.")
 		buf.WriteString("{{< /hint >}}\n")
 	}
 

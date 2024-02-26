@@ -72,7 +72,7 @@ kosli attest junit \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--results-dir yourFolderWithJUnitResults \
-	--evidence-paths=yourEvidencePathName \
+	--attachments=yourEvidencePathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 `
@@ -148,10 +148,10 @@ func (o *attestJunitOptions) run(args []string) error {
 		if err != nil {
 			return err
 		}
-		o.evidencePaths = append(o.evidencePaths, junitFilenames...)
+		o.attachments = append(o.attachments, junitFilenames...)
 	}
 
-	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.evidencePaths)
+	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.attachments)
 	if err != nil {
 		return err
 	}

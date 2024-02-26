@@ -65,7 +65,7 @@ kosli attest generic \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--evidence-paths=yourEvidencePathName \
+	--attachments=yourEvidencePathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -138,7 +138,7 @@ func (o *attestGenericOptions) run(args []string) error {
 		return err
 	}
 
-	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.evidencePaths)
+	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.attachments)
 	if err != nil {
 		return err
 	}

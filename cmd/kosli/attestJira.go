@@ -98,7 +98,7 @@ kosli attest jira \
 	--jira-base-url https://kosli.atlassian.net \
 	--jira-username user@domain.com \
 	--jira-api-token yourJiraAPIToken \
-	--evidence-paths=yourEvidencePathName \
+	--attachments=yourEvidencePathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -110,7 +110,7 @@ kosli attest jira \
 	--jira-base-url https://kosli.atlassian.net \
 	--jira-username user@domain.com \
 	--jira-api-token yourJiraAPIToken \
-	--evidence-paths=yourEvidencePathName \
+	--attachments=yourEvidencePathName \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 	--assert
@@ -226,7 +226,7 @@ func (o *attestJiraOptions) run(args []string) error {
 		issueLog += fmt.Sprintf("\n\t%s: %s", result.IssueID, issueExistLog)
 	}
 
-	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.evidencePaths)
+	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.attachments)
 	if err != nil {
 		return err
 	}

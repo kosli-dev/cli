@@ -11,10 +11,6 @@ import (
 
 const disableBetaDesc = `Disable beta features for an organization.`
 
-const disableLongBetaDesc = disableBetaDesc + `
-Currently, the only beta feature is audit-trails.
-`
-
 type betaOptions struct {
 	payload betaFeaturesPayload
 }
@@ -29,7 +25,7 @@ func newDisableExperimentalCmd(out io.Writer) *cobra.Command {
 		Use:     "beta",
 		Aliases: []string{"experimental"},
 		Short:   disableBetaDesc,
-		Long:    disableLongBetaDesc,
+		Long:    disableBetaDesc,
 		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})

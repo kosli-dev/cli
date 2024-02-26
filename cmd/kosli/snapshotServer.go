@@ -25,13 +25,20 @@ kosli snapshot server yourEnvironmentName \
 	--org yourOrgName  
 	
 # exclude certain paths when reporting directory artifacts: 
-# the example below, any path matching [a/b/c/logs, a/b/c/*/logs, a/b/c/*/*/logs]
+# in the example below, any path matching [a/b/c/logs, a/b/c/*/logs, a/b/c/*/*/logs]
 # will be skipped when calculating the fingerprint
 kosli snapshot server yourEnvironmentName \
 	--paths a/b/c \
 	--exclude logs,"*/logs","*/*/logs"
 	--api-token yourAPIToken \
-	--org yourOrgName  
+	--org yourOrgName 
+	
+# use glob pattern to match paths to report them as directory artifacts: 
+# in the example below, any path matching "*/*/src" under top-dir/ will be reported as a separate artifact.
+kosli snapshot server yourEnvironmentName \
+	--paths "top-dir/*/*/src" \
+	--api-token yourAPIToken \
+	--org yourOrgName 
 `
 
 type snapshotServerOptions struct {
@@ -66,8 +73,8 @@ func newSnapshotServerCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringSliceVarP(&o.paths, "paths", "p", []string{}, pathsFlag)
-	cmd.Flags().StringSliceVarP(&o.excludePaths, "exclude", "x", []string{}, excludePathsFlag)
-	cmd.Flags().StringSliceVarP(&o.excludePaths, "e", "e", []string{}, excludePathsFlag)
+	cmd.Flags().StringSliceVarP(&o.excludePaths, "exclude", "x", []string{}, serverExcludePathsFlag)
+	cmd.Flags().StringSliceVarP(&o.excludePaths, "e", "e", []string{}, serverExcludePathsFlag)
 	addDryRunFlag(cmd)
 
 	err := DeprecateFlags(cmd, map[string]string{
