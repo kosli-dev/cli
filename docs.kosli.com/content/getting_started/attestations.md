@@ -5,24 +5,92 @@ weight: 270
 ---
 # Part 7: Attestations
 
-Attestations lets you declare whether an Artifact or a Trail adhere to a certain requirement or not. The attestation often includes evidence proofing the claim.
+Attestations lets you declare whether an artifact or a trail adhere to a certain requirement or not. The attestation often includes evidence proving the claim.
 
-Kosli allows you to report different types of attestations about an Artifact or a Trail. For some types, Kosli will process the evidence you provide and conclude whether the evidence proofs compliance or otherwise. 
+Kosli allows you to report different types of attestations about an artifact or a trail. For some types, Kosli will process the evidence you provide and conclude whether the evidence proves compliance or otherwise. 
 
+The following template is expecting 4 attestations, one for each `name`.
 
-## Trail attestation vs Artifact attestation
+```yml
+version: 1
+trail:
+  attestations:
+  - name: jira-ticket
+    type: jira
+  artifacts:
+  - name: backend
+    attestations:
+    - name: unit-tests
+      type: junit
+    - name: security-scan
+      type: snyk
+```
 
-Depending on your process requirements, some attestations will belong to an Artifact while others will belong to a Trail. When you report an attestation, you have the choice of where to attach it:
+It expects `jira-ticket` on the trail, the `backend` artifact, with `unit-tests` and `security-scan` attached to it.
+When you make an attestation, you have the choice of what `name` to attach it to:
 
-1. **To a trail**: the attestation belongs to a single trail and is not linked to a specific artifact.
-2. **To an Artifact**: the attestation belongs to a specific artifact.
+2. **To an artifact in a trail**: the attestation is attached to a specific artifact.
 
-## Binding attestations to an artifact
+## Make the `jira-ticket` attestation to a trail
 
-To bind an attestation to an artifact, you have two options:
-1. **Binding with the fingerprint**: the attestation belongs only to the artifact with that fingerprint. This requires that the artifact has already been reported to Kosli.
-2. **Binding with template name and git commit**: the attestation belongs to any artifact that **has been or will be** reported with the specified template name and a matching git commit. For instance, if multiple artifacts are reported as `backend` from the same trail, and an attestation has been reported targeting template name `backend`. The attestation will be bound to the `backend` artifacts that has the same git commit as the attestation.
+The `jira-ticket` attestation belongs to a single trail and is not linked to a specific artifact.
+In this example, the id of the trail is the git commit.
 
+```shell
+$ kosli attest jira \
+    --flow backend-ci \
+	--trail $(git rev-parse HEAD) \	
+    --name jira-ticket 
+    ...
+```
+
+## Make the `unit-test` attestation to the `backend` artifact
+
+Often, evidence like unit tests are created before the artifact is built. To attach the evidence to the artifact before its creation, use `backend` (the artifact's `name` from the template), as well as `unit-tests` (the attestation's `name` from the template).
+
+```shell
+$ kosli attest junit \
+    --name backend.unit-tests \
+    --flow backend-ci \
+    --trail $(git rev-parse HEAD) \
+    ...
+```
+
+This attestation belongs to any artifact later attested with the artifact's name from the template (in this example `backend`) and a matching git commit.
+
+<!-- Explain that the binding happens with the commit -->
+
+## Make the `backend` artifact attestation
+
+Once the artifact has been built, it can be attested with the following command.
+
+```shell
+$ kosli attest artifact my_company/backend:latest \
+	--artifact-type docker \
+    --flow backend-ci \
+	--trail $(git rev-parse HEAD) \	
+    --name backend 
+    ...
+```
+
+After this attestation, Kosli knows the fingerprint of the docker image called `my_company/backend:latest`, which is attached to the `backend` artifact `name` in the trail.
+
+## Make the `security-scan` attestation to the `backend` artifact
+
+Often, evidence like snyk reports are created after the artifact is built. To attach the evidence to the artifact after its creation, use `backend` (the artifact's `name` from the template), as well as `security-scan` (the attestation's `name` from the template).
+
+<!-- Explain that the binding happens with the --artifact-type and name -->
+
+The following attestation (which does specify the artifact by name and `--artifact-type`) will only belong to the artifact `my_company/backend:latest` attested above and its fingerprint, in this case calculated by the Kosli CLI.
+
+```shell
+$ kosli attest snyk \
+    --artifact-type docker my_company/backend:latest \
+    --name backend.security-scan \
+    --flow backend-ci \
+    --trail $(git rev-parse HEAD)
+    ...
+```
 
 {{< hint info >}}
 
