@@ -25,9 +25,9 @@ kosli snapshot server ENVIRONMENT-NAME [flags]
 | Flag | Description |
 | :--- | :--- |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Only applicable for --artifact-type dir.  |
+|    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns.  |
 |    -h, --help  |  help for server  |
-|    -p, --paths strings  |  The comma separated list of artifact directories.  |
+|    -p, --paths strings  |  The comma separated list of absolute or relative paths of artifact directories or files. Can take glob patterns, but be aware that each matching path will be reported as an artifact.  |
 
 
 ## Options inherited from parent commands
@@ -52,13 +52,20 @@ kosli snapshot server yourEnvironmentName \
 	--org yourOrgName  
 	
 # exclude certain paths when reporting directory artifacts: 
-# the example below, any path matching [a/b/c/logs, a/b/c/*/logs, a/b/c/*/*/logs]
+# in the example below, any path matching [a/b/c/logs, a/b/c/*/logs, a/b/c/*/*/logs]
 # will be skipped when calculating the fingerprint
 kosli snapshot server yourEnvironmentName \
 	--paths a/b/c \
 	--exclude logs,"*/logs","*/*/logs"
 	--api-token yourAPIToken \
-	--org yourOrgName  
+	--org yourOrgName 
+	
+# use glob pattern to match paths to report them as directory artifacts: 
+# in the example below, any path matching "*/*/src" under top-dir/ will be reported as a separate artifact.
+kosli snapshot server yourEnvironmentName \
+	--paths "top-dir/*/*/src" \
+	--api-token yourAPIToken \
+	--org yourOrgName 
 
 ```
 

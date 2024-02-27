@@ -11,7 +11,7 @@ Please contact us to enable this feature for your organization.{{< /hint >}}
 ## Synopsis
 
 Report a Gitlab merge request attestation to an artifact or a trail in a Kosli flow.  
-It checks if a merge request exists for the artifact (based on its git commit) and reports the merge request evidence to the artifact in Kosli.
+It checks if a merge request exists for the artifact (based on its git commit) and reports the merge request attestation to the artifact in Kosli.
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell
@@ -112,7 +112,7 @@ kosli attest pullrequest gitlab \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a Gitlab merge request attestation about a trail with an evidence file:
+# report a Gitlab merge request attestation about a trail with an attachment:
 kosli attest pullrequest gitlab \
 	--name yourAttestationName \
 	--flow yourFlowName \
@@ -121,7 +121,7 @@ kosli attest pullrequest gitlab \
 	--gitlab-org yourGitlabOrg \
 	--commit yourArtifactGitCommit \
 	--repository yourGithubGitRepository \
-	--attachments=yourEvidencePathName \
+	--attachments=yourAttachmentPathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 

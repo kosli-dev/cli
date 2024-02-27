@@ -8,7 +8,7 @@ deprecated: false
 
 ## Synopsis
 
-The Kosli evidence reporting CLI.
+The Kosli CLI.
 
 Environment variables:
 You can set any flag from an environment variable by capitalizing it in snake case and adding the KOSLI_ prefix.

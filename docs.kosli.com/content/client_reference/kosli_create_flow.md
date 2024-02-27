@@ -22,7 +22,8 @@ kosli create flow FLOW-NAME [flags]
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -h, --help  |  help for flow  |
 |    -t, --template strings  |  [defaulted] The comma-separated list of required compliance controls names.  |
-|    -f, --template-file string  |  The path to a yaml template file.  |
+|    -f, --template-file string  |  [optional] The path to a yaml template file. Cannot be used together with --use-empty-template  |
+|        --use-empty-template  |  Use an empty template for the flow creation without specifying a file. Cannot be used together with --template or --template-file  |
 |        --visibility string  |  [defaulted] The visibility of the Kosli flow. Valid visibilities are [public, private]. (default "private")  |
 
 

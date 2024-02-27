@@ -37,9 +37,9 @@ kosli attest junit [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --repo-root string  |  [defaulted] The directory where the source git repository is available. Only used if --commit is used. (default ".")  |
-|    -R, --results-dir string  |  [defaulted] The path to a directory with JUnit test results. The directory will be uploaded to Kosli's evidence vault. (default ".")  |
+|    -R, --results-dir string  |  [defaulted] The path to a directory with JUnit test results. By default, the directory will be uploaded to Kosli's evidence vault. (default ".")  |
 |    -T, --trail string  |  The Kosli trail name.  |
-|        --upload-results  |  [defaulted] Whether to upload the provided Junit results directory as evidence to Kosli or not. (default true)  |
+|        --upload-results  |  [defaulted] Whether to upload the provided Junit results directory as an attachment to Kosli or not. (default true)  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the attestation.  |
 
 
@@ -96,13 +96,13 @@ kosli attest junit \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a junit attestation about a trail with an evidence file:
+# report a junit attestation about a trail with an attachment:
 kosli attest junit \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--results-dir yourFolderWithJUnitResults \
-	--attachments=yourEvidencePathName \
+	--attachments=yourAttachmentPathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 

@@ -11,7 +11,7 @@ Please contact us to enable this feature for your organization.{{< /hint >}}
 ## Synopsis
 
 Report a Github pull request attestation to an artifact or a trail in a Kosli flow.  
-It checks if a pull request exists for the artifact (based on its git commit) and reports the pull-request evidence to the artifact in Kosli.
+It checks if a pull request exists for the artifact (based on its git commit) and reports the pull-request attestation to the artifact in Kosli.
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell
@@ -112,7 +112,7 @@ kosli attest pullrequest github \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a Github pull request attestation about a trail with an evidence file:
+# report a Github pull request attestation about a trail with an attachment:
 kosli attest pullrequest github \
 	--name yourAttestationName \
 	--flow yourFlowName \
@@ -121,7 +121,7 @@ kosli attest pullrequest github \
 	--github-org yourGithubOrg \
 	--commit yourArtifactGitCommit \
 	--repository yourGithubGitRepository \
-	--attachments=yourEvidencePathName \
+	--attachments=yourAttachmentPathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 

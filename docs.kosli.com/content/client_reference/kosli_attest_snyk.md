@@ -37,8 +37,9 @@ kosli attest snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --repo-root string  |  [defaulted] The directory where the source git repository is available. Only used if --commit is used. (default ".")  |
-|    -R, --scan-results string  |  The path to Snyk scan results JSON file from 'snyk test' and 'snyk container test'. The Snyk results will be uploaded to Kosli's evidence vault.  |
+|    -R, --scan-results string  |  The path to Snyk scan SARIF results file from 'snyk test' and 'snyk container test'. By default, the Snyk results will be uploaded to Kosli's evidence vault.  |
 |    -T, --trail string  |  The Kosli trail name.  |
+|        --upload-results  |  [defaulted] Whether to upload the provided Snyk results file as an attachment to Kosli or not. (default true)  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the attestation.  |
 
 
@@ -63,7 +64,7 @@ kosli attest snyk yourDockerImageName \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--scan-results yourSnykJSONScanResults \
+	--scan-results yourSnykSARIFScanResults \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -73,7 +74,7 @@ kosli attest snyk \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--scan-results yourSnykJSONScanResults \
+	--scan-results yourSnykSARIFScanResults \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -82,7 +83,7 @@ kosli attest snyk \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--scan-results yourSnykJSONScanResults \
+	--scan-results yourSnykSARIFScanResults \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -91,17 +92,27 @@ kosli attest snyk \
 	--name yourTemplateArtifactName.yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--scan-results yourSnykJSONScanResults \
+	--scan-results yourSnykSARIFScanResults \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a snyk attestation about a trail with an evidence file:
+# report a snyk attestation about a trail with an attachment:
 kosli attest snyk \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--scan-results yourSnykJSONScanResults \
+	--scan-results yourSnykSARIFScanResults \
 	--attachments=yourEvidencePathName \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# report a snyk attestation about a trail without uploading the snyk results file:
+kosli attest snyk \
+	--name yourAttestationName \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--scan-results yourSnykSARIFScanResults \
+	--upload-results=false \
 	--api-token yourAPIToken \
 	--org yourOrgName
 

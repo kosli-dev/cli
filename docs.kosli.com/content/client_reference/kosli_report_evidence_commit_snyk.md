@@ -28,7 +28,8 @@ kosli report evidence commit snyk [flags]
 |    -f, --flows strings  |  [defaulted] The comma separated list of Kosli flows. Defaults to all flows of the org.  |
 |    -h, --help  |  help for snyk  |
 |    -n, --name string  |  The name of the evidence.  |
-|    -R, --scan-results string  |  The path to Snyk scan results JSON file from 'snyk test' and 'snyk container test'. The Snyk results will be uploaded to Kosli's evidence vault.  |
+|    -R, --scan-results string  |  The path to Snyk SARIF or JSON scan results file from 'snyk test' and 'snyk container test'. By default, the Snyk results will be uploaded to Kosli's evidence vault.  |
+|        --upload-results  |  [defaulted] Whether to upload the provided Snyk results file as an attachment to Kosli or not. (default true)  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the evidence.  |
 
 

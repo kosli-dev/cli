@@ -28,7 +28,7 @@ kosli report evidence commit junit [flags]
 |    -f, --flows strings  |  [defaulted] The comma separated list of Kosli flows. Defaults to all flows of the org.  |
 |    -h, --help  |  help for junit  |
 |    -n, --name string  |  The name of the evidence.  |
-|    -R, --results-dir string  |  [defaulted] The path to a directory with JUnit test results. The directory will be uploaded to Kosli's evidence vault. (default ".")  |
+|    -R, --results-dir string  |  [defaulted] The path to a directory with JUnit test results. By default, the directory will be uploaded to Kosli's evidence vault. (default ".")  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the evidence.  |
 
 
