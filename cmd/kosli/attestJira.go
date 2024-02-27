@@ -37,7 +37,7 @@ form:
 dash and one or more digits'. 
 
 The found issue references will be checked against Jira to confirm their existence.
-The evidence is reported in all cases, and its compliance status depends on referencing
+The attestation is reported in all cases, and its compliance status depends on referencing
 existing Jira issues.  
 If you have wrong Jira credentials or wrong Jira-base-url it will be reported as non existing Jira issue.
 This is because Jira returns same 404 error code in all cases.
@@ -90,7 +90,7 @@ kosli attest jira \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a jira attestation about a trail with an evidence file:
+# report a jira attestation about a trail with an attachment:
 kosli attest jira \
 	--name yourAttestationName \
 	--flow yourFlowName \
@@ -98,7 +98,7 @@ kosli attest jira \
 	--jira-base-url https://kosli.atlassian.net \
 	--jira-username user@domain.com \
 	--jira-api-token yourJiraAPIToken \
-	--attachments=yourEvidencePathName \
+	--attachments=yourAttachmentPathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -110,7 +110,6 @@ kosli attest jira \
 	--jira-base-url https://kosli.atlassian.net \
 	--jira-username user@domain.com \
 	--jira-api-token yourJiraAPIToken \
-	--attachments=yourEvidencePathName \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 	--assert

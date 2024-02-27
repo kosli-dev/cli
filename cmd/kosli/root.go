@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var globalUsage = `The Kosli evidence reporting CLI.
+var globalUsage = `The Kosli CLI.
 
 Environment variables:
 You can set any flag from an environment variable by capitalizing it in snake case and adding the KOSLI_ prefix.
@@ -136,8 +136,9 @@ The service principal needs to have the following permissions:
 	registryProviderFlag        = "[conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry."
 	registryUsernameFlag        = "[conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry."
 	registryPasswordFlag        = "[conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry."
-	resultsDirFlag              = "[defaulted] The path to a directory with JUnit test results. The directory will be uploaded to Kosli's evidence vault."
-	snykJsonResultsFileFlag     = "The path to Snyk scan results JSON file from 'snyk test' and 'snyk container test'. The Snyk results will be uploaded to Kosli's evidence vault."
+	resultsDirFlag              = "[defaulted] The path to a directory with JUnit test results. By default, the directory will be uploaded to Kosli's evidence vault."
+	snykJsonResultsFileFlag     = "The path to Snyk SARIF or JSON scan results file from 'snyk test' and 'snyk container test'. By default, the Snyk results will be uploaded to Kosli's evidence vault."
+	snykSarifResultsFileFlag    = "The path to Snyk scan SARIF results file from 'snyk test' and 'snyk container test'. By default, the Snyk results will be uploaded to Kosli's evidence vault."
 	ecsClusterFlag              = "The name of the ECS cluster."
 	ecsServiceFlag              = "[optional] The name of the ECS service."
 	kubeconfigFlag              = "[defaulted] The kubeconfig path for the target cluster."
@@ -173,7 +174,8 @@ The service principal needs to have the following permissions:
 	attestationNameFlag         = "The name of the attestation as declared in the flow or trail yaml template."
 	attestationCompliantFlag    = "[defaulted] Whether the attestation is compliant or not. A boolean flag https://docs.kosli.com/faq/#boolean-flags"
 	attestationRepoRootFlag     = "[defaulted] The directory where the source git repository is available. Only used if --commit is used."
-	uploadJunitResultsFlag      = "[defaulted] Whether to upload the provided Junit results directory as evidence to Kosli or not."
+	uploadJunitResultsFlag      = "[defaulted] Whether to upload the provided Junit results directory as an attachment to Kosli or not."
+	uploadSnykResultsFlag       = "[defaulted] Whether to upload the provided Snyk results file as an attachment to Kosli or not."
 	attestationAssertFlag       = "[optional] Exit with non-zero code if the attestation is non-compliant"
 	beginTrailCommitFlag        = "[defaulted] The git commit from which the trail is begun. (defaulted in some CIs: https://docs.kosli.com/ci-defaults, otherwise defaults to HEAD )."
 	attachmentsFlag             = "[optional] The comma-separated list of paths of attachments for the reported attestation. Attachments can be files or directories. All attachments are compressed and uploaded to Kosli's evidence vault."
