@@ -37,6 +37,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/xanzy/go-gitlab v0.81.0
 	github.com/xeonx/timeago v1.0.0-rc5
+	github.com/yargevad/filepathx v1.0.0
 	golang.org/x/oauth2 v0.10.0
 	k8s.io/api v0.29.0
 	k8s.io/apimachinery v0.29.0

@@ -18,6 +18,7 @@ import (
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/utils"
+	"github.com/yargevad/filepathx"
 )
 
 var (
@@ -61,7 +62,7 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 func calculateDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, excludePaths []string, logger *logger.Logger) error {
 	pathsToExclude := []string{}
 	for _, p := range excludePaths {
-		found, err := filepath.Glob(filepath.Join(dirPath, p))
+		found, err := filepathx.Glob(filepath.Join(dirPath, p))
 		if err != nil {
 			return err
 		}
