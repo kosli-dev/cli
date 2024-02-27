@@ -52,12 +52,17 @@ func ProcessSnykResultFile(file string) (*SnykData, error) {
 	}
 	data := &SnykData{
 		SchemaVersion: 1,
-		Tool: SnykTool{
-			Name:    report.Runs[0].Tool.Driver.Name,
-			Version: *report.Runs[0].Tool.Driver.Version,
-		},
-		Results: []SnykResult{},
+		Tool:          SnykTool{},
+		Results:       []SnykResult{},
 	}
+
+	if len(report.Runs) > 0 {
+		data.Tool.Name = report.Runs[0].Tool.Driver.Name
+		if report.Runs[0].Tool.Driver.Version != nil {
+			data.Tool.Version = *report.Runs[0].Tool.Driver.Version
+		}
+	}
+
 	for _, run := range report.Runs {
 		result := SnykResult{}
 		for _, r := range run.Results {
@@ -85,7 +90,7 @@ func createVulnerability(r *sarif.Result) Vulnerability {
 	for _, l := range r.Locations {
 		if l.PhysicalLocation != nil {
 			lines := ""
-			if l.PhysicalLocation.Region != nil {
+			if l.PhysicalLocation.Region != nil && l.PhysicalLocation.Region.StartLine != nil {
 				lines = strconv.Itoa(*l.PhysicalLocation.Region.StartLine)
 				if l.PhysicalLocation.Region.EndLine != nil && *l.PhysicalLocation.Region.EndLine != *l.PhysicalLocation.Region.StartLine {
 					lines += fmt.Sprintf("-%d", *l.PhysicalLocation.Region.EndLine)
