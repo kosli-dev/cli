@@ -7,6 +7,7 @@ import (
 
 	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/logger"
+	"github.com/yargevad/filepathx"
 )
 
 // ServerEnvRequest represents the PUT request body to be sent to kosli from a server
@@ -28,7 +29,7 @@ func CreateServerArtifactsData(paths, excludePaths []string, logger *logger.Logg
 
 	pathsToInclude := []string{}
 	for _, p := range paths {
-		found, err := filepath.Glob(p)
+		found, err := filepathx.Glob(p)
 		if err != nil {
 			return []*ServerData{}, err
 		}
