@@ -66,13 +66,13 @@ kosli attest junit \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a junit attestation about a trail with an evidence file:
+# report a junit attestation about a trail with an attachment:
 kosli attest junit \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--results-dir yourFolderWithJUnitResults \
-	--attachments=yourEvidencePathName \
+	--attachments=yourAttachmentPathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 `
@@ -143,7 +143,7 @@ func (o *attestJunitOptions) run(args []string) error {
 	}
 
 	if o.uploadResultsDir {
-		// prepare the files to upload as evidence. We are only interested in the actual Junit XMl files
+		// prepare the files to upload as attachments. We are only interested in the actual Junit XMl files
 		junitFilenames, err := getJunitFilenames(o.testResultsDir)
 		if err != nil {
 			return err

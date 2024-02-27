@@ -7,13 +7,15 @@ import (
 	"os"
 
 	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/kosli-dev/cli/internal/snyk"
 	"github.com/spf13/cobra"
 )
 
 type reportEvidenceCommitSnykOptions struct {
-	snykJsonFile     string
-	userDataFilePath string
-	payload          EvidenceSnykPayload
+	snykJsonFile      string
+	userDataFilePath  string
+	uploadResultsFile bool
+	payload           EvidenceSnykPayload
 }
 
 const reportEvidenceCommitSnykShortDesc = `Report Snyk vulnerability scan evidence for a commit in Kosli flows.  `
@@ -69,6 +71,8 @@ func newReportEvidenceCommitSnykCmd(out io.Writer) *cobra.Command {
 	addCommitEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
 	cmd.Flags().StringVarP(&o.snykJsonFile, "scan-results", "R", "", snykJsonResultsFileFlag)
 	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
+	cmd.Flags().BoolVar(&o.uploadResultsFile, "upload-results", true, uploadSnykResultsFlag)
+
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"commit", "build-url", "name", "scan-results"})
@@ -87,12 +91,20 @@ func (o *reportEvidenceCommitSnykOptions) run(args []string) error {
 		return err
 	}
 
-	o.payload.SnykResults, err = LoadJsonData(o.snykJsonFile)
+	o.payload.SnykSarifResults, err = snyk.ProcessSnykResultFile(o.snykJsonFile)
 	if err != nil {
-		return err
+		o.payload.SnykResults, err = LoadJsonData(o.snykJsonFile)
+		if err != nil {
+			return err
+		}
 	}
 
-	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, []string{o.snykJsonFile})
+	attachments := []string{}
+	if o.uploadResultsFile {
+		attachments = append(attachments, o.snykJsonFile)
+	}
+
+	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, attachments)
 	// if we created a tar package, remove it after uploading it
 	if cleanupNeeded {
 		defer os.Remove(evidencePath)

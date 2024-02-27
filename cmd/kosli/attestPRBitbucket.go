@@ -10,7 +10,7 @@ import (
 const attestPRBitbucketShortDesc = `Report a Bitbucket pull request attestation to an artifact or a trail in a Kosli flow.  `
 
 const attestPRBitbucketLongDesc = attestPRBitbucketShortDesc + `
-It checks if a pull request exists for the artifact (based on its git commit) and reports the pull-request evidence to the artifact in Kosli.
+It checks if a pull request exists for the artifact (based on its git commit) and reports the pull-request attestation to the artifact in Kosli.
 ` + fingerprintDesc
 
 const attestPRBitbucketExample = `
@@ -68,7 +68,7 @@ kosli attest pullrequest bitbucket \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a Bitbucket pull request attestation about a trail with an evidence file:
+# report a Bitbucket pull request attestation about a trail with an attachment:
 kosli attest pullrequest bitbucket \
 	--name yourAttestationName \
 	--flow yourFlowName \
@@ -78,7 +78,7 @@ kosli attest pullrequest bitbucket \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--commit yourArtifactGitCommit \
 	--repository yourBitbucketGitRepository \
-	--attachments=yourEvidencePathName \
+	--attachments=yourAttachmentPathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 

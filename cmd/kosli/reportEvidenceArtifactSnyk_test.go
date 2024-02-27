@@ -54,39 +54,51 @@ func (suite *ArtifactEvidenceSnykCommandTestSuite) TestArtifactEvidenceSnykCmd()
 			golden: "snyk scan evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
 		{
-			name: "report Snyk scan evidence with non-existing scan-results",
+			name: "report Snyk scan evidence with non-existing scan-results fails",
 			cmd: `report evidence artifact snyk --fingerprint ` + suite.artifactFingerprint + ` --name snyk-result --flow ` + suite.flowName + `
 			          --build-url example.com --scan-results testdata/foo.json` + suite.defaultKosliArguments,
 			wantError: true,
 			golden:    "Error: open testdata/foo.json: no such file or directory\n",
 		},
 		{
-			name: "report Snyk scan evidence with missing scan-results flag",
+			name: "report Snyk scan evidence with missing scan-results flag fails",
 			cmd: `report evidence artifact snyk --fingerprint ` + suite.artifactFingerprint + ` --name snyk-result --flow ` + suite.flowName + `
 			          --build-url example.com` + suite.defaultKosliArguments,
 			wantError: true,
 			golden:    "Error: required flag(s) \"scan-results\" not set\n",
 		},
 		{
-			name: "report Snyk scan evidence with missing name flag",
+			name: "report Snyk scan evidence with missing name flag fails",
 			cmd: `report evidence artifact snyk --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + `
 			          --build-url example.com --scan-results testdata/snyk_scan_example.json` + suite.defaultKosliArguments,
 			wantError: true,
 			golden:    "Error: required flag(s) \"name\" not set\n",
 		},
 		{
-			name: "report Snyk scan evidence with a missing flow",
+			name: "report Snyk scan evidence with a missing flow fails",
 			cmd: `report evidence artifact snyk --fingerprint ` + suite.artifactFingerprint + ` --name snyk-result
 			          --build-url example.com --scan-results testdata/snyk_scan_example.json` + suite.defaultKosliArguments,
 			wantError: true,
 			golden:    "Error: required flag(s) \"flow\" not set\n",
 		},
 		{
-			name: "report Snyk scan evidence with a missing build-url",
+			name: "report Snyk scan evidence with a missing build-url fails",
 			cmd: `report evidence artifact snyk --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + `
 			         --name snyk-result --scan-results testdata/snyk_scan_example.json` + suite.defaultKosliArguments,
 			wantError: true,
 			golden:    "Error: required flag(s) \"build-url\" not set\n",
+		},
+		{
+			name: "report Snyk test evidence works with sarif snyk results and uploading is enabled",
+			cmd: `report evidence artifact snyk --fingerprint ` + suite.artifactFingerprint + ` --name snyk-result --flow ` + suite.flowName + `
+			          --build-url example.com --scan-results testdata/snyk_sarif.json` + suite.defaultKosliArguments,
+			golden: "snyk scan evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
+		},
+		{
+			name: "report Snyk test evidence works with sarif snyk results and uploading is disabled",
+			cmd: `report evidence artifact snyk --fingerprint ` + suite.artifactFingerprint + ` --name snyk-result --flow ` + suite.flowName + `
+			          --build-url example.com --scan-results testdata/snyk_sarif.json --upload-results=false` + suite.defaultKosliArguments,
+			golden: "snyk scan evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
 	}
 	runTestCmd(suite.T(), tests)

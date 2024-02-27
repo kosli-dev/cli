@@ -7,18 +7,20 @@ import (
 	"os"
 
 	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/kosli-dev/cli/internal/snyk"
 	"github.com/spf13/cobra"
 )
 
 type SnykAttestationPayload struct {
 	*CommonAttestationPayload
-	SnykResults interface{} `json:"snyk_results"`
+	SnykResults *snyk.SnykData `json:"snyk_results"`
 }
 
 type attestSnykOptions struct {
 	*CommonAttestationOptions
-	snykJsonFilePath string
-	payload          SnykAttestationPayload
+	snykSarifFilePath string
+	uploadResultsFile bool
+	payload           SnykAttestationPayload
 }
 
 const attestSnykShortDesc = `Report a snyk attestation to an artifact or a trail in a Kosli flow.  `
@@ -33,7 +35,7 @@ kosli attest snyk yourDockerImageName \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--scan-results yourSnykJSONScanResults \
+	--scan-results yourSnykSARIFScanResults \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -43,7 +45,7 @@ kosli attest snyk \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--scan-results yourSnykJSONScanResults \
+	--scan-results yourSnykSARIFScanResults \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -52,7 +54,7 @@ kosli attest snyk \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--scan-results yourSnykJSONScanResults \
+	--scan-results yourSnykSARIFScanResults \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -61,17 +63,27 @@ kosli attest snyk \
 	--name yourTemplateArtifactName.yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--scan-results yourSnykJSONScanResults \
+	--scan-results yourSnykSARIFScanResults \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a snyk attestation about a trail with an evidence file:
+# report a snyk attestation about a trail with an attachment:
 kosli attest snyk \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--scan-results yourSnykJSONScanResults \
+	--scan-results yourSnykSARIFScanResults \
 	--attachments=yourEvidencePathName \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# report a snyk attestation about a trail without uploading the snyk results file:
+kosli attest snyk \
+	--name yourAttestationName \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--scan-results yourSnykSARIFScanResults \
+	--upload-results=false \
 	--api-token yourAPIToken \
 	--org yourOrgName
 `
@@ -117,7 +129,8 @@ func newAttestSnykCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	addAttestationFlags(cmd, o.CommonAttestationOptions, o.payload.CommonAttestationPayload, ci)
-	cmd.Flags().StringVarP(&o.snykJsonFilePath, "scan-results", "R", "", snykJsonResultsFileFlag)
+	cmd.Flags().StringVarP(&o.snykSarifFilePath, "scan-results", "R", "", snykSarifResultsFileFlag)
+	cmd.Flags().BoolVar(&o.uploadResultsFile, "upload-results", true, uploadSnykResultsFlag)
 
 	err := RequireFlags(cmd, []string{"flow", "trail", "name", "scan-results"})
 	if err != nil {
@@ -135,9 +148,13 @@ func (o *attestSnykOptions) run(args []string) error {
 		return err
 	}
 
-	o.payload.SnykResults, err = LoadJsonData(o.snykJsonFilePath)
+	o.payload.SnykResults, err = snyk.ProcessSnykResultFile(o.snykSarifFilePath)
 	if err != nil {
 		return err
+	}
+
+	if o.uploadResultsFile {
+		o.attachments = append(o.attachments, o.snykSarifFilePath)
 	}
 
 	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.attachments)

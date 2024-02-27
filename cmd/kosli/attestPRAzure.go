@@ -10,7 +10,7 @@ import (
 const attestPRAzureShortDesc = `Report an Azure Devops pull request attestation to an artifact or a trail in a Kosli flow.  `
 
 const attestPRAzureLongDesc = attestPRAzureShortDesc + `
-It checks if a pull request exists for the artifact (based on its git commit) and reports the pull-request evidence to the artifact in Kosli.
+It checks if a pull request exists for the artifact (based on its git commit) and reports the pull-request attestation to the artifact in Kosli.
 ` + fingerprintDesc
 
 const attestPRAzureExample = `
@@ -68,7 +68,7 @@ kosli attest pullrequest azure \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report an Azure Devops pull request attestation about a trail with an evidence file:
+# report an Azure Devops pull request attestation about a trail with an attachment:
 kosli attest pullrequest azure \
 	--name yourAttestationName \
 	--flow yourFlowName \
@@ -78,7 +78,7 @@ kosli attest pullrequest azure \
 	--azure-token yourAzureToken \
 	--commit yourGitCommitSha1 \
 	--repository yourAzureGitRepository \
-	--attachments=yourEvidencePathName \
+	--attachments=yourAttachmentPathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
