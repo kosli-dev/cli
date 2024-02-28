@@ -9,7 +9,14 @@ deprecated: false
 ## Synopsis
 
 Report Snyk vulnerability scan evidence for a commit in Kosli flows.    
-The --scan-results .json file is parsed and uploaded to Kosli's evidence vault.  
+The --scan-results .json file is parsed and uploaded to Kosli's evidence vault.
+
+In CLI <v2.8.2, Snyk results could only be in the Snyk JSON output format. "snyk code test" results were not supported by 
+this command and could be reported as generic evidence.
+
+Starting from v2.8.2, the Snyk results can be in Snyk JSON or SARIF output format for "snyk container test". 
+"snyk code test" is now supported but only in the SARIF format.
+
 If no vulnerabilities are detected the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
 
 

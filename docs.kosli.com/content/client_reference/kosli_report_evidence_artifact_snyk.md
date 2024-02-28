@@ -9,8 +9,16 @@ deprecated: false
 ## Synopsis
 
 Report Snyk vulnerability scan evidence for an artifact in a Kosli flow.    
-The --scan-results .json file is parsed and uploaded to Kosli's evidence vault.  
-If no vulnerabilities are detected the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.  
+The --scan-results .json file is parsed and uploaded to Kosli's evidence vault.
+
+In CLI <v2.8.2, Snyk results could only be in the Snyk JSON output format. "snyk code test" results were not supported by 
+this command and could be reported as generic evidence.
+
+Starting from v2.8.2, the Snyk results can be in Snyk JSON or SARIF output format for "snyk container test". 
+"snyk code test" is now supported but only in the SARIF format.
+
+If no vulnerabilities are detected the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
+
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell
@@ -25,7 +33,7 @@ kosli report evidence artifact snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |        --evidence-fingerprint string  |  [optional] The SHA256 fingerprint of the evidence file or dir.  |
 |        --evidence-url string  |  [optional] The external URL where the evidence file or dir is stored.  |
-|    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Only applicable for --artifact-type dir.  |
+|    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for --artifact-type dir.  |
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'.  |
 |    -f, --flow string  |  The Kosli flow name.  |
 |    -h, --help  |  help for snyk  |

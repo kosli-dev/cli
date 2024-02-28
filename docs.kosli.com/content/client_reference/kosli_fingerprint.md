@@ -19,7 +19,8 @@ When fingerprinting a 'dir' artifact, you can exclude certain paths from fingerp
 using the '--exclude' flag.  
 Excluded paths are relative to the artifact path(s) and can be literal paths or
 glob patterns.  
-The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match
+The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match , 
+plus the ability to use recursive globs "**"
 
 ```shell
 kosli fingerprint {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
@@ -29,7 +30,7 @@ kosli fingerprint {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 | Flag | Description |
 | :--- | :--- |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
-|    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Only applicable for --artifact-type dir.  |
+|    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for --artifact-type dir.  |
 |    -h, --help  |  help for fingerprint  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
