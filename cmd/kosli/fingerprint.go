@@ -12,7 +12,8 @@ const fingerprintDirSynopsis = `When fingerprinting a 'dir' artifact, you can ex
 using the '--exclude' flag.  
 Excluded paths are relative to the artifact path(s) and can be literal paths or
 glob patterns.  
-The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match`
+The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match , 
+plus the ability to use recursive globs "**"`
 
 const fingerprintLongDesc = fingerprintShortDesc + `
 Requires artifact type flag to be set.

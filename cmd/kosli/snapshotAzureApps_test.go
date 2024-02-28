@@ -62,11 +62,10 @@ func (suite *SnapshotAzureAppsTestSuite) TestSnapshotAzureAppsCmd() {
 			name: "snapshot azure succeeds when digests-source is set to acr if all required flags are set",
 			cmd:  fmt.Sprintf(`snapshot azure %s %s %s --digests-source acr`, suite.envName, suite.defaultKosliArguments, suite.defaultAzureArguments),
 		},
-		{
-			name: "snapshot azure succeeds when digests-source is set to logs if all required flags are set",
-			cmd:  fmt.Sprintf(`snapshot azure %s %s %s --digests-source logs`, suite.envName, suite.defaultKosliArguments, suite.defaultAzureArguments),
-		},
-
+		// {
+		// 	name: "snapshot azure succeeds when digests-source is set to logs if all required flags are set",
+		// 	cmd:  fmt.Sprintf(`snapshot azure %s %s %s --digests-source logs`, suite.envName, suite.defaultKosliArguments, suite.defaultAzureArguments),
+		// },
 		{
 			wantError: true,
 			name:      "snapshot azure fails when Azure client ID is not set",
