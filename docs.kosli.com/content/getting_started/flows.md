@@ -20,7 +20,7 @@ $ kosli create flow process-a --description "My SW delivery process" \
     --use-empty-template
 ```
 
-## Expected steps
+## Flow template
 
 When creating a Flow, you can optionally provide a `Flow Template`. This template defines the necessary steps within the business or software process represented by a Kosli Flow. The compliance of Flow trails and artifacts will be assessed using the template.
 
