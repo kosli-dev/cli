@@ -5,9 +5,11 @@ weight: 270
 ---
 # Part 7: Attestations
 
-Attestations lets you declare whether an artifact or a trail adhere to a certain requirement or not. The attestation often includes evidence proving the claim.
+Attestations are how you record the facts your care about in your software supply chain. They are the evidence that you have performed certain activities, such as running tests, security scans, or ensuring that a certain requirement is met.
 
-Kosli allows you to report different types of attestations about an artifact or a trail. For some types, Kosli will process the evidence you provide and conclude whether the evidence proves compliance or otherwise. 
+Kosli allows you to report different types of attestations about artifacts and trails. For some types, Kosli will process the evidence you provide and conclude whether the evidence proves compliance or otherwise. 
+
+Let's take a look at how to make attestations to Kosli.
 
 The following template is expecting 4 attestations, one for each `name`.
 
@@ -26,15 +28,11 @@ trail:
       type: snyk
 ```
 
-It expects `jira-ticket` on the trail, the `backend` artifact, with `unit-tests` and `security-scan` attached to it.
-When you make an attestation, you have the choice of what `name` to attach it to:
-
-2. **To an artifact in a trail**: the attestation is attached to a specific artifact.
+It expects `jira-ticket` on the trail, the `backend` artifact, with `unit-tests` and `security-scan` attached to it. When you make an attestation, you have the choice of what `name` to attach it to:
 
 ## Make the `jira-ticket` attestation to a trail
 
-The `jira-ticket` attestation belongs to a single trail and is not linked to a specific artifact.
-In this example, the id of the trail is the git commit.
+The `jira-ticket` attestation belongs to a single trail and is not linked to a specific artifact. In this example, the id of the trail is the git commit.
 
 ```shell
 $ kosli attest jira \
@@ -46,7 +44,7 @@ $ kosli attest jira \
 
 ## Make the `unit-test` attestation to the `backend` artifact
 
-Often, evidence like unit tests are created before the artifact is built. To attach the evidence to the artifact before its creation, use `backend` (the artifact's `name` from the template), as well as `unit-tests` (the attestation's `name` from the template).
+Some attestations are attached to a specific artifact, like the unit tests for the `backend` artifact. Often, evidence like unit tests are created before the artifact is built. To attach the evidence to the artifact before its creation, use `backend` (the artifact's `name` from the template), as well as `unit-tests` (the attestation's `name` from the template).
 
 ```shell
 $ kosli attest junit \
@@ -56,9 +54,7 @@ $ kosli attest junit \
     ...
 ```
 
-This attestation belongs to any artifact later attested with the artifact's name from the template (in this example `backend`) and a matching git commit.
-
-<!-- Explain that the binding happens with the commit -->
+This attestation belongs to any artifact attested with the matching `name` from the template (in this example `backend`) and a matching git commit. 
 
 ## Make the `backend` artifact attestation
 
@@ -73,15 +69,18 @@ $ kosli attest artifact my_company/backend:latest \
     ...
 ```
 
-After this attestation, Kosli knows the fingerprint of the docker image called `my_company/backend:latest`, which is attached to the `backend` artifact `name` in the trail.
+The Kosli CLI will calculate the fingerprint of the docker image called `my_company/backend:latest` and attest it as the `backend` artifact `name` in the trail.
+
+{{< hint info >}}
+### Automatically gather git commit and CI environment information
+In all attestation commands the Kosli CLI will automatically gather the git commit and other information from the current git repository and the [CI environment](https://docs.kosli.com/integrations/ci_cd/). This is how the git commit is used to match attestation to artifacts.
+{{< /hint >}}
 
 ## Make the `security-scan` attestation to the `backend` artifact
 
-Often, evidence like snyk reports are created after the artifact is built. To attach the evidence to the artifact after its creation, use `backend` (the artifact's `name` from the template), as well as `security-scan` (the attestation's `name` from the template).
+Often, evidence like snyk reports are created after the artifact is built. In this case, you can attach the evidence to the artifact after its creation. Use `backend` (the artifact's `name` from the template), as well as `security-scan` (the attestation's `name` from the template) to name the attestation.
 
-<!-- Explain that the binding happens with the --artifact-type and name -->
-
-The following attestation (which does specify the artifact by name and `--artifact-type`) will only belong to the artifact `my_company/backend:latest` attested above and its fingerprint, in this case calculated by the Kosli CLI.
+The following attestation will only belong to the artifact `my_company/backend:latest` attested above and its fingerprint, in this case calculated by the Kosli CLI.
 
 ```shell
 $ kosli attest snyk \
@@ -93,11 +92,10 @@ $ kosli attest snyk \
 ```
 
 {{< hint info >}}
+### Attestation immutability
 
 Attestations are append-only immutable records. You can report the same attestation multiple times, and each report will be recorded. However, only the latest version of the attestation is  considered when evaluating trail or artifact compliance.
-
 {{< /hint >}}
-
 
 ## Evidence Vault
 
@@ -111,13 +109,13 @@ For `JUnit` attestations (see below), Kosli automatically stores the JUnit XML r
 
 ## Attestation types
 
-Currently we support the following types of evidence:
+Currently, we support the following types of evidence:
 
 ### Pull requests
 
 If you use GitHub, Bitbucket, Gitlab or Azure DevOps you can use Kosli to verify if a given git commit comes from a pull/merge request. 
 
-{{< hint info >}}
+{{< hint warning >}}
 Currently, the status of the PR does NOT impact the compliance status of the attestation.
 {{< /hint >}}
 
@@ -135,18 +133,13 @@ See the CLI reference for the following commands for more details and examples:
 
 If you produce your test results in JUnit format, you can attest the test results to Kosli. Kosli will analyze the JUnit results and determine the compliance status based on whether any tests have failed and/or errored or not.
 
-See [attest JUnit results o an artifact or a trail](/client_reference/kosli_attest_junit/) for usage details and examples.
+See [attest JUnit results to an artifact or a trail](/client_reference/kosli_attest_junit/) for usage details and examples.
 
 ### Snyk security scans 
 
 You can report results of a Snyk security scan to Kosli and it will analyze the Snyk scan results and determine the compliance status based on whether vulnerabilities where found or not.
 
-{{< hint warning >}}
-Currently, only `snyk container scan` results are supported for this type. For `snyk code scan` please use the generic attestation type.
-{{< /hint >}}
-
 See [attest Snyk results to an artifact or a trail](/client_reference/kosli_attest_snyk/) for usage details and examples.
-
 
 ### Jira issues
 
@@ -157,7 +150,6 @@ If Jira reference is found in a commit message, that reference will be reported 
 Kosli CLI will also verify and report if the detected issue reference is found and accessible on Jira (reported as compliant) or not (reported as non compliant). 
 
 See [attest Jira issue to an artifact or a trail](/client_reference/kosli_attest_jira/) for usage details and examples.
-
 
 ### Generic
 
