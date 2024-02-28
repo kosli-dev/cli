@@ -3,7 +3,7 @@ Flow:          get-artifact
 Fingerprint:   fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02
 Created on:    Sat, 16 Jan 2016 00:00:00 UTC • 2016-01-16
 Git commit:    0fc1ba9876f91b215679f3649b8668085d820ab5
-Commit URL:    www.nrk.no
+Commit URL:    https://www.nrk.no
 Build URL:     www.yr.no
 Artifact URL:  http://localhost:8001/docs-cmd-test-user-shared/flows/get-artifact/artifacts/fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02
 State:         COMPLIANT

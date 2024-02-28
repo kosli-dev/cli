@@ -7,12 +7,14 @@ import (
 	"os"
 
 	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/kosli-dev/cli/internal/snyk"
 	"github.com/spf13/cobra"
 )
 
 type EvidenceSnykPayload struct {
 	TypedEvidencePayload
-	SnykResults interface{} `json:"snyk_results"`
+	SnykResults      interface{}    `json:"snyk_results,omitempty"`
+	SnykSarifResults *snyk.SnykData `json:"processed_snyk_results,omitempty"`
 }
 
 type reportEvidenceArtifactSnykOptions struct {
@@ -20,6 +22,7 @@ type reportEvidenceArtifactSnykOptions struct {
 	flowName           string
 	snykJsonFilePath   string
 	userDataFilePath   string
+	uploadResultsFile  bool
 	payload            EvidenceSnykPayload
 }
 
@@ -83,6 +86,7 @@ func newReportEvidenceArtifactSnykCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.snykJsonFilePath, "scan-results", "R", "", snykJsonResultsFileFlag)
 	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
+	cmd.Flags().BoolVar(&o.uploadResultsFile, "upload-results", true, uploadSnykResultsFlag)
 
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
@@ -109,12 +113,20 @@ func (o *reportEvidenceArtifactSnykOptions) run(args []string) error {
 		return err
 	}
 
-	o.payload.SnykResults, err = LoadJsonData(o.snykJsonFilePath)
+	o.payload.SnykSarifResults, err = snyk.ProcessSnykResultFile(o.snykJsonFilePath)
 	if err != nil {
-		return err
+		o.payload.SnykResults, err = LoadJsonData(o.snykJsonFilePath)
+		if err != nil {
+			return err
+		}
 	}
 
-	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, []string{o.snykJsonFilePath})
+	attachments := []string{}
+	if o.uploadResultsFile {
+		attachments = append(attachments, o.snykJsonFilePath)
+	}
+
+	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, attachments)
 	// if we created a tar package, remove it after uploading it
 	if cleanupNeeded {
 		defer os.Remove(evidencePath)

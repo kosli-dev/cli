@@ -17,7 +17,7 @@ type PipelineCommandTestSuite struct {
 
 func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 	defaultKosliArguments := " -H http://localhost:8001 --org docs-cmd-test-user -a eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY"
-	defaultArtifactArguments := " --flow newFlow --build-url www.yr.no --commit-url www.nrk.no"
+	defaultArtifactArguments := " --flow newFlow --build-url www.yr.no --commit-url https://www.nrk.no"
 	defaultRepoRoot := " --repo-root ../.. "
 
 	repo, err := git.PlainOpen("../..")

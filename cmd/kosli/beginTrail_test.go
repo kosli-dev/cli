@@ -51,7 +51,7 @@ func (suite *BeginTrailCommandTestSuite) TestBeginTrailCmd() {
 			wantError:   true,
 			name:        "beginning a trail with an invalid template fails",
 			cmd:         fmt.Sprintf("begin trail test-123 --flow %s --template-file testdata/invalid_template.yml %s", suite.flowName, suite.defaultKosliArguments),
-			goldenRegex: "Error: template file is invalid 1 validation error for Template\n.*",
+			goldenRegex: "Error: template file is invalid. 1 validation error for Template\n.*",
 		},
 		{
 			name:   "can begin a trail with a valid template",

@@ -29,6 +29,7 @@ require (
 	github.com/microsoft/azure-devops-go-api/azuredevops v1.0.0-b5
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/otiai10/copy v1.9.0
+	github.com/owenrumney/go-sarif/v2 v2.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
@@ -36,6 +37,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/xanzy/go-gitlab v0.81.0
 	github.com/xeonx/timeago v1.0.0-rc5
+	github.com/yargevad/filepathx v1.0.0
 	golang.org/x/oauth2 v0.10.0
 	k8s.io/api v0.29.0
 	k8s.io/apimachinery v0.29.0

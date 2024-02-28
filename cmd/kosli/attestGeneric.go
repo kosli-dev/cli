@@ -60,12 +60,12 @@ kosli attest generic \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a generic attestation about a trail with an evidence file:
+# report a generic attestation about a trail with an attachment:
 kosli attest generic \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--attachments=yourEvidencePathName \
+	--attachments=yourAttachmentPathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
