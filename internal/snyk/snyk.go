@@ -88,7 +88,7 @@ func ProcessSnykResultFile(file string) (*SnykData, error) {
 func createVulnerability(r *sarif.Result) Vulnerability {
 	locations := []Location{}
 	for _, l := range r.Locations {
-		if l.PhysicalLocation != nil {
+		if l != nil && l.PhysicalLocation != nil {
 			lines := ""
 			if l.PhysicalLocation.Region != nil && l.PhysicalLocation.Region.StartLine != nil {
 				lines = strconv.Itoa(*l.PhysicalLocation.Region.StartLine)
@@ -96,16 +96,30 @@ func createVulnerability(r *sarif.Result) Vulnerability {
 					lines += fmt.Sprintf("-%d", *l.PhysicalLocation.Region.EndLine)
 				}
 			}
+			uri := ""
+			if l.PhysicalLocation.ArtifactLocation != nil && l.PhysicalLocation.ArtifactLocation.URI != nil {
+				uri = *l.PhysicalLocation.ArtifactLocation.URI
+			}
+
 			locations = append(locations, Location{
-				URI:   *l.PhysicalLocation.ArtifactLocation.URI,
+				URI:   uri,
 				Lines: lines,
 			})
 		}
 	}
-	return Vulnerability{
-		ID:            *r.RuleID,
-		Message:       *r.Message.Text,
-		Locations:     locations,
-		PriorityScore: r.Properties["priorityScore"].(float64),
+	vul := Vulnerability{
+		Locations: locations,
 	}
+	if r.RuleID != nil {
+		vul.ID = *r.RuleID
+	}
+	if r.Message.Text != nil {
+		vul.Message = *r.Message.Text
+	}
+	if value, exists := r.Properties["priorityScore"]; exists {
+		if value != nil {
+			vul.PriorityScore = value.(float64)
+		}
+	}
+	return vul
 }
