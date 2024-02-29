@@ -19,7 +19,9 @@ kosli create environment ENVIRONMENT-NAME [flags]
 | :--- | :--- |
 |    -d, --description string  |  [optional] The environment description.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
+|        --exclude-scaling  |  [optional] Exclude scaling events for snapshots. Only show SW and compliance changes  |
 |    -h, --help  |  help for environment  |
+|        --include-scaling  |  [optional] Include scaling events for snapshots. This will give a lot of snapshots without any change of SW or compliance  |
 |    -t, --type string  |  The type of environment. Valid types are: [K8S, ECS, server, S3, lambda, docker].  |
 
 
