@@ -26,6 +26,14 @@ type attestSnykOptions struct {
 const attestSnykShortDesc = `Report a snyk attestation to an artifact or a trail in a Kosli flow.  `
 
 const attestSnykLongDesc = attestSnykShortDesc + `
+Only SARIF snyk output is accepted. 
+Snyk output can be for "snyk code test", "snyk container test", or "snyk iac test".
+
+The --scan-results .json file is analyzed and a summary of the scan results are reported to Kosli.
+
+By default, the --scan-results .json file is also uploaded to Kosli's evidence vault. 
+You can disable that by setting --upload-results=false
+
 ` + fingerprintDesc
 
 const attestSnykExample = `

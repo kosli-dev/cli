@@ -131,6 +131,21 @@ func TestProcessSnykResultFile(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "a sarif Open source test json file is parsed correctly",
+			file: "sarif-os.json",
+			want: &want{
+				tool:    "Snyk Open Source",
+				version: "",
+				results: []result{
+					{
+						high_count:   0,
+						medium_count: 6,
+						low_count:    0,
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
