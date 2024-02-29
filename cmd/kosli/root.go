@@ -76,7 +76,7 @@ The service principal needs to have the following permissions:
 	pageNumberFlag              = "[defaulted] The page number of a response."
 	pageLimitFlag               = "[defaulted] The number of elements per page."
 	newEnvNameFlag              = "The name of environment to be created."
-	newEnvTypeFlag              = "The type of environment. Valid types are: [K8S, ECS, server, S3, lambda, docker]."
+	newEnvTypeFlag              = "The type of environment. Valid types are: [K8S, ECS, server, S3, lambda, docker, azure-apps]."
 	envAllowListFlag            = "The environment name for which the artifact is allowlisted."
 	reasonFlag                  = "The reason why this artifact is allowlisted."
 	oldestCommitFlag            = "[conditional] The source commit sha for the oldest change in the deployment. Can be any commit-ish. Only required if you don't specify '--environment'."
@@ -182,8 +182,8 @@ The service principal needs to have the following permissions:
 	externalFingerprintFlag     = "[optional] A SHA256 fingerprint of an external attachment represented by --external-url. The format is label=fingerprint (labels cannot contain '.' or '='). This flag can be set multiple times. There must be an external url with a matching label for each external fingerprint."
 	externalURLFlag             = "[optional] Add labeled reference URL for an external resource. The format is label=url (labels cannot contain '.' or '='). This flag can be set multiple times. If the resource is a file or dir, you can optionally add its fingerprint via --external-fingerprint"
 	attestationDescription      = "[optional] attestation description"
-	excludeScalingFlag          = "[optional] Exclude scaling events for snapshots. Only show SW and compliance changes"
-	includeScalingFlag          = "[optional] Include scaling events for snapshots. This will give a lot of snapshots without any change of SW or compliance"
+	excludeScalingFlag          = "[optional] Exclude scaling events for snapshots. Snapshots with scaling changes will not result in new environment records."
+	includeScalingFlag          = "[optional] Include scaling events for snapshots. Snapshots with scaling changes will result in new environment records."
 )
 
 var global *GlobalOpts
