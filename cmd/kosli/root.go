@@ -182,6 +182,8 @@ The service principal needs to have the following permissions:
 	externalFingerprintFlag     = "[optional] A SHA256 fingerprint of an external attachment represented by --external-url. The format is label=fingerprint (labels cannot contain '.' or '='). This flag can be set multiple times. There must be an external url with a matching label for each external fingerprint."
 	externalURLFlag             = "[optional] Add labeled reference URL for an external resource. The format is label=url (labels cannot contain '.' or '='). This flag can be set multiple times. If the resource is a file or dir, you can optionally add its fingerprint via --external-fingerprint"
 	attestationDescription      = "[optional] attestation description"
+	excludeScalingFlag          = "[optional] Exclude scaling events for snapshots. Only show SW and compliance changes"
+	includeScalingFlag          = "[optional] Include scaling events for snapshots. This will give a lot of snapshots without any change of SW or compliance"
 )
 
 var global *GlobalOpts

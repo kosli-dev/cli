@@ -39,6 +39,24 @@ func (suite *CreateEnvironmentCommandTestSuite) TestCreateEnvironmentCmd() {
 			golden:    "environment newEnv2 was created\n",
 		},
 		{
+			wantError: false,
+			name:      "can create K8S env with include-scaling",
+			cmd:       "create env newEnv1 --type K8S --include-scaling" + suite.defaultKosliArguments,
+			golden:    "environment newEnv1 was created\n",
+		},
+		{
+			wantError: false,
+			name:      "can create K8S env with exclude-scaling",
+			cmd:       "create env newEnv1 --type K8S --exclude-scaling" + suite.defaultKosliArguments,
+			golden:    "environment newEnv1 was created\n",
+		},
+		{
+			wantError: true,
+			name:      "fail if both exclude-scaling an include-scaling is provided",
+			cmd:       "create env newEnv1 --type K8S --exclude-scaling --include-scaling" + suite.defaultKosliArguments,
+			golden:    "Error: only one of --exclude-scaling, --include-scaling is allowed\n",
+		},
+		{
 			wantError: true,
 			name:      "fails if the type case does not match what the server accepts",
 			cmd:       "create env newEnv1 --type k8s" + suite.defaultKosliArguments,
