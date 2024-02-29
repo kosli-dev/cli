@@ -9,7 +9,26 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const createEnvironmentDesc = `Create a Kosli environment.`
+const createEnvironmentShortDesc = `Create or update a Kosli environment.`
+
+const createEnvironmentLongDesc = createEnvironmentShortDesc + `
+
+The **--type** must match the type of environment you wish to record snapshots from.
+The following types are supported:
+  - k8s        - Kubernetes
+  - ecs        - Amazon Elastic Container Service
+  - s3         - Amazon S3 object storage
+  - lambda     - AWS Lambda serverles
+  - docker     - Docker images
+  - azure-apps - Azure app services
+  - server     - Generic type
+
+By default kosli will not make new snapshots for scaling events (change in number of instances running).
+For large clusters the scaling events will often outnumber the actual change of SW.
+
+It is possible to enable new snapshots for scaling events this with the --include-scaling flag, or turn
+it off again with --exluce-scaling.
+`
 
 const createEnvironmentExample = `
 # create a Kosli environment:
@@ -38,8 +57,8 @@ func newCreateEnvironmentCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "environment ENVIRONMENT-NAME",
 		Aliases: []string{"env"},
-		Short:   createEnvironmentDesc,
-		Long:    createEnvironmentDesc,
+		Short:   createEnvironmentShortDesc,
+		Long:    createEnvironmentLongDesc,
 		Example: createEnvironmentExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
