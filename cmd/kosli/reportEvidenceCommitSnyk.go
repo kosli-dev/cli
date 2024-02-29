@@ -100,9 +100,10 @@ func (o *reportEvidenceCommitSnykOptions) run(args []string) error {
 
 	o.payload.SnykSarifResults, err = snyk.ProcessSnykResultFile(o.snykJsonFile)
 	if err != nil {
+		sarifErr := err
 		o.payload.SnykResults, err = LoadJsonData(o.snykJsonFile)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to parse Snyk results file [%s]. Failed to parse as Sarif: %s. Fallen back to parse Snyk Json, but also failed: %s", o.snykJsonFile, err, sarifErr)
 		}
 	}
 

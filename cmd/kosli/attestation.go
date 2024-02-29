@@ -42,7 +42,7 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 
 	p1, p2, err := parseAttestationNameTemplate(o.attestationNameTemplate)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse attestation name: %s", err)
 	}
 	if p1 != "" && p2 != "" {
 		payload.TargetArtifacts = []string{p1}
@@ -54,25 +54,25 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 	if o.fingerprintOptions.artifactType != "" {
 		payload.ArtifactFingerprint, err = GetSha256Digest(args[0], o.fingerprintOptions, logger)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to calculate artifact fingerprint: %s", err)
 		}
 	}
 
 	if o.commitSHA != "" {
 		gv, err := gitview.New(o.srcRepoRoot)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get commit info. %s", err)
 		}
 		commitInfo, err := gv.GetCommitInfoFromCommitSHA(o.commitSHA, false)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get commit info. %s", err)
 		}
 		payload.Commit = &commitInfo.BasicCommitInfo
 	}
 
 	payload.UserData, err = LoadJsonData(o.userDataFilePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to load user data. %s", err)
 	}
 
 	// process external urls
@@ -115,7 +115,7 @@ func parseAttestationNameTemplate(template string) (string, string, error) {
 	} else if len(parts) == 2 {
 		return parts[0], parts[1], nil
 	} else {
-		return "", "", fmt.Errorf("invalid attestation name format")
+		return "", "", fmt.Errorf("invalid attestation name format: %s", template)
 	}
 }
 

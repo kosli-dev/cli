@@ -1,0 +1,284 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "originalUriBaseIds": {
+        "PROJECTROOT": {
+          "uri": "file:///Users/samialajrami/workspace/merkely/cli/",
+          "description": {
+            "text": "The root directory for all project files."
+          }
+        }
+      },
+      "tool": {
+        "driver": {
+          "name": "Snyk IaC",
+          "fullName": "Snyk Infrastructure as Code",
+          "version": "1.1177.0",
+          "informationUri": "https://docs.snyk.io/products/snyk-infrastructure-as-code",
+          "rules": [
+            {
+              "id": "SNYK-CC-TF-124",
+              "name": "S3BucketVersioningDisabled",
+              "shortDescription": {
+                "text": "Low severity - S3 bucket versioning disabled"
+              },
+              "fullDescription": {
+                "text": "Low severity - S3"
+              },
+              "help": {
+                "text": "The issue is... \nS3 bucket versioning is disabled\n\n The impact of this is... \n Changes or deletion of objects will not be reversible\n\n You can resolve this by... \nSet `Properties.VersioningConfiguration.Status` attribute to `Enabled`",
+                "markdown": "**The issue is...** \nS3 bucket versioning is disabled\n\n **The impact of this is...** \n Changes or deletion of objects will not be reversible\n\n **You can resolve this by...** \nSet `Properties.VersioningConfiguration.Status` attribute to `Enabled`"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "S3"
+                ],
+                "problem": {
+                  "severity": "low"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-TF-124"
+            },
+            {
+              "id": "SNYK-CC-TF-45",
+              "name": "S3ServerAccessLoggingIsDisabled",
+              "shortDescription": {
+                "text": "Low severity - S3 server access logging is disabled"
+              },
+              "fullDescription": {
+                "text": "Low severity - S3"
+              },
+              "help": {
+                "text": "The issue is... \nThe s3 access logs will not be collected\n\n The impact of this is... \n There will be no audit trail of access to s3 objects\n\n You can resolve this by... \nSet `Properties.LoggingConfiguration` attribute",
+                "markdown": "**The issue is...** \nThe s3 access logs will not be collected\n\n **The impact of this is...** \n There will be no audit trail of access to s3 objects\n\n **You can resolve this by...** \nSet `Properties.LoggingConfiguration` attribute"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "S3"
+                ],
+                "problem": {
+                  "severity": "low"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-TF-45"
+            },
+            {
+              "id": "SNYK-CC-TF-134",
+              "name": "CloudWatchLogGroupRetentionPeriodNotSet",
+              "shortDescription": {
+                "text": "Low severity - CloudWatch Log group retention period not set"
+              },
+              "fullDescription": {
+                "text": "Low severity - CloudWatch"
+              },
+              "help": {
+                "text": "The issue is... \nAmazon CloudWatch log group does not specify retention period\n\n The impact of this is... \n Logs will be kept indefinitely and incur AWS costs\n\n You can resolve this by... \nSet `Properties.RetentionInDays` attribute to required value, e.g. set `365`",
+                "markdown": "**The issue is...** \nAmazon CloudWatch log group does not specify retention period\n\n **The impact of this is...** \n Logs will be kept indefinitely and incur AWS costs\n\n **You can resolve this by...** \nSet `Properties.RetentionInDays` attribute to required value, e.g. set `365`"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "CloudWatch"
+                ],
+                "problem": {
+                  "severity": "low"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-TF-134"
+            },
+            {
+              "id": "SNYK-CC-AWS-415",
+              "name": "CloudWatchLogGroupNotEncryptedWithManagedKey",
+              "shortDescription": {
+                "text": "Low severity - CloudWatch log group not encrypted with managed key"
+              },
+              "fullDescription": {
+                "text": "Low severity - CloudWatch"
+              },
+              "help": {
+                "text": "The issue is... \nLog group is not encrypted with customer managed key\n\n The impact of this is... \n Scope of use of the key cannot be controlled via KMS/IAM policies\n\n You can resolve this by... \nSet `Properties.KmsKeyId` attribute with customer managed key id",
+                "markdown": "**The issue is...** \nLog group is not encrypted with customer managed key\n\n **The impact of this is...** \n Scope of use of the key cannot be controlled via KMS/IAM policies\n\n **You can resolve this by...** \nSet `Properties.KmsKeyId` attribute with customer managed key id"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "CloudWatch"
+                ],
+                "problem": {
+                  "severity": "low"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-AWS-415"
+            },
+            {
+              "id": "SNYK-CC-TF-133",
+              "name": "XRayTracingIsDisabledForLambdaFunction",
+              "shortDescription": {
+                "text": "Low severity - X-ray tracing is disabled for Lambda function"
+              },
+              "fullDescription": {
+                "text": "Low severity - Lambda"
+              },
+              "help": {
+                "text": "The issue is... \nAmazon X-Ray tracing is not enabled for Lambda function\n\n The impact of this is... \n Trace logs will not be available during investigation\n\n You can resolve this by... \nSet `Properties.TracingConfig.Mode` attribute to `Active` or `PassThrough`",
+                "markdown": "**The issue is...** \nAmazon X-Ray tracing is not enabled for Lambda function\n\n **The impact of this is...** \n Trace logs will not be available during investigation\n\n **You can resolve this by...** \nSet `Properties.TracingConfig.Mode` attribute to `Active` or `PassThrough`"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "Lambda"
+                ],
+                "problem": {
+                  "severity": "low"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-TF-133"
+            }
+          ]
+        }
+      },
+      "automationDetails": {
+        "id": "snyk-iac"
+      },
+      "results": [
+        {
+          "ruleId": "SNYK-CC-TF-124",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the S3"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "serverless-artifacts/cloudformation-template-create-stack.json",
+                  "uriBaseId": "PROJECTROOT"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-45",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the S3"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "serverless-artifacts/cloudformation-template-create-stack.json",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-134",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the CloudWatch"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "serverless-artifacts/cloudformation-template-update-stack.json",
+                  "uriBaseId": "PROJECTROOT"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-124",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the S3"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "serverless-artifacts/cloudformation-template-update-stack.json",
+                  "uriBaseId": "PROJECTROOT"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-45",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the S3"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "serverless-artifacts/cloudformation-template-update-stack.json",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-415",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the CloudWatch"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "serverless-artifacts/cloudformation-template-update-stack.json",
+                  "uriBaseId": "PROJECTROOT"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-133",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the Lambda"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "serverless-artifacts/cloudformation-template-update-stack.json",
+                  "uriBaseId": "PROJECTROOT"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
