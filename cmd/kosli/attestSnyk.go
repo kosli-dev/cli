@@ -150,7 +150,7 @@ func (o *attestSnykOptions) run(args []string) error {
 
 	o.payload.SnykResults, err = snyk.ProcessSnykResultFile(o.snykSarifFilePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse Snyk sarif results file [%s]: %s", o.snykSarifFilePath, err)
 	}
 
 	if o.uploadResultsFile {

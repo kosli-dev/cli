@@ -48,7 +48,7 @@ func (suite *CommitEvidenceSnykCommandTestSuite) TestCommitEvidenceSnykCmd() {
 			cmd: `report evidence commit snyk --commit 239d7cee00ca341f124fa710fc694b67cdf8011b --name snyk-result --flows ` + suite.flowName + `
 			          --build-url example.com --scan-results testdata/foo.json` + suite.defaultKosliArguments,
 			wantError: true,
-			golden:    "Error: open testdata/foo.json: no such file or directory\n",
+			golden:    "Error: failed to parse Snyk results file [testdata/foo.json]. Failed to parse as Sarif: open testdata/foo.json: no such file or directory. Fallen back to parse Snyk Json, but also failed: the provided file path doesn't have a file\n",
 		},
 		{
 			name: "report Snyk scan evidence with missing scan-results flag",

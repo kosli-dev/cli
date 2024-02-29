@@ -31,7 +31,7 @@ type SnykResult struct {
 	LowCount    int             `json:"low_count"`
 	High        []Vulnerability `json:"high,omitempty"`
 	Medium      []Vulnerability `json:"medium,omitempty"`
-	LOW         []Vulnerability `json:"low,omitempty"`
+	Low         []Vulnerability `json:"low,omitempty"`
 }
 
 type SnykData struct {
@@ -66,16 +66,25 @@ func ProcessSnykResultFile(file string) (*SnykData, error) {
 	for _, run := range report.Runs {
 		result := SnykResult{}
 		for _, r := range run.Results {
-			switch *r.Level {
-			case "error":
+			level := r.Level
+			vulnerability := createVulnerability(r)
+			if level == nil {
+				ruleLevel, err := findLevel(run, vulnerability.ID)
+				if err != nil {
+					return nil, err
+				}
+				level = &ruleLevel
+			}
+			switch *level {
+			case "error", "high", "critical":
 				result.HighCount++
-				result.High = append(result.High, createVulnerability(r))
-			case "warning":
+				result.High = append(result.High, vulnerability)
+			case "warning", "medium":
 				result.MediumCount++
-				result.Medium = append(result.Medium, createVulnerability(r))
-			case "info":
+				result.Medium = append(result.Medium, vulnerability)
+			case "info", "low":
 				result.LowCount++
-				result.Medium = append(result.Medium, createVulnerability(r))
+				result.Low = append(result.Low, vulnerability)
 			}
 
 		}
@@ -122,4 +131,23 @@ func createVulnerability(r *sarif.Result) Vulnerability {
 		}
 	}
 	return vul
+}
+
+func findLevel(r *sarif.Run, id string) (string, error) {
+	ruleDesc, err := r.GetRuleById(id)
+	if err != nil {
+		return "", fmt.Errorf("could not find rule ID: %s. %s", id, err)
+	}
+	// defaultConfig := ruleDesc.DefaultConfiguration
+	// if defaultConfig != nil {
+	// 	return defaultConfig.Level, nil
+	// }
+	problem, problem_exists := ruleDesc.Properties["problem"]
+	if problem_exists && problem != nil {
+		severity, severity_exists := problem.(map[string]interface{})["severity"]
+		if severity_exists {
+			return severity.(string), nil
+		}
+	}
+	return "", fmt.Errorf("could not find level for rule ID: %s", id)
 }
