@@ -51,10 +51,6 @@ func newCreateEnvironmentCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			// if o.excludeScaling && o.includeScaling {
-			// 	return ErrorBeforePrintingUsage(cmd, "Only one of the flags '--exclude-scaling' and '--include-scaling' should be set")
-			// }
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
