@@ -18,7 +18,7 @@ The following types are supported:
   - k8s        - Kubernetes
   - ecs        - Amazon Elastic Container Service
   - s3         - Amazon S3 object storage
-  - lambda     - AWS Lambda serverles
+  - lambda     - AWS Lambda serverless
   - docker     - Docker images
   - azure-apps - Azure app services
   - server     - Generic type
@@ -26,8 +26,8 @@ The following types are supported:
 By default kosli will not make new snapshots for scaling events (change in number of instances running).
 For large clusters the scaling events will often outnumber the actual change of SW.
 
-It is possible to enable new snapshots for scaling events this with the --include-scaling flag, or turn
-it off again with --exluce-scaling.
+It is possible to enable new snapshots for scaling events with the --include-scaling flag, or turn
+it off again with the --exclude-scaling.
 `
 
 const createEnvironmentExample = `
