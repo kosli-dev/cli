@@ -74,7 +74,7 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 			wantError:   true,
 			name:        "report artifact missing --git-commit",
 			cmd:         "report artifact testdata/folder1 --artifact-type dir " + defaultArtifactArguments + defaultKosliArguments + defaultRepoRoot,
-			goldenRegex: "Error: required flag(s) \"git-commit\" not set\n",
+			goldenRegex: "Error: required flag\\(s\\) \"git-commit\" not set\n",
 		},
 		{
 			wantError:   true,

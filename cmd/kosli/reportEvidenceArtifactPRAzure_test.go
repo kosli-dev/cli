@@ -48,7 +48,7 @@ func (suite *ArtifactEvidencePRAzureCommandTestSuite) TestArtifactEvidencePRAzur
 			cmd: `report evidence artifact pullrequest azure --fingerprint ` + suite.artifactFingerprint + ` --name az-pr --flow ` + suite.flowName + `
 			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a --api-token foo --host bar`,
 			goldenRegex: "Error: --org is not set\n" +
-				"Usage: kosli report evidence artifact pullrequest azure [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+				"Usage: kosli report evidence artifact pullrequest azure \\[IMAGE-NAME | FILE-PATH | DIR-PATH\\] \\[flags\\]\n",
 		},
 		{
 			wantError: true,
