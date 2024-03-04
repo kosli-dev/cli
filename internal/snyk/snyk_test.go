@@ -5,12 +5,15 @@ import (
 )
 
 func TestProcessSnykResultFile(t *testing.T) {
-	type want struct {
-		tool         string
-		version      string
+	type result struct {
 		high_count   int
 		medium_count int
 		low_count    int
+	}
+	type want struct {
+		tool    string
+		version string
+		results []result
 	}
 	tests := []struct {
 		name    string
@@ -29,14 +32,118 @@ func TestProcessSnykResultFile(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "a sarif json file is parsed correctly",
-			file: "sarif.json",
+			name: "a sarif code test json file is parsed correctly",
+			file: "sarif-code.json",
 			want: &want{
-				tool:         "SnykCode",
-				version:      "1.0.0",
-				high_count:   0,
-				medium_count: 9,
-				low_count:    0,
+				tool:    "SnykCode",
+				version: "1.0.0",
+				results: []result{
+					{
+						high_count:   0,
+						medium_count: 9,
+						low_count:    0,
+					},
+				},
+			},
+		},
+		{
+			name: "a sarif container test json file is parsed correctly",
+			file: "sarif-container.json",
+			want: &want{
+				tool:    "Snyk Container",
+				version: "",
+				results: []result{
+					{
+						high_count:   0,
+						medium_count: 0,
+						low_count:    0,
+					},
+					{
+						high_count:   2,
+						medium_count: 1,
+						low_count:    0,
+					},
+				},
+			},
+		},
+		{
+			name: "a sarif empty container test json file is parsed correctly",
+			file: "sarif-empty-container.json",
+			want: &want{
+				tool:    "Snyk Container",
+				version: "",
+				results: []result{
+					{
+						high_count:   0,
+						medium_count: 0,
+						low_count:    0,
+					},
+					{
+						high_count:   0,
+						medium_count: 0,
+						low_count:    0,
+					},
+				},
+			},
+		},
+		{
+			name: "a sarif IaC (terraform) test json file is parsed correctly",
+			file: "sarif-iac.json",
+			want: &want{
+				tool:    "Snyk IaC",
+				version: "1.1177.0",
+				results: []result{
+					{
+						high_count:   4,
+						medium_count: 9,
+						low_count:    113,
+					},
+				},
+			},
+		},
+		{
+			name: "a sarif IaC (helm) test json file is parsed correctly",
+			file: "sarif-helm.json",
+			want: &want{
+				tool:    "Snyk IaC",
+				version: "1.1177.0",
+				results: []result{
+					{
+						high_count:   0,
+						medium_count: 3,
+						low_count:    2,
+					},
+				},
+			},
+		},
+		{
+			name: "a sarif IaC (Serverless) test json file is parsed correctly",
+			file: "sarif-serverless.json",
+			want: &want{
+				tool:    "Snyk IaC",
+				version: "1.1177.0",
+				results: []result{
+					{
+						high_count:   0,
+						medium_count: 0,
+						low_count:    7,
+					},
+				},
+			},
+		},
+		{
+			name: "a sarif Open source test json file is parsed correctly",
+			file: "sarif-os.json",
+			want: &want{
+				tool:    "Snyk Open Source",
+				version: "",
+				results: []result{
+					{
+						high_count:   0,
+						medium_count: 6,
+						low_count:    0,
+					},
+				},
 			},
 		},
 	}
@@ -48,13 +155,19 @@ func TestProcessSnykResultFile(t *testing.T) {
 				return
 			}
 			if tt.want != nil && (tt.want.tool != got.Tool.Name ||
-				tt.want.version != got.Tool.Version ||
-				tt.want.high_count != got.Results[0].HighCount ||
-				tt.want.medium_count != got.Results[0].MediumCount ||
-				tt.want.low_count != got.Results[0].LowCount) {
-				t.Errorf("ProcessSnykResultFile() = %v, want %v", got, tt.want)
+				tt.want.version != got.Tool.Version) {
+				t.Errorf("ProcessSnykResultFile() failed, want: Tool: %s (got %s) -- Version: %s (got %s)", tt.want.tool, got.Tool.Name, tt.want.version, got.Tool.Version)
 			}
 
+			if tt.want != nil && len(tt.want.results) > 0 {
+				for i, wantResult := range tt.want.results {
+					if wantResult.high_count != got.Results[i].HighCount ||
+						wantResult.medium_count != got.Results[i].MediumCount ||
+						wantResult.low_count != got.Results[i].LowCount {
+						t.Errorf("ProcessSnykResultFile() failed for Result [%d], want %v -- got %v", i, wantResult, got.Results[i])
+					}
+				}
+			}
 		})
 	}
 }

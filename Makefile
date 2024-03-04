@@ -98,7 +98,7 @@ test_docs: deps vet ensure_network test_setup
 	./bin/test_docs_cmds.sh docs.kosli.com/content/use_cases/simulating_a_devops_system/_index.md
 
 
-docker: deps vet lint
+docker:
 	@docker build -t kosli-cli .
 
 cli-docs: build

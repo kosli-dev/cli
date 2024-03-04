@@ -123,9 +123,10 @@ func (o *reportEvidenceArtifactSnykOptions) run(args []string) error {
 
 	o.payload.SnykSarifResults, err = snyk.ProcessSnykResultFile(o.snykJsonFilePath)
 	if err != nil {
+		sarifErr := err
 		o.payload.SnykResults, err = LoadJsonData(o.snykJsonFilePath)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to parse Snyk results file [%s]. Failed to parse as Sarif: %s. Fallen back to parse Snyk Json, but also failed: %s", o.snykJsonFilePath, err, sarifErr)
 		}
 	}
 

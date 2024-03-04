@@ -1,7 +1,7 @@
 ---
 title: "How to report Kubernetes Clusters"
 bookCollapseSection: false
-weight: 507
+weight: 508
 ---
 
 # How to report Kubernetes Clusters to Kosli

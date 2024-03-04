@@ -1,0 +1,251 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "Snyk Open Source",
+          "rules": [
+            {
+              "id": "SNYK-JS-GOT-2932019",
+              "shortDescription": {
+                "text": "Medium severity - Open Redirect vulnerability in got"
+              },
+              "fullDescription": {
+                "text": "(CVE-2022-33987) got@11.8.2"
+              },
+              "help": {
+                "text": "",
+                "markdown": "* Package Manager: npm\n* Vulnerable module: got\n* Introduced through: snyk@1.0.0-monorepo, snyk-nodejs-lockfile-parser@1.52.11 and others\n### Detailed paths\n* _Introduced through_: snyk@1.0.0-monorepo › snyk-nodejs-lockfile-parser@1.52.11 › @yarnpkg/core@2.4.0 › got@11.8.2\n* _Introduced through_: snyk@1.0.0-monorepo › snyk-docker-plugin@6.10.2 › snyk-nodejs-lockfile-parser@1.52.11 › @yarnpkg/core@2.4.0 › got@11.8.2\n# Overview\n\nAffected versions of this package are vulnerable to Open Redirect due to missing verification of requested URLs. It allowed a victim to be redirected to a UNIX socket.\n# Remediation\nUpgrade `got` to version 11.8.5, 12.1.0 or higher.\n# References\n- [GitHub Diff](https://github.com/sindresorhus/got/compare/v12.0.3...v12.1.0)\n- [GitHub PR](https://github.com/sindresorhus/got/pull/2047)\n"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "CWE-601",
+                  "npm"
+                ]
+              }
+            },
+            {
+              "id": "SNYK-JS-INFLIGHT-6095116",
+              "shortDescription": {
+                "text": "Medium severity - Missing Release of Resource after Effective Lifetime vulnerability in inflight"
+              },
+              "fullDescription": {
+                "text": "inflight@1.0.6"
+              },
+              "help": {
+                "text": "",
+                "markdown": "* Package Manager: npm\n* Vulnerable module: inflight\n* Introduced through: snyk@1.0.0-monorepo, glob@7.2.3 and others\n### Detailed paths\n* _Introduced through_: snyk@1.0.0-monorepo › glob@7.2.3 › inflight@1.0.6\n* _Introduced through_: snyk@1.0.0-monorepo › rimraf@2.7.1 › glob@7.2.3 › inflight@1.0.6\n* _Introduced through_: snyk@1.0.0-monorepo › snyk-mvn-plugin@3.1.0 › glob@7.2.3 › inflight@1.0.6\n* _Introduced through_: snyk@1.0.0-monorepo › snyk-sbt-plugin@2.17.1 › tmp@0.1.0 › rimraf@2.7.1 › glob@7.2.3 › inflight@1.0.6\n* _Introduced through_: snyk@1.0.0-monorepo › snyk-docker-plugin@6.10.2 › tmp@0.2.1 › rimraf@3.0.2 › glob@7.2.3 › inflight@1.0.6\n* _Introduced through_: snyk@1.0.0-monorepo › snyk-go-plugin@1.23.0 › tmp@0.2.1 › rimraf@3.0.2 › glob@7.2.3 › inflight@1.0.6\n* _Introduced through_: snyk@1.0.0-monorepo › snyk-gradle-plugin@4.1.0 › tmp@0.2.1 › rimraf@3.0.2 › glob@7.2.3 › inflight@1.0.6\n* _Introduced through_: snyk@1.0.0-monorepo › snyk-python-plugin@2.0.8 › tmp@0.2.1 › rimraf@3.0.2 › glob@7.2.3 › inflight@1.0.6\n# Overview\n\nAffected versions of this package are vulnerable to Missing Release of Resource after Effective Lifetime via the `makeres` function due to improperly deleting keys from the `reqs` object after execution of callbacks. This behavior causes the keys to remain in the `reqs` object, which leads to resource exhaustion.\r\n\r\nExploiting this vulnerability results in crashing the `node` process or in the application crash.\r\n\r\n**Note:**\r\nThis library is not maintained, and currently, there is no fix for this issue. To overcome this vulnerability, several dependent packages have eliminated the use of this library.\n# PoC\n```js\r\nconst inflight = require('inflight');\r\n\r\nfunction testInflight() {\r\n  let i = 0;\r\n  function scheduleNext() {\r\n    let key = `key-${i++}`;\r\n    const callback = () => {\r\n    };\r\n    for (let j = 0; j < 1000000; j++) {\r\n      inflight(key, callback);\r\n    }\r\n\r\n    setImmediate(scheduleNext);\r\n  }\r\n\r\n\r\n  if (i % 100 === 0) {\r\n    console.log(process.memoryUsage());\r\n  }\r\n\r\n  scheduleNext();\r\n}\r\n\r\ntestInflight();\r\n```\n# Remediation\nThere is no fixed version for `inflight`.\n# References\n- [GitHub Issue](https://github.com/isaacs/inflight/issues/5)\n- [GitHub PR](https://github.com/logdna/logdna-agent/pull/157)\n"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "CWE-772",
+                  "npm"
+                ]
+              }
+            },
+            {
+              "id": "SNYK-JS-MARKED-2342073",
+              "shortDescription": {
+                "text": "Medium severity - Regular Expression Denial of Service (ReDoS) vulnerability in marked"
+              },
+              "fullDescription": {
+                "text": "(CVE-2022-21681) marked@4.0.1"
+              },
+              "help": {
+                "text": "",
+                "markdown": "* Package Manager: npm\n* Vulnerable module: marked\n* Introduced through: snyk@1.0.0-monorepo and marked@4.0.1\n### Detailed paths\n* _Introduced through_: snyk@1.0.0-monorepo › marked@4.0.1\n# Overview\n[marked](https://marked.js.org/) is a low-level compiler for parsing markdown without caching or blocking for long periods of time.\n\nAffected versions of this package are vulnerable to Regular Expression Denial of Service (ReDoS) when passing unsanitized user input to `inline.reflinkSearch`, if it is not being parsed by a time-limited worker thread.\r\n\r\n# PoC\r\n```js\r\nimport * as marked from 'marked';\r\n\r\nconsole.log(marked.parse(`[x]: x\r\n\r\n\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](\\\\[\\\\](`));\r\n```\n\n# Details\n\nDenial of Service (DoS) describes a family of attacks, all aimed at making a system inaccessible to its original and legitimate users. There are many types of DoS attacks, ranging from trying to clog the network pipes to the system by generating a large volume of traffic from many machines (a Distributed Denial of Service - DDoS - attack) to sending crafted requests that cause a system to crash or take a disproportional amount of time to process.\n\nThe Regular expression Denial of Service (ReDoS) is a type of Denial of Service attack. Regular expressions are incredibly powerful, but they aren't very intuitive and can ultimately end up making it easy for attackers to take your site down.\n\nLet’s take the following regular expression as an example:\n```js\nregex = /A(B|C+)+D/\n```\n\nThis regular expression accomplishes the following:\n- `A` The string must start with the letter 'A'\n- `(B|C+)+` The string must then follow the letter A with either the letter 'B' or some number of occurrences of the letter 'C' (the `+` matches one or more times). The `+` at the end of this section states that we can look for one or more matches of this section.\n- `D` Finally, we ensure this section of the string ends with a 'D'\n\nThe expression would match inputs such as `ABBD`, `ABCCCCD`, `ABCBCCCD` and `ACCCCCD`\n\nIt most cases, it doesn't take very long for a regex engine to find a match:\n\n```bash\n$ time node -e '/A(B|C+)+D/.test(\"ACCCCCCCCCCCCCCCCCCCCCCCCCCCCD\")'\n0.04s user 0.01s system 95% cpu 0.052 total\n\n$ time node -e '/A(B|C+)+D/.test(\"ACCCCCCCCCCCCCCCCCCCCCCCCCCCCX\")'\n1.79s user 0.02s system 99% cpu 1.812 total\n```\n\nThe entire process of testing it against a 30 characters long string takes around ~52ms. But when given an invalid string, it takes nearly two seconds to complete the test, over ten times as long as it took to test a valid string. The dramatic difference is due to the way regular expressions get evaluated.\n\nMost Regex engines will work very similarly (with minor differences). The engine will match the first possible way to accept the current character and proceed to the next one. If it then fails to match the next one, it will backtrack and see if there was another way to digest the previous character. If it goes too far down the rabbit hole only to find out the string doesn’t match in the end, and if many characters have multiple valid regex paths, the number of backtracking steps can become very large, resulting in what is known as _catastrophic backtracking_.\n\nLet's look at how our expression runs into this problem, using a shorter string: \"ACCCX\". While it seems fairly straightforward, there are still four different ways that the engine could match those three C's:\n1. CCC\n2. CC+C\n3. C+CC\n4. C+C+C.\n\nThe engine has to try each of those combinations to see if any of them potentially match against the expression. When you combine that with the other steps the engine must take, we can use [RegEx 101 debugger](https://regex101.com/debugger) to see the engine has to take a total of 38 steps before it can determine the string doesn't match.\n\nFrom there, the number of steps the engine must use to validate a string just continues to grow.\n\n| String | Number of C's | Number of steps |\n| -------|-------------:| -----:|\n| ACCCX | 3 | 38\n| ACCCCX | 4 | 71\n| ACCCCCX | 5 | 136\n| ACCCCCCCCCCCCCCX | 14 | 65,553\n\n\nBy the time the string includes 14 C's, the engine has to take over 65,000 steps just to see if the string is valid. These extreme situations can cause them to work very slowly (exponentially related to input size, as shown above), allowing an attacker to exploit this and can cause the service to excessively consume CPU, resulting in a Denial of Service.\n\n# Remediation\nUpgrade `marked` to version 4.0.10 or higher.\n# References\n- [GitHub Commit](https://github.com/markedjs/marked/commit/c4a3ccd344b6929afa8a1d50ac54a721e57012c0)\n"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "CWE-1333",
+                  "npm"
+                ]
+              }
+            },
+            {
+              "id": "SNYK-JS-MARKED-2342082",
+              "shortDescription": {
+                "text": "Medium severity - Regular Expression Denial of Service (ReDoS) vulnerability in marked"
+              },
+              "fullDescription": {
+                "text": "(CVE-2022-21680) marked@4.0.1"
+              },
+              "help": {
+                "text": "",
+                "markdown": "* Package Manager: npm\n* Vulnerable module: marked\n* Introduced through: snyk@1.0.0-monorepo and marked@4.0.1\n### Detailed paths\n* _Introduced through_: snyk@1.0.0-monorepo › marked@4.0.1\n# Overview\n[marked](https://marked.js.org/) is a low-level compiler for parsing markdown without caching or blocking for long periods of time.\n\nAffected versions of this package are vulnerable to Regular Expression Denial of Service (ReDoS) when unsanitized user input is passed to `block.def`.\r\n\r\n# PoC\r\n```js\r\nimport * as marked from \"marked\";\r\nmarked.parse(`[x]:${' '.repeat(1500)}x ${' '.repeat(1500)} x`);\r\n```\n\n# Details\n\nDenial of Service (DoS) describes a family of attacks, all aimed at making a system inaccessible to its original and legitimate users. There are many types of DoS attacks, ranging from trying to clog the network pipes to the system by generating a large volume of traffic from many machines (a Distributed Denial of Service - DDoS - attack) to sending crafted requests that cause a system to crash or take a disproportional amount of time to process.\n\nThe Regular expression Denial of Service (ReDoS) is a type of Denial of Service attack. Regular expressions are incredibly powerful, but they aren't very intuitive and can ultimately end up making it easy for attackers to take your site down.\n\nLet’s take the following regular expression as an example:\n```js\nregex = /A(B|C+)+D/\n```\n\nThis regular expression accomplishes the following:\n- `A` The string must start with the letter 'A'\n- `(B|C+)+` The string must then follow the letter A with either the letter 'B' or some number of occurrences of the letter 'C' (the `+` matches one or more times). The `+` at the end of this section states that we can look for one or more matches of this section.\n- `D` Finally, we ensure this section of the string ends with a 'D'\n\nThe expression would match inputs such as `ABBD`, `ABCCCCD`, `ABCBCCCD` and `ACCCCCD`\n\nIt most cases, it doesn't take very long for a regex engine to find a match:\n\n```bash\n$ time node -e '/A(B|C+)+D/.test(\"ACCCCCCCCCCCCCCCCCCCCCCCCCCCCD\")'\n0.04s user 0.01s system 95% cpu 0.052 total\n\n$ time node -e '/A(B|C+)+D/.test(\"ACCCCCCCCCCCCCCCCCCCCCCCCCCCCX\")'\n1.79s user 0.02s system 99% cpu 1.812 total\n```\n\nThe entire process of testing it against a 30 characters long string takes around ~52ms. But when given an invalid string, it takes nearly two seconds to complete the test, over ten times as long as it took to test a valid string. The dramatic difference is due to the way regular expressions get evaluated.\n\nMost Regex engines will work very similarly (with minor differences). The engine will match the first possible way to accept the current character and proceed to the next one. If it then fails to match the next one, it will backtrack and see if there was another way to digest the previous character. If it goes too far down the rabbit hole only to find out the string doesn’t match in the end, and if many characters have multiple valid regex paths, the number of backtracking steps can become very large, resulting in what is known as _catastrophic backtracking_.\n\nLet's look at how our expression runs into this problem, using a shorter string: \"ACCCX\". While it seems fairly straightforward, there are still four different ways that the engine could match those three C's:\n1. CCC\n2. CC+C\n3. C+CC\n4. C+C+C.\n\nThe engine has to try each of those combinations to see if any of them potentially match against the expression. When you combine that with the other steps the engine must take, we can use [RegEx 101 debugger](https://regex101.com/debugger) to see the engine has to take a total of 38 steps before it can determine the string doesn't match.\n\nFrom there, the number of steps the engine must use to validate a string just continues to grow.\n\n| String | Number of C's | Number of steps |\n| -------|-------------:| -----:|\n| ACCCX | 3 | 38\n| ACCCCX | 4 | 71\n| ACCCCCX | 5 | 136\n| ACCCCCCCCCCCCCCX | 14 | 65,553\n\n\nBy the time the string includes 14 C's, the engine has to take over 65,000 steps just to see if the string is valid. These extreme situations can cause them to work very slowly (exponentially related to input size, as shown above), allowing an attacker to exploit this and can cause the service to excessively consume CPU, resulting in a Denial of Service.\n\n# Remediation\nUpgrade `marked` to version 4.0.10 or higher.\n# References\n- [GitHub Commit](https://github.com/markedjs/marked/commit/c4a3ccd344b6929afa8a1d50ac54a721e57012c0)\n- [GitHub Release](https://github.com/markedjs/marked/releases/tag/v4.0.10)\n"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "CWE-1333",
+                  "npm"
+                ]
+              }
+            },
+            {
+              "id": "SNYK-JS-SHESCAPE-5734237",
+              "shortDescription": {
+                "text": "Medium severity - Information Exposure vulnerability in shescape"
+              },
+              "fullDescription": {
+                "text": "(CVE-2023-35931) shescape@1.6.1"
+              },
+              "help": {
+                "text": "",
+                "markdown": "* Package Manager: npm\n* Vulnerable module: shescape\n* Introduced through: snyk@1.0.0-monorepo, @snyk/snyk-cocoapods-plugin@2.5.3 and others\n### Detailed paths\n* _Introduced through_: snyk@1.0.0-monorepo › @snyk/snyk-cocoapods-plugin@2.5.3 › shescape@1.6.1\n* _Introduced through_: snyk@1.0.0-monorepo › @snyk/snyk-hex-plugin@1.1.6 › shescape@1.6.1\n* _Introduced through_: snyk@1.0.0-monorepo › snyk-gradle-plugin@4.1.0 › shescape@1.6.1\n* _Introduced through_: snyk@1.0.0-monorepo › snyk-mvn-plugin@3.1.0 › shescape@1.6.1\n* _Introduced through_: snyk@1.0.0-monorepo › snyk-python-plugin@2.0.8 › shescape@1.6.1\n* _Introduced through_: snyk@1.0.0-monorepo › snyk-sbt-plugin@2.17.1 › shescape@1.6.1\n# Overview\n[shescape](https://www.npmjs.org/package/shescape) is a simple shell escape library\n\nAffected versions of this package are vulnerable to Information Exposure such that an attacker may be able to get read-only access to environment variables.\n\n**Note:**\n\nThis impact users of Shescape:\n\n1. On Windows using the Windows Command Prompt (i.e. `cmd.exe`), and\n2. Using `quote`/`quoteAll` or `escape`/`escapeAll` with the `interpolation` option set to `true`.\n\n# Workaround\n\nUsers who are unable to upgrade to the fixed version can remove all instances of `%` from user input, either before or after using Shescape.\n# PoC\n```javascript\nimport * as cp from \"node:child_process\";\nimport * as shescape from \"shescape\";\n\n// 1. Prerequisites\nconst options = {\n    shell: \"cmd.exe\",\n    // Or\n    shell: undefined, // Only if the default shell is CMD\n\n    // And\n    interpolation: true, // Only applies to `escape` and `escapeAll` usage\n}\n\n// 2. Attack (one of many)\nconst payload = \"%PATH%\";\n\n// 3. Usage\nlet escapedPayload;\n\nescapedPayload = shescape.quote(payload, options);\n// Or\nescapedPayload = shescape.quoteAll([payload], options);\n// Or\nescapedPayload = shescape.escape(payload, options);\n// Or\nescapedPayload = shescape.escapeAll([payload], options);\n\n// And (example)\nconst result = cp.execSync(`echo Hello ${escapedPayload}`, options);\n\n// 4. Impact\nconsole.log(result.toString());\n// Outputs \"Hello\" followed by the contents of the PATH environment variable\n```\n# Remediation\nUpgrade `shescape` to version 1.7.1 or higher.\n# References\n- [GitHub Commit](https://github.com/ericcornelissen/shescape/commit/d0fce70f987ac0d8331f93cb45d47e79436173ac)\n- [GitHub PR](https://github.com/ericcornelissen/shescape/pull/982)\n- [GitHub Release](https://github.com/ericcornelissen/shescape/releases/tag/v1.7.1)\n"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "CWE-200",
+                  "npm"
+                ]
+              }
+            },
+            {
+              "id": "SNYK-JS-SHESCAPE-5849592",
+              "shortDescription": {
+                "text": "Medium severity - Improper Neutralization vulnerability in shescape"
+              },
+              "fullDescription": {
+                "text": "(CVE-2023-40185) shescape@1.6.1"
+              },
+              "help": {
+                "text": "",
+                "markdown": "* Package Manager: npm\n* Vulnerable module: shescape\n* Introduced through: snyk@1.0.0-monorepo, @snyk/snyk-cocoapods-plugin@2.5.3 and others\n### Detailed paths\n* _Introduced through_: snyk@1.0.0-monorepo › @snyk/snyk-cocoapods-plugin@2.5.3 › shescape@1.6.1\n* _Introduced through_: snyk@1.0.0-monorepo › @snyk/snyk-hex-plugin@1.1.6 › shescape@1.6.1\n* _Introduced through_: snyk@1.0.0-monorepo › snyk-gradle-plugin@4.1.0 › shescape@1.6.1\n* _Introduced through_: snyk@1.0.0-monorepo › snyk-mvn-plugin@3.1.0 › shescape@1.6.1\n* _Introduced through_: snyk@1.0.0-monorepo › snyk-python-plugin@2.0.8 › shescape@1.6.1\n* _Introduced through_: snyk@1.0.0-monorepo › snyk-sbt-plugin@2.17.1 › shescape@1.6.1\n# Overview\n[shescape](https://www.npmjs.org/package/shescape) is a simple shell escape library\n\nAffected versions of this package are vulnerable to Improper Neutralization due to possible escaping the wrong shell, thus allowing attackers to bypass protections.\n**Note**: you are only vulnerable if you are using this package on Windows in a threaded context.\n# PoC\n```javascript\n// vulnerable.js\n\nimport { exec } from \"node:child_process\";\nimport { Worker, isMainThread } from 'node:worker_threads';\n\nimport * as shescape from \"shescape\";\n\nif (isMainThread) {\n  // 1. Something like a worker thread must be used. The reason being that they\n  // unexpectedly change environment variable names on Windows.\n  new Worker(\"./vulnerable.js\");\n} else {\n  // 2. Example configuration that's problematic. In this setup example the\n  // expected default system shell is CMD. We configure the use of PowerShell.\n  // Shescape will fail to look up PowerShell and default to escaping for CMD\n  // instead, resulting in the vulnerability.\n  const options = {\n    shell: \"powershell\",\n    interpolation: true,\n  };\n\n  // 3. Using shescape to protect against attacks, this is correct.\n  const escaped = shescape.escape(\"&& ls\", options);\n\n  // 4. Invoking a command with the escaped user input, this is vulnerable in\n  // this case.\n  exec(`echo Hello ${escaped}`, options, (error, stdout) => {\n    if (error) {\n      console.error(`An error occurred: ${error}`);\n    } else {\n      console.log(stdout);\n    }\n  });\n}\n```\n# Remediation\nUpgrade `shescape` to version 1.7.4 or higher.\n# References\n- [GitHub Commit](https://github.com/ericcornelissen/shescape/commit/0b976dab645abf45ffd85e74a8c6e51ee2f42d63)\n- [GitHub PR](https://github.com/ericcornelissen/shescape/pull/1142)\n- [GitHub Release](https://github.com/ericcornelissen/shescape/releases/tag/v1.7.4)\n"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "CWE-150",
+                  "npm"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "SNYK-JS-GOT-2932019",
+          "level": "warning",
+          "message": {
+            "text": "This file introduces a vulnerable got package with a medium severity vulnerability."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-JS-INFLIGHT-6095116",
+          "level": "warning",
+          "message": {
+            "text": "This file introduces a vulnerable inflight package with a medium severity vulnerability."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-JS-MARKED-2342073",
+          "level": "warning",
+          "message": {
+            "text": "This file introduces a vulnerable marked package with a medium severity vulnerability."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-JS-MARKED-2342082",
+          "level": "warning",
+          "message": {
+            "text": "This file introduces a vulnerable marked package with a medium severity vulnerability."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-JS-SHESCAPE-5734237",
+          "level": "warning",
+          "message": {
+            "text": "This file introduces a vulnerable shescape package with a medium severity vulnerability."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-JS-SHESCAPE-5849592",
+          "level": "warning",
+          "message": {
+            "text": "This file introduces a vulnerable shescape package with a medium severity vulnerability."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "package.json"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,2947 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "originalUriBaseIds": {
+        "PROJECTROOT": {
+          "uri": "file:///Users/samialajrami/workspace/merkely/terraform-server/",
+          "description": {
+            "text": "The root directory for all project files."
+          }
+        }
+      },
+      "tool": {
+        "driver": {
+          "name": "Snyk IaC",
+          "fullName": "Snyk Infrastructure as Code",
+          "version": "1.1177.0",
+          "informationUri": "https://docs.snyk.io/products/snyk-infrastructure-as-code",
+          "rules": [
+            {
+              "id": "SNYK-CC-AWS-415",
+              "name": "CloudWatchLogGroupNotEncryptedWithManagedKey",
+              "shortDescription": {
+                "text": "Low severity - CloudWatch log group not encrypted with managed key"
+              },
+              "fullDescription": {
+                "text": "Low severity - CloudWatch"
+              },
+              "help": {
+                "text": "The issue is... \nLog group is not encrypted with customer managed key\n\n The impact of this is... \n Scope of use of the key cannot be controlled via KMS/IAM policies\n\n You can resolve this by... \nSet `kms_key_id` attribute with customer managed key id",
+                "markdown": "**The issue is...** \nLog group is not encrypted with customer managed key\n\n **The impact of this is...** \n Scope of use of the key cannot be controlled via KMS/IAM policies\n\n **You can resolve this by...** \nSet `kms_key_id` attribute with customer managed key id"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "CloudWatch"
+                ],
+                "problem": {
+                  "severity": "low"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-AWS-415"
+            },
+            {
+              "id": "SNYK-CC-AWS-422",
+              "name": "SnsTopicIsNotEncryptedWithCustomerManagedKey",
+              "shortDescription": {
+                "text": "Low severity - SNS topic is not encrypted with customer managed key"
+              },
+              "fullDescription": {
+                "text": "Low severity - SNS"
+              },
+              "help": {
+                "text": "The issue is... \nSNS topic is not encrypted with customer managed key\n\n The impact of this is... \n Scope of use of the encryption key cannot be controlled via KMS/IAM policies\n\n You can resolve this by... \nSet `kms_master_key_id` attribute to a customer managed key id",
+                "markdown": "**The issue is...** \nSNS topic is not encrypted with customer managed key\n\n **The impact of this is...** \n Scope of use of the encryption key cannot be controlled via KMS/IAM policies\n\n **You can resolve this by...** \nSet `kms_master_key_id` attribute to a customer managed key id"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "SNS"
+                ],
+                "problem": {
+                  "severity": "low"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-AWS-422"
+            },
+            {
+              "id": "SNYK-CC-TF-55",
+              "name": "NonEncryptedSnsTopic",
+              "shortDescription": {
+                "text": "Medium severity - Non-Encrypted SNS Topic"
+              },
+              "fullDescription": {
+                "text": "Medium severity - SNS"
+              },
+              "help": {
+                "text": "The issue is... \nThe SNS topic is not encrypted at rest\n\n The impact of this is... \n That should someone gain unauthorized access to the data they would be able to read the contents.\n\n You can resolve this by... \nSet `kms_master_key_id` attribute to KMS key",
+                "markdown": "**The issue is...** \nThe SNS topic is not encrypted at rest\n\n **The impact of this is...** \n That should someone gain unauthorized access to the data they would be able to read the contents.\n\n **You can resolve this by...** \nSet `kms_master_key_id` attribute to KMS key"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "SNS"
+                ],
+                "problem": {
+                  "severity": "medium"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-TF-55"
+            },
+            {
+              "id": "SNYK-CC-TF-14",
+              "name": "KmsKeyDoesNotHaveKeyRotationEnabled",
+              "shortDescription": {
+                "text": "Low severity - KMS key does not have key rotation enabled"
+              },
+              "fullDescription": {
+                "text": "Low severity - KMS"
+              },
+              "help": {
+                "text": "The issue is... \nThat your encryption keys are not being rotated by AWS\n\n The impact of this is... \n That data is being encrypted with a key which is valid for a longer period of time, resulting in a greater exposure window should that key be leaked\n\n You can resolve this by... \nSet `enable_key_rotation` attribute to `true`",
+                "markdown": "**The issue is...** \nThat your encryption keys are not being rotated by AWS\n\n **The impact of this is...** \n That data is being encrypted with a key which is valid for a longer period of time, resulting in a greater exposure window should that key be leaked\n\n **You can resolve this by...** \nSet `enable_key_rotation` attribute to `true`"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "KMS"
+                ],
+                "problem": {
+                  "severity": "low"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-TF-14"
+            },
+            {
+              "id": "SNYK-CC-TF-126",
+              "name": "EcrRegistryAllowsMutableTags",
+              "shortDescription": {
+                "text": "Low severity - ECR Registry allows mutable tags"
+              },
+              "fullDescription": {
+                "text": "Low severity - ECR"
+              },
+              "help": {
+                "text": "The issue is... \nThe AWS ECR registry does not enforce immutable tags\n\n The impact of this is... \n Image tags can be modified post deployment\n\n You can resolve this by... \nSet `image_tag_mutability` attribute to `IMMUTABLE`",
+                "markdown": "**The issue is...** \nThe AWS ECR registry does not enforce immutable tags\n\n **The impact of this is...** \n Image tags can be modified post deployment\n\n **You can resolve this by...** \nSet `image_tag_mutability` attribute to `IMMUTABLE`"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "ECR"
+                ],
+                "problem": {
+                  "severity": "low"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-TF-126"
+            },
+            {
+              "id": "SNYK-CC-AWS-418",
+              "name": "EcrRepositoryIsNotEncryptedWithCustomerManagedKey",
+              "shortDescription": {
+                "text": "Low severity - ECR repository is not encrypted with customer managed key"
+              },
+              "fullDescription": {
+                "text": "Low severity - ECR"
+              },
+              "help": {
+                "text": "The issue is... \nECR repository is not encrypted with customer managed key\n\n The impact of this is... \n Scope of use of the key cannot be controlled via KMS/IAM policies\n\n You can resolve this by... \nSet `encryption_configuration.kms_key` attribute to customer managed KMS key",
+                "markdown": "**The issue is...** \nECR repository is not encrypted with customer managed key\n\n **The impact of this is...** \n Scope of use of the key cannot be controlled via KMS/IAM policies\n\n **You can resolve this by...** \nSet `encryption_configuration.kms_key` attribute to customer managed KMS key"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "ECR"
+                ],
+                "problem": {
+                  "severity": "low"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-AWS-418"
+            },
+            {
+              "id": "SNYK-CC-AWS-421",
+              "name": "SecretsManagerIsNotEncryptedWithCustomerManagedKey",
+              "shortDescription": {
+                "text": "Low severity - Secrets Manager is not encrypted with customer managed key"
+              },
+              "fullDescription": {
+                "text": "Low severity - Secrets Manager"
+              },
+              "help": {
+                "text": "The issue is... \nSecrets Manager is not encrypted with customer managed key\n\n The impact of this is... \n Scope of use of the encryption key cannot be controlled via KMS/IAM policies\n\n You can resolve this by... \nSet `kms_key_id` attribute to customer managed key id",
+                "markdown": "**The issue is...** \nSecrets Manager is not encrypted with customer managed key\n\n **The impact of this is...** \n Scope of use of the encryption key cannot be controlled via KMS/IAM policies\n\n **You can resolve this by...** \nSet `kms_key_id` attribute to customer managed key id"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "Secrets Manager"
+                ],
+                "problem": {
+                  "severity": "low"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-AWS-421"
+            },
+            {
+              "id": "SNYK-CC-TF-72",
+              "name": "RuleAllowsOpenEgress",
+              "shortDescription": {
+                "text": "Low severity - Rule allows open egress"
+              },
+              "fullDescription": {
+                "text": "Low severity - VPC"
+              },
+              "help": {
+                "text": "The issue is... \nThe security group rule allows open egress\n\n The impact of this is... \n Open egress can be used to exfiltrate data to unauthorized destinations, and enable access to potentially malicious resources\n\n You can resolve this by... \nSet `cidr_blocks` attribute to specific ranges e.g. `192.168.1.0/24`",
+                "markdown": "**The issue is...** \nThe security group rule allows open egress\n\n **The impact of this is...** \n Open egress can be used to exfiltrate data to unauthorized destinations, and enable access to potentially malicious resources\n\n **You can resolve this by...** \nSet `cidr_blocks` attribute to specific ranges e.g. `192.168.1.0/24`"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "VPC"
+                ],
+                "problem": {
+                  "severity": "low"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-TF-72"
+            },
+            {
+              "id": "SNYK-CC-TF-98",
+              "name": "S3RestrictPublicBucketControlIsDisabled",
+              "shortDescription": {
+                "text": "High severity - S3 restrict public bucket control is disabled"
+              },
+              "fullDescription": {
+                "text": "High severity - S3"
+              },
+              "help": {
+                "text": "The issue is... \nBucket will recognize public policies and allow public access\n\n The impact of this is... \n If public policy is attached to the bucket, anyone will be able to read and/or write to the bucket.\n\n You can resolve this by... \nSet `aws_s3_bucket_public_access_block` `restrict_public_buckets` attribute to `true`, or use default",
+                "markdown": "**The issue is...** \nBucket will recognize public policies and allow public access\n\n **The impact of this is...** \n If public policy is attached to the bucket, anyone will be able to read and/or write to the bucket.\n\n **You can resolve this by...** \nSet `aws_s3_bucket_public_access_block` `restrict_public_buckets` attribute to `true`, or use default"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "S3"
+                ],
+                "problem": {
+                  "severity": "high"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-TF-98"
+            },
+            {
+              "id": "SNYK-CC-TF-127",
+              "name": "S3BucketMfaDeleteControlDisabled",
+              "shortDescription": {
+                "text": "Low severity - S3 bucket MFA delete control disabled"
+              },
+              "fullDescription": {
+                "text": "Low severity - S3"
+              },
+              "help": {
+                "text": "The issue is... \nS3 bucket will not enforce MFA login on delete requests\n\n The impact of this is... \n Object could be deleted without stronger MFA authorization\n\n You can resolve this by... \nFollow instructions in `https://docs.aws.amazon.com/AmazonS3/latest/userguide/MultiFactorAuthenticationDelete.html` to manually configure the MFA setting. For AWS provider < v4.0.0 set `versioning.mfa_delete` attribute to `true` in aws_s3_bucket resource. For AWS provider >= v4.0.0 set 'versioning_configuration.mfa_delete` attribute to `Enabled`. The terraform change is required to reflect the setting in the state file",
+                "markdown": "**The issue is...** \nS3 bucket will not enforce MFA login on delete requests\n\n **The impact of this is...** \n Object could be deleted without stronger MFA authorization\n\n **You can resolve this by...** \nFollow instructions in `https://docs.aws.amazon.com/AmazonS3/latest/userguide/MultiFactorAuthenticationDelete.html` to manually configure the MFA setting. For AWS provider < v4.0.0 set `versioning.mfa_delete` attribute to `true` in aws_s3_bucket resource. For AWS provider >= v4.0.0 set 'versioning_configuration.mfa_delete` attribute to `Enabled`. The terraform change is required to reflect the setting in the state file"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "S3"
+                ],
+                "problem": {
+                  "severity": "low"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-TF-127"
+            },
+            {
+              "id": "SNYK-CC-TF-95",
+              "name": "S3BlockPublicAcLsControlIsDisabled",
+              "shortDescription": {
+                "text": "High severity - S3 block public ACLs control is disabled"
+              },
+              "fullDescription": {
+                "text": "High severity - S3"
+              },
+              "help": {
+                "text": "The issue is... \nBucket does not prevent creation of public ACLs\n\n The impact of this is... \n Anyone who can manage bucket's ACLs will be able to grant public access to the bucket\n\n You can resolve this by... \nSet the `aws_s3_bucket_public_access_block` `block_public_acls` field to `true` or use the default setting",
+                "markdown": "**The issue is...** \nBucket does not prevent creation of public ACLs\n\n **The impact of this is...** \n Anyone who can manage bucket's ACLs will be able to grant public access to the bucket\n\n **You can resolve this by...** \nSet the `aws_s3_bucket_public_access_block` `block_public_acls` field to `true` or use the default setting"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "S3"
+                ],
+                "problem": {
+                  "severity": "high"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-TF-95"
+            },
+            {
+              "id": "SNYK-CC-TF-97",
+              "name": "S3IgnorePublicAcLsControlIsDisabled",
+              "shortDescription": {
+                "text": "High severity - S3 ignore public ACLs control is disabled"
+              },
+              "fullDescription": {
+                "text": "High severity - S3"
+              },
+              "help": {
+                "text": "The issue is... \nBucket will recognize public ACLs and allow public access\n\n The impact of this is... \n If public ACL is attached to the bucket, anyone will be able to read and/or write to the bucket.\n\n You can resolve this by... \nSet `aws_s3_bucket_public_access_block` `ignore_public_acls` attribute to `true`, or use default",
+                "markdown": "**The issue is...** \nBucket will recognize public ACLs and allow public access\n\n **The impact of this is...** \n If public ACL is attached to the bucket, anyone will be able to read and/or write to the bucket.\n\n **You can resolve this by...** \nSet `aws_s3_bucket_public_access_block` `ignore_public_acls` attribute to `true`, or use default"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "S3"
+                ],
+                "problem": {
+                  "severity": "high"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-TF-97"
+            },
+            {
+              "id": "SNYK-CC-TF-96",
+              "name": "S3BlockPublicPolicyControlIsDisabled",
+              "shortDescription": {
+                "text": "High severity - S3 block public policy control is disabled"
+              },
+              "fullDescription": {
+                "text": "High severity - S3"
+              },
+              "help": {
+                "text": "The issue is... \nBucket does not prevent creation of public policies\n\n The impact of this is... \n Anyone who can manage bucket's policies will be able to grant public access to the bucket.\n\n You can resolve this by... \nSet `aws_s3_bucket_public_access_block` `block_public_policy` attribute to `true`, or use default",
+                "markdown": "**The issue is...** \nBucket does not prevent creation of public policies\n\n **The impact of this is...** \n Anyone who can manage bucket's policies will be able to grant public access to the bucket.\n\n **You can resolve this by...** \nSet `aws_s3_bucket_public_access_block` `block_public_policy` attribute to `true`, or use default"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "S3"
+                ],
+                "problem": {
+                  "severity": "high"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-TF-96"
+            },
+            {
+              "id": "SNYK-CC-TF-124",
+              "name": "S3BucketVersioningDisabled",
+              "shortDescription": {
+                "text": "Low severity - S3 bucket versioning disabled"
+              },
+              "fullDescription": {
+                "text": "Low severity - S3"
+              },
+              "help": {
+                "text": "The issue is... \nS3 bucket versioning is disabled\n\n The impact of this is... \n Changes or deletion of objects will not be reversible\n\n You can resolve this by... \nFor AWS provider < v4.0.0, set `versioning.enabled` attribute to `true`. For AWS provider >= v4.0.0, add aws_s3_bucket_versioning resource.",
+                "markdown": "**The issue is...** \nS3 bucket versioning is disabled\n\n **The impact of this is...** \n Changes or deletion of objects will not be reversible\n\n **You can resolve this by...** \nFor AWS provider < v4.0.0, set `versioning.enabled` attribute to `true`. For AWS provider >= v4.0.0, add aws_s3_bucket_versioning resource."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "S3"
+                ],
+                "problem": {
+                  "severity": "low"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-TF-124"
+            },
+            {
+              "id": "SNYK-CC-TF-133",
+              "name": "XRayTracingIsDisabledForLambdaFunction",
+              "shortDescription": {
+                "text": "Low severity - X-ray tracing is disabled for Lambda function"
+              },
+              "fullDescription": {
+                "text": "Low severity - Lambda"
+              },
+              "help": {
+                "text": "The issue is... \nAmazon X-Ray tracing is not enabled for Lambda function\n\n The impact of this is... \n Trace logs will not be available during investigation\n\n You can resolve this by... \nSet `tracing_config.mode` attribute to `Active` or `PassThrough`",
+                "markdown": "**The issue is...** \nAmazon X-Ray tracing is not enabled for Lambda function\n\n **The impact of this is...** \n Trace logs will not be available during investigation\n\n **You can resolve this by...** \nSet `tracing_config.mode` attribute to `Active` or `PassThrough`"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "Lambda"
+                ],
+                "problem": {
+                  "severity": "low"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-TF-133"
+            },
+            {
+              "id": "SNYK-CC-TF-132",
+              "name": "MqBrokerGeneralLogsAreDisabled",
+              "shortDescription": {
+                "text": "Low severity - MQ broker general logs are disabled"
+              },
+              "fullDescription": {
+                "text": "Low severity - MQ"
+              },
+              "help": {
+                "text": "The issue is... \nAmazon MQ Broker logging is disabled\n\n The impact of this is... \n Audit records may not be available during investigation\n\n You can resolve this by... \nSet `logs.general` attribute to `true`",
+                "markdown": "**The issue is...** \nAmazon MQ Broker logging is disabled\n\n **The impact of this is...** \n Audit records may not be available during investigation\n\n **You can resolve this by...** \nSet `logs.general` attribute to `true`"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "MQ"
+                ],
+                "problem": {
+                  "severity": "low"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-TF-132"
+            },
+            {
+              "id": "SNYK-CC-AWS-417",
+              "name": "DynamoDbNotEncryptedWithCustomerManagedKey",
+              "shortDescription": {
+                "text": "Low severity - DynamoDB not encrypted with customer managed key"
+              },
+              "fullDescription": {
+                "text": "Low severity - DynamoDB"
+              },
+              "help": {
+                "text": "The issue is... \nDynamoDB table is not encrypted with customer managed KMS key\n\n The impact of this is... \n Scope of use of the key cannot be controlled via KMS/IAM policies\n\n You can resolve this by... \nSet `server_side_encryption.kms_key_arn` attribute to customer managed key ARN",
+                "markdown": "**The issue is...** \nDynamoDB table is not encrypted with customer managed KMS key\n\n **The impact of this is...** \n Scope of use of the key cannot be controlled via KMS/IAM policies\n\n **You can resolve this by...** \nSet `server_side_encryption.kms_key_arn` attribute to customer managed key ARN"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "DynamoDB"
+                ],
+                "problem": {
+                  "severity": "low"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-AWS-417"
+            },
+            {
+              "id": "SNYK-CC-TF-62",
+              "name": "NonEncryptedKinesisStream",
+              "shortDescription": {
+                "text": "Medium severity - Non-Encrypted Kinesis Stream"
+              },
+              "fullDescription": {
+                "text": "Medium severity - Kinesis"
+              },
+              "help": {
+                "text": "The issue is... \nThe AWS kinesis server-side encryption is disabled\n\n The impact of this is... \n That should someone gain unauthorized access to the data they would be able to read the contents.\n\n You can resolve this by... \nSet `encryption_type` attribute to `KMS`",
+                "markdown": "**The issue is...** \nThe AWS kinesis server-side encryption is disabled\n\n **The impact of this is...** \n That should someone gain unauthorized access to the data they would be able to read the contents.\n\n **You can resolve this by...** \nSet `encryption_type` attribute to `KMS`"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "Kinesis"
+                ],
+                "problem": {
+                  "severity": "medium"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-TF-62"
+            },
+            {
+              "id": "SNYK-CC-TF-125",
+              "name": "DynamoDbPointInTimeRecoveryDisabled",
+              "shortDescription": {
+                "text": "Medium severity - DynamoDB point-in-time recovery disabled"
+              },
+              "fullDescription": {
+                "text": "Medium severity - DynamoDB"
+              },
+              "help": {
+                "text": "The issue is... \nDynamoDB does not have Point-in-Time Recovery enabled\n\n The impact of this is... \n No automated backups of DynamoDB data\n\n You can resolve this by... \nSet `point_in_time_recovery.enabled` attribute to `true`",
+                "markdown": "**The issue is...** \nDynamoDB does not have Point-in-Time Recovery enabled\n\n **The impact of this is...** \n No automated backups of DynamoDB data\n\n **You can resolve this by...** \nSet `point_in_time_recovery.enabled` attribute to `true`"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "DynamoDB"
+                ],
+                "problem": {
+                  "severity": "medium"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-TF-125"
+            },
+            {
+              "id": "SNYK-CC-TF-204",
+              "name": "NonEncryptedEfsAtRest",
+              "shortDescription": {
+                "text": "Medium severity - Non-encrypted EFS at rest"
+              },
+              "fullDescription": {
+                "text": "Medium severity - EFS"
+              },
+              "help": {
+                "text": "The issue is... \nEFS system file is not encrypted\n\n The impact of this is... \n That should someone gain unauthorized access to the data they would be able to read the contents.\n\n You can resolve this by... \nSet `encrypted` attribute to `true`.",
+                "markdown": "**The issue is...** \nEFS system file is not encrypted\n\n **The impact of this is...** \n That should someone gain unauthorized access to the data they would be able to read the contents.\n\n **You can resolve this by...** \nSet `encrypted` attribute to `true`."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "EFS"
+                ],
+                "problem": {
+                  "severity": "medium"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-TF-204"
+            },
+            {
+              "id": "SNYK-CC-TF-61",
+              "name": "EcrImageScanningIsDisabled",
+              "shortDescription": {
+                "text": "Low severity - ECR image scanning is disabled"
+              },
+              "fullDescription": {
+                "text": "Low severity - ECR"
+              },
+              "help": {
+                "text": "The issue is... \nThe ECR image scan for known vulnerabilities is disabled\n\n The impact of this is... \n The known vulnerabilities will not be automatically discovered\n\n You can resolve this by... \nSet `image_scanning_configuration.scan_on_push` attribute to `true`",
+                "markdown": "**The issue is...** \nThe ECR image scan for known vulnerabilities is disabled\n\n **The impact of this is...** \n The known vulnerabilities will not be automatically discovered\n\n **You can resolve this by...** \nSet `image_scanning_configuration.scan_on_push` attribute to `true`"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "security",
+                  "ECR"
+                ],
+                "problem": {
+                  "severity": "low"
+                }
+              },
+              "helpUri": "https://snyk.io/security-rules/SNYK-CC-TF-61"
+            }
+          ]
+        }
+      },
+      "automationDetails": {
+        "id": "snyk-iac"
+      },
+      "results": [
+        {
+          "ruleId": "SNYK-CC-AWS-415",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the CloudWatch"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "cloudwatch.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 15
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-415",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the CloudWatch"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "cloudwatch.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-415",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the CloudWatch"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "cloudwatch.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 9
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-422",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the SNS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "ecs_autoscaling.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-55",
+          "message": {
+            "text": "This line contains a potential medium severity misconfiguration affecting the SNS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "ecs_autoscaling.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-14",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the KMS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/app_secrets/backup/v1/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/app_secrets/ecr/v1/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/app_secrets/ecr/v1/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/app_secrets/ecr/v2/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/app_secrets/ecr/v2/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/app_secrets/ecr/v3/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/app_secrets/ecr/v3/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/app_secrets/ecr/v4/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/app_secrets/ecr/v4/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-415",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the CloudWatch"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/app_secrets/ecs-service/v1/cloudwatch.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-415",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the CloudWatch"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/app_secrets/ecs-service/v2/cloudwatch.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-421",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the Secrets Manager"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/app_secrets/secret/v1/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-421",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the Secrets Manager"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/app_secrets/secret/v2/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-421",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the Secrets Manager"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/app_secrets/secret/v3/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-72",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the VPC"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/app_secrets/vpc/nat/v1/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-14",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the KMS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_central_1/backup/v1/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_central_1/ecr/v1/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_central_1/ecr/v1/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_central_1/ecr/v2/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_central_1/ecr/v2/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_central_1/ecr/v3/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_central_1/ecr/v3/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_central_1/ecr/v4/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_central_1/ecr/v4/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-415",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the CloudWatch"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_central_1/ecs-service/v1/cloudwatch.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-415",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the CloudWatch"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_central_1/ecs-service/v2/cloudwatch.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-421",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the Secrets Manager"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_central_1/secret/v1/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-421",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the Secrets Manager"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_central_1/secret/v2/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-421",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the Secrets Manager"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_central_1/secret/v3/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-72",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the VPC"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_central_1/vpc/nat/v1/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-14",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the KMS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_west_2/backup/v1/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_west_2/ecr/v1/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_west_2/ecr/v1/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_west_2/ecr/v2/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_west_2/ecr/v2/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_west_2/ecr/v3/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_west_2/ecr/v3/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_west_2/ecr/v4/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_west_2/ecr/v4/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-415",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the CloudWatch"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_west_2/ecs-service/v1/cloudwatch.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-415",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the CloudWatch"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_west_2/ecs-service/v2/cloudwatch.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-421",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the Secrets Manager"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_west_2/secret/v1/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-421",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the Secrets Manager"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_west_2/secret/v2/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-421",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the Secrets Manager"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_west_2/secret/v3/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-72",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the VPC"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_adot_eu_west_2/vpc/nat/v1/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-14",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the KMS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_central_1/backup/v1/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_central_1/ecr/v1/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_central_1/ecr/v1/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_central_1/ecr/v2/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_central_1/ecr/v2/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_central_1/ecr/v3/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_central_1/ecr/v3/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_central_1/ecr/v4/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_central_1/ecr/v4/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-415",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the CloudWatch"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_central_1/ecs-service/v1/cloudwatch.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-415",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the CloudWatch"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_central_1/ecs-service/v2/cloudwatch.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-421",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the Secrets Manager"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_central_1/secret/v1/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-421",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the Secrets Manager"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_central_1/secret/v2/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-421",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the Secrets Manager"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_central_1/secret/v3/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-72",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the VPC"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_central_1/vpc/nat/v1/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-14",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the KMS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_west_2/backup/v1/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_west_2/ecr/v1/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_west_2/ecr/v1/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_west_2/ecr/v2/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_west_2/ecr/v2/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_west_2/ecr/v3/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_west_2/ecr/v3/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_west_2/ecr/v4/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_west_2/ecr/v4/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-415",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the CloudWatch"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_west_2/ecs-service/v1/cloudwatch.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-415",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the CloudWatch"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_west_2/ecs-service/v2/cloudwatch.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-421",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the Secrets Manager"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_west_2/secret/v1/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-421",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the Secrets Manager"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_west_2/secret/v2/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-421",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the Secrets Manager"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_west_2/secret/v3/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-72",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the VPC"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_app_eu_west_2/vpc/nat/v1/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-14",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the KMS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_mongo/backup/v1/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_mongo/ecr/v1/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_mongo/ecr/v1/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_mongo/ecr/v2/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_mongo/ecr/v2/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_mongo/ecr/v3/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_mongo/ecr/v3/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_mongo/ecr/v4/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_mongo/ecr/v4/ecr.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-415",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the CloudWatch"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_mongo/ecs-service/v1/cloudwatch.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-415",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the CloudWatch"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_mongo/ecs-service/v2/cloudwatch.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-421",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the Secrets Manager"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_mongo/secret/v1/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-421",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the Secrets Manager"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_mongo/secret/v2/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-421",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the Secrets Manager"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_mongo/secret/v3/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-72",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the VPC"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/aws_ecr_repository_mongo/vpc/nat/v1/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-98",
+          "message": {
+            "text": "This line contains a potential high severity misconfiguration affecting the S3"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/customer_evidence_bucket/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 734
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-127",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the S3"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/customer_evidence_bucket/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 146
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-95",
+          "message": {
+            "text": "This line contains a potential high severity misconfiguration affecting the S3"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/customer_evidence_bucket/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 20
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-97",
+          "message": {
+            "text": "This line contains a potential high severity misconfiguration affecting the S3"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/customer_evidence_bucket/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 733
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-96",
+          "message": {
+            "text": "This line contains a potential high severity misconfiguration affecting the S3"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/customer_evidence_bucket/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 732
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-124",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the S3"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/customer_evidence_bucket/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 143
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-14",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the KMS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/customer_evidence_bucket/examples/complete/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-14",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the KMS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/customer_evidence_bucket/examples/complete-legacy/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-14",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the KMS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/customer_evidence_bucket/examples/object/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 80
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-14",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the KMS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/customer_evidence_bucket/examples/s3-replication/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 38
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-14",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the KMS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/scaling_notifications_lambda/examples/cloudwatch-alerts-to-slack/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 5
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-55",
+          "message": {
+            "text": "This line contains a potential medium severity misconfiguration affecting the SNS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/scaling_notifications_lambda/examples/notify-slack-simple/custom-lambda.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 12
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-422",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the SNS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/scaling_notifications_lambda/examples/notify-slack-simple/custom-lambda.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 12
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-422",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the SNS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/scaling_notifications_lambda/examples/notify-slack-simple/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-55",
+          "message": {
+            "text": "This line contains a potential medium severity misconfiguration affecting the SNS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/scaling_notifications_lambda/examples/notify-slack-simple/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-133",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the Lambda"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/scaling_notifications_lambda.lambda/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 22
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-55",
+          "message": {
+            "text": "This line contains a potential medium severity misconfiguration affecting the SNS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/scaling_notifications_lambda.lambda/examples/async/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 36
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-422",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the SNS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/scaling_notifications_lambda.lambda/examples/async/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 36
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-55",
+          "message": {
+            "text": "This line contains a potential medium severity misconfiguration affecting the SNS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/scaling_notifications_lambda.lambda/examples/deploy/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 79
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-422",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the SNS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/scaling_notifications_lambda.lambda/examples/deploy/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 83
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-422",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the SNS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/scaling_notifications_lambda.lambda/examples/deploy/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 79
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-55",
+          "message": {
+            "text": "This line contains a potential medium severity misconfiguration affecting the SNS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/scaling_notifications_lambda.lambda/examples/deploy/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 83
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-421",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the Secrets Manager"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/scaling_notifications_lambda.lambda/examples/event-source-mapping/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-132",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the MQ"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/scaling_notifications_lambda.lambda/examples/event-source-mapping/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-417",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the DynamoDB"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/scaling_notifications_lambda.lambda/examples/event-source-mapping/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-62",
+          "message": {
+            "text": "This line contains a potential medium severity misconfiguration affecting the Kinesis"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/scaling_notifications_lambda.lambda/examples/event-source-mapping/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-125",
+          "message": {
+            "text": "This line contains a potential medium severity misconfiguration affecting the DynamoDB"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/scaling_notifications_lambda.lambda/examples/event-source-mapping/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-204",
+          "message": {
+            "text": "This line contains a potential medium severity misconfiguration affecting the EFS"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/scaling_notifications_lambda.lambda/examples/with-efs/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 61
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-126",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/scaling_notifications_lambda.lambda/modules/docker-build/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 38
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-TF-61",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/scaling_notifications_lambda.lambda/modules/docker-build/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 40
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SNYK-CC-AWS-418",
+          "message": {
+            "text": "This line contains a potential low severity misconfiguration affecting the ECR"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".terraform.772819027869-eu-central-1/modules/scaling_notifications_lambda.lambda/modules/docker-build/main.tf",
+                  "uriBaseId": "PROJECTROOT"
+                },
+                "region": {
+                  "startLine": 34
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
