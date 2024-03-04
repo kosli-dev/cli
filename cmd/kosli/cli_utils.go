@@ -616,7 +616,12 @@ func getPathOfEvidenceFileToUpload(evidencePaths []string) (string, bool, error)
 		logger.Debug("[%d] paths are provided as evidence. They will be tarred from %s", len(evidencePaths), tmpDir)
 
 		for _, path := range evidencePaths {
-			err := cp.Copy(path, filepath.Join(tmpDir, path), cp.Options{
+			volume := filepath.VolumeName(path)
+			volumeWithoutColon := strings.Replace(volume, ":", "", 1)
+			pathWithoutVolume := path[len(volume):]
+			pathWithoutColon := volumeWithoutColon + pathWithoutVolume
+
+			err := cp.Copy(path, filepath.Join(tmpDir, pathWithoutColon), cp.Options{
 				PreserveTimes: true,
 				PreserveOwner: true,
 			})
