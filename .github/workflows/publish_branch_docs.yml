@@ -1,3 +1,6 @@
+# This workflow deploys the docs from any branch to https://staging-docs--kosli-docs.netlify.app/
+# It has to be triggered manually in github actions from the branch that must be deployed
+
 name: publish branch docs
 
 on: 
@@ -36,5 +39,5 @@ jobs:
           # docs.kosli.com/assets/metadata.json are not present, but we use CLEAR_GLOBS_FILE to preserve
           # their versions pushed to docs-main during last release - hence CLEAR_GLOBS_FILE in
           # publish_docs.yml, to prevent removing them before copying
-          # CLEAR_GLOBS_FILE: ".clear-files"
-          # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLEAR_GLOBS_FILE: ".clear-files"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
