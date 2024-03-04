@@ -57,12 +57,12 @@ kosli report evidence commit snyk \
 func newReportEvidenceCommitSnykCmd(out io.Writer) *cobra.Command {
 	o := new(reportEvidenceCommitSnykOptions)
 	cmd := &cobra.Command{
-		Use:        "snyk",
-		Short:      reportEvidenceCommitSnykShortDesc,
-		Long:       reportEvidenceCommitSnykLongDesc,
-		Example:    reportEvidenceCommitSnykExample,
-		Deprecated: "see kosli attest commands",
-		Args:       cobra.NoArgs,
+		Use:     "snyk",
+		Short:   reportEvidenceCommitSnykShortDesc,
+		Long:    reportEvidenceCommitSnykLongDesc,
+		Example: reportEvidenceCommitSnykExample,
+		//Deprecated: "see kosli attest commands",
+		Args: cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
