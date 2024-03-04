@@ -59,7 +59,7 @@ func (suite *CommitEvidencePRGitlabCommandTestSuite) TestCommitEvidencePRGitlabC
 			cmd: `report evidence commit pullrequest gitlab --name gl-pr --flows ` + suite.flowName + `
 			          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6 --api-token foo --host bar`,
 			goldenRegex: "Error: --org is not set\n" +
-				"Usage: kosli report evidence commit pullrequest gitlab [flags]\n",
+				"Usage: kosli report evidence commit pullrequest gitlab \\[flags\\]\n",
 		},
 		{
 			wantError: true,
