@@ -621,9 +621,6 @@ func getPathOfEvidenceFileToUpload(evidencePaths []string) (string, bool, error)
 			pathWithoutVolume := path[len(volume):]
 			pathWithoutColon := volumeWithoutColon + pathWithoutVolume
 
-			logger.Debug("\npath  =%s\npathWC=%s",
-				path, pathWithoutColon)
-
 			err := cp.Copy(path, filepath.Join(tmpDir, pathWithoutColon), cp.Options{
 				PreserveTimes: true,
 				PreserveOwner: true,
