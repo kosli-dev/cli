@@ -61,12 +61,13 @@ func newReportEvidenceArtifactPRGitlabCmd(out io.Writer) *cobra.Command {
 	o.fingerprintOptions = new(fingerprintOptions)
 	o.retriever = new(gitlabUtils.GitlabConfig)
 	cmd := &cobra.Command{
-		Use:     "gitlab [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Aliases: []string{"gl"},
-		Short:   reportEvidenceArtifactPRGitlabShortDesc,
-		Long:    reportEvidenceArtifactPRGitlabLongDesc,
-		Example: reportEvidenceArtifactPRGitlabExample,
-		Args:    cobra.MaximumNArgs(1),
+		Use:        "gitlab [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Aliases:    []string{"gl"},
+		Short:      reportEvidenceArtifactPRGitlabShortDesc,
+		Long:       reportEvidenceArtifactPRGitlabLongDesc,
+		Example:    reportEvidenceArtifactPRGitlabExample,
+		Args:       cobra.MaximumNArgs(1),
+		Deprecated: "see kosli attest commands",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

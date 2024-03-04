@@ -48,11 +48,12 @@ kosli report evidence commit junit \
 func newReportEvidenceCommitJunitCmd(out io.Writer) *cobra.Command {
 	o := new(reportEvidenceCommitJunitOptions)
 	cmd := &cobra.Command{
-		Use:     "junit",
-		Short:   reportEvidenceCommitJunitShortDesc,
-		Long:    reportEvidenceCommitJunitLongDesc,
-		Example: reportEvidenceCommitJunitExample,
-		Args:    cobra.NoArgs,
+		Use:        "junit",
+		Short:      reportEvidenceCommitJunitShortDesc,
+		Long:       reportEvidenceCommitJunitLongDesc,
+		Example:    reportEvidenceCommitJunitExample,
+		Args:       cobra.NoArgs,
+		Deprecated: "see kosli attest commands",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

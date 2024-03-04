@@ -43,11 +43,12 @@ func newReportEvidenceCommitPRGitlabCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestCommitOptions)
 	o.retriever = new(gitlabUtils.GitlabConfig)
 	cmd := &cobra.Command{
-		Use:     "gitlab",
-		Aliases: []string{"gl"},
-		Short:   reportEvidenceCommitPRGitlabShortDesc,
-		Long:    reportEvidenceCommitPRGitlabLongDesc,
-		Example: reportEvidenceCommitPRGitlabExample,
+		Use:        "gitlab",
+		Aliases:    []string{"gl"},
+		Short:      reportEvidenceCommitPRGitlabShortDesc,
+		Long:       reportEvidenceCommitPRGitlabLongDesc,
+		Example:    reportEvidenceCommitPRGitlabExample,
+		Deprecated: "see kosli attest commands",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

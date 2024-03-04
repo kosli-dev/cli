@@ -45,11 +45,12 @@ func newReportEvidenceCommitPRGithubCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestCommitOptions)
 	githubFlagsValues := new(ghUtils.GithubFlagsTempValueHolder)
 	cmd := &cobra.Command{
-		Use:     "github",
-		Aliases: []string{"gh"},
-		Short:   reportEvidenceCommitPRGithubShortDesc,
-		Long:    reportEvidenceCommitPRGithubLongDesc,
-		Example: reportEvidenceCommitPRGithubExample,
+		Use:        "github",
+		Aliases:    []string{"gh"},
+		Short:      reportEvidenceCommitPRGithubShortDesc,
+		Long:       reportEvidenceCommitPRGithubLongDesc,
+		Example:    reportEvidenceCommitPRGithubExample,
+		Deprecated: "see kosli attest commands",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

@@ -19,11 +19,11 @@ const createFlowLongDesc = createFlowShortDesc + `
 You can specify flow parameters in flags.`
 
 const createFlowExample = `
-# create/update a Kosli flow (with legacy template):
+# create/update a Kosli flow (with empty template):
 kosli create flow yourFlowName \
 	--description yourFlowDescription \
-    --visibility private OR public \
-	--template artifact,evidence-type1,evidence-type2 \
+	--visibility private OR public \
+	--use-empty-template \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -83,6 +83,7 @@ func newCreateFlowCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.payload.Description, "description", "", flowDescriptionFlag)
 	cmd.Flags().StringVar(&o.payload.Visibility, "visibility", "private", visibilityFlag)
 	cmd.Flags().StringSliceVarP(&o.payload.Template, "template", "t", []string{}, templateFlag)
+	cmd.Flags().MarkDeprecated("template", "use --template-file instead")
 	cmd.Flags().StringVarP(&o.TemplateFile, "template-file", "f", "", templateFileFlag)
 	cmd.Flags().BoolVar(&o.UseEmptyTemplate, "use-empty-template", false, useEmptyTemplateFlag)
 	addDryRunFlag(cmd)

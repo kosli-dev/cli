@@ -10,9 +10,10 @@ const reportEvidenceArtifactDesc = `All Kosli evidence commands.`
 
 func newReportEvidenceArtifactCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "artifact",
-		Short: reportEvidenceArtifactDesc,
-		Long:  reportEvidenceArtifactDesc,
+		Use:        "artifact",
+		Short:      reportEvidenceArtifactDesc,
+		Long:       reportEvidenceArtifactDesc,
+		Deprecated: "see kosli attest commands",
 	}
 
 	// Add subcommands

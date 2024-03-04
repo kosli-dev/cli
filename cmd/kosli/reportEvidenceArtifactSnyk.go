@@ -67,10 +67,11 @@ func newReportEvidenceArtifactSnykCmd(out io.Writer) *cobra.Command {
 	o := new(reportEvidenceArtifactSnykOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "snyk [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Short:   reportEvidenceArtifactSnykShortDesc,
-		Long:    reportEvidenceArtifactSnykLongDesc,
-		Example: reportEvidenceArtifactSnykExample,
+		Use:        "snyk [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Short:      reportEvidenceArtifactSnykShortDesc,
+		Long:       reportEvidenceArtifactSnykLongDesc,
+		Example:    reportEvidenceArtifactSnykExample,
+		Deprecated: "see kosli attest commands",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

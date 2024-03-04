@@ -10,10 +10,11 @@ const reportEvidenceCommitPRDesc = `All Kosli commands to report pull/merge requ
 
 func newReportEvidenceCommitPRCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "pullrequest",
-		Aliases: []string{"pr", "mr", "mergerequest"},
-		Short:   reportEvidenceCommitPRDesc,
-		Long:    reportEvidenceCommitPRDesc,
+		Use:        "pullrequest",
+		Aliases:    []string{"pr", "mr", "mergerequest"},
+		Short:      reportEvidenceCommitPRDesc,
+		Long:       reportEvidenceCommitPRDesc,
+		Deprecated: "see kosli attest commands",
 	}
 
 	// Add subcommands
