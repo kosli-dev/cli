@@ -47,7 +47,7 @@ func (suite *ArtifactEvidencePRAzureCommandTestSuite) TestArtifactEvidencePRAzur
 			name:      "report Azure PR evidence fails when --org is missing",
 			cmd: `report evidence artifact pullrequest azure --fingerprint ` + suite.artifactFingerprint + ` --name az-pr --flow ` + suite.flowName + `
 			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a --api-token foo --host bar`,
-			golden: "Error: --org is not set\n" +
+			goldenRegex: "Error: --org is not set\n" +
 				"Usage: kosli report evidence artifact pullrequest azure [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
@@ -55,43 +55,43 @@ func (suite *ArtifactEvidencePRAzureCommandTestSuite) TestArtifactEvidencePRAzur
 			name:      "report Azure PR evidence fails when --name is missing",
 			cmd: `report evidence artifact pullrequest azure --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + `
 			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
-			golden: "Error: required flag(s) \"name\" not set\n",
+			goldenRegex: "Error: required flag\\(s\\) \"name\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Azure PR evidence fails when --azure-org-url is missing",
 			cmd: `report evidence artifact pullrequest azure --fingerprint ` + suite.artifactFingerprint + ` --name az-pr --flow ` + suite.flowName + `
 			          --build-url example.com --project kosli-azure --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
-			golden: "Error: required flag(s) \"azure-org-url\" not set\n",
+			goldenRegex: "Error: required flag\\(s\\) \"azure-org-url\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Azure PR evidence fails when --project is missing",
 			cmd: `report evidence artifact pullrequest azure --fingerprint ` + suite.artifactFingerprint + ` --name az-pr --flow ` + suite.flowName + `
 			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
-			golden: "Error: required flag(s) \"project\" not set\n",
+			goldenRegex: "Error: required flag\\(s\\) \"project\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Azure PR evidence fails when --repository is missing",
 			cmd: `report evidence artifact pullrequest azure --fingerprint ` + suite.artifactFingerprint + ` --name az-pr --flow ` + suite.flowName + `
 			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
-			golden: "Error: required flag(s) \"repository\" not set\n",
+			goldenRegex: "Error: required flag\\(s\\) \"repository\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Azure PR evidence fails when --commit is missing",
 			cmd: `report evidence artifact pullrequest azure --fingerprint ` + suite.artifactFingerprint + ` --name az-pr --flow ` + suite.flowName + `
 			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli` + suite.defaultKosliArguments,
-			golden: "Error: required flag(s) \"commit\" not set\n",
+			goldenRegex: "Error: required flag\\(s\\) \"commit\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Azure PR evidence fails when neither --fingerprint nor --artifact-type are set",
 			cmd: `report evidence artifact pullrequest azure artifactNameArg --name az-pr --flow ` + suite.flowName + `
 					  --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
-			golden: "Error: either --artifact-type or --fingerprint must be specified\n" +
-				"Usage: kosli report evidence artifact pullrequest azure [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+			goldenRegex: "Error: either --artifact-type or --fingerprint must be specified\n" +
+				"Usage: kosli report evidence artifact pullrequest azure \\[IMAGE-NAME | FILE-PATH | DIR-PATH\\] \\[flags\\]\n",
 		},
 		{
 			name: "report Azure PR evidence does not fail when commit does not exist, empty evidence is reported instead.",
@@ -132,7 +132,7 @@ func (suite *ArtifactEvidencePRAzureCommandTestSuite) TestArtifactEvidencePRAzur
 			name:      "report Azure PR evidence fails when --artifact-type is unsupported",
 			cmd: `report evidence artifact pullrequest azure testdata/file1 --artifact-type unsupported --name az-pr --flow ` + suite.flowName + `
 			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
-			golden: "Error: unsupported is not a supported artifact type\n",
+			goldenRegex: "Error: unsupported is not a supported artifact type\n",
 		},
 		{
 			wantError: true,
@@ -140,7 +140,7 @@ func (suite *ArtifactEvidencePRAzureCommandTestSuite) TestArtifactEvidencePRAzur
 			cmd: `report evidence artifact pullrequest azure --fingerprint ` + suite.artifactFingerprint + ` --name az-pr --flow ` + suite.flowName + `
 					  --user-data non-existing.json
 			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
-			golden: "Error: open non-existing.json: no such file or directory\n",
+			goldenRegex: "Error: open non-existing.json: no such file or directory\n",
 		},
 	}
 

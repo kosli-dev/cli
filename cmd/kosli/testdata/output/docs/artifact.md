@@ -1,11 +1,12 @@
 ---
 title: "artifact"
 beta: false
-deprecated: false
+deprecated: true
 ---
 
 # artifact
 
+{{< hint danger >}}**artifact** is a deprecated. see kosli attest commands  Deprecated commands will be removed in a future release.{{< /hint >}}
 ## Synopsis
 
 Report an artifact creation to a Kosli flow.  
@@ -59,3 +60,4 @@ kosli report artifact ANOTHER_FILE.txt \
 	--fingerprint yourArtifactFingerprint 
 
 ```
+

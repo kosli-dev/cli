@@ -55,7 +55,7 @@ func (suite *ArtifactEvidencePRGitlabCommandTestSuite) TestArtifactEvidencePRGit
 			cmd: `report evidence artifact pullrequest gitlab --fingerprint ` + suite.artifactFingerprint + ` --name gl-pr --flow ` + suite.flowName + `
 			          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6 --api-token foo --host bar`,
 			goldenRegex: "Error: --org is not set\n" +
-				"Usage: kosli report evidence artifact pullrequest gitlab [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+				"Usage: kosli report evidence artifact pullrequest gitlab \\[IMAGE-NAME | FILE-PATH | DIR-PATH\\] \\[flags\\]\n",
 		},
 		{
 			wantError: true,
@@ -91,7 +91,7 @@ func (suite *ArtifactEvidencePRGitlabCommandTestSuite) TestArtifactEvidencePRGit
 			cmd: `report evidence artifact pullrequest gitlab artifactNameArg --name gl-pr --flow ` + suite.flowName + `
 					  --build-url example.com --gitlab-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			goldenRegex: "Error: either --artifact-type or --fingerprint must be specified\n" +
-				"Usage: kosli report evidence artifact pullrequest gitlab [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+				"Usage: kosli report evidence artifact pullrequest gitlab \\[IMAGE-NAME | FILE-PATH | DIR-PATH\\] \\[flags\\]\n",
 		},
 		{
 			wantError: true,

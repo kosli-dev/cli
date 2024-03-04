@@ -129,7 +129,7 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 			name:      "report Github PR evidence fails when --artifact-type is unsupported",
 			cmd: `report evidence artifact pullrequest github testdata/file1 --artifact-type unsupported --name gh-pr --flow ` + suite.flowName + `
 			          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
-			golden: "Error: unsupported is not a supported artifact type\n",
+			goldenRegex: "Error: unsupported is not a supported artifact type\n",
 		},
 		{
 			wantError: true,
@@ -137,7 +137,7 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
 					  --user-data non-existing.json
 			          --build-url example.com --github-org kosli-dev --repository cli --commit ` + suite.commitWithPR + suite.defaultKosliArguments,
-			golden: "Error: open non-existing.json: no such file or directory\n",
+			goldenRegex: "Error: open non-existing.json: no such file or directory\n",
 		},
 	}
 
