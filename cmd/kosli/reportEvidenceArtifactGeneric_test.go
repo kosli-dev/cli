@@ -58,7 +58,7 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) TestArtifactEvidenceGeneri
 			cmd: fmt.Sprintf(`report evidence artifact generic --fingerprint %s --name %s --flow %s
 			          --build-url example.com --compliant --description "some description" %s`,
 				suite.artifactFingerprint, evidenceName, suite.flowName, suite.defaultKosliArguments),
-			golden: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
+			goldenRegex: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
 		},
 		{
 			name: "report Generic test evidence works when --evidence-url and --evidence-fingerprint are provided",
@@ -66,7 +66,7 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) TestArtifactEvidenceGeneri
 			          --build-url example.com --compliant --description "some description" 
 					  --evidence-url https://example.com --evidence-fingerprint %s %s`,
 				suite.artifactFingerprint, evidenceName, suite.flowName, suite.artifactFingerprint, suite.defaultKosliArguments),
-			golden: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
+			goldenRegex: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
 		},
 		{
 			name: "report Generic test evidence works with --evidence-paths that contains a single file",
@@ -74,7 +74,7 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) TestArtifactEvidenceGeneri
 			          --build-url example.com --compliant --description "some description"
 					  --evidence-paths testdata/file1 %s`,
 				suite.artifactFingerprint, evidenceName, suite.flowName, suite.defaultKosliArguments),
-			golden: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
+			goldenRegex: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
 		},
 		{
 			name: "report Generic test evidence works with --evidence-paths that contains a single dir",
@@ -82,7 +82,7 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) TestArtifactEvidenceGeneri
 			          --build-url example.com --compliant --description "some description"
 					  --evidence-paths testdata/folder1 %s`,
 				suite.artifactFingerprint, evidenceName, suite.flowName, suite.defaultKosliArguments),
-			golden: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
+			goldenRegex: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
 		},
 		{
 			name: "report Generic test evidence works with --evidence-paths that contains multiple paths",
@@ -90,7 +90,7 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) TestArtifactEvidenceGeneri
 			          --build-url example.com --compliant --description "some description"
 					  --evidence-paths testdata/file1,testdata/folder1 %s`,
 				suite.artifactFingerprint, evidenceName, suite.flowName, suite.defaultKosliArguments),
-			golden: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
+			goldenRegex: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
 		},
 		{
 			name: "report Generic test evidence works when multiple --evidence-paths include duplicates",
@@ -98,21 +98,21 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) TestArtifactEvidenceGeneri
 			          --build-url example.com --compliant --description "some description" 
 					  --evidence-paths testdata/file1,testdata/folder1,testdata/file1 %s`,
 				suite.artifactFingerprint, evidenceName, suite.flowName, suite.defaultKosliArguments),
-			golden: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
+			goldenRegex: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
 		},
 		{
 			name: "report Generic test evidence works when neither of --description nor --user-data provided",
 			cmd: fmt.Sprintf(`report evidence artifact generic --fingerprint %s --name %s --flow %s
 			          --build-url example.com --compliant %s`,
 				suite.artifactFingerprint, evidenceName, suite.flowName, suite.defaultKosliArguments),
-			golden: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
+			goldenRegex: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
 		},
 		{
 			name: "report Generic test evidence works when neither of --description, --user-data or --compliant is provided",
 			cmd: fmt.Sprintf(`report evidence artifact generic --fingerprint %s --name %s --flow %s
 			          --build-url example.com %s`,
 				suite.artifactFingerprint, evidenceName, suite.flowName, suite.defaultKosliArguments),
-			golden: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
+			goldenRegex: fmt.Sprintf("generic evidence '%s' is reported to artifact: %s\n", evidenceName, suite.artifactFingerprint),
 		},
 		{
 			wantError: true,
@@ -121,15 +121,15 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) TestArtifactEvidenceGeneri
 			          --build-url example.com --compliant --description "some description"
 					  --evidence-paths non-existing %s`,
 				suite.artifactFingerprint, evidenceName, suite.flowName, suite.defaultKosliArguments),
-			golden: "Error: stat non-existing: no such file or directory\n",
+			goldenRegex: "Error: stat non-existing: no such file or directory\n",
 		},
 		{
 			name: "report Generic test evidence fails if --name is missing",
 			cmd: fmt.Sprintf(`report evidence artifact generic --fingerprint %s --flow %s
 			          --build-url example.com %s`,
 				suite.artifactFingerprint, suite.flowName, suite.defaultKosliArguments),
-			wantError: true,
-			golden:    "Error: required flag(s) \"name\" not set\n",
+			wantError:   true,
+			goldenRegex: "Error: required flag\\(s\\) \"name\" not set\n",
 		},
 		{
 			name: "report Generic test evidence fails if --fingerprint and --artifact-type are missing ",

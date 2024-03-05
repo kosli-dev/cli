@@ -44,11 +44,12 @@ func newReportEvidenceCommitPRAzureCmd(out io.Writer) *cobra.Command {
 	o := new(pullRequestCommitOptions)
 	azureFlagsValues := new(azUtils.AzureFlagsTempValueHolder)
 	cmd := &cobra.Command{
-		Use:     "azure",
-		Aliases: []string{"az"},
-		Short:   reportEvidenceCommitPRAzureShortDesc,
-		Long:    reportEvidenceCommitPRAzureLongDesc,
-		Example: reportEvidenceCommitPRAzureExample,
+		Use:        "azure",
+		Aliases:    []string{"az"},
+		Short:      reportEvidenceCommitPRAzureShortDesc,
+		Long:       reportEvidenceCommitPRAzureLongDesc,
+		Example:    reportEvidenceCommitPRAzureExample,
+		Deprecated: "see kosli attest commands",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

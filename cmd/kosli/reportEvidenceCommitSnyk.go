@@ -61,7 +61,8 @@ func newReportEvidenceCommitSnykCmd(out io.Writer) *cobra.Command {
 		Short:   reportEvidenceCommitSnykShortDesc,
 		Long:    reportEvidenceCommitSnykLongDesc,
 		Example: reportEvidenceCommitSnykExample,
-		Args:    cobra.NoArgs,
+		//Deprecated: "see kosli attest commands",
+		Args: cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

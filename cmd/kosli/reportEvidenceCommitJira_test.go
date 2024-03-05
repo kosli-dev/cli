@@ -153,7 +153,7 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 					--jira-base-url https://kosli-test.atlassian.net  --jira-api-token xxx
 					--jira-pat xxxx --repo-root %s --commit 61ab3ea22bd4264996b35bfb82869c482d9f4a06
 					--build-url example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
-			golden: "Error: only one of --jira-pat, --jira-api-token is allowed\n",
+			goldenRegex: "Error: only one of --jira-pat, --jira-api-token is allowed\n",
 		},
 		{
 			wantError: true,
@@ -162,7 +162,7 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 					--jira-base-url https://kosli-test.atlassian.net  --jira-api-token xxx
 					--repo-root %s --commit 61ab3ea22bd4264996b35bfb82869c482d9f4a06
 					--build-url example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
-			golden: "Error: at least one of --jira-pat, --jira-username is required\n",
+			goldenRegex: "Error: at least one of --jira-pat, --jira-username is required\n",
 		},
 		{
 			wantError: true,
@@ -171,7 +171,7 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
 					--repo-root %s
 					--build-url example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
-			golden: "Error: required flag(s) \"commit\" not set\n",
+			goldenRegex: "Error: required flag\\(s\\) \"commit\" not set\n",
 		},
 		{
 			wantError: true,

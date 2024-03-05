@@ -19,11 +19,11 @@ const createFlowLongDesc = createFlowShortDesc + `
 You can specify flow parameters in flags.`
 
 const createFlowExample = `
-# create/update a Kosli flow (with legacy template):
+# create/update a Kosli flow (with empty template):
 kosli create flow yourFlowName \
 	--description yourFlowDescription \
-    --visibility private OR public \
-	--template artifact,evidence-type1,evidence-type2 \
+	--visibility private OR public \
+	--use-empty-template \
 	--api-token yourAPIToken \
 	--org yourOrgName
 

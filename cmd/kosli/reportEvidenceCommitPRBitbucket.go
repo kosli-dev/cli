@@ -50,11 +50,12 @@ func newReportEvidenceCommitPRBitbucketCmd(out io.Writer) *cobra.Command {
 	o.retriever = config
 
 	cmd := &cobra.Command{
-		Use:     "bitbucket",
-		Aliases: []string{"bb"},
-		Short:   reportEvidenceCommitPRBitbucketShortDesc,
-		Long:    reportEvidenceCommitPRBitbucketLongDesc,
-		Example: reportEvidenceCommitPRBitbucketExample,
+		Use:        "bitbucket",
+		Aliases:    []string{"bb"},
+		Short:      reportEvidenceCommitPRBitbucketShortDesc,
+		Long:       reportEvidenceCommitPRBitbucketLongDesc,
+		Example:    reportEvidenceCommitPRBitbucketExample,
+		Deprecated: "see kosli attest commands",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

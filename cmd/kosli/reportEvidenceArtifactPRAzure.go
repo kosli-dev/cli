@@ -47,11 +47,12 @@ func newReportEvidenceArtifactPRAzureCmd(out io.Writer) *cobra.Command {
 	o.fingerprintOptions = new(fingerprintOptions)
 	azureFlagsValues := new(azUtils.AzureFlagsTempValueHolder)
 	cmd := &cobra.Command{
-		Use:     "azure [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Aliases: []string{"az"},
-		Short:   reportEvidenceArtifactPRAzureShortDesc,
-		Long:    reportEvidenceArtifactPRAzureLongDesc,
-		Example: reportEvidenceArtifactPRAzureExample,
+		Use:        "azure [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Aliases:    []string{"az"},
+		Short:      reportEvidenceArtifactPRAzureShortDesc,
+		Long:       reportEvidenceArtifactPRAzureLongDesc,
+		Example:    reportEvidenceArtifactPRAzureExample,
+		Deprecated: "see kosli attest commands",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

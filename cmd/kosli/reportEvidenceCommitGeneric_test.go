@@ -38,7 +38,7 @@ func (suite *CommitEvidenceGenericCommandTestSuite) TestCommitEvidenceGenericCom
 			cmd: fmt.Sprintf(`report evidence commit generic --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name %s --flows %s
 			          --build-url example.com --compliant --description "some description" %s`,
 				evidenceName, suite.flowNames, suite.defaultKosliArguments),
-			golden: fmt.Sprintf("generic evidence '%s' is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n", evidenceName),
+			goldenRegex: fmt.Sprintf("generic evidence '%s' is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n", evidenceName),
 		},
 		{
 			name: "report Generic test evidence works when --evidence-url and --evidence-fingerprint are provided",
@@ -46,7 +46,7 @@ func (suite *CommitEvidenceGenericCommandTestSuite) TestCommitEvidenceGenericCom
 			          --build-url example.com --compliant --description "some description" 
 					  --evidence-url https://example.com --evidence-fingerprint 847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0 %s`,
 				evidenceName, suite.flowNames, suite.defaultKosliArguments),
-			golden: fmt.Sprintf("generic evidence '%s' is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n", evidenceName),
+			goldenRegex: fmt.Sprintf("generic evidence '%s' is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n", evidenceName),
 		},
 		{
 			name: "report Generic test evidence works when --evidence-paths is provided and contains a single file",
@@ -54,7 +54,7 @@ func (suite *CommitEvidenceGenericCommandTestSuite) TestCommitEvidenceGenericCom
 			          --build-url example.com --compliant --description "some description" 
 					  --evidence-paths testdata/file1 %s`,
 				evidenceName, suite.flowNames, suite.defaultKosliArguments),
-			golden: fmt.Sprintf("generic evidence '%s' is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n", evidenceName),
+			goldenRegex: fmt.Sprintf("generic evidence '%s' is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n", evidenceName),
 		},
 		{
 			name: "report Generic test evidence works when --evidence-paths is provided and contains a single directory",
@@ -62,7 +62,7 @@ func (suite *CommitEvidenceGenericCommandTestSuite) TestCommitEvidenceGenericCom
 			          --build-url example.com --compliant --description "some description" 
 					  --evidence-paths testdata/folder1 %s`,
 				evidenceName, suite.flowNames, suite.defaultKosliArguments),
-			golden: fmt.Sprintf("generic evidence '%s' is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n", evidenceName),
+			goldenRegex: fmt.Sprintf("generic evidence '%s' is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n", evidenceName),
 		},
 		{
 			name: "report Generic test evidence works when --evidence-paths is provided and contains a file and a dir",
@@ -70,7 +70,7 @@ func (suite *CommitEvidenceGenericCommandTestSuite) TestCommitEvidenceGenericCom
 			          --build-url example.com --compliant --description "some description" 
 					  --evidence-paths testdata/folder1,testdata/file1 %s`,
 				evidenceName, suite.flowNames, suite.defaultKosliArguments),
-			golden: fmt.Sprintf("generic evidence '%s' is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n", evidenceName),
+			goldenRegex: fmt.Sprintf("generic evidence '%s' is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n", evidenceName),
 		},
 		{
 			wantError: true,
@@ -79,58 +79,58 @@ func (suite *CommitEvidenceGenericCommandTestSuite) TestCommitEvidenceGenericCom
 			          --build-url example.com --compliant --description "some description" 
 					  --evidence-paths non-existing.txt %s`,
 				evidenceName, suite.flowNames, suite.defaultKosliArguments),
-			golden: "Error: stat non-existing.txt: no such file or directory\n",
+			goldenRegex: "Error: stat non-existing.txt: no such file or directory\n",
 		},
 		{
 			name: "report Generic test evidence works when neither of --description nor --user-data provided",
 			cmd: fmt.Sprintf(`report evidence commit generic --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name %s --flows %s
 			          --build-url example.com --compliant %s`,
 				evidenceName, suite.flowNames, suite.defaultKosliArguments),
-			golden: fmt.Sprintf("generic evidence '%s' is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n", evidenceName),
+			goldenRegex: fmt.Sprintf("generic evidence '%s' is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n", evidenceName),
 		},
 		{
 			name: "report Generic test evidence works when neither of --description, --user-data or --compliant is provided",
 			cmd: fmt.Sprintf(`report evidence commit generic --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name %s --flows %s
 			          --build-url example.com %s`, evidenceName, suite.flowNames, suite.defaultKosliArguments),
-			golden: fmt.Sprintf("generic evidence '%s' is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n", evidenceName),
+			goldenRegex: fmt.Sprintf("generic evidence '%s' is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n", evidenceName),
 		},
 		{
 			name: "report Generic test evidence fails if --name is missing",
 			cmd: fmt.Sprintf(`report evidence commit generic --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --flows %s
 			          --build-url example.com %s`, suite.flowNames, suite.defaultKosliArguments),
-			wantError: true,
-			golden:    "Error: required flag(s) \"name\" not set\n",
+			wantError:   true,
+			goldenRegex: "Error: required flag\\(s\\) \"name\" not set\n",
 		},
 		{
 			name: "report Generic test evidence fails if --commit is missing",
 			cmd: fmt.Sprintf(`report evidence commit generic --name %s --flows %s
 			          --build-url example.com --compliant --description "some description" %s`,
 				evidenceName, suite.flowNames, suite.defaultKosliArguments),
-			wantError: true,
-			golden:    "Error: required flag(s) \"commit\" not set\n",
+			wantError:   true,
+			goldenRegex: "Error: required flag\\(s\\) \"commit\" not set\n",
 		},
 		{
 			name: "report Generic test evidence works if --flows flag is missing",
 			cmd: fmt.Sprintf(`report evidence commit generic --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name %s
 			          --build-url example.com --compliant --description "some description" %s`,
 				evidenceName, suite.defaultKosliArguments),
-			golden: fmt.Sprintf("generic evidence '%s' is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n", evidenceName),
+			goldenRegex: fmt.Sprintf("generic evidence '%s' is reported to commit: af28ccdeffdfa67f5c5a88be209e94cc4742de3c\n", evidenceName),
 		},
 		{
 			name: "report Generic test evidence fails if --build-url is missing",
 			cmd: fmt.Sprintf(`report evidence commit generic --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name %s --flows %s
 					--compliant --description "some description" %s`,
 				evidenceName, suite.flowNames, suite.defaultKosliArguments),
-			wantError: true,
-			golden:    "Error: required flag(s) \"build-url\" not set\n",
+			wantError:   true,
+			goldenRegex: "Error: required flag\\(s\\) \"build-url\" not set\n",
 		},
 		{
 			name: "report Generic test evidence fails if user-data is non-existing file",
 			cmd: fmt.Sprintf(`report evidence commit generic --commit af28ccdeffdfa67f5c5a88be209e94cc4742de3c --name %s --flows %s
 			          --build-url example.com --compliant --description "some description" %s --user-data non-existing-file`,
 				evidenceName, suite.flowNames, suite.defaultKosliArguments),
-			wantError: true,
-			golden:    "Error: open non-existing-file: no such file or directory\n",
+			wantError:   true,
+			goldenRegex: "Error: open non-existing-file: no such file or directory\n",
 		},
 	}
 	runTestCmd(suite.T(), tests)

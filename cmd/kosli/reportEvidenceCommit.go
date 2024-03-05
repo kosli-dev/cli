@@ -10,9 +10,10 @@ const reportEvidenceCommitDesc = `All Kosli commit commands.`
 
 func newReportEvidenceCommitCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "commit",
-		Short: reportEvidenceCommitDesc,
-		Long:  reportEvidenceCommitDesc,
+		Use:        "commit",
+		Short:      reportEvidenceCommitDesc,
+		Long:       reportEvidenceCommitDesc,
+		Deprecated: "see kosli attest commands",
 	}
 
 	// Add subcommands

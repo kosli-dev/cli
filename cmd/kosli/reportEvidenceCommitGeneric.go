@@ -48,11 +48,12 @@ kosli report evidence commit generic \
 func newReportEvidenceCommitGenericCmd(out io.Writer) *cobra.Command {
 	o := new(reportEvidenceCommitGenericOptions)
 	cmd := &cobra.Command{
-		Use:     "generic",
-		Short:   reportEvidenceCommitGenericShortDesc,
-		Long:    reportEvidenceCommitGenericLongDesc,
-		Example: reportEvidenceCommitGenericExample,
-		Args:    cobra.NoArgs,
+		Use:        "generic",
+		Short:      reportEvidenceCommitGenericShortDesc,
+		Long:       reportEvidenceCommitGenericLongDesc,
+		Example:    reportEvidenceCommitGenericExample,
+		Args:       cobra.NoArgs,
+		Deprecated: "see kosli attest commands",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

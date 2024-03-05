@@ -95,11 +95,12 @@ kosli report evidence commit jira \
 func newReportEvidenceCommitJiraCmd(out io.Writer) *cobra.Command {
 	o := new(reportEvidenceCommitJiraOptions)
 	cmd := &cobra.Command{
-		Use:     "jira",
-		Short:   reportEvidenceCommitJiraShortDesc,
-		Long:    reportEvidenceCommitJiraLongDesc,
-		Example: reportEvidenceCommitJiraExample,
-		Args:    cobra.NoArgs,
+		Use:        "jira",
+		Short:      reportEvidenceCommitJiraShortDesc,
+		Long:       reportEvidenceCommitJiraLongDesc,
+		Example:    reportEvidenceCommitJiraExample,
+		Deprecated: "see kosli attest commands",
+		Args:       cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

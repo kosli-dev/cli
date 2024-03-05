@@ -62,10 +62,11 @@ func newReportArtifactCmd(out io.Writer) *cobra.Command {
 	o := new(reportArtifactOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "artifact {IMAGE-NAME | FILE-PATH | DIR-PATH}",
-		Short:   reportArtifactShortDesc,
-		Long:    reportArtifactLongDesc,
-		Example: reportArtifactExample,
+		Use:        "artifact {IMAGE-NAME | FILE-PATH | DIR-PATH}",
+		Short:      reportArtifactShortDesc,
+		Long:       reportArtifactLongDesc,
+		Example:    reportArtifactExample,
+		Deprecated: "see kosli attest commands",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

@@ -48,11 +48,12 @@ func newReportEvidenceArtifactPRGithubCmd(out io.Writer) *cobra.Command {
 	o.fingerprintOptions = new(fingerprintOptions)
 	githubFlagsValues := new(ghUtils.GithubFlagsTempValueHolder)
 	cmd := &cobra.Command{
-		Use:     "github [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Aliases: []string{"gh"},
-		Short:   reportEvidenceArtifactPRGithubShortDesc,
-		Long:    reportEvidenceArtifactPRGithubLongDesc,
-		Example: reportEvidenceArtifactPRGithubExample,
+		Use:        "github [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Aliases:    []string{"gh"},
+		Short:      reportEvidenceArtifactPRGithubShortDesc,
+		Long:       reportEvidenceArtifactPRGithubLongDesc,
+		Example:    reportEvidenceArtifactPRGithubExample,
+		Deprecated: "see kosli attest commands",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

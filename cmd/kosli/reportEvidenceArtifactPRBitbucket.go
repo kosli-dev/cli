@@ -54,11 +54,12 @@ func newReportEvidenceArtifactPRBitbucketCmd(out io.Writer) *cobra.Command {
 	o.retriever = config
 
 	cmd := &cobra.Command{
-		Use:     "bitbucket [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Aliases: []string{"bb"},
-		Short:   reportEvidenceArtifactPRBitbucketShortDesc,
-		Long:    reportEvidenceArtifactPRBitbucketLongDesc,
-		Example: reportEvidenceArtifactPRBitbucketExample,
+		Use:        "bitbucket [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Aliases:    []string{"bb"},
+		Short:      reportEvidenceArtifactPRBitbucketShortDesc,
+		Long:       reportEvidenceArtifactPRBitbucketLongDesc,
+		Example:    reportEvidenceArtifactPRBitbucketExample,
+		Deprecated: "see kosli attest commands",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
