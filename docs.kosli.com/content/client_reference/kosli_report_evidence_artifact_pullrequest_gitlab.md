@@ -1,11 +1,12 @@
 ---
 title: "kosli report evidence artifact pullrequest gitlab"
 beta: false
-deprecated: false
+deprecated: true
 ---
 
 # kosli report evidence artifact pullrequest gitlab
 
+{{< hint danger >}}**kosli report evidence artifact pullrequest gitlab** is a deprecated. see kosli attest commands  Deprecated commands will be removed in a future release.{{< /hint >}}
 ## Synopsis
 
 Report a Gitlab merge request evidence for an artifact in a Kosli flow.  

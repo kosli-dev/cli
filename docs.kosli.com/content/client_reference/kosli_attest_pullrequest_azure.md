@@ -1,13 +1,11 @@
 ---
 title: "kosli attest pullrequest azure"
-beta: true
+beta: false
 deprecated: false
 ---
 
 # kosli attest pullrequest azure
 
-{{< hint warning >}}**kosli attest pullrequest azure** is a beta feature. Beta features provide early access to product functionality.  These features may change between releases without warning, or can be removed in a future release.
-Please contact us to enable this feature for your organization.{{< /hint >}}
 ## Synopsis
 
 Report an Azure Devops pull request attestation to an artifact or a trail in a Kosli flow.  

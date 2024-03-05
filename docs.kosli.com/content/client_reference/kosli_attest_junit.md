@@ -1,13 +1,11 @@
 ---
 title: "kosli attest junit"
-beta: true
+beta: false
 deprecated: false
 ---
 
 # kosli attest junit
 
-{{< hint warning >}}**kosli attest junit** is a beta feature. Beta features provide early access to product functionality.  These features may change between releases without warning, or can be removed in a future release.
-Please contact us to enable this feature for your organization.{{< /hint >}}
 ## Synopsis
 
 Report a junit attestation to an artifact or a trail in a Kosli flow.  

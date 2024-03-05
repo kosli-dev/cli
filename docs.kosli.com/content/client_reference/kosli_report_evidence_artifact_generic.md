@@ -1,11 +1,12 @@
 ---
 title: "kosli report evidence artifact generic"
 beta: false
-deprecated: false
+deprecated: true
 ---
 
 # kosli report evidence artifact generic
 
+{{< hint danger >}}**kosli report evidence artifact generic** is a deprecated. see kosli attest commands  Deprecated commands will be removed in a future release.{{< /hint >}}
 ## Synopsis
 
 Report generic evidence to an artifact in a Kosli flow.  

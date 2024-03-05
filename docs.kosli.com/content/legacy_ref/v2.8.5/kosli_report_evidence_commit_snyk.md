@@ -1,38 +1,42 @@
 ---
-title: "kosli report evidence commit pullrequest github"
+title: "kosli report evidence commit snyk"
 beta: false
-deprecated: true
+deprecated: false
 ---
 
-# kosli report evidence commit pullrequest github
+# kosli report evidence commit snyk
 
-{{< hint danger >}}**kosli report evidence commit pullrequest github** is a deprecated. see kosli attest commands  Deprecated commands will be removed in a future release.{{< /hint >}}
 ## Synopsis
 
-Report Github pull request evidence for a git commit in Kosli flows.  
-It checks if a pull request exists for a commit and report the pull-request evidence to the commit in Kosli. 
+Report Snyk vulnerability scan evidence for a commit in Kosli flows.    
+The --scan-results .json file is parsed and uploaded to Kosli's evidence vault.
+
+In CLI <v2.8.2, Snyk results could only be in the Snyk JSON output format. "snyk code test" results were not supported by 
+this command and could be reported as generic evidence.
+
+Starting from v2.8.2, the Snyk results can be in Snyk JSON or SARIF output format for "snyk container test". 
+"snyk code test" is now supported but only in the SARIF format.
+
+If no vulnerabilities are detected the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
 
 
 ```shell
-kosli report evidence commit pullrequest github [flags]
+kosli report evidence commit snyk [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --commit string  |  Git commit for which to verify a given evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |        --evidence-fingerprint string  |  [optional] The SHA256 fingerprint of the evidence file or dir.  |
 |        --evidence-url string  |  [optional] The external URL where the evidence file or dir is stored.  |
 |    -f, --flows strings  |  [defaulted] The comma separated list of Kosli flows. Defaults to all flows of the org.  |
-|        --github-base-url string  |  [optional] GitHub base URL (only needed for GitHub Enterprise installations).  |
-|        --github-org string  |  Github organization. (defaulted if you are running in GitHub Actions: https://docs.kosli.com/ci-defaults ).  |
-|        --github-token string  |  Github token.  |
-|    -h, --help  |  help for github  |
+|    -h, --help  |  help for snyk  |
 |    -n, --name string  |  The name of the evidence.  |
-|        --repository string  |  Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|    -R, --scan-results string  |  The path to Snyk SARIF or JSON scan results file from 'snyk test' and 'snyk container test'. By default, the Snyk results will be uploaded to Kosli's evidence vault.  |
+|        --upload-results  |  [defaulted] Whether to upload the provided Snyk results file as an attachment to Kosli or not. (default true)  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the evidence.  |
 
 
@@ -51,30 +55,25 @@ kosli report evidence commit pullrequest github [flags]
 
 ```shell
 
-# report a pull request commit evidence to Kosli
-kosli report evidence commit pullrequest github \
+# report Snyk evidence for a commit related to one Kosli flow:
+kosli report evidence commit snyk \
 	--commit yourGitCommitSha1 \
-	--repository yourGithubGitRepository \
-	--github-token yourGithubToken \
-	--github-org yourGithubOrg \
 	--name yourEvidenceName \
-	--flows yourFlowName1,yourFlowName2 \
+	--flows yourFlowName1 \
 	--build-url https://exampleci.com \
-	--org yourOrgName \
-	--api-token yourAPIToken
-	
-# fail if a pull request does not exist for your commit
-kosli report evidence commit pullrequest github \
-	--commit yourGitCommitSha1 \
-	--repository yourGithubGitRepository \
-	--github-token yourGithubToken \
-	--github-org yourGithubOrg \
-	--name yourEvidenceName \
-	--flows yourFlowName1,yourFlowName2 \
-	--build-url https://exampleci.com \
-	--org yourOrgName \
 	--api-token yourAPIToken \
-	--assert
+	--org yourOrgName	\
+	--scan-results yourSnykJSONScanResults
+
+# report Snyk evidence for a commit related to multiple Kosli flows:
+kosli report evidence commit snyk \
+	--commit yourGitCommitSha1 \
+	--name yourEvidenceName \
+	--flows yourFlowName1,yourFlowName2 \
+	--build-url https://exampleci.com \
+	--api-token yourAPIToken \
+	--org yourOrgName	\
+	--scan-results yourSnykJSONScanResults
 
 ```
 
