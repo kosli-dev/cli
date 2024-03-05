@@ -23,7 +23,7 @@ You can install the Kosli reporter Helm chart from source code:
 
 ```shell
 git clone https://github.com/kosli-dev/cli.git
-cd reporter/charts/k8s-reporter
+cd cli/charts/k8s-reporter
 helm install [RELEASE-NAME] . -f [VALUES-FILE-PATH]
 ```
 
