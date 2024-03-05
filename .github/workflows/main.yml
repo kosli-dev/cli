@@ -47,7 +47,7 @@ jobs:
     uses: kosli-dev/cli/.github/workflows/docker.yml@main
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
-      platforms: linux/amd64
+      platforms: linux/amd64,linux/arm64
     secrets:
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
       slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
