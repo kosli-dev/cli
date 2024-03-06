@@ -20,19 +20,29 @@ spec:
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
             imagePullPolicy: {{ .Values.image.pullPolicy }}
             env:
+              - name: KOSLI_ORG
+                value: {{ required ".Values.reporterConfig.kosliOrg is required" .Values.reporterConfig.kosliOrg }}
               - name: KOSLI_API_TOKEN
                 valueFrom:
                   secretKeyRef:
                     name: {{ required ".Values.kosliApiToken.secretName is required." .Values.kosliApiToken.secretName }}
                     key: {{ .Values.kosliApiToken.secretKey | default "token" }}
+              {{ if .Values.reporterConfig.namespaces }}
+              - name: KOSLI_NAMESPACES
+                value: {{ .Values.reporterConfig.namespaces | quote }}
+              {{ end }}
               {{- range $key, $value :=  .Values.env }}
               - name: {{ $key }}
                 value: {{ $value }}
               {{ end }}    
-            command:
-            - /bin/sh
-            - -c
-            - kosli snapshot k8s {{ required ".Values.reporterConfig.kosliEnvironmentName is required" .Values.reporterConfig.kosliEnvironmentName }} {{ if .Values.reporterConfig.namespaces }} --namespaces {{ .Values.reporterConfig.namespaces | quote }} {{ end }} --org {{ required ".Values.reporterConfig.kosliOrg is required" .Values.reporterConfig.kosliOrg }} {{ if .Values.reporterConfig.dryRun }}--dry-run{{ end }}
+            args:
+            - snapshot
+            - k8s
+            - {{ required ".Values.reporterConfig.kosliEnvironmentName is required" .Values.reporterConfig.kosliEnvironmentName }}
+            {{ if .Values.reporterConfig.dryRun }}
+            - --dry-run 
+            {{ end }}
+            
             resources:
 {{ toYaml .Values.resources | indent 14 }}
           restartPolicy: Never

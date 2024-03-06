@@ -24,19 +24,19 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
-# -- the cron schedule at which the reporter is triggered to report to kosli  
+# -- the cron schedule at which the reporter is triggered to report to Kosli  
 cronSchedule: "*/5 * * * *"
 
 kosliApiToken:
   # -- the name of the secret containing the kosli API token
-  secretName: ""
-  # -- the name of the key in the secret data which contains the kosli API token
-  secretKey: ""
+  secretName: "kosli-api-token"
+  # -- the name of the key in the secret data which contains the Kosli API token
+  secretKey: "key"
 
 reporterConfig:
-  # -- the name of the kosli org
+  # -- the name of the Kosli org
   kosliOrg: ""
-  # -- the name of kosli environment that the k8s cluster/namespace correlates to
+  # -- the name of Kosli environment that the k8s cluster/namespace correlates to
   kosliEnvironmentName: ""
   # -- the namespaces which represent the environment.
   # It is a comma separated list of namespace name regex patterns.
@@ -46,8 +46,9 @@ reporterConfig:
   # -- whether the dry run mode is enabled or not. In dry run mode, the reporter logs the reports to stdout and does not send them to kosli.
   dryRun: false
 
+# Uncomment the env variable below and replace <instance_name>, if you are on a single tenant Kosli instance
 # env:
-#   KOSLI_HOST: https://staging.app.kosli.com
+#   KOSLI_HOST: https://<instance_name>.kosli.com
 
 # -- any custom annotations to be added to the cronjob
 podAnnotations: {}
