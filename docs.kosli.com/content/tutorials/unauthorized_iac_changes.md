@@ -52,13 +52,13 @@ In this tutorial, however, we run the commands that you would otherwise do in CI
 Let's create a trail to represent a single instance of making an authorized change. We will call it `authorized-1`.
 
 ```shell {.command}
-$ kosli begin trail authorized-1 --flow tf-tutorial
+$ kosli begin trail authorized-1 --flow=tf-tutorial
 ```
 Next, we can scan our terraform config scripts for security issues. We capture the SARIF output from the scan and attest it to Kosli.
 
 ```shell {.command}
 $ snyk iac test main.tf --sarif-file-output=sarif.json
-$ kosli attest snyk --name security --flow tf-tutorial --trail authorized-1 --scan-results sarif.json
+$ kosli attest snyk --name=security --flow=tf-tutorial --trail=authorized-1 --scan-results=sarif.json
 ```
 
 We are now ready to run terraform. We create a plan and save it to a file. Then attest the plan file to Kosli to build a historical audit log. 
@@ -66,7 +66,7 @@ We are now ready to run terraform. We create a plan and save it to a file. Then 
 ```shell {.command}
 $ terraform init
 $ terraform plan -out=tf.plan
-$ kosli attest generic --name tf-plan --flow tf-tutorial --trail authorized-1 --attachments tf.plan
+$ kosli attest generic --name=tf-plan --flow=tf-tutorial --trail=authorized-1 --attachments=tf.plan
 ```
 
 Finally, we apply the terraform plan, and attest the produced terraform state file as an artifact.
@@ -82,8 +82,8 @@ Note that we set both `--build-url` and `--commit-url` to fake URLs. These are n
 
 ```shell {.command}
 $ terraform apply -auto-approve tf.plan
-$ kosli attest artifact terraform.tfstate --name state-file --artifact-type file --flow tf-tutorial --trail authorized-1 \
-   --build-url https://example.com --commit-url https://example.com --commit HEAD
+$ kosli attest artifact terraform.tfstate --name=state-file --artifact-type=file --flow=tf-tutorial --trail=authorized-1 \
+   --build-url=https://example.com --commit-url=https://example.com --commit=HEAD
 ```
 
 ## Monitoring the state file
@@ -95,7 +95,7 @@ a Kosli environment.
 Let's start by creating an environment of type `server`. 
 
 ```shell {.command}
-$ kosli create env terraform-state --type server
+$ kosli create env terraform-state --type=server
 ```
 
 We can report the state file to the environment we created:
@@ -106,7 +106,7 @@ In production, you would configure the environment reporting to run periodically
 {{</hint>}}
 
 ```shell {.command}
-$ kosli snapshot server terraform-state -p terraform.tfstate
+$ kosli snapshot server terraform-state -p=terraform.tfstate
 ```
 
 You can get the latest snapshot of the environment by running:
@@ -143,7 +143,7 @@ automatically (either on state file change or periodically).
 {{</hint>}}
 
 ```shell {.command}
-$ kosli snapshot server terraform-state -p terraform.tfstate
+$ kosli snapshot server terraform-state -p=terraform.tfstate
 ```
 
 Getting the latest snapshot of the environment by running the command below shows that the `FLOW` is unknown. 
