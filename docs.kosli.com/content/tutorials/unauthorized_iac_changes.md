@@ -106,7 +106,7 @@ In production, you would configure the environment reporting to run periodically
 {{</hint>}}
 
 ```shell {.command}
-$ kosli snapshot server terraform-state -p=terraform.tfstate
+$ kosli snapshot server terraform-state --paths=terraform.tfstate
 ```
 
 You can get the latest snapshot of the environment by running:
@@ -143,7 +143,7 @@ automatically (either on state file change or periodically).
 {{</hint>}}
 
 ```shell {.command}
-$ kosli snapshot server terraform-state -p=terraform.tfstate
+$ kosli snapshot server terraform-state --paths=terraform.tfstate
 ```
 
 Getting the latest snapshot of the environment by running the command below shows that the `FLOW` is unknown. 
