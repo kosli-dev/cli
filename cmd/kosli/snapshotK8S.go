@@ -45,7 +45,7 @@ kosli snapshot k8s yourEnvironmentName \
 	--org yourOrgName
 
 # report what is running in a cluster using kubeconfig at a custom path:
-kosli environment report k8s yourEnvironmentName \
+kosli snapshot k8s yourEnvironmentName \
 	--kubeconfig /path/to/kube/config \
 	--api-token yourAPIToken \
 	--org yourOrgName

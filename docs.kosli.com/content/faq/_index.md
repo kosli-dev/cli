@@ -113,7 +113,7 @@ API-TOKEN = "123456abcdef"
 When calling Kosli command you can skip the file extension. For example, to list environments with `org` and `api-token` in the configuration file you would run:
 
 ```
-$ kosli environment ls --config-file kosli-conf
+$ kosli list environments --config-file kosli-conf
 ```
 
 `--config-file` defaults to `kosli`, so if you name your file `kosli.<yaml|toml|json>` and the file is in the same location as where you run Kosli commands from, you can skip the `--config-file` altogether.
