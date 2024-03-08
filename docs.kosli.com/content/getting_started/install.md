@@ -162,5 +162,5 @@ When using the `--config-file` flag you can skip the file extension. For example
 to list environments with `org` and `api-token` in the configuration file you would run:
 
 ```
-$ kosli environment ls --config-file=kosli-conf
+$ kosli list environments --config-file=kosli-conf
 ```
