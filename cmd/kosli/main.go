@@ -38,7 +38,7 @@ func ProdAndStagingCyberDojoCallArgs(args []string) ([]string, []string) {
 		logger.Info("Org: %v", org)*/
 
 		// TODO: proper check for doubled host etc
-		if false {
+		if true {
 			argsProd := append(args[1:], "--debug", "--host=https://app.kosli.com")
 			argsStaging := append(args[1:], "--debug", "--host=https://staging.app.kosli.com")
 			return argsProd, argsStaging
@@ -67,6 +67,8 @@ func main() {
 		if err != nil {
 			fmt.Printf("%s\n", err.Error())
 			os.Exit(42)
+		} else {
+			os.Exit(0)
 		}
 	}
 
