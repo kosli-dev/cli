@@ -1,9 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
-	"os/exec"
 	"strings"
 
 	log "github.com/kosli-dev/cli/internal/logger"
@@ -12,7 +13,7 @@ import (
 )
 
 var (
-	logger      *log.Logger
+	logger      *log.Logger // DROP?
 	kosliClient *requests.Client
 )
 
@@ -21,75 +22,77 @@ func init() {
 	kosliClient = requests.NewStandardKosliClient()
 }
 
-func DoubleHostCyberDojoCallArgs() bool {
-	cmd, err := newRootCmd(logger.Out, os.Args[1:])
+func ProdAndStagingCyberDojoCallArgs(args []string) ([]string, []string) {
+	// TODO: new logger here?
+	_, err := newRootCmd(logger.Out, args[1:])
 	if err == nil {
-		host := cmd.Flag("host")
+		/*host := cmd.Flag("host")
+		if host.Value.String() == "https://app.kosli.com,https://staging.app.kosli.com" {
+			logger.Info("Host is Doubled")
+		}
+		fmt.Printf("host.Value %+v", host.Value)
 		apiToken := cmd.Flag("api-token")
 		org := cmd.Flag("org")
 		logger.Info("Host: %v", host)
 		logger.Info("ApiToken: %v", apiToken)
-		logger.Info("Org: %v", org)
-		/*if host.Value.String() == "https://app.kosli.com,https://staging.app.kosli.com" {
-			logger.Info("Host is Doubled")
-		}*/
-		return true
+		logger.Info("Org: %v", org)*/
+
+		// TODO: proper check for doubled host etc
+		if true {
+			argsProd := append(args[1:], "--dry-run", "--debug", "--host=https://app.kosli.com")
+			argsStaging := append(args[1:], "--dry-run", "--debug", "--host=https://staging.app.kosli.com")
+			return argsProd, argsStaging
+		} else {
+			return nil, nil
+		}
 	}
-	return false
+	return nil, nil
 }
 
-func DoubleHostCyberDojoCalls() int {
-
-	// cmd, err := newRootCmd(logger.Out, os.Args[1:])
-	// TODO: Get real host/api-token values
-
-	// Hard-wire the two host/api-token values
-	// Run exec.command() twice
-	//     add --host=... and --api-token=...
-	//     add --debug --dry-run
-	//     capture output and err and handle as per Issue
-
-	prodArgs := append(os.Args[1:], "--dry-run", "--debug")
-	logger.Info("prodCmd: %s", os.Args[0])
-	logger.Info("prodArgs: %v", prodArgs)
-	prodCmd := exec.Command(os.Args[0], prodArgs...)
-	prodOutput, prodError := prodCmd.Output()
-	// TODO: get to here by preventing infinite loop!
-	logger.Info("prodOutput %s\n", prodOutput)
-
-	stagingArgs := append(os.Args[1:], "--dry-run", "--debug")
-	logger.Info("stagingCmd: %s", os.Args[0])
-	logger.Info("stagingArgs: %v", stagingArgs)
-	stagingCmd := exec.Command(os.Args[0], stagingArgs...)
-	stagingOutput, stagingError := stagingCmd.Output()
-	if stagingError != nil {
-		fmt.Printf("%s", stagingOutput)
-	}
-
-	status := 0
-	if prodError != nil && stagingError != nil {
-		status = 42
-	}
-	return status
+func bufferedLogger() (*bytes.Buffer, *log.Logger) {
+	var buffer bytes.Buffer
+	writer := io.Writer(&buffer)
+	return &buffer, log.NewLogger(writer, writer, false)
 }
 
 func main() {
-	if DoubleHostCyberDojoCallArgs() {
-		status := DoubleHostCyberDojoCalls()
-		os.Exit(status)
-	}
-	cmd, err := newRootCmd(logger.Out, os.Args[1:])
-	if err != nil {
-		logger.Error(err.Error())
-	}
+	prodArgs, stagingArgs := ProdAndStagingCyberDojoCallArgs(os.Args)
+	if prodArgs != nil && stagingArgs != nil {
+		fmt.Printf("Running inner_main() twice\n")
 
+		prodBuffer, prodLogger := bufferedLogger()
+		inner_main(prodLogger, prodArgs)
+		fmt.Print(prodBuffer)
+
+		stagingBuffer, stagingLogger := bufferedLogger()
+		inner_main(stagingLogger, stagingArgs)
+		fmt.Print(stagingBuffer)
+
+	} else {
+		fmt.Printf("Running inner_main() once\n")
+		inner_main(log.NewStandardLogger(), os.Args)
+	}
+}
+
+func inner_main(log *log.Logger, args []string) {
+	// TODO: make this accept logger.Out used for newRootCmd() call
+	// TODO: pass in buffered-logger for doubled-calls, logger.Out for normal call
+	// TODO: make this return (output, error)
+	fmt.Printf("Inside inner_main: %v\n", args)
+
+	//cmd, err := newRootCmd(logger.Out, args[1:])
+	cmd, err := newRootCmd(log.Out, args[1:])
+
+	if err != nil {
+		log.Error(err.Error())
+	}
 	if err := cmd.Execute(); err != nil {
 		// cobra does not capture unknown/missing commands, see https://github.com/spf13/cobra/issues/706
 		// so we handle this here until it is fixed in cobra
 		if strings.Contains(err.Error(), "unknown flag:") {
-			c, flags, err := cmd.Traverse(os.Args[1:])
+			c, flags, err := cmd.Traverse(args[1:])
 			if err != nil {
-				logger.Error(err.Error())
+				log.Error(err.Error())
 			}
 			if c.HasSubCommands() {
 				errMessage := ""
@@ -104,15 +107,15 @@ func main() {
 						availableSubcommands = append(availableSubcommands, strings.Split(sc.Use, " ")[0])
 					}
 				}
-				logger.Error("%s\navailable subcommands are: %s", errMessage, strings.Join(availableSubcommands, " | "))
+				log.Error("%s\navailable subcommands are: %s", errMessage, strings.Join(availableSubcommands, " | "))
 			}
 		}
 
 		if global.DryRun {
-			logger.Info("Error: %s", err.Error())
-			logger.Warning("Encountered an error but --dry-run is enabled. Exiting with 0 exit code.")
+			log.Info("Error: %s", err.Error())
+			log.Warning("Encountered an error but --dry-run is enabled. Exiting with 0 exit code.")
 			os.Exit(0)
 		}
-		logger.Error(err.Error())
+		log.Error(err.Error())
 	}
 }
