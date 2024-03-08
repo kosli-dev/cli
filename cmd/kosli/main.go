@@ -38,9 +38,9 @@ func ProdAndStagingCyberDojoCallArgs(args []string) ([]string, []string) {
 		logger.Info("Org: %v", org)*/
 
 		// TODO: proper check for doubled host etc
-		if true {
-			argsProd := append(args[1:], "--dry-run", "--debug", "--host=https://app.kosli.com")
-			argsStaging := append(args[1:], "--dry-run", "--debug", "--host=https://staging.app.kosli.com")
+		if false {
+			argsProd := append(args[1:], "--debug", "--host=https://app.kosli.com")
+			argsStaging := append(args[1:], "--debug", "--host=https://staging.app.kosli.com")
 			return argsProd, argsStaging
 		} else {
 			return nil, nil
@@ -49,73 +49,96 @@ func ProdAndStagingCyberDojoCallArgs(args []string) ([]string, []string) {
 	return nil, nil
 }
 
-func bufferedLogger() (*bytes.Buffer, *log.Logger) {
+func runBufferedInnerMain(args []string) (string, error) {
+	// Use a buffered Writer because we want usually dont want
+	// to print output for the cyber-dojo staging call
 	var buffer bytes.Buffer
 	writer := io.Writer(&buffer)
-	return &buffer, log.NewLogger(writer, writer, false)
+	logger := log.NewLogger(writer, writer, false)
+	err := inner_main(logger, args)
+	return fmt.Sprint(&buffer), err
 }
 
 func main() {
 	prodArgs, stagingArgs := ProdAndStagingCyberDojoCallArgs(os.Args)
-	if prodArgs != nil && stagingArgs != nil {
-		fmt.Printf("Running inner_main() twice\n")
+	if prodArgs == nil && stagingArgs == nil {
+		// Normal call
+		err := inner_main(log.NewStandardLogger(), os.Args)
+		if err != nil {
+			fmt.Printf("%s\n", err.Error())
+			os.Exit(42)
+		}
+	}
 
-		prodBuffer, prodLogger := bufferedLogger()
-		inner_main(prodLogger, prodArgs)
-		fmt.Print(prodBuffer)
+	// Kosli uses CI pipelines in the cyber-dojo Org repos for two purposes
+	// 1. public facing documentation
+	// 2. private development purposes, specifically
+	//    all Kosli CLI calls are made twice, to two different servers
+	//     - https://app.kosli.com
+	//     - https://staging.app.kolsi.com
+	//    We do not want to have to explicitly make each Kosli CLI call twice
+	//    since that would not serve well for the documentation.
+	// The least worst option is to allow multiple KOLSI_HOST and KOSLI_API_TOKEN
+	// to specify more than one flag value.
 
-		stagingBuffer, stagingLogger := bufferedLogger()
-		inner_main(stagingLogger, stagingArgs)
-		fmt.Print(stagingBuffer)
+	prodOutput, prodErr := runBufferedInnerMain(prodArgs)
+	fmt.Print(prodOutput)
+	if prodErr != nil {
+		fmt.Printf("%s\n", prodErr.Error())
+	}
 
+	stagingOutput, stagingErr := runBufferedInnerMain(stagingArgs)
+	if stagingErr != nil {
+		// Only show staging output if there is an error
+		fmt.Print(stagingOutput)
+		fmt.Printf("%s\n", stagingErr.Error())
+	}
+
+	if prodErr == nil && stagingErr == nil {
+		os.Exit(0)
 	} else {
-		fmt.Printf("Running inner_main() once\n")
-		inner_main(log.NewStandardLogger(), os.Args)
+		os.Exit(42)
 	}
 }
 
-func inner_main(log *log.Logger, args []string) {
-	// TODO: make this accept logger.Out used for newRootCmd() call
-	// TODO: pass in buffered-logger for doubled-calls, logger.Out for normal call
-	// TODO: make this return (output, error)
-	fmt.Printf("Inside inner_main: %v\n", args)
-
-	//cmd, err := newRootCmd(logger.Out, args[1:])
+func inner_main(log *log.Logger, args []string) error {
 	cmd, err := newRootCmd(log.Out, args[1:])
-
 	if err != nil {
-		log.Error(err.Error())
+		return err
 	}
-	if err := cmd.Execute(); err != nil {
-		// cobra does not capture unknown/missing commands, see https://github.com/spf13/cobra/issues/706
-		// so we handle this here until it is fixed in cobra
-		if strings.Contains(err.Error(), "unknown flag:") {
-			c, flags, err := cmd.Traverse(args[1:])
-			if err != nil {
-				log.Error(err.Error())
-			}
-			if c.HasSubCommands() {
-				errMessage := ""
-				if strings.HasPrefix(flags[0], "-") {
-					errMessage = "missing subcommand"
-				} else {
-					errMessage = fmt.Sprintf("unknown command: %s", flags[0])
-				}
-				availableSubcommands := []string{}
-				for _, sc := range c.Commands() {
-					if !sc.Hidden {
-						availableSubcommands = append(availableSubcommands, strings.Split(sc.Use, " ")[0])
-					}
-				}
-				log.Error("%s\navailable subcommands are: %s", errMessage, strings.Join(availableSubcommands, " | "))
-			}
-		}
 
-		if global.DryRun {
-			log.Info("Error: %s", err.Error())
-			log.Warning("Encountered an error but --dry-run is enabled. Exiting with 0 exit code.")
-			os.Exit(0)
-		}
-		log.Error(err.Error())
+	err = cmd.Execute()
+	if err == nil {
+		return nil
 	}
+
+	// cobra does not capture unknown/missing commands, see https://github.com/spf13/cobra/issues/706
+	// so we handle this here until it is fixed in cobra
+	if strings.Contains(err.Error(), "unknown flag:") {
+		c, flags, err := cmd.Traverse(args[1:])
+		if err != nil {
+			return err
+		}
+		if c.HasSubCommands() {
+			errMessage := ""
+			if strings.HasPrefix(flags[0], "-") {
+				errMessage = "missing subcommand"
+			} else {
+				errMessage = fmt.Sprintf("unknown command: %s", flags[0])
+			}
+			availableSubcommands := []string{}
+			for _, sc := range c.Commands() {
+				if !sc.Hidden {
+					availableSubcommands = append(availableSubcommands, strings.Split(sc.Use, " ")[0])
+				}
+			}
+			log.Error("%s\navailable subcommands are: %s", errMessage, strings.Join(availableSubcommands, " | "))
+		}
+	}
+	if global.DryRun {
+		log.Info("Error: %s", err.Error())
+		log.Warning("Encountered an error but --dry-run is enabled. Exiting with 0 exit code.")
+		return nil
+	}
+	return err
 }
