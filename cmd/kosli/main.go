@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	logger      *log.Logger // DROP?
+	logger      *log.Logger
 	kosliClient *requests.Client
 )
 
@@ -23,19 +23,18 @@ func init() {
 }
 
 func prodAndStagingCyberDojoCallArgs(args []string) ([]string, []string) {
-	// TODO: new logger here?
-	_, err := newRootCmd(logger.Out, args[1:])
+	var buffer bytes.Buffer
+	writer := io.Writer(&buffer)
+	nullLogger := log.NewLogger(writer, writer, false)
+
+	_, err := newRootCmd(nullLogger.Out, args[1:])
 	if err == nil {
-		/*host := cmd.Flag("host")
-		if host.Value.String() == "https://app.kosli.com,https://staging.app.kosli.com" {
-			logger.Info("Host is Doubled")
-		}
-		fmt.Printf("host.Value %+v", host.Value)
-		apiToken := cmd.Flag("api-token")
-		org := cmd.Flag("org")
-		logger.Info("Host: %v", host)
-		logger.Info("ApiToken: %v", apiToken)
-		logger.Info("Org: %v", org)*/
+		// host := cmd.Flag("host")
+		// if host.Value.String() == "https://app.kosli.com,https://staging.app.kosli.com" {
+		// 	logger.Info("Host is Doubled")
+		// }
+		// apiToken := cmd.Flag("api-token")
+		// org := cmd.Flag("org")
 
 		// TODO: proper check for doubled host etc
 		if true {
@@ -58,8 +57,8 @@ func runProdAndStagingCyberDojoCalls(prodArgs []string, stagingArgs []string) in
 	//     - https://staging.app.kolsi.com
 	//    We do not want to have to explicitly make each Kosli CLI call twice
 	//    since that would not serve well for the documentation.
-	// The least worst option is to allow multiple KOLSI_HOST and KOSLI_API_TOKEN
-	// to specify more than one flag value.
+	// The least worst option is to allow the KOLSI_HOST and KOSLI_API_TOKEN flags
+	// to specify more than one value.
 
 	prodOutput, prodErr := runBufferedInnerMain(prodArgs)
 	fmt.Print(prodOutput)
@@ -86,8 +85,8 @@ func runBufferedInnerMain(args []string) (string, error) {
 	// to print output for the cyber-dojo staging call
 	var buffer bytes.Buffer
 	writer := io.Writer(&buffer)
-	logger := log.NewLogger(writer, writer, false)
-	err := inner_main(logger, args)
+	logger = log.NewLogger(writer, writer, false)
+	err := inner_main(args)
 	return fmt.Sprint(&buffer), err
 }
 
@@ -96,7 +95,8 @@ func main() {
 	prodArgs, stagingArgs := prodAndStagingCyberDojoCallArgs(os.Args)
 	if prodArgs == nil && stagingArgs == nil {
 		// Normal call
-		err := inner_main(log.NewStandardLogger(), os.Args)
+		logger = log.NewStandardLogger()
+		err := inner_main(os.Args)
 		if err != nil {
 			fmt.Printf("%s\n", err.Error())
 			status = 42
@@ -109,8 +109,8 @@ func main() {
 	os.Exit(status)
 }
 
-func inner_main(log *log.Logger, args []string) error {
-	cmd, err := newRootCmd(log.Out, args[1:])
+func inner_main(args []string) error {
+	cmd, err := newRootCmd(logger.Out, args[1:])
 	if err != nil {
 		return err
 	}
@@ -140,12 +140,12 @@ func inner_main(log *log.Logger, args []string) error {
 					availableSubcommands = append(availableSubcommands, strings.Split(sc.Use, " ")[0])
 				}
 			}
-			log.Error("%s\navailable subcommands are: %s", errMessage, strings.Join(availableSubcommands, " | "))
+			logger.Error("%s\navailable subcommands are: %s", errMessage, strings.Join(availableSubcommands, " | "))
 		}
 	}
 	if global.DryRun {
-		log.Info("Error: %s", err.Error())
-		log.Warning("Encountered an error but --dry-run is enabled. Exiting with 0 exit code.")
+		logger.Info("Error: %s", err.Error())
+		logger.Warning("Encountered an error but --dry-run is enabled. Exiting with 0 exit code.")
 		return nil
 	}
 	return err
