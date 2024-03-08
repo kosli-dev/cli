@@ -22,7 +22,7 @@ func init() {
 	kosliClient = requests.NewStandardKosliClient()
 }
 
-func ProdAndStagingCyberDojoCallArgs(args []string) ([]string, []string) {
+func prodAndStagingCyberDojoCallArgs(args []string) ([]string, []string) {
 	// TODO: new logger here?
 	_, err := newRootCmd(logger.Out, args[1:])
 	if err == nil {
@@ -49,29 +49,7 @@ func ProdAndStagingCyberDojoCallArgs(args []string) ([]string, []string) {
 	return nil, nil
 }
 
-func runBufferedInnerMain(args []string) (string, error) {
-	// Use a buffered Writer because we want usually dont want
-	// to print output for the cyber-dojo staging call
-	var buffer bytes.Buffer
-	writer := io.Writer(&buffer)
-	logger := log.NewLogger(writer, writer, false)
-	err := inner_main(logger, args)
-	return fmt.Sprint(&buffer), err
-}
-
-func main() {
-	prodArgs, stagingArgs := ProdAndStagingCyberDojoCallArgs(os.Args)
-	if prodArgs == nil && stagingArgs == nil {
-		// Normal call
-		err := inner_main(log.NewStandardLogger(), os.Args)
-		if err != nil {
-			fmt.Printf("%s\n", err.Error())
-			os.Exit(42)
-		} else {
-			os.Exit(0)
-		}
-	}
-
+func runProdAndStagingCyberDojoCalls(prodArgs []string, stagingArgs []string) int {
 	// Kosli uses CI pipelines in the cyber-dojo Org repos for two purposes
 	// 1. public facing documentation
 	// 2. private development purposes, specifically
@@ -97,10 +75,38 @@ func main() {
 	}
 
 	if prodErr == nil && stagingErr == nil {
-		os.Exit(0)
+		return 0
 	} else {
-		os.Exit(42)
+		return 42
 	}
+}
+
+func runBufferedInnerMain(args []string) (string, error) {
+	// Use a buffered Writer because we want usually dont want
+	// to print output for the cyber-dojo staging call
+	var buffer bytes.Buffer
+	writer := io.Writer(&buffer)
+	logger := log.NewLogger(writer, writer, false)
+	err := inner_main(logger, args)
+	return fmt.Sprint(&buffer), err
+}
+
+func main() {
+	var status int
+	prodArgs, stagingArgs := prodAndStagingCyberDojoCallArgs(os.Args)
+	if prodArgs == nil && stagingArgs == nil {
+		// Normal call
+		err := inner_main(log.NewStandardLogger(), os.Args)
+		if err != nil {
+			fmt.Printf("%s\n", err.Error())
+			status = 42
+		} else {
+			status = 0
+		}
+	} else {
+		status = runProdAndStagingCyberDojoCalls(prodArgs, stagingArgs)
+	}
+	os.Exit(status)
 }
 
 func inner_main(log *log.Logger, args []string) error {
