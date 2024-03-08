@@ -38,8 +38,8 @@ func prodAndStagingCyberDojoCallArgs(args []string) ([]string, []string) {
 
 		// TODO: proper check for doubled host etc
 		if true {
-			argsProd := append(args[1:], "--debug", "--host=https://app.kosli.com")
-			argsStaging := append(args[1:], "--debug", "--host=https://staging.app.kosli.com")
+			argsProd := append(args[1:], "--host=https://app.kosli.com")            // --api-token=...
+			argsStaging := append(args[1:], "--host=https://staging.app.kosli.com") // --api-token=...
 			return argsProd, argsStaging
 		} else {
 			return nil, nil
