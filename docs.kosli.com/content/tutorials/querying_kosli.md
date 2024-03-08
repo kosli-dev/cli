@@ -1,7 +1,7 @@
 ---
 title: "Querying Kosli"
 bookCollapseSection: false
-weight: 506
+weight: 505
 ---
 
 # Querying Kosli
