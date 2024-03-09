@@ -64,25 +64,21 @@ func runProdAndStagingCyberDojoCalls(prodArgs []string, stagingArgs []string) er
 	prodOutput, prodErr := runBufferedInnerMain(prodArgs)
 	fmt.Print(prodOutput)
 	if prodErr != nil {
-		errorMessage += hostnameErrorMessage("https://app.kosli.com", prodErr)
+		errorMessage += prodErr.Error()
 	}
 
 	stagingOutput, stagingErr := runBufferedInnerMain(stagingArgs)
 	if stagingErr != nil {
 		// Only show staging output if there is an error
 		fmt.Print(stagingOutput)
-		errorMessage += hostnameErrorMessage("https://staging.app.kosli.com", stagingErr)
+		errorMessage += fmt.Sprintf("\n%s\n\t%s", "https://staging.app.kosli.com", stagingErr.Error())
 	}
 
 	if errorMessage == "" {
 		return nil
 	} else {
-		return fmt.Errorf("\n%s", errorMessage)
+		return fmt.Errorf("%s", errorMessage)
 	}
-}
-
-func hostnameErrorMessage(hostname string, err error) string {
-	return fmt.Sprintf("%s\n\t%s\n", hostname, err.Error())
 }
 
 func runBufferedInnerMain(args []string) (string, error) {
