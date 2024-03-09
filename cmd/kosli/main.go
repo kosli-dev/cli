@@ -135,6 +135,7 @@ func main() {
 }
 
 func inner_main(args []string) error {
+	resetGlobal()
 	cmd, err := newRootCmd(logger.Out, args[1:])
 	if err != nil {
 		return err
