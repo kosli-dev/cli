@@ -55,7 +55,7 @@ func newReportEvidenceCommitPRBitbucketCmd(out io.Writer) *cobra.Command {
 		Short:      reportEvidenceCommitPRBitbucketShortDesc,
 		Long:       reportEvidenceCommitPRBitbucketLongDesc,
 		Example:    reportEvidenceCommitPRBitbucketExample,
-		Deprecated: "see kosli attest commands",
+		Deprecated: deprecatedKosliReportEvidenceMessage,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
