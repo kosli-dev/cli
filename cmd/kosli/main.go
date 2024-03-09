@@ -23,14 +23,22 @@ func init() {
 	kosliClient = requests.NewStandardKosliClient()
 }
 
-func getHost(args []string) string {
+// func resetGlobal() {
+// 	global = &GlobalOpts{}
+// }
+
+func getHosts(args []string) []string {
 	_ = nullCmd(args).Execute()
-	return global.Host
+	hosts := strings.Split(global.Host, ",")
+	global = &GlobalOpts{}
+	return hosts
 }
 
-func getApiToken(args []string) string {
+func getApiTokens(args []string) []string {
 	_ = nullCmd(args).Execute()
-	return global.ApiToken
+	apiTokens := strings.Split(global.ApiToken, ",")
+	global = &GlobalOpts{}
+	return apiTokens
 }
 
 func nullCmd(args []string) *cobra.Command {
@@ -41,15 +49,24 @@ func nullCmd(args []string) *cobra.Command {
 }
 
 func prodAndStagingCyberDojoCallArgs(args []string) ([]string, []string) {
-	host := getHost(args)
-	fmt.Printf("host=<%s>\n", host)
-	apiToken := getApiToken(args)
-	fmt.Printf("api-token=<%s>\n", apiToken)
+	hosts := getHosts(args)
+	apiTokens := getApiTokens(args)
 
 	// TODO: proper check for doubled host etc
-	if true {
-		argsProd := append(args[1:], "--host=https://app.kosli.com")            // --api-token=...
-		argsStaging := append(args[1:], "--host=https://staging.app.kosli.com") // --api-token=...
+	if len(hosts) == 2 && len(apiTokens) == 2 {
+		hostProd := fmt.Sprintf("--host=%s", hosts[0])
+		apiTokenProd := fmt.Sprintf("--api-token=%s", apiTokens[0])
+		// TODO: if args[1:] has existing --host or --api-token strip them out
+		argsProd := append(args[1:], hostProd, apiTokenProd)
+
+		hostStaging := fmt.Sprintf("--host=%s", hosts[1])
+		apiTokenStaging := fmt.Sprintf("--api-token=%s", apiTokens[1])
+		// TODO: if args[1:] has existing --host or --api-token strip them out
+		argsStaging := append(args[1:], hostStaging, apiTokenStaging)
+
+		fmt.Printf("argsProd == <%s>\n", strings.Join(argsProd, " "))
+		fmt.Printf("argsStaging == <%s>\n", strings.Join(argsStaging, " "))
+
 		return argsProd, argsStaging
 	} else {
 		return nil, nil
