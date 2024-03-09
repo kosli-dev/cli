@@ -9,6 +9,7 @@ import (
 
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/spf13/cobra"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
@@ -22,30 +23,37 @@ func init() {
 	kosliClient = requests.NewStandardKosliClient()
 }
 
-func prodAndStagingCyberDojoCallArgs(args []string) ([]string, []string) {
+func getHost(args []string) string {
+	_ = nullCmd(args).Execute()
+	return global.Host
+}
+
+func getApiToken(args []string) string {
+	_ = nullCmd(args).Execute()
+	return global.ApiToken
+}
+
+func nullCmd(args []string) *cobra.Command {
 	var buffer bytes.Buffer
 	writer := io.Writer(&buffer)
-	nullLogger := log.NewLogger(writer, writer, false)
+	cmd, _ := newRootCmd(writer, args)
+	return cmd
+}
 
-	_, err := newRootCmd(nullLogger.Out, args[1:])
-	if err == nil {
-		// host := cmd.Flag("host")
-		// if host.Value.String() == "https://app.kosli.com,https://staging.app.kosli.com" {
-		// 	logger.Info("Host is Doubled")
-		// }
-		// apiToken := cmd.Flag("api-token")
-		// org := cmd.Flag("org")
+func prodAndStagingCyberDojoCallArgs(args []string) ([]string, []string) {
+	host := getHost(args)
+	fmt.Printf("host=<%s>\n", host)
+	apiToken := getApiToken(args)
+	fmt.Printf("api-token=<%s>\n", apiToken)
 
-		// TODO: proper check for doubled host etc
-		if true {
-			argsProd := append(args[1:], "--host=https://app.kosli.com")            // --api-token=...
-			argsStaging := append(args[1:], "--host=https://staging.app.kosli.com") // --api-token=...
-			return argsProd, argsStaging
-		} else {
-			return nil, nil
-		}
+	// TODO: proper check for doubled host etc
+	if true {
+		argsProd := append(args[1:], "--host=https://app.kosli.com")            // --api-token=...
+		argsStaging := append(args[1:], "--host=https://staging.app.kosli.com") // --api-token=...
+		return argsProd, argsStaging
+	} else {
+		return nil, nil
 	}
-	return nil, nil
 }
 
 func runProdAndStagingCyberDojoCalls(prodArgs []string, stagingArgs []string) error {
@@ -60,11 +68,11 @@ func runProdAndStagingCyberDojoCalls(prodArgs []string, stagingArgs []string) er
 	// Explicitly making each Kosli CLI call in [*] twice is not an option because of 1)
 	// The least-worst option is to allow KOLSI_HOST and KOSLI_API_TOKEN to specify two values.
 
-	// Make double-host calls look as-if only the prod call occurred:
-	//   - never print the staging-call output.
-	//   - if the staging-call fails:
-	//     - print its error message, making it clear it is from staging
-	//     - return a non-zero exit-code, so staging errors are not silently ignored
+	// If the prod-call and the staging-call succeed:
+	//   - do NOT print the staging-call output, so it looks as-if only the prod call occurred.
+	// If the staging-call fails:
+	//   - print its error message, making it clear it is from staging
+	//   - return a non-zero exit-code, so staging errors are not silently ignored
 
 	prodOutput, prodErr := runBufferedInnerMain(prodArgs)
 	fmt.Print(prodOutput)
