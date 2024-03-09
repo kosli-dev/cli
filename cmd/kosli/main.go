@@ -48,41 +48,48 @@ func prodAndStagingCyberDojoCallArgs(args []string) ([]string, []string) {
 	return nil, nil
 }
 
-func runProdAndStagingCyberDojoCalls(prodArgs []string, stagingArgs []string) int {
+func runProdAndStagingCyberDojoCalls(prodArgs []string, stagingArgs []string) error {
 	// Kosli uses CI pipelines in the cyber-dojo Org repos for two purposes
 	// 1. public facing documentation
 	// 2. private development purposes, specifically
-	//    all Kosli CLI calls are made twice, to two different servers
+	//    all Kosli CLI calls are made to _two_ servers
 	//     - https://app.kosli.com
 	//     - https://staging.app.kolsi.com
-	//    We do not want to have to explicitly make each Kosli CLI call twice
-	//    since that would not serve well for the documentation.
+	//    Explicitly making each Kosli CLI call twice is not good for the documentation.
 	// The least worst option is to allow the KOLSI_HOST and KOSLI_API_TOKEN flags
 	// to specify more than one value.
+
+	var errorMessage string
 
 	prodOutput, prodErr := runBufferedInnerMain(prodArgs)
 	fmt.Print(prodOutput)
 	if prodErr != nil {
-		fmt.Printf("%s\n", prodErr.Error())
+		errorMessage += hostnameErrorMessage("https://app.kosli.com", prodErr)
 	}
 
 	stagingOutput, stagingErr := runBufferedInnerMain(stagingArgs)
 	if stagingErr != nil {
 		// Only show staging output if there is an error
 		fmt.Print(stagingOutput)
-		fmt.Printf("%s\n", stagingErr.Error())
+		errorMessage += hostnameErrorMessage("https://staging.app.kosli.com", stagingErr)
 	}
 
-	if prodErr == nil && stagingErr == nil {
-		return 0
+	if errorMessage == "" {
+		return nil
 	} else {
-		return 42
+		return fmt.Errorf("\n%s", errorMessage)
 	}
 }
 
+func hostnameErrorMessage(hostname string, err error) string {
+	return fmt.Sprintf("%s\n\t%s\n", hostname, err.Error())
+}
+
 func runBufferedInnerMain(args []string) (string, error) {
-	// Use a buffered Writer because we want usually dont want
-	// to print output for the cyber-dojo staging call
+	globalLogger := &logger
+	defer func(logger *log.Logger) { *globalLogger = logger }(logger)
+	// Use a buffered Writer because unless there is an error we
+	// don't want to print output for the cyber-dojo staging call
 	var buffer bytes.Buffer
 	writer := io.Writer(&buffer)
 	logger = log.NewLogger(writer, writer, false)
@@ -91,22 +98,18 @@ func runBufferedInnerMain(args []string) (string, error) {
 }
 
 func main() {
-	var status int
+	var err error
 	prodArgs, stagingArgs := prodAndStagingCyberDojoCallArgs(os.Args)
 	if prodArgs == nil && stagingArgs == nil {
 		// Normal call
-		logger = log.NewStandardLogger()
-		err := inner_main(os.Args)
-		if err != nil {
-			fmt.Printf("%s\n", err.Error())
-			status = 42
-		} else {
-			status = 0
-		}
+		err = inner_main(os.Args)
 	} else {
-		status = runProdAndStagingCyberDojoCalls(prodArgs, stagingArgs)
+		// Doubled host call
+		err = runProdAndStagingCyberDojoCalls(prodArgs, stagingArgs)
 	}
-	os.Exit(status)
+	if err != nil {
+		logger.Error(err.Error())
+	}
 }
 
 func inner_main(args []string) error {
