@@ -27,16 +27,22 @@ func resetGlobal() {
 	global = &GlobalOpts{}
 }
 
-func getHosts(args []string) []string {
-	defer resetGlobal()
-	_ = nullCmd(args).Execute()
-	return strings.Split(global.Host, ",")
+type Getter func() string
+
+func getOrg() string {
+	return global.Org
+}
+func getHost() string {
+	return global.Host
+}
+func getApiToken() string {
+	return global.ApiToken
 }
 
-func getApiTokens(args []string) []string {
+func splitGlobal(args []string, g Getter) []string {
 	defer resetGlobal()
 	_ = nullCmd(args).Execute()
-	return strings.Split(global.ApiToken, ",")
+	return strings.Split(g(), ",")
 }
 
 func nullCmd(args []string) *cobra.Command {
@@ -46,20 +52,28 @@ func nullCmd(args []string) *cobra.Command {
 	return cmd
 }
 
+const prodHostURL = "https://app.kosli.com"
+const stagingHostURL = "https://staging.app.kosli.com"
+
 func prodAndStagingCyberDojoCallArgs(args []string) ([]string, []string) {
-	hosts := getHosts(args)
-	apiTokens := getApiTokens(args)
+	orgs := splitGlobal(args, getOrg)
+	hosts := splitGlobal(args, getHost)
+	apiTokens := splitGlobal(args, getApiToken)
 
-	argsAppendHostApiToken := func(n int) []string {
-		// No need to strip existing --host/--api-token flags from args
-		// as we are appending new flag values which take precedence.
-		hostProd := fmt.Sprintf("--host=%s", hosts[n])
-		apiTokenProd := fmt.Sprintf("--api-token=%s", apiTokens[n])
-		return append(args, hostProd, apiTokenProd)
-	}
+	isCyberDojo := len(orgs) == 1 && orgs[0] == "cyber-dojo"
+	isDoubledHost := len(hosts) == 2 && hosts[0] == prodHostURL && hosts[1] == stagingHostURL
+	isDoubledApiToken := len(apiTokens) == 2
 
-	// TODO: proper check for doubled host, org, etc
-	if len(hosts) == 2 && len(apiTokens) == 2 {
+	if isCyberDojo && isDoubledHost && isDoubledApiToken {
+
+		argsAppendHostApiToken := func(n int) []string {
+			// No need to strip existing --host/--api-token flags from args
+			// as we are appending new flag values which take precedence.
+			hostProd := fmt.Sprintf("--host=%s", hosts[n])
+			apiTokenProd := fmt.Sprintf("--api-token=%s", apiTokens[n])
+			return append(args, hostProd, apiTokenProd)
+		}
+
 		argsProd := argsAppendHostApiToken(0)
 		argsStaging := argsAppendHostApiToken(1)
 		//fmt.Printf("argsProd == <%s>\n", strings.Join(argsProd, " "))
@@ -97,7 +111,7 @@ func runProdAndStagingCyberDojoCalls(prodArgs []string, stagingArgs []string) er
 		errorMessage += prodErr.Error()
 	}
 	if stagingErr != nil {
-		errorMessage += fmt.Sprintf("\n%s\n\t%s", "https://staging.app.kosli.com", stagingErr.Error())
+		errorMessage += fmt.Sprintf("\n%s\n\t%s", stagingHostURL, stagingErr.Error())
 	}
 
 	if errorMessage == "" {
