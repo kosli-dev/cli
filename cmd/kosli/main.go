@@ -22,11 +22,10 @@ func init() {
 
 func main() {
 	var err error
-	prodArgs, stagingArgs := CyberDojoProdAndStagingCallArgs(os.Args)
-	if prodArgs == nil && stagingArgs == nil {
-		err = inner_main(os.Args)
+	if IsCyberDojoDoubleHost() {
+		err = RunCyberDojoDoubleHost()
 	} else {
-		err = CyberDojoRunProdAndStagingCalls(prodArgs, stagingArgs)
+		err = inner_main(os.Args)
 	}
 	if err != nil {
 		logger.Error(err.Error())

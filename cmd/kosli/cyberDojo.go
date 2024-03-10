@@ -28,56 +28,34 @@ import (
 const prodHostURL = "https://app.kosli.com"
 const stagingHostURL = "https://staging.app.kosli.com"
 
-func CyberDojoProdAndStagingCallArgs(args []string) ([]string, []string) {
-	// If the args call is a double-host, double-api-token, cyber-dojo call then
-	// return two []string args, modified so a call with those args targets two hosts:
-	//  - https://app.kosli.com
-	//  - https://staging.app.kosli.com
-	// Otherwise return nil, nil to indicate this is not a doubled-call.
-
+func IsCyberDojoDoubleHost() bool {
+	// Returns true iff the CLI execution is a double-host, double-api-token, org==cyber-dojo
 	orgs := getOrgs()
 	hosts := getHosts()
 	apiTokens := getApiTokens()
-
-	//fmt.Printf("orgs=%v\n", orgs)
-	//fmt.Printf("hosts=%v\n", hosts)
 
 	isCyberDojo := len(orgs) == 1 && orgs[0] == "cyber-dojo"
 	isDoubledHost := len(hosts) == 2 && hosts[0] == prodHostURL && hosts[1] == stagingHostURL
 	isDoubledApiToken := len(apiTokens) == 2
 
-	if isCyberDojo && isDoubledHost && isDoubledApiToken {
-
-		argsAppendHostApiToken := func(n int) []string {
-			// No need to strip existing --host/--api-token flags from args
-			// as we are appending new flag values which take precedence.
-			hostProd := fmt.Sprintf("--host=%s", hosts[n])
-			apiTokenProd := fmt.Sprintf("--api-token=%s", apiTokens[n])
-			return append(args, hostProd, apiTokenProd)
-		}
-
-		argsProd := argsAppendHostApiToken(0)
-		argsStaging := argsAppendHostApiToken(1)
-		// fmt.Printf("argsProd == %s\n", strings.Join(argsProd, " "))
-		// fmt.Printf("argsStaging == %s\n", strings.Join(argsStaging, " "))
-		return argsProd, argsStaging
-	} else {
-		return nil, nil
-	}
+	return isCyberDojo && isDoubledHost && isDoubledApiToken
 }
 
-func CyberDojoRunProdAndStagingCalls(prodArgs []string, stagingArgs []string) error {
+func RunCyberDojoDoubleHost() error {
 	// Calls "inner_main" twice:
-	//  - with prodArgs targetting https://app.kosli.com
-	//  - with stagingArgs targetting https://staging.app.kosli.com
-	// If the prod-call and the staging-call succeed:
-	// 	- do NOT print the staging-call output, so it looks as-if only the prod call occurred.
+	//  - with os.Args targetting https://app.kosli.com (prod)
+	//  - with os.Args targetting https://staging.app.kosli.com (staging)
+	// Always print the prod-call output
+	// Print the staging-call output only in debug mode, so it looks as-if only the prod call occurred.
 	// If the staging-call fails:
 	// 	- print its error message, making it clear it is from staging
 	// 	- return a non-zero exit-code, so staging errors are not silently ignored
 
+	prodArgs, stagingArgs := cyberDojoProdAndStagingArgs()
+
 	prodOutput, _, prodErr := runBufferedInnerMain(prodArgs)
 	fmt.Print(prodOutput)
+
 	stagingOutput, stagingGlobal, stagingErr := runBufferedInnerMain(stagingArgs)
 	if stagingGlobal.Debug {
 		fmt.Print(stagingOutput)
@@ -98,23 +76,46 @@ func CyberDojoRunProdAndStagingCalls(prodArgs []string, stagingArgs []string) er
 	}
 }
 
+func cyberDojoProdAndStagingArgs() ([]string, []string) {
+	// The CLI execution is a double-host, double-api-token, org==cyber-dojo
+	// Return two []string args, modified so a call with those args targets two hosts:
+	//  - https://app.kosli.com
+	//  - https://staging.app.kosli.com
+
+	hosts := getHosts()
+	apiTokens := getApiTokens()
+
+	argsAppendHostApiToken := func(n int) []string {
+		// No need to strip existing --host/--api-token flags from os.Args
+		// as we are appending new flag values which take precedence.
+		hostProd := fmt.Sprintf("--host=%s", hosts[n])
+		apiTokenProd := fmt.Sprintf("--api-token=%s", apiTokens[n])
+		return append(os.Args, hostProd, apiTokenProd)
+	}
+
+	argsProd := argsAppendHostApiToken(0)
+	argsStaging := argsAppendHostApiToken(1)
+	return argsProd, argsStaging
+}
+
 func runBufferedInnerMain(args []string) (string, *GlobalOpts, error) {
 	// There is a logger.Error(..) call in main. It must be restored to use
 	// the non-buffered global logger so the error messages actually appear.
 	globalLogger := &logger
 	defer func(logger *log.Logger) { *globalLogger = logger }(logger)
+
 	// Use a buffered Writer so output printing is decided by the caller.
 	var buffer bytes.Buffer
 	writer := io.Writer(&buffer)
 	logger = log.NewLogger(writer, writer, false)
 
-	// We have to set os.Args here.
-	// Presumably because viper is reading os.Args.
-	// Note that newRootCmd(out, args) does not use its args parameter.
+	// newRootCmd(out, args) does _not_ use its args parameter.
+	// Viper must be reading os.Args.
+	// So we have to set os.Args here.
 	defer func(args []string) { os.Args = args }(os.Args)
 	os.Args = args
 
-	// Ensure we reset globals so prod/staging calls do not interfere with each other.
+	// Ensure we reset global
 	globalPtr := &global
 	defer func(p *GlobalOpts) { *globalPtr = p }(global)
 
