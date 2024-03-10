@@ -105,6 +105,7 @@ func runProdAndStagingCyberDojoCalls(prodArgs []string, stagingArgs []string) er
 	prodOutput, prodErr := runBufferedInnerMain(prodArgs)
 	fmt.Print(prodOutput)
 	_, stagingErr := runBufferedInnerMain(stagingArgs)
+	// TODO?: print stagingOutput if --debug
 
 	var errorMessage string
 	if prodErr != nil {
