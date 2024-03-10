@@ -50,21 +50,20 @@ func prodAndStagingCyberDojoCallArgs(args []string) ([]string, []string) {
 	hosts := getHosts(args)
 	apiTokens := getApiTokens(args)
 
-	// TODO: proper check for doubled host etc
+	argsAppendHostApiToken := func(n int) []string {
+		// No need to strip existing --host/--api-token flags from args
+		// as we are appending new flag values which take precedence.
+		hostProd := fmt.Sprintf("--host=%s", hosts[n])
+		apiTokenProd := fmt.Sprintf("--api-token=%s", apiTokens[n])
+		return append(args, hostProd, apiTokenProd)
+	}
+
+	// TODO: proper check for doubled host, org, etc
 	if len(hosts) == 2 && len(apiTokens) == 2 {
-		hostProd := fmt.Sprintf("--host=%s", hosts[0])
-		apiTokenProd := fmt.Sprintf("--api-token=%s", apiTokens[0])
-		// TODO?: if args[1:] has existing --host or --api-token strip them out
-		argsProd := append(args[1:], hostProd, apiTokenProd)
-
-		hostStaging := fmt.Sprintf("--host=%s", hosts[1])
-		apiTokenStaging := fmt.Sprintf("--api-token=%s", apiTokens[1])
-		// TODO?: if args[1:] has existing --host or --api-token strip them out
-		argsStaging := append(args[1:], hostStaging, apiTokenStaging)
-
-		fmt.Printf("argsProd == <%s>\n", strings.Join(argsProd, " "))
-		fmt.Printf("argsStaging == <%s>\n", strings.Join(argsStaging, " "))
-
+		argsProd := argsAppendHostApiToken(0)
+		argsStaging := argsAppendHostApiToken(1)
+		//fmt.Printf("argsProd == <%s>\n", strings.Join(argsProd, " "))
+		//fmt.Printf("argsStaging == <%s>\n", strings.Join(argsStaging, " "))
 		return argsProd, argsStaging
 	} else {
 		return nil, nil
@@ -116,7 +115,15 @@ func runBufferedInnerMain(args []string) (string, error) {
 	// Use a buffered Writer so the output of the staging call is NOT printed
 	var buffer bytes.Buffer
 	writer := io.Writer(&buffer)
+	// Set global logger
 	logger = log.NewLogger(writer, writer, false)
+	// We have to reset os.Args here.
+	// Presumably viper is reading os.Args?
+	// Note that newRootCmd(args) does not use its args parameter.
+	os.Args = args
+	// Ensure prod/staging calls do not interfere with each other.
+	resetGlobal()
+	// Finally!
 	err := inner_main(args)
 	return fmt.Sprint(&buffer), err
 }
@@ -135,7 +142,6 @@ func main() {
 }
 
 func inner_main(args []string) error {
-	resetGlobal()
 	cmd, err := newRootCmd(logger.Out, args[1:])
 	if err != nil {
 		return err
