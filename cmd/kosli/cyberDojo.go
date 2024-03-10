@@ -11,6 +11,7 @@ All Kosli CLI calls in [*] are made to _two_ servers (because of 2)
 
 Explicitly making each Kosli CLI call in [*] twice is not an option (because of 1)
 The least-worst option is to allow KOSLI_HOST and KOSLI_API_TOKEN to specify two values.
+Note: cyber-dojo must ensure its api-tokens do not contain commas.
 */
 
 import (
@@ -28,15 +29,18 @@ const prodHostURL = "https://app.kosli.com"
 const stagingHostURL = "https://staging.app.kosli.com"
 
 func CyberDojoProdAndStagingCallArgs(args []string) ([]string, []string) {
-	// If the args call is a double-host, double-api-token cyber-dojo call then
+	// If the args call is a double-host, double-api-token, cyber-dojo call then
 	// return two []string args, modified so a call with those args targets two hosts:
 	//  - https://app.kosli.com
 	//  - https://staging.app.kosli.com
 	// Otherwise return nil, nil to indicate this is not a doubled-call.
 
-	orgs := splitGlobal(args, getOrg)
-	hosts := splitGlobal(args, getHost)
-	apiTokens := splitGlobal(args, getApiToken)
+	orgs := getOrgs()
+	hosts := getHosts()
+	apiTokens := getApiTokens()
+
+	//fmt.Printf("orgs=%v\n", orgs)
+	//fmt.Printf("hosts=%v\n", hosts)
 
 	isCyberDojo := len(orgs) == 1 && orgs[0] == "cyber-dojo"
 	isDoubledHost := len(hosts) == 2 && hosts[0] == prodHostURL && hosts[1] == stagingHostURL
@@ -72,9 +76,12 @@ func CyberDojoRunProdAndStagingCalls(prodArgs []string, stagingArgs []string) er
 	// 	- print its error message, making it clear it is from staging
 	// 	- return a non-zero exit-code, so staging errors are not silently ignored
 
-	prodOutput, prodErr := runBufferedInnerMain(prodArgs)
+	prodOutput, _, prodErr := runBufferedInnerMain(prodArgs)
 	fmt.Print(prodOutput)
-	_, stagingErr := runBufferedInnerMain(stagingArgs)
+	stagingOutput, stagingGlobal, stagingErr := runBufferedInnerMain(stagingArgs)
+	if stagingGlobal.Debug {
+		fmt.Print(stagingOutput)
+	}
 
 	var errorMessage string
 	if prodErr != nil {
@@ -91,7 +98,7 @@ func CyberDojoRunProdAndStagingCalls(prodArgs []string, stagingArgs []string) er
 	}
 }
 
-func runBufferedInnerMain(args []string) (string, error) {
+func runBufferedInnerMain(args []string) (string, *GlobalOpts, error) {
 	// There is a logger.Error(..) call in main. It must be restored to use
 	// the non-buffered global logger so the error messages actually appear.
 	globalLogger := &logger
@@ -99,48 +106,50 @@ func runBufferedInnerMain(args []string) (string, error) {
 	// Use a buffered Writer so output printing is decided by the caller.
 	var buffer bytes.Buffer
 	writer := io.Writer(&buffer)
-	// Set global logger
 	logger = log.NewLogger(writer, writer, false)
-	// We have to reset os.Args here.
+
+	// We have to set os.Args here.
 	// Presumably because viper is reading os.Args.
-	// Note that newRootCmd(args) does not use its args parameter.
+	// Note that newRootCmd(out, args) does not use its args parameter.
+	defer func(args []string) { os.Args = args }(os.Args)
 	os.Args = args
-	// Ensure prod/staging calls do not interfere with each other.
-	resetGlobal()
-	// Finally!
-	err := inner_main(args)
-	return fmt.Sprint(&buffer), err
+
+	// Ensure we reset globals so prod/staging calls do not interfere with each other.
+	globalPtr := &global
+	defer func(p *GlobalOpts) { *globalPtr = p }(global)
+
+	// inner_main uses its argument for custom error messages
+	err := inner_main(os.Args)
+	return fmt.Sprint(&buffer), global, err
 }
 
-type getter func() string
+func getOrgs() []string {
+	g := func() string { return global.Org }
+	return splitGlobal(g)
+}
 
-func splitGlobal(args []string, g getter) []string {
-	defer resetGlobal()
+func getHosts() []string {
+	g := func() string { return global.Host }
+	return splitGlobal(g)
+}
+
+func getApiTokens() []string {
+	g := func() string { return global.ApiToken }
+	return splitGlobal(g)
+}
+
+func splitGlobal(g func() string) []string {
+	// Execute() sets global, so ensure we reset it
+	globalPtr := &global
+	defer func(p *GlobalOpts) { *globalPtr = p }(global)
 	// Ignore any error, we want only to set the global fields.
-	_ = nullCmd(args).Execute()
-	// Note: cyber-dojo must ensure its api-tokens do not contain commas.
+	_ = nullCmd().Execute()
 	return strings.Split(g(), ",")
 }
 
-func resetGlobal() {
-	global = new(GlobalOpts)
-}
-
-func nullCmd(args []string) *cobra.Command {
+func nullCmd() *cobra.Command {
 	var buffer bytes.Buffer
 	writer := io.Writer(&buffer)
-	cmd, _ := newRootCmd(writer, args)
+	cmd, _ := newRootCmd(writer, nil)
 	return cmd
-}
-
-func getOrg() string {
-	return global.Org
-}
-
-func getHost() string {
-	return global.Host
-}
-
-func getApiToken() string {
-	return global.ApiToken
 }
