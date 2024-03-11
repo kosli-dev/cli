@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -73,29 +74,39 @@ func (suite *DoubleHostTestSuite) TestIsDoubleHost() {
 
 func (suite *DoubleHostTestSuite) TestRunDoubleHost() {
 
-	doubledArgsCmd := fmt.Sprintf("status --host=%s,%s --api-token=%s,%s --org=%s", localHost, localHost, apiToken, apiToken, org)
+	doubledHost := fmt.Sprintf("--host=%s,%s", localHost, localHost)
+	doubledApiToken := fmt.Sprintf("--api-token=%s,%s", apiToken, apiToken)
+	org := fmt.Sprintf("--org=%s", org)
+	doubledArgs := []string{"status", doubledHost, doubledApiToken, org}
 
-	line1 := fmt.Sprintf("[debug] request made to %s/ready and got status 200\n", localHost)
-	line2 := "OK\n"
-	line3 := fmt.Sprintf("[debug] request made to %s/ready and got status 200\n", localHost)
-	line4 := "OK\n"
+	line1 := fmt.Sprintf("[debug] request made to %s/ready and got status 200", localHost)
+	line2 := "OK"
+	line3 := fmt.Sprintf("[debug] request made to %s/ready and got status 200", localHost)
+	line4 := "OK"
+	expectedOutputInDebugMode := strings.Join([]string{line1, line2, line3, line4}, "\n")
 
-	tests := []cmdTestCase{
+	for _, t := range []struct {
+		name   string
+		args   []string
+		golden string
+	}{
 		{
-			wantError: false,
-			name:      "only prints primary call output when both calls succeed",
-			cmd:       doubledArgsCmd,
-			golden:    "OK\n",
+			name:   "only prints primary call output when both calls succeed",
+			args:   doubledArgs,
+			golden: "OK\n",
 		},
 		{
-			wantError: false,
-			name:      "in debug mode also prints secondary call output",
-			cmd:       doubledArgsCmd + " --debug",
-			golden:    line1 + line2 + line3 + line4,
+			name:   "in debug mode also prints secondary call output",
+			args:   append(doubledArgs, " --debug"),
+			golden: expectedOutputInDebugMode,
 		},
+	} {
+		suite.Run(t.name, func() {
+			// Can't test using runTestCmd() as that calls executeCommandC() which calls newRootCmd()
+			actual := runDoubleHost(t.args)
+			assert.Equal(suite.T(), t.golden, actual, fmt.Sprintf("TestRunDoubleHost: %s , got: %v -- want: %v", t.name, actual, t.golden))
+		})
 	}
-
-	runTestCmd(suite.T(), tests)
 }
 
 func TestDoubleHostTestSuite(t *testing.T) {
