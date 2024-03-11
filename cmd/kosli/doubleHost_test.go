@@ -74,7 +74,7 @@ func (suite *DoubleHostTestSuite) TestRunDoubleHost() {
 	doubledHost := fmt.Sprintf("--host=%s,%s", localHost, localHost)
 	doubledApiToken := fmt.Sprintf("--api-token=%s,%s", apiToken, apiToken)
 	org := fmt.Sprintf("--org=%s", org)
-	doubledArgs := []string{"status", doubledHost, doubledApiToken, org}
+	doubledArgs := []string{"kosli", "status", doubledHost, doubledApiToken, org}
 
 	line1 := fmt.Sprintf("[debug] request made to %s/ready and got status 200", localHost)
 	line2 := "OK"
