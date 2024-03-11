@@ -22,17 +22,15 @@ import (
 	"strings"
 
 	log "github.com/kosli-dev/cli/internal/logger"
-	"github.com/spf13/cobra"
 )
 
 func isDoubleHost(args []string) bool {
 	// Returns true iff the CLI execution is double-host, double-api-token
-	return len(getHosts(args)) == 2 && len(getApiTokens(args)) == 2
+	opts := getDoubleOpts(args)
+	return len(opts.hosts) == 2 && len(opts.apiTokens) == 2
 }
 
 func runDoubleHost(args []string) (string, error) {
-	var output string
-	var errorMessage string
 
 	// Calls "innerMain" twice with the 0th call taking precedence over the 1st call.
 	//  - Call first with the 0th host/api-token
@@ -45,47 +43,49 @@ func runDoubleHost(args []string) (string, error) {
 	// 	- return its error message, making its host clear
 	// 	- return a non-zero exit-code, so errors are not silently ignored
 
-	hosts := getHosts(args)
-	apiTokens := getApiTokens(args)
+	opts := getDoubleOpts(args)
 
 	argsAppendHostApiTokenFlags := func(n int) []string {
 		// Return args appended with the given host and api-token.
 		// No need to strip existing --host/--api-token flags from args
 		// as appended flags take precedence.
-		hostFlag := fmt.Sprintf("--host=%s", hosts[n])
-		apiTokenFlag := fmt.Sprintf("--api-token=%s", apiTokens[n])
+		hostFlag := fmt.Sprintf("--host=%s", opts.hosts[n])
+		apiTokenFlag := fmt.Sprintf("--api-token=%s", opts.apiTokens[n])
 		return append(args, hostFlag, apiTokenFlag)
 	}
 
 	args0 := argsAppendHostApiTokenFlags(0)
-	output0, _, err0 := runBufferedInnerMain(args0)
-	output += output0
+	output0, err0 := runBufferedInnerMain(args0)
 
 	args1 := argsAppendHostApiTokenFlags(1)
-	output1, global1, err1 := runBufferedInnerMain(args1)
-	if global1.Debug {
-		output += output1
+	output1, err1 := runBufferedInnerMain(args1)
+
+	stdOut := output0
+	if opts.debug {
+		stdOut += fmt.Sprintf("[debug] %s\n", opts.hosts[1])
+		stdOut += output1
 	}
 
+	var errorMessage string
 	if err0 != nil {
 		errorMessage += err0.Error()
 	}
 	if err1 != nil {
-		errorMessage += fmt.Sprintf("\n%s\n\t%s", hosts[1], err1.Error())
+		errorMessage += fmt.Sprintf("\n%s\n\t%s", opts.hosts[1], err1.Error())
 	}
 
 	if errorMessage == "" {
-		return output, nil
+		return stdOut, nil
 	} else {
-		return output, fmt.Errorf("%s", errorMessage)
+		return stdOut, fmt.Errorf("%s", errorMessage)
 	}
 }
 
-func runBufferedInnerMain(args []string) (string, *GlobalOpts, error) {
+func runBufferedInnerMain(args []string) (string, error) {
 	// There is a logger.Error(..) call in main. It must be restored to use
 	// the non-buffered global logger so the error messages actually appear.
 	globalLogger := &logger
-	defer func(logger *log.Logger) { *globalLogger = logger }(logger)
+	defer func(original *log.Logger) { *globalLogger = original }(logger)
 
 	// Use a buffered Writer so output printing is decided by the caller.
 	var buffer bytes.Buffer
@@ -95,44 +95,50 @@ func runBufferedInnerMain(args []string) (string, *GlobalOpts, error) {
 	// newRootCmd(out, args) does _not_ use its args parameter.
 	// Viper must be reading os.Args.
 	// So we have to set os.Args here.
-	defer func(args []string) { os.Args = args }(os.Args)
+	defer func(original []string) { os.Args = original }(os.Args)
 	os.Args = args
 
-	// Ensure we reset global
+	// Reset global back when done
 	globalPtr := &global
-	defer func(p *GlobalOpts) { *globalPtr = p }(global)
+	defer func(original *GlobalOpts) { *globalPtr = original }(global)
 
 	// inner_main uses its argument for custom error messages
 	err := innerMain(os.Args)
-	return fmt.Sprint(&buffer), global, err
+	return fmt.Sprint(&buffer), err
 }
 
-func getHosts(args []string) []string {
-	g := func() string { return global.Host }
-	return splitGlobal(args, g)
+type DoubleOpts struct {
+	hosts     []string
+	apiTokens []string
+	debug     bool
 }
 
-func getApiTokens(args []string) []string {
-	g := func() string { return global.ApiToken }
-	return splitGlobal(args, g)
-}
-
-func splitGlobal(args []string, g func() string) []string {
-	defer func(args []string) { os.Args = args }(os.Args)
-	os.Args = args
-
-	// Execute() sets global, so ensure we reset it
-	globalPtr := &global
-	defer func(p *GlobalOpts) { *globalPtr = p }(global)
-	// Ignore any error, we want only to set the global fields.
-	// TODO: this takes a _long_ time to run
-	_ = nullCmd().Execute()
-	return strings.Split(g(), ",")
-}
-
-func nullCmd() *cobra.Command {
+func getDoubleOpts(args []string) DoubleOpts {
+	// There is a logger.Error(..) call in main. It must be restored to use
+	// the non-buffered global logger so the error messages actually appear.
+	globalLogger := &logger
+	defer func(original *log.Logger) { *globalLogger = original }(logger)
+	// Use a buffered Writer so output swallowed.
 	var buffer bytes.Buffer
 	writer := io.Writer(&buffer)
-	cmd, _ := newRootCmd(writer, nil)
-	return cmd
+	logger = log.NewLogger(writer, writer, false)
+
+	// Append --dry-run; we don't want to execute, we just want to set global
+	defer func(original []string) { os.Args = original }(os.Args)
+	os.Args = append(args, "--dry-run")
+
+	// Reset global back when done
+	globalPtr := &global
+	defer func(original *GlobalOpts) { *globalPtr = original }(global)
+
+	// These three statements set the fields in global
+	cmd, _ := newRootCmd(logger.Out, os.Args[1:])
+	_ = cmd.Execute()
+	initialize(cmd, writer)
+
+	return DoubleOpts{
+		hosts:     strings.Split(global.Host, ","),
+		apiTokens: strings.Split(global.ApiToken, ","),
+		debug:     global.Debug,
+	}
 }
