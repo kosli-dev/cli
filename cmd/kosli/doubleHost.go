@@ -25,9 +25,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func isDoubleHost() bool {
+func isDoubleHost(args []string) bool {
 	// Returns true iff the CLI execution is double-host, double-api-token
-	return len(getHosts()) == 2 && len(getApiTokens()) == 2
+	return len(getHosts(args)) == 2 && len(getApiTokens(args)) == 2
 }
 
 func runDoubleHost(args []string) error {
@@ -42,8 +42,8 @@ func runDoubleHost(args []string) error {
 	// 	- print its error message, making its host clear
 	// 	- return a non-zero exit-code, so errors are not silently ignored
 
-	hosts := getHosts()
-	apiTokens := getApiTokens()
+	hosts := getHosts(args)
+	apiTokens := getApiTokens(args)
 
 	argsAppendHostApiTokenFlags := func(n int) []string {
 		// Return args appended with the given host and api-token.
@@ -105,17 +105,20 @@ func runBufferedInnerMain(args []string) (string, *GlobalOpts, error) {
 	return fmt.Sprint(&buffer), global, err
 }
 
-func getHosts() []string {
+func getHosts(args []string) []string {
 	g := func() string { return global.Host }
-	return splitGlobal(g)
+	return splitGlobal(args, g)
 }
 
-func getApiTokens() []string {
+func getApiTokens(args []string) []string {
 	g := func() string { return global.ApiToken }
-	return splitGlobal(g)
+	return splitGlobal(args, g)
 }
 
-func splitGlobal(g func() string) []string {
+func splitGlobal(args []string, g func() string) []string {
+	defer func(args []string) { os.Args = args }(os.Args)
+	os.Args = args
+
 	// Execute() sets global, so ensure we reset it
 	globalPtr := &global
 	defer func(p *GlobalOpts) { *globalPtr = p }(global)

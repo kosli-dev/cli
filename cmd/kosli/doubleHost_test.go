@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 
@@ -61,11 +60,9 @@ func (suite *DoubleHostTestSuite) TestIsDoubleHost() {
 			host := fmt.Sprintf("--host=%s", t.host)
 			apiToken := fmt.Sprintf("--api-token=%s", t.apiToken)
 			org := fmt.Sprintf("--org=%s", org)
+			args := []string{"status", host, apiToken, org}
 
-			defer func(args []string) { os.Args = args }(os.Args)
-			os.Args = []string{"status", host, apiToken, org}
-
-			actual := isDoubleHost()
+			actual := isDoubleHost(args)
 
 			assert.Equal(suite.T(), t.want, actual, fmt.Sprintf("TestIsDoubleHost: %s , got: %v -- want: %v", t.name, actual, t.want))
 		})
@@ -102,8 +99,9 @@ func (suite *DoubleHostTestSuite) TestRunDoubleHost() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			// Can't test using runTestCmd() as that calls executeCommandC() which calls newRootCmd()
+			// Can't test using runTestCmd() as that calls executeCommandC() which directly calls newRootCmd()
 			actual := runDoubleHost(t.args)
+
 			assert.Equal(suite.T(), t.golden, actual, fmt.Sprintf("TestRunDoubleHost: %s , got: %v -- want: %v", t.name, actual, t.golden))
 		})
 	}

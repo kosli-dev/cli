@@ -22,7 +22,7 @@ func init() {
 
 func main() {
 	var err error
-	if isDoubleHost() {
+	if isDoubleHost(os.Args) {
 		err = runDoubleHost(os.Args)
 	} else {
 		err = innerMain(os.Args)
