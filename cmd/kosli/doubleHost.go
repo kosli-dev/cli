@@ -31,13 +31,14 @@ func isDoubleHost() bool {
 }
 
 func runDoubleHost(args []string) error {
-	// Calls "innerMain" twice with the [0]th call taking precedence over the [1]st call.
-	//  - Call first with the [0]th host/api-token
-	//  - Call next with the [1]st host/api-token
+	// Calls "innerMain" twice with the 0th call taking precedence over the 1st call.
+	//  - Call first with the 0th host/api-token
+	//  - Call next with the 1st host/api-token
 	//
-	// Always print the [0]th call output
-	// Print the [1]st call output only in debug mode, so it looks as-if only the [0]th call occurred.
-	// If the [1]st call fails:
+	// Always print the 0th call output.
+	// The aim is to make it look like only the 0th call occurred
+	//   - print the 1st call output only in debug mode
+	// If the 1st call fails:
 	// 	- print its error message, making its host clear
 	// 	- return a non-zero exit-code, so errors are not silently ignored
 
@@ -47,7 +48,7 @@ func runDoubleHost(args []string) error {
 	argsAppendHostApiTokenFlags := func(n int) []string {
 		// Return args appended with the given host and api-token.
 		// No need to strip existing --host/--api-token flags from args
-		// as we are appending new flag values which take precedence.
+		// as appended flags take precedence.
 		hostFlag := fmt.Sprintf("--host=%s", hosts[n])
 		apiTokenFlag := fmt.Sprintf("--api-token=%s", apiTokens[n])
 		return append(args, hostFlag, apiTokenFlag)
