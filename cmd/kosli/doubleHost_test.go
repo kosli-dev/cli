@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -67,4 +68,8 @@ func (suite *DoubleHostTestSuite) TestIsDoubleHost() {
 			assert.Equal(suite.T(), t.want, actual, fmt.Sprintf("TestIsDoubleHost: %s , got: %v -- want: %v", t.name, actual, t.want))
 		})
 	}
+}
+
+func TestDoubleHostTestSuite(t *testing.T) {
+	suite.Run(t, new(DoubleHostTestSuite))
 }
