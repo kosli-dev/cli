@@ -134,7 +134,7 @@ func getDoubleOpts(args []string) DoubleOpts {
 	// These three statements set the fields in global
 	cmd, _ := newRootCmd(logger.Out, os.Args[1:])
 	_ = cmd.Execute()
-	initialize(cmd, writer)
+	_ = initialize(cmd, writer)
 
 	return DoubleOpts{
 		hosts:     strings.Split(global.Host, ","),
