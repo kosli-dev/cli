@@ -22,17 +22,17 @@ func init() {
 
 func main() {
 	var err error
-	if IsCyberDojoDoubleHost() {
-		err = RunCyberDojoDoubleHost()
+	if isDoubleHost() {
+		err = runDoubleHost(os.Args)
 	} else {
-		err = inner_main(os.Args)
+		err = innerMain(os.Args)
 	}
 	if err != nil {
 		logger.Error(err.Error())
 	}
 }
 
-func inner_main(args []string) error {
+func innerMain(args []string) error {
 	cmd, err := newRootCmd(logger.Out, args[1:])
 	if err != nil {
 		return err
