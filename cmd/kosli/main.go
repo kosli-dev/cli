@@ -23,7 +23,9 @@ func init() {
 func main() {
 	var err error
 	if isDoubleHost(os.Args) {
-		err = runDoubleHost(os.Args)
+		var output string
+		output, err = runDoubleHost(os.Args)
+		fmt.Print(output)
 	} else {
 		err = innerMain(os.Args)
 	}

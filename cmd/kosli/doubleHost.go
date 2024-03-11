@@ -30,16 +30,19 @@ func isDoubleHost(args []string) bool {
 	return len(getHosts(args)) == 2 && len(getApiTokens(args)) == 2
 }
 
-func runDoubleHost(args []string) error {
+func runDoubleHost(args []string) (string, error) {
+	var output string
+	var errorMessage string
+
 	// Calls "innerMain" twice with the 0th call taking precedence over the 1st call.
 	//  - Call first with the 0th host/api-token
 	//  - Call next with the 1st host/api-token
 	//
-	// Always print the 0th call output.
+	// Always returns the 0th call output.
 	// The aim is to make it look like only the 0th call occurred
-	//   - print the 1st call output only in debug mode
+	//   - return the 1st call output only in debug mode
 	// If the 1st call fails:
-	// 	- print its error message, making its host clear
+	// 	- return its error message, making its host clear
 	// 	- return a non-zero exit-code, so errors are not silently ignored
 
 	hosts := getHosts(args)
@@ -56,15 +59,14 @@ func runDoubleHost(args []string) error {
 
 	args0 := argsAppendHostApiTokenFlags(0)
 	output0, _, err0 := runBufferedInnerMain(args0)
-	fmt.Print(output0)
+	output += output0
 
 	args1 := argsAppendHostApiTokenFlags(1)
 	output1, global1, err1 := runBufferedInnerMain(args1)
 	if global1.Debug {
-		fmt.Print(output1)
+		output += output1
 	}
 
-	var errorMessage string
 	if err0 != nil {
 		errorMessage += err0.Error()
 	}
@@ -73,9 +75,9 @@ func runDoubleHost(args []string) error {
 	}
 
 	if errorMessage == "" {
-		return nil
+		return output, nil
 	} else {
-		return fmt.Errorf("%s", errorMessage)
+		return output, fmt.Errorf("%s", errorMessage)
 	}
 }
 
@@ -123,6 +125,7 @@ func splitGlobal(args []string, g func() string) []string {
 	globalPtr := &global
 	defer func(p *GlobalOpts) { *globalPtr = p }(global)
 	// Ignore any error, we want only to set the global fields.
+	// TODO: this takes a _long_ time to run
 	_ = nullCmd().Execute()
 	return strings.Split(g(), ",")
 }

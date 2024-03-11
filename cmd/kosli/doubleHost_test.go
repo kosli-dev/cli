@@ -64,7 +64,7 @@ func (suite *DoubleHostTestSuite) TestIsDoubleHost() {
 
 			actual := isDoubleHost(args)
 
-			assert.Equal(suite.T(), t.want, actual, fmt.Sprintf("TestIsDoubleHost: %s , got: %v -- want: %v", t.name, actual, t.want))
+			assert.Equal(suite.T(), t.want, actual, fmt.Sprintf("TestIsDoubleHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, t.want, actual))
 		})
 	}
 }
@@ -85,24 +85,27 @@ func (suite *DoubleHostTestSuite) TestRunDoubleHost() {
 	for _, t := range []struct {
 		name   string
 		args   []string
-		golden string
+		output string
+		err    error
 	}{
 		{
-			name:   "only prints primary call output when both calls succeed",
+			name:   "only returns primary call output when both calls succeed",
 			args:   doubledArgs,
-			golden: "OK\n",
+			output: "OK\n",
+			err:    error(nil),
 		},
 		{
-			name:   "in debug mode also prints secondary call output",
+			name:   "in debug mode also returns secondary call output",
 			args:   append(doubledArgs, " --debug"),
-			golden: expectedOutputInDebugMode,
+			output: expectedOutputInDebugMode,
+			err:    error(nil),
 		},
 	} {
 		suite.Run(t.name, func() {
 			// Can't test using runTestCmd() as that calls executeCommandC() which directly calls newRootCmd()
-			actual := runDoubleHost(t.args)
-
-			assert.Equal(suite.T(), t.golden, actual, fmt.Sprintf("TestRunDoubleHost: %s , got: %v -- want: %v", t.name, actual, t.golden))
+			output, err := runDoubleHost(t.args)
+			assert.Equal(suite.T(), t.err, err, fmt.Sprintf("TestRunDoubleHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, err, t.err))
+			assert.Equal(suite.T(), t.output, output, fmt.Sprintf("TestRunDoubleHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, output, t.output))
 		})
 	}
 }
