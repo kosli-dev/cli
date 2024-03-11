@@ -104,8 +104,8 @@ func (suite *DoubleHostTestSuite) TestRunDoubleHost() {
 		suite.Run(t.name, func() {
 			// Can't test using runTestCmd() as that calls executeCommandC() which directly calls newRootCmd()
 			output, err := runDoubleHost(t.args)
-			assert.Equal(suite.T(), t.err, err, fmt.Sprintf("TestRunDoubleHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, err, t.err))
-			assert.Equal(suite.T(), t.output, output, fmt.Sprintf("TestRunDoubleHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, output, t.output))
+			assert.Equal(suite.T(), t.err, err, fmt.Sprintf("TestRunDoubleHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, t.err, err))
+			assert.Equal(suite.T(), t.output, output, fmt.Sprintf("TestRunDoubleHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, t.output, output))
 		})
 	}
 }
