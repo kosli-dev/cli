@@ -26,13 +26,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func isDoubleHost(args []string) bool {
+func isDoubledHost(args []string) bool {
 	// Returns true iff the CLI execution is double-host, double-api-token
 	opts := getDoubleOpts(args)
 	return len(opts.hosts) == 2 && len(opts.apiTokens) == 2
 }
 
-func runDoubleHost(args []string) (string, error) {
+func runDoubledHost(args []string) (string, error) {
 	// Calls "innerMain" twice with the 0th call taking precedence over the 1st call.
 	//  - Call first with the 0th host/api-token
 	//  - Call next with the 1st host/api-token
@@ -107,13 +107,13 @@ func runBufferedInnerMain(args []string) (string, error) {
 	return fmt.Sprint(&buffer), err
 }
 
-type DoubleOpts struct {
+type DoubledOpts struct {
 	hosts     []string
 	apiTokens []string
 	debug     bool
 }
 
-func getDoubleOpts(args []string) DoubleOpts {
+func getDoubleOpts(args []string) DoubledOpts {
 	// For any error, return DoubleOpts{} which will have hosts and apiTokens
 	// fields set to nil, so isDoubleHost() will return false since len(nil) == 0
 
@@ -138,7 +138,7 @@ func getDoubleOpts(args []string) DoubleOpts {
 	// Create a cmd object. We have appended --dry-run to os.Args so [1:] is safe.
 	cmd, err := newRootCmd(logger.Out, os.Args[1:])
 	if err != nil {
-		return DoubleOpts{}
+		return DoubledOpts{}
 	}
 
 	// The cmd returned by newRootCmd(...) does not have --dry-run flag, so add it.
@@ -154,15 +154,15 @@ func getDoubleOpts(args []string) DoubleOpts {
 	if err != nil {
 		// Eg kosli unknownCommand ...
 		// Eg kosli status --unknown-flag
-		return DoubleOpts{}
+		return DoubledOpts{}
 	}
 
 	err = initialize(cmd, writer)
 	if err != nil {
-		return DoubleOpts{}
+		return DoubledOpts{}
 	}
 
-	return DoubleOpts{
+	return DoubledOpts{
 		hosts:     strings.Split(global.Host, ","),
 		apiTokens: strings.Split(global.ApiToken, ","),
 		debug:     global.Debug,

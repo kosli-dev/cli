@@ -22,9 +22,9 @@ func init() {
 
 func main() {
 	var err error
-	if isDoubleHost(os.Args) {
+	if isDoubledHost(os.Args) {
 		var output string
-		output, err = runDoubleHost(os.Args)
+		output, err = runDoubledHost(os.Args)
 		fmt.Print(output)
 	} else {
 		err = innerMain(os.Args)
