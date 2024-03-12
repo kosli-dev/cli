@@ -94,13 +94,15 @@ func (suite *DoubleHostTestSuite) TestRunDoubleHost() {
 	doubledHost := fmt.Sprintf("--host=%s,%s", localHost, localHost)
 	doubledApiToken := fmt.Sprintf("--api-token=%s,%s", apiToken, apiToken)
 	org := fmt.Sprintf("--org=%s", org)
-	doubledArgs := []string{"status", doubledHost, doubledApiToken, org}
+	doubledArgs := []string{"kosli", "status", doubledHost, doubledApiToken, org}
 
 	line1 := fmt.Sprintf("[debug] request made to %s/ready and got status 200", localHost)
 	line2 := "OK"
-	line3 := fmt.Sprintf("[debug] request made to %s/ready and got status 200", localHost)
-	line4 := "OK"
-	expectedOutputInDebugMode := strings.Join([]string{line1, line2, line3, line4}, "\n")
+	line3 := fmt.Sprintf("[debug] %s", localHost)
+	line4 := fmt.Sprintf("[debug] request made to %s/ready and got status 200", localHost)
+	line5 := "OK"
+	line6 := ""
+	expectedOutputInDebugMode := strings.Join([]string{line1, line2, line3, line4, line5, line6}, "\n")
 
 	for _, t := range []struct {
 		name   string
@@ -116,7 +118,7 @@ func (suite *DoubleHostTestSuite) TestRunDoubleHost() {
 		},
 		{
 			name:   "in debug mode also returns secondary call output",
-			args:   append(doubledArgs, " --debug"),
+			args:   append(doubledArgs, "--debug"),
 			output: expectedOutputInDebugMode,
 			err:    error(nil),
 		},
