@@ -10,8 +10,9 @@ All Kosli CLI calls in [*] are made to _two_ servers (because of 2)
   - https://staging.app.kosli.com
 
 Explicitly making each Kosli CLI call in [*] twice is not an option (because of 1)
-The least-worst option is to allow KOSLI_HOST and KOSLI_API_TOKEN to specify two values.
-Note: cyber-dojo must ensure its api-tokens do not contain commas.
+Duplicating the entire CI workflows is complex because, eg, deployments must not be duplicated.
+The least-worst option is to allow KOSLI_HOST and KOSLI_API_TOKEN to specify two
+comma-separated values. Note cyber-dojo must ensure its api-tokens do not contain commas.
 */
 
 import (
@@ -26,6 +27,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// I think isDoubledHost() is now running silently in all cases
+// However, when KOSLI_HOST is doubled, and runDoubledHost() is called...
+// TODO?: kosli status --help
+//   prints output multiple times,
+// TODO?: kosli status --debug
+//   seems to be very slow
+
 func isDoubledHost(args []string) bool {
 	// Returns true iff the CLI execution is double-host, double-api-token
 	opts := getDoubleOpts(args)
@@ -33,7 +41,7 @@ func isDoubledHost(args []string) bool {
 }
 
 func runDoubledHost(args []string) (string, error) {
-	// Calls "innerMain" twice with the 0th call taking precedence over the 1st call.
+	// Calls "innerMain" twice, with the 0th call taking precedence over the 1st call.
 	//  - Call first with the 0th host/api-token
 	//  - Call next with the 1st host/api-token
 	//
@@ -121,7 +129,7 @@ func getDoubleOpts(args []string) DoubledOpts {
 	// For any error, return DoubleOpts{} which will have
 	//   - hosts == nil, so len(hosts) == 0
 	//   - apiTokens == nil, so len(apiTokens) == 0
-	// so isDoubleHost() will return false.
+	// so isDoubledHost() will return false.
 
 	// There is a logger.Error(..) call in main. Restore it to use the
 	// non-buffered global logger so the error messages actually appear.
@@ -155,8 +163,9 @@ func getDoubleOpts(args []string) DoubledOpts {
 	cmd.Long = ""
 	cmd.SetUsageFunc(func(c *cobra.Command) error { return nil })
 
-	// Finally, call cmd.Execute() to set global's fields.
+	// Finally, call cmd.Execute() and initialize() to set global's fields.
 	err = cmd.Execute()
+
 	if err != nil {
 		// Eg kosli unknownCommand ...
 		// Eg kosli status --unknown-flag
