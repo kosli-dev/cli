@@ -96,13 +96,15 @@ func (suite *DoubleHostTestSuite) TestRunDoubleHost() {
 	org := fmt.Sprintf("--org=%s", org)
 	doubledArgs := []string{"kosli", "status", doubledHost, doubledApiToken, org}
 
-	line1 := fmt.Sprintf("[debug] request made to %s/ready and got status 200", localHost)
-	line2 := "OK"
-	line3 := fmt.Sprintf("[debug] %s", localHost)
-	line4 := fmt.Sprintf("[debug] request made to %s/ready and got status 200", localHost)
-	line5 := "OK"
-	line6 := ""
-	expectedOutputInDebugMode := strings.Join([]string{line1, line2, line3, line4, line5, line6}, "\n")
+	lines := []string{
+		fmt.Sprintf("[debug] request made to %s/ready and got status 200", localHost),
+		"OK",
+		fmt.Sprintf("[debug] %s", localHost),
+		fmt.Sprintf("[debug] request made to %s/ready and got status 200", localHost),
+		"OK",
+		"",
+	}
+	expectedOutputInDebugMode := strings.Join(lines, "\n")
 
 	for _, t := range []struct {
 		name   string
