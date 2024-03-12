@@ -16,6 +16,7 @@ Note: cyber-dojo must ensure its api-tokens do not contain commas.
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -31,7 +32,6 @@ func isDoubleHost(args []string) bool {
 }
 
 func runDoubleHost(args []string) (string, error) {
-
 	// Calls "innerMain" twice with the 0th call taking precedence over the 1st call.
 	//  - Call first with the 0th host/api-token
 	//  - Call next with the 1st host/api-token
@@ -68,7 +68,7 @@ func runDoubleHost(args []string) (string, error) {
 
 	var errorMessage string
 	if err0 != nil {
-		errorMessage += err0.Error()
+		errorMessage = err0.Error()
 	}
 	if err1 != nil {
 		errorMessage += fmt.Sprintf("\n%s\n\t%s", opts.hosts[1], err1.Error())
@@ -77,7 +77,7 @@ func runDoubleHost(args []string) (string, error) {
 	if errorMessage == "" {
 		return stdOut, nil
 	} else {
-		return stdOut, fmt.Errorf("%s", errorMessage)
+		return stdOut, errors.New(errorMessage)
 	}
 }
 
@@ -93,7 +93,6 @@ func runBufferedInnerMain(args []string) (string, error) {
 	logger = log.NewLogger(writer, writer, false)
 
 	// newRootCmd(out, args) does _not_ use its args parameter.
-	// Viper must be reading os.Args.
 	// So we have to set os.Args here.
 	defer func(original []string) { os.Args = original }(os.Args)
 	os.Args = args
@@ -102,8 +101,8 @@ func runBufferedInnerMain(args []string) (string, error) {
 	globalPtr := &global
 	defer func(original *GlobalOpts) { *globalPtr = original }(global)
 
-	// inner_main uses its argument for custom error messages
-	err := innerMain(os.Args)
+	// innerMain uses its argument for custom error messages
+	err := innerMain(args)
 	return fmt.Sprint(&buffer), err
 }
 
