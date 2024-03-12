@@ -162,6 +162,8 @@ func getDoubleOpts(args []string) DoubledOpts {
 	cmd.Short = ""
 	cmd.Long = ""
 	cmd.SetUsageFunc(func(c *cobra.Command) error { return nil })
+	cmd.SetOut(writer)
+	cmd.SetErr(writer)
 
 	// Finally, call cmd.Execute() and initialize() to set global's fields.
 	err = cmd.Execute()
