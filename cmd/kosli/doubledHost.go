@@ -36,7 +36,7 @@ import (
 
 func isDoubledHost(args []string) bool {
 	// Returns true iff the CLI execution is double-host, double-api-token
-	opts := getDoubleOpts(args)
+	opts := getDoubledOpts(args)
 	return len(opts.hosts) == 2 && len(opts.apiTokens) == 2
 }
 
@@ -52,7 +52,7 @@ func runDoubledHost(args []string) (string, error) {
 	// 	- return its error message, making its host clear
 	// 	- return a non-zero exit-code, so errors are not silently ignored
 
-	opts := getDoubleOpts(args)
+	opts := getDoubledOpts(args)
 
 	argsAppendHostApiTokenFlags := func(n int) []string {
 		// Return args appended with the given host and api-token.
@@ -121,7 +121,7 @@ type DoubledOpts struct {
 	debug     bool
 }
 
-func getDoubleOpts(args []string) DoubledOpts {
+func getDoubledOpts(args []string) DoubledOpts {
 	// Return a DoubledOpts struct with:
 	//   - hosts set to H, split on comma, where H is the normal value of KOSLI_HOST/--host
 	//   - apiTokens set to A, split on comma, where A is the normal value of KOSLI_API_TOKEN/--api-token
