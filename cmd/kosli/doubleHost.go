@@ -122,18 +122,33 @@ func getDoubleOpts(args []string) DoubleOpts {
 	writer := io.Writer(&buffer)
 	logger = log.NewLogger(writer, writer, false)
 
-	// Append --dry-run; we don't want to execute, we just want to set global
+	// Append --dry-run; we don't want to execute, we just want to set global.
 	defer func(original []string) { os.Args = original }(os.Args)
 	os.Args = append(args, "--dry-run")
 
-	// Reset global back when done
+	// Reset global back when done.
 	globalPtr := &global
 	defer func(original *GlobalOpts) { *globalPtr = original }(global)
 
-	// These three statements set the fields in global
-	cmd, _ := newRootCmd(logger.Out, os.Args[1:])
-	_ = cmd.Execute()
-	_ = initialize(cmd, writer)
+	// Set the fields in global.
+	// We have appended --dry-run to os.Args so [1:] is safe.
+	cmd, err := newRootCmd(logger.Out, os.Args[1:])
+	if err != nil {
+		return DoubleOpts{}
+	}
+	// newRootCmd does not have --dry-run flag, so add it.
+	addDryRunFlag(cmd)
+
+	err = cmd.Execute()
+	if err != nil {
+		// Eg kosli unknownCommand ...
+		// Eg kosli status --unknown-flag
+		return DoubleOpts{}
+	}
+	err = initialize(cmd, writer)
+	if err != nil {
+		return DoubleOpts{}
+	}
 
 	return DoubleOpts{
 		hosts:     strings.Split(global.Host, ","),
