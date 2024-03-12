@@ -114,24 +114,30 @@ type DoubledOpts struct {
 }
 
 func getDoubleOpts(args []string) DoubledOpts {
-	// For any error, return DoubleOpts{} which will have hosts and apiTokens
-	// fields set to nil, so isDoubleHost() will return false since len(nil) == 0
+	// Return a DoubledOpts struct with:
+	//   - hosts set to H, split on comma, where H is the normal value of KOSLI_HOST/--host
+	//   - apiTokens set to A, split on comma, where A is the normal value of KOSLI_API_TOKEN/--api-token
+	//
+	// For any error, return DoubleOpts{} which will have
+	//   - hosts == nil, so len(hosts) == 0
+	//   - apiTokens == nil, so len(apiTokens) == 0
+	// so isDoubleHost() will return false.
 
-	// There is a logger.Error(..) call in main. It must be restored to use
-	// the non-buffered global logger so the error messages actually appear.
+	// There is a logger.Error(..) call in main. Restore it to use the
+	// non-buffered global logger so the error messages actually appear.
 	globalLogger := &logger
 	defer func(original *log.Logger) { *globalLogger = original }(logger)
 
-	// Use a logger with a buffered Writer so output swallowed.
+	// Set the global logger to use a buffered Writer so any use of it produces no output.
 	var buffer bytes.Buffer
 	writer := io.Writer(&buffer)
 	logger = log.NewLogger(writer, writer, false)
 
-	// Reset global back when done.
+	// We are setting global's fields. Reset global back when done.
 	globalPtr := &global
 	defer func(original *GlobalOpts) { *globalPtr = original }(global)
 
-	// Append --dry-run so cmd.Execute() has no side-effects; we just want to set global.
+	// Append --dry-run so cmd.Execute() below has no side-effects; we just want to set global's fields.
 	defer func(original []string) { os.Args = original }(os.Args)
 	os.Args = append(args, "--dry-run")
 
@@ -149,7 +155,7 @@ func getDoubleOpts(args []string) DoubledOpts {
 	cmd.Long = ""
 	cmd.SetUsageFunc(func(c *cobra.Command) error { return nil })
 
-	// Finally, call cmd.Execute() to set fields in global
+	// Finally, call cmd.Execute() to set global's fields.
 	err = cmd.Execute()
 	if err != nil {
 		// Eg kosli unknownCommand ...
