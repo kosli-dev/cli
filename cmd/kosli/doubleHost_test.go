@@ -21,38 +21,58 @@ func (suite *DoubleHostTestSuite) TestIsDoubleHost() {
 
 	for _, t := range []struct {
 		name     string
+		args     []string
 		host     string
 		apiToken string
 		want     bool
 	}{
 		{
 			name:     "True when two hosts and two api-tokens",
+			args:     []string{"status"},
 			host:     fmt.Sprintf("%s,%s", localHost, localHost),
 			apiToken: fmt.Sprintf("%s,%s", apiToken, apiToken),
 			want:     true,
 		},
 		{
 			name:     "False when one host",
+			args:     []string{"status"},
 			host:     localHost,
 			apiToken: fmt.Sprintf("%s,%s", apiToken, apiToken),
 			want:     false,
 		},
 		{
 			name:     "False when three hosts",
+			args:     []string{"status"},
 			host:     fmt.Sprintf("%s,%s,%s", localHost, localHost, localHost),
 			apiToken: fmt.Sprintf("%s,%s", apiToken, apiToken),
 			want:     false,
 		},
 		{
 			name:     "False when one api-token",
+			args:     []string{"status"},
 			host:     fmt.Sprintf("%s,%s", localHost, localHost),
 			apiToken: apiToken,
 			want:     false,
 		},
 		{
 			name:     "False when three api-tokens",
+			args:     []string{"status"},
 			host:     fmt.Sprintf("%s,%s", localHost, localHost),
 			apiToken: fmt.Sprintf("%s,%s,%s", apiToken, apiToken, apiToken),
+			want:     false,
+		},
+		{
+			name:     "False when unknown command",
+			args:     []string{"not-a-command"},
+			host:     fmt.Sprintf("%s,%s", localHost, localHost),
+			apiToken: fmt.Sprintf("%s,%s", apiToken, apiToken),
+			want:     false,
+		},
+		{
+			name:     "False when unknown flag",
+			args:     []string{"status", "--not-a-flag"},
+			host:     fmt.Sprintf("%s,%s", localHost, localHost),
+			apiToken: fmt.Sprintf("%s,%s", apiToken, apiToken),
 			want:     false,
 		},
 	} {
@@ -60,7 +80,7 @@ func (suite *DoubleHostTestSuite) TestIsDoubleHost() {
 			host := fmt.Sprintf("--host=%s", t.host)
 			apiToken := fmt.Sprintf("--api-token=%s", t.apiToken)
 			org := fmt.Sprintf("--org=%s", org)
-			args := []string{"status", host, apiToken, org}
+			args := append(t.args, host, apiToken, org)
 
 			actual := isDoubleHost(args)
 
