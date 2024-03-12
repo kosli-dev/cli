@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	log "github.com/kosli-dev/cli/internal/logger"
+	"github.com/spf13/cobra"
 )
 
 func isDoubleHost(args []string) bool {
@@ -113,38 +114,49 @@ type DoubleOpts struct {
 }
 
 func getDoubleOpts(args []string) DoubleOpts {
+	// For any error, return DoubleOpts{} which will have hosts and apiTokens
+	// fields set to nil, so isDoubleHost() will return false since len(nil) == 0
+
 	// There is a logger.Error(..) call in main. It must be restored to use
 	// the non-buffered global logger so the error messages actually appear.
 	globalLogger := &logger
 	defer func(original *log.Logger) { *globalLogger = original }(logger)
-	// Use a buffered Writer so output swallowed.
+
+	// Use a logger with a buffered Writer so output swallowed.
 	var buffer bytes.Buffer
 	writer := io.Writer(&buffer)
 	logger = log.NewLogger(writer, writer, false)
-
-	// Append --dry-run; we don't want to execute, we just want to set global.
-	defer func(original []string) { os.Args = original }(os.Args)
-	os.Args = append(args, "--dry-run")
 
 	// Reset global back when done.
 	globalPtr := &global
 	defer func(original *GlobalOpts) { *globalPtr = original }(global)
 
-	// Set the fields in global.
-	// We have appended --dry-run to os.Args so [1:] is safe.
+	// Append --dry-run so cmd.Execute() has no side-effects; we just want to set global.
+	defer func(original []string) { os.Args = original }(os.Args)
+	os.Args = append(args, "--dry-run")
+
+	// Create a cmd object. We have appended --dry-run to os.Args so [1:] is safe.
 	cmd, err := newRootCmd(logger.Out, os.Args[1:])
 	if err != nil {
 		return DoubleOpts{}
 	}
-	// newRootCmd does not have --dry-run flag, so add it.
+
+	// The cmd returned by newRootCmd(...) does not have --dry-run flag, so add it.
 	addDryRunFlag(cmd)
 
+	// Ensure cmd.Execute() prints nothing, even for a [kosli] call
+	cmd.Short = ""
+	cmd.Long = ""
+	cmd.SetUsageFunc(func(c *cobra.Command) error { return nil })
+
+	// Finally, call cmd.Execute() to set fields in global
 	err = cmd.Execute()
 	if err != nil {
 		// Eg kosli unknownCommand ...
 		// Eg kosli status --unknown-flag
 		return DoubleOpts{}
 	}
+
 	err = initialize(cmd, writer)
 	if err != nil {
 		return DoubleOpts{}
