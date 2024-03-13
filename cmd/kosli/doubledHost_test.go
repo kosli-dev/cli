@@ -91,6 +91,11 @@ func (suite *DoubledHostTestSuite) TestIsDoubledHost() {
 
 func (suite *DoubledHostTestSuite) TestRunDoubledHost() {
 
+	// Add...
+	// TEST: kosli
+	// TEST: kosli status --help
+	// TEST: kosli status --debug
+
 	doubledHost := fmt.Sprintf("--host=%s,%s", localHost, localHost)
 	doubledApiToken := fmt.Sprintf("--api-token=%s,%s", apiToken, apiToken)
 	org := fmt.Sprintf("--org=%s", org)

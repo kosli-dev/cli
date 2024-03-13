@@ -7,6 +7,7 @@ import (
 
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/spf13/cobra"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
@@ -27,20 +28,19 @@ func main() {
 		output, err = runDoubledHost(os.Args)
 		fmt.Print(output)
 	} else {
-		err = innerMain(os.Args)
+		var cmd *cobra.Command
+		cmd, err = newRootCmd(logger.Out, os.Args[1:])
+		if err == nil {
+			err = innerMain(cmd, os.Args)
+		}
 	}
 	if err != nil {
 		logger.Error(err.Error())
 	}
 }
 
-func innerMain(args []string) error {
-	cmd, err := newRootCmd(logger.Out, args[1:])
-	if err != nil {
-		return err
-	}
-
-	err = cmd.Execute()
+func innerMain(cmd *cobra.Command, args []string) error {
+	err := cmd.Execute()
 	if err == nil {
 		return nil
 	}

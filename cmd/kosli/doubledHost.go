@@ -27,13 +27,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// I think isDoubledHost() is now running silently in all cases
-// However, when KOSLI_HOST is doubled, and runDoubledHost() is called...
-// TODO?: kosli status --help
-//   prints output multiple times,
-// TODO?: kosli status --debug
-//   seems to be very slow
-
 func isDoubledHost(args []string) bool {
 	// Returns true iff the CLI execution is double-host, double-api-token
 	opts := getDoubledOpts(args)
@@ -110,8 +103,16 @@ func runBufferedInnerMain(args []string) (string, error) {
 	globalPtr := &global
 	defer func(original *GlobalOpts) { *globalPtr = original }(global)
 
+	// Create a cmd writing to the buffered Writer
+	cmd, err := newRootCmd(logger.Out, args[1:])
+	if err != nil {
+		return "", err
+	}
+	cmd.SetOut(writer)
+	cmd.SetErr(writer)
+
 	// innerMain uses its argument for custom error messages
-	err := innerMain(args)
+	err = innerMain(cmd, args)
 	return fmt.Sprint(&buffer), err
 }
 
