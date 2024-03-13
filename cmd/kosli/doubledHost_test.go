@@ -62,11 +62,11 @@ func (suite *DoubledHostTestSuite) TestIsDoubledHost() {
 			want:     false,
 		},
 		{
-			name:     "False when unknown command",
+			name:     "True when unknown command",
 			args:     []string{"not-a-command"},
 			host:     fmt.Sprintf("%s,%s", localHost, localHost),
 			apiToken: fmt.Sprintf("%s,%s", apiToken, apiToken),
-			want:     false,
+			want:     true,
 		},
 		{
 			name:     "False when unknown flag",
@@ -124,8 +124,8 @@ func (suite *DoubledHostTestSuite) TestRunDoubledHost() {
 			err:    error(nil),
 		},
 		{
-			name:   "bad-command prints output once",
-			args:   doubledArgs([]string{"kosli", "bad-command"}),
+			name:   "unknown-command prints output once",
+			args:   doubledArgs([]string{"kosli", "unknown-command"}),
 			stdOut: UsageLines(),
 			err:    error(nil),
 		},
