@@ -292,7 +292,3 @@ func UsageLines() []string {
 		"",
 	}
 }
-
-func BareKosliLines() []string {
-	return []string{}
-}
