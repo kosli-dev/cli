@@ -28,27 +28,20 @@ import (
 )
 
 func isDoubledHost(args []string) bool {
-	// Returns true iff the CLI execution is double-host, double-api-token
+	// Returns true iff the CLI execution is doubled-host, doubled-api-token
 	opts := getDoubledOpts(args)
 	return len(opts.hosts) == 2 && len(opts.apiTokens) == 2
 }
 
 func runDoubledHost(args []string) (string, error) {
-	// Calls "innerMain" twice, with the 0th call taking precedence over the 1st call.
-	//  - Call first with the 0th host/api-token
-	//  - Call next with the 1st host/api-token
-	//
-	// Always returns the 0th call output.
-	// The aim is to make it look like only the 0th call occurred
-	//   - return the 1st call output only in debug mode
-	// If the 1st call fails:
-	// 	- return its error message, making its host clear
-	// 	- return a non-zero exit-code, so errors are not silently ignored
+	// Calls "innerMain" twice:
+	//  - with the 0th host/api-token (primary)
+	//  - with the 1st host/api-token (subsidiary)
 
 	opts := getDoubledOpts(args)
 
 	argsAppendHostApiTokenFlags := func(n int) []string {
-		// Return args appended with the given host and api-token.
+		// Return args appended with the [n]th host/api-token.
 		// No need to strip existing --host/--api-token flags from args
 		// as appended flags take precedence.
 		hostFlag := fmt.Sprintf("--host=%s", opts.hosts[n])
@@ -62,30 +55,34 @@ func runDoubledHost(args []string) (string, error) {
 	args1 := argsAppendHostApiTokenFlags(1)
 	output1, err1 := runBufferedInnerMain(args1)
 
+	// Return subsidiary-call's output in debug mode only.
 	stdOut := output0
-	if opts.debug {
-		stdOut += fmt.Sprintf("[debug] %s\n", opts.hosts[1])
-		stdOut += output1
+	if opts.debug && output1 != "" {
+		stdOut += fmt.Sprintf("\n[debug] [%s]", opts.hosts[1])
+		stdOut += fmt.Sprintf("\n%s", output1)
 	}
 
+	// Make origin of subsidiary-call failure clear.
 	var errorMessage string
 	if err0 != nil {
-		errorMessage = err0.Error()
+		errorMessage += err0.Error()
 	}
 	if err1 != nil {
-		errorMessage += fmt.Sprintf("\n%s\n\t%s", opts.hosts[1], err1.Error())
+		errorMessage += fmt.Sprintf("\n[%s]", opts.hosts[1])
+		errorMessage += fmt.Sprintf("\n%s", err1.Error())
 	}
 
-	if errorMessage == "" {
-		return stdOut, nil
-	} else {
-		return stdOut, errors.New(errorMessage)
+	var err error
+	if errorMessage != "" {
+		err = errors.New(errorMessage)
 	}
+
+	return stdOut, err
 }
 
 func runBufferedInnerMain(args []string) (string, error) {
-	// There is a logger.Error(..) call in main. It must be restored to use
-	// the non-buffered global logger so the error messages actually appear.
+	// There is a logger.Error(..) call at the end of main. It must be restored to
+	// the original global logger so the error messages actually appear.
 	globalLogger := &logger
 	defer func(original *log.Logger) { *globalLogger = original }(logger)
 
@@ -132,8 +129,8 @@ func getDoubledOpts(args []string) DoubledOpts {
 	//   - apiTokens == nil, so len(apiTokens) == 0
 	// so isDoubledHost() will return false.
 
-	// There is a logger.Error(..) call in main. Restore it to use the
-	// non-buffered global logger so the error messages actually appear.
+	// There is a logger.Error(..) call at the end of main. Restore it to
+	// the original global logger so the error messages actually appear.
 	globalLogger := &logger
 	defer func(original *log.Logger) { *globalLogger = original }(logger)
 
@@ -146,6 +143,8 @@ func getDoubledOpts(args []string) DoubledOpts {
 	globalPtr := &global
 	defer func(original *GlobalOpts) { *globalPtr = original }(global)
 
+	// newRootCmd(out, args) does _not_ use its args parameter.
+	// So we have to set os.Args here.
 	// Append --dry-run so cmd.Execute() below has no side-effects; we just want to set global's fields.
 	defer func(original []string) { os.Args = original }(os.Args)
 	os.Args = append(args, "--dry-run")
