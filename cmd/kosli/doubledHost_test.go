@@ -145,6 +145,8 @@ func (suite *DoubledHostTestSuite) TestRunDoubledHost() {
 		// 	err:    error(nil),
 		// },
 	} {
+		defer func(original []string) { os.Args = original }(os.Args)
+		os.Args = t.args
 		output, err := runDoubledHost(t.args)
 
 		assert.Equal(suite.T(), t.err, err, fmt.Sprintf("TestRunDoubleHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, t.err, err))
