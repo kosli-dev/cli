@@ -184,6 +184,8 @@ The service principal needs to have the following permissions:
 	attestationDescription      = "[optional] attestation description"
 	excludeScalingFlag          = "[optional] Exclude scaling events for snapshots. Snapshots with scaling changes will not result in new environment records."
 	includeScalingFlag          = "[optional] Include scaling events for snapshots. Snapshots with scaling changes will result in new environment records."
+
+	deprecatedKosliReportEvidenceMessage = "See **kosli attest** commands."
 )
 
 var global *GlobalOpts

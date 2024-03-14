@@ -13,7 +13,7 @@ func newReportEvidenceCommitCmd(out io.Writer) *cobra.Command {
 		Use:        "commit",
 		Short:      reportEvidenceCommitDesc,
 		Long:       reportEvidenceCommitDesc,
-		Deprecated: "see kosli attest commands",
+		Deprecated: deprecatedKosliReportEvidenceMessage,
 	}
 
 	// Add subcommands

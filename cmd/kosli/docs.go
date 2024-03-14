@@ -119,7 +119,7 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 
 	if isDeprecated(cmd) {
 		buf.WriteString("{{< hint danger >}}")
-		buf.WriteString(fmt.Sprintf("**%s** is a deprecated. %s  ", name, cmd.Deprecated))
+		buf.WriteString(fmt.Sprintf("**%s** is deprecated. %s  ", name, cmd.Deprecated))
 		buf.WriteString("Deprecated commands will be removed in a future release.")
 		buf.WriteString("{{< /hint >}}\n")
 	}

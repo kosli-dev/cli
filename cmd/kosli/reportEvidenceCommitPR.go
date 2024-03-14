@@ -14,7 +14,7 @@ func newReportEvidenceCommitPRCmd(out io.Writer) *cobra.Command {
 		Aliases:    []string{"pr", "mr", "mergerequest"},
 		Short:      reportEvidenceCommitPRDesc,
 		Long:       reportEvidenceCommitPRDesc,
-		Deprecated: "see kosli attest commands",
+		Deprecated: deprecatedKosliReportEvidenceMessage,
 	}
 
 	// Add subcommands
