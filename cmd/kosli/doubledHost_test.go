@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 
@@ -82,7 +83,9 @@ func (suite *DoubledHostTestSuite) TestIsDoubledHost() {
 			org := fmt.Sprintf("--org=%s", orgName)
 			args := append(t.args, host, apiToken, org)
 
-			actual := isDoubledHost(args)
+			defer func(original []string) { os.Args = original }(os.Args)
+			os.Args = args
+			actual := isDoubledHost()
 
 			assert.Equal(suite.T(), t.want, actual, fmt.Sprintf("TestIsDoubledHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, t.want, actual))
 		})
@@ -151,6 +154,14 @@ func (suite *DoubledHostTestSuite) TestRunDoubledHost() {
 		assert.Equal(suite.T(), "", d, fmt.Sprintf("TestRunDoubleHost: %s\n%s\n", t.name, d))
 	}
 }
+
+// func BadCreateFlowLines() []string {
+// 	return []string{
+// 		"Error: Access denied to 'https://localhost/api/v2/flows/cyber-dojo/template_file'",
+// 		"[http://localhost]",
+// 		"Access denied to 'https://localhost/api/v2/flows/cyber-dojo/template_file'		",
+// 	}
+// }
 
 func TestDoubledHostTestSuite(t *testing.T) {
 	suite.Run(t, new(DoubledHostTestSuite))

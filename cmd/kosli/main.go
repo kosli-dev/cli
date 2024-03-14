@@ -23,7 +23,7 @@ func init() {
 
 func main() {
 	var err error
-	if isDoubledHost(os.Args) {
+	if isDoubledHost() {
 		var output string
 		output, err = runDoubledHost(os.Args)
 		fmt.Print(output)

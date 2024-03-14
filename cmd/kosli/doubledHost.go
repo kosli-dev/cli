@@ -27,9 +27,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func isDoubledHost(args []string) bool {
+func isDoubledHost() bool {
 	// Returns true iff the CLI execution is doubled-host, doubled-api-token
-	opts := getDoubledOpts(args)
+	opts := getDoubledOpts()
 	return len(opts.hosts) == 2 && len(opts.apiTokens) == 2
 }
 
@@ -38,7 +38,7 @@ func runDoubledHost(args []string) (string, error) {
 	//  - with the 0th host/api-token (primary)
 	//  - with the 1st host/api-token (subsidiary)
 
-	opts := getDoubledOpts(args)
+	opts := getDoubledOpts()
 
 	argsAppendHostApiTokenFlags := func(n int) []string {
 		// Return args appended with the [n]th host/api-token.
@@ -96,17 +96,17 @@ func runBufferedInnerMain(args []string) (string, error) {
 	defer func(original []string) { os.Args = original }(os.Args)
 	os.Args = args
 
-	// Reset global back when done
-	globalPtr := &global
-	defer func(original *GlobalOpts) { *globalPtr = original }(global)
-
 	// Create a cmd writing to the buffered Writer
-	cmd, err := newRootCmd(logger.Out, args[1:])
+	cmd, err := newRootCmd(logger.Out, nil)
 	if err != nil {
 		return "", err
 	}
 	cmd.SetOut(writer)
 	cmd.SetErr(writer)
+
+	// Reset global back when done
+	globalPtr := &global
+	defer func(original *GlobalOpts) { *globalPtr = original }(global)
 
 	// innerMain uses its argument for custom error messages
 	err = innerMain(cmd, args)
@@ -119,7 +119,7 @@ type DoubledOpts struct {
 	debug     bool
 }
 
-func getDoubledOpts(args []string) DoubledOpts {
+func getDoubledOpts() DoubledOpts {
 	// Return a DoubledOpts struct with:
 	//   - hosts set to H, split on comma, where H is the normal value of KOSLI_HOST/--host
 	//   - apiTokens set to A, split on comma, where A is the normal value of KOSLI_API_TOKEN/--api-token
@@ -139,43 +139,37 @@ func getDoubledOpts(args []string) DoubledOpts {
 	writer := io.Writer(&buffer)
 	logger = log.NewLogger(writer, writer, false)
 
+	// Create a cmd object. Note: newRootCmd(out, args) does _not_ use its args parameter.
+	cmd, err := newRootCmd(logger.Out, nil)
+	if err != nil {
+		return DoubledOpts{}
+	}
+
+	// Ensure cmd.Execute() prints nothing, even for a [kosli] call
+	cmd.SetOut(writer)
+	cmd.SetErr(writer)
+
+	fakeError := errors.New("")
+
+	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		// Call initialize() to bind cobra and viper
+		err := initialize(cmd, writer)
+		if err != nil {
+			return err
+		}
+		return fakeError
+	}
+
 	// We are setting global's fields. Reset global back when done.
 	globalPtr := &global
 	defer func(original *GlobalOpts) { *globalPtr = original }(global)
 
-	// newRootCmd(out, args) does _not_ use its args parameter.
-	// So we have to set os.Args here.
-	// Append --dry-run so cmd.Execute() below has no side-effects; we just want to set global's fields.
-	defer func(original []string) { os.Args = original }(os.Args)
-	os.Args = append(args, "--dry-run")
-
-	// Create a cmd object. We have appended --dry-run to os.Args so [1:] is safe.
-	cmd, err := newRootCmd(logger.Out, os.Args[1:])
-	if err != nil {
-		return DoubledOpts{}
-	}
-
-	// The cmd returned by newRootCmd(...) does not have --dry-run flag, so add it.
-	addDryRunFlag(cmd)
-
-	// Ensure cmd.Execute() prints nothing, even for a [kosli] call
-	cmd.Short = ""
-	cmd.Long = ""
-	cmd.SetUsageFunc(func(c *cobra.Command) error { return nil })
-	cmd.SetOut(writer)
-	cmd.SetErr(writer)
-
-	// Finally, call cmd.Execute() and initialize() to set global's fields.
+	// Call cmd.Execute() to set global's fields.
 	err = cmd.Execute()
-
-	if err != nil {
+	if err != nil && err != fakeError {
+		// Genuine error
 		// Eg kosli unknownCommand ...
 		// Eg kosli status --unknown-flag
-		return DoubledOpts{}
-	}
-
-	err = initialize(cmd, writer)
-	if err != nil {
 		return DoubledOpts{}
 	}
 
