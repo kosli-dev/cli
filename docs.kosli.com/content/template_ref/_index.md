@@ -15,7 +15,7 @@ trail: # the trail specification (optional)
   - name: reference name for the artifact (e.g. frontend-app) (required)
     attestations: # what attestations are required for the artifact to be compliant
     - name: the attestation name (required)
-      type: the attestation type. One of [generic, jira, junit, pull-request, snyk] (required)
+      type: the attestation type. One of [generic, jira, junit, pull_request, snyk] (required)
 ```
  
 ## Example:
