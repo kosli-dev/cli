@@ -184,6 +184,8 @@ The service principal needs to have the following permissions:
 	attestationDescription      = "[optional] attestation description"
 	excludeScalingFlag          = "[optional] Exclude scaling events for snapshots. Snapshots with scaling changes will not result in new environment records."
 	includeScalingFlag          = "[optional] Include scaling events for snapshots. Snapshots with scaling changes will result in new environment records."
+	setTagsFlag                 = "[optional] The key-value pairs to tag the resource with. The format is: key=value"
+	unsetTagsFlag               = "[optional] The list of tag keys to remove from the resource."
 )
 
 var global *GlobalOpts
@@ -274,6 +276,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		newLogCmd(out),
 		newDisableCmd(out),
 		newEnableCmd(out),
+		newTagCmd(out),
 	)
 
 	cobra.AddTemplateFunc("isBeta", isBeta)

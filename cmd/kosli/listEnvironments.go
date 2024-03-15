@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/kosli-dev/cli/internal/output"
@@ -75,7 +76,7 @@ func printEnvListAsTable(raw string, out io.Writer, page int) error {
 		return nil
 	}
 
-	header := []string{"NAME", "TYPE", "LAST REPORT", "LAST MODIFIED"}
+	header := []string{"NAME", "TYPE", "LAST REPORT", "LAST MODIFIED", "TAGS"}
 	rows := []string{}
 	for _, env := range envs {
 		last_reported_str := ""
@@ -88,7 +89,15 @@ func printEnvListAsTable(raw string, out io.Writer, page int) error {
 		if last_modified_at != nil {
 			last_modified_str = time.Unix(int64(last_modified_at.(float64)), 0).Format(time.RFC3339)
 		}
-		row := fmt.Sprintf("%s\t%s\t%s\t%s", env["name"], env["type"], last_reported_str, last_modified_str)
+
+		tags := env["tags"].(map[string]interface{})
+		tagsOutput := ""
+		for key, value := range tags {
+			tagsOutput += fmt.Sprintf("[%s=%s], ", key, value)
+		}
+		tagsOutput = strings.TrimSuffix(tagsOutput, ", ")
+
+		row := fmt.Sprintf("%s\t%s\t%s\t%s\t%s", env["name"], env["type"], last_reported_str, last_modified_str, tagsOutput)
 		rows = append(rows, row)
 	}
 	tabFormattedPrint(out, header, rows)
