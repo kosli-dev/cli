@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -81,6 +82,13 @@ func printEnvironmentAsTable(raw string, out io.Writer, page int) error {
 		state = "INCOMPLIANT"
 	}
 
+	tags := env["tags"].(map[string]interface{})
+	tagsOutput := ""
+	for key, value := range tags {
+		tagsOutput += fmt.Sprintf("[%s=%s], ", key, value)
+	}
+	tagsOutput = strings.TrimSuffix(tagsOutput, ", ")
+
 	header := []string{}
 	rows := []string{}
 	rows = append(rows, fmt.Sprintf("Name:\t%s", env["name"]))
@@ -88,6 +96,7 @@ func printEnvironmentAsTable(raw string, out io.Writer, page int) error {
 	rows = append(rows, fmt.Sprintf("Description:\t%s", env["description"]))
 	rows = append(rows, fmt.Sprintf("State:\t%s", state))
 	rows = append(rows, fmt.Sprintf("Last Reported At:\t%s", lastReportedAt))
+	rows = append(rows, fmt.Sprintf("Tags:\t%s", tagsOutput))
 
 	tabFormattedPrint(out, header, rows)
 
