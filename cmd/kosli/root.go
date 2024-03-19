@@ -61,7 +61,6 @@ The service principal needs to have the following permissions:
 	dryRunFlag                  = "[optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors."
 	maxAPIRetryFlag             = "[defaulted] How many times should API calls be retried when the API host is not reachable."
 	configFileFlag              = "[optional] The Kosli config file path."
-	verboseFlag                 = "[optional] Print verbose logs to stdout."
 	debugFlag                   = "[optional] Print debug logs to stdout. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default false)"
 	artifactTypeFlag            = "[conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'."
 	flowNameFlag                = "The Kosli flow name."
@@ -239,13 +238,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	cmd.PersistentFlags().StringVarP(&global.Host, "host", "H", "https://app.kosli.com", hostFlag)
 	cmd.PersistentFlags().IntVarP(&global.MaxAPIRetries, "max-api-retries", "r", maxAPIRetries, maxAPIRetryFlag)
 	cmd.PersistentFlags().StringVarP(&global.ConfigFile, "config-file", "c", defaultConfigFilename, configFileFlag)
-	cmd.PersistentFlags().BoolVarP(&global.Debug, "verbose", "v", false, verboseFlag)
 	cmd.PersistentFlags().BoolVar(&global.Debug, "debug", false, debugFlag)
-
-	err := cmd.PersistentFlags().MarkDeprecated("verbose", "use --debug instead")
-	if err != nil {
-		return cmd, err
-	}
 
 	// Add subcommands
 	cmd.AddCommand(
