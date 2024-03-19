@@ -63,7 +63,6 @@ func newTagCmd(out io.Writer) *cobra.Command {
 		Short:   tagShortDesc,
 		Long:    tagLongDesc,
 		Example: tagExample,
-		Hidden:  true,
 		Args:    cobra.ExactArgs(2),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
