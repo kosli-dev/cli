@@ -59,7 +59,7 @@ kosli tag env yourEnvironmentName \
 func newTagCmd(out io.Writer) *cobra.Command {
 	o := new(tagOptions)
 	cmd := &cobra.Command{
-		Use:     "tag {IMAGE-NAME | FILE-PATH | DIR-PATH}",
+		Use:     "tag RESOURCE-TYPE RESOURCE-ID",
 		Short:   tagShortDesc,
 		Long:    tagLongDesc,
 		Example: tagExample,
