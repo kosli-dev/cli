@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/security"
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -22,13 +24,19 @@ Setting the API token to DRY_RUN sets the --dry-run flag.
 `
 
 const (
-	maxAPIRetries = 3
+	defaultMaxAPIRetries = 3
 	// The name of our config file, without the file extension because viper supports many different config file languages.
-	defaultConfigFilename = "kosli"
+	defaultConfigFilename = ".kosli.yml"
+
+	// The default Kosli app host URL.
+	defaultHost = "https://app.kosli.com"
 
 	// The environment variable prefix of all environment variables bound to our command line flags.
 	// For example, --namespace is bound to KOSLI_NAMESPACE.
 	envPrefix = "KOSLI"
+
+	// the name of the credentials store secret holding the encryption key for api token storage
+	credentialsStoreKeySecretName = "kosli-encryption-key"
 
 	// the following constants are used in the docs/help
 	fingerprintDesc = "The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag)."
@@ -196,7 +204,6 @@ type GlobalOpts struct {
 	DryRun        bool
 	MaxAPIRetries int
 	ConfigFile    string
-	Verbose       bool
 	Debug         bool
 }
 
@@ -235,9 +242,9 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	}
 	cmd.PersistentFlags().StringVarP(&global.ApiToken, "api-token", "a", "", apiTokenFlag)
 	cmd.PersistentFlags().StringVar(&global.Org, "org", "", orgFlag)
-	cmd.PersistentFlags().StringVarP(&global.Host, "host", "H", "https://app.kosli.com", hostFlag)
-	cmd.PersistentFlags().IntVarP(&global.MaxAPIRetries, "max-api-retries", "r", maxAPIRetries, maxAPIRetryFlag)
-	cmd.PersistentFlags().StringVarP(&global.ConfigFile, "config-file", "c", defaultConfigFilename, configFileFlag)
+	cmd.PersistentFlags().StringVarP(&global.Host, "host", "H", defaultHost, hostFlag)
+	cmd.PersistentFlags().IntVarP(&global.MaxAPIRetries, "max-api-retries", "r", defaultMaxAPIRetries, maxAPIRetryFlag)
+	cmd.PersistentFlags().StringVarP(&global.ConfigFile, "config-file", "c", defaultConfigFilePath(), configFileFlag)
 	cmd.PersistentFlags().BoolVar(&global.Debug, "debug", false, debugFlag)
 
 	// Add subcommands
@@ -270,6 +277,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		newDisableCmd(out),
 		newEnableCmd(out),
 		newTagCmd(out),
+		newConfigCmd(out),
 	)
 
 	cobra.AddTemplateFunc("isBeta", isBeta)
@@ -279,12 +287,22 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	return cmd, nil
 }
 
+func defaultConfigFilePath() string {
+	if _, ok := os.LookupEnv("DOCS"); ok { // used for docs generation
+		return fmt.Sprintf("$HOME/%s", defaultConfigFilename)
+	}
+	home, err := homedir.Dir()
+	if err == nil {
+		path := filepath.Join(home, defaultConfigFilename)
+		_, err := os.Stat(path)
+		if err == nil {
+			return path
+		}
+	}
+	return "kosli" // for backward compatibility with old default config location
+}
+
 func initialize(cmd *cobra.Command, out io.Writer) error {
-	logger.DebugEnabled = global.Debug
-	logger.SetInfoOut(out) // needed to allow tests to overwrite the logger output stream
-	kosliClient.SetDebug(global.Debug)
-	kosliClient.SetMaxAPIRetries(global.MaxAPIRetries)
-	kosliClient.SetLogger(logger)
 	v := viper.New()
 
 	// If provided, extract the custom config file dir and name
@@ -292,7 +310,7 @@ func initialize(cmd *cobra.Command, out io.Writer) error {
 	// handle passing the config file as an env variable.
 	// we load the config file before we bind env vars to flags,
 	// so we check for the config file env var separately here
-	if global.ConfigFile == defaultConfigFilename {
+	if global.ConfigFile == defaultConfigFilePath() {
 		if path, exists := os.LookupEnv("KOSLI_CONFIG_FILE"); exists {
 			global.ConfigFile = path
 		}
@@ -304,7 +322,7 @@ func initialize(cmd *cobra.Command, out io.Writer) error {
 	v.SetConfigName(file)
 
 	// Set as many paths as you like where viper should look for the
-	// config file. We are only looking in the current working directory.
+	// config file. By default, we are looking in the current working directory.
 	if dir == "" {
 		dir = "."
 	}
@@ -333,6 +351,12 @@ func initialize(cmd *cobra.Command, out io.Writer) error {
 	// Bind the current command's flags to viper
 	bindFlags(cmd, v)
 
+	logger.DebugEnabled = global.Debug
+	logger.SetInfoOut(out) // needed to allow tests to overwrite the logger output stream
+	kosliClient.SetDebug(global.Debug)
+	kosliClient.SetMaxAPIRetries(global.MaxAPIRetries)
+	kosliClient.SetLogger(logger)
+
 	return nil
 }
 
@@ -351,6 +375,20 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 		// Apply the viper config value to the flag when the flag is not set and viper has a value
 		if !f.Changed && v.IsSet(f.Name) {
 			val := v.Get(f.Name)
+			if f.Name == "api-token" {
+				// get encryption key
+				key, err := security.GetSecretFromCredentialsStore(credentialsStoreKeySecretName)
+				if err != nil {
+					logger.Error("failed to get api token encryption key from credentials store: %s", err)
+				}
+				// decrypt token
+				decryptedBytes, err := security.AESDecrypt([]byte(val.(string)), []byte(key))
+				if err != nil {
+					logger.Error("failed to decrypt api token: %s", err)
+				}
+				val = string(decryptedBytes)
+			}
+
 			if err := cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val)); err != nil {
 				logger.Error("failed to set flag: %v", err)
 			}
