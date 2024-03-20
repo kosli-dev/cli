@@ -58,7 +58,7 @@ kosli attest artifact FILE.tgz \
 	--artifact-type file \
 	--build-url https://exampleci.com \
 	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
-	--commit yourCommitShaThatThisArtifactWasBuiltFrom \
+	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--name yourTemplateArtifactName \
@@ -70,7 +70,7 @@ kosli attest artifact FILE.tgz \
 kosli attest artifact ANOTHER_FILE.txt \
 	--build-url https://exampleci.com \
 	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
-	--commit yourCommitShaThatThisArtifactWasBuiltFrom \
+	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--fingerprint yourArtifactFingerprint \
@@ -82,7 +82,7 @@ kosli attest artifact ANOTHER_FILE.txt \
 kosli attest artifact ANOTHER_FILE.txt \
 	--build-url https://exampleci.com \
 	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
-	--commit yourCommitShaThatThisArtifactWasBuiltFrom \
+	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--fingerprint yourArtifactFingerprint \
