@@ -133,6 +133,16 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 		buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", cmd.UseLine()))
 	}
 
+	if entry, ok := liveExamples[name]; ok {
+		buf.WriteString("## Live Examples\n\n")
+		if githubURL, okGH := entry["Github"]; okGH {
+			buf.WriteString(fmt.Sprintf("[Github](%v)\n", githubURL))
+		}
+		if gitlabURL, okGL := entry["Gitlab"]; okGL {
+			buf.WriteString(fmt.Sprintf("[Gitlab](%v)\n", gitlabURL))
+		}
+	}
+
 	if err := printOptions(buf, cmd, name); err != nil {
 		return err
 	}
@@ -168,4 +178,41 @@ func printOptions(buf *bytes.Buffer, cmd *cobra.Command, name string) error {
 		buf.WriteString("\n\n")
 	}
 	return nil
+}
+
+var liveExamples = map[string]map[string]string{
+	"kosli create flow": {
+		"Github": "https://github.com/cyber-dojo/runner/blob/main/.github/workflows/main.yml#L32",
+		"Gitlab": "https://gitlab.com/cyber-dojo/creator/-/blob/main/.gitlab/workflows/main.yml#L44",
+	},
+	"kosli begin trail": {
+		"Github": "https://github.com/cyber-dojo/runner/blob/main/.github/workflows/main.yml#L38",
+		"Gitlab": "https://gitlab.com/cyber-dojo/creator/-/blob/main/.gitlab/workflows/main.yml#L44",
+	},
+	"kosli attest junit": {
+		"Github": "https://github.com/cyber-dojo/runner/blob/main/.github/workflows/main.yml#L167",
+		"Gitlab": "https://gitlab.com/cyber-dojo/creator/-/blob/main/.gitlab/workflows/main.yml#L103",
+	},
+	"kosli attest pullrequest github": {
+		"Github": "https://github.com/cyber-dojo/runner/blob/main/.github/workflows/main.yml#L66",
+	},
+	"kosli attest pullrequest gitlab": {
+		"Gitlab": "ttps://gitlab.com/cyber-dojo/creator/-/blob/main/.gitlab/workflows/main.yml#L56",
+	},
+	"kosli attest snyk": {
+		"Github": "https://github.com/cyber-dojo/runner/blob/main/.github/workflows/main.yml#L227",
+		"Gitlab": "https://gitlab.com/cyber-dojo/creator/-/blob/main/.gitlab/workflows/main.yml#L130",
+	},
+	"kosli attest generic": {
+		"Github": "https://github.com/cyber-dojo/runner/blob/main/.github/workflows/main.yml#L98",
+		"Gitlab": "https://gitlab.com/cyber-dojo/creator/-/blob/main/.gitlab/workflows/main.yml#L66",
+	},
+	"kosli attest artifact": {
+		"Github": "https://github.com/cyber-dojo/runner/blob/main/.github/workflows/main.yml#L135",
+		"Gitlab": "https://gitlab.com/cyber-dojo/creator/-/blob/main/.gitlab/workflows/main.yml#L85",
+	},
+	"kosli assert artifact": {
+		"Github": "https://github.com/cyber-dojo/runner/blob/main/.github/workflows/main.yml#L298",
+		"Gitlab": "https://gitlab.com/cyber-dojo/creator/-/blob/main/.gitlab/workflows/main.yml#L203",
+	},
 }
