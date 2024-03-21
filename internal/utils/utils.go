@@ -150,3 +150,36 @@ func CreateFileWithContent(path, content string) error {
 	_, err = file.Write([]byte(content))
 	return err
 }
+
+// IsPathEmpty checks if a path is empty or only contains empty files
+func IsPathEmpty(path string) (bool, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false, err
+	}
+
+	if info.IsDir() {
+		// If it's a directory, check its contents recursively
+		files, err := os.ReadDir(path)
+		if err != nil {
+			return false, err
+		}
+
+		for _, file := range files {
+			filePath := filepath.Join(path, file.Name())
+			isEmpty, err := IsPathEmpty(filePath)
+			if err != nil {
+				return false, err
+			}
+
+			if !isEmpty {
+				return false, nil
+			}
+		}
+
+		return true, nil
+	}
+
+	// If it's a file, check if it's empty
+	return info.Size() == 0, nil
+}
