@@ -2,8 +2,10 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -133,14 +135,13 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 		buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", cmd.UseLine()))
 	}
 
-	if entry, ok := liveExamples[name]; ok {
-		buf.WriteString("## Live Examples\n\n")
-		if githubURL, okGH := entry["Github"]; okGH {
-			buf.WriteString(fmt.Sprintf("[Github](%v)\n", githubURL))
-		}
-		if gitlabURL, okGL := entry["Gitlab"]; okGL {
-			buf.WriteString(fmt.Sprintf("[Gitlab](%v)\n", gitlabURL))
-		}
+	uname := strings.Replace(name, " ", "_", -1)
+	if liveDocsExist(uname) {
+		buf.WriteString("#### Live Examples\n\n")
+		buf.WriteString(fmt.Sprintf("[Github YAML](%v)\n", yamlURL("github", uname)))
+		buf.WriteString(fmt.Sprintf("[-> Kosli Event](%v)\n\n", eventURL("github", uname)))
+		buf.WriteString(fmt.Sprintf("[GitLab YAML](%v)\n", yamlURL("gitlab", uname)))
+		buf.WriteString(fmt.Sprintf("[-> Kosli Event](%v)\n\n", eventURL("gitlab", uname)))
 	}
 
 	if err := printOptions(buf, cmd, name); err != nil {
@@ -180,39 +181,28 @@ func printOptions(buf *bytes.Buffer, cmd *cobra.Command, name string) error {
 	return nil
 }
 
-var liveExamples = map[string]map[string]string{
-	"kosli create flow": {
-		"Github": "https://github.com/cyber-dojo/runner/blob/main/.github/workflows/main.yml#L32",
-		"Gitlab": "https://gitlab.com/cyber-dojo/creator/-/blob/main/.gitlab/workflows/main.yml#L44",
-	},
-	"kosli begin trail": {
-		"Github": "https://github.com/cyber-dojo/runner/blob/main/.github/workflows/main.yml#L38",
-		"Gitlab": "https://gitlab.com/cyber-dojo/creator/-/blob/main/.gitlab/workflows/main.yml#L44",
-	},
-	"kosli attest junit": {
-		"Github": "https://github.com/cyber-dojo/runner/blob/main/.github/workflows/main.yml#L167",
-		"Gitlab": "https://gitlab.com/cyber-dojo/creator/-/blob/main/.gitlab/workflows/main.yml#L103",
-	},
-	"kosli attest pullrequest github": {
-		"Github": "https://github.com/cyber-dojo/runner/blob/main/.github/workflows/main.yml#L66",
-	},
-	"kosli attest pullrequest gitlab": {
-		"Gitlab": "ttps://gitlab.com/cyber-dojo/creator/-/blob/main/.gitlab/workflows/main.yml#L56",
-	},
-	"kosli attest snyk": {
-		"Github": "https://github.com/cyber-dojo/runner/blob/main/.github/workflows/main.yml#L227",
-		"Gitlab": "https://gitlab.com/cyber-dojo/creator/-/blob/main/.gitlab/workflows/main.yml#L130",
-	},
-	"kosli attest generic": {
-		"Github": "https://github.com/cyber-dojo/runner/blob/main/.github/workflows/main.yml#L98",
-		"Gitlab": "https://gitlab.com/cyber-dojo/creator/-/blob/main/.gitlab/workflows/main.yml#L66",
-	},
-	"kosli attest artifact": {
-		"Github": "https://github.com/cyber-dojo/runner/blob/main/.github/workflows/main.yml#L135",
-		"Gitlab": "https://gitlab.com/cyber-dojo/creator/-/blob/main/.gitlab/workflows/main.yml#L85",
-	},
-	"kosli assert artifact": {
-		"Github": "https://github.com/cyber-dojo/runner/blob/main/.github/workflows/main.yml#L298",
-		"Gitlab": "https://gitlab.com/cyber-dojo/creator/-/blob/main/.gitlab/workflows/main.yml#L203",
-	},
+const baseURL = "http://localhost/api/v2/livedocs/cyber-dojo"
+
+func yamlURL(ci string, command string) string {
+	return fmt.Sprintf("%v/yaml?ci=%v&command=%v", baseURL, ci, command)
+}
+
+func eventURL(ci string, command string) string {
+	return fmt.Sprintf("%v/event?ci=%v&command=%v", baseURL, ci, command)
+}
+
+func liveDocsExist(command string) bool {
+	url := fmt.Sprintf("%v/yaml_exists?command=%v&ci=github", baseURL, command)
+	response, err := http.Get(url)
+	if err != nil {
+		return false
+	}
+	defer response.Body.Close()
+	decoder := json.NewDecoder(response.Body)
+	var exists bool
+	err = decoder.Decode(&exists)
+	if err != nil {
+		return false
+	}
+	return exists
 }
