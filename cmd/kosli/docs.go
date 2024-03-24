@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -135,13 +136,13 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 		buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", cmd.UseLine()))
 	}
 
-	uname := strings.Replace(name, " ", "_", -1)
-	if liveDocsExist(uname) {
+	urlSafeName := url.QueryEscape(name)
+	if liveDocsExist(urlSafeName) {
 		buf.WriteString("#### Live Examples\n\n")
-		buf.WriteString(fmt.Sprintf("[Github YAML](%v)\n", yamlURL("github", uname)))
-		buf.WriteString(fmt.Sprintf("[-> Kosli Event](%v)\n\n", eventURL("github", uname)))
-		buf.WriteString(fmt.Sprintf("[GitLab YAML](%v)\n", yamlURL("gitlab", uname)))
-		buf.WriteString(fmt.Sprintf("[-> Kosli Event](%v)\n\n", eventURL("gitlab", uname)))
+		buf.WriteString(fmt.Sprintf("[Github YAML](%v)\n", yamlURL("github", urlSafeName)))
+		buf.WriteString(fmt.Sprintf("[-> Kosli Event](%v)\n\n", eventURL("github", urlSafeName)))
+		buf.WriteString(fmt.Sprintf("[GitLab YAML](%v)\n", yamlURL("gitlab", urlSafeName)))
+		buf.WriteString(fmt.Sprintf("[-> Kosli Event](%v)\n\n", eventURL("gitlab", urlSafeName)))
 	}
 
 	if err := printOptions(buf, cmd, name); err != nil {
