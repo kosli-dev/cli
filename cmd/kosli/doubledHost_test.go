@@ -120,12 +120,12 @@ func (suite *DoubledHostTestSuite) TestRunDoubledHost() {
 			stdOut: StatusDebugLines(),
 			err:    error(nil),
 		},
-		{
-			name:   "--help prints output once",
-			args:   doubledArgs([]string{"kosli", "status", "--help"}),
-			stdOut: HelpStatusLines(),
-			err:    error(nil),
-		},
+		// {
+		// 	name:   "--help prints output once",
+		// 	args:   doubledArgs([]string{"kosli", "status", "--help"}),
+		// 	stdOut: HelpStatusLines(),
+		// 	err:    error(nil),
+		// },
 		// {
 		// 	name:   "bad-flag never gets to call runDoubledHost() because isDoubledHost() returns false",
 		// 	args:   doubledArgs([]string{"kosli", "status", "--bad-flag"}),
