@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	"github.com/kosli-dev/cli/internal/security"
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/zalando/go-keyring"
@@ -62,7 +61,7 @@ func newConfigCmd(out io.Writer) *cobra.Command {
 		Hidden:  true,
 		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if global.ConfigFile != defaultConfigFilePath() {
+			if cmd.Flags().Changed("config-file") {
 				return fmt.Errorf("cannot use --config-file with config command")
 			}
 			return nil
@@ -79,12 +78,9 @@ func newConfigCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *configOptions) run() error {
-	home, err := homedir.Dir()
-	if err != nil {
-		return fmt.Errorf("setting default config failed. Failed to find home directory: %s", err)
-	}
-
-	path := filepath.Join(home, defaultConfigFilename)
+	path := defaultConfigFilePathFunc()
+	home := filepath.Dir(path)
+	configFileName := filepath.Base(path)
 	permissions := os.FileMode(0600)
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -103,7 +99,7 @@ func (o *configOptions) run() error {
 		return fmt.Errorf("setting default config failed. Error checking file status: %s", err)
 	}
 
-	viper.SetConfigName(defaultConfigFilename)
+	viper.SetConfigName(configFileName)
 	viper.AddConfigPath(home)
 	viper.SetConfigType("yaml")
 
@@ -124,19 +120,17 @@ func (o *configOptions) run() error {
 			// create and save key
 			keyBytes, err := security.GenerateRandomAESKey()
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to generate a new AES encryption key: %s", err)
 			}
 			key = string(keyBytes)
 			err = security.SetSecretInCredentialsStore(credentialsStoreKeySecretName, key)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to save AES encryption key in credentials store: %s", err)
 			}
 		} else if err != nil {
-			return err
+			return fmt.Errorf("failed to get AES encryption key: %s", err)
 		}
-		if err != nil {
-			return err
-		}
+
 		// encrypt the token
 		encryptedTokenBytes, err := security.AESEncrypt(global.ApiToken, []byte(key))
 		if err != nil {
@@ -163,6 +157,6 @@ func (o *configOptions) run() error {
 		return fmt.Errorf("setting default config failed. Error writing config file: %s", err)
 	}
 
-	logger.Info("default config file updated successfully.")
+	logger.Info("default config file [%s] updated successfully.", path)
 	return nil
 }

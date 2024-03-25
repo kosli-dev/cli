@@ -207,6 +207,40 @@ type GlobalOpts struct {
 	Debug         bool
 }
 
+// ConfigGetter defines an interface for getting the default config file path
+// the interface allows to mock the default config file path in tests
+type ConfigGetter interface {
+	defaultConfigFilePath() string
+}
+
+// RealConfigGetter is a real implementation of the ConfigGetter interface
+type RealConfigGetter struct{}
+
+// defaultConfigFilePath is a method that satisfies the ConfigGetter interface
+func (r *RealConfigGetter) defaultConfigFilePath() string {
+	if _, ok := os.LookupEnv("DOCS"); ok { // used for docs generation
+		return fmt.Sprintf("$HOME/%s", defaultConfigFilename)
+	}
+
+	home, err := homedir.Dir()
+	if err == nil {
+		return filepath.Join(home, defaultConfigFilename)
+
+	}
+	return "kosli" // for backward compatibility with old default config location
+}
+
+// defaultConfigFilePathFunc is a variable holding the implementation of defaultConfigFilePath
+var defaultConfigFilePathFunc = (&RealConfigGetter{}).defaultConfigFilePath
+
+func getConfigFileFlagDefault() string {
+	defaultPath := defaultConfigFilePathFunc()
+	if _, err := os.Stat(defaultPath); err == nil {
+		return defaultPath
+	}
+	return "kosli" // for backward compatibility with old default config location
+}
+
 func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	global = new(GlobalOpts)
 	cmd := &cobra.Command{
@@ -244,7 +278,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	cmd.PersistentFlags().StringVar(&global.Org, "org", "", orgFlag)
 	cmd.PersistentFlags().StringVarP(&global.Host, "host", "H", defaultHost, hostFlag)
 	cmd.PersistentFlags().IntVarP(&global.MaxAPIRetries, "max-api-retries", "r", defaultMaxAPIRetries, maxAPIRetryFlag)
-	cmd.PersistentFlags().StringVarP(&global.ConfigFile, "config-file", "c", defaultConfigFilePath(), configFileFlag)
+	cmd.PersistentFlags().StringVarP(&global.ConfigFile, "config-file", "c", getConfigFileFlagDefault(), configFileFlag)
 	cmd.PersistentFlags().BoolVar(&global.Debug, "debug", false, debugFlag)
 
 	// Add subcommands
@@ -287,21 +321,6 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	return cmd, nil
 }
 
-func defaultConfigFilePath() string {
-	if _, ok := os.LookupEnv("DOCS"); ok { // used for docs generation
-		return fmt.Sprintf("$HOME/%s", defaultConfigFilename)
-	}
-	home, err := homedir.Dir()
-	if err == nil {
-		path := filepath.Join(home, defaultConfigFilename)
-		_, err := os.Stat(path)
-		if err == nil {
-			return path
-		}
-	}
-	return "kosli" // for backward compatibility with old default config location
-}
-
 func initialize(cmd *cobra.Command, out io.Writer) error {
 	v := viper.New()
 
@@ -310,7 +329,7 @@ func initialize(cmd *cobra.Command, out io.Writer) error {
 	// handle passing the config file as an env variable.
 	// we load the config file before we bind env vars to flags,
 	// so we check for the config file env var separately here
-	if global.ConfigFile == defaultConfigFilePath() {
+	if global.ConfigFile == defaultConfigFilePathFunc() {
 		if path, exists := os.LookupEnv("KOSLI_CONFIG_FILE"); exists {
 			global.ConfigFile = path
 		}

@@ -157,6 +157,7 @@ require (
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/stoewer/go-strcase v1.2.0 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/trivago/tgo v1.0.7 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
