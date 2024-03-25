@@ -137,12 +137,18 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 	}
 
 	urlSafeName := url.QueryEscape(name)
-	if liveDocsExist(urlSafeName) {
+	liveYaml := liveYamlDocExists(urlSafeName)
+	liveEvent := liveEventDocExists(urlSafeName)
+	if liveYaml || liveEvent {
 		buf.WriteString("#### Live Examples\n\n")
-		buf.WriteString(fmt.Sprintf("[Github YAML](%v)\n", yamlURL("github", urlSafeName)))
-		buf.WriteString(fmt.Sprintf("[-> Kosli Event](%v)\n\n", eventURL("github", urlSafeName)))
-		buf.WriteString(fmt.Sprintf("[GitLab YAML](%v)\n", yamlURL("gitlab", urlSafeName)))
-		buf.WriteString(fmt.Sprintf("[-> Kosli Event](%v)\n\n", eventURL("gitlab", urlSafeName)))
+		if liveYaml {
+			buf.WriteString(fmt.Sprintf("[Github YAML](%v)\n", yamlURL("github", urlSafeName)))
+			buf.WriteString(fmt.Sprintf("[-> Kosli Event](%v)\n\n", eventURL("github", urlSafeName)))
+		}
+		if liveEvent {
+			buf.WriteString(fmt.Sprintf("[GitLab YAML](%v)\n", yamlURL("gitlab", urlSafeName)))
+			buf.WriteString(fmt.Sprintf("[-> Kosli Event](%v)\n\n", eventURL("gitlab", urlSafeName)))
+		}
 	}
 
 	if err := printOptions(buf, cmd, name); err != nil {
@@ -184,16 +190,17 @@ func printOptions(buf *bytes.Buffer, cmd *cobra.Command, name string) error {
 
 const baseURL = "http://localhost/api/v2/livedocs/cyber-dojo"
 
-func yamlURL(ci string, command string) string {
-	return fmt.Sprintf("%v/yaml?ci=%v&command=%v", baseURL, ci, command)
-}
-
-func eventURL(ci string, command string) string {
-	return fmt.Sprintf("%v/event?ci=%v&command=%v", baseURL, ci, command)
-}
-
-func liveDocsExist(command string) bool {
+func liveYamlDocExists(command string) bool {
 	url := fmt.Sprintf("%v/yaml_exists?command=%v&ci=github", baseURL, command)
+	return liveDocExists(url)
+}
+
+func liveEventDocExists(command string) bool {
+	url := fmt.Sprintf("%v/event_exists?command=%v&ci=github", baseURL, command)
+	return liveDocExists(url)
+}
+
+func liveDocExists(url string) bool {
 	response, err := http.Get(url)
 	if err != nil {
 		return false
@@ -206,4 +213,12 @@ func liveDocsExist(command string) bool {
 		return false
 	}
 	return exists
+}
+
+func yamlURL(ci string, command string) string {
+	return fmt.Sprintf("%v/yaml?ci=%v&command=%v", baseURL, ci, command)
+}
+
+func eventURL(ci string, command string) string {
+	return fmt.Sprintf("%v/event?ci=%v&command=%v", baseURL, ci, command)
 }
