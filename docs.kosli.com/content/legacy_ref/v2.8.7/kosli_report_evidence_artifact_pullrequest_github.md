@@ -1,19 +1,20 @@
 ---
-title: "kosli report evidence artifact pullrequest gitlab"
+title: "kosli report evidence artifact pullrequest github"
 beta: false
-deprecated: false
+deprecated: true
 ---
 
-# kosli report evidence artifact pullrequest gitlab
+# kosli report evidence artifact pullrequest github
 
+{{< hint danger >}}**kosli report evidence artifact pullrequest github** is a deprecated. see kosli attest commands  Deprecated commands will be removed in a future release.{{< /hint >}}
 ## Synopsis
 
-Report a Gitlab merge request evidence for an artifact in a Kosli flow.  
-It checks if a merge request exists for the artifact (based on its git commit) and reports the merge request evidence to the artifact in Kosli.  
+Report a Github pull request evidence for an artifact in a Kosli flow.  
+It checks if a pull request exists for the artifact (based on its git commit) and reports the pull-request evidence to the artifact in Kosli.  
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell
-kosli report evidence artifact pullrequest gitlab [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli report evidence artifact pullrequest github [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ## Flags
@@ -29,10 +30,10 @@ kosli report evidence artifact pullrequest gitlab [IMAGE-NAME | FILE-PATH | DIR-
 |    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for --artifact-type dir.  |
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'.  |
 |    -f, --flow string  |  The Kosli flow name.  |
-|        --gitlab-base-url string  |  [optional] Gitlab base URL (only needed for on-prem Gitlab installations).  |
-|        --gitlab-org string  |  Gitlab organization. (defaulted if you are running in Gitlab Pipelines: https://docs.kosli.com/ci-defaults ).  |
-|        --gitlab-token string  |  Gitlab token.  |
-|    -h, --help  |  help for gitlab  |
+|        --github-base-url string  |  [optional] GitHub base URL (only needed for GitHub Enterprise installations).  |
+|        --github-org string  |  Github organization. (defaulted if you are running in GitHub Actions: https://docs.kosli.com/ci-defaults ).  |
+|        --github-token string  |  Github token.  |
+|    -h, --help  |  help for github  |
 |    -n, --name string  |  The name of the evidence.  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
@@ -56,40 +57,27 @@ kosli report evidence artifact pullrequest gitlab [IMAGE-NAME | FILE-PATH | DIR-
 
 ```shell
 
-# report a merge request evidence to kosli for a docker image
-kosli report evidence artifact mergerequest gitlab yourDockerImageName \
+# report a pull request evidence to kosli for a docker image
+kosli report evidence artifact pullrequest github yourDockerImageName \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
 	--name yourEvidenceName \
 	--flow yourFlowName \
-	--gitlab-token yourGitlabToken \
-	--gitlab-org yourGitlabOrg \
-	--commit yourArtifactGitCommit \
-	--repository yourGithubGitRepository \
-	--org yourOrgName \
-	--api-token yourAPIToken
-
-# report a merge request evidence (from an on-prem Gitlab) to kosli for a docker image 
-kosli report evidence artifact mergerequest gitlab yourDockerImageName \
-	--artifact-type docker \
-	--build-url https://exampleci.com \
-	--name yourEvidenceName \
-	--flow yourFlowName \
-	--gitlab-base-url https://gitlab.example.org \
-	--gitlab-token yourGitlabToken \
-	--gitlab-org yourGitlabOrg \
+	--github-token yourGithubToken \
+	--github-org yourGithubOrg \
 	--commit yourArtifactGitCommit \
 	--repository yourGithubGitRepository \
 	--org yourOrgName \
 	--api-token yourAPIToken
 	
-# fail if a merge request does not exist for your artifact
-kosli report evidence artifact mergerequest gitlab yourDockerImageName \
+# fail if a pull request does not exist for your artifact
+kosli report evidence artifact pullrequest github yourDockerImageName \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
+	--name yourEvidenceName \
 	--flow yourFlowName \
-	--gitlab-token yourGitlabToken \
-	--gitlab-org yourGitlabOrg \
+	--github-token yourGithubToken \
+	--github-org yourGithubOrg \
 	--commit yourArtifactGitCommit \
 	--repository yourGithubGitRepository \
 	--org yourOrgName \
