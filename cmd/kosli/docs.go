@@ -136,31 +136,36 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 		buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", cmd.UseLine()))
 	}
 
-	urlSafeName := url.QueryEscape(name)
-	liveYaml := liveYamlDocExists(urlSafeName)
-	liveEvent := liveEventDocExists(urlSafeName)
-	if liveYaml || liveEvent {
-		buf.WriteString("#### Live Examples\n\n")
-		if liveYaml {
-			buf.WriteString(fmt.Sprintf("[Github YAML](%v)\n", yamlURL("github", urlSafeName)))
-			if liveEvent {
-			    buf.WriteString(fmt.Sprintf("[-> Kosli Event](%v)\n\n", eventURL("github", urlSafeName)))
-			}
-			buf.WriteString(fmt.Sprintf("[GitLab YAML](%v)\n", yamlURL("gitlab", urlSafeName)))
-			if liveEvent {
-			    buf.WriteString(fmt.Sprintf("[-> Kosli Event](%v)\n\n", eventURL("gitlab", urlSafeName)))
-			}
-		}
-	}
-
 	if err := printOptions(buf, cmd, name); err != nil {
 		return err
 	}
 
-	if len(cmd.Example) > 0 {
+	urlSafeName := url.QueryEscape(name)
+	liveYaml := liveYamlDocExists(urlSafeName)
+	liveEvent := liveEventDocExists(urlSafeName)
+
+	if len(cmd.Example) > 0 || liveYaml || liveEvent {
 		buf.WriteString("## Examples\n\n")
-		buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", cmd.Example))
+		if liveYaml {
+			buf.WriteString("### Live Examples\n\n")
+			buf.WriteString(fmt.Sprintf("[Github YAML](%v)\n", yamlURL("github", urlSafeName)))
+			if liveEvent {
+				buf.WriteString(fmt.Sprintf("[-> Kosli Event](%v)\n\n", eventURL("github", urlSafeName)))
+			}
+			buf.WriteString(fmt.Sprintf("[GitLab YAML](%v)\n", yamlURL("gitlab", urlSafeName)))
+			if liveEvent {
+				buf.WriteString(fmt.Sprintf("[-> Kosli Event](%v)\n\n", eventURL("gitlab", urlSafeName)))
+			}
+		}
+		if len(cmd.Example) > 0 {
+			buf.WriteString("### Examples Use Cases\n\n")
+			if cmd.Example[0] == '\n' {
+				cmd.Example = cmd.Example[1:]
+			}
+			buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", cmd.Example))
+		}
 	}
+
 	_, err := buf.WriteTo(w)
 	return err
 }
