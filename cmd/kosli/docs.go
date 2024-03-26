@@ -142,20 +142,25 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 
 	urlSafeName := url.QueryEscape(name)
 	liveYaml := liveYamlDocExists(urlSafeName)
-	liveEvent := liveEventDocExists(urlSafeName)
+	//liveEvent := liveEventDocExists(urlSafeName)
 
-	if len(cmd.Example) > 0 || liveYaml || liveEvent {
+	if len(cmd.Example) > 0 || liveYaml {
 		buf.WriteString("## Examples\n\n")
 		if liveYaml {
 			buf.WriteString("### Live Examples\n\n")
-			buf.WriteString(fmt.Sprintf("[Github YAML](%v)\n", yamlURL("github", urlSafeName)))
-			if liveEvent {
-				buf.WriteString(fmt.Sprintf("[-> Kosli Event](%v)\n\n", eventURL("github", urlSafeName)))
-			}
-			buf.WriteString(fmt.Sprintf("[GitLab YAML](%v)\n", yamlURL("gitlab", urlSafeName)))
-			if liveEvent {
-				buf.WriteString(fmt.Sprintf("[-> Kosli Event](%v)\n\n", eventURL("gitlab", urlSafeName)))
-			}
+			buf.WriteString(fmt.Sprintf("View examples of the `%s` command in different CI systems.\n\n", name))
+
+			buf.WriteString(fmt.Sprintf("#### Github\n\n"))
+			buf.WriteString(fmt.Sprintf("[Pipeline YAML](%v)\n", yamlURL("github", urlSafeName)))
+			// 			if liveEvent {
+			// 				buf.WriteString(fmt.Sprintf("[View Event in Kosli](%v)\n\n", eventURL("github", urlSafeName)))
+			// 			}
+
+			buf.WriteString(fmt.Sprintf("#### Gitlab\n\n"))
+			buf.WriteString(fmt.Sprintf("[Pipeline YAML](%v)\n", yamlURL("gitlab", urlSafeName)))
+			// 			if liveEvent {
+			// 				buf.WriteString(fmt.Sprintf("[View Event in Kosli](%v)\n\n", eventURL("gitlab", urlSafeName)))
+			// 			}
 		}
 		if len(cmd.Example) > 0 {
 			buf.WriteString("### Examples Use Cases\n\n")
