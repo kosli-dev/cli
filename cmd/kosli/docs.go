@@ -143,11 +143,13 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 		buf.WriteString("#### Live Examples\n\n")
 		if liveYaml {
 			buf.WriteString(fmt.Sprintf("[Github YAML](%v)\n", yamlURL("github", urlSafeName)))
-			buf.WriteString(fmt.Sprintf("[-> Kosli Event](%v)\n\n", eventURL("github", urlSafeName)))
-		}
-		if liveEvent {
+			if liveEvent {
+			    buf.WriteString(fmt.Sprintf("[-> Kosli Event](%v)\n\n", eventURL("github", urlSafeName)))
+			}
 			buf.WriteString(fmt.Sprintf("[GitLab YAML](%v)\n", yamlURL("gitlab", urlSafeName)))
-			buf.WriteString(fmt.Sprintf("[-> Kosli Event](%v)\n\n", eventURL("gitlab", urlSafeName)))
+			if liveEvent {
+			    buf.WriteString(fmt.Sprintf("[-> Kosli Event](%v)\n\n", eventURL("gitlab", urlSafeName)))
+			}
 		}
 	}
 
