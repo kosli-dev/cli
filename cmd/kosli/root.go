@@ -322,6 +322,8 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 }
 
 func initialize(cmd *cobra.Command, out io.Writer) error {
+	logger.SetInfoOut(out) // needed to allow tests to overwrite the logger output stream
+	logger.DebugEnabled = global.Debug
 	v := viper.New()
 
 	// If provided, extract the custom config file dir and name
@@ -362,7 +364,7 @@ func initialize(cmd *cobra.Command, out io.Writer) error {
 	// avoid conflicts.
 	v.SetEnvPrefix(envPrefix)
 
-	// Bind to environment variables
+	// Bind viper config to environment variables
 	// Works great for simple config names, but needs help for names
 	// like --kube-config which we fix in the bindFlags function
 	v.AutomaticEnv()
@@ -370,8 +372,6 @@ func initialize(cmd *cobra.Command, out io.Writer) error {
 	// Bind the current command's flags to viper
 	bindFlags(cmd, v)
 
-	logger.DebugEnabled = global.Debug
-	logger.SetInfoOut(out) // needed to allow tests to overwrite the logger output stream
 	kosliClient.SetDebug(global.Debug)
 	kosliClient.SetMaxAPIRetries(global.MaxAPIRetries)
 	kosliClient.SetLogger(logger)
@@ -379,8 +379,16 @@ func initialize(cmd *cobra.Command, out io.Writer) error {
 	return nil
 }
 
-// Bind each cobra flag to its associated viper configuration (config file and environment variable)
+// Bind each cobra flag to its associated viper configuration
+// (coming either from environment variables or config file)
 func bindFlags(cmd *cobra.Command, v *viper.Viper) {
+	// for some reason, logger does not print errors at the point
+	// of calling this function, so we ensure to point errors to stderr
+	logger.SetErrOut(os.Stderr)
+	// api token in config file is encrypted, so we have to decrypt it
+	// but if it is set via env variables, it is not encrypted
+	_, apiTokenSetInEnv := os.LookupEnv("KOSLI_API_TOKEN")
+
 	cmd.Flags().VisitAll(func(f *pflag.Flag) {
 		// Environment variables can't have dashes in them, so bind them to their equivalent
 		// keys with underscores, e.g. --kube-config to KOSLI_KUBE_CONFIG
@@ -392,9 +400,10 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 		}
 
 		// Apply the viper config value to the flag when the flag is not set and viper has a value
+		// for api token, decrypt it if it is coming from the config file
 		if !f.Changed && v.IsSet(f.Name) {
 			val := v.Get(f.Name)
-			if f.Name == "api-token" {
+			if !apiTokenSetInEnv && f.Name == "api-token" {
 				// get encryption key
 				key, err := security.GetSecretFromCredentialsStore(credentialsStoreKeySecretName)
 				if err != nil {
