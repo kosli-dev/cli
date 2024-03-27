@@ -129,7 +129,7 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 
 	if len(cmd.Long) > 0 {
 		buf.WriteString("## Synopsis\n\n")
-		buf.WriteString(cmd.Long + "\n\n")
+		buf.WriteString(strings.Replace(cmd.Long, "^", "`", -1) + "\n\n")
 	}
 
 	if cmd.Runnable() {
@@ -141,36 +141,32 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 	}
 
 	urlSafeName := url.QueryEscape(name)
-	liveYaml := liveYamlDocExists(urlSafeName)
-	liveEvent := liveEventDocExists(urlSafeName)
-
-	if len(cmd.Example) > 0 || liveYaml {
-		buf.WriteString("## Examples\n\n")
-		if liveYaml {
-			buf.WriteString("### Live Examples\n\n")
-			buf.WriteString(fmt.Sprintf("View examples of the `%s` command in different CI systems.\n\n", name))
-
-			buf.WriteString(fmt.Sprintf("#### Github\n\n"))
-			buf.WriteString(fmt.Sprintf("[Pipeline YAML](%v)\n", yamlURL("github", urlSafeName)))
-			if liveEvent {
-				buf.WriteString(fmt.Sprintf("[View Event in Kosli](%v)\n\n", eventURL("github", urlSafeName)))
+	liveExamplesBuf := new(bytes.Buffer)
+	for _, ci := range []string{"github", "gitlab"} {
+		if liveYamlDocExists(ci, urlSafeName) {
+			liveExamplesBuf.WriteString(fmt.Sprintf("### %v\n\n", ci))
+			liveExamplesBuf.WriteString(fmt.Sprintf("In [this YAML file](%v)", yamlURL("github", urlSafeName)))
+			if liveEventDocExists(ci, urlSafeName) {
+				liveExamplesBuf.WriteString(fmt.Sprintf(", which created [this Kosli Event](%v).", eventURL("github", urlSafeName)))
 			}
-
-			buf.WriteString(fmt.Sprintf("#### Gitlab\n\n"))
-			buf.WriteString(fmt.Sprintf("[Pipeline YAML](%v)\n", yamlURL("gitlab", urlSafeName)))
-			if liveEvent {
-				buf.WriteString(fmt.Sprintf("[View Event in Kosli](%v)\n\n", eventURL("gitlab", urlSafeName)))
-			}
+			liveExamplesBuf.WriteString("\n\n")
 		}
-		if len(cmd.Example) > 0 {
-			buf.WriteString("### Examples Use Cases\n\n")
-			all := strings.Split(cmd.Example, "#")
-			for _, one := range all {
-				lines := strings.Split(one, "\n")
-				if len(lines[0]) > 0 {
-					buf.WriteString(fmt.Sprintf("#### %s\n\n", lines[0]))
-					buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", strings.Join(lines[1:], "\n")))
-				}
+	}
+	liveExamples := liveExamplesBuf.String()
+	if len(liveExamples) > 0 {
+		buf.WriteString("## Live Examples\n\n")
+		buf.WriteString(fmt.Sprintf("View examples of the `%s` command in different CI systems.\n\n", name))
+		buf.WriteString(liveExamples)
+	}
+
+	if len(cmd.Example) > 0 {
+		buf.WriteString("## Examples Use Cases\n\n")
+		all := strings.Split(cmd.Example, "#")
+		for _, one := range all {
+			lines := strings.Split(one, "\n")
+			if len(lines[0]) > 0 {
+				buf.WriteString(fmt.Sprintf("### %s\n\n", lines[0]))
+				buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", strings.Join(lines[1:], "\n")))
 			}
 		}
 	}
@@ -194,7 +190,7 @@ func printOptions(buf *bytes.Buffer, cmd *cobra.Command, name string) error {
 	parentFlags := cmd.InheritedFlags()
 	parentFlags.SetOutput(buf)
 	if parentFlags.HasAvailableFlags() {
-		buf.WriteString("## Options inherited from parent commands\n")
+		buf.WriteString("## Flags inherited from parent commands\n")
 		buf.WriteString("| Flag | Description |\n")
 		buf.WriteString("| :--- | :--- |\n")
 		usages := CommandsInTable(parentFlags)
@@ -206,13 +202,13 @@ func printOptions(buf *bytes.Buffer, cmd *cobra.Command, name string) error {
 
 const baseURL = "https://staging.app.kosli.com/api/v2/livedocs/cyber-dojo"
 
-func liveYamlDocExists(command string) bool {
-	url := fmt.Sprintf("%v/yaml_exists?command=%v&ci=github", baseURL, command)
+func liveYamlDocExists(ci string, command string) bool {
+	url := fmt.Sprintf("%v/yaml_exists?ci=%v&command=%v", baseURL, ci, command)
 	return liveDocExists(url)
 }
 
-func liveEventDocExists(command string) bool {
-	url := fmt.Sprintf("%v/event_exists?command=%v&ci=github", baseURL, command)
+func liveEventDocExists(ci string, command string) bool {
+	url := fmt.Sprintf("%v/event_exists?ci=%v&command=%v", baseURL, ci, command)
 	return liveDocExists(url)
 }
 

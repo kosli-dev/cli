@@ -31,7 +31,7 @@ const (
 	envPrefix = "KOSLI"
 
 	// the following constants are used in the docs/help
-	fingerprintDesc = "The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag)."
+	fingerprintDesc = "The artifact SHA256 fingerprint is calculated (based on the ^--artifact-type^ flag) or can be provided directly (with the ^--fingerprint^ flag)."
 	awsAuthDesc     = `
 
 To authenticate to AWS, you can either:  
