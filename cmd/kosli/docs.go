@@ -142,7 +142,7 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 
 	urlSafeName := url.QueryEscape(name)
 	liveYaml := liveYamlDocExists(urlSafeName)
-	//liveEvent := liveEventDocExists(urlSafeName)
+	liveEvent := liveEventDocExists(urlSafeName)
 
 	if len(cmd.Example) > 0 || liveYaml {
 		buf.WriteString("## Examples\n\n")
@@ -152,22 +152,26 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 
 			buf.WriteString(fmt.Sprintf("#### Github\n\n"))
 			buf.WriteString(fmt.Sprintf("[Pipeline YAML](%v)\n", yamlURL("github", urlSafeName)))
-			// 			if liveEvent {
-			// 				buf.WriteString(fmt.Sprintf("[View Event in Kosli](%v)\n\n", eventURL("github", urlSafeName)))
-			// 			}
+			if liveEvent {
+				buf.WriteString(fmt.Sprintf("[View Event in Kosli](%v)\n\n", eventURL("github", urlSafeName)))
+			}
 
 			buf.WriteString(fmt.Sprintf("#### Gitlab\n\n"))
 			buf.WriteString(fmt.Sprintf("[Pipeline YAML](%v)\n", yamlURL("gitlab", urlSafeName)))
-			// 			if liveEvent {
-			// 				buf.WriteString(fmt.Sprintf("[View Event in Kosli](%v)\n\n", eventURL("gitlab", urlSafeName)))
-			// 			}
+			if liveEvent {
+				buf.WriteString(fmt.Sprintf("[View Event in Kosli](%v)\n\n", eventURL("gitlab", urlSafeName)))
+			}
 		}
 		if len(cmd.Example) > 0 {
 			buf.WriteString("### Examples Use Cases\n\n")
-			if cmd.Example[0] == '\n' {
-				cmd.Example = cmd.Example[1:]
+			all := strings.Split(cmd.Example, "#")
+			for _, one := range all {
+				lines := strings.Split(one, "\n")
+				if len(lines[0]) > 0 {
+					buf.WriteString(fmt.Sprintf("#### %s\n\n", lines[0]))
+					buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", strings.Join(lines[1:], "\n")))
+				}
 			}
-			buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", cmd.Example))
 		}
 	}
 
@@ -200,7 +204,7 @@ func printOptions(buf *bytes.Buffer, cmd *cobra.Command, name string) error {
 	return nil
 }
 
-const baseURL = "http://localhost/api/v2/livedocs/cyber-dojo"
+const baseURL = "https://staging.app.kosli.com/api/v2/livedocs/cyber-dojo"
 
 func liveYamlDocExists(command string) bool {
 	url := fmt.Sprintf("%v/yaml_exists?command=%v&ci=github", baseURL, command)
