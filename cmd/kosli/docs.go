@@ -200,7 +200,7 @@ func printOptions(buf *bytes.Buffer, cmd *cobra.Command, name string) error {
 	return nil
 }
 
-const baseURL = "https://staging.app.kosli.com/api/v2/livedocs/cyber-dojo"
+const baseURL = "https://app.kosli.com/api/v2/livedocs/cyber-dojo"
 
 func liveYamlDocExists(ci string, command string) bool {
 	url := fmt.Sprintf("%v/yaml_exists?ci=%v&command=%v", baseURL, ci, command)
