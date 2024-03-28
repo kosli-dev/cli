@@ -145,9 +145,9 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 	for _, ci := range []string{"github", "gitlab"} {
 		if liveYamlDocExists(ci, urlSafeName) {
 			liveExamplesBuf.WriteString(fmt.Sprintf("### %v\n\n", ci))
-			liveExamplesBuf.WriteString(fmt.Sprintf("In [this YAML file](%v)", yamlURL("github", urlSafeName)))
+			liveExamplesBuf.WriteString(fmt.Sprintf("In [this YAML file](%v)", yamlURL(ci, urlSafeName)))
 			if liveEventDocExists(ci, urlSafeName) {
-				liveExamplesBuf.WriteString(fmt.Sprintf(", which created [this Kosli Event](%v).", eventURL("github", urlSafeName)))
+				liveExamplesBuf.WriteString(fmt.Sprintf(", which created [this Kosli Event](%v).", eventURL(ci, urlSafeName)))
 			}
 			liveExamplesBuf.WriteString("\n\n")
 		}
