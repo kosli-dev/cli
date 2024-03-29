@@ -70,7 +70,7 @@ type environmentGetOptions struct {
 	output string
 }
 
-const getSnapshotDescShort = `Get a specified environment snapshot.`
+const getSnapshotDescShort = `Get a specified environment snapshot.  `
 
 const getSnapshotDesc = getSnapshotDescShort + `
 ENVIRONMENT-NAME-OR-EXPRESSION can be specified as follows:
