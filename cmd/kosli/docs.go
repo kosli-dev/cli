@@ -161,14 +161,21 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 
 	if len(cmd.Example) > 0 {
 		buf.WriteString("## Examples Use Cases\n\n")
-		all := strings.Split(cmd.Example, "#")
-		for _, one := range all {
-			lines := strings.Split(one, "\n")
-			if len(lines[0]) > 0 {
-				buf.WriteString(fmt.Sprintf("### %s\n\n", lines[0]))
-				buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", strings.Join(lines[1:], "\n")))
-			}
-		}
+		buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", cmd.Example))
+		// This is an attempt to tidy up the examples, so they each have their own title.
+		// It works in most cases, but not, eg, for 'kosli report approval' which has titles
+		// that span several lines, each line starting with a # character.
+		// The contents of the title lines could also contain < and > characters which will
+		// be lost if simply embedded in a md ## section.
+		//
+		// 		all := strings.Split(cmd.Example, "#")
+		// 		for _, one := range all {
+		// 			lines := strings.Split(one, "\n")
+		// 			if len(lines[0]) > 0 {
+		// 				buf.WriteString(fmt.Sprintf("### %s\n\n", lines[0]))
+		// 				buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", strings.Join(lines[1:], "\n")))
+		// 			}
+		// 		}
 	}
 
 	_, err := buf.WriteTo(w)
