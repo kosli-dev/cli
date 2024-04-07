@@ -160,26 +160,59 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 	}
 
 	if len(cmd.Example) > 0 {
-		buf.WriteString("## Examples Use Cases\n\n")
-		buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", cmd.Example))
-		// This is an attempt to tidy up the examples, so they each have their own title.
-		// It works in most cases, but not, eg, for 'kosli report approval' which has titles
-		// that span several lines, each line starting with a # character.
-		// The contents of the title lines could also contain < and > characters which will
+		// This is an attempt to tidy up the non-live examples, so they each have their own title.
+		// Note: The contents of the title lines could also contain < and > characters which will
 		// be lost if simply embedded in a md ## section.
-		//
-		// 		all := strings.Split(cmd.Example, "#")
-		// 		for _, one := range all {
-		// 			lines := strings.Split(one, "\n")
-		// 			if len(lines[0]) > 0 {
-		// 				buf.WriteString(fmt.Sprintf("### %s\n\n", lines[0]))
-		// 				buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", strings.Join(lines[1:], "\n")))
-		// 			}
-		// 		}
+		buf.WriteString("## Examples Use Cases\n\n")
+
+		// Some non-title lines contain a # character, (eg in a snappish) so we have to
+		// split on newlines first and then only split on # in the first position
+		example := strings.TrimSpace(cmd.Example)
+		lines := strings.Split(example, "\n")
+
+		// Some commands have #titles spanning several lines (that is, each title line starts with a # character)
+		if name == "kosli report approval" {
+			buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", example))
+		} else if name == "kosli request approval" {
+			buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", example))
+		} else if name == "kosli snapshot server" {
+			buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", example))
+		} else if lines[0][0] != '#' {
+			// Some commands, eg 'kosli assert snapshot' have no #title
+			// and their example starts immediately with the kosli command.
+			buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", example))
+		} else {
+			// The rest we can format nicely
+			all := hashTitledExamples(lines)
+			for i := 0; i < len(all); i++ {
+				exampleLines := all[i]
+				title := strings.Trim(exampleLines[0], ":")
+				if len(title) > 0 {
+					buf.WriteString(fmt.Sprintf("### %s\n\n", title))
+					buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", strings.Join(exampleLines[1:], "\n")))
+				}
+			}
+		}
 	}
 
 	_, err := buf.WriteTo(w)
 	return err
+}
+
+func hashTitledExamples(lines []string) [][]string {
+	// Some non-title lines contain a # character, so we have split on newlines first
+	// and then split on # which are the first character in their line
+	result := make([][]string, 0)
+	example := make([]string, 0)
+	for _, line := range lines {
+		if strings.HasPrefix(line, "#") {
+			result = append(result, example) // See result[1:] at end
+			example = make([]string, 0)
+		}
+		example = append(example, line)
+	}
+	result = append(result, example)
+	return result[1:]
 }
 
 func printOptions(buf *bytes.Buffer, cmd *cobra.Command, name string) error {
