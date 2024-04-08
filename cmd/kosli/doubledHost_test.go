@@ -165,7 +165,7 @@ func HelpStatusLines() []string {
 	return []string{
 		"Check the status of a Kosli server.  ",
 		"The status is logged and the command always exits with 0 exit code.  ",
-		"If you like to assert the Kosli server status, you can use the --assert flag or the \"kosli assert status\" command.",
+		"If you like to assert the Kosli server status, you can use the ^--assert^ flag or the \"kosli assert status\" command.",
 		"",
 		"Usage:",
 		"  kosli status [flags]",
