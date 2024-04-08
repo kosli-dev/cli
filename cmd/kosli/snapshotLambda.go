@@ -13,7 +13,7 @@ import (
 const snapshotLambdaShortDesc = `Report a snapshot of artifacts deployed as one or more AWS Lambda functions and their digests to Kosli.`
 
 const snapshotLambdaLongDesc = snapshotLambdaShortDesc + `  
-Skip --function-names to report all functions in a given AWS account.` + awsAuthDesc
+Skip ^--function-names^ to report all functions in a given AWS account.` + awsAuthDesc
 
 const snapshotLambdaExample = `
 # report all Lambda functions running in an AWS account (AWS auth provided in env variables):

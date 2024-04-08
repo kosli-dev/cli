@@ -2,8 +2,11 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -126,7 +129,7 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 
 	if len(cmd.Long) > 0 {
 		buf.WriteString("## Synopsis\n\n")
-		buf.WriteString(cmd.Long + "\n\n")
+		buf.WriteString(strings.Replace(cmd.Long, "^", "`", -1) + "\n\n")
 	}
 
 	if cmd.Runnable() {
@@ -137,12 +140,79 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 		return err
 	}
 
-	if len(cmd.Example) > 0 {
-		buf.WriteString("## Examples\n\n")
-		buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", cmd.Example))
+	urlSafeName := url.QueryEscape(name)
+	liveExamplesBuf := new(bytes.Buffer)
+	for _, ci := range []string{"github", "gitlab"} {
+		if liveYamlDocExists(ci, urlSafeName) {
+			liveExamplesBuf.WriteString(fmt.Sprintf("### %v\n\n", ci))
+			liveExamplesBuf.WriteString(fmt.Sprintf("In [this YAML file](%v)", yamlURL(ci, urlSafeName)))
+			if liveEventDocExists(ci, urlSafeName) {
+				liveExamplesBuf.WriteString(fmt.Sprintf(", which created [this Kosli Event](%v).", eventURL(ci, urlSafeName)))
+			}
+			liveExamplesBuf.WriteString("\n\n")
+		}
 	}
+	liveExamples := liveExamplesBuf.String()
+	if len(liveExamples) > 0 {
+		buf.WriteString("## Live Examples\n\n")
+		buf.WriteString(fmt.Sprintf("View examples of the `%s` command in different CI systems.\n\n", name))
+		buf.WriteString(liveExamples)
+	}
+
+	if len(cmd.Example) > 0 {
+		// This is an attempt to tidy up the non-live examples, so they each have their own title.
+		// Note: The contents of the title lines could also contain < and > characters which will
+		// be lost if simply embedded in a md ## section.
+		buf.WriteString("## Examples Use Cases\n\n")
+
+		// Some non-title lines contain a # character, (eg in a snappish) so we have to
+		// split on newlines first and then only split on # in the first position
+		example := strings.TrimSpace(cmd.Example)
+		lines := strings.Split(example, "\n")
+
+		// Some commands have #titles spanning several lines (that is, each title line starts with a # character)
+		if name == "kosli report approval" {
+			buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", example))
+		} else if name == "kosli request approval" {
+			buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", example))
+		} else if name == "kosli snapshot server" {
+			buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", example))
+		} else if lines[0][0] != '#' {
+			// Some commands, eg 'kosli assert snapshot' have no #title
+			// and their example starts immediately with the kosli command.
+			buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", example))
+		} else {
+			// The rest we can format nicely
+			all := hashTitledExamples(lines)
+			for i := 0; i < len(all); i++ {
+				exampleLines := all[i]
+				title := strings.Trim(exampleLines[0], ":")
+				if len(title) > 0 {
+					buf.WriteString(fmt.Sprintf("### %s\n\n", title[1:]))
+					buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", strings.Join(exampleLines[1:], "\n")))
+				}
+			}
+		}
+	}
+
 	_, err := buf.WriteTo(w)
 	return err
+}
+
+func hashTitledExamples(lines []string) [][]string {
+	// Some non-title lines contain a # character, so we have split on newlines first
+	// and then split on # which are the first character in their line
+	result := make([][]string, 0)
+	example := make([]string, 0)
+	for _, line := range lines {
+		if strings.HasPrefix(line, "#") {
+			result = append(result, example) // See result[1:] at end
+			example = make([]string, 0)
+		}
+		example = append(example, line)
+	}
+	result = append(result, example)
+	return result[1:]
 }
 
 func printOptions(buf *bytes.Buffer, cmd *cobra.Command, name string) error {
@@ -160,7 +230,7 @@ func printOptions(buf *bytes.Buffer, cmd *cobra.Command, name string) error {
 	parentFlags := cmd.InheritedFlags()
 	parentFlags.SetOutput(buf)
 	if parentFlags.HasAvailableFlags() {
-		buf.WriteString("## Options inherited from parent commands\n")
+		buf.WriteString("## Flags inherited from parent commands\n")
 		buf.WriteString("| Flag | Description |\n")
 		buf.WriteString("| :--- | :--- |\n")
 		usages := CommandsInTable(parentFlags)
@@ -168,4 +238,39 @@ func printOptions(buf *bytes.Buffer, cmd *cobra.Command, name string) error {
 		buf.WriteString("\n\n")
 	}
 	return nil
+}
+
+const baseURL = "https://app.kosli.com/api/v2/livedocs/cyber-dojo"
+
+func liveYamlDocExists(ci string, command string) bool {
+	url := fmt.Sprintf("%v/yaml_exists?ci=%v&command=%v", baseURL, ci, command)
+	return liveDocExists(url)
+}
+
+func liveEventDocExists(ci string, command string) bool {
+	url := fmt.Sprintf("%v/event_exists?ci=%v&command=%v", baseURL, ci, command)
+	return liveDocExists(url)
+}
+
+func liveDocExists(url string) bool {
+	response, err := http.Get(url)
+	if err != nil {
+		return false
+	}
+	defer response.Body.Close()
+	decoder := json.NewDecoder(response.Body)
+	var exists bool
+	err = decoder.Decode(&exists)
+	if err != nil {
+		return false
+	}
+	return exists
+}
+
+func yamlURL(ci string, command string) string {
+	return fmt.Sprintf("%v/yaml?ci=%v&command=%v", baseURL, ci, command)
+}
+
+func eventURL(ci string, command string) string {
+	return fmt.Sprintf("%v/event?ci=%v&command=%v", baseURL, ci, command)
 }
