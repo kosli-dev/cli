@@ -142,21 +142,23 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 
 	urlSafeName := url.QueryEscape(name)
 	liveExamplesBuf := new(bytes.Buffer)
-	for _, ci := range []string{"github", "gitlab"} {
+	for _, ci := range []string{"GitHub", "GitLab"} {
 		if liveYamlDocExists(ci, urlSafeName) {
-			liveExamplesBuf.WriteString(fmt.Sprintf("### %v\n\n", ci))
+			liveExamplesBuf.WriteString(fmt.Sprintf("{{< tab \"%v\" >}}", ci))
+			liveExamplesBuf.WriteString(fmt.Sprintf("View an example of the `%s` command in %s.\n\n", name, ci))
 			liveExamplesBuf.WriteString(fmt.Sprintf("In [this YAML file](%v)", yamlURL(ci, urlSafeName)))
 			if liveEventDocExists(ci, urlSafeName) {
 				liveExamplesBuf.WriteString(fmt.Sprintf(", which created [this Kosli Event](%v).", eventURL(ci, urlSafeName)))
 			}
-			liveExamplesBuf.WriteString("\n\n")
+			liveExamplesBuf.WriteString("{{< /tab >}}")
 		}
 	}
 	liveExamples := liveExamplesBuf.String()
 	if len(liveExamples) > 0 {
-		buf.WriteString("## Live Examples\n\n")
-		buf.WriteString(fmt.Sprintf("View examples of the `%s` command in different CI systems.\n\n", name))
+		buf.WriteString("## Live Examples in different CI systems\n\n")
+		buf.WriteString("{{< tabs \"live-examples\" \"col-no-wrap\" >}}")
 		buf.WriteString(liveExamples)
+		buf.WriteString("{{< /tabs >}}\n\n")
 	}
 
 	if len(cmd.Example) > 0 {
@@ -186,9 +188,10 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 			all := hashTitledExamples(lines)
 			for i := 0; i < len(all); i++ {
 				exampleLines := all[i]
+				// Some titles have a trailing colon, some don't
 				title := strings.Trim(exampleLines[0], ":")
 				if len(title) > 0 {
-					buf.WriteString(fmt.Sprintf("### %s\n\n", title[1:]))
+					buf.WriteString(fmt.Sprintf("**%s**\n\n", strings.TrimSpace(title[1:])))
 					buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", strings.Join(exampleLines[1:], "\n")))
 				}
 			}
@@ -243,12 +246,12 @@ func printOptions(buf *bytes.Buffer, cmd *cobra.Command, name string) error {
 const baseURL = "https://app.kosli.com/api/v2/livedocs/cyber-dojo"
 
 func liveYamlDocExists(ci string, command string) bool {
-	url := fmt.Sprintf("%v/yaml_exists?ci=%v&command=%v", baseURL, ci, command)
+	url := fmt.Sprintf("%v/yaml_exists?ci=%v&command=%v", baseURL, strings.ToLower(ci), command)
 	return liveDocExists(url)
 }
 
 func liveEventDocExists(ci string, command string) bool {
-	url := fmt.Sprintf("%v/event_exists?ci=%v&command=%v", baseURL, ci, command)
+	url := fmt.Sprintf("%v/event_exists?ci=%v&command=%v", baseURL, strings.ToLower(ci), command)
 	return liveDocExists(url)
 }
 
@@ -268,9 +271,9 @@ func liveDocExists(url string) bool {
 }
 
 func yamlURL(ci string, command string) string {
-	return fmt.Sprintf("%v/yaml?ci=%v&command=%v", baseURL, ci, command)
+	return fmt.Sprintf("%v/yaml?ci=%v&command=%v", baseURL, strings.ToLower(ci), command)
 }
 
 func eventURL(ci string, command string) string {
-	return fmt.Sprintf("%v/event?ci=%v&command=%v", baseURL, ci, command)
+	return fmt.Sprintf("%v/event?ci=%v&command=%v", baseURL, strings.ToLower(ci), command)
 }
