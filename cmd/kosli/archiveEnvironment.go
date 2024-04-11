@@ -12,7 +12,7 @@ import (
 const archiveEnvironmentShortDesc = `Archive a Kosli environment.`
 
 const archiveEnvironmentLongDesc = archiveEnvironmentShortDesc + `
-The environment will no longer be visible in list of environments, data is still stored in database.
+The environment will no longer be visible in list of environments, data is still stored in the database.
 `
 
 const archiveEnvironmentExample = `

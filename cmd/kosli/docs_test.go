@@ -24,15 +24,15 @@ func (suite *DocsCommandTestSuite) TestDocsCmd() {
 
 	o := &docsOptions{
 		dest:            tempDirName,
-		topCmd:          newReportArtifactCmd(os.Stdout),
+		topCmd:          newAttestSnykCmd(os.Stdout),
 		generateHeaders: true,
 	}
 	err = o.run()
 	require.NoError(suite.T(), err)
 
-	actualFile := filepath.Join(tempDirName, "artifact.md")
+	actualFile := filepath.Join(tempDirName, "snyk.md")
 	require.FileExists(suite.T(), actualFile)
-	err = compareTwoFiles(actualFile, goldenPath("output/docs/artifact.md"))
+	err = compareTwoFiles(actualFile, goldenPath("output/docs/snyk.md"))
 	require.NoError(suite.T(), err)
 }
 
