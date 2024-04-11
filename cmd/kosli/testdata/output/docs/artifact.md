@@ -6,7 +6,7 @@ deprecated: true
 
 # artifact
 
-{{< hint danger >}}**artifact** is a deprecated. see kosli attest commands  Deprecated commands will be removed in a future release.{{< /hint >}}
+{{< hint danger >}}**artifact** is deprecated. See **kosli attest** commands. Deprecated commands will be removed in a future release.{{< /hint >}}
 ## Synopsis
 
 Report an artifact creation to a Kosli flow.  

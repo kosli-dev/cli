@@ -99,7 +99,7 @@ func newReportEvidenceCommitJiraCmd(out io.Writer) *cobra.Command {
 		Short:      reportEvidenceCommitJiraShortDesc,
 		Long:       reportEvidenceCommitJiraLongDesc,
 		Example:    reportEvidenceCommitJiraExample,
-		Deprecated: "see kosli attest commands",
+		Deprecated: deprecatedKosliReportEvidenceMessage,
 		Args:       cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
