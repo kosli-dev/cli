@@ -15,12 +15,23 @@ import (
 const diffSnapshotsDescShort = `Diff environment snapshots.  `
 
 const diffSnapshotsDesc = diffSnapshotsDescShort + `
-Specify SNAPPISH_1 and SNAPPISH_2 by:  
-- environmentName~<N>  N'th behind the latest snapshot  
-- environmentName#<N>  snapshot number N  
-- environmentName@{YYYY-MM-DDTHH:MM:SS} snapshot at specific moment in time in UTC
-- environmentName@{<N>.<hours|days|weeks|months>.ago} snapshot at a relative time
-- environmentName      the latest snapshot`
+Specify SNAPPISH_1 and SNAPPISH_2 by:
+- environmentName
+    - the latest snapshot for environmentName, at the time of the request
+    - e.g., **prod**
+- environmentName#N
+    - the Nth snapshot, counting from 1
+    - e.g., **prod#42**
+- environmentName~N
+    - the Nth snapshot behind the latest, at the time of the request
+    - e.g., **prod~5**
+- environmentName@{YYYY-MM-DDTHH:MM:SS}
+    - the snapshot at specific moment in time in UTC
+    - e.g., **prod@{2023-10-02T12:00:00}**
+- environmentName@{N.<hours|days|weeks|months>.ago}
+    - the snapshot at a time relative to the time of the request
+    - e.g., **prod@{2.hours.ago}**
+`
 
 const diffSnapshotsExample = `
 # compare the third latest snapshot in an environment to the latest

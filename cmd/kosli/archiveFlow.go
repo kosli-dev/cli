@@ -12,7 +12,7 @@ import (
 const archiveFlowShortDesc = `Archive a Kosli flow.`
 
 const archiveFlowLongDesc = archiveFlowShortDesc + `
-The flow will no longer be visible in list of flows, data is still stored in database.
+The flow will no longer be visible in list of flows, data is still stored in the database.
 `
 
 const archiveFlowExample = `

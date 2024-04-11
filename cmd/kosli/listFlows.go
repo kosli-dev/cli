@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -73,10 +74,16 @@ func printFlowsListAsTable(raw string, out io.Writer, page int) error {
 		return nil
 	}
 
-	header := []string{"NAME", "DESCRIPTION", "VISIBILITY"}
+	header := []string{"NAME", "DESCRIPTION", "VISIBILITY", "TAGS"}
 	rows := []string{}
 	for _, flow := range flows {
-		row := fmt.Sprintf("%s\t%s\t%s", flow["name"], flow["description"], flow["visibility"])
+		tags := flow["tags"].(map[string]interface{})
+		tagsOutput := ""
+		for key, value := range tags {
+			tagsOutput += fmt.Sprintf("[%s=%s], ", key, value)
+		}
+		tagsOutput = strings.TrimSuffix(tagsOutput, ", ")
+		row := fmt.Sprintf("%s\t%s\t%s\t%s", flow["name"], flow["description"], flow["visibility"], tagsOutput)
 		rows = append(rows, row)
 	}
 	tabFormattedPrint(out, header, rows)

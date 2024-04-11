@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/security"
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -22,16 +24,22 @@ Setting the API token to DRY_RUN sets the --dry-run flag.
 `
 
 const (
-	maxAPIRetries = 3
+	defaultMaxAPIRetries = 3
 	// The name of our config file, without the file extension because viper supports many different config file languages.
-	defaultConfigFilename = "kosli"
+	defaultConfigFilename = ".kosli.yml"
+
+	// The default Kosli app host URL.
+	defaultHost = "https://app.kosli.com"
 
 	// The environment variable prefix of all environment variables bound to our command line flags.
 	// For example, --namespace is bound to KOSLI_NAMESPACE.
 	envPrefix = "KOSLI"
 
+	// the name of the credentials store secret holding the encryption key for api token storage
+	credentialsStoreKeySecretName = "kosli-encryption-key"
+
 	// the following constants are used in the docs/help
-	fingerprintDesc = "The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag)."
+	fingerprintDesc = "The artifact SHA256 fingerprint is calculated (based on the ^--artifact-type^ flag) or can be provided directly (with the ^--fingerprint^ flag)."
 	awsAuthDesc     = `
 
 To authenticate to AWS, you can either:  
@@ -61,7 +69,6 @@ The service principal needs to have the following permissions:
 	dryRunFlag                  = "[optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors."
 	maxAPIRetryFlag             = "[defaulted] How many times should API calls be retried when the API host is not reachable."
 	configFileFlag              = "[optional] The Kosli config file path."
-	verboseFlag                 = "[optional] Print verbose logs to stdout."
 	debugFlag                   = "[optional] Print debug logs to stdout. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default false)"
 	artifactTypeFlag            = "[conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'."
 	flowNameFlag                = "The Kosli flow name."
@@ -184,8 +191,9 @@ The service principal needs to have the following permissions:
 	attestationDescription      = "[optional] attestation description"
 	excludeScalingFlag          = "[optional] Exclude scaling events for snapshots. Snapshots with scaling changes will not result in new environment records."
 	includeScalingFlag          = "[optional] Include scaling events for snapshots. Snapshots with scaling changes will result in new environment records."
-
 	deprecatedKosliReportEvidenceMessage = "See **kosli attest** commands."
+	setTagsFlag                 = "[optional] The key-value pairs to tag the resource with. The format is: key=value"
+	unsetTagsFlag               = "[optional] The list of tag keys to remove from the resource."
 )
 
 var global *GlobalOpts
@@ -197,8 +205,41 @@ type GlobalOpts struct {
 	DryRun        bool
 	MaxAPIRetries int
 	ConfigFile    string
-	Verbose       bool
 	Debug         bool
+}
+
+// ConfigGetter defines an interface for getting the default config file path
+// the interface allows to mock the default config file path in tests
+type ConfigGetter interface {
+	defaultConfigFilePath() string
+}
+
+// RealConfigGetter is a real implementation of the ConfigGetter interface
+type RealConfigGetter struct{}
+
+// defaultConfigFilePath is a method that satisfies the ConfigGetter interface
+func (r *RealConfigGetter) defaultConfigFilePath() string {
+	if _, ok := os.LookupEnv("DOCS"); ok { // used for docs generation
+		return fmt.Sprintf("$HOME/%s", defaultConfigFilename)
+	}
+
+	home, err := homedir.Dir()
+	if err == nil {
+		return filepath.Join(home, defaultConfigFilename)
+
+	}
+	return "kosli" // for backward compatibility with old default config location
+}
+
+// defaultConfigFilePathFunc is a variable holding the implementation of defaultConfigFilePath
+var defaultConfigFilePathFunc = (&RealConfigGetter{}).defaultConfigFilePath
+
+func getConfigFileFlagDefault() string {
+	defaultPath := defaultConfigFilePathFunc()
+	if _, err := os.Stat(defaultPath); err == nil {
+		return defaultPath
+	}
+	return "kosli" // for backward compatibility with old default config location
 }
 
 func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
@@ -236,16 +277,10 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	}
 	cmd.PersistentFlags().StringVarP(&global.ApiToken, "api-token", "a", "", apiTokenFlag)
 	cmd.PersistentFlags().StringVar(&global.Org, "org", "", orgFlag)
-	cmd.PersistentFlags().StringVarP(&global.Host, "host", "H", "https://app.kosli.com", hostFlag)
-	cmd.PersistentFlags().IntVarP(&global.MaxAPIRetries, "max-api-retries", "r", maxAPIRetries, maxAPIRetryFlag)
-	cmd.PersistentFlags().StringVarP(&global.ConfigFile, "config-file", "c", defaultConfigFilename, configFileFlag)
-	cmd.PersistentFlags().BoolVarP(&global.Debug, "verbose", "v", false, verboseFlag)
+	cmd.PersistentFlags().StringVarP(&global.Host, "host", "H", defaultHost, hostFlag)
+	cmd.PersistentFlags().IntVarP(&global.MaxAPIRetries, "max-api-retries", "r", defaultMaxAPIRetries, maxAPIRetryFlag)
+	cmd.PersistentFlags().StringVarP(&global.ConfigFile, "config-file", "c", getConfigFileFlagDefault(), configFileFlag)
 	cmd.PersistentFlags().BoolVar(&global.Debug, "debug", false, debugFlag)
-
-	err := cmd.PersistentFlags().MarkDeprecated("verbose", "use --debug instead")
-	if err != nil {
-		return cmd, err
-	}
 
 	// Add subcommands
 	cmd.AddCommand(
@@ -276,6 +311,8 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		newLogCmd(out),
 		newDisableCmd(out),
 		newEnableCmd(out),
+		newTagCmd(out),
+		newConfigCmd(out),
 	)
 
 	cobra.AddTemplateFunc("isBeta", isBeta)
@@ -286,11 +323,8 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 }
 
 func initialize(cmd *cobra.Command, out io.Writer) error {
-	logger.DebugEnabled = global.Debug
 	logger.SetInfoOut(out) // needed to allow tests to overwrite the logger output stream
-	kosliClient.SetDebug(global.Debug)
-	kosliClient.SetMaxAPIRetries(global.MaxAPIRetries)
-	kosliClient.SetLogger(logger)
+	logger.DebugEnabled = global.Debug
 	v := viper.New()
 
 	// If provided, extract the custom config file dir and name
@@ -298,7 +332,7 @@ func initialize(cmd *cobra.Command, out io.Writer) error {
 	// handle passing the config file as an env variable.
 	// we load the config file before we bind env vars to flags,
 	// so we check for the config file env var separately here
-	if global.ConfigFile == defaultConfigFilename {
+	if global.ConfigFile == defaultConfigFilePathFunc() {
 		if path, exists := os.LookupEnv("KOSLI_CONFIG_FILE"); exists {
 			global.ConfigFile = path
 		}
@@ -310,7 +344,7 @@ func initialize(cmd *cobra.Command, out io.Writer) error {
 	v.SetConfigName(file)
 
 	// Set as many paths as you like where viper should look for the
-	// config file. We are only looking in the current working directory.
+	// config file. By default, we are looking in the current working directory.
 	if dir == "" {
 		dir = "."
 	}
@@ -331,7 +365,7 @@ func initialize(cmd *cobra.Command, out io.Writer) error {
 	// avoid conflicts.
 	v.SetEnvPrefix(envPrefix)
 
-	// Bind to environment variables
+	// Bind viper config to environment variables
 	// Works great for simple config names, but needs help for names
 	// like --kube-config which we fix in the bindFlags function
 	v.AutomaticEnv()
@@ -339,11 +373,23 @@ func initialize(cmd *cobra.Command, out io.Writer) error {
 	// Bind the current command's flags to viper
 	bindFlags(cmd, v)
 
+	kosliClient.SetDebug(global.Debug)
+	kosliClient.SetMaxAPIRetries(global.MaxAPIRetries)
+	kosliClient.SetLogger(logger)
+
 	return nil
 }
 
-// Bind each cobra flag to its associated viper configuration (config file and environment variable)
+// Bind each cobra flag to its associated viper configuration
+// (coming either from environment variables or config file)
 func bindFlags(cmd *cobra.Command, v *viper.Viper) {
+	// for some reason, logger does not print errors at the point
+	// of calling this function, so we ensure to point errors to stderr
+	logger.SetErrOut(os.Stderr)
+	// api token in config file is encrypted, so we have to decrypt it
+	// but if it is set via env variables, it is not encrypted
+	_, apiTokenSetInEnv := os.LookupEnv("KOSLI_API_TOKEN")
+
 	cmd.Flags().VisitAll(func(f *pflag.Flag) {
 		// Environment variables can't have dashes in them, so bind them to their equivalent
 		// keys with underscores, e.g. --kube-config to KOSLI_KUBE_CONFIG
@@ -355,8 +401,23 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 		}
 
 		// Apply the viper config value to the flag when the flag is not set and viper has a value
+		// for api token, decrypt it if it is coming from the config file
 		if !f.Changed && v.IsSet(f.Name) {
 			val := v.Get(f.Name)
+			if !apiTokenSetInEnv && f.Name == "api-token" {
+				// get encryption key
+				key, err := security.GetSecretFromCredentialsStore(credentialsStoreKeySecretName)
+				if err != nil {
+					logger.Error("failed to get api token encryption key from credentials store: %s", err)
+				}
+				// decrypt token
+				decryptedBytes, err := security.AESDecrypt([]byte(val.(string)), []byte(key))
+				if err != nil {
+					logger.Error("failed to decrypt api token: %s", err)
+				}
+				val = string(decryptedBytes)
+			}
+
 			if err := cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val)); err != nil {
 				logger.Error("failed to set flag: %v", err)
 			}

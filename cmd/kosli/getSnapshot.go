@@ -70,7 +70,7 @@ type environmentGetOptions struct {
 	output string
 }
 
-const getSnapshotDescShort = `Get a specified environment snapshot.`
+const getSnapshotDescShort = `Get a specified environment snapshot.  `
 
 const getSnapshotDesc = getSnapshotDescShort + `
 ENVIRONMENT-NAME-OR-EXPRESSION can be specified as follows:
@@ -179,7 +179,7 @@ func printSnapshotAsTable(raw string, out io.Writer, page int) error {
 		return nil
 	}
 
-	header := []string{"COMMIT", "ARTIFACT", "FLOW", "RUNNING_SINCE", "REPLICAS"}
+	header := []string{"COMMIT", "ARTIFACT", "FLOW", "COMPLIANCE", "RUNNING_SINCE", "REPLICAS"}
 	rows := []string{}
 	for _, artifact := range snapshot.Artifacts {
 		if artifact.Annotation.Now == 0 {
@@ -199,7 +199,12 @@ func printSnapshotAsTable(raw string, out io.Writer, page int) error {
 			flowName = artifact.FlowName
 		}
 
-		row := fmt.Sprintf("%s\tName: %s\t%s\t%s\t%d", gitCommit, artifact.Name, flowName, since, len(artifact.CreationTimestamp))
+		compliance := "COMPLIANT"
+		if !artifact.Compliant {
+			compliance = "NON-COMPLIANT"
+		}
+
+		row := fmt.Sprintf("%s\tName: %s\t%s\t%s\t%s\t%d", gitCommit, artifact.Name, flowName, compliance, since, len(artifact.CreationTimestamp))
 		rows = append(rows, row)
 		row = fmt.Sprintf("\tFingerprint: %s\t\t\t", artifact.Fingerprint)
 		rows = append(rows, row)
