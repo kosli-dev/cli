@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/requests"
@@ -109,10 +110,12 @@ func (o *tagOptions) run(args []string) error {
 			for key := range o.payload.SetTags {
 				keys = append(keys, key)
 			}
+			sort.Strings(keys)
 			keysStr := strings.Join(keys, ", ")
 			addMsg = fmt.Sprintf("Tag(s) [%s] added", keysStr)
 		}
 		if len(o.payload.RemoveTags) > 0 {
+			sort.Strings(o.payload.RemoveTags)
 			keysStr := strings.Join(o.payload.RemoveTags, ", ")
 			removedMsg = fmt.Sprintf("Tag(s) [%s] removed", keysStr)
 		}
