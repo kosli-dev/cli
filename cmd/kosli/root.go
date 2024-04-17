@@ -188,6 +188,7 @@ The service principal needs to have the following permissions:
 	attachmentsFlag                      = "[optional] The comma-separated list of paths of attachments for the reported attestation. Attachments can be files or directories. All attachments are compressed and uploaded to Kosli's evidence vault."
 	externalFingerprintFlag              = "[optional] A SHA256 fingerprint of an external attachment represented by --external-url. The format is label=fingerprint (labels cannot contain '.' or '='). This flag can be set multiple times. There must be an external url with a matching label for each external fingerprint."
 	externalURLFlag                      = "[optional] Add labeled reference URL for an external resource. The format is label=url (labels cannot contain '.' or '='). This flag can be set multiple times. If the resource is a file or dir, you can optionally add its fingerprint via --external-fingerprint"
+	annotationFlag                       = "[optional] Annotate the attestation with data using key=value."
 	attestationDescription               = "[optional] attestation description"
 	excludeScalingFlag                   = "[optional] Exclude scaling events for snapshots. Snapshots with scaling changes will not result in new environment records."
 	includeScalingFlag                   = "[optional] Include scaling events for snapshots. Snapshots with scaling changes will result in new environment records."

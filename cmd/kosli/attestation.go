@@ -22,6 +22,7 @@ type CommonAttestationPayload struct {
 	OriginURL           string                   `json:"origin_url,omitempty"`
 	UserData            interface{}              `json:"user_data,omitempty"`
 	Description         string                   `json:"description,omitempty"`
+	Annotations         map[string]string        `json:"annotations,omitempty"`
 }
 
 type CommonAttestationOptions struct {
@@ -35,6 +36,7 @@ type CommonAttestationOptions struct {
 	srcRepoRoot             string
 	externalURLs            map[string]string
 	externalFingerprints    map[string]string
+	annotations             map[string]string
 }
 
 func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestationPayload) error {
@@ -77,6 +79,9 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 
 	// process external urls
 	payload.ExternalURLs, err = processExternalURLs(o.externalURLs, o.externalFingerprints)
+
+	// process annotations
+	payload.Annotations = o.annotations
 
 	return err
 }

@@ -121,6 +121,11 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 			cmd:    fmt.Sprintf("attest generic --name bar --description 'foo bar foo' %s", suite.defaultKosliArguments),
 			golden: "generic attestation 'bar' is reported to trail: test-123\n",
 		},
+		{
+			name:   "can attest generic attestation with annotations against a trail",
+			cmd:    fmt.Sprintf("attest generic --name bar --annotate foo=bar --annotate baz=\"data with spaces\" %s", suite.defaultKosliArguments),
+			golden: "generic attestation 'bar' is reported to trail: test-123\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)
