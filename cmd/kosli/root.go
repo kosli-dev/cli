@@ -272,7 +272,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 				}
 
 				if _, ok := f.Annotations[cobra.BashCompOneRequiredFlag]; ok {
-					if f.Value.String() == "" {
+					if f.Changed && f.Value.String() == "" {
 						flagError = fmt.Errorf("flag '--%s' is required, but empty string was provided", f.Name)
 					}
 				}
