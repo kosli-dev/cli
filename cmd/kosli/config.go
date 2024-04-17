@@ -58,7 +58,6 @@ func newConfigCmd(out io.Writer) *cobra.Command {
 		Short:   configShortDesc,
 		Long:    configLongDesc,
 		Example: configExample,
-		Hidden:  true,
 		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if cmd.Flags().Changed("config-file") {
