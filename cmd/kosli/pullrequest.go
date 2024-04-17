@@ -119,15 +119,19 @@ func (o *attestPROptions) run(args []string) error {
 		return err
 	}
 
+	label := ""
+	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
+
+	if o.payload.Commit == nil {
+		return fmt.Errorf("failed to attest %s. No commit was provided. Please pass the merge commit using --commit", label)
+	}
+
 	pullRequestsEvidence, err := o.getRetriever().PREvidenceForCommit(o.payload.Commit.Sha1)
 	if err != nil {
 		return err
 	}
 
 	o.payload.PullRequests = pullRequestsEvidence
-
-	label := ""
-	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
 
 	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.attachments)
 	if err != nil {
