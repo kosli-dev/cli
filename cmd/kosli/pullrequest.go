@@ -126,6 +126,9 @@ func (o *attestPROptions) run(args []string) error {
 
 	o.payload.PullRequests = pullRequestsEvidence
 
+	label := ""
+	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
+
 	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.attachments)
 	if err != nil {
 		return err
@@ -134,9 +137,6 @@ func (o *attestPROptions) run(args []string) error {
 	if cleanupNeeded {
 		defer os.Remove(evidencePath)
 	}
-
-	label := ""
-	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
 
 	logger.Info("found %d %s(s) for commit: %s", len(pullRequestsEvidence), label, o.payload.Commit.Sha1)
 
