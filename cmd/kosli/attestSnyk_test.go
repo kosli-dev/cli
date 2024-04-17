@@ -109,6 +109,21 @@ func (suite *AttestSnykCommandTestSuite) TestAttestSnykCmd() {
 				--scan-results testdata/snyk_sarif.json %s`, suite.defaultKosliArguments),
 			golden: "snyk attestation 'bar' is reported to trail: test-123\n",
 		},
+		{
+			name: "can attest with annotations against a trail",
+			cmd: fmt.Sprintf(`attest snyk --name bar --commit HEAD --origin-url example.com
+				--annotate foo=bar --annotate baz=qux
+				--scan-results testdata/snyk_sarif.json %s`, suite.defaultKosliArguments),
+			golden: "snyk attestation 'bar' is reported to trail: test-123\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when annotation is not valid",
+			cmd: fmt.Sprintf(`attest snyk --name bar --commit HEAD --origin-url example.com
+				--annotate foo.baz=bar
+				--scan-results testdata/snyk_sarif.json %s`, suite.defaultKosliArguments),
+			golden: "Error: --annotate flag should be in the format key=value. Invalid key: 'foo.baz'. Key can only contain [A-Za-z0-9_].\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

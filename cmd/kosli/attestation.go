@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/gitview"
@@ -79,11 +80,22 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 
 	// process external urls
 	payload.ExternalURLs, err = processExternalURLs(o.externalURLs, o.externalFingerprints)
+	if err != nil {
+		return err
+	}
 
 	// process annotations
-	payload.Annotations = o.annotations
-
+	payload.Annotations, err = proccessAnnotations(o.annotations)
 	return err
+}
+
+func proccessAnnotations(annotations map[string]string) (map[string]string, error) {
+	for label, _ := range annotations {
+		if !regexp.MustCompile(`^[A-Za-z0-9_]+$`).MatchString(label) {
+			return nil, fmt.Errorf("--annotate flag should be in the format key=value. Invalid key: '%s'. Key can only contain [A-Za-z0-9_].", label)
+		}
+	}
+	return annotations, nil
 }
 
 func processExternalURLs(externalURLs, externalFingerprints map[string]string) (map[string]*URLInfo, error) {
