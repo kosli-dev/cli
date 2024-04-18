@@ -270,6 +270,12 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 				if strings.HasPrefix(f.Value.String(), "-") {
 					flagError = fmt.Errorf("flag '--%s' has value '%s' which is illegal", f.Name, f.Value.String())
 				}
+
+				if _, ok := f.Annotations[cobra.BashCompOneRequiredFlag]; ok {
+					if f.Changed && f.Value.String() == "" {
+						flagError = fmt.Errorf("flag '--%s' is required, but empty string was provided", f.Name)
+					}
+				}
 			})
 
 			return flagError

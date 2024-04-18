@@ -64,6 +64,13 @@ func (suite *AttestGithubPRCommandTestSuite) TestAttestGithubPRCmd() {
 		},
 		{
 			wantError: true,
+			name:      "fails when --commit is provided as empty string",
+			cmd: fmt.Sprintf(`attest pullrequest github --commit "" --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo 
+			    --github-org kosli-dev --repository cli  --flow %s --trail %s --repo-root ../.. --host %s --org %s --api-token %s`, suite.flowName, suite.trailName, global.Host, global.Org, global.ApiToken),
+			golden: "Error: flag '--commit' is required, but empty string was provided\n",
+		},
+		{
+			wantError: true,
 			name:      "attesting against an artifact that does not exist fails",
 			cmd: fmt.Sprintf(`attest pullrequest github --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo 
 				--github-org kosli-dev --repository cli   %s`, suite.defaultKosliArguments),

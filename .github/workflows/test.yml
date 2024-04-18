@@ -37,22 +37,22 @@ jobs:
       contents: write
     steps:
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
     
-    - uses: actions/setup-go@v3
+    - uses: actions/setup-go@v5
       with:
         go-version: '1.21.5'
     
     - name: Run golangci-lint
-      uses: golangci/golangci-lint-action@v3
+      uses: golangci/golangci-lint-action@v4
       with:
         version: latest
         args: --timeout=5m -v
 
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1-node16
+      uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: arn:aws:iam::${{ inputs.AWS_ACCOUNT_ID }}:role/cli
         aws-region: ${{ inputs.AWS_REGION }}
@@ -61,7 +61,7 @@ jobs:
 
     - name: Login to Amazon ECR private
       id: login-ecr-private
-      uses: aws-actions/amazon-ecr-login@v1
+      uses: aws-actions/amazon-ecr-login@v2
 
     - name: Run tests
       env:
@@ -78,7 +78,7 @@ jobs:
         make test_integration_full
 
     - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
 
     - name: Slack Notification on Failure
       if: ${{ failure() }}
