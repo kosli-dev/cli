@@ -18,6 +18,8 @@ var (
 
 func init() {
 	logger = log.NewStandardLogger()
+	// needed for some tests, actual CLI client is initialized in root.go
+	kosliClient, _ = requests.NewStandardKosliClient("")
 }
 
 func main() {

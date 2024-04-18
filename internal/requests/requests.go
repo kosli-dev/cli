@@ -40,16 +40,16 @@ type Client struct {
 func NewKosliClient(httpProxyURL string, maxAPIRetries int, debug bool, logger *logger.Logger) (*Client, error) {
 	retryClient := retryablehttp.NewClient()
 	retryClient.RetryMax = maxAPIRetries
-	retryClient.Logger = nil         // this silences logging each individual attempt
-	client := retryClient.HTTPClient // return a standard *http.Client from the retryable client
+	retryClient.Logger = nil               // this silences logging each individual attempt
+	client := retryClient.StandardClient() // return a standard *http.Client from the retryable client
 	if httpProxyURL != "" {
 		proxyURL, err := url.Parse(httpProxyURL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse proxy URL when creating a Kosli http client: %s", err)
 		}
-		client.Transport = &http.Transport{
-			Proxy: http.ProxyURL(proxyURL),
-		}
+		// client.Transport is already set by retryClient.StandardClient() and we add
+		// the proxy to it
+		client.Transport.(*retryablehttp.RoundTripper).Client.HTTPClient.Transport.(*http.Transport).Proxy = http.ProxyURL(proxyURL)
 	}
 
 	return &Client{
