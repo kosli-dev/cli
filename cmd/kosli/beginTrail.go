@@ -15,6 +15,7 @@ const beginTrailShortDesc = `Begin or update a Kosli flow trail.`
 const beginTrailExample = `
 # begin/update a Kosli flow trail:
 kosli begin trail yourTrailName \
+	--flow yourFlowName \
 	--description yourTrailDescription \
 	--template-file /path/to/your/template/file.yml \
 	--user-data /path/to/your/user-data/file.json \
