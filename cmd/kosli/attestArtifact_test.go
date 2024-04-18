@@ -87,6 +87,17 @@ func (suite *AttestArtifactCommandTestSuite) TestAttestArtifactCmd() {
 			cmd:       fmt.Sprintf("attest artifact testdata/file1 --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name cli --commit HEAD --build-url example.com --commit-url example.com --external-url file=https://example.com --external-fingerprint file=7509e5bda0  %s", suite.defaultKosliArguments),
 			golden:    "Error: Input payload validation failed: map[external_urls.file.fingerprint:'7509e5bda0' does not match '^[a-f0-9]{64}$']\n",
 		},
+		{
+			name:   "can attest with annotations against a trail",
+			cmd:    fmt.Sprintf("attest artifact testdata/file1 --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name cli --commit HEAD --build-url example.com --commit-url example.com --annotate foo=bar --annotate baz=\"data with spaces\" %s", suite.defaultKosliArguments),
+			golden: "artifact testdata/file1 was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when annotation is not valid",
+			cmd:       fmt.Sprintf("attest artifact testdata/file1 --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name cli --commit HEAD --build-url example.com --commit-url example.com --annotate foo.baz=bar %s", suite.defaultKosliArguments),
+			golden:    "Error: --annotate flag should be in the format key=value. Invalid key: 'foo.baz'. Key can only contain [A-Za-z0-9_].\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)
