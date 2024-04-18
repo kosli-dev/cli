@@ -18,7 +18,6 @@ var (
 
 func init() {
 	logger = log.NewStandardLogger()
-	kosliClient = requests.NewStandardKosliClient()
 }
 
 func main() {

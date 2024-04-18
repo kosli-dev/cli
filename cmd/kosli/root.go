@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/security"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
@@ -66,6 +67,7 @@ The service principal needs to have the following permissions:
 	artifactDisplayName                  = "[optional] Artifact display name, if different from file, image or directory name."
 	orgFlag                              = "The Kosli organization."
 	hostFlag                             = "[defaulted] The Kosli endpoint."
+	httpProxyFlag                        = "[optional] The HTTP proxy URL including protocol and port number. e.g. 'http://proxy-server-ip:proxy-port'"
 	dryRunFlag                           = "[optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors."
 	maxAPIRetryFlag                      = "[defaulted] How many times should API calls be retried when the API host is not reachable."
 	configFileFlag                       = "[optional] The Kosli config file path."
@@ -202,6 +204,7 @@ type GlobalOpts struct {
 	ApiToken      string
 	Org           string
 	Host          string
+	HttpProxy     string
 	DryRun        bool
 	MaxAPIRetries int
 	ConfigFile    string
@@ -278,6 +281,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	cmd.PersistentFlags().StringVarP(&global.ApiToken, "api-token", "a", "", apiTokenFlag)
 	cmd.PersistentFlags().StringVar(&global.Org, "org", "", orgFlag)
 	cmd.PersistentFlags().StringVarP(&global.Host, "host", "H", defaultHost, hostFlag)
+	cmd.PersistentFlags().StringVar(&global.HttpProxy, "http-proxy", "", httpProxyFlag)
 	cmd.PersistentFlags().IntVarP(&global.MaxAPIRetries, "max-api-retries", "r", defaultMaxAPIRetries, maxAPIRetryFlag)
 	cmd.PersistentFlags().StringVarP(&global.ConfigFile, "config-file", "c", getConfigFileFlagDefault(), configFileFlag)
 	cmd.PersistentFlags().BoolVar(&global.Debug, "debug", false, debugFlag)
@@ -323,8 +327,6 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 }
 
 func initialize(cmd *cobra.Command, out io.Writer) error {
-	logger.SetInfoOut(out) // needed to allow tests to overwrite the logger output stream
-	logger.DebugEnabled = global.Debug
 	v := viper.New()
 
 	// If provided, extract the custom config file dir and name
@@ -372,6 +374,15 @@ func initialize(cmd *cobra.Command, out io.Writer) error {
 
 	// Bind the current command's flags to viper
 	bindFlags(cmd, v)
+
+	logger.SetInfoOut(out) // needed to allow tests to overwrite the logger output stream
+	logger.DebugEnabled = global.Debug
+
+	var err error
+	kosliClient, err = requests.NewStandardKosliClient(global.HttpProxy)
+	if err != nil {
+		return err
+	}
 
 	kosliClient.SetDebug(global.Debug)
 	kosliClient.SetMaxAPIRetries(global.MaxAPIRetries)

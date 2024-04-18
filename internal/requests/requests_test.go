@@ -65,8 +65,10 @@ func (suite *RequestsTestSuite) TearDownSuite() {
 func (suite *RequestsTestSuite) TestNewKosliClient() {
 	for _, t := range []struct {
 		name       string
+		httpProxy  string
 		maxRetries int
 		debug      bool
+		wantError  bool
 	}{
 		{
 			name:       "client is created with expected settings 1",
@@ -78,18 +80,38 @@ func (suite *RequestsTestSuite) TestNewKosliClient() {
 			maxRetries: 3,
 			debug:      false,
 		},
+		{
+			name:       "client is created with an http proxy",
+			maxRetries: 3,
+			debug:      false,
+			httpProxy:  "http://192.0.0.1:8001",
+		},
+		{
+			name:       "client creation fails when http proxy URL is invalid",
+			maxRetries: 3,
+			debug:      false,
+			httpProxy:  "http://:foo.com",
+			wantError:  true,
+		},
 	} {
 		suite.Run(t.name, func() {
-			client := NewKosliClient(t.maxRetries, t.debug, logger.NewStandardLogger())
-			require.NotNil(suite.T(), client)
-			require.Equal(suite.T(), t.maxRetries, client.MaxAPIRetries)
-			require.Equal(suite.T(), t.debug, client.Debug)
+			client, err := NewKosliClient(t.httpProxy, t.maxRetries, t.debug, logger.NewStandardLogger())
+			if !t.wantError {
+				require.NoError(suite.T(), err)
+				require.NotNil(suite.T(), client)
+				require.Equal(suite.T(), t.maxRetries, client.MaxAPIRetries)
+				require.Equal(suite.T(), t.debug, client.Debug)
+			} else {
+				require.Error(suite.T(), err)
+			}
+
 		})
 	}
 }
 
 func (suite *RequestsTestSuite) TestNewStandardKosliClient() {
-	client := NewStandardKosliClient()
+	client, err := NewStandardKosliClient("")
+	require.NoError(suite.T(), err)
 	require.NotNil(suite.T(), client)
 
 	client.SetDebug(true)
@@ -101,6 +123,11 @@ func (suite *RequestsTestSuite) TestNewStandardKosliClient() {
 
 	client.SetMaxAPIRetries(5)
 	require.Equal(suite.T(), 5, client.MaxAPIRetries)
+
+	client2, err := NewStandardKosliClient("http://192.0.0.1:8001")
+	require.NoError(suite.T(), err)
+	require.NotNil(suite.T(), client2.HttpClient.Transport)
+	require.NotNil(suite.T(), client2.HttpClient.Transport.(*http.Transport).Proxy)
 }
 
 func (suite *RequestsTestSuite) TestNewHttpRequest() {
@@ -352,7 +379,8 @@ func (suite *RequestsTestSuite) TestDo() {
 	} {
 		suite.Run(t.name, func() {
 			buf := new(bytes.Buffer)
-			client := NewKosliClient(1, false, logger.NewLogger(buf, buf, false))
+			client, err := NewKosliClient("", 1, false, logger.NewLogger(buf, buf, false))
+			require.NoError(suite.T(), err)
 			resp, err := client.Do(t.params)
 			if t.wantError {
 				require.Error(suite.T(), err)
