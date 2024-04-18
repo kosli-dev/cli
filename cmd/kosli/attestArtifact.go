@@ -20,6 +20,7 @@ type attestArtifactOptions struct {
 	payload              AttestArtifactPayload
 	externalFingerprints map[string]string
 	externalURLs         map[string]string
+	annotations          map[string]string
 }
 
 type AttestArtifactPayload struct {
@@ -33,6 +34,7 @@ type AttestArtifactPayload struct {
 	Name          string                   `json:"template_reference_name"`
 	TrailName     string                   `json:"trail_name"`
 	ExternalURLs  map[string]*URLInfo      `json:"external_urls,omitempty"`
+	Annotations   map[string]string        `json:"annotations,omitempty"`
 }
 
 const attestArtifactShortDesc = `Attest an artifact creation to a Kosli flow.  `
@@ -119,6 +121,7 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.TrailName, "trail", "T", "", trailNameFlag)
 	cmd.Flags().StringToStringVar(&o.externalFingerprints, "external-fingerprint", map[string]string{}, externalFingerprintFlag)
 	cmd.Flags().StringToStringVar(&o.externalURLs, "external-url", map[string]string{}, externalURLFlag)
+	cmd.Flags().StringToStringVar(&o.annotations, "annotate", map[string]string{}, annotationFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 
 	addDryRunFlag(cmd)
@@ -145,6 +148,11 @@ func (o *attestArtifactOptions) run(args []string) error {
 
 	// process external urls
 	o.payload.ExternalURLs, err = processExternalURLs(o.externalURLs, o.externalFingerprints)
+	if err != nil {
+		return err
+	}
+
+	o.payload.Annotations, err = proccessAnnotations(o.annotations)
 	if err != nil {
 		return err
 	}
