@@ -109,6 +109,19 @@ func (suite *AttestJunitCommandTestSuite) TestAttestJunitCmd() {
 					 --external-fingerprint file=7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 %s`, suite.defaultKosliArguments),
 			golden: "Error: --external-fingerprints have labels that don't have a URL in --external-url\n",
 		},
+		{
+			name: "can attest with annotations against a trail",
+			cmd: fmt.Sprintf(`attest junit --name bar --commit HEAD --origin-url example.com --results-dir testdata
+					 --annotate foo=bar --annotate baz=qux %s`, suite.defaultKosliArguments),
+			golden: "junit attestation 'bar' is reported to trail: test-123\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when annotation is not valid",
+			cmd: fmt.Sprintf(`attest junit --name bar --commit HEAD --origin-url example.com --results-dir testdata
+					       --annotate foo.bar=bar %s`, suite.defaultKosliArguments),
+			golden: "Error: --annotate flag should be in the format key=value. Invalid key: 'foo.bar'. Key can only contain [A-Za-z0-9_].\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

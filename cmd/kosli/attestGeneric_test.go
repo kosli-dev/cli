@@ -127,6 +127,17 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 			cmd:    fmt.Sprintf("attest generic --name bar --description 'foo bar foo' %s", suite.defaultKosliArguments),
 			golden: "generic attestation 'bar' is reported to trail: test-123\n",
 		},
+		{
+			name:   "can attest with annotations against a trail",
+			cmd:    fmt.Sprintf("attest generic --name bar --annotate foo=bar --annotate baz=\"data with spaces\" %s", suite.defaultKosliArguments),
+			golden: "generic attestation 'bar' is reported to trail: test-123\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when annotation is not valid",
+			cmd:       fmt.Sprintf("attest generic --name bar --annotate foo.baz=bar %s", suite.defaultKosliArguments),
+			golden:    "Error: --annotate flag should be in the format key=value. Invalid key: 'foo.baz'. Key can only contain [A-Za-z0-9_].\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

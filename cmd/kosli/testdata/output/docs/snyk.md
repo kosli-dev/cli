@@ -26,6 +26,7 @@ snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ## Flags
 | Flag | Description |
 | :--- | :--- |
+|        --annotate stringToString  |  [optional] Annotate the attestation with data using key=value.  |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
 |        --attachments strings  |  [optional] The comma-separated list of paths of attachments for the reported attestation. Attachments can be files or directories. All attachments are compressed and uploaded to Kosli's evidence vault.  |
 |    -g, --commit string  |  [optional] The git commit associated to the attestation. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
