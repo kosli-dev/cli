@@ -335,13 +335,18 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 
 func initialize(cmd *cobra.Command, out io.Writer) error {
 	v := viper.New()
+	logger.SetInfoOut(out) // needed to allow tests to overwrite the logger output stream
+	// assign debug value early here to enable debug logs during config file and env var binding
+	// if --debug is used. The value is re-assigned later after binding config file and env vars
+	logger.DebugEnabled = global.Debug
 
 	// If provided, extract the custom config file dir and name
 
 	// handle passing the config file as an env variable.
 	// we load the config file before we bind env vars to flags,
 	// so we check for the config file env var separately here
-	if global.ConfigFile == defaultConfigFilePathFunc() {
+	configFlag := cmd.Flags().Lookup("config-file")
+	if !configFlag.Changed {
 		if path, exists := os.LookupEnv("KOSLI_CONFIG_FILE"); exists {
 			global.ConfigFile = path
 		}
@@ -362,10 +367,13 @@ func initialize(cmd *cobra.Command, out io.Writer) error {
 	// Attempt to read the config file, gracefully ignoring errors
 	// caused by a config file not being found. Return an error
 	// if we cannot parse the config file.
+	logger.Debug("processing config file [%s]", global.ConfigFile)
 	if err := v.ReadInConfig(); err != nil {
 		// It's okay if there isn't a config file
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return err
+			return fmt.Errorf("failed to parse config file [%s] : %v", global.ConfigFile, err)
+		} else {
+			logger.Debug("config file [%s] not found. Skipping.", global.ConfigFile)
 		}
 	}
 	// When we bind flags to environment variables expect that the
@@ -382,7 +390,8 @@ func initialize(cmd *cobra.Command, out io.Writer) error {
 	// Bind the current command's flags to viper
 	bindFlags(cmd, v)
 
-	logger.SetInfoOut(out) // needed to allow tests to overwrite the logger output stream
+	// re-assign debug after binding flags to config or env vars as it may have
+	// a different value now
 	logger.DebugEnabled = global.Debug
 
 	var err error
@@ -403,7 +412,7 @@ func initialize(cmd *cobra.Command, out io.Writer) error {
 func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 	// for some reason, logger does not print errors at the point
 	// of calling this function, so we ensure to point errors to stderr
-	logger.SetErrOut(os.Stderr)
+	logger.SetErrOut(cmd.ErrOrStderr())
 	// api token in config file is encrypted, so we have to decrypt it
 	// but if it is set via env variables, it is not encrypted
 	_, apiTokenSetInEnv := os.LookupEnv("KOSLI_API_TOKEN")
@@ -423,17 +432,23 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 		if !f.Changed && v.IsSet(f.Name) {
 			val := v.Get(f.Name)
 			if !apiTokenSetInEnv && f.Name == "api-token" {
+				// api token is coming from a config file (it may or may not be encrypted)
+				// we try decrypting it first, if that fails, we use it as it is
 				// get encryption key
 				key, err := security.GetSecretFromCredentialsStore(credentialsStoreKeySecretName)
 				if err != nil {
-					logger.Error("failed to get api token encryption key from credentials store: %s", err)
+					logger.Warning("failed to decrypt api token from [%s]. Failed to get api token encryption key from credentials store: %s", global.ConfigFile, err)
+					logger.Warning("using api token from [%s] as plain text. It is recommended to encrypt your api token by setting it with: kosli config --api-token <token>", global.ConfigFile)
+				} else {
+					// decrypt token
+					decryptedBytes, err := security.AESDecrypt([]byte(val.(string)), []byte(key))
+					if err != nil {
+						logger.Warning("failed to decrypt api token from [%s]: %s", global.ConfigFile, err)
+						logger.Warning("using api token from [%s] as plain text. It is recommended to encrypt your api token by setting it with: kosli config --api-token <token>", global.ConfigFile)
+					} else {
+						val = string(decryptedBytes)
+					}
 				}
-				// decrypt token
-				decryptedBytes, err := security.AESDecrypt([]byte(val.(string)), []byte(key))
-				if err != nil {
-					logger.Error("failed to decrypt api token: %s", err)
-				}
-				val = string(decryptedBytes)
 			}
 
 			if err := cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val)); err != nil {
