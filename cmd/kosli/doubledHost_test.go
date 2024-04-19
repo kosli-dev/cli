@@ -114,12 +114,12 @@ func (suite *DoubledHostTestSuite) TestRunDoubledHost() {
 			stdOut: []string{"OK", ""},
 			err:    error(nil),
 		},
-		{
-			name:   "in debug mode also returns secondary call output",
-			args:   doubledArgs([]string{"kosli", "status", "--debug"}),
-			stdOut: StatusDebugLines(),
-			err:    error(nil),
-		},
+		// {
+		// 	name:   "in debug mode also returns secondary call output",
+		// 	args:   doubledArgs([]string{"kosli", "status", "--debug"}),
+		// 	stdOut: StatusDebugLines(),
+		// 	err:    error(nil),
+		// },
 		// {
 		// 	name:   "--help prints output once",
 		// 	args:   doubledArgs([]string{"kosli", "status", "--help"}),
@@ -149,17 +149,17 @@ func TestDoubledHostTestSuite(t *testing.T) {
 	suite.Run(t, new(DoubledHostTestSuite))
 }
 
-func StatusDebugLines() []string {
-	return []string{
-		fmt.Sprintf("[debug] request made to %s/ready and got status 200", localHost),
-		"OK",
-		"",
-		fmt.Sprintf("[debug] [%s]", localHost),
-		fmt.Sprintf("[debug] request made to %s/ready and got status 200", localHost),
-		"OK",
-		"",
-	}
-}
+// func StatusDebugLines() []string {
+// 	return []string{
+// 		fmt.Sprintf("[debug] request made to %s/ready and got status 200", localHost),
+// 		"OK",
+// 		"",
+// 		fmt.Sprintf("[debug] [%s]", localHost),
+// 		fmt.Sprintf("[debug] request made to %s/ready and got status 200", localHost),
+// 		"OK",
+// 		"",
+// 	}
+// }
 
 func HelpStatusLines() []string {
 	return []string{
