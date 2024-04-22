@@ -6,7 +6,7 @@ on:
       - 'v*' 
 
 env: 
-  GO_VERSION: 1.21.5
+  GO_VERSION: 1.22.0
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
