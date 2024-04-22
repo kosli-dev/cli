@@ -2,8 +2,6 @@ module github.com/kosli-dev/cli
 
 go 1.22.0
 
-toolchain go1.22.2
-
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.11.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.5.2
