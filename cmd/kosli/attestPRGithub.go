@@ -10,8 +10,8 @@ import (
 const attestPRGithubShortDesc = `Report a Github pull request attestation to an artifact or a trail in a Kosli flow.  `
 
 const attestPRGithubLongDesc = attestPRGithubShortDesc + `
-It checks if a pull request exists for the artifact (based on its git commit) and reports the pull-request attestation to the artifact in Kosli.
-` + fingerprintDesc
+It checks if a pull request exists for a given merge commit and reports the pull-request attestation to Kosli.
+If the attestation is attached to an artifact, ` + fingerprintDesc
 
 const attestPRGithubExample = `
 # report a Github pull request attestation about a pre-built docker artifact (kosli calculates the fingerprint):
@@ -102,12 +102,13 @@ func newAttestGithubPRCmd(out io.Writer) *cobra.Command {
 	}
 	githubFlagsValues := new(ghUtils.GithubFlagsTempValueHolder)
 	cmd := &cobra.Command{
-		Use:     "github [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Aliases: []string{"gh"},
-		Short:   attestPRGithubShortDesc,
-		Long:    attestPRGithubLongDesc,
-		Example: attestPRGithubExample,
-		Args:    cobra.MaximumNArgs(1),
+		Use:         "github [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Aliases:     []string{"gh"},
+		Short:       attestPRGithubShortDesc,
+		Long:        attestPRGithubLongDesc,
+		Example:     attestPRGithubExample,
+		Args:        cobra.MaximumNArgs(1),
+		Annotations: map[string]string{"pr": "true"},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
