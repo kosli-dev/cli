@@ -6,11 +6,11 @@ deprecated: true
 
 # kosli report artifact
 
-{{< hint danger >}}**kosli report artifact** is a deprecated. see kosli attest commands  Deprecated commands will be removed in a future release.{{< /hint >}}
+{{< hint danger >}}**kosli report artifact** is deprecated. see kosli attest commands  Deprecated commands will be removed in a future release.{{< /hint >}}
 ## Synopsis
 
 Report an artifact creation to a Kosli flow.  
-The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
+The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag) or can be provided directly (with the `--fingerprint` flag).
 
 ```shell
 kosli report artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
@@ -35,22 +35,23 @@ kosli report artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 |        --repo-root string  |  [defaulted] The directory where the source git repository is available. (default ".")  |
 
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
 |    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
 |        --debug  |  [optional] Print debug logs to stdout. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default false)  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
+|        --http-proxy string  |  [optional] The HTTP proxy URL including protocol and port number. e.g. 'http://proxy-server-ip:proxy-port'  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
 
-## Examples
+## Examples Use Cases
+
+**Report to a Kosli flow that a file type artifact has been created**
 
 ```shell
-
-# Report to a Kosli flow that a file type artifact has been created
 kosli report artifact FILE.tgz \
 	--api-token yourApiToken \
 	--artifact-type file \
@@ -60,7 +61,11 @@ kosli report artifact FILE.tgz \
 	--org yourOrgName \
 	--flow yourFlowName 
 
-# Report to a Kosli flow that an artifact with a provided fingerprint (sha256) has been created
+```
+
+**Report to a Kosli flow that an artifact with a provided fingerprint (sha256) has been created**
+
+```shell
 kosli report artifact ANOTHER_FILE.txt \
 	--api-token yourApiToken \
 	--build-url https://exampleci.com \
@@ -68,7 +73,6 @@ kosli report artifact ANOTHER_FILE.txt \
 	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
 	--org yourOrgName \
 	--flow yourFlowName \
-	--fingerprint yourArtifactFingerprint 
-
+	--fingerprint yourArtifactFingerprint
 ```
 

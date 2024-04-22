@@ -30,28 +30,37 @@ kosli begin trail TRAIL-NAME [flags]
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the flow trail.  |
 
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
 |    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
 |        --debug  |  [optional] Print debug logs to stdout. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default false)  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
+|        --http-proxy string  |  [optional] The HTTP proxy URL including protocol and port number. e.g. 'http://proxy-server-ip:proxy-port'  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
 
-## Examples
+## Live Examples in different CI systems
+
+{{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli begin trail` command in GitHub.
+
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli+begin+trail), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=github&command=kosli+begin+trail).{{< /tab >}}{{< tab "GitLab" >}}View an example of the `kosli begin trail` command in GitLab.
+
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=gitlab&command=kosli+begin+trail), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=gitlab&command=kosli+begin+trail).{{< /tab >}}{{< /tabs >}}
+
+## Examples Use Cases
+
+**begin/update a Kosli flow trail**
 
 ```shell
-
-# begin/update a Kosli flow trail:
 kosli begin trail yourTrailName \
+	--flow yourFlowName \
 	--description yourTrailDescription \
 	--template-file /path/to/your/template/file.yml \
 	--user-data /path/to/your/user-data/file.json \
 	--api-token yourAPIToken \
 	--org yourOrgName
-
 ```
 

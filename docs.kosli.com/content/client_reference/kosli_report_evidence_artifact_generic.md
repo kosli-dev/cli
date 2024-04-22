@@ -6,11 +6,11 @@ deprecated: true
 
 # kosli report evidence artifact generic
 
-{{< hint danger >}}**kosli report evidence artifact generic** is a deprecated. see kosli attest commands  Deprecated commands will be removed in a future release.{{< /hint >}}
+{{< hint danger >}}**kosli report evidence artifact generic** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.{{< /hint >}}
 ## Synopsis
 
 Report generic evidence to an artifact in a Kosli flow.  
-The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
+The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag) or can be provided directly (with the `--fingerprint` flag).
 
 ```shell
 kosli report evidence artifact generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
@@ -38,22 +38,23 @@ kosli report evidence artifact generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flag
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the evidence.  |
 
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
 |    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
 |        --debug  |  [optional] Print debug logs to stdout. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default false)  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
+|        --http-proxy string  |  [optional] The HTTP proxy URL including protocol and port number. e.g. 'http://proxy-server-ip:proxy-port'  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
 
-## Examples
+## Examples Use Cases
+
+**report a generic evidence about a pre-built docker image**
 
 ```shell
-
-# report a generic evidence about a pre-built docker image:
 kosli report evidence artifact generic yourDockerImageName \
 	--api-token yourAPIToken \
 	--artifact-type docker \
@@ -62,7 +63,11 @@ kosli report evidence artifact generic yourDockerImageName \
 	--org yourOrgName \
 	--flow yourFlowName 
 
-# report a generic evidence about a directory type artifact:
+```
+
+**report a generic evidence about a directory type artifact**
+
+```shell
 kosli report evidence artifact generic /path/to/your/dir \
 	--api-token yourAPIToken \
 	--artifact-type dir \
@@ -71,7 +76,11 @@ kosli report evidence artifact generic /path/to/your/dir \
 	--org yourOrgName	\
 	--flow yourFlowName 
 
-# report a generic evidence about an artifact with a provided fingerprint (sha256)
+```
+
+**report a generic evidence about an artifact with a provided fingerprint (sha256)**
+
+```shell
 kosli report evidence artifact generic \
 	--api-token yourAPIToken \
 	--build-url https://exampleci.com \	
@@ -80,7 +89,11 @@ kosli report evidence artifact generic \
 	--flow yourFlowName \
 	--fingerprint yourArtifactFingerprint
 
-# report a generic evidence about an artifact with evidence file upload
+```
+
+**report a generic evidence about an artifact with evidence file upload**
+
+```shell
 kosli report evidence artifact generic \
 	--api-token yourAPIToken \
 	--build-url https://exampleci.com \	
@@ -90,7 +103,11 @@ kosli report evidence artifact generic \
 	--fingerprint yourArtifactFingerprint \
 	--evidence-paths=yourEvidencePathName
 
-# report a generic evidence about an artifact with evidence file upload via API
+```
+
+**report a generic evidence about an artifact with evidence file upload via API**
+
+```shell
 curl -X 'POST' \
 	'https://app.kosli.com/api/v2/evidence/yourOrgName/artifact/yourFlowName/generic' \
 	-H 'accept: application/json' \
@@ -102,6 +119,5 @@ curl -X 'POST' \
       "is_compliant": true
     }' \
 	-F 'evidence_file=@yourEvidencePathName'
-
 ```
 

@@ -1,20 +1,29 @@
 ---
-title: "kosli report evidence artifact junit"
+title: "kosli report evidence artifact snyk"
 beta: false
-deprecated: false
+deprecated: true
 ---
 
-# kosli report evidence artifact junit
+# kosli report evidence artifact snyk
 
+{{< hint danger >}}**kosli report evidence artifact snyk** is a deprecated. see kosli attest commands  Deprecated commands will be removed in a future release.{{< /hint >}}
 ## Synopsis
 
-Report JUnit test evidence for an artifact in a Kosli flow.    
-All .xml files from --results-dir are parsed and uploaded to Kosli's evidence vault.  
-If there are no failing tests and no errors the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.  
+Report Snyk vulnerability scan evidence for an artifact in a Kosli flow.    
+The --scan-results .json file is parsed and uploaded to Kosli's evidence vault.
+
+In CLI <v2.8.2, Snyk results could only be in the Snyk JSON output format. "snyk code test" results were not supported by 
+this command and could be reported as generic evidence.
+
+Starting from v2.8.2, the Snyk results can be in Snyk JSON or SARIF output format for "snyk container test". 
+"snyk code test" is now supported but only in the SARIF format.
+
+If no vulnerabilities are detected the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
+
 The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
 
 ```shell
-kosli report evidence artifact junit [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli report evidence artifact snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ## Flags
@@ -28,12 +37,13 @@ kosli report evidence artifact junit [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for --artifact-type dir.  |
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'.  |
 |    -f, --flow string  |  The Kosli flow name.  |
-|    -h, --help  |  help for junit  |
+|    -h, --help  |  help for snyk  |
 |    -n, --name string  |  The name of the evidence.  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
-|    -R, --results-dir string  |  [defaulted] The path to a directory with JUnit test results. By default, the directory will be uploaded to Kosli's evidence vault. (default ".")  |
+|    -R, --scan-results string  |  The path to Snyk SARIF or JSON scan results file from 'snyk test' and 'snyk container test'. By default, the Snyk results will be uploaded to Kosli's evidence vault.  |
+|        --upload-results  |  [defaulted] Whether to upload the provided Snyk results file as an attachment to Kosli or not. (default true)  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the evidence.  |
 
 
@@ -52,25 +62,25 @@ kosli report evidence artifact junit [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 
 ```shell
 
-# report JUnit test evidence about a file artifact:
-kosli report evidence artifact junit FILE.tgz \
+# report Snyk vulnerability scan evidence about a file artifact:
+kosli report evidence artifact snyk FILE.tgz \
 	--artifact-type file \
 	--name yourEvidenceName \
 	--flow yourFlowName \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
 	--org yourOrgName	\
-	--results-dir yourFolderWithJUnitResults
+	--scan-results yourSnykJSONScanResults
 
-# report JUnit test evidence about an artifact using an available Sha256 digest:
-kosli report evidence artifact junit \
+# report Snyk vulnerability scan evidence about an artifact using an available Sha256 digest:
+kosli report evidence artifact snyk \
 	--fingerprint yourSha256 \
 	--name yourEvidenceName \
 	--flow yourFlowName \
 	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
 	--org yourOrgName	\
-	--results-dir yourFolderWithJUnitResults
+	--scan-results yourSnykJSONScanResults
 
 ```
 

@@ -16,7 +16,7 @@ Fingerprinting docker images can be done using via the local docker daemon or th
 from a remote registry.
 
 When fingerprinting a 'dir' artifact, you can exclude certain paths from fingerprint calculation 
-using the '--exclude' flag.  
+using the `--exclude` flag.
 Excluded paths are relative to the artifact path(s) and can be literal paths or
 glob patterns.  
 The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match , 
@@ -37,13 +37,14 @@ kosli fingerprint {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
 |    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
 |        --debug  |  [optional] Print debug logs to stdout. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default false)  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
+|        --http-proxy string  |  [optional] The HTTP proxy URL including protocol and port number. e.g. 'http://proxy-server-ip:proxy-port'  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 

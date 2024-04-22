@@ -1,35 +1,37 @@
 ---
-title: "kosli report evidence commit pullrequest bitbucket"
+title: "kosli report evidence commit pullrequest azure"
 beta: false
-deprecated: false
+deprecated: true
 ---
 
-# kosli report evidence commit pullrequest bitbucket
+# kosli report evidence commit pullrequest azure
 
+{{< hint danger >}}**kosli report evidence commit pullrequest azure** is a deprecated. see kosli attest commands  Deprecated commands will be removed in a future release.{{< /hint >}}
 ## Synopsis
 
-Report Bitbucket pull request evidence for a commit in Kosli flows.  
-It checks if a pull request exists for the git commit and reports the pull-request evidence to the commit in Kosli.
+Report Azure Devops pull request evidence for a git commit in Kosli flows.  
+It checks if a pull request exists for a commit and report the pull-request evidence to the commit in Kosli. 
+
 
 ```shell
-kosli report evidence commit pullrequest bitbucket [flags]
+kosli report evidence commit pullrequest azure [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
 |        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
-|        --bitbucket-password string  |  Bitbucket App password. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#authentication for more details.  |
-|        --bitbucket-username string  |  Bitbucket username.  |
-|        --bitbucket-workspace string  |  Bitbucket workspace ID.  |
+|        --azure-org-url string  |  Azure organization url. E.g. "https://dev.azure.com/myOrg" (defaulted if you are running in Azure Devops pipelines: https://docs.kosli.com/ci-defaults ).  |
+|        --azure-token string  |  Azure Personal Access token.  |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --commit string  |  Git commit for which to verify a given evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |        --evidence-fingerprint string  |  [optional] The SHA256 fingerprint of the evidence file or dir.  |
 |        --evidence-url string  |  [optional] The external URL where the evidence file or dir is stored.  |
 |    -f, --flows strings  |  [defaulted] The comma separated list of Kosli flows. Defaults to all flows of the org.  |
-|    -h, --help  |  help for bitbucket  |
+|    -h, --help  |  help for azure  |
 |    -n, --name string  |  The name of the evidence.  |
+|        --project string  |  Azure project.(defaulted if you are running in Azure Devops pipelines: https://docs.kosli.com/ci-defaults ).  |
 |        --repository string  |  Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the evidence.  |
 
@@ -49,31 +51,29 @@ kosli report evidence commit pullrequest bitbucket [flags]
 
 ```shell
 
-# report a pull request evidence to Kosli
-kosli report evidence commit pullrequest bitbucket \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
-	--bitbucket-workspace yourBitbucketWorkspace \
+# report a pull request commit evidence to Kosli
+kosli report evidence commit pullrequest azure \
+	--commit yourGitCommitSha1 \
+	--azure-org-url https://dev.azure.com/myOrg \
+	--project yourAzureDevOpsProject \
+	--repository yourAzureGitRepository \
+	--azure-token yourAzureToken \
 	--name yourEvidenceName \
 	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
-	--org yourOrgName \
 	--api-token yourAPIToken
 	
 # fail if a pull request does not exist for your commit
-kosli report evidence commit pullrequest bitbucket \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
-	--bitbucket-workspace yourBitbucketWorkspace \
+kosli report evidence commit pullrequest azure \
+	--commit yourGitCommitSha1 \
+	--azure-org-url https://dev.azure.com/myOrg \
+	--project yourAzureDevOpsProject \
+	--repository yourAzureGitRepository \
+	--azure-token yourAzureToken \
 	--name yourEvidenceName \
 	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
-	--org yourOrgName \
-	--api-token yourAPIToken \
+	--api-token yourAPIToken
 	--assert
 
 ```

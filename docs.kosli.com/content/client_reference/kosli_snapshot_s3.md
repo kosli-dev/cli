@@ -18,7 +18,7 @@ To authenticate to AWS, you can either:
 Option 1 takes highest precedence, while option 3 is the lowest.  
 More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials
 	
-You can report the entire bucket content, or filter some of the content using --include and --exclude.
+You can report the entire bucket content, or filter some of the content using `--include` and `--exclude`.
 In all cases, the content is reported as one artifact. If you wish to report separate files/dirs within the same bucket as separate artifacts, you need to run the command twice.
 
 
@@ -39,22 +39,23 @@ kosli snapshot s3 ENVIRONMENT-NAME [flags]
 |    -i, --include strings  |  [optional] The comma separated list of file and/or directory paths in the S3 bucket to include when fingerprinting. Cannot be used together with --exclude.  |
 
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
 |    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
 |        --debug  |  [optional] Print debug logs to stdout. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default false)  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
+|        --http-proxy string  |  [optional] The HTTP proxy URL including protocol and port number. e.g. 'http://proxy-server-ip:proxy-port'  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
 
-## Examples
+## Examples Use Cases
+
+**report the contents of an entire AWS S3 bucket (AWS auth provided in env variables)**
 
 ```shell
-
-# report the contents of an entire AWS S3 bucket (AWS auth provided in env variables):
 export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
@@ -64,7 +65,11 @@ kosli snapshot s3 yourEnvironmentName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report what is running in an AWS S3 bucket (AWS auth provided in flags):
+```
+
+**report what is running in an AWS S3 bucket (AWS auth provided in flags)**
+
+```shell
 kosli snapshot s3 yourEnvironmentName \
 	--bucket yourBucketName \
 	--aws-key-id yourAWSAccessKeyID \
@@ -73,7 +78,11 @@ kosli snapshot s3 yourEnvironmentName \
 	--api-token yourAPIToken \
 	--org yourOrgName	
 
-# report a subset of contents of an AWS S3 bucket (AWS auth provided in env variables):
+```
+
+**report a subset of contents of an AWS S3 bucket (AWS auth provided in env variables)**
+
+```shell
 export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
@@ -84,7 +93,11 @@ kosli snapshot s3 yourEnvironmentName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report contents of an entire AWS S3 bucket, except for some paths (AWS auth provided in env variables):
+```
+
+**report contents of an entire AWS S3 bucket, except for some paths (AWS auth provided in env variables)**
+
+```shell
 export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
@@ -94,6 +107,5 @@ kosli snapshot s3 yourEnvironmentName \
 	--exclude file.txt,path/within/bucket \
 	--api-token yourAPIToken \
 	--org yourOrgName
-
 ```
 

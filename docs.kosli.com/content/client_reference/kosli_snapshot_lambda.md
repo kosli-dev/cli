@@ -9,7 +9,7 @@ deprecated: false
 ## Synopsis
 
 Report a snapshot of artifacts deployed as one or more AWS Lambda functions and their digests to Kosli.  
-Skip --function-names to report all functions in a given AWS account.
+Skip `--function-names` to report all functions in a given AWS account.
 
 To authenticate to AWS, you can either:  
   1) provide the AWS static credentials via flags or by exporting the equivalent KOSLI env vars (e.g. KOSLI_AWS_KEY_ID)  
@@ -35,22 +35,23 @@ kosli snapshot lambda ENVIRONMENT-NAME [flags]
 |    -h, --help  |  help for lambda  |
 
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
 |    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
 |        --debug  |  [optional] Print debug logs to stdout. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default false)  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
+|        --http-proxy string  |  [optional] The HTTP proxy URL including protocol and port number. e.g. 'http://proxy-server-ip:proxy-port'  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
 
-## Examples
+## Examples Use Cases
+
+**report all Lambda functions running in an AWS account (AWS auth provided in env variables)**
 
 ```shell
-
-# report all Lambda functions running in an AWS account (AWS auth provided in env variables):
 export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
@@ -59,7 +60,11 @@ kosli snapshot lambda yourEnvironmentName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report what is running in the latest version of an AWS Lambda function (AWS auth provided in env variables):
+```
+
+**report what is running in the latest version of an AWS Lambda function (AWS auth provided in env variables)**
+
+```shell
 export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
@@ -69,7 +74,11 @@ kosli snapshot lambda yourEnvironmentName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report what is running in the latest version of multiple AWS Lambda functions (AWS auth provided in env variables):
+```
+
+**report what is running in the latest version of multiple AWS Lambda functions (AWS auth provided in env variables)**
+
+```shell
 export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
@@ -79,7 +88,11 @@ kosli snapshot lambda yourEnvironmentName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report what is running in the latest version of an AWS Lambda function (AWS auth provided in flags):
+```
+
+**report what is running in the latest version of an AWS Lambda function (AWS auth provided in flags)**
+
+```shell
 kosli snapshot lambda yourEnvironmentName \
 	--function-names yourFunctionName \
 	--aws-key-id yourAWSAccessKeyID \
@@ -87,6 +100,5 @@ kosli snapshot lambda yourEnvironmentName \
 	--aws-region yourAWSRegion \
 	--api-token yourAPIToken \
 	--org yourOrgName
-
 ```
 

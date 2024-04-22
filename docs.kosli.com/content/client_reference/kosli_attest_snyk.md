@@ -12,12 +12,12 @@ Report a snyk attestation to an artifact or a trail in a Kosli flow.
 Only SARIF snyk output is accepted. 
 Snyk output can be for "snyk code test", "snyk container test", or "snyk iac test".
 
-The --scan-results .json file is analyzed and a summary of the scan results are reported to Kosli.
+The `--scan-results` .json file is analyzed and a summary of the scan results are reported to Kosli.
 
-By default, the --scan-results .json file is also uploaded to Kosli's evidence vault. 
-You can disable that by setting --upload-results=false
+By default, the `--scan-results` .json file is also uploaded to Kosli's evidence vault.
+You can disable that by setting `--upload-results=false`
 
-The artifact SHA256 fingerprint is calculated (based on --artifact-type flag) or alternatively it can be provided directly (with --fingerprint flag).
+The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag) or can be provided directly (with the `--fingerprint` flag).
 
 ```shell
 kosli attest snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
@@ -26,6 +26,7 @@ kosli attest snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ## Flags
 | Flag | Description |
 | :--- | :--- |
+|        --annotate stringToString  |  [optional] Annotate the attestation with data using key=value.  |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
 |        --attachments strings  |  [optional] The comma-separated list of paths of attachments for the reported attestation. Attachments can be files or directories. All attachments are compressed and uploaded to Kosli's evidence vault.  |
 |    -g, --commit string  |  [optional] The git commit associated to the attestation. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
@@ -49,22 +50,31 @@ kosli attest snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the attestation.  |
 
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
 |    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
 |        --debug  |  [optional] Print debug logs to stdout. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default false)  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
+|        --http-proxy string  |  [optional] The HTTP proxy URL including protocol and port number. e.g. 'http://proxy-server-ip:proxy-port'  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
 
-## Examples
+## Live Examples in different CI systems
+
+{{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli attest snyk` command in GitHub.
+
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli+attest+snyk), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=github&command=kosli+attest+snyk).{{< /tab >}}{{< tab "GitLab" >}}View an example of the `kosli attest snyk` command in GitLab.
+
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=gitlab&command=kosli+attest+snyk), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=gitlab&command=kosli+attest+snyk).{{< /tab >}}{{< /tabs >}}
+
+## Examples Use Cases
+
+**report a snyk attestation about a pre-built docker artifact (kosli calculates the fingerprint)**
 
 ```shell
-
-# report a snyk attestation about a pre-built docker artifact (kosli calculates the fingerprint):
 kosli attest snyk yourDockerImageName \
 	--artifact-type docker \
 	--name yourAttestationName \
@@ -74,7 +84,11 @@ kosli attest snyk yourDockerImageName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a snyk attestation about a pre-built docker artifact (you provide the fingerprint):
+```
+
+**report a snyk attestation about a pre-built docker artifact (you provide the fingerprint)**
+
+```shell
 kosli attest snyk \
 	--fingerprint yourDockerImageFingerprint \
 	--name yourAttestationName \
@@ -84,7 +98,11 @@ kosli attest snyk \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a snyk attestation about a trail:
+```
+
+**report a snyk attestation about a trail**
+
+```shell
 kosli attest snyk \
 	--name yourAttestationName \
 	--flow yourFlowName \
@@ -93,7 +111,11 @@ kosli attest snyk \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a snyk attestation about an artifact which has not been reported yet in a trail:
+```
+
+**report a snyk attestation about an artifact which has not been reported yet in a trail**
+
+```shell
 kosli attest snyk \
 	--name yourTemplateArtifactName.yourAttestationName \
 	--flow yourFlowName \
@@ -102,7 +124,11 @@ kosli attest snyk \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a snyk attestation about a trail with an attachment:
+```
+
+**report a snyk attestation about a trail with an attachment**
+
+```shell
 kosli attest snyk \
 	--name yourAttestationName \
 	--flow yourFlowName \
@@ -112,7 +138,11 @@ kosli attest snyk \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report a snyk attestation about a trail without uploading the snyk results file:
+```
+
+**report a snyk attestation about a trail without uploading the snyk results file**
+
+```shell
 kosli attest snyk \
 	--name yourAttestationName \
 	--flow yourFlowName \
@@ -121,6 +151,5 @@ kosli attest snyk \
 	--upload-results=false \
 	--api-token yourAPIToken \
 	--org yourOrgName
-
 ```
 

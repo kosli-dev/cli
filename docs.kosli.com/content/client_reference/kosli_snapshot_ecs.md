@@ -36,22 +36,23 @@ kosli snapshot ecs ENVIRONMENT-NAME [flags]
 |    -s, --service-name string  |  [optional] The name of the ECS service.  |
 
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
 |    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
 |        --debug  |  [optional] Print debug logs to stdout. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default false)  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
+|        --http-proxy string  |  [optional] The HTTP proxy URL including protocol and port number. e.g. 'http://proxy-server-ip:proxy-port'  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
 
-## Examples
+## Examples Use Cases
+
+**report what is running in an entire AWS ECS cluster**
 
 ```shell
-
-# report what is running in an entire AWS ECS cluster:
 export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
@@ -61,7 +62,11 @@ kosli snapshot ecs yourEnvironmentName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report what is running in a specific AWS ECS service within a cluster:
+```
+
+**report what is running in a specific AWS ECS service within a cluster**
+
+```shell
 export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
@@ -72,7 +77,11 @@ kosli snapshot ecs yourEnvironmentName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report what is running in in a specific AWS ECS service within a cluster (AWS auth provided in flags):
+```
+
+**report what is running in in a specific AWS ECS service within a cluster (AWS auth provided in flags)**
+
+```shell
 kosli snapshot ecs yourEnvironmentName \
 	--cluster yourECSClusterName \
 	--service-name yourECSServiceName \
@@ -81,6 +90,5 @@ kosli snapshot ecs yourEnvironmentName \
 	--aws-region yourAWSRegion \
 	--api-token yourAPIToken \
 	--org yourOrgName
-
 ```
 

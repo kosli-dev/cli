@@ -29,34 +29,46 @@ kosli assert artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 
 
-## Options inherited from parent commands
+## Flags inherited from parent commands
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
 |    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
 |        --debug  |  [optional] Print debug logs to stdout. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default false)  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
+|        --http-proxy string  |  [optional] The HTTP proxy URL including protocol and port number. e.g. 'http://proxy-server-ip:proxy-port'  |
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
 
-## Examples
+## Live Examples in different CI systems
+
+{{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli assert artifact` command in GitHub.
+
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli+assert+artifact){{< /tab >}}{{< tab "GitLab" >}}View an example of the `kosli assert artifact` command in GitLab.
+
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=gitlab&command=kosli+assert+artifact){{< /tab >}}{{< /tabs >}}
+
+## Examples Use Cases
+
+**fail if an artifact has a non-compliant status (using the artifact fingerprint)**
 
 ```shell
-
-# fail if an artifact has a non-compliant status (using the artifact fingerprint)
 kosli assert artifact \
 	--fingerprint 184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0 \
 	--flow yourFlowName \
 	--api-token yourAPIToken \
 	--org yourOrgName 
 
-# fail if an artifact has a non-compliant status (using the artifact name and type)
+```
+
+**fail if an artifact has a non-compliant status (using the artifact name and type)**
+
+```shell
 kosli assert artifact library/nginx:1.21 \
 	--artifact-type docker \
 	--flow yourFlowName \
 	--api-token yourAPIToken \
-	--org yourOrgName 
-
+	--org yourOrgName
 ```
 
