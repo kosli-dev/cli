@@ -10,8 +10,8 @@ import (
 const attestPRGitlabShortDesc = `Report a Gitlab merge request attestation to an artifact or a trail in a Kosli flow.  `
 
 const attestPRGitlabLongDesc = attestPRGitlabShortDesc + `
-It checks if a merge request exists for the artifact (based on its git commit) and reports the merge request attestation to the artifact in Kosli.
-` + fingerprintDesc
+It checks if a merge request exists for a given merge commit and reports the merge request attestation to Kosli.
+If the attestation is attached to an artifact, ` + fingerprintDesc
 
 const attestPRGitlabExample = `
 # report a Gitlab merge request attestation about a pre-built docker artifact (kosli calculates the fingerprint):
@@ -102,12 +102,13 @@ func newAttestGitlabPRCmd(out io.Writer) *cobra.Command {
 		retriever: new(gitlabUtils.GitlabConfig),
 	}
 	cmd := &cobra.Command{
-		Use:     "gitlab [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Aliases: []string{"gl"},
-		Short:   attestPRGitlabShortDesc,
-		Long:    attestPRGitlabLongDesc,
-		Example: attestPRGitlabExample,
-		Args:    cobra.MaximumNArgs(1),
+		Use:         "gitlab [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Aliases:     []string{"gl"},
+		Short:       attestPRGitlabShortDesc,
+		Long:        attestPRGitlabLongDesc,
+		Example:     attestPRGitlabExample,
+		Args:        cobra.MaximumNArgs(1),
+		Annotations: map[string]string{"pr": "true"},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

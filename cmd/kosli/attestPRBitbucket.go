@@ -10,8 +10,8 @@ import (
 const attestPRBitbucketShortDesc = `Report a Bitbucket pull request attestation to an artifact or a trail in a Kosli flow.  `
 
 const attestPRBitbucketLongDesc = attestPRBitbucketShortDesc + `
-It checks if a pull request exists for the artifact (based on its git commit) and reports the pull-request attestation to the artifact in Kosli.
-` + fingerprintDesc
+It checks if a pull request exists for a given merge commit and reports the pull-request attestation to Kosli.
+If the attestation is attached to an artifact, ` + fingerprintDesc
 
 const attestPRBitbucketExample = `
 # report a Bitbucket pull request attestation about a pre-built docker artifact (kosli calculates the fingerprint):
@@ -112,12 +112,13 @@ func newAttestBitbucketPRCmd(out io.Writer) *cobra.Command {
 		retriever: config,
 	}
 	cmd := &cobra.Command{
-		Use:     "bitbucket [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Aliases: []string{"bb"},
-		Short:   attestPRBitbucketShortDesc,
-		Long:    attestPRBitbucketLongDesc,
-		Example: attestPRBitbucketExample,
-		Args:    cobra.MaximumNArgs(1),
+		Use:         "bitbucket [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Aliases:     []string{"bb"},
+		Short:       attestPRBitbucketShortDesc,
+		Long:        attestPRBitbucketLongDesc,
+		Example:     attestPRBitbucketExample,
+		Args:        cobra.MaximumNArgs(1),
+		Annotations: map[string]string{"pr": "true"},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
