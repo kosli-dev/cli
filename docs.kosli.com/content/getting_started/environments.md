@@ -41,15 +41,20 @@ After the new environment is created you'll be redirected to its page - with "No
 
 ## Snapshoting an environment
 
-There is range of `kosli snapshot [...]` commands, allowing you to report a variety of environments. To record the current status of your environment you simply run one of them. While you can do it manually, typically you would run the commands automatically, e.g. via a cron job or scheduled CI job.
-
-Whenever an environment report is received, if the received list of running artifacts is different than what is in the latest snapshot, a new snapshot is created. Snapshots are immutable and can't be tampered with.
+To record the current status of your environment you need to make Kosli CLI scrape the running artifacts in it and report it to Kosli. 
+When Kosli receives an environment report, if the received list of running artifacts is different than what is in the latest environment snapshot, a new environment snapshot is created. Snapshots are immutable and can't be tampered with.
 
 Currently, the following environment types are supported:
+- Kubernetes
+- Docker
+- Paths on a server
+- AWS Simple Storage Service (S3)
+- AWS Lambda
+- AWS Elastic Container Service (ECS)
 
-- Kubernetes: see [kosli snapshot kubernetes](/client_reference/kosli_snapshot_k8s/) for usage details and examples.
-- Docker: see [kosli snapshot docker](/client_reference/kosli_snapshot_docker/) for usage details and examples.
-- Physical/Virtual Server: see [kosli snapshot server](/client_reference/kosli_snapshot_server/) for usage details and examples.
-- AWS Simple Storage Service (S3): see [kosli snapshot s3](/client_reference/kosli_snapshot_s3/) for usage details and examples.
-- AWS Lambda: see [kosli snapshot lambda](/client_reference/kosli_snapshot_lambda/) for usage details and examples.
-- AWS Elastic Container Service (ECS): see [kosli snapshot ecs](/client_reference/kosli_snapshot_ecs/) for usage details and examples.
+While you can report environment snapshots manually using the `kosli snapshot [...]` commands for testing, for production use, you would configure the reporting to happen automatically on regular intervals, e.g. via a cron job or scheduled CI job, or on certain events. 
+
+You can follow one of the tutorials below to setup automatic snapshot reporting for your environment:
+- [Kubernetes environment reporting](/tutorials/report_k8s_envs)
+- [AWS ECS/S3/Lambda environment reporting](/tutorials/report_aws_envs)
+

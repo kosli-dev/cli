@@ -13,18 +13,6 @@ The chart allows you to create a Kubernetes cronjob and all its necessary RBAC t
 {{ define "extra.install" -}}
 ## Installing the chart
 
-### Installing from source
-
-You can install the Kosli reporter Helm chart from source code:
-
-```shell 
-git clone https://github.com/kosli-dev/cli.git
-cd reporter/charts/k8s-reporter
-helm install [RELEASE-NAME] . -f [VALUES-FILE-PATH]
-```
-
-### Installing from the Helm Repository
-
 To install this chart via the Helm chart repository:
 
 ```shell 
@@ -32,18 +20,12 @@ helm repo add kosli https://charts.kosli.com/
 helm repo update
 helm install [RELEASE-NAME] kosli/k8s-reporter -f [VALUES-FILE-PATH]
 ```
+
+> Chart source can be found at https://github.com/kosli-dev/cli/tree/main/charts/k8s-reporter
 {{- end }}
 
 {{ define "extra.upgrade" -}}
 ## Upgrading the chart
-
-### Upgrading from source
-
-```shell
-helm upgrade [RELEASE-NAME] .
-```
-
-### Upgrading from the Helm chart repository
 
 ```shell
 helm upgrade [RELEASE-NAME] kosli/k8s-reporter 
