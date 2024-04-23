@@ -9,8 +9,8 @@ deprecated: false
 ## Synopsis
 
 Report a Gitlab merge request attestation to an artifact or a trail in a Kosli flow.  
-It checks if a merge request exists for the artifact (based on its git commit) and reports the merge request attestation to the artifact in Kosli.
-The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag) or can be provided directly (with the `--fingerprint` flag).
+It checks if a merge request exists for a given merge commit and reports the merge request attestation to Kosli.
+If the attestation is attached to an artifact, The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag) or can be provided directly (with the `--fingerprint` flag).
 
 ```shell
 kosli attest pullrequest gitlab [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
@@ -23,7 +23,7 @@ kosli attest pullrequest gitlab [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
 |        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
 |        --attachments strings  |  [optional] The comma-separated list of paths of attachments for the reported attestation. Attachments can be files or directories. All attachments are compressed and uploaded to Kosli's evidence vault.  |
-|    -g, --commit string  |  [optional] The git commit associated to the attestation. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|    -g, --commit string  |  the git merge commit to be checked for associated pull requests.  |
 |        --description string  |  [optional] attestation description  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for --artifact-type dir.  |

@@ -9,8 +9,8 @@ deprecated: false
 ## Synopsis
 
 Report a Bitbucket pull request attestation to an artifact or a trail in a Kosli flow.  
-It checks if a pull request exists for a given merge commit and reports the pull-request attestation to Kosli.
-If the attestation is attached to an artifact, The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag) or can be provided directly (with the `--fingerprint` flag).
+It checks if a pull request exists for the artifact (based on its git commit) and reports the pull-request attestation to the artifact in Kosli.
+The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag) or can be provided directly (with the `--fingerprint` flag).
 
 ```shell
 kosli attest pullrequest bitbucket [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
@@ -26,7 +26,7 @@ kosli attest pullrequest bitbucket [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --bitbucket-password string  |  Bitbucket App password. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#authentication for more details.  |
 |        --bitbucket-username string  |  Bitbucket username.  |
 |        --bitbucket-workspace string  |  Bitbucket workspace ID.  |
-|    -g, --commit string  |  the git merge commit to be checked for associated pull requests.  |
+|    -g, --commit string  |  [optional] The git commit associated to the attestation. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --description string  |  [optional] attestation description  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for --artifact-type dir.  |
