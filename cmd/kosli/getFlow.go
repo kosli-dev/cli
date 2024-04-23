@@ -76,8 +76,18 @@ func printFlowAsTable(raw string, out io.Writer, page int) error {
 	if err != nil {
 		return err
 	}
+
 	template := fmt.Sprintf("%s", flow["template"])
-	template = strings.Replace(template, " ", ", ", -1)
+	if strings.HasPrefix(strings.TrimSpace(template), "version: ") {
+		lines := strings.Split(template, "\n")
+		for i, line := range lines {
+			lines[i] = "\t" + line
+		}
+		lines[0] = "\n" + lines[0]
+		template = strings.Join(lines, "\n")
+	} else {
+		template = strings.Replace(template, " ", ", ", -1)
+	}
 
 	tags := flow["tags"].(map[string]interface{})
 	tagsOutput := ""
@@ -85,6 +95,9 @@ func printFlowAsTable(raw string, out io.Writer, page int) error {
 		tagsOutput += fmt.Sprintf("[%s=%s], ", key, value)
 	}
 	tagsOutput = strings.TrimSuffix(tagsOutput, ", ")
+	if tagsOutput == "" {
+		tagsOutput = "None"
+	}
 
 	rows = append(rows, fmt.Sprintf("Name:\t%s", flow["name"]))
 	rows = append(rows, fmt.Sprintf("Description:\t%s", flow["description"]))
