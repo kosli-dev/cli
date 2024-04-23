@@ -179,7 +179,7 @@ func (suite *RequestsTestSuite) TestNewHttpRequest() {
 		{
 			name: "request with valid payload",
 			params: &RequestParams{
-				Method:   http.MethodGet,
+				Method:   http.MethodPost,
 				URL:      "https://google.com",
 				Username: "user",
 				Password: "password",
@@ -198,7 +198,7 @@ func (suite *RequestsTestSuite) TestNewHttpRequest() {
 		{
 			name: "request with invalid payload causes an error",
 			params: &RequestParams{
-				Method:  http.MethodGet,
+				Method:  http.MethodPost,
 				URL:     "https://google.com",
 				Token:   "secret",
 				Payload: make(chan string),
@@ -208,7 +208,7 @@ func (suite *RequestsTestSuite) TestNewHttpRequest() {
 		{
 			name: "request with form works",
 			params: &RequestParams{
-				Method: http.MethodGet,
+				Method: http.MethodPost,
 				URL:    "https://google.com",
 				Token:  "secret",
 				Form: []FormItem{
@@ -229,7 +229,7 @@ func (suite *RequestsTestSuite) TestNewHttpRequest() {
 		{
 			name: "request with form that has invalid content causes an error",
 			params: &RequestParams{
-				Method: http.MethodGet,
+				Method: http.MethodPost,
 				URL:    "https://google.com",
 				Token:  "secret",
 				Form: []FormItem{
@@ -271,6 +271,10 @@ func (suite *RequestsTestSuite) TestNewHttpRequest() {
 				}
 				for k, v := range t.params.AdditionalHeaders {
 					require.Equal(suite.T(), v, req.Header.Get(k))
+				}
+
+				if t.params.Method == http.MethodGet {
+					require.Nil(suite.T(), req.Body)
 				}
 			}
 		})
@@ -331,15 +335,25 @@ func (suite *RequestsTestSuite) TestDo() {
 			expectedErrorMsg: "failed to create a GET request to   https://app.kosli.com/api/v2/environments/cyber-dojo/foo : failed to create GET request to   https://app.kosli.com/api/v2/environments/cyber-dojo/foo : parse \"  https://app.kosli.com/api/v2/environments/cyber-dojo/foo\": first path segment in URL cannot contain colon",
 		},
 		{
-			name: "GET request to cyber-dojo with dry-run",
+			name: "PUT request to cyber-dojo with dry-run",
 			params: &RequestParams{
-				Method:   http.MethodGet,
+				Method:   http.MethodPut,
 				URL:      "https://app.kosli.com/api/v2/environments/cyber-dojo",
 				Password: "secret",
 				DryRun:   true,
 				Payload:  "some payload",
 			},
 			expectedLog: "############### THIS IS A DRY-RUN  ###############\nthis is the payload that would be sent in real run: \n \"some payload\"\n",
+		},
+		{
+			name: "GET request to cyber-dojo with dry-run",
+			params: &RequestParams{
+				Method:   http.MethodGet,
+				URL:      "https://app.kosli.com/api/v2/environments/cyber-dojo",
+				Password: "secret",
+				DryRun:   true,
+			},
+			expectedLog: "############### THIS IS A DRY-RUN  ###############\n",
 		},
 		{
 			name: "GET request to 400 endpoint with message and errors in response",
