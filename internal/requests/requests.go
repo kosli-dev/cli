@@ -94,7 +94,7 @@ func (p *RequestParams) newHTTPRequest() (*http.Request, error) {
 		p.AdditionalHeaders = make(map[string]string)
 	}
 
-	var body *bytes.Buffer
+	var body io.Reader
 
 	if len(p.Form) > 0 {
 		var contentType string
@@ -105,11 +105,13 @@ func (p *RequestParams) newHTTPRequest() (*http.Request, error) {
 		}
 		p.AdditionalHeaders["Content-Type"] = contentType
 	} else {
-		jsonBytes, err := json.MarshalIndent(p.Payload, "", "    ")
-		if err != nil {
-			return nil, err
+		if p.Method != http.MethodGet {
+			jsonBytes, err := json.MarshalIndent(p.Payload, "", "    ")
+			if err != nil {
+				return nil, err
+			}
+			body = bytes.NewBuffer(jsonBytes)
 		}
-		body = bytes.NewBuffer(jsonBytes)
 	}
 
 	req, err := http.NewRequest(p.Method, p.URL, body)
@@ -197,11 +199,14 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 
 	if p.DryRun {
 		c.Logger.Info("############### THIS IS A DRY-RUN  ###############")
-		reqBody, err := io.ReadAll(req.Body)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read request body to %s : %v", req.URL, err)
+		if req.Body != nil {
+			reqBody, err := io.ReadAll(req.Body)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read request body to %s : %v", req.URL, err)
+			}
+			c.Logger.Info("this is the payload that would be sent in real run: \n %+v", string(reqBody))
 		}
-		c.Logger.Info("this is the payload that would be sent in real run: \n %+v", string(reqBody))
+
 		return nil, nil
 	} else {
 		resp, err := c.HttpClient.Do(req)
