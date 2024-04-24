@@ -49,12 +49,13 @@ type snapshotServerOptions struct {
 func newSnapshotServerCmd(out io.Writer) *cobra.Command {
 	o := new(snapshotServerOptions)
 	cmd := &cobra.Command{
-		Use:     "server ENVIRONMENT-NAME",
-		Short:   snapshotServerShortDesc,
-		Long:    snapshotServerLongDesc,
-		Aliases: []string{"directories"},
-		Args:    cobra.ExactArgs(1),
-		Example: snapshotServerExample,
+		Use:        "server ENVIRONMENT-NAME",
+		Short:      snapshotServerShortDesc,
+		Long:       snapshotServerLongDesc,
+		Aliases:    []string{"directories"},
+		Args:       cobra.ExactArgs(1),
+		Deprecated: "use 'kosli snapshot paths' instead",
+		Example:    snapshotServerExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
