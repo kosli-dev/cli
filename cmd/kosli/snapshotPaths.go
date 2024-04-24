@@ -13,37 +13,30 @@ import (
 const snapshotPathsShortDesc = `Report a snapshot of artifacts running from specific filesystem paths to Kosli.  `
 
 const snapshotPathsLongDesc = snapshotPathsShortDesc + `
-You can report directory or file artifacts in one or more filesystem paths.
+You can report directory or file artifacts in one or more filesystem paths. 
+Artifacts names and paths to include and ignore when fingerprinting them can be defined in the paths spec file.
+Paths spec files can be in YAML, JSON or TOML formats.
 
-` + fingerprintDirSynopsis
+This is example YAML paths spec file:
+
+version: 1
+artifacts:
+  artifact_name_a:
+    path: dir1
+    ignore: [subdir1, **/log]
+
+`
 
 const snapshotPathsExample = `
 # report directory artifacts running in a filesystem at a list of paths:
 kosli snapshot server yourEnvironmentName \
-	--paths a/b/c,e/f/g \
+	--path-spec path/to/your/pathsSpec/file \
 	--api-token yourAPIToken \
 	--org yourOrgName  
-	
-# exclude certain paths when reporting directory artifacts: 
-# in the example below, any path matching [a/b/c/logs, a/b/c/*/logs, a/b/c/*/*/logs]
-# will be skipped when calculating the fingerprint
-kosli snapshot server yourEnvironmentName \
-	--paths a/b/c \
-	--exclude logs,"*/logs","*/*/logs"
-	--api-token yourAPIToken \
-	--org yourOrgName 
-	
-# use glob pattern to match paths to report them as directory artifacts: 
-# in the example below, any path matching "*/*/src" under top-dir/ will be reported as a separate artifact.
-kosli snapshot server yourEnvironmentName \
-	--paths "top-dir/*/*/src" \
-	--api-token yourAPIToken \
-	--org yourOrgName 
+
 `
 
 type snapshotPathsOptions struct {
-	// paths        []string
-	// excludePaths []string
 	pathSpecFile string
 }
 
@@ -68,9 +61,6 @@ func newSnapshotPathsCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	// cmd.Flags().StringSliceVarP(&o.paths, "paths", "p", []string{}, pathsFlag)
-	// cmd.Flags().StringSliceVarP(&o.excludePaths, "exclude", "x", []string{}, serverExcludePathsFlag)
-	// cmd.Flags().StringSliceVarP(&o.excludePaths, "e", "e", []string{}, serverExcludePathsFlag)
 	cmd.Flags().StringVar(&o.pathSpecFile, "path-spec", "", "path to the path-spec file")
 	addDryRunFlag(cmd)
 
