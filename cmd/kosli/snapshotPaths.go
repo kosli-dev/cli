@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"io"
+	"net/http"
 
+	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/server"
 	"github.com/spf13/cobra"
 )
@@ -80,29 +83,28 @@ func newSnapshotPathsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *snapshotPathsOptions) run(args []string) error {
-	// envName := args[0]
+	envName := args[0]
 
-	// url = fmt.Sprintf("%s/api/v2/environments/%s/%s/report/server", global.Host, global.Org, envName)
+	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/server", global.Host, global.Org, envName)
 
-	_, err := server.CreatePathsArtifactsData(o.pathSpecFile, logger)
+	artifacts, err := server.CreatePathsArtifactsData(o.pathSpecFile, logger)
 	if err != nil {
 		return err
 	}
-	// payload := &server.ServerEnvRequest{
-	// 	Artifacts: artifacts,
-	// }
+	payload := &server.ServerEnvRequest{
+		Artifacts: artifacts,
+	}
 
-	// reqParams := &requests.RequestParams{
-	// 	Method:   http.MethodPut,
-	// 	URL:      url,
-	// 	Payload:  payload,
-	// 	DryRun:   global.DryRun,
-	// 	Password: global.ApiToken,
-	// }
-	// _, err = kosliClient.Do(reqParams)
-	// if err == nil && !global.DryRun {
-	// 	logger.Info("[%d] artifacts were reported to environment %s", len(payload.Artifacts), envName)
-	// }
-	// return err
-	return nil
+	reqParams := &requests.RequestParams{
+		Method:   http.MethodPut,
+		URL:      url,
+		Payload:  payload,
+		DryRun:   global.DryRun,
+		Password: global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
+	if err == nil && !global.DryRun {
+		logger.Info("[%d] artifacts were reported to environment %s", len(payload.Artifacts), envName)
+	}
+	return err
 }

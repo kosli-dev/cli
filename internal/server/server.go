@@ -76,7 +76,7 @@ func CreateServerArtifactsData(paths, excludePaths []string, logger *logger.Logg
 // CreateServerArtifactsData creates a list of ServerData for server artifacts at given paths
 // paths and excludePaths can contain Glob patterns
 // if paths have Glob patterns, each path matching the pattern will be treated as an artifact
-func FingerprintPaths(artifacName string, paths, excludePaths []string, logger *logger.Logger) (*ServerData, error) {
+func FingerprintPaths(artifactName string, paths, excludePaths []string, logger *logger.Logger) (*ServerData, error) {
 	result := &ServerData{}
 
 	pathsToInclude := []string{}
@@ -92,16 +92,26 @@ func FingerprintPaths(artifacName string, paths, excludePaths []string, logger *
 		return result, fmt.Errorf("no matches found for %v", paths)
 	}
 
-	fingerprintAfterEachOther := ""
-	for _, p := range pathsToInclude {
-		// digests := make(map[string]string)
+	tmpDir, err := os.MkdirTemp("", "*")
+	if err != nil {
+		return result, err
+	}
+	defer os.RemoveAll(tmpDir)
 
+	aggregateFingerprintsFile, err := os.Create(filepath.Join(tmpDir, "aggregate"))
+	if err != nil {
+		return result, err
+	}
+	defer aggregateFingerprintsFile.Close()
+
+	for _, p := range pathsToInclude {
 		finfo, err := os.Stat(p)
 		if err != nil {
 			return result, fmt.Errorf("failed to open path %s with error: %v", p, err)
 		}
 		var fingerprint string
 		if !finfo.IsDir() {
+			logger.Debug("calculating fingerprint for file [%s]", p)
 			fingerprint, err = digest.FileSha256(p)
 		} else {
 			fingerprint, err = digest.DirSha256(p, excludePaths, logger)
@@ -109,8 +119,9 @@ func FingerprintPaths(artifacName string, paths, excludePaths []string, logger *
 		if err != nil {
 			return result, fmt.Errorf("failed to get a digest of path %s with error: %v", p, err)
 		}
-		fingerprintAfterEachOther += fingerprint
-		fmt.Printf("%s\n", fingerprintAfterEachOther)
+		if _, err := aggregateFingerprintsFile.Write([]byte(fingerprint)); err != nil {
+			return result, err
+		}
 
 		// artifactName, err := filepath.Abs(p)
 		// if err != nil {
@@ -123,6 +134,11 @@ func FingerprintPaths(artifacName string, paths, excludePaths []string, logger *
 		// }
 		// result = append(result, &ServerData{Digests: digests, CreationTimestamp: ts})
 	}
+	aggregateFingerprint, err := digest.FileSha256(aggregateFingerprintsFile.Name())
+	if err != nil {
+		return result, err
+	}
+	result = &ServerData{Digests: map[string]string{artifactName: aggregateFingerprint}, CreationTimestamp: 0}
 	return result, nil
 }
 
@@ -149,6 +165,7 @@ type ArtifactSpec struct {
 }
 
 type PathSpec struct {
+	Version   int                     `mapstructure:"version"`
 	Artifacts map[string]ArtifactSpec `mapstructure:"artifacts"`
 }
 
@@ -163,7 +180,7 @@ func CreatePathsArtifactsData(pathSpecFile string, logger *logger.Logger) ([]*Se
 	// Set the base name of the pathspec file, without the file extension.
 	v.SetConfigName(file)
 
-	// Set as many paths as you like where viper should look for the
+	// Set the dir path where viper should look for the
 	// pathspec file. By default, we are looking in the current working directory.
 	if dir == "" {
 		dir = "."
@@ -180,56 +197,14 @@ func CreatePathsArtifactsData(pathSpecFile string, logger *logger.Logger) ([]*Se
 	}
 
 	for artifactName, paths := range ps.Artifacts {
-		fmt.Printf("%s with %v\n", artifactName, paths)
+		logger.Debug("fingerprinting artifact [%s] with spec [ Include: %s, Exclude: %s]", artifactName, paths.Include, paths.Exclude)
 		res, err := FingerprintPaths(artifactName, paths.Include, paths.Exclude, logger)
 		if err != nil {
-			return result, err
+			return result, fmt.Errorf("failed to calculate fingerprint for artifact [%s]: %v", artifactName, err)
 		}
+		logger.Debug("fingerprint for artifact [%s]: %s", artifactName, res.Digests[artifactName])
 		result = append(result, res)
 	}
 
-	fmt.Println(result[0])
-
-	// pathsToInclude := []string{}
-	// for _, p := range paths {
-	// 	found, err := filepathx.Glob(p)
-	// 	if err != nil {
-	// 		return []*ServerData{}, err
-	// 	}
-	// 	pathsToInclude = append(pathsToInclude, found...)
-	// }
-
-	// if len(pathsToInclude) == 0 {
-	// 	return []*ServerData{}, fmt.Errorf("no matches found for %v", paths)
-	// }
-
-	// for _, p := range pathsToInclude {
-	// 	digests := make(map[string]string)
-
-	// 	finfo, err := os.Stat(p)
-	// 	if err != nil {
-	// 		return []*ServerData{}, fmt.Errorf("failed to open path %s with error: %v", p, err)
-	// 	}
-	// 	var fingerprint string
-	// 	if !finfo.IsDir() {
-	// 		fingerprint, err = digest.FileSha256(p)
-	// 	} else {
-	// 		fingerprint, err = digest.DirSha256(p, excludePaths, logger)
-	// 	}
-
-	// 	if err != nil {
-	// 		return []*ServerData{}, fmt.Errorf("failed to get a digest of path %s with error: %v", p, err)
-	// 	}
-	// 	artifactName, err := filepath.Abs(p)
-	// 	if err != nil {
-	// 		return []*ServerData{}, fmt.Errorf("failed to get absolute path for %s with error: %v", p, err)
-	// 	}
-	// 	digests[artifactName] = fingerprint
-	// 	ts, err := getPathLastModifiedTimestamp(p)
-	// 	if err != nil {
-	// 		return []*ServerData{}, fmt.Errorf("failed to get last modified timestamp of path %s with error: %v", p, err)
-	// 	}
-	// 	result = append(result, &ServerData{Digests: digests, CreationTimestamp: ts})
-	// }
 	return result, nil
 }

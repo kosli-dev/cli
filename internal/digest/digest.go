@@ -29,8 +29,7 @@ var (
 
 // DirSha256 returns sha256 digest of a directory
 func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (string, error) {
-	logger.Debug("Input path: %v", dirPath)
-	logger.Debug("Exclude paths: %s", excludePaths)
+	logger.Debug("calculating fingerprint for path [%s] -- excluding paths: %s", dirPath, excludePaths)
 	info, err := os.Stat(dirPath)
 	if err != nil {
 		return "", err
