@@ -4,10 +4,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path/filepath"
+	"strings"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/server"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 const snapshotPathsShortDesc = `Report a snapshot of artifacts running from specific filesystem paths to Kosli.  `
@@ -35,15 +39,31 @@ which can be provided using ^--path-spec^.
 ` + pathSpecFileDesc
 
 const snapshotPathsExample = `
-# report directory artifacts running in a filesystem at a list of paths:
-kosli snapshot server yourEnvironmentName \
+# report one or more artifacts running in a filesystem using a path spec file:
+kosli snapshot paths yourEnvironmentName \
 	--path-spec path/to/your/pathsSpec/file \
 	--api-token yourAPIToken \
-	--org yourOrgName  
+	--org yourOrgName
+
+# report one artifact running in a specific path in a filesystem:
+kosli snapshot paths yourEnvironmentName \
+	--path path/to/your/artifact/dir/or/file \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# report one artifact running in a specific path in a filesystem AND exclude certain path patterns:
+kosli snapshot paths yourEnvironmentName \
+	--path path/to/your/artifact/dir/or/file \
+	--ignore **/log,unwanted.txt,path/**/output.txt
+	--api-token yourAPIToken \
+	--org yourOrgName
 `
 
 type snapshotPathsOptions struct {
 	pathSpecFile string
+	path         string
+	artifactName string
+	ignore       []string
 }
 
 func newSnapshotPathsCmd(out io.Writer) *cobra.Command {
@@ -60,6 +80,18 @@ func newSnapshotPathsCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
+			if err := MuXRequiredFlags(cmd, []string{"path-spec", "path"}, true); err != nil {
+				return err
+			}
+
+			if err := MuXRequiredFlags(cmd, []string{"path-spec", "ignore"}, false); err != nil {
+				return err
+			}
+
+			if err := MuXRequiredFlags(cmd, []string{"path-spec", "name"}, false); err != nil {
+				return err
+			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -67,13 +99,11 @@ func newSnapshotPathsCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&o.pathSpecFile, "path-spec", "", "path to the path-spec file")
+	cmd.Flags().StringVar(&o.pathSpecFile, "path-spec", "", pathsSpecFileFlag)
+	cmd.Flags().StringVar(&o.path, "path", "", snapshotPathsPathFlag)
+	cmd.Flags().StringVar(&o.artifactName, "name", "", snapshotPathsArtifactNameFlag)
+	cmd.Flags().StringSliceVar(&o.ignore, "ignore", []string{}, snapshotPathsIgnoreFlag)
 	addDryRunFlag(cmd)
-
-	err := RequireFlags(cmd, []string{"path-spec"})
-	if err != nil {
-		logger.Error("failed to configure required flags: %v", err)
-	}
 
 	return cmd
 }
@@ -83,7 +113,28 @@ func (o *snapshotPathsOptions) run(args []string) error {
 
 	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/server", global.Host, global.Org, envName)
 
-	artifacts, err := server.CreatePathsArtifactsData(o.pathSpecFile, logger)
+	var ps *server.PathsSpec
+	var err error
+	if o.pathSpecFile != "" {
+		// load path spec from file
+		ps, err = processPathSpecFile(o.pathSpecFile)
+		if err != nil {
+			return err
+		}
+	} else {
+		// load path spec from flags
+		ps = &server.PathsSpec{
+			Version: 1,
+			Artifacts: map[string]server.ArtifactPathSpec{
+				o.artifactName: {
+					Path:   o.path,
+					Ignore: o.ignore,
+				},
+			},
+		}
+	}
+
+	artifacts, err := server.CreatePathsArtifactsData(ps, logger)
 	if err != nil {
 		return err
 	}
@@ -103,4 +154,36 @@ func (o *snapshotPathsOptions) run(args []string) error {
 		logger.Info("[%d] artifacts were reported to environment %s", len(payload.Artifacts), envName)
 	}
 	return err
+}
+
+func processPathSpecFile(pathsSpecFile string) (*server.PathsSpec, error) {
+	var ps *server.PathsSpec
+	v := viper.New()
+	dir, file := filepath.Split(pathsSpecFile)
+	file = strings.TrimSuffix(file, filepath.Ext(file))
+
+	// Set the base name of the pathspec file, without the file extension.
+	v.SetConfigName(file)
+
+	// Set the dir path where viper should look for the
+	// pathspec file. By default, we are looking in the current working directory.
+	if dir == "" {
+		dir = "."
+	}
+	v.AddConfigPath(dir)
+
+	if err := v.ReadInConfig(); err != nil {
+		return ps, fmt.Errorf("failed to parse path spec file [%s] : %v", pathsSpecFile, err)
+	}
+
+	if err := v.UnmarshalExact(&ps); err != nil {
+		return ps, fmt.Errorf("failed to unmarshal path spec file [%s] : %v", pathsSpecFile, err)
+	}
+
+	validate := validator.New(validator.WithRequiredStructEnabled())
+	if err := validate.Struct(ps); err != nil {
+		return ps, fmt.Errorf("path spec file [%s] is invalid: %v", pathsSpecFile, err)
+	}
+
+	return ps, nil
 }

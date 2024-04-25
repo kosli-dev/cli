@@ -1,5 +1,0 @@
-version: 1
-artifacts:
-  differ:
-    path: testdata/folder1/full.txt
-    ignore: ["empty"]

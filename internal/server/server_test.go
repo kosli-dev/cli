@@ -306,45 +306,44 @@ func (suite *ServerTestSuite) createFileWithContent(path, content string) {
 func (suite *ServerTestSuite) TestCreatePathsArtifactsData() {
 
 	for _, t := range []struct {
-		name          string
-		pathsSpecFile string
-		want          []map[string]string
-		wantError     bool
+		name      string
+		pathsSpec *PathsSpec
+		want      []map[string]string
+		wantError bool
 	}{
 		{
-			name:          "fails when paths spec file does not exist",
-			pathsSpecFile: "testdata/does-not-exist.yml",
-			wantError:     true,
-		},
-		{
-			name:          "fails when paths spec file is invalid",
-			pathsSpecFile: "testdata/invalid-pathspec.yml",
-			wantError:     true,
-		},
-		{
-			name:          "can get artifact data with YAML path spec file",
-			pathsSpecFile: "testdata/valid-pathspec.yml",
+			name: "can get artifact data for a dir",
+			pathsSpec: &PathsSpec{
+				Version: 1,
+				Artifacts: map[string]ArtifactPathSpec{
+					"differ": {
+						Path:   "testdata/folder1",
+						Ignore: []string{"empty"},
+					},
+				},
+			},
 			want: []map[string]string{
 				{"differ": "51687c011a07c59b6ae9e774e6dc8b5b85343c1a0cfad2b5a0c3613744d19d2b"},
 			},
 		},
 		{
-			name:          "can get artifact data with JSON path spec file",
-			pathsSpecFile: "testdata/valid-pathspec.json",
-			want: []map[string]string{
-				{"differ": "51687c011a07c59b6ae9e774e6dc8b5b85343c1a0cfad2b5a0c3613744d19d2b"},
+			name: "can get artifact data for a file",
+			pathsSpec: &PathsSpec{
+				Version: 1,
+				Artifacts: map[string]ArtifactPathSpec{
+					"differ": {
+						Path:   "testdata/folder1/full.txt",
+						Ignore: []string{"empty"},
+					},
+				},
 			},
-		},
-		{
-			name:          "can get artifact data for a file",
-			pathsSpecFile: "testdata/file-artifact-pathspec.yml",
 			want: []map[string]string{
 				{"differ": "ff9c0fc39bdcbd5770c67fb1bf49d10f1815fc028edf1a6d83ddb75b64ae85be"},
 			},
 		},
 	} {
 		suite.Run(t.name, func() {
-			serverData, err := CreatePathsArtifactsData(t.pathsSpecFile, logger.NewStandardLogger())
+			serverData, err := CreatePathsArtifactsData(t.pathsSpec, logger.NewStandardLogger())
 			require.Equal(suite.T(), t.wantError, err != nil, err)
 
 			digestsList := []map[string]string{}

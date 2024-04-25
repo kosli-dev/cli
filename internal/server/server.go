@@ -4,12 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/utils"
-	"github.com/spf13/viper"
 	"github.com/yargevad/filepathx"
 )
 
@@ -26,14 +24,14 @@ type ServerData struct {
 
 // ArtifactPathSpec represents specification for how to fingerprint an artifact
 type ArtifactPathSpec struct {
-	Path   string   `mapstructure:"path"`
+	Path   string   `mapstructure:"path" validate:"required"`
 	Ignore []string `mapstructure:"ignore"`
 }
 
 // PathsSpec represents specification for how to fingerprint a list of artifacts
 type PathsSpec struct {
-	Version   int                         `mapstructure:"version"`
-	Artifacts map[string]ArtifactPathSpec `mapstructure:"artifacts"`
+	Version   int                         `mapstructure:"version" validate:"required,oneof=1"`
+	Artifacts map[string]ArtifactPathSpec `mapstructure:"artifacts" validate:"required"`
 }
 
 // CreateServerArtifactsData creates a list of ServerData for server artifacts at given paths
@@ -66,7 +64,8 @@ func CreateServerArtifactsData(paths, excludePaths []string, logger *logger.Logg
 }
 
 // getArtifactDataForPath calculates the artifact fingerprint for path (while excluding excludePaths)
-// and returns a ServerData object
+// and returns a ServerData object.
+// If artifactName is empty, it is defaulted to the absolute path of the artifact path
 func getArtifactDataForPath(path, artifactName string, excludePaths []string, logger *logger.Logger) (*ServerData, error) {
 	data := &ServerData{}
 	digests := make(map[string]string)
@@ -118,32 +117,8 @@ func getPathLastModifiedTimestamp(path string) (int64, error) {
 }
 
 // CreatePathsArtifactsData creates a list of ServerData for artifacts as defined in a pathSpecFile
-func CreatePathsArtifactsData(pathsSpecFile string, logger *logger.Logger) ([]*ServerData, error) {
+func CreatePathsArtifactsData(ps *PathsSpec, logger *logger.Logger) ([]*ServerData, error) {
 	result := []*ServerData{}
-
-	v := viper.New()
-	dir, file := filepath.Split(pathsSpecFile)
-	file = strings.TrimSuffix(file, filepath.Ext(file))
-
-	// Set the base name of the pathspec file, without the file extension.
-	v.SetConfigName(file)
-
-	// Set the dir path where viper should look for the
-	// pathspec file. By default, we are looking in the current working directory.
-	if dir == "" {
-		dir = "."
-	}
-	v.AddConfigPath(dir)
-
-	if err := v.ReadInConfig(); err != nil {
-		return result, fmt.Errorf("failed to parse path spec file [%s] : %v", pathsSpecFile, err)
-	}
-
-	var ps PathsSpec
-	if err := v.UnmarshalExact(&ps); err != nil {
-		return result, fmt.Errorf("failed to unmarshal path spec file [%s] : %v", pathsSpecFile, err)
-	}
-
 	for artifactName, pathSpec := range ps.Artifacts {
 		logger.Debug("fingerprinting artifact [%s] with spec [ Include: %s, Ignore: %s]", artifactName, pathSpec.Path, pathSpec.Ignore)
 		data, err := getArtifactDataForPath(pathSpec.Path, artifactName, pathSpec.Ignore, logger)
