@@ -11,7 +11,7 @@ The chart allows you to create a Kubernetes cronjob and all its necessary RBAC t
 
 ## Prerequisites
 
-- A Kubernetes cluster
+- A Kubernetes cluster (minimum supported version is `v1.21`)
 - Helm v3.0+
 - Create a secret for the Kosli API token which will be used for reporting. You can create a secret by running: `kubectl create secret generic <secret-name> --from-literal=<secret-key>=<your-api-key>`
 
