@@ -11,23 +11,11 @@ The chart allows you to create a Kubernetes cronjob and all its necessary RBAC t
 
 ## Prerequisites
 
-- A Kubernetes cluster
+- A Kubernetes cluster (minimum supported version is `v1.21`)
 - Helm v3.0+
 - Create a secret for the Kosli API token which will be used for reporting. You can create a secret by running: `kubectl create secret generic <secret-name> --from-literal=<secret-key>=<your-api-key>`
 
 ## Installing the chart
-
-### Installing from source
-
-You can install the Kosli reporter Helm chart from source code:
-
-```shell
-git clone https://github.com/kosli-dev/cli.git
-cd reporter/charts/k8s-reporter
-helm install [RELEASE-NAME] . -f [VALUES-FILE-PATH]
-```
-
-### Installing from the Helm Repository
 
 To install this chart via the Helm chart repository:
 
@@ -37,18 +25,18 @@ helm repo update
 helm install [RELEASE-NAME] kosli/k8s-reporter -f [VALUES-FILE-PATH]
 ```
 
+> Chart source can be found at https://github.com/kosli-dev/cli/tree/main/charts/k8s-reporter
+
 ## Upgrading the chart
-
-### Upgrading from source
-
-```shell
-helm upgrade [RELEASE-NAME] .
-```
-
-### Upgrading from the Helm chart repository
 
 ```shell
 helm upgrade [RELEASE-NAME] kosli/k8s-reporter
+```
+
+## Uninstalling chart
+
+```shell
+helm uninstall [RELEASE-NAME]
 ```
 
 ## Configurations
