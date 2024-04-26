@@ -24,8 +24,8 @@ type ServerData struct {
 
 // ArtifactPathSpec represents specification for how to fingerprint an artifact
 type ArtifactPathSpec struct {
-	Path   string   `mapstructure:"path" validate:"required"`
-	Ignore []string `mapstructure:"ignore"`
+	Path    string   `mapstructure:"path" validate:"required"`
+	Exclude []string `mapstructure:"exclude"`
 }
 
 // PathsSpec represents specification for how to fingerprint a list of artifacts
@@ -85,7 +85,7 @@ func getArtifactDataForPath(path, artifactName string, excludePaths []string, lo
 	var fingerprint string
 	if !finfo.IsDir() {
 		if utils.Contains(excludePaths, path) {
-			return data, fmt.Errorf("path [%s] is both required and ignored", path)
+			return data, fmt.Errorf("path [%s] is both included and excluded", path)
 		}
 		fingerprint, err = digest.FileSha256(path)
 	} else {
@@ -120,8 +120,8 @@ func getPathLastModifiedTimestamp(path string) (int64, error) {
 func CreatePathsArtifactsData(ps *PathsSpec, logger *logger.Logger) ([]*ServerData, error) {
 	result := []*ServerData{}
 	for artifactName, pathSpec := range ps.Artifacts {
-		logger.Debug("fingerprinting artifact [%s] with spec [ Include: %s, Ignore: %s]", artifactName, pathSpec.Path, pathSpec.Ignore)
-		data, err := getArtifactDataForPath(pathSpec.Path, artifactName, pathSpec.Ignore, logger)
+		logger.Debug("fingerprinting artifact [%s] with spec [ Include: %s, Exclude: %s]", artifactName, pathSpec.Path, pathSpec.Exclude)
+		data, err := getArtifactDataForPath(pathSpec.Path, artifactName, pathSpec.Exclude, logger)
 		if err != nil {
 			return result, fmt.Errorf("failed to calculate fingerprint for artifact [%s]: %v", artifactName, err)
 		}

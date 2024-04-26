@@ -2,4 +2,4 @@ version: 13 # invalid version
 artifacts:
   differ:
     path: testdata/folder1
-    ignore: ["empty"]
+    exclude: ["empty"]

@@ -16,9 +16,9 @@ import (
 
 const snapshotPathsShortDesc = `Report a snapshot of artifacts running from specific filesystem paths to Kosli.  `
 
-const pathSpecFileDesc = `Paths spec files can be in YAML, JSON or TOML formats.
+const pathSpecFileDesc = `Paths files can be in YAML, JSON or TOML formats.
 They specify a list of artifacts to fingerprint. For each artifact, the file specifies a base path to look for the artifact in 
-and (optionally) a list of paths to ignore. Ignored paths are relative to the artifact path(s) and can be literal paths or
+and (optionally) a list of paths to exclude. Excluded paths are relative to the artifact path(s) and can be literal paths or
 glob patterns.  
 The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match , 
 plus the ability to use recursive globs "**"
@@ -29,32 +29,35 @@ version: 1
 artifacts:
   artifact_name_a:
     path: dir1
-    ignore: [subdir1, **/log]`
+    exclude: [subdir1, **/log]`
 
 const snapshotPathsLongDesc = snapshotPathsShortDesc + `
 You can report directory or file artifacts in one or more filesystem paths. 
-Artifacts names and the paths to include and ignore when fingerprinting them can be defined in a paths spec file
-which can be provided using ^--path-spec^.
+Artifacts names and the paths to include and exclude when fingerprinting them can either:
+- be defined on command line using [^--name^, ^--path^, ^--exclude^] (suitable for reporting one artifact)
+- OR, be defined in a paths file which can be provided using ^--paths-file^.
 
 ` + pathSpecFileDesc
 
 const snapshotPathsExample = `
 # report one or more artifacts running in a filesystem using a path spec file:
 kosli snapshot paths yourEnvironmentName \
-	--path-spec path/to/your/pathsSpec/file \
+	--paths-file path/to/your/paths/file \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 # report one artifact running in a specific path in a filesystem:
 kosli snapshot paths yourEnvironmentName \
 	--path path/to/your/artifact/dir/or/file \
+	--name yourArtifactDisplayName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 # report one artifact running in a specific path in a filesystem AND exclude certain path patterns:
 kosli snapshot paths yourEnvironmentName \
-	--path path/to/your/artifact/dir/or/file \
-	--ignore **/log,unwanted.txt,path/**/output.txt
+	--path path/to/your/artifact/dir \
+	--name yourArtifactDisplayName \
+	--exclude **/log,unwanted.txt,path/**/output.txt
 	--api-token yourAPIToken \
 	--org yourOrgName
 `
@@ -63,7 +66,7 @@ type snapshotPathsOptions struct {
 	pathSpecFile string
 	path         string
 	artifactName string
-	ignore       []string
+	exclude      []string
 }
 
 func newSnapshotPathsCmd(out io.Writer) *cobra.Command {
@@ -80,15 +83,19 @@ func newSnapshotPathsCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
-			if err := MuXRequiredFlags(cmd, []string{"path-spec", "path"}, true); err != nil {
+			if err := MuXRequiredFlags(cmd, []string{"paths-file", "path"}, true); err != nil {
 				return err
 			}
 
-			if err := MuXRequiredFlags(cmd, []string{"path-spec", "ignore"}, false); err != nil {
+			if err := MuXRequiredFlags(cmd, []string{"paths-file", "exclude"}, false); err != nil {
 				return err
 			}
 
-			if err := MuXRequiredFlags(cmd, []string{"path-spec", "name"}, false); err != nil {
+			if err := MuXRequiredFlags(cmd, []string{"paths-file", "name"}, false); err != nil {
+				return err
+			}
+
+			if err := ConditionallyRequiredFlags(cmd, "name", "path"); err != nil {
 				return err
 			}
 
@@ -99,10 +106,10 @@ func newSnapshotPathsCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&o.pathSpecFile, "path-spec", "", pathsSpecFileFlag)
+	cmd.Flags().StringVar(&o.pathSpecFile, "paths-file", "", pathsSpecFileFlag)
 	cmd.Flags().StringVar(&o.path, "path", "", snapshotPathsPathFlag)
 	cmd.Flags().StringVar(&o.artifactName, "name", "", snapshotPathsArtifactNameFlag)
-	cmd.Flags().StringSliceVar(&o.ignore, "ignore", []string{}, snapshotPathsIgnoreFlag)
+	cmd.Flags().StringSliceVarP(&o.exclude, "exclude", "x", []string{}, snapshotPathsExcludeFlag)
 	addDryRunFlag(cmd)
 
 	return cmd
@@ -127,8 +134,8 @@ func (o *snapshotPathsOptions) run(args []string) error {
 			Version: 1,
 			Artifacts: map[string]server.ArtifactPathSpec{
 				o.artifactName: {
-					Path:   o.path,
-					Ignore: o.ignore,
+					Path:    o.path,
+					Exclude: o.exclude,
 				},
 			},
 		}

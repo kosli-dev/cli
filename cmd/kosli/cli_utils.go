@@ -214,6 +214,29 @@ func MuXRequiredFlags(cmd *cobra.Command, flagNames []string, atLeastOne bool) e
 	return nil
 }
 
+// ConditionallyRequiredFlags checks that "requiredFlagName" must be set, and ONLY allowed to be set
+// when "conditionFlagName" is set
+func ConditionallyRequiredFlags(cmd *cobra.Command, requiredFlagName, conditionFlagName string) error {
+	conditionFlag := cmd.Flags().Lookup(conditionFlagName)
+	requiredFlag := cmd.Flags().Lookup(requiredFlagName)
+	if conditionFlag == nil {
+		return fmt.Errorf("failed to configure conditionally required flags [%s]. The flag is not defined for this command.", conditionFlagName)
+	}
+	if requiredFlag == nil {
+		return fmt.Errorf("failed to configure conditionally required flags [%s]. The flag is not defined for this command.", requiredFlagName)
+	}
+
+	if conditionFlag.Changed && !requiredFlag.Changed {
+		return fmt.Errorf("flag --%s is required when flag --%s is set", requiredFlagName, conditionFlagName)
+	}
+
+	if !conditionFlag.Changed && requiredFlag.Changed {
+		return fmt.Errorf("flag --%s is only allowed when flag --%s is set", requiredFlagName, conditionFlagName)
+	}
+
+	return nil
+}
+
 func RequireAtLeastOneOfFlags(cmd *cobra.Command, flagNames []string) error {
 	flagsSet := 0
 	for _, name := range flagNames {

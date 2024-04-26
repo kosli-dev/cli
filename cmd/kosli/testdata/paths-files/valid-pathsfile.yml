@@ -2,4 +2,4 @@ version: 1
 artifacts:
   differ:
     path: testdata/server
-    ignore: ["logs/*"]
+    exclude: ["logs/*"]

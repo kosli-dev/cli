@@ -2,4 +2,4 @@ versionnn: 1
 foo:
   differ:
     path: testdata/folder1
-    ignore: ["empty"]
+    exclude: ["empty"]

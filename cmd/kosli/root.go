@@ -197,10 +197,10 @@ The service principal needs to have the following permissions:
 	deprecatedKosliReportEvidenceMessage = "See **kosli attest** commands."
 	setTagsFlag                          = "[optional] The key-value pairs to tag the resource with. The format is: key=value"
 	unsetTagsFlag                        = "[optional] The list of tag keys to remove from the resource."
-	pathsSpecFileFlag                    = "[conditional] The path to a path-spec file in YAML/JSON/TOML format. Cannot be used together with --path ."
-	snapshotPathsPathFlag                = "[conditional] The base path for the artifact to snapshot. Cannot be used together with --path-spec ."
-	snapshotPathsIgnoreFlag              = "[optional] The comma-separated list of literal paths or glob patterns to ignore when fingerprinting the artifact. Can only be used together with --path ."
-	snapshotPathsArtifactNameFlag        = "[optional] The reported name of the artifact. Can only be used together with --path. If not provided when --path is used, the absolute path of the artifact is used."
+	pathsSpecFileFlag                    = "[conditional] The path to a paths file in YAML/JSON/TOML format. Cannot be used together with --path ."
+	snapshotPathsPathFlag                = "[conditional] The base path for the artifact to snapshot. Cannot be used together with --paths-file ."
+	snapshotPathsExcludeFlag             = "[optional] The comma-separated list of literal paths or glob patterns to exclude when fingerprinting the artifact. Can only be used together with --path ."
+	snapshotPathsArtifactNameFlag        = "[conditional] The reported name of the artifact. Only required when --path is used."
 )
 
 var global *GlobalOpts

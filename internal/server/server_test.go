@@ -317,8 +317,8 @@ func (suite *ServerTestSuite) TestCreatePathsArtifactsData() {
 				Version: 1,
 				Artifacts: map[string]ArtifactPathSpec{
 					"differ": {
-						Path:   "testdata/folder1",
-						Ignore: []string{"empty"},
+						Path:    "testdata/folder1",
+						Exclude: []string{"empty"},
 					},
 				},
 			},
@@ -332,8 +332,8 @@ func (suite *ServerTestSuite) TestCreatePathsArtifactsData() {
 				Version: 1,
 				Artifacts: map[string]ArtifactPathSpec{
 					"differ": {
-						Path:   "testdata/folder1/full.txt",
-						Ignore: []string{"empty"},
+						Path:    "testdata/folder1/full.txt",
+						Exclude: []string{"empty"},
 					},
 				},
 			},

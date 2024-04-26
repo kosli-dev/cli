@@ -3,7 +3,7 @@
   "artifacts": {
     "differ": {
       "path": "testdata/server",
-      "ignore": ["app.app"]
+      "exclude": ["app.app"]
     }
   }
 }
