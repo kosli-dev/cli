@@ -303,6 +303,63 @@ func (suite *ServerTestSuite) createFileWithContent(path, content string) {
 	require.NoErrorf(suite.T(), err, "error creating file %s", path)
 }
 
+func (suite *ServerTestSuite) TestCreatePathsArtifactsData() {
+
+	for _, t := range []struct {
+		name      string
+		pathsSpec *PathsSpec
+		want      []map[string]string
+		wantError bool
+	}{
+		{
+			name: "can get artifact data for a dir",
+			pathsSpec: &PathsSpec{
+				Version: 1,
+				Artifacts: map[string]ArtifactPathSpec{
+					"differ": {
+						Path:    "testdata/folder1",
+						Exclude: []string{"empty"},
+					},
+				},
+			},
+			want: []map[string]string{
+				{"differ": "51687c011a07c59b6ae9e774e6dc8b5b85343c1a0cfad2b5a0c3613744d19d2b"},
+			},
+		},
+		{
+			name: "can get artifact data for a file",
+			pathsSpec: &PathsSpec{
+				Version: 1,
+				Artifacts: map[string]ArtifactPathSpec{
+					"differ": {
+						Path:    "testdata/folder1/full.txt",
+						Exclude: []string{"empty"},
+					},
+				},
+			},
+			want: []map[string]string{
+				{"differ": "ff9c0fc39bdcbd5770c67fb1bf49d10f1815fc028edf1a6d83ddb75b64ae85be"},
+			},
+		},
+	} {
+		suite.Run(t.name, func() {
+			serverData, err := CreatePathsArtifactsData(t.pathsSpec, logger.NewStandardLogger())
+			require.Equal(suite.T(), t.wantError, err != nil, err)
+
+			digestsList := []map[string]string{}
+
+			for i, data := range serverData {
+				digestsList = append(digestsList, data.Digests)
+				assert.NotEqual(suite.T(), int64(0), data.CreationTimestamp, fmt.Sprintf("TestCreatePathsArtifactsData: %s , got: %v, should not be 0, at index: %d", t.name, data.CreationTimestamp, i))
+			}
+
+			for artifactName, digest := range t.want {
+				require.Equal(suite.T(), digest, digestsList[artifactName])
+			}
+		})
+	}
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestServerTestSuite(t *testing.T) {

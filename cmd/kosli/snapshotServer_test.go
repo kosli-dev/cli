@@ -34,31 +34,31 @@ func (suite *SnapshotServerTestSuite) TestSnapshotServerCmd() {
 			wantError: false,
 			name:      "snapshot server works with --paths",
 			cmd:       fmt.Sprintf(`snapshot server --paths testdata/file1 %s %s`, suite.envName, suite.defaultKosliArguments),
-			golden:    "[1] artifacts were reported to environment snapshot-server-env\n",
+			golden:    "Command \"server\" is deprecated, use 'kosli snapshot paths' instead\n[1] artifacts were reported to environment snapshot-server-env\n",
 		},
 		{
 			wantError: false,
 			name:      "snapshot server works with --exclude",
 			cmd:       fmt.Sprintf(`snapshot server --paths testdata/server --exclude logs %s %s`, suite.envName, suite.defaultKosliArguments),
-			golden:    "[1] artifacts were reported to environment snapshot-server-env\n",
+			golden:    "Command \"server\" is deprecated, use 'kosli snapshot paths' instead\n[1] artifacts were reported to environment snapshot-server-env\n",
 		},
 		{
 			wantError: true,
 			name:      "snapshot server fails without --paths",
 			cmd:       fmt.Sprintf(`snapshot server %s %s`, suite.envName, suite.defaultKosliArguments),
-			golden:    "Error: required flag \"paths\" not set\n",
+			golden:    "Command \"server\" is deprecated, use 'kosli snapshot paths' instead\nError: required flag \"paths\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "snapshot server fails if two arguments are provided",
 			cmd:       fmt.Sprintf(`snapshot server %s xxx %s`, suite.envName, suite.defaultKosliArguments),
-			golden:    "Error: accepts 1 arg(s), received 2\n",
+			golden:    "Command \"server\" is deprecated, use 'kosli snapshot paths' instead\nError: accepts 1 arg(s), received 2\n",
 		},
 		{
 			wantError: true,
 			name:      "snapshot server fails if no args are set",
 			cmd:       fmt.Sprintf(`snapshot server %s`, suite.defaultKosliArguments),
-			golden:    "Error: accepts 1 arg(s), received 0\n",
+			golden:    "Command \"server\" is deprecated, use 'kosli snapshot paths' instead\nError: accepts 1 arg(s), received 0\n",
 		},
 	}
 

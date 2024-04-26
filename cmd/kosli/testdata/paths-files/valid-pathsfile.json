@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "artifacts": {
+    "differ": {
+      "path": "testdata/server",
+      "exclude": ["app.app"]
+    }
+  }
+}

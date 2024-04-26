@@ -16,10 +16,10 @@ The supported glob pattern syntax is what is documented here: https://pkg.go.dev
 plus the ability to use recursive globs "**"`
 
 const fingerprintLongDesc = fingerprintShortDesc + `
-Requires artifact type flag to be set.
+Requires ^--artifact-type^ flag to be set.
 Artifact type can be one of: "file" for files, "dir" for directories, "docker" for docker images.
 
-Fingerprinting docker images can be done using via the local docker daemon or the fingerprint can be fetched
+Fingerprinting docker images can be done using the local docker daemon or the fingerprint can be fetched
 from a remote registry.
 
 ` + fingerprintDirSynopsis
