@@ -1,37 +1,29 @@
 ---
-title: "kosli fingerprint"
+title: "kosli assert artifact"
 beta: false
 deprecated: false
 ---
 
-# kosli fingerprint
+# kosli assert artifact
 
 ## Synopsis
 
-Calculate the SHA256 fingerprint of an artifact.
-Requires `--artifact-type` flag to be set.
-Artifact type can be one of: "file" for files, "dir" for directories, "docker" for docker images.
-
-Fingerprinting docker images can be done using the local docker daemon or the fingerprint can be fetched
-from a remote registry.
-
-When fingerprinting a 'dir' artifact, you can exclude certain paths from fingerprint calculation 
-using the `--exclude` flag.
-Excluded paths are relative to the artifact path(s) and can be literal paths or
-glob patterns.  
-The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match , 
-plus the ability to use recursive globs "**"
+Assert the compliance status of an artifact in Kosli.  
+Exits with non-zero code if the artifact has a non-compliant status.
 
 ```shell
-kosli fingerprint {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
+kosli assert artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
+|    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for --artifact-type dir.  |
-|    -h, --help  |  help for fingerprint  |
+|    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'.  |
+|    -f, --flow string  |  The Kosli flow name.  |
+|    -h, --help  |  help for artifact  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
@@ -48,4 +40,35 @@ kosli fingerprint {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
+
+## Live Examples in different CI systems
+
+{{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli assert artifact` command in GitHub.
+
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli+assert+artifact){{< /tab >}}{{< tab "GitLab" >}}View an example of the `kosli assert artifact` command in GitLab.
+
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=gitlab&command=kosli+assert+artifact){{< /tab >}}{{< /tabs >}}
+
+## Examples Use Cases
+
+**fail if an artifact has a non-compliant status (using the artifact fingerprint)**
+
+```shell
+kosli assert artifact \
+	--fingerprint 184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0 \
+	--flow yourFlowName \
+	--api-token yourAPIToken \
+	--org yourOrgName 
+
+```
+
+**fail if an artifact has a non-compliant status (using the artifact name and type)**
+
+```shell
+kosli assert artifact library/nginx:1.21 \
+	--artifact-type docker \
+	--flow yourFlowName \
+	--api-token yourAPIToken \
+	--org yourOrgName
+```
 
