@@ -52,9 +52,6 @@ kosli snapshot paths yourEnvironmentName \
 
 type snapshotPathsOptions struct {
 	pathSpecFile string
-	path         string
-	artifactName string
-	exclude      []string
 }
 
 func newSnapshotPathsCmd(out io.Writer) *cobra.Command {
