@@ -13,7 +13,7 @@ const createEnvironmentShortDesc = `Create or update a Kosli environment.`
 
 const createEnvironmentLongDesc = createEnvironmentShortDesc + `
 
-The **--type** must match the type of environment you wish to record snapshots from.
+^^--type^^ must match the type of environment you wish to record snapshots from.
 The following types are supported:
   - k8s        - Kubernetes
   - ecs        - Amazon Elastic Container Service
@@ -23,7 +23,11 @@ The following types are supported:
   - azure-apps - Azure app services
   - server     - Generic type
 
-By default kosli will not make new snapshots for scaling events (change in number of instances running).
+By default, the environment allows artifacts with no provenance (i.e. environment snapshots will not 
+become non-compliant because of artifacts that do not have provenance). You can require provenance for all artifacts
+by setting --allow-no-provenance=false.
+
+Also, by default, kosli will not make new snapshots for scaling events (change in number of instances running).
 For large clusters the scaling events will often outnumber the actual change of SW.
 
 It is possible to enable new snapshots for scaling events with the --include-scaling flag, or turn
@@ -40,16 +44,18 @@ kosli create environment yourEnvironmentName
 `
 
 type createEnvOptions struct {
-	payload        CreateEnvironmentPayload
-	excludeScaling bool
-	includeScaling bool
+	payload           CreateEnvironmentPayload
+	excludeScaling    bool
+	includeScaling    bool
+	allowNoProvenance bool
 }
 
 type CreateEnvironmentPayload struct {
-	Name           string `json:"name"`
-	Type           string `json:"type"`
-	Description    string `json:"description"`
-	IncludeScaling *bool  `json:"include_scaling,omitempty"`
+	Name              string `json:"name"`
+	Type              string `json:"type"`
+	Description       string `json:"description"`
+	IncludeScaling    *bool  `json:"include_scaling,omitempty"`
+	AllowNoProvenance *bool  `json:"allow_no_provenance,omitempty"`
 }
 
 func newCreateEnvironmentCmd(out io.Writer) *cobra.Command {
@@ -81,6 +87,7 @@ func newCreateEnvironmentCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", envDescriptionFlag)
 	cmd.Flags().BoolVar(&o.excludeScaling, "exclude-scaling", false, excludeScalingFlag)
 	cmd.Flags().BoolVar(&o.includeScaling, "include-scaling", false, includeScalingFlag)
+	cmd.Flags().BoolVar(&o.allowNoProvenance, "allow-no-provenance", true, allowNoProvenanceFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"type"})

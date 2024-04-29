@@ -51,6 +51,16 @@ func (suite *CreateEnvironmentCommandTestSuite) TestCreateEnvironmentCmd() {
 			golden:    "environment newEnv1 was created\n",
 		},
 		{
+			name:   "can create K8S env with --allow-no-provenance",
+			cmd:    "create env relaxedEnv --type K8S --allow-no-provenance" + suite.defaultKosliArguments,
+			golden: "environment relaxedEnv was created\n",
+		},
+		{
+			name:   "can create K8S env with --allow-no-provenance=false",
+			cmd:    "create env relaxedEnv --type K8S --allow-no-provenance=false" + suite.defaultKosliArguments,
+			golden: "environment relaxedEnv was created\n",
+		},
+		{
 			wantError: true,
 			name:      "fail if both exclude-scaling an include-scaling is provided",
 			cmd:       "create env newEnv1 --type K8S --exclude-scaling --include-scaling" + suite.defaultKosliArguments,

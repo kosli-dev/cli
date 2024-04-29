@@ -88,12 +88,16 @@ func printEnvironmentAsTable(raw string, out io.Writer, page int) error {
 		tagsOutput += fmt.Sprintf("[%s=%s], ", key, value)
 	}
 	tagsOutput = strings.TrimSuffix(tagsOutput, ", ")
+	if tagsOutput == "" {
+		tagsOutput = "None"
+	}
 
 	header := []string{}
 	rows := []string{}
 	rows = append(rows, fmt.Sprintf("Name:\t%s", env["name"]))
 	rows = append(rows, fmt.Sprintf("Type:\t%s", env["type"]))
 	rows = append(rows, fmt.Sprintf("Description:\t%s", env["description"]))
+	rows = append(rows, fmt.Sprintf("Allow No Provenance Artifacts:\t%t", env["allow_no_provenance"]))
 	rows = append(rows, fmt.Sprintf("State:\t%s", state))
 	rows = append(rows, fmt.Sprintf("Last Reported At:\t%s", lastReportedAt))
 	rows = append(rows, fmt.Sprintf("Tags:\t%s", tagsOutput))
