@@ -24,12 +24,15 @@ The supported glob pattern syntax is what is documented here: https://pkg.go.dev
 plus the ability to use recursive globs "**"
 
 This is an example YAML paths spec file:
+` +
 
-version: 1
+	"```yaml\n" +
+	`version: 1
 artifacts:
   artifact_name_a:
     path: dir1
-    exclude: [subdir1, **/log]`
+    exclude: [subdir1, **/log]` +
+	"\n```"
 
 const snapshotPathsLongDesc = snapshotPathsShortDesc + `
 You can report directory or file artifacts in one or more filesystem paths. 
