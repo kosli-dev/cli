@@ -198,9 +198,9 @@ The service principal needs to have the following permissions:
 	setTagsFlag                          = "[optional] The key-value pairs to tag the resource with. The format is: key=value"
 	unsetTagsFlag                        = "[optional] The list of tag keys to remove from the resource."
 	pathsSpecFileFlag                    = "[conditional] The path to a paths file in YAML/JSON/TOML format. Cannot be used together with --path ."
-	snapshotPathsPathFlag                = "[conditional] The base path for the artifact to snapshot. Cannot be used together with --paths-file ."
-	snapshotPathsExcludeFlag             = "[optional] The comma-separated list of literal paths or glob patterns to exclude when fingerprinting the artifact. Can only be used together with --path ."
-	snapshotPathsArtifactNameFlag        = "[conditional] The reported name of the artifact. Only required when --path is used."
+	snapshotPathPathFlag                 = "The base path for the artifact to snapshot."
+	snapshotPathExcludeFlag              = "[optional] The comma-separated list of literal paths or glob patterns to exclude when fingerprinting the artifact."
+	snapshotPathArtifactNameFlag         = "The reported name of the artifact."
 )
 
 var global *GlobalOpts

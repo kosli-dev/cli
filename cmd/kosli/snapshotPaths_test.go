@@ -49,30 +49,6 @@ func (suite *SnapshotPathsTestSuite) TestSnapshotPathsCmd() {
 			golden:    "Error: path spec file [testdata/paths-files/invalid-values-pathsfile.yml] is invalid: Key: 'PathsSpec.Version' Error:Field validation for 'Version' failed on the 'oneof' tag\n",
 		},
 		{
-			wantError: true,
-			name:      "fails when --paths-file and --path are provided",
-			cmd:       fmt.Sprintf(`snapshot paths --paths-file testdata/paths-files/valid-pathsfile.yml --path foo %s %s`, suite.envName, suite.defaultKosliArguments),
-			golden:    "Error: only one of --paths-file, --path is allowed\n",
-		},
-		{
-			wantError: true,
-			name:      "fails when --paths-file and --exclude are provided",
-			cmd:       fmt.Sprintf(`snapshot paths --paths-file testdata/paths-files/valid-pathsfile.yml --exclude foo %s %s`, suite.envName, suite.defaultKosliArguments),
-			golden:    "Error: only one of --paths-file, --exclude is allowed\n",
-		},
-		{
-			wantError: true,
-			name:      "fails when --paths-file and --name are provided",
-			cmd:       fmt.Sprintf(`snapshot paths --paths-file testdata/paths-files/valid-pathsfile.yml --name foo %s %s`, suite.envName, suite.defaultKosliArguments),
-			golden:    "Error: only one of --paths-file, --name is allowed\n",
-		},
-		{
-			wantError: true,
-			name:      "fails when neither --paths-file nor --path are provided",
-			cmd:       fmt.Sprintf(`snapshot paths %s %s`, suite.envName, suite.defaultKosliArguments),
-			golden:    "Error: at least one of --paths-file, --path is required\n",
-		},
-		{
 			name:   "can report artifact data with YAML path spec file",
 			cmd:    fmt.Sprintf(`snapshot paths --paths-file testdata/paths-files/valid-pathsfile.yml %s %s`, suite.envName, suite.defaultKosliArguments),
 			golden: fmt.Sprintf("[1] artifacts were reported to environment %s\n", suite.envName),
@@ -85,22 +61,6 @@ func (suite *SnapshotPathsTestSuite) TestSnapshotPathsCmd() {
 		{
 			name:   "can report artifact data with TOML path spec file",
 			cmd:    fmt.Sprintf(`snapshot paths --paths-file testdata/paths-files/valid-pathsfile.toml %s %s`, suite.envName, suite.defaultKosliArguments),
-			golden: fmt.Sprintf("[1] artifacts were reported to environment %s\n", suite.envName),
-		},
-		{
-			wantError: true,
-			name:      "--name is required when --path is used",
-			cmd:       fmt.Sprintf(`snapshot paths --path testdata/file1 %s %s`, suite.envName, suite.defaultKosliArguments),
-			golden:    "Error: flag --name is required when flag --path is set\n",
-		},
-		{
-			name:   "can report artifact data with --path and --name",
-			cmd:    fmt.Sprintf(`snapshot paths --path testdata/file1 --name foo %s %s`, suite.envName, suite.defaultKosliArguments),
-			golden: fmt.Sprintf("[1] artifacts were reported to environment %s\n", suite.envName),
-		},
-		{
-			name:   "can report artifact data with --path and --exclude",
-			cmd:    fmt.Sprintf(`snapshot paths --path testdata/server --name foo --exclude app.app,"**/logs.txt" %s %s`, suite.envName, suite.defaultKosliArguments),
 			golden: fmt.Sprintf("[1] artifacts were reported to environment %s\n", suite.envName),
 		},
 	}

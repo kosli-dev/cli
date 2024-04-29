@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-const snapshotPathsShortDesc = `Report a snapshot of artifacts running from specific filesystem paths to Kosli.  `
+const snapshotPathsShortDesc = `Report a snapshot of artifacts running in specific filesystem paths to Kosli.  `
 
 const pathSpecFileDesc = `Paths files can be in YAML, JSON or TOML formats.
 They specify a list of artifacts to fingerprint. For each artifact, the file specifies a base path to look for the artifact in 
@@ -33,9 +33,8 @@ artifacts:
 
 const snapshotPathsLongDesc = snapshotPathsShortDesc + `
 You can report directory or file artifacts in one or more filesystem paths. 
-Artifacts names and the paths to include and exclude when fingerprinting them can either:
-- be defined on command line using [^--name^, ^--path^, ^--exclude^] (suitable for reporting one artifact)
-- OR, be defined in a paths file which can be provided using ^--paths-file^.
+Artifacts names and the paths to include and exclude when fingerprinting them can be 
+defined in a paths file which can be provided using ^--paths-file^.
 
 ` + pathSpecFileDesc
 
@@ -46,20 +45,6 @@ kosli snapshot paths yourEnvironmentName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report one artifact running in a specific path in a filesystem:
-kosli snapshot paths yourEnvironmentName \
-	--path path/to/your/artifact/dir/or/file \
-	--name yourArtifactDisplayName \
-	--api-token yourAPIToken \
-	--org yourOrgName
-
-# report one artifact running in a specific path in a filesystem AND exclude certain path patterns:
-kosli snapshot paths yourEnvironmentName \
-	--path path/to/your/artifact/dir \
-	--name yourArtifactDisplayName \
-	--exclude **/log,unwanted.txt,path/**/output.txt
-	--api-token yourAPIToken \
-	--org yourOrgName
 `
 
 type snapshotPathsOptions struct {
@@ -83,22 +68,6 @@ func newSnapshotPathsCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
-			if err := MuXRequiredFlags(cmd, []string{"paths-file", "path"}, true); err != nil {
-				return err
-			}
-
-			if err := MuXRequiredFlags(cmd, []string{"paths-file", "exclude"}, false); err != nil {
-				return err
-			}
-
-			if err := MuXRequiredFlags(cmd, []string{"paths-file", "name"}, false); err != nil {
-				return err
-			}
-
-			if err := ConditionallyRequiredFlags(cmd, "name", "path"); err != nil {
-				return err
-			}
-
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -107,10 +76,11 @@ func newSnapshotPathsCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&o.pathSpecFile, "paths-file", "", pathsSpecFileFlag)
-	cmd.Flags().StringVar(&o.path, "path", "", snapshotPathsPathFlag)
-	cmd.Flags().StringVar(&o.artifactName, "name", "", snapshotPathsArtifactNameFlag)
-	cmd.Flags().StringSliceVarP(&o.exclude, "exclude", "x", []string{}, snapshotPathsExcludeFlag)
 	addDryRunFlag(cmd)
+
+	if err := RequireFlags(cmd, []string{"paths-file"}); err != nil {
+		logger.Error("failed to configure required flags: %v", err)
+	}
 
 	return cmd
 }
@@ -120,25 +90,10 @@ func (o *snapshotPathsOptions) run(args []string) error {
 
 	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/server", global.Host, global.Org, envName)
 
-	var ps *server.PathsSpec
-	var err error
-	if o.pathSpecFile != "" {
-		// load path spec from file
-		ps, err = processPathSpecFile(o.pathSpecFile)
-		if err != nil {
-			return err
-		}
-	} else {
-		// load path spec from flags
-		ps = &server.PathsSpec{
-			Version: 1,
-			Artifacts: map[string]server.ArtifactPathSpec{
-				o.artifactName: {
-					Path:    o.path,
-					Exclude: o.exclude,
-				},
-			},
-		}
+	// load path spec from file
+	ps, err := processPathSpecFile(o.pathSpecFile)
+	if err != nil {
+		return err
 	}
 
 	artifacts, err := server.CreatePathsArtifactsData(ps, logger)
