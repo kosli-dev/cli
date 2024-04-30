@@ -1,44 +1,33 @@
 ---
-title: "kosli snapshot paths"
+title: "kosli snapshot path"
 beta: false
 deprecated: false
 ---
 
-# kosli snapshot paths
+# kosli snapshot path
 
 ## Synopsis
 
 Report a snapshot of artifacts running in specific filesystem paths to Kosli.  
-You can report directory or file artifacts in one or more filesystem paths. 
-Artifacts names and the paths to include and exclude when fingerprinting them can be 
-defined in a paths file which can be provided using `--paths-file`.
-
-Paths files can be in YAML, JSON or TOML formats.
-They specify a list of artifacts to fingerprint. For each artifact, the file specifies a base path to look for the artifact in 
-and (optionally) a list of paths to exclude. Excluded paths are relative to the artifact path(s) and can be literal paths or
-glob patterns.  
+You can report a directory or file artifact. For reporting multiple artifacts in one go, use "kosli snapshot paths".
+You can exclude certain paths or patterns from the artifact fingerprint using `--exclude`.
 The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match , 
 plus the ability to use recursive globs "**"
 
-This is an example YAML paths spec file:
-```yaml
-version: 1
-artifacts:
-  artifact_name_a:
-    path: dir1
-    exclude: [subdir1, **/log]
-```
+
 
 ```shell
-kosli snapshot paths ENVIRONMENT-NAME [flags]
+kosli snapshot path ENVIRONMENT-NAME [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|    -h, --help  |  help for paths  |
-|        --paths-file string  |  The path to a paths file in YAML/JSON/TOML format. Cannot be used together with --path .  |
+|    -x, --exclude strings  |  [optional] The comma-separated list of literal paths or glob patterns to exclude when fingerprinting the artifact.  |
+|    -h, --help  |  help for path  |
+|        --name string  |  The reported name of the artifact.  |
+|        --path string  |  The base path for the artifact to snapshot.  |
 
 
 ## Flags inherited from parent commands
@@ -55,11 +44,24 @@ kosli snapshot paths ENVIRONMENT-NAME [flags]
 
 ## Examples Use Cases
 
-**report one or more artifacts running in a filesystem using a path spec file**
+**report one artifact running in a specific path in a filesystem**
 
 ```shell
-kosli snapshot paths yourEnvironmentName \
-	--paths-file path/to/your/paths/file \
+kosli snapshot path yourEnvironmentName \
+	--path path/to/your/artifact/dir/or/file \
+	--name yourArtifactDisplayName \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+```
+
+**report one artifact running in a specific path in a filesystem AND exclude certain path patterns**
+
+```shell
+kosli snapshot path yourEnvironmentName \
+	--path path/to/your/artifact/dir \
+	--name yourArtifactDisplayName \
+	--exclude **/log,unwanted.txt,path/**/output.txt
 	--api-token yourAPIToken \
 	--org yourOrgName
 ```
