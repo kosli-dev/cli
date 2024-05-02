@@ -194,6 +194,7 @@ The service principal needs to have the following permissions:
 	attestationDescription               = "[optional] attestation description"
 	excludeScalingFlag                   = "[optional] Exclude scaling events for snapshots. Snapshots with scaling changes will not result in new environment records."
 	includeScalingFlag                   = "[optional] Include scaling events for snapshots. Snapshots with scaling changes will result in new environment records."
+	requireProvenanceFlag                = "[defaulted] Require provenance for all artifacts running in environment snapshots."
 	deprecatedKosliReportEvidenceMessage = "See **kosli attest** commands."
 	setTagsFlag                          = "[optional] The key-value pairs to tag the resource with. The format is: key=value"
 	unsetTagsFlag                        = "[optional] The list of tag keys to remove from the resource."
