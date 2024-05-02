@@ -1,50 +1,38 @@
 ---
-title: "kosli report evidence artifact snyk"
+title: "kosli report artifact"
 beta: false
 deprecated: true
 ---
 
-# kosli report evidence artifact snyk
+# kosli report artifact
 
-{{< hint danger >}}**kosli report evidence artifact snyk** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.{{< /hint >}}
+{{< hint danger >}}**kosli report artifact** is deprecated. see kosli attest commands  Deprecated commands will be removed in a future release.{{< /hint >}}
 ## Synopsis
 
-Report Snyk vulnerability scan evidence for an artifact in a Kosli flow.    
-The --scan-results .json file is parsed and uploaded to Kosli's evidence vault.
-
-In CLI <v2.8.2, Snyk results could only be in the Snyk JSON output format. "snyk code test" results were not supported by 
-this command and could be reported as generic evidence.
-
-Starting from v2.8.2, the Snyk results can be in Snyk JSON or SARIF output format for "snyk container test". 
-"snyk code test" is now supported but only in the SARIF format.
-
-If no vulnerabilities are detected, the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
-
+Report an artifact creation to a Kosli flow.  
 The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag) or can be provided directly (with the `--fingerprint` flag).
 
 ```shell
-kosli report evidence artifact snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli report artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
-|    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|    -b, --build-url string  |  The url of CI pipeline that built the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|    -u, --commit-url string  |  The url for the git commit that created the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|        --evidence-fingerprint string  |  [optional] The SHA256 fingerprint of the evidence file or dir.  |
-|        --evidence-url string  |  [optional] The external URL where the evidence file or dir is stored.  |
 |    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for --artifact-type dir.  |
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'.  |
 |    -f, --flow string  |  The Kosli flow name.  |
-|    -h, --help  |  help for snyk  |
-|    -n, --name string  |  The name of the evidence.  |
+|    -g, --git-commit string  |  [defaulted] The git commit from which the artifact was created. (defaulted in some CIs: https://docs.kosli.com/ci-defaults, otherwise defaults to HEAD ).  |
+|    -h, --help  |  help for artifact  |
+|    -n, --name string  |  [optional] Artifact display name, if different from file, image or directory name.  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
-|    -R, --scan-results string  |  The path to Snyk SARIF or JSON scan results file from 'snyk test' and 'snyk container test'. By default, the Snyk results will be uploaded to Kosli's evidence vault.  |
-|        --upload-results  |  [defaulted] Whether to upload the provided Snyk results file as an attachment to Kosli or not. (default true)  |
-|    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the evidence.  |
+|        --repo-root string  |  [defaulted] The directory where the source git repository is available. (default ".")  |
 
 
 ## Flags inherited from parent commands
@@ -61,30 +49,30 @@ kosli report evidence artifact snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 
 ## Examples Use Cases
 
-**report Snyk vulnerability scan evidence about a file artifact**
+**Report to a Kosli flow that a file type artifact has been created**
 
 ```shell
-kosli report evidence artifact snyk FILE.tgz \
+kosli report artifact FILE.tgz \
+	--api-token yourApiToken \
 	--artifact-type file \
-	--name yourEvidenceName \
-	--flow yourFlowName \
 	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
-	--org yourOrgName	\
-	--scan-results yourSnykJSONScanResults
+	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
+	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
+	--org yourOrgName \
+	--flow yourFlowName 
 
 ```
 
-**report Snyk vulnerability scan evidence about an artifact using an available Sha256 digest**
+**Report to a Kosli flow that an artifact with a provided fingerprint (sha256) has been created**
 
 ```shell
-kosli report evidence artifact snyk \
-	--fingerprint yourSha256 \
-	--name yourEvidenceName \
-	--flow yourFlowName \
+kosli report artifact ANOTHER_FILE.txt \
+	--api-token yourApiToken \
 	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
-	--org yourOrgName	\
-	--scan-results yourSnykJSONScanResults
+	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
+	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
+	--org yourOrgName \
+	--flow yourFlowName \
+	--fingerprint yourArtifactFingerprint
 ```
 

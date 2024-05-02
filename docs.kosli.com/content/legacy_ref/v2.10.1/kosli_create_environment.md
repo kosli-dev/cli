@@ -10,7 +10,7 @@ deprecated: false
 
 Create or update a Kosli environment.
 
-``--type`` must match the type of environment you wish to record snapshots from.
+The **--type** must match the type of environment you wish to record snapshots from.
 The following types are supported:
   - k8s        - Kubernetes
   - ecs        - Amazon Elastic Container Service
@@ -20,11 +20,7 @@ The following types are supported:
   - azure-apps - Azure app services
   - server     - Generic type
 
-By default, the environment does not require artifacts provenance (i.e. environment snapshots will not 
-become non-compliant because of artifacts that do not have provenance). You can require provenance for all artifacts
-by setting --require-provenance=true
-
-Also, by default, kosli will not make new snapshots for scaling events (change in number of instances running).
+By default kosli will not make new snapshots for scaling events (change in number of instances running).
 For large clusters the scaling events will often outnumber the actual change of SW.
 
 It is possible to enable new snapshots for scaling events with the --include-scaling flag, or turn
@@ -43,7 +39,6 @@ kosli create environment ENVIRONMENT-NAME [flags]
 |        --exclude-scaling  |  [optional] Exclude scaling events for snapshots. Snapshots with scaling changes will not result in new environment records.  |
 |    -h, --help  |  help for environment  |
 |        --include-scaling  |  [optional] Include scaling events for snapshots. Snapshots with scaling changes will result in new environment records.  |
-|        --require-provenance  |  [defaulted] Require provenance for all artifacts running in environment snapshots.  |
 |    -t, --type string  |  The type of environment. Valid types are: [K8S, ECS, server, S3, lambda, docker, azure-apps].  |
 
 
