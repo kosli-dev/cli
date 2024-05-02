@@ -75,6 +75,8 @@ func ProcessSnykResultFile(file string) (*SnykData, error) {
 				}
 				level = &ruleLevel
 			}
+			// levels in sarif and JSON snyk output files differ
+			// mapping can be found here: https://docs.snyk.io/snyk-cli/scan-and-maintain-projects-using-the-cli/snyk-cli-for-snyk-code/view-snyk-code-cli-results#severity-levels-in-json-and-sarif-files
 			switch *level {
 			case "error", "high", "critical":
 				result.HighCount++
@@ -82,7 +84,7 @@ func ProcessSnykResultFile(file string) (*SnykData, error) {
 			case "warning", "medium":
 				result.MediumCount++
 				result.Medium = append(result.Medium, vulnerability)
-			case "info", "low":
+			case "info", "low", "note":
 				result.LowCount++
 				result.Low = append(result.Low, vulnerability)
 			}
