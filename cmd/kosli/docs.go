@@ -161,10 +161,10 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 		buf.WriteString("{{< /tabs >}}\n\n")
 	}
 
-	liveCliFullCommand, liveCliURL, liveCliExists := liveCliDocExists(urlSafeName)
+	liveCliFullCommand, liveCliURL, liveCliExists := liveCliDocExists(name)
 	if liveCliExists {
 		buf.WriteString("## Live Example\n\n")
-		buf.WriteString(fmt.Sprintf("TODO name='%s'  \n\n", urlSafeName))
+		buf.WriteString(fmt.Sprintf("TODO name='%s'  \n\n", name))
 		buf.WriteString(fmt.Sprintf("TODO fullCommand='%s'  \n\n", liveCliFullCommand))
 		buf.WriteString(fmt.Sprintf("TODO URL='%s'  \n\n", liveCliURL))
 		// TODO: html to call liveCliURL, and put returned html into a dom element
@@ -267,7 +267,8 @@ func liveEventDocExists(ci string, command string) bool {
 func liveCliDocExists(command string) (string, string, bool) {
 	fullCommand, ok := liveCliMap[command]
 	if ok {
-		url := fmt.Sprintf("%v/cli_exists?command=%v", baseURL, fullCommand)
+		plussed := strings.Replace(fullCommand, " ", "+", -1)
+		url := fmt.Sprintf("%v/cli_exists?command=%v", baseURL, plussed)
 		return fullCommand, url, liveDocExists(url)
 	} else {
 		return "", "", false
@@ -298,5 +299,14 @@ func eventURL(ci string, command string) string {
 }
 
 var liveCliMap = map[string]string{
-	"kosli+list+environments": "kosli+list+environments+--output=json",
+	"kosli list environments": "kosli list environments --output=json",
+	"kosli get environment":   "kosli get environment aws-prod --output=json",
+	"kosli log environment":   "kosli log environment aws-prod --output=json",
+	"kosli list snapshots":    "kosli list snapshots aws-prod --output=json",
+	"kosli get snapshot":      "kosli get snapshot aws-prod --output=json",
+	"kosli diff snapshots":    "kosli diff snapshots aws-beta aws-prod --output=json",
+	"kosli list flows":        "kosli list flows --output=json",
+	"kosli get flow":          "kosli get flow dashboard-ci --output=json",
+	//"kosli list trails":       "kosli list trails dashboard-ci --output=json",
+	"kosli get trail":         "kosli get trail dashboard-ci 1159a6f1193150681b8484545150334e89de6c1c --output=json",
 }
