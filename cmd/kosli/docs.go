@@ -164,9 +164,10 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 	liveCliFullCommand, liveCliURL, liveCliExists := liveCliDocExists(urlSafeName)
 	if liveCliExists {
 		buf.WriteString("## Live Example\n\n")
-		buf.WriteString(fmt.Sprintf("TODO '%s'", name))
-		buf.WriteString(fmt.Sprintf("TODO '%s'", liveCliFullCommand))
-		buf.WriteString(fmt.Sprintf("TODO '%s'", liveCliURL))
+		buf.WriteString(fmt.Sprintf("TODO name='%s'  \n\n", urlSafeName))
+		buf.WriteString(fmt.Sprintf("TODO fullCommand='%s'  \n\n", liveCliFullCommand))
+		buf.WriteString(fmt.Sprintf("TODO URL='%s'  \n\n", liveCliURL))
+		// TODO: html to call liveCliURL, and put returned html into a dom element
 	}
 
 	if len(cmd.Example) > 0 {
@@ -297,5 +298,5 @@ func eventURL(ci string, command string) string {
 }
 
 var liveCliMap = map[string]string{
-	"kosli list environments": "kosli list environments --output=json",
+	"kosli+list+environments": "kosli+list+environments+--output=json",
 }
