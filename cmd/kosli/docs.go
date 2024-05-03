@@ -161,6 +161,14 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 		buf.WriteString("{{< /tabs >}}\n\n")
 	}
 
+	liveCliFullCommand, liveCliURL, liveCliExists := liveCliDocExists(urlSafeName)
+	if liveCliExists {
+		buf.WriteString("## Live Example\n\n")
+		buf.WriteString(fmt.Sprintf("TODO '%s'", name))
+		buf.WriteString(fmt.Sprintf("TODO '%s'", liveCliFullCommand))
+		buf.WriteString(fmt.Sprintf("TODO '%s'", liveCliURL))
+	}
+
 	if len(cmd.Example) > 0 {
 		// This is an attempt to tidy up the non-live examples, so they each have their own title.
 		// Note: The contents of the title lines could also contain < and > characters which will
@@ -255,6 +263,16 @@ func liveEventDocExists(ci string, command string) bool {
 	return liveDocExists(url)
 }
 
+func liveCliDocExists(command string) (string, string, bool) {
+	fullCommand, ok := liveCliMap[command]
+	if ok {
+		url := fmt.Sprintf("%v/cli_exists?command=%v", baseURL, fullCommand)
+		return fullCommand, url, liveDocExists(url)
+	} else {
+		return "", "", false
+	}
+}
+
 func liveDocExists(url string) bool {
 	response, err := http.Get(url)
 	if err != nil {
@@ -276,4 +294,8 @@ func yamlURL(ci string, command string) string {
 
 func eventURL(ci string, command string) string {
 	return fmt.Sprintf("%v/event?ci=%v&command=%v", baseURL, strings.ToLower(ci), command)
+}
+
+var liveCliMap = map[string]string{
+	"kosli list environments": "kosli list environments --output=json",
 }
