@@ -167,7 +167,15 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 		buf.WriteString(fmt.Sprintf("TODO name='%s'  \n\n", name))
 		buf.WriteString(fmt.Sprintf("TODO fullCommand='%s'  \n\n", liveCliFullCommand))
 		buf.WriteString(fmt.Sprintf("TODO URL='%s'  \n\n", liveCliURL))
-		// TODO: html to call liveCliURL, and put returned html into a dom element
+
+		buf.WriteString(fmt.Sprintf("<button hx-get=\"%s\"", liveCliURL))
+		buf.WriteString(" hx-trigger=\"click\"")
+		buf.WriteString(" hx-target=\"#kosli-live-docs\"")
+		buf.WriteString(" hx-swap=\"innerHTML\">")
+		buf.WriteString(liveCliURL)
+		buf.WriteString("</button>")
+		buf.WriteString("<div id=\"kosli-live-docs\"></div>")
+		buf.WriteString("\n\n")
 	}
 
 	if len(cmd.Example) > 0 {
@@ -268,8 +276,9 @@ func liveCliDocExists(command string) (string, string, bool) {
 	fullCommand, ok := liveCliMap[command]
 	if ok {
 		plussed := strings.Replace(fullCommand, " ", "+", -1)
-		url := fmt.Sprintf("%v/cli_exists?command=%v", baseURL, plussed)
-		return fullCommand, url, liveDocExists(url)
+		exists_url := fmt.Sprintf("%v/cli_exists?command=%v", baseURL, plussed)
+		url := fmt.Sprintf("%v/cli?command=%v", baseURL, plussed)
+		return fullCommand, url, liveDocExists(exists_url)
 	} else {
 		return "", "", false
 	}
@@ -308,5 +317,5 @@ var liveCliMap = map[string]string{
 	"kosli list flows":        "kosli list flows --output=json",
 	"kosli get flow":          "kosli get flow dashboard-ci --output=json",
 	//"kosli list trails":       "kosli list trails dashboard-ci --output=json",
-	"kosli get trail":         "kosli get trail dashboard-ci 1159a6f1193150681b8484545150334e89de6c1c --output=json",
+	"kosli get trail": "kosli get trail dashboard-ci 1159a6f1193150681b8484545150334e89de6c1c --output=json",
 }
