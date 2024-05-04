@@ -168,6 +168,7 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 		buf.WriteString(fmt.Sprintf("TODO fullCommand='%s'  \n\n", liveCliFullCommand))
 		buf.WriteString(fmt.Sprintf("TODO URL='%s'  \n\n", liveCliURL))
 
+		buf.WriteString("{{< raw-html >}}")
 		buf.WriteString(fmt.Sprintf("<button hx-get=\"%s\"", liveCliURL))
 		buf.WriteString(" hx-trigger=\"click\"")
 		buf.WriteString(" hx-target=\"#kosli-live-docs\"")
@@ -175,7 +176,7 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 		buf.WriteString(liveCliURL)
 		buf.WriteString("</button>")
 		buf.WriteString("<div id=\"kosli-live-docs\"></div>")
-		buf.WriteString("\n\n")
+		buf.WriteString("{{< / raw-html >}}")
 	}
 
 	if len(cmd.Example) > 0 {
