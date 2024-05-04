@@ -8,6 +8,12 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
 
+
+permissions:
+  id-token: write
+  attestations: write
+  contents: read
+
 jobs:
   pre-build:
     runs-on: ubuntu-20.04

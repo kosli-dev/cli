@@ -80,6 +80,11 @@ jobs:
         cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
         cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max    
 
+    - name: Attest Build Provenance
+      uses: actions/attest-build-provenance@v1
+      with:
+        subject-name: ${{ env.IMAGE }}:${{ inputs.tag }}
+        subject-digest: ${{ steps.docker_build.outputs.digest }}
 
     - name: Make the image fingerprint available for following steps
       run: |
