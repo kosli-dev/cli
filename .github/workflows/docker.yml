@@ -85,6 +85,7 @@ jobs:
       with:
         subject-name: ${{ env.IMAGE }}:${{ inputs.tag }}
         subject-digest: ${{ steps.docker_build.outputs.digest }}
+        push-to-registry: true
 
     - name: Make the image fingerprint available for following steps
       run: |
