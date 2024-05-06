@@ -42,6 +42,10 @@ jobs:
 
   init-kosli:
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write
+      contents: write
+      pull-requests: read
     needs: [pre-build]
     steps:
 
@@ -69,6 +73,17 @@ jobs:
            --template-file ${{needs.pre-build.outputs.trail_template_file}}
            --org kosli-public
 
+    - name: Report pull-request attestation to Kosli
+      env:
+        KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
+      run:
+        kosli attest pullrequest github
+          --flow cli
+          --trail ${{needs.pre-build.outputs.trail_name}} 
+          --name pr
+          --github-token ${{ secrets.GITHUB_TOKEN }}
+          --org kosli-public
+
   test:
     needs: [pre-build]
     if: ${{ github.ref != 'refs/heads/prod' }}
@@ -93,14 +108,16 @@ jobs:
   docker:
     needs: [pre-build, test]
     if: ${{ github.ref != 'refs/heads/prod' }}
-    uses: kosli-dev/cli/.github/workflows/docker.yml@main
+    uses: kosli-dev/cli/.github/workflows/docker.yml@use-trails
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
       platforms: linux/amd64
+      trail_name: ${{ needs.pre-build.outputs.trail_name }}
+      kosli_org: kosli-public
     secrets:
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
       slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
       ghcr_user: ${{ secrets.GHCR_USER }}
       ghcr_token: ${{ secrets.GHCR_TOKEN }}
-      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN_PROD }}
+      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN_2 }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}
