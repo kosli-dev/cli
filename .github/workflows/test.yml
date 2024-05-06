@@ -34,7 +34,7 @@ on:
         required: true 
       snyk_token:
         required: true
-      kosli_api_toke:
+      kosli_api_token:
         required: true
 
 
