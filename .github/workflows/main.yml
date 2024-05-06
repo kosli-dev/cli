@@ -26,7 +26,7 @@ jobs:
         echo "TAG=${TAG}" >> ${GITHUB_ENV}
         echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-        if [ -n "${GITHUB_REF##refs/tags/}" ]; then
+        if [ "${GITHUB_REF}" == refs/tags/* ]; then
           TRAIL_NAME=${GITHUB_REF##refs/tags/}
           TRAIL_TEMPLATE_FILE=release-flow-template.yml
         else
