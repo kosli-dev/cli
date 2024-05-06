@@ -91,10 +91,17 @@ jobs:
         cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
         cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
 
+
+    - name: Make the image fingerprint available for following steps
+      run: |
+        ARTIFACT_SHA=$( echo ${{ steps.docker_build.outputs.digest }} | sed 's/.*://')
+        echo "FINGERPRINT=$ARTIFACT_SHA" >> ${GITHUB_ENV}
+
+
     - name: Attest Build Provenance
       uses: actions/attest-build-provenance@v1
       with:
-        subject-name: ${{ env.IMAGE }}:${{ inputs.tag }}
+        subject-name: ${{ env.IMAGE }}
         subject-digest: ${{ steps.docker_build.outputs.digest }}
         push-to-registry: true
 
@@ -110,7 +117,7 @@ jobs:
       uses: actions/attest-sbom@v1
       with:
         sbom-path: 'sbom.spdx.json'
-        subject-name: ${{ env.IMAGE }}:${{ inputs.tag }}
+        subject-name: ${{ env.IMAGE }}
         subject-digest: ${{ steps.docker_build.outputs.digest }}
         push-to-registry: true
 
@@ -128,7 +135,8 @@ jobs:
            --flow cli
            --trail ${{ inputs.trail_name }} 
            --name cli-docker
-           --fingerprint ${{ steps.docker_build.outputs.digest }} 
+           --fingerprint ${{ env.FINGERPRINT }}
+           --external-url sigstore=https://search.sigstore.dev/?hash=${{ env.FINGERPRINT }}
            --org ${{ inputs.kosli_org }}
 
            
@@ -140,7 +148,7 @@ jobs:
           --flow cli
           --trail ${{ inputs.trail_name }} 
           --name cli-docker
-          --fingerprint ${{ steps.docker_build.outputs.digest }}
+          --fingerprint ${{ env.FINGERPRINT }}
           --attachments  sbom.spdx.json
           --org ${{ inputs.kosli_org }}
 
@@ -156,15 +164,15 @@ jobs:
              --sarif-file-output=snyk-docker.json
 
 
-    - name: Report Snyk Docker scan results evidence to Kosli
+    - name: Report Snyk Docker scan results attestation to Kosli
       if:  ${{ (success() || failure()) }}
       env:
-        KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
+        KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
       run: 
         kosli attest snyk 
             --flow cli
             --trail ${{ inputs.trail_name }} 
-            --fingerprint ${{ steps.docker_build.outputs.digest }} 
+            --fingerprint ${{ env.FINGERPRINT }} 
             --name snyk-container
             --scan-results snyk-docker.json
             --org ${{ inputs.kosli_org }}
@@ -183,13 +191,13 @@ jobs:
     - name: Report Docker smoke test attestation to Kosli
       if:  ${{ (success() || failure()) }}
       env:
-        KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
+        KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
         SMOKE_TEST_OUTCOME: ${{ steps.smoke-test.outcome}}
       run: 
         kosli attest generic 
             --flow cli
             --trail ${{ inputs.trail_name }} 
-            --fingerprint ${{ steps.docker_build.outputs.digest }} 
+            --fingerprint ${{ env.FINGERPRINT }} 
             --name smoke-test
             --compliant=${{ steps.smoke-test.outcome == 'success' }} 
             --org ${{ inputs.kosli_org }}
