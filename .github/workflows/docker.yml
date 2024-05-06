@@ -47,8 +47,9 @@ jobs:
     permissions:
       id-token: write
       contents: write
-    steps:
+      attestations: write
 
+    steps:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 3
@@ -63,7 +64,13 @@ jobs:
 
     # This is the a separate action that sets up buildx (buildkit) runner
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3 
+      uses: docker/setup-buildx-action@v3
+
+    - name: setup-kosli-cli
+      uses: kosli-dev/setup-cli-action@v2
+      with:
+        version:
+          ${{ vars.KOSLI_CLI_VERSION }}
     
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v3
@@ -82,14 +89,30 @@ jobs:
         tags: ${{ env.IMAGE }}:${{ inputs.tag }}
         platforms: ${{ inputs.platforms }}
         cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
-        cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max    
+        cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
 
-
-    - name: setup-kosli-cli
-      uses: kosli-dev/setup-cli-action@v2
+    - name: Attest Build Provenance
+      uses: actions/attest-build-provenance@v1
       with:
-        version:
-          ${{ vars.KOSLI_CLI_VERSION }}
+        subject-name: ${{ env.IMAGE }}:${{ inputs.tag }}
+        subject-digest: ${{ steps.docker_build.outputs.digest }}
+        push-to-registry: true
+
+    - name: Generate SBOM for the docker image
+      uses: anchore/sbom-action@v0
+      with:
+        image: ${{ env.IMAGE }}:${{ inputs.tag }}
+        format: 'spdx-json'
+        output-file: 'sbom.spdx.json'
+
+
+    - name: Attest SBOM to Github
+      uses: actions/attest-sbom@v1
+      with:
+        sbom-path: 'sbom.spdx.json'
+        subject-name: ${{ env.IMAGE }}:${{ inputs.tag }}
+        subject-digest: ${{ steps.docker_build.outputs.digest }}
+        push-to-registry: true
 
     
     - name: setup Snyk
@@ -107,6 +130,19 @@ jobs:
            --name cli-docker
            --fingerprint ${{ steps.docker_build.outputs.digest }} 
            --org ${{ inputs.kosli_org }}
+
+           
+    - name: Report SBOM to Kosli
+      env:
+        KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+      run: 
+        kosli attest generic
+          --flow cli
+          --trail ${{ inputs.trail_name }} 
+          --name cli-docker
+          --fingerprint ${{ steps.docker_build.outputs.digest }}
+          --attachments  sbom.spdx.json
+          --org ${{ inputs.kosli_org }}
 
     
     - name: Run Snyk to scan the Docker image for vulnerabilities

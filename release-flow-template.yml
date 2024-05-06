@@ -14,6 +14,8 @@ trail:
       type: snyk
     - name: smoke-test
       type: generic
+    - name: sbom
+      type: generic
 
   - name: cli-docker
   - name: cli-darwin
