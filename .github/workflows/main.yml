@@ -74,8 +74,9 @@ jobs:
            --org kosli-public
 
     - name: Report pull-request attestation to Kosli
+      if: ${{ github.ref == 'refs/heads/main' }}
       env:
-        KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
+        KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN_2 }}
       run:
         kosli attest pullrequest github
           --flow cli
