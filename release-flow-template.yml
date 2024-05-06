@@ -1,0 +1,24 @@
+version: 1
+trail:
+  attestations:
+  - name: lint
+    type: generic
+  - name: test
+    type: junit
+  - name: snyk-code
+    type: snyk
+  artifacts:
+  - name: cli-docker
+    attestations:
+    - name: snyk-container
+      type: snyk
+    - name: smoke-test
+      type: generic
+    - name: sbom
+      type: generic
+
+  - name: cli-docker
+  - name: cli-darwin
+  - name: cli-windows
+  - name: cli-linux
+
