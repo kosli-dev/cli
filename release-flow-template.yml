@@ -12,6 +12,8 @@ trail:
     attestations:
     - name: snyk-container
       type: snyk
+    - name: smoke-test
+      type: generic
 
   - name: cli-docker
   - name: cli-darwin
