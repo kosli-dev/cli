@@ -1,0 +1,16 @@
+version: 1
+trail:
+  attestations:
+  - name: pr
+    type: pull-request
+  - name: lint
+    type: generic
+  - name: test
+    type: junit
+  - name: snyk-code
+    type: snyk
+  artifacts:
+  - name: cli-docker
+    attestations:
+    - name: snyk-container
+      type: snyk

@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-20.04
     outputs:
       tag: ${{ steps.prep.outputs.tag }}
+      trail_name: ${{ steps.prep.outputs.trail_name }}
+      trail_template_file: ${{ steps.prep.outputs.trail_template_file }}
     steps:
 
     - uses: actions/checkout@v4
@@ -24,13 +26,46 @@ jobs:
         echo "TAG=${TAG}" >> ${GITHUB_ENV}
         echo "tag=$TAG" >> $GITHUB_OUTPUT
 
+        if [ -n "${GITHUB_REF##refs/tags/}" ]; then
+          TRAIL_NAME=${GITHUB_REF##refs/tags/}
+          TRAIL_TEMPLATE_FILE=release-flow-template.yml
+        else
+          TRAIL_NAME=$(echo $GITHUB_SHA | head -c 7)
+          TRAIL_TEMPLATE_FILE=main-flow-template.yml
+        fi
+        echo "TRAIL_NAME=${TRAIL_NAME}" >> $GITHUB_ENV
+        echo "trail_name=$TRAIL_NAME" >> $GITHUB_OUTPUT
+
+        echo "TRAIL_TEMPLATE_FILE=${TRAIL_TEMPLATE_FILE}" >> $GITHUB_ENV
+        echo "trail_template_file=$TRAIL_TEMPLATE_FILE" >> $GITHUB_OUTPUT
+
+
+  init-kosli:
+    runs-on: ubuntu-20.04
+    needs: [pre-build]
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - name: Update Kosli Flow
+      env:
+        KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN_2 }}
+      run: kosli create flow cli --description "CLI change and release process" --template-file main-flow-template.yml
+
+    - name: Init Kosli Trail
+      env:
+        KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN_2 }}
+      run: kosli begin trail ${{needs.pre-build.outputs.trail_name}} --flow cli --template-file ${{needs.pre-build.outputs.trail_template_file}}
+
   test:
     needs: [pre-build]
     if: ${{ github.ref != 'refs/heads/prod' }}
-    uses: kosli-dev/cli/.github/workflows/test.yml@main
+    uses: kosli-dev/cli/.github/workflows/test.yml@use-trails
     with:
       AWS_ACCOUNT_ID: 772819027869
       AWS_REGION: eu-central-1
+      TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
+      KOSLI_ORG: kosli-public
     secrets:
       github_access_token: ${{ secrets.KOSLI_GITHUB_TOKEN }}
       gitlab_access_token: ${{ secrets.KOSLI_GITLAB_TOKEN }}

@@ -85,7 +85,7 @@ test_integration: deps vet ensure_network test_setup ## Run tests except the too
 
 test_integration_full: deps vet ensure_network test_setup ## Run all tests
 	@mv ~/.kosli.yml ~/.kosli-renamed.yml || true
-	@export KOSLI_TESTS=true && $(GOTESTSUM) -- -p=8 -coverprofile=cover.out ./...
+	@export KOSLI_TESTS=true && $(GOTESTSUM) --junitfile junit.xml -- -p=8 -coverprofile=cover.out ./...
 	@go tool cover -func=cover.out
 	@mv ~/.kosli-renamed.yml ~/.kosli.yml || true
 

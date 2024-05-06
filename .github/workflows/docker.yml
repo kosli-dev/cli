@@ -29,7 +29,6 @@ on:
 
 env:
   IMAGE: ghcr.io/kosli-dev/cli
-  KOSLI_CLI_VERSION: "2.8.5"
   # KOSLI_DRY_RUN: "True"
   # Ordinarily we declare KOSLI_ORG and KOSLI_FLOW here but
   # this interferes with the CLI integration tests
@@ -91,7 +90,7 @@ jobs:
       uses: kosli-dev/setup-cli-action@v2
       with:
         version:
-          ${{ env.KOSLI_CLI_VERSION }}
+          ${{ vars.KOSLI_CLI_VERSION }}
 
     
     - name: setup Snyk
