@@ -2,7 +2,7 @@ version: 1
 trail:
   attestations:
   - name: pr
-    type: pull-request
+    type: pull_request
   - name: lint
     type: generic
   - name: test
