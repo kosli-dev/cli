@@ -58,6 +58,7 @@ jobs:
           ${{ vars.KOSLI_CLI_VERSION }}
 
     - name: Update Kosli Flow
+      if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') }}
       env:
         KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
       run: kosli create flow cli 
@@ -66,6 +67,7 @@ jobs:
            --org kosli-public
 
     - name: Init Kosli Trail
+      if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') }}
       env:
         KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
       run: kosli begin trail ${{needs.pre-build.outputs.trail_name}} 

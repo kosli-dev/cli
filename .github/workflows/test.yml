@@ -67,7 +67,7 @@ jobs:
         args: --timeout=5m -v
 
     - name: Report lint to Kosli
-      if:  ${{ (success() || failure()) }}
+      if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) &&  (success() || failure()) }}
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
       run: kosli attest generic 
@@ -136,7 +136,7 @@ jobs:
         make test_integration_full
 
     - name: Report test to Kosli
-      if:  ${{ (success() || failure()) }}
+      if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) &&  (success() || failure()) }}
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
       run: kosli attest junit 
@@ -184,7 +184,7 @@ jobs:
           snyk test --sarif --policy-path=.snyk  --sarif-file-output=snyk-code.json --prune-repeated-subdependencies
     
     - name: Report Snyk Code to Kosli
-      if:  ${{ (success() || failure()) }}
+      if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) &&  (success() || failure()) }}
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
       run: kosli attest snyk 
@@ -203,5 +203,3 @@ jobs:
         SLACK_TITLE: Snyk Code Failed in CLI repository
         SLACK_USERNAME: GithubActions
         SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
-
-# (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) && 
