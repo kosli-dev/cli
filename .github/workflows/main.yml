@@ -47,6 +47,12 @@ jobs:
 
     - uses: actions/checkout@v4
 
+    - name: setup-kosli-cli
+      uses: kosli-dev/setup-cli-action@v2
+      with:
+        version:
+          ${{ vars.KOSLI_CLI_VERSION }}
+
     - name: Update Kosli Flow
       env:
         KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN_2 }}
@@ -74,7 +80,8 @@ jobs:
       bitbucket_password: ${{ secrets.KOSLI_BITBUCKET_PASSWORD }}
       jira_api_token: ${{ secrets.KOSLI_JIRA_API_TOKEN }}
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
-      slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
+      slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }}
+      snyk_token: ${{ secrets.SNYK_TOKEN }}
 
   docker:
     needs: [pre-build, test]

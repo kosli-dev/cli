@@ -31,7 +31,9 @@ on:
       bitbucket_password:
         required: true
       jira_api_token:
-        required: true      
+        required: true 
+      snyk_token:
+        required: true
 
 
 jobs:
@@ -50,6 +52,12 @@ jobs:
     - uses: actions/setup-go@v5
       with:
         go-version: '1.22.0'
+
+    - name: setup-kosli-cli
+      uses: kosli-dev/setup-cli-action@v2
+      with:
+        version:
+          ${{ vars.KOSLI_CLI_VERSION }}
     
     - name: Run golangci-lint
       id: lint
@@ -94,6 +102,12 @@ jobs:
     - uses: actions/setup-go@v5
       with:
         go-version: '1.22.0'
+
+    - name: setup-kosli-cli
+      uses: kosli-dev/setup-cli-action@v2
+      with:
+        version:
+          ${{ vars.KOSLI_CLI_VERSION }}
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
