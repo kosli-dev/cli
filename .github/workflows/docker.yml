@@ -147,7 +147,7 @@ jobs:
         kosli attest generic
           --flow cli
           --trail ${{ inputs.trail_name }} 
-          --name cli-docker
+          --name sbom
           --fingerprint ${{ env.FINGERPRINT }}
           --attachments  sbom.spdx.json
           --org ${{ inputs.kosli_org }}
