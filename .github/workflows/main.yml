@@ -56,12 +56,18 @@ jobs:
     - name: Update Kosli Flow
       env:
         KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN_2 }}
-      run: kosli create flow cli --description "CLI change and release process" --template-file main-flow-template.yml
+      run: kosli create flow cli 
+           --description "CLI change and release process" 
+           --template-file main-flow-template.yml
+           --org kosli-public
 
     - name: Init Kosli Trail
       env:
         KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN_2 }}
-      run: kosli begin trail ${{needs.pre-build.outputs.trail_name}} --flow cli --template-file ${{needs.pre-build.outputs.trail_template_file}}
+      run: kosli begin trail ${{needs.pre-build.outputs.trail_name}} 
+           --flow cli 
+           --template-file ${{needs.pre-build.outputs.trail_template_file}}
+           --org kosli-public
 
   test:
     needs: [pre-build]
@@ -82,6 +88,7 @@ jobs:
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
       slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}
+      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN_2 }}
 
   docker:
     needs: [pre-build, test]
