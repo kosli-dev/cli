@@ -131,7 +131,10 @@ jobs:
                 .
             end
            )]' dist/artifacts.json)
-          echo "artifacts=${ARTIFACTS}" >> "$GITHUB_OUTPUT"
+          
+          echo "artifacts<<nEOFn" >> $GITHUB_OUTPUT
+          echo "${ARTIFACTS}" >> $GITHUB_OUTPUT
+          echo "nEOFn" >> $GITHUB_OUTPUT
 
         
 
