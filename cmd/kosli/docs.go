@@ -164,19 +164,13 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 	liveCliFullCommand, liveCliURL, liveCliExists := liveCliDocExists(name)
 	if liveCliExists {
 		buf.WriteString("## Live Example\n\n")
-		buf.WriteString(fmt.Sprintf("TODO name='%s'  \n\n", name))
-		buf.WriteString(fmt.Sprintf("TODO fullCommand='%s'  \n\n", liveCliFullCommand))
-		buf.WriteString(fmt.Sprintf("TODO URL='%s'  \n\n", liveCliURL))
-
 		buf.WriteString("{{< raw-html >}}")
-		buf.WriteString(fmt.Sprintf("<button hx-get=\"%s\"", liveCliURL))
-		buf.WriteString(" hx-trigger=\"click\"")
-		buf.WriteString(" hx-target=\"#kosli-live-docs\"")
-		buf.WriteString(" hx-swap=\"innerHTML\">")
-		buf.WriteString(liveCliURL)
-		buf.WriteString("</button>")
-		buf.WriteString("<div id=\"kosli-live-docs\"></div>")
-		buf.WriteString("{{< / raw-html >}}")
+		buf.WriteString("<pre>")
+		buf.WriteString("export KOSLI_ORG=cyber-dojo\n")
+		buf.WriteString("export KOSLI_API_TOKEN=Pj_XT2deaVA6V1qrTlthuaWsmjVt4eaHQwqnwqjRO3A  # read-only\n")
+		buf.WriteString(fmt.Sprintf("<a href=\"%s\">%s</a>", liveCliURL, liveCliFullCommand))
+		buf.WriteString("</pre>")
+		buf.WriteString("{{< / raw-html >}}\n\n")
 	}
 
 	if len(cmd.Example) > 0 {
