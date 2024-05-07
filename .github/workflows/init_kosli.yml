@@ -15,7 +15,7 @@ on:
         secrets:        
             kosli_api_token:
                 required: true
-            github_token:
+            pr_github_token:
                 required: false
 
 jobs:
@@ -62,5 +62,5 @@ jobs:
                 --flow cli
                 --trail ${{inputs.trail_name}} 
                 --name pr
-                --github-token ${{ secrets.github_token }}
+                --github-token ${{ secrets.pr_github_token }}
                 --org ${{inputs.kosli_org}}

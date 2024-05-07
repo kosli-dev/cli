@@ -44,7 +44,7 @@ jobs:
         KOSLI_ORG: kosli-public
       secrets:
         kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        pr_github_token: ${{ secrets.GITHUB_TOKEN }}
 
   test:
     needs: [pre-build]
