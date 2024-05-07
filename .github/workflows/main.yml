@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
   pre-build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.prep.outputs.tag }}
       trail_name: ${{ steps.prep.outputs.trail_name }}
@@ -41,55 +41,19 @@ jobs:
 
 
   init-kosli:
-    runs-on: ubuntu-20.04
-    permissions:
-      id-token: write
-      contents: write
-      pull-requests: read
     needs: [pre-build]
-    steps:
+    uses: kosli-dev/cli/.github/workflows/init_kosli.yml@main
+    with:
+      TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
+      TRAIL_TEMPLATE_FILE: ${{ needs.pre-build.outputs.trail_template_file }}
+      KOSLI_ORG: kosli-public
+    secrets:
+      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
+      github-token: ${{ secrets.GITHUB_TOKEN }}
 
-    - uses: actions/checkout@v4
-
-    - name: setup-kosli-cli
-      uses: kosli-dev/setup-cli-action@v2
-      with:
-        version:
-          ${{ vars.KOSLI_CLI_VERSION }}
-
-    - name: Update Kosli Flow
-      if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') }}
-      env:
-        KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
-      run: kosli create flow cli 
-           --description "CLI change and release process" 
-           --template-file main-flow-template.yml
-           --org kosli-public
-
-    - name: Init Kosli Trail
-      if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') }}
-      env:
-        KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
-      run: kosli begin trail ${{needs.pre-build.outputs.trail_name}} 
-           --flow cli 
-           --template-file ${{needs.pre-build.outputs.trail_template_file}}
-           --org kosli-public
-
-    - name: Report pull-request attestation to Kosli
-      if: ${{ github.ref == 'refs/heads/main' }}
-      env:
-        KOSLI_API_TOKEN: ${{ secrets.KOSLI_API_TOKEN }}
-      run:
-        kosli attest pullrequest github
-          --flow cli
-          --trail ${{needs.pre-build.outputs.trail_name}} 
-          --name pr
-          --github-token ${{ secrets.GITHUB_TOKEN }}
-          --org kosli-public
 
   test:
     needs: [pre-build]
-    if: ${{ github.ref != 'refs/heads/prod' }}
     uses: kosli-dev/cli/.github/workflows/test.yml@main
     with:
       AWS_ACCOUNT_ID: 772819027869
@@ -109,8 +73,7 @@ jobs:
       kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
 
   docker:
-    needs: [pre-build, test]
-    if: ${{ github.ref != 'refs/heads/prod' }}
+    needs: [pre-build, test, init-kosli]
     uses: kosli-dev/cli/.github/workflows/docker.yml@main
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
