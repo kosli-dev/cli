@@ -97,7 +97,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install Jq
-        uses: dcarbone/install-jq-action
+        uses: dcarbone/install-jq-action@v2
 
       - name: Set up Go
         uses: actions/setup-go@v5
