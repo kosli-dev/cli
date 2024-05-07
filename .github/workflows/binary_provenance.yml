@@ -1,0 +1,99 @@
+name: Binary Provenance
+on:
+    workflow_call:
+        inputs:
+          artifacts:
+            required: true
+            type: string
+          dir:
+            required: true
+            type: string
+          kosli_org:
+            required: true
+            type: string
+          trail_name:
+            required: true
+            type: string
+        secrets:        
+            kosli_api_token:
+                required: true
+
+
+jobs:
+    binary-provenance:
+        runs-on: ubuntu-latest
+        permissions:
+            id-token: write
+            contents: write
+            pull-requests: read
+        strategy:
+            matrix:
+                artifact: ${{fromJson(inputs.artifacts)}}
+        steps:
+        - uses: actions/checkout@v4
+
+        - uses: actions/download-artifact@master
+          with:
+            name: dist
+            path: ${{inputs.dir}}
+
+        - name: setup-kosli-cli
+          uses: kosli-dev/setup-cli-action@v2
+          with:
+            version:
+                ${{ vars.KOSLI_CLI_VERSION }}
+
+
+        - name: Attest Build Provenance
+          uses: actions/attest-build-provenance@v1
+          with:
+            subject-path: ${{matrix.artifact.path}}
+            push-to-registry: true
+        
+        - name: Generate SBOM for the binary
+          uses: anchore/sbom-action@v0
+          with:
+            file: ${{matrix.artifact.path}}
+            format: 'spdx-json'
+            output-file: '${{matrix.artifact.template_name}}-sbom.spdx.json'
+        
+        - name: Publish SBOM
+          uses: anchore/sbom-action/publish-sbom@v0
+          with:
+            sbom-artifact-match: ".*\\.spdx.json$"
+        
+        - name: Attest SBOM to Github
+          uses: actions/attest-sbom@v1
+          with:
+            sbom-path: '${{matrix.artifact.template_name}}-sbom.spdx.json'
+            subject-path: ${{matrix.artifact.path}}
+            push-to-registry: true
+
+        - name: Report artifact to Kosli
+          env:
+            KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+          run: 
+            kosli attest artifact
+                ${{matrix.artifact.path}}
+                --artifact-type file
+                --flow cli
+                --trail ${{ inputs.trail_name }} 
+                --name ${{matrix.artifact.template_name}}
+                --org ${{ inputs.kosli_org }}
+
+        - name: Report SBOM to Kosli
+          env:
+            KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+          run: 
+            kosli attest generic
+              ${{matrix.artifact.path}}
+              --artifact-type file
+              --flow cli
+              --trail ${{ inputs.trail_name }} 
+              --name sbom
+              --attachments  ${{matrix.artifact.template_name}}-sbom.spdx.json
+              --org ${{ inputs.kosli_org }}
+
+
+
+        

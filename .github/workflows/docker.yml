@@ -43,7 +43,7 @@ env:
 jobs:  
   docker:
     name: Docker Build
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: write
@@ -149,7 +149,7 @@ jobs:
         kosli attest generic
           --flow cli
           --trail ${{ inputs.trail_name }} 
-          --name sbom
+          --name container-sbom
           --fingerprint ${{ env.FINGERPRINT }}
           --attachments  sbom.spdx.json
           --org ${{ inputs.kosli_org }}

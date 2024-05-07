@@ -16,5 +16,5 @@ trail:
       type: snyk
     - name: smoke-test
       type: generic
-    - name: sbom
+    - name: container-sbom
       type: generic
