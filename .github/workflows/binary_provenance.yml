@@ -1,5 +1,19 @@
 name: Binary Provenance
 on:
+    workflow_dispatch:
+      inputs:
+        artifacts:
+          required: true
+          type: string
+        dir:
+          required: true
+          type: string
+        kosli_org:
+          required: true
+          type: string
+        trail_name:
+          required: true
+          type: string
     workflow_call:
         inputs:
           artifacts:
@@ -32,10 +46,9 @@ jobs:
         steps:
         - uses: actions/checkout@v4
 
-        - uses: actions/download-artifact@master
+        - uses: actions/download-artifact@v4
           with:
-            name: dist
-            path: ${{inputs.dir}}
+            name: ${{inputs.dir}}
 
         - name: setup-kosli-cli
           uses: kosli-dev/setup-cli-action@v2
