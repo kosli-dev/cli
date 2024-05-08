@@ -44,6 +44,10 @@ jobs:
             matrix:
                 artifact: ${{fromJson(inputs.artifacts)}}
         steps:
+        - run: |
+            echo ${{toJson(inputs.artifacts)}}
+            echo "*******"
+            echo "${{matrix.artifact.template_name}} || ${{matrix.artifact.path}}""
         - uses: actions/checkout@v4
 
         - uses: actions/download-artifact@v4
