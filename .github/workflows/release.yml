@@ -131,7 +131,7 @@ jobs:
             else
                 .
             end
-           )]' dist/artifacts.json)
+           )][]' dist/artifacts.json)
           
           echo "artifacts<<nEOFn" >> $GITHUB_OUTPUT
           echo "${ARTIFACTS}" >> $GITHUB_OUTPUT
