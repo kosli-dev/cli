@@ -24,7 +24,7 @@ jobs:
 
     - name: Get tag
       id: tag
-      uses: olegtarasov/get-tag@v2
+      uses: actions-ecosystem/action-get-latest-tag@v1
 
     - name: Prepare
       id: prep
