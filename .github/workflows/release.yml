@@ -24,7 +24,7 @@ jobs:
 
     - name: Get tag
       id: tag
-      uses: actions-ecosystem/action-get-latest-tag@v1
+      uses: dawidd6/action-get-tag@v1
 
     - name: Prepare
       id: prep
