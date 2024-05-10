@@ -49,6 +49,7 @@ jobs:
         - uses: actions/download-artifact@v4
           with:
             name: ${{inputs.dir}}
+            path: ${{ github.workspace }}/${{inputs.dir}}
 
         - name: setup-kosli-cli
           uses: kosli-dev/setup-cli-action@v2
