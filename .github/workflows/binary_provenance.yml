@@ -63,8 +63,6 @@ jobs:
           uses: actions/attest-build-provenance@v1
           with:
             subject-path: ${{matrix.artifact.path}}
-            subject-name: ${{matrix.artifact.template_name}}
-            push-to-registry: true
         
         - name: Generate SBOM for the binary
           uses: anchore/sbom-action@v0
@@ -83,8 +81,6 @@ jobs:
           with:
             sbom-path: '${{matrix.artifact.template_name}}-sbom.spdx.json'
             subject-path: ${{matrix.artifact.path}}
-            subject-name: ${{matrix.artifact.template_name}}
-            push-to-registry: true
 
         - name: Report artifact to Kosli
           env:
