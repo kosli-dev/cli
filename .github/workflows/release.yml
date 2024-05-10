@@ -66,21 +66,21 @@ jobs:
       snyk_token: ${{ secrets.SNYK_TOKEN }}
       kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
 
-  docker:
-    needs: [test, pre-build, init-kosli]
-    uses: kosli-dev/cli/.github/workflows/docker.yml@main
-    with:
-      tag: ${{ needs.pre-build.outputs.tag }}
-      platforms: linux/amd64,linux/arm64
-      trail_name: ${{ needs.pre-build.outputs.trail_name }}
-      kosli_org: kosli-public
-    secrets:
-      slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
-      slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
-      ghcr_user: ${{ secrets.GHCR_USER }}
-      ghcr_token: ${{ secrets.GHCR_TOKEN }}
-      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
-      snyk_token: ${{ secrets.SNYK_TOKEN }}
+  # docker:
+  #   needs: [test, pre-build, init-kosli]
+  #   uses: kosli-dev/cli/.github/workflows/docker.yml@main
+  #   with:
+  #     tag: ${{ needs.pre-build.outputs.tag }}
+  #     platforms: linux/amd64,linux/arm64
+  #     trail_name: ${{ needs.pre-build.outputs.trail_name }}
+  #     kosli_org: kosli-public
+  #   secrets:
+  #     slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
+  #     slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
+  #     ghcr_user: ${{ secrets.GHCR_USER }}
+  #     ghcr_token: ${{ secrets.GHCR_TOKEN }}
+  #     kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
+  #     snyk_token: ${{ secrets.SNYK_TOKEN }}
 
   goreleaser:
     needs: [test]
