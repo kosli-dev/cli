@@ -89,7 +89,7 @@ jobs:
       id-token: write
       attestations: write
     outputs:
-      artifacts: ${{ toJson(steps.prepare-artifacts-list.outputs.artifacts) }}
+      artifacts: ${{ steps.prepare-artifacts-list.outputs.artifacts }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -145,7 +145,7 @@ jobs:
     uses: kosli-dev/cli/.github/workflows/binary_provenance.yml@main
     with:
       dir: dist
-      artifacts: ${{needs.goreleaser.outputs.artifacts}}
+      artifacts: ${{ needs.goreleaser.outputs.artifacts }}
       trail_name: ${{ needs.pre-build.outputs.trail_name }}
       kosli_org: kosli-public
     secrets:
