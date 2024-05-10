@@ -40,6 +40,7 @@ jobs:
             id-token: write
             contents: write
             pull-requests: read
+            attestations: write
         strategy:
             matrix:
                 artifact: ${{fromJson(inputs.artifacts)}}
@@ -56,11 +57,6 @@ jobs:
           with:
             version:
                 ${{ vars.KOSLI_CLI_VERSION }}
-        
-        - run: |
-              ls -la
-              ls -la  ${{inputs.dir}}
-              ls -la ${{matrix.artifact.path}}
 
 
         - name: Attest Build Provenance
