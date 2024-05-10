@@ -108,7 +108,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: release --clean
+          args: release --skip-publish --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
           FURY_TOKEN: ${{ secrets.FURY_TOKEN }}

@@ -55,6 +55,11 @@ jobs:
           with:
             version:
                 ${{ vars.KOSLI_CLI_VERSION }}
+        
+        - run: |
+              ls -la
+              ls -la  ${{inputs.dir}}
+              ls -la ${{matrix.artifact.path}}
 
 
         - name: Attest Build Provenance
