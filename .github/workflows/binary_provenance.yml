@@ -64,10 +64,16 @@ jobs:
             echo "FINGERPRINT=$ARTIFACT_SHA" >> ${GITHUB_ENV}
 
         - name: Attest Build Provenance
+          id: artifact-gh-attest
           uses: actions/attest-build-provenance@v1
           with:
             subject-name: ${{matrix.artifact.template_name}}
             subject-digest: sha256:${{ env.FINGERPRINT }}
+
+        - name: Make artifact GH sigstore attestation index available to next steps
+          run: |
+            TRANSPARENCY_LOG_INDEX=$(jq '.verificationMaterial.tlogEntries[0].logIndex' ${{ steps.artifact-gh-attest.outputs.bundle-path }})
+            echo "ARTIFACT_TLOG_INDEX=$TRANSPARENCY_LOG_INDEX" >> ${GITHUB_ENV}
         
         - name: Generate SBOM for the binary
           uses: anchore/sbom-action@v0
@@ -82,18 +88,17 @@ jobs:
             sbom-artifact-match: ".*\\.spdx.json$"
         
         - name: Attest SBOM to Github
-          id: sbom-attest
+          id: sbom-gh-attest
           uses: actions/attest-sbom@v1
           with:
             sbom-path: '${{matrix.artifact.template_name}}-sbom.spdx.json'
             subject-name: ${{matrix.artifact.template_name}}
             subject-digest: sha256:${{ env.FINGERPRINT }}
-        
-        - uses: actions/upload-artifact@v4
-          with:
-            name: sbom-attest-jsonl-bundle
-            path: ${{ steps.sbom-attest.outputs.bundle-path }}
-            retention-days: 1
+
+        - name: Make sbom GH sigstore attestation index available to next steps
+          run: |
+            TRANSPARENCY_LOG_INDEX=$(jq '.verificationMaterial.tlogEntries[0].logIndex' ${{ steps.sbom-gh-attest.outputs.bundle-path }})
+            echo "SBOM_TLOG_INDEX=$TRANSPARENCY_LOG_INDEX" >> ${GITHUB_ENV}
 
         - name: Report artifact to Kosli
           env:
@@ -118,6 +123,7 @@ jobs:
               --name sbom
               --fingerprint ${{ env.FINGERPRINT }}
               --attachments  ${{matrix.artifact.template_name}}-sbom.spdx.json
+              --external-url sigstore=https://search.sigstore.dev/?logIndex=${{ env.SBOM_TLOG_INDEX }}
               --org ${{ inputs.kosli_org }}
 
 
