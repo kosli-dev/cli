@@ -36,6 +36,10 @@ on:
         required: true
       kosli_api_token:
         required: true
+      azure_client_id:
+        required: true
+      azure_client_secret:
+        required: true
 
 
 jobs:
