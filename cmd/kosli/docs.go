@@ -161,6 +161,18 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 		buf.WriteString("{{< /tabs >}}\n\n")
 	}
 
+	liveCliFullCommand, liveCliURL, liveCliExists := liveCliDocExists(name)
+	if liveCliExists {
+		buf.WriteString("## Live Example\n\n")
+		buf.WriteString("{{< raw-html >}}")
+		buf.WriteString("<pre>")
+		buf.WriteString("export KOSLI_ORG=cyber-dojo\n")
+		buf.WriteString("export KOSLI_API_TOKEN=Pj_XT2deaVA6V1qrTlthuaWsmjVt4eaHQwqnwqjRO3A  # read-only\n")
+		buf.WriteString(fmt.Sprintf("<a href=\"%s\">%s</a>", liveCliURL, liveCliFullCommand))
+		buf.WriteString("</pre>")
+		buf.WriteString("{{< / raw-html >}}\n\n")
+	}
+
 	if len(cmd.Example) > 0 {
 		// This is an attempt to tidy up the non-live examples, so they each have their own title.
 		// Note: The contents of the title lines could also contain < and > characters which will
@@ -255,6 +267,18 @@ func liveEventDocExists(ci string, command string) bool {
 	return liveDocExists(url)
 }
 
+func liveCliDocExists(command string) (string, string, bool) {
+	fullCommand, ok := liveCliMap[command]
+	if ok {
+		plussed := strings.Replace(fullCommand, " ", "+", -1)
+		exists_url := fmt.Sprintf("%v/cli_exists?command=%v", baseURL, plussed)
+		url := fmt.Sprintf("%v/cli?command=%v", baseURL, plussed)
+		return fullCommand, url, liveDocExists(exists_url)
+	} else {
+		return "", "", false
+	}
+}
+
 func liveDocExists(url string) bool {
 	response, err := http.Get(url)
 	if err != nil {
@@ -276,4 +300,17 @@ func yamlURL(ci string, command string) string {
 
 func eventURL(ci string, command string) string {
 	return fmt.Sprintf("%v/event?ci=%v&command=%v", baseURL, strings.ToLower(ci), command)
+}
+
+var liveCliMap = map[string]string{
+	"kosli list environments": "kosli list environments --output=json",
+	"kosli get environment":   "kosli get environment aws-prod --output=json",
+	"kosli log environment":   "kosli log environment aws-prod --output=json",
+	"kosli list snapshots":    "kosli list snapshots aws-prod --output=json",
+	"kosli get snapshot":      "kosli get snapshot aws-prod --output=json",
+	"kosli diff snapshots":    "kosli diff snapshots aws-beta aws-prod --output=json",
+	"kosli list flows":        "kosli list flows --output=json",
+	"kosli get flow":          "kosli get flow dashboard-ci --output=json",
+	//"kosli list trails":       "kosli list trails dashboard-ci --output=json",
+	"kosli get trail": "kosli get trail dashboard-ci 1159a6f1193150681b8484545150334e89de6c1c --output=json",
 }
