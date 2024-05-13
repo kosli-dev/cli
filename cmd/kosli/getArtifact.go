@@ -46,6 +46,7 @@ kosli get artifact flowName:commitSHA \
 
 type getArtifactOptions struct {
 	output string
+	trail  string
 }
 
 func newGetArtifactCmd(out io.Writer) *cobra.Command {
@@ -69,6 +70,7 @@ func newGetArtifactCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
+	cmd.Flags().StringVarP(&o.trail, "trail", "t", "", trailNameFlag)
 
 	return cmd
 }
@@ -86,6 +88,9 @@ func (o *getArtifactOptions) run(out io.Writer, args []string) error {
 	}
 
 	url := fmt.Sprintf("%s/api/v2/artifacts/%s/%s/%s/%s", global.Host, global.Org, flowName, idType, id)
+	if o.trail != "" {
+		url = url + fmt.Sprintf("?trail=%s", o.trail)
+	}
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,
 		URL:      url,
