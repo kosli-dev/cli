@@ -39,10 +39,22 @@ kosli get artifact flowName@fingerprint \
 	--api-token yourAPIToken \
 	--org orgName
 
+# get the latest artifact with a given fingerprint from a flow in a specific trail
+kosli get artifact flowName@fingerprint \
+	--api-token yourAPIToken \
+	--org orgName
+	--trail trailName
+
 # get an artifact with a given commit SHA from a flow
 kosli get artifact flowName:commitSHA \
 	--api-token yourAPIToken \
-	--org orgName`
+	--org orgName
+
+# get a list of artifacts with a given commit SHA from a flow in a particular trail
+kosli get artifact flowName:commitSHA \
+	--api-token yourAPIToken \
+	--org orgName
+	--trail trailName`
 
 type getArtifactOptions struct {
 	output string
@@ -70,7 +82,7 @@ func newGetArtifactCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
-	cmd.Flags().StringVarP(&o.trail, "trail", "t", "", trailNameFlag)
+	cmd.Flags().StringVarP(&o.trail, "trail", "t", "", trailNameFlagOptional)
 
 	return cmd
 }

@@ -75,6 +75,7 @@ The service principal needs to have the following permissions:
 	artifactTypeFlag                     = "[conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'."
 	flowNameFlag                         = "The Kosli flow name."
 	trailNameFlag                        = "The Kosli trail name."
+	trailNameFlagOptional                = "[optional] The Kosli trail name."
 	templateArtifactName                 = "The name of the artifact in the yml template file."
 	flowNamesFlag                        = "[defaulted] The comma separated list of Kosli flows. Defaults to all flows of the org."
 	newFlowFlag                          = "The name of the flow to be created or updated."
