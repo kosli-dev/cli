@@ -66,21 +66,21 @@ jobs:
       snyk_token: ${{ secrets.SNYK_TOKEN }}
       kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
 
-  # docker:
-  #   needs: [test, pre-build, init-kosli]
-  #   uses: kosli-dev/cli/.github/workflows/docker.yml@main
-  #   with:
-  #     tag: ${{ needs.pre-build.outputs.tag }}
-  #     platforms: linux/amd64,linux/arm64
-  #     trail_name: ${{ needs.pre-build.outputs.trail_name }}
-  #     kosli_org: kosli-public
-  #   secrets:
-  #     slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
-  #     slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
-  #     ghcr_user: ${{ secrets.GHCR_USER }}
-  #     ghcr_token: ${{ secrets.GHCR_TOKEN }}
-  #     kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
-  #     snyk_token: ${{ secrets.SNYK_TOKEN }}
+  docker:
+    needs: [test, pre-build, init-kosli]
+    uses: kosli-dev/cli/.github/workflows/docker.yml@main
+    with:
+      tag: ${{ needs.pre-build.outputs.tag }}
+      platforms: linux/amd64,linux/arm64
+      trail_name: ${{ needs.pre-build.outputs.trail_name }}
+      kosli_org: kosli-public
+    secrets:
+      slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
+      slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
+      ghcr_user: ${{ secrets.GHCR_USER }}
+      ghcr_token: ${{ secrets.GHCR_TOKEN }}
+      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
+      snyk_token: ${{ secrets.SNYK_TOKEN }}
 
   goreleaser:
     needs: [test]
@@ -108,7 +108,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: release --skip-publish --clean
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
           FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
@@ -137,7 +137,6 @@ jobs:
           echo "${ARTIFACTS}" >> $GITHUB_OUTPUT
           echo "nEOFn" >> $GITHUB_OUTPUT
 
-        
 
   binary-provenance:
     needs: [goreleaser, pre-build]
@@ -151,76 +150,76 @@ jobs:
     secrets:
       kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
 
-  # homebrew-pr:
-  #   needs: [goreleaser, pre-build]
-  #   name: Bump Homebrew formula
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: mislav/bump-homebrew-formula-action@v3
-  #       if: ${{ !contains(github.ref, '-') }} # skip prereleases
-  #       with:
-  #         # A PR will be sent to github.com/Homebrew/homebrew-core to update this formula:
-  #         formula-name: kosli-cli
-  #       env:
-  #         # the personal access token should have "repo" & "workflow" scopes
-  #         COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
+  homebrew-pr:
+    needs: [goreleaser, pre-build]
+    name: Bump Homebrew formula
+    runs-on: ubuntu-latest
+    steps:
+      - uses: mislav/bump-homebrew-formula-action@v3
+        if: ${{ !contains(github.ref, '-') }} # skip prereleases
+        with:
+          # A PR will be sent to github.com/Homebrew/homebrew-core to update this formula:
+          formula-name: kosli-cli
+        env:
+          # the personal access token should have "repo" & "workflow" scopes
+          COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
     
-  # docs-gen:
-  #   needs: [goreleaser, pre-build]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0 # needed to be able to generate legacy versions reference.
+  docs-gen:
+    needs: [goreleaser, pre-build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # needed to be able to generate legacy versions reference.
 
-  #     - name: Set up Go
-  #       uses: actions/setup-go@v5
-  #       with:
-  #         go-version: ${{ env.GO_VERSION }}
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
     
-  #     - name: Generate docs
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       # legacy-ref should happen first as it has the side effect of deleting generated files outside the legacy_ref
-  #       run: | 
-  #         make legacy-ref-docs 
-  #         make cli-docs 
+      - name: Generate docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # legacy-ref should happen first as it has the side effect of deleting generated files outside the legacy_ref
+        run: | 
+          make legacy-ref-docs 
+          make cli-docs 
 
-  #     - name: Generate json
-  #       run: |
-  #         echo '{"currentversion": "${{ needs.pre-build.outputs.tag }}"}' > docs.kosli.com/assets/metadata.json
+      - name: Generate json
+        run: |
+          echo '{"currentversion": "${{ needs.pre-build.outputs.tag }}"}' > docs.kosli.com/assets/metadata.json
 
-  #     - name: Deploy
-  #       uses: s0/git-publish-subdir-action@develop
-  #       env:
-  #         REPO: self
-  #         BRANCH: docs-main
-  #         FOLDER: docs.kosli.com
-  #         TARGET_DIR: docs.kosli.com
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #         MESSAGE: "Release: {msg}"
+      - name: Deploy
+        uses: s0/git-publish-subdir-action@develop
+        env:
+          REPO: self
+          BRANCH: docs-main
+          FOLDER: docs.kosli.com
+          TARGET_DIR: docs.kosli.com
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MESSAGE: "Release: {msg}"
 
-  # evidence-reporter-upload-package-and-deploy:
-  #   needs: [pre-build, goreleaser]
-  #   runs-on: ubuntu-20.04
-  #   steps:
-  #     - name: Repository Dispatch
-  #       uses: peter-evans/repository-dispatch@v2
-  #       with:
-  #         token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
-  #         repository: kosli-dev/terraform-aws-evidence-reporter
-  #         event-type: upload-package
-  #         client-payload: '{"kosli_cli_tag": "${{ needs.pre-build.outputs.tag }}"}'
+  evidence-reporter-upload-package-and-deploy:
+    needs: [pre-build, goreleaser]
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
+          repository: kosli-dev/terraform-aws-evidence-reporter
+          event-type: upload-package
+          client-payload: '{"kosli_cli_tag": "${{ needs.pre-build.outputs.tag }}"}'
 
-  # environment-reporter-upload-package-and-deploy:
-  #   needs: [pre-build, goreleaser]
-  #   runs-on: ubuntu-20.04
-  #   steps:
-  #     - name: Repository Dispatch
-  #       uses: peter-evans/repository-dispatch@v2
-  #       with:
-  #         token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
-  #         repository: kosli-dev/terraform-aws-kosli-reporter
-  #         event-type: upload-package
-  #         client-payload: '{"kosli_cli_tag": "${{ needs.pre-build.outputs.tag }}"}'
+  environment-reporter-upload-package-and-deploy:
+    needs: [pre-build, goreleaser]
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
+          repository: kosli-dev/terraform-aws-kosli-reporter
+          event-type: upload-package
+          client-payload: '{"kosli_cli_tag": "${{ needs.pre-build.outputs.tag }}"}'

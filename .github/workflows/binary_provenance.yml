@@ -1,19 +1,5 @@
 name: Binary Provenance
 on:
-    workflow_dispatch:
-      inputs:
-        artifacts:
-          required: true
-          type: string
-        dir:
-          required: true
-          type: string
-        kosli_org:
-          required: true
-          type: string
-        trail_name:
-          required: true
-          type: string
     workflow_call:
         inputs:
           artifacts:
