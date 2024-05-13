@@ -54,7 +54,7 @@ jobs:
 
   test:
     needs: [pre-build]
-    uses: kosli-dev/cli/.github/workflows/test.yml@main
+    uses: kosli-dev/cli/.github/workflows/test.yml@{{ github.sha }}
     with:
       AWS_ACCOUNT_ID: 772819027869
       AWS_REGION: eu-central-1
