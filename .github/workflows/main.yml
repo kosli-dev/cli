@@ -64,7 +64,6 @@ jobs:
       github_access_token: ${{ secrets.KOSLI_GITHUB_TOKEN }}
       gitlab_access_token: ${{ secrets.KOSLI_GITLAB_TOKEN }}
       azure_access_token: ${{ secrets.KOSLI_AZURE_TOKEN }}
-      azure_service_token: ${{ secrets.KOSLI_AZURE_SERVICE_TOKEN }}
       azure_client_id: ${{ secrets.AZURE_CLIENT_ID }}
       azure_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
       bitbucket_password: ${{ secrets.KOSLI_BITBUCKET_PASSWORD }}
