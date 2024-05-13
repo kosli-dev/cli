@@ -58,11 +58,16 @@ jobs:
             version:
                 ${{ vars.KOSLI_CLI_VERSION }}
 
+        - name: Make the artifact fingerprint available for following steps
+          run: |
+            ARTIFACT_SHA=$(kosli fingerprint ${{matrix.artifact.path}} --artifact-type file)
+            echo "FINGERPRINT=$ARTIFACT_SHA" >> ${GITHUB_ENV}
 
         - name: Attest Build Provenance
           uses: actions/attest-build-provenance@v1
           with:
-            subject-path: ${{matrix.artifact.path}}
+            subject-name: ${{matrix.artifact.template_name}}
+            subject-digest: ${{ env.FINGERPRINT }}
         
         - name: Generate SBOM for the binary
           uses: anchore/sbom-action@v0
@@ -77,10 +82,14 @@ jobs:
             sbom-artifact-match: ".*\\.spdx.json$"
         
         - name: Attest SBOM to Github
+          id: sbom-attest
           uses: actions/attest-sbom@v1
           with:
             sbom-path: '${{matrix.artifact.template_name}}-sbom.spdx.json'
-            subject-path: ${{matrix.artifact.path}}
+            subject-path: ${{matrix.artifact.template_name}}
+            subject-digest: ${{ env.FINGERPRINT }}
+
+        - run: cat ${{ steps.sbom-attest.outputs.bundle-path }} || true
 
         - name: Report artifact to Kosli
           env:
@@ -88,10 +97,11 @@ jobs:
           run: 
             kosli attest artifact
                 ${{matrix.artifact.path}}
-                --artifact-type file
                 --flow cli
                 --trail ${{ inputs.trail_name }} 
                 --name ${{matrix.artifact.template_name}}
+                --fingerprint ${{ env.FINGERPRINT }}
+                --external-url sigstore=https://search.sigstore.dev/?hash=${{ env.FINGERPRINT }}
                 --org ${{ inputs.kosli_org }}
 
         - name: Report SBOM to Kosli
@@ -99,11 +109,10 @@ jobs:
             KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
           run: 
             kosli attest generic
-              ${{matrix.artifact.path}}
-              --artifact-type file
               --flow cli
               --trail ${{ inputs.trail_name }} 
               --name sbom
+              --fingerprint ${{ env.FINGERPRINT }}
               --attachments  ${{matrix.artifact.template_name}}-sbom.spdx.json
               --org ${{ inputs.kosli_org }}
 
