@@ -86,7 +86,7 @@ jobs:
           uses: actions/attest-sbom@v1
           with:
             sbom-path: '${{matrix.artifact.template_name}}-sbom.spdx.json'
-            subject-path: ${{matrix.artifact.template_name}}
+            subject-name: ${{matrix.artifact.template_name}}
             subject-digest: sha256:${{ env.FINGERPRINT }}
 
         - run: cat ${{ steps.sbom-attest.outputs.bundle-path }} || true
