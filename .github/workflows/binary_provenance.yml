@@ -67,6 +67,8 @@ jobs:
             file: ${{matrix.artifact.path}}
             format: 'spdx-json'
             output-file: '${{matrix.artifact.template_name}}-sbom.spdx.json'
+            upload-artifact: false
+            upload-release-assets: false
         
         - name: Publish SBOM
           uses: anchore/sbom-action/publish-sbom@v0

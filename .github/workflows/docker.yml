@@ -111,6 +111,7 @@ jobs:
         image: ${{ env.IMAGE }}:${{ inputs.tag }}
         format: 'spdx-json'
         output-file: 'sbom.spdx.json'
+        upload-artifact: false
 
 
     - name: Attest SBOM to Github
