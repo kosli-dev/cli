@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/testHelpers"
@@ -19,7 +20,10 @@ type SnapshotAzureAppsTestSuite struct {
 }
 
 func (suite *SnapshotAzureAppsTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_AZURE_CLIENT_SECRET"})
+	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{
+		"INTEGRATION_TEST_AZURE_CLIENT_SECRET",
+		"INTEGRATION_TEST_AZURE_CLIENT_ID",
+	})
 
 	suite.envName = "snapshot-azure-env"
 	global = &GlobalOpts{
@@ -29,8 +33,18 @@ func (suite *SnapshotAzureAppsTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 	// AZURE-CLIENT-SECRET is set as a secret and passed as env variable to tests
-	suite.defaultAzureArguments = " --azure-client-id 0bfad7d5-eb5e-4144-95a0-0a0d66eb07cb --azure-tenant-id e52b5fba-43c2-4eaf-91c1-579dc6fae771 " +
-		"--azure-subscription-id 96cdee58-1fa8-419d-a65a-7233b3465632 --azure-resource-group-name EnvironmentReportingExperiment"
+
+	azureClientSecret, _ := os.LookupEnv("INTEGRATION_TEST_AZURE_CLIENT_SECRET")
+	azureClientID, _ := os.LookupEnv("INTEGRATION_TEST_AZURE_CLIENT_ID")
+	azureTenantID := "e52b5fba-43c2-4eaf-91c1-579dc6fae771"
+	azureSubscriptionID := "96cdee58-1fa8-419d-a65a-7233b3465632"
+	azureResourceGroupName := "EnvironmentReportingExperiment"
+
+	suite.defaultAzureArguments = fmt.Sprintf(
+		" --azure-client-secret %s --azure-client-id %s --azure-tenant-id %s --azure-subscription-id %s --azure-resource-group-name %s",
+		azureClientSecret, azureClientID, azureTenantID, azureSubscriptionID, azureResourceGroupName,
+	)
+
 	CreateEnv(global.Org, suite.envName, "azure-apps", suite.T())
 }
 
@@ -66,6 +80,12 @@ func (suite *SnapshotAzureAppsTestSuite) TestSnapshotAzureAppsCmd() {
 		// 	name: "snapshot azure succeeds when digests-source is set to logs if all required flags are set",
 		// 	cmd:  fmt.Sprintf(`snapshot azure %s %s %s --digests-source logs`, suite.envName, suite.defaultKosliArguments, suite.defaultAzureArguments),
 		// },
+		{
+			wantError: true,
+			name:      "snapshot azure fails when Azure client secret is not set",
+			cmd:       fmt.Sprintf(`snapshot azure %s %s --azure-client-id xxx --azure-tenant-id xxx --azure-subscription-id xxx --azure-resource-group-name xxx`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: required flag(s) \"azure-client-secret\" not set\n",
+		},
 		{
 			wantError: true,
 			name:      "snapshot azure fails when Azure client ID is not set",
