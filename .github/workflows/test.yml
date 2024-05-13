@@ -28,6 +28,10 @@ on:
         required: true 
       azure_service_token:
         required: true
+      azure_client_id:
+        required: true
+      azure_client_secret:
+        required: true
       bitbucket_password:
         required: true
       jira_api_token:
@@ -35,10 +39,6 @@ on:
       snyk_token:
         required: true
       kosli_api_token:
-        required: true
-      azure_client_id:
-        required: true
-      azure_client_secret:
         required: true
 
 
