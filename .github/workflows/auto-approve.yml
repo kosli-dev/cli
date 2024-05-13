@@ -19,7 +19,7 @@ jobs:
         run: |
           # fail job if the requester is not a member of the organization
 
-          curl -s -H "Authorization: token ${{ secrets.READ_KOSLI_GH_ORG_MEMBERS }}" \
+          curl --silent --fail --header "Authorization: token ${{ secrets.READ_KOSLI_GH_ORG_MEMBERS }}" \
             https://api.github.com/orgs/kosli-dev/members \
             | jq -r ".[].login" \
             | grep -w "${{ github.event.pull_request.user.login }}"
