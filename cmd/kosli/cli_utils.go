@@ -32,11 +32,12 @@ const (
 	gitlab      = "Gitlab"
 	azureDevops = "Azure Devops"
 	circleci    = "CircleCI"
+	codeBuild   = "Code Build"
 	unknown     = "Unknown"
 )
 
 // supportedCIs the set of CI tools that are supported for defaulting
-var supportedCIs = []string{bitbucket, github, teamcity, gitlab, azureDevops, circleci}
+var supportedCIs = []string{bitbucket, github, teamcity, gitlab, azureDevops, circleci, codeBuild}
 
 // ciTemplates a map of kosli flags and corresponding default templates in supported CI tools
 var ciTemplates = map[string]map[string]string{
@@ -78,6 +79,11 @@ var ciTemplates = map[string]map[string]string{
 		"commit-url": "${CIRCLE_REPOSITORY_URL}/commit/${CIRCLE_SHA1}",
 		"build-url":  "${CIRCLE_BUILD_URL}",
 	},
+	codeBuild: {
+		"git-commit": "${CODEBUILD_RESOLVED_SOURCE_VERSION}",
+		"commit-url": "${CODEBUILD_SOURCE_REPO_URL}/commit/${CODEBUILD_RESOLVED_SOURCE_VERSION}",
+		"build-url":  "${CODEBUILD_BUILD_URL}",
+	},
 }
 
 // GetCIDefaultsTemplates returns the templates used in a given CI
@@ -116,6 +122,8 @@ func WhichCI() string {
 		return azureDevops
 	} else if _, ok := os.LookupEnv("CIRCLECI"); ok {
 		return circleci
+	} else if _, ok := os.LookupEnv("CODEBUILD_CI"); ok {
+		return codeBuild
 	} else {
 		return unknown
 	}
@@ -133,7 +141,7 @@ func DefaultValue(ci, flag string) string {
 		if v, ok := ciTemplates[ci][flag]; ok {
 			result := os.ExpandEnv(v)
 			// github and gitlab use ../commit/.. , bitbucket uses ../commits/..
-			if ci == circleci && flag == "commit-url" {
+			if (ci == circleci || ci == codeBuild) && flag == "commit-url" {
 				result, _ = gitview.ExtractRepoURLFromRemote(result)
 				if strings.Contains(result, "bitbucket.org") {
 					return strings.Replace(result, "commit", "commits", 1)
@@ -203,6 +211,29 @@ func MuXRequiredFlags(cmd *cobra.Command, flagNames []string, atLeastOne bool) e
 			return fmt.Errorf("at least one of %s is required", JoinFlagNames(flagNames))
 		}
 	}
+	return nil
+}
+
+// ConditionallyRequiredFlags checks that "requiredFlagName" must be set, and ONLY allowed to be set
+// when "conditionFlagName" is set
+func ConditionallyRequiredFlags(cmd *cobra.Command, requiredFlagName, conditionFlagName string) error {
+	conditionFlag := cmd.Flags().Lookup(conditionFlagName)
+	requiredFlag := cmd.Flags().Lookup(requiredFlagName)
+	if conditionFlag == nil {
+		return fmt.Errorf("failed to configure conditionally required flags [%s]. The flag is not defined for this command.", conditionFlagName)
+	}
+	if requiredFlag == nil {
+		return fmt.Errorf("failed to configure conditionally required flags [%s]. The flag is not defined for this command.", requiredFlagName)
+	}
+
+	if conditionFlag.Changed && !requiredFlag.Changed {
+		return fmt.Errorf("flag --%s is required when flag --%s is set", requiredFlagName, conditionFlagName)
+	}
+
+	if !conditionFlag.Changed && requiredFlag.Changed {
+		return fmt.Errorf("flag --%s is only allowed when flag --%s is set", requiredFlagName, conditionFlagName)
+	}
+
 	return nil
 }
 

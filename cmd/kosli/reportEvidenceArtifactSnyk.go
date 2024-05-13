@@ -37,7 +37,7 @@ this command and could be reported as generic evidence.
 Starting from v2.8.2, the Snyk results can be in Snyk JSON or SARIF output format for "snyk container test". 
 "snyk code test" is now supported but only in the SARIF format.
 
-If no vulnerabilities are detected the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
+If no vulnerabilities are detected, the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
 
 ` + fingerprintDesc
 

@@ -29,8 +29,7 @@ var (
 
 // DirSha256 returns sha256 digest of a directory
 func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (string, error) {
-	logger.Debug("Input path: %v", dirPath)
-	logger.Debug("Exclude paths: %s", excludePaths)
+	logger.Debug("calculating fingerprint for path [%s] -- excluding paths: %s", dirPath, excludePaths)
 	info, err := os.Stat(dirPath)
 	if err != nil {
 		return "", err
@@ -200,10 +199,13 @@ func requestManifestFromRegistry(registryEndPoint, imageName, imageTag, registry
 		Token:             registryToken,
 		AdditionalHeaders: dockerHeaders,
 	}
-	kosliClient := requests.NewKosliClient(1, logger.DebugEnabled, logger)
+	kosliClient, err := requests.NewKosliClient("", 1, logger.DebugEnabled, logger)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get docker digest from registry: %v", err)
+	}
 	res, err := kosliClient.Do(reqParams)
 	if err != nil {
-		return res, fmt.Errorf("failed to get docker digest from registry %v", err)
+		return res, fmt.Errorf("failed to get docker digest from registry: %v", err)
 	}
 	return res, nil
 

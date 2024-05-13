@@ -82,7 +82,7 @@ To setup the Lambda function using terraform, you need to follow these steps:
 
 1. [Authenticate to AWS](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html)
    
-2. Store the Kosli API key value in an AWS SSM parameter (SecureString type). By default, the Lambda Reporter function will search for the kosli_api_token SSM parameter, but it is also possible to set custom parameter name using kosli_api_token_ssm_parameter_name variable.
+2. Store the Kosli API key value in the parameter store in AWS Systems Manager (SSM) (use SecureString type). By default, the Lambda Reporter function will search for the `kosli_api_token` SSM parameter, but it is also possible to set custom parameter name using `kosli_api_token_ssm_parameter_name` terraform variable.
    
 3. Create a Terraform configuration by copying one of the examples below into a `main.tf` file.
 

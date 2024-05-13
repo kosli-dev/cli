@@ -66,6 +66,12 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 			golden:    "Error: Artifact with fingerprint '1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'attest-generic' belonging to organization 'docs-cmd-test-user'\n",
 		},
 		{
+			wantError: true,
+			name:      "fails when --name is passed as empty string",
+			cmd:       fmt.Sprintf("attest generic --name \"\" --commit HEAD --origin-url example.com  %s", suite.defaultKosliArguments),
+			golden:    "Error: flag '--name' is required, but empty string was provided\n",
+		},
+		{
 			name:   "can attest generic against an artifact using artifact name and --artifact-type",
 			cmd:    fmt.Sprintf("attest generic testdata/file1 --artifact-type file --name foo --commit HEAD --origin-url example.com  %s", suite.defaultKosliArguments),
 			golden: "generic attestation 'foo' is reported to trail: test-123\n",
@@ -120,6 +126,17 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 			name:   "can attest generic attestation with description against a trail",
 			cmd:    fmt.Sprintf("attest generic --name bar --description 'foo bar foo' %s", suite.defaultKosliArguments),
 			golden: "generic attestation 'bar' is reported to trail: test-123\n",
+		},
+		{
+			name:   "can attest with annotations against a trail",
+			cmd:    fmt.Sprintf("attest generic --name bar --annotate foo=bar --annotate baz=\"data with spaces\" %s", suite.defaultKosliArguments),
+			golden: "generic attestation 'bar' is reported to trail: test-123\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when annotation is not valid",
+			cmd:       fmt.Sprintf("attest generic --name bar --annotate foo.baz=bar %s", suite.defaultKosliArguments),
+			golden:    "Error: --annotate flag should be in the format key=value. Invalid key: 'foo.baz'. Key can only contain [A-Za-z0-9_].\n",
 		},
 	}
 

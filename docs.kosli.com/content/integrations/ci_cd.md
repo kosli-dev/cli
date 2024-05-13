@@ -43,6 +43,15 @@ The following flags are **defaulted** (which means you don't need to provide the
 | --bitbucket-workspace |  ${BITBUCKET_WORKSPACE} |
 {{< /tab >}}
 
+{{< tab "CodeBuild" >}}
+| Flag | Default |
+| :--- | :--- |
+| --build-url | ${CODEBUILD_BUILD_URL} |
+| --commit-url | ${CODEBUILD_SOURCE_REPO_URL}/commit(s)/${CODEBUILD_RESOLVED_SOURCE_VERSION} |
+| --commit | ${CODEBUILD_RESOLVED_SOURCE_VERSION} |
+| --git-commit | ${CODEBUILD_RESOLVED_SOURCE_VERSION} |
+{{< /tab >}}
+
 {{< tab "Github" >}}
 | Flag | Default |
 | :--- | :--- |

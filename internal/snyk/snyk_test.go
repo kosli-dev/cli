@@ -41,7 +41,7 @@ func TestProcessSnykResultFile(t *testing.T) {
 					{
 						high_count:   0,
 						medium_count: 9,
-						low_count:    0,
+						low_count:    25,
 					},
 				},
 			},

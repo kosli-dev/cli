@@ -10,12 +10,14 @@ concurrency:
 
 jobs:
   pre-build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.prep.outputs.tag }}
+      trail_name: ${{ steps.prep.outputs.trail_name }}
+      trail_template_file: ${{ steps.prep.outputs.trail_template_file }}
     steps:
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Prepare
       id: prep
@@ -24,13 +26,40 @@ jobs:
         echo "TAG=${TAG}" >> ${GITHUB_ENV}
         echo "tag=$TAG" >> $GITHUB_OUTPUT
 
+        if [ "${GITHUB_REF}" == refs/tags/* ]; then
+          TRAIL_NAME=${GITHUB_REF##refs/tags/}
+          TRAIL_TEMPLATE_FILE=release-flow-template.yml
+        else
+          TRAIL_NAME=$(echo $GITHUB_SHA | head -c 7)
+          TRAIL_TEMPLATE_FILE=main-flow-template.yml
+        fi
+        echo "TRAIL_NAME=${TRAIL_NAME}" >> $GITHUB_ENV
+        echo "trail_name=$TRAIL_NAME" >> $GITHUB_OUTPUT
+
+        echo "TRAIL_TEMPLATE_FILE=${TRAIL_TEMPLATE_FILE}" >> $GITHUB_ENV
+        echo "trail_template_file=$TRAIL_TEMPLATE_FILE" >> $GITHUB_OUTPUT
+
+
+  init-kosli:
+    needs: [pre-build]
+    uses: kosli-dev/cli/.github/workflows/init_kosli.yml@main
+    with:
+      TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
+      TRAIL_TEMPLATE_FILE: ${{ needs.pre-build.outputs.trail_template_file }}
+      KOSLI_ORG: kosli-public
+    secrets:
+      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
+      pr_github_token: ${{ secrets.GITHUB_TOKEN }}
+
+
   test:
     needs: [pre-build]
-    if: ${{ github.ref != 'refs/heads/prod' }}
     uses: kosli-dev/cli/.github/workflows/test.yml@main
     with:
       AWS_ACCOUNT_ID: 772819027869
       AWS_REGION: eu-central-1
+      TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
+      KOSLI_ORG: kosli-public
     secrets:
       github_access_token: ${{ secrets.KOSLI_GITHUB_TOKEN }}
       gitlab_access_token: ${{ secrets.KOSLI_GITLAB_TOKEN }}
@@ -39,19 +68,22 @@ jobs:
       bitbucket_password: ${{ secrets.KOSLI_BITBUCKET_PASSWORD }}
       jira_api_token: ${{ secrets.KOSLI_JIRA_API_TOKEN }}
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
-      slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
+      slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }}
+      snyk_token: ${{ secrets.SNYK_TOKEN }}
+      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
 
   docker:
-    needs: [pre-build, test]
-    if: ${{ github.ref != 'refs/heads/prod' }}
+    needs: [pre-build, test, init-kosli]
     uses: kosli-dev/cli/.github/workflows/docker.yml@main
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
       platforms: linux/amd64
+      trail_name: ${{ needs.pre-build.outputs.trail_name }}
+      kosli_org: kosli-public
     secrets:
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
       slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
       ghcr_user: ${{ secrets.GHCR_USER }}
       ghcr_token: ${{ secrets.GHCR_TOKEN }}
-      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN_PROD }}
+      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}

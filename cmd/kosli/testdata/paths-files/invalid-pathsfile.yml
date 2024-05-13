@@ -1,0 +1,5 @@
+versionnn: 1
+foo:
+  differ:
+    path: testdata/folder1
+    exclude: ["empty"]

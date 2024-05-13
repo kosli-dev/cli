@@ -10,13 +10,13 @@ on:
 
 jobs:
   publish:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -42,7 +42,7 @@ jobs:
 
       # Configure AWS credentials
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1-node16
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::358426185766:role/cli
           aws-region: eu-central-1
@@ -65,11 +65,19 @@ jobs:
         run: |
           rm -rf package 
 
+      - uses: crazy-max/ghaction-import-gpg@v5
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+  
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
         with:
+          token: ${{ secrets.COMMITTER_TOKEN }}
+          committer: Sami Alajrami <sami@kosli.com>
           commit-message: 'Update helm docs'
-          committer: GitHub <noreply@github.com>
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           signoff: false
           delete-branch: true

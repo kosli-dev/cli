@@ -7,6 +7,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -36,20 +37,31 @@ type Client struct {
 	HttpClient    *http.Client
 }
 
-func NewKosliClient(maxAPIRetries int, debug bool, logger *logger.Logger) *Client {
+func NewKosliClient(httpProxyURL string, maxAPIRetries int, debug bool, logger *logger.Logger) (*Client, error) {
 	retryClient := retryablehttp.NewClient()
 	retryClient.RetryMax = maxAPIRetries
-	retryClient.Logger = nil // this silences logging each individual attempt
+	retryClient.Logger = nil               // this silences logging each individual attempt
+	client := retryClient.StandardClient() // return a standard *http.Client from the retryable client
+	if httpProxyURL != "" {
+		proxyURL, err := url.Parse(httpProxyURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse proxy URL when creating a Kosli http client: %s", err)
+		}
+		// client.Transport is already set by retryClient.StandardClient() and we add
+		// the proxy to it
+		client.Transport.(*retryablehttp.RoundTripper).Client.HTTPClient.Transport.(*http.Transport).Proxy = http.ProxyURL(proxyURL)
+	}
+
 	return &Client{
 		MaxAPIRetries: maxAPIRetries,
 		Debug:         debug,
 		Logger:        logger,
-		HttpClient:    retryClient.StandardClient(), // return a standard *http.Client from the retryable client
-	}
+		HttpClient:    client,
+	}, nil
 }
 
-func NewStandardKosliClient() *Client {
-	return NewKosliClient(3, false, logger.NewStandardLogger())
+func NewStandardKosliClient(httpProxyURL string) (*Client, error) {
+	return NewKosliClient(httpProxyURL, 3, false, logger.NewStandardLogger())
 }
 
 func (c *Client) SetDebug(debug bool) {
@@ -82,7 +94,7 @@ func (p *RequestParams) newHTTPRequest() (*http.Request, error) {
 		p.AdditionalHeaders = make(map[string]string)
 	}
 
-	var body *bytes.Buffer
+	var body io.Reader
 
 	if len(p.Form) > 0 {
 		var contentType string
@@ -93,11 +105,13 @@ func (p *RequestParams) newHTTPRequest() (*http.Request, error) {
 		}
 		p.AdditionalHeaders["Content-Type"] = contentType
 	} else {
-		jsonBytes, err := json.MarshalIndent(p.Payload, "", "    ")
-		if err != nil {
-			return nil, err
+		if p.Method != http.MethodGet {
+			jsonBytes, err := json.MarshalIndent(p.Payload, "", "    ")
+			if err != nil {
+				return nil, err
+			}
+			body = bytes.NewBuffer(jsonBytes)
 		}
-		body = bytes.NewBuffer(jsonBytes)
 	}
 
 	req, err := http.NewRequest(p.Method, p.URL, body)
@@ -185,11 +199,14 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 
 	if p.DryRun {
 		c.Logger.Info("############### THIS IS A DRY-RUN  ###############")
-		reqBody, err := io.ReadAll(req.Body)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read request body to %s : %v", req.URL, err)
+		if req.Body != nil {
+			reqBody, err := io.ReadAll(req.Body)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read request body to %s : %v", req.URL, err)
+			}
+			c.Logger.Info("this is the payload that would be sent in real run: \n %+v", string(reqBody))
 		}
-		c.Logger.Info("this is the payload that would be sent in real run: \n %+v", string(reqBody))
+
 		return nil, nil
 	} else {
 		resp, err := c.HttpClient.Do(req)

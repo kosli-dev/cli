@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/version"
 	"github.com/maxcnunes/httpfake"
@@ -65,8 +66,10 @@ func (suite *RequestsTestSuite) TearDownSuite() {
 func (suite *RequestsTestSuite) TestNewKosliClient() {
 	for _, t := range []struct {
 		name       string
+		httpProxy  string
 		maxRetries int
 		debug      bool
+		wantError  bool
 	}{
 		{
 			name:       "client is created with expected settings 1",
@@ -78,18 +81,38 @@ func (suite *RequestsTestSuite) TestNewKosliClient() {
 			maxRetries: 3,
 			debug:      false,
 		},
+		{
+			name:       "client is created with an http proxy",
+			maxRetries: 3,
+			debug:      false,
+			httpProxy:  "http://192.0.0.1:8001",
+		},
+		{
+			name:       "client creation fails when http proxy URL is invalid",
+			maxRetries: 3,
+			debug:      false,
+			httpProxy:  "http://:foo.com",
+			wantError:  true,
+		},
 	} {
 		suite.Run(t.name, func() {
-			client := NewKosliClient(t.maxRetries, t.debug, logger.NewStandardLogger())
-			require.NotNil(suite.T(), client)
-			require.Equal(suite.T(), t.maxRetries, client.MaxAPIRetries)
-			require.Equal(suite.T(), t.debug, client.Debug)
+			client, err := NewKosliClient(t.httpProxy, t.maxRetries, t.debug, logger.NewStandardLogger())
+			if !t.wantError {
+				require.NoError(suite.T(), err)
+				require.NotNil(suite.T(), client)
+				require.Equal(suite.T(), t.maxRetries, client.MaxAPIRetries)
+				require.Equal(suite.T(), t.debug, client.Debug)
+			} else {
+				require.Error(suite.T(), err)
+			}
+
 		})
 	}
 }
 
 func (suite *RequestsTestSuite) TestNewStandardKosliClient() {
-	client := NewStandardKosliClient()
+	client, err := NewStandardKosliClient("")
+	require.NoError(suite.T(), err)
 	require.NotNil(suite.T(), client)
 
 	client.SetDebug(true)
@@ -101,6 +124,11 @@ func (suite *RequestsTestSuite) TestNewStandardKosliClient() {
 
 	client.SetMaxAPIRetries(5)
 	require.Equal(suite.T(), 5, client.MaxAPIRetries)
+
+	client2, err := NewStandardKosliClient("http://192.0.0.1:8001")
+	require.NoError(suite.T(), err)
+	require.NotNil(suite.T(), client2.HttpClient.Transport)
+	require.NotNil(suite.T(), client2.HttpClient.Transport.(*retryablehttp.RoundTripper).Client.HTTPClient.Transport.(*http.Transport).Proxy)
 }
 
 func (suite *RequestsTestSuite) TestNewHttpRequest() {
@@ -151,7 +179,7 @@ func (suite *RequestsTestSuite) TestNewHttpRequest() {
 		{
 			name: "request with valid payload",
 			params: &RequestParams{
-				Method:   http.MethodGet,
+				Method:   http.MethodPost,
 				URL:      "https://google.com",
 				Username: "user",
 				Password: "password",
@@ -170,7 +198,7 @@ func (suite *RequestsTestSuite) TestNewHttpRequest() {
 		{
 			name: "request with invalid payload causes an error",
 			params: &RequestParams{
-				Method:  http.MethodGet,
+				Method:  http.MethodPost,
 				URL:     "https://google.com",
 				Token:   "secret",
 				Payload: make(chan string),
@@ -180,7 +208,7 @@ func (suite *RequestsTestSuite) TestNewHttpRequest() {
 		{
 			name: "request with form works",
 			params: &RequestParams{
-				Method: http.MethodGet,
+				Method: http.MethodPost,
 				URL:    "https://google.com",
 				Token:  "secret",
 				Form: []FormItem{
@@ -201,7 +229,7 @@ func (suite *RequestsTestSuite) TestNewHttpRequest() {
 		{
 			name: "request with form that has invalid content causes an error",
 			params: &RequestParams{
-				Method: http.MethodGet,
+				Method: http.MethodPost,
 				URL:    "https://google.com",
 				Token:  "secret",
 				Form: []FormItem{
@@ -243,6 +271,10 @@ func (suite *RequestsTestSuite) TestNewHttpRequest() {
 				}
 				for k, v := range t.params.AdditionalHeaders {
 					require.Equal(suite.T(), v, req.Header.Get(k))
+				}
+
+				if t.params.Method == http.MethodGet {
+					require.Nil(suite.T(), req.Body)
 				}
 			}
 		})
@@ -303,15 +335,25 @@ func (suite *RequestsTestSuite) TestDo() {
 			expectedErrorMsg: "failed to create a GET request to   https://app.kosli.com/api/v2/environments/cyber-dojo/foo : failed to create GET request to   https://app.kosli.com/api/v2/environments/cyber-dojo/foo : parse \"  https://app.kosli.com/api/v2/environments/cyber-dojo/foo\": first path segment in URL cannot contain colon",
 		},
 		{
-			name: "GET request to cyber-dojo with dry-run",
+			name: "PUT request to cyber-dojo with dry-run",
 			params: &RequestParams{
-				Method:   http.MethodGet,
+				Method:   http.MethodPut,
 				URL:      "https://app.kosli.com/api/v2/environments/cyber-dojo",
 				Password: "secret",
 				DryRun:   true,
 				Payload:  "some payload",
 			},
 			expectedLog: "############### THIS IS A DRY-RUN  ###############\nthis is the payload that would be sent in real run: \n \"some payload\"\n",
+		},
+		{
+			name: "GET request to cyber-dojo with dry-run",
+			params: &RequestParams{
+				Method:   http.MethodGet,
+				URL:      "https://app.kosli.com/api/v2/environments/cyber-dojo",
+				Password: "secret",
+				DryRun:   true,
+			},
+			expectedLog: "############### THIS IS A DRY-RUN  ###############\n",
 		},
 		{
 			name: "GET request to 400 endpoint with message and errors in response",
@@ -352,7 +394,8 @@ func (suite *RequestsTestSuite) TestDo() {
 	} {
 		suite.Run(t.name, func() {
 			buf := new(bytes.Buffer)
-			client := NewKosliClient(1, false, logger.NewLogger(buf, buf, false))
+			client, err := NewKosliClient("", 1, false, logger.NewLogger(buf, buf, false))
+			require.NoError(suite.T(), err)
 			resp, err := client.Do(t.params)
 			if t.wantError {
 				require.Error(suite.T(), err)

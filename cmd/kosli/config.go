@@ -42,7 +42,8 @@ kosli config --org=yourOrg \
 	--api-token=yourAPIToken \
 	--host=https://app.kosli.com \
 	--debug=false \
-	--max-api-retries=3
+	--max-api-retries=3 \
+	--http-proxy=http://192.0.0.1:8080
 
 # configure non-global flags in your default config file
 kosli config --set FLOW=yourFlowName
@@ -58,7 +59,6 @@ func newConfigCmd(out io.Writer) *cobra.Command {
 		Short:   configShortDesc,
 		Long:    configLongDesc,
 		Example: configExample,
-		Hidden:  true,
 		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if cmd.Flags().Changed("config-file") {
@@ -113,6 +113,16 @@ func (o *configOptions) run() error {
 	if global.Host != defaultHost {
 		viper.Set("host", global.Host)
 	}
+	if global.MaxAPIRetries != defaultMaxAPIRetries {
+		viper.Set("max-api-retries", global.MaxAPIRetries)
+	}
+	if global.HttpProxy != "" {
+		viper.Set("http-proxy", global.HttpProxy)
+	}
+
+	viper.Set("debug", global.Debug)
+	viper.Set("dry-run", global.DryRun)
+
 	if global.ApiToken != "" {
 		// get encryption key
 		key, err := security.GetSecretFromCredentialsStore(credentialsStoreKeySecretName)
@@ -138,12 +148,6 @@ func (o *configOptions) run() error {
 		}
 		viper.Set("api-token", string(encryptedTokenBytes))
 	}
-	if global.MaxAPIRetries != defaultMaxAPIRetries {
-		viper.Set("max-api-retries", global.MaxAPIRetries)
-	}
-
-	viper.Set("debug", global.Debug)
-	viper.Set("dry-run", global.DryRun)
 
 	for key, value := range o.setKeys {
 		viper.Set(key, value)

@@ -6,31 +6,54 @@ on:
       - 'v*' 
 
 env: 
-  GO_VERSION: 1.21.5
+  GO_VERSION: 1.22.0
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   pre-build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
+      trail_name: ${{ steps.prep.outputs.trail_name }}
+      trail_template_file: ${{ steps.prep.outputs.trail_template_file }}
     steps:
     
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Get tag
       id: tag
       uses: dawidd6/action-get-tag@v1
 
+    - name: Prepare
+      id: prep
+      run: |
+        echo "TRAIL_NAME=${{ steps.tag.outputs.tag }}" >> $GITHUB_STATE
+        echo "trail_name=${{ steps.tag.outputs.tag }}" >> $GITHUB_OUTPUT
+
+        echo "TRAIL_TEMPLATE_FILE=release-flow-template.yml" >> $GITHUB_STATE
+        echo "trail_template_file=release-flow-template.yml" >> $GITHUB_OUTPUT
+  
+  init-kosli:
+      needs: [pre-build]
+      uses: kosli-dev/cli/.github/workflows/init_kosli.yml@main
+      with:
+        TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
+        TRAIL_TEMPLATE_FILE: ${{ needs.pre-build.outputs.trail_template_file }}
+        KOSLI_ORG: kosli-public
+      secrets:
+        kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
+        pr_github_token: ${{ secrets.GITHUB_TOKEN }}
+
   test:
     needs: [pre-build]
-    if: ${{ github.ref != 'refs/heads/prod' }}
     uses: kosli-dev/cli/.github/workflows/test.yml@main
     with:
       AWS_ACCOUNT_ID: 772819027869
       AWS_REGION: eu-central-1
+      TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
+      KOSLI_ORG: kosli-public
     secrets:
       github_access_token: ${{ secrets.KOSLI_GITHUB_TOKEN }}
       gitlab_access_token: ${{ secrets.KOSLI_GITLAB_TOKEN }}
@@ -40,45 +63,92 @@ jobs:
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
       slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }}
       jira_api_token: ${{ secrets.KOSLI_JIRA_API_TOKEN }}
+      snyk_token: ${{ secrets.SNYK_TOKEN }}
+      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
 
   docker:
-    needs: [test, pre-build]
-    if: ${{ github.ref != 'refs/heads/prod' }}
+    needs: [test, pre-build, init-kosli]
     uses: kosli-dev/cli/.github/workflows/docker.yml@main
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
       platforms: linux/amd64,linux/arm64
-      assert: true
+      trail_name: ${{ needs.pre-build.outputs.trail_name }}
+      kosli_org: kosli-public
     secrets:
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
       slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
       ghcr_user: ${{ secrets.GHCR_USER }}
       ghcr_token: ${{ secrets.GHCR_TOKEN }}
-      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN_PROD }}
+      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}
 
   goreleaser:
-    needs: [test, docker]
+    needs: [test]
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      attestations: write
+    outputs:
+      artifacts: ${{ steps.prepare-artifacts-list.outputs.artifacts }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Install Jq
+        uses: dcarbone/install-jq-action@v2
+
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
           FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
+      
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          retention-days: 1
+      
+      - name: Prepare artifacts list
+        id: prepare-artifacts-list
+        run: |
+          ARTIFACTS=$(jq '[reduce .[] as $item (
+            [];
+            if ($item.type == "Archive") then
+                . + [{ template_name: ($item.goos + "-" + $item.goarch), path: $item.path }]
+            elif ($item.type == "Linux Package") then
+                . + [{ template_name: ($item.extra.Ext + "-pkg-" + $item.goarch), path: $item.path }]
+            else
+                .
+            end
+           )][]' dist/artifacts.json)
+          
+          echo "artifacts<<nEOFn" >> $GITHUB_OUTPUT
+          echo "${ARTIFACTS}" >> $GITHUB_OUTPUT
+          echo "nEOFn" >> $GITHUB_OUTPUT
+
+
+  binary-provenance:
+    needs: [goreleaser, pre-build]
+    name: Artifacts Binary Provenance
+    uses: kosli-dev/cli/.github/workflows/binary_provenance.yml@main
+    with:
+      dir: dist
+      artifacts: ${{ needs.goreleaser.outputs.artifacts }}
+      trail_name: ${{ needs.pre-build.outputs.trail_name }}
+      kosli_org: kosli-public
+    secrets:
+      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
 
   homebrew-pr:
     needs: [goreleaser, pre-build]
@@ -93,21 +163,21 @@ jobs:
         env:
           # the personal access token should have "repo" & "workflow" scopes
           COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
-
+    
   docs-gen:
     needs: [goreleaser, pre-build]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # needed to be able to generate legacy versions reference.
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-
+    
       - name: Generate docs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

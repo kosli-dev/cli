@@ -23,7 +23,7 @@ func NewLogger(infoOut, errOut io.Writer, debug bool) *Logger {
 	return &Logger{
 		DebugEnabled: debug,
 		Out:          infoOut,
-		warnLog:      log.New(errOut, "", 0),
+		warnLog:      log.New(infoOut, "", 0),
 		errLog:       log.New(errOut, "", 0),
 		infoLog:      log.New(infoOut, "", 0),
 	}
@@ -35,6 +35,7 @@ func (l *Logger) SetErrOut(out io.Writer) {
 
 func (l *Logger) SetInfoOut(out io.Writer) {
 	l.infoLog.SetOutput(out)
+	l.warnLog.SetOutput(out)
 }
 
 func (l *Logger) Debug(format string, v ...interface{}) {

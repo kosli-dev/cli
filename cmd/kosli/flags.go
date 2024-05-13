@@ -94,12 +94,17 @@ func addListFlags(cmd *cobra.Command, o *listOptions) {
 }
 
 func addAttestationFlags(cmd *cobra.Command, o *CommonAttestationOptions, payload *CommonAttestationPayload, ci string) {
+	commitFlagDesc := attestationCommitFlag
+	if _, ok := cmd.Annotations["pr"]; ok {
+		commitFlagDesc = "the git merge commit to be checked for associated pull requests."
+	}
 	cmd.Flags().StringVarP(&payload.ArtifactFingerprint, "fingerprint", "F", "", attestationFingerprintFlag)
-	cmd.Flags().StringVarP(&o.commitSHA, "commit", "g", DefaultValueForCommit(ci, false), attestationCommitFlag)
+	cmd.Flags().StringVarP(&o.commitSHA, "commit", "g", DefaultValueForCommit(ci, false), commitFlagDesc)
 	cmd.Flags().StringVarP(&payload.OriginURL, "origin-url", "o", DefaultValue(ci, "build-url"), attestationOriginUrlFlag)
 	cmd.Flags().StringVarP(&o.attestationNameTemplate, "name", "n", "", attestationNameFlag)
 	cmd.Flags().StringToStringVar(&o.externalFingerprints, "external-fingerprint", map[string]string{}, externalFingerprintFlag)
 	cmd.Flags().StringToStringVar(&o.externalURLs, "external-url", map[string]string{}, externalURLFlag)
+	cmd.Flags().StringToStringVar(&o.annotations, "annotate", map[string]string{}, annotationFlag)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.trailName, "trail", "T", "", trailNameFlag)
 	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", attestationUserDataFlag)

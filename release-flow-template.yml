@@ -1,0 +1,77 @@
+version: 1
+trail:
+  attestations:
+  - name: lint
+    type: generic
+  - name: test
+    type: junit
+  - name: snyk-code
+    type: snyk
+  artifacts:
+  - name: cli-docker
+    attestations:
+    - name: snyk-container
+      type: snyk
+    - name: smoke-test
+      type: generic
+    - name: container-sbom
+      type: generic
+
+  - name: linux-arm
+    attestations:
+    - name: sbom
+      type: generic
+  - name: windows-arm
+    attestations:
+    - name: sbom
+      type: generic
+  - name: windows-arm64
+    attestations:
+    - name: sbom
+      type: generic
+  - name: darwin-arm64
+    attestations:
+    - name: sbom
+      type: generic
+  - name: linux-arm64
+    attestations:
+    - name: sbom
+      type: generic
+  - name: linux-amd64
+    attestations:
+    - name: sbom
+      type: generic
+  - name: windows-amd64
+    attestations:
+    - name: sbom
+      type: generic
+  - name: darwin-amd64
+    attestations:
+    - name: sbom
+      type: generic
+  - name: rpm-pkg-amd64
+    attestations:
+    - name: sbom
+      type: generic
+  - name: rpm-pkg-arm64
+    attestations:
+    - name: sbom
+      type: generic
+  - name: rpm-pkg-arm
+    attestations:
+    - name: sbom
+      type: generic
+  - name: deb-pkg-arm64
+    attestations:
+    - name: sbom
+      type: generic
+  - name: deb-pkg-arm
+    attestations:
+    - name: sbom
+      type: generic
+  - name: deb-pkg-amd64
+    attestations:
+    - name: sbom
+      type: generic
+
+

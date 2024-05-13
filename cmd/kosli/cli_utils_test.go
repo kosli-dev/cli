@@ -735,6 +735,51 @@ func (suite *CliUtilsTestSuite) TestMuXRequiredFlags() {
 	}
 }
 
+func (suite *CliUtilsTestSuite) TestConditionallyRequiredFlags() {
+	tests := []struct {
+		name     string
+		wantErr  bool
+		setFlags []string
+	}{
+		{
+			name:     "okay when required and condition are set",
+			setFlags: []string{"required", "condition"},
+		},
+		{
+			name:     "okay when NEITHER required nor condition are set",
+			setFlags: []string{},
+		},
+		{
+			name:     "fails when required is NOT set and condition is set",
+			setFlags: []string{"condition"},
+			wantErr:  true,
+		},
+		{
+			name:     "fails when required is set and condition is NOT set",
+			setFlags: []string{"required"},
+			wantErr:  true,
+		},
+	}
+	for _, t := range tests {
+		suite.Run(t.name, func() {
+			cmd := &cobra.Command{}
+			var var1, var2 string
+			cmd.Flags().StringVar(&var1, "required", "", "")
+			cmd.Flags().StringVar(&var2, "condition", "", "")
+
+			for _, flagName := range t.setFlags {
+				cmd.Flags().Lookup(flagName).Changed = true
+			}
+			err := ConditionallyRequiredFlags(cmd, "required", "condition")
+			if t.wantErr {
+				require.Error(suite.T(), err)
+			} else {
+				require.NoError(suite.T(), err)
+			}
+		})
+	}
+}
+
 func (suite *CliUtilsTestSuite) TestFormattedTimestamp() {
 	tests := []struct {
 		name      string
