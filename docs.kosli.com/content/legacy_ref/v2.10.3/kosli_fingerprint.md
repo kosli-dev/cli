@@ -9,10 +9,10 @@ deprecated: false
 ## Synopsis
 
 Calculate the SHA256 fingerprint of an artifact.
-Requires artifact type flag to be set.
+Requires `--artifact-type` flag to be set.
 Artifact type can be one of: "file" for files, "dir" for directories, "docker" for docker images.
 
-Fingerprinting docker images can be done using via the local docker daemon or the fingerprint can be fetched
+Fingerprinting docker images can be done using the local docker daemon or the fingerprint can be fetched
 from a remote registry.
 
 When fingerprinting a 'dir' artifact, you can exclude certain paths from fingerprint calculation 
