@@ -37,7 +37,7 @@ jobs:
   
   init-kosli:
       needs: [pre-build]
-      uses: kosli-dev/cli/.github/workflows/init_kosli.yml@main
+      uses: ./.github/workflows/init_kosli.yml
       with:
         TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
         TRAIL_TEMPLATE_FILE: ${{ needs.pre-build.outputs.trail_template_file }}
@@ -48,7 +48,7 @@ jobs:
 
   test:
     needs: [pre-build]
-    uses: kosli-dev/cli/.github/workflows/test.yml@main
+    uses: ./.github/workflows/test.yml
     with:
       AWS_ACCOUNT_ID: 772819027869
       AWS_REGION: eu-central-1
@@ -58,7 +58,8 @@ jobs:
       github_access_token: ${{ secrets.KOSLI_GITHUB_TOKEN }}
       gitlab_access_token: ${{ secrets.KOSLI_GITLAB_TOKEN }}
       azure_access_token: ${{ secrets.KOSLI_AZURE_TOKEN }}
-      azure_service_token: ${{ secrets.KOSLI_AZURE_SERVICE_TOKEN }}
+      azure_client_id: ${{ secrets.AZURE_CLIENT_ID }}
+      azure_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
       bitbucket_password: ${{ secrets.KOSLI_BITBUCKET_PASSWORD }}
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
       slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }}
@@ -68,7 +69,7 @@ jobs:
 
   docker:
     needs: [test, pre-build, init-kosli]
-    uses: kosli-dev/cli/.github/workflows/docker.yml@main
+    uses: ./.github/workflows/docker.yml
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
       platforms: linux/amd64,linux/arm64
@@ -141,7 +142,7 @@ jobs:
   binary-provenance:
     needs: [goreleaser, pre-build]
     name: Artifacts Binary Provenance
-    uses: kosli-dev/cli/.github/workflows/binary_provenance.yml@main
+    uses: ./.github/workflows/binary_provenance.yml
     with:
       dir: dist
       artifacts: ${{ needs.goreleaser.outputs.artifacts }}
