@@ -88,8 +88,12 @@ jobs:
             sbom-path: '${{matrix.artifact.template_name}}-sbom.spdx.json'
             subject-name: ${{matrix.artifact.template_name}}
             subject-digest: sha256:${{ env.FINGERPRINT }}
-
-        - run: cat ${{ steps.sbom-attest.outputs.bundle-path }} || true
+        
+        - uses: actions/upload-artifact@v4
+          with:
+            name: sbom-attest-jsonl-bundle
+            path: ${{ steps.sbom-attest.outputs.bundle-path }}
+            retention-days: 1
 
         - name: Report artifact to Kosli
           env:
