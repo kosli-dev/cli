@@ -146,6 +146,12 @@ func printArtifactsJsonAsTable(artifacts []map[string]interface{}, out io.Writer
 		rows := []string{}
 		rows = append(rows, fmt.Sprintf("Name:\t%s", artifact["filename"].(string)))
 		rows = append(rows, fmt.Sprintf("Flow:\t%s", artifact["flow_name"].(string)))
+		if artifact["trail_name"] != nil {
+			rows = append(rows, fmt.Sprintf("Trail:\t%s", artifact["trail_name"].(string)))
+		}
+		if artifact["template_reference_name"] != nil {
+			rows = append(rows, fmt.Sprintf("Name in template:\t%s", artifact["template_reference_name"].(string)))
+		}
 		rows = append(rows, fmt.Sprintf("Fingerprint:\t%s", artifact["fingerprint"].(string)))
 		createdAt, err := formattedTimestamp(artifact["created_at"], false)
 		if err != nil {
