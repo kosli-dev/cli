@@ -39,13 +39,26 @@ kosli get artifact flowName@fingerprint \
 	--api-token yourAPIToken \
 	--org orgName
 
+# get the latest artifact with a given fingerprint from a flow in a specific trail
+kosli get artifact flowName@fingerprint \
+	--api-token yourAPIToken \
+	--org orgName
+	--trail trailName
+
 # get an artifact with a given commit SHA from a flow
 kosli get artifact flowName:commitSHA \
 	--api-token yourAPIToken \
-	--org orgName`
+	--org orgName
+
+# get a list of artifacts with a given commit SHA from a flow in a particular trail
+kosli get artifact flowName:commitSHA \
+	--api-token yourAPIToken \
+	--org orgName
+	--trail trailName`
 
 type getArtifactOptions struct {
 	output string
+	trail  string
 }
 
 func newGetArtifactCmd(out io.Writer) *cobra.Command {
@@ -69,6 +82,7 @@ func newGetArtifactCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
+	cmd.Flags().StringVarP(&o.trail, "trail", "t", "", trailNameFlagOptional)
 
 	return cmd
 }
@@ -86,6 +100,9 @@ func (o *getArtifactOptions) run(out io.Writer, args []string) error {
 	}
 
 	url := fmt.Sprintf("%s/api/v2/artifacts/%s/%s/%s/%s", global.Host, global.Org, flowName, idType, id)
+	if o.trail != "" {
+		url = url + fmt.Sprintf("?trail=%s", o.trail)
+	}
 	reqParams := &requests.RequestParams{
 		Method:   http.MethodGet,
 		URL:      url,
@@ -129,6 +146,12 @@ func printArtifactsJsonAsTable(artifacts []map[string]interface{}, out io.Writer
 		rows := []string{}
 		rows = append(rows, fmt.Sprintf("Name:\t%s", artifact["filename"].(string)))
 		rows = append(rows, fmt.Sprintf("Flow:\t%s", artifact["flow_name"].(string)))
+		if artifact["trail_name"] != nil {
+			rows = append(rows, fmt.Sprintf("Trail:\t%s", artifact["trail_name"].(string)))
+		}
+		if artifact["template_reference_name"] != nil {
+			rows = append(rows, fmt.Sprintf("Name in template:\t%s", artifact["template_reference_name"].(string)))
+		}
 		rows = append(rows, fmt.Sprintf("Fingerprint:\t%s", artifact["fingerprint"].(string)))
 		createdAt, err := formattedTimestamp(artifact["created_at"], false)
 		if err != nil {
