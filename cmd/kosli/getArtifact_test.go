@@ -18,12 +18,14 @@ type GetArtifactCommandTestSuite struct {
 	artifactName          string
 	artifactPath          string
 	fingerprint           string
+	trailName             string
 }
 
 func (suite *GetArtifactCommandTestSuite) SetupTest() {
 	suite.flowName = "get-artifact"
 	suite.artifactName = "arti"
 	suite.artifactPath = "testdata/folder1/hello.txt"
+	suite.trailName = "cli-build-1"
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Org:      "docs-cmd-test-user-shared",
@@ -31,14 +33,15 @@ func (suite *GetArtifactCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateFlow(suite.flowName, suite.T())
+	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
+	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
 	fingerprintOptions := &fingerprintOptions{
 		artifactType: "file",
 	}
 	var err error
 	suite.fingerprint, err = GetSha256Digest(suite.artifactPath, fingerprintOptions, logger)
 	require.NoError(suite.T(), err)
-	CreateArtifact(suite.flowName, suite.fingerprint, suite.artifactName, suite.T())
+	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.fingerprint, suite.artifactName, suite.T())
 }
 
 func (suite *GetArtifactCommandTestSuite) TestGetArtifactCmd() {
@@ -79,6 +82,16 @@ func (suite *GetArtifactCommandTestSuite) TestGetArtifactCmd() {
 		{
 			name:       "get an existing artifact using commit works",
 			cmd:        fmt.Sprintf(`get artifact %s:0fc1ba9876f91b215679f3649b8668085d820ab5 %s`, suite.flowName, suite.defaultKosliArguments),
+			goldenFile: "output/get/get-artifact.txt",
+		},
+		{
+			name:       "get an existing artifact using commit with a provided trail works",
+			cmd:        fmt.Sprintf(`get artifact %s:0fc1ba9876f91b215679f3649b8668085d820ab5 --trail=%s %s`, suite.flowName, suite.trailName, suite.defaultKosliArguments),
+			goldenFile: "output/get/get-artifact.txt",
+		},
+		{
+			name:       "get an existing artifact using fingerprint with a provided trail works",
+			cmd:        fmt.Sprintf(`get artifact %s@%s --trail=%s %s`, suite.flowName, suite.fingerprint, suite.trailName, suite.defaultKosliArguments),
 			goldenFile: "output/get/get-artifact.txt",
 		},
 	}
