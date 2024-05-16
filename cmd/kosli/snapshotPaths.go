@@ -141,39 +141,23 @@ func watch_for_changes(ps *server.PathsSpec, url string, envName string) bool {
 	}
 	defer watcher.Close()
 
-	if err := watcher.Add("./bin/"); err != nil {
-		logger.Error("failed to watch dir: %v", err)
+	// Add every path in path spec to watcher
+	for _, pathSpec := range ps.Artifacts {
+		if err := watcher.Add(pathSpec.Path); err != nil {
+			logger.Error("failed to watch dir: %v", err)
+		}
 	}
 
 	for {
 		select {
 		case event := <-watcher.Events:
-
 			logger.Debug("Event: " + event.String())
 
-			if event.Op&fsnotify.Write == fsnotify.Write {
-
-				logger.Debug("Modified file: " + event.Name)
-				reportArtifacts(ps, url, envName)
-
-			} else if event.Op&fsnotify.Create == fsnotify.Create {
-
-				logger.Debug("Created file: " + event.Name)
-				reportArtifacts(ps, url, envName)
-
-			} else if event.Op&fsnotify.Remove == fsnotify.Remove {
-
-				logger.Debug("Removed file: " + event.Name)
-				reportArtifacts(ps, url, envName)
-
-			} else if event.Op&fsnotify.Rename == fsnotify.Rename {
-
-				logger.Debug("Renamed file: " + event.Name)
-				reportArtifacts(ps, url, envName)
-
-			} else {
-				logger.Debug("Other event: " + event.Name)
-				// ignore
+			if event.Op != fsnotify.Chmod {
+				err := reportArtifacts(ps, url, envName)
+				if err != nil {
+					logger.Error("failed to report artifacts: %v", err)
+				}
 			}
 
 		case err := <-watcher.Errors:

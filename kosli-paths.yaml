@@ -2,3 +2,5 @@ version: 1
 artifacts:
   service-a:
     path: bin/
+  service-b:
+    path: hack/
