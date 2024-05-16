@@ -40,8 +40,15 @@ const (
 	credentialsStoreKeySecretName = "kosli-encryption-key"
 
 	// the following constants are used in the docs/help
-	fingerprintDesc = "The artifact SHA256 fingerprint is calculated (based on the ^--artifact-type^ flag) or can be provided directly (with the ^--fingerprint^ flag)."
-	awsAuthDesc     = `
+	fingerprintDesc        = "The artifact SHA256 fingerprint is calculated (based on the ^--artifact-type^ flag and the artifact name/path argument) or can be provided directly (with the ^--fingerprint^ flag)."
+	attestationBindingDesc = `
+
+The attestation can be bound to a trail using the trail name.
+
+If the attestation is for an artifact, the attestation can be bound to the artifact using one of two ways:
+- using the artifact's SHA256 fingerprint which is calculated (based on the ^--artifact-type^ flag and the artifact name/path argument) or can be provided directly (with the ^--fingerprint^ flag).
+- using the artifact's name in the flow yaml template and the git commit from which the artifact is/will be created. Useful when reporting an attestation before creating/reporting the artifact.`
+	awsAuthDesc = `
 
 To authenticate to AWS, you can either:  
   1) provide the AWS static credentials via flags or by exporting the equivalent KOSLI env vars (e.g. KOSLI_AWS_KEY_ID)  
@@ -178,8 +185,8 @@ The service principal needs to have the following permissions:
 	intervalFlag                         = "[optional] Expression to define specified snapshots range."
 	showUnchangedArtifactsFlag           = "[defaulted] Show the unchanged artifacts present in both snapshots within the diff output."
 	approverFlag                         = "[optional] The user approving an approval."
-	attestationFingerprintFlag           = "[optional] The SHA256 fingerprint of the artifact to attach the attestation to."
-	attestationCommitFlag                = "[optional] The git commit associated to the attestation. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
+	attestationFingerprintFlag           = "[conditional] The SHA256 fingerprint of the artifact to attach the attestation to. Only required if the attestation is for an artifact and --artifact-type and artifact name/path are not used."
+	attestationCommitFlag                = "[conditional] The git commit for which the attestation is associated to. Becomes required when reporting an attestation for an artifact before reporting it to Kosli. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
 	attestationOriginUrlFlag             = "[optional] The url pointing to where the attestation came from or is related. (defaulted to the CI url in some CIs: https://docs.kosli.com/ci-defaults )."
 	attestationNameFlag                  = "The name of the attestation as declared in the flow or trail yaml template."
 	attestationCompliantFlag             = "[defaulted] Whether the attestation is compliant or not. A boolean flag https://docs.kosli.com/faq/#boolean-flags"

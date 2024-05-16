@@ -11,7 +11,7 @@ const attestPRGitlabShortDesc = `Report a Gitlab merge request attestation to an
 
 const attestPRGitlabLongDesc = attestPRGitlabShortDesc + `
 It checks if a merge request exists for a given merge commit and reports the merge request attestation to Kosli.
-If the attestation is attached to an artifact, ` + fingerprintDesc
+` + attestationBindingDesc
 
 const attestPRGitlabExample = `
 # report a Gitlab merge request attestation about a pre-built docker artifact (kosli calculates the fingerprint):

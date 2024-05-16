@@ -10,9 +10,10 @@ const beginDesc = `All Kosli begin commands.`
 
 func newBeginCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "begin",
-		Short: beginDesc,
-		Long:  beginDesc,
+		Use:     "begin",
+		Aliases: []string{"start", "init"},
+		Short:   beginDesc,
+		Long:    beginDesc,
 	}
 
 	// Add subcommands

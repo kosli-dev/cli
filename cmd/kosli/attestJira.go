@@ -41,7 +41,7 @@ The attestation is reported in all cases, and its compliance status depends on r
 existing Jira issues.  
 If you have wrong Jira credentials or wrong Jira-base-url it will be reported as non existing Jira issue.
 This is because Jira returns same 404 error code in all cases.
-` + fingerprintDesc
+` + attestationBindingDesc
 
 const attestJiraExample = `
 # report a jira attestation about a pre-built docker artifact (kosli calculates the fingerprint):
