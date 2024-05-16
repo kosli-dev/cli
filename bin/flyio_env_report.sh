@@ -5,6 +5,8 @@ SCRIPT_NAME=flyio_env_report.sh
 USAGE="$SCRIPT_NAME [options] <protocol://hostname> <owner> <environment-name>"
 
 
+
+
 die()
 {
     echo "Error: $1" >&2

@@ -207,6 +207,7 @@ The service principal needs to have the following permissions:
 	setTagsFlag                          = "[optional] The key-value pairs to tag the resource with. The format is: key=value"
 	unsetTagsFlag                        = "[optional] The list of tag keys to remove from the resource."
 	pathsSpecFileFlag                    = "The path to a paths file in YAML/JSON/TOML format. Cannot be used together with --path ."
+	pathsWatchFlag                       = "[optional] Watch the filesystem for changes and report snapshots of artifacts running in specific filesystem paths to Kosli."
 	snapshotPathPathFlag                 = "The base path for the artifact to snapshot."
 	snapshotPathExcludeFlag              = "[optional] The comma-separated list of literal paths or glob patterns to exclude when fingerprinting the artifact."
 	snapshotPathArtifactNameFlag         = "The reported name of the artifact."

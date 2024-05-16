@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"path/filepath"
 	"strings"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/go-playground/validator/v10"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/server"
@@ -52,6 +54,7 @@ kosli snapshot paths yourEnvironmentName \
 
 type snapshotPathsOptions struct {
 	pathSpecFile string
+	watch        bool
 }
 
 func newSnapshotPathsCmd(out io.Writer) *cobra.Command {
@@ -76,6 +79,8 @@ func newSnapshotPathsCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&o.pathSpecFile, "paths-file", "", pathsSpecFileFlag)
+	cmd.Flags().BoolVar(&o.watch, "watch", false, pathsWatchFlag)
+
 	addDryRunFlag(cmd)
 
 	if err := RequireFlags(cmd, []string{"paths-file"}); err != nil {
@@ -96,10 +101,21 @@ func (o *snapshotPathsOptions) run(args []string) error {
 		return err
 	}
 
+	// snapshot the paths
+	if o.watch {
+		watch_for_changes(ps, url, envName)
+	}
+
+	return reportArtifacts(ps, url, envName)
+}
+
+func reportArtifacts(ps *server.PathsSpec, url string, envName string) error {
+
 	artifacts, err := server.CreatePathsArtifactsData(ps, logger)
 	if err != nil {
 		return err
 	}
+
 	payload := &server.ServerEnvRequest{
 		Artifacts: artifacts,
 	}
@@ -116,6 +132,54 @@ func (o *snapshotPathsOptions) run(args []string) error {
 		logger.Info("[%d] artifacts were reported to environment %s", len(payload.Artifacts), envName)
 	}
 	return err
+}
+
+func watch_for_changes(ps *server.PathsSpec, url string, envName string) bool {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer watcher.Close()
+
+	if err := watcher.Add("./bin/"); err != nil {
+		logger.Error("failed to watch dir: %v", err)
+	}
+
+	for {
+		select {
+		case event := <-watcher.Events:
+
+			logger.Debug("Event: " + event.String())
+
+			if event.Op&fsnotify.Write == fsnotify.Write {
+
+				logger.Debug("Modified file: " + event.Name)
+				reportArtifacts(ps, url, envName)
+
+			} else if event.Op&fsnotify.Create == fsnotify.Create {
+
+				logger.Debug("Created file: " + event.Name)
+				reportArtifacts(ps, url, envName)
+
+			} else if event.Op&fsnotify.Remove == fsnotify.Remove {
+
+				logger.Debug("Removed file: " + event.Name)
+				reportArtifacts(ps, url, envName)
+
+			} else if event.Op&fsnotify.Rename == fsnotify.Rename {
+
+				logger.Debug("Renamed file: " + event.Name)
+				reportArtifacts(ps, url, envName)
+
+			} else {
+				logger.Debug("Other event: " + event.Name)
+				// ignore
+			}
+
+		case err := <-watcher.Errors:
+			logger.Debug("Error: ", err)
+		}
+	}
 }
 
 func processPathSpecFile(pathsSpecFile string) (*server.PathsSpec, error) {
