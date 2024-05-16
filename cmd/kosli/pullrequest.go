@@ -155,7 +155,7 @@ func (o *attestPROptions) run(args []string) error {
 	if len(pullRequestsEvidence) == 0 && o.assert && !global.DryRun {
 		return fmt.Errorf("assert failed: no %s found for the given commit: %s", label, o.payload.Commit.Sha1)
 	}
-	return err
+	return wrapAttestationError(err)
 }
 
 type pullRequestCommitOptions struct {

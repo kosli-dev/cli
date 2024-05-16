@@ -160,3 +160,11 @@ func newAttestationForm(payload interface{}, attachments []string) (
 
 	return form, cleanupNeeded, evidencePath, nil
 }
+
+func wrapAttestationError(err error) error {
+	if err != nil {
+		return fmt.Errorf(strings.Replace(err.Error(), "requires at least one of: artifact_fingerprint or git_commit_info.",
+			"requires at least one of: specifying the fingerprint (either by calculating it using the artifact name/path and --artifact-type, or by providing it using --fingerprint) or providing --commit (requires an available git repo to access commit details)", 1))
+	}
+	return err
+}

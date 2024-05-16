@@ -22,8 +22,7 @@ type attestGenericOptions struct {
 
 const attestGenericShortDesc = `Report a generic attestation to an artifact or a trail in a Kosli flow.  `
 
-const attestGenericLongDesc = attestGenericShortDesc + `
-` + fingerprintDesc
+const attestGenericLongDesc = attestGenericShortDesc + attestationBindingDesc
 
 const attestGenericExample = `
 # report a generic attestation about a pre-built docker artifact (kosli calculates the fingerprint):
@@ -158,5 +157,5 @@ func (o *attestGenericOptions) run(args []string) error {
 	if err == nil && !global.DryRun {
 		logger.Info("generic attestation '%s' is reported to trail: %s", o.payload.AttestationName, o.trailName)
 	}
-	return err
+	return wrapAttestationError(err)
 }

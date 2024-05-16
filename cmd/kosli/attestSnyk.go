@@ -33,8 +33,7 @@ The ^--scan-results^ .json file is analyzed and a summary of the scan results ar
 
 By default, the ^--scan-results^ .json file is also uploaded to Kosli's evidence vault.
 You can disable that by setting ^--upload-results=false^
-
-` + fingerprintDesc
+` + attestationBindingDesc
 
 const attestSnykExample = `
 # report a snyk attestation about a pre-built docker artifact (kosli calculates the fingerprint):
@@ -185,5 +184,5 @@ func (o *attestSnykOptions) run(args []string) error {
 	if err == nil && !global.DryRun {
 		logger.Info("snyk attestation '%s' is reported to trail: %s", o.payload.AttestationName, o.trailName)
 	}
-	return err
+	return wrapAttestationError(err)
 }
