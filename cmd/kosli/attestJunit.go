@@ -171,5 +171,5 @@ func (o *attestJunitOptions) run(args []string) error {
 	if err == nil && !global.DryRun {
 		logger.Info("junit attestation '%s' is reported to trail: %s", o.payload.AttestationName, o.trailName)
 	}
-	return err
+	return wrapAttestationError(err)
 }

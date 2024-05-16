@@ -253,5 +253,5 @@ func (o *attestJiraOptions) run(args []string) error {
 	if issueFoundCount != len(issueIDs) && o.assert {
 		return fmt.Errorf("missing Jira issues from references found in commit message or branch name%s", issueLog)
 	}
-	return err
+	return wrapAttestationError(err)
 }

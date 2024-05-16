@@ -185,5 +185,5 @@ func (o *attestSnykOptions) run(args []string) error {
 	if err == nil && !global.DryRun {
 		logger.Info("snyk attestation '%s' is reported to trail: %s", o.payload.AttestationName, o.trailName)
 	}
-	return err
+	return wrapAttestationError(err)
 }
