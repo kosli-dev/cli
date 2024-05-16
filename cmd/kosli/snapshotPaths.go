@@ -103,6 +103,11 @@ func (o *snapshotPathsOptions) run(args []string) error {
 
 	// snapshot the paths
 	if o.watch {
+		err := reportArtifacts(ps, url, envName)
+		if err != nil {
+			return err
+		}
+
 		watch_for_changes(ps, url, envName)
 	}
 
