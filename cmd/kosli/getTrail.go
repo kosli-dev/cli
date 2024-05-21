@@ -40,6 +40,11 @@ func newGetTrailCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 
+	err := RequireFlags(cmd, []string{"flow"})
+	if err != nil {
+		logger.Error("failed to configure required flags: %v", err)
+	}
+
 	return cmd
 }
 
@@ -95,8 +100,8 @@ func printTrailAsTable(raw string, out io.Writer, page int) error {
 			rows = append(rows, fmt.Sprintf("  url:\t%s", url))
 		}
 		rows = append(rows, fmt.Sprintf("  message:\t%s", prefixEachLine(commitInfo["message"].(string), "\t")))
-		rows = append(rows, fmt.Sprintf("Events:\n"))
 	}
+	rows = append(rows, fmt.Sprintf("Events:\n"))
 
 	tabFormattedPrint(out, header, rows)
 

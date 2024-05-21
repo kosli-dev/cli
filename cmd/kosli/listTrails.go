@@ -40,6 +40,11 @@ func newListTrailsCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 
+	err := RequireFlags(cmd, []string{"flow"})
+	if err != nil {
+		logger.Error("failed to configure required flags: %v", err)
+	}
+
 	return cmd
 }
 
