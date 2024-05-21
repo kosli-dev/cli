@@ -88,7 +88,7 @@ func printTrailAsTable(raw string, out io.Writer, page int) error {
 	rows = append(rows, fmt.Sprintf("Compliance:\t%s", trail["compliance_state"]))
 	rows = append(rows, fmt.Sprintf("Last modified at:\t%s", lastModifiedAt))
 	if commitInfo, ok := trail["git_commit_info"].(map[string]interface{}); ok {
-		rows = append(rows, fmt.Sprintf("Git commit:\t"))
+		rows = append(rows, "Git commit:\t")
 		rows = append(rows, fmt.Sprintf("  Sha1:\t%s", commitInfo["sha1"].(string)))
 		rows = append(rows, fmt.Sprintf("  Author:\t%s", commitInfo["author"].(string)))
 		commitTimestamp, err := formattedTimestamp(commitInfo["timestamp"].(float64), false)
@@ -101,7 +101,7 @@ func printTrailAsTable(raw string, out io.Writer, page int) error {
 		}
 		rows = append(rows, fmt.Sprintf("  message:\t%s", prefixEachLine(commitInfo["message"].(string), "\t")))
 	}
-	rows = append(rows, fmt.Sprintf("Events:\n"))
+	rows = append(rows, "Events:\n")
 
 	tabFormattedPrint(out, header, rows)
 
@@ -148,9 +148,9 @@ func eventRow(event interface{}) (string, error) {
 	eventType := eventMap["type"].(string)
 	switch eventType {
 	case "trail_reported":
-		eventDescription = fmt.Sprintf("trail started")
+		eventDescription = "trail started"
 	case "trail_updated":
-		eventDescription = fmt.Sprintf("trail updated")
+		eventDescription = "trail updated"
 	case "trail_attestation_reported":
 		eventDescription = fmt.Sprintf("'%s' attestation reported for %s on the trail", eventMap["attestation_type"], eventMap["template_reference_name"])
 	case "artifact_creation_reported":
