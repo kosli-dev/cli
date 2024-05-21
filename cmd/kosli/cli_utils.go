@@ -758,3 +758,17 @@ func handleArtifactExpression(expression string) (string, string, string, error)
 
 	return items[0], items[1], separator, nil
 }
+
+// prefixEachLine adds a prefix string to each line in a string except the first line
+// new lines are skipped
+func prefixEachLine(multilineString, prefix string) string {
+	lines := strings.Split(multilineString, "\n")
+
+	for i, line := range lines {
+		if line != "\n" && line != "" && i != 0 {
+			lines[i] = prefix + line
+		}
+	}
+
+	return strings.Join(lines, "\n")
+}
