@@ -1053,3 +1053,38 @@ func (suite *CliUtilsTestSuite) TestHandleArtifactExpression() {
 		})
 	}
 }
+
+func Test_prefixEachLine(t *testing.T) {
+	tests := []struct {
+		name            string
+		multilineString string
+		prefix          string
+		want            string
+	}{
+		{
+			name:            "first line is skipped",
+			multilineString: "This a line and no more lines",
+			prefix:          "**",
+			want:            "This a line and no more lines",
+		},
+		{
+			name:            "prefix is added correctly",
+			multilineString: "This a line\nand this is another",
+			prefix:          "**",
+			want:            "This a line\n**and this is another",
+		},
+		{
+			name:            "empty lines are skipped",
+			multilineString: "This a line\n\nand this\n is another",
+			prefix:          "**",
+			want:            "This a line\n\n**and this\n** is another",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := prefixEachLine(tt.multilineString, tt.prefix); got != tt.want {
+				t.Errorf("prefixEachLine() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
