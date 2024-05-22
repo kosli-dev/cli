@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 
 	ghUtils "github.com/kosli-dev/cli/internal/github"
@@ -113,6 +114,11 @@ func newAttestGithubPRCmd(out io.Writer) *cobra.Command {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
+			}
+
+			err = ValidateSliceValues(o.redactedCommitInfo, allowedCommitRedactionValues)
+			if err != nil {
+				return fmt.Errorf("%s for --redact-commit-info", err.Error())
 			}
 
 			err = MuXRequiredFlags(cmd, []string{"fingerprint", "artifact-type"}, false)

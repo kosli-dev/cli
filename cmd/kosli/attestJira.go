@@ -41,7 +41,9 @@ The attestation is reported in all cases, and its compliance status depends on r
 existing Jira issues.  
 If you have wrong Jira credentials or wrong Jira-base-url it will be reported as non existing Jira issue.
 This is because Jira returns same 404 error code in all cases.
-` + attestationBindingDesc
+` + attestationBindingDesc + `
+
+` + commitDescription
 
 const attestJiraExample = `
 # report a jira attestation about a pre-built docker artifact (kosli calculates the fingerprint):
@@ -149,6 +151,11 @@ func newAttestJiraCmd(out io.Writer) *cobra.Command {
 			err = MuXRequiredFlags(cmd, []string{"jira-pat", "jira-username"}, true)
 			if err != nil {
 				return err
+			}
+
+			err = ValidateSliceValues(o.redactedCommitInfo, allowedCommitRedactionValues)
+			if err != nil {
+				return fmt.Errorf("%s for --redact-commit-info", err.Error())
 			}
 
 			err = ValidateAttestationArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.ArtifactFingerprint)

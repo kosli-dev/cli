@@ -534,6 +534,16 @@ func ValidateRegistryFlags(cmd *cobra.Command, o *fingerprintOptions) error {
 	return nil
 }
 
+// ValidateSliceValues checks if all elements in the slice are one of the allowed values
+func ValidateSliceValues(values []string, allowedValues map[string]struct{}) error {
+	for _, value := range values {
+		if _, ok := allowedValues[value]; !ok {
+			return fmt.Errorf("%s is not an allowed value", value)
+		}
+	}
+	return nil
+}
+
 // ErrorBeforePrintingUsage
 func ErrorBeforePrintingUsage(cmd *cobra.Command, errMsg string) error {
 	return fmt.Errorf(

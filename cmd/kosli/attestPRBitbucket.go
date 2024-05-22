@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 
 	bbUtils "github.com/kosli-dev/cli/internal/bitbucket"
@@ -128,6 +129,11 @@ func newAttestBitbucketPRCmd(out io.Writer) *cobra.Command {
 			err = MuXRequiredFlags(cmd, []string{"fingerprint", "artifact-type"}, false)
 			if err != nil {
 				return err
+			}
+
+			err = ValidateSliceValues(o.redactedCommitInfo, allowedCommitRedactionValues)
+			if err != nil {
+				return fmt.Errorf("%s for --redact-commit-info", err.Error())
 			}
 
 			err = ValidateAttestationArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.ArtifactFingerprint)

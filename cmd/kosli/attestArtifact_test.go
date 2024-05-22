@@ -98,6 +98,17 @@ func (suite *AttestArtifactCommandTestSuite) TestAttestArtifactCmd() {
 			cmd:       fmt.Sprintf("attest artifact testdata/file1 --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name cli --commit HEAD --build-url example.com --commit-url example.com --annotate foo.baz=bar %s", suite.defaultKosliArguments),
 			golden:    "Error: --annotate flag should be in the format key=value. Invalid key: 'foo.baz'. Key can only contain [A-Za-z0-9_].\n",
 		},
+		{
+			name:   "can attest a file artifact with redacted commit info",
+			cmd:    fmt.Sprintf("attest artifact testdata/file1 --artifact-type file --redact-commit-info author,branch --name cli --commit HEAD --build-url example.com --commit-url example.com  %s", suite.defaultKosliArguments),
+			golden: "artifact file1 was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when attesting an artifact with invalid redacted commit info",
+			cmd:       fmt.Sprintf("attest artifact testdata/file1 --artifact-type file --redact-commit-info author,bar --name cli --commit HEAD --build-url example.com --commit-url example.com  %s", suite.defaultKosliArguments),
+			golden:    "Error: bar is not an allowed value for --redact-commit-info\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

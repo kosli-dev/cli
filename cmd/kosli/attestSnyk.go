@@ -33,7 +33,9 @@ The ^--scan-results^ .json file is analyzed and a summary of the scan results ar
 
 By default, the ^--scan-results^ .json file is also uploaded to Kosli's evidence vault.
 You can disable that by setting ^--upload-results=false^
-` + attestationBindingDesc
+` + attestationBindingDesc + `
+
+` + commitDescription
 
 const attestSnykExample = `
 # report a snyk attestation about a pre-built docker artifact (kosli calculates the fingerprint):
@@ -119,6 +121,11 @@ func newAttestSnykCmd(out io.Writer) *cobra.Command {
 			err = MuXRequiredFlags(cmd, []string{"fingerprint", "artifact-type"}, false)
 			if err != nil {
 				return err
+			}
+
+			err = ValidateSliceValues(o.redactedCommitInfo, allowedCommitRedactionValues)
+			if err != nil {
+				return fmt.Errorf("%s for --redact-commit-info", err.Error())
 			}
 
 			err = ValidateAttestationArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.ArtifactFingerprint)

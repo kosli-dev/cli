@@ -130,7 +130,7 @@ func (o *reportArtifactOptions) run(args []string) error {
 		return err
 	}
 
-	commitObject, err := gitView.GetCommitInfoFromCommitSHA(o.gitReference, false)
+	commitObject, err := gitView.GetCommitInfoFromCommitSHA(o.gitReference, false, []string{})
 	if err != nil {
 		return err
 	}

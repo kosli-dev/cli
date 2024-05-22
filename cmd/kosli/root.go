@@ -187,6 +187,7 @@ The service principal needs to have the following permissions:
 	approverFlag                         = "[optional] The user approving an approval."
 	attestationFingerprintFlag           = "[conditional] The SHA256 fingerprint of the artifact to attach the attestation to. Only required if the attestation is for an artifact and --artifact-type and artifact name/path are not used."
 	attestationCommitFlag                = "[conditional] The git commit for which the attestation is associated to. Becomes required when reporting an attestation for an artifact before reporting it to Kosli. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
+	attestationRedactCommitInfoFlag      = "[optional] The list of commit info to be redacted before sending to Kosli. Allowed values are one or more of [author, message, branch]."
 	attestationOriginUrlFlag             = "[optional] The url pointing to where the attestation came from or is related. (defaulted to the CI url in some CIs: https://docs.kosli.com/ci-defaults )."
 	attestationNameFlag                  = "The name of the attestation as declared in the flow or trail yaml template."
 	attestationCompliantFlag             = "[defaulted] Whether the attestation is compliant or not. A boolean flag https://docs.kosli.com/faq/#boolean-flags"

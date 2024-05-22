@@ -9,6 +9,11 @@ import (
 	"github.com/kosli-dev/cli/internal/requests"
 )
 
+const commitDescription = `You can optionally associate the attestation to a git commit using ^--commit^ (requires access to a git repo). And you  
+can optionally redact some of the git commit data sent to Kosli using ^--redact-commit-info^. 
+Note that when the attestation is reported for an artifact that does not yet exist in Kosli, ^--commit^ becomes required to facilitate 
+binding the attestation to the right artifact.`
+
 type URLInfo struct {
 	Href        string `json:"href"`
 	Fingerprint string `json:"fingerprint,omitempty"`
@@ -34,6 +39,7 @@ type CommonAttestationOptions struct {
 	userDataFilePath        string
 	attachments             []string
 	commitSHA               string
+	redactedCommitInfo      []string
 	srcRepoRoot             string
 	externalURLs            map[string]string
 	externalFingerprints    map[string]string
@@ -66,7 +72,7 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 		if err != nil {
 			return fmt.Errorf("failed to get commit info. %s", err)
 		}
-		commitInfo, err := gv.GetCommitInfoFromCommitSHA(o.commitSHA, false)
+		commitInfo, err := gv.GetCommitInfoFromCommitSHA(o.commitSHA, false, o.redactedCommitInfo)
 		if err != nil {
 			return fmt.Errorf("failed to get commit info. %s", err)
 		}
