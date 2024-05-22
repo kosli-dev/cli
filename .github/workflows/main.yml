@@ -44,8 +44,9 @@ jobs:
     needs: [pre-build]
     uses: ./.github/workflows/init_kosli.yml
     with:
+      FLOW_NAME: cli
       TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
-      TRAIL_TEMPLATE_FILE: ${{ needs.pre-build.outputs.trail_template_file }}
+      FLOW_TEMPLATE_FILE: ${{ needs.pre-build.outputs.trail_template_file }}
       KOSLI_ORG: kosli-public
     secrets:
       kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
