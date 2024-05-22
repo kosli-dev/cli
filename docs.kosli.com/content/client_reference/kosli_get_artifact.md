@@ -35,6 +35,7 @@ kosli get artifact EXPRESSION [flags]
 | :--- | :--- |
 |    -h, --help  |  help for artifact  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
+|    -t, --trail string  |  [optional] The Kosli trail name.  |
 
 
 ## Flags inherited from parent commands
@@ -60,11 +61,31 @@ kosli get artifact flowName@fingerprint \
 
 ```
 
+**get the latest artifact with a given fingerprint from a flow in a specific trail**
+
+```shell
+kosli get artifact flowName@fingerprint \
+	--api-token yourAPIToken \
+	--org orgName
+	--trail trailName
+
+```
+
 **get an artifact with a given commit SHA from a flow**
 
 ```shell
 kosli get artifact flowName:commitSHA \
 	--api-token yourAPIToken \
 	--org orgName
+
+```
+
+**get a list of artifacts with a given commit SHA from a flow in a particular trail**
+
+```shell
+kosli get artifact flowName:commitSHA \
+	--api-token yourAPIToken \
+	--org orgName
+	--trail trailName
 ```
 

@@ -20,7 +20,7 @@ Starting from v2.8.2, the Snyk results can be in Snyk JSON or SARIF output forma
 
 If no vulnerabilities are detected, the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
 
-The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag) or can be provided directly (with the `--fingerprint` flag).
+The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
 
 ```shell
 kosli report evidence artifact snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]

@@ -11,7 +11,7 @@ deprecated: true
 
 Report an Azure Devops pull request evidence for an artifact in a Kosli flow.  
 It checks if a pull request exists for the artifact (based on its git commit) and reports the pull-request evidence to the artifact in Kosli.  
-The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag) or can be provided directly (with the `--fingerprint` flag).
+The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
 
 ```shell
 kosli report evidence artifact pullrequest azure [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]

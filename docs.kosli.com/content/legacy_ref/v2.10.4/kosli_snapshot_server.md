@@ -1,11 +1,12 @@
 ---
 title: "kosli snapshot server"
 beta: false
-deprecated: false
+deprecated: true
 ---
 
 # kosli snapshot server
 
+{{< hint danger >}}**kosli snapshot server** is deprecated. use 'kosli snapshot paths' instead  Deprecated commands will be removed in a future release.{{< /hint >}}
 ## Synopsis
 
 Report a snapshot of artifacts running in a server environment to Kosli.  

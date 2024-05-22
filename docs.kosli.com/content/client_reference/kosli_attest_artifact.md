@@ -9,7 +9,9 @@ deprecated: false
 ## Synopsis
 
 Attest an artifact creation to a Kosli flow.  
-The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag) or can be provided directly (with the `--fingerprint` flag).
+The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
+This command requires access to a git repo to associate the artifact to the git commit it is originating from. 
+You can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`
 
 ```shell
 kosli attest artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
@@ -32,6 +34,7 @@ kosli attest artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 |    -f, --flow string  |  The Kosli flow name.  |
 |    -h, --help  |  help for artifact  |
 |    -n, --name string  |  The name of the artifact in the yml template file.  |
+|        --redact-commit-info strings  |  [optional] The list of commit info to be redacted before sending to Kosli. Allowed values are one or more of [author, message, branch].  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |

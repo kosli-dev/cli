@@ -10,7 +10,7 @@ deprecated: false
 
 Assert an artifact in Kosli has been approved for deployment.  
 Exits with non-zero code if the artifact has not been approved.  
-The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag) or can be provided directly (with the `--fingerprint` flag).
+The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
 
 ```shell
 kosli assert approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]

@@ -50,6 +50,12 @@ kosli get snapshot ENVIRONMENT-NAME-OR-EXPRESSION [flags]
 |        --org string  |  The Kosli organization.  |
 
 
+## Live Example
+
+{{< raw-html >}}<pre>export KOSLI_ORG=cyber-dojo
+export KOSLI_API_TOKEN=Pj_XT2deaVA6V1qrTlthuaWsmjVt4eaHQwqnwqjRO3A  # read-only
+<a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli+get+snapshot+aws-prod+--output=json">kosli get snapshot aws-prod --output=json</a></pre>{{< / raw-html >}}
+
 ## Examples Use Cases
 
 **get the latest snapshot of an environment**

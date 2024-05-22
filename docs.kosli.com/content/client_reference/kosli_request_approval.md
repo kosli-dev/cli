@@ -10,7 +10,7 @@ deprecated: false
 
 Request an approval of a deployment of an artifact to an environment in Kosli.  
 The request should be reviewed in the Kosli UI.  
-The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag) or can be provided directly (with the `--fingerprint` flag).
+The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
 
 ```shell
 kosli request approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]

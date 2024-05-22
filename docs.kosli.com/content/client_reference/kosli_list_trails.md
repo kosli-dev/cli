@@ -1,23 +1,24 @@
 ---
-title: "kosli list environments"
+title: "kosli list trails"
 beta: false
 deprecated: false
 ---
 
-# kosli list environments
+# kosli list trails
 
 ## Synopsis
 
-List environments for an org.
+List Trails for a Flow in an org.
 
 ```shell
-kosli list environments [flags]
+kosli list trails [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|    -h, --help  |  help for environments  |
+|    -f, --flow string  |  The Kosli flow name.  |
+|    -h, --help  |  help for trails  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 
 
@@ -32,10 +33,4 @@ kosli list environments [flags]
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
-
-## Live Example
-
-{{< raw-html >}}<pre>export KOSLI_ORG=cyber-dojo
-export KOSLI_API_TOKEN=Pj_XT2deaVA6V1qrTlthuaWsmjVt4eaHQwqnwqjRO3A  # read-only
-<a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli+list+environments+--output=json">kosli list environments --output=json</a></pre>{{< / raw-html >}}
 

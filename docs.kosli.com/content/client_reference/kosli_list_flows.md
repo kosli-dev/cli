@@ -33,3 +33,9 @@ kosli list flows [flags]
 |        --org string  |  The Kosli organization.  |
 
 
+## Live Example
+
+{{< raw-html >}}<pre>export KOSLI_ORG=cyber-dojo
+export KOSLI_API_TOKEN=Pj_XT2deaVA6V1qrTlthuaWsmjVt4eaHQwqnwqjRO3A  # read-only
+<a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli+list+flows+--output=json">kosli list flows --output=json</a></pre>{{< / raw-html >}}
+

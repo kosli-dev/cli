@@ -9,7 +9,7 @@ deprecated: false
 ## Synopsis
 
 Report an approval of deploying an artifact to an environment to Kosli.  
-The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag) or can be provided directly (with the `--fingerprint` flag).
+The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
 
 ```shell
 kosli report approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]

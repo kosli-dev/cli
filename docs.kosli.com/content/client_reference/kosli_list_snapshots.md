@@ -49,6 +49,12 @@ kosli list snapshots ENV_NAME [flags]
 |        --org string  |  The Kosli organization.  |
 
 
+## Live Example
+
+{{< raw-html >}}<pre>export KOSLI_ORG=cyber-dojo
+export KOSLI_API_TOKEN=Pj_XT2deaVA6V1qrTlthuaWsmjVt4eaHQwqnwqjRO3A  # read-only
+<a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli+list+snapshots+aws-prod+--output=json">kosli list snapshots aws-prod --output=json</a></pre>{{< / raw-html >}}
+
 ## Examples Use Cases
 
 **list the last 15 snapshots for an environment**

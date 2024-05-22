@@ -51,6 +51,12 @@ kosli diff snapshots SNAPPISH_1 SNAPPISH_2 [flags]
 |        --org string  |  The Kosli organization.  |
 
 
+## Live Example
+
+{{< raw-html >}}<pre>export KOSLI_ORG=cyber-dojo
+export KOSLI_API_TOKEN=Pj_XT2deaVA6V1qrTlthuaWsmjVt4eaHQwqnwqjRO3A  # read-only
+<a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli+diff+snapshots+aws-beta+aws-prod+--output=json">kosli diff snapshots aws-beta aws-prod --output=json</a></pre>{{< / raw-html >}}
+
 ## Examples Use Cases
 
 **compare the third latest snapshot in an environment to the latest**
