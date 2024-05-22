@@ -12,6 +12,9 @@ on:
       assert:
         type: boolean
         default: false
+      flow_name:
+        required: true
+        type: string
       trail_name:
         required: true
         type: string
@@ -134,7 +137,7 @@ jobs:
       run: 
         kosli attest artifact
            ${{ env.IMAGE }}:${{ inputs.tag }}
-           --flow cli
+           --flow ${{ inputs.flow_name }} 
            --trail ${{ inputs.trail_name }} 
            --name cli-docker
            --fingerprint ${{ env.FINGERPRINT }}
@@ -148,7 +151,7 @@ jobs:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
       run: 
         kosli attest generic
-          --flow cli
+          --flow ${{ inputs.flow_name }}
           --trail ${{ inputs.trail_name }} 
           --name container-sbom
           --fingerprint ${{ env.FINGERPRINT }}
@@ -173,7 +176,7 @@ jobs:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
       run: 
         kosli attest snyk 
-            --flow cli
+            --flow ${{ inputs.flow_name }}
             --trail ${{ inputs.trail_name }} 
             --fingerprint ${{ env.FINGERPRINT }} 
             --name snyk-container
@@ -198,7 +201,7 @@ jobs:
         SMOKE_TEST_OUTCOME: ${{ steps.smoke-test.outcome}}
       run: 
         kosli attest generic 
-            --flow cli
+            --flow ${{ inputs.flow_name }}
             --trail ${{ inputs.trail_name }} 
             --fingerprint ${{ env.FINGERPRINT }} 
             --name smoke-test
