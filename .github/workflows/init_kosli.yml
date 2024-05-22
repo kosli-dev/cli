@@ -3,10 +3,13 @@ name: Init Kosli
 on:
     workflow_call:
         inputs:
+          flow_name:
+            required: true
+            type: string
           trail_name:
             required: true
             type: string
-          trail_template_file:
+          flow_template_file:
             required: true
             type: string
           kosli_org:
@@ -36,13 +39,20 @@ jobs:
             version:
                 ${{ vars.KOSLI_CLI_VERSION }}
 
+        - uses: haya14busa/action-cond@v1
+          id: description
+          with:
+            cond: ${{ inputs.flow_name == 'cli-release' }}
+            if_true: "CLI release process"
+            if_false: "CLI main branch changes"
+
         - name: Update Kosli Flow
           if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') }}
           env:
             KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-          run: kosli create flow cli 
-                --description "CLI change and release process" 
-                --template-file main-flow-template.yml
+          run: kosli create flow ${{inputs.flow_name}}
+                --description ${{ steps.description.outputs.value }}
+                --template-file ${{inputs.flow_template_file}}
                 --org ${{inputs.kosli_org}}
 
         - name: Init Kosli Trail
@@ -50,8 +60,7 @@ jobs:
           env:
             KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
           run: kosli begin trail ${{inputs.trail_name}} 
-                --flow cli 
-                --template-file ${{inputs.trail_template_file}}
+                --flow ${{inputs.flow_name}} 
                 --org ${{inputs.kosli_org}}
 
         - name: Report pull-request attestation to Kosli
@@ -59,7 +68,7 @@ jobs:
           env:
             KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
           run: kosli attest pullrequest github
-                --flow cli
+                --flow ${{inputs.flow_name}}
                 --trail ${{inputs.trail_name}} 
                 --name pr
                 --github-token ${{ secrets.pr_github_token }}
