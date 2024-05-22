@@ -51,7 +51,7 @@ jobs:
           env:
             KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
           run: kosli create flow ${{inputs.flow_name}}
-                --description ${{ steps.description.outputs.value }}
+                --description "${{ steps.description.outputs.value }}"
                 --template-file ${{inputs.flow_template_file}}
                 --org ${{inputs.kosli_org}}
 
