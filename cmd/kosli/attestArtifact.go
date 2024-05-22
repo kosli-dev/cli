@@ -15,6 +15,7 @@ type attestArtifactOptions struct {
 	fingerprintOptions   *fingerprintOptions
 	flowName             string
 	gitReference         string
+	redactedCommitInfo   []string
 	srcRepoRoot          string
 	displayName          string
 	payload              AttestArtifactPayload
@@ -40,7 +41,9 @@ type AttestArtifactPayload struct {
 const attestArtifactShortDesc = `Attest an artifact creation to a Kosli flow.  `
 
 const attestArtifactLongDesc = attestArtifactShortDesc + `
-` + fingerprintDesc
+` + fingerprintDesc + `
+This command requires access to a git repo to associate the artifact to the git commit it is originating from. 
+You can optionally redact some of the git commit data sent to Kosli using ^--redact-commit-info^`
 
 const attestArtifactExample = `
 # Attest that a file type artifact has been created, and let Kosli calculate its fingerprint
@@ -98,6 +101,11 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
+			err = ValidateSliceValues(o.redactedCommitInfo, allowedCommitRedactionValues)
+			if err != nil {
+				return fmt.Errorf("%s for --redact-commit-info", err.Error())
+			}
+
 			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.Fingerprint, true)
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
@@ -113,6 +121,7 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.Fingerprint, "fingerprint", "F", "", fingerprintFlag)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.gitReference, "commit", "g", DefaultValueForCommit(ci, true), gitCommitFlag)
+	cmd.Flags().StringSliceVar(&o.redactedCommitInfo, "redact-commit-info", []string{}, attestationRedactCommitInfoFlag)
 	cmd.Flags().StringVarP(&o.payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), buildUrlFlag)
 	cmd.Flags().StringVarP(&o.payload.CommitUrl, "commit-url", "u", DefaultValue(ci, "commit-url"), commitUrlFlag)
 	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", repoRootFlag)
@@ -169,7 +178,7 @@ func (o *attestArtifactOptions) run(args []string) error {
 		return err
 	}
 
-	commitInfo, err := gitView.GetCommitInfoFromCommitSHA(o.gitReference, false)
+	commitInfo, err := gitView.GetCommitInfoFromCommitSHA(o.gitReference, false, o.redactedCommitInfo)
 	if err != nil {
 		return err
 	}

@@ -24,6 +24,11 @@ If the attestation is for an artifact, the attestation can be bound to the artif
 - using the artifact's SHA256 fingerprint which is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
 - using the artifact's name in the flow yaml template and the git commit from which the artifact is/will be created. Useful when reporting an attestation before creating/reporting the artifact.
 
+You can optionally associate the attestation to a git commit using `--commit` (requires access to a git repo). And you  
+can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`. 
+Note that when the attestation is reported for an artifact that does not yet exist in Kosli, `--commit` becomes required to facilitate 
+binding the attestation to the right artifact.
+
 ```shell
 snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
@@ -45,6 +50,7 @@ snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |    -h, --help  |  help for snyk  |
 |    -n, --name string  |  The name of the attestation as declared in the flow or trail yaml template.  |
 |    -o, --origin-url string  |  [optional] The url pointing to where the attestation came from or is related. (defaulted to the CI url in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|        --redact-commit-info strings  |  [optional] The list of commit info to be redacted before sending to Kosli. Allowed values are one or more of [author, message, branch].  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |

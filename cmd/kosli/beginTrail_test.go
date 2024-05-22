@@ -33,7 +33,7 @@ func (suite *BeginTrailCommandTestSuite) TestBeginTrailCmd() {
 			wantError: true,
 			name:      "fails when more arguments are provided",
 			cmd:       fmt.Sprintf("begin trail trail1 xxx --flow %s %s", suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: accepts at most 1 arg(s), received 2\n",
+			golden:    "Error: accepts 1 arg(s), received 2\n",
 		},
 		{
 			wantError: true,
@@ -84,7 +84,7 @@ func (suite *BeginTrailCommandTestSuite) TestBeginTrailCmd() {
 			wantError: true,
 			name:      "missing name argument fails",
 			cmd:       "begin trail --flow my-modern-flow  -H http://localhost:8001 --org cyber-dojo -a eyJhbGciOiJIUzUxMiIsImlhdCI6MTYyNTY0NDUwMCwiZXhwIjoxNjI1NjQ4MTAwfQ.eyJpZCI6IjgzYTBkY2Q1In0.1B-xDlajF46vipL49zPbnXBRgotqGGcB3lxwpJxZ3HNce07E0p2LwO7UDYve9j2G9fQtKrKhUKvVR97SQOEFLQ",
-			golden:    "Error: trail name must be provided as an argument\n",
+			golden:    "Error: accepts 1 arg(s), received 0\n",
 		},
 		{
 			name:   "can create a trail with --origin-url and --external-url",

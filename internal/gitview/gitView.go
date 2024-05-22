@@ -10,6 +10,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/kosli-dev/cli/internal/logger"
+	"github.com/kosli-dev/cli/internal/utils"
 )
 
 type BasicCommitInfo struct {
@@ -32,6 +33,8 @@ type GitView struct {
 	repositoryRoot string
 	repository     *git.Repository
 }
+
+const redactedCommitInfoValue = "**REDACTED**"
 
 // New opens a git repository from the given path. It detects if the
 // repository is bare or a normal one. If the path doesn't contain a valid
@@ -78,7 +81,7 @@ func (gv *GitView) CommitsBetween(oldest, newest string, logger *logger.Logger) 
 		if err != nil {
 			return commits, err
 		}
-		commit := gv.asCommitInfo(commitObject, branchName, true)
+		commit := gv.asCommitInfo(commitObject, branchName, true, []string{})
 		commits = append(commits, commit)
 
 	} else {
@@ -93,7 +96,7 @@ func (gv *GitView) CommitsBetween(oldest, newest string, logger *logger.Logger) 
 				return commits, fmt.Errorf("failed to get next git commit: %v\n%s", err, hint)
 			}
 			if commit.Hash != *oldestHash {
-				nextCommit := gv.asCommitInfo(commit, branchName, true)
+				nextCommit := gv.asCommitInfo(commit, branchName, true, []string{})
 				commits = append(commits, nextCommit)
 			} else {
 				break
@@ -156,7 +159,7 @@ func (gv *GitView) ChangeLog(currentCommit, previousCommit string, logger *logge
 		}
 	}
 
-	currentArtifactCommit, err := gv.GetCommitInfoFromCommitSHA(currentCommit, true)
+	currentArtifactCommit, err := gv.GetCommitInfoFromCommitSHA(currentCommit, true, []string{})
 	if err != nil {
 		return []*CommitInfo{}, fmt.Errorf("could not retrieve current git commit for %s: %v", currentCommit, err)
 	}
@@ -178,7 +181,7 @@ func (gv *GitView) BranchName() (string, error) {
 
 // GetCommitInfoFromCommitSHA returns a CommitInfo object from a git commit
 // the gitCommit can be SHA1 or a revision: e.g. HEAD or HEAD~2 etc
-func (gv *GitView) GetCommitInfoFromCommitSHA(gitCommit string, ignoreURL bool) (*CommitInfo, error) {
+func (gv *GitView) GetCommitInfoFromCommitSHA(gitCommit string, ignoreURL bool, redactInfo []string) (*CommitInfo, error) {
 	branchName, err := gv.BranchName()
 	if err != nil {
 		return &CommitInfo{}, err
@@ -192,11 +195,11 @@ func (gv *GitView) GetCommitInfoFromCommitSHA(gitCommit string, ignoreURL bool) 
 	if err != nil {
 		return &CommitInfo{}, fmt.Errorf("could not retrieve commit for %s: %v", *hash, err)
 	}
-	return gv.asCommitInfo(commit, branchName, ignoreURL), nil
+	return gv.asCommitInfo(commit, branchName, ignoreURL, redactInfo), nil
 }
 
 // asCommitInfo returns a CommitInfo from a git Commit object
-func (gv *GitView) asCommitInfo(commit *object.Commit, branchName string, ignoreURL bool) *CommitInfo {
+func (gv *GitView) asCommitInfo(commit *object.Commit, branchName string, ignoreURL bool, redactedInfo []string) *CommitInfo {
 	commitParents := []string{}
 	for _, hash := range commit.ParentHashes {
 		commitParents = append(commitParents, hash.String())
@@ -210,11 +213,26 @@ func (gv *GitView) asCommitInfo(commit *object.Commit, branchName string, ignore
 		}
 	}
 
+	redactedValue := "**REDACTED**"
+	commitMessage := strings.TrimSpace(commit.Message)
+	if utils.Contains(redactedInfo, "message") {
+		commitMessage = redactedValue
+	}
+
+	commitAuthor := commit.Author.String()
+	if utils.Contains(redactedInfo, "author") {
+		commitAuthor = redactedValue
+	}
+
+	if utils.Contains(redactedInfo, "branch") {
+		branchName = redactedValue
+	}
+
 	return &CommitInfo{
 		BasicCommitInfo: BasicCommitInfo{
 			Sha1:      commit.Hash.String(),
-			Message:   strings.TrimSpace(commit.Message),
-			Author:    commit.Author.String(),
+			Message:   commitMessage,
+			Author:    commitAuthor,
 			Timestamp: commit.Author.When.UTC().Unix(),
 			Branch:    branchName,
 			URL:       commitURL,
@@ -251,7 +269,7 @@ func getCommitURL(repoURL, commitHash string) string {
 // matches lookup happens in the commit message first, and if none is found, matching against the branch name is done
 // if no matches are found in both the commit message and the branch name, an empty slice is returned
 func (gv *GitView) MatchPatternInCommitMessageORBranchName(pattern, commitSHA string) ([]string, *CommitInfo, error) {
-	commitInfo, err := gv.GetCommitInfoFromCommitSHA(commitSHA, true)
+	commitInfo, err := gv.GetCommitInfoFromCommitSHA(commitSHA, true, []string{})
 	if err != nil {
 		return []string{}, nil, err
 	}

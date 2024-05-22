@@ -24,7 +24,9 @@ type attestJunitOptions struct {
 
 const attestJunitShortDesc = `Report a junit attestation to an artifact or a trail in a Kosli flow.  `
 
-const attestJunitLongDesc = attestJunitShortDesc + attestationBindingDesc
+const attestJunitLongDesc = attestJunitShortDesc + attestationBindingDesc + `
+
+` + commitDescription
 
 const attestJunitExample = `
 # report a junit attestation about a pre-built docker artifact (kosli calculates the fingerprint):
@@ -100,6 +102,11 @@ func newAttestJunitCmd(out io.Writer) *cobra.Command {
 			err = MuXRequiredFlags(cmd, []string{"fingerprint", "artifact-type"}, false)
 			if err != nil {
 				return err
+			}
+
+			err = ValidateSliceValues(o.redactedCommitInfo, allowedCommitRedactionValues)
+			if err != nil {
+				return fmt.Errorf("%s for --redact-commit-info", err.Error())
 			}
 
 			err = ValidateAttestationArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.ArtifactFingerprint)

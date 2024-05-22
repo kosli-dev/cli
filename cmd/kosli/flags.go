@@ -9,6 +9,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// allowed commit redaction values
+var allowedCommitRedactionValues = map[string]struct{}{
+	"author":  {},
+	"message": {},
+	"branch":  {},
+}
+
 func addFingerprintFlags(cmd *cobra.Command, o *fingerprintOptions) {
 	cmd.Flags().StringVarP(&o.artifactType, "artifact-type", "t", "", artifactTypeFlag)
 	cmd.Flags().StringVar(&o.registryProvider, "registry-provider", "", registryProviderFlag)
@@ -100,6 +107,7 @@ func addAttestationFlags(cmd *cobra.Command, o *CommonAttestationOptions, payloa
 	}
 	cmd.Flags().StringVarP(&payload.ArtifactFingerprint, "fingerprint", "F", "", attestationFingerprintFlag)
 	cmd.Flags().StringVarP(&o.commitSHA, "commit", "g", DefaultValueForCommit(ci, false), commitFlagDesc)
+	cmd.Flags().StringSliceVar(&o.redactedCommitInfo, "redact-commit-info", []string{}, attestationRedactCommitInfoFlag)
 	cmd.Flags().StringVarP(&payload.OriginURL, "origin-url", "o", DefaultValue(ci, "build-url"), attestationOriginUrlFlag)
 	cmd.Flags().StringVarP(&o.attestationNameTemplate, "name", "n", "", attestationNameFlag)
 	cmd.Flags().StringToStringVar(&o.externalFingerprints, "external-fingerprint", map[string]string{}, externalFingerprintFlag)

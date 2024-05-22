@@ -326,22 +326,28 @@ func (suite *GitViewTestSuite) TestGetCommitInfoFromCommitSHA() {
 	gv, err := New(worktree.Filesystem.Root())
 	require.NoError(suite.T(), err)
 
-	_, err = gv.GetCommitInfoFromCommitSHA("58a9461c5a42d83bd5731485a72ddae542ac99d8", true)
+	_, err = gv.GetCommitInfoFromCommitSHA("58a9461c5a42d83bd5731485a72ddae542ac99d8", true, []string{})
 	require.Error(suite.T(), err)
 	expected := "failed to resolve git reference 58a9461c5a42d83bd5731485a72ddae542ac99d8: reference not found"
 	require.Equal(suite.T(), expected, err.Error())
 
-	_, err = gv.GetCommitInfoFromCommitSHA("HEAD~2", true)
+	_, err = gv.GetCommitInfoFromCommitSHA("HEAD~2", true, []string{})
 	require.Error(suite.T(), err)
 	expected = "failed to resolve git reference HEAD~2: EOF"
 	require.Equal(suite.T(), expected, err.Error())
 
-	commitInfo, err := gv.GetCommitInfoFromCommitSHA("HEAD", false)
+	commitInfo, err := gv.GetCommitInfoFromCommitSHA("HEAD", false, []string{})
 	require.NoError(suite.T(), err)
 	require.Equal(suite.T(), "Added file 1", commitInfo.Message)
 	require.Equal(suite.T(), "master", commitInfo.Branch)
 	require.Empty(suite.T(), commitInfo.Parents)
 	require.Empty(suite.T(), commitInfo.URL)
+
+	commitInfo, err = gv.GetCommitInfoFromCommitSHA("HEAD", false, []string{"author", "message", "branch"})
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), redactedCommitInfoValue, commitInfo.Author)
+	require.Equal(suite.T(), redactedCommitInfoValue, commitInfo.Message)
+	require.Equal(suite.T(), redactedCommitInfoValue, commitInfo.Branch)
 }
 
 func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {

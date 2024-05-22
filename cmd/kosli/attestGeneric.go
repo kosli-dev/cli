@@ -22,7 +22,9 @@ type attestGenericOptions struct {
 
 const attestGenericShortDesc = `Report a generic attestation to an artifact or a trail in a Kosli flow.  `
 
-const attestGenericLongDesc = attestGenericShortDesc + attestationBindingDesc
+const attestGenericLongDesc = attestGenericShortDesc + attestationBindingDesc + `
+
+` + commitDescription
 
 const attestGenericExample = `
 # report a generic attestation about a pre-built docker artifact (kosli calculates the fingerprint):
@@ -102,6 +104,11 @@ func newAttestGenericCmd(out io.Writer) *cobra.Command {
 			err = MuXRequiredFlags(cmd, []string{"fingerprint", "artifact-type"}, false)
 			if err != nil {
 				return err
+			}
+
+			err = ValidateSliceValues(o.redactedCommitInfo, allowedCommitRedactionValues)
+			if err != nil {
+				return fmt.Errorf("%s for --redact-commit-info", err.Error())
 			}
 
 			err = ValidateAttestationArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.ArtifactFingerprint)

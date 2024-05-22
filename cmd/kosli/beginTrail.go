@@ -12,6 +12,11 @@ import (
 
 const beginTrailShortDesc = `Begin or update a Kosli flow trail.`
 
+const beginTrailLongDesc = beginTrailShortDesc + `
+
+You can optionally associate the trail to a git commit using ^--commit^ (requires access to a git repo). And you  
+can optionally redact some of the git commit data sent to Kosli using ^--redact-commit-info^`
+
 const beginTrailExample = `
 # begin/update a Kosli flow trail:
 kosli begin trail yourTrailName \
@@ -29,6 +34,7 @@ type beginTrailOptions struct {
 	userDataFile         string
 	flow                 string
 	commitSHA            string
+	redactedCommitInfo   []string
 	srcRepoRoot          string
 	externalURLs         map[string]string
 	externalFingerprints map[string]string
@@ -48,16 +54,18 @@ func newBeginTrailCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "trail TRAIL-NAME",
 		Short:   beginTrailShortDesc,
-		Long:    beginTrailShortDesc,
+		Long:    beginTrailLongDesc,
 		Example: beginTrailExample,
-		Args:    cobra.MaximumNArgs(1),
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
-			if len(args) == 0 {
-				return fmt.Errorf("trail name must be provided as an argument")
+
+			err = ValidateSliceValues(o.redactedCommitInfo, allowedCommitRedactionValues)
+			if err != nil {
+				return fmt.Errorf("%s for --redact-commit-info", err.Error())
 			}
 
 			return nil
@@ -73,6 +81,7 @@ func newBeginTrailCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.templateFile, "template-file", "f", "", templateFileFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", trailUserDataFlag)
 	cmd.Flags().StringVarP(&o.commitSHA, "commit", "g", DefaultValueForCommit(ci, false), beginTrailCommitFlag)
+	cmd.Flags().StringSliceVar(&o.redactedCommitInfo, "redact-commit-info", []string{}, attestationRedactCommitInfoFlag)
 	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", attestationRepoRootFlag)
 	cmd.Flags().StringVarP(&o.payload.OriginURL, "origin-url", "o", DefaultValue(ci, "build-url"), attestationOriginUrlFlag)
 	cmd.Flags().StringToStringVar(&o.externalFingerprints, "external-fingerprint", map[string]string{}, externalFingerprintFlag)
@@ -103,7 +112,7 @@ func (o *beginTrailOptions) run(args []string) error {
 		if err != nil {
 			return err
 		}
-		commitInfo, err := gv.GetCommitInfoFromCommitSHA(o.commitSHA, false)
+		commitInfo, err := gv.GetCommitInfoFromCommitSHA(o.commitSHA, false, o.redactedCommitInfo)
 		if err != nil {
 			return err
 		}
