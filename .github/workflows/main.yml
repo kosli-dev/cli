@@ -59,6 +59,7 @@ jobs:
     with:
       AWS_ACCOUNT_ID: 772819027869
       AWS_REGION: eu-central-1
+      FLOW_NAME: cli
       TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
       KOSLI_ORG: kosli-public
     secrets:
@@ -80,6 +81,7 @@ jobs:
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
       platforms: linux/amd64
+      flow_name: cli
       trail_name: ${{ needs.pre-build.outputs.trail_name }}
       kosli_org: kosli-public
     secrets:

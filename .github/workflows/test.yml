@@ -9,6 +9,9 @@ on:
       AWS_REGION:
         required: true
         type: string
+      FLOW_NAME:
+        required: true
+        type: string
       TRAIL_NAME:
         required: true
         type: string
@@ -74,7 +77,7 @@ jobs:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
       run: kosli attest generic 
            --name lint 
-           --flow cli 
+           --flow ${{ inputs.FLOW_NAME }} 
            --trail ${{ inputs.TRAIL_NAME }}  
            --org ${{ inputs.KOSLI_ORG }}
            --compliant=${{ steps.lint.outcome == 'success' }} 
@@ -144,7 +147,7 @@ jobs:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
       run: kosli attest junit 
            --name test 
-           --flow cli 
+           --flow ${{ inputs.FLOW_NAME }}  
            --trail ${{ inputs.TRAIL_NAME }} 
            --org ${{ inputs.KOSLI_ORG }}
 
@@ -192,7 +195,7 @@ jobs:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
       run: kosli attest snyk 
            --name snyk-code 
-           --flow cli 
+           --flow ${{ inputs.FLOW_NAME }}  
            --trail ${{ inputs.TRAIL_NAME }} 
            --scan-results  snyk-code.json
            --org ${{ inputs.KOSLI_ORG }}

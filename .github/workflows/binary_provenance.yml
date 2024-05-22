@@ -11,6 +11,9 @@ on:
           kosli_org:
             required: true
             type: string
+          flow_name:
+            required: true
+            type: string
           trail_name:
             required: true
             type: string
@@ -94,7 +97,7 @@ jobs:
           run: 
             kosli attest artifact
                 ${{matrix.artifact.path}}
-                --flow cli
+                --flow ${{ inputs.flow_name }}
                 --trail ${{ inputs.trail_name }} 
                 --name ${{matrix.artifact.template_name}}
                 --fingerprint ${{ env.FINGERPRINT }}
@@ -106,7 +109,7 @@ jobs:
             KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
           run: 
             kosli attest generic
-              --flow cli
+              --flow ${{ inputs.flow_name }}
               --trail ${{ inputs.trail_name }} 
               --name sbom
               --fingerprint ${{ env.FINGERPRINT }}
