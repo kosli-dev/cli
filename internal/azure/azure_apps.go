@@ -126,12 +126,18 @@ func (azureClient *AzureClient) NewAppData(app *armappservice.Site, logger *logg
 
 	// get image name from "DOCKER|tookyregistry.azurecr.io/tookyregistry/tooky/sha256:cb29a6"
 	linuxFxVersion := strings.Split(*app.Properties.SiteConfig.LinuxFxVersion, "|")
-	if len(linuxFxVersion) != 2 || linuxFxVersion[0] != "DOCKER" {
-		logger.Debug("app %s is not using a Docker image, skipping from report", *app.Name)
+	notDocker := len(linuxFxVersion) != 2 || linuxFxVersion[0] != "DOCKER"
+	if notDocker {
+		logger.Debug("app %s is not using a Docker image, skipping from report: %s", *app.Name, *app.Properties.SiteConfig.LinuxFxVersion)
+		kuduZipUrl := fmt.Sprintf("https://%s.scm.azurewebsites.net/api/zip/site/wwwroot/", *app.Name)
+		logger.Debug("Kudu Zip URL: %s", kuduZipUrl)
 		return AppData{}, nil
+	} else {
+		return azureClient.fingerprintDockerService(app, logger, linuxFxVersion[1])
 	}
-	imageName := linuxFxVersion[1]
+}
 
+func (azureClient *AzureClient) fingerprintDockerService(app *armappservice.Site, logger *logger.Logger, imageName string) (AppData, error) {
 	var fingerprint string
 	var startedAt int64
 	var fingerprintSource string
