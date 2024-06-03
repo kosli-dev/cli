@@ -1,12 +1,17 @@
 package azure
 
 import (
+	"archive/zip"
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
+	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -14,8 +19,9 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/containers/azcontainerregistry"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
-	"github.com/aws/smithy-go/time"
+	smithyTime "github.com/aws/smithy-go/time"
 	"github.com/kosli-dev/cli/internal/logger"
+	"github.com/kosli-dev/cli/internal/server"
 )
 
 type AzureStaticCredentials struct {
@@ -126,12 +132,200 @@ func (azureClient *AzureClient) NewAppData(app *armappservice.Site, logger *logg
 
 	// get image name from "DOCKER|tookyregistry.azurecr.io/tookyregistry/tooky/sha256:cb29a6"
 	linuxFxVersion := strings.Split(*app.Properties.SiteConfig.LinuxFxVersion, "|")
-	if len(linuxFxVersion) != 2 || linuxFxVersion[0] != "DOCKER" {
-		logger.Debug("app %s is not using a Docker image, skipping from report", *app.Name)
-		return AppData{}, nil
+	notDocker := len(linuxFxVersion) != 2 || linuxFxVersion[0] != "DOCKER"
+	if notDocker {
+		return azureClient.fingerprintZipService(app, logger)
+	} else {
+		return azureClient.fingerprintDockerService(app, logger, linuxFxVersion[1])
 	}
-	imageName := linuxFxVersion[1]
+}
 
+// getBearerToken gets a bearer token
+func (azureClient *AzureClient) getBearerToken() (string, error) {
+	oauthURL := fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/token", azureClient.Credentials.TenantId)
+
+	data := url.Values{}
+	data.Set("grant_type", "client_credentials")
+	data.Set("client_id", azureClient.Credentials.ClientId)
+	data.Set("client_secret", azureClient.Credentials.ClientSecret)
+	data.Set("resource", "https://management.azure.com/")
+
+	req, err := http.NewRequest("POST", oauthURL, bytes.NewBufferString(data.Encode()))
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	var oauthResp map[string]interface{}
+	err = json.Unmarshal(body, &oauthResp)
+	if err != nil {
+		return "", err
+	}
+	accessToken := oauthResp["access_token"].(string)
+	return accessToken, nil
+}
+
+// downloadAppPackage downloads the zip package of a non-docker web app
+func downloadAppPackage(appName, bearerToken, destination string) error {
+	kuduZipURL := fmt.Sprintf("https://%s.scm.azurewebsites.net/api/zip/site/wwwroot/", appName)
+	req, err := http.NewRequest("GET", kuduZipURL, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+bearerToken)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to download package for app [%s]: %s", appName, resp.Status)
+	}
+
+	out, err := os.Create(destination)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (azureClient *AzureClient) fingerprintZipService(app *armappservice.Site, logger *logger.Logger) (AppData, error) {
+	// get bearer token
+	token, err := azureClient.getBearerToken()
+	if err != nil {
+		return AppData{}, err
+	}
+	// download package
+	tmpDir, err := os.MkdirTemp("", "*")
+	if err != nil {
+		return AppData{}, err
+	}
+	defer os.RemoveAll(tmpDir)
+
+	packagePath := filepath.Join(tmpDir, *app.Name+".zip")
+	err = downloadAppPackage(*app.Name, token, packagePath)
+	if err != nil {
+		return AppData{}, err
+	}
+
+	// unzip the downloaded package
+	destDir := filepath.Join(tmpDir, "extracted")
+	err = unzip(packagePath, destDir)
+	if err != nil {
+		return AppData{}, fmt.Errorf("failed to unzip downloaded package for app [%s]: %v", *app.Name, err)
+	}
+
+	//  fingerprint the downloaded and unzipped package
+	ps := &server.PathsSpec{
+		Version: 1,
+		Artifacts: map[string]server.ArtifactPathSpec{
+			*app.Name: {
+				Path: destDir,
+			},
+		},
+	}
+
+	artifacts, err := server.CreatePathsArtifactsData(ps, logger)
+	if err != nil {
+		return AppData{}, err
+	}
+
+	// webAppsClient := azureClient.AppServiceFactory.NewWebAppsClient()
+	// deploymentsPager := webAppsClient.NewListDeploymentsPager(resourceGroupName, *app.Name, &armappservice.WebAppsClientListDeploymentsOptions{})
+	// var deploymentsInfo []*armappservice.Deployment
+	// ctx := context.Background()
+	// for deploymentsPager.More() {
+	// 	response, err := deploymentsPager.NextPage(ctx)
+	// 	if err != nil {
+	// 		return AppData{}, err
+	// 	}
+	// 	deploymentsInfo = append(deploymentsInfo, response.Value...)
+	// }
+	// var startedAt int64
+	// var deploymentTime *time.Time
+	// for _, deploymentInfo := range deploymentsInfo {
+	// 	if *deploymentInfo.Properties.Active {
+	// 		deploymentTime = deploymentInfo.Properties.StartTime
+	// 	}
+	// }
+	// if deploymentTime != nil {
+	// 	startedAt = deploymentTime.Unix()
+	// }
+	return AppData{*app.Name, *app.Kind, "kosli-cli", artifacts[0].Digests, 0}, nil
+}
+
+// unzip extracts a zip archive to a specified destination directory.
+func unzip(zipFile, destDir string) error {
+	r, err := zip.OpenReader(zipFile)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	for _, f := range r.File {
+		filePath := filepath.Join(destDir, f.Name)
+
+		if f.FileInfo().IsDir() {
+			// Create directories
+			err := os.MkdirAll(filePath, os.ModePerm)
+			if err != nil {
+				return err
+			}
+			continue
+		}
+
+		// Ensure the directory for the file exists
+		if err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm); err != nil {
+			return err
+		}
+
+		// Open the destination file
+		destFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+		if err != nil {
+			return err
+		}
+
+		// Open the source file within the ZIP archive
+		zipFile, err := f.Open()
+		if err != nil {
+			return err
+		}
+
+		// Copy the file contents
+		_, err = io.Copy(destFile, zipFile)
+
+		// Close the open files
+		destFile.Close()
+		zipFile.Close()
+
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (azureClient *AzureClient) fingerprintDockerService(app *armappservice.Site, logger *logger.Logger, imageName string) (AppData, error) {
 	var fingerprint string
 	var startedAt int64
 	var fingerprintSource string
@@ -343,12 +537,12 @@ func exractImageFingerprintAndStartedTimestampFromLogs(logs []byte, appName stri
 
 	if digestLoggedAt != "" && startedAtLoggedAt != "" {
 		digestLoggedAt = strings.TrimSpace(digestLoggedAt)
-		digestLogTime, err := time.ParseDateTime(digestLoggedAt)
+		digestLogTime, err := smithyTime.ParseDateTime(digestLoggedAt)
 		if err != nil {
 			return "", 0, err
 		}
 		startedAtLoggedAt = strings.TrimSpace(startedAtLoggedAt)
-		startedAtLogTime, err := time.ParseDateTime(startedAtLoggedAt)
+		startedAtLogTime, err := smithyTime.ParseDateTime(startedAtLoggedAt)
 		if err != nil {
 			return "", 0, err
 		}
