@@ -7,7 +7,6 @@ import (
 )
 
 type SonarConfig struct {
-	OrgKey     string
 	ProjectKey string
 	APIToken   string
 }
@@ -29,9 +28,8 @@ type Measures struct {
 	Value  string `json:"value"`
 }
 
-func NewSonarConfig(orgKey, projectKey, apiToken string) *SonarConfig {
+func NewSonarConfig(projectKey, apiToken string) *SonarConfig {
 	return &SonarConfig{
-		OrgKey:     orgKey,
 		ProjectKey: projectKey,
 		APIToken:   apiToken,
 	}
@@ -42,10 +40,11 @@ func (sc *SonarConfig) GetSonarResults() (*SonarResults, error) {
 	var url string
 	var token string
 
-	if sc.OrgKey != "" && sc.ProjectKey != "" && sc.APIToken != "" {
-		url = fmt.Sprintf("https://sonarcloud.io/api/measures/component?metricKeys=alert_status%%2Cquality_gate_details%%2Cbugs%%2Csecurity_issues%%2Ccode_smells%%2Ccomplexity%%2Cmaintainability_issues%%2Creliability_issues%%2Ccoverage&component=%s_%s", sc.OrgKey, sc.ProjectKey)
+	if sc.ProjectKey != "" && sc.APIToken != "" {
+		url = fmt.Sprintf("https://sonarcloud.io/api/measures/component?metricKeys=alert_status%%2Cquality_gate_details%%2Cbugs%%2Csecurity_issues%%2Ccode_smells%%2Ccomplexity%%2Cmaintainability_issues%%2Creliability_issues%%2Ccoverage&component=%s", sc.ProjectKey)
+		token = sc.APIToken
 	} else {
-		return nil, fmt.Errorf("OrgKey, Project Key and API token must be given to retrieve data from SonarCloud/SonarQube")
+		return nil, fmt.Errorf("Project Key and API token must be given to retrieve data from SonarCloud/SonarQube")
 	}
 
 	//response, err := httpClient.Get(url)
@@ -55,7 +54,11 @@ func (sc *SonarConfig) GetSonarResults() (*SonarResults, error) {
 	response, err := httpClient.Do(request)
 	if err != nil {
 		return nil, err
-	}
+	} /*else {
+		sonarResult := &SonarResults{}
+		json.NewDecoder(response.Body).Decode(sonarResult)
+		return nil, fmt.Errorf(sonarResult.Component.Measures[8].Metric)
+	}*/
 	sonarResult := &SonarResults{}
 	json.NewDecoder(response.Body).Decode(sonarResult)
 

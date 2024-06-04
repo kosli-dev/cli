@@ -19,7 +19,6 @@ type SonarAttestationPayload struct {
 // It is also possible to provide a branch or PR number, but not necessary - how do we handle this here?
 type attestSonarOptions struct {
 	*CommonAttestationOptions
-	orgKey     string
 	projectKey string
 	apiToken   string
 	payload    SonarAttestationPayload
@@ -62,7 +61,7 @@ func newAttestSonarCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:     "sonar",
+		Use:     "sonar [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Short:   attestSonarShortDesc,
 		Long:    attestSonarLongDesc,
 		Example: attestSonarExample,
@@ -93,11 +92,11 @@ func newAttestSonarCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	addAttestationFlags(cmd, o.CommonAttestationOptions, o.payload.CommonAttestationPayload, ci)
-	cmd.Flags().StringVar(&o.orgKey, "sonar-org-key", "", "Sonar organization key")
+	//cmd.Flags().StringVar(&o.orgKey, "sonar-org-key", "", "Sonar organization key")
 	cmd.Flags().StringVar(&o.projectKey, "sonar-project-key", "", "Sonar project key")
 	cmd.Flags().StringVar(&o.apiToken, "sonar-api-token", "", "Sonar API token")
 
-	err := RequireFlags(cmd, []string{"flow", "trail", "name", "sonar-org-key", "sonar-project-key", "sonar-api-token"})
+	err := RequireFlags(cmd, []string{"flow", "trail", "name", "sonar-project-key"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
@@ -113,7 +112,7 @@ func (o *attestSonarOptions) run(args []string) error {
 		return err
 	}
 
-	sc := sonar.NewSonarConfig(o.orgKey, o.projectKey, o.apiToken)
+	sc := sonar.NewSonarConfig(o.projectKey, o.apiToken)
 
 	o.payload.SonarResults, err = sc.GetSonarResults()
 	if err != nil {
@@ -140,6 +139,7 @@ func (o *attestSonarOptions) run(args []string) error {
 	if err == nil && !global.DryRun {
 		logger.Info("sonar attestation '%s' is reported to trail: %s", o.payload.AttestationName, o.trailName)
 	}
+
 	return wrapAttestationError(err)
 
 }
