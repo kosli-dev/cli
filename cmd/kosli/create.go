@@ -19,6 +19,7 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 	cmd.AddCommand(
 		newCreateEnvironmentCmd(out),
 		newCreateFlowCmd(out),
+		newCreatePolicyCmd(out),
 	)
 	return cmd
 }
