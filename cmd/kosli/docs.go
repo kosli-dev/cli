@@ -165,10 +165,11 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 	if liveCliExists {
 		buf.WriteString("## Live Example\n\n")
 		buf.WriteString("{{< raw-html >}}")
+		buf.WriteString(fmt.Sprintf("To view a live example of '%s' you can run the commands below (for the <a href=\"https://app.kosli.com/cyber-dojo/environments/aws-prod/snapshots/\">cyber-dojo</a> demo organization).<br/><a href=\"%s\">Run the commands below and view the output.</a>", name, liveCliURL))
 		buf.WriteString("<pre>")
 		buf.WriteString("export KOSLI_ORG=cyber-dojo\n")
 		buf.WriteString("export KOSLI_API_TOKEN=Pj_XT2deaVA6V1qrTlthuaWsmjVt4eaHQwqnwqjRO3A  # read-only\n")
-		buf.WriteString(fmt.Sprintf("<a href=\"%s\">%s</a>", liveCliURL, liveCliFullCommand))
+		buf.WriteString(liveCliFullCommand)
 		buf.WriteString("</pre>")
 		buf.WriteString("{{< / raw-html >}}\n\n")
 	}
