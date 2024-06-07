@@ -15,12 +15,14 @@ type SonarResults struct {
 	Component Component `json:"component"`
 }
 
+/* SonarCloud JSON has ID but no description; SonarQube JSON has description but no ID */
 type Component struct {
-	Id        string     `json:"id"`
-	Key       string     `json:"key"`
-	Name      string     `json:"name"`
-	Qualifier string     `json:"qualifier"`
-	Measures  []Measures `json:"measures"`
+	Id          string     `json:"id,omitempty"`
+	Key         string     `json:"key"`
+	Name        string     `json:"name"`
+	Description string     `json:"description,omitempty"`
+	Qualifier   string     `json:"qualifier"`
+	Measures    []Measures `json:"measures"`
 }
 
 type Measures struct {
@@ -41,26 +43,35 @@ func (sc *SonarConfig) GetSonarResults() (*SonarResults, error) {
 	var token string
 
 	if sc.ProjectKey != "" && sc.APIToken != "" {
+		/* SonarQube works differently to SonarCloud - with Qube, each company has their own specific
+		base-URL (i.e. instead of sonarcloud.io as below, it will be something specific to their SonarQube
+			instance), which they will need to give us.
+			We can have two different CLI commands to deal with this - could we make it so that both commands
+			utilise the same API call to save repeating a tonne of code?
+			Or we could handle it using flags: if they're using SonarQube they give the URL, if SonarCloud they don't.
+				But the URL would need to be a required flag for SQ.
+		*/
 		url = fmt.Sprintf("https://sonarcloud.io/api/measures/component?metricKeys=alert_status%%2Cquality_gate_details%%2Cbugs%%2Csecurity_issues%%2Ccode_smells%%2Ccomplexity%%2Cmaintainability_issues%%2Creliability_issues%%2Ccoverage&component=%s", sc.ProjectKey)
-		token = sc.APIToken
+		token = fmt.Sprintf("Bearer %s", sc.APIToken)
 	} else {
 		return nil, fmt.Errorf("Project Key and API token must be given to retrieve data from SonarCloud/SonarQube")
 	}
 
-	//response, err := httpClient.Get(url)
 	request, err := http.NewRequest("GET", url, nil)
 	request.Header.Add("Authorization", token)
 
 	response, err := httpClient.Do(request)
 	if err != nil {
 		return nil, err
-	} /*else {
-		sonarResult := &SonarResults{}
-		json.NewDecoder(response.Body).Decode(sonarResult)
-		return nil, fmt.Errorf(sonarResult.Component.Measures[8].Metric)
-	}*/
+	}
+
 	sonarResult := &SonarResults{}
 	json.NewDecoder(response.Body).Decode(sonarResult)
+
+	//With incorrect project key, API token or base URL(for SQ), we receive no data
+	if sonarResult.Component.Key == "" {
+		return nil, fmt.Errorf("No data retrieved - check your project key and API token are correct")
+	}
 
 	return sonarResult, nil
 }

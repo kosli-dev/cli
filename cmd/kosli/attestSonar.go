@@ -29,14 +29,24 @@ const attestSonarShortDesc = `Report a sonarcloud or sonarqube attestation to an
 const attestSonarLongDesc = attestSonarShortDesc + attestationBindingDesc
 
 const attestSonarExample = `
-# report a sonar attestation about a trail:
+# report a sonarcloud attestation about a trail:
 kosli attest sonar \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--sonar-org-key yourSonarOrgKey \
 	--sonar-project-key yourSonarProjectKey \
 	--sonar-api-token yourSonarAPIToken \
+	--api-token yourAPIToken \
+	--org yourOrgName \
+
+# report a sonarqube attestation about a trail:
+kosli attest sonar \
+	--name yourAttestationName \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--sonar-project-key yourSonarProjectKey \
+	--sonar-api-token yourSonarAPIToken \
+	--sonar-server-url yourSonarQubeServerURL \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 
@@ -45,6 +55,8 @@ kosli attest sonar \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
+	--sonar-project-key yourSonarProjectKey \
+	--sonar-api-token yourSonarAPIToken \
 	--attachment yourAttachmentPath \
 	--api-token yourAPIToken \
 	--org yourOrgName
@@ -92,11 +104,10 @@ func newAttestSonarCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	addAttestationFlags(cmd, o.CommonAttestationOptions, o.payload.CommonAttestationPayload, ci)
-	//cmd.Flags().StringVar(&o.orgKey, "sonar-org-key", "", "Sonar organization key")
-	cmd.Flags().StringVar(&o.projectKey, "sonar-project-key", "", "Sonar project key")
-	cmd.Flags().StringVar(&o.apiToken, "sonar-api-token", "", "Sonar API token")
+	cmd.Flags().StringVar(&o.projectKey, "sonar-project-key", "", "SonarCloud/Qube project key")
+	cmd.Flags().StringVar(&o.apiToken, "sonar-api-token", "", "SonarCloud/Qube API token")
 
-	err := RequireFlags(cmd, []string{"flow", "trail", "name", "sonar-project-key"})
+	err := RequireFlags(cmd, []string{"flow", "trail", "name", "sonar-project-key", "sonar-api-token"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}

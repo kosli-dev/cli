@@ -55,7 +55,7 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 		{
 			wantError: true,
 			name:      "fails when --fingerprint is not valid",
-			cmd:       fmt.Sprintf("attest sonar --name foo-s --fingerprint xxxx --commit HEAD --origin-url example.com %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest sonar --name foo-s --fingerprint xxxx --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ %s", suite.defaultKosliArguments),
 			golden:    "Error: xxxx is not a valid SHA256 fingerprint. It should match the pattern ^([a-f0-9]{64})$\nUsage: kosli attest sonar [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
@@ -84,16 +84,17 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 			cmd:    fmt.Sprintf("attest sonar --name bar --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ %s", suite.defaultKosliArguments),
 			golden: "sonar attestation 'bar' is reported to trail: test-123\n",
 		},
-		/*{
-			name:   "can attest snyk against a trail when name is not found in the trail template",
-			cmd:    fmt.Sprintf("attest snyk --name additional --commit HEAD --origin-url example.com --scan-results testdata/snyk_sarif.json %s", suite.defaultKosliArguments),
-			golden: "snyk attestation 'additional' is reported to trail: test-123\n",
+		{
+			name:   "can attest sonar against a trail when name is not found in the trail template",
+			cmd:    fmt.Sprintf("attest sonar --name additional --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ %s", suite.defaultKosliArguments),
+			golden: "sonar attestation 'additional' is reported to trail: test-123\n",
 		},
 		{
-			name:   "can attest snyk against an artifact it is created using dot syntax in --name",
-			cmd:    fmt.Sprintf("attest snyk --name cli.foo --commit HEAD --origin-url example.com --scan-results testdata/snyk_sarif.json %s", suite.defaultKosliArguments),
-			golden: "snyk attestation 'foo' is reported to trail: test-123\n",
-		},*/
+			name:   "can attest sonar against an artifact it is created using dot syntax in --name",
+			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ %s", suite.defaultKosliArguments),
+			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
+		},
+		//Test for attesting SonarCloud and SonarQube?
 	}
 
 	runTestCmd(suite.T(), tests)
