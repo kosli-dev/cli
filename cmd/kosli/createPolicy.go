@@ -63,7 +63,7 @@ func newCreatePolicyCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVar(&o.payload.Description, "description", "", policyDescriptionFlag)
 	cmd.Flags().StringVar(&o.payload.Comment, "comment", "", policyCommentFlag)
-	cmd.Flags().StringVar(&o.payload.Type, "type", "environment", policyTypeFlag)
+	cmd.Flags().StringVar(&o.payload.Type, "type", "env", policyTypeFlag)
 
 	addDryRunFlag(cmd)
 

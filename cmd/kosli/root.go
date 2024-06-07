@@ -213,7 +213,7 @@ The service principal needs to have the following permissions:
 	snapshotPathArtifactNameFlag         = "The reported name of the artifact."
 	policyDescriptionFlag                = "[optional] policy description."
 	policyCommentFlag                    = "[optional] comment about the change made in a policy file when updating a policy."
-	policyTypeFlag                       = "[defaulted] the type of policy. One of: [environment]"
+	policyTypeFlag                       = "[defaulted] the type of policy. One of: [env]"
 	attachPolicyEnvFlag                  = "the list of environment names to attach the policy to"
 	detachPolicyEnvFlag                  = "the list of environment names to detach the policy from"
 )
