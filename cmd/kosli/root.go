@@ -461,6 +461,7 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 						logger.Warning("using api token from [%s] as plain text. It is recommended to encrypt your api token by setting it with: kosli config --api-token <token>", global.ConfigFile)
 					} else {
 						val = string(decryptedBytes)
+						logger.Debug("using api token from [%s].", global.ConfigFile)
 					}
 				}
 			}
