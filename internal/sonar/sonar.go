@@ -15,14 +15,12 @@ type SonarResults struct {
 	Component Component `json:"component"`
 }
 
-/* SonarCloud JSON has ID but no description; SonarQube JSON has description but no ID */
 type Component struct {
-	Id          string     `json:"id,omitempty"`
-	Key         string     `json:"key"`
-	Name        string     `json:"name"`
-	Description string     `json:"description,omitempty"`
-	Qualifier   string     `json:"qualifier"`
-	Measures    []Measures `json:"measures"`
+	Id        string     `json:"id,omitempty"`
+	Key       string     `json:"key"`
+	Name      string     `json:"name"`
+	Qualifier string     `json:"qualifier"`
+	Measures  []Measures `json:"measures"`
 }
 
 type Measures struct {
@@ -59,18 +57,24 @@ func (sc *SonarConfig) GetSonarResults() (*SonarResults, error) {
 
 	request, err := http.NewRequest("GET", url, nil)
 	request.Header.Add("Authorization", token)
+	if err != nil {
+		return nil, err
+	}
 
 	response, err := httpClient.Do(request)
 	if err != nil {
 		return nil, err
 	}
 
-	sonarResult := &SonarResults{}
-	json.NewDecoder(response.Body).Decode(sonarResult)
+	sonarResult := &SonarResults{Component: Component{}}
+	err = json.NewDecoder(response.Body).Decode(sonarResult)
+	if err != nil {
+		return nil, err
+	}
 
-	//With incorrect project key, API token or base URL(for SQ), we receive no data
+	//With incorrect project key or API token we receive no data
 	if sonarResult.Component.Key == "" {
-		return nil, fmt.Errorf("No data retrieved - check your project key and API token are correct")
+		return nil, fmt.Errorf("No data retrieved from Sonarcloud - check your project key and API token are correct")
 	}
 
 	return sonarResult, nil

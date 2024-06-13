@@ -77,7 +77,7 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 		{
 			name:   "can attest sonar against an artifact using --fingerprint",
 			cmd:    fmt.Sprintf("attest sonar --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ  %s", suite.defaultKosliArguments),
-			golden: "snyk attestation 'foo' is reported to trail: test-123\n",
+			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			name:   "can attest sonar against a trail",
@@ -94,7 +94,12 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ %s", suite.defaultKosliArguments),
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
-		//Test for attesting SonarCloud and SonarQube?
+		{
+			wantError: true,
+			name:      "trying to fetch data from SonarCloud for a non-existent project gives error",
+			cmd:       fmt.Sprintf("attest sonar --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com --sonar-project-key cyberdojo_differ  %s", suite.defaultKosliArguments),
+			golden:    "Error: No data retrieved from Sonarcloud/Sonarqube - check your project key and API token are correct\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)
