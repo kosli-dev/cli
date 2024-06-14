@@ -77,12 +77,12 @@ func (sc *SonarConfig) GetSonarResults() (*SonarResults, error) {
 	sonarResult := &SonarResults{Component: Component{}}
 	err = json.NewDecoder(response.Body).Decode(sonarResult)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("No data retrieved from Sonarcloud - check your API token is correct")
 	}
 
 	//With incorrect project key or API token we receive no data
 	if sonarResult.Component.Key == "" {
-		return nil, fmt.Errorf("No data retrieved from Sonarcloud - check your project key and API token are correct")
+		return nil, fmt.Errorf("No data retrieved from Sonarcloud - check your project key and branch or pull request id are correct")
 	}
 
 	return sonarResult, nil
