@@ -19,9 +19,11 @@ type SonarAttestationPayload struct {
 // It is also possible to provide a branch or PR number, but not necessary - how do we handle this here?
 type attestSonarOptions struct {
 	*CommonAttestationOptions
-	projectKey string
-	apiToken   string
-	payload    SonarAttestationPayload
+	projectKey    string
+	apiToken      string
+	branchName    string
+	pullRequestID string
+	payload       SonarAttestationPayload
 }
 
 const attestSonarShortDesc = `Report a sonarcloud or sonarqube attestation to an artifact or a trail in a Kosli flow.  `
@@ -39,18 +41,29 @@ kosli attest sonar \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 
-# report a sonarqube attestation about a trail:
+# report a sonarcloud attestation for a specific branch about a trail:
 kosli attest sonar \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--sonar-project-key yourSonarProjectKey \
 	--sonar-api-token yourSonarAPIToken \
-	--sonar-server-url yourSonarQubeServerURL \
+	--branch-name yourBranchName \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 
-# report a sonar attestation about a trail with an attachment:
+# report a sonarcloud attestation for a pull-request about a trail:
+kosli attest sonar \
+	--name yourAttestationName \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--sonar-project-key yourSonarProjectKey \
+	--sonar-api-token yourSonarAPIToken \
+	--pull-request-id yourPullRequestID \
+	--api-token yourAPIToken \
+	--org yourOrgName \
+
+# report a sonarcloud attestation about a trail with an attachment:
 kosli attest sonar \
 	--name yourAttestationName \
 	--flow yourFlowName \
@@ -104,8 +117,10 @@ func newAttestSonarCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	addAttestationFlags(cmd, o.CommonAttestationOptions, o.payload.CommonAttestationPayload, ci)
-	cmd.Flags().StringVar(&o.projectKey, "sonar-project-key", "", "SonarCloud/Qube project key")
-	cmd.Flags().StringVar(&o.apiToken, "sonar-api-token", "", "SonarCloud/Qube API token")
+	cmd.Flags().StringVar(&o.projectKey, "sonar-project-key", "", "SonarCloud project key")
+	cmd.Flags().StringVar(&o.apiToken, "sonar-api-token", "", "SonarCloud API token")
+	cmd.Flags().StringVar(&o.apiToken, "branch-name", "", "CI Branch Name")
+	cmd.Flags().StringVar(&o.apiToken, "pull-request-id", "", "Pull Request ID")
 
 	err := RequireFlags(cmd, []string{"flow", "trail", "name", "sonar-project-key", "sonar-api-token"})
 	if err != nil {
@@ -123,7 +138,7 @@ func (o *attestSonarOptions) run(args []string) error {
 		return err
 	}
 
-	sc := sonar.NewSonarConfig(o.projectKey, o.apiToken)
+	sc := sonar.NewSonarConfig(o.projectKey, o.apiToken, o.branchName, o.pullRequestID)
 
 	o.payload.SonarResults, err = sc.GetSonarResults()
 	if err != nil {

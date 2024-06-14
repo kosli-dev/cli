@@ -65,6 +65,12 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 			golden:    "Error: Artifact with fingerprint '1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'attest-sonar' belonging to organization 'docs-cmd-test-user'\n",
 		},
 		{
+			wantError: true,
+			name:      "fails when both --branch-name and --pull-request-id",
+			cmd:       fmt.Sprintf("attest sonar testdata/file1 --fingerprint xxxx --artifact-type file --name bar --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ --branch-name organise-sonarcloud-code --pull-request-id 167 %s", suite.defaultKosliArguments),
+			golden:    "Error: only one of --fingerprint, --artifact-type is allowed\n",
+		},
+		{
 			name:   "can attest sonar against an artifact using artifact name and --artifact-type",
 			cmd:    fmt.Sprintf("attest sonar testdata/file1 --artifact-type file --name foo --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ  %s", suite.defaultKosliArguments),
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
@@ -98,7 +104,7 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 			wantError: true,
 			name:      "trying to fetch data from SonarCloud for a non-existent project gives error",
 			cmd:       fmt.Sprintf("attest sonar --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com --sonar-project-key cyberdojo_differ  %s", suite.defaultKosliArguments),
-			golden:    "Error: No data retrieved from Sonarcloud/Sonarqube - check your project key and API token are correct\n",
+			golden:    "Error: No data retrieved from Sonarcloud - check your project key and API token are correct\n",
 		},
 	}
 
