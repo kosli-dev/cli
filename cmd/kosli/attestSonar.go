@@ -16,7 +16,6 @@ type SonarAttestationPayload struct {
 	SonarResults *sonar.SonarResults `json:"sonar_results"`
 }
 
-// It is also possible to provide a branch or PR number, but not necessary - how do we handle this here?
 type attestSonarOptions struct {
 	*CommonAttestationOptions
 	projectKey    string
@@ -119,8 +118,8 @@ func newAttestSonarCmd(out io.Writer) *cobra.Command {
 	addAttestationFlags(cmd, o.CommonAttestationOptions, o.payload.CommonAttestationPayload, ci)
 	cmd.Flags().StringVar(&o.projectKey, "sonar-project-key", "", "SonarCloud project key")
 	cmd.Flags().StringVar(&o.apiToken, "sonar-api-token", "", "SonarCloud API token")
-	cmd.Flags().StringVar(&o.apiToken, "branch-name", "", "CI Branch Name")
-	cmd.Flags().StringVar(&o.apiToken, "pull-request-id", "", "Pull Request ID")
+	cmd.Flags().StringVar(&o.branchName, "branch-name", "", "CI Branch Name")
+	cmd.Flags().StringVar(&o.pullRequestID, "pull-request-id", "", "Pull Request ID")
 
 	err := RequireFlags(cmd, []string{"flow", "trail", "name", "sonar-project-key", "sonar-api-token"})
 	if err != nil {
