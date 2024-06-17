@@ -51,9 +51,9 @@ kosli list snapshots ENV_NAME [flags]
 
 ## Live Example
 
-{{< raw-html >}}To view a live example of 'kosli list snapshots' you can run the commands below (for the <a href="https://app.kosli.com/cyber-dojo/environments/aws-prod/snapshots/">cyber-dojo</a> demo organization).<br/><a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli+list+snapshots+aws-prod+--output=json">Run the commands below and view the output.</a><pre>export KOSLI_ORG=cyber-dojo
+{{< raw-html >}}<pre>export KOSLI_ORG=cyber-dojo
 export KOSLI_API_TOKEN=Pj_XT2deaVA6V1qrTlthuaWsmjVt4eaHQwqnwqjRO3A  # read-only
-kosli list snapshots aws-prod --output=json</pre>{{< / raw-html >}}
+<a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli+list+snapshots+aws-prod+--output=json">kosli list snapshots aws-prod --output=json</a></pre>{{< / raw-html >}}
 
 ## Examples Use Cases
 

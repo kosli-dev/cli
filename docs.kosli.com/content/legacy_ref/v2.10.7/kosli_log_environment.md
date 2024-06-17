@@ -1,16 +1,16 @@
 ---
-title: "kosli list snapshots"
+title: "kosli log environment"
 beta: false
 deprecated: false
 ---
 
-# kosli list snapshots
+# kosli log environment
 
 ## Synopsis
 
-List environment snapshots.
+List environment events.
 The results are paginated and ordered from latest to oldest.
-By default, the page limit is 15 snapshots per page.
+By default, the page limit is 15 events per page.
 
 You can optionally specify an INTERVAL between two snapshot expressions with [expression]..[expression]. 
 
@@ -23,13 +23,13 @@ Either expression can be omitted to default to NOW.
 
 
 ```shell
-kosli list snapshots ENV_NAME [flags]
+kosli log environment ENV_NAME [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|    -h, --help  |  help for snapshots  |
+|    -h, --help  |  help for environment  |
 |    -i, --interval string  |  [optional] Expression to define specified snapshots range.  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 |        --page int  |  [defaulted] The page number of a response. (default 1)  |
@@ -51,35 +51,35 @@ kosli list snapshots ENV_NAME [flags]
 
 ## Live Example
 
-{{< raw-html >}}To view a live example of 'kosli list snapshots' you can run the commands below (for the <a href="https://app.kosli.com/cyber-dojo/environments/aws-prod/snapshots/">cyber-dojo</a> demo organization).<br/><a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli+list+snapshots+aws-prod+--output=json">Run the commands below and view the output.</a><pre>export KOSLI_ORG=cyber-dojo
+{{< raw-html >}}<pre>export KOSLI_ORG=cyber-dojo
 export KOSLI_API_TOKEN=Pj_XT2deaVA6V1qrTlthuaWsmjVt4eaHQwqnwqjRO3A  # read-only
-kosli list snapshots aws-prod --output=json</pre>{{< / raw-html >}}
+<a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli+log+environment+aws-prod+--output=json">kosli log environment aws-prod --output=json</a></pre>{{< / raw-html >}}
 
 ## Examples Use Cases
 
-**list the last 15 snapshots for an environment**
+**list the last 15 events for an environment**
 
 ```shell
-kosli list snapshots yourEnvironmentName \
+kosli log environment yourEnvironmentName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 ```
 
-**list the last 30 snapshots for an environment**
+**list the last 30 events for an environment**
 
 ```shell
-kosli list snapshots yourEnvironmentName \
+kosli log environment yourEnvironmentName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 ```
 
-**list the last 30 snapshots for an environment (in JSON)**
+**list the last 30 events for an environment (in JSON)**
 
 ```shell
-kosli list snapshots yourEnvironmentName \
+kosli log environment yourEnvironmentName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--org yourOrgName \

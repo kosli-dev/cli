@@ -1,23 +1,24 @@
 ---
-title: "kosli list environments"
+title: "kosli get trail"
 beta: false
 deprecated: false
 ---
 
-# kosli list environments
+# kosli get trail
 
 ## Synopsis
 
-List environments for an org.
+Get the metadata of a specific trail.
 
 ```shell
-kosli list environments [flags]
+kosli get trail TRAIL-NAME [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|    -h, --help  |  help for environments  |
+|    -f, --flow string  |  The Kosli flow name.  |
+|    -h, --help  |  help for trail  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 
 
@@ -35,7 +36,7 @@ kosli list environments [flags]
 
 ## Live Example
 
-{{< raw-html >}}To view a live example of 'kosli list environments' you can run the commands below (for the <a href="https://app.kosli.com/cyber-dojo/environments/aws-prod/snapshots/">cyber-dojo</a> demo organization).<br/><a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli+list+environments+--output=json">Run the commands below and view the output.</a><pre>export KOSLI_ORG=cyber-dojo
+{{< raw-html >}}<pre>export KOSLI_ORG=cyber-dojo
 export KOSLI_API_TOKEN=Pj_XT2deaVA6V1qrTlthuaWsmjVt4eaHQwqnwqjRO3A  # read-only
-kosli list environments --output=json</pre>{{< / raw-html >}}
+<a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli+get+trail+dashboard-ci+1159a6f1193150681b8484545150334e89de6c1c+--output=json">kosli get trail dashboard-ci 1159a6f1193150681b8484545150334e89de6c1c --output=json</a></pre>{{< / raw-html >}}
 

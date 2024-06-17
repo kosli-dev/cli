@@ -1,15 +1,15 @@
 ---
-title: "kosli diff snapshots"
+title: "kosli get snapshot"
 beta: false
 deprecated: false
 ---
 
-# kosli diff snapshots
+# kosli get snapshot
 
 ## Synopsis
 
-Diff environment snapshots.  
-Specify SNAPPISH_1 and SNAPPISH_2 by:
+Get a specified environment snapshot.  
+ENVIRONMENT-NAME-OR-EXPRESSION can be specified as follows:
 - environmentName
     - the latest snapshot for environmentName, at the time of the request
     - e.g., **prod**
@@ -28,15 +28,14 @@ Specify SNAPPISH_1 and SNAPPISH_2 by:
 
 
 ```shell
-kosli diff snapshots SNAPPISH_1 SNAPPISH_2 [flags]
+kosli get snapshot ENVIRONMENT-NAME-OR-EXPRESSION [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|    -h, --help  |  help for snapshots  |
+|    -h, --help  |  help for snapshot  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
-|    -u, --show-unchanged  |  [defaulted] Show the unchanged artifacts present in both snapshots within the diff output.  |
 
 
 ## Flags inherited from parent commands
@@ -53,45 +52,53 @@ kosli diff snapshots SNAPPISH_1 SNAPPISH_2 [flags]
 
 ## Live Example
 
-{{< raw-html >}}To view a live example of 'kosli diff snapshots' you can run the commands below (for the <a href="https://app.kosli.com/cyber-dojo/environments/aws-prod/snapshots/">cyber-dojo</a> demo organization).<br/><a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli+diff+snapshots+aws-beta+aws-prod+--output=json">Run the commands below and view the output.</a><pre>export KOSLI_ORG=cyber-dojo
+{{< raw-html >}}<pre>export KOSLI_ORG=cyber-dojo
 export KOSLI_API_TOKEN=Pj_XT2deaVA6V1qrTlthuaWsmjVt4eaHQwqnwqjRO3A  # read-only
-kosli diff snapshots aws-beta aws-prod --output=json</pre>{{< / raw-html >}}
+<a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli+get+snapshot+aws-prod+--output=json">kosli get snapshot aws-prod --output=json</a></pre>{{< / raw-html >}}
 
 ## Examples Use Cases
 
-**compare the third latest snapshot in an environment to the latest**
+**get the latest snapshot of an environment**
 
 ```shell
-kosli diff snapshots envName~3 envName \
+kosli get snapshot yourEnvironmentName
 	--api-token yourAPIToken \
-	--org orgName
+	--org yourOrgName 
+
+```
+
+**get the SECOND latest snapshot of an environment**
+
+```shell
+kosli get snapshot yourEnvironmentName~1
+	--api-token yourAPIToken \
+	--org yourOrgName 
+
+```
+
+**get the snapshot number 23 of an environment**
+
+```shell
+kosli get snapshot yourEnvironmentName#23
+	--api-token yourAPIToken \
+	--org yourOrgName 
 	
 ```
 
-**compare snapshots of two different environments of the same type**
+**get the environment snapshot at midday (UTC), on valentine's day of 2023**
 
 ```shell
-kosli diff snapshots envName1 envName2 \
+kosli get snapshot yourEnvironmentName@{2023-02-14T12:00:00}
 	--api-token yourAPIToken \
-	--org orgName
+	--org yourOrgName
 
 ```
 
-**show the not-changed artifacts in both snapshots**
+**get the environment snapshot based on a relative time**
 
 ```shell
-kosli diff snapshots envName1 envName2 \
-	--show-unchanged \
-	--api-token yourAPIToken \
-	--org orgName
-
-```
-
-**compare the snapshot from 2 weeks ago in an environment to the latest**
-
-```shell
-kosli diff snapshots envName@{2.weeks.ago} envName \
+kosli get snapshot yourEnvironmentName@{3.weeks.ago}
 --api-token yourAPIToken \
---org orgName
+--org yourOrgName
 ```
 

@@ -35,7 +35,7 @@ kosli list flows [flags]
 
 ## Live Example
 
-{{< raw-html >}}<pre>export KOSLI_ORG=cyber-dojo
+{{< raw-html >}}To view a live example of 'kosli list flows' you can run the commands below (for the <a href="https://app.kosli.com/cyber-dojo/environments/aws-prod/snapshots/">cyber-dojo</a> demo organization).<br/><a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli+list+flows+--output=json">Run the commands below and view the output.</a><pre>export KOSLI_ORG=cyber-dojo
 export KOSLI_API_TOKEN=Pj_XT2deaVA6V1qrTlthuaWsmjVt4eaHQwqnwqjRO3A  # read-only
-<a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli+list+flows+--output=json">kosli list flows --output=json</a></pre>{{< / raw-html >}}
+kosli list flows --output=json</pre>{{< / raw-html >}}
 
