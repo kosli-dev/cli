@@ -104,7 +104,13 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 			wantError: true,
 			name:      "trying to fetch data from SonarCloud for a non-existent project gives error",
 			cmd:       fmt.Sprintf("attest sonar --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com --sonar-project-key cyberdojo_differ  %s", suite.defaultKosliArguments),
-			golden:    "Error: No data retrieved from Sonarcloud - check your project key and API token are correct\n",
+			golden:    "Error: No data retrieved from Sonarcloud - check your project key and branch or pull request id are correct\n",
+		},
+		{
+			wantError: true,
+			name:      "trying to fetch data from SonarQube with incorrect SonarQube URL gives error",
+			cmd:       fmt.Sprintf("attest sonar --name foo --commit HEAD --origin-url example.com --sonar-project-key test --sonarqube-url example.com/ %s", suite.defaultKosliArguments),
+			golden:    "Error: Incorrect SonarQube URL (make sure to include 'https://')\n",
 		},
 	}
 

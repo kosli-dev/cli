@@ -20,6 +20,7 @@ type attestSonarOptions struct {
 	*CommonAttestationOptions
 	projectKey    string
 	apiToken      string
+	sonarQubeUrl  string
 	branchName    string
 	pullRequestID string
 	payload       SonarAttestationPayload
@@ -118,6 +119,7 @@ func newAttestSonarCmd(out io.Writer) *cobra.Command {
 	addAttestationFlags(cmd, o.CommonAttestationOptions, o.payload.CommonAttestationPayload, ci)
 	cmd.Flags().StringVar(&o.projectKey, "sonar-project-key", "", "SonarCloud project key")
 	cmd.Flags().StringVar(&o.apiToken, "sonar-api-token", "", "SonarCloud API token")
+	cmd.Flags().StringVar(&o.sonarQubeUrl, "sonarqube-url", "", "SonarQube URL")
 	cmd.Flags().StringVar(&o.branchName, "branch-name", "", "CI Branch Name")
 	cmd.Flags().StringVar(&o.pullRequestID, "pull-request-id", "", "Pull Request ID")
 
@@ -137,7 +139,7 @@ func (o *attestSonarOptions) run(args []string) error {
 		return err
 	}
 
-	sc := sonar.NewSonarConfig(o.projectKey, o.apiToken, o.branchName, o.pullRequestID)
+	sc := sonar.NewSonarConfig(o.projectKey, o.apiToken, o.sonarQubeUrl, o.branchName, o.pullRequestID)
 
 	o.payload.SonarResults, err = sc.GetSonarResults()
 	if err != nil {
