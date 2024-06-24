@@ -27,6 +27,16 @@ func SkipIfEnvVarUnset(T *testing.T, requiredEnvVars []string) {
 	}
 }
 
+func SkipIfEnvVarSet(T *testing.T, requiredEnvVars []string) {
+	for _, envVar := range requiredEnvVars {
+		_, ok := os.LookupEnv(envVar)
+		if ok {
+			T.Logf("skipping %s as %s is set in environment", T.Name(), envVar)
+			T.Skipf("does not require %s", envVar)
+		}
+	}
+}
+
 // Originally we had commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6
 // This worked for a while, but now the PR is no longer found by the github api
 // for reasons we cannot fathom

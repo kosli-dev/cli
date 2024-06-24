@@ -84,7 +84,7 @@ func (sc *SonarConfig) GetSonarResults() (*SonarResults, error) {
 	response, err := httpClient.Do(request)
 	if err != nil {
 		//If incorrect URL given, HTTP request returns error
-		return nil, fmt.Errorf("Incorrect SonarQube URL (make sure to include 'https://')")
+		return nil, fmt.Errorf("Incorrect SonarQube URL")
 	}
 
 	sonarResult := &SonarResults{Component: Component{}}
@@ -97,7 +97,7 @@ func (sc *SonarConfig) GetSonarResults() (*SonarResults, error) {
 	//If the project key/branch name/pull request id is incorrect, SonarCloud returns an error
 	//and therefore the component key will be empty
 	if sonarResult.Component.Key == "" {
-		return nil, fmt.Errorf("No data retrieved from Sonarcloud - check your project key and branch or pull request id are correct")
+		return nil, fmt.Errorf("No data retrieved - check your project key and branch or pull request id are correct")
 	}
 
 	return sonarResult, nil
