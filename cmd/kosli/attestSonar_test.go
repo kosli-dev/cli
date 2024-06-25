@@ -136,7 +136,19 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 			wantError: true,
 			name:      "trying to fetch data from SonarCloud for a non-existent project gives error",
 			cmd:       fmt.Sprintf("attest sonar --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com --sonar-project-key cyberdojo_differ  %s", suite.defaultKosliArguments),
-			golden:    "Error: No data retrieved - check your project key and branch or pull request id are correct\n",
+			golden:    "Error: Component key 'cyberdojo_differ' not found\n",
+		},
+		{
+			wantError: true,
+			name:      "trying to fetch data from SonarCloud for a non-existent branch gives error",
+			cmd:       fmt.Sprintf("attest sonar --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ --branch-name xx %s", suite.defaultKosliArguments),
+			golden:    "Error: Component 'cyber-dojo_differ' on branch 'xx' not found\n",
+		},
+		{
+			wantError: true,
+			name:      "trying to fetch data from SonarCloud for a non-existent pull-request gives error",
+			cmd:       fmt.Sprintf("attest sonar --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ --pull-request-id 5 %s", suite.defaultKosliArguments),
+			golden:    "Error: Component 'cyber-dojo_differ' of pull request '5' not found\n",
 		},
 		{
 			wantError: true,
@@ -244,7 +256,19 @@ func (suite *AttestSonarQubeCommandTestSuite) TestAttestSonarQubeCmd() {
 			wantError: true,
 			name:      "trying to fetch data from SonarQube for a non-existent project gives error",
 			cmd:       fmt.Sprintf("attest sonar --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ  %s", suite.defaultKosliArguments),
-			golden:    "Error: No data retrieved - check your project key and branch or pull request id are correct\n",
+			golden:    "Error: Component key 'cyber-dojo_differ' not found\n",
+		},
+		{
+			wantError: true,
+			name:      "trying to fetch data from SonarQube for a non-existent branch gives error",
+			cmd:       fmt.Sprintf("attest sonar --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com --sonar-project-key test --branch-name xx %s", suite.defaultKosliArguments),
+			golden:    "Error: Component 'test' on branch 'xx' not found\n",
+		},
+		{
+			wantError: true,
+			name:      "trying to fetch data from SonarQube for a non-existent pull-request gives error",
+			cmd:       fmt.Sprintf("attest sonar --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com --sonar-project-key test --pull-request-id 5 %s", suite.defaultKosliArguments),
+			golden:    "Error: Component 'test' of pull request '5' not found\n",
 		},
 	}
 

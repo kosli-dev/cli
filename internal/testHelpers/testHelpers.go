@@ -32,7 +32,7 @@ func SkipIfEnvVarSet(T *testing.T, requiredEnvVars []string) {
 		_, ok := os.LookupEnv(envVar)
 		if ok {
 			T.Logf("skipping %s as %s is set in environment", T.Name(), envVar)
-			T.Skipf("does not require %s", envVar)
+			T.Skipf("requires that %s is not set", envVar)
 		}
 	}
 }

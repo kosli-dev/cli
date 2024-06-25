@@ -41,6 +41,17 @@ kosli attest sonar \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 
+# report a sonarqube attestation about a trail:
+kosli attest sonar \
+	--name yourAttestationName \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--sonar-project-key yourSonarProjectKey \
+	--sonar-api-token yourSonarAPIToken \
+	--sonarqube-url yourSonarQubeURL \
+	--api-token yourAPIToken \
+	--org yourOrgName \
+
 # report a sonarcloud attestation for a specific branch about a trail:
 kosli attest sonar \
 	--name yourAttestationName \
@@ -52,13 +63,14 @@ kosli attest sonar \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 
-# report a sonarcloud attestation for a pull-request about a trail:
+# report a sonarqube attestation for a pull-request about a trail:
 kosli attest sonar \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--sonar-project-key yourSonarProjectKey \
 	--sonar-api-token yourSonarAPIToken \
+	--sonarqube-url yourSonarQubeURL \
 	--pull-request-id yourPullRequestID \
 	--api-token yourAPIToken \
 	--org yourOrgName \
