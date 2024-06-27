@@ -28,7 +28,10 @@ type attestSonarOptions struct {
 
 const attestSonarShortDesc = `Report a sonarcloud or sonarqube attestation to an artifact or a trail in a Kosli flow.  `
 
-const attestSonarLongDesc = attestSonarShortDesc + attestationBindingDesc
+const attestSonarLongDesc = attestSonarShortDesc + `
+Retrieves the latest scan results for the given project key from SonarCloud or SonarQube (if a SonarQube server URL is given).
+The results are parsed to find the status of the project's quality gate which is used to determine the attestation's compliance status.
+` + attestationBindingDesc
 
 const attestSonarExample = `
 # report a sonarcloud attestation about a trail:
@@ -129,11 +132,11 @@ func newAttestSonarCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	addAttestationFlags(cmd, o.CommonAttestationOptions, o.payload.CommonAttestationPayload, ci)
-	cmd.Flags().StringVar(&o.projectKey, "sonar-project-key", "", "SonarCloud project key")
-	cmd.Flags().StringVar(&o.apiToken, "sonar-api-token", "", "SonarCloud API token")
-	cmd.Flags().StringVar(&o.sonarQubeUrl, "sonarqube-url", "", "SonarQube URL")
-	cmd.Flags().StringVar(&o.branchName, "branch-name", "", "CI Branch Name")
-	cmd.Flags().StringVar(&o.pullRequestID, "pull-request-id", "", "Pull Request ID")
+	cmd.Flags().StringVar(&o.projectKey, "sonar-project-key", "", sonarProjectKeyFlag)
+	cmd.Flags().StringVar(&o.apiToken, "sonar-api-token", "", sonarAPITokenFlag)
+	cmd.Flags().StringVar(&o.sonarQubeUrl, "sonarqube-url", "", sonarQubeUrlFlag)
+	cmd.Flags().StringVar(&o.branchName, "branch-name", "", sonarBranchNameFlag)
+	cmd.Flags().StringVar(&o.pullRequestID, "pull-request-id", "", sonarPullRequestFlag)
 
 	err := RequireFlags(cmd, []string{"flow", "trail", "name", "sonar-project-key", "sonar-api-token"})
 	if err != nil {

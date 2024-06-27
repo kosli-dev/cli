@@ -216,6 +216,11 @@ The service principal needs to have the following permissions:
 	policyTypeFlag                       = "[defaulted] the type of policy. One of: [env]"
 	attachPolicyEnvFlag                  = "the list of environment names to attach the policy to"
 	detachPolicyEnvFlag                  = "the list of environment names to detach the policy from"
+	sonarAPITokenFlag                    = "[required] SonarCloud/SonarQube API token."
+	sonarProjectKeyFlag                  = "[required] SonarCloud/SonarQube project key."
+	sonarQubeUrlFlag                     = "[conditional] The URL for your SonarQube server (only required if using SonarQube for project analysis)."
+	sonarBranchNameFlag                  = "[optional] The name of the branch being analysed by SonarCloud/SonarQube. Cannot be used together with --pull-request-id ."
+	sonarPullRequestFlag                 = "[optional] The ID of the pull request being analysed by SonarCloud/SonarQube. Cannot be used together with --branch-name ."
 )
 
 var global *GlobalOpts
