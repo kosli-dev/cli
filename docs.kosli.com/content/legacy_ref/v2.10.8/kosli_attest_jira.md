@@ -1,16 +1,24 @@
 ---
-title: "kosli attest sonar"
+title: "kosli attest jira"
 beta: false
 deprecated: false
 ---
 
-# kosli attest sonar
+# kosli attest jira
 
 ## Synopsis
 
-Report a sonarcloud or sonarqube attestation to an artifact or a trail in a Kosli flow.  
-Retrieves the latest scan results for the given project key from SonarCloud or SonarQube (if a SonarQube server URL is given).
-The results are parsed to find the status of the project's quality gate which is used to determine the attestation's compliance status.
+Report a jira attestation to an artifact or a trail in a Kosli flow.  
+Parses the given commit's message or current branch name for Jira issue references of the 
+form:  
+'at least 2 characters long, starting with an uppercase letter project key followed by
+dash and one or more digits'. 
+
+The found issue references will be checked against Jira to confirm their existence.
+The attestation is reported in all cases, and its compliance status depends on referencing
+existing Jira issues.  
+If you have wrong Jira credentials or wrong Jira-base-url it will be reported as non existing Jira issue.
+This is because Jira returns same 404 error code in all cases.
 
 
 The attestation can be bound to a trail using the trail name.
@@ -19,8 +27,13 @@ If the attestation is for an artifact, the attestation can be bound to the artif
 - using the artifact's SHA256 fingerprint which is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
 - using the artifact's name in the flow yaml template and the git commit from which the artifact is/will be created. Useful when reporting an attestation before creating/reporting the artifact.
 
+You can optionally associate the attestation to a git commit using `--commit` (requires access to a git repo). And you  
+can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`. 
+Note that when the attestation is reported for an artifact that does not yet exist in Kosli, `--commit` becomes required to facilitate 
+binding the attestation to the right artifact.
+
 ```shell
-kosli attest sonar [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli attest jira [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ## Flags
@@ -28,8 +41,8 @@ kosli attest sonar [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 | :--- | :--- |
 |        --annotate stringToString  |  [optional] Annotate the attestation with data using key=value.  |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
+|        --assert  |  [optional] Exit with non-zero code if the attestation is non-compliant  |
 |        --attachments strings  |  [optional] The comma-separated list of paths of attachments for the reported attestation. Attachments can be files or directories. All attachments are compressed and uploaded to Kosli's evidence vault.  |
-|        --branch-name string  |  [optional] The name of the branch being analysed by SonarCloud/SonarQube. Cannot be used together with --pull-request-id .  |
 |    -g, --commit string  |  [conditional] The git commit for which the attestation is associated to. Becomes required when reporting an attestation for an artifact before reporting it to Kosli. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --description string  |  [optional] attestation description  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
@@ -38,18 +51,18 @@ kosli attest sonar [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --external-url stringToString  |  [optional] Add labeled reference URL for an external resource. The format is label=url (labels cannot contain '.' or '='). This flag can be set multiple times. If the resource is a file or dir, you can optionally add its fingerprint via --external-fingerprint  |
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact to attach the attestation to. Only required if the attestation is for an artifact and --artifact-type and artifact name/path are not used.  |
 |    -f, --flow string  |  The Kosli flow name.  |
-|    -h, --help  |  help for sonar  |
+|    -h, --help  |  help for jira  |
+|        --jira-api-token string  |  Jira API token (for Jira Cloud)  |
+|        --jira-base-url string  |  The base url for the jira project, e.g. 'https://kosli.atlassian.net/browse/'  |
+|        --jira-pat string  |  Jira personal access token (for self-hosted Jira)  |
+|        --jira-username string  |  Jira username (for Jira Cloud)  |
 |    -n, --name string  |  The name of the attestation as declared in the flow or trail yaml template.  |
 |    -o, --origin-url string  |  [optional] The url pointing to where the attestation came from or is related. (defaulted to the CI url in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|        --pull-request-id string  |  [optional] The ID of the pull request being analysed by SonarCloud/SonarQube. Cannot be used together with --branch-name .  |
 |        --redact-commit-info strings  |  [optional] The list of commit info to be redacted before sending to Kosli. Allowed values are one or more of [author, message, branch].  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --repo-root string  |  [defaulted] The directory where the source git repository is available. Only used if --commit is used. (default ".")  |
-|        --sonar-api-token string  |  [required] SonarCloud/SonarQube API token.  |
-|        --sonar-project-key string  |  [required] SonarCloud/SonarQube project key.  |
-|        --sonarqube-url string  |  [conditional] The URL for your SonarQube server (only required if using SonarQube for project analysis).  |
 |    -T, --trail string  |  The Kosli trail name.  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the attestation.  |
 
@@ -66,85 +79,98 @@ kosli attest sonar [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --org string  |  The Kosli organization.  |
 
 
-## Live Examples in different CI systems
-
-{{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli attest sonar` command in GitHub.
-
-In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli+attest+sonar), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=github&command=kosli+attest+sonar).{{< /tab >}}{{< /tabs >}}
-
 ## Examples Use Cases
 
-**report a sonarcloud attestation about a trail**
+**report a jira attestation about a pre-built docker artifact (kosli calculates the fingerprint)**
 
 ```shell
-kosli attest sonar \
+kosli attest jira yourDockerImageName \
+	--artifact-type docker \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--sonar-project-key yourSonarProjectKey \
-	--sonar-api-token yourSonarAPIToken \
-	--api-token yourAPIToken \
-	--org yourOrgName \
-
-```
-
-**report a sonarqube attestation about a trail**
-
-```shell
-kosli attest sonar \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--sonar-project-key yourSonarProjectKey \
-	--sonar-api-token yourSonarAPIToken \
-	--sonarqube-url yourSonarQubeURL \
-	--api-token yourAPIToken \
-	--org yourOrgName \
-
-```
-
-**report a sonarcloud attestation for a specific branch about a trail**
-
-```shell
-kosli attest sonar \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--sonar-project-key yourSonarProjectKey \
-	--sonar-api-token yourSonarAPIToken \
-	--branch-name yourBranchName \
-	--api-token yourAPIToken \
-	--org yourOrgName \
-
-```
-
-**report a sonarqube attestation for a pull-request about a trail**
-
-```shell
-kosli attest sonar \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--sonar-project-key yourSonarProjectKey \
-	--sonar-api-token yourSonarAPIToken \
-	--sonarqube-url yourSonarQubeURL \
-	--pull-request-id yourPullRequestID \
-	--api-token yourAPIToken \
-	--org yourOrgName \
-
-```
-
-**report a sonarcloud attestation about a trail with an attachment**
-
-```shell
-kosli attest sonar \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--sonar-project-key yourSonarProjectKey \
-	--sonar-api-token yourSonarAPIToken \
-	--attachment yourAttachmentPath \
+	--jira-base-url https://kosli.atlassian.net \
+	--jira-username user@domain.com \
+	--jira-api-token yourJiraAPIToken \
 	--api-token yourAPIToken \
 	--org yourOrgName
+
+```
+
+**report a jira attestation about a pre-built docker artifact (you provide the fingerprint)**
+
+```shell
+kosli attest jira \
+	--fingerprint yourDockerImageFingerprint \
+	--name yourAttestationName \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--jira-base-url https://kosli.atlassian.net \
+	--jira-username user@domain.com \
+	--jira-api-token yourJiraAPIToken \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+```
+
+**report a jira attestation about a trail**
+
+```shell
+kosli attest jira \
+	--name yourAttestationName \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--jira-base-url https://kosli.atlassian.net \
+	--jira-username user@domain.com \
+	--jira-api-token yourJiraAPIToken \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+```
+
+**report a jira attestation about an artifact which has not been reported yet in a trail**
+
+```shell
+kosli attest jira \
+	--name yourTemplateArtifactName.yourAttestationName \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--jira-base-url https://kosli.atlassian.net \
+	--jira-username user@domain.com \
+	--jira-api-token yourJiraAPIToken \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+```
+
+**report a jira attestation about a trail with an attachment**
+
+```shell
+kosli attest jira \
+	--name yourAttestationName \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--jira-base-url https://kosli.atlassian.net \
+	--jira-username user@domain.com \
+	--jira-api-token yourJiraAPIToken \
+	--attachments=yourAttachmentPathName \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+```
+
+**fail if no issue reference is found, or the issue is not found in your jira instance**
+
+```shell
+kosli attest jira \
+	--name yourAttestationName \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--jira-base-url https://kosli.atlassian.net \
+	--jira-username user@domain.com \
+	--jira-api-token yourJiraAPIToken \
+	--api-token yourAPIToken \
+	--org yourOrgName \
+	--assert
 ```
 

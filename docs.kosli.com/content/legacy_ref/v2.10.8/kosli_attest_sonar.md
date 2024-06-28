@@ -9,9 +9,6 @@ deprecated: false
 ## Synopsis
 
 Report a sonarcloud or sonarqube attestation to an artifact or a trail in a Kosli flow.  
-Retrieves the latest scan results for the given project key from SonarCloud or SonarQube (if a SonarQube server URL is given).
-The results are parsed to find the status of the project's quality gate which is used to determine the attestation's compliance status.
-
 
 The attestation can be bound to a trail using the trail name.
 
@@ -29,7 +26,7 @@ kosli attest sonar [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --annotate stringToString  |  [optional] Annotate the attestation with data using key=value.  |
 |    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
 |        --attachments strings  |  [optional] The comma-separated list of paths of attachments for the reported attestation. Attachments can be files or directories. All attachments are compressed and uploaded to Kosli's evidence vault.  |
-|        --branch-name string  |  [optional] The name of the branch being analysed by SonarCloud/SonarQube. Cannot be used together with --pull-request-id .  |
+|        --branch-name string  |  CI Branch Name  |
 |    -g, --commit string  |  [conditional] The git commit for which the attestation is associated to. Becomes required when reporting an attestation for an artifact before reporting it to Kosli. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --description string  |  [optional] attestation description  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
@@ -41,15 +38,14 @@ kosli attest sonar [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |    -h, --help  |  help for sonar  |
 |    -n, --name string  |  The name of the attestation as declared in the flow or trail yaml template.  |
 |    -o, --origin-url string  |  [optional] The url pointing to where the attestation came from or is related. (defaulted to the CI url in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|        --pull-request-id string  |  [optional] The ID of the pull request being analysed by SonarCloud/SonarQube. Cannot be used together with --branch-name .  |
+|        --pull-request-id string  |  Pull Request ID  |
 |        --redact-commit-info strings  |  [optional] The list of commit info to be redacted before sending to Kosli. Allowed values are one or more of [author, message, branch].  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --repo-root string  |  [defaulted] The directory where the source git repository is available. Only used if --commit is used. (default ".")  |
-|        --sonar-api-token string  |  [required] SonarCloud/SonarQube API token.  |
-|        --sonar-project-key string  |  [required] SonarCloud/SonarQube project key.  |
-|        --sonarqube-url string  |  [conditional] The URL for your SonarQube server (only required if using SonarQube for project analysis).  |
+|        --sonar-api-token string  |  SonarCloud API token  |
+|        --sonar-project-key string  |  SonarCloud project key  |
 |    -T, --trail string  |  The Kosli trail name.  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the attestation.  |
 
@@ -88,21 +84,6 @@ kosli attest sonar \
 
 ```
 
-**report a sonarqube attestation about a trail**
-
-```shell
-kosli attest sonar \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--sonar-project-key yourSonarProjectKey \
-	--sonar-api-token yourSonarAPIToken \
-	--sonarqube-url yourSonarQubeURL \
-	--api-token yourAPIToken \
-	--org yourOrgName \
-
-```
-
 **report a sonarcloud attestation for a specific branch about a trail**
 
 ```shell
@@ -118,7 +99,7 @@ kosli attest sonar \
 
 ```
 
-**report a sonarqube attestation for a pull-request about a trail**
+**report a sonarcloud attestation for a pull-request about a trail**
 
 ```shell
 kosli attest sonar \
@@ -127,7 +108,6 @@ kosli attest sonar \
 	--trail yourTrailName \
 	--sonar-project-key yourSonarProjectKey \
 	--sonar-api-token yourSonarAPIToken \
-	--sonarqube-url yourSonarQubeURL \
 	--pull-request-id yourPullRequestID \
 	--api-token yourAPIToken \
 	--org yourOrgName \
