@@ -70,13 +70,13 @@ func (suite *CreateEnvironmentCommandTestSuite) TestCreateEnvironmentCmd() {
 			wantError: true,
 			name:      "fails if the type case does not match what the server accepts",
 			cmd:       "create env newEnv1 --type k8s" + suite.defaultKosliArguments,
-			golden:    "Error: Input payload validation failed: map[type:'k8s' is not one of ['K8S', 'ECS', 'S3', 'lambda', 'server', 'docker', 'azure-apps']]\n",
+			golden:    "Error: Input payload validation failed: map[type:'k8s' is not one of ['K8S', 'ECS', 'S3', 'lambda', 'server', 'docker', 'azure-apps', 'logical']]\n",
 		},
 		{
 			wantError: true,
 			name:      "fails if the type is not recognized by the server",
 			cmd:       "create env newEnv1 --type unknown" + suite.defaultKosliArguments,
-			golden:    "Error: Input payload validation failed: map[type:'unknown' is not one of ['K8S', 'ECS', 'S3', 'lambda', 'server', 'docker', 'azure-apps']]\n",
+			golden:    "Error: Input payload validation failed: map[type:'unknown' is not one of ['K8S', 'ECS', 'S3', 'lambda', 'server', 'docker', 'azure-apps', 'logical']]\n",
 		},
 		{
 			wantError: true,

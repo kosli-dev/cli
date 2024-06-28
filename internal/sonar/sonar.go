@@ -4,21 +4,29 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 )
 
 type SonarConfig struct {
 	ProjectKey    string
 	APIToken      string
+	SonarQubeURL  string
 	BranchName    string
 	PullRequestID string
 }
 
 type SonarResults struct {
 	Component Component `json:"component"`
+	Errors    []Error   `json:"errors,omitempty"` //So we can give the user the detailed error message from SonarCloud/SonarQube
+}
+
+type Error struct {
+	Msg string `json:"msg,omitempty"`
 }
 
 type Component struct {
 	Id          string     `json:"id,omitempty"`
+	Description string     `json:"description,omitempty"`
 	Key         string     `json:"key"`
 	Name        string     `json:"name"`
 	Qualifier   string     `json:"qualifier"`
@@ -28,14 +36,23 @@ type Component struct {
 }
 
 type Measures struct {
-	Metric string `json:"metric"`
-	Value  string `json:"value"`
+	Metric    string   `json:"metric"`
+	Value     string   `json:"value"`
+	BestValue bool     `json:"bestValue,omitempty"`
+	Periods   []Period `json:"periods,omitempty"`
 }
 
-func NewSonarConfig(projectKey, apiToken, branchName, pullRequestID string) *SonarConfig {
+type Period struct {
+	Index     int    `json:"index"`
+	Value     string `json:"value"`
+	BestValue bool   `json:"bestValue,omitempty"`
+}
+
+func NewSonarConfig(projectKey, apiToken, sonarQubeUrl, branchName, pullRequestID string) *SonarConfig {
 	return &SonarConfig{
 		ProjectKey:    projectKey,
 		APIToken:      apiToken,
+		SonarQubeURL:  sonarQubeUrl,
 		BranchName:    branchName,
 		PullRequestID: pullRequestID,
 	}
@@ -43,12 +60,20 @@ func NewSonarConfig(projectKey, apiToken, branchName, pullRequestID string) *Son
 
 func (sc *SonarConfig) GetSonarResults() (*SonarResults, error) {
 	httpClient := &http.Client{}
-	var url string
-	var token string
+	var baseUrl, fullUrl, tokenHeader string
+	metrics := GetMetrics()
+
+	if sc.SonarQubeURL != "" {
+		baseUrl = sc.SonarQubeURL
+		metrics = fmt.Sprintf("%s,new_security_issues", metrics) //This metric is available via the sonarqube api but not sonarcloud
+	} else {
+		baseUrl = "https://sonarcloud.io"
+	}
 
 	if sc.ProjectKey != "" && sc.APIToken != "" {
-		url = fmt.Sprintf("https://sonarcloud.io/api/measures/component?metricKeys=alert_status%%2Cquality_gate_details%%2Cbugs%%2Csecurity_issues%%2Ccode_smells%%2Ccomplexity%%2Cmaintainability_issues%%2Creliability_issues%%2Ccoverage&component=%s", sc.ProjectKey)
-		token = fmt.Sprintf("Bearer %s", sc.APIToken)
+		metricsPath := url.PathEscape(metrics)
+		fullUrl = fmt.Sprintf("%s/api/measures/component?metricKeys=%s&component=%s", baseUrl, metricsPath, sc.ProjectKey)
+		tokenHeader = fmt.Sprintf("Bearer %s", sc.APIToken)
 	} else {
 		return nil, fmt.Errorf("Project Key and API token must be given to retrieve data from SonarCloud/SonarQube")
 	}
@@ -58,31 +83,40 @@ func (sc *SonarConfig) GetSonarResults() (*SonarResults, error) {
 	}
 
 	if sc.BranchName != "" {
-		url = fmt.Sprintf("%s&branch=%s", url, sc.BranchName)
+		fullUrl = fmt.Sprintf("%s&branch=%s", fullUrl, sc.BranchName)
 	} else if sc.PullRequestID != "" {
-		url = fmt.Sprintf("%s&pullRequest=%s", url, sc.PullRequestID)
+		fullUrl = fmt.Sprintf("%s&pullRequest=%s", fullUrl, sc.PullRequestID)
 	}
 
-	request, err := http.NewRequest("GET", url, nil)
-	request.Header.Add("Authorization", token)
+	request, err := http.NewRequest("GET", fullUrl, nil)
+	request.Header.Add("Authorization", tokenHeader)
 	if err != nil {
 		return nil, err
 	}
 
 	response, err := httpClient.Do(request)
 	if err != nil {
-		return nil, err
+		//If a non-existent URL given, HTTP request returns error
+		return nil, fmt.Errorf("Incorrect SonarQube URL")
 	}
 
 	sonarResult := &SonarResults{Component: Component{}}
 	err = json.NewDecoder(response.Body).Decode(sonarResult)
 	if err != nil {
-		return nil, fmt.Errorf("No data retrieved from Sonarcloud - check your API token is correct")
+		//If the API token or SonarQube URL is incorrect, SonarCloud/Qube returns nothing, thus we get a Decode error
+		return nil, fmt.Errorf("Incorrect API token or SonarQube URL")
 	}
 
-	//With incorrect project key or API token we receive no data
-	if sonarResult.Component.Key == "" {
-		return nil, fmt.Errorf("No data retrieved from Sonarcloud - check your project key and branch or pull request id are correct")
+	//If the project key/branch name/pull request id is incorrect or a metric key is invalid, SonarCloud/Qube returns an error
+	if sonarResult.Errors != nil {
+		message := ""
+		for errorIndex := range sonarResult.Errors {
+			message = fmt.Sprintf("%s%s", message, sonarResult.Errors[errorIndex].Msg)
+			if errorIndex != len(sonarResult.Errors)-1 {
+				message = fmt.Sprintf("%s\n", message)
+			}
+		}
+		return nil, fmt.Errorf(message)
 	}
 
 	return sonarResult, nil
