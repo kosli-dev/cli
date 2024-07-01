@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/version"
 	"github.com/maxcnunes/httpfake"
@@ -108,27 +107,6 @@ func (suite *RequestsTestSuite) TestNewKosliClient() {
 
 		})
 	}
-}
-
-func (suite *RequestsTestSuite) TestNewStandardKosliClient() {
-	client, err := NewStandardKosliClient("")
-	require.NoError(suite.T(), err)
-	require.NotNil(suite.T(), client)
-
-	client.SetDebug(true)
-	require.True(suite.T(), client.Debug)
-
-	logger := logger.NewStandardLogger()
-	client.SetLogger(logger)
-	require.Equal(suite.T(), logger, client.Logger)
-
-	client.SetMaxAPIRetries(5)
-	require.Equal(suite.T(), 5, client.MaxAPIRetries)
-
-	client2, err := NewStandardKosliClient("http://192.0.0.1:8001")
-	require.NoError(suite.T(), err)
-	require.NotNil(suite.T(), client2.HttpClient.Transport)
-	require.NotNil(suite.T(), client2.HttpClient.Transport.(*retryablehttp.RoundTripper).Client.HTTPClient.Transport.(*http.Transport).Proxy)
 }
 
 func (suite *RequestsTestSuite) TestNewHttpRequest() {

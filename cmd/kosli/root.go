@@ -421,14 +421,10 @@ func initialize(cmd *cobra.Command, out io.Writer) error {
 	logger.DebugEnabled = global.Debug
 
 	var err error
-	kosliClient, err = requests.NewStandardKosliClient(global.HttpProxy)
+	kosliClient, err = requests.NewKosliClient(global.HttpProxy, global.MaxAPIRetries, global.Debug, logger)
 	if err != nil {
 		return err
 	}
-
-	kosliClient.SetDebug(global.Debug)
-	kosliClient.SetMaxAPIRetries(global.MaxAPIRetries)
-	kosliClient.SetLogger(logger)
 
 	return nil
 }
