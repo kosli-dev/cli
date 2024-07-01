@@ -2,6 +2,7 @@
 
 import documentdb
 from lib import on_localhost
+from seams import external_mongo
 
 
 def clean_database(mongo):
@@ -16,5 +17,4 @@ def clean_database(mongo):
 
 
 if __name__ == "__main__":
-    from model import Externals
-    clean_database(Externals().mongo)
+    clean_database(external_mongo())
