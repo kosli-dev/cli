@@ -30,7 +30,7 @@ be using in this guide.
 
 To follow the tutorial, you will need to:
 
-- Install both `Docker` and `docker-compose`.
+- Install `Docker`.
 - [Create a Kosli account](https://app.kosli.com/sign-up) if you have not got one already.
 - [Install Kosli CLI](/getting_started/install/).
 - [Get a Kosli API token](/getting_started/service-accounts/).
@@ -165,7 +165,7 @@ Pull the docker image - the Kosli CLI needs the Artifact to be locally present t
 generate a "fingerprint" to identify it:
 
 ```shell {.command}
-docker-compose pull
+docker compose pull
 ```
 
 You can check that this has worked by typing: 
@@ -222,7 +222,7 @@ COMMIT   ARTIFACT                                                               
 
 First, run the artifact:
 ```shell {.command}
-docker-compose up -d
+docker compose up -d
 ```
 
 Confirm the container is running:
