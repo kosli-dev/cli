@@ -26,7 +26,7 @@ kosli attest pullrequest azure [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 | Flag | Description |
 | :--- | :--- |
 |        --annotate stringToString  |  [optional] Annotate the attestation with data using key=value.  |
-|    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
+|    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it).  |
 |        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
 |        --attachments strings  |  [optional] The comma-separated list of paths of attachments for the reported attestation. Attachments can be files or directories. All attachments are compressed and uploaded to Kosli's evidence vault.  |
 |        --azure-org-url string  |  Azure organization url. E.g. "https://dev.azure.com/myOrg" (defaulted if you are running in Azure Devops pipelines: https://docs.kosli.com/ci-defaults ).  |

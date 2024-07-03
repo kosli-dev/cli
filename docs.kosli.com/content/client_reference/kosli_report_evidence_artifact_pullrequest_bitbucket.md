@@ -20,7 +20,7 @@ kosli report evidence artifact pullrequest bitbucket [IMAGE-NAME | FILE-PATH | D
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
+|    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it).  |
 |        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
 |        --bitbucket-password string  |  Bitbucket App password. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#authentication for more details.  |
 |        --bitbucket-username string  |  Bitbucket username.  |

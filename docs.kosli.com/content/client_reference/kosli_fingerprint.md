@@ -17,7 +17,7 @@ from a remote registry.
 
 When fingerprinting a 'dir' artifact, you can exclude certain paths from fingerprint calculation 
 using the `--exclude` flag.
-Excluded paths are relative to the artifact path(s) and can be literal paths or
+Excluded paths are relative to the DIR-PATH and can be literal paths or
 glob patterns.  
 The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match , 
 plus the ability to use recursive globs "**"
@@ -29,7 +29,7 @@ kosli fingerprint {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
+|    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it).  |
 |    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for --artifact-type dir.  |
 |    -h, --help  |  help for fingerprint  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
@@ -48,4 +48,33 @@ kosli fingerprint {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
+
+## Examples Use Cases
+
+**fingerprint a file**
+
+```shell
+kosli fingerprint --artifact-type file file.txt
+
+```
+
+**fingerprint a dir**
+
+```shell
+kosli fingerprint --artifact-type dir mydir
+
+```
+
+**fingerprint a dir while excluding paths**
+
+```shell
+kosli fingerprint --artifact-type dir --exclude logs --exclude *.exe mydir
+
+```
+
+**fingerprint a locally available docker image**
+
+```shell
+kosli fingerprint --artifact-type docker nginx:latest
+```
 
