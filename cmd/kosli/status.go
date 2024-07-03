@@ -46,6 +46,7 @@ func (o *statusOptions) run(out io.Writer) error {
 
 	response, err := kosliClient.Do(reqParams)
 	if err != nil {
+		logger.Debug("failed to check Kosli's readiness: %s", err.Error())
 		if o.assert {
 			return fmt.Errorf("kosli server %s is unresponsive", global.Host)
 		}
