@@ -10,7 +10,7 @@ const fingerprintShortDesc = `Calculate the SHA256 fingerprint of an artifact.`
 
 const fingerprintDirSynopsis = `When fingerprinting a 'dir' artifact, you can exclude certain paths from fingerprint calculation 
 using the ^--exclude^ flag.
-Excluded paths are relative to the artifact path(s) and can be literal paths or
+Excluded paths are relative to the DIR-PATH and can be literal paths or
 glob patterns.  
 The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match , 
 plus the ability to use recursive globs "**"`
@@ -24,6 +24,20 @@ from a remote registry.
 
 ` + fingerprintDirSynopsis
 
+const fingerprintExamples = `
+# fingerprint a file
+kosli fingerprint --artifact-type file file.txt
+
+# fingerprint a dir
+kosli fingerprint --artifact-type dir mydir
+
+# fingerprint a dir while excluding paths
+kosli fingerprint --artifact-type dir --exclude logs --exclude *.exe mydir
+
+# fingerprint a locally available docker image
+kosli fingerprint --artifact-type docker nginx:latest
+`
+
 type fingerprintOptions struct {
 	artifactType     string
 	registryProvider string
@@ -35,10 +49,11 @@ type fingerprintOptions struct {
 func newFingerprintCmd(out io.Writer) *cobra.Command {
 	o := new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:   "fingerprint {IMAGE-NAME | FILE-PATH | DIR-PATH}",
-		Short: fingerprintShortDesc,
-		Long:  fingerprintLongDesc,
-		Args:  cobra.ExactArgs(1),
+		Use:     "fingerprint {IMAGE-NAME | FILE-PATH | DIR-PATH}",
+		Short:   fingerprintShortDesc,
+		Long:    fingerprintLongDesc,
+		Example: fingerprintExamples,
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return ValidateRegistryFlags(cmd, o)
 		},

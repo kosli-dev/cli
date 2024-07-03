@@ -79,7 +79,7 @@ The service principal needs to have the following permissions:
 	maxAPIRetryFlag                      = "[defaulted] How many times should API calls be retried when the API host is not reachable."
 	configFileFlag                       = "[optional] The Kosli config file path."
 	debugFlag                            = "[optional] Print debug logs to stdout. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default false)"
-	artifactTypeFlag                     = "[conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'."
+	artifactTypeFlag                     = "The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it)"
 	flowNameFlag                         = "The Kosli flow name."
 	trailNameFlag                        = "The Kosli trail name."
 	trailNameFlagOptional                = "[optional] The Kosli trail name."
