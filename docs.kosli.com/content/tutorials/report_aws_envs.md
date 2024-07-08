@@ -46,7 +46,7 @@ export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
 {{< tab "ECS" >}}
 ```shell {.command}
-$ kosli snapshot ecs aws-env-tutorial \
+kosli snapshot ecs aws-env-tutorial \
     --cluster <your-ecs-cluster-name> \
 	--api-token <your-api-token-here> \
     --org <your-kosli-org-name>
@@ -55,7 +55,7 @@ $ kosli snapshot ecs aws-env-tutorial \
 
 {{< tab "Lambda" >}}
 ```shell {.command}
-$ kosli snapshot lambda aws-env-tutorial \
+kosli snapshot lambda aws-env-tutorial \
     --function-names function1,function2 \
 	--api-token <your-api-token-here> \
     --org <your-kosli-org-name>
@@ -64,7 +64,7 @@ $ kosli snapshot lambda aws-env-tutorial \
 
 {{< tab "S3" >}}
 ```shell {.command}
-$ kosli snapshot s3 aws-env-tutorial \
+kosli snapshot s3 aws-env-tutorial \
     --bucket <your-bucket-name> \
 	--api-token <your-api-token-here> \
     --org <your-kosli-org-name>
@@ -285,8 +285,8 @@ module "lambda_reporter" {
 4. Initialize and run Terraform by running:
 
 ```shell {.command}
-$ terraform init
-$ terraform apply
+terraform init
+terraform apply
 ```
 
 5. To check Lambda reporter logs you can go to the AWS console -> Lambda service -> choose your lambda reporter function -> Monitor tab -> Logs tab.

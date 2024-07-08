@@ -24,13 +24,13 @@ To follow the steps in this tutorial, you need to:
 * [Get a Kosli API token](/getting_started/service-accounts/).
 * Set the `KOSLI_ORG` environment variable to your personal org name and `KOSLI_API_TOKEN` to your token:
   ```shell {.command}
-  $ export KOSLI_ORG=<your-personal-kosli-org-name>
-  $ export KOSLI_API_TOKEN=<your-api-token>
+  export KOSLI_ORG=<your-personal-kosli-org-name>
+  export KOSLI_API_TOKEN=<your-api-token>
   ```
 * Clone the tutorial git repo
   ```shell {.command}
-  $ git clone https://github.com/kosli-dev/iac-changes-tutorial.git 
-  $ cd iac-changes-tutorial
+  git clone https://github.com/kosli-dev/iac-changes-tutorial.git 
+  cd iac-changes-tutorial
   ```
 
 ## Creating a Kosli flow
@@ -39,7 +39,7 @@ We will start by creating a Kosli flow to represent the process for authorized T
 For simplicity, we will not define any requirements for this process by using `--use-empty-template`
 
 ```shell {.command}
-$ kosli create flow tf-tutorial --use-empty-template
+kosli create flow tf-tutorial --use-empty-template
 ```
 
 ## Making and tracking an authorized change
@@ -52,21 +52,21 @@ In this tutorial, however, we run the commands that you would otherwise do in CI
 Let's create a trail to represent a single instance of making an authorized change. We will call it `authorized-1`.
 
 ```shell {.command}
-$ kosli begin trail authorized-1 --flow=tf-tutorial
+kosli begin trail authorized-1 --flow=tf-tutorial
 ```
 Next, we can scan our terraform config scripts for security issues. We capture the SARIF output from the scan and attest it to Kosli.
 
 ```shell {.command}
-$ snyk iac test main.tf --sarif-file-output=sarif.json
-$ kosli attest snyk --name=security --flow=tf-tutorial --trail=authorized-1 --scan-results=sarif.json
+snyk iac test main.tf --sarif-file-output=sarif.json
+kosli attest snyk --name=security --flow=tf-tutorial --trail=authorized-1 --scan-results=sarif.json
 ```
 
 We are now ready to run terraform. We create a plan and save it to a file. Then attest the plan file to Kosli to build a historical audit log. 
 
 ```shell {.command}
-$ terraform init
-$ terraform plan -out=tf.plan
-$ kosli attest generic --name=tf-plan --flow=tf-tutorial --trail=authorized-1 --attachments=tf.plan
+terraform init
+terraform plan -out=tf.plan
+kosli attest generic --name=tf-plan --flow=tf-tutorial --trail=authorized-1 --attachments=tf.plan
 ```
 
 Finally, we apply the terraform plan, and attest the produced terraform state file as an artifact.
@@ -81,8 +81,8 @@ Note that we set both `--build-url` and `--commit-url` to fake URLs. These are n
 {{</hint>}}
 
 ```shell {.command}
-$ terraform apply -auto-approve tf.plan
-$ kosli attest artifact terraform.tfstate --name=state-file --artifact-type=file --flow=tf-tutorial --trail=authorized-1 \
+terraform apply -auto-approve tf.plan
+kosli attest artifact terraform.tfstate --name=state-file --artifact-type=file --flow=tf-tutorial --trail=authorized-1 \
    --build-url=https://example.com --commit-url=https://example.com --commit=HEAD
 ```
 
@@ -95,7 +95,7 @@ a Kosli environment.
 Let's start by creating an environment of type `server`. 
 
 ```shell {.command}
-$ kosli create env terraform-state --type=server
+kosli create env terraform-state --type=server
 ```
 
 We can report the state file to the environment we created:
@@ -106,13 +106,13 @@ In production, you would configure the environment reporting to run periodically
 {{</hint>}}
 
 ```shell {.command}
-$ kosli snapshot server terraform-state --paths=terraform.tfstate
+kosli snapshot server terraform-state --paths=terraform.tfstate
 ```
 
 You can get the latest snapshot of the environment by running:
 
 ```shell
-$ kosli get snapshot terraform-state
+kosli get snapshot terraform-state
 COMMIT   ARTIFACT                                                                        FLOW     RUNNING_SINCE   REPLICAS
 6cbdb34  Name: /Users/samialajrami/workspace/kosli/iac-changes-tutorial/terraform.tfstate  tf-tutorial  28 minutes ago  1
          Fingerprint: a57667a7b921b91d438631afa1a1fe35300b4da909a19d2b61196580f30f1d0c 
@@ -132,7 +132,7 @@ Now let's see how Kosli can help catching an unauthorized change.
 We can simulate such change by modifying the `random_pet_result` output on line 6 in main.tf to `random_pet_name` and running:
 
 ```shell {.command}
-$ terraform apply --auto-approve
+terraform apply --auto-approve
 ```
 
 This updates the state file. Let's report the updated state file to the Kosli environment.
@@ -143,14 +143,14 @@ automatically (either on state file change or periodically).
 {{</hint>}}
 
 ```shell {.command}
-$ kosli snapshot server terraform-state --paths=terraform.tfstate
+kosli snapshot server terraform-state --paths=terraform.tfstate
 ```
 
 Getting the latest snapshot of the environment by running the command below shows that the `FLOW` is unknown. 
 This means that Kosli does not have provenance for that change (i.e. it is an unauthorized change).
 
 ```shell
-$ kosli get snapshot terraform-state
+kosli get snapshot terraform-state
 COMMIT  ARTIFACT                                                                        FLOW  RUNNING_SINCE  REPLICAS
 N/A     Name: /Users/samialajrami/workspace/kosli/iac-changes-tutorial/terraform.tfstate  N/A   8 minutes ago  1
         Fingerprint: edd93dcde27718ed493222ceb218275655555f3f3bfefa95628c599e678ac325 

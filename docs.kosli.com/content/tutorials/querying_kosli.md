@@ -24,7 +24,10 @@ You need to:
 You can use `kosli search` command to find out if Kosli knows of any artifact that was build using that commit - both short and full shas are accepted:
 
 ```
-$ kosli search 0f5c9e1
+kosli search 0f5c9e1
+```
+
+```
 Search result resolved to commit 0f5c9e19c4d4f948d19ce4c8495b2a44745cda96
 Name:              cyberdojo/web:0f5c9e1
 Fingerprint:       62e1d2909cc59193b31bfd120276fcb8ba5e42dd6becd873218a41e4ce022505
@@ -52,7 +55,10 @@ The information returned by `kosli search` - like Flow, Fingerprint or History -
 When you search in Kosli you often need to refer to a specific flow. If you don't remember all the flows' names it is easy to list them with `kosli list flows` command:
 
 ```
-$ kosli list flows 
+kosli list flows
+```
+
+```
 NAME                    DESCRIPTION                         VISIBILITY
 creator                 UX for Group/Kata creation          public
 custom-start-points     Custom exercises choices            public
@@ -71,7 +77,10 @@ web                     UX for practicing TDD               public
 And if you want to check metadata of a specific flow (like description or template) use `kosli get flow`
 
 ```
-$ kosli get flow creator
+kosli get flow creator
+```
+
+```
 Name:                creator
 Description:         UX for Group/Kata creation
 Visibility:          public
@@ -84,7 +93,10 @@ Last Deployment At:  Wed, 14 Sep 2022 10:51:43 CEST • one month ago
 To find the information about artifacts reported to a specific flow in Kosli use `kosli list artifacts` command
 
 ```
-$ kosli list artifacts --flow creator
+kosli list artifacts --flow creator
+```
+
+```
 COMMIT   ARTIFACT                                  STATE       CREATED_AT
 344430d  Name: cyberdojo/creator:344430d           COMPLIANT   Wed, 14 Sep 2022 10:48:09 CEST
          Fingerprint: 817a72(...)6b5a273399c693             
@@ -104,17 +116,17 @@ The amount of artifacts may be really long and by default you can see the last 1
 
 E.g. to see last five artifacts you'd use:
 ```
-$ kosli list artifacts --flow creator -n 5
+kosli list artifacts --flow creator -n 5
 ```
 
 And to see the next page:
 ```
-$ kosli list artifacts --flow creator -n 5 --page 2
+kosli list artifacts --flow creator -n 5 --page 2
 ```
 
 You can also use the `--output` flag to change the format of the response. By default the response comes in a *table* format, but you can choose to switch to *json*:
 ```
-$ kosli list artifacts --flow creator --output json
+kosli list artifacts --flow creator --output json
 ```
 ## Get artifact
 
@@ -127,7 +139,10 @@ Both are available in the output of `kosli list artifacts` command
 
 ```
 # search for artifact by its fingerprint
-$ kosli get artifact creator@817a72609041c51cd2a3bbbcbeb048c687677986b5a273399c6938b5e6aa1ded
+kosli get artifact creator@817a72609041c51cd2a3bbbcbeb048c687677986b5a273399c6938b5e6aa1ded
+```
+
+```
 Name:                     cyberdojo/creator:344430d
 Flow:                     creator
 Fingerprint:              817a72609041c51cd2a3bbbcbeb048c687677986b5a273399c6938b5e6aa1ded
@@ -194,7 +209,10 @@ History:
 As is the case for flows and artifacts, you can list all the Kosli environments you created under your organization
 
 ```
-$ kosli list environments
+kosli list environments
+```
+
+```
 NAME      TYPE  LAST REPORT                LAST MODIFIED
 aws-beta  ECS   2022-10-30T14:51:42+01:00  2022-10-30T14:51:42+01:00
 aws-prod  ECS   2022-10-30T14:51:28+01:00  2022-10-30T14:51:28+01:00
@@ -205,7 +223,10 @@ prod      K8S   2022-06-15T11:40:01+02:00  2022-06-15T11:40:01+02:00
 And get the metadata (including the type) of each environment:
 
 ```
-$ kosli get environment aws-beta
+kosli get environment aws-beta
+```
+
+```
 Name:              aws-beta
 Type:              ECS
 Description:       The ECS beta namespace
@@ -218,7 +239,10 @@ Last Reported At:  Sun, 30 Oct 2022 14:55:42 CET • 5 seconds ago
 When you have the name of the environment you want to dig into use `kosli list snapshots` or `kosli log environment` to browse snapshots and changes in the environment, or `kosli get snapshot` to have a look at a specific snapshot.
 
 ```
-$ kosli list snapshots aws-beta
+kosli list snapshots aws-beta
+```
+
+```
 SNAPSHOT  FROM                            TO                              DURATION
 266       Wed, 19 Oct 2022 09:47:42 CEST  now                             11 days
 265       Wed, 19 Oct 2022 09:46:42 CEST  Wed, 19 Oct 2022 09:47:42 CEST  59 seconds
@@ -237,12 +261,15 @@ SNAPSHOT  FROM                            TO                              DURATI
 252       Mon, 10 Oct 2022 08:47:42 CEST  Thu, 13 Oct 2022 09:04:42 CEST  3 days
 ```
 
-By default you can see the last 15 changes to the environment. You can choose to only print e.g. last 3 events (`-n` flag).
+By default, you can see the last 15 changes to the environment. You can choose to only print e.g. last 3 events (`-n` flag).
 
 You can also choose to see the actual events from each snapshot, using `kosli log environment` command:
 
 ```
-$ kosli log environment aws-beta
+kosli log environment aws-beta
+```
+
+```
 SNAPSHOT  EVENT                                                                          FLOW       DEPLOYMENTS
 #266      Artifact: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/dashboard:d90a3e4    dashboard  #15 
           Fingerprint: dd5308fdcda117c1ff3963e192a069ae390c2fe9e10e8abfa2430224265efe98             
@@ -260,16 +287,26 @@ SNAPSHOT  EVENT                                                                 
           Reported at: Wed, 19 Oct 2022 09:46:42 CEST  
 ```
 
-You can also use an *interval* expression, like `262..264` (to see specified snapshot list) , or `~4..NOW` (to get a list of snapshots starting from 4 behind a currently running one and the current one)
+You can also use an *interval* expression, like `262..264` (to see specified snapshot list)
 
 ```
-$ kosli log environment aws-beta 262..264
+kosli log environment aws-beta 262..264
+```
+
+```
 SNAPSHOT  FROM                            TO                              DURATION
 264       Wed, 19 Oct 2022 09:45:42 CEST  Wed, 19 Oct 2022 09:46:42 CEST  about a minute
 263       Wed, 19 Oct 2022 09:42:42 CEST  Wed, 19 Oct 2022 09:45:42 CEST  3 minutes
 262       Wed, 19 Oct 2022 09:32:42 CEST  Wed, 19 Oct 2022 09:42:42 CEST  10 minutes
+```
 
-$ kosli log environment aws-beta ~4..NOW
+or `~4..NOW` (to get a list of snapshots starting from 4 behind a currently running one and the current one)
+
+```
+kosli log environment aws-beta ~4..NOW
+```
+
+```
 SNAPSHOT  FROM                            TO                              DURATION
 266       Wed, 19 Oct 2022 09:47:42 CEST  now                             11 days
 265       Wed, 19 Oct 2022 09:46:42 CEST  Wed, 19 Oct 2022 09:47:42 CEST  59 seconds
@@ -283,7 +320,10 @@ SNAPSHOT  FROM                            TO                              DURATI
 To have a look at what is or was running in a given snapshot use `kosli get snapshot` command. You can use just the environment name as the argument, which will give you the latest snapshot, add `#` and snapshot number, to get a specific one, or `~n` where *n* is a number, to get *n-th* snapshot behind a current one:
 
 ``` 
-$ kosli get snapshot aws-beta
+kosli get snapshot aws-beta
+```
+
+```
 COMMIT   ARTIFACT                                                                              FLOW      RUNNING_SINCE  REPLICAS
 d90a3e4  Name: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/dashboard:d90a3e4               N/A       11 days ago    1
          Fingerprint: dd5308fdcda117c1ff3963e192a069ae390c2fe9e10e8abfa2430224265efe98                                  
@@ -294,8 +334,13 @@ d90a3e4  Name: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/dashboard:d90a3e4
 1c162e4  Name: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/differ:1c162e4                  N/A       11 days ago    1
          Fingerprint: b7fd766dd2514b2610c0c8d70d8f762de4921931f97fdd6fbbfcc9745ac3ce3b                                  
 [...]
+```
 
-$ kosli get snapshot aws-beta#256
+```
+kosli get snapshot aws-beta#256
+```
+
+```
 COMMIT   ARTIFACT                                                                              FLOW      RUNNING_SINCE  REPLICAS
 6fe0d30  Name: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/repler:6fe0d30                  N/A       16 days ago    1
          Fingerprint: a0c03099c832e4ce5f23f5e33dac9889c0b7ccd61297fffdaf1c67e7b99e6f8f                                  
@@ -306,8 +351,13 @@ d90a3e4  Name: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/dashboard:d90a3e4
 1c162e4  Name: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/differ:1c162e4                  N/A       16 days ago    1
          Fingerprint: b7fd766dd2514b2610c0c8d70d8f762de4921931f97fdd6fbbfcc9745ac3ce3b                                  
 [...]
+```
 
-$ kosli get snapshot aws-beta~19
+```
+kosli get snapshot aws-beta~19
+```
+
+```
 COMMIT   ARTIFACT                                                                              FLOW      RUNNING_SINCE  REPLICAS
 2e8646c  Name: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/shas:2e8646c                    N/A       one month ago  1
          Fingerprint: a3158c3e79c83905fd3613e06b8cf5a45141c50cf49d4f99de90a2d081b77771                                  
@@ -325,7 +375,10 @@ The same expressions (with `#` and `~`) can be used to reference snapshots when 
 In the example below there was only one difference between snapshots: one new artifact started running in the latest snapshot. 
 
 ```
-$ kosli diff snapshots aws-beta aws-beta~1
+kosli diff snapshots aws-beta aws-beta~1
+```
+
+```
 Only present in aws-beta (snapshot: aws-beta#266)
                    
      Name:         244531986313.dkr.ecr.eu-central-1.amazonaws.com/dashboard:d90a3e4
@@ -340,7 +393,10 @@ Only present in aws-beta (snapshot: aws-beta#266)
 You can use `diff` to compare snapshots of two different environments or different snapshots of the same environment:
 
 ```
-$ kosli diff snapshots aws-beta~3 aws-prod
+kosli diff snapshots aws-beta~3 aws-prod
+```
+
+```
 Only present in aws-prod (snapshot: aws-prod#261)
                    
      Name:         274425519734.dkr.ecr.eu-central-1.amazonaws.com/saver:8d724a1
