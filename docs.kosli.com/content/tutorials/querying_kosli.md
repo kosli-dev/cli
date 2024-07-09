@@ -23,7 +23,7 @@ You need to:
 
 You can use `kosli search` command to find out if Kosli knows of any artifact that was build using that commit - both short and full shas are accepted:
 
-```
+```shell {.command}
 kosli search 0f5c9e1
 ```
 
@@ -54,7 +54,7 @@ The information returned by `kosli search` - like Flow, Fingerprint or History -
 
 When you search in Kosli you often need to refer to a specific flow. If you don't remember all the flows' names it is easy to list them with `kosli list flows` command:
 
-```
+```shell {.command}
 kosli list flows
 ```
 
@@ -76,7 +76,7 @@ web                     UX for practicing TDD               public
 
 And if you want to check metadata of a specific flow (like description or template) use `kosli get flow`
 
-```
+```shell {.command}
 kosli get flow creator
 ```
 
@@ -92,7 +92,7 @@ Last Deployment At:  Wed, 14 Sep 2022 10:51:43 CEST • one month ago
 
 To find the information about artifacts reported to a specific flow in Kosli use `kosli list artifacts` command
 
-```
+```shell {.command}
 kosli list artifacts --flow creator
 ```
 
@@ -115,17 +115,17 @@ The output of the command is shortened above, for readability purposes.
 The amount of artifacts may be really long and by default you can see the last 15 artifacts - the first page of the result list. You can use `-n` flag to limit the amount of artifacts displayed per page, and `--page` to select which page of the result list you want to see.
 
 E.g. to see last five artifacts you'd use:
-```
+```shell {.command}
 kosli list artifacts --flow creator -n 5
 ```
 
 And to see the next page:
-```
+```shell {.command}
 kosli list artifacts --flow creator -n 5 --page 2
 ```
 
 You can also use the `--output` flag to change the format of the response. By default the response comes in a *table* format, but you can choose to switch to *json*:
-```
+```shell {.command}
 kosli list artifacts --flow creator --output json
 ```
 ## Get artifact
@@ -137,8 +137,8 @@ OR
 
 Both are available in the output of `kosli list artifacts` command
 
-```
-# search for artifact by its fingerprint
+```shell {.command}
+# search for an artifact by its fingerprint
 kosli get artifact creator@817a72609041c51cd2a3bbbcbeb048c687677986b5a273399c6938b5e6aa1ded
 ```
 
@@ -171,9 +171,14 @@ History:
     Started running in aws-beta#265 environment    Wed, 19 Oct 2022 09:46:42 CEST
     No longer running in aws-prod#257 environment  Fri, 21 Oct 2022 11:02:28 CEST
     Started running in aws-prod#259 environment    Fri, 21 Oct 2022 11:05:28 CEST
+```
 
-# search for artifact by its commit sha
-$ kosli get artifact creator:344430d
+```shell {.command}
+# search for an artifact by its commit sha
+kosli get artifact creator:344430d
+```
+
+```
 Name:                     cyberdojo/creator:344430d
 Flow:                     creator
 Fingerprint:              817a72609041c51cd2a3bbbcbeb048c687677986b5a273399c6938b5e6aa1ded
@@ -208,7 +213,7 @@ History:
 
 As is the case for flows and artifacts, you can list all the Kosli environments you created under your organization
 
-```
+```shell {.command}
 kosli list environments
 ```
 
@@ -222,7 +227,7 @@ prod      K8S   2022-06-15T11:40:01+02:00  2022-06-15T11:40:01+02:00
 
 And get the metadata (including the type) of each environment:
 
-```
+```shell {.command}
 kosli get environment aws-beta
 ```
 
@@ -238,7 +243,7 @@ Last Reported At:  Sun, 30 Oct 2022 14:55:42 CET • 5 seconds ago
 
 When you have the name of the environment you want to dig into use `kosli list snapshots` or `kosli log environment` to browse snapshots and changes in the environment, or `kosli get snapshot` to have a look at a specific snapshot.
 
-```
+```shell {.command}
 kosli list snapshots aws-beta
 ```
 
@@ -265,7 +270,7 @@ By default, you can see the last 15 changes to the environment. You can choose t
 
 You can also choose to see the actual events from each snapshot, using `kosli log environment` command:
 
-```
+```shell {.command}
 kosli log environment aws-beta
 ```
 
@@ -289,7 +294,7 @@ SNAPSHOT  EVENT                                                                 
 
 You can also use an *interval* expression, like `262..264` (to see specified snapshot list)
 
-```
+```shell {.command}
 kosli log environment aws-beta 262..264
 ```
 
@@ -302,7 +307,7 @@ SNAPSHOT  FROM                            TO                              DURATI
 
 or `~4..NOW` (to get a list of snapshots starting from 4 behind a currently running one and the current one)
 
-```
+```shell {.command}
 kosli log environment aws-beta ~4..NOW
 ```
 
@@ -319,7 +324,7 @@ SNAPSHOT  FROM                            TO                              DURATI
 
 To have a look at what is or was running in a given snapshot use `kosli get snapshot` command. You can use just the environment name as the argument, which will give you the latest snapshot, add `#` and snapshot number, to get a specific one, or `~n` where *n* is a number, to get *n-th* snapshot behind a current one:
 
-``` 
+``` shell {.command}
 kosli get snapshot aws-beta
 ```
 
@@ -336,7 +341,7 @@ d90a3e4  Name: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/dashboard:d90a3e4
 [...]
 ```
 
-```
+```shell {.command}
 kosli get snapshot aws-beta#256
 ```
 
@@ -353,7 +358,7 @@ d90a3e4  Name: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/dashboard:d90a3e4
 [...]
 ```
 
-```
+```shell {.command}
 kosli get snapshot aws-beta~19
 ```
 
@@ -374,7 +379,7 @@ The same expressions (with `#` and `~`) can be used to reference snapshots when 
 
 In the example below there was only one difference between snapshots: one new artifact started running in the latest snapshot. 
 
-```
+```shell {.command}
 kosli diff snapshots aws-beta aws-beta~1
 ```
 
@@ -392,7 +397,7 @@ Only present in aws-beta (snapshot: aws-beta#266)
 
 You can use `diff` to compare snapshots of two different environments or different snapshots of the same environment:
 
-```
+```shell {.command}
 kosli diff snapshots aws-beta~3 aws-prod
 ```
 
