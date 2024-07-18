@@ -167,7 +167,7 @@ func (suite *CliUtilsTestSuite) TestDefaultValue() {
 			want: "",
 		},
 		{
-			name: "Lookup commit-url for CircleCI with a repo from bitbucket returns correct url (with 'commits')",
+			name: "Lookup commit-url for CircleCI with a repo from bitbucket returns correct url (with '/commits/')",
 			args: args{
 				ci:               circleci,
 				flag:             "commit-url",
@@ -177,7 +177,7 @@ func (suite *CliUtilsTestSuite) TestDefaultValue() {
 			want: "https://bitbucket.org/ewelinawilkosz/cli-test/commits/2492011ef04a9da09d35be706cf6a4c5bc6f1e69",
 		},
 		{
-			name: "Lookup commit-url for CircleCI with a repo that is not from bitbucket returns correct url (with 'commits')",
+			name: "Lookup commit-url for CircleCI with a repo that is not from bitbucket returns correct url (with '/commit/')",
 			args: args{
 				ci:               circleci,
 				flag:             "commit-url",
@@ -185,6 +185,39 @@ func (suite *CliUtilsTestSuite) TestDefaultValue() {
 				envVars:          map[string]string{"CIRCLE_REPOSITORY_URL": "git@github.com:cyber-dojo/kosli-environment-reporter.git", "CIRCLE_SHA1": "84d80cd07ef86c1a5afbe69af491e5b3836a3f42"},
 			},
 			want: "https://github.com/cyber-dojo/kosli-environment-reporter/commit/84d80cd07ef86c1a5afbe69af491e5b3836a3f42",
+		},
+		{
+			name: "Lookup commit-url for Jenkins returns a correct url with HTTPS repo URL.",
+			args: args{
+				ci:   jenkins,
+				flag: "commit-url",
+				envVars: map[string]string{"GIT_URL": "https://github.com/example/foo.git",
+					"GIT_COMMIT": "8eb22db889202e4e23892665dbcc691217f500f8"},
+				unsetTestsEnvVar: true,
+			},
+			want: "https://github.com/example/foo/commit/8eb22db889202e4e23892665dbcc691217f500f8",
+		},
+		{
+			name: "Lookup commit-url for Jenkins returns a correct url with SSH repo URL.",
+			args: args{
+				ci:   jenkins,
+				flag: "commit-url",
+				envVars: map[string]string{"GIT_URL": "https://github.com/example/foo.git",
+					"GIT_COMMIT": "8eb22db889202e4e23892665dbcc691217f500f8"},
+				unsetTestsEnvVar: true,
+			},
+			want: "https://github.com/example/foo/commit/8eb22db889202e4e23892665dbcc691217f500f8",
+		},
+		{
+			name: "Lookup commit-url for Jenkins returns a correct url when it is bitbucket.",
+			args: args{
+				ci:   jenkins,
+				flag: "commit-url",
+				envVars: map[string]string{"GIT_URL": "https://bitbucket.org/example/foo.git",
+					"GIT_COMMIT": "8eb22db889202e4e23892665dbcc691217f500f8"},
+				unsetTestsEnvVar: true,
+			},
+			want: "https://bitbucket.org/example/foo/commits/8eb22db889202e4e23892665dbcc691217f500f8",
 		},
 	} {
 		suite.Run(t.name, func() {

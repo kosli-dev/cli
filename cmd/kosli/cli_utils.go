@@ -33,6 +33,7 @@ const (
 	azureDevops = "Azure Devops"
 	circleci    = "CircleCI"
 	codeBuild   = "Code Build"
+	jenkins     = "Jenkins"
 	unknown     = "Unknown"
 )
 
@@ -84,6 +85,11 @@ var ciTemplates = map[string]map[string]string{
 		"commit-url": "${CODEBUILD_SOURCE_REPO_URL}/commit/${CODEBUILD_RESOLVED_SOURCE_VERSION}",
 		"build-url":  "${CODEBUILD_BUILD_URL}",
 	},
+	jenkins: {
+		"git-commit": "${GIT_COMMIT}",
+		"commit-url": "${GIT_URL}/commit/${GIT_COMMIT}", // GIT_URL is the git repository url can be http or ssh
+		"build-url":  "${BUILD_URL}",
+	},
 }
 
 // GetCIDefaultsTemplates returns the templates used in a given CI
@@ -124,6 +130,8 @@ func WhichCI() string {
 		return circleci
 	} else if _, ok := os.LookupEnv("CODEBUILD_CI"); ok {
 		return codeBuild
+	} else if _, ok := os.LookupEnv("JENKINS_URL"); ok {
+		return jenkins
 	} else {
 		return unknown
 	}
@@ -135,13 +143,15 @@ func WhichCI() string {
 // if the KOSLI_TESTS env variable is set, return empty string to allow
 // testing missing flags in CI
 func DefaultValue(ci, flag string) string {
-	_, ok1 := os.LookupEnv("DOCS")
-	_, ok2 := os.LookupEnv("KOSLI_TESTS")
-	if !ok1 && !ok2 {
+	_, inDocs := os.LookupEnv("DOCS")
+	_, inTests := os.LookupEnv("KOSLI_TESTS")
+	if !inDocs && !inTests {
 		if v, ok := ciTemplates[ci][flag]; ok {
 			result := os.ExpandEnv(v)
 			// github and gitlab use ../commit/.. , bitbucket uses ../commits/..
-			if (ci == circleci || ci == codeBuild) && flag == "commit-url" {
+			// Note that this correction will not work for Bitbucket Data Center (self hosted) with
+			// custom domain name
+			if (ci == circleci || ci == codeBuild || ci == jenkins) && flag == "commit-url" {
 				result, _ = gitview.ExtractRepoURLFromRemote(result)
 				if strings.Contains(result, "bitbucket.org") {
 					return strings.Replace(result, "commit", "commits", 1)
