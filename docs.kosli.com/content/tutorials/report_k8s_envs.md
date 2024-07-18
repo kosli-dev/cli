@@ -41,7 +41,7 @@ This option is **only suitable for testing purposes**.
 To report the **artifacts running in an entire cluster**, you can run the following command:
 
 ```shell {.command}
-$ kosli snapshot k8s k8s-tutorial \
+kosli snapshot k8s k8s-tutorial \
     --api-token <your-api-token-here> \
     --org <your-kosli-org-name>
 ```
@@ -49,7 +49,7 @@ $ kosli snapshot k8s k8s-tutorial \
 To report **artifacts running in one or more namespaces**, you can run the following command:
 
 ```shell {.command}
-$ kosli snapshot k8s k8s-tutorial \
+kosli snapshot k8s k8s-tutorial \
     --namespaces namespace1,namespace2 \
     --api-token <your-api-token-here> \
     --org <your-kosli-org-name>
@@ -58,7 +58,7 @@ $ kosli snapshot k8s k8s-tutorial \
 To report **artifacts running in the entire cluster except from some namespaces**, you can run the following command:
 
 ```shell {.command}
-$ kosli snapshot k8s k8s-tutorial \
+kosli snapshot k8s k8s-tutorial \
     --exclude-namespaces namespace1,namespace2 \
     --api-token <your-api-token-here> \
     --org <your-kosli-org-name>
@@ -73,7 +73,7 @@ The chart creates a cronjob that will run the Kosli CLI inside a pod to report t
 1. Create a K8S secret to contain your Kosli API token.
 
 ```shell {.command}
-$ kubectl create secret generic kosli-api-token --from-literal=apikey=<your-kosli-api-token>
+kubectl create secret generic kosli-api-token --from-literal=apikey=<your-kosli-api-token>
 ```
 
 > Make sure the secret value does not contain any trailing whitespace.
@@ -109,15 +109,15 @@ reporterConfig:
 3. Install the Kosli helm chart
 
 ```shell {.command}
-$ helm repo add kosli https://charts.kosli.com/
-$ helm repo update
-$ helm install kosli-reporter kosli/k8s-reporter -f tutorial-values.yaml
+helm repo add kosli https://charts.kosli.com/
+helm repo update
+helm install kosli-reporter kosli/k8s-reporter -f tutorial-values.yaml
 ```
 
 4. Confirm the cronjob is created in the cluster:
 
 ```shell {.command}
-$ kubectl get cronjobs
+kubectl get cronjobs
 ```
 
 Now, the cronjob will run every 5 minutes and report what is running in the entire cluster to Kosli.

@@ -28,13 +28,13 @@ To follow the steps in this tutorial, you need to:
 * [Get a Kosli API token](/getting_started/service-accounts/).
 * Set the `KOSLI_ORG` environment variable to your personal org name and `KOSLI_API_TOKEN` to your token:
   ```shell {.command}
-  $ export KOSLI_ORG=<your-personal-kosli-org-name>
-  $ export KOSLI_API_TOKEN=<your-api-token>
+  export KOSLI_ORG=<your-personal-kosli-org-name>
+  export KOSLI_API_TOKEN=<your-api-token>
   ```
 * Clone the Kosli CLI git repo
   ```shell {.command}
-  $ git clone https://github.com/kosli-dev/cli.git 
-  $ cd cli
+  git clone https://github.com/kosli-dev/cli.git 
+  cd cli
   ```
 
 ## Creating a Flow and Trail
@@ -42,7 +42,7 @@ To follow the steps in this tutorial, you need to:
 We will start by creating a flow in Kosli to contain Trails and Artifacts for this demo.
 
 ```shell {.command}
-$ kosli create flow snyk-demo --use-empty-template
+kosli create flow snyk-demo --use-empty-template
 ```
 
 {{<hint info>}}
@@ -52,7 +52,7 @@ $ kosli create flow snyk-demo --use-empty-template
 Then, we can start a trail to bind our snyk attestations to.
 
 ```shell {.command}
-$ kosli begin trail test-1 --flow snyk-demo
+kosli begin trail test-1 --flow snyk-demo
 ```
 
 Now we can start running Snyk scans and attest them to this trail.
@@ -68,9 +68,9 @@ After each attestation in the sections below, you can navigate to:
 
 You can run a snyk opens source scan and report it to Kosli as follows:
 ```shell {.command}
-$ snyk test --sarif-file-output=os.json
+snyk test --sarif-file-output=os.json
 
-$ kosli attest snyk --flow snyk-demo --trail test-1 --name open-source-scan --scan-results os.json --commit HEAD
+kosli attest snyk --flow snyk-demo --trail test-1 --name open-source-scan --scan-results os.json --commit HEAD
 ```
 
 {{<hint info>}}
@@ -84,9 +84,9 @@ $ kosli attest snyk --flow snyk-demo --trail test-1 --name open-source-scan --sc
 
 You can run a snyk code scan and report it to Kosli as follows:
 ```shell {.command}
-$ snyk code test --sarif-file-output=code.json
+snyk code test --sarif-file-output=code.json
 
-$ kosli attest snyk --flow snyk-demo --trail test-1 --name code-scan --scan-results code.json --commit HEAD
+kosli attest snyk --flow snyk-demo --trail test-1 --name code-scan --scan-results code.json --commit HEAD
 ```
 
 ## Snyk Container scan
@@ -96,10 +96,10 @@ $ kosli attest snyk --flow snyk-demo --trail test-1 --name code-scan --scan-resu
 You can run a snyk container scan and report it to Kosli as follows:
 ```shell {.command}
 # pull the cli docker image before scanning it
-$ docker pull ghcr.io/kosli-dev/cli:v2.8.3
-$ snyk container test ghcr.io/kosli-dev/cli:v2.8.3  --file=Dockerfile --sarif-file-output=container.json
+docker pull ghcr.io/kosli-dev/cli:v2.8.3
+snyk container test ghcr.io/kosli-dev/cli:v2.8.3  --file=Dockerfile --sarif-file-output=container.json
 
-$ kosli attest snyk --flow snyk-demo --trail test-1 --name container-scan --scan-results container.json --commit HEAD
+kosli attest snyk --flow snyk-demo --trail test-1 --name container-scan --scan-results container.json --commit HEAD
 ```
 
 ## Snyk IaC scan
@@ -108,14 +108,14 @@ $ kosli attest snyk --flow snyk-demo --trail test-1 --name container-scan --scan
 
 We can run a snyk IaC scan on the K8S reporter Helm chart and report it to Kosli as follows:
 ```shell {.command}
-$ helm template ./charts/k8s-reporter --output-dir helm \
-   --set kosliApiToken.secretName=secret \
-   --set reporterConfig.kosliEnvironmentName=foo \
-   --set reporterConfig.kosliOrg=bar
+helm template ./charts/k8s-reporter --output-dir helm \
+  --set kosliApiToken.secretName=secret \
+  --set reporterConfig.kosliEnvironmentName=foo \
+  --set reporterConfig.kosliOrg=bar
 
-$ snyk iac test helm  --sarif-file-output=helm.json
+snyk iac test helm  --sarif-file-output=helm.json
 
-$ kosli attest snyk --flow snyk-demo --trail test-1 --name helm-scan --scan-results helm.json --commit HEAD
+kosli attest snyk --flow snyk-demo --trail test-1 --name helm-scan --scan-results helm.json --commit HEAD
 ```
 
 You can refer to the [Snyk docs](https://docs.snyk.io/snyk-cli/scan-and-maintain-projects-using-the-cli/snyk-cli-for-iac/test-your-iac-files) for more information on supported IaC configuration formats and how you can run snyk scans on them.

@@ -26,13 +26,13 @@ The same steps apply for different HTTP proxies and machines, but commands will 
 1. Start Tinyproxy using docker:
 
 ```shell {.command}
-$ cat <<EOF > tinyproxy.conf
+cat <<EOF > tinyproxy.conf
 User nobody
 Group nobody
 Port 8888
 EOF
 
-$ docker run -p 8888:8888 -v $(PWD)/tinyproxy.conf:/etc/tinyproxy/tinyproxy.conf:ro kalaksi/tinyproxy
+docker run -p 8888:8888 -v $(PWD)/tinyproxy.conf:/etc/tinyproxy/tinyproxy.conf:ro kalaksi/tinyproxy
 ```
 
 
@@ -44,7 +44,7 @@ Now you have an HTTP proxy running at http://localhost:8888
 To verify if the setup works, you can run this command to list environments of the public demo org `Cyber Dojo`:
 
 ```shell {.command}
-$ kosli list envs --org cyber-dojo --http-proxy http://localhost:8888 --api-token <<your-token>>
+kosli list envs --org cyber-dojo --http-proxy http://localhost:8888 --api-token <<your-token>>
 ```
 
 Your request goes through the HTTP proxy and is then forwarded to Kosli. If successful, you should see a similar output to this:
