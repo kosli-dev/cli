@@ -103,7 +103,7 @@ The service principal needs to have the following permissions:
 	artifactDescriptionFlag              = "[optional] The artifact description."
 	deploymentDescriptionFlag            = "[optional] The deployment description."
 	evidenceDescriptionFlag              = "[optional] The evidence description."
-	jiraBaseUrlFlag                      = "The base url for the jira project, e.g. 'https://kosli.atlassian.net/browse/'"
+	jiraBaseUrlFlag                      = "The base url for the jira project, e.g. 'https://kosli.atlassian.net'"
 	jiraUsernameFlag                     = "Jira username (for Jira Cloud)"
 	jiraAPITokenFlag                     = "Jira API token (for Jira Cloud)"
 	jiraPATFlag                          = "Jira personal access token (for self-hosted Jira)"
