@@ -9,9 +9,7 @@ The results of SonarCloud and SonarQube scans can be tracked in [Kosli trails](/
 
 ## Setting up in Kosli
 
-To set up the integration, navigate to the Sonar integration page of your org in the [Kosli app](https://app.kosli.com/).
-
-![Kosli App LaunchDarkly Integration page](/images/launchdarkly-integration.png)
+To set up the integration, navigate to the [Sonar integration page](https://app.kosli.com/cyber-dojo/integrations/sonar/) for your org in the [Kosli app](https://app.kosli.com/).
 
 After switching on the integration, you will be provided with a webhook and a secret.
 
@@ -62,4 +60,4 @@ The name of the Flow relevant to your project.
 ## Testing the integration
 
 To test the webhook once configured, simply scan a project in SonarCloud or SonarQube. If successful, the results of the scan will be attested to the relevant Flow and Trail as a sonar attestation.
-If the webhook fails, please check that you have provided the Flow name to the scanner correctly. 
+If the webhook fails, please check that you have passed the parameters to the scanner correctly.
