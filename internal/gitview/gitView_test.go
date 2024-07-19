@@ -310,6 +310,12 @@ func (suite *GitViewTestSuite) TestGetCommitURL() {
 			commitHash: "089615f84caedd6280689da694e71052cbdfb84d",
 			want:       "https://dev.azure.com/kosli/kosli-azure/_git/cli/commit/089615f84caedd6280689da694e71052cbdfb84d",
 		},
+		{
+			name:       "github enterprise",
+			repoURL:    "https://custom-domain-name.com/kosli-dev/cli",
+			commitHash: "089615f84caedd6280689da694e71052cbdfb84d",
+			want:       "https://custom-domain-name.com/kosli-dev/cli/commit/089615f84caedd6280689da694e71052cbdfb84d",
+		},
 	} {
 		suite.Run(t.name, func() {
 			actual := getCommitURL(t.repoURL, t.commitHash)

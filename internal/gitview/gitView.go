@@ -261,7 +261,10 @@ func getCommitURL(repoURL, commitHash string) string {
 	case strings.Contains(host, "dev.azure.com"):
 		return fmt.Sprintf("%s/commit/%s", repoURL, commitHash)
 	default:
-		return ""
+		// self-hosted instances can have custom domain names.
+		// in this case, we default to repoURL/commit/commitHash
+		// which works except for Bitbucket Data Center (self hosted)
+		return fmt.Sprintf("%s/commit/%s", repoURL, commitHash)
 	}
 }
 
