@@ -3,13 +3,15 @@ title: Sonar
 bookCollapseSection: false
 weight: 340
 ---
-# Sonar in Kosli
+# Record Sonar scan results in Kosli
 
-The results of SonarCloud and SonarQube scans can be tracked in [Kosli trails](/getting_started/trails/).
+The results of SonarCloud and SonarQube scans can be tracked in [Kosli trails](/getting_started/trails/). <br>
+This integration involves setting up a Sonar webhook in Kosli and a corresponding webhook in SonarCloud or SonarQube. When you run a scan of your SonarCloud/SonarQube project, the webhook is triggered and the results of the scan are sent to Kosli.<br>
+Some parameters must be passed to the Sonar scanner when it is run (e.g. the name of the Flow corresponding to the project, and the name of the trail the results should be attested to); these are sent with the scan results, and allow Kosli to determine the compliance status of the results and attest them to the correct trail/artifact.
 
 ## Setting up in Kosli
 
-To set up the integration, navigate to the [Sonar integration page](https://app.kosli.com/cyber-dojo/integrations/sonar/) for your org in the [Kosli app](https://app.kosli.com/).
+To set up the integration, navigate to the Sonar integration page for your org in the [Kosli app](https://app.kosli.com/).
 
 After switching on the integration, you will be provided with a webhook and a secret.
 
@@ -26,16 +28,22 @@ In [SonarCloud](https://sonarcloud.io/) or [SonarQube](https://sonarqube.org):
 - In SonarCloud: Go to your Organization, then Administration > Webhooks
 - In SonarQube: Go to Administration > Configuration > Webhooks
 - Create a new Webhook
-- Add the webhook URL and secret provided on this page
+- Add the Kosli webhook URL and secret provided
 - Click Create
+
+![SonarCloud Global Webhook page](/images/sonarcloud_integration_global.png)
+![SonarQube Global Webhook page](/images/sonarqube_integration_global.png)
 
 ### To create a project-specific webhook:
 
 - Go to the project you want to create a webhook for
 - Click on Administration (SonarCloud) or Project Settings (SonarQube) and go to Webhooks in the dropdown menu
 - Create a new Webhook
-- Add the webhook URL and secret provided on this page
+- Add the Kosli webhook URL and secret provided
 - Click Create
+
+![SonarCloud Project Webhook page](/images/sonarcloud_integration_project.png)
+![SonarQube Project Webhook page](/images/sonarqube_integration_project.png)
 
 ## Setting up the SonarScanner
 
