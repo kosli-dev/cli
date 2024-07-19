@@ -43,7 +43,20 @@ In order for Kosli to know where the scan results should be attested, certain pa
 These parameters can be passed to the scanner in three ways:
 - As part of the sonar-project.properties file used in CI analysis
 - As arguments to the scanner in your CI pipeline's YML file
+```shell
+    - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@master
+        with:
+          args: >
+            -Dsonar.analysis.kosli_flow=<YourFlowName>
+            -Dsonar.analysis.kosli_trail=<YourTrailName>
+```
 - As arguments to the CLI scanner
+```shell
+$ sonar scanner \
+  -Dsonar.analysis.kosli_flow=<YourFlowName> \
+  -Dsonar.analysis.kosli_trail=<YourTrailName> 
+```
 
 ### Required scanner parameters:
 - `sonar.analysis.kosli_flow=<YourFlowName>`
@@ -55,9 +68,9 @@ The name of the Flow relevant to your project.
 - `sonar.analysis.kosli_attestation=<YourAttestationName>`
     - The name you want to give to the attestation. If not provided, a default name "sonar" is used.
 - `sonar.analysis.kosli_artifact_fingerprint=<YourArtifactFingerprint>`
-    - The fingerprint of the artifact you want the attestation to be attached to.
+    - The fingerprint of the artifact you want the attestation to be attached to. Requires that the artifact has already been reported to Kosli.
 
 ## Testing the integration
 
-To test the webhook once configured, simply scan a project in SonarCloud or SonarQube. If successful, the results of the scan will be attested to the relevant Flow and Trail as a sonar attestation.
-If the webhook fails, please check that you have passed the parameters to the scanner correctly.
+To test the webhook once configured, simply scan a project in SonarCloud or SonarQube. If successful, the results of the scan will be attested to the relevant Flow and Trail (and artifact, if applicable) as a sonar attestation. <br>
+If the webhook fails, check that you have passed the parameters to the scanner correctly, and that the flow name and artifact fingerprint are valid.
