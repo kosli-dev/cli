@@ -2,9 +2,10 @@
 version: v1.25.0
 # ignores vulnerabilities until expiry date; change duration by modifying expiry date
 ignore:
-  SNYK-GOLANG-GOLANGORGXNETHTTP2-6173321:
+  
+  SNYK-GOLANG-K8SIOCLIENTGOTRANSPORT-7538822:
     - '*':
-        reason: A fix was pushed into the master branch but not yet published.
-        expires: 2024-03-31T11:00:12.080Z
-        created: 2024-01-31T11:00:12.086Z
+        reason: This is indirect dependency of k8s.io/client-go and does not really impact the CLI. Waiting for next k8s releases to fix it.
+        expires: 2024-09-19T10:26:12.080Z
+        created: 2024-07-19T10:26:12.086Z
 patch: {}
