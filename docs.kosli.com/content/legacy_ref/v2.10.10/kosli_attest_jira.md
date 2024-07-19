@@ -53,7 +53,7 @@ kosli attest jira [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |    -f, --flow string  |  The Kosli flow name.  |
 |    -h, --help  |  help for jira  |
 |        --jira-api-token string  |  Jira API token (for Jira Cloud)  |
-|        --jira-base-url string  |  The base url for the jira project, e.g. 'https://kosli.atlassian.net'  |
+|        --jira-base-url string  |  The base url for the jira project, e.g. 'https://kosli.atlassian.net/browse/'  |
 |        --jira-pat string  |  Jira personal access token (for self-hosted Jira)  |
 |        --jira-username string  |  Jira username (for Jira Cloud)  |
 |    -n, --name string  |  The name of the attestation as declared in the flow or trail yaml template.  |
