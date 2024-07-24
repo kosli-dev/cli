@@ -104,7 +104,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 								--repo-root %s
 								--jira-base-url https://kosli-test.atlassian.net
 								--jira-username tore@kosli.com %s`, suite.tmpDir, suite.defaultKosliArguments),
-			golden: "Error: Artifact with fingerprint '1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'attest-jira' belonging to organization 'docs-cmd-test-user'\n",
+			golden: "Error: Artifact with fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 does not exist in trail \"test-123\" of flow \"attest-jira\" belonging to organization \"docs-cmd-test-user\"\n",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "test commit",
 			},

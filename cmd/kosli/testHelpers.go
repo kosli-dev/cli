@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -104,17 +106,71 @@ func compareTwoFiles(actualFilename, expectedFilename string) error {
 	return compareFileBytes(actual, expected)
 }
 
+// compareAgainstFile compares the content of an actual file against a file containing regex patterns.
 func compareAgainstFile(actual []byte, filename string) error {
-	expected, err := os.ReadFile(filename)
+	// Read the expected file with regex patterns
+	expectedFile, err := os.Open(filename)
 	if err != nil {
 		return errors.Wrapf(err, "unable to read golden file %s", filename)
 	}
-	if err := compareFileBytes(actual, expected); err != nil {
-		return errors.Errorf("does not match golden file %s\n\nWANT:\n'%s'\n\nGOT:\n'%s'", filename, expected, actual)
+	defer expectedFile.Close()
+
+	// Scanner to read the expected file line by line
+	expectedScanner := bufio.NewScanner(expectedFile)
+	actualScanner := bufio.NewScanner(bytes.NewReader(actual))
+
+	lineNum := 1
+	for expectedScanner.Scan() {
+		if !actualScanner.Scan() {
+			return errors.Errorf("line %d: expected more lines in actual content", lineNum)
+		}
+
+		expectedLine := expectedScanner.Text()
+		actualLine := actualScanner.Text()
+		expectedLine = strings.TrimSpace(expectedLine)
+		actualLine = strings.TrimSpace(actualLine)
+
+		// Compile the regex pattern from the expected file
+		re, err := regexp.Compile(expectedLine + "$")
+		if err != nil {
+			return errors.Wrapf(err, "invalid regex on line %d in golden file %s", lineNum, filename)
+		}
+
+		// Check if the actual line matches the regex pattern
+		if !re.MatchString(actualLine) {
+			return errors.Errorf("line %d does not match: expected pattern '%s', got '%s'", lineNum, expectedLine, actualLine)
+		}
+
+		lineNum++
+	}
+
+	// Check if there are extra lines in the actual content
+	if actualScanner.Scan() {
+		return errors.Errorf("unexpected additional content after line %d in actual content", lineNum)
+	}
+
+	if err := expectedScanner.Err(); err != nil {
+		return errors.Wrapf(err, "error reading golden file %s", filename)
+	}
+
+	if err := actualScanner.Err(); err != nil {
+		return errors.Wrap(err, "error reading actual content")
 	}
 
 	return nil
 }
+
+// func compareAgainstFile(actual []byte, filename string) error {
+// 	expected, err := os.ReadFile(filename)
+// 	if err != nil {
+// 		return errors.Wrapf(err, "unable to read golden file %s", filename)
+// 	}
+// 	if err := compareFileBytes(actual, expected); err != nil {
+// 		return errors.Errorf("does not match golden file %s\n\nWANT:\n'%s'\n\nGOT:\n'%s'", filename, expected, actual)
+// 	}
+
+// 	return nil
+// }
 
 func compareFileBytes(actual, expected []byte) error {
 	actual = normalize(actual)

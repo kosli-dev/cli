@@ -74,7 +74,7 @@ func (suite *AttestGithubPRCommandTestSuite) TestAttestGithubPRCmd() {
 			name:      "attesting against an artifact that does not exist fails",
 			cmd: fmt.Sprintf(`attest pullrequest github --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo 
 				--github-org kosli-dev --repository cli   %s`, suite.defaultKosliArguments),
-			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nError: Artifact with fingerprint '1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'attest-github-pr' belonging to organization 'docs-cmd-test-user'\n",
+			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nError: Artifact with fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 does not exist in trail \"test-123\" of flow \"attest-github-pr\" belonging to organization \"docs-cmd-test-user\"\n",
 		},
 		{
 			name: "can attest github pr against an artifact using artifact name and --artifact-type",
