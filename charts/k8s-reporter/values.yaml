@@ -8,7 +8,7 @@ image:
   # -- the kosli reporter image pull policy
   pullPolicy: IfNotPresent
   # -- the kosli reporter image tag, overrides the image tag whose default is the chart appVersion.
-  tag: "v2.8.6"
+  tag: "v2.10.11"
 
 # -- overrides the name used for the created k8s resources. If `fullnameOverride` is provided, it has higher precedence than this one
 nameOverride: ""
@@ -45,6 +45,8 @@ reporterConfig:
   namespaces: ""
   # -- whether the dry run mode is enabled or not. In dry run mode, the reporter logs the reports to stdout and does not send them to kosli.
   dryRun: false
+  # -- the http proxy url
+  httpProxy: ""
 
 # Uncomment the env variable below and replace <instance_name>, if you are on a single tenant Kosli instance
 # env:

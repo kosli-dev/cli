@@ -67,7 +67,7 @@ func (suite *AttestAzurePRCommandTestSuite) TestAttestAzurePRCmd() {
 			name:      "attesting against an artifact that does not exist fails",
 			cmd: fmt.Sprintf(`attest pullrequest azure --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo 
 				--azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit HEAD  %s`, suite.defaultKosliArguments),
-			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nError: Artifact with fingerprint '1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'attest-azure-pr' belonging to organization 'docs-cmd-test-user'\n",
+			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nError: Artifact with fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 does not exist in trail \"test-123\" of flow \"attest-azure-pr\" belonging to organization \"docs-cmd-test-user\"\n",
 		},
 		{
 			name: "can attest azure pr against an artifact using artifact name and --artifact-type",
