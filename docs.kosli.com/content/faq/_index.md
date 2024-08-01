@@ -163,20 +163,19 @@ For example, `--artifact-type=file` or `--artifact-type file`.
 However, an explicitly specified boolean flag value **must** use an `=`.
 For example, if you try this:
 ```
-kosli report evidence artifact generic Dockerfile --artifact-type file  --compliant true ...
+kosli attest generic Dockerfile --artifact-type file  --compliant true ...
 ```
 You will get an error stating:
 ```
-Error: only one argument ... is allowed.
-The 2 supplied arguments are: [Dockerfile, true]
+Error: accepts at most 1 arg(s), received 2
 ```
 Here, `--artifact-type file` is parsed as if it was `--artifact-type=file`, leaving:
 ```
-kosli report evidence artifact generic Dockerfile --compliant true ...
+kosli attest generic Dockerfile --compliant true ...
 ```
 Then `--compliant` is parsed as if *implicitly* defaulting to `--compliant=true`, leaving:
 ```
-kosli report evidence artifact generic Dockerfile true ...
+kosli attest generic Dockerfile true ...
 ```
 The parser then sees `Dockerfile` and `true` as the two
-arguments to `kosli report evidence artifact generic`.
+arguments to `kosli attest generic`.
