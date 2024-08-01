@@ -48,10 +48,10 @@ function get_commit_of_latest_relase
     fi
 
     isLatest=$(echo "$latest_release" | jq ".[0].isLatest")
-    latestTag=$(echo "$latest_release" | jq -r ".[0].tagName")
     if [ "$isLatest" != "true" ]; then
         die "Latest tag is not marked as 'isLatest'. $latest_release"
     fi
+    latestTag=$(echo "$latest_release" | jq -r ".[0].tagName")
     git rev-list -n 1 ${latestTag}
 }
 
