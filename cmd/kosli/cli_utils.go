@@ -520,7 +520,13 @@ func ValidateAttestationArtifactArg(args []string, artifactType, inputSha256 str
 	if artifactType != "" && (len(args) == 0 || args[0] == "") {
 		return fmt.Errorf("artifact name argument is required when --artifact-type is set")
 	}
-
+	if artifactType == "" && (len(args) > 0) {
+		extraMessage := ""
+		if args[0] == "true" || args[0] == "false" {
+			extraMessage = "\nSee https://docs.kosli.com//faq/#boolean-flags"
+		}
+		return fmt.Errorf("--artifact-type is required when artifact name ('%s') argument is supplied.%s", args[0], extraMessage)
+	}
 	if inputSha256 != "" {
 		if err := digest.ValidateDigest(inputSha256); err != nil {
 			return err
