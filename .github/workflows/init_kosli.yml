@@ -89,7 +89,7 @@ jobs:
             kosli attest generic \
               --org ${{inputs.kosli_org}} \
               --flow ${{inputs.flow_name}} \
-              --trail ${{inputs.trail_name}} \ 
+              --trail ${{inputs.trail_name}} \
               --name=never-alone-data \
               --compliant=true \
               --attachments="${ALL_PRS_FILENAME}"
@@ -99,7 +99,7 @@ jobs:
             kosli attest generic \
               --org ${{inputs.kosli_org}} \
               --flow ${{inputs.flow_name}} \
-              --trail ${{inputs.trail_name}} \ 
+              --trail ${{inputs.trail_name}} \
               --name=never-alone-control \
               --compliant=${KOSLI_COMPLIANT} \
               --attachments="${FAILED_PRS_FILENAME}"
