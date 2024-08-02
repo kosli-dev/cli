@@ -39,7 +39,7 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 			wantError: true,
 			name:      "fails when more arguments are provided",
 			cmd:       fmt.Sprintf("attest generic foo bar %s", suite.defaultKosliArguments),
-			golden:    "Error: accepts at most 1 arg(s), received 2\n",
+			golden:    "Error: accepts at most 1 arg(s), received 2 [foo bar]\n",
 		},
 		{
 			wantError: true,
@@ -58,6 +58,18 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 			name:      "fails when artifact-name is provided and there is no --artifact-type",
 			cmd:       fmt.Sprintf("attest generic wibble %s", suite.defaultKosliArguments),
 			golden:    "Error: --artifact-type is required when artifact name ('wibble') argument is supplied.\nUsage: kosli attest generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when there are extra args and gives custom help message when an argument is true|false",
+			cmd:       fmt.Sprintf("attest generic foo -t file %s --compliant false", suite.defaultKosliArguments),
+			golden:    "Error: accepts at most 1 arg(s), received 2 [foo false]\nSee https://docs.kosli.com//faq/#boolean-flags\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when there are extra args and gives custom help message when an argument is true|false",
+			cmd:       fmt.Sprintf("attest generic %s --compliant false", suite.defaultKosliArguments),
+			golden:    "Error: --artifact-type is required when artifact name ('false') argument is supplied.\nSee https://docs.kosli.com//faq/#boolean-flags\nUsage: kosli attest generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,

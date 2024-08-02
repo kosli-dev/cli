@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -797,4 +798,17 @@ func prefixEachLine(multilineString, prefix string) string {
 	}
 
 	return strings.Join(lines, "\n")
+}
+
+// Custom error message instead of cobra.MaximumNArgs(1)
+func CustomMaximumNArgs(max int, args []string) error {
+	if len(args) > max {
+		extraMessage := ""
+		if slices.Contains(args, "true") || slices.Contains(args, "false") {
+			extraMessage = "\nSee https://docs.kosli.com//faq/#boolean-flags"
+		}
+		return fmt.Errorf("accepts at most 1 arg(s), received %v %v%s", len(args), args, extraMessage)
+	} else {
+		return nil
+	}
 }
