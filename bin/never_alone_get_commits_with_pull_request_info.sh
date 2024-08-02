@@ -73,7 +73,11 @@ function get_pull_requests
     local proposed_commit=$1; shift
     local result_file=$1; shift
     local commits list_separator
-    commits=($(git rev-list --first-parent "${base_commit}..${proposed_commit}"))
+    # Use gh instead of git so we can keep the commit depth of 1. The order of the response for gh is reversed
+    # so I do a tac at the end to get it the same order.
+    # commits=($(git rev-list --first-parent "${base_commit}..${proposed_commit}"))
+    commits=($(gh api repos/:owner/:repo/compare/${base_commit}...${proposed_commit} -q '.commits[].sha' | tac))
+
     list_separator=""
     echo "[" > ${result_file}
     for commit in "${commits[@]}"; do
