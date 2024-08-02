@@ -61,7 +61,7 @@ func (suite *AttestBitbucketPRCommandTestSuite) TestAttestBitbucketPRCmd() {
 		{
 			wantError: true,
 			name:      "fails when missing a required flags",
-			cmd:       fmt.Sprintf("attest pullrequest bitbucket foo %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest pullrequest bitbucket foo -t file %s", suite.defaultKosliArguments),
 			golden:    "Error: required flag(s) \"bitbucket-username\", \"bitbucket-workspace\", \"name\", \"repository\" not set\n",
 		},
 		{

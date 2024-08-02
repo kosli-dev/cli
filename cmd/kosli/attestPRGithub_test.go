@@ -47,7 +47,7 @@ func (suite *AttestGithubPRCommandTestSuite) TestAttestGithubPRCmd() {
 		{
 			wantError: true,
 			name:      "fails when missing a required flags",
-			cmd:       fmt.Sprintf("attest pullrequest github foo %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest pullrequest github foo -t file %s", suite.defaultKosliArguments),
 			golden:    "Error: required flag(s) \"github-org\", \"name\", \"repository\" not set\n",
 		},
 		{

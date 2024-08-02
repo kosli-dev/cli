@@ -44,7 +44,7 @@ func (suite *AttestSnykCommandTestSuite) TestAttestSnykCmd() {
 		{
 			wantError: true,
 			name:      "fails when missing a required flags",
-			cmd:       fmt.Sprintf("attest snyk foo %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest snyk foo -t file %s", suite.defaultKosliArguments),
 			golden:    "Error: required flag(s) \"name\", \"scan-results\" not set\n",
 		},
 		{

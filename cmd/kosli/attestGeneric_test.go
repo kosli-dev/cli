@@ -44,8 +44,20 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 		{
 			wantError: true,
 			name:      "fails when missing a required flag",
-			cmd:       fmt.Sprintf("attest generic foo %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest generic foo -t file %s", suite.defaultKosliArguments),
 			golden:    "Error: required flag(s) \"name\" not set\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when artifact-name is provided (as _unused_ boolean 'space' arg) and there is no --artifact-type",
+			cmd:       fmt.Sprintf("attest generic %s --compliant false", suite.defaultKosliArguments),
+			golden:    "Error: --artifact-type is required when artifact name ('false') argument is supplied.\nSee https://docs.kosli.com//faq/#boolean-flags\nUsage: kosli attest generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when artifact-name is provided and there is no --artifact-type",
+			cmd:       fmt.Sprintf("attest generic wibble %s", suite.defaultKosliArguments),
+			golden:    "Error: --artifact-type is required when artifact name ('wibble') argument is supplied.\nUsage: kosli attest generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,

@@ -64,7 +64,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 		{
 			wantError: true,
 			name:      "fails when missing required flags",
-			cmd:       fmt.Sprintf("attest jira foo --jira-username tore@kosli.com %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest jira foo -t file --jira-username tore@kosli.com %s", suite.defaultKosliArguments),
 			golden:    "Error: required flag(s) \"commit\", \"jira-base-url\", \"name\" not set\n",
 		},
 		{
@@ -78,7 +78,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 		{
 			wantError: true,
 			name:      "fails when missing --commit flag",
-			cmd: fmt.Sprintf(`attest jira foo --name bar
+			cmd: fmt.Sprintf(`attest jira foo -t file --name bar
 							--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
 							--jira-api-token secret
 							%s`, suite.defaultKosliArguments),
