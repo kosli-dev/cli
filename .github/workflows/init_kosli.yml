@@ -73,3 +73,26 @@ jobs:
                 --name pr
                 --github-token ${{ secrets.pr_github_token }}
                 --org ${{inputs.kosli_org}}
+        
+
+        - name: Attest never alone evidence to Kosli Trail
+          env:
+            KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+            GH_TOKEN: ${{ github.token }}
+          run: |
+            ALL_PRS_FILENAME=pull-request-list.json
+            FAILED_PRS_FILENAME=failed-pull-requests.json
+            
+            ./bin/never_alone.sh -p "${ALL_PRS_FILENAME}" -f "${FAILED_PRS_FILENAME}" -c "${GITHUB_SHA}"
+            
+            kosli attest generic \
+              --name=never-alone-data \
+              --compliant=true \
+              --attachments="${ALL_PRS_FILENAME}"
+
+            KOSLI_COMPLIANT=$(jq 'if . == [] then true else false end' "${FAILED_PRS_FILENAME}")
+            
+            kosli attest generic \
+              --name=never-alone-control \
+              --compliant=${KOSLI_COMPLIANT} \
+              --attachments="${FAILED_PRS_FILENAME}"
