@@ -76,6 +76,7 @@ jobs:
         
 
         - name: Attest never alone evidence to Kosli Trail
+          if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') }}
           env:
             KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
             GH_TOKEN: ${{ github.token }}
@@ -86,6 +87,10 @@ jobs:
             ./bin/never_alone.sh -p "${ALL_PRS_FILENAME}" -f "${FAILED_PRS_FILENAME}" -c "${GITHUB_SHA}"
             
             kosli attest generic \
+              --github-token ${{ secrets.pr_github_token }} \
+              --org ${{inputs.kosli_org}} \
+              --flow ${{inputs.flow_name}} \
+              --trail ${{inputs.trail_name}} \ 
               --name=never-alone-data \
               --compliant=true \
               --attachments="${ALL_PRS_FILENAME}"
@@ -93,6 +98,10 @@ jobs:
             KOSLI_COMPLIANT=$(jq 'if . == [] then true else false end' "${FAILED_PRS_FILENAME}")
             
             kosli attest generic \
+              --github-token ${{ secrets.pr_github_token }} \
+              --org ${{inputs.kosli_org}} \
+              --flow ${{inputs.flow_name}} \
+              --trail ${{inputs.trail_name}} \ 
               --name=never-alone-control \
               --compliant=${KOSLI_COMPLIANT} \
               --attachments="${FAILED_PRS_FILENAME}"
