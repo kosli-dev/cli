@@ -52,7 +52,8 @@ function get_commit_of_latest_relase
     if [ "$isLatest" != "true" ]; then
         die "Latest tag is not marked as 'isLatest'. $latest_release"
     fi
-    git rev-list -n 1 ${latestTag}
+    tagCommit=$(gh api repos/:owner/:repo/git/refs/tags/${latestTag} -q .object.sha)
+    gh api repos/:owner/:repo/git/tags/${tagCommit} -q .object.sha
 }
 
 

@@ -67,8 +67,9 @@ function get_failing_pull_requests
     # Read each entry and check it
     while IFS= read -r entry; do
         # Check for missing latestReviews or if that list is empty
-        latest_reviews=$(echo "$entry" | jq '.latestReviews // empty')
+        latest_reviews=$(echo "$entry" | jq '.latestReviews')
         if [ -z "$latest_reviews" -o "$latest_reviews" = "[]" ]; then
+            entry=$(echo $entry | jq '. += {"failure": "no reviewers"}')
             failed_reviews+=("$entry")
         else
             # Find the entry where 'state' is APPROVED
@@ -83,7 +84,7 @@ function get_failing_pull_requests
                 fi
             done
             if [ "$state" != '"APPROVED"' ]; then
-                # Fail if no APPROVED was found
+                entry=$(echo $entry | jq '. += {"failure": "no state:APPROVED review"}')
                 failed_reviews+=("$entry")
             else
                 # Fail if latest reviewer and auther is the same person
