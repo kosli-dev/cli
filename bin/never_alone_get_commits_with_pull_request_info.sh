@@ -83,7 +83,10 @@ function get_pull_requests
     for commit in "${commits[@]}"; do
         echo "${list_separator}" >> ${result_file}
         pr_data=$(gh pr list --search "${commit}" --state merged --json author,latestReviews,mergeCommit,mergedAt,url)
-        if [ "$(echo "$pr_data" | jq '. | length')" -eq 0 ]; then
+        if [ "$pr_data" = "[]" ]; then
+            # Commit is not merged back to master (this will happen if you run this on a branch)
+            echo '{"sha": "'$commit'"}' >> "${result_file}"
+        elif [ "$(echo "$pr_data" | jq '. | length')" -eq 0 ]; then
             # No pull request found for that commit, so do a new request to get the commit
             commit_data=$(gh search commits --hash "${commit}" --json author,sha)
             echo "$commit_data" | jq '.[0]' >> "${result_file}"

@@ -68,7 +68,7 @@ function get_failing_pull_requests
     while IFS= read -r entry; do
         # Check for missing latestReviews or if that list is empty
         latest_reviews=$(echo "$entry" | jq '.latestReviews')
-        if [ -z "$latest_reviews" -o "$latest_reviews" = "[]" ]; then
+        if [ -z "$latest_reviews" -o "$latest_reviews" = "[]" -o "$latest_reviews" = "null" ]; then
             entry=$(echo $entry | jq '. += {"failure": "no reviewers"}')
             failed_reviews+=("$entry")
         else
