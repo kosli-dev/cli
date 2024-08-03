@@ -114,9 +114,15 @@ func newAttestAzurePRCmd(out io.Writer) *cobra.Command {
 		Short:   attestPRAzureShortDesc,
 		Long:    attestPRAzureLongDesc,
 		Example: attestPRAzureExample,
-		Args:    cobra.MaximumNArgs(1),
+		// Args:    cobra.MaximumNArgs(1),  // See CustomMaximumNArgs() below
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
+
+			err := CustomMaximumNArgs(1, args)
+			if err != nil {
+				return err
+			}
+
+			err = RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}

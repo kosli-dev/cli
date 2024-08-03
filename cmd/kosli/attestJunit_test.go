@@ -39,7 +39,7 @@ func (suite *AttestJunitCommandTestSuite) TestAttestJunitCmd() {
 			wantError: true,
 			name:      "fails when more arguments are provided",
 			cmd:       fmt.Sprintf("attest junit foo bar %s", suite.defaultKosliArguments),
-			golden:    "Error: accepts at most 1 arg(s), received 2\n",
+			golden:    "Error: accepts at most 1 arg(s), received 2 [foo bar]\n",
 		},
 		{
 			wantError: true,

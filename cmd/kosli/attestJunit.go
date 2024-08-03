@@ -92,9 +92,15 @@ func newAttestJunitCmd(out io.Writer) *cobra.Command {
 		Short:   attestJunitShortDesc,
 		Long:    attestJunitLongDesc,
 		Example: attestJunitExample,
-		Args:    cobra.MaximumNArgs(1),
+		// Args:    cobra.MaximumNArgs(1),  // See CustomMaximumNArgs() below
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
+
+			err := CustomMaximumNArgs(1, args)
+			if err != nil {
+				return err
+			}
+
+			err = RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
