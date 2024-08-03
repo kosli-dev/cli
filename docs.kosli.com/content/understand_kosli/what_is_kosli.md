@@ -17,7 +17,7 @@ Kosli connects the recorded changes to establish immutable "chains of custody" w
 
 # When to use Kosli?
 
-Kosli serves as a versatile solution for a variety of use cases. Two primary scenarios in which customers find value in using Kosli include:
+Kosli serves as a versatile solution for a variety of use cases. Two primary scenarios which customers find Kosli valuable are:
 
 - Monitoring and Ensuring Compliance in Software and Business Processes:
   Regardless of your specific process requirements and tools, Kosli empowers you to streamline and automate your change management and evidence recording processes. This capability ensures that organizations are consistently prepared for audits.
