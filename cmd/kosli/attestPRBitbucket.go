@@ -113,12 +113,12 @@ func newAttestBitbucketPRCmd(out io.Writer) *cobra.Command {
 		retriever: config,
 	}
 	cmd := &cobra.Command{
-		Use:         "bitbucket [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Aliases:     []string{"bb"},
-		Short:       attestPRBitbucketShortDesc,
-		Long:        attestPRBitbucketLongDesc,
-		Example:     attestPRBitbucketExample,
 		// Args:    cobra.MaximumNArgs(1),  // See CustomMaximumNArgs() below
+		Use:     "bitbucket [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Aliases: []string{"bb"},
+		Short:   attestPRBitbucketShortDesc,
+		Long:    attestPRBitbucketLongDesc,
+		Example: attestPRBitbucketExample,
 		Annotations: map[string]string{"pr": "true"},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 

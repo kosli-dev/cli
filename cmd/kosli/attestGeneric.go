@@ -90,11 +90,11 @@ func newAttestGenericCmd(out io.Writer) *cobra.Command {
 		},
 	}
 	cmd := &cobra.Command{
+		// Args:    cobra.MaximumNArgs(1),  // See CustomMaximumNArgs() below
 		Use:     "generic [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Short:   attestGenericShortDesc,
 		Long:    attestGenericLongDesc,
 		Example: attestGenericExample,
-		// Args:    cobra.MaximumNArgs(1),  // See CustomMaximumNArgs() below
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 
 			err := CustomMaximumNArgs(1, args)

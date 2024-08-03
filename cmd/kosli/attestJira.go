@@ -127,11 +127,11 @@ func newAttestJiraCmd(out io.Writer) *cobra.Command {
 		},
 	}
 	cmd := &cobra.Command{
+		// Args:    cobra.MaximumNArgs(1), // See CustomMaximumNArgs() below
 		Use:     "jira [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Short:   attestJiraShortDesc,
 		Long:    attestJiraLongDesc,
 		Example: attestJiraExample,
-		// Args:    cobra.MaximumNArgs(1), // See CustomMaximumNArgs() below
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 
 			err := CustomMaximumNArgs(1, args)

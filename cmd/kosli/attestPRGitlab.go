@@ -103,12 +103,12 @@ func newAttestGitlabPRCmd(out io.Writer) *cobra.Command {
 		retriever: new(gitlabUtils.GitlabConfig),
 	}
 	cmd := &cobra.Command{
-		Use:         "gitlab [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Aliases:     []string{"gl"},
-		Short:       attestPRGitlabShortDesc,
-		Long:        attestPRGitlabLongDesc,
-		Example:     attestPRGitlabExample,
 		// Args:    cobra.MaximumNArgs(1),  // See CustomMaximumNArgs() below
+		Use:     "gitlab [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Aliases: []string{"gl"},
+		Short:   attestPRGitlabShortDesc,
+		Long:    attestPRGitlabLongDesc,
+		Example: attestPRGitlabExample,
 		Annotations: map[string]string{"pr": "true"},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 

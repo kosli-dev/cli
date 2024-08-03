@@ -107,19 +107,19 @@ func newAttestSnykCmd(out io.Writer) *cobra.Command {
 		},
 	}
 	cmd := &cobra.Command{
+		// Args:    cobra.MaximumNArgs(1),  // See CustomMaximumNArgs() below
 		Use:     "snyk [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Short:   attestSnykShortDesc,
 		Long:    attestSnykLongDesc,
 		Example: attestSnykExample,
-		// Args:    cobra.MaximumNArgs(1),  // See CustomMaximumNArgs() below
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 
-			err = CustomMaximumNArgs(1, args)
+			err := CustomMaximumNArgs(1, args)
 			if err != nil {
 				return err
 			}
 
-			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
+			err = RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}

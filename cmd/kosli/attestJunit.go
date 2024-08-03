@@ -88,11 +88,11 @@ func newAttestJunitCmd(out io.Writer) *cobra.Command {
 		},
 	}
 	cmd := &cobra.Command{
+		// Args:    cobra.MaximumNArgs(1),  // See CustomMaximumNArgs() below
 		Use:     "junit [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Short:   attestJunitShortDesc,
 		Long:    attestJunitLongDesc,
 		Example: attestJunitExample,
-		// Args:    cobra.MaximumNArgs(1),  // See CustomMaximumNArgs() below
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 
 			err := CustomMaximumNArgs(1, args)
