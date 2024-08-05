@@ -22,9 +22,14 @@ As you go through the guide you can also check your progress from
 
 In the upper left corner there is a house icon. Next to it you can select
 which organization you want to view. Your personal organization
-has the same name as your github login name, and is the organization you will
+has the same name as your GitHub login name, and is the organization you will
 be using in this guide.
 {{< /hint >}}
+
+> [Playground](https://github.com/kosli-dev/playground?tab=readme-ov-file#kosli-playground) is an alternative version of this tutorial in which you
+embed the Kosli commands in a GitHub CI Workflow (in a clone of the playground repo) rather than running them 
+directly from your terminal. 
+
 
 ## Step 1: Prerequisites and Kosli account
 
