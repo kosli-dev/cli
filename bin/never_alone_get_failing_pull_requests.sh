@@ -90,6 +90,7 @@ function get_failing_pull_requests
                 # Fail if latest reviewer and auther is the same person
                 review_author=$(echo "$review" | jq ".author.login")
                 if [ "${review_author}" = "${commit_author}" ]; then
+                    entry=$(echo $entry | jq '. += {"failure": "committer and approver are the same person"}')
                     failed_reviews+=("$entry")
                 fi
             fi
