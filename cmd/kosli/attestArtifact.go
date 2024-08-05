@@ -90,13 +90,19 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 	o := new(attestArtifactOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
+		//Args:    cobra.MaximumNArgs(1), // See CustomMaximumNArgs() below
 		Use:     "artifact {IMAGE-NAME | FILE-PATH | DIR-PATH}",
 		Short:   attestArtifactShortDesc,
 		Long:    attestArtifactLongDesc,
 		Example: attestArtifactExample,
-		Args:    cobra.MaximumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
+
+			err := CustomMaximumNArgs(1, args)
+			if err != nil {
+				return err
+			}
+
+			err = RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}

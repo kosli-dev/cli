@@ -109,14 +109,20 @@ func newAttestAzurePRCmd(out io.Writer) *cobra.Command {
 	}
 	azureFlagsValues := new(azUtils.AzureFlagsTempValueHolder)
 	cmd := &cobra.Command{
+		// Args:    cobra.MaximumNArgs(1),  // See CustomMaximumNArgs() below
 		Use:     "azure [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Aliases: []string{"az"},
 		Short:   attestPRAzureShortDesc,
 		Long:    attestPRAzureLongDesc,
 		Example: attestPRAzureExample,
-		Args:    cobra.MaximumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
+
+			err := CustomMaximumNArgs(1, args)
+			if err != nil {
+				return err
+			}
+
+			err = RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}

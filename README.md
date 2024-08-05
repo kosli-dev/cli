@@ -23,3 +23,7 @@ See the [docs](https://docs.kosli.com/client_reference/)
 ## Building the documentation
 
 `make hugo`
+
+## Running the tests
+To run only the tests in a single test suite, eg TestAttestJunitCommandTestSuite
+`make test_integration_single TARGET=TestAttestJunitCommandTestSuite`

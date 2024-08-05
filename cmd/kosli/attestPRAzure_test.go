@@ -42,12 +42,12 @@ func (suite *AttestAzurePRCommandTestSuite) TestAttestAzurePRCmd() {
 			wantError: true,
 			name:      "fails when more arguments are provided",
 			cmd:       fmt.Sprintf("attest pullrequest azure foo bar %s", suite.defaultKosliArguments),
-			golden:    "Error: accepts at most 1 arg(s), received 2\n",
+			golden:    "Error: accepts at most 1 arg(s), received 2 [foo bar]\n",
 		},
 		{
 			wantError: true,
 			name:      "fails when missing a required flags",
-			cmd:       fmt.Sprintf("attest pullrequest azure foo %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest pullrequest azure foo -t file %s", suite.defaultKosliArguments),
 			golden:    "Error: required flag(s) \"azure-org-url\", \"commit\", \"name\", \"project\", \"repository\" not set\n",
 		},
 		{

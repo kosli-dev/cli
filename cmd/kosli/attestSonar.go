@@ -101,13 +101,19 @@ func newAttestSonarCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
+		// Args:    cobra.MaximumNArgs(1),  // See CustomMaximumNArgs() below
 		Use:     "sonar [IMAGE-NAME | FILE-PATH | DIR-PATH]",
 		Short:   attestSonarShortDesc,
 		Long:    attestSonarLongDesc,
 		Example: attestSonarExample,
-		Args:    cobra.MaximumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
+
+			err := CustomMaximumNArgs(1, args)
+			if err != nil {
+				return err
+			}
+
+			err = RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
