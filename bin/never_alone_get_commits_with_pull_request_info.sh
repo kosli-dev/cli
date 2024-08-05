@@ -75,7 +75,6 @@ function get_pull_requests
     local commits list_separator
     # Use gh instead of git so we can keep the commit depth of 1. The order of the response for gh is reversed
     # so I do a tac at the end to get it the same order.
-    # commits=($(git rev-list --first-parent "${base_commit}..${proposed_commit}"))
     commits=($(gh api repos/:owner/:repo/compare/${base_commit}...${proposed_commit} -q '.commits[].sha' | tac))
 
     list_separator=""
