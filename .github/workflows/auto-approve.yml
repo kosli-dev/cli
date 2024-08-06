@@ -41,6 +41,11 @@ jobs:
         run: |
           ACCEPTED_PATHS="^bin/|^design-docs/|^charts/k8s-reporter/README.md|^docs.kosli.com/content/helm/_index.md"
           CRITICAL=false
+          if [ -z "${a}" ]; then
+              echo "empty file list"
+              # we get this if we use never_alone_create_pull_request_for_old_commit.sh
+              CRITICAL=true
+          fi
           for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
             echo "$file"
             # set CRITICAL as true when a file does not match the ACCEPTED_PATHS
