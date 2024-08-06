@@ -9,6 +9,10 @@ trail:
     type: junit
   - name: snyk-code
     type: snyk
+  - name: never-alone-data
+    type: generic
+  - name: never-alone-control
+    type: generic
   artifacts:
   - name: cli-docker
     attestations:
