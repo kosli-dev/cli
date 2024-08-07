@@ -22,6 +22,7 @@ The following types are supported:
   - docker     - Docker images
   - azure-apps - Azure app services
   - server     - Generic type
+  - logical    - Logical grouping of real environments
 
 By default, the environment does not require artifacts provenance (i.e. environment snapshots will not 
 become non-compliant because of artifacts that do not have provenance). You can require provenance for all artifacts
@@ -32,6 +33,10 @@ For large clusters the scaling events will often outnumber the actual change of 
 
 It is possible to enable new snapshots for scaling events with the --include-scaling flag, or turn
 it off again with the --exclude-scaling.
+
+Logical environments are used for grouping of physical environments. For instance **prod-aws** and **prod-s3** can
+be grouped into logical environment **prod**. Logical environments are view-only, you can not report snapshots
+to them.
 `
 
 const createEnvironmentExample = `
@@ -41,6 +46,15 @@ kosli create environment yourEnvironmentName
 	--description "my new env" \
 	--api-token yourAPIToken \
 	--org yourOrgName 
+
+
+kosli create environment yourLogicalEnvironmentName
+	--type logical \
+	--included-environments realEnv1,realEnv2,realEnv3
+	--description "my full prod" \	
+	--api-token yourAPIToken \
+	--org yourOrgName 
+
 `
 
 type createEnvOptions struct {
@@ -50,11 +64,12 @@ type createEnvOptions struct {
 }
 
 type CreateEnvironmentPayload struct {
-	Name              string `json:"name"`
-	Type              string `json:"type"`
-	Description       string `json:"description"`
-	IncludeScaling    *bool  `json:"include_scaling,omitempty"`
-	RequireProvenance bool   `json:"require_provenance"`
+	Name                 string   `json:"name"`
+	Type                 string   `json:"type"`
+	Description          string   `json:"description"`
+	IncludeScaling       *bool    `json:"include_scaling,omitempty"`
+	RequireProvenance    bool     `json:"require_provenance"`
+	IncludedEnvironments []string `json:"included_environments,omitempty"`
 }
 
 func newCreateEnvironmentCmd(out io.Writer) *cobra.Command {
@@ -87,6 +102,8 @@ func newCreateEnvironmentCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().BoolVar(&o.excludeScaling, "exclude-scaling", false, excludeScalingFlag)
 	cmd.Flags().BoolVar(&o.includeScaling, "include-scaling", false, includeScalingFlag)
 	cmd.Flags().BoolVar(&o.payload.RequireProvenance, "require-provenance", false, requireProvenanceFlag)
+	cmd.Flags().StringSliceVar(&o.payload.IncludedEnvironments, "included-environments", []string{}, includedEnvironments)
+
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"type"})

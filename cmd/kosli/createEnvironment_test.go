@@ -102,6 +102,18 @@ func (suite *CreateEnvironmentCommandTestSuite) TestCreateEnvironmentCmd() {
 			cmd:       "create env foo_bar --type K8S" + suite.defaultKosliArguments,
 			golden:    "Error: Input payload validation failed: map[name:'foo_bar' does not match '^[a-zA-Z][a-zA-Z0-9\\\\-]*$']\n",
 		},
+		{
+			wantError: false,
+			name:      "can create Logical env with empty list of real environments",
+			cmd:       "create env mixEnv1 --type logical" + suite.defaultKosliArguments,
+			golden:    "environment mixEnv1 was created\n",
+		},
+		{
+			wantError: false,
+			name:      "can create Logical env with list of real environments",
+			cmd:       "create env mixEnv1 --type logical --included-environments newEnv1" + suite.defaultKosliArguments,
+			golden:    "environment mixEnv1 was created\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)
