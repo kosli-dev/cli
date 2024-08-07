@@ -34,7 +34,7 @@ For large clusters the scaling events will often outnumber the actual change of 
 It is possible to enable new snapshots for scaling events with the --include-scaling flag, or turn
 it off again with the --exclude-scaling.
 
-Logcial environments are used for grouping of real environments. For instance **prod-aws** and **prod-s3** can
+Logical environments are used for grouping of physical environments. For instance **prod-aws** and **prod-s3** can
 be grouped into logical environment **prod**. Logical environments are view-only, you can not report snapshots
 to them.
 `
