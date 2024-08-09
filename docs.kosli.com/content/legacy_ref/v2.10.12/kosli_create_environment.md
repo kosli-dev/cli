@@ -50,7 +50,7 @@ kosli create environment ENVIRONMENT-NAME [flags]
 |        --include-scaling  |  [optional] Include scaling events for snapshots. Snapshots with scaling changes will result in new environment records.  |
 |        --included-environments strings  |  [optional] Comma separated list of environments to include in logical environment  |
 |        --require-provenance  |  [defaulted] Require provenance for all artifacts running in environment snapshots.  |
-|    -t, --type string  |  The type of environment. Valid types are: [K8S, ECS, server, S3, lambda, docker, azure-apps, logical].  |
+|    -t, --type string  |  The type of environment. Valid types are: [K8S, ECS, server, S3, lambda, docker, azure-apps].  |
 
 
 ## Flags inherited from parent commands
