@@ -21,7 +21,7 @@ Options are:
   -m <branch>      Name of main/master branch. Required
   -f <flow>        Name of kosli flow to report commit and pull request info to. Required
   -c <commit-sha>  Commit sha for release we are building now. Required
-  -t <trail-name>  Name of the trail that the reviews shall be reported to
+  -t <trail-name>  Name of the trail that the reviews shall be reported to. Required
 EOF
 }
 
