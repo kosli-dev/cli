@@ -79,43 +79,38 @@ function get_commit_and_pull_request
     local commit_sha=$1; shift
     local result_file=$1; shift
 
-    pr_data=$(gh pr list --search "${commit_sha}" --state merged --json author,reviews,mergeCommit,mergedAt,url)
+    pr_data=$(gh pr list --search "${commit_sha}" --state merged --json author,reviews,mergeCommit,mergedAt,reviewDecision,url)
     commit_data=$(gh search commits --hash "${commit_sha}" --json author)
 
-    local compliant="true"
+    local compliant="false"
     combined_data=$(jq -n --arg commitsha "$commit_sha" --argjson commit "$commit_data" --argjson pr "$pr_data" \
       '{commit_sha: $commitsha, commit: $commit[0], pull_request: $pr[0]}')
 
     # Check for missing reviews or if that list is empty
     reviews=$(echo "${pr_data}" | jq '.[0].reviews')
+    github_review_decision=$(echo "${pr_data}" | jq '.[0].reviewDecision')
     if [ "$reviews" = "null" ]; then
         combined_data=$(echo "${combined_data}" | jq '. += {"reason_for_non_compliance": "no pull-request"}')
-        compliant="false"
     elif [ -z "$reviews" -o "$reviews" = "[]" ]; then
         combined_data=$(echo "${combined_data}" | jq '. += {"reason_for_non_compliance": "no reviewers"}')
-        compliant="false"
+    elif [ "${github_review_decision}" != '"APPROVED"' ]; then
+        combined_data=$(echo "${combined_data}" | jq '. += {"reason_for_non_compliance": "pull-request not approved"}')
     else
-        # Find the entry where 'state' is APPROVED
+        # Loop over reviews and check that at least one approver is not the same as committer
         pr_author=$(echo "${pr_data}" | jq '.[0].author.login')
         reviews_length=$(echo "${pr_data}" | jq '.[0].reviews | length')
         for i in $(seq 0 $(( reviews_length - 1 )))
         do
             review=$(echo "${pr_data}" | jq ".[0].reviews[$i]")
             state=$(echo "$review" | jq ".state")
-            if [ "$state" = '"APPROVED"' ]; then
-                break
+            review_author=$(echo "$review" | jq ".author.login")
+            if [ "$state" = '"APPROVED"' -a "${review_author}" != "${pr_author}" ]; then
+                compliant="true"
             fi
         done
-        if [ "$state" != '"APPROVED"' ]; then
-            combined_data=$(echo "${combined_data}" | jq '. += {"reason_for_non_compliance": "no state:APPROVED review"}')
-            compliant="false"
-        else
-            # Fail if approving reviewer and auther is the same person
-            review_author=$(echo "$review" | jq ".author.login")
-            if [ "${review_author}" = "${pr_author}" ]; then
-                combined_data=$(echo "${combined_data}" | jq '. += {"reason_for_non_compliance": "committer and approver are the same person"}')
-                compliant="false"
-            fi
+
+        if [ "${compliant}" == "false" ]; then
+            combined_data=$(echo "${combined_data}" | jq '. += {"reason_for_non_compliance": "committer and approver are the same person"}')
         fi
     fi
 
