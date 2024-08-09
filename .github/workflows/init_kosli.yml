@@ -82,28 +82,28 @@ jobs:
             KOSLI_ORG: ${{ inputs.kosli_org }}
             GH_TOKEN: ${{ github.token }}
           run: |
-            ALL_PRS_FILENAME=pull-request-list.json
-            FAILED_PRS_FILENAME=failed-pull-requests.json
+            # ALL_PRS_FILENAME=pull-request-list.json
+            # FAILED_PRS_FILENAME=failed-pull-requests.json
             
-            ./bin/never_alone.sh -p "${ALL_PRS_FILENAME}" -f "${FAILED_PRS_FILENAME}" -c "${GITHUB_SHA}"
+            # ./bin/never_alone.sh -p "${ALL_PRS_FILENAME}" -f "${FAILED_PRS_FILENAME}" -c "${GITHUB_SHA}"
             
-            kosli attest generic \
-              --org ${{inputs.kosli_org}} \
-              --flow ${{inputs.flow_name}} \
-              --trail ${{inputs.trail_name}} \
-              --name=never-alone-data \
-              --compliant=true \
-              --attachments="${ALL_PRS_FILENAME}"
+            # kosli attest generic \
+            #   --org ${{inputs.kosli_org}} \
+            #   --flow ${{inputs.flow_name}} \
+            #   --trail ${{inputs.trail_name}} \
+            #   --name=never-alone-data \
+            #   --compliant=true \
+            #   --attachments="${ALL_PRS_FILENAME}"
 
-            KOSLI_COMPLIANT=$(jq 'if . == [] then true else false end' "${FAILED_PRS_FILENAME}")
+            # KOSLI_COMPLIANT=$(jq 'if . == [] then true else false end' "${FAILED_PRS_FILENAME}")
             
-            kosli attest generic \
-              --org ${{inputs.kosli_org}} \
-              --flow ${{inputs.flow_name}} \
-              --trail ${{inputs.trail_name}} \
-              --name=never-alone-control \
-              --compliant=${KOSLI_COMPLIANT} \
-              --attachments="${FAILED_PRS_FILENAME}"
+            # kosli attest generic \
+            #   --org ${{inputs.kosli_org}} \
+            #   --flow ${{inputs.flow_name}} \
+            #   --trail ${{inputs.trail_name}} \
+            #   --name=never-alone-control \
+            #   --compliant=${KOSLI_COMPLIANT} \
+            #   --attachments="${FAILED_PRS_FILENAME}"
 
             # New way where all commits have their own attestation
             if [ ${{github.ref}} = "refs/heads/main " ]; then
