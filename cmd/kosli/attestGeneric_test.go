@@ -43,21 +43,27 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 		},
 		{
 			wantError: true,
+			name:      "fails when artifact-name is provided and there is an --artifact-type flag and --compliant is not set with =",
+			cmd:       fmt.Sprintf("attest generic testdata/file1 %s --artifact-type file --compliant false", suite.defaultKosliArguments),
+			golden:    "Error: accepts at most 1 arg(s), received 2 [testdata/file1 false]\nSee https://docs.kosli.com//faq/#boolean-flags\n",
+		},
+		{
+			wantError: true,
 			name:      "fails when missing a required flag",
 			cmd:       fmt.Sprintf("attest generic foo -t file %s", suite.defaultKosliArguments),
 			golden:    "Error: required flag(s) \"name\" not set\n",
 		},
 		{
 			wantError: true,
-			name:      "fails when artifact-name is provided (as _unused_ boolean 'space' arg) and there is no --artifact-type",
+			name:      "fails when artifact-name is provided (as _unused_ boolean 'space' arg) and there is no --artifact-type and no --fingerprint",
 			cmd:       fmt.Sprintf("attest generic %s --compliant false", suite.defaultKosliArguments),
-			golden:    "Error: --artifact-type is required when artifact name ('false') argument is supplied.\nSee https://docs.kosli.com//faq/#boolean-flags\nUsage: kosli attest generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+			golden:    "Error: --artifact-type or --fingerprint must be specified when artifact name ('false') argument is supplied.\nSee https://docs.kosli.com//faq/#boolean-flags\nUsage: kosli attest generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "fails when artifact-name is provided and there is no --artifact-type",
 			cmd:       fmt.Sprintf("attest generic wibble %s", suite.defaultKosliArguments),
-			golden:    "Error: --artifact-type is required when artifact name ('wibble') argument is supplied.\nUsage: kosli attest generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+			golden:    "Error: --artifact-type or --fingerprint must be specified when artifact name ('wibble') argument is supplied.\nUsage: kosli attest generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
@@ -69,7 +75,7 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 			wantError: true,
 			name:      "fails when there are extra args and gives custom help message when an argument is true|false",
 			cmd:       fmt.Sprintf("attest generic %s --compliant false", suite.defaultKosliArguments),
-			golden:    "Error: --artifact-type is required when artifact name ('false') argument is supplied.\nSee https://docs.kosli.com//faq/#boolean-flags\nUsage: kosli attest generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+			golden:    "Error: --artifact-type or --fingerprint must be specified when artifact name ('false') argument is supplied.\nSee https://docs.kosli.com//faq/#boolean-flags\nUsage: kosli attest generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
@@ -96,6 +102,11 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 			golden:    "Error: flag '--name' is required, but empty string was provided\n",
 		},
 		{
+			name:   "can attest generic against an artifact using artifact-name and --fingerprint",
+			cmd:    fmt.Sprintf("attest generic testdata/file1 %s --name foo --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9", suite.defaultKosliArguments),
+			golden: "generic attestation 'foo' is reported to trail: test-123\n",
+		},
+		{
 			name:   "can attest generic against an artifact using artifact name and --artifact-type",
 			cmd:    fmt.Sprintf("attest generic testdata/file1 --artifact-type file --name foo --commit HEAD --origin-url example.com  %s", suite.defaultKosliArguments),
 			golden: "generic attestation 'foo' is reported to trail: test-123\n",
@@ -106,7 +117,7 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 			golden: "generic attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
-			name:   "can attest generic against an artifact using --fingerprint",
+			name:   "can attest generic against an artifact using --fingerprint and no artifact-name",
 			cmd:    fmt.Sprintf("attest generic --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com  %s", suite.defaultKosliArguments),
 			golden: "generic attestation 'foo' is reported to trail: test-123\n",
 		},
