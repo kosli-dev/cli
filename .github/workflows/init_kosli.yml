@@ -121,7 +121,7 @@ jobs:
               -t "${{inputs.trail_name}}"
 
             TRAIL_COMPLIANCE=$(kosli get trail ${{inputs.trail_name}} \
-              --flow ${{inputs.flow_name}} --output json | jq .compliance_status.is_compliant)
+              --flow ${CODE_REVIEW_FLOW} --output json | jq .compliance_status.is_compliant)
 
             # Link the code-review trail in as a generic attestation.
             # The best would be if we had:
