@@ -79,6 +79,7 @@ jobs:
           if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') }}
           env:
             KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+            KOSLI_ORG: ${{ inputs.kosli_org }}
             GH_TOKEN: ${{ github.token }}
           run: |
             ALL_PRS_FILENAME=pull-request-list.json
