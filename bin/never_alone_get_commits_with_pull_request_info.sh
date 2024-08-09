@@ -81,7 +81,7 @@ function get_pull_requests
     echo "[" > ${result_file}
     for commit in "${commits[@]}"; do
         echo "${list_separator}" >> ${result_file}
-        pr_data=$(gh pr list --search "${commit}" --state merged --json author,latestReviews,mergeCommit,mergedAt,url)
+        pr_data=$(gh pr list --search "${commit}" --state merged --json author,reviews,mergeCommit,mergedAt,reviewDecision,url)
         if [ "$pr_data" = "[]" ]; then
             # Commit is not merged back to master (this will happen if you run this on a branch)
             echo '{"sha": "'$commit'"}' >> "${result_file}"
