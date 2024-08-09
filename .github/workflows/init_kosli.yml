@@ -106,7 +106,7 @@ jobs:
             #   --attachments="${FAILED_PRS_FILENAME}"
 
             # New way where all commits have their own attestation
-            if [ ${{github.ref}} = "refs/heads/main " ]; then
+            if [ ${{github.ref}} = "refs/heads/main" ]; then
               CODE_REVIEW_FLOW=cli-code-reviews
             else
               CODE_REVIEW_FLOW=cli-release-code-reviews
