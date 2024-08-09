@@ -64,35 +64,38 @@ function get_failing_pull_requests
     local file=$1;shift
     local failed_reviews=()
 
-    # Read each entry and check it
-    while IFS= read -r entry; do
-        # Check for missing latestReviews or if that list is empty
-        latest_reviews=$(echo "$entry" | jq '.latestReviews')
-        if [ -z "$latest_reviews" -o "$latest_reviews" = "[]" -o "$latest_reviews" = "null" ]; then
-            entry=$(echo $entry | jq '. += {"failure": "no reviewers"}')
-            failed_reviews+=("$entry")
+    # Read each pull-request entry and check it
+    while IFS= read -r pr_data; do
+        # Check for missing reviews or if that list is empty
+        reviews=$(echo "${pr_data}" | jq '.[0].reviews')
+        github_review_decision=$(echo "${pr_data}" | jq '.[0].reviewDecision')
+        local compliant="false"
+        if [ "$reviews" = "null" ]; then
+            pr_data=$(echo $pr_data | jq '. += {"failure": "no pull-request"}')
+            failed_reviews+=("$pr_data")
+        elif [ -z "$reviews" -o "$reviews" = "[]" ]; then
+            pr_data=$(echo $pr_data | jq '. += {"failure": "no reviewers"}')
+            failed_reviews+=("$pr_data")
+        elif [ "${github_review_decision}" != '"APPROVED"' ]; then
+            pr_data=$(echo $pr_data | jq '. += {"failure": "pull-request not approved"}')
+            failed_reviews+=("$pr_data")
         else
-            # Find the entry where 'state' is APPROVED
-            commit_author=$(echo "$entry" | jq '.author.login')
-            reviews_length=$(echo "$entry" | jq '.latestReviews | length')
+            # Loop over reviews and check that at least one approver is not the same as committer
+            pr_author=$(echo "${pr_data}" | jq '.[0].author.login')
+            reviews_length=$(echo "${pr_data}" | jq '.[0].reviews | length')
             for i in $(seq 0 $(( reviews_length - 1 )))
             do
-                review=$(echo "$entry" | jq ".latestReviews[$i]")
+                review=$(echo "${pr_data}" | jq ".[0].reviews[$i]")
                 state=$(echo "$review" | jq ".state")
-                if [ "$state" = '"APPROVED"' ]; then
-                    break
+                review_author=$(echo "$review" | jq ".author.login")
+                if [ "$state" = '"APPROVED"' -a "${review_author}" != "${pr_author}" ]; then
+                    compliant="true"
                 fi
             done
-            if [ "$state" != '"APPROVED"' ]; then
-                entry=$(echo $entry | jq '. += {"failure": "no state:APPROVED review"}')
-                failed_reviews+=("$entry")
-            else
-                # Fail if latest reviewer and auther is the same person
-                review_author=$(echo "$review" | jq ".author.login")
-                if [ "${review_author}" = "${commit_author}" ]; then
-                    entry=$(echo $entry | jq '. += {"failure": "committer and approver are the same person"}')
-                    failed_reviews+=("$entry")
-                fi
+
+            if [ "${compliant}" == "false" ]; then
+                pr_data=$(echo $pr_data | jq '. += {"failure": "committer and approver are the same person"}')
+                failed_reviews+=("$pr_data")
             fi
         fi
     done < <(jq -c '.[]' "$file")

@@ -82,13 +82,13 @@ function get_commit_and_pull_request
     pr_data=$(gh pr list --search "${commit_sha}" --state merged --json author,reviews,mergeCommit,mergedAt,reviewDecision,url)
     commit_data=$(gh search commits --hash "${commit_sha}" --json author)
 
-    local compliant="false"
     combined_data=$(jq -n --arg commitsha "$commit_sha" --argjson commit "$commit_data" --argjson pr "$pr_data" \
       '{commit_sha: $commitsha, commit: $commit[0], pull_request: $pr[0]}')
 
     # Check for missing reviews or if that list is empty
     reviews=$(echo "${pr_data}" | jq '.[0].reviews')
     github_review_decision=$(echo "${pr_data}" | jq '.[0].reviewDecision')
+    local compliant="false"
     if [ "$reviews" = "null" ]; then
         combined_data=$(echo "${combined_data}" | jq '. += {"reason_for_non_compliance": "no pull-request"}')
     elif [ -z "$reviews" -o "$reviews" = "[]" ]; then
