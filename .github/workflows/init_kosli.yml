@@ -104,9 +104,25 @@ jobs:
               --compliant=${KOSLI_COMPLIANT} \
               --attachments="${FAILED_PRS_FILENAME}"
 
-            CODE_REVIEW_FLOW=cli-release-code-reviews
+            # New way where all commits have their own attestation
+            if [ ${{github.ref}} = "refs/heads/main " ]; then
+              CODE_REVIEW_FLOW=cli-code-reviews
+            else
+              CODE_REVIEW_FLOW=cli-release-code-reviews
+            fi
             MAIN_BRANCH=main
             ./bin/never_alone_create_review_trail.sh -m "${MAIN_BRANCH}" \
               -f "${CODE_REVIEW_FLOW}" \
               -c "${GITHUB_SHA}" \
               -t "${{inputs.trail_name}}"
+
+            # Link the code-review trail in as a generic attestation. We do not know the compliance of
+            # the code-review trail and there is no kosli assert trail.
+            # The best would be if we had:
+            #   kosli attest trail-link --trail ${{inputs.trail_name}} --linked-trail ${CODE_REVIEW_FLOW}
+            kosli attest generic \
+              --org ${{inputs.kosli_org}} \
+              --flow ${{inputs.flow_name}} \
+              --trail ${{inputs.trail_name}} \
+              --name code-reviews \
+              --external-url review-trail=https://app.kosli.com/${{inputs.kosli_org}}/flows/${CODE_REVIEW_FLOW}/trails/${{inputs.trail_name}}

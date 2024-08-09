@@ -100,7 +100,7 @@ function main
     begin_trail ${COMMIT_PULL_REQUEST_FLOW} ${TRAIL_NAME} \
         --description="$(git log -1 --pretty='%aN - %s')"
 
-    $(repo_root)/sh/never_alone_report_commit_and_pr_to_kosli.sh \
+    $(repo_root)/bin/never_alone_report_commit_and_pr_to_kosli.sh \
         -b ${base_commit} \
         -p ${PROPOSED_COMMIT} \
         -f ${COMMIT_PULL_REQUEST_FLOW} \
