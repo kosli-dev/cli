@@ -118,13 +118,16 @@ jobs:
               -c "${GITHUB_SHA}" \
               -t "${{inputs.trail_name}}"
 
-            # Link the code-review trail in as a generic attestation. We do not know the compliance of
-            # the code-review trail and there is no kosli assert trail.
+            TRAIL_COMPLIANCE=$(kosli get trail ${{inputs.trail_name}} \
+              --flow ${{inputs.flow_name}} --output json | jq .compliance_status.is_compliant)
+
+            # Link the code-review trail in as a generic attestation.
             # The best would be if we had:
             #   kosli attest trail-link --trail ${{inputs.trail_name}} --linked-trail ${CODE_REVIEW_FLOW}
             kosli attest generic \
               --org ${{inputs.kosli_org}} \
               --flow ${{inputs.flow_name}} \
               --trail ${{inputs.trail_name}} \
+              --compliant=${TRAIL_COMPLIANCE} \
               --name code-reviews \
               --external-url review-trail=https://app.kosli.com/${{inputs.kosli_org}}/flows/${CODE_REVIEW_FLOW}/trails/${{inputs.trail_name}}

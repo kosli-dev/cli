@@ -141,6 +141,7 @@ function get_commit_and_pr_data_and_report_to_kosli
         kosli attest generic \
             --name=commit_${short_commit_sha} \
             --compliant=${compliant} \
+            --commit=${commit_sha} \
             --attachments=${file_name} \
             --flow=${commit_pull_request_flow} \
             --trail=${trail_name}
