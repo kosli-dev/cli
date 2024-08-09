@@ -103,3 +103,10 @@ jobs:
               --name=never-alone-control \
               --compliant=${KOSLI_COMPLIANT} \
               --attachments="${FAILED_PRS_FILENAME}"
+
+            CODE_REVIEW_FLOW=cli-release-code-reviews
+            MAIN_BRANCH=main
+            ./bin/never_alone_create_review_trail.sh -m "${MAIN_BRANCH}" \
+              -f "${CODE_REVIEW_FLOW}" \
+              -c "${GITHUB_SHA}" \
+              -t "${{inputs.trail_name}}"
