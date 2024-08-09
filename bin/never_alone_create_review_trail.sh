@@ -97,8 +97,7 @@ function main
     # base_commit: the commit of latest release
     local -r base_commit=$($(repo_root)/bin/never_alone_get_commit_of_latest_release.sh)
 
-    begin_trail ${COMMIT_PULL_REQUEST_FLOW} ${TRAIL_NAME} \
-        --description="$(git log -1 --pretty='%aN - %s')"
+    begin_trail ${COMMIT_PULL_REQUEST_FLOW} ${TRAIL_NAME}
 
     $(repo_root)/bin/never_alone_report_commit_and_pr_to_kosli.sh \
         -b ${base_commit} \
