@@ -67,8 +67,8 @@ function get_failing_pull_requests
     # Read each pull-request entry and check it
     while IFS= read -r pr_data; do
         # Check for missing reviews or if that list is empty
-        reviews=$(echo "${pr_data}" | jq '.[0].reviews')
-        github_review_decision=$(echo "${pr_data}" | jq '.[0].reviewDecision')
+        reviews=$(echo "${pr_data}" | jq '.reviews')
+        github_review_decision=$(echo "${pr_data}" | jq '.reviewDecision')
         local compliant="false"
         if [ "$reviews" = "null" ]; then
             pr_data=$(echo $pr_data | jq '. += {"failure": "no pull-request"}')
@@ -81,11 +81,11 @@ function get_failing_pull_requests
             failed_reviews+=("$pr_data")
         else
             # Loop over reviews and check that at least one approver is not the same as committer
-            pr_author=$(echo "${pr_data}" | jq '.[0].author.login')
-            reviews_length=$(echo "${pr_data}" | jq '.[0].reviews | length')
+            pr_author=$(echo "${pr_data}" | jq '.author.login')
+            reviews_length=$(echo "${pr_data}" | jq '.reviews | length')
             for i in $(seq 0 $(( reviews_length - 1 )))
             do
-                review=$(echo "${pr_data}" | jq ".[0].reviews[$i]")
+                review=$(echo "${pr_data}" | jq ".reviews[$i]")
                 state=$(echo "$review" | jq ".state")
                 review_author=$(echo "$review" | jq ".author.login")
                 if [ "$state" = '"APPROVED"' -a "${review_author}" != "${pr_author}" ]; then
