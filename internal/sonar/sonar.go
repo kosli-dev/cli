@@ -1,123 +1,274 @@
 package sonar
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 type SonarConfig struct {
-	ProjectKey    string
-	APIToken      string
-	SonarQubeURL  string
-	BranchName    string
-	PullRequestID string
+	APIToken   string
+	WorkingDir string
 }
 
+// Structs to build the JSON for our attestation payload
 type SonarResults struct {
-	Component Component `json:"component"`
-	Errors    []Error   `json:"errors,omitempty"` //So we can give the user the detailed error message from SonarCloud/SonarQube
+	ServerUrl   string       `json:"serverUrl"`
+	TaskID      string       `json:"taskId"`
+	Status      string       `json:"status"`
+	AnalaysedAt string       `json:"analysedAt"`
+	Revision    string       `json:"revision"`
+	Project     Project      `json:"project"`
+	Branch      *Branch      `json:"branch,omitempty"`
+	QualityGate *QualityGate `json:"qualityGate,omitempty"`
 }
 
-type Error struct {
-	Msg string `json:"msg,omitempty"`
+type Project struct {
+	Key  string `json:"key"`
+	Name string `json:"name",omitempty`
+	Url  string `json:"url"`
 }
 
-type Component struct {
-	Id          string     `json:"id,omitempty"`
-	Description string     `json:"description,omitempty"`
-	Key         string     `json:"key"`
-	Name        string     `json:"name"`
-	Qualifier   string     `json:"qualifier"`
-	Measures    []Measures `json:"measures"`
-	Branch      string     `json:"branch,omitempty"`
-	PullRequest string     `json:"pullRequest,omitempty"`
+type Branch struct {
+	Name string `json:"name,omitempty"`
+	Type string `json:"type,omitempty"`
 }
 
-type Measures struct {
-	Metric    string   `json:"metric"`
-	Value     string   `json:"value"`
-	BestValue bool     `json:"bestValue,omitempty"`
-	Periods   []Period `json:"periods,omitempty"`
+type QualityGate struct {
+	Status     string      `json:"status"`
+	Conditions []Condition `json:"conditions"`
+	//Name       string      `json:"name"` I cannot find a way to find out which quality gate was used for a specific scan
 }
 
-type Period struct {
-	Index     int    `json:"index"`
-	Value     string `json:"value"`
-	BestValue bool   `json:"bestValue,omitempty"`
+type Condition struct {
+	Metric         string `json:"metric"`
+	ErrorThreshold string `json:"errorThreshold"`
+	Operator       string `json:"operator"`
+	Value          string `json:"value",omitempty`
+	Status         string `json:"status"`
 }
 
-func NewSonarConfig(projectKey, apiToken, sonarQubeUrl, branchName, pullRequestID string) *SonarConfig {
+// These are the structs for the response from the qualitygates/project_status API
+type QualityGateResponse struct {
+	ProjectStatus ProjectStatus `json:"projectStatus"`
+}
+
+type ProjectStatus struct {
+	Status     string       `json:"status"`
+	Conditions []Conditions `json:"conditions"`
+}
+
+type Conditions struct {
+	Status         string `json:"status"`
+	MetricKey      string `json:"metricKey"`
+	Comparator     string `json:"comparator"`
+	ErrorThreshold string `json:"errorThreshold"`
+	ActualValue    string `json:"actualValue"`
+}
+
+// These are the structs for the response from the ceTaskURL
+type TaskResponse struct {
+	Task Task `json:"task"`
+}
+type Task struct {
+	ComponentName string `json:"componentName"`
+	AnalysisID    string `json:"analysisId"`
+	Status        string `json:"status"`
+	Branch        string `json:"branch"`
+	BranchType    string `json:"branchType"`
+}
+
+// These are the structs for the response from the project_analyses/search API
+type ProjectAnalyses struct {
+	Analyses []Analysis `json:"analyses"`
+}
+type Analysis struct {
+	Key      string `json:"key"`
+	Date     string `json:"date"`
+	Revision string `json:"revision"`
+}
+
+func NewSonarConfig(apiToken, workingDir string) *SonarConfig {
 	return &SonarConfig{
-		ProjectKey:    projectKey,
-		APIToken:      apiToken,
-		SonarQubeURL:  sonarQubeUrl,
-		BranchName:    branchName,
-		PullRequestID: pullRequestID,
+		APIToken:   apiToken,
+		WorkingDir: workingDir,
 	}
 }
 
 func (sc *SonarConfig) GetSonarResults() (*SonarResults, error) {
 	httpClient := &http.Client{}
-	var baseUrl, fullUrl, tokenHeader string
-	metrics := GetMetrics()
+	var ceTaskURL string
+	var analysisID, tokenHeader string
+	project := &Project{}
+	qualityGate := &QualityGate{}
+	sonarResults := &SonarResults{}
 
-	if sc.SonarQubeURL != "" {
-		baseUrl = sc.SonarQubeURL
-		metrics = fmt.Sprintf("%s,new_security_issues", metrics) //This metric is available via the sonarqube api but not sonarcloud
-	} else {
-		baseUrl = "https://sonarcloud.io"
-	}
-
-	if sc.ProjectKey != "" && sc.APIToken != "" {
-		metricsPath := url.PathEscape(metrics)
-		fullUrl = fmt.Sprintf("%s/api/measures/component?metricKeys=%s&component=%s", baseUrl, metricsPath, sc.ProjectKey)
+	//Check if the API token is given
+	if sc.APIToken != "" {
 		tokenHeader = fmt.Sprintf("Bearer %s", sc.APIToken)
 	} else {
-		return nil, fmt.Errorf("Project Key and API token must be given to retrieve data from SonarCloud/SonarQube")
+		return nil, fmt.Errorf("API token must be given to retrieve data from SonarCloud/SonarQube")
 	}
 
-	if sc.BranchName != "" && sc.PullRequestID != "" {
-		return nil, fmt.Errorf("Branch Name and Pull Request ID cannot both be given")
-	}
-
-	if sc.BranchName != "" {
-		fullUrl = fmt.Sprintf("%s&branch=%s", fullUrl, sc.BranchName)
-	} else if sc.PullRequestID != "" {
-		fullUrl = fmt.Sprintf("%s&pullRequest=%s", fullUrl, sc.PullRequestID)
-	}
-
-	request, err := http.NewRequest("GET", fullUrl, nil)
-	request.Header.Add("Authorization", tokenHeader)
+	//Read the report-task.txt file to get the project key, server URL, dashboard URL and ceTaskURL
+	ceTaskURL, err := sc.readFile(project, sonarResults)
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := httpClient.Do(request)
+	//Get the analysis ID, status, project name and branch data from the ceTaskURL (ce API)
+	analysisID, err = GetCETaskData(httpClient, project, sonarResults, ceTaskURL, tokenHeader)
 	if err != nil {
-		//If a non-existent URL given, HTTP request returns error
-		return nil, fmt.Errorf("Incorrect SonarQube URL")
+		return nil, err
 	}
 
-	sonarResult := &SonarResults{Component: Component{}}
-	err = json.NewDecoder(response.Body).Decode(sonarResult)
+	//Get project revision and scan date/time from the projectAnalyses API
+	err = GetProjectAnalysis(httpClient, sonarResults, project, analysisID, tokenHeader)
 	if err != nil {
-		//If the API token or SonarQube URL is incorrect, SonarCloud/Qube returns nothing, thus we get a Decode error
-		return nil, fmt.Errorf("Incorrect API token or SonarQube URL")
+		return nil, err
 	}
 
-	//If the project key/branch name/pull request id is incorrect or a metric key is invalid, SonarCloud/Qube returns an error
-	if sonarResult.Errors != nil {
-		message := ""
-		for errorIndex := range sonarResult.Errors {
-			message = fmt.Sprintf("%s%s", message, sonarResult.Errors[errorIndex].Msg)
-			if errorIndex != len(sonarResult.Errors)-1 {
-				message = fmt.Sprintf("%s\n", message)
-			}
+	//Get the quality gate status from the qualitygates/project_status API
+	qualityGate, err = GetQualityGate(httpClient, sonarResults, qualityGate, analysisID, tokenHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	sonarResults.Project = *project
+	sonarResults.QualityGate = qualityGate
+
+	return sonarResults, nil
+}
+
+func (sc *SonarConfig) readFile(project *Project, results *SonarResults) (string, error) {
+	var ceTaskURL string
+
+	metadata, err := os.Open(filepath.Join(sc.WorkingDir, "report-task.txt"))
+	if err != nil {
+		return "", fmt.Errorf("report-task.txt not found. Check your working directory is set correctly.")
+	}
+	defer metadata.Close()
+
+	scanner := bufio.NewScanner(metadata)
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if strings.HasPrefix(line, "projectKey=") {
+			project.Key = strings.TrimPrefix(line, "projectKey=")
+			continue
 		}
-		return nil, fmt.Errorf(message)
+		if strings.HasPrefix(line, "serverUrl=") {
+			results.ServerUrl = strings.TrimPrefix(line, "serverUrl=")
+			continue
+		}
+		if strings.HasPrefix(line, "dashboardUrl=") {
+			project.Url = strings.TrimPrefix(line, "dashboardUrl=")
+			continue
+		}
+		if strings.HasPrefix(line, "ceTaskUrl=") {
+			ceTaskURL = strings.TrimPrefix(line, "ceTaskUrl=")
+			continue
+		}
+	}
+	return ceTaskURL, nil
+}
+
+func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *SonarResults, ceTaskURL, tokenHeader string) (string, error) {
+	taskRequest, err := http.NewRequest("GET", ceTaskURL, nil)
+	taskRequest.Header.Add("Authorization", tokenHeader)
+	if err != nil {
+		return "", err
 	}
 
-	return sonarResult, nil
+	taskResponse, err := httpClient.Do(taskRequest)
+	if err != nil {
+		return "", err
+	}
+
+	taskResponseData := &TaskResponse{}
+	err = json.NewDecoder(taskResponse.Body).Decode(taskResponseData)
+	if err != nil {
+		return "", fmt.Errorf("Please check your API token is correct and you have the correct permissions in SonarCloud/SonarQube.")
+	}
+
+	project.Name = taskResponseData.Task.ComponentName
+	sonarResults.TaskID = taskResponseData.Task.AnalysisID
+	sonarResults.Status = taskResponseData.Task.Status
+
+	if taskResponseData.Task.Branch != "" {
+		sonarResults.Branch = &Branch{}
+		sonarResults.Branch.Name = taskResponseData.Task.Branch
+		sonarResults.Branch.Type = taskResponseData.Task.BranchType
+	} else {
+		sonarResults.Branch = nil
+	}
+
+	return sonarResults.TaskID, nil
+}
+
+func GetProjectAnalysis(httpClient *http.Client, sonarResults *SonarResults, project *Project, analysisID, tokenHeader string) error {
+	projectAnalysesURL := fmt.Sprintf("%s/api/project_analyses/search?project=%s", sonarResults.ServerUrl, project.Key)
+	projectAnalysesRequest, err := http.NewRequest("GET", projectAnalysesURL, nil)
+	projectAnalysesRequest.Header.Add("Authorization", tokenHeader)
+	if err != nil {
+		return err
+	}
+
+	projectAnalysesResponse, err := httpClient.Do(projectAnalysesRequest)
+	if err != nil {
+		return err
+	}
+
+	projectAnalysesData := &ProjectAnalyses{}
+	err = json.NewDecoder(projectAnalysesResponse.Body).Decode(projectAnalysesData)
+	if err != nil {
+		return fmt.Errorf("Please check your API token is correct and you have the correct permissions in SonarCloud/SonarQube.")
+	}
+
+	for analysis := range projectAnalysesData.Analyses {
+		if projectAnalysesData.Analyses[analysis].Key == analysisID {
+			sonarResults.AnalaysedAt = projectAnalysesData.Analyses[analysis].Date
+			sonarResults.Revision = projectAnalysesData.Analyses[analysis].Revision
+			break
+		}
+	}
+
+	return nil
+}
+
+func GetQualityGate(httpClient *http.Client, sonarResults *SonarResults, qualityGate *QualityGate, analysisID, tokenHeader string) (*QualityGate, error) {
+	qualityGateURL := fmt.Sprintf("%s/api/qualitygates/project_status?analysisId=%s", sonarResults.ServerUrl, analysisID)
+	qualityGateRequest, err := http.NewRequest("GET", qualityGateURL, nil)
+	qualityGateRequest.Header.Add("Authorization", tokenHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	qualityGateResponse, err := httpClient.Do(qualityGateRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	qualityGateData := &QualityGateResponse{}
+	err = json.NewDecoder(qualityGateResponse.Body).Decode(qualityGateData)
+	if err != nil {
+		qualityGate = nil
+	} else {
+		qualityGate.Status = qualityGateData.ProjectStatus.Status
+		for condition := range qualityGateData.ProjectStatus.Conditions {
+			qualityGate.Conditions = append(qualityGate.Conditions, Condition{
+				Metric:         qualityGateData.ProjectStatus.Conditions[condition].MetricKey,
+				ErrorThreshold: qualityGateData.ProjectStatus.Conditions[condition].ErrorThreshold,
+				Operator:       qualityGateData.ProjectStatus.Conditions[condition].Comparator,
+				Value:          qualityGateData.ProjectStatus.Conditions[condition].ActualValue,
+				Status:         qualityGateData.ProjectStatus.Conditions[condition].Status,
+			})
+		}
+	}
+
+	return qualityGate, nil
 }

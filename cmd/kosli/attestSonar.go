@@ -18,12 +18,9 @@ type SonarAttestationPayload struct {
 
 type attestSonarOptions struct {
 	*CommonAttestationOptions
-	projectKey    string
-	apiToken      string
-	sonarQubeUrl  string
-	branchName    string
-	pullRequestID string
-	payload       SonarAttestationPayload
+	apiToken   string
+	workingDir string
+	payload    SonarAttestationPayload
 }
 
 const attestSonarShortDesc = `Report a sonarcloud or sonarqube attestation to an artifact or a trail in a Kosli flow.  `
@@ -138,13 +135,10 @@ func newAttestSonarCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	addAttestationFlags(cmd, o.CommonAttestationOptions, o.payload.CommonAttestationPayload, ci)
-	cmd.Flags().StringVar(&o.projectKey, "sonar-project-key", "", sonarProjectKeyFlag)
 	cmd.Flags().StringVar(&o.apiToken, "sonar-api-token", "", sonarAPITokenFlag)
-	cmd.Flags().StringVar(&o.sonarQubeUrl, "sonarqube-url", "", sonarQubeUrlFlag)
-	cmd.Flags().StringVar(&o.branchName, "branch-name", "", sonarBranchNameFlag)
-	cmd.Flags().StringVar(&o.pullRequestID, "pull-request-id", "", sonarPullRequestFlag)
+	cmd.Flags().StringVar(&o.workingDir, "sonar-working-directory", ".scannerwork", sonarWorkingDirFlag)
 
-	err := RequireFlags(cmd, []string{"flow", "trail", "name", "sonar-project-key", "sonar-api-token"})
+	err := RequireFlags(cmd, []string{"flow", "trail", "name", "sonar-api-token"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
@@ -160,7 +154,7 @@ func (o *attestSonarOptions) run(args []string) error {
 		return err
 	}
 
-	sc := sonar.NewSonarConfig(o.projectKey, o.apiToken, o.sonarQubeUrl, o.branchName, o.pullRequestID)
+	sc := sonar.NewSonarConfig(o.apiToken, o.workingDir)
 
 	o.payload.SonarResults, err = sc.GetSonarResults()
 	if err != nil {
