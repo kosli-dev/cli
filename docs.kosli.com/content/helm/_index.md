@@ -4,7 +4,7 @@ title: Kubernetes Reporter Helm Chart
 
 # k8s-reporter
 
-![Version: 1.5.0](https://img.shields.io/badge/Version-1.5.0-informational?style=flat-square)
+![Version: 1.5.1](https://img.shields.io/badge/Version-1.5.1-informational?style=flat-square)
 
 A Helm chart for installing the Kosli K8S reporter as a cronjob.
 The chart allows you to create a Kubernetes cronjob and all its necessary RBAC to report running images to Kosli at a given cron schedule.
@@ -46,7 +46,7 @@ helm uninstall [RELEASE-NAME]
 | fullnameOverride | string | `""` | overrides the fullname used for the created k8s resources. It has higher precedence than `nameOverride` |
 | image.pullPolicy | string | `"IfNotPresent"` | the kosli reporter image pull policy |
 | image.repository | string | `"ghcr.io/kosli-dev/cli"` | the kosli reporter image repository |
-| image.tag | string | `"v2.10.11"` | the kosli reporter image tag, overrides the image tag whose default is the chart appVersion. |
+| image.tag | string | `"v2.10.13"` | the kosli reporter image tag, overrides the image tag whose default is the chart appVersion. |
 | kosliApiToken.secretKey | string | `"key"` | the name of the key in the secret data which contains the Kosli API token |
 | kosliApiToken.secretName | string | `"kosli-api-token"` | the name of the secret containing the kosli API token |
 | nameOverride | string | `""` | overrides the name used for the created k8s resources. If `fullnameOverride` is provided, it has higher precedence than this one |
