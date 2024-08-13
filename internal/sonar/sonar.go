@@ -29,7 +29,7 @@ type SonarResults struct {
 
 type Project struct {
 	Key  string `json:"key"`
-	Name string `json:"name",omitempty`
+	Name string `json:"name,omitempty"`
 	Url  string `json:"url"`
 }
 
@@ -48,7 +48,7 @@ type Condition struct {
 	Metric         string `json:"metric"`
 	ErrorThreshold string `json:"errorThreshold"`
 	Operator       string `json:"operator"`
-	Value          string `json:"value",omitempty`
+	Value          string `json:"value,omitempty"`
 	Status         string `json:"status"`
 }
 
@@ -207,6 +207,7 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 		sonarResults.Branch = nil
 	}
 
+	taskResponse.Body.Close()
 	return sonarResults.TaskID, nil
 }
 
