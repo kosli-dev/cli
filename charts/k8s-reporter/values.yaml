@@ -8,7 +8,7 @@ image:
   # -- the kosli reporter image pull policy
   pullPolicy: IfNotPresent
   # -- the kosli reporter image tag, overrides the image tag whose default is the chart appVersion.
-  tag: "v2.10.11"
+  tag: "v2.10.13"
 
 # -- overrides the name used for the created k8s resources. If `fullnameOverride` is provided, it has higher precedence than this one
 nameOverride: ""
