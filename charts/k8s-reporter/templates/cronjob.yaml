@@ -43,7 +43,8 @@ spec:
             - --dry-run 
             {{ end }}
             {{ if .Values.reporterConfig.httpProxy }}
-            - --http-proxy {{ .Values.reporterConfig.httpProxy }}
+            - --http-proxy 
+            - {{ .Values.reporterConfig.httpProxy }}
             {{ end }}
             
             resources:
