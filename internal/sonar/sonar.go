@@ -42,7 +42,6 @@ type Branch struct {
 type QualityGate struct {
 	Status     string      `json:"status"`
 	Conditions []Condition `json:"conditions"`
-	//Name       string      `json:"name"` I cannot find a way to find out which quality gate was used for a specific scan
 }
 
 type Condition struct {
@@ -202,6 +201,10 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 	sonarResults.TaskID = taskResponseData.Task.TaskID
 	analysisId := taskResponseData.Task.AnalysisID
 	sonarResults.Status = taskResponseData.Task.Status
+
+	if analysisId == "" {
+		return "", fmt.Errorf("analysis ID not found. Please check the ceTaskURL is correct")
+	}
 
 	if project.Url == "" {
 		project.Url = fmt.Sprintf("%s/dashboard?id=%s", sonarResults.ServerUrl, project.Key)
