@@ -20,6 +20,7 @@ type attestSonarOptions struct {
 	*CommonAttestationOptions
 	apiToken   string
 	workingDir string
+	ceTaskURL  string
 	payload    SonarAttestationPayload
 }
 
@@ -136,7 +137,8 @@ func newAttestSonarCmd(out io.Writer) *cobra.Command {
 	ci := WhichCI()
 	addAttestationFlags(cmd, o.CommonAttestationOptions, o.payload.CommonAttestationPayload, ci)
 	cmd.Flags().StringVar(&o.apiToken, "sonar-api-token", "", sonarAPITokenFlag)
-	cmd.Flags().StringVar(&o.workingDir, "sonar-working-directory", ".scannerwork", sonarWorkingDirFlag)
+	cmd.Flags().StringVar(&o.workingDir, "sonar-working-dir", ".scannerwork", sonarWorkingDirFlag)
+	cmd.Flags().StringVar(&o.ceTaskURL, "CE-task-url", "", sonarCETaskUrlFlag)
 
 	err := RequireFlags(cmd, []string{"flow", "trail", "name", "sonar-api-token"})
 	if err != nil {
@@ -154,7 +156,7 @@ func (o *attestSonarOptions) run(args []string) error {
 		return err
 	}
 
-	sc := sonar.NewSonarConfig(o.apiToken, o.workingDir)
+	sc := sonar.NewSonarConfig(o.apiToken, o.workingDir, o.ceTaskURL)
 
 	o.payload.SonarResults, err = sc.GetSonarResults()
 	if err != nil {

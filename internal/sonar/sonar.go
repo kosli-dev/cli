@@ -13,6 +13,7 @@ import (
 type SonarConfig struct {
 	APIToken   string
 	WorkingDir string
+	CETaskUrl  string
 }
 
 // Structs to build the JSON for our attestation payload
@@ -75,7 +76,9 @@ type TaskResponse struct {
 	Task Task `json:"task"`
 }
 type Task struct {
+	TaskID        string `json:"id"`
 	ComponentName string `json:"componentName"`
+	ComponentKey  string `json:"componentKey"`
 	AnalysisID    string `json:"analysisId"`
 	Status        string `json:"status"`
 	Branch        string `json:"branch"`
@@ -92,17 +95,18 @@ type Analysis struct {
 	Revision string `json:"revision"`
 }
 
-func NewSonarConfig(apiToken, workingDir string) *SonarConfig {
+func NewSonarConfig(apiToken, workingDir, ceTaskUrl string) *SonarConfig {
 	return &SonarConfig{
 		APIToken:   apiToken,
 		WorkingDir: workingDir,
+		CETaskUrl:  ceTaskUrl,
 	}
 }
 
 func (sc *SonarConfig) GetSonarResults() (*SonarResults, error) {
 	httpClient := &http.Client{}
-	var ceTaskURL string
 	var analysisID, tokenHeader string
+	var err error
 	project := &Project{}
 	qualityGate := &QualityGate{}
 	sonarResults := &SonarResults{}
@@ -114,14 +118,18 @@ func (sc *SonarConfig) GetSonarResults() (*SonarResults, error) {
 		return nil, fmt.Errorf("API token must be given to retrieve data from SonarCloud/SonarQube")
 	}
 
-	//Read the report-task.txt file to get the project key, server URL, dashboard URL and ceTaskURL
-	ceTaskURL, err := sc.readFile(project, sonarResults)
-	if err != nil {
-		return nil, err
+	if sc.CETaskUrl == "" {
+		//Read the report-task.txt file to get the project key, server URL, dashboard URL and ceTaskURL
+		err = sc.readFile(project, sonarResults)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		sonarResults.ServerUrl = strings.Split(sc.CETaskUrl, "/api/")[0]
 	}
 
 	//Get the analysis ID, status, project name and branch data from the ceTaskURL (ce API)
-	analysisID, err = GetCETaskData(httpClient, project, sonarResults, ceTaskURL, tokenHeader)
+	analysisID, err = GetCETaskData(httpClient, project, sonarResults, sc.CETaskUrl, tokenHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -144,12 +152,10 @@ func (sc *SonarConfig) GetSonarResults() (*SonarResults, error) {
 	return sonarResults, nil
 }
 
-func (sc *SonarConfig) readFile(project *Project, results *SonarResults) (string, error) {
-	var ceTaskURL string
-
+func (sc *SonarConfig) readFile(project *Project, results *SonarResults) error {
 	metadata, err := os.Open(filepath.Join(sc.WorkingDir, "report-task.txt"))
 	if err != nil {
-		return "", fmt.Errorf("report-task.txt not found. Check your working directory is set correctly.")
+		return fmt.Errorf("report-task.txt not found. Check your working directory is set correctly: %s", err)
 	}
 	defer metadata.Close()
 
@@ -157,10 +163,6 @@ func (sc *SonarConfig) readFile(project *Project, results *SonarResults) (string
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		if strings.HasPrefix(line, "projectKey=") {
-			project.Key = strings.TrimPrefix(line, "projectKey=")
-			continue
-		}
 		if strings.HasPrefix(line, "serverUrl=") {
 			results.ServerUrl = strings.TrimPrefix(line, "serverUrl=")
 			continue
@@ -170,11 +172,11 @@ func (sc *SonarConfig) readFile(project *Project, results *SonarResults) (string
 			continue
 		}
 		if strings.HasPrefix(line, "ceTaskUrl=") {
-			ceTaskURL = strings.TrimPrefix(line, "ceTaskUrl=")
+			sc.CETaskUrl = strings.TrimPrefix(line, "ceTaskUrl=")
 			continue
 		}
 	}
-	return ceTaskURL, nil
+	return nil
 }
 
 func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *SonarResults, ceTaskURL, tokenHeader string) (string, error) {
@@ -192,12 +194,18 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 	taskResponseData := &TaskResponse{}
 	err = json.NewDecoder(taskResponse.Body).Decode(taskResponseData)
 	if err != nil {
-		return "", fmt.Errorf("Please check your API token is correct and you have the correct permissions in SonarCloud/SonarQube.")
+		return "", fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarCloud/SonarQube")
 	}
 
 	project.Name = taskResponseData.Task.ComponentName
-	sonarResults.TaskID = taskResponseData.Task.AnalysisID
+	project.Key = taskResponseData.Task.ComponentKey
+	sonarResults.TaskID = taskResponseData.Task.TaskID
+	analysisId := taskResponseData.Task.AnalysisID
 	sonarResults.Status = taskResponseData.Task.Status
+
+	if project.Url == "" {
+		project.Url = fmt.Sprintf("%s/dashboard?id=%s", sonarResults.ServerUrl, project.Key)
+	}
 
 	if taskResponseData.Task.Branch != "" {
 		sonarResults.Branch = &Branch{}
@@ -208,7 +216,7 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 	}
 
 	taskResponse.Body.Close()
-	return sonarResults.TaskID, nil
+	return analysisId, nil
 }
 
 func GetProjectAnalysis(httpClient *http.Client, sonarResults *SonarResults, project *Project, analysisID, tokenHeader string) error {
@@ -227,7 +235,7 @@ func GetProjectAnalysis(httpClient *http.Client, sonarResults *SonarResults, pro
 	projectAnalysesData := &ProjectAnalyses{}
 	err = json.NewDecoder(projectAnalysesResponse.Body).Decode(projectAnalysesData)
 	if err != nil {
-		return fmt.Errorf("Please check your API token is correct and you have the correct permissions in SonarCloud/SonarQube.")
+		return fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarCloud/SonarQube")
 	}
 
 	for analysis := range projectAnalysesData.Analyses {
@@ -236,6 +244,10 @@ func GetProjectAnalysis(httpClient *http.Client, sonarResults *SonarResults, pro
 			sonarResults.Revision = projectAnalysesData.Analyses[analysis].Revision
 			break
 		}
+	}
+
+	if sonarResults.AnalaysedAt == "" {
+		return fmt.Errorf("analysis with ID %s not found. Snapshot has most likely been deleted by Sonar", analysisID)
 	}
 
 	return nil
