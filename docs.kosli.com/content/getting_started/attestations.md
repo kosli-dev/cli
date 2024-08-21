@@ -5,9 +5,11 @@ weight: 270
 ---
 # Part 7: Attestations
 
-Attestations are how you record the facts your care about in your software supply chain. They are the evidence that you have performed certain activities, such as running tests, security scans, or ensuring that a certain requirement is met.
+Attestations are how you record the facts your care about in your software supply chain. 
+They are the evidence that you have performed certain activities, such as running tests, security scans, or ensuring that a certain requirement is met.
 
-Kosli allows you to report different types of attestations about artifacts and trails. For some types, Kosli will process the evidence you provide and conclude whether the evidence proves compliance or otherwise. 
+Kosli allows you to report different types of attestations about artifacts and trails. 
+For some types, Kosli will process the evidence you provide and conclude whether the evidence proves compliance or otherwise. 
 
 Let's take a look at how to make attestations to Kosli.
 
@@ -28,7 +30,8 @@ trail:
       type: snyk
 ```
 
-It expects `jira-ticket` on the trail, the `backend` artifact, with `unit-tests` and `security-scan` attached to it. When you make an attestation, you have the choice of what `name` to attach it to:
+It expects `jira-ticket` on the trail, the `backend` artifact, with `unit-tests` and `security-scan` attached to it. 
+When you make an attestation, you have the choice of what `name` to attach it to:
 
 ## Make the `jira-ticket` attestation to a trail
 
@@ -91,11 +94,48 @@ $ kosli attest snyk \
     ...
 ```
 
+
+## Compliance
+
 {{< hint info >}}
 ### Attestation immutability
 
-Attestations are append-only immutable records. You can report the same attestation multiple times, and each report will be recorded. However, only the latest version of the attestation is  considered when evaluating trail or artifact compliance.
+Attestations are append-only immutable records. You can report the same attestation multiple times, and each report will be recorded.
+However, only the latest version of the attestation is  considered when evaluating compliance.
 {{< /hint >}}
+
+### Attesting with a template
+
+The four attestations above are all made against a Flow named `backend-ci` and a Trail named after the git commit.
+Typically, the Flow and Trail are explicitly setup before making the attestations (e.g. at the start of a CI workflow).
+This is done with the `create flow` and `begin trail` commands, either of which can specify the name of the template yaml file above 
+(eg `.kosli.yml`) whose contents define overall compliance. For example:
+
+```shell
+$ kosli create flow backend-ci \
+    --template-file .kosli.yml
+    ...
+    
+$ kosli begin trail $(git rev-parse HEAD) \
+    --flow backend-ci \
+    ...    
+```
+
+An attested `backend` artifact is then compliant if and only if all the template attestations have been made
+against it and are themselves compliant:
+- `jira-ticket` on the Trail 
+- `backend.unit-tests` on the artifact 
+- `backend.security-scan` on the artifact
+
+If any of these attestations are missing, or are individually non-compliant then the `backend` artifact is non-compliant.
+
+### Attesting without a template
+
+An attestation can also be made against a Flow and Trail **not** previously explicitly setup.
+In this case a Flow and Trail will be automatically setup but there will be no template yaml file defining
+overall compliance. The compliance of any attested artifact will depend only on the compliance of the attestations actually made
+and never because a specific attestation is missing.
+
 
 ## Evidence Vault
 
