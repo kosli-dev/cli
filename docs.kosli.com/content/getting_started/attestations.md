@@ -97,19 +97,12 @@ $ kosli attest snyk \
 
 ## Compliance
 
-{{< hint info >}}
-### Attestation immutability
-
-Attestations are append-only immutable records. You can report the same attestation multiple times, and each report will be recorded.
-However, only the latest version of the attestation is  considered when evaluating compliance.
-{{< /hint >}}
-
 ### Attesting with a template
 
 The four attestations above are all made against a Flow named `backend-ci` and a Trail named after the git commit.
 Typically, the Flow and Trail are explicitly setup before making the attestations (e.g. at the start of a CI workflow).
 This is done with the `create flow` and `begin trail` commands, either of which can specify the name of the template yaml file above 
-(eg `.kosli.yml`) whose contents define overall compliance. For example:
+(e.g. `.kosli.yml`) whose contents define overall compliance. For example:
 
 ```shell
 $ kosli create flow backend-ci \
@@ -135,6 +128,16 @@ An attestation can also be made against a Flow and Trail **not** previously expl
 In this case a Flow and Trail will be automatically setup but there will be no template yaml file defining
 overall compliance. The compliance of any attested artifact will depend only on the compliance of the attestations actually made
 and never because a specific attestation is missing.
+
+### Attestation immutability
+
+You can set/edit the template yml file for the Flow/Trail at any time.
+This will affect compliance evaluations made after the edit.
+It will not affect earlier records of compliance evaluations (e.g. in Environment Snapshots). 
+
+Attestations are append-only immutable records. You can report the same attestation multiple times, and each report will be recorded.
+However, only the latest version of the attestation is considered when evaluating compliance.
+
 
 
 ## Evidence Vault
