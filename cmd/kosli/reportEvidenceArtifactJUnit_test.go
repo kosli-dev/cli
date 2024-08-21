@@ -36,13 +36,13 @@ func (suite *ArtifactEvidenceJUnitCommandTestSuite) TestArtifactEvidenceJUnitCom
 		{
 			name: "report JUnit test evidence works (using --fingerprint)",
 			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result --flow ` + suite.flowName + `
-			          --build-url example.com --results-dir testdata` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --results-dir testdata` + suite.defaultKosliArguments,
 			goldenRegex: "junit test evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
 		{
 			name: "report JUnit test evidence works when --evidence-url and --evidence-fingerprint are provided",
 			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result --flow ` + suite.flowName + `
-			          --build-url example.com --results-dir testdata
+			          --build-url http://www.example.com --results-dir testdata
 					  --evidence-url https://example.com --evidence-fingerprint ` + suite.artifactFingerprint + suite.defaultKosliArguments,
 			goldenRegex: "junit test evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
@@ -50,39 +50,39 @@ func (suite *ArtifactEvidenceJUnitCommandTestSuite) TestArtifactEvidenceJUnitCom
 			name: "report JUnit test evidence with maven-surefire XML that lacks a timestamp on the <testsuite>",
 			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint +
 				` --name junit-result --flow ` + suite.flowName +
-				` --build-url example.com --results-dir testdata/junit` + suite.defaultKosliArguments,
+				` --build-url http://www.example.com --results-dir testdata/junit` + suite.defaultKosliArguments,
 			goldenRegex: "junit test evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
 		{
 			name: "report JUnit test evidence works (using --artifact-type)",
 			cmd: `report evidence artifact junit testdata/file1 --artifact-type file --name junit-result --flow ` + suite.flowName + `
-			          --build-url example.com --results-dir testdata` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --results-dir testdata` + suite.defaultKosliArguments,
 			goldenRegex: "junit test evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
 		{
 			name: "report JUnit test evidence with non-existing results dir",
 			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result --flow ` + suite.flowName + `
-			          --build-url example.com --results-dir foo` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --results-dir foo` + suite.defaultKosliArguments,
 			wantError: true,
 		},
 		{
 			name: "report JUnit test evidence with a results dir that does not contain any results",
 			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result --flow ` + suite.flowName + `
-			          --build-url example.com --results-dir testdata/folder1` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --results-dir testdata/folder1` + suite.defaultKosliArguments,
 			wantError:   true,
 			goldenRegex: "Error: no tests found in testdata/folder1 directory\n",
 		},
 		{
 			name: "report JUnit test evidence with missing name flag",
 			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + `
-			          --build-url example.com --results-dir testdata` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --results-dir testdata` + suite.defaultKosliArguments,
 			wantError:   true,
 			goldenRegex: "Error: required flag\\(s\\) \"name\" not set\n",
 		},
 		{
 			name: "report JUnit test evidence with a missing flow",
 			cmd: `report evidence artifact junit --fingerprint ` + suite.artifactFingerprint + ` --name junit-result
-			          --build-url example.com --results-dir testdata` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --results-dir testdata` + suite.defaultKosliArguments,
 			wantError:   true,
 			goldenRegex: "Error: required flag\\(s\\) \"flow\" not set\n",
 		},

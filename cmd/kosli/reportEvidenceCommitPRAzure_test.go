@@ -36,14 +36,14 @@ func (suite *CommitEvidencePRAzureCommandTestSuite) TestCommitEvidencePRAzureCmd
 		{
 			name: "report Azure PR evidence works",
 			cmd: `report evidence commit pullrequest azure --name az-pr --flows ` + suite.flowNames + `
-			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
 			goldenRegex: "found 1 pull request\\(s\\) for commit: 5f61be8f00a01c84e491922a630c9a418c684c7a\nazure pull request evidence is reported to commit: 5f61be8f00a01c84e491922a630c9a418c684c7a\n",
 		},
 		{
 			wantError: true,
 			name:      "report Azure PR evidence fails when --org is missing",
 			cmd: `report evidence commit pullrequest azure --name az-pr --flows ` + suite.flowNames + `
-			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a --api-token foo --host bar`,
+			          --build-url http://www.example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a --api-token foo --host bar`,
 			goldenRegex: "Error: --org is not set\n" +
 				"Usage: kosli report evidence commit pullrequest azure \\[flags\\]\n",
 		},
@@ -51,41 +51,41 @@ func (suite *CommitEvidencePRAzureCommandTestSuite) TestCommitEvidencePRAzureCmd
 			wantError: true,
 			name:      "report Azure PR evidence fails when --name is missing",
 			cmd: `report evidence commit pullrequest azure --flows ` + suite.flowNames + ` --azure-org-url https://dev.azure.com/kosli --project kosli-azure
-			          --build-url example.com --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
 			goldenRegex: "Error: required flag\\(s\\) \"name\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Azure PR evidence fails when --azure-org-url is missing",
 			cmd: `report evidence commit pullrequest azure --name az-pr --flows ` + suite.flowNames + `
-			          --build-url example.com --project kosli-azure --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --project kosli-azure --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
 			goldenRegex: "Error: required flag\\(s\\) \"azure-org-url\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Azure PR evidence fails when --project is missing",
 			cmd: `report evidence commit pullrequest azure --name az-pr --flows ` + suite.flowNames + `
-			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --azure-org-url https://dev.azure.com/kosli --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
 			goldenRegex: "Error: required flag\\(s\\) \"project\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Azure PR evidence fails when --repository is missing",
 			cmd: `report evidence commit pullrequest azure --name az-pr --flows ` + suite.flowNames + `
-			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
 			goldenRegex: "Error: required flag\\(s\\) \"repository\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Azure PR evidence fails when --commit is missing",
 			cmd: `report evidence commit pullrequest azure --name az-pr --flows ` + suite.flowNames + `
-			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli` + suite.defaultKosliArguments,
 			goldenRegex: "Error: required flag\\(s\\) \"commit\" not set\n",
 		},
 		{
 			name: "report Azure PR evidence does not fail when commit does not exist, empty evidence is reported instead",
 			cmd: `report evidence commit pullrequest azure --name az-pr --flows ` + suite.flowNames + `
-			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 1111111111111111111111111111111111111111` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 1111111111111111111111111111111111111111` + suite.defaultKosliArguments,
 			goldenRegex: "found 0 pull request\\(s\\) for commit: 1111111111111111111111111111111111111111\n" +
 				"azure pull request evidence is reported to commit: 1111111111111111111111111111111111111111\n",
 		},
@@ -93,13 +93,13 @@ func (suite *CommitEvidencePRAzureCommandTestSuite) TestCommitEvidencePRAzureCmd
 			wantError: true,
 			name:      "report Azure PR evidence fails when --assert is used and commit has no PRs",
 			cmd: `report evidence commit pullrequest azure --name az-pr --flows ` + suite.flowNames + ` --assert
-					--build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 1a877d0c3cf4644b4225bf3eb23ced26818d685a` + suite.defaultKosliArguments,
+					--build-url http://www.example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 1a877d0c3cf4644b4225bf3eb23ced26818d685a` + suite.defaultKosliArguments,
 			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nazure pull request evidence is reported to commit: .*\nError: assert failed: no pull request found for the given commit: .*\n",
 		},
 		{
 			name: "report Azure PR evidence does not fail when commit has no PRs",
 			cmd: `report evidence commit pullrequest azure --name az-pr --flows ` + suite.flowNames + `
-			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 1a877d0c3cf4644b4225bf3eb23ced26818d685a` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 1a877d0c3cf4644b4225bf3eb23ced26818d685a` + suite.defaultKosliArguments,
 			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nazure pull request evidence is reported to commit: .*\n",
 		},
 		{
@@ -107,7 +107,7 @@ func (suite *CommitEvidencePRAzureCommandTestSuite) TestCommitEvidencePRAzureCmd
 			name:      "report Azure PR evidence fails when --user-data is not found",
 			cmd: `report evidence commit pullrequest azure --name az-pr --flows ` + suite.flowNames + `
 					  --user-data non-existing.json
-			          --build-url example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit 5f61be8f00a01c84e491922a630c9a418c684c7a` + suite.defaultKosliArguments,
 			goldenRegex: "Error: open non-existing.json: no such file or directory\n",
 		},
 	}

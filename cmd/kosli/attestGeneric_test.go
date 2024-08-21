@@ -80,25 +80,25 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 		{
 			wantError: true,
 			name:      "fails when both --fingerprint and --artifact-type",
-			cmd:       fmt.Sprintf("attest generic testdata/file1 --fingerprint xxxx --artifact-type file --name bar --commit HEAD --origin-url example.com  %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest generic testdata/file1 --fingerprint xxxx --artifact-type file --name bar --commit HEAD --origin-url http://www.example.com  %s", suite.defaultKosliArguments),
 			golden:    "Error: only one of --fingerprint, --artifact-type is allowed\n",
 		},
 		{
 			wantError: true,
 			name:      "fails when --fingerprint is not valid",
-			cmd:       fmt.Sprintf("attest generic --name foo --fingerprint xxxx --commit HEAD --origin-url example.com %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest generic --name foo --fingerprint xxxx --commit HEAD --origin-url http://www.example.com %s", suite.defaultKosliArguments),
 			golden:    "Error: xxxx is not a valid SHA256 fingerprint. It should match the pattern ^([a-f0-9]{64})$\nUsage: kosli attest generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "attesting against an artifact that does not exist fails",
-			cmd:       fmt.Sprintf("attest generic --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com  %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest generic --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url http://www.example.com  %s", suite.defaultKosliArguments),
 			golden:    "Error: Artifact with fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 does not exist in trail \"test-123\" of flow \"attest-generic\" belonging to organization \"docs-cmd-test-user\"\n",
 		},
 		{
 			wantError: true,
 			name:      "fails when --name is passed as empty string",
-			cmd:       fmt.Sprintf("attest generic --name \"\" --commit HEAD --origin-url example.com  %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest generic --name \"\" --commit HEAD --origin-url http://www.example.com  %s", suite.defaultKosliArguments),
 			golden:    "Error: flag '--name' is required, but empty string was provided\n",
 		},
 		{
@@ -108,32 +108,32 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 		},
 		{
 			name:   "can attest generic against an artifact using artifact name and --artifact-type",
-			cmd:    fmt.Sprintf("attest generic testdata/file1 --artifact-type file --name foo --commit HEAD --origin-url example.com  %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest generic testdata/file1 --artifact-type file --name foo --commit HEAD --origin-url http://www.example.com  %s", suite.defaultKosliArguments),
 			golden: "generic attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			name:   "can attest generic against an artifact using artifact name and --artifact-type when --name does not exist in the trail template",
-			cmd:    fmt.Sprintf("attest generic testdata/file1 --artifact-type file --name bar --commit HEAD --origin-url example.com  %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest generic testdata/file1 --artifact-type file --name bar --commit HEAD --origin-url http://www.example.com  %s", suite.defaultKosliArguments),
 			golden: "generic attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
 			name:   "can attest generic against an artifact using --fingerprint and no artifact-name",
-			cmd:    fmt.Sprintf("attest generic --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com  %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest generic --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url http://www.example.com  %s", suite.defaultKosliArguments),
 			golden: "generic attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			name:   "can attest generic against a trail",
-			cmd:    fmt.Sprintf("attest generic --name bar --commit HEAD --origin-url example.com  %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest generic --name bar --commit HEAD --origin-url http://www.example.com  %s", suite.defaultKosliArguments),
 			golden: "generic attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
 			name:   "can attest generic against a trail when name is not found in the trail template",
-			cmd:    fmt.Sprintf("attest generic --name additional --commit HEAD --origin-url example.com  %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest generic --name additional --commit HEAD --origin-url http://www.example.com  %s", suite.defaultKosliArguments),
 			golden: "generic attestation 'additional' is reported to trail: test-123\n",
 		},
 		{
 			name:   "can attest generic against an artifact it is created using dot syntax in --name",
-			cmd:    fmt.Sprintf("attest generic --name cli.foo --commit HEAD --origin-url example.com  %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest generic --name cli.foo --commit HEAD --origin-url http://www.example.com  %s", suite.defaultKosliArguments),
 			golden: "generic attestation 'foo' is reported to trail: test-123\n",
 		},
 		{

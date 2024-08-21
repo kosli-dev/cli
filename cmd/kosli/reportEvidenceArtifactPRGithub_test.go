@@ -41,14 +41,14 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 		{
 			name: "report Github PR evidence works with new flags (fingerprint, name ...)",
 			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
-			          --build-url example.com --github-org kosli-dev --repository cli --commit ` + suite.commitWithPR + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --github-org kosli-dev --repository cli --commit ` + suite.commitWithPR + suite.defaultKosliArguments,
 			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\ngithub pull request evidence is reported to artifact: .*\n",
 		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --org is missing",
 			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
-			          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6 --api-token foo --host bar`,
+			          --build-url http://www.example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6 --api-token foo --host bar`,
 			goldenRegex: "Error: --org is not set\n" +
 				"Usage: kosli report evidence artifact pullrequest github \\[IMAGE-NAME | FILE-PATH | DIR-PATH\\] \\[flags\\]\n",
 		},
@@ -56,35 +56,35 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 			wantError: true,
 			name:      "report Github PR evidence fails when --name is missing",
 			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + `
-			          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			goldenRegex: "Error: required flag\\(s\\) \"name\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --github-org is missing",
 			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
-			          --build-url example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			goldenRegex: "Error: required flag\\(s\\) \"github-org\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --repository is missing",
 			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
-			          --build-url example.com --github-org kosli-dev --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --github-org kosli-dev --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			goldenRegex: "Error: required flag\\(s\\) \"repository\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --commit is missing",
 			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
-			          --build-url example.com --github-org kosli-dev --repository cli` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --github-org kosli-dev --repository cli` + suite.defaultKosliArguments,
 			goldenRegex: "Error: required flag\\(s\\) \"commit\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when neither --fingerprint nor --artifact-type are set",
 			cmd: `report evidence artifact pullrequest github artifactNameArg --name gh-pr --flow ` + suite.flowName + `
-					  --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
+					  --build-url http://www.example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			goldenRegex: "Error: either --artifact-type or --fingerprint must be specified\n" +
 				"Usage: kosli report evidence artifact pullrequest github \\[IMAGE-NAME | FILE-PATH | DIR-PATH\\] \\[flags\\]\n",
 		},
@@ -92,14 +92,14 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 			wantError: true,
 			name:      "report Github PR evidence fails when commit does not exist",
 			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
-			          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c3123ab` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c3123ab` + suite.defaultKosliArguments,
 			goldenRegex: "Error: GET https://api.github.com/repos/kosli-dev/cli/commits/73d7fee2f31ade8e1a9c456c324255212c3123ab/pulls: 422 No commit found for SHA: 73d7fee2f31ade8e1a9c456c324255212c3123ab \\[\\]\n",
 		},
 		{
 			name: "report Github PR evidence works when --assert is used and commit has a PR",
 			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
 					  --assert
-			          --build-url example.com --github-org kosli-dev --repository cli --commit ` + suite.commitWithPR + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --github-org kosli-dev --repository cli --commit ` + suite.commitWithPR + suite.defaultKosliArguments,
 			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\ngithub pull request evidence is reported to artifact: .*\n",
 		},
 		{
@@ -107,13 +107,13 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 			name:      "report Github PR evidence fails when --assert is used and commit has no PRs",
 			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
 					  --assert
-			          --build-url example.com --github-org kosli-dev --repository cli --commit 9bca2c44eaf221a79fb18a1a11bdf2997adaf870` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --github-org kosli-dev --repository cli --commit 9bca2c44eaf221a79fb18a1a11bdf2997adaf870` + suite.defaultKosliArguments,
 			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\ngithub pull request evidence is reported to artifact: .*\nError: assert failed: no pull request found for the given commit: .*\n",
 		},
 		{
 			name: "report Github PR evidence does not fail when commit has no PRs",
 			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
-			          --build-url example.com --github-org kosli-dev --repository cli --commit 9bca2c44eaf221a79fb18a1a11bdf2997adaf870` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --github-org kosli-dev --repository cli --commit 9bca2c44eaf221a79fb18a1a11bdf2997adaf870` + suite.defaultKosliArguments,
 			goldenRegex: "found 0 pull request\\(s\\) for commit: 9bca2c44eaf221a79fb18a1a11bdf2997adaf870\n" +
 				"github pull request evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
@@ -121,14 +121,14 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 			wantError: true,
 			name:      "report Github PR evidence fails when the artifact does not exist in the server",
 			cmd: `report evidence artifact pullrequest github testdata/file1 --artifact-type file --name gh-pr --flow ` + suite.flowName + `
-			          --build-url example.com --github-org kosli-dev --repository cli --commit ` + suite.commitWithPR + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --github-org kosli-dev --repository cli --commit ` + suite.commitWithPR + suite.defaultKosliArguments,
 			goldenRegex: "found 1 pull request\\(s\\) for commit: e21a8afff429e0c87ee523d683f2438113f0a105\nError: Artifact with fingerprint '7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'github-pr' belonging to organization 'docs-cmd-test-user'. \n",
 		},
 		{
 			wantError: true,
 			name:      "report Github PR evidence fails when --artifact-type is unsupported",
 			cmd: `report evidence artifact pullrequest github testdata/file1 --artifact-type unsupported --name gh-pr --flow ` + suite.flowName + `
-			          --build-url example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --github-org kosli-dev --repository cli --commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6` + suite.defaultKosliArguments,
 			goldenRegex: "Error: unsupported is not a supported artifact type\n",
 		},
 		{
@@ -136,7 +136,7 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 			name:      "report Github PR evidence fails when --user-data is not found",
 			cmd: `report evidence artifact pullrequest github --fingerprint ` + suite.artifactFingerprint + ` --name gh-pr --flow ` + suite.flowName + `
 					  --user-data non-existing.json
-			          --build-url example.com --github-org kosli-dev --repository cli --commit ` + suite.commitWithPR + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --github-org kosli-dev --repository cli --commit ` + suite.commitWithPR + suite.defaultKosliArguments,
 			goldenRegex: "Error: open non-existing.json: no such file or directory\n",
 		},
 	}
