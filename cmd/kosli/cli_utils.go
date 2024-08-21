@@ -493,7 +493,7 @@ func ValidateArtifactArg(args []string, artifactType, inputSha256 string, always
 		if argsWithLeadingSpace {
 			errMsg = append(errMsg, "Arguments with a leading space are probably caused by a lone backslash that has a space after it.")
 		}
-		return fmt.Errorf(strings.Join(errMsg, "\n"))
+		return fmt.Errorf("%s", strings.Join(errMsg, "\n"))
 	}
 
 	if len(args) == 0 || args[0] == "" {

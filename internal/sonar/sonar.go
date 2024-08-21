@@ -116,7 +116,7 @@ func (sc *SonarConfig) GetSonarResults() (*SonarResults, error) {
 				message = fmt.Sprintf("%s\n", message)
 			}
 		}
-		return nil, fmt.Errorf(message)
+		return nil, fmt.Errorf("%s", message)
 	}
 
 	return sonarResult, nil
