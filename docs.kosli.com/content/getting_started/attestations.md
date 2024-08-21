@@ -5,7 +5,7 @@ weight: 270
 ---
 # Part 7: Attestations
 
-Attestations are how you record the facts your care about in your software supply chain. 
+Attestations are how you record the facts you care about in your software supply chain. 
 They are the evidence that you have performed certain activities, such as running tests, security scans, or ensuring that a certain requirement is met.
 
 Kosli allows you to report different types of attestations about artifacts and trails. 
