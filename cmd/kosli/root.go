@@ -109,7 +109,7 @@ The service principal needs to have the following permissions:
 	jiraPATFlag                          = "Jira personal access token (for self-hosted Jira)"
 	envDescriptionFlag                   = "[optional] The environment description."
 	flowDescriptionFlag                  = "[optional] The Kosli flow description."
-	trailDescriptionFlag                 = "[optional] The Kosli trail description."
+	trailDescriptionFlag                 = "[optional] The Kosli trail description. (defaults to the commit author+message when all attestations on the trail are for the same commit)."
 	visibilityFlag                       = "[defaulted] The visibility of the Kosli flow. Valid visibilities are [public, private]."
 	templateFlag                         = "[defaulted] The comma-separated list of required compliance controls names."
 	templateFileFlag                     = "[optional] The path to a yaml template file. Cannot be used together with --use-empty-template"
