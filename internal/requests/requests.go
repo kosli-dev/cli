@@ -233,7 +233,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 					cleanedErrorMessage = fmt.Sprintf("%s", respBodyMap)
 				}
 			}
-			return nil, fmt.Errorf(cleanedErrorMessage)
+			return nil, fmt.Errorf("%s", cleanedErrorMessage)
 		}
 		return &HTTPResponse{string(body), resp}, nil
 	}
