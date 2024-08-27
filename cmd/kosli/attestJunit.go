@@ -63,6 +63,7 @@ kosli attest junit \
 	--name yourTemplateArtifactName.yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
+	--commit yourArtifactGitCommit \
 	--results-dir yourFolderWithJUnitResults \
 	--api-token yourAPIToken \
 	--org yourOrgName
@@ -73,7 +74,7 @@ kosli attest junit \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--results-dir yourFolderWithJUnitResults \
-	--attachments=yourAttachmentPathName \
+	--attachments yourAttachmentPathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 `
