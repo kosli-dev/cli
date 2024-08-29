@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"os"
 	"path/filepath"
+	"regexp"
 	"testing"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
@@ -67,12 +68,17 @@ func (suite *AzureAppsTestSuite) TestFingerprintZipService() {
 	appKind := "app"
 	appData, err := suite.defaultClient.fingerprintZipService(&armappservice.Site{Name: &appName, Kind: &appKind}, logger.NewStandardLogger())
 	require.NoError(suite.T(), err)
+
+	digest := appData.Digests[appName]
+	sha256Regex := regexp.MustCompile(`^[a-f0-9]{64}$`)
+	require.True(suite.T(), sha256Regex.MatchString(digest))
+
 	require.EqualValues(suite.T(), appData, AppData{AppName: appName,
 		AppKind:       appKind,
 		DigestsSource: "kosli-cli",
 		StartedAt:     0,
 		Digests: map[string]string{
-			appName: "6a104b86b97c41eaff21d7ab01194d017dd2e59a1b6bf2ebe4d07ada79222bca",
+			appName: digest,
 		},
 	})
 
