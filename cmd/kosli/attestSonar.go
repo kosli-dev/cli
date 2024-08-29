@@ -141,10 +141,9 @@ func newAttestSonarCmd(out io.Writer) *cobra.Command {
 	addAttestationFlags(cmd, o.CommonAttestationOptions, o.payload.CommonAttestationPayload, ci)
 	cmd.Flags().StringVar(&o.apiToken, "sonar-api-token", "", sonarAPITokenFlag)
 	cmd.Flags().StringVar(&o.workingDir, "sonar-working-dir", ".scannerwork", sonarWorkingDirFlag)
-	cmd.Flags().StringVar(&o.ceTaskURL, "CE-task-url", "", sonarCETaskUrlFlag)
-	cmd.Flags().StringVar(&o.projectKey, "sonar-project-key", "", "The project key of the SonarCloud/SonarQube project")
-	cmd.Flags().StringVar(&o.serverURL, "sonar-server-url", "https://sonarcloud.io", "The URL of the SonarQube server")
-	cmd.Flags().StringVar(&o.revision, "sonar-revision", o.commitSHA, "The revision of the Sonar scan")
+	cmd.Flags().StringVar(&o.projectKey, "sonar-project-key", "", sonarProjectKeyFlag)
+	cmd.Flags().StringVar(&o.serverURL, "sonar-server-url", "https://sonarcloud.io", sonarServerURLFlag)
+	cmd.Flags().StringVar(&o.revision, "sonar-revision", o.commitSHA, sonarRevisionFlag)
 
 	err := RequireFlags(cmd, []string{"flow", "trail", "name", "sonar-api-token"})
 	if err != nil {
