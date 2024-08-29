@@ -14,6 +14,9 @@ type SonarConfig struct {
 	APIToken   string
 	WorkingDir string
 	CETaskUrl  string
+	revision   string
+	projectKey string
+	serverURL  string
 }
 
 // Structs to build the JSON for our attestation payload
@@ -84,6 +87,10 @@ type Task struct {
 	BranchType    string `json:"branchType"`
 }
 
+type ActivityResponse struct {
+	Tasks []Task `json:"tasks"`
+}
+
 // These are the structs for the response from the project_analyses/search API
 type ProjectAnalyses struct {
 	Analyses []Analysis `json:"analyses"`
@@ -94,11 +101,14 @@ type Analysis struct {
 	Revision string `json:"revision"`
 }
 
-func NewSonarConfig(apiToken, workingDir, ceTaskUrl string) *SonarConfig {
+func NewSonarConfig(apiToken, workingDir, ceTaskUrl, projectKey, serverURL, revision string) *SonarConfig {
 	return &SonarConfig{
 		APIToken:   apiToken,
 		WorkingDir: workingDir,
 		CETaskUrl:  ceTaskUrl,
+		revision:   revision,
+		projectKey: projectKey,
+		serverURL:  serverURL,
 	}
 }
 
@@ -117,26 +127,40 @@ func (sc *SonarConfig) GetSonarResults() (*SonarResults, error) {
 		return nil, fmt.Errorf("API token must be given to retrieve data from SonarCloud/SonarQube")
 	}
 
-	if sc.CETaskUrl == "" {
-		//Read the report-task.txt file to get the project key, server URL, dashboard URL and ceTaskURL
-		err = sc.readFile(project, sonarResults)
+	// Read the report-task.txt file (if it exists) to get the project key, server URL, dashboard URL and ceTaskURL
+	err = sc.readFile(project, sonarResults)
+	if err != nil {
+		if sc.projectKey == "" || sc.revision == "" {
+			return nil, fmt.Errorf("%s. Alternatively provide the project key and revision for the scan to attest", err)
+			// If the report-task.txt does not exist, but we've been given the project key and revision, we can still get the data
+		} else {
+			project.Key = sc.projectKey
+			sonarResults.ServerUrl = sc.serverURL
+			sonarResults.Revision = sc.revision
+			project.Url = fmt.Sprintf("%s/dashboard?id=%s", sonarResults.ServerUrl, project.Key)
+			analysisID, err = GetProjectAnalysisFromRevision(httpClient, sonarResults, project, sc.revision, tokenHeader)
+			if err != nil {
+				return nil, err
+			}
+			err = GetTaskID(httpClient, sonarResults, project, analysisID, tokenHeader)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if analysisID == "" {
+		//Get the analysis ID, status, project name and branch data from the ceTaskURL (ce API)
+		analysisID, err = GetCETaskData(httpClient, project, sonarResults, sc.CETaskUrl, tokenHeader)
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		sonarResults.ServerUrl = strings.Split(sc.CETaskUrl, "/api/")[0]
-	}
 
-	//Get the analysis ID, status, project name and branch data from the ceTaskURL (ce API)
-	analysisID, err = GetCETaskData(httpClient, project, sonarResults, sc.CETaskUrl, tokenHeader)
-	if err != nil {
-		return nil, err
-	}
-
-	//Get project revision and scan date/time from the projectAnalyses API
-	err = GetProjectAnalysis(httpClient, sonarResults, project, analysisID, tokenHeader)
-	if err != nil {
-		return nil, err
+		//Get project revision and scan date/time from the projectAnalyses API
+		err = GetProjectAnalysisFromAnalysisID(httpClient, sonarResults, project, analysisID, tokenHeader)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	//Get the quality gate status from the qualitygates/project_status API
@@ -154,7 +178,7 @@ func (sc *SonarConfig) GetSonarResults() (*SonarResults, error) {
 func (sc *SonarConfig) readFile(project *Project, results *SonarResults) error {
 	metadata, err := os.Open(filepath.Join(sc.WorkingDir, "report-task.txt"))
 	if err != nil {
-		return fmt.Errorf("report-task.txt not found. Check your working directory is set correctly: %s", err)
+		return fmt.Errorf("%s. Check your working directory is set correctly", err)
 	}
 	defer metadata.Close()
 
@@ -222,7 +246,44 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 	return analysisId, nil
 }
 
-func GetProjectAnalysis(httpClient *http.Client, sonarResults *SonarResults, project *Project, analysisID, tokenHeader string) error {
+func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *SonarResults, project *Project, revision, tokenHeader string) (string, error) {
+	var analysisID string
+
+	projectAnalysesURL := fmt.Sprintf("%s/api/project_analyses/search?project=%s", sonarResults.ServerUrl, project.Key)
+	projectAnalysesRequest, err := http.NewRequest("GET", projectAnalysesURL, nil)
+	projectAnalysesRequest.Header.Add("Authorization", tokenHeader)
+	if err != nil {
+		return "", err
+	}
+
+	projectAnalysesResponse, err := httpClient.Do(projectAnalysesRequest)
+	if err != nil {
+		return "", err
+	}
+
+	projectAnalysesData := &ProjectAnalyses{}
+	err = json.NewDecoder(projectAnalysesResponse.Body).Decode(projectAnalysesData)
+	if err != nil {
+		return "", fmt.Errorf("please check your API token and SonarQube server URL are correct and you have the correct permissions in SonarCloud/SonarQube")
+	}
+
+	for analysis := range projectAnalysesData.Analyses {
+		if projectAnalysesData.Analyses[analysis].Revision == revision {
+			sonarResults.AnalaysedAt = projectAnalysesData.Analyses[analysis].Date
+			analysisID = projectAnalysesData.Analyses[analysis].Key
+			break
+		}
+	}
+
+	if sonarResults.AnalaysedAt == "" {
+		return "", fmt.Errorf("analysis for revision %s of project %s not found. Check your provided revision and project key. Snapshot may also have been deleted by Sonar", revision, project.Key)
+	}
+	projectAnalysesResponse.Body.Close()
+
+	return analysisID, nil
+}
+
+func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *SonarResults, project *Project, analysisID, tokenHeader string) error {
 	projectAnalysesURL := fmt.Sprintf("%s/api/project_analyses/search?project=%s", sonarResults.ServerUrl, project.Key)
 	projectAnalysesRequest, err := http.NewRequest("GET", projectAnalysesURL, nil)
 	projectAnalysesRequest.Header.Add("Authorization", tokenHeader)
@@ -287,4 +348,43 @@ func GetQualityGate(httpClient *http.Client, sonarResults *SonarResults, quality
 	}
 
 	return qualityGate, nil
+}
+
+func GetTaskID(httpClient *http.Client, sonarResults *SonarResults, project *Project, analysisID, tokenHeader string) error {
+	CEActivityURL := fmt.Sprintf("%s/api/ce/activity?component=%s", sonarResults.ServerUrl, project.Key)
+	CEActivityRequest, err := http.NewRequest("GET", CEActivityURL, nil)
+	CEActivityRequest.Header.Add("Authorization", tokenHeader)
+	if err != nil {
+		return err
+	}
+
+	CEActivityResponse, err := httpClient.Do(CEActivityRequest)
+	if err != nil {
+		return err
+	}
+
+	CEActivityData := &ActivityResponse{}
+	err = json.NewDecoder(CEActivityResponse.Body).Decode(CEActivityData)
+	if err != nil {
+		return fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarCloud/SonarQube")
+	}
+
+	for task := range CEActivityData.Tasks {
+		if CEActivityData.Tasks[task].AnalysisID == analysisID {
+			sonarResults.TaskID = CEActivityData.Tasks[task].TaskID
+			sonarResults.Status = CEActivityData.Tasks[task].Status
+			project.Name = CEActivityData.Tasks[task].ComponentName
+			if CEActivityData.Tasks[task].Branch != "" {
+				sonarResults.Branch = &Branch{}
+				sonarResults.Branch.Name = CEActivityData.Tasks[task].Branch
+				sonarResults.Branch.Type = CEActivityData.Tasks[task].BranchType
+			} else {
+				sonarResults.Branch = nil
+			}
+			break
+		}
+	}
+	CEActivityResponse.Body.Close()
+
+	return nil
 }
