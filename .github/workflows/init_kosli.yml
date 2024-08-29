@@ -77,59 +77,59 @@ jobs:
                 --org ${{inputs.kosli_org}}
         
 
-        - name: Attest never alone evidence to Kosli Trail
-          if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') }}
-          env:
-            KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-            KOSLI_ORG: ${{ inputs.kosli_org }}
-            GH_TOKEN: ${{ github.token }}
-          run: |
-            # A single attestation for all commits
-            ALL_PRS_FILENAME=pull-request-list.json
-            FAILED_PRS_FILENAME=failed-pull-requests.json
+        # - name: Attest never alone evidence to Kosli Trail
+        #   if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') }}
+        #   env:
+        #     KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+        #     KOSLI_ORG: ${{ inputs.kosli_org }}
+        #     GH_TOKEN: ${{ github.token }}
+        #   run: |
+        #     # A single attestation for all commits
+        #     ALL_PRS_FILENAME=pull-request-list.json
+        #     FAILED_PRS_FILENAME=failed-pull-requests.json
             
-            ./bin/never_alone.sh -p "${ALL_PRS_FILENAME}" -f "${FAILED_PRS_FILENAME}" -c "${GITHUB_SHA}"
+        #     ./bin/never_alone.sh -p "${ALL_PRS_FILENAME}" -f "${FAILED_PRS_FILENAME}" -c "${GITHUB_SHA}"
             
-            kosli attest generic \
-              --org ${{inputs.kosli_org}} \
-              --flow ${{inputs.flow_name}} \
-              --trail ${{inputs.trail_name}} \
-              --name=never-alone-data \
-              --compliant=true \
-              --attachments="${ALL_PRS_FILENAME}"
+        #     kosli attest generic \
+        #       --org ${{inputs.kosli_org}} \
+        #       --flow ${{inputs.flow_name}} \
+        #       --trail ${{inputs.trail_name}} \
+        #       --name=never-alone-data \
+        #       --compliant=true \
+        #       --attachments="${ALL_PRS_FILENAME}"
 
-            KOSLI_COMPLIANT=$(jq 'if . == [] then true else false end' "${FAILED_PRS_FILENAME}")
+        #     KOSLI_COMPLIANT=$(jq 'if . == [] then true else false end' "${FAILED_PRS_FILENAME}")
             
-            kosli attest generic \
-              --org ${{inputs.kosli_org}} \
-              --flow ${{inputs.flow_name}} \
-              --trail ${{inputs.trail_name}} \
-              --name=never-alone-control \
-              --compliant=${KOSLI_COMPLIANT} \
-              --attachments="${FAILED_PRS_FILENAME}"
+        #     kosli attest generic \
+        #       --org ${{inputs.kosli_org}} \
+        #       --flow ${{inputs.flow_name}} \
+        #       --trail ${{inputs.trail_name}} \
+        #       --name=never-alone-control \
+        #       --compliant=${KOSLI_COMPLIANT} \
+        #       --attachments="${FAILED_PRS_FILENAME}"
 
-            # A separate trail with one attestation per commit
-            if [ ${{github.ref}} = "refs/heads/main" ]; then
-              CODE_REVIEW_FLOW=cli-code-reviews
-            else
-              CODE_REVIEW_FLOW=cli-release-code-reviews
-            fi
-            MAIN_BRANCH=main
-            ./bin/never_alone_create_review_trail.sh -m "${MAIN_BRANCH}" \
-              -f "${CODE_REVIEW_FLOW}" \
-              -c "${GITHUB_SHA}" \
-              -t "${{inputs.trail_name}}"
+        #     # A separate trail with one attestation per commit
+        #     if [ ${{github.ref}} = "refs/heads/main" ]; then
+        #       CODE_REVIEW_FLOW=cli-code-reviews
+        #     else
+        #       CODE_REVIEW_FLOW=cli-release-code-reviews
+        #     fi
+        #     MAIN_BRANCH=main
+        #     ./bin/never_alone_create_review_trail.sh -m "${MAIN_BRANCH}" \
+        #       -f "${CODE_REVIEW_FLOW}" \
+        #       -c "${GITHUB_SHA}" \
+        #       -t "${{inputs.trail_name}}"
 
-            TRAIL_COMPLIANCE=$(kosli get trail ${{inputs.trail_name}} \
-              --flow ${CODE_REVIEW_FLOW} --output json | jq .compliance_status.is_compliant)
+        #     TRAIL_COMPLIANCE=$(kosli get trail ${{inputs.trail_name}} \
+        #       --flow ${CODE_REVIEW_FLOW} --output json | jq .compliance_status.is_compliant)
 
-            # Link the code-review trail in as a generic attestation.
-            # The best would be if we had:
-            #   kosli attest trail-link --trail ${{inputs.trail_name}} --linked-trail ${CODE_REVIEW_FLOW}
-            kosli attest generic \
-              --org ${{inputs.kosli_org}} \
-              --flow ${{inputs.flow_name}} \
-              --trail ${{inputs.trail_name}} \
-              --compliant=${TRAIL_COMPLIANCE} \
-              --name code-reviews \
-              --external-url review-trail=https://app.kosli.com/${{inputs.kosli_org}}/flows/${CODE_REVIEW_FLOW}/trails/${{inputs.trail_name}}
+        #     # Link the code-review trail in as a generic attestation.
+        #     # The best would be if we had:
+        #     #   kosli attest trail-link --trail ${{inputs.trail_name}} --linked-trail ${CODE_REVIEW_FLOW}
+        #     kosli attest generic \
+        #       --org ${{inputs.kosli_org}} \
+        #       --flow ${{inputs.flow_name}} \
+        #       --trail ${{inputs.trail_name}} \
+        #       --compliant=${TRAIL_COMPLIANCE} \
+        #       --name code-reviews \
+        #       --external-url review-trail=https://app.kosli.com/${{inputs.kosli_org}}/flows/${CODE_REVIEW_FLOW}/trails/${{inputs.trail_name}}
