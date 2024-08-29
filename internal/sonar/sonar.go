@@ -227,7 +227,7 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 	sonarResults.Status = taskResponseData.Task.Status
 
 	if analysisId == "" {
-		return "", fmt.Errorf("analysis ID not found. Please check the ceTaskURL is correct")
+		return "", fmt.Errorf("analysis ID not found on %s. Please check the ceTaskURL is correct", sonarResults.ServerUrl)
 	}
 
 	if project.Url == "" {
@@ -276,7 +276,7 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 	}
 
 	if sonarResults.AnalaysedAt == "" {
-		return "", fmt.Errorf("analysis for revision %s of project %s not found. Check your provided revision and project key. Snapshot may also have been deleted by Sonar", revision, project.Key)
+		return "", fmt.Errorf("analysis for revision %s of project %s not found on %s. Check the revision and project key (and server URL if using). Snapshot may also have been deleted by Sonar", revision, project.Key, sonarResults.ServerUrl)
 	}
 	projectAnalysesResponse.Body.Close()
 
@@ -311,7 +311,7 @@ func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *Son
 	}
 
 	if sonarResults.AnalaysedAt == "" {
-		return fmt.Errorf("analysis with ID %s not found. Snapshot has most likely been deleted by Sonar", analysisID)
+		return fmt.Errorf("analysis with ID %s not found on %s. Snapshot has most likely been deleted by Sonar", analysisID, sonarResults.ServerUrl)
 	}
 
 	return nil

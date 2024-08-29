@@ -4,4 +4,5 @@ serverUrl=https://sonarcloud.io
 serverVersion=8.0.0.56246
 dashboardUrl=https://sonarcloud.io/dashboard?id=FayeSGW_Hangman
 ceTaskId=AZE2jzvUF2N-a1ygL1sM
-ceTaskUrl=https://sonarcloud.io/api/ce/task?id=AZE2jzvUF2N-a1ygL1sM
+ceTaskUrl=https://sonarcloud.io/api/ce/task?id=AZERk4uWpzGpahwkB9ac
+
