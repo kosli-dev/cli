@@ -72,6 +72,7 @@ kosli attest snyk \
 	--name yourTemplateArtifactName.yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
+	--commit yourArtifactGitCommit \
 	--scan-results yourSnykSARIFScanResults \
 	--api-token yourAPIToken \
 	--org yourOrgName
@@ -82,7 +83,7 @@ kosli attest snyk \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--scan-results yourSnykSARIFScanResults \
-	--attachments=yourEvidencePathName \
+	--attachments yourEvidencePathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 

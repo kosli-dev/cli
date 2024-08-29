@@ -86,6 +86,7 @@ kosli attest jira \
 	--name yourTemplateArtifactName.yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
+	--commit yourArtifactGitCommit \
 	--jira-base-url https://kosli.atlassian.net \
 	--jira-username user@domain.com \
 	--jira-api-token yourJiraAPIToken \
@@ -100,7 +101,7 @@ kosli attest jira \
 	--jira-base-url https://kosli.atlassian.net \
 	--jira-username user@domain.com \
 	--jira-api-token yourJiraAPIToken \
-	--attachments=yourAttachmentPathName \
+	--attachments yourAttachmentPathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 

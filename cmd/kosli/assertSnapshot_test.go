@@ -69,12 +69,13 @@ func (suite *AssertSnapshotCommandTestSuite) TestAssertSnapshotCmd() {
 			golden:    "Error: Environment named 'non-existing' does not exist for organization 'docs-cmd-test-user'\n",
 		},
 		{
-			name: "asserting a compliant env results in COMPLIANT and zero exit",
-			cmd:  fmt.Sprintf(`assert snapshot %s %s`, suite.envName, suite.defaultKosliArguments),
+			wantError: true,
+			name:      "asserting a non compliant env results in INCOMPLIANT and zero exit",
+			cmd:       fmt.Sprintf(`assert snapshot %s %s`, suite.envName, suite.defaultKosliArguments),
 			additionalConfig: assertSnapshotTestConfig{
 				reportToEnv: true,
 			},
-			golden: "COMPLIANT\n",
+			golden: "Error: INCOMPLIANT\n",
 		},
 	}
 
