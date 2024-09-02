@@ -77,26 +77,24 @@ jobs:
                 --org ${{inputs.kosli_org}}
         
 
-        # - name: Attest never alone evidence to Kosli Trail
-        #   if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') }}
-        #   env:
-        #     KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-        #     KOSLI_ORG: ${{ inputs.kosli_org }}
-        #     GH_TOKEN: ${{ github.token }}
-        #   run: |
-        #     # A single attestation for all commits
-        #     ALL_PRS_FILENAME=pull-request-list.json
-        #     FAILED_PRS_FILENAME=failed-pull-requests.json
+        - name: Attest never alone evidence to Kosli Trail
+          if: ${{ github.ref == 'refs/heads/main' }}
+          env:
+            KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+            KOSLI_ORG: ${{ inputs.kosli_org }}
+            GH_TOKEN: ${{ github.token }}
+          run: |
+            USER_DATA_FILENAME=never-alone-user-data.json
             
-        #     ./bin/never_alone.sh -p "${ALL_PRS_FILENAME}" -f "${FAILED_PRS_FILENAME}" -c "${GITHUB_SHA}"
+            ./bin/never_alone.sh -c "${GITHUB_SHA}" -o "${USER_DATA_FILENAME}"
             
-        #     kosli attest generic \
-        #       --org ${{inputs.kosli_org}} \
-        #       --flow ${{inputs.flow_name}} \
-        #       --trail ${{inputs.trail_name}} \
-        #       --name=never-alone-data \
-        #       --compliant=true \
-        #       --attachments="${ALL_PRS_FILENAME}"
+            kosli attest generic \
+              --org ${{inputs.kosli_org}} \
+              --flow ${{inputs.flow_name}} \
+              --trail ${{inputs.trail_name}} \
+              --name=never-alone-data \
+              --compliant=true \
+              --user-data="${USER_DATA_FILENAME}"
 
         #     KOSLI_COMPLIANT=$(jq 'if . == [] then true else false end' "${FAILED_PRS_FILENAME}")
             

@@ -2,9 +2,8 @@
 set -Eeu
 
 SCRIPT_NAME="never_alone.sh"
-PROPOSED_COMMIT=""
-PULL_REQUEST_LIST_JSON_FILENAME=""
-FAILED_PULL_REQUESTS_JSON_FILENAME=""
+COMMIT=""
+NEVER_ALONE_JSON_FILENAME=""
 
 
 function print_help
@@ -12,13 +11,12 @@ function print_help
     cat <<EOF
 Use: $SCRIPT_NAME [options]
 
-Script to get pull request info for all commits to main/master branch
+Script to get commit and pull request info for a commit
 
 Options are:
-  -h                       Print this help menu
-  -c <commit-sha>          Commit sha for release we are building now. Required
-  -p <all-prs-filename>    Name of json file to save all pull-requests. Required
-  -f <failed-prs-filename> Name of json file to save failed pull-requests: Required
+  -h                   Print this help menu
+  -c <commit-sha>      Commit sha we are gathering data for. Required
+  -o <output-filename> Name of json file to save result: Required
 EOF
 }
 
@@ -38,20 +36,17 @@ function repo_root
 
 function check_arguments
 {
-    while getopts "hc:p:f:" opt; do
+    while getopts "hc:o:" opt; do
         case $opt in
             h)
                 print_help
                 exit 1
                 ;;
             c)
-                PROPOSED_COMMIT=${OPTARG}
+                COMMIT=${OPTARG}
                 ;;
-            p)
-                PULL_REQUEST_LIST_JSON_FILENAME=${OPTARG}
-                ;;
-            f)
-                FAILED_PULL_REQUESTS_JSON_FILENAME=${OPTARG}
+            o)
+                NEVER_ALONE_JSON_FILENAME=${OPTARG}
                 ;;
             \?)
                 echo "Invalid option: -$OPTARG" >&2
@@ -60,26 +55,35 @@ function check_arguments
         esac
     done
 
-    if [ -z "${PROPOSED_COMMIT}" ]; then
+    if [ -z "${COMMIT}" ]; then
         die "option -c <commit-sha> is required"
     fi
-    if [ -z "${PULL_REQUEST_LIST_JSON_FILENAME}" ]; then
-        die "option -p <all-prs-filename> is required"
-    fi
-    if [ -z "${FAILED_PULL_REQUESTS_JSON_FILENAME}" ]; then
-        die "option -f <failed-prs-filename> is required"
+    if [ -z "${NEVER_ALONE_JSON_FILENAME}" ]; then
+        die "option -o <output-filename> is required"
     fi
 }
+
+
+function get_never_alone_data
+{
+    local commit=$1; shift
+    local result_file=$1; shift
+
+    commit_data=$(gh search commits --hash "${commit}" --json commit,sha)
+    commit_data_0=$(echo "$commit_data" | jq '.[0]')
+    commit_info=$(echo $commit_data_0 | jq '.commit')
+    pr_data=$(gh pr list --search "${commit}" --state merged --json author,reviews,mergeCommit,mergedAt,reviewDecision,url)    
+    pr_data_0=$(echo "$pr_data" | jq '.[0]')
+
+    echo "{\"sha\": \"${commit}\", \"commit\": ${commit_info},\"pullRequest\": ${pr_data_0}}" | jq . > "${result_file}"
+}
+
 
 function main
 {
     check_arguments "$@"
-
-    # base_commit: the commit of latest release
-    local -r base_commit=$($(repo_root)/bin/never_alone_get_commit_of_latest_release.sh)
-
-    $(repo_root)/bin/never_alone_get_commits_with_pull_request_info.sh -b ${base_commit} -p ${PROPOSED_COMMIT} -o ${PULL_REQUEST_LIST_JSON_FILENAME}
-    $(repo_root)/bin/never_alone_get_failing_pull_requests.sh -i ${PULL_REQUEST_LIST_JSON_FILENAME} -o ${FAILED_PULL_REQUESTS_JSON_FILENAME}
+    get_never_alone_data ${COMMIT} ${NEVER_ALONE_JSON_FILENAME}
 }
+
 
 main "$@"
