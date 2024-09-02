@@ -11,8 +11,6 @@ trail:
     type: snyk
   - name: never-alone-data
     type: generic
-  - name: never-alone-control
-    type: generic
   artifacts:
   - name: cli-docker
     attestations:
