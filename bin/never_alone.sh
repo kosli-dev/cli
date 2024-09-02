@@ -66,14 +66,22 @@ function check_arguments
 
 function get_never_alone_data
 {
-    local commit=$1; shift
-    local result_file=$1; shift
+    local -r commit=$1; shift
+    local -r result_file=$1; shift
 
-    commit_data=$(gh search commits --hash "${commit}" --json commit,sha)
-    commit_data_0=$(echo "$commit_data" | jq '.[0]')
-    commit_info=$(echo $commit_data_0 | jq '.commit')
     pr_data=$(gh pr list --search "${commit}" --state merged --json author,reviews,mergeCommit,mergedAt,reviewDecision,url)    
     pr_data_0=$(echo "$pr_data" | jq '.[0]')
+
+    echo xxxxxxxxxxx
+    echo gh search commits --hash "${commit}" --json commit,sha
+    commit_data=$(gh search commits --hash "${commit}" --json commit)
+    echo commit_data=${commit_data}
+    commit_data_0=$(echo "$commit_data" | jq '.[0]')
+    echo commit_data_0=$commit_data_0
+    commit_info=$(echo $commit_data_0 | jq '.commit')
+    echo commit_info=$commit_info
+    echo xxxxxxxx
+
 
     echo "{\"sha\": \"${commit}\", \"commit\": ${commit_info},\"pullRequest\": ${pr_data_0}}" | jq . > "${result_file}"
 }
