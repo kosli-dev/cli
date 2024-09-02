@@ -58,6 +58,7 @@ type Condition struct {
 // These are the structs for the response from the qualitygates/project_status API
 type QualityGateResponse struct {
 	ProjectStatus ProjectStatus `json:"projectStatus"`
+	Errors        []Error       `json:"errors,omitempty"`
 }
 
 type ProjectStatus struct {
@@ -94,11 +95,18 @@ type ActivityResponse struct {
 // These are the structs for the response from the project_analyses/search API
 type ProjectAnalyses struct {
 	Analyses []Analysis `json:"analyses"`
+	Errors   []Error    `json:"errors,omitempty"`
 }
+
 type Analysis struct {
 	Key      string `json:"key"`
 	Date     string `json:"date"`
 	Revision string `json:"revision"`
+}
+
+// Struct for error messages from sonar APIs
+type Error struct {
+	Msg string `json:"msg"`
 }
 
 func NewSonarConfig(apiToken, workingDir, ceTaskUrl, projectKey, serverURL, revision string) *SonarConfig {
@@ -227,7 +235,7 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 	sonarResults.Status = taskResponseData.Task.Status
 
 	if analysisId == "" {
-		return "", fmt.Errorf("analysis ID not found on %s. Please check the ceTaskURL is correct", sonarResults.ServerUrl)
+		return "", fmt.Errorf("analysis ID not found on %s", sonarResults.ServerUrl) // This should never happen
 	}
 
 	if project.Url == "" {
@@ -275,8 +283,12 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 		}
 	}
 
+	if projectAnalysesData.Errors != nil {
+		return "", fmt.Errorf("sonar error: %s", projectAnalysesData.Errors[0].Msg)
+	}
+
 	if sonarResults.AnalaysedAt == "" {
-		return "", fmt.Errorf("analysis for revision %s of project %s not found on %s. Check the revision and project key (and server URL if using). Snapshot may also have been deleted by Sonar", revision, project.Key, sonarResults.ServerUrl)
+		return "", fmt.Errorf("analysis for revision %s of project %s not found. Check the revision is correct. Snapshot may also have been deleted by Sonar", revision, project.Key)
 	}
 	projectAnalysesResponse.Body.Close()
 
@@ -311,7 +323,7 @@ func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *Son
 	}
 
 	if sonarResults.AnalaysedAt == "" {
-		return fmt.Errorf("analysis with ID %s not found on %s. Snapshot has most likely been deleted by Sonar", analysisID, sonarResults.ServerUrl)
+		return fmt.Errorf("analysis with ID %s not found. Snapshot may have been deleted by Sonar", analysisID)
 	}
 
 	return nil
@@ -333,17 +345,24 @@ func GetQualityGate(httpClient *http.Client, sonarResults *SonarResults, quality
 	qualityGateData := &QualityGateResponse{}
 	err = json.NewDecoder(qualityGateResponse.Body).Decode(qualityGateData)
 	if err != nil {
-		qualityGate = nil
+		return nil, err
+	} else if qualityGateData.Errors != nil {
+		return nil, fmt.Errorf("sonar error: %s", qualityGateData.Errors[0].Msg) //We should never reach this point, since incorrect/outdated task/analysis IDs etc. should already have raised errors
 	} else {
 		qualityGate.Status = qualityGateData.ProjectStatus.Status
-		for condition := range qualityGateData.ProjectStatus.Conditions {
-			qualityGate.Conditions = append(qualityGate.Conditions, Condition{
-				Metric:         qualityGateData.ProjectStatus.Conditions[condition].MetricKey,
-				ErrorThreshold: qualityGateData.ProjectStatus.Conditions[condition].ErrorThreshold,
-				Operator:       qualityGateData.ProjectStatus.Conditions[condition].Comparator,
-				Value:          qualityGateData.ProjectStatus.Conditions[condition].ActualValue,
-				Status:         qualityGateData.ProjectStatus.Conditions[condition].Status,
-			})
+		// The server expects an array of conditions if the Quality Gate exists, so if there are no conditions, we need to send an empty array
+		if len(qualityGateData.ProjectStatus.Conditions) == 0 {
+			qualityGate.Conditions = []Condition{}
+		} else {
+			for condition := range qualityGateData.ProjectStatus.Conditions {
+				qualityGate.Conditions = append(qualityGate.Conditions, Condition{
+					Metric:         qualityGateData.ProjectStatus.Conditions[condition].MetricKey,
+					ErrorThreshold: qualityGateData.ProjectStatus.Conditions[condition].ErrorThreshold,
+					Operator:       qualityGateData.ProjectStatus.Conditions[condition].Comparator,
+					Value:          qualityGateData.ProjectStatus.Conditions[condition].ActualValue,
+					Status:         qualityGateData.ProjectStatus.Conditions[condition].Status,
+				})
+			}
 		}
 	}
 
