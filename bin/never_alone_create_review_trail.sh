@@ -80,14 +80,29 @@ function check_arguments
     fi
 }
 
-function begin_trail
+function begin_trail_with_template
 {
     local commit_pull_request_flow=$1; shift
     local trail_name=$1; shift
+    local commits=("$@")
+    local trail_template_file_name="review_trail.yaml"
+    {
+    cat <<EOF
+version: 1
+trail:
+  attestations:
+EOF
+
+    for commit in "${commits[@]}"; do
+        echo "    - name: ${commit}"
+        echo "      type: generic"
+    done
+    } > ${trail_template_file_name}
 
     kosli begin trail ${trail_name} \
         --flow=${commit_pull_request_flow} \
-        --description="$(git log -1 --pretty='%aN - %s')"
+        --description="$(git log -1 --pretty='%aN - %s')" \
+        --template-file=${trail_template_file_name}
 }
 
 
@@ -95,15 +110,17 @@ function main
 {
     check_arguments "$@"
     # base_commit: the commit of latest release
-    local -r base_commit=$($(repo_root)/bin/never_alone_get_commit_of_latest_release.sh)
+    # local -r base_commit=$($(repo_root)/bin/never_alone_get_commit_of_latest_release.sh)
+    # base_commit="ad4500e73dcb6fb980bcc2b12f44f0750a4adfcc"
+    base_commit="d9a332df12ec3883f48b0d79858be5ef9c2bed45"
 
-    begin_trail ${COMMIT_PULL_REQUEST_FLOW} ${TRAIL_NAME}
+    # Use gh instead of git so we can keep the commit depth of 1. The order of the response for gh is reversed
+    # so I do a tac at the end to get it the same order.
+    commits=($(gh api repos/:owner/:repo/compare/${base_commit}...${PROPOSED_COMMIT} -q '.commits[].sha' | tac))
 
-    $(repo_root)/bin/never_alone_report_commit_and_pr_to_kosli.sh \
-        -b ${base_commit} \
-        -p ${PROPOSED_COMMIT} \
-        -f ${COMMIT_PULL_REQUEST_FLOW} \
-        -t ${TRAIL_NAME}
+    begin_trail_with_template ${COMMIT_PULL_REQUEST_FLOW} ${TRAIL_NAME} "${commits[@]}"
+    
+
 }
 
 main "$@"
