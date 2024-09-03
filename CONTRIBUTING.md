@@ -24,6 +24,7 @@ KOSLI_GITLAB_TOKEN
 KOSLI_BITBUCKET_USERNAME
 KOSLI_BITBUCKET_PASSWORD
 KOSLI_AZURE_TOKEN
+KOSLI_SONAR_API_TOKEN
 ```
 
 Additionally authentication is necessary to run some tests. See https://github.com/kosli-dev/knowledge-base.

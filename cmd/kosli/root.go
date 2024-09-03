@@ -218,10 +218,10 @@ The service principal needs to have the following permissions:
 	attachPolicyEnvFlag                  = "the list of environment names to attach the policy to"
 	detachPolicyEnvFlag                  = "the list of environment names to detach the policy from"
 	sonarAPITokenFlag                    = "[required] SonarCloud/SonarQube API token."
-	sonarProjectKeyFlag                  = "[required] SonarCloud/SonarQube project key."
-	sonarQubeUrlFlag                     = "[conditional] The URL for your SonarQube server (only required if using SonarQube for project analysis)."
-	sonarBranchNameFlag                  = "[optional] The name of the branch being analysed by SonarCloud/SonarQube. Cannot be used together with --pull-request-id ."
-	sonarPullRequestFlag                 = "[optional] The ID of the pull request being analysed by SonarCloud/SonarQube. Cannot be used together with --branch-name ."
+	sonarWorkingDirFlag                  = "[conditional] The base directory of the repo scanned by SonarCloud/SonarQube. Only required if you have overriden the default in the sonar scanner or you are running the CLI locally in a separate folder from the repo."
+	sonarProjectKeyFlag                  = "[conditional] The project key of the SonarCloud/SonarQube project. Only required if you want to use the project key/revision to get the scan results rather than using Sonar's metadata file."
+	sonarServerURLFlag                   = "[conditional] The URL of your SonarQube server. Only required if you are using SonarQube and not using SonarQube's metadata file to get scan results."
+	sonarRevisionFlag                    = "[conditional] The revision of the SonarCloud/SonarQube project. Only required if you want to use the project key/revision to get the scan results rather than using Sonar's metadata file and you have overridden the default revision, or you aren't using a CI. Defaults to the value of the git commit flag."
 )
 
 var global *GlobalOpts

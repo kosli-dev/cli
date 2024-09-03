@@ -12,7 +12,20 @@ import (
  * The sonar API token for SonarCloud and SonarQube will always be different, so we need
  * to have a separate test suite for each version of the command. This means we can easily
  * skip the SonarQube tests when we're testing SonarCloud (with the SonarCloud API token),
- * and vice-versa. */
+ * and vice-versa.
+ *
+ * Note that SonarCloud regularly deletes older scans (see https://docs.sonarsource.com/sonarcloud/digging-deeper/housekeeping/ )
+ * so the current report-task.txt files and the revisions used in the tests may not be valid in the future.
+ * If/when this happens, they will need to be updated.
+ *
+ * Note also that if you want to run the SonarQube tests, there are a few steps to take:
+ * 1. Set the environment variable SONARQUBE to something (value doesn't matter)
+ * so we know which test suite to use.
+ * 2. Set up an instance of SonarQube (e.g. on localhost), with a project that has been
+ * scanned at least once.
+ * 3. Replace testdata/sonar/sonarqube/.scannerwork/report-task.txt with the report-task.txt
+ * from your sonarqube project (this should be located in a .scannerwork folder in
+ * the base directory of your project) */
 
 type AttestSonarCommandTestSuite struct {
 	flowName            string
@@ -32,8 +45,8 @@ type AttestSonarQubeCommandTestSuite struct {
 
 func (suite *AttestSonarCommandTestSuite) SetupTest() {
 	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_SONAR_API_TOKEN"})
-	// If we have the sonarqube url set, we're testing SonarQube and therefore should skip the SonarCloud tests
-	testHelpers.SkipIfEnvVarSet(suite.T(), []string{"KOSLI_SONARQUBE_URL"})
+	// If we have SONARQUBE set (e.g. to true), we're testing SonarQube and therefore should skip the SonarCloud tests
+	testHelpers.SkipIfEnvVarSet(suite.T(), []string{"SONARQUBE"})
 	suite.flowName = "attest-sonar"
 	suite.trailName = "test-123"
 	suite.artifactFingerprint = "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
@@ -49,7 +62,7 @@ func (suite *AttestSonarCommandTestSuite) SetupTest() {
 }
 
 func (suite *AttestSonarQubeCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_SONAR_API_TOKEN", "KOSLI_SONARQUBE_URL"})
+	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_SONAR_API_TOKEN", "SONARQUBE"})
 	suite.flowName = "attest-sonar"
 	suite.trailName = "test-123"
 	suite.artifactFingerprint = "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
@@ -69,98 +82,96 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 		{
 			wantError: true,
 			name:      "fails when more arguments are provided",
-			cmd:       fmt.Sprintf("attest sonar foo bar %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest sonar foo bar --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
 			golden:    "Error: accepts at most 1 arg(s), received 2 [foo bar]\n",
 		},
 		{
 			wantError: true,
-			name:      "fails when missing a required flags",
-			cmd:       fmt.Sprintf("attest sonar foo %s", suite.defaultKosliArguments),
-			golden:    "Error: required flag(s) \"name\", \"sonar-project-key\" not set\n",
-		},
-		{
-			wantError: true,
 			name:      "fails when both --fingerprint and --artifact-type",
-			cmd:       fmt.Sprintf("attest sonar testdata/file1 --fingerprint xxxx --artifact-type file --name bar --commit HEAD --origin-url example.com  %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest sonar testdata/file1 --fingerprint xxxx --artifact-type file --name bar --commit HEAD --origin-url http://www.example.com  --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
 			golden:    "Error: only one of --fingerprint, --artifact-type is allowed\n",
 		},
 		{
 			wantError: true,
 			name:      "fails when --fingerprint is not valid",
-			cmd:       fmt.Sprintf("attest sonar --name foo-s --fingerprint xxxx --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest sonar --name foo-s --fingerprint xxxx --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
 			golden:    "Error: xxxx is not a valid SHA256 fingerprint. It should match the pattern ^([a-f0-9]{64})$\nUsage: kosli attest sonar [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "attesting against an artifact that does not exist fails",
-			cmd:       fmt.Sprintf("attest sonar --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ  %s", suite.defaultKosliArguments),
-			golden:    "Error: Artifact with fingerprint '1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'attest-sonar' belonging to organization 'docs-cmd-test-user'\n",
-		},
-		{
-			wantError: true,
-			name:      "fails when both --branch-name and --pull-request-id",
-			cmd:       fmt.Sprintf("attest sonar testdata/file1 --fingerprint xxxx --artifact-type file --name bar --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ --branch-name organise-sonarcloud-code --pull-request-id 167 %s", suite.defaultKosliArguments),
-			golden:    "Error: only one of --fingerprint, --artifact-type is allowed\n",
+			cmd:       fmt.Sprintf("attest sonar --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
+			golden:    "Error: Artifact with fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 does not exist in trail \"test-123\" of flow \"attest-sonar\" belonging to organization \"docs-cmd-test-user\"\n",
 		},
 		{
 			name:   "can attest sonar against an artifact using artifact name and --artifact-type",
-			cmd:    fmt.Sprintf("attest sonar testdata/file1 --artifact-type file --name foo --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ  %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar testdata/file1 --artifact-type file --name foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			name:   "can attest sonar against an artifact using artifact name and --artifact-type when --name does not exist in the trail template",
-			cmd:    fmt.Sprintf("attest sonar testdata/file1 --artifact-type file --name bar --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ  %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar testdata/file1 --artifact-type file --name bar --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
 			golden: "sonar attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
 			name:   "can attest sonar against an artifact using --fingerprint",
-			cmd:    fmt.Sprintf("attest sonar --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ  %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			name:   "can attest sonar against a trail",
-			cmd:    fmt.Sprintf("attest sonar --name bar --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar --name bar --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
 			golden: "sonar attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
 			name:   "can attest sonar against a trail when name is not found in the trail template",
-			cmd:    fmt.Sprintf("attest sonar --name additional --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar --name additional --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
 			golden: "sonar attestation 'additional' is reported to trail: test-123\n",
 		},
 		{
 			name:   "can attest sonar against an artifact it is created using dot syntax in --name",
-			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			wantError: true,
-			name:      "trying to fetch data from SonarCloud for a non-existent project gives error",
-			cmd:       fmt.Sprintf("attest sonar --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com --sonar-project-key cyberdojo_differ  %s", suite.defaultKosliArguments),
-			golden:    "Error: Component key 'cyberdojo_differ' not found\n",
-		},
-		{
-			wantError: true,
-			name:      "trying to fetch data from SonarCloud for a non-existent branch gives error",
-			cmd:       fmt.Sprintf("attest sonar --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ --branch-name xx %s", suite.defaultKosliArguments),
-			golden:    "Error: Component 'cyber-dojo_differ' on branch 'xx' not found\n",
-		},
-		{
-			wantError: true,
-			name:      "trying to fetch data from SonarCloud for a non-existent pull-request gives error",
-			cmd:       fmt.Sprintf("attest sonar --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ --pull-request-id 5 %s", suite.defaultKosliArguments),
-			golden:    "Error: Component 'cyber-dojo_differ' of pull request '5' not found\n",
-		},
-		{
-			wantError: true,
-			name:      "providing a SonarQube url when attesting a SonarCloud scan gives error",
-			cmd:       fmt.Sprintf("attest sonar --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com --sonar-project-key test --sonarqube-url http://localhost:9000 %s", suite.defaultKosliArguments),
-			golden:    "Error: Incorrect API token or SonarQube URL\n",
-		},
-		{
-			wantError: true,
 			name:      "trying to fetch data from SonarCloud with incorrect API token gives error",
-			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url example.com --sonar-project-key cyberdojo_differ --sonar-api-token xxxx %s", suite.defaultKosliArguments),
-			golden:    "Error: Incorrect API token or SonarQube URL\n",
+			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-api-token xxxx --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
+			golden:    "Error: please check your API token is correct and you have the correct permissions in SonarCloud/SonarQube\n",
+		},
+		{
+			wantError: true,
+			name:      "if no path to the scannerwork directory is provided and the command is not being run in the same base directory, we get an error",
+			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com %s", suite.defaultKosliArguments),
+			golden:    "Error: open .scannerwork/report-task.txt: no such file or directory. Check your working directory is set correctly. Alternatively provide the project key and revision for the scan to attest\n",
+		},
+		{
+			name:   "can retrieve scan results using project key and revision and attest them",
+			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-project-key cyber-dojo_differ --sonar-revision 38f3dc8b63abb632ac94a12b3f818b49f8047fa1 %s", suite.defaultKosliArguments),
+			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
+		},
+		{
+			name:   "if report-task.txt file found, we don't use the sonar-project-key, sonar-revision or sonar-server-url flags",
+			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork --sonar-project-key anyKey --sonar-revision anyRevision --sonar-server-url http://example.com %s", suite.defaultKosliArguments),
+			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
+		},
+		{
+			wantError: true,
+			name:      "if outdated task given (i.e. we try to get results for an older scan that SonarCloud has deleted), we get an error",
+			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork-old %s", suite.defaultKosliArguments),
+			golden:    "Error: analysis with ID AZERk4xKSYJCvL0vWjio not found. Snapshot may have been deleted by Sonar\n",
+		},
+		{
+			wantError: true,
+			name:      "if incorrect revision given (or the scan for the given revision has been deleted by SonarCloud)",
+			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-project-key cyber-dojo_differ --sonar-revision b4d1053f2aac18c9fb4b9a289a8289199c932e12 %s", suite.defaultKosliArguments),
+			golden:    "Error: analysis for revision b4d1053f2aac18c9fb4b9a289a8289199c932e12 of project cyber-dojo_differ not found. Check the revision is correct. Snapshot may also have been deleted by Sonar\n",
+		},
+		{
+			wantError: true,
+			name:      "if incorrect project key given, we get an error message from Sonar",
+			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-project-key cyber-dojo-differ --sonar-revision 38f3dc8b63abb632ac94a12b3f818b49f8047fa1 %s", suite.defaultKosliArguments),
+			golden:    "Error: sonar error: Component key 'cyber-dojo-differ' not found\n",
 		},
 	}
 
@@ -172,103 +183,96 @@ func (suite *AttestSonarQubeCommandTestSuite) TestAttestSonarQubeCmd() {
 		{
 			wantError: true,
 			name:      "fails when more arguments are provided",
-			cmd:       fmt.Sprintf("attest sonar foo bar %s", suite.defaultKosliArguments),
-			golden:    "Error: accepts at most 1 arg(s), received 2\n",
-		},
-		{
-			wantError: true,
-			name:      "fails when missing a required flags",
-			cmd:       fmt.Sprintf("attest sonar foo %s", suite.defaultKosliArguments),
-			golden:    "Error: required flag(s) \"name\", \"sonar-project-key\" not set\n",
+			cmd:       fmt.Sprintf("attest sonar foo bar --sonar-working-dir testdata/sonar/sonarqube/.scannerwork %s", suite.defaultKosliArguments),
+			golden:    "Error: accepts at most 1 arg(s), received 2 [foo bar]\n",
 		},
 		{
 			wantError: true,
 			name:      "fails when both --fingerprint and --artifact-type",
-			cmd:       fmt.Sprintf("attest sonar testdata/file1 --fingerprint xxxx --artifact-type file --name bar --commit HEAD --origin-url example.com  %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest sonar testdata/file1 --fingerprint xxxx --artifact-type file --name bar --commit HEAD --origin-url http://www.example.com  --sonar-working-dir testdata/sonar/sonarqube/.scannerwork %s", suite.defaultKosliArguments),
 			golden:    "Error: only one of --fingerprint, --artifact-type is allowed\n",
 		},
 		{
 			wantError: true,
 			name:      "fails when --fingerprint is not valid",
-			cmd:       fmt.Sprintf("attest sonar --name foo-s --fingerprint xxxx --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest sonar --name foo-s --fingerprint xxxx --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarqube/.scannerwork %s", suite.defaultKosliArguments),
 			golden:    "Error: xxxx is not a valid SHA256 fingerprint. It should match the pattern ^([a-f0-9]{64})$\nUsage: kosli attest sonar [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "attesting against an artifact that does not exist fails",
-			cmd:       fmt.Sprintf("attest sonar --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com --sonar-project-key test  %s", suite.defaultKosliArguments),
-			golden:    "Error: Artifact with fingerprint '1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'attest-sonar' belonging to organization 'docs-cmd-test-user'\n",
-		},
-		{
-			wantError: true,
-			name:      "fails when both --branch-name and --pull-request-id",
-			cmd:       fmt.Sprintf("attest sonar testdata/file1 --fingerprint xxxx --artifact-type file --name bar --commit HEAD --origin-url example.com --sonar-project-key test --branch-name organise-sonarcloud-code --pull-request-id 167 %s", suite.defaultKosliArguments),
-			golden:    "Error: only one of --fingerprint, --artifact-type is allowed\n",
+			cmd:       fmt.Sprintf("attest sonar --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarqube/.scannerwork %s", suite.defaultKosliArguments),
+			golden:    "Error: Artifact with fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 does not exist in trail \"test-123\" of flow \"attest-sonar\" belonging to organization \"docs-cmd-test-user\"\n",
 		},
 		{
 			name:   "can attest sonar against an artifact using artifact name and --artifact-type",
-			cmd:    fmt.Sprintf("attest sonar testdata/file1 --artifact-type file --name foo --commit HEAD --origin-url example.com --sonar-project-key test  %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar testdata/file1 --artifact-type file --name foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarqube/.scannerwork %s", suite.defaultKosliArguments),
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			name:   "can attest sonar against an artifact using artifact name and --artifact-type when --name does not exist in the trail template",
-			cmd:    fmt.Sprintf("attest sonar testdata/file1 --artifact-type file --name bar --commit HEAD --origin-url example.com --sonar-project-key test  %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar testdata/file1 --artifact-type file --name bar --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarqube/.scannerwork %s", suite.defaultKosliArguments),
 			golden: "sonar attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
 			name:   "can attest sonar against an artifact using --fingerprint",
-			cmd:    fmt.Sprintf("attest sonar --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com --sonar-project-key test %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarqube/.scannerwork %s", suite.defaultKosliArguments),
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			name:   "can attest sonar against a trail",
-			cmd:    fmt.Sprintf("attest sonar --name bar --commit HEAD --origin-url example.com --sonar-project-key test %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar --name bar --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarqube/.scannerwork %s", suite.defaultKosliArguments),
 			golden: "sonar attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
 			name:   "can attest sonar against a trail when name is not found in the trail template",
-			cmd:    fmt.Sprintf("attest sonar --name additional --commit HEAD --origin-url example.com --sonar-project-key test %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar --name additional --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarqube/.scannerwork %s", suite.defaultKosliArguments),
 			golden: "sonar attestation 'additional' is reported to trail: test-123\n",
 		},
 		{
 			name:   "can attest sonar against an artifact it is created using dot syntax in --name",
-			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url example.com --sonar-project-key test %s", suite.defaultKosliArguments),
-			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
-		},
-		{
-			wantError: true,
-			name:      "trying to fetch data from SonarQube with incorrect SonarQube URL gives error",
-			cmd:       fmt.Sprintf("attest sonar --name foo --commit HEAD --origin-url example.com --sonar-project-key test --sonarqube-url example.com/ %s", suite.defaultKosliArguments),
-			golden:    "Error: Incorrect SonarQube URL\n",
-		},
-		{
-			name:   "can attest sonar with sonarqube url against an artifact it is created using dot syntax in --name",
-			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url example.com --sonar-project-key test %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarqube/.scannerwork %s", suite.defaultKosliArguments),
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			wantError: true,
 			name:      "trying to fetch data from SonarQube with incorrect API token gives error",
-			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url example.com --sonar-project-key test --sonar-api-token xxxx %s", suite.defaultKosliArguments),
-			golden:    "Error: Incorrect API token or SonarQube URL\n",
+			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-api-token xxxx --sonar-working-dir testdata/sonar/sonarqube/.scannerwork %s", suite.defaultKosliArguments),
+			golden:    "Error: please check your API token is correct and you have the correct permissions in SonarCloud/SonarQube\n",
 		},
 		{
 			wantError: true,
-			name:      "trying to fetch data from SonarQube for a non-existent project gives error",
-			cmd:       fmt.Sprintf("attest sonar --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com --sonar-project-key cyber-dojo_differ  %s", suite.defaultKosliArguments),
-			golden:    "Error: Component key 'cyber-dojo_differ' not found\n",
+			name:      "if no path to the scannerwork directory is provided and the command is not being run in the same base directory, we get an error",
+			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com %s", suite.defaultKosliArguments),
+			golden:    "Error: open .scannerwork/report-task.txt: no such file or directory. Check your working directory is set correctly. Alternatively provide the project key and revision for the scan to attest\n",
+		},
+		{
+			name:   "can retrieve scan results using project key and revision and attest them",
+			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-server-url http://localhost:9000 --sonar-project-key test5 --sonar-revision 8e6f9489e5f2ddf8e719b503e374975e8b607fd1 %s", suite.defaultKosliArguments),
+			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			wantError: true,
-			name:      "trying to fetch data from SonarQube for a non-existent branch gives error",
-			cmd:       fmt.Sprintf("attest sonar --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com --sonar-project-key test --branch-name xx %s", suite.defaultKosliArguments),
-			golden:    "Error: Component 'test' on branch 'xx' not found\n",
+			name:      "if incorrect revision given, give an error",
+			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-server-url http://localhost:9000 --sonar-project-key test5 --sonar-revision 8e6f9489e5f2ddf8e719b503e374975e8b607fd2 %s", suite.defaultKosliArguments),
+			golden:    "Error: analysis for revision 8e6f9489e5f2ddf8e719b503e374975e8b607fd2 of project test5 not found. Check the revision is correct. Snapshot may also have been deleted by Sonar\n",
 		},
 		{
 			wantError: true,
-			name:      "trying to fetch data from SonarQube for a non-existent pull-request gives error",
-			cmd:       fmt.Sprintf("attest sonar --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url example.com --sonar-project-key test --pull-request-id 5 %s", suite.defaultKosliArguments),
-			golden:    "Error: Component 'test' of pull request '5' not found\n",
+			name:      "if incorrect project key given, we get an error message from Sonar",
+			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-server-url http://localhost:9000 --sonar-project-key test99 --sonar-revision 38f3dc8b63abb632ac94a12b3f818b49f8047fa1 %s", suite.defaultKosliArguments),
+			golden:    "Error: sonar error: Component key 'test99' not found\n",
+		},
+		{
+			wantError: true,
+			name:      "if incorrect sonarqube server url given, we get an error",
+			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-server-url http://example.com --sonar-project-key test99 --sonar-revision 38f3dc8b63abb632ac94a12b3f818b49f8047fa1 %s", suite.defaultKosliArguments),
+			golden:    "Error: please check your API token and SonarQube server URL are correct and you have the correct permissions in SonarCloud/SonarQube\n",
+		},
+		{
+			name:   "if report-task.txt file found, we don't use the sonar-project-key, sonar-revision or sonar-server-url flags",
+			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarqube/.scannerwork --sonar-project-key anyKey --sonar-revision anyRevision --sonar-server-url http://example.com %s", suite.defaultKosliArguments),
+			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
 	}
 
