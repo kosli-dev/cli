@@ -134,8 +134,26 @@ function get_never_alone_attestation_in_trail
 
 function get_never_alone_compliance
 {
+    local never_alone_data=$1; shift
+    local pr_data=$(echo "${never_alone_data}" | jq '.user_data.pullRequest')
+    local compliant="false"
+    reviews=$(echo "${pr_data}" | jq '.reviews')
+        
+    # github_review_decision=$(echo "${pr_data}" | jq '.reviewDecision')
 
-    echo false
+    pr_author=$(echo "${pr_data}" | jq '.author.login')
+    reviews_length=$(echo "${pr_data}" | jq '.reviews | length')
+    for i in $(seq 0 $(( reviews_length - 1 )))
+    do
+        review=$(echo "${pr_data}" | jq ".reviews[$i]")
+        state=$(echo "$review" | jq ".state")
+        review_author=$(echo "$review" | jq ".author.login")
+        if [ "$state" = '"APPROVED"' -a "${review_author}" != "${pr_author}" ]; then
+            compliant="true"
+        fi
+    done
+
+    echo $compliant
 }
 
 function attest_commit_trail_never_alone
@@ -149,7 +167,8 @@ function attest_commit_trail_never_alone
     never_alone_data=$(get_never_alone_attestation_in_trail cli ${commit})
     if [ "${never_alone_data}" != "[]" ]; then
 
-        compliant=$(get_never_alone_compliance "${never_alone_data}")
+        latest_never_alone_data=$(echo "${never_alone_data}" | jq '.[-1]')
+        compliant=$(get_never_alone_compliance "${latest_never_alone_data}")
 
         kosli attest generic \
             --flow ${release_flow} \
