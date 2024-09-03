@@ -3,7 +3,7 @@ set -Eeu
 
 SCRIPT_NAME="never_alone_create_review_trail.sh"
 MAIN_BRANCH=""
-COMMIT_PULL_REQUEST_FLOW=""
+RELEASE_FLOW=""
 PROPOSED_COMMIT=""
 TRAIL_NAME=""
 
@@ -54,7 +54,7 @@ function check_arguments
                 MAIN_BRANCH=${OPTARG}
                 ;;
             f)
-                COMMIT_PULL_REQUEST_FLOW=${OPTARG}
+                RELEASE_FLOW=${OPTARG}
                 ;;
             t)
                 TRAIL_NAME=${OPTARG}
@@ -72,7 +72,7 @@ function check_arguments
     if [ -z "${MAIN_BRANCH}" ]; then
         die "option -m <branch> is required"
     fi
-    if [ -z "${COMMIT_PULL_REQUEST_FLOW}" ]; then
+    if [ -z "${RELEASE_FLOW}" ]; then
         die "option -f <commit-prs-filename> is required"
     fi
     if [ -z "${TRAIL_NAME}" ]; then
@@ -82,7 +82,7 @@ function check_arguments
 
 function begin_trail_with_template
 {
-    local commit_pull_request_flow=$1; shift
+    local release_flow=$1; shift
     local trail_name=$1; shift
     local commits=("$@")
     local trail_template_file_name="review_trail.yaml"
@@ -94,17 +94,29 @@ trail:
 EOF
 
     for commit in "${commits[@]}"; do
-        echo "    - name: ${commit}"
+        echo "    - name: sha_${commit}"
         echo "      type: generic"
     done
     } > ${trail_template_file_name}
 
     kosli begin trail ${trail_name} \
-        --flow=${commit_pull_request_flow} \
+        --flow=${release_flow} \
         --description="$(git log -1 --pretty='%aN - %s')" \
         --template-file=${trail_template_file_name}
 }
 
+function attest_commit_trail_never_alone
+{
+    local release_flow=$1; shift
+    local trail_name=$1; shift
+    local -r commit=$1; shift
+
+    kosli attest generic \
+        --flow ${release_flow} \
+        --trail ${trail_name} \
+        --name="sha_${commit}" \
+        --compliant=true
+}
 
 function main
 {
@@ -118,9 +130,11 @@ function main
     # so I do a tac at the end to get it the same order.
     commits=($(gh api repos/:owner/:repo/compare/${base_commit}...${PROPOSED_COMMIT} -q '.commits[].sha' | tac))
 
-    begin_trail_with_template ${COMMIT_PULL_REQUEST_FLOW} ${TRAIL_NAME} "${commits[@]}"
+    begin_trail_with_template ${RELEASE_FLOW} ${TRAIL_NAME} "${commits[@]}"
     
-
+    for commit in "${commits[@]}"; do
+        attest_commit_trail_never_alone ${RELEASE_FLOW} ${TRAIL_NAME} $commit
+    done
 }
 
 main "$@"
