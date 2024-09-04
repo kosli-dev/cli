@@ -49,7 +49,7 @@ jobs:
 
   never-alone-release:
       needs: [pre-build, init-kosli]
-      uses: ./.github/workflows/never_alone_kosli.yml
+      uses: ./.github/workflows/never_alone_release.yml
       with:
         FLOW_NAME: cli-release-never-alone
         TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}

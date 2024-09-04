@@ -56,7 +56,7 @@ jobs:
   # Temporary here to test out the CI on a branch
   never-alone-release:
     needs: [pre-build, init-kosli]
-    uses: ./.github/workflows/never_alone_kosli.yml
+    uses: ./.github/workflows/never_alone_release.yml
     with:
       FLOW_NAME: test-cli-release-never-alone
       TRAIL_NAME: v0.0.99
