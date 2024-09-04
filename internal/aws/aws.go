@@ -446,12 +446,18 @@ func (staticCreds *AWSStaticCreds) GetEcsTasksData(cluster string, serviceName s
 			digests := make(map[string]string)
 			if *taskDesc.LastStatus == "RUNNING" {
 				for _, container := range taskDesc.Containers {
+					imageName := container.Image
+					if imageName == nil {
+						// some images like AWS Guard Duty don't get an image name from AWS
+						// so we default to the container name
+						imageName = container.Name
+					}
 					if container.ImageDigest != nil {
-						digests[*container.Image] = strings.TrimPrefix(*container.ImageDigest, "sha256:")
-					} else if strings.Contains(*container.Image, "@sha256:") {
-						digests[*container.Image] = strings.Split(*container.Image, "@sha256:")[1]
+						digests[*imageName] = strings.TrimPrefix(*container.ImageDigest, "sha256:")
+					} else if strings.Contains(*imageName, "@sha256:") {
+						digests[*imageName] = strings.Split(*imageName, "@sha256:")[1]
 					} else {
-						digests[*container.Image] = ""
+						digests[*imageName] = ""
 					}
 				}
 				data := NewEcsTaskData(*taskDesc.TaskArn, digests, *taskDesc.StartedAt)
