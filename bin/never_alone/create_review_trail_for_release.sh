@@ -180,10 +180,12 @@ function attest_commit_trail_never_alone
     local -r commit=$1; shift
     local -r source_flow=$1; shift
     local -r attestation_name=$1; shift
+    local -r link_trail_name=${commit:0:7}
+
     local link_to_attestation never_alone_data latest_never_alone_data compliant
 
-    link_to_attestation="${KOSLI_HOST}/${KOSLI_ORG}/flows/${source_flow}/trails/${commit}"
-    never_alone_data=$(get_never_alone_attestation_in_trail ${source_flow} ${commit} ${attestation_name})
+    link_to_attestation="${KOSLI_HOST}/${KOSLI_ORG}/flows/${source_flow}/trails/${link_trail_name}"
+    never_alone_data=$(get_never_alone_attestation_in_trail ${source_flow} ${link_trail_name} ${attestation_name})
     if [ "${never_alone_data}" != "[]" ]; then
         latest_never_alone_data=$(echo "${never_alone_data}" | jq '.[-1]')
         compliant=$(get_never_alone_compliance "${latest_never_alone_data}")
