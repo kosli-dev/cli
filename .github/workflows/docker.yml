@@ -51,6 +51,7 @@ jobs:
       id-token: write
       contents: write
       attestations: write
+      packages: write
 
     steps:
     - uses: actions/checkout@v4
