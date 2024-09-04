@@ -51,7 +51,7 @@ jobs:
       needs: [pre-build, init-kosli]
       uses: ./.github/workflows/never_alone_kosli.yml
       with:
-        FLOW_NAME: testing-cli-release-never-alone
+        FLOW_NAME: cli-release-never-alone
         TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
         SOURCE_FLOW_NAME: cli
         ATTESTATION_NAME: never-alone-data
