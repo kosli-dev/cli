@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeu
 
-SCRIPT_NAME="never_alone.sh"
+SCRIPT_NAME="get_commit_and_pr_info.sh"
 COMMIT=""
 NEVER_ALONE_JSON_FILENAME=""
 
