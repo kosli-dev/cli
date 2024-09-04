@@ -8,7 +8,7 @@ BASE_COMMIT=""
 PROPOSED_COMMIT=""
 SOURCE_FLOW=""
 SOURCE_ATTESTATION_NAME=""
-
+KOSLI_HOST=${KOSLI_HOST:-https://app.kosli.com}
 
 
 function print_help
