@@ -192,6 +192,7 @@ function attest_commit_trail_never_alone
         kosli attest generic \
             --flow ${release_flow} \
             --trail ${trail_name} \
+            --commit ${commit} \
             --name="${commit}" \
             --compliant=${compliant} \
             --external-url never-alone-data=${link_to_attestation}
