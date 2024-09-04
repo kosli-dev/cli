@@ -51,20 +51,7 @@ jobs:
     secrets:
       kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
       pr_github_token: ${{ secrets.GITHUB_TOKEN }}
-
-
-  never-alone-kosli:
-    needs: [pre-build]
-    uses: ./.github/workflows/never_alone_kosli.yml
-    with:
-      FLOW_NAME: cli
-      TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
-      FLOW_TEMPLATE_FILE: ${{ needs.pre-build.outputs.trail_template_file }}
-      KOSLI_ORG: kosli-public
-    secrets:
-      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
-      pr_github_token: ${{ secrets.GITHUB_TOKEN }}
-    
+  
 
   test:
     needs: [pre-build]

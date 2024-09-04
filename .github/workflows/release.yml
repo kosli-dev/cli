@@ -47,6 +47,19 @@ jobs:
         kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
         pr_github_token: ${{ secrets.GITHUB_TOKEN }}
 
+  never-alone-release:
+      needs: [pre-build, init-kosli]
+      uses: ./.github/workflows/never_alone_kosli.yml
+      with:
+        FLOW_NAME: testing-cli-release-never-alone
+        TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
+        SOURCE_FLOW_NAME: cli
+        ATTESTATION_NAME: never-alone-data
+        KOSLI_ORG: kosli-public
+      secrets:
+        kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
+        pr_github_token: ${{ secrets.GITHUB_TOKEN }}        
+
   test:
     needs: [pre-build]
     uses: ./.github/workflows/test.yml
@@ -70,7 +83,7 @@ jobs:
       kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
 
   docker:
-    needs: [test, pre-build, init-kosli]
+    needs: [test, pre-build, init-kosli, never-alone-release]
     uses: ./.github/workflows/docker.yml
     with:
       tag: ${{ needs.pre-build.outputs.tag }}

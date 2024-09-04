@@ -75,3 +75,22 @@ jobs:
                 --name pr
                 --github-token ${{ secrets.pr_github_token }}
                 --org ${{inputs.kosli_org}}
+
+        - name: Attest never alone evidence to Kosli Trail
+          if: ${{ github.ref == 'refs/heads/main' }}
+          env:
+            KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+            KOSLI_ORG: ${{ inputs.kosli_org }}
+            GH_TOKEN: ${{ github.token }}
+          run: |
+            USER_DATA_FILENAME=never-alone-user-data.json
+            
+            ./bin/never_alone/get_commit_and_pr_info.sh -c "${GITHUB_SHA}" -o "${USER_DATA_FILENAME}"
+            
+            kosli attest generic \
+              --org ${{inputs.kosli_org}} \
+              --flow ${{inputs.flow_name}} \
+              --trail ${{inputs.trail_name}} \
+              --name=never-alone-data \
+              --compliant=true \
+              --user-data="${USER_DATA_FILENAME}"
