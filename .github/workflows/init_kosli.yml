@@ -106,13 +106,15 @@ jobs:
           run: |
             RELEASE_FLOW=cli-release-never-alone
             BASE_COMMIT=$(./bin/never_alone/get_commit_of_latest_release.sh)
+            ATTESTATION_NAME="never-alone-data"
             
             ./bin/never_alone/create_review_trail_for_release.sh \
               -f ${RELEASE_FLOW} \
               -t ${{inputs.trail_name}} \
               -b ${BASE_COMMIT} \
               -p ${GITHUB_SHA} \
-              -s ${{inputs.flow_name}}
+              -s ${{inputs.flow_name}} \
+              -n ${ATTESTATION_NAME}
 
 
         #     KOSLI_COMPLIANT=$(jq 'if . == [] then true else false end' "${FAILED_PRS_FILENAME}")

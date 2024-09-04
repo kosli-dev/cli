@@ -7,6 +7,7 @@ TRAIL_NAME=""
 BASE_COMMIT=""
 PROPOSED_COMMIT=""
 SOURCE_FLOW=""
+SOURCE_ATTESTATION_NAME=""
 
 
 
@@ -25,6 +26,7 @@ Options are:
   -b <base-commit>      Commit of previous release
   -p <proposed-commit>  Commit sha for release we are building now. Required
   -s <source-flow>      Name of kosli flow where the never-alone-data data are stored. Required
+  -n <attestation-name> Attestation name used for never-alone-data. Required
 EOF
 }
 
@@ -44,7 +46,7 @@ function repo_root
 
 function check_arguments
 {
-    while getopts "hf:t:b:p:s:" opt; do
+    while getopts "hf:t:b:p:s:n:" opt; do
         case $opt in
             h)
                 print_help
@@ -65,6 +67,9 @@ function check_arguments
             s)
                 SOURCE_FLOW=${OPTARG}
                 ;;
+            n)
+                SOURCE_ATTESTATION_NAME=${OPTARG}
+                ;;
             \?)
                 echo "Invalid option: -$OPTARG" >&2
                 exit 1
@@ -82,10 +87,13 @@ function check_arguments
         die "option -b <base-commit> is required"
     fi
     if [ -z "${PROPOSED_COMMIT}" ]; then
-        die "option -c <proposed-commit> is required"
+        die "option -p <proposed-commit> is required"
     fi
     if [ -z "${SOURCE_FLOW}" ]; then
-        die "option -c <source-flow> is required"
+        die "option -s <source-flow> is required"
+    fi
+    if [ -z "${SOURCE_ATTESTATION_NAME}" ]; then
+        die "option -n <attestation-name> is required"
     fi
 }
 
@@ -118,15 +126,14 @@ EOF
 
 function get_never_alone_attestation_in_trail
 {
-    local source_flow=$1; shift
-    local trail_name=$1; shift
-    local slot_name="never-alone-data"
+    local -r source_flow=$1; shift
+    local -r trail_name=$1; shift
+    local -r attestation_name=$1; shift
     local -r curl_output_file=$(mktemp)
-
 
     http_code=$(curl -X 'GET' \
         --user ${KOSLI_API_TOKEN}:unused \
-        "${KOSLI_HOST}/api/v2/attestations/${KOSLI_ORG}/${source_flow}/trail/${trail_name}/${slot_name}" \
+        "${KOSLI_HOST}/api/v2/attestations/${KOSLI_ORG}/${source_flow}/trail/${trail_name}/${attestation_name}" \
         -H 'accept: application/json' \
         --output "${curl_output_file}" \
         --write-out "%{http_code}" \
@@ -172,10 +179,11 @@ function attest_commit_trail_never_alone
     local -r trail_name=$1; shift
     local -r commit=$1; shift
     local -r source_flow=$1; shift
+    local -r attestation_name=$1; shift
     local link_to_attestation never_alone_data latest_never_alone_data compliant
 
     link_to_attestation="${KOSLI_HOST}/${KOSLI_ORG}/flows/${source_flow}/trails/${commit}"
-    never_alone_data=$(get_never_alone_attestation_in_trail ${source_flow} ${commit})
+    never_alone_data=$(get_never_alone_attestation_in_trail ${source_flow} ${commit} ${attestation_name})
     if [ "${never_alone_data}" != "[]" ]; then
         latest_never_alone_data=$(echo "${never_alone_data}" | jq '.[-1]')
         compliant=$(get_never_alone_compliance "${latest_never_alone_data}")
@@ -198,7 +206,7 @@ function main
     begin_trail_with_template ${RELEASE_FLOW} ${TRAIL_NAME} "${commits[@]}"
     
     for commit in "${commits[@]}"; do
-        attest_commit_trail_never_alone ${RELEASE_FLOW} ${TRAIL_NAME} ${commit} ${SOURCE_FLOW}
+        attest_commit_trail_never_alone ${RELEASE_FLOW} ${TRAIL_NAME} ${commit} ${SOURCE_FLOW} ${SOURCE_ATTESTATION_NAME}
     done
 }
 
