@@ -91,7 +91,6 @@ jobs:
               --org ${{inputs.kosli_org}} \
               --flow ${{inputs.flow_name}} \
               --trail ${{inputs.trail_name}} \
-              --commit ${GITHUB_SHA} \
               --name=never-alone-data \
               --compliant=true \
               --user-data="${USER_DATA_FILENAME}"
