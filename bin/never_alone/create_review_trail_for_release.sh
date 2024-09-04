@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 set -Eeu
 
-SCRIPT_NAME="create_revew_trail_for_release.sh"
+SCRIPT_NAME="create_review_trail_for_release.sh"
 RELEASE_FLOW=""
-PROPOSED_COMMIT=""
 TRAIL_NAME=""
+BASE_COMMIT=""
+PROPOSED_COMMIT=""
+SOURCE_FLOW=""
+
 
 
 function print_help
@@ -16,11 +19,12 @@ Script to create a trail for a release. Collects all commits between base-commit
 and proposed-commit and use it as a template for the trail.
 
 Options are:
-  -h               Print this help menu
-  -f <flow>        Name of kosli flow to report combined never-alone info to. Required
-  -c <commit-sha>  Commit sha for release we are building now. Required
-  -t <trail-name>  Name of the trail that the reviews shall be reported to. Required
-  -s <source-flow> Name of kosli flow where the never-alone-data data are stored. Required
+  -h                    Print this help menu
+  -f <release-flow>     Name of kosli flow to report combined never-alone info to. Required
+  -t <trail-name>       Name of the trail that the reviews shall be reported to. Required
+  -b <base-commit>      Commit of previous release
+  -p <proposed-commit>  Commit sha for release we are building now. Required
+  -s <source-flow>      Name of kosli flow where the never-alone-data data are stored. Required
 EOF
 }
 
@@ -40,20 +44,26 @@ function repo_root
 
 function check_arguments
 {
-    while getopts "hc:f:t:" opt; do
+    while getopts "hf:t:b:p:s:" opt; do
         case $opt in
             h)
                 print_help
                 exit 1
-                ;;
-            c)
-                PROPOSED_COMMIT=${OPTARG}
                 ;;
             f)
                 RELEASE_FLOW=${OPTARG}
                 ;;
             t)
                 TRAIL_NAME=${OPTARG}
+                ;;
+            b)
+                BASE_COMMIT=${OPTARG}
+                ;;
+            p)
+                PROPOSED_COMMIT=${OPTARG}
+                ;;
+            s)
+                SOURCE_FLOW=${OPTARG}
                 ;;
             \?)
                 echo "Invalid option: -$OPTARG" >&2
@@ -62,14 +72,20 @@ function check_arguments
         esac
     done
 
-    if [ -z "${PROPOSED_COMMIT}" ]; then
-        die "option -c <commit-sha> is required"
-    fi
     if [ -z "${RELEASE_FLOW}" ]; then
-        die "option -f <commit-prs-filename> is required"
+        die "option -f <release-flow> is required"
     fi
     if [ -z "${TRAIL_NAME}" ]; then
         die "option -t <trail-name> is required"
+    fi
+    if [ -z "${BASE_COMMIT}" ]; then
+        die "option -b <base-commit> is required"
+    fi
+    if [ -z "${PROPOSED_COMMIT}" ]; then
+        die "option -c <proposed-commit> is required"
+    fi
+    if [ -z "${SOURCE_FLOW}" ]; then
+        die "option -c <source-flow> is required"
     fi
 }
 
@@ -87,7 +103,7 @@ trail:
 EOF
 
     for commit in "${commits[@]}"; do
-        echo "    - name: sha_${commit}"
+        echo "    - name: ${commit}"
         echo "      type: generic"
     done
     } > ${trail_template_file_name}
@@ -100,7 +116,7 @@ EOF
 
 function get_never_alone_attestation_in_trail
 {
-    local commit_flow=$1; shift
+    local source_flow=$1; shift
     local trail_name=$1; shift
     local slot_name="never-alone-data"
     local -r curl_output_file=$(mktemp)
@@ -108,7 +124,7 @@ function get_never_alone_attestation_in_trail
 
     http_code=$(curl -X 'GET' \
         --user ${KOSLI_API_TOKEN}:unused \
-        "${KOSLI_HOST}/api/v2/attestations/${KOSLI_ORG}/${commit_flow}/trail/${trail_name}/${slot_name}" \
+        "${KOSLI_HOST}/api/v2/attestations/${KOSLI_ORG}/${source_flow}/trail/${trail_name}/${slot_name}" \
         -H 'accept: application/json' \
         --output "${curl_output_file}" \
         --write-out "%{http_code}" \
@@ -154,10 +170,11 @@ function attest_commit_trail_never_alone
     local release_flow=$1; shift
     local trail_name=$1; shift
     local -r commit=$1; shift
-    # local link_to_attestation=https://app.kosli.com/${{inputs.kosli_org}}/flows/${CODE_REVIEW_FLOW}/trails/${{inputs.trail_name}}
-    local link_to_attestation="${KOSLI_HOST}/${KOSLI_ORG}/flows/cli/trails/${commit}"
+    local -r source_flow=$1; shift
 
-    never_alone_data=$(get_never_alone_attestation_in_trail cli ${commit})
+    local link_to_attestation="${KOSLI_HOST}/${KOSLI_ORG}/flows/${source_flow}/trails/${commit}"
+
+    never_alone_data=$(get_never_alone_attestation_in_trail ${source_flow} ${commit})
     if [ "${never_alone_data}" != "[]" ]; then
 
         latest_never_alone_data=$(echo "${never_alone_data}" | jq '.[-1]')
@@ -166,7 +183,7 @@ function attest_commit_trail_never_alone
         kosli attest generic \
             --flow ${release_flow} \
             --trail ${trail_name} \
-            --name="sha_${commit}" \
+            --name="${commit}" \
             --compliant=${compliant} \
             --external-url never-alone-data=${link_to_attestation}
     fi
@@ -176,20 +193,20 @@ function main
 {
     check_arguments "$@"
     # base_commit: the commit of latest release
-    local -r base_commit=$($(repo_root)/bin/never_alone/get_commit_of_latest_release.sh)
+    # local -r base_commit=$($(repo_root)/bin/never_alone/get_commit_of_latest_release.sh)
     # base_commit="ad4500e73dcb6fb980bcc2b12f44f0750a4adfcc"
     # base_commit="d9a332df12ec3883f48b0d79858be5ef9c2bed45"
     # base_commit="4d6ccf339e627ea850071e859f93a34b53284512"
 
     # Use gh instead of git so we can keep the commit depth of 1. The order of the response for gh is reversed
     # so I do a tac at the end to get it the same order.
-    commits=($(gh api repos/:owner/:repo/compare/${base_commit}...${PROPOSED_COMMIT} -q '.commits[].sha' | tac))
+    commits=($(gh api repos/:owner/:repo/compare/${BASE_COMMIT}...${PROPOSED_COMMIT} -q '.commits[].sha' | tac))
 
     begin_trail_with_template ${RELEASE_FLOW} ${TRAIL_NAME} "${commits[@]}"
     
     for commit in "${commits[@]}"; do
         set +e
-        attest_commit_trail_never_alone ${RELEASE_FLOW} ${TRAIL_NAME} $commit
+        attest_commit_trail_never_alone ${RELEASE_FLOW} ${TRAIL_NAME} ${commit} ${SOURCE_FLOW}
         set -e
     done
 }
