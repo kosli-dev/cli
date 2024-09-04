@@ -74,7 +74,6 @@ jobs:
       slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}
       kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
-            
 
   docker:
     needs: [pre-build, test, init-kosli]

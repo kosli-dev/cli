@@ -75,6 +75,7 @@ jobs:
                 --name pr
                 --github-token ${{ secrets.pr_github_token }}
                 --org ${{inputs.kosli_org}}
+        
 
         - name: Attest never alone evidence to Kosli Trail
           if: ${{ github.ref == 'refs/heads/main' }}
