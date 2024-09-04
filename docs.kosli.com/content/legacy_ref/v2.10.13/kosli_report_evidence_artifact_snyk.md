@@ -1,44 +1,49 @@
 ---
-title: "kosli report evidence artifact pullrequest github"
+title: "kosli report evidence artifact snyk"
 beta: false
 deprecated: true
 ---
 
-# kosli report evidence artifact pullrequest github
+# kosli report evidence artifact snyk
 
-{{< hint danger >}}**kosli report evidence artifact pullrequest github** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.{{< /hint >}}
+{{< hint danger >}}**kosli report evidence artifact snyk** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.{{< /hint >}}
 ## Synopsis
 
-Report a Github pull request evidence for an artifact in a Kosli flow.  
-It checks if a pull request exists for the artifact (based on its git commit) and reports the pull-request evidence to the artifact in Kosli.  
+Report Snyk vulnerability scan evidence for an artifact in a Kosli flow.    
+The --scan-results .json file is parsed and uploaded to Kosli's evidence vault.
+
+In CLI <v2.8.2, Snyk results could only be in the Snyk JSON output format. "snyk code test" results were not supported by 
+this command and could be reported as generic evidence.
+
+Starting from v2.8.2, the Snyk results can be in Snyk JSON or SARIF output format for "snyk container test". 
+"snyk code test" is now supported but only in the SARIF format.
+
+If no vulnerabilities are detected, the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
+
 The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
 
 ```shell
-kosli report evidence artifact pullrequest github [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli report evidence artifact snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
-|        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
+|    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it).  |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|        --commit string  |  Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |        --evidence-fingerprint string  |  [optional] The SHA256 fingerprint of the evidence file or dir.  |
 |        --evidence-url string  |  [optional] The external URL where the evidence file or dir is stored.  |
 |    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for --artifact-type dir.  |
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'.  |
 |    -f, --flow string  |  The Kosli flow name.  |
-|        --github-base-url string  |  [optional] GitHub base URL (only needed for GitHub Enterprise installations).  |
-|        --github-org string  |  Github organization. (defaulted if you are running in GitHub Actions: https://docs.kosli.com/ci-defaults ).  |
-|        --github-token string  |  Github token.  |
-|    -h, --help  |  help for github  |
+|    -h, --help  |  help for snyk  |
 |    -n, --name string  |  The name of the evidence.  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
-|        --repository string  |  Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|    -R, --scan-results string  |  The path to Snyk SARIF or JSON scan results file from 'snyk test' and 'snyk container test'. By default, the Snyk results will be uploaded to Kosli's evidence vault.  |
+|        --upload-results  |  [defaulted] Whether to upload the provided Snyk results file as an attachment to Kosli or not. (default true)  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the evidence.  |
 
 
@@ -56,37 +61,30 @@ kosli report evidence artifact pullrequest github [IMAGE-NAME | FILE-PATH | DIR-
 
 ## Examples Use Cases
 
-**report a pull request evidence to kosli for a docker image**
+**report Snyk vulnerability scan evidence about a file artifact**
 
 ```shell
-kosli report evidence artifact pullrequest github yourDockerImageName \
-	--artifact-type docker \
-	--build-url https://exampleci.com \
+kosli report evidence artifact snyk FILE.tgz \
+	--artifact-type file \
 	--name yourEvidenceName \
 	--flow yourFlowName \
-	--github-token yourGithubToken \
-	--github-org yourGithubOrg \
-	--commit yourArtifactGitCommit \
-	--repository yourGithubGitRepository \
-	--org yourOrgName \
-	--api-token yourAPIToken
-	
+	--build-url https://exampleci.com \
+	--api-token yourAPIToken \
+	--org yourOrgName	\
+	--scan-results yourSnykJSONScanResults
+
 ```
 
-**fail if a pull request does not exist for your artifact**
+**report Snyk vulnerability scan evidence about an artifact using an available Sha256 digest**
 
 ```shell
-kosli report evidence artifact pullrequest github yourDockerImageName \
-	--artifact-type docker \
-	--build-url https://exampleci.com \
+kosli report evidence artifact snyk \
+	--fingerprint yourSha256 \
 	--name yourEvidenceName \
 	--flow yourFlowName \
-	--github-token yourGithubToken \
-	--github-org yourGithubOrg \
-	--commit yourArtifactGitCommit \
-	--repository yourGithubGitRepository \
-	--org yourOrgName \
+	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
-	--assert
+	--org yourOrgName	\
+	--scan-results yourSnykJSONScanResults
 ```
 

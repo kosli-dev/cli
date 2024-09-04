@@ -119,6 +119,7 @@ kosli attest generic \
 	--name yourTemplateArtifactName.yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
+	--commit yourArtifactGitCommit \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -131,7 +132,7 @@ kosli attest generic \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--attachments=yourAttachmentPathName \
+	--attachments yourAttachmentPathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 

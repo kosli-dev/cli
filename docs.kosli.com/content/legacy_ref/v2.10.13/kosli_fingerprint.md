@@ -1,30 +1,37 @@
 ---
-title: "kosli allow artifact"
+title: "kosli fingerprint"
 beta: false
 deprecated: false
 ---
 
-# kosli allow artifact
+# kosli fingerprint
 
 ## Synopsis
 
-Add an artifact to an environment's allowlist.  
-The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
+Calculate the SHA256 fingerprint of an artifact.
+Requires `--artifact-type` flag to be set.
+Artifact type can be one of: "file" for files, "dir" for directories, "docker" for docker images.
+
+Fingerprinting docker images can be done using the local docker daemon or the fingerprint can be fetched
+from a remote registry.
+
+When fingerprinting a 'dir' artifact, you can exclude certain paths from fingerprint calculation 
+using the `--exclude` flag.
+Excluded paths are relative to the DIR-PATH and can be literal paths or
+glob patterns.  
+The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match , 
+plus the ability to use recursive globs "**"
 
 ```shell
-kosli allow artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli fingerprint {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
-|    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|    -e, --environment string  |  The environment name for which the artifact is allowlisted.  |
+|    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it).  |
 |    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for --artifact-type dir.  |
-|    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'.  |
-|    -h, --help  |  help for artifact  |
-|        --reason string  |  The reason why this artifact is allowlisted.  |
+|    -h, --help  |  help for fingerprint  |
 |        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
@@ -41,4 +48,33 @@ kosli allow artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
+
+## Examples Use Cases
+
+**fingerprint a file**
+
+```shell
+kosli fingerprint --artifact-type file file.txt
+
+```
+
+**fingerprint a dir**
+
+```shell
+kosli fingerprint --artifact-type dir mydir
+
+```
+
+**fingerprint a dir while excluding paths**
+
+```shell
+kosli fingerprint --artifact-type dir --exclude logs --exclude *.exe mydir
+
+```
+
+**fingerprint a locally available docker image**
+
+```shell
+kosli fingerprint --artifact-type docker nginx:latest
+```
 

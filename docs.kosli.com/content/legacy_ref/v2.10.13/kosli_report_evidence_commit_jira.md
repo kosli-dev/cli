@@ -39,7 +39,7 @@ kosli report evidence commit jira [flags]
 |    -f, --flows strings  |  [defaulted] The comma separated list of Kosli flows. Defaults to all flows of the org.  |
 |    -h, --help  |  help for jira  |
 |        --jira-api-token string  |  Jira API token (for Jira Cloud)  |
-|        --jira-base-url string  |  The base url for the jira project, e.g. 'https://kosli.atlassian.net/browse/'  |
+|        --jira-base-url string  |  The base url for the jira project, e.g. 'https://kosli.atlassian.net'  |
 |        --jira-pat string  |  Jira personal access token (for self-hosted Jira)  |
 |        --jira-username string  |  Jira username (for Jira Cloud)  |
 |    -n, --name string  |  The name of the evidence.  |
