@@ -77,7 +77,7 @@ jobs:
                 --org ${{inputs.kosli_org}}
         
 
-        - name: Attest never alone evidence to Kosli Trail
+        - name: Attest never alone data to Kosli Trail
           if: ${{ github.ref == 'refs/heads/main' }}
           env:
             KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}

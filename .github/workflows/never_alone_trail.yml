@@ -1,4 +1,4 @@
-name: Never Alone Control
+name: Never Alone Trail
 
 on:
     workflow_call:
@@ -25,8 +25,8 @@ on:
                 required: false
 
 jobs:
-    never-alone-control:
-        name: Never Alone Control
+    never-alone-trail:
+        name: Never Alone Trail
         runs-on: ubuntu-latest
         permissions:
             id-token: write
