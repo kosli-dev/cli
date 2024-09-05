@@ -90,7 +90,7 @@ jobs:
         run: |
           KOSLI_HOST=${KOSLI_HOST:-https://app.kosli.com}
           NEVER_ALONE_TRAIL_LINK="${KOSLI_HOST}/${KOSLI_ORG}/flows/${SOURCE_FLOW_NAME}/trails/${TRAIL_NAME}"
-          kosli attest generic github \
+          kosli attest generic \
             --flow ${FLOW_NAME} \
             --trail ${TRAIL_NAME} \ 
             --name never-alone-trail \
