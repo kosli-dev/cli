@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeu
 
-SCRIPT_NAME="create_review_trail_for_release.sh"
+SCRIPT_NAME="create_never_alone_trail.sh"
 RELEASE_FLOW=""
 TRAIL_NAME=""
 BASE_COMMIT=""
@@ -16,8 +16,8 @@ function print_help
     cat <<EOF
 Use: $SCRIPT_NAME [options]
 
-Script to create a trail for a release. Collects all commits between base-commit
-and proposed-commit and use it as a template for the trail.
+Script to create a trail for collecting never-alone information from multiple commits.
+Collects all commits between base-commit and proposed-commit and use it as a template for the trail.
 
 Options are:
   -h                    Print this help menu

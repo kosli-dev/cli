@@ -44,15 +44,15 @@ jobs:
             version:
                 ${{ vars.KOSLI_CLI_VERSION }}
 
-        - name: Update never-alone release flow
+        - name: Update never-alone flow
           env:
             KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
           run: kosli create flow ${{inputs.flow_name}}
-                --description "Track never alone attestations for release"
+                --description "Track never-alone-data for release"
                 --use-empty-template
                 --org ${{inputs.kosli_org}}
 
-        - name: Create never-alone release trail
+        - name: Create never-alone trail
           env:
             KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
             KOSLI_ORG: ${{ inputs.kosli_org }}
@@ -60,7 +60,7 @@ jobs:
           run: |
             BASE_COMMIT=$(./bin/never_alone/get_commit_of_latest_release.sh)
             
-            ./bin/never_alone/create_review_trail_for_release.sh \
+            ./bin/never_alone/create_never_alone_trail.sh \
               -f ${{inputs.flow_name}} \
               -t ${{inputs.trail_name}} \
               -b ${BASE_COMMIT} \
