@@ -66,6 +66,30 @@ jobs:
       kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
       pr_github_token: ${{ secrets.GITHUB_TOKEN }}        
   
+  never-alone-link-in-relase:
+    needs: [pre-build, init-kosli, never-alone-trail]
+    runs-on: ubuntu-latest
+    permissions:
+        id-token: write
+        contents: write
+        pull-requests: read
+    steps:
+      - name: Report never-alone-trail
+        env:
+          FLOW_NAME: test-cli-release
+          TRAIL_NAME: v0.0.101
+          SOURCE_FLOW_NAME: test-cli-release-never-alone
+          KOSLI_ORG: kosli-public    
+          KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+        run: |
+          KOSLI_HOST=${KOSLI_HOST:-https://app.kosli.com}
+          NEVER_ALONE_TRAIL_LINK="${KOSLI_HOST}/${KOSLI_ORG}/flows/${SOURCE_FLOW_NAME}/trails/${TRAIL_NAME}"
+          kosli attest generic github \
+            --flow ${FLOW_NAME} \
+            --trail ${TRAIL_NAME} \ 
+            --name never-alone-trail \
+            --annotate never_alone_trail="${NEVER_ALONE_TRAIL_LINK}"
+
   ### end
   test:
     needs: [pre-build]
