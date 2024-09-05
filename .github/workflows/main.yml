@@ -74,6 +74,11 @@ jobs:
         contents: write
         pull-requests: read
     steps:
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - name: setup-kosli-cli
         uses: kosli-dev/setup-cli-action@v2
         with:
