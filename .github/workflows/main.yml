@@ -74,6 +74,12 @@ jobs:
         contents: write
         pull-requests: read
     steps:
+      - name: setup-kosli-cli
+        uses: kosli-dev/setup-cli-action@v2
+        with:
+          version:
+              ${{ vars.KOSLI_CLI_VERSION }}
+
       - name: Report never-alone-trail
         env:
           FLOW_NAME: test-cli-release
