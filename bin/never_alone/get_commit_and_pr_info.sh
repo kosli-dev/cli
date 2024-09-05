@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeu
 
-SCRIPT_NAME="never_alone.sh"
+SCRIPT_NAME="get_commit_and_pr_info.sh"
 COMMIT=""
 NEVER_ALONE_JSON_FILENAME=""
 
@@ -14,9 +14,9 @@ Use: $SCRIPT_NAME [options]
 Script to get commit and pull request info for a commit
 
 Options are:
-  -h                   Print this help menu
-  -c <commit-sha>      Commit sha we are gathering data for. Required
-  -o <output-filename> Name of json file to save result: Required
+  -h                    Print this help menu
+  -c <commit-sha>       Commit sha we are gathering data for. Required
+  -o <output-filename>  Name of json file to save result: Required
 EOF
 }
 
@@ -70,13 +70,17 @@ function get_never_alone_data
     local -r result_file=$1; shift
     
     pr_data=$(gh pr list --search "${commit}" --state merged --json author,reviews,mergeCommit,mergedAt,reviewDecision,url)    
-    pr_data_0=$(echo "$pr_data" | jq '.[0]')
-
     commit_data=$(gh search commits --hash "${commit}" --json commit)
-    commit_data_0=$(echo "$commit_data" | jq '.[0]')
-    commit_info=$(echo $commit_data_0 | jq '.commit')
     
-    echo "{\"sha\": \"${commit}\", \"commit\": ${commit_info},\"pullRequest\": ${pr_data_0}}" | jq . > "${result_file}"
+    jq -n \
+        --arg sha "$commit" \
+        --argjson commit "$commit_data" \
+        --argjson pullRequest "$pr_data" \
+        '{
+            sha: $sha,
+            commit: $commit[0].commit,
+            pullRequest: $pullRequest[0]
+        }' > "${result_file}"
 }
 
 

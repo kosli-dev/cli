@@ -1,0 +1,69 @@
+name: Never Alone Trail
+
+on:
+    workflow_call:
+        inputs:
+          flow_name:
+            required: true
+            type: string
+          trail_name:
+            required: true
+            type: string
+          source_flow_name:
+            required: true
+            type: string
+          attestation_name:
+            required: true
+            type: string
+          kosli_org:
+            required: true
+            type: string
+        secrets:        
+            kosli_api_token:
+                required: true
+            pr_github_token:
+                required: false
+
+jobs:
+    never-alone-trail:
+        name: Never Alone Trail
+        runs-on: ubuntu-latest
+        permissions:
+            id-token: write
+            contents: write
+            pull-requests: read
+        steps:
+
+        - uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+
+        - name: setup-kosli-cli
+          uses: kosli-dev/setup-cli-action@v2
+          with:
+            version:
+                ${{ vars.KOSLI_CLI_VERSION }}
+
+        - name: Update never-alone flow
+          env:
+            KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+          run: kosli create flow ${{inputs.flow_name}}
+                --description "Track never-alone-data for release"
+                --use-empty-template
+                --org ${{inputs.kosli_org}}
+
+        - name: Create never-alone trail
+          env:
+            KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+            KOSLI_ORG: ${{ inputs.kosli_org }}
+            GH_TOKEN: ${{ github.token }}
+          run: |
+            BASE_COMMIT=$(./bin/never_alone/get_commit_of_latest_release.sh)
+            
+            ./bin/never_alone/create_never_alone_trail.sh \
+              -f ${{inputs.flow_name}} \
+              -t ${{inputs.trail_name}} \
+              -b ${BASE_COMMIT} \
+              -p ${GITHUB_SHA} \
+              -s ${{inputs.source_flow_name}} \
+              -n ${{inputs.attestation_name}}
