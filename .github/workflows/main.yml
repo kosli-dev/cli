@@ -88,11 +88,14 @@ jobs:
           KOSLI_ORG: kosli-public    
           KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
         run: |
+          # only on test on real it is already there
+          kosli begin trail ${TRAIL_NAME} --flow ${FLOW_NAME}
+
           KOSLI_HOST=${KOSLI_HOST:-https://app.kosli.com}
           NEVER_ALONE_TRAIL_LINK="${KOSLI_HOST}/${KOSLI_ORG}/flows/${SOURCE_FLOW_NAME}/trails/${TRAIL_NAME}"
           kosli attest generic \
             --flow ${FLOW_NAME} \
-            --trail ${TRAIL_NAME} \ 
+            --trail ${TRAIL_NAME} \
             --name never-alone-trail \
             --annotate never_alone_trail="${NEVER_ALONE_TRAIL_LINK}"
 
