@@ -63,15 +63,55 @@ function check_arguments
     fi
 }
 
+function get_commit_data_using_graphql
+{
+    local -r commit=$1; shift
+    gh api graphql \
+    -F commit="${commit}" \
+    -f query="$(gh repo view --json owner,name --jq '. | 
+        "query($commit: String!) {
+            repository(owner: \"\(.owner.login)\", name: \"\(.name)\") {
+                object(expression: $commit) {
+                    ... on Commit {
+                        author {
+                            name
+                            email
+                            date
+                        }
+                        committer {
+                            name
+                            email
+                            date
+                        }
+                        message
+                        tree {
+                            oid
+                        }
+                        associatedPullRequests(first: 1) {
+                            nodes {
+                                url
+                            }
+                        }
+                    }
+                }
+            }
+        }"
+    ')"
+}
+
 
 function get_never_alone_data
 {
     local -r commit=$1; shift
     local -r result_file=$1; shift
     
-    pr_data=$(gh pr list --search "${commit}" --state merged --json author,reviews,mergeCommit,mergedAt,reviewDecision,url)    
+    commit_data_graphql=$(get_commit_data_using_graphql $commit)
+    pr_data=$(gh pr list --search "${commit}" --state merged --json author,reviews,mergeCommit,mergedAt,reviewDecision,url)
     commit_data=$(gh search commits --hash "${commit}" --json commit)
     
+    echo commit_data_graphql=$commit_data_graphql
+    echo commit_data=$commit_data
+
     jq -n \
         --arg sha "$commit" \
         --argjson commit "$commit_data" \
