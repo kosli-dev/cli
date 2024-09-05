@@ -195,7 +195,7 @@ function attest_commit_trail_never_alone
             --commit ${commit} \
             --name="${commit}" \
             --compliant=${compliant} \
-            --external-url never-alone-data=${link_to_attestation}
+            --annotate never_alone_data="${link_to_attestation}"
     fi
 }
 
