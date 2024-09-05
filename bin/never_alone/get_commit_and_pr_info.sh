@@ -4,7 +4,6 @@ set -Eeu
 SCRIPT_NAME="get_commit_and_pr_info.sh"
 COMMIT=""
 NEVER_ALONE_JSON_FILENAME=""
-PULL_REQUEST_URL_FILENAME=""
 
 
 function print_help
@@ -15,10 +14,9 @@ Use: $SCRIPT_NAME [options]
 Script to get commit and pull request info for a commit
 
 Options are:
-  -h                   Print this help menu
-  -c <commit-sha>      Commit sha we are gathering data for. Required
-  -o <output-filename> Name of json file to save result: Required
-  -p <pr-url-filename> Name of file to put pull reqeust url.
+  -h                    Print this help menu
+  -c <commit-sha>       Commit sha we are gathering data for. Required
+  -o <output-filename>  Name of json file to save result: Required
 EOF
 }
 
@@ -38,7 +36,7 @@ function repo_root
 
 function check_arguments
 {
-    while getopts "hc:o:p:" opt; do
+    while getopts "hc:o:" opt; do
         case $opt in
             h)
                 print_help
@@ -49,9 +47,6 @@ function check_arguments
                 ;;
             o)
                 NEVER_ALONE_JSON_FILENAME=${OPTARG}
-                ;;
-            p)
-                PULL_REQUEST_URL_FILENAME=${OPTARG}
                 ;;
             \?)
                 echo "Invalid option: -$OPTARG" >&2
@@ -86,10 +81,6 @@ function get_never_alone_data
             commit: $commit[0].commit,
             pullRequest: $pullRequest[0]
         }' > "${result_file}"
-
-    if [ -n "${PULL_REQUEST_URL_FILENAME}" ]; then
-        echo "$pr_data" | jq -r '.[0].url // empty' > ${PULL_REQUEST_URL_FILENAME}
-    fi
 }
 
 

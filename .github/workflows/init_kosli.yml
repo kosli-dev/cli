@@ -85,13 +85,12 @@ jobs:
             GH_TOKEN: ${{ github.token }}
           run: |
             USER_DATA_FILENAME=never-alone-user-data.json
-            PULL_REQUEST_URL_FILE=never-alone-pr-url.txt
-            ./bin/never_alone/get_commit_and_pr_info.sh -c ${GITHUB_SHA} -o ${USER_DATA_FILENAME} -p ${PULL_REQUEST_URL_FILE}
+            ./bin/never_alone/get_commit_and_pr_info.sh -c ${GITHUB_SHA} -o ${USER_DATA_FILENAME} 
             
-            PR_URL=$(cat ${PULL_REQUEST_URL_FILE})            
-            PR_ANNOTATION_ARG=""
+            PR_URL=$(cat ${USER_DATA_FILENAME} | jq -r '.pullRequest.url // empty')
+            PR_ANNOTATE_ARG=""
             if [ -n "$PR_URL" ]; then
-                PR_ANNOTATION_ARG="--annotate pull_request=$PR_URL"
+                PR_ANNOTATE_ARG="--annotate pull_request=$PR_URL"
             fi
 
             kosli attest generic \
@@ -101,4 +100,4 @@ jobs:
               --name=never-alone-data \
               --compliant=true \
               --user-data="${USER_DATA_FILENAME}" \
-              ${PR_ANNOTATION_ARG}
+              ${PR_ANNOTATE_ARG}
