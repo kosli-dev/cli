@@ -47,9 +47,9 @@ jobs:
         kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
         pr_github_token: ${{ secrets.GITHUB_TOKEN }}
 
-  never-alone-release:
+  never-alone-control:
       needs: [pre-build, init-kosli]
-      uses: ./.github/workflows/never_alone_release.yml
+      uses: ./.github/workflows/never_alone_control.yml
       with:
         FLOW_NAME: cli-release-never-alone
         TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
@@ -83,7 +83,7 @@ jobs:
       kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
 
   docker:
-    needs: [test, pre-build, init-kosli, never-alone-release]
+    needs: [test, pre-build, init-kosli, never-alone-control]
     uses: ./.github/workflows/docker.yml
     with:
       tag: ${{ needs.pre-build.outputs.tag }}

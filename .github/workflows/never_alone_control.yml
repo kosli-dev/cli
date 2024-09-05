@@ -1,4 +1,4 @@
-name: Never Alone Release
+name: Never Alone Control
 
 on:
     workflow_call:
@@ -25,8 +25,8 @@ on:
                 required: false
 
 jobs:
-    never-alone-release:
-        name: Never Alone Release
+    never-alone-control:
+        name: Never Alone Control
         runs-on: ubuntu-latest
         permissions:
             id-token: write
