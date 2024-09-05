@@ -52,7 +52,21 @@ jobs:
       kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
       pr_github_token: ${{ secrets.GITHUB_TOKEN }}
 
-
+  # Only to test CI on a branch
+  never-alone-trail:
+    needs: [pre-build, init-kosli]
+    uses: ./.github/workflows/never_alone_trail.yml
+    with:
+      FLOW_NAME: test-cli-release-never-alone
+      TRAIL_NAME: v0.0.101
+      SOURCE_FLOW_NAME: cli
+      ATTESTATION_NAME: never-alone-data
+      KOSLI_ORG: kosli-public
+    secrets:
+      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
+      pr_github_token: ${{ secrets.GITHUB_TOKEN }}        
+  
+  ### end
   test:
     needs: [pre-build]
     uses: ./.github/workflows/test.yml
@@ -75,19 +89,19 @@ jobs:
       snyk_token: ${{ secrets.SNYK_TOKEN }}
       kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
 
-  docker:
-    needs: [pre-build, test, init-kosli]
-    uses: ./.github/workflows/docker.yml
-    with:
-      tag: ${{ needs.pre-build.outputs.tag }}
-      platforms: linux/amd64
-      flow_name: cli
-      trail_name: ${{ needs.pre-build.outputs.trail_name }}
-      kosli_org: kosli-public
-    secrets:
-      slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
-      slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
-      ghcr_user: ${{ secrets.GHCR_USER }}
-      ghcr_token: ${{ secrets.GHCR_TOKEN }}
-      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
-      snyk_token: ${{ secrets.SNYK_TOKEN }}
+  # docker:
+  #   needs: [pre-build, test, init-kosli]
+  #   uses: ./.github/workflows/docker.yml
+  #   with:
+  #     tag: ${{ needs.pre-build.outputs.tag }}
+  #     platforms: linux/amd64
+  #     flow_name: cli
+  #     trail_name: ${{ needs.pre-build.outputs.trail_name }}
+  #     kosli_org: kosli-public
+  #   secrets:
+  #     slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
+  #     slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
+  #     ghcr_user: ${{ secrets.GHCR_USER }}
+  #     ghcr_token: ${{ secrets.GHCR_TOKEN }}
+  #     kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
+  #     snyk_token: ${{ secrets.SNYK_TOKEN }}
