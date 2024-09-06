@@ -105,6 +105,9 @@ function get_never_alone_data
     local -r commit=$1; shift
     local -r result_file=$1; shift
     
+    # We have seen that the 'gh search commits' sometimes return an empty list
+    # Have added getting data with graphql also, and some echo messages further down
+    # Only for debugging at the moment, but we could use graphql to get both commit and pr data
     commit_data_graphql=$(get_commit_data_using_graphql $commit)
     pr_data=$(gh pr list --search "${commit}" --state merged --json author,reviews,mergeCommit,mergedAt,reviewDecision,url)
     commit_data=$(gh search commits --hash "${commit}" --json commit)

@@ -55,6 +55,8 @@ jobs:
         TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
         SOURCE_FLOW_NAME: cli
         ATTESTATION_NAME: never-alone-data
+        PARENT_FLOW_NAME: cli-release
+        PARENT_TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
         KOSLI_ORG: kosli-public
       secrets:
         kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}

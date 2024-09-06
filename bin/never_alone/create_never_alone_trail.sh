@@ -2,12 +2,14 @@
 set -Eeu
 
 SCRIPT_NAME="create_never_alone_trail.sh"
-RELEASE_FLOW=""
+FLOW_NAME=""
 TRAIL_NAME=""
 BASE_COMMIT=""
-PROPOSED_COMMIT=""
+CURRENT_COMMIT=""
 SOURCE_FLOW=""
 SOURCE_ATTESTATION_NAME=""
+PARENT_FLOW=""
+PARENT_TRAIL=""
 KOSLI_HOST=${KOSLI_HOST:-https://app.kosli.com}
 
 
@@ -21,12 +23,14 @@ Collects all commits between base-commit and proposed-commit and use it as a tem
 
 Options are:
   -h                    Print this help menu
-  -f <release-flow>     Name of kosli flow to report combined never-alone info to. Required
+  -f <flow-name>        Name of kosli flow to report combined never-alone info to. Required
   -t <trail-name>       Name of the trail that the reviews shall be reported to. Required
-  -b <base-commit>      Commit of previous release
-  -p <proposed-commit>  Commit sha for release we are building now. Required
+  -b <base-commit-sha>  Old commit sha, used as base for creating list of commits. Required
+  -c <commit-sha>       Current commit sha, used as the end point for creating list of commits. Required
   -s <source-flow>      Name of kosli flow where the never-alone-data data are stored. Required
   -n <attestation-name> Attestation name used for never-alone-data. Required
+  -p <parent-flow>      Send an attestation about the never-alone-trail to the parent-flow. Optional
+  -q <parent-trail>     Trail name of parent flow where the report shall be sent. Optional
 EOF
 }
 
@@ -46,14 +50,14 @@ function repo_root
 
 function check_arguments
 {
-    while getopts "hf:t:b:p:s:n:" opt; do
+    while getopts "hf:t:b:c:s:n:p:q:" opt; do
         case $opt in
             h)
                 print_help
                 exit 1
                 ;;
             f)
-                RELEASE_FLOW=${OPTARG}
+                FLOW_NAME=${OPTARG}
                 ;;
             t)
                 TRAIL_NAME=${OPTARG}
@@ -61,14 +65,20 @@ function check_arguments
             b)
                 BASE_COMMIT=${OPTARG}
                 ;;
-            p)
-                PROPOSED_COMMIT=${OPTARG}
+            c)
+                CURRENT_COMMIT=${OPTARG}
                 ;;
             s)
                 SOURCE_FLOW=${OPTARG}
                 ;;
             n)
                 SOURCE_ATTESTATION_NAME=${OPTARG}
+                ;;
+            p)
+                PARENT_FLOW=${OPTARG}
+                ;;
+            q)
+                PARENT_TRAIL=${OPTARG}
                 ;;
             \?)
                 echo "Invalid option: -$OPTARG" >&2
@@ -77,17 +87,17 @@ function check_arguments
         esac
     done
 
-    if [ -z "${RELEASE_FLOW}" ]; then
-        die "option -f <release-flow> is required"
+    if [ -z "${FLOW_NAME}" ]; then
+        die "option -f <flow-name> is required"
     fi
     if [ -z "${TRAIL_NAME}" ]; then
         die "option -t <trail-name> is required"
     fi
     if [ -z "${BASE_COMMIT}" ]; then
-        die "option -b <base-commit> is required"
+        die "option -b <base-commit-sha> is required"
     fi
-    if [ -z "${PROPOSED_COMMIT}" ]; then
-        die "option -p <proposed-commit> is required"
+    if [ -z "${CURRENT_COMMIT}" ]; then
+        die "option -c <commit-sha> is required"
     fi
     if [ -z "${SOURCE_FLOW}" ]; then
         die "option -s <source-flow> is required"
@@ -95,11 +105,14 @@ function check_arguments
     if [ -z "${SOURCE_ATTESTATION_NAME}" ]; then
         die "option -n <attestation-name> is required"
     fi
+    if { [[ -n "$PARENT_FLOW" && -z "$PARENT_TRAIL" ]] || [[ -z "$PARENT_FLOW" && -n "$PARENT_TRAIL" ]]; }; then
+        die "You must provide either both options -p <parent-flow> and -q <parent-trail>, or neither"
+    fi
 }
 
 function begin_trail_with_template
 {
-    local release_flow=$1; shift
+    local flow_name=$1; shift
     local trail_name=$1; shift
     local commits=("$@")
     local trail_template_file_name="review_trail.yaml"
@@ -119,7 +132,7 @@ EOF
     } > ${trail_template_file_name}
 
     kosli begin trail ${trail_name} \
-        --flow=${release_flow} \
+        --flow=${flow_name} \
         --description="$(git log -1 --pretty='%aN - %s')" \
         --template-file=${trail_template_file_name}
 }
@@ -175,7 +188,7 @@ function get_never_alone_compliance
 
 function attest_commit_trail_never_alone
 {
-    local -r release_flow=$1; shift
+    local -r flow_name=$1; shift
     local -r trail_name=$1; shift
     local -r commit=$1; shift
     local -r source_flow=$1; shift
@@ -190,7 +203,7 @@ function attest_commit_trail_never_alone
         latest_never_alone_data=$(echo "${never_alone_data}" | jq '.[-1]')
         compliant=$(get_never_alone_compliance "${latest_never_alone_data}")
         kosli attest generic \
-            --flow ${release_flow} \
+            --flow ${flow_name} \
             --trail ${trail_name} \
             --commit ${commit} \
             --name="${commit}" \
@@ -199,18 +212,37 @@ function attest_commit_trail_never_alone
     fi
 }
 
+function attest_never_alone_trail_to_parent
+{
+    local -r flow_name=$1; shift
+    local -r trail_name=$1; shift
+    local -r parent_flow=$1; shift
+    local -r parent_trail=$1; shift
+
+    never_alone_trail_link="${KOSLI_HOST}/${KOSLI_ORG}/flows/${flow_name}/trails/${trail_name}"
+    kosli attest generic \
+        --flow ${parent_flow} \
+        --trail ${parent_trail} \
+        --name never-alone-trail \
+        --annotate never_alone_trail="${never_alone_trail_link}"
+}
+
 function main
 {
     check_arguments "$@"
     # Use gh instead of git so we can keep the commit depth of 1. The order are from oldest
     # commit to newest
-    commits=($(gh api repos/:owner/:repo/compare/${BASE_COMMIT}...${PROPOSED_COMMIT} -q '.commits[].sha'))
+    commits=($(gh api repos/:owner/:repo/compare/${BASE_COMMIT}...${CURRENT_COMMIT} -q '.commits[].sha'))
 
-    begin_trail_with_template ${RELEASE_FLOW} ${TRAIL_NAME} "${commits[@]}"
+    begin_trail_with_template ${FLOW_NAME} ${TRAIL_NAME} "${commits[@]}"
     
     for commit in "${commits[@]}"; do
-        attest_commit_trail_never_alone ${RELEASE_FLOW} ${TRAIL_NAME} ${commit} ${SOURCE_FLOW} ${SOURCE_ATTESTATION_NAME}
+        attest_commit_trail_never_alone ${FLOW_NAME} ${TRAIL_NAME} ${commit} ${SOURCE_FLOW} ${SOURCE_ATTESTATION_NAME}
     done
+
+    if [ -n "${PARENT_FLOW}" ]; then
+        attest_never_alone_trail_to_parent  ${FLOW_NAME} ${TRAIL_NAME} ${PARENT_FLOW} ${PARENT_TRAIL}
+    fi
 }
 
 main "$@"
