@@ -163,12 +163,13 @@ function echo_never_alone_attestation_in_trail
     cat "${never_alone_json_file_name}"
 }
 
-function echo_never_alone_compliance
+function set_never_alone_compliance
 {
     local -r never_alone_data=$1; shift
     local pr_data compliant reviews pr_author reviews_length review state review_author
-
-    compliant="false"
+    
+    COMPLIANT_STATUS="false"
+    REASON_FOR_NON_COMPLIANT="Pull-request has not been approved by someone other than pr-author"
     pr_data=$(echo "${never_alone_data}" | jq '.user_data.pullRequest')
     reviews=$(echo "${pr_data}" | jq '.reviews')
     pr_author=$(echo "${pr_data}" | jq '.author.login')
@@ -179,11 +180,10 @@ function echo_never_alone_compliance
         state=$(echo "$review" | jq ".state")
         review_author=$(echo "$review" | jq ".author.login")
         if [ "$state" == '"APPROVED"' -a "${review_author}" != "${pr_author}" ]; then
-            compliant="true"
+            COMPLIANT_STATUS="true"
+            REASON_FOR_NON_COMPLIANT=""
         fi
     done
-
-    echo $compliant
 }
 
 function attest_commit_trail_never_alone
@@ -202,14 +202,25 @@ function attest_commit_trail_never_alone
     never_alone_data=$(echo_never_alone_attestation_in_trail ${source_flow_name} ${source_trail_name} ${source_attestation_name})
     if [ "${never_alone_data}" != "[]" ]; then
         latest_never_alone_data=$(echo "${never_alone_data}" | jq '.[-1]')
-        compliant=$(echo_never_alone_compliance "${latest_never_alone_data}")
-        kosli attest generic \
-            --flow=${flow_name} \
-            --trail=${trail_name} \
-            --name="${commit_sha}" \
-            --commit=${commit_sha} \
-            --compliant=${compliant} \
-            --annotate="never_alone_data=${url_to_source_attestation}"
+        set_never_alone_compliance "${latest_never_alone_data}"
+        if [ "${COMPLIANT_STATUS}" == "true" ]; then
+            kosli attest generic \
+                --flow=${flow_name} \
+                --trail=${trail_name} \
+                --name="${commit_sha}" \
+                --commit=${commit_sha} \
+                --compliant="true" \
+                --annotate="never_alone_data=${url_to_source_attestation}"
+        else        
+            kosli attest generic \
+                --flow=${flow_name} \
+                --trail=${trail_name} \
+                --name="${commit_sha}" \
+                --commit=${commit_sha} \
+                --compliant="false" \
+                --annotate="never_alone_data=${url_to_source_attestation}" \
+                --annotate="reason_for_non_compliance=${REASON_FOR_NON_COMPLIANT}"
+        fi
     fi
 }
 
