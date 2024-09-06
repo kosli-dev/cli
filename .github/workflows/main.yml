@@ -58,51 +58,53 @@ jobs:
     uses: ./.github/workflows/never_alone_trail.yml
     with:
       FLOW_NAME: test-cli-release-never-alone
-      TRAIL_NAME: v0.0.102
+      TRAIL_NAME: v0.0.103
       SOURCE_FLOW_NAME: cli
       ATTESTATION_NAME: never-alone-data
+      PARENT_FLOW_NAME: test-cli-release
+      PARENT_TRAIL_NAME: v0.0.103
       KOSLI_ORG: kosli-public
     secrets:
       kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
       pr_github_token: ${{ secrets.GITHUB_TOKEN }}        
   
-  never-alone-link-in-relase:
-    needs: [pre-build, init-kosli, never-alone-trail]
-    runs-on: ubuntu-latest
-    permissions:
-        id-token: write
-        contents: write
-        pull-requests: read
-    steps:
+  # never-alone-link-in-relase:
+  #   needs: [pre-build, init-kosli, never-alone-trail]
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #       id-token: write
+  #       contents: write
+  #       pull-requests: read
+  #   steps:
 
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 1
 
-      - name: setup-kosli-cli
-        uses: kosli-dev/setup-cli-action@v2
-        with:
-          version:
-              ${{ vars.KOSLI_CLI_VERSION }}
+  #     - name: setup-kosli-cli
+  #       uses: kosli-dev/setup-cli-action@v2
+  #       with:
+  #         version:
+  #             ${{ vars.KOSLI_CLI_VERSION }}
 
-      - name: Report never-alone-trail
-        env:
-          FLOW_NAME: test-cli-release
-          TRAIL_NAME: v0.0.102
-          SOURCE_FLOW_NAME: test-cli-release-never-alone
-          KOSLI_ORG: kosli-public    
-          KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-        run: |
-          # only on test on real it is already there
-          kosli begin trail ${TRAIL_NAME} --flow ${FLOW_NAME}
+  #     - name: Report never-alone-trail
+  #       env:
+  #         FLOW_NAME: test-cli-release
+  #         TRAIL_NAME: v0.0.102
+  #         SOURCE_FLOW_NAME: test-cli-release-never-alone
+  #         KOSLI_ORG: kosli-public    
+  #         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+  #       run: |
+  #         # only on test on real it is already there
+  #         kosli begin trail ${TRAIL_NAME} --flow ${FLOW_NAME}
 
-          KOSLI_HOST=${KOSLI_HOST:-https://app.kosli.com}
-          NEVER_ALONE_TRAIL_LINK="${KOSLI_HOST}/${KOSLI_ORG}/flows/${SOURCE_FLOW_NAME}/trails/${TRAIL_NAME}"
-          kosli attest generic \
-            --flow ${FLOW_NAME} \
-            --trail ${TRAIL_NAME} \
-            --name never-alone-trail \
-            --annotate never_alone_trail="${NEVER_ALONE_TRAIL_LINK}"
+  #         KOSLI_HOST=${KOSLI_HOST:-https://app.kosli.com}
+  #         NEVER_ALONE_TRAIL_LINK="${KOSLI_HOST}/${KOSLI_ORG}/flows/${SOURCE_FLOW_NAME}/trails/${TRAIL_NAME}"
+  #         kosli attest generic \
+  #           --flow ${FLOW_NAME} \
+  #           --trail ${TRAIL_NAME} \
+  #           --name never-alone-trail \
+  #           --annotate never_alone_trail="${NEVER_ALONE_TRAIL_LINK}"
 
   ### end
   test:

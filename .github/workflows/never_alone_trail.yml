@@ -8,12 +8,18 @@ on:
             type: string
           trail_name:
             required: true
-            type: string
+            type: string          
           source_flow_name:
             required: true
             type: string
           attestation_name:
             required: true
+            type: string
+          parent_flow_name:
+            required: false
+            type: string
+          parent_trail_name:
+            required: false
             type: string
           kosli_org:
             required: true
@@ -64,6 +70,6 @@ jobs:
               -f ${{inputs.flow_name}} \
               -t ${{inputs.trail_name}} \
               -b ${BASE_COMMIT} \
-              -p ${GITHUB_SHA} \
+              -c ${GITHUB_SHA} \
               -s ${{inputs.source_flow_name}} \
               -n ${{inputs.attestation_name}}
