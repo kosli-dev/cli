@@ -72,4 +72,6 @@ jobs:
               -b ${BASE_COMMIT} \
               -c ${GITHUB_SHA} \
               -s ${{inputs.source_flow_name}} \
-              -n ${{inputs.attestation_name}}
+              -n ${{inputs.attestation_name}} \
+              -p ${{inputs.parent_flow_name}} \
+              -q ${{inputs.parent_trail_name}}
