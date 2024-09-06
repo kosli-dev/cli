@@ -241,9 +241,6 @@ function main
     done
 
     if [ -n "${PARENT_FLOW}" ]; then
-        # only for test. On real it is already there
-        kosli begin trail ${PARENT_TRAIL} --flow ${PARENT_FLOW}
-
         attest_never_alone_trail_to_parent  ${FLOW_NAME} ${TRAIL_NAME} ${PARENT_FLOW} ${PARENT_TRAIL}
     fi
 }

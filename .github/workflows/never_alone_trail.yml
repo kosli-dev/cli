@@ -8,7 +8,7 @@ on:
             type: string
           trail_name:
             required: true
-            type: string          
+            type: string
           source_flow_name:
             required: true
             type: string
