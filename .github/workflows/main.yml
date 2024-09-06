@@ -58,11 +58,11 @@ jobs:
     uses: ./.github/workflows/never_alone_trail.yml
     with:
       FLOW_NAME: test-cli-release-never-alone
-      TRAIL_NAME: v0.0.103
+      TRAIL_NAME: v0.0.104
       SOURCE_FLOW_NAME: cli
       ATTESTATION_NAME: never-alone-data
       PARENT_FLOW_NAME: test-cli-release
-      PARENT_TRAIL_NAME: v0.0.103
+      PARENT_TRAIL_NAME: v0.0.104
       KOSLI_ORG: kosli-public
     secrets:
       kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
