@@ -47,8 +47,7 @@ jobs:
         - name: setup-kosli-cli
           uses: kosli-dev/setup-cli-action@v2
           with:
-            version:
-                ${{ vars.KOSLI_CLI_VERSION }}
+            version: ${{ vars.KOSLI_CLI_VERSION }}
 
         - name: Update never-alone flow
           env:
@@ -64,12 +63,12 @@ jobs:
             KOSLI_ORG: ${{ inputs.kosli_org }}
             GH_TOKEN: ${{ github.token }}
           run: |
-            BASE_COMMIT=$(./bin/never_alone/get_commit_of_latest_release.sh)
+            START_COMMIT_SHA=$(./bin/never_alone/get_commit_of_latest_release.sh)
             
             ./bin/never_alone/create_never_alone_trail.sh \
               -f ${{inputs.flow_name}} \
               -t ${{inputs.trail_name}} \
-              -b ${BASE_COMMIT} \
+              -b ${START_COMMIT_SHA} \
               -c ${GITHUB_SHA} \
               -s ${{inputs.source_flow_name}} \
               -n ${{inputs.attestation_name}} \
