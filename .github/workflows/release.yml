@@ -63,7 +63,7 @@ jobs:
         pr_github_token: ${{ secrets.GITHUB_TOKEN }}        
 
   test:
-    needs: [pre-build]
+    needs: [pre-build, init-kosli]
     uses: ./.github/workflows/test.yml
     with:
       AWS_ACCOUNT_ID: 772819027869
@@ -85,7 +85,7 @@ jobs:
       kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
 
   docker:
-    needs: [test, pre-build, init-kosli, never-alone-trail]
+    needs: [pre-build, init-kosli, test, never-alone-trail]
     uses: ./.github/workflows/docker.yml
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
