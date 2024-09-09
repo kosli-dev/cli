@@ -78,7 +78,7 @@ func newBeginTrailCmd(out io.Writer) *cobra.Command {
 	ci := WhichCI()
 	cmd.Flags().StringVar(&o.flow, "flow", "", flowNameFlag)
 	cmd.Flags().StringVar(&o.payload.Description, "description", "", trailDescriptionFlag)
-	cmd.Flags().StringVarP(&o.templateFile, "template-file", "f", "", templateFileFlag)
+	cmd.Flags().StringVarP(&o.templateFile, "template-file", "f", "", templateFileSimpleFlag)
 	cmd.Flags().StringVarP(&o.userDataFile, "user-data", "u", "", trailUserDataFlag)
 	cmd.Flags().StringVarP(&o.commitSHA, "commit", "g", DefaultValueForCommit(ci, false), beginTrailCommitFlag)
 	cmd.Flags().StringSliceVar(&o.redactedCommitInfo, "redact-commit-info", []string{}, attestationRedactCommitInfoFlag)
