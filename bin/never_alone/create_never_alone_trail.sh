@@ -201,8 +201,7 @@ function attest_commit_trail_never_alone
     never_alone_data=$(echo_never_alone_attestation_in_trail ${source_flow_name} ${source_trail_name} ${source_attestation_name})
     if [ "${never_alone_data}" != "[]" ]; then
         latest_never_alone_data=$(echo "${never_alone_data}" | jq '.[-1]')
-        attestation_id=$(echo $latest_never_alone_data | jq -r '.inner_id')
-        url_to_source_attestation="${KOSLI_HOST}/${KOSLI_ORG}/flows/${source_flow_name}/trails/${source_trail_name}?attestation_id=${attestation_id}"
+        url_to_source_attestation=$(echo $latest_never_alone_data | jq -r '.html_url')
         set_never_alone_compliance "${latest_never_alone_data}"
         if [ "${COMPLIANT_STATUS}" == "true" ]; then
             kosli attest generic \
