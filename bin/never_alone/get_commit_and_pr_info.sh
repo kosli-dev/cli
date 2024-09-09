@@ -2,7 +2,7 @@
 set -Eeu
 
 SCRIPT_NAME="get_commit_and_pr_info.sh"
-COMMIT=""
+COMMIT_SHA=""
 NEVER_ALONE_JSON_FILENAME=""
 
 
@@ -43,7 +43,7 @@ function check_arguments
                 exit 1
                 ;;
             c)
-                COMMIT=${OPTARG}
+                COMMIT_SHA=${OPTARG}
                 ;;
             o)
                 NEVER_ALONE_JSON_FILENAME=${OPTARG}
@@ -55,7 +55,7 @@ function check_arguments
         esac
     done
 
-    if [ -z "${COMMIT}" ]; then
+    if [ -z "${COMMIT_SHA}" ]; then
         die "option -c <commit-sha> is required"
     fi
     if [ -z "${NEVER_ALONE_JSON_FILENAME}" ]; then
@@ -63,66 +63,99 @@ function check_arguments
     fi
 }
 
-function get_commit_data_using_graphql
+function get_commit_and_pr_data_using_graphql
 {
-    local -r commit=$1; shift
+    # This function is a replacement for two api calls
+    # pr_data=$(gh pr list --search "${commit_sha}" --state merged --json author,reviews,mergeCommit,mergedAt,reviewDecision,url)
+    # commit_data=$(gh search commits --hash "${commit_sha}" --json commit)
+    # We have seen that the 'gh search commits' sometimes just return an empty list.
+    # Combining them also reduces the number of API calls which is good since we have seen that we
+    # have been rate limited
+    local -r commit_sha=$1; shift
+
+    repo_info=$(gh repo view --json owner,name --jq '. | {owner: .owner.login, name: .name}')
+    repo_owner=$(echo "$repo_info" | jq -r '.owner')
+    repo_name=$(echo "$repo_info" | jq -r '.name')
+
     gh api graphql \
-    -F commit="${commit}" \
-    -f query="$(gh repo view --json owner,name --jq '. | 
-        "query($commit: String!) {
-            repository(owner: \"\(.owner.login)\", name: \"\(.name)\") {
-                object(expression: $commit) {
-                    ... on Commit {
-                        author {
-                            name
-                            email
-                            date
-                        }
-                        committer {
-                            name
-                            email
-                            date
-                        }
-                        message
-                        tree {
-                            oid
-                        }
-                        associatedPullRequests(first: 1) {
-                            nodes {
-                                url
+        -F commit_sha="${commit_sha}" \
+        -F owner="${repo_owner}" \
+        -F name="${repo_name}" \
+        -f query='
+            query($commit_sha: String!, $owner: String!, $name: String!) {
+                repository(owner: $owner, name: $name) {
+                    object(expression: $commit_sha) {
+                        ... on Commit {
+                            author {
+                                name
+                                email
+                                date
                             }
+                            message
+                            associatedPullRequests(first: 1) {
+                                nodes {
+                                    author {
+                                        login
+                                        ... on User {
+                                            name
+                                        }
+                                    }
+                                    mergeCommit {
+                                        oid
+                                    }
+                                    mergedAt
+                                    reviewDecision
+                                    reviews(first: 100) {
+                                        nodes {
+                                            author {
+                                                login
+                                                ... on User {
+                                                    name
+                                                }
+                                            }
+                                            state
+                                            submittedAt
+                                            commit {
+                                                oid
+                                            }
+                                        }
+                                    }
+                                    url
+                                }
+                            }                            
                         }
                     }
                 }
-            }
-        }"
-    ')"
+            }'
 }
 
+function get_pr_data_using_graphql
+{
+    local -r commit=$1; shift
+
+
+}
 
 function get_never_alone_data
 {
-    local -r commit=$1; shift
+    local -r commit_sha=$1; shift
     local -r result_file=$1; shift
     
-    # We have seen that the 'gh search commits' sometimes return an empty list
-    # Have added getting data with graphql also, and some echo messages further down
-    # Only for debugging at the moment, but we could use graphql to get both commit and pr data
-    commit_data_graphql=$(get_commit_data_using_graphql $commit)
-    pr_data=$(gh pr list --search "${commit}" --state merged --json author,reviews,mergeCommit,mergedAt,reviewDecision,url)
-    commit_data=$(gh search commits --hash "${commit}" --json commit)
-    
-    echo commit_data_graphql=$commit_data_graphql
-    echo commit_data=$commit_data
+    commit_and_pr_data=$(get_commit_and_pr_data_using_graphql $commit_sha)
+    commit_data=$(echo "${commit_and_pr_data}" | jq '{
+        author: .data.repository.object.author,
+        message: .data.repository.object.message
+    }')
+    pr_data=$(echo "${commit_and_pr_data}" | jq '.data.repository.object.associatedPullRequests.nodes[0] | .reviews = .reviews.nodes')
 
     jq -n \
-        --arg sha "$commit" \
-        --argjson commit "$commit_data" \
-        --argjson pullRequest "$pr_data" \
+        --arg commit_sha "$commit_sha" \
+        --argjson commit_data "$commit_data" \
+        --argjson pr_data "$pr_data" \
         '{
-            sha: $sha,
-            commit: $commit[0].commit,
-            pullRequest: $pullRequest[0]
+            commit_sha: $commit_sha,
+            commit: $commit_data,
+            pullRequest: $pr_data
         }' > "${result_file}"
 }
 
@@ -130,7 +163,7 @@ function get_never_alone_data
 function main
 {
     check_arguments "$@"
-    get_never_alone_data ${COMMIT} ${NEVER_ALONE_JSON_FILENAME}
+    get_never_alone_data ${COMMIT_SHA} ${NEVER_ALONE_JSON_FILENAME}
 }
 
 
