@@ -113,6 +113,7 @@ The service principal needs to have the following permissions:
 	visibilityFlag                       = "[defaulted] The visibility of the Kosli flow. Valid visibilities are [public, private]."
 	templateFlag                         = "[defaulted] The comma-separated list of required compliance controls names."
 	templateFileFlag                     = "[optional] The path to a yaml template file. Cannot be used together with --use-empty-template"
+	templateFileSimpleFlag               = "[optional] The path to a yaml template file."
 	useEmptyTemplateFlag                 = "Use an empty template for the flow creation without specifying a file. Cannot be used together with --template or --template-file"
 	approvalUserDataFlag                 = "[optional] The path to a JSON file containing additional data you would like to attach to the approval."
 	evidenceUserDataFlag                 = "[optional] The path to a JSON file containing additional data you would like to attach to the evidence."
