@@ -198,6 +198,7 @@ function attest_commit_trail_never_alone
     local -r source_trail_name=${commit_sha:0:7}
     local url_to_source_attestation never_alone_data latest_never_alone_data compliant
 
+    COMPLIANT_STATUS="false"
     never_alone_data=$(echo_never_alone_attestation_in_trail ${source_flow_name} ${source_trail_name} ${source_attestation_name})
     if [ "${never_alone_data}" != "[]" ]; then
         latest_never_alone_data=$(echo "${never_alone_data}" | jq '.[-1]')
@@ -230,12 +231,14 @@ function attest_never_alone_trail_to_parent
     local -r trail_name=$1; shift
     local -r parent_flow_name=$1; shift
     local -r parent_trail_name=$1; shift
+    local -r trail_compliance=$1; shift
 
     never_alone_trail_url="${KOSLI_HOST}/${KOSLI_ORG}/flows/${flow_name}/trails/${trail_name}"
     kosli attest generic \
         --flow=${parent_flow_name} \
         --trail=${parent_trail_name} \
         --name=never-alone-trail \
+        --compliant=${trail_compliance} \
         --annotate="never_alone_trail=${never_alone_trail_url}"
 }
 
@@ -247,12 +250,16 @@ function main
 
     begin_trail_with_template ${FLOW_NAME} ${TRAIL_NAME} "${commits[@]}"
     
+    local trail_compliance="true"
     for commit in "${commits[@]}"; do        
         attest_commit_trail_never_alone ${FLOW_NAME} ${TRAIL_NAME} ${commit} ${SOURCE_FLOW_NAME} ${SOURCE_ATTESTATION_NAME}
+        if [ "${COMPLIANT_STATUS}" == "false" ]; then
+            trail_compliance="false"
+        fi
     done
 
     if [ -n "${PARENT_FLOW_NAME}" ]; then
-        attest_never_alone_trail_to_parent  ${FLOW_NAME} ${TRAIL_NAME} ${PARENT_FLOW_NAME} ${PARENT_TRAIL_NAME}
+        attest_never_alone_trail_to_parent  ${FLOW_NAME} ${TRAIL_NAME} ${PARENT_FLOW_NAME} ${PARENT_TRAIL_NAME} ${trail_compliance}
     fi
 }
 
