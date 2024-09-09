@@ -54,7 +54,7 @@ jobs:
 
 
   test:
-    needs: [pre-build]
+    needs: [pre-build, init-kosli]
     uses: ./.github/workflows/test.yml
     with:
       AWS_ACCOUNT_ID: 772819027869
