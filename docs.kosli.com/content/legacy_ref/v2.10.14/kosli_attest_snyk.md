@@ -1,15 +1,21 @@
 ---
-title: "kosli attest pullrequest bitbucket"
+title: "kosli attest snyk"
 beta: false
 deprecated: false
 ---
 
-# kosli attest pullrequest bitbucket
+# kosli attest snyk
 
 ## Synopsis
 
-Report a Bitbucket pull request attestation to an artifact or a trail in a Kosli flow.  
-It checks if a pull request exists for a given merge commit and reports the pull-request attestation to Kosli.
+Report a snyk attestation to an artifact or a trail in a Kosli flow.  
+Only SARIF snyk output is accepted. 
+Snyk output can be for "snyk code test", "snyk container test", or "snyk iac test".
+
+The `--scan-results` .json file is analyzed and a summary of the scan results are reported to Kosli.
+
+By default, the `--scan-results` .json file is also uploaded to Kosli's evidence vault.
+You can disable that by setting `--upload-results=false`
 
 
 The attestation can be bound to a trail using the trail name.
@@ -18,21 +24,22 @@ If the attestation is for an artifact, the attestation can be bound to the artif
 - using the artifact's SHA256 fingerprint which is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
 - using the artifact's name in the flow yaml template and the git commit from which the artifact is/will be created. Useful when reporting an attestation before creating/reporting the artifact.
 
+You can optionally associate the attestation to a git commit using `--commit` (requires access to a git repo). And you  
+can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`. 
+Note that when the attestation is reported for an artifact that does not yet exist in Kosli, `--commit` becomes required to facilitate 
+binding the attestation to the right artifact.
+
 ```shell
-kosli attest pullrequest bitbucket [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli attest snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
 |        --annotate stringToString  |  [optional] Annotate the attestation with data using key=value.  |
-|    -t, --artifact-type string  |  [conditional] The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you don't specify '--fingerprint'.  |
-|        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
+|    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it).  |
 |        --attachments strings  |  [optional] The comma-separated list of paths of attachments for the reported attestation. Attachments can be files or directories. All attachments are compressed and uploaded to Kosli's evidence vault.  |
-|        --bitbucket-password string  |  Bitbucket App password. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#authentication for more details.  |
-|        --bitbucket-username string  |  Bitbucket username.  |
-|        --bitbucket-workspace string  |  Bitbucket workspace ID.  |
-|    -g, --commit string  |  the git merge commit to be checked for associated pull requests.  |
+|    -g, --commit string  |  [conditional] The git commit for which the attestation is associated to. Becomes required when reporting an attestation for an artifact before reporting it to Kosli. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --description string  |  [optional] attestation description  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for --artifact-type dir.  |
@@ -40,7 +47,7 @@ kosli attest pullrequest bitbucket [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --external-url stringToString  |  [optional] Add labeled reference URL for an external resource. The format is label=url (labels cannot contain '.' or '='). This flag can be set multiple times. If the resource is a file or dir, you can optionally add its fingerprint via --external-fingerprint  |
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact to attach the attestation to. Only required if the attestation is for an artifact and --artifact-type and artifact name/path are not used.  |
 |    -f, --flow string  |  The Kosli flow name.  |
-|    -h, --help  |  help for bitbucket  |
+|    -h, --help  |  help for snyk  |
 |    -n, --name string  |  The name of the attestation as declared in the flow or trail yaml template.  |
 |    -o, --origin-url string  |  [optional] The url pointing to where the attestation came from or is related. (defaulted to the CI url in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --redact-commit-info strings  |  [optional] The list of commit info to be redacted before sending to Kosli. Allowed values are one or more of [author, message, branch].  |
@@ -48,8 +55,9 @@ kosli attest pullrequest bitbucket [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
 |        --repo-root string  |  [defaulted] The directory where the source git repository is available. Only used if --commit is used. (default ".")  |
-|        --repository string  |  Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|    -R, --scan-results string  |  The path to Snyk scan SARIF results file from 'snyk test' and 'snyk container test'. By default, the Snyk results will be uploaded to Kosli's evidence vault.  |
 |    -T, --trail string  |  The Kosli trail name.  |
+|        --upload-results  |  [defaulted] Whether to upload the provided Snyk results file as an attachment to Kosli or not. (default true)  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the attestation.  |
 
 
@@ -65,110 +73,95 @@ kosli attest pullrequest bitbucket [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --org string  |  The Kosli organization.  |
 
 
+## Live Examples in different CI systems
+
+{{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli attest snyk` command in GitHub.
+
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli+attest+snyk), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=github&command=kosli+attest+snyk).{{< /tab >}}{{< tab "GitLab" >}}View an example of the `kosli attest snyk` command in GitLab.
+
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=gitlab&command=kosli+attest+snyk), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=gitlab&command=kosli+attest+snyk).{{< /tab >}}{{< /tabs >}}
+
 ## Examples Use Cases
 
-**report a Bitbucket pull request attestation about a pre-built docker artifact (kosli calculates the fingerprint)**
+**report a snyk attestation about a pre-built docker artifact (kosli calculates the fingerprint)**
 
 ```shell
-kosli attest pullrequest bitbucket yourDockerImageName \
+kosli attest snyk yourDockerImageName \
 	--artifact-type docker \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
-	--bitbucket-workspace yourBitbucketWorkspace \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
+	--scan-results yourSnykSARIFScanResults \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 ```
 
-**report a Bitbucket pull request attestation about a pre-built docker artifact (you provide the fingerprint)**
+**report a snyk attestation about a pre-built docker artifact (you provide the fingerprint)**
 
 ```shell
-kosli attest pullrequest bitbucket \
+kosli attest snyk \
 	--fingerprint yourDockerImageFingerprint \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
-	--bitbucket-workspace yourBitbucketWorkspace \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
+	--scan-results yourSnykSARIFScanResults \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 ```
 
-**report a Bitbucket pull request attestation about a trail**
+**report a snyk attestation about a trail**
 
 ```shell
-kosli attest pullrequest bitbucket \
+kosli attest snyk \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
-	--bitbucket-workspace yourBitbucketWorkspace \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
+	--scan-results yourSnykSARIFScanResults \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 ```
 
-**report a Bitbucket pull request attestation about an artifact which has not been reported yet in a trail**
+**report a snyk attestation about an artifact which has not been reported yet in a trail**
 
 ```shell
-kosli attest pullrequest bitbucket \
+kosli attest snyk \
 	--name yourTemplateArtifactName.yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
-	--bitbucket-workspace yourBitbucketWorkspace \
 	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
+	--scan-results yourSnykSARIFScanResults \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 ```
 
-**report a Bitbucket pull request attestation about a trail with an attachment**
+**report a snyk attestation about a trail with an attachment**
 
 ```shell
-kosli attest pullrequest bitbucket \
+kosli attest snyk \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
-	--bitbucket-workspace yourBitbucketWorkspace \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
-	--attachments=yourAttachmentPathName \
+	--scan-results yourSnykSARIFScanResults \
+	--attachments yourEvidencePathName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 ```
 
-**fail if a pull request does not exist for your artifact**
+**report a snyk attestation about a trail without uploading the snyk results file**
 
 ```shell
-kosli attest pullrequest bitbucket \
-	--name yourTemplateArtifactName.yourAttestationName \
+kosli attest snyk \
+	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
-	--bitbucket-workspace yourBitbucketWorkspace \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
+	--scan-results yourSnykSARIFScanResults \
+	--upload-results=false \
 	--api-token yourAPIToken \
-	--org yourOrgName \
-	--assert
+	--org yourOrgName
 ```
 
