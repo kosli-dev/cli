@@ -47,7 +47,8 @@ In [SonarCloud](https://sonarcloud.io/) or [SonarQube](https://sonarqube.org):
 
 ## Setting up the SonarScanner
 
-In order for Kosli to know where the scan results should be attested, certain parameters must be passed to the SonarScanner. Note that this does NOT work for SonarCloud's Automatic Analysis.
+In order for Kosli to know where the scan results should be attested, certain parameters can be passed to the SonarScanner. Note that parameters cannot be passed with SonarCloud's Automatic Analysis - in this case, Kosli determines the relevant Flow and Trail as described below.
+
 These parameters can be passed to the scanner in three ways:
 - As part of the sonar-project.properties file used in CI analysis
 - As arguments to the scanner in your CI pipeline's YML file
@@ -66,19 +67,25 @@ $ sonar scanner \
   -Dsonar.analysis.kosli_trail=<YourTrailName> 
 ```
 
-### Required scanner parameters:
-- `sonar.analysis.kosli_flow=<YourFlowName>`
-The name of the Flow relevant to your project. 
 
-### Optional scanner parameters:
+### Possible scanner parameters:
+- `sonar.analysis.kosli_flow=<YourFlowName>`
+    - The name of the Flow relevant to your project. If a Flow does not already exist with the given name, it is created. If no Flow name is provided, the project key of your project in SonarCloud/SonarQube is used as the name (with any invalid symbols replaced by '-').
 - `sonar.analysis.kosli_trail=<YourTrailName>`
-    - The name of the Trail to attest the scan results. If a trail does not already exist with the given name it is created. If no Trail name is provided, the revision ID of the Sonar project (typically defaulted to the Git SHA) is used as the name.
+    - The name of the Trail to attest the scan results. If a Trail does not already exist with the given name it is created. If no Trail name is provided, the revision ID of the Sonar project (typically defaulted to the Git SHA) is used as the name.
 - `sonar.analysis.kosli_attestation=<YourAttestationName>`
     - The name you want to give to the attestation. If not provided, a default name "sonar" is used.
 - `sonar.analysis.kosli_artifact_fingerprint=<YourArtifactFingerprint>`
     - The fingerprint of the artifact you want the attestation to be attached to. Requires that the artifact has already been reported to Kosli.
+- `sonar.analysis.kosli_flow_description=<DescriptionOfYourKosliFlow>`
+    - The description for the Kosli Flow being created by this webhook. This will not be used if attesting to an already-existing Flow (i.e. will not change any existing descriptions).
+- `sonar.analysis.kosli_trail_description=<DescriptionOfYourKosliTrail>`
+    - The description for the Kosli Trail being created by this webhook. This will not be used if attesting to an already-existing Trail (i.e. will not change any existing descriptions).
 
 ## Testing the integration
 
 To test the webhook once configured, simply scan a project in SonarCloud or SonarQube. If successful, the results of the scan will be attested to the relevant Flow and Trail (and artifact, if applicable) as a sonar attestation. <br>
-If the webhook fails, check that you have passed the parameters to the scanner correctly, and that the flow name and artifact fingerprint are valid.
+If the webhook fails, check that you have passed the parameters to the scanner correctly, and that the trail name, attestation name and artifact fingerprint are valid.
+
+## Alternatives:
+If you'd rather not use webhooks, or they don't quite fit your use-case, we also have a [CLI command](/client_reference/kosli_attest_sonar/) for attesting Sonar scan results to Kosli.
