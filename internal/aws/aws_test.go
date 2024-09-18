@@ -245,13 +245,19 @@ func (suite *AWSTestSuite) TestAWSClients() {
 // All cases will run in CI
 
 func (suite *AWSTestSuite) TestGetLambdaPackageData() {
+	type expectedFunction struct {
+		name        string
+		fingerprint string
+	}
 	for _, t := range []struct {
-		name             string
-		requireEnvVars   bool // indicates that a test case needs real credentials from env vars
-		creds            *AWSStaticCreds
-		functionNames    []string
-		wantFingerprints []string
-		wantErr          bool
+		name              string
+		requireEnvVars    bool // indicates that a test case needs real credentials from env vars
+		creds             *AWSStaticCreds
+		functionNames     []string
+		excludeNames      []string
+		excludeNamesRegex []string
+		expectedFunctions []expectedFunction
+		wantErr           bool
 	}{
 		{
 			name: "invalid credentials causes an error",
@@ -277,18 +283,20 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			functionNames:    []string{"cli-tests"},
-			wantFingerprints: []string{"321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"},
-			requireEnvVars:   true,
+			functionNames: []string{"cli-tests"},
+			expectedFunctions: []expectedFunction{{name: "cli-tests",
+				fingerprint: "321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"}},
+			requireEnvVars: true,
 		},
 		{
 			name: "can get image package lambda function data from name",
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			functionNames:    []string{"cli-tests-docker"},
-			wantFingerprints: []string{"e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"},
-			requireEnvVars:   true,
+			functionNames: []string{"cli-tests-docker"},
+			expectedFunctions: []expectedFunction{{name: "cli-tests-docker",
+				fingerprint: "e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"}},
+			requireEnvVars: true,
 		},
 		{
 			name: "can get a list of lambda functions data from names",
@@ -296,27 +304,65 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 				Region: "eu-central-1",
 			},
 			functionNames: []string{"cli-tests-docker", "cli-tests"},
-			wantFingerprints: []string{"e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e",
-				"321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"},
+			expectedFunctions: []expectedFunction{
+				{name: "cli-tests",
+					fingerprint: "321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"},
+				{name: "cli-tests-docker",
+					fingerprint: "e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"}},
+			requireEnvVars: true,
+		},
+		{
+			name: "can exclude lambda functions matching a regex pattern",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			excludeNamesRegex: []string{"^([^c]|c[^l]|cl[^i]|cli[^-]).*$"},
+			expectedFunctions: []expectedFunction{
+				{name: "cli-tests",
+					fingerprint: "321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"},
+				{name: "cli-tests-docker",
+					fingerprint: "e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"}},
+			requireEnvVars: true,
+		},
+		{
+			name: "invalid exclude name regex pattern causes an error",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			excludeNamesRegex: []string{"invalid["},
+			requireEnvVars:    true,
+			wantErr:           true,
+		},
+		{
+			name: "can combine exclude and exclude-regex and they are joined",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			excludeNames:      []string{"cli-tests"},
+			excludeNamesRegex: []string{"^([^c]|c[^l]|cl[^i]|cli[^-]).*$"},
+			expectedFunctions: []expectedFunction{
+				{name: "cli-tests-docker",
+					fingerprint: "e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"}},
 			requireEnvVars: true,
 		},
 	} {
 		suite.Run(t.name, func() {
 			skipOrSetCreds(suite.T(), t.requireEnvVars, t.creds)
-			data, err := t.creds.GetLambdaPackageData(t.functionNames)
+			data, err := t.creds.GetLambdaPackageData(t.functionNames, t.excludeNames, t.excludeNamesRegex)
 			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetLambdaPackageData() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
 				matchFound := false
+				require.Len(suite.T(), data, len(t.expectedFunctions))
 			loop1:
-				for index, name := range t.functionNames {
+				for _, expectedFunction := range t.expectedFunctions {
 					for _, item := range data {
-						if fingerprint, ok := item.Digests[name]; ok {
-							if t.wantFingerprints[index] == fingerprint {
+						if fingerprint, ok := item.Digests[expectedFunction.name]; ok {
+							if expectedFunction.fingerprint == fingerprint {
 								matchFound = true
 								break loop1
 							} else {
-								suite.T().Logf("fingerprint did not match: GOT %s -- WANT %s", fingerprint, t.wantFingerprints[index])
+								suite.T().Logf("fingerprint did not match: GOT %s -- WANT %s", fingerprint, expectedFunction.fingerprint)
 							}
 						}
 					}

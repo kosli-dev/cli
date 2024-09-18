@@ -164,6 +164,8 @@ The service principal needs to have the following permissions:
 	excludeNamespaceFlag                 = "[conditional] The comma separated list of namespaces regex patterns NOT to report artifacts info from. Can't be used together with --namespace."
 	functionNameFlag                     = "[optional] The name of the AWS Lambda function."
 	functionNamesFlag                    = "[optional] The comma-separated list of AWS Lambda function names to be reported."
+	excludeFlag                          = "[optional] The comma-separated list of AWS Lambda function names to be excluded. Cannot be used together with --function-names"
+	excludeRegexFlag                     = "[optional] The comma-separated list of name regex patterns for AWS Lambda functions to be excluded. Cannot be used together with --function-names. Allowed regex patterns are described in https://github.com/google/re2/wiki/Syntax"
 	functionVersionFlag                  = "[optional] The version of the AWS Lambda function."
 	awsKeyIdFlag                         = "The AWS access key ID."
 	awsSecretKeyFlag                     = "The AWS secret access key."

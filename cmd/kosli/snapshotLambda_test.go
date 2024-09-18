@@ -95,7 +95,7 @@ func (suite *SnapshotLambdaTestSuite) TestSnapshotLambdaCmd() {
 			additionalConfig: snapshotLambdaTestConfig{
 				requireAuthToBeSet: true,
 			},
-			golden: "Flag --function-name has been deprecated, use --function-names instead\nError: only one of --function-name, --function-names is allowed\n",
+			golden: "Flag --function-name has been deprecated, use --function-names instead\nError: only one of --function-name, --function-names, --exclude is allowed\n",
 		},
 		{
 			wantError: true,
@@ -108,6 +108,26 @@ func (suite *SnapshotLambdaTestSuite) TestSnapshotLambdaCmd() {
 			name:      "snapshot lambda fails two args are set",
 			cmd:       fmt.Sprintf(`snapshot lambda %s xxx %s --function-names %s`, suite.envName, suite.defaultKosliArguments, suite.zipFunctionName),
 			golden:    "Error: accepts 1 arg(s), received 2\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot lambda fails if both --function-names and --exclude are set",
+			cmd:       fmt.Sprintf(`snapshot lambda %s %s --function-names %s --exclude function1`, suite.envName, suite.defaultKosliArguments, suite.zipFunctionName),
+			golden:    "Error: only one of --function-name, --function-names, --exclude is allowed\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot lambda fails if both --function-names and --exclude-regex are set",
+			cmd:       fmt.Sprintf(`snapshot lambda %s %s --function-names %s --exclude-regex function1`, suite.envName, suite.defaultKosliArguments, suite.zipFunctionName),
+			golden:    "Error: only one of --function-name, --function-names, --exclude-regex is allowed\n",
+		},
+		{
+			name: "snapshot lambda works if both --exclude and --exclude-regex are set",
+			cmd:  fmt.Sprintf(`snapshot lambda %s %s --exclude %s --exclude-regex function1`, suite.envName, suite.defaultKosliArguments, suite.zipFunctionName),
+			additionalConfig: snapshotLambdaTestConfig{
+				requireAuthToBeSet: true,
+			},
+			goldenRegex: fmt.Sprintf("[0-9]+ lambda functions were reported to environment %s\n", suite.envName),
 		},
 	}
 

@@ -13,7 +13,7 @@ import (
 const snapshotLambdaShortDesc = `Report a snapshot of artifacts deployed as one or more AWS Lambda functions and their digests to Kosli.`
 
 const snapshotLambdaLongDesc = snapshotLambdaShortDesc + `  
-Skip ^--function-names^ to report all functions in a given AWS account.` + awsAuthDesc
+Skip ^--function-names^ to report all functions in a given AWS account. Or use ^--exclude^ and/or ^--exclude-regex^ to report all functions excluding some.` + awsAuthDesc
 
 const snapshotLambdaExample = `
 # report all Lambda functions running in an AWS account (AWS auth provided in env variables):
@@ -22,6 +22,17 @@ export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
 kosli snapshot lambda yourEnvironmentName \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# report all (excluding some) Lambda functions running in an AWS account (AWS auth provided in env variables):
+export AWS_REGION=yourAWSRegion
+export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
+export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
+
+kosli snapshot lambda yourEnvironmentName \
+    --exclude function1,function2 \
+	--exclude-regex "^not-wanted.*" \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -56,9 +67,11 @@ kosli snapshot lambda yourEnvironmentName \
 `
 
 type snapshotLambdaOptions struct {
-	functionNames   []string
-	functionVersion string
-	awsStaticCreds  *aws.AWSStaticCreds
+	functionNames     []string
+	functionVersion   string
+	excludeNames      []string
+	excludeNamesRegex []string
+	awsStaticCreds    *aws.AWSStaticCreds
 }
 
 func newSnapshotLambdaCmd(out io.Writer) *cobra.Command {
@@ -76,7 +89,12 @@ func newSnapshotLambdaCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
-			err = MuXRequiredFlags(cmd, []string{"function-name", "function-names"}, false)
+			err = MuXRequiredFlags(cmd, []string{"function-name", "function-names", "exclude"}, false)
+			if err != nil {
+				return err
+			}
+
+			err = MuXRequiredFlags(cmd, []string{"function-name", "function-names", "exclude-regex"}, false)
 			if err != nil {
 				return err
 			}
@@ -91,6 +109,8 @@ func newSnapshotLambdaCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringSliceVar(&o.functionNames, "function-name", []string{}, functionNameFlag)
 	cmd.Flags().StringSliceVar(&o.functionNames, "function-names", []string{}, functionNamesFlag)
 	cmd.Flags().StringVar(&o.functionVersion, "function-version", "", functionVersionFlag)
+	cmd.Flags().StringSliceVar(&o.excludeNames, "exclude", []string{}, excludeFlag)
+	cmd.Flags().StringSliceVar(&o.excludeNamesRegex, "exclude-regex", []string{}, excludeRegexFlag)
 	addAWSAuthFlags(cmd, o.awsStaticCreds)
 	addDryRunFlag(cmd)
 
@@ -109,7 +129,7 @@ func (o *snapshotLambdaOptions) run(args []string) error {
 	envName := args[0]
 
 	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/lambda", global.Host, global.Org, envName)
-	lambdaData, err := o.awsStaticCreds.GetLambdaPackageData(o.functionNames)
+	lambdaData, err := o.awsStaticCreds.GetLambdaPackageData(o.functionNames, o.excludeNames, o.excludeNamesRegex)
 	if err != nil {
 		return err
 	}
