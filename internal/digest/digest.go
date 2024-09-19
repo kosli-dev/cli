@@ -50,9 +50,13 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 		return "", err
 	}
 	defer digestsFile.Close()
-	ignoredPaths, err := excludePathsFromFile(filepath.Join(dirPath, ".kosli_ignore"))
+	ignoreFilePath := filepath.Join(dirPath, ".kosli_ignore")
+	ignoredPaths, err := excludePathsFromFile(ignoreFilePath)
 	if err != nil {
 		return "", err
+	}
+	if len(ignoredPaths) > 0 {
+		logger.Debug("  -> ignore file used %s -- excluding paths: %s", ignoreFilePath, ignoredPaths)
 	}
 	excludePaths = append(excludePaths, ignoredPaths...)
 	err = calculateDirContentSha256(digestsFile, dirPath, tmpDir, excludePaths, logger)
