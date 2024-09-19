@@ -420,7 +420,6 @@ func (suite *DigestTestSuite) TestDirSha256() {
 			name: ".kosli_ignore is included in the fingerprint",
 			args: args{
 				dirName: "exclusion4",
-				//excludePaths: []string{"logs", "*/logs"},
 				dirContent: []fileSystemEntry{
 					{
 						files: []fileEntry{
