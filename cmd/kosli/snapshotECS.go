@@ -25,6 +25,16 @@ kosli snapshot ecs yourEnvironmentName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
+# report what is running in all AWS ECS clusters to a single Kosli environment:
+export AWS_REGION=yourAWSRegion
+export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
+export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
+
+kosli snapshot ecs yourEnvironmentName \
+	--scan-all \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
 # report what is running in a specific AWS ECS service within a cluster:
 export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
