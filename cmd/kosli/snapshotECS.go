@@ -51,6 +51,7 @@ type snapshotECSOptions struct {
 	cluster        string
 	serviceName    string
 	awsStaticCreds *aws.AWSStaticCreds
+	scanAll        bool
 }
 
 func newSnapshotECSCmd(out io.Writer) *cobra.Command {
@@ -67,6 +68,11 @@ func newSnapshotECSCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
+
+			err = MuXRequiredFlags(cmd, []string{"cluster", "scan-all"}, true)
+			if err != nil {
+				return err
+			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -76,13 +82,9 @@ func newSnapshotECSCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVarP(&o.cluster, "cluster", "C", "", ecsClusterFlag)
 	cmd.Flags().StringVarP(&o.serviceName, "service-name", "s", "", ecsServiceFlag)
+	cmd.Flags().BoolVarP(&o.scanAll, "scan-all", "A", false, ecsScanAllFlag)
 	addAWSAuthFlags(cmd, o.awsStaticCreds)
 	addDryRunFlag(cmd)
-
-	err := RequireFlags(cmd, []string{"cluster"})
-	if err != nil {
-		logger.Error("failed to configure required flags: %v", err)
-	}
 
 	return cmd
 }
@@ -90,14 +92,37 @@ func newSnapshotECSCmd(out io.Writer) *cobra.Command {
 func (o *snapshotECSOptions) run(args []string) error {
 	envName := args[0]
 	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/ECS", global.Host, global.Org, envName)
+	logger.Debug("ECS Snapshot parameters: scan-all: %t, cluster: %s", o.scanAll, o.cluster)
 
-	tasksData, err := o.awsStaticCreds.GetEcsTasksData(o.cluster, o.serviceName)
-	if err != nil {
-		return err
+	tasksDataList := []*aws.EcsTaskData{}
+
+	if o.scanAll {
+		clusters, err := o.awsStaticCreds.GetECSClusters()
+		if err != nil {
+			logger.Error("Failed to get ECS clusters: %v", err)
+			return err
+		}
+		logger.Debug("Attempting to find ECS clusters")
+		for _, cluster := range clusters {
+			logger.Debug("Found ECS cluster with ARN: %s", cluster)
+			tasksData, err := o.awsStaticCreds.GetEcsTasksData(cluster, o.serviceName)
+			if err != nil {
+				return err
+			}
+			// append to EcsTaskDataList
+			tasksDataList = append(tasksDataList, tasksData...)
+
+		}
+	} else {
+		tasksData, err := o.awsStaticCreds.GetEcsTasksData(o.cluster, o.serviceName)
+		if err != nil {
+			return err
+		}
+		tasksDataList = append(tasksDataList, tasksData...)
 	}
 
 	payload := &aws.EcsEnvRequest{
-		Artifacts: tasksData,
+		Artifacts: tasksDataList,
 	}
 
 	reqParams := &requests.RequestParams{
@@ -107,7 +132,7 @@ func (o *snapshotECSOptions) run(args []string) error {
 		DryRun:   global.DryRun,
 		Password: global.ApiToken,
 	}
-	_, err = kosliClient.Do(reqParams)
+	_, err := kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
 		logger.Info("[%d] containers were reported to environment %s", len(payload.Artifacts), envName)
 	}

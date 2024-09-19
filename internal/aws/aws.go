@@ -125,6 +125,24 @@ func (staticCreds *AWSStaticCreds) NewECSClient() (*ecs.Client, error) {
 	return ecs.NewFromConfig(cfg), nil
 }
 
+func (staticCreds *AWSStaticCreds) GetECSClusters() ([]string, error) {
+	ecsClient, err := staticCreds.NewECSClient()
+	if err != nil {
+		return []string{}, err
+	}
+	clusters := []string{}
+	params := &ecs.ListClustersInput{}
+	paginator := ecs.NewListClustersPaginator(ecsClient, params)
+	for paginator.HasMorePages() {
+		output, err := paginator.NextPage(context.Background())
+		if err != nil {
+			return clusters, err
+		}
+		clusters = append(clusters, output.ClusterArns...)
+	}
+	return clusters, nil
+}
+
 // getAllLambdaFuncs fetches all lambda functions recursively (50 at a time) and returns a list of FunctionConfiguration
 func getAllLambdaFuncs(client *lambda.Client, nextMarker *string, allFunctions *[]types.FunctionConfiguration) (*[]types.FunctionConfiguration, error) {
 	params := &lambda.ListFunctionsInput{}
