@@ -9,7 +9,7 @@ deprecated: false
 ## Synopsis
 
 Report a snapshot of artifacts deployed as one or more AWS Lambda functions and their digests to Kosli.  
-Skip `--function-names` to report all functions in a given AWS account.
+Skip `--function-names` to report all functions in a given AWS account. Or use `--exclude` and/or `--exclude-regex` to report all functions excluding some.
 
 To authenticate to AWS, you can either:  
   1) provide the AWS static credentials via flags or by exporting the equivalent KOSLI env vars (e.g. KOSLI_AWS_KEY_ID)  
@@ -31,6 +31,8 @@ kosli snapshot lambda ENVIRONMENT-NAME [flags]
 |        --aws-region string  |  The AWS region.  |
 |        --aws-secret-key string  |  The AWS secret access key.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
+|        --exclude strings  |  [optional] The comma-separated list of AWS Lambda function names to be excluded. Cannot be used together with --function-names  |
+|        --exclude-regex strings  |  [optional] The comma-separated list of name regex patterns for AWS Lambda functions to be excluded. Cannot be used together with --function-names. Allowed regex patterns are described in https://github.com/google/re2/wiki/Syntax  |
 |        --function-names strings  |  [optional] The comma-separated list of AWS Lambda function names to be reported.  |
 |    -h, --help  |  help for lambda  |
 
@@ -57,6 +59,21 @@ export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
 kosli snapshot lambda yourEnvironmentName \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+```
+
+**report all (excluding some) Lambda functions running in an AWS account (AWS auth provided in env variables)**
+
+```shell
+export AWS_REGION=yourAWSRegion
+export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
+export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
+
+kosli snapshot lambda yourEnvironmentName \
+    --exclude function1,function2 \
+	--exclude-regex "^not-wanted.*" \
 	--api-token yourAPIToken \
 	--org yourOrgName
 

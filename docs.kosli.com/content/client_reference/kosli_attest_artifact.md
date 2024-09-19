@@ -9,7 +9,9 @@ deprecated: false
 ## Synopsis
 
 Attest an artifact creation to a Kosli flow.  
-The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
+The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).To specify paths in a directory artifact that should always be excluded from the SHA256 calculation, you can add a `.kosli_ignore` file to the root of the artifact.
+Each line should specify a relative path or path glob to be ignored. You can include comments in this file, using `#`.
+The `.kosli_ignore` will be treated as part of the artifact like any other file,unless it is explicitly ignored itself.
 This command requires access to a git repo to associate the artifact to the git commit it is originating from. 
 You can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`
 
