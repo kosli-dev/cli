@@ -13,7 +13,9 @@ using the ^--exclude^ flag.
 Excluded paths are relative to the DIR-PATH and can be literal paths or
 glob patterns.  
 The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match , 
-plus the ability to use recursive globs "**"`
+plus the ability to use recursive globs "**"
+
+` + kosliIgnoreDesc
 
 const fingerprintLongDesc = fingerprintShortDesc + `
 Requires ^--artifact-type^ flag to be set.

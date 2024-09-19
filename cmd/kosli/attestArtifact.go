@@ -41,7 +41,7 @@ type AttestArtifactPayload struct {
 const attestArtifactShortDesc = `Attest an artifact creation to a Kosli flow.  `
 
 const attestArtifactLongDesc = attestArtifactShortDesc + `
-` + fingerprintDesc + `
+` + fingerprintDesc + kosliIgnoreDesc + `
 This command requires access to a git repo to associate the artifact to the git commit it is originating from. 
 You can optionally redact some of the git commit data sent to Kosli using ^--redact-commit-info^`
 
