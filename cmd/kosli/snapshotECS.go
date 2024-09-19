@@ -107,14 +107,16 @@ func (o *snapshotECSOptions) run(args []string) error {
 	tasksDataList := []*aws.EcsTaskData{}
 
 	if o.scanAll {
+		logger.Debug("Attempting to find ECS clusters")
 		clusters, err := o.awsStaticCreds.GetECSClusters()
 		if err != nil {
 			logger.Error("Failed to get ECS clusters: %v", err)
 			return err
 		}
-		logger.Debug("Attempting to find ECS clusters")
+
+		logger.Debug("Found %d ECS clusters.", len(clusters))
 		for _, cluster := range clusters {
-			logger.Debug("Found ECS cluster with ARN: %s", cluster)
+			logger.Debug("Processing ECS cluster with ARN: %s", cluster)
 			tasksData, err := o.awsStaticCreds.GetEcsTasksData(cluster, o.serviceName)
 			if err != nil {
 				return err
