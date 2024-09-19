@@ -416,6 +416,99 @@ func (suite *DigestTestSuite) TestDirSha256() {
 			},
 			want: "5d3c17dae9e208bbb92ee04ff8342abf77cb0959764def4af3ccfe9a2109d4a7",
 		},
+		{
+			name: ".kosli_ignore is included in the fingerprint",
+			args: args{
+				dirName: "exclusion4",
+				//excludePaths: []string{"logs", "*/logs"},
+				dirContent: []fileSystemEntry{
+					{
+						files: []fileEntry{
+							{
+								name:    "sample.yaml",
+								content: "some content. And some more.",
+							},
+							{
+								name:    ".kosli_ignore",
+								content: "logs\n*/logs",
+							},
+						},
+						dirs: []dirEntry{
+							{
+								name: "nested-dir",
+								files: []fileEntry{
+									{
+										name:    "file1",
+										content: "content1",
+									},
+									{
+										name:    "file2",
+										content: "content2",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: "4048004ce6f91e8ce27c35e5e857948a46750567cf7c873ee32b120f4318363c",
+		},
+		{
+			name: "excluding dirs using .kosli_ignore in root works",
+			args: args{
+				dirName: "exclusion5",
+				dirContent: []fileSystemEntry{
+					{
+						files: []fileEntry{
+							{
+								name:    "sample.yaml",
+								content: "some content. And some more.",
+							},
+							{
+								name:    ".kosli_ignore",
+								content: "logs\n*/logs",
+							},
+						},
+						dirs: []dirEntry{
+							{
+								name: "nested-dir",
+								files: []fileEntry{
+									{
+										name:    "file1",
+										content: "content1",
+									},
+									{
+										name:    "file2",
+										content: "content2",
+									},
+								},
+								dirs: []dirEntry{
+									{
+										name: "logs",
+										files: []fileEntry{
+											{
+												name:    "log.txt",
+												content: "this is a log",
+											},
+										},
+									},
+								},
+							},
+							{
+								name: "logs",
+								files: []fileEntry{
+									{
+										name:    "file1",
+										content: "content1",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: "4048004ce6f91e8ce27c35e5e857948a46750567cf7c873ee32b120f4318363c",
+		},
 	} {
 		suite.Run(t.name, func() {
 			topLevelPath := filepath.Join(suite.tmpDir, t.args.dirName)
@@ -774,6 +867,101 @@ func (suite *DigestTestSuite) TestExtractImageDigestFromRepoDigest() {
 			} else {
 				require.NoErrorf(suite.T(), err, "TestExtractImageDigestFromRepoDigest: error was NOT expected")
 				assert.Equal(suite.T(), t.want.sha256, actual, fmt.Sprintf("TestExtractImageDigestFromRepoDigest: want %s -- got %s", t.want.sha256, actual))
+			}
+		})
+	}
+}
+
+func (suite *DigestTestSuite) TestGetExcludePathsFromIgnoreFile() {
+	type want struct {
+		expectError  bool
+		excludePaths []string
+	}
+	const MISSING_FILE_NAME = "NO_CREATE.ignore"
+	for _, t := range []struct {
+		name           string
+		ignoreFileName string
+		content        string
+		want           want
+	}{
+		{
+			name:           "missing file should return []",
+			ignoreFileName: MISSING_FILE_NAME,
+			want: want{
+				expectError:  false,
+				excludePaths: []string{},
+			},
+		},
+		{
+			name:           "empty file should return []",
+			ignoreFileName: "empty.ignore",
+			content:        ``,
+			want: want{
+				expectError:  false,
+				excludePaths: []string{},
+			},
+		},
+		{
+			name:           "a single line ignore file",
+			ignoreFileName: "empty.ignore",
+			content:        `logs`,
+			want: want{
+				expectError:  false,
+				excludePaths: []string{"logs"},
+			},
+		},
+		{
+			name:           "a multi line ignore file",
+			ignoreFileName: "multi.ignore",
+			content: `logs
+*/logs`,
+			want: want{
+				expectError:  false,
+				excludePaths: []string{"logs", "*/logs"},
+			},
+		},
+		{
+			name:           "an ignore file with blank lines",
+			ignoreFileName: "multi-with-blank.ignore",
+			content: `logs
+    
+	
+*/logs
+`,
+			want: want{
+				expectError:  false,
+				excludePaths: []string{"logs", "*/logs"},
+			},
+		},
+		{
+			name:           "a commented ignore file",
+			ignoreFileName: "multi.ignore",
+			content: `logs
+# a line comment
+*/logs # an end of line comment`,
+			want: want{
+				expectError:  false,
+				excludePaths: []string{"logs", "*/logs"},
+			},
+		},
+	} {
+		suite.Run(t.name, func() {
+			assert.False(suite.T(), t.ignoreFileName == "", "ignoreFileName cannot be empty string")
+			ignoreFilePath := filepath.Join(suite.tmpDir, t.ignoreFileName)
+			if t.ignoreFileName != MISSING_FILE_NAME {
+				testFile, err := os.Create(ignoreFilePath)
+				require.NoErrorf(suite.T(), err, "error creating test file %s: %s", t.ignoreFileName, err)
+
+				_, err = testFile.Write([]byte(t.content))
+				require.NoErrorf(suite.T(), err, "error writing content to test file %s: %s", t.ignoreFileName, err)
+			}
+
+			actual, err := excludePathsFromFile(ignoreFilePath)
+			if t.want.expectError {
+				require.Errorf(suite.T(), err, "TestGetExcludePathsFromIgnoreFile: error was expected: %s", err)
+			} else {
+				require.NoErrorf(suite.T(), err, "TestGetExcludePathsFromIgnoreFile: error was NOT expected: %s", err)
+				assert.Equal(suite.T(), t.want.excludePaths, actual, fmt.Sprintf("TestGetExcludePathsFromIgnoreFile: want %s -- got %s", t.want.excludePaths, actual))
 			}
 		})
 	}

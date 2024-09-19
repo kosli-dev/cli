@@ -1,6 +1,7 @@
 package digest
 
 import (
+	"bufio"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -49,6 +50,11 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 		return "", err
 	}
 	defer digestsFile.Close()
+	ignoredPaths, err := excludePathsFromFile(filepath.Join(dirPath, ".kosli_ignore"))
+	if err != nil {
+		return "", err
+	}
+	excludePaths = append(excludePaths, ignoredPaths...)
 	err = calculateDirContentSha256(digestsFile, dirPath, tmpDir, excludePaths, logger)
 	if err != nil {
 		return "", err
@@ -257,4 +263,30 @@ func ValidateDigest(sha256ToCheck string) error {
 		return fmt.Errorf("%s is not a valid SHA256 fingerprint. It should match the pattern %v", sha256ToCheck, validSha256regex)
 	}
 	return nil
+}
+
+func excludePathsFromFile(path string) ([]string, error) {
+	file, err := os.Open(path)
+	if err == nil {
+		defer file.Close()
+		var excludes = []string{}
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			line := scanner.Text()
+			line = removeComments(line)
+			line = strings.TrimSpace(line)
+			if len(line) > 0 {
+				excludes = append(excludes, line)
+			}
+		}
+		return excludes, nil
+	} else if errors.Is(err, fs.ErrNotExist) {
+		return []string{}, nil
+	}
+	return nil, err
+}
+
+func removeComments(line string) string {
+	parts := strings.SplitN(line, "#", 2)
+	return strings.TrimRight(parts[0], " ")
 }
