@@ -203,7 +203,7 @@ function attest_commit_trail_never_alone
     if [ "${never_alone_data}" != "[]" ]; then
         latest_never_alone_data=$(echo "${never_alone_data}" | jq '.[-1]')
         url_to_source_attestation=$(echo $latest_never_alone_data | jq -r '.html_url')
-        commit_author_name=$(echo "${latest_never_alone_data}" | jq -r '.user_data.commit.author.name')
+        pr_author_name=$(echo "${latest_never_alone_data}" | jq -r '.user_data.pullRequest.author.name')
         review_decision=$(echo "${latest_never_alone_data}" | jq -r '.user_data.pullRequest.reviewDecision')
         pr_url=$(echo "${latest_never_alone_data}" | jq -r '.user_data.pullRequest.url')
         reviewers=$(echo "${latest_never_alone_data}" | jq -r '.user_data.pullRequest.reviews[0].author.name')
@@ -217,7 +217,7 @@ function attest_commit_trail_never_alone
                 --commit=${commit_sha} \
                 --compliant="true" \
                 --annotate="never_alone_data=${url_to_source_attestation}" \
-                --annotate="commit_author_name=${commit_author_name}" \
+                --annotate="pr_author_name=${pr_author_name}" \
                 --annotate="review_decision=${review_decision}" \
                 --annotate="pull_request=${pr_url}" \
                 --annotate="reviewers=${reviewers}"
@@ -229,7 +229,7 @@ function attest_commit_trail_never_alone
                 --commit=${commit_sha} \
                 --compliant="false" \
                 --annotate="never_alone_data=${url_to_source_attestation}" \
-                --annotate="commit_author_name=${commit_author_name}" \
+                --annotate="pr_author_name=${pr_author_name}" \
                 --annotate="review_decision=${review_decision}" \
                 --annotate="pull_request=${pr_url}" \
                 --annotate="reviewers=${reviewers}" \
