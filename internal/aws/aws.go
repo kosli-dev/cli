@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -126,7 +128,7 @@ func (staticCreds *AWSStaticCreds) NewECSClient() (*ecs.Client, error) {
 }
 
 // getAllLambdaFuncs fetches all lambda functions recursively (50 at a time) and returns a list of FunctionConfiguration
-func getAllLambdaFuncs(client *lambda.Client, nextMarker *string, allFunctions *[]types.FunctionConfiguration) (*[]types.FunctionConfiguration, error) {
+func getAllLambdaFuncs(client *lambda.Client, nextMarker *string, allFunctions *[]types.FunctionConfiguration, excludeNames, excludeNamesRegex []string) (*[]types.FunctionConfiguration, error) {
 	params := &lambda.ListFunctionsInput{}
 	if nextMarker != nil {
 		params.Marker = nextMarker
@@ -137,9 +139,34 @@ func getAllLambdaFuncs(client *lambda.Client, nextMarker *string, allFunctions *
 		return allFunctions, err
 	}
 
-	*allFunctions = append(*allFunctions, listFunctionsOutput.Functions...)
+	if len(excludeNames) == 0 && len(excludeNamesRegex) == 0 {
+		*allFunctions = append(*allFunctions, listFunctionsOutput.Functions...)
+	} else {
+		for _, f := range listFunctionsOutput.Functions {
+			if slices.Contains(excludeNames, *f.FunctionName) {
+				continue
+			}
+			regexExcluded := false
+			for _, pattern := range excludeNamesRegex {
+				re, err := regexp.Compile(pattern)
+				if err != nil {
+					return allFunctions, fmt.Errorf("invalid exclude name regex pattern %s: %v", pattern, err)
+				}
+				if re.MatchString(*f.FunctionName) {
+					regexExcluded = true
+					break
+				}
+			}
+			if regexExcluded {
+				continue
+			}
+
+			*allFunctions = append(*allFunctions, f)
+		}
+	}
+
 	if listFunctionsOutput.NextMarker != nil {
-		_, err := getAllLambdaFuncs(client, listFunctionsOutput.NextMarker, allFunctions)
+		_, err := getAllLambdaFuncs(client, listFunctionsOutput.NextMarker, allFunctions, excludeNames, excludeNamesRegex)
 		if err != nil {
 			return allFunctions, err
 		}
@@ -148,7 +175,7 @@ func getAllLambdaFuncs(client *lambda.Client, nextMarker *string, allFunctions *
 }
 
 // GetLambdaPackageData returns a digest and metadata of a Lambda function package
-func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionNames []string) ([]*LambdaData, error) {
+func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionNames, excludeNames, excludeNamesRegex []string) ([]*LambdaData, error) {
 	lambdaData := []*LambdaData{}
 	client, err := staticCreds.NewLambdaClient()
 	if err != nil {
@@ -156,7 +183,7 @@ func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionNames []string) 
 	}
 
 	if len(functionNames) == 0 {
-		allFunctions, err := getAllLambdaFuncs(client, nil, &[]types.FunctionConfiguration{})
+		allFunctions, err := getAllLambdaFuncs(client, nil, &[]types.FunctionConfiguration{}, excludeNames, excludeNamesRegex)
 		if err != nil {
 			return lambdaData, err
 		}
