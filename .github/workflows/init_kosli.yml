@@ -90,19 +90,8 @@ jobs:
             PR_URL=$(cat ${USER_DATA_FILENAME} | jq -r '.pullRequest.url // empty')
             if [ -n "$PR_URL" ]; then
                 PR_ANNOTATE_ARG="--annotate pull_request=$PR_URL"
-
-                commit_author_name=$(cat ${USER_DATA_FILENAME} | jq -r '.commit.author.name')
-                review_decision=$(echo "${latest_never_alone_data}" | jq -r '.pullRequest.reviewDecision')
-                reviewers=$(echo "${latest_never_alone_data}" | jq -r '.pullRequest.reviews[0].author.name')
-                COMMITER_ANNOTATE_ARG="--annotate commit_author_name=${commit_author_name}"
-                REVIEW_DECISION_ANNOTATE_ARG="--annotate review_decision=${review_decision}"
-                REVIEWERS_ANNOTATE_ARG="--annotate reviewers=${reviewers}"
-
             else
                 PR_ANNOTATE_ARG=""
-                COMMITER_ANNOTATE_ARG=""
-                REVIEW_DECISION_ANNOTATE_ARG=""
-                REVIEWERS_ANNOTATE_ARG=""
             fi
 
             kosli attest generic \
@@ -112,8 +101,4 @@ jobs:
               --name=never-alone-data \
               --compliant=true \
               --user-data="${USER_DATA_FILENAME}" \
-              ${PR_ANNOTATE_ARG} \
-              ${COMMITER_ANNOTATE_ARG} \
-              ${REVIEW_DECISION_ANNOTATE_ARG} \
-              ${REVIEWERS_ANNOTATE_ARG}
-
+              ${PR_ANNOTATE_ARG}
