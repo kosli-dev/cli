@@ -203,7 +203,12 @@ function attest_commit_trail_never_alone
     if [ "${never_alone_data}" != "[]" ]; then
         latest_never_alone_data=$(echo "${never_alone_data}" | jq '.[-1]')
         url_to_source_attestation=$(echo $latest_never_alone_data | jq -r '.html_url')
+        commit_author_name=$(echo "${latest_never_alone_data}" | jq -r '.user_data.commit.author.name')
+        review_decision=$(echo "${latest_never_alone_data}" | jq -r '.user_data.pullRequest.reviewDecision')
+        pr_url=$(echo "${latest_never_alone_data}" | jq -r '.user_data.pullRequest.url')
+        reviewers=$(echo "${latest_never_alone_data}" | jq -r '.user_data.pullRequest.reviews[0].author.name')
         set_never_alone_compliance "${latest_never_alone_data}"
+
         if [ "${COMPLIANT_STATUS}" == "true" ]; then
             kosli attest generic \
                 --flow=${flow_name} \
@@ -211,7 +216,11 @@ function attest_commit_trail_never_alone
                 --name="${commit_sha}" \
                 --commit=${commit_sha} \
                 --compliant="true" \
-                --annotate="never_alone_data=${url_to_source_attestation}"
+                --annotate="never_alone_data=${url_to_source_attestation}" \
+                --annotate="commit_author_name=${commit_author_name}" \
+                --annotate="review_decision=${review_decision}" \
+                --annotate="pull_request=${pr_url}" \
+                --annotate="reviewers=${reviewers}"
         else        
             kosli attest generic \
                 --flow=${flow_name} \
@@ -220,6 +229,10 @@ function attest_commit_trail_never_alone
                 --commit=${commit_sha} \
                 --compliant="false" \
                 --annotate="never_alone_data=${url_to_source_attestation}" \
+                --annotate="commit_author_name=${commit_author_name}" \
+                --annotate="review_decision=${review_decision}" \
+                --annotate="pull_request=${pr_url}" \
+                --annotate="reviewers=${reviewers}" \
                 --annotate="reason_for_non_compliance=${REASON_FOR_NON_COMPLIANT}"
         fi
     fi
