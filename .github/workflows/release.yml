@@ -44,7 +44,7 @@ jobs:
         FLOW_TEMPLATE_FILE: ${{ needs.pre-build.outputs.trail_template_file }}
         KOSLI_ORG: kosli-public
       secrets:
-        kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
+        kosli_api_token: ${{ secrets.KOSLI_API_TOKEN_PROD }}
         pr_github_token: ${{ secrets.GITHUB_TOKEN }}
 
   never-alone-trail:
@@ -59,7 +59,7 @@ jobs:
         PARENT_TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
         KOSLI_ORG: kosli-public
       secrets:
-        kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
+        kosli_api_token: ${{ secrets.KOSLI_API_TOKEN_PROD }}
         pr_github_token: ${{ secrets.GITHUB_TOKEN }}        
 
   test:
@@ -82,7 +82,7 @@ jobs:
       slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }}
       jira_api_token: ${{ secrets.KOSLI_JIRA_API_TOKEN }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}
-      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
+      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN_PROD }}
 
   docker:
     needs: [pre-build, init-kosli, test, never-alone-trail]
@@ -98,7 +98,7 @@ jobs:
       slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
       ghcr_user: ${{ secrets.GHCR_USER }}
       ghcr_token: ${{ secrets.GHCR_TOKEN }}
-      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
+      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN_PROD }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}
 
   goreleaser:
@@ -168,7 +168,7 @@ jobs:
       trail_name: ${{ needs.pre-build.outputs.trail_name }}
       kosli_org: kosli-public
     secrets:
-      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
+      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN_PROD }}
 
   homebrew-pr:
     needs: [goreleaser, pre-build]
