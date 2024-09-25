@@ -49,7 +49,7 @@ jobs:
       FLOW_TEMPLATE_FILE: ${{ needs.pre-build.outputs.trail_template_file }}
       KOSLI_ORG: kosli-public
     secrets:
-      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN_PROD }}
+      kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
       pr_github_token: ${{ secrets.GITHUB_TOKEN }}
 
 
@@ -73,7 +73,7 @@ jobs:
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
       slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}
-      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN_PROD }}
+      kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
 
   docker:
     needs: [pre-build, test, init-kosli]
@@ -89,5 +89,5 @@ jobs:
       slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
       ghcr_user: ${{ secrets.GHCR_USER }}
       ghcr_token: ${{ secrets.GHCR_TOKEN }}
-      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN_PROD }}
+      kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}
