@@ -68,7 +68,7 @@ $ sonar scanner \
 ```
 
 
-### Possible scanner parameters:
+### Scanner parameters:
 - `sonar.analysis.kosli_flow=<YourFlowName>`
     - The name of the Flow relevant to your project. If a Flow does not already exist with the given name, it is created. If no Flow name is provided, the project key of your project in SonarCloud/SonarQube is used as the name (with any invalid symbols replaced by '-').
 - `sonar.analysis.kosli_trail=<YourTrailName>`
@@ -86,6 +86,12 @@ $ sonar scanner \
 
 To test the webhook once configured, simply scan a project in SonarCloud or SonarQube. If successful, the results of the scan will be attested to the relevant Flow and Trail (and artifact, if applicable) as a sonar attestation. <br>
 If the webhook fails, check that you have passed the parameters to the scanner correctly, and that the trail name, attestation name and artifact fingerprint are valid.
+
+## Live Example in CI system
+View an example of a sonar attestation via webhook in Github.
+
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=-Dsonar.analysis.kosli_flow), which created [this Kosli event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=github&command=-Dsonar.analysis.kosli_flow). 
+
 
 ## Alternatives:
 If you'd rather not use webhooks, or they don't quite fit your use-case, we also have a [CLI command](/client_reference/kosli_attest_sonar/) for attesting Sonar scan results to Kosli.
