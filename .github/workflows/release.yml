@@ -79,7 +79,7 @@ jobs:
       azure_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
       bitbucket_password: ${{ secrets.KOSLI_BITBUCKET_PASSWORD }}
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
-      slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }}
+      slack_channel: ci-failures
       jira_api_token: ${{ secrets.KOSLI_JIRA_API_TOKEN }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}
       kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
@@ -95,7 +95,7 @@ jobs:
       kosli_org: kosli-public
     secrets:
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
-      slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
+      slack_channel: ci-failures
       ghcr_user: ${{ secrets.GHCR_USER }}
       ghcr_token: ${{ secrets.GHCR_TOKEN }}
       kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
