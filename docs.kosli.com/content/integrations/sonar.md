@@ -92,5 +92,6 @@ View an example of a sonar attestation via webhook in Github.
 
 In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=-Dsonar.analysis.kosli_flow), which created [this Kosli event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=github&command=-Dsonar.analysis.kosli_flow). 
 
+
 ## Alternatives:
 If you'd rather not use webhooks, or they don't quite fit your use-case, we also have a [CLI command](/client_reference/kosli_attest_sonar/) for attesting Sonar scan results to Kosli.

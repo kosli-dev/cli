@@ -18,7 +18,7 @@ You can exclude certain paths or patterns from the artifact fingerprint using ^-
 The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match , 
 plus the ability to use recursive globs "**"
 
-`
+` + kosliIgnoreDesc
 
 const snapshotPathExample = `
 # report one artifact running in a specific path in a filesystem:

@@ -23,9 +23,10 @@ glob patterns.
 The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match , 
 plus the ability to use recursive globs "**"
 
+` + kosliIgnoreDesc + `
+
 This is an example YAML paths spec file:
 ` +
-
 	"```yaml\n" +
 	`version: 1
 artifacts:

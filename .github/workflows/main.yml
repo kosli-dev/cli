@@ -49,12 +49,12 @@ jobs:
       FLOW_TEMPLATE_FILE: ${{ needs.pre-build.outputs.trail_template_file }}
       KOSLI_ORG: kosli-public
     secrets:
-      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
+      kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
       pr_github_token: ${{ secrets.GITHUB_TOKEN }}
 
 
   test:
-    needs: [pre-build]
+    needs: [pre-build, init-kosli]
     uses: ./.github/workflows/test.yml
     with:
       AWS_ACCOUNT_ID: 772819027869
@@ -71,9 +71,9 @@ jobs:
       bitbucket_password: ${{ secrets.KOSLI_BITBUCKET_PASSWORD }}
       jira_api_token: ${{ secrets.KOSLI_JIRA_API_TOKEN }}
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
-      slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }}
+      slack_channel: ci-failures
       snyk_token: ${{ secrets.SNYK_TOKEN }}
-      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
+      kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
 
   docker:
     needs: [pre-build, test, init-kosli]
@@ -86,8 +86,8 @@ jobs:
       kosli_org: kosli-public
     secrets:
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
-      slack_channel: ${{ secrets.MERKELY_SLACK_CI_FAILURES_CHANNEL }} 
+      slack_channel: ci-failures
       ghcr_user: ${{ secrets.GHCR_USER }}
       ghcr_token: ${{ secrets.GHCR_TOKEN }}
-      kosli_api_token: ${{ secrets.KOSLI_API_TOKEN }}
+      kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}

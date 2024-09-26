@@ -67,6 +67,9 @@ The service principal needs to have the following permissions:
   2) Microsoft.ContainerRegistry/registries/pull/read  
 
 	`
+	kosliIgnoreDesc = `To specify paths in a directory artifact that should always be excluded from the SHA256 calculation, you can add a ^.kosli_ignore^ file to the root of the artifact.
+Each line should specify a relative path or path glob to be ignored. You can include comments in this file, using ^#^.
+The ^.kosli_ignore^ will be treated as part of the artifact like any other file,unless it is explicitly ignored itself.`
 
 	// flags
 	apiTokenFlag                         = "The Kosli API token."
@@ -113,6 +116,7 @@ The service principal needs to have the following permissions:
 	visibilityFlag                       = "[defaulted] The visibility of the Kosli flow. Valid visibilities are [public, private]."
 	templateFlag                         = "[defaulted] The comma-separated list of required compliance controls names."
 	templateFileFlag                     = "[optional] The path to a yaml template file. Cannot be used together with --use-empty-template"
+	templateFileSimpleFlag               = "[optional] The path to a yaml template file."
 	useEmptyTemplateFlag                 = "Use an empty template for the flow creation without specifying a file. Cannot be used together with --template or --template-file"
 	approvalUserDataFlag                 = "[optional] The path to a JSON file containing additional data you would like to attach to the approval."
 	evidenceUserDataFlag                 = "[optional] The path to a JSON file containing additional data you would like to attach to the evidence."
@@ -163,6 +167,8 @@ The service principal needs to have the following permissions:
 	excludeNamespaceFlag                 = "[conditional] The comma separated list of namespaces regex patterns NOT to report artifacts info from. Can't be used together with --namespace."
 	functionNameFlag                     = "[optional] The name of the AWS Lambda function."
 	functionNamesFlag                    = "[optional] The comma-separated list of AWS Lambda function names to be reported."
+	excludeFlag                          = "[optional] The comma-separated list of AWS Lambda function names to be excluded. Cannot be used together with --function-names"
+	excludeRegexFlag                     = "[optional] The comma-separated list of name regex patterns for AWS Lambda functions to be excluded. Cannot be used together with --function-names. Allowed regex patterns are described in https://github.com/google/re2/wiki/Syntax"
 	functionVersionFlag                  = "[optional] The version of the AWS Lambda function."
 	awsKeyIdFlag                         = "The AWS access key ID."
 	awsSecretKeyFlag                     = "The AWS secret access key."
