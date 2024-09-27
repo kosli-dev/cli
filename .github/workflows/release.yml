@@ -103,6 +103,7 @@ jobs:
     needs: [test]
     runs-on: ubuntu-latest
     permissions:
+      contents: write
       id-token: write
       attestations: write
     outputs:
@@ -127,7 +128,7 @@ jobs:
           version: latest
           args: release --clean
         env:
-          GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
       
       - uses: actions/upload-artifact@v4
