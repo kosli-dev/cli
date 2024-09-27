@@ -26,10 +26,6 @@ on:
         required: true
       slack_webhook:
         required: true
-      ghcr_user:
-        required: true
-      ghcr_token: 
-        required: true         
       kosli_api_token:
         required: true
       snyk_token:
