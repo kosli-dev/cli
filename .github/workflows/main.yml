@@ -87,7 +87,5 @@ jobs:
     secrets:
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
       slack_channel: ci-failures
-      ghcr_user: ${{ secrets.GHCR_USER }}
-      ghcr_token: ${{ secrets.GHCR_TOKEN }}
       kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}
