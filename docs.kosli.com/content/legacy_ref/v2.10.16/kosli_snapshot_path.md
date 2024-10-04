@@ -14,7 +14,9 @@ You can exclude certain paths or patterns from the artifact fingerprint using `-
 The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match , 
 plus the ability to use recursive globs "**"
 
-
+To specify paths in a directory artifact that should always be excluded from the SHA256 calculation, you can add a `.kosli_ignore` file to the root of the artifact.
+Each line should specify a relative path or path glob to be ignored. You can include comments in this file, using `#`.
+The `.kosli_ignore` will be treated as part of the artifact like any other file,unless it is explicitly ignored itself.
 
 ```shell
 kosli snapshot path ENVIRONMENT-NAME [flags]

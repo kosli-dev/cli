@@ -19,6 +19,7 @@ The following types are supported:
   - docker     - Docker images
   - azure-apps - Azure app services
   - server     - Generic type
+  - logical    - Logical grouping of real environments
 
 By default, the environment does not require artifacts provenance (i.e. environment snapshots will not 
 become non-compliant because of artifacts that do not have provenance). You can require provenance for all artifacts
@@ -29,6 +30,10 @@ For large clusters the scaling events will often outnumber the actual change of 
 
 It is possible to enable new snapshots for scaling events with the --include-scaling flag, or turn
 it off again with the --exclude-scaling.
+
+Logical environments are used for grouping of physical environments. For instance **prod-aws** and **prod-s3** can
+be grouped into logical environment **prod**. Logical environments are view-only, you can not report snapshots
+to them.
 
 
 ```shell
@@ -43,8 +48,9 @@ kosli create environment ENVIRONMENT-NAME [flags]
 |        --exclude-scaling  |  [optional] Exclude scaling events for snapshots. Snapshots with scaling changes will not result in new environment records.  |
 |    -h, --help  |  help for environment  |
 |        --include-scaling  |  [optional] Include scaling events for snapshots. Snapshots with scaling changes will result in new environment records.  |
+|        --included-environments strings  |  [optional] Comma separated list of environments to include in logical environment  |
 |        --require-provenance  |  [defaulted] Require provenance for all artifacts running in environment snapshots.  |
-|    -t, --type string  |  The type of environment. Valid types are: [K8S, ECS, server, S3, lambda, docker, azure-apps].  |
+|    -t, --type string  |  The type of environment. Valid types are: [K8S, ECS, server, S3, lambda, docker, azure-apps, logical].  |
 
 
 ## Flags inherited from parent commands
@@ -67,6 +73,14 @@ kosli create environment ENVIRONMENT-NAME [flags]
 kosli create environment yourEnvironmentName
 	--type K8S \
 	--description "my new env" \
+	--api-token yourAPIToken \
+	--org yourOrgName 
+
+
+kosli create environment yourLogicalEnvironmentName
+	--type logical \
+	--included-environments realEnv1,realEnv2,realEnv3
+	--description "my full prod" \	
 	--api-token yourAPIToken \
 	--org yourOrgName
 ```
