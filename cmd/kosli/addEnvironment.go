@@ -41,7 +41,7 @@ func newAddEnvironmentCmd(out io.Writer) *cobra.Command {
 		Short:   addEnvironmentShortDesc,
 		Long:    addEnvironmentLongDesc,
 		Example: addEnvironmentExample,
-		// Args:    cobra.ExactArgs(2),
+		Args:    cobra.ExactArgs(0),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
