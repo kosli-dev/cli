@@ -228,6 +228,8 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	sonarProjectKeyFlag                  = "[conditional] The project key of the SonarCloud/SonarQube project. Only required if you want to use the project key/revision to get the scan results rather than using Sonar's metadata file."
 	sonarServerURLFlag                   = "[conditional] The URL of your SonarQube server. Only required if you are using SonarQube and not using SonarQube's metadata file to get scan results."
 	sonarRevisionFlag                    = "[conditional] The revision of the SonarCloud/SonarQube project. Only required if you want to use the project key/revision to get the scan results rather than using Sonar's metadata file and you have overridden the default revision, or you aren't using a CI. Defaults to the value of the git commit flag."
+	logicalEnvFlag                       = "[required] The logical environment."
+	physicalEnvFlag                      = "[required] The physical environment."
 )
 
 var global *GlobalOpts
@@ -347,6 +349,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		newAllowCmd(out),
 		newListCmd(out),
 		newRenameCmd(out),
+		newAddCmd(out),
 		newArchiveCmd(out),
 		newSnapshotCmd(out),
 		newRequestCmd(out),
