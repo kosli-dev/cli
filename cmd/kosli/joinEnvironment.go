@@ -9,38 +9,36 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const addEnvironmentShortDesc = `Add a physical environment to a logical environment.`
+const joinEnvironmentShortDesc = `Join a physical environment to a logical environment.`
 
-const addEnvironmentLongDesc = addEnvironmentShortDesc + `
-Add a physical Kosli environment to a logical Kosli environment.
-`
+const joinEnvironmentLongDesc = joinEnvironmentShortDesc + ``
 
-const addEnvironmentExample = `
-# add a physical environment to a logical environment:
-kosli add environment \
+const joinEnvironmentExample = `
+# join a physical environment to a logical environment:
+kosli join environment \
 	--physical prod-k8 \
 	--logical prod \
 	--api-token yourAPIToken \
 	--org yourOrgName 
 `
 
-type addEnvironmentOptions struct {
-	payload AddEnvironmentPayload
+type joinEnvironmentOptions struct {
+	payload JoinEnvironmentPayload
 	logical string
 }
 
-type AddEnvironmentPayload struct {
-	Pysical string `json:"physical_env_name"`
+type JoinEnvironmentPayload struct {
+	Physical string `json:"physical_env_name"`
 }
 
-func newAddEnvironmentCmd(out io.Writer) *cobra.Command {
-	o := new(addEnvironmentOptions)
+func newJoinEnvironmentCmd(out io.Writer) *cobra.Command {
+	o := new(joinEnvironmentOptions)
 	cmd := &cobra.Command{
 		Use:     "environment",
 		Aliases: []string{"env"},
-		Short:   addEnvironmentShortDesc,
-		Long:    addEnvironmentLongDesc,
-		Example: addEnvironmentExample,
+		Short:   joinEnvironmentShortDesc,
+		Long:    joinEnvironmentLongDesc,
+		Example: joinEnvironmentExample,
 		Args:    cobra.ExactArgs(0),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
@@ -51,7 +49,7 @@ func newAddEnvironmentCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			url := fmt.Sprintf("%s/api/v2/environments/%s/%s/add-physical-env-to-logical", global.Host, global.Org, o.logical)
+			url := fmt.Sprintf("%s/api/v2/environments/%s/%s/join", global.Host, global.Org, o.logical)
 
 			reqParams := &requests.RequestParams{
 				Method:   http.MethodPut,
@@ -62,13 +60,13 @@ func newAddEnvironmentCmd(out io.Writer) *cobra.Command {
 			}
 			_, err := kosliClient.Do(reqParams)
 			if err == nil && !global.DryRun {
-				logger.Info("environment '%s' was added to '%s'", o.payload.Pysical, o.logical)
+				logger.Info("environment '%s' was joined to '%s'", o.payload.Physical, o.logical)
 			}
 			return err
 		},
 	}
 
-	cmd.Flags().StringVar(&o.payload.Pysical, "physical", "", physicalEnvFlag)
+	cmd.Flags().StringVar(&o.payload.Physical, "physical", "", physicalEnvFlag)
 	cmd.Flags().StringVar(&o.logical, "logical", "", logicalEnvFlag)
 	err := RequireFlags(cmd, []string{"physical", "logical"})
 	if err != nil {
