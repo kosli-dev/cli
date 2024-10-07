@@ -222,7 +222,7 @@ func (suite *RequestsTestSuite) TestNewHttpRequest() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			req, err := t.params.newHTTPRequest()
+			req, _, err := t.params.newHTTPRequest()
 			if t.wantError {
 				require.Error(suite.T(), err)
 			} else {
@@ -450,7 +450,7 @@ func (suite *RequestsTestSuite) TestCreateMultipartRequestBody() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			contentType, _, err := createMultipartRequestBody(t.formItems)
+			contentType, _, _, err := createMultipartRequestBody(t.formItems)
 			require.True(suite.T(), t.wantError == (err != nil))
 			require.True(suite.T(), strings.HasPrefix(contentType, t.expectedContentTypePrefix))
 		})

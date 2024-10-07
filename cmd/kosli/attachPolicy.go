@@ -53,6 +53,7 @@ func newAttachPolicyCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringSliceVarP(&o.environments, "environment", "e", []string{}, attachPolicyEnvFlag)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"environment"})
 	if err != nil {
