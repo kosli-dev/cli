@@ -183,7 +183,8 @@ func DefaultValueForCommit(ci string, returnHead bool) string {
 // RequireFlags declares a list of flags as required for a given command
 func RequireFlags(cmd *cobra.Command, flagNames []string) error {
 	for _, name := range flagNames {
-		if cmd.Flags().Lookup(name).DefValue == "" {
+		defaultValue := cmd.Flags().Lookup(name).DefValue
+		if defaultValue == "" || defaultValue == "[]" {
 			err := cobra.MarkFlagRequired(cmd.Flags(), name)
 			if err != nil {
 				return err
