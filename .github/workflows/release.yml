@@ -85,7 +85,7 @@ jobs:
       kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
 
   docker:
-    needs: [pre-build, init-kosli, test, never-alone-trail]
+    needs: [pre-build, init-kosli, test]
     uses: ./.github/workflows/docker.yml
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
