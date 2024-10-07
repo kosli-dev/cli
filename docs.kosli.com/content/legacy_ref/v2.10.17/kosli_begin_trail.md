@@ -30,7 +30,7 @@ kosli begin trail TRAIL-NAME [flags]
 |    -o, --origin-url string  |  [optional] The url pointing to where the attestation came from or is related. (defaulted to the CI url in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --redact-commit-info strings  |  [optional] The list of commit info to be redacted before sending to Kosli. Allowed values are one or more of [author, message, branch].  |
 |        --repo-root string  |  [defaulted] The directory where the source git repository is available. Only used if --commit is used. (default ".")  |
-|    -f, --template-file string  |  [optional] The path to a yaml template file. Cannot be used together with --use-empty-template  |
+|    -f, --template-file string  |  [optional] The path to a yaml template file.  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the flow trail.  |
 
 
