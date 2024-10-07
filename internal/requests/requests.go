@@ -212,7 +212,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 			if err != nil {
 				return nil, fmt.Errorf("failed to read request body to %s : %v", req.URL, err)
 			}
-			c.Logger.Info("this is the payload that would be sent in real run: \n %+v", string(reqBody))
+			c.Logger.Info("this is the payload that would be sent in a real run: \n %+v", string(reqBody))
 		}
 		return nil, nil
 	} else {

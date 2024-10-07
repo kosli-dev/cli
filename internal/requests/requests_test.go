@@ -321,7 +321,7 @@ func (suite *RequestsTestSuite) TestDo() {
 				DryRun:   true,
 				Payload:  "some payload",
 			},
-			expectedLog: "############### THIS IS A DRY-RUN  ###############\nthis is the payload that would be sent in real run: \n \"some payload\"\n",
+			expectedLog: "############### THIS IS A DRY-RUN  ###############\nthe request would have been sent to: https://app.kosli.com/api/v2/environments/cyber-dojo\nthis is the payload that would be sent in a real run: \n \"some payload\"\n",
 		},
 		{
 			name: "GET request to cyber-dojo with dry-run",
