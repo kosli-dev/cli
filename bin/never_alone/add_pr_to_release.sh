@@ -17,7 +17,7 @@ function print_help
     cat <<EOF
 Use: $SCRIPT_NAME [options]
 
-Script to add PR evidence to an existing release. If a CI build is cancled the attest never-alone is not
+Script to add PR evidence to an existing release. If a CI build is cancelled the attest never-alone is not
 reported to kosli. 
 
 Options are:
