@@ -49,6 +49,7 @@ func newDetachPolicyCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringSliceVarP(&o.environments, "environment", "e", []string{}, detachPolicyEnvFlag)
+	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"environment"})
 	if err != nil {
@@ -75,7 +76,7 @@ func (o *detachPolicyOptions) run(args []string) error {
 			break
 		}
 	}
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		logger.Info("policy '%s' is detached from environments: %s", args[0], o.environments)
 	}
 	return err

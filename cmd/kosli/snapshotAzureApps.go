@@ -108,7 +108,7 @@ func (o *snapshotAzureAppsOptions) run(args []string) error {
 		Password: global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		logger.Info("%d azure apps were reported to environment %s", len(webAppsData), envName)
 	}
 	return err

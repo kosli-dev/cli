@@ -69,7 +69,7 @@ type RequestParams struct {
 	Username          string
 	Password          string
 	Token             string
-	DryRun            bool
+	DryRun            string
 }
 
 // newHTTPRequest returns a customized http request based on RequestParams
@@ -181,7 +181,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 		return nil, fmt.Errorf("failed to create a %s request to %s : %v", p.Method, p.URL, err)
 	}
 
-	if p.DryRun {
+	if p.DryRun == "true" {
 		c.Logger.Info("############### THIS IS A DRY-RUN  ###############")
 		if req.Body != nil {
 			reqBody, err := io.ReadAll(req.Body)

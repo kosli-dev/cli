@@ -57,7 +57,7 @@ func runDoubledHost(args []string) (string, error) {
 
 	// Return subsidiary-call's output in debug mode only.
 	stdOut := output0
-	if opts.debug && output1 != "" {
+	if opts.debug == "true" && output1 != "" {
 		stdOut += fmt.Sprintf("\n[debug] [%s]", opts.hosts[1])
 		stdOut += fmt.Sprintf("\n%s", output1)
 	}
@@ -116,7 +116,7 @@ func runBufferedInnerMain(args []string) (string, error) {
 type DoubledOpts struct {
 	hosts     []string
 	apiTokens []string
-	debug     bool
+	debug     string
 }
 
 func getDoubledOpts() DoubledOpts {

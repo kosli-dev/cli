@@ -139,10 +139,10 @@ func (o *reportArtifactOptions) run(args []string) error {
 	previousCommit, err := o.latestCommit(currentBranch(gitView))
 	if err == nil {
 		o.payload.CommitsList, err = gitView.ChangeLog(o.payload.GitCommit, previousCommit, logger)
-		if err != nil && !global.DryRun {
+		if err != nil && global.DryRun == "false" {
 			return err
 		}
-	} else if !global.DryRun {
+	} else if global.DryRun == "false" {
 		return err
 	}
 
@@ -161,7 +161,7 @@ func (o *reportArtifactOptions) run(args []string) error {
 		Password: global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		logger.Info("artifact %s was reported with fingerprint: %s", o.payload.Filename, o.payload.Fingerprint)
 	}
 	return err

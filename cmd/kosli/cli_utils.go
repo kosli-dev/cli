@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"slices"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -523,7 +522,7 @@ func ValidateAttestationArtifactArg(args []string, artifactType, inputSha256 str
 		return fmt.Errorf("artifact name argument is required when --artifact-type is set")
 	}
 	if artifactType == "" && inputSha256 == "" && len(args) > 0 {
-		return fmt.Errorf("--artifact-type or --fingerprint must be specified when artifact name ('%s') argument is supplied.%s", args[0], BooleanArgsMessageLink(args))
+		return fmt.Errorf("--artifact-type or --fingerprint must be specified when artifact name ('%s') argument is supplied.", args[0])
 	}
 
 	if inputSha256 != "" {
@@ -801,17 +800,8 @@ func prefixEachLine(multilineString, prefix string) string {
 // Custom error message instead of cobra.MaximumNArgs(1)
 func CustomMaximumNArgs(max int, args []string) error {
 	if len(args) > max {
-		return fmt.Errorf("accepts at most 1 arg(s), received %v %v%s", len(args), args, BooleanArgsMessageLink(args))
+		return fmt.Errorf("accepts at most 1 arg(s), received %v %v", len(args), args)
 	} else {
 		return nil
 	}
-}
-
-func BooleanArgsMessageLink(args []string) string {
-	if slices.Contains(args, "true") || slices.Contains(args, "false") {
-		return "\nSee https://docs.kosli.com//faq/#boolean-flags"
-	} else {
-		return ""
-	}
-
 }
