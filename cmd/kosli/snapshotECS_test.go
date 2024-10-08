@@ -37,9 +37,16 @@ func (suite *SnapshotECSTestSuite) TestSnapshotECSCmd() {
 	tests := []cmdTestCase{
 		{
 			wantError: true,
-			name:      "snapshot ECS fails if --cluster is missing",
+			name:      "snapshot ECS fails if --cluster and --scan-all is missing",
 			cmd:       fmt.Sprintf(`snapshot ecs %s %s`, suite.envName, suite.defaultKosliArguments),
-			golden:    "Error: required flag(s) \"cluster\" not set\n",
+			golden:    "Error: at least one of --cluster, --scan-all is required\n",
+			// golden:    "Error: required flag(s) \"cluster\" not set\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot ECS fails if both --cluster and --scan-all is set",
+			cmd:       fmt.Sprintf(`snapshot ecs %s %s --cluster sss --scan-all`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: only one of --cluster, --scan-all is allowed\n",
 		},
 		{
 			wantError: true,
