@@ -222,7 +222,7 @@ func (suite *RequestsTestSuite) TestNewHttpRequest() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			req, err := t.params.newHTTPRequest()
+			req, _, err := t.params.newHTTPRequest()
 			if t.wantError {
 				require.Error(suite.T(), err)
 			} else {
@@ -321,7 +321,7 @@ func (suite *RequestsTestSuite) TestDo() {
 				DryRun:   true,
 				Payload:  "some payload",
 			},
-			expectedLog: "############### THIS IS A DRY-RUN  ###############\nthis is the payload that would be sent in real run: \n \"some payload\"\n",
+			expectedLog: "############### THIS IS A DRY-RUN  ###############\nthe request would have been sent to: https://app.kosli.com/api/v2/environments/cyber-dojo\nthis is the payload that would be sent in a real run: \n \"some payload\"\n",
 		},
 		{
 			name: "GET request to cyber-dojo with dry-run",
@@ -331,7 +331,7 @@ func (suite *RequestsTestSuite) TestDo() {
 				Password: "secret",
 				DryRun:   true,
 			},
-			expectedLog: "############### THIS IS A DRY-RUN  ###############\n",
+			expectedLog: "############### THIS IS A DRY-RUN  ###############\nthe request would have been sent to: https://app.kosli.com/api/v2/environments/cyber-dojo\n",
 		},
 		{
 			name: "GET request to 400 endpoint with message and errors in response",
@@ -450,7 +450,7 @@ func (suite *RequestsTestSuite) TestCreateMultipartRequestBody() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			contentType, _, err := createMultipartRequestBody(t.formItems)
+			contentType, _, _, err := createMultipartRequestBody(t.formItems)
 			require.True(suite.T(), t.wantError == (err != nil))
 			require.True(suite.T(), strings.HasPrefix(contentType, t.expectedContentTypePrefix))
 		})

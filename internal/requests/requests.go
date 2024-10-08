@@ -72,27 +72,29 @@ type RequestParams struct {
 	DryRun            bool
 }
 
-// newHTTPRequest returns a customized http request based on RequestParams
-func (p *RequestParams) newHTTPRequest() (*http.Request, error) {
+func (p *RequestParams) newHTTPRequest() (*http.Request, map[string]interface{}, error) {
 	if len(p.AdditionalHeaders) == 0 {
 		p.AdditionalHeaders = make(map[string]string)
 	}
 
 	var body io.Reader
+	var jsonFields map[string]interface{}
 
 	if len(p.Form) > 0 {
+		// Multipart form handling (with possible file attachments)
 		var contentType string
 		var err error
-		contentType, body, err = createMultipartRequestBody(p.Form)
+		contentType, body, jsonFields, err = createMultipartRequestBody(p.Form)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		p.AdditionalHeaders["Content-Type"] = contentType
 	} else {
+		// JSON payload handling
 		if p.Method != http.MethodGet {
 			jsonBytes, err := json.MarshalIndent(p.Payload, "", "    ")
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			body = bytes.NewBuffer(jsonBytes)
 		}
@@ -100,13 +102,13 @@ func (p *RequestParams) newHTTPRequest() (*http.Request, error) {
 
 	req, err := http.NewRequest(p.Method, p.URL, body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create %s request to %s : %v", p.Method, p.URL, err)
+		return nil, nil, fmt.Errorf("failed to create %s request to %s : %v", p.Method, p.URL, err)
 	}
 
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("User-Agent", "Kosli/"+version.GetVersion())
 
-	// token authorization has higher precedence over basic auth
+	// Token-based or Basic authentication handling
 	if p.Token != "" {
 		p.AdditionalHeaders["Authorization"] = fmt.Sprintf("Bearer %s", p.Token)
 	} else if p.Username != "" || p.Password != "" {
@@ -124,73 +126,94 @@ func (p *RequestParams) newHTTPRequest() (*http.Request, error) {
 		req.Header.Set(k, v)
 	}
 
-	return req, nil
+	return req, jsonFields, nil
 }
 
-// createMultipartRequestBody process a list of FormItem and returns
+// createMultipartRequestBody processes a list of FormItem and returns:
 // - the multipart form content type
 // - request body for the multipart form in the form of bytes.Buffer
+// - a map of the JSON fields to log during dry-run
 // - error, if any occurred
-func createMultipartRequestBody(items []FormItem) (string, *bytes.Buffer, error) {
+func createMultipartRequestBody(items []FormItem) (string, *bytes.Buffer, map[string]interface{}, error) {
 	body := &bytes.Buffer{}
-
 	writer := multipart.NewWriter(body)
 	defer writer.Close()
+
+	// Map to store the JSON fields for logging during dry-run
+	jsonFields := make(map[string]interface{})
 
 	for _, item := range items {
 		if item.Type == "field" {
 			part, err := writer.CreateFormField(item.FieldName)
 			if err != nil {
-				return "", body, err
+				return "", body, nil, err
 			}
 
+			// Marshal the JSON field and add it to the multipart writer
 			jsonBytes, err := json.MarshalIndent(item.Content, "", "    ")
 			if err != nil {
-				return "", body, err
+				return "", body, nil, err
 			}
 			_, err = part.Write(jsonBytes)
 			if err != nil {
-				return "", body, err
+				return "", body, nil, err
 			}
+
+			// Add the JSON field to jsonFields map for dry-run logging
+			jsonFields[item.FieldName] = jsonBytes
+
 		} else if item.Type == "file" {
+			// Handle file upload separately
 			filename := item.Content.(string)
 			file, err := os.Open(filename)
 			if err != nil {
-				return "", body, err
+				return "", body, nil, err
 			}
 			defer file.Close()
 
 			part, err := writer.CreateFormFile(item.FieldName, filepath.Base(filename))
 			if err != nil {
-				return "", body, err
+				return "", body, nil, err
 			}
 
 			_, err = io.Copy(part, file)
 			if err != nil {
-				return "", body, err
+				return "", body, nil, err
 			}
 		}
 	}
 	contentType := writer.FormDataContentType()
-	return contentType, body, nil
+
+	// Return the content type, the body, and the JSON fields
+	return contentType, body, jsonFields, nil
 }
 
 func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
-	req, err := p.newHTTPRequest()
+	req, jsonFields, err := p.newHTTPRequest()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a %s request to %s : %v", p.Method, p.URL, err)
 	}
 
 	if p.DryRun {
 		c.Logger.Info("############### THIS IS A DRY-RUN  ###############")
-		if req.Body != nil {
+		c.Logger.Info("the request would have been sent to: %s", req.URL)
+
+		// Check the content type to determine what to log
+		contentType := req.Header.Get("Content-Type")
+		if strings.Contains(contentType, "multipart/form-data") {
+			// Log only the JSON fields for multipart/form-data
+			c.Logger.Info("this is the payload data that would be sent in a real run:")
+			for key, value := range jsonFields {
+				c.Logger.Info("Field: %s, Value: %+v", key, string(value.([]byte)))
+			}
+		} else if req.Body != nil {
+			// For non-multipart requests, log the full JSON body
 			reqBody, err := io.ReadAll(req.Body)
 			if err != nil {
 				return nil, fmt.Errorf("failed to read request body to %s : %v", req.URL, err)
 			}
-			c.Logger.Info("this is the payload that would be sent in real run: \n %+v", string(reqBody))
+			c.Logger.Info("this is the payload that would be sent in a real run: \n %+v", string(reqBody))
 		}
-
 		return nil, nil
 	} else {
 		resp, err := c.HttpClient.Do(req)
