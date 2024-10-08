@@ -30,7 +30,7 @@ report_update_of_secrets_to_kosli()
     local -r trail_name=$(get_soc_trail_name)
     local files_changed secret_name expire_date repository attestation_name
 
-    files_changed=$(git diff --name-only HEAD~200 HEAD ${SECRETS_PATH})
+    files_changed=$(git diff --name-only HEAD^ HEAD ${SECRETS_PATH})
     for file in ${files_changed}; do
         secret_name=$(grep "^secret-name:" $file | sed "s/secret-name: *//")
         expire_date=$(grep "^secret-expire:" $file | sed "s/secret-expire: *//")
