@@ -331,7 +331,7 @@ func (suite *RequestsTestSuite) TestDo() {
 				Password: "secret",
 				DryRun:   true,
 			},
-			expectedLog: "############### THIS IS A DRY-RUN  ###############\n",
+			expectedLog: "############### THIS IS A DRY-RUN  ###############\nthe request would have been sent to: https://app.kosli.com/api/v2/environments/cyber-dojo\n",
 		},
 		{
 			name: "GET request to 400 endpoint with message and errors in response",
