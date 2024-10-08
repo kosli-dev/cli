@@ -76,14 +76,16 @@ func (suite *AWSTestSuite) TestDecodeLambdaFingerprint() {
 
 func (suite *AWSTestSuite) TestNewEcsTaskData() {
 	taskARN := ""
+	cluster := "foo"
 	digests := map[string]string{}
 	time := time.Now()
 	expected := &EcsTaskData{
 		TaskArn:   taskARN,
+		Cluster:   "",
 		Digests:   digests,
 		StartedAt: time.Unix(),
 	}
-	got := NewEcsTaskData(taskARN, digests, time)
+	got := NewEcsTaskData(taskARN, cluster, digests, time)
 	require.Equal(suite.T(), expected, got)
 }
 
@@ -511,8 +513,10 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 		name                 string
 		requireEnvVars       bool // indicates that a test case needs real credentials from env vars
 		creds                *AWSStaticCreds
-		clusterName          string
-		serviceName          string
+		clusterNames         []string
+		clusterNamesRegex    []string
+		exclude              []string
+		excludeRegex         []string
 		minNumberOfArtifacts int
 		wantErr              bool
 	}{
@@ -523,42 +527,58 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 				AccessKeyID:     "ssss",
 				SecretAccessKey: "ssss",
 			},
-			clusterName: "merkely",
-			wantErr:     true,
+			clusterNames: []string{"merkely"},
+			wantErr:      true,
 		},
 		{
 			name: "can get ECS data with cluster name alone",
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			clusterName:          "merkely",
+			clusterNames:         []string{"merkely"},
 			minNumberOfArtifacts: 2,
 			requireEnvVars:       true,
 		},
 		{
-			name: "providing the wrong region causes an error",
+			name: "providing the wrong region finds 0 artifacts",
 			creds: &AWSStaticCreds{
 				Region: "ap-south-1",
 			},
-			clusterName:          "merkely",
-			minNumberOfArtifacts: 2,
+			clusterNames:         []string{"merkely"},
+			minNumberOfArtifacts: 0,
 			requireEnvVars:       true,
-			wantErr:              true,
 		},
 		{
-			name: "can get ECS data with cluster name and service name",
+			name: "can get ECS data with exclude names",
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			clusterName:          "merkely",
-			serviceName:          "merkely",
+			exclude:              []string{"slackapp"},
+			minNumberOfArtifacts: 2,
+			requireEnvVars:       true,
+		},
+		{
+			name: "can get ECS data with exclude names regex",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			excludeRegex:         []string{"slack.*"},
+			minNumberOfArtifacts: 2,
+			requireEnvVars:       true,
+		},
+		{
+			name: "can get ECS data with cluster names regex",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			clusterNamesRegex:    []string{"^merk.*"},
 			minNumberOfArtifacts: 2,
 			requireEnvVars:       true,
 		},
 	} {
 		suite.Run(t.name, func() {
 			skipOrSetCreds(suite.T(), t.requireEnvVars, t.creds)
-			data, err := t.creds.GetEcsTasksData(t.clusterName, t.serviceName)
+			data, err := t.creds.GetEcsTasksData(t.clusterNames, t.clusterNamesRegex, t.exclude, t.excludeRegex)
 			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetEcsTasksData() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {

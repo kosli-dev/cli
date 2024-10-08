@@ -18,6 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	s3manager "github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/ecs"
+	ecsTypes "github.com/aws/aws-sdk-go-v2/service/ecs/types"
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/lambda/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -34,6 +35,7 @@ type EcsEnvRequest struct {
 // EcsTaskData represents the harvested ECS task data
 type EcsTaskData struct {
 	TaskArn   string            `json:"taskArn"`
+	Cluster   string            `json:"cluster,omitempty"`
 	Digests   map[string]string `json:"digests"`
 	StartedAt int64             `json:"creationTimestamp"`
 }
@@ -61,9 +63,10 @@ type LambdaData struct {
 }
 
 // NewEcsTaskData creates a NewEcsTaskData object from an ECS task
-func NewEcsTaskData(taskArn string, digests map[string]string, startedAt time.Time) *EcsTaskData {
+func NewEcsTaskData(taskArn, cluster string, digests map[string]string, startedAt time.Time) *EcsTaskData {
 	return &EcsTaskData{
-		TaskArn:   taskArn,
+		TaskArn: taskArn,
+		// Cluster:   cluster,
 		Digests:   digests,
 		StartedAt: startedAt.Unix(),
 	}
@@ -146,18 +149,18 @@ func getAllLambdaFuncs(client *lambda.Client, nextMarker *string, allFunctions *
 			if slices.Contains(excludeNames, *f.FunctionName) {
 				continue
 			}
-			regexExcluded := false
+			funcExcluded := false
 			for _, pattern := range excludeNamesRegex {
 				re, err := regexp.Compile(pattern)
 				if err != nil {
 					return allFunctions, fmt.Errorf("invalid exclude name regex pattern %s: %v", pattern, err)
 				}
 				if re.MatchString(*f.FunctionName) {
-					regexExcluded = true
+					funcExcluded = true
 					break
 				}
 			}
-			if regexExcluded {
+			if funcExcluded {
 				continue
 			}
 
@@ -438,22 +441,150 @@ func downloadFileFromBucket(downloader *s3manager.Downloader, dirName, key, buck
 	return nil
 }
 
-// GetEcsTasksData returns a list of tasks data for an ECS cluster or service
-func (staticCreds *AWSStaticCreds) GetEcsTasksData(cluster string, serviceName string) ([]*EcsTaskData, error) {
-	listInput := &ecs.ListTasksInput{}
-	descriptionInput := &ecs.DescribeTasksInput{}
-	tasksData := []*EcsTaskData{}
-	if serviceName != "" {
-		listInput.ServiceName = aws.String(serviceName)
-	}
-	if cluster != "" {
-		listInput.Cluster = aws.String(cluster)
-		descriptionInput.Cluster = aws.String(cluster)
+// getFilteredECSClusters fetches all ECS clusters recursively (50 at a time) and returns a list of FunctionConfiguration
+func getFilteredECSClusters(client *ecs.Client, nextToken *string, allClusters *[]ecsTypes.Cluster, includeNames, includeNamesRegex,
+	excludeNames, excludeNamesRegex []string) (*[]ecsTypes.Cluster, error) {
+	params := &ecs.ListClustersInput{}
+	if nextToken != nil {
+		params.NextToken = nextToken
 	}
 
+	listClustersOutput, err := client.ListClusters(context.TODO(), params)
+	if err != nil {
+		return allClusters, err
+	}
+
+	describeClustersOutput, err := client.DescribeClusters(context.TODO(), &ecs.DescribeClustersInput{Clusters: listClustersOutput.ClusterArns})
+	if err != nil {
+		return allClusters, err
+	}
+
+	if len(includeNames) == 0 && len(includeNamesRegex) == 0 &&
+		len(excludeNames) == 0 && len(excludeNamesRegex) == 0 {
+		*allClusters = append(*allClusters, describeClustersOutput.Clusters...)
+	} else {
+		for _, c := range describeClustersOutput.Clusters {
+			if len(excludeNames) > 0 || len(excludeNamesRegex) > 0 {
+				if slices.Contains(excludeNames, *c.ClusterName) {
+					continue
+				}
+				clusterExcluded := false
+				for _, pattern := range excludeNamesRegex {
+					re, err := regexp.Compile(pattern)
+					if err != nil {
+						return allClusters, fmt.Errorf("invalid exclude name regex pattern %s: %v", pattern, err)
+					}
+					if re.MatchString(*c.ClusterName) {
+						clusterExcluded = true
+						break
+					}
+				}
+				if clusterExcluded {
+					continue
+				}
+				*allClusters = append(*allClusters, c)
+			} else {
+				// inclusion
+				if slices.Contains(includeNames, *c.ClusterName) {
+					*allClusters = append(*allClusters, c)
+					continue
+				}
+
+				clusterIncluded := false
+				for _, pattern := range includeNamesRegex {
+					re, err := regexp.Compile(pattern)
+					if err != nil {
+						return allClusters, fmt.Errorf("invalid include name regex pattern %s: %v", pattern, err)
+					}
+					if re.MatchString(*c.ClusterName) {
+						clusterIncluded = true
+						break
+					}
+				}
+				if clusterIncluded {
+					*allClusters = append(*allClusters, c)
+				}
+			}
+		}
+	}
+
+	if listClustersOutput.NextToken != nil {
+		_, err := getFilteredECSClusters(client, listClustersOutput.NextToken, allClusters,
+			includeNames, includeNamesRegex, excludeNames, excludeNamesRegex)
+		if err != nil {
+			return allClusters, err
+		}
+	}
+	return allClusters, nil
+}
+
+// GetEcsTasksData returns a list of tasks data for an ECS cluster or service
+func (staticCreds *AWSStaticCreds) GetEcsTasksData(clusters, clustersRegex, exclude, excludeRegex []string) ([]*EcsTaskData, error) {
+	allTasksData := []*EcsTaskData{}
 	client, err := staticCreds.NewECSClient()
 	if err != nil {
-		return tasksData, err
+		return allTasksData, err
+	}
+
+	filteredClusters, err := getFilteredECSClusters(client, nil, &[]ecsTypes.Cluster{}, clusters, clustersRegex, exclude, excludeRegex)
+	if err != nil {
+		return allTasksData, err
+	}
+
+	var (
+		wg    sync.WaitGroup
+		mutex = &sync.Mutex{}
+	)
+
+	// run concurrently
+	errs := make(chan error, 1) // Buffered only for the first error
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // Make sure it's called to release resources even if no errors
+
+	for _, cluster := range *filteredClusters {
+		wg.Add(1)
+		go func(cluster string) {
+			defer wg.Done()
+			// Check if any error occurred in any other gorouties:
+			select {
+			case <-ctx.Done():
+				return // Error somewhere, terminate
+			default: // Default is must to avoid blocking
+			}
+
+			tasksData, err := getTasksDataInCluster(client, cluster)
+			if err != nil {
+				// Non-blocking send of error
+				select {
+				case errs <- err:
+				default:
+				}
+				cancel() // send cancel signal to goroutines
+				return
+			}
+			mutex.Lock()
+			allTasksData = append(allTasksData, tasksData...)
+			mutex.Unlock()
+
+		}(*cluster.ClusterName)
+	}
+
+	wg.Wait()
+	// Return (first) error, if any:
+	if ctx.Err() != nil {
+		return allTasksData, <-errs
+	}
+
+	return allTasksData, nil
+}
+
+func getTasksDataInCluster(client *ecs.Client, cluster string) ([]*EcsTaskData, error) {
+	tasksData := []*EcsTaskData{}
+	listInput := &ecs.ListTasksInput{
+		Cluster: aws.String(cluster),
+	}
+	descriptionInput := &ecs.DescribeTasksInput{
+		Cluster: aws.String(cluster),
 	}
 
 	list, err := client.ListTasks(context.Background(), listInput)
@@ -487,7 +618,7 @@ func (staticCreds *AWSStaticCreds) GetEcsTasksData(cluster string, serviceName s
 						digests[*imageName] = ""
 					}
 				}
-				data := NewEcsTaskData(*taskDesc.TaskArn, digests, *taskDesc.StartedAt)
+				data := NewEcsTaskData(*taskDesc.TaskArn, cluster, digests, *taskDesc.StartedAt)
 				tasksData = append(tasksData, data)
 			}
 		}
