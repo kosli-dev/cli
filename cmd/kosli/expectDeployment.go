@@ -98,7 +98,7 @@ func (o *expectDeploymentOptions) run(args []string) error {
 		Password: global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		logger.Info("expect deployment of artifact %s was reported to: %s", o.payload.Fingerprint, o.payload.Environment)
 	}
 	return err

@@ -92,7 +92,7 @@ func (o *createPolicyOptions) run(args []string) error {
 	}
 
 	res, err := kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		verb := "created"
 		if res.Resp.StatusCode == 200 {
 			verb = "updated"

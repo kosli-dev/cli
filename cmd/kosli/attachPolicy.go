@@ -80,7 +80,7 @@ func (o *attachPolicyOptions) run(args []string) error {
 			break
 		}
 	}
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		logger.Info("policy '%s' is attached to environments: %s", args[0], o.environments)
 	}
 	return err

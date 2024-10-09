@@ -76,7 +76,7 @@ func (o *detachPolicyOptions) run(args []string) error {
 			break
 		}
 	}
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		logger.Info("policy '%s' is detached from environments: %s", args[0], o.environments)
 	}
 	return err

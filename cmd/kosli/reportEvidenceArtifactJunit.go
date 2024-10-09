@@ -153,7 +153,7 @@ func (o *reportEvidenceArtifactJunitOptions) run(args []string) error {
 		Password: global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		logger.Info("junit test evidence is reported to artifact: %s", o.payload.ArtifactFingerprint)
 	}
 	return err

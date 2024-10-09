@@ -59,7 +59,7 @@ func (o *betaOptions) run(args []string) error {
 		Password: global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		logger.Info("beta features have been %s for organization: %s", action, global.Org)
 	}
 	return err

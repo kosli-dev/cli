@@ -69,7 +69,7 @@ type RequestParams struct {
 	Username          string
 	Password          string
 	Token             string
-	DryRun            bool
+	DryRun            string
 }
 
 func (p *RequestParams) newHTTPRequest() (*http.Request, map[string]interface{}, error) {
@@ -194,7 +194,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 		return nil, fmt.Errorf("failed to create a %s request to %s : %v", p.Method, p.URL, err)
 	}
 
-	if p.DryRun {
+	if p.DryRun == "true" {
 		c.Logger.Info("############### THIS IS A DRY-RUN  ###############")
 		c.Logger.Info("the request would have been sent to: %s", req.URL)
 

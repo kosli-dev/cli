@@ -54,7 +54,7 @@ func newRenameFlowCmd(out io.Writer) *cobra.Command {
 				Password: global.ApiToken,
 			}
 			_, err := kosliClient.Do(reqParams)
-			if err == nil && !global.DryRun {
+			if err == nil && global.DryRun == "false" {
 				logger.Info("flow %s was renamed to %s", args[0], payload.NewName)
 			}
 			return err

@@ -130,7 +130,7 @@ func (o *snapshotS3Options) run(args []string) error {
 		Password: global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		logger.Info("bucket %s was reported to environment %s", o.bucket, envName)
 	}
 	return err

@@ -52,7 +52,7 @@ func newArchiveFlowCmd(out io.Writer) *cobra.Command {
 				Password: global.ApiToken,
 			}
 			_, err := kosliClient.Do(reqParams)
-			if err == nil && !global.DryRun {
+			if err == nil && global.DryRun == "false" {
 				logger.Info("flow %s was archived", args[0])
 			}
 			return err

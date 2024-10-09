@@ -156,7 +156,7 @@ func (o *reportEvidenceArtifactGenericOptions) run(args []string) error {
 		Password: global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		logger.Info("generic evidence '%s' is reported to artifact: %s", o.payload.EvidenceName, o.payload.ArtifactFingerprint)
 	}
 	return err

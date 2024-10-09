@@ -84,11 +84,11 @@ func (o *pullRequestArtifactOptions) run(out io.Writer, args []string) error {
 		Password: global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		logger.Info("%s %s evidence is reported to artifact: %s", o.payload.GitProvider, label, o.payload.ArtifactFingerprint)
 	}
 
-	if len(pullRequestsEvidence) == 0 && o.pullRequestOptions.assert && !global.DryRun {
+	if len(pullRequestsEvidence) == 0 && o.pullRequestOptions.assert && global.DryRun == "false" {
 		return fmt.Errorf("assert failed: no %s found for the given commit: %s", label, o.commit)
 	}
 	return err
@@ -148,11 +148,11 @@ func (o *attestPROptions) run(args []string) error {
 		Password: global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		logger.Info("%s %s attestation '%s' is reported to trail: %s", o.payload.GitProvider, label, o.payload.AttestationName, o.trailName)
 	}
 
-	if len(pullRequestsEvidence) == 0 && o.assert && !global.DryRun {
+	if len(pullRequestsEvidence) == 0 && o.assert && global.DryRun == "false" {
 		return fmt.Errorf("assert failed: no %s found for the given commit: %s", label, o.payload.Commit.Sha1)
 	}
 	return wrapAttestationError(err)
@@ -204,11 +204,11 @@ func (o *pullRequestCommitOptions) run(args []string) error {
 		Password: global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		logger.Info("%s %s evidence is reported to commit: %s", o.payload.GitProvider, label, o.payload.CommitSHA)
 	}
 
-	if len(pullRequestsEvidence) == 0 && o.pullRequestOptions.assert && !global.DryRun {
+	if len(pullRequestsEvidence) == 0 && o.pullRequestOptions.assert && global.DryRun == "false" {
 		return fmt.Errorf("assert failed: no %s found for the given commit: %s", label, o.payload.CommitSHA)
 	}
 	return err

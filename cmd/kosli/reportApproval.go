@@ -168,14 +168,14 @@ func (o *reportApprovalOptions) run(args []string, request bool) error {
 		getLastApprovedGitCommitParams := &requests.RequestParams{
 			Method:   http.MethodGet,
 			URL:      url,
-			DryRun:   false,
+			DryRun:   "false",
 			Password: global.ApiToken,
 		}
 
 		lastApprovedGitCommitResponse, err := kosliClient.Do(getLastApprovedGitCommitParams)
 
 		if err != nil {
-			if !global.DryRun {
+			if global.DryRun == "false" {
 				// error and not dry run -> print error message and return err
 				return err
 			} else {
@@ -216,7 +216,7 @@ func (o *reportApprovalOptions) run(args []string, request bool) error {
 		Password: global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		logger.Info("approval created for artifact: %s", o.payload.ArtifactFingerprint)
 	}
 	return err

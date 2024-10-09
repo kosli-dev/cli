@@ -197,7 +197,7 @@ func (o *attestSonarOptions) run(args []string) error {
 		Password: global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		logger.Info("sonar attestation '%s' is reported to trail: %s", o.payload.AttestationName, o.trailName)
 	}
 

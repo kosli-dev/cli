@@ -154,7 +154,7 @@ func (o *reportEvidenceArtifactSnykOptions) run(args []string) error {
 		Password: global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		logger.Info("snyk scan evidence is reported to artifact: %s", o.payload.ArtifactFingerprint)
 	}
 	return err

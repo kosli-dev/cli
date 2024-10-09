@@ -69,7 +69,7 @@ func innerMain(cmd *cobra.Command, args []string) error {
 			logger.Error("%s\navailable subcommands are: %s", errMessage, strings.Join(availableSubcommands, " | "))
 		}
 	}
-	if global.DryRun {
+	if global.DryRun == "true" {
 		logger.Info("Error: %s", err.Error())
 		logger.Warning("Encountered an error but --dry-run is enabled. Exiting with 0 exit code.")
 		return nil

@@ -181,7 +181,7 @@ func (o *attestJunitOptions) run(args []string) error {
 		Password: global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		logger.Info("junit attestation '%s' is reported to trail: %s", o.payload.AttestationName, o.trailName)
 	}
 	return wrapAttestationError(err)
