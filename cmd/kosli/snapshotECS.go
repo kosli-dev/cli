@@ -59,7 +59,6 @@ kosli snapshot ecs yourEnvironmentName \
 type snapshotECSOptions struct {
 	filter         *filters.ResourceFilterOptions
 	serviceName    string
-	cluster        string
 	awsStaticCreds *aws.AWSStaticCreds
 }
 
