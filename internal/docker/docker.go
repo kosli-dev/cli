@@ -101,7 +101,7 @@ func RunDockerContainer(imageName string) (string, error) {
 		return "", err
 	}
 	containerID := resp.ID
-	return containerID, cli.ContainerStart(ctx, containerID, types.ContainerStartOptions{})
+	return containerID, cli.ContainerStart(ctx, containerID, container.StartOptions{})
 }
 
 // RemoveDockerContainer remove a docker container or returns an error
@@ -111,5 +111,5 @@ func RemoveDockerContainer(containerID string) error {
 		return err
 	}
 
-	return cli.ContainerRemove(context.Background(), containerID, types.ContainerRemoveOptions{Force: true})
+	return cli.ContainerRemove(context.Background(), containerID, container.RemoveOptions{Force: true})
 }

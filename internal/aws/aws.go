@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
-	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -23,6 +21,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/lambda/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/kosli-dev/cli/internal/digest"
+	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/utils"
 )
@@ -130,8 +129,9 @@ func (staticCreds *AWSStaticCreds) NewECSClient() (*ecs.Client, error) {
 	return ecs.NewFromConfig(cfg), nil
 }
 
-// getAllLambdaFuncs fetches all lambda functions recursively (50 at a time) and returns a list of FunctionConfiguration
-func getAllLambdaFuncs(client *lambda.Client, nextMarker *string, allFunctions *[]types.FunctionConfiguration, excludeNames, excludeNamesRegex []string) (*[]types.FunctionConfiguration, error) {
+// getFilteredLambdaFuncs fetches a filtered set of lambda functions recursively (50 at a time) and returns a list of FunctionConfiguration
+func getFilteredLambdaFuncs(client *lambda.Client, nextMarker *string, allFunctions *[]types.FunctionConfiguration,
+	filter *filters.ResourceFilterOptions) (*[]types.FunctionConfiguration, error) {
 	params := &lambda.ListFunctionsInput{}
 	if nextMarker != nil {
 		params.Marker = nextMarker
@@ -142,34 +142,23 @@ func getAllLambdaFuncs(client *lambda.Client, nextMarker *string, allFunctions *
 		return allFunctions, err
 	}
 
-	if len(excludeNames) == 0 && len(excludeNamesRegex) == 0 {
+	if len(filter.IncludeNames) == 0 && len(filter.IncludeNamesRegex) == 0 &&
+		len(filter.ExcludeNames) == 0 && len(filter.ExcludeNamesRegex) == 0 {
 		*allFunctions = append(*allFunctions, listFunctionsOutput.Functions...)
 	} else {
 		for _, f := range listFunctionsOutput.Functions {
-			if slices.Contains(excludeNames, *f.FunctionName) {
-				continue
+			include, err := filter.ShouldInclude(*f.FunctionName)
+			if err != nil {
+				return allFunctions, err
 			}
-			funcExcluded := false
-			for _, pattern := range excludeNamesRegex {
-				re, err := regexp.Compile(pattern)
-				if err != nil {
-					return allFunctions, fmt.Errorf("invalid exclude name regex pattern %s: %v", pattern, err)
-				}
-				if re.MatchString(*f.FunctionName) {
-					funcExcluded = true
-					break
-				}
+			if include {
+				*allFunctions = append(*allFunctions, f)
 			}
-			if funcExcluded {
-				continue
-			}
-
-			*allFunctions = append(*allFunctions, f)
 		}
 	}
 
 	if listFunctionsOutput.NextMarker != nil {
-		_, err := getAllLambdaFuncs(client, listFunctionsOutput.NextMarker, allFunctions, excludeNames, excludeNamesRegex)
+		_, err := getFilteredLambdaFuncs(client, listFunctionsOutput.NextMarker, allFunctions, filter)
 		if err != nil {
 			return allFunctions, err
 		}
@@ -178,72 +167,61 @@ func getAllLambdaFuncs(client *lambda.Client, nextMarker *string, allFunctions *
 }
 
 // GetLambdaPackageData returns a digest and metadata of a Lambda function package
-func (staticCreds *AWSStaticCreds) GetLambdaPackageData(functionNames, excludeNames, excludeNamesRegex []string) ([]*LambdaData, error) {
+func (staticCreds *AWSStaticCreds) GetLambdaPackageData(filter *filters.ResourceFilterOptions) ([]*LambdaData, error) {
 	lambdaData := []*LambdaData{}
 	client, err := staticCreds.NewLambdaClient()
 	if err != nil {
 		return lambdaData, err
 	}
 
-	if len(functionNames) == 0 {
-		allFunctions, err := getAllLambdaFuncs(client, nil, &[]types.FunctionConfiguration{}, excludeNames, excludeNamesRegex)
-		if err != nil {
-			return lambdaData, err
-		}
+	filteredFunctions, err := getFilteredLambdaFuncs(client, nil, &[]types.FunctionConfiguration{}, filter)
+	if err != nil {
+		return lambdaData, err
+	}
 
-		for _, function := range *allFunctions {
-			oneLambdaData, err := processOneLambdaFunc(*function.LastModified, *function.CodeSha256, *function.FunctionName, string(function.PackageType))
-			if err != nil {
-				return lambdaData, err
+	var (
+		wg    sync.WaitGroup
+		mutex = &sync.Mutex{}
+	)
+
+	// run concurrently
+	errs := make(chan error, 1) // Buffered only for the first error
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // Make sure it's called to release resources even if no errors
+
+	for _, function := range *filteredFunctions {
+		wg.Add(1)
+		go func(functionName string) {
+			defer wg.Done()
+			// Check if any error occurred in any other gorouties:
+			select {
+			case <-ctx.Done():
+				return // Error somewhere, terminate
+			default: // Default is a must to avoid blocking
 			}
-			lambdaData = append(lambdaData, oneLambdaData)
-		}
-
-	} else {
-		var (
-			wg    sync.WaitGroup
-			mutex = &sync.Mutex{}
-		)
-
-		// run concurrently
-		errs := make(chan error, 1) // Buffered only for the first error
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel() // Make sure it's called to release resources even if no errors
-
-		for _, functionName := range functionNames {
-			wg.Add(1)
-			go func(functionName string) {
-				defer wg.Done()
-				// Check if any error occurred in any other gorouties:
+			oneLambdaData, err := getAndProcessOneLambdaFunc(client, functionName)
+			if err != nil {
+				// Non-blocking send of error
 				select {
-				case <-ctx.Done():
-					return // Error somewhere, terminate
-				default: // Default is a must to avoid blocking
+				case errs <- err:
+				default:
 				}
-				oneLambdaData, err := getAndProcessOneLambdaFunc(client, functionName)
-				if err != nil {
-					// Non-blocking send of error
-					select {
-					case errs <- err:
-					default:
-					}
-					cancel() // send cancel signal to goroutines
-					return
-				}
+				cancel() // send cancel signal to goroutines
+				return
+			}
 
-				mutex.Lock()
-				lambdaData = append(lambdaData, oneLambdaData)
-				mutex.Unlock()
+			mutex.Lock()
+			lambdaData = append(lambdaData, oneLambdaData)
+			mutex.Unlock()
 
-			}(functionName)
+		}(*function.FunctionName)
 
-		}
+	}
 
-		wg.Wait()
-		// Return (first) error, if any:
-		if ctx.Err() != nil {
-			return lambdaData, <-errs
-		}
+	wg.Wait()
+	// Return (first) error, if any:
+	if ctx.Err() != nil {
+		return lambdaData, <-errs
 	}
 
 	return lambdaData, nil
@@ -441,9 +419,9 @@ func downloadFileFromBucket(downloader *s3manager.Downloader, dirName, key, buck
 	return nil
 }
 
-// getFilteredECSClusters fetches all ECS clusters recursively (50 at a time) and returns a list of FunctionConfiguration
-func getFilteredECSClusters(client *ecs.Client, nextToken *string, allClusters *[]ecsTypes.Cluster, includeNames, includeNamesRegex,
-	excludeNames, excludeNamesRegex []string) (*[]ecsTypes.Cluster, error) {
+// getFilteredECSClusters fetches a filtered set of ECS clusters recursively (50 at a time) and returns a list of ecs Clusters
+func getFilteredECSClusters(client *ecs.Client, nextToken *string, allClusters *[]ecsTypes.Cluster,
+	filter *filters.ResourceFilterOptions) (*[]ecsTypes.Cluster, error) {
 	params := &ecs.ListClustersInput{}
 	if nextToken != nil {
 		params.NextToken = nextToken
@@ -459,58 +437,23 @@ func getFilteredECSClusters(client *ecs.Client, nextToken *string, allClusters *
 		return allClusters, err
 	}
 
-	if len(includeNames) == 0 && len(includeNamesRegex) == 0 &&
-		len(excludeNames) == 0 && len(excludeNamesRegex) == 0 {
+	if len(filter.IncludeNames) == 0 && len(filter.IncludeNamesRegex) == 0 &&
+		len(filter.ExcludeNames) == 0 && len(filter.ExcludeNamesRegex) == 0 {
 		*allClusters = append(*allClusters, describeClustersOutput.Clusters...)
 	} else {
 		for _, c := range describeClustersOutput.Clusters {
-			if len(excludeNames) > 0 || len(excludeNamesRegex) > 0 {
-				if slices.Contains(excludeNames, *c.ClusterName) {
-					continue
-				}
-				clusterExcluded := false
-				for _, pattern := range excludeNamesRegex {
-					re, err := regexp.Compile(pattern)
-					if err != nil {
-						return allClusters, fmt.Errorf("invalid exclude name regex pattern %s: %v", pattern, err)
-					}
-					if re.MatchString(*c.ClusterName) {
-						clusterExcluded = true
-						break
-					}
-				}
-				if clusterExcluded {
-					continue
-				}
+			include, err := filter.ShouldInclude(*c.ClusterName)
+			if err != nil {
+				return allClusters, err
+			}
+			if include {
 				*allClusters = append(*allClusters, c)
-			} else {
-				// inclusion
-				if slices.Contains(includeNames, *c.ClusterName) {
-					*allClusters = append(*allClusters, c)
-					continue
-				}
-
-				clusterIncluded := false
-				for _, pattern := range includeNamesRegex {
-					re, err := regexp.Compile(pattern)
-					if err != nil {
-						return allClusters, fmt.Errorf("invalid include name regex pattern %s: %v", pattern, err)
-					}
-					if re.MatchString(*c.ClusterName) {
-						clusterIncluded = true
-						break
-					}
-				}
-				if clusterIncluded {
-					*allClusters = append(*allClusters, c)
-				}
 			}
 		}
 	}
 
 	if listClustersOutput.NextToken != nil {
-		_, err := getFilteredECSClusters(client, listClustersOutput.NextToken, allClusters,
-			includeNames, includeNamesRegex, excludeNames, excludeNamesRegex)
+		_, err := getFilteredECSClusters(client, listClustersOutput.NextToken, allClusters, filter)
 		if err != nil {
 			return allClusters, err
 		}
@@ -519,14 +462,14 @@ func getFilteredECSClusters(client *ecs.Client, nextToken *string, allClusters *
 }
 
 // GetEcsTasksData returns a list of tasks data for an ECS cluster or service
-func (staticCreds *AWSStaticCreds) GetEcsTasksData(clusters, clustersRegex, exclude, excludeRegex []string) ([]*EcsTaskData, error) {
+func (staticCreds *AWSStaticCreds) GetEcsTasksData(filter *filters.ResourceFilterOptions) ([]*EcsTaskData, error) {
 	allTasksData := []*EcsTaskData{}
 	client, err := staticCreds.NewECSClient()
 	if err != nil {
 		return allTasksData, err
 	}
 
-	filteredClusters, err := getFilteredECSClusters(client, nil, &[]ecsTypes.Cluster{}, clusters, clustersRegex, exclude, excludeRegex)
+	filteredClusters, err := getFilteredECSClusters(client, nil, &[]ecsTypes.Cluster{}, filter)
 	if err != nil {
 		return allTasksData, err
 	}

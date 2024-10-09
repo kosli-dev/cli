@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -90,7 +90,7 @@ func CreateDockerArtifactsData() ([]*server.ServerData, error) {
 		return result, err
 	}
 
-	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{})
+	containers, err := cli.ContainerList(context.Background(), container.ListOptions{})
 	if err != nil {
 		return result, err
 	}

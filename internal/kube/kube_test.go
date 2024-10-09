@@ -8,12 +8,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 	"sigs.k8s.io/kind/pkg/cluster"
 )
@@ -28,7 +28,7 @@ type KubeTestSuite struct {
 	provider        *cluster.Provider
 	kubeConfigPath  string
 	namespacesLabel string
-	clientset       *kubernetes.Clientset
+	clientset       *K8SConnection
 }
 
 // create a KIND cluster and a tmp dir before the suite execution
@@ -75,10 +75,9 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 		digests   map[string]string
 	}
 	type args struct {
-		namespaces      []string
-		includePatterns []string
-		excludePatterns []string
-		pods            map[string][]*corev1.Pod
+		namespaces []string
+		filter     *filters.ResourceFilterOptions
+		pods       map[string][]*corev1.Pod
 	}
 	for _, t := range []struct {
 		name            string
@@ -90,8 +89,10 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 		{
 			name: "an empty namespace has nothing to report.",
 			args: args{
-				namespaces:      []string{"empty-ns"},
-				includePatterns: []string{"^empty-ns$"},
+				filter: &filters.ResourceFilterOptions{
+					IncludeNamesRegex: []string{"^empty-ns$"},
+				},
+				namespaces: []string{"empty-ns"},
 			},
 			want: []*comparablePodData{},
 		},
@@ -102,7 +103,9 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 				pods: map[string][]*corev1.Pod{
 					"ns1": {suite.getPodPayload("pod1", []string{"nginx:1.21.3"})},
 				},
-				includePatterns: []string{"^ns1$"},
+				filter: &filters.ResourceFilterOptions{
+					IncludeNamesRegex: []string{"^ns1$"},
+				},
 			},
 			want: []*comparablePodData{
 				{
@@ -117,8 +120,10 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 		{
 			name: "excluding a namespace works.",
 			args: args{
-				namespaces:      []string{"ns2", "ns3"},
-				excludePatterns: []string{"^ns3$", "^default$", "^local-path-storage$", "^ns1$", "^kube-system$", "^empty-ns$", "^kube-node-lease$", "^kube-public$"},
+				namespaces: []string{"ns2", "ns3"},
+				filter: &filters.ResourceFilterOptions{
+					ExcludeNamesRegex: []string{"^ns3$", "^default$", "^local-path-storage$", "^ns1$", "^kube-system$", "^empty-ns$", "^kube-node-lease$", "^kube-public$"},
+				},
 				pods: map[string][]*corev1.Pod{
 					"ns2": {suite.getPodPayload("nginx1", []string{"nginx:1.21.3"})},
 					"ns3": {suite.getPodPayload("nginx2", []string{"nginx:1.21.0"})},
@@ -141,6 +146,7 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 				pods: map[string][]*corev1.Pod{
 					"ns4": {suite.getPodPayload("nginx1", []string{"nginx:1.21.3"})},
 				},
+				filter: &filters.ResourceFilterOptions{},
 			},
 			wantSubset: []*comparablePodData{
 				{
@@ -166,7 +172,7 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 				}
 			}
 			// Get pods data
-			podsData, err := GetPodsData(t.args.includePatterns, t.args.excludePatterns, suite.clientset, logger.NewStandardLogger())
+			podsData, err := suite.clientset.GetPodsData(t.args.filter, logger.NewStandardLogger())
 			require.NoErrorf(suite.T(), err, "error getting pods data for test %s", t.name)
 			actual := []*comparablePodData{}
 			for _, pd := range podsData {
@@ -188,9 +194,8 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 
 func (suite *KubeTestSuite) TestFilterNamespaces() {
 	type args struct {
-		nsList    []corev1.Namespace
-		patterns  []string
-		operation string
+		nsList []corev1.Namespace
+		filter *filters.ResourceFilterOptions
 	}
 	for _, t := range []struct {
 		name        string
@@ -199,45 +204,22 @@ func (suite *KubeTestSuite) TestFilterNamespaces() {
 		want        []string
 	}{
 		{
-			name: "unknown operation causes an error",
-			args: args{
-				nsList: []corev1.Namespace{
-					{ObjectMeta: metav1.ObjectMeta{Name: "ns1"}},
-				},
-				patterns:  []string{"^ns"},
-				operation: "unknown",
-			},
-			expectError: true,
-		},
-		{
-			name: "invalid patterns return error",
+			name: "invalid regex patterns return error",
 			args: args{
 				nsList: []corev1.Namespace{
 					{ObjectMeta: metav1.ObjectMeta{Name: "ns1"}},
 					{ObjectMeta: metav1.ObjectMeta{Name: "ns2"}},
 				},
-				patterns:  []string{"["},
-				operation: "exclude",
+				filter: &filters.ResourceFilterOptions{
+					IncludeNamesRegex: []string{"["},
+				},
 			},
 			expectError: true,
 			want:        []string{},
 		},
-		{
-			name: "excluding when no patterns, returns all input namespaces",
-			args: args{
-				nsList: []corev1.Namespace{
-					{ObjectMeta: metav1.ObjectMeta{Name: "ns1"}},
-					{ObjectMeta: metav1.ObjectMeta{Name: "ns2"}},
-				},
-				patterns:  []string{},
-				operation: "exclude",
-			},
-			expectError: false,
-			want:        []string{"ns1", "ns2"},
-		},
 	} {
 		suite.Run(t.name, func() {
-			result, err := filterNamespaces(t.args.nsList, t.args.patterns, t.args.operation)
+			result, err := suite.clientset.filterNamespaces(t.args.filter)
 			if t.expectError {
 				require.Error(suite.T(), err, "error was expected but got none.")
 			} else {
@@ -250,7 +232,7 @@ func (suite *KubeTestSuite) TestFilterNamespaces() {
 }
 
 // getK8sClient creates a k8s client set
-func (suite *KubeTestSuite) getK8sClient(ctx context.Context) *kubernetes.Clientset {
+func (suite *KubeTestSuite) getK8sClient(ctx context.Context) *K8SConnection {
 	clientset, err := NewK8sClientSet(suite.kubeConfigPath)
 	require.NoErrorf(suite.T(), err, "error creating k8s client set for kubeconfig %s", suite.kubeConfigPath)
 	return clientset

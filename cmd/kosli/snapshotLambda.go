@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/kosli-dev/cli/internal/aws"
+	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -13,7 +14,7 @@ import (
 const snapshotLambdaShortDesc = `Report a snapshot of artifacts deployed as one or more AWS Lambda functions and their digests to Kosli.`
 
 const snapshotLambdaLongDesc = snapshotLambdaShortDesc + `  
-Skip ^--function-names^ to report all functions in a given AWS account. Or use ^--exclude^ and/or ^--exclude-regex^ to report all functions excluding some.` + awsAuthDesc
+Skip ^--function-names^ and ^--function-names-regex^ to report all functions in a given AWS account. Or use ^--exclude^ and/or ^--exclude-regex^ to report all functions excluding some.` + awsAuthDesc
 
 const snapshotLambdaExample = `
 # report all Lambda functions running in an AWS account (AWS auth provided in env variables):
@@ -46,6 +47,16 @@ kosli snapshot lambda yourEnvironmentName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
+# report what is running in the latest version of AWS Lambda functions that match a name regex:
+export AWS_REGION=yourAWSRegion
+export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
+export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
+
+kosli snapshot lambda yourEnvironmentName \
+	--function-names-regex yourFunctionNameRegexPattern \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
 # report what is running in the latest version of multiple AWS Lambda functions (AWS auth provided in env variables):
 export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
@@ -67,16 +78,15 @@ kosli snapshot lambda yourEnvironmentName \
 `
 
 type snapshotLambdaOptions struct {
-	functionNames     []string
-	functionVersion   string
-	excludeNames      []string
-	excludeNamesRegex []string
-	awsStaticCreds    *aws.AWSStaticCreds
+	functionVersion string
+	filter          *filters.ResourceFilterOptions
+	awsStaticCreds  *aws.AWSStaticCreds
 }
 
 func newSnapshotLambdaCmd(out io.Writer) *cobra.Command {
 	o := new(snapshotLambdaOptions)
 	o.awsStaticCreds = new(aws.AWSStaticCreds)
+	o.filter = new(filters.ResourceFilterOptions)
 	cmd := &cobra.Command{
 		Use:     "lambda ENVIRONMENT-NAME",
 		Short:   snapshotLambdaShortDesc,
@@ -94,7 +104,17 @@ func newSnapshotLambdaCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
+			err = MuXRequiredFlags(cmd, []string{"function-names-regex", "exclude"}, false)
+			if err != nil {
+				return err
+			}
+
 			err = MuXRequiredFlags(cmd, []string{"function-name", "function-names", "exclude-regex"}, false)
+			if err != nil {
+				return err
+			}
+
+			err = MuXRequiredFlags(cmd, []string{"function-names-regex", "exclude-regex"}, false)
 			if err != nil {
 				return err
 			}
@@ -106,11 +126,12 @@ func newSnapshotLambdaCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringSliceVar(&o.functionNames, "function-name", []string{}, functionNameFlag)
-	cmd.Flags().StringSliceVar(&o.functionNames, "function-names", []string{}, functionNamesFlag)
+	cmd.Flags().StringSliceVar(&o.filter.IncludeNames, "function-name", []string{}, functionNameFlag)
+	cmd.Flags().StringSliceVar(&o.filter.IncludeNames, "function-names", []string{}, functionNamesFlag)
+	cmd.Flags().StringSliceVar(&o.filter.IncludeNamesRegex, "function-names-regex", []string{}, functionNamesRegexFlag)
 	cmd.Flags().StringVar(&o.functionVersion, "function-version", "", functionVersionFlag)
-	cmd.Flags().StringSliceVar(&o.excludeNames, "exclude", []string{}, excludeFlag)
-	cmd.Flags().StringSliceVar(&o.excludeNamesRegex, "exclude-regex", []string{}, excludeRegexFlag)
+	cmd.Flags().StringSliceVar(&o.filter.ExcludeNames, "exclude", []string{}, excludeFlag)
+	cmd.Flags().StringSliceVar(&o.filter.ExcludeNamesRegex, "exclude-regex", []string{}, excludeRegexFlag)
 	addAWSAuthFlags(cmd, o.awsStaticCreds)
 	addDryRunFlag(cmd)
 
@@ -129,7 +150,7 @@ func (o *snapshotLambdaOptions) run(args []string) error {
 	envName := args[0]
 
 	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/lambda", global.Host, global.Org, envName)
-	lambdaData, err := o.awsStaticCreds.GetLambdaPackageData(o.functionNames, o.excludeNames, o.excludeNamesRegex)
+	lambdaData, err := o.awsStaticCreds.GetLambdaPackageData(o.filter)
 	if err != nil {
 		return err
 	}

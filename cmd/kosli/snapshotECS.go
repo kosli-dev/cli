@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/kosli-dev/cli/internal/aws"
+	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -56,18 +57,15 @@ kosli snapshot ecs yourEnvironmentName \
 `
 
 type snapshotECSOptions struct {
-	clusters       []string
-	clustersRegex  []string
-	exclude        []string
-	excludeRegex   []string
+	filter         *filters.ResourceFilterOptions
 	serviceName    string
-	cluster        string
 	awsStaticCreds *aws.AWSStaticCreds
 }
 
 func newSnapshotECSCmd(out io.Writer) *cobra.Command {
 	o := new(snapshotECSOptions)
 	o.awsStaticCreds = new(aws.AWSStaticCreds)
+	o.filter = new(filters.ResourceFilterOptions)
 	cmd := &cobra.Command{
 		Use:     "ecs ENVIRONMENT-NAME",
 		Short:   snapshotECSShortDesc,
@@ -103,12 +101,12 @@ func newSnapshotECSCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringSliceVar(&o.clusters, "clusters", []string{}, ecsClustersFlag)
-	cmd.Flags().StringSliceVar(&o.clustersRegex, "clusters-regex", []string{}, ecsClustersRegexFlag)
-	cmd.Flags().StringSliceVar(&o.exclude, "exclude", []string{}, ecsExcludeClustersFlag)
-	cmd.Flags().StringSliceVar(&o.excludeRegex, "exclude-regex", []string{}, ecsExcludeClustersRegexFlag)
+	cmd.Flags().StringSliceVar(&o.filter.IncludeNames, "clusters", []string{}, ecsClustersFlag)
+	cmd.Flags().StringSliceVar(&o.filter.IncludeNamesRegex, "clusters-regex", []string{}, ecsClustersRegexFlag)
+	cmd.Flags().StringSliceVar(&o.filter.ExcludeNames, "exclude", []string{}, ecsExcludeClustersFlag)
+	cmd.Flags().StringSliceVar(&o.filter.ExcludeNamesRegex, "exclude-regex", []string{}, ecsExcludeClustersRegexFlag)
 
-	cmd.Flags().StringVarP(&o.cluster, "cluster", "C", "", ecsClusterFlag)
+	cmd.Flags().StringSliceVarP(&o.filter.IncludeNames, "cluster", "C", []string{}, ecsClusterFlag)
 	cmd.Flags().StringVarP(&o.serviceName, "service-name", "s", "", ecsServiceFlag)
 	addAWSAuthFlags(cmd, o.awsStaticCreds)
 	addDryRunFlag(cmd)
@@ -128,11 +126,7 @@ func (o *snapshotECSOptions) run(args []string) error {
 	envName := args[0]
 	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/ECS", global.Host, global.Org, envName)
 
-	if o.cluster != "" {
-		o.clusters = append(o.clusters, o.cluster)
-	}
-
-	tasksData, err := o.awsStaticCreds.GetEcsTasksData(o.clusters, o.clustersRegex, o.exclude, o.excludeRegex)
+	tasksData, err := o.awsStaticCreds.GetEcsTasksData(o.filter)
 	if err != nil {
 		return err
 	}

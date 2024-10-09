@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/kube"
 	"github.com/kosli-dev/cli/internal/requests"
 	homedir "github.com/mitchellh/go-homedir"
@@ -16,6 +17,7 @@ import (
 const snapshotK8SShortDesc = `Report a snapshot of running pods in a K8S cluster or namespace(s) to Kosli.  `
 
 const snapshotK8SLongDesc = snapshotK8SShortDesc + `
+Skip ^--namespaces^ and ^--namespaces-regex^ to report all pods in all namespaces in a cluster.
 The reported data includes pod container images digests and creation timestamps. You can customize the scope of reporting
 to include or exclude namespaces.`
 
@@ -52,13 +54,15 @@ kosli snapshot k8s yourEnvironmentName \
 `
 
 type snapshotK8SOptions struct {
-	kubeconfig        string
-	namespaces        []string
-	excludeNamespaces []string
+	kubeconfig string
+	// namespaces        []string
+	// excludeNamespaces []string
+	filter *filters.ResourceFilterOptions
 }
 
 func newSnapshotK8SCmd(out io.Writer) *cobra.Command {
 	o := new(snapshotK8SOptions)
+	o.filter = new(filters.ResourceFilterOptions)
 	cmd := &cobra.Command{
 		Use:     "k8s ENVIRONMENT-NAME",
 		Aliases: []string{"kubernetes"},
@@ -79,8 +83,10 @@ func newSnapshotK8SCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.kubeconfig, "kubeconfig", "k", defaultKubeConfigPath(), kubeconfigFlag)
-	cmd.Flags().StringSliceVarP(&o.namespaces, "namespaces", "n", []string{}, namespaceFlag)
-	cmd.Flags().StringSliceVarP(&o.excludeNamespaces, "exclude-namespaces", "x", []string{}, excludeNamespaceFlag)
+	cmd.Flags().StringSliceVarP(&o.filter.IncludeNames, "namespaces", "n", []string{}, namespacesFlag)
+	cmd.Flags().StringSliceVar(&o.filter.IncludeNamesRegex, "namespaces-regex", []string{}, namespacesRegexFlag)
+	cmd.Flags().StringSliceVarP(&o.filter.ExcludeNames, "exclude-namespaces", "x", []string{}, excludeNamespacesFlag)
+	cmd.Flags().StringSliceVar(&o.filter.ExcludeNamesRegex, "exclude-namespaces-regex", []string{}, excludeNamespacesRegexFlag)
 	addDryRunFlag(cmd)
 	return cmd
 }
@@ -92,7 +98,7 @@ func (o *snapshotK8SOptions) run(args []string) error {
 	if err != nil {
 		return err
 	}
-	podsData, err := kube.GetPodsData(o.namespaces, o.excludeNamespaces, clientset, logger)
+	podsData, err := clientset.GetPodsData(o.filter, logger)
 	if err != nil {
 		return err
 	}

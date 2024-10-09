@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/testHelpers"
 	"github.com/stretchr/testify/require"
@@ -255,9 +256,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 		name              string
 		requireEnvVars    bool // indicates that a test case needs real credentials from env vars
 		creds             *AWSStaticCreds
-		functionNames     []string
-		excludeNames      []string
-		excludeNamesRegex []string
+		filter            *filters.ResourceFilterOptions
 		expectedFunctions []expectedFunction
 		wantErr           bool
 	}{
@@ -268,24 +267,24 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 				AccessKeyID:     "ssss",
 				SecretAccessKey: "ssss",
 			},
-			functionNames: []string{"cli-tests"},
-			wantErr:       true,
+			filter:  &filters.ResourceFilterOptions{IncludeNames: []string{"cli-tests"}},
+			wantErr: true,
 		},
 		{
-			name: "providing the wrong region causes a failure",
+			name: "providing the wrong region gives an empty result",
 			creds: &AWSStaticCreds{
 				Region: "ap-south-1",
 			},
-			functionNames:  []string{"cli-tests"},
-			requireEnvVars: true,
-			wantErr:        true,
+			filter:            &filters.ResourceFilterOptions{IncludeNames: []string{"cli-tests"}},
+			requireEnvVars:    true,
+			expectedFunctions: []expectedFunction{},
 		},
 		{
 			name: "can get zip package lambda function data from name",
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			functionNames: []string{"cli-tests"},
+			filter: &filters.ResourceFilterOptions{IncludeNames: []string{"cli-tests"}},
 			expectedFunctions: []expectedFunction{{name: "cli-tests",
 				fingerprint: "321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"}},
 			requireEnvVars: true,
@@ -295,7 +294,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			functionNames: []string{"cli-tests-docker"},
+			filter: &filters.ResourceFilterOptions{IncludeNames: []string{"cli-tests-docker"}},
 			expectedFunctions: []expectedFunction{{name: "cli-tests-docker",
 				fingerprint: "e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"}},
 			requireEnvVars: true,
@@ -305,7 +304,20 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			functionNames: []string{"cli-tests-docker", "cli-tests"},
+			filter: &filters.ResourceFilterOptions{IncludeNames: []string{"cli-tests-docker", "cli-tests"}},
+			expectedFunctions: []expectedFunction{
+				{name: "cli-tests",
+					fingerprint: "321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"},
+				{name: "cli-tests-docker",
+					fingerprint: "e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"}},
+			requireEnvVars: true,
+		},
+		{
+			name: "can get a list of lambda functions data from names regex",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			filter: &filters.ResourceFilterOptions{IncludeNamesRegex: []string{"^cli-test.*"}},
 			expectedFunctions: []expectedFunction{
 				{name: "cli-tests",
 					fingerprint: "321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"},
@@ -318,7 +330,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			excludeNamesRegex: []string{"^([^c]|c[^l]|cl[^i]|cli[^-]).*$"},
+			filter: &filters.ResourceFilterOptions{ExcludeNamesRegex: []string{"^([^c]|c[^l]|cl[^i]|cli[^-]).*$"}},
 			expectedFunctions: []expectedFunction{
 				{name: "cli-tests",
 					fingerprint: "321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"},
@@ -331,17 +343,18 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			excludeNamesRegex: []string{"invalid["},
-			requireEnvVars:    true,
-			wantErr:           true,
+			filter:         &filters.ResourceFilterOptions{ExcludeNamesRegex: []string{"invalid["}},
+			requireEnvVars: true,
+			wantErr:        true,
 		},
 		{
 			name: "can combine exclude and exclude-regex and they are joined",
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			excludeNames:      []string{"cli-tests"},
-			excludeNamesRegex: []string{"^([^c]|c[^l]|cl[^i]|cli[^-]).*$"},
+			filter: &filters.ResourceFilterOptions{
+				ExcludeNames:      []string{"cli-tests"},
+				ExcludeNamesRegex: []string{"^([^c]|c[^l]|cl[^i]|cli[^-]).*$"}},
 			expectedFunctions: []expectedFunction{
 				{name: "cli-tests-docker",
 					fingerprint: "e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"}},
@@ -350,12 +363,15 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 	} {
 		suite.Run(t.name, func() {
 			skipOrSetCreds(suite.T(), t.requireEnvVars, t.creds)
-			data, err := t.creds.GetLambdaPackageData(t.functionNames, t.excludeNames, t.excludeNamesRegex)
+			data, err := t.creds.GetLambdaPackageData(t.filter)
 			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetLambdaPackageData() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
 				matchFound := false
 				require.Len(suite.T(), data, len(t.expectedFunctions))
+				if len(t.expectedFunctions) == 0 {
+					matchFound = true
+				}
 			loop1:
 				for _, expectedFunction := range t.expectedFunctions {
 					for _, item := range data {
@@ -513,10 +529,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 		name                 string
 		requireEnvVars       bool // indicates that a test case needs real credentials from env vars
 		creds                *AWSStaticCreds
-		clusterNames         []string
-		clusterNamesRegex    []string
-		exclude              []string
-		excludeRegex         []string
+		filter               *filters.ResourceFilterOptions
 		minNumberOfArtifacts int
 		wantErr              bool
 	}{
@@ -527,15 +540,15 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 				AccessKeyID:     "ssss",
 				SecretAccessKey: "ssss",
 			},
-			clusterNames: []string{"merkely"},
-			wantErr:      true,
+			filter:  &filters.ResourceFilterOptions{IncludeNames: []string{"merkely"}},
+			wantErr: true,
 		},
 		{
 			name: "can get ECS data with cluster name alone",
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			clusterNames:         []string{"merkely"},
+			filter:               &filters.ResourceFilterOptions{IncludeNames: []string{"merkely"}},
 			minNumberOfArtifacts: 2,
 			requireEnvVars:       true,
 		},
@@ -544,7 +557,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 			creds: &AWSStaticCreds{
 				Region: "ap-south-1",
 			},
-			clusterNames:         []string{"merkely"},
+			filter:               &filters.ResourceFilterOptions{IncludeNames: []string{"merkely"}},
 			minNumberOfArtifacts: 0,
 			requireEnvVars:       true,
 		},
@@ -553,7 +566,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			exclude:              []string{"slackapp"},
+			filter:               &filters.ResourceFilterOptions{ExcludeNames: []string{"slackapp"}},
 			minNumberOfArtifacts: 2,
 			requireEnvVars:       true,
 		},
@@ -562,7 +575,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			excludeRegex:         []string{"slack.*"},
+			filter:               &filters.ResourceFilterOptions{ExcludeNamesRegex: []string{"slack.*"}},
 			minNumberOfArtifacts: 2,
 			requireEnvVars:       true,
 		},
@@ -571,14 +584,14 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			clusterNamesRegex:    []string{"^merk.*"},
+			filter:               &filters.ResourceFilterOptions{IncludeNamesRegex: []string{"^merk.*"}},
 			minNumberOfArtifacts: 2,
 			requireEnvVars:       true,
 		},
 	} {
 		suite.Run(t.name, func() {
 			skipOrSetCreds(suite.T(), t.requireEnvVars, t.creds)
-			data, err := t.creds.GetEcsTasksData(t.clusterNames, t.clusterNamesRegex, t.exclude, t.excludeRegex)
+			data, err := t.creds.GetEcsTasksData(t.filter)
 			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetEcsTasksData() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
