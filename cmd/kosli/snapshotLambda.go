@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/kosli-dev/cli/internal/aws"
+	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -78,14 +79,14 @@ kosli snapshot lambda yourEnvironmentName \
 
 type snapshotLambdaOptions struct {
 	functionVersion string
-	filter          *aws.ResourceFilterOptions
+	filter          *filters.ResourceFilterOptions
 	awsStaticCreds  *aws.AWSStaticCreds
 }
 
 func newSnapshotLambdaCmd(out io.Writer) *cobra.Command {
 	o := new(snapshotLambdaOptions)
 	o.awsStaticCreds = new(aws.AWSStaticCreds)
-	o.filter = new(aws.ResourceFilterOptions)
+	o.filter = new(filters.ResourceFilterOptions)
 	cmd := &cobra.Command{
 		Use:     "lambda ENVIRONMENT-NAME",
 		Short:   snapshotLambdaShortDesc,

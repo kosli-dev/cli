@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/kosli-dev/cli/internal/aws"
+	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -56,7 +57,7 @@ kosli snapshot ecs yourEnvironmentName \
 `
 
 type snapshotECSOptions struct {
-	filter         *aws.ResourceFilterOptions
+	filter         *filters.ResourceFilterOptions
 	serviceName    string
 	cluster        string
 	awsStaticCreds *aws.AWSStaticCreds
@@ -65,7 +66,7 @@ type snapshotECSOptions struct {
 func newSnapshotECSCmd(out io.Writer) *cobra.Command {
 	o := new(snapshotECSOptions)
 	o.awsStaticCreds = new(aws.AWSStaticCreds)
-	o.filter = new(aws.ResourceFilterOptions)
+	o.filter = new(filters.ResourceFilterOptions)
 	cmd := &cobra.Command{
 		Use:     "ecs ENVIRONMENT-NAME",
 		Short:   snapshotECSShortDesc,

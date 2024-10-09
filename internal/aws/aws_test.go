@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/testHelpers"
 	"github.com/stretchr/testify/require"
@@ -255,7 +256,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 		name              string
 		requireEnvVars    bool // indicates that a test case needs real credentials from env vars
 		creds             *AWSStaticCreds
-		filter            *ResourceFilterOptions
+		filter            *filters.ResourceFilterOptions
 		expectedFunctions []expectedFunction
 		wantErr           bool
 	}{
@@ -266,7 +267,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 				AccessKeyID:     "ssss",
 				SecretAccessKey: "ssss",
 			},
-			filter:  &ResourceFilterOptions{IncludeNames: []string{"cli-tests"}},
+			filter:  &filters.ResourceFilterOptions{IncludeNames: []string{"cli-tests"}},
 			wantErr: true,
 		},
 		{
@@ -274,7 +275,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			creds: &AWSStaticCreds{
 				Region: "ap-south-1",
 			},
-			filter:            &ResourceFilterOptions{IncludeNames: []string{"cli-tests"}},
+			filter:            &filters.ResourceFilterOptions{IncludeNames: []string{"cli-tests"}},
 			requireEnvVars:    true,
 			expectedFunctions: []expectedFunction{},
 		},
@@ -283,7 +284,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			filter: &ResourceFilterOptions{IncludeNames: []string{"cli-tests"}},
+			filter: &filters.ResourceFilterOptions{IncludeNames: []string{"cli-tests"}},
 			expectedFunctions: []expectedFunction{{name: "cli-tests",
 				fingerprint: "321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"}},
 			requireEnvVars: true,
@@ -293,7 +294,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			filter: &ResourceFilterOptions{IncludeNames: []string{"cli-tests-docker"}},
+			filter: &filters.ResourceFilterOptions{IncludeNames: []string{"cli-tests-docker"}},
 			expectedFunctions: []expectedFunction{{name: "cli-tests-docker",
 				fingerprint: "e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"}},
 			requireEnvVars: true,
@@ -303,7 +304,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			filter: &ResourceFilterOptions{IncludeNames: []string{"cli-tests-docker", "cli-tests"}},
+			filter: &filters.ResourceFilterOptions{IncludeNames: []string{"cli-tests-docker", "cli-tests"}},
 			expectedFunctions: []expectedFunction{
 				{name: "cli-tests",
 					fingerprint: "321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"},
@@ -316,7 +317,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			filter: &ResourceFilterOptions{IncludeNamesRegex: []string{"^cli-test.*"}},
+			filter: &filters.ResourceFilterOptions{IncludeNamesRegex: []string{"^cli-test.*"}},
 			expectedFunctions: []expectedFunction{
 				{name: "cli-tests",
 					fingerprint: "321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"},
@@ -329,7 +330,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			filter: &ResourceFilterOptions{ExcludeNamesRegex: []string{"^([^c]|c[^l]|cl[^i]|cli[^-]).*$"}},
+			filter: &filters.ResourceFilterOptions{ExcludeNamesRegex: []string{"^([^c]|c[^l]|cl[^i]|cli[^-]).*$"}},
 			expectedFunctions: []expectedFunction{
 				{name: "cli-tests",
 					fingerprint: "321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"},
@@ -342,7 +343,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			filter:         &ResourceFilterOptions{ExcludeNamesRegex: []string{"invalid["}},
+			filter:         &filters.ResourceFilterOptions{ExcludeNamesRegex: []string{"invalid["}},
 			requireEnvVars: true,
 			wantErr:        true,
 		},
@@ -351,7 +352,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			filter: &ResourceFilterOptions{
+			filter: &filters.ResourceFilterOptions{
 				ExcludeNames:      []string{"cli-tests"},
 				ExcludeNamesRegex: []string{"^([^c]|c[^l]|cl[^i]|cli[^-]).*$"}},
 			expectedFunctions: []expectedFunction{
@@ -528,7 +529,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 		name                 string
 		requireEnvVars       bool // indicates that a test case needs real credentials from env vars
 		creds                *AWSStaticCreds
-		filter               *ResourceFilterOptions
+		filter               *filters.ResourceFilterOptions
 		minNumberOfArtifacts int
 		wantErr              bool
 	}{
@@ -539,7 +540,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 				AccessKeyID:     "ssss",
 				SecretAccessKey: "ssss",
 			},
-			filter:  &ResourceFilterOptions{IncludeNames: []string{"merkely"}},
+			filter:  &filters.ResourceFilterOptions{IncludeNames: []string{"merkely"}},
 			wantErr: true,
 		},
 		{
@@ -547,7 +548,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			filter:               &ResourceFilterOptions{IncludeNames: []string{"merkely"}},
+			filter:               &filters.ResourceFilterOptions{IncludeNames: []string{"merkely"}},
 			minNumberOfArtifacts: 2,
 			requireEnvVars:       true,
 		},
@@ -556,7 +557,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 			creds: &AWSStaticCreds{
 				Region: "ap-south-1",
 			},
-			filter:               &ResourceFilterOptions{IncludeNames: []string{"merkely"}},
+			filter:               &filters.ResourceFilterOptions{IncludeNames: []string{"merkely"}},
 			minNumberOfArtifacts: 0,
 			requireEnvVars:       true,
 		},
@@ -565,7 +566,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			filter:               &ResourceFilterOptions{ExcludeNames: []string{"slackapp"}},
+			filter:               &filters.ResourceFilterOptions{ExcludeNames: []string{"slackapp"}},
 			minNumberOfArtifacts: 2,
 			requireEnvVars:       true,
 		},
@@ -574,7 +575,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			filter:               &ResourceFilterOptions{ExcludeNamesRegex: []string{"slack.*"}},
+			filter:               &filters.ResourceFilterOptions{ExcludeNamesRegex: []string{"slack.*"}},
 			minNumberOfArtifacts: 2,
 			requireEnvVars:       true,
 		},
@@ -583,7 +584,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			filter:               &ResourceFilterOptions{IncludeNamesRegex: []string{"^merk.*"}},
+			filter:               &filters.ResourceFilterOptions{IncludeNamesRegex: []string{"^merk.*"}},
 			minNumberOfArtifacts: 2,
 			requireEnvVars:       true,
 		},

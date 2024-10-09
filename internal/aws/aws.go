@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
-	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -23,6 +21,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/lambda/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/kosli-dev/cli/internal/digest"
+	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/utils"
 )
@@ -60,13 +59,6 @@ type S3Data struct {
 type LambdaData struct {
 	Digests               map[string]string `json:"digests"`
 	LastModifiedTimestamp int64             `json:"creationTimestamp"`
-}
-
-type ResourceFilterOptions struct {
-	IncludeNames      []string
-	IncludeNamesRegex []string
-	ExcludeNames      []string
-	ExcludeNamesRegex []string
 }
 
 // NewEcsTaskData creates a NewEcsTaskData object from an ECS task
@@ -139,7 +131,7 @@ func (staticCreds *AWSStaticCreds) NewECSClient() (*ecs.Client, error) {
 
 // getFilteredLambdaFuncs fetches a filtered set of lambda functions recursively (50 at a time) and returns a list of FunctionConfiguration
 func getFilteredLambdaFuncs(client *lambda.Client, nextMarker *string, allFunctions *[]types.FunctionConfiguration,
-	filter *ResourceFilterOptions) (*[]types.FunctionConfiguration, error) {
+	filter *filters.ResourceFilterOptions) (*[]types.FunctionConfiguration, error) {
 	params := &lambda.ListFunctionsInput{}
 	if nextMarker != nil {
 		params.Marker = nextMarker
@@ -155,47 +147,12 @@ func getFilteredLambdaFuncs(client *lambda.Client, nextMarker *string, allFuncti
 		*allFunctions = append(*allFunctions, listFunctionsOutput.Functions...)
 	} else {
 		for _, f := range listFunctionsOutput.Functions {
-			if len(filter.ExcludeNames) > 0 || len(filter.ExcludeNamesRegex) > 0 {
-				if slices.Contains(filter.ExcludeNames, *f.FunctionName) {
-					continue
-				}
-				funcExcluded := false
-				for _, pattern := range filter.ExcludeNamesRegex {
-					re, err := regexp.Compile(pattern)
-					if err != nil {
-						return allFunctions, fmt.Errorf("invalid exclude name regex pattern %s: %v", pattern, err)
-					}
-					if re.MatchString(*f.FunctionName) {
-						funcExcluded = true
-						break
-					}
-				}
-				if funcExcluded {
-					continue
-				}
-
+			include, err := filter.ShouldInclude(*f.FunctionName)
+			if err != nil {
+				return allFunctions, err
+			}
+			if include {
 				*allFunctions = append(*allFunctions, f)
-			} else {
-				// inclusion
-				if slices.Contains(filter.IncludeNames, *f.FunctionName) {
-					*allFunctions = append(*allFunctions, f)
-					continue
-				}
-
-				funcIncluded := false
-				for _, pattern := range filter.IncludeNamesRegex {
-					re, err := regexp.Compile(pattern)
-					if err != nil {
-						return allFunctions, fmt.Errorf("invalid include name regex pattern %s: %v", pattern, err)
-					}
-					if re.MatchString(*f.FunctionName) {
-						funcIncluded = true
-						break
-					}
-				}
-				if funcIncluded {
-					*allFunctions = append(*allFunctions, f)
-				}
 			}
 		}
 	}
@@ -210,7 +167,7 @@ func getFilteredLambdaFuncs(client *lambda.Client, nextMarker *string, allFuncti
 }
 
 // GetLambdaPackageData returns a digest and metadata of a Lambda function package
-func (staticCreds *AWSStaticCreds) GetLambdaPackageData(filter *ResourceFilterOptions) ([]*LambdaData, error) {
+func (staticCreds *AWSStaticCreds) GetLambdaPackageData(filter *filters.ResourceFilterOptions) ([]*LambdaData, error) {
 	lambdaData := []*LambdaData{}
 	client, err := staticCreds.NewLambdaClient()
 	if err != nil {
@@ -464,7 +421,7 @@ func downloadFileFromBucket(downloader *s3manager.Downloader, dirName, key, buck
 
 // getFilteredECSClusters fetches a filtered set of ECS clusters recursively (50 at a time) and returns a list of ecs Clusters
 func getFilteredECSClusters(client *ecs.Client, nextToken *string, allClusters *[]ecsTypes.Cluster,
-	filter *ResourceFilterOptions) (*[]ecsTypes.Cluster, error) {
+	filter *filters.ResourceFilterOptions) (*[]ecsTypes.Cluster, error) {
 	params := &ecs.ListClustersInput{}
 	if nextToken != nil {
 		params.NextToken = nextToken
@@ -485,46 +442,12 @@ func getFilteredECSClusters(client *ecs.Client, nextToken *string, allClusters *
 		*allClusters = append(*allClusters, describeClustersOutput.Clusters...)
 	} else {
 		for _, c := range describeClustersOutput.Clusters {
-			if len(filter.ExcludeNames) > 0 || len(filter.ExcludeNamesRegex) > 0 {
-				if slices.Contains(filter.ExcludeNames, *c.ClusterName) {
-					continue
-				}
-				clusterExcluded := false
-				for _, pattern := range filter.ExcludeNamesRegex {
-					re, err := regexp.Compile(pattern)
-					if err != nil {
-						return allClusters, fmt.Errorf("invalid exclude name regex pattern %s: %v", pattern, err)
-					}
-					if re.MatchString(*c.ClusterName) {
-						clusterExcluded = true
-						break
-					}
-				}
-				if clusterExcluded {
-					continue
-				}
+			include, err := filter.ShouldInclude(*c.ClusterName)
+			if err != nil {
+				return allClusters, err
+			}
+			if include {
 				*allClusters = append(*allClusters, c)
-			} else {
-				// inclusion
-				if slices.Contains(filter.IncludeNames, *c.ClusterName) {
-					*allClusters = append(*allClusters, c)
-					continue
-				}
-
-				clusterIncluded := false
-				for _, pattern := range filter.IncludeNamesRegex {
-					re, err := regexp.Compile(pattern)
-					if err != nil {
-						return allClusters, fmt.Errorf("invalid include name regex pattern %s: %v", pattern, err)
-					}
-					if re.MatchString(*c.ClusterName) {
-						clusterIncluded = true
-						break
-					}
-				}
-				if clusterIncluded {
-					*allClusters = append(*allClusters, c)
-				}
 			}
 		}
 	}
@@ -539,7 +462,7 @@ func getFilteredECSClusters(client *ecs.Client, nextToken *string, allClusters *
 }
 
 // GetEcsTasksData returns a list of tasks data for an ECS cluster or service
-func (staticCreds *AWSStaticCreds) GetEcsTasksData(filter *ResourceFilterOptions) ([]*EcsTaskData, error) {
+func (staticCreds *AWSStaticCreds) GetEcsTasksData(filter *filters.ResourceFilterOptions) ([]*EcsTaskData, error) {
 	allTasksData := []*EcsTaskData{}
 	client, err := staticCreds.NewECSClient()
 	if err != nil {
