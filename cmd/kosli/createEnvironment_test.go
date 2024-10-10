@@ -99,8 +99,8 @@ func (suite *CreateEnvironmentCommandTestSuite) TestCreateEnvironmentCmd() {
 		{
 			wantError: true,
 			name:      "fails when name is considered invalid by the server",
-			cmd:       "create env foo_bar --type K8S" + suite.defaultKosliArguments,
-			golden:    "Error: Input payload validation failed: map[name:'foo_bar' does not match '^[a-zA-Z][a-zA-Z0-9\\\\-]*$']\n",
+			cmd:       "create env 'foo bar' --type K8S" + suite.defaultKosliArguments,
+			golden:    "Error: Input payload validation failed: map[name:'foo bar' does not match '^[a-zA-Z0-9][a-zA-Z0-9\\\\.\\\\-_~]*$']\n",
 		},
 		{
 			wantError: false,

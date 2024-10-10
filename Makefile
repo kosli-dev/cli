@@ -76,25 +76,25 @@ test_setup_restart_server: ensure_gotestsum
 	./bin/reset-or-start-server.sh force
 
 test_integration: deps vet ensure_network test_setup ## Run tests except the too slow ones
-	@mv ~/.kosli.yml ~/.kosli-renamed.yml || true
+	@[ -e ~/.kosli.yml ] && mv ~/.kosli.yml ~/.kosli-renamed.yml || true
 	@export KOSLI_TESTS=true && $(GOTESTSUM) -- --short -p=8 -coverprofile=cover.out ./...
 	@go tool cover -func=cover.out | grep total:
 	@go tool cover -html=cover.out
-	@mv ~/.kosli-renamed.yml ~/.kosli.yml || true
+	@[ -e ~/.kosli-renamed.yml ] && mv ~/.kosli-renamed.yml ~/.kosli.yml || true
 
 
 test_integration_full: deps vet ensure_network test_setup ## Run all tests
-	@mv ~/.kosli.yml ~/.kosli-renamed.yml || true
+	@[ -e ~/.kosli.yml ] && mv ~/.kosli.yml ~/.kosli-renamed.yml || true
 	@export KOSLI_TESTS=true && $(GOTESTSUM) --junitfile junit.xml -- -p=8 -coverprofile=cover.out ./...
 	@go tool cover -func=cover.out
-	@mv ~/.kosli-renamed.yml ~/.kosli.yml || true
+	@[ -e ~/.kosli-renamed.yml ] && mv ~/.kosli-renamed.yml ~/.kosli.yml || true
 
 
 test_integration_restart_server: test_setup_restart_server
-	@mv ~/.kosli.yml ~/.kosli-renamed.yml || true
+	@[ -e ~/.kosli.yml ] && mv ~/.kosli.yml ~/.kosli-renamed.yml || true
 	@export KOSLI_TESTS=true && $(GOTESTSUM) -- --short -p=8 -coverprofile=cover.out ./...
 	@go tool cover -html=cover.out
-	@mv ~/.kosli-renamed.yml ~/.kosli.yml || true
+	@[ -e ~/.kosli-renamed.yml ] && mv ~/.kosli-renamed.yml ~/.kosli.yml || true
 
 test_integration_single: test_setup
 	@export KOSLI_TESTS=true && $(GOTESTSUM) -- -p=1 ./... -run "${TARGET}"
