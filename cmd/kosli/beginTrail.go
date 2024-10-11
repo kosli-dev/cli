@@ -17,7 +17,7 @@ const beginTrailLongDesc = beginTrailShortDesc + `
 You can optionally associate the trail to a git commit using ^--commit^ (requires access to a git repo). And you  
 can optionally redact some of the git commit data sent to Kosli using ^--redact-commit-info^.
 
-A legal ^TRAIL-NAME^ must start with an alphanumeric and only contain alphanumeric characters, ^.^, ^-^, ^_^ and ^~^.
+^TRAIL-NAME^s must start with a letter or number, and only contain letters, numbers, ^.^, ^-^, ^_^, and ^~^.
 `
 
 const beginTrailExample = `
