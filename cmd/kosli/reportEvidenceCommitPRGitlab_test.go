@@ -36,21 +36,21 @@ func (suite *CommitEvidencePRGitlabCommandTestSuite) TestCommitEvidencePRGitlabC
 		{
 			name: "report Gitlab PR evidence works when no merge requests are found",
 			cmd: `report evidence commit pullrequest gitlab --name gl-pr --flows ` + suite.flowName + `
-			          --build-url http://www.example.com --gitlab-org ewelinawilkosz  --repository merkely-gitlab-demo --commit 2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --gitlab-org kosli-dev  --repository merkely-gitlab-demo --commit 2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6` + suite.defaultKosliArguments,
 			goldenRegex: "found 0 merge request\\(s\\) for commit: 2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6\n" +
 				"gitlab merge request evidence is reported to commit: 2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6\n",
 		},
 		{
 			name: "report Gitlab PR evidence works when there are merge requests",
 			cmd: `report evidence commit pullrequest gitlab --name gl-pr --flows ` + suite.flowName + `
-			          --build-url http://www.example.com --gitlab-org ewelinawilkosz  --repository merkely-gitlab-demo --commit e6510880aecdc05d79104d937e1adb572bd91911` + suite.defaultKosliArguments,
-			goldenRegex: "found 1 merge request\\(s\\) for commit: e6510880aecdc05d79104d937e1adb572bd91911\ngitlab merge request evidence is reported to commit: e6510880aecdc05d79104d937e1adb572bd91911\n",
+			          --build-url http://www.example.com --gitlab-org kosli-dev  --repository merkely-gitlab-demo --commit f6d2c1a288f2c400c04e8451f4fdddb1f3b4ce01` + suite.defaultKosliArguments,
+			goldenRegex: "found 1 merge request\\(s\\) for commit: f6d2c1a288f2c400c04e8451f4fdddb1f3b4ce01\ngitlab merge request evidence is reported to commit: f6d2c1a288f2c400c04e8451f4fdddb1f3b4ce01\n",
 		},
 		{
 			wantError: true,
 			name:      "report Gitlab PR evidence fails when --name is missing",
 			cmd: `report evidence commit pullrequest gitlab --flows ` + suite.flowName + `
-			          --build-url http://www.example.com --gitlab-org ewelinawilkosz  --repository merkely-gitlab-demo --commit e6510880aecdc05d79104d937e1adb572bd91911` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --gitlab-org kosli-dev  --repository merkely-gitlab-demo --commit f6d2c1a288f2c400c04e8451f4fdddb1f3b4ce01` + suite.defaultKosliArguments,
 			goldenRegex: "Error: required flag\\(s\\) \"name\" not set\n",
 		},
 		{
@@ -86,15 +86,15 @@ func (suite *CommitEvidencePRGitlabCommandTestSuite) TestCommitEvidencePRGitlabC
 			wantError: true,
 			name:      "report Gitlab PR evidence fails when commit does not exist",
 			cmd: `report evidence commit pullrequest gitlab --name gl-pr --flows ` + suite.flowName + `
-			          --build-url http://www.example.com --gitlab-org ewelinawilkosz --repository merkely-gitlab-demo --commit 73d7fee2f31ade8e1a9c456c324255212c3123ab` + suite.defaultKosliArguments,
-			goldenRegex: "Error: GET https://gitlab.com/api/v4/projects/ewelinawilkosz/merkely-gitlab-demo/repository/commits/73d7fee2f31ade8e1a9c456c324255212c3123ab/merge_requests: 404 {message: 404 Commit Not Found}\n",
+			          --build-url http://www.example.com --gitlab-org kosli-dev --repository merkely-gitlab-demo --commit 73d7fee2f31ade8e1a9c456c324255212c3123ab` + suite.defaultKosliArguments,
+			goldenRegex: "Error: GET https://gitlab.com/api/v4/projects/kosli-dev/merkely-gitlab-demo/repository/commits/73d7fee2f31ade8e1a9c456c324255212c3123ab/merge_requests: 404 {message: 404 Commit Not Found}\n",
 		},
 		{
 			wantError: true,
 			name:      "report Gitlab PR evidence fails when --assert is used and commit has no PRs",
 			cmd: `report evidence commit pullrequest gitlab --name gl-pr --flows ` + suite.flowName + `
 					  --assert
-			          --build-url http://www.example.com --gitlab-org ewelinawilkosz --repository merkely-gitlab-demo --commit 2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --gitlab-org kosli-dev --repository merkely-gitlab-demo --commit 2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6` + suite.defaultKosliArguments,
 			goldenRegex: "found 0 merge request\\(s\\) for commit: .*\ngitlab merge request evidence is reported to commit: .*\nError: assert failed: no merge request found for the given commit: .*\n",
 		},
 		{
@@ -102,7 +102,7 @@ func (suite *CommitEvidencePRGitlabCommandTestSuite) TestCommitEvidencePRGitlabC
 			name:      "report Gitlab PR evidence fails when --user-data is not found",
 			cmd: `report evidence commit pullrequest gitlab --name gl-pr --flows ` + suite.flowName + `
 					  --user-data non-existing.json
-			          --build-url http://www.example.com --gitlab-org ewelinawilkosz --repository merkely-gitlab-demo --commit e6510880aecdc05d79104d937e1adb572bd91911` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --gitlab-org kosli-dev --repository merkely-gitlab-demo --commit f6d2c1a288f2c400c04e8451f4fdddb1f3b4ce01` + suite.defaultKosliArguments,
 			goldenRegex: "Error: open non-existing.json: no such file or directory\n",
 		},
 	}

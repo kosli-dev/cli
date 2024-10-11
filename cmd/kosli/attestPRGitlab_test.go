@@ -37,10 +37,10 @@ func (suite *AttestGitlabPRCommandTestSuite) SetupTest() {
 	var err error
 	suite.tmpDir, err = os.MkdirTemp("", "testDir")
 	require.NoError(suite.T(), err)
-	_, err = testHelpers.CloneGitRepo("https://gitlab.com/ewelinawilkosz/merkely-gitlab-demo.git", suite.tmpDir)
+	_, err = testHelpers.CloneGitRepo("https://gitlab.com/kosli-dev/merkely-gitlab-demo.git", suite.tmpDir)
 	require.NoError(suite.T(), err)
 
-	suite.defaultKosliArguments = fmt.Sprintf(" --flow %s --trail %s --repo-root %s --commit e6510880aecdc05d79104d937e1adb572bd91911 --host %s --org %s --api-token %s", suite.flowName, suite.trailName, suite.tmpDir, global.Host, global.Org, global.ApiToken)
+	suite.defaultKosliArguments = fmt.Sprintf(" --flow %s --trail %s --repo-root %s --commit f6d2c1a288f2c400c04e8451f4fdddb1f3b4ce01 --host %s --org %s --api-token %s", suite.flowName, suite.trailName, suite.tmpDir, global.Host, global.Org, global.ApiToken)
 	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
 	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
 	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.T())
@@ -80,43 +80,43 @@ func (suite *AttestGitlabPRCommandTestSuite) TestAttestGitlabPRCmd() {
 			wantError: true,
 			name:      "attesting against an artifact that does not exist fails",
 			cmd: fmt.Sprintf(`attest pullrequest gitlab --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo 
-						--gitlab-org ewelinawilkosz --repository merkely-gitlab-demo   %s`, suite.defaultKosliArguments),
+						--gitlab-org kosli-dev --repository merkely-gitlab-demo   %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 1 merge request\\(s\\) for commit: .*\nError: Artifact with fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 does not exist in trail \"test-123\" of flow \"attest-gitlab-pr\" belonging to organization \"docs-cmd-test-user\"\n",
 		},
 		{
 			name: "can attest gitlab pr against an artifact using artifact name and --artifact-type",
 			cmd: fmt.Sprintf(`attest pullrequest gitlab testdata/file1 --artifact-type file --name foo 
-					--gitlab-org ewelinawilkosz --repository merkely-gitlab-demo  %s`, suite.defaultKosliArguments),
+					--gitlab-org kosli-dev --repository merkely-gitlab-demo  %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 1 merge request\\(s\\) for commit: .*\ngitlab merge request attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			name: "can attest gitlab pr against an artifact using artifact name and --artifact-type when --name does not exist in the trail template",
 			cmd: fmt.Sprintf(`attest pullrequest gitlab testdata/file1 --artifact-type file --name bar 
-					--gitlab-org ewelinawilkosz --repository merkely-gitlab-demo  %s`, suite.defaultKosliArguments),
+					--gitlab-org kosli-dev --repository merkely-gitlab-demo  %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 1 merge request\\(s\\) for commit: .*\ngitlab merge request attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
 			name: "can attest gitlab pr against an artifact using --fingerprint",
 			cmd: fmt.Sprintf(`attest pullrequest gitlab --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo 
-					--gitlab-org ewelinawilkosz --repository merkely-gitlab-demo  %s`, suite.defaultKosliArguments),
+					--gitlab-org kosli-dev --repository merkely-gitlab-demo  %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 1 merge request\\(s\\) for commit: .*\ngitlab merge request attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			name: "can attest gitlab pr against a trail",
 			cmd: fmt.Sprintf(`attest pullrequest gitlab --name bar 
-				--gitlab-org ewelinawilkosz --repository merkely-gitlab-demo  %s`, suite.defaultKosliArguments),
+				--gitlab-org kosli-dev --repository merkely-gitlab-demo  %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 1 merge request\\(s\\) for commit: .*\ngitlab merge request attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
 			name: "can attest gitlab pr against a trail when name is not found in the trail template",
 			cmd: fmt.Sprintf(`attest pullrequest gitlab --name additional 
-					--gitlab-org ewelinawilkosz --repository merkely-gitlab-demo  %s`, suite.defaultKosliArguments),
+					--gitlab-org kosli-dev --repository merkely-gitlab-demo  %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 1 merge request\\(s\\) for commit: .*\ngitlab merge request attestation 'additional' is reported to trail: test-123\n",
 		},
 		{
 			name: "can attest gitlab pr against an artifact it is created using dot syntax in --name",
 			cmd: fmt.Sprintf(`attest pullrequest gitlab --name cli.foo 
-				--gitlab-org ewelinawilkosz --repository merkely-gitlab-demo  %s`, suite.defaultKosliArguments),
+				--gitlab-org kosli-dev --repository merkely-gitlab-demo  %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 1 merge request\\(s\\) for commit: .*\ngitlab merge request attestation 'foo' is reported to trail: test-123\n",
 		},
 	}

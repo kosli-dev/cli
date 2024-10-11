@@ -99,9 +99,9 @@ func (suite *GitlabTestSuite) TestMergeRequestsForCommit() {
 		},
 		{
 			name:   "valid token and commit with an MR find one MR",
-			commit: "e6510880aecdc05d79104d937e1adb572bd91911",
+			commit: "f6d2c1a288f2c400c04e8451f4fdddb1f3b4ce01",
 			gitlabConfig: &GitlabConfig{
-				Org:        "ewelinawilkosz",
+				Org:        "kosli-dev",
 				Repository: "merkely-gitlab-demo",
 			},
 			requireEnvVars: true,
@@ -113,7 +113,7 @@ func (suite *GitlabTestSuite) TestMergeRequestsForCommit() {
 			name:   "valid token and commit with no MRs find no MRs",
 			commit: "2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6",
 			gitlabConfig: &GitlabConfig{
-				Org:        "ewelinawilkosz",
+				Org:        "kosli-dev",
 				Repository: "merkely-gitlab-demo",
 			},
 			requireEnvVars: true,
@@ -125,7 +125,7 @@ func (suite *GitlabTestSuite) TestMergeRequestsForCommit() {
 			name:   "valid token and wrong commit causes an error",
 			commit: "ab4979c426d2d8e77586cfaaf32a7d50a1439bfa",
 			gitlabConfig: &GitlabConfig{
-				Org:        "ewelinawilkosz",
+				Org:        "kosli-dev",
 				Repository: "merkely-gitlab-demo",
 			},
 			requireEnvVars: true,
@@ -174,9 +174,9 @@ func (suite *GitlabTestSuite) TestPREvidenceForCommit() {
 		},
 		{
 			name:   "valid token and commit with an MR find one MR",
-			commit: "e6510880aecdc05d79104d937e1adb572bd91911",
+			commit: "f6d2c1a288f2c400c04e8451f4fdddb1f3b4ce01",
 			gitlabConfig: &GitlabConfig{
-				Org:        "ewelinawilkosz",
+				Org:        "kosli-dev",
 				Repository: "merkely-gitlab-demo",
 			},
 			requireEnvVars: true,
@@ -188,7 +188,7 @@ func (suite *GitlabTestSuite) TestPREvidenceForCommit() {
 			name:   "valid token and commit with no MRs find no MRs",
 			commit: "2ec23dda01fc85e3f94a2b5ea8cb8cf7e79c4ed6",
 			gitlabConfig: &GitlabConfig{
-				Org:        "ewelinawilkosz",
+				Org:        "kosli-dev",
 				Repository: "merkely-gitlab-demo",
 			},
 			requireEnvVars: true,
@@ -200,7 +200,7 @@ func (suite *GitlabTestSuite) TestPREvidenceForCommit() {
 			name:   "valid token and wrong commit causes an error",
 			commit: "ab4979c426d2d8e77586cfaaf32a7d50a1439bfa",
 			gitlabConfig: &GitlabConfig{
-				Org:        "ewelinawilkosz",
+				Org:        "kosli-dev",
 				Repository: "merkely-gitlab-demo",
 			},
 			requireEnvVars: true,
@@ -250,19 +250,19 @@ func (suite *GitlabTestSuite) TestGetMergeRequestApprovers() {
 			name:  "valid token and mrIID get the correct approvers",
 			mrIID: 2,
 			gitlabConfig: &GitlabConfig{
-				Org:        "ewelinawilkosz",
+				Org:        "kosli-dev",
 				Repository: "merkely-gitlab-demo",
 			},
 			requireEnvVars: true,
 			result: result{
-				approvers: []string{"Sami Alajrami (@sami.alajrami)"},
+				approvers: []string{"Tore Martin Hagen (@tore7681647)"},
 			},
 		},
 		{
 			name:  "valid token and mrIID with no approvals returns empty list",
 			mrIID: 1,
 			gitlabConfig: &GitlabConfig{
-				Org:        "ewelinawilkosz",
+				Org:        "kosli-dev",
 				Repository: "merkely-gitlab-demo",
 			},
 			requireEnvVars: true,
@@ -274,7 +274,7 @@ func (suite *GitlabTestSuite) TestGetMergeRequestApprovers() {
 			name:  "valid token and non-existing mrIID causes an error",
 			mrIID: 200,
 			gitlabConfig: &GitlabConfig{
-				Org:        "ewelinawilkosz",
+				Org:        "kosli-dev",
 				Repository: "merkely-gitlab-demo",
 			},
 			requireEnvVars: true,
