@@ -72,8 +72,11 @@ func (suite *SnapshotECSTestSuite) TestSnapshotECSCmd() {
 			golden:    "Error: only one of --cluster, --clusters, --exclude-regex is allowed\n",
 		},
 		{
-			name:        "snapshot ECS works if no filtering flags are used",
-			cmd:         fmt.Sprintf(`snapshot ecs %s %s`, suite.envName, suite.defaultKosliArguments),
+			name: "snapshot ECS works if no filtering flags are used",
+			cmd:  fmt.Sprintf(`snapshot ecs %s %s`, suite.envName, suite.defaultKosliArguments),
+			additionalConfig: snapshotECSTestConfig{
+				requireAuthToBeSet: true,
+			},
 			goldenRegex: "\\[\\d+\\] containers were reported to environment snapshot-ecs-env\n",
 		},
 		{

@@ -37,6 +37,8 @@ it off again with the --exclude-scaling.
 Logical environments are used for grouping of physical environments. For instance **prod-aws** and **prod-s3** can
 be grouped into logical environment **prod**. Logical environments are view-only, you can not report snapshots
 to them.
+
+A legal ^ENVIRONMENT-NAME^ must start with an alphanumeric and only contain alphanumeric characters, ^.^, ^-^, ^_^ and ^~^.
 `
 
 const createEnvironmentExample = `
