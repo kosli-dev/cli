@@ -16,7 +16,10 @@ import (
 const createFlowShortDesc = `Create or update a Kosli flow.`
 
 const createFlowLongDesc = createFlowShortDesc + `
-You can specify flow parameters in flags.`
+You can specify flow parameters in flags.
+
+A legal ^FLOW-NAME^ must start with an alphanumeric and only contain alphanumeric characters, ^.^, ^-^, ^_^ and ^~^.
+`
 
 const createFlowExample = `
 # create/update a Kosli flow (with empty template):

@@ -15,7 +15,10 @@ const beginTrailShortDesc = `Begin or update a Kosli flow trail.`
 const beginTrailLongDesc = beginTrailShortDesc + `
 
 You can optionally associate the trail to a git commit using ^--commit^ (requires access to a git repo). And you  
-can optionally redact some of the git commit data sent to Kosli using ^--redact-commit-info^`
+can optionally redact some of the git commit data sent to Kosli using ^--redact-commit-info^.
+
+A legal ^TRAIL-NAME^ must start with an alphanumeric and only contain alphanumeric characters, ^.^, ^-^, ^_^ and ^~^.
+`
 
 const beginTrailExample = `
 # begin/update a Kosli flow trail:
