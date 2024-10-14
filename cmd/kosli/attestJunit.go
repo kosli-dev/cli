@@ -22,7 +22,9 @@ type attestJunitOptions struct {
 	payload          JunitAttestationPayload
 }
 
-const attestJunitShortDesc = `Report a junit attestation to an artifact or a trail in a Kosli flow.  `
+const attestJunitShortDesc = `Report a junit attestation to an artifact or a trail in a Kosli flow.
+JUnit xml files are read from the ^--results-dir^ directory which defaults to the current directory.
+The xml files are automatically uploaded as ^--attachments^ via the ^--upload-results^ flag which defaults to ^true^.  `
 
 const attestJunitLongDesc = attestJunitShortDesc + attestationBindingDesc + `
 
