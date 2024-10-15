@@ -58,3 +58,8 @@ You can follow one of the tutorials below to setup automatic snapshot reporting 
 - [Kubernetes environment reporting](/tutorials/report_k8s_envs)
 - [AWS ECS/S3/Lambda environment reporting](/tutorials/report_aws_envs)
 
+## Logical Environments
+
+Logical environments are a way to group your Kosli environments so you can view all changes happening in your group in the same place. For example, if what you consider to be “Production” is a combination of a Kubernetes cluster, an S3 bucket, and a configuration file, you can combine the reports sent to these Kosli environments into a “Production” logical environment.
+
+A logical environment can be created in the app or the CLI, and physical environments can be assigned to it in the app or with the [`kosli join environment`](/client_reference/kosli_join_environment/) command.
