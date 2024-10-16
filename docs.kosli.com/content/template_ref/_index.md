@@ -10,7 +10,7 @@ version: The version of the specification schema. Allowed values are [1]. (requi
 trail: # the trail specification (optional)
   attestations: # what attestations are required for the trail to be compliant (optional)
   - name: the attestation name (required)
-    type: the attestation type. One of [generic, jira, junit, pull_request, snyk] (required)
+    type: the attestation type. One of [generic, jira, junit, pull_request, snyk, sonar, any] (required)
   artifacts: # what artifacts are expected to be produced in the trail (optional)
   - name: reference name for the artifact (e.g. frontend-app) (required)
     attestations: # what attestations are required for the artifact to be compliant
