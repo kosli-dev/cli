@@ -172,9 +172,9 @@ func (suite *CliUtilsTestSuite) TestDefaultValue() {
 				ci:               circleci,
 				flag:             "commit-url",
 				unsetTestsEnvVar: true,
-				envVars:          map[string]string{"CIRCLE_REPOSITORY_URL": "git@bitbucket.org:ewelinawilkosz/cli-test.git", "CIRCLE_SHA1": "fd54040fc90e7e83f7b152619bfa18917b72c34f"},
+				envVars:          map[string]string{"CIRCLE_REPOSITORY_URL": "git@bitbucket.org:kosli-dev/cli-test.git", "CIRCLE_SHA1": "fd54040fc90e7e83f7b152619bfa18917b72c34f"},
 			},
-			want: "https://bitbucket.org/ewelinawilkosz/cli-test/commits/fd54040fc90e7e83f7b152619bfa18917b72c34f",
+			want: "https://bitbucket.org/kosli-dev/cli-test/commits/fd54040fc90e7e83f7b152619bfa18917b72c34f",
 		},
 		{
 			name: "Lookup commit-url for CircleCI with a repo that is not from bitbucket returns correct url (with '/commit/')",
