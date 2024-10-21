@@ -294,15 +294,15 @@ func (suite *GitViewTestSuite) TestGetCommitURL() {
 		},
 		{
 			name:       "gitlab",
-			repoURL:    "https://gitlab.com/ewelinawilkosz/merkely-gitlab-demo",
+			repoURL:    "https://gitlab.com/kosli/merkely-gitlab-demo",
 			commitHash: "089615f84caedd6280689da694e71052cbdfb84d",
-			want:       "https://gitlab.com/ewelinawilkosz/merkely-gitlab-demo/-/commit/089615f84caedd6280689da694e71052cbdfb84d",
+			want:       "https://gitlab.com/kosli/merkely-gitlab-demo/-/commit/089615f84caedd6280689da694e71052cbdfb84d",
 		},
 		{
 			name:       "bitbucket",
-			repoURL:    "https://bitbucket.org/ewelinawilkosz/cli-test",
+			repoURL:    "https://bitbucket.org/kosli-dev/cli-test",
 			commitHash: "089615f84caedd6280689da694e71052cbdfb84d",
-			want:       "https://bitbucket.org/ewelinawilkosz/cli-test/commits/089615f84caedd6280689da694e71052cbdfb84d",
+			want:       "https://bitbucket.org/kosli-dev/cli-test/commits/089615f84caedd6280689da694e71052cbdfb84d",
 		},
 		{
 			name:       "azure",
