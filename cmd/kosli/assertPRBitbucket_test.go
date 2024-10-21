@@ -31,21 +31,21 @@ func (suite *AssertPRBitbucketCommandTestSuite) TestAssertPRBitbucketCmd() {
 	tests := []cmdTestCase{
 		{
 			name: "assert Bitbucket PR evidence passes when commit has a PR in bitbucket",
-			cmd: `assert pullrequest bitbucket --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test 
+			cmd: `assert pullrequest bitbucket --bitbucket-workspace kosli-dev --repository cli-test 
 			--commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
 			golden: "found [1] pull request(s) in Bitbucket for commit: fd54040fc90e7e83f7b152619bfa18917b72c34f\n",
 		},
 		{
 			wantError: true,
 			name:      "assert Bitbucket PR evidence fails when commit has no PRs in bitbucket",
-			cmd: `assert pullrequest bitbucket --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test 
+			cmd: `assert pullrequest bitbucket --bitbucket-workspace kosli-dev --repository cli-test 
 			--commit 3dce097040987c4693d2e4be817474d9d0063c93` + suite.defaultKosliArguments,
 			golden: "Error: assert failed: found no pull request(s) in Bitbucket for commit: 3dce097040987c4693d2e4be817474d9d0063c93\n",
 		},
 		{
 			wantError: true,
 			name:      "assert Bitbucket PR evidence fails when commit does not exist",
-			cmd: `assert pullrequest bitbucket --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test 
+			cmd: `assert pullrequest bitbucket --bitbucket-workspace kosli-dev --repository cli-test 
 			--commit 19aab7f063147614451c88969602a10afba123ab` + suite.defaultKosliArguments,
 			golden: "Error: map[error:map[message:Resource not found] type:error]\n",
 		},

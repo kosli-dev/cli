@@ -39,14 +39,14 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePR
 		{
 			name: "report Bitbucket PR evidence works with new flags (fingerprint, name ...)",
 			cmd: `report evidence artifact pullrequest bitbucket --fingerprint ` + suite.artifactFingerprint + ` --name bb-pr --flow ` + suite.flowName + `
-			          --build-url http://www.example.com --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
 			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nbitbucket pull request evidence is reported to artifact: .*",
 		},
 		{
 			wantError: true,
 			name:      "report Bitbucket PR evidence fails when --org is missing",
 			cmd: `report evidence artifact pullrequest bitbucket --fingerprint ` + suite.artifactFingerprint + ` --name bb-pr --flow ` + suite.flowName + `
-			          --build-url http://www.example.com --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f --api-token foo --host bar`,
+			          --build-url http://www.example.com --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f --api-token foo --host bar`,
 			goldenRegex: "Error: --org is not set\n" +
 				"Usage: kosli report evidence artifact pullrequest bitbucket \\[IMAGE-NAME | FILE-PATH | DIR-PATH\\] \\[flags\\]\n",
 		},
@@ -54,35 +54,28 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePR
 			wantError: true,
 			name:      "report Bitbucket PR evidence fails when --name is missing",
 			cmd: `report evidence artifact pullrequest bitbucket --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + `
-			          --build-url http://www.example.com --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --bitbucket-workspace kosli-dev --repository cli --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
 			goldenRegex: "Error: required flag\\(s\\) \"name\" not set\n",
-		},
-		{
-			wantError: true,
-			name:      "report Bitbucket PR evidence fails when --bitbucket-username is missing",
-			cmd: `report evidence artifact pullrequest bitbucket --fingerprint ` + suite.artifactFingerprint + ` --name bb-pr --flow ` + suite.flowName + `
-			          --build-url http://www.example.com --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
-			goldenRegex: "Error: required flag\\(s\\) \"bitbucket-username\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Bitbucket PR evidence fails when --repository is missing",
 			cmd: `report evidence artifact pullrequest bitbucket --fingerprint ` + suite.artifactFingerprint + ` --name bb-pr --flow ` + suite.flowName + `
-			          --build-url http://www.example.com --bitbucket-username tore1 --bitbucket-workspace kosli-dev --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --bitbucket-workspace kosli-dev --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
 			goldenRegex: "Error: required flag\\(s\\) \"repository\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Bitbucket PR evidence fails when --commit is missing",
 			cmd: `report evidence artifact pullrequest bitbucket --fingerprint ` + suite.artifactFingerprint + ` --name bb-pr --flow ` + suite.flowName + `
-			          --build-url http://www.example.com --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --bitbucket-workspace kosli-dev --repository cli-test` + suite.defaultKosliArguments,
 			goldenRegex: "Error: required flag\\(s\\) \"commit\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Bitbucket PR evidence fails when neither --fingerprint nor --artifact-type are set",
 			cmd: `report evidence artifact pullrequest bitbucket artifactNameArg --name bb-pr --flow ` + suite.flowName + `
-					  --build-url http://www.example.com --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
+					  --build-url http://www.example.com --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
 			goldenRegex: "Error: either --artifact-type or --fingerprint must be specified\n" +
 				"Usage: kosli report evidence artifact pullrequest bitbucket \\[IMAGE-NAME | FILE-PATH | DIR-PATH\\] \\[flags\\]\n",
 		},
@@ -90,14 +83,14 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePR
 			wantError: true,
 			name:      "report Bitbucket PR evidence fails when commit does not exist",
 			cmd: `report evidence artifact pullrequest bitbucket --fingerprint ` + suite.artifactFingerprint + ` --name bb-pr --flow ` + suite.flowName + `
-			          --build-url http://www.example.com --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test --commit 73d7fee2f31ade8e1a9c456c324255212c3123ab` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --bitbucket-workspace kosli-dev --repository cli-test --commit 73d7fee2f31ade8e1a9c456c324255212c3123ab` + suite.defaultKosliArguments,
 			goldenRegex: "Error: map\\[error:map\\[message:Resource not found\\] type:error\\]\n",
 		},
 		{
 			name: "report Bitbucket PR evidence works when --assert is used and commit has a PR",
 			cmd: `report evidence artifact pullrequest bitbucket --fingerprint ` + suite.artifactFingerprint + ` --name bb-pr --flow ` + suite.flowName + `
 					  --assert
-			          --build-url http://www.example.com --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
 			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nbitbucket pull request evidence is reported to artifact: .*\n",
 		},
 		{
@@ -105,27 +98,27 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePR
 			name:      "report Bitbucket PR evidence fails when --assert is used and commit has no PRs",
 			cmd: `report evidence artifact pullrequest bitbucket --fingerprint ` + suite.artifactFingerprint + ` --name bb-pr --flow ` + suite.flowName + `
 					  --assert
-			          --build-url http://www.example.com --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test --commit 3dce097040987c4693d2e4be817474d9d0063c93` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --bitbucket-workspace kosli-dev --repository cli-test --commit 3dce097040987c4693d2e4be817474d9d0063c93` + suite.defaultKosliArguments,
 			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nbitbucket pull request evidence is reported to artifact: .*\nError: assert failed: no pull request found for the given commit: .*\n",
 		},
 		{
 			name: "report Bitbucket PR evidence does not fail when commit has no PRs",
 			cmd: `report evidence artifact pullrequest bitbucket --fingerprint ` + suite.artifactFingerprint + ` --name bb-pr --flow ` + suite.flowName + `
-			          --build-url http://www.example.com --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test --commit 3dce097040987c4693d2e4be817474d9d0063c93` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --bitbucket-workspace kosli-dev --repository cli-test --commit 3dce097040987c4693d2e4be817474d9d0063c93` + suite.defaultKosliArguments,
 			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nbitbucket pull request evidence is reported to artifact: .*\n",
 		},
 		{
 			wantError: true,
 			name:      "report Bitbucket PR evidence fails when the artifact does not exist in the server",
 			cmd: `report evidence artifact pullrequest bitbucket testdata/file1 --artifact-type file --name bb-pr --flow ` + suite.flowName + `
-			          --build-url http://www.example.com --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
 			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nError: Artifact with fingerprint '7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9' does not exist in flow 'bitbucket-pr' belonging to organization 'docs-cmd-test-user'. \n",
 		},
 		{
 			wantError: true,
 			name:      "report Bitbucket PR evidence fails when --artifact-type is unsupported",
 			cmd: `report evidence artifact pullrequest bitbucket testdata/file1 --artifact-type unsupported --name bb-pr --flow ` + suite.flowName + `
-			          --build-url http://www.example.com --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
 			goldenRegex: "Error: unsupported is not a supported artifact type\n",
 		},
 		{
@@ -133,7 +126,7 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePR
 			name:      "report Bitbucket PR evidence fails when --user-data is not found",
 			cmd: `report evidence artifact pullrequest bitbucket --fingerprint ` + suite.artifactFingerprint + ` --name bb-pr --flow ` + suite.flowName + `
 					  --user-data non-existing.json
-			          --build-url http://www.example.com --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
 			goldenRegex: "Error: open non-existing.json: no such file or directory\n",
 		},
 	}

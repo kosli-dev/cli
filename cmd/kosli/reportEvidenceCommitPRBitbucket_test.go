@@ -36,14 +36,14 @@ func (suite *CommitEvidencePRBitbucketCommandTestSuite) TestCommitEvidencePRBitb
 		{
 			name: "report Bitbucket PR evidence works",
 			cmd: `report evidence commit pullrequest bitbucket --name bb-pr --flows ` + suite.flowNames + `
-					--build-url http://www.example.com --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
+					--build-url http://www.example.com --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
 			goldenRegex: "found 1 pull request\\(s\\) for commit: fd54040fc90e7e83f7b152619bfa18917b72c34f\nbitbucket pull request evidence is reported to commit: fd54040fc90e7e83f7b152619bfa18917b72c34f\n",
 		},
 		{
 			wantError: true,
 			name:      "report Bitbucket PR evidence fails when --org is missing",
 			cmd: `report evidence commit pullrequest bitbucket --name bb-pr --flows ` + suite.flowNames + `
-					--build-url http://www.example.com --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f --api-token foo --host bar`,
+					--build-url http://www.example.com --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f --api-token foo --host bar`,
 			goldenRegex: "Error: --org is not set\n" +
 				"Usage: kosli report evidence commit pullrequest bitbucket \\[flags\\]\n",
 		},
@@ -51,35 +51,28 @@ func (suite *CommitEvidencePRBitbucketCommandTestSuite) TestCommitEvidencePRBitb
 			wantError: true,
 			name:      "report Bitbucket PR evidence fails when --name is missing",
 			cmd: `report evidence commit pullrequest bitbucket --flows ` + suite.flowNames + `
-					--build-url http://www.example.com --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
-			goldenRegex: "Error: required flag\\(s\\) \"name\" not set\n",
-		},
-		{
-			wantError: true,
-			name:      "report Bitbucket PR evidence fails when --bitbucket-username is missing",
-			cmd: `report evidence commit pullrequest bitbucket --name bb-pr --flows ` + suite.flowNames + `
 					--build-url http://www.example.com --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
-			goldenRegex: "Error: required flag\\(s\\) \"bitbucket-username\" not set\n",
+			goldenRegex: "Error: required flag\\(s\\) \"name\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Bitbucket PR evidence fails when --repository is missing",
 			cmd: `report evidence commit pullrequest bitbucket --name bb-pr --flows ` + suite.flowNames + `
-					--build-url http://www.example.com --bitbucket-username tore1 --bitbucket-workspace kosli-dev --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
+					--build-url http://www.example.com --bitbucket-workspace kosli-dev --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
 			goldenRegex: "Error: required flag\\(s\\) \"repository\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Bitbucket PR evidence fails when --commit is missing",
 			cmd: `report evidence commit pullrequest bitbucket --name bb-pr --flows ` + suite.flowNames + `
-					--build-url http://www.example.com --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test` + suite.defaultKosliArguments,
+					--build-url http://www.example.com --bitbucket-workspace kosli-dev --repository cli-test` + suite.defaultKosliArguments,
 			goldenRegex: "Error: required flag\\(s\\) \"commit\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "report Bitbucket PR evidence fails when commit does not exist",
 			cmd: `report evidence commit pullrequest bitbucket --name bb-pr --flows ` + suite.flowNames + `
-					--build-url http://www.example.com --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test --commit 73d7fee2f31ade8e1a9c456c324255212c3123ab` + suite.defaultKosliArguments,
+					--build-url http://www.example.com --bitbucket-workspace kosli-dev --repository cli-test --commit 73d7fee2f31ade8e1a9c456c324255212c3123ab` + suite.defaultKosliArguments,
 			goldenRegex: "Error: map\\[error:map\\[message:Resource not found\\] type:error\\]\n",
 		},
 		{
@@ -87,13 +80,13 @@ func (suite *CommitEvidencePRBitbucketCommandTestSuite) TestCommitEvidencePRBitb
 			name:      "report Bitbucket PR evidence fails when --assert is used and commit has no PRs",
 			cmd: `report evidence commit pullrequest bitbucket --name bb-pr --flows ` + suite.flowNames + `
 					--assert
-					--build-url http://www.example.com --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test --commit 3dce097040987c4693d2e4be817474d9d0063c93` + suite.defaultKosliArguments,
+					--build-url http://www.example.com --bitbucket-workspace kosli-dev --repository cli-test --commit 3dce097040987c4693d2e4be817474d9d0063c93` + suite.defaultKosliArguments,
 			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nbitbucket pull request evidence is reported to commit: .*\nError: assert failed: no pull request found for the given commit: .*\n",
 		},
 		{
 			name: "report Bitbucket PR evidence does not fail when commit has no PRs",
 			cmd: `report evidence commit pullrequest bitbucket --name bb-pr --flows ` + suite.flowNames + `
-			          --build-url http://www.example.com --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test --commit 3dce097040987c4693d2e4be817474d9d0063c93` + suite.defaultKosliArguments,
+			          --build-url http://www.example.com --bitbucket-workspace kosli-dev --repository cli-test --commit 3dce097040987c4693d2e4be817474d9d0063c93` + suite.defaultKosliArguments,
 			goldenRegex: "found 0 pull request\\(s\\) for commit: 3dce097040987c4693d2e4be817474d9d0063c93\n" +
 				"bitbucket pull request evidence is reported to commit: 3dce097040987c4693d2e4be817474d9d0063c93\n",
 		},
@@ -102,7 +95,7 @@ func (suite *CommitEvidencePRBitbucketCommandTestSuite) TestCommitEvidencePRBitb
 			name:      "report Bitbucket PR evidence fails when --user-data is not found",
 			cmd: `report evidence commit pullrequest bitbucket --name bb-pr --flows ` + suite.flowNames + `
 					--user-data non-existing.json
-					--build-url http://www.example.com --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
+					--build-url http://www.example.com --bitbucket-workspace kosli-dev --repository cli-test --commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
 			goldenRegex: "Error: open non-existing.json: no such file or directory\n",
 		},
 	}
