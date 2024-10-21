@@ -33,6 +33,8 @@ on:
         required: true
       azure_client_secret:
         required: true
+      bitbucket_username:
+        required: true
       bitbucket_password:
         required: true
       jira_api_token:
