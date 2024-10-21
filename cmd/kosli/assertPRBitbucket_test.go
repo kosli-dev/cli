@@ -31,21 +31,21 @@ func (suite *AssertPRBitbucketCommandTestSuite) TestAssertPRBitbucketCmd() {
 	tests := []cmdTestCase{
 		{
 			name: "assert Bitbucket PR evidence passes when commit has a PR in bitbucket",
-			cmd: `assert pullrequest bitbucket --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test 
-			--commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69` + suite.defaultKosliArguments,
-			golden: "found [1] pull request(s) in Bitbucket for commit: 2492011ef04a9da09d35be706cf6a4c5bc6f1e69\n",
+			cmd: `assert pullrequest bitbucket --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test 
+			--commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
+			golden: "found [1] pull request(s) in Bitbucket for commit: fd54040fc90e7e83f7b152619bfa18917b72c34f\n",
 		},
 		{
 			wantError: true,
 			name:      "assert Bitbucket PR evidence fails when commit has no PRs in bitbucket",
-			cmd: `assert pullrequest bitbucket --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test 
-			--commit cb6ec5fcbb25b1ebe4859d35ab7995ab973f894c` + suite.defaultKosliArguments,
-			golden: "Error: assert failed: found no pull request(s) in Bitbucket for commit: cb6ec5fcbb25b1ebe4859d35ab7995ab973f894c\n",
+			cmd: `assert pullrequest bitbucket --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test 
+			--commit 3dce097040987c4693d2e4be817474d9d0063c93` + suite.defaultKosliArguments,
+			golden: "Error: assert failed: found no pull request(s) in Bitbucket for commit: 3dce097040987c4693d2e4be817474d9d0063c93\n",
 		},
 		{
 			wantError: true,
 			name:      "assert Bitbucket PR evidence fails when commit does not exist",
-			cmd: `assert pullrequest bitbucket --bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test 
+			cmd: `assert pullrequest bitbucket --bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test 
 			--commit 19aab7f063147614451c88969602a10afba123ab` + suite.defaultKosliArguments,
 			golden: "Error: map[error:map[message:Resource not found] type:error]\n",
 		},

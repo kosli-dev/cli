@@ -37,10 +37,10 @@ func (suite *AttestBitbucketPRCommandTestSuite) SetupTest() {
 	var err error
 	suite.tmpDir, err = os.MkdirTemp("", "testDir")
 	require.NoError(suite.T(), err)
-	_, err = testHelpers.CloneGitRepo("https://bitbucket.org/ewelinawilkosz/cli-test.git", suite.tmpDir)
+	_, err = testHelpers.CloneGitRepo("https://bitbucket.org/kosli-dev/cli-test.git", suite.tmpDir)
 	require.NoError(suite.T(), err)
 
-	suite.defaultKosliArguments = fmt.Sprintf(" --flow %s --trail %s --repo-root %s --commit 2492011ef04a9da09d35be706cf6a4c5bc6f1e69 --host %s --org %s --api-token %s", suite.flowName, suite.trailName, suite.tmpDir, global.Host, global.Org, global.ApiToken)
+	suite.defaultKosliArguments = fmt.Sprintf(" --flow %s --trail %s --repo-root %s --commit fd54040fc90e7e83f7b152619bfa18917b72c34f --host %s --org %s --api-token %s", suite.flowName, suite.trailName, suite.tmpDir, global.Host, global.Org, global.ApiToken)
 	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
 	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
 	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.T())
@@ -80,43 +80,43 @@ func (suite *AttestBitbucketPRCommandTestSuite) TestAttestBitbucketPRCmd() {
 			wantError: true,
 			name:      "attesting against an artifact that does not exist fails",
 			cmd: fmt.Sprintf(`attest pullrequest bitbucket --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo 
-				--bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test   %s`, suite.defaultKosliArguments),
+				--bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test   %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nError: Artifact with fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 does not exist in trail \"test-123\" of flow \"attest-bitbucket-pr\" belonging to organization \"docs-cmd-test-user\"\n",
 		},
 		{
 			name: "can attest bitbucket pr against an artifact using artifact name and --artifact-type",
 			cmd: fmt.Sprintf(`attest pullrequest bitbucket testdata/file1 --artifact-type file --name foo
-				--bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test  %s`, suite.defaultKosliArguments),
+				--bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test  %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nbitbucket pull request attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			name: "can attest bitbucket pr against an artifact using artifact name and --artifact-type when --name does not exist in the trail template",
 			cmd: fmt.Sprintf(`attest pullrequest bitbucket testdata/file1 --artifact-type file --name bar
-				--bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test  %s`, suite.defaultKosliArguments),
+				--bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test  %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nbitbucket pull request attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
 			name: "can attest bitbucket pr against an artifact using --fingerprint",
 			cmd: fmt.Sprintf(`attest pullrequest bitbucket --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo
-				--bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test  %s`, suite.defaultKosliArguments),
+				--bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test  %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nbitbucket pull request attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			name: "can attest bitbucket pr against a trail",
 			cmd: fmt.Sprintf(`attest pullrequest bitbucket --name bar
-				--bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test  %s`, suite.defaultKosliArguments),
+				--bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test  %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nbitbucket pull request attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
 			name: "can attest bitbucket pr against a trail when name is not found in the trail template",
 			cmd: fmt.Sprintf(`attest pullrequest bitbucket --name additional
-				--bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test  %s`, suite.defaultKosliArguments),
+				--bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test  %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nbitbucket pull request attestation 'additional' is reported to trail: test-123\n",
 		},
 		{
 			name: "can attest bitbucket pr against an artifact it is created using dot syntax in --name",
 			cmd: fmt.Sprintf(`attest pullrequest bitbucket --name cli.foo
-				--bitbucket-username ewelinawilkosz --bitbucket-workspace ewelinawilkosz --repository cli-test  %s`, suite.defaultKosliArguments),
+				--bitbucket-username tore1 --bitbucket-workspace kosli-dev --repository cli-test  %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nbitbucket pull request attestation 'foo' is reported to trail: test-123\n",
 		},
 	}
