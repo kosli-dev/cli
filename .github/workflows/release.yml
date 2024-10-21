@@ -77,6 +77,7 @@ jobs:
       azure_access_token: ${{ secrets.KOSLI_AZURE_TOKEN }}
       azure_client_id: ${{ secrets.AZURE_CLIENT_ID }}
       azure_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+      bitbucket_username: ${{ secrets.KOSLI_BITBUCKET_USERNAME }}
       bitbucket_password: ${{ secrets.KOSLI_BITBUCKET_PASSWORD }}
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
       slack_channel: ci-failures
