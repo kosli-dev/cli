@@ -451,7 +451,7 @@ func initialize(cmd *cobra.Command, out io.Writer) error {
 func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 	// for some reason, logger does not print errors at the point
 	// of calling this function, so we ensure to point errors to stderr
-	logger.SetErrOut(cmd.ErrOrStderr())
+	logger.SetErrOut(os.Stderr)
 	// api token in config file is encrypted, so we have to decrypt it
 	// but if it is set via env variables, it is not encrypted
 	_, apiTokenSetInEnv := os.LookupEnv("KOSLI_API_TOKEN")
