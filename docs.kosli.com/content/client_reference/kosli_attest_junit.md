@@ -8,7 +8,9 @@ deprecated: false
 
 ## Synopsis
 
-Report a junit attestation to an artifact or a trail in a Kosli flow.  
+Report a junit attestation to an artifact or a trail in a Kosli flow.
+JUnit xml files are read from the `--results-dir` directory which defaults to the current directory.
+The xml files are automatically uploaded as `--attachments` via the `--upload-results` flag which defaults to `true`.  
 
 The attestation can be bound to a trail using the trail name.
 
