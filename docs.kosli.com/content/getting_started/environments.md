@@ -37,11 +37,11 @@ You can also create an environment directly from [app.kosli.com](https://app.kos
 - Fill in the environment name and description and select a type, then click `Save Environment`.
 
 
-After the new environment is created you'll be redirected to its page - with "No events have been found for [...]" message. Once you start reporting your actual runtime environment to Kosli you'll see all the events (such as which artifacts started or stopped running) listed on that page.
+After the new environment is created you'll be redirected to its page, which will initially have no snapshots. Once you start reporting your actual runtime environment to Kosli you'll be able to find snapshots and events (such as which artifacts started or stopped running) listed on that page.
 
 ## Snapshoting an environment
 
-To record the current status of your environment you need to make Kosli CLI scrape the running artifacts in it and report it to Kosli. 
+To record the current status of your environment you need to make Kosli CLI snapshot the running artifacts in it and report it to Kosli. 
 When Kosli receives an environment report, if the received list of running artifacts is different than what is in the latest environment snapshot, a new environment snapshot is created. Snapshots are immutable and can't be tampered with.
 
 Currently, the following environment types are supported:
@@ -52,11 +52,25 @@ Currently, the following environment types are supported:
 - AWS Lambda
 - AWS Elastic Container Service (ECS)
 
-While you can report environment snapshots manually using the `kosli snapshot [...]` commands for testing, for production use, you would configure the reporting to happen automatically on regular intervals, e.g. via a cron job or scheduled CI job, or on certain events. 
+You can report environment snapshots manually using the `kosli snapshot [...]` commands for testing. For production use, however,  you would configure the reporting to happen automatically on regular intervals, e.g. via a cron job or scheduled CI job, or on certain events. 
 
 You can follow one of the tutorials below to setup automatic snapshot reporting for your environment:
 - [Kubernetes environment reporting](/tutorials/report_k8s_envs)
 - [AWS ECS/S3/Lambda environment reporting](/tutorials/report_aws_envs)
+
+### Snapshotting scopes
+
+Depending on the type of your environment, you can scope what to snapshot from the environment. The following table shows the different scoping options currently available for different environment types:
+
+| what to snapshot ->        | all resources | resources by names | resources by Regex | exclude by names | exclude by Regex |
+|----------------------------|---------------|--------------------|--------------------|------------------|------------------|
+| ECS (clusters)             |       √       |          √         |          √         |         √        |         √        |
+| Lambda (functions)         |       √       |          √         |          √         |         √        |         √        |
+| S3 (buckets)               |               |                    |                    |                  |                  |
+| docker (containers)        |       √       |                    |                    |                  |                  |
+| k8s (namespaces)           |       √       |          √         |          √         |         √        |         √        |
+| azure (functions and apps) |       √       |                    |                    |                  |                  |
+
 
 ## Logical Environments
 
