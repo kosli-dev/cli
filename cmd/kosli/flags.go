@@ -31,7 +31,7 @@ func addAWSAuthFlags(cmd *cobra.Command, o *aws.AWSStaticCreds) {
 }
 
 func addDryRunFlag(cmd *cobra.Command) {
-	cmd.PersistentFlags().BoolVarP(&global.DryRun, "dry-run", "D", false, dryRunFlag)
+	cmd.Flags().StringVarP(&global.DryRun, "dry-run", "D", "false", dryRunFlag)
 }
 
 func addBitbucketFlags(cmd *cobra.Command, bbConfig *bbUtils.Config, ci string) {

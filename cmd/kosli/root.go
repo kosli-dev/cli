@@ -246,10 +246,10 @@ type GlobalOpts struct {
 	Org           string
 	Host          string
 	HttpProxy     string
-	DryRun        bool
+	DryRun        string
 	MaxAPIRetries int
 	ConfigFile    string
-	Debug         bool
+	Debug         string
 }
 
 // ConfigGetter defines an interface for getting the default config file path
@@ -303,7 +303,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 			}
 
 			if global.ApiToken == "DRY_RUN" {
-				global.DryRun = true
+				global.DryRun = "true"
 			}
 
 			// If the user types "--description $variable --sha256 ..." and $variable is "" then Cobra
@@ -331,7 +331,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	cmd.PersistentFlags().StringVar(&global.HttpProxy, "http-proxy", "", httpProxyFlag)
 	cmd.PersistentFlags().IntVarP(&global.MaxAPIRetries, "max-api-retries", "r", defaultMaxAPIRetries, maxAPIRetryFlag)
 	cmd.PersistentFlags().StringVarP(&global.ConfigFile, "config-file", "c", getConfigFileFlagDefault(), configFileFlag)
-	cmd.PersistentFlags().BoolVar(&global.Debug, "debug", false, debugFlag)
+	cmd.PersistentFlags().StringVar(&global.Debug, "debug", "false", debugFlag)
 
 	// Add subcommands
 	cmd.AddCommand(
@@ -381,7 +381,7 @@ func initialize(cmd *cobra.Command, out io.Writer) error {
 	logger.SetInfoOut(out) // needed to allow tests to overwrite the logger output stream
 	// assign debug value early here to enable debug logs during config file and env var binding
 	// if --debug is used. The value is re-assigned later after binding config file and env vars
-	logger.DebugEnabled = global.Debug
+	logger.DebugEnabled = global.Debug == "true"
 
 	// If provided, extract the custom config file dir and name
 
@@ -435,10 +435,10 @@ func initialize(cmd *cobra.Command, out io.Writer) error {
 
 	// re-assign debug after binding flags to config or env vars as it may have
 	// a different value now
-	logger.DebugEnabled = global.Debug
+	logger.DebugEnabled = global.Debug == "true"
 
 	var err error
-	kosliClient, err = requests.NewKosliClient(global.HttpProxy, global.MaxAPIRetries, global.Debug, logger)
+	kosliClient, err = requests.NewKosliClient(global.HttpProxy, global.MaxAPIRetries, global.Debug == "true", logger)
 	if err != nil {
 		return err
 	}

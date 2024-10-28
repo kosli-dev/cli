@@ -92,7 +92,7 @@ func (o *allowArtifactOptions) run(args []string) error {
 		Password: global.ApiToken,
 	}
 	_, err := kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		logger.Info("artifact %s was allow listed in environment: %s", o.payload.Fingerprint, o.environmentName)
 	}
 	return err

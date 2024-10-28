@@ -115,7 +115,7 @@ func (o *snapshotK8SOptions) run(args []string) error {
 		Password: global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		logger.Info("[%d] pods were reported to environment %s", len(payload.Artifacts), envName)
 	}
 	return err

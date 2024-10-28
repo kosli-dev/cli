@@ -142,7 +142,7 @@ func (o *beginTrailOptions) run(args []string) error {
 	}
 
 	res, err := kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		verb := "begun"
 		if res.Resp.StatusCode == 200 {
 			verb = "updated"

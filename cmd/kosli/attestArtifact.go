@@ -206,7 +206,7 @@ func (o *attestArtifactOptions) run(args []string) error {
 		Password: global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		logger.Info("artifact %s was attested with fingerprint: %s", o.payload.Filename, o.payload.Fingerprint)
 	}
 	return err

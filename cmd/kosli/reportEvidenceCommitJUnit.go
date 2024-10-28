@@ -117,7 +117,7 @@ func (o *reportEvidenceCommitJunitOptions) run(args []string) error {
 		Password: global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		logger.Info("junit test evidence is reported to commit: %s", o.payload.CommitSHA)
 	}
 	return err

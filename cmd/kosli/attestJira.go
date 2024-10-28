@@ -256,7 +256,7 @@ func (o *attestJiraOptions) run(args []string) error {
 		Password: global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		logger.Info("jira attestation '%s' is reported to trail: %s", o.payload.AttestationName, o.trailName)
 	}
 

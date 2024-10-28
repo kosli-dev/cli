@@ -103,7 +103,7 @@ func (o *tagOptions) run(args []string) error {
 		Password: global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
+	if err == nil && global.DryRun == "false" {
 		var addMsg, removedMsg, msg string
 		if len(o.payload.SetTags) > 0 {
 			keys := make([]string, 0, len(o.payload.SetTags))
