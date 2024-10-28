@@ -70,4 +70,8 @@ you can assign an API key to any CLI command by one of the following options:
 
 ### In API
 
-When utilizing the Kosli API directly, you can authenticate your requests using basic authentication. Set the `username` to your API key and the `password` to any string value. 
+When making requests against the Kosli API directly (e.g. using curl), you can authenticate your requests using bear token. Set the bearer token in the request Authorization header to your API key.
+
+```shell
+curl -H "Authorization: Bearer <<your-api-key>>" http://app.kosli.com/api/v2/environments/<<your-org-name>>
+```
