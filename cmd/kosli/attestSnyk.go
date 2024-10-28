@@ -188,11 +188,11 @@ func (o *attestSnykOptions) run(args []string) error {
 	}
 
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodPost,
-		URL:      url,
-		Form:     form,
-		DryRun:   global.DryRun,
-		Password: global.ApiToken,
+		Method: http.MethodPost,
+		URL:    url,
+		Form:   form,
+		DryRun: global.DryRun,
+		Token:  global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {

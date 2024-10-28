@@ -104,9 +104,9 @@ func (o *getArtifactOptions) run(out io.Writer, args []string) error {
 		url = url + fmt.Sprintf("?trail=%s", o.trail)
 	}
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodGet,
-		URL:      url,
-		Password: global.ApiToken,
+		Method: http.MethodGet,
+		URL:    url,
+		Token:  global.ApiToken,
 	}
 
 	response, err := kosliClient.Do(reqParams)

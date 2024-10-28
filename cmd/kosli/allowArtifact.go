@@ -85,11 +85,11 @@ func (o *allowArtifactOptions) run(args []string) error {
 	url := fmt.Sprintf("%s/api/v2/allowlists/%s/%s", global.Host, global.Org, o.environmentName)
 
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodPut,
-		URL:      url,
-		Payload:  o.payload,
-		DryRun:   global.DryRun,
-		Password: global.ApiToken,
+		Method:  http.MethodPut,
+		URL:     url,
+		Payload: o.payload,
+		DryRun:  global.DryRun,
+		Token:   global.ApiToken,
 	}
 	_, err := kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {

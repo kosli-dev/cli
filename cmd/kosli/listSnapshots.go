@@ -95,9 +95,9 @@ func (o *listSnapshotsOptions) getSnapshotsList(out io.Writer, envName, interval
 		global.Host, global.Org, envName, o.pageNumber, o.pageLimit, url.QueryEscape(interval), o.reverse)
 
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodGet,
-		URL:      url,
-		Password: global.ApiToken,
+		Method: http.MethodGet,
+		URL:    url,
+		Token:  global.ApiToken,
 	}
 	response, err := kosliClient.Do(reqParams)
 	if err != nil {

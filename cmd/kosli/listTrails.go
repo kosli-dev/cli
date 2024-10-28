@@ -52,9 +52,9 @@ func (o *listTrailsOptions) run(out io.Writer) error {
 	url := fmt.Sprintf("%s/api/v2/trails/%s/%s", global.Host, global.Org, o.flowName)
 
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodGet,
-		URL:      url,
-		Password: global.ApiToken,
+		Method: http.MethodGet,
+		URL:    url,
+		Token:  global.ApiToken,
 	}
 	response, err := kosliClient.Do(reqParams)
 	if err != nil {

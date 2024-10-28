@@ -154,11 +154,11 @@ func (o *reportArtifactOptions) run(args []string) error {
 	url := fmt.Sprintf("%s/api/v2/artifacts/%s/%s", global.Host, global.Org, o.flowName)
 
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodPost,
-		URL:      url,
-		Payload:  o.payload,
-		DryRun:   global.DryRun,
-		Password: global.ApiToken,
+		Method:  http.MethodPost,
+		URL:     url,
+		Payload: o.payload,
+		DryRun:  global.DryRun,
+		Token:   global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
@@ -174,9 +174,9 @@ func (o *reportArtifactOptions) latestCommit(branchName string) (string, error) 
 		global.Host, global.Org, o.flowName, o.payload.Fingerprint, asBranchParameter(branchName))
 
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodGet,
-		URL:      latestCommitUrl,
-		Password: global.ApiToken,
+		Method: http.MethodGet,
+		URL:    latestCommitUrl,
+		Token:  global.ApiToken,
 	}
 	response, err := kosliClient.Do(reqParams)
 	if err != nil {

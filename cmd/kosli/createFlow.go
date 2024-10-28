@@ -120,11 +120,11 @@ func (o *createFlowOptions) run(args []string) error {
 		}
 
 		reqParams = &requests.RequestParams{
-			Method:   http.MethodPut,
-			URL:      url,
-			Form:     form,
-			DryRun:   global.DryRun,
-			Password: global.ApiToken,
+			Method: http.MethodPut,
+			URL:    url,
+			Form:   form,
+			DryRun: global.DryRun,
+			Token:  global.ApiToken,
 		}
 	} else {
 		// legacy flows
@@ -132,11 +132,11 @@ func (o *createFlowOptions) run(args []string) error {
 		o.payload.Template = injectArtifactIntoTemplateIfNotExisting(o.payload.Template)
 
 		reqParams = &requests.RequestParams{
-			Method:   http.MethodPut,
-			URL:      url,
-			Payload:  o.payload,
-			DryRun:   global.DryRun,
-			Password: global.ApiToken,
+			Method:  http.MethodPut,
+			URL:     url,
+			Payload: o.payload,
+			DryRun:  global.DryRun,
+			Token:   global.ApiToken,
 		}
 	}
 

@@ -96,11 +96,11 @@ func (o *tagOptions) run(args []string) error {
 	url := fmt.Sprintf("%s/api/v2/tags/%s/%s/%s", global.Host, global.Org, o.resourceType, o.resourceID)
 
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodPatch,
-		URL:      url,
-		Payload:  o.payload,
-		DryRun:   global.DryRun,
-		Password: global.ApiToken,
+		Method:  http.MethodPatch,
+		URL:     url,
+		Payload: o.payload,
+		DryRun:  global.DryRun,
+		Token:   global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {

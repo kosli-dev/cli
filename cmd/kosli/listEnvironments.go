@@ -48,9 +48,9 @@ func (o *environmentLsOptions) run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v2/environments/%s", global.Host, global.Org)
 
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodGet,
-		URL:      url,
-		Password: global.ApiToken,
+		Method: http.MethodGet,
+		URL:    url,
+		Token:  global.ApiToken,
 	}
 	response, err := kosliClient.Do(reqParams)
 	if err != nil {

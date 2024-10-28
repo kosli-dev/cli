@@ -84,11 +84,11 @@ func (o *createPolicyOptions) run(args []string) error {
 	}
 
 	reqParams = &requests.RequestParams{
-		Method:   http.MethodPut,
-		URL:      url,
-		Form:     form,
-		DryRun:   global.DryRun,
-		Password: global.ApiToken,
+		Method: http.MethodPut,
+		URL:    url,
+		Form:   form,
+		DryRun: global.DryRun,
+		Token:  global.ApiToken,
 	}
 
 	res, err := kosliClient.Do(reqParams)

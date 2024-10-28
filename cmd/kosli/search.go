@@ -90,9 +90,9 @@ func (o *searchOptions) run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v2/search/%s/sha/%s", global.Host, global.Org, search_value)
 
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodGet,
-		URL:      url,
-		Password: global.ApiToken,
+		Method: http.MethodGet,
+		URL:    url,
+		Token:  global.ApiToken,
 	}
 	response, err := kosliClient.Do(reqParams)
 	if err != nil {

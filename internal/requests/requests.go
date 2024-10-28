@@ -112,13 +112,6 @@ func (p *RequestParams) newHTTPRequest() (*http.Request, map[string]interface{},
 	if p.Token != "" {
 		p.AdditionalHeaders["Authorization"] = fmt.Sprintf("Bearer %s", p.Token)
 	} else if p.Username != "" || p.Password != "" {
-		if p.Username == "" {
-			// when communicating with Kosli, apiToken is sent as username
-			// (passed to doRequest() as password)
-			p.Username = p.Password
-			// when communicating with Kosli, password should be "unset"
-			p.Password = "unset"
-		}
 		req.SetBasicAuth(p.Username, p.Password)
 	}
 

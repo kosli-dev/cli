@@ -39,9 +39,9 @@ func newStatusCmd(out io.Writer) *cobra.Command {
 func (o *statusOptions) run(out io.Writer) error {
 	url := fmt.Sprintf("%s/ready", global.Host)
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodGet,
-		URL:      url,
-		Password: global.ApiToken,
+		Method: http.MethodGet,
+		URL:    url,
+		Token:  global.ApiToken,
 	}
 
 	response, err := kosliClient.Do(reqParams)
