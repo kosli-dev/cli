@@ -52,11 +52,11 @@ func newJoinEnvironmentCmd(out io.Writer) *cobra.Command {
 			url := fmt.Sprintf("%s/api/v2/environments/%s/%s/join", global.Host, global.Org, o.logical)
 
 			reqParams := &requests.RequestParams{
-				Method:   http.MethodPut,
-				URL:      url,
-				Payload:  o.payload,
-				DryRun:   global.DryRun,
-				Password: global.ApiToken,
+				Method:  http.MethodPut,
+				URL:     url,
+				Payload: o.payload,
+				DryRun:  global.DryRun,
+				Token:   global.ApiToken,
 			}
 			_, err := kosliClient.Do(reqParams)
 			if err == nil && !global.DryRun {

@@ -77,11 +77,11 @@ func (o *pullRequestArtifactOptions) run(out io.Writer, args []string) error {
 	logger.Info("found %d %s(s) for commit: %s", len(pullRequestsEvidence), label, o.commit)
 
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodPost,
-		URL:      url,
-		Form:     form,
-		DryRun:   global.DryRun,
-		Password: global.ApiToken,
+		Method: http.MethodPost,
+		URL:    url,
+		Form:   form,
+		DryRun: global.DryRun,
+		Token:  global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
@@ -141,11 +141,11 @@ func (o *attestPROptions) run(args []string) error {
 	logger.Info("found %d %s(s) for commit: %s", len(pullRequestsEvidence), label, o.payload.Commit.Sha1)
 
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodPost,
-		URL:      url,
-		Form:     form,
-		DryRun:   global.DryRun,
-		Password: global.ApiToken,
+		Method: http.MethodPost,
+		URL:    url,
+		Form:   form,
+		DryRun: global.DryRun,
+		Token:  global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
@@ -197,11 +197,11 @@ func (o *pullRequestCommitOptions) run(args []string) error {
 	logger.Info("found %d %s(s) for commit: %s", len(pullRequestsEvidence), label, o.payload.CommitSHA)
 
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodPost,
-		URL:      url,
-		Form:     form,
-		DryRun:   global.DryRun,
-		Password: global.ApiToken,
+		Method: http.MethodPost,
+		URL:    url,
+		Form:   form,
+		DryRun: global.DryRun,
+		Token:  global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {

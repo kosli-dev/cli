@@ -46,9 +46,9 @@ func (o *getFlowOptions) run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v2/flows/%s/%s", global.Host, global.Org, args[0])
 
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodGet,
-		URL:      url,
-		Password: global.ApiToken,
+		Method: http.MethodGet,
+		URL:    url,
+		Token:  global.ApiToken,
 	}
 	response, err := kosliClient.Do(reqParams)
 	if err != nil {

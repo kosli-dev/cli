@@ -129,11 +129,11 @@ func (o *createEnvOptions) run(args []string) error {
 		o.payload.IncludeScaling = &myFalse
 	}
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodPut,
-		URL:      url,
-		Payload:  o.payload,
-		DryRun:   global.DryRun,
-		Password: global.ApiToken,
+		Method:  http.MethodPut,
+		URL:     url,
+		Payload: o.payload,
+		DryRun:  global.DryRun,
+		Token:   global.ApiToken,
 	}
 	_, err := kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {

@@ -91,11 +91,11 @@ func (o *expectDeploymentOptions) run(args []string) error {
 	url := fmt.Sprintf("%s/api/v2/deployments/%s/%s", global.Host, global.Org, o.flowName)
 
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodPost,
-		URL:      url,
-		Payload:  o.payload,
-		DryRun:   global.DryRun,
-		Password: global.ApiToken,
+		Method:  http.MethodPost,
+		URL:     url,
+		Payload: o.payload,
+		DryRun:  global.DryRun,
+		Token:   global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {

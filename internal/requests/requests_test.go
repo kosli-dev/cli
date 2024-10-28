@@ -236,13 +236,8 @@ func (suite *RequestsTestSuite) TestNewHttpRequest() {
 				if t.params.Username != "" || t.params.Password != "" {
 					user, pass, ok := req.BasicAuth()
 					require.True(suite.T(), ok)
-					if t.params.Username == "" {
-						require.Equal(suite.T(), t.params.Username, pass)
-						require.Equal(suite.T(), t.params.Password, "unset")
-					} else {
-						require.Equal(suite.T(), t.params.Username, user)
-						require.Equal(suite.T(), t.params.Password, pass)
-					}
+					require.Equal(suite.T(), t.params.Username, user)
+					require.Equal(suite.T(), t.params.Password, pass)
 				}
 				if t.params.Token != "" {
 					require.Equal(suite.T(), fmt.Sprintf("Bearer %s", t.params.Token), req.Header.Get("Authorization"))

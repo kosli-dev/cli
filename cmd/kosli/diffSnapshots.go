@@ -117,9 +117,9 @@ func (o *diffSnapshotsOptions) run(out io.Writer, args []string) error {
 		global.Host, global.Org, url.QueryEscape(snappish1), url.QueryEscape(snappish2))
 
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodGet,
-		URL:      url,
-		Password: global.ApiToken,
+		Method: http.MethodGet,
+		URL:    url,
+		Token:  global.ApiToken,
 	}
 	response, err := kosliClient.Do(reqParams)
 	if err != nil {

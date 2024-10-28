@@ -83,9 +83,9 @@ func (o *listDeploymentsOptions) run(out io.Writer) error {
 		global.Host, global.Org, o.flowName, o.pageNumber, o.pageLimit)
 
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodGet,
-		URL:      url,
-		Password: global.ApiToken,
+		Method: http.MethodGet,
+		URL:    url,
+		Token:  global.ApiToken,
 	}
 	response, err := kosliClient.Do(reqParams)
 	if err != nil {

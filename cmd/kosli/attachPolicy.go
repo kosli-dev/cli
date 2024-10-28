@@ -69,11 +69,11 @@ func (o *attachPolicyOptions) run(args []string) error {
 		url := fmt.Sprintf("%s/api/v2/environments/%s/%s/policies", global.Host, global.Org, env)
 		o.payload.PolicyNames = []string{args[0]}
 		reqParams := &requests.RequestParams{
-			Method:   http.MethodPost,
-			URL:      url,
-			Payload:  o.payload,
-			DryRun:   global.DryRun,
-			Password: global.ApiToken,
+			Method:  http.MethodPost,
+			URL:     url,
+			Payload: o.payload,
+			DryRun:  global.DryRun,
+			Token:   global.ApiToken,
 		}
 		_, err = kosliClient.Do(reqParams)
 		if err != nil {

@@ -64,9 +64,9 @@ func run(out io.Writer, args []string) error {
 	url := fmt.Sprintf("%s/api/v2/snapshots/%s/%s/%d", global.Host, global.Org, envName, id)
 
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodGet,
-		URL:      url,
-		Password: global.ApiToken,
+		Method: http.MethodGet,
+		URL:    url,
+		Token:  global.ApiToken,
 	}
 	response, err := kosliClient.Do(reqParams)
 	if err != nil {

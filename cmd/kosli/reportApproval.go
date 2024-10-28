@@ -166,10 +166,10 @@ func (o *reportApprovalOptions) run(args []string, request bool) error {
 			o.flowName, o.payload.Environment)
 
 		getLastApprovedGitCommitParams := &requests.RequestParams{
-			Method:   http.MethodGet,
-			URL:      url,
-			DryRun:   false,
-			Password: global.ApiToken,
+			Method: http.MethodGet,
+			URL:    url,
+			DryRun: false,
+			Token:  global.ApiToken,
 		}
 
 		lastApprovedGitCommitResponse, err := kosliClient.Do(getLastApprovedGitCommitParams)
@@ -209,11 +209,11 @@ func (o *reportApprovalOptions) run(args []string, request bool) error {
 	url := fmt.Sprintf("%s/api/v2/approvals/%s/%s", global.Host, global.Org, o.flowName)
 
 	reqParams := &requests.RequestParams{
-		Method:   http.MethodPost,
-		URL:      url,
-		Payload:  o.payload,
-		DryRun:   global.DryRun,
-		Password: global.ApiToken,
+		Method:  http.MethodPost,
+		URL:     url,
+		Payload: o.payload,
+		DryRun:  global.DryRun,
+		Token:   global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
