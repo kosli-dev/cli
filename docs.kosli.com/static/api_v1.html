@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Kosli API V1</title>
+    <!-- needed for adaptive design -->
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+
+    <!--
+    Redoc doesn't change outer page styles
+    -->
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      .menu-content>div:first-child {
+        background-color: #000d40;
+        padding: 16px
+      }
+    </style>
+  </head>
+  <body>
+    <redoc spec-url='https://app.kosli.com/api/v1/public-swagger.json'
+       required-props-first=true
+       theme='{
+        "sidebar": {
+          "textColor": "#000",
+          "backgroundColor": "#f7f9fc"
+        },
+        "rightPanel": {
+          "textColor": "ivory"
+        },
+        "typography": {
+          "fontSize": "16px",
+          "fontFamily": "ibm plex sans, sans-serif",
+          "fontWeightRegular": "400",
+          "headings": {
+            "fontFamily": "proxima nova, sans-serif",
+            "fontWeight": "600"
+          },
+          "links": {
+            "color": "#2459D1"
+          }
+        }
+       }'
+    ></redoc>
+    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"> </script>
+  </body>
+</html>

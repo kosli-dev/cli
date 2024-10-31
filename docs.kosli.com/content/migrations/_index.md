@@ -1,7 +1,7 @@
 ---
 title: Migrations
 bookCollapseSection: true
-weight: 600
+weight: 620
 ---
 
 # Migrations
