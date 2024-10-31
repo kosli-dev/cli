@@ -75,7 +75,8 @@ authorized or not.
 
 {{<hint info>}}
 In this tutorial, we use a simple setup where the terraform state file is stored locally.
-In production cases, however, the state file would be stored in some cloud storage (e.g. AWS S3)
+In production cases, however, the state file would be stored in some cloud storage (e.g. AWS S3). 
+In such cases, you would need to download the state file from the remote backend after it was updated by the authorized change.
 
 Note that we set both `--build-url` and `--commit-url` to fake URLs. These are normally defaulted in CI.
 {{</hint>}}
@@ -102,20 +103,21 @@ We can report the state file to the environment we created:
 
 {{<hint info>}}
 In this tutorial, we run the environment reporting manually. 
-In production, you would configure the environment reporting to run periodically or on changes.
+In production, you would configure the environment reporting to run periodically or on changes. 
+See [reporting AWS environments](../report_aws_envs) if you are using S3 as a backend for your state files.
 {{</hint>}}
 
 ```shell {.command}
-kosli snapshot server terraform-state --paths=terraform.tfstate
+kosli snapshot path terraform-state --name=tf-state --path=terraform.tfstate
 ```
 
 You can get the latest snapshot of the environment by running:
 
 ```shell
 kosli get snapshot terraform-state
-COMMIT   ARTIFACT                                                                        FLOW     RUNNING_SINCE   REPLICAS
-6cbdb34  Name: /Users/samialajrami/workspace/kosli/iac-changes-tutorial/terraform.tfstate  tf-tutorial  28 minutes ago  1
-         Fingerprint: a57667a7b921b91d438631afa1a1fe35300b4da909a19d2b61196580f30f1d0c 
+COMMIT   ARTIFACT                                                                       FLOW         COMPLIANCE     RUNNING_SINCE  REPLICAS
+d881b2f  Name: tf-state                                                                 tf-tutorial  NON-COMPLIANT  28 minutes ago   1
+         Fingerprint: a57667a7b921b91d438631afa1a1fe35300b4da909a19d2b61196580f30f1d0c
 ```
 
 Note that the `FLOW` column indicates that this artifact came from the `tf-tutorial` flow which means Kosli has provenance for 
@@ -143,7 +145,7 @@ automatically (either on state file change or periodically).
 {{</hint>}}
 
 ```shell {.command}
-kosli snapshot server terraform-state --paths=terraform.tfstate
+kosli snapshot path terraform-state --name=tf-state --path=terraform.tfstate
 ```
 
 Getting the latest snapshot of the environment by running the command below shows that the `FLOW` is unknown. 
@@ -151,9 +153,9 @@ This means that Kosli does not have provenance for that change (i.e. it is an un
 
 ```shell
 kosli get snapshot terraform-state
-COMMIT  ARTIFACT                                                                        FLOW  RUNNING_SINCE  REPLICAS
-N/A     Name: /Users/samialajrami/workspace/kosli/iac-changes-tutorial/terraform.tfstate  N/A   8 minutes ago  1
-        Fingerprint: edd93dcde27718ed493222ceb218275655555f3f3bfefa95628c599e678ac325 
+COMMIT  ARTIFACT                                                                       FLOW  COMPLIANCE     RUNNING_SINCE   REPLICAS
+N/A     Name: tf-state                                                                 N/A   NON-COMPLIANT  8 minutes ago  1
+        Fingerprint: edd93dcde27718ed493222ceb218275655555f3f3bfefa95628c599e678ac325
 ```
 
 When you navigate to the environment page again, you will see a non-compliant artifact running.
