@@ -168,6 +168,7 @@ jobs:
         SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
 
   snyk-code:
+    if: false  # Have reached limit of 200 tests this month
     name: Snyk Code
     runs-on: ubuntu-latest
     permissions:
