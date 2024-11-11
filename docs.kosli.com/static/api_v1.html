@@ -48,5 +48,33 @@
        }'
     ></redoc>
     <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"> </script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        // Create a MutationObserver to wait for the logo to be added to the DOM
+        const observer = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            // Check if the logo image is now in the DOM
+            const logoImage = document.querySelector(".menu-content > div:first-child > img");
+            
+            if (logoImage) {
+              // Create a link element and wrap the logo image
+              const link = document.createElement("a");
+              link.href = "https://docs.kosli.com";  
+              // link.target = "_blank";  
+              
+              // Wrap the logo image inside the link
+              logoImage.parentNode.insertBefore(link, logoImage);
+              link.appendChild(logoImage);
+              
+              // Stop observing once we've found and modified the logo
+              observer.disconnect();
+            }
+          });
+        });
+    
+        // Start observing the body for child additions or subtree modifications
+        observer.observe(document.body, { childList: true, subtree: true });
+      });
+    </script>
   </body>
 </html>
