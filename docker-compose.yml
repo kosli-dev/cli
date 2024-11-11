@@ -18,6 +18,9 @@ services:
     container_name: cli_kosli_server-index
     read_only: true
     env_file: [ "./mongo/mongo.env" ]
+    environment:
+      KOSLI_HOSTNAME: localhost
+      TEST_MODE: cli
     stop_signal: SIGINT
     tmpfs:
       - /tmp
