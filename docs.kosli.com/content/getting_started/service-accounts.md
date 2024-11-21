@@ -38,7 +38,7 @@ Personal API keys possess equivalent permissions to your user account, encompass
 
 To create a personal API key:
 - Login to Kosli 
-- From your user menu on the top right corner, click `Profile`
+- From your user menu in the top right corner, click `Profile`
 - In the API Keys section, click `Add API Key`, select a Time-To-Live (TTL) for the key, add a descriptive label, and then click `Add`
 - Ensure to copy the generated key as it won't be retrievable later. This key serves as the authentication token.
 
@@ -70,7 +70,7 @@ you can assign an API key to any CLI command by one of the following options:
 
 ### In API
 
-When making requests against the Kosli API directly (e.g. using curl), you can authenticate your requests using bear token. Set the bearer token in the request Authorization header to your API key.
+When making requests against the Kosli API directly (e.g. using curl), you can authenticate your requests by setting the bearer token in the request Authorization header to your API key.
 
 ```shell
 curl -H "Authorization: Bearer <<your-api-key>>" http://app.kosli.com/api/v2/environments/<<your-org-name>>
