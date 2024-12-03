@@ -28,14 +28,19 @@ func (suite *CreateAttestationTypeTestSuite) TestCustomAttestationTypeCmd() {
 	tests := []cmdTestCase{
 		{
 			wantError: true,
-			name:      "fails when more arguments are provided",
+			name:      "fails when no arguments are provided",
 			cmd:       "create attestation-type" + suite.defaultKosliArguments,
 			golden:    "Error: accepts 1 arg(s), received 0\n",
 		},
 		{
-			name:      "type name is provided",
-			cmd:       "create attestation-type wibble" + suite.defaultKosliArguments,
-			golden:    "attestation-type wibble was created\n",
+			name:   "type name is provided",
+			cmd:    "create attestation-type wibble" + suite.defaultKosliArguments,
+			golden: "attestation-type wibble was created\n",
+		},
+		{
+			name:   "type description is provided",
+			cmd:    "create attestation-type wibble-2 -d 'description of attestation type'" + suite.defaultKosliArguments,
+			golden: "attestation-type wibble-2 was created\n",
 		},
 	}
 

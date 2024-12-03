@@ -20,7 +20,8 @@ type createAttestationTypeOptions struct {
 }
 
 type CreateAttestationTypePayload struct {
-	TypeName string `json:"type_name"`
+	TypeName    string `json:"name"`
+	Description string `json:"description"`
 }
 
 func newCreateAttestationTypeCmd(out io.Writer) *cobra.Command {
@@ -43,7 +44,7 @@ func newCreateAttestationTypeCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	//cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", envDescriptionFlag)
+	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", attestationTypeDescriptionFlag)
 
 	addDryRunFlag(cmd)
 	return cmd
@@ -59,15 +60,15 @@ func (o *createAttestationTypeOptions) run(args []string) error {
 	}
 
 	reqParams := &requests.RequestParams{
-		Method:  http.MethodPost,
-		URL:     url,
+		Method: http.MethodPost,
+		URL:    url,
 		Form:   form,
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
+		DryRun: global.DryRun,
+		Token:  global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("foo bar fix me %s", o.payload.TypeName)
+		logger.Info("attestation-type %s was created", o.payload.TypeName)
 	}
 	return err
 }
