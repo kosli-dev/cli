@@ -20,7 +20,7 @@ type createAttestationTypeOptions struct {
 }
 
 type CreateAttestationTypePayload struct {
-	TypeName string
+	TypeName string `json:"type_name"`
 }
 
 func newCreateAttestationTypeCmd(out io.Writer) *cobra.Command {
@@ -53,16 +53,41 @@ func (o *createAttestationTypeOptions) run(args []string) error {
 	o.payload.TypeName = args[0]
 	url := fmt.Sprintf("%s/api/v2/custom-attestation-types/%s", global.Host, global.Org)
 
+	form, err := prepareAttestationTypeForm(o.payload)
+	if err != nil {
+		return err
+	}
+
 	reqParams := &requests.RequestParams{
 		Method:  http.MethodPost,
 		URL:     url,
-		Payload: o.payload,
+		Form:   form,
 		DryRun:  global.DryRun,
 		Token:   global.ApiToken,
 	}
-	_, err := kosliClient.Do(reqParams)
+	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
 		logger.Info("foo bar fix me %s", o.payload.TypeName)
 	}
 	return err
+}
+
+func prepareAttestationTypeForm(payload interface{}) ([]requests.FormItem, error) {
+	form, err := newAttestationTypeForm(payload)
+	if err != nil {
+		return []requests.FormItem{}, err
+	}
+	return form, nil
+}
+
+// newAttestationTypeForm constructs a list of FormItems for an attestation-type
+// form submission.
+func newAttestationTypeForm(payload interface{}) (
+	[]requests.FormItem, error,
+) {
+	form := []requests.FormItem{
+		{Type: "field", FieldName: "data_json", Content: payload},
+	}
+
+	return form, nil
 }

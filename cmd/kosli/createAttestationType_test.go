@@ -32,10 +32,15 @@ func (suite *CreateAttestationTypeTestSuite) TestCustomAttestationTypeCmd() {
 			cmd:       "create attestation-type" + suite.defaultKosliArguments,
 			golden:    "Error: accepts 1 arg(s), received 0\n",
 		},
+		{
+			name:      "type name is provided",
+			cmd:       "create attestation-type wibble" + suite.defaultKosliArguments,
+			golden:    "attestation-type wibble was created\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)
-}u
+}
 
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
