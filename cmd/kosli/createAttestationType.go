@@ -26,14 +26,14 @@ type JQEvaluatorPayload struct {
 	Rules       []string `json:"rules"`
 }
 
-func NewJQEvaluatorPayload(rules []string) JQEvaluatorPayload {
-	return JQEvaluatorPayload{"jq", rules}
+func NewJQEvaluatorPayload(rules []string) *JQEvaluatorPayload {
+	return &JQEvaluatorPayload{"jq", rules}
 }
 
 type CreateAttestationTypePayload struct {
-	TypeName    string             `json:"name"`
-	Description string             `json:"description"`
-	Evaluator   JQEvaluatorPayload `json:"evaluator"`
+	TypeName    string              `json:"name"`
+	Description string              `json:"description,omitempty"`
+	Evaluator   *JQEvaluatorPayload `json:"evaluator,omitempty"`
 }
 
 func newCreateAttestationTypeCmd(out io.Writer) *cobra.Command {
@@ -66,7 +66,9 @@ func newCreateAttestationTypeCmd(out io.Writer) *cobra.Command {
 
 func (o *createAttestationTypeOptions) run(args []string) error {
 	o.payload.TypeName = args[0]
-	o.payload.Evaluator = NewJQEvaluatorPayload(o.jqRules)
+	if len(o.jqRules) > 0 {
+		o.payload.Evaluator = NewJQEvaluatorPayload(o.jqRules)
+	}
 
 	form, err := prepareAttestationTypeForm(o.payload, o.schemaFilePath)
 	if err != nil {
