@@ -47,6 +47,16 @@ func (suite *CreateAttestationTypeTestSuite) TestCustomAttestationTypeCmd() {
 			cmd:    "create attestation-type wibble-4 --schema testdata/person-schema.json" + suite.defaultKosliArguments,
 			golden: "attestation-type wibble-4 was created\n",
 		},
+		{
+			name:   "type jq evaluator is provided",
+			cmd:    `create attestation-type wibble-5 --jq '.age > 21' --jq '.age < 50'` + suite.defaultKosliArguments,
+			golden: "attestation-type wibble-5 was created\n",
+		},
+		{
+			name:   `jq evaluators can include bare "`,
+			cmd:    `create attestation-type wibble-6 --jq '.name | startswith("B")'` + suite.defaultKosliArguments,
+			golden: "attestation-type wibble-6 was created\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

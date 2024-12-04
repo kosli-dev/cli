@@ -239,6 +239,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	physicalEnvFlag                      = "[required] The physical environment."
 	attestationTypeDescriptionFlag       = "[optional] The attestation type description."
 	attestationTypeSchemaFlag            = "[optional] The attestation type schema."
+	attestationTypeJqFlag                = "[optional] The attestation type evaluation JQ rules."
 )
 
 var global *GlobalOpts

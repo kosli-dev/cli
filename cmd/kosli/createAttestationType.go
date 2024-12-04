@@ -18,11 +18,22 @@ const createAttestationTypeExample = ` `
 type createAttestationTypeOptions struct {
 	payload        CreateAttestationTypePayload
 	schemaFilePath string
+	jqRules        []string
+}
+
+type JQEvaluatorPayload struct {
+	ContentType string   `json:"content_type"`
+	Rules       []string `json:"rules"`
+}
+
+func NewJQEvaluatorPayload(rules []string) JQEvaluatorPayload {
+	return JQEvaluatorPayload{"jq", rules}
 }
 
 type CreateAttestationTypePayload struct {
-	TypeName    string `json:"name"`
-	Description string `json:"description"`
+	TypeName    string             `json:"name"`
+	Description string             `json:"description"`
+	Evaluator   JQEvaluatorPayload `json:"evaluator"`
 }
 
 func newCreateAttestationTypeCmd(out io.Writer) *cobra.Command {
@@ -47,6 +58,7 @@ func newCreateAttestationTypeCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", attestationTypeDescriptionFlag)
 	cmd.Flags().StringVarP(&o.schemaFilePath, "schema", "s", "", attestationTypeSchemaFlag)
+	cmd.Flags().StringArrayVar(&o.jqRules, "jq", []string{}, attestationTypeJqFlag)
 
 	addDryRunFlag(cmd)
 	return cmd
@@ -54,13 +66,14 @@ func newCreateAttestationTypeCmd(out io.Writer) *cobra.Command {
 
 func (o *createAttestationTypeOptions) run(args []string) error {
 	o.payload.TypeName = args[0]
-	url := fmt.Sprintf("%s/api/v2/custom-attestation-types/%s", global.Host, global.Org)
+	o.payload.Evaluator = NewJQEvaluatorPayload(o.jqRules)
 
 	form, err := prepareAttestationTypeForm(o.payload, o.schemaFilePath)
 	if err != nil {
 		return err
 	}
 
+	url := fmt.Sprintf("%s/api/v2/custom-attestation-types/%s", global.Host, global.Org)
 	reqParams := &requests.RequestParams{
 		Method: http.MethodPost,
 		URL:    url,
