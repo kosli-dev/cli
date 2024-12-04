@@ -16,7 +16,8 @@ const createAttestationTypeLongDesc = createAttestationTypeShortDesc + ``
 const createAttestationTypeExample = ` `
 
 type createAttestationTypeOptions struct {
-	payload CreateAttestationTypePayload
+	payload        CreateAttestationTypePayload
+	schemaFilePath string
 }
 
 type CreateAttestationTypePayload struct {
@@ -45,6 +46,7 @@ func newCreateAttestationTypeCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", attestationTypeDescriptionFlag)
+	cmd.Flags().StringVarP(&o.schemaFilePath, "schema", "s", "", attestationTypeSchemaFlag)
 
 	addDryRunFlag(cmd)
 	return cmd
@@ -54,7 +56,7 @@ func (o *createAttestationTypeOptions) run(args []string) error {
 	o.payload.TypeName = args[0]
 	url := fmt.Sprintf("%s/api/v2/custom-attestation-types/%s", global.Host, global.Org)
 
-	form, err := prepareAttestationTypeForm(o.payload)
+	form, err := prepareAttestationTypeForm(o.payload, o.schemaFilePath)
 	if err != nil {
 		return err
 	}
@@ -73,8 +75,8 @@ func (o *createAttestationTypeOptions) run(args []string) error {
 	return err
 }
 
-func prepareAttestationTypeForm(payload interface{}) ([]requests.FormItem, error) {
-	form, err := newAttestationTypeForm(payload)
+func prepareAttestationTypeForm(payload interface{}, schemaFilePath string) ([]requests.FormItem, error) {
+	form, err := newAttestationTypeForm(payload, schemaFilePath)
 	if err != nil {
 		return []requests.FormItem{}, err
 	}
@@ -83,11 +85,15 @@ func prepareAttestationTypeForm(payload interface{}) ([]requests.FormItem, error
 
 // newAttestationTypeForm constructs a list of FormItems for an attestation-type
 // form submission.
-func newAttestationTypeForm(payload interface{}) (
+func newAttestationTypeForm(payload interface{}, schemaFilePath string) (
 	[]requests.FormItem, error,
 ) {
 	form := []requests.FormItem{
 		{Type: "field", FieldName: "data_json", Content: payload},
+	}
+
+	if schemaFilePath != "" {
+		form = append(form, requests.FormItem{Type: "file", FieldName: "type_schema", Content: schemaFilePath})
 	}
 
 	return form, nil

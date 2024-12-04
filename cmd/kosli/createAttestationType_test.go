@@ -39,8 +39,13 @@ func (suite *CreateAttestationTypeTestSuite) TestCustomAttestationTypeCmd() {
 		},
 		{
 			name:   "type description is provided",
-			cmd:    "create attestation-type wibble-2 -d 'description of attestation type'" + suite.defaultKosliArguments,
+			cmd:    "create attestation-type wibble-2 --description 'description of attestation type'" + suite.defaultKosliArguments,
 			golden: "attestation-type wibble-2 was created\n",
+		},
+		{
+			name:   "type schema is provided",
+			cmd:    "create attestation-type wibble-4 --schema testdata/person-schema.json" + suite.defaultKosliArguments,
+			golden: "attestation-type wibble-4 was created\n",
 		},
 	}
 
