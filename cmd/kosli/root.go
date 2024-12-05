@@ -238,7 +238,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	logicalEnvFlag                       = "[required] The logical environment."
 	physicalEnvFlag                      = "[required] The physical environment."
 	attestationTypeDescriptionFlag       = "[optional] The attestation type description."
-	attestationTypeSchemaFlag            = "[optional] The attestation type schema."
+	attestationTypeSchemaFlag            = "[optional] Path to the attestation type schema in JSON Schema format."
 	attestationTypeJqFlag                = "[optional] The attestation type evaluation JQ rules."
 )
 

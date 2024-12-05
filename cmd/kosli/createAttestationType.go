@@ -11,9 +11,22 @@ import (
 
 const createAttestationTypeShortDesc = `Create or update a Kosli attestation type.`
 
-const createAttestationTypeLongDesc = createAttestationTypeShortDesc + ``
+const createAttestationTypeLongDesc = createAttestationTypeShortDesc + `
 
-const createAttestationTypeExample = ` `
+^TYPE-NAME^ must start with a letter or number, and only contain letters, numbers, ^.^, ^-^, ^_^, and ^~^.
+
+^--schema^ is a path to a file containing a JSON schema which will be used to validate attestations made using this type.
+
+^--jq^ defines the evaluation rules for this attestation type. This can be repeated in order to add additional rules. All rules must return ^true^ for the evaluation to pass.
+`
+
+const createAttestationTypeExample = `
+kosli create attestation type person-of-age \
+    --description "Attest that a person meets the age requirements." \
+    --schema person-schema.json \
+    --jq ".age >= 18"
+    --jq ".age < 65"
+`
 
 type createAttestationTypeOptions struct {
 	payload        CreateAttestationTypePayload
