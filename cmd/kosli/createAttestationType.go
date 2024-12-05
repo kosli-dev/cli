@@ -67,6 +67,7 @@ func newCreateAttestationTypeCmd(out io.Writer) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)
 		},
+		Hidden: true,
 	}
 
 	cmd.Flags().StringVarP(&o.payload.Description, "description", "d", "", attestationTypeDescriptionFlag)
