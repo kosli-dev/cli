@@ -237,6 +237,9 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	sonarRevisionFlag                    = "[conditional] The revision of the SonarCloud/SonarQube project. Only required if you want to use the project key/revision to get the scan results rather than using Sonar's metadata file and you have overridden the default revision, or you aren't using a CI. Defaults to the value of the git commit flag."
 	logicalEnvFlag                       = "[required] The logical environment."
 	physicalEnvFlag                      = "[required] The physical environment."
+	attestationTypeDescriptionFlag       = "[optional] The attestation type description."
+	attestationTypeSchemaFlag            = "[optional] Path to the attestation type schema in JSON Schema format."
+	attestationTypeJqFlag                = "[optional] The attestation type evaluation JQ rules."
 )
 
 var global *GlobalOpts
