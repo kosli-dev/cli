@@ -33,7 +33,7 @@ Kosli serves as a versatile solution for a variety of use cases. Two primary sce
 - Enhancing Overall Observability of Changes in Complex Systems and Environments:
   Beyond compliance considerations, Kosli remains valuable as a comprehensive platform, offering a unified view to different stakeholders. It provides visibility into changes occurring across various components of complex systems, even when there are no specific compliance requirements in place. This single pane of glass enhances overall observability.
 
-Feel free to contact us with any additional questions or if you require further information regarding the capabilities of Kosli. Alternatively, [explore how our customers have successfully implemented and utilized our services](https://www.kosli.com/case-studies/).
+Feel free to contact us with any additional questions or if you require further information regarding the capabilities of Kosli. Alternatively, [explore how our customers have successfully implemented and used our services](https://www.kosli.com/case-studies/).
 
 # Where does Kosli fit in the growing tools landscape?
 
@@ -41,7 +41,7 @@ Kosli is tool-agnostic, specifically crafted to seamlessly integrate with variou
 
 # How does Kosli work?
 
-Kosli operates akin to a black box recorder, functioning as an append-only repository for immutable change records. To utilize Kosli, users report specific changes of interest through the command line interface (CLI) or API. Kosli, in turn, captures and stores these changes while actively monitoring compliance with designated policies.
+Kosli operates akin to a black box recorder, functioning as an append-only repository for immutable change records. Users report specific changes of interest through the command line interface (CLI) or API. Kosli, in turn, captures and stores these changes while actively monitoring compliance with designated policies.
 
 Notably, change sources can originate from diverse environments, including build systems (such as CI systems) and runtime environments (for instance, a Kubernetes cluster). This flexibility ensures that Kosli effectively captures and monitors changes across various stages of development and deployment.
 
