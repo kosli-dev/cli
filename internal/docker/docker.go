@@ -7,8 +7,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
 )
@@ -20,7 +20,7 @@ func PullDockerImage(imageName string) error {
 		return err
 	}
 
-	rc, err := cli.ImagePull(context.Background(), imageName, types.ImagePullOptions{})
+	rc, err := cli.ImagePull(context.Background(), imageName, image.PullOptions{})
 	if err != nil {
 		return err
 	}
@@ -45,7 +45,7 @@ func PushDockerImage(imageName string) error {
 	}
 	authConfigBytes, _ := json.Marshal(authConfig)
 	authConfigEncoded := base64.URLEncoding.EncodeToString(authConfigBytes)
-	opts := types.ImagePushOptions{RegistryAuth: authConfigEncoded}
+	opts := image.PushOptions{RegistryAuth: authConfigEncoded}
 
 	rc, err := cli.ImagePush(context.Background(), imageName, opts)
 	if err != nil {
@@ -77,7 +77,7 @@ func RemoveDockerImage(imageName string) error {
 		return err
 	}
 
-	_, err = cli.ImageRemove(context.Background(), imageName, types.ImageRemoveOptions{Force: true})
+	_, err = cli.ImageRemove(context.Background(), imageName, image.RemoveOptions{Force: true})
 	if err != nil {
 		return err
 	}

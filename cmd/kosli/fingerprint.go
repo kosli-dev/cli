@@ -1,6 +1,10 @@
 package main
 
-import "github.com/spf13/cobra"
+import (
+	"io"
+
+	"github.com/spf13/cobra"
+)
 
 const fingerprintShortDesc = `Calculate the SHA256 fingerprint of an artifact.`
 

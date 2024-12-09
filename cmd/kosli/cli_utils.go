@@ -539,13 +539,13 @@ func ValidateAttestationArtifactArg(args []string, artifactType, inputSha256 str
 // ValidateRegistryFlags validates that you provide all registry information necessary for
 // remote digest.
 func ValidateRegistryFlags(cmd *cobra.Command, o *fingerprintOptions) error {
-	if o.artifactType != "docker" && (o.registryPassword != "" || o.registryUsername != "") {
+	if o.artifactType != "docker" && o.artifactType != "oci" && (o.registryPassword != "" || o.registryUsername != "") {
 		return ErrorBeforePrintingUsage(cmd, "--registry-provider, --registry-username and registry-password are only applicable when --artifact-type is 'docker'")
 	}
 	if o.registryProvider != "" && (o.registryPassword == "" || o.registryUsername == "") {
 		return ErrorBeforePrintingUsage(cmd, "both --registry-username and registry-password are required when --registry-provider is used")
 	}
-	if o.registryProvider == "" && (o.registryPassword != "" || o.registryUsername != "") {
+	if o.registryProvider == "" && o.artifactType != "oci" && (o.registryPassword != "" || o.registryUsername != "") {
 		return ErrorBeforePrintingUsage(cmd, "--registry-username and registry-password are only used when --registry-provider is used")
 	}
 	return nil

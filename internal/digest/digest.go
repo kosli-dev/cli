@@ -15,14 +15,13 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/containers/image/v5/docker"
+	"github.com/containers/image/v5/types"
 	"github.com/docker/docker/client"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/utils"
 	"github.com/yargevad/filepathx"
-
-	"github.com/containers/image/v5/docker"
-	containerImageTypes "github.com/containers/image/v5/types"
 )
 
 var (
@@ -70,11 +69,12 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 	return FileSha256(digestsFile.Name())
 }
 
+// OciSha256 gets the digest of a docker/OCI image from its registry
 func OciSha256(artifactName string, registryUsername string, registryPassword string) (string, error) {
 	imageName := fmt.Sprintf("//%s", artifactName)
 	ctx := context.Background()
-	sysCtx := &containerImageTypes.SystemContext{
-		DockerAuthConfig: &containerImageTypes.DockerAuthConfig{
+	sysCtx := &types.SystemContext{
+		DockerAuthConfig: &types.DockerAuthConfig{
 			Username: registryUsername,
 			Password: registryPassword,
 		},
@@ -83,7 +83,7 @@ func OciSha256(artifactName string, registryUsername string, registryPassword st
 	// Parse image reference
 	ref, err := docker.ParseReference(imageName)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to parse image reference for %s: %w", imageName, err)
 	}
 
 	// Compute digest
