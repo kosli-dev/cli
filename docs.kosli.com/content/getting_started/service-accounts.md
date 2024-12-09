@@ -7,7 +7,7 @@ weight: 230
 
 Prior to engaging with Kosli, authentication is necessary. There are two methods to achieve this:
 
-1. Utilizing a service account API key (recommended).
+1. Using a service account API key (recommended).
 2. Using a personal API key.
 
 ## Service Accounts
@@ -33,7 +33,7 @@ To create a service account:
 ## Personal API Keys
 
 {{< hint warning >}}
-Personal API keys possess equivalent permissions to your user account, encompassing access to multiple organizations. Therefore, exercise caution while utilizing personal API keys. These keys grant access and perform actions as per the associated user's permissions across various organizations.
+Personal API keys possess equivalent permissions to your user account, encompassing access to multiple organizations. Therefore, exercise caution while using personal API keys. These keys grant access and perform actions as per the associated user's permissions across various organizations.
 {{< /hint >}}
 
 To create a personal API key:
@@ -51,7 +51,7 @@ You can execute a zero-downtime API key rotation by following these steps:
 Create a new API key that will replace the existing key.
 
 - **Replace the Old Key Where Used**: 
-Implement the new key in all areas where the old key is currently utilized for authentication or access.
+Implement the new key in all areas where the old key is currently used for authentication or access.
 
 - **Delete the Old Key:**
 Once the new key is in place and operational, remove or delete the old key from the system or applications where it was previously employed for security or authentication purposes.
