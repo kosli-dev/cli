@@ -1,10 +1,6 @@
 package main
 
-import (
-	"io"
-
-	"github.com/spf13/cobra"
-)
+import "github.com/spf13/cobra"
 
 const fingerprintShortDesc = `Calculate the SHA256 fingerprint of an artifact.`
 
@@ -39,6 +35,10 @@ kosli fingerprint --artifact-type dir --exclude logs --exclude *.exe mydir
 # fingerprint a locally available docker image
 kosli fingerprint --artifact-type docker nginx:latest
 `
+
+//# fingerprint a container image from a remote registry
+//kosli fingerprint --artifact-type oci nginx:latest \
+//  --SOME-AUTHENTICATION
 
 type fingerprintOptions struct {
 	artifactType     string

@@ -382,7 +382,7 @@ func getDockerRegistryAPIToken(providerInfo *registryProviderEndpoints, username
 	}
 
 	if err != nil {
-		return "", fmt.Errorf("failed to create an authentication token for the docker registry: %v", err)
+		return "", fmt.Errorf("failed to create an authentication token for the docker registry: %v %v", err, res)
 	}
 
 	var responseData map[string]interface{}
@@ -407,6 +407,8 @@ func GetSha256Digest(artifactName string, o *fingerprintOptions, logger *log.Log
 		fingerprint, err = digest.FileSha256(artifactName)
 	case "dir":
 		fingerprint, err = digest.DirSha256(artifactName, o.excludePaths, logger)
+	case "oci":
+		fingerprint, err = digest.OciSha256(artifactName, o.registryUsername, o.registryPassword)
 	case "docker":
 		if o.registryProvider != "" {
 			var providerInfo *registryProviderEndpoints
