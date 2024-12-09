@@ -126,6 +126,7 @@ func newAttestGenericCmd(out io.Writer) *cobra.Command {
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
 
 		},
+
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)
 		},
