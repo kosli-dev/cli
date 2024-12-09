@@ -40,4 +40,49 @@ $ kosli attest artifact project-a-app.bin \
 See [kosli attest artifact](/client_reference/kosli_attest_artifact/) for more details. 
 
 
+## The --dry-run flag
+
+All Kosli CLI commands accept the `--dry-run` [boolean flag](/faq/#boolean-flags). 
+When this flag is used, a CLI command:
+* Does not communicate with Kosli at all
+* Prints the payload it would have sent
+* Exits with a zero status code
+
+We recommend using the `KOSLI_DRY_RUN` environment variable to automatically set the `--dry-run` flag. 
+This will allow you to instantly turn off all Kosli CLI commands if Kosli is down, as detailed in
+[this tutorial](/tutorials/what_do_i_do_if_kosli_is_down/).
+
+The `--dry-run` flag is also useful when trying commands locally. For example:
+
+```shell
+$ kosli attest artifact cyberdojo/differ:dde3b2a \
+  --artifact-type=docker \
+  --org=cyber-dojo \
+  --flow=differ-ci \
+  --trail=$(git rev-parse HEAD) \
+  --dry-run \
+  ...
+
+ {
+    "fingerprint": "0f53b5b9e7c266defe6984deafe039b116295b2df4a409ba6288c403f2451a9f",
+    "filename": "cyberdojo/differ:dde3b2a",
+    "git_commit": "fbb9e8000e2344323040e348a54b33ecbf67f273",
+    "git_commit_info": {
+        "sha1": "fbb9e8000e2344323040e348a54b33ecbf67f273",
+        "message": "improve coverage report info (#2796)",
+        "author": "Jon Jagger \u003cjon@jaggersoft.com\u003e",
+        "timestamp": 1733724563,
+        "branch": "master",
+        "url": "https://github.com/kosli-dev/server/commit/fbb9e8000e2344323040e348a54b33ecbf67f273"
+    },
+    "build_url": "sdf",
+    "commit_url": "sdsdf",
+    "repo_url": "https://github.com/kosli-dev/server",
+    "template_reference_name": "differ",
+    "trail_name": "dde3b2a7dab8e4567038e4c66ac68f0f01d0f704"
+}
+
+$ echo $?
+0
+```
 
