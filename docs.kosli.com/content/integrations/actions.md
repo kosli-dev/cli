@@ -30,7 +30,7 @@ Use the app to create notification settings by running the `/kosli subscribe` sl
 2) Using Slack Incoming Webhooks
 
 - Create a [Slack incoming webhook](https://api.slack.com/messaging/webhooks#create_a_webhook).
-- Utilize this webhook to [create a notification settings in the Kosli UI](/integrations/actions/#manage-actions-in-the-ui).
+- Use this webhook to [create a notification settings in the Kosli UI](/integrations/actions/#manage-actions-in-the-ui).
   
 Both approaches allow you to configure Kosli notifications in Slack, offering flexibility based on your preferences.
 

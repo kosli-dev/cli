@@ -11,6 +11,10 @@ If you can't find the answer you're looking for please:
 * email us at [support@kosli.com](mailto:support@kosli.com)
 * join our slack community [here](https://join.slack.com/t/koslicommunity/shared_invite/zt-1dlchm3s7-DEP6TKjP3Mr58OZVB3hCBw)
 
+## What do I do if Kosli is down?
+
+There is a [tutorial](/tutorials/what_do_i_do_if_kosli_is_down/) dedicated to this.
+
 ## Why am I getting "unknown flag" error?
 
 If you see an error like below (or similar, with a different flag):

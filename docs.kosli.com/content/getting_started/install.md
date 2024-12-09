@@ -113,7 +113,7 @@ Among these options, priority is given in the following order: Option 1 holds th
 
 ### Assigning flags via environment variables
 
-To assign a CLI flag using environment variables, generate a variable prefixed with KOSLI_. Utilize the flag's name in uppercase and substitute any internal dashes with underscores. For instance:
+To assign a CLI flag using environment variables, generate a variable prefixed with KOSLI_. Use the flag's name in uppercase and substitute any internal dashes with underscores. For instance:
 
 
 * `--api-token` corresponds to `KOSLI_API_TOKEN` 
