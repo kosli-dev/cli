@@ -87,7 +87,7 @@ func (suite *CreateFlowCommandTestSuite) TestCreateFlowCmd() {
 			wantError:   true,
 			name:        "creating a flow with an invalid template fails",
 			cmd:         "create flow newFlowWithTemplate --template-file testdata/invalid_template.yml --description \"my new flow\" " + suite.defaultKosliArguments,
-			goldenRegex: "Error: template file is invalid. 1 validation error for Template\n.*",
+			goldenRegex: "Error: Input payload validation failed.*",
 		},
 		{
 			wantError: true,
