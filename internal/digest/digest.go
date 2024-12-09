@@ -15,6 +15,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/containers/image/v5/docker"
+	"github.com/containers/image/v5/types"
 	"github.com/docker/docker/client"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -65,6 +67,31 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 	}
 
 	return FileSha256(digestsFile.Name())
+}
+
+// OciSha256 gets the digest of a docker/OCI image from its registry
+func OciSha256(artifactName string, registryUsername string, registryPassword string) (string, error) {
+	imageName := fmt.Sprintf("//%s", artifactName)
+	ctx := context.Background()
+	sysCtx := &types.SystemContext{
+		DockerAuthConfig: &types.DockerAuthConfig{
+			Username: registryUsername,
+			Password: registryPassword,
+		},
+	}
+
+	// Parse image reference
+	ref, err := docker.ParseReference(imageName)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse image reference for %s: %w", imageName, err)
+	}
+
+	// Compute digest
+	digest, err := docker.GetDigest(ctx, sysCtx, ref)
+	if err != nil {
+		return "", fmt.Errorf("failed to get digest for %s: %w", imageName, err)
+	}
+	return strings.Split(digest.String(), "sha256:")[1], nil
 }
 
 // calculateDirContentSha256 calculates a sha256 digest for a directory content

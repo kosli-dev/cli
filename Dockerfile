@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
-ARG GO_VERSION="1.22.0"
-ARG ALPINE_VERSION="3.19"
+ARG GO_VERSION="1.22"
+ARG ALPINE_VERSION="3.21"
 
 
 ### Go Builder ###
@@ -12,8 +12,6 @@ RUN apk add --update --no-cache git bash make ca-certificates
 WORKDIR /go/src/kosli
 
 COPY . .
-
-RUN make deps && make vet
 
 RUN make build
 

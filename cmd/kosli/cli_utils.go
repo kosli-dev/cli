@@ -382,7 +382,7 @@ func getDockerRegistryAPIToken(providerInfo *registryProviderEndpoints, username
 	}
 
 	if err != nil {
-		return "", fmt.Errorf("failed to create an authentication token for the docker registry: %v", err)
+		return "", fmt.Errorf("failed to create an authentication token for the docker registry: %v %v", err, res)
 	}
 
 	var responseData map[string]interface{}
@@ -407,6 +407,8 @@ func GetSha256Digest(artifactName string, o *fingerprintOptions, logger *log.Log
 		fingerprint, err = digest.FileSha256(artifactName)
 	case "dir":
 		fingerprint, err = digest.DirSha256(artifactName, o.excludePaths, logger)
+	case "oci":
+		fingerprint, err = digest.OciSha256(artifactName, o.registryUsername, o.registryPassword)
 	case "docker":
 		if o.registryProvider != "" {
 			var providerInfo *registryProviderEndpoints
@@ -537,13 +539,13 @@ func ValidateAttestationArtifactArg(args []string, artifactType, inputSha256 str
 // ValidateRegistryFlags validates that you provide all registry information necessary for
 // remote digest.
 func ValidateRegistryFlags(cmd *cobra.Command, o *fingerprintOptions) error {
-	if o.artifactType != "docker" && (o.registryPassword != "" || o.registryUsername != "") {
+	if o.artifactType != "docker" && o.artifactType != "oci" && (o.registryPassword != "" || o.registryUsername != "") {
 		return ErrorBeforePrintingUsage(cmd, "--registry-provider, --registry-username and registry-password are only applicable when --artifact-type is 'docker'")
 	}
 	if o.registryProvider != "" && (o.registryPassword == "" || o.registryUsername == "") {
 		return ErrorBeforePrintingUsage(cmd, "both --registry-username and registry-password are required when --registry-provider is used")
 	}
-	if o.registryProvider == "" && (o.registryPassword != "" || o.registryUsername != "") {
+	if o.registryProvider == "" && o.artifactType != "oci" && (o.registryPassword != "" || o.registryUsername != "") {
 		return ErrorBeforePrintingUsage(cmd, "--registry-username and registry-password are only used when --registry-provider is used")
 	}
 	return nil
