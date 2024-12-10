@@ -7,6 +7,7 @@ import (
 	ghUtils "github.com/kosli-dev/cli/internal/github"
 	gitlabUtils "github.com/kosli-dev/cli/internal/gitlab"
 	"github.com/spf13/cobra"
+	"log"
 )
 
 // allowed commit redaction values
@@ -22,6 +23,14 @@ func addFingerprintFlags(cmd *cobra.Command, o *fingerprintOptions) {
 	cmd.Flags().StringVar(&o.registryUsername, "registry-username", "", registryUsernameFlag)
 	cmd.Flags().StringVar(&o.registryPassword, "registry-password", "", registryPasswordFlag)
 	cmd.Flags().StringSliceVarP(&o.excludePaths, "exclude", "x", []string{}, excludePathsFlag)
+
+	err := DeprecateFlags(cmd, map[string]string{
+		"registry-provider": "no longer used",
+	})
+
+	if err != nil {
+		log.Fatalf("failed to configure deprecated flags: %v", err)
+	}
 }
 
 func addAWSAuthFlags(cmd *cobra.Command, o *aws.AWSStaticCreds) {

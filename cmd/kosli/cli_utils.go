@@ -410,42 +410,8 @@ func GetSha256Digest(artifactName string, o *fingerprintOptions, logger *log.Log
 	case "oci":
 		fingerprint, err = digest.OciSha256(artifactName, o.registryUsername, o.registryPassword)
 	case "docker":
-		if o.registryProvider != "" {
-			var providerInfo *registryProviderEndpoints
-			providerInfo, err = getRegistryEndpointForProvider(o.registryProvider)
-			if err != nil {
-				return "", err
-			}
-
-			nameSlice := strings.Split(artifactName, ":")
-			if len(nameSlice) < 2 {
-				nameSlice = append(nameSlice, "latest")
-			}
-			imageName := nameSlice[0]
-			imageTag := nameSlice[1]
-
-			if strings.Contains(nameSlice[0], "/") {
-				strSlice := strings.Split(nameSlice[0], "/")
-				urlOrRepo := strSlice[0]
-				if strings.Contains(urlOrRepo, ".") {
-					imageName = strings.TrimPrefix(nameSlice[0], urlOrRepo+"/")
-				}
-			}
-
-			if !strings.Contains(imageName, "/") && o.registryProvider == "dockerhub" {
-				imageName = fmt.Sprintf("library/%s", imageName)
-			}
-
-			token, err := getDockerRegistryAPIToken(providerInfo, o.registryUsername, o.registryPassword, imageName)
-			if err != nil {
-				return "", err
-			}
-
-			fingerprint, err = digest.RemoteDockerImageSha256(imageName, imageTag, providerInfo.mainApi, token, logger)
-			if err != nil {
-				return "", err
-			}
-
+		if o.registryUsername != "" {
+			fingerprint, err = digest.OciSha256(artifactName, o.registryUsername, o.registryPassword)
 		} else {
 			fingerprint, err = digest.DockerImageSha256(artifactName)
 		}
@@ -540,13 +506,10 @@ func ValidateAttestationArtifactArg(args []string, artifactType, inputSha256 str
 // remote digest.
 func ValidateRegistryFlags(cmd *cobra.Command, o *fingerprintOptions) error {
 	if o.artifactType != "docker" && o.artifactType != "oci" && (o.registryPassword != "" || o.registryUsername != "") {
-		return ErrorBeforePrintingUsage(cmd, "--registry-provider, --registry-username and registry-password are only applicable when --artifact-type is 'docker'")
+		return ErrorBeforePrintingUsage(cmd, "--registry-username and registry-password are only applicable when --artifact-type is 'docker' or 'oci'")
 	}
-	if o.registryProvider != "" && (o.registryPassword == "" || o.registryUsername == "") {
-		return ErrorBeforePrintingUsage(cmd, "both --registry-username and registry-password are required when --registry-provider is used")
-	}
-	if o.registryProvider == "" && o.artifactType != "oci" && (o.registryPassword != "" || o.registryUsername != "") {
-		return ErrorBeforePrintingUsage(cmd, "--registry-username and registry-password are only used when --registry-provider is used")
+	if (o.registryPassword == "" && o.registryUsername != "") || (o.registryPassword != "" && o.registryUsername == "") {
+		return ErrorBeforePrintingUsage(cmd, "--registry-username and registry-password must both be set")
 	}
 	return nil
 }

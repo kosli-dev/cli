@@ -40,7 +40,15 @@ const (
 	credentialsStoreKeySecretName = "kosli-encryption-key"
 
 	// the following constants are used in the docs/help
-	fingerprintDesc        = "The artifact SHA256 fingerprint is calculated (based on the ^--artifact-type^ flag and the artifact name/path argument) or can be provided directly (with the ^--fingerprint^ flag)."
+	fingerprintDesc = `
+The artifact fingerprint can be provided directly with the ^--fingerprint^ flag, or 
+calculated based on ^--artifact-type^ flag.
+
+Artifact type can be one of: "file" for files, "dir" for directories, "oci" for container
+images in registries or "docker" for local docker images.
+
+`
+
 	attestationBindingDesc = `
 
 The attestation can be bound to a trail using the trail name.
@@ -82,20 +90,17 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	maxAPIRetryFlag                      = "[defaulted] How many times should API calls be retried when the API host is not reachable."
 	configFileFlag                       = "[optional] The Kosli config file path."
 	debugFlag                            = "[optional] Print debug logs to stdout. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default false)"
-	artifactTypeFlag                     = "The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it)."
+	artifactTypeFlag                     = "The type of the artifact to calculate its SHA256 fingerprint. One of: [oci, docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it)."
 	flowNameFlag                         = "The Kosli flow name."
 	trailNameFlag                        = "The Kosli trail name."
 	trailNameFlagOptional                = "[optional] The Kosli trail name."
 	templateArtifactName                 = "The name of the artifact in the yml template file."
 	flowNamesFlag                        = "[defaulted] The comma separated list of Kosli flows. Defaults to all flows of the org."
-	newFlowFlag                          = "The name of the flow to be created or updated."
 	outputFlag                           = "[defaulted] The format of the output. Valid formats are: [table, json]."
-	pipefileFlag                         = "[deprecated] The path to the JSON pipefile."
 	environmentNameFlag                  = "The environment name."
 	approvalEnvironmentNameFlag          = "[defaulted] The environment the artifact is approved for. (defaults to all environments)"
 	pageNumberFlag                       = "[defaulted] The page number of a response."
 	pageLimitFlag                        = "[defaulted] The number of elements per page."
-	newEnvNameFlag                       = "The name of environment to be created."
 	newEnvTypeFlag                       = "The type of environment. Valid types are: [K8S, ECS, server, S3, lambda, docker, azure-apps, logical]."
 	envAllowListFlag                     = "The environment name for which the artifact is allowlisted."
 	reasonFlag                           = "The reason why this artifact is allowlisted."
@@ -103,7 +108,6 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	newestCommitFlag                     = "[defaulted] The source commit sha for the newest change in the deployment. Can be any commit-ish."
 	repoRootFlag                         = "[defaulted] The directory where the source git repository is available."
 	approvalDescriptionFlag              = "[optional] The approval description."
-	artifactDescriptionFlag              = "[optional] The artifact description."
 	deploymentDescriptionFlag            = "[optional] The deployment description."
 	evidenceDescriptionFlag              = "[optional] The evidence description."
 	jiraBaseUrlFlag                      = "The base url for the jira project, e.g. 'https://kosli.atlassian.net'"
@@ -128,7 +132,6 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	buildUrlFlag                         = "The url of CI pipeline that built the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
 	commitUrlFlag                        = "The url for the git commit that created the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
 	evidenceCompliantFlag                = "[defaulted] Whether the evidence is compliant or not. A boolean flag https://docs.kosli.com/faq/#boolean-flags"
-	evidenceTypeFlag                     = "The type of evidence being reported."
 	bbUsernameFlag                       = "Bitbucket username."
 	bbPasswordFlag                       = "Bitbucket App password. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#authentication for more details."
 	bbWorkspaceFlag                      = "Bitbucket workspace ID."
@@ -141,7 +144,6 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	azureTokenFlag                       = "Azure Personal Access token."
 	azureProjectFlag                     = "Azure project.(defaulted if you are running in Azure Devops pipelines: https://docs.kosli.com/ci-defaults )."
 	azureOrgUrlFlag                      = "Azure organization url. E.g. \"https://dev.azure.com/myOrg\" (defaulted if you are running in Azure Devops pipelines: https://docs.kosli.com/ci-defaults )."
-	azureBaseURLFlag                     = "[optional] Azure Devops base URL."
 	azureClientIdFlag                    = "Azure client ID."
 	azureClientSecretFlag                = "Azure client secret."
 	azureTenantIdFlag                    = "Azure tenant ID."
@@ -154,9 +156,9 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	gitlabTokenFlag                      = "Gitlab token."
 	gitlabOrgFlag                        = "Gitlab organization. (defaulted if you are running in Gitlab Pipelines: https://docs.kosli.com/ci-defaults )."
 	gitlabBaseURLFlag                    = "[optional] Gitlab base URL (only needed for on-prem Gitlab installations)."
-	registryProviderFlag                 = "[conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry."
-	registryUsernameFlag                 = "[conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry."
-	registryPasswordFlag                 = "[conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry."
+	registryProviderFlag                 = "[deprecated] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry."
+	registryUsernameFlag                 = "[conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry."
+	registryPasswordFlag                 = "[conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry."
 	resultsDirFlag                       = "[defaulted] The path to a directory with JUnit test results. By default, the directory will be uploaded to Kosli's evidence vault."
 	snykJsonResultsFileFlag              = "The path to Snyk SARIF or JSON scan results file from 'snyk test' and 'snyk container test'. By default, the Snyk results will be uploaded to Kosli's evidence vault."
 	snykSarifResultsFileFlag             = "The path to Snyk scan SARIF results file from 'snyk test' and 'snyk container test'. By default, the Snyk results will be uploaded to Kosli's evidence vault."
@@ -187,14 +189,12 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	excludePathsFlag                     = "[optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for --artifact-type dir."
 	serverExcludePathsFlag               = "[optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns."
 	shortFlag                            = "[optional] Print only the Kosli CLI version number."
-	longFlag                             = "[optional] Print detailed output."
 	reverseFlag                          = "[defaulted] Reverse the order of output list."
 	evidenceNameFlag                     = "The name of the evidence."
 	evidenceFingerprintFlag              = "[optional] The SHA256 fingerprint of the evidence file or dir."
 	evidenceURLFlag                      = "[optional] The external URL where the evidence file or dir is stored."
 	evidencePathsFlag                    = "[optional] The comma-separated list of paths containing supporting proof for the reported evidence. Paths can be for files or directories. All provided proofs will be uploaded to Kosli's evidence vault."
 	fingerprintFlag                      = "[conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'."
-	evidenceCommitFlag                   = "The git commit SHA1 for which the evidence belongs. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
 	intervalFlag                         = "[optional] Expression to define specified snapshots range."
 	showUnchangedArtifactsFlag           = "[defaulted] Show the unchanged artifacts present in both snapshots within the diff output."
 	approverFlag                         = "[optional] The user approving an approval."
