@@ -561,45 +561,6 @@ func (suite *CliUtilsTestSuite) TestValidateArtifactArg() {
 	}
 }
 
-func (suite *CliUtilsTestSuite) TestGetRegistryEndpointForProvider() {
-	for _, t := range []struct {
-		name        string
-		provider    string
-		want        *registryProviderEndpoints
-		expectError bool
-	}{
-		{
-			name:     "github provider returns expected endpoints",
-			provider: "github",
-			want: &registryProviderEndpoints{
-				mainApi: "https://ghcr.io/v2",
-				authApi: "https://ghcr.io",
-				service: "ghcr.io",
-			},
-		},
-		{
-			name:     "dockerhub provider returns expected endpoints",
-			provider: "dockerhub",
-			want: &registryProviderEndpoints{
-				mainApi: "https://registry-1.docker.io/v2",
-				authApi: "https://auth.docker.io",
-				service: "registry.docker.io",
-			},
-		},
-	} {
-		suite.Run(t.name, func() {
-			endpoints, err := getRegistryEndpointForProvider(t.provider)
-			if t.expectError {
-				require.Errorf(suite.T(), err, "error was expected but got none")
-			} else {
-				require.NoErrorf(suite.T(), err, "error was NOT expected but got %v", err)
-				require.Equalf(suite.T(), t.want, endpoints,
-					"TestGetRegistryEndpointForProvider: got %v -- want %v", t.want, endpoints)
-			}
-		})
-	}
-}
-
 func (suite *CliUtilsTestSuite) TestValidateRegistryFlags() {
 	for _, t := range []struct {
 		name        string
@@ -610,16 +571,14 @@ func (suite *CliUtilsTestSuite) TestValidateRegistryFlags() {
 			name: "registry flags are valid",
 			options: &fingerprintOptions{
 				artifactType:     "docker",
-				registryProvider: "dockerhub",
 				registryUsername: "user",
 				registryPassword: "pass",
 			},
 		},
 		{
-			name: "non-docker type with registry flags set casues an error",
+			name: "non-docker type with registry flags set causes an error",
 			options: &fingerprintOptions{
 				artifactType:     "file",
-				registryProvider: "dockerhub",
 				registryUsername: "user",
 				registryPassword: "pass",
 			},
@@ -629,7 +588,6 @@ func (suite *CliUtilsTestSuite) TestValidateRegistryFlags() {
 			name: "missing username causes an error",
 			options: &fingerprintOptions{
 				artifactType:     "docker",
-				registryProvider: "dockerhub",
 				registryPassword: "pass",
 			},
 			expectError: true,
@@ -638,33 +596,7 @@ func (suite *CliUtilsTestSuite) TestValidateRegistryFlags() {
 			name: "missing password causes an error",
 			options: &fingerprintOptions{
 				artifactType:     "docker",
-				registryProvider: "dockerhub",
 				registryUsername: "user",
-			},
-			expectError: true,
-		},
-		{
-			name: "missing provider causes an error 1",
-			options: &fingerprintOptions{
-				artifactType:     "docker",
-				registryUsername: "user",
-				registryPassword: "pass",
-			},
-			expectError: true,
-		},
-		{
-			name: "missing provider causes an error 2",
-			options: &fingerprintOptions{
-				artifactType:     "docker",
-				registryUsername: "user",
-			},
-			expectError: true,
-		},
-		{
-			name: "missing provider causes an error 3",
-			options: &fingerprintOptions{
-				artifactType:     "docker",
-				registryPassword: "pass",
 			},
 			expectError: true,
 		},

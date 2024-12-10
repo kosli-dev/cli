@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	urlPackage "net/url"
 	"os"
 	"path/filepath"
@@ -19,7 +18,6 @@ import (
 	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/gitview"
 	log "github.com/kosli-dev/cli/internal/logger"
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/utils"
 	cp "github.com/otiai10/copy"
 	"github.com/spf13/cobra"
@@ -311,92 +309,6 @@ func GetFlagFromVarName(varName string) string {
 	return result
 }
 
-type registryProviderEndpoints struct {
-	mainApi string
-	authApi string
-	service string
-}
-
-func getRegistryEndpointForProvider(provider string) (*registryProviderEndpoints, error) {
-	switch provider {
-	case "dockerhub":
-		return &registryProviderEndpoints{
-			mainApi: "https://registry-1.docker.io/v2",
-			authApi: "https://auth.docker.io",
-			service: "registry.docker.io",
-		}, nil
-	case "github":
-		return &registryProviderEndpoints{
-			mainApi: "https://ghcr.io/v2",
-			authApi: "https://ghcr.io",
-			service: "ghcr.io",
-		}, nil
-
-	default:
-		return getRegistryEndpoint(provider)
-	}
-}
-
-func getRegistryEndpoint(url string) (*registryProviderEndpoints, error) {
-	url = strings.TrimPrefix(url, "https://")
-	url = strings.Split(url, "/")[0]
-
-	return &registryProviderEndpoints{
-		mainApi: "https://" + url + "/v2",
-		authApi: "https://" + url + "/oauth2",
-		service: url,
-	}, nil
-}
-
-// getDockerRegistryAPIToken returns a short-lived read-only api token for a docker registry api
-func getDockerRegistryAPIToken(providerInfo *registryProviderEndpoints, username, password, imageName string) (string, error) {
-	var res *requests.HTTPResponse
-	var err error
-
-	if strings.Contains(providerInfo.service, "jfrog") {
-		url := "https://" + providerInfo.service + "/artifactory/api/security/token"
-
-		form := urlPackage.Values{}
-		form.Add("username", username)
-		form.Add("scope", "member-of-groups:readers")
-		form.Add("expires_in", "60")
-
-		reqParams := &requests.RequestParams{
-			Method:            http.MethodPost,
-			URL:               url,
-			Payload:           form.Encode(),
-			Username:          username,
-			Password:          password,
-			AdditionalHeaders: map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
-		}
-		res, err = kosliClient.Do(reqParams)
-	} else {
-		url := fmt.Sprintf("%s/token?scope=repository:%s:pull&service=%s", providerInfo.authApi, imageName, providerInfo.service)
-		reqParams := &requests.RequestParams{
-			Method:   http.MethodGet,
-			URL:      url,
-			Username: username,
-			Password: password,
-		}
-		res, err = kosliClient.Do(reqParams)
-	}
-
-	if err != nil {
-		return "", fmt.Errorf("failed to create an authentication token for the docker registry: %v %v", err, res)
-	}
-
-	var responseData map[string]interface{}
-	err = json.Unmarshal([]byte(res.Body), &responseData)
-	if err != nil {
-		return "", err
-	}
-	token := responseData["token"]
-	if token == nil {
-		token = responseData["access_token"]
-	}
-	return token.(string), nil
-}
-
 // GetSha256Digest calculates the sha256 digest of an artifact.
 // Supported artifact types are: dir, file, docker
 func GetSha256Digest(artifactName string, o *fingerprintOptions, logger *log.Logger) (string, error) {
@@ -410,42 +322,8 @@ func GetSha256Digest(artifactName string, o *fingerprintOptions, logger *log.Log
 	case "oci":
 		fingerprint, err = digest.OciSha256(artifactName, o.registryUsername, o.registryPassword)
 	case "docker":
-		if o.registryProvider != "" {
-			var providerInfo *registryProviderEndpoints
-			providerInfo, err = getRegistryEndpointForProvider(o.registryProvider)
-			if err != nil {
-				return "", err
-			}
-
-			nameSlice := strings.Split(artifactName, ":")
-			if len(nameSlice) < 2 {
-				nameSlice = append(nameSlice, "latest")
-			}
-			imageName := nameSlice[0]
-			imageTag := nameSlice[1]
-
-			if strings.Contains(nameSlice[0], "/") {
-				strSlice := strings.Split(nameSlice[0], "/")
-				urlOrRepo := strSlice[0]
-				if strings.Contains(urlOrRepo, ".") {
-					imageName = strings.TrimPrefix(nameSlice[0], urlOrRepo+"/")
-				}
-			}
-
-			if !strings.Contains(imageName, "/") && o.registryProvider == "dockerhub" {
-				imageName = fmt.Sprintf("library/%s", imageName)
-			}
-
-			token, err := getDockerRegistryAPIToken(providerInfo, o.registryUsername, o.registryPassword, imageName)
-			if err != nil {
-				return "", err
-			}
-
-			fingerprint, err = digest.RemoteDockerImageSha256(imageName, imageTag, providerInfo.mainApi, token, logger)
-			if err != nil {
-				return "", err
-			}
-
+		if o.registryUsername != "" {
+			fingerprint, err = digest.OciSha256(artifactName, o.registryUsername, o.registryPassword)
 		} else {
 			fingerprint, err = digest.DockerImageSha256(artifactName)
 		}
@@ -540,13 +418,10 @@ func ValidateAttestationArtifactArg(args []string, artifactType, inputSha256 str
 // remote digest.
 func ValidateRegistryFlags(cmd *cobra.Command, o *fingerprintOptions) error {
 	if o.artifactType != "docker" && o.artifactType != "oci" && (o.registryPassword != "" || o.registryUsername != "") {
-		return ErrorBeforePrintingUsage(cmd, "--registry-provider, --registry-username and registry-password are only applicable when --artifact-type is 'docker'")
+		return ErrorBeforePrintingUsage(cmd, "--registry-username and registry-password are only applicable when --artifact-type is 'docker' or 'oci'")
 	}
-	if o.registryProvider != "" && (o.registryPassword == "" || o.registryUsername == "") {
-		return ErrorBeforePrintingUsage(cmd, "both --registry-username and registry-password are required when --registry-provider is used")
-	}
-	if o.registryProvider == "" && o.artifactType != "oci" && (o.registryPassword != "" || o.registryUsername != "") {
-		return ErrorBeforePrintingUsage(cmd, "--registry-username and registry-password are only used when --registry-provider is used")
+	if (o.registryPassword == "" && o.registryUsername != "") || (o.registryPassword != "" && o.registryUsername == "") {
+		return ErrorBeforePrintingUsage(cmd, "--registry-username and registry-password must both be set")
 	}
 	return nil
 }

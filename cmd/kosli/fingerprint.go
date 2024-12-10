@@ -19,9 +19,10 @@ plus the ability to use recursive globs "**"
 
 const fingerprintLongDesc = fingerprintShortDesc + `
 Requires ^--artifact-type^ flag to be set.
-Artifact type can be one of: "file" for files, "dir" for directories, "docker" for docker images.
+Artifact type can be one of: "file" for files, "dir" for directories, "oci" for container
+images in registries or "docker" for local docker images.
 
-Fingerprinting docker images can be done using the local docker daemon or the fingerprint can be fetched
+Fingerprinting container images can be done using the local docker daemon or the fingerprint can be fetched
 from a remote registry.
 
 ` + fingerprintDirSynopsis
@@ -36,8 +37,14 @@ kosli fingerprint --artifact-type dir mydir
 # fingerprint a dir while excluding paths
 kosli fingerprint --artifact-type dir --exclude logs --exclude *.exe mydir
 
-# fingerprint a locally available docker image
+# fingerprint a locally available docker image (requires docker daemon running)
 kosli fingerprint --artifact-type docker nginx:latest
+
+# fingerprint a public image from a remote registry
+kosli fingerprint --artifact-type oci nginx:latest
+
+# fingerprint a private image from a remote registry
+kosli fingerprint --artifact-type oci private:latest --registry-username YourUsername --registry-password YourPassword
 `
 
 type fingerprintOptions struct {
@@ -74,6 +81,7 @@ func newFingerprintCmd(out io.Writer) *cobra.Command {
 	err = DeprecateFlags(cmd, map[string]string{
 		"e": "use -x instead",
 	})
+
 	if err != nil {
 		logger.Error("failed to configure deprecated flags: %v", err)
 	}
