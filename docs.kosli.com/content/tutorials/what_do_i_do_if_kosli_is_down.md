@@ -9,7 +9,7 @@ weight: 507
 Customers use Kosli to attest evidence of their business and software processes.
 If Kosli is down, these attestations will fail.
 This will break CI workflow pipelines, blocking artifacts from being deployed.
-In this situation there is a built-in mechanism to instantly turn Kosli off and keep the pipeline flowing.
+In this situation there is a built-in mechanism to instantly turn Kosli off and keep the pipelines flowing.
 When Kosli is back up, you can instantly turn Kosli back on.
 
 ## Turning Kosli CLI calls on and off instantly
