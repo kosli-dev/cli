@@ -75,8 +75,8 @@ $ kosli attest artifact cyberdojo/differ:dde3b2a \
         "branch": "master",
         "url": "https://github.com/kosli-dev/server/commit/fbb9e8000e2344323040e348a54b33ecbf67f273"
     },
-    "build_url": "sdf",
-    "commit_url": "sdsdf",
+    "build_url": "https://github.com/cyber-dojo/differ/actions/runs/11777650898",
+    "commit_url": "https://github.com/cyber-dojo/differ/commit/dde3b2a7dab8e4567038e4c66ac68f0f01d0f704",
     "repo_url": "https://github.com/kosli-dev/server",
     "template_reference_name": "differ",
     "trail_name": "dde3b2a7dab8e4567038e4c66ac68f0f01d0f704"
