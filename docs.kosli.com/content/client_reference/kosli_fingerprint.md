@@ -10,9 +10,10 @@ deprecated: false
 
 Calculate the SHA256 fingerprint of an artifact.
 Requires `--artifact-type` flag to be set.
-Artifact type can be one of: "file" for files, "dir" for directories, "docker" for docker images.
+Artifact type can be one of: "file" for files, "dir" for directories, "oci" for container
+images in registries or "docker" for local docker images.
 
-Fingerprinting docker images can be done using the local docker daemon or the fingerprint can be fetched
+Fingerprinting container images can be done using the local docker daemon or the fingerprint can be fetched
 from a remote registry.
 
 When fingerprinting a 'dir' artifact, you can exclude certain paths from fingerprint calculation 
@@ -33,12 +34,11 @@ kosli fingerprint {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it).  |
+|    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [oci, docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it).  |
 |    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for --artifact-type dir.  |
 |    -h, --help  |  help for fingerprint  |
-|        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
-|        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
-|        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
+|        --registry-password string  |  [conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry.  |
+|        --registry-username string  |  [conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry.  |
 
 
 ## Flags inherited from parent commands
@@ -76,9 +76,23 @@ kosli fingerprint --artifact-type dir --exclude logs --exclude *.exe mydir
 
 ```
 
-**fingerprint a locally available docker image**
+**fingerprint a locally available docker image (requires docker daemon running)**
 
 ```shell
 kosli fingerprint --artifact-type docker nginx:latest
+
+```
+
+**fingerprint a public image from a remote registry**
+
+```shell
+kosli fingerprint --artifact-type oci nginx:latest
+
+```
+
+**fingerprint a private image from a remote registry**
+
+```shell
+kosli fingerprint --artifact-type oci private:latest --registry-username YourUsername --registry-password YourPassword
 ```
 

@@ -11,6 +11,9 @@ deprecated: false
 Create or update a Kosli flow.
 You can specify flow parameters in flags.
 
+`FLOW-NAME`s must start with a letter or number, and only contain letters, numbers, `.`, `-`, `_`, and `~`.
+
+
 ```shell
 kosli create flow FLOW-NAME [flags]
 ```

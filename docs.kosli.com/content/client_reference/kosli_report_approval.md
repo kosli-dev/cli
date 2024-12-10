@@ -9,7 +9,14 @@ deprecated: false
 ## Synopsis
 
 Report an approval of deploying an artifact to an environment to Kosli.  
-The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
+
+The artifact fingerprint can be provided directly with the `--fingerprint` flag, or 
+calculated based on `--artifact-type` flag.
+
+Artifact type can be one of: "file" for files, "dir" for directories, "oci" for container
+images in registries or "docker" for local docker images.
+
+
 
 ```shell
 kosli report approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
@@ -19,7 +26,7 @@ kosli report approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 | Flag | Description |
 | :--- | :--- |
 |        --approver string  |  [optional] The user approving an approval.  |
-|    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it).  |
+|    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [oci, docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it).  |
 |    -d, --description string  |  [optional] The approval description.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -e, --environment string  |  [defaulted] The environment the artifact is approved for. (defaults to all environments)  |
@@ -29,9 +36,8 @@ kosli report approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |    -h, --help  |  help for approval  |
 |        --newest-commit string  |  [defaulted] The source commit sha for the newest change in the deployment. Can be any commit-ish. (default "HEAD")  |
 |        --oldest-commit string  |  [conditional] The source commit sha for the oldest change in the deployment. Can be any commit-ish. Only required if you don't specify '--environment'.  |
-|        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
-|        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
-|        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
+|        --registry-password string  |  [conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry.  |
+|        --registry-username string  |  [conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry.  |
 |        --repo-root string  |  [defaulted] The directory where the source git repository is available. (default ".")  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the approval.  |
 

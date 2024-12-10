@@ -9,6 +9,7 @@ deprecated: false
 ## Synopsis
 
 Report a snapshot of running pods in a K8S cluster or namespace(s) to Kosli.  
+Skip `--namespaces` and `--namespaces-regex` to report all pods in all namespaces in a cluster.
 The reported data includes pod container images digests and creation timestamps. You can customize the scope of reporting
 to include or exclude namespaces.
 
@@ -20,10 +21,12 @@ kosli snapshot k8s ENVIRONMENT-NAME [flags]
 | Flag | Description |
 | :--- | :--- |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|    -x, --exclude-namespaces strings  |  [conditional] The comma separated list of namespaces regex patterns NOT to report artifacts info from. Can't be used together with --namespace.  |
+|    -x, --exclude-namespaces strings  |  [optional] The comma separated list of namespaces names to exclude from reporting artifacts info from. Can't be used together with --namespaces or --namespaces-regex.  |
+|        --exclude-namespaces-regex strings  |  [optional] The comma separated list of namespaces regex patterns to exclude from reporting artifacts info from. Can't be used together with --namespaces or --namespaces-regex.  |
 |    -h, --help  |  help for k8s  |
 |    -k, --kubeconfig string  |  [defaulted] The kubeconfig path for the target cluster. (default "$HOME/.kube/config")  |
-|    -n, --namespaces strings  |  [conditional] The comma separated list of namespaces regex patterns to report artifacts info from. Can't be used together with --exclude-namespace.  |
+|    -n, --namespaces strings  |  [optional] The comma separated list of namespaces names to report artifacts info from. Can't be used together with --exclude-namespaces or --exclude-namespaces-regex.  |
+|        --namespaces-regex strings  |  [optional] The comma separated list of namespaces regex patterns to report artifacts info from. Can't be used together with --exclude-namespaces --exclude-namespaces-regex.  |
 
 
 ## Flags inherited from parent commands

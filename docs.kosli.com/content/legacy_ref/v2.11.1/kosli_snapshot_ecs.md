@@ -8,7 +8,8 @@ deprecated: false
 
 ## Synopsis
 
-Report a snapshot of running containers in an AWS ECS cluster or service to Kosli.  
+Report a snapshot of running containers in one or more AWS ECS cluster(s) to Kosli.  
+Skip `--clusters` and `--clusters-regex` to report all clusters in a given AWS account. Or use `--exclude` and/or `--exclude-regex` to report all clusters excluding some.
 The reported data includes container image digests and creation timestamps.
 
 To authenticate to AWS, you can either:  
@@ -30,10 +31,12 @@ kosli snapshot ecs ENVIRONMENT-NAME [flags]
 |        --aws-key-id string  |  The AWS access key ID.  |
 |        --aws-region string  |  The AWS region.  |
 |        --aws-secret-key string  |  The AWS secret access key.  |
-|    -C, --cluster string  |  The name of the ECS cluster.  |
+|        --clusters strings  |  [optional] The comma-separated list of ECS cluster names to snapshot. Can't be used together with --exclude or --exclude-regex.  |
+|        --clusters-regex strings  |  [optional] The comma-separated list of ECS cluster name regex patterns to snapshot. Can't be used together with --exclude or --exclude-regex.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
+|        --exclude strings  |  [optional] The comma-separated list of ECS cluster names to exclude. Can't be used together with --exclude or --exclude-regex.  |
+|        --exclude-regex strings  |  [optional] The comma-separated list of ECS cluster name regex patterns to exclude. Can't be used together with --clusters or --clusters-regex.  |
 |    -h, --help  |  help for ecs  |
-|    -s, --service-name string  |  [optional] The name of the ECS service.  |
 
 
 ## Flags inherited from parent commands
@@ -58,7 +61,7 @@ export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
 kosli snapshot ecs yourEnvironmentName \
-	--cluster yourECSClusterName \
+	--clusters yourECSClusterName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -72,22 +75,33 @@ export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
 kosli snapshot ecs yourEnvironmentName \
-	--cluster yourECSClusterName \
+	--clusters yourECSClusterName \
 	--service-name yourECSServiceName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 ```
 
-**report what is running in in a specific AWS ECS service within a cluster (AWS auth provided in flags)**
+**report what is running in all ECS clusters in an AWS account (AWS auth provided in flags)**
 
 ```shell
 kosli snapshot ecs yourEnvironmentName \
-	--cluster yourECSClusterName \
-	--service-name yourECSServiceName \
 	--aws-key-id yourAWSAccessKeyID \
 	--aws-secret-key yourAWSSecretAccessKey \
 	--aws-region yourAWSRegion \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+```
+
+**report what is running in all ECS clusters in an AWS account except for clusters with names matching given regex patterns**
+
+```shell
+kosli snapshot ecs yourEnvironmentName \
+	--aws-key-id yourAWSAccessKeyID \
+	--aws-secret-key yourAWSSecretAccessKey \
+	--aws-region yourAWSRegion \
+	--exclude-regex "those-names.*" \
 	--api-token yourAPIToken \
 	--org yourOrgName
 ```
