@@ -187,6 +187,19 @@ func normalize(in []byte) []byte {
 	return []byte(strings.TrimSpace(string(normalized)))
 }
 
+func CreateCustomAttestationType(typeName, schemaFilePath string, jqEvaluators []string, t *testing.T) {
+	t.Helper()
+	o := &createAttestationTypeOptions{
+		payload: CreateAttestationTypePayload{
+			TypeName: typeName,
+		},
+		schemaFilePath: schemaFilePath,
+		jqRules:        jqEvaluators,
+	}
+	err := o.run([]string{typeName})
+	require.NoError(t, err, "attestation type should be created without error")
+}
+
 // CreateFlow creates a flow on the server
 func CreateFlow(flowName string, t *testing.T) {
 	t.Helper()
@@ -257,7 +270,7 @@ func CreateArtifact(flowName, artifactFingerprint, artifactName string, t *testi
 }
 
 // CreateArtifactOnTrail creates an artifact on a trail on the server
-func CreateArtifactOnTrail(flowName, trailName, step_name, artifactFingerprint, artifactName string, t *testing.T) {
+func CreateArtifactOnTrail(flowName, trailName, stepName, artifactFingerprint, artifactName string, t *testing.T) {
 	t.Helper()
 	o := &attestArtifactOptions{
 		srcRepoRoot:  "../..",
@@ -269,7 +282,7 @@ func CreateArtifactOnTrail(flowName, trailName, step_name, artifactFingerprint, 
 			BuildUrl:    "www.yr.no",
 			CommitUrl:   "https://www.nrk.no",
 			TrailName:   trailName,
-			Name:        step_name,
+			Name:        stepName,
 		},
 	}
 
