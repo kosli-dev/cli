@@ -8,7 +8,7 @@ image:
   # -- the kosli reporter image pull policy
   pullPolicy: IfNotPresent
   # -- the kosli reporter image tag, overrides the image tag whose default is the chart appVersion.
-  tag: "v2.10.13"
+  tag: "v2.11.3"
 
 # -- overrides the name used for the created k8s resources. If `fullnameOverride` is provided, it has higher precedence than this one
 nameOverride: ""
@@ -18,6 +18,8 @@ fullnameOverride: ""
 serviceAccount:
   # -- specifies whether a service account should be created
   create: true
+  # -- specifies whether to create a cluster-wide permissions for the service account or namespace-scoped permissions. allowed values are: [cluster, namespace]
+  permissionScope: cluster
   # -- annotations to add to the service account
   annotations: {}
   # -- the name of the service account to use.
@@ -39,8 +41,7 @@ reporterConfig:
   # -- the name of Kosli environment that the k8s cluster/namespace correlates to
   kosliEnvironmentName: ""
   # -- the namespaces which represent the environment.
-  # It is a comma separated list of namespace name regex patterns.
-  # e.g. `^prod$,^dev-*` reports for the `prod` namespace and any namespace that starts with `dev-`
+  # It is a comma separated list of namespace names.
   # leave this unset if you want to report what is running in the entire cluster
   namespaces: ""
   # -- whether the dry run mode is enabled or not. In dry run mode, the reporter logs the reports to stdout and does not send them to kosli.
