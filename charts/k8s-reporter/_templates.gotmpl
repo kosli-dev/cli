@@ -7,7 +7,8 @@ The chart allows you to create a Kubernetes cronjob and all its necessary RBAC t
 
 - A Kubernetes cluster (minimum supported version is `v1.21`)
 - Helm v3.0+
-- Create a secret for the Kosli API token which will be used for reporting. You can create a secret by running: `kubectl create secret generic <secret-name> --from-literal=<secret-key>=<your-api-key>`
+- If you want to report artifacts from just one namespace, you need to have permissions to `get` and `list` pods in that namespace.
+- If you want to report artifacts from multiple namespaces or entire cluster, you need to have cluster-wide permissions to `get` and `list` pods.
 {{- end }}
 
 {{ define "extra.install" -}}
@@ -15,28 +16,64 @@ The chart allows you to create a Kubernetes cronjob and all its necessary RBAC t
 
 To install this chart via the Helm chart repository:
 
-```shell 
-helm repo add kosli https://charts.kosli.com/
-helm repo update
-helm install [RELEASE-NAME] kosli/k8s-reporter -f [VALUES-FILE-PATH]
+1. Add the Kosli helm repo
+```shell {.command}
+helm repo add kosli https://charts.kosli.com/ && helm repo update
+```
+
+2. Create a secret for the Kosli API token
+```shell {.command}
+kubectl create secret generic kosli-api-token --from-literal=key=<your-api-key>
+```
+
+3. Install the helm chart
+
+A. To report artifacts running in entire cluster (requires cluster-wide read permissions):
+
+```shell {.command}
+helm install kosli-reporter kosli/k8s-reporter \
+    --set reporterConfig.kosliOrg=<your-org> \
+    --set reporterConfig.kosliEnvironmentName=<your-env-name>
+```
+
+B. To report artifacts running in multiple namespaces (requires cluster-wide read permissions):
+
+```shell {.command}
+helm install kosli-reporter kosli/k8s-reporter \
+    --set reporterConfig.kosliOrg=<your-org> \
+    --set reporterConfig.kosliEnvironmentName=<your-env-name> \
+    --set reporterConfig.namespaces=<namespace1,namespace2>
+```
+
+C. To report artifacts running in one namespace (requires namespace-scoped read permissions):
+
+```shell {.command}
+helm install kosli-reporter kosli/k8s-reporter \
+    --set reporterConfig.kosliOrg=<your-org> \
+    --set reporterConfig.kosliEnvironmentName=<your-env-name> \
+    --set reporterConfig.namespaces=<namespace1> \
+    --set serviceAccount.permissionScope=namespace
 ```
 
 > Chart source can be found at https://github.com/kosli-dev/cli/tree/main/charts/k8s-reporter
+
+> See all available [configuration options](#configurations) below.
+
 {{- end }}
 
 {{ define "extra.upgrade" -}}
 ## Upgrading the chart
 
-```shell
-helm upgrade [RELEASE-NAME] kosli/k8s-reporter 
+```shell {.command}
+helm upgrade kosli-reporter kosli/k8s-reporter ...
 ```
 {{- end }}
 
 {{ define "extra.uninstall" -}}
 ## Uninstalling chart
 
-```shell
-helm uninstall [RELEASE-NAME]
+```shell {.command}
+helm uninstall kosli-reporter
 ```
 {{- end }}
 
