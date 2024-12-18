@@ -32,17 +32,25 @@ $ kosli attest artifact project-a-app.bin \
 	--artifact-type file \
 	--build-url https://exampleci.com \
 	--commit-url https://github.com/ProjectA/ProjectAApp/commit/e67f2f2b121f9325ebf166b7b3c707f73cb48b14 \
-	--git-commit e67f2f2b121f9325ebf166b7b3c707f73cb48b14 \
+	--commit e67f2f2b121f9325ebf166b7b3c707f73cb48b14 \
 	--flow project-a \
 	--trail trail-1 \
 	--name backend
 ```
+
+The `--artifact-type` flag is used to determine the type of artifact being attested. The following types are supported:
+
+- **file**: for any single file artifacts (e.g. a binary, Jar file, etc.)
+- **dir**: for directory artifacts.
+- **docker**: for docker images that are pulled on the machine. This option depends on having a running Docker daemon on the machine.
+- **oci**: for container images in docker or OCI format. The fingerprint is fetched directly from the registry.
+
 See [kosli attest artifact](/client_reference/kosli_attest_artifact/) for more details. 
 
 
 ## The --dry-run flag
 
-All Kosli CLI commands accept the `--dry-run` [boolean flag](/faq/#boolean-flags). 
+All Kosli CLI commands which write data accept the `--dry-run` [boolean flag](/faq/#boolean-flags). 
 When this flag is used, a CLI command:
 * Does not communicate with Kosli at all
 * Prints the payload it would have sent
