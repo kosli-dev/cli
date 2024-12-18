@@ -1,9 +1,9 @@
 ---
-title: "Part 2: Install Kosli"
+title: "Part 2: Install Kosli CLI"
 bookCollapseSection: false
 weight: 220
 ---
-# Part 2: Install Kosli
+# Part 2: Install Kosli CLI
 
 Kosli CLI can be installed from package managers, 
 by Curling pre-built binaries, or can be used from the distributed Docker images.
@@ -98,7 +98,7 @@ kosli version
 ```
 The expected output should be similar to this:
 ```plaintext {.light-console}
-version.BuildInfo{Version:"v{{< cli-version >}}", GitCommit:"4058e8932ec093c28f553177e41c906940114866", GitTreeState:"clean", GoVersion:"go1.19.5"}
+version.BuildInfo{Version:"2.11.4", GitCommit:"Homebrew", GitTreeState:"clean", GoVersion:"go1.23.4"}
 ```
 
 ## Using the CLI
