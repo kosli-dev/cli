@@ -74,8 +74,8 @@ $ sonar scanner \
 - `sonar.analysis.kosli_trail=<YourTrailName>`
     - The name of the Trail to attest the scan results. If a Trail does not already exist with the given name it is created. If no Trail name is provided, the revision ID of the Sonar project (typically defaulted to the Git SHA) is used as the name.
 - `sonar.analysis.kosli_attestation=<YourAttestationName>`
-    - The name you want to give to the attestation. If not provided, a default name "sonar" is used. If using dot-notation (of the form `<target-artifact.attestation-name>`), either the artifact fingerprint or git commit is also required (see below).
-- `sonar.analysis.kosli_git_commit=<commitSHA>`
+    - The name you want to give to the attestation. If not provided, a default name "sonar" is used. If using dot-notation (of the form `<YourTargetArtifact.YourAttestationName>`), either the artifact fingerprint or git commit is also required (see below).
+- `sonar.analysis.kosli_git_commit=<GitCommitSHA>`
     - The git commit for the attestation. If not provided the revision ID of the Sonar project is used (provided it has the correct format for a git SHA).
 - `sonar.analysis.kosli_artifact_fingerprint=<YourArtifactFingerprint>`
     - The fingerprint of the artifact you want the attestation to be attached to. Requires that the artifact has already been reported to Kosli.
