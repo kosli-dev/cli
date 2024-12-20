@@ -91,11 +91,11 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 	}
 
 	// process annotations
-	payload.Annotations, err = proccessAnnotations(o.annotations)
+	payload.Annotations, err = processAnnotations(o.annotations)
 	return err
 }
 
-func proccessAnnotations(annotations map[string]string) (map[string]string, error) {
+func processAnnotations(annotations map[string]string) (map[string]string, error) {
 	for label := range annotations {
 		if !regexp.MustCompile(`^[A-Za-z0-9_]+$`).MatchString(label) {
 			return nil, fmt.Errorf("--annotate flag should be in the format key=value. Invalid key: '%s'. Key can only contain [A-Za-z0-9_].", label)
