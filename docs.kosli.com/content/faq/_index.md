@@ -15,6 +15,20 @@ If you can't find the answer you're looking for please:
 
 There is a [tutorial](/tutorials/what_do_i_do_if_kosli_is_down/) dedicated to this.
 
+## Why am I getting "Error response from daemon: client version 1.47 is too new. Maximum supported API version is 1.45" error in my GitHub Action Workflow?
+
+The latest Kosli CLI defaults to using version 1.47 of the Docker API and
+on Github Action Workflows, the maximum supported Docker API version is currently 1.45
+
+You can tell the Kosli CLI to use version 1.45 by setting the
+`DOCKER_API_VERSION` environment-variable. For example:
+
+```yaml
+env:
+  DOCKER_API_VERSION: "1.45"
+```
+
+
 ## Why am I getting "unknown flag" error?
 
 If you see an error like below (or similar, with a different flag):

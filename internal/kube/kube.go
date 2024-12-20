@@ -102,24 +102,6 @@ func (clientset *K8SConnection) GetPodsData(filter *filters.ResourceFilterOption
 			return podsData, fmt.Errorf("could not filter namespaces: %v ", err)
 		}
 
-		// if len(excludeNamespaces) > 0 {
-		// 	filteredNamespaces, err = filterNamespaces(nsList.Items, excludeNamespaces, "exclude")
-		// 	if err != nil {
-		// 		return podsData, fmt.Errorf("could not filter namespaces: %v ", err)
-		// 	}
-		// } else if len(includNamespaces) == 0 {
-		// 	var err error
-		// 	list, err = clientset.CoreV1().Pods("").List(ctx, metav1.ListOptions{})
-		// 	if err != nil {
-		// 		return podsData, fmt.Errorf("could not list pods on cluster scope: %v ", err)
-		// 	}
-		// } else {
-		// 	filteredNamespaces, err = filterNamespaces(nsList.Items, includNamespaces, "include")
-		// 	if err != nil {
-		// 		return podsData, fmt.Errorf("could not filter namespaces: %v ", err)
-		// 	}
-		// }
-
 		logger.Info("scanning the following namespaces: %v ", filteredNamespaces)
 
 		// run concurrently
@@ -191,6 +173,11 @@ func processPods(list *corev1.PodList) []*PodData {
 
 // filterNamespaces filters a super set of namespaces by including or excluding a subset of namespaces using regex patterns.
 func (clientset *K8SConnection) filterNamespaces(filter *filters.ResourceFilterOptions) ([]string, error) {
+	if len(filter.IncludeNamesRegex) == 0 && len(filter.ExcludeNamesRegex) == 0 {
+		if len(filter.IncludeNames) > 0 {
+			return filter.IncludeNames, nil
+		}
+	}
 	result := []string{}
 	// get all namespaces in the cluster
 	nsList, err := clientset.GetClusterNamespaces()
@@ -241,46 +228,6 @@ func (clientset *K8SConnection) filterNamespaces(filter *filters.ResourceFilterO
 				result = append(result, ns)
 				mutex.Unlock()
 			}
-
-			// match := false
-			// for _, p := range patterns {
-			// 	r, err := regexp.Compile(p)
-			// 	if err != nil {
-			// 		select {
-			// 		case errs <- fmt.Errorf("failed to compile regex pattern %v : %v", p, err):
-			// 		default:
-			// 		}
-			// 		cancel() // send cancel signal to goroutines
-			// 		return
-			// 	}
-			// 	if r.MatchString(ns) {
-			// 		match = true
-			// 		break
-			// 	}
-			// }
-			// switch operation {
-			// case "include":
-			// 	if match {
-			// 		mutex.Lock()
-			// 		result = append(result, ns)
-			// 		mutex.Unlock()
-			// 	}
-			// case "exclude":
-			// 	if !match {
-			// 		mutex.Lock()
-			// 		result = append(result, ns)
-			// 		mutex.Unlock()
-			// 	}
-
-			// default:
-			// 	select {
-			// 	case errs <- fmt.Errorf("unsupported operation %s", operation):
-			// 	default:
-			// 	}
-			// 	cancel() // send cancel signal to goroutines
-			// 	return
-
-			// }
 		}(ns.Name)
 	}
 	wg.Wait()
