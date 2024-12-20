@@ -99,6 +99,7 @@ func newAttestCustomCmd(out io.Writer) *cobra.Command {
 		Short:   attestCustomShortDesc,
 		Long:    attestCustomLongDesc,
 		Example: attestCustomExample,
+		Hidden:  true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 
 			err := CustomMaximumNArgs(1, args)
@@ -138,9 +139,9 @@ func newAttestCustomCmd(out io.Writer) *cobra.Command {
 	ci := WhichCI()
 	addAttestationFlags(cmd, o.CommonAttestationOptions, o.payload.CommonAttestationPayload, ci)
 	cmd.Flags().StringVar(&o.payload.TypeName, "type", "", attestationCustomTypeNameFlag)
-	cmd.Flags().StringVar(&o.attestationDataFile, "data", "", attestationCustomDataFileFlag)
+	cmd.Flags().StringVar(&o.attestationDataFile, "attestation-data", "", attestationCustomDataFileFlag)
 
-	err := RequireFlags(cmd, []string{"type", "data", "flow", "trail", "name"})
+	err := RequireFlags(cmd, []string{"type", "attestation-data", "flow", "trail", "name"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
@@ -179,7 +180,7 @@ func (o *attestCustomOptions) run(args []string) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("custom attestation '%s' is reported to trail: %s", o.payload.AttestationName, o.trailName)
+		logger.Info("custom:%s attestation '%s' is reported to trail: %s", o.payload.TypeName, o.payload.AttestationName, o.trailName)
 	}
 	return wrapAttestationError(err)
 }
