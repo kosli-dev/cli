@@ -205,6 +205,8 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	attestationNameFlag                  = "The name of the attestation as declared in the flow or trail yaml template."
 	attestationCompliantFlag             = "[defaulted] Whether the attestation is compliant or not. A boolean flag https://docs.kosli.com/faq/#boolean-flags"
 	attestationRepoRootFlag              = "[defaulted] The directory where the source git repository is available. Only used if --commit is used."
+	attestationCustomTypeNameFlag        = "The name of the custom attestation type."
+	attestationCustomDataFileFlag        = "The filepath of a json file containing the custom attestation data."
 	uploadJunitResultsFlag               = "[defaulted] Whether to upload the provided Junit results directory as an attachment to Kosli or not."
 	uploadSnykResultsFlag                = "[defaulted] Whether to upload the provided Snyk results file as an attachment to Kosli or not."
 	attestationAssertFlag                = "[optional] Exit with non-zero code if the attestation is non-compliant"

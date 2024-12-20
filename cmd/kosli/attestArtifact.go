@@ -167,7 +167,7 @@ func (o *attestArtifactOptions) run(args []string) error {
 		return err
 	}
 
-	o.payload.Annotations, err = proccessAnnotations(o.annotations)
+	o.payload.Annotations, err = processAnnotations(o.annotations)
 	if err != nil {
 		return err
 	}
