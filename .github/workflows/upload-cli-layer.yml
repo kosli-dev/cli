@@ -1,20 +1,17 @@
 name: Upload Kosli cli lambda layer
 
 on:
-  push:
-    branches:
-      - "lambda-layer"
-  # workflow_call:
-  #   inputs:
-  #     tag:
-  #       required: true
-  #       type: string
-  #     AWS_ACCOUNT_ID:
-  #       required: true
-  #       type: string
-  #     AWS_REGION:
-  #       required: true
-  #       type: string
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+      AWS_ACCOUNT_ID:
+        required: true
+        type: string
+      AWS_REGION:
+        required: true
+        type: string
 
 jobs:
   upload-layer:
@@ -28,18 +25,14 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          # role-to-assume: arn:aws:iam::${{ inputs.AWS_ACCOUNT_ID }}:role/cli
-          # aws-region: ${{ inputs.AWS_REGION }}
-          role-to-assume: arn:aws:iam::585008075785:role/cli
-          aws-region: "eu-central-1"
+          role-to-assume: arn:aws:iam::${{ inputs.AWS_ACCOUNT_ID }}:role/cli
+          aws-region: ${{ inputs.AWS_REGION }}
           role-duration-seconds: 2400
           role-session-name: ${{ github.event.repository.name }}
 
       - name: Upload reporter lambda package
         id: upload-reporter-lambda-package
         env:
-          # TAG: ${{ inputs.tag }}
-          # AWS_ACCOUNT_ID: ${{ inputs.AWS_ACCOUNT_ID }}
-          TAG: v2.11.1
-          AWS_ACCOUNT_ID: 585008075785
+          TAG: ${{ inputs.tag }}
+          AWS_ACCOUNT_ID: ${{ inputs.AWS_ACCOUNT_ID }}
         run: ./bin/upload_cli_layer.sh

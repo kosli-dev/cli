@@ -2,10 +2,10 @@ name: release
 
 on:
   push:
-    tags:        
-      - 'v*' 
+    tags:
+      - "v*"
 
-env: 
+env:
   GO_VERSION: 1.22.0
 
 concurrency:
@@ -19,48 +19,47 @@ jobs:
       trail_name: ${{ steps.prep.outputs.trail_name }}
       trail_template_file: ${{ steps.prep.outputs.trail_template_file }}
     steps:
-    
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Get tag
-      id: tag
-      uses: dawidd6/action-get-tag@v1
+      - name: Get tag
+        id: tag
+        uses: dawidd6/action-get-tag@v1
 
-    - name: Prepare
-      id: prep
-      run: |
-        echo "TRAIL_NAME=${{ steps.tag.outputs.tag }}" >> $GITHUB_STATE
-        echo "trail_name=${{ steps.tag.outputs.tag }}" >> $GITHUB_OUTPUT
+      - name: Prepare
+        id: prep
+        run: |
+          echo "TRAIL_NAME=${{ steps.tag.outputs.tag }}" >> $GITHUB_STATE
+          echo "trail_name=${{ steps.tag.outputs.tag }}" >> $GITHUB_OUTPUT
 
-        echo "TRAIL_TEMPLATE_FILE=release-flow-template.yml" >> $GITHUB_STATE
-        echo "trail_template_file=release-flow-template.yml" >> $GITHUB_OUTPUT
-  
+          echo "TRAIL_TEMPLATE_FILE=release-flow-template.yml" >> $GITHUB_STATE
+          echo "trail_template_file=release-flow-template.yml" >> $GITHUB_OUTPUT
+
   init-kosli:
-      needs: [pre-build]
-      uses: ./.github/workflows/init_kosli.yml
-      with:
-        FLOW_NAME: cli-release
-        TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
-        FLOW_TEMPLATE_FILE: ${{ needs.pre-build.outputs.trail_template_file }}
-        KOSLI_ORG: kosli-public
-      secrets:
-        kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
-        pr_github_token: ${{ secrets.GITHUB_TOKEN }}
+    needs: [pre-build]
+    uses: ./.github/workflows/init_kosli.yml
+    with:
+      FLOW_NAME: cli-release
+      TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
+      FLOW_TEMPLATE_FILE: ${{ needs.pre-build.outputs.trail_template_file }}
+      KOSLI_ORG: kosli-public
+    secrets:
+      kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
+      pr_github_token: ${{ secrets.GITHUB_TOKEN }}
 
   never-alone-trail:
-      needs: [pre-build, init-kosli]
-      uses: ./.github/workflows/never_alone_trail.yml
-      with:
-        FLOW_NAME: cli-release-never-alone
-        TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
-        SOURCE_FLOW_NAME: cli
-        ATTESTATION_NAME: never-alone-data
-        PARENT_FLOW_NAME: cli-release
-        PARENT_TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
-        KOSLI_ORG: kosli-public
-      secrets:
-        kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
-        pr_github_token: ${{ secrets.GITHUB_TOKEN }}        
+    needs: [pre-build, init-kosli]
+    uses: ./.github/workflows/never_alone_trail.yml
+    with:
+      FLOW_NAME: cli-release-never-alone
+      TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
+      SOURCE_FLOW_NAME: cli
+      ATTESTATION_NAME: never-alone-data
+      PARENT_FLOW_NAME: cli-release
+      PARENT_TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
+      KOSLI_ORG: kosli-public
+    secrets:
+      kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
+      pr_github_token: ${{ secrets.GITHUB_TOKEN }}
 
   test:
     needs: [pre-build, init-kosli]
@@ -131,13 +130,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
-      
+
       - uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist
           retention-days: 1
-      
+
       - name: Prepare artifacts list
         id: prepare-artifacts-list
         run: |
@@ -151,11 +150,10 @@ jobs:
                 .
             end
            )][]' dist/artifacts.json)
-          
+
           echo "artifacts<<nEOFn" >> $GITHUB_OUTPUT
           echo "${ARTIFACTS}" >> $GITHUB_OUTPUT
           echo "nEOFn" >> $GITHUB_OUTPUT
-
 
   binary-provenance:
     needs: [goreleaser, pre-build]
@@ -183,7 +181,7 @@ jobs:
         env:
           # the personal access token should have "repo" & "workflow" scopes
           COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
-    
+
   docs-gen:
     needs: [goreleaser, pre-build]
     runs-on: ubuntu-latest
@@ -197,14 +195,14 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-    
+
       - name: Generate docs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # legacy-ref should happen first as it has the side effect of deleting generated files outside the legacy_ref
-        run: | 
+        run: |
           make legacy-ref-docs 
-          make cli-docs 
+          make cli-docs
 
       - name: Generate json
         run: |
@@ -243,3 +241,12 @@ jobs:
           repository: kosli-dev/terraform-aws-kosli-reporter
           event-type: upload-package
           client-payload: '{"kosli_cli_tag": "${{ needs.pre-build.outputs.tag }}"}'
+
+  environment-reporter-upload-layer:
+    needs: [pre-build, goreleaser]
+    runs-on: ubuntu-24.04
+    uses: ./.github/workflows/upload-cli-layer.yml
+    with:
+      tag: ${{ needs.pre-build.outputs.tag }}
+      AWS_ACCOUNT_ID: 585008075785
+      AWS_REGION: eu-central-1
