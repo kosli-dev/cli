@@ -1,5 +1,3 @@
-#! /opt/homebrew/bin/bash 
-
 # Configuration
 TAG=$TAG
 AWS_ACCOUNT_ID=$AWS_ACCOUNT_ID
