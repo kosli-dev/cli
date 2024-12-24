@@ -30,6 +30,11 @@ jobs:
           role-duration-seconds: 2400
           role-session-name: ${{ github.event.repository.name }}
 
+      - id: install-aws-cli
+        uses: unfor19/install-aws-cli-action@v1
+        with:
+          version: 2
+
       - name: Upload reporter lambda package
         id: upload-reporter-lambda-package
         env:
