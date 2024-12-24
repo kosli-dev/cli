@@ -42,4 +42,7 @@ jobs:
           # AWS_ACCOUNT_ID: ${{ inputs.AWS_ACCOUNT_ID }}
           TAG: v2.11.1
           AWS_ACCOUNT_ID: 585008075785
-        run: ./bin/upload_cli_layer.sh
+        run: |
+          ls -la
+          ls -la ./bin
+          ./bin/upload_cli_layer.sh
