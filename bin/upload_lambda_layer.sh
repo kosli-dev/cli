@@ -19,7 +19,6 @@ curl -Lo kosli_${KOSLI_CLI_VERSION}_linux_amd64.tar.gz "https://github.com/kosli
 tar -xf kosli_${KOSLI_CLI_VERSION}_linux_amd64.tar.gz -C . && rm kosli_${KOSLI_CLI_VERSION}_linux_amd64.tar.gz
 zip -j "$ZIP_FILE" kosli
 
-# Initialize an empty associative array to store region-layer mappings
 declare -A REGION_LAYER_MAP
 
 # Iterate through regions
@@ -92,7 +91,5 @@ aws s3 cp "$TEMP_FILE" "s3://${S3_BUCKET}/${S3_KEY}" --region "$PRIMARY_REGION" 
 
 # Clean up
 rm -f "$TEMP_FILE"
-rm $ZIP_FILE
-rm kosli
 
 echo "Update complete. Kosli CLI version $TAG mappings for all regions added to the JSON file."
