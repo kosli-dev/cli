@@ -1,7 +1,7 @@
 # Configuration
 TAG=$TAG
 AWS_ACCOUNT_ID=$AWS_ACCOUNT_ID
-AWS_REGIONS=("eu-central-1" "us-east-1" "us-west-1") # Where to upload the layer
+AWS_REGIONS=("eu-central-1" "eu-west-1" "eu-west-2" "eu-west-3" "eu-north-1" "us-east-1" "us-east-2" "us-west-1" "us-west-2") # Where to upload the layer
 S3_BUCKET="lambda-layer-mapping-ccc19615fd6c05ace42e71c551995458dbdb1be7"
 S3_KEY="lambda_layer_versions.json"
 LAYER_NAME="kosli-cli-test"

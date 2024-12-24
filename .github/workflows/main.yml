@@ -77,7 +77,7 @@ jobs:
     needs: [pre-build, init-kosli]
     uses: ./.github/workflows/upload-cli-layer.yml
     with:
-      tag: v2.11.2
+      tag: v2.11.5
       AWS_ACCOUNT_ID: 585008075785
       AWS_REGION: eu-central-1
 
