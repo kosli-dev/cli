@@ -73,14 +73,6 @@ jobs:
       snyk_token: ${{ secrets.SNYK_TOKEN }}
       kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
 
-  environment-reporter-upload-layer:
-    needs: [pre-build, init-kosli]
-    uses: ./.github/workflows/upload-cli-layer.yml
-    with:
-      tag: v2.11.5
-      AWS_ACCOUNT_ID: 585008075785
-      AWS_REGION: eu-central-1
-
   docker:
     needs: [pre-build, test, init-kosli]
     uses: ./.github/workflows/docker.yml
