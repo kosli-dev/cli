@@ -75,7 +75,6 @@ jobs:
 
   environment-reporter-upload-layer:
     needs: [pre-build, init-kosli]
-    runs-on: ubuntu-24.04
     uses: ./.github/workflows/upload-cli-layer.yml
     with:
       # tag: v2.11.2
