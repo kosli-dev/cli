@@ -49,11 +49,13 @@ for REGION in "${AWS_REGIONS[@]}"; do
       --action "lambda:GetLayerVersion" \
       --principal "*"
   
+  LAYER_ARN="arn:aws:lambda:${REGION}:${AWS_ACCOUNT_ID}:layer:${LAYER_NAME}:${LAYER_VERSION}"
+
   echo "Lambda layer is now publicly accessible in region: $REGION!"
-  echo "Layer ARN: arn:aws:lambda:${REGION}:${AWS_ACCOUNT_ID}:layer:${LAYER_NAME}:${LAYER_VERSION}"
+  echo "Layer ARN: $LAYER_ARN"
 
   # Store the mapping
-  REGION_LAYER_MAP["$REGION"]="$LAYER_VERSION"
+  REGION_LAYER_MAP["$REGION"]="$LAYER_ARN"
 done
 
 # Update Lambda layer to Kosli cli mapping in the primary region (e.g., first region in the list)
@@ -70,8 +72,8 @@ aws s3 cp "s3://${S3_BUCKET}/${S3_KEY}" "$TEMP_FILE" --region "$PRIMARY_REGION" 
 # Update the JSON file with mappings for all regions
 echo "Updating JSON file with new mappings..."
 for REGION in "${!REGION_LAYER_MAP[@]}"; do
-  LAYER_VERSION=${REGION_LAYER_MAP[$REGION]}
-  jq --arg binary "$TAG" --arg region "$REGION" --argjson layer "$LAYER_VERSION" '.[$binary][$region] = $layer' "$TEMP_FILE" > "${TEMP_FILE}.tmp" && mv "${TEMP_FILE}.tmp" "$TEMP_FILE"
+  LAYER_ARN=${REGION_LAYER_MAP[$REGION]}
+  jq --arg binary "$TAG" --arg region "$REGION" --arg layer "$LAYER_ARN" '.[$binary][$region] = $layer' "$TEMP_FILE" > "${TEMP_FILE}.tmp" && mv "${TEMP_FILE}.tmp" "$TEMP_FILE"
 done
 
 # Validate the updated JSON file
