@@ -91,11 +91,11 @@ func printFlowAsTable(raw string, out io.Writer, page int) error {
 
 	tagsOutput := ""
 	if flow["tags"] != nil {
-                tags := flow["tags"].(map[string]interface{})
-                for key, value := range tags {
-                        tagsOutput += fmt.Sprintf("[%s=%s], ", key, value)
-                }
-        }
+		tags := flow["tags"].(map[string]interface{})
+		for key, value := range tags {
+			tagsOutput += fmt.Sprintf("[%s=%s], ", key, value)
+		}
+	}
 	tagsOutput = strings.TrimSuffix(tagsOutput, ", ")
 	if tagsOutput == "" {
 		tagsOutput = "None"
