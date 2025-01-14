@@ -37,8 +37,20 @@ type SearchArtifact struct {
 }
 
 type ResolvedToBody struct {
-	FullMatch string `json:"full_match"`
-	Type      string `json:"type"`
+	Fingerprints ResolvedFingerprints `json:"fingerprints"`
+	Commits      ResolvedCommits      `json:"commits"`
+}
+
+type ResolvedFingerprints struct {
+	Type    string   `json:"type"`
+	Count   int      `json:"count"`
+	Matches []string `json:"matches"`
+}
+
+type ResolvedCommits struct {
+	Type    string   `json:"type"`
+	Count   int      `json:"count"`
+	Matches []string `json:"matches"`
 }
 
 const searchExample = `
@@ -112,12 +124,10 @@ func printSearchAsTableWrapper(responseRaw string, out io.Writer, pageNumber int
 	if err != nil {
 		return err
 	}
-	fullMatch := searchResult.ResolvedTo.FullMatch
-	if searchResult.ResolvedTo.Type == "commit" {
-		logger.Info("Search result resolved to commit %s", fullMatch)
-	} else {
-		logger.Info("Search result resolved to artifact with fingerprint %s", fullMatch)
-	}
+
+	countFingerprints := searchResult.ResolvedTo.Fingerprints.Count
+	countCommits := searchResult.ResolvedTo.Commits.Count
+	logger.Info("Search result resolved to %d fingerprint(s) and %d commit(s) across %d artifacts\n", countFingerprints, countCommits, len(searchResult.Artifacts))
 
 	rows := []string{}
 	for _, artifact := range searchResult.Artifacts {
@@ -143,6 +153,7 @@ func printSearchAsTableWrapper(responseRaw string, out io.Writer, pageNumber int
 			}
 			rows = append(rows, fmt.Sprintf("    %s\t%s", event["event"], timestampHuman))
 		}
+		rows = append(rows, "\n")
 	}
 
 	tabFormattedPrint(out, []string{}, rows)
