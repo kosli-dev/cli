@@ -21,7 +21,7 @@ const createAttestationTypeLongDesc = createAttestationTypeShortDesc + `
 `
 
 const createAttestationTypeExample = `
-kosli create attestation type person-of-age \
+kosli create attestation-type person-of-age \
     --description "Attest that a person meets the age requirements." \
     --schema person-schema.json \
     --jq ".age >= 18"
