@@ -10,8 +10,9 @@ const fingerprintShortDesc = `Calculate the SHA256 fingerprint of an artifact.`
 
 const fingerprintDirSynopsis = `When fingerprinting a 'dir' artifact, you can exclude certain paths from fingerprint calculation 
 using the ^--exclude^ flag.
-Excluded paths are relative to the DIR-PATH and can be literal paths or
-glob patterns.  
+Excluded paths are relative to the DIR-PATH and can be literal paths or glob patterns.
+With a directory structure like this ^foo/bar/zam/file.txt^ if you are calculating the fingerprint of ^foo/bar^ you need to
+exclude ^zam/file.txt^ which is relative to the DIR-PATH.
 The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match , 
 plus the ability to use recursive globs "**"
 
@@ -34,8 +35,15 @@ kosli fingerprint --artifact-type file file.txt
 # fingerprint a dir
 kosli fingerprint --artifact-type dir mydir
 
-# fingerprint a dir while excluding paths
+# fingerprint a dir while excluding paths ^mydir/logs^ and ^mydir/*exe^
 kosli fingerprint --artifact-type dir --exclude logs --exclude *.exe mydir
+
+# fingerprint a dir while excluding all ^.pyc^ files
+kosli fingerprint --artifact-type dir  --exclude **/*.pyc mydir
+
+# fingerprint a dir while excluding paths in .kosli_ignore file
+echo bar/file.txt > mydir/.kosli_ignore
+kosli fingerprint --artifact-type dir mydir
 
 # fingerprint a locally available docker image (requires docker daemon running)
 kosli fingerprint --artifact-type docker nginx:latest
