@@ -15,9 +15,10 @@ type JiraConfig struct {
 }
 
 type JiraIssueInfo struct {
-	IssueID     string `json:"issue_id"`
-	IssueURL    string `json:"issue_url"`
-	IssueExists bool   `json:"issue_exists"`
+	IssueID     string            `json:"issue_id"`
+	IssueURL    string            `json:"issue_url"`
+	IssueExists bool              `json:"issue_exists"`
+	IssueFields *jira.IssueFields `json:"issue_fields,omitempty"`
 }
 
 // NewJiraConfig returns a new JiraConfig
@@ -61,7 +62,7 @@ func (jc *JiraConfig) NewJiraClient() (*jira.Client, error) {
 
 // GetJiraIssueInfo retrieve Jira issue information
 // if issue is not found, we still return a JiraIssueInfo object with IssueExists set to false
-func (jc *JiraConfig) GetJiraIssueInfo(issueID string) (*JiraIssueInfo, error) {
+func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string) (*JiraIssueInfo, error) {
 	result := &JiraIssueInfo{
 		IssueID:     issueID,
 		IssueExists: false,
@@ -72,13 +73,26 @@ func (jc *JiraConfig) GetJiraIssueInfo(issueID string) (*JiraIssueInfo, error) {
 	if err != nil {
 		return result, err
 	}
-	issue, response, err := jiraClient.Issue.Get(issueID, nil)
+
+	// API will return all fields if the Fields is empty so we default to a non-existing field.
+	// The user can use '*all' if they want all
+	if issueFields == "" {
+		issueFields = "non-existing-key-in-jira-fields"
+	}
+	queryOptions := jira.GetQueryOptions{
+		Fields: issueFields,
+	}
+
+	issue, response, err := jiraClient.Issue.Get(issueID, &queryOptions)
 	if err != nil && response.StatusCode != http.StatusNotFound {
 		return result, err
 	}
 
 	if issue != nil {
 		result.IssueExists = true
+		if issue.Fields != nil {
+			result.IssueFields = issue.Fields
+		}
 	}
 	return result, nil
 }

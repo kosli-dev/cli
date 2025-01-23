@@ -114,6 +114,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	jiraUsernameFlag                     = "Jira username (for Jira Cloud)"
 	jiraAPITokenFlag                     = "Jira API token (for Jira Cloud)"
 	jiraPATFlag                          = "Jira personal access token (for self-hosted Jira)"
+	jiraIssueFieldFlag                   = "[optional] The comma separated list of fields to include from the Jira issue. Default no fields are included. '*all' will give all fields."
 	envDescriptionFlag                   = "[optional] The environment description."
 	flowDescriptionFlag                  = "[optional] The Kosli flow description."
 	trailDescriptionFlag                 = "[optional] The Kosli trail description."
