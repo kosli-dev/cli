@@ -109,10 +109,13 @@ func printAttestationTypeAsTable(raw string, out io.Writer, page int) error {
 	}
 
 	if versions, ok := attestationType["versions"]; ok {
-		rows = append(rows, fmt.Sprintf("Versions:\t"))
+		rows = append(rows, "Versions:\t")
 		for _, version := range versions.([]interface{}) {
 			versionMap := version.(map[string]interface{})
 			rows, err = printVersionedAttestationTypeAsTable(versionMap, rows)
+			if err != nil {
+				return err
+			}
 			rows = append(rows, "	")
 		}
 	}
