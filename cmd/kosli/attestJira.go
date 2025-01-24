@@ -20,12 +20,13 @@ type JiraAttestationPayload struct {
 
 type attestJiraOptions struct {
 	*CommonAttestationOptions
-	baseURL  string
-	username string
-	apiToken string
-	pat      string
-	assert   bool
-	payload  JiraAttestationPayload
+	baseURL     string
+	username    string
+	apiToken    string
+	pat         string
+	issueFields string
+	assert      bool
+	payload     JiraAttestationPayload
 }
 
 const attestJiraShortDesc = `Report a jira attestation to an artifact or a trail in a Kosli flow.  `
@@ -41,6 +42,11 @@ The attestation is reported in all cases, and its compliance status depends on r
 existing Jira issues.  
 If you have wrong Jira credentials or wrong Jira-base-url it will be reported as non existing Jira issue.
 This is because Jira returns same 404 error code in all cases.
+
+The ^--jira-issue-fields^ can be used to include fields from the jira issue. By default no fields
+are included. ^*all^ will give all fields. Using ^--jira-issue-fields "*all" --dry-run^ will give you
+the complete list so you can select the once you need. The issue fields uses the jira API that is documented here:
+https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issues/#api-rest-api-2-issue-issueidorkey-get-request
 ` + attestationBindingDesc + `
 
 ` + commitDescription
@@ -78,6 +84,18 @@ kosli attest jira \
 	--jira-base-url https://kosli.atlassian.net \
 	--jira-username user@domain.com \
 	--jira-api-token yourJiraAPIToken \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# report a jira attestation about a trail and include jira issue summary, description and creator:
+kosli attest jira \
+	--name yourAttestationName \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--jira-base-url https://kosli.atlassian.net \
+	--jira-username user@domain.com \
+	--jira-api-token yourJiraAPIToken \
+	--jira-issue-fields "summary,description,creator"
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -184,6 +202,7 @@ func newAttestJiraCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.username, "jira-username", "", jiraUsernameFlag)
 	cmd.Flags().StringVar(&o.apiToken, "jira-api-token", "", jiraAPITokenFlag)
 	cmd.Flags().StringVar(&o.pat, "jira-pat", "", jiraPATFlag)
+	cmd.Flags().StringVar(&o.issueFields, "jira-issue-fields", "", jiraIssueFieldFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, attestationAssertFlag)
 
 	err := RequireFlags(cmd, []string{"flow", "trail", "name", "commit", "jira-base-url"})
@@ -226,7 +245,7 @@ func (o *attestJiraOptions) run(args []string) error {
 	issueLog := ""
 	issueFoundCount := 0
 	for _, issueID := range issueIDs {
-		result, err := jc.GetJiraIssueInfo(issueID)
+		result, err := jc.GetJiraIssueInfo(issueID, o.issueFields)
 		if err != nil {
 			return err
 		}

@@ -162,6 +162,17 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
+			name: "can attest jira against a trail with summary and description from jira issue fields",
+			cmd: fmt.Sprintf(`attest jira --name bar 
+					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+					--jira-issue-fields "summary,description"
+					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "jira attestation 'bar' is reported to trail: test-123\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "EX-1 test commit",
+			},
+		},
+		{
 			name: "can attest jira against a trail when name is not found in the trail template",
 			cmd: fmt.Sprintf(`attest jira --name additional 
 				--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
