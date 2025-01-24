@@ -45,8 +45,7 @@ This is because Jira returns same 404 error code in all cases.
 
 The ^--jira-issue-fields^ can be used to include fields from the jira issue. By default no fields
 are included. ^*all^ will give all fields. Using ^--jira-issue-fields "*all" --dry-run^ will give you
-the complete list so you can select the once you need. Be aware that specifying "creator" gives both "Creator"
-and "creator", but specifying "Creator" gives nothing. The issue fields uses the jira API that is documented here:
+the complete list so you can select the once you need. The issue fields uses the jira API that is documented here:
 https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issues/#api-rest-api-2-issue-issueidorkey-get-request
 ` + attestationBindingDesc + `
 
