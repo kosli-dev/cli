@@ -14,8 +14,9 @@ You can report directory or file artifacts in one or more server paths.
 
 When fingerprinting a 'dir' artifact, you can exclude certain paths from fingerprint calculation 
 using the `--exclude` flag.
-Excluded paths are relative to the DIR-PATH and can be literal paths or
-glob patterns.  
+Excluded paths are relative to the DIR-PATH and can be literal paths or glob patterns.
+With a directory structure like this `foo/bar/zam/file.txt` if you are calculating the fingerprint of `foo/bar` you need to
+exclude `zam/file.txt` which is relative to the DIR-PATH.
 The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match , 
 plus the ability to use recursive globs "**"
 

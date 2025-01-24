@@ -10,7 +10,14 @@ deprecated: true
 ## Synopsis
 
 Report generic evidence to an artifact in a Kosli flow.  
-The artifact SHA256 fingerprint is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
+
+The artifact fingerprint can be provided directly with the `--fingerprint` flag, or 
+calculated based on `--artifact-type` flag.
+
+Artifact type can be one of: "file" for files, "dir" for directories, "oci" for container
+images in registries or "docker" for local docker images.
+
+
 
 ```shell
 kosli report evidence artifact generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
@@ -19,7 +26,7 @@ kosli report evidence artifact generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flag
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it).  |
+|    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [oci, docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it).  |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -C, --compliant  |  [defaulted] Whether the evidence is compliant or not. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default true)  |
 |    -d, --description string  |  [optional] The evidence description.  |
@@ -32,9 +39,8 @@ kosli report evidence artifact generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flag
 |    -f, --flow string  |  The Kosli flow name.  |
 |    -h, --help  |  help for generic  |
 |    -n, --name string  |  The name of the evidence.  |
-|        --registry-password string  |  [conditional] The docker registry password or access token. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
-|        --registry-provider string  |  [conditional] The docker registry provider or url. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
-|        --registry-username string  |  [conditional] The docker registry username. Only required if you want to read docker image SHA256 digest from a remote docker registry.  |
+|        --registry-password string  |  [conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry.  |
+|        --registry-username string  |  [conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry.  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the evidence.  |
 
 

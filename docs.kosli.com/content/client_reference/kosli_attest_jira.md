@@ -20,6 +20,11 @@ existing Jira issues.
 If you have wrong Jira credentials or wrong Jira-base-url it will be reported as non existing Jira issue.
 This is because Jira returns same 404 error code in all cases.
 
+The `--jira-issue-fields` can be used to include fields from the jira issue. By default no fields
+are included. `*all` will give all fields. Using `--jira-issue-fields "*all" --dry-run` will give you
+the complete list so you can select the once you need. The issue fields uses the jira API that is documented here:
+https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issues/#api-rest-api-2-issue-issueidorkey-get-request
+
 
 The attestation can be bound to a trail using the trail name.
 
@@ -54,6 +59,7 @@ kosli attest jira [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |    -h, --help  |  help for jira  |
 |        --jira-api-token string  |  Jira API token (for Jira Cloud)  |
 |        --jira-base-url string  |  The base url for the jira project, e.g. 'https://kosli.atlassian.net'  |
+|        --jira-issue-fields string  |  [optional] The comma separated list of fields to include from the Jira issue. Default no fields are included. '*all' will give all fields.  |
 |        --jira-pat string  |  Jira personal access token (for self-hosted Jira)  |
 |        --jira-username string  |  Jira username (for Jira Cloud)  |
 |    -n, --name string  |  The name of the attestation as declared in the flow or trail yaml template.  |
@@ -122,6 +128,22 @@ kosli attest jira \
 	--jira-base-url https://kosli.atlassian.net \
 	--jira-username user@domain.com \
 	--jira-api-token yourJiraAPIToken \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+```
+
+**report a jira attestation about a trail and include jira issue summary, description and creator**
+
+```shell
+kosli attest jira \
+	--name yourAttestationName \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--jira-base-url https://kosli.atlassian.net \
+	--jira-username user@domain.com \
+	--jira-api-token yourJiraAPIToken \
+	--jira-issue-fields "summary,description,creator"
 	--api-token yourAPIToken \
 	--org yourOrgName
 

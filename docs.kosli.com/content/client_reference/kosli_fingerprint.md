@@ -18,8 +18,9 @@ from a remote registry.
 
 When fingerprinting a 'dir' artifact, you can exclude certain paths from fingerprint calculation 
 using the `--exclude` flag.
-Excluded paths are relative to the DIR-PATH and can be literal paths or
-glob patterns.  
+Excluded paths are relative to the DIR-PATH and can be literal paths or glob patterns.
+With a directory structure like this `foo/bar/zam/file.txt` if you are calculating the fingerprint of `foo/bar` you need to
+exclude `zam/file.txt` which is relative to the DIR-PATH.
 The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match , 
 plus the ability to use recursive globs "**"
 
@@ -53,6 +54,12 @@ kosli fingerprint {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 |        --org string  |  The Kosli organization.  |
 
 
+## Live Examples in different CI systems
+
+{{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli fingerprint` command in GitHub.
+
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli+fingerprint), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=github&command=kosli+fingerprint).{{< /tab >}}{{< /tabs >}}
+
 ## Examples Use Cases
 
 **fingerprint a file**
@@ -69,10 +76,25 @@ kosli fingerprint --artifact-type dir mydir
 
 ```
 
-**fingerprint a dir while excluding paths**
+**fingerprint a dir while excluding paths ^mydir/logs^ and ^mydir/*exe^**
 
 ```shell
 kosli fingerprint --artifact-type dir --exclude logs --exclude *.exe mydir
+
+```
+
+**fingerprint a dir while excluding all ^.pyc^ files**
+
+```shell
+kosli fingerprint --artifact-type dir  --exclude **/*.pyc mydir
+
+```
+
+**fingerprint a dir while excluding paths in .kosli_ignore file**
+
+```shell
+echo bar/file.txt > mydir/.kosli_ignore
+kosli fingerprint --artifact-type dir mydir
 
 ```
 
