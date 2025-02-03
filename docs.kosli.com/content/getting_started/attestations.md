@@ -204,8 +204,8 @@ See [report generic attestation to an artifact or a trail](/client_reference/kos
 
 ### Custom
 
-As an alternative to generic attestations, you can use custom attestations, which are based on custom attestation types you have previously created.
+Custom attestations are an alternative to generic attestations if Kosli does not support the type of the attestation you'd like to attach. A custom attestation uses a custom attestation type that you have previously created.
 
-When creating a custom attestation type you can specify rules, which are then used to determine the compliance status of the attestation data for the custom attestation.
+When creating a custom attestation type you can specify rules, which are then applied to the attestation data to determine the compliance status of the custom attestation.
 
-See [create custom attestation type](/client_reference/kosli_create_custom_attestation_type) and [report custom attestation to an artifact or a trail](/client_reference/kosli_attest_custom/) for usage details and examples.
+See [create custom attestation type](/client_reference/kosli_create_attestation-type) and [report custom attestation to an artifact or a trail](/client_reference/kosli_attest_custom/) for usage details and examples.

@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const archiveAttestationTypeShortDesc = `Archive a Kosli custom attestation type.`
+const archiveAttestationTypeShortDesc = `Archive a custom Kosli attestation type.`
 
 const archiveAttestationTypeLongDesc = archiveAttestationTypeShortDesc + `
 The custom attestation type will no longer be visible in the list of attestation types for an org, data is still stored in the database.
@@ -58,6 +58,7 @@ func newArchiveAttestationTypeCmd(out io.Writer) *cobra.Command {
 			}
 			return err
 		},
+		Hidden: true,
 	}
 	addDryRunFlag(cmd)
 	return cmd
