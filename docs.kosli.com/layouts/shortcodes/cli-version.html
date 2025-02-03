@@ -1,1 +1,9 @@
-{{ $json := getJSON "assets/metadata.json" }}{{ $currentVersion := $json.currentversion}}{{ substr $currentVersion 1 }}
+{{ $json := dict }}
+{{ with resources.Get "assets/metadata.json" }}
+  {{ with .Err }}
+    {{ errorf "%s" . }}
+  {{ else }}
+    {{ $json = . | transform.Unmarshal }}
+  {{ end }}
+{{ $currentVersion := $json.currentversion}}{{ substr $currentVersion 1 }}
+{{ end }}

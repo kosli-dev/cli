@@ -1,4 +1,10 @@
-{{ $json := getJSON "assets/metadata.json" }}
+{{ $json := dict }}
+{{ with resources.Get "assets/metadata.json" }}
+  {{ with .Err }}
+    {{ errorf "%s" . }}
+  {{ else }}
+    {{ $json = . | transform.Unmarshal }}
+  {{ end }}
 {{ $currentVersion := $json.currentversion}}
 
 <div class="docs-version-selector">
@@ -14,3 +20,4 @@
         {{ end }}
     </select>
 </div>
+{{ end }}
