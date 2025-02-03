@@ -13,6 +13,7 @@ const archiveAttestationTypeShortDesc = `Archive a Kosli custom attestation type
 
 const archiveAttestationTypeLongDesc = archiveAttestationTypeShortDesc + `
 The custom attestation type will no longer be visible in the list of attestation types for an org, data is still stored in the database.
+New custom attestations using this type cannot be made, but existing attestations will still be visible.
 `
 
 const archiveAttestationTypeExample = `
@@ -53,7 +54,7 @@ func newArchiveAttestationTypeCmd(out io.Writer) *cobra.Command {
 			}
 			_, err := kosliClient.Do(reqParams)
 			if err == nil && !global.DryRun {
-				logger.Info("custom-attestation-type %s was archived", args[0])
+				logger.Info("Custom attestation type %s was archived", args[0])
 			}
 			return err
 		},

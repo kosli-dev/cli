@@ -201,3 +201,11 @@ If Kosli doesn't support the type of the attestation you'd like to attach, you c
 Use `--compliant=false` if you want to report a given evidence as non-compliant.
 
 See [report generic attestation to an artifact or a trail](/client_reference/kosli_attest_generic/) for usage details and examples.
+
+### Custom
+
+As an alternative to generic attestations, you can use custom attestations, which are based on custom attestation types you have previously created.
+
+When creating a custom attestation type you can specify rules, which are then used to determine the compliance status of the attestation data for the custom attestation.
+
+See [create custom attestation type](/client_reference/kosli_create_custom_attestation_type) and [report custom attestation to an artifact or a trail](/client_reference/kosli_attest_custom/) for usage details and examples.
