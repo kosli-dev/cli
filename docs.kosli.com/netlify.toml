@@ -3,7 +3,7 @@
   command = "HUGO_BASEURL=$URL hugo"
 
 [build.environment]
-  HUGO_VERSION = "0.110.0"
+  HUGO_VERSION = "0.143.0"
   HUGO_ENABLEGITINFO = "true"
 
 [dev]
