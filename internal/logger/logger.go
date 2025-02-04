@@ -48,7 +48,7 @@ func (l *Logger) SetInfoOut(out io.Writer) {
 func (l *Logger) Debug(format string, v ...interface{}) {
 	if l.DebugEnabled {
 		format = fmt.Sprintf("[debug] %s\n", format)
-		l.debugLog.Printf(fmt.Sprintf(format, v...))
+		l.debugLog.Printf(format, v...)
 	}
 }
 
