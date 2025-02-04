@@ -2,7 +2,7 @@ baseURL: 'https://docs.kosli.com'
 languageCode: 'en-us'
 title: 'Kosli developer documentation'
 
-theme: "book"
+theme: "hugo-book"
 
 markup:
   tableOfContents:
