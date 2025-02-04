@@ -97,7 +97,7 @@ func runBufferedInnerMain(args []string) (string, error) {
 	os.Args = args
 
 	// Create a cmd writing to the buffered Writer
-	cmd, err := newRootCmd(logger.Out, nil)
+	cmd, err := newRootCmd(logger.Out, logger.ErrOut, nil)
 	if err != nil {
 		return "", err
 	}
@@ -140,7 +140,7 @@ func getDoubledOpts() DoubledOpts {
 	logger = log.NewLogger(writer, writer, false)
 
 	// Create a cmd object. Note: newRootCmd(out, args) does _not_ use its args parameter.
-	cmd, err := newRootCmd(logger.Out, nil)
+	cmd, err := newRootCmd(logger.Out, logger.ErrOut, nil)
 	if err != nil {
 		return DoubledOpts{}
 	}
@@ -153,7 +153,7 @@ func getDoubledOpts() DoubledOpts {
 
 	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		// Call initialize() to bind cobra and viper
-		err := initialize(cmd, writer)
+		err := initialize(cmd, writer, writer)
 		if err != nil {
 			return err
 		}

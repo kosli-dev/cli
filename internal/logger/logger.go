@@ -10,7 +10,9 @@ import (
 type Logger struct {
 	DebugEnabled bool
 	Out          io.Writer
+	ErrOut       io.Writer
 	warnLog      *log.Logger
+	debugLog     *log.Logger
 	infoLog      *log.Logger
 	errLog       *log.Logger
 }
@@ -23,28 +25,30 @@ func NewLogger(infoOut, errOut io.Writer, debug bool) *Logger {
 	return &Logger{
 		DebugEnabled: debug,
 		Out:          infoOut,
-		warnLog:      log.New(infoOut, "", 0),
+		ErrOut:       errOut,
+		warnLog:      log.New(errOut, "", 0),
+		debugLog:     log.New(errOut, "", 0),
 		errLog:       log.New(errOut, "", 0),
 		infoLog:      log.New(infoOut, "", 0),
 	}
 }
 
 func (l *Logger) SetErrOut(out io.Writer) {
+	l.ErrOut = out
 	l.errLog.SetOutput(out)
+	l.warnLog.SetOutput(out)
+	l.debugLog.SetOutput(out)
 }
 
 func (l *Logger) SetInfoOut(out io.Writer) {
+	l.Out = out
 	l.infoLog.SetOutput(out)
-	l.warnLog.SetOutput(out)
 }
 
 func (l *Logger) Debug(format string, v ...interface{}) {
 	if l.DebugEnabled {
 		format = fmt.Sprintf("[debug] %s\n", format)
-		err := l.infoLog.Output(2, fmt.Sprintf(format, v...))
-		if err != nil {
-			l.Error(err.Error())
-		}
+		l.debugLog.Printf(format, v...)
 	}
 }
 
