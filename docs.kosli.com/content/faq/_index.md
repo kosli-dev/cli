@@ -2,6 +2,7 @@
 title: FAQ
 bookCollapseSection: false
 weight: 700
+summary: "Frequently asked questions "
 ---
 
 # Frequently asked questions

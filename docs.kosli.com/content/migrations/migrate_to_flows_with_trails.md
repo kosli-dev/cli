@@ -1,6 +1,7 @@
 ---
 title: "Migrate your flows reporting to use trails and attestations"
 weight: 2
+summary: "Initially, flows in Kosli represented artifacts and their evidence. Trails was then introduced to give users more flexibility to model business and/or software workflows they care about in Kosli flows. "
 ---
 
 # Migrate your flows reporting to use trails and attestations

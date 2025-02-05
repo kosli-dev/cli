@@ -2,6 +2,7 @@
 title: "Part 1: Overview"
 bookCollapseSection: false
 weight: 210
+summary: "The \"Getting Started\" section contains the steps you can follow to implement Kosli in your organization. It focuses on general instructions for using Kosli and doesn't delve into specific tutorials for integrating Kosli with particular tools or runtime environments."
 ---
 # Part 1: Overview
 

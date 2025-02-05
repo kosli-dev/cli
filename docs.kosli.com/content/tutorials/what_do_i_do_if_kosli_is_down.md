@@ -2,6 +2,7 @@
 title: "What do I do if Kosli is down?"
 bookCollapseSection: false
 weight: 507
+summary: "Customers use Kosli to attest evidence of their business and software processes. If Kosli is down, these attestations will fail. In this situation there is a built-in mechanism to instantly turn Kosli off and keep the pipelines flowing. When Kosli is back up, you can instantly turn Kosli back on."
 ---
 
 # What do I do if Kosli is down?

@@ -57,11 +57,11 @@ func (o *docsOptions) run() error {
 			return "/client_reference/" + strings.ToLower(base) + "/"
 		}
 
-		hdrFunc := func(filename string, beta, deprecated bool) string {
+		hdrFunc := func(filename string, beta, deprecated bool, summary string) string {
 			base := filepath.Base(filename)
 			name := strings.TrimSuffix(base, path.Ext(base))
 			title := strings.ToLower(strings.Replace(name, "_", " ", -1))
-			return fmt.Sprintf("---\ntitle: \"%s\"\nbeta: %t\ndeprecated: %t\n---\n\n", title, beta, deprecated)
+			return fmt.Sprintf("---\ntitle: \"%s\"\nbeta: %t\ndeprecated: %t\nsummary: \"%s\"\n---\n\n", title, beta, deprecated, summary)
 		}
 
 		return MereklyGenMarkdownTreeCustom(o.topCmd, o.dest, hdrFunc, linkHandler)
@@ -69,7 +69,7 @@ func (o *docsOptions) run() error {
 	return doc.GenMarkdownTree(o.topCmd, o.dest)
 }
 
-func MereklyGenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender func(string, bool, bool) string, linkHandler func(string) string) error {
+func MereklyGenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender func(string, bool, bool, string) string, linkHandler func(string) string) error {
 	for _, c := range cmd.Commands() {
 		// skip all unavailable commands except deprecated ones
 		if (!c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand()) && c.Deprecated == "" {
@@ -83,13 +83,14 @@ func MereklyGenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender 
 	if !cmd.HasParent() || !cmd.HasSubCommands() {
 		basename := strings.Replace(cmd.CommandPath(), " ", "_", -1) + ".md"
 		filename := filepath.Join(dir, basename)
+		summary := cmd.Short
 		f, err := os.Create(filename)
 		if err != nil {
 			return err
 		}
 		defer f.Close()
 
-		if _, err := io.WriteString(f, filePrepender(filename, isBeta(cmd), isDeprecated(cmd))); err != nil {
+		if _, err := io.WriteString(f, filePrepender(filename, isBeta(cmd), isDeprecated(cmd), summary)); err != nil {
 			return err
 		}
 		if err := KosliGenMarkdownCustom(cmd, f, linkHandler); err != nil {

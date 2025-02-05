@@ -1,5 +1,7 @@
 ---
 title: Kubernetes Reporter Helm Chart
+summary: "A Helm chart for installing the Kosli K8S reporter as a cronjob.
+The chart allows you to create a Kubernetes cronjob and all its necessary RBAC to report running images to Kosli at a given cron schedule."
 ---
 
 # k8s-reporter

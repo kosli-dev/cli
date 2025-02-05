@@ -2,6 +2,7 @@
 title: "Attesting Snyk scans"
 bookCollapseSection: false
 weight: 507
+summary: "In this tutorial, we will see how you can run and attest different types of Snyk scans to Kosli. We will run the scans on the Kosli CLI git repo"
 ---
 
 # Attesting Snyk Scans

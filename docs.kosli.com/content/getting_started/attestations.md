@@ -2,6 +2,8 @@
 title: "Part 7: Attestations"
 bookCollapseSection: false
 weight: 270
+summary: "Attestations are how you record the facts you care about in your software supply chain. 
+They are the evidence that you have performed certain activities, such as running tests, security scans, or ensuring that a certain requirement is met."
 ---
 # Part 7: Attestations
 
