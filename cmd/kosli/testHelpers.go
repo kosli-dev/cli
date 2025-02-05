@@ -37,7 +37,7 @@ func executeCommandC(cmd string) (*cobra.Command, string, error) {
 
 	buf := new(bytes.Buffer)
 
-	root, err := newRootCmd(buf, args)
+	root, err := newRootCmd(buf, buf, args)
 	if err != nil {
 		return nil, "", err
 	}
