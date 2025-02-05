@@ -1,6 +1,7 @@
 ---
 title: "CLI v0.1.x => 2.0.0 migration"
 weight: 1
+summary: "If you decided to migrate Kosli cli from version v0.1.x to v2.0.0 or later the table below can help you with figuring out how the commands have changed. "
 ---
 
 # CLI v0.1.x => 2.0.0 migration

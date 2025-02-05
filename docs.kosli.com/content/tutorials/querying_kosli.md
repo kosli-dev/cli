@@ -2,6 +2,7 @@
 title: "Querying Kosli"
 bookCollapseSection: false
 weight: 505
+summary: "All the information stored in Kosli may be helpful both for operations and development. A set of `get`, `list`, `log` and `assert` commands allows you to quickly access the information about your environments, artifacts and deployments, without leaving your development environment."
 ---
 
 # Querying Kosli

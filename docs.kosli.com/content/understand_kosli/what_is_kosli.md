@@ -1,6 +1,7 @@
 ---
 title: 'What is Kosli?'
 weight: 120
+summary: "Kosli is a change recording and compliance monitoring platform which allows you to record, track and query changes about any software or business process so you can prove compliance and maintain security without slowing down."
 ---
 # What is Kosli?
 

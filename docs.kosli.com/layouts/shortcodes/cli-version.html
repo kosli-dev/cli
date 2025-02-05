@@ -1,1 +1,11 @@
-{{ $json := getJSON "assets/metadata.json" }}{{ $currentVersion := $json.currentversion}}{{ substr $currentVersion 1 }}
+{{ $json := dict }}
+{{ with try (resources.Get "/metadata.json") }}
+    {{ with .Err }}
+     {{ errorf "%s" . }}
+    {{ else with .Value }}
+     {{ $json = . | transform.Unmarshal }}
+    {{ else }}
+      {{ errorf "Failed to read metadata.json" }}
+   {{ end }}
+{{ $currentVersion := $json.currentversion}}{{ substr $currentVersion 1 }}
+{{ end }}

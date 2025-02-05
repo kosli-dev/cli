@@ -3,6 +3,7 @@ title: Tracing a production incident back to git commits
 bookCollapseSection: false
 weight: 520
 draft: false
+summary: "In this 5 minute tutorial you'll learn how Kosli can track a production incident in Cyber-dojo back to git commits."
 ---
 
 <!-- Add Easter-eggs comments? -->

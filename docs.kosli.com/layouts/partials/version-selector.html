@@ -1,12 +1,20 @@
-{{ $json := getJSON "assets/metadata.json" }}
+{{ $json := dict }}
+ {{ with try (resources.Get "/metadata.json") }}
+   {{ with .Err }}
+     {{ errorf "%s" . }}
+   {{ else with .Value }}
+     {{ $json = . | transform.Unmarshal }}
+    {{ else }}
+     {{ errorf "Failed to read metadata.json" }}
+   {{ end }}
 {{ $currentVersion := $json.currentversion}}
 
 <div class="docs-version-selector">
     <select name="docsVersion" aria-label="Choose docs version" onchange="chooseDocsVersion(this)">
         <option value="choose">-- choose version --</option>
         <option value="latest">{{ $currentVersion }} (latest)</option>
-        {{- $legacyRef := where .Site.Pages ".Section" "==" "legacy_ref" -}}
-        {{- $legacyPage := .GetPage "/legacy_ref/"}}
+        {{- $legacyRef := where $.Site.Pages ".Section" "==" "legacy_ref" -}}
+        {{- $legacyPage := $.GetPage "/legacy_ref/"}}
         {{ range $legacyRef }}
             {{ if and .IsSection (.IsDescendant $legacyPage)}}
             <option {{ if in $.Permalink .Title }} selected {{ end }} value="{{ .Title }}">{{ .Title }}</option>
@@ -14,3 +22,4 @@
         {{ end }}
     </select>
 </div>
+{{ end }}

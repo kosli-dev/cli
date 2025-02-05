@@ -2,11 +2,12 @@
 title: Sonar
 bookCollapseSection: false
 weight: 340
+summary: "The results of SonarCloud and SonarQube scans can be tracked in Kosli trails. This integration involves setting up a Sonar webhook in Kosli and a corresponding webhook in SonarCloud or SonarQube. When you run a scan of your SonarCloud/SonarQube project, the webhook is triggered and the results of the scan are sent to Kosli."
 ---
 # Record Sonar scan results in Kosli
 
-The results of SonarCloud and SonarQube scans can be tracked in [Kosli trails](/getting_started/trails/). <br>
-This integration involves setting up a Sonar webhook in Kosli and a corresponding webhook in SonarCloud or SonarQube. When you run a scan of your SonarCloud/SonarQube project, the webhook is triggered and the results of the scan are sent to Kosli.<br>
+The results of SonarCloud and SonarQube scans can be tracked in [Kosli trails](/getting_started/trails/).  
+This integration involves setting up a Sonar webhook in Kosli and a corresponding webhook in SonarCloud or SonarQube. When you run a scan of your SonarCloud/SonarQube project, the webhook is triggered and the results of the scan are sent to Kosli.  
 Some parameters must be passed to the Sonar scanner when it is run (e.g. the name of the Flow corresponding to the project, and the name of the trail the results should be attested to); these are sent with the scan results, and allow Kosli to determine the compliance status of the results and attest them to the correct trail/artifact.
 
 ## Setting up in Kosli
