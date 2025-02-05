@@ -76,7 +76,7 @@ func printEnvListAsTable(raw string, out io.Writer, page int) error {
 		return nil
 	}
 
-	header := []string{"NAME", "TYPE", "LAST REPORT", "LAST MODIFIED", "TAGS"}
+	header := []string{"NAME", "TYPE", "LAST REPORT", "LAST MODIFIED", "TAGS", "POLICIES"}
 	rows := []string{}
 	for _, env := range envs {
 		last_reported_str := ""
@@ -97,7 +97,9 @@ func printEnvListAsTable(raw string, out io.Writer, page int) error {
 		}
 		tagsOutput = strings.TrimSuffix(tagsOutput, ", ")
 
-		row := fmt.Sprintf("%s\t%s\t%s\t%s\t%s", env["name"], env["type"], last_reported_str, last_modified_str, tagsOutput)
+		policies := env["policies"].([]interface{})
+
+		row := fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s", env["name"], env["type"], last_reported_str, last_modified_str, tagsOutput, policies)
 		rows = append(rows, row)
 	}
 	tabFormattedPrint(out, header, rows)

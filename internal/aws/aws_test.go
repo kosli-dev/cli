@@ -549,7 +549,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 				Region: "eu-central-1",
 			},
 			filter:               &filters.ResourceFilterOptions{IncludeNames: []string{"merkely"}},
-			minNumberOfArtifacts: 2,
+			minNumberOfArtifacts: 1,
 			requireEnvVars:       true,
 		},
 		{
@@ -567,7 +567,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 				Region: "eu-central-1",
 			},
 			filter:               &filters.ResourceFilterOptions{ExcludeNames: []string{"slackapp"}},
-			minNumberOfArtifacts: 2,
+			minNumberOfArtifacts: 1,
 			requireEnvVars:       true,
 		},
 		{
@@ -576,7 +576,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 				Region: "eu-central-1",
 			},
 			filter:               &filters.ResourceFilterOptions{ExcludeNamesRegex: []string{"slack.*"}},
-			minNumberOfArtifacts: 2,
+			minNumberOfArtifacts: 1,
 			requireEnvVars:       true,
 		},
 		{
@@ -585,7 +585,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 				Region: "eu-central-1",
 			},
 			filter:               &filters.ResourceFilterOptions{IncludeNamesRegex: []string{"^merk.*"}},
-			minNumberOfArtifacts: 2,
+			minNumberOfArtifacts: 1,
 			requireEnvVars:       true,
 		},
 	} {

@@ -92,15 +92,17 @@ func printEnvironmentAsTable(raw string, out io.Writer, page int) error {
 		tagsOutput = "None"
 	}
 
+	policies := env["policies"].([]interface{})
+
 	header := []string{}
 	rows := []string{}
 	rows = append(rows, fmt.Sprintf("Name:\t%s", env["name"]))
 	rows = append(rows, fmt.Sprintf("Type:\t%s", env["type"]))
 	rows = append(rows, fmt.Sprintf("Description:\t%s", env["description"]))
-	rows = append(rows, fmt.Sprintf("Require Provenance for Artifacts:\t%t", env["require_provenance"]))
 	rows = append(rows, fmt.Sprintf("State:\t%s", state))
 	rows = append(rows, fmt.Sprintf("Last Reported At:\t%s", lastReportedAt))
 	rows = append(rows, fmt.Sprintf("Tags:\t%s", tagsOutput))
+	rows = append(rows, fmt.Sprintf("Policies:\t%s", policies))
 
 	tabFormattedPrint(out, header, rows)
 

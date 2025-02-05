@@ -393,3 +393,18 @@ func UnSetEnvVars(envVars map[string]string, t *testing.T) {
 		require.NoErrorf(t, err, "error unsetting env variable %s", key)
 	}
 }
+
+// CreatePolicy creates a policy on the server
+func CreatePolicy(org, policyName string, t *testing.T) {
+	t.Helper()
+	o := &createPolicyOptions{
+		payload: PolicyPayload{
+			Name:        policyName,
+			Type:        "env",
+			Description: "test policy",
+		},
+	}
+
+	err := o.run([]string{policyName, "testdata/policy-files/test-policy.yml"})
+	require.NoError(t, err, "policy should be created without error")
+}
