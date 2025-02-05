@@ -1,6 +1,7 @@
 ---
 title: 'Concepts'
 weight: 130
+summary: "This section helps you understand the concepts Kosli is built on. The figure below gives an overview of the main Kosli concepts and how they are related to each other."
 ---
 
 # Concepts

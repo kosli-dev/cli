@@ -3,6 +3,7 @@ title: Following a git commit to runtime environments
 bookCollapseSection: false
 weight: 510
 draft: false
+summary: "In this 5 minute tutorial you'll learn how Kosli tracks \"life after git\" and shows you events from CI pipelines (eg, building the docker image, running the unit tests, deploying, etc) and runtime environments (eg, the blue-green rollover, instance scaling, etc)"
 ---
 
 <!-- The book "Developer Marketing Does Not Exist" by Adam DuVander suggests 

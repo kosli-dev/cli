@@ -2,6 +2,7 @@
 title: "Detecting unauthorized Terraform IaC changes"
 bookCollapseSection: false
 weight: 506
+summary: "Authorized Terraform changes follow a predefined process that maintains a certain level of quality, security and safety for the underlying infrastructure. Unauthorized changes, however, can undermine the integrity and reliability of the infrastructure. Hence the importance of prompt detection of such changes."
 ---
 
 # Detecting unauthorized Terraform IaC changes
