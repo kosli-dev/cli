@@ -1,0 +1,8 @@
+_schema: https://kosli.com/schemas/policy/environment/v1
+
+artifacts:
+  provenance:
+    required: true
+
+  trail-compliance:
+    required: true
