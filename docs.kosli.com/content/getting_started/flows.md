@@ -2,6 +2,7 @@
 title: "Part 4: Flows"
 bookCollapseSection: false
 weight: 240
+summary: "A Kosli Flow represents a business or software process that requires change tracking. It allows you to monitor changes across all steps within a process or focus specifically on a subset of critical steps."
 ---
 # Part 4: Flows
 

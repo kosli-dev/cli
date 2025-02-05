@@ -2,6 +2,7 @@
 title: LaunchDarkly
 bookCollapseSection: false
 weight: 340
+summary: "LaunchDarkly feature flag changes can be tracked in Kosli trails."
 ---
 # LaunchDarkly in Kosli
 

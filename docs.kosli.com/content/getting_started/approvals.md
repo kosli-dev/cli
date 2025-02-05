@@ -2,6 +2,7 @@
 title: "Part 9: Approvals"
 bookCollapseSection: false
 weight: 300
+summary: "When an artifact is ready to be deployed to a given environment, an approval may be reported to Kosli. An approval can be requested which will require a manual action, or reported automatically. This will be recorded in Kosli so the decision made outside your CI system won't be lost."
 ---
 # Part 9: Approvals
 
