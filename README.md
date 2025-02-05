@@ -22,6 +22,10 @@ See the [docs](https://docs.kosli.com/client_reference/)
 
 ## Building the documentation
 
+If building the docs for the first time, the submodule for the theme should be initialized:
+`git submodule update --init --recursive`
+
+then:
 `make hugo`
 
 ## Running the tests
