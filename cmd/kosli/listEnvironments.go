@@ -97,7 +97,12 @@ func printEnvListAsTable(raw string, out io.Writer, page int) error {
 		}
 		tagsOutput = strings.TrimSuffix(tagsOutput, ", ")
 
-		policies := env["policies"].([]interface{})
+		var policies []interface{}
+		if env["policies"] != nil {
+			policies = env["policies"].([]interface{})
+		} else {
+			policies = []interface{}{}
+		}
 
 		row := fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s", env["name"], env["type"], last_reported_str, last_modified_str, tagsOutput, policies)
 		rows = append(rows, row)
