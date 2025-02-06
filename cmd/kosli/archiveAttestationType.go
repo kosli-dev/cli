@@ -12,7 +12,6 @@ import (
 const archiveAttestationTypeShortDesc = `Archive a custom Kosli attestation type.`
 
 const archiveAttestationTypeLongDesc = archiveAttestationTypeShortDesc + `
-The custom attestation type will no longer be visible in the list of attestation types for an org, data is still stored in the database.
 New custom attestations using this type cannot be made, but existing attestations will still be visible.
 `
 
@@ -23,11 +22,7 @@ kosli archive attestation-type yourAttestationTypeName \
 	--org yourOrgName 
 `
 
-type ArchiveAttestationTypePayload struct {
-}
-
 func newArchiveAttestationTypeCmd(out io.Writer) *cobra.Command {
-	payload := new(ArchiveAttestationTypePayload)
 	cmd := &cobra.Command{
 		Use:     "attestation-type TYPE-NAME",
 		Short:   archiveAttestationTypeShortDesc,
@@ -46,11 +41,10 @@ func newArchiveAttestationTypeCmd(out io.Writer) *cobra.Command {
 			url := fmt.Sprintf("%s/api/v2/custom-attestation-types/%s/%s/archive", global.Host, global.Org, args[0])
 
 			reqParams := &requests.RequestParams{
-				Method:  http.MethodPut,
-				URL:     url,
-				Payload: payload,
-				DryRun:  global.DryRun,
-				Token:   global.ApiToken,
+				Method: http.MethodPut,
+				URL:    url,
+				DryRun: global.DryRun,
+				Token:  global.ApiToken,
 			}
 			_, err := kosliClient.Do(reqParams)
 			if err == nil && !global.DryRun {
