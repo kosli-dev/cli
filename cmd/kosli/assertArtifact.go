@@ -5,17 +5,26 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
-const assertArtifactShortDesc = `Assert the compliance status of an artifact in Kosli.  `
+const assertArtifactShortDesc = `Assert the compliance status of an artifact in Kosli (in its flow or against an environment).  `
 
 const assertArtifactLongDesc = assertArtifactShortDesc + `
 Exits with non-zero code if the artifact has a non-compliant status.`
 
 const assertArtifactExample = `
+# assert that an artifact meets all compliance requirements for an environment
+kosli assert artifact \
+	--fingerprint 184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0 \
+	--flow yourFlowName \
+	--against-env prod \
+	--api-token yourAPIToken \
+	--org yourOrgName 
+
 # fail if an artifact has a non-compliant status (using the artifact fingerprint)
 kosli assert artifact \
 	--fingerprint 184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0 \
@@ -35,6 +44,7 @@ type assertArtifactOptions struct {
 	fingerprintOptions *fingerprintOptions
 	fingerprint        string // This is calculated or provided by the user
 	flowName           string
+	envName            string
 }
 
 func newAssertArtifactCmd(out io.Writer) *cobra.Command {
@@ -64,13 +74,9 @@ func newAssertArtifactCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVarP(&o.fingerprint, "fingerprint", "F", "", fingerprintFlag)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
+	cmd.Flags().StringVar(&o.envName, "environment", "", envNameFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
-
-	err := RequireFlags(cmd, []string{"flow"})
-	if err != nil {
-		logger.Error("failed to configure required flags: %v", err)
-	}
 
 	return cmd
 }
@@ -84,11 +90,25 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 		}
 	}
 
-	url := fmt.Sprintf("%s/api/v2/artifacts/%s/%s/fingerprint/%s", global.Host, global.Org, o.flowName, o.fingerprint)
+	baseURL := fmt.Sprintf("%s/api/v2/asserts/%s/fingerprint/%s", global.Host, global.Org, o.fingerprint)
+	params := url.Values{}
+
+	if o.flowName != "" {
+		params.Add("flow_name", o.flowName)
+	}
+
+	if o.envName != "" {
+		params.Add("environment_name", o.envName)
+	}
+
+	fullURL := baseURL
+	if len(params) > 0 {
+		fullURL += "?" + params.Encode()
+	}
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
-		URL:    url,
+		URL:    fullURL,
 		Token:  global.ApiToken,
 	}
 	response, err := kosliClient.Do(reqParams)
@@ -96,19 +116,30 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
-	var artifactData map[string]interface{}
-	err = json.Unmarshal([]byte(response.Body), &artifactData)
+	var evaluationResult map[string]interface{}
+	err = json.Unmarshal([]byte(response.Body), &evaluationResult)
 	if err != nil {
 		return err
 	}
 
-	if artifactData["state"].(string) == "COMPLIANT" {
+	scope := evaluationResult["scope"].(string)
+
+	if evaluationResult["compliant"].(bool) {
 		logger.Info("COMPLIANT")
-		logger.Info("See more details at %s", artifactData["html_url"].(string))
+		if scope == "flow" {
+			logger.Info("See more details at %s", evaluationResult["html_url"].(string))
+		}
 	} else {
-		return fmt.Errorf("%s: %s\nSee more details at %s", artifactData["state"].(string),
-			artifactData["state_info"].(string),
-			artifactData["html_url"].(string))
+		if scope == "flow" {
+			return fmt.Errorf("not compliant\nSee more details at %s", evaluationResult["html_url"].(string))
+		} else {
+			jsonData, err := json.MarshalIndent(evaluationResult["policy_evaluations"], "", "  ")
+			if err != nil {
+				return fmt.Errorf("error marshalling evaluation result: %v", err)
+			}
+			return fmt.Errorf("not compliant for env [%s]: \n %v", o.envName,
+				string(jsonData))
+		}
 	}
 
 	return nil

@@ -71,18 +71,11 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 			cmd:       fmt.Sprintf(`assert artifact --flow %s %s`, suite.flowName, suite.defaultKosliArguments),
 			golden:    "Error: docker image name or file/dir path is required when --fingerprint is not provided\nUsage: kosli assert artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
-		// TODO: this test case does not pass as the validation does not check for it
-		// {
-		// 	wantError: true,
-		// 	name:      "providing both --fingerprint and --artifact-type fails",
-		// 	cmd:       fmt.Sprintf(`assert artifact --artifact-type file --fingerprint %s --flow %s %s`, suite.fingerprint, suite.flowName, suite.defaultKosliArguments),
-		// 	golden:    "COMPLIANT\n",
-		// },
 		{
 			wantError: true,
-			name:      "missing --flow fails",
+			name:      "not providing --flow when the artifact has multiple instances fails with a server error",
 			cmd:       fmt.Sprintf(`assert artifact --fingerprint %s  %s`, suite.fingerprint, suite.defaultKosliArguments),
-			golden:    "Error: required flag(s) \"flow\" not set\n",
+			golden:    fmt.Sprintf("Error: Fingerprint '%s' matched multiple artifacts in org '%s'. Please narrow the search to one flow.\n", suite.fingerprint, global.Org),
 		},
 	}
 
