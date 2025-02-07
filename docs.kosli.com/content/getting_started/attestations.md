@@ -196,18 +196,25 @@ Kosli CLI will also verify and report if the detected issue reference is found a
 
 See [attest Jira issue to an artifact or a trail](/client_reference/kosli_attest_jira/) for usage details and examples.
 
+### Custom
+
+These above attestations are all "typed" - each one knows how to interpret its own particular kind of input.
+For example, `kosli attest snyk` interprets the sarif file produced by a snyk container scan to determine the `true/false` value for that individual attestation. 
+If you're using a tool that does not yet have a corresponding kosli attest command we recommend using custom attestations.
+
+When creating a custom attestation type you can specify arbitrary evaluation rules, 
+which are then applied to the attestation data to determine the compliance status of the custom attestation.
+These rules can have an optional schema specifying the types of the names used in rules, whether they are required, whether they have defaults, etc.
+See:
+* [create custom attestation type](/client_reference/kosli_create_attestation-type) and
+* [report custom attestation to an artifact or a trail](/client_reference/kosli_attest_custom/) for usage details and examples.
+
 ### Generic
 
-If Kosli doesn't support the type of the attestation you'd like to attach, you can use the generic type.
-
-Use `--compliant=false` if you want to report a given evidence as non-compliant.
+{{< hint warning >}}
+Generic attestations are an earlier, much less sophisticated version of custom attestations.
+We recommend using custom attestations instead of generic attestations.
+{{< /hint >}}
 
 See [report generic attestation to an artifact or a trail](/client_reference/kosli_attest_generic/) for usage details and examples.
 
-### Custom
-
-Custom attestations are an alternative to generic attestations if Kosli does not support the type of the attestation you'd like to attach. A custom attestation uses a custom attestation type that you have previously created.
-
-When creating a custom attestation type you can specify rules, which are then applied to the attestation data to determine the compliance status of the custom attestation.
-
-See [create custom attestation type](/client_reference/kosli_create_attestation-type) and [report custom attestation to an artifact or a trail](/client_reference/kosli_attest_custom/) for usage details and examples.
