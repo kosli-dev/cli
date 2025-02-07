@@ -1,5 +1,6 @@
 Name:              custom-attestation-type-1
 Organization:      docs-cmd-test-user-shared
+Archived:          false
 Created By:        docs-cmd-test-user
 Created at:        Sat, 16 Jan 2016 00:00:00 UTC • 2016-01-16
 Last modified at:  Sat, 16 Jan 2016 00:00:00 UTC • 2016-01-16
