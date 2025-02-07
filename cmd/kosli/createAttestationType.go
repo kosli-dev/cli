@@ -23,7 +23,7 @@ See an example schema file
 [here](https://github.com/cyber-dojo/kosli-attestation-types/blob/f9130c58d3a8151b0b0e7c5db284e4380eb2d2cf/metrics-coverage.schema.json).
 
 ^--jq^ defines an evaluation rule, given in jq-format, for this attestation type. The flag can be repeated in order to add additional rules.  
-These rules specify acceptable values for attestation data, e.g. ^age >= 21^ or ^failing_tests == 0^.  
+These rules specify acceptable values for attestation data, e.g. ^.age >= 21^ or ^.failing_tests == 0^.  
 When a custom attestation is reported, the provided data is evaluated according to the rules defined in its attestation-type. 
 All rules must return ^true^ for the evaluation to pass and the attestation to be determined compliant.
 `
