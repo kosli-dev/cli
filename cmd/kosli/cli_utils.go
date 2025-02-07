@@ -662,12 +662,12 @@ func handleArtifactExpression(expression string) (string, string, string, error)
 }
 
 func handleCustomAttestationTypeExpression(expression string) (string, string, error) {
-	items := strings.SplitN(expression, "@", 2)
+	items := strings.SplitN(expression, "@v", 2)
+	if len(items) == 1 {
+		return "", "", fmt.Errorf("version number should be given as '@v<version>'")
+	}
 	if items[0] == "" {
 		return "", "", fmt.Errorf("attestation type name is required")
-	}
-	if items[1] == "" {
-		return "", "", fmt.Errorf("attestation type version is empty")
 	}
 
 	return items[0], items[1], nil

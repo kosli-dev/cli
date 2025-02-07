@@ -12,7 +12,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const getAttestationTypeDesc = `Get a Kosli attestation type.`
+const getAttestationTypeShortDesc = `Get a Kosli attestation type.  `
+
+const getAttestationTypeLongDesc = getAttestationTypeShortDesc + `
+You can specify a version of the attestation type by appending ^@v^ to the type name followed by the version number, e.g. ^customTypeName@v4^.
+If a non-integer version is given, the unversioned custom attestation type is returned.
+`
+
+const getAttestationTypeExample = `
+# get an unversioned custom attestation type:
+kosli get attestation-type customTypeName 
+
+# get version 1 of a custom attestation type:
+kosli get attestation-type customTypeName@v1
+`
 
 type getAttestationTypeOptions struct {
 	output string
@@ -21,10 +34,11 @@ type getAttestationTypeOptions struct {
 func newGetAttestationTypeCmd(out io.Writer) *cobra.Command {
 	o := new(getAttestationTypeOptions)
 	cmd := &cobra.Command{
-		Use:   "attestation-type TYPE-NAME",
-		Short: getAttestationTypeDesc,
-		Long:  getAttestationTypeDesc,
-		Args:  cobra.ExactArgs(1),
+		Use:     "attestation-type TYPE-NAME",
+		Short:   getAttestationTypeShortDesc,
+		Long:    getAttestationTypeLongDesc,
+		Example: getAttestationTypeExample,
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
@@ -45,11 +59,11 @@ func newGetAttestationTypeCmd(out io.Writer) *cobra.Command {
 func (o *getAttestationTypeOptions) run(out io.Writer, args []string) error {
 	attestationType := args[0]
 	var version string
-	var er error
+	var err error
 	if strings.Contains(attestationType, "@") {
-		attestationType, version, er = handleCustomAttestationTypeExpression(attestationType)
-		if er != nil {
-			return er
+		attestationType, version, err = handleCustomAttestationTypeExpression(attestationType)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -90,7 +104,13 @@ func printAttestationTypeAsTable(raw string, out io.Writer, page int) error {
 		rows = append(rows, fmt.Sprintf("Description:\t%s", description))
 	}
 	rows = append(rows, fmt.Sprintf("Organization:\t%s", attestationType["org"]))
-	rows = append(rows, fmt.Sprintf("Created By:\t%s", attestationType["created_by"]))
+
+	if archived, ok := attestationType["archived"]; ok {
+		rows = append(rows, fmt.Sprintf("Archived:\t%t", archived))
+	}
+	if createdBy, ok := attestationType["created_by"]; ok {
+		rows = append(rows, fmt.Sprintf("Created By:\t%s", createdBy))
+	}
 
 	if createdAt, ok := attestationType["created_at"]; ok {
 		createdAtFormatted, err := formattedTimestamp(createdAt, false)
@@ -108,16 +128,14 @@ func printAttestationTypeAsTable(raw string, out io.Writer, page int) error {
 		rows = append(rows, fmt.Sprintf("Last modified at:\t%s", lastModifiedAtFormatted))
 	}
 
-	if versions, ok := attestationType["versions"]; ok {
-		rows = append(rows, "Versions:\t")
-		for _, version := range versions.([]interface{}) {
-			versionMap := version.(map[string]interface{})
-			rows, err = printVersionedAttestationTypeAsTable(versionMap, rows)
-			if err != nil {
-				return err
-			}
-			rows = append(rows, "	")
+	rows = append(rows, "Versions:\t")
+	for _, version := range attestationType["versions"].([]interface{}) {
+		versionMap := version.(map[string]interface{})
+		rows, err = printVersionedAttestationTypeAsTable(versionMap, rows)
+		if err != nil {
+			return err
 		}
+		rows = append(rows, "	")
 	}
 
 	tabFormattedPrint(out, header, rows)
