@@ -16,9 +16,16 @@ You can specify attestation type parameters in flags.
 
 ^TYPE-NAME^ must start with a letter or number, and only contain letters, numbers, ^.^, ^-^, ^_^, and ^~^.
 
-^--schema^ is a path to a file containing a JSON schema which will be used to validate attestations made using this type.
+^--schema^ is a path to a file containing a JSON schema which will be used to validate attestations made using this type.  
+The schema is used to specify the structure of the attestation data, e.g. any fields that are required or 
+the expected type of the data.
+See an example schema file 
+[here](https://github.com/cyber-dojo/kosli-attestation-types/blob/f9130c58d3a8151b0b0e7c5db284e4380eb2d2cf/metrics-coverage.schema.json).
 
-^--jq^ defines the evaluation rules for this attestation type. This can be repeated in order to add additional rules. All rules must return ^true^ for the evaluation to pass.
+^--jq^ defines an evaluation rule, given in jq-format, for this attestation type. The flag can be repeated in order to add additional rules.  
+These rules specify acceptable values for attestation data, e.g. ^.age >= 21^ or ^.failing_tests == 0^.  
+When a custom attestation is reported, the provided data is evaluated according to the rules defined in its attestation-type. 
+All rules must return ^true^ for the evaluation to pass and the attestation to be determined compliant.
 `
 
 const createAttestationTypeExample = `
