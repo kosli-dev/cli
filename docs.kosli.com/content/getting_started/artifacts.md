@@ -2,6 +2,7 @@
 title: "Part 6: Artifacts"
 bookCollapseSection: false
 weight: 260
+summary: "In software processes, you typically generate one or more artifacts that are deployed or distributed, such as docker images, archives, binaries, etc. You can ensure traceability for the creation of these artifacts by attesting them to Kosli, thereby establishing a binary provenance for each one."
 ---
 # Part 6: Artifacts
 

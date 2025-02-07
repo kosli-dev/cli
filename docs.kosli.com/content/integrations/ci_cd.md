@@ -2,6 +2,8 @@
 title: CI/CD
 bookCollapseSection: false
 weight: 310
+summary: "This section provides how-to guides showing you how to use Kosli to report changes from
+different CI systems."
 aliases:
     - /ci-defaults  # To keep short URL in docs and help in the CLI
 ---

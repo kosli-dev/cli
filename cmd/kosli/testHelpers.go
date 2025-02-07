@@ -37,7 +37,7 @@ func executeCommandC(cmd string) (*cobra.Command, string, error) {
 
 	buf := new(bytes.Buffer)
 
-	root, err := newRootCmd(buf, args)
+	root, err := newRootCmd(buf, buf, args)
 	if err != nil {
 		return nil, "", err
 	}
@@ -392,4 +392,19 @@ func UnSetEnvVars(envVars map[string]string, t *testing.T) {
 		err := os.Unsetenv(key)
 		require.NoErrorf(t, err, "error unsetting env variable %s", key)
 	}
+}
+
+// CreatePolicy creates a policy on the server
+func CreatePolicy(org, policyName string, t *testing.T) {
+	t.Helper()
+	o := &createPolicyOptions{
+		payload: PolicyPayload{
+			Name:        policyName,
+			Type:        "env",
+			Description: "test policy",
+		},
+	}
+
+	err := o.run([]string{policyName, "testdata/policy-files/test-policy.yml"})
+	require.NoError(t, err, "policy should be created without error")
 }

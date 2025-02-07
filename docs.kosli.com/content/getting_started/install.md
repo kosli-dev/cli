@@ -2,6 +2,8 @@
 title: "Part 2: Install Kosli CLI"
 bookCollapseSection: false
 weight: 220
+summary: "Kosli CLI can be installed from package managers, 
+by Curling pre-built binaries, or can be used from the distributed Docker images."
 ---
 # Part 2: Install Kosli CLI
 

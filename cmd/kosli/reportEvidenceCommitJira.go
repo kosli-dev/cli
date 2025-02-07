@@ -185,7 +185,7 @@ func (o *reportEvidenceCommitJiraOptions) run(args []string) error {
 	issueLog := ""
 	issueFoundCount := 0
 	for _, issueID := range issueIDs {
-		result, err := jc.GetJiraIssueInfo(issueID)
+		result, err := jc.GetJiraIssueInfo(issueID, "")
 		if err != nil {
 			return err
 		}

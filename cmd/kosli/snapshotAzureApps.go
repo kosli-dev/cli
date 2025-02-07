@@ -37,6 +37,16 @@ kosli snapshot azure yourEnvironmentName \
 	--digests-source logs \
 	--api-token yourAPIToken \
 	--org yourOrgName
+
+# Report digest of an Azure Function app
+kosli snapshot azure yourEnvironmentName \
+	--azure-client-id yourAzureClientID \
+	--azure-client-secret yourAzureClientSecret \
+	--azure-tenant-id yourAzureTenantID \
+	--azure-subscription-id yourAzureSubscriptionID \
+	--azure-resource-group-name yourAzureResourceGroupName \
+	--api-token yourAPIToken \
+	--org yourOrgName
 `
 
 type snapshotAzureAppsOptions struct {

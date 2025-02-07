@@ -30,7 +30,7 @@ func main() {
 		fmt.Print(output)
 	} else {
 		var cmd *cobra.Command
-		cmd, err = newRootCmd(logger.Out, os.Args[1:])
+		cmd, err = newRootCmd(logger.Out, logger.ErrOut, os.Args[1:])
 		if err == nil {
 			err = innerMain(cmd, os.Args)
 		}

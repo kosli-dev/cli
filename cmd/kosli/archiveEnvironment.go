@@ -22,11 +22,7 @@ kosli archive environment yourEnvironmentName \
 	--org yourOrgName 
 `
 
-type ArchiveEnvironmentPayload struct {
-}
-
 func newArchiveEnvironmentCmd(out io.Writer) *cobra.Command {
-	payload := new(ArchiveEnvironmentPayload)
 	cmd := &cobra.Command{
 		Use:     "environment ENVIRONMENT-NAME",
 		Short:   archiveEnvironmentShortDesc,
@@ -45,11 +41,10 @@ func newArchiveEnvironmentCmd(out io.Writer) *cobra.Command {
 			url := fmt.Sprintf("%s/api/v2/environments/%s/%s/archive", global.Host, global.Org, args[0])
 
 			reqParams := &requests.RequestParams{
-				Method:  http.MethodPut,
-				URL:     url,
-				Payload: payload,
-				DryRun:  global.DryRun,
-				Token:   global.ApiToken,
+				Method: http.MethodPut,
+				URL:    url,
+				DryRun: global.DryRun,
+				Token:  global.ApiToken,
 			}
 			_, err := kosliClient.Do(reqParams)
 			if err == nil && !global.DryRun {

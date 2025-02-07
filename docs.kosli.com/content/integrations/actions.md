@@ -2,6 +2,7 @@
 title: Actions
 bookCollapseSection: false
 weight: 320
+summary: "Actions enable you to automate the execution of if-this-do-that workflows based on Kosli events. You can configure actions to either receive a Slack notification or a JSON payload on a custom webhook when certain Kosli events happen.  "
 ---
 
 # Kosli Actions

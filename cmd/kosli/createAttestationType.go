@@ -9,9 +9,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const createAttestationTypeShortDesc = `Create or update a Kosli attestation type.`
+const createAttestationTypeShortDesc = `Create or update a Kosli custom attestation type.`
 
 const createAttestationTypeLongDesc = createAttestationTypeShortDesc + `
+You can specify attestation type parameters in flags.
 
 ^TYPE-NAME^ must start with a letter or number, and only contain letters, numbers, ^.^, ^-^, ^_^, and ^~^.
 
@@ -21,7 +22,11 @@ const createAttestationTypeLongDesc = createAttestationTypeShortDesc + `
 `
 
 const createAttestationTypeExample = `
-kosli create attestation-type person-of-age \
+# create/update a custom attestation type with no schema no evaluation rules:
+kosli create attestation-type customTypeName 
+
+# create/update a custom attestation type with schema and jq evaluation rules:
+kosli create attestation-type customTypeName \
     --description "Attest that a person meets the age requirements." \
     --schema person-schema.json \
     --jq ".age >= 18"

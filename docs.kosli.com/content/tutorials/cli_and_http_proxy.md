@@ -2,6 +2,7 @@
 title: "Using Kosli CLI with an HTTP proxy"
 bookCollapseSection: false
 weight: 511
+summary: "In enterprises with strict network policies, you might want to communicate with Kosli via an HTTP proxy as the single point of egress communication with Kosli. This tutorial shows how you can setup an HTTP proxy and use it when communicating with Kosli via the CLI."
 ---
 
 # Using Kosli CLI with an HTTP proxy

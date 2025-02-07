@@ -1,5 +1,6 @@
 ---
 title: Flow Template Specification
+summary: "This document describes the specification for how to write your Flow Template files in [YAML](http://yaml.org/). The template file contains the following fields:"
 ---
 # Flow Template Specification
 

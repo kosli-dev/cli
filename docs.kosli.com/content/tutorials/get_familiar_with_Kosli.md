@@ -2,6 +2,8 @@
 title: Get familiar with Kosli
 bookCollapseSection: false
 weight: 504
+summary: "The following guide is the easiest and quickest way to try Kosli out and understand its features. 
+It is made to run from your local machine, but the same concepts and steps apply to using Kosli in a production setup."
 ---
 
 # Get familiar with Kosli

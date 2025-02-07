@@ -2,6 +2,10 @@
 title: "Part 3: Service Accounts"
 bookCollapseSection: false
 weight: 230
+summary: "Prior to engaging with Kosli, authentication is necessary. There are two methods to achieve this:
+
+1. Using a service account API key (recommended).
+2. Using a personal API key."
 ---
 # Part 3: Create a Service Account
 

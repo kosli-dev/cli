@@ -2,6 +2,7 @@
 title: "How to report Kubernetes Clusters"
 bookCollapseSection: false
 weight: 508
+summary: "Kosli environments allow you to track changes in your physical/virtual runtime environments. Such changes must be reported from the runtime environment to Kosli. This tutorial shows you how to set up reporting of running artifacts from a Kubernetes cluster to Kosli."
 ---
 
 # How to report Kubernetes Clusters to Kosli

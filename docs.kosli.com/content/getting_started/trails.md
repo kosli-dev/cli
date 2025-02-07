@@ -2,6 +2,7 @@
 title: "Part 5: Trails"
 bookCollapseSection: false
 weight: 250
+summary: "Every time you execute a process represented by a Kosli Flow, you would initiate a `trail` to record the changes made during that specific execution."
 ---
 # Part 5: Trails
 

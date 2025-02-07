@@ -114,6 +114,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	jiraUsernameFlag                     = "Jira username (for Jira Cloud)"
 	jiraAPITokenFlag                     = "Jira API token (for Jira Cloud)"
 	jiraPATFlag                          = "Jira personal access token (for self-hosted Jira)"
+	jiraIssueFieldFlag                   = "[optional] The comma separated list of fields to include from the Jira issue. Default no fields are included. '*all' will give all fields."
 	envDescriptionFlag                   = "[optional] The environment description."
 	flowDescriptionFlag                  = "[optional] The Kosli flow description."
 	trailDescriptionFlag                 = "[optional] The Kosli trail description."
@@ -291,7 +292,7 @@ func getConfigFileFlagDefault() string {
 	return "kosli" // for backward compatibility with old default config location
 }
 
-func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
+func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 	global = new(GlobalOpts)
 	cmd := &cobra.Command{
 		Use:              "kosli",
@@ -302,7 +303,7 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 		TraverseChildren: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// You can bind cobra and viper in a few locations, but PersistencePreRunE on the root command works well
-			err := initialize(cmd, out)
+			err := initialize(cmd, out, errOut)
 			if err != nil {
 				return err
 			}
@@ -381,9 +382,10 @@ func newRootCmd(out io.Writer, args []string) (*cobra.Command, error) {
 	return cmd, nil
 }
 
-func initialize(cmd *cobra.Command, out io.Writer) error {
+func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
 	v := viper.New()
 	logger.SetInfoOut(out) // needed to allow tests to overwrite the logger output stream
+	logger.SetErrOut(errOut)
 	// assign debug value early here to enable debug logs during config file and env var binding
 	// if --debug is used. The value is re-assigned later after binding config file and env vars
 	logger.DebugEnabled = global.Debug
@@ -456,7 +458,7 @@ func initialize(cmd *cobra.Command, out io.Writer) error {
 func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 	// for some reason, logger does not print errors at the point
 	// of calling this function, so we ensure to point errors to stderr
-	logger.SetErrOut(os.Stderr)
+	// logger.SetErrOut(errOut)
 	// api token in config file is encrypted, so we have to decrypt it
 	// but if it is set via env variables, it is not encrypted
 	_, apiTokenSetInEnv := os.LookupEnv("KOSLI_API_TOKEN")
