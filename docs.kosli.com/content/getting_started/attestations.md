@@ -11,11 +11,11 @@ Attestations are how you record the facts you care about in your software supply
 They are the evidence that you have performed certain activities, such as running tests, security scans, or ensuring that a certain requirement is met.
 
 Kosli allows you to report different types of attestations about artifacts and trails. 
-For some types, Kosli will process the evidence you provide and conclude whether the evidence proves compliance or otherwise. 
+For most types, Kosli will process the evidence you provide and conclude whether the evidence proves compliance or otherwise. 
 
 Let's take a look at how to make attestations to Kosli.
 
-The following template is expecting 4 attestations, one for each `name`.
+The following compliance template is expecting 4 attestations, each with its own `name`.
 
 ```yml
 version: 1
@@ -33,7 +33,7 @@ trail:
 ```
 
 It expects `jira-ticket` on the trail, the `backend` artifact, with `unit-tests` and `security-scan` attached to it. 
-When you make an attestation, you have the choice of what `name` to attach it to:
+When you make an attestation, you have the choice of what `name` to attach it to.
 
 ## Make the `jira-ticket` attestation to a trail
 
@@ -49,7 +49,7 @@ $ kosli attest jira \
 
 ## Make the `unit-test` attestation to the `backend` artifact
 
-Some attestations are attached to a specific artifact, like the unit tests for the `backend` artifact. Often, evidence like unit tests are created before the artifact is built. To attach the evidence to the artifact before its creation, use `backend` (the artifact's `name` from the template), as well as `unit-tests` (the attestation's `name` from the template).
+Some attestations are attached to a specific artifact, like the unit tests for the `backend` artifact. Often, evidence like unit tests are created _before_ the artifact is built. To attach the evidence to the artifact before its creation, use `backend` (the artifact's `name` from the template), as well as `unit-tests` (the attestation's `name` from the template).
 
 ```shell
 $ kosli attest junit \
@@ -74,16 +74,17 @@ $ kosli attest artifact my_company/backend:latest \
     ...
 ```
 
-The Kosli CLI will calculate the fingerprint of the docker image called `my_company/backend:latest` and attest it as the `backend` artifact `name` in the trail.
+In this case the Kosli CLI will calculate the fingerprint of the docker image called `my_company/backend:latest` and attest it as the `backend` artifact `name` in the trail.
 
 {{< hint info >}}
 ### Automatically gather git commit and CI environment information
-In all attestation commands the Kosli CLI will automatically gather the git commit and other information from the current git repository and the [CI environment](https://docs.kosli.com/integrations/ci_cd/). This is how the git commit is used to match attestation to artifacts.
+In all attestation commands the Kosli CLI will automatically gather the git commit and other information from the current git repository and the [CI environment](https://docs.kosli.com/integrations/ci_cd/).
+This is how the git commit is used to match attestations to artifacts.
 {{< /hint >}}
 
 ## Make the `security-scan` attestation to the `backend` artifact
 
-Often, evidence like snyk reports are created after the artifact is built. In this case, you can attach the evidence to the artifact after its creation. Use `backend` (the artifact's `name` from the template), as well as `security-scan` (the attestation's `name` from the template) to name the attestation.
+Often, evidence like snyk reports are created _after_ the artifact is built. In this case, you can attach the evidence to the artifact after its creation. Use `backend` (the artifact's `name` from the template), as well as `security-scan` (the attestation's `name` from the template) to name the attestation.
 
 The following attestation will only belong to the artifact `my_company/backend:latest` attested above and its fingerprint, in this case calculated by the Kosli CLI.
 
@@ -118,9 +119,9 @@ $ kosli begin trail $(git rev-parse HEAD) \
 
 An attested `backend` artifact is then compliant if and only if all the template attestations have been made
 against it and are themselves compliant:
-- `jira-ticket` on the Trail 
-- `backend.unit-tests` on the artifact 
-- `backend.security-scan` on the artifact
+- `jira-ticket` on its Trail 
+- `backend.unit-tests` for its junit evidence 
+- `backend.security-scan` for its snyk evidence
 
 If any of these attestations are missing, or are individually non-compliant then the `backend` artifact is non-compliant.
 
@@ -147,9 +148,7 @@ However, only the latest version of the attestation is considered when evaluatin
 Along with attestations data, you can attach additional supporting evidence files. These will be securely stored in Kosli's **Evidence Vault** and can easily be retrieved when needed. Alternatively, you can store the evidence files in your own preferred storage and only attach links to it in the Kosli attestation.
 
 {{< hint info >}}
-
-For `JUnit` attestations (see below), Kosli automatically stores the JUnit XML results files in the Evidence Vault. You can disable this by setting `--upload-results=false` 
-
+For `JUnit` attestations (see below), Kosli automatically stores the JUnit XML results files in the Evidence Vault. You can disable this by setting `--upload-results=false`
 {{< /hint >}}
 
 ## Attestation types
@@ -198,13 +197,13 @@ See [attest Jira issue to an artifact or a trail](/client_reference/kosli_attest
 
 ### Custom
 
-These above attestations are all "typed" - each one knows how to interpret its own particular kind of input.
+The above attestations are all "fully typed" - each one knows how to interpret its own particular kind of input.
 For example, `kosli attest snyk` interprets the sarif file produced by a snyk container scan to determine the `true/false` value for that individual attestation. 
-If you're using a tool that does not yet have a corresponding kosli attest command we recommend using custom attestations.
+If you're using a tool that does not yet have a corresponding kosli attest command we recommend creating your own custom attestation type.
 
-When creating a custom attestation type you can specify arbitrary evaluation rules, 
-which are then applied to the attestation data to determine the compliance status of the custom attestation.
+When creating a custom attestation type you can specify arbitrary evaluation rules.
 These rules can have an optional schema specifying the types of the names used in rules, whether they are required, whether they have defaults, etc.
+When a custom attestation is made using this type its rules are applied to the provided custom attestation data to determine its `true/false` compliance status.
 See:
 * [create custom attestation type](/client_reference/kosli_create_attestation-type) and
 * [report custom attestation to an artifact or a trail](/client_reference/kosli_attest_custom/) for usage details and examples.
