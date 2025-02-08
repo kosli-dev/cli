@@ -11,7 +11,7 @@ Attestations are how you record the facts you care about in your software supply
 They are the evidence that you have performed certain activities, such as running tests, security scans, or ensuring that a certain requirement is met.
 
 Kosli allows you to report different types of attestations about artifacts and trails. 
-For most types, Kosli will process the evidence you provide and conclude whether the evidence proves compliance or otherwise. 
+Kosli will process the evidence you provide and conclude whether the evidence proves compliance or otherwise. 
 
 Let's take a look at how to make attestations to Kosli.
 
@@ -198,12 +198,49 @@ See [attest Jira issue to an artifact or a trail](/client_reference/kosli_attest
 ### Custom
 
 The above attestations are all "fully typed" - each one knows how to interpret its own particular kind of input.
-For example, `kosli attest snyk` interprets the sarif file produced by a snyk container scan to determine the `true/false` value for that individual attestation. 
+For example, `kosli attest snyk` interprets the sarif file produced by a snyk container scan to determine the `true/false` value. 
 If you're using a tool that does not yet have a corresponding kosli attest command we recommend creating your own custom attestation type.
 
-When creating a custom attestation type you can specify arbitrary evaluation rules.
-These rules can have an optional schema specifying the types of the names used in rules, whether they are required, whether they have defaults, etc.
+A custom attestation type specifies one or more arbitrary evaluation rules.
+These rules can have an optional schema specifying the types of the names used in the rules, whether they are required, whether they have defaults, etc.
 When a custom attestation is made using this type its rules are applied to the provided custom attestation data to determine its `true/false` compliance status.
+
+For example, suppose you wish to attest coverage metrics captured as part of a unit-test run.
+The coverage metrics are being saved in a file called `unit-test-coverage.json` as follows:
+```json
+{
+  "code": {
+    "lines": {
+      "missed": 32,
+      "total": 1209
+    }
+  },
+  ...
+}
+```
+You could create a custom attestation type called `coverage-metrics` using a [jq expression](https://jqlang.org/manual/) rule defining a minimum line coverage of 95%: 
+
+```bash
+kosli create attestation-type coverage-metrics
+  --jq=".code.lines.missed / .code.lines.total * 100 <= 5"
+```
+
+You could then make your custom attestation with the json file:
+```bash
+kosli attest custom 
+  --type=coverage-metrics
+  --attestation-data=unit-test-coverage.json
+  ...
+```
+
+For this attestation, Kosli would:
+- Evaluate the rule `.code.lines.missed / .code.lines.total * 100 <= 5`
+- Using the values from the file `unit-test-coverage.json`
+  - `.code.lines.missed` is `32`
+  - `.code.lines.total` is `1209`
+- So `32 / 1209 * 100 <= 5` evaluates to `2.64 <= 5` which is `true`
+
+
 See:
 * [create custom attestation type](/client_reference/kosli_create_attestation-type) and
 * [report custom attestation to an artifact or a trail](/client_reference/kosli_attest_custom/) for usage details and examples.
