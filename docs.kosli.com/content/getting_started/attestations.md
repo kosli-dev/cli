@@ -181,7 +181,7 @@ See [attest JUnit results to an artifact or a trail](/client_reference/kosli_att
 
 ### Snyk security scans 
 
-You can report results of a Snyk security scan to Kosli and it will analyze the Snyk scan results and determine the compliance status based on whether vulnerabilities where found or not.
+You can report results of a Snyk security scan to Kosli and it will analyze the Snyk scan results and determine the compliance status based on whether vulnerabilities were found or not.
 
 See [attest Snyk results to an artifact or a trail](/client_reference/kosli_attest_snyk/) for usage details and examples.
 
