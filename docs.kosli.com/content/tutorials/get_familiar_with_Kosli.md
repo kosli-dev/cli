@@ -18,7 +18,7 @@ artifacts are running in your runtime environment.
 This tutorial uses the `docker` Kosli environment type, but the same steps can be applied to 
 other supported environment types.
 
-{{< hint info >}}
+{{% hint info %}}
 As you go through the guide you can also check your progress from 
 [your browser](https://app.kosli.com).
 
@@ -26,7 +26,7 @@ In the upper left corner there is a house icon. Next to it you can select
 which organization you want to view. Your personal organization
 has the same name as your GitHub login name, and is the organization you will
 be using in this guide.
-{{< /hint >}}
+{{% /hint %}}
 
 > [Playground](https://github.com/kosli-dev/playground?tab=readme-ov-file#kosli-playground) is an alternative version of this tutorial in which you
 embed the Kosli commands in a GitHub CI Workflow (in a clone of the playground repo) rather than running them 
@@ -106,12 +106,12 @@ which will produce the following output:
 NAME              DESCRIPTION                          VISIBILITY
 quickstart-nginx  Flow for quickstart nginx image      private
 ```
-{{< hint info >}}
+{{% hint info %}}
 In the web interface you can select *Flows* on the left.
 It will show you that you have a *quickstart-nginx* Flow.
 If you select the Flow it will show that no Artifacts have
 been reported yet.
-{{< /hint  >}}
+{{% /hint %}}
 
 
 ## Step 3: Create a Kosli Trail
@@ -156,11 +156,11 @@ NAME        TYPE    LAST REPORT  LAST MODIFIED
 quickstart  docker               2022-11-01T15:30:56+01:00
 ```
 
-{{< hint info >}}
+{{% hint info %}}
 If you refresh the *Environments* web page in your Kosli account, 
 it will show you that you have a *quickstart* environment and that
 no snapshot reports have been received yet.
-{{< /hint >}}
+{{% /hint %}}
 
 ## Step 5: Attest an Artifact to Kosli
 
@@ -277,11 +277,11 @@ docker containers running in your environment, equivalent to the output from
 `docker ps`. This tutorial only shows the `nginx` container 
 in the examples.
 
-{{< hint info >}}
+{{% hint info %}}
 If you refresh the *Environments* web page in your Kosli account, you will see 
 that there is now a timestamp for *Last Change At* column. 
 Select the *quickstart* link on left for a detailed view of what is currently running.
-{{< /hint >}}
+{{% /hint %}}
 
 ## Step 7: Searching Kosli
 

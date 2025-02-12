@@ -12,9 +12,9 @@ aliases:
 This section provides how-to guides showing you how to use Kosli to report changes from
 different CI systems.
 
-{{< hint info >}}
+{{% hint info %}}
 Note that **all** CLI command flags can be set as environment variables by adding the the `KOSLI_` prefix and capitalizing them. 
-{{< /hint >}}
+{{% /hint %}}
 
 ## Defaulted Kosli command flags from CI variables
 
