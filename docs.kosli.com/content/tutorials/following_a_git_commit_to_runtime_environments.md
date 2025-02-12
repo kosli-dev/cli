@@ -75,7 +75,7 @@ version-reporter        UX for git+image version-reporter   public
 web                     UX for practicing TDD               public
 ```
 
-{{< hint info >}}
+{{% hint info %}}
 ## cyber-dojo overview
 * [cyber-dojo](https://cyber-dojo.org) is a web platform where teams 
 practice TDD without any installation.  
@@ -84,7 +84,7 @@ practice TDD without any installation.
 * These docker images run in two AWS environments named 
 [aws-beta](https://app.kosli.com/cyber-dojo/environments/aws-beta)
 and [aws-prod](https://app.kosli.com/cyber-dojo/environments/aws-prod).
-{{< /hint >}}
+{{% /hint %}}
 
 
 ### Following the artifact
@@ -147,12 +147,12 @@ Let's look at this output in detail:
      
 The information about this artifact is also available through the [web interface](https://app.kosli.com/cyber-dojo/flows/runner/artifacts/9af401c4350b21e3f1df17d6ad808da43d9646e75b6da902cc7c492bcfb9c625).
 
-{{< hint info >}}
+{{% hint info %}}
 The `runner` service uses [Continuous Deployment](https://en.wikipedia.org/wiki/Continuous_deployment); 
 if the tests pass the artifact is [blue-green deployed](https://en.wikipedia.org/wiki/Blue-green_deployment) 
 to both its runtime environments *without* any manual approval steps.
 Some cyber-dojo services (eg web) have a manual approval step, and Kosli supports this.
-{{< /hint >}}
+{{% /hint %}}
 
 ## Environment Snapshots
 
@@ -162,11 +162,11 @@ We use one Kosli environment per runtime environment.
 The Kosli CLI periodically fingerprints all the running artifacts in a runtime environment and reports them to Kosli.
 Whenever a change is detected, a snapshot of the environment is saved.
 
-{{< hint info >}}
+{{% hint info %}}
 Cyber-dojo runs the `kosli` CLI from inside its AWS runtime environments
 using a [lambda function](https://github.com/cyber-dojo/kosli-environment-reporter/blob/main/deployment/terraform/deployment.tf)
 to report the running services to Kosli.
-{{< /hint >}}
+{{% /hint %}}
 
 
 The **History** of the artifact tells you your artifact started running in snapshot #65 of `aws-prod`.
@@ -199,7 +199,7 @@ COMMIT   ARTIFACT                                                               
 You see in this snapshot, the `runner:16d9990` artifact is indeed running with 3 replicas.
 You have proof the git commit has worked. 
 
-{{< hint info >}}
+{{% hint info %}}
 ## Blue-green deployment
 There were *two* versions of `runner` at this point in time! 
 The first had three replicas (to fix the problem), but there was also a second (from commit `85d83c6`) with only one replica.
@@ -207,7 +207,7 @@ The first had three replicas (to fix the problem), but there was also a second (
 You are seeing a **blue-green deployment** happening;
 `runner:85d83c6` is about to be stopped and will not be reported in
 snapshot `aws-prod#66`.
-{{< /hint >}}
+{{% /hint %}}
 
 ## Diffing snapshots
 

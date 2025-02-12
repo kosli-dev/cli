@@ -8,9 +8,9 @@ summary: "A Kosli Flow represents a business or software process that requires c
 
 A Kosli Flow represents a business or software process that requires change tracking. It allows you to monitor changes across all steps within a process or focus specifically on a subset of critical steps.
 
-{{< hint info >}}
+{{% hint info %}}
 In all the commands below we skip the required `--api-token` and `--org` flags for brevity. These can be set as described [here](/getting_started/install#assigning-flags-via-config-files).
-{{< /hint >}}
+{{% /hint %}}
 
 ## Create a flow
 

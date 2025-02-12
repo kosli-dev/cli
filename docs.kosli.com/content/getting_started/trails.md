@@ -28,7 +28,7 @@ Rerunning the command with different description or template file will update th
 
 See [kosli begin trail](/client_reference/kosli_begin_trail/) for more details. 
 
-{{< hint info >}}
+{{% hint info %}}
 You can overwrite the flow template for each trail using `--template-file`.
 By default, the trail inherits the template from its Flow.
-{{< /hint >}}
+{{% /hint %}}

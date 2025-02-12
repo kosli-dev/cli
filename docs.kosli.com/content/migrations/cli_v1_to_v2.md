@@ -8,12 +8,12 @@ summary: "If you decided to migrate Kosli cli from version v0.1.x to v2.0.0 or l
 
 If you decided to migrate Kosli cli from version v0.1.x to v2.0.0 or later the table below can help you with figuring out how the commands have changed.  
 
-{{< hint info >}}
+{{% hint info %}}
 
 Keep in mind that for some commands the [flag names or argument types](#flagsarguments) are also updated, so have a look at documentation for each command before switching.  
 Reach out to us using [Slack](https://www.kosli.com/community/) if you find yourself in trouble.
 
-{{< /hint >}}
+{{% /hint %}}
 
 ## Commands
 
