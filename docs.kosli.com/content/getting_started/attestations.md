@@ -76,11 +76,11 @@ $ kosli attest artifact my_company/backend:latest \
 
 In this case the Kosli CLI will calculate the fingerprint of the docker image called `my_company/backend:latest` and attest it as the `backend` artifact `name` in the trail.
 
-{{< hint info >}}
+{{% hint info %}}
 ### Automatically gather git commit and CI environment information
 In all attestation commands the Kosli CLI will automatically gather the git commit and other information from the current git repository and the [CI environment](https://docs.kosli.com/integrations/ci_cd/).
 This is how the git commit is used to match attestations to artifacts.
-{{< /hint >}}
+{{% /hint %}}
 
 ## Make the `security-scan` attestation to the `backend` artifact
 
@@ -147,9 +147,9 @@ However, only the latest version of the attestation is considered when evaluatin
 
 Along with attestations data, you can attach additional supporting evidence files. These will be securely stored in Kosli's **Evidence Vault** and can easily be retrieved when needed. Alternatively, you can store the evidence files in your own preferred storage and only attach links to it in the Kosli attestation.
 
-{{< hint info >}}
+{{% hint info %}}
 For `JUnit` attestations (see below), Kosli automatically stores the JUnit XML results files in the Evidence Vault. You can disable this by setting `--upload-results=false`
-{{< /hint >}}
+{{% /hint %}}
 
 ## Attestation types
 
@@ -159,9 +159,9 @@ Currently, we support the following types of evidence:
 
 If you use GitHub, Bitbucket, Gitlab or Azure DevOps you can use Kosli to verify if a given git commit comes from a pull/merge request. 
 
-{{< hint warning >}}
+{{% hint warning %}}
 Currently, the status of the PR does NOT impact the compliance status of the attestation.
-{{< /hint >}}
+{{% /hint %}}
 
 If there is no pull request for the commit, the attestation will be reported as `non-compliant`. You can choose to short-circuit execution in case pull request is missing by using the `--assert` flag.
 
@@ -247,10 +247,10 @@ See:
 
 ### Generic
 
-{{< hint warning >}}
+{{% hint warning %}}
 Generic attestations are an earlier, much less sophisticated version of custom attestations.
 We recommend using custom attestations instead of generic attestations.
-{{< /hint >}}
+{{% /hint %}}
 
 See [report generic attestation to an artifact or a trail](/client_reference/kosli_attest_generic/) for usage details and examples.
 

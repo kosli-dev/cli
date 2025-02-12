@@ -111,21 +111,21 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 	buf.WriteString("# " + name + "\n\n")
 
 	if isBeta(cmd) {
-		buf.WriteString("{{< hint warning >}}")
+		buf.WriteString("{{% hint warning %}}\n")
 		buf.WriteString(fmt.Sprintf("**%s** is a beta feature. ", name))
-		buf.WriteString("Beta features provide early access to product functionality.  ")
+		buf.WriteString("Beta features provide early access to product functionality. ")
 		buf.WriteString("These features may change between releases without warning, or can be removed in a ")
 		buf.WriteString("future release.\n")
-		buf.WriteString("Please contact us to enable this feature for your organization.")
+		buf.WriteString("Please contact us to enable this feature for your organization.\n")
 		// buf.WriteString("You can enable beta features by using the `kosli enable beta` command.")
-		buf.WriteString("{{< /hint >}}\n")
+		buf.WriteString("{{% /hint %}}\n")
 	}
 
 	if isDeprecated(cmd) {
-		buf.WriteString("{{< hint danger >}}")
+		buf.WriteString("{{% hint danger %}}\n")
 		buf.WriteString(fmt.Sprintf("**%s** is deprecated. %s  ", name, cmd.Deprecated))
-		buf.WriteString("Deprecated commands will be removed in a future release.")
-		buf.WriteString("{{< /hint >}}\n")
+		buf.WriteString("Deprecated commands will be removed in a future release.\n")
+		buf.WriteString("{{% /hint %}}\n")
 	}
 
 	if len(cmd.Long) > 0 {

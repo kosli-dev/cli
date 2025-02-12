@@ -12,9 +12,9 @@ Kosli environments allow you to record the artifacts running in your runtime env
 
 You can create Kosli environments in the app, via CLI or via the API. When you create an environment, you give it a name, a description and select its type. 
 
-{{< hint warning >}}
+{{% hint warning %}}
 Make sure that type of Kosli environment matches the type of the environment you'll be reporting from.
-{{< /hint >}}
+{{% /hint %}}
 
 ### Via CLI
 

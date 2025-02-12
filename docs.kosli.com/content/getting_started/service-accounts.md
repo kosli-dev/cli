@@ -16,9 +16,9 @@ Prior to engaging with Kosli, authentication is necessary. There are two methods
 
 ## Service Accounts
 
-{{< hint warning >}}
+{{% hint warning %}}
 Service accounts are exclusively available within shared organizations.
-{{< /hint >}}
+{{% /hint %}}
 
 A service account represents a machine user designed for interactions with Kosli from external systems, such as CI or runtime environments.
 
@@ -36,9 +36,9 @@ To create a service account:
 
 ## Personal API Keys
 
-{{< hint warning >}}
+{{% hint warning %}}
 Personal API keys possess equivalent permissions to your user account, encompassing access to multiple organizations. Therefore, exercise caution while using personal API keys. These keys grant access and perform actions as per the associated user's permissions across various organizations.
-{{< /hint >}}
+{{% /hint %}}
 
 To create a personal API key:
 - Login to Kosli 
