@@ -15,6 +15,8 @@ import (
 	"strings"
 	"sync"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/containers/azcontainerregistry"
@@ -39,7 +41,7 @@ type AzureClient struct {
 	AppServiceFactory *armappservice.ClientFactory
 }
 
-// AppData represents the harvested Azure service app and function app data
+// AppData is the harvested Azure service app and function app data
 type AppData struct {
 	AppName       string            `json:"app_name"`
 	AppKind       string            `json:"app_kind"`
@@ -48,12 +50,12 @@ type AppData struct {
 	StartedAt     int64             `json:"creationTimestamp"`
 }
 
-// AzureAppsRequest represents the PUT request body to be sent to Kosli from CLI
+// AzureAppsRequest is request body to be sent to Kosli server from CLI
 type AzureAppsRequest struct {
 	Artifacts []*AppData `json:"artifacts"`
 }
 
-func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logger) (appsData []*AppData, err error) {
+func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logger) ([]*AppData, error) {
 	azureClient, err := staticCreds.NewAzureClient()
 	if err != nil {
 		return nil, err
@@ -71,65 +73,40 @@ func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logge
 	}
 
 	// run concurrently
-	var wg sync.WaitGroup
-	errs := make(chan error, 1) // Buffered only for the first error
-	appsChan := make(chan *AppData, len(appsInfo))
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel() // Make sure it's called to release resources even if no errors
+	mutex := new(sync.Mutex)
+	appsData := make([]*AppData, 0, len(appsInfo))
+	g := new(errgroup.Group)
 
 	for _, app := range appsInfo {
-		wg.Add(1)
-		go func(app *armappservice.Site) {
-			defer wg.Done()
-
-			select {
-			case <-ctx.Done():
-				return // Error somewhere, terminate
-			default: // Default is a must to avoid blocking
-			}
-
+		g.Go(func() error {
 			if strings.ToLower(*app.Properties.State) != "running" {
 				logger.Debug("app %s is not running, skipping from report", *app.Name)
-				return
+				return nil
 			}
 
 			data, err := azureClient.NewAppData(app, logger)
 			if err != nil {
-				select {
-				case errs <- err:
-				default:
-				}
-				cancel() // send cancel signal to goroutines
-				return
+				return err
 			}
 
 			if !data.IsEmpty() {
-				appsChan <- &data
+				mutex.Lock()
+				appsData = append(appsData, &data)
+				mutex.Unlock()
 			}
-		}(app)
+			return nil
+		})
 	}
 
-	wg.Wait()
-	close(appsChan)
-
-	// Return (first) error, if any:
-	if ctx.Err() != nil {
-		return appsData, <-errs
+	if err := g.Wait(); err != nil {
+		return appsData, err
 	}
 
-	for app := range appsChan {
-		appsData = append(appsData, app)
-	}
-
-	if appsData == nil {
-		appsData = make([]*AppData, 0)
-	}
 	return appsData, nil
 }
 
+// NewAppData constructs and return AppData for the provided armappservice.Site
 func (azureClient *AzureClient) NewAppData(app *armappservice.Site, logger *logger.Logger) (AppData, error) {
-	// Construct and return AppData for the provided armappservice.Site
-
 	// get image name from "DOCKER|tookyregistry.azurecr.io/tookyregistry/tooky/sha256:cb29a6"
 	linuxFxVersion := strings.Split(*app.Properties.SiteConfig.LinuxFxVersion, "|")
 	notDocker := len(linuxFxVersion) != 2 || linuxFxVersion[0] != "DOCKER"
@@ -387,9 +364,9 @@ func (azureClient *AzureClient) GetImageFingerprintFromRegistry(imageName string
 	return fingerprint, nil
 }
 
+// parseImageName parses the image name to extract the repository name and tag
+// Example: tookyregistry.azurecr.io/tooky/sha256:latest
 func parseImageName(imageName string) (registryUrl, repoName, tag string) {
-	// Parse the image name to extract the repository name and tag
-	// Example: tookyregistry.azurecr.io/tooky/sha256:latest
 	splitFullImageName := strings.SplitN(imageName, "/", 2)
 	if len(splitFullImageName) != 2 {
 		return "", "", ""
@@ -398,7 +375,6 @@ func parseImageName(imageName string) (registryUrl, repoName, tag string) {
 	registryUrl = fmt.Sprintf("https://%s", splitFullImageName[0])
 
 	if strings.Contains(splitFullImageName[1], "@sha256:") {
-		// Example: tookyregistry.azurecr.io/tooky@sha256:cb29a6..7
 		imageNameAndTag := strings.SplitN(splitFullImageName[1], "@", 2)
 		repoName = imageNameAndTag[0]
 		tag = imageNameAndTag[1]
