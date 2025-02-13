@@ -4,6 +4,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"os/signal"
+	"path/filepath"
+
+	"github.com/rjeczalik/notify"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/server"
@@ -41,6 +46,7 @@ type snapshotPathOptions struct {
 	path         string
 	artifactName string
 	exclude      []string
+	watch        bool
 }
 
 func newSnapshotPathCmd(out io.Writer) *cobra.Command {
@@ -67,6 +73,7 @@ func newSnapshotPathCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.path, "path", "", snapshotPathPathFlag)
 	cmd.Flags().StringVar(&o.artifactName, "name", "", snapshotPathArtifactNameFlag)
 	cmd.Flags().StringSliceVarP(&o.exclude, "exclude", "x", []string{}, snapshotPathExcludeFlag)
+	cmd.Flags().BoolVar(&o.watch, "watch", false, pathsWatchFlag)
 	addDryRunFlag(cmd)
 
 	if err := RequireFlags(cmd, []string{"path", "name"}); err != nil {
@@ -78,9 +85,6 @@ func newSnapshotPathCmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotPathOptions) run(args []string) error {
 	envName := args[0]
-
-	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/server", global.Host, global.Org, envName)
-
 	// load path spec from flags
 	ps := &server.PathsSpec{
 		Version: 1,
@@ -92,6 +96,23 @@ func (o *snapshotPathOptions) run(args []string) error {
 		},
 	}
 
+	err := reportArtifacts(ps, envName)
+	if err != nil {
+		return err
+	}
+
+	if o.watch {
+		err := watchPath(ps, o.path, envName)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func reportArtifacts(ps *server.PathsSpec, envName string) error {
+	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/server", global.Host, global.Org, envName)
 	artifacts, err := server.CreatePathsArtifactsData(ps, logger)
 	if err != nil {
 		return err
@@ -112,4 +133,61 @@ func (o *snapshotPathOptions) run(args []string) error {
 		logger.Info("[%d] artifacts were reported to environment %s", len(payload.Artifacts), envName)
 	}
 	return err
+}
+
+func watchPath(ps *server.PathsSpec, path, envName string) error {
+	events := make(chan notify.EventInfo, 1)
+	if err := watchRecursive(path, events); err != nil {
+		return fmt.Errorf("error setting up watcher: %v", err)
+	}
+	defer notify.Stop(events)
+
+	logger.Info("watching for file changes in %s. Press Ctrl+C to exit...", path)
+
+	// Handle system interrupts (Ctrl+C)
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+
+	for {
+		select {
+		case event := <-events:
+			logger.Debug("event: %s on %s", event.Event(), event.Path())
+
+			err := reportArtifacts(ps, envName)
+			if err != nil {
+				return err
+			}
+
+			// If a new directory is created, start watching it
+			// github.com/rjeczalik/notify does not automatically watch new subdirs
+			if event.Event() == notify.Create {
+				info, err := os.Stat(event.Path())
+				if err == nil && info.IsDir() {
+					logger.Debug("new directory detected: %s. Adding to watcher.", event.Path())
+					notify.Watch(event.Path()+"/...", events, notify.All)
+				}
+			}
+		case <-stop:
+			logger.Info("\tstopping file watcher...")
+			return nil
+		}
+	}
+}
+
+// Watches a directory recursively and detects new subdirectories
+func watchRecursive(root string, events chan notify.EventInfo) error {
+	return filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		// Watch all directories, including existing and newly created ones
+		if info.IsDir() {
+			if err := notify.Watch(path+"/...", events, notify.All); err != nil {
+				return fmt.Errorf("failed to watch %s: %v", path, err)
+			} else {
+				logger.Debug("watching: %s", path)
+			}
+		}
+		return nil
+	})
 }
