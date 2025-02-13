@@ -164,7 +164,10 @@ func watchPath(ps *server.PathsSpec, path, envName string) error {
 				info, err := os.Stat(event.Path())
 				if err == nil && info.IsDir() {
 					logger.Debug("new directory detected: %s. Adding to watcher.", event.Path())
-					notify.Watch(event.Path()+"/...", events, notify.All)
+					err = notify.Watch(event.Path()+"/...", events, notify.All)
+					if err != nil {
+						return err
+					}
 				}
 			}
 		case <-stop:
