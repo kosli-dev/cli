@@ -75,15 +75,15 @@ func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logge
 	// run concurrently
 	mutex := new(sync.Mutex)
 	appsData := make([]*AppData, 0, len(appsInfo))
-	g := new(errgroup.Group)
+	g, _ := errgroup.WithContext(context.Background())
 
 	for _, app := range appsInfo {
-		g.Go(func() error {
-			if strings.ToLower(*app.Properties.State) != "running" {
-				logger.Debug("app %s is not running, skipping from report", *app.Name)
-				return nil
-			}
+		if strings.ToLower(*app.Properties.State) != "running" {
+			logger.Debug("app %s is not running, skipping from report", *app.Name)
+			continue
+		}
 
+		g.Go(func() error {
 			data, err := azureClient.NewAppData(app, logger)
 			if err != nil {
 				return err
