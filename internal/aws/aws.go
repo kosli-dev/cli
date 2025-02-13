@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -168,60 +170,36 @@ func getFilteredLambdaFuncs(client *lambda.Client, nextMarker *string, allFuncti
 
 // GetLambdaPackageData returns a digest and metadata of a Lambda function package
 func (staticCreds *AWSStaticCreds) GetLambdaPackageData(filter *filters.ResourceFilterOptions) ([]*LambdaData, error) {
-	lambdaData := []*LambdaData{}
 	client, err := staticCreds.NewLambdaClient()
 	if err != nil {
-		return lambdaData, err
+		return nil, err
 	}
 
 	filteredFunctions, err := getFilteredLambdaFuncs(client, nil, &[]types.FunctionConfiguration{}, filter)
 	if err != nil {
-		return lambdaData, err
+		return nil, err
 	}
 
-	var (
-		wg    sync.WaitGroup
-		mutex = &sync.Mutex{}
-	)
-
-	// run concurrently
-	errs := make(chan error, 1) // Buffered only for the first error
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel() // Make sure it's called to release resources even if no errors
+	lambdaData := make([]*LambdaData, 0, len(*filteredFunctions))
+	mutex := new(sync.Mutex)
+	g, _ := errgroup.WithContext(context.Background())
 
 	for _, function := range *filteredFunctions {
-		wg.Add(1)
-		go func(functionName string) {
-			defer wg.Done()
-			// Check if any error occurred in any other gorouties:
-			select {
-			case <-ctx.Done():
-				return // Error somewhere, terminate
-			default: // Default is a must to avoid blocking
-			}
-			oneLambdaData, err := getAndProcessOneLambdaFunc(client, functionName)
+		g.Go(func() error {
+			oneLambdaData, err := getAndProcessOneLambdaFunc(client, *function.FunctionName)
 			if err != nil {
-				// Non-blocking send of error
-				select {
-				case errs <- err:
-				default:
-				}
-				cancel() // send cancel signal to goroutines
-				return
+				return err
 			}
 
 			mutex.Lock()
 			lambdaData = append(lambdaData, oneLambdaData)
 			mutex.Unlock()
-
-		}(*function.FunctionName)
-
+			return nil
+		})
 	}
 
-	wg.Wait()
-	// Return (first) error, if any:
-	if ctx.Err() != nil {
-		return lambdaData, <-errs
+	if err := g.Wait(); err != nil {
+		return lambdaData, err
 	}
 
 	return lambdaData, nil
@@ -463,61 +441,36 @@ func getFilteredECSClusters(client *ecs.Client, nextToken *string, allClusters *
 
 // GetEcsTasksData returns a list of tasks data for an ECS cluster or service
 func (staticCreds *AWSStaticCreds) GetEcsTasksData(filter *filters.ResourceFilterOptions) ([]*EcsTaskData, error) {
-	allTasksData := []*EcsTaskData{}
 	client, err := staticCreds.NewECSClient()
 	if err != nil {
-		return allTasksData, err
+		return nil, err
 	}
 
 	filteredClusters, err := getFilteredECSClusters(client, nil, &[]ecsTypes.Cluster{}, filter)
 	if err != nil {
-		return allTasksData, err
+		return nil, err
 	}
 
-	var (
-		wg    sync.WaitGroup
-		mutex = &sync.Mutex{}
-	)
-
-	// run concurrently
-	errs := make(chan error, 1) // Buffered only for the first error
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel() // Make sure it's called to release resources even if no errors
+	allTasksData := make([]*EcsTaskData, 0, len(*filteredClusters))
+	mutex := new(sync.Mutex)
+	g, _ := errgroup.WithContext(context.Background())
 
 	for _, cluster := range *filteredClusters {
-		wg.Add(1)
-		go func(cluster string) {
-			defer wg.Done()
-			// Check if any error occurred in any other gorouties:
-			select {
-			case <-ctx.Done():
-				return // Error somewhere, terminate
-			default: // Default is must to avoid blocking
-			}
-
-			tasksData, err := getTasksDataInCluster(client, cluster)
+		g.Go(func() error {
+			tasksData, err := getTasksDataInCluster(client, *cluster.ClusterName)
 			if err != nil {
-				// Non-blocking send of error
-				select {
-				case errs <- err:
-				default:
-				}
-				cancel() // send cancel signal to goroutines
-				return
+				return err
 			}
 			mutex.Lock()
 			allTasksData = append(allTasksData, tasksData...)
 			mutex.Unlock()
-
-		}(*cluster.ClusterName)
+			return nil
+		})
 	}
 
-	wg.Wait()
-	// Return (first) error, if any:
-	if ctx.Err() != nil {
-		return allTasksData, <-errs
+	if err := g.Wait(); err != nil {
+		return nil, err
 	}
-
 	return allTasksData, nil
 }
 

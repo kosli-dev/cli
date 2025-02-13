@@ -99,7 +99,7 @@ func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logge
 	}
 
 	if err := g.Wait(); err != nil {
-		return appsData, err
+		return nil, err
 	}
 
 	return appsData, nil
