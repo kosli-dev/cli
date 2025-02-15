@@ -85,7 +85,6 @@ func NewK8sClientSet(kubeconfigPath string) (*K8SConnection, error) {
 func (clientset *K8SConnection) GetPodsData(filter *filters.ResourceFilterOptions, logger *logger.Logger) ([]*PodData, error) {
 	var (
 		podsData = []*PodData{}
-		wg       sync.WaitGroup
 		mutex    = &sync.Mutex{}
 	)
 
