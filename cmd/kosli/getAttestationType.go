@@ -15,8 +15,14 @@ import (
 const getAttestationTypeShortDesc = `Get a Kosli attestation type.  `
 
 const getAttestationTypeLongDesc = getAttestationTypeShortDesc + `
-You can specify a version of the attestation type by appending ^@v^ to the type name followed by the version number, e.g. ^customTypeName@v4^.
-If a non-integer version is given, the unversioned custom attestation type is returned.
+The TYPE-NAME can be specified as follows:
+- customTypeName
+	- The unversioned custom attestation type, containing details of all versions of the type.
+	- e.g. ^custom-type^
+- customTypeName@vN
+	- The Nth version of the custom attestation type.
+	- If a non-integer version number is given, the unversioned custom attestation type is returned.
+	- e.g. ^custom-type@v4^
 `
 
 const getAttestationTypeExample = `
@@ -151,11 +157,11 @@ func printVersionedAttestationTypeAsTable(raw map[string]interface{}, rows []str
 	}
 
 	version := int(attestationType["version"].(float64))
-
 	rows = append(rows, fmt.Sprintf("	Version:\t%d", version))
 	if comment, ok := attestationType["comment"]; ok {
 		rows = append(rows, fmt.Sprintf("	Comment:\t%s", comment))
 	}
+
 	rows = append(rows, fmt.Sprintf("	Timestamp:\t%s", timestamp))
 	rows = append(rows, fmt.Sprintf("	Created By:\t%s", attestationType["created_by"]))
 
