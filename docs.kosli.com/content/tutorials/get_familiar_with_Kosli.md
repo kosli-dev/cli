@@ -79,8 +79,6 @@ You will see the following output, specifying the existence of an Artifact named
 
 
 ```plaintext {.light-console}
-version: 1
-
 trail:
   artifacts:
     - name: nginx
@@ -89,7 +87,7 @@ trail:
 Create a Kosli *Flow* called `quickstart-nginx` using this yml template-file:
 
 ```shell {.command}
-kosli create flow2 quickstart-nginx \
+kosli create flow quickstart-nginx \
     --description "Flow for quickstart nginx image" \
     --template-file kosli.yml
 ```
@@ -195,14 +193,14 @@ in a real call these would get default values (e.g. from Github Actions).
 
 ```shell {.command}
 GIT_COMMIT=$(git rev-parse HEAD)
-kosli attest artifact nginx:1.21 \  
+kosli attest artifact nginx:1.21 \
     --name nginx \
     --flow quickstart-nginx \
     --trail ${GIT_COMMIT} \
     --artifact-type docker \
     --build-url https://example.com \
     --commit-url https://github.com/kosli-dev/quickstart-docker-example/commit/9f14efa0c91807da9a8b1d1d6332c5b3aa24a310 \
-    --git-commit $(git rev-parse HEAD)    
+    --commit $(git rev-parse HEAD)    
 ```
 
 <!--
