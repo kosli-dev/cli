@@ -12,15 +12,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const getAttestationTypeShortDesc = `Get a Kosli attestation type.  `
+const getAttestationTypeShortDesc = `Get a custom Kosli attestation type.  `
 
 const getAttestationTypeLongDesc = getAttestationTypeShortDesc + `
 The TYPE-NAME can be specified as follows:
 - customTypeName
-	- The unversioned custom attestation type, containing details of all versions of the type.
+	- Returns the unversioned custom attestation type, containing details of all versions of the type.
 	- e.g. ^custom-type^
 - customTypeName@vN
-	- The Nth version of the custom attestation type.
+	- Returns the Nth version of the custom attestation type.
 	- If a non-integer version number is given, the unversioned custom attestation type is returned.
 	- e.g. ^custom-type@v4^
 `
