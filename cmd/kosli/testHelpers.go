@@ -191,7 +191,7 @@ func ArchiveCustomAttestationType(typeName string, t *testing.T) {
 	t.Helper()
 
 	err := newArchiveAttestationTypeCmd(os.Stdout).RunE(nil, []string{typeName})
-	require.NoError(t, err, "attestation type should be created without error")
+	require.NoError(t, err, "attestation type should be archived without error")
 }
 
 func CreateCustomAttestationType(typeName, schemaFilePath string, jqEvaluators []string, t *testing.T) {
