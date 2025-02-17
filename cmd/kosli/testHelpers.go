@@ -187,6 +187,13 @@ func normalize(in []byte) []byte {
 	return []byte(strings.TrimSpace(string(normalized)))
 }
 
+func ArchiveCustomAttestationType(typeName string, t *testing.T) {
+	t.Helper()
+
+	err := newArchiveAttestationTypeCmd(os.Stdout).RunE(nil, []string{typeName})
+	require.NoError(t, err, "attestation type should be archived without error")
+}
+
 func CreateCustomAttestationType(typeName, schemaFilePath string, jqEvaluators []string, t *testing.T) {
 	t.Helper()
 	o := &createAttestationTypeOptions{
