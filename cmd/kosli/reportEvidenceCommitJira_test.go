@@ -96,7 +96,7 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 					--repo-root %s
 					--build-url http://www.example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
 			goldenRegex: "Jira evidence is reported to commit: [0-9a-f]{40}\n" +
-				".*Issues references reported:.*\n.*SAMI-1: issue not found\n.*EX-1: issue found",
+				".*Issues references reported:.*\n.*EX-1: issue found\n.*SAMI-1: issue not found",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "go EX-1 SAMI-1 test commit",
 			},

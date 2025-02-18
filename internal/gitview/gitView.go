@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/go-git/go-git/v5"
@@ -299,6 +300,7 @@ func (gv *GitView) MatchPatternInCommitMessageORBranchName(pattern, commitSHA, s
 	for match := range uniqueMatches {
 		matches = append(matches, match)
 	}
+	sort.Strings(matches)
 
 	return matches, commitInfo, nil
 }
