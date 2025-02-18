@@ -32,7 +32,7 @@ func newDetachPolicyCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "detach-policy POLICY-NAME",
 		Short:   detachPolicyShortDesc,
-		Long:    detachPolicyShortDesc,
+		Long:    detachPolicyLongDesc,
 		Example: detachPolicyExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
