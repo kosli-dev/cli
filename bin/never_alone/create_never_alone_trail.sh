@@ -258,8 +258,8 @@ function attest_never_alone_trail_to_parent
 function main
 {
     check_arguments "$@"
-    # Use gh instead of git so we can keep the commit depth of 1. The order are from oldest commit to newest
-    local -r commits=($(gh api repos/:owner/:repo/compare/${START_COMMIT_SHA}...${END_COMMIT_SHA} -q '.commits[].sha'))
+    # Only get commits on main branch.
+    local -r commits=($(git rev-list --first-parent ${START_COMMIT_SHA}...${END_COMMIT_SHA}))
 
     begin_trail_with_template ${FLOW_NAME} ${TRAIL_NAME} "${commits[@]}"
     
