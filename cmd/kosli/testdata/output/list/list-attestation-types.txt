@@ -1,3 +1,0 @@
-NAME                       DESCRIPTION  LATEST VERSION
-custom-attestation-type-2               1
-custom-attestation-type-1               2

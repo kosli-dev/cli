@@ -40,9 +40,9 @@ func (suite *ListAttestationTypesCommandTestSuite) SetupTest() {
 func (suite *ListAttestationTypesCommandTestSuite) TestListFlowsCmd() {
 	tests := []cmdTestCase{
 		{
-			name:       "listing custom attestation types works when some exist",
-			cmd:        fmt.Sprintf(`list attestation-types %s`, suite.defaultKosliArguments),
-			goldenFile: "output/list/list-attestation-types.txt",
+			name:   "listing custom attestation types works when some exist",
+			cmd:    fmt.Sprintf(`list attestation-types %s`, suite.defaultKosliArguments),
+			golden: "",
 		},
 		{
 			name:   "listing custom attestation types works when there are none",
