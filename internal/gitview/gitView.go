@@ -154,7 +154,7 @@ func (gv *GitView) ChangeLog(currentCommit, previousCommit string, logger *logge
 	if previousCommit != "" {
 		commitsList, err := gv.CommitsBetween(previousCommit, currentCommit, logger)
 		if err != nil {
-			logger.Warning(err.Error())
+			logger.Warn(err.Error())
 		} else {
 			return commitsList, nil
 		}

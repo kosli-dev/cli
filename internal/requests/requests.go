@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -37,10 +38,34 @@ type Client struct {
 	HttpClient    *http.Client
 }
 
+// CustomLogger wraps log.Logger and implements the Printf method
+// It is used as a custom logger for retryableClient
+type CustomLogger struct {
+	*log.Logger
+}
+
+// Printf intercepts the log message and removes the hardcoded [DEBUG] part
+func (cl *CustomLogger) Printf(format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+
+	// Remove the hardcoded [DEBUG] prefix if it exists
+	msg = strings.TrimPrefix(msg, "[DEBUG]")
+
+	// Call the underlying log.Logger's Printf method with the cleaned message
+	cl.Logger.Printf(msg)
+}
+
 func NewKosliClient(httpProxyURL string, maxAPIRetries int, debug bool, logger *logger.Logger) (*Client, error) {
 	retryClient := retryablehttp.NewClient()
 	retryClient.RetryMax = maxAPIRetries
-	retryClient.Logger = nil               // this silences logging each individual attempt
+	if debug {
+		retryClient.Logger = &CustomLogger{
+			Logger: log.New(os.Stderr, "[debug]", log.Lmsgprefix),
+		}
+	} else {
+		retryClient.Logger = nil // this silences logging each individual attempt
+	}
+
 	client := retryClient.StandardClient() // return a standard *http.Client from the retryable client
 	if httpProxyURL != "" {
 		proxyURL, err := url.Parse(httpProxyURL)
