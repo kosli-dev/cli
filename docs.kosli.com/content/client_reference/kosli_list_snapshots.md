@@ -2,6 +2,7 @@
 title: "kosli list snapshots"
 beta: false
 deprecated: false
+summary: "List environment snapshots."
 ---
 
 # kosli list snapshots

@@ -57,7 +57,7 @@ kosli fingerprint {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 
 {{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli fingerprint` command in GitHub.
 
-In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli+fingerprint), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=github&command=kosli+fingerprint).{{< /tab >}}{{< /tabs >}}
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli+fingerprint){{< /tab >}}{{< /tabs >}}
 
 ## Examples Use Cases
 

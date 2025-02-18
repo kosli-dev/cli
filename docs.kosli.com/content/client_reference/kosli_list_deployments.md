@@ -2,6 +2,7 @@
 title: "kosli list deployments"
 beta: false
 deprecated: false
+summary: "List deployments in a flow."
 ---
 
 # kosli list deployments

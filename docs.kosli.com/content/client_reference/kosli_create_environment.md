@@ -2,6 +2,7 @@
 title: "kosli create environment"
 beta: false
 deprecated: false
+summary: "Create or update a Kosli environment."
 ---
 
 # kosli create environment

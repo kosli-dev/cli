@@ -2,6 +2,7 @@
 title: "kosli attest sonar"
 beta: false
 deprecated: false
+summary: "Report a SonarCloud or SonarQube attestation to an artifact or a trail in a Kosli flow.  "
 ---
 
 # kosli attest sonar

@@ -2,6 +2,7 @@
 title: "kosli assert snapshot"
 beta: false
 deprecated: false
+summary: "Assert the compliance status of an environment in Kosli."
 ---
 
 # kosli assert snapshot

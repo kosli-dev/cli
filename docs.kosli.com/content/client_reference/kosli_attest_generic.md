@@ -2,6 +2,7 @@
 title: "kosli attest generic"
 beta: false
 deprecated: false
+summary: "Report a generic attestation to an artifact or a trail in a Kosli flow.  "
 ---
 
 # kosli attest generic

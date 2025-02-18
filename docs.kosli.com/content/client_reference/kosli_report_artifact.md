@@ -2,11 +2,14 @@
 title: "kosli report artifact"
 beta: false
 deprecated: true
+summary: "Report an artifact creation to a Kosli flow.  "
 ---
 
 # kosli report artifact
 
-{{< hint danger >}}**kosli report artifact** is deprecated. see kosli attest commands  Deprecated commands will be removed in a future release.{{< /hint >}}
+{{% hint danger %}}
+**kosli report artifact** is deprecated. see kosli attest commands  Deprecated commands will be removed in a future release.
+{{% /hint %}}
 ## Synopsis
 
 Report an artifact creation to a Kosli flow.  

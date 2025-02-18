@@ -2,6 +2,7 @@
 title: "kosli list environments"
 beta: false
 deprecated: false
+summary: "List environments for an org."
 ---
 
 # kosli list environments

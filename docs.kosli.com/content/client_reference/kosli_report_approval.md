@@ -2,6 +2,7 @@
 title: "kosli report approval"
 beta: false
 deprecated: false
+summary: "Report an approval of deploying an artifact to an environment to Kosli.  "
 ---
 
 # kosli report approval

@@ -2,6 +2,7 @@
 title: "kosli status"
 beta: false
 deprecated: false
+summary: "Check the status of a Kosli server.  "
 ---
 
 # kosli status

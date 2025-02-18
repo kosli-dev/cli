@@ -2,11 +2,14 @@
 title: "kosli report evidence commit pullrequest azure"
 beta: false
 deprecated: true
+summary: "Report Azure Devops pull request evidence for a git commit in Kosli flows.  "
 ---
 
 # kosli report evidence commit pullrequest azure
 
-{{< hint danger >}}**kosli report evidence commit pullrequest azure** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.{{< /hint >}}
+{{% hint danger %}}
+**kosli report evidence commit pullrequest azure** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.
+{{% /hint %}}
 ## Synopsis
 
 Report Azure Devops pull request evidence for a git commit in Kosli flows.  

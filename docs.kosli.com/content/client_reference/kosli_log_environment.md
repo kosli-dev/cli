@@ -2,6 +2,7 @@
 title: "kosli log environment"
 beta: false
 deprecated: false
+summary: "List environment events."
 ---
 
 # kosli log environment

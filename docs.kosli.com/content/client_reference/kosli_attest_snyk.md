@@ -2,6 +2,7 @@
 title: "kosli attest snyk"
 beta: false
 deprecated: false
+summary: "Report a snyk attestation to an artifact or a trail in a Kosli flow.  "
 ---
 
 # kosli attest snyk

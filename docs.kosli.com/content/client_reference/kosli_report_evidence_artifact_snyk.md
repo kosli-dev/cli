@@ -2,11 +2,14 @@
 title: "kosli report evidence artifact snyk"
 beta: false
 deprecated: true
+summary: "Report Snyk vulnerability scan evidence for an artifact in a Kosli flow.  "
 ---
 
 # kosli report evidence artifact snyk
 
-{{< hint danger >}}**kosli report evidence artifact snyk** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.{{< /hint >}}
+{{% hint danger %}}
+**kosli report evidence artifact snyk** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.
+{{% /hint %}}
 ## Synopsis
 
 Report Snyk vulnerability scan evidence for an artifact in a Kosli flow.    

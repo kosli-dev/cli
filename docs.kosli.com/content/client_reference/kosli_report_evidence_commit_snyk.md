@@ -2,11 +2,14 @@
 title: "kosli report evidence commit snyk"
 beta: false
 deprecated: true
+summary: "Report Snyk vulnerability scan evidence for a commit in Kosli flows.  "
 ---
 
 # kosli report evidence commit snyk
 
-{{< hint danger >}}**kosli report evidence commit snyk** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.{{< /hint >}}
+{{% hint danger %}}
+**kosli report evidence commit snyk** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.
+{{% /hint %}}
 ## Synopsis
 
 Report Snyk vulnerability scan evidence for a commit in Kosli flows.    

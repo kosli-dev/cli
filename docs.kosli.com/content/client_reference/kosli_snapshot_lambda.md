@@ -2,6 +2,7 @@
 title: "kosli snapshot lambda"
 beta: false
 deprecated: false
+summary: "Report a snapshot of artifacts deployed as one or more AWS Lambda functions and their digests to Kosli."
 ---
 
 # kosli snapshot lambda

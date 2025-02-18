@@ -2,6 +2,7 @@
 title: "kosli create flow"
 beta: false
 deprecated: false
+summary: "Create or update a Kosli flow."
 ---
 
 # kosli create flow

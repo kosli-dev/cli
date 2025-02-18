@@ -2,6 +2,7 @@
 title: "kosli version"
 beta: false
 deprecated: false
+summary: "Print the version of a Kosli CLI.  "
 ---
 
 # kosli version

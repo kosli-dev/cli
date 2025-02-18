@@ -2,6 +2,7 @@
 title: "kosli list approvals"
 beta: false
 deprecated: false
+summary: "List approvals in a flow."
 ---
 
 # kosli list approvals

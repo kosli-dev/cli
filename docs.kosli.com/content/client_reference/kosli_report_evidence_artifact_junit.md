@@ -2,11 +2,14 @@
 title: "kosli report evidence artifact junit"
 beta: false
 deprecated: true
+summary: "Report JUnit test evidence for an artifact in a Kosli flow.  "
 ---
 
 # kosli report evidence artifact junit
 
-{{< hint danger >}}**kosli report evidence artifact junit** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.{{< /hint >}}
+{{% hint danger %}}
+**kosli report evidence artifact junit** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.
+{{% /hint %}}
 ## Synopsis
 
 Report JUnit test evidence for an artifact in a Kosli flow.    

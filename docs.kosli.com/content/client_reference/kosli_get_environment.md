@@ -2,6 +2,7 @@
 title: "kosli get environment"
 beta: false
 deprecated: false
+summary: "Get an environment's metadata."
 ---
 
 # kosli get environment

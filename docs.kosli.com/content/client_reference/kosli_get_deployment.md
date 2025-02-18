@@ -2,6 +2,7 @@
 title: "kosli get deployment"
 beta: false
 deprecated: false
+summary: "Get a deployment from a specified flow."
 ---
 
 # kosli get deployment

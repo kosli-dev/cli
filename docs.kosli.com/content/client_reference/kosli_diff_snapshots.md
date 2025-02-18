@@ -2,6 +2,7 @@
 title: "kosli diff snapshots"
 beta: false
 deprecated: false
+summary: "Diff environment snapshots.  "
 ---
 
 # kosli diff snapshots

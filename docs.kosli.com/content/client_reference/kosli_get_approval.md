@@ -2,6 +2,7 @@
 title: "kosli get approval"
 beta: false
 deprecated: false
+summary: "Get an approval from a specified flow."
 ---
 
 # kosli get approval

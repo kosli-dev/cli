@@ -2,6 +2,7 @@
 title: "kosli archive environment"
 beta: false
 deprecated: false
+summary: "Archive a Kosli environment."
 ---
 
 # kosli archive environment

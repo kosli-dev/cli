@@ -2,11 +2,14 @@
 title: "kosli report evidence commit pullrequest bitbucket"
 beta: false
 deprecated: true
+summary: "Report Bitbucket pull request evidence for a commit in Kosli flows.  "
 ---
 
 # kosli report evidence commit pullrequest bitbucket
 
-{{< hint danger >}}**kosli report evidence commit pullrequest bitbucket** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.{{< /hint >}}
+{{% hint danger %}}
+**kosli report evidence commit pullrequest bitbucket** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.
+{{% /hint %}}
 ## Synopsis
 
 Report Bitbucket pull request evidence for a commit in Kosli flows.  

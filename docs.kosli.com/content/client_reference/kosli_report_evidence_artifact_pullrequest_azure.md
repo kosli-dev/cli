@@ -2,11 +2,14 @@
 title: "kosli report evidence artifact pullrequest azure"
 beta: false
 deprecated: true
+summary: "Report an Azure Devops pull request evidence for an artifact in a Kosli flow.  "
 ---
 
 # kosli report evidence artifact pullrequest azure
 
-{{< hint danger >}}**kosli report evidence artifact pullrequest azure** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.{{< /hint >}}
+{{% hint danger %}}
+**kosli report evidence artifact pullrequest azure** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.
+{{% /hint %}}
 ## Synopsis
 
 Report an Azure Devops pull request evidence for an artifact in a Kosli flow.  

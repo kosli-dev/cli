@@ -2,11 +2,14 @@
 title: "kosli report evidence commit junit"
 beta: false
 deprecated: true
+summary: "Report JUnit test evidence for a commit in Kosli flows.  "
 ---
 
 # kosli report evidence commit junit
 
-{{< hint danger >}}**kosli report evidence commit junit** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.{{< /hint >}}
+{{% hint danger %}}
+**kosli report evidence commit junit** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.
+{{% /hint %}}
 ## Synopsis
 
 Report JUnit test evidence for a commit in Kosli flows.    

@@ -2,6 +2,7 @@
 title: "kosli list trails"
 beta: false
 deprecated: false
+summary: "List Trails for a Flow in an org."
 ---
 
 # kosli list trails

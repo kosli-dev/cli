@@ -2,6 +2,7 @@
 title: "kosli snapshot docker"
 beta: false
 deprecated: false
+summary: "Report a snapshot of running containers from docker host to Kosli.  "
 ---
 
 # kosli snapshot docker

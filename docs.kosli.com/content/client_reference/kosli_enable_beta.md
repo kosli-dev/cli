@@ -2,6 +2,7 @@
 title: "kosli enable beta"
 beta: false
 deprecated: false
+summary: "Enable beta features for an organization."
 ---
 
 # kosli enable beta

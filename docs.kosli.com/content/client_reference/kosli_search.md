@@ -2,6 +2,7 @@
 title: "kosli search"
 beta: false
 deprecated: false
+summary: "Search for a git commit or an artifact fingerprint in Kosli.  "
 ---
 
 # kosli search

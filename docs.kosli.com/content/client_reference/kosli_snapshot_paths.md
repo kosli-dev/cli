@@ -2,6 +2,7 @@
 title: "kosli snapshot paths"
 beta: false
 deprecated: false
+summary: "Report a snapshot of artifacts running in specific filesystem paths to Kosli.  "
 ---
 
 # kosli snapshot paths

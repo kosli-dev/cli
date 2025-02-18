@@ -2,6 +2,7 @@
 title: "kosli join environment"
 beta: false
 deprecated: false
+summary: "Join a physical environment to a logical environment."
 ---
 
 # kosli join environment

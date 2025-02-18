@@ -2,6 +2,7 @@
 title: "kosli assert pullrequest github"
 beta: false
 deprecated: false
+summary: "Assert a Github pull request for a git commit exists.  "
 ---
 
 # kosli assert pullrequest github

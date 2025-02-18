@@ -2,6 +2,7 @@
 title: "kosli begin trail"
 beta: false
 deprecated: false
+summary: "Begin or update a Kosli flow trail."
 ---
 
 # kosli begin trail

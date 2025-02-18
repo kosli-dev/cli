@@ -2,6 +2,7 @@
 title: "kosli list artifacts"
 beta: false
 deprecated: false
+summary: "List artifacts in a flow. "
 ---
 
 # kosli list artifacts

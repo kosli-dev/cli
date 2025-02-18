@@ -2,6 +2,7 @@
 title: "kosli get snapshot"
 beta: false
 deprecated: false
+summary: "Get a specified environment snapshot.  "
 ---
 
 # kosli get snapshot

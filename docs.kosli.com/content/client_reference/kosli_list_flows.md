@@ -2,6 +2,7 @@
 title: "kosli list flows"
 beta: false
 deprecated: false
+summary: "List flows for an org."
 ---
 
 # kosli list flows

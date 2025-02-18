@@ -2,6 +2,7 @@
 title: "kosli attest jira"
 beta: false
 deprecated: false
+summary: "Report a jira attestation to an artifact or a trail in a Kosli flow.  "
 ---
 
 # kosli attest jira
@@ -9,8 +10,8 @@ deprecated: false
 ## Synopsis
 
 Report a jira attestation to an artifact or a trail in a Kosli flow.  
-Parses the given commit's message or current branch name for Jira issue references of the 
-form:  
+Parses the given commit's message, current branch name or the content of the `--jira-secondary-source`
+argument for Jira issue references of the form:  
 'at least 2 characters long, starting with an uppercase letter project key followed by
 dash and one or more digits'. 
 
@@ -61,6 +62,7 @@ kosli attest jira [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --jira-base-url string  |  The base url for the jira project, e.g. 'https://kosli.atlassian.net'  |
 |        --jira-issue-fields string  |  [optional] The comma separated list of fields to include from the Jira issue. Default no fields are included. '*all' will give all fields.  |
 |        --jira-pat string  |  Jira personal access token (for self-hosted Jira)  |
+|        --jira-secondary-source string  |  [optional] An optional string to search for Jira ticket reference, e.g. '--jira-secondary-source ${{ github.head_ref }}'  |
 |        --jira-username string  |  Jira username (for Jira Cloud)  |
 |    -n, --name string  |  The name of the attestation as declared in the flow or trail yaml template.  |
 |    -o, --origin-url string  |  [optional] The url pointing to where the attestation came from or is related. (defaulted to the CI url in some CIs: https://docs.kosli.com/ci-defaults ).  |
@@ -194,5 +196,21 @@ kosli attest jira \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 	--assert
+
+```
+
+**get jira reference from original branch name in a GitHub Pull Request merge job**
+
+```shell
+kosli attest jira \
+	--name yourAttestationName \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--jira-secondary-source ${{ github.head_ref }} \
+	--jira-base-url https://kosli.atlassian.net \
+	--jira-username user@domain.com \
+	--jira-api-token yourJiraAPIToken \
+	--api-token yourAPIToken \
+	--org yourOrgName
 ```
 

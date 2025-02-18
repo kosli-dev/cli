@@ -2,11 +2,14 @@
 title: "kosli report evidence commit jira"
 beta: false
 deprecated: true
+summary: "Report Jira evidence for a commit in Kosli flows."
 ---
 
 # kosli report evidence commit jira
 
-{{< hint danger >}}**kosli report evidence commit jira** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.{{< /hint >}}
+{{% hint danger %}}
+**kosli report evidence commit jira** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.
+{{% /hint %}}
 ## Synopsis
 
 Report Jira evidence for a commit in Kosli flows.  

@@ -2,6 +2,7 @@
 title: "kosli"
 beta: false
 deprecated: false
+summary: "The Kosli CLI."
 ---
 
 # kosli

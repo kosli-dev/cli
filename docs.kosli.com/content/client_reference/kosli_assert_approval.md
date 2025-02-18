@@ -2,6 +2,7 @@
 title: "kosli assert approval"
 beta: false
 deprecated: false
+summary: "Assert an artifact in Kosli has been approved for deployment.  "
 ---
 
 # kosli assert approval

@@ -2,11 +2,14 @@
 title: "kosli report evidence commit generic"
 beta: false
 deprecated: true
+summary: "Report Generic evidence for a commit in Kosli flows.  "
 ---
 
 # kosli report evidence commit generic
 
-{{< hint danger >}}**kosli report evidence commit generic** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.{{< /hint >}}
+{{% hint danger %}}
+**kosli report evidence commit generic** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.
+{{% /hint %}}
 ## Synopsis
 
 Report Generic evidence for a commit in Kosli flows.  

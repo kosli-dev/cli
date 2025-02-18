@@ -2,6 +2,7 @@
 title: "kosli completion"
 beta: false
 deprecated: false
+summary: "Generate completion script"
 ---
 
 # kosli completion

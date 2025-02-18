@@ -2,6 +2,7 @@
 title: "kosli get trail"
 beta: false
 deprecated: false
+summary: "Get the metadata of a specific trail."
 ---
 
 # kosli get trail

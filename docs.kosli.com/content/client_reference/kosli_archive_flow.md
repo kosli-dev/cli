@@ -2,6 +2,7 @@
 title: "kosli archive flow"
 beta: false
 deprecated: false
+summary: "Archive a Kosli flow."
 ---
 
 # kosli archive flow

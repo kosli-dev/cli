@@ -2,6 +2,7 @@
 title: "kosli assert status"
 beta: false
 deprecated: false
+summary: "Assert the status of a Kosli server."
 ---
 
 # kosli assert status

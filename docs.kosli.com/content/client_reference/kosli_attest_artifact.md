@@ -2,6 +2,7 @@
 title: "kosli attest artifact"
 beta: false
 deprecated: false
+summary: "Attest an artifact creation to a Kosli flow.  "
 ---
 
 # kosli attest artifact

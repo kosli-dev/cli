@@ -2,11 +2,14 @@
 title: "kosli expect deployment"
 beta: false
 deprecated: true
+summary: "Report the expectation of an upcoming deployment of an artifact to an environment.  "
 ---
 
 # kosli expect deployment
 
-{{< hint danger >}}**kosli expect deployment** is deprecated. deployment expectation is no longer required for compliance.  Deprecated commands will be removed in a future release.{{< /hint >}}
+{{% hint danger %}}
+**kosli expect deployment** is deprecated. deployment expectation is no longer required for compliance.  Deprecated commands will be removed in a future release.
+{{% /hint %}}
 ## Synopsis
 
 Report the expectation of an upcoming deployment of an artifact to an environment.  
