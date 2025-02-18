@@ -90,7 +90,7 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 			},
 		},
 		{
-			name: "report existing and non existing Jira commit evidence with reference in midle of line works",
+			name: "report existing and non existing Jira commit evidence with reference in middle of line works",
 			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
 					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
 					--repo-root %s
