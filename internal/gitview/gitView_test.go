@@ -424,6 +424,14 @@ func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 			wantError:     false,
 		},
 		{
+			name:          "Same Jira references found in commit and branch name is not duplicated",
+			pattern:       "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			commitMessage: "DUP-1 some test commit",
+			branchName:    "DUP-1-test-commit",
+			want:          []string{"DUP-1"},
+			wantError:     false,
+		},
+		{
 			name:            "Jira references found in commit, branch name and secondary source",
 			pattern:         "[A-Z][A-Z0-9]{1,9}-[0-9]+",
 			commitMessage:   "ALL-1 some test commit",
