@@ -52,7 +52,7 @@ func (cl *CustomLogger) Printf(format string, args ...interface{}) {
 	msg = strings.TrimPrefix(msg, "[DEBUG]")
 
 	// Call the underlying log.Logger's Printf method with the cleaned message
-	cl.Logger.Printf(msg)
+	cl.Logger.Print(msg)
 }
 
 func NewKosliClient(httpProxyURL string, maxAPIRetries int, debug bool, logger *logger.Logger) (*Client, error) {
