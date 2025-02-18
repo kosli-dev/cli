@@ -485,14 +485,14 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 				// get encryption key
 				key, err := security.GetSecretFromCredentialsStore(credentialsStoreKeySecretName)
 				if err != nil {
-					logger.Warning("failed to decrypt api token from [%s]. Failed to get api token encryption key from credentials store: %s", global.ConfigFile, err)
-					logger.Warning("using api token from [%s] as plain text. It is recommended to encrypt your api token by setting it with: kosli config --api-token <token>", global.ConfigFile)
+					logger.Warn("failed to decrypt api token from [%s]. Failed to get api token encryption key from credentials store: %s", global.ConfigFile, err)
+					logger.Warn("using api token from [%s] as plain text. It is recommended to encrypt your api token by setting it with: kosli config --api-token <token>", global.ConfigFile)
 				} else {
 					// decrypt token
 					decryptedBytes, err := security.AESDecrypt([]byte(val.(string)), []byte(key))
 					if err != nil {
-						logger.Warning("failed to decrypt api token from [%s]: %s", global.ConfigFile, err)
-						logger.Warning("using api token from [%s] as plain text. It is recommended to encrypt your api token by setting it with: kosli config --api-token <token>", global.ConfigFile)
+						logger.Warn("failed to decrypt api token from [%s]: %s", global.ConfigFile, err)
+						logger.Warn("using api token from [%s] as plain text. It is recommended to encrypt your api token by setting it with: kosli config --api-token <token>", global.ConfigFile)
 					} else {
 						val = string(decryptedBytes)
 						logger.Debug("using api token from [%s].", global.ConfigFile)

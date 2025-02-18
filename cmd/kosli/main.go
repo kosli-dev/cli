@@ -71,7 +71,7 @@ func innerMain(cmd *cobra.Command, args []string) error {
 	}
 	if global.DryRun {
 		logger.Info("Error: %s", err.Error())
-		logger.Warning("Encountered an error but --dry-run is enabled. Exiting with 0 exit code.")
+		logger.Warn("Encountered an error but --dry-run is enabled. Exiting with 0 exit code.")
 		return nil
 	}
 	return err
