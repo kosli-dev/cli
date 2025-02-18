@@ -361,12 +361,14 @@ func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 	require.NoError(suite.T(), err)
 
 	for _, t := range []struct {
-		name          string
-		pattern       string
-		commitMessage string
-		wantError     bool
-		want          []string
-		commitSha     string
+		name            string
+		pattern         string
+		commitMessage   string
+		secondarySource string
+		wantError       bool
+		want            []string
+		commitSha       string
+		branchName      string
 	}{
 		{
 			name:          "One Jira reference found",
@@ -388,6 +390,47 @@ func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 			commitMessage: "test commit",
 			want:          []string{},
 			wantError:     false,
+		},
+		{
+			name:          "Jira references found in branch name",
+			pattern:       "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			commitMessage: "some test commit",
+			branchName:    "EX-5-cool-branch",
+			want:          []string{"EX-5"},
+			wantError:     false,
+		},
+		{
+			name:            "Jira references found in secondary source",
+			pattern:         "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			commitMessage:   "some test commit",
+			secondarySource: "EX-1-test-commit",
+			want:            []string{"EX-1"},
+			wantError:       false,
+		},
+		{
+			name:            "Jira references found in commit and secondary source",
+			pattern:         "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			commitMessage:   "EX-1 some test commit",
+			secondarySource: "EX-2-test-commit",
+			want:            []string{"EX-1", "EX-2"},
+			wantError:       false,
+		},
+		{
+			name:          "Jira references found in commit and branch name",
+			pattern:       "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			commitMessage: "EX-1 some test commit",
+			branchName:    "EX-2-test-commit",
+			want:          []string{"EX-1", "EX-2"},
+			wantError:     false,
+		},
+		{
+			name:            "Jira references found in commit, branch name and secondary source",
+			pattern:         "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			commitMessage:   "ALL-1 some test commit",
+			branchName:      "ALL-2-test-commit",
+			secondarySource: "ALL-3-some-things",
+			want:            []string{"ALL-1", "ALL-2", "ALL-3"},
+			wantError:       false,
 		},
 		{
 			name:          "No Jira references found, despite something that looks similar to Jira reference",
@@ -417,10 +460,16 @@ func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 				require.NoError(suite.T(), err)
 			}
 
+			if t.branchName != "" {
+				err := testHelpers.CheckoutNewBranch(workTree, t.branchName)
+				require.NoError(suite.T(), err)
+				defer testHelpers.CheckoutMaster(workTree, suite.T())
+			}
+
 			gitView, err := New(suite.tmpDir)
 			require.NoError(suite.T(), err)
 
-			actual, _, err := gitView.MatchPatternInCommitMessageORBranchName(t.pattern, t.commitSha)
+			actual, _, err := gitView.MatchPatternInCommitMessageORBranchName(t.pattern, t.commitSha, t.secondarySource)
 			require.True(suite.T(), (err != nil) == t.wantError)
 			require.ElementsMatch(suite.T(), t.want, actual)
 

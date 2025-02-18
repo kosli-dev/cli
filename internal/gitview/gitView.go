@@ -271,23 +271,36 @@ func getCommitURL(repoURL, commitHash string) string {
 // MatchPatternInCommitMessageORBranchName returns a slice of strings matching a pattern in a commit message or branch name
 // matches lookup happens in the commit message first, and if none is found, matching against the branch name is done
 // if no matches are found in both the commit message and the branch name, an empty slice is returned
-func (gv *GitView) MatchPatternInCommitMessageORBranchName(pattern, commitSHA string) ([]string, *CommitInfo, error) {
+func (gv *GitView) MatchPatternInCommitMessageORBranchName(pattern, commitSHA, secondarySource string) ([]string, *CommitInfo, error) {
 	commitInfo, err := gv.GetCommitInfoFromCommitSHA(commitSHA, true, []string{})
 	if err != nil {
 		return []string{}, nil, err
 	}
 
 	re := regexp.MustCompile(pattern)
-	matches := re.FindAllString(commitInfo.Message, -1)
-	if matches != nil {
-		return matches, commitInfo, nil
-	} else {
-		matches := re.FindAllString(commitInfo.Branch, -1)
-		if matches != nil {
-			return matches, commitInfo, nil
-		}
+	commitMatches := re.FindAllString(commitInfo.Message, -1)
+	branchMatches := re.FindAllString(commitInfo.Branch, -1)
+	secondaryMatches := re.FindAllString(secondarySource, -1)
+
+	// Use a map to remove duplicates
+	uniqueMatches := make(map[string]struct{})
+	for _, match := range commitMatches {
+		uniqueMatches[match] = struct{}{}
 	}
-	return []string{}, commitInfo, nil
+	for _, match := range branchMatches {
+		uniqueMatches[match] = struct{}{}
+	}
+	for _, match := range secondaryMatches {
+		uniqueMatches[match] = struct{}{}
+	}
+
+	// Convert map keys back to a slice
+	matches := make([]string, 0, len(uniqueMatches))
+	for match := range uniqueMatches {
+		matches = append(matches, match)
+	}
+
+	return matches, commitInfo, nil
 }
 
 // ResolveRevision returns an explicit commit SHA1 from commit SHA or ref (e.g. HEAD~2)

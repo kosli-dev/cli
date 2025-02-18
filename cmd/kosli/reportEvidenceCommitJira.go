@@ -175,7 +175,7 @@ func (o *reportEvidenceCommitJiraOptions) run(args []string) error {
 	// more info: https://support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/#Workingwithissues-Projectandissuekeys
 	jiraIssueKeyPattern := `[A-Z][A-Z0-9]{1,9}-[0-9]+`
 
-	issueIDs, commitInfo, err := gv.MatchPatternInCommitMessageORBranchName(jiraIssueKeyPattern, o.payload.CommitSHA)
+	issueIDs, commitInfo, err := gv.MatchPatternInCommitMessageORBranchName(jiraIssueKeyPattern, o.payload.CommitSHA, "")
 	if err != nil {
 		return err
 	}
