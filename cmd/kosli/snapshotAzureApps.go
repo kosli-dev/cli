@@ -13,7 +13,14 @@ import (
 const snapshotAzureAppsShortDesc = `Report a snapshot of running Azure web apps and function apps in an Azure resource group to Kosli.  `
 
 const snapshotAzureAppsLongDesc = snapshotAzureAppsShortDesc + `
-The reported data includes Azure app names, container image digests and creation timestamps.` + azureAuthDesc
+The reported data includes Azure app names, container image digests and creation timestamps.
+
+For Azure Function apps or Web apps which uses zip deployment the fingerprint is calculated based on the
+content of the zip file. This is the same as unzipping the file and then running ^kosli fingerprint -t dir yourDirName^.
+When doing zip deployment the WEBSITE_RUN_FROM_PACKAGE must NOT be set to 1. This will cause the azure
+API calls to not return the content of what is running on the server and fingerprint calculations
+will not match. See 
+https://learn.microsoft.com/en-us/azure/azure-functions/functions-app-settings#website_run_from_package` + azureAuthDesc
 
 const snapshotAzureAppsExample = `
 # Use Azure Container Registry to get the digests for artifacts in a snapshot
