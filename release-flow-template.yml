@@ -5,8 +5,10 @@ trail:
     type: generic
   - name: test
     type: junit
-  - name: snyk-code
-    type: snyk
+#  - name: snyk-code
+#    type: snyk
+  - name: never-alone-trail
+    type: generic
   artifacts:
   - name: cli-docker
     attestations:
