@@ -7,6 +7,7 @@ import (
 
 	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/logger"
+	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -84,7 +85,6 @@ func NewK8sClientSet(kubeconfigPath string) (*K8SConnection, error) {
 func (clientset *K8SConnection) GetPodsData(filter *filters.ResourceFilterOptions, logger *logger.Logger) ([]*PodData, error) {
 	var (
 		podsData = []*PodData{}
-		wg       sync.WaitGroup
 		mutex    = &sync.Mutex{}
 	)
 
@@ -104,43 +104,23 @@ func (clientset *K8SConnection) GetPodsData(filter *filters.ResourceFilterOption
 
 		logger.Info("scanning the following namespaces: %v ", filteredNamespaces)
 
-		// run concurrently
-		errs := make(chan error, 1) // Buffered only for the first error
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel() // Make sure it's called to release resources even if no errors
+		g, _ := errgroup.WithContext(context.Background())
 
 		for _, ns := range filteredNamespaces {
-			wg.Add(1)
-			go func(ns string) {
-				defer wg.Done()
-				// Check if any error occurred in any other gorouties:
-				select {
-				case <-ctx.Done():
-					return // Error somewhere, terminate
-				default: // Default is must to avoid blocking
-				}
-
+			g.Go(func() error {
 				pods, err := clientset.getPodsInNamespace(ns)
 				if err != nil {
-					// Non-blocking send of error
-					select {
-					case errs <- err:
-					default:
-					}
-					cancel() // send cancel signal to goroutines
-					return
+					return err
 				}
 				mutex.Lock()
 				list.Items = append(list.Items, pods...)
 				mutex.Unlock()
-
-			}(ns)
+				return nil
+			})
 		}
 
-		wg.Wait()
-		// Return (first) error, if any:
-		if ctx.Err() != nil {
-			return podsData, <-errs
+		if err := g.Wait(); err != nil {
+			return nil, err
 		}
 
 		return processPods(list), nil
@@ -178,63 +158,43 @@ func (clientset *K8SConnection) filterNamespaces(filter *filters.ResourceFilterO
 			return filter.IncludeNames, nil
 		}
 	}
-	result := []string{}
 	// get all namespaces in the cluster
 	nsList, err := clientset.GetClusterNamespaces()
 	if err != nil {
-		return result, err
+		return nil, err
 	}
+
+	namespaces := []string{}
 
 	if len(filter.IncludeNames) == 0 && len(filter.IncludeNamesRegex) == 0 &&
 		len(filter.ExcludeNames) == 0 && len(filter.ExcludeNamesRegex) == 0 {
 		for _, ns := range nsList {
-			result = append(result, ns.Name)
+			namespaces = append(namespaces, ns.Name)
 		}
-		return result, nil
+		return namespaces, nil
 	}
 
-	var (
-		wg    sync.WaitGroup
-		mutex = &sync.Mutex{}
-	)
-
-	errs := make(chan error, 1) // Buffered only for the first error
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel() // Make sure it's called to release resources even if no errors
+	mutex := new(sync.Mutex)
+	g, _ := errgroup.WithContext(context.Background())
 
 	for _, ns := range nsList {
-		wg.Add(1)
-		go func(ns string) {
-			defer wg.Done()
-
-			// Check if any error occurred in any other gorouties:
-			select {
-			case <-ctx.Done():
-				return // Error somewhere, terminate
-			default: // Default is must to avoid blocking
-			}
-
-			include, err := filter.ShouldInclude(ns)
+		g.Go(func() error {
+			include, err := filter.ShouldInclude(ns.Name)
 			if err != nil {
-				select {
-				case errs <- err:
-				default:
-				}
-				cancel() // send cancel signal to goroutines
-				return
+				return err
 			}
 			if include {
 				mutex.Lock()
-				result = append(result, ns)
+				namespaces = append(namespaces, ns.Name)
 				mutex.Unlock()
 			}
-		}(ns.Name)
+			return nil
+		})
 	}
-	wg.Wait()
-	if ctx.Err() != nil {
-		return result, <-errs
+	if err := g.Wait(); err != nil {
+		return nil, err
 	}
-	return result, nil
+	return namespaces, nil
 }
 
 // getPodsInNamespace get pods in a specific namespace in a cluster
