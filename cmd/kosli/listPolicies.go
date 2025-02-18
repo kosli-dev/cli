@@ -20,11 +20,10 @@ type policiesLsOptions struct {
 func newListPoliciesCmd(out io.Writer) *cobra.Command {
 	o := new(policiesLsOptions)
 	cmd := &cobra.Command{
-		Use:    "policies",
-		Short:  listPoliciesDesc,
-		Long:   listPoliciesDesc,
-		Args:   cobra.NoArgs,
-		Hidden: true,
+		Use:   "policies",
+		Short: listPoliciesDesc,
+		Long:  listPoliciesDesc,
+		Args:  cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

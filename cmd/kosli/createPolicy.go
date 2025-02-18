@@ -11,6 +11,8 @@ import (
 
 const createPolicyShortDesc = `Create or update a Kosli policy.`
 
+const createPolicyLongDesc = `Updating policy content creates a new version of the policy.`
+
 const createPolicyExample = `
 # create a Kosli policy:
 kosli create policy yourPolicyName \
@@ -44,9 +46,8 @@ func newCreatePolicyCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "policy POLICY-NAME POLICY-FILE-PATH",
 		Short:   createPolicyShortDesc,
-		Long:    createPolicyShortDesc,
+		Long:    createPolicyLongDesc,
 		Example: createPolicyExample,
-		Hidden:  true,
 		Args:    cobra.ExactArgs(2),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
