@@ -27,8 +27,8 @@ func (suite *GetTrailCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
-	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
+	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.Suite.T())
+	BeginTrail(suite.trailName, suite.flowName, "", suite.Suite.T())
 }
 
 func (suite *GetTrailCommandTestSuite) TestGetTrailCmd() {
@@ -62,7 +62,7 @@ func (suite *GetTrailCommandTestSuite) TestGetTrailCmd() {
 		},
 	}
 
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

@@ -23,7 +23,7 @@ type AttestBitbucketPRCommandTestSuite struct {
 }
 
 func (suite *AttestBitbucketPRCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_BITBUCKET_PASSWORD"})
+	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_BITBUCKET_PASSWORD"})
 
 	suite.flowName = "attest-bitbucket-pr"
 	suite.trailName = "test-123"
@@ -36,14 +36,14 @@ func (suite *AttestBitbucketPRCommandTestSuite) SetupTest() {
 
 	var err error
 	suite.tmpDir, err = os.MkdirTemp("", "testDir")
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 	_, err = testHelpers.CloneGitRepo("https://bitbucket.org/kosli-dev/cli-test.git", suite.tmpDir)
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 
 	suite.defaultKosliArguments = fmt.Sprintf(" --flow %s --trail %s --repo-root %s --commit fd54040fc90e7e83f7b152619bfa18917b72c34f --host %s --org %s --api-token %s", suite.flowName, suite.trailName, suite.tmpDir, global.Host, global.Org, global.ApiToken)
-	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
-	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
-	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.T())
+	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.Suite.T())
+	BeginTrail(suite.trailName, suite.flowName, "", suite.Suite.T())
+	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.Suite.T())
 }
 
 func (suite *AttestBitbucketPRCommandTestSuite) TearDownSuite() {
@@ -121,7 +121,7 @@ func (suite *AttestBitbucketPRCommandTestSuite) TestAttestBitbucketPRCmd() {
 		},
 	}
 
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

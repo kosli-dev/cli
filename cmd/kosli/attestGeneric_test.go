@@ -28,9 +28,9 @@ func (suite *AttestGenericCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --flow %s --trail %s --repo-root ../.. --host %s --org %s --api-token %s", suite.flowName, suite.trailName, global.Host, global.Org, global.ApiToken)
-	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
-	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
-	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.T())
+	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.Suite.T())
+	BeginTrail(suite.trailName, suite.flowName, "", suite.Suite.T())
+	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.Suite.T())
 }
 
 func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
@@ -175,7 +175,7 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 		},
 	}
 
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

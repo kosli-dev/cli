@@ -34,7 +34,7 @@ func (suite *SnapshotLambdaTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateEnv(global.Org, suite.envName, "lambda", suite.T())
+	CreateEnv(global.Org, suite.envName, "lambda", suite.Suite.T())
 }
 
 func (suite *SnapshotLambdaTestSuite) TestSnapshotLambdaCmd() {
@@ -133,9 +133,9 @@ func (suite *SnapshotLambdaTestSuite) TestSnapshotLambdaCmd() {
 
 	for _, t := range tests {
 		if t.additionalConfig != nil && t.additionalConfig.(snapshotLambdaTestConfig).requireAuthToBeSet {
-			testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"})
+			testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"})
 		}
-		runTestCmd(suite.T(), []cmdTestCase{t})
+		runTestCmd(suite.Suite.T(), []cmdTestCase{t})
 	}
 }
 

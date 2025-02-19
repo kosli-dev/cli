@@ -23,7 +23,7 @@ func (suite *ListPoliciesCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
-	CreatePolicy(global.Org, "test-policy", suite.T())
+	CreatePolicy(global.Org, "test-policy", suite.Suite.T())
 
 	global.Org = "acme-org"
 	global.ApiToken = "v3OWZiYWu9G2IMQStYg9BcPQUQ88lJNNnTJTNq8jfvmkR1C5wVpHSs7F00JcB5i6OGeUzrKt3CwRq7ndcN4TTfMeo8ASVJ5NdHpZT7DkfRfiFvm8s7GbsIHh2PtiQJYs2UoN13T8DblV5C4oKb6-yWH73h67OhotPlKfVKazR-c"
@@ -58,7 +58,7 @@ func (suite *ListPoliciesCommandTestSuite) TestListPoliciesCmd() {
 		},
 	}
 
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

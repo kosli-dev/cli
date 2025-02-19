@@ -34,17 +34,17 @@ func (suite *ListDeploymentsCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
-	CreateFlow(suite.flowName1, suite.T())
-	CreateFlow(suite.flowName2, suite.T())
+	CreateFlow(suite.flowName1, suite.Suite.T())
+	CreateFlow(suite.flowName2, suite.Suite.T())
 	fingerprintOptions := &fingerprintOptions{
 		artifactType: "file",
 	}
 	var err error
 	suite.fingerprint, err = GetSha256Digest(suite.artifactPath, fingerprintOptions, logger)
-	require.NoError(suite.T(), err)
-	CreateArtifact(suite.flowName2, suite.fingerprint, suite.artifactName, suite.T())
-	CreateEnv(global.Org, suite.envName, "server", suite.T())
-	ExpectDeployment(suite.flowName2, suite.fingerprint, suite.envName, suite.T())
+	require.NoError(suite.Suite.T(), err)
+	CreateArtifact(suite.flowName2, suite.fingerprint, suite.artifactName, suite.Suite.T())
+	CreateEnv(global.Org, suite.envName, "server", suite.Suite.T())
+	ExpectDeployment(suite.flowName2, suite.fingerprint, suite.envName, suite.Suite.T())
 }
 
 func (suite *ListDeploymentsCommandTestSuite) TestListDeploymentsCmd() {
@@ -102,7 +102,7 @@ func (suite *ListDeploymentsCommandTestSuite) TestListDeploymentsCmd() {
 		},
 	}
 
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

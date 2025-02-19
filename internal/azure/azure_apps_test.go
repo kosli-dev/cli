@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
+	armappservice "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/testHelpers"
 	"github.com/stretchr/testify/require"
@@ -23,7 +23,7 @@ type AzureAppsTestSuite struct {
 }
 
 func (suite *AzureAppsTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{
+	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{
 		"INTEGRATION_TEST_AZURE_CLIENT_SECRET",
 		"INTEGRATION_TEST_AZURE_CLIENT_ID",
 	})
@@ -36,29 +36,29 @@ func (suite *AzureAppsTestSuite) SetupTest() {
 	}
 	var err error
 	suite.defaultClient, err = suite.staticCreds.NewAzureClient()
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 }
 
 func (suite *AzureAppsTestSuite) TestCanDownloadAppZip() {
 	token, err := suite.defaultClient.getBearerToken()
-	require.NoError(suite.T(), err)
-	require.NotEmpty(suite.T(), token)
+	require.NoError(suite.Suite.T(), err)
+	require.NotEmpty(suite.Suite.T(), token)
 
 	appName := "kosli-dev-WaveApp"
 	tmpDir, err := os.MkdirTemp("", "*")
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 	defer os.RemoveAll(tmpDir)
 	dest := filepath.Join(tmpDir, appName+".zip")
 	err = downloadAppPackage(appName, token, dest)
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 
 	// check download file exists
 	_, err = os.Stat(dest)
-	require.False(suite.T(), os.IsNotExist(err))
+	require.False(suite.Suite.T(), os.IsNotExist(err))
 
 	// check downloaded file is a valid zip
 	r, err := zip.OpenReader(dest)
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 	defer r.Close()
 
 }
@@ -67,13 +67,13 @@ func (suite *AzureAppsTestSuite) TestFingerprintZipService() {
 	appName := "kosli-dev-WaveApp"
 	appKind := "app"
 	appData, err := suite.defaultClient.fingerprintZipService(&armappservice.Site{Name: &appName, Kind: &appKind}, logger.NewStandardLogger())
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 
 	digest := appData.Digests[appName]
 	sha256Regex := regexp.MustCompile(`^[a-f0-9]{64}$`)
-	require.True(suite.T(), sha256Regex.MatchString(digest))
+	require.True(suite.Suite.T(), sha256Regex.MatchString(digest))
 
-	require.EqualValues(suite.T(), appData, AppData{AppName: appName,
+	require.EqualValues(suite.Suite.T(), appData, AppData{AppName: appName,
 		AppKind:       appKind,
 		DigestsSource: "kosli-cli",
 		StartedAt:     0,
@@ -84,7 +84,7 @@ func (suite *AzureAppsTestSuite) TestFingerprintZipService() {
 
 	unknownAppName := "unknown"
 	_, err = suite.defaultClient.fingerprintZipService(&armappservice.Site{Name: &unknownAppName}, logger.NewStandardLogger())
-	require.Error(suite.T(), err)
+	require.Error(suite.Suite.T(), err)
 }
 
 // In order for 'go test' to run this suite, we need to create

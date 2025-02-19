@@ -24,7 +24,7 @@ func (suite *GetPolicyCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
-	CreatePolicy(global.Org, suite.policyName, suite.T())
+	CreatePolicy(global.Org, suite.policyName, suite.Suite.T())
 }
 
 func (suite *GetPolicyCommandTestSuite) TestGetPolicyCmd() {
@@ -51,7 +51,7 @@ func (suite *GetPolicyCommandTestSuite) TestGetPolicyCmd() {
 		},
 	}
 
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

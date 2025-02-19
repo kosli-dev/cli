@@ -27,10 +27,10 @@ func (suite *GitlabTestSuite) TestNewGitlabClientFromToken() {
 			},
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			client, err := t.gitlabConfig.NewGitlabClientFromToken()
-			require.NoError(suite.T(), err)
-			require.NotNilf(suite.T(), client, "client should not be nil")
+			require.NoError(suite.Suite.T(), err)
+			require.NotNilf(suite.Suite.T(), client, "client should not be nil")
 		})
 	}
 }
@@ -57,11 +57,11 @@ func (suite *GitlabTestSuite) TestGetClientOptFns() {
 			expectedURL: "https://gitlab.com/api/v4/",
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			client, err := t.gitlabConfig.NewGitlabClientFromToken()
-			require.NoError(suite.T(), err)
-			require.NotNilf(suite.T(), client, "client should not be nil")
-			require.Equal(suite.T(), t.expectedURL, client.BaseURL().String())
+			require.NoError(suite.Suite.T(), err)
+			require.NotNilf(suite.Suite.T(), client, "client should not be nil")
+			require.Equal(suite.Suite.T(), t.expectedURL, client.BaseURL().String())
 		})
 	}
 }
@@ -72,7 +72,7 @@ func (suite *GitlabTestSuite) TestProjectID() {
 		Repository: "test",
 	}
 	projectID := gitlabConfig.ProjectID()
-	require.Equal(suite.T(), "my_org/test", projectID)
+	require.Equal(suite.Suite.T(), "my_org/test", projectID)
 }
 
 func (suite *GitlabTestSuite) TestMergeRequestsForCommit() {
@@ -134,17 +134,17 @@ func (suite *GitlabTestSuite) TestMergeRequestsForCommit() {
 			},
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			if t.requireEnvVars {
-				testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_GITLAB_TOKEN"})
+				testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_GITLAB_TOKEN"})
 				t.gitlabConfig.Token = os.Getenv("KOSLI_GITLAB_TOKEN")
 			}
 			prs, err := t.gitlabConfig.MergeRequestsForCommit(t.commit)
 			if t.result.wantError {
-				require.Error(suite.T(), err)
+				require.Error(suite.Suite.T(), err)
 			} else {
-				require.NoError(suite.T(), err)
-				require.Len(suite.T(), prs, t.result.numberOfPRs)
+				require.NoError(suite.Suite.T(), err)
+				require.Len(suite.Suite.T(), prs, t.result.numberOfPRs)
 			}
 		})
 	}
@@ -209,17 +209,17 @@ func (suite *GitlabTestSuite) TestPREvidenceForCommit() {
 			},
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			if t.requireEnvVars {
-				testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_GITLAB_TOKEN"})
+				testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_GITLAB_TOKEN"})
 				t.gitlabConfig.Token = os.Getenv("KOSLI_GITLAB_TOKEN")
 			}
 			prs, err := t.gitlabConfig.PREvidenceForCommit(t.commit)
 			if t.result.wantError {
-				require.Error(suite.T(), err)
+				require.Error(suite.Suite.T(), err)
 			} else {
-				require.NoError(suite.T(), err)
-				require.Len(suite.T(), prs, t.result.numberOfPRs)
+				require.NoError(suite.Suite.T(), err)
+				require.Len(suite.Suite.T(), prs, t.result.numberOfPRs)
 			}
 		})
 	}
@@ -283,17 +283,17 @@ func (suite *GitlabTestSuite) TestGetMergeRequestApprovers() {
 			},
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			if t.requireEnvVars {
-				testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_GITLAB_TOKEN"})
+				testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_GITLAB_TOKEN"})
 				t.gitlabConfig.Token = os.Getenv("KOSLI_GITLAB_TOKEN")
 			}
 			approvers, err := t.gitlabConfig.GetMergeRequestApprovers(t.mrIID)
 			if t.result.wantError {
-				require.Error(suite.T(), err)
+				require.Error(suite.Suite.T(), err)
 			} else {
-				require.NoError(suite.T(), err)
-				require.ElementsMatch(suite.T(), t.result.approvers, approvers)
+				require.NoError(suite.Suite.T(), err)
+				require.ElementsMatch(suite.Suite.T(), t.result.approvers, approvers)
 			}
 		})
 	}

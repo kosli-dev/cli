@@ -27,7 +27,7 @@ type AttestJiraCommandTestSuite struct {
 }
 
 func (suite *AttestJiraCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_JIRA_API_TOKEN"})
+	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_JIRA_API_TOKEN"})
 	suite.flowName = "attest-jira"
 	suite.trailName = "test-123"
 	suite.artifactFingerprint = "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
@@ -40,13 +40,13 @@ func (suite *AttestJiraCommandTestSuite) SetupTest() {
 
 	var err error
 	suite.tmpDir, err = os.MkdirTemp("", "testDir")
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 	_, suite.workTree, suite.fs, err = testHelpers.InitializeGitRepo(suite.tmpDir)
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 
-	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
-	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
-	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.T())
+	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.Suite.T())
+	BeginTrail(suite.trailName, suite.flowName, "", suite.Suite.T())
+	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.Suite.T())
 }
 
 func (suite *AttestJiraCommandTestSuite) TearDownSuite() {
@@ -238,17 +238,17 @@ func execJiraTestCase(test cmdTestCase, suite *AttestJiraCommandTestSuite) {
 		branchName := test.additionalConfig.(jiraTestsAdditionalConfig).branchName
 		if branchName != "" {
 			err := testHelpers.CheckoutNewBranch(suite.workTree, branchName)
-			require.NoError(suite.T(), err)
-			defer testHelpers.CheckoutMaster(suite.workTree, suite.T())
+			require.NoError(suite.Suite.T(), err)
+			defer testHelpers.CheckoutMaster(suite.workTree, suite.Suite.T())
 		}
 		msg := test.additionalConfig.(jiraTestsAdditionalConfig).commitMessage
 		commitSha, err := testHelpers.CommitToRepo(suite.workTree, suite.fs, msg)
-		require.NoError(suite.T(), err)
+		require.NoError(suite.Suite.T(), err)
 
 		test.cmd = test.cmd + " --commit " + commitSha
 	}
 
-	runTestCmd(suite.T(), []cmdTestCase{test})
+	runTestCmd(suite.Suite.T(), []cmdTestCase{test})
 }
 
 // In order for 'go test' to run this suite, we need to create

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/zalando/go-keyring"
+	keyring "github.com/zalando/go-keyring"
 )
 
 const CredentialsStoreService = "KosliCLIService"

@@ -23,7 +23,7 @@ type AttestGitlabPRCommandTestSuite struct {
 }
 
 func (suite *AttestGitlabPRCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_GITLAB_TOKEN"})
+	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_GITLAB_TOKEN"})
 
 	suite.flowName = "attest-gitlab-pr"
 	suite.trailName = "test-123"
@@ -36,14 +36,14 @@ func (suite *AttestGitlabPRCommandTestSuite) SetupTest() {
 
 	var err error
 	suite.tmpDir, err = os.MkdirTemp("", "testDir")
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 	_, err = testHelpers.CloneGitRepo("https://gitlab.com/kosli-dev/merkely-gitlab-demo.git", suite.tmpDir)
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 
 	suite.defaultKosliArguments = fmt.Sprintf(" --flow %s --trail %s --repo-root %s --commit f6d2c1a288f2c400c04e8451f4fdddb1f3b4ce01 --host %s --org %s --api-token %s", suite.flowName, suite.trailName, suite.tmpDir, global.Host, global.Org, global.ApiToken)
-	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
-	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
-	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.T())
+	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.Suite.T())
+	BeginTrail(suite.trailName, suite.flowName, "", suite.Suite.T())
+	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.Suite.T())
 }
 
 func (suite *AttestGitlabPRCommandTestSuite) TearDownSuite() {
@@ -121,7 +121,7 @@ func (suite *AttestGitlabPRCommandTestSuite) TestAttestGitlabPRCmd() {
 		},
 	}
 
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

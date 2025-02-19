@@ -27,9 +27,9 @@ func (suite *ListAttestationTypesCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
-	CreateCustomAttestationType(suite.attestationName1, "testdata/person-schema.json", []string{".age > 21"}, suite.T())
-	CreateCustomAttestationType(suite.attestationName2, "testdata/person-schema.json", []string{".age < 25"}, suite.T())
-	CreateCustomAttestationType(suite.attestationName1, "testdata/person-schema.json", []string{".age > 21", ".age < 85"}, suite.T()) //Make a second version
+	CreateCustomAttestationType(suite.attestationName1, "testdata/person-schema.json", []string{".age > 21"}, suite.Suite.T())
+	CreateCustomAttestationType(suite.attestationName2, "testdata/person-schema.json", []string{".age < 25"}, suite.Suite.T())
+	CreateCustomAttestationType(suite.attestationName1, "testdata/person-schema.json", []string{".age > 21", ".age < 85"}, suite.Suite.T()) //Make a second version
 
 	global.Org = "acme-org"
 	global.ApiToken = "v3OWZiYWu9G2IMQStYg9BcPQUQ88lJNNnTJTNq8jfvmkR1C5wVpHSs7F00JcB5i6OGeUzrKt3CwRq7ndcN4TTfMeo8ASVJ5NdHpZT7DkfRfiFvm8s7GbsIHh2PtiQJYs2UoN13T8DblV5C4oKb6-yWH73h67OhotPlKfVKazR-c"
@@ -67,7 +67,7 @@ func (suite *ListAttestationTypesCommandTestSuite) TestListFlowsCmd() {
 		},
 	}
 
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

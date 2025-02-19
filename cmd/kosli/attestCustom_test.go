@@ -37,9 +37,9 @@ func (suite *AttestCustomCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --type %s --attestation-data %s --flow %s --trail %s --repo-root ../.. --host %s --org %s --api-token %s", suite.typeName, suite.attestationDataFile, suite.flowName, suite.trailName, global.Host, global.Org, global.ApiToken)
 
-	CreateCustomAttestationType(suite.typeName, suite.schemaFilePath, suite.jqRules, suite.T())
-	CreateFlow(suite.flowName, suite.T())
-	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.T())
+	CreateCustomAttestationType(suite.typeName, suite.schemaFilePath, suite.jqRules, suite.Suite.T())
+	CreateFlow(suite.flowName, suite.Suite.T())
+	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.Suite.T())
 }
 
 func (suite *AttestCustomCommandTestSuite) TestAttestCustomCmd() {
@@ -160,7 +160,7 @@ func (suite *AttestCustomCommandTestSuite) TestAttestCustomCmd() {
 		},
 	}
 
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

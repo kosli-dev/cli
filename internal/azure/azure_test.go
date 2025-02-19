@@ -18,8 +18,8 @@ type AzureTestSuite struct {
 // suite.
 func (suite *AzureTestSuite) TestNewAzureClientFromToken() {
 	client, err := NewAzureClientFromToken(context.Background(), "some_fake_token", "https://dev.azure.com/kosli_xxxxx")
-	require.Error(suite.T(), err)
-	require.Nil(suite.T(), client)
+	require.Error(suite.Suite.T(), err)
+	require.Nil(suite.Suite.T(), client)
 }
 
 func (suite *AzureTestSuite) TestPREvidenceForCommit() {
@@ -61,17 +61,17 @@ func (suite *AzureTestSuite) TestPREvidenceForCommit() {
 			},
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			if t.requireEnvVars {
-				testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_AZURE_TOKEN"})
+				testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_AZURE_TOKEN"})
 				t.config.Token = os.Getenv("KOSLI_AZURE_TOKEN")
 			}
 			prs, err := t.config.PREvidenceForCommit(t.commit)
 			if t.result.wantError {
-				require.Errorf(suite.T(), err, "expected an error but got: %s", err)
+				require.Errorf(suite.Suite.T(), err, "expected an error but got: %s", err)
 			} else {
-				require.NoErrorf(suite.T(), err, "was NOT expecting error but got: %s", err)
-				require.Len(suite.T(), prs, t.result.numberOfPRs)
+				require.NoErrorf(suite.Suite.T(), err, "was NOT expecting error but got: %s", err)
+				require.Len(suite.Suite.T(), prs, t.result.numberOfPRs)
 			}
 		})
 	}
@@ -102,8 +102,8 @@ func (suite *AzureTestSuite) TestPullRequestsForCommit() {
 			},
 		},
 	} {
-		suite.Run(t.name, func() {
-			testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_AZURE_TOKEN"})
+		suite.Suite.Run(t.name, func() {
+			testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_AZURE_TOKEN"})
 			token := os.Getenv("KOSLI_AZURE_TOKEN")
 			c := &AzureConfig{
 				Token:      token,
@@ -114,10 +114,10 @@ func (suite *AzureTestSuite) TestPullRequestsForCommit() {
 
 			prs, err := c.PullRequestsForCommit(t.commit)
 			if t.result.wantError {
-				require.Errorf(suite.T(), err, "expected an error but got: %s", err)
+				require.Errorf(suite.Suite.T(), err, "expected an error but got: %s", err)
 			} else {
-				require.NoErrorf(suite.T(), err, "was NOT expecting error but got: %s", err)
-				require.Lenf(suite.T(), prs, t.result.numberOfPRs, "expected %d PRs but got %d", t.result.numberOfPRs, len(prs))
+				require.NoErrorf(suite.Suite.T(), err, "was NOT expecting error but got: %s", err)
+				require.Lenf(suite.Suite.T(), prs, t.result.numberOfPRs, "expected %d PRs but got %d", t.result.numberOfPRs, len(prs))
 			}
 		})
 	}
@@ -167,8 +167,8 @@ func (suite *AzureTestSuite) TestGetPullRequestApprovers() {
 			},
 		},
 	} {
-		suite.Run(t.name, func() {
-			testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_AZURE_TOKEN"})
+		suite.Suite.Run(t.name, func() {
+			testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_AZURE_TOKEN"})
 			token := os.Getenv("KOSLI_AZURE_TOKEN")
 			c := &AzureConfig{
 				Token:      token,
@@ -178,10 +178,10 @@ func (suite *AzureTestSuite) TestGetPullRequestApprovers() {
 			}
 			approvers, err := c.GetPullRequestApprovers(t.number)
 			if t.result.wantError {
-				require.Errorf(suite.T(), err, "expected an error but got: %s", err)
+				require.Errorf(suite.Suite.T(), err, "expected an error but got: %s", err)
 			} else {
-				require.NoErrorf(suite.T(), err, "was NOT expecting error but got: %s", err)
-				require.ElementsMatchf(suite.T(), t.result.approvers, approvers, "want approvers: %v, got approvers: %v",
+				require.NoErrorf(suite.Suite.T(), err, "was NOT expecting error but got: %s", err)
+				require.ElementsMatchf(suite.Suite.T(), t.result.approvers, approvers, "want approvers: %v, got approvers: %v",
 					t.result.approvers, approvers)
 			}
 		})
@@ -205,9 +205,9 @@ func (suite *AzureTestSuite) TestExtractRepoName() {
 			want:  "cli",
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			repo := extractRepoName(t.input)
-			require.Equalf(suite.T(), t.want, repo, "expected %s but got %s", t.want, repo)
+			require.Equalf(suite.Suite.T(), t.want, repo, "expected %s but got %s", t.want, repo)
 		})
 	}
 }
