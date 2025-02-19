@@ -37,7 +37,7 @@ func (suite *ListAttestationTypesCommandTestSuite) SetupTest() {
 
 }
 
-func (suite *ListAttestationTypesCommandTestSuite) TestListFlowsCmd() {
+func (suite *ListAttestationTypesCommandTestSuite) TestListAttestationTypesCmd() {
 	tests := []cmdTestCase{
 		{
 			name:   "listing custom attestation types works when some exist",
