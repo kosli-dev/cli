@@ -6,7 +6,7 @@
   HUGO_VERSION = "0.143.0"
   HUGO_ENABLEGITINFO = "true"
 
-[context.test-docs]
+[context.staging-docs]
   command = "git fetch --tags && bash update_version.sh && HUGO_BASEURL=$STAGING_URL hugo"
 
 [dev]
