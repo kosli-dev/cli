@@ -1,47 +1,29 @@
 ---
-title: "kosli attest jira"
+title: "kosli attest custom"
 beta: false
 deprecated: false
-summary: "Report a jira attestation to an artifact or a trail in a Kosli flow.  "
+summary: "Report a custom attestation to an artifact or a trail in a Kosli flow. "
 ---
 
-# kosli attest jira
+# kosli attest custom
 
 ## Synopsis
 
-Report a jira attestation to an artifact or a trail in a Kosli flow.  
-Parses the given commit's message, current branch name or the content of the `--jira-secondary-source`
-argument for Jira issue references of the form:  
-'at least 2 characters long, starting with an uppercase letter project key followed by
-dash and one or more digits'. 
-
-If the `--ignore-branch-match` is set, the branch name is not parsed for a match.
-
-The found issue references will be checked against Jira to confirm their existence.
-The attestation is reported in all cases, and its compliance status depends on referencing
-existing Jira issues.  
-If you have wrong Jira credentials or wrong Jira-base-url it will be reported as non existing Jira issue.
-This is because Jira returns same 404 error code in all cases.
-
-The `--jira-issue-fields` can be used to include fields from the jira issue. By default no fields
-are included. `*all` will give all fields. Using `--jira-issue-fields "*all" --dry-run` will give you
-the complete list so you can select the once you need. The issue fields uses the jira API that is documented here:
-https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issues/#api-rest-api-2-issue-issueidorkey-get-request
+Report a custom attestation to an artifact or a trail in a Kosli flow. 
+The name of the custom attestation type is specified using the `--type` flag.
 
 
 The attestation can be bound to a trail using the trail name.
 
 If the attestation is for an artifact, the attestation can be bound to the artifact using one of two ways:
 - using the artifact's SHA256 fingerprint which is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
-- using the artifact's name in the flow yaml template and the git commit from which the artifact is/will be created. Useful when reporting an attestation before creating/reporting the artifact.
-
-You can optionally associate the attestation to a git commit using `--commit` (requires access to a git repo). And you  
+- using the artifact's name in the flow yaml template and the git commit from which the artifact is/will be created. Useful when reporting an attestation before creating/reporting the artifact.You can optionally associate the attestation to a git commit using `--commit` (requires access to a git repo). And you  
 can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`. 
 Note that when the attestation is reported for an artifact that does not yet exist in Kosli, `--commit` becomes required to facilitate 
 binding the attestation to the right artifact.
 
 ```shell
-kosli attest jira [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli attest custom [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ## Flags
@@ -49,8 +31,8 @@ kosli attest jira [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 | :--- | :--- |
 |        --annotate stringToString  |  [optional] Annotate the attestation with data using key=value.  |
 |    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [oci, docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it).  |
-|        --assert  |  [optional] Exit with non-zero code if the attestation is non-compliant  |
 |        --attachments strings  |  [optional] The comma-separated list of paths of attachments for the reported attestation. Attachments can be files or directories. All attachments are compressed and uploaded to Kosli's evidence vault.  |
+|        --attestation-data string  |  The filepath of a json file containing the custom attestation data.  |
 |    -g, --commit string  |  [conditional] The git commit for which the attestation is associated to. Becomes required when reporting an attestation for an artifact before reporting it to Kosli. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --description string  |  [optional] attestation description  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
@@ -59,14 +41,7 @@ kosli attest jira [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --external-url stringToString  |  [optional] Add labeled reference URL for an external resource. The format is label=url (labels cannot contain '.' or '='). This flag can be set multiple times. If the resource is a file or dir, you can optionally add its fingerprint via --external-fingerprint  |
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact to attach the attestation to. Only required if the attestation is for an artifact and --artifact-type and artifact name/path are not used.  |
 |    -f, --flow string  |  The Kosli flow name.  |
-|    -h, --help  |  help for jira  |
-|        --ignore-branch-match  |  Ignore branch name when searching for Jira ticket reference.  |
-|        --jira-api-token string  |  Jira API token (for Jira Cloud)  |
-|        --jira-base-url string  |  The base url for the jira project, e.g. 'https://kosli.atlassian.net'  |
-|        --jira-issue-fields string  |  [optional] The comma separated list of fields to include from the Jira issue. Default no fields are included. '*all' will give all fields.  |
-|        --jira-pat string  |  Jira personal access token (for self-hosted Jira)  |
-|        --jira-secondary-source string  |  [optional] An optional string to search for Jira ticket reference, e.g. '--jira-secondary-source ${{ github.head_ref }}'  |
-|        --jira-username string  |  Jira username (for Jira Cloud)  |
+|    -h, --help  |  help for custom  |
 |    -n, --name string  |  The name of the attestation as declared in the flow or trail yaml template.  |
 |    -o, --origin-url string  |  [optional] The url pointing to where the attestation came from or is related. (defaulted to the CI url in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --redact-commit-info strings  |  [optional] The list of commit info to be redacted before sending to Kosli. Allowed values are one or more of [author, message, branch].  |
@@ -74,6 +49,7 @@ kosli attest jira [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --registry-username string  |  [conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry.  |
 |        --repo-root string  |  [defaulted] The directory where the source git repository is available. Only used if --commit is used. (default ".")  |
 |    -T, --trail string  |  The Kosli trail name.  |
+|        --type string  |  The name of the custom attestation type.  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the attestation.  |
 
 
@@ -89,130 +65,83 @@ kosli attest jira [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --org string  |  The Kosli organization.  |
 
 
+## Live Examples in different CI systems
+
+{{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli attest custom` command in GitHub.
+
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli+attest+custom), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=github&command=kosli+attest+custom).{{< /tab >}}{{< /tabs >}}
+
 ## Examples Use Cases
 
-**report a jira attestation about a pre-built docker artifact (kosli calculates the fingerprint)**
+**report a custom attestation about a pre-built container image artifact (kosli finds the fingerprint)**
 
 ```shell
-kosli attest jira yourDockerImageName \
-	--artifact-type docker \
+kosli attest custom yourDockerImageName \
+	--artifact-type oci \
+	--type customTypeName \
 	--name yourAttestationName \
+	--data yourCustomData \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--jira-base-url https://kosli.atlassian.net \
-	--jira-username user@domain.com \
-	--jira-api-token yourJiraAPIToken \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 ```
 
-**report a jira attestation about a pre-built docker artifact (you provide the fingerprint)**
+**report a custom attestation about a pre-built docker artifact (you provide the fingerprint)**
 
 ```shell
-kosli attest jira \
+kosli attest custom \
 	--fingerprint yourDockerImageFingerprint \
+	--type customTypeName \
 	--name yourAttestationName \
+	--data yourCustomData \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--jira-base-url https://kosli.atlassian.net \
-	--jira-username user@domain.com \
-	--jira-api-token yourJiraAPIToken \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 ```
 
-**report a jira attestation about a trail**
+**report a custom attestation about a trail**
 
 ```shell
-kosli attest jira \
+kosli attest custom \
+	--type customTypeName \
 	--name yourAttestationName \
+	--data yourCustomData \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--jira-base-url https://kosli.atlassian.net \
-	--jira-username user@domain.com \
-	--jira-api-token yourJiraAPIToken \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 ```
 
-**report a jira attestation about a trail and include jira issue summary, description and creator**
+**report a custom attestation about an artifact which has not been reported yet in a trail**
 
 ```shell
-kosli attest jira \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--jira-base-url https://kosli.atlassian.net \
-	--jira-username user@domain.com \
-	--jira-api-token yourJiraAPIToken \
-	--jira-issue-fields "summary,description,creator"
-	--api-token yourAPIToken \
-	--org yourOrgName
-
-```
-
-**report a jira attestation about an artifact which has not been reported yet in a trail**
-
-```shell
-kosli attest jira \
+kosli attest custom \
+	--type customTypeName \
 	--name yourTemplateArtifactName.yourAttestationName \
+	--data yourCustomData \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--commit yourArtifactGitCommit \
-	--jira-base-url https://kosli.atlassian.net \
-	--jira-username user@domain.com \
-	--jira-api-token yourJiraAPIToken \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 ```
 
-**report a jira attestation about a trail with an attachment**
+**report a custom attestation about a trail with an attachment**
 
 ```shell
-kosli attest jira \
+kosli attest custom \
+    --type customTypeName \
 	--name yourAttestationName \
+	--data yourCustomData \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--jira-base-url https://kosli.atlassian.net \
-	--jira-username user@domain.com \
-	--jira-api-token yourJiraAPIToken \
 	--attachments yourAttachmentPathName \
-	--api-token yourAPIToken \
-	--org yourOrgName
-
-```
-
-**fail if no issue reference is found, or the issue is not found in your jira instance**
-
-```shell
-kosli attest jira \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--jira-base-url https://kosli.atlassian.net \
-	--jira-username user@domain.com \
-	--jira-api-token yourJiraAPIToken \
-	--api-token yourAPIToken \
-	--org yourOrgName \
-	--assert
-
-```
-
-**get jira reference from original branch name in a GitHub Pull Request merge job**
-
-```shell
-kosli attest jira \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--jira-secondary-source ${{ github.head_ref }} \
-	--jira-base-url https://kosli.atlassian.net \
-	--jira-username user@domain.com \
-	--jira-api-token yourJiraAPIToken \
 	--api-token yourAPIToken \
 	--org yourOrgName
 ```

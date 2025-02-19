@@ -15,8 +15,6 @@ argument for Jira issue references of the form:
 'at least 2 characters long, starting with an uppercase letter project key followed by
 dash and one or more digits'. 
 
-If the `--ignore-branch-match` is set, the branch name is not parsed for a match.
-
 The found issue references will be checked against Jira to confirm their existence.
 The attestation is reported in all cases, and its compliance status depends on referencing
 existing Jira issues.  
@@ -60,7 +58,6 @@ kosli attest jira [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact to attach the attestation to. Only required if the attestation is for an artifact and --artifact-type and artifact name/path are not used.  |
 |    -f, --flow string  |  The Kosli flow name.  |
 |    -h, --help  |  help for jira  |
-|        --ignore-branch-match  |  Ignore branch name when searching for Jira ticket reference.  |
 |        --jira-api-token string  |  Jira API token (for Jira Cloud)  |
 |        --jira-base-url string  |  The base url for the jira project, e.g. 'https://kosli.atlassian.net'  |
 |        --jira-issue-fields string  |  [optional] The comma separated list of fields to include from the Jira issue. Default no fields are included. '*all' will give all fields.  |

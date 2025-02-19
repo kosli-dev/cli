@@ -44,6 +44,7 @@ kosli snapshot paths ENVIRONMENT-NAME [flags]
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -h, --help  |  help for paths  |
 |        --paths-file string  |  The path to a paths file in YAML/JSON/TOML format. Cannot be used together with --path .  |
+|        --watch  |  [optional] Watch the filesystem for changes and report snapshots of artifacts running in specific filesystem paths to Kosli.  |
 
 
 ## Flags inherited from parent commands

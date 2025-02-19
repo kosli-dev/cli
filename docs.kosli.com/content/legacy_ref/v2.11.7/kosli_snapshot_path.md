@@ -31,7 +31,6 @@ kosli snapshot path ENVIRONMENT-NAME [flags]
 |    -h, --help  |  help for path  |
 |        --name string  |  The reported name of the artifact.  |
 |        --path string  |  The base path for the artifact to snapshot.  |
-|        --watch  |  [optional] Watch the filesystem for changes and report snapshots of artifacts running in specific filesystem paths to Kosli.  |
 
 
 ## Flags inherited from parent commands
