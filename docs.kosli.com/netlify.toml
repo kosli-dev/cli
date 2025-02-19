@@ -7,7 +7,7 @@
   HUGO_ENABLEGITINFO = "true"
 
 [context.test-docs]
-  command = "bash update_version.sh $VERSION_ARG && HUGO_BASEURL=$STAGING_URL hugo"
+  command = "bash update_version.sh && HUGO_BASEURL=$STAGING_URL hugo"
 
 [dev]
   command = "hugo -b http://127.0.0.1:8888/ -w --buildDrafts -F "
