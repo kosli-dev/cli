@@ -1,6 +1,6 @@
 [build]
   publish = "public"
-  command = "gh release list --repo kosli-dev/cli -L 1 --exclude-pre-releases --exclude-drafts | awk '{print $1}' && bash update_version.sh && HUGO_BASEURL=$STAGING_URL hugo"
+  command = "bash update_version.sh && HUGO_BASEURL=$STAGING_URL hugo"
 
 [build.environment]
   HUGO_VERSION = "0.143.0"
@@ -10,9 +10,6 @@
   command = "hugo -b http://127.0.0.1:8888/ -w --buildDrafts -F "
   framework = "#static"
   publish = "./public/"
-
-[context.branch-deploy]
-  command = "gh release list --repo kosli-dev/cli -L 1 --exclude-pre-releases --exclude-drafts | awk '{print $1}' && bash update_version.sh && HUGO_BASEURL=$STAGING_URL hugo"
 
 [[context.production.plugins]]
 package = "netlify-plugin-checklinks"
