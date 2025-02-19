@@ -17,7 +17,7 @@ type AssertPRAzureCommandTestSuite struct {
 }
 
 func (suite *AssertPRAzureCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_AZURE_TOKEN"})
+	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_AZURE_TOKEN"})
 
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
@@ -51,7 +51,7 @@ func (suite *AssertPRAzureCommandTestSuite) TestAssertPRAzureCmd() {
 		},
 	}
 
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

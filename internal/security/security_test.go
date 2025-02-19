@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/zalando/go-keyring"
+	keyring "github.com/zalando/go-keyring"
 )
 
 // Define the suite, and absorb the built-in basic suite
@@ -25,17 +25,17 @@ func (suite *SecurityTestSuite) TestAESEncryptionDecryption() {
 		{input: "S3cur3P@55w0rd"},
 		{input: "3st!ng123"},
 	} {
-		suite.Run(t.input, func() {
+		suite.Suite.Run(t.input, func() {
 			keyBytes, err := GenerateRandomAESKey()
-			require.NoError(suite.T(), err)
-			require.Len(suite.T(), keyBytes, 32)
+			require.NoError(suite.Suite.T(), err)
+			require.Len(suite.Suite.T(), keyBytes, 32)
 
 			encryptedBytes, err := AESEncrypt(t.input, keyBytes)
-			require.NoError(suite.T(), err)
+			require.NoError(suite.Suite.T(), err)
 
 			decrypted_bytes, err := AESDecrypt(encryptedBytes, keyBytes)
-			require.NoError(suite.T(), err)
-			require.Equal(suite.T(), t.input, string(decrypted_bytes))
+			require.NoError(suite.Suite.T(), err)
+			require.Equal(suite.Suite.T(), t.input, string(decrypted_bytes))
 
 		})
 	}
@@ -46,10 +46,10 @@ func (suite *SecurityTestSuite) TestSetSecretInCredentialsStore() {
 	secretName := "topsecret"
 	secretValue := "securepassword"
 	err := SetSecretInCredentialsStore(secretName, secretValue)
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 	returnedSecretValue, err := GetSecretFromCredentialsStore(secretName)
-	require.NoError(suite.T(), err)
-	require.Equal(suite.T(), secretValue, returnedSecretValue)
+	require.NoError(suite.Suite.T(), err)
+	require.Equal(suite.Suite.T(), secretValue, returnedSecretValue)
 }
 
 // In order for 'go test' to run this suite, we need to create

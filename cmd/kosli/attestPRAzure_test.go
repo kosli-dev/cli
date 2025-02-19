@@ -20,7 +20,7 @@ type AttestAzurePRCommandTestSuite struct {
 }
 
 func (suite *AttestAzurePRCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_AZURE_TOKEN"})
+	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_AZURE_TOKEN"})
 
 	suite.flowName = "attest-azure-pr"
 	suite.trailName = "test-123"
@@ -31,9 +31,9 @@ func (suite *AttestAzurePRCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --flow %s --trail %s --repo-root ../.. --host %s --org %s --api-token %s", suite.flowName, suite.trailName, global.Host, global.Org, global.ApiToken)
-	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
-	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
-	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.T())
+	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.Suite.T())
+	BeginTrail(suite.trailName, suite.flowName, "", suite.Suite.T())
+	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.Suite.T())
 }
 
 func (suite *AttestAzurePRCommandTestSuite) TestAttestAzurePRCmd() {
@@ -107,7 +107,7 @@ func (suite *AttestAzurePRCommandTestSuite) TestAttestAzurePRCmd() {
 		},
 	}
 
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

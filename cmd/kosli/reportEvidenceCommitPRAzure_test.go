@@ -18,7 +18,7 @@ type CommitEvidencePRAzureCommandTestSuite struct {
 }
 
 func (suite *CommitEvidencePRAzureCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_AZURE_TOKEN"})
+	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_AZURE_TOKEN"})
 
 	suite.flowNames = "azure-pr"
 	global = &GlobalOpts{
@@ -28,7 +28,7 @@ func (suite *CommitEvidencePRAzureCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateFlow(suite.flowNames, suite.T())
+	CreateFlow(suite.flowNames, suite.Suite.T())
 }
 
 func (suite *CommitEvidencePRAzureCommandTestSuite) TestCommitEvidencePRAzureCmd() {
@@ -112,7 +112,7 @@ func (suite *CommitEvidencePRAzureCommandTestSuite) TestCommitEvidencePRAzureCmd
 		},
 	}
 
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

@@ -25,7 +25,7 @@ func (suite *SnapshotServerTestSuite) SetupSuite() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateEnv(global.Org, suite.envName, "server", suite.T())
+	CreateEnv(global.Org, suite.envName, "server", suite.Suite.T())
 }
 
 func (suite *SnapshotServerTestSuite) TestSnapshotServerCmd() {
@@ -62,7 +62,7 @@ func (suite *SnapshotServerTestSuite) TestSnapshotServerCmd() {
 		},
 	}
 
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 
 }
 

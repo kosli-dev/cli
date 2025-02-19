@@ -55,9 +55,9 @@ func (suite *UtilsTestSuite) TestContains() {
 			want: false,
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			actual := Contains(t.args.list, t.args.item)
-			assert.Equal(suite.T(), t.want, actual, fmt.Sprintf("TestContains: %s , got: %v -- want: %v", t.name, actual, t.want))
+			assert.Equal(suite.Suite.T(), t.want, actual, fmt.Sprintf("TestContains: %s , got: %v -- want: %v", t.name, actual, t.want))
 		})
 	}
 }
@@ -84,9 +84,9 @@ func (suite *UtilsTestSuite) TestIsJSON() {
 			want:  false,
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			actual := IsJSON(t.input)
-			assert.Equal(suite.T(), t.want, actual, fmt.Sprintf("TestIsJSON: %s , got: %v -- want: %v", t.name, actual, t.want))
+			assert.Equal(suite.Suite.T(), t.want, actual, fmt.Sprintf("TestIsJSON: %s , got: %v -- want: %v", t.name, actual, t.want))
 		})
 	}
 }
@@ -130,74 +130,74 @@ func (suite *UtilsTestSuite) TestLoadFileContent() {
 			expectError: true,
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			tmpDir, err := os.MkdirTemp("", "testDir")
-			require.NoError(suite.T(), err, "error creating a temporary test directory")
+			require.NoError(suite.Suite.T(), err, "error creating a temporary test directory")
 			defer os.RemoveAll(tmpDir)
 
 			if t.args.create {
 				testFile, err := os.Create(filepath.Join(tmpDir, t.args.filename))
-				require.NoErrorf(suite.T(), err, "error creating test file %s", t.args.filename)
+				require.NoErrorf(suite.Suite.T(), err, "error creating test file %s", t.args.filename)
 
 				_, err = testFile.Write([]byte(t.args.content))
-				require.NoErrorf(suite.T(), err, "error writing content to test file %s", t.args.filename)
+				require.NoErrorf(suite.Suite.T(), err, "error writing content to test file %s", t.args.filename)
 			}
 
 			actual, err := LoadFileContent(filepath.Join(tmpDir, t.args.filename))
 			if t.expectError {
-				require.Errorf(suite.T(), err, "loading content for test file %s IS expected to return an error", t.args.filename)
+				require.Errorf(suite.Suite.T(), err, "loading content for test file %s IS expected to return an error", t.args.filename)
 			} else {
-				require.NoErrorf(suite.T(), err, "loading content for test file %s is NOT expected to return an error", t.args.filename)
+				require.NoErrorf(suite.Suite.T(), err, "loading content for test file %s is NOT expected to return an error", t.args.filename)
 			}
 
-			assert.Equal(suite.T(), t.args.content, actual, fmt.Sprintf("TestLoadFileContent: %s , got: %v -- want: %v", t.name, actual, t.args.content))
+			assert.Equal(suite.Suite.T(), t.args.content, actual, fmt.Sprintf("TestLoadFileContent: %s , got: %v -- want: %v", t.name, actual, t.args.content))
 		})
 	}
 }
 
 func (suite *UtilsTestSuite) TestCreateFile() {
 	tmpDir, err := os.MkdirTemp("", "")
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 	defer os.RemoveAll(tmpDir)
 
 	path := filepath.Join(tmpDir, "test.txt")
 	f, err := CreateFile(path)
-	require.NoError(suite.T(), err)
-	require.NotNil(suite.T(), f)
-	require.FileExists(suite.T(), path)
+	require.NoError(suite.Suite.T(), err)
+	require.NotNil(suite.Suite.T(), f)
+	require.FileExists(suite.Suite.T(), path)
 }
 
 func (suite *UtilsTestSuite) TestIsFileIsDir() {
 	tmpDir, err := os.MkdirTemp("", "")
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 	defer os.RemoveAll(tmpDir)
 
 	ok, err := IsDir(tmpDir)
-	require.NoError(suite.T(), err)
-	require.True(suite.T(), ok)
+	require.NoError(suite.Suite.T(), err)
+	require.True(suite.Suite.T(), ok)
 
 	path := filepath.Join(tmpDir, "test.txt")
 	_, err = CreateFile(path)
-	require.NoError(suite.T(), err)
-	require.FileExists(suite.T(), path)
+	require.NoError(suite.Suite.T(), err)
+	require.FileExists(suite.Suite.T(), path)
 
 	ok, err = IsFile(path)
-	require.NoError(suite.T(), err)
-	require.True(suite.T(), ok)
+	require.NoError(suite.Suite.T(), err)
+	require.True(suite.Suite.T(), ok)
 
 	ok, err = IsDir(path)
-	require.NoError(suite.T(), err)
-	require.False(suite.T(), ok)
+	require.NoError(suite.Suite.T(), err)
+	require.False(suite.Suite.T(), ok)
 
 	nonExistingPath := filepath.Join(tmpDir, "non-existing.txt")
 	ok, err = IsFile(nonExistingPath)
-	require.Error(suite.T(), err)
-	require.False(suite.T(), ok)
+	require.Error(suite.Suite.T(), err)
+	require.False(suite.Suite.T(), ok)
 
 	nonExistingDir := "non-existing"
 	ok, err = IsDir(nonExistingDir)
-	require.Error(suite.T(), err)
-	require.False(suite.T(), ok)
+	require.Error(suite.Suite.T(), err)
+	require.False(suite.Suite.T(), ok)
 }
 
 func (suite *UtilsTestSuite) TestTar() {
@@ -226,11 +226,11 @@ func (suite *UtilsTestSuite) TestTar() {
 			wantError:       true,
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			path := "non-existing"
 			if t.shouldCreateSrc {
 				tmpDir, err := os.MkdirTemp("", "")
-				require.NoError(suite.T(), err)
+				require.NoError(suite.Suite.T(), err)
 				suite.createFileWithContent(filepath.Join(tmpDir, "newfile.txt"), "Hello World!")
 				defer os.RemoveAll(tmpDir)
 				path = tmpDir
@@ -241,10 +241,10 @@ func (suite *UtilsTestSuite) TestTar() {
 			}
 
 			tarPath, err := Tar(path, t.tarFileName)
-			require.True(suite.T(), t.wantError == (err != nil))
+			require.True(suite.Suite.T(), t.wantError == (err != nil))
 			if !t.wantError {
 				defer os.RemoveAll(tarPath)
-				require.Equal(suite.T(), t.tarFileName, filepath.Base(tarPath))
+				require.Equal(suite.Suite.T(), t.tarFileName, filepath.Base(tarPath))
 			}
 		})
 	}
@@ -252,7 +252,7 @@ func (suite *UtilsTestSuite) TestTar() {
 
 func (suite *UtilsTestSuite) createFileWithContent(path, content string) {
 	err := CreateFileWithContent(path, content)
-	require.NoErrorf(suite.T(), err, "error creating file %s", path)
+	require.NoErrorf(suite.Suite.T(), err, "error creating file %s", path)
 }
 
 // In order for 'go test' to run this suite, we need to create

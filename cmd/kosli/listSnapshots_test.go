@@ -33,7 +33,7 @@ func (suite *ListSnapshotsCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
-	CreateEnv(global.Org, suite.snapshotsEnvName, "server", suite.T())
+	CreateEnv(global.Org, suite.snapshotsEnvName, "server", suite.Suite.T())
 }
 
 func (suite *ListSnapshotsCommandTestSuite) TestListSnapshotsCmd() {
@@ -116,11 +116,11 @@ func (suite *ListSnapshotsCommandTestSuite) TestListSnapshotsCmd() {
 			if t.additionalConfig.(listSnapshotsTestConfig).reportToEnv {
 				// send 2 reports to create 2 snapshots
 				// every time this is called, will add 2 more snapshots and 2 more events
-				ReportServerArtifactToEnv([]string{suite.firstArtifactPath}, suite.snapshotsEnvName, suite.T())
-				ReportServerArtifactToEnv([]string{suite.firstArtifactPath, suite.secondArtifactPath}, suite.snapshotsEnvName, suite.T())
+				ReportServerArtifactToEnv([]string{suite.firstArtifactPath}, suite.snapshotsEnvName, suite.Suite.T())
+				ReportServerArtifactToEnv([]string{suite.firstArtifactPath, suite.secondArtifactPath}, suite.snapshotsEnvName, suite.Suite.T())
 			}
 		}
-		runTestCmd(suite.T(), []cmdTestCase{t})
+		runTestCmd(suite.Suite.T(), []cmdTestCase{t})
 	}
 }
 

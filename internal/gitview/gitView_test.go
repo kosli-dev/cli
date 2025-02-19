@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/go-git/go-billy/v5/osfs"
-	"github.com/go-git/go-git/v5"
+	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/cache"
 	"github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/kosli-dev/cli/internal/logger"
@@ -29,27 +29,27 @@ func (suite *GitViewTestSuite) SetupSuite() {
 func (suite *GitViewTestSuite) SetupTest() {
 	var err error
 	suite.tmpDir, err = os.MkdirTemp("", "testRepoDir")
-	require.NoError(suite.T(), err, "error creating a temporary test directory")
+	require.NoError(suite.Suite.T(), err, "error creating a temporary test directory")
 }
 
 // clean up tmpDir after each test
 func (suite *GitViewTestSuite) AfterTest() {
 	err := os.RemoveAll(suite.tmpDir)
-	require.NoErrorf(suite.T(), err, "error cleaning up the temporary test directory %s", suite.tmpDir)
+	require.NoErrorf(suite.Suite.T(), err, "error cleaning up the temporary test directory %s", suite.tmpDir)
 }
 
 func (suite *GitViewTestSuite) TestNewGitView() {
 	dirPath := filepath.Join(suite.tmpDir, "repoName")
 	_, worktree, err := initializeRepoAndCommit(dirPath, 1)
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 
 	gv, err := New(worktree.Filesystem.Root())
-	require.NoError(suite.T(), err)
-	require.NotNil(suite.T(), gv)
-	require.Equal(suite.T(), worktree.Filesystem.Root(), gv.repositoryRoot)
+	require.NoError(suite.Suite.T(), err)
+	require.NotNil(suite.Suite.T(), gv)
+	require.Equal(suite.Suite.T(), worktree.Filesystem.Root(), gv.repositoryRoot)
 
 	_, err = New(filepath.Join(suite.tmpDir, "non-existing"))
-	require.Error(suite.T(), err)
+	require.Error(suite.Suite.T(), err)
 }
 
 func (suite *GitViewTestSuite) TestCommitsBetween() {
@@ -104,20 +104,20 @@ func (suite *GitViewTestSuite) TestCommitsBetween() {
 			expectError:   true,
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			repoName := fmt.Sprintf("test-%d", i)
 			dirPath := filepath.Join(suite.tmpDir, repoName)
 			_, worktree, err := initializeRepoAndCommit(dirPath, t.commitsNumber)
-			require.NoErrorf(suite.T(), err, "error creating test repository %s", repoName)
-			// suite.T().Logf("repo dir is: %s", worktree.Filesystem.Root())
+			require.NoErrorf(suite.Suite.T(), err, "error creating test repository %s", repoName)
+			// suite.Suite.T().Logf("repo dir is: %s", worktree.Filesystem.Root())
 
 			gv, err := New(worktree.Filesystem.Root())
-			require.NoError(suite.T(), err)
+			require.NoError(suite.Suite.T(), err)
 			commits, err := gv.CommitsBetween(t.oldestCommit, t.newestCommit, suite.logger)
 			if t.expectError {
-				require.Error(suite.T(), err)
+				require.Error(suite.Suite.T(), err)
 			} else {
-				require.Len(suite.T(), commits, t.expectedNumberOfCommits)
+				require.Len(suite.Suite.T(), commits, t.expectedNumberOfCommits)
 			}
 		})
 	}
@@ -181,20 +181,20 @@ func (suite *GitViewTestSuite) TestChangeLog() {
 			expectedNumberOfCommits: 1,
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			repoName := fmt.Sprintf("test-%d", i)
 			dirPath := filepath.Join(suite.tmpDir, repoName)
 			_, worktree, err := initializeRepoAndCommit(dirPath, t.commitsNumber)
-			require.NoErrorf(suite.T(), err, "error creating test repository %s", repoName)
-			// suite.T().Logf("repo dir is: %s", worktree.Filesystem.Root())
+			require.NoErrorf(suite.Suite.T(), err, "error creating test repository %s", repoName)
+			// suite.Suite.T().Logf("repo dir is: %s", worktree.Filesystem.Root())
 
 			gv, err := New(worktree.Filesystem.Root())
-			require.NoError(suite.T(), err)
+			require.NoError(suite.Suite.T(), err)
 			commitsInfo, err := gv.ChangeLog(t.currentCommit, t.previousCommit, suite.logger)
 			if t.expectError {
-				require.Error(suite.T(), err)
+				require.Error(suite.Suite.T(), err)
 			} else {
-				require.Len(suite.T(), commitsInfo, t.expectedNumberOfCommits)
+				require.Len(suite.Suite.T(), commitsInfo, t.expectedNumberOfCommits)
 			}
 		})
 	}
@@ -203,15 +203,15 @@ func (suite *GitViewTestSuite) TestChangeLog() {
 func (suite *GitViewTestSuite) TestRepoURL() {
 	dirPath := filepath.Join(suite.tmpDir, "repoName")
 	_, worktree, err := initializeRepoAndCommit(dirPath, 1)
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 
 	gv, err := New(worktree.Filesystem.Root())
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 	// the created repo does not have origin remote yet
 	_, err = gv.RepoURL()
-	require.Error(suite.T(), err)
+	require.Error(suite.Suite.T(), err)
 	expectedError := fmt.Sprintf("remote('origin') is not found in git repository: %s", gv.repositoryRoot)
-	require.Equal(suite.T(), expectedError, err.Error())
+	require.Equal(suite.Suite.T(), expectedError, err.Error())
 }
 
 func (suite *GitViewTestSuite) TestExtractRepoURLFromRemote() {
@@ -236,9 +236,9 @@ func (suite *GitViewTestSuite) TestExtractRepoURLFromRemote() {
 			want:      "https://github.com/kosli-dev/cli",
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			actual, _ := ExtractRepoURLFromRemote(t.remoteURL)
-			require.Equal(suite.T(), t.want, actual)
+			require.Equal(suite.Suite.T(), t.want, actual)
 		})
 	}
 }
@@ -271,10 +271,10 @@ func (suite *GitViewTestSuite) TestRemoveUsernamePasswordFromURL() {
 			wantError: true,
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			actual, err := removeUsernamePasswordFromURL(t.inputURL)
-			require.Equal(suite.T(), t.wantError, err != nil)
-			require.Equal(suite.T(), t.want, actual)
+			require.Equal(suite.Suite.T(), t.wantError, err != nil)
+			require.Equal(suite.Suite.T(), t.want, actual)
 		})
 	}
 }
@@ -317,9 +317,9 @@ func (suite *GitViewTestSuite) TestGetCommitURL() {
 			want:       "https://custom-domain-name.com/kosli-dev/cli/commit/089615f84caedd6280689da694e71052cbdfb84d",
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			actual := getCommitURL(t.repoURL, t.commitHash)
-			require.Equal(suite.T(), t.want, actual)
+			require.Equal(suite.Suite.T(), t.want, actual)
 		})
 	}
 }
@@ -327,38 +327,38 @@ func (suite *GitViewTestSuite) TestGetCommitURL() {
 func (suite *GitViewTestSuite) TestGetCommitInfoFromCommitSHA() {
 	dirPath := filepath.Join(suite.tmpDir, "repoName")
 	_, worktree, err := initializeRepoAndCommit(dirPath, 1)
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 
 	gv, err := New(worktree.Filesystem.Root())
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 
 	_, err = gv.GetCommitInfoFromCommitSHA("58a9461c5a42d83bd5731485a72ddae542ac99d8", true, []string{})
-	require.Error(suite.T(), err)
+	require.Error(suite.Suite.T(), err)
 	expected := "failed to resolve git reference 58a9461c5a42d83bd5731485a72ddae542ac99d8: reference not found"
-	require.Equal(suite.T(), expected, err.Error())
+	require.Equal(suite.Suite.T(), expected, err.Error())
 
 	_, err = gv.GetCommitInfoFromCommitSHA("HEAD~2", true, []string{})
-	require.Error(suite.T(), err)
+	require.Error(suite.Suite.T(), err)
 	expected = "failed to resolve git reference HEAD~2: EOF"
-	require.Equal(suite.T(), expected, err.Error())
+	require.Equal(suite.Suite.T(), expected, err.Error())
 
 	commitInfo, err := gv.GetCommitInfoFromCommitSHA("HEAD", false, []string{})
-	require.NoError(suite.T(), err)
-	require.Equal(suite.T(), "Added file 1", commitInfo.Message)
-	require.Equal(suite.T(), "master", commitInfo.Branch)
-	require.Empty(suite.T(), commitInfo.Parents)
-	require.Empty(suite.T(), commitInfo.URL)
+	require.NoError(suite.Suite.T(), err)
+	require.Equal(suite.Suite.T(), "Added file 1", commitInfo.Message)
+	require.Equal(suite.Suite.T(), "master", commitInfo.Branch)
+	require.Empty(suite.Suite.T(), commitInfo.Parents)
+	require.Empty(suite.Suite.T(), commitInfo.URL)
 
 	commitInfo, err = gv.GetCommitInfoFromCommitSHA("HEAD", false, []string{"author", "message", "branch"})
-	require.NoError(suite.T(), err)
-	require.Equal(suite.T(), redactedCommitInfoValue, commitInfo.Author)
-	require.Equal(suite.T(), redactedCommitInfoValue, commitInfo.Message)
-	require.Equal(suite.T(), redactedCommitInfoValue, commitInfo.Branch)
+	require.NoError(suite.Suite.T(), err)
+	require.Equal(suite.Suite.T(), redactedCommitInfoValue, commitInfo.Author)
+	require.Equal(suite.Suite.T(), redactedCommitInfoValue, commitInfo.Message)
+	require.Equal(suite.Suite.T(), redactedCommitInfoValue, commitInfo.Branch)
 }
 
 func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 	_, workTree, fs, err := testHelpers.InitializeGitRepo(suite.tmpDir)
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 
 	for _, t := range []struct {
 		name              string
@@ -471,25 +471,25 @@ func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 			wantError:     false,
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 
 			if t.commitSha == "" {
 				t.commitSha, err = testHelpers.CommitToRepo(workTree, fs, t.commitMessage)
-				require.NoError(suite.T(), err)
+				require.NoError(suite.Suite.T(), err)
 			}
 
 			if t.branchName != "" {
 				err := testHelpers.CheckoutNewBranch(workTree, t.branchName)
-				require.NoError(suite.T(), err)
-				defer testHelpers.CheckoutMaster(workTree, suite.T())
+				require.NoError(suite.Suite.T(), err)
+				defer testHelpers.CheckoutMaster(workTree, suite.Suite.T())
 			}
 
 			gitView, err := New(suite.tmpDir)
-			require.NoError(suite.T(), err)
+			require.NoError(suite.Suite.T(), err)
 
 			actual, _, err := gitView.MatchPatternInCommitMessageORBranchName(t.pattern, t.commitSha, t.secondarySource, t.ignoreBranchMatch)
-			require.True(suite.T(), (err != nil) == t.wantError)
-			require.ElementsMatch(suite.T(), t.want, actual)
+			require.True(suite.Suite.T(), (err != nil) == t.wantError)
+			require.ElementsMatch(suite.Suite.T(), t.want, actual)
 
 		})
 	}
@@ -497,16 +497,16 @@ func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 
 func (suite *GitViewTestSuite) TestResolveRevision() {
 	_, workTree, fs, err := testHelpers.InitializeGitRepo(suite.tmpDir)
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 
 	FirstCommitSha, err := testHelpers.CommitToRepo(workTree, fs, "Test commit message 1")
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 
 	SecondCommitSha, err := testHelpers.CommitToRepo(workTree, fs, "Test commit message 2")
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 
 	ThirdCommitSha, err := testHelpers.CommitToRepo(workTree, fs, "Test commit message 3")
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 
 	for _, t := range []struct {
 		name           string
@@ -544,14 +544,14 @@ func (suite *GitViewTestSuite) TestResolveRevision() {
 			wantError:      true,
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 
 			gitView, err := New(suite.tmpDir)
-			require.NoError(suite.T(), err)
+			require.NoError(suite.Suite.T(), err)
 
 			actual, err := gitView.ResolveRevision(t.commitSHAOrRef)
-			require.True(suite.T(), (err != nil) == t.wantError)
-			require.Equal(suite.T(), t.want, actual)
+			require.True(suite.Suite.T(), (err != nil) == t.wantError)
+			require.Equal(suite.Suite.T(), t.want, actual)
 
 		})
 	}
