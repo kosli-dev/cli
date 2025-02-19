@@ -1,13 +1,16 @@
 #!/bin/bash
 
-echo "Running in: $(pwd)"
-ls -la
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  SED_CMD="sed -i ''"
+else
+  SED_CMD="sed -i"
+fi
 
 VERSION=$(git describe --tags --abbrev=0 | cut -c2-)
 TARGET_DIR="content"
 
 find "$TARGET_DIR" -type f | while read -r file; do
-  sed -i '' "s/%%VERSION%%/$VERSION/g" "$file"
+  $SED_CMD "s/%%VERSION%%/$VERSION/g" "$file"
 done
 
-echo "Replacement complete."
+echo "Version replaced in content."
