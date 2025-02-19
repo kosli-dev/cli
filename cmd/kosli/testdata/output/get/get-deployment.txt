@@ -1,7 +1,0 @@
-ID:                    1
-Artifact fingerprint:  fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02
-Artifact name:         arti-name
-Build URL:             https://example.com
-Created at:            Sat, 16 Jan 2016 00:00:00 UTC • 2016-01-16
-Environment:           get-deployment-env
-Runtime state:         Deploying

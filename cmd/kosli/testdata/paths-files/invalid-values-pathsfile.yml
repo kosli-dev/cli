@@ -1,5 +1,0 @@
-version: 13 # invalid version
-artifacts:
-  differ:
-    path: testdata/folder1
-    exclude: ["empty"]

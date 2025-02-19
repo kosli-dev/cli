@@ -1,6 +1,0 @@
-*
-!cmd/
-!internal/
-!Makefile
-!go.*
-!.git/

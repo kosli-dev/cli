@@ -1,4 +1,0 @@
-DirectoryPath: "docs.kosli.com/public"
-IgnoreDirectoryMissingTrailingSlash: true
-IgnoreURLs:
-  - "https://docs.github.com/en/actions" # correct link, but github detects that it is not a genuine browser request and returns 403

@@ -1,8 +1,0 @@
-Name:              cli-build-1
-Description:       test trail
-Compliance:        INCOMPLETE
-Last modified at:  Sat, 16 Jan 2016 00:00:00 UTC • 2016-01-16
-Events:
-
-     TIME                           DESCRIPTION    GIT-COMMIT  COMPLIANCE
-     Sat, 16 Jan 2016 00:00:00 UTC  trail started 
