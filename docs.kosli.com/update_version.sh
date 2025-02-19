@@ -5,7 +5,7 @@
 # to the CLI's latest version
 # It should not be run outside of netlify's build process
 
-VERSION=$(git describe --tags --abbrev=0 | cut -c2-)
+VERSION=$(gh release list --repo kosli-dev/cli -L 1 --exclude-pre-releases --exclude-drafts | awk '{print $1}' | cut -c2-)
 TARGET_DIR="content"
 
 find "$TARGET_DIR" -type f | while read -r file; do
