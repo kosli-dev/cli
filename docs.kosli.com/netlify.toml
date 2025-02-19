@@ -1,6 +1,6 @@
 [build]
   publish = "public"
-  command = "bash update_version.sh && HUGO_BASEURL=$STAGING_URL hugo"
+  command = "HUGO_BASEURL=$URL hugo"
 
 [build.environment]
   HUGO_VERSION = "0.143.0"
@@ -10,6 +10,12 @@
   command = "hugo -b http://127.0.0.1:8888/ -w --buildDrafts -F "
   framework = "#static"
   publish = "./public/"
+
+[context.deploy-preview]
+  command = "HUGO_BASEURL=$DEPLOY_PRIME_URL hugo --printI18nWarnings --enableGitInfo"
+
+[context.branch-deploy]
+  command = "HUGO_BASEURL=$DEPLOY_PRIME_URL hugo --printI18nWarnings --buildDrafts --enableGitInfo"
 
 [[context.production.plugins]]
 package = "netlify-plugin-checklinks"

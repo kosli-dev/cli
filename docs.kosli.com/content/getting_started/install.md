@@ -61,7 +61,7 @@ You can download the Kosli CLI from [GitHub](https://github.com/kosli-dev/cli/re
 Make sure to choose the correct tar file for your system.  
 For example, on Mac with AMD:
 ```shell {.command}
-curl -L https://github.com/kosli-dev/cli/releases/download/v%%VERSION%%/kosli_%%VERSION%%_darwin_amd64.tar.gz | tar zx
+curl -L https://github.com/kosli-dev/cli/releases/download/v{{< cli-version >}}/kosli_{{< cli-version >}}_darwin_amd64.tar.gz | tar zx
 sudo mv kosli /usr/local/bin/kosli
 ```
 {{< /tab >}}
@@ -69,14 +69,14 @@ sudo mv kosli /usr/local/bin/kosli
 {{< tab "Docker" >}}
 You can run the Kosli CLI with docker:
 ```shell {.command}
-docker run --rm ghcr.io/kosli-dev/cli:v%%VERSION%%
+docker run --rm ghcr.io/kosli-dev/cli:v{{< cli-version >}}
 ```
 The `entrypoint` for this container is the kosli command.
 
 To run any kosli command you append it to the `docker run` command above –
 without the `kosli` keyword. For example to run `kosli version`:
 ```shell {.command}
-docker run --rm ghcr.io/kosli-dev/cli:v%%VERSION%% version
+docker run --rm ghcr.io/kosli-dev/cli:v{{< cli-version >}} version
 ```
 {{< /tab >}}
 
@@ -100,7 +100,7 @@ kosli version
 ```
 The expected output should be similar to this:
 ```plaintext {.light-console}
-version.BuildInfo{Version:"%%VERSION%%", GitCommit:"Homebrew", GitTreeState:"clean", GoVersion:"go1.23.4"}
+version.BuildInfo{Version:"{{< cli-version >}}", GitCommit:"Homebrew", GitTreeState:"clean", GoVersion:"go1.23.4"}
 ```
 
 ## Using the CLI
