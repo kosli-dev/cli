@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo "Running in: $(pwd)"
+ls -la
+
 VERSION=$(git describe --tags --abbrev=0 | cut -c2-)
 TARGET_DIR="content"
 
