@@ -3,12 +3,10 @@ package main
 import (
 	"fmt"
 	"io"
-	"net/http"
 	"path/filepath"
 	"strings"
 
 	validator "github.com/go-playground/validator/v10"
-	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/server"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -53,6 +51,7 @@ kosli snapshot paths yourEnvironmentName \
 
 type snapshotPathsOptions struct {
 	pathSpecFile string
+	watch        bool
 }
 
 func newSnapshotPathsCmd(out io.Writer) *cobra.Command {
@@ -77,6 +76,7 @@ func newSnapshotPathsCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&o.pathSpecFile, "paths-file", "", pathsSpecFileFlag)
+	cmd.Flags().BoolVar(&o.watch, "watch", false, pathsWatchFlag)
 	addDryRunFlag(cmd)
 
 	if err := RequireFlags(cmd, []string{"paths-file"}); err != nil {
@@ -89,34 +89,27 @@ func newSnapshotPathsCmd(out io.Writer) *cobra.Command {
 func (o *snapshotPathsOptions) run(args []string) error {
 	envName := args[0]
 
-	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/server", global.Host, global.Org, envName)
-
 	// load path spec from file
 	ps, err := processPathSpecFile(o.pathSpecFile)
 	if err != nil {
 		return err
 	}
 
-	artifacts, err := server.CreatePathsArtifactsData(ps, logger)
+	err = reportArtifacts(ps, envName)
 	if err != nil {
 		return err
 	}
-	payload := &server.ServerEnvRequest{
-		Artifacts: artifacts,
+
+	if o.watch {
+		for _, artifactSpec := range ps.Artifacts {
+			err := watchPath(ps, artifactSpec.Path, envName)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
-	reqParams := &requests.RequestParams{
-		Method:  http.MethodPut,
-		URL:     url,
-		Payload: payload,
-		DryRun:  global.DryRun,
-		Token:   global.ApiToken,
-	}
-	_, err = kosliClient.Do(reqParams)
-	if err == nil && !global.DryRun {
-		logger.Info("[%d] artifacts were reported to environment %s", len(payload.Artifacts), envName)
-	}
-	return err
+	return nil
 }
 
 func processPathSpecFile(pathsSpecFile string) (*server.PathsSpec, error) {

@@ -246,6 +246,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	attestationTypeSchemaFlag            = "[optional] Path to the attestation type schema in JSON Schema format."
 	attestationTypeJqFlag                = "[optional] The attestation type evaluation JQ rules."
 	envNameFlag                          = "The Kosli environment name to assert the artifact against."
+	pathsWatchFlag                       = "[optional] Watch the filesystem for changes and report snapshots of artifacts running in specific filesystem paths to Kosli."
 )
 
 var global *GlobalOpts
