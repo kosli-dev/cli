@@ -7,7 +7,7 @@
   HUGO_ENABLEGITINFO = "true"
 
 [context.staging-docs]
-  command = "git fetch --tags && bash update_version.sh && HUGO_BASEURL=$STAGING_URL hugo"
+  command = "git fetch --tags -f && bash update_version.sh && HUGO_BASEURL=$STAGING_URL hugo"
 
 [dev]
   command = "hugo -b http://127.0.0.1:8888/ -w --buildDrafts -F "

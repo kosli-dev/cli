@@ -100,7 +100,7 @@ kosli version
 ```
 The expected output should be similar to this:
 ```plaintext {.light-console}
-version.BuildInfo{Version:"2.11.4", GitCommit:"Homebrew", GitTreeState:"clean", GoVersion:"go1.23.4"}
+version.BuildInfo{Version:"%%VERSION%%", GitCommit:"Homebrew", GitTreeState:"clean", GoVersion:"go1.23.4"}
 ```
 
 ## Using the CLI
