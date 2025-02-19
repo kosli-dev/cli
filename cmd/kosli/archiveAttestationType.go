@@ -52,7 +52,6 @@ func newArchiveAttestationTypeCmd(out io.Writer) *cobra.Command {
 			}
 			return err
 		},
-		Hidden: true,
 	}
 	addDryRunFlag(cmd)
 	return cmd

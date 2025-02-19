@@ -16,6 +16,8 @@ type detachPolicyOptions struct {
 
 const detachPolicyShortDesc = `Detach a policy from one or more Kosli environments.  `
 
+const detachPolicyLongDesc = `If the environment has no more policies attached to it, then its snapshots' status will become "unknown".`
+
 const detachPolicyExample = `
 # detach policy from multiple environment:
 kosli detach-policy yourPolicyName \
@@ -30,9 +32,8 @@ func newDetachPolicyCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "detach-policy POLICY-NAME",
 		Short:   detachPolicyShortDesc,
-		Long:    detachPolicyShortDesc,
+		Long:    detachPolicyLongDesc,
 		Example: detachPolicyExample,
-		Hidden:  true,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})

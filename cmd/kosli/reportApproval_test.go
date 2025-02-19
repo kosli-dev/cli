@@ -34,7 +34,7 @@ func (suite *ApprovalReportTestSuite) SetupTest() {
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 	suite.flowName = "approval-test"
 	suite.envName = "staging"
-	t := suite.T()
+	t := suite.Suite.T()
 
 	gitView, err := gitview.New("../..")
 	require.NoError(t, err, "Failed to create gitview")
@@ -86,9 +86,9 @@ func (suite *ApprovalReportTestSuite) TestApprovalReportCmd() {
 	}
 	for _, t := range tests {
 		if t.additionalConfig != nil && t.additionalConfig.(reportApprovalTestConfig).createSnapshot {
-			ReportServerArtifactToEnv([]string{suite.artifactPath}, suite.envName, suite.T())
+			ReportServerArtifactToEnv([]string{suite.artifactPath}, suite.envName, suite.Suite.T())
 		}
-		runTestCmd(suite.T(), []cmdTestCase{t})
+		runTestCmd(suite.Suite.T(), []cmdTestCase{t})
 	}
 }
 

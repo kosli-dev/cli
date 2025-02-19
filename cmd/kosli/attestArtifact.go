@@ -193,7 +193,7 @@ func (o *attestArtifactOptions) run(args []string) error {
 
 	o.payload.RepoUrl, err = gitView.RepoURL()
 	if err != nil {
-		logger.Warning("Repo URL will not be reported, %s", err.Error())
+		logger.Warn("Repo URL will not be reported, %s", err.Error())
 	}
 
 	url := fmt.Sprintf("%s/api/v2/artifacts/%s/%s", global.Host, global.Org, o.flowName)

@@ -99,7 +99,6 @@ func newAttestCustomCmd(out io.Writer) *cobra.Command {
 		Short:   attestCustomShortDesc,
 		Long:    attestCustomLongDesc,
 		Example: attestCustomExample,
-		//Hidden:  true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 
 			err := CustomMaximumNArgs(1, args)

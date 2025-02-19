@@ -26,13 +26,13 @@ type DigestTestSuite struct {
 func (suite *DigestTestSuite) SetupTest() {
 	var err error
 	suite.tmpDir, err = os.MkdirTemp("", "testDir")
-	require.NoError(suite.T(), err, "error creating a temporary test directory")
+	require.NoError(suite.Suite.T(), err, "error creating a temporary test directory")
 }
 
 // clean up tmpDir after each test
 func (suite *DigestTestSuite) AfterTest() {
 	err := os.RemoveAll(suite.tmpDir)
-	require.NoErrorf(suite.T(), err, "error cleaning up the temporary test directory %s", suite.tmpDir)
+	require.NoErrorf(suite.Suite.T(), err, "error cleaning up the temporary test directory %s", suite.tmpDir)
 }
 
 // All methods that begin with "Test" are run as tests within a
@@ -80,17 +80,17 @@ func (suite *DigestTestSuite) TestFileSha256() {
 			want: "a50afcf37a327e0715b3148c2625bc28b3e4dcdf32b6cf78c8b8fa3ac1ebfe47",
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			testFile, err := os.Create(filepath.Join(suite.tmpDir, t.args.filename))
-			require.NoErrorf(suite.T(), err, "error creating test file %s", t.args.filename)
+			require.NoErrorf(suite.Suite.T(), err, "error creating test file %s", t.args.filename)
 
 			_, err = testFile.Write([]byte(t.args.content))
-			require.NoErrorf(suite.T(), err, "error writing content to test file %s", t.args.filename)
+			require.NoErrorf(suite.Suite.T(), err, "error writing content to test file %s", t.args.filename)
 
 			sha256, err := FileSha256(filepath.Join(suite.tmpDir, t.args.filename))
-			require.NoErrorf(suite.T(), err, "error creating digest for test file %s", t.args.filename)
+			require.NoErrorf(suite.Suite.T(), err, "error creating digest for test file %s", t.args.filename)
 
-			assert.Equal(suite.T(), t.want, sha256, fmt.Sprintf("TestFileSha256: %s , got: %v -- want: %v", t.name, sha256, t.want))
+			assert.Equal(suite.Suite.T(), t.want, sha256, fmt.Sprintf("TestFileSha256: %s , got: %v -- want: %v", t.name, sha256, t.want))
 		})
 	}
 }
@@ -509,19 +509,19 @@ func (suite *DigestTestSuite) TestDirSha256() {
 			want: "4048004ce6f91e8ce27c35e5e857948a46750567cf7c873ee32b120f4318363c",
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			topLevelPath := filepath.Join(suite.tmpDir, t.args.dirName)
 			err := os.Mkdir(topLevelPath, 0777)
-			require.NoErrorf(suite.T(), err, "error creating test dir %s", t.args.dirName)
+			require.NoErrorf(suite.Suite.T(), err, "error creating test dir %s", t.args.dirName)
 
 			for _, entry := range t.args.dirContent {
 				suite.createNestedDir(topLevelPath, entry.files, entry.dirs)
 			}
 
 			sha256, err := DirSha256(topLevelPath, t.args.excludePaths, logger.NewStandardLogger())
-			require.NoErrorf(suite.T(), err, "error creating digest for test dir %s", topLevelPath)
+			require.NoErrorf(suite.Suite.T(), err, "error creating digest for test dir %s", topLevelPath)
 
-			assert.Equal(suite.T(), t.want, sha256, fmt.Sprintf("TestDirSha256: %s , got: %v -- want: %v", t.name, sha256, t.want))
+			assert.Equal(suite.Suite.T(), t.want, sha256, fmt.Sprintf("TestDirSha256: %s , got: %v -- want: %v", t.name, sha256, t.want))
 		})
 	}
 }
@@ -534,7 +534,7 @@ func (suite *DigestTestSuite) createNestedDir(path string, files []fileEntry, di
 	for _, d := range dirs {
 		nestedPath := filepath.Join(path, d.name)
 		err := os.Mkdir(nestedPath, 0777)
-		require.NoErrorf(suite.T(), err, "error creating nested test dir %s", nestedPath)
+		require.NoErrorf(suite.Suite.T(), err, "error creating nested test dir %s", nestedPath)
 		suite.createNestedDir(nestedPath, d.files, d.dirs)
 	}
 }
@@ -574,7 +574,7 @@ func (suite *DigestTestSuite) TestDirSha256Validation() {
 			errExpected: true,
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			dirPath := filepath.Join(suite.tmpDir, t.args.name)
 			if t.args.isAbsolute {
 				dirPath = t.args.name
@@ -586,7 +586,7 @@ func (suite *DigestTestSuite) TestDirSha256Validation() {
 
 			_, err := DirSha256(dirPath, []string{}, logger.NewStandardLogger())
 			if t.errExpected {
-				require.Errorf(suite.T(), err, "TestDirSha256Validation: error was expected")
+				require.Errorf(suite.Suite.T(), err, "TestDirSha256Validation: error was expected")
 			}
 
 		})
@@ -595,7 +595,7 @@ func (suite *DigestTestSuite) TestDirSha256Validation() {
 
 func (suite *DigestTestSuite) createFileWithContent(path, content string) {
 	err := utils.CreateFileWithContent(path, content)
-	require.NoErrorf(suite.T(), err, "error creating file %s", path)
+	require.NoErrorf(suite.Suite.T(), err, "error creating file %s", path)
 }
 
 func (suite *DigestTestSuite) TestValidateDigest() {
@@ -625,12 +625,12 @@ func (suite *DigestTestSuite) TestValidateDigest() {
 			expectError: true,
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			err := ValidateDigest(t.sha256)
 			if t.expectError {
-				require.Errorf(suite.T(), err, "TestValidateDigest: error was expected")
+				require.Errorf(suite.Suite.T(), err, "TestValidateDigest: error was expected")
 			} else {
-				require.NoErrorf(suite.T(), err, "TestValidateDigest: error was NOT expected")
+				require.NoErrorf(suite.Suite.T(), err, "TestValidateDigest: error was NOT expected")
 			}
 
 		})
@@ -674,17 +674,17 @@ func (suite *DigestTestSuite) TestDockerImageSha256() {
 			},
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			if t.pullImage {
 				err := docker.PullDockerImage(t.imageName)
-				require.NoErrorf(suite.T(), err, "TestDockerImageSha256: test image should be pullable")
+				require.NoErrorf(suite.Suite.T(), err, "TestDockerImageSha256: test image should be pullable")
 			}
 			actual, err := DockerImageSha256(t.imageName)
 			if t.want.expectError {
-				require.Errorf(suite.T(), err, "TestDockerImageSha256: error was expected")
+				require.Errorf(suite.Suite.T(), err, "TestDockerImageSha256: error was expected")
 			} else {
-				require.NoErrorf(suite.T(), err, "TestDockerImageSha256: error was NOT expected")
-				assert.Equal(suite.T(), t.want.sha256, actual, fmt.Sprintf("TestDockerImageSha256: want %s -- got %s", t.want.sha256, actual))
+				require.NoErrorf(suite.Suite.T(), err, "TestDockerImageSha256: error was NOT expected")
+				assert.Equal(suite.Suite.T(), t.want.sha256, actual, fmt.Sprintf("TestDockerImageSha256: want %s -- got %s", t.want.sha256, actual))
 			}
 
 		})
@@ -732,25 +732,25 @@ func (suite *DigestTestSuite) TestRemoteDockerImageSha256() {
 			},
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			if t.pullImage {
 				err := docker.PullDockerImage(t.imageName)
-				require.NoErrorf(suite.T(), err, "TestRemoteDockerImageSha256: test image should be pullable")
+				require.NoErrorf(suite.Suite.T(), err, "TestRemoteDockerImageSha256: test image should be pullable")
 
 				localImage := fmt.Sprintf("localhost:5001/%s:%s", t.localImageName, t.localImageTag)
 				err = docker.TagDockerImage(t.imageName, localImage)
-				require.NoErrorf(suite.T(), err, "TestRemoteDockerImageSha256: test image should be taggable")
+				require.NoErrorf(suite.Suite.T(), err, "TestRemoteDockerImageSha256: test image should be taggable")
 
 				err = docker.PushDockerImage(localImage)
-				require.NoErrorf(suite.T(), err, "TestRemoteDockerImageSha256: test image should be pushable")
+				require.NoErrorf(suite.Suite.T(), err, "TestRemoteDockerImageSha256: test image should be pushable")
 			}
 			actual, err := RemoteDockerImageSha256(t.localImageName, t.localImageTag, "http://localhost:5001/v2", "secret",
 				logger.NewStandardLogger())
 			if t.want.expectError {
-				require.Errorf(suite.T(), err, "TestRemoteDockerImageSha256: error was expected")
+				require.Errorf(suite.Suite.T(), err, "TestRemoteDockerImageSha256: error was expected")
 			} else {
-				require.NoErrorf(suite.T(), err, "TestRemoteDockerImageSha256: error was NOT expected")
-				assert.Equal(suite.T(), t.want.sha256, actual, fmt.Sprintf("TestRemoteDockerImageSha256: want %s -- got %s", t.want.sha256, actual))
+				require.NoErrorf(suite.Suite.T(), err, "TestRemoteDockerImageSha256: error was NOT expected")
+				assert.Equal(suite.Suite.T(), t.want.sha256, actual, fmt.Sprintf("TestRemoteDockerImageSha256: want %s -- got %s", t.want.sha256, actual))
 			}
 
 		})
@@ -859,13 +859,13 @@ func (suite *DigestTestSuite) TestExtractImageDigestFromRepoDigest() {
 			},
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			actual, err := extractImageDigestFromRepoDigest(t.imageID, t.repoDigests)
 			if t.want.expectError {
-				require.Errorf(suite.T(), err, "TestExtractImageDigestFromRepoDigest: error was expected")
+				require.Errorf(suite.Suite.T(), err, "TestExtractImageDigestFromRepoDigest: error was expected")
 			} else {
-				require.NoErrorf(suite.T(), err, "TestExtractImageDigestFromRepoDigest: error was NOT expected")
-				assert.Equal(suite.T(), t.want.sha256, actual, fmt.Sprintf("TestExtractImageDigestFromRepoDigest: want %s -- got %s", t.want.sha256, actual))
+				require.NoErrorf(suite.Suite.T(), err, "TestExtractImageDigestFromRepoDigest: error was NOT expected")
+				assert.Equal(suite.Suite.T(), t.want.sha256, actual, fmt.Sprintf("TestExtractImageDigestFromRepoDigest: want %s -- got %s", t.want.sha256, actual))
 			}
 		})
 	}
@@ -944,23 +944,23 @@ func (suite *DigestTestSuite) TestGetExcludePathsFromIgnoreFile() {
 			},
 		},
 	} {
-		suite.Run(t.name, func() {
-			assert.False(suite.T(), t.ignoreFileName == "", "ignoreFileName cannot be empty string")
+		suite.Suite.Run(t.name, func() {
+			assert.False(suite.Suite.T(), t.ignoreFileName == "", "ignoreFileName cannot be empty string")
 			ignoreFilePath := filepath.Join(suite.tmpDir, t.ignoreFileName)
 			if t.ignoreFileName != MISSING_FILE_NAME {
 				testFile, err := os.Create(ignoreFilePath)
-				require.NoErrorf(suite.T(), err, "error creating test file %s: %s", t.ignoreFileName, err)
+				require.NoErrorf(suite.Suite.T(), err, "error creating test file %s: %s", t.ignoreFileName, err)
 
 				_, err = testFile.Write([]byte(t.content))
-				require.NoErrorf(suite.T(), err, "error writing content to test file %s: %s", t.ignoreFileName, err)
+				require.NoErrorf(suite.Suite.T(), err, "error writing content to test file %s: %s", t.ignoreFileName, err)
 			}
 
 			actual, err := excludePathsFromFile(ignoreFilePath)
 			if t.want.expectError {
-				require.Errorf(suite.T(), err, "TestGetExcludePathsFromIgnoreFile: error was expected: %s", err)
+				require.Errorf(suite.Suite.T(), err, "TestGetExcludePathsFromIgnoreFile: error was expected: %s", err)
 			} else {
-				require.NoErrorf(suite.T(), err, "TestGetExcludePathsFromIgnoreFile: error was NOT expected: %s", err)
-				assert.Equal(suite.T(), t.want.excludePaths, actual, fmt.Sprintf("TestGetExcludePathsFromIgnoreFile: want %s -- got %s", t.want.excludePaths, actual))
+				require.NoErrorf(suite.Suite.T(), err, "TestGetExcludePathsFromIgnoreFile: error was NOT expected: %s", err)
+				assert.Equal(suite.Suite.T(), t.want.excludePaths, actual, fmt.Sprintf("TestGetExcludePathsFromIgnoreFile: want %s -- got %s", t.want.excludePaths, actual))
 			}
 		})
 	}

@@ -27,7 +27,7 @@ func (suite *CommitEvidenceJUnitCommandTestSuite) SetupTest() {
 
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateFlow(suite.flowNames, suite.T())
+	CreateFlow(suite.flowNames, suite.Suite.T())
 }
 
 func (suite *CommitEvidenceJUnitCommandTestSuite) TestCommitEvidenceJUnitCommandCmd() {
@@ -87,7 +87,7 @@ func (suite *CommitEvidenceJUnitCommandTestSuite) TestCommitEvidenceJUnitCommand
 			goldenRegex: "Error: required flag\\(s\\) \"commit\" not set\n",
 		},
 	}
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

@@ -661,6 +661,18 @@ func handleArtifactExpression(expression string) (string, string, string, error)
 	return items[0], items[1], separator, nil
 }
 
+func handleCustomAttestationTypeExpression(expression string) (string, string, error) {
+	items := strings.SplitN(expression, "@v", 2)
+	if len(items) == 1 {
+		return "", "", fmt.Errorf("version number should be given as '@v<version#>'")
+	}
+	if items[0] == "" {
+		return "", "", fmt.Errorf("attestation type name is required")
+	}
+
+	return items[0], items[1], nil
+}
+
 // prefixEachLine adds a prefix string to each line in a string except the first line
 // new lines are skipped
 func prefixEachLine(multilineString, prefix string) string {

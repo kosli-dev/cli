@@ -27,8 +27,8 @@ func (suite *JoinEnvironmentCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
-	CreateEnv(global.Org, suite.logicalEnvName, "logical", suite.T())
-	CreateEnv(global.Org, suite.physicalEnvName, "server", suite.T())
+	CreateEnv(global.Org, suite.logicalEnvName, "logical", suite.Suite.T())
+	CreateEnv(global.Org, suite.physicalEnvName, "server", suite.Suite.T())
 }
 
 func (suite *JoinEnvironmentCommandTestSuite) TestJoinEnvironmentCmd() {
@@ -60,7 +60,7 @@ func (suite *JoinEnvironmentCommandTestSuite) TestJoinEnvironmentCmd() {
 		},
 	}
 
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

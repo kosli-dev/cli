@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/go-git/go-git/v5"
+	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -31,7 +31,7 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	t := suite.T()
+	t := suite.Suite.T()
 	CreateFlow(suite.flowName, t)
 	CreateArtifact(suite.flowName, suite.artifactFingerprint, "FooBar_1", t)
 
@@ -47,7 +47,7 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) SetupTest() {
 			          --flow ` + suite.flowName + ` --build-url www.yr.no --commit-url https://www.nrk.no --repo-root ../..` + suite.defaultKosliArguments,
 		},
 	}
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 func (suite *ArtifactEvidenceGenericCommandTestSuite) TestArtifactEvidenceGenericCommandCmd() {
@@ -145,7 +145,7 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) TestArtifactEvidenceGeneri
 				evidenceName, suite.flowName, suite.defaultKosliArguments),
 		},
 	}
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

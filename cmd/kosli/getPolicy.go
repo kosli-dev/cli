@@ -21,11 +21,10 @@ type getPolicyOptions struct {
 func newGetPolicyCmd(out io.Writer) *cobra.Command {
 	o := new(getPolicyOptions)
 	cmd := &cobra.Command{
-		Use:    "policy POLICY-NAME",
-		Short:  getPolicyDesc,
-		Long:   getPolicyDesc,
-		Args:   cobra.ExactArgs(1),
-		Hidden: true,
+		Use:   "policy POLICY-NAME",
+		Short: getPolicyDesc,
+		Long:  getPolicyDesc,
+		Args:  cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {

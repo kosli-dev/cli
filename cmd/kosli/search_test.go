@@ -31,14 +31,14 @@ func (suite *SearchCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateFlow(suite.flowName, suite.T())
+	CreateFlow(suite.flowName, suite.Suite.T())
 	fingerprintOptions := &fingerprintOptions{
 		artifactType: "file",
 	}
 	var err error
 	suite.fingerprint, err = GetSha256Digest(suite.artifactPath, fingerprintOptions, logger)
-	require.NoError(suite.T(), err)
-	CreateArtifact(suite.flowName, suite.fingerprint, suite.artifactName, suite.T())
+	require.NoError(suite.Suite.T(), err)
+	CreateArtifact(suite.flowName, suite.fingerprint, suite.artifactName, suite.Suite.T())
 }
 
 func (suite *SearchCommandTestSuite) TestSearchCmd() {
@@ -95,7 +95,7 @@ func (suite *SearchCommandTestSuite) TestSearchCmd() {
 		},
 	}
 
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

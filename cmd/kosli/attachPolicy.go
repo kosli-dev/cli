@@ -21,7 +21,7 @@ type attachPolicyOptions struct {
 const attachPolicyShortDesc = `Attach a policy to one or more Kosli environments.  `
 
 const attachPolicyExample = `
-# attach previously created policy to multiple environment:
+# attach a previously created policy to multiple environment:
 kosli attach-policy yourPolicyName \
 	--environment yourFirstEnvironmentName \
 	--environment yourSecondEnvironmentName \
@@ -36,7 +36,6 @@ func newAttachPolicyCmd(out io.Writer) *cobra.Command {
 		Short:   attachPolicyShortDesc,
 		Long:    attachPolicyShortDesc,
 		Example: attachPolicyExample,
-		Hidden:  true,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/go-git/go-git/v5"
+	git "github.com/go-git/go-git/v5"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -22,12 +22,12 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 
 	repo, err := git.PlainOpen("../..")
 	if err != nil {
-		suite.T().Fatal(fmt.Errorf("failed to open git repository at %s: %v", "../..", err))
+		suite.Suite.T().Fatal(fmt.Errorf("failed to open git repository at %s: %v", "../..", err))
 	}
 	// headHash, err := repo.ResolveRevision(plumbing.Revision("HEAD"))
 	repoHead, err := repo.Head()
 	if err != nil {
-		suite.T().Fatal(fmt.Errorf("failed to resolve revision %s: %v", "HEAD", err))
+		suite.Suite.T().Fatal(fmt.Errorf("failed to resolve revision %s: %v", "HEAD", err))
 	}
 	headHash := repoHead.Hash().String()
 
@@ -106,7 +106,7 @@ func (suite *PipelineCommandTestSuite) TestPipelineCommandCmd() {
 			golden:    "",
 		},
 	}
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

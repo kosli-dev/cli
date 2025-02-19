@@ -20,20 +20,21 @@ type JiraAttestationPayload struct {
 
 type attestJiraOptions struct {
 	*CommonAttestationOptions
-	baseURL     string
-	username    string
-	apiToken    string
-	pat         string
-	issueFields string
-	assert      bool
-	payload     JiraAttestationPayload
+	baseURL         string
+	username        string
+	apiToken        string
+	pat             string
+	issueFields     string
+	secondarySource string
+	assert          bool
+	payload         JiraAttestationPayload
 }
 
 const attestJiraShortDesc = `Report a jira attestation to an artifact or a trail in a Kosli flow.  `
 
 const attestJiraLongDesc = attestJiraShortDesc + `
-Parses the given commit's message or current branch name for Jira issue references of the 
-form:  
+Parses the given commit's message, current branch name or the content of the ^--jira-secondary-source^
+argument for Jira issue references of the form:  
 'at least 2 characters long, starting with an uppercase letter project key followed by
 dash and one or more digits'. 
 
@@ -134,6 +135,18 @@ kosli attest jira \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 	--assert
+
+# get jira reference from original branch name in a GitHub Pull Request merge job
+kosli attest jira \
+	--name yourAttestationName \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--jira-secondary-source ${{ github.head_ref }} \
+	--jira-base-url https://kosli.atlassian.net \
+	--jira-username user@domain.com \
+	--jira-api-token yourJiraAPIToken \
+	--api-token yourAPIToken \
+	--org yourOrgName
 `
 
 func newAttestJiraCmd(out io.Writer) *cobra.Command {
@@ -203,6 +216,7 @@ func newAttestJiraCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.apiToken, "jira-api-token", "", jiraAPITokenFlag)
 	cmd.Flags().StringVar(&o.pat, "jira-pat", "", jiraPATFlag)
 	cmd.Flags().StringVar(&o.issueFields, "jira-issue-fields", "", jiraIssueFieldFlag)
+	cmd.Flags().StringVar(&o.secondarySource, "jira-secondary-source", "", jiraSecondarySourceFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, attestationAssertFlag)
 
 	err := RequireFlags(cmd, []string{"flow", "trail", "name", "commit", "jira-base-url"})
@@ -235,7 +249,7 @@ func (o *attestJiraOptions) run(args []string) error {
 	// more info: https://support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/#Workingwithissues-Projectandissuekeys
 	jiraIssueKeyPattern := `[A-Z][A-Z0-9]{1,9}-[0-9]+`
 
-	issueIDs, commitInfo, err := gv.MatchPatternInCommitMessageORBranchName(jiraIssueKeyPattern, o.payload.Commit.Sha1)
+	issueIDs, commitInfo, err := gv.MatchPatternInCommitMessageORBranchName(jiraIssueKeyPattern, o.payload.Commit.Sha1, o.secondarySource)
 	if err != nil {
 		return err
 	}

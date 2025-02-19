@@ -38,12 +38,12 @@ func (suite *KubeTestSuite) SetupSuite() {
 	createOptions := cluster.CreateWithWaitForReady(300 * time.Second)
 	suite.provider = cluster.NewProvider(cluster.ProviderWithDocker())
 	err := suite.provider.Create(suite.clusterName, createOptions)
-	require.NoError(suite.T(), err, "creating test k8s cluster failed")
+	require.NoError(suite.Suite.T(), err, "creating test k8s cluster failed")
 	suite.tmpDir, err = os.MkdirTemp("", "testDir")
-	require.NoError(suite.T(), err, "error creating a temporary test directory")
+	require.NoError(suite.Suite.T(), err, "error creating a temporary test directory")
 	suite.kubeConfigPath = filepath.Join(suite.tmpDir, "kubeconfig")
 	err = suite.provider.ExportKubeConfig(suite.clusterName, suite.kubeConfigPath)
-	require.NoError(suite.T(), err, "exporting kubeconfig failed")
+	require.NoError(suite.Suite.T(), err, "exporting kubeconfig failed")
 	ctx := context.Background()
 	suite.clientset = suite.getK8sClient(ctx)
 }
@@ -51,20 +51,20 @@ func (suite *KubeTestSuite) SetupSuite() {
 // delete the KIND cluster and the tmp dir after the suite execution
 func (suite *KubeTestSuite) TearDownSuite() {
 	err := suite.provider.Delete(suite.clusterName, suite.kubeConfigPath)
-	require.NoError(suite.T(), err, "deleting KIND cluster failed")
+	require.NoError(suite.Suite.T(), err, "deleting KIND cluster failed")
 	err = os.RemoveAll(suite.tmpDir)
-	require.NoErrorf(suite.T(), err, "error cleaning up the temporary test directory %s", suite.tmpDir)
+	require.NoErrorf(suite.Suite.T(), err, "error cleaning up the temporary test directory %s", suite.tmpDir)
 }
 
 func (suite *KubeTestSuite) AfterTest(_, _ string) {
 	ctx := context.Background()
 
-	namespaces, err := suite.clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{LabelSelector: suite.namespacesLabel})
-	require.NoErrorf(suite.T(), err, "error listing test namespaces with label %s", suite.namespacesLabel)
+	namespaces, err := suite.clientset.Clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{LabelSelector: suite.namespacesLabel})
+	require.NoErrorf(suite.Suite.T(), err, "error listing test namespaces with label %s", suite.namespacesLabel)
 
 	for _, ns := range namespaces.Items {
-		err = suite.clientset.CoreV1().Namespaces().Delete(ctx, ns.Name, metav1.DeleteOptions{})
-		require.NoErrorf(suite.T(), err, "error deleting namespace %s", ns.Name)
+		err = suite.clientset.Clientset.CoreV1().Namespaces().Delete(ctx, ns.Name, metav1.DeleteOptions{})
+		require.NoErrorf(suite.Suite.T(), err, "error deleting namespace %s", ns.Name)
 	}
 }
 
@@ -160,7 +160,7 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 			wantMinimumPods: 2,
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			// create namespaces
 			for _, ns := range t.args.namespaces {
 				suite.createNamespace(ns)
@@ -173,7 +173,7 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 			}
 			// Get pods data
 			podsData, err := suite.clientset.GetPodsData(t.args.filter, logger.NewStandardLogger())
-			require.NoErrorf(suite.T(), err, "error getting pods data for test %s", t.name)
+			require.NoErrorf(suite.Suite.T(), err, "error getting pods data for test %s", t.name)
 			actual := []*comparablePodData{}
 			for _, pd := range podsData {
 				actual = append(actual, &comparablePodData{
@@ -183,10 +183,10 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 				})
 			}
 			if len(t.want) > 0 {
-				require.Equal(suite.T(), t.want, actual, fmt.Sprintf("want: %v -- got: %v", t.want, actual))
+				require.Equal(suite.Suite.T(), t.want, actual, fmt.Sprintf("want: %v -- got: %v", t.want, actual))
 			} else if len(t.wantSubset) > 0 {
-				require.Subset(suite.T(), actual, t.wantSubset)
-				require.GreaterOrEqual(suite.T(), len(actual), t.wantMinimumPods)
+				require.Subset(suite.Suite.T(), actual, t.wantSubset)
+				require.GreaterOrEqual(suite.Suite.T(), len(actual), t.wantMinimumPods)
 			}
 		})
 	}
@@ -218,13 +218,13 @@ func (suite *KubeTestSuite) TestFilterNamespaces() {
 			want:        []string{},
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			result, err := suite.clientset.filterNamespaces(t.args.filter)
 			if t.expectError {
-				require.Error(suite.T(), err, "error was expected but got none.")
+				require.Error(suite.Suite.T(), err, "error was expected but got none.")
 			} else {
-				require.NoErrorf(suite.T(), err, "error was NOT expected but got: %v.", err)
-				require.Equal(suite.T(), t.want, result, "TestFilterNamespaces: got %v -- want %v", result, t.want)
+				require.NoErrorf(suite.Suite.T(), err, "error was NOT expected but got: %v.", err)
+				require.Equal(suite.Suite.T(), t.want, result, "TestFilterNamespaces: got %v -- want %v", result, t.want)
 			}
 		})
 	}
@@ -234,7 +234,7 @@ func (suite *KubeTestSuite) TestFilterNamespaces() {
 // getK8sClient creates a k8s client set
 func (suite *KubeTestSuite) getK8sClient(ctx context.Context) *K8SConnection {
 	clientset, err := NewK8sClientSet(suite.kubeConfigPath)
-	require.NoErrorf(suite.T(), err, "error creating k8s client set for kubeconfig %s", suite.kubeConfigPath)
+	require.NoErrorf(suite.Suite.T(), err, "error creating k8s client set for kubeconfig %s", suite.kubeConfigPath)
 	return clientset
 }
 
@@ -249,8 +249,8 @@ func (suite *KubeTestSuite) createNamespace(name string) {
 			},
 		},
 	}
-	_, err := suite.clientset.CoreV1().Namespaces().Create(ctx, namespace, metav1.CreateOptions{})
-	require.NoErrorf(suite.T(), err, "error creating namespace %s", name)
+	_, err := suite.clientset.Clientset.CoreV1().Namespaces().Create(ctx, namespace, metav1.CreateOptions{})
+	require.NoErrorf(suite.Suite.T(), err, "error creating namespace %s", name)
 }
 
 // getPodPayload creates a k8s Pod struct
@@ -278,10 +278,10 @@ func (suite *KubeTestSuite) getPodPayload(name string, images []string) *corev1.
 // createPod creates a pod in the suite KIND cluster
 func (suite *KubeTestSuite) createPod(namespace string, pod *corev1.Pod) {
 	ctx := context.Background()
-	_, err := suite.clientset.CoreV1().Pods(namespace).Create(ctx, pod, metav1.CreateOptions{})
-	require.NoErrorf(suite.T(), err, "error creating pod %s", pod.Name)
+	_, err := suite.clientset.Clientset.CoreV1().Pods(namespace).Create(ctx, pod, metav1.CreateOptions{})
+	require.NoErrorf(suite.Suite.T(), err, "error creating pod %s", pod.Name)
 	err = e2epod.WaitForPodNameRunningInNamespace(ctx, suite.clientset, pod.Name, namespace)
-	require.NoErrorf(suite.T(), err, "error waiting for pod %s to be running in namespace %s", pod.Name, namespace)
+	require.NoErrorf(suite.Suite.T(), err, "error waiting for pod %s to be running in namespace %s", pod.Name, namespace)
 }
 
 // In order for 'go test' to run this suite, we need to create

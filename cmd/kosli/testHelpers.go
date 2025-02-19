@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mattn/go-shellwords"
+	shellwords "github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
@@ -185,6 +185,13 @@ func compareFileBytes(actual, expected []byte) error {
 func normalize(in []byte) []byte {
 	normalized := bytes.Replace(in, []byte("\r\n"), []byte("\n"), -1)
 	return []byte(strings.TrimSpace(string(normalized)))
+}
+
+func ArchiveCustomAttestationType(typeName string, t *testing.T) {
+	t.Helper()
+
+	err := newArchiveAttestationTypeCmd(os.Stdout).RunE(nil, []string{typeName})
+	require.NoError(t, err, "attestation type should be archived without error")
 }
 
 func CreateCustomAttestationType(typeName, schemaFilePath string, jqEvaluators []string, t *testing.T) {

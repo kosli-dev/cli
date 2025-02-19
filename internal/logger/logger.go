@@ -52,7 +52,7 @@ func (l *Logger) Debug(format string, v ...interface{}) {
 	}
 }
 
-func (l *Logger) Warning(format string, v ...interface{}) {
+func (l *Logger) Warn(format string, v ...interface{}) {
 	format = fmt.Sprintf("[warning] %s\n", format)
 	l.warnLog.Printf(format, v...)
 }

@@ -19,7 +19,7 @@ type CommitEvidencePRGithubCommandTestSuite struct {
 }
 
 func (suite *CommitEvidencePRGithubCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_GITHUB_TOKEN"})
+	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_GITHUB_TOKEN"})
 
 	suite.flowNames = "github-pr"
 	global = &GlobalOpts{
@@ -30,7 +30,7 @@ func (suite *CommitEvidencePRGithubCommandTestSuite) SetupTest() {
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 	suite.commitWithPR = testHelpers.GithubCommitWithPR()
 
-	CreateFlow(suite.flowNames, suite.T())
+	CreateFlow(suite.flowNames, suite.Suite.T())
 }
 
 func (suite *CommitEvidencePRGithubCommandTestSuite) TestCommitEvidencePRGithubCmd() {
@@ -114,7 +114,7 @@ func (suite *CommitEvidencePRGithubCommandTestSuite) TestCommitEvidencePRGithubC
 		},
 	}
 
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

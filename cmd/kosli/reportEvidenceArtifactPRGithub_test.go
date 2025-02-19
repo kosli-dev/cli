@@ -20,7 +20,7 @@ type ArtifactEvidencePRGithubCommandTestSuite struct {
 }
 
 func (suite *ArtifactEvidencePRGithubCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_GITHUB_TOKEN"})
+	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_GITHUB_TOKEN"})
 
 	suite.flowName = "github-pr"
 	suite.artifactFingerprint = "847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0"
@@ -32,8 +32,8 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) SetupTest() {
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 	suite.commitWithPR = testHelpers.GithubCommitWithPR()
 
-	CreateFlow(suite.flowName, suite.T())
-	CreateArtifact(suite.flowName, suite.artifactFingerprint, "foobar", suite.T())
+	CreateFlow(suite.flowName, suite.Suite.T())
+	CreateArtifact(suite.flowName, suite.artifactFingerprint, "foobar", suite.Suite.T())
 }
 
 func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGithubCmd() {
@@ -141,7 +141,7 @@ func (suite *ArtifactEvidencePRGithubCommandTestSuite) TestArtifactEvidencePRGit
 		},
 	}
 
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

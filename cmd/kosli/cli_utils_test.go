@@ -49,12 +49,12 @@ func (suite *CliUtilsTestSuite) TestWhichCI() {
 			want:    unknown,
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			suite.setEnvVars(t.envVars)
 			actual := WhichCI()
 			// clean up
 			suite.unsetEnvVars(t.envVars)
-			assert.Equal(suite.T(), t.want, actual, fmt.Sprintf("TestWhichCI: %s , got: %v -- want: %v", t.name, actual, t.want))
+			assert.Equal(suite.Suite.T(), t.want, actual, fmt.Sprintf("TestWhichCI: %s , got: %v -- want: %v", t.name, actual, t.want))
 		})
 	}
 }
@@ -220,11 +220,11 @@ func (suite *CliUtilsTestSuite) TestDefaultValue() {
 			want: "https://bitbucket.org/example/foo/commits/8eb22db889202e4e23892665dbcc691217f500f8",
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			value, testMode := os.LookupEnv("KOSLI_TESTS")
 			if t.args.unsetTestsEnvVar && testMode {
 				err := os.Unsetenv("KOSLI_TESTS")
-				require.NoError(suite.T(), err, "should have unset KOSLI_TESTS env var without error")
+				require.NoError(suite.Suite.T(), err, "should have unset KOSLI_TESTS env var without error")
 			}
 			suite.setEnvVars(t.args.envVars)
 			actual := DefaultValue(t.args.ci, t.args.flag)
@@ -234,7 +234,7 @@ func (suite *CliUtilsTestSuite) TestDefaultValue() {
 			if testMode {
 				os.Setenv("KOSLI_TESTS", value)
 			}
-			assert.Equal(suite.T(), t.want, actual, fmt.Sprintf("TestDefaultValue: %s , got: %v -- want: %v", t.name, actual, t.want))
+			assert.Equal(suite.Suite.T(), t.want, actual, fmt.Sprintf("TestDefaultValue: %s , got: %v -- want: %v", t.name, actual, t.want))
 		})
 	}
 }
@@ -271,12 +271,12 @@ func (suite *CliUtilsTestSuite) TestRequireGlobalFlags() {
 			expectError: true,
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			err := RequireGlobalFlags(t.args.global, t.args.fields)
 			if t.expectError {
-				require.Errorf(suite.T(), err, "TestRequireGlobalFlags: error was expected but got none.")
+				require.Errorf(suite.Suite.T(), err, "TestRequireGlobalFlags: error was expected but got none.")
 			} else {
-				require.NoErrorf(suite.T(), err, "TestRequireGlobalFlags: got an error but was not expecting one:  %v", err)
+				require.NoErrorf(suite.Suite.T(), err, "TestRequireGlobalFlags: got an error but was not expecting one:  %v", err)
 			}
 		})
 	}
@@ -304,16 +304,16 @@ func (suite *CliUtilsTestSuite) TestGetFlagFromVarName() {
 			want:  "--a",
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			actual := GetFlagFromVarName(t.input)
-			assert.Equal(suite.T(), t.want, actual, fmt.Sprintf("TestGetFlagFromVarName: %s , got: %v -- want: %v", t.name, actual, t.want))
+			assert.Equal(suite.Suite.T(), t.want, actual, fmt.Sprintf("TestGetFlagFromVarName: %s , got: %v -- want: %v", t.name, actual, t.want))
 		})
 	}
 }
 
 func (suite *CliUtilsTestSuite) TestGetCIDefaultsTemplates() {
 	text := GetCIDefaultsTemplates(supportedCIs, []string{"git-commit"})
-	require.NotEmpty(suite.T(), text, "TestGetCIDefaultsTemplates: returned string should not be empty")
+	require.NotEmpty(suite.Suite.T(), text, "TestGetCIDefaultsTemplates: returned string should not be empty")
 }
 
 func (suite *CliUtilsTestSuite) TestGetSha256Digest() {
@@ -394,14 +394,14 @@ func (suite *CliUtilsTestSuite) TestGetSha256Digest() {
 			expectError: true,
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			fingerprint, err := GetSha256Digest(t.args.artifactName, t.args.fingerprintOptions,
 				log.NewStandardLogger())
 			if t.expectError {
-				require.Errorf(suite.T(), err, "TestGetSha256Digest: error was expected but got none.")
+				require.Errorf(suite.Suite.T(), err, "TestGetSha256Digest: error was expected but got none.")
 			} else {
-				require.NoErrorf(suite.T(), err, "TestGetSha256Digest: got an error but was not expecting one:  %v", err)
-				assert.Equal(suite.T(), t.want, fingerprint, fmt.Sprintf("TestGetSha256Digest: %s , got: %v -- want: %v", t.name, fingerprint, t.want))
+				require.NoErrorf(suite.Suite.T(), err, "TestGetSha256Digest: got an error but was not expecting one:  %v", err)
+				assert.Equal(suite.Suite.T(), t.want, fingerprint, fmt.Sprintf("TestGetSha256Digest: %s , got: %v -- want: %v", t.name, fingerprint, t.want))
 			}
 		})
 	}
@@ -455,24 +455,24 @@ func (suite *CliUtilsTestSuite) TestLoadUserData() {
 			expectError: true,
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			tmpDir, err := os.MkdirTemp("", "testDir")
-			require.NoError(suite.T(), err, "error creating a temporary test directory")
+			require.NoError(suite.Suite.T(), err, "error creating a temporary test directory")
 			defer os.RemoveAll(tmpDir)
 
 			if t.args.create {
 				testFile, err := os.Create(filepath.Join(tmpDir, t.args.filename))
-				require.NoErrorf(suite.T(), err, "error creating test file %s", t.args.filename)
+				require.NoErrorf(suite.Suite.T(), err, "error creating test file %s", t.args.filename)
 
 				_, err = testFile.Write([]byte(t.args.content))
-				require.NoErrorf(suite.T(), err, "error writing content to test file %s", t.args.filename)
+				require.NoErrorf(suite.Suite.T(), err, "error writing content to test file %s", t.args.filename)
 			}
 
 			_, err = LoadJsonData(filepath.Join(tmpDir, t.args.filename))
 			if t.expectError {
-				require.Errorf(suite.T(), err, "TestLoadUserData: error was expected but got none.")
+				require.Errorf(suite.Suite.T(), err, "TestLoadUserData: error was expected but got none.")
 			} else {
-				require.NoErrorf(suite.T(), err, "TestLoadUserData: got an error but was not expecting one:  %v", err)
+				require.NoErrorf(suite.Suite.T(), err, "TestLoadUserData: got an error but was not expecting one:  %v", err)
 			}
 		})
 	}
@@ -550,12 +550,12 @@ func (suite *CliUtilsTestSuite) TestValidateArtifactArg() {
 			alwaysRequireArtifactName: true,
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			err := ValidateArtifactArg(t.args, t.artifactType, t.inputSha256, t.alwaysRequireArtifactName)
 			if t.expectError {
-				require.Errorf(suite.T(), err, "error was expected but got none")
+				require.Errorf(suite.Suite.T(), err, "error was expected but got none")
 			} else {
-				require.NoErrorf(suite.T(), err, "error was NOT expected but got %v", err)
+				require.NoErrorf(suite.Suite.T(), err, "error was NOT expected but got %v", err)
 			}
 		})
 	}
@@ -601,12 +601,12 @@ func (suite *CliUtilsTestSuite) TestValidateRegistryFlags() {
 			expectError: true,
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			err := ValidateRegistryFlags(&cobra.Command{}, t.options)
 			if t.expectError {
-				require.Errorf(suite.T(), err, "error was expected but got none")
+				require.Errorf(suite.Suite.T(), err, "error was expected but got none")
 			} else {
-				require.NoErrorf(suite.T(), err, "error was NOT expected but got %v", err)
+				require.NoErrorf(suite.Suite.T(), err, "error was NOT expected but got %v", err)
 			}
 		})
 	}
@@ -616,7 +616,7 @@ func (suite *CliUtilsTestSuite) TestValidateRegistryFlags() {
 func (suite *CliUtilsTestSuite) setEnvVars(envVars map[string]string) {
 	for key, value := range envVars {
 		err := os.Setenv(key, value)
-		require.NoErrorf(suite.T(), err, "error setting env variable %s", key)
+		require.NoErrorf(suite.Suite.T(), err, "error setting env variable %s", key)
 	}
 }
 
@@ -624,7 +624,7 @@ func (suite *CliUtilsTestSuite) setEnvVars(envVars map[string]string) {
 func (suite *CliUtilsTestSuite) unsetEnvVars(envVars map[string]string) {
 	for key := range envVars {
 		err := os.Unsetenv(key)
-		require.NoErrorf(suite.T(), err, "error unsetting env variable %s", key)
+		require.NoErrorf(suite.Suite.T(), err, "error unsetting env variable %s", key)
 	}
 }
 
@@ -680,7 +680,7 @@ func (suite *CliUtilsTestSuite) TestMuXRequiredFlags() {
 		},
 	}
 	for _, t := range tests {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			cmd := &cobra.Command{}
 			var var1, var2, var3 string
 			cmd.Flags().StringVar(&var1, "flag1", "", "")
@@ -692,9 +692,9 @@ func (suite *CliUtilsTestSuite) TestMuXRequiredFlags() {
 			}
 			err := MuXRequiredFlags(cmd, t.flagNames, t.atLeastOne)
 			if t.wantErr {
-				require.Error(suite.T(), err)
+				require.Error(suite.Suite.T(), err)
 			} else {
-				require.NoError(suite.T(), err)
+				require.NoError(suite.Suite.T(), err)
 			}
 		})
 	}
@@ -726,7 +726,7 @@ func (suite *CliUtilsTestSuite) TestConditionallyRequiredFlags() {
 		},
 	}
 	for _, t := range tests {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			cmd := &cobra.Command{}
 			var var1, var2 string
 			cmd.Flags().StringVar(&var1, "required", "", "")
@@ -737,9 +737,9 @@ func (suite *CliUtilsTestSuite) TestConditionallyRequiredFlags() {
 			}
 			err := ConditionallyRequiredFlags(cmd, "required", "condition")
 			if t.wantErr {
-				require.Error(suite.T(), err)
+				require.Error(suite.Suite.T(), err)
 			} else {
-				require.NoError(suite.T(), err)
+				require.NoError(suite.Suite.T(), err)
 			}
 		})
 	}
@@ -791,12 +791,12 @@ func (suite *CliUtilsTestSuite) TestFormattedTimestamp() {
 		},
 	}
 	for _, t := range tests {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			os.Setenv("KOSLI_TESTS_FORMATTED_TIMESTAMP", "True")
 			defer os.Unsetenv("KOSLI_TESTS_FORMATTED_TIMESTAMP")
 			ts, err := formattedTimestamp(t.timestamp, t.short)
-			require.True(suite.T(), t.wantErr == (err != nil))
-			require.Equal(suite.T(), t.expected, ts)
+			require.True(suite.Suite.T(), t.wantErr == (err != nil))
+			require.Equal(suite.Suite.T(), t.expected, ts)
 		})
 	}
 }
@@ -871,11 +871,11 @@ func (suite *CliUtilsTestSuite) TestHandleExpressions() {
 		},
 	}
 	for _, t := range tests {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			name, id, err := handleExpressions(t.expression)
-			require.True(suite.T(), err != nil == t.wantErr)
-			require.Equal(suite.T(), t.wantName, name)
-			require.Equal(suite.T(), t.wantId, id)
+			require.True(suite.Suite.T(), err != nil == t.wantErr)
+			require.Equal(suite.Suite.T(), t.wantName, name)
+			require.Equal(suite.Suite.T(), t.wantId, id)
 		})
 	}
 }
@@ -941,11 +941,11 @@ func (suite *CliUtilsTestSuite) TestHandleSnapshotExpressions() {
 		},
 	}
 	for _, t := range tests {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			name, id, err := handleSnapshotExpressions(t.expression)
-			require.True(suite.T(), err != nil == t.wantErr)
-			require.Equal(suite.T(), t.wantName, name)
-			require.Equal(suite.T(), t.wantFragment, id)
+			require.True(suite.Suite.T(), err != nil == t.wantErr)
+			require.Equal(suite.Suite.T(), t.wantName, name)
+			require.Equal(suite.Suite.T(), t.wantFragment, id)
 		})
 	}
 }
@@ -1009,12 +1009,12 @@ func (suite *CliUtilsTestSuite) TestHandleArtifactExpression() {
 		},
 	}
 	for _, t := range tests {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			name, id, sep, err := handleArtifactExpression(t.expression)
-			require.True(suite.T(), err != nil == t.wantErr)
-			require.Equal(suite.T(), t.wantName, name)
-			require.Equal(suite.T(), t.wantId, id)
-			require.Equal(suite.T(), t.wantSep, sep)
+			require.True(suite.Suite.T(), err != nil == t.wantErr)
+			require.Equal(suite.Suite.T(), t.wantName, name)
+			require.Equal(suite.Suite.T(), t.wantId, id)
+			require.Equal(suite.Suite.T(), t.wantSep, sep)
 		})
 	}
 }

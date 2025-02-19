@@ -115,6 +115,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	jiraAPITokenFlag                     = "Jira API token (for Jira Cloud)"
 	jiraPATFlag                          = "Jira personal access token (for self-hosted Jira)"
 	jiraIssueFieldFlag                   = "[optional] The comma separated list of fields to include from the Jira issue. Default no fields are included. '*all' will give all fields."
+	jiraSecondarySourceFlag              = "[optional] An optional string to search for Jira ticket reference, e.g. '--jira-secondary-source ${{ github.head_ref }}'"
 	envDescriptionFlag                   = "[optional] The environment description."
 	flowDescriptionFlag                  = "[optional] The Kosli flow description."
 	trailDescriptionFlag                 = "[optional] The Kosli trail description."
@@ -485,14 +486,14 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 				// get encryption key
 				key, err := security.GetSecretFromCredentialsStore(credentialsStoreKeySecretName)
 				if err != nil {
-					logger.Warning("failed to decrypt api token from [%s]. Failed to get api token encryption key from credentials store: %s", global.ConfigFile, err)
-					logger.Warning("using api token from [%s] as plain text. It is recommended to encrypt your api token by setting it with: kosli config --api-token <token>", global.ConfigFile)
+					logger.Warn("failed to decrypt api token from [%s]. Failed to get api token encryption key from credentials store: %s", global.ConfigFile, err)
+					logger.Warn("using api token from [%s] as plain text. It is recommended to encrypt your api token by setting it with: kosli config --api-token <token>", global.ConfigFile)
 				} else {
 					// decrypt token
 					decryptedBytes, err := security.AESDecrypt([]byte(val.(string)), []byte(key))
 					if err != nil {
-						logger.Warning("failed to decrypt api token from [%s]: %s", global.ConfigFile, err)
-						logger.Warning("using api token from [%s] as plain text. It is recommended to encrypt your api token by setting it with: kosli config --api-token <token>", global.ConfigFile)
+						logger.Warn("failed to decrypt api token from [%s]: %s", global.ConfigFile, err)
+						logger.Warn("using api token from [%s] as plain text. It is recommended to encrypt your api token by setting it with: kosli config --api-token <token>", global.ConfigFile)
 					} else {
 						val = string(decryptedBytes)
 						logger.Debug("using api token from [%s].", global.ConfigFile)

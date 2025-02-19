@@ -77,7 +77,7 @@ func (suite *DoubledHostTestSuite) TestIsDoubledHost() {
 			want:     false,
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			host := fmt.Sprintf("--host=%s", t.host)
 			apiToken := fmt.Sprintf("--api-token=%s", t.apiToken)
 			org := fmt.Sprintf("--org=%s", orgName)
@@ -87,7 +87,7 @@ func (suite *DoubledHostTestSuite) TestIsDoubledHost() {
 			os.Args = args
 			actual := isDoubledHost()
 
-			assert.Equal(suite.T(), t.want, actual, fmt.Sprintf("TestIsDoubledHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, t.want, actual))
+			assert.Equal(suite.Suite.T(), t.want, actual, fmt.Sprintf("TestIsDoubledHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, t.want, actual))
 		})
 	}
 }
@@ -137,11 +137,11 @@ func (suite *DoubledHostTestSuite) TestRunDoubledHost() {
 		os.Args = t.args
 		output, err := runDoubledHost(t.args)
 
-		assert.Equal(suite.T(), t.err, err, fmt.Sprintf("TestRunDoubleHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, t.err, err))
+		assert.Equal(suite.Suite.T(), t.err, err, fmt.Sprintf("TestRunDoubleHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, t.err, err))
 
 		lines := strings.Split(output, "\n")
 		d := diff(t.stdOut, lines)
-		assert.Equal(suite.T(), "", d, fmt.Sprintf("TestRunDoubleHost: %s\n%s\n", t.name, d))
+		assert.Equal(suite.Suite.T(), "", d, fmt.Sprintf("TestRunDoubleHost: %s\n%s\n", t.name, d))
 	}
 }
 

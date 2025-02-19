@@ -25,7 +25,7 @@ type CommitEvidenceJiraCommandTestSuite struct {
 }
 
 func (suite *CommitEvidenceJiraCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_JIRA_API_TOKEN"})
+	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_JIRA_API_TOKEN"})
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Org:      "docs-cmd-test-user-shared",
@@ -35,12 +35,12 @@ func (suite *CommitEvidenceJiraCommandTestSuite) SetupTest() {
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 	var err error
 	suite.tmpDir, err = os.MkdirTemp("", "testDir")
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 	_, suite.workTree, suite.fs, err = testHelpers.InitializeGitRepo(suite.tmpDir)
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 
 	suite.flowName = "flow-for-jira-testing"
-	CreateFlow(suite.flowName, suite.T())
+	CreateFlow(suite.flowName, suite.Suite.T())
 }
 
 func (suite *CommitEvidenceJiraCommandTestSuite) TearDownSuite() {
@@ -90,7 +90,7 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 			},
 		},
 		{
-			name: "report existing and non existing Jira commit evidence with reference in midle of line works",
+			name: "report existing and non existing Jira commit evidence with reference in middle of line works",
 			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
 					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
 					--repo-root %s
@@ -210,17 +210,17 @@ func funcName(test cmdTestCase, suite *CommitEvidenceJiraCommandTestSuite) {
 		branchName := test.additionalConfig.(jiraTestsAdditionalConfig).branchName
 		if branchName != "" {
 			err := testHelpers.CheckoutNewBranch(suite.workTree, branchName)
-			require.NoError(suite.T(), err)
-			defer testHelpers.CheckoutMaster(suite.workTree, suite.T())
+			require.NoError(suite.Suite.T(), err)
+			defer testHelpers.CheckoutMaster(suite.workTree, suite.Suite.T())
 		}
 		msg := test.additionalConfig.(jiraTestsAdditionalConfig).commitMessage
 		commitSha, err := testHelpers.CommitToRepo(suite.workTree, suite.fs, msg)
-		require.NoError(suite.T(), err)
+		require.NoError(suite.Suite.T(), err)
 
 		test.cmd = test.cmd + " --commit " + commitSha
 	}
 
-	runTestCmd(suite.T(), []cmdTestCase{test})
+	runTestCmd(suite.Suite.T(), []cmdTestCase{test})
 }
 
 // In order for 'go test' to run this suite, we need to create
