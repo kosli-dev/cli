@@ -11,11 +11,8 @@
   framework = "#static"
   publish = "./public/"
 
-[context.deploy-preview]
-  command = "HUGO_BASEURL=$DEPLOY_PRIME_URL hugo --printI18nWarnings --enableGitInfo"
-
 [context.branch-deploy]
-  command = "HUGO_BASEURL=$DEPLOY_PRIME_URL hugo --printI18nWarnings --buildDrafts --enableGitInfo"
+  command = "git fetch --tags -f && bash update_version.sh && HUGO_BASEURL=$STAGING_URL hugo"
 
 [[context.production.plugins]]
 package = "netlify-plugin-checklinks"
