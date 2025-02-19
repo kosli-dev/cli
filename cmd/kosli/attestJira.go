@@ -20,14 +20,15 @@ type JiraAttestationPayload struct {
 
 type attestJiraOptions struct {
 	*CommonAttestationOptions
-	baseURL         string
-	username        string
-	apiToken        string
-	pat             string
-	issueFields     string
-	secondarySource string
-	assert          bool
-	payload         JiraAttestationPayload
+	baseURL           string
+	username          string
+	apiToken          string
+	pat               string
+	issueFields       string
+	secondarySource   string
+	ignoreBranchMatch bool
+	assert            bool
+	payload           JiraAttestationPayload
 }
 
 const attestJiraShortDesc = `Report a jira attestation to an artifact or a trail in a Kosli flow.  `
@@ -37,6 +38,8 @@ Parses the given commit's message, current branch name or the content of the ^--
 argument for Jira issue references of the form:  
 'at least 2 characters long, starting with an uppercase letter project key followed by
 dash and one or more digits'. 
+
+If the ^--ignore-branch-match^ is set, the branch name is not parsed for a match.
 
 The found issue references will be checked against Jira to confirm their existence.
 The attestation is reported in all cases, and its compliance status depends on referencing
@@ -217,6 +220,7 @@ func newAttestJiraCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.pat, "jira-pat", "", jiraPATFlag)
 	cmd.Flags().StringVar(&o.issueFields, "jira-issue-fields", "", jiraIssueFieldFlag)
 	cmd.Flags().StringVar(&o.secondarySource, "jira-secondary-source", "", jiraSecondarySourceFlag)
+	cmd.Flags().BoolVar(&o.ignoreBranchMatch, "ignore-branch-match", false, ignoreBranchMatchFlag)
 	cmd.Flags().BoolVar(&o.assert, "assert", false, attestationAssertFlag)
 
 	err := RequireFlags(cmd, []string{"flow", "trail", "name", "commit", "jira-base-url"})
@@ -249,7 +253,8 @@ func (o *attestJiraOptions) run(args []string) error {
 	// more info: https://support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/#Workingwithissues-Projectandissuekeys
 	jiraIssueKeyPattern := `[A-Z][A-Z0-9]{1,9}-[0-9]+`
 
-	issueIDs, commitInfo, err := gv.MatchPatternInCommitMessageORBranchName(jiraIssueKeyPattern, o.payload.Commit.Sha1, o.secondarySource)
+	issueIDs, commitInfo, err := gv.MatchPatternInCommitMessageORBranchName(jiraIssueKeyPattern, o.payload.Commit.Sha1,
+		o.secondarySource, o.ignoreBranchMatch)
 	if err != nil {
 		return err
 	}

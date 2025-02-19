@@ -272,7 +272,7 @@ func getCommitURL(repoURL, commitHash string) string {
 // MatchPatternInCommitMessageORBranchName returns a slice of strings matching a pattern in a commit message or branch name
 // matches lookup happens in the commit message first, and if none is found, matching against the branch name is done
 // if no matches are found in both the commit message and the branch name, an empty slice is returned
-func (gv *GitView) MatchPatternInCommitMessageORBranchName(pattern, commitSHA, secondarySource string) ([]string, *CommitInfo, error) {
+func (gv *GitView) MatchPatternInCommitMessageORBranchName(pattern, commitSHA, secondarySource string, ignoreBranchMatch bool) ([]string, *CommitInfo, error) {
 	commitInfo, err := gv.GetCommitInfoFromCommitSHA(commitSHA, true, []string{})
 	if err != nil {
 		return []string{}, nil, err
@@ -288,8 +288,10 @@ func (gv *GitView) MatchPatternInCommitMessageORBranchName(pattern, commitSHA, s
 	for _, match := range commitMatches {
 		uniqueMatches[match] = struct{}{}
 	}
-	for _, match := range branchMatches {
-		uniqueMatches[match] = struct{}{}
+	if !ignoreBranchMatch {
+		for _, match := range branchMatches {
+			uniqueMatches[match] = struct{}{}
+		}
 	}
 	for _, match := range secondaryMatches {
 		uniqueMatches[match] = struct{}{}

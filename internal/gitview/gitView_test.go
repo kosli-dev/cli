@@ -361,14 +361,15 @@ func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 	require.NoError(suite.T(), err)
 
 	for _, t := range []struct {
-		name            string
-		pattern         string
-		commitMessage   string
-		secondarySource string
-		wantError       bool
-		want            []string
-		commitSha       string
-		branchName      string
+		name              string
+		pattern           string
+		commitMessage     string
+		secondarySource   string
+		ignoreBranchMatch bool
+		wantError         bool
+		want              []string
+		commitSha         string
+		branchName        string
 	}{
 		{
 			name:          "One Jira reference found",
@@ -398,6 +399,15 @@ func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 			branchName:    "EX-5-cool-branch",
 			want:          []string{"EX-5"},
 			wantError:     false,
+		},
+		{
+			name:              "Jira references found in branch name but ignoreBranchMatch set",
+			pattern:           "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			commitMessage:     "some test commit",
+			branchName:        "EX-6-cool-branch",
+			ignoreBranchMatch: true,
+			want:              []string{},
+			wantError:         false,
 		},
 		{
 			name:            "Jira references found in secondary source",
@@ -477,7 +487,7 @@ func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 			gitView, err := New(suite.tmpDir)
 			require.NoError(suite.T(), err)
 
-			actual, _, err := gitView.MatchPatternInCommitMessageORBranchName(t.pattern, t.commitSha, t.secondarySource)
+			actual, _, err := gitView.MatchPatternInCommitMessageORBranchName(t.pattern, t.commitSha, t.secondarySource, t.ignoreBranchMatch)
 			require.True(suite.T(), (err != nil) == t.wantError)
 			require.ElementsMatch(suite.T(), t.want, actual)
 
