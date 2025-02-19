@@ -27,7 +27,7 @@ func (suite *VersionTestSuite) TestVersionCmd() {
 			golden: "main\n",
 		},
 	}
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

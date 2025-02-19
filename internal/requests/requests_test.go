@@ -94,15 +94,15 @@ func (suite *RequestsTestSuite) TestNewKosliClient() {
 			wantError:  true,
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			client, err := NewKosliClient(t.httpProxy, t.maxRetries, t.debug, logger.NewStandardLogger())
 			if !t.wantError {
-				require.NoError(suite.T(), err)
-				require.NotNil(suite.T(), client)
-				require.Equal(suite.T(), t.maxRetries, client.MaxAPIRetries)
-				require.Equal(suite.T(), t.debug, client.Debug)
+				require.NoError(suite.Suite.T(), err)
+				require.NotNil(suite.Suite.T(), client)
+				require.Equal(suite.Suite.T(), t.maxRetries, client.MaxAPIRetries)
+				require.Equal(suite.Suite.T(), t.debug, client.Debug)
 			} else {
-				require.Error(suite.T(), err)
+				require.Error(suite.Suite.T(), err)
 			}
 
 		})
@@ -221,33 +221,33 @@ func (suite *RequestsTestSuite) TestNewHttpRequest() {
 			wantError: true,
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			req, _, err := t.params.newHTTPRequest()
 			if t.wantError {
-				require.Error(suite.T(), err)
+				require.Error(suite.Suite.T(), err)
 			} else {
-				require.NoError(suite.T(), err)
-				require.Equal(suite.T(), t.params.Method, req.Method)
-				require.Equal(suite.T(), "Kosli/"+version.GetVersion(), req.UserAgent())
+				require.NoError(suite.Suite.T(), err)
+				require.Equal(suite.Suite.T(), t.params.Method, req.Method)
+				require.Equal(suite.Suite.T(), "Kosli/"+version.GetVersion(), req.UserAgent())
 				if t.expectedContentTypePrefix == "" {
 					t.expectedContentTypePrefix = "application/json; charset=utf-8"
 				}
-				require.True(suite.T(), strings.HasPrefix(req.Header.Get("Content-Type"), t.expectedContentTypePrefix))
+				require.True(suite.Suite.T(), strings.HasPrefix(req.Header.Get("Content-Type"), t.expectedContentTypePrefix))
 				if t.params.Username != "" || t.params.Password != "" {
 					user, pass, ok := req.BasicAuth()
-					require.True(suite.T(), ok)
-					require.Equal(suite.T(), t.params.Username, user)
-					require.Equal(suite.T(), t.params.Password, pass)
+					require.True(suite.Suite.T(), ok)
+					require.Equal(suite.Suite.T(), t.params.Username, user)
+					require.Equal(suite.Suite.T(), t.params.Password, pass)
 				}
 				if t.params.Token != "" {
-					require.Equal(suite.T(), fmt.Sprintf("Bearer %s", t.params.Token), req.Header.Get("Authorization"))
+					require.Equal(suite.Suite.T(), fmt.Sprintf("Bearer %s", t.params.Token), req.Header.Get("Authorization"))
 				}
 				for k, v := range t.params.AdditionalHeaders {
-					require.Equal(suite.T(), v, req.Header.Get(k))
+					require.Equal(suite.Suite.T(), v, req.Header.Get(k))
 				}
 
 				if t.params.Method == http.MethodGet {
-					require.Nil(suite.T(), req.Body)
+					require.Nil(suite.Suite.T(), req.Body)
 				}
 			}
 		})
@@ -365,20 +365,20 @@ func (suite *RequestsTestSuite) TestDo() {
 			expectedErrorMsg: "unexpected end of JSON input",
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			buf := new(bytes.Buffer)
 			client, err := NewKosliClient("", 1, false, logger.NewLogger(buf, buf, false))
-			require.NoError(suite.T(), err)
+			require.NoError(suite.Suite.T(), err)
 			resp, err := client.Do(t.params)
 			if t.wantError {
-				require.Error(suite.T(), err)
-				require.Equal(suite.T(), t.expectedErrorMsg, err.Error())
+				require.Error(suite.Suite.T(), err)
+				require.Equal(suite.Suite.T(), t.expectedErrorMsg, err.Error())
 			} else {
-				require.NoError(suite.T(), err)
+				require.NoError(suite.Suite.T(), err)
 				output := buf.String()
-				require.Equal(suite.T(), t.expectedLog, output)
+				require.Equal(suite.Suite.T(), t.expectedLog, output)
 				if t.expectedBody != "" {
-					require.Equal(suite.T(), t.expectedBody, resp.Body)
+					require.Equal(suite.Suite.T(), t.expectedBody, resp.Body)
 				}
 
 			}
@@ -444,10 +444,10 @@ func (suite *RequestsTestSuite) TestCreateMultipartRequestBody() {
 			wantError: true,
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			contentType, _, _, err := createMultipartRequestBody(t.formItems)
-			require.True(suite.T(), t.wantError == (err != nil))
-			require.True(suite.T(), strings.HasPrefix(contentType, t.expectedContentTypePrefix))
+			require.True(suite.Suite.T(), t.wantError == (err != nil))
+			require.True(suite.Suite.T(), strings.HasPrefix(contentType, t.expectedContentTypePrefix))
 		})
 	}
 }

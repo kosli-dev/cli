@@ -66,14 +66,14 @@ func (suite *VersionTestSuite) TestGetVersion() {
 			want: "v1.2.3",
 		},
 	} {
-		suite.Run(t.name, func() {
+		suite.Suite.Run(t.name, func() {
 			metadata = t.args.metadata
 			if t.args.version != "" {
 				version = t.args.version
 			}
 
 			actual := GetVersion()
-			assert.Equal(suite.T(), t.want, actual, fmt.Sprintf("TestGetVersion: %s , got: %v -- want: %v", t.name, actual, t.want))
+			assert.Equal(suite.Suite.T(), t.want, actual, fmt.Sprintf("TestGetVersion: %s , got: %v -- want: %v", t.name, actual, t.want))
 		})
 	}
 }
@@ -91,7 +91,7 @@ func (suite *VersionTestSuite) TestGet() {
 		GoVersion:    runtime.Version(),
 	}
 	actual := Get()
-	assert.Equal(suite.T(), expected, actual, fmt.Sprintf("build info should match, got: %v -- expected: %v", actual, expected))
+	assert.Equal(suite.Suite.T(), expected, actual, fmt.Sprintf("build info should match, got: %v -- expected: %v", actual, expected))
 }
 
 // In order for 'go test' to run this suite, we need to create

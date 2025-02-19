@@ -90,7 +90,7 @@ func (clientset *K8SConnection) GetPodsData(filter *filters.ResourceFilterOption
 
 	if len(filter.IncludeNames) == 0 && len(filter.IncludeNamesRegex) == 0 &&
 		len(filter.ExcludeNames) == 0 && len(filter.ExcludeNamesRegex) == 0 {
-		list, err := clientset.CoreV1().Pods("").List(context.Background(), metav1.ListOptions{})
+		list, err := clientset.Clientset.CoreV1().Pods("").List(context.Background(), metav1.ListOptions{})
 		if err != nil {
 			return podsData, fmt.Errorf("could not list pods on cluster scope: %v ", err)
 		}
@@ -240,7 +240,7 @@ func (clientset *K8SConnection) filterNamespaces(filter *filters.ResourceFilterO
 // getPodsInNamespace get pods in a specific namespace in a cluster
 func (clientset *K8SConnection) getPodsInNamespace(namespace string) ([]corev1.Pod, error) {
 	ctx := context.Background()
-	podlist, err := clientset.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{})
+	podlist, err := clientset.Clientset.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return []corev1.Pod{}, fmt.Errorf("could not list pods on namespace %s: %v ", namespace, err)
 	}
@@ -251,7 +251,7 @@ func (clientset *K8SConnection) getPodsInNamespace(namespace string) ([]corev1.P
 func (clientset *K8SConnection) GetClusterNamespaces() ([]corev1.Namespace, error) {
 	ctx := context.Background()
 
-	namespaces, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+	namespaces, err := clientset.Clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return []corev1.Namespace{}, fmt.Errorf("could not list namespaces on cluster scope: %v ", err)
 	}

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/zalando/go-keyring"
+	keyring "github.com/zalando/go-keyring"
 )
 
 // MockConfigGetter is a mock implementation of the ConfigGetter interface
@@ -19,7 +19,7 @@ type MockConfigGetter struct {
 
 // defaultConfigFilePath is a method that satisfies the ConfigGetter interface
 func (m *MockConfigGetter) defaultConfigFilePath() string {
-	args := m.Called()
+	args := m.Mock.Called()
 	return args.String(0)
 }
 
@@ -33,13 +33,13 @@ type ConfigCommandTestSuite struct {
 
 func (suite *ConfigCommandTestSuite) SetupTest() {
 	dir, err := os.MkdirTemp("", "tmp-config-file")
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 	suite.tmpConfigFilePath = filepath.Join(dir, defaultConfigFilename)
 }
 
 func (suite *ConfigCommandTestSuite) TearDownTest() {
 	err := os.RemoveAll(suite.tmpConfigFilePath)
-	require.NoError(suite.T(), err)
+	require.NoError(suite.Suite.T(), err)
 	defaultConfigFilePathFunc = (&RealConfigGetter{}).defaultConfigFilePath
 	global = new(GlobalOpts)
 }
@@ -48,7 +48,7 @@ func (suite *ConfigCommandTestSuite) TestConfigCmd() {
 	// Create a new instance of the mock
 	mockConfigGetter := new(MockConfigGetter)
 	// Set up expectations
-	mockConfigGetter.On("defaultConfigFilePath").Return(suite.tmpConfigFilePath)
+	mockConfigGetter.Mock.On("defaultConfigFilePath").Return(suite.tmpConfigFilePath)
 	// Replace the original function with the mock
 	defaultConfigFilePathFunc = mockConfigGetter.defaultConfigFilePath
 
@@ -94,7 +94,7 @@ func (suite *ConfigCommandTestSuite) TestConfigCmd() {
 		},
 	}
 
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

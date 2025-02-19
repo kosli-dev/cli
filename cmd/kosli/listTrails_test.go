@@ -26,12 +26,12 @@ func (suite *ListTrailsCommandTestSuite) SetupTest() {
 
 	suite.flowName = "list-trails"
 	suite.defaultKosliArguments = fmt.Sprintf(" --flow %s --host %s --org %s --api-token %s", suite.flowName, global.Host, global.Org, global.ApiToken)
-	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
-	BeginTrail("trail-name", suite.flowName, "", suite.T())
+	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.Suite.T())
+	BeginTrail("trail-name", suite.flowName, "", suite.Suite.T())
 
 	global.Org = "acme-org"
 	global.ApiToken = "v3OWZiYWu9G2IMQStYg9BcPQUQ88lJNNnTJTNq8jfvmkR1C5wVpHSs7F00JcB5i6OGeUzrKt3CwRq7ndcN4TTfMeo8ASVJ5NdHpZT7DkfRfiFvm8s7GbsIHh2PtiQJYs2UoN13T8DblV5C4oKb6-yWH73h67OhotPlKfVKazR-c"
-	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
+	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.Suite.T())
 	suite.acmeOrgKosliArguments = fmt.Sprintf(" --flow %s --host %s --org %s --api-token %s", suite.flowName, global.Host, global.Org, global.ApiToken)
 }
 
@@ -65,7 +65,7 @@ func (suite *ListTrailsCommandTestSuite) TestListTrailsCmd() {
 		},
 	}
 
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

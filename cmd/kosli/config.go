@@ -9,7 +9,7 @@ import (
 	"github.com/kosli-dev/cli/internal/security"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/zalando/go-keyring"
+	keyring "github.com/zalando/go-keyring"
 )
 
 type configOptions struct {

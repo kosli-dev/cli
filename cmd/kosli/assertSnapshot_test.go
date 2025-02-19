@@ -37,15 +37,15 @@ func (suite *AssertSnapshotCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateEnv(global.Org, suite.envName, "server", suite.T())
-	CreateFlow(suite.flowName, suite.T())
+	CreateEnv(global.Org, suite.envName, "server", suite.Suite.T())
+	CreateFlow(suite.flowName, suite.Suite.T())
 	fingerprintOptions := &fingerprintOptions{
 		artifactType: "file",
 	}
 	var err error
 	suite.fingerprint, err = GetSha256Digest(suite.artifactPath, fingerprintOptions, logger)
-	require.NoError(suite.T(), err)
-	CreateArtifact(suite.flowName, suite.fingerprint, suite.artifactName, suite.T())
+	require.NoError(suite.Suite.T(), err)
+	CreateArtifact(suite.flowName, suite.fingerprint, suite.artifactName, suite.Suite.T())
 }
 
 func (suite *AssertSnapshotCommandTestSuite) TestAssertSnapshotCmd() {
@@ -81,8 +81,8 @@ func (suite *AssertSnapshotCommandTestSuite) TestAssertSnapshotCmd() {
 
 	for _, t := range tests {
 		if t.additionalConfig != nil && t.additionalConfig.(assertSnapshotTestConfig).reportToEnv {
-			ReportServerArtifactToEnv([]string{suite.artifactPath}, suite.envName, suite.T())
-			runTestCmd(suite.T(), []cmdTestCase{t})
+			ReportServerArtifactToEnv([]string{suite.artifactPath}, suite.envName, suite.Suite.T())
+			runTestCmd(suite.Suite.T(), []cmdTestCase{t})
 		}
 	}
 }

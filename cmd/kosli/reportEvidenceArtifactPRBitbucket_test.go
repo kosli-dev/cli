@@ -19,7 +19,7 @@ type ArtifactEvidencePRBitbucketCommandTestSuite struct {
 }
 
 func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_BITBUCKET_PASSWORD"})
+	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_BITBUCKET_PASSWORD"})
 
 	suite.flowName = "bitbucket-pr"
 	suite.artifactFingerprint = "847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0"
@@ -30,8 +30,8 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateFlow(suite.flowName, suite.T())
-	CreateArtifact(suite.flowName, suite.artifactFingerprint, "foobar", suite.T())
+	CreateFlow(suite.flowName, suite.Suite.T())
+	CreateArtifact(suite.flowName, suite.artifactFingerprint, "foobar", suite.Suite.T())
 }
 
 func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePRBitbucketCmd() {
@@ -131,7 +131,7 @@ func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) TestArtifactEvidencePR
 		},
 	}
 
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

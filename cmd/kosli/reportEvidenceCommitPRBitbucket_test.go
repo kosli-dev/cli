@@ -18,7 +18,7 @@ type CommitEvidencePRBitbucketCommandTestSuite struct {
 }
 
 func (suite *CommitEvidencePRBitbucketCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_BITBUCKET_PASSWORD"})
+	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_BITBUCKET_PASSWORD"})
 
 	suite.flowNames = "bitbucket-pr"
 	global = &GlobalOpts{
@@ -28,7 +28,7 @@ func (suite *CommitEvidencePRBitbucketCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateFlow(suite.flowNames, suite.T())
+	CreateFlow(suite.flowNames, suite.Suite.T())
 }
 
 func (suite *CommitEvidencePRBitbucketCommandTestSuite) TestCommitEvidencePRBitbucketCmd() {
@@ -100,7 +100,7 @@ func (suite *CommitEvidencePRBitbucketCommandTestSuite) TestCommitEvidencePRBitb
 		},
 	}
 
-	runTestCmd(suite.T(), tests)
+	runTestCmd(suite.Suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create
