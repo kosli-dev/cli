@@ -11,7 +11,7 @@ It is made to run from your local machine, but the same concepts and steps apply
 > The following guide is the easiest and quickest way to try Kosli out and understand its features. 
 It is made to run from your local machine, but the same concepts and steps apply to using Kosli in a production setup.
 
-In this tutorial, you'll learn how Kosli allows you to follow a source code change to runtime environments.
+In this tutorial, you'll learn how Kosli allows you to track a source code change from runtime environments.
 You'll set up a `docker` environment, use Kosli to record build and deployment events, and track what 
 artifacts are running in your runtime environment. 
 
@@ -57,6 +57,10 @@ To follow the tutorial, you will need to:
     git clone https://github.com/kosli-dev/quickstart-docker-example.git
     cd quickstart-docker-example
     ```
+- Export the head commit in a variable (will be used in several of the commands below):
+  ```shell {.command}
+  export GIT_COMMIT=$(git rev-parse HEAD)
+  ```
 
 ## Step 2: Create a Kosli Flow
 
@@ -118,7 +122,6 @@ Create a Kosli *Trail*, in the `quickstart-nginx` Flow, whose
 name is the repository's current git-commit:
 
 ```shell {.command}
-GIT_COMMIT=$(git rev-parse HEAD)
 kosli begin trail ${GIT_COMMIT} \
     --flow quickstart-nginx
 ```
@@ -127,7 +130,70 @@ kosli begin trail ${GIT_COMMIT} \
 Step to confirm the Trail exists?
 -->
 
-## Step 4: Create a Kosli environment
+## Step 4: Attest an Artifact to Kosli
+
+Typically, you would build an Artifact in your CI system, in response to a git-commit being pushed.
+The quickstart-docker repository contains a `docker-compose.yml` file that uses a public [nginx](https://nginx.org/) 
+docker image which you will be using as your Artifact in this tutorial instead.
+
+<!-- Pull the docker image - the Kosli CLI needs the Artifact to be locally present to 
+generate a "fingerprint" to identify it:
+
+```shell {.command}
+docker compose pull
+```
+
+You can check that this has worked by typing: 
+```shell {.command}
+docker images nginx
+```
+The output should look like this:
+```plaintext {.light-console}
+REPOSITORY   TAG       IMAGE ID       CREATED        SIZE
+nginx        1.21      8f05d7383593   5 months ago   134MB
+``` -->
+
+Now report the artifact to Kosli using the `kosli attest artifact` command.
+
+Note:
+- The `--name` flag has the value `nginx` which is the (only) artifact
+name defined in the `kosli.yml` file from step 2.
+- The `--build-url` and `--commit-url` flags have dummy values;
+in a real call these would be the CI and git hosting provider URLs respectively.
+
+```shell {.command}
+kosli attest artifact nginx:1.21 \
+    --name nginx \
+    --flow quickstart-nginx \
+    --trail ${GIT_COMMIT} \
+    --artifact-type oci \
+    --build-url https://example.com \
+    --commit-url https://github.com/kosli-dev/quickstart-docker-example/commit/9f14efa0c91807da9a8b1d1d6332c5b3aa24a310 \
+    --commit $(git rev-parse HEAD)    
+```
+
+<!--
+It is noticeable here that we are providing the git-commit twice;
+once for the name of the trail, and once for the actual git-commit.
+It is also noticeable that the git-commit is hard-wired to 9f14efa...
+in several places, and it will be incorrect whenever the repo gets new git
+commit (eg to add the kosli.yml file)
+-->
+
+You can verify that you have reported the Artifact in your *quickstart-nginx* flow:
+
+```shell {.command}
+kosli list artifacts --flow quickstart-nginx
+```
+
+```plaintext {.light-console}
+COMMIT   ARTIFACT                                                                       STATE      CREATED_AT
+9f14efa  Name: nginx:1.21                                                               COMPLIANT  Tue, 01 Nov 2022 15:46:59 CET
+         Fingerprint: 2bcabc23b45489fb0885d69a06ba1d648aeda973fae7bb981bafbb884165e514                 
+```
+
+
+## Step 5: Create a Kosli environment
 
 <!--
 A Kosli *Environment* stores snapshots containing information about
@@ -160,68 +226,6 @@ it will show you that you have a *quickstart* environment and that
 no snapshot reports have been received yet.
 {{% /hint %}}
 
-## Step 5: Attest an Artifact to Kosli
-
-Typically, you would build an Artifact in your CI system, in response to a git-commit.
-The quickstart-docker repository contains a `docker-compose.yml` file which uses an [nginx](https://nginx.org/) 
-docker image which you will be using as your Artifact in this tutorial instead.
-
-Pull the docker image - the Kosli CLI needs the Artifact to be locally present to 
-generate a "fingerprint" to identify it:
-
-```shell {.command}
-docker compose pull
-```
-
-You can check that this has worked by typing: 
-```shell {.command}
-docker images nginx
-```
-The output should look like this:
-```plaintext {.light-console}
-REPOSITORY   TAG       IMAGE ID       CREATED        SIZE
-nginx        1.21      8f05d7383593   5 months ago   134MB
-```
-
-Now report the artifact to Kosli using the `kosli attest artifact` command.
-
-Note:
-- The `--name` flag has the value `nginx` which is the (only) artifact
-name defined in the `kosli.yml` file from step 2.
-- The `--build-url` and `--commit-url` flags have dummy values;
-in a real call these would get default values (e.g. from Github Actions).
-
-```shell {.command}
-GIT_COMMIT=$(git rev-parse HEAD)
-kosli attest artifact nginx:1.21 \
-    --name nginx \
-    --flow quickstart-nginx \
-    --trail ${GIT_COMMIT} \
-    --artifact-type docker \
-    --build-url https://example.com \
-    --commit-url https://github.com/kosli-dev/quickstart-docker-example/commit/9f14efa0c91807da9a8b1d1d6332c5b3aa24a310 \
-    --commit $(git rev-parse HEAD)    
-```
-
-<!--
-It is noticeable here that we are providing the git-commit twice;
-once for the name of the trail, and once for the actual git-commit.
-It is also noticeable that the git-commit is hard-wired to 9f14efa...
-in several places, and it will be incorrect whenever the repo gets new git
-commit (eg to add the kosli.yml file)
--->
-
-You can verify that you have reported the Artifact in your *quickstart-nginx* flow:
-
-```shell {.command}
-kosli list artifacts --flow quickstart-nginx
-```
-
-```plaintext {.light-console}
-COMMIT   ARTIFACT                                                                       STATE      CREATED_AT
-9f14efa  Name: nginx:1.21                                                               COMPLIANT  Tue, 01 Nov 2022 15:46:59 CET
-         Fingerprint: 2bcabc23b45489fb0885d69a06ba1d648aeda973fae7bb981bafbb884165e514                 
-```
 
 ## Step 6: Report what is running in your environment
 
@@ -289,7 +293,7 @@ you can use the `kosli search` command to find everything Kosli knows about an A
 For example, you can give Kosli search the git-commit whose CI run built and deployed the Artifact: 
 
 ```shell {.command}
-kosli search 9f14efa
+kosli search ${GIT_COMMIT}
 ```
 
 ```plaintext {.light-console}
