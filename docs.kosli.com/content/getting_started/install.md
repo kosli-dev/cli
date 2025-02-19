@@ -2,7 +2,7 @@
 title: "Part 2: Install Kosli CLI"
 bookCollapseSection: false
 weight: 220
-summary: "Kosli CLI can be installed from package managers, 
+summary: "Kosli CLI can be installed from package managers,
 by Curling pre-built binaries, or can be used from the distributed Docker images."
 ---
 # Part 2: Install Kosli CLI
@@ -100,7 +100,7 @@ kosli version
 ```
 The expected output should be similar to this:
 ```plaintext {.light-console}
-version.BuildInfo{Version:"2.11.4", GitCommit:"Homebrew", GitTreeState:"clean", GoVersion:"go1.23.4"}
+version.BuildInfo{Version:"2.11.7", GitCommit:"Homebrew", GitTreeState:"clean", GoVersion:"go1.23.4"}
 ```
 
 ## Using the CLI
@@ -110,7 +110,7 @@ The [CLI Reference](/client_reference/) section contains all the information you
 1. Directly on the command line.
 2. Via environment variables.
 3. Within a config file.
-   
+
 Among these options, priority is given in the following order: Option 1 holds the highest precedence, followed by Option 2, with Option 3 being the least prioritized.
 
 ### Assigning flags via environment variables
@@ -118,15 +118,15 @@ Among these options, priority is given in the following order: Option 1 holds th
 To assign a CLI flag using environment variables, generate a variable prefixed with KOSLI_. Use the flag's name in uppercase and substitute any internal dashes with underscores. For instance:
 
 
-* `--api-token` corresponds to `KOSLI_API_TOKEN` 
+* `--api-token` corresponds to `KOSLI_API_TOKEN`
 * `--org` corresponds to `KOSLI_ORG`
 
 
 ### Assigning flags via config files
 
-A config file is an alternative to using Kosli flags or environment variables. 
-You could use a config file for the values that rarely change - like API token or org, 
-but you can represent all Kosli flags in a config file. 
+A config file is an alternative to using Kosli flags or environment variables.
+You could use a config file for the values that rarely change - like API token or org,
+but you can represent all Kosli flags in a config file.
 
 Each key in the config file corresponds to the flag name, capitalized. For instance:
 
@@ -160,7 +160,7 @@ ORG = "my-org"
 API-TOKEN = "123456abcdef"
 ```
 
-When using the `--config-file` flag you can skip the file extension. For example, 
+When using the `--config-file` flag you can skip the file extension. For example,
 to list environments with `org` and `api-token` in the configuration file you would run:
 
 ```
