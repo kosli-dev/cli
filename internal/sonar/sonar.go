@@ -132,7 +132,7 @@ func (sc *SonarConfig) GetSonarResults() (*SonarResults, error) {
 	if sc.APIToken != "" {
 		tokenHeader = fmt.Sprintf("Bearer %s", sc.APIToken)
 	} else {
-		return nil, fmt.Errorf("API token must be given to retrieve data from SonarCloud/SonarQube")
+		return nil, fmt.Errorf("API token must be given to retrieve data from SonarQube Cloud/SonarQube")
 	}
 
 	// Read the report-task.txt file (if it exists) to get the project key, server URL, dashboard URL and ceTaskURL
@@ -225,7 +225,7 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 	taskResponseData := &TaskResponse{}
 	err = json.NewDecoder(taskResponse.Body).Decode(taskResponseData)
 	if err != nil {
-		return "", fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarCloud/SonarQube")
+		return "", fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube Cloud/SonarQube")
 	}
 
 	project.Name = taskResponseData.Task.ComponentName
@@ -272,7 +272,7 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 	projectAnalysesData := &ProjectAnalyses{}
 	err = json.NewDecoder(projectAnalysesResponse.Body).Decode(projectAnalysesData)
 	if err != nil {
-		return "", fmt.Errorf("please check your API token and SonarQube server URL are correct and you have the correct permissions in SonarCloud/SonarQube")
+		return "", fmt.Errorf("please check your API token and SonarQube server URL are correct and you have the correct permissions in SonarQube Cloud/SonarQube")
 	}
 
 	for analysis := range projectAnalysesData.Analyses {
@@ -311,7 +311,7 @@ func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *Son
 	projectAnalysesData := &ProjectAnalyses{}
 	err = json.NewDecoder(projectAnalysesResponse.Body).Decode(projectAnalysesData)
 	if err != nil {
-		return fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarCloud/SonarQube")
+		return fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube Cloud/SonarQube")
 	}
 
 	for analysis := range projectAnalysesData.Analyses {
@@ -385,7 +385,7 @@ func GetTaskID(httpClient *http.Client, sonarResults *SonarResults, project *Pro
 	CEActivityData := &ActivityResponse{}
 	err = json.NewDecoder(CEActivityResponse.Body).Decode(CEActivityData)
 	if err != nil {
-		return fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarCloud/SonarQube")
+		return fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube Cloud/SonarQube")
 	}
 
 	for task := range CEActivityData.Tasks {
