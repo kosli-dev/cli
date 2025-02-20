@@ -5,6 +5,7 @@ import (
 	"io"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	validator "github.com/go-playground/validator/v10"
 	"github.com/kosli-dev/cli/internal/server"
@@ -101,12 +102,18 @@ func (o *snapshotPathsOptions) run(args []string) error {
 	}
 
 	if o.watch {
+		var wg sync.WaitGroup
 		for _, artifactSpec := range ps.Artifacts {
-			err := watchPath(ps, artifactSpec.Path, envName)
-			if err != nil {
-				return err
-			}
+			wg.Add(1)
+			go func(path string) {
+				defer wg.Done()
+				err := watchPath(ps, path, envName)
+				if err != nil {
+					logger.Error("error watching path %s: %v", path, err)
+				}
+			}(artifactSpec.Path)
 		}
+		wg.Wait() // Wait for all watchers to complete before exiting
 	}
 
 	return nil

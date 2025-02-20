@@ -142,7 +142,7 @@ func watchPath(ps *server.PathsSpec, path, envName string) error {
 	}
 	defer notify.Stop(events)
 
-	logger.Info("watching for file changes in %s. Press Ctrl+C to exit...", path)
+	logger.Info("watching for file changes in [%s]. Press Ctrl+C to exit...", path)
 
 	// Handle system interrupts (Ctrl+C)
 	stop := make(chan os.Signal, 1)
@@ -151,7 +151,7 @@ func watchPath(ps *server.PathsSpec, path, envName string) error {
 	for {
 		select {
 		case event := <-events:
-			logger.Debug("event: %s on %s", event.Event(), event.Path())
+			logger.Info("event detected: %s on %s", event.Event().String(), event.Path())
 
 			err := reportArtifacts(ps, envName)
 			if err != nil {
@@ -171,7 +171,7 @@ func watchPath(ps *server.PathsSpec, path, envName string) error {
 				}
 			}
 		case <-stop:
-			logger.Info("\tstopping file watcher...")
+			logger.Info("\nstopping file watcher for [%s] ...", path)
 			return nil
 		}
 	}
