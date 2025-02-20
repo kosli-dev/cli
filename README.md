@@ -17,9 +17,25 @@ See the [docs](https://docs.kosli.com/client_reference/)
 
 `make lint`
 
-## Building the code
+## Building the code (Mac/Linux)
 
 `make build`
+
+Then to run Kosli commands:  
+`./kosli [COMMAND]`
+
+## Building the code (Windows)
+
+Windows will not allow building using the makefile, so we need to run the commands directly in the terminal.
+
+`set GOFLAGS=""`  
+`go mod download`  
+`go mod tidy`  
+`go vet ./...`  
+`go build -o kosli.exe -ldflags '-extldflags "-static"' ./cmd/kosli/`
+
+Then to run Kosli commands:  
+`./kosli.exe [COMMAND]` or `.\kosli.exe [COMMAND]`
 
 ## Building the documentation
 
