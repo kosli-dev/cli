@@ -6,6 +6,7 @@
 This CLI is used to report DevOps change events to Kosli and query them.
 
 ## Status
+
 Kosli is still in beta
 
 ## Usage 
@@ -22,12 +23,9 @@ See the [docs](https://docs.kosli.com/client_reference/)
 
 ## Building the documentation
 
-If building the docs for the first time, the submodule for the theme should be initialized:
-`git submodule update --init --recursive`
-
-then:
-`make hugo`
+`make hugo-local`
 
 ## Running the tests
+
 To run only the tests in a single test suite, eg TestAttestJunitCommandTestSuite
 `make test_integration_single TARGET=TestAttestJunitCommandTestSuite`
