@@ -21,7 +21,7 @@ const assertArtifactExample = `
 kosli assert artifact \
 	--fingerprint 184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0 \
 	--flow yourFlowName \
-	--against-env prod \
+	--environment prod \
 	--api-token yourAPIToken \
 	--org yourOrgName 
 
