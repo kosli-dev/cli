@@ -195,6 +195,14 @@ Kosli CLI will also verify and report if the detected issue reference is found a
 
 See [attest Jira issue to an artifact or a trail](/client_reference/kosli_attest_jira/) for usage details and examples.
 
+### Sonar scan results
+
+You can report the results of a SonarQube or SonarQube Cloud scan to Kosli. Kosli will use the status of the scan's Quality Gate (passing or failing) to determine the compliance status. 
+
+These scan result can be attested in two ways:
+- Using Kosli's [webhook integration](/integrations/sonar) with Sonar
+- Using [Kosli's CLI](/client_reference/kosli_attest_sonar)
+
 ### Custom
 
 The above attestations are all "fully typed" - each one knows how to interpret its own particular kind of input.
