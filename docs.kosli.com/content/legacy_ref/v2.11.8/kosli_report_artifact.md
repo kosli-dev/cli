@@ -1,33 +1,47 @@
 ---
-title: "kosli assert artifact"
+title: "kosli report artifact"
 beta: false
-deprecated: false
-summary: "Assert the compliance status of an artifact in Kosli (in its flow or against an environment).  "
+deprecated: true
+summary: "Report an artifact creation to a Kosli flow.  "
 ---
 
-# kosli assert artifact
+# kosli report artifact
 
+{{% hint danger %}}
+**kosli report artifact** is deprecated. see kosli attest commands  Deprecated commands will be removed in a future release.
+{{% /hint %}}
 ## Synopsis
 
-Assert the compliance status of an artifact in Kosli (in its flow or against an environment).  
-Exits with non-zero code if the artifact has a non-compliant status.
+Report an artifact creation to a Kosli flow.  
+
+The artifact fingerprint can be provided directly with the `--fingerprint` flag, or 
+calculated based on `--artifact-type` flag.
+
+Artifact type can be one of: "file" for files, "dir" for directories, "oci" for container
+images in registries or "docker" for local docker images.
+
+
 
 ```shell
-kosli assert artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli report artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [oci, docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it).  |
+|    -b, --build-url string  |  The url of CI pipeline that built the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|    -u, --commit-url string  |  The url for the git commit that created the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|        --environment string  |  The Kosli environment name to assert the artifact against.  |
 |    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for --artifact-type dir.  |
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'.  |
 |    -f, --flow string  |  The Kosli flow name.  |
+|    -g, --git-commit string  |  [defaulted] The git commit from which the artifact was created. (defaulted in some CIs: https://docs.kosli.com/ci-defaults, otherwise defaults to HEAD ).  |
 |    -h, --help  |  help for artifact  |
+|    -n, --name string  |  [optional] Artifact display name, if different from file, image or directory name.  |
 |        --registry-password string  |  [conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry.  |
 |        --registry-username string  |  [conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry.  |
+|        --repo-root string  |  [defaulted] The directory where the source git repository is available. (default ".")  |
 
 
 ## Flags inherited from parent commands
@@ -42,46 +56,32 @@ kosli assert artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --org string  |  The Kosli organization.  |
 
 
-## Live Examples in different CI systems
-
-{{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli assert artifact` command in GitHub.
-
-In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli+assert+artifact), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=github&command=kosli+assert+artifact).{{< /tab >}}{{< tab "GitLab" >}}View an example of the `kosli assert artifact` command in GitLab.
-
-In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=gitlab&command=kosli+assert+artifact), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=gitlab&command=kosli+assert+artifact).{{< /tab >}}{{< /tabs >}}
-
 ## Examples Use Cases
 
-**assert that an artifact meets all compliance requirements for an environment**
+**Report to a Kosli flow that a file type artifact has been created**
 
 ```shell
-kosli assert artifact \
-	--fingerprint 184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0 \
-	--flow yourFlowName \
-	--environment prod \
-	--api-token yourAPIToken \
-	--org yourOrgName 
+kosli report artifact FILE.tgz \
+	--api-token yourApiToken \
+	--artifact-type file \
+	--build-url https://exampleci.com \
+	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
+	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
+	--org yourOrgName \
+	--flow yourFlowName 
 
 ```
 
-**fail if an artifact has a non-compliant status (using the artifact fingerprint)**
+**Report to a Kosli flow that an artifact with a provided fingerprint (sha256) has been created**
 
 ```shell
-kosli assert artifact \
-	--fingerprint 184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0 \
+kosli report artifact ANOTHER_FILE.txt \
+	--api-token yourApiToken \
+	--build-url https://exampleci.com \
+	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
+	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
+	--org yourOrgName \
 	--flow yourFlowName \
-	--api-token yourAPIToken \
-	--org yourOrgName 
-
-```
-
-**fail if an artifact has a non-compliant status (using the artifact name and type)**
-
-```shell
-kosli assert artifact library/nginx:1.21 \
-	--artifact-type docker \
-	--flow yourFlowName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+	--fingerprint yourArtifactFingerprint
 ```
 
