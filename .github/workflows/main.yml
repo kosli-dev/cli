@@ -41,6 +41,7 @@ jobs:
           echo "trail_template_file=$TRAIL_TEMPLATE_FILE" >> $GITHUB_OUTPUT
 
   init-kosli:
+    if: ${{ github.event_name != 'schedule'}}
     needs: [pre-build]
     uses: ./.github/workflows/init_kosli.yml
     with:
@@ -54,6 +55,10 @@ jobs:
 
   test:
     needs: [pre-build, init-kosli]
+    if: | 
+      always() &&
+      (needs.init-kosli.result == 'success' || 
+      (needs.init-kosli.result == 'skipped' && github.event_name == 'schedule'))
     uses: ./.github/workflows/test.yml
     with:
       AWS_ACCOUNT_ID: 772819027869
@@ -61,6 +66,7 @@ jobs:
       FLOW_NAME: cli
       TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
       KOSLI_ORG: kosli-public
+      SCHEDULED: ${{ github.event_name == 'schedule' }}
     secrets:
       github_access_token: ${{ secrets.KOSLI_GITHUB_TOKEN }}
       gitlab_access_token: ${{ secrets.KOSLI_GITLAB_TOKEN }}
@@ -76,6 +82,7 @@ jobs:
       kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
 
   docker:
+    if: ${{ github.event_name != 'schedule'}}
     needs: [pre-build, test, init-kosli]
     uses: ./.github/workflows/docker.yml
     with:
