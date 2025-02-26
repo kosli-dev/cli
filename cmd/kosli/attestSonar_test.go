@@ -8,23 +8,23 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-/* The attest sonar command is used to attest scans from both SonarCloud and SonarQube.
- * The sonar API token for SonarCloud and SonarQube will always be different, so we need
+/* The attest sonar command is used to attest scans from both SonarQube Server and SonarQube Cloud.
+ * The sonar API token for SonarQube Server and Cloud will always be different, so we need
  * to have a separate test suite for each version of the command. This means we can easily
- * skip the SonarQube tests when we're testing SonarCloud (with the SonarCloud API token),
+ * skip the SonarQube Server tests when we're testing SonarQube Cloud (with the SonarQube Cloud API token),
  * and vice-versa.
  *
- * Note that SonarCloud regularly deletes older scans (see https://docs.sonarsource.com/sonarcloud/digging-deeper/housekeeping/ )
+ * Note that SonarQube Cloud regularly deletes older scans (see https://docs.sonarsource.com/sonarcloud/digging-deeper/housekeeping/ )
  * so the current report-task.txt files and the revisions used in the tests may not be valid in the future.
  * If/when this happens, they will need to be updated.
  *
- * Note also that if you want to run the SonarQube tests, there are a few steps to take:
+ * Note also that if you want to run the SonarQube Server tests, there are a few steps to take:
  * 1. Set the environment variable SONARQUBE to something (value doesn't matter)
  * so we know which test suite to use.
- * 2. Set up an instance of SonarQube (e.g. on localhost), with a project that has been
+ * 2. Set up an instance of SonarQube Server (or SonarQube Community on localhost), with a project that has been
  * scanned at least once.
  * 3. Replace testdata/sonar/sonarqube/.scannerwork/report-task.txt with the report-task.txt
- * from your sonarqube project (this should be located in a .scannerwork folder in
+ * from your SonarQube project (this should be located in a .scannerwork folder in
  * the base directory of your project) */
 
 type AttestSonarCommandTestSuite struct {
@@ -45,7 +45,7 @@ type AttestSonarQubeCommandTestSuite struct {
 
 func (suite *AttestSonarCommandTestSuite) SetupTest() {
 	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_SONAR_API_TOKEN"})
-	// If we have SONARQUBE set (e.g. to true), we're testing SonarQube and therefore should skip the SonarCloud tests
+	// If we have SONARQUBE set (e.g. to true), we're testing SonarQube Server and therefore should skip the SonarQube Cloud tests
 	testHelpers.SkipIfEnvVarSet(suite.Suite.T(), []string{"SONARQUBE"})
 	suite.flowName = "attest-sonar"
 	suite.trailName = "test-123"
@@ -137,7 +137,7 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 			wantError: true,
 			name:      "trying to fetch data from SonarCloud with incorrect API token gives error",
 			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-api-token xxxx --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
-			golden:    "Error: please check your API token is correct and you have the correct permissions in SonarCloud/SonarQube\n",
+			golden:    "Error: please check your API token is correct and you have the correct permissions in SonarQube\n",
 		},
 		{
 			wantError: true,
@@ -159,13 +159,13 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 			wantError: true,
 			name:      "if outdated task given (i.e. we try to get results for an older scan that SonarCloud has deleted), we get an error",
 			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork-old %s", suite.defaultKosliArguments),
-			golden:    "Error: analysis with ID AZERk4xKSYJCvL0vWjio not found. Snapshot may have been deleted by Sonar\n",
+			golden:    "Error: analysis with ID AZERk4xKSYJCvL0vWjio not found. Snapshot may have been deleted by SonarQube\n",
 		},
 		{
 			wantError: true,
 			name:      "if incorrect revision given (or the scan for the given revision has been deleted by SonarCloud)",
 			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-project-key cyber-dojo_differ --sonar-revision b4d1053f2aac18c9fb4b9a289a8289199c932e12 %s", suite.defaultKosliArguments),
-			golden:    "Error: analysis for revision b4d1053f2aac18c9fb4b9a289a8289199c932e12 of project cyber-dojo_differ not found. Check the revision is correct. Snapshot may also have been deleted by Sonar\n",
+			golden:    "Error: analysis for revision b4d1053f2aac18c9fb4b9a289a8289199c932e12 of project cyber-dojo_differ not found. Check the revision is correct. Snapshot may also have been deleted by SonarQube\n",
 		},
 		{
 			wantError: true,
@@ -238,7 +238,7 @@ func (suite *AttestSonarQubeCommandTestSuite) TestAttestSonarQubeCmd() {
 			wantError: true,
 			name:      "trying to fetch data from SonarQube with incorrect API token gives error",
 			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-api-token xxxx --sonar-working-dir testdata/sonar/sonarqube/.scannerwork %s", suite.defaultKosliArguments),
-			golden:    "Error: please check your API token is correct and you have the correct permissions in SonarCloud/SonarQube\n",
+			golden:    "Error: please check your API token is correct and you have the correct permissions in SonarQube\n",
 		},
 		{
 			wantError: true,
@@ -255,7 +255,7 @@ func (suite *AttestSonarQubeCommandTestSuite) TestAttestSonarQubeCmd() {
 			wantError: true,
 			name:      "if incorrect revision given, give an error",
 			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-server-url http://localhost:9000 --sonar-project-key test5 --sonar-revision 8e6f9489e5f2ddf8e719b503e374975e8b607fd2 %s", suite.defaultKosliArguments),
-			golden:    "Error: analysis for revision 8e6f9489e5f2ddf8e719b503e374975e8b607fd2 of project test5 not found. Check the revision is correct. Snapshot may also have been deleted by Sonar\n",
+			golden:    "Error: analysis for revision 8e6f9489e5f2ddf8e719b503e374975e8b607fd2 of project test5 not found. Check the revision is correct. Snapshot may also have been deleted by SonarQube\n",
 		},
 		{
 			wantError: true,
@@ -267,7 +267,7 @@ func (suite *AttestSonarQubeCommandTestSuite) TestAttestSonarQubeCmd() {
 			wantError: true,
 			name:      "if incorrect sonarqube server url given, we get an error",
 			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-server-url http://example.com --sonar-project-key test99 --sonar-revision 38f3dc8b63abb632ac94a12b3f818b49f8047fa1 %s", suite.defaultKosliArguments),
-			golden:    "Error: please check your API token and SonarQube server URL are correct and you have the correct permissions in SonarCloud/SonarQube\n",
+			golden:    "Error: please check your API token and SonarQube server URL are correct and you have the correct permissions in SonarQube\n",
 		},
 		{
 			name:   "if report-task.txt file found, we don't use the sonar-project-key, sonar-revision or sonar-server-url flags",

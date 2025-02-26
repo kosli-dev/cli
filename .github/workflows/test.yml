@@ -43,6 +43,8 @@ on:
         required: true
       kosli_api_token:
         required: true
+      sonarqube_token:
+        required: true
 
 
 jobs:
@@ -138,6 +140,7 @@ jobs:
         KOSLI_JIRA_API_TOKEN: ${{ secrets.jira_api_token }}
         INTEGRATION_TEST_AZURE_CLIENT_SECRET: ${{ secrets.azure_client_secret }}
         INTEGRATION_TEST_AZURE_CLIENT_ID: ${{ secrets.azure_client_id }}
+        KOSLI_SONAR_API_TOKEN: ${{ secrets.sonarqube_token }}
         DOCKER_API_VERSION: "1.45"
       run: |
         # some tests use git operations, therefore the git author on the CI VM needs to be set
@@ -169,6 +172,7 @@ jobs:
         SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
 
   snyk-code:
+    if: false  # Have reached limit of 200 tests this month
     name: Snyk Code
     runs-on: ubuntu-latest
     permissions:
@@ -191,7 +195,7 @@ jobs:
       env:
         SNYK_TOKEN: ${{ secrets.snyk_token }}
       run: 
-          snyk test --debug --sarif --policy-path=.snyk  --sarif-file-output=snyk-code.json --prune-repeated-subdependencies
+          snyk test --sarif --policy-path=.snyk  --sarif-file-output=snyk-code.json --prune-repeated-subdependencies
     
     - name: Report Snyk Code to Kosli
       if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) &&  (success() || failure()) }}
