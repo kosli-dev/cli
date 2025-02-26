@@ -172,7 +172,6 @@ jobs:
         SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
 
   snyk-code:
-    if: false  # Have reached limit of 200 tests this month
     name: Snyk Code
     runs-on: ubuntu-latest
     permissions:
@@ -195,7 +194,7 @@ jobs:
       env:
         SNYK_TOKEN: ${{ secrets.snyk_token }}
       run: 
-          snyk test --sarif --policy-path=.snyk  --sarif-file-output=snyk-code.json --prune-repeated-subdependencies
+          snyk test --debug --sarif --policy-path=.snyk  --sarif-file-output=snyk-code.json --prune-repeated-subdependencies
     
     - name: Report Snyk Code to Kosli
       if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) &&  (success() || failure()) }}
