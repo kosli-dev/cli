@@ -16,8 +16,8 @@ In all the commands below we skip the required `--api-token` and `--org` flags f
 
 To create a Flow, you can run:
 
-```shell
-$ kosli create flow process-a --description "My SW delivery process" \
+```shell {.command}
+kosli create flow process-a --description "My SW delivery process" \
     --use-empty-template
 ```
 
@@ -46,8 +46,8 @@ trail:
 
 To create a Flow with a template, you can run:
 
-```shell
-$ kosli create flow process-a --description "My SW delivery process" \
+```shell {.command}
+kosli create flow process-a --description "My SW delivery process" \
  --template-file sw-delivery-template.yml
 ```
 

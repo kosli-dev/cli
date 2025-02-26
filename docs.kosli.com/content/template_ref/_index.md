@@ -16,7 +16,7 @@ trail: # the trail specification (optional)
   - name: reference name for the artifact (e.g. frontend-app) (required)
     attestations: # what attestations are required for the artifact to be compliant
     - name: the attestation name (required)
-      type: the attestation type. One of [generic, jira, junit, pull_request, snyk] (required)
+      type: the attestation type. One of [generic, jira, junit, pull_request, snyk, sonar, custom:<custom-type-name>] (required)
 ```
  
 ## Example:
@@ -40,4 +40,6 @@ trail:
     attestations:
     - name: manual-ui-test
       type: generic
+    - name: coverage-metrics
+      type: custom:coverage-metrics
 ```

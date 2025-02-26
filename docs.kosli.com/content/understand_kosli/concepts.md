@@ -12,7 +12,7 @@ This section helps you understand the concepts Kosli is built on. The figure bel
 
 ## Organization
 
-A Kosli organization is an account that owns Kosli resources, such as Flows and Environments. Only members within an organization can access its contents.
+A Kosli organization is an account that owns Kosli resources, such as Flows and Environments. Only members within an organization can access its resources.
 
 When signing up for Kosli, a personal organization is automatically created for you, bearing your username. This personal organization is exclusively accessible to you. Additionally, you can create `Shared` organizations and invite multiple team members to collaborate on different Flows and Environments.
 
@@ -27,15 +27,15 @@ Each Trail must have a unique identifier of your choice, based on your process a
   
 #### Artifact
 
-Kosli Artifacts represent the software artifacts generated from every execution, portrayed as a Trail, of your software process depicted as a Flow. These artifacts play a crucial role in enabling **Binary Provenance**, providing a comprehensive chain of custody that records the origin, history, distribution, and execution details of each artifact.
+Kosli Artifacts represent the software artifacts generated from every execution, portrayed as a Trail, of your software process depicted as a Flow. These artifacts play a crucial role in enabling **Binary Provenance**, providing a comprehensive chain of custody that records the origin, history and distribution of each artifact.
 
 Each Artifact is uniquely identified by its SHA256 fingerprint. Using this fingerprint, Kosli can link the creation of the Artifact with its runtime-related events, such as when the artifact starts or concludes execution within a specific Environment.
 
 #### Attestation
 
-An Attestation is a declaration about whether a particular Artifact or Trail adheres to a certain requirement or not. It is normally reported after performing a specific risk control or quality check (e.g. running tests). The attestation encompasses the procedure's results.
+An Attestation is a record of compliance checks or controls that have been performed a particular Artifact or Trail. It is normally reported after performing a specific risk control or quality check (e.g. running tests). The attestation encompasses the procedure's results.
 
-Kosli supports reporting specific types of attestations (e.g., a snyk scan, sonarcloud scan, junit tests) and a generic one for other use cases.
+Kosli provides specific built-in types of attestations (e.g., a snyk scan, sonar scan, junit tests) and allows to define your own custom types. 
 
 ##### Evidence Vault
 
@@ -62,6 +62,7 @@ Kosli supports various types of runtime environments:
 * Amazon Lambda
 * Physical/virtual server
 * Docker host
+* Azure Web Apps and Function Apps
 
 ### Environment Snapshot
 
@@ -70,3 +71,8 @@ An Environment Snapshot represents the reported status (running Artifacts) of yo
 In each snapshot, Kosli links the running artifacts to the Flows and Trails that produced them. Snapshot compliance relies on the compliance status of each running artifact, while Environment compliance depends on its latest snapshot compliance.
 
 Running artifacts that come from 3rd party sources, can be `allow-listed` in an Environment to make them compliant. 
+
+
+### Environment Policy
+
+Environment Policy enables you to define and enforce compliance requirements for artifact deployments across different environments.
