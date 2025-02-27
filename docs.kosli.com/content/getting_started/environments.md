@@ -2,11 +2,11 @@
 title: "Part 8: Environments"
 bookCollapseSection: false
 weight: 280
-summary: "Kosli environments allow you to record the artifacts running in your runtime environments and how they change. Every time an environment change (or a set of changes) is reported, Kosli creates a new environment snapshot containing the status of the environment at a given point in time."
+summary: "Kosli environments allow you to record the artifacts running in your runtime environments and how they change. Every time an environment change (or a set of changes) is reported, Kosli creates a new environment snapshot containing the status of the environment at a given point in time. The change record created in Kosli enables you to retrospectively perform runtime forensics about what ran where and when."
 ---
 # Part 8: Environments
 
-Kosli environments allow you to record the artifacts running in your runtime environments and how they change. Every time an environment change (or a set of changes) is reported, Kosli creates a new environment snapshot containing the status of the environment at a given point in time.
+Kosli environments allow you to record the artifacts running in your runtime environments and how they change. Every time an environment change (or a set of changes) is reported, Kosli creates a new environment snapshot containing the status of the environment at a given point in time. The change record created in Kosli enables you to retrospectively perform runtime forensics about what ran where and when.
 
 ## Create an environment
 
@@ -21,7 +21,7 @@ Make sure that type of Kosli environment matches the type of the environment you
 To create an environment via CLI, you would run a command like this:
 
 ```shell {.command}
-$ kosli create environment quickstart \
+kosli create environment quickstart \
     --environment-type docker \
     --description "quickstart environment for tutorial"
 ```
@@ -42,8 +42,8 @@ After the new environment is created you'll be redirected to its page, which wil
 
 ## Snapshoting an environment
 
-To record the current status of your environment you need to make Kosli CLI snapshot the running artifacts in it and report it to Kosli. 
-When Kosli receives an environment report, if the received list of running artifacts is different than what is in the latest environment snapshot, a new environment snapshot is created. Snapshots are immutable and can't be tampered with.
+To record the current status of your environment you need to use the Kosli CLI to snapshot the running artifacts in it and report it to Kosli. 
+When Kosli receives an environment report, if the received list of running artifacts is different than what is in the latest environment snapshot, a new snapshot is created. Snapshots are immutable and can't be tampered with.
 
 Currently, the following environment types are supported:
 - Kubernetes
@@ -52,6 +52,7 @@ Currently, the following environment types are supported:
 - AWS Simple Storage Service (S3)
 - AWS Lambda
 - AWS Elastic Container Service (ECS)
+- Azure Web Apps and Function Apps
 
 You can report environment snapshots manually using the `kosli snapshot [...]` commands for testing. For production use, however,  you would configure the reporting to happen automatically on regular intervals, e.g. via a cron job or scheduled CI job, or on certain events. 
 

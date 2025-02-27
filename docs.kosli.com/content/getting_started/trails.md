@@ -20,8 +20,8 @@ Each trail must possess a unique name within the Flow. This name typically follo
 
 To begin a Trail, you can run a command similar to the one below:
 
-```shell
-$ kosli begin trail trail-1 --flow process-1 --description "My first trail"
+```shell {.command}
+kosli begin trail trail-1 --flow process-1 --description "My first trail"
 ```
 
 Rerunning the command with different description or template file will update the Trail. 

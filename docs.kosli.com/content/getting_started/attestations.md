@@ -39,8 +39,8 @@ When you make an attestation, you have the choice of what `name` to attach it to
 
 The `jira-ticket` attestation belongs to a single trail and is not linked to a specific artifact. In this example, the id of the trail is the git commit.
 
-```shell
-$ kosli attest jira \
+```shell {.command}
+kosli attest jira \
     --flow backend-ci \
 	--trail $(git rev-parse HEAD) \	
     --name jira-ticket 
@@ -51,8 +51,8 @@ $ kosli attest jira \
 
 Some attestations are attached to a specific artifact, like the unit tests for the `backend` artifact. Often, evidence like unit tests are created _before_ the artifact is built. To attach the evidence to the artifact before its creation, use `backend` (the artifact's `name` from the template), as well as `unit-tests` (the attestation's `name` from the template).
 
-```shell
-$ kosli attest junit \
+```shell {.command}
+kosli attest junit \
     --name backend.unit-tests \
     --flow backend-ci \
     --trail $(git rev-parse HEAD) \
@@ -65,8 +65,8 @@ This attestation belongs to any artifact attested with the matching `name` from 
 
 Once the artifact has been built, it can be attested with the following command.
 
-```shell
-$ kosli attest artifact my_company/backend:latest \
+```shell {.command}
+kosli attest artifact my_company/backend:latest \
 	--artifact-type docker \
     --flow backend-ci \
 	--trail $(git rev-parse HEAD) \	
@@ -88,8 +88,8 @@ Often, evidence like snyk reports are created _after_ the artifact is built. In 
 
 The following attestation will only belong to the artifact `my_company/backend:latest` attested above and its fingerprint, in this case calculated by the Kosli CLI.
 
-```shell
-$ kosli attest snyk \
+```shell {.command}
+kosli attest snyk \
     --artifact-type docker my_company/backend:latest \
     --name backend.security-scan \
     --flow backend-ci \
@@ -107,12 +107,12 @@ Typically, the Flow and Trail are explicitly setup before making the attestation
 This is done with the `create flow` and `begin trail` commands, either of which can specify the name of the template yaml file above 
 (e.g. `.kosli.yml`) whose contents define overall compliance. For example:
 
-```shell
-$ kosli create flow backend-ci \
+```shell {.command}
+kosli create flow backend-ci \
     --template-file .kosli.yml
     ...
     
-$ kosli begin trail $(git rev-parse HEAD) \
+kosli begin trail $(git rev-parse HEAD) \
     --flow backend-ci \
     ...    
 ```
@@ -140,7 +140,6 @@ It will not affect earlier records of compliance evaluations (e.g. in Environmen
 
 Attestations are append-only immutable records. You can report the same attestation multiple times, and each report will be recorded.
 However, only the latest version of the attestation is considered when evaluating compliance.
-
 
 
 ## Evidence Vault
