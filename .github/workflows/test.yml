@@ -89,7 +89,7 @@ jobs:
         args: --timeout=5m -v
 
     - name: Report lint to Kosli
-      if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) &&  (success() || failure()) }}
+      if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) &&  (success() || failure()) && inputs.report_results }}
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
       run: kosli attest generic 
@@ -213,7 +213,7 @@ jobs:
           snyk test --sarif --policy-path=.snyk  --sarif-file-output=snyk-code.json --prune-repeated-subdependencies
     
     - name: Report Snyk Code to Kosli
-      if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) &&  (success() || failure()) }}
+      if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) &&  (success() || failure()) && inputs.report_results }}
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
       run: kosli attest snyk 
