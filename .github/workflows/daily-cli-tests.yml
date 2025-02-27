@@ -1,0 +1,50 @@
+name: Main
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 9 * * 1,2,3,4,5"
+
+jobs:
+  set-trail-name:
+    runs-on: ubuntu-latest
+    outputs:
+      trail_name: ${{ steps.prep.outputs.trail_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare
+        id: prep
+        run: |
+          TRAIL_NAME=$(echo $GITHUB_SHA | head -c 7)
+
+          echo "TRAIL_NAME=${TRAIL_NAME}" >> $GITHUB_ENV
+          echo "trail_name=$TRAIL_NAME" >> $GITHUB_OUTPUT
+
+  test:
+    needs: [set-trail-name]
+    uses: ./.github/workflows/test.yml
+    with:
+      AWS_ACCOUNT_ID: 772819027869
+      AWS_REGION: eu-central-1
+      FLOW_NAME: cli-daily-tests
+      TRAIL_NAME: ${{ needs.set-trail-name.outputs.trail_name }}
+      KOSLI_ORG: kosli-public
+      run_lint: false
+      run_snyk: false
+      report_results: false
+
+    secrets:
+      github_access_token: ${{ secrets.KOSLI_GITHUB_TOKEN }}
+      gitlab_access_token: ${{ secrets.KOSLI_GITLAB_TOKEN }}
+      azure_access_token: ${{ secrets.KOSLI_AZURE_TOKEN }}
+      azure_client_id: ${{ secrets.AZURE_CLIENT_ID }}
+      azure_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+      bitbucket_username: ${{ secrets.KOSLI_BITBUCKET_USERNAME }}
+      bitbucket_password: ${{ secrets.KOSLI_BITBUCKET_PASSWORD }}
+      jira_api_token: ${{ secrets.KOSLI_JIRA_API_TOKEN }}
+      slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
+      slack_channel: ci-failures
+      snyk_token: ${{ secrets.SNYK_TOKEN }}
+      kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
+      sonarqube_token: ${{ secrets.KOSLI_SONARQUBE_TOKEN }}

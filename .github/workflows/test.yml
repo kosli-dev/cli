@@ -18,9 +18,18 @@ on:
       KOSLI_ORG:
         required: true
         type: string
-      SCHEDULED:
-        required: true
+      run_lint:
+        required: false
         type: boolean
+        default: true
+      run_snyk:
+        required: false
+        type: boolean
+        default: true
+      report_results:
+        required: false
+        type: boolean
+        default: true
     secrets:
       slack_channel:
         required: true
@@ -52,7 +61,7 @@ on:
 
 jobs:
   lint:
-    if: ${{ !inputs.SCHEDULED }}
+    if: ${{ inputs.run_lint }}
     name: Lint
     runs-on: ubuntu-latest
     permissions:
@@ -153,7 +162,7 @@ jobs:
         make test_integration_full
 
     - name: Report test to Kosli
-      if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) &&  (success() || failure()) && !inputs.SCHEDULED }}
+      if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) && (success() || failure()) && inputs.report_results }}
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
       run: kosli attest junit 
@@ -163,6 +172,7 @@ jobs:
            --org ${{ inputs.KOSLI_ORG }}
 
     - name: Upload coverage reports to Codecov
+      if: ${{ inputs.report_results }}
       uses: codecov/codecov-action@v4
 
     - name: Slack Notification on Failure
@@ -176,8 +186,7 @@ jobs:
         SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
 
   snyk-code:
-    if: false  # Have reached limit of 200 tests this month
-    # if: ${{ !inputs.SCHEDULED }} #Uncomment this when we can re-enable snyk code so we don't do it on scheduled runs
+    if: ${{ inputs.run_snyk }} 
     name: Snyk Code
     runs-on: ubuntu-latest
     permissions:

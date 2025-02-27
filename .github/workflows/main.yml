@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - "**"
-  schedule:
-    - cron: "0 9 * * 1,2,3,4,5"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -41,7 +39,6 @@ jobs:
           echo "trail_template_file=$TRAIL_TEMPLATE_FILE" >> $GITHUB_OUTPUT
 
   init-kosli:
-    if: ${{ github.event_name != 'schedule'}}
     needs: [pre-build]
     uses: ./.github/workflows/init_kosli.yml
     with:
@@ -55,9 +52,6 @@ jobs:
 
   test:
     needs: [pre-build, init-kosli]
-    if: | # This allows tests to run even when init-kosli is skipped due to a schedule event
-      always() &&
-      (needs.init-kosli.result == 'success' || github.event_name == 'schedule')
     uses: ./.github/workflows/test.yml
     with:
       AWS_ACCOUNT_ID: 772819027869
@@ -65,7 +59,7 @@ jobs:
       FLOW_NAME: cli
       TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
       KOSLI_ORG: kosli-public
-      SCHEDULED: ${{ github.event_name == 'schedule' }}
+      run_snyk: false # Remove this when we want to re-enable snyk code scans
     secrets:
       github_access_token: ${{ secrets.KOSLI_GITHUB_TOKEN }}
       gitlab_access_token: ${{ secrets.KOSLI_GITLAB_TOKEN }}
@@ -82,7 +76,6 @@ jobs:
       sonarqube_token: ${{ secrets.KOSLI_SONARQUBE_TOKEN }}
 
   docker:
-    if: ${{ github.event_name != 'schedule'}}
     needs: [pre-build, test, init-kosli]
     uses: ./.github/workflows/docker.yml
     with:
