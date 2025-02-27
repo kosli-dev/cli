@@ -55,10 +55,9 @@ jobs:
 
   test:
     needs: [pre-build, init-kosli]
-    if: | 
+    if: | # This allows tests to run even when init-kosli is skipped due to a schedule event
       always() &&
-      (needs.init-kosli.result == 'success' || 
-      (needs.init-kosli.result == 'skipped' && github.event_name == 'schedule'))
+      (needs.init-kosli.result == 'success' || github.event_name == 'schedule')
     uses: ./.github/workflows/test.yml
     with:
       AWS_ACCOUNT_ID: 772819027869
