@@ -49,6 +49,16 @@ func newAssertPullRequestBitbucketCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return err
 			}
+
+			err = ConditionallyRequiredFlags(cmd, "bitbucket-username", "bitbucket-password")
+			if err != nil {
+				return err
+			}
+
+			err = ConditionallyRequiredFlags(cmd, "bitbucket-password", "bitbucket-username")
+			if err != nil {
+				return err
+			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {

@@ -76,6 +76,16 @@ func newReportEvidenceArtifactPRBitbucketCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
+			err = ConditionallyRequiredFlags(cmd, "bitbucket-username", "bitbucket-password")
+			if err != nil {
+				return err
+			}
+
+			err = ConditionallyRequiredFlags(cmd, "bitbucket-password", "bitbucket-username")
+			if err != nil {
+				return err
+			}
+
 			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.ArtifactFingerprint, false)
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())

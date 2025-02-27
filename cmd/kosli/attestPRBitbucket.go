@@ -142,6 +142,16 @@ func newAttestBitbucketPRCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
+			err = ConditionallyRequiredFlags(cmd, "bitbucket-username", "bitbucket-password")
+			if err != nil {
+				return err
+			}
+
+			err = ConditionallyRequiredFlags(cmd, "bitbucket-password", "bitbucket-username")
+			if err != nil {
+				return err
+			}
+
 			err = ValidateSliceValues(o.redactedCommitInfo, allowedCommitRedactionValues)
 			if err != nil {
 				return fmt.Errorf("%s for --redact-commit-info", err.Error())
