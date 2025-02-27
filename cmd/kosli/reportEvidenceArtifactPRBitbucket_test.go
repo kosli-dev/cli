@@ -19,7 +19,7 @@ type ArtifactEvidencePRBitbucketCommandTestSuite struct {
 }
 
 func (suite *ArtifactEvidencePRBitbucketCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_BITBUCKET_PASSWORD"})
+	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_BITBUCKET_ACCESS_TOKEN"})
 
 	suite.flowName = "bitbucket-pr"
 	suite.artifactFingerprint = "847411c6124e719a4e8da2550ac5c116b7ff930493ce8a061486b48db8a5aaa0"

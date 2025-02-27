@@ -12,6 +12,7 @@ const attestPRBitbucketShortDesc = `Report a Bitbucket pull request attestation 
 
 const attestPRBitbucketLongDesc = attestPRBitbucketShortDesc + `
 It checks if a pull request exists for a given merge commit and reports the pull-request attestation to Kosli.
+Authentication to Bitbucket can be done with access token (recommended) or app passwords. Credentials need to have read access for both repos and pull requests.
 ` + attestationBindingDesc
 
 const attestPRBitbucketExample = `
@@ -21,8 +22,7 @@ kosli attest pullrequest bitbucket yourDockerImageName \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
+	--bitbucket-access-token yourBitbucketAccessToken \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--commit yourArtifactGitCommit \
 	--repository yourBitbucketGitRepository \
@@ -35,8 +35,7 @@ kosli attest pullrequest bitbucket \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
+	--bitbucket-access-token yourBitbucketAccessToken \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--commit yourArtifactGitCommit \
 	--repository yourBitbucketGitRepository \
@@ -48,8 +47,7 @@ kosli attest pullrequest bitbucket \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
+	--bitbucket-access-token yourBitbucketAccessToken \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--commit yourArtifactGitCommit \
 	--repository yourBitbucketGitRepository \
@@ -61,8 +59,7 @@ kosli attest pullrequest bitbucket \
 	--name yourTemplateArtifactName.yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
+	--bitbucket-access-token yourBitbucketAccessToken \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--commit yourArtifactGitCommit \
 	--repository yourBitbucketGitRepository \
@@ -74,8 +71,7 @@ kosli attest pullrequest bitbucket \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
+	--bitbucket-access-token yourBitbucketAccessToken \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--commit yourArtifactGitCommit \
 	--repository yourBitbucketGitRepository \
@@ -88,8 +84,7 @@ kosli attest pullrequest bitbucket \
 	--name yourTemplateArtifactName.yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
+	--bitbucket-access-token yourBitbucketAccessToken \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--commit yourArtifactGitCommit \
 	--repository yourBitbucketGitRepository \
@@ -137,6 +132,16 @@ func newAttestBitbucketPRCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
+			err = MuXRequiredFlags(cmd, []string{"bitbucket-username", "bitbucket-access-token"}, true)
+			if err != nil {
+				return err
+			}
+
+			err = MuXRequiredFlags(cmd, []string{"bitbucket-password", "bitbucket-access-token"}, true)
+			if err != nil {
+				return err
+			}
+
 			err = ValidateSliceValues(o.redactedCommitInfo, allowedCommitRedactionValues)
 			if err != nil {
 				return fmt.Errorf("%s for --redact-commit-info", err.Error())
@@ -161,7 +166,6 @@ func newAttestBitbucketPRCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
 
 	err := RequireFlags(cmd, []string{"flow", "trail", "name",
-		"bitbucket-username", "bitbucket-password",
 		"bitbucket-workspace", "commit", "repository"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)

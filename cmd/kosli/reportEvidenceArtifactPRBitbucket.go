@@ -66,6 +66,16 @@ func newReportEvidenceArtifactPRBitbucketCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
+			err = MuXRequiredFlags(cmd, []string{"bitbucket-username", "bitbucket-access-token"}, true)
+			if err != nil {
+				return err
+			}
+
+			err = MuXRequiredFlags(cmd, []string{"bitbucket-password", "bitbucket-access-token"}, true)
+			if err != nil {
+				return err
+			}
+
 			err = ValidateArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.ArtifactFingerprint, false)
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
@@ -86,7 +96,6 @@ func newReportEvidenceArtifactPRBitbucketCmd(out io.Writer) *cobra.Command {
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{
-		"bitbucket-username", "bitbucket-password",
 		"bitbucket-workspace", "commit", "repository", "flow", "name", "build-url",
 	})
 	if err != nil {

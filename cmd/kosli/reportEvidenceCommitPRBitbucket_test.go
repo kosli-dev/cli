@@ -18,7 +18,7 @@ type CommitEvidencePRBitbucketCommandTestSuite struct {
 }
 
 func (suite *CommitEvidencePRBitbucketCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_BITBUCKET_PASSWORD"})
+	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_BITBUCKET_ACCESS_TOKEN"})
 
 	suite.flowNames = "bitbucket-pr"
 	global = &GlobalOpts{

@@ -23,7 +23,7 @@ type AttestBitbucketPRCommandTestSuite struct {
 }
 
 func (suite *AttestBitbucketPRCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_BITBUCKET_PASSWORD"})
+	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_BITBUCKET_ACCESS_TOKEN"})
 
 	suite.flowName = "attest-bitbucket-pr"
 	suite.trailName = "test-123"
@@ -63,6 +63,13 @@ func (suite *AttestBitbucketPRCommandTestSuite) TestAttestBitbucketPRCmd() {
 			name:      "fails when missing a required flags",
 			cmd:       fmt.Sprintf("attest pullrequest bitbucket foo -t file %s", suite.defaultKosliArguments),
 			golden:    "Error: required flag(s) \"bitbucket-workspace\", \"name\", \"repository\" not set\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when both password and access token are provided",
+			cmd: fmt.Sprintf(`attest pullrequest bitbucket testdata/file1 --artifact-type file --name foo
+				--bitbucket-workspace kosli-dev --repository cli-test --bitbucket-password xxx %s`, suite.defaultKosliArguments),
+			golden: "Error: only one of --bitbucket-password, --bitbucket-access-token is allowed\n",
 		},
 		{
 			wantError: true,
