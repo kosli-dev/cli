@@ -163,6 +163,6 @@ API-TOKEN = "123456abcdef"
 When using the `--config-file` flag you can skip the file extension. For example, 
 to list environments with `org` and `api-token` in the configuration file you would run:
 
-```
-$ kosli list environments --config-file=kosli-conf
+```shell {.command}
+kosli list environments --config-file=kosli-conf
 ```

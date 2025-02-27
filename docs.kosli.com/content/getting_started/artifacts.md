@@ -28,8 +28,8 @@ By establishing and maintaining binary provenance for artifacts, Kosli enables y
 
 To attest an artifact, you can run a command similar to the one below:
 
-```shell
-$ kosli attest artifact project-a-app.bin \
+```shell {.command}
+kosli attest artifact project-a-app.bin \
 	--artifact-type file \
 	--build-url https://exampleci.com \
 	--commit-url https://github.com/ProjectA/ProjectAApp/commit/e67f2f2b121f9325ebf166b7b3c707f73cb48b14 \
@@ -63,8 +63,8 @@ This will allow you to instantly turn off all Kosli CLI commands if Kosli is dow
 
 The `--dry-run` flag is also useful when trying commands locally. For example:
 
-```shell
-$ kosli attest artifact cyberdojo/differ:dde3b2a \
+```shell {.command}
+kosli attest artifact cyberdojo/differ:dde3b2a \
   --artifact-type=docker \
   --org=cyber-dojo \
   --flow=differ-ci \

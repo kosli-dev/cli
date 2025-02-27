@@ -131,8 +131,8 @@ API-TOKEN = "123456abcdef"
 
 When calling Kosli command you can skip the file extension. For example, to list environments with `org` and `api-token` in the configuration file you would run:
 
-```
-$ kosli list environments --config-file kosli-conf
+```shell {.command}
+kosli list environments --config-file kosli-conf
 ```
 
 `--config-file` defaults to `kosli`, so if you name your file `kosli.<yaml|toml|json>` and the file is in the same location as where you run Kosli commands from, you can skip the `--config-file` altogether.
@@ -163,8 +163,8 @@ part of the template, the state of the extra evidence will affect the overall co
 
 The `--compliant` flag is a [boolean flag](#boolean-flags). 
 To report generic evidence as non-compliant use `--compliant=false`, as in this example:
-```
-$ kosli report evidence artifact generic server:1.0 \
+```shell {.command}
+kosli report evidence artifact generic server:1.0 \
   --artifact-type docker \
   --name test \
   --description "generic test evidence" \

@@ -1,11 +1,11 @@
 ---
-title: "Part 10: Next Steps"
+title: "Part 11: Next Steps"
 bookCollapseSection: false
 weight: 310
 summary: "In the previous chapters, you explored Kosli Flows and Environments and have reported some data to Kosli. 
 The next steps would be to harness the benefits of your hard work. Here are a few areas to look at next:"
 ---
-# Part 10: Next Steps
+# Part 11: Next Steps
 
 In the previous chapters, you explored Kosli Flows and Environments and have reported some data to Kosli. 
 The next steps would be to harness the benefits of your hard work. Here are a few areas to look at next:
