@@ -186,7 +186,8 @@ jobs:
         SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
 
   snyk-code:
-    if: ${{ inputs.run_snyk }} 
+    if: false # Disable snyk code scans because we reached the monthly limit
+    #if: ${{ inputs.run_snyk }}  # Uncomment this when we re-enable snyk code scans
     name: Snyk Code
     runs-on: ubuntu-latest
     permissions:
