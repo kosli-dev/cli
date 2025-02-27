@@ -82,6 +82,7 @@ jobs:
       jira_api_token: ${{ secrets.KOSLI_JIRA_API_TOKEN }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}
       kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
+      sonarqube_token: ${{ secrets.KOSLI_SONARQUBE_TOKEN }}
 
   docker:
     needs: [pre-build, init-kosli, test]
