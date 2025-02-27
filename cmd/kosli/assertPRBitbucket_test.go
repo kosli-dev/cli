@@ -17,7 +17,7 @@ type AssertPRBitbucketCommandTestSuite struct {
 }
 
 func (suite *AssertPRBitbucketCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_BITBUCKET_PASSWORD"})
+	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_BITBUCKET_ACCESS_TOKEN"})
 
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
@@ -34,6 +34,13 @@ func (suite *AssertPRBitbucketCommandTestSuite) TestAssertPRBitbucketCmd() {
 			cmd: `assert pullrequest bitbucket --bitbucket-workspace kosli-dev --repository cli-test 
 			--commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
 			golden: "found [1] pull request(s) in Bitbucket for commit: fd54040fc90e7e83f7b152619bfa18917b72c34f\n",
+		},
+		{
+			wantError: true,
+			name:      "assert Bitbucket PR evidence fails when both password and access token are provided",
+			cmd: `assert pullrequest bitbucket --bitbucket-workspace kosli-dev --repository cli-test 
+			--commit fd54040fc90e7e83f7b152619bfa18917b72c34f --bitbucket-password xxxx` + suite.defaultKosliArguments,
+			golden: "Error: only one of --bitbucket-password, --bitbucket-access-token is allowed\n",
 		},
 		{
 			wantError: true,

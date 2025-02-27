@@ -13,6 +13,7 @@ import (
 type Config struct {
 	Username    string
 	Password    string
+	AccessToken string
 	Workspace   string
 	Repository  string
 	Logger      *logger.Logger
@@ -35,6 +36,7 @@ func (c *Config) getPullRequestsFromBitbucketApi(commit string) ([]*types.PREvid
 		URL:      url,
 		Username: c.Username,
 		Password: c.Password,
+		Token:    c.AccessToken,
 	}
 	response, err := c.KosliClient.Do(reqParams)
 	if err != nil {

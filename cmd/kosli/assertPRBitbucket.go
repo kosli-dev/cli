@@ -16,13 +16,12 @@ type assertPullRequestBitbucketOptions struct {
 const assertPRBitbucketShortDesc = `Assert a Bitbucket pull request for a git commit exists.  `
 
 const assertPRBitbucketLongDesc = assertPRBitbucketShortDesc + `
-The command exits with non-zero exit code 
-if no pull requests were found for the commit.`
+The command exits with non-zero exit code if no pull requests were found for the commit.
+Authentication to Bitbucket can be done with access token (recommended) or app passwords. Credentials need to have read access for both repos and pull requests.`
 
 const assertPRBitbucketExample = `
 kosli assert pullrequest bitbucket  \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
+	--bitbucket-access-token yourBitbucketAccessToken \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--commit yourGitCommit \
 	--repository yourBitbucketGitRepository
@@ -40,6 +39,28 @@ func newAssertPullRequestBitbucketCmd(out io.Writer) *cobra.Command {
 		Long:    assertPRBitbucketLongDesc,
 		Example: assertPRBitbucketExample,
 		Args:    cobra.NoArgs,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			err := MuXRequiredFlags(cmd, []string{"bitbucket-username", "bitbucket-access-token"}, true)
+			if err != nil {
+				return err
+			}
+
+			err = MuXRequiredFlags(cmd, []string{"bitbucket-password", "bitbucket-access-token"}, true)
+			if err != nil {
+				return err
+			}
+
+			err = ConditionallyRequiredFlags(cmd, "bitbucket-username", "bitbucket-password")
+			if err != nil {
+				return err
+			}
+
+			err = ConditionallyRequiredFlags(cmd, "bitbucket-password", "bitbucket-username")
+			if err != nil {
+				return err
+			}
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)
 		},
@@ -50,7 +71,7 @@ func newAssertPullRequestBitbucketCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.commit, "commit", DefaultValueForCommit(ci, true), commitPREvidenceFlag)
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"bitbucket-username", "bitbucket-password",
+	err := RequireFlags(cmd, []string{
 		"bitbucket-workspace", "commit", "repository"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)

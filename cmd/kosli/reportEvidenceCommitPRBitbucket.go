@@ -61,6 +61,25 @@ func newReportEvidenceCommitPRBitbucketCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
+			err = MuXRequiredFlags(cmd, []string{"bitbucket-username", "bitbucket-access-token"}, true)
+			if err != nil {
+				return err
+			}
+
+			err = MuXRequiredFlags(cmd, []string{"bitbucket-password", "bitbucket-access-token"}, true)
+			if err != nil {
+				return err
+			}
+
+			err = ConditionallyRequiredFlags(cmd, "bitbucket-username", "bitbucket-password")
+			if err != nil {
+				return err
+			}
+
+			err = ConditionallyRequiredFlags(cmd, "bitbucket-password", "bitbucket-username")
+			if err != nil {
+				return err
+			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -75,7 +94,7 @@ func newReportEvidenceCommitPRBitbucketCmd(out io.Writer) *cobra.Command {
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{
-		"bitbucket-username", "bitbucket-password", "bitbucket-workspace",
+		"bitbucket-workspace",
 		"commit", "repository", "build-url", "name",
 	})
 	if err != nil {

@@ -230,10 +230,10 @@ func ConditionallyRequiredFlags(cmd *cobra.Command, requiredFlagName, conditionF
 	conditionFlag := cmd.Flags().Lookup(conditionFlagName)
 	requiredFlag := cmd.Flags().Lookup(requiredFlagName)
 	if conditionFlag == nil {
-		return fmt.Errorf("failed to configure conditionally required flags [%s]. The flag is not defined for this command.", conditionFlagName)
+		return fmt.Errorf("failed to configure conditionally required flags [%s]. The flag is not defined for this command", conditionFlagName)
 	}
 	if requiredFlag == nil {
-		return fmt.Errorf("failed to configure conditionally required flags [%s]. The flag is not defined for this command.", requiredFlagName)
+		return fmt.Errorf("failed to configure conditionally required flags [%s]. The flag is not defined for this command", requiredFlagName)
 	}
 
 	if conditionFlag.Changed && !requiredFlag.Changed {

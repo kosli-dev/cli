@@ -1,13 +1,14 @@
 package main
 
 import (
+	"log"
+
 	"github.com/kosli-dev/cli/internal/aws"
 	azUtils "github.com/kosli-dev/cli/internal/azure"
 	bbUtils "github.com/kosli-dev/cli/internal/bitbucket"
 	ghUtils "github.com/kosli-dev/cli/internal/github"
 	gitlabUtils "github.com/kosli-dev/cli/internal/gitlab"
 	"github.com/spf13/cobra"
-	"log"
 )
 
 // allowed commit redaction values
@@ -46,6 +47,7 @@ func addDryRunFlag(cmd *cobra.Command) {
 func addBitbucketFlags(cmd *cobra.Command, bbConfig *bbUtils.Config, ci string) {
 	cmd.Flags().StringVar(&bbConfig.Username, "bitbucket-username", "", bbUsernameFlag)
 	cmd.Flags().StringVar(&bbConfig.Password, "bitbucket-password", "", bbPasswordFlag)
+	cmd.Flags().StringVar(&bbConfig.AccessToken, "bitbucket-access-token", "", bbAccessTokenFlag)
 	cmd.Flags().StringVar(&bbConfig.Workspace, "bitbucket-workspace", DefaultValue(ci, "workspace"), bbWorkspaceFlag)
 	cmd.Flags().StringVar(&bbConfig.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
 }
