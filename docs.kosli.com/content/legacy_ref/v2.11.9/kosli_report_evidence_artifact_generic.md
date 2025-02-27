@@ -1,19 +1,18 @@
 ---
-title: "kosli report evidence artifact pullrequest bitbucket"
+title: "kosli report evidence artifact generic"
 beta: false
 deprecated: true
-summary: "Report a Bitbucket pull request evidence for an artifact in a Kosli flow.  "
+summary: "Report generic evidence to an artifact in a Kosli flow.  "
 ---
 
-# kosli report evidence artifact pullrequest bitbucket
+# kosli report evidence artifact generic
 
 {{% hint danger %}}
-**kosli report evidence artifact pullrequest bitbucket** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.
+**kosli report evidence artifact generic** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.
 {{% /hint %}}
 ## Synopsis
 
-Report a Bitbucket pull request evidence for an artifact in a Kosli flow.  
-It checks if a pull request exists for the artifact (based on its git commit) and reports the pull-request evidence to the artifact in Kosli.  
+Report generic evidence to an artifact in a Kosli flow.  
 
 The artifact fingerprint can be provided directly with the `--fingerprint` flag, or 
 calculated based on `--artifact-type` flag.
@@ -24,31 +23,27 @@ images in registries or "docker" for local docker images.
 
 
 ```shell
-kosli report evidence artifact pullrequest bitbucket [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli report evidence artifact generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [oci, docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it).  |
-|        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
-|        --bitbucket-access-token string  |  Bitbucket repo/project/workspace access token. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#access-tokens for more details.  |
-|        --bitbucket-password string  |  Bitbucket App password. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#authentication for more details.  |
-|        --bitbucket-username string  |  Bitbucket username. Only needed if you use --bitbucket-password  |
-|        --bitbucket-workspace string  |  Bitbucket workspace ID.  |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|        --commit string  |  Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|    -C, --compliant  |  [defaulted] Whether the evidence is compliant or not. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default true)  |
+|    -d, --description string  |  [optional] The evidence description.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |        --evidence-fingerprint string  |  [optional] The SHA256 fingerprint of the evidence file or dir.  |
+|    -e, --evidence-paths strings  |  [optional] The comma-separated list of paths containing supporting proof for the reported evidence. Paths can be for files or directories. All provided proofs will be uploaded to Kosli's evidence vault.  |
 |        --evidence-url string  |  [optional] The external URL where the evidence file or dir is stored.  |
 |    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for --artifact-type dir.  |
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'.  |
 |    -f, --flow string  |  The Kosli flow name.  |
-|    -h, --help  |  help for bitbucket  |
+|    -h, --help  |  help for generic  |
 |    -n, --name string  |  The name of the evidence.  |
 |        --registry-password string  |  [conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry.  |
 |        --registry-username string  |  [conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry.  |
-|        --repository string  |  Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the evidence.  |
 
 
@@ -66,39 +61,72 @@ kosli report evidence artifact pullrequest bitbucket [IMAGE-NAME | FILE-PATH | D
 
 ## Examples Use Cases
 
-**report a pull request evidence to kosli for a docker image**
+**report a generic evidence about a pre-built docker image**
 
 ```shell
-kosli report evidence artifact pullrequest bitbucket yourDockerImageName \
+kosli report evidence artifact generic yourDockerImageName \
+	--api-token yourAPIToken \
 	--artifact-type docker \
 	--build-url https://exampleci.com \
 	--name yourEvidenceName \
-	--flow yourFlowName \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
-	--bitbucket-workspace yourBitbucketWorkspace \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
 	--org yourOrgName \
-	--api-token yourAPIToken
-	
+	--flow yourFlowName 
+
 ```
 
-**fail if a pull request does not exist for your artifact**
+**report a generic evidence about a directory type artifact**
 
 ```shell
-kosli report evidence artifact pullrequest bitbucket yourDockerImageName \
-	--artifact-type docker \
+kosli report evidence artifact generic /path/to/your/dir \
+	--api-token yourAPIToken \
+	--artifact-type dir \
 	--build-url https://exampleci.com \
 	--name yourEvidenceName \
-	--flow yourFlowName \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
-	--bitbucket-workspace yourBitbucketWorkspace \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
-	--org yourOrgName \
+	--org yourOrgName	\
+	--flow yourFlowName 
+
+```
+
+**report a generic evidence about an artifact with a provided fingerprint (sha256)**
+
+```shell
+kosli report evidence artifact generic \
 	--api-token yourAPIToken \
-	--assert
+	--build-url https://exampleci.com \	
+	--name yourEvidenceName \
+	--org yourOrgName \
+	--flow yourFlowName \
+	--fingerprint yourArtifactFingerprint
+
+```
+
+**report a generic evidence about an artifact with evidence file upload**
+
+```shell
+kosli report evidence artifact generic \
+	--api-token yourAPIToken \
+	--build-url https://exampleci.com \	
+	--name yourEvidenceName \
+	--org yourOrgName \
+	--flow yourFlowName \
+	--fingerprint yourArtifactFingerprint \
+	--evidence-paths=yourEvidencePathName
+
+```
+
+**report a generic evidence about an artifact with evidence file upload via API**
+
+```shell
+curl -X 'POST' \
+	'https://app.kosli.com/api/v2/evidence/yourOrgName/artifact/yourFlowName/generic' \
+	-H 'accept: application/json' \
+	-H 'Content-Type: multipart/form-data' \
+	-F 'evidence_json={
+  	  "artifact_fingerprint": "yourArtifactFingerprint",
+	  "name": "yourEvidenceName",
+      "build_url": "https://exampleci.com",
+      "is_compliant": true
+    }' \
+	-F 'evidence_file=@yourEvidencePathName'
 ```
 

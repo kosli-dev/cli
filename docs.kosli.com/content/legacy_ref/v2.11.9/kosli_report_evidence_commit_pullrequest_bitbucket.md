@@ -23,9 +23,8 @@ kosli report evidence commit pullrequest bitbucket [flags]
 | Flag | Description |
 | :--- | :--- |
 |        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
-|        --bitbucket-access-token string  |  Bitbucket repo/project/workspace access token. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#access-tokens for more details.  |
 |        --bitbucket-password string  |  Bitbucket App password. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#authentication for more details.  |
-|        --bitbucket-username string  |  Bitbucket username. Only needed if you use --bitbucket-password  |
+|        --bitbucket-username string  |  Bitbucket username.  |
 |        --bitbucket-workspace string  |  Bitbucket workspace ID.  |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --commit string  |  Git commit for which to verify a given evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |

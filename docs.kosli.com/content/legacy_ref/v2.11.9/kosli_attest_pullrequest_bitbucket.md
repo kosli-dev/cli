@@ -11,7 +11,6 @@ summary: "Report a Bitbucket pull request attestation to an artifact or a trail 
 
 Report a Bitbucket pull request attestation to an artifact or a trail in a Kosli flow.  
 It checks if a pull request exists for a given merge commit and reports the pull-request attestation to Kosli.
-Authentication to Bitbucket can be done with access token (recommended) or app passwords. Credentials need to have read access for both repos and pull requests.
 
 
 The attestation can be bound to a trail using the trail name.
@@ -31,9 +30,8 @@ kosli attest pullrequest bitbucket [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [oci, docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it).  |
 |        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
 |        --attachments strings  |  [optional] The comma-separated list of paths of attachments for the reported attestation. Attachments can be files or directories. All attachments are compressed and uploaded to Kosli's evidence vault.  |
-|        --bitbucket-access-token string  |  Bitbucket repo/project/workspace access token. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#access-tokens for more details.  |
 |        --bitbucket-password string  |  Bitbucket App password. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#authentication for more details.  |
-|        --bitbucket-username string  |  Bitbucket username. Only needed if you use --bitbucket-password  |
+|        --bitbucket-username string  |  Bitbucket username.  |
 |        --bitbucket-workspace string  |  Bitbucket workspace ID.  |
 |    -g, --commit string  |  the git merge commit to be checked for associated pull requests.  |
 |        --description string  |  [optional] attestation description  |
@@ -77,7 +75,8 @@ kosli attest pullrequest bitbucket yourDockerImageName \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--bitbucket-access-token yourBitbucketAccessToken \
+	--bitbucket-username yourBitbucketUsername \
+	--bitbucket-password yourBitbucketPassword \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--commit yourArtifactGitCommit \
 	--repository yourBitbucketGitRepository \
@@ -94,7 +93,8 @@ kosli attest pullrequest bitbucket \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--bitbucket-access-token yourBitbucketAccessToken \
+	--bitbucket-username yourBitbucketUsername \
+	--bitbucket-password yourBitbucketPassword \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--commit yourArtifactGitCommit \
 	--repository yourBitbucketGitRepository \
@@ -110,7 +110,8 @@ kosli attest pullrequest bitbucket \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--bitbucket-access-token yourBitbucketAccessToken \
+	--bitbucket-username yourBitbucketUsername \
+	--bitbucket-password yourBitbucketPassword \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--commit yourArtifactGitCommit \
 	--repository yourBitbucketGitRepository \
@@ -126,7 +127,8 @@ kosli attest pullrequest bitbucket \
 	--name yourTemplateArtifactName.yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--bitbucket-access-token yourBitbucketAccessToken \
+	--bitbucket-username yourBitbucketUsername \
+	--bitbucket-password yourBitbucketPassword \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--commit yourArtifactGitCommit \
 	--repository yourBitbucketGitRepository \
@@ -142,7 +144,8 @@ kosli attest pullrequest bitbucket \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--bitbucket-access-token yourBitbucketAccessToken \
+	--bitbucket-username yourBitbucketUsername \
+	--bitbucket-password yourBitbucketPassword \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--commit yourArtifactGitCommit \
 	--repository yourBitbucketGitRepository \
@@ -159,7 +162,8 @@ kosli attest pullrequest bitbucket \
 	--name yourTemplateArtifactName.yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
-	--bitbucket-access-token yourBitbucketAccessToken \
+	--bitbucket-username yourBitbucketUsername \
+	--bitbucket-password yourBitbucketPassword \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--commit yourArtifactGitCommit \
 	--repository yourBitbucketGitRepository \

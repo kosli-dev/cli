@@ -1,41 +1,46 @@
 ---
-title: "kosli report evidence commit pullrequest bitbucket"
+title: "kosli report evidence commit snyk"
 beta: false
 deprecated: true
-summary: "Report Bitbucket pull request evidence for a commit in Kosli flows.  "
+summary: "Report Snyk vulnerability scan evidence for a commit in Kosli flows.  "
 ---
 
-# kosli report evidence commit pullrequest bitbucket
+# kosli report evidence commit snyk
 
 {{% hint danger %}}
-**kosli report evidence commit pullrequest bitbucket** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.
+**kosli report evidence commit snyk** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.
 {{% /hint %}}
 ## Synopsis
 
-Report Bitbucket pull request evidence for a commit in Kosli flows.  
-It checks if a pull request exists for the git commit and reports the pull-request evidence to the commit in Kosli.
+Report Snyk vulnerability scan evidence for a commit in Kosli flows.    
+The --scan-results .json file is parsed and uploaded to Kosli's evidence vault.
+
+In CLI <v2.8.2, Snyk results could only be in the Snyk JSON output format. "snyk code test" results were not supported by 
+this command and could be reported as generic evidence.
+
+Starting from v2.8.2, the Snyk results can be in Snyk JSON or SARIF output format for "snyk container test". 
+"snyk code test" is now supported but only in the SARIF format.
+
+If no vulnerabilities are detected the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
+
 
 ```shell
-kosli report evidence commit pullrequest bitbucket [flags]
+kosli report evidence commit snyk [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
-|        --bitbucket-access-token string  |  Bitbucket repo/project/workspace access token. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#access-tokens for more details.  |
-|        --bitbucket-password string  |  Bitbucket App password. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#authentication for more details.  |
-|        --bitbucket-username string  |  Bitbucket username. Only needed if you use --bitbucket-password  |
-|        --bitbucket-workspace string  |  Bitbucket workspace ID.  |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --commit string  |  Git commit for which to verify a given evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |        --evidence-fingerprint string  |  [optional] The SHA256 fingerprint of the evidence file or dir.  |
 |        --evidence-url string  |  [optional] The external URL where the evidence file or dir is stored.  |
 |    -f, --flows strings  |  [defaulted] The comma separated list of Kosli flows. Defaults to all flows of the org.  |
-|    -h, --help  |  help for bitbucket  |
+|    -h, --help  |  help for snyk  |
 |    -n, --name string  |  The name of the evidence.  |
-|        --repository string  |  Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|    -R, --scan-results string  |  The path to Snyk SARIF or JSON scan results file from 'snyk test' and 'snyk container test'. By default, the Snyk results will be uploaded to Kosli's evidence vault.  |
+|        --upload-results  |  [defaulted] Whether to upload the provided Snyk results file as an attachment to Kosli or not. (default true)  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the evidence.  |
 
 
@@ -53,37 +58,30 @@ kosli report evidence commit pullrequest bitbucket [flags]
 
 ## Examples Use Cases
 
-**report a pull request evidence to Kosli**
+**report Snyk evidence for a commit related to one Kosli flow**
 
 ```shell
-kosli report evidence commit pullrequest bitbucket \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
-	--bitbucket-workspace yourBitbucketWorkspace \
+kosli report evidence commit snyk \
+	--commit yourGitCommitSha1 \
 	--name yourEvidenceName \
-	--flows yourFlowName1,yourFlowName2 \
+	--flows yourFlowName1 \
 	--build-url https://exampleci.com \
-	--org yourOrgName \
-	--api-token yourAPIToken
-	
+	--api-token yourAPIToken \
+	--org yourOrgName	\
+	--scan-results yourSnykJSONScanResults
+
 ```
 
-**fail if a pull request does not exist for your commit**
+**report Snyk evidence for a commit related to multiple Kosli flows**
 
 ```shell
-kosli report evidence commit pullrequest bitbucket \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
-	--bitbucket-workspace yourBitbucketWorkspace \
+kosli report evidence commit snyk \
+	--commit yourGitCommitSha1 \
 	--name yourEvidenceName \
 	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
-	--org yourOrgName \
 	--api-token yourAPIToken \
-	--assert
+	--org yourOrgName	\
+	--scan-results yourSnykJSONScanResults
 ```
 

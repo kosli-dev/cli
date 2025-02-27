@@ -10,8 +10,8 @@ summary: "Assert a Bitbucket pull request for a git commit exists.  "
 ## Synopsis
 
 Assert a Bitbucket pull request for a git commit exists.  
-The command exits with non-zero exit code if no pull requests were found for the commit.
-Authentication to Bitbucket can be done with access token (recommended) or app passwords. Credentials need to have read access for both repos and pull requests.
+The command exits with non-zero exit code 
+if no pull requests were found for the commit.
 
 ```shell
 kosli assert pullrequest bitbucket [flags]
@@ -20,9 +20,8 @@ kosli assert pullrequest bitbucket [flags]
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|        --bitbucket-access-token string  |  Bitbucket repo/project/workspace access token. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#access-tokens for more details.  |
 |        --bitbucket-password string  |  Bitbucket App password. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#authentication for more details.  |
-|        --bitbucket-username string  |  Bitbucket username. Only needed if you use --bitbucket-password  |
+|        --bitbucket-username string  |  Bitbucket username.  |
 |        --bitbucket-workspace string  |  Bitbucket workspace ID.  |
 |        --commit string  |  Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ). (default "HEAD")  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
@@ -46,7 +45,8 @@ kosli assert pullrequest bitbucket [flags]
 
 ```shell
 kosli assert pullrequest bitbucket  \
-	--bitbucket-access-token yourBitbucketAccessToken \
+	--bitbucket-username yourBitbucketUsername \
+	--bitbucket-password yourBitbucketPassword \
 	--bitbucket-workspace yourBitbucketWorkspace \
 	--commit yourGitCommit \
 	--repository yourBitbucketGitRepository

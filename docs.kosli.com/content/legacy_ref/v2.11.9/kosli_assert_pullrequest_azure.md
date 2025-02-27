@@ -1,32 +1,31 @@
 ---
-title: "kosli assert pullrequest bitbucket"
+title: "kosli assert pullrequest azure"
 beta: false
 deprecated: false
-summary: "Assert a Bitbucket pull request for a git commit exists.  "
+summary: "Assert an Azure DevOps pull request for a git commit exists.  "
 ---
 
-# kosli assert pullrequest bitbucket
+# kosli assert pullrequest azure
 
 ## Synopsis
 
-Assert a Bitbucket pull request for a git commit exists.  
-The command exits with non-zero exit code if no pull requests were found for the commit.
-Authentication to Bitbucket can be done with access token (recommended) or app passwords. Credentials need to have read access for both repos and pull requests.
+Assert an Azure DevOps pull request for a git commit exists.  
+The command exits with non-zero exit code 
+if no pull requests were found for the commit.
 
 ```shell
-kosli assert pullrequest bitbucket [flags]
+kosli assert pullrequest azure [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|        --bitbucket-access-token string  |  Bitbucket repo/project/workspace access token. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#access-tokens for more details.  |
-|        --bitbucket-password string  |  Bitbucket App password. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#authentication for more details.  |
-|        --bitbucket-username string  |  Bitbucket username. Only needed if you use --bitbucket-password  |
-|        --bitbucket-workspace string  |  Bitbucket workspace ID.  |
+|        --azure-org-url string  |  Azure organization url. E.g. "https://dev.azure.com/myOrg" (defaulted if you are running in Azure Devops pipelines: https://docs.kosli.com/ci-defaults ).  |
+|        --azure-token string  |  Azure Personal Access token.  |
 |        --commit string  |  Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ). (default "HEAD")  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|    -h, --help  |  help for bitbucket  |
+|    -h, --help  |  help for azure  |
+|        --project string  |  Azure project.(defaulted if you are running in Azure Devops pipelines: https://docs.kosli.com/ci-defaults ).  |
 |        --repository string  |  Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 
 
@@ -45,10 +44,11 @@ kosli assert pullrequest bitbucket [flags]
 ## Examples Use Cases
 
 ```shell
-kosli assert pullrequest bitbucket  \
-	--bitbucket-access-token yourBitbucketAccessToken \
-	--bitbucket-workspace yourBitbucketWorkspace \
+kosli assert pullrequest azure \
+	--azure-token yourAzureToken \
+	--azure-org-url yourAzureOrgUrl \
 	--commit yourGitCommit \
-	--repository yourBitbucketGitRepository
+	--project yourAzureDevopsProject \
+	--repository yourAzureDevOpsGitRepository
 ```
 

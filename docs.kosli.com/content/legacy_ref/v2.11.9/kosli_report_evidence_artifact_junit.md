@@ -1,19 +1,20 @@
 ---
-title: "kosli report evidence artifact pullrequest bitbucket"
+title: "kosli report evidence artifact junit"
 beta: false
 deprecated: true
-summary: "Report a Bitbucket pull request evidence for an artifact in a Kosli flow.  "
+summary: "Report JUnit test evidence for an artifact in a Kosli flow.  "
 ---
 
-# kosli report evidence artifact pullrequest bitbucket
+# kosli report evidence artifact junit
 
 {{% hint danger %}}
-**kosli report evidence artifact pullrequest bitbucket** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.
+**kosli report evidence artifact junit** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.
 {{% /hint %}}
 ## Synopsis
 
-Report a Bitbucket pull request evidence for an artifact in a Kosli flow.  
-It checks if a pull request exists for the artifact (based on its git commit) and reports the pull-request evidence to the artifact in Kosli.  
+Report JUnit test evidence for an artifact in a Kosli flow.    
+All .xml files from --results-dir are parsed and uploaded to Kosli's evidence vault.  
+If there are no failing tests and no errors the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.  
 
 The artifact fingerprint can be provided directly with the `--fingerprint` flag, or 
 calculated based on `--artifact-type` flag.
@@ -24,31 +25,25 @@ images in registries or "docker" for local docker images.
 
 
 ```shell
-kosli report evidence artifact pullrequest bitbucket [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli report evidence artifact junit [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [oci, docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it).  |
-|        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
-|        --bitbucket-access-token string  |  Bitbucket repo/project/workspace access token. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#access-tokens for more details.  |
-|        --bitbucket-password string  |  Bitbucket App password. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#authentication for more details.  |
-|        --bitbucket-username string  |  Bitbucket username. Only needed if you use --bitbucket-password  |
-|        --bitbucket-workspace string  |  Bitbucket workspace ID.  |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|        --commit string  |  Git commit for which to find pull request evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |        --evidence-fingerprint string  |  [optional] The SHA256 fingerprint of the evidence file or dir.  |
 |        --evidence-url string  |  [optional] The external URL where the evidence file or dir is stored.  |
 |    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for --artifact-type dir.  |
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'.  |
 |    -f, --flow string  |  The Kosli flow name.  |
-|    -h, --help  |  help for bitbucket  |
+|    -h, --help  |  help for junit  |
 |    -n, --name string  |  The name of the evidence.  |
 |        --registry-password string  |  [conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry.  |
 |        --registry-username string  |  [conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry.  |
-|        --repository string  |  Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|    -R, --results-dir string  |  [defaulted] The path to a directory with JUnit test results. By default, the directory will be uploaded to Kosli's evidence vault. (default ".")  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the evidence.  |
 
 
@@ -66,39 +61,30 @@ kosli report evidence artifact pullrequest bitbucket [IMAGE-NAME | FILE-PATH | D
 
 ## Examples Use Cases
 
-**report a pull request evidence to kosli for a docker image**
+**report JUnit test evidence about a file artifact**
 
 ```shell
-kosli report evidence artifact pullrequest bitbucket yourDockerImageName \
-	--artifact-type docker \
-	--build-url https://exampleci.com \
+kosli report evidence artifact junit FILE.tgz \
+	--artifact-type file \
 	--name yourEvidenceName \
 	--flow yourFlowName \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
-	--bitbucket-workspace yourBitbucketWorkspace \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
-	--org yourOrgName \
-	--api-token yourAPIToken
-	
+	--build-url https://exampleci.com \
+	--api-token yourAPIToken \
+	--org yourOrgName	\
+	--results-dir yourFolderWithJUnitResults
+
 ```
 
-**fail if a pull request does not exist for your artifact**
+**report JUnit test evidence about an artifact using an available Sha256 digest**
 
 ```shell
-kosli report evidence artifact pullrequest bitbucket yourDockerImageName \
-	--artifact-type docker \
-	--build-url https://exampleci.com \
+kosli report evidence artifact junit \
+	--fingerprint yourSha256 \
 	--name yourEvidenceName \
 	--flow yourFlowName \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
-	--bitbucket-workspace yourBitbucketWorkspace \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
-	--org yourOrgName \
+	--build-url https://exampleci.com \
 	--api-token yourAPIToken \
-	--assert
+	--org yourOrgName	\
+	--results-dir yourFolderWithJUnitResults
 ```
 

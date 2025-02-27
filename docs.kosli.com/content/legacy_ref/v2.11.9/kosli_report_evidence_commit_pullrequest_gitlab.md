@@ -1,39 +1,38 @@
 ---
-title: "kosli report evidence commit pullrequest bitbucket"
+title: "kosli report evidence commit pullrequest gitlab"
 beta: false
 deprecated: true
-summary: "Report Bitbucket pull request evidence for a commit in Kosli flows.  "
+summary: "Report Gitlab merge request evidence for a commit in Kosli flows.  "
 ---
 
-# kosli report evidence commit pullrequest bitbucket
+# kosli report evidence commit pullrequest gitlab
 
 {{% hint danger %}}
-**kosli report evidence commit pullrequest bitbucket** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.
+**kosli report evidence commit pullrequest gitlab** is deprecated. See **kosli attest** commands.  Deprecated commands will be removed in a future release.
 {{% /hint %}}
 ## Synopsis
 
-Report Bitbucket pull request evidence for a commit in Kosli flows.  
-It checks if a pull request exists for the git commit and reports the pull-request evidence to the commit in Kosli.
+Report Gitlab merge request evidence for a commit in Kosli flows.  
+It checks if a merge request exists for the git commit and reports the merge-request evidence to the commit in Kosli.
 
 ```shell
-kosli report evidence commit pullrequest bitbucket [flags]
+kosli report evidence commit pullrequest gitlab [flags]
 ```
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
 |        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
-|        --bitbucket-access-token string  |  Bitbucket repo/project/workspace access token. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#access-tokens for more details.  |
-|        --bitbucket-password string  |  Bitbucket App password. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#authentication for more details.  |
-|        --bitbucket-username string  |  Bitbucket username. Only needed if you use --bitbucket-password  |
-|        --bitbucket-workspace string  |  Bitbucket workspace ID.  |
 |    -b, --build-url string  |  The url of CI pipeline that generated the evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --commit string  |  Git commit for which to verify a given evidence. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |        --evidence-fingerprint string  |  [optional] The SHA256 fingerprint of the evidence file or dir.  |
 |        --evidence-url string  |  [optional] The external URL where the evidence file or dir is stored.  |
 |    -f, --flows strings  |  [defaulted] The comma separated list of Kosli flows. Defaults to all flows of the org.  |
-|    -h, --help  |  help for bitbucket  |
+|        --gitlab-base-url string  |  [optional] Gitlab base URL (only needed for on-prem Gitlab installations).  |
+|        --gitlab-org string  |  Gitlab organization. (defaulted if you are running in Gitlab Pipelines: https://docs.kosli.com/ci-defaults ).  |
+|        --gitlab-token string  |  Gitlab token.  |
+|    -h, --help  |  help for gitlab  |
 |    -n, --name string  |  The name of the evidence.  |
 |        --repository string  |  Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the evidence.  |
@@ -53,15 +52,14 @@ kosli report evidence commit pullrequest bitbucket [flags]
 
 ## Examples Use Cases
 
-**report a pull request evidence to Kosli**
+**report a merge request evidence to Kosli**
 
 ```shell
-kosli report evidence commit pullrequest bitbucket \
+kosli report evidence commit pullrequest gitlab \
 	--commit yourArtifactGitCommit \
 	--repository yourBitbucketGitRepository \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
-	--bitbucket-workspace yourBitbucketWorkspace \
+	--gitlab-token yourGitlabToken \
+	--gitlab-org yourGitlabOrg \
 	--name yourEvidenceName \
 	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
@@ -73,12 +71,11 @@ kosli report evidence commit pullrequest bitbucket \
 **fail if a pull request does not exist for your commit**
 
 ```shell
-kosli report evidence commit pullrequest bitbucket \
+kosli report evidence commit pullrequest gitlab \
 	--commit yourArtifactGitCommit \
 	--repository yourBitbucketGitRepository \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
-	--bitbucket-workspace yourBitbucketWorkspace \
+	--gitlab-token yourGitlabToken \
+	--gitlab-org yourGitlabOrg \
 	--name yourEvidenceName \
 	--flows yourFlowName1,yourFlowName2 \
 	--build-url https://exampleci.com \
