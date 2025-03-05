@@ -22,7 +22,7 @@ kosli create policy yourPolicyName \
 	--org yourOrgName
 
 # update a Kosli policy:
-kosli create policy yourFlowName \
+kosli create policy yourPolicyName \
 	--description yourPolicyDescription \
 	--type environment \
 	--comment yourChangeComment \
