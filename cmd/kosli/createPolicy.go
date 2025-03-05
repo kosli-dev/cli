@@ -15,16 +15,16 @@ const createPolicyLongDesc = `Updating policy content creates a new version of t
 
 const createPolicyExample = `
 # create a Kosli policy:
-kosli create policy yourPolicyName \
+kosli create policy yourPolicyName yourPolicyFile.yml \
 	--description yourPolicyDescription \
-	--type environment \
+	--type env \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
 # update a Kosli policy:
-kosli create policy yourPolicyName \
+kosli create policy yourPolicyName yourPolicyFile.yml \
 	--description yourPolicyDescription \
-	--type environment \
+	--type env \
 	--comment yourChangeComment \
 	--api-token yourAPIToken \
 	--org yourOrgName
