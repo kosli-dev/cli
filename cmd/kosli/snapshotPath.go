@@ -17,7 +17,7 @@ import (
 
 const snapshotPathShortDesc = `Report a snapshot of a single artifact running in a specific filesystem path to Kosli.  `
 
-const snapshotPathLongDesc = snapshotPathsShortDesc + `
+const snapshotPathLongDesc = snapshotPathShortDesc + `
 You can report a directory or file artifact. For reporting multiple artifacts in one go, use "kosli snapshot paths".
 You can exclude certain paths or patterns from the artifact fingerprint using ^--exclude^.
 The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match , 
