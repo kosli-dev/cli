@@ -78,6 +78,50 @@ env:
   KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
 ```
 
+## I'm running the Kosli CLI in a subshell and the captured output includes stderr!
+
+The Kosli CLI writes debug information to `stderr`, and all other output to `stdout`.
+Normally, in a bash $(subshell), only `stdout` is captured. 
+In the following example, the `DIGEST` variable captures _only_ the 64 character digest of the docker image; 
+the extra debug information is printed to the terminal.
+
+```shell {.command}
+# In a local terminal
+KOSLI_DEBUG=true
+DIGEST="$(kosli fingerprint "${IMAGE_NAME}" --artifact-type=docker)"
+
+[debug] calculated fingerprint: 2c6079df58292ed10e8074adcb74be549b7f841a1bd8266f06bb5c518643193e for artifact: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/exercises-start-points:86f9052
+
+echo "DIGEST=${DIGEST}"
+DIGEST=2c6079df58292ed10e8074adcb74be549b7f841a1bd8266f06bb5c518643193e
+```
+
+However, in many CI workflows (including Github and Gitlab), `stdout` and `stderr` are multiplexed together.
+This means `DIGEST` will contain _both_ the 64 character digest _and_ the debug information. 
+For example:
+
+```shell {.command}
+# In a CI workflow
+KOSLI_DEBUG=true
+DIGEST="$(kosli fingerprint "${IMAGE_NAME}" --artifact-type=docker)"
+
+echo "DIGEST=${DIGEST}"
+DIGEST=[debug] calculated fingerprint: 2c6079df58292ed10e8074adcb74be549b7f841a1bd8266f06bb5c518643193e for artifact: 244531986313.dkr.ecr.eu-central-1.amazonaws.com/exercises-start-points:86f9052
+2c6079df58292ed10e8074adcb74be549b7f841a1bd8266f06bb5c518643193e
+```
+
+When running the Kosli CLI in a subshell, in a CI workflow, we recommend explicitly setting the `--debug` flag to false.
+
+```shell {.command}
+# In a CI workflow
+KOSLI_DEBUG=true
+DIGEST="$(kosli fingerprint "${IMAGE_NAME}" --artifact-type=docker --debug=false)"
+
+echo "DIGEST=${DIGEST}"
+DIGEST=2c6079df58292ed10e8074adcb74be549b7f841a1bd8266f06bb5c518643193e
+```
+
+
 ## Where can I find API documentation?
 
 Kosli API documentation is available for logged in Kosli users here: https://app.kosli.com/api/v2/doc/  
