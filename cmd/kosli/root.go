@@ -51,9 +51,9 @@ images in registries or "docker" for local docker images.
 
 	attestationBindingDesc = `
 
-The attestation can be bound to a trail using the trail name.
+The attestation can be bound to a *trail* using the trail name.
 
-If the attestation is for an artifact, the attestation can be bound to the artifact using one of two ways:
+The attestation can be bound to an *artifact* in two ways:
 - using the artifact's SHA256 fingerprint which is calculated (based on the ^--artifact-type^ flag and the artifact name/path argument) or can be provided directly (with the ^--fingerprint^ flag).
 - using the artifact's name in the flow yaml template and the git commit from which the artifact is/will be created. Useful when reporting an attestation before creating/reporting the artifact.`
 	awsAuthDesc = `
