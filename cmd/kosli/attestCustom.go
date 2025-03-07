@@ -26,7 +26,9 @@ const attestCustomShortDesc = `Report a custom attestation to an artifact or a t
 
 const attestCustomLongDesc = attestCustomShortDesc + `
 The name of the custom attestation type is specified using the ^--type^ flag.
-` + attestationBindingDesc + commitDescription
+` + attestationBindingDesc + `
+
+` + commitDescription
 
 const attestCustomExample = `
 # report a custom attestation about a pre-built container image artifact (kosli finds the fingerprint):
