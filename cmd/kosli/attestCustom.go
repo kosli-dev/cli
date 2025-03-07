@@ -36,7 +36,7 @@ kosli attest custom yourDockerImageName \
 	--artifact-type oci \
 	--type customTypeName \
 	--name yourAttestationName \
-	--data yourCustomData \
+	--attestation-data yourJsonFilePath \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--api-token yourAPIToken \
@@ -47,7 +47,7 @@ kosli attest custom \
 	--fingerprint yourDockerImageFingerprint \
 	--type customTypeName \
 	--name yourAttestationName \
-	--data yourCustomData \
+	--attestation-data yourJsonFilePath \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--api-token yourAPIToken \
@@ -57,7 +57,7 @@ kosli attest custom \
 kosli attest custom \
 	--type customTypeName \
 	--name yourAttestationName \
-	--data yourCustomData \
+	--attestation-data yourJsonFilePath \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--api-token yourAPIToken \
@@ -67,7 +67,7 @@ kosli attest custom \
 kosli attest custom \
 	--type customTypeName \
 	--name yourTemplateArtifactName.yourAttestationName \
-	--data yourCustomData \
+	--attestation-data yourJsonFilePath \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--commit yourArtifactGitCommit \
@@ -78,7 +78,7 @@ kosli attest custom \
 kosli attest custom \
     --type customTypeName \
 	--name yourAttestationName \
-	--data yourCustomData \
+	--attestation-data yourJsonFilePath \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--attachments yourAttachmentPathName \
