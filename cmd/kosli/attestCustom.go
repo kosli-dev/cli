@@ -26,6 +26,7 @@ const attestCustomShortDesc = `Report a custom attestation to an artifact or a t
 
 const attestCustomLongDesc = attestCustomShortDesc + `
 The name of the custom attestation type is specified using the ^--type^ flag.
+The path to the JSON file the custom type will evaluate is specified using the ^--attestation-data^ flag.
 ` + attestationBindingDesc + `
 
 ` + commitDescription
