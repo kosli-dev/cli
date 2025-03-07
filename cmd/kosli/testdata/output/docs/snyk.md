@@ -19,15 +19,14 @@ By default, the `--scan-results` .json file is also uploaded to Kosli's evidence
 You can disable that by setting `--upload-results=false`
 
 
-The attestation can be bound to a trail using the trail name.
-
-If the attestation is for an artifact, the attestation can be bound to the artifact using one of two ways:
+The attestation can be bound to a *trail* using the trail name.  
+The attestation can be bound to an *artifact* in two ways:
 - using the artifact's SHA256 fingerprint which is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
 - using the artifact's name in the flow yaml template and the git commit from which the artifact is/will be created. Useful when reporting an attestation before creating/reporting the artifact.
 
-You can optionally associate the attestation to a git commit using `--commit` (requires access to a git repo). And you  
-can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`. 
-Note that when the attestation is reported for an artifact that does not yet exist in Kosli, `--commit` becomes required to facilitate 
+You can optionally associate the attestation to a git commit using `--commit` (requires access to a git repo).
+You can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`.
+Note that when the attestation is reported for an artifact that does not yet exist in Kosli, `--commit` is required to facilitate
 binding the attestation to the right artifact.
 
 ```shell

@@ -26,7 +26,10 @@ const attestCustomShortDesc = `Report a custom attestation to an artifact or a t
 
 const attestCustomLongDesc = attestCustomShortDesc + `
 The name of the custom attestation type is specified using the ^--type^ flag.
-` + attestationBindingDesc + commitDescription
+The path to the JSON file the custom type will evaluate is specified using the ^--attestation-data^ flag.
+` + attestationBindingDesc + `
+
+` + commitDescription
 
 const attestCustomExample = `
 # report a custom attestation about a pre-built container image artifact (kosli finds the fingerprint):
@@ -34,7 +37,7 @@ kosli attest custom yourDockerImageName \
 	--artifact-type oci \
 	--type customTypeName \
 	--name yourAttestationName \
-	--data yourCustomData \
+	--attestation-data yourJsonFilePath \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--api-token yourAPIToken \
@@ -45,7 +48,7 @@ kosli attest custom \
 	--fingerprint yourDockerImageFingerprint \
 	--type customTypeName \
 	--name yourAttestationName \
-	--data yourCustomData \
+	--attestation-data yourJsonFilePath \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--api-token yourAPIToken \
@@ -55,7 +58,7 @@ kosli attest custom \
 kosli attest custom \
 	--type customTypeName \
 	--name yourAttestationName \
-	--data yourCustomData \
+	--attestation-data yourJsonFilePath \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--api-token yourAPIToken \
@@ -65,7 +68,7 @@ kosli attest custom \
 kosli attest custom \
 	--type customTypeName \
 	--name yourTemplateArtifactName.yourAttestationName \
-	--data yourCustomData \
+	--attestation-data yourJsonFilePath \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--commit yourArtifactGitCommit \
@@ -76,7 +79,7 @@ kosli attest custom \
 kosli attest custom \
     --type customTypeName \
 	--name yourAttestationName \
-	--data yourCustomData \
+	--attestation-data yourJsonFilePath \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--attachments yourAttachmentPathName \

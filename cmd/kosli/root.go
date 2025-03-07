@@ -51,9 +51,8 @@ images in registries or "docker" for local docker images.
 
 	attestationBindingDesc = `
 
-The attestation can be bound to a trail using the trail name.
-
-If the attestation is for an artifact, the attestation can be bound to the artifact using one of two ways:
+The attestation can be bound to a *trail* using the trail name.  
+The attestation can be bound to an *artifact* in two ways:
 - using the artifact's SHA256 fingerprint which is calculated (based on the ^--artifact-type^ flag and the artifact name/path argument) or can be provided directly (with the ^--fingerprint^ flag).
 - using the artifact's name in the flow yaml template and the git commit from which the artifact is/will be created. Useful when reporting an attestation before creating/reporting the artifact.`
 	awsAuthDesc = `
@@ -77,7 +76,7 @@ The service principal needs to have the following permissions:
 	`
 	kosliIgnoreDesc = `To specify paths in a directory artifact that should always be excluded from the SHA256 calculation, you can add a ^.kosli_ignore^ file to the root of the artifact.
 Each line should specify a relative path or path glob to be ignored. You can include comments in this file, using ^#^.
-The ^.kosli_ignore^ will be treated as part of the artifact like any other file,unless it is explicitly ignored itself.`
+The ^.kosli_ignore^ will be treated as part of the artifact like any other file, unless it is explicitly ignored itself.`
 
 	// flags
 	apiTokenFlag                         = "The Kosli API token."
