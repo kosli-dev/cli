@@ -339,6 +339,6 @@ var liveCliMap = map[string]string{
 	"kosli diff snapshots":    "kosli diff snapshots aws-beta aws-prod --output=json",
 	"kosli list flows":        "kosli list flows --output=json",
 	"kosli get flow":          "kosli get flow dashboard-ci --output=json",
-	//"kosli list trails":       "kosli list trails dashboard-ci --output=json",
-	"kosli get trail": "kosli get trail dashboard-ci 1159a6f1193150681b8484545150334e89de6c1c --output=json",
+	"kosli list trails":       "kosli list trails dashboard-ci --output=json",
+	"kosli get trail":         "kosli get trail dashboard-ci 1159a6f1193150681b8484545150334e89de6c1c --output=json",
 }
