@@ -181,9 +181,7 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 		// Note: The contents of the title lines could also contain < and > characters which will
 		// be lost if simply embedded in a md ## section.
 		buf.WriteString("## Examples Use Cases\n\n")
-		buf.WriteString("These examples all assume the `KOSLI_API_TOKEN`, `KOSLI_ORG`, `KOSLI_HOST`, `KOSLI_FLOW`, and `KOSLI_TRAIL`\n")
-		buf.WriteString("environment variables are set, so the `--api-token`, `--org`, `--host`, `--flow`, and `--trail` flags\n")
-		buf.WriteString("do not need to be explicitly provided.  \n\n")
+		buf.WriteString("These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. \n\n")
 
 		// Some non-title lines contain a # character, (eg in a snappish) so we have to
 		// split on newlines first and then only split on # in the first position

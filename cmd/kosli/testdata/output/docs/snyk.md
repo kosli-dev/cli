@@ -62,9 +62,7 @@ snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 
 ## Examples Use Cases
 
-These examples all assume the `KOSLI_API_TOKEN`, `KOSLI_ORG`, `KOSLI_HOST`, `KOSLI_FLOW`, and `KOSLI_TRAIL`
-environment variables are set, so the `--api-token`, `--org`, `--host`, `--flow`, and `--trail` flags
-do not need to be explicitly provided.  
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
 
 **report a snyk attestation about a pre-built docker artifact (kosli calculates the fingerprint)**
 

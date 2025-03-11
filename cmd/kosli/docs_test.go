@@ -17,15 +17,15 @@ type DocsCommandTestSuite struct {
 }
 
 func (suite *DocsCommandTestSuite) TestDocsCmd() {
-        // If this test fails, a simple way to retrieve a new generated master is to:
-        // - add an import for fmt
-        // - uncomment the fmt.Printf() call below
-        // - comment out the line defer os.RemoveAll(tempDirName)
-        // Then:
-        // - make test_integration_single TARGET=TestDocsCommandTestSuite
-        // will tell you where the new snyk.md master file lives.
-        // Then copy it to ./cmd/kosli/testdata/output/docs/
-        // and undo the changes above.
+	// If this test fails, a simple way to retrieve a new generated master is to:
+	// - add an import for fmt
+	// - uncomment the fmt.Printf() call below
+	// - comment out the line defer os.RemoveAll(tempDirName)
+	// Then:
+	// - make test_integration_single TARGET=TestDocsCommandTestSuite
+	// will tell you where the new snyk.md master file lives.
+	// Then copy it to ./cmd/kosli/testdata/output/docs/
+	// and undo the changes above.
 	global = &GlobalOpts{}
 	tempDirName, err := os.MkdirTemp("", "generatedDocs")
 	//fmt.Printf("tempDirName :%s:\n\n\n\n\n", tempDirName)
