@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"unicode"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -180,6 +181,9 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 		// Note: The contents of the title lines could also contain < and > characters which will
 		// be lost if simply embedded in a md ## section.
 		buf.WriteString("## Examples Use Cases\n\n")
+		buf.WriteString("These examples all assume the `KOSLI_API_TOKEN`, `KOSLI_ORG`, `KOSLI_HOST`, `KOSLI_FLOW`, and `KOSLI_TRAIL`\n")
+		buf.WriteString("environment variables are set, so the `--api-token`, `--org`, `--host`, `--flow`, and `--trail` flags\n")
+		buf.WriteString("do not need to be explicitly provided.  \n\n")
 
 		// Some non-title lines contain a # character, (eg in a snappish) so we have to
 		// split on newlines first and then only split on # in the first position
@@ -226,10 +230,34 @@ func hashTitledExamples(lines []string) [][]string {
 			result = append(result, example) // See result[1:] at end
 			example = make([]string, 0)
 		}
-		example = append(example, line)
+		if !isSetWithEnvVar(line) {
+			example = append(example, choppedLineContinuation(line))
+		}
 	}
 	result = append(result, example)
 	return result[1:]
+}
+
+func isSetWithEnvVar(line string) bool {
+	trimmed_line := strings.TrimSpace(line)
+	if strings.HasPrefix(trimmed_line, "--api-token ") {
+		return true
+	} else if strings.HasPrefix(trimmed_line, "--host ") {
+		return true
+	} else if strings.HasPrefix(trimmed_line, "--org ") {
+		return true
+	} else if strings.HasPrefix(trimmed_line, "--flow ") {
+		return true
+	} else if strings.HasPrefix(trimmed_line, "--trail ") {
+		return true
+	} else {
+		return false
+	}
+}
+
+func choppedLineContinuation(line string) string {
+	trimmed_line := strings.TrimRightFunc(line, unicode.IsSpace)
+	return strings.TrimSuffix(trimmed_line, "\\")
 }
 
 func printOptions(buf *bytes.Buffer, cmd *cobra.Command, name string) error {
