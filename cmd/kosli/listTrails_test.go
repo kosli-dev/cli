@@ -63,6 +63,23 @@ func (suite *ListTrailsCommandTestSuite) TestListTrailsCmd() {
 			cmd:       fmt.Sprintf(`list trails xxx %s`, suite.defaultKosliArguments),
 			golden:    "Error: unknown command \"xxx\" for \"kosli list trails\"\n",
 		},
+		{
+			wantError: true,
+			name:      "negative page limit causes an error",
+			cmd:       fmt.Sprintf(`list trails --page-limit -1 %s`, suite.defaultKosliArguments),
+			golden:    "Error: flag '--page-limit' has value '-1' which is illegal\n",
+		},
+		{
+			wantError: true,
+			name:      "negative page number causes an error",
+			cmd:       fmt.Sprintf(`list trails --page -1 %s`, suite.defaultKosliArguments),
+			golden:    "Error: flag '--page' has value '-1' which is illegal\n",
+		},
+		{
+			name:   "can list trails with pagination",
+			cmd:    fmt.Sprintf(`list trails --page-limit 15 --page 2 %s`, suite.defaultKosliArguments),
+			golden: "",
+		},
 	}
 
 	runTestCmd(suite.Suite.T(), tests)
