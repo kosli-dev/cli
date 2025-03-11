@@ -56,10 +56,11 @@ type listTrailsOptions struct {
 func newListTrailsCmd(out io.Writer) *cobra.Command {
 	o := new(listTrailsOptions)
 	cmd := &cobra.Command{
-		Use:   "trails",
-		Short: listTrailsShortDesc,
-		Long:  listTrailsLongDesc,
-		Args:  cobra.NoArgs,
+		Use:     "trails",
+		Short:   listTrailsShortDesc,
+		Long:    listTrailsLongDesc,
+		Example: listTrailsExample,
+		Args:    cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
@@ -121,6 +122,8 @@ func printTrailsListAsTable(raw string, out io.Writer, page int) error {
 		if err != nil {
 			return err
 		}
+		// This is a little ridiculous but seems to be the easiest way to get the
+		// trails list from paginated results and put it into the trails variable defined above.
 		trails_json, err := json.Marshal(response["data"])
 		if err != nil {
 			return err
