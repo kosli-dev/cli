@@ -53,6 +53,23 @@ type listTrailsOptions struct {
 	flowName string
 }
 
+type Trail struct {
+	Name            string `json:"name"`
+	Description     string `json:"description"`
+	ComplianceState string `json:"compliance_state"`
+}
+
+type Pagination struct {
+	Page      float64 `json:"page"`
+	PageCount float64 `json:"page_count"`
+	Total     float64 `json:"total"`
+}
+
+type listTrailsResponse struct {
+	Data       []Trail    `json:"data"`
+	Pagination Pagination `json:"pagination"`
+}
+
 func newListTrailsCmd(out io.Writer) *cobra.Command {
 	o := new(listTrailsOptions)
 	cmd := &cobra.Command{
@@ -74,9 +91,7 @@ func newListTrailsCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
-	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
-	cmd.Flags().IntVar(&o.pageNumber, "page", 1, pageNumberFlag)
-	cmd.Flags().IntVarP(&o.pageLimit, "page-limit", "n", 0, pageLimitListTrailsFlag)
+	addListFlags(cmd, &o.listOptions, 0)
 
 	err := RequireFlags(cmd, []string{"flow"})
 	if err != nil {
@@ -113,25 +128,19 @@ func (o *listTrailsOptions) run(out io.Writer) error {
 }
 
 func printTrailsListAsTable(raw string, out io.Writer, page int) error {
-	var trails []map[string]interface{}
-	var response map[string]interface{}
+	response := &listTrailsResponse{}
+	trails := []Trail{}
 
+	// If using pagination, the response will have the format {data: [], pagination: {}}
+	// and therefore will not unmarshal into an array of Trail structs; instead, we need
+	// to unmarshal into a listTrailsResponse struct and extract the data field.
 	err := json.Unmarshal([]byte(raw), &trails)
 	if err != nil {
 		err = json.Unmarshal([]byte(raw), &response)
 		if err != nil {
 			return err
 		}
-		// This is a little ridiculous but seems to be the easiest way to get the
-		// trails list from paginated results and put it into the trails variable defined above.
-		trails_json, err := json.Marshal(response["data"])
-		if err != nil {
-			return err
-		}
-		err = json.Unmarshal(trails_json, &trails)
-		if err != nil {
-			return err
-		}
+		trails = response.Data
 	}
 
 	if len(trails) == 0 {
@@ -146,11 +155,12 @@ func printTrailsListAsTable(raw string, out io.Writer, page int) error {
 	header := []string{"NAME", "DESCRIPTION", "COMPLIANCE"}
 	rows := []string{}
 	for _, trail := range trails {
-		row := fmt.Sprintf("%s\t%s\t%s", trail["name"], trail["description"], trail["compliance_state"])
+		row := fmt.Sprintf("%s\t%s\t%s", trail.Name, trail.Description, trail.ComplianceState)
 		rows = append(rows, row)
 	}
-	if pagination, ok := response["pagination"].(map[string]interface{}); ok {
-		paginationInfo := fmt.Sprintf("\nShowing page %.0f of %.0f, total %.0f items", pagination["page"], pagination["page_count"], pagination["total"])
+	if len(response.Data) > 0 {
+		pagination := response.Pagination
+		paginationInfo := fmt.Sprintf("\nShowing page %.0f of %.0f, total %.0f items", pagination.Page, pagination.PageCount, pagination.Total)
 		rows = append(rows, paginationInfo)
 	}
 
