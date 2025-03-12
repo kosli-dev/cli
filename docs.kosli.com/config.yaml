@@ -18,7 +18,7 @@ markup:
 Params:
   BookSection: '/'
   BookToC: true
-  default_social_thumb: /kosli-docs-logo-white.svg
+  default_social_thumb: /kosli-logo-dark-main.svg
 
 caches:
   getjson:
