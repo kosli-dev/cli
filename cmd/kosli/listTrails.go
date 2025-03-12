@@ -91,6 +91,7 @@ func newListTrailsCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
+	// We set the defauly page limit to 0 so that all results are returned if the flag is not provided
 	addListFlags(cmd, &o.listOptions, 0)
 
 	err := RequireFlags(cmd, []string{"flow"})
@@ -102,13 +103,7 @@ func newListTrailsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *listTrailsOptions) run(out io.Writer) error {
-	url := fmt.Sprintf("%s/api/v2/trails/%s/%s", global.Host, global.Org, o.flowName)
-
-	// For backward compatibility, we need to return all of the results if no pagination
-	// flags are provided - i.e. by not passing a pageLimit parameter to the API.
-	if o.pageLimit != 0 {
-		url = fmt.Sprintf("%s?per_page=%d&page=%d", url, o.pageLimit, o.pageNumber)
-	}
+	url := fmt.Sprintf("%s/api/v2/trails/%s/%s?per_page=%d&page=%d", global.Host, global.Org, o.flowName, o.pageLimit, o.pageNumber)
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
