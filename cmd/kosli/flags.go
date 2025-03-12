@@ -105,10 +105,17 @@ func addEvidenceFlags(cmd *cobra.Command, payload *TypedEvidencePayload, ci stri
 	cmd.Flags().StringVar(&payload.EvidenceURL, "evidence-url", "", evidenceURLFlag)
 }
 
-func addListFlags(cmd *cobra.Command, o *listOptions) {
+func addListFlags(cmd *cobra.Command, o *listOptions, customPageLimit ...int) {
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	cmd.Flags().IntVar(&o.pageNumber, "page", 1, pageNumberFlag)
-	cmd.Flags().IntVarP(&o.pageLimit, "page-limit", "n", 15, pageLimitFlag)
+
+	// Use customPageLimit if provided, otherwise default to 15
+	pageLimit := 15
+	if len(customPageLimit) > 0 {
+		pageLimit = customPageLimit[0]
+	}
+
+	cmd.Flags().IntVarP(&o.pageLimit, "page-limit", "n", pageLimit, pageLimitFlag)
 }
 
 func addAttestationFlags(cmd *cobra.Command, o *CommonAttestationOptions, payload *CommonAttestationPayload, ci string) {
