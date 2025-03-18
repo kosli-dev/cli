@@ -100,12 +100,16 @@ aside.book-toc .book-toc-content {
     .container {
         .docs-logo {        
             width: 16rem;
-            margin: 1rem 0;
-            text-align: center;
-            border-right: 1px solid #fff;
-
-            img {
-                height: 40px;
+            
+            
+            a {
+                margin: 1rem 0;
+                padding: 0 1rem;
+                display: block;
+                border-right: 1px solid #fff;
+                img {
+                    height: 40px;
+                }
             }
         }
 
@@ -191,4 +195,8 @@ aside.book-toc .book-toc-content {
     border: 1px solid #000d40;
     border-radius: 3px;
     padding: 5px;
+}
+
+.footer-logo {
+    height: 40px;
 }

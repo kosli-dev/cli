@@ -30,7 +30,7 @@ sections:
           link_text: View >
           url: /getting_started/environments/
         - title: Kosli flows
-          image: /images/home/home-flows.png
+          image: /images/home/home-flows.svg
           alt_text: Flows and artifact reporting explained
           description: Artifact reporting explained
           link_text: View >
@@ -51,7 +51,7 @@ sections:
           image: /images/home/home-community.svg
           alt_text: Slack community icon
           description: Join the Kosli Community
-          link_text: Join the Kosli Community >
+          link_text: Join the Kosli Slack Community >
           url: https://www.kosli.com/community/
           new_page: true
 ---
