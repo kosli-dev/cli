@@ -19,7 +19,6 @@ Environment Policies enable you to define and enforce compliance requirements fo
 - Enforce consistent compliance standards across your deployment pipeline
 - Prevent non-compliant artifacts from being deployed (via admission controllers)
 
-
 Policies are written in YAML and are immutable (updating a policy creates a new version). They can be attached to one or more environments, and an environment can have one or more policies attached to it.
 
 ## Create a Policy
