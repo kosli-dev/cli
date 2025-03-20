@@ -21,6 +21,7 @@ Environment Policies enable you to define and enforce compliance requirements fo
 
 Polices are written in YAML and are immutable (updating a policy creates a new version). They can be attached to one or more environments, and an environment can have one or more policies attached to it.
 
+Policies are written in YAML and are immutable (updating a policy creates a new version). They can be attached to one or more environments, and an environment can have one or more policies attached to it.
 
 ## Create a Policy
 
