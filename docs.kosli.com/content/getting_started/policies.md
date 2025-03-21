@@ -45,7 +45,7 @@ kosli create policy prod-requirements prod-policy.yaml
 ```
 
 ```shell {.command}
-kosli create get policy prod-requirements
+kosli get policy prod-requirements
 ```
 
 See [kosli create policy](/client_reference/kosli_create_policy/) for usage details and examples.
