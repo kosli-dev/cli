@@ -58,10 +58,10 @@ Once you create a policy, you will be able to see it in the UI under `policies` 
 
 A Policy is declaratively defined according to the following schema:
 
-```yaml
+```yaml {.command}
 _schema: https://kosli.com/schemas/policy/environment/v1
 
-artifacts
+artifacts:
   provenance:
     required: true | false (default = false)
     exceptions: (default [])
