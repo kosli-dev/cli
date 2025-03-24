@@ -72,6 +72,15 @@ jobs:
             output-file: '${{matrix.artifact.template_name}}-sbom.spdx.json'
             upload-artifact: false
             upload-release-assets: false
+
+        - name: Generate Cyclone-dx SBOM for the binary
+          uses: anchore/sbom-action@v0
+          with:
+            file: ${{matrix.artifact.path}}
+            format: 'cyclonedx-json'
+            output-file: '${{matrix.artifact.template_name}}-sbom.cyclonedx.json'
+            upload-artifact: false
+            upload-release-assets: false        
         
         - name: Publish SBOM
           uses: anchore/sbom-action/publish-sbom@v0
