@@ -2,6 +2,7 @@ package gitview
 
 import (
 	"fmt"
+	"github.com/kosli-dev/cli/internal/jira"
 	"os"
 	"path/filepath"
 	"testing"
@@ -360,6 +361,7 @@ func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 	_, workTree, fs, err := testHelpers.InitializeGitRepo(suite.tmpDir)
 	require.NoError(suite.Suite.T(), err)
 
+	defaultJiraPattern := "[A-Z][A-Z0-9]{1,9}-[0-9]+"
 	for _, t := range []struct {
 		name              string
 		pattern           string
@@ -373,28 +375,28 @@ func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 	}{
 		{
 			name:          "One Jira reference found",
-			pattern:       "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			pattern:       jira.MakeJiraIssueKeyPattern([]string{}),
 			commitMessage: "EX-1 test commit",
 			want:          []string{"EX-1"},
 			wantError:     false,
 		},
 		{
 			name:          "Two Jira references found",
-			pattern:       "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			pattern:       defaultJiraPattern,
 			commitMessage: "EX-1 ABC-22 test commit",
 			want:          []string{"EX-1", "ABC-22"},
 			wantError:     false,
 		},
 		{
 			name:          "No Jira references found",
-			pattern:       "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			pattern:       defaultJiraPattern,
 			commitMessage: "test commit",
 			want:          []string{},
 			wantError:     false,
 		},
 		{
 			name:          "Jira references found in branch name",
-			pattern:       "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			pattern:       defaultJiraPattern,
 			commitMessage: "some test commit",
 			branchName:    "EX-5-cool-branch",
 			want:          []string{"EX-5"},
@@ -402,7 +404,7 @@ func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 		},
 		{
 			name:              "Jira references found in branch name but ignoreBranchMatch set",
-			pattern:           "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			pattern:           defaultJiraPattern,
 			commitMessage:     "some test commit",
 			branchName:        "EX-6-cool-branch",
 			ignoreBranchMatch: true,
@@ -411,7 +413,7 @@ func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 		},
 		{
 			name:            "Jira references found in secondary source",
-			pattern:         "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			pattern:         defaultJiraPattern,
 			commitMessage:   "some test commit",
 			secondarySource: "EX-1-test-commit",
 			want:            []string{"EX-1"},
@@ -419,7 +421,7 @@ func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 		},
 		{
 			name:            "Jira references found in commit and secondary source",
-			pattern:         "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			pattern:         defaultJiraPattern,
 			commitMessage:   "EX-1 some test commit",
 			secondarySource: "EX-2-test-commit",
 			want:            []string{"EX-1", "EX-2"},
@@ -427,7 +429,7 @@ func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 		},
 		{
 			name:          "Jira references found in commit and branch name",
-			pattern:       "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			pattern:       defaultJiraPattern,
 			commitMessage: "EX-1 some test commit",
 			branchName:    "EX-2-test-commit",
 			want:          []string{"EX-1", "EX-2"},
@@ -435,7 +437,7 @@ func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 		},
 		{
 			name:          "Same Jira references found in commit and branch name is not duplicated",
-			pattern:       "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			pattern:       defaultJiraPattern,
 			commitMessage: "DUP-1 some test commit",
 			branchName:    "DUP-1-test-commit",
 			want:          []string{"DUP-1"},
@@ -443,7 +445,7 @@ func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 		},
 		{
 			name:            "Jira references found in commit, branch name and secondary source",
-			pattern:         "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			pattern:         defaultJiraPattern,
 			commitMessage:   "ALL-1 some test commit",
 			branchName:      "ALL-2-test-commit",
 			secondarySource: "ALL-3-some-things",
@@ -452,14 +454,28 @@ func (suite *GitViewTestSuite) TestMatchPatternInCommitMessageORBranchName() {
 		},
 		{
 			name:          "No Jira references found, despite something that looks similar to Jira reference",
-			pattern:       "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			pattern:       defaultJiraPattern,
 			commitMessage: "Ea-1 test commit",
 			want:          []string{},
 			wantError:     false,
 		},
 		{
+			name:          "One Jira reference found with specific pattern",
+			pattern:       jira.MakeJiraIssueKeyPattern([]string{"EX"}),
+			commitMessage: "EX-1 ABC-22 test commit",
+			want:          []string{"EX-1"},
+			wantError:     false,
+		},
+		{
+			name:          "Two Jira references found with specific pattern",
+			pattern:       jira.MakeJiraIssueKeyPattern([]string{"EX", "ABC"}),
+			commitMessage: "EX-1 ABC-22 test commit",
+			want:          []string{"EX-1", "ABC-22"},
+			wantError:     false,
+		},
+		{
 			name:      "Commit not found, expect an error",
-			pattern:   "[A-Z][A-Z0-9]{1,9}-[0-9]+",
+			pattern:   defaultJiraPattern,
 			commitSha: "3b7420d0392114794591aaefcd84d7b100b8d095",
 			wantError: true,
 		},

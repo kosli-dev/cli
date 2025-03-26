@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/kosli-dev/cli/internal/jira"
 	"os"
 	"regexp"
 	"testing"
@@ -316,7 +317,7 @@ func TestMakeJiraIssueKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := makeJiraIssueKeyPattern(tt.projectKeys)
+			got := jira.MakeJiraIssueKeyPattern(tt.projectKeys)
 			if got != tt.want {
 				t.Errorf("makeJiraIssueKeyPattern() = %v, want %v", got, tt.want)
 			}

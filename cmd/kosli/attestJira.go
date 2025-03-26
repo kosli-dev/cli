@@ -250,7 +250,7 @@ func (o *attestJiraOptions) run(args []string) error {
 	if err != nil {
 		return err
 	}
-	jiraIssueKeyPattern := makeJiraIssueKeyPattern(o.projectKeys)
+	jiraIssueKeyPattern := jira.MakeJiraIssueKeyPattern(o.projectKeys)
 
 	issueIDs, commitInfo, err := gv.MatchPatternInCommitMessageORBranchName(jiraIssueKeyPattern, o.payload.Commit.Sha1,
 		o.secondarySource, o.ignoreBranchMatch)
@@ -305,15 +305,4 @@ func (o *attestJiraOptions) run(args []string) error {
 		return fmt.Errorf("missing Jira issues from references found in commit message or branch name%s", issueLog)
 	}
 	return wrapAttestationError(err)
-}
-
-func makeJiraIssueKeyPattern(projectKeys []string) string {
-	// Jira issue keys consist of [project-key]-[sequential-number]
-	// project key must be at least 2 characters long and start with an uppercase letter
-	// more info: https://support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/#Workingwithissues-Projectandissuekeys
-	if len(projectKeys) == 0 {
-		return `[A-Z][A-Z0-9]{1,9}-[0-9]+`
-	} else {
-		return `(` + strings.Join(projectKeys, "|") + `)-[0-9]+`
-	}
 }
