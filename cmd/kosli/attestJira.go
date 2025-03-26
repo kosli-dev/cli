@@ -24,6 +24,7 @@ type attestJiraOptions struct {
 	username          string
 	apiToken          string
 	pat               string
+	projectKeys       []string
 	issueFields       string
 	secondarySource   string
 	ignoreBranchMatch bool
@@ -218,6 +219,7 @@ func newAttestJiraCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.username, "jira-username", "", jiraUsernameFlag)
 	cmd.Flags().StringVar(&o.apiToken, "jira-api-token", "", jiraAPITokenFlag)
 	cmd.Flags().StringVar(&o.pat, "jira-pat", "", jiraPATFlag)
+	cmd.Flags().StringSliceVar(&o.projectKeys, "jira-project-key", []string{}, jiraProjectKeyFlag)
 	cmd.Flags().StringVar(&o.issueFields, "jira-issue-fields", "", jiraIssueFieldFlag)
 	cmd.Flags().StringVar(&o.secondarySource, "jira-secondary-source", "", jiraSecondarySourceFlag)
 	cmd.Flags().BoolVar(&o.ignoreBranchMatch, "ignore-branch-match", false, ignoreBranchMatchFlag)
@@ -248,7 +250,7 @@ func (o *attestJiraOptions) run(args []string) error {
 	if err != nil {
 		return err
 	}
-	jiraIssueKeyPattern := makeJiraIssueKeyPattern([]string{})
+	jiraIssueKeyPattern := makeJiraIssueKeyPattern(o.projectKeys)
 
 	issueIDs, commitInfo, err := gv.MatchPatternInCommitMessageORBranchName(jiraIssueKeyPattern, o.payload.Commit.Sha1,
 		o.secondarySource, o.ignoreBranchMatch)
