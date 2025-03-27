@@ -104,7 +104,7 @@ kosli attest jira \
 	--jira-base-url https://kosli.atlassian.net \
 	--jira-username user@domain.com \
 	--jira-api-token yourJiraAPIToken \
-    --jira-project-key ABC \
+	--jira-project-key ABC \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
