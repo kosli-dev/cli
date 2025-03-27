@@ -113,6 +113,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	jiraUsernameFlag                     = "Jira username (for Jira Cloud)"
 	jiraAPITokenFlag                     = "Jira API token (for Jira Cloud)"
 	jiraPATFlag                          = "Jira personal access token (for self-hosted Jira)"
+	jiraProjectKeyFlag                   = "[optional] Jira project key to match against. Can be repeated. Defaults to matching any jira project key."
 	jiraIssueFieldFlag                   = "[optional] The comma separated list of fields to include from the Jira issue. Default no fields are included. '*all' will give all fields."
 	jiraSecondarySourceFlag              = "[optional] An optional string to search for Jira ticket reference, e.g. '--jira-secondary-source ${{ github.head_ref }}'"
 	ignoreBranchMatchFlag                = "Ignore branch name when searching for Jira ticket reference."

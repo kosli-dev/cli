@@ -226,6 +226,31 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 				commitMessage: "EX-1 test commit",
 			},
 		},
+		{
+			name: "can specify the jira project key",
+			cmd: fmt.Sprintf(`attest jira --name bar 
+					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+					--jira-project-key EX
+					--jira-project-key ABC
+					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "jira attestation 'bar' is reported to trail: test-123\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "EX-1 test commit",
+			},
+		},
+		{
+			wantError: true,
+			name:      "fails with an invalid Jira project key specified",
+			cmd: fmt.Sprintf(`attest jira --name bar 
+					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+					--jira-project-key ex
+					--jira-project-key 1AB
+					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "Error: Invalid Jira project keys: ex, 1AB\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "EX-1 test commit",
+			},
+		},
 	}
 
 	for _, test := range tests {
