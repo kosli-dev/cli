@@ -85,7 +85,7 @@ func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string) (*Jir
 	}
 
 	issue, response, err := jiraClient.Issue.Get(issueID, &queryOptions)
-	if err != nil && response.StatusCode != http.StatusNotFound {
+	if err != nil && response != nil && response.StatusCode != http.StatusNotFound {
 		return result, err
 	}
 

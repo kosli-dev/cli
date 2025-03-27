@@ -132,6 +132,16 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
+			name: "can attest jira when the issue doesn't exist",
+			cmd: fmt.Sprintf(`attest jira testdata/file1 --artifact-type file --name foo 
+								--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+								--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "jira attestation 'foo' is reported to trail: test-123\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "EX-999 test commit",
+			},
+		},
+		{
 			name: "can attest jira against an artifact using artifact name and --artifact-type when --name does not exist in the trail template",
 			cmd: fmt.Sprintf(`attest jira testdata/file1 --artifact-type file --name bar 
 					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
