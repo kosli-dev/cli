@@ -262,7 +262,7 @@ func (o *attestJiraOptions) run(args []string) error {
 
 	o.payload.JiraResults = []*jira.JiraIssueInfo{}
 
-	err = o.validateJiraProjectKeys(err)
+	err = o.validateJiraProjectKeys()
 	if err != nil {
 		return err
 	}
@@ -328,7 +328,7 @@ func (o *attestJiraOptions) run(args []string) error {
 	return wrapAttestationError(err)
 }
 
-func (o *attestJiraOptions) validateJiraProjectKeys(err error) error {
+func (o *attestJiraOptions) validateJiraProjectKeys() error {
 	matchesJiraProjectKeys, err := regexp.Compile("^[A-Z][A-Z0-9]{1,9}$")
 	if err != nil {
 		return err
