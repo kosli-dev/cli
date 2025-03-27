@@ -53,35 +53,35 @@ kosli report evidence commit pullrequest azure [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report a pull request commit evidence to Kosli**
 
 ```shell
-kosli report evidence commit pullrequest azure \
-	--commit yourGitCommitSha1 \
-	--azure-org-url https://dev.azure.com/myOrg \
-	--project yourAzureDevOpsProject \
-	--repository yourAzureGitRepository \
-	--azure-token yourAzureToken \
-	--name yourEvidenceName \
-	--flows yourFlowName1,yourFlowName2 \
-	--build-url https://exampleci.com \
-	--api-token yourAPIToken
-	
+kosli report evidence commit pullrequest azure 
+	--commit yourGitCommitSha1 
+	--azure-org-url https://dev.azure.com/myOrg 
+	--project yourAzureDevOpsProject 
+	--repository yourAzureGitRepository 
+	--azure-token yourAzureToken 
+	--name yourEvidenceName 
+	--flows yourFlowName1,yourFlowName2 
+	--build-url https://exampleci.com 
+
 ```
 
 **fail if a pull request does not exist for your commit**
 
 ```shell
-kosli report evidence commit pullrequest azure \
-	--commit yourGitCommitSha1 \
-	--azure-org-url https://dev.azure.com/myOrg \
-	--project yourAzureDevOpsProject \
-	--repository yourAzureGitRepository \
-	--azure-token yourAzureToken \
-	--name yourEvidenceName \
-	--flows yourFlowName1,yourFlowName2 \
-	--build-url https://exampleci.com \
-	--api-token yourAPIToken
+kosli report evidence commit pullrequest azure 
+	--commit yourGitCommitSha1 
+	--azure-org-url https://dev.azure.com/myOrg 
+	--project yourAzureDevOpsProject 
+	--repository yourAzureGitRepository 
+	--azure-token yourAzureToken 
+	--name yourEvidenceName 
+	--flows yourFlowName1,yourFlowName2 
+	--build-url https://exampleci.com 
 	--assert
 ```
 

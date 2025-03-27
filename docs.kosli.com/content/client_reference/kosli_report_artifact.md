@@ -58,30 +58,26 @@ kosli report artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **Report to a Kosli flow that a file type artifact has been created**
 
 ```shell
-kosli report artifact FILE.tgz \
-	--api-token yourApiToken \
-	--artifact-type file \
-	--build-url https://exampleci.com \
-	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
-	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
-	--org yourOrgName \
-	--flow yourFlowName 
+kosli report artifact FILE.tgz 
+	--artifact-type file 
+	--build-url https://exampleci.com 
+	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom 
+	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom 
 
 ```
 
 **Report to a Kosli flow that an artifact with a provided fingerprint (sha256) has been created**
 
 ```shell
-kosli report artifact ANOTHER_FILE.txt \
-	--api-token yourApiToken \
-	--build-url https://exampleci.com \
-	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
-	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom \
-	--org yourOrgName \
-	--flow yourFlowName \
+kosli report artifact ANOTHER_FILE.txt 
+	--build-url https://exampleci.com 
+	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom 
+	--git-commit yourCommitShaThatThisArtifactWasBuiltFrom 
 	--fingerprint yourArtifactFingerprint
 ```
 

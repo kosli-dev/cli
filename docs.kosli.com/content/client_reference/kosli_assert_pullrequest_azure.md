@@ -43,6 +43,8 @@ kosli assert pullrequest azure [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 ```shell
 kosli assert pullrequest azure \
 	--azure-token yourAzureToken \

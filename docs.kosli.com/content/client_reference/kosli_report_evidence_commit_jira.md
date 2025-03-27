@@ -64,50 +64,46 @@ kosli report evidence commit jira [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report Jira evidence for a commit related to one Kosli flow (with Jira Cloud)**
 
 ```shell
-kosli report evidence commit jira \
-	--commit yourGitCommitSha1 \
-	--name yourEvidenceName \
-	--jira-base-url https://kosli.atlassian.net \
-	--jira-username user@domain.com \
-	--jira-api-token yourJiraAPIToken \
-	--flows yourFlowName \
-	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli report evidence commit jira 
+	--commit yourGitCommitSha1 
+	--name yourEvidenceName 
+	--jira-base-url https://kosli.atlassian.net 
+	--jira-username user@domain.com 
+	--jira-api-token yourJiraAPIToken 
+	--flows yourFlowName 
+	--build-url https://exampleci.com 
 
 ```
 
 **report Jira evidence for a commit related to one Kosli flow (with self-hosted Jira)**
 
 ```shell
-kosli report evidence commit jira \
-	--commit yourGitCommitSha1 \
-	--name yourEvidenceName \
-	--jira-base-url https://jira.example.com \
-	--jira-pat yourJiraPATToken \
-	--flows yourFlowName \
-	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli report evidence commit jira 
+	--commit yourGitCommitSha1 
+	--name yourEvidenceName 
+	--jira-base-url https://jira.example.com 
+	--jira-pat yourJiraPATToken 
+	--flows yourFlowName 
+	--build-url https://exampleci.com 
 
 ```
 
 **report Jira  evidence for a commit related to multiple Kosli flows with user-data (with Jira Cloud)**
 
 ```shell
-kosli report evidence commit jira \
-	--commit yourGitCommitSha1 \
-	--name yourEvidenceName \
-	--jira-base-url https://kosli.atlassian.net \
-	--jira-username user@domain.com \
-	--jira-api-token yourJiraAPIToken \
-	--flows yourFlowName1,yourFlowName2 \
-	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
-	--org yourOrgName \
+kosli report evidence commit jira 
+	--commit yourGitCommitSha1 
+	--name yourEvidenceName 
+	--jira-base-url https://kosli.atlassian.net 
+	--jira-username user@domain.com 
+	--jira-api-token yourJiraAPIToken 
+	--flows yourFlowName1,yourFlowName2 
+	--build-url https://exampleci.com 
 	--user-data /path/to/json/file.json
 
 
@@ -116,16 +112,14 @@ kosli report evidence commit jira \
 **fail if no issue reference is found, or the issue is not found in your jira instance**
 
 ```shell
-kosli report evidence commit jira \
-	--commit yourGitCommitSha1 \
-	--name yourEvidenceName \
-	--jira-base-url https://kosli.atlassian.net \
-	--jira-username user@domain.com \
-	--jira-api-token yourJiraAPIToken \
-	--flows yourFlowName \
-	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
-	--org yourOrgName \
+kosli report evidence commit jira 
+	--commit yourGitCommitSha1 
+	--name yourEvidenceName 
+	--jira-base-url https://kosli.atlassian.net 
+	--jira-username user@domain.com 
+	--jira-api-token yourJiraAPIToken 
+	--flows yourFlowName 
+	--build-url https://exampleci.com 
 	--assert
 ```
 

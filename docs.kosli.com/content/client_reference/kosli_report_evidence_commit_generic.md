@@ -49,33 +49,31 @@ kosli report evidence commit generic [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report Generic evidence for a commit related to one Kosli flow**
 
 ```shell
-kosli report evidence commit generic \
-	--commit yourGitCommitSha1 \
-	--name yourEvidenceName \
-	--description "some description" \
-	--compliant \
-	--flows yourFlowName \
-	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli report evidence commit generic 
+	--commit yourGitCommitSha1 
+	--name yourEvidenceName 
+	--description "some description" 
+	--compliant 
+	--flows yourFlowName 
+	--build-url https://exampleci.com 
 
 ```
 
 **report Generic evidence for a commit related to multiple Kosli flows with user-data**
 
 ```shell
-kosli report evidence commit generic \
-	--commit yourGitCommitSha1 \
-	--name yourEvidenceName \
-	--description "some description" \
-	--compliant \
-	--flows yourFlowName1,yourFlowName2 \
-	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
-	--org yourOrgName \
+kosli report evidence commit generic 
+	--commit yourGitCommitSha1 
+	--name yourEvidenceName 
+	--description "some description" 
+	--compliant 
+	--flows yourFlowName1,yourFlowName2 
+	--build-url https://exampleci.com 
 	--user-data /path/to/json/file.json
 ```
 

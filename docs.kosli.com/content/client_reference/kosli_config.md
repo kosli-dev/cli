@@ -52,14 +52,16 @@ kosli config [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **configure global flags in your default config file**
 
 ```shell
-kosli config --org=yourOrg \
-	--api-token=yourAPIToken \
-	--host=https://app.kosli.com \
-	--debug=false \
-	--max-api-retries=3 \
+kosli config --org=yourOrg 
+	--api-token=yourAPIToken 
+	--host=https://app.kosli.com 
+	--debug=false 
+	--max-api-retries=3 
 	--http-proxy=http://192.0.0.1:8080
 
 ```

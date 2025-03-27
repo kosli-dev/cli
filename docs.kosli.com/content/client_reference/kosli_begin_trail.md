@@ -60,15 +60,14 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **begin/update a Kosli flow trail**
 
 ```shell
-kosli begin trail yourTrailName \
-	--flow yourFlowName \
-	--description yourTrailDescription \
-	--template-file /path/to/your/template/file.yml \
-	--user-data /path/to/your/user-data/file.json \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli begin trail yourTrailName 
+	--description yourTrailDescription 
+	--template-file /path/to/your/template/file.yml 
+	--user-data /path/to/your/user-data/file.json 
 ```
 

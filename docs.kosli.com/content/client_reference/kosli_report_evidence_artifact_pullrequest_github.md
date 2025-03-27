@@ -65,37 +65,33 @@ kosli report evidence artifact pullrequest github [IMAGE-NAME | FILE-PATH | DIR-
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report a pull request evidence to kosli for a docker image**
 
 ```shell
-kosli report evidence artifact pullrequest github yourDockerImageName \
-	--artifact-type docker \
-	--build-url https://exampleci.com \
-	--name yourEvidenceName \
-	--flow yourFlowName \
-	--github-token yourGithubToken \
-	--github-org yourGithubOrg \
-	--commit yourArtifactGitCommit \
-	--repository yourGithubGitRepository \
-	--org yourOrgName \
-	--api-token yourAPIToken
-	
+kosli report evidence artifact pullrequest github yourDockerImageName 
+	--artifact-type docker 
+	--build-url https://exampleci.com 
+	--name yourEvidenceName 
+	--github-token yourGithubToken 
+	--github-org yourGithubOrg 
+	--commit yourArtifactGitCommit 
+	--repository yourGithubGitRepository 
+
 ```
 
 **fail if a pull request does not exist for your artifact**
 
 ```shell
-kosli report evidence artifact pullrequest github yourDockerImageName \
-	--artifact-type docker \
-	--build-url https://exampleci.com \
-	--name yourEvidenceName \
-	--flow yourFlowName \
-	--github-token yourGithubToken \
-	--github-org yourGithubOrg \
-	--commit yourArtifactGitCommit \
-	--repository yourGithubGitRepository \
-	--org yourOrgName \
-	--api-token yourAPIToken \
+kosli report evidence artifact pullrequest github yourDockerImageName 
+	--artifact-type docker 
+	--build-url https://exampleci.com 
+	--name yourEvidenceName 
+	--github-token yourGithubToken 
+	--github-org yourGithubOrg 
+	--commit yourArtifactGitCommit 
+	--repository yourGithubGitRepository 
 	--assert
 ```
 

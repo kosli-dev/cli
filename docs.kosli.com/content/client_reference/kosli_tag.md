@@ -48,45 +48,39 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **add/update tags to a flow**
 
 ```shell
-kosli tag flow yourFlowName \
-	--set key1=value1 \
-	--set key2=value2 \
-	--api-token yourApiToken \
-	--org yourOrgName
+kosli tag flow yourFlowName 
+	--set key1=value1 
+	--set key2=value2 
 
 ```
 
 **tag an environment**
 
 ```shell
-kosli tag env yourEnvironmentName \
-	--set key1=value1 \
-	--set key2=value2 \
-	--api-token yourApiToken \
-	--org yourOrgName
+kosli tag env yourEnvironmentName 
+	--set key1=value1 
+	--set key2=value2 
 
 ```
 
 **add/update tags to an environment**
 
 ```shell
-kosli tag env yourEnvironmentName \
-	--set key1=value1 \
-	--set key2=value2 \
-	--api-token yourApiToken \
-	--org yourOrgName
+kosli tag env yourEnvironmentName 
+	--set key1=value1 
+	--set key2=value2 
 
 ```
 
 **remove tags from an environment**
 
 ```shell
-kosli tag env yourEnvironmentName \
-	--unset key1=value1 \
-	--api-token yourApiToken \
-	--org yourOrgName
+kosli tag env yourEnvironmentName 
+	--unset key1=value1 
 ```
 

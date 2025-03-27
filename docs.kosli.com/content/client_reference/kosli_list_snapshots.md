@@ -58,32 +58,28 @@ kosli list snapshots aws-prod --output=json</pre>{{< / raw-html >}}
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **list the last 15 snapshots for an environment**
 
 ```shell
-kosli list snapshots yourEnvironmentName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli list snapshots yourEnvironmentName 
 
 ```
 
 **list the last 30 snapshots for an environment**
 
 ```shell
-kosli list snapshots yourEnvironmentName \
-	--page-limit 30 \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli list snapshots yourEnvironmentName 
+	--page-limit 30 
 
 ```
 
 **list the last 30 snapshots for an environment (in JSON)**
 
 ```shell
-kosli list snapshots yourEnvironmentName \
-	--page-limit 30 \
-	--api-token yourAPIToken \
-	--org yourOrgName \
+kosli list snapshots yourEnvironmentName 
+	--page-limit 30 
 	--output json
 ```
 

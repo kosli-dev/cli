@@ -50,16 +50,16 @@ kosli report evidence commit junit [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report JUnit test evidence for a commit related to one Kosli flow**
 
 ```shell
-kosli report evidence commit junit \
-	--commit yourGitCommitSha1 \
-	--name yourEvidenceName \
-	--flows yourFlowName \
-	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
-	--org yourOrgName	\
+kosli report evidence commit junit 
+	--commit yourGitCommitSha1 
+	--name yourEvidenceName 
+	--flows yourFlowName 
+	--build-url https://exampleci.com 
 	--results-dir yourFolderWithJUnitResults
 
 ```
@@ -67,13 +67,11 @@ kosli report evidence commit junit \
 **report JUnit test evidence for a commit related to multiple Kosli flows**
 
 ```shell
-kosli report evidence commit junit \
-	--commit yourGitCommitSha1 \
-	--name yourEvidenceName \
-	--flows yourFlowName1,yourFlowName2 \
-	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
-	--org yourOrgName	\
+kosli report evidence commit junit 
+	--commit yourGitCommitSha1 
+	--name yourEvidenceName 
+	--flows yourFlowName1,yourFlowName2 
+	--build-url https://exampleci.com 
 	--results-dir yourFolderWithJUnitResults
 ```
 

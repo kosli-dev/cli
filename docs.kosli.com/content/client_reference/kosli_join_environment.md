@@ -38,13 +38,13 @@ kosli join environment [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **join a physical environment to a logical environment**
 
 ```shell
-kosli join environment \
-	--physical prod-k8 \
-	--logical prod \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli join environment 
+	--physical prod-k8 
+	--logical prod 
 ```
 

@@ -42,35 +42,28 @@ kosli list deployments [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **list the last 15 deployments for a flow**
 
 ```shell
-kosli list deployments \ 
-	--flow yourFlowName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli list deployments 
 
 ```
 
 **list the last 30 deployments for a flow**
 
 ```shell
-kosli list deployments \ 
-	--flow yourFlowName \	
-	--page-limit 30 \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli list deployments 
+	--page-limit 30 
 
 ```
 
 **list the last 30 deployments for a flow (in JSON)**
 
 ```shell
-kosli list deployments \ 
-	--flow yourFlowName \
-	--page-limit 30 \
-	--api-token yourAPIToken \
-	--org yourOrgName \
+kosli list deployments 
+	--page-limit 30 
 	--output json
 ```
 

@@ -13,9 +13,8 @@ Report an Azure Devops pull request attestation to an artifact or a trail in a K
 It checks if a pull request exists for the artifact (based on its git commit) and reports the pull-request attestation to the artifact in Kosli.
 
 
-The attestation can be bound to a trail using the trail name.
-
-If the attestation is for an artifact, the attestation can be bound to the artifact using one of two ways:
+The attestation can be bound to a *trail* using the trail name.  
+The attestation can be bound to an *artifact* in two ways:
 - using the artifact's SHA256 fingerprint which is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
 - using the artifact's name in the flow yaml template and the git commit from which the artifact is/will be created. Useful when reporting an attestation before creating/reporting the artifact.
 
@@ -67,108 +66,86 @@ kosli attest pullrequest azure [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report an Azure Devops pull request attestation about a pre-built docker artifact (kosli calculates the fingerprint)**
 
 ```shell
-kosli attest pullrequest azure yourDockerImageName \
-	--artifact-type docker \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--azure-org-url https://dev.azure.com/myOrg \
-	--project yourAzureDevOpsProject \
-	--azure-token yourAzureToken \
-	--commit yourGitCommitSha1 \
-	--repository yourAzureGitRepository \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest pullrequest azure yourDockerImageName 
+	--artifact-type docker 
+	--name yourAttestationName 
+	--azure-org-url https://dev.azure.com/myOrg 
+	--project yourAzureDevOpsProject 
+	--azure-token yourAzureToken 
+	--commit yourGitCommitSha1 
+	--repository yourAzureGitRepository 
 
 ```
 
 **report an Azure Devops pull request attestation about a pre-built docker artifact (you provide the fingerprint)**
 
 ```shell
-kosli attest pullrequest azure \
-	--fingerprint yourDockerImageFingerprint \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--azure-org-url https://dev.azure.com/myOrg \
-	--project yourAzureDevOpsProject \
-	--azure-token yourAzureToken \
-	--commit yourGitCommitSha1 \
-	--repository yourAzureGitRepository \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest pullrequest azure 
+	--fingerprint yourDockerImageFingerprint 
+	--name yourAttestationName 
+	--azure-org-url https://dev.azure.com/myOrg 
+	--project yourAzureDevOpsProject 
+	--azure-token yourAzureToken 
+	--commit yourGitCommitSha1 
+	--repository yourAzureGitRepository 
 
 ```
 
 **report an Azure Devops pull request attestation about a trail**
 
 ```shell
-kosli attest pullrequest azure \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--azure-org-url https://dev.azure.com/myOrg \
-	--project yourAzureDevOpsProject \
-	--azure-token yourAzureToken \
-	--commit yourGitCommitSha1 \
-	--repository yourAzureGitRepository \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest pullrequest azure 
+	--name yourAttestationName 
+	--azure-org-url https://dev.azure.com/myOrg 
+	--project yourAzureDevOpsProject 
+	--azure-token yourAzureToken 
+	--commit yourGitCommitSha1 
+	--repository yourAzureGitRepository 
 
 ```
 
 **report an Azure Devops pull request attestation about an artifact which has not been reported yet in a trail**
 
 ```shell
-kosli attest pullrequest azure \
-	--name yourTemplateArtifactName.yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--azure-org-url https://dev.azure.com/myOrg \
-	--project yourAzureDevOpsProject \
-	--azure-token yourAzureToken \
-	--commit yourGitCommitSha1 \
-	--repository yourAzureGitRepository \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest pullrequest azure 
+	--name yourTemplateArtifactName.yourAttestationName 
+	--azure-org-url https://dev.azure.com/myOrg 
+	--project yourAzureDevOpsProject 
+	--azure-token yourAzureToken 
+	--commit yourGitCommitSha1 
+	--repository yourAzureGitRepository 
 
 ```
 
 **report an Azure Devops pull request attestation about a trail with an attachment**
 
 ```shell
-kosli attest pullrequest azure \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--azure-org-url https://dev.azure.com/myOrg \
-	--project yourAzureDevOpsProject \
-	--azure-token yourAzureToken \
-	--commit yourGitCommitSha1 \
-	--repository yourAzureGitRepository \
-	--attachments=yourAttachmentPathName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest pullrequest azure 
+	--name yourAttestationName 
+	--azure-org-url https://dev.azure.com/myOrg 
+	--project yourAzureDevOpsProject 
+	--azure-token yourAzureToken 
+	--commit yourGitCommitSha1 
+	--repository yourAzureGitRepository 
+	--attachments=yourAttachmentPathName 
 
 ```
 
 **fail if a pull request does not exist for your artifact**
 
 ```shell
-kosli attest pullrequest azure \
-	--name yourTemplateArtifactName.yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--azure-org-url https://dev.azure.com/myOrg \
-	--project yourAzureDevOpsProject \
-	--azure-token yourAzureToken \
-	--commit yourGitCommitSha1 \
-	--repository yourAzureGitRepository \
-	--api-token yourAPIToken \
-	--org yourOrgName \
+kosli attest pullrequest azure 
+	--name yourTemplateArtifactName.yourAttestationName 
+	--azure-org-url https://dev.azure.com/myOrg 
+	--project yourAzureDevOpsProject 
+	--azure-token yourAzureToken 
+	--commit yourGitCommitSha1 
+	--repository yourAzureGitRepository 
 	--assert
 ```
 

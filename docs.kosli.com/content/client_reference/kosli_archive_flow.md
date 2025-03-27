@@ -38,11 +38,11 @@ kosli archive flow FLOW-NAME [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **archive a Kosli flow**
 
 ```shell
-kosli archive flow yourFlowName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli archive flow yourFlowName 
 ```
 

@@ -58,32 +58,28 @@ kosli log environment aws-prod --output=json</pre>{{< / raw-html >}}
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **list the last 15 events for an environment**
 
 ```shell
-kosli log environment yourEnvironmentName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli log environment yourEnvironmentName 
 
 ```
 
 **list the last 30 events for an environment**
 
 ```shell
-kosli log environment yourEnvironmentName \
-	--page-limit 30 \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli log environment yourEnvironmentName 
+	--page-limit 30 
 
 ```
 
 **list the last 30 events for an environment (in JSON)**
 
 ```shell
-kosli log environment yourEnvironmentName \
-	--page-limit 30 \
-	--api-token yourAPIToken \
-	--org yourOrgName \
+kosli log environment yourEnvironmentName 
+	--page-limit 30 
 	--output json
 ```
 

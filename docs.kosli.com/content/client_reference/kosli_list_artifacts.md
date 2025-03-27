@@ -41,35 +41,28 @@ kosli list artifacts [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **list the last 15 artifacts for a flow**
 
 ```shell
-kosli list artifacts \
-	--flow yourFlowName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli list artifacts 
 
 ```
 
 **list the last 30 artifacts for a flow**
 
 ```shell
-kosli list artifacts \
-	--flow yourFlowName \
-	--page-limit 30 \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli list artifacts 
+	--page-limit 30 
 
 ```
 
 **list the last 30 artifacts for a flow (in JSON)**
 
 ```shell
-kosli list artifacts \
-	--flow yourFlowName \	
-	--page-limit 30 \
-	--api-token yourAPIToken \
-	--org yourOrgName \
+kosli list artifacts 
+	--page-limit 30 
 	--output json
 ```
 

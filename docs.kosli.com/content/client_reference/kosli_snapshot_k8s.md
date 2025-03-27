@@ -44,12 +44,12 @@ kosli snapshot k8s ENVIRONMENT-NAME [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report what is running in an entire cluster using kubeconfig at $HOME/.kube/config**
 
 ```shell
-kosli snapshot k8s yourEnvironmentName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli snapshot k8s yourEnvironmentName 
 
 ```
 
@@ -67,29 +67,23 @@ kosli snapshot k8s yourEnvironmentName
 **report what is running in an entire cluster excluding some namespaces using kubeconfig at $HOME/.kube/config**
 
 ```shell
-kosli snapshot k8s yourEnvironmentName \
-    --exclude-namespaces kube-system,utilities \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli snapshot k8s yourEnvironmentName 
+    --exclude-namespaces kube-system,utilities 
 
 ```
 
 **report what is running in a given namespace in the cluster using kubeconfig at $HOME/.kube/config**
 
 ```shell
-kosli snapshot k8s yourEnvironmentName \
-	--namespaces your-namespace \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli snapshot k8s yourEnvironmentName 
+	--namespaces your-namespace 
 
 ```
 
 **report what is running in a cluster using kubeconfig at a custom path**
 
 ```shell
-kosli snapshot k8s yourEnvironmentName \
-	--kubeconfig /path/to/kube/config \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli snapshot k8s yourEnvironmentName 
+	--kubeconfig /path/to/kube/config 
 ```
 

@@ -9,7 +9,10 @@ summary: "List Trails for a Flow in an org."
 
 ## Synopsis
 
-List Trails for a Flow in an org.
+List Trails for a Flow in an org.The results are ordered from latest to oldest.  
+If the `page-limit` flag is provided, the results will be paginated, otherwise all results will be 
+returned.  
+If `page-limit` is set to 0, all results will be returned.
 
 ```shell
 kosli list trails [flags]
@@ -21,6 +24,8 @@ kosli list trails [flags]
 |    -f, --flow string  |  The Kosli flow name.  |
 |    -h, --help  |  help for trails  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
+|        --page int  |  [defaulted] The page number of a response. (default 1)  |
+|    -n, --page-limit int  |  [defaulted] The number of elements per page.  |
 
 
 ## Flags inherited from parent commands
@@ -34,4 +39,39 @@ kosli list trails [flags]
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
+
+## Examples Use Cases
+
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
+**list all trails for a flow**
+
+```shell
+kosli list trails 
+
+```
+
+**list the most recent 30 trails for a flow**
+
+```shell
+kosli list trails 
+	--page-limit 30 
+
+```
+
+**show the second page of trails for a flow**
+
+```shell
+kosli list trails 
+	--page-limit 30 
+	--page 2 
+
+```
+
+**list all trails for a flow (in JSON)**
+
+```shell
+kosli list trails 
+	--output json
+```
 

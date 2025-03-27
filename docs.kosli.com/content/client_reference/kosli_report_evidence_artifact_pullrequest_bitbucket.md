@@ -66,39 +66,35 @@ kosli report evidence artifact pullrequest bitbucket [IMAGE-NAME | FILE-PATH | D
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report a pull request evidence to kosli for a docker image**
 
 ```shell
-kosli report evidence artifact pullrequest bitbucket yourDockerImageName \
-	--artifact-type docker \
-	--build-url https://exampleci.com \
-	--name yourEvidenceName \
-	--flow yourFlowName \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
-	--bitbucket-workspace yourBitbucketWorkspace \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
-	--org yourOrgName \
-	--api-token yourAPIToken
-	
+kosli report evidence artifact pullrequest bitbucket yourDockerImageName 
+	--artifact-type docker 
+	--build-url https://exampleci.com 
+	--name yourEvidenceName 
+	--bitbucket-username yourBitbucketUsername 
+	--bitbucket-password yourBitbucketPassword 
+	--bitbucket-workspace yourBitbucketWorkspace 
+	--commit yourArtifactGitCommit 
+	--repository yourBitbucketGitRepository 
+
 ```
 
 **fail if a pull request does not exist for your artifact**
 
 ```shell
-kosli report evidence artifact pullrequest bitbucket yourDockerImageName \
-	--artifact-type docker \
-	--build-url https://exampleci.com \
-	--name yourEvidenceName \
-	--flow yourFlowName \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
-	--bitbucket-workspace yourBitbucketWorkspace \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
-	--org yourOrgName \
-	--api-token yourAPIToken \
+kosli report evidence artifact pullrequest bitbucket yourDockerImageName 
+	--artifact-type docker 
+	--build-url https://exampleci.com 
+	--name yourEvidenceName 
+	--bitbucket-username yourBitbucketUsername 
+	--bitbucket-password yourBitbucketPassword 
+	--bitbucket-workspace yourBitbucketWorkspace 
+	--commit yourArtifactGitCommit 
+	--repository yourBitbucketGitRepository 
 	--assert
 ```
 

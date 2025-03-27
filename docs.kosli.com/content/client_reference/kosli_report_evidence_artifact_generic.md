@@ -61,41 +61,34 @@ kosli report evidence artifact generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flag
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report a generic evidence about a pre-built docker image**
 
 ```shell
-kosli report evidence artifact generic yourDockerImageName \
-	--api-token yourAPIToken \
-	--artifact-type docker \
-	--build-url https://exampleci.com \
-	--name yourEvidenceName \
-	--org yourOrgName \
-	--flow yourFlowName 
+kosli report evidence artifact generic yourDockerImageName 
+	--artifact-type docker 
+	--build-url https://exampleci.com 
+	--name yourEvidenceName 
 
 ```
 
 **report a generic evidence about a directory type artifact**
 
 ```shell
-kosli report evidence artifact generic /path/to/your/dir \
-	--api-token yourAPIToken \
-	--artifact-type dir \
-	--build-url https://exampleci.com \
-	--name yourEvidenceName \
-	--org yourOrgName	\
-	--flow yourFlowName 
+kosli report evidence artifact generic /path/to/your/dir 
+	--artifact-type dir 
+	--build-url https://exampleci.com 
+	--name yourEvidenceName 
 
 ```
 
 **report a generic evidence about an artifact with a provided fingerprint (sha256)**
 
 ```shell
-kosli report evidence artifact generic \
-	--api-token yourAPIToken \
-	--build-url https://exampleci.com \	
-	--name yourEvidenceName \
-	--org yourOrgName \
-	--flow yourFlowName \
+kosli report evidence artifact generic 
+	--build-url https://exampleci.com 
+	--name yourEvidenceName 
 	--fingerprint yourArtifactFingerprint
 
 ```
@@ -103,13 +96,10 @@ kosli report evidence artifact generic \
 **report a generic evidence about an artifact with evidence file upload**
 
 ```shell
-kosli report evidence artifact generic \
-	--api-token yourAPIToken \
-	--build-url https://exampleci.com \	
-	--name yourEvidenceName \
-	--org yourOrgName \
-	--flow yourFlowName \
-	--fingerprint yourArtifactFingerprint \
+kosli report evidence artifact generic 
+	--build-url https://exampleci.com 
+	--name yourEvidenceName 
+	--fingerprint yourArtifactFingerprint 
 	--evidence-paths=yourEvidencePathName
 
 ```
@@ -117,16 +107,16 @@ kosli report evidence artifact generic \
 **report a generic evidence about an artifact with evidence file upload via API**
 
 ```shell
-curl -X 'POST' \
-	'https://app.kosli.com/api/v2/evidence/yourOrgName/artifact/yourFlowName/generic' \
-	-H 'accept: application/json' \
-	-H 'Content-Type: multipart/form-data' \
+curl -X 'POST' 
+	'https://app.kosli.com/api/v2/evidence/yourOrgName/artifact/yourFlowName/generic' 
+	-H 'accept: application/json' 
+	-H 'Content-Type: multipart/form-data' 
 	-F 'evidence_json={
   	  "artifact_fingerprint": "yourArtifactFingerprint",
 	  "name": "yourEvidenceName",
       "build_url": "https://exampleci.com",
       "is_compliant": true
-    }' \
+    }' 
 	-F 'evidence_file=@yourEvidencePathName'
 ```
 

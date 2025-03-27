@@ -65,54 +65,47 @@ kosli report evidence artifact pullrequest gitlab [IMAGE-NAME | FILE-PATH | DIR-
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report a merge request evidence to kosli for a docker image**
 
 ```shell
-kosli report evidence artifact mergerequest gitlab yourDockerImageName \
-	--artifact-type docker \
-	--build-url https://exampleci.com \
-	--name yourEvidenceName \
-	--flow yourFlowName \
-	--gitlab-token yourGitlabToken \
-	--gitlab-org yourGitlabOrg \
-	--commit yourArtifactGitCommit \
-	--repository yourGithubGitRepository \
-	--org yourOrgName \
-	--api-token yourAPIToken
+kosli report evidence artifact mergerequest gitlab yourDockerImageName 
+	--artifact-type docker 
+	--build-url https://exampleci.com 
+	--name yourEvidenceName 
+	--gitlab-token yourGitlabToken 
+	--gitlab-org yourGitlabOrg 
+	--commit yourArtifactGitCommit 
+	--repository yourGithubGitRepository 
 
 ```
 
 **report a merge request evidence (from an on-prem Gitlab) to kosli for a docker image**
 
 ```shell
-kosli report evidence artifact mergerequest gitlab yourDockerImageName \
-	--artifact-type docker \
-	--build-url https://exampleci.com \
-	--name yourEvidenceName \
-	--flow yourFlowName \
-	--gitlab-base-url https://gitlab.example.org \
-	--gitlab-token yourGitlabToken \
-	--gitlab-org yourGitlabOrg \
-	--commit yourArtifactGitCommit \
-	--repository yourGithubGitRepository \
-	--org yourOrgName \
-	--api-token yourAPIToken
-	
+kosli report evidence artifact mergerequest gitlab yourDockerImageName 
+	--artifact-type docker 
+	--build-url https://exampleci.com 
+	--name yourEvidenceName 
+	--gitlab-base-url https://gitlab.example.org 
+	--gitlab-token yourGitlabToken 
+	--gitlab-org yourGitlabOrg 
+	--commit yourArtifactGitCommit 
+	--repository yourGithubGitRepository 
+
 ```
 
 **fail if a merge request does not exist for your artifact**
 
 ```shell
-kosli report evidence artifact mergerequest gitlab yourDockerImageName \
-	--artifact-type docker \
-	--build-url https://exampleci.com \
-	--flow yourFlowName \
-	--gitlab-token yourGitlabToken \
-	--gitlab-org yourGitlabOrg \
-	--commit yourArtifactGitCommit \
-	--repository yourGithubGitRepository \
-	--org yourOrgName \
-	--api-token yourAPIToken \
+kosli report evidence artifact mergerequest gitlab yourDockerImageName 
+	--artifact-type docker 
+	--build-url https://exampleci.com 
+	--gitlab-token yourGitlabToken 
+	--gitlab-org yourGitlabOrg 
+	--commit yourArtifactGitCommit 
+	--repository yourGithubGitRepository 
 	--assert
 ```
 

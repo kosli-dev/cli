@@ -58,16 +58,16 @@ kosli report evidence commit snyk [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report Snyk evidence for a commit related to one Kosli flow**
 
 ```shell
-kosli report evidence commit snyk \
-	--commit yourGitCommitSha1 \
-	--name yourEvidenceName \
-	--flows yourFlowName1 \
-	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
-	--org yourOrgName	\
+kosli report evidence commit snyk 
+	--commit yourGitCommitSha1 
+	--name yourEvidenceName 
+	--flows yourFlowName1 
+	--build-url https://exampleci.com 
 	--scan-results yourSnykJSONScanResults
 
 ```
@@ -75,13 +75,11 @@ kosli report evidence commit snyk \
 **report Snyk evidence for a commit related to multiple Kosli flows**
 
 ```shell
-kosli report evidence commit snyk \
-	--commit yourGitCommitSha1 \
-	--name yourEvidenceName \
-	--flows yourFlowName1,yourFlowName2 \
-	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
-	--org yourOrgName	\
+kosli report evidence commit snyk 
+	--commit yourGitCommitSha1 
+	--name yourEvidenceName 
+	--flows yourFlowName1,yourFlowName2 
+	--build-url https://exampleci.com 
 	--scan-results yourSnykJSONScanResults
 ```
 

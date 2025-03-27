@@ -59,46 +59,42 @@ kosli snapshot azure ENVIRONMENT-NAME [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **Use Azure Container Registry to get the digests for artifacts in a snapshot**
 
 ```shell
-kosli snapshot azure yourEnvironmentName \
-	--azure-client-id yourAzureClientID \
-	--azure-client-secret yourAzureClientSecret \
-	--azure-tenant-id yourAzureTenantID \
-	--azure-subscription-id yourAzureSubscriptionID \
-	--azure-resource-group-name yourAzureResourceGroupName \
-	--digests-source acr \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli snapshot azure yourEnvironmentName 
+	--azure-client-id yourAzureClientID 
+	--azure-client-secret yourAzureClientSecret 
+	--azure-tenant-id yourAzureTenantID 
+	--azure-subscription-id yourAzureSubscriptionID 
+	--azure-resource-group-name yourAzureResourceGroupName 
+	--digests-source acr 
 
 ```
 
 **Use Docker logs of Azure apps to get the digests for artifacts in a snapshot**
 
 ```shell
-kosli snapshot azure yourEnvironmentName \
-	--azure-client-id yourAzureClientID \
-	--azure-client-secret yourAzureClientSecret \
-	--azure-tenant-id yourAzureTenantID \
-	--azure-subscription-id yourAzureSubscriptionID \
-	--azure-resource-group-name yourAzureResourceGroupName \
-	--digests-source logs \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli snapshot azure yourEnvironmentName 
+	--azure-client-id yourAzureClientID 
+	--azure-client-secret yourAzureClientSecret 
+	--azure-tenant-id yourAzureTenantID 
+	--azure-subscription-id yourAzureSubscriptionID 
+	--azure-resource-group-name yourAzureResourceGroupName 
+	--digests-source logs 
 
 ```
 
 **Report digest of an Azure Function app**
 
 ```shell
-kosli snapshot azure yourEnvironmentName \
-	--azure-client-id yourAzureClientID \
-	--azure-client-secret yourAzureClientSecret \
-	--azure-tenant-id yourAzureTenantID \
-	--azure-subscription-id yourAzureSubscriptionID \
-	--azure-resource-group-name yourAzureResourceGroupName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli snapshot azure yourEnvironmentName 
+	--azure-client-id yourAzureClientID 
+	--azure-client-secret yourAzureClientSecret 
+	--azure-tenant-id yourAzureTenantID 
+	--azure-subscription-id yourAzureSubscriptionID 
+	--azure-resource-group-name yourAzureResourceGroupName 
 ```
 

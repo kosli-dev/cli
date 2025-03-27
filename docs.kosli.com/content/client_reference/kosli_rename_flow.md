@@ -38,11 +38,11 @@ kosli rename flow OLD_NAME NEW_NAME [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **rename a Kosli flow**
 
 ```shell
-kosli rename flow oldName newName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli rename flow oldName newName 
 ```
 

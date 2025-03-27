@@ -15,15 +15,14 @@ Report a junit attestation to an artifact or a trail in a Kosli flow.
 JUnit xml files are read from the `--results-dir` directory which defaults to the current directory.
 The xml files are automatically uploaded as `--attachments` via the `--upload-results` flag which defaults to `true`.  
 
-The attestation can be bound to a trail using the trail name.
-
-If the attestation is for an artifact, the attestation can be bound to the artifact using one of two ways:
+The attestation can be bound to a *trail* using the trail name.  
+The attestation can be bound to an *artifact* in two ways:
 - using the artifact's SHA256 fingerprint which is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
 - using the artifact's name in the flow yaml template and the git commit from which the artifact is/will be created. Useful when reporting an attestation before creating/reporting the artifact.
 
-You can optionally associate the attestation to a git commit using `--commit` (requires access to a git repo). And you  
-can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`. 
-Note that when the attestation is reported for an artifact that does not yet exist in Kosli, `--commit` becomes required to facilitate 
+You can optionally associate the attestation to a git commit using `--commit` (requires access to a git repo).
+You can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`.
+Note that when the attestation is reported for an artifact that does not yet exist in Kosli, `--commit` is required to facilitate
 binding the attestation to the right artifact.
 
 ```shell
@@ -79,71 +78,53 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report a junit attestation about a pre-built docker artifact (kosli calculates the fingerprint)**
 
 ```shell
-kosli attest junit yourDockerImageName \
-	--artifact-type docker \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--results-dir yourFolderWithJUnitResults \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest junit yourDockerImageName 
+	--artifact-type docker 
+	--name yourAttestationName 
+	--results-dir yourFolderWithJUnitResults 
 
 ```
 
 **report a junit attestation about a pre-built docker artifact (you provide the fingerprint)**
 
 ```shell
-kosli attest junit \
-	--fingerprint yourDockerImageFingerprint \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--results-dir yourFolderWithJUnitResults \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest junit 
+	--fingerprint yourDockerImageFingerprint 
+	--name yourAttestationName 
+	--results-dir yourFolderWithJUnitResults 
 
 ```
 
 **report a junit attestation about a trail**
 
 ```shell
-kosli attest junit \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--results-dir yourFolderWithJUnitResults \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest junit 
+	--name yourAttestationName 
+	--results-dir yourFolderWithJUnitResults 
 
 ```
 
 **report a junit attestation about an artifact which has not been reported yet in a trail**
 
 ```shell
-kosli attest junit \
-	--name yourTemplateArtifactName.yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--commit yourArtifactGitCommit \
-	--results-dir yourFolderWithJUnitResults \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest junit 
+	--name yourTemplateArtifactName.yourAttestationName 
+	--commit yourArtifactGitCommit 
+	--results-dir yourFolderWithJUnitResults 
 
 ```
 
 **report a junit attestation about a trail with an attachment**
 
 ```shell
-kosli attest junit \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--results-dir yourFolderWithJUnitResults \
-	--attachments yourAttachmentPathName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest junit 
+	--name yourAttestationName 
+	--results-dir yourFolderWithJUnitResults 
+	--attachments yourAttachmentPathName 
 ```
 

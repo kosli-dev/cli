@@ -70,21 +70,19 @@ kosli create environment ENVIRONMENT-NAME [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **create a Kosli environment**
 
 ```shell
 kosli create environment yourEnvironmentName
-	--type K8S \
-	--description "my new env" \
-	--api-token yourAPIToken \
-	--org yourOrgName 
+	--type K8S 
+	--description "my new env" 
 
 
 kosli create environment yourLogicalEnvironmentName
-	--type logical \
+	--type logical 
 	--included-environments realEnv1,realEnv2,realEnv3
-	--description "my full prod" \	
-	--api-token yourAPIToken \
-	--org yourOrgName
+	--description "my full prod" 
 ```
 

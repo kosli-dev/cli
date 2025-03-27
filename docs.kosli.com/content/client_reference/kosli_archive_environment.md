@@ -38,11 +38,11 @@ kosli archive environment ENVIRONMENT-NAME [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **archive a Kosli environment**
 
 ```shell
-kosli archive environment yourEnvironmentName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli archive environment yourEnvironmentName 
 ```
 

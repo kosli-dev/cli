@@ -47,29 +47,25 @@ kosli get deployment EXPRESSION [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **get previous deployment in a flow**
 
 ```shell
-kosli get deployment flowName~1 \
-	--api-token yourAPIToken \
-	--org orgName
+kosli get deployment flowName~1 
 
 ```
 
 **get the 10th deployment in a flow**
 
 ```shell
-kosli get deployment flowName#10 \
-	--api-token yourAPIToken \
-	--org orgName
+kosli get deployment flowName#10 
 
 ```
 
 **get the latest deployment in a flow**
 
 ```shell
-kosli get deployment flowName \
-	--api-token yourAPIToken \
-	--org orgName
+kosli get deployment flowName 
 ```
 

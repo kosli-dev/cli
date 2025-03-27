@@ -65,37 +65,37 @@ kosli report evidence artifact pullrequest azure [IMAGE-NAME | FILE-PATH | DIR-P
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report a pull request evidence to kosli for a docker image**
 
 ```shell
-kosli report evidence artifact pullrequest azure yourDockerImageName \
-	--artifact-type docker \
-	--azure-org-url https://dev.azure.com/myOrg \
-	--project yourAzureDevOpsProject \
-	--commit yourGitCommitSha1 \
-	--repository yourAzureGitRepository \
-	--azure-token yourAzureToken \
-	--name yourEvidenceName \
-	--flows yourFlowName1,yourFlowName2 \
-	--build-url https://exampleci.com \
-	--api-token yourAPIToken
-	
+kosli report evidence artifact pullrequest azure yourDockerImageName 
+	--artifact-type docker 
+	--azure-org-url https://dev.azure.com/myOrg 
+	--project yourAzureDevOpsProject 
+	--commit yourGitCommitSha1 
+	--repository yourAzureGitRepository 
+	--azure-token yourAzureToken 
+	--name yourEvidenceName 
+	--flows yourFlowName1,yourFlowName2 
+	--build-url https://exampleci.com 
+
 ```
 
 **fail if a pull request does not exist for your artifact**
 
 ```shell
-kosli report evidence artifact pullrequest azure yourDockerImageName \
-	--artifact-type docker \
-	--azure-org-url https://dev.azure.com/myOrg \
-	--project yourAzureDevOpsProject \
-	--commit yourGitCommitSha1 \
-	--repository yourAzureGitRepository \
-	--azure-token yourAzureToken \
-	--name yourEvidenceName \
-	--flows yourFlowName1,yourFlowName2 \
-	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
+kosli report evidence artifact pullrequest azure yourDockerImageName 
+	--artifact-type docker 
+	--azure-org-url https://dev.azure.com/myOrg 
+	--project yourAzureDevOpsProject 
+	--commit yourGitCommitSha1 
+	--repository yourAzureGitRepository 
+	--azure-token yourAzureToken 
+	--name yourEvidenceName 
+	--flows yourFlowName1,yourFlowName2 
+	--build-url https://exampleci.com 
 	--assert
 ```
 

@@ -53,6 +53,8 @@ kosli snapshot lambda ENVIRONMENT-NAME [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report all Lambda functions running in an AWS account (AWS auth provided in env variables)**
 
 ```shell
@@ -60,9 +62,7 @@ export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
-kosli snapshot lambda yourEnvironmentName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli snapshot lambda yourEnvironmentName 
 
 ```
 
@@ -73,11 +73,9 @@ export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
-kosli snapshot lambda yourEnvironmentName \
-    --exclude function1,function2 \
-	--exclude-regex "^not-wanted.*" \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli snapshot lambda yourEnvironmentName 
+    --exclude function1,function2 
+	--exclude-regex "^not-wanted.*" 
 
 ```
 
@@ -88,10 +86,8 @@ export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
-kosli snapshot lambda yourEnvironmentName \
-	--function-names yourFunctionName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli snapshot lambda yourEnvironmentName 
+	--function-names yourFunctionName 
 
 ```
 
@@ -102,10 +98,8 @@ export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
-kosli snapshot lambda yourEnvironmentName \
-	--function-names-regex yourFunctionNameRegexPattern \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli snapshot lambda yourEnvironmentName 
+	--function-names-regex yourFunctionNameRegexPattern 
 
 ```
 
@@ -116,22 +110,18 @@ export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
-kosli snapshot lambda yourEnvironmentName \
-	--function-names yourFirstFunctionName,yourSecondFunctionName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli snapshot lambda yourEnvironmentName 
+	--function-names yourFirstFunctionName,yourSecondFunctionName 
 
 ```
 
 **report what is running in the latest version of an AWS Lambda function (AWS auth provided in flags)**
 
 ```shell
-kosli snapshot lambda yourEnvironmentName \
-	--function-names yourFunctionName \
-	--aws-key-id yourAWSAccessKeyID \
-	--aws-secret-key yourAWSSecretAccessKey \
-	--aws-region yourAWSRegion \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli snapshot lambda yourEnvironmentName 
+	--function-names yourFunctionName 
+	--aws-key-id yourAWSAccessKeyID 
+	--aws-secret-key yourAWSSecretAccessKey 
+	--aws-region yourAWSRegion 
 ```
 

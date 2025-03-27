@@ -47,29 +47,25 @@ kosli get approval EXPRESSION [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **get second behind the latest approval from a flow**
 
 ```shell
-kosli get approval flowName~1 \
-	--api-token yourAPIToken \
-	--org orgName
+kosli get approval flowName~1 
 
 ```
 
 **get the 10th approval from a flow**
 
 ```shell
-kosli get approval flowName#10 \
-	--api-token yourAPIToken \
-	--org orgName
+kosli get approval flowName#10 
 
 ```
 
 **get the latest approval from a flow**
 
 ```shell
-kosli get approval flowName \
-	--api-token yourAPIToken \
-	--org orgName
+kosli get approval flowName 
 ```
 

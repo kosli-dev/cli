@@ -19,15 +19,14 @@ By default, the `--scan-results` .json file is also uploaded to Kosli's evidence
 You can disable that by setting `--upload-results=false`
 
 
-The attestation can be bound to a trail using the trail name.
-
-If the attestation is for an artifact, the attestation can be bound to the artifact using one of two ways:
+The attestation can be bound to a *trail* using the trail name.  
+The attestation can be bound to an *artifact* in two ways:
 - using the artifact's SHA256 fingerprint which is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
 - using the artifact's name in the flow yaml template and the git commit from which the artifact is/will be created. Useful when reporting an attestation before creating/reporting the artifact.
 
-You can optionally associate the attestation to a git commit using `--commit` (requires access to a git repo). And you  
-can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`. 
-Note that when the attestation is reported for an artifact that does not yet exist in Kosli, `--commit` becomes required to facilitate 
+You can optionally associate the attestation to a git commit using `--commit` (requires access to a git repo).
+You can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`.
+Note that when the attestation is reported for an artifact that does not yet exist in Kosli, `--commit` is required to facilitate
 binding the attestation to the right artifact.
 
 ```shell
@@ -83,85 +82,63 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report a snyk attestation about a pre-built docker artifact (kosli calculates the fingerprint)**
 
 ```shell
-kosli attest snyk yourDockerImageName \
-	--artifact-type docker \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--scan-results yourSnykSARIFScanResults \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest snyk yourDockerImageName 
+	--artifact-type docker 
+	--name yourAttestationName 
+	--scan-results yourSnykSARIFScanResults 
 
 ```
 
 **report a snyk attestation about a pre-built docker artifact (you provide the fingerprint)**
 
 ```shell
-kosli attest snyk \
-	--fingerprint yourDockerImageFingerprint \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--scan-results yourSnykSARIFScanResults \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest snyk 
+	--fingerprint yourDockerImageFingerprint 
+	--name yourAttestationName 
+	--scan-results yourSnykSARIFScanResults 
 
 ```
 
 **report a snyk attestation about a trail**
 
 ```shell
-kosli attest snyk \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--scan-results yourSnykSARIFScanResults \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest snyk 
+	--name yourAttestationName 
+	--scan-results yourSnykSARIFScanResults 
 
 ```
 
 **report a snyk attestation about an artifact which has not been reported yet in a trail**
 
 ```shell
-kosli attest snyk \
-	--name yourTemplateArtifactName.yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--commit yourArtifactGitCommit \
-	--scan-results yourSnykSARIFScanResults \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest snyk 
+	--name yourTemplateArtifactName.yourAttestationName 
+	--commit yourArtifactGitCommit 
+	--scan-results yourSnykSARIFScanResults 
 
 ```
 
 **report a snyk attestation about a trail with an attachment**
 
 ```shell
-kosli attest snyk \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--scan-results yourSnykSARIFScanResults \
-	--attachments yourEvidencePathName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest snyk 
+	--name yourAttestationName 
+	--scan-results yourSnykSARIFScanResults 
+	--attachments yourEvidencePathName 
 
 ```
 
 **report a snyk attestation about a trail without uploading the snyk results file**
 
 ```shell
-kosli attest snyk \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--scan-results yourSnykSARIFScanResults \
-	--upload-results=false \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest snyk 
+	--name yourAttestationName 
+	--scan-results yourSnykSARIFScanResults 
+	--upload-results=false 
 ```
 

@@ -59,12 +59,12 @@ kosli get snapshot aws-prod --output=json</pre>{{< / raw-html >}}
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **get the latest snapshot of an environment**
 
 ```shell
 kosli get snapshot yourEnvironmentName
-	--api-token yourAPIToken \
-	--org yourOrgName 
 
 ```
 
@@ -72,8 +72,6 @@ kosli get snapshot yourEnvironmentName
 
 ```shell
 kosli get snapshot yourEnvironmentName~1
-	--api-token yourAPIToken \
-	--org yourOrgName 
 
 ```
 
@@ -81,17 +79,13 @@ kosli get snapshot yourEnvironmentName~1
 
 ```shell
 kosli get snapshot yourEnvironmentName#23
-	--api-token yourAPIToken \
-	--org yourOrgName 
-	
+
 ```
 
 **get the environment snapshot at midday (UTC), on valentine's day of 2023**
 
 ```shell
 kosli get snapshot yourEnvironmentName@{2023-02-14T12:00:00}
-	--api-token yourAPIToken \
-	--org yourOrgName
 
 ```
 
@@ -99,7 +93,5 @@ kosli get snapshot yourEnvironmentName@{2023-02-14T12:00:00}
 
 ```shell
 kosli get snapshot yourEnvironmentName@{3.weeks.ago}
---api-token yourAPIToken \
---org yourOrgName
 ```
 

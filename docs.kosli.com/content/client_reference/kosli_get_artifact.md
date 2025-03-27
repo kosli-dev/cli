@@ -53,40 +53,32 @@ kosli get artifact EXPRESSION [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **get an artifact with a given fingerprint from a flow**
 
 ```shell
-kosli get artifact flowName@fingerprint \
-	--api-token yourAPIToken \
-	--org orgName
+kosli get artifact flowName@fingerprint 
 
 ```
 
 **get the latest artifact with a given fingerprint from a flow in a specific trail**
 
 ```shell
-kosli get artifact flowName@fingerprint \
-	--api-token yourAPIToken \
-	--org orgName
-	--trail trailName
+kosli get artifact flowName@fingerprint 
 
 ```
 
 **get an artifact with a given commit SHA from a flow**
 
 ```shell
-kosli get artifact flowName:commitSHA \
-	--api-token yourAPIToken \
-	--org orgName
+kosli get artifact flowName:commitSHA 
 
 ```
 
 **get a list of artifacts with a given commit SHA from a flow in a particular trail**
 
 ```shell
-kosli get artifact flowName:commitSHA \
-	--api-token yourAPIToken \
-	--org orgName
-	--trail trailName
+kosli get artifact flowName:commitSHA 
 ```
 

@@ -53,37 +53,35 @@ kosli report evidence commit pullrequest bitbucket [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report a pull request evidence to Kosli**
 
 ```shell
-kosli report evidence commit pullrequest bitbucket \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
-	--bitbucket-workspace yourBitbucketWorkspace \
-	--name yourEvidenceName \
-	--flows yourFlowName1,yourFlowName2 \
-	--build-url https://exampleci.com \
-	--org yourOrgName \
-	--api-token yourAPIToken
-	
+kosli report evidence commit pullrequest bitbucket 
+	--commit yourArtifactGitCommit 
+	--repository yourBitbucketGitRepository 
+	--bitbucket-username yourBitbucketUsername 
+	--bitbucket-password yourBitbucketPassword 
+	--bitbucket-workspace yourBitbucketWorkspace 
+	--name yourEvidenceName 
+	--flows yourFlowName1,yourFlowName2 
+	--build-url https://exampleci.com 
+
 ```
 
 **fail if a pull request does not exist for your commit**
 
 ```shell
-kosli report evidence commit pullrequest bitbucket \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
-	--bitbucket-username yourBitbucketUsername \
-	--bitbucket-password yourBitbucketPassword \
-	--bitbucket-workspace yourBitbucketWorkspace \
-	--name yourEvidenceName \
-	--flows yourFlowName1,yourFlowName2 \
-	--build-url https://exampleci.com \
-	--org yourOrgName \
-	--api-token yourAPIToken \
+kosli report evidence commit pullrequest bitbucket 
+	--commit yourArtifactGitCommit 
+	--repository yourBitbucketGitRepository 
+	--bitbucket-username yourBitbucketUsername 
+	--bitbucket-password yourBitbucketPassword 
+	--bitbucket-workspace yourBitbucketWorkspace 
+	--name yourEvidenceName 
+	--flows yourFlowName1,yourFlowName2 
+	--build-url https://exampleci.com 
 	--assert
 ```
 

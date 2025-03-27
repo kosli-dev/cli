@@ -60,39 +60,33 @@ kosli diff snapshots aws-beta aws-prod --output=json</pre>{{< / raw-html >}}
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **compare the third latest snapshot in an environment to the latest**
 
 ```shell
-kosli diff snapshots envName~3 envName \
-	--api-token yourAPIToken \
-	--org orgName
-	
+kosli diff snapshots envName~3 envName 
+
 ```
 
 **compare snapshots of two different environments of the same type**
 
 ```shell
-kosli diff snapshots envName1 envName2 \
-	--api-token yourAPIToken \
-	--org orgName
+kosli diff snapshots envName1 envName2 
 
 ```
 
 **show the not-changed artifacts in both snapshots**
 
 ```shell
-kosli diff snapshots envName1 envName2 \
-	--show-unchanged \
-	--api-token yourAPIToken \
-	--org orgName
+kosli diff snapshots envName1 envName2 
+	--show-unchanged 
 
 ```
 
 **compare the snapshot from 2 weeks ago in an environment to the latest**
 
 ```shell
-kosli diff snapshots envName@{2.weeks.ago} envName \
---api-token yourAPIToken \
---org orgName
+kosli diff snapshots envName@{2.weeks.ago} envName 
 ```
 

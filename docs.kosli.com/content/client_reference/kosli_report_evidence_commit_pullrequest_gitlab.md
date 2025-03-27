@@ -52,35 +52,33 @@ kosli report evidence commit pullrequest gitlab [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report a merge request evidence to Kosli**
 
 ```shell
-kosli report evidence commit pullrequest gitlab \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
-	--gitlab-token yourGitlabToken \
-	--gitlab-org yourGitlabOrg \
-	--name yourEvidenceName \
-	--flows yourFlowName1,yourFlowName2 \
-	--build-url https://exampleci.com \
-	--org yourOrgName \
-	--api-token yourAPIToken
-	
+kosli report evidence commit pullrequest gitlab 
+	--commit yourArtifactGitCommit 
+	--repository yourBitbucketGitRepository 
+	--gitlab-token yourGitlabToken 
+	--gitlab-org yourGitlabOrg 
+	--name yourEvidenceName 
+	--flows yourFlowName1,yourFlowName2 
+	--build-url https://exampleci.com 
+
 ```
 
 **fail if a pull request does not exist for your commit**
 
 ```shell
-kosli report evidence commit pullrequest gitlab \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
-	--gitlab-token yourGitlabToken \
-	--gitlab-org yourGitlabOrg \
-	--name yourEvidenceName \
-	--flows yourFlowName1,yourFlowName2 \
-	--build-url https://exampleci.com \
-	--org yourOrgName \
-	--api-token yourAPIToken \
+kosli report evidence commit pullrequest gitlab 
+	--commit yourArtifactGitCommit 
+	--repository yourBitbucketGitRepository 
+	--gitlab-token yourGitlabToken 
+	--gitlab-org yourGitlabOrg 
+	--name yourEvidenceName 
+	--flows yourFlowName1,yourFlowName2 
+	--build-url https://exampleci.com 
 	--assert
 ```
 

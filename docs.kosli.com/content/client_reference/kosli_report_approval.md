@@ -65,6 +65,8 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 ```shell
 # Report that an artifact with a provided fingerprint (sha256) has been approved for 
 # deployment to environment <yourEnvironmentName>.

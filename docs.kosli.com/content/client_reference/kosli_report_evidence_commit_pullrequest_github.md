@@ -53,35 +53,33 @@ kosli report evidence commit pullrequest github [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report a pull request commit evidence to Kosli**
 
 ```shell
-kosli report evidence commit pullrequest github \
-	--commit yourGitCommitSha1 \
-	--repository yourGithubGitRepository \
-	--github-token yourGithubToken \
-	--github-org yourGithubOrg \
-	--name yourEvidenceName \
-	--flows yourFlowName1,yourFlowName2 \
-	--build-url https://exampleci.com \
-	--org yourOrgName \
-	--api-token yourAPIToken
-	
+kosli report evidence commit pullrequest github 
+	--commit yourGitCommitSha1 
+	--repository yourGithubGitRepository 
+	--github-token yourGithubToken 
+	--github-org yourGithubOrg 
+	--name yourEvidenceName 
+	--flows yourFlowName1,yourFlowName2 
+	--build-url https://exampleci.com 
+
 ```
 
 **fail if a pull request does not exist for your commit**
 
 ```shell
-kosli report evidence commit pullrequest github \
-	--commit yourGitCommitSha1 \
-	--repository yourGithubGitRepository \
-	--github-token yourGithubToken \
-	--github-org yourGithubOrg \
-	--name yourEvidenceName \
-	--flows yourFlowName1,yourFlowName2 \
-	--build-url https://exampleci.com \
-	--org yourOrgName \
-	--api-token yourAPIToken \
+kosli report evidence commit pullrequest github 
+	--commit yourGitCommitSha1 
+	--repository yourGithubGitRepository 
+	--github-token yourGithubToken 
+	--github-org yourGithubOrg 
+	--name yourEvidenceName 
+	--flows yourFlowName1,yourFlowName2 
+	--build-url https://exampleci.com 
 	--assert
 ```
 

@@ -61,16 +61,15 @@ kosli report evidence artifact junit [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report JUnit test evidence about a file artifact**
 
 ```shell
-kosli report evidence artifact junit FILE.tgz \
-	--artifact-type file \
-	--name yourEvidenceName \
-	--flow yourFlowName \
-	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
-	--org yourOrgName	\
+kosli report evidence artifact junit FILE.tgz 
+	--artifact-type file 
+	--name yourEvidenceName 
+	--build-url https://exampleci.com 
 	--results-dir yourFolderWithJUnitResults
 
 ```
@@ -78,13 +77,10 @@ kosli report evidence artifact junit FILE.tgz \
 **report JUnit test evidence about an artifact using an available Sha256 digest**
 
 ```shell
-kosli report evidence artifact junit \
-	--fingerprint yourSha256 \
-	--name yourEvidenceName \
-	--flow yourFlowName \
-	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
-	--org yourOrgName	\
+kosli report evidence artifact junit 
+	--fingerprint yourSha256 
+	--name yourEvidenceName 
+	--build-url https://exampleci.com 
 	--results-dir yourFolderWithJUnitResults
 ```
 

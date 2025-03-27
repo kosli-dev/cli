@@ -54,6 +54,8 @@ kosli snapshot ecs ENVIRONMENT-NAME [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report what is running in an entire AWS ECS cluster**
 
 ```shell
@@ -61,10 +63,8 @@ export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
-kosli snapshot ecs yourEnvironmentName \
-	--clusters yourECSClusterName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli snapshot ecs yourEnvironmentName 
+	--clusters yourECSClusterName 
 
 ```
 
@@ -75,35 +75,29 @@ export AWS_REGION=yourAWSRegion
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 
-kosli snapshot ecs yourEnvironmentName \
-	--clusters yourECSClusterName \
-	--service-name yourECSServiceName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli snapshot ecs yourEnvironmentName 
+	--clusters yourECSClusterName 
+	--service-name yourECSServiceName 
 
 ```
 
 **report what is running in all ECS clusters in an AWS account (AWS auth provided in flags)**
 
 ```shell
-kosli snapshot ecs yourEnvironmentName \
-	--aws-key-id yourAWSAccessKeyID \
-	--aws-secret-key yourAWSSecretAccessKey \
-	--aws-region yourAWSRegion \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli snapshot ecs yourEnvironmentName 
+	--aws-key-id yourAWSAccessKeyID 
+	--aws-secret-key yourAWSSecretAccessKey 
+	--aws-region yourAWSRegion 
 
 ```
 
 **report what is running in all ECS clusters in an AWS account except for clusters with names matching given regex patterns**
 
 ```shell
-kosli snapshot ecs yourEnvironmentName \
-	--aws-key-id yourAWSAccessKeyID \
-	--aws-secret-key yourAWSSecretAccessKey \
-	--aws-region yourAWSRegion \
-	--exclude-regex "those-names.*" \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli snapshot ecs yourEnvironmentName 
+	--aws-key-id yourAWSAccessKeyID 
+	--aws-secret-key yourAWSSecretAccessKey 
+	--aws-region yourAWSRegion 
+	--exclude-regex "those-names.*" 
 ```
 

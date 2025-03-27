@@ -37,20 +37,18 @@ kosli search {GIT-COMMIT | FINGERPRINT} [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **Search for a git commit in Kosli**
 
 ```shell
-kosli search YOUR_GIT_COMMIT \
-	--api-token yourApiToken \
-	--org yourOrgName
+kosli search YOUR_GIT_COMMIT 
 
 ```
 
 **Search for an artifact fingerprint in Kosli**
 
 ```shell
-kosli search YOUR_ARTIFACT_FINGERPRINT \
-	--api-token yourApiToken \
-	--org yourOrgName
+kosli search YOUR_ARTIFACT_FINGERPRINT 
 ```
 

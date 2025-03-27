@@ -19,7 +19,7 @@ images in registries or "docker" for local docker images.
 
 To specify paths in a directory artifact that should always be excluded from the SHA256 calculation, you can add a `.kosli_ignore` file to the root of the artifact.
 Each line should specify a relative path or path glob to be ignored. You can include comments in this file, using `#`.
-The `.kosli_ignore` will be treated as part of the artifact like any other file,unless it is explicitly ignored itself.
+The `.kosli_ignore` will be treated as part of the artifact like any other file, unless it is explicitly ignored itself.
 This command requires access to a git repo to associate the artifact to the git commit it is originating from. 
 You can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`
 
@@ -73,19 +73,17 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **Attest that a file type artifact has been created, and let Kosli calculate its fingerprint**
 
 ```shell
-kosli attest artifact FILE.tgz \
-	--artifact-type file \
-	--build-url https://exampleci.com \
-	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
-	--commit yourCommitShaThatThisArtifactWasBuiltFrom \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--name yourTemplateArtifactName \
-	--api-token yourApiToken \
-	--org yourOrgName
+kosli attest artifact FILE.tgz 
+	--artifact-type file 
+	--build-url https://exampleci.com 
+	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom 
+	--commit yourCommitShaThatThisArtifactWasBuiltFrom 
+	--name yourTemplateArtifactName 
 
 
 ```
@@ -93,33 +91,25 @@ kosli attest artifact FILE.tgz \
 **Attest that an artifact has been created and provide its fingerprint (sha256)**
 
 ```shell
-kosli attest artifact ANOTHER_FILE.txt \
-	--build-url https://exampleci.com \
-	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
-	--commit yourCommitShaThatThisArtifactWasBuiltFrom \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--fingerprint yourArtifactFingerprint \
-	--name yourTemplateArtifactName \
-	--api-token yourApiToken \
-	--org yourOrgName
+kosli attest artifact ANOTHER_FILE.txt 
+	--build-url https://exampleci.com 
+	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom 
+	--commit yourCommitShaThatThisArtifactWasBuiltFrom 
+	--fingerprint yourArtifactFingerprint 
+	--name yourTemplateArtifactName 
 
 ```
 
 **Attest that an artifact has been created and provide external attachments**
 
 ```shell
-kosli attest artifact ANOTHER_FILE.txt \
-	--build-url https://exampleci.com \
-	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom \
-	--commit yourCommitShaThatThisArtifactWasBuiltFrom \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--fingerprint yourArtifactFingerprint \
-	--external-url label=https://example.com/attachment \
-	--external-fingerprint label=yourExternalAttachmentFingerprint \
-	--name yourTemplateArtifactName \
-	--api-token yourApiToken \
-	--org yourOrgName
+kosli attest artifact ANOTHER_FILE.txt 
+	--build-url https://exampleci.com 
+	--commit-url https://github.com/YourOrg/YourProject/commit/yourCommitShaThatThisArtifactWasBuiltFrom 
+	--commit yourCommitShaThatThisArtifactWasBuiltFrom 
+	--fingerprint yourArtifactFingerprint 
+	--external-url label=https://example.com/attachment 
+	--external-fingerprint label=yourExternalAttachmentFingerprint 
+	--name yourTemplateArtifactName 
 ```
 

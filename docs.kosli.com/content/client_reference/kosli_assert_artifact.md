@@ -52,36 +52,29 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **assert that an artifact meets all compliance requirements for an environment**
 
 ```shell
-kosli assert artifact \
-	--fingerprint 184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0 \
-	--flow yourFlowName \
-	--environment prod \
-	--api-token yourAPIToken \
-	--org yourOrgName 
+kosli assert artifact 
+	--fingerprint 184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0 
+	--environment prod 
 
 ```
 
 **fail if an artifact has a non-compliant status (using the artifact fingerprint)**
 
 ```shell
-kosli assert artifact \
-	--fingerprint 184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0 \
-	--flow yourFlowName \
-	--api-token yourAPIToken \
-	--org yourOrgName 
+kosli assert artifact 
+	--fingerprint 184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0 
 
 ```
 
 **fail if an artifact has a non-compliant status (using the artifact name and type)**
 
 ```shell
-kosli assert artifact library/nginx:1.21 \
-	--artifact-type docker \
-	--flow yourFlowName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli assert artifact library/nginx:1.21 
+	--artifact-type docker 
 ```
 

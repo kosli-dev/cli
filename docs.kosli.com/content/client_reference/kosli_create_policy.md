@@ -39,25 +39,23 @@ kosli create policy POLICY-NAME POLICY-FILE-PATH [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **create a Kosli policy**
 
 ```shell
-kosli create policy yourPolicyName \
-	--description yourPolicyDescription \
-	--type environment \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli create policy yourPolicyName yourPolicyFile.yml 
+	--description yourPolicyDescription 
+	--type env 
 
 ```
 
 **update a Kosli policy**
 
 ```shell
-kosli create policy yourFlowName \
-	--description yourPolicyDescription \
-	--type environment \
-	--comment yourChangeComment \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli create policy yourPolicyName yourPolicyFile.yml 
+	--description yourPolicyDescription 
+	--type env 
+	--comment yourChangeComment 
 ```
 

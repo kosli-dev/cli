@@ -51,14 +51,13 @@ kosli assert approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **Assert that a file type artifact has been approved**
 
 ```shell
-kosli assert approval FILE.tgz \
-	--api-token yourAPIToken \
-	--artifact-type file \
-	--org yourOrgName \
-	--flow yourFlowName 
+kosli assert approval FILE.tgz 
+	--artifact-type file 
 
 
 ```
@@ -66,10 +65,7 @@ kosli assert approval FILE.tgz \
 **Assert that an artifact with a provided fingerprint (sha256) has been approved**
 
 ```shell
-kosli assert approval \
-	--api-token yourAPIToken \
-	--org yourOrgName \
-	--flow yourFlowName \
+kosli assert approval 
 	--fingerprint yourArtifactFingerprint
 ```
 

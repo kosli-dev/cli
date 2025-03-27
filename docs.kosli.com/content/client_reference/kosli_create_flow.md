@@ -53,26 +53,24 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **create/update a Kosli flow (with empty template)**
 
 ```shell
-kosli create flow yourFlowName \
-	--description yourFlowDescription \
-	--visibility private OR public \
-	--use-empty-template \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli create flow yourFlowName 
+	--description yourFlowDescription 
+	--visibility private OR public 
+	--use-empty-template 
 
 ```
 
 **create/update a Kosli flow (with template file)**
 
 ```shell
-kosli create flow yourFlowName \
-	--description yourFlowDescription \
-	--visibility private OR public \
-	--template-file /path/to/your/template/file.yml \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli create flow yourFlowName 
+	--description yourFlowDescription 
+	--visibility private OR public 
+	--template-file /path/to/your/template/file.yml 
 ```
 

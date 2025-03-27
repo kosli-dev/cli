@@ -14,9 +14,8 @@ It checks if a pull request exists for a given merge commit and reports the pull
 Authentication to Bitbucket can be done with access token (recommended) or app passwords. Credentials need to have read access for both repos and pull requests.
 
 
-The attestation can be bound to a trail using the trail name.
-
-If the attestation is for an artifact, the attestation can be bound to the artifact using one of two ways:
+The attestation can be bound to a *trail* using the trail name.  
+The attestation can be bound to an *artifact* in two ways:
 - using the artifact's SHA256 fingerprint which is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
 - using the artifact's name in the flow yaml template and the git commit from which the artifact is/will be created. Useful when reporting an attestation before creating/reporting the artifact.
 
@@ -69,102 +68,80 @@ kosli attest pullrequest bitbucket [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report a Bitbucket pull request attestation about a pre-built docker artifact (kosli calculates the fingerprint)**
 
 ```shell
-kosli attest pullrequest bitbucket yourDockerImageName \
-	--artifact-type docker \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--bitbucket-access-token yourBitbucketAccessToken \
-	--bitbucket-workspace yourBitbucketWorkspace \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest pullrequest bitbucket yourDockerImageName 
+	--artifact-type docker 
+	--name yourAttestationName 
+	--bitbucket-access-token yourBitbucketAccessToken 
+	--bitbucket-workspace yourBitbucketWorkspace 
+	--commit yourArtifactGitCommit 
+	--repository yourBitbucketGitRepository 
 
 ```
 
 **report a Bitbucket pull request attestation about a pre-built docker artifact (you provide the fingerprint)**
 
 ```shell
-kosli attest pullrequest bitbucket \
-	--fingerprint yourDockerImageFingerprint \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--bitbucket-access-token yourBitbucketAccessToken \
-	--bitbucket-workspace yourBitbucketWorkspace \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest pullrequest bitbucket 
+	--fingerprint yourDockerImageFingerprint 
+	--name yourAttestationName 
+	--bitbucket-access-token yourBitbucketAccessToken 
+	--bitbucket-workspace yourBitbucketWorkspace 
+	--commit yourArtifactGitCommit 
+	--repository yourBitbucketGitRepository 
 
 ```
 
 **report a Bitbucket pull request attestation about a trail**
 
 ```shell
-kosli attest pullrequest bitbucket \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--bitbucket-access-token yourBitbucketAccessToken \
-	--bitbucket-workspace yourBitbucketWorkspace \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest pullrequest bitbucket 
+	--name yourAttestationName 
+	--bitbucket-access-token yourBitbucketAccessToken 
+	--bitbucket-workspace yourBitbucketWorkspace 
+	--commit yourArtifactGitCommit 
+	--repository yourBitbucketGitRepository 
 
 ```
 
 **report a Bitbucket pull request attestation about an artifact which has not been reported yet in a trail**
 
 ```shell
-kosli attest pullrequest bitbucket \
-	--name yourTemplateArtifactName.yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--bitbucket-access-token yourBitbucketAccessToken \
-	--bitbucket-workspace yourBitbucketWorkspace \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest pullrequest bitbucket 
+	--name yourTemplateArtifactName.yourAttestationName 
+	--bitbucket-access-token yourBitbucketAccessToken 
+	--bitbucket-workspace yourBitbucketWorkspace 
+	--commit yourArtifactGitCommit 
+	--repository yourBitbucketGitRepository 
 
 ```
 
 **report a Bitbucket pull request attestation about a trail with an attachment**
 
 ```shell
-kosli attest pullrequest bitbucket \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--bitbucket-access-token yourBitbucketAccessToken \
-	--bitbucket-workspace yourBitbucketWorkspace \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
-	--attachments=yourAttachmentPathName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest pullrequest bitbucket 
+	--name yourAttestationName 
+	--bitbucket-access-token yourBitbucketAccessToken 
+	--bitbucket-workspace yourBitbucketWorkspace 
+	--commit yourArtifactGitCommit 
+	--repository yourBitbucketGitRepository 
+	--attachments=yourAttachmentPathName 
 
 ```
 
 **fail if a pull request does not exist for your artifact**
 
 ```shell
-kosli attest pullrequest bitbucket \
-	--name yourTemplateArtifactName.yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--bitbucket-access-token yourBitbucketAccessToken \
-	--bitbucket-workspace yourBitbucketWorkspace \
-	--commit yourArtifactGitCommit \
-	--repository yourBitbucketGitRepository \
-	--api-token yourAPIToken \
-	--org yourOrgName \
+kosli attest pullrequest bitbucket 
+	--name yourTemplateArtifactName.yourAttestationName 
+	--bitbucket-access-token yourBitbucketAccessToken 
+	--bitbucket-workspace yourBitbucketWorkspace 
+	--commit yourArtifactGitCommit 
+	--repository yourBitbucketGitRepository 
 	--assert
 ```
 

@@ -13,7 +13,10 @@ Report a jira attestation to an artifact or a trail in a Kosli flow.
 Parses the given commit's message, current branch name or the content of the `--jira-secondary-source`
 argument for Jira issue references of the form:  
 'at least 2 characters long, starting with an uppercase letter project key followed by
-dash and one or more digits'. 
+dash and one or more digits'.
+
+If you want to restrict the Jira issue matching to a specific project, use the
+`--jira-project-key` flag to specify your own project key. You can specify multiple project keys if needed.
 
 If the `--ignore-branch-match` is set, the branch name is not parsed for a match.
 
@@ -29,15 +32,14 @@ the complete list so you can select the once you need. The issue fields uses the
 https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issues/#api-rest-api-2-issue-issueidorkey-get-request
 
 
-The attestation can be bound to a trail using the trail name.
-
-If the attestation is for an artifact, the attestation can be bound to the artifact using one of two ways:
+The attestation can be bound to a *trail* using the trail name.  
+The attestation can be bound to an *artifact* in two ways:
 - using the artifact's SHA256 fingerprint which is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
 - using the artifact's name in the flow yaml template and the git commit from which the artifact is/will be created. Useful when reporting an attestation before creating/reporting the artifact.
 
-You can optionally associate the attestation to a git commit using `--commit` (requires access to a git repo). And you  
-can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`. 
-Note that when the attestation is reported for an artifact that does not yet exist in Kosli, `--commit` becomes required to facilitate 
+You can optionally associate the attestation to a git commit using `--commit` (requires access to a git repo).
+You can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`.
+Note that when the attestation is reported for an artifact that does not yet exist in Kosli, `--commit` is required to facilitate
 binding the attestation to the right artifact.
 
 ```shell
@@ -65,6 +67,7 @@ kosli attest jira [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --jira-base-url string  |  The base url for the jira project, e.g. 'https://kosli.atlassian.net'  |
 |        --jira-issue-fields string  |  [optional] The comma separated list of fields to include from the Jira issue. Default no fields are included. '*all' will give all fields.  |
 |        --jira-pat string  |  Jira personal access token (for self-hosted Jira)  |
+|        --jira-project-key strings  |  [optional] Jira project key to match against. Can be repeated. Defaults to matching any jira project key.  |
 |        --jira-secondary-source string  |  [optional] An optional string to search for Jira ticket reference, e.g. '--jira-secondary-source ${{ github.head_ref }}'  |
 |        --jira-username string  |  Jira username (for Jira Cloud)  |
 |    -n, --name string  |  The name of the attestation as declared in the flow or trail yaml template.  |
@@ -91,113 +94,99 @@ kosli attest jira [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report a jira attestation about a pre-built docker artifact (kosli calculates the fingerprint)**
 
 ```shell
-kosli attest jira yourDockerImageName \
-	--artifact-type docker \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--jira-base-url https://kosli.atlassian.net \
-	--jira-username user@domain.com \
-	--jira-api-token yourJiraAPIToken \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest jira yourDockerImageName 
+	--artifact-type docker 
+	--name yourAttestationName 
+	--jira-base-url https://kosli.atlassian.net 
+	--jira-username user@domain.com 
+	--jira-api-token yourJiraAPIToken 
 
 ```
 
 **report a jira attestation about a pre-built docker artifact (you provide the fingerprint)**
 
 ```shell
-kosli attest jira \
-	--fingerprint yourDockerImageFingerprint \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--jira-base-url https://kosli.atlassian.net \
-	--jira-username user@domain.com \
-	--jira-api-token yourJiraAPIToken \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest jira 
+	--fingerprint yourDockerImageFingerprint 
+	--name yourAttestationName 
+	--jira-base-url https://kosli.atlassian.net 
+	--jira-username user@domain.com 
+	--jira-api-token yourJiraAPIToken 
 
 ```
 
 **report a jira attestation about a trail**
 
 ```shell
-kosli attest jira \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--jira-base-url https://kosli.atlassian.net \
-	--jira-username user@domain.com \
-	--jira-api-token yourJiraAPIToken \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest jira 
+	--name yourAttestationName 
+	--jira-base-url https://kosli.atlassian.net 
+	--jira-username user@domain.com 
+	--jira-api-token yourJiraAPIToken 
+
+```
+
+**report a jira attestation matching a specific jira project key**
+
+```shell
+kosli attest jira 
+	--name yourAttestationName 
+	--jira-base-url https://kosli.atlassian.net 
+	--jira-username user@domain.com 
+	--jira-api-token yourJiraAPIToken 
+	--jira-project-key ABC 
 
 ```
 
 **report a jira attestation about a trail and include jira issue summary, description and creator**
 
 ```shell
-kosli attest jira \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--jira-base-url https://kosli.atlassian.net \
-	--jira-username user@domain.com \
-	--jira-api-token yourJiraAPIToken \
+kosli attest jira 
+	--name yourAttestationName 
+	--jira-base-url https://kosli.atlassian.net 
+	--jira-username user@domain.com 
+	--jira-api-token yourJiraAPIToken 
 	--jira-issue-fields "summary,description,creator"
-	--api-token yourAPIToken \
-	--org yourOrgName
 
 ```
 
 **report a jira attestation about an artifact which has not been reported yet in a trail**
 
 ```shell
-kosli attest jira \
-	--name yourTemplateArtifactName.yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--commit yourArtifactGitCommit \
-	--jira-base-url https://kosli.atlassian.net \
-	--jira-username user@domain.com \
-	--jira-api-token yourJiraAPIToken \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest jira 
+	--name yourTemplateArtifactName.yourAttestationName 
+	--commit yourArtifactGitCommit 
+	--jira-base-url https://kosli.atlassian.net 
+	--jira-username user@domain.com 
+	--jira-api-token yourJiraAPIToken 
 
 ```
 
 **report a jira attestation about a trail with an attachment**
 
 ```shell
-kosli attest jira \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--jira-base-url https://kosli.atlassian.net \
-	--jira-username user@domain.com \
-	--jira-api-token yourJiraAPIToken \
-	--attachments yourAttachmentPathName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest jira 
+	--name yourAttestationName 
+	--jira-base-url https://kosli.atlassian.net 
+	--jira-username user@domain.com 
+	--jira-api-token yourJiraAPIToken 
+	--attachments yourAttachmentPathName 
 
 ```
 
 **fail if no issue reference is found, or the issue is not found in your jira instance**
 
 ```shell
-kosli attest jira \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--jira-base-url https://kosli.atlassian.net \
-	--jira-username user@domain.com \
-	--jira-api-token yourJiraAPIToken \
-	--api-token yourAPIToken \
-	--org yourOrgName \
+kosli attest jira 
+	--name yourAttestationName 
+	--jira-base-url https://kosli.atlassian.net 
+	--jira-username user@domain.com 
+	--jira-api-token yourJiraAPIToken 
 	--assert
 
 ```
@@ -205,15 +194,11 @@ kosli attest jira \
 **get jira reference from original branch name in a GitHub Pull Request merge job**
 
 ```shell
-kosli attest jira \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--jira-secondary-source ${{ github.head_ref }} \
-	--jira-base-url https://kosli.atlassian.net \
-	--jira-username user@domain.com \
-	--jira-api-token yourJiraAPIToken \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest jira 
+	--name yourAttestationName 
+	--jira-secondary-source ${{ github.head_ref }} 
+	--jira-base-url https://kosli.atlassian.net 
+	--jira-username user@domain.com 
+	--jira-api-token yourJiraAPIToken 
 ```
 

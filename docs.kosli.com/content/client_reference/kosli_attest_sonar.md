@@ -25,9 +25,8 @@ Note that if your project is very large and you are using SonarQube Cloud's auto
 In this case, we recommend using Kosli's Sonar webhook integration ( https://docs.kosli.com/integrations/sonar/ ) rather than the CLI to attest the scan results.
 
 
-The attestation can be bound to a trail using the trail name.
-
-If the attestation is for an artifact, the attestation can be bound to the artifact using one of two ways:
+The attestation can be bound to a *trail* using the trail name.  
+The attestation can be bound to an *artifact* in two ways:
 - using the artifact's SHA256 fingerprint which is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
 - using the artifact's name in the flow yaml template and the git commit from which the artifact is/will be created. Useful when reporting an attestation before creating/reporting the artifact.
 
@@ -85,78 +84,60 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report a SonarQube Cloud attestation about a trail using Sonar's metadata**
 
 ```shell
-kosli attest sonar \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--sonar-api-token yourSonarAPIToken \
-	--sonar-working-dir yourSonarWorkingDirPath \
-	--api-token yourAPIToken \
-	--org yourOrgName \
+kosli attest sonar 
+	--name yourAttestationName 
+	--sonar-api-token yourSonarAPIToken 
+	--sonar-working-dir yourSonarWorkingDirPath 
 
 ```
 
 **report a SonarQube Server attestation about a trail using Sonar's metadata**
 
 ```shell
-kosli attest sonar \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--sonar-api-token yourSonarAPIToken \
-	--sonar-working-dir yourSonarWorkingDirPath \
-	--api-token yourAPIToken \
-	--org yourOrgName \
+kosli attest sonar 
+	--name yourAttestationName 
+	--sonar-api-token yourSonarAPIToken 
+	--sonar-working-dir yourSonarWorkingDirPath 
 
 ```
 
 **report a SonarQube Cloud attestation for a specific branch about a trail using key/revision**
 
 ```shell
-kosli attest sonar \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--sonar-api-token yourSonarAPIToken \
-	--sonar-project-key yourSonarProjectKey \
-	--sonar-revision yourSonarRevision \
-	--branch-name yourBranchName \
-	--api-token yourAPIToken \
-	--org yourOrgName \
+kosli attest sonar 
+	--name yourAttestationName 
+	--sonar-api-token yourSonarAPIToken 
+	--sonar-project-key yourSonarProjectKey 
+	--sonar-revision yourSonarRevision 
+	--branch-name yourBranchName 
 
 ```
 
 **report a SonarQube Server attestation for a pull-request about a trail using key/revision**
 
 ```shell
-kosli attest sonar \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--sonar-api-token yourSonarAPIToken \
-	--sonarqube-url yourSonarQubeURL \
-	--sonar-project-key yourSonarProjectKey \
-	--sonar-revision yourSonarRevision \
-	--pull-request-id yourPullRequestID \
-	--api-token yourAPIToken \
-	--org yourOrgName \
+kosli attest sonar 
+	--name yourAttestationName 
+	--sonar-api-token yourSonarAPIToken 
+	--sonarqube-url yourSonarQubeURL 
+	--sonar-project-key yourSonarProjectKey 
+	--sonar-revision yourSonarRevision 
+	--pull-request-id yourPullRequestID 
 
 ```
 
 **report a SonarQube Cloud attestation about a trail with an attachment using Sonar's metadata**
 
 ```shell
-kosli attest sonar \
-	--name yourAttestationName \
-	--flow yourFlowName \
-	--trail yourTrailName \
-	--sonar-api-token yourSonarAPIToken \
-	--sonar-working-dir yourSonarWorkingDirPath \
-	--attachment yourAttachmentPath \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attest sonar 
+	--name yourAttestationName 
+	--sonar-api-token yourSonarAPIToken 
+	--sonar-working-dir yourSonarWorkingDirPath 
+	--attachment yourAttachmentPath 
 ```
 

@@ -60,19 +60,21 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **create/update a custom attestation type with no schema no evaluation rules**
 
 ```shell
-kosli create attestation-type customTypeName 
+kosli create attestation-type customTypeName
 
 ```
 
 **create/update a custom attestation type with schema and jq evaluation rules**
 
 ```shell
-kosli create attestation-type customTypeName \
-    --description "Attest that a person meets the age requirements." \
-    --schema person-schema.json \
+kosli create attestation-type customTypeName 
+    --description "Attest that a person meets the age requirements." 
+    --schema person-schema.json 
     --jq ".age >= 18"
     --jq ".age < 65"
 ```

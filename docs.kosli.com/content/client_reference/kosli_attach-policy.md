@@ -37,13 +37,13 @@ kosli attach-policy POLICY-NAME [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **attach a previously created policy to multiple environment**
 
 ```shell
-kosli attach-policy yourPolicyName \
-	--environment yourFirstEnvironmentName \
-	--environment yourSecondEnvironmentName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+kosli attach-policy yourPolicyName 
+	--environment yourFirstEnvironmentName 
+	--environment yourSecondEnvironmentName 
 ```
 

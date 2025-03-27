@@ -70,16 +70,15 @@ kosli report evidence artifact snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **report Snyk vulnerability scan evidence about a file artifact**
 
 ```shell
-kosli report evidence artifact snyk FILE.tgz \
-	--artifact-type file \
-	--name yourEvidenceName \
-	--flow yourFlowName \
-	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
-	--org yourOrgName	\
+kosli report evidence artifact snyk FILE.tgz 
+	--artifact-type file 
+	--name yourEvidenceName 
+	--build-url https://exampleci.com 
 	--scan-results yourSnykJSONScanResults
 
 ```
@@ -87,13 +86,10 @@ kosli report evidence artifact snyk FILE.tgz \
 **report Snyk vulnerability scan evidence about an artifact using an available Sha256 digest**
 
 ```shell
-kosli report evidence artifact snyk \
-	--fingerprint yourSha256 \
-	--name yourEvidenceName \
-	--flow yourFlowName \
-	--build-url https://exampleci.com \
-	--api-token yourAPIToken \
-	--org yourOrgName	\
+kosli report evidence artifact snyk 
+	--fingerprint yourSha256 
+	--name yourEvidenceName 
+	--build-url https://exampleci.com 
 	--scan-results yourSnykJSONScanResults
 ```
 

@@ -45,10 +45,12 @@ kosli get attestation-type TYPE-NAME [flags]
 
 ## Examples Use Cases
 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+
 **get an unversioned custom attestation type**
 
 ```shell
-kosli get attestation-type customTypeName 
+kosli get attestation-type customTypeName
 
 ```
 
