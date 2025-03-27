@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/gitview"
@@ -246,6 +247,11 @@ func (o *attestJiraOptions) run(args []string) error {
 
 	o.payload.JiraResults = []*jira.JiraIssueInfo{}
 
+	err = o.validateJiraProjectKeys(err)
+	if err != nil {
+		return err
+	}
+
 	gv, err := gitview.New(o.srcRepoRoot)
 	if err != nil {
 		return err
@@ -305,4 +311,23 @@ func (o *attestJiraOptions) run(args []string) error {
 		return fmt.Errorf("missing Jira issues from references found in commit message or branch name%s", issueLog)
 	}
 	return wrapAttestationError(err)
+}
+
+func (o *attestJiraOptions) validateJiraProjectKeys(err error) error {
+	matchesJiraProjectKeys, err := regexp.Compile("^[A-Z][A-Z0-9]{1,9}$")
+	if err != nil {
+		return err
+	}
+
+	invalidKeys := []string{}
+	for _, projectKey := range o.projectKeys {
+		isValid := matchesJiraProjectKeys.MatchString(projectKey)
+		if !isValid {
+			invalidKeys = append(invalidKeys, projectKey)
+		}
+	}
+	if len(invalidKeys) > 0 {
+		return fmt.Errorf("Invalid Jira project keys: %s", strings.Join(invalidKeys, ", "))
+	}
+	return nil
 }
