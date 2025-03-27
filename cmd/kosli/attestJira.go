@@ -39,7 +39,10 @@ const attestJiraLongDesc = attestJiraShortDesc + `
 Parses the given commit's message, current branch name or the content of the ^--jira-secondary-source^
 argument for Jira issue references of the form:  
 'at least 2 characters long, starting with an uppercase letter project key followed by
-dash and one or more digits'. 
+dash and one or more digits'.
+
+If you want to restrict the Jira issue matching to a specific project, use the
+^--jira-project-key^ flag to specify your own project key. You can specify multiple project keys if needed.
 
 If the ^--ignore-branch-match^ is set, the branch name is not parsed for a match.
 
@@ -90,6 +93,18 @@ kosli attest jira \
 	--jira-base-url https://kosli.atlassian.net \
 	--jira-username user@domain.com \
 	--jira-api-token yourJiraAPIToken \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# report a jira attestation matching a specific jira project key:
+kosli attest jira \
+	--name yourAttestationName \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--jira-base-url https://kosli.atlassian.net \
+	--jira-username user@domain.com \
+	--jira-api-token yourJiraAPIToken \
+    --jira-project-key ABC \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
