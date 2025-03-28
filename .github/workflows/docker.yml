@@ -99,7 +99,8 @@ jobs:
 
 
     - name: Attest Build Provenance
-      uses: actions/attest-build-provenance@v1
+      id: gh_build_provenance
+      uses: actions/attest-build-provenance@v2
       with:
         subject-name: ${{ env.IMAGE }}
         subject-digest: ${{ steps.docker_build.outputs.digest }}
@@ -154,7 +155,19 @@ jobs:
           --fingerprint ${{ env.FINGERPRINT }}
           --attachments  sbom.spdx.json
           --org ${{ inputs.kosli_org }}
-
+    
+    - name: Report GH Build Attestation to Kosli
+      if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') }}
+      env:
+        KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+      run: 
+        kosli attest generic
+          --flow ${{ inputs.flow_name }}
+          --trail ${{ inputs.trail_name }} 
+          --name cli-docker.build
+          --fingerprint ${{ env.FINGERPRINT }}
+          --attachments  ${{ steps.gh_build_provenance.outputs.bundle-path }}
+          --org ${{ inputs.kosli_org }}
     
     - name: Run Snyk to scan the Docker image for vulnerabilities
       env:
