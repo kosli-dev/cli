@@ -35,6 +35,9 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 	logger.Debug("calculating fingerprint for path [%s] -- excluding paths: %s", dirPath, excludePaths)
 	info, err := os.Stat(dirPath)
 	if err != nil {
+		if dirPath == " " {
+			return "", fmt.Errorf("%s. The directory path is '%s'. https://docs.kosli.com/faq/", err, dirPath)
+		}
 		return "", err
 	}
 	if !info.IsDir() {
@@ -83,6 +86,9 @@ func OciSha256(artifactName string, registryUsername string, registryPassword st
 	// Parse image reference
 	ref, err := docker.ParseReference(imageName)
 	if err != nil {
+		if artifactName == " " {
+			return "", fmt.Errorf("%w. The artifact name is '%s'. https://docs.kosli.com/faq/", err, artifactName)
+		}
 		return "", fmt.Errorf("failed to parse image reference for %s: %w", imageName, err)
 	}
 
@@ -171,6 +177,9 @@ func FileSha256(filepath string) (string, error) {
 	hasher := sha256.New()
 	f, err := os.Open(filepath)
 	if err != nil {
+		if filepath == " " {
+			return "", fmt.Errorf("%s. The filename is '%s'. https://docs.kosli.com/faq/", err, filepath)
+		}
 		return "", err
 	}
 	defer f.Close()
@@ -191,6 +200,9 @@ func DockerImageSha256(imageID string) (string, error) {
 	}
 	imageInspect, _, err := cli.ImageInspectWithRaw(context.Background(), imageID)
 	if err != nil {
+		if imageID == " " {
+			return "", fmt.Errorf("%s. The image ID is '%s'. https://docs.kosli.com/faq/", err, imageID)
+		}
 		return "", err
 	}
 	repoDigests := imageInspect.RepoDigests
