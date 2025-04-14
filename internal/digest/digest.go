@@ -189,7 +189,7 @@ func DockerImageSha256(imageID string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	imageInspect, _, err := cli.ImageInspectWithRaw(context.Background(), imageID)
+	imageInspect, err := cli.ImageInspect(context.Background(), imageID)
 	if err != nil {
 		return "", err
 	}

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kosli-dev/cli/internal/types"
-	gitlab "github.com/xanzy/go-gitlab"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
 type GitlabConfig struct {
@@ -54,7 +54,7 @@ func (c *GitlabConfig) PREvidenceForCommit(commit string) ([]*types.PREvidence, 
 	return pullRequestsEvidence, nil
 }
 
-func (c *GitlabConfig) newPRGitlabEvidence(mr *gitlab.MergeRequest) (*types.PREvidence, error) {
+func (c *GitlabConfig) newPRGitlabEvidence(mr *gitlab.BasicMergeRequest) (*types.PREvidence, error) {
 	evidence := &types.PREvidence{
 		URL:         mr.WebURL,
 		MergeCommit: mr.MergeCommitSHA,
@@ -69,8 +69,8 @@ func (c *GitlabConfig) newPRGitlabEvidence(mr *gitlab.MergeRequest) (*types.PREv
 }
 
 // MergeRequestsForCommit returns a list of MRs for a given commit
-func (c *GitlabConfig) MergeRequestsForCommit(commit string) ([]*gitlab.MergeRequest, error) {
-	mrs := []*gitlab.MergeRequest{}
+func (c *GitlabConfig) MergeRequestsForCommit(commit string) ([]*gitlab.BasicMergeRequest, error) {
+	mrs := []*gitlab.BasicMergeRequest{}
 	client, err := c.NewGitlabClientFromToken()
 	if err != nil {
 		return mrs, err

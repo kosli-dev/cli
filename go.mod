@@ -36,10 +36,10 @@ require (
 	github.com/spf13/pflag v1.0.6
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
-	github.com/xanzy/go-gitlab v0.115.0
 	github.com/xeonx/timeago v1.0.0-rc5
 	github.com/yargevad/filepathx v1.0.0
 	github.com/zalando/go-keyring v0.2.6
+	gitlab.com/gitlab-org/api/client-go v0.127.0
 	golang.org/x/oauth2 v0.29.0
 	k8s.io/api v0.32.3
 	k8s.io/apimachinery v0.32.3
