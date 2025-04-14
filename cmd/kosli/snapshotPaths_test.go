@@ -40,7 +40,7 @@ func (suite *SnapshotPathsTestSuite) TestSnapshotPathsCmd() {
 			wantError: true,
 			name:      "fails when paths spec file is invalid (fails to unmarshal)",
 			cmd:       fmt.Sprintf(`snapshot paths --paths-file testdata/paths-files/invalid-pathsfile.yml %s %s`, suite.envName, suite.defaultKosliArguments),
-			golden:    "Error: failed to unmarshal path spec file [testdata/paths-files/invalid-pathsfile.yml] : 1 error(s) decoding:\n\n* '' has invalid keys: foo, versionnn\n",
+			golden:    "Error: failed to unmarshal path spec file [testdata/paths-files/invalid-pathsfile.yml] : decoding failed due to the following error(s):\n\n'' has invalid keys: foo, versionnn\n",
 		},
 		{
 			wantError: true,
