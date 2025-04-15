@@ -7,14 +7,16 @@ trail:
     type: generic
   - name: test
     type: junit
-  - name: snyk-code
+  - name: snyk-code-test
+    type: snyk
+  - name: snyk-dependency-test
     type: snyk
   - name: never-alone-data
     type: generic
   artifacts:
   - name: cli-docker
     attestations:
-    - name: snyk-container
+    - name: snyk-container-test
       type: snyk
     - name: smoke-test
       type: generic
