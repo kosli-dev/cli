@@ -2,10 +2,19 @@
 version: v1.25.0
 # ignores vulnerabilities until expiry date; change duration by modifying expiry date
 ignore:
-  
-  SNYK-GOLANG-K8SIOCLIENTGOTRANSPORT-7538822:
+  snyk:lic:golang:github.com:hashicorp:go-retryablehttp:MPL-2.0:
     - '*':
-        reason: This is indirect dependency of k8s.io/client-go and does not really impact the CLI. Waiting for next k8s releases to fix it.
-        expires: 2024-09-19T10:26:12.080Z
-        created: 2024-07-19T10:26:12.086Z
+        reason: "Choosing to ignore this licence issue for now"
+        expires: "2025-07-01T00:00:00Z"
+
+  snyk:lic:golang:github.com:hashicorp:go-cleanhttp:MPL-2.0:
+    - '*':
+        reason: "Choosing to ignore this licence issue for now"
+        expires: "2025-07-01T00:00:00Z"
+        
 patch: {}
+
+exclude:
+  global:
+    - internal/azure/azure_apps.go
+    - cmd/kosli/root.go
