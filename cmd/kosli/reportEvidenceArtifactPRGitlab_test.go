@@ -98,7 +98,7 @@ func (suite *ArtifactEvidencePRGitlabCommandTestSuite) TestArtifactEvidencePRGit
 			name:      "report Gitlab PR evidence fails when commit does not exist",
 			cmd: `report evidence artifact pullrequest gitlab --fingerprint ` + suite.artifactFingerprint + ` --name gl-pr --flow ` + suite.flowName + `
 			          --build-url http://www.example.com --gitlab-org kosli-dev --repository merkely-gitlab-demo --commit 73d7fee2f31ade8e1a9c456c324255212c3123ab` + suite.defaultKosliArguments,
-			goldenRegex: "Error: GET https://gitlab.com/api/v4/projects/kosli-dev/merkely-gitlab-demo/repository/commits/73d7fee2f31ade8e1a9c456c324255212c3123ab/merge_requests: 404 {message: 404 Commit Not Found}\n",
+			goldenRegex: "Error: failed to list merge requests for commit 73d7fee2f31ade8e1a9c456c324255212c3123ab: 404 Not Found\n",
 		},
 		{
 			name: "report Gitlab PR evidence works when --assert is used and commit has a PR",

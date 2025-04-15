@@ -198,7 +198,7 @@ func DockerImageSha256(imageID string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	imageInspect, _, err := cli.ImageInspectWithRaw(context.Background(), imageID)
+	imageInspect, err := cli.ImageInspect(context.Background(), imageID)
 	if err != nil {
 		if imageID == " " {
 			return "", fmt.Errorf("%s. The image ID is '%s'. https://docs.kosli.com/faq/", err, imageID)
