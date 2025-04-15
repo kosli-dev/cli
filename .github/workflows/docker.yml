@@ -156,7 +156,7 @@ jobs:
           --org ${{ inputs.kosli_org }}
 
     
-    - name: Run Snyk to scan the Docker image for vulnerabilities
+    - name: Run Snyk Container Test to scan the Docker image for vulnerabilities
       env:
         SNYK_TOKEN: ${{ secrets.snyk_token }}
       run: 
@@ -176,7 +176,7 @@ jobs:
             --flow ${{ inputs.flow_name }}
             --trail ${{ inputs.trail_name }} 
             --fingerprint ${{ env.FINGERPRINT }} 
-            --name snyk-container
+            --name snyk-container-test
             --scan-results snyk-docker.json
             --org ${{ inputs.kosli_org }}
 
