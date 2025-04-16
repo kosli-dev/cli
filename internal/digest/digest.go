@@ -36,7 +36,7 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 	info, err := os.Stat(dirPath)
 	if err != nil {
 		if dirPath == " " {
-			return "", fmt.Errorf("%s. The directory path is '%s'. https://docs.kosli.com/faq/", err, dirPath)
+			return "", fmt.Errorf("%s. The directory path is '%s'. https://docs.kosli.com/faq/#pathimage-name-is-a-single-whitespace-character", err, dirPath)
 		}
 		return "", err
 	}
@@ -87,7 +87,7 @@ func OciSha256(artifactName string, registryUsername string, registryPassword st
 	ref, err := docker.ParseReference(imageName)
 	if err != nil {
 		if artifactName == " " {
-			return "", fmt.Errorf("%w. The artifact name is '%s'. https://docs.kosli.com/faq/", err, artifactName)
+			return "", fmt.Errorf("%w. The artifact name is '%s'. https://docs.kosli.com/faq/#pathimage-name-is-a-single-whitespace-character", err, artifactName)
 		}
 		return "", fmt.Errorf("failed to parse image reference for %s: %w", imageName, err)
 	}
@@ -178,7 +178,7 @@ func FileSha256(filepath string) (string, error) {
 	f, err := os.Open(filepath)
 	if err != nil {
 		if filepath == " " {
-			return "", fmt.Errorf("%s. The filename is '%s'. https://docs.kosli.com/faq/", err, filepath)
+			return "", fmt.Errorf("%s. The filename is '%s'. https://docs.kosli.com/faq/#pathimage-name-is-a-single-whitespace-character", err, filepath)
 		}
 		return "", err
 	}
@@ -201,7 +201,7 @@ func DockerImageSha256(imageID string) (string, error) {
 	imageInspect, err := cli.ImageInspect(context.Background(), imageID)
 	if err != nil {
 		if imageID == " " {
-			return "", fmt.Errorf("%s. The image ID is '%s'. https://docs.kosli.com/faq/", err, imageID)
+			return "", fmt.Errorf("%s. The image ID is '%s'. https://docs.kosli.com/faq/#pathimage-name-is-a-single-whitespace-character", err, imageID)
 		}
 		return "", err
 	}

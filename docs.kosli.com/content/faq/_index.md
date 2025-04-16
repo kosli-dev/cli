@@ -243,14 +243,14 @@ kosli attest generic Dockerfile true ...
 The parser then sees `Dockerfile` and `true` as the two
 arguments to `kosli attest generic`.
 
-## Fingerprint calculation
+## Path/Image name is a single whitespace character!
 
 In order to calculate the fingerprint for an artifact, Kosli requires the path to the relevant file or directory, or the relevant image name. The command typically takes the form:
 ```
 kosli attest generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
-When using multi-line commands in the shell or a script, if the image name or path has not been provided as above and whitespace has unintentionally been added after the backslash on one of the lines, this whitespace is interpreted as the name or path.
+When using multi-line commands in the shell or a script, if the image name or path has not been provided as above and whitespace has unintentionally been added after the line-continuation backslash on one of the lines, this whitespace character is interpreted as the name or path.
 
 If you're using multi-line commands and receive an error message similar to this, check your command for extraneous whitespace:
 ```
