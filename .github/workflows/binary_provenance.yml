@@ -113,7 +113,7 @@ jobs:
                 --external-url sigstore=https://search.sigstore.dev/?hash=${{ env.FINGERPRINT }}
                 --org ${{ inputs.kosli_org }}
 
-        - name: Report SBOM to Kosli
+        - name: Report spdx SBOM attestation from sigstore to Kosli
           env:
             KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
           run: 
@@ -126,6 +126,18 @@ jobs:
               --external-url sigstore=https://search.sigstore.dev/?logIndex=${{ env.SBOM_TLOG_INDEX }}
               --org ${{ inputs.kosli_org }}
 
+        - name: Report cyclonedx SBOM attestation from sigstore to Kosli
+          env:
+            KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+          run:
+            kosli attest custom
+              --flow ${{ inputs.flow_name }}
+              --trail ${{ inputs.trail_name }}
+              --name cyclone-dx-sbom
+              --type cyclone-dx-1-6
+              --fingerprint ${{ env.FINGERPRINT }}
+              --attestation-data ${{matrix.artifact.template_name}}-sbom.cyclonedx.json
+              --org ${{ inputs.kosli_org }}
 
 
         
