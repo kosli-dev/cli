@@ -72,6 +72,15 @@ jobs:
             output-file: '${{matrix.artifact.template_name}}-sbom.spdx.json'
             upload-artifact: false
             upload-release-assets: false
+
+        - name: Generate Cyclone-dx SBOM for the binary
+          uses: anchore/sbom-action@v0
+          with:
+            file: ${{matrix.artifact.path}}
+            format: 'cyclonedx-json'
+            output-file: '${{matrix.artifact.template_name}}-sbom.cyclonedx.json'
+            upload-artifact: false
+            upload-release-assets: false        
         
         - name: Publish SBOM
           uses: anchore/sbom-action/publish-sbom@v0
@@ -104,7 +113,7 @@ jobs:
                 --external-url sigstore=https://search.sigstore.dev/?hash=${{ env.FINGERPRINT }}
                 --org ${{ inputs.kosli_org }}
 
-        - name: Report SBOM to Kosli
+        - name: Report spdx SBOM attestation from sigstore to Kosli
           env:
             KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
           run: 
@@ -117,6 +126,18 @@ jobs:
               --external-url sigstore=https://search.sigstore.dev/?logIndex=${{ env.SBOM_TLOG_INDEX }}
               --org ${{ inputs.kosli_org }}
 
+        - name: Report cyclonedx SBOM attestation from sigstore to Kosli
+          env:
+            KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+          run:
+            kosli attest custom
+              --flow ${{ inputs.flow_name }}
+              --trail ${{ inputs.trail_name }}
+              --name cyclone-dx-sbom
+              --type cyclone-dx-1-6
+              --fingerprint ${{ env.FINGERPRINT }}
+              --attestation-data ${{matrix.artifact.template_name}}-sbom.cyclonedx.json
+              --org ${{ inputs.kosli_org }}
 
 
         
