@@ -59,7 +59,7 @@ func (suite *AssertPRGitlabCommandTestSuite) TestAssertPRGitlabCmd() {
 			name:      "assert Gitlab PR evidence fails when commit does not exist",
 			cmd: `assert mergerequest gitlab --gitlab-org kosli-dev --repository cli
 			--commit 1111111111111111111111111111111111111111` + suite.defaultKosliArguments,
-			golden: "Error: GET https://gitlab.com/api/v4/projects/kosli-dev/cli/repository/commits/1111111111111111111111111111111111111111/merge_requests: 404 {message: 404 Project Not Found}\n",
+			golden: "Error: failed to list merge requests for commit 1111111111111111111111111111111111111111: 404 Not Found\n",
 		},
 	}
 

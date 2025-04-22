@@ -3,6 +3,7 @@ package jira
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	jira "github.com/andygrunwald/go-jira"
 )
@@ -84,7 +85,7 @@ func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string) (*Jir
 	}
 
 	issue, response, err := jiraClient.Issue.Get(issueID, &queryOptions)
-	if err != nil && response.StatusCode != http.StatusNotFound {
+	if err != nil && response != nil && response.StatusCode != http.StatusNotFound {
 		return result, err
 	}
 
@@ -95,4 +96,15 @@ func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string) (*Jir
 		}
 	}
 	return result, nil
+}
+
+func MakeJiraIssueKeyPattern(projectKeys []string) string {
+	// Jira issue keys consist of [project-key]-[sequential-number]
+	// project key must be at least 2 characters long and start with an uppercase letter
+	// more info: https://support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/#Workingwithissues-Projectandissuekeys
+	if len(projectKeys) == 0 {
+		return `[A-Z][A-Z0-9]{1,9}-[0-9]+`
+	} else {
+		return `(` + strings.Join(projectKeys, "|") + `)-[0-9]+`
+	}
 }

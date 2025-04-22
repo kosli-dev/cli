@@ -132,6 +132,16 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
+			name: "can attest jira when the issue doesn't exist",
+			cmd: fmt.Sprintf(`attest jira testdata/file1 --artifact-type file --name foo 
+								--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+								--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "jira attestation 'foo' is reported to trail: test-123\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "EX-999 test commit",
+			},
+		},
+		{
 			name: "can attest jira against an artifact using artifact name and --artifact-type when --name does not exist in the trail template",
 			cmd: fmt.Sprintf(`attest jira testdata/file1 --artifact-type file --name bar 
 					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
@@ -222,6 +232,31 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 					--external-url foo=https://foo.com --external-fingerprint bar=7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9
 					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
 			golden: "Error: bar in --external-fingerprint does not match any labels in --external-url\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "EX-1 test commit",
+			},
+		},
+		{
+			name: "can specify the jira project key",
+			cmd: fmt.Sprintf(`attest jira --name bar 
+					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+					--jira-project-key EX
+					--jira-project-key ABC
+					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "jira attestation 'bar' is reported to trail: test-123\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "EX-1 test commit",
+			},
+		},
+		{
+			wantError: true,
+			name:      "fails with an invalid Jira project key specified",
+			cmd: fmt.Sprintf(`attest jira --name bar 
+					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+					--jira-project-key ex
+					--jira-project-key 1AB
+					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "Error: Invalid Jira project keys: ex, 1AB\n",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "EX-1 test commit",
 			},

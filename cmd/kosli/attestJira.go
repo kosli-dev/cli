@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/gitview"
@@ -24,6 +25,7 @@ type attestJiraOptions struct {
 	username          string
 	apiToken          string
 	pat               string
+	projectKeys       []string
 	issueFields       string
 	secondarySource   string
 	ignoreBranchMatch bool
@@ -37,7 +39,10 @@ const attestJiraLongDesc = attestJiraShortDesc + `
 Parses the given commit's message, current branch name or the content of the ^--jira-secondary-source^
 argument for Jira issue references of the form:  
 'at least 2 characters long, starting with an uppercase letter project key followed by
-dash and one or more digits'. 
+dash and one or more digits'.
+
+If you want to restrict the Jira issue matching to a specific project, use the
+^--jira-project-key^ flag to specify your own project key. You can specify multiple project keys if needed.
 
 If the ^--ignore-branch-match^ is set, the branch name is not parsed for a match.
 
@@ -88,6 +93,18 @@ kosli attest jira \
 	--jira-base-url https://kosli.atlassian.net \
 	--jira-username user@domain.com \
 	--jira-api-token yourJiraAPIToken \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# report a jira attestation matching a specific jira project key:
+kosli attest jira \
+	--name yourAttestationName \
+	--flow yourFlowName \
+	--trail yourTrailName \
+	--jira-base-url https://kosli.atlassian.net \
+	--jira-username user@domain.com \
+	--jira-api-token yourJiraAPIToken \
+	--jira-project-key ABC \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -218,6 +235,7 @@ func newAttestJiraCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.username, "jira-username", "", jiraUsernameFlag)
 	cmd.Flags().StringVar(&o.apiToken, "jira-api-token", "", jiraAPITokenFlag)
 	cmd.Flags().StringVar(&o.pat, "jira-pat", "", jiraPATFlag)
+	cmd.Flags().StringSliceVar(&o.projectKeys, "jira-project-key", []string{}, jiraProjectKeyFlag)
 	cmd.Flags().StringVar(&o.issueFields, "jira-issue-fields", "", jiraIssueFieldFlag)
 	cmd.Flags().StringVar(&o.secondarySource, "jira-secondary-source", "", jiraSecondarySourceFlag)
 	cmd.Flags().BoolVar(&o.ignoreBranchMatch, "ignore-branch-match", false, ignoreBranchMatchFlag)
@@ -244,14 +262,16 @@ func (o *attestJiraOptions) run(args []string) error {
 
 	o.payload.JiraResults = []*jira.JiraIssueInfo{}
 
+	err = o.validateJiraProjectKeys()
+	if err != nil {
+		return err
+	}
+
 	gv, err := gitview.New(o.srcRepoRoot)
 	if err != nil {
 		return err
 	}
-	// Jira issue keys consist of [project-key]-[sequential-number]
-	// project key must be at least 2 characters long and start with an uppercase letter
-	// more info: https://support.atlassian.com/jira-software-cloud/docs/what-is-an-issue/#Workingwithissues-Projectandissuekeys
-	jiraIssueKeyPattern := `[A-Z][A-Z0-9]{1,9}-[0-9]+`
+	jiraIssueKeyPattern := jira.MakeJiraIssueKeyPattern(o.projectKeys)
 
 	issueIDs, commitInfo, err := gv.MatchPatternInCommitMessageORBranchName(jiraIssueKeyPattern, o.payload.Commit.Sha1,
 		o.secondarySource, o.ignoreBranchMatch)
@@ -306,4 +326,23 @@ func (o *attestJiraOptions) run(args []string) error {
 		return fmt.Errorf("missing Jira issues from references found in commit message or branch name%s", issueLog)
 	}
 	return wrapAttestationError(err)
+}
+
+func (o *attestJiraOptions) validateJiraProjectKeys() error {
+	matchesJiraProjectKeys, err := regexp.Compile("^[A-Z][A-Z0-9]{1,9}$")
+	if err != nil {
+		return err
+	}
+
+	invalidKeys := []string{}
+	for _, projectKey := range o.projectKeys {
+		isValid := matchesJiraProjectKeys.MatchString(projectKey)
+		if !isValid {
+			invalidKeys = append(invalidKeys, projectKey)
+		}
+	}
+	if len(invalidKeys) > 0 {
+		return fmt.Errorf("Invalid Jira project keys: %s", strings.Join(invalidKeys, ", "))
+	}
+	return nil
 }

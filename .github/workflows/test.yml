@@ -182,10 +182,9 @@ jobs:
         SLACK_USERNAME: GithubActions
         SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
 
-  snyk-code:
-    if: false # Disable snyk code scans because we reached the monthly limit
-    #if: ${{ inputs.run_snyk }}  # Uncomment this when we re-enable snyk code scans
-    name: Snyk Code
+  snyk-code-test:
+    if: ${{ inputs.run_snyk }}
+    name: Snyk Code Test
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -207,14 +206,14 @@ jobs:
       env:
         SNYK_TOKEN: ${{ secrets.snyk_token }}
       run: 
-          snyk test --sarif --policy-path=.snyk  --sarif-file-output=snyk-code.json --prune-repeated-subdependencies
+          snyk code test --sarif --policy-path=.snyk  --sarif-file-output=snyk-code.json --prune-repeated-subdependencies
     
     - name: Report Snyk Code to Kosli
       if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) &&  (success() || failure()) && inputs.report_results }}
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
       run: kosli attest snyk 
-           --name snyk-code 
+           --name snyk-code-test 
            --flow ${{ inputs.FLOW_NAME }}  
            --trail ${{ inputs.TRAIL_NAME }} 
            --scan-results  snyk-code.json
@@ -227,5 +226,52 @@ jobs:
         SLACK_CHANNEL: ${{ secrets.slack_channel }}
         SLACK_COLOR: ${{ job.status }}
         SLACK_TITLE: Snyk Code Failed in CLI repository
+        SLACK_USERNAME: GithubActions
+        SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
+
+  snyk-dependency-test:
+    if: ${{ inputs.run_snyk }}
+    name: Snyk Dependency Test
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - name: setup Snyk
+      uses: snyk/actions/setup@master
+
+    - name: setup-kosli-cli
+      uses: kosli-dev/setup-cli-action@v2
+      with:
+        version:
+          ${{ vars.KOSLI_CLI_VERSION }}
+
+    - name: Run Snyk to check dependencies for vulnerabilities
+      env:
+        SNYK_TOKEN: ${{ secrets.snyk_token }}
+      run: 
+          snyk test --sarif --policy-path=.snyk  --sarif-file-output=snyk-dependency.json --prune-repeated-subdependencies
+    
+    - name: Report Snyk Test to Kosli
+      if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) &&  (success() || failure()) && inputs.report_results }}
+      env:
+        KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+      run: kosli attest snyk 
+           --name snyk-dependency-test 
+           --flow ${{ inputs.FLOW_NAME }}  
+           --trail ${{ inputs.TRAIL_NAME }} 
+           --scan-results  snyk-dependency.json
+           --org ${{ inputs.KOSLI_ORG }}
+    
+    - name: Slack Notification on Failure
+      if: ${{ failure() }}
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_CHANNEL: ${{ secrets.slack_channel }}
+        SLACK_COLOR: ${{ job.status }}
+        SLACK_TITLE: Snyk Test Failed in CLI repository
         SLACK_USERNAME: GithubActions
         SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
