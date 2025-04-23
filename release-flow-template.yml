@@ -12,7 +12,7 @@ trail:
   artifacts:
   - name: cli-docker
     attestations:
-    - name: snyk-container
+    - name: snyk-container-test
       type: snyk
     - name: smoke-test
       type: generic
