@@ -42,11 +42,11 @@ kosli attest pullrequest gitlab [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --gitlab-token string  |  Gitlab token.  |
 |    -h, --help  |  help for gitlab  |
 |    -n, --name string  |  The name of the attestation as declared in the flow or trail yaml template.  |
-|    -o, --origin-url string  |  [optional] The url pointing to where the attestation came from or is related. (defaulted to the CI url in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|    -o, --origin-url string  |  [optional] The url pointing to where the attestation came from or is related. (defaulted to the CI url in some CIs: https://docs.kosli.com/integrations/ci_cd/#defaulted-kosli-command-flags-from-ci-variables ).  |
 |        --redact-commit-info strings  |  [optional] The list of commit info to be redacted before sending to Kosli. Allowed values are one or more of [author, message, branch].  |
 |        --registry-password string  |  [conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry.  |
 |        --registry-username string  |  [conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry.  |
-|        --repo-root string  |  [defaulted] The directory where the source git repository is available. Only used if --commit is used or defaulted in CI (https://docs.kosli.com/ci-defaults). (default ".")  |
+|        --repo-root string  |  [defaulted] The directory where the source git repository is available. Only used if --commit is used or defaulted in CI, see https://docs.kosli.com/integrations/ci_cd/#defaulted-kosli-command-flags-from-ci-variables . (default ".")  |
 |        --repository string  |  Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -T, --trail string  |  The Kosli trail name.  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the attestation.  |
