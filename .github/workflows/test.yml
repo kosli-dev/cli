@@ -51,7 +51,9 @@ on:
         required: true 
       snyk_token:
         required: true
-      kosli_api_token:
+      kosli_reporting_api_token:
+        required: true
+      kosli_querying_api_token:
         required: true
       sonarqube_token:
         required: true
@@ -89,7 +91,7 @@ jobs:
     - name: Report lint to Kosli
       if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) &&  (success() || failure()) && inputs.report_results }}
       env:
-        KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+        KOSLI_API_TOKEN: ${{ secrets.kosli_reporting_api_token }}
       run: kosli attest generic 
            --name lint 
            --flow ${{ inputs.FLOW_NAME }} 
@@ -152,7 +154,7 @@ jobs:
         INTEGRATION_TEST_AZURE_CLIENT_ID: ${{ secrets.azure_client_id }}
         KOSLI_SONAR_API_TOKEN: ${{ secrets.sonarqube_token }}
         DOCKER_API_VERSION: "1.45"
-        KOSLI_API_TOKEN_PROD: ${{ secrets.kosli_api_token }}
+        KOSLI_API_TOKEN_PROD: ${{ secrets.kosli_querying_api_token }}
       run: |
         # some tests use git operations, therefore the git author on the CI VM needs to be set
         git config --global user.name "John Doe"
@@ -162,7 +164,7 @@ jobs:
     - name: Report test to Kosli
       if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) && (success() || failure()) && inputs.report_results }}
       env:
-        KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+        KOSLI_API_TOKEN: ${{ secrets.kosli_reporting_api_token }}
       run: kosli attest junit 
            --name test 
            --flow ${{ inputs.FLOW_NAME }}  
@@ -212,7 +214,7 @@ jobs:
     - name: Report Snyk Code to Kosli
       if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) &&  (success() || failure()) && inputs.report_results }}
       env:
-        KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+        KOSLI_API_TOKEN: ${{ secrets.kosli_reporting_api_token }}
       run: kosli attest snyk 
            --name snyk-code-test 
            --flow ${{ inputs.FLOW_NAME }}  
@@ -259,7 +261,7 @@ jobs:
     - name: Report Snyk Test to Kosli
       if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) &&  (success() || failure()) && inputs.report_results }}
       env:
-        KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+        KOSLI_API_TOKEN: ${{ secrets.kosli_reporting_api_token }}
       run: kosli attest snyk 
            --name snyk-dependency-test 
            --flow ${{ inputs.FLOW_NAME }}  
