@@ -1,6 +1,14 @@
 #!/bin/bash
+set -euo pipefail
 
-force_restart=$1
+# Validate KOSLI_SERVER_IMAGE
+if [[ -z "${KOSLI_SERVER_IMAGE:-}" ]] || [[ "$KOSLI_SERVER_IMAGE" == *"Error"* ]]; then
+    echo "❌ Invalid or missing KOSLI_SERVER_IMAGE"
+    exit 1
+fi
+
+# Set force_restart to the first argument if provided, empty string otherwise
+force_restart="${1:-}"
 container_name=cli_kosli_server
 
 check_success()
@@ -18,7 +26,8 @@ restart_server()
     echo restarting server ...
     ./bin/docker_login_aws.sh staging
     docker compose down || true
-    docker pull 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:latest || true
+    echo -e "\033[38;5;208musing server image\033[0m ${KOSLI_SERVER_IMAGE}"
+    docker pull ${KOSLI_SERVER_IMAGE} || true
     docker compose up -d
     ./mongo/ip_wait.sh localhost:9010/minio/health/live
     ./mongo/ip_wait.sh localhost:8001/ready
