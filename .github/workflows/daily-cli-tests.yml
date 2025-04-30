@@ -45,5 +45,6 @@ jobs:
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
       slack_channel: ci-failures
       snyk_token: ${{ secrets.SNYK_TOKEN }}
-      kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
+      kosli_reporting_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
+      kosli_querying_api_token: ${{ secrets.KOSLI_API_TOKEN_PROD }}
       sonarqube_token: ${{ secrets.KOSLI_SONARQUBE_TOKEN }}

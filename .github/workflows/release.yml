@@ -81,7 +81,8 @@ jobs:
       slack_channel: ci-failures
       jira_api_token: ${{ secrets.KOSLI_JIRA_API_TOKEN }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}
-      kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
+      kosli_reporting_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
+      kosli_querying_api_token: ${{ secrets.KOSLI_API_TOKEN_PROD }}
       sonarqube_token: ${{ secrets.KOSLI_SONARQUBE_TOKEN }}
 
   docker:
