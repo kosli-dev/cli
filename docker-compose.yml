@@ -12,7 +12,7 @@ services:
   server-index:
     networks: [ cli_net ]
     depends_on: [ mongo_rs_initiate, minio ]
-    image: 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:latest
+    image: ${KOSLI_SERVER_IMAGE}
     platform: linux/amd64
     command: /app/src/documentdb/wait_till_ready_or_raise.py
     container_name: cli_kosli_server-index
@@ -34,7 +34,7 @@ services:
         condition: service_started
       server-index:
         condition: service_completed_successfully
-    image: 772819027869.dkr.ecr.eu-central-1.amazonaws.com/merkely:latest
+    image: ${KOSLI_SERVER_IMAGE}
     platform: linux/amd64
     env_file: [ "./mongo/mongo.env" ]
     environment:
