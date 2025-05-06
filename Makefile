@@ -69,14 +69,17 @@ ensure_network:
 ensure_gotestsum:
 	@go install gotest.tools/gotestsum@latest
 
+clear_local_image_ref:
+	rm /tmp/server-image.txt
+
 test_setup: ensure_gotestsum
 # cat and exit if error
-	./hack/get-server-image.sh > /tmp/server-image.txt || (cat /tmp/server-image.txt && exit 1) 
+	@test -f /tmp/server-image.txt || ./hack/get-server-image.sh /tmp/server-image.txt
 	export KOSLI_SERVER_IMAGE=$$(cat /tmp/server-image.txt) && ./bin/reset-or-start-server.sh
 
 test_setup_restart_server: ensure_gotestsum
 # cat and exit if error
-	./hack/get-server-image.sh > /tmp/server-image.txt || (cat /tmp/server-image.txt && exit 1)
+	@test -f /tmp/server-image.txt || ./hack/get-server-image.sh /tmp/server-image.txt
 	export KOSLI_SERVER_IMAGE=$$(cat /tmp/server-image.txt) && ./bin/reset-or-start-server.sh force
 
 test_integration: deps vet ensure_network test_setup ## Run tests except the too slow ones

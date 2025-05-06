@@ -1,6 +1,13 @@
 #!/bin/bash
 set -uo pipefail
 
+if [ $# -lt 1 ]; then
+  echo "Output result file is missing" >&2
+  exit 1
+fi
+
+OUTPUT_FILE=$1; shift
+
 # Check that jq is installed
 if ! command -v jq &> /dev/null; then
   echo "❌ Error: 'jq' is not installed. Please install it:" >&2
@@ -29,4 +36,4 @@ echo "$json" | jq -r '
   | select(.name | test("merkely:"))
   | select(.annotation.type != "exited")
   | "\(.name | sub(":.*"; ""))@sha256:\(.fingerprint)"
-'
+' > ${OUTPUT_FILE}
