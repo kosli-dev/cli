@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/gitview"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -414,4 +415,51 @@ func CreatePolicy(org, policyName string, t *testing.T) {
 
 	err := o.run([]string{policyName, "testdata/policy-files/test-policy.yml"})
 	require.NoError(t, err, "policy should be created without error")
+}
+
+func CreateGenericArtifactAttestation(flowName, trailName, fingerprint, attestationName string, t *testing.T) {
+	t.Helper()
+	o := &attestGenericOptions{
+		CommonAttestationOptions: &CommonAttestationOptions{
+			flowName:                flowName,
+			trailName:               trailName,
+			fingerprintOptions:      &fingerprintOptions{},
+			attestationNameTemplate: attestationName,
+		},
+		payload: GenericAttestationPayload{
+			CommonAttestationPayload: &CommonAttestationPayload{
+				ArtifactFingerprint: fingerprint,
+			},
+			Compliant: true,
+		},
+	}
+	err := o.run([]string{})
+	require.NoError(t, err, "generic artifact attestation should be created without error")
+}
+
+func CreateGenericTrailAttestation(flowName, trailName, attestationName string, t *testing.T) {
+	t.Helper()
+
+	o := &attestGenericOptions{
+		CommonAttestationOptions: &CommonAttestationOptions{
+			flowName:                flowName,
+			trailName:               trailName,
+			fingerprintOptions:      &fingerprintOptions{},
+			attestationNameTemplate: attestationName,
+		},
+		payload: GenericAttestationPayload{
+			CommonAttestationPayload: &CommonAttestationPayload{
+				Commit: &gitview.BasicCommitInfo{
+					Sha1:      "0fc1ba9876f91b215679f3649b8668085d820ab5",
+					Message:   "test commit",
+					Author:    "test author",
+					Timestamp: 1234567890,
+					Branch:    "test branch",
+				},
+			},
+			Compliant: true,
+		},
+	}
+	err := o.run([]string{})
+	require.NoError(t, err, "generic artifact attestation should be created without error")
 }
