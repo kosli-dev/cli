@@ -11,16 +11,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const getAttestationShortDesc = `Get attestation by name from a specified trail or artifact`
+const getAttestationShortDesc = `Get attestation by name from a specified trail or artifact.  `
 
 const getAttestationLongDesc = getAttestationShortDesc + `
-You can get an attestation from a trail or artifact using its name.
+You can get an attestation from a trail or artifact using its name. The attestation name should be given
+WITHOUT dot-notation.
 
-To get an attestation from a trail, specify the trail name using the --trail flag.
+To get an attestation from a trail, specify the trail name using the --trail flag.  
 To get an attestation from an artifact, specify the artifact fingerprint using the --fingerprint flag.
 The fingerprint can be short or complete.
 
 In both cases the flow must also be specified using the --flow flag.
+
+If there are multiple attestations with the same name on the trail or artifact, a list of all will be returned.
 `
 
 const getAttestationExample = `
@@ -158,7 +161,7 @@ func printAttestationsAsTable(raw string, out io.Writer, pageNumber int) error {
 			rows = append(rows, fmt.Sprintf("Artifact fingerprint:\t%s", attestation.ArtifactFingerprint))
 		}
 		if attestation.GitCommitInfo != nil {
-			rows = append(rows, fmt.Sprintf("Git Commit Info:"))
+			rows = append(rows, "Git Commit Info:")
 			rows = append(rows, fmt.Sprintf("    Sha1:\t%s", attestation.GitCommitInfo.Sha1))
 			rows = append(rows, fmt.Sprintf("    Author:\t%s", attestation.GitCommitInfo.Author))
 			rows = append(rows, fmt.Sprintf("    Branch:\t%s", attestation.GitCommitInfo.Branch))
