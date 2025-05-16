@@ -26,6 +26,7 @@ func newGetCmd(out io.Writer) *cobra.Command {
 		newGetTrailCmd(out),
 		newGetPolicyCmd(out),
 		newGetAttestationTypeCmd(out),
+		newGetAttestationCmd(out),
 	)
 	return cmd
 }
