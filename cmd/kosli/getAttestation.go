@@ -19,7 +19,6 @@ WITHOUT dot-notation.
 
 To get an attestation from a trail, specify the trail name using the --trail flag.  
 To get an attestation from an artifact, specify the artifact fingerprint using the --fingerprint flag.
-The fingerprint can be short or complete.
 
 In both cases the flow must also be specified using the --flow flag.
 
