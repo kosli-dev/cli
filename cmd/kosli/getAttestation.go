@@ -27,12 +27,12 @@ If there are multiple attestations with the same name on the trail or artifact, 
 `
 
 const getAttestationExample = `
-# get an attestation from a trail
+# get an attestation from a trail (requires the --trail flag)
 kosli get attestation attestationName \
 	--flow flowName \
 	--trail trailName 
 
-# get an attestation from an artifact
+# get an attestation from an artifact 
 kosli get attestation attestationName \
 	--flow flowName \
 	--fingerprint fingerprint 
