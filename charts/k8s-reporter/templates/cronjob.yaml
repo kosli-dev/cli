@@ -1,3 +1,4 @@
+{{- include "k8s-reporter.validateNamespacesRegex" . -}}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -30,7 +31,11 @@ spec:
               {{ if .Values.reporterConfig.namespaces }}
               - name: KOSLI_NAMESPACES
                 value: {{ .Values.reporterConfig.namespaces | quote }}
+              {{ else if .Values.reporterConfig.namespacesRegex }}
+              - name: KOSLI_NAMESPACES_REGEX
+                value: {{ .Values.reporterConfig.namespacesRegex | quote }}
               {{ end }}
+
               {{- range $key, $value :=  .Values.env }}
               - name: {{ $key }}
                 value: {{ $value }}
