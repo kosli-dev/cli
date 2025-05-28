@@ -20,6 +20,10 @@ spec:
           - name: reporter
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
             imagePullPolicy: {{ .Values.image.pullPolicy }}
+            securityContext:
+              allowPrivilegeEscalation: {{ .Values.reporterConfig.securityContext.allowPrivilegeEscalation }}
+              runAsNonRoot: {{ .Values.reporterConfig.securityContext.runAsNonRoot }}
+              runAsUser: {{ .Values.reporterConfig.securityContext.runAsUser }}
             env:
               - name: KOSLI_ORG
                 value: {{ required ".Values.reporterConfig.kosliOrg is required" .Values.reporterConfig.kosliOrg }}

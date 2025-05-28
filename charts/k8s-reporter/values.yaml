@@ -55,6 +55,15 @@ reporterConfig:
   # -- the http proxy url
   httpProxy: ""
 
+  # -- the security context for the reporter cronjob
+  securityContext:
+    # -- whether to allow privilege escalation
+    allowPrivilegeEscalation: false
+    # -- whether to run as non root
+    runAsNonRoot: true
+    # -- the user id to run as
+    runAsUser: 1000
+
 # Uncomment the env variable below and replace <instance_name>, if you are on a single tenant Kosli instance
 # env:
 #   KOSLI_HOST: https://<instance_name>.kosli.com
