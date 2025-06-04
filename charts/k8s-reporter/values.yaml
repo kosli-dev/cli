@@ -56,12 +56,15 @@ reporterConfig:
   httpProxy: ""
 
   # -- the security context for the reporter cronjob
+  # Set to null or {} to disable security context entirely (not recommended)
+  # For OpenShift, you can omit runAsUser to let OpenShift assign the UID
   securityContext:
     # -- whether to allow privilege escalation
     allowPrivilegeEscalation: false
     # -- whether to run as non root
     runAsNonRoot: true
     # -- the user id to run as
+    # Omit this field for OpenShift environments to allow automatic UID assignment
     runAsUser: 1000
 
 # Uncomment the env variable below and replace <instance_name>, if you are on a single tenant Kosli instance
