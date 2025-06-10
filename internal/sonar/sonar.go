@@ -8,6 +8,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
+
+	log "github.com/kosli-dev/cli/internal/logger"
 )
 
 type SonarConfig struct {
@@ -17,6 +20,7 @@ type SonarConfig struct {
 	revision   string
 	projectKey string
 	serverURL  string
+	allowWait  bool
 }
 
 // Structs to build the JSON for our attestation payload
@@ -109,7 +113,7 @@ type Error struct {
 	Msg string `json:"msg"`
 }
 
-func NewSonarConfig(apiToken, workingDir, ceTaskUrl, projectKey, serverURL, revision string) *SonarConfig {
+func NewSonarConfig(apiToken, workingDir, ceTaskUrl, projectKey, serverURL, revision string, allowWait bool) *SonarConfig {
 	return &SonarConfig{
 		APIToken:   apiToken,
 		WorkingDir: workingDir,
@@ -117,6 +121,7 @@ func NewSonarConfig(apiToken, workingDir, ceTaskUrl, projectKey, serverURL, revi
 		revision:   revision,
 		projectKey: projectKey,
 		serverURL:  serverURL,
+		allowWait:  allowWait,
 	}
 }
 
@@ -159,7 +164,7 @@ func (sc *SonarConfig) GetSonarResults() (*SonarResults, error) {
 
 	if analysisID == "" {
 		//Get the analysis ID, status, project name and branch data from the ceTaskURL (ce API)
-		analysisID, err = GetCETaskData(httpClient, project, sonarResults, sc.CETaskUrl, tokenHeader)
+		analysisID, err = GetCETaskData(httpClient, project, sonarResults, sc.CETaskUrl, tokenHeader, sc.allowWait)
 		if err != nil {
 			return nil, err
 		}
@@ -210,7 +215,7 @@ func (sc *SonarConfig) readFile(project *Project, results *SonarResults) error {
 	return nil
 }
 
-func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *SonarResults, ceTaskURL, tokenHeader string) (string, error) {
+func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *SonarResults, ceTaskURL, tokenHeader string, allowWait bool) (string, error) {
 	taskRequest, err := http.NewRequest("GET", ceTaskURL, nil)
 	taskRequest.Header.Add("Authorization", tokenHeader)
 	if err != nil {
@@ -228,11 +233,39 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 		return "", fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube")
 	}
 
-	project.Name = taskResponseData.Task.ComponentName
-	project.Key = taskResponseData.Task.ComponentKey
-	sonarResults.TaskID = taskResponseData.Task.TaskID
-	analysisId := taskResponseData.Task.AnalysisID
-	sonarResults.Status = taskResponseData.Task.Status
+	if allowWait {
+		logger := log.NewStandardLogger()
+		wait := 10         // seconds
+		maxWait := 20 * 60 // 20 minutes
+
+		for wait < maxWait {
+			taskResponse, err := httpClient.Do(taskRequest)
+			if err != nil {
+				return "", err
+			}
+
+			err = json.NewDecoder(taskResponse.Body).Decode(taskResponseData)
+			if err != nil {
+				return "", fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube")
+			}
+
+			if taskResponseData.Task.Status == "PENDING" {
+				logger.Info("waiting for SonarQube scan to complete...")
+				time.Sleep(time.Duration(wait) * time.Second)
+				wait *= 2
+			} else {
+				break
+			}
+		}
+	}
+
+	task := taskResponseData.Task
+
+	project.Name = task.ComponentName
+	project.Key = task.ComponentKey
+	sonarResults.TaskID = task.TaskID
+	analysisId := task.AnalysisID
+	sonarResults.Status = task.Status
 
 	if analysisId == "" {
 		return "", fmt.Errorf("analysis ID not found on %s", sonarResults.ServerUrl) // This should never happen
