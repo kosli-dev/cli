@@ -175,7 +175,7 @@ func (o *attestSonarOptions) run(args []string) error {
 		return err
 	}
 
-	sc := sonar.NewSonarConfig(o.apiToken, o.workingDir, o.ceTaskURL, o.projectKey, o.serverURL, o.revision)
+	sc := sonar.NewSonarConfig(o.apiToken, o.workingDir, o.ceTaskURL, o.projectKey, o.serverURL, o.revision, o.allowWait)
 
 	o.payload.SonarResults, err = sc.GetSonarResults()
 	if err != nil {
