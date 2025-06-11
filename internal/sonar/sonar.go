@@ -270,7 +270,7 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 	// This should only happen if the task is pending - either because the project is large and the scan takes a long time
 	// to process, or because SonarQube is experiencing delays for some reason.
 	if analysisId == "" {
-		return "", fmt.Errorf("analysis ID not found on %s. This is because either ", sonarResults.ServerUrl)
+		return "", fmt.Errorf("analysis ID not found on %s. The scan results are not yet available, likely due to: \n1. Your project being particularly large and the scan taking time to process, or \n2. SonarQube is experiencing delays in processing scans. \nTry rerunning the command with the --allow-wait flag.", sonarResults.ServerUrl)
 	}
 
 	if project.Url == "" {
