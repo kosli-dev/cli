@@ -249,7 +249,7 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 				return "", fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube")
 			}
 
-			if taskResponseData.Task.Status == "PENDING" {
+			if taskResponseData.Task.Status == "PENDING" || taskResponseData.Task.Status == "IN_PROGRESS" {
 				logger.Info("waiting for SonarQube scan to complete...")
 				time.Sleep(time.Duration(wait) * time.Second)
 				wait *= 2
@@ -267,8 +267,10 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 	analysisId := task.AnalysisID
 	sonarResults.Status = task.Status
 
+	// This should only happen if the task is pending - either because the project is large and the scan takes a long time
+	// to process, or because SonarQube is experiencing delays for some reason.
 	if analysisId == "" {
-		return "", fmt.Errorf("analysis ID not found on %s", sonarResults.ServerUrl) // This should never happen
+		return "", fmt.Errorf("analysis ID not found on %s. This is because either ", sonarResults.ServerUrl)
 	}
 
 	if project.Url == "" {
