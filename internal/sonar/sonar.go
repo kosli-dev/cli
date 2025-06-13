@@ -246,7 +246,6 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 			break
 		}
 
-		//taskResponseData.Task.Status = "PENDING"
 		if taskResponseData.Task.Status == "PENDING" || taskResponseData.Task.Status == "IN_PROGRESS" {
 			logger.Info("waiting %ds for SonarQube scan to be processed... \n%d seconds elapsed", wait, elapsed)
 			time.Sleep(time.Duration(wait) * time.Second)
