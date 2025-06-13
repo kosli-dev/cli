@@ -20,7 +20,7 @@ type SonarConfig struct {
 	revision   string
 	projectKey string
 	serverURL  string
-	allowWait  bool
+	allowWait  int
 }
 
 // Structs to build the JSON for our attestation payload
@@ -113,7 +113,7 @@ type Error struct {
 	Msg string `json:"msg"`
 }
 
-func NewSonarConfig(apiToken, workingDir, ceTaskUrl, projectKey, serverURL, revision string, allowWait bool) *SonarConfig {
+func NewSonarConfig(apiToken, workingDir, ceTaskUrl, projectKey, serverURL, revision string, allowWait int) *SonarConfig {
 	return &SonarConfig{
 		APIToken:   apiToken,
 		WorkingDir: workingDir,
@@ -125,7 +125,7 @@ func NewSonarConfig(apiToken, workingDir, ceTaskUrl, projectKey, serverURL, revi
 	}
 }
 
-func (sc *SonarConfig) GetSonarResults() (*SonarResults, error) {
+func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error) {
 	httpClient := &http.Client{}
 	var analysisID, tokenHeader string
 	var err error
@@ -164,7 +164,7 @@ func (sc *SonarConfig) GetSonarResults() (*SonarResults, error) {
 
 	if analysisID == "" {
 		//Get the analysis ID, status, project name and branch data from the ceTaskURL (ce API)
-		analysisID, err = GetCETaskData(httpClient, project, sonarResults, sc.CETaskUrl, tokenHeader, sc.allowWait)
+		analysisID, err = GetCETaskData(httpClient, project, sonarResults, sc.CETaskUrl, tokenHeader, sc.allowWait, logger)
 		if err != nil {
 			return nil, err
 		}
@@ -215,48 +215,56 @@ func (sc *SonarConfig) readFile(project *Project, results *SonarResults) error {
 	return nil
 }
 
-func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *SonarResults, ceTaskURL, tokenHeader string, allowWait bool) (string, error) {
+func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *SonarResults, ceTaskURL, tokenHeader string, allowWait int, logger *log.Logger) (string, error) {
 	taskRequest, err := http.NewRequest("GET", ceTaskURL, nil)
 	taskRequest.Header.Add("Authorization", tokenHeader)
 	if err != nil {
 		return "", err
 	}
 
-	taskResponse, err := httpClient.Do(taskRequest)
-	if err != nil {
-		return "", err
+	wait := 10 // seconds to sleep between checks
+	if allowWait < wait {
+		wait = allowWait
 	}
-
+	maxWait := allowWait // 20 minutes
+	elapsed := 0         // seconds elapsed
 	taskResponseData := &TaskResponse{}
-	err = json.NewDecoder(taskResponse.Body).Decode(taskResponseData)
-	if err != nil {
-		return "", fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube")
+
+	for elapsed < maxWait || maxWait == 0 {
+		taskResponse, err := httpClient.Do(taskRequest)
+		if err != nil {
+			return "", err
+		}
+
+		err = json.NewDecoder(taskResponse.Body).Decode(taskResponseData)
+		if err != nil {
+			return "", fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube")
+		}
+
+		if maxWait == 0 {
+			taskResponse.Body.Close()
+			break
+		}
+
+		//taskResponseData.Task.Status = "PENDING"
+		if taskResponseData.Task.Status == "PENDING" || taskResponseData.Task.Status == "IN_PROGRESS" {
+			logger.Info("waiting %ds for SonarQube scan to be processed... \n%d seconds elapsed", wait, elapsed)
+			time.Sleep(time.Duration(wait) * time.Second)
+			if elapsed > 300 { // If we've waited 5 minutes, we'll wait 300 seconds (5 minutes) before checking again. This is so that we don't end up with extremely long waiting intervals with the doubling approach.
+				elapsed += wait
+				wait += 300
+			} else { // Otherwise, we'll double the wait time each time
+				elapsed += wait
+				wait *= 2
+			}
+		} else {
+			taskResponse.Body.Close()
+			break
+		}
 	}
 
-	if allowWait {
-		logger := log.NewStandardLogger()
-		wait := 10         // seconds
-		maxWait := 20 * 60 // 20 minutes
-
-		for wait < maxWait {
-			taskResponse, err := httpClient.Do(taskRequest)
-			if err != nil {
-				return "", err
-			}
-
-			err = json.NewDecoder(taskResponse.Body).Decode(taskResponseData)
-			if err != nil {
-				return "", fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube")
-			}
-
-			if taskResponseData.Task.Status == "PENDING" || taskResponseData.Task.Status == "IN_PROGRESS" {
-				logger.Info("waiting for SonarQube scan to complete...")
-				time.Sleep(time.Duration(wait) * time.Second)
-				wait *= 2
-			} else {
-				break
-			}
-		}
+	if elapsed != 0 {
+		logger.Info("Waited for %d seconds for SonarQube scan to be processed", elapsed)
 	}
 
 	task := taskResponseData.Task
@@ -285,7 +293,6 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 		sonarResults.Branch = nil
 	}
 
-	taskResponse.Body.Close()
 	return analysisId, nil
 }
 
