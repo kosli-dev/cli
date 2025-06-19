@@ -22,7 +22,7 @@ To create an environment via CLI, you would run a command like this:
 
 ```shell {.command}
 kosli create environment quickstart \
-    --environment-type docker \
+    --type docker \
     --description "quickstart environment for tutorial"
 ```
 
