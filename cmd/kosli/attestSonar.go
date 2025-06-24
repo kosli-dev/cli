@@ -52,7 +52,7 @@ In this case, we recommend using Kosli's Sonar webhook integration ( https://doc
 ` + attestationBindingDesc
 
 const attestSonarExample = `
-# report a SonarQube Cloud attestation about a trail using SonarQube's metadata:
+# report a SonarQube Cloud attestation about a trail using SonarQube's metadata, with no retries:
 kosli attest sonar \
 	--name yourAttestationName \
 	--flow yourFlowName \
@@ -62,7 +62,7 @@ kosli attest sonar \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 
-# report a SonarQube Server attestation about a trail using SonarWube's metadata, allowing for up to 10 retries:
+# report a SonarQube Server attestation about a trail using SonarQube's metadata, allowing for up to 10 retries:
 kosli attest sonar \
 	--name yourAttestationName \
 	--flow yourFlowName \
@@ -98,7 +98,7 @@ kosli attest sonar \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 
-# report a SonarQube Cloud attestation about a trail with an attachment using Sonar's metadata, allowing for up to 5 retries:
+# report a SonarQube Cloud attestation about a trail with an attachment using SonarQube's metadata, allowing for up to 5 retries:
 kosli attest sonar \
 	--name yourAttestationName \
 	--flow yourFlowName \
