@@ -62,7 +62,7 @@ kosli attest sonar \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 
-# report a SonarQube Server attestation about a trail using SonarWube's metadata, waiting for up to 10 minutes for scan processing:
+# report a SonarQube Server attestation about a trail using SonarWube's metadata, allowing for up to 10 retries:
 kosli attest sonar \
 	--name yourAttestationName \
 	--flow yourFlowName \
@@ -71,7 +71,7 @@ kosli attest sonar \
 	--sonar-working-dir yourSonarWorkingDirPath \
 	--api-token yourAPIToken \
 	--org yourOrgName \
-	--allow-wait 600
+	--max-retries 10
 
 # report a SonarQube Cloud attestation for a specific branch about a trail using key/revision:
 kosli attest sonar \
@@ -98,7 +98,7 @@ kosli attest sonar \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 
-# report a SonarQube Cloud attestation about a trail with an attachment using Sonar's metadata, waiting for up to 10 minutes for scan processing:
+# report a SonarQube Cloud attestation about a trail with an attachment using Sonar's metadata, allowing for up to 5 retries:
 kosli attest sonar \
 	--name yourAttestationName \
 	--flow yourFlowName \
@@ -108,7 +108,7 @@ kosli attest sonar \
 	--attachment yourAttachmentPath \
 	--api-token yourAPIToken \
 	--org yourOrgName \
-	--allow-wait 600
+	--max-retries 5
 `
 
 func newAttestSonarCmd(out io.Writer) *cobra.Command {
