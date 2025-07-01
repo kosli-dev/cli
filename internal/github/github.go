@@ -2,10 +2,14 @@ package github
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"strings"
+	"time"
 
 	gh "github.com/google/go-github/v42/github"
 	"github.com/kosli-dev/cli/internal/types"
+	"github.com/shurcooL/graphql"
 
 	"golang.org/x/oauth2"
 )
@@ -59,7 +63,7 @@ func NewGithubClientFromToken(ctx context.Context, ghToken string, baseURL strin
 	return gh.NewClient(tc), nil
 }
 
-func (c *GithubConfig) PREvidenceForCommit(commit string) ([]*types.PREvidence, error) {
+func (c *GithubConfig) PREvidenceForCommit_old(commit string) ([]*types.PREvidence, error) {
 	pullRequestsEvidence := []*types.PREvidence{}
 	prs, err := c.PullRequestsForCommit(commit)
 	if err != nil {
@@ -75,17 +79,188 @@ func (c *GithubConfig) PREvidenceForCommit(commit string) ([]*types.PREvidence, 
 	return pullRequestsEvidence, nil
 }
 
+func graphqlEndpoint(baseURL string) string {
+	if baseURL == "" || baseURL == "https://api.github.com" {
+		return "https://api.github.com/graphql"
+	}
+	return strings.TrimSuffix(baseURL, "/") + "/api/graphql"
+}
+
+func (c *GithubConfig) PREvidenceForCommit(commit string) ([]*types.PREvidence, error) {
+	ctx := context.Background()
+	ghClient, err := NewGithubClientFromToken(ctx, c.Token, c.BaseURL)
+	httpClient := ghClient.Client()
+
+	client := graphql.NewClient(graphqlEndpoint(c.BaseURL), httpClient)
+
+	pullRequestsEvidence := []*types.PREvidence{}
+
+	var query struct {
+		Repository struct {
+			Object struct {
+				Commit struct {
+					AssociatedPullRequests struct {
+						Nodes []struct {
+							Number      graphql.Int
+							Title       graphql.String
+							State       graphql.String
+							HeadRefName graphql.String
+							URL         graphql.String
+							CreatedAt   graphql.String
+							MergedAt    graphql.String
+
+							Author struct {
+								Login graphql.String
+							}
+
+							Commits struct {
+								Nodes []struct {
+									Commit struct {
+										Oid             graphql.String
+										MessageHeadline graphql.String
+										CommittedDate   graphql.String
+										Committer       struct {
+											Name  graphql.String
+											Email graphql.String
+											Date  graphql.String
+											User  *struct {
+												Login graphql.String
+											}
+										}
+									}
+								}
+								PageInfo struct {
+									HasNextPage graphql.Boolean
+									EndCursor   graphql.String
+								}
+							} `graphql:"commits(first: 100, after: $commitCursor)"`
+
+							Reviews struct {
+								Nodes []struct {
+									Author struct {
+										Login graphql.String
+									}
+									State       graphql.String
+									SubmittedAt graphql.String
+								}
+								PageInfo struct {
+									HasNextPage graphql.Boolean
+									EndCursor   graphql.String
+								}
+							} `graphql:"reviews(first: 100, states: APPROVED, after: $reviewCursor)"`
+						}
+						PageInfo struct {
+							HasNextPage graphql.Boolean
+							EndCursor   graphql.String
+						}
+					} `graphql:"associatedPullRequests(first: 100, after: $prCursor)"`
+				} `graphql:"... on Commit"`
+			} `graphql:"object(oid: $commitSHA)"`
+		} `graphql:"repository(owner: $owner, name: $repo)"`
+	}
+
+	variables := map[string]interface{}{
+		"owner":        graphql.String(c.Org),
+		"repo":         graphql.String(c.Repository),
+		"commitSHA":    GitObjectID(commit),
+		"prCursor":     (*graphql.String)(nil),
+		"commitCursor": (*graphql.String)(nil),
+		"reviewCursor": (*graphql.String)(nil),
+	}
+
+	fmt.Printf("variables: %v\n", variables)
+	err = client.Query(context.Background(), &query, variables)
+	fmt.Printf("query: %v\n", query)
+	if err != nil {
+		return pullRequestsEvidence, err
+	}
+
+	// Print results for demonstration
+	for _, pr := range query.Repository.Object.Commit.AssociatedPullRequests.Nodes {
+		createdAt, err := time.Parse(time.RFC3339, string(pr.CreatedAt))
+		if err != nil {
+			return pullRequestsEvidence, err
+		}
+		mergedAt, err := time.Parse(time.RFC3339, string(pr.MergedAt))
+		if err != nil {
+			return pullRequestsEvidence, err
+		}
+
+		evidence := &types.PREvidence{
+			URL:         string(pr.URL),
+			MergeCommit: commit,
+			State:       string(pr.State),
+			Author:      string(pr.Author.Login),
+			CreatedAt:   createdAt.Unix(),
+			MergedAt:    mergedAt.Unix(),
+			Title:       string(pr.Title),
+			HeadBranch:  string(pr.HeadRefName),
+			Approvers2:  []types.PRApprovals{},
+			Commits:     []types.Commit{},
+		}
+
+		for _, c := range pr.Commits.Nodes {
+			timestamp, err := time.Parse(time.RFC3339, string(c.Commit.CommittedDate))
+			if err != nil {
+				return pullRequestsEvidence, err
+			}
+
+			evidence.Commits = append(evidence.Commits, types.Commit{
+				SHA:       string(c.Commit.Oid),
+				Message:   string(c.Commit.MessageHeadline),
+				Committer: string(c.Commit.Committer.User.Login),
+				Timestamp: timestamp.Unix(),
+			})
+		}
+
+		for _, r := range pr.Reviews.Nodes {
+			submittedAt, err := time.Parse(time.RFC3339, string(r.SubmittedAt))
+			if err != nil {
+				return pullRequestsEvidence, err
+			}
+
+			evidence.Approvers2 = append(evidence.Approvers2, types.PRApprovals{
+				Author:    string(r.Author.Login),
+				State:     string(r.State),
+				Timestamp: submittedAt.Unix(),
+			})
+		}
+
+		// fmt.Printf("PR #%d: %s (State: %s, Branch: %s)\n", pr.Number, pr.Title, pr.State, pr.HeadRefName)
+		// fmt.Printf("URL: %s\n", pr.URL)
+		// fmt.Printf("Author: %s\n", pr.Author.Login)
+		// fmt.Printf("Commits:\n")
+		// for _, c := range pr.Commits.Nodes {
+		// 	fmt.Printf("- %s %s by %s\n", c.Commit.Oid, c.Commit.MessageHeadline, c.Commit.Committer.Name)
+		// }
+		// fmt.Printf("Approvals:\n")
+		// for _, r := range pr.Reviews.Nodes {
+		// 	fmt.Printf("- %s at %s\n", r.Author.Login, r.SubmittedAt)
+		// }
+		// fmt.Println()
+		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
+	}
+	fmt.Printf("pullRequestsEvidence: %v\n", pullRequestsEvidence)
+	return pullRequestsEvidence, nil
+}
+
+type GitObjectID string
+
+func (v GitObjectID) MarshalGQL(w io.Writer) {
+	fmt.Fprintf(w, `"%s"`, string(v))
+}
+
 func (c *GithubConfig) newPRGithubEvidence(pr *gh.PullRequest) (*types.PREvidence, error) {
 	evidence := &types.PREvidence{
 		URL:         pr.GetHTMLURL(),
 		MergeCommit: pr.GetMergeCommitSHA(),
 		State:       pr.GetState(),
 	}
-	approvers, err := c.GetPullRequestApprovers(pr.GetNumber())
-	if err != nil {
-		return evidence, err
-	}
-	evidence.Approvers = approvers
+	// approvers, err := c.GetPullRequestApprovers(pr.GetNumber())
+	// if err != nil {
+	// 	return evidence, err
+	// }
+	//evidence.Approvers = approvers
 	return evidence, nil
 }
 
