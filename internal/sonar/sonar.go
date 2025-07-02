@@ -222,7 +222,7 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 		return "", err
 	}
 
-	wait := 10   // start wait period
+	wait := 1    // start wait period
 	retries := 0 // number of retries so far
 	elapsed := 0 // seconds elapsed
 	taskResponseData := &TaskResponse{}
