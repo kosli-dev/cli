@@ -10,7 +10,7 @@ type PREvidence struct {
 	CreatedAt   int64         `json:"created_at"`
 	MergedAt    int64         `json:"merged_at"`
 	Title       string        `json:"title"`
-	HeadBranch  string        `json:"head_branch"`
+	HeadRef     string        `json:"head_ref"`
 	Commits     []Commit      `json:"commits"`
 	// LastCommit             string `json:"lastCommit"`
 	// LastCommitter          string `json:"lastCommitter"`
@@ -24,9 +24,9 @@ type PRApprovals struct {
 }
 
 type Commit struct {
-	SHA       string `json:"sha"`
+	SHA       string `json:"sha1"`
 	Message   string `json:"message"`
-	Committer string `json:"committer"`
+	Committer string `json:"author"`
 	Timestamp int64  `json:"timestamp"`
 }
 
