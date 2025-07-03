@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kosli-dev/cli/internal/types"
+	"github.com/kosli-dev/cli/internal/utils"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
@@ -64,7 +65,7 @@ func (c *GitlabConfig) newPRGitlabEvidence(mr *gitlab.BasicMergeRequest) (*types
 	if err != nil {
 		return evidence, err
 	}
-	evidence.Approvers = approvers
+	evidence.Approvers = utils.ConvertStringListToInterfaceList(approvers)
 	return evidence, nil
 }
 

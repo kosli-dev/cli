@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/types"
+	"github.com/kosli-dev/cli/internal/utils"
 	"github.com/microsoft/azure-devops-go-api/azuredevops"
 	"github.com/microsoft/azure-devops-go-api/azuredevops/git"
 )
@@ -85,7 +86,7 @@ func (c *AzureConfig) newPRAzureEvidence(pr git.GitPullRequest) (*types.PREviden
 	if err != nil {
 		return evidence, err
 	}
-	evidence.Approvers = approvers
+	evidence.Approvers = utils.ConvertStringListToInterfaceList(approvers)
 	return evidence, nil
 }
 

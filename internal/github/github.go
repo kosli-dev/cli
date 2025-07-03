@@ -63,21 +63,21 @@ func NewGithubClientFromToken(ctx context.Context, ghToken string, baseURL strin
 	return gh.NewClient(tc), nil
 }
 
-func (c *GithubConfig) PREvidenceForCommit_old(commit string) ([]*types.PREvidence, error) {
-	pullRequestsEvidence := []*types.PREvidence{}
-	prs, err := c.PullRequestsForCommit(commit)
-	if err != nil {
-		return pullRequestsEvidence, err
-	}
-	for _, pr := range prs {
-		evidence, err := c.newPRGithubEvidence(pr)
-		if err != nil {
-			return pullRequestsEvidence, err
-		}
-		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
-	}
-	return pullRequestsEvidence, nil
-}
+// func (c *GithubConfig) PREvidenceForCommit_old(commit string) ([]*types.PREvidence, error) {
+// 	pullRequestsEvidence := []*types.PREvidence{}
+// 	prs, err := c.PullRequestsForCommit(commit)
+// 	if err != nil {
+// 		return pullRequestsEvidence, err
+// 	}
+// 	for _, pr := range prs {
+// 		evidence, err := c.newPRGithubEvidence(pr)
+// 		if err != nil {
+// 			return pullRequestsEvidence, err
+// 		}
+// 		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
+// 	}
+// 	return pullRequestsEvidence, nil
+// }
 
 func graphqlEndpoint(baseURL string) string {
 	if baseURL == "" || baseURL == "https://api.github.com" {
@@ -181,9 +181,13 @@ func (c *GithubConfig) PREvidenceForCommit(commit string) ([]*types.PREvidence, 
 		if err != nil {
 			return pullRequestsEvidence, err
 		}
-		mergedAt, err := time.Parse(time.RFC3339, string(pr.MergedAt))
-		if err != nil {
-			return pullRequestsEvidence, err
+		mergedAt := int64(0)
+		if pr.MergedAt != "" {
+			mergedAtTime, err := time.Parse(time.RFC3339, string(pr.MergedAt))
+			if err != nil {
+				return pullRequestsEvidence, err
+			}
+			mergedAt = mergedAtTime.Unix()
 		}
 
 		evidence := &types.PREvidence{
@@ -192,10 +196,10 @@ func (c *GithubConfig) PREvidenceForCommit(commit string) ([]*types.PREvidence, 
 			State:       string(pr.State),
 			Author:      string(pr.Author.Login),
 			CreatedAt:   createdAt.Unix(),
-			MergedAt:    mergedAt.Unix(),
+			MergedAt:    mergedAt,
 			Title:       string(pr.Title),
 			HeadRef:     string(pr.HeadRefName),
-			Approvers2:  []types.PRApprovals{},
+			Approvers:   []interface{}{},
 			Commits:     []types.Commit{},
 		}
 
@@ -219,7 +223,7 @@ func (c *GithubConfig) PREvidenceForCommit(commit string) ([]*types.PREvidence, 
 				return pullRequestsEvidence, err
 			}
 
-			evidence.Approvers2 = append(evidence.Approvers2, types.PRApprovals{
+			evidence.Approvers = append(evidence.Approvers, types.PRApprovals{
 				Author:    string(r.Author.Login),
 				State:     string(r.State),
 				Timestamp: submittedAt.Unix(),

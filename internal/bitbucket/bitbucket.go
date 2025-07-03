@@ -8,6 +8,7 @@ import (
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/types"
+	"github.com/kosli-dev/cli/internal/utils"
 )
 
 type Config struct {
@@ -122,7 +123,7 @@ func (c *Config) getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, commit
 		} else {
 			c.Logger.Debug("no approvers found")
 		}
-		evidence.Approvers = approvers
+		evidence.Approvers = utils.ConvertStringListToInterfaceList(approvers)
 		// prID := int(responseData["id"].(float64))
 		// evidence.LastCommit, evidence.LastCommitter, err = getBitbucketPRLastCommit(workspace, repository, username, password, prID)
 		// if err != nil {
