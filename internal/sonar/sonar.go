@@ -8,6 +8,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
+
+	log "github.com/kosli-dev/cli/internal/logger"
 )
 
 type SonarConfig struct {
@@ -17,6 +20,7 @@ type SonarConfig struct {
 	revision   string
 	projectKey string
 	serverURL  string
+	maxWait    int
 }
 
 // Structs to build the JSON for our attestation payload
@@ -109,7 +113,7 @@ type Error struct {
 	Msg string `json:"msg"`
 }
 
-func NewSonarConfig(apiToken, workingDir, ceTaskUrl, projectKey, serverURL, revision string) *SonarConfig {
+func NewSonarConfig(apiToken, workingDir, ceTaskUrl, projectKey, serverURL, revision string, maxWait int) *SonarConfig {
 	return &SonarConfig{
 		APIToken:   apiToken,
 		WorkingDir: workingDir,
@@ -117,10 +121,11 @@ func NewSonarConfig(apiToken, workingDir, ceTaskUrl, projectKey, serverURL, revi
 		revision:   revision,
 		projectKey: projectKey,
 		serverURL:  serverURL,
+		maxWait:    maxWait,
 	}
 }
 
-func (sc *SonarConfig) GetSonarResults() (*SonarResults, error) {
+func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error) {
 	httpClient := &http.Client{}
 	var analysisID, tokenHeader string
 	var err error
@@ -159,7 +164,7 @@ func (sc *SonarConfig) GetSonarResults() (*SonarResults, error) {
 
 	if analysisID == "" {
 		//Get the analysis ID, status, project name and branch data from the ceTaskURL (ce API)
-		analysisID, err = GetCETaskData(httpClient, project, sonarResults, sc.CETaskUrl, tokenHeader)
+		analysisID, err = GetCETaskData(httpClient, project, sonarResults, sc.CETaskUrl, tokenHeader, sc.maxWait, logger)
 		if err != nil {
 			return nil, err
 		}
@@ -210,32 +215,69 @@ func (sc *SonarConfig) readFile(project *Project, results *SonarResults) error {
 	return nil
 }
 
-func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *SonarResults, ceTaskURL, tokenHeader string) (string, error) {
+func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *SonarResults, ceTaskURL, tokenHeader string, maxWait int, logger *log.Logger) (string, error) {
 	taskRequest, err := http.NewRequest("GET", ceTaskURL, nil)
 	taskRequest.Header.Add("Authorization", tokenHeader)
 	if err != nil {
 		return "", err
 	}
 
-	taskResponse, err := httpClient.Do(taskRequest)
-	if err != nil {
-		return "", err
-	}
-
+	wait := 1    // start wait period
+	retries := 0 // number of retries so far
+	elapsed := 0 // seconds elapsed
 	taskResponseData := &TaskResponse{}
-	err = json.NewDecoder(taskResponse.Body).Decode(taskResponseData)
-	if err != nil {
-		return "", fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube")
+
+	for elapsed < maxWait {
+		taskResponse, err := httpClient.Do(taskRequest)
+		if err != nil {
+			return "", err
+		}
+
+		err = json.NewDecoder(taskResponse.Body).Decode(taskResponseData)
+		if err != nil {
+			return "", fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube")
+		}
+
+		if taskResponseData.Task.Status == "PENDING" || taskResponseData.Task.Status == "IN_PROGRESS" {
+			// So that we don't wait longer than maxWait
+			if (elapsed + wait) > maxWait {
+				wait = maxWait - elapsed
+			}
+
+			logger.Info("retry %d: waiting %ds for SonarQube scan to be processed...", retries+1, wait)
+			time.Sleep(time.Duration(wait) * time.Second)
+
+			if elapsed > 300 { // If we've waited 5 minutes, we'll wait 300 seconds (5 minutes) before checking again. This is so that we don't end up with extremely long waiting intervals with the doubling approach.
+				elapsed += wait
+				retries++
+				wait += 300
+			} else { // Otherwise, we'll double the wait time each time
+				elapsed += wait
+				retries++
+				wait *= 2
+			}
+		} else {
+			taskResponse.Body.Close()
+			break
+		}
 	}
 
-	project.Name = taskResponseData.Task.ComponentName
-	project.Key = taskResponseData.Task.ComponentKey
-	sonarResults.TaskID = taskResponseData.Task.TaskID
-	analysisId := taskResponseData.Task.AnalysisID
-	sonarResults.Status = taskResponseData.Task.Status
+	if elapsed != 0 {
+		logger.Info("Waited for %d seconds for SonarQube scan to be processed. %d retries.\n", elapsed, retries)
+	}
 
+	task := taskResponseData.Task
+
+	project.Name = task.ComponentName
+	project.Key = task.ComponentKey
+	sonarResults.TaskID = task.TaskID
+	analysisId := task.AnalysisID
+	sonarResults.Status = task.Status
+
+	// This should only happen if the task is pending - either because the project is large and the scan takes a long time
+	// to process, or because SonarQube is experiencing delays for some reason.
 	if analysisId == "" {
-		return "", fmt.Errorf("analysis ID not found on %s", sonarResults.ServerUrl) // This should never happen
+		return "", fmt.Errorf("analysis ID not found on %s. The scan results are not yet available, likely due to: \n1. Your project being particularly large and the scan taking time to process, or \n2. SonarQube is experiencing delays in processing scans. \nTry rerunning the command with the --max-retries flag.", sonarResults.ServerUrl)
 	}
 
 	if project.Url == "" {
@@ -250,7 +292,6 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 		sonarResults.Branch = nil
 	}
 
-	taskResponse.Body.Close()
 	return analysisId, nil
 }
 
