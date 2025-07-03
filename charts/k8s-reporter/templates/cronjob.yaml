@@ -1,3 +1,4 @@
+{{- include "k8s-reporter.validateNamespacesRegex" . -}}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -19,6 +20,24 @@ spec:
           - name: reporter
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
             imagePullPolicy: {{ .Values.image.pullPolicy }}
+            {{- if .Values.reporterConfig.securityContext }}
+            securityContext:
+              {{- if hasKey .Values.reporterConfig.securityContext "allowPrivilegeEscalation" }}
+              allowPrivilegeEscalation: {{ .Values.reporterConfig.securityContext.allowPrivilegeEscalation }}
+              {{- end }}
+              {{- if hasKey .Values.reporterConfig.securityContext "runAsNonRoot" }}
+              runAsNonRoot: {{ .Values.reporterConfig.securityContext.runAsNonRoot }}
+              {{- end }}
+              {{- if hasKey .Values.reporterConfig.securityContext "runAsUser" }}
+              runAsUser: {{ .Values.reporterConfig.securityContext.runAsUser }}
+              {{- end }}
+              {{- if hasKey .Values.reporterConfig.securityContext "runAsGroup" }}
+              runAsGroup: {{ .Values.reporterConfig.securityContext.runAsGroup }}
+              {{- end }}
+              {{- if hasKey .Values.reporterConfig.securityContext "fsGroup" }}
+              fsGroup: {{ .Values.reporterConfig.securityContext.fsGroup }}
+              {{- end }}
+            {{- end }}
             env:
               - name: KOSLI_ORG
                 value: {{ required ".Values.reporterConfig.kosliOrg is required" .Values.reporterConfig.kosliOrg }}
@@ -30,7 +49,11 @@ spec:
               {{ if .Values.reporterConfig.namespaces }}
               - name: KOSLI_NAMESPACES
                 value: {{ .Values.reporterConfig.namespaces | quote }}
+              {{ else if .Values.reporterConfig.namespacesRegex }}
+              - name: KOSLI_NAMESPACES_REGEX
+                value: {{ .Values.reporterConfig.namespacesRegex | quote }}
               {{ end }}
+
               {{- range $key, $value :=  .Values.env }}
               - name: {{ $key }}
                 value: {{ $value }}
@@ -50,3 +73,4 @@ spec:
             resources:
 {{ toYaml .Values.resources | indent 14 }}
           restartPolicy: Never
+
