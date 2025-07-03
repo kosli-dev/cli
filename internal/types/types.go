@@ -5,16 +5,12 @@ type PREvidence struct {
 	URL         string        `json:"url"`
 	State       string        `json:"state"`
 	Approvers   []interface{} `json:"approvers"`
-	//Approvers2  []PRApprovals `json:"approvers2"`
-	Author    string   `json:"author"`
-	CreatedAt int64    `json:"created_at"`
-	MergedAt  int64    `json:"merged_at"`
-	Title     string   `json:"title"`
-	HeadRef   string   `json:"head_ref"`
-	Commits   []Commit `json:"commits"`
-	// LastCommit             string `json:"lastCommit"`
-	// LastCommitter          string `json:"lastCommitter"`
-	// SelfApproved           bool   `json:"selfApproved"`
+	Author      string        `json:"author,omitempty"`
+	CreatedAt   int64         `json:"created_at,omitempty"`
+	MergedAt    int64         `json:"merged_at,omitempty"`
+	Title       string        `json:"title,omitempty"`
+	HeadRef     string        `json:"head_ref,omitempty"`
+	Commits     []Commit      `json:"commits,omitempty"`
 }
 
 type PRApprovals struct {

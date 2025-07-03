@@ -63,22 +63,6 @@ func NewGithubClientFromToken(ctx context.Context, ghToken string, baseURL strin
 	return gh.NewClient(tc), nil
 }
 
-// func (c *GithubConfig) PREvidenceForCommit_old(commit string) ([]*types.PREvidence, error) {
-// 	pullRequestsEvidence := []*types.PREvidence{}
-// 	prs, err := c.PullRequestsForCommit(commit)
-// 	if err != nil {
-// 		return pullRequestsEvidence, err
-// 	}
-// 	for _, pr := range prs {
-// 		evidence, err := c.newPRGithubEvidence(pr)
-// 		if err != nil {
-// 			return pullRequestsEvidence, err
-// 		}
-// 		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
-// 	}
-// 	return pullRequestsEvidence, nil
-// }
-
 func graphqlEndpoint(baseURL string) string {
 	if baseURL == "" || baseURL == "https://api.github.com" {
 		return "https://api.github.com/graphql"
@@ -88,12 +72,15 @@ func graphqlEndpoint(baseURL string) string {
 
 func (c *GithubConfig) PREvidenceForCommit(commit string) ([]*types.PREvidence, error) {
 	ctx := context.Background()
+	pullRequestsEvidence := []*types.PREvidence{}
+
 	ghClient, err := NewGithubClientFromToken(ctx, c.Token, c.BaseURL)
+	if err != nil {
+		return pullRequestsEvidence, err
+	}
 	httpClient := ghClient.Client()
 
 	client := graphql.NewClient(graphqlEndpoint(c.BaseURL), httpClient)
-
-	pullRequestsEvidence := []*types.PREvidence{}
 
 	var query struct {
 		Repository struct {
@@ -168,9 +155,7 @@ func (c *GithubConfig) PREvidenceForCommit(commit string) ([]*types.PREvidence, 
 		"reviewCursor": (*graphql.String)(nil),
 	}
 
-	fmt.Printf("variables: %v\n", variables)
 	err = client.Query(context.Background(), &query, variables)
-	fmt.Printf("query: %v\n", query)
 	if err != nil {
 		return pullRequestsEvidence, err
 	}
@@ -230,21 +215,8 @@ func (c *GithubConfig) PREvidenceForCommit(commit string) ([]*types.PREvidence, 
 			})
 		}
 
-		// fmt.Printf("PR #%d: %s (State: %s, Branch: %s)\n", pr.Number, pr.Title, pr.State, pr.HeadRefName)
-		// fmt.Printf("URL: %s\n", pr.URL)
-		// fmt.Printf("Author: %s\n", pr.Author.Login)
-		// fmt.Printf("Commits:\n")
-		// for _, c := range pr.Commits.Nodes {
-		// 	fmt.Printf("- %s %s by %s\n", c.Commit.Oid, c.Commit.MessageHeadline, c.Commit.Committer.Name)
-		// }
-		// fmt.Printf("Approvals:\n")
-		// for _, r := range pr.Reviews.Nodes {
-		// 	fmt.Printf("- %s at %s\n", r.Author.Login, r.SubmittedAt)
-		// }
-		// fmt.Println()
 		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
 	}
-	fmt.Printf("pullRequestsEvidence: %v\n", pullRequestsEvidence)
 	return pullRequestsEvidence, nil
 }
 
@@ -252,20 +224,6 @@ type GitObjectID string
 
 func (v GitObjectID) MarshalGQL(w io.Writer) {
 	fmt.Fprintf(w, `"%s"`, string(v))
-}
-
-func (c *GithubConfig) newPRGithubEvidence(pr *gh.PullRequest) (*types.PREvidence, error) {
-	evidence := &types.PREvidence{
-		URL:         pr.GetHTMLURL(),
-		MergeCommit: pr.GetMergeCommitSHA(),
-		State:       pr.GetState(),
-	}
-	// approvers, err := c.GetPullRequestApprovers(pr.GetNumber())
-	// if err != nil {
-	// 	return evidence, err
-	// }
-	//evidence.Approvers = approvers
-	return evidence, nil
 }
 
 // PullRequestsForCommit returns a list of pull requests for a specific commit
