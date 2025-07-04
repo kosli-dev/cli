@@ -107,6 +107,7 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 										Oid             graphql.String
 										MessageHeadline graphql.String
 										CommittedDate   graphql.String
+										URL             graphql.String
 										Committer       struct {
 											Name  graphql.String
 											Email graphql.String
@@ -196,10 +197,13 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 			}
 
 			evidence.Commits = append(evidence.Commits, types.Commit{
-				SHA:       string(c.Commit.Oid),
-				Message:   string(c.Commit.MessageHeadline),
-				Committer: string(c.Commit.Committer.User.Login),
-				Timestamp: timestamp.Unix(),
+				SHA:               string(c.Commit.Oid),
+				Message:           string(c.Commit.MessageHeadline),
+				Committer:         fmt.Sprintf("%s <%s>", string(c.Commit.Committer.Name), string(c.Commit.Committer.Email)),
+				CommitterUsername: string(c.Commit.Committer.User.Login),
+				Timestamp:         timestamp.Unix(),
+				Branch:            string(pr.HeadRefName),
+				URL:               string(c.Commit.URL),
 			})
 		}
 
@@ -210,7 +214,7 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 			}
 
 			evidence.Approvers = append(evidence.Approvers, types.PRApprovals{
-				Author:    string(r.Author.Login),
+				Username:  string(r.Author.Login),
 				State:     string(r.State),
 				Timestamp: submittedAt.Unix(),
 			})

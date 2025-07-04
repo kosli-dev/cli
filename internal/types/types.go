@@ -14,16 +14,19 @@ type PREvidence struct {
 }
 
 type PRApprovals struct {
-	Author    string `json:"username"`
+	Username  string `json:"username"`
 	State     string `json:"state"`
 	Timestamp int64  `json:"timestamp"`
 }
 
 type Commit struct {
-	SHA       string `json:"sha1"`
-	Message   string `json:"message"`
-	Committer string `json:"author"`
-	Timestamp int64  `json:"timestamp"`
+	SHA               string `json:"sha1"`
+	Message           string `json:"message"`
+	Committer         string `json:"author"`
+	CommitterUsername string `json:"author_username"`
+	Timestamp         int64  `json:"timestamp"`
+	Branch            string `json:"branch"`
+	URL               string `json:"url,omitempty"`
 }
 
 type PRRetriever interface {
