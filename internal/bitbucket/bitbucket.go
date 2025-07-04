@@ -22,8 +22,14 @@ type Config struct {
 	Assert      bool
 }
 
-func (c *Config) PREvidenceForCommit(commit string) ([]*types.PREvidence, error) {
+// This is the old implementation, it will be removed after the PR payload is enhanced for Bitbucket
+func (c *Config) PREvidenceForCommitV2(commit string) ([]*types.PREvidence, error) {
 	return c.getPullRequestsFromBitbucketApi(commit)
+}
+
+// This is the new implementation, it will be used for Bitbucket
+func (c *Config) PREvidenceForCommitV1(commit string) ([]*types.PREvidence, error) {
+	return []*types.PREvidence{}, nil
 }
 
 func (c *Config) getPullRequestsFromBitbucketApi(commit string) ([]*types.PREvidence, error) {

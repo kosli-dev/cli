@@ -95,7 +95,7 @@ func (suite *GithubTestSuite) TestPREvidenceForCommit() {
 			if t.commit == "" {
 				t.commit = testHelpers.GithubCommitWithPR()
 			}
-			prs, err := t.config.PREvidenceForCommit(t.commit)
+			prs, err := t.config.PREvidenceForCommitV2(t.commit)
 			if t.result.wantError {
 				require.Errorf(suite.Suite.T(), err, "expected an error but got: %s", err)
 			} else {

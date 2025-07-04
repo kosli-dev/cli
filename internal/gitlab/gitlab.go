@@ -39,7 +39,8 @@ func (c *GitlabConfig) ProjectID() string {
 	return fmt.Sprintf("%s/%s", c.Org, c.Repository)
 }
 
-func (c *GitlabConfig) PREvidenceForCommit(commit string) ([]*types.PREvidence, error) {
+// This is the old implementation, it will be removed after the PR payload is enhanced for Gitlab
+func (c *GitlabConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence, error) {
 	pullRequestsEvidence := []*types.PREvidence{}
 	mrs, err := c.MergeRequestsForCommit(commit)
 	if err != nil {
@@ -53,6 +54,11 @@ func (c *GitlabConfig) PREvidenceForCommit(commit string) ([]*types.PREvidence, 
 		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
 	}
 	return pullRequestsEvidence, nil
+}
+
+// This is the new implementation, it will be used for Gitlab
+func (c *GitlabConfig) PREvidenceForCommitV1(commit string) ([]*types.PREvidence, error) {
+	return []*types.PREvidence{}, nil
 }
 
 func (c *GitlabConfig) newPRGitlabEvidence(mr *gitlab.BasicMergeRequest) (*types.PREvidence, error) {

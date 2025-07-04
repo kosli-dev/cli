@@ -9,6 +9,7 @@ import (
 
 	gh "github.com/google/go-github/v42/github"
 	"github.com/kosli-dev/cli/internal/types"
+	"github.com/kosli-dev/cli/internal/utils"
 	"github.com/shurcooL/graphql"
 
 	"golang.org/x/oauth2"
@@ -70,7 +71,7 @@ func graphqlEndpoint(baseURL string) string {
 	return strings.TrimSuffix(baseURL, "/") + "/api/graphql"
 }
 
-func (c *GithubConfig) PREvidenceForCommit(commit string) ([]*types.PREvidence, error) {
+func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence, error) {
 	ctx := context.Background()
 	pullRequestsEvidence := []*types.PREvidence{}
 
@@ -226,6 +227,22 @@ func (v GitObjectID) MarshalGQL(w io.Writer) {
 	fmt.Fprintf(w, `"%s"`, string(v))
 }
 
+func (c *GithubConfig) PREvidenceForCommitV1(commit string) ([]*types.PREvidence, error) {
+	pullRequestsEvidence := []*types.PREvidence{}
+	prs, err := c.PullRequestsForCommit(commit)
+	if err != nil {
+		return pullRequestsEvidence, err
+	}
+	for _, pr := range prs {
+		evidence, err := c.newPRGithubEvidence(pr)
+		if err != nil {
+			return pullRequestsEvidence, err
+		}
+		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
+	}
+	return pullRequestsEvidence, nil
+}
+
 // PullRequestsForCommit returns a list of pull requests for a specific commit
 func (c *GithubConfig) PullRequestsForCommit(commit string) ([]*gh.PullRequest, error) {
 	ctx := context.Background()
@@ -257,4 +274,18 @@ func (c *GithubConfig) GetPullRequestApprovers(number int) ([]string, error) {
 		}
 	}
 	return approvers, nil
+}
+
+func (c *GithubConfig) newPRGithubEvidence(pr *gh.PullRequest) (*types.PREvidence, error) {
+	evidence := &types.PREvidence{
+		URL:         pr.GetHTMLURL(),
+		MergeCommit: pr.GetMergeCommitSHA(),
+		State:       pr.GetState(),
+	}
+	approvers, err := c.GetPullRequestApprovers(pr.GetNumber())
+	if err != nil {
+		return evidence, err
+	}
+	evidence.Approvers = utils.ConvertStringListToInterfaceList(approvers)
+	return evidence, nil
 }

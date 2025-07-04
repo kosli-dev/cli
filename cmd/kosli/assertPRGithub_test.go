@@ -47,7 +47,7 @@ func (suite *AssertPRGithubCommandTestSuite) TestAssertPRGithubCmd() {
 			name:      "assert Github PR evidence fails when commit does not exist",
 			cmd: `assert pullrequest github --github-org kosli-dev --repository cli 
 			--commit 19aab7f063147614451c88969602a10afba123ab` + suite.defaultKosliArguments,
-			golden: "Error: GET https://api.github.com/repos/kosli-dev/cli/commits/19aab7f063147614451c88969602a10afba123ab/pulls: 422 No commit found for SHA: 19aab7f063147614451c88969602a10afba123ab []\n",
+			golden: "Error: assert failed: found no pull request(s) in Github for commit: 19aab7f063147614451c88969602a10afba123ab\n",
 		},
 	}
 

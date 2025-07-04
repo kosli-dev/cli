@@ -27,5 +27,6 @@ type Commit struct {
 }
 
 type PRRetriever interface {
-	PREvidenceForCommit(string) ([]*PREvidence, error)
+	PREvidenceForCommitV2(string) ([]*PREvidence, error)
+	PREvidenceForCommitV1(string) ([]*PREvidence, error)
 }

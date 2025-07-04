@@ -214,7 +214,7 @@ func (suite *GitlabTestSuite) TestPREvidenceForCommit() {
 				testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_GITLAB_TOKEN"})
 				t.gitlabConfig.Token = os.Getenv("KOSLI_GITLAB_TOKEN")
 			}
-			prs, err := t.gitlabConfig.PREvidenceForCommit(t.commit)
+			prs, err := t.gitlabConfig.PREvidenceForCommitV2(t.commit)
 			if t.result.wantError {
 				require.Error(suite.Suite.T(), err)
 			} else {
