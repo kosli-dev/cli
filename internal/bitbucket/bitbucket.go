@@ -8,6 +8,7 @@ import (
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/types"
+	"github.com/kosli-dev/cli/internal/utils"
 )
 
 type Config struct {
@@ -21,8 +22,14 @@ type Config struct {
 	Assert      bool
 }
 
-func (c *Config) PREvidenceForCommit(commit string) ([]*types.PREvidence, error) {
+// This is the old implementation, it will be removed after the PR payload is enhanced for Bitbucket
+func (c *Config) PREvidenceForCommitV2(commit string) ([]*types.PREvidence, error) {
 	return c.getPullRequestsFromBitbucketApi(commit)
+}
+
+// This is the new implementation, it will be used for Bitbucket
+func (c *Config) PREvidenceForCommitV1(commit string) ([]*types.PREvidence, error) {
+	return []*types.PREvidence{}, nil
 }
 
 func (c *Config) getPullRequestsFromBitbucketApi(commit string) ([]*types.PREvidence, error) {
@@ -122,7 +129,7 @@ func (c *Config) getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, commit
 		} else {
 			c.Logger.Debug("no approvers found")
 		}
-		evidence.Approvers = approvers
+		evidence.Approvers = utils.ConvertStringListToInterfaceList(approvers)
 		// prID := int(responseData["id"].(float64))
 		// evidence.LastCommit, evidence.LastCommitter, err = getBitbucketPRLastCommit(workspace, repository, username, password, prID)
 		// if err != nil {

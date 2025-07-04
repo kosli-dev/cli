@@ -58,7 +58,7 @@ func newAssertPullRequestGitlabCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *assertPullRequestGitlabOptions) run(args []string) error {
-	pullRequestsEvidence, err := o.gitlabConfig.PREvidenceForCommit(o.commit)
+	pullRequestsEvidence, err := o.gitlabConfig.PREvidenceForCommitV2(o.commit)
 	if err != nil {
 		return err
 	}

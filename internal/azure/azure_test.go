@@ -66,7 +66,7 @@ func (suite *AzureTestSuite) TestPREvidenceForCommit() {
 				testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_AZURE_TOKEN"})
 				t.config.Token = os.Getenv("KOSLI_AZURE_TOKEN")
 			}
-			prs, err := t.config.PREvidenceForCommit(t.commit)
+			prs, err := t.config.PREvidenceForCommitV2(t.commit)
 			if t.result.wantError {
 				require.Errorf(suite.Suite.T(), err, "expected an error but got: %s", err)
 			} else {

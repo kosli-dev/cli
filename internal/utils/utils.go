@@ -150,3 +150,11 @@ func CreateFileWithContent(path, content string) error {
 	_, err = file.Write([]byte(content))
 	return err
 }
+
+func ConvertStringListToInterfaceList(approversList []string) []interface{} {
+	approversIface := make([]interface{}, len(approversList))
+	for i, v := range approversList {
+		approversIface[i] = v
+	}
+	return approversIface
+}

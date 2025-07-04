@@ -48,8 +48,19 @@ func (o *pullRequestArtifactOptions) run(out io.Writer, args []string) error {
 		}
 	}
 
+	label := ""
+	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
+
 	url := fmt.Sprintf("%s/api/v2/evidence/%s/artifact/%s/pull_request", global.Host, global.Org, o.flowName)
-	pullRequestsEvidence, err := o.getRetriever().PREvidenceForCommit(o.commit)
+
+	// TODO: after the PR payload is enhanced for all git providers they will all use the same method
+	var pullRequestsEvidence []*types.PREvidence
+	if o.payload.GitProvider == "github" {
+		pullRequestsEvidence, err = o.getRetriever().PREvidenceForCommitV1(o.commit)
+	} else {
+		pullRequestsEvidence, err = o.getRetriever().PREvidenceForCommitV2(o.commit)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -59,9 +70,6 @@ func (o *pullRequestArtifactOptions) run(out io.Writer, args []string) error {
 	if err != nil {
 		return err
 	}
-
-	label := ""
-	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
 
 	// PR evidence does not have files to upload
 	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, []string{})
@@ -119,7 +127,7 @@ func (o *attestPROptions) run(args []string) error {
 		return err
 	}
 
-	pullRequestsEvidence, err := o.getRetriever().PREvidenceForCommit(o.payload.Commit.Sha1)
+	pullRequestsEvidence, err := o.getRetriever().PREvidenceForCommitV2(o.payload.Commit.Sha1)
 	if err != nil {
 		return err
 	}
@@ -175,14 +183,21 @@ func (o *pullRequestCommitOptions) run(args []string) error {
 		return err
 	}
 
-	pullRequestsEvidence, err := o.getRetriever().PREvidenceForCommit(o.payload.CommitSHA)
+	label := ""
+	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
+
+	// TODO: after the PR payload is enhanced for all git providers they will all use the same method
+	var pullRequestsEvidence []*types.PREvidence
+	if o.payload.GitProvider == "github" {
+		pullRequestsEvidence, err = o.getRetriever().PREvidenceForCommitV1(o.payload.CommitSHA)
+	} else {
+		pullRequestsEvidence, err = o.getRetriever().PREvidenceForCommitV2(o.payload.CommitSHA)
+	}
 	if err != nil {
 		return err
 	}
 
 	o.payload.PullRequests = pullRequestsEvidence
-	label := ""
-	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
 
 	// PR evidence does not have files to upload
 	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, []string{})
