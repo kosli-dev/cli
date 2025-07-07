@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,15 +19,24 @@ const getAttestationsShortDesc = `Get attestations.  `
 const getAttestationsLongDesc = getAttestationShortDesc + ``
 
 const getAttestationsExample = `
-# get an attestation from a trail (requires the --trail flag)
-kosli get attestation attestationName \
+# get trail attestations of a given type and name for a range of commits in a flow (requires the --flow flag)
+kosli get attestations \ 
 	--flow flowName \
-	--trail trailName 
+	--type attestationType \
+	--name attestationName \
+	--commit-range commitRange 
 
-# get an attestation from an artifact 
-kosli get attestation attestationName \
+# get artifact attestations of a given type and name for a range of commits in a flow (requires the --flow flag)
+kosli get attestations \
 	--flow flowName \
-	--fingerprint fingerprint 
+	--type attestationType \
+	--name slotName.attestationName \
+	--commit-range commitRange 
+
+# get all attestations of a given type from a flow
+kosli get attestations \
+	--flow flowName \
+	--type attestationType
 `
 
 type getAttestationsOptions struct {
@@ -36,6 +46,14 @@ type getAttestationsOptions struct {
 	attestationName string
 	commitRange     string
 	repositoryRoot  string
+}
+
+type SingleAttestation struct {
+	Name                string  `json:"attestation_name"`
+	Type                string  `json:"attestation_type"`
+	Compliance          bool    `json:"is_compliant"`
+	ArtifactFingerprint string  `json:"artifact_fingerprint,omitempty"`
+	CreatedAt           float64 `json:"created_at"`
 }
 
 func newGetAttestationsCmd(out io.Writer) *cobra.Command {
@@ -128,53 +146,34 @@ func (o *getAttestationsOptions) run(out io.Writer, args []string) error {
 }
 
 func printFilteredAttestationsAsTable(raw string, out io.Writer, pageNumber int) error {
-	// var attestations []Attestation
-	// err := json.Unmarshal([]byte(raw), &attestations)
-	// if err != nil {
-	// 	return err)
-	// }
+	var commitDict map[string][]SingleAttestation
+	err := json.Unmarshal([]byte(raw), &commitDict)
+	if err != nil {
+		return err
+	}
 
-	// if len(attestations) == 0 {
-	// 	logger.Info("No attestations found.")
-	// 	return nil
-	// }
+	if len(commitDict) == 0 {
+		logger.Info("No commits found.")
+		return nil
+	}
 
-	// separator := ""
-	// for _, attestation := range attestations {
-	// 	rows := []string{}
-	// 	rows = append(rows, fmt.Sprintf("Name:\t%s", attestation.Name))
-	// 	rows = append(rows, fmt.Sprintf("Type:\t%s", attestation.Type))
-	// 	rows = append(rows, fmt.Sprintf("Compliance:\t%t", attestation.Compliance))
+	header := []string{"COMMIT", "ATTESTATION NAME", "ATTESTATION TYPE", "COMPLIANT", "CREATED_AT"}
+	rows := []string{}
+	for commit, attestations := range commitDict {
+		for i, attestation := range attestations {
+			createdAt, err := formattedTimestamp(attestation.CreatedAt, true)
+			if err != nil {
+				return err
+			}
+			if i == 0 {
+				rows = append(rows, fmt.Sprintf("%s\t%s\t%s\t%t\t%s", commit, attestation.Name, attestation.Type, attestation.Compliance, createdAt))
+			} else {
+				rows = append(rows, fmt.Sprintf("\t%s\t%s\t%t\t%s", attestation.Name, attestation.Type, attestation.Compliance, createdAt))
+			}
+		}
+		rows = append(rows, "\t\t\t")
+	}
+	tabFormattedPrint(out, header, rows)
 
-	// 	createdAt, err := formattedTimestamp(attestation.CreatedAt, false)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	rows = append(rows, fmt.Sprintf("Created at:\t%s", createdAt))
-
-	// 	if attestation.ArtifactFingerprint != "" {
-	// 		rows = append(rows, fmt.Sprintf("Artifact fingerprint:\t%s", attestation.ArtifactFingerprint))
-	// 	}
-	// 	if attestation.GitCommitInfo != nil {
-	// 		rows = append(rows, "Git Commit Info:")
-	// 		rows = append(rows, fmt.Sprintf("    Sha1:\t%s", attestation.GitCommitInfo.Sha1))
-	// 		rows = append(rows, fmt.Sprintf("    Author:\t%s", attestation.GitCommitInfo.Author))
-	// 		rows = append(rows, fmt.Sprintf("    Branch:\t%s", attestation.GitCommitInfo.Branch))
-	// 		rows = append(rows, fmt.Sprintf("    Commit URL:\t%s", attestation.GitCommitInfo.Url))
-	// 		timestamp, err := formattedTimestamp(attestation.GitCommitInfo.Timestamp, false)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 		rows = append(rows, fmt.Sprintf("    Timestamp:\t%s", timestamp))
-	// 	}
-
-	// 	if attestation.HtmlUrl != "" {
-	// 		rows = append(rows, fmt.Sprintf("Attestation URL:\t%s", attestation.HtmlUrl))
-	// 	}
-
-	// 	fmt.Print(separator)
-	// 	separator = "\n"
-	// 	tabFormattedPrint(out, []string{}, rows)
-	// }
 	return nil
 }
