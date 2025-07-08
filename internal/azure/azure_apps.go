@@ -16,6 +16,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/containers/azcontainerregistry"
@@ -54,7 +55,16 @@ type AzureAppsRequest struct {
 	Artifacts []*AppData `json:"artifacts"`
 }
 
+// These are for handling temporary 503 errors so that they do not fail the whole command
 var ErrAppUnavailable = errors.New("app is unavailable (503)")
+
+func isAppUnavailableErrorForSDK(err error) bool {
+	var respErr *azcore.ResponseError
+	if errors.As(err, &respErr) {
+		return respErr.StatusCode == 503
+	}
+	return false
+}
 
 func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logger) (appsData []*AppData, err error) {
 	azureClient, err := staticCreds.NewAzureClient()
@@ -346,15 +356,23 @@ func (azureClient *AzureClient) fingerprintDockerService(app *armappservice.Site
 		fingerprint, err = azureClient.GetImageFingerprintFromRegistry(imageName, logger)
 		// Handle exception when image is not found in the registry but is found in the environment
 		if err != nil {
+			if isAppUnavailableErrorForSDK(err) {
+				logger.Debug("app %s is unavailable (503), skipping", *app.Name)
+				return AppData{}, nil
+			}
 			return AppData{}, err
 		}
 	} else {
 		fingerprintSource = "logs"
 		logs, err := azureClient.GetDockerLogsForApp(*app.Name, logger)
 		if err != nil {
+			if isAppUnavailableErrorForSDK(err) {
+				logger.Debug("app %s is unavailable (503), skipping", *app.Name)
+				return AppData{}, nil
+			}
 			return AppData{}, err
 		}
-		fingerprint, startedAt, err = exractImageFingerprintAndStartedTimestampFromLogs(logs, *app.Name)
+		fingerprint, startedAt, err = extractImageFingerprintAndStartedTimestampFromLogs(logs, *app.Name)
 		if err != nil {
 			return AppData{}, err
 		}
@@ -506,7 +524,7 @@ func (azureClient *AzureClient) GetDockerLogsForApp(appServiceName string, logge
 	}
 }
 
-func exractImageFingerprintAndStartedTimestampFromLogs(logs []byte, appName string) (fingerprint string, startedAt int64, error error) {
+func extractImageFingerprintAndStartedTimestampFromLogs(logs []byte, appName string) (fingerprint string, startedAt int64, error error) {
 	logsReader := bytes.NewReader(logs)
 	scanner := bufio.NewScanner(logsReader)
 
