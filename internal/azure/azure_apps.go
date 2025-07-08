@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -52,6 +53,8 @@ type AppData struct {
 type AzureAppsRequest struct {
 	Artifacts []*AppData `json:"artifacts"`
 }
+
+var ErrAppUnavailable = errors.New("app is unavailable (503)")
 
 func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logger) (appsData []*AppData, err error) {
 	azureClient, err := staticCreds.NewAzureClient()
@@ -192,6 +195,9 @@ func downloadAppPackage(appName, bearerToken, destination string) error {
 		return err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusServiceUnavailable {
+		return ErrAppUnavailable
+	}
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("failed to download package for app [%s]: %s", appName, resp.Status)
 	}
@@ -225,6 +231,10 @@ func (azureClient *AzureClient) fingerprintZipService(app *armappservice.Site, l
 	packagePath := filepath.Join(tmpDir, *app.Name+".zip")
 	err = downloadAppPackage(*app.Name, token, packagePath)
 	if err != nil {
+		if err == ErrAppUnavailable {
+			logger.Debug("app %s is unavailable (503), skipping", *app.Name)
+			return AppData{}, nil
+		}
 		return AppData{}, err
 	}
 
