@@ -82,7 +82,7 @@ helm uninstall kosli-reporter
 | fullnameOverride | string | `""` | overrides the fullname used for the created k8s resources. It has higher precedence than `nameOverride` |
 | image.pullPolicy | string | `"IfNotPresent"` | the kosli reporter image pull policy |
 | image.repository | string | `"ghcr.io/kosli-dev/cli"` | the kosli reporter image repository |
-| image.tag | string | `"v2.11.15"` | the kosli reporter image tag, overrides the image tag whose default is the chart appVersion. |
+| image.tag | string | `"v2.11.17"` | the kosli reporter image tag, overrides the image tag whose default is the chart appVersion. |
 | kosliApiToken.secretKey | string | `"key"` | the name of the key in the secret data which contains the Kosli API token |
 | kosliApiToken.secretName | string | `"kosli-api-token"` | the name of the secret containing the kosli API token |
 | nameOverride | string | `""` | overrides the name used for the created k8s resources. If `fullnameOverride` is provided, it has higher precedence than this one |
