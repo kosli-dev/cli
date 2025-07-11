@@ -1,16 +1,16 @@
 ---
-title: "kosli attest pullrequest github"
+title: "kosli attest pullrequest gitlab"
 beta: false
 deprecated: false
-summary: "Report a Github pull request attestation to an artifact or a trail in a Kosli flow.  "
+summary: "Report a Gitlab merge request attestation to an artifact or a trail in a Kosli flow.  "
 ---
 
-# kosli attest pullrequest github
+# kosli attest pullrequest gitlab
 
 ## Synopsis
 
-Report a Github pull request attestation to an artifact or a trail in a Kosli flow.  
-It checks if a pull request exists for a given merge commit and reports the pull-request attestation to Kosli.
+Report a Gitlab merge request attestation to an artifact or a trail in a Kosli flow.  
+It checks if a merge request exists for a given merge commit and reports the merge request attestation to Kosli.
 
 
 The attestation can be bound to a *trail* using the trail name.  
@@ -19,7 +19,7 @@ The attestation can be bound to an *artifact* in two ways:
 - using the artifact's name in the flow yaml template and the git commit from which the artifact is/will be created. Useful when reporting an attestation before creating/reporting the artifact.
 
 ```shell
-kosli attest pullrequest github [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli attest pullrequest gitlab [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
 ## Flags
@@ -37,16 +37,16 @@ kosli attest pullrequest github [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |        --external-url stringToString  |  [optional] Add labeled reference URL for an external resource. The format is label=url (labels cannot contain '.' or '='). This flag can be set multiple times. If the resource is a file or dir, you can optionally add its fingerprint via --external-fingerprint  |
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact to attach the attestation to. Only required if the attestation is for an artifact and --artifact-type and artifact name/path are not used.  |
 |    -f, --flow string  |  The Kosli flow name.  |
-|        --github-base-url string  |  [optional] GitHub base URL (only needed for GitHub Enterprise installations).  |
-|        --github-org string  |  Github organization. (defaulted if you are running in GitHub Actions: https://docs.kosli.com/ci-defaults ).  |
-|        --github-token string  |  Github token.  |
-|    -h, --help  |  help for github  |
+|        --gitlab-base-url string  |  [optional] Gitlab base URL (only needed for on-prem Gitlab installations).  |
+|        --gitlab-org string  |  Gitlab organization. (defaulted if you are running in Gitlab Pipelines: https://docs.kosli.com/ci-defaults ).  |
+|        --gitlab-token string  |  Gitlab token.  |
+|    -h, --help  |  help for gitlab  |
 |    -n, --name string  |  The name of the attestation as declared in the flow or trail yaml template.  |
-|    -o, --origin-url string  |  [optional] The url pointing to where the attestation came from or is related. (defaulted to the CI url in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|    -o, --origin-url string  |  [optional] The url pointing to where the attestation came from or is related. (defaulted to the CI url in some CIs: https://docs.kosli.com/integrations/ci_cd/#defaulted-kosli-command-flags-from-ci-variables ).  |
 |        --redact-commit-info strings  |  [optional] The list of commit info to be redacted before sending to Kosli. Allowed values are one or more of [author, message, branch].  |
 |        --registry-password string  |  [conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry.  |
 |        --registry-username string  |  [conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry.  |
-|        --repo-root string  |  [defaulted] The directory where the source git repository is available. Only used if --commit is used. (default ".")  |
+|        --repo-root string  |  [defaulted] The directory where the source git repository is available. Only used if --commit is used or defaulted in CI, see https://docs.kosli.com/integrations/ci_cd/#defaulted-kosli-command-flags-from-ci-variables . (default ".")  |
 |        --repository string  |  Git repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -T, --trail string  |  The Kosli trail name.  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the attestation.  |
@@ -66,84 +66,84 @@ kosli attest pullrequest github [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 
 ## Live Examples in different CI systems
 
-{{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli attest pullrequest github` command in GitHub.
+{{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitLab" >}}View an example of the `kosli attest pullrequest gitlab` command in GitLab.
 
-In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli+attest+pullrequest+github), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=github&command=kosli+attest+pullrequest+github).{{< /tab >}}{{< /tabs >}}
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=gitlab&command=kosli+attest+pullrequest+gitlab), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=gitlab&command=kosli+attest+pullrequest+gitlab).{{< /tab >}}{{< /tabs >}}
 
 ## Examples Use Cases
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
 
-**report a Github pull request attestation about a pre-built docker artifact (kosli calculates the fingerprint)**
+**report a Gitlab merge request attestation about a pre-built docker artifact (kosli calculates the fingerprint)**
 
 ```shell
-kosli attest pullrequest github yourDockerImageName 
+kosli attest pullrequest gitlab yourDockerImageName 
 	--artifact-type docker 
 	--name yourAttestationName 
-	--github-token yourGithubToken 
-	--github-org yourGithubOrg 
+	--gitlab-token yourGitlabToken 
+	--gitlab-org yourGitlabOrg 
 	--commit yourArtifactGitCommit 
 	--repository yourGithubGitRepository 
 
 ```
 
-**report a Github pull request attestation about a pre-built docker artifact (you provide the fingerprint)**
+**report a Gitlab merge request attestation about a pre-built docker artifact (you provide the fingerprint)**
 
 ```shell
-kosli attest pullrequest github 
+kosli attest pullrequest gitlab 
 	--fingerprint yourDockerImageFingerprint 
 	--name yourAttestationName 
-	--github-token yourGithubToken 
-	--github-org yourGithubOrg 
+	--gitlab-token yourGitlabToken 
+	--gitlab-org yourGitlabOrg 
 	--commit yourArtifactGitCommit 
 	--repository yourGithubGitRepository 
 
 ```
 
-**report a Github pull request attestation about a trail**
+**report a Gitlab merge request attestation about a trail**
 
 ```shell
-kosli attest pullrequest github 
+kosli attest pullrequest gitlab 
 	--name yourAttestationName 
-	--github-token yourGithubToken 
-	--github-org yourGithubOrg 
+	--gitlab-token yourGitlabToken 
+	--gitlab-org yourGitlabOrg 
 	--commit yourArtifactGitCommit 
 	--repository yourGithubGitRepository 
 
 ```
 
-**report a Github pull request attestation about an artifact which has not been reported yet in a trail**
+**report a Gitlab merge request attestation about an artifact which has not been reported yet in a trail**
 
 ```shell
-kosli attest pullrequest github 
+kosli attest pullrequest gitlab 
 	--name yourTemplateArtifactName.yourAttestationName 
-	--github-token yourGithubToken 
-	--github-org yourGithubOrg 
+	--gitlab-token yourGitlabToken 
+	--gitlab-org yourGitlabOrg 
 	--commit yourArtifactGitCommit 
 	--repository yourGithubGitRepository 
 
 ```
 
-**report a Github pull request attestation about a trail with an attachment**
+**report a Gitlab merge request attestation about a trail with an attachment**
 
 ```shell
-kosli attest pullrequest github 
+kosli attest pullrequest gitlab 
 	--name yourAttestationName 
-	--github-token yourGithubToken 
-	--github-org yourGithubOrg 
+	--gitlab-token yourGitlabToken 
+	--gitlab-org yourGitlabOrg 
 	--commit yourArtifactGitCommit 
 	--repository yourGithubGitRepository 
 	--attachments=yourAttachmentPathName 
 
 ```
 
-**fail if a pull request does not exist for your artifact**
+**fail if a merge request does not exist for your artifact**
 
 ```shell
-kosli attest pullrequest github 
+kosli attest pullrequest gitlab 
 	--name yourTemplateArtifactName.yourAttestationName 
-	--github-token yourGithubToken 
-	--github-org yourGithubOrg 
+	--gitlab-token yourGitlabToken 
+	--gitlab-org yourGitlabOrg 
 	--commit yourArtifactGitCommit 
 	--repository yourGithubGitRepository 
 	--assert
