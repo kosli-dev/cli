@@ -196,11 +196,16 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 				return pullRequestsEvidence, err
 			}
 
+			committerUsername := ""
+			if c.Commit.Committer.User != nil {
+				committerUsername = string(c.Commit.Committer.User.Login)
+			}
+
 			evidence.Commits = append(evidence.Commits, types.Commit{
 				SHA:               string(c.Commit.Oid),
 				Message:           string(c.Commit.MessageHeadline),
 				Committer:         fmt.Sprintf("%s <%s>", string(c.Commit.Committer.Name), string(c.Commit.Committer.Email)),
-				CommitterUsername: string(c.Commit.Committer.User.Login),
+				CommitterUsername: committerUsername,
 				Timestamp:         timestamp.Unix(),
 				Branch:            string(pr.HeadRefName),
 				URL:               string(c.Commit.URL),
