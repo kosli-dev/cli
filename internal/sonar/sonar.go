@@ -237,6 +237,10 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 		if err != nil {
 			return "", fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube")
 		}
+		// If the CETaskURL from the report-task.txt file gives a 404, the CE task does not exist.
+		if taskResponseData.Task.Status == "" {
+			return "", fmt.Errorf("analysis not found on %s. Snapshot may have been deleted by SonarQube", sonarResults.ServerUrl)
+		}
 
 		if taskResponseData.Task.Status == "PENDING" || taskResponseData.Task.Status == "IN_PROGRESS" {
 			// So that we don't wait longer than maxWait
@@ -277,7 +281,7 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 	// This should only happen if the task is pending - either because the project is large and the scan takes a long time
 	// to process, or because SonarQube is experiencing delays for some reason.
 	if analysisId == "" {
-		return "", fmt.Errorf("analysis ID not found on %s. The scan results are not yet available, likely due to: \n1. Your project being particularly large and the scan taking time to process, or \n2. SonarQube is experiencing delays in processing scans. \nTry rerunning the command with the --max-retries flag.", sonarResults.ServerUrl)
+		return "", fmt.Errorf("analysis ID not found on %s. The scan results are not yet available, likely due to: \n1. Your project being particularly large and the scan taking time to process, or \n2. SonarQube is experiencing delays in processing scans. \nTry rerunning the command with the --max-wait flag.", sonarResults.ServerUrl)
 	}
 
 	if project.Url == "" {
@@ -364,7 +368,7 @@ func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *Son
 	}
 
 	if sonarResults.AnalaysedAt == "" {
-		return fmt.Errorf("analysis with ID %s not found. Snapshot may have been deleted by SonarQube", analysisID)
+		return fmt.Errorf("analysis with ID %s not found on %s. Snapshot may have been deleted by SonarQube", analysisID, sonarResults.ServerUrl)
 	}
 
 	return nil
