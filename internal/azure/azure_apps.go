@@ -16,7 +16,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/containers/azcontainerregistry"
@@ -57,14 +56,6 @@ type AzureAppsRequest struct {
 
 // These are for handling temporary 503 errors so that they do not fail the whole command
 var ErrAppUnavailable = errors.New("app is unavailable (503)")
-
-func isAppUnavailableErrorForSDK(err error) bool {
-	var respErr *azcore.ResponseError
-	if errors.As(err, &respErr) {
-		return respErr.StatusCode == 503
-	}
-	return false
-}
 
 func (staticCreds *AzureStaticCredentials) GetAzureAppsData(logger *logger.Logger) (appsData []*AppData, err error) {
 	azureClient, err := staticCreds.NewAzureClient()
@@ -356,20 +347,12 @@ func (azureClient *AzureClient) fingerprintDockerService(app *armappservice.Site
 		fingerprint, err = azureClient.GetImageFingerprintFromRegistry(imageName, logger)
 		// Handle exception when image is not found in the registry but is found in the environment
 		if err != nil {
-			if isAppUnavailableErrorForSDK(err) {
-				logger.Debug("app %s is unavailable (503), skipping", *app.Name)
-				return AppData{}, nil
-			}
 			return AppData{}, err
 		}
 	} else {
 		fingerprintSource = "logs"
 		logs, err := azureClient.GetDockerLogsForApp(*app.Name, logger)
 		if err != nil {
-			if isAppUnavailableErrorForSDK(err) {
-				logger.Debug("app %s is unavailable (503), skipping", *app.Name)
-				return AppData{}, nil
-			}
 			return AppData{}, err
 		}
 		fingerprint, startedAt, err = extractImageFingerprintAndStartedTimestampFromLogs(logs, *app.Name)
