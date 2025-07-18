@@ -293,7 +293,7 @@ func (c *Client) PayloadOutput(req *http.Request, jsonFields map[string]interfac
 		if err != nil {
 			return fmt.Errorf("failed to read request body to %s : %v", req.URL, err)
 		}
-		c.Logger.Info("message \n %+v", string(reqBody))
+		c.Logger.Info("%s \n %+v", message, string(reqBody))
 	}
 	return nil
 }
