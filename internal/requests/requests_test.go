@@ -386,6 +386,63 @@ func (suite *RequestsTestSuite) TestDo() {
 	}
 }
 
+func (suite *RequestsTestSuite) TestDebugPayloadOutput() {
+	for _, t := range []struct {
+		name             string
+		params           *RequestParams
+		wantError        bool
+		expectedLog      string
+		expectedErrorMsg string
+		expectedBody     string
+	}{
+		{
+			name: "PUT request with debug logs payload",
+			params: &RequestParams{
+				Method: http.MethodPut,
+				URL:    "http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared",
+				DryRun: false,
+				Token:  "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
+				Payload: struct {
+					Name              string `json:"name"`
+					Type              string `json:"type"`
+					Description       string `json:"description"`
+					IncludeScaling    bool   `json:"include_scaling"`
+					RequireProvenance bool   `json:"require_provenance"`
+				}{
+					Name:              "test-environment",
+					Type:              "K8S",
+					Description:       "test-environment",
+					IncludeScaling:    true,
+					RequireProvenance: true,
+				},
+			},
+			expectedLog: "############### PAYLOAD ###############\npayload sent to: http://localhost:8001/api/v2/environments/docs-cmd-test-user-shared\nthis is the payload being sent: \n {\n    \"name\": \"test-environment\",\n    \"type\": \"K8S\",\n    \"description\": \"test-environment\",\n    \"include_scaling\": true,\n    \"require_provenance\": true\n}\n",
+		},
+		{
+			name: "GET request with debug does not log non-existent payload",
+			params: &RequestParams{
+				Method: http.MethodGet,
+				URL:    "https://app.kosli.com/api/v2/environments/cyber-dojo",
+				DryRun: false,
+			},
+		},
+	} {
+		suite.Suite.Run(t.name, func() {
+			buf := new(bytes.Buffer)
+			client, err := NewKosliClient("", 1, true, logger.NewLogger(buf, buf, false))
+			require.NoError(suite.Suite.T(), err)
+			resp, err := client.Do(t.params)
+			require.NoError(suite.Suite.T(), err)
+
+			output := buf.String()
+			require.Equal(suite.Suite.T(), t.expectedLog, output)
+			if t.expectedBody != "" {
+				require.Equal(suite.Suite.T(), t.expectedBody, resp.Body)
+			}
+		})
+	}
+}
+
 func (suite *RequestsTestSuite) TestCreateMultipartRequestBody() {
 	for _, t := range []struct {
 		name                      string

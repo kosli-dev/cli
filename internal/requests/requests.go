@@ -216,24 +216,22 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 		c.Logger.Info("############### THIS IS A DRY-RUN  ###############")
 		c.Logger.Info("the request would have been sent to: %s", req.URL)
 
-		// Check the content type to determine what to log
-		contentType := req.Header.Get("Content-Type")
-		if strings.Contains(contentType, "multipart/form-data") {
-			// Log only the JSON fields for multipart/form-data
-			c.Logger.Info("this is the payload data that would be sent in a real run:")
-			for key, value := range jsonFields {
-				c.Logger.Info("Field: %s, Value: %+v", key, string(value.([]byte)))
-			}
-		} else if req.Body != nil {
-			// For non-multipart requests, log the full JSON body
-			reqBody, err := io.ReadAll(req.Body)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read request body to %s : %v", req.URL, err)
-			}
-			c.Logger.Info("this is the payload that would be sent in a real run: \n %+v", string(reqBody))
+		// log the payload
+		err := c.PayloadOutput(req, jsonFields, "this is the payload that would be sent in a real run:")
+		if err != nil {
+			return nil, err
 		}
 		return nil, nil
 	} else {
+		if c.Debug && req.Body != nil {
+			// log the payload
+			c.Logger.Info("############### PAYLOAD ###############")
+			c.Logger.Info("payload sent to: %s", req.URL)
+			err := c.PayloadOutput(req, jsonFields, "this is the payload being sent:")
+			if err != nil {
+				c.Logger.Error("failed to log payload: %v \nContinuing with the request...", err)
+			}
+		}
 		resp, err := c.HttpClient.Do(req)
 		if err != nil {
 			// err from retryable client is detailed enough
@@ -278,4 +276,27 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 		}
 		return &HTTPResponse{string(body), resp}, nil
 	}
+}
+
+func (c *Client) PayloadOutput(req *http.Request, jsonFields map[string]interface{}, message string) error {
+	// Check the content type to determine what to log
+	contentType := req.Header.Get("Content-Type")
+	if strings.Contains(contentType, "multipart/form-data") {
+		// Log only the JSON fields for multipart/form-data
+		c.Logger.Info(message)
+		for key, value := range jsonFields {
+			c.Logger.Info("Field: %s, Value: %+v", key, string(value.([]byte)))
+		}
+	} else if req.Body != nil {
+		// For non-multipart requests, log the full JSON body
+		// Create a copy of the body to avoid consuming the original stream
+		bodyBytes, err := io.ReadAll(req.Body)
+		if err != nil {
+			return fmt.Errorf("failed to read request body to %s : %v", req.URL, err)
+		}
+		// Restore the body for the actual request
+		req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		c.Logger.Info("%s \n %+v", message, string(bodyBytes))
+	}
+	return nil
 }
