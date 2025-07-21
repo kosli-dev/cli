@@ -229,7 +229,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 			c.Logger.Info("payload sent to: %s", req.URL)
 			err := c.PayloadOutput(req, jsonFields, "this is the payload being sent:")
 			if err != nil {
-				c.Logger.Error("failed to log payload: %v")
+				c.Logger.Error("failed to log payload: %v \nContinuing with the request...", err)
 			}
 		}
 		resp, err := c.HttpClient.Do(req)
