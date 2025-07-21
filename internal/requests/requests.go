@@ -289,11 +289,14 @@ func (c *Client) PayloadOutput(req *http.Request, jsonFields map[string]interfac
 		}
 	} else if req.Body != nil {
 		// For non-multipart requests, log the full JSON body
-		reqBody, err := io.ReadAll(req.Body)
+		// Create a copy of the body to avoid consuming the original stream
+		bodyBytes, err := io.ReadAll(req.Body)
 		if err != nil {
 			return fmt.Errorf("failed to read request body to %s : %v", req.URL, err)
 		}
-		c.Logger.Info("%s \n %+v", message, string(reqBody))
+		// Restore the body for the actual request
+		req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		c.Logger.Info("%s \n %+v", message, string(bodyBytes))
 	}
 	return nil
 }
