@@ -100,6 +100,7 @@ func (c *Config) getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, commit
 		URL:      prApiUrl,
 		Username: c.Username,
 		Password: c.Password,
+		Token:    c.AccessToken,
 	}
 	response, err := c.KosliClient.Do(reqParams)
 	if err != nil {
