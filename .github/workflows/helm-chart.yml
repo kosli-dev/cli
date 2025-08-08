@@ -76,7 +76,7 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.COMMITTER_TOKEN }}
-          committer: Sami Alajrami <sami@kosli.com>
+          committer: Jon Jagger <jon@kosli.com>
           commit-message: 'Update helm docs'
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           signoff: false
