@@ -24,7 +24,7 @@ type SearchResponse struct {
 type SearchArtifact struct {
 	Fingerprint     string                   `json:"fingerprint"`
 	Name            string                   `json:"name"`
-	Flow            string                   `json:"pipeline"`
+	Flow            string                   `json:"flow"`
 	Commit          string                   `json:"git_commit"`
 	HasProvenance   bool                     `json:"has_provenance"`
 	CommitURL       string                   `json:"commit_url"`
