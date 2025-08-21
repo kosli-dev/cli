@@ -47,6 +47,12 @@ kosli get attestation ATTESTATION-NAME [flags]
 |        --org string  |  The Kosli organization.  |
 
 
+## Live Example
+
+{{< raw-html >}}To view a live example of 'kosli get attestation' you can run the commands below (for the <a href="https://app.kosli.com/cyber-dojo/environments/aws-prod/snapshots/">cyber-dojo</a> demo organization).<br/><a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli+get+attestation+snyk-container-scan+--flow=differ-ci+--fingerprint=0cbbe3a6e73e733e8ca4b8813738d68e824badad0508ff20842832b5143b48c0+--output=json">Run the commands below and view the output.</a><pre>export KOSLI_ORG=cyber-dojo
+export KOSLI_API_TOKEN=Pj_XT2deaVA6V1qrTlthuaWsmjVt4eaHQwqnwqjRO3A  # read-only
+kosli get attestation snyk-container-scan --flow=differ-ci --fingerprint=0cbbe3a6e73e733e8ca4b8813738d68e824badad0508ff20842832b5143b48c0 --output=json</pre>{{< / raw-html >}}
+
 ## Examples Use Cases
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
