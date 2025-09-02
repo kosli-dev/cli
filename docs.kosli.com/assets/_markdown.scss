@@ -24,6 +24,15 @@
     margin-top: 1.5em;
     margin-bottom: $padding-16;
 
+    // If a heading starts with an image (e.g., an icon), size it like text
+    > img:first-child {
+      height: 1em;
+      width: auto;
+      vertical-align: -0.15em; // make baseline align nicely
+      margin-bottom: 0em;
+      box-shadow: none;
+    }
+
     a.anchor {
       opacity: 0;
       font-size: 0.75em;
