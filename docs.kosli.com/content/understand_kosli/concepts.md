@@ -26,7 +26,13 @@ As an example, a flow can be created to track the controls involved with buildin
 
 A Kosli Trail represents a single execution instance of a Kosli Flow.
 Each Trail must have a unique identifier of your choice, based on your process and domain. Example identifiers include git commits or pull request numbers.
-  
+
+**Examples:**
+
+* A CI run [example](https://app.kosli.com/cyber-dojo/flows/differ-ci/trails/98b393fa758558ceb90653a2cfb53ba3bd7898ee)
+* A terraform workflow [example](https://app.kosli.com/cyber-dojo/flows/terraform-base-infra-prs/trails/PR-11)
+* A cron job [in CI pipeline](https://github.com/cyber-dojo/live-snyk-scans/blob/2f0c74e65761b8d51271bb28de61db85b391d4f0/.github/workflows/snyk_scan_aws_prod.yml#L9) | [in Kosli](https://app.kosli.com/cyber-dojo/flows/aws-snyk-scan/trails/)
+
 ### ![icon](/images/diagram-elements/kosli-icon-round-artifact-green.png) Artifact
 
 Kosli Artifacts represents the software artifacts generated from your CI pipeline.
@@ -36,6 +42,10 @@ When captured by Kosli, the Artifact is uniquely identified by its SHA256 finger
 
 These artifacts play a crucial role in enabling **Binary Provenance**, providing a comprehensive chain of custody that records the origin, history and distribution of each artifact.
 
+**Examples:**
+
+* Artifact attestation as part of the CLI flow [example](https://app.kosli.com/kosli-public/flows/cli/trails/6781399)
+
 ### ![icon](/images/diagram-elements/kosli-icon-round-attestations-2.png) Attestation
 
 An Attestation is a record of compliance checks or controls that have been performed a particular Artifact or Trail. It is normally reported after performing a specific risk control or quality check (e.g. running tests). The attestation encompasses the procedure's results.
@@ -43,6 +53,14 @@ An Attestation is a record of compliance checks or controls that have been perfo
 Kosli provides specific built-in types of attestations (e.g., a snyk scan, sonar scan, junit tests) and allows to define your own custom types with jq quering for compliance status, or generic ones that simply creates an attestation without evaluation.
 
 Attestations can be connected either to the trail, or to a specific artifact.
+
+**Examples:**
+
+* This build [in CI pipeline](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli+attest+artifact) | [in Kosli](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=github&command=kosli+attest+artifact)
+* This test execution [in CI pipeline](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli+attest+junit) | [in Kosli](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=github&command=kosli+attest+junit)
+* This security scan [in CI pipeline](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli+attest+snyk) | [in Kosli](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=github&command=kosli+attest+snyk)
+* This deployment approved [in CI pipeline](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli+report+approval)
+* This pull request [in CI pipeline](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli+attest+pullrequest+github) | [in Kosli](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=github&command=kosli+attest+pullrequest+github)
 
 ### ![icon](/images/diagram-elements/kosli-icon-round-vault.png) Evidence Vault
 
@@ -57,6 +75,10 @@ During an audit process, Kosli enables you to download an audit package for a Tr
 A Flow Template defines the expected Artifacts and attestations for Trails of that given Flow to be considered compliant.
 
 While each Flow has its own Template, each Trail in a Flow can override the Flow Template with its own.
+
+**Examples:**
+
+* Template for our CLI flow [example](https://app.kosli.com/kosli-public/flows/cli/settings/)
 
 ## ![icon](/images/diagram-elements/kosli-icon-round-environment.png) Environment
 
@@ -74,6 +96,11 @@ Kosli supports various types of runtime environments:
 * Docker host
 * Azure Web Apps and Function Apps
 
+**Examples:**
+
+* How this k8s cluster changes [example](https://app.kosli.com/cyber-dojo/environments/aws-prod/events/)
+* How this lambda changes [example](https://app.kosli.com/kosli-public/environments/bitbucket-lambda-example-env/snapshots/)
+
 ### ![icon](/images/diagram-elements/kosli-icon-round-snapshots.png) Environment Snapshot
 
 An Environment Snapshot represents the reported status (running Artifacts) of your runtime environment at a specific point in time.
@@ -82,6 +109,18 @@ In each snapshot, Kosli links the running artifacts to the Flows and Trails that
 
 Running artifacts that come from 3rd party sources, can be `allow-listed` in an Environment to make them compliant.
 
+**Examples:**
+
+* The running artifacts in a AWS ECS namespace [example](https://app.kosli.com/cyber-dojo/environments/aws-prod/snapshots/)
+* The running pods in a k8s cluster
+* The terraform state files in an S3 bucket
+* The functions in AWS Lambda
+* The files in a directory
+
 ### ![icon](/images/diagram-elements/kosli-icon-round-policy.png) Environment Policy
 
 Environment Policy enables you to define and enforce compliance requirements for artifact deployments across different environments.
+
+**Examples:**
+
+* A policy making sure that all artifacts have the required tests associated with them [example](https://app.kosli.com/kosli-public/policies/all-test-cases-present)
