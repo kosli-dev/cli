@@ -29,6 +29,9 @@ serviceAccount:
 # -- the cron schedule at which the reporter is triggered to report to Kosli  
 cronSchedule: "*/5 * * * *"
 
+# -- custom labels to add to pods
+podLabels: {}
+
 kosliApiToken:
   # -- the name of the secret containing the kosli API token
   secretName: "kosli-api-token"
