@@ -25,14 +25,15 @@ type CommitEvidenceJiraCommandTestSuite struct {
 }
 
 func (suite *CommitEvidenceJiraCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_JIRA_API_TOKEN"})
+	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_JIRA_API_TOKEN", "KOSLI_JIRA_USERNAME"})
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Org:      "docs-cmd-test-user-shared",
 		Host:     "http://localhost:8001",
 	}
 
-	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
+	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s",
+		global.Host, global.Org, global.ApiToken)
 	var err error
 	suite.tmpDir, err = os.MkdirTemp("", "testDir")
 	require.NoError(suite.Suite.T(), err)
@@ -57,7 +58,7 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 		{
 			name: "report Jira commit evidence with reference in start of line works",
 			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
-					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+					--jira-base-url https://kosli-test.atlassian.net
 					--repo-root %s
 					--build-url http://www.example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
 			goldenRegex: "Jira evidence is reported to commit: [0-9a-f]{40}\n.*Issues references reported:.*\n.*EX-1: issue found",
@@ -67,10 +68,10 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 		},
 		{
 			name: "report Jira commit evidence with reference in start of line works for one flow",
-			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
-					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation
+					--jira-base-url https://kosli-test.atlassian.net
 					--repo-root %s
-					--flows %s 
+					--flows %s
 					--build-url http://www.example.com %s`, suite.tmpDir, suite.flowName, suite.defaultKosliArguments),
 			goldenRegex: "Jira evidence is reported to commit: [0-9a-f]{40}\n.*Issues references reported:.*\n.*EX-1: issue found",
 			additionalConfig: jiraTestsAdditionalConfig{
@@ -79,8 +80,8 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 		},
 		{
 			name: "report non existing Jira commit evidence with reference in start of line works",
-			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
-					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation
+					--jira-base-url https://kosli-test.atlassian.net
 					--repo-root %s
 					--build-url http://www.example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
 			goldenRegex: "Jira evidence is reported to commit: [0-9a-f]{40}\n" +
@@ -91,8 +92,8 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 		},
 		{
 			name: "report existing and non existing Jira commit evidence with reference in middle of line works",
-			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
-					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation
+					--jira-base-url https://kosli-test.atlassian.net
 					--repo-root %s
 					--build-url http://www.example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
 			goldenRegex: "Jira evidence is reported to commit: [0-9a-f]{40}\n" +
@@ -104,7 +105,7 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 		{
 			name: "report Jira commit evidence with reference in middle of line works",
 			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation
-				--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+				--jira-base-url https://kosli-test.atlassian.net
 				--repo-root %s
 				--build-url http://www.example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
 			goldenRegex: "Jira evidence is reported to commit: [0-9a-f]{40}\n.*Issues references reported:.*\n.*EX-1: issue found",
@@ -115,7 +116,7 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 		{
 			name: "report Jira commit evidence with reference in end of line works",
 			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation
-					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+					--jira-base-url https://kosli-test.atlassian.net
 					--repo-root %s
 					--build-url http://www.example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
 			goldenRegex: "Jira evidence is reported to commit: [0-9a-f]{40}\n.*Issues references reported:.*\n.*EX-1: issue found",
@@ -125,8 +126,8 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 		},
 		{
 			name: "report Jira commit evidence with reference as branch name works",
-			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
-					--jira-base-url https://kosli-test.atlassian.net/  --jira-username tore@kosli.com
+			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation
+					--jira-base-url https://kosli-test.atlassian.net/
 					--repo-root %s
 					--build-url http://www.example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
 			goldenRegex: "Jira evidence is reported to commit: [0-9a-f]{40}\n.*Issues references reported:.*\n.*EX-1: issue found",
@@ -138,7 +139,7 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 		{
 			name: "report Jira commit evidence with a slash at the end of --jira-base-url works",
 			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation
-				--jira-base-url https://kosli-test.atlassian.net/  --jira-username tore@kosli.com
+				--jira-base-url https://kosli-test.atlassian.net/
 				--repo-root %s
 				--build-url http://www.example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
 			goldenRegex: "Jira evidence is reported to commit: [0-9a-f]{40}\n.*Issues references reported:.*\n.*EX-1: issue found",
@@ -157,18 +158,9 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 		},
 		{
 			wantError: true,
-			name:      "report Jira commit evidence with missing --jira-username and --jira-pat fails",
-			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
-					--jira-base-url https://kosli-test.atlassian.net  --jira-api-token xxx
-					--repo-root %s --commit 61ab3ea22bd4264996b35bfb82869c482d9f4a06
-					--build-url http://www.example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
-			goldenRegex: "Error: at least one of --jira-pat, --jira-username is required\n",
-		},
-		{
-			wantError: true,
 			name:      "report Jira commit evidence with missing --commit fails",
-			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
-					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation
+					--jira-base-url https://kosli-test.atlassian.net
 					--repo-root %s
 					--build-url http://www.example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
 			goldenRegex: "Error: required flag\\(s\\) \"commit\" not set\n",
@@ -176,8 +168,8 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 		{
 			wantError: true,
 			name:      "assert for non-existing Jira issue gives an error",
-			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
-					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation
+					--jira-base-url https://kosli-test.atlassian.net
 					--repo-root %s
 					--assert
 					--build-url http://www.example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
@@ -189,8 +181,8 @@ func (suite *CommitEvidenceJiraCommandTestSuite) TestCommitEvidenceJiraCommandCm
 		{
 			wantError: true,
 			name:      "assert for no Jira issue reference gives an error",
-			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation 
-					--jira-base-url https://kosli-test.atlassian.net  --jira-username tore@kosli.com
+			cmd: fmt.Sprintf(`report evidence commit jira --name jira-validation
+					--jira-base-url https://kosli-test.atlassian.net
 					--repo-root %s
 					--assert
 					--build-url http://www.example.com %s`, suite.tmpDir, suite.defaultKosliArguments),
