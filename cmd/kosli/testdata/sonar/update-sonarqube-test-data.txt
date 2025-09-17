@@ -1,0 +1,47 @@
+# Updating SonarQube test data
+
+SonarQube progressively deletes older scan data from their database (https://docs.sonarsource.com/sonarqube-cloud/digging-deeper/housekeeping/),
+which means that it is possible for the data we have in the report-task.txt to not be valid any more.
+This will cause tests to fail with the following message:
+'Error: analysis not found on https://sonarcloud.io. Snapshot may have been deleted by SonarQube'
+
+## SonarQube Deletion Schedule
+
+Background tasks (referenced by the ceTaskId in report-task.txt) are retained for 6 months.
+
+Analysis snapshots are deleted as follows:
+All snapshots are retained for one day.
+After one day, only one snapshot per day is retained.
+After one week, only one snapshot per week is retained.
+After 4 weeks, only one snapshot for every 4 weeks is retained.
+After 2 years, only snapshots with version events are retained. Snapshots without events or with only non-version events are deleted.
+After 5 years all snapshots are deleted, including snapshots marked by version events.
+
+## Instructions for updating test data in report-task.txt
+
+(This assumes you are a member of the cyber-dojo org in SonarQube)
+
+1. Find valid analyses for the project in SonarQube using the SonarQube API with your SonarQube API token:
+   - The endpoint to call is https://sonarcloud.io/api/project_analyses/search?project=cyber-dojo_differ
+   - This returns a JSON object which includes an array of analyses, with each analysis including a date and ID.
+2. Choose one of these analyses to use for the tests. My recommendations for choosing are:
+   - An analysis that happened within the last 6 months (so that there is still a corresponding CE Task in SonarQube's database).
+   - An analysis that happened more than 4 weeks ago (since this will be the analysis retained for that 4-week period, and should therefore remain valid for an extended period of time).
+   - The best is probably to choose an analysis from approximately a month ago, making sure it's the only analysis listed for that month.
+3. Copy the key from the chosen analysis object.
+4. Find valid CE Tasks for the project using the SonarQube API with your API token;
+   - The endpoint is https://sonarcloud.io/api/ce/activity?component=cyber-dojo_differ
+   - This returns a JSON object including an array of CE Task objects, with each one containing an ID and an AnalysisID.
+5. Find the CE Task object whose Analysis ID matches the key that you copied in step 3.
+6. Copy the ID from that object (NOT the AnalysisID - we need the ID for CE Task).
+7. In report-task.txt, replace the value of ceTaskId with the ID you just copied.
+   - Also replace the id at the end of the ceTaskUrl with that ID.
+
+## Instructions for updating test data passed as CLI command arguments
+
+Instead of using the report-task.txt file, some of our sonar tests take the key of the SonarQube project and a git commit as arguments to the CLI command, which are then used to find the relevant analysis in SonarQube. This should rarely need to be updated, since once an analysis snapshot is 4 weeks old in SonarQube, it will remain in the database until at least 2 years.
+But if it does need to be changed:
+
+1. Repeat steps 1 and 2 as above to find a valid analysis.
+2. Copy the revision from that analysis object.
+3. In the relevant tests in attestSonar_test.go, replace the --sonar-revision argument with the revision that you just copied.
