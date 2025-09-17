@@ -1,17 +1,19 @@
 # Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
-version: v1.25.0
+version: v1.25.1
 # ignores vulnerabilities until expiry date; change duration by modifying expiry date
 ignore:
-  snyk:lic:golang:github.com:hashicorp:go-retryablehttp:MPL-2.0:
+  'snyk:lic:golang:github.com:hashicorp:go-retryablehttp:MPL-2.0':
     - '*':
-        reason: "Choosing to ignore this licence issue for now"
-
-  snyk:lic:golang:github.com:hashicorp:go-cleanhttp:MPL-2.0:
+        reason: Choosing to ignore this licence issue for now
+  'snyk:lic:golang:github.com:hashicorp:go-cleanhttp:MPL-2.0':
     - '*':
-        reason: "Choosing to ignore this licence issue for now"
-        
+        reason: Choosing to ignore this licence issue for now
+  SNYK-GOLANG-GOLANGORGXCRYPTOSSHAGENT-12668891:
+    - '*':
+        reason: No fix available
+        expires: 2025-10-17T05:18:46.481Z
+        created: 2025-09-17T05:18:46.483Z
 patch: {}
-
 exclude:
   global:
     - internal/azure/azure_apps.go
