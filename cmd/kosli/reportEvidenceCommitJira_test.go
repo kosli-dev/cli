@@ -32,6 +32,9 @@ func (suite *CommitEvidenceJiraCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 
+	pw := os.Getenv("KOSLI_JIRA_API_TOKEN")
+	fmt.Printf("Username: %s - .%s...%s.\n", os.Getenv("KOSLI_JIRA_USERNAME"), pw[:5], pw[len(pw)-5:])
+
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s",
 		global.Host, global.Org, global.ApiToken)
 	var err error
