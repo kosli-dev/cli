@@ -4,17 +4,11 @@ bookCollapseSection: false
 weight: 290
 summary: "Environment Policies enable you to define and enforce compliance requirements for artifact deployments across different environments."
 ---
+
 # Part 9: Environment Policies
 
-{{% hint warning %}}
-Environment policies is in alpha. It is subject to change, including naming, syntax, CLI commands, etc.
-If you want to try this feature, create a policy and attach it to an environment. 
-{{% /hint %}}
-{{% hint warning %}}
-Note that once an environment starts using policies, it is not possible to go back to not using them.
-{{% /hint %}}
-
 Environment Policies enable you to define and enforce compliance requirements for artifact deployments across different environments. With Environment Policies, you can:
+
 - Define specific requirements for each environment (e.g, dev, staging, prod)
 - Enforce consistent compliance standards across your deployment pipeline
 - Prevent non-compliant artifacts from being deployed (via admission controllers)
@@ -33,7 +27,7 @@ artifacts: # the rules apply to artifacts in an environment snapshot
     required: true # all artifacts must have provenance
   attestations:
     - name: dependency-scan # all artifacts must have dependency-scan attestation
-      type: '*' # any attestation type
+      type: "*" # any attestation type
     - name: unit-test # all artifacts must have unit-test attestation
       type: junit # must be a 'junit' attestation type
 ```
@@ -52,7 +46,7 @@ See [kosli create policy](/client_reference/kosli_create_policy/) for usage deta
 
 {{% hint info %}}
 Once you create a policy, you will be able to see it in the UI under `policies` in the left navigation menu.
-{{% /hint %}} 
+{{% /hint %}}
 
 ## Declarative Policy Syntax
 
@@ -67,7 +61,7 @@ artifacts:
     exceptions: (default [])
     - if: ${{ expression }}
 
-  trail-compliance: 
+  trail-compliance:
     required: true | false (default = false)
     exceptions: (default [])
     - if: ${{ expression }}
@@ -82,20 +76,20 @@ artifacts:
 
 A policy consists of `rules` which are applied to artifacts in an environment snapshot.
 
-#### Provenance 
+#### Provenance
 
 ```yaml {.command}
 artifacts:
   provenance:
-    required: true  # Requires artifact to be part of a Kosli Flow
+    required: true # Requires artifact to be part of a Kosli Flow
 ```
 
-#### Trail Compliance 
+#### Trail Compliance
 
 ```yaml {.command}
 artifacts:
   trail-compliance:
-    required: true  # Requires the trail in which the artifact is attested to be compliant
+    required: true # Requires the trail in which the artifact is attested to be compliant
 ```
 
 #### Specific Attestations
@@ -103,10 +97,10 @@ artifacts:
 ```yaml {.command}
 artifacts:
   attestations:
-    - name: '*' # attestation name can be anything
+    - name: "*" # attestation name can be anything
       type: pull-request
     - name: acceptance-test
-      type: '*' # attestation type can be any built-in or existing custom type
+      type: "*" # attestation type can be any built-in or existing custom type
     - name: security-scan
       type: snyk
     - name: coverage-metrics
@@ -122,20 +116,20 @@ _schema: https://kosli.com/schemas/policy/environment/v1
 
 artifacts
   provenance:
-    required: true 
+    required: true
     exceptions:
     # provenance is required except when one of the expressions evaluates to true
-    - if: ${{ expression1 }} 
-    - if: ${{ expression2 }} 
+    - if: ${{ expression1 }}
+    - if: ${{ expression2 }}
 
-  trail-compliance: 
-    required: true 
-    exceptions: 
+  trail-compliance:
+    required: true
+    exceptions:
     # trail-compliance is required except when one of the expressions evaluates to true
-    - if: ${{ expression1 }} 
-    - if: ${{ expression2 }} 
+    - if: ${{ expression1 }}
+    - if: ${{ expression2 }}
 
-  attestations: 
+  attestations:
     - if: ${{ expression }} # this attestation is only required when expression evaluates to true
       name: unit-tests
       type: junit
@@ -148,6 +142,7 @@ Policy expressions allow you to create conditional rules using a simple and powe
 **Operators**
 
 Expressions support these operators:
+
 - Comparison: `==, !=, <, >, <=, >=`
 - Logical: `and, or, not`
 - List membership: `in`
@@ -155,21 +150,22 @@ Expressions support these operators:
 **Operands**
 
 Operands can be:
+
 - Literal string
-- List 
+- List
 - Context variable
 - Function call
-
 
 **Available Contexts**
 
 Contexts are built-in objects which are accessible from an expression. Expressions can access two main contexts:
+
 - `flow` - Information about the Kosli Flow:
-    - `flow.name` - Name of the flow
-    - `flow.tags` - Flow tags (accessed via flow.tags.tag_name)
+  - `flow.name` - Name of the flow
+  - `flow.tags` - Flow tags (accessed via flow.tags.tag_name)
 - `artifact` - Information about the artifact:
-    - `artifact.name` - Name of the artifact
-    - `artifact.fingerprint` - SHA256 fingerprint
+  - `artifact.name` - Name of the artifact
+  - `artifact.fingerprint` - SHA256 fingerprint
 
 **Functions**
 
@@ -177,7 +173,6 @@ Functions are helpers that can be used when constructing conditions. They may or
 
 - `exists(arg)` : checks whether the value of arg is not None/Null
 - `matches(input, regex)` : checks if input matches regex
-
 
 **Example Expressions**
 
@@ -192,7 +187,6 @@ Functions are helpers that can be used when constructing conditions. They may or
 - ${{ flow.tags.risk-level >= 2 }}
 - ${{ flow.name == 'prod' and (flow.tags.key_name == "value" or artifact.name == 'critical-service') }}
 - ${{ flow.name == 'HIGH-RISK' and artifact.fingerprint == "37193ba1f3da2581e93ff1a9bba523241a7982a6c01dd311494b0aff6d349462" }}
-
 
 ## Attaching/Detaching Policies to/from Environments
 
@@ -211,13 +205,12 @@ kosli detach-policy prod-requirements --environment=aws-production
 Any attachment/detachment operation automatically triggers an evaluation of the latest environment snapshot and creates a new one with an updated compliance status.
 
 {{% hint info %}}
-If you detach all attached policies from an environment, the environment will have no defined requirements for artifacts running in it, and therefore, new environment snapshots will have status `unknown` 
-{{% /hint %}} 
-
+If you detach all attached policies from an environment, the environment will have no defined requirements for artifacts running in it, and therefore, new environment snapshots will have status `unknown`
+{{% /hint %}}
 
 ## Policy Enforcement Gates
 
-Environment policies enable you to proactively block deploying a non-compliant artifact into an environment. This can be done as a deployment gate in your delivery pipeline or as an admission controller in your environment. 
+Environment policies enable you to proactively block deploying a non-compliant artifact into an environment. This can be done as a deployment gate in your delivery pipeline or as an admission controller in your environment.
 
 Regardless of where you place your policy enforcement gate, it will be using the `assert artifact` Kosli CLI command or its equivalent API call.
 
