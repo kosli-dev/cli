@@ -16,7 +16,7 @@ import (
  *
  * Note that SonarQube Cloud regularly deletes older scans (see https://docs.sonarsource.com/sonarcloud/digging-deeper/housekeeping/ )
  * so the current report-task.txt files and the revisions used in the tests may not be valid in the future.
- * If/when this happens, they will need to be updated.
+ * If/when this happens, they will need to be updated. There is an instruction file at testdata/sonar/update-sonarqube-test-data.txt
  *
  * Note also that if you want to run the SonarQube Server tests, there are a few steps to take:
  * 1. Set the environment variable SONARQUBE to something (value doesn't matter)
