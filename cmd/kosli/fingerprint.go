@@ -18,7 +18,7 @@ plus the ability to use recursive globs "**"
 
 If the directory structure contains symbolic links to a file the content of the file it points to is included in the
 fingerprint calculation. If a symbolic link points to a directory the path it is pointing to is include in the
-fingerprint calcualtion.
+fingerprint calculation.
 
 ` + kosliIgnoreDesc
 
