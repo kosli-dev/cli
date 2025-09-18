@@ -45,6 +45,18 @@ func (suite *FingerprintTestSuite) TestFingerprintCmd() {
 			golden: "038897ea5334462098d65125380d58a493671fb3b8bdbbee1e75ec8bd4a65c23\n",
 		},
 		{
+			name:   "dir fingerprint with symbolic links 1",
+			cmd:    "fingerprint --artifact-type dir testdata/folder-with-symlinks-1",
+			golden: "1c0740265b38509fb9ce7babf00d7eb57e7e08b59dad8be66897c1ebb5b36409\n",
+		},
+		{
+			// The two folders contains the same files and folder, but a/b/c/point-to-dir points
+			// different directories
+			name:   "dir fingerprint with symbolic links 2",
+			cmd:    "fingerprint --artifact-type dir testdata/folder-with-symlinks-2",
+			golden: "2a5fe76bc616a97b2ff6f30f46380f1230b98a58df8aec6e96c1fb0e03b41fd9\n",
+		},
+		{
 			name:      "fails if type is directory but the argument is not a dir",
 			cmd:       "fingerprint --artifact-type dir testdata/file1",
 			wantError: true,

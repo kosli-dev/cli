@@ -131,14 +131,50 @@ func calculateDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, exc
 			return nil
 		}
 
+		// If it's a symlink, resolve the target
+		var stat fs.FileInfo
+		if info.Type()&os.ModeSymlink != 0 {
+			resolved, err := os.Stat(path) // follows the symlink
+			if err != nil {
+				return err
+			}
+			stat = resolved
+		} else {
+			// Convert fs.DirEntry to fs.FileInfo for consistency
+			resolved, err := info.Info()
+			if err != nil {
+				return err
+			}
+			stat = resolved
+		}
+
 		nameSha256, err := addNameDigest(tmpDir, info.Name(), digestsFile)
 		if err != nil {
 			return err
 		}
 
-		if info.IsDir() {
-			logger.Debug("dir path: %s -- dirname digest: %v", path, nameSha256)
+		if stat.IsDir() {
+			if info.Type()&os.ModeSymlink != 0 {
+				// This is a symlink to a directory
+				logger.Debug("symlink path: %s -- linkname digest: %v", path, nameSha256)
+
+				targetPath, err := os.Readlink(path)
+				if err != nil {
+					return err
+				}
+
+				// Calculate fingerprint of what link points to (for this: a -> c/d calculate the fingerprint of c/d)
+				targetSha256, err := addNameDigest(tmpDir, targetPath, digestsFile)
+				if err != nil {
+					return err
+				}
+				logger.Debug("symlink: %s (points to %s) -- digest: %v", path, targetPath, targetSha256)
+			} else {
+				// Normal directory
+				logger.Debug("dir path: %s -- dirname digest: %v", path, nameSha256)
+			}
 		} else {
+			// File or symlink -> file
 			logger.Debug("file path: %s -- filename digest: %s", path, nameSha256)
 			fileContentSha256, err := FileSha256(path)
 			if err != nil {
