@@ -131,12 +131,29 @@ func calculateDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, exc
 			return nil
 		}
 
+		// If it's a symlink, resolve the target
+		var stat fs.FileInfo
+		if info.Type()&os.ModeSymlink != 0 {
+			resolved, err := os.Stat(path) // follows the symlink
+			if err != nil {
+				return err
+			}
+			stat = resolved
+		} else {
+			// Convert fs.DirEntry to fs.FileInfo for consistency
+			resolved, err := info.Info()
+			if err != nil {
+				return err
+			}
+			stat = resolved
+		}
+
 		nameSha256, err := addNameDigest(tmpDir, info.Name(), digestsFile)
 		if err != nil {
 			return err
 		}
 
-		if info.IsDir() {
+		if stat.IsDir() {
 			logger.Debug("dir path: %s -- dirname digest: %v", path, nameSha256)
 		} else {
 			logger.Debug("file path: %s -- filename digest: %s", path, nameSha256)
