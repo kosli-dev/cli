@@ -30,7 +30,7 @@ type cmdTestCase struct {
 	golden           string
 	goldenFile       string
 	goldenRegex      string
-	goldenJSON       []jsonCheck
+	goldenJSON       []jsonCheck // Use like this for array {"[0].compliant", false}
 	wantError        bool
 	additionalConfig interface{}
 }
