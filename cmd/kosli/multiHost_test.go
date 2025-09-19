@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type DoubledHostTestSuite struct {
+type MultiHostTestSuite struct {
 	suite.Suite
 }
 
@@ -18,7 +18,7 @@ const localHost = "http://localhost:8001"
 const apiToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9"
 const orgName = "docs-cmd-test-user"
 
-func (suite *DoubledHostTestSuite) TestIsDoubledHost() {
+func (suite *MultiHostTestSuite) TestIsMultiHost() {
 
 	for _, t := range []struct {
 		name     string
@@ -35,28 +35,35 @@ func (suite *DoubledHostTestSuite) TestIsDoubledHost() {
 			want:     true,
 		},
 		{
-			name:     "False when one host",
+			name:     "True when three hosts and three api-tokens",
+			args:     []string{"status"},
+			host:     fmt.Sprintf("%s,%s,%s", localHost, localHost, localHost),
+			apiToken: fmt.Sprintf("%s,%s,%s", apiToken, apiToken, apiToken),
+			want:     true,
+		},
+		{
+			name:     "False when one host and two api-tokens",
 			args:     []string{"status"},
 			host:     localHost,
 			apiToken: fmt.Sprintf("%s,%s", apiToken, apiToken),
 			want:     false,
 		},
 		{
-			name:     "False when three hosts",
+			name:     "False when three hosts and two api-tokens",
 			args:     []string{"status"},
 			host:     fmt.Sprintf("%s,%s,%s", localHost, localHost, localHost),
 			apiToken: fmt.Sprintf("%s,%s", apiToken, apiToken),
 			want:     false,
 		},
 		{
-			name:     "False when one api-token",
+			name:     "False when one api-token and two hostnames",
 			args:     []string{"status"},
 			host:     fmt.Sprintf("%s,%s", localHost, localHost),
 			apiToken: apiToken,
 			want:     false,
 		},
 		{
-			name:     "False when three api-tokens",
+			name:     "False when three api-tokens and two hostnames",
 			args:     []string{"status"},
 			host:     fmt.Sprintf("%s,%s", localHost, localHost),
 			apiToken: fmt.Sprintf("%s,%s,%s", apiToken, apiToken, apiToken),
@@ -85,21 +92,21 @@ func (suite *DoubledHostTestSuite) TestIsDoubledHost() {
 
 			defer func(original []string) { os.Args = original }(os.Args)
 			os.Args = args
-			actual := isDoubledHost()
+			actual := isMultiHost()
 
-			assert.Equal(suite.Suite.T(), t.want, actual, fmt.Sprintf("TestIsDoubledHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, t.want, actual))
+			assert.Equal(suite.Suite.T(), t.want, actual, fmt.Sprintf("TestIsMultiHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, t.want, actual))
 		})
 	}
 }
 
-func (suite *DoubledHostTestSuite) TestRunDoubledHost() {
+func (suite *MultiHostTestSuite) TestRunDoubledHost() {
 
-	doubledHost := fmt.Sprintf("--host=%s,%s", localHost, localHost)
+	MultiHost := fmt.Sprintf("--host=%s,%s", localHost, localHost)
 	doubledApiToken := fmt.Sprintf("--api-token=%s,%s", apiToken, apiToken)
 	org := fmt.Sprintf("--org=%s", orgName)
 
 	doubledArgs := func(args []string) []string {
-		return append(args, doubledHost, doubledApiToken, org)
+		return append(args, MultiHost, doubledApiToken, org)
 	}
 
 	for _, t := range []struct {
@@ -109,33 +116,16 @@ func (suite *DoubledHostTestSuite) TestRunDoubledHost() {
 		err    error
 	}{
 		{
-			name:   "only returns primary call output when both calls succeed",
+			name:   "only returns primary call output when both (2) calls succeed",
 			args:   doubledArgs([]string{"kosli", "status"}),
 			stdOut: []string{"OK", ""},
 			err:    error(nil),
 		},
-		// {
-		// 	name:   "in debug mode also returns secondary call output",
-		// 	args:   doubledArgs([]string{"kosli", "status", "--debug"}),
-		// 	stdOut: StatusDebugLines(),
-		// 	err:    error(nil),
-		// },
-		// {
-		// 	name:   "--help prints output once",
-		// 	args:   doubledArgs([]string{"kosli", "status", "--help"}),
-		// 	stdOut: HelpStatusLines(),
-		// 	err:    error(nil),
-		// },
-		// {
-		// 	name:   "bad-flag never gets to call runDoubledHost() because isDoubledHost() returns false",
-		// 	args:   doubledArgs([]string{"kosli", "status", "--bad-flag"}),
-		// 	stdOut: BadFlagLines(),
-		// 	err:    error(nil),
-		// },
+		
 	} {
 		defer func(original []string) { os.Args = original }(os.Args)
 		os.Args = t.args
-		output, err := runDoubledHost(t.args)
+		output, err := runMultiHost(t.args)
 
 		assert.Equal(suite.Suite.T(), t.err, err, fmt.Sprintf("TestRunDoubleHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, t.err, err))
 
@@ -145,8 +135,44 @@ func (suite *DoubledHostTestSuite) TestRunDoubledHost() {
 	}
 }
 
-func TestDoubledHostTestSuite(t *testing.T) {
-	suite.Run(t, new(DoubledHostTestSuite))
+func (suite *MultiHostTestSuite) TestRunTripledHost() {
+
+	multiHost := fmt.Sprintf("--host=%s,%s,%s", localHost, localHost, localHost)
+	multiApiToken := fmt.Sprintf("--api-token=%s,%s,%s", apiToken, apiToken, apiToken)
+	org := fmt.Sprintf("--org=%s", orgName)
+
+	tripledArgs := func(args []string) []string {
+		return append(args, multiHost, multiApiToken, org)
+	}
+
+	for _, t := range []struct {
+		name   string
+		args   []string
+		stdOut []string
+		err    error
+	}{
+		{
+			name:   "only returns primary call output when all three calls succeed",
+			args:   tripledArgs([]string{"kosli", "status"}),
+			stdOut: []string{"OK", ""},
+			err:    error(nil),
+		},
+		
+	} {
+		defer func(original []string) { os.Args = original }(os.Args)
+		os.Args = t.args
+		output, err := runMultiHost(t.args)
+
+		assert.Equal(suite.Suite.T(), t.err, err, fmt.Sprintf("TestRunTripledHost: %s\n\texpected: '%v'\n\t--actual: '%v'\n", t.name, t.err, err))
+
+		lines := strings.Split(output, "\n")
+		d := diff(t.stdOut, lines)
+		assert.Equal(suite.Suite.T(), "", d, fmt.Sprintf("TestRunTripledHost: %s\n%s\n", t.name, d))
+	}
+}
+
+func TestMultiHostTestSuite(t *testing.T) {
+	suite.Run(t, new(MultiHostTestSuite))
 }
 
 // func StatusDebugLines() []string {
@@ -234,3 +260,22 @@ func charAt(s string, n int) string {
 	}
 	return fmt.Sprintf("%v", c)
 }
+
+		// {
+		// 	name:   "in debug mode also returns secondary call output",
+		// 	args:   doubledArgs([]string{"kosli", "status", "--debug"}),
+		// 	stdOut: StatusDebugLines(),
+		// 	err:    error(nil),
+		// },
+		// {
+		// 	name:   "--help prints output once",
+		// 	args:   doubledArgs([]string{"kosli", "status", "--help"}),
+		// 	stdOut: HelpStatusLines(),
+		// 	err:    error(nil),
+		// },
+		// {
+		// 	name:   "bad-flag never gets to call runMultiHost() because isMultiHost() returns false",
+		// 	args:   doubledArgs([]string{"kosli", "status", "--bad-flag"}),
+		// 	stdOut: BadFlagLines(),
+		// 	err:    error(nil),
+		// },
