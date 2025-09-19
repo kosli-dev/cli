@@ -3,9 +3,11 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -16,6 +18,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type jsonCheck struct {
+	Path string
+	Want interface{}
+}
+
 // cmdTestCase describes a cmd test case.
 type cmdTestCase struct {
 	name             string
@@ -23,6 +30,7 @@ type cmdTestCase struct {
 	golden           string
 	goldenFile       string
 	goldenRegex      string
+	goldenJSON       []jsonCheck
 	wantError        bool
 	additionalConfig interface{}
 }
@@ -82,6 +90,10 @@ func runTestCmd(t *testing.T, tests []cmdTestCase) {
 				}
 			} else if tt.goldenRegex != "" {
 				require.Regexp(t, tt.goldenRegex, out)
+			} else if len(tt.goldenJSON) > 0 {
+				for _, check := range tt.goldenJSON {
+					GoldenJSONContains(t, out, check.Path, check.Want)
+				}
 			}
 		})
 	}
@@ -92,6 +104,38 @@ func goldenPath(filename string) string {
 		return filename
 	}
 	return filepath.Join("testdata", filename)
+}
+
+func GoldenJSONContains(t *testing.T, output string, path string, want interface{}) {
+	var data interface{}
+	err := json.Unmarshal([]byte(output), &data)
+	require.NoError(t, err, "invalid JSON in command output")
+
+	current := data
+	segments := strings.Split(path, ".")
+	for _, seg := range segments {
+		if strings.HasPrefix(seg, "[") && strings.HasSuffix(seg, "]") {
+			// list index
+			idxStr := seg[1 : len(seg)-1]
+			idx, err := strconv.Atoi(idxStr)
+			require.NoError(t, err, "invalid array index in path: %s", seg)
+
+			list, ok := current.([]interface{})
+			require.True(t, ok, "expected array at %s", seg)
+			require.True(t, idx < len(list), "index %d out of range", idx)
+			current = list[idx]
+		} else {
+			// map lookup
+			m, ok := current.(map[string]interface{})
+			require.True(t, ok, "expected object at %s", seg)
+
+			val, exists := m[seg]
+			require.True(t, exists, "missing key %s", seg)
+			current = val
+		}
+	}
+
+	require.Equal(t, want, current, "unexpected value at path %s", path)
 }
 
 func compareTwoFiles(actualFilename, expectedFilename string) error {
