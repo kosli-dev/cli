@@ -27,18 +27,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func isDoubledHost() bool {
-	// Returns true iff the CLI execution is doubled-host, doubled-api-token
-	opts := getDoubledOpts()
-	return len(opts.hosts) == 2 && len(opts.apiTokens) == 2
+func isMultiHost() bool {
+	// Returns true iff the CLI execution is multi-host, multi-api-token
+	opts := getMultiOpts()
+	return len(opts.hosts) > 1 && len(opts.apiTokens) > 1 && len(opts.hosts) == len(opts.apiTokens)
 }
 
-func runDoubledHost(args []string) (string, error) {
-	// Calls "innerMain" twice:
+func runMultiHost(args []string) (string, error) {
+	// Calls "innerMain" at least twice:
 	//  - with the 0th host/api-token (primary)
-	//  - with the 1st host/api-token (subsidiary)
+	//  - with the n-th host/api-token (subsidiary)
 
-	opts := getDoubledOpts()
+	opts := getMultiOpts()
 
 	argsAppendHostApiTokenFlags := func(n int) []string {
 		// Return args appended with the [n]th host/api-token.
@@ -52,26 +52,30 @@ func runDoubledHost(args []string) (string, error) {
 	args0 := argsAppendHostApiTokenFlags(0)
 	output0, err0 := runBufferedInnerMain(args0)
 
-	args1 := argsAppendHostApiTokenFlags(1)
-	output1, err1 := runBufferedInnerMain(args1)
-
-	// Return subsidiary-call's output in debug mode only.
 	stdOut := output0
-	if opts.debug && output1 != "" {
-		stdOut += fmt.Sprintf("\n[debug] [%s]", opts.hosts[1])
-		stdOut += fmt.Sprintf("\n%s", output1)
-	}
-
-	// Make origin of subsidiary-call failure clear.
 	var errorMessage string
+
 	if err0 != nil {
 		errorMessage += err0.Error()
 	}
-	if err1 != nil {
-		errorMessage += fmt.Sprintf("\n[%s]", opts.hosts[1])
-		errorMessage += fmt.Sprintf("\n%s", err1.Error())
-	}
 
+	for i:=1; i < len(opts.hosts); i++ {
+		argsN := argsAppendHostApiTokenFlags(i)
+		outputN, errN := runBufferedInnerMain(argsN)
+
+		// Return subsidiary-call's output in debug mode only.
+		if opts.debug && outputN != "" {
+			stdOut += fmt.Sprintf("\n[debug] [%s]", opts.hosts[i])
+			stdOut += fmt.Sprintf("\n%s", outputN)
+		}
+
+		// Make origin of subsidiary-call failure clear.
+		if errN != nil {
+			errorMessage += fmt.Sprintf("\n[%s]", opts.hosts[i])
+			errorMessage += fmt.Sprintf("\n%s", errN.Error())
+		}
+	}
+	
 	var err error
 	if errorMessage != "" {
 		err = errors.New(errorMessage)
@@ -113,21 +117,21 @@ func runBufferedInnerMain(args []string) (string, error) {
 	return fmt.Sprint(&buffer), err
 }
 
-type DoubledOpts struct {
+type MultiOpts struct {
 	hosts     []string
 	apiTokens []string
 	debug     bool
 }
 
-func getDoubledOpts() DoubledOpts {
-	// Return a DoubledOpts struct with:
+func getMultiOpts() MultiOpts {
+	// Return a MultiOpts struct with:
 	//   - hosts set to H, split on comma, where H is the normal value of KOSLI_HOST/--host
 	//   - apiTokens set to A, split on comma, where A is the normal value of KOSLI_API_TOKEN/--api-token
 	//
-	// For any error, return DoubleOpts{} which will have
+	// For any error, return MultiOpts{} which will have
 	//   - hosts == nil, so len(hosts) == 0
 	//   - apiTokens == nil, so len(apiTokens) == 0
-	// so isDoubledHost() will return false.
+	// so isMultiHost() will return false.
 
 	// There is a logger.Error(..) call at the end of main. Restore it to
 	// the original global logger so the error messages actually appear.
@@ -142,7 +146,7 @@ func getDoubledOpts() DoubledOpts {
 	// Create a cmd object. Note: newRootCmd(out, args) does _not_ use its args parameter.
 	cmd, err := newRootCmd(logger.Out, logger.ErrOut, nil)
 	if err != nil {
-		return DoubledOpts{}
+		return MultiOpts{}
 	}
 
 	// Ensure cmd.Execute() prints nothing, even for a [kosli] call
@@ -170,10 +174,10 @@ func getDoubledOpts() DoubledOpts {
 		// Genuine error
 		// Eg kosli unknownCommand ...
 		// Eg kosli status --unknown-flag
-		return DoubledOpts{}
+		return MultiOpts{}
 	}
 
-	return DoubledOpts{
+	return MultiOpts{
 		hosts:     strings.Split(global.Host, ","),
 		apiTokens: strings.Split(global.ApiToken, ","),
 		debug:     global.Debug,
