@@ -59,7 +59,7 @@ func runMultiHost(args []string) (string, error) {
 		errorMessage += err0.Error()
 	}
 
-	for i:=1; i < len(opts.hosts); i++ {
+	for i := 1; i < len(opts.hosts); i++ {
 		argsN := argsAppendHostApiTokenFlags(i)
 		outputN, errN := runBufferedInnerMain(argsN)
 
@@ -75,7 +75,7 @@ func runMultiHost(args []string) (string, error) {
 			errorMessage += fmt.Sprintf("\n%s", errN.Error())
 		}
 	}
-	
+
 	var err error
 	if errorMessage != "" {
 		err = errors.New(errorMessage)
