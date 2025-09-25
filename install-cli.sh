@@ -62,7 +62,11 @@ fi
 
 # --- Download and Extract ---
 # The download is a .tar.gz file which needs to be extracted
-URL="https://github.com/kosli-dev/cli/releases/download/${VERSION}/kosli_${VERSION_FILENAME}_${CLI_OS}_${ARCH}.tar.gz"
+if [ "$CLI_OS" = "windows" ]; then
+    URL="https://github.com/kosli-dev/cli/releases/download/${VERSION}/kosli_${VERSION_FILENAME}_${CLI_OS}_${ARCH}.zip"
+else
+    URL="https://github.com/kosli-dev/cli/releases/download/${VERSION}/kosli_${VERSION_FILENAME}_${CLI_OS}_${ARCH}.tar.gz"
+fi
 echo "Downloading from: $URL"
 
 # Download and extract in one go
