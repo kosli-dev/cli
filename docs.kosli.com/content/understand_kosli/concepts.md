@@ -48,7 +48,10 @@ These artifacts play a crucial role in enabling **Binary Provenance**, providing
 
 ### ![icon](/images/diagram-elements/kosli-icon-round-attestations-2.png) Attestation
 
-An Attestation is a record of compliance checks or controls that have been performed a particular Artifact or Trail. It is normally reported after performing a specific risk control or quality check (e.g. running tests). The attestation encompasses the procedure's results.
+An Attestation are trusted and verifiable statements or metadata about a software artifact, compliance checks, or controls that have been performed in regards to a particular Artifact or Trail.
+It is normally reported after performing a specific event like risk control or quality check (e.g. running tests).
+
+The attestation encompasses the procedure's results, both in structured JSON data on its own, or as part of an attachment (See evidence vault).
 
 Kosli provides specific built-in types of attestations (e.g., a snyk scan, sonar scan, junit tests) and allows to define your own custom types with jq quering for compliance status, or generic ones that simply creates an attestation without evaluation.
 
@@ -64,7 +67,9 @@ Attestations can be connected either to the trail, or to a specific artifact.
 
 ### ![icon](/images/diagram-elements/kosli-icon-round-vault.png) Evidence Vault
 
-Attestations in Kosli have the capability to contain additional evidence files attached to them. This supporting evidence is securely stored within Kosli's evidence vault and is retrievable on demand.
+Attestations in Kosli have the capability to contain additional files attached to them.
+
+This supporting data is securely stored within Kosli's evidence vault and is retrievable on demand.
 
 ## ![icon](/images/diagram-elements/kosli-icon-round-package.png) Audit package
 
