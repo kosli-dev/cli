@@ -1,0 +1,41 @@
+name: Install Script Tests
+
+on:
+    push:
+        paths:
+            - 'install-cli.sh'
+            - '.github/workflows/install-script-tests.yaml'
+    pull_request:
+        paths:
+            - 'install-cli.sh'
+            - '.github/workflows/install-script-tests.yaml'
+
+jobs:
+    test-script:
+        name: Test Bash Script on ${{ matrix.os }}
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os: [ubuntu-latest, macos-latest, windows-latest]
+
+        steps:
+        - name: Checkout repository
+          uses: actions/checkout@v5
+
+        - name: Set up Bash on Windows
+          if: runner.os == 'Windows'
+          uses: msys2/setup-msys2@v2
+          with:
+            install: bash
+
+        - name: Run script on Linux/macOS
+          if: runner.os != 'Windows'
+          run: bash install-cli.sh
+
+        - name: Run script on Windows (MSYS2 Bash)
+          if: runner.os == 'Windows'
+          shell: msys2 {0}
+          run: bash install-cli.sh
+        
+        - name: Verify installation
+          run: kosli version
