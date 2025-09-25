@@ -61,18 +61,22 @@ else
 fi
 
 # --- Download and Extract ---
-# The download is a .tar.gz file which needs to be extracted
+# The download is a .tar.gz or .zip file which needs to be extracted
 if [ "$CLI_OS" = "windows" ]; then
     URL="https://github.com/kosli-dev/cli/releases/download/${VERSION}/kosli_${VERSION_FILENAME}_${CLI_OS}_${ARCH}.zip"
+    # Download and extract for Windows
+    if ! curl -L --fail "$URL" -o kosli.zip; then
+        echo "Error: Download failed. Please check the URL and your network connection."
+        exit 1
+    fi
+    unzip -o kosli.zip
 else
     URL="https://github.com/kosli-dev/cli/releases/download/${VERSION}/kosli_${VERSION_FILENAME}_${CLI_OS}_${ARCH}.tar.gz"
-fi
-echo "Downloading from: $URL"
-
-# Download and extract in one go
-if ! curl -L --fail "$URL" | tar zx; then
-    echo "Error: Download or extraction failed. Please check the URL and your network connection."
-    exit 1
+    # Download and extract for Linux and Darwin
+    if ! curl -L --fail "$URL" | tar zx; then
+        echo "Error: Download or extraction failed. Please check the URL and your network connection."
+        exit 1
+    fi
 fi
 
 # --- Installation ---
