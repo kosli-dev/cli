@@ -24,9 +24,9 @@ func init() {
 
 func main() {
 	var err error
-	if isDoubledHost() {
+	if isMultiHost() {
 		var output string
-		output, err = runDoubledHost(os.Args)
+		output, err = runMultiHost(os.Args)
 		fmt.Print(output)
 	} else {
 		var cmd *cobra.Command
