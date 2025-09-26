@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -45,6 +46,7 @@ type assertArtifactOptions struct {
 	fingerprint        string // This is calculated or provided by the user
 	flowName           string
 	envName            string
+	output             string
 }
 
 func newAssertArtifactCmd(out io.Writer) *cobra.Command {
@@ -75,6 +77,8 @@ func newAssertArtifactCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.fingerprint, "fingerprint", "F", "", fingerprintFlag)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVar(&o.envName, "environment", "", envNameFlag)
+	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
+
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
@@ -116,8 +120,16 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
+	return output.FormattedPrint(response.Body, o.output, out, 0,
+		map[string]output.FormatOutputFunc{
+			"table": printAssertAsTable,
+			"json":  output.PrintJson,
+		})
+}
+
+func printAssertAsTable(raw string, out io.Writer, page int) error {
 	var evaluationResult map[string]interface{}
-	err = json.Unmarshal([]byte(response.Body), &evaluationResult)
+	err := json.Unmarshal([]byte(raw), &evaluationResult)
 	if err != nil {
 		return err
 	}
@@ -137,7 +149,7 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 			if err != nil {
 				return fmt.Errorf("error marshalling evaluation result: %v", err)
 			}
-			return fmt.Errorf("not compliant for env [%s]: \n %v", o.envName,
+			return fmt.Errorf("not compliant for env [%s]: \n %v", evaluationResult["environment"].(string),
 				string(jsonData))
 		}
 	}

@@ -66,6 +66,14 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 			goldenRegex: "COMPLIANT\nSee more details at http://localhost:8001/docs-cmd-test-user/flows/assert-artifact/artifacts/fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02?(?:\\?artifact_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{8})?\n",
 		},
 		{
+			name: "json output of asserting an existing compliant artifact (using --artifact-type) results in OK and zero exit",
+			cmd:  fmt.Sprintf(`assert artifact %s --output json --artifact-type file --flow %s %s`, suite.artifactPath, suite.flowName, suite.defaultKosliArguments),
+			goldenJSON: []jsonCheck{
+				{"compliant", true},
+				{"scope", "flow"},
+			},
+		},
+		{
 			wantError: true,
 			name:      "not providing --fingerprint nor --artifact-type fails",
 			cmd:       fmt.Sprintf(`assert artifact --flow %s %s`, suite.flowName, suite.defaultKosliArguments),
