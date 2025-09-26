@@ -4,11 +4,11 @@ on:
     push:
         paths:
             - 'install-cli.sh'
-            - '.github/workflows/install-script-tests.yaml'
+            - '.github/workflows/install-script-tests.yml'
     pull_request:
         paths:
             - 'install-cli.sh'
-            - '.github/workflows/install-script-tests.yaml'
+            - '.github/workflows/install-script-tests.yml'
 
 jobs:
     test-script:
