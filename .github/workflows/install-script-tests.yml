@@ -22,20 +22,10 @@ jobs:
         - name: Checkout repository
           uses: actions/checkout@v5
 
-        - name: Set up Bash on Windows
-          if: runner.os == 'Windows'
-          uses: msys2/setup-msys2@v2
-          with:
-            install: bash
-
         - name: Run script on Linux/macOS
-          if: runner.os != 'Windows'
+          shell: bash
           run: bash install-cli.sh
 
-        - name: Run script on Windows (MSYS2 Bash)
-          if: runner.os == 'Windows'
-          shell: msys2 {0}
-          run: bash install-cli.sh
-        
         - name: Verify installation
+          shell: bash
           run: kosli version
