@@ -121,7 +121,6 @@ func (suite *MultiHostTestSuite) TestRunDoubledHost() {
 			stdOut: []string{"OK", ""},
 			err:    error(nil),
 		},
-		
 	} {
 		defer func(original []string) { os.Args = original }(os.Args)
 		os.Args = t.args
@@ -157,7 +156,6 @@ func (suite *MultiHostTestSuite) TestRunTripledHost() {
 			stdOut: []string{"OK", ""},
 			err:    error(nil),
 		},
-		
 	} {
 		defer func(original []string) { os.Args = original }(os.Args)
 		os.Args = t.args
@@ -261,21 +259,21 @@ func charAt(s string, n int) string {
 	return fmt.Sprintf("%v", c)
 }
 
-		// {
-		// 	name:   "in debug mode also returns secondary call output",
-		// 	args:   doubledArgs([]string{"kosli", "status", "--debug"}),
-		// 	stdOut: StatusDebugLines(),
-		// 	err:    error(nil),
-		// },
-		// {
-		// 	name:   "--help prints output once",
-		// 	args:   doubledArgs([]string{"kosli", "status", "--help"}),
-		// 	stdOut: HelpStatusLines(),
-		// 	err:    error(nil),
-		// },
-		// {
-		// 	name:   "bad-flag never gets to call runMultiHost() because isMultiHost() returns false",
-		// 	args:   doubledArgs([]string{"kosli", "status", "--bad-flag"}),
-		// 	stdOut: BadFlagLines(),
-		// 	err:    error(nil),
-		// },
+// {
+// 	name:   "in debug mode also returns secondary call output",
+// 	args:   doubledArgs([]string{"kosli", "status", "--debug"}),
+// 	stdOut: StatusDebugLines(),
+// 	err:    error(nil),
+// },
+// {
+// 	name:   "--help prints output once",
+// 	args:   doubledArgs([]string{"kosli", "status", "--help"}),
+// 	stdOut: HelpStatusLines(),
+// 	err:    error(nil),
+// },
+// {
+// 	name:   "bad-flag never gets to call runMultiHost() because isMultiHost() returns false",
+// 	args:   doubledArgs([]string{"kosli", "status", "--bad-flag"}),
+// 	stdOut: BadFlagLines(),
+// 	err:    error(nil),
+// },

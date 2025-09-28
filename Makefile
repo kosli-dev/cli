@@ -82,6 +82,19 @@ test_setup_restart_server: ensure_gotestsum
 	@test -f /tmp/server-image.txt || ./hack/get-server-image.sh /tmp/server-image.txt
 	export KOSLI_SERVER_IMAGE=$$(cat /tmp/server-image.txt) && ./bin/reset-or-start-server.sh force
 
+setup_test_to_use_local_image:
+	@echo merkely > /tmp/server-image.txt
+	@docker ps -aq | xargs -r docker rm -fv
+	@echo "Run make build in the server repo you want to use"
+	@echo "Then run make test_integration"
+	@echo "To look at the logs from local kosli server run: make follow_integration_test_server"
+
+setup_test_to_use_staging_server_image:
+	@rm /tmp/server-image.txt
+	@docker ps -aq | xargs -r docker rm -fv
+	@echo "Now run make test_integration"
+	@echo "To look at the logs from kosli server run: make follow_integration_test_server"
+
 test_integration: deps vet ensure_network test_setup ## Run tests except the too slow ones
 	@[ -e ~/.kosli.yml ] && mv ~/.kosli.yml ~/.kosli-renamed.yml || true
 	@export KOSLI_TESTS=true && $(GOTESTSUM) -- --short -p=8 -coverprofile=cover.out ./...
@@ -109,6 +122,12 @@ test_integration_single: test_setup
 
 test_docs: deps vet ensure_network test_setup
 	./bin/test_docs_cmds.sh docs.kosli.com/content/use_cases/simulating_a_devops_system/_index.md
+
+logs_integration_test_server:
+	@docker logs cli_kosli_server ${CONTAINER} 2>&1
+
+follow_integration_test_server:
+	@docker logs cli_kosli_server -f ${CONTAINER} 2>&1
 
 
 docker:
