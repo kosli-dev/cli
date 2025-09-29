@@ -9,6 +9,7 @@ on:
         paths:
             - 'install-cli.sh'
             - '.github/workflows/install-script-tests.yml'
+    workflow_dispatch:
 
 jobs:
     test-script:
