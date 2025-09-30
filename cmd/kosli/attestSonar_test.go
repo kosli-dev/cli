@@ -282,6 +282,6 @@ func (suite *AttestSonarQubeCommandTestSuite) TestAttestSonarQubeCmd() {
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestAttestSonarCommandTestSuite(t *testing.T) {
-	//suite.Run(t, new(AttestSonarCommandTestSuite)) // Commented out since they currently fail Tore Hagen 2025.09.30
+	suite.Run(t, new(AttestSonarCommandTestSuite))
 	suite.Run(t, new(AttestSonarQubeCommandTestSuite))
 }
