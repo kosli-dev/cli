@@ -1,5 +1,5 @@
 #!/bin/sh
-set -u
+set -eu
 
 # This script downloads the OS- and architecture-specific Kosli CLI binary,
 # extracts it, and moves the executable to a directory in your PATH.
@@ -111,4 +111,5 @@ done
 echo ""
 echo "Error: Could not install Kosli CLI."
 echo "Please move the '$FILE_NAME' executable manually to a directory in your \$PATH."
+echo "For example, you can run: sudo mv \"$FILE_NAME\" /usr/local/bin/"
 exit 1
