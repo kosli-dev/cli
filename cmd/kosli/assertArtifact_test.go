@@ -58,12 +58,12 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 		{
 			name:        "asserting an existing compliant artifact (using --fingerprint) results in OK and zero exit",
 			cmd:         fmt.Sprintf(`assert artifact --fingerprint %s --flow %s %s`, suite.fingerprint, suite.flowName, suite.defaultKosliArguments),
-			goldenRegex: "COMPLIANT\nSee more details at http://localhost:8001/docs-cmd-test-user/flows/assert-artifact/artifacts/fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02(?:\\?artifact_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{8})?\n",
+			goldenRegex: "COMPLIANT\nSee more details at http://localhost(:8001)?/docs-cmd-test-user/flows/assert-artifact/artifacts/fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02(?:\\?artifact_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{8})?\n",
 		},
 		{
 			name:        "asserting an existing compliant artifact (using --artifact-type) results in OK and zero exit",
 			cmd:         fmt.Sprintf(`assert artifact %s --artifact-type file --flow %s %s`, suite.artifactPath, suite.flowName, suite.defaultKosliArguments),
-			goldenRegex: "COMPLIANT\nSee more details at http://localhost:8001/docs-cmd-test-user/flows/assert-artifact/artifacts/fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02?(?:\\?artifact_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{8})?\n",
+			goldenRegex: "COMPLIANT\nSee more details at http://localhost(:8001)?/docs-cmd-test-user/flows/assert-artifact/artifacts/fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02?(?:\\?artifact_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{8})?\n",
 		},
 		{
 			wantError: true,
