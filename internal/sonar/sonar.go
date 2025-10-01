@@ -80,7 +80,8 @@ type Conditions struct {
 
 // These are the structs for the response from the ceTaskURL
 type TaskResponse struct {
-	Task Task `json:"task"`
+	Task   Task    `json:"task"`
+	Errors []Error `json:"errors,omitempty"`
 }
 type Task struct {
 	TaskID        string `json:"id"`
@@ -232,14 +233,13 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 		if err != nil {
 			return "", err
 		}
-
 		err = json.NewDecoder(taskResponse.Body).Decode(taskResponseData)
 		if err != nil {
 			return "", fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube")
 		}
-		// If the CETaskURL from the report-task.txt file gives a 404, the CE task does not exist.
-		if taskResponseData.Task.Status == "" {
-			return "", fmt.Errorf("analysis not found on %s. Snapshot may have been deleted by SonarQube", sonarResults.ServerUrl)
+		// If the CETaskURL from the report-task.txt file gives a 404, the CE task does not exist, or SonarQube is down.
+		if taskResponseData.Errors != nil {
+			return "", fmt.Errorf("%s on %s. \nSonarQube may be experiencing problems, please check https://status.sonarqube.com/ and try again later. \nOtherwise if you are attesting an older scan, the snapshot may have been deleted by SonarQube.", taskResponseData.Errors[0].Msg, sonarResults.ServerUrl)
 		}
 
 		if taskResponseData.Task.Status == "PENDING" || taskResponseData.Task.Status == "IN_PROGRESS" {
@@ -281,7 +281,7 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 	// This should only happen if the task is pending - either because the project is large and the scan takes a long time
 	// to process, or because SonarQube is experiencing delays for some reason.
 	if analysisId == "" {
-		return "", fmt.Errorf("analysis ID not found on %s. The scan results are not yet available, likely due to: \n1. Your project being particularly large and the scan taking time to process, or \n2. SonarQube is experiencing delays in processing scans. \nTry rerunning the command with the --max-wait flag.", sonarResults.ServerUrl)
+		return "", fmt.Errorf("analysis ID not found on %s. The scan results are not yet available, likely due to: \n1. Your project being particularly large and the scan taking time to process, or \n2. SonarQube experiencing delays in processing scans. \nTry rerunning the command with the --max-wait flag.", sonarResults.ServerUrl)
 	}
 
 	if project.Url == "" {
@@ -329,11 +329,11 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 	}
 
 	if projectAnalysesData.Errors != nil {
-		return "", fmt.Errorf("sonar error: %s", projectAnalysesData.Errors[0].Msg)
+		return "", fmt.Errorf("SonarQube error: %s", projectAnalysesData.Errors[0].Msg)
 	}
 
 	if sonarResults.AnalaysedAt == "" {
-		return "", fmt.Errorf("analysis for revision %s of project %s not found. Check the revision is correct. Snapshot may also have been deleted by SonarQube", revision, project.Key)
+		return "", fmt.Errorf("analysis for revision %s of project %s not found. Check the revision is correct. \nThe scan may still be being processed by SonarQube, try again later.\n Otherwise if you are attesting an older scan, the snapshot may also have been deleted by SonarQube", revision, project.Key)
 	}
 	projectAnalysesResponse.Body.Close()
 
@@ -367,6 +367,10 @@ func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *Son
 		}
 	}
 
+	if projectAnalysesData.Errors != nil {
+		return fmt.Errorf("SonarQube error: %s", projectAnalysesData.Errors[0].Msg)
+	}
+
 	if sonarResults.AnalaysedAt == "" {
 		return fmt.Errorf("analysis with ID %s not found on %s. Snapshot may have been deleted by SonarQube", analysisID, sonarResults.ServerUrl)
 	}
@@ -392,7 +396,7 @@ func GetQualityGate(httpClient *http.Client, sonarResults *SonarResults, quality
 	if err != nil {
 		return nil, err
 	} else if qualityGateData.Errors != nil {
-		return nil, fmt.Errorf("sonar error: %s", qualityGateData.Errors[0].Msg) //We should never reach this point, since incorrect/outdated task/analysis IDs etc. should already have raised errors
+		return nil, fmt.Errorf("SonarQube error: %s", qualityGateData.Errors[0].Msg) //We should never reach this point, since incorrect/outdated task/analysis IDs etc. should already have raised errors
 	} else {
 		qualityGate.Status = qualityGateData.ProjectStatus.Status
 		// The server expects an array of conditions if the Quality Gate exists, so if there are no conditions, we need to send an empty array
