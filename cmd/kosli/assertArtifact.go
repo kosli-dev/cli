@@ -177,7 +177,7 @@ func printAssertAsTable(raw string, out io.Writer, page int) error {
 					ruleEvaluation := item2.(map[string]interface{})
 					ignored := ruleEvaluation["ignored"].(bool)
 					satisfied, _ := ruleEvaluation["satisfied"].(bool)
-					if ignored == false && satisfied == false {
+					if !ignored && !satisfied {
 						rule := ruleEvaluation["rule"].(map[string]interface{})
 						resolutions := ruleEvaluation["resolutions"].([]interface{})
 						for _, item3 := range resolutions {
