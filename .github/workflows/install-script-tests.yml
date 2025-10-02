@@ -23,7 +23,7 @@ jobs:
         - name: Checkout repository
           uses: actions/checkout@v5
 
-        - name: Run script on Linux/macOS
+        - name: Run install scriptt
           shell: bash
           run: bash install-cli.sh
 
