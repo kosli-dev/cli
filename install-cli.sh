@@ -63,15 +63,17 @@ debug_print "Detecting OS and architecture"
 debug_print "uname -s output: $(uname -s)"
 debug_print "uname -m output: $(uname -m)"
 
-if uname -s | grep -q -E -i "(cygwin|mingw|msys|windows)"; then
+UNAME_S=$(uname -s)
+if echo "$UNAME_S" | grep -q -E -i "(cygwin|mingw|msys|windows)"; then
     CLI_OS="windows"
     ARCH="amd64"
     FILE_NAME="${FILE_NAME}.exe"
     debug_print "Detected Windows OS"
-elif uname -s | grep -q -i "darwin"; then
+elif echo "$UNAME_S" | grep -q -i "darwin"; then
     CLI_OS="darwin"
     debug_print "Detected Darwin/macOS"
-    if [ "$(uname -m)" = "arm64" ]; then
+    UNAME_M=$(uname -m)
+    if [ "$UNAME_M" = "arm64" ]; then
       ARCH="arm64"
       debug_print "Detected ARM64 architecture"
     else
@@ -135,16 +137,17 @@ fi
 echo "Installing Kosli CLI..."
 debug_print "Starting installation process"
 debug_print "Current PATH: $PATH"
-set -- "/usr/local/bin" "/usr/bin" "/opt/bin"
-while [ -n "$1" ]; do
-    debug_print "Checking directory: $1"
+
+# Check directories one by one instead of using set --
+for dir in "/usr/local/bin" "/usr/bin" "/opt/bin"; do
+    debug_print "Checking directory: $dir"
     # Check if destination directory exists and is in the PATH
-    if [ -d "$1" ] && echo "$PATH" | grep -q "$1"; then
-        debug_print "Directory $1 exists and is in PATH"
-        debug_print "Attempting to move $FILE_NAME to $1"
-        if mv "$FILE_NAME" "$1/"; then
+    if [ -d "$dir" ] && echo "$PATH" | grep -q "$dir"; then
+        debug_print "Directory $dir exists and is in PATH"
+        debug_print "Attempting to move $FILE_NAME to $dir"
+        if mv "$FILE_NAME" "$dir/"; then
             echo ""
-            echo "✅ Kosli CLI was successfully installed in $1"
+            echo "✅ Kosli CLI was successfully installed in $dir"
             echo "Running 'kosli version' to verify:"
             debug_print "Installation successful, running version check"
             kosli version
@@ -152,22 +155,21 @@ while [ -n "$1" ]; do
         else
             echo ""
             echo "Attempting to install with sudo..."
-            echo "We'd like to install the Kosli CLI executable in '$1'. Please enter your password if prompted."
+            echo "We'd like to install the Kosli CLI executable in '$dir'. Please enter your password if prompted."
             debug_print "Regular move failed, trying with sudo"
-            if sudo mv "$FILE_NAME" "$1/"; then
+            if sudo mv "$FILE_NAME" "$dir/"; then
                 echo ""
-                echo "✅ Kosli CLI was successfully installed in $1"
+                echo "✅ Kosli CLI was successfully installed in $dir"
                 echo "Running 'kosli version' to verify:"
                 debug_print "Sudo installation successful, running version check"
                 kosli version
                 exit 0
             fi
-            debug_print "Sudo move also failed for $1"
+            debug_print "Sudo move also failed for $dir"
         fi
     else
-        debug_print "Directory $1 either doesn't exist or is not in PATH"
+        debug_print "Directory $dir either doesn't exist or is not in PATH"
     fi
-    shift
 done
 
 debug_print "All installation attempts failed"
