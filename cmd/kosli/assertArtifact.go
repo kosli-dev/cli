@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -45,6 +46,7 @@ type assertArtifactOptions struct {
 	fingerprint        string // This is calculated or provided by the user
 	flowName           string
 	envName            string
+	output             string
 }
 
 func newAssertArtifactCmd(out io.Writer) *cobra.Command {
@@ -75,6 +77,8 @@ func newAssertArtifactCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.fingerprint, "fingerprint", "F", "", fingerprintFlag)
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVar(&o.envName, "environment", "", envNameFlag)
+	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
+
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
 
@@ -116,31 +120,92 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
+	return output.FormattedPrint(response.Body, o.output, out, 0,
+		map[string]output.FormatOutputFunc{
+			"table": printAssertAsTable,
+			"json":  output.PrintJson,
+		})
+}
+
+func printAssertAsTable(raw string, out io.Writer, page int) error {
 	var evaluationResult map[string]interface{}
-	err = json.Unmarshal([]byte(response.Body), &evaluationResult)
+	err := json.Unmarshal([]byte(raw), &evaluationResult)
 	if err != nil {
 		return err
 	}
 
+	flow, _ := evaluationResult["flow"].(string)
+	trail, _ := evaluationResult["trail"].(string)
 	scope := evaluationResult["scope"].(string)
+	complianceStatus, _ := evaluationResult["compliance_status"].(map[string]interface{})
+	attestationsStatuses, _ := complianceStatus["attestations_statuses"].([]interface{})
 
 	if evaluationResult["compliant"].(bool) {
 		logger.Info("COMPLIANT")
-		if scope == "flow" {
-			logger.Info("See more details at %s", evaluationResult["html_url"].(string))
-		}
 	} else {
-		if scope == "flow" {
-			return fmt.Errorf("not compliant\nSee more details at %s", evaluationResult["html_url"].(string))
-		} else {
-			jsonData, err := json.MarshalIndent(evaluationResult["policy_evaluations"], "", "  ")
-			if err != nil {
-				return fmt.Errorf("error marshalling evaluation result: %v", err)
+		logger.Info("Error: NON-COMPLIANT")
+	}
+	logger.Info("Flow: %v\nTrail %v", flow, trail)
+	logger.Info("%-32v %-30v %-15v %-10v", "Attestation-name", "type", "status", "compliant")
+
+	for _, item := range attestationsStatuses {
+		attestation := item.(map[string]interface{})
+		name := attestation["attestation_name"]
+		attType := attestation["attestation_type"]
+		status := attestation["status"]
+		isCompliant, _ := attestation["is_compliant"].(bool)
+		unexpected, _ := attestation["unexpected"].(bool)
+		unexpectedStr := ""
+		if unexpected {
+			unexpectedStr = "unexpected"
+		}
+
+		logger.Info("  %-32v %-30v %-15v %-10v %-10v", name, attType, status, isCompliant, unexpectedStr)
+	}
+	if scope == "environment" {
+		logger.Info("%-32v %-30v", "Policy-name", "status")
+		policyEvaluations := evaluationResult["policy_evaluations"].([]interface{})
+		for _, item := range policyEvaluations {
+			policyEvaluation := item.(map[string]interface{})
+			policyName := policyEvaluation["policy_name"]
+			policyStatus := policyEvaluation["status"]
+			logger.Info("  %-32v %-30v", policyName, policyStatus)
+			if policyStatus != "COMPLIANT" {
+				ruleEvaluations := policyEvaluation["rule_evaluations"].([]interface{})
+				var failures []string
+				for _, item2 := range ruleEvaluations {
+					ruleEvaluation := item2.(map[string]interface{})
+					ignored := ruleEvaluation["ignored"].(bool)
+					satisfied, _ := ruleEvaluation["satisfied"].(bool)
+					if !ignored && !satisfied {
+						rule := ruleEvaluation["rule"].(map[string]interface{})
+						resolutions := ruleEvaluation["resolutions"].([]interface{})
+						for _, item3 := range resolutions {
+							resolution := item3.(map[string]interface{})
+							resolutionType := resolution["type"].(string)
+							ruleDefinition := rule["definition"].(map[string]interface{})
+							attestationName := ruleDefinition["name"]
+							attestationType := ruleDefinition["type"]
+							switch resolutionType {
+							case "legacy_flow":
+								failures = append(failures, "artifact comes from a legacy flow and does not have the new attestations")
+							case "missing_attestation":
+								failures = append(failures, fmt.Sprintf("artifact is missing required '%v' (type: %v) attestation in trail", attestationName, attestationType))
+							case "non_compliant_attestation":
+								failures = append(failures, fmt.Sprintf("attestation '%v' is non-compliant in trail", attestationName))
+							case "non_compliant_in_trail":
+								failures = append(failures, "artifact is not compliant in trail")
+							}
+						}
+					}
+				}
+				for _, fail := range failures {
+					logger.Info("    %v", fail)
+				}
 			}
-			return fmt.Errorf("not compliant for env [%s]: \n %v", o.envName,
-				string(jsonData))
 		}
 	}
+	logger.Info("\nSee more details at %s", evaluationResult["html_url"].(string))
 
 	return nil
 }

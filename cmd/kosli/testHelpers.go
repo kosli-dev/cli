@@ -164,6 +164,7 @@ func goldenJsonContains(t *testing.T, output string, path string, want interface
 
 	require.Equal(t, want, current, "unexpected value at path %s", path)
 }
+
 func compareTwoFiles(actualFilename, expectedFilename string) error {
 	actual, err := os.ReadFile(actualFilename)
 	if err != nil {
