@@ -50,14 +50,14 @@ func (suite *ListAttestationTypesCommandTestSuite) TestListAttestationTypesCmd()
 			golden: "No attestation types were found.\n",
 		},
 		{
-			name:   "listing custom attestation types with --output json works when some exist",
-			cmd:    fmt.Sprintf(`list attestation-types --output json %s`, suite.defaultKosliArguments),
-			golden: "",
+			name:       "listing custom attestation types with --output json works when some exist",
+			cmd:        fmt.Sprintf(`list attestation-types --output json %s`, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"", "non-empty"}},
 		},
 		{
-			name:   "listing custom attestation types with --output json works when there are none",
-			cmd:    fmt.Sprintf(`list attestation-types --output json %s`, suite.acmeOrgKosliArguments),
-			golden: "[]\n",
+			name:       "listing custom attestation types with --output json works when there are none",
+			cmd:        fmt.Sprintf(`list attestation-types --output json %s`, suite.acmeOrgKosliArguments),
+			goldenJson: []jsonCheck{{"", "[]"}},
 		},
 		{
 			wantError: true,

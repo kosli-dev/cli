@@ -3,9 +3,11 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -16,6 +18,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type jsonCheck struct {
+	Path string
+	Want interface{}
+}
+
 // cmdTestCase describes a cmd test case.
 type cmdTestCase struct {
 	name             string
@@ -23,6 +30,7 @@ type cmdTestCase struct {
 	golden           string
 	goldenFile       string
 	goldenRegex      string
+	goldenJson       []jsonCheck // Use like this for array {"[0].compliant", false}
 	wantError        bool
 	additionalConfig interface{}
 }
@@ -82,6 +90,10 @@ func runTestCmd(t *testing.T, tests []cmdTestCase) {
 				}
 			} else if tt.goldenRegex != "" {
 				require.Regexp(t, tt.goldenRegex, out)
+			} else if len(tt.goldenJson) > 0 {
+				for _, check := range tt.goldenJson {
+					goldenJsonContains(t, out, check.Path, check.Want)
+				}
 			}
 		})
 	}
@@ -94,6 +106,64 @@ func goldenPath(filename string) string {
 	return filepath.Join("testdata", filename)
 }
 
+func goldenJsonContains(t *testing.T, output string, path string, want interface{}) {
+	var data interface{}
+	err := json.Unmarshal([]byte(output), &data)
+	require.NoError(t, err, "invalid JSON in command output")
+
+	// Handle empty path - check root value directly
+	if path == "" {
+		// Special case: check for empty array
+		if want == "[]" || want == "empty" {
+			list, ok := data.([]interface{})
+			require.True(t, ok, "expected array at root")
+			require.Equal(t, 0, len(list), "expected empty array")
+			return
+		}
+		// Special case: check for non-empty array
+		if want == "non-empty" {
+			list, ok := data.([]interface{})
+			require.True(t, ok, "expected array at root")
+			require.Greater(t, len(list), 0, "expected non-empty array")
+			return
+		}
+		// Special case: check for empty object
+		if want == "{}" {
+			obj, ok := data.(map[string]interface{})
+			require.True(t, ok, "expected object at root")
+			require.Equal(t, 0, len(obj), "expected empty object")
+			return
+		}
+		require.Equal(t, want, data, "unexpected value at root")
+		return
+	}
+
+	current := data
+	segments := strings.Split(path, ".")
+	for _, seg := range segments {
+		if strings.HasPrefix(seg, "[") && strings.HasSuffix(seg, "]") {
+			// list index
+			idxStr := seg[1 : len(seg)-1]
+			idx, err := strconv.Atoi(idxStr)
+			require.NoError(t, err, "invalid array index in path: %s", seg)
+
+			list, ok := current.([]interface{})
+			require.True(t, ok, "expected array at %s", seg)
+			require.True(t, idx < len(list), "index %d out of range", idx)
+			current = list[idx]
+		} else {
+			// map lookup
+			m, ok := current.(map[string]interface{})
+			require.True(t, ok, "expected object at %s", seg)
+
+			val, exists := m[seg]
+			require.True(t, exists, "missing key %s", seg)
+			current = val
+		}
+	}
+
+	require.Equal(t, want, current, "unexpected value at path %s", path)
+}
 func compareTwoFiles(actualFilename, expectedFilename string) error {
 	actual, err := os.ReadFile(actualFilename)
 	if err != nil {
@@ -266,7 +336,7 @@ func CreateArtifact(flowName, artifactFingerprint, artifactName string, t *testi
 		payload: ArtifactPayload{
 			Fingerprint: artifactFingerprint,
 			GitCommit:   "0fc1ba9876f91b215679f3649b8668085d820ab5",
-			BuildUrl:    "www.yr.no",
+			BuildUrl:    "https://www.yr.no",
 			CommitUrl:   "https://www.nrk.no",
 		},
 	}
@@ -287,7 +357,7 @@ func CreateArtifactOnTrail(flowName, trailName, stepName, artifactFingerprint, a
 		payload: AttestArtifactPayload{
 			Fingerprint: artifactFingerprint,
 			GitCommit:   "0fc1ba9876f91b215679f3649b8668085d820ab5",
-			BuildUrl:    "www.yr.no",
+			BuildUrl:    "https://www.yr.no",
 			CommitUrl:   "https://www.nrk.no",
 			TrailName:   trailName,
 			Name:        stepName,
@@ -310,7 +380,7 @@ func CreateArtifactWithCommit(flowName, artifactFingerprint, artifactName string
 		payload: ArtifactPayload{
 			Fingerprint: artifactFingerprint,
 			GitCommit:   gitCommit,
-			BuildUrl:    "www.yr.no",
+			BuildUrl:    "https://www.yr.no",
 			CommitUrl:   "https://www.nrk.no",
 		},
 	}
