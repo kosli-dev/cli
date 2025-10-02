@@ -23,9 +23,9 @@ jobs:
         - name: Checkout repository
           uses: actions/checkout@v5
 
-        - name: Run install scriptt
+        - name: Run install script
           shell: bash
-          run: bash install-cli.sh
+          run: bash install-cli.sh --debug
 
         - name: Verify installation
           shell: bash
