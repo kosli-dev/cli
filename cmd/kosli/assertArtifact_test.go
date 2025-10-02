@@ -15,6 +15,7 @@ type AssertArtifactCommandTestSuite struct {
 	suite.Suite
 	defaultKosliArguments string
 	flowName              string
+	envName               string
 	artifactName          string
 	artifactPath          string
 	fingerprint           string
@@ -22,6 +23,7 @@ type AssertArtifactCommandTestSuite struct {
 
 func (suite *AssertArtifactCommandTestSuite) SetupTest() {
 	suite.flowName = "assert-artifact"
+	suite.envName = "assert-artifact-environment"
 	suite.artifactName = "arti"
 	suite.artifactPath = "testdata/folder1/hello.txt"
 	global = &GlobalOpts{
@@ -35,6 +37,7 @@ func (suite *AssertArtifactCommandTestSuite) SetupTest() {
 	fingerprintOptions := &fingerprintOptions{
 		artifactType: "file",
 	}
+	CreateEnv(global.Org, suite.envName, "server", suite.Suite.T())
 	var err error
 	suite.fingerprint, err = GetSha256Digest(suite.artifactPath, fingerprintOptions, logger)
 	require.NoError(suite.Suite.T(), err)
@@ -58,7 +61,12 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 		{
 			name:        "asserting an existing compliant artifact (using --fingerprint) results in OK and zero exit",
 			cmd:         fmt.Sprintf(`assert artifact --fingerprint %s --flow %s %s`, suite.fingerprint, suite.flowName, suite.defaultKosliArguments),
-			goldenRegex: "(?s)^COMPLIANT\n.*See more details at http://localhost(:8001)?/docs-cmd-test-user/flows/assert-artifact/artifacts/fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02(?:\\?artifact_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{8})?\n",
+			goldenRegex: "(?s)^COMPLIANT\n.*Attestation-name.*See more details at http://localhost(:8001)?/docs-cmd-test-user/flows/assert-artifact/artifacts/fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02(?:\\?artifact_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{8})?\n",
+		},
+		{
+			name:        "asserting an existing compliant artifact (using --fingerprint) for an environment results in OK and zero exit",
+			cmd:         fmt.Sprintf(`assert artifact --fingerprint %s --flow %s --environment %s %s`, suite.fingerprint, suite.flowName, suite.envName, suite.defaultKosliArguments),
+			goldenRegex: "(?s)^COMPLIANT\n.*Attestation-name.*Policy-name.*See more details at http://localhost(:8001)?/docs-cmd-test-user/flows/assert-artifact/artifacts/fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02(?:\\?artifact_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{8})?\n",
 		},
 		{
 			name:        "asserting an existing compliant artifact (using --artifact-type) results in OK and zero exit",
