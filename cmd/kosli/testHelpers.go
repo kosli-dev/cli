@@ -266,7 +266,7 @@ func CreateArtifact(flowName, artifactFingerprint, artifactName string, t *testi
 		payload: ArtifactPayload{
 			Fingerprint: artifactFingerprint,
 			GitCommit:   "0fc1ba9876f91b215679f3649b8668085d820ab5",
-			BuildUrl:    "www.yr.no",
+			BuildUrl:    "https://www.yr.no",
 			CommitUrl:   "https://www.nrk.no",
 		},
 	}
@@ -287,7 +287,7 @@ func CreateArtifactOnTrail(flowName, trailName, stepName, artifactFingerprint, a
 		payload: AttestArtifactPayload{
 			Fingerprint: artifactFingerprint,
 			GitCommit:   "0fc1ba9876f91b215679f3649b8668085d820ab5",
-			BuildUrl:    "www.yr.no",
+			BuildUrl:    "https://www.yr.no",
 			CommitUrl:   "https://www.nrk.no",
 			TrailName:   trailName,
 			Name:        stepName,
@@ -310,7 +310,7 @@ func CreateArtifactWithCommit(flowName, artifactFingerprint, artifactName string
 		payload: ArtifactPayload{
 			Fingerprint: artifactFingerprint,
 			GitCommit:   gitCommit,
-			BuildUrl:    "www.yr.no",
+			BuildUrl:    "https://www.yr.no",
 			CommitUrl:   "https://www.nrk.no",
 		},
 	}

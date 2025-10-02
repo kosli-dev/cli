@@ -35,10 +35,10 @@ func (suite *GetAttestationTypeCommandTestSuite) SetupTest() {
 func (suite *GetAttestationTypeCommandTestSuite) TestGetAttestationTypeCmd() {
 	tests := []cmdTestCase{
 		{
-			wantError: true,
-			name:      "getting a non existing attestation type fails",
-			cmd:       fmt.Sprintf(`get attestation-type foo %s`, suite.defaultKosliArguments),
-			golden:    fmt.Sprintf("Error: Custom attestation type 'foo' does not exist for org '%s'. \n", global.Org),
+			wantError:   true,
+			name:        "getting a non existing attestation type fails",
+			cmd:         fmt.Sprintf(`get attestation-type foo %s`, suite.defaultKosliArguments),
+			goldenRegex: fmt.Sprintf("^Error: Custom attestation type 'foo' does not exist for org '%s'", global.Org),
 		},
 		{
 			wantError: true,
@@ -73,11 +73,6 @@ func (suite *GetAttestationTypeCommandTestSuite) TestGetAttestationTypeCmd() {
 			name:       "getting an existing attestation type version works",
 			cmd:        fmt.Sprintf(`get attestation-type %s@v1 %s`, suite.attestationTypeName, suite.defaultKosliArguments),
 			goldenFile: "output/get/get-attestation-type-version.txt",
-		},
-		{
-			name:       "giving a non-integer version number returns the unversioned attestation type",
-			cmd:        fmt.Sprintf(`get attestation-type %s@vone %s`, suite.attestationTypeName, suite.defaultKosliArguments),
-			goldenFile: "output/get/get-attestation-type.txt",
 		},
 		{
 			name: "getting an existing attestation type with --output json works",

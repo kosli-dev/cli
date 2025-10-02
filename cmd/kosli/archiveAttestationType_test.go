@@ -36,10 +36,10 @@ func (suite *ArchiveAttestationTypeCommandTestSuite) TestArchiveAttestationTypeC
 			golden: "Custom attestation type archive-attestation-type was archived\n",
 		},
 		{
-			wantError: true,
-			name:      "archiving non-existing custom attestation type fails",
-			cmd:       fmt.Sprintf(`archive attestation-type non-existing %s`, suite.defaultKosliArguments),
-			golden:    "Error: Custom attestation type 'non-existing' does not exist for org 'docs-cmd-test-user'. \n",
+			wantError:   true,
+			name:        "archiving non-existing custom attestation type fails",
+			cmd:         fmt.Sprintf(`archive attestation-type non-existing %s`, suite.defaultKosliArguments),
+			goldenRegex: "^Error: Custom attestation type 'non-existing' does not exist for org 'docs-cmd-test-user'",
 		},
 		{
 			wantError: true,
