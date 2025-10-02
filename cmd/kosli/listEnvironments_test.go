@@ -41,14 +41,14 @@ func (suite *ListEnvironmentsCommandTestSuite) TestListEnvironmentsCmd() {
 			golden: "No environments were found.\n",
 		},
 		{
-			name:   "listing environments with --output json works when there are envs",
-			cmd:    fmt.Sprintf(`list environments --output json %s`, suite.defaultKosliArguments),
-			golden: "",
+			name:       "listing environments with --output json works when there are envs",
+			cmd:        fmt.Sprintf(`list environments --output json %s`, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"", "non-empty"}},
 		},
 		{
-			name:   "listing environments with --output json works when there are no envs",
-			cmd:    fmt.Sprintf(`list environments --output json %s`, suite.acmeOrgKosliArguments),
-			golden: "[]\n",
+			name:       "listing environments with --output json works when there are no envs",
+			cmd:        fmt.Sprintf(`list environments --output json %s`, suite.acmeOrgKosliArguments),
+			goldenJson: []jsonCheck{{"", "[]"}},
 		},
 		{
 			wantError: true,

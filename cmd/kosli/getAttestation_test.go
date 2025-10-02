@@ -57,10 +57,10 @@ func (suite *GetAttestationCommandTestSuite) TestGetAttestationCmd() {
 			golden:    "No attestations found.\n",
 		},
 		{
-			wantError: false,
-			name:      "if no attestation found return empty list in json format",
-			cmd:       fmt.Sprintf(`get attestation non-existent-attestation --flow %s --trail %s %s --output json`, suite.flowName, suite.trailName, suite.defaultKosliArguments),
-			golden:    "[]\n",
+			wantError:  false,
+			name:       "if no attestation found return empty list in json format",
+			cmd:        fmt.Sprintf(`get attestation non-existent-attestation --flow %s --trail %s %s --output json`, suite.flowName, suite.trailName, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"", "[]"}},
 		},
 		{
 			wantError: true,
@@ -85,16 +85,18 @@ func (suite *GetAttestationCommandTestSuite) TestGetAttestationCmd() {
 			cmd:  fmt.Sprintf(`get attestation first-trail-attestation --flow %s --trail %s %s`, suite.flowName, suite.trailName, suite.defaultKosliArguments),
 		},
 		{
-			name: "getting an existing trail attestation with --output json works",
-			cmd:  fmt.Sprintf(`get attestation first-trail-attestation --flow %s --trail %s --output json %s`, suite.flowName, suite.trailName, suite.defaultKosliArguments),
+			name:       "getting an existing trail attestation with --output json works",
+			cmd:        fmt.Sprintf(`get attestation first-trail-attestation --flow %s --trail %s --output json %s`, suite.flowName, suite.trailName, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"", "non-empty"}},
 		},
 		{
 			name: "getting an existing artifact attestation works",
 			cmd:  fmt.Sprintf(`get attestation first-artifact-attestation --flow %s --fingerprint %s %s`, suite.flowName, suite.fingerprint, suite.defaultKosliArguments),
 		},
 		{
-			name: "getting an existing artifact attestation with --output json works",
-			cmd:  fmt.Sprintf(`get attestation first-artifact-attestation --flow %s --fingerprint %s --output json %s`, suite.flowName, suite.fingerprint, suite.defaultKosliArguments),
+			name:       "getting an existing artifact attestation with --output json works",
+			cmd:        fmt.Sprintf(`get attestation first-artifact-attestation --flow %s --fingerprint %s --output json %s`, suite.flowName, suite.fingerprint, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"", "non-empty"}},
 		},
 		{
 			wantError: true,

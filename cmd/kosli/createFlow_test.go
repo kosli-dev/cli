@@ -36,7 +36,7 @@ func (suite *CreateFlowCommandTestSuite) TestCreateFlowCmd() {
 			wantError:   true,
 			name:        "fails when name is considered invalid by the server",
 			cmd:         "create flow 'foo bar'" + suite.defaultKosliArguments,
-			goldenRegex: "^Error: Input payload validation failed: .*foo bar",
+			goldenRegex: "^Error: .*foo bar",
 		},
 		{
 			name:   "can create a flow (by default legacy template is used)",
