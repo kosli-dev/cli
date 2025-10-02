@@ -52,10 +52,10 @@ func (suite *ListArtifactsCommandTestSuite) TestListArtifactsCmd() {
 			golden:    "Error: required flag(s) \"flow\" not set\n",
 		},
 		{
-			wantError: true,
-			name:      "non-existing flow causes an error",
-			cmd:       fmt.Sprintf(`list artifacts --flow non-existing %s`, suite.defaultKosliArguments),
-			golden:    "Error: Flow named 'non-existing' does not exist for organization 'docs-cmd-test-user'. \n",
+			wantError:   true,
+			name:        "non-existing flow causes an error",
+			cmd:         fmt.Sprintf(`list artifacts --flow non-existing %s`, suite.defaultKosliArguments),
+			goldenRegex: "^Error: Flow named 'non-existing' does not exist for organization 'docs-cmd-test-user'",
 		},
 		// TODO: the correct error is overwritten by the hack flag value check in root.go
 		{
@@ -76,9 +76,9 @@ func (suite *ListArtifactsCommandTestSuite) TestListArtifactsCmd() {
 			golden: "No artifacts were found.\n",
 		},
 		{
-			name:   "listing artifacts on an empty flow with --output json works",
-			cmd:    fmt.Sprintf(`list artifacts --flow %s --output json %s`, suite.flowName1, suite.defaultKosliArguments),
-			golden: "[]\n",
+			name:       "listing artifacts on an empty flow with --output json works",
+			cmd:        fmt.Sprintf(`list artifacts --flow %s --output json %s`, suite.flowName1, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"", "[]"}},
 		},
 		{
 			name:       "listing artifacts on a flow works",

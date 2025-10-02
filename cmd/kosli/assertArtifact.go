@@ -134,11 +134,11 @@ func printAssertAsTable(raw string, out io.Writer, page int) error {
 		return err
 	}
 
-	flow := evaluationResult["flow"].(string)
-	trail := evaluationResult["trail"].(string)
+	flow, _ := evaluationResult["flow"].(string)
+	trail, _ := evaluationResult["trail"].(string)
 	scope := evaluationResult["scope"].(string)
-	complianceStatus := evaluationResult["compliance_status"].(map[string]interface{})
-	attestationsStatuses := complianceStatus["attestations_statuses"].([]interface{})
+	complianceStatus, _ := evaluationResult["compliance_status"].(map[string]interface{})
+	attestationsStatuses, _ := complianceStatus["attestations_statuses"].([]interface{})
 
 	if evaluationResult["compliant"].(bool) {
 		logger.Info("COMPLIANT")

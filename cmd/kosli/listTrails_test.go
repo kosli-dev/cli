@@ -48,14 +48,14 @@ func (suite *ListTrailsCommandTestSuite) TestListTrailsCmd() {
 			golden: "No trails were found.\n",
 		},
 		{
-			name:   "listing trails with --output json works when there are trails",
-			cmd:    fmt.Sprintf(`list trails --output json %s`, suite.defaultKosliArguments),
-			golden: "",
+			name:       "listing trails with --output json works when there are trails",
+			cmd:        fmt.Sprintf(`list trails --output json %s`, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"", "non-empty"}},
 		},
 		{
-			name:   "listing trails with --output json works when there are no trails",
-			cmd:    fmt.Sprintf(`list trails --output json %s`, suite.acmeOrgKosliArguments),
-			golden: "[]\n",
+			name:       "listing trails with --output json works when there are no trails",
+			cmd:        fmt.Sprintf(`list trails --output json %s`, suite.acmeOrgKosliArguments),
+			goldenJson: []jsonCheck{{"", "[]"}},
 		},
 		{
 			wantError: true,

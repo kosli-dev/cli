@@ -77,9 +77,9 @@ func (suite *ListApprovalsCommandTestSuite) TestListApprovalsCmd() {
 			golden: "No approvals were found.\n",
 		},
 		{
-			name:   "listing approvals on an empty flow with --output json works",
-			cmd:    fmt.Sprintf(`list approvals --flow %s --output json %s`, suite.flowName1, suite.defaultKosliArguments),
-			golden: "[]\n",
+			name:       "listing approvals on an empty flow with --output json works",
+			cmd:        fmt.Sprintf(`list approvals --flow %s --output json %s`, suite.flowName1, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"", "[]"}},
 		},
 		{
 			name:       "listing approvals on a flow works",

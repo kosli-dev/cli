@@ -129,6 +129,8 @@ logs_integration_test_server:
 follow_integration_test_server:
 	@docker logs cli_kosli_server -f ${CONTAINER} 2>&1
 
+enter_integration_test_server:
+	@docker exec -it --workdir / cli_kosli_server bash
 
 docker:
 	@docker build -t kosli-cli .

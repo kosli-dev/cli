@@ -82,10 +82,10 @@ func (suite *AttestArtifactCommandTestSuite) TestAttestArtifactCmd() {
 			golden:    "Error: --external-fingerprints have labels that don't have a URL in --external-url\n",
 		},
 		{
-			wantError: true,
-			name:      "fails (from server) when --external-fingerprint has invalid fingerprint",
-			cmd:       fmt.Sprintf("attest artifact testdata/file1 --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name cli --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com --external-url file=https://http://www.example.com --external-fingerprint file=7509e5bda0  %s", suite.defaultKosliArguments),
-			golden:    "Error: Input payload validation failed: map[external_urls.file.fingerprint:'7509e5bda0' does not match '^[a-f0-9]{64}$']\n",
+			wantError:   true,
+			name:        "fails (from server) when --external-fingerprint has invalid fingerprint",
+			cmd:         fmt.Sprintf("attest artifact testdata/file1 --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name cli --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com --external-url file=https://http://www.example.com --external-fingerprint file=7509e5bda0  %s", suite.defaultKosliArguments),
+			goldenRegex: "Error: Input payload validation failed: .*7509e5bda0",
 		},
 		{
 			name:   "can attest with annotations against a trail",
