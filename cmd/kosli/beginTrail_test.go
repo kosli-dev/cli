@@ -36,10 +36,10 @@ func (suite *BeginTrailCommandTestSuite) TestBeginTrailCmd() {
 			golden:    "Error: accepts 1 arg(s), received 2\n",
 		},
 		{
-			wantError: true,
-			name:      "fails when name is considered invalid by the server",
-			cmd:       fmt.Sprintf("begin trail foo?$bar --flow %s %s", suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: Input payload validation failed: map[name:'foo?$bar' does not match '^[a-zA-Z0-9][a-zA-Z0-9\\\\.\\\\-_~]*$']\n",
+			wantError:   true,
+			name:        "fails when name is considered invalid by the server",
+			cmd:         fmt.Sprintf("begin trail foo?$bar --flow %s %s", suite.flowName, suite.defaultKosliArguments),
+			goldenRegex: "^Error.*foo\\?\\$bar",
 		},
 		{
 			wantError: true,

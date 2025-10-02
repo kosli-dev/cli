@@ -42,13 +42,14 @@ func (suite *ListPoliciesCommandTestSuite) TestListPoliciesCmd() {
 			golden: "No environment policies were found.\n",
 		},
 		{
-			name: "listing policies with --output json works when there are envs",
-			cmd:  fmt.Sprintf(`list policies --output json %s`, suite.defaultKosliArguments),
+			name:       "listing policies with --output json works when there are polices",
+			cmd:        fmt.Sprintf(`list policies --output json %s`, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"", "non-empty"}},
 		},
 		{
-			name:   "listing policies with --output json works when there are no envs",
-			cmd:    fmt.Sprintf(`list policies --output json %s`, suite.acmeOrgKosliArguments),
-			golden: "[]\n",
+			name:       "listing policies with --output json works when there are no polices",
+			cmd:        fmt.Sprintf(`list policies --output json %s`, suite.acmeOrgKosliArguments),
+			goldenJson: []jsonCheck{{"", "[]"}},
 		},
 		{
 			wantError: true,

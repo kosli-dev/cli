@@ -42,14 +42,14 @@ func (suite *ListFlowsCommandTestSuite) TestListFlowsCmd() {
 			golden: "No flows were found.\n",
 		},
 		{
-			name:   "listing flows with --output json works when there are flows",
-			cmd:    fmt.Sprintf(`list flows --output json %s`, suite.defaultKosliArguments),
-			golden: "", // some flows exist from other tests
+			name:       "listing flows with --output json works when there are flows",
+			cmd:        fmt.Sprintf(`list flows --output json %s`, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"", "non-empty"}},
 		},
 		{
-			name:   "listing flows with --output json works when there are no flows",
-			cmd:    fmt.Sprintf(`list flows --output json %s`, suite.acmeOrgKosliArguments),
-			golden: "[]\n",
+			name:       "listing flows with --output json works when there are no flows",
+			cmd:        fmt.Sprintf(`list flows --output json %s`, suite.acmeOrgKosliArguments),
+			goldenJson: []jsonCheck{{"", "[]"}},
 		},
 		{
 			wantError: true,

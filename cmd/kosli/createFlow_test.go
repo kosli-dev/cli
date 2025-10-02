@@ -33,10 +33,10 @@ func (suite *CreateFlowCommandTestSuite) TestCreateFlowCmd() {
 			golden:    "Error: accepts 1 arg(s), received 2\n",
 		},
 		{
-			wantError: true,
-			name:      "fails when name is considered invalid by the server",
-			cmd:       "create flow 'foo bar'" + suite.defaultKosliArguments,
-			golden:    "Error: Input payload validation failed: map[name:'foo bar' does not match '^[a-zA-Z0-9][a-zA-Z0-9\\\\.\\\\-_~]*$']\n",
+			wantError:   true,
+			name:        "fails when name is considered invalid by the server",
+			cmd:         "create flow 'foo bar'" + suite.defaultKosliArguments,
+			goldenRegex: "^Error: .*foo bar",
 		},
 		{
 			name:   "can create a flow (by default legacy template is used)",

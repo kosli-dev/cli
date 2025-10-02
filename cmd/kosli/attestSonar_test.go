@@ -159,19 +159,19 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 			wantError: true,
 			name:      "if outdated task given (i.e. we try to get results for an older scan that SonarCloud has deleted), we get an error",
 			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork-old %s", suite.defaultKosliArguments),
-			golden:    "Error: analysis not found on https://sonarcloud.io. Snapshot may have been deleted by SonarQube\n",
+			golden:    "Error: No activity found for task 'AZERk4uWpzGpahwkB9ac' on https://sonarcloud.io. \nSonarQube may be experiencing problems, please check https://status.sonarqube.com/ and try again later. \nOtherwise if you are attesting an older scan, the snapshot may have been deleted by SonarQube.\n",
 		},
 		{
 			wantError: true,
 			name:      "if incorrect revision given (or the scan for the given revision has been deleted by SonarCloud)",
 			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-project-key cyber-dojo_differ --sonar-revision b4d1053f2aac18c9fb4b9a289a8289199c932e12 %s", suite.defaultKosliArguments),
-			golden:    "Error: analysis for revision b4d1053f2aac18c9fb4b9a289a8289199c932e12 of project cyber-dojo_differ not found. Check the revision is correct. Snapshot may also have been deleted by SonarQube\n",
+			golden:    "Error: analysis for revision b4d1053f2aac18c9fb4b9a289a8289199c932e12 of project cyber-dojo_differ not found. Check the revision is correct. \nThe scan may still be being processed by SonarQube, try again later.\n Otherwise if you are attesting an older scan, the snapshot may also have been deleted by SonarQube\n",
 		},
 		{
 			wantError: true,
 			name:      "if incorrect project key given, we get an error message from Sonar",
 			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-project-key cyber-dojo-differ --sonar-revision 38f3dc8b63abb632ac94a12b3f818b49f8047fa1 %s", suite.defaultKosliArguments),
-			golden:    "Error: sonar error: Component key 'cyber-dojo-differ' not found\n",
+			golden:    "Error: SonarQube error: Component key 'cyber-dojo-differ' not found\n",
 		},
 	}
 
@@ -261,7 +261,7 @@ func (suite *AttestSonarQubeCommandTestSuite) TestAttestSonarQubeCmd() {
 			wantError: true,
 			name:      "if incorrect project key given, we get an error message from Sonar",
 			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-server-url http://localhost:9000 --sonar-project-key test99 --sonar-revision 38f3dc8b63abb632ac94a12b3f818b49f8047fa1 %s", suite.defaultKosliArguments),
-			golden:    "Error: sonar error: Component key 'test99' not found\n",
+			golden:    "Error: SonarQube error: Component key 'test99' not found\n",
 		},
 		{
 			wantError: true,
