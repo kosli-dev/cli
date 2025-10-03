@@ -13,6 +13,10 @@ This will break CI workflow pipelines, blocking artifacts from being deployed.
 In this situation there is a built-in mechanism to instantly turn Kosli off and keep the pipelines flowing.
 When Kosli is back up, you can instantly turn Kosli back on.
 
+{{% hint info %}}
+You can check the current status of Kosli services at https://status.app.kosli.com or by running `kosli status` in the CLI.
+{{% /hint %}}
+
 ## Turning Kosli CLI calls on and off instantly
 
 If the `KOSLI_DRY_RUN` environment variable is set to `true` then all Kosli CLI commands will:
@@ -21,7 +25,7 @@ If the `KOSLI_DRY_RUN` environment variable is set to `true` then all Kosli CLI 
 * Exit with a zero status code
 
 We recommend creating an Org-level KOSLI_DRY_RUN variable in your CI system and, in all CI workflows,
-ensuring there is an environment variable set from it. 
+ensuring there is an environment variable set from it.
 
 For example, in a [Github Action workflow](https://github.com/cyber-dojo/differ/blob/main/.github/workflows/main.yml):
 
@@ -32,10 +36,9 @@ env:
   KOSLI_DRY_RUN: ${{ vars.KOSLI_DRY_RUN }}           # true iff Kosli is down
 ```
 
-
 ## Turning Kosli API calls on and off instantly
 
-If you are using the Kosli API in your workflows (e.g. using `curl`), we recommend using the same Org-level `KOSLI_DRY_RUN` 
+If you are using the Kosli API in your workflows (e.g. using `curl`), we recommend using the same Org-level `KOSLI_DRY_RUN`
 environment variable and guarding the `curl` call with a simple if statement. For example:
 
 ```shell
@@ -54,7 +57,3 @@ kosli_curl()
   fi
 }
 ```
-
-
-
-
