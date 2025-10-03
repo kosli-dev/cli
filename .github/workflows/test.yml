@@ -65,7 +65,6 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     permissions:
-      actions: read
       id-token: write
       contents: write
     steps:
