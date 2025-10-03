@@ -41,20 +41,38 @@ if [ -n "$VERSION" ]; then
 else
     echo "Detecting the latest version of Kosli CLI..."
     debug_print "Fetching latest version from GitHub API"
-    # Fetches the latest release tag from the GitHub API
-    METADATA=$(curl -s "https://api.github.com/repos/kosli-dev/cli/releases/latest")
-    debug_print "GitHub API response: $METADATA"
-    TAG_NAME=$(echo "$METADATA" | grep '"tag_name":')
-    debug_print "GitHub API response tag: $TAG_NAME"
-    LATEST_TAG=$(echo "$TAG_NAME" | sed -E 's/.*"([^"]+)".*/\1/')
-    debug_print "GitHub API response tag: $LATEST_TAG"
-    if [ -z "$LATEST_TAG" ]; then
-        echo "Error: Could not fetch the latest version tag from GitHub."
-        exit 1
-    fi
-    VERSION=$LATEST_TAG
-    echo "Latest version is $VERSION. Downloading..."
-    debug_print "Set VERSION to: $VERSION"
+    
+    # Retry mechanism for fetching the latest version
+    RETRY_COUNT=0
+    MAX_RETRIES=5
+    while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        METADATA=$(curl -s "https://api.github.com/repos/kosli-dev/cli/releases/latest")
+        debug_print "GitHub API response: $METADATA"
+        
+        # Check if the response contains the expected tag_name
+        if echo "$METADATA" | grep -q '"tag_name":'; then
+            TAG_NAME=$(echo "$METADATA" | grep '"tag_name":')
+            debug_print "GitHub API response tag: $TAG_NAME"
+            LATEST_TAG=$(echo "$TAG_NAME" | sed -E 's/.*"([^"]+)".*/\1/')
+            debug_print "GitHub API response tag: $LATEST_TAG"
+            if [ -z "$LATEST_TAG" ]; then
+                echo "Error: Could not fetch the latest version tag from GitHub."
+                exit 1
+            fi
+            VERSION=$LATEST_TAG
+            echo "Latest version is $VERSION. Downloading..."
+            debug_print "Set VERSION to: $VERSION"
+            break
+        else
+            echo "Warning: GitHub API response did not contain a valid tag_name. Retrying in 5 seconds..."
+            sleep 5
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+                echo "Error: GitHub rate limit exceeded too many times."
+                exit 1
+            fi
+        fi
+    done
 fi
 echo ""
 
