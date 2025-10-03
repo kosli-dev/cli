@@ -42,7 +42,11 @@ else
     echo "Detecting the latest version of Kosli CLI..."
     debug_print "Fetching latest version from GitHub API"
     # Fetches the latest release tag from the GitHub API
-    LATEST_TAG=$(curl -s "https://api.github.com/repos/kosli-dev/cli/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    METADATA=$(curl -s "https://api.github.com/repos/kosli-dev/cli/releases/latest")
+    debug_print "GitHub API response: $METADATA"
+    TAG_NAME=$(echo "$METADATA" | grep '"tag_name":')
+    debug_print "GitHub API response tag: $TAG_NAME"
+    LATEST_TAG=$(echo "$TAG_NAME" | sed -E 's/.*"([^"]+)".*/\1/')
     debug_print "GitHub API response tag: $LATEST_TAG"
     if [ -z "$LATEST_TAG" ]; then
         echo "Error: Could not fetch the latest version tag from GitHub."
