@@ -65,6 +65,7 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     permissions:
+      actions: read
       id-token: write
       contents: write
     steps:
@@ -101,13 +102,10 @@ jobs:
 
     - name: Slack Notification on Failure
       if: ${{ failure() }}
-      uses: rtCamp/action-slack-notify@v2
-      env:
-        SLACK_CHANNEL: ${{ secrets.slack_channel }}
-        SLACK_COLOR: ${{ job.status }}
-        SLACK_TITLE: Lint Failed in CLI repository
-        SLACK_USERNAME: GithubActions
-        SLACK_WEBHOOK: ${{ secrets.slack_webhook }} 
+      uses: kosli-dev/reusable-actions/.github/actions/send-ci-failure-slack-message@debug
+      with:
+        slack_url: ${{ secrets.slack_webhook }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
 
   test:
     name: Test
