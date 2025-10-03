@@ -250,3 +250,31 @@ jobs:
       tag: ${{ needs.pre-build.outputs.tag }}
       AWS_ACCOUNT_ID: 585008075785
       AWS_REGION: eu-central-1
+
+  slack-notification-on-failure:
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      contents: read
+    needs:
+      [
+        pre-build,
+        init-kosli,
+        never-alone-trail,
+        test,
+        docker,
+        goreleaser,
+        binary-provenance,
+        homebrew-pr,
+        docs-gen,
+        evidence-reporter-upload-package-and-deploy,
+        environment-reporter-upload-package-and-deploy,
+        environment-reporter-upload-layer
+      ]
+    if: ${{ always() && contains(join(needs.*.result, ','), 'failure') && github.ref == 'refs/heads/master' }}
+    steps:
+      - name: Slack Notification on Failure
+        uses: kosli-dev/reusable-actions/.github/actions/send-ci-failure-slack-message@main
+        with:
+          slack_url: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}

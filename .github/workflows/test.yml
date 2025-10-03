@@ -98,14 +98,7 @@ jobs:
            --flow ${{ inputs.FLOW_NAME }} 
            --trail ${{ inputs.TRAIL_NAME }}  
            --org ${{ inputs.KOSLI_ORG }}
-           --compliant=${{ steps.lint.outcome == 'success' }} 
-
-    - name: Slack Notification on Failure
-      if: ${{ failure() }}
-      uses: kosli-dev/reusable-actions/.github/actions/send-ci-failure-slack-message@debug
-      with:
-        slack_url: ${{ secrets.slack_webhook }}
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+           --compliant=${{ steps.lint.outcome == 'success' }}
 
   test:
     name: Test
@@ -174,13 +167,6 @@ jobs:
       if: ${{ inputs.report_results }}
       uses: codecov/codecov-action@v4
 
-    - name: Slack Notification on Failure
-      if: ${{ failure() }}
-      uses: kosli-dev/reusable-actions/.github/actions/send-ci-failure-slack-message@debug
-      with:
-        slack_url: ${{ secrets.slack_webhook }}
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-
   snyk-code-test:
     if: ${{ inputs.run_snyk }}
     name: Snyk Code Test
@@ -217,13 +203,6 @@ jobs:
     #        --trail ${{ inputs.TRAIL_NAME }} 
     #        --scan-results  snyk-code.json
     #        --org ${{ inputs.KOSLI_ORG }}
-
-    # - name: Slack Notification on Failure
-    #   if: ${{ failure() }}
-    #   uses: kosli-dev/reusable-actions/.github/actions/send-ci-failure-slack-message@debug
-    #   with:
-    #     slack_url: ${{ secrets.slack_webhook }}
-    #     github_token: ${{ secrets.GITHUB_TOKEN }}
 
   snyk-dependency-test:
     if: ${{ inputs.run_snyk }}
@@ -262,9 +241,3 @@ jobs:
     #        --scan-results  snyk-dependency.json
     #        --org ${{ inputs.KOSLI_ORG }}
 
-    # - name: Slack Notification on Failure
-    #   if: ${{ failure() }}
-    #   uses: kosli-dev/reusable-actions/.github/actions/send-ci-failure-slack-message@debug
-    #   with:
-    #     slack_url: ${{ secrets.slack_webhook }}
-    #     github_token: ${{ secrets.GITHUB_TOKEN }}

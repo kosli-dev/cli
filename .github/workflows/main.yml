@@ -88,3 +88,23 @@ jobs:
       slack_channel: ci-failures
       kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
       snyk_token: ${{ secrets.SNYK_TOKEN }}
+
+  slack-notification-on-failure:
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      contents: read
+    needs:
+      [
+        pre-build,
+        init-kosli,
+        test,
+        docker
+      ]
+    if: ${{ always() && contains(join(needs.*.result, ','), 'failure') && github.ref == 'refs/heads/master' }}
+    steps:
+      - name: Slack Notification on Failure
+        uses: kosli-dev/reusable-actions/.github/actions/send-ci-failure-slack-message@main
+        with:
+          slack_url: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
