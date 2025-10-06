@@ -25,7 +25,7 @@ jobs:
 
         - name: Run install script
           shell: bash
-          run: bash install-cli.sh --debug
+          run: bash install-cli.sh --debug --token ${{ secrets.GITHUB_TOKEN }}
 
         - name: Verify installation
           shell: bash

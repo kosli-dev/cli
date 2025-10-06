@@ -10,6 +10,7 @@ ARCH="unknown"
 VERSION=""
 FILE_NAME="kosli"
 DEBUG=false
+GITHUB_TOKEN=""
 
 # --- Debug function ---
 debug_print() {
@@ -25,6 +26,16 @@ while [ $# -gt 0 ]; do
             DEBUG=true
             debug_print "Debug mode enabled"
             shift
+            ;;
+        --token)
+            if [ -n "${2:-}" ]; then
+                GITHUB_TOKEN="$2"
+                debug_print "GitHub token provided"
+                shift 2
+            else
+                echo "Error: --token requires a value"
+                exit 1
+            fi
             ;;
         *)
             VERSION=$1
@@ -46,7 +57,13 @@ else
     RETRY_COUNT=0
     MAX_RETRIES=5
     while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-        METADATA=$(curl -s "https://api.github.com/repos/kosli-dev/cli/releases/latest")
+        if [ -n "$GITHUB_TOKEN" ]; then
+            debug_print "Using GitHub token for API request"
+            METADATA=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/kosli-dev/cli/releases/latest")
+        else
+            debug_print "Using unauthenticated API request"
+            METADATA=$(curl -s "https://api.github.com/repos/kosli-dev/cli/releases/latest")
+        fi
         debug_print "GitHub API response: $METADATA"
         
         # Check if the response contains the expected tag_name
