@@ -12,7 +12,7 @@ by Curling pre-built binaries, or can be used from the distributed Docker images
 {{< tabs "installKosli" >}}
 
 {{< tab "Script" >}}
-You can download the correct Kosli CLI for your platform, given that you can run bash on it, by invoking this one-line script:
+You can download the correct Kosli CLI for your platform, given that you can run shell scripts on it, by invoking this one-line script:
 
 ```shell {.command}
 curl -fL https://raw.githubusercontent.com/kosli-dev/cli/refs/heads/main/install-cli.sh | sh
