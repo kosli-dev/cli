@@ -11,6 +11,28 @@ Kosli CLI can be installed from package managers,
 by Curling pre-built binaries, or can be used from the distributed Docker images.
 {{< tabs "installKosli" >}}
 
+{{< tab "Script" >}}
+You can download the correct Kosli CLI for your platform, given that you can run bash on it, by invoking this one-line script:
+
+```shell {.command}
+curl -fL https://raw.githubusercontent.com/kosli-dev/cli/refs/heads/main/install-cli.sh | sh
+```
+{{< /tab >}}
+
+{{< tab "Docker" >}}
+You can run the Kosli CLI with docker:
+```shell {.command}
+docker run --rm ghcr.io/kosli-dev/cli:v{{< cli-version >}}
+```
+The `entrypoint` for this container is the kosli command.
+
+To run any kosli command you append it to the `docker run` command above –
+without the `kosli` keyword. For example to run `kosli version`:
+```shell {.command}
+docker run --rm ghcr.io/kosli-dev/cli:v{{< cli-version >}} version
+```
+{{< /tab >}}
+
 {{< tab "Homebrew" >}}
 If you have [Homebrew](https://brew.sh/) (available on MacOS, Linux or Windows Subsystem for Linux), 
 you can install the Kosli CLI by running: 
@@ -64,20 +86,7 @@ For example, on Mac with AMD:
 curl -L https://github.com/kosli-dev/cli/releases/download/v{{< cli-version >}}/kosli_{{< cli-version >}}_darwin_amd64.tar.gz | tar zx
 sudo mv kosli /usr/local/bin/kosli
 ```
-{{< /tab >}}
 
-{{< tab "Docker" >}}
-You can run the Kosli CLI with docker:
-```shell {.command}
-docker run --rm ghcr.io/kosli-dev/cli:v{{< cli-version >}}
-```
-The `entrypoint` for this container is the kosli command.
-
-To run any kosli command you append it to the `docker run` command above –
-without the `kosli` keyword. For example to run `kosli version`:
-```shell {.command}
-docker run --rm ghcr.io/kosli-dev/cli:v{{< cli-version >}} version
-```
 {{< /tab >}}
 
 {{< tab "From source" >}}
