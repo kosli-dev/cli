@@ -1,0 +1,32 @@
+name: Install Script Tests
+
+on:
+    push:
+        paths:
+            - 'install-cli.sh'
+            - '.github/workflows/install-script-tests.yml'
+    pull_request:
+        paths:
+            - 'install-cli.sh'
+            - '.github/workflows/install-script-tests.yml'
+    workflow_dispatch:
+
+jobs:
+    test-script:
+        name: Test Bash Script on ${{ matrix.os }}
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os: [ubuntu-latest, macos-latest, windows-latest]
+
+        steps:
+        - name: Checkout repository
+          uses: actions/checkout@v5
+
+        - name: Run install script
+          shell: bash
+          run: bash install-cli.sh --debug --token ${{ secrets.GITHUB_TOKEN }}
+
+        - name: Verify installation
+          shell: bash
+          run: kosli version
