@@ -97,17 +97,7 @@ jobs:
            --flow ${{ inputs.FLOW_NAME }} 
            --trail ${{ inputs.TRAIL_NAME }}  
            --org ${{ inputs.KOSLI_ORG }}
-           --compliant=${{ steps.lint.outcome == 'success' }} 
-
-    - name: Slack Notification on Failure
-      if: ${{ failure() }}
-      uses: rtCamp/action-slack-notify@v2
-      env:
-        SLACK_CHANNEL: ${{ secrets.slack_channel }}
-        SLACK_COLOR: ${{ job.status }}
-        SLACK_TITLE: Lint Failed in CLI repository
-        SLACK_USERNAME: GithubActions
-        SLACK_WEBHOOK: ${{ secrets.slack_webhook }} 
+           --compliant=${{ steps.lint.outcome == 'success' }}
 
   test:
     name: Test
@@ -176,16 +166,6 @@ jobs:
       if: ${{ inputs.report_results }}
       uses: codecov/codecov-action@v4
 
-    - name: Slack Notification on Failure
-      if: ${{ failure() }}
-      uses: rtCamp/action-slack-notify@v2
-      env:
-        SLACK_CHANNEL: ${{ secrets.slack_channel }}
-        SLACK_COLOR: ${{ job.status }}
-        SLACK_TITLE: Test Failed in CLI repository
-        SLACK_USERNAME: GithubActions
-        SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
-
   snyk-code-test:
     if: ${{ inputs.run_snyk }}
     name: Snyk Code Test
@@ -222,16 +202,6 @@ jobs:
     #        --trail ${{ inputs.TRAIL_NAME }} 
     #        --scan-results  snyk-code.json
     #        --org ${{ inputs.KOSLI_ORG }}
-    
-    # - name: Slack Notification on Failure
-    #   if: ${{ failure() }}
-    #   uses: rtCamp/action-slack-notify@v2
-    #   env:
-    #     SLACK_CHANNEL: ${{ secrets.slack_channel }}
-    #     SLACK_COLOR: ${{ job.status }}
-    #     SLACK_TITLE: Snyk Code Failed in CLI repository
-    #     SLACK_USERNAME: GithubActions
-    #     SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
 
   snyk-dependency-test:
     if: ${{ inputs.run_snyk }}
@@ -269,13 +239,4 @@ jobs:
     #        --trail ${{ inputs.TRAIL_NAME }} 
     #        --scan-results  snyk-dependency.json
     #        --org ${{ inputs.KOSLI_ORG }}
-    
-    # - name: Slack Notification on Failure
-    #   if: ${{ failure() }}
-    #   uses: rtCamp/action-slack-notify@v2
-    #   env:
-    #     SLACK_CHANNEL: ${{ secrets.slack_channel }}
-    #     SLACK_COLOR: ${{ job.status }}
-    #     SLACK_TITLE: Snyk Test Failed in CLI repository
-    #     SLACK_USERNAME: GithubActions
-    #     SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
+
