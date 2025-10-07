@@ -79,7 +79,7 @@ func newAssertArtifactCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVar(&o.envName, "environment", "", envNameFlag)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
-	cmd.Flags().StringSliceVarP(&o.policyNames, "policy", "", []string{}, policyName)
+	cmd.Flags().StringSliceVar(&o.policyNames, "policy", []string{}, policyName)
 
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
