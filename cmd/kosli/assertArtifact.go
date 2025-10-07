@@ -46,6 +46,7 @@ type assertArtifactOptions struct {
 	fingerprint        string // This is calculated or provided by the user
 	flowName           string
 	envName            string
+	policyNames        []string
 	output             string
 }
 
@@ -78,6 +79,7 @@ func newAssertArtifactCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVar(&o.envName, "environment", "", envNameFlag)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
+	cmd.Flags().StringSliceVarP(&o.policyNames, "policy", "", []string{}, policyName)
 
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
@@ -103,6 +105,12 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 
 	if o.envName != "" {
 		params.Add("environment_name", o.envName)
+	}
+
+	if len(o.policyNames) > 0 {
+		for _, policy := range o.policyNames {
+			params.Add("policy_name", policy)
+		}
 	}
 
 	fullURL := baseURL
@@ -162,7 +170,7 @@ func printAssertAsTable(raw string, out io.Writer, page int) error {
 
 		logger.Info("  %-32v %-30v %-15v %-10v %-10v", name, attType, status, isCompliant, unexpectedStr)
 	}
-	if scope == "environment" {
+	if scope == "environment" || scope == "policy" {
 		logger.Info("%-32v %-30v", "Policy-name", "status")
 		policyEvaluations := evaluationResult["policy_evaluations"].([]interface{})
 		for _, item := range policyEvaluations {

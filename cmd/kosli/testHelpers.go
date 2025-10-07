@@ -162,6 +162,18 @@ func goldenJsonContains(t *testing.T, output string, path string, want interface
 		}
 	}
 
+	// Special case: check array length
+	if wantStr, ok := want.(string); ok && strings.HasPrefix(wantStr, "length:") {
+		lengthStr := strings.TrimPrefix(wantStr, "length:")
+		expectedLength, err := strconv.Atoi(lengthStr)
+		require.NoError(t, err, "invalid length specification: %s", wantStr)
+
+		list, ok := current.([]interface{})
+		require.True(t, ok, "expected array at path %s", path)
+		require.Equal(t, expectedLength, len(list), "unexpected array length at path %s", path)
+		return
+	}
+
 	require.Equal(t, want, current, "unexpected value at path %s", path)
 }
 
