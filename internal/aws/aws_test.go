@@ -656,7 +656,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 			if t.serviceFilter == nil {
 				t.serviceFilter = new(filters.ResourceFilterOptions)
 			}
-			data, err := t.creds.GetEcsTasksData(t.clusterFilter, t.serviceFilter)
+			data, err := t.creds.GetEcsTasksData(t.clusterFilter, t.serviceFilter, logger.NewStandardLogger())
 			require.False(suite.Suite.T(), (err != nil) != t.wantErr,
 				"GetEcsTasksData() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {

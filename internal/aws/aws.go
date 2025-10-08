@@ -421,7 +421,7 @@ func downloadFileFromBucket(downloader *s3manager.Downloader, dirName, key, buck
 
 // getFilteredECSClusters fetches a filtered set of ECS clusters recursively (50 at a time) and returns a list of ecs Clusters
 func getFilteredECSClusters(client *ecs.Client, allClusters *[]ecsTypes.Cluster,
-	clusterFilter *filters.ResourceFilterOptions, nextToken *string) (*[]ecsTypes.Cluster, error) {
+	clusterFilter *filters.ResourceFilterOptions, nextToken *string, logger *logger.Logger) (*[]ecsTypes.Cluster, error) {
 	params := &ecs.ListClustersInput{}
 	if nextToken != nil {
 		params.NextToken = nextToken
@@ -438,6 +438,7 @@ func getFilteredECSClusters(client *ecs.Client, allClusters *[]ecsTypes.Cluster,
 	}
 
 	if !clusterFilter.IsSet() {
+		logger.Info("all ECS clusters in the AWS account will be scanned")
 		*allClusters = append(*allClusters, describeClustersOutput.Clusters...)
 	} else {
 		for _, c := range describeClustersOutput.Clusters {
@@ -452,25 +453,32 @@ func getFilteredECSClusters(client *ecs.Client, allClusters *[]ecsTypes.Cluster,
 	}
 
 	if listClustersOutput.NextToken != nil {
-		_, err := getFilteredECSClusters(client, allClusters, clusterFilter, listClustersOutput.NextToken)
+		_, err := getFilteredECSClusters(client, allClusters, clusterFilter, listClustersOutput.NextToken, logger)
 		if err != nil {
 			return allClusters, err
 		}
+	}
+	if clusterFilter.IsSet() {
+		clusterNames := make([]string, len(*allClusters))
+		for i, cluster := range *allClusters {
+			clusterNames[i] = *cluster.ClusterName
+		}
+		logger.Info("the following ECS clusters will be scanned: %v", clusterNames)
 	}
 	return allClusters, nil
 }
 
 // GetEcsTasksData returns a list of tasks data for an ECS cluster or service
-func (staticCreds *AWSStaticCreds) GetEcsTasksData(clusterFilter, serviceFilter *filters.ResourceFilterOptions) ([]*EcsTaskData, error) {
+func (staticCreds *AWSStaticCreds) GetEcsTasksData(clusterFilter, serviceFilter *filters.ResourceFilterOptions, logger *logger.Logger) ([]*EcsTaskData, error) {
 	allTasksData := []*EcsTaskData{}
 	client, err := staticCreds.NewECSClient()
 	if err != nil {
-		return allTasksData, err
+		return allTasksData, fmt.Errorf("failed to create ECS client: %w", err)
 	}
 
-	filteredClusters, err := getFilteredECSClusters(client, &[]ecsTypes.Cluster{}, clusterFilter, nil)
+	filteredClusters, err := getFilteredECSClusters(client, &[]ecsTypes.Cluster{}, clusterFilter, nil, logger)
 	if err != nil {
-		return allTasksData, err
+		return allTasksData, fmt.Errorf("failed to filter ECS clusters: %w", err)
 	}
 
 	var (
@@ -484,15 +492,15 @@ func (staticCreds *AWSStaticCreds) GetEcsTasksData(clusterFilter, serviceFilter 
 		go func(clusterName string) {
 			defer wg.Done()
 
-			filteredServices, err := getFilteredECSServicesInCluster(client, clusterName, &[]ecsTypes.Service{}, serviceFilter, nil)
+			filteredServices, err := getFilteredECSServicesInCluster(client, clusterName, &[]ecsTypes.Service{}, serviceFilter, nil, logger)
 			if err != nil {
-				errChan <- err
+				errChan <- fmt.Errorf("failed to filter ECS services in cluster %s: %w", clusterName, err)
 				return
 			}
 
-			tasksData, err := getTasksDataInClusterService(client, clusterName, filteredServices, nil)
+			tasksData, err := getTasksDataInClusterService(client, clusterName, filteredServices, nil, logger)
 			if err != nil {
-				errChan <- err
+				errChan <- fmt.Errorf("failed to get tasks data in cluster %s: %w", clusterName, err)
 				return
 			}
 
@@ -517,7 +525,8 @@ func (staticCreds *AWSStaticCreds) GetEcsTasksData(clusterFilter, serviceFilter 
 }
 
 // getFilteredECSServicesInCluster fetches a filtered set of ECS services recursively (10 at a time) and returns a list of ecs Services
-func getFilteredECSServicesInCluster(client *ecs.Client, cluster string, allServices *[]ecsTypes.Service, serviceFilter *filters.ResourceFilterOptions, nextToken *string) (*[]ecsTypes.Service, error) {
+func getFilteredECSServicesInCluster(client *ecs.Client, cluster string, allServices *[]ecsTypes.Service, serviceFilter *filters.ResourceFilterOptions,
+	nextToken *string, logger *logger.Logger) (*[]ecsTypes.Service, error) {
 	listInput := &ecs.ListServicesInput{
 		Cluster: aws.String(cluster),
 	}
@@ -529,14 +538,13 @@ func getFilteredECSServicesInCluster(client *ecs.Client, cluster string, allServ
 		return allServices, err
 	}
 
-	fmt.Println("listServicesOutput.ServiceArns", listServicesOutput.ServiceArns)
-
 	describeServicesOutput, err := client.DescribeServices(context.TODO(), &ecs.DescribeServicesInput{Cluster: aws.String(cluster), Services: listServicesOutput.ServiceArns})
 	if err != nil {
 		return allServices, err
 	}
 
 	if !serviceFilter.IsSet() {
+		logger.Info("all ECS services in cluster [%s] will be scanned", cluster)
 		*allServices = append(*allServices, describeServicesOutput.Services...)
 	} else {
 		for _, s := range describeServicesOutput.Services {
@@ -551,16 +559,23 @@ func getFilteredECSServicesInCluster(client *ecs.Client, cluster string, allServ
 	}
 
 	if listServicesOutput.NextToken != nil {
-		_, err := getFilteredECSServicesInCluster(client, cluster, allServices, serviceFilter, listServicesOutput.NextToken)
+		_, err := getFilteredECSServicesInCluster(client, cluster, allServices, serviceFilter, listServicesOutput.NextToken, logger)
 		if err != nil {
 			return allServices, err
 		}
+	}
+	if serviceFilter.IsSet() {
+		serviceNames := make([]string, len(*allServices))
+		for i, service := range *allServices {
+			serviceNames[i] = *service.ServiceName
+		}
+		logger.Info("the following ECS services in cluster [%s] will be scanned: %v", cluster, serviceNames)
 	}
 	return allServices, nil
 }
 
 // getTasksDataInClusterService fetches a filtered set of ECS tasks recursively (100 at a time) and returns a list of ecs Tasks
-func getTasksDataInClusterService(client *ecs.Client, clusterName string, filteredServices *[]ecsTypes.Service, nextToken *string) ([]*EcsTaskData, error) {
+func getTasksDataInClusterService(client *ecs.Client, clusterName string, filteredServices *[]ecsTypes.Service, nextToken *string, logger *logger.Logger) ([]*EcsTaskData, error) {
 	tasksData := []*EcsTaskData{}
 	var mutex sync.Mutex
 	var wg sync.WaitGroup
@@ -571,6 +586,7 @@ func getTasksDataInClusterService(client *ecs.Client, clusterName string, filter
 		go func(svc ecsTypes.Service) {
 			defer wg.Done()
 
+			logger.Debug("scanning ECS tasks in service [%s] in cluster [%s]", *svc.ServiceName, clusterName)
 			listInput := &ecs.ListTasksInput{
 				Cluster:     aws.String(clusterName),
 				ServiceName: svc.ServiceName,
@@ -629,7 +645,7 @@ func getTasksDataInClusterService(client *ecs.Client, clusterName string, filter
 
 			// Handle pagination for this service's tasks
 			if listTasksOutput.NextToken != nil {
-				additionalTasksData, err := getTasksDataInClusterService(client, clusterName, &[]ecsTypes.Service{svc}, listTasksOutput.NextToken)
+				additionalTasksData, err := getTasksDataInClusterService(client, clusterName, &[]ecsTypes.Service{svc}, listTasksOutput.NextToken, logger)
 				if err != nil {
 					errChan <- err
 					return

@@ -215,7 +215,7 @@ func (o *snapshotECSOptions) run(args []string) error {
 	envName := args[0]
 	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/ECS", global.Host, global.Org, envName)
 
-	tasksData, err := o.awsStaticCreds.GetEcsTasksData(o.clustersFilter, o.serviceFilter)
+	tasksData, err := o.awsStaticCreds.GetEcsTasksData(o.clustersFilter, o.serviceFilter, logger)
 	if err != nil {
 		return err
 	}
