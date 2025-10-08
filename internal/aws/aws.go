@@ -516,7 +516,7 @@ func (staticCreds *AWSStaticCreds) GetEcsTasksData(clusterFilter, serviceFilter 
 	return allTasksData, nil
 }
 
-// getFilteredECSServicesInCluster fetches a filtered set of ECS services recursively (100 at a time) and returns a list of ecs Services
+// getFilteredECSServicesInCluster fetches a filtered set of ECS services recursively (10 at a time) and returns a list of ecs Services
 func getFilteredECSServicesInCluster(client *ecs.Client, cluster string, allServices *[]ecsTypes.Service, serviceFilter *filters.ResourceFilterOptions, nextToken *string) (*[]ecsTypes.Service, error) {
 	listInput := &ecs.ListServicesInput{
 		Cluster: aws.String(cluster),
