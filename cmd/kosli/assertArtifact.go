@@ -13,7 +13,7 @@ import (
 )
 
 const assertArtifactShortDesc = `Assert the compliance status of an artifact in Kosli ` +
-	`(in its flow, against an environment or against policies).  `
+	`(in its flow, against an environment or against one or more policies).  `
 
 const assertArtifactLongDesc = assertArtifactShortDesc + `
 Exits with non-zero code if the artifact has a non-compliant status.`
