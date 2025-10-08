@@ -57,7 +57,8 @@ kosli snapshot ecs yourEnvironmentName \
 `
 
 type snapshotECSOptions struct {
-	filter         *filters.ResourceFilterOptions
+	clustersFilter *filters.ResourceFilterOptions
+	serviceFilter  *filters.ResourceFilterOptions
 	serviceName    string
 	awsStaticCreds *aws.AWSStaticCreds
 }
@@ -65,7 +66,8 @@ type snapshotECSOptions struct {
 func newSnapshotECSCmd(out io.Writer) *cobra.Command {
 	o := new(snapshotECSOptions)
 	o.awsStaticCreds = new(aws.AWSStaticCreds)
-	o.filter = new(filters.ResourceFilterOptions)
+	o.clustersFilter = new(filters.ResourceFilterOptions)
+	o.serviceFilter = new(filters.ResourceFilterOptions)
 	cmd := &cobra.Command{
 		Use:     "ecs ENVIRONMENT-NAME",
 		Short:   snapshotECSShortDesc,
@@ -94,6 +96,30 @@ func newSnapshotECSCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			// service filtering flags
+			// Include flags vs exclude flags mutual exclusion
+			err = MuXRequiredFlags(cmd, []string{"services", "exclude-services"}, false)
+			if err != nil {
+				return err
+			}
+			err = MuXRequiredFlags(cmd, []string{"services", "exclude-services-regex"}, false)
+			if err != nil {
+				return err
+			}
+			err = MuXRequiredFlags(cmd, []string{"services-regex", "exclude-services"}, false)
+			if err != nil {
+				return err
+			}
+			err = MuXRequiredFlags(cmd, []string{"services-regex", "exclude-services-regex"}, false)
+			if err != nil {
+				return err
+			}
+
+			// Deprecated flag vs new flags mutual exclusion
+			err = MuXRequiredFlags(cmd, []string{"service-name", "services", "services-regex", "exclude-services", "exclude-services-regex"}, false)
+			if err != nil {
+				return err
+			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -101,12 +127,17 @@ func newSnapshotECSCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringSliceVar(&o.filter.IncludeNames, "clusters", []string{}, ecsClustersFlag)
-	cmd.Flags().StringSliceVar(&o.filter.IncludeNamesRegex, "clusters-regex", []string{}, ecsClustersRegexFlag)
-	cmd.Flags().StringSliceVar(&o.filter.ExcludeNames, "exclude", []string{}, ecsExcludeClustersFlag)
-	cmd.Flags().StringSliceVar(&o.filter.ExcludeNamesRegex, "exclude-regex", []string{}, ecsExcludeClustersRegexFlag)
+	cmd.Flags().StringSliceVar(&o.clustersFilter.IncludeNames, "clusters", []string{}, ecsClustersFlag)
+	cmd.Flags().StringSliceVar(&o.clustersFilter.IncludeNamesRegex, "clusters-regex", []string{}, ecsClustersRegexFlag)
+	cmd.Flags().StringSliceVar(&o.clustersFilter.ExcludeNames, "exclude", []string{}, ecsExcludeClustersFlag)
+	cmd.Flags().StringSliceVar(&o.clustersFilter.ExcludeNamesRegex, "exclude-regex", []string{}, ecsExcludeClustersRegexFlag)
 
-	cmd.Flags().StringSliceVarP(&o.filter.IncludeNames, "cluster", "C", []string{}, ecsClusterFlag)
+	cmd.Flags().StringSliceVar(&o.serviceFilter.IncludeNames, "services", []string{}, ecsServicesFlag)
+	cmd.Flags().StringSliceVar(&o.serviceFilter.IncludeNamesRegex, "services-regex", []string{}, ecsServicesRegexFlag)
+	cmd.Flags().StringSliceVar(&o.serviceFilter.ExcludeNames, "exclude-services", []string{}, ecsExcludeServicesFlag)
+	cmd.Flags().StringSliceVar(&o.serviceFilter.ExcludeNamesRegex, "exclude-services-regex", []string{}, ecsExcludeServicesRegexFlag)
+
+	cmd.Flags().StringSliceVarP(&o.clustersFilter.IncludeNames, "cluster", "C", []string{}, ecsClusterFlag)
 	cmd.Flags().StringVarP(&o.serviceName, "service-name", "s", "", ecsServiceFlag)
 	addAWSAuthFlags(cmd, o.awsStaticCreds)
 	addDryRunFlag(cmd)
@@ -126,7 +157,7 @@ func (o *snapshotECSOptions) run(args []string) error {
 	envName := args[0]
 	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/ECS", global.Host, global.Org, envName)
 
-	tasksData, err := o.awsStaticCreds.GetEcsTasksData(o.filter)
+	tasksData, err := o.awsStaticCreds.GetEcsTasksData(o.clustersFilter, o.serviceFilter)
 	if err != nil {
 		return err
 	}

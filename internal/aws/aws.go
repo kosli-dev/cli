@@ -420,8 +420,8 @@ func downloadFileFromBucket(downloader *s3manager.Downloader, dirName, key, buck
 }
 
 // getFilteredECSClusters fetches a filtered set of ECS clusters recursively (50 at a time) and returns a list of ecs Clusters
-func getFilteredECSClusters(client *ecs.Client, nextToken *string, allClusters *[]ecsTypes.Cluster,
-	filter *filters.ResourceFilterOptions) (*[]ecsTypes.Cluster, error) {
+func getFilteredECSClusters(client *ecs.Client, allClusters *[]ecsTypes.Cluster,
+	clusterFilter *filters.ResourceFilterOptions, nextToken *string) (*[]ecsTypes.Cluster, error) {
 	params := &ecs.ListClustersInput{}
 	if nextToken != nil {
 		params.NextToken = nextToken
@@ -437,12 +437,11 @@ func getFilteredECSClusters(client *ecs.Client, nextToken *string, allClusters *
 		return allClusters, err
 	}
 
-	if len(filter.IncludeNames) == 0 && len(filter.IncludeNamesRegex) == 0 &&
-		len(filter.ExcludeNames) == 0 && len(filter.ExcludeNamesRegex) == 0 {
+	if !clusterFilter.IsSet() {
 		*allClusters = append(*allClusters, describeClustersOutput.Clusters...)
 	} else {
 		for _, c := range describeClustersOutput.Clusters {
-			include, err := filter.ShouldInclude(*c.ClusterName)
+			include, err := clusterFilter.ShouldInclude(*c.ClusterName)
 			if err != nil {
 				return allClusters, err
 			}
@@ -453,7 +452,7 @@ func getFilteredECSClusters(client *ecs.Client, nextToken *string, allClusters *
 	}
 
 	if listClustersOutput.NextToken != nil {
-		_, err := getFilteredECSClusters(client, listClustersOutput.NextToken, allClusters, filter)
+		_, err := getFilteredECSClusters(client, allClusters, clusterFilter, listClustersOutput.NextToken)
 		if err != nil {
 			return allClusters, err
 		}
@@ -462,108 +461,193 @@ func getFilteredECSClusters(client *ecs.Client, nextToken *string, allClusters *
 }
 
 // GetEcsTasksData returns a list of tasks data for an ECS cluster or service
-func (staticCreds *AWSStaticCreds) GetEcsTasksData(filter *filters.ResourceFilterOptions) ([]*EcsTaskData, error) {
+func (staticCreds *AWSStaticCreds) GetEcsTasksData(clusterFilter, serviceFilter *filters.ResourceFilterOptions) ([]*EcsTaskData, error) {
 	allTasksData := []*EcsTaskData{}
 	client, err := staticCreds.NewECSClient()
 	if err != nil {
 		return allTasksData, err
 	}
 
-	filteredClusters, err := getFilteredECSClusters(client, nil, &[]ecsTypes.Cluster{}, filter)
+	filteredClusters, err := getFilteredECSClusters(client, &[]ecsTypes.Cluster{}, clusterFilter, nil)
 	if err != nil {
 		return allTasksData, err
 	}
 
 	var (
 		wg    sync.WaitGroup
-		mutex = &sync.Mutex{}
+		mutex sync.Mutex
 	)
-
-	// run concurrently
-	errs := make(chan error, 1) // Buffered only for the first error
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel() // Make sure it's called to release resources even if no errors
+	errChan := make(chan error, len(*filteredClusters))
 
 	for _, cluster := range *filteredClusters {
 		wg.Add(1)
-		go func(cluster string) {
+		go func(clusterName string) {
 			defer wg.Done()
-			// Check if any error occurred in any other gorouties:
-			select {
-			case <-ctx.Done():
-				return // Error somewhere, terminate
-			default: // Default is must to avoid blocking
-			}
 
-			tasksData, err := getTasksDataInCluster(client, cluster)
+			filteredServices, err := getFilteredECSServicesInCluster(client, clusterName, &[]ecsTypes.Service{}, serviceFilter, nil)
 			if err != nil {
-				// Non-blocking send of error
-				select {
-				case errs <- err:
-				default:
-				}
-				cancel() // send cancel signal to goroutines
+				errChan <- err
 				return
 			}
+
+			tasksData, err := getTasksDataInClusterService(client, clusterName, filteredServices, nil)
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			// Safely append to shared allTasksData
 			mutex.Lock()
 			allTasksData = append(allTasksData, tasksData...)
 			mutex.Unlock()
-
 		}(*cluster.ClusterName)
 	}
 
 	wg.Wait()
-	// Return (first) error, if any:
-	if ctx.Err() != nil {
-		return allTasksData, <-errs
+	close(errChan)
+
+	// Check for any errors
+	for err := range errChan {
+		if err != nil {
+			return allTasksData, err
+		}
 	}
 
 	return allTasksData, nil
 }
 
-func getTasksDataInCluster(client *ecs.Client, cluster string) ([]*EcsTaskData, error) {
-	tasksData := []*EcsTaskData{}
-	listInput := &ecs.ListTasksInput{
+// getFilteredECSServicesInCluster fetches a filtered set of ECS services recursively (100 at a time) and returns a list of ecs Services
+func getFilteredECSServicesInCluster(client *ecs.Client, cluster string, allServices *[]ecsTypes.Service, serviceFilter *filters.ResourceFilterOptions, nextToken *string) (*[]ecsTypes.Service, error) {
+	listInput := &ecs.ListServicesInput{
 		Cluster: aws.String(cluster),
 	}
-	descriptionInput := &ecs.DescribeTasksInput{
-		Cluster: aws.String(cluster),
+	if nextToken != nil {
+		listInput.NextToken = nextToken
 	}
-
-	list, err := client.ListTasks(context.Background(), listInput)
+	listServicesOutput, err := client.ListServices(context.TODO(), listInput)
 	if err != nil {
-		return tasksData, err
+		return allServices, err
 	}
-	tasks := list.TaskArns
 
-	if len(tasks) > 0 {
-		descriptionInput.Tasks = tasks
-		result, err := client.DescribeTasks(context.Background(), descriptionInput)
-		if err != nil {
-			return tasksData, err
+	fmt.Println("listServicesOutput.ServiceArns", listServicesOutput.ServiceArns)
+
+	describeServicesOutput, err := client.DescribeServices(context.TODO(), &ecs.DescribeServicesInput{Cluster: aws.String(cluster), Services: listServicesOutput.ServiceArns})
+	if err != nil {
+		return allServices, err
+	}
+
+	if !serviceFilter.IsSet() {
+		*allServices = append(*allServices, describeServicesOutput.Services...)
+	} else {
+		for _, s := range describeServicesOutput.Services {
+			include, err := serviceFilter.ShouldInclude(*s.ServiceName)
+			if err != nil {
+				return allServices, err
+			}
+			if include {
+				*allServices = append(*allServices, s)
+			}
 		}
+	}
 
-		for _, taskDesc := range result.Tasks {
-			digests := make(map[string]string)
-			if *taskDesc.LastStatus == "RUNNING" {
-				for _, container := range taskDesc.Containers {
-					imageName := container.Image
-					if imageName == nil {
-						// some images like AWS Guard Duty don't get an image name from AWS
-						// so we default to the container name
-						imageName = container.Name
-					}
-					if container.ImageDigest != nil {
-						digests[*imageName] = strings.TrimPrefix(*container.ImageDigest, "sha256:")
-					} else if strings.Contains(*imageName, "@sha256:") {
-						digests[*imageName] = strings.Split(*imageName, "@sha256:")[1]
-					} else {
-						digests[*imageName] = ""
+	if listServicesOutput.NextToken != nil {
+		_, err := getFilteredECSServicesInCluster(client, cluster, allServices, serviceFilter, listServicesOutput.NextToken)
+		if err != nil {
+			return allServices, err
+		}
+	}
+	return allServices, nil
+}
+
+// getTasksDataInClusterService fetches a filtered set of ECS tasks recursively (100 at a time) and returns a list of ecs Tasks
+func getTasksDataInClusterService(client *ecs.Client, clusterName string, filteredServices *[]ecsTypes.Service, nextToken *string) ([]*EcsTaskData, error) {
+	tasksData := []*EcsTaskData{}
+	var mutex sync.Mutex
+	var wg sync.WaitGroup
+	errChan := make(chan error, len(*filteredServices))
+
+	for _, service := range *filteredServices {
+		wg.Add(1)
+		go func(svc ecsTypes.Service) {
+			defer wg.Done()
+
+			listInput := &ecs.ListTasksInput{
+				Cluster:     aws.String(clusterName),
+				ServiceName: svc.ServiceName,
+			}
+			if nextToken != nil {
+				listInput.NextToken = nextToken
+			}
+			descriptionInput := &ecs.DescribeTasksInput{
+				Cluster: aws.String(clusterName),
+			}
+
+			listTasksOutput, err := client.ListTasks(context.Background(), listInput)
+			if err != nil {
+				errChan <- err
+				return
+			}
+			tasks := listTasksOutput.TaskArns
+
+			if len(tasks) > 0 {
+				descriptionInput.Tasks = tasks
+				result, err := client.DescribeTasks(context.Background(), descriptionInput)
+				if err != nil {
+					errChan <- err
+					return
+				}
+
+				serviceTasksData := []*EcsTaskData{}
+				for _, taskDesc := range result.Tasks {
+					digests := make(map[string]string)
+					if *taskDesc.LastStatus == "RUNNING" {
+						for _, container := range taskDesc.Containers {
+							imageName := container.Image
+							if imageName == nil {
+								// some images like AWS Guard Duty don't get an image name from AWS
+								// so we default to the container name
+								imageName = container.Name
+							}
+							if container.ImageDigest != nil {
+								digests[*imageName] = strings.TrimPrefix(*container.ImageDigest, "sha256:")
+							} else if strings.Contains(*imageName, "@sha256:") {
+								digests[*imageName] = strings.Split(*imageName, "@sha256:")[1]
+							} else {
+								digests[*imageName] = ""
+							}
+						}
+						data := NewEcsTaskData(*taskDesc.TaskArn, clusterName, digests, *taskDesc.StartedAt)
+						serviceTasksData = append(serviceTasksData, data)
 					}
 				}
-				data := NewEcsTaskData(*taskDesc.TaskArn, cluster, digests, *taskDesc.StartedAt)
-				tasksData = append(tasksData, data)
+
+				// Safely append to shared tasksData
+				mutex.Lock()
+				tasksData = append(tasksData, serviceTasksData...)
+				mutex.Unlock()
 			}
+
+			// Handle pagination for this service's tasks
+			if listTasksOutput.NextToken != nil {
+				additionalTasksData, err := getTasksDataInClusterService(client, clusterName, &[]ecsTypes.Service{svc}, listTasksOutput.NextToken)
+				if err != nil {
+					errChan <- err
+					return
+				}
+				mutex.Lock()
+				tasksData = append(tasksData, additionalTasksData...)
+				mutex.Unlock()
+			}
+		}(service)
+	}
+
+	wg.Wait()
+	close(errChan)
+
+	// Check for any errors
+	for err := range errChan {
+		if err != nil {
+			return tasksData, err
 		}
 	}
 

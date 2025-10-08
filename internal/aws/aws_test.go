@@ -529,7 +529,8 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 		name                 string
 		requireEnvVars       bool // indicates that a test case needs real credentials from env vars
 		creds                *AWSStaticCreds
-		filter               *filters.ResourceFilterOptions
+		clusterFilter        *filters.ResourceFilterOptions
+		serviceFilter        *filters.ResourceFilterOptions
 		minNumberOfArtifacts int
 		wantErr              bool
 	}{
@@ -540,15 +541,23 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 				AccessKeyID:     "ssss",
 				SecretAccessKey: "ssss",
 			},
-			filter:  &filters.ResourceFilterOptions{IncludeNames: []string{"merkely"}},
-			wantErr: true,
+			clusterFilter: &filters.ResourceFilterOptions{IncludeNames: []string{"merkely"}},
+			wantErr:       true,
+		},
+		{
+			name: "can get ECS data without any filters",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			minNumberOfArtifacts: 1,
+			requireEnvVars:       true,
 		},
 		{
 			name: "can get ECS data with cluster name alone",
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			filter:               &filters.ResourceFilterOptions{IncludeNames: []string{"merkely"}},
+			clusterFilter:        &filters.ResourceFilterOptions{IncludeNames: []string{"merkely"}},
 			minNumberOfArtifacts: 1,
 			requireEnvVars:       true,
 		},
@@ -557,7 +566,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 			creds: &AWSStaticCreds{
 				Region: "ap-south-1",
 			},
-			filter:               &filters.ResourceFilterOptions{IncludeNames: []string{"merkely"}},
+			clusterFilter:        &filters.ResourceFilterOptions{IncludeNames: []string{"merkely"}},
 			minNumberOfArtifacts: 0,
 			requireEnvVars:       true,
 		},
@@ -566,7 +575,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			filter:               &filters.ResourceFilterOptions{ExcludeNames: []string{"slackapp"}},
+			clusterFilter:        &filters.ResourceFilterOptions{ExcludeNames: []string{"slackapp"}},
 			minNumberOfArtifacts: 1,
 			requireEnvVars:       true,
 		},
@@ -575,7 +584,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			filter:               &filters.ResourceFilterOptions{ExcludeNamesRegex: []string{"slack.*"}},
+			clusterFilter:        &filters.ResourceFilterOptions{ExcludeNamesRegex: []string{"slack.*"}},
 			minNumberOfArtifacts: 1,
 			requireEnvVars:       true,
 		},
@@ -584,14 +593,70 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
-			filter:               &filters.ResourceFilterOptions{IncludeNamesRegex: []string{"^merk.*"}},
+			clusterFilter:        &filters.ResourceFilterOptions{IncludeNamesRegex: []string{"^merk.*"}},
 			minNumberOfArtifacts: 1,
+			requireEnvVars:       true,
+		},
+		{
+			name: "can get ECS data with service names",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			clusterFilter:        &filters.ResourceFilterOptions{IncludeNames: []string{"merkely"}},
+			serviceFilter:        &filters.ResourceFilterOptions{IncludeNames: []string{"kosli"}},
+			minNumberOfArtifacts: 1,
+			requireEnvVars:       true,
+		},
+		{
+			name: "can get ECS data with service names regex",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			clusterFilter:        &filters.ResourceFilterOptions{IncludeNames: []string{"merkely"}},
+			serviceFilter:        &filters.ResourceFilterOptions{IncludeNamesRegex: []string{"^kos.*"}},
+			minNumberOfArtifacts: 1,
+			requireEnvVars:       true,
+		},
+		{
+			name: "can get ECS data with service names regex",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			clusterFilter:        &filters.ResourceFilterOptions{IncludeNames: []string{"merkely"}},
+			serviceFilter:        &filters.ResourceFilterOptions{IncludeNamesRegex: []string{"^kos.*"}},
+			minNumberOfArtifacts: 1,
+			requireEnvVars:       true,
+		},
+		{
+			name: "can get ECS data with exclude service names",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			clusterFilter:        &filters.ResourceFilterOptions{IncludeNames: []string{"merkely"}},
+			serviceFilter:        &filters.ResourceFilterOptions{ExcludeNames: []string{"kosli"}},
+			minNumberOfArtifacts: 0,
+			requireEnvVars:       true,
+		},
+		{
+			name: "can get ECS data with exclude service names regex",
+			creds: &AWSStaticCreds{
+				Region: "eu-central-1",
+			},
+			clusterFilter:        &filters.ResourceFilterOptions{IncludeNames: []string{"merkely"}},
+			serviceFilter:        &filters.ResourceFilterOptions{ExcludeNamesRegex: []string{"^kos.*"}},
+			minNumberOfArtifacts: 0,
 			requireEnvVars:       true,
 		},
 	} {
 		suite.Suite.Run(t.name, func() {
 			skipOrSetCreds(suite.Suite.T(), t.requireEnvVars, t.creds)
-			data, err := t.creds.GetEcsTasksData(t.filter)
+			if t.clusterFilter == nil {
+				t.clusterFilter = new(filters.ResourceFilterOptions)
+			}
+			if t.serviceFilter == nil {
+				t.serviceFilter = new(filters.ResourceFilterOptions)
+			}
+			data, err := t.creds.GetEcsTasksData(t.clusterFilter, t.serviceFilter)
 			require.False(suite.Suite.T(), (err != nil) != t.wantErr,
 				"GetEcsTasksData() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
