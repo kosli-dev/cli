@@ -2,14 +2,14 @@
 title: "kosli assert artifact"
 beta: false
 deprecated: false
-summary: "Assert the compliance status of an artifact in Kosli (in its flow or against an environment).  "
+summary: "Assert the compliance status of an artifact in Kosli (in its flow, against an environment or against one or more policies).  "
 ---
 
 # kosli assert artifact
 
 ## Synopsis
 
-Assert the compliance status of an artifact in Kosli (in its flow or against an environment).  
+Assert the compliance status of an artifact in Kosli (in its flow, against an environment or against one or more policies).  
 Exits with non-zero code if the artifact has a non-compliant status.
 
 ```shell
@@ -27,6 +27,7 @@ kosli assert artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 |    -f, --flow string  |  The Kosli flow name.  |
 |    -h, --help  |  help for artifact  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
+|        --policy strings  |  [optional] policy name (can be specified multiple times)  |
 |        --registry-password string  |  [conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry.  |
 |        --registry-username string  |  [conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry.  |
 
@@ -61,6 +62,15 @@ These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and
 kosli assert artifact 
 	--fingerprint 184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0 
 	--environment prod 
+
+```
+
+**assert that an artifact meets a set of policies**
+
+```shell
+kosli assert artifact 
+	--fingerprint 184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0 
+	--policy has-approval,has-been-integration-tested 
 
 ```
 
