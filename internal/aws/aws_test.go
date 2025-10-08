@@ -78,15 +78,17 @@ func (suite *AWSTestSuite) TestDecodeLambdaFingerprint() {
 func (suite *AWSTestSuite) TestNewEcsTaskData() {
 	taskARN := ""
 	cluster := "foo"
+	service := "bar"
 	digests := map[string]string{}
 	time := time.Now()
 	expected := &EcsTaskData{
 		TaskArn:   taskARN,
-		Cluster:   "",
+		Cluster:   cluster,
+		Service:   service,
 		Digests:   digests,
 		StartedAt: time.Unix(),
 	}
-	got := NewEcsTaskData(taskARN, cluster, digests, time)
+	got := NewEcsTaskData(taskARN, cluster, service, digests, time)
 	require.Equal(suite.Suite.T(), expected, got)
 }
 

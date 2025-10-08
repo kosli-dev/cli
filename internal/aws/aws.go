@@ -35,6 +35,7 @@ type EcsEnvRequest struct {
 type EcsTaskData struct {
 	TaskArn   string            `json:"taskArn"`
 	Cluster   string            `json:"cluster,omitempty"`
+	Service   string            `json:"service,omitempty"`
 	Digests   map[string]string `json:"digests"`
 	StartedAt int64             `json:"creationTimestamp"`
 }
@@ -62,10 +63,11 @@ type LambdaData struct {
 }
 
 // NewEcsTaskData creates a NewEcsTaskData object from an ECS task
-func NewEcsTaskData(taskArn, cluster string, digests map[string]string, startedAt time.Time) *EcsTaskData {
+func NewEcsTaskData(taskArn, clusterName, serviceName string, digests map[string]string, startedAt time.Time) *EcsTaskData {
 	return &EcsTaskData{
-		TaskArn: taskArn,
-		// Cluster:   cluster,
+		TaskArn:   taskArn,
+		Cluster:   clusterName,
+		Service:   serviceName,
 		Digests:   digests,
 		StartedAt: startedAt.Unix(),
 	}
@@ -632,7 +634,7 @@ func getTasksDataInClusterService(client *ecs.Client, clusterName string, filter
 								digests[*imageName] = ""
 							}
 						}
-						data := NewEcsTaskData(*taskDesc.TaskArn, clusterName, digests, *taskDesc.StartedAt)
+						data := NewEcsTaskData(*taskDesc.TaskArn, clusterName, *svc.ServiceName, digests, *taskDesc.StartedAt)
 						serviceTasksData = append(serviceTasksData, data)
 					}
 				}
