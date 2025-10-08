@@ -26,6 +26,13 @@ kosli assert artifact \
 	--api-token yourAPIToken \
 	--org yourOrgName 
 
+# assert that an artifact meets a set of policies
+kosli assert artifact \
+	--fingerprint 184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0 \
+	--policy has-approval,has-been-integration-tested \
+	--api-token yourAPIToken \
+	--org yourOrgName 
+
 # fail if an artifact has a non-compliant status (using the artifact fingerprint)
 kosli assert artifact \
 	--fingerprint 184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0 \
