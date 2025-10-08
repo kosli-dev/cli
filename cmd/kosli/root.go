@@ -234,6 +234,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	policyDescriptionFlag                = "[optional] policy description."
 	policyCommentFlag                    = "[optional] comment about the change made in a policy file when updating a policy."
 	policyTypeFlag                       = "[defaulted] the type of policy. One of: [env]"
+	policyName                           = "[optional] policy name (can be specified multiple times)"
 	attachPolicyEnvFlag                  = "the list of environment names to attach the policy to"
 	detachPolicyEnvFlag                  = "the list of environment names to detach the policy from"
 	sonarAPITokenFlag                    = "[required] SonarCloud/SonarQube API token."

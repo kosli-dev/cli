@@ -16,6 +16,8 @@ type AssertArtifactCommandTestSuite struct {
 	defaultKosliArguments string
 	flowName              string
 	envName               string
+	policyName1           string
+	policyName2           string
 	artifactName          string
 	artifactPath          string
 	fingerprint           string
@@ -24,6 +26,8 @@ type AssertArtifactCommandTestSuite struct {
 func (suite *AssertArtifactCommandTestSuite) SetupTest() {
 	suite.flowName = "assert-artifact"
 	suite.envName = "assert-artifact-environment"
+	suite.policyName1 = "assert-artifact-policy-1"
+	suite.policyName2 = "assert-artifact-policy-2"
 	suite.artifactName = "arti"
 	suite.artifactPath = "testdata/folder1/hello.txt"
 	global = &GlobalOpts{
@@ -38,6 +42,8 @@ func (suite *AssertArtifactCommandTestSuite) SetupTest() {
 		artifactType: "file",
 	}
 	CreateEnv(global.Org, suite.envName, "server", suite.Suite.T())
+	CreatePolicy(global.Org, suite.policyName1, suite.Suite.T())
+	CreatePolicy(global.Org, suite.policyName2, suite.Suite.T())
 	var err error
 	suite.fingerprint, err = GetSha256Digest(suite.artifactPath, fingerprintOptions, logger)
 	require.NoError(suite.Suite.T(), err)
@@ -69,6 +75,11 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 			goldenRegex: "(?s)^COMPLIANT\n.*Attestation-name.*Policy-name.*See more details at http://localhost(:8001)?/docs-cmd-test-user/flows/assert-artifact/artifacts/fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02(?:\\?artifact_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{8})?\n",
 		},
 		{
+			name:        "asserting an existing compliant artifact (using --fingerprint) for an policy results in OK and zero exit",
+			cmd:         fmt.Sprintf(`assert artifact --fingerprint %s --flow %s --policy %s %s`, suite.fingerprint, suite.flowName, suite.policyName1, suite.defaultKosliArguments),
+			goldenRegex: "(?s)^COMPLIANT\n.*Attestation-name.*Policy-name.*assert-artifact-policy-1.*See more details at http://localhost(:8001)?/docs-cmd-test-user/flows/assert-artifact/artifacts/fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02(?:\\?artifact_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{8})?\n",
+		},
+		{
 			name:        "asserting an existing compliant artifact (using --artifact-type) results in OK and zero exit",
 			cmd:         fmt.Sprintf(`assert artifact %s --artifact-type file --flow %s %s`, suite.artifactPath, suite.flowName, suite.defaultKosliArguments),
 			goldenRegex: "(?s)^COMPLIANT\n.*See more details at http://localhost(:8001)?/docs-cmd-test-user/flows/assert-artifact/artifacts/fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02?(?:\\?artifact_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{8})?\n",
@@ -80,6 +91,16 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 				{"compliant", true},
 				{"scope", "flow"},
 			},
+		},
+		{
+			name: "json output of asserting an existing compliant artifact (using --fingerprint) for an policy results in correct json",
+			cmd:  fmt.Sprintf(`assert artifact %s --output json --artifact-type file --flow %s --policy=%s --policy=%s %s`, suite.artifactPath, suite.flowName, suite.policyName1, suite.policyName2, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{
+				{"compliant", true},
+				{"scope", "policy"},
+				{"policy_evaluations", "length:2"},
+				{"policy_evaluations.[0].policy_name", suite.policyName1},
+				{"policy_evaluations.[1].policy_name", suite.policyName2}},
 		},
 		{
 			wantError: true,
