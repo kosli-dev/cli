@@ -12,7 +12,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const assertArtifactShortDesc = `Assert the compliance status of an artifact in Kosli (in its flow or against an environment).  `
+const assertArtifactShortDesc = `Assert the compliance status of an artifact in Kosli ` +
+	`(in its flow, against an environment or against one or more policies).  `
 
 const assertArtifactLongDesc = assertArtifactShortDesc + `
 Exits with non-zero code if the artifact has a non-compliant status.`
@@ -23,6 +24,13 @@ kosli assert artifact \
 	--fingerprint 184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0 \
 	--flow yourFlowName \
 	--environment prod \
+	--api-token yourAPIToken \
+	--org yourOrgName 
+
+# assert that an artifact meets a set of policies
+kosli assert artifact \
+	--fingerprint 184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0 \
+	--policy has-approval,has-been-integration-tested \
 	--api-token yourAPIToken \
 	--org yourOrgName 
 

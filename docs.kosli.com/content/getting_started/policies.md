@@ -217,3 +217,8 @@ Regardless of where you place your policy enforcement gate, it will be using the
 ```shell {.command}
 kosli assert artifact --fingerprint=$SHA256 --environment=aws-production
 ```
+
+An artifact can also be asserted directly against one or more policies.
+```shell {.command}
+kosli assert artifact --fingerprint=$SHA256 --policy=has-approval,has-been-integration-tested
+```
