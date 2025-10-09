@@ -172,22 +172,9 @@ func ingestJunitDir(testResultsDir string) ([]*JUnitResults, error) {
 
 	for _, suite := range suites {
 		var timestamp float64
-		// There is no official schema for the timestamp in the junit xml
-		suite_timestamp := suite.Properties["timestamp"]
-		if suite_timestamp != "" {
-			// This one comes from pytest
-			createdAt, err := time.Parse("2006-01-02T15:04:05.999999", suite_timestamp)
-			if err != nil {
-				// This one comes from Ruby minitest
-				createdAt, err = time.Parse("2006-01-02T15:04:05+00:00", suite_timestamp)
-				if err != nil {
-					return results, err
-				}
-			}
-			timestamp = float64(createdAt.UTC().Unix())
-		} else {
-			// maven surefire plugin generates Junit xml with no timestamp
-			timestamp = 0.0
+		timestamp, err := parseTimestamp(suite.Properties["timestamp"])
+		if err != nil {
+			return results, err
 		}
 
 		// The values in suite.Totals are based on the results of the tests in the suite and not in the header of the suite.
@@ -234,4 +221,28 @@ func getJunitFilenames(directory string) ([]string, error) {
 	}
 
 	return filenames, nil
+}
+
+func parseTimestamp(timestampStr string) (float64, error) {
+	// There is no official schema for the timestamp in the junit xml
+	// so we add formats here when we find new once
+	if timestampStr == "" {
+		return 0.0, nil
+	}
+
+	formats := []string{
+		"2006-01-02T15:04:05.999999", // pytest
+		"2006-01-02T15:04:05+00:00",  // Ruby minitest
+		"2006-01-02T15:04:05.999Z",   // vitest
+	}
+
+	var err error
+	for _, format := range formats {
+		t, err := time.Parse(format, timestampStr)
+		if err == nil {
+			return float64(t.UTC().Unix()), nil
+		}
+	}
+
+	return 0.0, err
 }

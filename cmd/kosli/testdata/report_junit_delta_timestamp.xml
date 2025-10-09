@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="5" failures="0" errors="0" time="1.886">
+    <testsuite name="src/components/TodoApp.integration.test.tsx" timestamp="2025-06-18T10:24:39.090Z" hostname="sofus-ASUS-Zenbook-14-UX3405CA-UX3405CA" tests="1" failures="0" errors="0" skipped="0" time="0.165">
+        <testcase classname="src/components/TodoApp.integration.test.tsx" name="TodoApp integration &gt; should add and delete a todo item" time="0.164">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/TodoApp.test.tsx" timestamp="2025-06-18T10:24:39.096Z" hostname="sofus-ASUS-Zenbook-14-UX3405CA-UX3405CA" tests="4" failures="0" errors="0" skipped="0" time="0.244">
+        <testcase classname="src/components/TodoApp.test.tsx" name="TodoApp &gt; renders empty state" time="0.058">
+        </testcase>
+        <testcase classname="src/components/TodoApp.test.tsx" name="TodoApp &gt; can add a todo" time="0.105">
+        </testcase>
+        <testcase classname="src/components/TodoApp.test.tsx" name="TodoApp &gt; can complete a todo" time="0.043">
+        </testcase>
+        <testcase classname="src/components/TodoApp.test.tsx" name="TodoApp &gt; can delete a todo" time="0.036">
+        </testcase>
+    </testsuite>
+</testsuites>
+
