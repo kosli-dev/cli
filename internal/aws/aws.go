@@ -34,8 +34,8 @@ type EcsEnvRequest struct {
 // EcsTaskData represents the harvested ECS task data
 type EcsTaskData struct {
 	TaskArn   string            `json:"taskArn"`
-	Cluster   string            `json:"cluster,omitempty"`
-	Service   string            `json:"service,omitempty"`
+	Cluster   string            `json:"cluster_name,omitempty"`
+	Service   string            `json:"service_name,omitempty"`
 	Digests   map[string]string `json:"digests"`
 	StartedAt int64             `json:"creationTimestamp"`
 }
