@@ -131,11 +131,10 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 
 	if len(cmd.Long) > 0 {
 		buf.WriteString("## Synopsis\n\n")
+		if cmd.Runnable() {
+			buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", cmd.UseLine()))
+		}
 		buf.WriteString(strings.Replace(cmd.Long, "^", "`", -1) + "\n\n")
-	}
-
-	if cmd.Runnable() {
-		buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", cmd.UseLine()))
 	}
 
 	if err := printOptions(buf, cmd, name); err != nil {
@@ -181,7 +180,9 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 		// Note: The contents of the title lines could also contain < and > characters which will
 		// be lost if simply embedded in a md ## section.
 		buf.WriteString("## Examples Use Cases\n\n")
-		buf.WriteString("These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. \n\n")
+		url := "https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables"
+		message := fmt.Sprintf("These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](%v). \n\n", url)
+		buf.WriteString(message)
 
 		// Some non-title lines contain a # character, (eg in a snappish) so we have to
 		// split on newlines first and then only split on # in the first position
