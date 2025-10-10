@@ -160,6 +160,7 @@ jobs:
            --name test 
            --flow ${{ inputs.FLOW_NAME }}  
            --trail ${{ inputs.TRAIL_NAME }} 
+           --results-dir junit-test-results
            --org ${{ inputs.KOSLI_ORG }}
 
     - name: Upload coverage reports to Codecov

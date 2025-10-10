@@ -23,3 +23,4 @@ docs.kosli.com/.netlify
 docs.kosli.com/assets/metadata.json
 tmp/
 junit.xml
+junit-test-results/.
