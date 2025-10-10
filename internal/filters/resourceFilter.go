@@ -13,6 +13,11 @@ type ResourceFilterOptions struct {
 	ExcludeNamesRegex []string
 }
 
+// IsSet checks if the filter options are set
+func (filter *ResourceFilterOptions) IsSet() bool {
+	return len(filter.IncludeNames) > 0 || len(filter.IncludeNamesRegex) > 0 || len(filter.ExcludeNames) > 0 || len(filter.ExcludeNamesRegex) > 0
+}
+
 // ShouldInclude checks if a name should be included or not according to the filter options
 // the filter should only be used for one operation (include, exclude)
 func (filter *ResourceFilterOptions) ShouldInclude(name string) (bool, error) {

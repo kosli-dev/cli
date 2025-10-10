@@ -13,32 +13,21 @@ import (
 
 const snapshotECSShortDesc = `Report a snapshot of running containers in one or more AWS ECS cluster(s) to Kosli.  `
 const snapshotECSLongDesc = snapshotECSShortDesc + `
-Skip ^--clusters^ and ^--clusters-regex^ to report all clusters in a given AWS account. Or use ^--exclude^ and/or ^--exclude-regex^ to report all clusters excluding some.
-The reported data includes container image digests and creation timestamps.` + awsAuthDesc
+Skip all filtering flags to report everything running in all clusters in a given AWS account. 
+
+Use ^--clusters^ and/or ^--clusters-regex^ OR ^--exclude^ and/or ^--exclude-regex^ to filter the clusters to snapshot.
+You can also filter the services within a cluster using ^--services^ and/or ^--services-regex^. Or use ^--exclude-services^ and/or ^--exclude-services-regex^ to exclude some services. 
+Note that service filtering is applied to all clusters being snapshot.
+
+All filtering options are case-sensitive.
+
+The reported data includes cluster and service names, container image digests and creation timestamps.` + awsAuthDesc
 
 const snapshotECSExample = `
-# report what is running in an entire AWS ECS cluster:
-export AWS_REGION=yourAWSRegion
-export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
-export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
+###### Authentication to AWS ######
 
-kosli snapshot ecs yourEnvironmentName \
-	--clusters yourECSClusterName \
-	--api-token yourAPIToken \
-	--org yourOrgName
+# authentication to AWS using flags
 
-# report what is running in a specific AWS ECS service within a cluster:
-export AWS_REGION=yourAWSRegion
-export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
-export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
-
-kosli snapshot ecs yourEnvironmentName \
-	--clusters yourECSClusterName \
-	--service-name yourECSServiceName \
-	--api-token yourAPIToken \
-	--org yourOrgName
-
-# report what is running in all ECS clusters in an AWS account (AWS auth provided in flags):
 kosli snapshot ecs yourEnvironmentName \
 	--aws-key-id yourAWSAccessKeyID \
 	--aws-secret-key yourAWSSecretAccessKey \
@@ -46,18 +35,88 @@ kosli snapshot ecs yourEnvironmentName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# report what is running in all ECS clusters in an AWS account except for clusters with names matching given regex patterns:
+# authentication to AWS using env variables
+
+export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
+export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
+export AWS_REGION=yourAWSRegion
+
 kosli snapshot ecs yourEnvironmentName \
-	--aws-key-id yourAWSAccessKeyID \
-	--aws-secret-key yourAWSSecretAccessKey \
-	--aws-region yourAWSRegion \
-	--exclude-regex "those-names.*" \
 	--api-token yourAPIToken \
 	--org yourOrgName
+
+###### reporting everything running in all clusters in a given AWS account ######
+
+kosli snapshot ecs my-env \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+###### filtering which ECS clusters to snapshot ######
+
+########### including clusters
+
+# include clusters matching a name in the AWS account
+kosli snapshot ecs my-env --clusters my-cluster ...
+
+# include clusters matching a pattern in the AWS account
+kosli snapshot ecs my-env --clusters-regex "my-cluster-*" ...
+
+# include clusters matching a list of names in the AWS account
+kosli snapshot ecs my-env --clusters my-cluster1,my-cluster2 ...
+
+########### excluding clusters
+
+# exclude clusters matching a name in the AWS account
+kosli snapshot ecs my-env --exclude my-cluster ...
+
+# exclude clusters matching a pattern in the AWS account
+kosli snapshot ecs my-env --exclude-regex "my-cluster-*" ...
+
+# exclude clusters matching a list of names in the AWS account
+kosli snapshot ecs my-env --exclude my-cluster1,my-cluster2 ...
+
+
+
+###### filtering which ECS services to snapshot ######
+
+########### including services
+
+# include Services matching a name in one cluster
+kosli snapshot ecs my-env --clusters my-cluster --services backend-app ...
+
+# include Services matching a pattern in one cluster
+kosli snapshot ecs my-env --clusters my-cluster --services-regex "backend-*" ...
+
+# include production Services only (by naming convention) in all clusters in the AWS account
+kosli snapshot ecs my-env --services-regex "*-prod-*" ...
+
+# include Services matching a name in all clusters in the AWS account
+kosli snapshot ecs my-env --services backend-app ...
+
+# include Services matching a list of names in all clusters in the AWS account
+kosli snapshot ecs my-env --services backend-app,frontend-app ...
+
+########### excluding services
+
+# exclude Services matching a pattern in one cluster
+kosli snapshot ecs my-env --clusters my-cluster --exclude-services-regex "backend-*" ...
+
+# exclude Production services only (by naming convention)  in all clusters in the AWS account
+kosli snapshot ecs my-env --exclude-services-regex "*-prod-*" ...
+
+# exclude Services matching a name in one cluster
+kosli snapshot ecs my-env --clusters my-cluster --exclude-services backend-app ...
+
+# exclude Services matching a name in all clusters in the AWS account
+kosli snapshot ecs my-env --exclude-services backend-app ...
+
+# exclude Services matching a list of names in all clusters in the AWS account
+kosli snapshot ecs my-env --exclude-services backend-app,frontend-app ...
 `
 
 type snapshotECSOptions struct {
-	filter         *filters.ResourceFilterOptions
+	clustersFilter *filters.ResourceFilterOptions
+	serviceFilter  *filters.ResourceFilterOptions
 	serviceName    string
 	awsStaticCreds *aws.AWSStaticCreds
 }
@@ -65,7 +124,8 @@ type snapshotECSOptions struct {
 func newSnapshotECSCmd(out io.Writer) *cobra.Command {
 	o := new(snapshotECSOptions)
 	o.awsStaticCreds = new(aws.AWSStaticCreds)
-	o.filter = new(filters.ResourceFilterOptions)
+	o.clustersFilter = new(filters.ResourceFilterOptions)
+	o.serviceFilter = new(filters.ResourceFilterOptions)
 	cmd := &cobra.Command{
 		Use:     "ecs ENVIRONMENT-NAME",
 		Short:   snapshotECSShortDesc,
@@ -94,6 +154,30 @@ func newSnapshotECSCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			// service filtering flags
+			// Include flags vs exclude flags mutual exclusion
+			err = MuXRequiredFlags(cmd, []string{"services", "exclude-services"}, false)
+			if err != nil {
+				return err
+			}
+			err = MuXRequiredFlags(cmd, []string{"services", "exclude-services-regex"}, false)
+			if err != nil {
+				return err
+			}
+			err = MuXRequiredFlags(cmd, []string{"services-regex", "exclude-services"}, false)
+			if err != nil {
+				return err
+			}
+			err = MuXRequiredFlags(cmd, []string{"services-regex", "exclude-services-regex"}, false)
+			if err != nil {
+				return err
+			}
+
+			// Deprecated flag vs new flags mutual exclusion
+			err = MuXRequiredFlags(cmd, []string{"service-name", "services", "services-regex", "exclude-services", "exclude-services-regex"}, false)
+			if err != nil {
+				return err
+			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -101,12 +185,17 @@ func newSnapshotECSCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringSliceVar(&o.filter.IncludeNames, "clusters", []string{}, ecsClustersFlag)
-	cmd.Flags().StringSliceVar(&o.filter.IncludeNamesRegex, "clusters-regex", []string{}, ecsClustersRegexFlag)
-	cmd.Flags().StringSliceVar(&o.filter.ExcludeNames, "exclude", []string{}, ecsExcludeClustersFlag)
-	cmd.Flags().StringSliceVar(&o.filter.ExcludeNamesRegex, "exclude-regex", []string{}, ecsExcludeClustersRegexFlag)
+	cmd.Flags().StringSliceVar(&o.clustersFilter.IncludeNames, "clusters", []string{}, ecsClustersFlag)
+	cmd.Flags().StringSliceVar(&o.clustersFilter.IncludeNamesRegex, "clusters-regex", []string{}, ecsClustersRegexFlag)
+	cmd.Flags().StringSliceVar(&o.clustersFilter.ExcludeNames, "exclude", []string{}, ecsExcludeClustersFlag)
+	cmd.Flags().StringSliceVar(&o.clustersFilter.ExcludeNamesRegex, "exclude-regex", []string{}, ecsExcludeClustersRegexFlag)
 
-	cmd.Flags().StringSliceVarP(&o.filter.IncludeNames, "cluster", "C", []string{}, ecsClusterFlag)
+	cmd.Flags().StringSliceVar(&o.serviceFilter.IncludeNames, "services", []string{}, ecsServicesFlag)
+	cmd.Flags().StringSliceVar(&o.serviceFilter.IncludeNamesRegex, "services-regex", []string{}, ecsServicesRegexFlag)
+	cmd.Flags().StringSliceVar(&o.serviceFilter.ExcludeNames, "exclude-services", []string{}, ecsExcludeServicesFlag)
+	cmd.Flags().StringSliceVar(&o.serviceFilter.ExcludeNamesRegex, "exclude-services-regex", []string{}, ecsExcludeServicesRegexFlag)
+
+	cmd.Flags().StringSliceVarP(&o.clustersFilter.IncludeNames, "cluster", "C", []string{}, ecsClusterFlag)
 	cmd.Flags().StringVarP(&o.serviceName, "service-name", "s", "", ecsServiceFlag)
 	addAWSAuthFlags(cmd, o.awsStaticCreds)
 	addDryRunFlag(cmd)
@@ -126,7 +215,7 @@ func (o *snapshotECSOptions) run(args []string) error {
 	envName := args[0]
 	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/ECS", global.Host, global.Org, envName)
 
-	tasksData, err := o.awsStaticCreds.GetEcsTasksData(o.filter)
+	tasksData, err := o.awsStaticCreds.GetEcsTasksData(o.clustersFilter, o.serviceFilter, logger)
 	if err != nil {
 		return err
 	}

@@ -72,6 +72,30 @@ func (suite *SnapshotECSTestSuite) TestSnapshotECSCmd() {
 			golden:    "Error: only one of --cluster, --clusters, --exclude-regex is allowed\n",
 		},
 		{
+			wantError: true,
+			name:      "snapshot ECS fails if --services and --exclude-services-regex are set",
+			cmd:       fmt.Sprintf(`snapshot ecs %s --services sss --exclude-services-regex sss %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: only one of --services, --exclude-services-regex is allowed\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot ECS fails if --services and --exclude-services are set",
+			cmd:       fmt.Sprintf(`snapshot ecs %s --services sss --exclude-services sss %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: only one of --services, --exclude-services is allowed\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot ECS fails if --services-regex and --exclude-services-regex are set",
+			cmd:       fmt.Sprintf(`snapshot ecs %s --services-regex sss --exclude-services-regex sss %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: only one of --services-regex, --exclude-services-regex is allowed\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot ECS fails if --services-regex and --exclude-services are set",
+			cmd:       fmt.Sprintf(`snapshot ecs %s --services-regex sss --exclude-services sss %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: only one of --services-regex, --exclude-services is allowed\n",
+		},
+		{
 			name: "snapshot ECS works if no filtering flags are used",
 			cmd:  fmt.Sprintf(`snapshot ecs %s %s`, suite.envName, suite.defaultKosliArguments),
 			additionalConfig: snapshotECSTestConfig{
@@ -82,6 +106,14 @@ func (suite *SnapshotECSTestSuite) TestSnapshotECSCmd() {
 		{
 			name: "snapshot ECS works with --clusters",
 			cmd:  fmt.Sprintf(`snapshot ecs %s %s --clusters merkely`, suite.envName, suite.defaultKosliArguments),
+			additionalConfig: snapshotECSTestConfig{
+				requireAuthToBeSet: true,
+			},
+			goldenRegex: "\\[\\d+\\] containers were reported to environment snapshot-ecs-env\n",
+		},
+		{
+			name: "snapshot ECS works with --clusters and --services",
+			cmd:  fmt.Sprintf(`snapshot ecs %s %s --clusters merkely --services kosli`, suite.envName, suite.defaultKosliArguments),
 			additionalConfig: snapshotECSTestConfig{
 				requireAuthToBeSet: true,
 			},
