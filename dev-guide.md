@@ -39,5 +39,14 @@ Then to run Kosli commands:
 
 ## Running the tests
 
+To run the tests you need to set the env-var `KOSLI_API_TOKEN_PROD`
+to an api-token (with reader rights), for the `kosli` Org on https://app.kosli.com
+
+To run all tests except the too slow ones:
+`make test_integration` 
+
+To run all the tests"
+`make test_integration_full`
+
 To run only the tests in a single test suite, eg TestAttestJunitCommandTestSuite
 `make test_integration_single TARGET=TestAttestJunitCommandTestSuite`
