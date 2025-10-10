@@ -131,11 +131,10 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 
 	if len(cmd.Long) > 0 {
 		buf.WriteString("## Synopsis\n\n")
+		if cmd.Runnable() {
+			buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", cmd.UseLine()))
+		}
 		buf.WriteString(strings.Replace(cmd.Long, "^", "`", -1) + "\n\n")
-	}
-
-	if cmd.Runnable() {
-		buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", cmd.UseLine()))
 	}
 
 	if err := printOptions(buf, cmd, name); err != nil {
