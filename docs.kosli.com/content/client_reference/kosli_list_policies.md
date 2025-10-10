@@ -9,11 +9,11 @@ summary: "List environment policies for an org."
 
 ## Synopsis
 
-List environment policies for an org.
-
 ```shell
 kosli list policies [flags]
 ```
+
+List environment policies for an org.
 
 ## Flags
 | Flag | Description |

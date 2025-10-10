@@ -9,6 +9,10 @@ summary: "Add an artifact to an environment's allowlist.  "
 
 ## Synopsis
 
+```shell
+kosli allow artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+```
+
 Add an artifact to an environment's allowlist.  
 
 The artifact fingerprint can be provided directly with the `--fingerprint` flag, or 
@@ -18,10 +22,6 @@ Artifact type can be one of: "file" for files, "dir" for directories, "oci" for 
 images in registries or "docker" for local docker images.
 
 
-
-```shell
-kosli allow artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
-```
 
 ## Flags
 | Flag | Description |

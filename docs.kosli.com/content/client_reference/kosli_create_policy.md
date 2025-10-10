@@ -9,11 +9,11 @@ summary: "Create or update a Kosli policy."
 
 ## Synopsis
 
-Updating policy content creates a new version of the policy.
-
 ```shell
 kosli create policy POLICY-NAME POLICY-FILE-PATH [flags]
 ```
+
+Updating policy content creates a new version of the policy.
 
 ## Flags
 | Flag | Description |
@@ -39,7 +39,7 @@ kosli create policy POLICY-NAME POLICY-FILE-PATH [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **create a Kosli policy**
 

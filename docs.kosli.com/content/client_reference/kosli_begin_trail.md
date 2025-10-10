@@ -9,6 +9,10 @@ summary: "Begin or update a Kosli flow trail."
 
 ## Synopsis
 
+```shell
+kosli begin trail TRAIL-NAME [flags]
+```
+
 Begin or update a Kosli flow trail.
 
 You can optionally associate the trail to a git commit using `--commit` (requires access to a git repo). And you  
@@ -16,10 +20,6 @@ can optionally redact some of the git commit data sent to Kosli using `--redact-
 
 `TRAIL-NAME`s must start with a letter or number, and only contain letters, numbers, `.`, `-`, `_`, and `~`.
 
-
-```shell
-kosli begin trail TRAIL-NAME [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -60,7 +60,7 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **begin/update a Kosli flow trail**
 

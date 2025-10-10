@@ -9,11 +9,11 @@ summary: "List flows for an org."
 
 ## Synopsis
 
-List flows for an org.
-
 ```shell
 kosli list flows [flags]
 ```
+
+List flows for an org.
 
 ## Flags
 | Flag | Description |

@@ -9,15 +9,15 @@ summary: "Create or update a Kosli flow."
 
 ## Synopsis
 
+```shell
+kosli create flow FLOW-NAME [flags]
+```
+
 Create or update a Kosli flow.
 You can specify flow parameters in flags.
 
 `FLOW-NAME`s must start with a letter or number, and only contain letters, numbers, `.`, `-`, `_`, and `~`.
 
-
-```shell
-kosli create flow FLOW-NAME [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -53,7 +53,7 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **create/update a Kosli flow (with empty template)**
 

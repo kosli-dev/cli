@@ -9,14 +9,14 @@ summary: "Report a snapshot of running pods in a K8S cluster or namespace(s) to 
 
 ## Synopsis
 
+```shell
+kosli snapshot k8s ENVIRONMENT-NAME [flags]
+```
+
 Report a snapshot of running pods in a K8S cluster or namespace(s) to Kosli.  
 Skip `--namespaces` and `--namespaces-regex` to report all pods in all namespaces in a cluster.
 The reported data includes pod container images digests and creation timestamps. You can customize the scope of reporting
 to include or exclude namespaces.
-
-```shell
-kosli snapshot k8s ENVIRONMENT-NAME [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -44,7 +44,7 @@ kosli snapshot k8s ENVIRONMENT-NAME [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **report what is running in an entire cluster using kubeconfig at $HOME/.kube/config**
 

@@ -9,13 +9,13 @@ summary: "Assert a Bitbucket pull request for a git commit exists.  "
 
 ## Synopsis
 
-Assert a Bitbucket pull request for a git commit exists.  
-The command exits with non-zero exit code if no pull requests were found for the commit.
-Authentication to Bitbucket can be done with access token (recommended) or app passwords. Credentials need to have read access for both repos and pull requests.
-
 ```shell
 kosli assert pullrequest bitbucket [flags]
 ```
+
+Assert a Bitbucket pull request for a git commit exists.  
+The command exits with non-zero exit code if no pull requests were found for the commit.
+Authentication to Bitbucket can be done with access token (recommended) or app passwords. Credentials need to have read access for both repos and pull requests.
 
 ## Flags
 | Flag | Description |
@@ -44,7 +44,7 @@ kosli assert pullrequest bitbucket [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 ```shell
 kosli assert pullrequest bitbucket  \

@@ -9,6 +9,10 @@ summary: "Create or update a Kosli environment."
 
 ## Synopsis
 
+```shell
+kosli create environment ENVIRONMENT-NAME [flags]
+```
+
 Create or update a Kosli environment.
 
 ``--type`` must match the type of environment you wish to record snapshots from.
@@ -39,10 +43,6 @@ to them.
 `ENVIRONMENT-NAME`s must start with a letter or number, and only contain letters, numbers, `.`, `-`, `_`, and `~`.
 
 
-```shell
-kosli create environment ENVIRONMENT-NAME [flags]
-```
-
 ## Flags
 | Flag | Description |
 | :--- | :--- |
@@ -70,7 +70,7 @@ kosli create environment ENVIRONMENT-NAME [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **create a Kosli environment**
 

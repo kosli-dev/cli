@@ -9,6 +9,10 @@ summary: "Attest an artifact creation to a Kosli flow.  "
 
 ## Synopsis
 
+```shell
+kosli attest artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
+```
+
 Attest an artifact creation to a Kosli flow.  
 
 The artifact fingerprint can be provided directly with the `--fingerprint` flag, or 
@@ -22,10 +26,6 @@ Each line should specify a relative path or path glob to be ignored. You can inc
 The `.kosli_ignore` will be treated as part of the artifact like any other file, unless it is explicitly ignored itself.
 This command requires access to a git repo to associate the artifact to the git commit it is originating from. 
 You can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`
-
-```shell
-kosli attest artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -73,7 +73,7 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **Attest that a file type artifact has been created, and let Kosli calculate its fingerprint**
 

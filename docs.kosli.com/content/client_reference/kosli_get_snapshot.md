@@ -9,6 +9,10 @@ summary: "Get a specified environment snapshot.  "
 
 ## Synopsis
 
+```shell
+kosli get snapshot ENVIRONMENT-NAME-OR-EXPRESSION [flags]
+```
+
 Get a specified environment snapshot.  
 ENVIRONMENT-NAME-OR-EXPRESSION can be specified as follows:
 - environmentName
@@ -27,10 +31,6 @@ ENVIRONMENT-NAME-OR-EXPRESSION can be specified as follows:
     - the snapshot at a time relative to the time of the request
     - e.g., **prod@{2.hours.ago}**
 
-
-```shell
-kosli get snapshot ENVIRONMENT-NAME-OR-EXPRESSION [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -59,7 +59,7 @@ kosli get snapshot aws-prod --output=json</pre>{{< / raw-html >}}
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **get the latest snapshot of an environment**
 

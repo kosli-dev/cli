@@ -9,11 +9,11 @@ summary: "Attach a policy to one or more Kosli environments.  "
 
 ## Synopsis
 
-Attach a policy to one or more Kosli environments.  
-
 ```shell
 kosli attach-policy POLICY-NAME [flags]
 ```
+
+Attach a policy to one or more Kosli environments.  
 
 ## Flags
 | Flag | Description |
@@ -37,7 +37,7 @@ kosli attach-policy POLICY-NAME [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **attach a previously created policy to multiple environment**
 

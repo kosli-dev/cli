@@ -9,13 +9,13 @@ summary: "Archive a custom Kosli attestation type."
 
 ## Synopsis
 
-Archive a custom Kosli attestation type.
-New custom attestations using this type cannot be made, but existing attestations will still be visible.
-
-
 ```shell
 kosli archive attestation-type TYPE-NAME [flags]
 ```
+
+Archive a custom Kosli attestation type.
+New custom attestations using this type cannot be made, but existing attestations will still be visible.
+
 
 ## Flags
 | Flag | Description |
@@ -38,7 +38,7 @@ kosli archive attestation-type TYPE-NAME [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **archive a Kosli custom attestation type**
 

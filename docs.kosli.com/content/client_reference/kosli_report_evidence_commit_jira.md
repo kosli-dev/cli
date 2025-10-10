@@ -12,6 +12,10 @@ summary: "Report Jira evidence for a commit in Kosli flows."
 {{% /hint %}}
 ## Synopsis
 
+```shell
+kosli report evidence commit jira [flags]
+```
+
 Report Jira evidence for a commit in Kosli flows.  
 Parses the given commit's message or current branch name for Jira issue references of the 
 form:  
@@ -24,10 +28,6 @@ existing Jira issues.
 If you have wrong Jira credentials or wrong Jira-base-url it will be reported as non existing Jira issue.
 This is because Jira returns same 404 error code in all cases.
 
-
-```shell
-kosli report evidence commit jira [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -64,7 +64,7 @@ kosli report evidence commit jira [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **report Jira evidence for a commit related to one Kosli flow (with Jira Cloud)**
 

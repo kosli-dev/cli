@@ -9,11 +9,11 @@ summary: "List all Kosli attestation types for an org."
 
 ## Synopsis
 
-List all Kosli attestation types for an org.
-
 ```shell
 kosli list attestation-types [flags]
 ```
+
+List all Kosli attestation types for an org.
 
 ## Flags
 | Flag | Description |

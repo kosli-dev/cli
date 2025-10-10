@@ -9,6 +9,10 @@ summary: "Assert an artifact in Kosli has been approved for deployment.  "
 
 ## Synopsis
 
+```shell
+kosli assert approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+```
+
 Assert an artifact in Kosli has been approved for deployment.  
 Exits with non-zero code if the artifact has not been approved.  
 
@@ -19,10 +23,6 @@ Artifact type can be one of: "file" for files, "dir" for directories, "oci" for 
 images in registries or "docker" for local docker images.
 
 
-
-```shell
-kosli assert approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -51,7 +51,7 @@ kosli assert approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **Assert that a file type artifact has been approved**
 

@@ -9,6 +9,10 @@ summary: "Diff environment snapshots.  "
 
 ## Synopsis
 
+```shell
+kosli diff snapshots SNAPPISH_1 SNAPPISH_2 [flags]
+```
+
 Diff environment snapshots.  
 Specify SNAPPISH_1 and SNAPPISH_2 by:
 - environmentName
@@ -27,10 +31,6 @@ Specify SNAPPISH_1 and SNAPPISH_2 by:
     - the snapshot at a time relative to the time of the request
     - e.g., **prod@{2.hours.ago}**
 
-
-```shell
-kosli diff snapshots SNAPPISH_1 SNAPPISH_2 [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -60,7 +60,7 @@ kosli diff snapshots aws-beta aws-prod --output=json</pre>{{< / raw-html >}}
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **compare the third latest snapshot in an environment to the latest**
 

@@ -9,13 +9,13 @@ summary: "Assert a Gitlab merge request for a git commit exists.  "
 
 ## Synopsis
 
-Assert a Gitlab merge request for a git commit exists.  
-The command exits with non-zero exit code 
-if no merge requests were found for the commit.
-
 ```shell
 kosli assert pullrequest gitlab [flags]
 ```
+
+Assert a Gitlab merge request for a git commit exists.  
+The command exits with non-zero exit code 
+if no merge requests were found for the commit.
 
 ## Flags
 | Flag | Description |
@@ -43,7 +43,7 @@ kosli assert pullrequest gitlab [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 ```shell
 kosli assert mergerequest gitlab \

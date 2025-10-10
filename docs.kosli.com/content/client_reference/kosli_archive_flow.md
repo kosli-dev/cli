@@ -9,13 +9,13 @@ summary: "Archive a Kosli flow."
 
 ## Synopsis
 
-Archive a Kosli flow.
-The flow will no longer be visible in list of flows, data is still stored in the database.
-
-
 ```shell
 kosli archive flow FLOW-NAME [flags]
 ```
+
+Archive a Kosli flow.
+The flow will no longer be visible in list of flows, data is still stored in the database.
+
 
 ## Flags
 | Flag | Description |
@@ -38,7 +38,7 @@ kosli archive flow FLOW-NAME [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **archive a Kosli flow**
 

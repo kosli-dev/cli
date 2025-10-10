@@ -9,6 +9,10 @@ summary: "Report a snapshot of the content of an AWS S3 bucket to Kosli."
 
 ## Synopsis
 
+```shell
+kosli snapshot s3 ENVIRONMENT-NAME [flags]
+```
+
 Report a snapshot of the content of an AWS S3 bucket to Kosli.
 
 To authenticate to AWS, you can either:  
@@ -25,10 +29,6 @@ In all cases, the content is reported as one artifact. If you wish to report sep
 To specify paths in a directory artifact that should always be excluded from the SHA256 calculation, you can add a `.kosli_ignore` file to the root of the artifact.
 Each line should specify a relative path or path glob to be ignored. You can include comments in this file, using `#`.
 The `.kosli_ignore` will be treated as part of the artifact like any other file, unless it is explicitly ignored itself.
-
-```shell
-kosli snapshot s3 ENVIRONMENT-NAME [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -57,7 +57,7 @@ kosli snapshot s3 ENVIRONMENT-NAME [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **report the contents of an entire AWS S3 bucket (AWS auth provided in env variables)**
 

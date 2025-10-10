@@ -9,6 +9,10 @@ summary: "Generate completion script"
 
 ## Synopsis
 
+```shell
+kosli completion [bash|zsh|fish|powershell]
+```
+
 To load completions:
 
   ### Bash
@@ -57,10 +61,6 @@ you will need to enable it.  You can execute the following once:
  ``` 
  and source this file from your PowerShell profile.
 
-
-```shell
-kosli completion [bash|zsh|fish|powershell]
-```
 
 ## Flags
 | Flag | Description |

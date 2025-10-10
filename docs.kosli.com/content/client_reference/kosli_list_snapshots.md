@@ -9,6 +9,10 @@ summary: "List environment snapshots."
 
 ## Synopsis
 
+```shell
+kosli list snapshots ENV_NAME [flags]
+```
+
 List environment snapshots.
 The results are paginated and ordered from latest to oldest.
 By default, the page limit is 15 snapshots per page.
@@ -22,10 +26,6 @@ Expressions can be:
 
 Either expression can be omitted to default to NOW.
 
-
-```shell
-kosli list snapshots ENV_NAME [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -58,7 +58,7 @@ kosli list snapshots aws-prod --output=json</pre>{{< / raw-html >}}
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **list the last 15 snapshots for an environment**
 

@@ -9,6 +9,10 @@ summary: "Get an approval from a specified flow."
 
 ## Synopsis
 
+```shell
+kosli get approval EXPRESSION [flags]
+```
+
 Get an approval from a specified flow.
 EXPRESSION can be specified as follows:
 - flowName
@@ -21,10 +25,6 @@ EXPRESSION can be specified as follows:
     - the Nth approval behind the latest, at the time of the request
     - e.g., **creator~56**
 
-
-```shell
-kosli get approval EXPRESSION [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -47,7 +47,7 @@ kosli get approval EXPRESSION [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **get second behind the latest approval from a flow**
 

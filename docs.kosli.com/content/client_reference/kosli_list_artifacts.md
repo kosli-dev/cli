@@ -9,13 +9,13 @@ summary: "List artifacts in a flow. "
 
 ## Synopsis
 
-List artifacts in a flow. The results are paginated and ordered from latest to oldest.
-By default, the page limit is 15 artifacts per page.
-
-
 ```shell
 kosli list artifacts [flags]
 ```
+
+List artifacts in a flow. The results are paginated and ordered from latest to oldest.
+By default, the page limit is 15 artifacts per page.
+
 
 ## Flags
 | Flag | Description |
@@ -41,7 +41,7 @@ kosli list artifacts [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **list the last 15 artifacts for a flow**
 

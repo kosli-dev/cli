@@ -9,6 +9,10 @@ summary: "Report a snapshot of artifacts running in specific filesystem paths to
 
 ## Synopsis
 
+```shell
+kosli snapshot paths ENVIRONMENT-NAME [flags]
+```
+
 Report a snapshot of artifacts running in specific filesystem paths to Kosli.  
 You can report directory or file artifacts in one or more filesystem paths. 
 Artifacts names and the paths to include and exclude when fingerprinting them can be 
@@ -34,10 +38,6 @@ artifacts:
     exclude: [subdir1, **/log]
 ```
 
-```shell
-kosli snapshot paths ENVIRONMENT-NAME [flags]
-```
-
 ## Flags
 | Flag | Description |
 | :--- | :--- |
@@ -61,7 +61,7 @@ kosli snapshot paths ENVIRONMENT-NAME [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **report one or more artifacts running in a filesystem using a path spec file**
 

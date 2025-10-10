@@ -9,11 +9,11 @@ summary: "Get a policy's metadata."
 
 ## Synopsis
 
-Get a policy's metadata.
-
 ```shell
 kosli get policy POLICY-NAME [flags]
 ```
+
+Get a policy's metadata.
 
 ## Flags
 | Flag | Description |

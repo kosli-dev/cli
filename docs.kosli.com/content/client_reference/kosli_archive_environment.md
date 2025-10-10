@@ -9,13 +9,13 @@ summary: "Archive a Kosli environment."
 
 ## Synopsis
 
-Archive a Kosli environment.
-The environment will no longer be visible in list of environments, data is still stored in the database.
-
-
 ```shell
 kosli archive environment ENVIRONMENT-NAME [flags]
 ```
+
+Archive a Kosli environment.
+The environment will no longer be visible in list of environments, data is still stored in the database.
+
 
 ## Flags
 | Flag | Description |
@@ -38,7 +38,7 @@ kosli archive environment ENVIRONMENT-NAME [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **archive a Kosli environment**
 

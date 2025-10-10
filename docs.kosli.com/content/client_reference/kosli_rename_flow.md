@@ -9,13 +9,13 @@ summary: "Rename a Kosli flow."
 
 ## Synopsis
 
-Rename a Kosli flow.
-The flow will remain accessible under its old name until that name is taken by another flow.
-
-
 ```shell
 kosli rename flow OLD_NAME NEW_NAME [flags]
 ```
+
+Rename a Kosli flow.
+The flow will remain accessible under its old name until that name is taken by another flow.
+
 
 ## Flags
 | Flag | Description |
@@ -38,7 +38,7 @@ kosli rename flow OLD_NAME NEW_NAME [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **rename a Kosli flow**
 

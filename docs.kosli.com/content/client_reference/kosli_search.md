@@ -9,12 +9,12 @@ summary: "Search for a git commit or an artifact fingerprint in Kosli.  "
 
 ## Synopsis
 
-Search for a git commit or an artifact fingerprint in Kosli.   
-You can use short git commit or artifact fingerprint shas, but you must provide at least 5 characters.
-
 ```shell
 kosli search {GIT-COMMIT | FINGERPRINT} [flags]
 ```
+
+Search for a git commit or an artifact fingerprint in Kosli.   
+You can use short git commit or artifact fingerprint shas, but you must provide at least 5 characters.
 
 ## Flags
 | Flag | Description |
@@ -37,7 +37,7 @@ kosli search {GIT-COMMIT | FINGERPRINT} [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **Search for a git commit in Kosli**
 

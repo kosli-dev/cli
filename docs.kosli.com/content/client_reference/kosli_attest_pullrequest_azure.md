@@ -9,6 +9,10 @@ summary: "Report an Azure Devops pull request attestation to an artifact or a tr
 
 ## Synopsis
 
+```shell
+kosli attest pullrequest azure [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+```
+
 Report an Azure Devops pull request attestation to an artifact or a trail in a Kosli flow.  
 It checks if a pull request exists for the artifact (based on its git commit) and reports the pull-request attestation to the artifact in Kosli.
 
@@ -17,10 +21,6 @@ The attestation can be bound to a *trail* using the trail name.
 The attestation can be bound to an *artifact* in two ways:
 - using the artifact's SHA256 fingerprint which is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
 - using the artifact's name in the flow yaml template and the git commit from which the artifact is/will be created. Useful when reporting an attestation before creating/reporting the artifact.
-
-```shell
-kosli attest pullrequest azure [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -66,7 +66,7 @@ kosli attest pullrequest azure [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **report an Azure Devops pull request attestation about a pre-built docker artifact (kosli calculates the fingerprint)**
 

@@ -12,6 +12,10 @@ summary: "Report Snyk vulnerability scan evidence for an artifact in a Kosli flo
 {{% /hint %}}
 ## Synopsis
 
+```shell
+kosli report evidence artifact snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+```
+
 Report Snyk vulnerability scan evidence for an artifact in a Kosli flow.    
 The --scan-results .json file is parsed and uploaded to Kosli's evidence vault.
 
@@ -31,10 +35,6 @@ Artifact type can be one of: "file" for files, "dir" for directories, "oci" for 
 images in registries or "docker" for local docker images.
 
 
-
-```shell
-kosli report evidence artifact snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -70,7 +70,7 @@ kosli report evidence artifact snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **report Snyk vulnerability scan evidence about a file artifact**
 

@@ -12,6 +12,10 @@ summary: "Report JUnit test evidence for an artifact in a Kosli flow.  "
 {{% /hint %}}
 ## Synopsis
 
+```shell
+kosli report evidence artifact junit [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+```
+
 Report JUnit test evidence for an artifact in a Kosli flow.    
 All .xml files from --results-dir are parsed and uploaded to Kosli's evidence vault.  
 If there are no failing tests and no errors the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.  
@@ -23,10 +27,6 @@ Artifact type can be one of: "file" for files, "dir" for directories, "oci" for 
 images in registries or "docker" for local docker images.
 
 
-
-```shell
-kosli report evidence artifact junit [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -61,7 +61,7 @@ kosli report evidence artifact junit [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **report JUnit test evidence about a file artifact**
 

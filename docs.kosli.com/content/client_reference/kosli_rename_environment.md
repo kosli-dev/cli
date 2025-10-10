@@ -9,13 +9,13 @@ summary: "Rename a Kosli environment."
 
 ## Synopsis
 
-Rename a Kosli environment.
-The environment will remain accessible under its old name until that name is taken by another environment.
-
-
 ```shell
 kosli rename environment OLD_NAME NEW_NAME [flags]
 ```
+
+Rename a Kosli environment.
+The environment will remain accessible under its old name until that name is taken by another environment.
+
 
 ## Flags
 | Flag | Description |
@@ -38,7 +38,7 @@ kosli rename environment OLD_NAME NEW_NAME [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **rename a Kosli environment**
 

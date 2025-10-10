@@ -9,6 +9,10 @@ summary: "Create or update a Kosli custom attestation type."
 
 ## Synopsis
 
+```shell
+kosli create attestation-type TYPE-NAME [flags]
+```
+
 Create or update a Kosli custom attestation type.
 You can specify attestation type parameters in flags.
 
@@ -25,10 +29,6 @@ These rules specify acceptable values for attestation data, e.g. `.age >= 21` or
 When a custom attestation is reported, the provided data is evaluated according to the rules defined in its attestation-type. 
 All rules must return `true` for the evaluation to pass and the attestation to be determined compliant.
 
-
-```shell
-kosli create attestation-type TYPE-NAME [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -60,7 +60,7 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **create/update a custom attestation type with no schema no evaluation rules**
 

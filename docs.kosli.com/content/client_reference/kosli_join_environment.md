@@ -9,11 +9,11 @@ summary: "Join a physical environment to a logical environment."
 
 ## Synopsis
 
-Join a physical environment to a logical environment.
-
 ```shell
 kosli join environment [flags]
 ```
+
+Join a physical environment to a logical environment.
 
 ## Flags
 | Flag | Description |
@@ -38,7 +38,7 @@ kosli join environment [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **join a physical environment to a logical environment**
 

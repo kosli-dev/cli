@@ -9,6 +9,10 @@ summary: "Config global Kosli flags values and store them in $HOME/.kosli .  "
 
 ## Synopsis
 
+```shell
+kosli config [flags]
+```
+
 Config global Kosli flags values and store them in $HOME/.kosli .  
 
 Flag values are determined in the following order (highest precedence first):
@@ -25,10 +29,6 @@ API tokens are stored in the suitable credentials manager on your machine.
 Other Kosli flags can be configured using the --set flag which takes a comma-separated list of key=value pairs.
 Keys correspond to the specific flag name, capitalized. For instance: --flow would be set using --set FLOW=value
 
-
-```shell
-kosli config [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -52,7 +52,7 @@ kosli config [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **configure global flags in your default config file**
 

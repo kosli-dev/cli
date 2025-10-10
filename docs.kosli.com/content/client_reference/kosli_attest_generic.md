@@ -9,6 +9,10 @@ summary: "Report a generic attestation to an artifact or a trail in a Kosli flow
 
 ## Synopsis
 
+```shell
+kosli attest generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+```
+
 Report a generic attestation to an artifact or a trail in a Kosli flow.  
 
 The attestation can be bound to a *trail* using the trail name.  
@@ -20,10 +24,6 @@ You can optionally associate the attestation to a git commit using `--commit` (r
 You can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`.
 Note that when the attestation is reported for an artifact that does not yet exist in Kosli, `--commit` is required to facilitate
 binding the attestation to the right artifact.
-
-```shell
-kosli attest generic [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -73,7 +73,7 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **report a generic attestation about a pre-built docker artifact (kosli calculates the fingerprint)**
 

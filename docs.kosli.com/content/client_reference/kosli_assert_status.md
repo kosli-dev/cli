@@ -9,12 +9,12 @@ summary: "Assert the status of a Kosli server."
 
 ## Synopsis
 
-Assert the status of a Kosli server.
-Exits with non-zero code if the Kosli server down.
-
 ```shell
 kosli assert status [flags]
 ```
+
+Assert the status of a Kosli server.
+Exits with non-zero code if the Kosli server down.
 
 ## Flags
 | Flag | Description |

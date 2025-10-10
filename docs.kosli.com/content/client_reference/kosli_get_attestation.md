@@ -9,6 +9,10 @@ summary: "Get attestation by name from a specified trail or artifact.  "
 
 ## Synopsis
 
+```shell
+kosli get attestation ATTESTATION-NAME [flags]
+```
+
 Get attestation by name from a specified trail or artifact.  
 You can get an attestation from a trail or artifact using its name. The attestation name should be given
 WITHOUT dot-notation.
@@ -20,10 +24,6 @@ In both cases the flow must also be specified using the --flow flag.
 
 If there are multiple attestations with the same name on the trail or artifact, a list of all will be returned.
 
-
-```shell
-kosli get attestation ATTESTATION-NAME [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -55,7 +55,7 @@ kosli get attestation snyk-container-scan --flow=differ-ci --fingerprint=0cbbe3a
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **get an attestation from a trail (requires the --trail flag)**
 

@@ -9,14 +9,14 @@ summary: "List Trails for a Flow in an org."
 
 ## Synopsis
 
+```shell
+kosli list trails [flags]
+```
+
 List Trails for a Flow in an org.The results are ordered from latest to oldest.  
 If the `page-limit` flag is provided, the results will be paginated, otherwise all results will be 
 returned.  
 If `page-limit` is set to 0, all results will be returned.
-
-```shell
-kosli list trails [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -42,7 +42,7 @@ kosli list trails [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **list all trails for a flow**
 

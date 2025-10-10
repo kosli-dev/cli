@@ -12,14 +12,14 @@ summary: "Report JUnit test evidence for a commit in Kosli flows.  "
 {{% /hint %}}
 ## Synopsis
 
+```shell
+kosli report evidence commit junit [flags]
+```
+
 Report JUnit test evidence for a commit in Kosli flows.    
 All .xml files from --results-dir are parsed and uploaded to Kosli's evidence vault.  
 If there are no failing tests and no errors the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
 
-
-```shell
-kosli report evidence commit junit [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -50,7 +50,7 @@ kosli report evidence commit junit [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **report JUnit test evidence for a commit related to one Kosli flow**
 

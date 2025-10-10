@@ -12,6 +12,10 @@ summary: "Report the expectation of an upcoming deployment of an artifact to an 
 {{% /hint %}}
 ## Synopsis
 
+```shell
+kosli expect deployment [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+```
+
 Report the expectation of an upcoming deployment of an artifact to an environment.  
 
 The artifact fingerprint can be provided directly with the `--fingerprint` flag, or 
@@ -21,10 +25,6 @@ Artifact type can be one of: "file" for files, "dir" for directories, "oci" for 
 images in registries or "docker" for local docker images.
 
 
-
-```shell
-kosli expect deployment [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
-```
 
 ## Flags
 | Flag | Description |

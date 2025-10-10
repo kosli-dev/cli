@@ -9,11 +9,11 @@ summary: "List environments for an org."
 
 ## Synopsis
 
-List environments for an org.
-
 ```shell
 kosli list environments [flags]
 ```
+
+List environments for an org.
 
 ## Flags
 | Flag | Description |

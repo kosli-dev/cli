@@ -9,6 +9,10 @@ summary: "Print the version of a Kosli CLI.  "
 
 ## Synopsis
 
+```shell
+kosli version [flags]
+```
+
 Print the version of a Kosli CLI.  
 The output will look something like this:  
 version.BuildInfo{Version:"v0.0.1", GitCommit:"fe51cd1e31e6a202cba7dead9552a6d418ded79a", GitTreeState:"clean", GoVersion:"go1.16.3"}
@@ -19,10 +23,6 @@ version.BuildInfo{Version:"v0.0.1", GitCommit:"fe51cd1e31e6a202cba7dead9552a6d41
   built, and "dirty" if the binary was built from locally modified code.
 - GoVersion is the version of Go that was used to compile Kosli CLI.
 
-
-```shell
-kosli version [flags]
-```
 
 ## Flags
 | Flag | Description |

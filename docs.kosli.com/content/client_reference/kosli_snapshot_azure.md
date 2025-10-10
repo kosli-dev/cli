@@ -9,6 +9,10 @@ summary: "Report a snapshot of running Azure web apps and function apps in an Az
 
 ## Synopsis
 
+```shell
+kosli snapshot azure ENVIRONMENT-NAME [flags]
+```
+
 Report a snapshot of running Azure web apps and function apps in an Azure resource group to Kosli.  
 The reported data includes Azure app names, container image digests and creation timestamps.
 
@@ -26,10 +30,6 @@ The service principal needs to have the following permissions:
   2) Microsoft.ContainerRegistry/registries/pull/read  
 
 	
-
-```shell
-kosli snapshot azure ENVIRONMENT-NAME [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -59,7 +59,7 @@ kosli snapshot azure ENVIRONMENT-NAME [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **Use Azure Container Registry to get the digests for artifacts in a snapshot**
 

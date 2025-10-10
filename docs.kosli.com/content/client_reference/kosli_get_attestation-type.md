@@ -9,6 +9,10 @@ summary: "Get a custom Kosli attestation type.  "
 
 ## Synopsis
 
+```shell
+kosli get attestation-type TYPE-NAME [flags]
+```
+
 Get a custom Kosli attestation type.  
 The TYPE-NAME can be specified as follows:
 - customTypeName
@@ -19,10 +23,6 @@ The TYPE-NAME can be specified as follows:
 	- If a non-integer version number is given, the unversioned custom attestation type is returned.
 	- e.g. `custom-type@v4`
 
-
-```shell
-kosli get attestation-type TYPE-NAME [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -45,7 +45,7 @@ kosli get attestation-type TYPE-NAME [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **get an unversioned custom attestation type**
 

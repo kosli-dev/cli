@@ -9,11 +9,11 @@ summary: "Get the metadata of a specific trail."
 
 ## Synopsis
 
-Get the metadata of a specific trail.
-
 ```shell
 kosli get trail TRAIL-NAME [flags]
 ```
+
+Get the metadata of a specific trail.
 
 ## Flags
 | Flag | Description |

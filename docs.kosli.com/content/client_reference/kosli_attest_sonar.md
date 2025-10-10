@@ -9,6 +9,10 @@ summary: "Report a SonarQube attestation to an artifact or a trail in a Kosli fl
 
 ## Synopsis
 
+```shell
+kosli attest sonar [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+```
+
 Report a SonarQube attestation to an artifact or a trail in a Kosli flow.  
 Retrieves results for the specified scan from SonarQube Cloud or SonarQube Server and attests them to Kosli.
 The results are parsed to find the status of the project's quality gate which is used to determine the attestation's compliance status.
@@ -34,10 +38,6 @@ The attestation can be bound to a *trail* using the trail name.
 The attestation can be bound to an *artifact* in two ways:
 - using the artifact's SHA256 fingerprint which is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
 - using the artifact's name in the flow yaml template and the git commit from which the artifact is/will be created. Useful when reporting an attestation before creating/reporting the artifact.
-
-```shell
-kosli attest sonar [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -90,7 +90,7 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **report a SonarQube Cloud attestation about a trail using SonarQube's metadata, with no retries**
 

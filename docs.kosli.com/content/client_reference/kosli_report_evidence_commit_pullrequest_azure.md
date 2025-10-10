@@ -12,13 +12,13 @@ summary: "Report Azure Devops pull request evidence for a git commit in Kosli fl
 {{% /hint %}}
 ## Synopsis
 
-Report Azure Devops pull request evidence for a git commit in Kosli flows.  
-It checks if a pull request exists for a commit and report the pull-request evidence to the commit in Kosli. 
-
-
 ```shell
 kosli report evidence commit pullrequest azure [flags]
 ```
+
+Report Azure Devops pull request evidence for a git commit in Kosli flows.  
+It checks if a pull request exists for a commit and report the pull-request evidence to the commit in Kosli. 
+
 
 ## Flags
 | Flag | Description |
@@ -53,7 +53,7 @@ kosli report evidence commit pullrequest azure [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **report a pull request commit evidence to Kosli**
 

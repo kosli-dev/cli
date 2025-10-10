@@ -9,13 +9,13 @@ summary: "Assert an Azure DevOps pull request for a git commit exists.  "
 
 ## Synopsis
 
-Assert an Azure DevOps pull request for a git commit exists.  
-The command exits with non-zero exit code 
-if no pull requests were found for the commit.
-
 ```shell
 kosli assert pullrequest azure [flags]
 ```
+
+Assert an Azure DevOps pull request for a git commit exists.  
+The command exits with non-zero exit code 
+if no pull requests were found for the commit.
 
 ## Flags
 | Flag | Description |
@@ -43,7 +43,7 @@ kosli assert pullrequest azure [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 ```shell
 kosli assert pullrequest azure \

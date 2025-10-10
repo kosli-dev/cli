@@ -9,11 +9,11 @@ summary: "Get the metadata of a specific flow."
 
 ## Synopsis
 
-Get the metadata of a specific flow.
-
 ```shell
 kosli get flow FLOW-NAME [flags]
 ```
+
+Get the metadata of a specific flow.
 
 ## Flags
 | Flag | Description |

@@ -12,11 +12,11 @@ summary: "Report Generic evidence for a commit in Kosli flows.  "
 {{% /hint %}}
 ## Synopsis
 
-Report Generic evidence for a commit in Kosli flows.  
-
 ```shell
 kosli report evidence commit generic [flags]
 ```
+
+Report Generic evidence for a commit in Kosli flows.  
 
 ## Flags
 | Flag | Description |
@@ -49,7 +49,7 @@ kosli report evidence commit generic [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **report Generic evidence for a commit related to one Kosli flow**
 

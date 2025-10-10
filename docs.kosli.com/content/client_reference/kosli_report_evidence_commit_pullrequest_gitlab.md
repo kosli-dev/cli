@@ -12,12 +12,12 @@ summary: "Report Gitlab merge request evidence for a commit in Kosli flows.  "
 {{% /hint %}}
 ## Synopsis
 
-Report Gitlab merge request evidence for a commit in Kosli flows.  
-It checks if a merge request exists for the git commit and reports the merge-request evidence to the commit in Kosli.
-
 ```shell
 kosli report evidence commit pullrequest gitlab [flags]
 ```
+
+Report Gitlab merge request evidence for a commit in Kosli flows.  
+It checks if a merge request exists for the git commit and reports the merge-request evidence to the commit in Kosli.
 
 ## Flags
 | Flag | Description |
@@ -52,7 +52,7 @@ kosli report evidence commit pullrequest gitlab [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **report a merge request evidence to Kosli**
 

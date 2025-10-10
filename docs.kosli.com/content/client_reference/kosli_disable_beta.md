@@ -9,11 +9,11 @@ summary: "Disable beta features for an organization."
 
 ## Synopsis
 
-Disable beta features for an organization.
-
 ```shell
 kosli disable beta [flags]
 ```
+
+Disable beta features for an organization.
 
 ## Flags
 | Flag | Description |

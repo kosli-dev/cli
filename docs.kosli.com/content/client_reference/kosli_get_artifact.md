@@ -9,6 +9,10 @@ summary: "Get artifact from a specified flow"
 
 ## Synopsis
 
+```shell
+kosli get artifact EXPRESSION [flags]
+```
+
 Get artifact from a specified flow
 You can get an artifact by its fingerprint or by its git commit sha.
 In case of using the git commit, it is possible to get multiple artifacts matching the git commit.
@@ -26,10 +30,6 @@ Examples of valid expressions are:
 - flow:110d048bf1fce72ba546cbafc4427fb21b958dee
 - flow:110d0
 
-
-```shell
-kosli get artifact EXPRESSION [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -53,7 +53,7 @@ kosli get artifact EXPRESSION [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **get an artifact with a given fingerprint from a flow**
 

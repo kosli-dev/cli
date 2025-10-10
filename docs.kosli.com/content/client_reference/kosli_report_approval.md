@@ -9,6 +9,10 @@ summary: "Report an approval of deploying an artifact to an environment to Kosli
 
 ## Synopsis
 
+```shell
+kosli report approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+```
+
 Report an approval of deploying an artifact to an environment to Kosli.  
 
 The artifact fingerprint can be provided directly with the `--fingerprint` flag, or 
@@ -18,10 +22,6 @@ Artifact type can be one of: "file" for files, "dir" for directories, "oci" for 
 images in registries or "docker" for local docker images.
 
 
-
-```shell
-kosli report approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -65,7 +65,7 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 ```shell
 # Report that an artifact with a provided fingerprint (sha256) has been approved for 

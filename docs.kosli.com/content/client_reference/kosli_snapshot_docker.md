@@ -9,14 +9,14 @@ summary: "Report a snapshot of running containers from docker host to Kosli.  "
 
 ## Synopsis
 
+```shell
+kosli snapshot docker ENVIRONMENT-NAME [flags]
+```
+
 Report a snapshot of running containers from docker host to Kosli.  
 The reported data includes container image digests 
 and creation timestamps. Containers running images which have not
 been pushed to or pulled from a registry will be ignored.
-
-```shell
-kosli snapshot docker ENVIRONMENT-NAME [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -39,7 +39,7 @@ kosli snapshot docker ENVIRONMENT-NAME [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **report what is running in a docker host**
 

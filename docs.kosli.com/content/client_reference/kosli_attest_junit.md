@@ -11,6 +11,10 @@ The xml files are automatically uploaded as ^--attachments^ via the ^--upload-re
 
 ## Synopsis
 
+```shell
+kosli attest junit [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+```
+
 Report a junit attestation to an artifact or a trail in a Kosli flow.
 JUnit xml files are read from the `--results-dir` directory which defaults to the current directory.
 The xml files are automatically uploaded as `--attachments` via the `--upload-results` flag which defaults to `true`.  
@@ -24,10 +28,6 @@ You can optionally associate the attestation to a git commit using `--commit` (r
 You can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`.
 Note that when the attestation is reported for an artifact that does not yet exist in Kosli, `--commit` is required to facilitate
 binding the attestation to the right artifact.
-
-```shell
-kosli attest junit [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -78,7 +78,7 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **report a junit attestation about a pre-built docker artifact (kosli calculates the fingerprint)**
 

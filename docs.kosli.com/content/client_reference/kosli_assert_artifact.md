@@ -9,12 +9,12 @@ summary: "Assert the compliance status of an artifact in Kosli (in its flow, aga
 
 ## Synopsis
 
-Assert the compliance status of an artifact in Kosli (in its flow, against an environment or against one or more policies).  
-Exits with non-zero code if the artifact has a non-compliant status.
-
 ```shell
 kosli assert artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
+
+Assert the compliance status of an artifact in Kosli (in its flow, against an environment or against one or more policies).  
+Exits with non-zero code if the artifact has a non-compliant status.
 
 ## Flags
 | Flag | Description |
@@ -54,7 +54,7 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **assert that an artifact meets all compliance requirements for an environment**
 

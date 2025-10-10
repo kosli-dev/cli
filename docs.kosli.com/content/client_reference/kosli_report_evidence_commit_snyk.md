@@ -12,6 +12,10 @@ summary: "Report Snyk vulnerability scan evidence for a commit in Kosli flows.  
 {{% /hint %}}
 ## Synopsis
 
+```shell
+kosli report evidence commit snyk [flags]
+```
+
 Report Snyk vulnerability scan evidence for a commit in Kosli flows.    
 The --scan-results .json file is parsed and uploaded to Kosli's evidence vault.
 
@@ -23,10 +27,6 @@ Starting from v2.8.2, the Snyk results can be in Snyk JSON or SARIF output forma
 
 If no vulnerabilities are detected the evidence is reported as compliant. Otherwise the evidence is reported as non-compliant.
 
-
-```shell
-kosli report evidence commit snyk [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -58,7 +58,7 @@ kosli report evidence commit snyk [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **report Snyk evidence for a commit related to one Kosli flow**
 

@@ -9,11 +9,11 @@ summary: "Enable beta features for an organization."
 
 ## Synopsis
 
-Enable beta features for an organization.
-
 ```shell
 kosli enable beta [flags]
 ```
+
+Enable beta features for an organization.
 
 ## Flags
 | Flag | Description |

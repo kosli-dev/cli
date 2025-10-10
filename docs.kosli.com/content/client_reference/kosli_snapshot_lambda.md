@@ -9,6 +9,10 @@ summary: "Report a snapshot of artifacts deployed as one or more AWS Lambda func
 
 ## Synopsis
 
+```shell
+kosli snapshot lambda ENVIRONMENT-NAME [flags]
+```
+
 Report a snapshot of artifacts deployed as one or more AWS Lambda functions and their digests to Kosli.  
 Skip `--function-names` and `--function-names-regex` to report all functions in a given AWS account. Or use `--exclude` and/or `--exclude-regex` to report all functions excluding some.
 
@@ -20,10 +24,6 @@ To authenticate to AWS, you can either:
 Option 1 takes highest precedence, while option 3 is the lowest.  
 More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials
 	
-
-```shell
-kosli snapshot lambda ENVIRONMENT-NAME [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -53,7 +53,7 @@ kosli snapshot lambda ENVIRONMENT-NAME [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **report all Lambda functions running in an AWS account (AWS auth provided in env variables)**
 

@@ -9,6 +9,10 @@ summary: "Report a snapshot of a single artifact running in a specific filesyste
 
 ## Synopsis
 
+```shell
+kosli snapshot path ENVIRONMENT-NAME [flags]
+```
+
 Report a snapshot of a single artifact running in a specific filesystem path to Kosli.  
 You can report a directory or file artifact. For reporting multiple artifacts in one go, use "kosli snapshot paths".
 You can exclude certain paths or patterns from the artifact fingerprint using `--exclude`.
@@ -18,10 +22,6 @@ plus the ability to use recursive globs "**"
 To specify paths in a directory artifact that should always be excluded from the SHA256 calculation, you can add a `.kosli_ignore` file to the root of the artifact.
 Each line should specify a relative path or path glob to be ignored. You can include comments in this file, using `#`.
 The `.kosli_ignore` will be treated as part of the artifact like any other file, unless it is explicitly ignored itself.
-
-```shell
-kosli snapshot path ENVIRONMENT-NAME [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -48,7 +48,7 @@ kosli snapshot path ENVIRONMENT-NAME [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **report one artifact running in a specific path in a filesystem**
 

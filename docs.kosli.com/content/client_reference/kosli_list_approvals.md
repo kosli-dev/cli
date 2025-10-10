@@ -9,14 +9,14 @@ summary: "List approvals in a flow."
 
 ## Synopsis
 
+```shell
+kosli list approvals [flags]
+```
+
 List approvals in a flow.
 The results are paginated and ordered from latest to oldest.
 By default, the page limit is 15 approvals per page.  
 
-
-```shell
-kosli list approvals [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -42,7 +42,7 @@ kosli list approvals [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 **list the last 15 approvals for a flow**
 

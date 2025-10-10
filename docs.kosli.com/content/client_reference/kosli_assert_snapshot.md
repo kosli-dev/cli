@@ -9,6 +9,10 @@ summary: "Assert the compliance status of an environment in Kosli."
 
 ## Synopsis
 
+```shell
+kosli assert snapshot ENVIRONMENT-NAME-OR-EXPRESSION [flags]
+```
+
 Assert the compliance status of an environment in Kosli.
 Exits with non-zero code if the environment has a non-compliant status.
 The expected argument is an expression to specify the specific environment snapshot to assert.
@@ -23,10 +27,6 @@ Examples of valid expressions are:
 - prod#10 (snapshot number 10 of prod)
 - prod~2 (third latest snapshot of prod)
 
-
-```shell
-kosli assert snapshot ENVIRONMENT-NAME-OR-EXPRESSION [flags]
-```
 
 ## Flags
 | Flag | Description |
@@ -49,7 +49,7 @@ kosli assert snapshot ENVIRONMENT-NAME-OR-EXPRESSION [flags]
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are set/provided. 
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
 ```shell
 kosli assert snapshot prod#5 \

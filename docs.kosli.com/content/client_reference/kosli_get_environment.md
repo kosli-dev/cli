@@ -9,11 +9,11 @@ summary: "Get an environment's metadata."
 
 ## Synopsis
 
-Get an environment's metadata.
-
 ```shell
 kosli get environment ENVIRONMENT-NAME [flags]
 ```
+
+Get an environment's metadata.
 
 ## Flags
 | Flag | Description |
