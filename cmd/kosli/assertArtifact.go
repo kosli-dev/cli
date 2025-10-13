@@ -164,7 +164,7 @@ func printAssertAsTable(raw string, out io.Writer, page int) error {
 		complianceStatus, _ := item["compliance_status"].(map[string]interface{})
 		attestationsStatuses, _ := complianceStatus["attestations_statuses"].([]interface{})
 
-		logger.Info("Flow: %v\n  Trail %v", flow, trail)
+		logger.Info("Flow: %v\n  Trail: %v", flow, trail)
 		logger.Info("  %-32v %-30v %-15v %-10v", "Attestation-name", "type", "status", "compliant")
 
 		for _, item := range attestationsStatuses {
@@ -182,8 +182,12 @@ func printAssertAsTable(raw string, out io.Writer, page int) error {
 			logger.Info("    %-32v %-30v %-15v %-10v %-10v", name, attType, status, isCompliant, unexpectedStr)
 		}
 	}
+	logger.Info("")
 
 	if scope == "environment" || scope == "policy" {
+		if scope == "environment" {
+			logger.Info("Environment: %v", evaluationResult["environment"].(string))
+		}
 		logger.Info("%-32v %-30v", "Policy-name", "status")
 		policyEvaluations := evaluationResult["policy_evaluations"].([]interface{})
 		for _, item := range policyEvaluations {
