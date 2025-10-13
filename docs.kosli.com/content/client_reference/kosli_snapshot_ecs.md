@@ -67,16 +67,9 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**##### Authentication to AWS ######**
-
-```shell
-
-```
-
 **authentication to AWS using flags**
 
 ```shell
-
 kosli snapshot ecs yourEnvironmentName 
 	--aws-key-id yourAWSAccessKeyID 
 	--aws-secret-key yourAWSSecretAccessKey 
@@ -87,7 +80,6 @@ kosli snapshot ecs yourEnvironmentName
 **authentication to AWS using env variables**
 
 ```shell
-
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 export AWS_REGION=yourAWSRegion
@@ -96,23 +88,10 @@ kosli snapshot ecs yourEnvironmentName
 
 ```
 
-**##### reporting everything running in all clusters in a given AWS account ######**
+**reporting everything running in all clusters in a given AWS account**
 
 ```shell
-
 kosli snapshot ecs my-env 
-
-```
-
-**##### filtering which ECS clusters to snapshot ######**
-
-```shell
-
-```
-
-**########## including clusters**
-
-```shell
 
 ```
 
@@ -137,12 +116,6 @@ kosli snapshot ecs my-env --clusters my-cluster1,my-cluster2 ...
 
 ```
 
-**########## excluding clusters**
-
-```shell
-
-```
-
 **exclude clusters matching a name in the AWS account**
 
 ```shell
@@ -161,20 +134,6 @@ kosli snapshot ecs my-env --exclude-regex "my-cluster-*" ...
 
 ```shell
 kosli snapshot ecs my-env --exclude my-cluster1,my-cluster2 ...
-
-
-
-```
-
-**##### filtering which ECS services to snapshot ######**
-
-```shell
-
-```
-
-**########## including services**
-
-```shell
 
 ```
 
@@ -210,12 +169,6 @@ kosli snapshot ecs my-env --services backend-app ...
 
 ```shell
 kosli snapshot ecs my-env --services backend-app,frontend-app ...
-
-```
-
-**########## excluding services**
-
-```shell
 
 ```
 
