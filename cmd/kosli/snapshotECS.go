@@ -24,10 +24,7 @@ All filtering options are case-sensitive.
 The reported data includes cluster and service names, container image digests and creation timestamps.` + awsAuthDesc
 
 const snapshotECSExample = `
-###### Authentication to AWS ######
-
 # authentication to AWS using flags
-
 kosli snapshot ecs yourEnvironmentName \
 	--aws-key-id yourAWSAccessKeyID \
 	--aws-secret-key yourAWSSecretAccessKey \
@@ -36,7 +33,6 @@ kosli snapshot ecs yourEnvironmentName \
 	--org yourOrgName
 
 # authentication to AWS using env variables
-
 export AWS_ACCESS_KEY_ID=yourAWSAccessKeyID
 export AWS_SECRET_ACCESS_KEY=yourAWSSecretAccessKey
 export AWS_REGION=yourAWSRegion
@@ -45,15 +41,10 @@ kosli snapshot ecs yourEnvironmentName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-###### reporting everything running in all clusters in a given AWS account ######
-
+# reporting everything running in all clusters in a given AWS account 
 kosli snapshot ecs my-env \
 	--api-token yourAPIToken \
 	--org yourOrgName
-
-###### filtering which ECS clusters to snapshot ######
-
-########### including clusters
 
 # include clusters matching a name in the AWS account
 kosli snapshot ecs my-env --clusters my-cluster ...
@@ -64,8 +55,6 @@ kosli snapshot ecs my-env --clusters-regex "my-cluster-*" ...
 # include clusters matching a list of names in the AWS account
 kosli snapshot ecs my-env --clusters my-cluster1,my-cluster2 ...
 
-########### excluding clusters
-
 # exclude clusters matching a name in the AWS account
 kosli snapshot ecs my-env --exclude my-cluster ...
 
@@ -74,12 +63,6 @@ kosli snapshot ecs my-env --exclude-regex "my-cluster-*" ...
 
 # exclude clusters matching a list of names in the AWS account
 kosli snapshot ecs my-env --exclude my-cluster1,my-cluster2 ...
-
-
-
-###### filtering which ECS services to snapshot ######
-
-########### including services
 
 # include Services matching a name in one cluster
 kosli snapshot ecs my-env --clusters my-cluster --services backend-app ...
@@ -95,8 +78,6 @@ kosli snapshot ecs my-env --services backend-app ...
 
 # include Services matching a list of names in all clusters in the AWS account
 kosli snapshot ecs my-env --services backend-app,frontend-app ...
-
-########### excluding services
 
 # exclude Services matching a pattern in one cluster
 kosli snapshot ecs my-env --clusters my-cluster --exclude-services-regex "backend-*" ...
