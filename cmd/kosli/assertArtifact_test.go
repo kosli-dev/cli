@@ -66,23 +66,23 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 	tests := []cmdTestCase{
 		{
 			wantError: true,
-			name:      "missing --org fails",
+			name:      "01 missing --org fails",
 			cmd:       fmt.Sprintf(`assert artifact --fingerprint 8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c  --flow %s --api-token secret`, suite.flowName1),
 			golden:    "Error: --org is not set\nUsage: kosli assert artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
-			name:      "asserting a non existing artifact fails",
+			name:      "02 asserting a non existing artifact fails",
 			cmd:       fmt.Sprintf(`assert artifact --fingerprint 8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c  --flow %s %s`, suite.flowName1, suite.defaultKosliArguments),
 			golden:    "Error: Artifact with fingerprint '8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c' does not exist in flow 'assert-artifact-one' belonging to organization 'docs-cmd-test-user'\n",
 		},
 		{
-			name:        "asserting a single existing compliant artifact (using --fingerprint) results in OK and zero exit",
+			name:        "03 asserting a single existing compliant artifact (using --fingerprint) results in OK and zero exit",
 			cmd:         fmt.Sprintf(`assert artifact --fingerprint %s %s`, suite.fingerprint1, suite.defaultKosliArguments),
 			goldenRegex: "(?s)^COMPLIANT\n.*Attestation-name.*See more details at http://localhost(:8001)?/docs-cmd-test-user/flows/assert-artifact-one/artifacts/0089a849fce9c7c9128cd13a2e8b1c0757bdb6a7bad0fdf2800e38c19055b7fc(?:\\?artifact_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{8})?\n",
 		},
 		{
-			name: "json output of asserting a single existing compliant artifact (using --fingerprint) results in OK and zero exit",
+			name: "04 json output of asserting a single existing compliant artifact (using --fingerprint) results in OK and zero exit",
 			cmd:  fmt.Sprintf(`assert artifact --output json --fingerprint %s %s`, suite.fingerprint1, suite.defaultKosliArguments),
 			goldenJson: []jsonCheck{
 				{"compliant", true},
@@ -91,12 +91,12 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 			},
 		},
 		{
-			name:        "asserting a single existing compliant artifact (using --fingerprint) for an environment results in OK and zero exit",
+			name:        "05 asserting a single existing compliant artifact (using --fingerprint) for an environment results in OK and zero exit",
 			cmd:         fmt.Sprintf(`assert artifact --fingerprint %s --environment %s %s`, suite.fingerprint1, suite.envName, suite.defaultKosliArguments),
-			goldenRegex: "(?s)^COMPLIANT\n.*Attestation-name.*Policy-name.*See more details at http://localhost(:8001)?/docs-cmd-test-user/flows/assert-artifact-one/artifacts/0089a849fce9c7c9128cd13a2e8b1c0757bdb6a7bad0fdf2800e38c19055b7fc(?:\\?artifact_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{8})?\n",
+			goldenRegex: "(?s)^COMPLIANT\n.*Policy-name.*Attestation-name.*See more details at http://localhost(:8001)?/docs-cmd-test-user/flows/assert-artifact-one/artifacts/0089a849fce9c7c9128cd13a2e8b1c0757bdb6a7bad0fdf2800e38c19055b7fc(?:\\?artifact_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{8})?\n",
 		},
 		{
-			name: "json output of asserting a single existing compliant artifact (using --fingerprint) for an environment results in OK and zero exit",
+			name: "06 json output of asserting a single existing compliant artifact (using --fingerprint) for an environment results in OK and zero exit",
 			cmd:  fmt.Sprintf(`assert artifact --output json --fingerprint %s --environment %s %s`, suite.fingerprint1, suite.envName, suite.defaultKosliArguments),
 			goldenJson: []jsonCheck{
 				{"compliant", true},
@@ -106,12 +106,12 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 			},
 		},
 		{
-			name:        "asserting a single existing compliant artifact (using --fingerprint) for an policy results in OK and zero exit",
+			name:        "07 asserting a single existing compliant artifact (using --fingerprint) for an policy results in OK and zero exit",
 			cmd:         fmt.Sprintf(`assert artifact --fingerprint %s --policy %s %s`, suite.fingerprint1, suite.policyName1, suite.defaultKosliArguments),
-			goldenRegex: "(?s)^COMPLIANT\n.*Attestation-name.*Policy-name.*assert-artifact-policy-1.*See more details at http://localhost(:8001)?/docs-cmd-test-user/flows/assert-artifact-one/artifacts/0089a849fce9c7c9128cd13a2e8b1c0757bdb6a7bad0fdf2800e38c19055b7fc(?:\\?artifact_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{8})?\n",
+			goldenRegex: "(?s)^COMPLIANT\n.*Policy-name.*assert-artifact-policy-1.*Attestation-name.*See more details at http://localhost(:8001)?/docs-cmd-test-user/flows/assert-artifact-one/artifacts/0089a849fce9c7c9128cd13a2e8b1c0757bdb6a7bad0fdf2800e38c19055b7fc(?:\\?artifact_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{8})?\n.*",
 		},
 		{
-			name: "json output of asserting a single existing compliant artifact (using --fingerprint) for an policy results in OK and zero exit\"",
+			name: "08 json output of asserting a single existing compliant artifact (using --fingerprint) for an policy results in OK and zero exit\"",
 			cmd:  fmt.Sprintf(`assert artifact --output json --fingerprint %s --policy %s %s`, suite.fingerprint1, suite.policyName1, suite.defaultKosliArguments),
 			goldenJson: []jsonCheck{
 				{"compliant", true},
@@ -120,12 +120,12 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 			},
 		},
 		{
-			name:        "asserting a single existing compliant artifact (using --artifact-type) results in OK and zero exit",
+			name:        "09 asserting a single existing compliant artifact (using --artifact-type) results in OK and zero exit",
 			cmd:         fmt.Sprintf(`assert artifact %s --artifact-type file %s`, suite.artifact1Path, suite.defaultKosliArguments),
 			goldenRegex: "(?s)^COMPLIANT\n.*See more details at http://localhost(:8001)?/docs-cmd-test-user/flows/assert-artifact-one/artifacts/0089a849fce9c7c9128cd13a2e8b1c0757bdb6a7bad0fdf2800e38c19055b7fc?(?:\\?artifact_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{8})?\n",
 		},
 		{
-			name: "json output of asserting a single existing compliant artifact (using --artifact-type) results in OK and zero exit",
+			name: "10 json output of asserting a single existing compliant artifact (using --artifact-type) results in OK and zero exit",
 			cmd:  fmt.Sprintf(`assert artifact %s --output json --artifact-type file %s`, suite.artifact1Path, suite.defaultKosliArguments),
 			goldenJson: []jsonCheck{
 				{"compliant", true},
@@ -134,7 +134,7 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 			},
 		},
 		{
-			name: "json output of asserting a single existing compliant artifact (using --fingerprint) for a policy results in correct json",
+			name: "11 json output of asserting a single existing compliant artifact (using --fingerprint) for a policy results in correct json",
 			cmd:  fmt.Sprintf(`assert artifact %s --output json --artifact-type file --policy=%s --policy=%s %s`, suite.artifact1Path, suite.policyName1, suite.policyName2, suite.defaultKosliArguments),
 			goldenJson: []jsonCheck{
 				{"compliant", true},
@@ -144,12 +144,12 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 				{"policy_evaluations.[1].policy_name", suite.policyName2}},
 		},
 		{
-			name:        "asserting a multi existing compliant artifact (using --fingerprint) results in OK and zero exit",
+			name:        "12 asserting a multi existing compliant artifact (using --fingerprint) results in OK and zero exit",
 			cmd:         fmt.Sprintf(`assert artifact --fingerprint %s %s`, suite.fingerprint2, suite.defaultKosliArguments),
 			goldenRegex: "(?s)^COMPLIANT\n.*Flow: assert-artifact-one.*Flow: assert-artifact-two.*Attestation-name.*See more details at http://localhost(:8001)?/docs-cmd-test-user/flows/assert-artifact-one/artifacts/130fabe054d8d90b5d899833cfc769253a39b38854eb0c64214b68b276ef07e8(?:\\?artifact_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{8})?\n",
 		},
 		{
-			name: "json output of asserting a multi existing compliant artifact (using --fingerprint) results in OK and zero exit",
+			name: "13 json output of asserting a multi existing compliant artifact (using --fingerprint) results in OK and zero exit",
 			cmd:  fmt.Sprintf(`assert artifact --output json --fingerprint %s %s`, suite.fingerprint2, suite.defaultKosliArguments),
 			goldenJson: []jsonCheck{
 				{"compliant", true},
@@ -159,13 +159,13 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 		},
 		{
 			wantError: true,
-			name:      "not providing --fingerprint nor --artifact-type fails",
+			name:      "14 not providing --fingerprint nor --artifact-type fails",
 			cmd:       fmt.Sprintf(`assert artifact --flow %s %s`, suite.flowName1, suite.defaultKosliArguments),
 			golden:    "Error: docker image name or file/dir path is required when --fingerprint is not provided\nUsage: kosli assert artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
-			name:      "providing both --environment and --polices fails",
+			name:      "15 providing both --environment and --polices fails",
 			cmd:       fmt.Sprintf(`assert artifact --fingerprint %s --environment %s --policy %s %s`, suite.fingerprint1, suite.envName, suite.policyName1, suite.defaultKosliArguments),
 			golden:    "Error: Cannot specify both 'environment_name' and 'policy_name' at the same time\n",
 		},
