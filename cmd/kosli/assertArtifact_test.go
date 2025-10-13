@@ -163,6 +163,12 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 			cmd:       fmt.Sprintf(`assert artifact --flow %s %s`, suite.flowName1, suite.defaultKosliArguments),
 			golden:    "Error: docker image name or file/dir path is required when --fingerprint is not provided\nUsage: kosli assert artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
+		{
+			wantError: true,
+			name:      "providing both --environment and --polices fails",
+			cmd:       fmt.Sprintf(`assert artifact --fingerprint %s --environment %s --policy %s %s`, suite.fingerprint1, suite.envName, suite.policyName1, suite.defaultKosliArguments),
+			golden:    "Error: Cannot specify both 'environment_name' and 'policy_name' at the same time\n",
+		},
 	}
 
 	runTestCmd(suite.Suite.T(), tests)
