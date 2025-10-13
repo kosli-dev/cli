@@ -149,36 +149,18 @@ func printAssertAsTable(raw string, out io.Writer, page int) error {
 	if err != nil {
 		return err
 	}
-
-	flow, _ := evaluationResult["flow"].(string)
-	trail, _ := evaluationResult["trail"].(string)
 	scope := evaluationResult["scope"].(string)
-	complianceStatus, _ := evaluationResult["compliance_status"].(map[string]interface{})
-	attestationsStatuses, _ := complianceStatus["attestations_statuses"].([]interface{})
 
 	if evaluationResult["compliant"].(bool) {
 		logger.Info("COMPLIANT")
 	} else {
 		logger.Info("Error: NON-COMPLIANT")
 	}
-	logger.Info("Flow: %v\nTrail %v", flow, trail)
-	logger.Info("%-32v %-30v %-15v %-10v", "Attestation-name", "type", "status", "compliant")
 
-	for _, item := range attestationsStatuses {
-		attestation := item.(map[string]interface{})
-		name := attestation["attestation_name"]
-		attType := attestation["attestation_type"]
-		status := attestation["status"]
-		isCompliant, _ := attestation["is_compliant"].(bool)
-		unexpected, _ := attestation["unexpected"].(bool)
-		unexpectedStr := ""
-		if unexpected {
-			unexpectedStr = "unexpected"
-		}
-
-		logger.Info("  %-32v %-30v %-15v %-10v %-10v", name, attType, status, isCompliant, unexpectedStr)
-	}
 	if scope == "environment" || scope == "policy" {
+		if scope == "environment" {
+			logger.Info("Environment: %v", evaluationResult["environment"].(string))
+		}
 		logger.Info("%-32v %-30v", "Policy-name", "status")
 		policyEvaluations := evaluationResult["policy_evaluations"].([]interface{})
 		for _, item := range policyEvaluations {
@@ -220,8 +202,35 @@ func printAssertAsTable(raw string, out io.Writer, page int) error {
 				}
 			}
 		}
+		logger.Info("")
 	}
-	logger.Info("\nSee more details at %s", evaluationResult["html_url"].(string))
 
+	flows := evaluationResult["flows"].([]interface{})
+	for _, item := range flows {
+		item := item.(map[string]interface{})
+		flow := item["flow"].(string)
+		trail, _ := item["trail"].(string)
+		complianceStatus, _ := item["compliance_status"].(map[string]interface{})
+		attestationsStatuses, _ := complianceStatus["attestations_statuses"].([]interface{})
+
+		logger.Info("Flow: %v\n  Trail: %v", flow, trail)
+		logger.Info("  %-32v %-30v %-15v %-10v", "Attestation-name", "type", "status", "compliant")
+
+		for _, item := range attestationsStatuses {
+			attestation := item.(map[string]interface{})
+			name := attestation["attestation_name"]
+			attType := attestation["attestation_type"]
+			status := attestation["status"]
+			isCompliant, _ := attestation["is_compliant"].(bool)
+			unexpected, _ := attestation["unexpected"].(bool)
+			unexpectedStr := ""
+			if unexpected {
+				unexpectedStr = "unexpected"
+			}
+
+			logger.Info("    %-32v %-30v %-15v %-10v %-10v", name, attType, status, isCompliant, unexpectedStr)
+		}
+		logger.Info("  See more details at %s", evaluationResult["html_url"].(string))
+	}
 	return nil
 }

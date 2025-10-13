@@ -1,0 +1,1 @@
+This shall only be used by the AssertArtifactCommandTestSuite and is the second artifact
