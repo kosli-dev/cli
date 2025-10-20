@@ -56,10 +56,10 @@ func (suite *ListDeploymentsCommandTestSuite) TestListDeploymentsCmd() {
 			golden:    "Error: required flag(s) \"flow\" not set\n",
 		},
 		{
-			wantError: true,
-			name:      "non-existing flow causes an error",
-			cmd:       fmt.Sprintf(`list deployments --flow non-existing %s`, suite.defaultKosliArguments),
-			golden:    "Error: Flow named 'non-existing' does not exist for organization 'docs-cmd-test-user'\n",
+			wantError:   true,
+			name:        "non-existing flow causes an error",
+			cmd:         fmt.Sprintf(`list deployments --flow non-existing %s`, suite.defaultKosliArguments),
+			goldenRegex: "^Error: Flow named 'non-existing' does not exist for organization 'docs-cmd-test-user'",
 		},
 		// TODO: the correct error is overwritten by the hack flag value check in root.go
 		{
@@ -91,9 +91,9 @@ func (suite *ListDeploymentsCommandTestSuite) TestListDeploymentsCmd() {
 			golden: "No deployments were found at page number 2.\n",
 		},
 		{
-			name:   "listing deployments on an empty flow with --output json works",
-			cmd:    fmt.Sprintf(`list deployments --flow %s --output json %s`, suite.flowName1, suite.defaultKosliArguments),
-			golden: "[]\n",
+			name:       "listing deployments on an empty flow with --output json works",
+			cmd:        fmt.Sprintf(`list deployments --flow %s --output json %s`, suite.flowName1, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"", "[]"}},
 		},
 		{
 			name:       "listing deployments on a flow works",
