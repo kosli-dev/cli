@@ -10,9 +10,9 @@ ignore:
         reason: Choosing to ignore this licence issue for now
   SNYK-GOLANG-GOLANGORGXCRYPTOSSHAGENT-12668891:
     - "*":
-        reason: No fix available
-        expires: 2025-10-17T05:18:46.481Z
-        created: 2025-09-17T05:18:46.483Z
+        reason: No fix available yet
+        expires: 2025-11-17T05:18:46.481Z
+        created: 2025-10-17T05:18:46.483Z
 patch: {}
 exclude:
   global:
