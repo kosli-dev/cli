@@ -12,17 +12,29 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const assertArtifactShortDesc = `Assert the compliance status of an artifact in Kosli ` +
-	`(in its flow, against an environment or against one or more policies).  `
+const assertArtifactShortDesc = `Assert the compliance status of an artifact in Kosli. ` +
+	`
+There are four (mutually exclusive) ways to use ^kosli assert artifact^:
+
+1. Against an environment. When ^--environment^ is specified,
+asserts against all policies currently attached to the given environment.
+2. Against one or more policies. When ^--policy^ is specified,
+asserts against all the given policies.
+3. Against a flow. When ^--flow^ is specified, asserts against the
+current template file of the given flow.
+4. Against many flows. When none of  ^--environment^, ^--policy^, or ^--flow^
+are specified, asserts against the template files of *all* flows the artifact
+is found in (by fingerprint).
+`
 
 const assertArtifactLongDesc = assertArtifactShortDesc + `
-Exits with non-zero code if the artifact has a non-compliant status.`
+Exits with zero code if the artifact has compliant status,
+non-zero code if non-compliant status.`
 
 const assertArtifactExample = `
 # assert that an artifact meets all compliance requirements for an environment
 kosli assert artifact \
 	--fingerprint 184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0 \
-	--flow yourFlowName \
 	--environment prod \
 	--api-token yourAPIToken \
 	--org yourOrgName 
@@ -34,17 +46,18 @@ kosli assert artifact \
 	--api-token yourAPIToken \
 	--org yourOrgName 
 
-# fail if an artifact has a non-compliant status (using the artifact fingerprint)
+# fail if an artifact has a non-compliant status in a single flow (using the artifact fingerprint)
+export KOSLI_FLOW=yourFlowName
 kosli assert artifact \
 	--fingerprint 184c799cd551dd1d8d5c5f9a5d593b2e931f5e36122ee5c793c1d08a19839cc0 \
 	--flow yourFlowName \
 	--api-token yourAPIToken \
 	--org yourOrgName 
 
-# fail if an artifact has a non-compliant status (using the artifact name and type)
+# fail if an artifact has a non-compliant status in any flow (using the artifact name and type)
+unset KOSLI_FLOW
 kosli assert artifact library/nginx:1.21 \
 	--artifact-type docker \
-	--flow yourFlowName \
 	--api-token yourAPIToken \
 	--org yourOrgName 
 `
