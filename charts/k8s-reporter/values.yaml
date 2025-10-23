@@ -46,26 +46,26 @@ reporterConfig:
   # -- the namespaces to scan and report.
   # Cannot be combined with excludeNamespaces or excludeNamespacesRegex.
   # It is a comma separated list of namespace names.
-  # leave this and namespacesRegex unset if you want to report what is running in the entire cluster
+  # Leave this and namespacesRegex unset if you want to report what is running in the entire cluster
   namespaces: ""
   # -- the namespaces Regex patterns to scan and report.
   # Does not have effect if namespaces is set.
   # Requires cluster-wide permissions.
   # Cannot be combined with excludeNamespaces or excludeNamespacesRegex.
   # It is a comma separated list of namespace regex patterns.
-  # leave this and namespaces unset if you want to report what is running in the entire cluster
+  # Leave this and namespaces unset if you want to report what is running in the entire cluster
   namespacesRegex: ""
   # -- the namespaces to exclude from scanning and reporting.
   # Cannot be combined with namespaces or namespacesRegex.
   # It is a comma separated list of namespace names.
-  # leave this and excludeNamespacesRegex unset if you want to report what is running in the entire cluster
+  # Leave this and excludeNamespacesRegex unset if you want to report what is running in the entire cluster
   excludeNamespaces: ""
   # -- the namespaces Regex patterns to exclude from scanning and reporting.
   # Does not have effect if excludeNamespaces is set.
   # Cannot be combined with namespaces or namespacesRegex.
   # Requires cluster-wide permissions.
   # It is a comma separated list of namespace regex patterns.
-  # leave this and excludeNamespaces unset if you want to report what is running in the entire cluster
+  # Leave this and excludeNamespaces unset if you want to report what is running in the entire cluster
   excludeNamespacesRegex: ""
   # -- whether the dry run mode is enabled or not. In dry run mode, the reporter logs the reports to stdout and does not send them to kosli.
   dryRun: false
