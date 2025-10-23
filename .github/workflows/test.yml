@@ -193,16 +193,16 @@ jobs:
       run: 
           snyk code test --sarif --policy-path=.snyk  --sarif-file-output=snyk-code.json --prune-repeated-subdependencies
     
-    # - name: Report Snyk Code to Kosli
-    #   if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) &&  (success() || failure()) && inputs.report_results }}
-    #   env:
-    #     KOSLI_API_TOKEN: ${{ secrets.kosli_reporting_api_token }}
-    #   run: kosli attest snyk 
-    #        --name snyk-code-test 
-    #        --flow ${{ inputs.FLOW_NAME }}  
-    #        --trail ${{ inputs.TRAIL_NAME }} 
-    #        --scan-results  snyk-code.json
-    #        --org ${{ inputs.KOSLI_ORG }}
+    - name: Report Snyk Code to Kosli
+      if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) &&  (success() || failure()) && inputs.report_results }}
+      env:
+        KOSLI_API_TOKEN: ${{ secrets.kosli_reporting_api_token }}
+      run: kosli attest snyk 
+           --name snyk-code-test 
+           --flow ${{ inputs.FLOW_NAME }}  
+           --trail ${{ inputs.TRAIL_NAME }} 
+           --scan-results  snyk-code.json
+           --org ${{ inputs.KOSLI_ORG }}
 
   snyk-dependency-test:
     if: ${{ inputs.run_snyk }}
@@ -230,14 +230,14 @@ jobs:
       run: 
           snyk test --sarif --policy-path=.snyk  --sarif-file-output=snyk-dependency.json --prune-repeated-subdependencies
     
-    # - name: Report Snyk Test to Kosli
-    #   if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) &&  (success() || failure()) && inputs.report_results }}
-    #   env:
-    #     KOSLI_API_TOKEN: ${{ secrets.kosli_reporting_api_token }}
-    #   run: kosli attest snyk 
-    #        --name snyk-dependency-test 
-    #        --flow ${{ inputs.FLOW_NAME }}  
-    #        --trail ${{ inputs.TRAIL_NAME }} 
-    #        --scan-results  snyk-dependency.json
-    #        --org ${{ inputs.KOSLI_ORG }}
+    - name: Report Snyk Test to Kosli
+      if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) &&  (success() || failure()) && inputs.report_results }}
+      env:
+        KOSLI_API_TOKEN: ${{ secrets.kosli_reporting_api_token }}
+      run: kosli attest snyk 
+           --name snyk-dependency-test 
+           --flow ${{ inputs.FLOW_NAME }}  
+           --trail ${{ inputs.TRAIL_NAME }} 
+           --scan-results  snyk-dependency.json
+           --org ${{ inputs.KOSLI_ORG }}
 
