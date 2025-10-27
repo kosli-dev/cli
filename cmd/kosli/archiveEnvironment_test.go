@@ -36,10 +36,10 @@ func (suite *ArchiveEnvironmentCommandTestSuite) TestArchiveEnvironmentCmd() {
 			golden: "environment archive-environment was archived\n",
 		},
 		{
-			wantError: true,
-			name:      "archiving non-existing environment fails",
-			cmd:       fmt.Sprintf(`archive environment non-existing %s`, suite.defaultKosliArguments),
-			golden:    "Error: Environment named 'non-existing' does not exist for organization 'docs-cmd-test-user'. \n",
+			wantError:   true,
+			name:        "archiving non-existing environment fails",
+			cmd:         fmt.Sprintf(`archive environment non-existing %s`, suite.defaultKosliArguments),
+			goldenRegex: "^Error: Environment named 'non-existing' does not exist for organization 'docs-cmd-test-user'",
 		},
 		{
 			wantError: true,
