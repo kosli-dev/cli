@@ -47,7 +47,7 @@ func (c *GitlabConfig) PREvidenceForCommitV1(commit string) ([]*types.PREvidence
 		return pullRequestsEvidence, err
 	}
 	for _, mr := range mrs {
-		evidence, err := c.newPRGitlabEvidence(mr)
+		evidence, err := c.newPRGitlabEvidenceV1(mr)
 		if err != nil {
 			return pullRequestsEvidence, err
 		}
@@ -58,10 +58,36 @@ func (c *GitlabConfig) PREvidenceForCommitV1(commit string) ([]*types.PREvidence
 
 // This is the new implementation, it will be used for all VCS providers
 func (c *GitlabConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence, error) {
-	return c.PREvidenceForCommitV1(commit)
+	pullRequestsEvidence := []*types.PREvidence{}
+	mrs, err := c.MergeRequestsForCommit(commit)
+	if err != nil {
+		return pullRequestsEvidence, err
+	}
+	for _, mr := range mrs {
+		evidence, err := c.newPRGitlabEvidenceV2(mr)
+		if err != nil {
+			return pullRequestsEvidence, err
+		}
+		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
+	}
+	return pullRequestsEvidence, nil
 }
 
-func (c *GitlabConfig) newPRGitlabEvidence(mr *gitlab.BasicMergeRequest) (*types.PREvidence, error) {
+func (c *GitlabConfig) newPRGitlabEvidenceV1(mr *gitlab.BasicMergeRequest) (*types.PREvidence, error) {
+	evidence := &types.PREvidence{
+		URL:         mr.WebURL,
+		MergeCommit: mr.MergeCommitSHA,
+		State:       mr.State,
+	}
+	approvers, err := c.GetMergeRequestApprovers(mr.IID)
+	if err != nil {
+		return evidence, err
+	}
+	evidence.Approvers = utils.ConvertStringListToInterfaceList(approvers)
+	return evidence, nil
+}
+
+func (c *GitlabConfig) newPRGitlabEvidenceV2(mr *gitlab.BasicMergeRequest) (*types.PREvidence, error) {
 	evidence := &types.PREvidence{
 		URL:         mr.WebURL,
 		MergeCommit: mr.MergeCommitSHA,
