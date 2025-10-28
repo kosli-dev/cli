@@ -130,6 +130,9 @@ func (o *attestPROptions) run(args []string) error {
 	} else {
 		pullRequestsEvidence, err = o.getRetriever().PREvidenceForCommitV1(o.payload.Commit.Sha1)
 	}
+	if err != nil {
+		return err
+	}
 
 	o.payload.PullRequests = pullRequestsEvidence
 
