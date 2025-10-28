@@ -53,7 +53,8 @@ func (o *pullRequestArtifactOptions) run(out io.Writer, args []string) error {
 
 	url := fmt.Sprintf("%s/api/v2/evidence/%s/artifact/%s/pull_request", global.Host, global.Org, o.flowName)
 
-	pullRequestsEvidence, err := o.getRetriever().PREvidenceForCommitV1(o.commit)
+	var pullRequestsEvidence []*types.PREvidence
+	pullRequestsEvidence, err = o.getRetriever().PREvidenceForCommitV1(o.commit)
 	if err != nil {
 		return err
 	}
@@ -181,7 +182,8 @@ func (o *pullRequestCommitOptions) run(args []string) error {
 	label := ""
 	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
 
-	pullRequestsEvidence, err := o.getRetriever().PREvidenceForCommitV1(o.payload.CommitSHA)
+	var pullRequestsEvidence []*types.PREvidence
+	pullRequestsEvidence, err = o.getRetriever().PREvidenceForCommitV1(o.payload.CommitSHA)
 	if err != nil {
 		return err
 	}
