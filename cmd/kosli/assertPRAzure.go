@@ -59,7 +59,7 @@ func newAssertPullRequestAzureCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *assertPullRequestAzureOptions) run(args []string) error {
-	pullRequestsEvidence, err := o.azureConfig.PREvidenceForCommitV2(o.commit)
+	pullRequestsEvidence, err := o.azureConfig.PREvidenceForCommitV1(o.commit)
 	if err != nil {
 		return err
 	}

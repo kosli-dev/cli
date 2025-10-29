@@ -39,15 +39,15 @@ func (c *GitlabConfig) ProjectID() string {
 	return fmt.Sprintf("%s/%s", c.Org, c.Repository)
 }
 
-// This is the old implementation, it will be removed after the PR payload is enhanced for Gitlab
-func (c *GitlabConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence, error) {
+// This is the old implementation, it will be removed after the PR payload is enhanced for all VCS providers
+func (c *GitlabConfig) PREvidenceForCommitV1(commit string) ([]*types.PREvidence, error) {
 	pullRequestsEvidence := []*types.PREvidence{}
 	mrs, err := c.MergeRequestsForCommit(commit)
 	if err != nil {
 		return pullRequestsEvidence, err
 	}
 	for _, mr := range mrs {
-		evidence, err := c.newPRGitlabEvidence(mr)
+		evidence, err := c.newPRGitlabEvidenceV1(mr)
 		if err != nil {
 			return pullRequestsEvidence, err
 		}
@@ -56,12 +56,24 @@ func (c *GitlabConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 	return pullRequestsEvidence, nil
 }
 
-// This is the new implementation, it will be used for Gitlab
-func (c *GitlabConfig) PREvidenceForCommitV1(commit string) ([]*types.PREvidence, error) {
-	return []*types.PREvidence{}, nil
+// This is the new implementation, it will be used for all VCS providers
+func (c *GitlabConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence, error) {
+	pullRequestsEvidence := []*types.PREvidence{}
+	mrs, err := c.MergeRequestsForCommit(commit)
+	if err != nil {
+		return pullRequestsEvidence, err
+	}
+	for _, mr := range mrs {
+		evidence, err := c.newPRGitlabEvidenceV2(mr)
+		if err != nil {
+			return pullRequestsEvidence, err
+		}
+		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
+	}
+	return pullRequestsEvidence, nil
 }
 
-func (c *GitlabConfig) newPRGitlabEvidence(mr *gitlab.BasicMergeRequest) (*types.PREvidence, error) {
+func (c *GitlabConfig) newPRGitlabEvidenceV1(mr *gitlab.BasicMergeRequest) (*types.PREvidence, error) {
 	evidence := &types.PREvidence{
 		URL:         mr.WebURL,
 		MergeCommit: mr.MergeCommitSHA,
@@ -72,6 +84,30 @@ func (c *GitlabConfig) newPRGitlabEvidence(mr *gitlab.BasicMergeRequest) (*types
 		return evidence, err
 	}
 	evidence.Approvers = utils.ConvertStringListToInterfaceList(approvers)
+	return evidence, nil
+}
+
+func (c *GitlabConfig) newPRGitlabEvidenceV2(mr *gitlab.BasicMergeRequest) (*types.PREvidence, error) {
+	evidence := &types.PREvidence{
+		URL:         mr.WebURL,
+		MergeCommit: mr.MergeCommitSHA,
+		State:       mr.State,
+		Author:      fmt.Sprintf("%s (@%s)", mr.Author.Name, mr.Author.Username),
+		CreatedAt:   mr.CreatedAt.Unix(),
+		MergedAt:    mr.MergedAt.Unix(),
+		Title:       mr.Title,
+		HeadRef:     mr.SourceBranch,
+	}
+	approvers, err := c.GetMergeRequestApprovers(mr.IID)
+	if err != nil {
+		return evidence, err
+	}
+	evidence.Approvers = utils.ConvertStringListToInterfaceList(approvers)
+	commits, err := c.GetMergeRequestCommits(mr)
+	if err != nil {
+		return evidence, err
+	}
+	evidence.Commits = commits
 	return evidence, nil
 }
 
@@ -105,4 +141,29 @@ func (c *GitlabConfig) GetMergeRequestApprovers(mrIID int) ([]string, error) {
 		approvers = append(approvers, fmt.Sprintf("%s (@%s)", approver.User.Name, approver.User.Username))
 	}
 	return approvers, nil
+}
+
+// GetMergeRequestCommits returns a list of commits for a given MR
+func (c *GitlabConfig) GetMergeRequestCommits(mr *gitlab.BasicMergeRequest) ([]types.Commit, error) {
+	commits := []types.Commit{}
+	client, err := c.NewGitlabClientFromToken()
+	if err != nil {
+		return commits, err
+	}
+	glCommits, _, err := client.MergeRequests.GetMergeRequestCommits(c.ProjectID(), mr.IID,
+		&gitlab.GetMergeRequestCommitsOptions{})
+	if err != nil {
+		return commits, err
+	}
+	for _, commit := range glCommits {
+		commits = append(commits, types.Commit{
+			SHA:       commit.ID,
+			Message:   commit.Message,
+			Committer: fmt.Sprintf("%s <%s>", commit.CommitterName, commit.CommitterEmail),
+			Timestamp: commit.CreatedAt.Unix(),
+			Branch:    mr.SourceBranch,
+			URL:       commit.WebURL,
+		})
+	}
+	return commits, nil
 }

@@ -56,7 +56,7 @@ func NewAzureClientFromToken(ctx context.Context, azToken, orgURL string) (git.C
 }
 
 // This is the old implementation, it will be removed after the PR payload is enhanced for Azure
-func (c *AzureConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence, error) {
+func (c *AzureConfig) PREvidenceForCommitV1(commit string) ([]*types.PREvidence, error) {
 	pullRequestsEvidence := []*types.PREvidence{}
 	prs, err := c.PullRequestsForCommit(commit)
 	if err != nil {
@@ -73,7 +73,7 @@ func (c *AzureConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence,
 }
 
 // This is the new implementation, it will be used for Azure
-func (c *AzureConfig) PREvidenceForCommitV1(commit string) ([]*types.PREvidence, error) {
+func (c *AzureConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence, error) {
 	return []*types.PREvidence{}, nil
 }
 

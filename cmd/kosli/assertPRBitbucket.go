@@ -81,7 +81,7 @@ func newAssertPullRequestBitbucketCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *assertPullRequestBitbucketOptions) run(args []string) error {
-	pullRequestsEvidence, err := o.bbConfig.PREvidenceForCommitV2(o.commit)
+	pullRequestsEvidence, err := o.bbConfig.PREvidenceForCommitV1(o.commit)
 	if err != nil {
 		return err
 	}

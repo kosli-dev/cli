@@ -53,14 +53,8 @@ func (o *pullRequestArtifactOptions) run(out io.Writer, args []string) error {
 
 	url := fmt.Sprintf("%s/api/v2/evidence/%s/artifact/%s/pull_request", global.Host, global.Org, o.flowName)
 
-	// TODO: after the PR payload is enhanced for all git providers they will all use the same method
 	var pullRequestsEvidence []*types.PREvidence
-	if o.payload.GitProvider == "github" {
-		pullRequestsEvidence, err = o.getRetriever().PREvidenceForCommitV1(o.commit)
-	} else {
-		pullRequestsEvidence, err = o.getRetriever().PREvidenceForCommitV2(o.commit)
-	}
-
+	pullRequestsEvidence, err = o.getRetriever().PREvidenceForCommitV1(o.commit)
 	if err != nil {
 		return err
 	}
@@ -110,7 +104,7 @@ type PRAttestationPayload struct {
 
 type attestPROptions struct {
 	*CommonAttestationOptions
-	retriever interface{}
+	retriever any
 	assert    bool
 	payload   PRAttestationPayload
 }
@@ -127,15 +121,20 @@ func (o *attestPROptions) run(args []string) error {
 		return err
 	}
 
-	pullRequestsEvidence, err := o.getRetriever().PREvidenceForCommitV2(o.payload.Commit.Sha1)
+	label := ""
+	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
+
+	var pullRequestsEvidence []*types.PREvidence
+	if o.payload.GitProvider == "github" || o.payload.GitProvider == "gitlab" {
+		pullRequestsEvidence, err = o.getRetriever().PREvidenceForCommitV2(o.payload.Commit.Sha1)
+	} else {
+		pullRequestsEvidence, err = o.getRetriever().PREvidenceForCommitV1(o.payload.Commit.Sha1)
+	}
 	if err != nil {
 		return err
 	}
 
 	o.payload.PullRequests = pullRequestsEvidence
-
-	label := ""
-	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
 
 	form, cleanupNeeded, evidencePath, err := prepareAttestationForm(o.payload, o.attachments)
 	if err != nil {
@@ -186,13 +185,8 @@ func (o *pullRequestCommitOptions) run(args []string) error {
 	label := ""
 	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
 
-	// TODO: after the PR payload is enhanced for all git providers they will all use the same method
 	var pullRequestsEvidence []*types.PREvidence
-	if o.payload.GitProvider == "github" {
-		pullRequestsEvidence, err = o.getRetriever().PREvidenceForCommitV1(o.payload.CommitSHA)
-	} else {
-		pullRequestsEvidence, err = o.getRetriever().PREvidenceForCommitV2(o.payload.CommitSHA)
-	}
+	pullRequestsEvidence, err = o.getRetriever().PREvidenceForCommitV1(o.payload.CommitSHA)
 	if err != nil {
 		return err
 	}
