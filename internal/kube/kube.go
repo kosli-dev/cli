@@ -34,14 +34,27 @@ type K8SConnection struct {
 }
 
 // NewPodData creates a PodData object from a k8s pod
-func NewPodData(pod *corev1.Pod) *PodData {
+func NewPodData(pod *corev1.Pod, logger *logger.Logger) (*PodData, error) {
 	digests := make(map[string]string)
 
 	creationTimestamp := pod.GetObjectMeta().GetCreationTimestamp()
 	owners := pod.GetObjectMeta().GetOwnerReferences()
 	containers := pod.Status.ContainerStatuses
+
 	for _, cs := range containers {
-		digests[cs.Image] = cs.ImageID[len(cs.ImageID)-64:]
+		if cs.ImageID == "" {
+			switch pod.Status.Phase {
+			case corev1.PodFailed:
+				// skip failed pods
+				logger.Warn("skipping failed pod %s in namespace %s as it has containers without image IDs", pod.Name, pod.Namespace)
+				return nil, nil
+			case corev1.PodRunning:
+				// fail
+				return nil, fmt.Errorf("pod %s in namespace %s has containers without image IDs", pod.Name, pod.Namespace)
+			}
+		} else {
+			digests[cs.Image] = cs.ImageID[len(cs.ImageID)-64:]
+		}
 	}
 
 	return &PodData{
@@ -50,7 +63,7 @@ func NewPodData(pod *corev1.Pod) *PodData {
 		Digests:           digests,
 		CreationTimestamp: creationTimestamp.Unix(),
 		Owners:            owners,
-	}
+	}, nil
 }
 
 // NewK8sClientSet creates a k8s clientset
@@ -94,7 +107,7 @@ func (clientset *K8SConnection) GetPodsData(filter *filters.ResourceFilterOption
 		if err != nil {
 			return podsData, fmt.Errorf("could not list pods on cluster scope: %v ", err)
 		}
-		return processPods(list), nil
+		return processPods(list, logger)
 	} else {
 		list := &corev1.PodList{}
 		filteredNamespaces, err := clientset.filterNamespaces(filter)
@@ -143,24 +156,46 @@ func (clientset *K8SConnection) GetPodsData(filter *filters.ResourceFilterOption
 			return podsData, <-errs
 		}
 
-		return processPods(list), nil
+		return processPods(list, logger)
 	}
 }
 
 // processPods returns podData list for a list of Pods
-func processPods(list *corev1.PodList) []*PodData {
+func processPods(list *corev1.PodList, logger *logger.Logger) ([]*PodData, error) {
 	podsData := []*PodData{}
 	var (
 		wg    sync.WaitGroup
 		mutex = &sync.Mutex{}
 	)
+
+	errs := make(chan error, 1) // Buffered only for the first error
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // Make sure it's called to release resources even if no errors
+
 	for _, pod := range list.Items {
 		wg.Add(1)
 		go func(pod corev1.Pod) {
 			defer wg.Done()
+
+			// Check if any error occurred in any other goroutines:
+			select {
+			case <-ctx.Done():
+				return // Error somewhere, terminate
+			default: // Default is must to avoid blocking
+			}
+
 			// only report running or failed pods
 			if pod.Status.Phase == corev1.PodRunning || pod.Status.Phase == corev1.PodFailed {
-				data := NewPodData(&pod)
+				data, err := NewPodData(&pod, logger)
+				if err != nil {
+					// Non-blocking send of error
+					select {
+					case errs <- err:
+					default:
+					}
+					cancel() // send cancel signal to goroutines
+					return
+				}
 				mutex.Lock()
 				podsData = append(podsData, data)
 				mutex.Unlock()
@@ -168,7 +203,11 @@ func processPods(list *corev1.PodList) []*PodData {
 		}(pod)
 	}
 	wg.Wait()
-	return podsData
+	// Return (first) error, if any:
+	if ctx.Err() != nil {
+		return podsData, <-errs
+	}
+	return podsData, nil
 }
 
 // filterNamespaces filters a super set of namespaces by including or excluding a subset of namespaces using regex patterns.
