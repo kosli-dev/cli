@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/kosli-dev/cli/internal/types"
-	"github.com/kosli-dev/cli/internal/utils"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
@@ -79,11 +78,11 @@ func (c *GitlabConfig) newPRGitlabEvidenceV1(mr *gitlab.BasicMergeRequest) (*typ
 		MergeCommit: mr.MergeCommitSHA,
 		State:       mr.State,
 	}
-	approvers, err := c.GetMergeRequestApprovers(mr.IID)
+	approvers, err := c.GetMergeRequestApprovers(mr.IID, 1)
 	if err != nil {
 		return evidence, err
 	}
-	evidence.Approvers = utils.ConvertStringListToInterfaceList(approvers)
+	evidence.Approvers = approvers
 	return evidence, nil
 }
 
@@ -98,11 +97,11 @@ func (c *GitlabConfig) newPRGitlabEvidenceV2(mr *gitlab.BasicMergeRequest) (*typ
 		Title:       mr.Title,
 		HeadRef:     mr.SourceBranch,
 	}
-	approvers, err := c.GetMergeRequestApprovers(mr.IID)
+	approvers, err := c.GetMergeRequestApprovers(mr.IID, 2)
 	if err != nil {
 		return evidence, err
 	}
-	evidence.Approvers = utils.ConvertStringListToInterfaceList(approvers)
+	evidence.Approvers = approvers
 	commits, err := c.GetMergeRequestCommits(mr)
 	if err != nil {
 		return evidence, err
@@ -127,8 +126,8 @@ func (c *GitlabConfig) MergeRequestsForCommit(commit string) ([]*gitlab.BasicMer
 }
 
 // GetMergeRequestApprovers returns a list of users (name and username) who approved an MR
-func (c *GitlabConfig) GetMergeRequestApprovers(mrIID int) ([]string, error) {
-	approvers := []string{}
+func (c *GitlabConfig) GetMergeRequestApprovers(mrIID, version int) ([]any, error) {
+	var approvers []any
 	client, err := c.NewGitlabClientFromToken()
 	if err != nil {
 		return approvers, err
@@ -137,8 +136,16 @@ func (c *GitlabConfig) GetMergeRequestApprovers(mrIID int) ([]string, error) {
 	if err != nil {
 		return approvers, err
 	}
+
 	for _, approver := range approvals.ApprovedBy {
-		approvers = append(approvers, fmt.Sprintf("%s (@%s)", approver.User.Name, approver.User.Username))
+		approverName := fmt.Sprintf("%s (@%s)", approver.User.Name, approver.User.Username)
+		if version == 1 {
+			approvers = append(approvers, approverName)
+		} else {
+			approvers = append(approvers, types.PRApprovals{
+				Username: approverName,
+			})
+		}
 	}
 	return approvers, nil
 }
