@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 
@@ -22,6 +23,7 @@ type URLInfo struct {
 type CommonAttestationPayload struct {
 	ArtifactFingerprint string                   `json:"artifact_fingerprint,omitempty"`
 	Commit              *gitview.BasicCommitInfo `json:"git_commit_info,omitempty"`
+	GitRepoInfo         *gitview.GitRepoInfo     `json:"repo_info,omitempty"`
 	AttestationName     string                   `json:"attestation_name"`
 	TargetArtifacts     []string                 `json:"target_artifacts,omitempty"`
 	ExternalURLs        map[string]*URLInfo      `json:"external_urls,omitempty"`
@@ -77,6 +79,11 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 			return fmt.Errorf("failed to get commit info. %s", err)
 		}
 		payload.Commit = &commitInfo.BasicCommitInfo
+	}
+
+	payload.GitRepoInfo, err = getGitRepoInfoFromEnvironment()
+	if err != nil {
+		logger.Warn("failed to get git repo info. %s", err.Error())
 	}
 
 	payload.UserData, err = LoadJsonData(o.userDataFilePath)
@@ -173,4 +180,69 @@ func wrapAttestationError(err error) error {
 			"requires at least one of: specifying the fingerprint (either by calculating it using the artifact name/path and --artifact-type, or by providing it using --fingerprint) or providing --commit (requires an available git repo to access commit details)", 1))
 	}
 	return err
+}
+
+func getGitRepoInfoFromEnvironment() (*gitview.GitRepoInfo, error) {
+	ci := WhichCI()
+	switch ci {
+	case github:
+		return getGitRepoInfoFromGitHub(), nil
+	case gitlab:
+		return getGitRepoInfoFromGitLab(), nil
+	case bitbucket:
+		return getGitRepoInfoFromBitbucket(), nil
+	case azureDevops:
+		return getGitRepoInfoFromAzureDevops(), nil
+	case circleci:
+		return getGitRepoInfoFromCircleci(), nil
+	case codeBuild:
+		return getGitRepoInfoFromCodeBuild(), nil
+	}
+	return nil, fmt.Errorf("unsupported CI: %s", ci)
+}
+
+func getGitRepoInfoFromGitHub() *gitview.GitRepoInfo {
+	return &gitview.GitRepoInfo{
+		URL:  fmt.Sprintf("%s/%s", os.Getenv("GITHUB_SERVER_URL"), os.Getenv("GITHUB_REPOSITORY")),
+		Name: os.Getenv("GITHUB_REPOSITORY"),
+		ID:   os.Getenv("GITHUB_REPOSITORY_ID"),
+	}
+}
+
+func getGitRepoInfoFromGitLab() *gitview.GitRepoInfo {
+	return &gitview.GitRepoInfo{
+		URL:         os.Getenv("CI_PROJECT_URL"),
+		Name:        os.Getenv("CI_PROJECT_PATH"),
+		ID:          os.Getenv("CI_PROJECT_ID"),
+		Description: os.Getenv("CI_PROJECT_DESCRIPTION"),
+	}
+}
+
+func getGitRepoInfoFromBitbucket() *gitview.GitRepoInfo {
+	return &gitview.GitRepoInfo{
+		URL:  os.Getenv("BITBUCKET_GIT_HTTP_ORIGIN"),
+		Name: os.Getenv("BITBUCKET_REPO_FULL_NAME"),
+		ID:   os.Getenv("BITBUCKET_REPO_UUID"),
+	}
+}
+
+func getGitRepoInfoFromAzureDevops() *gitview.GitRepoInfo {
+	return &gitview.GitRepoInfo{
+		URL:  os.Getenv("BUILD_REPOSITORY_URI"),
+		Name: os.Getenv("BUILD_REPOSITORY_NAME"),
+		ID:   os.Getenv("BUILD_REPOSITORY_ID"),
+	}
+}
+
+func getGitRepoInfoFromCircleci() *gitview.GitRepoInfo {
+	return &gitview.GitRepoInfo{
+		URL:  os.Getenv("CIRCLE_REPOSITORY_URL"),
+		Name: os.Getenv("CIRCLE_PROJECT_REPONAME"),
+	}
+}
+
+func getGitRepoInfoFromCodeBuild() *gitview.GitRepoInfo {
+	return &gitview.GitRepoInfo{
+		URL: os.Getenv("CODEBUILD_SOURCE_REPO_URL"),
+	}
 }
