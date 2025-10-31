@@ -197,6 +197,8 @@ func getGitRepoInfoFromEnvironment() (*gitview.GitRepoInfo, error) {
 		return getGitRepoInfoFromCircleci(), nil
 	case codeBuild:
 		return getGitRepoInfoFromCodeBuild(), nil
+	case unknown:
+		return nil, nil
 	}
 	return nil, fmt.Errorf("unsupported CI: %s", ci)
 }
