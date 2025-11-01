@@ -29,6 +29,7 @@ type AttestArtifactPayload struct {
 	Filename      string                   `json:"filename"`
 	GitCommit     string                   `json:"git_commit"`
 	GitCommitInfo *gitview.BasicCommitInfo `json:"git_commit_info"`
+	GitRepoInfo   *gitview.GitRepoInfo     `json:"repo_info"`
 	BuildUrl      string                   `json:"build_url"`
 	CommitUrl     string                   `json:"commit_url"`
 	RepoUrl       string                   `json:"repo_url"`
@@ -187,6 +188,10 @@ func (o *attestArtifactOptions) run(args []string) error {
 	commitInfo, err := gitView.GetCommitInfoFromCommitSHA(o.gitReference, false, o.redactedCommitInfo)
 	if err != nil {
 		return err
+	}
+	o.payload.GitRepoInfo, err = getGitRepoInfoFromEnvironment()
+	if err != nil {
+		logger.Warn("failed to get git repo info. %s", err.Error())
 	}
 	o.payload.GitCommit = commitInfo.Sha1
 	o.payload.GitCommitInfo = &commitInfo.BasicCommitInfo
