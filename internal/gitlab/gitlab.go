@@ -82,6 +82,9 @@ func (c *GitlabConfig) newPRGitlabEvidenceV1(mr *gitlab.BasicMergeRequest) (*typ
 	if err != nil {
 		return evidence, err
 	}
+	if approvers == nil {
+		approvers = []any{}
+	}
 	evidence.Approvers = approvers
 	return evidence, nil
 }
