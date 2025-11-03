@@ -28,6 +28,13 @@ type CommitInfo struct {
 	Parents []string `json:"parents"`
 }
 
+type GitRepoInfo struct {
+	URL         string `json:"url,omitempty"`
+	Name        string `json:"name,omitempty"`
+	ID          string `json:"id,omitempty"`
+	Description string `json:"description,omitempty"`
+}
+
 // GitView
 // A read-only view of a git repository.
 type GitView struct {

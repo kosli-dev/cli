@@ -288,7 +288,7 @@ func (suite *GitlabTestSuite) TestGetMergeRequestApprovers() {
 				testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_GITLAB_TOKEN"})
 				t.gitlabConfig.Token = os.Getenv("KOSLI_GITLAB_TOKEN")
 			}
-			approvers, err := t.gitlabConfig.GetMergeRequestApprovers(t.mrIID)
+			approvers, err := t.gitlabConfig.GetMergeRequestApprovers(t.mrIID, 1)
 			if t.result.wantError {
 				require.Error(suite.Suite.T(), err)
 			} else {

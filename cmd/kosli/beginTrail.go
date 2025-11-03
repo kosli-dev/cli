@@ -48,6 +48,7 @@ type TrailPayload struct {
 	Description  string                   `json:"description"`
 	UserData     interface{}              `json:"user_data"`
 	Commit       *gitview.BasicCommitInfo `json:"git_commit_info,omitempty"`
+	GitRepoInfo  *gitview.GitRepoInfo     `json:"repo_info,omitempty"`
 	ExternalURLs map[string]*URLInfo      `json:"external_urls,omitempty"`
 	OriginURL    string                   `json:"origin_url,omitempty"`
 }
@@ -120,6 +121,11 @@ func (o *beginTrailOptions) run(args []string) error {
 			return err
 		}
 		o.payload.Commit = &commitInfo.BasicCommitInfo
+	}
+
+	o.payload.GitRepoInfo, err = getGitRepoInfoFromEnvironment()
+	if err != nil {
+		logger.Warn("failed to get git repo info. %s", err.Error())
 	}
 
 	// process external urls
