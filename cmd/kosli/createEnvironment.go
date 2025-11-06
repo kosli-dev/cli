@@ -24,11 +24,7 @@ The following types are supported:
   - server     - Generic type
   - logical    - Logical grouping of real environments
 
-By default, the environment does not require artifacts provenance (i.e. environment snapshots will not 
-become non-compliant because of artifacts that do not have provenance). You can require provenance for all artifacts
-by setting --require-provenance=true
-
-Also, by default, kosli will not make new snapshots for scaling events (change in number of instances running).
+By default, kosli will not make new snapshots for scaling events (change in number of instances running).
 For large clusters the scaling events will often outnumber the actual change of SW.
 
 It is possible to enable new snapshots for scaling events with the --include-scaling flag, or turn
@@ -105,6 +101,8 @@ func newCreateEnvironmentCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().BoolVar(&o.includeScaling, "include-scaling", false, includeScalingFlag)
 	cmd.Flags().BoolVar(&o.payload.RequireProvenance, "require-provenance", false, requireProvenanceFlag)
 	cmd.Flags().StringSliceVar(&o.payload.IncludedEnvironments, "included-environments", []string{}, includedEnvironments)
+
+	cmd.Flags().MarkDeprecated("require-provenance", "this flag is deprecated and will be removed in a future version. Use policies instead.")
 
 	addDryRunFlag(cmd)
 
