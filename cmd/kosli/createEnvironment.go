@@ -102,11 +102,14 @@ func newCreateEnvironmentCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().BoolVar(&o.payload.RequireProvenance, "require-provenance", false, requireProvenanceFlag)
 	cmd.Flags().StringSliceVar(&o.payload.IncludedEnvironments, "included-environments", []string{}, includedEnvironments)
 
-	cmd.Flags().MarkDeprecated("require-provenance", "this flag is deprecated and will be removed in a future version. Use policies instead.")
+	err := cmd.Flags().MarkDeprecated("require-provenance", "this flag is deprecated and will be removed in a future version. Use policies instead.")
+	if err != nil {
+		logger.Error("failed to mark require-provenance as deprecated: %v", err)
+	}
 
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"type"})
+	err = RequireFlags(cmd, []string{"type"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
