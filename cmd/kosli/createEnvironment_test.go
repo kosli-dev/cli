@@ -51,14 +51,14 @@ func (suite *CreateEnvironmentCommandTestSuite) TestCreateEnvironmentCmd() {
 			golden:    "environment newEnv1 was created\n",
 		},
 		{
-			name:   "can create K8S env with --require-provenance",
-			cmd:    "create env strictEnv --type K8S --require-provenance" + suite.defaultKosliArguments,
-			golden: "environment strictEnv was created\n",
+			name:        "can create K8S env with --require-provenance",
+			cmd:         "create env strictEnv --type K8S --require-provenance" + suite.defaultKosliArguments,
+			goldenRegex: "Flag --require-provenance has been deprecated.*\nenvironment strictEnv was created",
 		},
 		{
-			name:   "can create K8S env with --require-provenance=false",
-			cmd:    "create env relaxedEnv --type K8S --require-provenance=false" + suite.defaultKosliArguments,
-			golden: "environment relaxedEnv was created\n",
+			name:        "can create K8S env with --require-provenance=false",
+			cmd:         "create env relaxedEnv --type K8S --require-provenance=false" + suite.defaultKosliArguments,
+			goldenRegex: "Flag --require-provenance has been deprecated.*\nenvironment relaxedEnv was created",
 		},
 		{
 			wantError: true,
