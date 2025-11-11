@@ -42,9 +42,9 @@ func (suite *GetAttestationCommandTestSuite) SetupTest() {
 	suite.fingerprint, err = GetSha256Digest(suite.artifactPath, fingerprintOptions, logger)
 	require.NoError(suite.Suite.T(), err)
 	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.fingerprint, suite.artifactName, suite.Suite.T())
-	CreateGenericArtifactAttestation(suite.flowName, suite.trailName, suite.fingerprint, "first-artifact-attestation", suite.Suite.T())
+	CreateGenericArtifactAttestation(suite.flowName, suite.trailName, suite.fingerprint, "first-artifact-attestation", true, suite.Suite.T())
 	CreateGenericTrailAttestation(suite.flowName, suite.trailName, "first-trail-attestation", suite.Suite.T())
-	CreateGenericArtifactAttestation(suite.flowName, suite.trailName, suite.fingerprint, "second-artifact-attestation", suite.Suite.T())
+	CreateGenericArtifactAttestation(suite.flowName, suite.trailName, suite.fingerprint, "second-artifact-attestation", true, suite.Suite.T())
 	CreateGenericTrailAttestation(suite.flowName, suite.trailName, "second-trail-attestation", suite.Suite.T())
 }
 
