@@ -163,8 +163,9 @@ func printAssertAsTable(raw string, out io.Writer, page int) error {
 		return err
 	}
 	scope := evaluationResult["scope"].(string)
+	isCompliant := evaluationResult["compliant"].(bool)
 
-	if evaluationResult["compliant"].(bool) {
+	if isCompliant {
 		logger.Info("COMPLIANT")
 	} else {
 		logger.Info("Error: NON-COMPLIANT")
@@ -244,6 +245,10 @@ func printAssertAsTable(raw string, out io.Writer, page int) error {
 			logger.Info("    %-32v %-30v %-15v %-10v %-10v", name, attType, status, isCompliant, unexpectedStr)
 		}
 		logger.Info("  See more details at %s", evaluationResult["html_url"].(string))
+	}
+
+	if !isCompliant {
+		return fmt.Errorf("Artifact is not compliant")
 	}
 	return nil
 }
