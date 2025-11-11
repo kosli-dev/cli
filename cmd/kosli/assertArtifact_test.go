@@ -25,6 +25,11 @@ type AssertArtifactCommandTestSuite struct {
 	artifactName2         string
 	artifact2Path         string
 	fingerprint2          string
+	flowName3             string
+	trailName             string
+	artifactName3         string
+	artifact3Path         string
+	fingerprint3          string
 }
 
 func (suite *AssertArtifactCommandTestSuite) SetupTest() {
@@ -60,6 +65,19 @@ func (suite *AssertArtifactCommandTestSuite) SetupTest() {
 	require.NoError(suite.Suite.T(), err)
 	CreateArtifact(suite.flowName1, suite.fingerprint2, suite.artifactName2, suite.Suite.T())
 	CreateArtifact(suite.flowName2, suite.fingerprint2, suite.artifactName1, suite.Suite.T())
+
+	// Setup for asserting non-compliant artifact to check error response
+	suite.flowName3 = "assert-non-compliant-artifact"
+	suite.trailName = "non-compliant-trail"
+	suite.artifactName3 = "arti-for-AssertArtifactCommandTestSuite-non-compliant"
+	suite.artifact3Path = "testdata/artifacts/AssertArtifactCommandTestSuiteArtifact3.txt"
+	suite.fingerprint3, err = GetSha256Digest(suite.artifact3Path, fingerprintOptions, logger)
+	CreateFlow(suite.flowName3, suite.Suite.T())
+	BeginTrail(suite.trailName, suite.flowName3, "", suite.Suite.T())
+	CreateArtifactOnTrail(suite.flowName3, suite.trailName, "cli", suite.fingerprint3, suite.artifactName3, suite.Suite.T())
+	require.NoError(suite.Suite.T(), err)
+	CreateGenericArtifactAttestation(suite.flowName3, suite.trailName, suite.fingerprint3, "failing-attestation", false, suite.Suite.T())
+	require.NoError(suite.Suite.T(), err)
 }
 
 func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
@@ -168,6 +186,18 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 			name:      "15 providing both --environment and --polices fails",
 			cmd:       fmt.Sprintf(`assert artifact --fingerprint %s --environment %s --policy %s %s`, suite.fingerprint1, suite.envName, suite.policyName1, suite.defaultKosliArguments),
 			golden:    "Error: Cannot specify both 'environment_name' and 'policy_name' at the same time\n",
+		},
+		{
+			wantError:   true,
+			name:        "16 asserting a single existing non-compliant artifact (using --fingerprint) results in non-zero exit",
+			cmd:         fmt.Sprintf(`assert artifact --fingerprint %s %s`, suite.fingerprint3, suite.defaultKosliArguments),
+			goldenRegex: "^Error: NON-COMPLIANT\n",
+		},
+		{
+			wantError:   true,
+			name:        "17 asserting a single existing non-compliant artifact (using --artifact-type) results in non-zero exit",
+			cmd:         fmt.Sprintf(`assert artifact %s --artifact-type file %s`, suite.artifact3Path, suite.defaultKosliArguments),
+			goldenRegex: "^Error: NON-COMPLIANT\n",
 		},
 	}
 

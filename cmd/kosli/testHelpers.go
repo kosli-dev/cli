@@ -500,7 +500,7 @@ func CreatePolicy(org, policyName string, t *testing.T) {
 	require.NoError(t, err, "policy should be created without error")
 }
 
-func CreateGenericArtifactAttestation(flowName, trailName, fingerprint, attestationName string, t *testing.T) {
+func CreateGenericArtifactAttestation(flowName, trailName, fingerprint, attestationName string, compliant bool, t *testing.T) {
 	t.Helper()
 	o := &attestGenericOptions{
 		CommonAttestationOptions: &CommonAttestationOptions{
@@ -513,7 +513,7 @@ func CreateGenericArtifactAttestation(flowName, trailName, fingerprint, attestat
 			CommonAttestationPayload: &CommonAttestationPayload{
 				ArtifactFingerprint: fingerprint,
 			},
-			Compliant: true,
+			Compliant: compliant,
 		},
 	}
 	err := o.run([]string{})
