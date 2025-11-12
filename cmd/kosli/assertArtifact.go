@@ -149,11 +149,26 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
-	return output.FormattedPrint(response.Body, o.output, out, 0,
+	err = output.FormattedPrint(response.Body, o.output, out, 0,
 		map[string]output.FormatOutputFunc{
 			"table": printAssertAsTable,
 			"json":  output.PrintJson,
 		})
+	if err != nil {
+		return err
+	}
+
+	var evaluationResult map[string]interface{}
+	err = json.Unmarshal([]byte(response.Body), &evaluationResult)
+	if err != nil {
+		return err
+	}
+
+	isCompliant := evaluationResult["compliant"].(bool)
+	if !isCompliant {
+		return fmt.Errorf("Artifact is not compliant")
+	}
+	return nil
 }
 
 func printAssertAsTable(raw string, out io.Writer, page int) error {
@@ -247,8 +262,5 @@ func printAssertAsTable(raw string, out io.Writer, page int) error {
 		logger.Info("  See more details at %s", evaluationResult["html_url"].(string))
 	}
 
-	if !isCompliant {
-		return fmt.Errorf("Artifact is not compliant")
-	}
 	return nil
 }
