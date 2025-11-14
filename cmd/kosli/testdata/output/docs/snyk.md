@@ -64,7 +64,7 @@ binding the attestation to the right artifact.
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report a snyk attestation about a pre-built docker artifact (kosli calculates the fingerprint)**
+##### report a snyk attestation about a pre-built docker artifact (kosli calculates the fingerprint)
 
 ```shell
 kosli attest snyk yourDockerImageName 
@@ -74,7 +74,7 @@ kosli attest snyk yourDockerImageName
 
 ```
 
-**report a snyk attestation about a pre-built docker artifact (you provide the fingerprint)**
+##### report a snyk attestation about a pre-built docker artifact (you provide the fingerprint)
 
 ```shell
 kosli attest snyk 
@@ -84,7 +84,7 @@ kosli attest snyk
 
 ```
 
-**report a snyk attestation about a trail**
+##### report a snyk attestation about a trail
 
 ```shell
 kosli attest snyk 
@@ -93,7 +93,7 @@ kosli attest snyk
 
 ```
 
-**report a snyk attestation about an artifact which has not been reported yet in a trail**
+##### report a snyk attestation about an artifact which has not been reported yet in a trail
 
 ```shell
 kosli attest snyk 
@@ -103,7 +103,7 @@ kosli attest snyk
 
 ```
 
-**report a snyk attestation about a trail with an attachment**
+##### report a snyk attestation about a trail with an attachment
 
 ```shell
 kosli attest snyk 
@@ -113,7 +113,7 @@ kosli attest snyk
 
 ```
 
-**report a snyk attestation about a trail without uploading the snyk results file**
+##### report a snyk attestation about a trail without uploading the snyk results file
 
 ```shell
 kosli attest snyk 

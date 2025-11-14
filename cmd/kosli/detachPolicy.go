@@ -19,7 +19,7 @@ const detachPolicyShortDesc = `Detach a policy from one or more Kosli environmen
 const detachPolicyLongDesc = `If the environment has no more policies attached to it, then its snapshots' status will become "unknown".`
 
 const detachPolicyExample = `
-# detach policy from multiple environment:
+# detach policy from multiple environments:
 kosli detach-policy yourPolicyName \
 	--environment yourFirstEnvironmentName \
 	--environment yourSecondEnvironmentName \

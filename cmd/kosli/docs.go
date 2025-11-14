@@ -208,7 +208,7 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 				// Some titles have a trailing colon, some don't
 				title := strings.Trim(exampleLines[0], ":")
 				if len(title) > 0 {
-					buf.WriteString(fmt.Sprintf("**%s**\n\n", strings.TrimSpace(title[1:])))
+					buf.WriteString(fmt.Sprintf("##### %s\n\n", strings.TrimSpace(title[1:])))
 					buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", strings.Join(exampleLines[1:], "\n")))
 				}
 			}

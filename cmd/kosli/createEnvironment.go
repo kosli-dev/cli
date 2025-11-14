@@ -45,7 +45,7 @@ kosli create environment yourEnvironmentName
 	--api-token yourAPIToken \
 	--org yourOrgName 
 
-
+# create a Kosli logical environment:
 kosli create environment yourLogicalEnvironmentName
 	--type logical \
 	--included-environments realEnv1,realEnv2,realEnv3
