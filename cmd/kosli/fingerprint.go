@@ -49,13 +49,13 @@ kosli fingerprint --artifact-type file file.txt
 # fingerprint a dir
 kosli fingerprint --artifact-type dir mydir
 
-# fingerprint a dir while excluding paths ^mydir/logs^ and ^mydir/*exe^
+# fingerprint a dir while excluding paths ` + "`" + `mydir/logs` + "`" + ` and ` + "`" + `mydir/*.exe` + "`" + `
 kosli fingerprint --artifact-type dir --exclude logs --exclude *.exe mydir
 
-# fingerprint a dir while excluding all ^.pyc^ files
+# fingerprint a dir while excluding all ` + "`" + `.pyc` + "`" + ` files
 kosli fingerprint --artifact-type dir  --exclude **/*.pyc mydir
 
-# fingerprint a dir while excluding paths in .kosli_ignore file
+# fingerprint a dir while excluding paths in ` + "`" + `.kosli_ignore` + "`" + ` file
 echo bar/file.txt > mydir/.kosli_ignore
 kosli fingerprint --artifact-type dir mydir
 
@@ -66,7 +66,9 @@ kosli fingerprint --artifact-type docker nginx:latest
 kosli fingerprint --artifact-type oci nginx:latest
 
 # fingerprint a private image from a remote registry
-kosli fingerprint --artifact-type oci private:latest --registry-username YourUsername --registry-password YourPassword
+kosli fingerprint --artifact-type oci private:latest \\
+  --registry-username YourUsername \\
+  --registry-password YourPassword
 `
 
 type fingerprintOptions struct {
