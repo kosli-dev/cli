@@ -62,21 +62,21 @@ kosli diff snapshots aws-beta aws-prod --output=json</pre>{{< / raw-html >}}
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**compare the third latest snapshot in an environment to the latest**
+##### compare the third latest snapshot in an environment to the latest
 
 ```shell
 kosli diff snapshots envName~3 envName 
 
 ```
 
-**compare snapshots of two different environments of the same type**
+##### compare snapshots of two different environments of the same type
 
 ```shell
 kosli diff snapshots envName1 envName2 
 
 ```
 
-**show the not-changed artifacts in both snapshots**
+##### show the not-changed artifacts in both snapshots
 
 ```shell
 kosli diff snapshots envName1 envName2 
@@ -84,7 +84,7 @@ kosli diff snapshots envName1 envName2
 
 ```
 
-**compare the snapshot from 2 weeks ago in an environment to the latest**
+##### compare the snapshot from 2 weeks ago in an environment to the latest
 
 ```shell
 kosli diff snapshots envName@{2.weeks.ago} envName 

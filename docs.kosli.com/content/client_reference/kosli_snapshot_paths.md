@@ -63,7 +63,7 @@ artifacts:
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report one or more artifacts running in a filesystem using a path spec file**
+##### report one or more artifacts running in a filesystem using a path spec file
 
 ```shell
 kosli snapshot paths yourEnvironmentName 

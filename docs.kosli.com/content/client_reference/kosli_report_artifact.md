@@ -60,7 +60,7 @@ images in registries or "docker" for local docker images.
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**Report to a Kosli flow that a file type artifact has been created**
+##### Report to a Kosli flow that a file type artifact has been created
 
 ```shell
 kosli report artifact FILE.tgz 
@@ -71,7 +71,7 @@ kosli report artifact FILE.tgz
 
 ```
 
-**Report to a Kosli flow that an artifact with a provided fingerprint (sha256) has been created**
+##### Report to a Kosli flow that an artifact with a provided fingerprint (sha256) has been created
 
 ```shell
 kosli report artifact ANOTHER_FILE.txt 

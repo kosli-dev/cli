@@ -27,9 +27,19 @@ exclude `zam/file.txt` which is relative to the DIR-PATH.
 The supported glob pattern syntax is what is documented here: https://pkg.go.dev/path/filepath#Match , 
 plus the ability to use recursive globs "**"
 
-If the directory structure contains symbolic links to a file the content of the file it points to is included in the
-fingerprint calculation. If a symbolic link points to a directory the path it is pointing to is include in the
-fingerprint calculation.
+If the directory structure contains a symbolic link to a *file* (for example, a link 'from/this/file' and a target of 'to/another/file') then:
+- the name of the link ('from/this/file') *is* included in the fingerprint.
+- the name of the link ('from/this/file') *is* subject to `.kosli_ignore` entries.
+- the name of the target ('to/another/file') is *not* included in the fingerprint.
+- the content of target *is* included in the fingerprint, even if the target is outside the root directory being fingerprinted.
+
+If the directory structure contains a symbolic link to a *directory* (for example, a link 'from/this/dir' and a target of 'to/another/dir') then:
+- the name of the link ('from/this/dir') *is* included in the fingerprint.
+- the name of the link ('from/this/dir') *is* subject to `.kosli_ignore` entries.
+- the name of the target ('to/another/dir') *is* included in the fingerprint, even if the target is outside the root directory being fingerprinted.
+- the name of the target ('to/another/dir') is *not* subject to `.kosli_ignore` entries.
+- the content of the target is *not* included in the fingerprint.
+
 
 To specify paths in a directory artifact that should always be excluded from the SHA256 calculation, you can add a `.kosli_ignore` file to the root of the artifact.
 Each line should specify a relative path or path glob to be ignored. You can include comments in this file, using `#`.

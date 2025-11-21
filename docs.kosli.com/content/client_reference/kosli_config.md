@@ -54,7 +54,7 @@ Keys correspond to the specific flag name, capitalized. For instance: --flow wou
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**configure global flags in your default config file**
+##### configure global flags in your default config file
 
 ```shell
 kosli config --org=yourOrg 
@@ -66,14 +66,14 @@ kosli config --org=yourOrg
 
 ```
 
-**configure non-global flags in your default config file**
+##### configure non-global flags in your default config file
 
 ```shell
 kosli config --set FLOW=yourFlowName
 
 ```
 
-**remove a key from the default config file**
+##### remove a key from the default config file
 
 ```shell
 kosli config --unset FLOW

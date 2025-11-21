@@ -68,7 +68,7 @@ images in registries or "docker" for local docker images.
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report a pull request evidence to kosli for a docker image**
+##### report a pull request evidence to kosli for a docker image
 
 ```shell
 kosli report evidence artifact pullrequest bitbucket yourDockerImageName 
@@ -83,7 +83,7 @@ kosli report evidence artifact pullrequest bitbucket yourDockerImageName
 
 ```
 
-**fail if a pull request does not exist for your artifact**
+##### fail if a pull request does not exist for your artifact
 
 ```shell
 kosli report evidence artifact pullrequest bitbucket yourDockerImageName 

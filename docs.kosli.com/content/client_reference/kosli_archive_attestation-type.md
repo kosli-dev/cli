@@ -40,7 +40,7 @@ New custom attestations using this type cannot be made, but existing attestation
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**archive a Kosli custom attestation type**
+##### archive a Kosli custom attestation type
 
 ```shell
 kosli archive attestation-type yourAttestationTypeName 

@@ -55,7 +55,7 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**create/update a Kosli flow (with empty template)**
+##### create/update a Kosli flow (with empty template)
 
 ```shell
 kosli create flow yourFlowName 
@@ -65,7 +65,7 @@ kosli create flow yourFlowName
 
 ```
 
-**create/update a Kosli flow (with template file)**
+##### create/update a Kosli flow (with template file)
 
 ```shell
 kosli create flow yourFlowName 

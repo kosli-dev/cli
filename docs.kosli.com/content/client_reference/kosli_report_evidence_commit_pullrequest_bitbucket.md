@@ -55,7 +55,7 @@ It checks if a pull request exists for the git commit and reports the pull-reque
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report a pull request evidence to Kosli**
+##### report a pull request evidence to Kosli
 
 ```shell
 kosli report evidence commit pullrequest bitbucket 
@@ -70,7 +70,7 @@ kosli report evidence commit pullrequest bitbucket
 
 ```
 
-**fail if a pull request does not exist for your commit**
+##### fail if a pull request does not exist for your commit
 
 ```shell
 kosli report evidence commit pullrequest bitbucket 

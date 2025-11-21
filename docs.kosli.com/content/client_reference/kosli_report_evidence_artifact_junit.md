@@ -63,7 +63,7 @@ images in registries or "docker" for local docker images.
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report JUnit test evidence about a file artifact**
+##### report JUnit test evidence about a file artifact
 
 ```shell
 kosli report evidence artifact junit FILE.tgz 
@@ -74,7 +74,7 @@ kosli report evidence artifact junit FILE.tgz
 
 ```
 
-**report JUnit test evidence about an artifact using an available Sha256 digest**
+##### report JUnit test evidence about an artifact using an available Sha256 digest
 
 ```shell
 kosli report evidence artifact junit 

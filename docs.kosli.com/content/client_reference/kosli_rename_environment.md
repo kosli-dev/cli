@@ -40,7 +40,7 @@ The environment will remain accessible under its old name until that name is tak
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**rename a Kosli environment**
+##### rename a Kosli environment
 
 ```shell
 kosli rename environment oldName newName 

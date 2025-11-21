@@ -61,7 +61,7 @@ The service principal needs to have the following permissions:
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**Use Azure Container Registry to get the digests for artifacts in a snapshot**
+##### Use Azure Container Registry to get the digests for artifacts in a snapshot
 
 ```shell
 kosli snapshot azure yourEnvironmentName 
@@ -74,7 +74,7 @@ kosli snapshot azure yourEnvironmentName
 
 ```
 
-**Use Docker logs of Azure apps to get the digests for artifacts in a snapshot**
+##### Use Docker logs of Azure apps to get the digests for artifacts in a snapshot
 
 ```shell
 kosli snapshot azure yourEnvironmentName 
@@ -87,7 +87,7 @@ kosli snapshot azure yourEnvironmentName
 
 ```
 
-**Report digest of an Azure Function app**
+##### Report digest of an Azure Function app
 
 ```shell
 kosli snapshot azure yourEnvironmentName 

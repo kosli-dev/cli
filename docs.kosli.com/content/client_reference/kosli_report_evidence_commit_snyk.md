@@ -60,7 +60,7 @@ If no vulnerabilities are detected the evidence is reported as compliant. Otherw
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report Snyk evidence for a commit related to one Kosli flow**
+##### report Snyk evidence for a commit related to one Kosli flow
 
 ```shell
 kosli report evidence commit snyk 
@@ -72,7 +72,7 @@ kosli report evidence commit snyk
 
 ```
 
-**report Snyk evidence for a commit related to multiple Kosli flows**
+##### report Snyk evidence for a commit related to multiple Kosli flows
 
 ```shell
 kosli report evidence commit snyk 

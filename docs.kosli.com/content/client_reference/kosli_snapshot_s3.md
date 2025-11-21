@@ -59,7 +59,7 @@ The `.kosli_ignore` will be treated as part of the artifact like any other file,
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report the contents of an entire AWS S3 bucket (AWS auth provided in env variables)**
+##### report the contents of an entire AWS S3 bucket (AWS auth provided in env variables)
 
 ```shell
 export AWS_REGION=yourAWSRegion
@@ -71,7 +71,7 @@ kosli snapshot s3 yourEnvironmentName
 
 ```
 
-**report what is running in an AWS S3 bucket (AWS auth provided in flags)**
+##### report what is running in an AWS S3 bucket (AWS auth provided in flags)
 
 ```shell
 kosli snapshot s3 yourEnvironmentName 
@@ -82,7 +82,7 @@ kosli snapshot s3 yourEnvironmentName
 
 ```
 
-**report a subset of contents of an AWS S3 bucket (AWS auth provided in env variables)**
+##### report a subset of contents of an AWS S3 bucket (AWS auth provided in env variables)
 
 ```shell
 export AWS_REGION=yourAWSRegion
@@ -95,7 +95,7 @@ kosli snapshot s3 yourEnvironmentName
 
 ```
 
-**report contents of an entire AWS S3 bucket, except for some paths (AWS auth provided in env variables)**
+##### report contents of an entire AWS S3 bucket, except for some paths (AWS auth provided in env variables)
 
 ```shell
 export AWS_REGION=yourAWSRegion

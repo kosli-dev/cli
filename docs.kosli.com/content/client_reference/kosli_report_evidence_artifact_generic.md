@@ -63,7 +63,7 @@ images in registries or "docker" for local docker images.
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report a generic evidence about a pre-built docker image**
+##### report a generic evidence about a pre-built docker image
 
 ```shell
 kosli report evidence artifact generic yourDockerImageName 
@@ -73,7 +73,7 @@ kosli report evidence artifact generic yourDockerImageName
 
 ```
 
-**report a generic evidence about a directory type artifact**
+##### report a generic evidence about a directory type artifact
 
 ```shell
 kosli report evidence artifact generic /path/to/your/dir 
@@ -83,7 +83,7 @@ kosli report evidence artifact generic /path/to/your/dir
 
 ```
 
-**report a generic evidence about an artifact with a provided fingerprint (sha256)**
+##### report a generic evidence about an artifact with a provided fingerprint (sha256)
 
 ```shell
 kosli report evidence artifact generic 
@@ -93,7 +93,7 @@ kosli report evidence artifact generic
 
 ```
 
-**report a generic evidence about an artifact with evidence file upload**
+##### report a generic evidence about an artifact with evidence file upload
 
 ```shell
 kosli report evidence artifact generic 
@@ -104,7 +104,7 @@ kosli report evidence artifact generic
 
 ```
 
-**report a generic evidence about an artifact with evidence file upload via API**
+##### report a generic evidence about an artifact with evidence file upload via API
 
 ```shell
 curl -X 'POST' 

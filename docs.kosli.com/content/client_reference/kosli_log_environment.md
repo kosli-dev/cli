@@ -60,14 +60,14 @@ kosli log environment aws-prod --output=json</pre>{{< / raw-html >}}
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**list the last 15 events for an environment**
+##### list the last 15 events for an environment
 
 ```shell
 kosli log environment yourEnvironmentName 
 
 ```
 
-**list the last 30 events for an environment**
+##### list the last 30 events for an environment
 
 ```shell
 kosli log environment yourEnvironmentName 
@@ -75,7 +75,7 @@ kosli log environment yourEnvironmentName
 
 ```
 
-**list the last 30 events for an environment (in JSON)**
+##### list the last 30 events for an environment (in JSON)
 
 ```shell
 kosli log environment yourEnvironmentName 

@@ -75,7 +75,7 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report a generic attestation about a pre-built docker artifact (kosli calculates the fingerprint)**
+##### report a generic attestation about a pre-built docker artifact (kosli calculates the fingerprint)
 
 ```shell
 kosli attest generic yourDockerImageName 
@@ -84,7 +84,7 @@ kosli attest generic yourDockerImageName
 
 ```
 
-**report a generic attestation about a pre-built docker artifact (you provide the fingerprint)**
+##### report a generic attestation about a pre-built docker artifact (you provide the fingerprint)
 
 ```shell
 kosli attest generic 
@@ -93,7 +93,7 @@ kosli attest generic
 
 ```
 
-**report a generic attestation about a trail**
+##### report a generic attestation about a trail
 
 ```shell
 kosli attest generic 
@@ -101,7 +101,7 @@ kosli attest generic
 
 ```
 
-**report a generic attestation about an artifact which has not been reported yet in a trail**
+##### report a generic attestation about an artifact which has not been reported yet in a trail
 
 ```shell
 kosli attest generic 
@@ -110,7 +110,7 @@ kosli attest generic
 
 ```
 
-**report a generic attestation about a trail with an attachment**
+##### report a generic attestation about a trail with an attachment
 
 ```shell
 kosli attest generic 
@@ -119,7 +119,7 @@ kosli attest generic
 
 ```
 
-**report a non-compliant generic attestation about a trail**
+##### report a non-compliant generic attestation about a trail
 
 ```shell
 kosli attest generic 

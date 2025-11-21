@@ -49,21 +49,21 @@ EXPRESSION can be specified as follows:
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**get second behind the latest approval from a flow**
+##### get second behind the latest approval from a flow
 
 ```shell
 kosli get approval flowName~1 
 
 ```
 
-**get the 10th approval from a flow**
+##### get the 10th approval from a flow
 
 ```shell
 kosli get approval flowName#10 
 
 ```
 
-**get the latest approval from a flow**
+##### get the latest approval from a flow
 
 ```shell
 kosli get approval flowName 

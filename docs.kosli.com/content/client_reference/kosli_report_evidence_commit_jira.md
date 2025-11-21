@@ -66,7 +66,7 @@ This is because Jira returns same 404 error code in all cases.
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report Jira evidence for a commit related to one Kosli flow (with Jira Cloud)**
+##### report Jira evidence for a commit related to one Kosli flow (with Jira Cloud)
 
 ```shell
 kosli report evidence commit jira 
@@ -80,7 +80,7 @@ kosli report evidence commit jira
 
 ```
 
-**report Jira evidence for a commit related to one Kosli flow (with self-hosted Jira)**
+##### report Jira evidence for a commit related to one Kosli flow (with self-hosted Jira)
 
 ```shell
 kosli report evidence commit jira 
@@ -93,7 +93,7 @@ kosli report evidence commit jira
 
 ```
 
-**report Jira  evidence for a commit related to multiple Kosli flows with user-data (with Jira Cloud)**
+##### report Jira  evidence for a commit related to multiple Kosli flows with user-data (with Jira Cloud)
 
 ```shell
 kosli report evidence commit jira 
@@ -109,7 +109,7 @@ kosli report evidence commit jira
 
 ```
 
-**fail if no issue reference is found, or the issue is not found in your jira instance**
+##### fail if no issue reference is found, or the issue is not found in your jira instance
 
 ```shell
 kosli report evidence commit jira 

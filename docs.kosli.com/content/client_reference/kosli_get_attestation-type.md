@@ -47,14 +47,14 @@ The TYPE-NAME can be specified as follows:
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**get an unversioned custom attestation type**
+##### get an unversioned custom attestation type
 
 ```shell
 kosli get attestation-type customTypeName
 
 ```
 
-**get version 1 of a custom attestation type**
+##### get version 1 of a custom attestation type
 
 ```shell
 kosli get attestation-type customTypeName@v1

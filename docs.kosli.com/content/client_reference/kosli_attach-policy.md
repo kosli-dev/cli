@@ -39,7 +39,7 @@ Attach a policy to one or more Kosli environments.
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**attach a previously created policy to multiple environment**
+##### attach a previously created policy to multiple environment
 
 ```shell
 kosli attach-policy yourPolicyName 

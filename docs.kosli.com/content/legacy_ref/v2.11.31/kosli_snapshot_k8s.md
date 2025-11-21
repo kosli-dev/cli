@@ -53,10 +53,9 @@ kosli snapshot k8s yourEnvironmentName
 
 ```
 
-**report what is running in an entire cluster using kubeconfig at $HOME/.kube/config**
+**report what is running in an entire cluster using kubeconfig at $HOME/.kube/config (with global flags defined in environment or in a config file)**
 
 ```shell
-(with global flags defined in environment or in a config file):
 export KOSLI_API_TOKEN=yourAPIToken
 export KOSLI_ORG=yourOrgName
 

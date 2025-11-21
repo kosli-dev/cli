@@ -51,7 +51,7 @@ Report Generic evidence for a commit in Kosli flows.
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report Generic evidence for a commit related to one Kosli flow**
+##### report Generic evidence for a commit related to one Kosli flow
 
 ```shell
 kosli report evidence commit generic 
@@ -64,7 +64,7 @@ kosli report evidence commit generic
 
 ```
 
-**report Generic evidence for a commit related to multiple Kosli flows with user-data**
+##### report Generic evidence for a commit related to multiple Kosli flows with user-data
 
 ```shell
 kosli report evidence commit generic 

@@ -55,28 +55,28 @@ Examples of valid expressions are:
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**get an artifact with a given fingerprint from a flow**
+##### get an artifact with a given fingerprint from a flow
 
 ```shell
 kosli get artifact flowName@fingerprint 
 
 ```
 
-**get the latest artifact with a given fingerprint from a flow in a specific trail**
+##### get the latest artifact with a given fingerprint from a flow in a specific trail
 
 ```shell
 kosli get artifact flowName@fingerprint 
 
 ```
 
-**get an artifact with a given commit SHA from a flow**
+##### get an artifact with a given commit SHA from a flow
 
 ```shell
 kosli get artifact flowName:commitSHA 
 
 ```
 
-**get a list of artifacts with a given commit SHA from a flow in a particular trail**
+##### get a list of artifacts with a given commit SHA from a flow in a particular trail
 
 ```shell
 kosli get artifact flowName:commitSHA 

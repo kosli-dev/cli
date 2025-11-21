@@ -40,7 +40,7 @@ The flow will no longer be visible in list of flows, data is still stored in the
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**archive a Kosli flow**
+##### archive a Kosli flow
 
 ```shell
 kosli archive flow yourFlowName 

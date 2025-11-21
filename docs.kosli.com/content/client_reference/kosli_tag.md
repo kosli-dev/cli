@@ -50,7 +50,7 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**add/update tags to a flow**
+##### add/update tags to a flow
 
 ```shell
 kosli tag flow yourFlowName 
@@ -59,7 +59,7 @@ kosli tag flow yourFlowName
 
 ```
 
-**tag an environment**
+##### tag an environment
 
 ```shell
 kosli tag env yourEnvironmentName 
@@ -68,7 +68,7 @@ kosli tag env yourEnvironmentName
 
 ```
 
-**add/update tags to an environment**
+##### add/update tags to an environment
 
 ```shell
 kosli tag env yourEnvironmentName 
@@ -77,7 +77,7 @@ kosli tag env yourEnvironmentName
 
 ```
 
-**remove tags from an environment**
+##### remove tags from an environment
 
 ```shell
 kosli tag env yourEnvironmentName 

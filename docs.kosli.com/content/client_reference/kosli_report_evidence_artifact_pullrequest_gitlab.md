@@ -67,7 +67,7 @@ images in registries or "docker" for local docker images.
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report a merge request evidence to kosli for a docker image**
+##### report a merge request evidence to kosli for a docker image
 
 ```shell
 kosli report evidence artifact mergerequest gitlab yourDockerImageName 
@@ -81,7 +81,7 @@ kosli report evidence artifact mergerequest gitlab yourDockerImageName
 
 ```
 
-**report a merge request evidence (from an on-prem Gitlab) to kosli for a docker image**
+##### report a merge request evidence (from an on-prem Gitlab) to kosli for a docker image
 
 ```shell
 kosli report evidence artifact mergerequest gitlab yourDockerImageName 
@@ -96,7 +96,7 @@ kosli report evidence artifact mergerequest gitlab yourDockerImageName
 
 ```
 
-**fail if a merge request does not exist for your artifact**
+##### fail if a merge request does not exist for your artifact
 
 ```shell
 kosli report evidence artifact mergerequest gitlab yourDockerImageName 

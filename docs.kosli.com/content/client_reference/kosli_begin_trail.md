@@ -62,7 +62,7 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**begin/update a Kosli flow trail**
+##### begin/update a Kosli flow trail
 
 ```shell
 kosli begin trail yourTrailName 

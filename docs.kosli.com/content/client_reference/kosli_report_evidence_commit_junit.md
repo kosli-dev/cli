@@ -52,7 +52,7 @@ If there are no failing tests and no errors the evidence is reported as complian
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report JUnit test evidence for a commit related to one Kosli flow**
+##### report JUnit test evidence for a commit related to one Kosli flow
 
 ```shell
 kosli report evidence commit junit 
@@ -64,7 +64,7 @@ kosli report evidence commit junit
 
 ```
 
-**report JUnit test evidence for a commit related to multiple Kosli flows**
+##### report JUnit test evidence for a commit related to multiple Kosli flows
 
 ```shell
 kosli report evidence commit junit 

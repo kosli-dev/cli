@@ -80,7 +80,7 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report a junit attestation about a pre-built docker artifact (kosli calculates the fingerprint)**
+##### report a junit attestation about a pre-built docker artifact (kosli calculates the fingerprint)
 
 ```shell
 kosli attest junit yourDockerImageName 
@@ -90,7 +90,7 @@ kosli attest junit yourDockerImageName
 
 ```
 
-**report a junit attestation about a pre-built docker artifact (you provide the fingerprint)**
+##### report a junit attestation about a pre-built docker artifact (you provide the fingerprint)
 
 ```shell
 kosli attest junit 
@@ -100,7 +100,7 @@ kosli attest junit
 
 ```
 
-**report a junit attestation about a trail**
+##### report a junit attestation about a trail
 
 ```shell
 kosli attest junit 
@@ -109,7 +109,7 @@ kosli attest junit
 
 ```
 
-**report a junit attestation about an artifact which has not been reported yet in a trail**
+##### report a junit attestation about an artifact which has not been reported yet in a trail
 
 ```shell
 kosli attest junit 
@@ -119,7 +119,7 @@ kosli attest junit
 
 ```
 
-**report a junit attestation about a trail with an attachment**
+##### report a junit attestation about a trail with an attachment
 
 ```shell
 kosli attest junit 

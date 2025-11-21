@@ -44,14 +44,14 @@ If `page-limit` is set to 0, all results will be returned.
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**list all trails for a flow**
+##### list all trails for a flow
 
 ```shell
 kosli list trails 
 
 ```
 
-**list the most recent 30 trails for a flow**
+##### list the most recent 30 trails for a flow
 
 ```shell
 kosli list trails 
@@ -59,7 +59,7 @@ kosli list trails
 
 ```
 
-**show the second page of trails for a flow**
+##### show the second page of trails for a flow
 
 ```shell
 kosli list trails 
@@ -68,7 +68,7 @@ kosli list trails
 
 ```
 
-**list all trails for a flow (in JSON)**
+##### list all trails for a flow (in JSON)
 
 ```shell
 kosli list trails 

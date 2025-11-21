@@ -43,14 +43,14 @@ By default, the page limit is 15 artifacts per page.
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**list the last 15 artifacts for a flow**
+##### list the last 15 artifacts for a flow
 
 ```shell
 kosli list artifacts 
 
 ```
 
-**list the last 30 artifacts for a flow**
+##### list the last 30 artifacts for a flow
 
 ```shell
 kosli list artifacts 
@@ -58,7 +58,7 @@ kosli list artifacts
 
 ```
 
-**list the last 30 artifacts for a flow (in JSON)**
+##### list the last 30 artifacts for a flow (in JSON)
 
 ```shell
 kosli list artifacts 

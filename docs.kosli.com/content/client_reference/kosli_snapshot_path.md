@@ -50,7 +50,7 @@ The `.kosli_ignore` will be treated as part of the artifact like any other file,
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report one artifact running in a specific path in a filesystem**
+##### report one artifact running in a specific path in a filesystem
 
 ```shell
 kosli snapshot path yourEnvironmentName 
@@ -59,7 +59,7 @@ kosli snapshot path yourEnvironmentName
 
 ```
 
-**report one artifact running in a specific path in a filesystem AND exclude certain path patterns**
+##### report one artifact running in a specific path in a filesystem AND exclude certain path patterns
 
 ```shell
 kosli snapshot path yourEnvironmentName 

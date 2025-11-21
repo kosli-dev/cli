@@ -40,7 +40,7 @@ The environment will no longer be visible in list of environments, data is still
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**archive a Kosli environment**
+##### archive a Kosli environment
 
 ```shell
 kosli archive environment yourEnvironmentName 

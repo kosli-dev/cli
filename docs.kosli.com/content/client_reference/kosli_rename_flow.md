@@ -40,7 +40,7 @@ The flow will remain accessible under its old name until that name is taken by a
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**rename a Kosli flow**
+##### rename a Kosli flow
 
 ```shell
 kosli rename flow oldName newName 

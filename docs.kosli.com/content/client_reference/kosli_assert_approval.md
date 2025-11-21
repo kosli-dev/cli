@@ -53,7 +53,7 @@ images in registries or "docker" for local docker images.
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**Assert that a file type artifact has been approved**
+##### Assert that a file type artifact has been approved
 
 ```shell
 kosli assert approval FILE.tgz 
@@ -62,7 +62,7 @@ kosli assert approval FILE.tgz
 
 ```
 
-**Assert that an artifact with a provided fingerprint (sha256) has been approved**
+##### Assert that an artifact with a provided fingerprint (sha256) has been approved
 
 ```shell
 kosli assert approval 

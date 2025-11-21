@@ -81,7 +81,7 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**assert that an artifact meets all compliance requirements for an environment**
+##### assert that an artifact meets all compliance requirements for an environment
 
 ```shell
 kosli assert artifact 
@@ -90,7 +90,7 @@ kosli assert artifact
 
 ```
 
-**assert that an artifact meets a set of policies**
+##### assert that an artifact meets a set of policies
 
 ```shell
 kosli assert artifact 
@@ -99,7 +99,7 @@ kosli assert artifact
 
 ```
 
-**fail if an artifact has a non-compliant status in a single flow (using the artifact fingerprint)**
+##### fail if an artifact has a non-compliant status in a single flow (using the artifact fingerprint)
 
 ```shell
 export KOSLI_FLOW=yourFlowName
@@ -108,7 +108,7 @@ kosli assert artifact
 
 ```
 
-**fail if an artifact has a non-compliant status in any flow (using the artifact name and type)**
+##### fail if an artifact has a non-compliant status in any flow (using the artifact name and type)
 
 ```shell
 unset KOSLI_FLOW

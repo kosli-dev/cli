@@ -79,35 +79,35 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**fingerprint a file**
+##### fingerprint a file
 
 ```shell
 kosli fingerprint --artifact-type file file.txt
 
 ```
 
-**fingerprint a dir**
+##### fingerprint a dir
 
 ```shell
 kosli fingerprint --artifact-type dir mydir
 
 ```
 
-**fingerprint a dir while excluding paths ^mydir/logs^ and ^mydir/*exe^**
+##### fingerprint a dir while excluding paths `mydir/logs` and `mydir/*.exe`
 
 ```shell
 kosli fingerprint --artifact-type dir --exclude logs --exclude *.exe mydir
 
 ```
 
-**fingerprint a dir while excluding all ^.pyc^ files**
+##### fingerprint a dir while excluding all `.pyc` files
 
 ```shell
 kosli fingerprint --artifact-type dir  --exclude **/*.pyc mydir
 
 ```
 
-**fingerprint a dir while excluding paths in .kosli_ignore file**
+##### fingerprint a dir while excluding paths in `.kosli_ignore` file
 
 ```shell
 echo bar/file.txt > mydir/.kosli_ignore
@@ -115,23 +115,25 @@ kosli fingerprint --artifact-type dir mydir
 
 ```
 
-**fingerprint a locally available docker image (requires docker daemon running)**
+##### fingerprint a locally available docker image (requires docker daemon running)
 
 ```shell
 kosli fingerprint --artifact-type docker nginx:latest
 
 ```
 
-**fingerprint a public image from a remote registry**
+##### fingerprint a public image from a remote registry
 
 ```shell
 kosli fingerprint --artifact-type oci nginx:latest
 
 ```
 
-**fingerprint a private image from a remote registry**
+##### fingerprint a private image from a remote registry
 
 ```shell
-kosli fingerprint --artifact-type oci private:latest --registry-username YourUsername --registry-password YourPassword
+kosli fingerprint --artifact-type oci private:latest \
+  --registry-username YourUsername \
+  --registry-password YourPassword
 ```
 

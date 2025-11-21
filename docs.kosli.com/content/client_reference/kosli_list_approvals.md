@@ -44,14 +44,14 @@ By default, the page limit is 15 approvals per page.
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**list the last 15 approvals for a flow**
+##### list the last 15 approvals for a flow
 
 ```shell
 kosli list approvals 
 
 ```
 
-**list the last 30 approvals for a flow**
+##### list the last 30 approvals for a flow
 
 ```shell
 kosli list approvals 
@@ -59,7 +59,7 @@ kosli list approvals
 
 ```
 
-**list the last 30 approvals for a flow (in JSON)**
+##### list the last 30 approvals for a flow (in JSON)
 
 ```shell
 kosli list approvals 

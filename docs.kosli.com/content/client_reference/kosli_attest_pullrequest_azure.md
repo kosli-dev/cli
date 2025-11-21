@@ -68,7 +68,7 @@ The attestation can be bound to an *artifact* in two ways:
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report an Azure Devops pull request attestation about a pre-built docker artifact (kosli calculates the fingerprint)**
+##### report an Azure Devops pull request attestation about a pre-built docker artifact (kosli calculates the fingerprint)
 
 ```shell
 kosli attest pullrequest azure yourDockerImageName 
@@ -82,7 +82,7 @@ kosli attest pullrequest azure yourDockerImageName
 
 ```
 
-**report an Azure Devops pull request attestation about a pre-built docker artifact (you provide the fingerprint)**
+##### report an Azure Devops pull request attestation about a pre-built docker artifact (you provide the fingerprint)
 
 ```shell
 kosli attest pullrequest azure 
@@ -96,7 +96,7 @@ kosli attest pullrequest azure
 
 ```
 
-**report an Azure Devops pull request attestation about a trail**
+##### report an Azure Devops pull request attestation about a trail
 
 ```shell
 kosli attest pullrequest azure 
@@ -109,7 +109,7 @@ kosli attest pullrequest azure
 
 ```
 
-**report an Azure Devops pull request attestation about an artifact which has not been reported yet in a trail**
+##### report an Azure Devops pull request attestation about an artifact which has not been reported yet in a trail
 
 ```shell
 kosli attest pullrequest azure 
@@ -122,7 +122,7 @@ kosli attest pullrequest azure
 
 ```
 
-**report an Azure Devops pull request attestation about a trail with an attachment**
+##### report an Azure Devops pull request attestation about a trail with an attachment
 
 ```shell
 kosli attest pullrequest azure 
@@ -136,7 +136,7 @@ kosli attest pullrequest azure
 
 ```
 
-**fail if a pull request does not exist for your artifact**
+##### fail if a pull request does not exist for your artifact
 
 ```shell
 kosli attest pullrequest azure 

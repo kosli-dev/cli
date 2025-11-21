@@ -46,14 +46,14 @@ to include or exclude namespaces.
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report what is running in an entire cluster using kubeconfig at $HOME/.kube/config**
+##### report what is running in an entire cluster using kubeconfig at $HOME/.kube/config
 
 ```shell
 kosli snapshot k8s yourEnvironmentName 
 
 ```
 
-**report what is running in an entire cluster using kubeconfig at $HOME/.kube/config (with global flags defined in environment or in a config file)**
+##### report what is running in an entire cluster using kubeconfig at $HOME/.kube/config (with global flags defined in environment or in a config file)
 
 ```shell
 export KOSLI_API_TOKEN=yourAPIToken
@@ -63,7 +63,7 @@ kosli snapshot k8s yourEnvironmentName
 
 ```
 
-**report what is running in an entire cluster excluding some namespaces using kubeconfig at $HOME/.kube/config**
+##### report what is running in an entire cluster excluding some namespaces using kubeconfig at $HOME/.kube/config
 
 ```shell
 kosli snapshot k8s yourEnvironmentName 
@@ -71,7 +71,7 @@ kosli snapshot k8s yourEnvironmentName
 
 ```
 
-**report what is running in a given namespace in the cluster using kubeconfig at $HOME/.kube/config**
+##### report what is running in a given namespace in the cluster using kubeconfig at $HOME/.kube/config
 
 ```shell
 kosli snapshot k8s yourEnvironmentName 
@@ -79,7 +79,7 @@ kosli snapshot k8s yourEnvironmentName
 
 ```
 
-**report what is running in a cluster using kubeconfig at a custom path**
+##### report what is running in a cluster using kubeconfig at a custom path
 
 ```shell
 kosli snapshot k8s yourEnvironmentName 

@@ -96,7 +96,7 @@ binding the attestation to the right artifact.
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report a jira attestation about a pre-built docker artifact (kosli calculates the fingerprint)**
+##### report a jira attestation about a pre-built docker artifact (kosli calculates the fingerprint)
 
 ```shell
 kosli attest jira yourDockerImageName 
@@ -108,7 +108,7 @@ kosli attest jira yourDockerImageName
 
 ```
 
-**report a jira attestation about a pre-built docker artifact (you provide the fingerprint)**
+##### report a jira attestation about a pre-built docker artifact (you provide the fingerprint)
 
 ```shell
 kosli attest jira 
@@ -120,7 +120,7 @@ kosli attest jira
 
 ```
 
-**report a jira attestation about a trail**
+##### report a jira attestation about a trail
 
 ```shell
 kosli attest jira 
@@ -131,7 +131,7 @@ kosli attest jira
 
 ```
 
-**report a jira attestation matching a specific jira project key**
+##### report a jira attestation matching a specific jira project key
 
 ```shell
 kosli attest jira 
@@ -143,7 +143,7 @@ kosli attest jira
 
 ```
 
-**report a jira attestation about a trail and include jira issue summary, description and creator**
+##### report a jira attestation about a trail and include jira issue summary, description and creator
 
 ```shell
 kosli attest jira 
@@ -155,7 +155,7 @@ kosli attest jira
 
 ```
 
-**report a jira attestation about an artifact which has not been reported yet in a trail**
+##### report a jira attestation about an artifact which has not been reported yet in a trail
 
 ```shell
 kosli attest jira 
@@ -167,7 +167,7 @@ kosli attest jira
 
 ```
 
-**report a jira attestation about a trail with an attachment**
+##### report a jira attestation about a trail with an attachment
 
 ```shell
 kosli attest jira 
@@ -179,7 +179,7 @@ kosli attest jira
 
 ```
 
-**fail if no issue reference is found, or the issue is not found in your jira instance**
+##### fail if no issue reference is found, or the issue is not found in your jira instance
 
 ```shell
 kosli attest jira 
@@ -191,7 +191,7 @@ kosli attest jira
 
 ```
 
-**get jira reference from original branch name in a GitHub Pull Request merge job**
+##### get jira reference from original branch name in a GitHub Pull Request merge job
 
 ```shell
 kosli attest jira 

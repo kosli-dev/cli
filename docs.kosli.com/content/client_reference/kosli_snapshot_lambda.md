@@ -55,7 +55,7 @@ More details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configu
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report all Lambda functions running in an AWS account (AWS auth provided in env variables)**
+##### report all Lambda functions running in an AWS account (AWS auth provided in env variables)
 
 ```shell
 export AWS_REGION=yourAWSRegion
@@ -66,7 +66,7 @@ kosli snapshot lambda yourEnvironmentName
 
 ```
 
-**report all (excluding some) Lambda functions running in an AWS account (AWS auth provided in env variables)**
+##### report all (excluding some) Lambda functions running in an AWS account (AWS auth provided in env variables)
 
 ```shell
 export AWS_REGION=yourAWSRegion
@@ -79,7 +79,7 @@ kosli snapshot lambda yourEnvironmentName
 
 ```
 
-**report what is running in the latest version of an AWS Lambda function (AWS auth provided in env variables)**
+##### report what is running in the latest version of an AWS Lambda function (AWS auth provided in env variables)
 
 ```shell
 export AWS_REGION=yourAWSRegion
@@ -91,7 +91,7 @@ kosli snapshot lambda yourEnvironmentName
 
 ```
 
-**report what is running in the latest version of AWS Lambda functions that match a name regex**
+##### report what is running in the latest version of AWS Lambda functions that match a name regex
 
 ```shell
 export AWS_REGION=yourAWSRegion
@@ -103,7 +103,7 @@ kosli snapshot lambda yourEnvironmentName
 
 ```
 
-**report what is running in the latest version of multiple AWS Lambda functions (AWS auth provided in env variables)**
+##### report what is running in the latest version of multiple AWS Lambda functions (AWS auth provided in env variables)
 
 ```shell
 export AWS_REGION=yourAWSRegion
@@ -115,7 +115,7 @@ kosli snapshot lambda yourEnvironmentName
 
 ```
 
-**report what is running in the latest version of an AWS Lambda function (AWS auth provided in flags)**
+##### report what is running in the latest version of an AWS Lambda function (AWS auth provided in flags)
 
 ```shell
 kosli snapshot lambda yourEnvironmentName 

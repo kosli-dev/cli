@@ -54,7 +54,7 @@ It checks if a merge request exists for the git commit and reports the merge-req
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report a merge request evidence to Kosli**
+##### report a merge request evidence to Kosli
 
 ```shell
 kosli report evidence commit pullrequest gitlab 
@@ -68,7 +68,7 @@ kosli report evidence commit pullrequest gitlab
 
 ```
 
-**fail if a pull request does not exist for your commit**
+##### fail if a pull request does not exist for your commit
 
 ```shell
 kosli report evidence commit pullrequest gitlab 

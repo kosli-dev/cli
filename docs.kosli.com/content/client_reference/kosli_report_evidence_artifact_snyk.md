@@ -72,7 +72,7 @@ images in registries or "docker" for local docker images.
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report Snyk vulnerability scan evidence about a file artifact**
+##### report Snyk vulnerability scan evidence about a file artifact
 
 ```shell
 kosli report evidence artifact snyk FILE.tgz 
@@ -83,7 +83,7 @@ kosli report evidence artifact snyk FILE.tgz
 
 ```
 
-**report Snyk vulnerability scan evidence about an artifact using an available Sha256 digest**
+##### report Snyk vulnerability scan evidence about an artifact using an available Sha256 digest
 
 ```shell
 kosli report evidence artifact snyk 

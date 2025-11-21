@@ -75,7 +75,7 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**Attest that a file type artifact has been created, and let Kosli calculate its fingerprint**
+##### Attest that a file type artifact has been created, and let Kosli calculate its fingerprint
 
 ```shell
 kosli attest artifact FILE.tgz 
@@ -88,7 +88,7 @@ kosli attest artifact FILE.tgz
 
 ```
 
-**Attest that an artifact has been created and provide its fingerprint (sha256)**
+##### Attest that an artifact has been created and provide its fingerprint (sha256)
 
 ```shell
 kosli attest artifact ANOTHER_FILE.txt 
@@ -100,7 +100,7 @@ kosli attest artifact ANOTHER_FILE.txt
 
 ```
 
-**Attest that an artifact has been created and provide external attachments**
+##### Attest that an artifact has been created and provide external attachments
 
 ```shell
 kosli attest artifact ANOTHER_FILE.txt 

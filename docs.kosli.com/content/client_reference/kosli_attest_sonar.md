@@ -92,7 +92,7 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report a SonarQube Cloud attestation about a trail using SonarQube's metadata, with no retries**
+##### report a SonarQube Cloud attestation about a trail using SonarQube's metadata, with no retries
 
 ```shell
 kosli attest sonar 
@@ -102,7 +102,7 @@ kosli attest sonar
 
 ```
 
-**report a SonarQube Server attestation about a trail using SonarQube's metadata, waiting for up to 60 seconds for the results to be available**
+##### report a SonarQube Server attestation about a trail using SonarQube's metadata, waiting for up to 60 seconds for the results to be available
 
 ```shell
 kosli attest sonar 
@@ -113,7 +113,7 @@ kosli attest sonar
 
 ```
 
-**report a SonarQube Cloud attestation for a specific branch about a trail using key/revision**
+##### report a SonarQube Cloud attestation for a specific branch about a trail using key/revision
 
 ```shell
 kosli attest sonar 
@@ -125,7 +125,7 @@ kosli attest sonar
 
 ```
 
-**report a SonarQube Server attestation for a pull-request about a trail using key/revision**
+##### report a SonarQube Server attestation for a pull-request about a trail using key/revision
 
 ```shell
 kosli attest sonar 
@@ -138,7 +138,7 @@ kosli attest sonar
 
 ```
 
-**report a SonarQube Cloud attestation about a trail with an attachment using SonarQube's metadata, waiting for up to 300 seconds for the results to be available**
+##### report a SonarQube Cloud attestation about a trail with an attachment using SonarQube's metadata, waiting for up to 300 seconds for the results to be available
 
 ```shell
 kosli attest sonar 

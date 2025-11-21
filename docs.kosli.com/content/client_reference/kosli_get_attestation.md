@@ -57,14 +57,14 @@ kosli get attestation snyk-container-scan --flow=differ-ci --fingerprint=0cbbe3a
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**get an attestation from a trail (requires the --trail flag)**
+##### get an attestation from a trail (requires the --trail flag)
 
 ```shell
 kosli get attestation attestationName 
 
 ```
 
-**get an attestation from an artifact**
+##### get an attestation from an artifact
 
 ```shell
 kosli get attestation attestationName 

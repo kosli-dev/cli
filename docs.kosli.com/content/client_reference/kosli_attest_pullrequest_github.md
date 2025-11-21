@@ -74,7 +74,7 @@ In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=git
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**report a Github pull request attestation about a pre-built docker artifact (kosli calculates the fingerprint)**
+##### report a Github pull request attestation about a pre-built docker artifact (kosli calculates the fingerprint)
 
 ```shell
 kosli attest pullrequest github yourDockerImageName 
@@ -87,7 +87,7 @@ kosli attest pullrequest github yourDockerImageName
 
 ```
 
-**report a Github pull request attestation about a pre-built docker artifact (you provide the fingerprint)**
+##### report a Github pull request attestation about a pre-built docker artifact (you provide the fingerprint)
 
 ```shell
 kosli attest pullrequest github 
@@ -100,7 +100,7 @@ kosli attest pullrequest github
 
 ```
 
-**report a Github pull request attestation about a trail**
+##### report a Github pull request attestation about a trail
 
 ```shell
 kosli attest pullrequest github 
@@ -112,7 +112,7 @@ kosli attest pullrequest github
 
 ```
 
-**report a Github pull request attestation about an artifact which has not been reported yet in a trail**
+##### report a Github pull request attestation about an artifact which has not been reported yet in a trail
 
 ```shell
 kosli attest pullrequest github 
@@ -124,7 +124,7 @@ kosli attest pullrequest github
 
 ```
 
-**report a Github pull request attestation about a trail with an attachment**
+##### report a Github pull request attestation about a trail with an attachment
 
 ```shell
 kosli attest pullrequest github 
@@ -137,7 +137,7 @@ kosli attest pullrequest github
 
 ```
 
-**fail if a pull request does not exist for your artifact**
+##### fail if a pull request does not exist for your artifact
 
 ```shell
 kosli attest pullrequest github 

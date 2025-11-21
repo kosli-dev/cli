@@ -39,14 +39,14 @@ You can use short git commit or artifact fingerprint shas, but you must provide 
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**Search for a git commit in Kosli**
+##### Search for a git commit in Kosli
 
 ```shell
 kosli search YOUR_GIT_COMMIT 
 
 ```
 
-**Search for an artifact fingerprint in Kosli**
+##### Search for an artifact fingerprint in Kosli
 
 ```shell
 kosli search YOUR_ARTIFACT_FINGERPRINT 

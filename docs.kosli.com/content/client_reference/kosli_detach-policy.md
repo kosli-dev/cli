@@ -39,7 +39,7 @@ If the environment has no more policies attached to it, then its snapshots' stat
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**detach policy from multiple environment**
+##### detach policy from multiple environments
 
 ```shell
 kosli detach-policy yourPolicyName 

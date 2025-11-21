@@ -41,7 +41,7 @@ Updating policy content creates a new version of the policy.
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**create a Kosli policy**
+##### create a Kosli policy
 
 ```shell
 kosli create policy yourPolicyName yourPolicyFile.yml 
@@ -50,7 +50,7 @@ kosli create policy yourPolicyName yourPolicyFile.yml
 
 ```
 
-**update a Kosli policy**
+##### update a Kosli policy
 
 ```shell
 kosli create policy yourPolicyName yourPolicyFile.yml 

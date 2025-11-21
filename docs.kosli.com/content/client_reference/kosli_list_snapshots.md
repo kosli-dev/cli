@@ -60,14 +60,14 @@ kosli list snapshots aws-prod --output=json</pre>{{< / raw-html >}}
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-**list the last 15 snapshots for an environment**
+##### list the last 15 snapshots for an environment
 
 ```shell
 kosli list snapshots yourEnvironmentName 
 
 ```
 
-**list the last 30 snapshots for an environment**
+##### list the last 30 snapshots for an environment
 
 ```shell
 kosli list snapshots yourEnvironmentName 
@@ -75,7 +75,7 @@ kosli list snapshots yourEnvironmentName
 
 ```
 
-**list the last 30 snapshots for an environment (in JSON)**
+##### list the last 30 snapshots for an environment (in JSON)
 
 ```shell
 kosli list snapshots yourEnvironmentName 
