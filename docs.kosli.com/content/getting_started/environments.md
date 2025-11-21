@@ -74,6 +74,22 @@ Depending on the type of your environment, you can scope what to snapshot from t
 | azure (functions and apps) |       √       |                    |                    |                  |                  |
 
 
+## Environment Compliance
+
+An environment's compliance status is determined by its attached policies. The compliance state can be:
+
+* **Compliant** - All artifacts in the snapshot meet the requirements defined in attached policies
+* **Non-compliant** - One or more artifacts violate the requirements in attached policies
+* **Unknown** - No policies are attached to the environment, so compliance requirements are undefined
+
+When you create a new environment, it starts with an **unknown** compliance state since no policies are attached
+by default. To establish compliance requirements, you need to attach at least one policy to the environment 
+(see Part 9: Environment Policies).
+
+**Note:** If you detach all policies from an environment, its compliance state returns to **unknown** since there are
+no longer any defined requirements for artifacts running in it.
+
+
 ## Logical Environments
 
 Logical environments are a way to group your Kosli environments so you can view all changes happening in your group in the same place. For example, if what you consider to be “Production” is a combination of a Kubernetes cluster, an S3 bucket, and a configuration file, you can combine the reports sent to these Kosli environments into a “Production” logical environment.

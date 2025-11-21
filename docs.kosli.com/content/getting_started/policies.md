@@ -7,17 +7,20 @@ summary: "Environment Policies enable you to define and enforce compliance requi
 
 # Part 9: Environment Policies
 
-Environment Policies enable you to define and enforce compliance requirements for artifact deployments across different environments. With Environment Policies, you can:
+Environment Policies enable you to define and enforce compliance requirements for artifact deployments across 
+different environments. With Environment Policies, you can:
 
 - Define specific requirements for each environment (e.g, dev, staging, prod)
 - Enforce consistent compliance standards across your deployment pipeline
 - Prevent non-compliant artifacts from being deployed (via admission controllers)
 
-Policies are written in YAML and are immutable (updating a policy creates a new version). They can be attached to one or more environments, and an environment can have one or more policies attached to it.
+Policies are written in YAML and are immutable (updating a policy creates a new version). They can be attached to 
+one or more environments, and an environment can have one or more policies attached to it.
 
 ## Create a Policy
 
-You can create a policy via CLI or via the API. Here is a basic policy that requires provenance and specific attestations:
+You can create a policy via CLI or via the API. Here is a basic policy that requires provenance and specific 
+attestations:
 
 ```yaml {.command}
 # prod-policy.yaml
@@ -137,7 +140,9 @@ artifacts
 
 #### Policy Expressions
 
-Policy expressions allow you to create conditional rules using a simple and powerful syntax. Expressions are wrapped in `${{ }}` and can be used in policy rules to create dynamic conditions. An expression consists of operands and operators:
+Policy expressions allow you to create conditional rules using a simple and powerful syntax. Expressions are wrapped
+in `${{ }}` and can be used in policy rules to create dynamic conditions. An expression consists of operands
+and operators:
 
 **Operators**
 
@@ -169,7 +174,8 @@ Contexts are built-in objects which are accessible from an expression. Expressio
 
 **Functions**
 
-Functions are helpers that can be used when constructing conditions. They may or may not accept arguments. Arguments can be literals or context variables. Expressions can use following functions:
+Functions are helpers that can be used when constructing conditions. They may or may not accept arguments. Arguments 
+can be literals or context variables. Expressions can use following functions:
 
 - `exists(arg)` : checks whether the value of arg is not None/Null
 - `matches(input, regex)` : checks if input matches regex
@@ -202,17 +208,23 @@ To detach a policy from an environment:
 kosli detach-policy prod-requirements --environment=aws-production
 ```
 
-Any attachment/detachment operation automatically triggers an evaluation of the latest environment snapshot and creates a new one with an updated compliance status.
+Any attachment/detachment operation automatically triggers an evaluation of the latest environment snapshot and 
+creates a new one with an updated compliance status.
 
 {{% hint info %}}
-If you detach all attached policies from an environment, the environment will have no defined requirements for artifacts running in it, and therefore, new environment snapshots will have status `unknown`
+If you detach all attached policies from an environment, the environment compliance state will become **unknown**
+since there are no longer any defined requirements for artifacts running in it. The environment will continue to
+track snapshots, but compliance cannot be evaluated without policies.
 {{% /hint %}}
+
 
 ## Policy Enforcement Gates
 
-Environment policies enable you to proactively block deploying a non-compliant artifact into an environment. This can be done as a deployment gate in your delivery pipeline or as an admission controller in your environment.
+Environment policies enable you to proactively block deploying a non-compliant artifact into an environment. This 
+can be done as a deployment gate in your delivery pipeline or as an admission controller in your environment.
 
-Regardless of where you place your policy enforcement gate, it will be using the `assert artifact` Kosli CLI command or its equivalent API call.
+Regardless of where you place your policy enforcement gate, it will be using the `assert artifact` Kosli CLI command 
+or its equivalent API call.
 
 ```shell {.command}
 kosli assert artifact --fingerprint=$SHA256 --environment=aws-production
