@@ -405,7 +405,8 @@ func CreateArtifactWithCommit(flowName, artifactFingerprint, artifactName string
 }
 
 // CreateApproval creates an approval for an artifact in a flow
-func CreateApproval(flowName, fingerprint string, t *testing.T) {
+// If isRequest is true, this creates an approval request
+func CreateApproval(flowName, fingerprint string, isRequest bool, t *testing.T) {
 	t.Helper()
 	o := &reportApprovalOptions{
 		payload: ApprovalPayload{
@@ -418,7 +419,7 @@ func CreateApproval(flowName, fingerprint string, t *testing.T) {
 		srcRepoRoot:     "../..",
 	}
 
-	err := o.run([]string{"filename"}, false)
+	err := o.run([]string{"filename"}, isRequest)
 	require.NoError(t, err, "approval should be created without error")
 }
 
