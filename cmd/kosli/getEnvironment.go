@@ -92,7 +92,11 @@ func printEnvironmentAsTable(raw string, out io.Writer, page int) error {
 		tagsOutput = "None"
 	}
 
-	policies := env["policies"].([]interface{})
+	policies := []any{}
+
+	if env["policies"] != nil {
+		policies = env["policies"].([]any)
+	}
 
 	header := []string{}
 	rows := []string{}
