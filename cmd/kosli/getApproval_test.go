@@ -29,8 +29,8 @@ func (suite *GetApprovalCommandTestSuite) SetupTest() {
 
 	CreateFlow(suite.flowName, suite.Suite.T())
 	CreateArtifact(suite.flowName, suite.fingerprint, "approved-artifact", suite.Suite.T())
-	CreateApproval(suite.flowName, suite.fingerprint, suite.Suite.T())
-	CreateApproval(suite.flowName, suite.fingerprint, suite.Suite.T())
+	CreateApproval(suite.flowName, suite.fingerprint, false, suite.Suite.T())
+	CreateApproval(suite.flowName, suite.fingerprint, false, suite.Suite.T())
 }
 
 func (suite *GetApprovalCommandTestSuite) TestGetApprovalCmd() {
