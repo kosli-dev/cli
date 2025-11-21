@@ -93,13 +93,12 @@ func (suite *AssertApprovalCommandTestSuite) TestAssertApprovalCmd() {
 			cmd:       fmt.Sprintf(`assert approval --flow %s %s`, suite.flowName, suite.defaultKosliArguments),
 			golden:    "Error: docker image name or file/dir path is required when --fingerprint is not provided\nUsage: kosli assert approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
-		// TODO: this test case does not pass as the validation does not check for it
-		// {
-		// 	wantError: true,
-		// 	name:      "providing both --fingerprint and --artifact-type fails",
-		// 	cmd:       fmt.Sprintf(`assert approval --artifact-type file --fingerprint %s --flow %s %s`, suite.fingerprint, suite.flowName, suite.defaultKosliArguments),
-		// 	golden:    "COMPLIANT\n",
-		// },
+		{
+			wantError: true,
+			name:      "providing both --fingerprint and --artifact-type fails",
+			cmd:       fmt.Sprintf(`assert approval --artifact-type file --fingerprint %s --flow %s %s`, suite.fingerprint, suite.flowName, suite.defaultKosliArguments),
+			golden:    "Error: only one of --fingerprint, --artifact-type is allowed\n",
+		},
 		{
 			wantError: true,
 			name:      "8 missing --flow fails",
