@@ -78,13 +78,13 @@ Depending on the type of your environment, you can scope what to snapshot from t
 
 An environment's compliance status is determined by its attached policies. The compliance state can be:
 
-* **Compliant** - All artifacts in the snapshot meet the requirements defined in attached policies
-* **Non-compliant** - One or more artifacts violate the requirements in attached policies
-* **Unknown** - No policies are attached to the environment, so compliance requirements are undefined
+* **Compliant** - All artifacts in the snapshot satisfy the requirements defined in attached policies
+* **Non-compliant** - One or more artifacts violate the requirements defined in attached policies
+* **Unknown** - No policies are attached to the environment, compliance requirements are undefined
 
 When you create a new environment, it starts with an **unknown** compliance state since no policies are attached
 by default. To establish compliance requirements, you need to attach at least one policy to the environment 
-(see Part 9: Environment Policies).
+(see [Environment Policies](/getting_started/policies))
 
 **Note:** If you detach all policies from an environment, its compliance state returns to **unknown** since there are
 no longer any defined requirements for artifacts running in it.

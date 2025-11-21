@@ -214,7 +214,7 @@ creates a new one with an updated compliance status.
 {{% hint info %}}
 If you detach all attached policies from an environment, the environment compliance state will become **unknown**
 since there are no longer any defined requirements for artifacts running in it. The environment will continue to
-track snapshots, but compliance cannot be evaluated without policies.
+track snapshots, but its compliance cannot be evaluated without policies.
 {{% /hint %}}
 
 
