@@ -95,19 +95,19 @@ func (suite *AssertApprovalCommandTestSuite) TestAssertApprovalCmd() {
 		},
 		{
 			wantError: true,
-			name:      "providing both --fingerprint and --artifact-type fails",
+			name:      "8 providing both --fingerprint and --artifact-type fails",
 			cmd:       fmt.Sprintf(`assert approval --artifact-type file --fingerprint %s --flow %s %s`, suite.fingerprint, suite.flowName, suite.defaultKosliArguments),
 			golden:    "Error: only one of --fingerprint, --artifact-type is allowed\n",
 		},
 		{
 			wantError: true,
-			name:      "8 missing --flow fails",
+			name:      "9 missing --flow fails",
 			cmd:       fmt.Sprintf(`assert approval --fingerprint %s  %s`, suite.fingerprint, suite.defaultKosliArguments),
 			golden:    "Error: required flag(s) \"flow\" not set\n",
 		},
 		{
 			wantError: true,
-			name:      "9 asserting approval of an unapproved existing artifact (using --artifact-type) works and exits with non-zero code",
+			name:      "10 asserting approval of an unapproved existing artifact (using --artifact-type) works and exits with non-zero code",
 			cmd:       fmt.Sprintf(`assert approval %s --artifact-type file --flow %s %s`, suite.artifactPath, suite.flowName, suite.defaultKosliArguments),
 			golden:    "Error: artifact with fingerprint fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02 is not approved\n",
 			additionalConfig: assertApprovalTestConfig{
@@ -118,7 +118,7 @@ func (suite *AssertApprovalCommandTestSuite) TestAssertApprovalCmd() {
 		// The approval request created in test 9 is valid here too
 		{
 			wantError: true,
-			name:      "10 asserting approval of an unapproved existing artifact (using --fingerprint) works and exits with non-zero code",
+			name:      "11 asserting approval of an unapproved existing artifact (using --fingerprint) works and exits with non-zero code",
 			cmd:       fmt.Sprintf(`assert approval --fingerprint %s --flow %s %s`, suite.fingerprint, suite.flowName, suite.defaultKosliArguments),
 			golden:    "Error: artifact with fingerprint fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02 is not approved\n",
 		},
