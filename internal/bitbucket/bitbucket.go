@@ -170,13 +170,13 @@ func (c *Config) getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, commit
 			evidence.MergedAt = mergedAt
 			evidence.Title = responseData["title"].(string)
 			evidence.HeadRef = responseData["source"].(map[string]any)["branch"].(map[string]any)["name"].(string)
-		}
 
-		prCommits, err := c.getPullRequestCommitsFromBitbucket(int(responseData["id"].(float64)))
-		if err != nil {
-			return evidence, err
+			prCommits, err := c.getPullRequestCommitsFromBitbucket(int(responseData["id"].(float64)))
+			if err != nil {
+				return evidence, err
+			}
+			evidence.Commits = prCommits
 		}
-		evidence.Commits = prCommits
 	} else {
 		return evidence, fmt.Errorf("failed to get PR details, got HTTP status %d. Please review repository permissions", response.Resp.StatusCode)
 	}
