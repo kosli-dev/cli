@@ -501,6 +501,19 @@ func CreatePolicy(org, policyName string, t *testing.T) {
 	require.NoError(t, err, "policy should be created without error")
 }
 
+func AttachPolicy(envNames []string, policyName string, t *testing.T) {
+	t.Helper()
+	o := &attachPolicyOptions{
+		payload: AttachPolicyPayload{
+			PolicyNames: []string{policyName},
+		},
+		environments: envNames,
+	}
+
+	err := o.run([]string{policyName})
+	require.NoError(t, err, "policies should be attached without error")
+}
+
 func CreateGenericArtifactAttestation(flowName, trailName, fingerprint, attestationName string, compliant bool, t *testing.T) {
 	t.Helper()
 	o := &attestGenericOptions{

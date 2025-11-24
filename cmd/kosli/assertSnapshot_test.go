@@ -14,7 +14,8 @@ import (
 type AssertSnapshotCommandTestSuite struct {
 	suite.Suite
 	defaultKosliArguments string
-	envName               string
+	nonCompliantEnvName   string
+	compliantEnvName      string
 	flowName              string
 	artifactName          string
 	artifactPath          string
@@ -23,10 +24,12 @@ type AssertSnapshotCommandTestSuite struct {
 
 type assertSnapshotTestConfig struct {
 	reportToEnv bool
+	envName     string
 }
 
 func (suite *AssertSnapshotCommandTestSuite) SetupTest() {
-	suite.envName = "env-to-assert"
+	suite.nonCompliantEnvName = "env-to-assert"
+	suite.compliantEnvName = "compliant-env-to-assert"
 	suite.flowName = "assert-snapshot"
 	suite.artifactName = "arti"
 	suite.artifactPath = "testdata/assert_snapshot_artifact.txt"
@@ -37,8 +40,17 @@ func (suite *AssertSnapshotCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateEnv(global.Org, suite.envName, "server", suite.Suite.T())
+	// Non-compliant environment
+	CreateEnv(global.Org, suite.nonCompliantEnvName, "server", suite.Suite.T())
 	CreateFlow(suite.flowName, suite.Suite.T())
+
+	// In order for an environment to be compliant instead of unknown (which we convert to false), it must have
+	// a polict attached.
+	CreateEnv(global.Org, suite.compliantEnvName, "server", suite.Suite.T())
+	CreatePolicy(global.Org, "server-policy", suite.Suite.T())
+	AttachPolicy([]string{suite.compliantEnvName}, "server-policy", suite.Suite.T())
+
+	//Create artifact to report to environments
 	fingerprintOptions := &fingerprintOptions{
 		artifactType: "file",
 	}
@@ -46,44 +58,68 @@ func (suite *AssertSnapshotCommandTestSuite) SetupTest() {
 	suite.fingerprint, err = GetSha256Digest(suite.artifactPath, fingerprintOptions, logger)
 	require.NoError(suite.Suite.T(), err)
 	CreateArtifact(suite.flowName, suite.fingerprint, suite.artifactName, suite.Suite.T())
+
 }
 
 func (suite *AssertSnapshotCommandTestSuite) TestAssertSnapshotCmd() {
 	tests := []cmdTestCase{
 		{
 			wantError: true,
-			name:      "missing --org fails",
-			cmd:       fmt.Sprintf(`assert snapshot %s --api-token secret`, suite.envName),
-			golden:    "Error: --org is not set\nUsage: kosli assert snapshot [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+			name:      "01 missing --org fails",
+			cmd:       fmt.Sprintf(`assert snapshot %s --api-token secret`, suite.nonCompliantEnvName),
+			golden:    "Error: --org is not set\nUsage: kosli assert snapshot ENVIRONMENT-NAME-OR-EXPRESSION [flags]\n",
 		},
 		{
 			wantError: true,
-			name:      "asserting an empty env results in non-zero exit",
-			cmd:       fmt.Sprintf(`assert snapshot %s %s`, suite.envName, suite.defaultKosliArguments),
+			name:      "02 asserting an empty env results in non-zero exit",
+			cmd:       fmt.Sprintf(`assert snapshot %s %s`, suite.nonCompliantEnvName, suite.defaultKosliArguments),
 			golden:    "Error: Org: 'docs-cmd-test-user'. Snapshot 'env-to-assert#-1' resolves to 'env-to-assert#0'. len(snapshots) == 0. Indexes are 1-based\n",
 		},
 		{
 			wantError: true,
-			name:      "asserting a non existing env fails",
+			name:      "03 asserting a non existing env fails",
 			cmd:       `assert snapshot non-existing` + suite.defaultKosliArguments,
 			golden:    "Error: Environment named 'non-existing' does not exist for organization 'docs-cmd-test-user'\n",
 		},
 		{
 			wantError: true,
-			name:      "asserting a non compliant env results in INCOMPLIANT and zero exit",
-			cmd:       fmt.Sprintf(`assert snapshot %s %s`, suite.envName, suite.defaultKosliArguments),
+			name:      "04 asserting a non compliant env results in INCOMPLIANT and zero exit",
+			cmd:       fmt.Sprintf(`assert snapshot %s %s`, suite.nonCompliantEnvName, suite.defaultKosliArguments),
 			additionalConfig: assertSnapshotTestConfig{
 				reportToEnv: true,
+				envName:     suite.nonCompliantEnvName,
 			},
 			golden: "Error: INCOMPLIANT\n",
+		},
+		{
+			wantError: false,
+			name:      "05 asserting a compliant env results in COMPLIANT and zero exit",
+			cmd:       fmt.Sprintf(`assert snapshot %s %s`, suite.compliantEnvName, suite.defaultKosliArguments),
+			additionalConfig: assertSnapshotTestConfig{
+				reportToEnv: true,
+				envName:     suite.compliantEnvName,
+			},
+			golden: "COMPLIANT\n",
+		},
+		{
+			wantError: true,
+			name:      "06 asserting an env using expression with both # and ~ fails",
+			cmd:       fmt.Sprintf(`assert snapshot %s#~ %s`, suite.compliantEnvName, suite.defaultKosliArguments),
+			golden:    "Error: invalid expression: compliant-env-to-assert#~. Both '~' and '#' are present\n",
+		},
+		{
+			wantError: true,
+			name:      "07 asserting an env using expression with a non-integer fails",
+			cmd:       fmt.Sprintf(`assert snapshot %s#five %s`, suite.compliantEnvName, suite.defaultKosliArguments),
+			golden:    "Error: invalid expression: compliant-env-to-assert#five. 'five' is not an integer\n",
 		},
 	}
 
 	for _, t := range tests {
 		if t.additionalConfig != nil && t.additionalConfig.(assertSnapshotTestConfig).reportToEnv {
-			ReportServerArtifactToEnv([]string{suite.artifactPath}, suite.envName, suite.Suite.T())
-			runTestCmd(suite.Suite.T(), []cmdTestCase{t})
+			ReportServerArtifactToEnv([]string{suite.artifactPath}, t.additionalConfig.(assertSnapshotTestConfig).envName, suite.Suite.T())
 		}
+		runTestCmd(suite.Suite.T(), []cmdTestCase{t})
 	}
 }
 
