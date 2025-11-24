@@ -186,7 +186,7 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 			MergedAt:    mergedAt,
 			Title:       string(pr.Title),
 			HeadRef:     string(pr.HeadRefName),
-			Approvers:   []interface{}{},
+			Approvers:   []any{},
 			Commits:     []types.Commit{},
 		}
 

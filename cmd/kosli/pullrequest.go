@@ -125,10 +125,10 @@ func (o *attestPROptions) run(args []string) error {
 	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
 
 	var pullRequestsEvidence []*types.PREvidence
-	if o.payload.GitProvider == "github" || o.payload.GitProvider == "gitlab" {
-		pullRequestsEvidence, err = o.getRetriever().PREvidenceForCommitV2(o.payload.Commit.Sha1)
-	} else {
+	if o.payload.GitProvider == "azure" {
 		pullRequestsEvidence, err = o.getRetriever().PREvidenceForCommitV1(o.payload.Commit.Sha1)
+	} else {
+		pullRequestsEvidence, err = o.getRetriever().PREvidenceForCommitV2(o.payload.Commit.Sha1)
 	}
 	if err != nil {
 		return err
