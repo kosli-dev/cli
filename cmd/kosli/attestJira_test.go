@@ -57,19 +57,19 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 	tests := []cmdTestCase{
 		{
 			wantError: true,
-			name:      "fails when more arguments are provided",
+			name:      "01 fails when more arguments are provided",
 			cmd:       fmt.Sprintf("attest jira foo bar %s", suite.defaultKosliArguments),
 			golden:    "Error: accepts at most 1 arg(s), received 2 [foo bar]\n",
 		},
 		{
 			wantError: true,
-			name:      "fails when missing required flags",
+			name:      "02 fails when missing required flags",
 			cmd:       fmt.Sprintf("attest jira foo -t file %s", suite.defaultKosliArguments),
 			golden:    "Error: required flag(s) \"commit\", \"jira-base-url\", \"name\" not set\n",
 		},
 		{
 			wantError: true,
-			name:      "fails when missing --commit flag",
+			name:      "03 fails when missing --commit flag",
 			cmd: fmt.Sprintf(`attest jira foo -t file --name bar
 							--jira-base-url https://kosli-test.atlassian.net
 							--jira-api-token secret
@@ -78,19 +78,19 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 		},
 		{
 			wantError: true,
-			name:      "fails when both --fingerprint and --artifact-type",
+			name:      "04 fails when both --fingerprint and --artifact-type",
 			cmd:       fmt.Sprintf("attest jira testdata/file1 --fingerprint xxxx --artifact-type file --name bar --commit HEAD --origin-url http://www.example.com %s", suite.defaultKosliArguments),
 			golden:    "Error: only one of --fingerprint, --artifact-type is allowed\n",
 		},
 		{
 			wantError: true,
-			name:      "fails when --fingerprint is not valid",
+			name:      "05 fails when --fingerprint is not valid",
 			cmd:       fmt.Sprintf("attest jira --name foo --fingerprint xxxx --commit HEAD --origin-url http://www..com %s", suite.defaultKosliArguments),
 			golden:    "Error: xxxx is not a valid SHA256 fingerprint. It should match the pattern ^([a-f0-9]{64})$\nUsage: kosli attest jira [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
-			name:      "attesting against an artifact that does not exist fails",
+			name:      "06 attesting against an artifact that does not exist fails",
 			cmd: fmt.Sprintf(`attest jira --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9
 								--name foo
 								--repo-root %s
@@ -103,7 +103,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 		},
 		{
 			wantError: true,
-			name:      "assert for non-existing Jira issue gives an error",
+			name:      "07 assert for non-existing Jira issue gives an error",
 			cmd: fmt.Sprintf(`attest jira --name jira-validation
 					--jira-base-url https://kosli-test.atlassian.net
 					--repo-root %s
@@ -114,7 +114,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
-			name: "can attest jira against an artifact using artifact name and --artifact-type",
+			name: "08 can attest jira against an artifact using artifact name and --artifact-type",
 			cmd: fmt.Sprintf(`attest jira testdata/file1 --artifact-type file --name foo 
 								--jira-base-url https://kosli-test.atlassian.net
 								--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
@@ -124,7 +124,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
-			name: "can attest jira when the issue doesn't exist",
+			name: "09 can attest jira when the issue doesn't exist",
 			cmd: fmt.Sprintf(`attest jira testdata/file1 --artifact-type file --name foo
 								--jira-base-url https://kosli-test.atlassian.net
 								--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
@@ -134,7 +134,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
-			name: "can attest jira against an artifact using artifact name and --artifact-type when --name does not exist in the trail template",
+			name: "10 can attest jira against an artifact using artifact name and --artifact-type when --name does not exist in the trail template",
 			cmd: fmt.Sprintf(`attest jira testdata/file1 --artifact-type file --name bar
 					--jira-base-url https://kosli-test.atlassian.net
 					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
@@ -144,7 +144,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
-			name: "can attest jira against an artifact using --fingerprint",
+			name: "11 can attest jira against an artifact using --fingerprint",
 			cmd: fmt.Sprintf(`attest jira --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo
 					--jira-base-url https://kosli-test.atlassian.net
 					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
@@ -154,7 +154,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
-			name: "can attest jira against a trail",
+			name: "12 can attest jira against a trail",
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
 					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
@@ -164,7 +164,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
-			name: "can attest jira against a trail with summary and description from jira issue fields",
+			name: "13 can attest jira against a trail with summary and description from jira issue fields",
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
 					--jira-issue-fields "summary,description"
@@ -175,7 +175,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
-			name: "can attest jira against a trail when name is not found in the trail template",
+			name: "14 can attest jira against a trail when name is not found in the trail template",
 			cmd: fmt.Sprintf(`attest jira --name additional
 				--jira-base-url https://kosli-test.atlassian.net
 				--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
@@ -185,7 +185,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
-			name: "can attest jira against an artifact it is created using dot syntax in --name",
+			name: "15 can attest jira against an artifact it is created using dot syntax in --name",
 			cmd: fmt.Sprintf(`attest jira --name cli.foo
 					--jira-base-url https://kosli-test.atlassian.net
 					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
@@ -195,7 +195,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
-			name: "can attest jira against a trail with attachment and external-url",
+			name: "16 can attest jira against a trail with attachment and external-url",
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
 					--attachments testdata/file1 --external-url foo=https://foo.com --external-url bar=https://bar.com
@@ -206,7 +206,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
-			name: "can attest jira against a trail with external-url and external-fingerprint",
+			name: "17 can attest jira against a trail with external-url and external-fingerprint",
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
 					--external-url foo=https://foo.com --external-fingerprint foo=7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9
@@ -218,7 +218,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 		},
 		{
 			wantError: true,
-			name:      "fails when external-url and external-fingerprint labels don't match",
+			name:      "18 fails when external-url and external-fingerprint labels don't match",
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
 					--external-url foo=https://foo.com --external-fingerprint bar=7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9
@@ -229,7 +229,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
-			name: "can specify the jira project key",
+			name: "19 can specify the jira project key",
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
 					--jira-project-key EX
@@ -241,7 +241,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
-			name: "can specify lower case and underscore jira project key",
+			name: "20 can specify lower case and underscore jira project key",
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
 					--jira-project-key low
@@ -255,13 +255,25 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 		},
 		{
 			wantError: true,
-			name:      "fails with an invalid Jira project key specified",
+			name:      "21 fails with an invalid Jira project key specified",
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
 					--jira-project-key 1AB
 					--jira-project-key AB-44
 					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
 			golden: "Error: Invalid Jira project keys: 1AB, AB-44\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "EX-1 test commit",
+			},
+		},
+		{
+			wantError: true,
+			name:      "22 if no matching issue exists, fails with a non-zero exit code",
+			cmd: fmt.Sprintf(`attest jira --name bar
+					--jira-base-url https://kosli-test.atlassian.net
+					--jira-project-key ABC
+					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "Error: no Jira references are found in commit message or branch name\n",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "EX-1 test commit",
 			},
