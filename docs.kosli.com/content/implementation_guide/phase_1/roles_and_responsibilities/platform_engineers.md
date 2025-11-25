@@ -1,5 +1,6 @@
 ---
 title: "Platform Engineers"
+draft: true
 bookCollapseSection: false
 weight: 200
 summary: "How Platform Engineers and DevOps teams can use Kosli to build secure, compliant software delivery pipelines."
@@ -71,6 +72,6 @@ Kosli automatically gives you compliance status per environment and per change. 
 
 ## Where to start
 
-- **[Getting Started Guide]({{< ref "/getting_started" >}})**: For a complete technical setup walkthrough.
-- **[CLI Reference]({{< ref "/client_reference" >}})**: Full list of commands.
-- **[Concepts Overview]({{< ref "/understand_kosli/concepts" >}})**: Understand how Flows, Trails, and Attestations fit together.
+- [**Getting Started Guide**]({{< ref "/getting_started" >}}): For a complete technical setup walkthrough.
+- [**CLI Reference**]({{< ref "/client_reference" >}}): Full list of commands.
+- [**Concepts Overview**]({{< ref "/understand_kosli/concepts" >}}): Understand how Flows, Trails, and Attestations fit together.

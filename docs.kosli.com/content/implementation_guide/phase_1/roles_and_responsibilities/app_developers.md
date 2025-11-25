@@ -1,5 +1,6 @@
 ---
 title: "Application Developers"
+draft: true
 bookCollapseSection: false
 weight: 300
 summary: "How Application Developers can use Kosli to build secure, compliant software delivery pipelines."
@@ -7,7 +8,9 @@ summary: "How Application Developers can use Kosli to build secure, compliant so
 
 # Application Developers
 
-You build and maintain services, applications, or APIs that deliver customer or business value. You write code, push changes, and expect your work to move safely from commit to production. You care about quality, security, and release velocity, but you do not want to be slowed down by compliance overhead.
+You build and maintain services, applications, or APIs that deliver customer or business value. You write code, push changes, and expect your work to move safely from commit to production.
+
+You care about quality, security, and release velocity, but you do not want to be slowed down by compliance overhead.
 
 
 # How Kosli helps you
@@ -47,6 +50,7 @@ You do not need to memorize Kosli commands or manage configurations. Most of it 
 - You do not need to fill out compliance tickets or wait for manual approvals
 - If something is blocked, Kosli tells you what evidence is missing and how to resolve it
 - You gain confidence that your work is secure and production-ready without extra effort
+
 
 ## Common questions you might have
 

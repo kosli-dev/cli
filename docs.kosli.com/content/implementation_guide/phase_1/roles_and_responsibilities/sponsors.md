@@ -1,7 +1,8 @@
 ---
 title: "Sponsors"
+draft: true
 bookCollapseSection: false
-weight: 200
+weight: 500
 summary: "How Sponsors can use Kosli to ensure secure, compliant software delivery across their organization."
 ---
 
@@ -64,4 +65,4 @@ You’ll see reduced lead times, fewer compliance exceptions, and improved audit
 ## Where to Start
 - [**What is Kosli?**]({{< ref "/understand_kosli/what_is_kosli/">}}): Understand the value and core ideas
 - [**Implementing Kosli**]({{< ref "/implementation_guide">}}): A rollout guide aligned to business and technical outcomes
-- [**Concepts Overview**]({{< ref "/understand_kosli/concepts" >}}): Understand how Flows, Trails, and Attestations fit together.
+- [**Concepts**]({{< ref "/understand_kosli/concepts" >}}): Understand how Flows, Trails, and Attestations fit together.

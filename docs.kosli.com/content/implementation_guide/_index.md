@@ -1,7 +1,6 @@
 ---
 title: Implementation guide
+draft: true
 bookCollapseSection: true
 weight: 300
-aliases:
-    - /implementation_guide
 ---
