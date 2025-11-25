@@ -62,12 +62,12 @@ artifacts:
   provenance:
     required: true | false (default = false)
     exceptions: (default [])
-    - if: ${{ expression }}
+      - if: ${{ expression }}
 
   trail-compliance:
     required: true | false (default = false)
     exceptions: (default [])
-    - if: ${{ expression }}
+      - if: ${{ expression }}
 
   attestations: (default [])
     - if: ${{ expression }} (default = true)
@@ -121,16 +121,16 @@ artifacts
   provenance:
     required: true
     exceptions:
-    # provenance is required except when one of the expressions evaluates to true
-    - if: ${{ expression1 }}
-    - if: ${{ expression2 }}
+      # provenance is required except when one of the expressions evaluates to true
+      - if: ${{ expression1 }}
+      - if: ${{ expression2 }}
 
   trail-compliance:
     required: true
     exceptions:
-    # trail-compliance is required except when one of the expressions evaluates to true
-    - if: ${{ expression1 }}
-    - if: ${{ expression2 }}
+      # trail-compliance is required except when one of the expressions evaluates to true
+      - if: ${{ expression1 }}
+      - if: ${{ expression2 }}
 
   attestations:
     - if: ${{ expression }} # this attestation is only required when expression evaluates to true
