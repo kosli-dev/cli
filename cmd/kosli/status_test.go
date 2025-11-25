@@ -21,9 +21,15 @@ func (suite *StatusTestSuite) TestStatusCmd() {
 			golden: "OK\n",
 		},
 		{
-			name:      "assert fail",
+			name:   "assert status works",
+			cmd:    "status --assert",
+			golden: "OK\n",
+		},
+		{
+			name:      "assert status on a non-existing host fails",
 			cmd:       "status --assert --host 123",
 			wantError: true,
+			golden:    "Error: kosli server 123 is unresponsive\n",
 		},
 	}
 	runTestCmd(suite.Suite.T(), tests)
