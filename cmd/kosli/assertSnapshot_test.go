@@ -83,7 +83,7 @@ func (suite *AssertSnapshotCommandTestSuite) TestAssertSnapshotCmd() {
 		},
 		{
 			wantError: true,
-			name:      "04 asserting a non compliant env results in INCOMPLIANT and zero exit",
+			name:      "04 asserting a non compliant env results in INCOMPLIANT and non-zero exit",
 			cmd:       fmt.Sprintf(`assert snapshot %s %s`, suite.nonCompliantEnvName, suite.defaultKosliArguments),
 			additionalConfig: assertSnapshotTestConfig{
 				reportToEnv: true,
