@@ -268,11 +268,12 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 		},
 		{
 			wantError: true,
-			name:      "22 if no matching issue exists, fails with a non-zero exit code",
+			name:      "22 if no matching issue exists, assert fails with a non-zero exit code",
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
 					--jira-project-key ABC
-					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
+					--repo-root %s 
+					--assert %s`, suite.tmpDir, suite.defaultKosliArguments),
 			golden: "Error: no Jira references are found in commit message or branch name\n",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "EX-1 test commit",
