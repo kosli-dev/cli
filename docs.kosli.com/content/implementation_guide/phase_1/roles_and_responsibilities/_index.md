@@ -1,9 +1,8 @@
 ---
 title: "Roles and Responsibilities"
+draft: true
 bookCollapseSection: true
 weight: 100
-aliases:
-    - /implementation_guide/phase-1/roles_and_responsibilities
 ---
 
 # Roles and Responsibilities
@@ -23,14 +22,10 @@ This guide provides:
 4. **Governance and Optimization:** Measure success, refine policies, and prepare for audits with real data.
 
 ## 👥 Stakeholders
-1. Platform Engineers and DevOps
-   - Leads technical implementation and pipeline integration
-2. Sponsor (e.g. CTO, Head of Platform)
-   - Champions adoption, aligns on outcomes, and tracks impact
-3. Security and Compliance
-   - Defines control objectives and verifies evidence
-4. Application Developer
-   - Builds code and produces evidence automatically
+1. [**Platform Engineers and DevOps**]({{< relref "platform_engineers" >}}): Leads technical implementation and pipeline integration
+2. [**Application Developer**]({{< relref "app_developers" >}}): Builds code and produces evidence automatically
+3. [**Security and Compliance**]({{< relref "security_compliance" >}}): Defines control objectives and verifies evidence
+4. [**Sponsors**]({{< relref "sponsors" >}}): Champions adoption, aligns on outcomes, and tracks impact
 
 ## 📊 RACI Matrix
 
@@ -66,4 +61,4 @@ The RACI model helps teams and stakeholders know who to talk to, who drives a de
 
     Kept in the loop. This person doesn't need to be consulted during the task but should be notified of progress or outcomes. It’s a one-way communication role.
 
-
+## Subpages

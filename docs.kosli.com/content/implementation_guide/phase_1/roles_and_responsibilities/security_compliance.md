@@ -1,5 +1,6 @@
 ---
 title: "Security and Compliance"
+draft: true
 bookCollapseSection: false
 weight: 400
 summary: "How Security and Compliance teams can use Kosli to define control objectives and verify evidence."
