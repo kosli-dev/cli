@@ -114,10 +114,10 @@ func (suite *AttestAzurePRCommandTestSuite) TestAttestAzurePRCmd() {
 		},
 		{
 			wantError: true,
-			name:      "13 assert is not checked if there is a server error, even if there are no PRs",
+			name:      "13 if there is a server error, this is output even when assert fails",
 			cmd: fmt.Sprintf(`attest pullrequest azure --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo 
 				--azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit HEAD --assert %s`, suite.defaultKosliArguments),
-			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nError: Artifact with fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 does not exist in trail \"test-123\" of flow \"attest-azure-pr\" belonging to organization \"docs-cmd-test-user\"\n",
+			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nError: Artifact with fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 does not exist in trail \"test-123\" of flow \"attest-azure-pr\" belonging to organization \"docs-cmd-test-user\"\nError: assert failed: no pull request found for the given commit: .*\n",
 		},
 	}
 
