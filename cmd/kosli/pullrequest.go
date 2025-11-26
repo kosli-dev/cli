@@ -161,9 +161,9 @@ func (o *attestPROptions) run(args []string) error {
 	if len(pullRequestsEvidence) == 0 && o.assert {
 		errString := ""
 		if err != nil {
-			errString = fmt.Sprintf("%s\nError: ", err.Error())
+			errString = fmt.Sprintf("%s\nError:", err.Error())
 		}
-		err = fmt.Errorf("%sassert failed: no %s found for the given commit: %s", errString, label, o.payload.Commit.Sha1)
+		err = fmt.Errorf("%s assert failed: no %s found for the given commit: %s", errString, label, o.payload.Commit.Sha1)
 	}
 
 	return wrapAttestationError(err)
