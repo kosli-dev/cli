@@ -40,70 +40,77 @@ func (suite *AttestAzurePRCommandTestSuite) TestAttestAzurePRCmd() {
 	tests := []cmdTestCase{
 		{
 			wantError: true,
-			name:      "fails when more arguments are provided",
+			name:      "01 fails when more arguments are provided",
 			cmd:       fmt.Sprintf("attest pullrequest azure foo bar %s", suite.defaultKosliArguments),
 			golden:    "Error: accepts at most 1 arg(s), received 2 [foo bar]\n",
 		},
 		{
 			wantError: true,
-			name:      "fails when missing a required flags",
+			name:      "02 fails when missing a required flags",
 			cmd:       fmt.Sprintf("attest pullrequest azure foo -t file %s", suite.defaultKosliArguments),
 			golden:    "Error: required flag(s) \"azure-org-url\", \"commit\", \"name\", \"project\", \"repository\" not set\n",
 		},
 		{
 			wantError: true,
-			name:      "fails when both --fingerprint and --artifact-type",
+			name:      "03 fails when both --fingerprint and --artifact-type",
 			cmd:       fmt.Sprintf("attest pullrequest azure testdata/file1 --fingerprint xxxx --artifact-type file --name bar --commit HEAD  %s", suite.defaultKosliArguments),
 			golden:    "Error: only one of --fingerprint, --artifact-type is allowed\n",
 		},
 		{
 			wantError: true,
-			name:      "fails when --fingerprint is not valid",
+			name:      "04 fails when --fingerprint is not valid",
 			cmd:       fmt.Sprintf("attest pullrequest azure --name foo --fingerprint xxxx --commit HEAD %s", suite.defaultKosliArguments),
 			golden:    "Error: xxxx is not a valid SHA256 fingerprint. It should match the pattern ^([a-f0-9]{64})$\nUsage: kosli attest pullrequest azure [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
-			name:      "attesting against an artifact that does not exist fails",
+			name:      "05 attesting against an artifact that does not exist fails",
 			cmd: fmt.Sprintf(`attest pullrequest azure --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo 
 				--azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit HEAD  %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nError: Artifact with fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 does not exist in trail \"test-123\" of flow \"attest-azure-pr\" belonging to organization \"docs-cmd-test-user\"\n",
 		},
 		{
-			name: "can attest azure pr against an artifact using artifact name and --artifact-type",
+			name: "06 can attest azure pr against an artifact using artifact name and --artifact-type",
 			cmd: fmt.Sprintf(`attest pullrequest azure testdata/file1 --artifact-type file --name foo
 				--azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit HEAD %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nazure pull request attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
-			name: "can attest azure pr against an artifact using artifact name and --artifact-type when --name does not exist in the trail template",
+			name: "07 can attest azure pr against an artifact using artifact name and --artifact-type when --name does not exist in the trail template",
 			cmd: fmt.Sprintf(`attest pullrequest azure testdata/file1 --artifact-type file --name bar
 				--azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit HEAD %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nazure pull request attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
-			name: "can attest azure pr against an artifact using --fingerprint",
+			name: "08 can attest azure pr against an artifact using --fingerprint",
 			cmd: fmt.Sprintf(`attest pullrequest azure --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo
 				--azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit HEAD %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nazure pull request attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
-			name: "can attest azure pr against a trail",
+			name: "09 can attest azure pr against a trail",
 			cmd: fmt.Sprintf(`attest pullrequest azure --name bar
 				--azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit HEAD %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nazure pull request attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
-			name: "can attest azure pr against a trail when name is not found in the trail template",
+			name: "10 can attest azure pr against a trail when name is not found in the trail template",
 			cmd: fmt.Sprintf(`attest pullrequest azure --name additional
 				--azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit HEAD %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nazure pull request attestation 'additional' is reported to trail: test-123\n",
 		},
 		{
-			name: "can attest azure pr against an artifact it is created using dot syntax in --name",
+			name: "11 can attest azure pr against an artifact it is created using dot syntax in --name",
 			cmd: fmt.Sprintf(`attest pullrequest azure --name cli.foo
 				--azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit HEAD %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nazure pull request attestation 'foo' is reported to trail: test-123\n",
+		},
+		{
+			wantError: true,
+			name:      "12 assert fails with non-zero exit code when commit has no PRs",
+			cmd: fmt.Sprintf(`attest pullrequest azure --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo 
+				--azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit HEAD --assert  %s`, suite.defaultKosliArguments),
+			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nError: assert failed: no pull request found for the given commit\n",
 		},
 	}
 
