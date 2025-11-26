@@ -157,11 +157,11 @@ func (o *attestPROptions) run(args []string) error {
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
 		logger.Info("%s %s attestation '%s' is reported to trail: %s", o.payload.GitProvider, label, o.payload.AttestationName, o.trailName)
+		if len(pullRequestsEvidence) == 0 && o.assert {
+			return fmt.Errorf("assert failed: no %s found for the given commit: %s", label, o.payload.Commit.Sha1)
+		}
 	}
 
-	if len(pullRequestsEvidence) == 0 && o.assert && !global.DryRun {
-		return fmt.Errorf("assert failed: no %s found for the given commit: %s", label, o.payload.Commit.Sha1)
-	}
 	return wrapAttestationError(err)
 }
 
