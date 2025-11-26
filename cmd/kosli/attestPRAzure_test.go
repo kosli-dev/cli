@@ -59,7 +59,7 @@ func (suite *AttestAzurePRCommandTestSuite) TestAttestAzurePRCmd() {
 		{
 			wantError: true,
 			name:      "04 fails when --fingerprint is not valid",
-			cmd:       fmt.Sprintf("attest pullrequest azure --name foo --fingerprint xxxx --commit HEAD %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest pullrequest azure --name foo --fingerprint xxxx --commit HEAD --assert %s", suite.defaultKosliArguments),
 			golden:    "Error: xxxx is not a valid SHA256 fingerprint. It should match the pattern ^([a-f0-9]{64})$\nUsage: kosli attest pullrequest azure [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
@@ -108,9 +108,16 @@ func (suite *AttestAzurePRCommandTestSuite) TestAttestAzurePRCmd() {
 		{
 			wantError: true,
 			name:      "12 assert fails with non-zero exit code when commit has no PRs",
-			cmd: fmt.Sprintf(`attest pullrequest azure --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo 
+			cmd: fmt.Sprintf(`attest pullrequest azure --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo 
 				--azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit HEAD --assert  %s`, suite.defaultKosliArguments),
-			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nError: assert failed: no pull request found for the given commit\n",
+			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nazure pull request attestation 'foo' is reported to trail: test-123\nError: assert failed: no pull request found for the given commit: .*\n",
+		},
+		{
+			wantError: true,
+			name:      "13 assert is not checked if there is a server error, even if there are no PRs",
+			cmd: fmt.Sprintf(`attest pullrequest azure --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo 
+				--azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit HEAD --assert %s`, suite.defaultKosliArguments),
+			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nError: Artifact with fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 does not exist in trail \"test-123\" of flow \"attest-azure-pr\" belonging to organization \"docs-cmd-test-user\"\n",
 		},
 	}
 

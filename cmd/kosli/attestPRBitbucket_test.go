@@ -143,6 +143,13 @@ func (suite *AttestBitbucketPRCommandTestSuite) TestAttestBitbucketPRCmd() {
 				--bitbucket-workspace kosli-dev --repository cli-test --commit %s --assert %s`, suite.commitWithPR, suite.defaultKosliArguments),
 			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\nbitbucket pull request attestation 'foo' is reported to trail: test-123\n",
 		},
+		{
+			wantError: true,
+			name:      "15 assert is not checked if there is a server error, even if there are no PRs",
+			cmd: fmt.Sprintf(`attest pullrequest bitbucket --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo 
+				--bitbucket-workspace kosli-dev --repository cli-test --commit %s --assert %s`, suite.commitWithNoPR, suite.defaultKosliArguments),
+			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nError: Artifact with fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 does not exist in trail \"test-123\" of flow \"attest-bitbucket-pr\" belonging to organization \"docs-cmd-test-user\"\n",
+		},
 	}
 
 	runTestCmd(suite.Suite.T(), tests)
