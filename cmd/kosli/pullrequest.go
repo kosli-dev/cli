@@ -158,7 +158,7 @@ func (o *attestPROptions) run(args []string) error {
 	if err == nil && !global.DryRun {
 		logger.Info("%s %s attestation '%s' is reported to trail: %s", o.payload.GitProvider, label, o.payload.AttestationName, o.trailName)
 	}
-	if len(pullRequestsEvidence) == 0 && o.assert {
+	if len(pullRequestsEvidence) == 0 && o.assert && !global.DryRun {
 		errString := ""
 		if err != nil {
 			errString = fmt.Sprintf("%s\nError: ", err.Error())
