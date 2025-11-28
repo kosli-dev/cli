@@ -127,26 +127,26 @@ func (suite *AttestGitlabPRCommandTestSuite) TestAttestGitlabPRCmd() {
 			wantError: true,
 			name:      "12 assert fails with non-zero exit code when commit has no merge requests",
 			cmd: fmt.Sprintf(`attest pullrequest gitlab --name bar 
-				--github-org kosli-dev --repository merkely-gitlab-demo --commit %s --assert %s`, suite.commitWithNoPR, suite.defaultKosliArguments),
+				--gitlab-org kosli-dev --repository merkely-gitlab-demo --commit %s --assert %s`, suite.commitWithNoPR, suite.defaultKosliArguments),
 			goldenRegex: "found 0 merge request\\(s\\) for commit: .*\ngitlab merge request attestation 'bar' is reported to trail: test-123\nError: assert failed: no merge request found for the given commit: .*\n",
 		},
 		{
 			name: "13 assert works and has zero exit code when commit has merge request(s)",
 			cmd: fmt.Sprintf(`attest pullrequest gitlab --name bar 
-				--github-org kosli-dev --repository merkely-gitlab-demo --commit %s --assert %s`, suite.commitWithPR, suite.defaultKosliArguments),
+				--gitlab-org kosli-dev --repository merkely-gitlab-demo --commit %s --assert %s`, suite.commitWithPR, suite.defaultKosliArguments),
 			goldenRegex: "found 1 merge request\\(s\\) for commit: .*\ngitlab merge request attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
 			wantError: true,
 			name:      "14 if there is a server error, this is output even when assert fails",
 			cmd: fmt.Sprintf(`attest pullrequest gitlab --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo 
-				--github-org kosli-dev --repository merkely-gitlab-demo --commit %s --assert %s`, suite.commitWithNoPR, suite.defaultKosliArguments),
+				--gitlab-org kosli-dev --repository merkely-gitlab-demo --commit %s --assert %s`, suite.commitWithNoPR, suite.defaultKosliArguments),
 			goldenRegex: "found 0 merge request\\(s\\) for commit: .*\nError: Artifact with fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 does not exist in trail \"test-123\" of flow \"attest-gitlab-pr\" belonging to organization \"docs-cmd-test-user\"\nError: assert failed: no merge request found for the given commit: .*\n",
 		},
 		{
 			name: "15 can attest github pr even if commit has no merge request",
 			cmd: fmt.Sprintf(`attest pullrequest gitlab --name bar 
-				--github-org kosli-dev --repository merkely-gitlab-demo --commit %s %s`, suite.commitWithNoPR, suite.defaultKosliArguments),
+				--gitlab-org kosli-dev --repository merkely-gitlab-demo --commit %s %s`, suite.commitWithNoPR, suite.defaultKosliArguments),
 			goldenRegex: "found 0 merge request\\(s\\) for commit: .*\ngitlab merge request attestation 'bar' is reported to trail: test-123\n",
 		},
 	}
