@@ -274,9 +274,49 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 					--jira-project-key ABC
 					--repo-root %s 
 					--assert %s`, suite.tmpDir, suite.defaultKosliArguments),
-			golden: "Error: no Jira references are found in commit message or branch name\n",
+			golden: "jira attestation 'bar' is reported to trail: test-123\nError: no Jira references are found in commit message or branch name\n",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "EX-1 test commit",
+			},
+		},
+		{
+			name: "23 assert works and exits with zero code if issue exists",
+			cmd: fmt.Sprintf(`attest jira --name bar
+					--jira-base-url https://kosli-test.atlassian.net
+					--repo-root %s 
+					--assert %s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "jira attestation 'bar' is reported to trail: test-123\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "EX-1 test commit",
+			},
+		},
+		{
+			wantError: true,
+			name:      "24 if there is a server error, this is output even when assert fails due to no matching issue",
+			cmd: fmt.Sprintf(`attest jira --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9
+								--name foo
+								--repo-root %s
+								--jira-project-key ABC
+								--jira-base-url https://kosli-test.atlassian.net
+								--assert
+								%s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "Error: Artifact with fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 does not exist in trail \"test-123\" of flow \"attest-jira\" belonging to organization \"docs-cmd-test-user\"\nError: no Jira references are found in commit message or branch name\n",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "EX-1 test commit",
+			},
+		},
+		{
+			wantError: true,
+			name:      "25 if there is a server error, this is output even when assert fails due to non-existing issue",
+			cmd: fmt.Sprintf(`attest jira --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9
+								--name foo
+								--repo-root %s
+								--jira-base-url https://kosli-test.atlassian.net
+								--assert
+								%s`, suite.tmpDir, suite.defaultKosliArguments),
+			golden: "Error: Artifact with fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 does not exist in trail \"test-123\" of flow \"attest-jira\" belonging to organization \"docs-cmd-test-user\"\nError: missing Jira issues from references found in commit message or branch name",
+			additionalConfig: jiraTestsAdditionalConfig{
+				commitMessage: "SAMI-1 test commit",
 			},
 		},
 	}
