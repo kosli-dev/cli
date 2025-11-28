@@ -236,7 +236,7 @@ func getGitRepoInfoFromAzureDevops() *gitview.GitRepoInfo {
 		URL:      os.Getenv("BUILD_REPOSITORY_URI"),
 		Name:     os.Getenv("BUILD_REPOSITORY_NAME"),
 		ID:       os.Getenv("BUILD_REPOSITORY_ID"),
-		Provider: "azure",
+		Provider: "azure-devops",
 	}
 }
 
