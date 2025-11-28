@@ -195,8 +195,8 @@ func getGitRepoInfoFromEnvironment() (*gitview.GitRepoInfo, error) {
 		return getGitRepoInfoFromAzureDevops(), nil
 	case circleci:
 		return getGitRepoInfoFromCircleci(), nil
-	case codeBuild:
-		return getGitRepoInfoFromCodeBuild(), nil
+	// case codeBuild:
+	// 	return getGitRepoInfoFromCodeBuild(), nil
 	case unknown:
 		return nil, nil
 	}
@@ -205,9 +205,10 @@ func getGitRepoInfoFromEnvironment() (*gitview.GitRepoInfo, error) {
 
 func getGitRepoInfoFromGitHub() *gitview.GitRepoInfo {
 	return &gitview.GitRepoInfo{
-		URL:  fmt.Sprintf("%s/%s", os.Getenv("GITHUB_SERVER_URL"), os.Getenv("GITHUB_REPOSITORY")),
-		Name: os.Getenv("GITHUB_REPOSITORY"),
-		ID:   os.Getenv("GITHUB_REPOSITORY_ID"),
+		URL:      fmt.Sprintf("%s/%s", os.Getenv("GITHUB_SERVER_URL"), os.Getenv("GITHUB_REPOSITORY")),
+		Name:     os.Getenv("GITHUB_REPOSITORY"),
+		ID:       os.Getenv("GITHUB_REPOSITORY_ID"),
+		Provider: "github",
 	}
 }
 
@@ -217,34 +218,38 @@ func getGitRepoInfoFromGitLab() *gitview.GitRepoInfo {
 		Name:        os.Getenv("CI_PROJECT_PATH"),
 		ID:          os.Getenv("CI_PROJECT_ID"),
 		Description: os.Getenv("CI_PROJECT_DESCRIPTION"),
+		Provider:    "gitlab",
 	}
 }
 
 func getGitRepoInfoFromBitbucket() *gitview.GitRepoInfo {
 	return &gitview.GitRepoInfo{
-		URL:  os.Getenv("BITBUCKET_GIT_HTTP_ORIGIN"),
-		Name: os.Getenv("BITBUCKET_REPO_FULL_NAME"),
-		ID:   os.Getenv("BITBUCKET_REPO_UUID"),
+		URL:      os.Getenv("BITBUCKET_GIT_HTTP_ORIGIN"),
+		Name:     os.Getenv("BITBUCKET_REPO_FULL_NAME"),
+		ID:       os.Getenv("BITBUCKET_REPO_UUID"),
+		Provider: "bitbucket",
 	}
 }
 
 func getGitRepoInfoFromAzureDevops() *gitview.GitRepoInfo {
 	return &gitview.GitRepoInfo{
-		URL:  os.Getenv("BUILD_REPOSITORY_URI"),
-		Name: os.Getenv("BUILD_REPOSITORY_NAME"),
-		ID:   os.Getenv("BUILD_REPOSITORY_ID"),
+		URL:      os.Getenv("BUILD_REPOSITORY_URI"),
+		Name:     os.Getenv("BUILD_REPOSITORY_NAME"),
+		ID:       os.Getenv("BUILD_REPOSITORY_ID"),
+		Provider: "azure-devops",
 	}
 }
 
 func getGitRepoInfoFromCircleci() *gitview.GitRepoInfo {
 	return &gitview.GitRepoInfo{
-		URL:  os.Getenv("CIRCLE_REPOSITORY_URL"),
-		Name: os.Getenv("CIRCLE_PROJECT_REPONAME"),
+		URL:      os.Getenv("CIRCLE_REPOSITORY_URL"),
+		Name:     os.Getenv("CIRCLE_PROJECT_REPONAME"),
+		Provider: "circleci",
 	}
 }
 
-func getGitRepoInfoFromCodeBuild() *gitview.GitRepoInfo {
-	return &gitview.GitRepoInfo{
-		URL: os.Getenv("CODEBUILD_SOURCE_REPO_URL"),
-	}
-}
+// func getGitRepoInfoFromCodeBuild() *gitview.GitRepoInfo {
+// 	return &gitview.GitRepoInfo{
+// 		URL: os.Getenv("CODEBUILD_SOURCE_REPO_URL"),
+// 	}
+// }

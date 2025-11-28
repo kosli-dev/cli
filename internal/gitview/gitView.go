@@ -33,6 +33,7 @@ type GitRepoInfo struct {
 	Name        string `json:"name,omitempty"`
 	ID          string `json:"id,omitempty"`
 	Description string `json:"description,omitempty"`
+	Provider    string `json:"provider,omitempty"`
 }
 
 // GitView
