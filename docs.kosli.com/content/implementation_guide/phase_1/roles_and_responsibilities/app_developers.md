@@ -1,6 +1,5 @@
 ---
 title: "Application Developers"
-draft: true
 bookCollapseSection: false
 weight: 300
 summary: "How Application Developers can use Kosli to build secure, compliant software delivery pipelines."

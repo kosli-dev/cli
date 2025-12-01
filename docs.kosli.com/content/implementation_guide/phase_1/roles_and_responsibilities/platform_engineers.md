@@ -1,6 +1,5 @@
 ---
 title: "Platform Engineers"
-draft: true
 bookCollapseSection: false
 weight: 200
 summary: "How Platform Engineers and DevOps teams can use Kosli to build secure, compliant software delivery pipelines."

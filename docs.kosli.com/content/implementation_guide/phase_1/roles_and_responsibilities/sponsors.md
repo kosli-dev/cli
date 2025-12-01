@@ -1,6 +1,5 @@
 ---
 title: "Sponsors"
-draft: true
 bookCollapseSection: false
 weight: 500
 summary: "How Sponsors can use Kosli to ensure secure, compliant software delivery across their organization."

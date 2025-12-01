@@ -1,6 +1,5 @@
 ---
 title: "Roles and Responsibilities"
-draft: true
 bookCollapseSection: true
 weight: 100
 ---
