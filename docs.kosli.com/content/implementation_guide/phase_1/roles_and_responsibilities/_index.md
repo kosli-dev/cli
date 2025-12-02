@@ -39,7 +39,7 @@ The RACI model helps teams and stakeholders know who to talk to, who drives a de
 | Define attestation types              | R                  | C                     | A                       | C       |
 | Configure environment snapshots       | A                  | I                     | C                       | C       |
 | Set up environment policies          | R                  | I                     | A                       | C       |
-| Validate compliance status           | C                  | C                     | A                       | C       |
+| Validate compliance controls         | R                  | C                     | A                       | C       |
 | Export and review audit packages     | C                  | I                     | A                       | C       |
 | Roll out to additional teams         | R                  | C                     | C                       | A       |
 | Track measures of success            | R                  | C                     | C                       | A       |
