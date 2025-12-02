@@ -14,7 +14,7 @@ You care about quality, security, and release velocity, but you do not want to b
 
 # How Kosli helps you
 
-Kosli captures the evidence that your changes have passed the right checks, like tests, code reviews, security scans, and approvals, so you can deploy with confidence and stay focused on building.
+Kosli captures the evidence that your changes have passed the right controls, like tests, code reviews, security scans, and approvals, so you can deploy with confidence and stay focused on building.
 
 With Kosli, you can:
 - Ship code without worrying about compliance gates or approval tickets
