@@ -47,7 +47,7 @@ func ProcessSnykResultFile(file string) (*SnykData, error) {
 	if err != nil {
 		return nil, err
 	}
-	if !strings.HasPrefix(report.Schema, "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-") && !strings.HasPrefix(report.Schema, "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json") {
+	if !strings.HasPrefix(report.Schema, "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/") && !strings.HasPrefix(report.Schema, "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-") && !strings.HasPrefix(report.Schema, "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json") {
 		return nil, fmt.Errorf("invalid sarif file")
 	}
 	data := &SnykData{
