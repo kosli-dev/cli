@@ -92,9 +92,9 @@ A clear naming convention transforms a simple ID into a meaningful identifier th
 
 Build Flows represent how code changes move from commit to artifact. Use the following convention to name Build Flows:
 
-**Name Convention:** `org`-`repo`-`[service]`
+**Name Convention:** `org-unit`-`repo`-`[service]`
 
-- **org**: Your organization, division, or team name
+- **org-unit**: Your organizational unit, division or team name
 - **repo**: Your repository name
 - **service (Optional)**: The specific service or component that the artifact belongs to
 
@@ -106,8 +106,8 @@ You can skip `service` if your repository produces only one artifact, i.e. non-m
 {{< tab "snake_case" >}}
 
 **Examples:**
-- `acme_corp-web_app` (single artifact)
-- `acme_corp-web_app-frontend` (with service: frontend)
+- `investment-web_app` (single artifact)
+- `investment-web_app-frontend` (with service: frontend)
 - `devops_team-mobile_app-backend` (with service: backend)
 
 ```bash
@@ -118,8 +118,8 @@ You can skip `service` if your repository produces only one artifact, i.e. non-m
 {{< tab "camelCase" >}}
 
 **Examples:**
-- `acmeCorp-webApp` (single artifact)
-- `acmeCorp-webApp-frontend` (with service: frontend)
+- `investment-webApp` (single artifact)
+- `investment-webApp-frontend` (with service: frontend)
 - `devopsTeam-mobileApp-backend` (with service: backend)
 
 ```bash
@@ -129,8 +129,8 @@ You can skip `service` if your repository produces only one artifact, i.e. non-m
 {{< tab "PascalCase" >}}
 
 **Examples:**
-- `AcmeCorp-WebApp` (single artifact)
-- `AcmeCorp-WebApp-Frontend` (with service: frontend)
+- `Investment-WebApp` (single artifact)
+- `Investment-WebApp-Frontend` (with service: frontend)
 - `DevOpsTeam-MobileApp-Backend` (with service: backend)
 
 ```bash
@@ -143,15 +143,15 @@ You can skip `service` if your repository produces only one artifact, i.e. non-m
 
 Release Flows represent how artifacts move from build to deployment. Use the following convention to name Release Flows:
 
-**Name Convention:** `org`-`repo`
+**Name Convention:** `org-unit`-`repo`
 
-- **Org**: Your organization or team name
-- **Repo**: Your repository name
+- **org-unit**: Your organizational unit, division or team name
+- **repo**: Your repository name
 
 {{< tabs "release-flow-examples" >}}
 {{< tab "snake_case" >}}
 **Examples:**
-- `acme_corp-web_app`
+- `investment-web_app`
 - `devops_team-mobile_app`
 ```bash
 ^[a-z][a-z0-9_]*-[a-z][a-z0-9_]*$
@@ -159,7 +159,7 @@ Release Flows represent how artifacts move from build to deployment. Use the fol
 {{< /tab >}}
 {{< tab "camelCase" >}}
 **Examples:**
-- `acmeCorp-webApp`
+- `investment-webApp`
 - `devopsTeam-mobileApp`
 ```bash
 ^[a-z][a-zA-Z0-9]*-[a-z][a-zA-Z0-9]*$
@@ -167,7 +167,7 @@ Release Flows represent how artifacts move from build to deployment. Use the fol
 {{< /tab >}}
 {{< tab "PascalCase" >}}
 **Examples:**
-- `AcmeCorp-WebApp`
+- `Investment-WebApp`
 - `DevOpsTeam-MobileApp`
 ```bash
 ^[A-Z][a-zA-Z0-9]*-[A-Z][a-zA-Z0-9]*$
