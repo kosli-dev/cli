@@ -28,11 +28,6 @@ jobs:
           token: ${{ steps.generate_token.outputs.token }}
           fetch-depth: 0
 
-      - name: Configure Git
-        run: |
-          git config user.name "CI-signed-commit-bot"
-          git config user.email "${{ vars.CI_SIGNED_COMMIT_APP_ID }}+CI-signed-commit-bot@users.noreply.github.com"
-
       - name: Set up Helm
         uses: azure/setup-helm@v1
         with:
@@ -78,12 +73,22 @@ jobs:
         run: |
           rm -rf package 
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
+      - name: Commit and push changes
+        uses: planetscale/ghcommit-action@v0.2.19
         with:
-          token: ${{ steps.generate_token.outputs.token }}
-          commit-message: 'Update helm docs'
-          delete-branch: true
-          title: 'Update helm docs'
-          body: |
-            Update helms docs
+          commit_message: 'Update helm docs'
+          repo: ${{ github.repository }}
+          branch: helm-docs-update
+          github_token: ${{ steps.generate_token.outputs.token }}
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+
+      - name: Create Pull Request
+        run: |
+          gh pr create \
+            --title "Update helm docs" \
+            --body "Update helm docs" \
+            --base main \
+            --head helm-docs-update
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
