@@ -73,13 +73,22 @@ jobs:
         run: |
           rm -rf package 
 
+      - name: Create branch via GitHub API
+        run: |
+          MAIN_SHA=$(gh api repos/${{ github.repository }}/git/ref/heads/main --jq '.object.sha')
+          gh api repos/${{ github.repository }}/git/refs \
+            -X POST \
+            -f ref='refs/heads/helm-docs-update' \
+            -f sha="$MAIN_SHA" || echo "Branch may already exist"
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+
       - name: Commit and push changes
         uses: planetscale/ghcommit-action@v0.2.19
         with:
           commit_message: 'Update helm docs'
           repo: ${{ github.repository }}
           branch: helm-docs-update
-          github_token: ${{ steps.generate_token.outputs.token }}
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
@@ -89,6 +98,6 @@ jobs:
             --title "Update helm docs" \
             --body "Update helm docs" \
             --base main \
-            --head helm-docs-update
+            --head helm-docs-update || echo "PR may already exist"
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
