@@ -28,6 +28,11 @@ jobs:
           token: ${{ steps.generate_token.outputs.token }}
           fetch-depth: 0
 
+      - name: Configure Git
+        run: |
+          git config user.name "CI-signed-commit-bot"
+          git config user.email "${{ vars.CI_SIGNED_COMMIT_APP_ID }}+CI-signed-commit-bot@users.noreply.github.com"
+
       - name: Set up Helm
         uses: azure/setup-helm@v1
         with:
@@ -78,8 +83,6 @@ jobs:
         with:
           token: ${{ steps.generate_token.outputs.token }}
           commit-message: 'Update helm docs'
-          committer: ci-signed-commit-bot[bot] <${{ vars.CI_SIGNED_COMMIT_APP_ID }}+ci-signed-commit-bot[bot]@users.noreply.github.com>
-          author: ci-signed-commit-bot[bot] <${{ vars.CI_SIGNED_COMMIT_APP_ID }}+ci-signed-commit-bot[bot]@users.noreply.github.com>
           delete-branch: true
           title: 'Update helm docs'
           body: |
