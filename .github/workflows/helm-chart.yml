@@ -67,17 +67,18 @@ jobs:
 
       - uses: crazy-max/ghaction-import-gpg@v5
         with:
-          gpg_private_key: ${{ secrets.BOT_GPG_PRIVATE_KEY }}
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
           git_user_signingkey: true
           git_commit_gpgsign: true
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          committer: CLI BOT <bot@kosli.com>
+          token: ${{ secrets.COMMITTER_TOKEN }}
+          committer: Jon Jagger <jon@kosli.com>
           commit-message: 'Update helm docs'
-          author: CLI BOT <bot@kosli.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           signoff: false
           delete-branch: true
           title: 'Update helm docs'
