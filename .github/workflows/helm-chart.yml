@@ -33,8 +33,8 @@ jobs:
           curl -L https://github.com/norwoodj/helm-docs/releases/download/v1.5.0/helm-docs_1.5.0_linux_amd64.deb --output helm-docs.dep
           sudo dpkg -i helm-docs.dep
           rm helm-docs.dep
-          cd charts/k8s-reporter
-          helm-docs --template-files README.md.gotmpl,_templates.gotmpl --output-file README.md
+          cd charts/k8s-reporter 
+          helm-docs --template-files README.md.gotmpl,_templates.gotmpl --output-file README.md 
           helm-docs --template-files README.md.gotmpl,_templates.gotmpl --output-file ../../docs.kosli.com/content/helm/_index.md
 
       - name: Helm Package
@@ -59,11 +59,11 @@ jobs:
       - name: Upload new chart and the update index.yaml to S3
         run: |
           rm package/old-index.yaml
-          aws s3 cp --recursive package s3://kosli-helm-charts-repo/stable/k8s-reporter/
+          aws s3 cp --recursive package s3://kosli-helm-charts-repo/stable/k8s-reporter/ 
 
       - name: cleanup
         run: |
-          rm -rf package
+          rm -rf package 
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
