@@ -16,10 +16,10 @@ kosli create attestation-type TYPE-NAME [flags]
 
 See [CLI documentation]({{< ref "client_reference/kosli_create_attestation-type" >}}) for more details.
 
-**Name Convention:** `control-objective`-`evidence-type`-`[detail]`-`[version]`
+**Name Convention:** `control objective`-`evidence type`-`[detail]`-`[version]`
 
-- **control-objective**: The high-level control or requirement the attestation supports (e.g., control-id, code-review, security-scan, unit-test)
-- **evidence-context**: The specific type of evidence being attested (e.g. tool-name, test-suite)
+- **control objective**: The high-level control or requirement the attestation supports (e.g., control id, code review, security scan, unit test)
+- **evidence type**: The specific type of evidence being attested (e.g. tool-name, test-suite)
 - **detail (Optional)**: Additional context or detail about the attestation (e.g., type, severity-level, environment, etc.)
 - **version (Optional)**: The version of the attestation type or schema. Should follow semantic versioning (e.g., v1, v2)
 

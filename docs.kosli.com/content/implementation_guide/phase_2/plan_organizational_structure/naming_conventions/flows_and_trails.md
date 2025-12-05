@@ -26,9 +26,9 @@ The following sections define conventions for the two main types of Flows in Kos
 
 ### Build Flows
 
-**Name Convention:** `org-unit`-`repo`-`[service]`
+**Name Convention:** `org unit`-`repo`-`[service]`
 
-- **org-unit**: Your organizational unit, division or team name
+- **org unit**: Your organizational unit, division or team name
 - **repo**: Your repository name
 - **service (Optional)**: The specific service or component that the artifact belongs to
 
@@ -81,9 +81,9 @@ You can skip `service` if your repository produces only one artifact, i.e. non-m
 
 ### Release Flows
 
-**Name Convention:** `org-unit`-`repo`
+**Name Convention:** `org unit`-`repo`
 
-- **org-unit**: Your organizational unit, division or team name
+- **org unit**: Your organizational unit, division or team name
 - **repo**: Your repository name
 
 {{< tabs "release-flow-examples" >}}
@@ -156,10 +156,10 @@ Casing does not matter for SHA values, so we do not provide multiple casing opti
 ```
 
 ### Trails associated with [Release Flows]({{< ref "#release-flows" >}})
-**Name Convention:** `env`-`pr-number`
+**Name Convention:** `env`-`pr number`
 
 - **env**: The target deployment environment (e.g., staging, production)
-- **pr-number**: The pull request or change request number associated with the deployment.
+- **pr number**: The pull request or change request number associated with the deployment.
 
 {{< tabs "release-trail-examples" >}}
 {{< tab "snake_case" >}}
