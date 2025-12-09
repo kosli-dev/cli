@@ -255,7 +255,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	envNameFlag                          = "The Kosli environment name to assert the artifact against."
 	pathsWatchFlag                       = "[optional] Watch the filesystem for changes and report snapshots of artifacts running in specific filesystem paths to Kosli."
 	getAttestationFingerprintFlag        = "[conditional] The fingerprint of the artifact for the attestation. Cannot be used together with --trail."
-	getAttestationTrailFlag              = "[conditional] The name of the Kosli trailfor the attestation. Cannot be used together with --fingerprint."
+	getAttestationTrailFlag              = "[conditional] The name of the Kosli trail for the attestation. Cannot be used together with --fingerprint."
 )
 
 var global *GlobalOpts
