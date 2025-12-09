@@ -53,8 +53,6 @@ Kosli provides three user roles to help administrators manage access and permiss
 | Query and search data | ✅ | ✅ | ✅ |
 | Export and generate reports | ✅ | ✅ | ✅ |
 | View flow/policy configurations | ✅ | ✅ | ✅ |
-| **API Access** | | | |
-| Use API with personal/service account keys | ✅ | ✅ | ✅ |
 
 ---
 
@@ -102,7 +100,6 @@ Members can:
 - **Attestations & Snapshots**: Report attestations, environment snapshots, and manage approvals
 - **Actions**: Create, update, and delete actions for automated workflows and notifications
 - **Data Access**: View all trails, artifacts, attestations, and snapshots
-- **API Access**: Use API keys to interact with Kosli programmatically
 
 Members cannot:
 - Manage users or change user roles
