@@ -66,8 +66,18 @@ Yes. Use flow templates and reusable CI snippets to roll out a consistent setup.
 **“Does Kosli work with our existing tools?”**<br>
 Almost certainly. Kosli is tool-agnostic and supports GitHub Actions, GitLab, Jenkins, Kubernetes, Terraform, and more.
 
-**“How do I know it’s working?”**<br>
+**"How do I know it's working?"**<br>
 Kosli automatically gives you compliance status per environment and per change. You can inspect Trails, download audit packages, and integrate with Slack or through Webhooks for alerts.
+
+## Required Kosli User Roles
+
+To perform the responsibilities described above, users in this role typically need:
+- **Recommended role**: Member
+- **Alternative role**: Admin (for lead platform engineers managing organization-wide setup)
+
+Platform engineers need to set up flows, manage service accounts, configure integrations, and implement Kosli across teams. The Member role provides these capabilities. Lead platform engineers who manage the overall organizational setup may require Admin access to manage users and organization settings.
+
+Learn more about [Kosli user roles and permissions]({{< ref "/administration/managing_users/roles_in_kosli" >}}).
 
 ## Where to start
 

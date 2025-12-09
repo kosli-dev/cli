@@ -65,6 +65,16 @@ You can use the Kosli UI to trace a git commit, artifact, or deployment. Kosli s
 **"Can I use Kosli in debugging or incident response?"**<br>
 Yes. Kosli helps you trace what changed and when across environments. You can see exactly what was deployed and what passed or failed.
 
+## Required Kosli User Roles
+
+To perform the responsibilities described above, users in this role typically need:
+- **Recommended role**: Member
+- **Alternative role**: Reader (for developers who only need visibility)
+
+Developers typically need to report attestations and manage flows for their applications. The Member role enables this. Some developers may only need visibility into deployments and compliance status, making the Reader role sufficient.
+
+Learn more about [Kosli user roles and permissions]({{< ref "/administration/managing_users/roles_in_kosli" >}}).
+
 ## Where to start
 - [**Getting Started**]({{< ref "/getting_started" >}}): Follow this if you're curious about how Kosli works behind the scenes
 - [**Querying Kosli**]({{< ref "/tutorials/querying_kosli/" >}}): Learn how to search for artifacts or changes
