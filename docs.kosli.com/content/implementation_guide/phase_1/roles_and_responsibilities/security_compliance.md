@@ -65,6 +65,15 @@ Kosli stores all records immutably and securely. Attestations can include signed
 **"How do I use Kosli in an audit?"**<br>
 You can export a complete Audit Package for any Trail, Artifact, or Environment. This includes all recorded evidence and metadata for traceable, reviewable compliance.
 
+## Required Kosli User Roles
+
+To perform the responsibilities described above, users in this role typically need:
+- **Recommended role**: Admin
+
+Security and compliance teams need to manage policies, review audit data, control user access, and configure organization-wide settings. The Admin role is required for these governance responsibilities, including the ability to manage users, define policies, and ensure proper access controls are in place.
+
+Learn more about [Kosli user roles and permissions]({{< ref "/administration/managing_users/roles_in_kosli" >}}).
+
 ## Where to start
 
 - [**Concepts**]({{< ref "/understand_kosli/concepts" >}}): Understand how Flows, Trails, and Attestations fit together.

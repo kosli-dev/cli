@@ -7,7 +7,9 @@ summary: "Actions enable you to automate the execution of if-this-do-that workfl
 
 # Kosli Actions
 
-Actions enable you to automate the execution of if-this-do-that workflows based on Kosli events. You can configure actions to either receive a Slack notification or a JSON payload on a custom webhook when certain Kosli events happen.   
+{{% required-roles roles="Admin,Member" capability="create, update, and delete Actions" %}}
+
+Actions enable you to automate the execution of if-this-do-that workflows based on Kosli events. You can configure actions to either receive a Slack notification or a JSON payload on a custom webhook when certain Kosli events happen.
 
 You can configure actions to be triggered by one or more of the following events occurring in one or more environments:
 
@@ -32,7 +34,7 @@ Use the app to create notification settings by running the `/kosli subscribe` sl
 
 - Create a [Slack incoming webhook](https://api.slack.com/messaging/webhooks#create_a_webhook).
 - Use this webhook to [create a notification settings in the Kosli UI](/integrations/actions/#manage-actions-in-the-ui).
-  
+
 Both approaches allow you to configure Kosli notifications in Slack, offering flexibility based on your preferences.
 
 ## Custom Webhook Notifications
@@ -64,7 +66,7 @@ Custom webhook notifications empower you to implement automation workflows for "
             "html_url": "https://app.kosli.com/cyber-dojo/runner/719defb995c86ad7c406ad74258fe98b9ebd71dfa80cd786870c967cb6c1f08d",
             "api_url": "https://app.kosli.com/api/v2/artifacts/cyber-dojo/runner/fingerprint/719defb995c86ad7c406ad74258fe98b9ebd71dfa80cd786870c967cb6c1f08d",
             "build_url": "https://github.com/cyber-dojo/runner/actions/runs/5891969166",
-            "deployments": [ 
+            "deployments": [
                 {
                    "number": "44",
                    "timestamp": "1692618644",
