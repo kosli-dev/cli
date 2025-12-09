@@ -1,5 +1,5 @@
 ---
 title: Administration
 bookCollapseSection: true
-weight: 400
+weight: 100
 ---
