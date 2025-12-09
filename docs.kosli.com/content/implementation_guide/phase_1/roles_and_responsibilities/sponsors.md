@@ -58,8 +58,17 @@ Yes. Kosli maps technical events to audit-friendly records, with downloadable au
 **“Will this add overhead for my teams?”**<br>
 No. Platform engineers handle setup and integration. Developers rarely need to interact with Kosli directly.
 
-**“How can I measure success?”**<br>
-You’ll see reduced lead times, fewer compliance exceptions, and improved audit efficiency. Kosli makes this visible through environment compliance views and evidence tracking.
+**"How can I measure success?"**<br>
+You'll see reduced lead times, fewer compliance exceptions, and improved audit efficiency. Kosli makes this visible through environment compliance views and evidence tracking.
+
+## Required Kosli User Roles
+
+To perform the responsibilities described above, users in this role typically need:
+- **Recommended role**: Reader
+
+Sponsors need visibility into adoption progress, compliance status, and overall system health but don't need to make technical changes. The Reader role provides necessary oversight without operational access, allowing you to view dashboards, compliance reports, and audit data.
+
+Learn more about [Kosli user roles and permissions]({{< ref "/administration/managing_users/roles_in_kosli" >}}).
 
 ## Where to Start
 - [**What is Kosli?**]({{< ref "/understand_kosli/what_is_kosli/">}}): Understand the value and core ideas
