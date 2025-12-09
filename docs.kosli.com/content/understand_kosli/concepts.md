@@ -105,7 +105,10 @@ Kosli supports various types of runtime environments:
 
 An Environment Snapshot represents the reported status (running Artifacts) of your runtime environment at a specific point in time.
 
-In each snapshot, Kosli links the running artifacts to the Flows and Trails that produced them. Snapshot compliance relies on the compliance status of each running artifact, while Environment compliance depends on its latest snapshot compliance.
+In each snapshot, Kosli links the running artifacts to the Flows and Trails that produced them. Snapshot compliance
+relies on the compliance status of each running artifact against the environment's attached policies. Environment
+compliance depends on its latest snapshot compliance. Environments without attached policies have an **unknown** 
+compliance state.
 
 Running artifacts that come from 3rd party sources, can be `allow-listed` in an Environment to make them compliant.
 

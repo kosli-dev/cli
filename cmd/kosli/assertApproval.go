@@ -57,6 +57,12 @@ func newAssertApprovalCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
+
+			err = MuXRequiredFlags(cmd, []string{"fingerprint", "artifact-type"}, true)
+			if err != nil {
+				return err
+			}
+
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
 
 		},

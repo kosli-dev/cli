@@ -2,6 +2,7 @@ package requests
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -58,6 +59,7 @@ func (cl *CustomLogger) Printf(format string, args ...interface{}) {
 func NewKosliClient(httpProxyURL string, maxAPIRetries int, debug bool, logger *logger.Logger) (*Client, error) {
 	retryClient := retryablehttp.NewClient()
 	retryClient.RetryMax = maxAPIRetries
+	retryClient.CheckRetry = customCheckRetry
 	if debug {
 		retryClient.Logger = &CustomLogger{
 			Logger: log.New(os.Stderr, "[debug]", log.Lmsgprefix),
@@ -299,4 +301,21 @@ func (c *Client) PayloadOutput(req *http.Request, jsonFields map[string]interfac
 		c.Logger.Info("%s \n %+v", message, string(bodyBytes))
 	}
 	return nil
+}
+
+func customCheckRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	// Get the default retry policy for errors and certain status codes.
+	// It will retry on 5xx, 429 and some special cases
+	shouldRetry, retryErr := retryablehttp.DefaultRetryPolicy(ctx, resp, err)
+	if retryErr != nil {
+		return false, retryErr
+	}
+	if shouldRetry {
+		return true, nil
+	}
+	// The sever gives 409 if we have a lock conflict.
+	if resp != nil && resp.StatusCode == 409 {
+		return true, nil
+	}
+	return false, nil
 }

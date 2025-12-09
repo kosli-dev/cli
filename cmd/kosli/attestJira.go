@@ -318,12 +318,20 @@ func (o *attestJiraOptions) run(args []string) error {
 		logger.Info("jira attestation '%s' is reported to trail: %s", o.payload.AttestationName, o.trailName)
 	}
 
-	if len(issueIDs) == 0 && o.assert {
-		return fmt.Errorf("no Jira references are found in commit message or branch name")
+	if len(issueIDs) == 0 && o.assert && !global.DryRun {
+		errString := ""
+		if err != nil {
+			errString = fmt.Sprintf("%s\nError: ", err.Error())
+		}
+		err = fmt.Errorf("%sno Jira references are found in commit message or branch name", errString)
 	}
 
-	if issueFoundCount != len(issueIDs) && o.assert {
-		return fmt.Errorf("missing Jira issues from references found in commit message or branch name%s", issueLog)
+	if issueFoundCount != len(issueIDs) && o.assert && !global.DryRun {
+		errString := ""
+		if err != nil {
+			errString = fmt.Sprintf("%s\nError: ", err.Error())
+		}
+		err = fmt.Errorf("%smissing Jira issues from references found in commit message or branch name%s", errString, issueLog)
 	}
 	return wrapAttestationError(err)
 }

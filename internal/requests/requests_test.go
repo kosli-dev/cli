@@ -52,6 +52,10 @@ func (suite *RequestsTestSuite) SetupSuite() {
 		Reply(403).
 		BodyString(`"Denied"`)
 	suite.fakeService.NewHandler().
+		Get("/locked/").
+		Reply(409).
+		BodyString("resource temporarily locked")
+	suite.fakeService.NewHandler().
 		Get("/fail/").
 		Reply(500).
 		BodyString("server broken")
@@ -287,6 +291,15 @@ func (suite *RequestsTestSuite) TestDo() {
 			},
 			wantError:        true,
 			expectedErrorMsg: "resource not found",
+		},
+		{
+			name: "GET request to 409 endpoint",
+			params: &RequestParams{
+				Method: http.MethodGet,
+				URL:    suite.fakeService.ResolveURL("/locked/"),
+			},
+			wantError:        true,
+			expectedErrorMsg: fmt.Sprintf("Get \"%s\": GET %s giving up after 2 attempt(s)", suite.fakeService.ResolveURL("/locked/"), suite.fakeService.ResolveURL("/locked/")),
 		},
 		{
 			name: "GET request to 500 endpoint",

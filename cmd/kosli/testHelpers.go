@@ -405,7 +405,8 @@ func CreateArtifactWithCommit(flowName, artifactFingerprint, artifactName string
 }
 
 // CreateApproval creates an approval for an artifact in a flow
-func CreateApproval(flowName, fingerprint string, t *testing.T) {
+// If isRequest is true, this creates an approval request
+func CreateApproval(flowName, fingerprint string, isRequest bool, t *testing.T) {
 	t.Helper()
 	o := &reportApprovalOptions{
 		payload: ApprovalPayload{
@@ -418,7 +419,7 @@ func CreateApproval(flowName, fingerprint string, t *testing.T) {
 		srcRepoRoot:     "../..",
 	}
 
-	err := o.run([]string{"filename"}, false)
+	err := o.run([]string{"filename"}, isRequest)
 	require.NoError(t, err, "approval should be created without error")
 }
 
@@ -498,6 +499,19 @@ func CreatePolicy(org, policyName string, t *testing.T) {
 
 	err := o.run([]string{policyName, "testdata/policy-files/test-policy.yml"})
 	require.NoError(t, err, "policy should be created without error")
+}
+
+func AttachPolicy(envNames []string, policyName string, t *testing.T) {
+	t.Helper()
+	o := &attachPolicyOptions{
+		payload: AttachPolicyPayload{
+			PolicyNames: []string{policyName},
+		},
+		environments: envNames,
+	}
+
+	err := o.run([]string{policyName})
+	require.NoError(t, err, "policies should be attached without error")
 }
 
 func CreateGenericArtifactAttestation(flowName, trailName, fingerprint, attestationName string, compliant bool, t *testing.T) {

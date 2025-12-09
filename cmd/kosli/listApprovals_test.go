@@ -41,7 +41,7 @@ func (suite *ListApprovalsCommandTestSuite) SetupTest() {
 	suite.fingerprint, err = GetSha256Digest(suite.artifactPath, fingerprintOptions, logger)
 	require.NoError(suite.Suite.T(), err)
 	CreateArtifact(suite.flowName2, suite.fingerprint, suite.artifactName, suite.Suite.T())
-	CreateApproval(suite.flowName2, suite.fingerprint, suite.Suite.T())
+	CreateApproval(suite.flowName2, suite.fingerprint, false, suite.Suite.T())
 }
 
 func (suite *ListApprovalsCommandTestSuite) TestListApprovalsCmd() {
