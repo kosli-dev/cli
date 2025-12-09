@@ -152,7 +152,7 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 			sonarResults.ServerUrl = sc.serverURL
 			sonarResults.Revision = sc.revision
 			project.Url = fmt.Sprintf("%s/dashboard?id=%s", sonarResults.ServerUrl, project.Key)
-			analysisID, err = GetProjectAnalysisFromRevision(httpClient, sonarResults, project, sc.revision, tokenHeader)
+			analysisID, err = GetProjectAnalysis(httpClient, sonarResults, project, "", sc.revision, tokenHeader)
 			if err != nil {
 				return nil, err
 			}
@@ -171,7 +171,7 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 		}
 
 		//Get project revision and scan date/time from the projectAnalyses API
-		err = GetProjectAnalysisFromAnalysisID(httpClient, sonarResults, project, analysisID, tokenHeader)
+		_, err = GetProjectAnalysis(httpClient, sonarResults, project, analysisID, "", tokenHeader)
 		if err != nil {
 			return nil, err
 		}
@@ -233,6 +233,7 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 		if err != nil {
 			return "", err
 		}
+
 		err = json.NewDecoder(taskResponse.Body).Decode(taskResponseData)
 		if err != nil {
 			return "", fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube")
@@ -299,8 +300,7 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 	return analysisId, nil
 }
 
-func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *SonarResults, project *Project, revision, tokenHeader string) (string, error) {
-	var analysisID string
+func GetProjectAnalysis(httpClient *http.Client, sonarResults *SonarResults, project *Project, analysisID, revision, tokenHeader string) (string, error) {
 
 	projectAnalysesURL := fmt.Sprintf("%s/api/project_analyses/search?project=%s", sonarResults.ServerUrl, project.Key)
 	projectAnalysesRequest, err := http.NewRequest("GET", projectAnalysesURL, nil)
@@ -320,11 +320,21 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 		return "", fmt.Errorf("please check your API token and SonarQube server URL are correct and you have the correct permissions in SonarQube")
 	}
 
-	for analysis := range projectAnalysesData.Analyses {
-		if projectAnalysesData.Analyses[analysis].Revision == revision {
-			sonarResults.AnalaysedAt = projectAnalysesData.Analyses[analysis].Date
-			analysisID = projectAnalysesData.Analyses[analysis].Key
-			break
+	if revision != "" {
+		for analysis := range projectAnalysesData.Analyses {
+			if projectAnalysesData.Analyses[analysis].Revision == revision {
+				sonarResults.AnalaysedAt = projectAnalysesData.Analyses[analysis].Date
+				analysisID = projectAnalysesData.Analyses[analysis].Key
+				break
+			}
+		}
+	} else if analysisID != "" {
+		for analysis := range projectAnalysesData.Analyses {
+			if projectAnalysesData.Analyses[analysis].Key == analysisID {
+				sonarResults.AnalaysedAt = projectAnalysesData.Analyses[analysis].Date
+				sonarResults.Revision = projectAnalysesData.Analyses[analysis].Revision
+				break
+			}
 		}
 	}
 
@@ -333,49 +343,16 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 	}
 
 	if sonarResults.AnalaysedAt == "" {
-		return "", fmt.Errorf("analysis for revision %s of project %s not found. Check the revision is correct. \nThe scan may still be being processed by SonarQube, try again later.\n Otherwise if you are attesting an older scan, the snapshot may also have been deleted by SonarQube", revision, project.Key)
+		if revision != "" {
+			return "", fmt.Errorf("analysis for revision %s of project %s not found. Check the revision is correct. \nThe scan may still be being processed by SonarQube, try again later.\n Otherwise if you are attesting an older scan, the snapshot may also have been deleted by SonarQube", revision, project.Key)
+		} else {
+			return "", fmt.Errorf("analysis with ID %s not found on %s. Snapshot may have been deleted by SonarQube", analysisID, sonarResults.ServerUrl)
+		}
 	}
 	projectAnalysesResponse.Body.Close()
 
 	return analysisID, nil
-}
 
-func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *SonarResults, project *Project, analysisID, tokenHeader string) error {
-	projectAnalysesURL := fmt.Sprintf("%s/api/project_analyses/search?project=%s", sonarResults.ServerUrl, project.Key)
-	projectAnalysesRequest, err := http.NewRequest("GET", projectAnalysesURL, nil)
-	projectAnalysesRequest.Header.Add("Authorization", tokenHeader)
-	if err != nil {
-		return err
-	}
-
-	projectAnalysesResponse, err := httpClient.Do(projectAnalysesRequest)
-	if err != nil {
-		return err
-	}
-
-	projectAnalysesData := &ProjectAnalyses{}
-	err = json.NewDecoder(projectAnalysesResponse.Body).Decode(projectAnalysesData)
-	if err != nil {
-		return fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube")
-	}
-
-	for analysis := range projectAnalysesData.Analyses {
-		if projectAnalysesData.Analyses[analysis].Key == analysisID {
-			sonarResults.AnalaysedAt = projectAnalysesData.Analyses[analysis].Date
-			sonarResults.Revision = projectAnalysesData.Analyses[analysis].Revision
-			break
-		}
-	}
-
-	if projectAnalysesData.Errors != nil {
-		return fmt.Errorf("SonarQube error: %s", projectAnalysesData.Errors[0].Msg)
-	}
-
-	if sonarResults.AnalaysedAt == "" {
-		return fmt.Errorf("analysis with ID %s not found on %s. Snapshot may have been deleted by SonarQube", analysisID, sonarResults.ServerUrl)
-	}
-
-	return nil
 }
 
 func GetQualityGate(httpClient *http.Client, sonarResults *SonarResults, qualityGate *QualityGate, analysisID, tokenHeader string) (*QualityGate, error) {
