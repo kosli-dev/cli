@@ -139,5 +139,56 @@
     &.success :is(h2, h3, h4, h5):before {
       background-image: url('/images/icons/kosli-info-green.svg');
     }
+
+    // Required roles shortcode styling
+    &.required-roles {
+      border-left: 4px solid #6bf;
+      background-color: #EAEEFA;
+      padding: 1rem 1.5rem;
+
+      h4 {
+        margin-top: 0;
+        margin-bottom: 0.75rem;
+        color: #000;
+        font-size: 1.1rem;
+        text-align: left;
+      }
+
+      p {
+        margin-bottom: 0.5rem;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+
+      ul {
+        margin: 0.5rem 0;
+        padding-left: 1.5rem;
+
+        li {
+          margin-bottom: 0.25rem;
+        }
+      }
+
+      strong {
+        color: #0066cc;
+        font-weight: 600;
+      }
+
+      .learn-more {
+        margin-top: 0.75rem;
+        font-size: 0.9rem;
+
+        a {
+          color: var(--color-link);
+          text-decoration: none;
+
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
+    }
   }
 }

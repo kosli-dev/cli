@@ -1,0 +1,24 @@
+{{- $roles := split (.Get "roles") "," -}}
+{{- $capability := .Get "capability" -}}
+{{- $roleCount := len $roles -}}
+
+<div class="book-hint required-roles">
+  <b>🔐 Required Permissions</b>
+
+  {{- if eq $roleCount 1 -}}
+    <p>You need the <b>{{ index $roles 0 }}</b> role{{ if $capability }} to {{ $capability }}{{ end }}.</p>
+  {{- else if eq $roleCount 2 -}}
+    <p>You need the <b>{{ index $roles 0 }}</b> or <b>{{ index $roles 1 }}</b> role{{ if $capability }} to {{ $capability }}{{ end }}.</p>
+  {{- else -}}
+    <p>You need one of the following roles{{ if $capability }} to {{ $capability }}{{ end }}:</p>
+    <ul>
+    {{- range $roles -}}
+      <li><strong>{{ . }}</strong></li>
+    {{- end -}}
+    </ul>
+  {{- end -}}
+
+  <p class="learn-more">
+    <a href="{{ ref . "/administration/managing_users/roles_in_kosli" }}">Learn more about Kosli user roles →</a>
+  </p>
+</div>
