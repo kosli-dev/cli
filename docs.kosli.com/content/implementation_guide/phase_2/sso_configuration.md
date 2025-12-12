@@ -2,6 +2,7 @@
 title: "SSO Configuration"
 bookCollapseSection: false
 weight: 200
+summary: "Step-by-step guide for configuring Single Sign-On (SSO) with Microsoft Entra ID for your Kosli organization."
 ---
 
 # Microsoft Entra ID Setup for SSO

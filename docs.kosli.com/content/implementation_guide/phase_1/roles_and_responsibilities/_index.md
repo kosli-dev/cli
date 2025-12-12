@@ -2,6 +2,7 @@
 title: "Roles and Responsibilities"
 bookCollapseSection: true
 weight: 100
+summary: "Understand the roles and responsibilities of different stakeholders during Kosli implementation using the RACI matrix."
 ---
 
 # Roles and Responsibilities
