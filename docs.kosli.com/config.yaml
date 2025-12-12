@@ -25,6 +25,17 @@ caches:
     dir: :cacheDir/:project
     maxAge: 30s
 
+outputs:
+  home:
+    - HTML
+    - llms
+
+outputFormats:
+  llms:
+    mediaType: text/plain
+    baseName: llms
+    isPlainText: true
+
 module:
   imports:
   - path: github.com/alex-shpak/hugo-book

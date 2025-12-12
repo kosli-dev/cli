@@ -2,6 +2,7 @@
 title: "Attestation Types"
 bookCollapseSection: false
 weight: 300
+summary: "Naming convention guidance for custom attestation types following the control-objective, evidence-type, detail, and version pattern."
 ---
 
 # Attestation Types

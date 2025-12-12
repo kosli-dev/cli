@@ -1,0 +1,64 @@
+# Kosli Documentation
+
+> Record all of the changes in your software and business processes so you can prove compliance and maintain security without slowing down. Track and query every change from the command line or browser.
+
+## Documentation Sections
+
+{{- $sections := slice "understand_kosli" "getting_started" "tutorials" "implementation_guide" "administration" "integrations" }}
+
+{{- range $sections }}
+{{- $sectionPages := where $.Site.Pages "Section" . }}
+{{- if $sectionPages }}
+
+## {{ humanize . | title }}
+
+{{- range $sectionPages }}
+{{- if not .IsHome }}
+- [{{ .Title }}]({{ .RelPermalink }}){{- if .Params.summary }}: {{ .Params.summary | plainify | truncate 200 "..." }}{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+## Reference
+
+### Client Reference
+{{- $clientRefPages := where $.Site.Pages "Section" "client_reference" }}
+{{- if $clientRefPages }}
+{{- range $clientRefPages }}
+{{- if not .IsHome }}
+- [{{ .Title }}]({{ .RelPermalink }})
+{{- end }}
+{{- end }}
+{{- end }}
+
+### API References
+{{- $apiRefPages := where $.Site.Pages "Section" "api_reference" }}
+{{- if $apiRefPages }}
+{{- range $apiRefPages }}
+{{- if not .IsHome }}
+- [{{ .Title }}]({{ .RelPermalink }})
+{{- end }}
+{{- end }}
+{{- end }}
+
+### Additional References
+{{- $additionalPages := where $.Site.Pages "Section" (slice "faq" "migrations" "template_ref" "legacy_ref") }}
+{{- if $additionalPages }}
+{{- range $additionalPages }}
+{{- if not .IsHome }}
+- [{{ .Title }}]({{ .RelPermalink }})
+{{- end }}
+{{- end }}
+{{- end }}
+
+## Optional
+
+The following sections provide additional context but can be skipped for shorter context windows:
+
+### All Pages
+
+{{- $allPages := where $.Site.Pages "Kind" "page" }}
+- Total documentation pages: {{ len $allPages }}
+- Last updated: {{ now.Format "2006-01-02 15:04:05 MST" }}
+- Base URL: {{ .Site.BaseURL }}
