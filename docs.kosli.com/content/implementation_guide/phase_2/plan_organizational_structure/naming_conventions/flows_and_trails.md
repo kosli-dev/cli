@@ -2,6 +2,7 @@
 title: "Flows and Trails"
 bookCollapseSection: false
 weight: 200
+summary: "Naming convention recommendations for flows and trails, including build flows, release flows, and trails with examples and regex patterns."
 ---
 # Flows and Trails Naming Conventions
 

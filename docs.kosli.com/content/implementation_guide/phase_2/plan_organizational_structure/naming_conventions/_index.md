@@ -2,6 +2,7 @@
 title: "Naming Conventions"
 bookCollapseSection: true
 weight: 100
+summary: "Best practices for creating clear and consistent naming conventions for flows, trails, attestation types, and environments in Kosli."
 ---
 
 # Naming Conventions
