@@ -2,12 +2,12 @@
 title: Roles in Kosli
 bookCollapseSection: false
 weight: 100
-summary: "Kosli provides three user roles to help administrators manage access and permissions within their organization: Admin, Member, and Reader."
+summary: "Kosli provides four user roles to help administrators manage access and permissions within their organization: Admin, Member, Snapshotter, and Reader."
 ---
 
 # Roles in Kosli
 
-Kosli provides three user roles to help administrators manage access and permissions within their organization. Understanding these roles is essential for assigning the appropriate level of access to your team members.
+Kosli provides four user roles to help administrators manage access and permissions within their organization. Understanding these roles is essential for assigning the appropriate level of access to your team members.
 
 ## Overview
 
@@ -15,44 +15,47 @@ Kosli provides three user roles to help administrators manage access and permiss
 |------|-------------|----------|
 | **Admin** | Full control over the organization | Organization owners, security leads, platform engineering leads |
 | **Member** | Can create and modify resources | Developers, platform engineers, CI/CD systems |
+| **Snapshotter** | Can create environments, policies, and snapshots | Environment teams, operations teams |
 | **Reader** | Read-only access to view data | Auditors, compliance officers, stakeholders, reporting systems |
 
 ## Permissions Matrix
 
-| Capability | Admin | Member | Reader |
-|------------|:-----:|:------:|:------:|
-| **User Management** | | | |
-| Invite and remove users | ✅ | ❌ | ❌ |
-| Change user roles | ✅ | ❌ | ❌ |
-| **Organization Settings** | | | |
-| Modify organization settings | ✅ | ❌ | ❌ |
-| Configure integrations (Slack, LaunchDarkly) | ✅ | ✅ | ❌ |
-| **Service Accounts** | | | |
-| Create and manage service accounts | ✅ | ✅ | ❌ |
-| Generate service account API keys | ✅ | ✅ | ❌ |
-| **Resource Management** | | | |
-| Create flows | ✅ | ✅ | ❌ |
-| Update/delete flows | ✅ | ✅ | ❌ |
-| Create environments | ✅ | ✅ | ❌ |
-| Update/delete environments | ✅ | ✅ | ❌ |
-| Create policies | ✅ | ✅ | ❌ |
-| Update/delete policies | ✅ | ✅ | ❌ |
-| Create attestation types | ✅ | ✅ | ❌ |
-| Update/delete attestation types | ✅ | ✅ | ❌ |
-| **Attestations & Snapshots** | | | |
-| Report attestations | ✅ | ✅ | ❌ |
-| Report environment snapshots | ✅ | ✅ | ❌ |
-| Create and manage approvals | ✅ | ✅ | ❌ |
-| **Actions** | | | |
-| Create, update, and delete actions | ✅ | ✅ | ❌ |
-| View actions | ✅ | ✅ | ✅ |
-| **Data Access** | | | |
-| View trails and artifacts | ✅ | ✅ | ✅ |
-| View attestations | ✅ | ✅ | ✅ |
-| View snapshots | ✅ | ✅ | ✅ |
-| Query and search data | ✅ | ✅ | ✅ |
-| Export and generate reports | ✅ | ✅ | ✅ |
-| View flow/policy configurations | ✅ | ✅ | ✅ |
+| Capability | Admin | Member | Snapshotter | Reader |
+|------------|:-----:|:------:|:-----------:|:------:|
+| **User Management** | | | | |
+| Invite and remove users | ✅ | ❌ | ❌ | ❌ |
+| Change user roles | ✅ | ❌ | ❌ | ❌ |
+| **Organization Settings** | | | | |
+| Modify organization settings | ✅ | ❌ | ❌ | ❌ |
+| Configure integrations (Slack, LaunchDarkly) | ✅ | ✅ | ❌ | ❌ |
+| **Service Accounts** | | | | |
+| Create and manage service accounts | ✅ | ✅ | ✅* | ❌ |
+| Generate service account API keys | ✅ | ✅ | ✅* | ❌ |
+| **Resource Management** | | | | |
+| Create flows | ✅ | ✅ | ❌ | ❌ |
+| Update/delete flows | ✅ | ✅ | ❌ | ❌ |
+| Create environments | ✅ | ✅ | ✅ | ❌ |
+| Update/delete environments | ✅ | ✅ | ✅ | ❌ |
+| Create policies | ✅ | ✅ | ✅ | ❌ |
+| Update/delete policies | ✅ | ✅ | ✅ | ❌ |
+| Create attestation types | ✅ | ✅ | ❌ | ❌ |
+| Update/delete attestation types | ✅ | ✅ | ❌ | ❌ |
+| **Attestations & Snapshots** | | | | |
+| Report attestations | ✅ | ✅ | ❌ | ❌ |
+| Report environment snapshots | ✅ | ✅ | ✅ | ❌ |
+| Create and manage approvals | ✅ | ✅ | ❌ | ❌ |
+| **Actions** | | | | |
+| Create, update, and delete actions | ✅ | ✅ | ❌ | ❌ |
+| View actions | ✅ | ✅ | ✅ | ✅ |
+| **Data Access** | | | | |
+| View trails and artifacts | ✅ | ✅ | ✅ | ✅ |
+| View attestations | ✅ | ✅ | ✅ | ✅ |
+| View snapshots | ✅ | ✅ | ✅ | ✅ |
+| Query and search data | ✅ | ✅ | ✅ | ✅ |
+| Export and generate reports | ✅ | ✅ | ✅ | ✅ |
+| View flow/policy configurations | ✅ | ✅ | ✅ | ✅ |
+
+*Snapshotters can only create service accounts with Snapshotter or Reader roles.*
 
 ---
 
@@ -112,6 +115,36 @@ Assign the Member role to:
 - Application developers who need to report attestations and manage flows
 - Team leads who need to configure integrations and create service accounts for their teams
 - CI/CD systems that need to report attestations and snapshots (via service accounts)
+
+---
+
+## Snapshotter
+
+Snapshotters can create and modify environments, policies, and snapshots, but cannot manage flows, trails, or organization-wide settings.
+
+### Permissions
+
+Snapshotters can:
+
+- **Service Accounts**: Create and manage service accounts (Snapshotter and Reader roles only)
+- **Resource Management**: Create, update, and delete environments and policies
+- **Snapshots**: Report environment snapshots
+- **Data Access**: View all trails, artifacts, attestations, and snapshots
+
+Snapshotters cannot:
+- Create or manage flows
+- Create or manage attestation types
+- Report attestations
+- Manage users or change user roles
+- Modify organization-wide settings
+- Configure integrations
+
+### When to assign
+
+Assign the Snapshotter role to:
+- Environment teams who need to manage runtime environments and report snapshots
+- Operations teams responsible for defining compliance policies
+- Systems that only need to report environment state without modifying build pipelines
 
 ---
 
@@ -180,7 +213,8 @@ Periodically review user roles and remove access for team members who no longer 
 ### Separate Concerns
 
 - **Admins**: Focus on governance, security, and organization-wide configuration
-- **Members**: Handle day-to-day operations and resource management
+- **Members**: Handle day-to-day operations, flow management, and resource management
+- **Snapshotters**: Manage environments and policies without affecting build flows
 - **Readers**: Provide visibility without risk of accidental changes
 
 ---
@@ -193,6 +227,7 @@ When implementing Kosli, you need to map organizational roles to Kosli user role
 |---------------------|------------------------|-------------|-----------|
 | **Platform Engineers** | Member | Admin (for leads) | Platform engineers need to set up flows, manage service accounts, configure integrations, and implement Kosli across teams. Member role provides these capabilities. Lead platform engineers managing the overall setup may need Admin access. |
 | **Application Developers** | Member | Reader (for view-only) | Developers typically need to report attestations and manage flows for their applications. Member role enables this. Some developers may only need visibility into deployments and compliance status, making Reader sufficient. |
+| **Environment Teams** | Snapshotter | Member | Teams managing specific environments need to report snapshots and define policies but may not need to alter build flows. Snapshotter role isolates these responsibilities. |
 | **Security & Compliance** | Admin | N/A | Security and compliance teams need to manage policies, review audit data, control user access, and configure organization-wide settings. Admin role is required for these governance responsibilities. |
 | **Sponsors** | Reader | N/A | Sponsors need visibility into adoption progress, compliance status, and overall system health but don't need to make technical changes. Reader role provides necessary oversight without operational access. |
 
