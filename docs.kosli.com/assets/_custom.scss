@@ -44,7 +44,7 @@ aside.book-toc .book-toc-content {
 .markdown {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
     flex-grow: 1;
 }
 
@@ -98,10 +98,10 @@ aside.book-toc .book-toc-content {
     color: $neutral-100;
 
     .container {
-        .docs-logo {        
+        .docs-logo {
             width: 16rem;
-            
-            
+
+
             a {
                 margin: 1rem 0;
                 padding: 0 1rem;
@@ -160,12 +160,12 @@ aside.book-toc .book-toc-content {
         width: 24px;
         background-image: url("/images/icons/kosli-icon-copy.svg");
         background-repeat: no-repeat;
-    }    
+    }
     &:hover::after {
-        background-image: url("/images/icons/kosli-icon-copy-hover.svg");       
+        background-image: url("/images/icons/kosli-icon-copy-hover.svg");
     }
     &:active::after {
-        background-image: url("/images/icons/kosli-icon-copy-clicked.svg");  
+        background-image: url("/images/icons/kosli-icon-copy-clicked.svg");
     }
     &:hover code {
         opacity: 0.7;
@@ -197,3 +197,9 @@ aside.book-toc .book-toc-content {
 .footer-logo {
     height: 40px;
 }
+
+.markdown h2 {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
