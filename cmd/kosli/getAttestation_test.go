@@ -19,6 +19,7 @@ type GetAttestationCommandTestSuite struct {
 	artifactPath          string
 	fingerprint           string
 	trailName             string
+	attestationId         string
 }
 
 func (suite *GetAttestationCommandTestSuite) SetupTest() {
@@ -46,6 +47,8 @@ func (suite *GetAttestationCommandTestSuite) SetupTest() {
 	CreateGenericTrailAttestation(suite.flowName, suite.trailName, "first-trail-attestation", suite.Suite.T())
 	CreateGenericArtifactAttestation(suite.flowName, suite.trailName, suite.fingerprint, "second-artifact-attestation", true, suite.Suite.T())
 	CreateGenericTrailAttestation(suite.flowName, suite.trailName, "second-trail-attestation", suite.Suite.T())
+
+	suite.attestationId = GetAttestationId(suite.flowName, suite.trailName, "first-trail-attestation", suite.Suite.T())
 }
 
 func (suite *GetAttestationCommandTestSuite) TestGetAttestationCmd() {
@@ -66,11 +69,11 @@ func (suite *GetAttestationCommandTestSuite) TestGetAttestationCmd() {
 			wantError: true,
 			name:      "providing more than one argument fails",
 			cmd:       fmt.Sprintf(`get attestation first-attestation second-attestation --flow %s --trail %s %s`, suite.flowName, suite.trailName, suite.defaultKosliArguments),
-			golden:    "Error: accepts 1 arg(s), received 2\n",
+			golden:    "Error: accepts at most 1 arg(s), received 2\n",
 		},
 		{
 			wantError: true,
-			name:      "missing --flow fails",
+			name:      "missing --flow fails when ATTESTATION-NAME is provided",
 			cmd:       fmt.Sprintf(`get attestation first-artifact-attestation --trail %s %s`, suite.trailName, suite.defaultKosliArguments),
 			golden:    "Error: required flag(s) \"flow\" not set\n",
 		},
@@ -78,7 +81,7 @@ func (suite *GetAttestationCommandTestSuite) TestGetAttestationCmd() {
 			wantError: true,
 			name:      "missing --api-token fails",
 			cmd:       fmt.Sprintf(`get attestation first-artifact-attestation --flow %s --org orgX`, suite.flowName),
-			golden:    "Error: --api-token is not set\nUsage: kosli get attestation ATTESTATION-NAME [flags]\n",
+			golden:    "Error: --api-token is not set\nUsage: kosli get attestation [ATTESTATION-NAME] [flags]\n",
 		},
 		{
 			name: "getting an existing trail attestation works",
@@ -109,6 +112,46 @@ func (suite *GetAttestationCommandTestSuite) TestGetAttestationCmd() {
 			name:      "providing both trail and fingerprint fails",
 			cmd:       fmt.Sprintf(`get attestation first-artifact-attestation --flow %s --trail %s --fingerprint %s %s`, suite.flowName, suite.trailName, suite.fingerprint, suite.defaultKosliArguments),
 			golden:    "Error: only one of --trail, --fingerprint is allowed\n",
+		},
+		{
+			name: "can get an attestation from its id",
+			cmd:  fmt.Sprintf(`get attestation --attestation-id %s %s`, suite.attestationId, suite.defaultKosliArguments),
+		},
+		{
+			wantError:  false,
+			name:       "if no attestation found when getting by id return empty list in json format",
+			cmd:        fmt.Sprintf(`get attestation --attestation-id %s --output json %s`, "non-existent-attestation-id", suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"data", "length:0"}},
+		},
+		{
+			wantError: true,
+			name:      "providing both attestation id and attestation name fails",
+			cmd:       fmt.Sprintf(`get attestation %s --attestation-id %s %s`, "first-artifact-attestation", suite.attestationId, suite.defaultKosliArguments),
+			golden:    "Error: --attestation-id cannot be used when ATTESTATION-NAME is provided\n",
+		},
+		{
+			wantError: true,
+			name:      "providing both attestation id and trail fails",
+			cmd:       fmt.Sprintf(`get attestation --attestation-id %s --trail %s %s`, suite.attestationId, suite.trailName, suite.defaultKosliArguments),
+			golden:    "Error: --flow, --trail, and --fingerprint flags cannot be used with --attestation-id\n",
+		},
+		{
+			wantError: true,
+			name:      "providing both attestation id and fingerprint fails",
+			cmd:       fmt.Sprintf(`get attestation --attestation-id %s --fingerprint %s %s`, suite.attestationId, suite.fingerprint, suite.defaultKosliArguments),
+			golden:    "Error: --flow, --trail, and --fingerprint flags cannot be used with --attestation-id\n",
+		},
+		{
+			wantError: true,
+			name:      "providing both attestation id and flow fails",
+			cmd:       fmt.Sprintf(`get attestation --attestation-id %s --flow %s %s`, suite.attestationId, suite.flowName, suite.defaultKosliArguments),
+			golden:    "Error: --flow, --trail, and --fingerprint flags cannot be used with --attestation-id\n",
+		},
+		{
+			wantError: true,
+			name:      "providing neither attestation id or flow fails",
+			cmd:       fmt.Sprintf(`get attestation  %s`, suite.defaultKosliArguments),
+			golden:    "Error: one of ATTESTATION-NAME argument or --attestation-id flag is required\n",
 		},
 	}
 
