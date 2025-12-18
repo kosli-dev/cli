@@ -1,5 +1,5 @@
 ---
-title: "SSO Configuration"
+title: "Microsoft Entra ID Setup"
 bookCollapseSection: false
 weight: 200
 summary: "Step-by-step guide for configuring Single Sign-On (SSO) with Microsoft Entra ID for your Kosli organization."
@@ -55,6 +55,7 @@ Make sure to assign the necessary user and group assignments to the application 
 {{% /hint %}}
 
 ### 3. Share details with Kosli Securely
+
 Please share details below securely in order for Kosli to complete SSO setup.<br>
 
 ```
@@ -63,7 +64,7 @@ Directory (tenant) ID:          11111111-2222-3333-4444-555555555555
 Client Secret:                  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 Client Secret Expiration Date:  1999-12-31 (format: yyyy-mm-dd)
 ```
-See [Securely share secrets with Kosli](#securely-share-secrets-with-kosli).
+See [Sharing Secrets Securely with Kosli]({{< relref "sharing_secrets_securely" >}}).
 
 ## Update or Rotate the Client Secret
 
@@ -92,22 +93,7 @@ Client Secret:                  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 Client Secret Expiration Date:  1999-12-31 (format: yyyy-mm-dd)
 ```
 
-See [Securely share secrets with Kosli]({{< ref "#securely-share-secrets-with-kosli" >}}).
-
-## Securely share secrets with Kosli
-
-For securely sharing your secrets with Kosli, we recommend using one of the following services:
-
-* **Onetime Secret:** https://eu.onetimesecret.com
-* **Yopass:** https://yopass.se
-
-After encrypting the secret and generating the link, please email the link to support@kosli.com or your Kosli contact, so we can finalize the SSO registration process.
-
-{{% hint warning %}}
-**Important:**
-The expiration for this must be set to a minimum of 7 days to allow Kosli to process it correctly.
-{{% /hint %}}
-
+See [Sharing Secrets Securely with Kosli]({{< relref "sharing_secrets_securely" >}}).
 
 ## Troubleshooting
 
@@ -136,8 +122,8 @@ Check the following common issues:
 - **Invalid Application ID, Directory ID, or Client Secret**
   - Verify that the values provided to Kosli are correct and correspond to those in your Microsoft Entra ID app registration.
 - **Expired Client Secret**
-  - Ensure that the Client Secret provided to Kosli is still valid and has not expired
-  - If it has expired, follow the [Update or Rotate the Client Secret]({{< ref "#update-or-rotate-the-client-secret" >}}) steps to create a new client
+  - Ensure that the Client Secret provided to Kosli is still valid and has not expired.
+  - If it has expired, follow the [Update or Rotate the Client Secret]({{< ref "#update-or-rotate-the-client-secret" >}}) steps to create a new client.
 - **User and Group Assignments**
   - Ensure that the necessary user and group assignments have been made to the application in Microsoft Entra ID so that users can access Kosli via SSO.
 
