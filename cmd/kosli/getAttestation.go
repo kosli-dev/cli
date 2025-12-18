@@ -11,30 +11,34 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const getAttestationShortDesc = `Get attestation by name from a specified trail or artifact.  `
+const getAttestationShortDesc = `Get an attestation using its name or id.  `
 
 const getAttestationLongDesc = getAttestationShortDesc + `
+
 You can get an attestation from a trail or artifact using its name. The attestation name should be given
-WITHOUT dot-notation.
-
-To get an attestation from a trail, specify the trail name using the --trail flag.  
-To get an attestation from an artifact, specify the artifact fingerprint using the --fingerprint flag.
-
-In both cases the flow must also be specified using the --flow flag.
-
+WITHOUT dot-notation.  
+To get an attestation from a trail, specify the trail name using the ^--trail^ flag.  
+To get an attestation from an artifact, specify the artifact fingerprint using the ^--fingerprint^ flag.  
+These flags cannot be used together. In both cases the flow must also be specified using the ^--flow^ flag.  
 If there are multiple attestations with the same name on the trail or artifact, a list of all will be returned.
+
+You can also get an attestation by its id using the ^--attestation-id^ flag. This cannot be used with the attestation name,
+or any of the ^--flow^, ^--trail^ or ^--fingerprint^ flags.
 `
 
 const getAttestationExample = `
-# get an attestation from a trail (requires the --trail flag)
+# get an attestation by name from a trail (requires the --trail flag)
 kosli get attestation attestationName \
 	--flow flowName \
 	--trail trailName 
 
-# get an attestation from an artifact 
+# get an attestation by name from an artifact 
 kosli get attestation attestationName \
 	--flow flowName \
 	--fingerprint fingerprint 
+
+# get an attestation by its id
+kosli get attestation --attestation-id attestationID
 `
 
 type getAttestationOptions struct {
@@ -92,13 +96,12 @@ func newGetAttestationCmd(out io.Writer) *cobra.Command {
 					return fmt.Errorf("--flow, --trail, and --fingerprint flags cannot be used with --attestation-id")
 				}
 			} else {
-				err := RequireFlags(cmd, []string{"flow"})
-				if err != nil {
-					logger.Error("failed to configure required flags: %v", err)
+				if o.flow == "" {
+					return fmt.Errorf("--flow is required when using ATTESTATION-NAME")
 				}
 				err = MuXRequiredFlags(cmd, []string{"trail", "fingerprint"}, true)
 				if err != nil {
-					return err
+					return fmt.Errorf("%s when using ATTESTATION-NAME", err)
 				}
 			}
 			return nil
@@ -109,10 +112,10 @@ func newGetAttestationCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
-	cmd.Flags().StringVarP(&o.flow, "flow", "f", "", flowNameFlag)
-	cmd.Flags().StringVarP(&o.trail, "trail", "t", "", getAttestationTrailFlag)
+	cmd.Flags().StringVarP(&o.flow, "flow", "f", "", getAttestationFlowNameFlag)
+	cmd.Flags().StringVarP(&o.trail, "trail", "t", "", getAttestationTrailNameFlag)
 	cmd.Flags().StringVarP(&o.fingerprint, "fingerprint", "F", "", getAttestationFingerprintFlag)
-	cmd.Flags().StringVar(&o.attestationID, "attestation-id", "", "The unique identifier of the attestation to retrieve.")
+	cmd.Flags().StringVar(&o.attestationID, "attestation-id", "", attestationIDFlag)
 
 	return cmd
 }

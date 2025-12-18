@@ -254,8 +254,10 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	attestationTypeJqFlag                = "[optional] The attestation type evaluation JQ rules."
 	envNameFlag                          = "The Kosli environment name to assert the artifact against."
 	pathsWatchFlag                       = "[optional] Watch the filesystem for changes and report snapshots of artifacts running in specific filesystem paths to Kosli."
-	getAttestationFingerprintFlag        = "[conditional] The fingerprint of the artifact for the attestation. Cannot be used together with --trail."
-	getAttestationTrailFlag              = "[conditional] The name of the Kosli trail for the attestation. Cannot be used together with --fingerprint."
+	getAttestationFingerprintFlag        = "[conditional] The fingerprint of the artifact for the attestation. Cannot be used together with --trail or --attestation-id."
+	getAttestationTrailNameFlag          = "[conditional] The name of the Kosli trail for the attestation. Cannot be used together with --fingerprint or --attestation-id."
+	getAttestationFlowNameFlag           = "[conditional] The name of the Kosli flow for the attestation. Required if ATTESTATION-NAME provided. Cannot be used together with --attestation-id."
+	attestationIDFlag                    = "[conditional] The unique identifier of the attestation to retrieve. Cannot be used together with ATTESTATION-NAME."
 )
 
 var global *GlobalOpts
