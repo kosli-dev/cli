@@ -2,7 +2,7 @@
 title: "kosli get attestation"
 beta: false
 deprecated: false
-summary: "Get an attestation using its name or id.  "
+summary: "Get attestation by name from a specified trail or artifact.  "
 ---
 
 # kosli get attestation
@@ -10,31 +10,29 @@ summary: "Get an attestation using its name or id.  "
 ## Synopsis
 
 ```shell
-kosli get attestation [ATTESTATION-NAME] [flags]
+kosli get attestation ATTESTATION-NAME [flags]
 ```
 
-Get an attestation using its name or id.  
-
+Get attestation by name from a specified trail or artifact.  
 You can get an attestation from a trail or artifact using its name. The attestation name should be given
-WITHOUT dot-notation.  
-To get an attestation from a trail, specify the trail name using the `--trail` flag.  
-To get an attestation from an artifact, specify the artifact fingerprint using the `--fingerprint` flag.  
-These flags cannot be used together. In both cases the flow must also be specified using the `--flow` flag.  
-If there are multiple attestations with the same name on the trail or artifact, a list of all will be returned.
+WITHOUT dot-notation.
 
-You can also get an attestation by its id using the `--attestation-id` flag. This cannot be used with the attestation name,
-or any of the `--flow`, `--trail` or `--fingerprint` flags.
+To get an attestation from a trail, specify the trail name using the --trail flag.  
+To get an attestation from an artifact, specify the artifact fingerprint using the --fingerprint flag.
+
+In both cases the flow must also be specified using the --flow flag.
+
+If there are multiple attestations with the same name on the trail or artifact, a list of all will be returned.
 
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|        --attestation-id string  |  [conditional] The unique identifier of the attestation to retrieve. Cannot be used together with ATTESTATION-NAME.  |
-|    -F, --fingerprint string  |  [conditional] The fingerprint of the artifact for the attestation. Cannot be used together with --trail or --attestation-id.  |
-|    -f, --flow string  |  [conditional] The name of the Kosli flow for the attestation. Required if ATTESTATION-NAME provided. Cannot be used together with --attestation-id.  |
+|    -F, --fingerprint string  |  [conditional] The fingerprint of the artifact for the attestation. Cannot be used together with --trail.  |
+|    -f, --flow string  |  The Kosli flow name.  |
 |    -h, --help  |  help for attestation  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
-|    -t, --trail string  |  [conditional] The name of the Kosli trail for the attestation. Cannot be used together with --fingerprint or --attestation-id.  |
+|    -t, --trail string  |  [conditional] The name of the Kosli trailfor the attestation. Cannot be used together with --fingerprint.  |
 
 
 ## Flags inherited from parent commands
@@ -59,24 +57,17 @@ kosli get attestation snyk-container-scan --flow=differ-ci --fingerprint=0cbbe3a
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-##### get an attestation by name from a trail (requires the --trail flag)
+##### get an attestation from a trail (requires the --trail flag)
 
 ```shell
 kosli get attestation attestationName 
 
 ```
 
-##### get an attestation by name from an artifact
+##### get an attestation from an artifact
 
 ```shell
 kosli get attestation attestationName 
 	--fingerprint fingerprint
-
-```
-
-##### get an attestation by its id
-
-```shell
-kosli get attestation --attestation-id attestationID
 ```
 
