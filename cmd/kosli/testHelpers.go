@@ -560,3 +560,24 @@ func CreateGenericTrailAttestation(flowName, trailName, attestationName string, 
 	err := o.run([]string{})
 	require.NoError(t, err, "generic artifact attestation should be created without error")
 }
+
+func GetAttestationId(flowName, trailName, attestationName string, t *testing.T) string {
+	t.Helper()
+	o := &getAttestationOptions{
+		flow:   flowName,
+		trail:  trailName,
+		output: "json",
+	}
+	buffer := new(bytes.Buffer)
+	err := o.run(buffer, []string{attestationName})
+	require.NoError(t, err, "attestation should be retrieved without error")
+
+	var data []map[string]interface{}
+	err = json.Unmarshal(buffer.Bytes(), &data)
+	require.NoError(t, err, "failed to parse attestation JSON: %s", buffer.String())
+	require.Greater(t, len(data), 0, "expected at least one attestation")
+
+	id, ok := data[0]["attestation_id"].(string)
+	require.True(t, ok, "attestation_id field not found or not a string")
+	return id
+}

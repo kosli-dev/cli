@@ -11,37 +11,42 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const getAttestationShortDesc = `Get attestation by name from a specified trail or artifact.  `
+const getAttestationShortDesc = `Get an attestation using its name or id.  `
 
 const getAttestationLongDesc = getAttestationShortDesc + `
+
 You can get an attestation from a trail or artifact using its name. The attestation name should be given
-WITHOUT dot-notation.
-
-To get an attestation from a trail, specify the trail name using the --trail flag.  
-To get an attestation from an artifact, specify the artifact fingerprint using the --fingerprint flag.
-
-In both cases the flow must also be specified using the --flow flag.
-
+WITHOUT dot-notation.  
+To get an attestation from a trail, specify the trail name using the ^--trail^ flag.  
+To get an attestation from an artifact, specify the artifact fingerprint using the ^--fingerprint^ flag.  
+These flags cannot be used together. In both cases the flow must also be specified using the ^--flow^ flag.  
 If there are multiple attestations with the same name on the trail or artifact, a list of all will be returned.
+
+You can also get an attestation by its id using the ^--attestation-id^ flag. This cannot be used with the attestation name,
+or any of the ^--flow^, ^--trail^ or ^--fingerprint^ flags.
 `
 
 const getAttestationExample = `
-# get an attestation from a trail (requires the --trail flag)
+# get an attestation by name from a trail (requires the --trail flag)
 kosli get attestation attestationName \
 	--flow flowName \
 	--trail trailName 
 
-# get an attestation from an artifact 
+# get an attestation by name from an artifact 
 kosli get attestation attestationName \
 	--flow flowName \
 	--fingerprint fingerprint 
+
+# get an attestation by its id
+kosli get attestation --attestation-id attestationID
 `
 
 type getAttestationOptions struct {
-	output      string
-	flow        string
-	trail       string
-	fingerprint string
+	output        string
+	flow          string
+	trail         string
+	fingerprint   string
+	attestationID string
 }
 
 type Attestation struct {
@@ -63,22 +68,41 @@ type GitCommitInfo struct {
 	Timestamp float64 `json:"timestamp"`
 }
 
+type listAttestationsResponse struct {
+	Data []Attestation `json:"data"`
+}
+
 func newGetAttestationCmd(out io.Writer) *cobra.Command {
 	o := new(getAttestationOptions)
 	cmd := &cobra.Command{
-		Use:     "attestation ATTESTATION-NAME",
+		Use:     "attestation [ATTESTATION-NAME]",
 		Short:   getAttestationShortDesc,
 		Long:    getAttestationLongDesc,
 		Example: getAttestationExample,
-		Args:    cobra.ExactArgs(1),
+		Args:    cobra.MaximumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
-			err = MuXRequiredFlags(cmd, []string{"trail", "fingerprint"}, true)
-			if err != nil {
-				return err
+			if len(args) == 0 && o.attestationID == "" {
+				return fmt.Errorf("one of ATTESTATION-NAME argument or --attestation-id flag is required")
+			}
+			if o.attestationID != "" {
+				if len(args) > 0 {
+					return fmt.Errorf("--attestation-id cannot be used when ATTESTATION-NAME is provided")
+				}
+				if o.flow != "" || o.trail != "" || o.fingerprint != "" {
+					return fmt.Errorf("--flow, --trail, and --fingerprint flags cannot be used with --attestation-id")
+				}
+			} else {
+				if o.flow == "" {
+					return fmt.Errorf("--flow is required when using ATTESTATION-NAME")
+				}
+				err = MuXRequiredFlags(cmd, []string{"trail", "fingerprint"}, true)
+				if err != nil {
+					return fmt.Errorf("%s when using ATTESTATION-NAME", err)
+				}
 			}
 			return nil
 		},
@@ -88,30 +112,32 @@ func newGetAttestationCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
-	cmd.Flags().StringVarP(&o.flow, "flow", "f", "", flowNameFlag)
-	cmd.Flags().StringVarP(&o.trail, "trail", "t", "", getAttestationTrailFlag)
+	cmd.Flags().StringVarP(&o.flow, "flow", "f", "", getAttestationFlowNameFlag)
+	cmd.Flags().StringVarP(&o.trail, "trail", "t", "", getAttestationTrailNameFlag)
 	cmd.Flags().StringVarP(&o.fingerprint, "fingerprint", "F", "", getAttestationFingerprintFlag)
-
-	err := RequireFlags(cmd, []string{"flow"})
-	if err != nil {
-		logger.Error("failed to configure required flags: %v", err)
-	}
+	cmd.Flags().StringVar(&o.attestationID, "attestation-id", "", attestationIDFlag)
 
 	return cmd
 }
 
 func (o *getAttestationOptions) run(out io.Writer, args []string) error {
 	var url string
-	baseUrl := fmt.Sprintf("%s/api/v2/attestations/%s/%s", global.Host, global.Org, o.flow)
-	if o.trail != "" {
-		url = fmt.Sprintf("%s/trail/%s", baseUrl, o.trail)
-	}
 
-	if o.fingerprint != "" {
-		url = fmt.Sprintf("%s/artifact/%s", baseUrl, o.fingerprint)
-	}
+	baseUrl := fmt.Sprintf("%s/api/v2/attestations/%s", global.Host, global.Org)
+	if o.attestationID != "" {
+		url = fmt.Sprintf("%s?attestation_id=%s", baseUrl, o.attestationID)
+	} else {
+		flowBaseUrl := fmt.Sprintf("%s/%s", baseUrl, o.flow)
+		if o.trail != "" {
+			url = fmt.Sprintf("%s/trail/%s", flowBaseUrl, o.trail)
+		}
 
-	url = fmt.Sprintf("%s/%s", url, args[0])
+		if o.fingerprint != "" {
+			url = fmt.Sprintf("%s/artifact/%s", flowBaseUrl, o.fingerprint)
+		}
+
+		url = fmt.Sprintf("%s/%s", url, args[0])
+	}
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
@@ -132,10 +158,16 @@ func (o *getAttestationOptions) run(out io.Writer, args []string) error {
 }
 
 func printAttestationsAsTable(raw string, out io.Writer, pageNumber int) error {
+	response := &listAttestationsResponse{}
 	var attestations []Attestation
+
 	err := json.Unmarshal([]byte(raw), &attestations)
 	if err != nil {
-		return err
+		err = json.Unmarshal([]byte(raw), &response)
+		if err != nil {
+			return err
+		}
+		attestations = response.Data
 	}
 
 	if len(attestations) == 0 {
