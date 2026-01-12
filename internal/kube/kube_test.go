@@ -296,6 +296,7 @@ func TestKubeTestSuite(t *testing.T) {
 
 // TestProcessPodsWithFailedPodsWithoutImageIDs tests that failed pods without image IDs
 // are skipped and do not result in nil entries in the returned slice
+// This relates to issue https://github.com/kosli-dev/server/issues/4448
 func TestProcessPodsWithFailedPodsWithoutImageIDs(t *testing.T) {
 	testLogger := logger.NewStandardLogger()
 
