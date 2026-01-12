@@ -293,3 +293,100 @@ func TestKubeTestSuite(t *testing.T) {
 
 	suite.Run(t, new(KubeTestSuite))
 }
+
+// TestProcessPodsWithFailedPodsWithoutImageIDs tests that failed pods without image IDs
+// are skipped and do not result in nil entries in the returned slice
+func TestProcessPodsWithFailedPodsWithoutImageIDs(t *testing.T) {
+	testLogger := logger.NewStandardLogger()
+
+	// Create a mix of pods: running, failed with image IDs, and failed without image IDs
+	pods := &corev1.PodList{
+		Items: []corev1.Pod{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "running-pod",
+					Namespace: "test-ns",
+				},
+				Status: corev1.PodStatus{
+					Phase: corev1.PodRunning,
+					ContainerStatuses: []corev1.ContainerStatus{
+						{
+							Name:    "container1",
+							Image:   "nginx:1.21.3",
+							ImageID: "docker-pullable://nginx@sha256:644a70516a26004c97d0d85c7fe1d0c3a67ea8ab7ddf4aff193d9f301670cf36",
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "failed-pod-without-imageid",
+					Namespace: "test-ns",
+				},
+				Status: corev1.PodStatus{
+					Phase: corev1.PodFailed,
+					ContainerStatuses: []corev1.ContainerStatus{
+						{
+							Name:    "container1",
+							Image:   "nginx:1.21.3",
+							ImageID: "", // Empty ImageID - should be skipped
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "another-running-pod",
+					Namespace: "test-ns",
+				},
+				Status: corev1.PodStatus{
+					Phase: corev1.PodRunning,
+					ContainerStatuses: []corev1.ContainerStatus{
+						{
+							Name:    "container1",
+							Image:   "nginx:1.21.0",
+							ImageID: "docker-pullable://nginx@sha256:123a70516a26004c97d0d85c7fe1d0c3a67ea8ab7ddf4aff193d9f301670cf36",
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "another-failed-pod-without-imageid",
+					Namespace: "test-ns",
+				},
+				Status: corev1.PodStatus{
+					Phase: corev1.PodFailed,
+					ContainerStatuses: []corev1.ContainerStatus{
+						{
+							Name:    "container1",
+							Image:   "busybox:latest",
+							ImageID: "", // Empty ImageID - should be skipped
+						},
+					},
+				},
+			},
+		},
+	}
+
+	result, err := processPods(pods, testLogger)
+	require.NoError(t, err, "processPods should not return an error")
+
+	// We should only get 2 pods (the two running ones), not 4
+	require.Equal(t, 2, len(result), "Expected only running pods to be included")
+
+	// Verify no nil entries
+	for i, podData := range result {
+		require.NotNil(t, podData, "Pod data at index %d should not be nil", i)
+	}
+
+	// Verify the correct pods are included
+	podNames := make([]string, len(result))
+	for i, podData := range result {
+		podNames[i] = podData.PodName
+	}
+	require.Contains(t, podNames, "running-pod")
+	require.Contains(t, podNames, "another-running-pod")
+	require.NotContains(t, podNames, "failed-pod-without-imageid")
+	require.NotContains(t, podNames, "another-failed-pod-without-imageid")
+}

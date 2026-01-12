@@ -196,9 +196,12 @@ func processPods(list *corev1.PodList, logger *logger.Logger) ([]*PodData, error
 					cancel() // send cancel signal to goroutines
 					return
 				}
-				mutex.Lock()
-				podsData = append(podsData, data)
-				mutex.Unlock()
+				// Only append if data is not nil (NewPodData returns nil for skipped pods)
+				if data != nil {
+					mutex.Lock()
+					podsData = append(podsData, data)
+					mutex.Unlock()
+				}
 			}
 		}(pod)
 	}
