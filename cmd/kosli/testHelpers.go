@@ -20,7 +20,7 @@ import (
 
 type jsonCheck struct {
 	Path string
-	Want interface{}
+	Want any
 }
 
 // cmdTestCase describes a cmd test case.
@@ -106,38 +106,53 @@ func goldenPath(filename string) string {
 	return filepath.Join("testdata", filename)
 }
 
-func goldenJsonContains(t *testing.T, output string, path string, want interface{}) {
-	var data interface{}
+func goldenJsonContains(t *testing.T, output string, path string, want any) {
+	var data any
 	err := json.Unmarshal([]byte(output), &data)
 	require.NoError(t, err, "invalid JSON in command output")
 
-	// Handle empty path - check root value directly
-	if path == "" {
-		// Special case: check for empty array
-		if want == "[]" || want == "empty" {
-			list, ok := data.([]interface{})
-			require.True(t, ok, "expected array at root")
-			require.Equal(t, 0, len(list), "expected empty array")
-			return
-		}
-		// Special case: check for non-empty array
-		if want == "non-empty" {
-			list, ok := data.([]interface{})
-			require.True(t, ok, "expected array at root")
-			require.Greater(t, len(list), 0, "expected non-empty array")
-			return
-		}
-		// Special case: check for empty object
-		if want == "{}" {
-			obj, ok := data.(map[string]interface{})
-			require.True(t, ok, "expected object at root")
-			require.Equal(t, 0, len(obj), "expected empty object")
-			return
-		}
-		require.Equal(t, want, data, "unexpected value at root")
+	if path != "" {
+		data = parseJsonData(data, path, t)
+	}
+
+	// Special case: check for empty array
+	if want == "[]" || want == "empty" {
+		list, ok := data.([]any)
+		require.True(t, ok, "expected array at root")
+		require.Equal(t, 0, len(list), "expected empty array")
+		return
+	}
+	// Special case: check for non-empty array
+	if want == "non-empty" {
+		list, ok := data.([]any)
+		require.True(t, ok, "expected array at root")
+		require.Greater(t, len(list), 0, "expected non-empty array")
+		return
+	}
+	// Special case: check for empty object
+	if want == "{}" {
+		obj, ok := data.(map[string]any)
+		require.True(t, ok, "expected object at root")
+		require.Equal(t, 0, len(obj), "expected empty object")
 		return
 	}
 
+	// Special case: check array length
+	if wantStr, ok := want.(string); ok && strings.HasPrefix(wantStr, "length:") {
+		lengthStr := strings.TrimPrefix(wantStr, "length:")
+		expectedLength, err := strconv.Atoi(lengthStr)
+		require.NoError(t, err, "invalid length specification: %s", wantStr)
+
+		list, ok := data.([]any)
+		require.True(t, ok, "expected array at path %s", path)
+		require.Equal(t, expectedLength, len(list), "unexpected array length at path %s", path)
+		return
+	}
+
+	require.Equal(t, want, data, "unexpected value at path %s", path)
+}
+
+func parseJsonData(data any, path string, t *testing.T) any {
 	current := data
 	segments := strings.Split(path, ".")
 	for _, seg := range segments {
@@ -147,13 +162,13 @@ func goldenJsonContains(t *testing.T, output string, path string, want interface
 			idx, err := strconv.Atoi(idxStr)
 			require.NoError(t, err, "invalid array index in path: %s", seg)
 
-			list, ok := current.([]interface{})
+			list, ok := current.([]any)
 			require.True(t, ok, "expected array at %s", seg)
 			require.True(t, idx < len(list), "index %d out of range", idx)
 			current = list[idx]
 		} else {
 			// map lookup
-			m, ok := current.(map[string]interface{})
+			m, ok := current.(map[string]any)
 			require.True(t, ok, "expected object at %s", seg)
 
 			val, exists := m[seg]
@@ -161,20 +176,7 @@ func goldenJsonContains(t *testing.T, output string, path string, want interface
 			current = val
 		}
 	}
-
-	// Special case: check array length
-	if wantStr, ok := want.(string); ok && strings.HasPrefix(wantStr, "length:") {
-		lengthStr := strings.TrimPrefix(wantStr, "length:")
-		expectedLength, err := strconv.Atoi(lengthStr)
-		require.NoError(t, err, "invalid length specification: %s", wantStr)
-
-		list, ok := current.([]interface{})
-		require.True(t, ok, "expected array at path %s", path)
-		require.Equal(t, expectedLength, len(list), "unexpected array length at path %s", path)
-		return
-	}
-
-	require.Equal(t, want, current, "unexpected value at path %s", path)
+	return current
 }
 
 func compareTwoFiles(actualFilename, expectedFilename string) error {
@@ -329,6 +331,13 @@ func BeginTrail(trailName, flowName, templatePath string, t *testing.T) {
 		payload: TrailPayload{
 			Name:        trailName,
 			Description: "test trail",
+			GitRepoInfo: &gitview.GitRepoInfo{
+				URL:         "https://github.com/kosli-dev/cli",
+				Name:        "main",
+				ID:          "1234567890",
+				Description: "test description",
+				Provider:    "github",
+			},
 		},
 		templateFile: templatePath,
 		flow:         flowName,
