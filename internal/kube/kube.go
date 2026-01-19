@@ -84,6 +84,11 @@ func NewK8sClientSet(kubeconfigPath string) (*K8SConnection, error) {
 		}
 	}
 
+	// set the QPS and burst for the config to control the rate of requests to the API server
+	//  defaults are 5 QPS and 10 burst which is too low for large clusters
+	config.QPS = 50
+	config.Burst = 100
+
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err
