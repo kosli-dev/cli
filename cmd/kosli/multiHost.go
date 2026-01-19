@@ -5,13 +5,14 @@ Kosli uses CI pipelines in the cyber-dojo Org repos [*] for two purposes:
 1. public facing documentation
 2. private development purposes
 
-All Kosli CLI calls in [*] are made to _two_ servers (because of 2)
+All Kosli CLI calls in [*] are made to _three_ servers (because of 2)
   - https://app.kosli.com
   - https://staging.app.kosli.com
+  - https://app.us.kosli.com
 
-Explicitly making each Kosli CLI call in [*] twice is not an option (because of 1)
-Duplicating the entire CI workflows is complex because, eg, deployments must not be duplicated.
-The least-worst option is to allow KOSLI_HOST and KOSLI_API_TOKEN to specify two
+Explicitly making each Kosli CLI call in [*] three times is not an option (because of 1)
+Duplicating the entire CI workflows is complex, eg, deployments must not be duplicated.
+The least-worst option is to allow KOSLI_HOST and KOSLI_API_TOKEN to specify multiple
 comma-separated values. Note cyber-dojo must ensure its api-tokens do not contain commas.
 */
 
@@ -52,7 +53,7 @@ func runMultiHost(args []string) (string, error) {
 	args0 := argsAppendHostApiTokenFlags(0)
 	output0, err0 := runBufferedInnerMain(args0)
 
-	stdOut := output0
+	stdOut := fmt.Sprintf("[%s]\n", opts.hosts[0]) + output0
 	var errorMessage string
 
 	if err0 != nil {
