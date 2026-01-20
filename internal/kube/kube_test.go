@@ -192,6 +192,19 @@ func (suite *KubeTestSuite) TestGetPodsData() {
 	}
 }
 
+func (suite *KubeTestSuite) TestGetPodsDataWithThrottling() {
+	// create a large number of pods
+	for i := 0; i < 200; i++ {
+		suite.createNamespace(fmt.Sprintf("ns-%d", i))
+	}
+	// Get pods data with timeout check
+	startTime := time.Now()
+	_, err := suite.clientset.GetPodsData(&filters.ResourceFilterOptions{IncludeNamesRegex: []string{"^ns-.*"}}, logger.NewStandardLogger())
+	duration := time.Since(startTime)
+	require.NoErrorf(suite.Suite.T(), err, "error getting pods data for test GetPodsDataWithThrottling")
+	require.LessOrEqual(suite.Suite.T(), duration, 5*time.Second, "GetPodsData should complete within 5 seconds, but took %v", duration)
+}
+
 func (suite *KubeTestSuite) TestFilterNamespaces() {
 	type args struct {
 		nsList []corev1.Namespace
