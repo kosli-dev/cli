@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const listArtifactsShortDesc = `List artifacts in a flow. `
+const listArtifactsShortDesc = `List artifacts in a flow or repo. `
 
 const listArtifactsLongDesc = listArtifactsShortDesc + `The results are paginated and ordered from latest to oldest.
 By default, the page limit is 15 artifacts per page.
@@ -20,6 +20,12 @@ const artifactLsExample = `
 # list the last 15 artifacts for a flow:
 kosli list artifacts \
 	--flow yourFlowName \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# list the last 15 artifacts for a repo:
+kosli list artifacts \
+	--repo yourRepoName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
@@ -42,7 +48,10 @@ kosli list artifacts \
 type listArtifactsOptions struct {
 	listOptions
 	flowName string
+	repoName string
 }
+
+var filter string = "flow"
 
 func newListArtifactsCmd(out io.Writer) *cobra.Command {
 	o := new(listArtifactsOptions)
@@ -57,6 +66,10 @@ func newListArtifactsCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
+			err = MuXRequiredFlags(cmd, []string{"flow", "repo"}, true)
+			if err != nil {
+				return err
+			}
 			return o.validate(cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -65,19 +78,22 @@ func newListArtifactsCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
+	cmd.Flags().StringVar(&o.repoName, "repo", "", repoNameFlag)
 	addListFlags(cmd, &o.listOptions)
-
-	err := RequireFlags(cmd, []string{"flow"})
-	if err != nil {
-		logger.Error("failed to configure required flags: %v", err)
-	}
 
 	return cmd
 }
 
 func (o *listArtifactsOptions) run(out io.Writer) error {
-	url := fmt.Sprintf("%s/api/v2/artifacts/%s/%s?page=%d&per_page=%d",
-		global.Host, global.Org, o.flowName, o.pageNumber, o.pageLimit)
+	var url string
+	if o.flowName != "" {
+		url = fmt.Sprintf("%s/api/v2/artifacts/%s/%s?page=%d&per_page=%d",
+			global.Host, global.Org, o.flowName, o.pageNumber, o.pageLimit)
+	} else {
+		filter = "repo"
+		url = fmt.Sprintf("%s/api/v2/repos/%s/artifacts/%s?page=%d&per_page=%d",
+			global.Host, global.Org, o.repoName, o.pageNumber, o.pageLimit)
+	}
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
@@ -97,7 +113,15 @@ func (o *listArtifactsOptions) run(out io.Writer) error {
 }
 
 func printArtifactsListAsTable(raw string, out io.Writer, page int) error {
-	var artifacts []map[string]interface{}
+	if filter == "flow" {
+		return printArtifactsListForFlow(raw, out, page)
+	} else {
+		return printArtifactsListForRepo(raw, out, page)
+	}
+}
+
+func printArtifactsListForFlow(raw string, out io.Writer, page int) error {
+	var artifacts []map[string]any
 	err := json.Unmarshal([]byte(raw), &artifacts)
 	if err != nil {
 		return err
@@ -115,7 +139,6 @@ func printArtifactsListAsTable(raw string, out io.Writer, page int) error {
 	header := []string{"COMMIT", "ARTIFACT", "STATE", "CREATED_AT"}
 	rows := []string{}
 	for _, artifact := range artifacts {
-
 		gitCommit := artifact["git_commit"].(string)[:7]
 		artifactName := artifact["filename"].(string)
 
@@ -136,4 +159,70 @@ func printArtifactsListAsTable(raw string, out io.Writer, page int) error {
 	tabFormattedPrint(out, header, rows)
 
 	return nil
+}
+
+func printArtifactsListForRepo(raw string, out io.Writer, page int) error {
+	var response map[string]any
+	err := json.Unmarshal([]byte(raw), &response)
+	if err != nil {
+		return err
+	}
+
+	embedded, ok := response["_embedded"].(map[string]any)
+	if !ok {
+		return fmt.Errorf("artifacts not found in response")
+	}
+	artifactsRaw, ok := embedded["artifacts"]
+	if !ok {
+		return fmt.Errorf("artifacts not found in response")
+	}
+	artifactsSlice, ok := artifactsRaw.([]any)
+	if !ok {
+		return fmt.Errorf("artifacts not found in response")
+	}
+	artifacts := make([]map[string]any, len(artifactsSlice))
+	for i, v := range artifactsSlice {
+		artifact, ok := v.(map[string]any)
+		if !ok {
+			return fmt.Errorf("invalid artifact format in response")
+		}
+		artifacts[i] = artifact
+	}
+	if len(artifacts) == 0 {
+		msg := "No artifacts were found"
+		if page != 1 {
+			msg = fmt.Sprintf("%s at page number %d", msg, page)
+		}
+		logger.Info(msg + ".")
+		return nil
+	}
+
+	header := []string{"COMMIT", "ARTIFACT", "STATE", "CREATED_AT"}
+	rows := []string{}
+	for _, artifact := range artifacts {
+		gitCommit := artifact["commit"].(string)[:7]
+		artifactName := artifact["name"].(string)
+
+		artifactDigest := artifact["fingerprint"].(string)
+		compliant := artifact["compliant_in_trail"].(bool)
+		artifactState := "COMPLIANT"
+		if !compliant {
+			artifactState = "NON-COMPLIANT"
+		}
+		createdAt, err := formattedTimestamp(artifact["created_at"], true)
+		if err != nil {
+			return err
+		}
+
+		row := fmt.Sprintf("%s\tName: %s\t%s\t%s", gitCommit, artifactName, artifactState, createdAt)
+		rows = append(rows, row)
+		row = fmt.Sprintf("\tFingerprint: %s\t\t", artifactDigest)
+		rows = append(rows, row)
+		rows = append(rows, "\t\t\t")
+
+	}
+	tabFormattedPrint(out, header, rows)
+
+	return nil
+
 }
