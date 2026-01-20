@@ -19,6 +19,7 @@ type ListArtifactsCommandTestSuite struct {
 	artifactName          string
 	artifactPath          string
 	fingerprint           string
+	repoName              string
 }
 
 func (suite *ListArtifactsCommandTestSuite) SetupTest() {
@@ -40,7 +41,23 @@ func (suite *ListArtifactsCommandTestSuite) SetupTest() {
 	var err error
 	suite.fingerprint, err = GetSha256Digest(suite.artifactPath, fingerprintOptions, logger)
 	require.NoError(suite.Suite.T(), err)
-	CreateArtifact(suite.flowName2, suite.fingerprint, suite.artifactName, suite.Suite.T())
+	suite.repoName = "kosli/dev"
+	SetEnvVars(map[string]string{
+		"GITHUB_RUN_NUMBER":    "1234",
+		"GITHUB_SERVER_URL":    "https://github.com",
+		"GITHUB_REPOSITORY":    suite.repoName,
+		"GITHUB_REPOSITORY_ID": "1234567890",
+	}, suite.Suite.T())
+	CreateArtifactOnTrail(suite.flowName2, "trail-1", "backend", suite.fingerprint, suite.artifactName, suite.Suite.T())
+}
+
+func (suite *ListArtifactsCommandTestSuite) TearDownTest() {
+	UnSetEnvVars(map[string]string{
+		"GITHUB_RUN_NUMBER":    "",
+		"GITHUB_SERVER_URL":    "",
+		"GITHUB_REPOSITORY":    "",
+		"GITHUB_REPOSITORY_ID": "",
+	}, suite.Suite.T())
 }
 
 func (suite *ListArtifactsCommandTestSuite) TestListArtifactsCmd() {
@@ -89,6 +106,11 @@ func (suite *ListArtifactsCommandTestSuite) TestListArtifactsCmd() {
 		{
 			name:       "listing artifacts on a flow works",
 			cmd:        fmt.Sprintf(`list artifacts --flow %s %s`, suite.flowName2, suite.defaultKosliArguments),
+			goldenFile: "output/list/list-artifacts.txt",
+		},
+		{
+			name:       "listing artifacts on a repo works",
+			cmd:        fmt.Sprintf(`list artifacts --repo %s %s`, suite.repoName, suite.defaultKosliArguments),
 			goldenFile: "output/list/list-artifacts.txt",
 		},
 	}

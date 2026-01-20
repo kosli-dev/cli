@@ -51,7 +51,7 @@ type listArtifactsOptions struct {
 	repoName string
 }
 
-var filter string = "flow"
+var filter string
 
 func newListArtifactsCmd(out io.Writer) *cobra.Command {
 	o := new(listArtifactsOptions)
@@ -87,6 +87,7 @@ func newListArtifactsCmd(out io.Writer) *cobra.Command {
 func (o *listArtifactsOptions) run(out io.Writer) error {
 	var url string
 	if o.flowName != "" {
+		filter = "flow"
 		url = fmt.Sprintf("%s/api/v2/artifacts/%s/%s?page=%d&per_page=%d",
 			global.Host, global.Org, o.flowName, o.pageNumber, o.pageLimit)
 	} else {
