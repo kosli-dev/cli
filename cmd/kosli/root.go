@@ -258,6 +258,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	getAttestationTrailNameFlag          = "[conditional] The name of the Kosli trail for the attestation. Cannot be used together with --fingerprint or --attestation-id."
 	getAttestationFlowNameFlag           = "[conditional] The name of the Kosli flow for the attestation. Required if ATTESTATION-NAME provided. Cannot be used together with --attestation-id."
 	attestationIDFlag                    = "[conditional] The unique identifier of the attestation to retrieve. Cannot be used together with ATTESTATION-NAME."
+	repoNameFlag                         = "The name of a git repo as it is registered in Kosli. e.g kosli-dev/cli"
 )
 
 var global *GlobalOpts
