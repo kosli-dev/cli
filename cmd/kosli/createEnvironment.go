@@ -34,7 +34,7 @@ Logical environments are used for grouping of physical environments. For instanc
 be grouped into logical environment **prod**. Logical environments are view-only, you can not report snapshots
 to them.
 
-^ENVIRONMENT-NAME^s must start with a letter or number, and only contain letters, numbers, ^.^, ^-^, ^_^, and ^~^.
+^ENVIRONMENT-NAME^s must start with a letter or number, and only contain letters, numbers, ^.^, ^-^ and ^_^.
 `
 
 const createEnvironmentExample = `
