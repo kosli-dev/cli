@@ -47,10 +47,9 @@ func (suite *GetAttestationTypeCommandTestSuite) TestGetAttestationTypeCmd() {
 			golden:    fmt.Sprintf("Error: version 10 does not exist for custom attestation type '%s'\n", suite.attestationTypeName),
 		},
 		{
-			wantError: true,
-			name:      "getting an archived attestation type fails",
-			cmd:       fmt.Sprintf(`get attestation-type %s %s`, suite.archivedTypeName, suite.defaultKosliArguments),
-			golden:    fmt.Sprintf("Error: Custom attestation type 'archived-type' is archived for org '%s'\n", global.Org),
+			name:       "getting an archived attestation type returns the archived type",
+			cmd:        fmt.Sprintf(`get attestation-type %s %s`, suite.archivedTypeName, suite.defaultKosliArguments),
+			goldenFile: "output/get/get-archived-attestation-type.txt",
 		},
 		{
 			wantError: true,
