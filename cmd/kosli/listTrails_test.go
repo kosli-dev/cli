@@ -13,6 +13,8 @@ import (
 type ListTrailsCommandTestSuite struct {
 	suite.Suite
 	flowName              string
+	trailName             string
+	fingerprint           string
 	defaultKosliArguments string
 	acmeOrgKosliArguments string
 }
@@ -20,19 +22,23 @@ type ListTrailsCommandTestSuite struct {
 func (suite *ListTrailsCommandTestSuite) SetupTest() {
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
-		Org:      "docs-cmd-test-user",
+		Org:      `docs-cmd-test-user`,
 		Host:     "http://localhost:8001",
 	}
 
 	suite.flowName = "list-trails"
+	suite.trailName = "trail-name"
+	suite.fingerprint = "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
 	suite.defaultKosliArguments = fmt.Sprintf(" --flow %s --host %s --org %s --api-token %s", suite.flowName, global.Host, global.Org, global.ApiToken)
 	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.Suite.T())
-	BeginTrail("trail-name", suite.flowName, "", suite.Suite.T())
+	BeginTrail(suite.trailName, suite.flowName, "", suite.Suite.T())
 
 	global.Org = "acme-org"
 	global.ApiToken = "v3OWZiYWu9G2IMQStYg9BcPQUQ88lJNNnTJTNq8jfvmkR1C5wVpHSs7F00JcB5i6OGeUzrKt3CwRq7ndcN4TTfMeo8ASVJ5NdHpZT7DkfRfiFvm8s7GbsIHh2PtiQJYs2UoN13T8DblV5C4oKb6-yWH73h67OhotPlKfVKazR-c"
 	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.Suite.T())
 	suite.acmeOrgKosliArguments = fmt.Sprintf(" --flow %s --host %s --org %s --api-token %s", suite.flowName, global.Host, global.Org, global.ApiToken)
+
+	CreateArtifactOnTrail(suite.flowName, suite.trailName, "artifact", suite.fingerprint, "artifact-name", suite.Suite.T())
 }
 
 func (suite *ListTrailsCommandTestSuite) TestListTrailsCmd() {
@@ -79,6 +85,10 @@ func (suite *ListTrailsCommandTestSuite) TestListTrailsCmd() {
 			name:   "can list trails with pagination",
 			cmd:    fmt.Sprintf(`list trails --page-limit 15 --page 2 %s`, suite.defaultKosliArguments),
 			golden: "",
+		},
+		{
+			name: "can list trails that contain an artifact with the provided fingerprint",
+			cmd:  fmt.Sprintf(`list trails --fingerprint %s %s`, suite.fingerprint, suite.defaultKosliArguments),
 		},
 	}
 

@@ -50,7 +50,8 @@ kosli list trails \
 
 type listTrailsOptions struct {
 	listOptions
-	flowName string
+	flowName    string
+	fingerprint string
 }
 
 type Trail struct {
@@ -90,20 +91,16 @@ func newListTrailsCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
+	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlagOptional)
+	cmd.Flags().StringVarP(&o.fingerprint, "fingerprint", "F", "", fingerprintInTrailsFlag)
 	// We set the defauly page limit to 0 so that all results are returned if the flag is not provided
 	addListFlags(cmd, &o.listOptions, 0)
-
-	err := RequireFlags(cmd, []string{"flow"})
-	if err != nil {
-		logger.Error("failed to configure required flags: %v", err)
-	}
 
 	return cmd
 }
 
 func (o *listTrailsOptions) run(out io.Writer) error {
-	url := fmt.Sprintf("%s/api/v2/trails/%s/%s?per_page=%d&page=%d", global.Host, global.Org, o.flowName, o.pageLimit, o.pageNumber)
+	url := fmt.Sprintf("%s/api/v2/trails/%s/?flow_name=%s&fingerprint=%s&per_page=%d&page=%d", global.Host, global.Org, o.flowName, o.fingerprint, o.pageLimit, o.pageNumber)
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
