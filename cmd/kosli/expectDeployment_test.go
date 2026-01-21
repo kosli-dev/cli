@@ -33,15 +33,15 @@ func (suite *ExpectDeploymentCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateFlow(suite.flowName, suite.Suite.T())
+	CreateFlow(suite.flowName, suite.T())
 	fingerprintOptions := &fingerprintOptions{
 		artifactType: "file",
 	}
 	var err error
 	suite.fingerprint, err = GetSha256Digest(suite.artifactPath, fingerprintOptions, logger)
-	require.NoError(suite.Suite.T(), err)
-	CreateArtifact(suite.flowName, suite.fingerprint, suite.artifactName, suite.Suite.T())
-	CreateEnv(global.Org, suite.envName, "server", suite.Suite.T())
+	require.NoError(suite.T(), err)
+	CreateArtifact(suite.flowName, suite.fingerprint, suite.artifactName, suite.T())
+	CreateEnv(global.Org, suite.envName, "server", suite.T())
 }
 
 func (suite *ExpectDeploymentCommandTestSuite) TestExpectDeploymentCmd() {
@@ -112,7 +112,7 @@ func (suite *ExpectDeploymentCommandTestSuite) TestExpectDeploymentCmd() {
 		},
 	}
 
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

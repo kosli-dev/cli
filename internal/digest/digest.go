@@ -48,13 +48,22 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 	if err != nil {
 		return "", err
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			logger.Warn("failed to remove temp dir %s: %v", tmpDir, err)
+		}
+	}()
 
 	digestsFile, err := os.Create(filepath.Join(tmpDir, "digests"))
 	if err != nil {
 		return "", err
 	}
-	defer digestsFile.Close()
+	defer func() {
+		if err := digestsFile.Close(); err != nil {
+			// Log warning for cleanup error
+			logger.Warn("failed to close digests file: %v", err)
+		}
+	}()
 	ignoreFilePath := filepath.Join(dirPath, ".kosli_ignore")
 	ignoredPaths, err := excludePathsFromFile(ignoreFilePath)
 	if err != nil {
@@ -69,7 +78,7 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 		return "", err
 	}
 
-	return FileSha256(digestsFile.Name())
+	return FileSha256(digestsFile.Name(), logger)
 }
 
 // OciSha256 gets the digest of a docker/OCI image from its registry
@@ -148,7 +157,7 @@ func calculateDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, exc
 			stat = resolved
 		}
 
-		nameSha256, err := addNameDigest(tmpDir, info.Name(), digestsFile)
+		nameSha256, err := addNameDigest(tmpDir, info.Name(), digestsFile, logger)
 		if err != nil {
 			return err
 		}
@@ -164,7 +173,7 @@ func calculateDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, exc
 				}
 
 				// Calculate fingerprint of what link points to (for this: a -> c/d calculate the fingerprint of c/d)
-				targetSha256, err := addNameDigest(tmpDir, targetPath, digestsFile)
+				targetSha256, err := addNameDigest(tmpDir, targetPath, digestsFile, logger)
 				if err != nil {
 					return err
 				}
@@ -176,7 +185,7 @@ func calculateDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, exc
 		} else {
 			// File or symlink -> file
 			logger.Debug("file path: %s -- filename digest: %s", path, nameSha256)
-			fileContentSha256, err := FileSha256(path)
+			fileContentSha256, err := FileSha256(path, logger)
 			if err != nil {
 				return err
 			}
@@ -191,14 +200,14 @@ func calculateDirContentSha256(digestsFile *os.File, dirPath, tmpDir string, exc
 }
 
 // addNameDigest calculates the sha256 digest of the filename and adds it to the digests file
-func addNameDigest(tmpDir string, filename string, digestsFile *os.File) (string, error) {
+func addNameDigest(tmpDir string, filename string, digestsFile *os.File, logger *logger.Logger) (string, error) {
 	nameFilePath := filepath.Join(tmpDir, "name")
 	err := utils.CreateFileWithContent(nameFilePath, filename)
 	if err != nil {
 		return "", err
 	}
 
-	nameSha256, err := FileSha256(nameFilePath)
+	nameSha256, err := FileSha256(nameFilePath, logger)
 	if err != nil {
 		return "", err
 	}
@@ -209,7 +218,7 @@ func addNameDigest(tmpDir string, filename string, digestsFile *os.File) (string
 }
 
 // FileSha256 returns a sha256 digest of a file.
-func FileSha256(filepath string) (string, error) {
+func FileSha256(filepath string, logger *logger.Logger) (string, error) {
 	hasher := sha256.New()
 	f, err := os.Open(filepath)
 	if err != nil {
@@ -218,7 +227,12 @@ func FileSha256(filepath string) (string, error) {
 		}
 		return "", err
 	}
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			// Log warning for cleanup error
+			logger.Warn("failed to close file %s: %v", filepath, err)
+		}
+	}()
 	if _, err := io.Copy(hasher, f); err != nil {
 		return "", err
 	}
@@ -347,7 +361,12 @@ func ValidateDigest(sha256ToCheck string) error {
 func excludePathsFromFile(path string) ([]string, error) {
 	file, err := os.Open(path)
 	if err == nil {
-		defer file.Close()
+		defer func() {
+			if err := file.Close(); err != nil {
+				// Log warning for cleanup error
+				fmt.Printf("warning: failed to close file %s: %v\n", path, err)
+			}
+		}()
 		var excludes = []string{}
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {

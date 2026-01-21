@@ -29,7 +29,7 @@ func (suite *AllowArtifactCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateEnv(global.Org, suite.envName, "server", suite.Suite.T())
+	CreateEnv(global.Org, suite.envName, "server", suite.T())
 }
 
 func (suite *AllowArtifactCommandTestSuite) TestAllowArtifactCmd() {
@@ -70,7 +70,7 @@ func (suite *AllowArtifactCommandTestSuite) TestAllowArtifactCmd() {
 		},
 	}
 
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

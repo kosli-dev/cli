@@ -25,17 +25,17 @@ func (suite *SecurityTestSuite) TestAESEncryptionDecryption() {
 		{input: "S3cur3P@55w0rd"},
 		{input: "3st!ng123"},
 	} {
-		suite.Suite.Run(t.input, func() {
+		suite.Run(t.input, func() {
 			keyBytes, err := GenerateRandomAESKey()
-			require.NoError(suite.Suite.T(), err)
-			require.Len(suite.Suite.T(), keyBytes, 32)
+			require.NoError(suite.T(), err)
+			require.Len(suite.T(), keyBytes, 32)
 
 			encryptedBytes, err := AESEncrypt(t.input, keyBytes)
-			require.NoError(suite.Suite.T(), err)
+			require.NoError(suite.T(), err)
 
 			decrypted_bytes, err := AESDecrypt(encryptedBytes, keyBytes)
-			require.NoError(suite.Suite.T(), err)
-			require.Equal(suite.Suite.T(), t.input, string(decrypted_bytes))
+			require.NoError(suite.T(), err)
+			require.Equal(suite.T(), t.input, string(decrypted_bytes))
 
 		})
 	}
@@ -46,10 +46,10 @@ func (suite *SecurityTestSuite) TestSetSecretInCredentialsStore() {
 	secretName := "topsecret"
 	secretValue := "securepassword"
 	err := SetSecretInCredentialsStore(secretName, secretValue)
-	require.NoError(suite.Suite.T(), err)
+	require.NoError(suite.T(), err)
 	returnedSecretValue, err := GetSecretFromCredentialsStore(secretName)
-	require.NoError(suite.Suite.T(), err)
-	require.Equal(suite.Suite.T(), secretValue, returnedSecretValue)
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), secretValue, returnedSecretValue)
 }
 
 // In order for 'go test' to run this suite, we need to create

@@ -17,7 +17,7 @@ type AssertPRGitlabCommandTestSuite struct {
 }
 
 func (suite *AssertPRGitlabCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_GITLAB_TOKEN"})
+	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_GITLAB_TOKEN"})
 
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
@@ -63,7 +63,7 @@ func (suite *AssertPRGitlabCommandTestSuite) TestAssertPRGitlabCmd() {
 		},
 	}
 
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

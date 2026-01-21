@@ -29,8 +29,8 @@ func (suite *TagTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateFlow(suite.flowName, suite.Suite.T())
-	CreateEnv(global.Org, suite.envName, suite.envType, suite.Suite.T())
+	CreateFlow(suite.flowName, suite.T())
+	CreateEnv(global.Org, suite.envName, suite.envType, suite.T())
 }
 
 func (suite *TagTestSuite) TestTagCmd() {
@@ -66,7 +66,7 @@ func (suite *TagTestSuite) TestTagCmd() {
 			golden: "Tag(s) [foo] added for flow 'tag-flow'\n",
 		},
 	}
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

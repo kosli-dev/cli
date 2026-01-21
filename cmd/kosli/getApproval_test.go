@@ -27,10 +27,10 @@ func (suite *GetApprovalCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateFlow(suite.flowName, suite.Suite.T())
-	CreateArtifact(suite.flowName, suite.fingerprint, "approved-artifact", suite.Suite.T())
-	CreateApproval(suite.flowName, suite.fingerprint, false, suite.Suite.T())
-	CreateApproval(suite.flowName, suite.fingerprint, false, suite.Suite.T())
+	CreateFlow(suite.flowName, suite.T())
+	CreateArtifact(suite.flowName, suite.fingerprint, "approved-artifact", suite.T())
+	CreateApproval(suite.flowName, suite.fingerprint, false, suite.T())
+	CreateApproval(suite.flowName, suite.fingerprint, false, suite.T())
 }
 
 func (suite *GetApprovalCommandTestSuite) TestGetApprovalCmd() {
@@ -76,7 +76,7 @@ func (suite *GetApprovalCommandTestSuite) TestGetApprovalCmd() {
 		},
 	}
 
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

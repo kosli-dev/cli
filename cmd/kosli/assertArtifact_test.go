@@ -49,22 +49,22 @@ func (suite *AssertArtifactCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateFlow(suite.flowName1, suite.Suite.T())
-	CreateFlow(suite.flowName2, suite.Suite.T())
+	CreateFlow(suite.flowName1, suite.T())
+	CreateFlow(suite.flowName2, suite.T())
 	fingerprintOptions := &fingerprintOptions{
 		artifactType: "file",
 	}
-	CreateEnv(global.Org, suite.envName, "server", suite.Suite.T())
-	CreatePolicy(global.Org, suite.policyName1, suite.Suite.T())
-	CreatePolicy(global.Org, suite.policyName2, suite.Suite.T())
+	CreateEnv(global.Org, suite.envName, "server", suite.T())
+	CreatePolicy(global.Org, suite.policyName1, suite.T())
+	CreatePolicy(global.Org, suite.policyName2, suite.T())
 	var err error
 	suite.fingerprint1, err = GetSha256Digest(suite.artifact1Path, fingerprintOptions, logger)
-	require.NoError(suite.Suite.T(), err)
-	CreateArtifact(suite.flowName1, suite.fingerprint1, suite.artifactName1, suite.Suite.T())
+	require.NoError(suite.T(), err)
+	CreateArtifact(suite.flowName1, suite.fingerprint1, suite.artifactName1, suite.T())
 	suite.fingerprint2, err = GetSha256Digest(suite.artifact2Path, fingerprintOptions, logger)
-	require.NoError(suite.Suite.T(), err)
-	CreateArtifact(suite.flowName1, suite.fingerprint2, suite.artifactName2, suite.Suite.T())
-	CreateArtifact(suite.flowName2, suite.fingerprint2, suite.artifactName1, suite.Suite.T())
+	require.NoError(suite.T(), err)
+	CreateArtifact(suite.flowName1, suite.fingerprint2, suite.artifactName2, suite.T())
+	CreateArtifact(suite.flowName2, suite.fingerprint2, suite.artifactName1, suite.T())
 
 	// Setup for asserting non-compliant artifact to check error response
 	suite.flowName3 = "assert-non-compliant-artifact"
@@ -72,12 +72,12 @@ func (suite *AssertArtifactCommandTestSuite) SetupTest() {
 	suite.artifactName3 = "arti-for-AssertArtifactCommandTestSuite-non-compliant"
 	suite.artifact3Path = "testdata/artifacts/AssertArtifactCommandTestSuiteArtifact3.txt"
 	suite.fingerprint3, err = GetSha256Digest(suite.artifact3Path, fingerprintOptions, logger)
-	CreateFlow(suite.flowName3, suite.Suite.T())
-	BeginTrail(suite.trailName, suite.flowName3, "", suite.Suite.T())
-	CreateArtifactOnTrail(suite.flowName3, suite.trailName, "cli", suite.fingerprint3, suite.artifactName3, suite.Suite.T())
-	require.NoError(suite.Suite.T(), err)
-	CreateGenericArtifactAttestation(suite.flowName3, suite.trailName, suite.fingerprint3, "failing-attestation", false, suite.Suite.T())
-	require.NoError(suite.Suite.T(), err)
+	CreateFlow(suite.flowName3, suite.T())
+	BeginTrail(suite.trailName, suite.flowName3, "", suite.T())
+	CreateArtifactOnTrail(suite.flowName3, suite.trailName, "cli", suite.fingerprint3, suite.artifactName3, suite.T())
+	require.NoError(suite.T(), err)
+	CreateGenericArtifactAttestation(suite.flowName3, suite.trailName, suite.fingerprint3, "failing-attestation", false, suite.T())
+	require.NoError(suite.T(), err)
 }
 
 func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
@@ -201,7 +201,7 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 		},
 	}
 
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

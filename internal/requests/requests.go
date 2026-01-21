@@ -53,7 +53,7 @@ func (cl *CustomLogger) Printf(format string, args ...interface{}) {
 	msg = strings.TrimPrefix(msg, "[DEBUG]")
 
 	// Call the underlying log.Logger's Printf method with the cleaned message
-	cl.Logger.Print(msg)
+	cl.Print(msg)
 }
 
 func NewKosliClient(httpProxyURL string, maxAPIRetries int, debug bool, logger *logger.Logger) (*Client, error) {
@@ -99,7 +99,7 @@ type RequestParams struct {
 	DryRun            bool
 }
 
-func (p *RequestParams) newHTTPRequest() (*http.Request, map[string]interface{}, error) {
+func (p *RequestParams) newHTTPRequest() (*http.Request, map[string]any, error) {
 	if len(p.AdditionalHeaders) == 0 {
 		p.AdditionalHeaders = make(map[string]string)
 	}
@@ -154,16 +154,22 @@ func (p *RequestParams) newHTTPRequest() (*http.Request, map[string]interface{},
 // - request body for the multipart form in the form of bytes.Buffer
 // - a map of the JSON fields to log during dry-run
 // - error, if any occurred
-func createMultipartRequestBody(items []FormItem) (string, *bytes.Buffer, map[string]interface{}, error) {
+func createMultipartRequestBody(items []FormItem) (string, *bytes.Buffer, map[string]any, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	defer writer.Close()
+	defer func() {
+		if err := writer.Close(); err != nil {
+			// Log warning for cleanup error
+			fmt.Printf("warning: failed to close multipart writer: %v\n", err)
+		}
+	}()
 
 	// Map to store the JSON fields for logging during dry-run
 	jsonFields := make(map[string]interface{})
 
 	for _, item := range items {
-		if item.Type == "field" {
+		switch item.Type {
+		case "field":
 			part, err := writer.CreateFormField(item.FieldName)
 			if err != nil {
 				return "", body, nil, err
@@ -182,14 +188,19 @@ func createMultipartRequestBody(items []FormItem) (string, *bytes.Buffer, map[st
 			// Add the JSON field to jsonFields map for dry-run logging
 			jsonFields[item.FieldName] = jsonBytes
 
-		} else if item.Type == "file" {
+		case "file":
 			// Handle file upload separately
 			filename := item.Content.(string)
 			file, err := os.Open(filename)
 			if err != nil {
 				return "", body, nil, err
 			}
-			defer file.Close()
+			defer func() {
+				if err := file.Close(); err != nil {
+					// Log warning for cleanup error
+					fmt.Printf("warning: failed to close file %s: %v\n", filename, err)
+				}
+			}()
 
 			part, err := writer.CreateFormFile(item.FieldName, filepath.Base(filename))
 			if err != nil {
@@ -240,7 +251,11 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 			return nil, fmt.Errorf("%v", err)
 		}
 
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				c.Logger.Warn("failed to close response body: %v", err)
+			}
+		}()
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read response from %s request to %s : %v", req.Method, req.URL, err)
@@ -249,7 +264,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 		c.Logger.Debug("request made to %s and got status %d", req.URL, resp.StatusCode)
 
 		if resp.StatusCode != 200 && resp.StatusCode != 201 {
-			var respBody interface{}
+			var respBody any
 			err := json.Unmarshal([]byte(body), &respBody)
 			if err != nil {
 				return &HTTPResponse{}, err
@@ -260,7 +275,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 			} else if reflect.ValueOf(respBody).Kind() == reflect.Map {
 				// Error response from kosli application SW contains a "message"
 				// Error response from the API schema validation contains a "message" and a list of "errors"
-				respBodyMap := respBody.(map[string]interface{})
+				respBodyMap := respBody.(map[string]any)
 				message, ok := respBodyMap["message"]
 				if ok {
 					errors, ok := respBodyMap["errors"]
@@ -280,7 +295,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 	}
 }
 
-func (c *Client) PayloadOutput(req *http.Request, jsonFields map[string]interface{}, message string) error {
+func (c *Client) PayloadOutput(req *http.Request, jsonFields map[string]any, message string) error {
 	// Check the content type to determine what to log
 	contentType := req.Header.Get("Content-Type")
 	if strings.Contains(contentType, "multipart/form-data") {

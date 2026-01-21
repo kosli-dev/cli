@@ -44,9 +44,9 @@ type AttestSonarQubeCommandTestSuite struct {
 }
 
 func (suite *AttestSonarCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_SONAR_API_TOKEN"})
+	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_SONAR_API_TOKEN"})
 	// If we have SONARQUBE set (e.g. to true), we're testing SonarQube Server and therefore should skip the SonarQube Cloud tests
-	testHelpers.SkipIfEnvVarSet(suite.Suite.T(), []string{"SONARQUBE"})
+	testHelpers.SkipIfEnvVarSet(suite.T(), []string{"SONARQUBE"})
 	suite.flowName = "attest-sonar"
 	suite.trailName = "test-123"
 	suite.artifactFingerprint = "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
@@ -56,13 +56,13 @@ func (suite *AttestSonarCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --flow %s --trail %s --repo-root ../.. --host %s --org %s --api-token %s", suite.flowName, suite.trailName, global.Host, global.Org, global.ApiToken)
-	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.Suite.T())
-	BeginTrail(suite.trailName, suite.flowName, "", suite.Suite.T())
-	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.Suite.T())
+	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
+	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
+	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.T())
 }
 
 func (suite *AttestSonarQubeCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_SONAR_API_TOKEN", "SONARQUBE"})
+	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_SONAR_API_TOKEN", "SONARQUBE"})
 	suite.flowName = "attest-sonar"
 	suite.trailName = "test-123"
 	suite.artifactFingerprint = "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
@@ -72,9 +72,9 @@ func (suite *AttestSonarQubeCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --flow %s --trail %s --repo-root ../.. --host %s --org %s --api-token %s", suite.flowName, suite.trailName, global.Host, global.Org, global.ApiToken)
-	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.Suite.T())
-	BeginTrail(suite.trailName, suite.flowName, "", suite.Suite.T())
-	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.Suite.T())
+	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
+	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
+	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.T())
 }
 
 func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
@@ -175,7 +175,7 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 		},
 	}
 
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 func (suite *AttestSonarQubeCommandTestSuite) TestAttestSonarQubeCmd() {
@@ -276,7 +276,7 @@ func (suite *AttestSonarQubeCommandTestSuite) TestAttestSonarQubeCmd() {
 		},
 	}
 
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

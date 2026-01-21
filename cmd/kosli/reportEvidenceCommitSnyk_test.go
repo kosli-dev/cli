@@ -25,7 +25,7 @@ func (suite *CommitEvidenceSnykCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateFlow(suite.flowName, suite.Suite.T())
+	CreateFlow(suite.flowName, suite.T())
 }
 
 func (suite *CommitEvidenceSnykCommandTestSuite) TestCommitEvidenceSnykCmd() {
@@ -90,7 +90,7 @@ func (suite *CommitEvidenceSnykCommandTestSuite) TestCommitEvidenceSnykCmd() {
 			goldenRegex: "snyk scan evidence is reported to commit: 239d7cee00ca341f124fa710fc694b67cdf8011b\n",
 		},
 	}
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

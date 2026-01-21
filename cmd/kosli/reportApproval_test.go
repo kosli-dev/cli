@@ -34,7 +34,7 @@ func (suite *ApprovalReportTestSuite) SetupTest() {
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 	suite.flowName = "approval-test"
 	suite.envName = "staging"
-	t := suite.Suite.T()
+	t := suite.T()
 
 	gitView, err := gitview.New("../..")
 	require.NoError(t, err, "Failed to create gitview")
@@ -45,7 +45,7 @@ func (suite *ApprovalReportTestSuite) SetupTest() {
 	suite.artifactPath = "testdata/report.xml"
 	// We cannot get the digest of the file by running the 'kosli fingerprint' command
 	// by using executeCommandC() because this function overwrites the global options
-	suite.artifactFingerprint, err = digest.FileSha256(suite.artifactPath)
+	suite.artifactFingerprint, err = digest.FileSha256(suite.artifactPath, logger)
 	require.NoError(t, err, "Failed to calculate fingerprint")
 
 	CreateFlow(suite.flowName, t)
@@ -86,9 +86,9 @@ func (suite *ApprovalReportTestSuite) TestApprovalReportCmd() {
 	}
 	for _, t := range tests {
 		if t.additionalConfig != nil && t.additionalConfig.(reportApprovalTestConfig).createSnapshot {
-			ReportServerArtifactToEnv([]string{suite.artifactPath}, suite.envName, suite.Suite.T())
+			ReportServerArtifactToEnv([]string{suite.artifactPath}, suite.envName, suite.T())
 		}
-		runTestCmd(suite.Suite.T(), []cmdTestCase{t})
+		runTestCmd(suite.T(), []cmdTestCase{t})
 	}
 }
 

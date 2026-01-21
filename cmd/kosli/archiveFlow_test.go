@@ -25,7 +25,7 @@ func (suite *ArchiveFlowCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
-	CreateFlow(suite.flowName, suite.Suite.T())
+	CreateFlow(suite.flowName, suite.T())
 }
 
 func (suite *ArchiveFlowCommandTestSuite) TestArchiveFlowCmd() {
@@ -55,7 +55,7 @@ func (suite *ArchiveFlowCommandTestSuite) TestArchiveFlowCmd() {
 		},
 	}
 
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

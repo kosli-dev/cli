@@ -59,7 +59,7 @@ func (suite *CreateAttestationTypeTestSuite) TestCustomAttestationTypeCmd() {
 		},
 	}
 
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

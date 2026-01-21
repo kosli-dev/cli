@@ -25,7 +25,7 @@ func (suite *SnapshotK8STestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateEnv(global.Org, suite.envName, "K8S", suite.Suite.T())
+	CreateEnv(global.Org, suite.envName, "K8S", suite.T())
 }
 
 func (suite *SnapshotK8STestSuite) TestSnapshotK8SCmd() {
@@ -50,7 +50,7 @@ func (suite *SnapshotK8STestSuite) TestSnapshotK8SCmd() {
 		},
 	}
 
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

@@ -31,7 +31,7 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	t := suite.Suite.T()
+	t := suite.T()
 	CreateFlow(suite.flowName, t)
 	CreateArtifact(suite.flowName, suite.artifactFingerprint, "FooBar_1", t)
 
@@ -47,7 +47,7 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) SetupTest() {
 			          --flow ` + suite.flowName + ` --build-url https://www.yr.no --commit-url https://www.nrk.no --repo-root ../..` + suite.defaultKosliArguments,
 		},
 	}
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 func (suite *ArtifactEvidenceGenericCommandTestSuite) TestArtifactEvidenceGenericCommandCmd() {
@@ -145,7 +145,7 @@ func (suite *ArtifactEvidenceGenericCommandTestSuite) TestArtifactEvidenceGeneri
 				evidenceName, suite.flowName, suite.defaultKosliArguments),
 		},
 	}
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

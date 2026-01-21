@@ -55,7 +55,7 @@ func (o *listReposOptions) run(out io.Writer) error {
 		return err
 	}
 
-	return output.FormattedPrint(response.Body, o.listOptions.output, out, o.pageNumber,
+	return output.FormattedPrint(response.Body, o.output, out, o.pageNumber,
 		map[string]output.FormatOutputFunc{
 			"table": printReposListAsTable,
 			"json":  output.PrintJson,

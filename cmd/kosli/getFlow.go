@@ -86,7 +86,7 @@ func printFlowAsTable(raw string, out io.Writer, page int) error {
 		lines[0] = "\n" + lines[0]
 		template = strings.Join(lines, "\n")
 	} else {
-		template = strings.Replace(template, " ", ", ", -1)
+		template = strings.ReplaceAll(template, " ", ", ")
 	}
 
 	tagsOutput := ""

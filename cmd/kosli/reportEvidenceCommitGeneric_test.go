@@ -27,7 +27,7 @@ func (suite *CommitEvidenceGenericCommandTestSuite) SetupTest() {
 
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateFlow(suite.flowNames, suite.Suite.T())
+	CreateFlow(suite.flowNames, suite.T())
 }
 
 func (suite *CommitEvidenceGenericCommandTestSuite) TestCommitEvidenceGenericCommandCmd() {
@@ -133,7 +133,7 @@ func (suite *CommitEvidenceGenericCommandTestSuite) TestCommitEvidenceGenericCom
 			goldenRegex: "Error: open non-existing-file: no such file or directory\n",
 		},
 	}
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

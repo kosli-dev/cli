@@ -88,7 +88,11 @@ func (o *configOptions) run() error {
 		if err != nil {
 			return fmt.Errorf("setting default config failed. Error creating file: %s", err)
 		}
-		defer file.Close()
+		defer func() {
+			if err := file.Close(); err != nil {
+				logger.Warn("failed to close config file %s: %v", path, err)
+			}
+		}()
 
 		if err := file.Chmod(permissions); err != nil {
 			return fmt.Errorf("setting default config failed. Error setting file permissions: %s", err)
