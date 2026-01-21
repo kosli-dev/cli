@@ -22,7 +22,7 @@ The general guidelines should be considered best practices for all naming conven
 
 
 1. **Choose Delimiter**: Choose a delimiter that works for your and stick with it consistently.</br>
-For example hyphen `-`, underscore `_`, tilde `~` or dot `.`. </br>
+For example hyphen `-`, underscore `_`, or dot `.`. </br>
 Avoid mixing delimiters within the same naming scheme.
 2. **Choose case style for elements**: Choose a meaningful case style across elements (e.g., PascalCase, camelCase, snake_case) and use it consistently. Avoid spaces and clashes with delimiters.
 3. **Keep it concise**: Shorter names are easier to read and remember. Aim for concise but descriptive names.
