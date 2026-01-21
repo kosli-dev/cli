@@ -79,7 +79,11 @@ jobs:
           gh api repos/${{ github.repository }}/git/refs \
             -X POST \
             -f ref='refs/heads/helm-docs-update' \
-            -f sha="$MAIN_SHA" || echo "Branch may already exist"
+            -f sha="$MAIN_SHA" || \
+            gh api repos/${{ github.repository }}/git/refs/heads/helm-docs-update \
+            -X PATCH \
+            -f sha="$MAIN_SHA" \
+            -F force=true || echo "Branch may already exist"
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
 
