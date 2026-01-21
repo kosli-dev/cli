@@ -262,7 +262,7 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 					--jira-project-key 1AB
 					--jira-project-key AB-44
 					--repo-root %s %s`, suite.tmpDir, suite.defaultKosliArguments),
-			golden: "Error: Invalid Jira project keys: 1AB, AB-44\n",
+			golden: "Error: invalid Jira project keys: [1AB AB-44]\n",
 			additionalConfig: jiraTestsAdditionalConfig{
 				commitMessage: "EX-1 test commit",
 			},

@@ -122,7 +122,7 @@ func (suite *AttestSnykCommandTestSuite) TestAttestSnykCmd() {
 			cmd: fmt.Sprintf(`attest snyk --name bar --commit HEAD --origin-url https://example.com
 				--annotate foo.baz=bar
 				--scan-results testdata/snyk_sarif.json %s`, suite.defaultKosliArguments),
-			golden: "Error: --annotate flag should be in the format key=value. Invalid key: 'foo.baz'. Key can only contain [A-Za-z0-9_].\n",
+			golden: "Error: --annotate flag should be in the format key=value. Invalid key: 'foo.baz'. Key can only contain [A-Za-z0-9_]\n",
 		},
 	}
 
