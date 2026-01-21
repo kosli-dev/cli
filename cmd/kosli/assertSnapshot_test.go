@@ -41,14 +41,14 @@ func (suite *AssertSnapshotCommandTestSuite) SetupTest() {
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
 	// Non-compliant environment
-	CreateEnv(global.Org, suite.nonCompliantEnvName, "server", suite.Suite.T())
-	CreateFlow(suite.flowName, suite.Suite.T())
+	CreateEnv(global.Org, suite.nonCompliantEnvName, "server", suite.T())
+	CreateFlow(suite.flowName, suite.T())
 
 	// In order for an environment to be compliant instead of unknown (which we convert to false), it must have
 	// a polict attached.
-	CreateEnv(global.Org, suite.compliantEnvName, "server", suite.Suite.T())
-	CreatePolicy(global.Org, "server-policy", suite.Suite.T())
-	AttachPolicy([]string{suite.compliantEnvName}, "server-policy", suite.Suite.T())
+	CreateEnv(global.Org, suite.compliantEnvName, "server", suite.T())
+	CreatePolicy(global.Org, "server-policy", suite.T())
+	AttachPolicy([]string{suite.compliantEnvName}, "server-policy", suite.T())
 
 	//Create artifact to report to environments
 	fingerprintOptions := &fingerprintOptions{
@@ -56,8 +56,8 @@ func (suite *AssertSnapshotCommandTestSuite) SetupTest() {
 	}
 	var err error
 	suite.fingerprint, err = GetSha256Digest(suite.artifactPath, fingerprintOptions, logger)
-	require.NoError(suite.Suite.T(), err)
-	CreateArtifact(suite.flowName, suite.fingerprint, suite.artifactName, suite.Suite.T())
+	require.NoError(suite.T(), err)
+	CreateArtifact(suite.flowName, suite.fingerprint, suite.artifactName, suite.T())
 
 }
 
@@ -117,9 +117,9 @@ func (suite *AssertSnapshotCommandTestSuite) TestAssertSnapshotCmd() {
 
 	for _, t := range tests {
 		if t.additionalConfig != nil && t.additionalConfig.(assertSnapshotTestConfig).reportToEnv {
-			ReportServerArtifactToEnv([]string{suite.artifactPath}, t.additionalConfig.(assertSnapshotTestConfig).envName, suite.Suite.T())
+			ReportServerArtifactToEnv([]string{suite.artifactPath}, t.additionalConfig.(assertSnapshotTestConfig).envName, suite.T())
 		}
-		runTestCmd(suite.Suite.T(), []cmdTestCase{t})
+		runTestCmd(suite.T(), []cmdTestCase{t})
 	}
 }
 

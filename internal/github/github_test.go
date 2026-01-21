@@ -32,10 +32,10 @@ func (suite *GithubTestSuite) TestNewGithubClientFromToken() {
 			baseURL: "https://github.example.com",
 		},
 	} {
-		suite.Suite.Run(t.name, func() {
+		suite.Run(t.name, func() {
 			client, err := NewGithubClientFromToken(context.Background(), t.token, t.baseURL)
-			require.NoErrorf(suite.Suite.T(), err, "was NOT expecting error but got: %s", err)
-			require.NotNilf(suite.Suite.T(), client, "client should not be nil")
+			require.NoErrorf(suite.T(), err, "was NOT expecting error but got: %s", err)
+			require.NotNilf(suite.T(), client, "client should not be nil")
 		})
 	}
 }
@@ -87,9 +87,9 @@ func (suite *GithubTestSuite) TestPREvidenceForCommit() {
 			},
 		},
 	} {
-		suite.Suite.Run(t.name, func() {
+		suite.Run(t.name, func() {
 			if t.requireEnvVars {
-				testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_GITHUB_TOKEN"})
+				testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_GITHUB_TOKEN"})
 				t.config.Token = os.Getenv("KOSLI_GITHUB_TOKEN")
 			}
 			if t.commit == "" {
@@ -97,10 +97,10 @@ func (suite *GithubTestSuite) TestPREvidenceForCommit() {
 			}
 			prs, err := t.config.PREvidenceForCommitV2(t.commit)
 			if t.result.wantError {
-				require.Errorf(suite.Suite.T(), err, "expected an error but got: %s", err)
+				require.Errorf(suite.T(), err, "expected an error but got: %s", err)
 			} else {
-				require.NoErrorf(suite.Suite.T(), err, "was NOT expecting error but got: %s", err)
-				require.Len(suite.Suite.T(), prs, t.result.numberOfPRs)
+				require.NoErrorf(suite.T(), err, "was NOT expecting error but got: %s", err)
+				require.Len(suite.T(), prs, t.result.numberOfPRs)
 			}
 		})
 	}
@@ -137,8 +137,8 @@ func (suite *GithubTestSuite) TestPullRequestsForCommit() {
 			},
 		},
 	} {
-		suite.Suite.Run(t.name, func() {
-			testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_GITHUB_TOKEN"})
+		suite.Run(t.name, func() {
+			testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_GITHUB_TOKEN"})
 			token := os.Getenv("KOSLI_GITHUB_TOKEN")
 			c := &GithubConfig{
 				Token:      token,
@@ -150,10 +150,10 @@ func (suite *GithubTestSuite) TestPullRequestsForCommit() {
 			}
 			prs, err := c.PullRequestsForCommit(t.commit)
 			if t.result.wantError {
-				require.Errorf(suite.Suite.T(), err, "expected an error but got: %s", err)
+				require.Errorf(suite.T(), err, "expected an error but got: %s", err)
 			} else {
-				require.NoErrorf(suite.Suite.T(), err, "was NOT expecting error but got: %s", err)
-				require.Lenf(suite.Suite.T(), prs, t.result.numberOfPRs, "expected %d PRs but got %d", t.result.numberOfPRs, len(prs))
+				require.NoErrorf(suite.T(), err, "was NOT expecting error but got: %s", err)
+				require.Lenf(suite.T(), prs, t.result.numberOfPRs, "expected %d PRs but got %d", t.result.numberOfPRs, len(prs))
 			}
 		})
 	}
@@ -199,8 +199,8 @@ func (suite *GithubTestSuite) TestGetPullRequestApprovers() {
 			},
 		},
 	} {
-		suite.Suite.Run(t.name, func() {
-			testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_GITHUB_TOKEN"})
+		suite.Run(t.name, func() {
+			testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_GITHUB_TOKEN"})
 			token := os.Getenv("KOSLI_GITHUB_TOKEN")
 			c := &GithubConfig{
 				Token:      token,
@@ -209,10 +209,10 @@ func (suite *GithubTestSuite) TestGetPullRequestApprovers() {
 			}
 			approvers, err := c.GetPullRequestApprovers(t.number)
 			if t.result.wantError {
-				require.Errorf(suite.Suite.T(), err, "expected an error but got: %s", err)
+				require.Errorf(suite.T(), err, "expected an error but got: %s", err)
 			} else {
-				require.NoErrorf(suite.Suite.T(), err, "was NOT expecting error but got: %s", err)
-				require.ElementsMatchf(suite.Suite.T(), t.result.approvers, approvers, "want approvers: %v, got approvers: %v",
+				require.NoErrorf(suite.T(), err, "was NOT expecting error but got: %s", err)
+				require.ElementsMatchf(suite.T(), t.result.approvers, approvers, "want approvers: %v, got approvers: %v",
 					t.result.approvers, approvers)
 			}
 		})
@@ -236,9 +236,9 @@ func (suite *GithubTestSuite) TestExtractRepoName() {
 			want:  "cli",
 		},
 	} {
-		suite.Suite.Run(t.name, func() {
+		suite.Run(t.name, func() {
 			repo := extractRepoName(t.input)
-			require.Equalf(suite.Suite.T(), t.want, repo, "expected %s but got %s", t.want, repo)
+			require.Equalf(suite.T(), t.want, repo, "expected %s but got %s", t.want, repo)
 		})
 	}
 }

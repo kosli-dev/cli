@@ -19,7 +19,7 @@ type MockConfigGetter struct {
 
 // defaultConfigFilePath is a method that satisfies the ConfigGetter interface
 func (m *MockConfigGetter) defaultConfigFilePath() string {
-	args := m.Mock.Called()
+	args := m.Called()
 	return args.String(0)
 }
 
@@ -33,13 +33,13 @@ type ConfigCommandTestSuite struct {
 
 func (suite *ConfigCommandTestSuite) SetupTest() {
 	dir, err := os.MkdirTemp("", "tmp-config-file")
-	require.NoError(suite.Suite.T(), err)
+	require.NoError(suite.T(), err)
 	suite.tmpConfigFilePath = filepath.Join(dir, defaultConfigFilename)
 }
 
 func (suite *ConfigCommandTestSuite) TearDownTest() {
 	err := os.RemoveAll(suite.tmpConfigFilePath)
-	require.NoError(suite.Suite.T(), err)
+	require.NoError(suite.T(), err)
 	defaultConfigFilePathFunc = (&RealConfigGetter{}).defaultConfigFilePath
 	global = new(GlobalOpts)
 }
@@ -94,7 +94,7 @@ func (suite *ConfigCommandTestSuite) TestConfigCmd() {
 		},
 	}
 
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

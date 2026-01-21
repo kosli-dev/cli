@@ -20,7 +20,7 @@ type SnapshotAzureAppsTestSuite struct {
 }
 
 func (suite *SnapshotAzureAppsTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{
+	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{
 		"INTEGRATION_TEST_AZURE_CLIENT_SECRET",
 		"INTEGRATION_TEST_AZURE_CLIENT_ID",
 	})
@@ -45,7 +45,7 @@ func (suite *SnapshotAzureAppsTestSuite) SetupTest() {
 		azureClientSecret, azureClientID, azureTenantID, azureSubscriptionID, azureResourceGroupName,
 	)
 
-	CreateEnv(global.Org, suite.envName, "azure-apps", suite.Suite.T())
+	CreateEnv(global.Org, suite.envName, "azure-apps", suite.T())
 }
 
 func (suite *SnapshotAzureAppsTestSuite) TestSnapshotAzureAppsCmd() {
@@ -112,7 +112,7 @@ func (suite *SnapshotAzureAppsTestSuite) TestSnapshotAzureAppsCmd() {
 		},
 	}
 
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

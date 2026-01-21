@@ -316,7 +316,7 @@ func GetSha256Digest(artifactName string, o *fingerprintOptions, logger *log.Log
 	var fingerprint string
 	switch o.artifactType {
 	case "file":
-		fingerprint, err = digest.FileSha256(artifactName)
+		fingerprint, err = digest.FileSha256(artifactName, logger)
 	case "dir":
 		fingerprint, err = digest.DirSha256(artifactName, o.excludePaths, logger)
 	case "oci":
@@ -453,12 +453,18 @@ func tabFormattedPrint(out io.Writer, header []string, rows []string) {
 	// Format in tab-separated columns with a tab stop of 8.
 	w.Init(out, 5, 12, 2, ' ', 0)
 	if len(header) > 0 {
-		fmt.Fprintln(w, strings.Join(header, "\t"))
+		if _, err := fmt.Fprintln(w, strings.Join(header, "\t")); err != nil {
+			logger.Warn("failed to write table header: %v", err)
+		}
 	}
 	for _, row := range rows {
-		fmt.Fprintln(w, row)
+		if _, err := fmt.Fprintln(w, row); err != nil {
+			logger.Warn("failed to write table row: %v", err)
+		}
 	}
-	w.Flush()
+	if err := w.Flush(); err != nil {
+		logger.Warn("failed to flush table output: %v", err)
+	}
 }
 
 // formattedTimestamp formats a float timestamp into something like "Mon, 22 Aug 2022 11:34:59 CEST • 10 days ago"
@@ -563,7 +569,11 @@ func getPathOfEvidenceFileToUpload(evidencePaths []string) (string, bool, error)
 			}
 		}
 		dirToTar = tmpDir
-		defer os.RemoveAll(tmpDir)
+		defer func() {
+			if err := os.RemoveAll(tmpDir); err != nil {
+				logger.Warn("failed to remove temporary directory %s: %v", tmpDir, err)
+			}
+		}()
 	}
 
 	// tar the required dir and return the path of the tar file

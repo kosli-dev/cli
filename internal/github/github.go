@@ -233,7 +233,10 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 type GitObjectID string
 
 func (v GitObjectID) MarshalGQL(w io.Writer) {
-	fmt.Fprintf(w, `"%s"`, string(v))
+	if _, err := fmt.Fprintf(w, `"%s"`, string(v)); err != nil {
+		// Log warning for output error
+		fmt.Printf("warning: failed to write GitObjectID: %v\n", err)
+	}
 }
 
 func (c *GithubConfig) PREvidenceForCommitV1(commit string) ([]*types.PREvidence, error) {

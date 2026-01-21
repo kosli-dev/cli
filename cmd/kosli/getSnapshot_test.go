@@ -28,11 +28,11 @@ func (suite *GetSnapshotCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateEnv(global.Org, suite.envName, "server", suite.Suite.T())
-	ReportServerArtifactToEnv([]string{"testdata/folder1/hello.txt"}, suite.envName, suite.Suite.T())
-	ReportServerArtifactToEnv([]string{"testdata/file1"}, suite.envName, suite.Suite.T())
-	ReportServerArtifactToEnv([]string{"testdata/report.xml"}, suite.envName, suite.Suite.T())
-	CreateEnv(global.Org, suite.emptyEnvName, "server", suite.Suite.T())
+	CreateEnv(global.Org, suite.envName, "server", suite.T())
+	ReportServerArtifactToEnv([]string{"testdata/folder1/hello.txt"}, suite.envName, suite.T())
+	ReportServerArtifactToEnv([]string{"testdata/file1"}, suite.envName, suite.T())
+	ReportServerArtifactToEnv([]string{"testdata/report.xml"}, suite.envName, suite.T())
+	CreateEnv(global.Org, suite.emptyEnvName, "server", suite.T())
 }
 
 // TODO: Add test for a snappish of the environemnt name
@@ -68,7 +68,7 @@ func (suite *GetSnapshotCommandTestSuite) TestGetSnapshotCmd() {
 		},
 	}
 
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 func currentTimeForSnappish() string {

@@ -33,14 +33,14 @@ func (suite *AWSTestSuite) TestFormatLambdaLastModified() {
 			wantErr:      true,
 		},
 	} {
-		suite.Suite.Run(t.name, func() {
+		suite.Run(t.name, func() {
 			got, err := formatLambdaLastModified(t.lastModified)
-			require.False(suite.Suite.T(), (err != nil) != t.wantErr,
+			require.False(suite.T(), (err != nil) != t.wantErr,
 				"formatLambdaLastModified() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
 				date, err := time.Parse("2006-01-02T15:04:05.000+0000", t.lastModified)
-				require.NoError(suite.Suite.T(), err)
-				require.Equal(suite.Suite.T(), date, got)
+				require.NoError(suite.T(), err)
+				require.Equal(suite.T(), date, got)
 			}
 		})
 	}
@@ -64,12 +64,12 @@ func (suite *AWSTestSuite) TestDecodeLambdaFingerprint() {
 			wantErr:           true,
 		},
 	} {
-		suite.Suite.Run(t.name, func() {
+		suite.Run(t.name, func() {
 			got, err := decodeLambdaFingerprint(t.base64Fingerprint)
-			require.False(suite.Suite.T(), (err != nil) != t.wantErr,
+			require.False(suite.T(), (err != nil) != t.wantErr,
 				"decodeLambdaFingerprint() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
-				require.Equal(suite.Suite.T(), t.wantFingerprint, got)
+				require.Equal(suite.T(), t.wantFingerprint, got)
 			}
 		})
 	}
@@ -89,7 +89,7 @@ func (suite *AWSTestSuite) TestNewEcsTaskData() {
 		StartedAt: time.Unix(),
 	}
 	got := NewEcsTaskData(taskARN, cluster, service, digests, time)
-	require.Equal(suite.Suite.T(), expected, got)
+	require.Equal(suite.T(), expected, got)
 }
 
 func (suite *AWSTestSuite) TestGetConfigOptFns() {
@@ -136,9 +136,9 @@ func (suite *AWSTestSuite) TestGetConfigOptFns() {
 			wantedLength: 1,
 		},
 	} {
-		suite.Suite.Run(t.name, func() {
+		suite.Run(t.name, func() {
 			got := t.creds.GetConfigOptFns()
-			require.Len(suite.Suite.T(), got, t.wantedLength)
+			require.Len(suite.T(), got, t.wantedLength)
 		})
 	}
 }
@@ -173,20 +173,20 @@ func (suite *AWSTestSuite) TestNewAWSConfigFromEnvOrFlags() {
 			checkAuth:   true,
 		},
 	} {
-		suite.Suite.Run(t.name, func() {
+		suite.Run(t.name, func() {
 			config, err := t.creds.NewAWSConfigFromEnvOrFlags()
-			require.False(suite.Suite.T(), (err != nil) != t.wantErr,
+			require.False(suite.T(), (err != nil) != t.wantErr,
 				"NewAWSConfigFromEnvOrFlags() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
-				require.NotNil(suite.Suite.T(), config)
+				require.NotNil(suite.T(), config)
 				if t.checkRegion {
-					require.Equal(suite.Suite.T(), config.Region, t.creds.Region)
+					require.Equal(suite.T(), config.Region, t.creds.Region)
 				}
 				if t.checkAuth {
 					c, err := config.Credentials.Retrieve(context.TODO())
-					require.NoError(suite.Suite.T(), err)
-					require.Equal(suite.Suite.T(), c.AccessKeyID, t.creds.AccessKeyID)
-					require.Equal(suite.Suite.T(), c.SecretAccessKey, t.creds.SecretAccessKey)
+					require.NoError(suite.T(), err)
+					require.Equal(suite.T(), c.AccessKeyID, t.creds.AccessKeyID)
+					require.Equal(suite.T(), c.SecretAccessKey, t.creds.SecretAccessKey)
 				}
 			}
 		})
@@ -218,26 +218,26 @@ func (suite *AWSTestSuite) TestAWSClients() {
 			},
 		},
 	} {
-		suite.Suite.Run(t.name, func() {
+		suite.Run(t.name, func() {
 			s3Client, err := t.creds.NewS3Client()
-			require.False(suite.Suite.T(), (err != nil) != t.wantErr,
+			require.False(suite.T(), (err != nil) != t.wantErr,
 				"NewS3Client() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
-				require.NotNil(suite.Suite.T(), s3Client)
+				require.NotNil(suite.T(), s3Client)
 			}
 
 			lambdaClient, err := t.creds.NewLambdaClient()
-			require.False(suite.Suite.T(), (err != nil) != t.wantErr,
+			require.False(suite.T(), (err != nil) != t.wantErr,
 				"NewLambdaClient() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
-				require.NotNil(suite.Suite.T(), lambdaClient)
+				require.NotNil(suite.T(), lambdaClient)
 			}
 
 			ecsClient, err := t.creds.NewECSClient()
-			require.False(suite.Suite.T(), (err != nil) != t.wantErr,
+			require.False(suite.T(), (err != nil) != t.wantErr,
 				"NewECSClient() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
-				require.NotNil(suite.Suite.T(), ecsClient)
+				require.NotNil(suite.T(), ecsClient)
 			}
 		})
 	}
@@ -363,14 +363,14 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			requireEnvVars: true,
 		},
 	} {
-		suite.Suite.Run(t.name, func() {
-			skipOrSetCreds(suite.Suite.T(), t.requireEnvVars, t.creds)
+		suite.Run(t.name, func() {
+			skipOrSetCreds(suite.T(), t.requireEnvVars, t.creds)
 			data, err := t.creds.GetLambdaPackageData(t.filter)
-			require.False(suite.Suite.T(), (err != nil) != t.wantErr,
+			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetLambdaPackageData() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
 				matchFound := false
-				require.Len(suite.Suite.T(), data, len(t.expectedFunctions))
+				require.Len(suite.T(), data, len(t.expectedFunctions))
 				if len(t.expectedFunctions) == 0 {
 					matchFound = true
 				}
@@ -382,12 +382,12 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 								matchFound = true
 								break loop1
 							} else {
-								suite.Suite.T().Logf("fingerprint did not match: GOT %s -- WANT %s", fingerprint, expectedFunction.fingerprint)
+								suite.T().Logf("fingerprint did not match: GOT %s -- WANT %s", fingerprint, expectedFunction.fingerprint)
 							}
 						}
 					}
 				}
-				require.True(suite.Suite.T(), matchFound)
+				require.True(suite.T(), matchFound)
 			}
 		})
 	}
@@ -507,19 +507,19 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 			wantArtifactName: "README.md",
 		},
 	} {
-		suite.Suite.Run(t.name, func() {
-			skipOrSetCreds(suite.Suite.T(), t.requireEnvVars, t.creds)
+		suite.Run(t.name, func() {
+			skipOrSetCreds(suite.T(), t.requireEnvVars, t.creds)
 			data, err := t.creds.GetS3Data(t.bucketName, t.includePaths, t.excludePaths, logger.NewStandardLogger())
-			require.False(suite.Suite.T(), (err != nil) != t.wantErr,
+			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetS3Data() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
 				if t.wantArtifactName == "" {
 					t.wantArtifactName = t.bucketName
 				}
 				if t.wantFingerprint == "" {
-					require.Contains(suite.Suite.T(), data[0].Digests, t.wantArtifactName)
+					require.Contains(suite.T(), data[0].Digests, t.wantArtifactName)
 				} else {
-					require.Equal(suite.Suite.T(), t.wantFingerprint, data[0].Digests[t.wantArtifactName])
+					require.Equal(suite.T(), t.wantFingerprint, data[0].Digests[t.wantArtifactName])
 				}
 			}
 		})
@@ -650,8 +650,8 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 			requireEnvVars:       true,
 		},
 	} {
-		suite.Suite.Run(t.name, func() {
-			skipOrSetCreds(suite.Suite.T(), t.requireEnvVars, t.creds)
+		suite.Run(t.name, func() {
+			skipOrSetCreds(suite.T(), t.requireEnvVars, t.creds)
 			if t.clusterFilter == nil {
 				t.clusterFilter = new(filters.ResourceFilterOptions)
 			}
@@ -659,10 +659,10 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 				t.serviceFilter = new(filters.ResourceFilterOptions)
 			}
 			data, err := t.creds.GetEcsTasksData(t.clusterFilter, t.serviceFilter, logger.NewStandardLogger())
-			require.False(suite.Suite.T(), (err != nil) != t.wantErr,
+			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetEcsTasksData() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
-				require.GreaterOrEqual(suite.Suite.T(), len(data), t.minNumberOfArtifacts)
+				require.GreaterOrEqual(suite.T(), len(data), t.minNumberOfArtifacts)
 			}
 		})
 	}

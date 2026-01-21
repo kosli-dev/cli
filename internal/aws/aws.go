@@ -335,7 +335,11 @@ func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, exclud
 	if err != nil {
 		return s3Data, err
 	}
-	defer os.RemoveAll(tempDirName)
+	defer func() {
+		if err := os.RemoveAll(tempDirName); err != nil {
+			logger.Warn("failed to remove temp dir %s: %v", tempDirName, err)
+		}
+	}()
 
 	client, err := staticCreds.NewS3Client()
 	if err != nil {
@@ -384,7 +388,7 @@ func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, exclud
 	var sha256 string
 	artifactName := bucket
 	if fileSnapshot {
-		sha256, err = digest.FileSha256(artifactPath)
+		sha256, err = digest.FileSha256(artifactPath, logger)
 		if err != nil {
 			return s3Data, err
 		}
@@ -406,7 +410,11 @@ func downloadFileFromBucket(downloader *s3manager.Downloader, dirName, key, buck
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			logger.Warn("failed to close file %s: %v", file.Name(), err)
+		}
+	}()
 
 	numBytes, err := downloader.Download(context.TODO(), file,
 		&s3.GetObjectInput{

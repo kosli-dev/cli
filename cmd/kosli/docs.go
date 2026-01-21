@@ -61,7 +61,7 @@ func (o *docsOptions) run() error {
 		hdrFunc := func(filename string, beta, deprecated bool, summary string) string {
 			base := filepath.Base(filename)
 			name := strings.TrimSuffix(base, path.Ext(base))
-			title := strings.ToLower(strings.Replace(name, "_", " ", -1))
+			title := strings.ToLower(strings.ReplaceAll(name, "_", " "))
 			return fmt.Sprintf("---\ntitle: \"%s\"\nbeta: %t\ndeprecated: %t\nsummary: \"%s\"\n---\n\n", title, beta, deprecated, summary)
 		}
 
@@ -82,14 +82,18 @@ func MereklyGenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender 
 	}
 
 	if !cmd.HasParent() || !cmd.HasSubCommands() {
-		basename := strings.Replace(cmd.CommandPath(), " ", "_", -1) + ".md"
+		basename := strings.ReplaceAll(cmd.CommandPath(), " ", "_") + ".md"
 		filename := filepath.Join(dir, basename)
 		summary := cmd.Short
 		f, err := os.Create(filename)
 		if err != nil {
 			return err
 		}
-		defer f.Close()
+		defer func() {
+			if err := f.Close(); err != nil {
+				logger.Warn("failed to close file %s: %v", filename, err)
+			}
+		}()
 
 		if _, err := io.WriteString(f, filePrepender(filename, isBeta(cmd), isDeprecated(cmd), summary)); err != nil {
 			return err
@@ -113,28 +117,28 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 
 	if isBeta(cmd) {
 		buf.WriteString("{{% hint warning %}}\n")
-		buf.WriteString(fmt.Sprintf("**%s** is a beta feature. ", name))
-		buf.WriteString("Beta features provide early access to product functionality. ")
-		buf.WriteString("These features may change between releases without warning, or can be removed in a ")
-		buf.WriteString("future release.\n")
-		buf.WriteString("Please contact us to enable this feature for your organization.\n")
-		// buf.WriteString("You can enable beta features by using the `kosli enable beta` command.")
+		fmt.Fprintf(buf, "**%s** is a beta feature. ", name)
+		fmt.Fprintf(buf, "Beta features provide early access to product functionality. ")
+		fmt.Fprintf(buf, "These features may change between releases without warning, or can be removed in a ")
+		fmt.Fprintf(buf, "future release.\n")
+		fmt.Fprintf(buf, "Please contact us to enable this feature for your organization.\n")
+		// fmt.Fprintf(buf, "You can enable beta features by using the `kosli enable beta` command.")
 		buf.WriteString("{{% /hint %}}\n")
 	}
 
 	if isDeprecated(cmd) {
 		buf.WriteString("{{% hint danger %}}\n")
-		buf.WriteString(fmt.Sprintf("**%s** is deprecated. %s  ", name, cmd.Deprecated))
-		buf.WriteString("Deprecated commands will be removed in a future release.\n")
+		fmt.Fprintf(buf, "**%s** is deprecated. %s  ", name, cmd.Deprecated)
+		fmt.Fprintf(buf, "Deprecated commands will be removed in a future release.\n")
 		buf.WriteString("{{% /hint %}}\n")
 	}
 
 	if len(cmd.Long) > 0 {
 		buf.WriteString("## Synopsis\n\n")
 		if cmd.Runnable() {
-			buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", cmd.UseLine()))
+			fmt.Fprintf(buf, "```shell\n%s\n```\n\n", cmd.UseLine())
 		}
-		buf.WriteString(strings.Replace(cmd.Long, "^", "`", -1) + "\n\n")
+		buf.WriteString(strings.ReplaceAll(cmd.Long, "^", "`") + "\n\n")
 	}
 
 	if err := printOptions(buf, cmd, name); err != nil {
@@ -145,11 +149,11 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 	liveExamplesBuf := new(bytes.Buffer)
 	for _, ci := range []string{"GitHub", "GitLab"} {
 		if liveYamlDocExists(ci, urlSafeName) {
-			liveExamplesBuf.WriteString(fmt.Sprintf("{{< tab \"%v\" >}}", ci))
-			liveExamplesBuf.WriteString(fmt.Sprintf("View an example of the `%s` command in %s.\n\n", name, ci))
-			liveExamplesBuf.WriteString(fmt.Sprintf("In [this YAML file](%v)", yamlURL(ci, urlSafeName)))
+			fmt.Fprintf(liveExamplesBuf, "{{< tab \"%v\" >}}", ci)
+			fmt.Fprintf(liveExamplesBuf, "View an example of the `%s` command in %s.\n\n", name, ci)
+			fmt.Fprintf(liveExamplesBuf, "In [this YAML file](%v)", yamlURL(ci, urlSafeName))
 			if liveEventDocExists(ci, urlSafeName) {
-				liveExamplesBuf.WriteString(fmt.Sprintf(", which created [this Kosli Event](%v).", eventURL(ci, urlSafeName)))
+				fmt.Fprintf(liveExamplesBuf, ", which created [this Kosli Event](%v).", eventURL(ci, urlSafeName))
 			}
 			liveExamplesBuf.WriteString("{{< /tab >}}")
 		}
@@ -166,7 +170,7 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 	if liveCliExists {
 		buf.WriteString("## Live Example\n\n")
 		buf.WriteString("{{< raw-html >}}")
-		buf.WriteString(fmt.Sprintf("To view a live example of '%s' you can run the commands below (for the <a href=\"https://app.kosli.com/cyber-dojo/environments/aws-prod/snapshots/\">cyber-dojo</a> demo organization).<br/><a href=\"%s\">Run the commands below and view the output.</a>", name, liveCliURL))
+		fmt.Fprintf(buf, "To view a live example of '%s' you can run the commands below (for the <a href=\"https://app.kosli.com/cyber-dojo/environments/aws-prod/snapshots/\">cyber-dojo</a> demo organization).<br/><a href=\"%s\">Run the commands below and view the output.</a>", name, liveCliURL)
 		buf.WriteString("<pre>")
 		buf.WriteString("export KOSLI_ORG=cyber-dojo\n")
 		buf.WriteString("export KOSLI_API_TOKEN=Pj_XT2deaVA6V1qrTlthuaWsmjVt4eaHQwqnwqjRO3A  # read-only\n")
@@ -191,15 +195,15 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 
 		// Some commands have #titles spanning several lines (that is, each title line starts with a # character)
 		if name == "kosli report approval" {
-			buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", example))
+			fmt.Fprintf(buf, "```shell\n%s\n```\n\n", example)
 		} else if name == "kosli request approval" {
-			buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", example))
+			fmt.Fprintf(buf, "```shell\n%s\n```\n\n", example)
 		} else if name == "kosli snapshot server" {
-			buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", example))
+			fmt.Fprintf(buf, "```shell\n%s\n```\n\n", example)
 		} else if lines[0][0] != '#' {
 			// Some commands, eg 'kosli assert snapshot' have no #title
 			// and their example starts immediately with the kosli command.
-			buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", example))
+			fmt.Fprintf(buf, "```shell\n%s\n```\n\n", example)
 		} else {
 			// The rest we can format nicely
 			all := hashTitledExamples(lines)
@@ -208,8 +212,8 @@ func KosliGenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(st
 				// Some titles have a trailing colon, some don't
 				title := strings.Trim(exampleLines[0], ":")
 				if len(title) > 0 {
-					buf.WriteString(fmt.Sprintf("##### %s\n\n", strings.TrimSpace(title[1:])))
-					buf.WriteString(fmt.Sprintf("```shell\n%s\n```\n\n", strings.Join(exampleLines[1:], "\n")))
+					fmt.Fprintf(buf, "##### %s\n\n", strings.TrimSpace(title[1:]))
+					fmt.Fprintf(buf, "```shell\n%s\n```\n\n", strings.Join(exampleLines[1:], "\n"))
 				}
 			}
 		}
@@ -287,21 +291,21 @@ func printOptions(buf *bytes.Buffer, cmd *cobra.Command, name string) error {
 const baseURL = "https://app.kosli.com/api/v2/livedocs/cyber-dojo"
 
 func liveYamlDocExists(ci string, command string) bool {
-	url := fmt.Sprintf("%v/yaml_exists?ci=%v&command=%v", baseURL, strings.ToLower(ci), command)
+	url := fmt.Sprintf("%s/yaml_exists?ci=%s&command=%s", baseURL, strings.ToLower(ci), command)
 	return liveDocExists(url)
 }
 
 func liveEventDocExists(ci string, command string) bool {
-	url := fmt.Sprintf("%v/event_exists?ci=%v&command=%v", baseURL, strings.ToLower(ci), command)
+	url := fmt.Sprintf("%s/event_exists?ci=%s&command=%s", baseURL, strings.ToLower(ci), command)
 	return liveDocExists(url)
 }
 
 func liveCliDocExists(command string) (string, string, bool) {
 	fullCommand, ok := liveCliMap[command]
 	if ok {
-		plussed := strings.Replace(fullCommand, " ", "+", -1)
-		exists_url := fmt.Sprintf("%v/cli_exists?command=%v", baseURL, plussed)
-		url := fmt.Sprintf("%v/cli?command=%v", baseURL, plussed)
+		plussed := strings.ReplaceAll(fullCommand, " ", "+")
+		exists_url := fmt.Sprintf("%s/cli_exists?command=%s", baseURL, plussed)
+		url := fmt.Sprintf("%s/cli?command=%s", baseURL, plussed)
 		return fullCommand, url, liveDocExists(exists_url)
 	} else {
 		return "", "", false
@@ -313,7 +317,11 @@ func liveDocExists(url string) bool {
 	if err != nil {
 		return false
 	}
-	defer response.Body.Close()
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			logger.Warn("failed to close response body: %v", err)
+		}
+	}()
 	decoder := json.NewDecoder(response.Body)
 	var exists bool
 	err = decoder.Decode(&exists)
@@ -324,11 +332,11 @@ func liveDocExists(url string) bool {
 }
 
 func yamlURL(ci string, command string) string {
-	return fmt.Sprintf("%v/yaml?ci=%v&command=%v", baseURL, strings.ToLower(ci), command)
+	return fmt.Sprintf("%s/yaml?ci=%s&command=%s", baseURL, strings.ToLower(ci), command)
 }
 
 func eventURL(ci string, command string) string {
-	return fmt.Sprintf("%v/event?ci=%v&command=%v", baseURL, strings.ToLower(ci), command)
+	return fmt.Sprintf("%s/event?ci=%s&command=%s", baseURL, strings.ToLower(ci), command)
 }
 
 var liveCliMap = map[string]string{

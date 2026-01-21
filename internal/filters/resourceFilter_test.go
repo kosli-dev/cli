@@ -100,13 +100,13 @@ func (suite *FiltersSuite) TestShouldInclude() {
 			wantErr: true,
 		},
 	} {
-		suite.Suite.Run(t.name, func() {
+		suite.Run(t.name, func() {
 			answer, err := t.filter.ShouldInclude(t.input)
-			require.False(suite.Suite.T(), (err != nil) != t.wantErr,
+			require.False(suite.T(), (err != nil) != t.wantErr,
 				"ShouldInclude() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
-				require.NoError(suite.Suite.T(), err)
-				require.Equal(suite.Suite.T(), answer, t.want)
+				require.NoError(suite.T(), err)
+				require.Equal(suite.T(), answer, t.want)
 			}
 		})
 	}

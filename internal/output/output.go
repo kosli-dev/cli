@@ -25,6 +25,8 @@ func PrintJson(raw string, out io.Writer, page int) error {
 		return err
 	}
 
-	fmt.Fprint(out, prettyJSON.String())
+	if _, err := fmt.Fprint(out, prettyJSON.String()); err != nil {
+		return fmt.Errorf("failed to write JSON output: %v", err)
+	}
 	return nil
 }

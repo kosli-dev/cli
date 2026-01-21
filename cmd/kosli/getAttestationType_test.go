@@ -27,9 +27,9 @@ func (suite *GetAttestationTypeCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateCustomAttestationType(suite.attestationTypeName, "testdata/person-schema.json", []string{".age > 21"}, suite.Suite.T())
-	CreateCustomAttestationType(suite.archivedTypeName, "testdata/person-schema.json", []string{".age < 21"}, suite.Suite.T())
-	ArchiveCustomAttestationType(suite.archivedTypeName, suite.Suite.T())
+	CreateCustomAttestationType(suite.attestationTypeName, "testdata/person-schema.json", []string{".age > 21"}, suite.T())
+	CreateCustomAttestationType(suite.archivedTypeName, "testdata/person-schema.json", []string{".age < 21"}, suite.T())
+	ArchiveCustomAttestationType(suite.archivedTypeName, suite.T())
 }
 
 func (suite *GetAttestationTypeCommandTestSuite) TestGetAttestationTypeCmd() {
@@ -79,7 +79,7 @@ func (suite *GetAttestationTypeCommandTestSuite) TestGetAttestationTypeCmd() {
 		},
 	}
 
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

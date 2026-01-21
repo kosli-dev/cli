@@ -199,7 +199,12 @@ func compareAgainstFile(actual []byte, filename string) error {
 	if err != nil {
 		return errors.Wrapf(err, "unable to read golden file %s", filename)
 	}
-	defer expectedFile.Close()
+	defer func() {
+		if err := expectedFile.Close(); err != nil {
+			// Log warning but don't fail the test for cleanup errors
+			logger.Warn("failed to close file %s: %v", filename, err)
+		}
+	}()
 
 	// Scanner to read the expected file line by line
 	expectedScanner := bufio.NewScanner(expectedFile)
@@ -269,7 +274,7 @@ func compareFileBytes(actual, expected []byte) error {
 }
 
 func normalize(in []byte) []byte {
-	normalized := bytes.Replace(in, []byte("\r\n"), []byte("\n"), -1)
+	normalized := bytes.ReplaceAll(in, []byte("\r\n"), []byte("\n"))
 	return []byte(strings.TrimSpace(string(normalized)))
 }
 

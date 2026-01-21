@@ -130,11 +130,12 @@ func printSearchAsTableWrapper(responseRaw string, out io.Writer, pageNumber int
 	countFingerprints := searchResult.ResolvedTo.Fingerprints.Count
 	countCommits := searchResult.ResolvedTo.Commits.Count
 	fullMatch := searchResult.ResolvedTo.FullMatch
-	if searchResult.ResolvedTo.Type == "commit" {
+	switch searchResult.ResolvedTo.Type {
+	case "commit":
 		logger.Info("Search result resolved to commit %s", fullMatch)
-	} else if searchResult.ResolvedTo.Type == "fingerprint" {
+	case "fingerprint":
 		logger.Info("Search result resolved to artifact with fingerprint %s", fullMatch)
-	} else {
+	default:
 		logger.Info("Search result resolved to %d fingerprint(s) and %d commit(s) across %d artifacts\n", countFingerprints, countCommits, len(searchResult.Artifacts))
 	}
 

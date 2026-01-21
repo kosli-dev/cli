@@ -126,11 +126,12 @@ func printDeploymentAsTable(raw string, out io.Writer, page int) error {
 	}
 
 	stateString := "Unknown"
-	if state == "deploying" {
+	switch state {
+	case "deploying":
 		stateString = "Deploying"
-	} else if state == "running" {
+	case "running":
 		stateString = fmt.Sprintf("The artifact running since %s", stateTimestamp)
-	} else if state == "exited" {
+	case "exited":
 		stateString = fmt.Sprintf("The artifact exited on %s", stateTimestamp)
 	}
 

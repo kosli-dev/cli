@@ -69,7 +69,11 @@ func (o *pullRequestArtifactOptions) run(out io.Writer, args []string) error {
 	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, []string{})
 	// if we created a tar package, remove it after uploading it
 	if cleanupNeeded {
-		defer os.Remove(evidencePath)
+		defer func() {
+			if err := os.Remove(evidencePath); err != nil {
+				logger.Warn("failed to remove evidence file %s: %v", evidencePath, err)
+			}
+		}()
 	}
 
 	if err != nil {
@@ -90,7 +94,7 @@ func (o *pullRequestArtifactOptions) run(out io.Writer, args []string) error {
 		logger.Info("%s %s evidence is reported to artifact: %s", o.payload.GitProvider, label, o.payload.ArtifactFingerprint)
 	}
 
-	if len(pullRequestsEvidence) == 0 && o.pullRequestOptions.assert && !global.DryRun {
+	if len(pullRequestsEvidence) == 0 && o.assert && !global.DryRun {
 		return fmt.Errorf("assert failed: no %s found for the given commit: %s", label, o.commit)
 	}
 	return err
@@ -142,7 +146,11 @@ func (o *attestPROptions) run(args []string) error {
 	}
 	// if we created a tar package, remove it after uploading it
 	if cleanupNeeded {
-		defer os.Remove(evidencePath)
+		defer func() {
+			if err := os.Remove(evidencePath); err != nil {
+				logger.Warn("failed to remove evidence file %s: %v", evidencePath, err)
+			}
+		}()
 	}
 
 	logger.Info("found %d %s(s) for commit: %s", len(pullRequestsEvidence), label, o.payload.Commit.Sha1)
@@ -201,7 +209,11 @@ func (o *pullRequestCommitOptions) run(args []string) error {
 	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, []string{})
 	// if we created a tar package, remove it after uploading it
 	if cleanupNeeded {
-		defer os.Remove(evidencePath)
+		defer func() {
+			if err := os.Remove(evidencePath); err != nil {
+				logger.Warn("failed to remove evidence file %s: %v", evidencePath, err)
+			}
+		}()
 	}
 
 	if err != nil {
@@ -221,13 +233,13 @@ func (o *pullRequestCommitOptions) run(args []string) error {
 		logger.Info("%s %s evidence is reported to commit: %s", o.payload.GitProvider, label, o.payload.CommitSHA)
 	}
 
-	if len(pullRequestsEvidence) == 0 && o.pullRequestOptions.assert && !global.DryRun {
+	if len(pullRequestsEvidence) == 0 && o.assert && !global.DryRun {
 		return fmt.Errorf("assert failed: no %s found for the given commit: %s", label, o.payload.CommitSHA)
 	}
 	return err
 }
 
-func getGitProviderAndLabel(retriever interface{}) (string, string) {
+func getGitProviderAndLabel(retriever any) (string, string) {
 	label := "pull request"
 	provider := ""
 	t := reflect.TypeOf(retriever)
