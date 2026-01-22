@@ -94,13 +94,19 @@ func newListTrailsCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlagOptional)
 	cmd.Flags().StringVarP(&o.fingerprint, "fingerprint", "F", "", fingerprintInTrailsFlag)
 	// We set the defauly page limit to 0 so that all results are returned if the flag is not provided
-	addListFlags(cmd, &o.listOptions, 0)
+	addListFlags(cmd, &o.listOptions, 20)
 
 	return cmd
 }
 
 func (o *listTrailsOptions) run(out io.Writer) error {
-	url := fmt.Sprintf("%s/api/v2/trails/%s/?flow_name=%s&fingerprint=%s&per_page=%d&page=%d", global.Host, global.Org, o.flowName, o.fingerprint, o.pageLimit, o.pageNumber)
+	url := fmt.Sprintf("%s/api/v2/trails/%s?per_page=%d&page=%d", global.Host, global.Org, o.pageLimit, o.pageNumber)
+	if o.flowName != "" {
+		url += fmt.Sprintf("&flow=%s", o.flowName)
+	}
+	if o.fingerprint != "" {
+		url += fmt.Sprintf("&fingerprint=%s", o.fingerprint)
+	}
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
@@ -112,7 +118,19 @@ func (o *listTrailsOptions) run(out io.Writer) error {
 		return err
 	}
 
-	return output.FormattedPrint(response.Body, o.output, out, o.pageNumber,
+	// Extract only the "data" field from the response
+	var fullResponse listTrailsResponse
+	err = json.Unmarshal([]byte(response.Body), &fullResponse)
+	if err != nil {
+		return err
+	}
+
+	dataOnly, err := json.Marshal(fullResponse.Data)
+	if err != nil {
+		return err
+	}
+
+	return output.FormattedPrint(string(dataOnly), o.output, out, o.pageNumber,
 		map[string]output.FormatOutputFunc{
 			"table": printTrailsListAsTable,
 			"json":  output.PrintJson,
