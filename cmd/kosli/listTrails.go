@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,20 +15,20 @@ const listTrailsShortDesc = `List Trails of an org.`
 const listTrailsLongDesc = listTrailsShortDesc + `The list can be filtered by flow and artifact fingerprint. The results are paginated and ordered from latest to oldest.`
 
 const listTrailsExample = `
-# list all trails for a flow:
+# get a paginated list of trails for a flow:
 kosli list trails \
 	--flow yourFlowName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-#list the most recent 30 trails for a flow:
+# list the most recent 30 trails for a flow:
 kosli list trails \
 	--flow yourFlowName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-#show the second page of trails for a flow:
+# show the second page of trails for a flow:
 kosli list trails \
 	--flow yourFlowName \
 	--page-limit 30 \
@@ -37,14 +36,14 @@ kosli list trails \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# list all trails for a flow (in JSON):
+# get a paginated list of trails for a flow (in JSON):
 kosli list trails \
 	--flow yourFlowName \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 	--output json
 
-# list all trails across all flows that contain an artifact with the provided fingerprint (in JSON):
+# get a paginated list of trails across all flows that contain an artifact with the provided fingerprint (in JSON):
 kosli list trails \
 	--fingerprint yourArtifactFingerprint \
 	--api-token yourAPIToken \
@@ -97,7 +96,6 @@ func newListTrailsCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlagOptional)
 	cmd.Flags().StringVarP(&o.fingerprint, "fingerprint", "F", "", fingerprintInTrailsFlag)
-	// We set the defauly page limit to 0 so that all results are returned if the flag is not provided
 	addListFlags(cmd, &o.listOptions, 20)
 
 	return cmd
@@ -133,15 +131,6 @@ func printTrailsListAsTable(raw string, out io.Writer, page int) error {
 	response := &listTrailsResponse{}
 	trails := []Trail{}
 
-	err := json.Unmarshal([]byte(raw), &trails)
-	if err != nil {
-		err = json.Unmarshal([]byte(raw), &response)
-		if err != nil {
-			return err
-		}
-		trails = response.Data
-	}
-
 	if len(trails) == 0 {
 		msg := "No trails were found"
 		if page != 1 {
@@ -157,11 +146,9 @@ func printTrailsListAsTable(raw string, out io.Writer, page int) error {
 		row := fmt.Sprintf("%s\t%s\t%s", trail.Name, trail.Description, trail.ComplianceState)
 		rows = append(rows, row)
 	}
-	if len(response.Data) > 0 {
-		pagination := response.Pagination
-		paginationInfo := fmt.Sprintf("\nShowing page %.0f of %.0f, total %.0f items", pagination.Page, pagination.PageCount, pagination.Total)
-		rows = append(rows, paginationInfo)
-	}
+	pagination := response.Pagination
+	paginationInfo := fmt.Sprintf("\nShowing page %.0f of %.0f, total %.0f items", pagination.Page, pagination.PageCount, pagination.Total)
+	rows = append(rows, paginationInfo)
 
 	tabFormattedPrint(out, header, rows)
 
