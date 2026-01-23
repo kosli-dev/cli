@@ -30,13 +30,13 @@ func (suite *ListTrailsCommandTestSuite) SetupTest() {
 	suite.trailName = "trail-name"
 	suite.fingerprint = "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
-	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.Suite.T())
-	BeginTrail(suite.trailName, suite.flowName, "", suite.Suite.T())
-	CreateArtifactOnTrail(suite.flowName, suite.trailName, "artifact", suite.fingerprint, "artifact-name", suite.Suite.T())
+	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
+	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
+	CreateArtifactOnTrail(suite.flowName, suite.trailName, "artifact", suite.fingerprint, "artifact-name", suite.T())
 
 	global.Org = "acme-org"
 	global.ApiToken = "v3OWZiYWu9G2IMQStYg9BcPQUQ88lJNNnTJTNq8jfvmkR1C5wVpHSs7F00JcB5i6OGeUzrKt3CwRq7ndcN4TTfMeo8ASVJ5NdHpZT7DkfRfiFvm8s7GbsIHh2PtiQJYs2UoN13T8DblV5C4oKb6-yWH73h67OhotPlKfVKazR-c"
-	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.Suite.T())
+	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
 	suite.acmeOrgKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
 }
