@@ -11,12 +11,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const listTrailsShortDesc = `List Trails for a Flow in an org.`
+const listTrailsShortDesc = `List Trails of an org.`
 
-const listTrailsLongDesc = listTrailsShortDesc + `The results are ordered from latest to oldest.  
-If the ^page-limit^ flag is provided, the results will be paginated, otherwise all results will be 
-returned.  
-If ^page-limit^ is set to 0, all results will be returned.`
+const listTrailsLongDesc = listTrailsShortDesc + `The list can be filtered by flow and artifact fingerprint. The results are paginated and ordered from latest to oldest.`
 
 const listTrailsExample = `
 # list all trails for a flow:
@@ -46,6 +43,13 @@ kosli list trails \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 	--output json
+
+# list all trails across all flows that contain an artifact with the provided fingerprint (in JSON):
+kosli list trails \
+	--fingerprint yourArtifactFingerprint \
+	--api-token yourAPIToken \
+	--org yourOrgName \
+	--output json \
 `
 
 type listTrailsOptions struct {
