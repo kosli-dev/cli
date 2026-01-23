@@ -33,22 +33,22 @@ func (suite *ListArtifactsCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
-	CreateFlow(suite.flowName1, suite.Suite.T())
-	CreateFlow(suite.flowName2, suite.Suite.T())
+	CreateFlow(suite.flowName1, suite.T())
+	CreateFlow(suite.flowName2, suite.T())
 	fingerprintOptions := &fingerprintOptions{
 		artifactType: "file",
 	}
 	var err error
 	suite.fingerprint, err = GetSha256Digest(suite.artifactPath, fingerprintOptions, logger)
-	require.NoError(suite.Suite.T(), err)
+	require.NoError(suite.T(), err)
 	suite.repoName = "kosli/dev"
 	SetEnvVars(map[string]string{
 		"GITHUB_RUN_NUMBER":    "1234",
 		"GITHUB_SERVER_URL":    "https://github.com",
 		"GITHUB_REPOSITORY":    suite.repoName,
 		"GITHUB_REPOSITORY_ID": "1234567890",
-	}, suite.Suite.T())
-	CreateArtifactOnTrail(suite.flowName2, "trail-1", "backend", suite.fingerprint, suite.artifactName, suite.Suite.T())
+	}, suite.T())
+	CreateArtifactOnTrail(suite.flowName2, "trail-1", "backend", suite.fingerprint, suite.artifactName, suite.T())
 }
 
 func (suite *ListArtifactsCommandTestSuite) TearDownTest() {
@@ -57,17 +57,11 @@ func (suite *ListArtifactsCommandTestSuite) TearDownTest() {
 		"GITHUB_SERVER_URL":    "",
 		"GITHUB_REPOSITORY":    "",
 		"GITHUB_REPOSITORY_ID": "",
-	}, suite.Suite.T())
+	}, suite.T())
 }
 
 func (suite *ListArtifactsCommandTestSuite) TestListArtifactsCmd() {
 	tests := []cmdTestCase{
-		{
-			wantError: true,
-			name:      "missing both flow and repo flags causes an error",
-			cmd:       fmt.Sprintf(`list artifacts %s`, suite.defaultKosliArguments),
-			golden:    "Error: at least one of --flow, --repo is required\n",
-		},
 		{
 			wantError:   true,
 			name:        "non-existing flow causes an error",
@@ -115,7 +109,7 @@ func (suite *ListArtifactsCommandTestSuite) TestListArtifactsCmd() {
 		},
 	}
 
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

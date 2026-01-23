@@ -26,7 +26,7 @@ func (suite *GetEnvironmentCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
-	CreateEnv(global.Org, suite.envName, suite.envType, suite.Suite.T())
+	CreateEnv(global.Org, suite.envName, suite.envType, suite.T())
 }
 
 func (suite *GetEnvironmentCommandTestSuite) TestGetEnvironmentCmd() {
@@ -57,7 +57,7 @@ func (suite *GetEnvironmentCommandTestSuite) TestGetEnvironmentCmd() {
 		},
 	}
 
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

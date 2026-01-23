@@ -18,7 +18,7 @@ func (suite *DockerTestSuite) SetupSuite() {
 
 func (suite *DockerTestSuite) SetupTest() {
 	err := PullDockerImage(suite.testImageName)
-	require.NoError(suite.Suite.T(), err)
+	require.NoError(suite.T(), err)
 }
 
 func (suite *DockerTestSuite) TestPullDockerImage() {
@@ -38,12 +38,12 @@ func (suite *DockerTestSuite) TestPullDockerImage() {
 		},
 	}
 	for _, tt := range tests {
-		suite.Suite.Run(tt.name, func() {
+		suite.Run(tt.name, func() {
 			err := PullDockerImage(tt.imageName)
 			if tt.wantErr {
-				require.Error(suite.Suite.T(), err)
+				require.Error(suite.T(), err)
 			} else {
-				require.NoError(suite.Suite.T(), err)
+				require.NoError(suite.T(), err)
 			}
 		})
 	}
@@ -68,19 +68,19 @@ func (suite *DockerTestSuite) TestPushDockerImage() {
 		},
 	}
 	for _, tt := range tests {
-		suite.Suite.Run(tt.name, func() {
+		suite.Run(tt.name, func() {
 			if tt.tagImageAs != "" {
 				err := TagDockerImage(tt.imageName, tt.tagImageAs)
-				require.NoError(suite.Suite.T(), err)
+				require.NoError(suite.T(), err)
 			} else {
 				tt.tagImageAs = tt.imageName
 			}
 
 			err := PushDockerImage(tt.tagImageAs)
 			if tt.wantErr {
-				require.Error(suite.Suite.T(), err)
+				require.Error(suite.T(), err)
 			} else {
-				require.NoError(suite.Suite.T(), err)
+				require.NoError(suite.T(), err)
 			}
 		})
 	}
@@ -88,26 +88,26 @@ func (suite *DockerTestSuite) TestPushDockerImage() {
 
 func (suite *DockerTestSuite) TestTagDockerImage() {
 	err := TagDockerImage(suite.testImageName, "new-tag")
-	require.NoError(suite.Suite.T(), err)
+	require.NoError(suite.T(), err)
 }
 
 func (suite *DockerTestSuite) TestRemoveDockerImage() {
 	err := RemoveDockerImage(suite.testImageName)
-	require.NoError(suite.Suite.T(), err)
+	require.NoError(suite.T(), err)
 	err = RemoveDockerImage("non-existing-image")
-	require.Error(suite.Suite.T(), err)
+	require.Error(suite.T(), err)
 }
 
 func (suite *DockerTestSuite) TestRunDockerContainer() {
 	id, err := RunDockerContainer(suite.testImageName)
-	require.NoError(suite.Suite.T(), err)
-	require.NotEmpty(suite.Suite.T(), id)
+	require.NoError(suite.T(), err)
+	require.NotEmpty(suite.T(), id)
 	err = RemoveDockerContainer(id)
-	require.NoError(suite.Suite.T(), err)
+	require.NoError(suite.T(), err)
 
 	id, err = RunDockerContainer("not-existing-image")
-	require.Error(suite.Suite.T(), err)
-	require.Empty(suite.Suite.T(), id)
+	require.Error(suite.T(), err)
+	require.Empty(suite.T(), id)
 }
 
 func TestDockerTestSuite(t *testing.T) {

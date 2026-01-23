@@ -25,7 +25,7 @@ type AttestGitlabPRCommandTestSuite struct {
 }
 
 func (suite *AttestGitlabPRCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_GITLAB_TOKEN"})
+	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_GITLAB_TOKEN"})
 
 	suite.flowName = "attest-gitlab-pr"
 	suite.trailName = "test-123"
@@ -40,18 +40,20 @@ func (suite *AttestGitlabPRCommandTestSuite) SetupTest() {
 
 	var err error
 	suite.tmpDir, err = os.MkdirTemp("", "testDir")
-	require.NoError(suite.Suite.T(), err)
+	require.NoError(suite.T(), err)
 	_, err = testHelpers.CloneGitRepo("https://gitlab.com/kosli-dev/merkely-gitlab-demo.git", suite.tmpDir)
-	require.NoError(suite.Suite.T(), err)
+	require.NoError(suite.T(), err)
 
 	suite.defaultKosliArguments = fmt.Sprintf(" --flow %s --trail %s --repo-root %s --host %s --org %s --api-token %s", suite.flowName, suite.trailName, suite.tmpDir, global.Host, global.Org, global.ApiToken)
-	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.Suite.T())
-	BeginTrail(suite.trailName, suite.flowName, "", suite.Suite.T())
-	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.Suite.T())
+	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
+	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
+	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.T())
 }
 
 func (suite *AttestGitlabPRCommandTestSuite) TearDownSuite() {
-	os.RemoveAll(suite.tmpDir)
+	if err := os.RemoveAll(suite.tmpDir); err != nil {
+		require.NoError(suite.T(), err, "failed to remove temp dir %s", suite.tmpDir)
+	}
 }
 
 func (suite *AttestGitlabPRCommandTestSuite) TestAttestGitlabPRCmd() {
@@ -151,7 +153,7 @@ func (suite *AttestGitlabPRCommandTestSuite) TestAttestGitlabPRCmd() {
 		},
 	}
 
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

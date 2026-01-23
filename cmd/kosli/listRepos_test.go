@@ -27,14 +27,14 @@ func (suite *ListReposCommandTestSuite) SetupTest() {
 	global.Org = "acme-org"
 	global.ApiToken = "v3OWZiYWu9G2IMQStYg9BcPQUQ88lJNNnTJTNq8jfvmkR1C5wVpHSs7F00JcB5i6OGeUzrKt3CwRq7ndcN4TTfMeo8ASVJ5NdHpZT7DkfRfiFvm8s7GbsIHh2PtiQJYs2UoN13T8DblV5C4oKb6-yWH73h67OhotPlKfVKazR-c"
 	suite.acmeOrgKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
-	CreateFlowWithTemplate("list-repos", "testdata/valid_template.yml", suite.Suite.T())
+	CreateFlowWithTemplate("list-repos", "testdata/valid_template.yml", suite.T())
 	SetEnvVars(map[string]string{
 		"GITHUB_RUN_NUMBER":    "1234",
 		"GITHUB_SERVER_URL":    "https://github.com",
 		"GITHUB_REPOSITORY":    "kosli-dev/cli",
 		"GITHUB_REPOSITORY_ID": "1234567890",
-	}, suite.Suite.T())
-	BeginTrail("trail-name", "list-repos", "", suite.Suite.T())
+	}, suite.T())
+	BeginTrail("trail-name", "list-repos", "", suite.T())
 }
 
 func (suite *ListReposCommandTestSuite) TearDownTest() {
@@ -43,7 +43,7 @@ func (suite *ListReposCommandTestSuite) TearDownTest() {
 		"GITHUB_SERVER_URL":    "",
 		"GITHUB_REPOSITORY":    "",
 		"GITHUB_REPOSITORY_ID": "",
-	}, suite.Suite.T())
+	}, suite.T())
 }
 
 func (suite *ListReposCommandTestSuite) TestListReposCmd() {
@@ -95,7 +95,7 @@ func (suite *ListReposCommandTestSuite) TestListReposCmd() {
 		},
 	}
 
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

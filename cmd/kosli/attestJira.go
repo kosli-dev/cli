@@ -303,7 +303,11 @@ func (o *attestJiraOptions) run(args []string) error {
 	}
 	// if we created a tar package, remove it after uploading it
 	if cleanupNeeded {
-		defer os.Remove(evidencePath)
+		defer func() {
+			if err := os.Remove(evidencePath); err != nil {
+				logger.Warn("failed to remove evidence file: %v", err)
+			}
+		}()
 	}
 
 	reqParams := &requests.RequestParams{
@@ -353,7 +357,7 @@ func (o *attestJiraOptions) validateJiraProjectKeys() error {
 		}
 	}
 	if len(invalidKeys) > 0 {
-		return fmt.Errorf("Invalid Jira project keys: %s", strings.Join(invalidKeys, ", "))
+		return fmt.Errorf("invalid Jira project keys: %v", invalidKeys)
 	}
 	return nil
 }

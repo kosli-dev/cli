@@ -27,8 +27,8 @@ func (suite *ArtifactEvidenceJUnitCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateFlow(suite.flowName, suite.Suite.T())
-	CreateArtifact(suite.flowName, suite.artifactFingerprint, "FooBar_1", suite.Suite.T())
+	CreateFlow(suite.flowName, suite.T())
+	CreateArtifact(suite.flowName, suite.artifactFingerprint, "FooBar_1", suite.T())
 }
 
 func (suite *ArtifactEvidenceJUnitCommandTestSuite) TestArtifactEvidenceJUnitCommandCmd() {
@@ -87,7 +87,7 @@ func (suite *ArtifactEvidenceJUnitCommandTestSuite) TestArtifactEvidenceJUnitCom
 			goldenRegex: "Error: required flag\\(s\\) \"flow\" not set\n",
 		},
 	}
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

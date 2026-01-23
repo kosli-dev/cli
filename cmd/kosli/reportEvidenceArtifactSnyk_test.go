@@ -28,8 +28,8 @@ func (suite *ArtifactEvidenceSnykCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateFlow(suite.flowName, suite.Suite.T())
-	CreateArtifact(suite.flowName, suite.artifactFingerprint, "FooBar_1", suite.Suite.T())
+	CreateFlow(suite.flowName, suite.T())
+	CreateArtifact(suite.flowName, suite.artifactFingerprint, "FooBar_1", suite.T())
 }
 
 func (suite *ArtifactEvidenceSnykCommandTestSuite) TestArtifactEvidenceSnykCmd() {
@@ -101,7 +101,7 @@ func (suite *ArtifactEvidenceSnykCommandTestSuite) TestArtifactEvidenceSnykCmd()
 			goldenRegex: "snyk scan evidence is reported to artifact: " + suite.artifactFingerprint + "\n",
 		},
 	}
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

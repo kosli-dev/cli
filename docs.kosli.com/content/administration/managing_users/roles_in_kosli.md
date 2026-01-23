@@ -33,10 +33,10 @@ Kosli provides three user roles to help administrators manage access and permiss
 | **Resource Management** | | | |
 | Create flows | ✅ | ✅ | ❌ |
 | Update/delete flows | ✅ | ✅ | ❌ |
-| Create environments | ✅ | ✅ | ❌ |
-| Update/delete environments | ✅ | ✅ | ❌ |
-| Create policies | ✅ | ✅ | ❌ |
-| Update/delete policies | ✅ | ✅ | ❌ |
+| Create/update environments | ✅ | ✅ | ❌ |
+| Delete environments | ✅ | ❌ | ❌ |
+| Create/update policies | ✅ | ✅ | ❌ |
+| Delete policies | ❌ | ❌ | ❌ |
 | Create attestation types | ✅ | ✅ | ❌ |
 | Update/delete attestation types | ✅ | ✅ | ❌ |
 | **Attestations & Snapshots** | | | |

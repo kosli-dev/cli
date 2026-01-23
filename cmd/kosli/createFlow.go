@@ -111,7 +111,11 @@ func (o *createFlowOptions) run(args []string) error {
 				return fmt.Errorf("failed to create default template: %v", err)
 			}
 			o.TemplateFile = defaultTemplatePath
-			defer os.RemoveAll(tmpDir)
+			defer func() {
+				if err := os.RemoveAll(tmpDir); err != nil {
+					logger.Warn("failed to remove temporary directory %s: %v", tmpDir, err)
+				}
+			}()
 		}
 
 		form, err := newFlowForm(o.payload, o.TemplateFile, false)

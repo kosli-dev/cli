@@ -26,8 +26,8 @@ func (suite *AttestArtifactCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --flow %s --trail %s --repo-root ../.. --host %s --org %s --api-token %s", suite.flowName, suite.trailName, global.Host, global.Org, global.ApiToken)
-	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.Suite.T())
-	BeginTrail(suite.trailName, suite.flowName, "", suite.Suite.T())
+	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
+	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
 }
 
 func (suite *AttestArtifactCommandTestSuite) TestAttestArtifactCmd() {
@@ -96,7 +96,7 @@ func (suite *AttestArtifactCommandTestSuite) TestAttestArtifactCmd() {
 			wantError: true,
 			name:      "fails when annotation is not valid",
 			cmd:       fmt.Sprintf("attest artifact testdata/file1 --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name cli --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com --annotate foo.baz=bar %s", suite.defaultKosliArguments),
-			golden:    "Error: --annotate flag should be in the format key=value. Invalid key: 'foo.baz'. Key can only contain [A-Za-z0-9_].\n",
+			golden:    "Error: --annotate flag should be in the format key=value. Invalid key: 'foo.baz'. Key can only contain [A-Za-z0-9_]\n",
 		},
 		{
 			name:   "can attest a file artifact with redacted commit info",
@@ -111,7 +111,7 @@ func (suite *AttestArtifactCommandTestSuite) TestAttestArtifactCmd() {
 		},
 	}
 
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

@@ -33,15 +33,15 @@ func (suite *GetArtifactCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.Suite.T())
-	BeginTrail(suite.trailName, suite.flowName, "", suite.Suite.T())
+	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
+	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
 	fingerprintOptions := &fingerprintOptions{
 		artifactType: "file",
 	}
 	var err error
 	suite.fingerprint, err = GetSha256Digest(suite.artifactPath, fingerprintOptions, logger)
-	require.NoError(suite.Suite.T(), err)
-	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.fingerprint, suite.artifactName, suite.Suite.T())
+	require.NoError(suite.T(), err)
+	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.fingerprint, suite.artifactName, suite.T())
 }
 
 func (suite *GetArtifactCommandTestSuite) TestGetArtifactCmd() {
@@ -96,7 +96,7 @@ func (suite *GetArtifactCommandTestSuite) TestGetArtifactCmd() {
 		},
 	}
 
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

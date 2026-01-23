@@ -37,8 +37,11 @@ ldflags:
 fmt: ## Reformat package sources
 	@go fmt ./...
 
-lint:
-	@docker run --rm -v $(PWD):/app -w /app golangci/golangci-lint:latest-alpine golangci-lint run --timeout=5m  -v ./...
+ensure_golangci-lint:
+	@$HOMEBREW_NO_AUTO_UPDATE=1 brew upgrade golangci-lint
+
+lint: deps vet ensure_golangci-lint
+	@golangci-lint run --timeout=5m --color always  -v ./...
 
 vet: fmt
 	@go vet ./...

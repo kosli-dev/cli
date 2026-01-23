@@ -145,7 +145,7 @@ func (azureClient *AzureClient) NewAppData(app *armappservice.Site, logger *logg
 }
 
 // getBearerToken gets a bearer token
-func (azureClient *AzureClient) getBearerToken() (string, error) {
+func (azureClient *AzureClient) getBearerToken(logger *logger.Logger) (string, error) {
 	oauthURL := fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/token", azureClient.Credentials.TenantId)
 
 	data := url.Values{}
@@ -166,7 +166,12 @@ func (azureClient *AzureClient) getBearerToken() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			// Log warning for cleanup error
+			logger.Warn("failed to close response body: %v", err)
+		}
+	}()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -195,7 +200,12 @@ func downloadAppPackage(appName, bearerToken, destination string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			// Log warning for cleanup error
+			fmt.Printf("warning: failed to close response body: %v\n", err)
+		}
+	}()
 	if resp.StatusCode == http.StatusServiceUnavailable {
 		return ErrAppUnavailable
 	}
@@ -207,7 +217,12 @@ func downloadAppPackage(appName, bearerToken, destination string) error {
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer func() {
+		if err := out.Close(); err != nil {
+			// Log warning for cleanup error
+			fmt.Printf("warning: failed to close file %s: %v\n", destination, err)
+		}
+	}()
 
 	_, err = io.Copy(out, resp.Body)
 	if err != nil {
@@ -218,7 +233,7 @@ func downloadAppPackage(appName, bearerToken, destination string) error {
 
 func (azureClient *AzureClient) fingerprintZipService(app *armappservice.Site, logger *logger.Logger) (AppData, error) {
 	// get bearer token
-	token, err := azureClient.getBearerToken()
+	token, err := azureClient.getBearerToken(logger)
 	if err != nil {
 		return AppData{}, err
 	}
@@ -227,7 +242,11 @@ func (azureClient *AzureClient) fingerprintZipService(app *armappservice.Site, l
 	if err != nil {
 		return AppData{}, err
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			logger.Warn("failed to remove temp dir %s: %v", tmpDir, err)
+		}
+	}()
 
 	packagePath := filepath.Join(tmpDir, *app.Name+".zip")
 	err = downloadAppPackage(*app.Name, token, packagePath)
@@ -241,7 +260,7 @@ func (azureClient *AzureClient) fingerprintZipService(app *armappservice.Site, l
 
 	// unzip the downloaded package
 	destDir := filepath.Join(tmpDir, "extracted")
-	err = unzip(packagePath, destDir)
+	err = unzip(packagePath, destDir, logger)
 	if err != nil {
 		return AppData{}, fmt.Errorf("failed to unzip downloaded package for app [%s]: %v", *app.Name, err)
 	}
@@ -286,12 +305,17 @@ func (azureClient *AzureClient) fingerprintZipService(app *armappservice.Site, l
 }
 
 // unzip extracts a zip archive to a specified destination directory.
-func unzip(zipFile, destDir string) error {
+func unzip(zipFile, destDir string, logger *logger.Logger) error {
 	r, err := zip.OpenReader(zipFile)
 	if err != nil {
 		return err
 	}
-	defer r.Close()
+	defer func() {
+		if err := r.Close(); err != nil {
+			// Log warning for cleanup error
+			logger.Warn("failed to close zip reader: %v", err)
+		}
+	}()
 
 	for _, f := range r.File {
 		filePath := filepath.Join(destDir, f.Name)
@@ -326,8 +350,14 @@ func unzip(zipFile, destDir string) error {
 		_, err = io.Copy(destFile, zipFile)
 
 		// Close the open files
-		destFile.Close()
-		zipFile.Close()
+		if closeErr := destFile.Close(); closeErr != nil {
+			// Log warning for cleanup error
+			logger.Warn("failed to close destination file %s: %v", filePath, closeErr)
+		}
+		if closeErr := zipFile.Close(); closeErr != nil {
+			// Log warning for cleanup error
+			logger.Warn("failed to close zip file: %v", closeErr)
+		}
 
 		if err != nil {
 			return err
@@ -476,7 +506,11 @@ func (azureClient *AzureClient) GetDockerLogsForApp(appServiceName string, logge
 		}
 		logger.Debug("Got logs for app service: ", appServiceName)
 		if response.Body != nil {
-			defer response.Body.Close()
+			defer func() {
+				if err := response.Body.Close(); err != nil {
+					logger.Warn("failed to close response body: %v", err)
+				}
+			}()
 		}
 		logger.Debug("Reading logs for app service: ", appServiceName)
 		body, err := io.ReadAll(response.Body)
@@ -497,7 +531,11 @@ func (azureClient *AzureClient) GetDockerLogsForApp(appServiceName string, logge
 		if err != nil {
 			return nil, err
 		}
-		defer response.Body.Close()
+		defer func() {
+			if err := response.Body.Close(); err != nil {
+				logger.Warn("failed to close response body: %v", err)
+			}
+		}()
 
 		body, err := io.ReadAll(response.Body)
 		if err != nil {

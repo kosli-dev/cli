@@ -85,10 +85,20 @@ func Tar(src, tarFileName string) (string, error) {
 	}
 
 	gzw := gzip.NewWriter(f)
-	defer gzw.Close()
+	defer func() {
+		if err := gzw.Close(); err != nil {
+			// Log warning for cleanup error
+			fmt.Printf("warning: failed to close gzip writer: %v\n", err)
+		}
+	}()
 
 	tw := tar.NewWriter(gzw)
-	defer tw.Close()
+	defer func() {
+		if err := tw.Close(); err != nil {
+			// Log warning for cleanup error
+			fmt.Printf("warning: failed to close tar writer: %v\n", err)
+		}
+	}()
 
 	// walk path
 	return tarFilePath, filepath.WalkDir(src, func(path string, di fs.DirEntry, err error) error {
@@ -115,7 +125,7 @@ func Tar(src, tarFileName string) (string, error) {
 		}
 
 		// update the name to correctly reflect the desired destination when untaring
-		header.Name = strings.TrimPrefix(strings.Replace(path, src, "", -1), string(filepath.Separator))
+		header.Name = strings.TrimPrefix(strings.ReplaceAll(path, src, ""), string(filepath.Separator))
 
 		// write the header
 		if err := tw.WriteHeader(header); err != nil {
@@ -135,7 +145,10 @@ func Tar(src, tarFileName string) (string, error) {
 
 		// manually close here after each file operation; defering would cause each file close
 		// to wait until all operations have completed.
-		f.Close()
+		if err := f.Close(); err != nil {
+			// Log warning for cleanup error
+			fmt.Printf("warning: failed to close file %s: %v\n", path, err)
+		}
 
 		return nil
 	})
@@ -146,12 +159,17 @@ func CreateFileWithContent(path, content string) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			// Log warning for cleanup error
+			fmt.Printf("warning: failed to close file %s: %v\n", path, err)
+		}
+	}()
 	_, err = file.Write([]byte(content))
 	return err
 }
 
-func ConvertStringListToInterfaceList(approversList []string) []interface{} {
+func ConvertStringListToInterfaceList(approversList []string) []any {
 	approversIface := make([]interface{}, len(approversList))
 	for i, v := range approversList {
 		approversIface[i] = v

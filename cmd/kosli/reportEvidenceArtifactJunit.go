@@ -138,7 +138,11 @@ func (o *reportEvidenceArtifactJunitOptions) run(args []string) error {
 	form, cleanupNeeded, evidencePath, err := newEvidenceForm(o.payload, junitFilenames)
 	// if we created a tar package, remove it after uploading it
 	if cleanupNeeded {
-		defer os.Remove(evidencePath)
+		defer func() {
+			if err := os.Remove(evidencePath); err != nil {
+				logger.Warn("failed to remove evidence file %s: %v", evidencePath, err)
+			}
+		}()
 	}
 
 	if err != nil {

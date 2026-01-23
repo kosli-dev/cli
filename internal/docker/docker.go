@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 
@@ -24,7 +25,12 @@ func PullDockerImage(imageName string) error {
 	if err != nil {
 		return err
 	}
-	defer rc.Close()
+	defer func() {
+		if err := rc.Close(); err != nil {
+			// Log warning for cleanup error
+			fmt.Printf("warning: failed to close image pull reader: %v\n", err)
+		}
+	}()
 	_, err = io.Copy(os.Stdout, rc)
 	if err != nil {
 		return err
@@ -51,7 +57,12 @@ func PushDockerImage(imageName string) error {
 	if err != nil {
 		return err
 	}
-	defer rc.Close()
+	defer func() {
+		if err := rc.Close(); err != nil {
+			// Log warning for cleanup error
+			fmt.Printf("warning: failed to close image push reader: %v\n", err)
+		}
+	}()
 	_, err = io.Copy(os.Stdout, rc)
 	if err != nil {
 		return err

@@ -22,13 +22,13 @@ type SnapshotDockerTestSuite struct {
 func (suite *SnapshotDockerTestSuite) SetupSuite() {
 	suite.imageName = "library/alpine@sha256:e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5"
 	err := docker.PullDockerImage(suite.imageName)
-	require.NoError(suite.Suite.T(), err)
+	require.NoError(suite.T(), err)
 }
 
 func (suite *SnapshotDockerTestSuite) TearDownSuite() {
 	for _, id := range suite.createdContainerIDs {
 		err := docker.RemoveDockerContainer(id)
-		require.NoError(suite.Suite.T(), err, fmt.Sprintf("RemoveDockerContainer: %s", id))
+		require.NoError(suite.T(), err, fmt.Sprintf("RemoveDockerContainer: %s", id))
 	}
 }
 
@@ -44,23 +44,23 @@ func (suite *SnapshotDockerTestSuite) TestCreateDockerArtifactsData() {
 			expectedSha256: "e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5",
 		},
 	} {
-		suite.Suite.Run(t.name, func() {
+		suite.Run(t.name, func() {
 			suite.withRunningContainer(t.imageName)
 
-			assert.Contains(suite.Suite.T(), suite.containerDigests(), t.expectedSha256)
+			assert.Contains(suite.T(), suite.containerDigests(), t.expectedSha256)
 		})
 	}
 }
 
 func (suite *SnapshotDockerTestSuite) withRunningContainer(imageName string) {
 	containerID, err := docker.RunDockerContainer(imageName)
-	require.NoError(suite.Suite.T(), err, fmt.Sprintf("RunDockerContainer for %s", imageName))
+	require.NoError(suite.T(), err, fmt.Sprintf("RunDockerContainer for %s", imageName))
 	suite.createdContainerIDs = append(suite.createdContainerIDs, containerID)
 }
 
 func (suite *SnapshotDockerTestSuite) containerDigests() []string {
 	data, err := CreateDockerArtifactsData()
-	require.NoError(suite.Suite.T(), err, "CreateDockerArtifactsData")
+	require.NoError(suite.T(), err, "CreateDockerArtifactsData")
 
 	var actualDigests []string
 	for _, item := range data {

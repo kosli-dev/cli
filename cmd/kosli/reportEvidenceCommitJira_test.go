@@ -25,7 +25,7 @@ type CommitEvidenceJiraCommandTestSuite struct {
 }
 
 func (suite *CommitEvidenceJiraCommandTestSuite) SetupTest() {
-	testHelpers.SkipIfEnvVarUnset(suite.Suite.T(), []string{"KOSLI_JIRA_API_TOKEN", "KOSLI_JIRA_USERNAME"})
+	testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_JIRA_API_TOKEN", "KOSLI_JIRA_USERNAME"})
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
 		Org:      "docs-cmd-test-user-shared",
@@ -36,16 +36,17 @@ func (suite *CommitEvidenceJiraCommandTestSuite) SetupTest() {
 		global.Host, global.Org, global.ApiToken)
 	var err error
 	suite.tmpDir, err = os.MkdirTemp("", "testDir")
-	require.NoError(suite.Suite.T(), err)
+	require.NoError(suite.T(), err)
 	_, suite.workTree, suite.fs, err = testHelpers.InitializeGitRepo(suite.tmpDir)
-	require.NoError(suite.Suite.T(), err)
+	require.NoError(suite.T(), err)
 
 	suite.flowName = "flow-for-jira-testing"
-	CreateFlow(suite.flowName, suite.Suite.T())
+	CreateFlow(suite.flowName, suite.T())
 }
 
 func (suite *CommitEvidenceJiraCommandTestSuite) TearDownSuite() {
-	os.RemoveAll(suite.tmpDir)
+	err := os.RemoveAll(suite.tmpDir)
+	require.NoError(suite.T(), err, "failed to remove temp dir %s", suite.tmpDir)
 }
 
 type jiraTestsAdditionalConfig struct {
@@ -202,17 +203,17 @@ func funcName(test cmdTestCase, suite *CommitEvidenceJiraCommandTestSuite) {
 		branchName := test.additionalConfig.(jiraTestsAdditionalConfig).branchName
 		if branchName != "" {
 			err := testHelpers.CheckoutNewBranch(suite.workTree, branchName)
-			require.NoError(suite.Suite.T(), err)
-			defer testHelpers.CheckoutMaster(suite.workTree, suite.Suite.T())
+			require.NoError(suite.T(), err)
+			defer testHelpers.CheckoutMaster(suite.workTree, suite.T())
 		}
 		msg := test.additionalConfig.(jiraTestsAdditionalConfig).commitMessage
 		commitSha, err := testHelpers.CommitToRepo(suite.workTree, suite.fs, msg)
-		require.NoError(suite.Suite.T(), err)
+		require.NoError(suite.T(), err)
 
 		test.cmd = test.cmd + " --commit " + commitSha
 	}
 
-	runTestCmd(suite.Suite.T(), []cmdTestCase{test})
+	runTestCmd(suite.T(), []cmdTestCase{test})
 }
 
 // In order for 'go test' to run this suite, we need to create

@@ -25,13 +25,13 @@ type ServerTestSuite struct {
 func (suite *ServerTestSuite) SetupTest() {
 	var err error
 	suite.tmpDir, err = os.MkdirTemp("", "testDir")
-	require.NoError(suite.Suite.T(), err, "error creating a temporary test directory")
+	require.NoError(suite.T(), err, "error creating a temporary test directory")
 }
 
 // clean up tmpDir after each test
 func (suite *ServerTestSuite) AfterTest() {
 	err := os.RemoveAll(suite.tmpDir)
-	require.NoErrorf(suite.Suite.T(), err, "error cleaning up the temporary test directory %s", suite.tmpDir)
+	require.NoErrorf(suite.T(), err, "error cleaning up the temporary test directory %s", suite.tmpDir)
 }
 
 type fileSystemEntry struct {
@@ -161,7 +161,7 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsData() {
 			},
 		},
 	} {
-		suite.Suite.Run(t.name, func() {
+		suite.Run(t.name, func() {
 			suite.setupTestFileSystem(suite.tmpDir, t.fileSystem)
 			if t.excludePaths == nil {
 				t.excludePaths = []string{}
@@ -172,13 +172,13 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsData() {
 			}
 
 			serverData, err := CreateServerArtifactsData(t.paths, t.excludePaths, logger.NewStandardLogger())
-			require.NoErrorf(suite.Suite.T(), err, "error creating server artifact data: %v", err)
+			require.NoErrorf(suite.T(), err, "error creating server artifact data: %v", err)
 
 			digestsList := []map[string]string{}
 
 			for i, data := range serverData {
 				digestsList = append(digestsList, data.Digests)
-				assert.NotEqual(suite.Suite.T(), int64(0), data.CreationTimestamp, fmt.Sprintf("TestCreateServerArtifactsData: %s , got: %v, should not be 0, at index: %d", t.name, data.CreationTimestamp, i))
+				assert.NotEqual(suite.T(), int64(0), data.CreationTimestamp, fmt.Sprintf("TestCreateServerArtifactsData: %s , got: %v, should not be 0, at index: %d", t.name, data.CreationTimestamp, i))
 			}
 
 			expected := []map[string]string{}
@@ -189,7 +189,7 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsData() {
 				}
 				expected = append(expected, tmpMap)
 			}
-			assert.ElementsMatch(suite.Suite.T(), expected, digestsList, fmt.Sprintf("TestCreateServerArtifactsData: %s , got: %v -- want: %v", t.name, digestsList, expected))
+			assert.ElementsMatch(suite.T(), expected, digestsList, fmt.Sprintf("TestCreateServerArtifactsData: %s , got: %v -- want: %v", t.name, digestsList, expected))
 
 		})
 	}
@@ -199,7 +199,7 @@ func (suite *ServerTestSuite) setupTestFileSystem(tmpDir string, fs map[string]f
 	for entryName, fsEntry := range fs {
 		dirPath := filepath.Join(tmpDir, entryName)
 		err := os.Mkdir(dirPath, 0777)
-		require.NoErrorf(suite.Suite.T(), err, "error creating test dir %s", entryName)
+		require.NoErrorf(suite.T(), err, "error creating test dir %s", entryName)
 
 		for fileName, fileContent := range fsEntry.files {
 			suite.createFileWithContent(filepath.Join(dirPath, fileName), fileContent)
@@ -244,7 +244,7 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsDataWithFiles() {
 			want:        []map[string]string{},
 		},
 	} {
-		suite.Suite.Run(t.name, func() {
+		suite.Run(t.name, func() {
 			paths := []string{}
 			path := filepath.Join(suite.tmpDir, t.args.name)
 			paths = append(paths, path)
@@ -254,15 +254,15 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsDataWithFiles() {
 
 			serverData, err := CreateServerArtifactsData(paths, []string{}, logger.NewStandardLogger())
 			if t.expectError {
-				require.Errorf(suite.Suite.T(), err, "was expecting error during creating server artifact data but got none")
+				require.Errorf(suite.T(), err, "was expecting error during creating server artifact data but got none")
 			} else {
-				require.NoErrorf(suite.Suite.T(), err, "error creating server artifact data was NOT expected: %v", err)
+				require.NoErrorf(suite.T(), err, "error creating server artifact data was NOT expected: %v", err)
 
 				digestsList := []map[string]string{}
 
 				for i, data := range serverData {
 					digestsList = append(digestsList, data.Digests)
-					assert.NotEqual(suite.Suite.T(), int64(0), data.CreationTimestamp, fmt.Sprintf("TestCreateServerArtifactsDataWithFiles: %s , got: %v, should not be 0, at index: %d", t.name, data.CreationTimestamp, i))
+					assert.NotEqual(suite.T(), int64(0), data.CreationTimestamp, fmt.Sprintf("TestCreateServerArtifactsDataWithFiles: %s , got: %v, should not be 0, at index: %d", t.name, data.CreationTimestamp, i))
 				}
 
 				expected := []map[string]string{}
@@ -273,7 +273,7 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsDataWithFiles() {
 					}
 					expected = append(expected, tmpMap)
 				}
-				assert.ElementsMatch(suite.Suite.T(), expected, digestsList, fmt.Sprintf("TestCreateServerArtifactsDataWithFiles: %s , got: %v -- want: %v", t.name, digestsList, expected))
+				assert.ElementsMatch(suite.T(), expected, digestsList, fmt.Sprintf("TestCreateServerArtifactsDataWithFiles: %s , got: %v -- want: %v", t.name, digestsList, expected))
 			}
 
 		})
@@ -285,22 +285,22 @@ func (suite *ServerTestSuite) TestCreateServerArtifactsDataInvalid() {
 	paths := []string{"a/b/c"}
 
 	_, err := CreateServerArtifactsData(paths, []string{}, logger.NewStandardLogger())
-	require.Errorf(suite.Suite.T(), err, "error was expected")
+	require.Errorf(suite.T(), err, "error was expected")
 }
 
 func (suite *ServerTestSuite) TestGetPathLastModifiedTimestamp() {
 	ts, err := getPathLastModifiedTimestamp("server.go")
-	require.NoError(suite.Suite.T(), err)
-	require.Greater(suite.Suite.T(), ts, int64(0))
+	require.NoError(suite.T(), err)
+	require.Greater(suite.T(), ts, int64(0))
 
 	ts, err = getPathLastModifiedTimestamp("non-existing")
-	require.Error(suite.Suite.T(), err)
-	require.Equal(suite.Suite.T(), ts, int64(0))
+	require.Error(suite.T(), err)
+	require.Equal(suite.T(), ts, int64(0))
 }
 
 func (suite *ServerTestSuite) createFileWithContent(path, content string) {
 	err := utils.CreateFileWithContent(path, content)
-	require.NoErrorf(suite.Suite.T(), err, "error creating file %s", path)
+	require.NoErrorf(suite.T(), err, "error creating file %s", path)
 }
 
 func (suite *ServerTestSuite) TestCreatePathsArtifactsData() {
@@ -342,19 +342,19 @@ func (suite *ServerTestSuite) TestCreatePathsArtifactsData() {
 			},
 		},
 	} {
-		suite.Suite.Run(t.name, func() {
+		suite.Run(t.name, func() {
 			serverData, err := CreatePathsArtifactsData(t.pathsSpec, logger.NewStandardLogger())
-			require.Equal(suite.Suite.T(), t.wantError, err != nil, err)
+			require.Equal(suite.T(), t.wantError, err != nil, err)
 
 			digestsList := []map[string]string{}
 
 			for i, data := range serverData {
 				digestsList = append(digestsList, data.Digests)
-				assert.NotEqual(suite.Suite.T(), int64(0), data.CreationTimestamp, fmt.Sprintf("TestCreatePathsArtifactsData: %s , got: %v, should not be 0, at index: %d", t.name, data.CreationTimestamp, i))
+				assert.NotEqual(suite.T(), int64(0), data.CreationTimestamp, fmt.Sprintf("TestCreatePathsArtifactsData: %s , got: %v, should not be 0, at index: %d", t.name, data.CreationTimestamp, i))
 			}
 
 			for artifactName, digest := range t.want {
-				require.Equal(suite.Suite.T(), digest, digestsList[artifactName])
+				require.Equal(suite.T(), digest, digestsList[artifactName])
 			}
 		})
 	}

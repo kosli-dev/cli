@@ -32,16 +32,16 @@ func (suite *ListApprovalsCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
-	CreateFlow(suite.flowName1, suite.Suite.T())
-	CreateFlow(suite.flowName2, suite.Suite.T())
+	CreateFlow(suite.flowName1, suite.T())
+	CreateFlow(suite.flowName2, suite.T())
 	fingerprintOptions := &fingerprintOptions{
 		artifactType: "file",
 	}
 	var err error
 	suite.fingerprint, err = GetSha256Digest(suite.artifactPath, fingerprintOptions, logger)
-	require.NoError(suite.Suite.T(), err)
-	CreateArtifact(suite.flowName2, suite.fingerprint, suite.artifactName, suite.Suite.T())
-	CreateApproval(suite.flowName2, suite.fingerprint, false, suite.Suite.T())
+	require.NoError(suite.T(), err)
+	CreateArtifact(suite.flowName2, suite.fingerprint, suite.artifactName, suite.T())
+	CreateApproval(suite.flowName2, suite.fingerprint, false, suite.T())
 }
 
 func (suite *ListApprovalsCommandTestSuite) TestListApprovalsCmd() {
@@ -88,7 +88,7 @@ func (suite *ListApprovalsCommandTestSuite) TestListApprovalsCmd() {
 		},
 	}
 
-	runTestCmd(suite.Suite.T(), tests)
+	runTestCmd(suite.T(), tests)
 }
 
 // In order for 'go test' to run this suite, we need to create

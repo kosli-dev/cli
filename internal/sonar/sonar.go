@@ -142,7 +142,7 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 	}
 
 	// Read the report-task.txt file (if it exists) to get the project key, server URL, dashboard URL and ceTaskURL
-	err = sc.readFile(project, sonarResults)
+	err = sc.readFile(project, sonarResults, logger)
 	if err != nil {
 		if sc.projectKey == "" || sc.revision == "" {
 			return nil, fmt.Errorf("%s. Alternatively provide the project key and revision for the scan to attest", err)
@@ -152,11 +152,11 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 			sonarResults.ServerUrl = sc.serverURL
 			sonarResults.Revision = sc.revision
 			project.Url = fmt.Sprintf("%s/dashboard?id=%s", sonarResults.ServerUrl, project.Key)
-			analysisID, err = GetProjectAnalysisFromRevision(httpClient, sonarResults, project, sc.revision, tokenHeader)
+			analysisID, err = GetProjectAnalysisFromRevision(httpClient, sonarResults, project, sc.revision, tokenHeader, logger)
 			if err != nil {
 				return nil, err
 			}
-			err = GetTaskID(httpClient, sonarResults, project, analysisID, tokenHeader)
+			err = GetTaskID(httpClient, sonarResults, project, analysisID, tokenHeader, logger)
 			if err != nil {
 				return nil, err
 			}
@@ -189,12 +189,17 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 	return sonarResults, nil
 }
 
-func (sc *SonarConfig) readFile(project *Project, results *SonarResults) error {
+func (sc *SonarConfig) readFile(project *Project, results *SonarResults, logger *log.Logger) error {
 	metadata, err := os.Open(filepath.Join(sc.WorkingDir, "report-task.txt"))
 	if err != nil {
 		return fmt.Errorf("%s. Check your working directory is set correctly", err)
 	}
-	defer metadata.Close()
+	defer func() {
+		if err := metadata.Close(); err != nil {
+			// Log warning for cleanup error
+			logger.Warn("failed to close metadata file: %v", err)
+		}
+	}()
 
 	scanner := bufio.NewScanner(metadata)
 	for scanner.Scan() {
@@ -239,7 +244,7 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 		}
 		// If the CETaskURL from the report-task.txt file gives a 404, the CE task does not exist, or SonarQube is down.
 		if taskResponseData.Errors != nil {
-			return "", fmt.Errorf("%s on %s. \nSonarQube may be experiencing problems, please check https://status.sonarqube.com/ and try again later. \nOtherwise if you are attesting an older scan, the snapshot may have been deleted by SonarQube.", taskResponseData.Errors[0].Msg, sonarResults.ServerUrl)
+			return "", fmt.Errorf("%s on %s. \nSonarQube may be experiencing problems, please check https://status.sonarqube.com/ and try again later. \nOtherwise if you are attesting an older scan, the snapshot may have been deleted by SonarQube", taskResponseData.Errors[0].Msg, sonarResults.ServerUrl)
 		}
 
 		if taskResponseData.Task.Status == "PENDING" || taskResponseData.Task.Status == "IN_PROGRESS" {
@@ -261,7 +266,9 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 				wait *= 2
 			}
 		} else {
-			taskResponse.Body.Close()
+			if err := taskResponse.Body.Close(); err != nil {
+				logger.Warn("failed to close task response body: %v", err)
+			}
 			break
 		}
 	}
@@ -281,7 +288,7 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 	// This should only happen if the task is pending - either because the project is large and the scan takes a long time
 	// to process, or because SonarQube is experiencing delays for some reason.
 	if analysisId == "" {
-		return "", fmt.Errorf("analysis ID not found on %s. The scan results are not yet available, likely due to: \n1. Your project being particularly large and the scan taking time to process, or \n2. SonarQube experiencing delays in processing scans. \nTry rerunning the command with the --max-wait flag.", sonarResults.ServerUrl)
+		return "", fmt.Errorf("analysis ID not found on %s. The scan results are not yet available, likely due to: \n1. Your project being particularly large and the scan taking time to process, or \n2. SonarQube experiencing delays in processing scans. \nTry rerunning the command with the --max-wait flag", sonarResults.ServerUrl)
 	}
 
 	if project.Url == "" {
@@ -299,7 +306,7 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 	return analysisId, nil
 }
 
-func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *SonarResults, project *Project, revision, tokenHeader string) (string, error) {
+func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *SonarResults, project *Project, revision, tokenHeader string, logger *log.Logger) (string, error) {
 	var analysisID string
 
 	projectAnalysesURL := fmt.Sprintf("%s/api/project_analyses/search?project=%s", sonarResults.ServerUrl, project.Key)
@@ -335,7 +342,10 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 	if sonarResults.AnalaysedAt == "" {
 		return "", fmt.Errorf("analysis for revision %s of project %s not found. Check the revision is correct. \nThe scan may still be being processed by SonarQube, try again later.\n Otherwise if you are attesting an older scan, the snapshot may also have been deleted by SonarQube", revision, project.Key)
 	}
-	projectAnalysesResponse.Body.Close()
+	if err := projectAnalysesResponse.Body.Close(); err != nil {
+		// Log warning for cleanup error
+		logger.Warn("failed to close project analyses response body: %v", err)
+	}
 
 	return analysisID, nil
 }
@@ -418,7 +428,7 @@ func GetQualityGate(httpClient *http.Client, sonarResults *SonarResults, quality
 	return qualityGate, nil
 }
 
-func GetTaskID(httpClient *http.Client, sonarResults *SonarResults, project *Project, analysisID, tokenHeader string) error {
+func GetTaskID(httpClient *http.Client, sonarResults *SonarResults, project *Project, analysisID, tokenHeader string, logger *log.Logger) error {
 	CEActivityURL := fmt.Sprintf("%s/api/ce/activity?component=%s", sonarResults.ServerUrl, project.Key)
 	CEActivityRequest, err := http.NewRequest("GET", CEActivityURL, nil)
 	CEActivityRequest.Header.Add("Authorization", tokenHeader)
@@ -452,7 +462,10 @@ func GetTaskID(httpClient *http.Client, sonarResults *SonarResults, project *Pro
 			break
 		}
 	}
-	CEActivityResponse.Body.Close()
+	if err := CEActivityResponse.Body.Close(); err != nil {
+		// Log warning for cleanup error
+		logger.Warn("failed to close CE activity response body: %v", err)
+	}
 
 	return nil
 }

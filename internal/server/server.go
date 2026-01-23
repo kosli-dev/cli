@@ -87,7 +87,7 @@ func getArtifactDataForPath(path, artifactName string, excludePaths []string, lo
 		if utils.Contains(excludePaths, path) {
 			return data, fmt.Errorf("path [%s] is both included and excluded", path)
 		}
-		fingerprint, err = digest.FileSha256(path)
+		fingerprint, err = digest.FileSha256(path, logger)
 	} else {
 		fingerprint, err = digest.DirSha256(path, excludePaths, logger)
 	}

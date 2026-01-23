@@ -35,8 +35,8 @@ func (suite *DiffSnapshotsCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	CreateEnv(global.Org, suite.envName1, "server", suite.Suite.T())
-	CreateEnv(global.Org, suite.envName2, "server", suite.Suite.T())
+	CreateEnv(global.Org, suite.envName1, "server", suite.T())
+	CreateEnv(global.Org, suite.envName2, "server", suite.T())
 }
 
 func (suite *DiffSnapshotsCommandTestSuite) TestDiffSnapshotsCmd() {
@@ -95,13 +95,13 @@ func (suite *DiffSnapshotsCommandTestSuite) TestDiffSnapshotsCmd() {
 	for _, t := range tests {
 		if t.additionalConfig != nil {
 			if t.additionalConfig.(diffSnapshotsTestConfig).reportToEnv1 {
-				ReportServerArtifactToEnv([]string{suite.artifactPath}, suite.envName1, suite.Suite.T())
+				ReportServerArtifactToEnv([]string{suite.artifactPath}, suite.envName1, suite.T())
 			}
 			if t.additionalConfig.(diffSnapshotsTestConfig).reportToEnv2 {
-				ReportServerArtifactToEnv([]string{suite.artifactPath}, suite.envName2, suite.Suite.T())
+				ReportServerArtifactToEnv([]string{suite.artifactPath}, suite.envName2, suite.T())
 			}
 		}
-		runTestCmd(suite.Suite.T(), []cmdTestCase{t})
+		runTestCmd(suite.T(), []cmdTestCase{t})
 	}
 }
 
