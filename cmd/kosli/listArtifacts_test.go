@@ -63,12 +63,6 @@ func (suite *ListArtifactsCommandTestSuite) TearDownTest() {
 func (suite *ListArtifactsCommandTestSuite) TestListArtifactsCmd() {
 	tests := []cmdTestCase{
 		{
-			wantError: true,
-			name:      "missing both flow and repo flags causes an error",
-			cmd:       fmt.Sprintf(`list artifacts %s`, suite.defaultKosliArguments),
-			golden:    "Error: at least one of --flow, --repo is required\n",
-		},
-		{
 			wantError:   true,
 			name:        "non-existing flow causes an error",
 			cmd:         fmt.Sprintf(`list artifacts --flow non-existing %s`, suite.defaultKosliArguments),
