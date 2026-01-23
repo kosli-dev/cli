@@ -118,19 +118,7 @@ func (o *listTrailsOptions) run(out io.Writer) error {
 		return err
 	}
 
-	// Extract only the "data" field from the response
-	var fullResponse listTrailsResponse
-	err = json.Unmarshal([]byte(response.Body), &fullResponse)
-	if err != nil {
-		return err
-	}
-
-	dataOnly, err := json.Marshal(fullResponse.Data)
-	if err != nil {
-		return err
-	}
-
-	return output.FormattedPrint(string(dataOnly), o.output, out, o.pageNumber,
+	return output.FormattedPrint(response.Body, o.output, out, o.pageNumber,
 		map[string]output.FormatOutputFunc{
 			"table": printTrailsListAsTable,
 			"json":  output.PrintJson,
@@ -141,9 +129,6 @@ func printTrailsListAsTable(raw string, out io.Writer, page int) error {
 	response := &listTrailsResponse{}
 	trails := []Trail{}
 
-	// If using pagination, the response will have the format {data: [], pagination: {}}
-	// and therefore will not unmarshal into an array of Trail structs; instead, we need
-	// to unmarshal into a listTrailsResponse struct and extract the data field.
 	err := json.Unmarshal([]byte(raw), &trails)
 	if err != nil {
 		err = json.Unmarshal([]byte(raw), &response)

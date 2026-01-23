@@ -56,12 +56,12 @@ func (suite *ListTrailsCommandTestSuite) TestListTrailsCmd() {
 		{
 			name:       "3 listing trails with --output json works when there are trails",
 			cmd:        fmt.Sprintf(`list trails --flow %s --output json %s`, suite.flowName, suite.defaultKosliArguments),
-			goldenJson: []jsonCheck{{"", "non-empty"}},
+			goldenJson: []jsonCheck{{"data", "non-empty"}},
 		},
 		{
 			name:       "4 listing trails with --output json works when there are no trails",
 			cmd:        fmt.Sprintf(`list trails --flow %s --output json %s`, suite.flowName, suite.acmeOrgKosliArguments),
-			goldenJson: []jsonCheck{{"", "[]"}},
+			goldenJson: []jsonCheck{{"data", "[]"}},
 		},
 		{
 			wantError: true,
@@ -89,7 +89,7 @@ func (suite *ListTrailsCommandTestSuite) TestListTrailsCmd() {
 		{
 			name:       "9 can list trails that contain an artifact with the provided fingerprint",
 			cmd:        fmt.Sprintf(`list trails --fingerprint %s --output json %s`, suite.fingerprint, suite.defaultKosliArguments),
-			goldenJson: []jsonCheck{{"", "non-empty"}},
+			goldenJson: []jsonCheck{{"data", "non-empty"}},
 		},
 	}
 
