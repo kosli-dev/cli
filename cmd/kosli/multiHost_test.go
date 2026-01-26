@@ -118,7 +118,7 @@ func (suite *MultiHostTestSuite) TestRunDoubledHost() {
 		{
 			name:   "only returns primary call output when both (2) calls succeed",
 			args:   doubledArgs([]string{"kosli", "status"}),
-			stdOut: []string{"[http://localhost:8001]", "OK", ""},
+			stdOut: []string{"OK", ""},
 			err:    error(nil),
 		},
 	} {
@@ -153,7 +153,7 @@ func (suite *MultiHostTestSuite) TestRunTripledHost() {
 		{
 			name:   "only returns primary call output when all three calls succeed",
 			args:   tripledArgs([]string{"kosli", "status"}),
-			stdOut: []string{"[http://localhost:8001]", "OK", ""},
+			stdOut: []string{"OK", ""},
 			err:    error(nil),
 		},
 	} {

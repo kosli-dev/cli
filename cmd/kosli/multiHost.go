@@ -37,7 +37,7 @@ func isMultiHost() bool {
 func runMultiHost(args []string) (string, error) {
 	// Calls "innerMain" at least twice:
 	//  - with the 0th host/api-token (primary)
-	//  - with the n-th host/api-token (subsidiary)
+	//  - with the 1st, 2nd, 3rd, etc host/api-token (secondaries)
 
 	opts := getMultiOpts()
 
@@ -51,23 +51,24 @@ func runMultiHost(args []string) (string, error) {
 	}
 
 	args0 := argsAppendHostApiTokenFlags(0)
-	output0, err0 := runBufferedInnerMain(args0)
+	stdOut, stdErr := runBufferedInnerMain(args0)
 
-	stdOut := fmt.Sprintf("[%s]\n", opts.hosts[0]) + output0
 	var errorMessage string
 
-	if err0 != nil {
-		errorMessage += err0.Error()
+	if stdErr != nil {
+		errorMessage = fmt.Sprintf("[%s]\n", opts.hosts[0])
+		errorMessage += stdErr.Error()
 	}
 
+	secondariesOut := ""
 	for i := 1; i < len(opts.hosts); i++ {
 		argsN := argsAppendHostApiTokenFlags(i)
 		outputN, errN := runBufferedInnerMain(argsN)
 
 		// Return subsidiary-call's output in debug mode only.
 		if opts.debug && outputN != "" {
-			stdOut += fmt.Sprintf("\n[debug] [%s]", opts.hosts[i])
-			stdOut += fmt.Sprintf("\n%s", outputN)
+			secondariesOut += fmt.Sprintf("\n[debug] [%s]", opts.hosts[i])
+			secondariesOut += fmt.Sprintf("\n%s", outputN)
 		}
 
 		// Make origin of subsidiary-call failure clear.
@@ -75,6 +76,12 @@ func runMultiHost(args []string) (string, error) {
 			errorMessage += fmt.Sprintf("\n[%s]", opts.hosts[i])
 			errorMessage += fmt.Sprintf("\n%s", errN.Error())
 		}
+	}
+
+	if secondariesOut != "" {
+		// Ensure stdOut is prefixed with the primary hostname ONLY if we are
+		// in debug mode - we could be producing JSON.
+		stdOut = fmt.Sprintf("\n[debug] [%s]", opts.hosts[0]) + stdOut + "\n" + secondariesOut
 	}
 
 	var err error
