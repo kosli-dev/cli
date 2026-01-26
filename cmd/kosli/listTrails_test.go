@@ -44,9 +44,9 @@ func (suite *ListTrailsCommandTestSuite) SetupTest() {
 func (suite *ListTrailsCommandTestSuite) TestListTrailsCmd() {
 	tests := []cmdTestCase{
 		{
-			name:   "1 listing trails works when there are trails",
-			cmd:    fmt.Sprintf(`list trails --flow %s %s`, suite.flowName, suite.defaultKosliArguments),
-			golden: "",
+			name:       "1 listing trails works when there are trails",
+			cmd:        fmt.Sprintf(`list trails --flow %s %s`, suite.flowName, suite.defaultKosliArguments),
+			goldenFile: "output/list/list-trails.txt",
 		},
 		{
 			name:   "2 listing trails works when there are no trails",

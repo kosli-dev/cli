@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -129,7 +130,11 @@ func (o *listTrailsOptions) run(out io.Writer) error {
 
 func printTrailsListAsTable(raw string, out io.Writer, page int) error {
 	response := &listTrailsResponse{}
-	trails := []Trail{}
+	err := json.Unmarshal([]byte(raw), response)
+	if err != nil {
+		return err
+	}
+	trails := response.Data
 
 	if len(trails) == 0 {
 		msg := "No trails were found"
