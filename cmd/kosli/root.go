@@ -91,6 +91,8 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	debugFlag                            = "[optional] Print debug logs to stdout. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default false)"
 	artifactTypeFlag                     = "The type of the artifact to calculate its SHA256 fingerprint. One of: [oci, docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it)."
 	flowNameFlag                         = "The Kosli flow name."
+	flowNameFlagOptional                 = "[optional] The Kosli flow name."
+	fingerprintInTrailsFlag              = "[optional] The SHA256 fingerprint of the artifact to filter trails by."
 	trailNameFlag                        = "The Kosli trail name."
 	trailNameFlagOptional                = "[optional] The Kosli trail name."
 	templateArtifactName                 = "The name of the artifact in the yml template file."

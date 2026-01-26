@@ -11,28 +11,25 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const listTrailsShortDesc = `List Trails for a Flow in an org.`
+const listTrailsShortDesc = `List Trails of an org.`
 
-const listTrailsLongDesc = listTrailsShortDesc + `The results are ordered from latest to oldest.  
-If the ^page-limit^ flag is provided, the results will be paginated, otherwise all results will be 
-returned.  
-If ^page-limit^ is set to 0, all results will be returned.`
+const listTrailsLongDesc = listTrailsShortDesc + `The list can be filtered by flow and artifact fingerprint. The results are paginated and ordered from latest to oldest.`
 
 const listTrailsExample = `
-# list all trails for a flow:
+# get a paginated list of trails for a flow:
 kosli list trails \
 	--flow yourFlowName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-#list the most recent 30 trails for a flow:
+# list the most recent 30 trails for a flow:
 kosli list trails \
 	--flow yourFlowName \
 	--page-limit 30 \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-#show the second page of trails for a flow:
+# show the second page of trails for a flow:
 kosli list trails \
 	--flow yourFlowName \
 	--page-limit 30 \
@@ -40,17 +37,25 @@ kosli list trails \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
-# list all trails for a flow (in JSON):
+# get a paginated list of trails for a flow (in JSON):
 kosli list trails \
 	--flow yourFlowName \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 	--output json
+
+# get a paginated list of trails across all flows that contain an artifact with the provided fingerprint (in JSON):
+kosli list trails \
+	--fingerprint yourArtifactFingerprint \
+	--api-token yourAPIToken \
+	--org yourOrgName \
+	--output json \
 `
 
 type listTrailsOptions struct {
 	listOptions
-	flowName string
+	flowName    string
+	fingerprint string
 }
 
 type Trail struct {
@@ -90,20 +95,21 @@ func newListTrailsCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
-	// We set the defauly page limit to 0 so that all results are returned if the flag is not provided
-	addListFlags(cmd, &o.listOptions, 0)
-
-	err := RequireFlags(cmd, []string{"flow"})
-	if err != nil {
-		logger.Error("failed to configure required flags: %v", err)
-	}
+	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlagOptional)
+	cmd.Flags().StringVarP(&o.fingerprint, "fingerprint", "F", "", fingerprintInTrailsFlag)
+	addListFlags(cmd, &o.listOptions, 20)
 
 	return cmd
 }
 
 func (o *listTrailsOptions) run(out io.Writer) error {
-	url := fmt.Sprintf("%s/api/v2/trails/%s/%s?per_page=%d&page=%d", global.Host, global.Org, o.flowName, o.pageLimit, o.pageNumber)
+	url := fmt.Sprintf("%s/api/v2/trails/%s?per_page=%d&page=%d", global.Host, global.Org, o.pageLimit, o.pageNumber)
+	if o.flowName != "" {
+		url += fmt.Sprintf("&flow=%s", o.flowName)
+	}
+	if o.fingerprint != "" {
+		url += fmt.Sprintf("&fingerprint=%s", o.fingerprint)
+	}
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
@@ -124,19 +130,11 @@ func (o *listTrailsOptions) run(out io.Writer) error {
 
 func printTrailsListAsTable(raw string, out io.Writer, page int) error {
 	response := &listTrailsResponse{}
-	trails := []Trail{}
-
-	// If using pagination, the response will have the format {data: [], pagination: {}}
-	// and therefore will not unmarshal into an array of Trail structs; instead, we need
-	// to unmarshal into a listTrailsResponse struct and extract the data field.
-	err := json.Unmarshal([]byte(raw), &trails)
+	err := json.Unmarshal([]byte(raw), response)
 	if err != nil {
-		err = json.Unmarshal([]byte(raw), &response)
-		if err != nil {
-			return err
-		}
-		trails = response.Data
+		return err
 	}
+	trails := response.Data
 
 	if len(trails) == 0 {
 		msg := "No trails were found"
@@ -153,11 +151,9 @@ func printTrailsListAsTable(raw string, out io.Writer, page int) error {
 		row := fmt.Sprintf("%s\t%s\t%s", trail.Name, trail.Description, trail.ComplianceState)
 		rows = append(rows, row)
 	}
-	if len(response.Data) > 0 {
-		pagination := response.Pagination
-		paginationInfo := fmt.Sprintf("\nShowing page %.0f of %.0f, total %.0f items", pagination.Page, pagination.PageCount, pagination.Total)
-		rows = append(rows, paginationInfo)
-	}
+	pagination := response.Pagination
+	paginationInfo := fmt.Sprintf("\nShowing page %.0f of %.0f, total %.0f items", pagination.Page, pagination.PageCount, pagination.Total)
+	rows = append(rows, paginationInfo)
 
 	tabFormattedPrint(out, header, rows)
 
