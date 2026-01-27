@@ -13,14 +13,14 @@ The preferred way to manage environments is via Terraform to have your Kosli inf
 
 {{% hint info %}}
 **Note**<br>
-This guide focuses entirely on managing environments via Terraform. All documentation and examples are provided at the [Kosli Terraform provider](https://registry.terraform.io/providers/kosli-dev/kosli/latest/docs/).
+This guide focuses entirely on managing physical (non-logical) environments via Terraform.<br>All documentation and examples are provided at the [Kosli Terraform provider](https://registry.terraform.io/providers/kosli-dev/kosli/latest/docs/).
 
 For information on creating environments via the CLI or UI, see [Part 8: Environments](/getting_started/environments/).
 {{% /hint %}}
 
 ## Importing existing environments
 
-If you have existing environments in Kosli that were created via the UI or CLI, you can import them into your Terraform state following these steps:
+If you have existing physical environments in Kosli that were created via the UI or CLI, you can import them into your Terraform state following these steps:
 
 ### 1. Set up your Terraform configuration
 
@@ -44,10 +44,17 @@ Create a Terraform resource block for the environment you want to import. This b
 resource "kosli_environment" "my_environment" {
   name        = "production"
   description = "Production environment"
-  type        = "K(S)"  # or other types that match your physical environment
+  type        = "K8S"  # or other types that match your physical environment
   # Add other attributes
 }
 ```
+
+{{% hint warning %}}
+**Warning**<br>
+Make sure that the environment `type` in your Terraform configuration matches the type of the existing environment in Kosli. Mismatched types may lead to import errors or misconfigurations.
+
+Logical environment types is currently not supported for import.
+{{% /hint %}}
 
 ### 5. Import the existing environment
 
@@ -56,6 +63,7 @@ Run the following command to import the existing environment into your Terraform
 ```bash
 terraform import kosli_environment.my_environment production
 ```
+
 
 ### 6. Verify the import
 
