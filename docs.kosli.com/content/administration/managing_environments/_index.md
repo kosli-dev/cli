@@ -2,7 +2,7 @@
 title: Managing environments
 bookCollapseSection: true
 weight: 200
-summary: "Learn how to manage environments in Kosli, including creating, updating, and archiving environments."
+summary: "Learn how to manage environments in Kosli trough Terraform, including creating, updating, and archiving environments."
 ---
 
 # Managing environments
