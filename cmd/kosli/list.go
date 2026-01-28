@@ -24,16 +24,6 @@ func (o *listOptions) validate(cmd *cobra.Command) error {
 	return nil
 }
 
-func (o *listOptions) validateForListTrails(cmd *cobra.Command) error {
-	if o.pageNumber <= 0 {
-		return ErrorBeforePrintingUsage(cmd, "page number must be a positive integer")
-	}
-	if o.pageLimit < 0 {
-		return ErrorBeforePrintingUsage(cmd, "page limit must be a positive integer")
-	}
-	return nil
-}
-
 func newListCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",

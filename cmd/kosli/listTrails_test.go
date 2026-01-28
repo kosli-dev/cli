@@ -15,6 +15,8 @@ type ListTrailsCommandTestSuite struct {
 	flowName              string
 	trailName             string
 	fingerprint           string
+	flowTagKey            string
+	flowTagValue          string
 	defaultKosliArguments string
 	acmeOrgKosliArguments string
 }
@@ -27,18 +29,23 @@ func (suite *ListTrailsCommandTestSuite) SetupTest() {
 	}
 
 	suite.flowName = "list-trails"
+	suite.flowTagKey = "team"
+	suite.flowTagValue = "backend"
 	suite.trailName = "trail-name"
 	suite.fingerprint = "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
+
+	// First flow (tagged), trail and artifact for the default org
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
 	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
 	CreateArtifactOnTrail(suite.flowName, suite.trailName, "artifact", suite.fingerprint, "artifact-name", suite.T())
+	TagFlow(suite.flowName, suite.flowTagKey, suite.flowTagValue, suite.T())
 
+	// Second flow for the acme org
 	global.Org = "acme-org"
 	global.ApiToken = "v3OWZiYWu9G2IMQStYg9BcPQUQ88lJNNnTJTNq8jfvmkR1C5wVpHSs7F00JcB5i6OGeUzrKt3CwRq7ndcN4TTfMeo8ASVJ5NdHpZT7DkfRfiFvm8s7GbsIHh2PtiQJYs2UoN13T8DblV5C4oKb6-yWH73h67OhotPlKfVKazR-c"
 	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
 	suite.acmeOrgKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
-
 }
 
 func (suite *ListTrailsCommandTestSuite) TestListTrailsCmd() {
@@ -90,6 +97,22 @@ func (suite *ListTrailsCommandTestSuite) TestListTrailsCmd() {
 			name:       "9 can list trails that contain an artifact with the provided fingerprint",
 			cmd:        fmt.Sprintf(`list trails --fingerprint %s --output json %s`, suite.fingerprint, suite.defaultKosliArguments),
 			goldenJson: []jsonCheck{{"data", "non-empty"}},
+		},
+		{
+			name:       "10 can list trails in a flow with the provided tag",
+			cmd:        fmt.Sprintf(`list trails --flow-tag %s=%s --output json %s`, suite.flowTagKey, suite.flowTagValue, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"data", "non-empty"}},
+		},
+		{
+			name:   "11 listing trails with a non-existing flow-tag returns no trails",
+			cmd:    fmt.Sprintf(`list trails --flow-tag non=existing %s`, suite.defaultKosliArguments),
+			golden: "No trails were found.\n",
+		},
+		{
+			wantError: true,
+			name:      "12 the value of the flow-tag flag must be a key-value pair",
+			cmd:       fmt.Sprintf(`list trails --flow-tag %s --output json %s`, "invalid-tag", suite.defaultKosliArguments),
+			golden:    "Error: flag '--flow-tag' must be in the format of key=value\nUsage: kosli list trails [flags]\n",
 		},
 	}
 

@@ -93,6 +93,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	flowNameFlag                         = "The Kosli flow name."
 	flowNameFlagOptional                 = "[optional] The Kosli flow name."
 	fingerprintInTrailsFlag              = "[optional] The SHA256 fingerprint of the artifact to filter trails by."
+	flowTagFlag                          = "[optional] A key=value flow tag to filter trails by."
 	trailNameFlag                        = "The Kosli trail name."
 	trailNameFlagOptional                = "[optional] The Kosli trail name."
 	templateArtifactName                 = "The name of the artifact in the yml template file."

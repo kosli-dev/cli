@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -13,7 +14,7 @@ import (
 
 const listTrailsShortDesc = `List Trails of an org.`
 
-const listTrailsLongDesc = listTrailsShortDesc + `The list can be filtered by flow and artifact fingerprint. The results are paginated and ordered from latest to oldest.`
+const listTrailsLongDesc = listTrailsShortDesc + `The list can be filtered by flow, flow tag and artifact fingerprint. The results are paginated and ordered from latest to oldest.`
 
 const listTrailsExample = `
 # get a paginated list of trails for a flow:
@@ -49,13 +50,30 @@ kosli list trails \
 	--fingerprint yourArtifactFingerprint \
 	--api-token yourAPIToken \
 	--org yourOrgName \
-	--output json \
+	--output json 
+
+	# get a paginated list of trails across all flows tagged with the provided key-value pair:
+kosli list trails \
+	--flow-tag team=backend \
+	--api-token yourAPIToken \
+	--org yourOrgName
 `
 
 type listTrailsOptions struct {
 	listOptions
 	flowName    string
 	fingerprint string
+	flowTag     string
+}
+
+func (o *listTrailsOptions) validate(cmd *cobra.Command) error {
+	if err := o.listOptions.validate(cmd); err != nil {
+		return err
+	}
+	if o.flowTag != "" && !strings.Contains(o.flowTag, "=") {
+		return ErrorBeforePrintingUsage(cmd, "flag '--flow-tag' must be in the format of key=value")
+	}
+	return nil
 }
 
 type Trail struct {
@@ -88,7 +106,7 @@ func newListTrailsCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
-			return o.validateForListTrails(cmd)
+			return o.validate(cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(out)
@@ -97,6 +115,7 @@ func newListTrailsCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlagOptional)
 	cmd.Flags().StringVarP(&o.fingerprint, "fingerprint", "F", "", fingerprintInTrailsFlag)
+	cmd.Flags().StringVarP(&o.flowTag, "flow-tag", "t", "", flowTagFlag)
 	addListFlags(cmd, &o.listOptions, 20)
 
 	return cmd
@@ -109,6 +128,9 @@ func (o *listTrailsOptions) run(out io.Writer) error {
 	}
 	if o.fingerprint != "" {
 		url += fmt.Sprintf("&fingerprint=%s", o.fingerprint)
+	}
+	if o.flowTag != "" {
+		url += fmt.Sprintf("&flow_tag=%s", o.flowTag)
 	}
 
 	reqParams := &requests.RequestParams{
