@@ -13,13 +13,14 @@ summary: "List Trails of an org."
 kosli list trails [flags]
 ```
 
-List Trails of an org.The list can be filtered by flow and artifact fingerprint. The results are paginated and ordered from latest to oldest.
+List Trails of an org.The list can be filtered by flow, flow tag and artifact fingerprint. The results are paginated and ordered from latest to oldest.
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -F, --fingerprint string  |  [optional] The SHA256 fingerprint of the artifact to filter trails by.  |
 |    -f, --flow string  |  [optional] The Kosli flow name.  |
+|    -t, --flow-tag string  |  [optional] A key=value flow tag to filter trails by.  |
 |    -h, --help  |  help for trails  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 |        --page int  |  [defaulted] The page number of a response. (default 1)  |
@@ -79,6 +80,10 @@ kosli list trails
 ```shell
 kosli list trails 
 	--fingerprint yourArtifactFingerprint 
-	--output json 
+	--output json
+
+	# get a paginated list of trails across all flows tagged with the provided key-value pair:
+kosli list trails 
+	--flow-tag team=backend 
 ```
 
