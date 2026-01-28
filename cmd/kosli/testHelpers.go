@@ -595,3 +595,15 @@ func GetAttestationId(flowName, trailName, attestationName string, t *testing.T)
 	require.True(t, ok, "attestation_id field not found or not a string")
 	return id
 }
+
+// TagFlow tags a flow with a key-value pair
+func TagFlow(flowName, tagKey, tagValue string, t *testing.T) {
+	t.Helper()
+	o := &tagOptions{
+		payload: TagResourcePayload{
+			SetTags: map[string]string{tagKey: tagValue},
+		},
+	}
+	err := o.run([]string{"flow", flowName})
+	require.NoError(t, err, "flow should be tagged without error")
+}

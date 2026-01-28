@@ -56,6 +56,7 @@ type listTrailsOptions struct {
 	listOptions
 	flowName    string
 	fingerprint string
+	flowTag     string
 }
 
 type Trail struct {
@@ -97,6 +98,7 @@ func newListTrailsCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlagOptional)
 	cmd.Flags().StringVarP(&o.fingerprint, "fingerprint", "F", "", fingerprintInTrailsFlag)
+	cmd.Flags().StringVarP(&o.flowTag, "flow-tag", "t", "", flowTagFlag)
 	addListFlags(cmd, &o.listOptions, 20)
 
 	return cmd
@@ -109,6 +111,9 @@ func (o *listTrailsOptions) run(out io.Writer) error {
 	}
 	if o.fingerprint != "" {
 		url += fmt.Sprintf("&fingerprint=%s", o.fingerprint)
+	}
+	if o.flowTag != "" {
+		url += fmt.Sprintf("&flow_tag=%s", o.flowTag)
 	}
 
 	reqParams := &requests.RequestParams{
