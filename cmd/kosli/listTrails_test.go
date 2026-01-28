@@ -100,8 +100,19 @@ func (suite *ListTrailsCommandTestSuite) TestListTrailsCmd() {
 		},
 		{
 			name:       "10 can list trails in a flow with the provided tag",
-			cmd:        fmt.Sprintf(`list trails --flow %s --flow-tag %s=%s --output json %s`, suite.flowName, suite.flowTagKey, suite.flowTagValue, suite.defaultKosliArguments),
+			cmd:        fmt.Sprintf(`list trails --flow-tag %s=%s --output json %s`, suite.flowTagKey, suite.flowTagValue, suite.defaultKosliArguments),
 			goldenJson: []jsonCheck{{"data", "non-empty"}},
+		},
+		{
+			name:   "11 listing trails with a non-existing flow-tag returns no trails",
+			cmd:    fmt.Sprintf(`list trails --flow-tag non=existing %s`, suite.defaultKosliArguments),
+			golden: "No trails were found.\n",
+		},
+		{
+			wantError: true,
+			name:      "12 the value of the flow-tag flag must be a key-value pair",
+			cmd:       fmt.Sprintf(`list trails --flow-tag %s --output json %s`, "invalid-tag", suite.defaultKosliArguments),
+			golden:    "Error: flag '--flow-tag' must be in the format of key=value\nUsage: kosli list trails [flags]\n",
 		},
 	}
 
