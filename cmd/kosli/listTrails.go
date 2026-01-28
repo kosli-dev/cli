@@ -14,7 +14,7 @@ import (
 
 const listTrailsShortDesc = `List Trails of an org.`
 
-const listTrailsLongDesc = listTrailsShortDesc + `The list can be filtered by flow and artifact fingerprint. The results are paginated and ordered from latest to oldest.`
+const listTrailsLongDesc = listTrailsShortDesc + `The list can be filtered by flow, flow tag and artifact fingerprint. The results are paginated and ordered from latest to oldest.`
 
 const listTrailsExample = `
 # get a paginated list of trails for a flow:
@@ -50,7 +50,13 @@ kosli list trails \
 	--fingerprint yourArtifactFingerprint \
 	--api-token yourAPIToken \
 	--org yourOrgName \
-	--output json \
+	--output json 
+
+	# get a paginated list of trails across all flows tagged with the provided key-value pair:
+kosli list trails \
+	--flow-tag team=backend \
+	--api-token yourAPIToken \
+	--org yourOrgName
 `
 
 type listTrailsOptions struct {
