@@ -16,6 +16,11 @@ To set up the integration, navigate to the Sonar integration page for your org i
 
 After switching on the integration, you will be provided with a webhook and a secret.
 
+#### Configuring the flow name
+By default, Kosli will use the key of your SonarQube project as the flow name for the sonar attestation. You can configure this flow name in the "Flow Name Options" section on the integration page, by choosing either the project name or key as the base of the flow name, and then optionally adding a prefix and/or suffix.
+
+Note that if you set the flow name by sending a parameter to the Sonar Scanner (see [Scanner parameters](/integrations/sonar/#scanner-parameters) below), this configuration will be overridden.  
+
 ## Setting up Sonar Webhooks
 
 You're now just a few steps away from connecting SonarQube to Kosli.
@@ -71,7 +76,7 @@ $ sonar-scanner \
 
 ### Scanner parameters:
 - `sonar.analysis.kosli_flow=<YourFlowName>`
-    - The name of the Flow relevant to your project. If a Flow does not already exist with the given name, it is created. If no Flow name is provided, the project key of your project in SonarQube is used as the name (with any invalid symbols replaced by '-').
+    - The name of the Flow relevant to your project. If a Flow does not already exist with the given name, it is created. If no Flow name is provided, it is determined using the chosen Flow name configuration (see [Configuring the flow name](/integrations/sonar/#configuring-the-flow-name) above), with any invalid symbols replaced by '-'.
 - `sonar.analysis.kosli_trail=<YourTrailName>`
     - The name of the Trail to attest the scan results. If a Trail does not already exist with the given name it is created. If no Trail name is provided, the revision ID of the SonarQube project (typically defaulted to the Git SHA) is used as the name.
 - `sonar.analysis.kosli_attestation=<YourAttestationName>`
