@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/testHelpers"
+	"github.com/kosli-dev/cli/internal/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -123,7 +124,7 @@ func (suite *AzureTestSuite) TestPullRequestsForCommit() {
 	}
 }
 
-func (suite *AzureTestSuite) TestGetPullRequestApprovers() {
+func (suite *AzureTestSuite) TestGetPullRequestApproversV1() {
 	type result struct {
 		wantError bool
 		approvers []string
@@ -153,7 +154,7 @@ func (suite *AzureTestSuite) TestGetPullRequestApprovers() {
 			project:    "kosli-azure",
 			number:     1,
 			result: result{
-				approvers: []string{"Ewelina"},
+				approvers: []string{"Ewelina (ewelina@merkely.onmicrosoft.com)"},
 			},
 		},
 		{
@@ -176,7 +177,78 @@ func (suite *AzureTestSuite) TestGetPullRequestApprovers() {
 				Repository: t.repository,
 				Project:    t.project,
 			}
-			approvers, err := c.GetPullRequestApprovers(t.number)
+			approvers, err := c.GetPullRequestApprovers(t.number, 1)
+			if t.result.wantError {
+				require.Errorf(suite.T(), err, "expected an error but got: %s", err)
+			} else {
+				require.NoErrorf(suite.T(), err, "was NOT expecting error but got: %s", err)
+				require.ElementsMatchf(suite.T(), t.result.approvers, approvers, "want approvers: %v, got approvers: %v",
+					t.result.approvers, approvers)
+			}
+		})
+	}
+}
+
+func (suite *AzureTestSuite) TestGetPullRequestApproversV2() {
+	type result struct {
+		wantError bool
+		approvers []types.PRApprovals
+	}
+	for _, t := range []struct {
+		name       string
+		azOrgURL   string
+		repository string
+		project    string
+		number     int
+		result     result
+	}{
+		{
+			name:       "get an empty list for a PR without approvers",
+			azOrgURL:   "https://dev.azure.com/kosli",
+			repository: "cli",
+			project:    "kosli-azure",
+			number:     2,
+			result: result{
+				approvers: []types.PRApprovals{},
+			},
+		},
+		{
+			name:       "get the list of approvers for an approved PR",
+			azOrgURL:   "https://dev.azure.com/kosli",
+			repository: "cli",
+			project:    "kosli-azure",
+			number:     1,
+			result: result{
+				approvers: []types.PRApprovals{
+					{
+						Username:  "Ewelina (ewelina@merkely.onmicrosoft.com)",
+						State:     "APPROVED",
+						Timestamp: 0,
+					},
+				},
+			},
+		},
+		{
+			name:       "non-existing PR causes an error",
+			azOrgURL:   "https://dev.azure.com/kosli",
+			repository: "cli",
+			project:    "kosli-azure",
+			number:     666,
+			result: result{
+				wantError: true,
+			},
+		},
+	} {
+		suite.Run(t.name, func() {
+			testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_AZURE_TOKEN"})
+			token := os.Getenv("KOSLI_AZURE_TOKEN")
+			c := &AzureConfig{
+				Token:      token,
+				OrgURL:     t.azOrgURL,
+				Repository: t.repository,
+				Project:    t.project,
+			}
+			approvers, err := c.GetPullRequestApprovers(t.number, 2)
 			if t.result.wantError {
 				require.Errorf(suite.T(), err, "expected an error but got: %s", err)
 			} else {
