@@ -15,8 +15,8 @@ type PREvidence struct {
 
 type PRApprovals struct {
 	Username  string `json:"username"`
-	State     string `json:"state"`
-	Timestamp int64  `json:"timestamp"`
+	State     string `json:"state,omitempty"`
+	Timestamp int64  `json:"timestamp,omitempty"`
 }
 
 type Commit struct {
