@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -107,17 +108,26 @@ func (o *logEnvironmentOptions) run(out io.Writer, args []string) error {
 // events
 
 func (o *logEnvironmentOptions) getEnvironmentEvents(out io.Writer, envName, interval string) error {
-	eventsURL := fmt.Sprintf("%s/api/v2/environments/%s/%s/events?page=%d&per_page=%d&interval=%s&reverse=%t",
-		global.Host, global.Org, envName, o.pageNumber, o.pageLimit, url.QueryEscape(interval), o.reverse)
+	baseURL := fmt.Sprintf("%s/api/v2/environments/%s/%s/events", global.Host, global.Org, envName)
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		return fmt.Errorf("failed to parse events URL: %w", err)
+	}
+	q := u.Query()
+	q.Set("page", strconv.Itoa(o.pageNumber))
+	q.Set("per_page", strconv.Itoa(o.pageLimit))
+	q.Set("interval", interval)
+	q.Set("reverse", strconv.FormatBool(o.reverse))
 	for _, repo := range o.repos {
 		if repo != "" {
-			eventsURL = eventsURL + "&repo_name=" + url.QueryEscape(repo)
+			q.Add("repo_name", repo)
 		}
 	}
+	u.RawQuery = q.Encode()
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
-		URL:    eventsURL,
+		URL:    u.String(),
 		Token:  global.ApiToken,
 	}
 	response, err := kosliClient.Do(reqParams)
