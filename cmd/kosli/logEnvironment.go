@@ -108,10 +108,13 @@ func (o *logEnvironmentOptions) run(out io.Writer, args []string) error {
 // events
 
 func (o *logEnvironmentOptions) getEnvironmentEvents(out io.Writer, envName, interval string) error {
-	baseURL := fmt.Sprintf("%s/api/v2/environments/%s/%s/events", global.Host, global.Org, envName)
-	u, err := url.Parse(baseURL)
+	u, err := url.Parse(global.Host)
 	if err != nil {
-		return fmt.Errorf("failed to parse events URL: %w", err)
+		return fmt.Errorf("failed to parse host URL: %w", err)
+	}
+	u.Path, err = url.JoinPath(u.Path, "/api/v2/environments", global.Org, envName, "events")
+	if err != nil {
+		return fmt.Errorf("failed to join URL path: %w", err)
 	}
 	q := u.Query()
 	q.Set("page", strconv.Itoa(o.pageNumber))
