@@ -57,7 +57,7 @@ type logEnvironmentOptions struct {
 	listOptions
 	reverse  bool
 	interval string
-	repo     string
+	repos    []string
 }
 
 func newLogEnvironmentCmd(out io.Writer) *cobra.Command {
@@ -83,7 +83,7 @@ func newLogEnvironmentCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.interval, "interval", "i", "", intervalFlag)
-	cmd.Flags().StringVar(&o.repo, "repo", "", repoNameFlag)
+	cmd.Flags().StringSliceVar(&o.repos, "repo", []string{}, repoNameFlag)
 	addListFlags(cmd, &o.listOptions)
 	cmd.Flags().BoolVar(&o.reverse, "reverse", false, reverseFlag)
 
@@ -102,8 +102,10 @@ func (o *logEnvironmentOptions) run(out io.Writer, args []string) error {
 func (o *logEnvironmentOptions) getEnvironmentEvents(out io.Writer, envName, interval string) error {
 	eventsURL := fmt.Sprintf("%s/api/v2/environments/%s/%s/events?page=%d&per_page=%d&interval=%s&reverse=%t",
 		global.Host, global.Org, envName, o.pageNumber, o.pageLimit, url.QueryEscape(interval), o.reverse)
-	if o.repo != "" {
-		eventsURL = eventsURL + "&repo_name=" + url.QueryEscape(o.repo)
+	for _, repo := range o.repos {
+		if repo != "" {
+			eventsURL = eventsURL + "&repo_name=" + url.QueryEscape(repo)
+		}
 	}
 
 	reqParams := &requests.RequestParams{

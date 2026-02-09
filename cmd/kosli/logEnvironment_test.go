@@ -135,6 +135,13 @@ func (suite *LogEnvironmentCommandTestSuite) TestLogEnvironmentCmd() {
 				reportToEnv: true,
 			},
 		},
+		{
+			name: "listing events with several --repo flags filters by all provided repos",
+			cmd:  fmt.Sprintf(`log env %s --repo other/repo --repo %s %s --debug`, suite.eventsEnvName, suite.repoName, suite.defaultKosliArguments),
+			additionalConfig: listSnapshotsTestConfig{
+				reportToEnv: true,
+			},
+		},
 	}
 
 	for _, t := range tests {
