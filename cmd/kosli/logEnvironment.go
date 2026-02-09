@@ -51,6 +51,13 @@ kosli log environment yourEnvironmentName \
 	--repo yourOrg/yourRepo \
 	--api-token yourAPIToken \
 	--org yourOrgName
+
+# list events for an environment filtered by multiple repos:
+kosli log environment yourEnvironmentName \
+	--repo yourOrg/yourRepo1 \
+	--repo yourOrg/yourRepo2 \
+	--api-token yourAPIToken \
+	--org yourOrgName
 `
 
 type logEnvironmentOptions struct {
