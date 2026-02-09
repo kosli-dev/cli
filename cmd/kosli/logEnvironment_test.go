@@ -18,9 +18,10 @@ type LogEnvironmentCommandTestSuite struct {
 	firstArtifactPath     string
 	secondArtifactPath    string
 	flowName              string
-	artifactName          string
 	fingerprint           string
+	secondFingerprint     string
 	repoName              string
+	secondRepoName        string
 }
 
 func (suite *LogEnvironmentCommandTestSuite) SetupTest() {
@@ -36,7 +37,6 @@ func (suite *LogEnvironmentCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	suite.artifactName = "arti"
 	CreateFlow(suite.flowName, suite.T())
 	fingerprintOptions := &fingerprintOptions{
 		artifactType: "file",
@@ -51,7 +51,17 @@ func (suite *LogEnvironmentCommandTestSuite) SetupTest() {
 		"GITHUB_REPOSITORY":    suite.repoName,
 		"GITHUB_REPOSITORY_ID": "1234567890",
 	}, suite.T())
-	CreateArtifactOnTrail(suite.flowName, "trail-1", "backend", suite.fingerprint, suite.artifactName, suite.T())
+	CreateArtifactOnTrail(suite.flowName, "trail-1", "backend", suite.fingerprint, suite.firstArtifactPath, suite.T())
+
+	suite.secondRepoName = "other/repo"
+	SetEnvVars(map[string]string{
+		"GITHUB_RUN_NUMBER":    "5678",
+		"GITHUB_REPOSITORY":    suite.secondRepoName,
+		"GITHUB_REPOSITORY_ID": "1234567891",
+	}, suite.T())
+	suite.secondFingerprint, err = GetSha256Digest(suite.secondArtifactPath, fingerprintOptions, logger)
+	require.NoError(suite.T(), err)
+	CreateArtifactOnTrail(suite.flowName, "trail-2", "frontend", suite.secondFingerprint, suite.secondArtifactPath, suite.T())
 	CreateEnv(global.Org, suite.eventsEnvName, "server", suite.T())
 }
 
@@ -137,7 +147,7 @@ func (suite *LogEnvironmentCommandTestSuite) TestLogEnvironmentCmd() {
 		},
 		{
 			name: "listing events with several --repo flags filters by all provided repos",
-			cmd:  fmt.Sprintf(`log env %s --repo other/repo --repo %s %s --debug`, suite.eventsEnvName, suite.repoName, suite.defaultKosliArguments),
+			cmd:  fmt.Sprintf(`log env %s --repo %s --repo %s %s --debug`, suite.eventsEnvName, suite.secondRepoName, suite.repoName, suite.defaultKosliArguments),
 			additionalConfig: listSnapshotsTestConfig{
 				reportToEnv: true,
 			},
