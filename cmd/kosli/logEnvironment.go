@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -45,12 +46,26 @@ kosli log environment yourEnvironmentName \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 	--output json
+
+# list events for an environment filtered by repo:
+kosli log environment yourEnvironmentName \
+	--repo yourOrg/yourRepo \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# list events for an environment filtered by multiple repos:
+kosli log environment yourEnvironmentName \
+	--repo yourOrg/yourRepo1 \
+	--repo yourOrg/yourRepo2 \
+	--api-token yourAPIToken \
+	--org yourOrgName
 `
 
 type logEnvironmentOptions struct {
 	listOptions
 	reverse  bool
 	interval string
+	repos    []string
 }
 
 func newLogEnvironmentCmd(out io.Writer) *cobra.Command {
@@ -76,6 +91,7 @@ func newLogEnvironmentCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.interval, "interval", "i", "", intervalFlag)
+	cmd.Flags().StringSliceVar(&o.repos, "repo", []string{}, repoNameFlag)
 	addListFlags(cmd, &o.listOptions)
 	cmd.Flags().BoolVar(&o.reverse, "reverse", false, reverseFlag)
 
@@ -92,12 +108,29 @@ func (o *logEnvironmentOptions) run(out io.Writer, args []string) error {
 // events
 
 func (o *logEnvironmentOptions) getEnvironmentEvents(out io.Writer, envName, interval string) error {
-	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/events?page=%d&per_page=%d&interval=%s&reverse=%t",
-		global.Host, global.Org, envName, o.pageNumber, o.pageLimit, url.QueryEscape(interval), o.reverse)
+	u, err := url.Parse(global.Host)
+	if err != nil {
+		return fmt.Errorf("failed to parse host URL: %w", err)
+	}
+	u.Path, err = url.JoinPath(u.Path, "/api/v2/environments", global.Org, envName, "events")
+	if err != nil {
+		return fmt.Errorf("failed to join URL path: %w", err)
+	}
+	q := u.Query()
+	q.Set("page", strconv.Itoa(o.pageNumber))
+	q.Set("per_page", strconv.Itoa(o.pageLimit))
+	q.Set("interval", interval)
+	q.Set("reverse", strconv.FormatBool(o.reverse))
+	for _, repo := range o.repos {
+		if repo != "" {
+			q.Add("repo_name", repo)
+		}
+	}
+	u.RawQuery = q.Encode()
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
-		URL:    url,
+		URL:    u.String(),
 		Token:  global.ApiToken,
 	}
 	response, err := kosliClient.Do(reqParams)
