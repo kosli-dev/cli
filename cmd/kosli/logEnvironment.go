@@ -45,12 +45,19 @@ kosli log environment yourEnvironmentName \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 	--output json
+
+# list events for an environment filtered by repo:
+kosli log environment yourEnvironmentName \
+	--repo yourOrg/yourRepo \
+	--api-token yourAPIToken \
+	--org yourOrgName
 `
 
 type logEnvironmentOptions struct {
 	listOptions
 	reverse  bool
 	interval string
+	repo     string
 }
 
 func newLogEnvironmentCmd(out io.Writer) *cobra.Command {
@@ -76,6 +83,7 @@ func newLogEnvironmentCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.interval, "interval", "i", "", intervalFlag)
+	cmd.Flags().StringVar(&o.repo, "repo", "", repoNameFlag)
 	addListFlags(cmd, &o.listOptions)
 	cmd.Flags().BoolVar(&o.reverse, "reverse", false, reverseFlag)
 
@@ -92,12 +100,15 @@ func (o *logEnvironmentOptions) run(out io.Writer, args []string) error {
 // events
 
 func (o *logEnvironmentOptions) getEnvironmentEvents(out io.Writer, envName, interval string) error {
-	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/events?page=%d&per_page=%d&interval=%s&reverse=%t",
+	eventsURL := fmt.Sprintf("%s/api/v2/environments/%s/%s/events?page=%d&per_page=%d&interval=%s&reverse=%t",
 		global.Host, global.Org, envName, o.pageNumber, o.pageLimit, url.QueryEscape(interval), o.reverse)
+	if o.repo != "" {
+		eventsURL = eventsURL + "&repo_name=" + url.QueryEscape(o.repo)
+	}
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
-		URL:    url,
+		URL:    eventsURL,
 		Token:  global.ApiToken,
 	}
 	response, err := kosliClient.Do(reqParams)

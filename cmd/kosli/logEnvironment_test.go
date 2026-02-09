@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -16,12 +17,17 @@ type LogEnvironmentCommandTestSuite struct {
 	eventsEnvName         string
 	firstArtifactPath     string
 	secondArtifactPath    string
+	flowName              string
+	artifactName          string
+	fingerprint           string
+	repoName              string
 }
 
 func (suite *LogEnvironmentCommandTestSuite) SetupTest() {
 	suite.eventsEnvName = "list-events-env"
 	suite.firstArtifactPath = "testdata/report.xml"
 	suite.secondArtifactPath = "testdata/file1"
+	suite.flowName = "list-events-flow"
 
 	global = &GlobalOpts{
 		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
@@ -29,6 +35,23 @@ func (suite *LogEnvironmentCommandTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
+
+	suite.artifactName = "arti"
+	CreateFlow(suite.flowName, suite.T())
+	fingerprintOptions := &fingerprintOptions{
+		artifactType: "file",
+	}
+	var err error
+	suite.fingerprint, err = GetSha256Digest(suite.firstArtifactPath, fingerprintOptions, logger)
+	require.NoError(suite.T(), err)
+	suite.repoName = "kosli/dev"
+	SetEnvVars(map[string]string{
+		"GITHUB_RUN_NUMBER":    "1234",
+		"GITHUB_SERVER_URL":    "https://github.com",
+		"GITHUB_REPOSITORY":    suite.repoName,
+		"GITHUB_REPOSITORY_ID": "1234567890",
+	}, suite.T())
+	CreateArtifactOnTrail(suite.flowName, "trail-1", "backend", suite.fingerprint, suite.artifactName, suite.T())
 	CreateEnv(global.Org, suite.eventsEnvName, "server", suite.T())
 }
 
@@ -101,6 +124,13 @@ func (suite *LogEnvironmentCommandTestSuite) TestLogEnvironmentCmd() {
 		{
 			name: "listing events in interval 1..2 with --reverse works",
 			cmd:  fmt.Sprintf(`log env %s --interval 1..2 --reverse %s`, suite.eventsEnvName, suite.defaultKosliArguments),
+			additionalConfig: listSnapshotsTestConfig{
+				reportToEnv: true,
+			},
+		},
+		{
+			name: "listing events with --repo returns events filtered by repo",
+			cmd:  fmt.Sprintf(`log env %s --repo %s %s`, suite.eventsEnvName, suite.repoName, suite.defaultKosliArguments),
 			additionalConfig: listSnapshotsTestConfig{
 				reportToEnv: true,
 			},
