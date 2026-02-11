@@ -2,7 +2,7 @@
 title: "kosli list trails"
 beta: false
 deprecated: false
-summary: "List Trails for a Flow in an org."
+summary: "List Trails of an org."
 ---
 
 # kosli list trails
@@ -13,19 +13,18 @@ summary: "List Trails for a Flow in an org."
 kosli list trails [flags]
 ```
 
-List Trails for a Flow in an org.The results are ordered from latest to oldest.  
-If the `page-limit` flag is provided, the results will be paginated, otherwise all results will be 
-returned.  
-If `page-limit` is set to 0, all results will be returned.
+List Trails of an org.The list can be filtered by flow, flow tag and artifact fingerprint. The results are paginated and ordered from latest to oldest.
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|    -f, --flow string  |  The Kosli flow name.  |
+|    -F, --fingerprint string  |  [optional] The SHA256 fingerprint of the artifact to filter trails by.  |
+|    -f, --flow string  |  [optional] The Kosli flow name.  |
+|    -t, --flow-tag string  |  [optional] A key=value flow tag to filter trails by.  |
 |    -h, --help  |  help for trails  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 |        --page int  |  [defaulted] The page number of a response. (default 1)  |
-|    -n, --page-limit int  |  [defaulted] The number of elements per page.  |
+|    -n, --page-limit int  |  [defaulted] The number of elements per page. (default 20)  |
 
 
 ## Flags inherited from parent commands
@@ -44,7 +43,7 @@ If `page-limit` is set to 0, all results will be returned.
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-##### list all trails for a flow
+##### get a paginated list of trails for a flow
 
 ```shell
 kosli list trails 
@@ -68,10 +67,23 @@ kosli list trails
 
 ```
 
-##### list all trails for a flow (in JSON)
+##### get a paginated list of trails for a flow (in JSON)
 
 ```shell
 kosli list trails 
 	--output json
+
+```
+
+##### get a paginated list of trails across all flows that contain an artifact with the provided fingerprint (in JSON)
+
+```shell
+kosli list trails 
+	--fingerprint yourArtifactFingerprint 
+	--output json
+
+	# get a paginated list of trails across all flows tagged with the provided key-value pair:
+kosli list trails 
+	--flow-tag team=backend 
 ```
 

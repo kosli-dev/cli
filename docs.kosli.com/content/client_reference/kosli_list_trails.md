@@ -13,7 +13,7 @@ summary: "List Trails of an org."
 kosli list trails [flags]
 ```
 
-List Trails of an org.The list can be filtered by flow, flow tag and artifact fingerprint. The results are paginated and ordered from latest to oldest.
+List Trails of an org.The list can be filtered by flow, flow tag and artifact fingerprint. When multiple filters are provided, only trails matching all specified criteria are returned. The results are paginated and ordered from latest to oldest.
 
 ## Flags
 | Flag | Description |
