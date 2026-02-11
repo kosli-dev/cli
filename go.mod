@@ -19,7 +19,7 @@ require (
 	github.com/containers/image/v5 v5.34.3
 	github.com/docker/docker v28.0.4+incompatible
 	github.com/go-git/go-billy/v5 v5.6.2
-	github.com/go-git/go-git/v5 v5.15.0
+	github.com/go-git/go-git/v5 v5.16.5
 	github.com/go-playground/validator/v10 v10.26.0
 	github.com/google/go-github/v42 v42.0.0
 	github.com/hashicorp/go-retryablehttp v0.7.7
