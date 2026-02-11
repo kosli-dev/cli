@@ -14,7 +14,10 @@ import (
 
 const listTrailsShortDesc = `List Trails of an org.`
 
-const listTrailsLongDesc = listTrailsShortDesc + `The list can be filtered by flow, flow tag and artifact fingerprint. The results are paginated and ordered from latest to oldest.`
+const listTrailsLongDesc = listTrailsShortDesc +
+	`The list can be filtered by flow, flow tag and artifact fingerprint. ` +
+	`When multiple filters are provided, only trails matching all specified criteria are returned. ` +
+	`The results are paginated and ordered from latest to oldest.`
 
 const listTrailsExample = `
 # get a paginated list of trails for a flow:
