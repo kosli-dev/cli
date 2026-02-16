@@ -1,0 +1,49 @@
+{
+  "name": "@kosli/cli",
+  "version": "2.11.43",
+  "description": "Kosli CLI - Record and query software delivery events",
+  "main": "index.js",
+  "bin": {
+    "kosli": "./bin/kosli"
+  },
+  "scripts": {
+    "postinstall": "node install.js",
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kosli-dev/cli.git"
+  },
+  "keywords": [
+    "kosli",
+    "devops",
+    "compliance",
+    "ci-cd",
+    "cli"
+  ],
+  "author": "Kosli Inc.",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kosli-dev/cli/issues"
+  },
+  "homepage": "https://www.kosli.com",
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "files": [
+    "README.md",
+    "index.js",
+    "install.js",
+    "test.js",
+    "bin/"
+  ]
+}

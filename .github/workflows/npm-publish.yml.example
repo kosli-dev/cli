@@ -1,0 +1,83 @@
+# Example workflow to add NPM publishing to the release process
+#
+# To integrate this into your release workflow:
+# 1. Rename this file to npm-publish.yml (remove .example)
+# 2. Add NPM_TOKEN secret to your GitHub repository secrets
+# 3. Add the 'npm-publish' job to the needs array in the
+#    slack-notification-on-failure job in release.yml
+
+name: npm-publish
+
+on:
+  workflow_call:
+    secrets:
+      npm_token:
+        required: true
+
+jobs:
+  publish-npm:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.0'
+
+      - name: Build Go binary
+        run: make build
+
+      - name: Setup npm package structure
+        run: |
+          # Copy binary to npm-package structure
+          mkdir -p npm-package/bin
+          cp ./kosli npm-package/bin/
+          chmod +x npm-package/bin/kosli
+
+      - name: Extract version and update package.json
+        run: |
+          # Extract version from kosli binary
+          KOSLI_VERSION=$(./kosli version 2>/dev/null | head -1 | grep -oP 'Version:"v\K[^"]+')
+          echo "Extracted version: $KOSLI_VERSION"
+
+          # Update package.json version
+          cd npm-package
+          npm version "$KOSLI_VERSION" --no-git-tag-version --allow-same-version
+          echo "Updated package.json to version $KOSLI_VERSION"
+
+      - name: Verify package contents
+        run: |
+          echo "npm-package contents:"
+          ls -lah npm-package/
+          echo -e "\nnpm-package/bin/ directory:"
+          ls -lah npm-package/bin/
+
+      - name: Test package locally
+        run: ./test-npm-package.sh
+
+      - name: Publish to npm
+        working-directory: npm-package
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.npm_token }}
+
+      - name: Get published version
+        id: published_version
+        run: |
+          VERSION=$(cd npm-package && node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Summary
+        run: |
+          echo "✅ Published @kosli/cli@${{ steps.published_version.outputs.version }} to npm"
+          echo "Install with: npm install -g @kosli/cli@${{ steps.published_version.outputs.version }}"

@@ -24,3 +24,12 @@ docs.kosli.com/assets/metadata.json
 tmp/
 junit.xml
 junit-test-results/.
+
+# NPM
+node_modules/
+*.tgz
+package-lock.json
+npm-package/bin/
+npm-package/*.tgz
+npm-package/.npmrc
+.npmrc

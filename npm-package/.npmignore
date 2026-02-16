@@ -1,0 +1,10 @@
+# Only include the essentials for the npm package
+# The bin/ directory will be populated during the build/test process
+
+# Archives (temporary download artifacts)
+*.tar.gz
+*.tgz
+*.zip
+
+# Node modules
+node_modules/
