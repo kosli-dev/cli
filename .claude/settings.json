@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(rg *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(cat *)",
+      "Bash(sort *)",
+      "Bash(wc *)",
+      "Bash(du *)",
+      "Bash(pwd)",
+      "Bash(cd *)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git status *)",
+      "Bash(git branch *)",
+      "Bash(git show *)",
+      "Bash(git remote *)",
+      "Bash(make pylint)",
+      "Bash(make lint_src)",
+      "Bash(python3 *)",
+      "Bash(CI=true etuk *)",
+      "Bash(CI=true etik *)",
+      "Bash(source *)",
+      "Bash(xargs *)"
+    ],
+    "deny": [
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(rm -rf *)",
+      "Bash(curl *)",
+      "Bash(wget *)"
+    ]
+  }
+}

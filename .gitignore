@@ -18,9 +18,11 @@ docs.kosli.com/content/client_reference/kosli*
 docs.kosli.com/public/
 docs.kosli.com/.netlify
 *.tar.gz
+*~
 /.idea
 # keep it uncommented on main
 docs.kosli.com/assets/metadata.json
 tmp/
 junit.xml
 junit-test-results/.
+.claude/settings.local.json
