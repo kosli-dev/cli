@@ -12,6 +12,11 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+type jiraTestsAdditionalConfig struct {
+	commitMessage string
+	branchName    string
+}
+
 // Define the suite, and absorb the built-in basic suite
 // functionality from testify - including a T() method which
 // returns the current testing context
