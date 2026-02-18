@@ -73,38 +73,6 @@ func addGitlabFlags(cmd *cobra.Command, gitlabConfig *gitlabUtils.GitlabConfig, 
 	cmd.Flags().StringVar(&gitlabConfig.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
 }
 
-func addArtifactPRFlags(cmd *cobra.Command, o *pullRequestArtifactOptions, ci string) {
-	addArtifactEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
-	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
-	cmd.Flags().StringVar(&o.commit, "commit", DefaultValueForCommit(ci, false), commitPREvidenceFlag)
-	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
-	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
-}
-
-func addArtifactEvidenceFlags(cmd *cobra.Command, payload *TypedEvidencePayload, ci string) {
-	addEvidenceFlags(cmd, payload, ci)
-	cmd.Flags().StringVarP(&payload.ArtifactFingerprint, "fingerprint", "F", "", fingerprintFlag)
-}
-
-func addCommitPRFlags(cmd *cobra.Command, o *pullRequestCommitOptions, ci string) {
-	addCommitEvidenceFlags(cmd, &o.payload.TypedEvidencePayload, ci)
-	cmd.Flags().StringVarP(&o.userDataFilePath, "user-data", "u", "", evidenceUserDataFlag)
-	cmd.Flags().BoolVar(&o.assert, "assert", false, assertPREvidenceFlag)
-}
-
-func addCommitEvidenceFlags(cmd *cobra.Command, payload *TypedEvidencePayload, ci string) {
-	addEvidenceFlags(cmd, payload, ci)
-	cmd.Flags().StringVar(&payload.CommitSHA, "commit", DefaultValueForCommit(ci, false), commitEvidenceFlag)
-	cmd.Flags().StringSliceVarP(&payload.Flows, "flows", "f", []string{}, flowNamesFlag)
-}
-
-func addEvidenceFlags(cmd *cobra.Command, payload *TypedEvidencePayload, ci string) {
-	cmd.Flags().StringVarP(&payload.BuildUrl, "build-url", "b", DefaultValue(ci, "build-url"), evidenceBuildUrlFlag)
-	cmd.Flags().StringVarP(&payload.EvidenceName, "name", "n", "", evidenceNameFlag)
-	cmd.Flags().StringVar(&payload.EvidenceFingerprint, "evidence-fingerprint", "", evidenceFingerprintFlag)
-	cmd.Flags().StringVar(&payload.EvidenceURL, "evidence-url", "", evidenceURLFlag)
-}
-
 func addListFlags(cmd *cobra.Command, o *listOptions, customPageLimit ...int) {
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	cmd.Flags().IntVar(&o.pageNumber, "page", 1, pageNumberFlag)

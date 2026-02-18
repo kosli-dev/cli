@@ -18,7 +18,6 @@ func newReportCmd(out io.Writer) *cobra.Command {
 	// Add subcommands
 	cmd.AddCommand(
 		newReportArtifactCmd(out),
-		newReportEvidenceCmd(out),
 		newReportApprovalCmd(out),
 	)
 

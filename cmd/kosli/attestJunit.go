@@ -5,7 +5,11 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
+	"time"
 
+	junit "github.com/joshdk/go-junit"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -191,4 +195,100 @@ func (o *attestJunitOptions) run(args []string) error {
 		logger.Info("junit attestation '%s' is reported to trail: %s", o.payload.AttestationName, o.trailName)
 	}
 	return wrapAttestationError(err)
+}
+
+type JUnitResults struct {
+	Name      string  `json:"name"`
+	Failures  int     `json:"failures"`
+	Errors    int     `json:"errors"`
+	Skipped   int     `json:"skipped"`
+	Total     int     `json:"total"`
+	Duration  float64 `json:"duration"`
+	Timestamp float64 `json:"timestamp,omitempty"`
+}
+
+func ingestJunitDir(testResultsDir string) ([]*JUnitResults, error) {
+	results := []*JUnitResults{}
+	suites, err := junit.IngestDir(testResultsDir)
+	if err != nil {
+		return results, err
+	}
+
+	if len(suites) == 0 {
+		return results, fmt.Errorf("no tests found in %s directory", testResultsDir)
+	}
+
+	for _, suite := range suites {
+		var timestamp float64
+		timestamp, err := parseTimestamp(suite.Properties["timestamp"])
+		if err != nil {
+			return results, err
+		}
+
+		// The values in suite.Totals are based on the results of the tests in the suite and not in the header of the suite.
+		suiteResult := &JUnitResults{
+			Name:      suite.Name,
+			Duration:  suite.Totals.Duration.Seconds(),
+			Total:     suite.Totals.Tests,
+			Skipped:   suite.Totals.Skipped,
+			Errors:    suite.Totals.Error,
+			Failures:  suite.Totals.Failed,
+			Timestamp: timestamp,
+		}
+		logger.Debug("parsed <testsuite> result: %+v", suiteResult)
+		results = append(results, suiteResult)
+	}
+
+	return results, nil
+}
+
+func getJunitFilenames(directory string) ([]string, error) {
+	var filenames []string
+
+	err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Add all regular files that end with ".xml"
+		if info.Mode().IsRegular() && strings.HasSuffix(info.Name(), ".xml") {
+			suites, err := junit.IngestFile(path)
+			if err != nil {
+				return err
+			}
+			if len(suites) > 0 {
+				filenames = append(filenames, path)
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return filenames, err
+	}
+
+	return filenames, nil
+}
+
+func parseTimestamp(timestampStr string) (float64, error) {
+	if timestampStr == "" {
+		return 0.0, nil
+	}
+
+	formats := []string{
+		"2006-01-02T15:04:05.999999", // pytest
+		"2006-01-02T15:04:05+00:00",  // Ruby minitest
+		"2006-01-02T15:04:05.999Z",   // vitest
+	}
+
+	var err error
+	for _, format := range formats {
+		t, err := time.Parse(format, timestampStr)
+		if err == nil {
+			return float64(t.UTC().Unix()), nil
+		}
+	}
+
+	return 0.0, err
 }
