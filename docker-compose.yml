@@ -54,8 +54,6 @@ services:
   mongo_rs_initiate:
     networks: [ cli_net ]
     image: kosli-mongo-rs
-    build:
-      context: ./mongo
     container_name: cli_mongo_rs_initiate
     init: true
     depends_on: [ mongo-cli-1 ]
