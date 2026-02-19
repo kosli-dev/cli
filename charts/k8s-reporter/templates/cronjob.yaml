@@ -84,6 +84,6 @@ spec:
             {{ end }}
             
             resources:
-{{ toYmal .Values.resources | indent 14 }}
+{{ toYaml .Values.resources | indent 14 }}
           restartPolicy: Never
 
