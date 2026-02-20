@@ -320,7 +320,7 @@ func (c *Client) PayloadOutput(req *http.Request, jsonFields map[string]any, mes
 
 func customCheckRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
 	// Get the default retry policy for errors and certain status codes.
-	// It will retry on 5xx, 429 and some special cases
+	// It will retry on 5xx, 409 and some special cases
 	shouldRetry, retryErr := retryablehttp.DefaultRetryPolicy(ctx, resp, err)
 	if retryErr != nil {
 		return false, retryErr
