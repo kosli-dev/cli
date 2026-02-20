@@ -93,6 +93,31 @@ func (suite *ListReposCommandTestSuite) TestListReposCmd() {
 			cmd:    fmt.Sprintf(`list repos --page-limit 15 --page 2 %s`, suite.defaultKosliArguments),
 			golden: "",
 		},
+		{
+			name:        "09-listing repos with --name filter works",
+			cmd:         fmt.Sprintf(`list repos --name kosli-dev/cli %s`, suite.acmeOrgKosliArguments),
+			goldenRegex: ".*\nkosli-dev/cli  https://github.com/kosli-dev/cli  Trail Started at.*",
+		},
+		{
+			name:       "10-listing repos with --name filter and --output json works",
+			cmd:        fmt.Sprintf(`list repos --name kosli-dev/cli --output json %s`, suite.acmeOrgKosliArguments),
+			goldenJson: []jsonCheck{{"_embedded.repos", "non-empty"}},
+		},
+		{
+			name:        "11-listing repos with --provider filter works",
+			cmd:         fmt.Sprintf(`list repos --provider github %s`, suite.acmeOrgKosliArguments),
+			goldenRegex: ".*\nkosli-dev/cli  https://github.com/kosli-dev/cli  Trail Started at.*",
+		},
+		{
+			name:   "12-listing repos with non-matching --provider returns no repos message",
+			cmd:    fmt.Sprintf(`list repos --provider gitlab %s`, suite.acmeOrgKosliArguments),
+			golden: "No repos were found.\n",
+		},
+		{
+			name:   "13-listing repos with non-matching --repo-id returns no repos message",
+			cmd:    fmt.Sprintf(`list repos --repo-id non-existing-id %s`, suite.acmeOrgKosliArguments),
+			golden: "No repos were found.\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

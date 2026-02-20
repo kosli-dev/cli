@@ -63,14 +63,33 @@ func (suite *GetRepoCommandTestSuite) TestGetRepoCmd() {
 			goldenJson: []jsonCheck{{"_embedded.repos", "non-empty"}},
 		},
 		{
+			name: "04-getting an existing repo with matching --provider works",
+			cmd:  fmt.Sprintf(`get repo kosli-dev/cli --provider github %s`, suite.acmeOrgKosliArguments),
+		},
+		{
+			name:       "05-getting an existing repo with matching --provider and --output json works",
+			cmd:        fmt.Sprintf(`get repo kosli-dev/cli --provider github --output json %s`, suite.acmeOrgKosliArguments),
+			goldenJson: []jsonCheck{{"_embedded.repos", "non-empty"}},
+		},
+		{
+			name:   "06-getting a repo with a non-matching --provider returns not-found message",
+			cmd:    fmt.Sprintf(`get repo kosli-dev/cli --provider gitlab %s`, suite.acmeOrgKosliArguments),
+			golden: "Repo was not found.\n",
+		},
+		{
+			name:   "07-getting a repo with a non-matching --repo-id returns not-found message",
+			cmd:    fmt.Sprintf(`get repo kosli-dev/cli --repo-id non-existing-id %s`, suite.acmeOrgKosliArguments),
+			golden: "Repo was not found.\n",
+		},
+		{
 			wantError: true,
-			name:      "04-providing no argument fails",
+			name:      "08-providing no argument fails",
 			cmd:       fmt.Sprintf(`get repo %s`, suite.defaultKosliArguments),
 			golden:    "Error: accepts 1 arg(s), received 0\n",
 		},
 		{
 			wantError: true,
-			name:      "05-providing more than one argument fails",
+			name:      "09-providing more than one argument fails",
 			cmd:       fmt.Sprintf(`get repo foo bar %s`, suite.defaultKosliArguments),
 			golden:    "Error: accepts 1 arg(s), received 2\n",
 		},
