@@ -50,6 +50,56 @@ func (suite *DocsCommandTestSuite) TestDocsCmd() {
 	require.NoError(suite.T(), err)
 }
 
+func (suite *DocsCommandTestSuite) TestDocsCmdMintlify() {
+	global = &GlobalOpts{}
+	tempDirName, err := os.MkdirTemp("", "generatedDocsMintlify")
+	require.NoError(suite.T(), err)
+	defer func() {
+		if err := os.RemoveAll(tempDirName); err != nil {
+			require.NoError(suite.T(), err, "failed to remove temp dir %s", tempDirName)
+		}
+	}()
+
+	o := &docsOptions{
+		dest:            tempDirName,
+		topCmd:          newAttestSnykCmd(os.Stdout),
+		generateHeaders: true,
+		mintlify:        true,
+	}
+	err = o.run()
+	require.NoError(suite.T(), err)
+
+	actualFile := filepath.Join(tempDirName, "snyk.md")
+	require.FileExists(suite.T(), actualFile)
+	err = compareTwoFiles(actualFile, goldenPath("output/docs/mintlify/snyk.md"))
+	require.NoError(suite.T(), err)
+}
+
+func (suite *DocsCommandTestSuite) TestDocsCmdMintlifyDeprecated() {
+	global = &GlobalOpts{}
+	tempDirName, err := os.MkdirTemp("", "generatedDocsMintlifyDeprecated")
+	require.NoError(suite.T(), err)
+	defer func() {
+		if err := os.RemoveAll(tempDirName); err != nil {
+			require.NoError(suite.T(), err, "failed to remove temp dir %s", tempDirName)
+		}
+	}()
+
+	o := &docsOptions{
+		dest:            tempDirName,
+		topCmd:          newReportArtifactCmd(os.Stdout),
+		generateHeaders: true,
+		mintlify:        true,
+	}
+	err = o.run()
+	require.NoError(suite.T(), err)
+
+	actualFile := filepath.Join(tempDirName, "artifact.md")
+	require.FileExists(suite.T(), actualFile)
+	err = compareTwoFiles(actualFile, goldenPath("output/docs/mintlify/artifact.md"))
+	require.NoError(suite.T(), err)
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestDocsCommandTestSuite(t *testing.T) {
