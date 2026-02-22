@@ -24,7 +24,7 @@ func (suite *DocsCommandTestSuite) TestDocsCmd() {
 	// Then:
 	// - make test_integration_single TARGET=TestDocsCommandTestSuite
 	// will tell you where the new snyk.md master file lives.
-	// Then copy it to ./cmd/kosli/testdata/output/docs/
+	// Then copy it to ./cmd/kosli/testdata/output/docs/hugo/
 	// and undo the changes above.
 	global = &GlobalOpts{}
 	tempDirName, err := os.MkdirTemp("", "generatedDocs")
@@ -46,11 +46,11 @@ func (suite *DocsCommandTestSuite) TestDocsCmd() {
 
 	actualFile := filepath.Join(tempDirName, "snyk.md")
 	require.FileExists(suite.T(), actualFile)
-	err = compareTwoFiles(actualFile, goldenPath("output/docs/snyk.md"))
+	err = compareTwoFiles(actualFile, goldenPath("output/docs/hugo/snyk.md"))
 	require.NoError(suite.T(), err)
 }
 
-func (suite *DocsCommandTestSuite) TestDocsCmdMintlify() {
+func (suite *DocsCommandTestSuite) TestDocsCmdMintlifySnyk() {
 	global = &GlobalOpts{}
 	tempDirName, err := os.MkdirTemp("", "generatedDocsMintlify")
 	require.NoError(suite.T(), err)
