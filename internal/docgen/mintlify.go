@@ -49,12 +49,15 @@ func (MintlifyFormatter) Synopsis(meta CommandMeta) string {
 			fmt.Fprintf(&b, "```shell\n%s\n```\n\n", meta.UseLine)
 		}
 		long := strings.ReplaceAll(meta.Long, "^", "`")
+		long = linkifyKosliDocsURLs(long)
 		b.WriteString(escapeMintlifyProse(long) + "\n\n")
 	}
 	return b.String()
 }
 
 func (MintlifyFormatter) FlagsSection(flags, inherited string) string {
+	flags = linkifyKosliDocsURLs(flags)
+	inherited = linkifyKosliDocsURLs(inherited)
 	var b strings.Builder
 	if flags != "" {
 		b.WriteString("## Flags\n")
@@ -164,6 +167,14 @@ func escapeMintlifyProse(s string) string {
 		}
 	}
 	return strings.Join(parts, "```")
+}
+
+var kosliDocsURLPattern = regexp.MustCompile(`https://docs\.kosli\.com(/[^\s),]*)`)
+
+// linkifyKosliDocsURLs converts bare https://docs.kosli.com/path URLs
+// into markdown links [docs](/path).
+func linkifyKosliDocsURLs(s string) string {
+	return kosliDocsURLPattern.ReplaceAllString(s, "[docs]($1)")
 }
 
 var angleBracketPattern = regexp.MustCompile(`<([A-Z][A-Z0-9_-]*)>`)

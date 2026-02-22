@@ -123,9 +123,8 @@ func TestMintlifyExampleUseCases(t *testing.T) {
 	if !strings.Contains(got, "</AccordionGroup>") {
 		t.Error("expected closing AccordionGroup")
 	}
-	// Should use relative URL, not full docs.kosli.com
 	if strings.Contains(got, "https://docs.kosli.com") {
-		t.Error("expected relative URL, not full URL")
+		t.Error("expected bare docs.kosli.com URLs to be linkified")
 	}
 }
 
@@ -134,6 +133,48 @@ func TestMintlifyLinkHandler(t *testing.T) {
 	got := f.LinkHandler("kosli_attest_snyk.md")
 	if got != "/client_reference/kosli_attest_snyk" {
 		t.Errorf("expected no trailing slash, got: %s", got)
+	}
+}
+
+func TestLinkifyKosliDocsURLs(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "bare URL becomes markdown link",
+			input: "A boolean flag https://docs.kosli.com/faq/#boolean-flags (default false)",
+			want:  "A boolean flag [docs](/faq/#boolean-flags) (default false)",
+		},
+		{
+			name:  "URL followed by comma",
+			input: "(defaulted in some CIs: https://docs.kosli.com/ci-defaults, otherwise defaults to HEAD ).",
+			want:  "(defaulted in some CIs: [docs](/ci-defaults), otherwise defaults to HEAD ).",
+		},
+		{
+			name:  "URL followed by space and closing paren",
+			input: "(defaulted in some CIs: https://docs.kosli.com/ci-defaults ).",
+			want:  "(defaulted in some CIs: [docs](/ci-defaults) ).",
+		},
+		{
+			name:  "long path URL",
+			input: "see https://docs.kosli.com/integrations/ci_cd/#defaulted-kosli-command-flags-from-ci-variables .",
+			want:  "see [docs](/integrations/ci_cd/#defaulted-kosli-command-flags-from-ci-variables) .",
+		},
+		{
+			name:  "non-kosli URL untouched",
+			input: "see https://example.com/foo for details",
+			want:  "see https://example.com/foo for details",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := linkifyKosliDocsURLs(tt.input)
+			if got != tt.want {
+				t.Errorf("linkifyKosliDocsURLs(%q):\ngot:  %q\nwant: %q", tt.input, got, tt.want)
+			}
+		})
 	}
 }
 
