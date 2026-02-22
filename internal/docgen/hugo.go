@@ -9,6 +9,10 @@ import (
 // HugoFormatter generates Hugo-compatible markdown documentation.
 type HugoFormatter struct{}
 
+func (HugoFormatter) Title(name string) string {
+	return "# " + name + "\n\n"
+}
+
 func (HugoFormatter) FrontMatter(meta CommandMeta) string {
 	return fmt.Sprintf("---\ntitle: \"%s\"\nbeta: %t\ndeprecated: %t\nsummary: \"%s\"\n---\n\n",
 		meta.Name, meta.Beta, meta.Deprecated, meta.Summary)

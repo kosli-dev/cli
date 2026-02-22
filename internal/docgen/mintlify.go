@@ -10,6 +10,10 @@ import (
 // MintlifyFormatter generates Mintlify-compatible MDX documentation.
 type MintlifyFormatter struct{}
 
+func (MintlifyFormatter) Title(name string) string {
+	return "" // Mintlify renders title from front matter
+}
+
 func (MintlifyFormatter) FrontMatter(meta CommandMeta) string {
 	desc := sanitizeDescription(meta.Summary)
 	return fmt.Sprintf("---\ntitle: \"%s\"\nbeta: %t\ndeprecated: %t\ndescription: \"%s\"\n---\n\n",

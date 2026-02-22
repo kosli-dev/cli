@@ -59,7 +59,7 @@ func genMarkdownCustom(cmd *cobra.Command, w io.Writer, formatter Formatter, met
 	buf.WriteString(formatter.FrontMatter(meta))
 
 	// Title
-	buf.WriteString("# " + name + "\n\n")
+	buf.WriteString(formatter.Title(name))
 
 	// Beta warning
 	if meta.Beta {

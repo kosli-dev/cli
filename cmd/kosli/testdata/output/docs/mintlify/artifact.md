@@ -5,8 +5,6 @@ deprecated: true
 description: "Report an artifact creation to a Kosli flow.  "
 ---
 
-# artifact
-
 <Warning>
 **artifact** is deprecated. see kosli attest commands  Deprecated commands will be removed in a future release.
 </Warning>

@@ -32,6 +32,7 @@ type LiveExampleData struct {
 
 // Formatter defines the interface for generating doc output in different formats.
 type Formatter interface {
+	Title(name string) string
 	FrontMatter(meta CommandMeta) string
 	BetaWarning(name string) string
 	DeprecatedWarning(name, message string) string
