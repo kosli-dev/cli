@@ -2,7 +2,7 @@
 title: "kosli list artifacts"
 beta: false
 deprecated: false
-summary: "List artifacts in a flow. "
+summary: "List artifacts in a flow or repo. "
 ---
 
 # kosli list artifacts
@@ -13,7 +13,7 @@ summary: "List artifacts in a flow. "
 kosli list artifacts [flags]
 ```
 
-List artifacts in a flow. The results are paginated and ordered from latest to oldest.
+List artifacts in a flow or repo. The results are paginated and ordered from latest to oldest.
 By default, the page limit is 15 artifacts per page.
 
 
@@ -25,6 +25,7 @@ By default, the page limit is 15 artifacts per page.
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 |        --page int  |  [defaulted] The page number of a response. (default 1)  |
 |    -n, --page-limit int  |  [defaulted] The number of elements per page. (default 15)  |
+|        --repo string  |  [optional] The name of a git repo as it is registered in Kosli. e.g kosli-dev/cli  |
 
 
 ## Flags inherited from parent commands
@@ -47,6 +48,14 @@ These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and
 
 ```shell
 kosli list artifacts 
+
+```
+
+##### list the last 15 artifacts for a repo
+
+```shell
+kosli list artifacts 
+	--repo yourRepoName 
 
 ```
 
