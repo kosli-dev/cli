@@ -61,8 +61,8 @@ type LiveDocProvider interface {
 // NullLiveDocProvider is a no-op implementation for testing.
 type NullLiveDocProvider struct{}
 
-func (NullLiveDocProvider) YamlDocExists(ci, command string) bool                      { return false }
-func (NullLiveDocProvider) EventDocExists(ci, command string) bool                     { return false }
-func (NullLiveDocProvider) YamlURL(ci, command string) string                          { return "" }
-func (NullLiveDocProvider) EventURL(ci, command string) string                         { return "" }
-func (NullLiveDocProvider) CLIDocExists(command string) (string, string, bool)         { return "", "", false }
+func (NullLiveDocProvider) YamlDocExists(ci, command string) bool              { return false }
+func (NullLiveDocProvider) EventDocExists(ci, command string) bool             { return false }
+func (NullLiveDocProvider) YamlURL(ci, command string) string                  { return "" }
+func (NullLiveDocProvider) EventURL(ci, command string) string                 { return "" }
+func (NullLiveDocProvider) CLIDocExists(command string) (string, string, bool) { return "", "", false }
