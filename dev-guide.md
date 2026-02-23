@@ -50,3 +50,7 @@ To run all the tests"
 
 To run only the tests in a single test suite, eg TestAttestJunitCommandTestSuite
 `make test_integration_single TARGET=TestAttestJunitCommandTestSuite`
+
+## Releasing
+
+See the [release guide](/release-guide.md) for details on CI/CD pipelines and the release process.
