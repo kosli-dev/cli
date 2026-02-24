@@ -57,7 +57,9 @@ func (MintlifyFormatter) Synopsis(meta CommandMeta) string {
 
 func (MintlifyFormatter) FlagsSection(flags, inherited string) string {
 	flags = linkifyKosliDocsURLs(flags)
+	flags = escapeMintlifyProse(flags)
 	inherited = linkifyKosliDocsURLs(inherited)
+	inherited = escapeMintlifyProse(inherited)
 	var b strings.Builder
 	if flags != "" {
 		b.WriteString("## Flags\n")
@@ -177,16 +179,39 @@ func linkifyKosliDocsURLs(s string) string {
 	return kosliDocsURLPattern.ReplaceAllString(s, "[docs]($1)")
 }
 
-var angleBracketPattern = regexp.MustCompile(`<([A-Z][A-Z0-9_-]*)>`)
+// angleBracketPattern matches placeholder patterns in angle brackets that MDX
+// would interpret as JSX tags. Matches:
+//   - uppercase placeholders like <IMAGE-NAME>
+//   - patterns with pipes like <hours|days|weeks|months> or <COMMIT_SHA1|FINGERPRINT>
+//   - lowercase placeholders like <fingerprint>, <commit_sha>
+//
+// Standard HTML tags like <a>, <br/>, <pre>, <code> are filtered out in escapeProseFragment.
+var angleBracketPattern = regexp.MustCompile(`<([a-zA-Z][a-zA-Z0-9_|-]*)>`)
+
+var htmlTags = map[string]bool{
+	"a": true, "br": true, "pre": true, "code": true, "em": true,
+	"strong": true, "p": true, "div": true, "span": true, "ul": true,
+	"ol": true, "li": true, "img": true, "table": true, "tr": true,
+	"td": true, "th": true, "thead": true, "tbody": true,
+	"h1": true, "h2": true, "h3": true, "h4": true, "h5": true, "h6": true,
+}
 
 func escapeProseFragment(s string) string {
 	// Escape curly braces: {expr} -> \{expr\}
 	s = strings.ReplaceAll(s, "{", "\\{")
 	s = strings.ReplaceAll(s, "}", "\\}")
 
-	// Escape <UPPERCASE_WORD> patterns -> `UPPERCASE_WORD`
-	// but leave HTML tags like <a>, <br/>, <pre> alone
-	s = angleBracketPattern.ReplaceAllString(s, "`$1`")
+	// Escape angle-bracket placeholders -> backtick-wrapped
+	// but leave standard HTML tags alone
+	s = angleBracketPattern.ReplaceAllStringFunc(s, func(match string) string {
+		inner := match[1 : len(match)-1]
+		// Check the base tag name (before any pipe) against HTML tags
+		baseName := strings.SplitN(inner, "|", 2)[0]
+		if htmlTags[strings.ToLower(baseName)] {
+			return match
+		}
+		return "`" + inner + "`"
+	})
 
 	return s
 }

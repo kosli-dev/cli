@@ -200,6 +200,26 @@ func TestEscapeMintlifyProse(t *testing.T) {
 			want:  "Use <a href=\"x\">link</a>",
 		},
 		{
+			name:  "lowercase angle brackets with pipes converted",
+			input: "Use <hours|days|weeks|months> for time",
+			want:  "Use `hours|days|weeks|months` for time",
+		},
+		{
+			name:  "uppercase angle brackets with pipes converted",
+			input: "Format: <COMMIT_SHA1|ARTIFACT_FINGERPRINT>",
+			want:  "Format: `COMMIT_SHA1|ARTIFACT_FINGERPRINT`",
+		},
+		{
+			name:  "lowercase single-word placeholders converted",
+			input: "flowName@<fingerprint> or flowName:<commit_sha>",
+			want:  "flowName@`fingerprint` or flowName:`commit_sha`",
+		},
+		{
+			name:  "double curly braces escaped",
+			input: "--jira-secondary-source ${{ github.head_ref }}",
+			want:  "--jira-secondary-source $\\{\\{ github.head_ref \\}\\}",
+		},
+		{
 			name:  "code fence content not escaped",
 			input: "text ```\n{code}\n<FOO>\n``` more {text}",
 			want:  "text ```\n{code}\n<FOO>\n``` more \\{text\\}",
