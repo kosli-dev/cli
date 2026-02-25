@@ -193,7 +193,7 @@ func (suite *GithubTestSuite) TestGetPullRequestApprovers() {
 			name:       "non-existing PR causes an error",
 			ghOrg:      "kosli-dev",
 			repository: "cli",
-			number:     666,
+			number:     662,
 			result: result{
 				wantError: true,
 			},

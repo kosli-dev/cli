@@ -70,7 +70,7 @@ By systematically following these steps, you can ensure a seamless API key rotat
 you can assign an API key to any CLI command by one of the following options:
 - using the `--api-token` flag
 - exporting an environment variable called `KOSLI_API_TOKEN`
-- setting it in a config file and passing the config file using `--config-file` (see [here](/getting_started/install#assigning-flags-via-config-files))
+- setting it in a config file and passing the config file using `--config-file` (see [here](/getting_started/install/#assigning-flags-via-config-files))
 
 ### In API
 
