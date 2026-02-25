@@ -85,11 +85,17 @@ func DirSha256(dirPath string, excludePaths []string, logger *logger.Logger) (st
 func OciSha256(artifactName string, registryUsername string, registryPassword string) (string, error) {
 	imageName := fmt.Sprintf("//%s", artifactName)
 	ctx := context.Background()
-	sysCtx := &types.SystemContext{
-		DockerAuthConfig: &types.DockerAuthConfig{
+	sysCtx := &types.SystemContext{}
+	// Only set explicit credentials when provided. When DockerAuthConfig is nil,
+	// the containers/image library falls back to credential discovery from auth
+	// files (~/.docker/config.json, ~/.config/containers/auth.json) and credential
+	// helpers (e.g. docker-credential-ecr-login), which is needed when Docker is
+	// not installed or when using Podman with a private registry like ECR.
+	if registryUsername != "" || registryPassword != "" {
+		sysCtx.DockerAuthConfig = &types.DockerAuthConfig{
 			Username: registryUsername,
 			Password: registryPassword,
-		},
+		}
 	}
 
 	// Parse image reference
