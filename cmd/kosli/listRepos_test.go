@@ -57,7 +57,7 @@ func (suite *ListReposCommandTestSuite) TestListReposCmd() {
 		{
 			name:        "02-listing repos works when there are no repos",
 			cmd:         fmt.Sprintf(`list repos %s`, suite.acmeOrgKosliArguments),
-			goldenRegex: ".*\nkosli-dev/cli  https://github.com/kosli-dev/cli  Trail Started at.*",
+			goldenRegex: ".*\nkosli-dev/cli  https://github.com/kosli-dev/cli  github    Trail Started at.*",
 		},
 		{
 			name:       "03-listing repos with --output json works when there are repos",
@@ -96,7 +96,7 @@ func (suite *ListReposCommandTestSuite) TestListReposCmd() {
 		{
 			name:        "09-listing repos with --name filter works",
 			cmd:         fmt.Sprintf(`list repos --name kosli-dev/cli %s`, suite.acmeOrgKosliArguments),
-			goldenRegex: ".*\nkosli-dev/cli  https://github.com/kosli-dev/cli  Trail Started at.*",
+			goldenRegex: ".*\nkosli-dev/cli  https://github.com/kosli-dev/cli github  Trail Started at.*",
 		},
 		{
 			name:       "10-listing repos with --name filter and --output json works",
@@ -106,7 +106,7 @@ func (suite *ListReposCommandTestSuite) TestListReposCmd() {
 		{
 			name:        "11-listing repos with --provider filter works",
 			cmd:         fmt.Sprintf(`list repos --provider github %s`, suite.acmeOrgKosliArguments),
-			goldenRegex: ".*\nkosli-dev/cli  https://github.com/kosli-dev/cli  Trail Started at.*",
+			goldenRegex: ".*\nkosli-dev/cli  https://github.com/kosli-dev/cli github  Trail Started at.*",
 		},
 		{
 			name:   "12-listing repos with non-matching --provider returns no repos message",
