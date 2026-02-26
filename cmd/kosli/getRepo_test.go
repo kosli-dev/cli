@@ -24,8 +24,8 @@ func (suite *GetRepoCommandTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	global.Org = "acme-org"
-	global.ApiToken = "v3OWZiYWu9G2IMQStYg9BcPQUQ88lJNNnTJTNq8jfvmkR1C5wVpHSs7F00JcB5i6OGeUzrKt3CwRq7ndcN4TTfMeo8ASVJ5NdHpZT7DkfRfiFvm8s7GbsIHh2PtiQJYs2UoN13T8DblV5C4oKb6-yWH73h67OhotPlKfVKazR-c"
+	global.Org = "iu-org-shared"
+	global.ApiToken = "qM9u2_grv6pJLbACwsMMMT5LIQy82tQj2k1zjZnlXti1smnFaGwCKW4jzk0La7ae9RrSYvEwCXSsXknD6YZqd-onLaaIUUKtEn6-B6yh53vWIe9EC5u85FCbKZjFbaicp_d0Me0Zcqq_KcCgrAZRX9xggl_pBb2oaCsNdllqNjk"
 	suite.acmeOrgKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 	CreateFlowWithTemplate("get-repo", "testdata/valid_template.yml", suite.T())
 	SetEnvVars(map[string]string{
