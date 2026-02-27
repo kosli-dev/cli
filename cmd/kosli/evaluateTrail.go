@@ -17,6 +17,7 @@ const evaluateTrailDesc = `Evaluate a trail against a policy.`
 type evaluateTrailOptions struct {
 	flowName   string
 	policyFile string
+	format     string
 }
 
 func newEvaluateTrailCmd(out io.Writer) *cobra.Command {
@@ -40,6 +41,7 @@ func newEvaluateTrailCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.policyFile, "policy", "p", "", "[optional] Path to a Rego policy file to evaluate against the trail.")
+	cmd.Flags().StringVar(&o.format, "format", "text", "[defaulted] The format of the policy evaluation output. Valid formats are: [text, json].")
 
 	err := RequireFlags(cmd, []string{"flow"})
 	if err != nil {
@@ -89,6 +91,25 @@ func (o *evaluateTrailOptions) run(out io.Writer, args []string) error {
 	result, err := evaluate.Evaluate(string(policySource), input)
 	if err != nil {
 		return err
+	}
+
+	if o.format == "json" {
+		auditResult := map[string]interface{}{
+			"allow":      result.Allow,
+			"violations": result.Violations,
+		}
+		output, err := json.MarshalIndent(auditResult, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to marshal output: %v", err)
+		}
+		_, err = fmt.Fprintln(out, string(output))
+		if err != nil {
+			return err
+		}
+		if !result.Allow {
+			return fmt.Errorf("policy denied")
+		}
+		return nil
 	}
 
 	if !result.Allow {
