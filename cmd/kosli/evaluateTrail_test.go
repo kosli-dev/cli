@@ -91,6 +91,12 @@ func (suite *EvaluateTrailCommandTestSuite) TestEvaluateTrailCmd() {
 			cmd:        fmt.Sprintf(`evaluate trail %s --flow %s --policy testdata/policies/allow-all.rego --format json %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
 			goldenJson: []jsonCheck{{"allow", true}},
 		},
+		{
+			wantError:   true,
+			name:        "with --policy deny-all --format json prints JSON with allow false and violations",
+			cmd:         fmt.Sprintf(`evaluate trail %s --flow %s --policy testdata/policies/deny-all.rego --format json %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenRegex: `(?s)"allow":\s*false.*"violations":\s*\[.*"always denied"`,
+		},
 	}
 
 	runTestCmd(suite.T(), tests)
