@@ -1,3 +1,4 @@
+version: 2
 project_name: kosli
 before:
   hooks:
@@ -22,6 +23,9 @@ builds:
       - amd64
       - arm64
       - arm
+    ignore:
+      - goos: windows
+        goarch: arm 
     main: ./cmd/kosli/
 
 archives:
@@ -31,8 +35,7 @@ archives:
     # Default is empty.
     format_overrides:
       - goos: windows
-        format: zip
-
+        formats: [ 'zip' ]
 
 # docs for nfpm can be found here:  https://goreleaser.com/customization/nfpm/
 nfpms:
@@ -41,14 +44,17 @@ nfpms:
     # You can change the file name of the package.
     #
     # Default:`{{ .PackageName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}`
-    file_name_template: >-
-      {{ .ProjectName }}_
-      {{- title .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end }}
 
-    builds:
+  # TODO Maybe enable the template again after we have a better understanding of how to use it.  It seems to be working without it, but it would be nice to have more control over the file name.
+
+    # file_name_template: >-
+    #   {{ .ProjectName }}_
+    #   {{- title .Os }}_
+    #   {{- if eq .Arch "amd64" }}x86_64
+    #   {{- else if eq .Arch "386" }}i386
+    #   {{- else }}{{ .Arch }}{{ end }}
+
+    ids:
       - kosli
 
     vendor: Kosli Inc.
@@ -72,12 +78,20 @@ nfpms:
     # Priority.
     priority: optional
 
-    # Contents to add to the package.
-    # GoReleaser will automatically add the binaries.
-    contents:
-      # The src and dst attributes also supports name templates
-      - src: dist/{{ .ProjectName }}_{{ .Os }}_{{ if .Amd64 }}{{ .Arch }}_v1{{ else if .Arm }}{{ .Arch }}_6{{ else }}{{ .Arch }}{{ end }}/kosli
-        dst: /usr/local/bin/kosli
+  
+  # TODO Maybe enable the template again after we have a better understanding of how to use it.  It seems to be working without it, but it would be nice to have more control over the file name.
+  
+    # # Contents to add to the package.
+    # # GoReleaser will automatically add the binaries.
+    # contents:
+    #   # The src and dst attributes also supports name templates
+    #   - src: >-
+    #       dist/{{ .ProjectName }}_
+    #       {{ .Os }}_
+    #       {{ if .Amd64 }}{{ .Arch }}_v1
+    #       {{ else if .Arm }}{{ .Arch }}_6
+    #       {{ else }}{{ .Arch }}{{ end }}/kosli
+    #     dst: /usr/local/bin/kosli
 
 publishers:
   - name: fury.io
