@@ -1,0 +1,19 @@
+{
+  "name": "@jbrejner/cli-linux-arm",
+  "version": "0.0.0",
+  "description": "Linux arm binary for @jbrejner/cli",
+  "license": "MIT",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm"
+  ],
+  "files": [
+    "bin/"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "public"
+  }
+}

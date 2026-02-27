@@ -1,0 +1,45 @@
+{
+  "name": "@jbrejner/cli",
+  "version": "0.0.0",
+  "description": "CLI client for reporting compliance events to https://kosli.com",
+  "license": "MIT",
+  "author": "Kosli Inc. <hello@kosli.com>",
+  "homepage": "https://kosli.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kosli-dev/cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kosli-dev/cli/issues"
+  },
+  "keywords": [
+    "cli",
+    "kosli",
+    "compliance",
+    "supply-chain",
+    "devops"
+  ],
+  "bin": {
+    "kosli": "bin/kosli"
+  },
+  "files": [
+    "bin/",
+    "install.js"
+  ],
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "optionalDependencies": {
+    "@jbrejner/cli-linux-x64": "0.0.0",
+    "@jbrejner/cli-linux-arm64": "0.0.0",
+    "@jbrejner/cli-linux-arm": "0.0.0",
+    "@jbrejner/cli-darwin-x64": "0.0.0",
+    "@jbrejner/cli-darwin-arm64": "0.0.0",
+    "@jbrejner/cli-win32-x64": "0.0.0",
+    "@jbrejner/cli-win32-arm64": "0.0.0"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "public"
+  }
+}

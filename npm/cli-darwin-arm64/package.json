@@ -1,0 +1,19 @@
+{
+  "name": "@jbrejner/cli-darwin-arm64",
+  "version": "0.0.0",
+  "description": "macOS arm64 binary for @jbrejner/cli",
+  "license": "MIT",
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "files": [
+    "bin/"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "public"
+  }
+}

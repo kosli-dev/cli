@@ -17,6 +17,8 @@ docs.kosli.com/resources/_gen/*
 docs.kosli.com/content/client_reference/kosli*
 docs.kosli.com/public/
 docs.kosli.com/.netlify
+npm/cli*/bin/*
+npm/wrapper/bin/*
 *.tar.gz
 *~
 /.idea

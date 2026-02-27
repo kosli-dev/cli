@@ -3,6 +3,7 @@ project_name: kosli
 before:
   hooks:
   - go mod tidy
+  - rm -rf npm/cli-*/bin
 builds:
   - id: kosli
     binary: kosli
@@ -27,6 +28,19 @@ builds:
       - goos: windows
         goarch: arm
     main: ./cmd/kosli/
+    hooks:
+      post:
+        - cmd: >-
+            bash -c '
+            OS="{{ .Os }}";
+            ARCH="{{ .Arch }}";
+            [ "$OS" = "windows" ] && OS="win32";
+            [ "$ARCH" = "amd64" ] && ARCH="x64";
+            EXT="";
+            [ "{{ .Os }}" = "windows" ] && EXT=".exe";
+            mkdir -p npm/cli-${OS}-${ARCH}/bin &&
+            cp "{{ .Path }}" npm/cli-${OS}-${ARCH}/bin/kosli${EXT} &&
+            chmod +x npm/cli-${OS}-${ARCH}/bin/kosli${EXT}'
 
 archives:
   -
@@ -42,39 +56,42 @@ archives:
 nfpms:
   - id: kosli
 
-    # You can change the file name of the package.
-    #
-    # Default:`{{ .PackageName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}`
-    file_name_template: >-
-      {{ .ProjectName }}_
-      {{- title .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end }}
+#     # You can change the file name of the package.
+#     #
+#     # Default:`{{ .PackageName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}`
+
+#   # TODO Maybe enable the template again after we have a better understanding of how to use it.  It seems to be working without it, but it would be nice to have more control over the file name.
+
+#     # file_name_template: >-
+#     #   {{ .ProjectName }}_
+#     #   {{- title .Os }}_
+#     #   {{- if eq .Arch "amd64" }}x86_64
+#     #   {{- else if eq .Arch "386" }}i386
+#     #   {{- else }}{{ .Arch }}{{ end }}
 
     ids:
       - kosli
 
-    vendor: Kosli Inc.
-    homepage: https://kosli.com/
-    maintainer: Mike Long <mike@kosli.com>
-    description: CLI client for reporting compliance events to  https://kosli.com
-    license: MIT
+#     vendor: Kosli Inc.
+#     homepage: https://kosli.com/
+#     maintainer: Mike Long <mike@kosli.com>
+#     description: CLI client for reporting compliance events to  https://kosli.com
+#     license: MIT
 
-    # Formats to be generated.
-    formats:
-      - deb
-      - rpm
+#     # Formats to be generated.
+#     formats:
+#       - deb
+#       - rpm
 
-    # Template to the path that the binaries should be installed.
-    # Defaults to `/usr/bin`.
-    bindir: /usr/bin
+#     # Template to the path that the binaries should be installed.
+#     # Defaults to `/usr/bin`.
+#     bindir: /usr/bin
 
-    # Section.
-    section: misc
+#     # Section.
+#     section: misc
 
-    # Priority.
-    priority: optional
+#     # Priority.
+#     priority: optional
 
     # Contents to add to the package.
     # GoReleaser will automatically add the binaries.
