@@ -1,0 +1,3 @@
+package policy
+
+allow = true
