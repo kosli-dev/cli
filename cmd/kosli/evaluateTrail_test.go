@@ -118,6 +118,12 @@ func (suite *EvaluateTrailCommandTestSuite) TestEvaluateTrailCmd() {
 			cmd:        fmt.Sprintf(`evaluate trail %s --flow %s --format json %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
 			goldenJson: []jsonCheck{{"trail.name", suite.trailName}},
 		},
+		{
+			wantError: true,
+			name:      "with --format invalid returns an error",
+			cmd:       fmt.Sprintf(`evaluate trail %s --flow %s --policy testdata/policies/allow-all.rego --format invalid %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+			golden:    "Error: invalid --format value \"invalid\": must be one of [text, json]\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

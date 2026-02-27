@@ -52,6 +52,10 @@ func newEvaluateTrailCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *evaluateTrailOptions) run(out io.Writer, args []string) error {
+	if o.format != "text" && o.format != "json" {
+		return fmt.Errorf("invalid --format value %q: must be one of [text, json]", o.format)
+	}
+
 	url := fmt.Sprintf("%s/api/v2/trails/%s/%s/%s", global.Host, global.Org, o.flowName, args[0])
 
 	reqParams := &requests.RequestParams{
