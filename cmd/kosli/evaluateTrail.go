@@ -18,6 +18,7 @@ type evaluateTrailOptions struct {
 	flowName   string
 	policyFile string
 	format     string
+	showInput  bool
 }
 
 func newEvaluateTrailCmd(out io.Writer) *cobra.Command {
@@ -42,6 +43,7 @@ func newEvaluateTrailCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.policyFile, "policy", "p", "", "[optional] Path to a Rego policy file to evaluate against the trail.")
 	cmd.Flags().StringVar(&o.format, "format", "text", "[defaulted] The format of the policy evaluation output. Valid formats are: [text, json].")
+	cmd.Flags().BoolVar(&o.showInput, "show-input", false, "[optional] Include the policy input data in the output.")
 
 	err := RequireFlags(cmd, []string{"flow"})
 	if err != nil {
@@ -101,6 +103,9 @@ func (o *evaluateTrailOptions) run(out io.Writer, args []string) error {
 		auditResult := map[string]interface{}{
 			"allow":      result.Allow,
 			"violations": result.Violations,
+		}
+		if o.showInput {
+			auditResult["input"] = input
 		}
 		output, err := json.MarshalIndent(auditResult, "", "  ")
 		if err != nil {
