@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	neturl "net/url"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -15,6 +16,9 @@ const listReposDesc = `List repos for an org.`
 
 type listReposOptions struct {
 	listOptions
+	name     string
+	provider string
+	repoID   string
 }
 
 func newListReposCmd(out io.Writer) *cobra.Command {
@@ -38,16 +42,31 @@ func newListReposCmd(out io.Writer) *cobra.Command {
 	}
 
 	addListFlags(cmd, &o.listOptions)
+	cmd.Flags().StringVar(&o.name, "name", "", "[optional] The repo name to filter by.")
+	cmd.Flags().StringVar(&o.provider, "provider", "", "[optional] The VCS provider to filter repos by (e.g. github, gitlab).")
+	cmd.Flags().StringVar(&o.repoID, "repo-id", "", "[optional] The external repo ID to filter repos by.")
 
 	return cmd
 }
 
 func (o *listReposOptions) run(out io.Writer) error {
-	url := fmt.Sprintf("%s/api/v2/repos/%s?page=%d&per_page=%d", global.Host, global.Org, o.pageNumber, o.pageLimit)
+	params := neturl.Values{}
+	params.Set("page", fmt.Sprintf("%d", o.pageNumber))
+	params.Set("per_page", fmt.Sprintf("%d", o.pageLimit))
+	if o.name != "" {
+		params.Set("name", o.name)
+	}
+	if o.provider != "" {
+		params.Set("provider", o.provider)
+	}
+	if o.repoID != "" {
+		params.Set("repo_id", o.repoID)
+	}
+	reqURL := fmt.Sprintf("%s/api/v2/repos/%s?%s", global.Host, global.Org, params.Encode())
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
-		URL:    url,
+		URL:    reqURL,
 		Token:  global.ApiToken,
 	}
 	response, err := kosliClient.Do(reqParams)
@@ -81,10 +100,10 @@ func printReposListAsTable(raw string, out io.Writer, page int) error {
 		return nil
 	}
 
-	header := []string{"NAME", "URL", "LAST_ACTIVITY"}
+	header := []string{"NAME", "URL", "PROVIDER", "LAST_ACTIVITY"}
 	rows := []string{}
 	for _, repo := range repos {
-		row := fmt.Sprintf("%s\t%s\t%s", repo["name"], repo["url"], repo["latest_activity"])
+		row := fmt.Sprintf("%s\t%s\t%s\t%s", repo["name"], repo["url"], repo["provider"], repo["latest_activity"])
 		rows = append(rows, row)
 	}
 	tabFormattedPrint(out, header, rows)

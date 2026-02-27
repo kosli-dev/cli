@@ -5,7 +5,7 @@ ARG ALPINE_VERSION="3.21"
 
 
 ### Go Builder ###
-FROM golang:${GO_VERSION}-alpine${ALPINE_VERSION} as builder
+FROM golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS builder
 
 RUN apk add --update --no-cache git bash make ca-certificates
 
