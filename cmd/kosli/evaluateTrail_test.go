@@ -67,6 +67,25 @@ func (suite *EvaluateTrailCommandTestSuite) TestEvaluateTrailCmd() {
 			cmd:        fmt.Sprintf(`evaluate trail %s --flow %s %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
 			goldenJson: []jsonCheck{{"trail.name", suite.trailName}},
 		},
+		{
+			name: "with --policy allow-all exits 0",
+			cmd:  fmt.Sprintf(`evaluate trail %s --flow %s --policy testdata/policies/allow-all.rego %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+		},
+		{
+			wantError: true,
+			name:      "with --policy deny-all exits 1",
+			cmd:       fmt.Sprintf(`evaluate trail %s --flow %s --policy testdata/policies/deny-all.rego %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+		},
+		{
+			wantError: true,
+			name:      "with --policy non-existent file fails",
+			cmd:       fmt.Sprintf(`evaluate trail %s --flow %s --policy testdata/policies/does-not-exist.rego %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+		},
+		{
+			wantError: true,
+			name:      "with --policy invalid rego fails",
+			cmd:       fmt.Sprintf(`evaluate trail %s --flow %s --policy testdata/policies/invalid.rego %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

@@ -28,7 +28,7 @@ func TestEvaluate_DenyAllPolicy(t *testing.T) {
 
 allow = false
 
-violations[msg] {
+violations contains msg if {
 	msg := "always denied"
 }
 `
@@ -59,7 +59,7 @@ allow = true
 func TestEvaluate_MissingAllowRule(t *testing.T) {
 	policy := `package policy
 
-violations[msg] {
+violations contains msg if {
 	msg := "no allow rule"
 }
 `

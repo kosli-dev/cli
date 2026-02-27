@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 
+	"github.com/kosli-dev/cli/internal/evaluate"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -13,7 +15,8 @@ import (
 const evaluateTrailDesc = `Evaluate a trail against a policy.`
 
 type evaluateTrailOptions struct {
-	flowName string
+	flowName   string
+	policyFile string
 }
 
 func newEvaluateTrailCmd(out io.Writer) *cobra.Command {
@@ -36,6 +39,7 @@ func newEvaluateTrailCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
+	cmd.Flags().StringVarP(&o.policyFile, "policy", "p", "", "[optional] Path to a Rego policy file to evaluate against the trail.")
 
 	err := RequireFlags(cmd, []string{"flow"})
 	if err != nil {
@@ -64,15 +68,35 @@ func (o *evaluateTrailOptions) run(out io.Writer, args []string) error {
 		return fmt.Errorf("failed to parse trail response: %v", err)
 	}
 
-	wrapped := map[string]interface{}{
+	input := map[string]interface{}{
 		"trail": trailData,
 	}
 
-	output, err := json.MarshalIndent(wrapped, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal output: %v", err)
+	if o.policyFile == "" {
+		output, err := json.MarshalIndent(input, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to marshal output: %v", err)
+		}
+		_, err = fmt.Fprintln(out, string(output))
+		return err
 	}
 
-	_, err = fmt.Fprintln(out, string(output))
-	return err
+	policySource, err := os.ReadFile(o.policyFile)
+	if err != nil {
+		return fmt.Errorf("failed to read policy file: %w", err)
+	}
+
+	result, err := evaluate.Evaluate(string(policySource), input)
+	if err != nil {
+		return err
+	}
+
+	if !result.Allow {
+		if len(result.Violations) > 0 {
+			return fmt.Errorf("policy denied: %v", result.Violations)
+		}
+		return fmt.Errorf("policy denied")
+	}
+
+	return nil
 }
