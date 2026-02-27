@@ -123,7 +123,15 @@ func (o *evaluateTrailOptions) run(out io.Writer, args []string) error {
 
 	if result.Allow {
 		_, err = fmt.Fprintln(out, "Policy evaluation: ALLOWED")
-		return err
+		if err != nil {
+			return err
+		}
+		if o.showInput {
+			if err := o.printInput(out, input); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 
 	_, err = fmt.Fprintln(out, "Policy evaluation: DENIED")
@@ -144,4 +152,17 @@ func (o *evaluateTrailOptions) run(out io.Writer, args []string) error {
 		return fmt.Errorf("policy denied: %v", result.Violations)
 	}
 	return fmt.Errorf("policy denied")
+}
+
+func (o *evaluateTrailOptions) printInput(out io.Writer, input map[string]interface{}) error {
+	_, err := fmt.Fprintln(out, "Input:")
+	if err != nil {
+		return err
+	}
+	inputJSON, err := json.MarshalIndent(input, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal input: %v", err)
+	}
+	_, err = fmt.Fprintln(out, string(inputJSON))
+	return err
 }
