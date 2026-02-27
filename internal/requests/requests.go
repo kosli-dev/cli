@@ -320,7 +320,7 @@ func (c *Client) PayloadOutput(req *http.Request, jsonFields map[string]any, mes
 
 func customCheckRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
 	// Get the default retry policy for errors and certain status codes.
-	// It will retry on 5xx, 409 and some special cases
+	// It will retry on 5xx, 429 (rate limit) and we add 409 (lock conflict) via a custom check.
 	shouldRetry, retryErr := retryablehttp.DefaultRetryPolicy(ctx, resp, err)
 	if retryErr != nil {
 		return false, retryErr
@@ -328,7 +328,7 @@ func customCheckRetry(ctx context.Context, resp *http.Response, err error) (bool
 	if shouldRetry {
 		return true, nil
 	}
-	// The sever gives 409 if we have a lock conflict.
+	// The server gives 409 if we have a lock conflict.
 	if resp != nil && resp.StatusCode == 409 {
 		return true, nil
 	}
