@@ -5,10 +5,14 @@ on:
         paths:
             - 'install-cli.sh'
             - '.github/workflows/install-script-tests.yml'
+            - 'bin/test_install_script.sh'
+            - 'bin/test_install_script_over_homebrew.sh'
     pull_request:
         paths:
             - 'install-cli.sh'
             - '.github/workflows/install-script-tests.yml'
+            - 'bin/test_install_script.sh'
+            - 'bin/test_install_script_over_homebrew.sh'
     workflow_dispatch:
 
 jobs:
@@ -23,10 +27,34 @@ jobs:
         - name: Checkout repository
           uses: actions/checkout@v5
 
-        - name: Run install script
+        - name: Run install script test
           shell: bash
-          run: bash install-cli.sh --debug --token ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            chmod +x install-cli.sh
+            bash bin/test_install_script.sh
 
-        - name: Verify installation
+    mac-homebrew:
+        name: Test Homebrew Installation on macOS
+        runs-on: macos-latest
+
+        steps:
+        - name: Checkout repository
+          uses: actions/checkout@v5
+        - name: install homebrew
           shell: bash
-          run: kosli version
+          run: |
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+        - name: Run Homebrew install 
+          shell: bash
+          run: brew install kosli-cli
+
+        - name: Verify Homebrew installation
+          shell: bash
+          run: command -v kosli
+        
+        - name: Run install script test
+          shell: bash
+          run: |
+            chmod +x install-cli.sh
+            bash bin/test_install_script_over_homebrew.sh
