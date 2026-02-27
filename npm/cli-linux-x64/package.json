@@ -1,0 +1,19 @@
+{
+  "name": "@jbrejner/cli-linux-x64",
+  "version": "0.0.0",
+  "description": "Linux x64 binary for @jbrejner/cli",
+  "license": "MIT",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "files": [
+    "bin/"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "public"
+  }
+}
