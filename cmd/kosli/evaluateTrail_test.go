@@ -102,6 +102,12 @@ func (suite *EvaluateTrailCommandTestSuite) TestEvaluateTrailCmd() {
 			cmd:    fmt.Sprintf(`evaluate trail %s --flow %s --policy testdata/policies/allow-all.rego --format text %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
 			golden: "Policy evaluation: ALLOWED\n",
 		},
+		{
+			wantError: true,
+			name:      "with --policy deny-all --format text prints denied text with violations",
+			cmd:       fmt.Sprintf(`evaluate trail %s --flow %s --policy testdata/policies/deny-all.rego --format text %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+			golden:    "Policy evaluation: DENIED\nViolations:\n  - always denied\nError: policy denied: [always denied]\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

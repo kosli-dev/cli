@@ -117,7 +117,12 @@ func (o *evaluateTrailOptions) run(out io.Writer, args []string) error {
 		return nil
 	}
 
+	fmt.Fprintln(out, "Policy evaluation: DENIED")
 	if len(result.Violations) > 0 {
+		fmt.Fprintln(out, "Violations:")
+		for _, v := range result.Violations {
+			fmt.Fprintf(out, "  - %s\n", v)
+		}
 		return fmt.Errorf("policy denied: %v", result.Violations)
 	}
 	return fmt.Errorf("policy denied")
