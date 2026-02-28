@@ -3,6 +3,7 @@ package evaluate
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -166,5 +167,12 @@ func TestTransformTrail(t *testing.T) {
 		as := cs["attestations_statuses"].(map[string]interface{})
 		require.Len(t, as, 1)
 		require.Contains(t, as, "good")
+	})
+}
+
+func TestCollectAttestationIDs(t *testing.T) {
+	t.Run("nil input returns empty slice", func(t *testing.T) {
+		ids := CollectAttestationIDs(nil)
+		assert.Empty(t, ids)
 	})
 }
