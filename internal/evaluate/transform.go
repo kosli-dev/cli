@@ -68,7 +68,45 @@ func CollectAttestationIDs(trailData interface{}) []string {
 // RehydrateTrail merges attestation detail data into the already-transformed
 // trail data. Fields from details are added where the key doesn't already exist.
 func RehydrateTrail(trailData interface{}, details map[string]interface{}) interface{} {
+	if len(details) == 0 {
+		return trailData
+	}
+	trailMap, ok := trailData.(map[string]interface{})
+	if !ok {
+		return trailData
+	}
+	cs, ok := trailMap["compliance_status"].(map[string]interface{})
+	if !ok {
+		return trailData
+	}
+
+	if as, ok := cs["attestations_statuses"].(map[string]interface{}); ok {
+		rehydrateAttestationMap(as, details)
+	}
+
 	return trailData
+}
+
+func rehydrateAttestationMap(attestations map[string]interface{}, details map[string]interface{}) {
+	for _, v := range attestations {
+		entry, ok := v.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		id, ok := entry["attestation_id"].(string)
+		if !ok {
+			continue
+		}
+		detail, ok := details[id].(map[string]interface{})
+		if !ok {
+			continue
+		}
+		for k, dv := range detail {
+			if _, exists := entry[k]; !exists {
+				entry[k] = dv
+			}
+		}
+	}
 }
 
 func collectIDsFromAttestationMap(m map[string]interface{}) []string {

@@ -288,4 +288,46 @@ func TestRehydrateTrail(t *testing.T) {
 		assert.Equal(t, "att-uuid-001", bar["attestation_id"])
 		assert.Nil(t, bar["origin_url"])
 	})
+
+	t.Run("empty details map leaves trail unchanged", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"attestations_statuses": map[string]interface{}{
+					"bar": map[string]interface{}{
+						"attestation_name": "bar",
+						"attestation_id":   "att-uuid-001",
+					},
+				},
+			},
+		}
+		result := RehydrateTrail(input, map[string]interface{}{})
+		bar := result.(map[string]interface{})["compliance_status"].(map[string]interface{})["attestations_statuses"].(map[string]interface{})["bar"].(map[string]interface{})
+		assert.Equal(t, "bar", bar["attestation_name"])
+		assert.Nil(t, bar["origin_url"])
+	})
+
+	t.Run("merges detail fields into trail-level attestation", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"attestations_statuses": map[string]interface{}{
+					"bar": map[string]interface{}{
+						"attestation_name": "bar",
+						"attestation_id":   "att-uuid-001",
+						"is_compliant":     true,
+					},
+				},
+			},
+		}
+		details := map[string]interface{}{
+			"att-uuid-001": map[string]interface{}{
+				"origin_url": "https://github.com/org/repo/pull/42",
+				"user_data":  map[string]interface{}{"key": "value"},
+			},
+		}
+		result := RehydrateTrail(input, details)
+		bar := result.(map[string]interface{})["compliance_status"].(map[string]interface{})["attestations_statuses"].(map[string]interface{})["bar"].(map[string]interface{})
+		assert.Equal(t, "https://github.com/org/repo/pull/42", bar["origin_url"])
+		assert.Equal(t, map[string]interface{}{"key": "value"}, bar["user_data"])
+		assert.Equal(t, true, bar["is_compliant"])
+	})
 }
