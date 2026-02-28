@@ -91,7 +91,7 @@ func (suite *EvaluateTrailsCommandTestSuite) TestEvaluateTrailsCmd() {
 			wantError: true,
 			name:      "with --output invalid returns error",
 			cmd:       fmt.Sprintf(`evaluate trails %s --flow %s --policy testdata/policies/allow-all.rego --output invalid %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: invalid --output value \"invalid\": must be one of [table, json]\n",
+			golden:    "Error: unsupported output format: invalid\n",
 		},
 		{
 			name:       "with --policy and --show-input --output json includes input in JSON output",

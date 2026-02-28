@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 
 	"github.com/spf13/cobra"
@@ -47,10 +46,6 @@ func newEvaluateTrailCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *evaluateTrailOptions) run(out io.Writer, args []string) error {
-	if o.output != "table" && o.output != "json" {
-		return fmt.Errorf("invalid --output value %q: must be one of [table, json]", o.output)
-	}
-
 	trailData, err := fetchAndEnrichTrail(o.flowName, args[0], o.attestations)
 	if err != nil {
 		return err

@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/kosli-dev/cli/internal/evaluate"
+	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 )
 
@@ -81,62 +82,84 @@ func evaluateAndPrintResult(out io.Writer, policyFile string, input map[string]i
 		return err
 	}
 
-	if outputFormat == "json" {
-		auditResult := map[string]interface{}{
-			"allow":      result.Allow,
-			"violations": result.Violations,
-		}
-		if showInput {
-			auditResult["input"] = input
-		}
-		output, err := json.MarshalIndent(auditResult, "", "  ")
-		if err != nil {
-			return fmt.Errorf("failed to marshal output: %v", err)
-		}
-		_, err = fmt.Fprintln(out, string(output))
-		if err != nil {
-			return err
-		}
-		if !result.Allow {
-			return fmt.Errorf("policy denied")
-		}
-		return nil
+	auditResult := map[string]interface{}{
+		"allow":      result.Allow,
+		"violations": result.Violations,
+	}
+	if showInput {
+		auditResult["input"] = input
 	}
 
-	if result.Allow {
-		_, err = fmt.Fprintln(out, "Policy evaluation: ALLOWED")
+	raw, err := json.Marshal(auditResult)
+	if err != nil {
+		return fmt.Errorf("failed to marshal output: %v", err)
+	}
+
+	return output.FormattedPrint(string(raw), outputFormat, out, 0,
+		map[string]output.FormatOutputFunc{
+			"json":  printEvaluateResultAsJson,
+			"table": printEvaluateResultAsTable,
+		})
+}
+
+func printEvaluateResultAsJson(raw string, out io.Writer, _ int) error {
+	if err := output.PrintJson(raw, out, 0); err != nil {
+		return err
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(raw), &result); err != nil {
+		return err
+	}
+	if allow, ok := result["allow"].(bool); ok && !allow {
+		return fmt.Errorf("policy denied")
+	}
+	return nil
+}
+
+func printEvaluateResultAsTable(raw string, out io.Writer, _ int) error {
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(raw), &result); err != nil {
+		return err
+	}
+
+	allow, _ := result["allow"].(bool)
+
+	if allow {
+		_, err := fmt.Fprintln(out, "Policy evaluation: ALLOWED")
 		if err != nil {
 			return err
 		}
-		if showInput {
-			if err := printEvaluateInput(out, input); err != nil {
+		if _, hasInput := result["input"]; hasInput {
+			if err := printEvaluateInput(out, result["input"]); err != nil {
 				return err
 			}
 		}
 		return nil
 	}
 
-	_, err = fmt.Fprintln(out, "Policy evaluation: DENIED")
+	_, err := fmt.Fprintln(out, "Policy evaluation: DENIED")
 	if err != nil {
 		return err
 	}
-	if len(result.Violations) > 0 {
+
+	if violations, ok := result["violations"].([]interface{}); ok && len(violations) > 0 {
 		_, err = fmt.Fprintln(out, "Violations:")
 		if err != nil {
 			return err
 		}
-		for _, v := range result.Violations {
+		for _, v := range violations {
 			_, err = fmt.Fprintf(out, "  - %s\n", v)
 			if err != nil {
 				return err
 			}
 		}
-		return fmt.Errorf("policy denied: %v", result.Violations)
+		return fmt.Errorf("policy denied: %v", violations)
 	}
 	return fmt.Errorf("policy denied")
 }
 
-func printEvaluateInput(out io.Writer, input map[string]interface{}) error {
+func printEvaluateInput(out io.Writer, input interface{}) error {
 	_, err := fmt.Fprintln(out, "Input:")
 	if err != nil {
 		return err

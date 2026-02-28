@@ -18,6 +18,6 @@
 - [x] Slice 8: Make `--policy` required, remove no-policy code path
 - [x] Slice 9: Extract shared enrichment pipeline
 - [x] Slice 10: Extract shared options struct
-- [ ] Slice 11: Use `output.FormattedPrint` for output dispatch
+- [x] Slice 11: Use `output.FormattedPrint` for output dispatch
 - [ ] Slice 12: Debug logging for swallowed errors during attestation detail fetching
 - [ ] Slice 13: Standardise `assert` vs `require` in `transform_test.go`
