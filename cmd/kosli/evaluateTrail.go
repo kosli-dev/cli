@@ -76,6 +76,8 @@ func (o *evaluateTrailOptions) run(out io.Writer, args []string) error {
 		return fmt.Errorf("failed to parse trail response: %v", err)
 	}
 
+	trailData = evaluate.TransformTrail(trailData)
+
 	input := map[string]interface{}{
 		"trail": trailData,
 	}
