@@ -53,10 +53,12 @@ func fetchAndEnrichTrail(flowName, trailName string, attestations []string) (int
 				Token:  global.ApiToken,
 			})
 			if err != nil {
+				logger.Debug("failed to fetch attestation detail for %s: %v", id, err)
 				continue
 			}
 			var wrapper map[string]interface{}
 			if err := json.Unmarshal([]byte(detailResp.Body), &wrapper); err != nil {
+				logger.Debug("failed to parse attestation detail for %s: %v", id, err)
 				continue
 			}
 			if data, ok := wrapper["data"].([]interface{}); ok && len(data) > 0 {
