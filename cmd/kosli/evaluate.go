@@ -18,6 +18,7 @@ func newEvaluateCmd(out io.Writer) *cobra.Command {
 	// Add subcommands
 	cmd.AddCommand(
 		newEvaluateTrailCmd(out),
+		newEvaluateTrailsCmd(out),
 	)
 
 	return cmd
