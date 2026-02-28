@@ -175,4 +175,27 @@ func TestCollectAttestationIDs(t *testing.T) {
 		ids := CollectAttestationIDs(nil)
 		assert.Empty(t, ids)
 	})
+
+	t.Run("trail with no compliance_status returns empty slice", func(t *testing.T) {
+		input := map[string]interface{}{
+			"name": "my-trail",
+		}
+		ids := CollectAttestationIDs(input)
+		assert.Empty(t, ids)
+	})
+
+	t.Run("collects ID from trail-level attestation", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"attestations_statuses": map[string]interface{}{
+					"bar": map[string]interface{}{
+						"attestation_name": "bar",
+						"attestation_id":   "att-uuid-001",
+					},
+				},
+			},
+		}
+		ids := CollectAttestationIDs(input)
+		assert.Equal(t, []string{"att-uuid-001"}, ids)
+	})
 }

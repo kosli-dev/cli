@@ -38,7 +38,34 @@ func TransformTrail(trailData interface{}) interface{} {
 // CollectAttestationIDs extracts all non-null attestation_id values
 // from the already-transformed (map-keyed) trail data.
 func CollectAttestationIDs(trailData interface{}) []string {
-	return nil
+	trailMap, ok := trailData.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+	cs, ok := trailMap["compliance_status"].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	var ids []string
+	if as, ok := cs["attestations_statuses"].(map[string]interface{}); ok {
+		ids = append(ids, collectIDsFromAttestationMap(as)...)
+	}
+	return ids
+}
+
+func collectIDsFromAttestationMap(m map[string]interface{}) []string {
+	var ids []string
+	for _, v := range m {
+		entry, ok := v.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if id, ok := entry["attestation_id"].(string); ok {
+			ids = append(ids, id)
+		}
+	}
+	return ids
 }
 
 func attestationsArrayToMap(arr []interface{}) map[string]interface{} {
