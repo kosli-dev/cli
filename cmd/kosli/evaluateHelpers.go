@@ -11,6 +11,14 @@ import (
 	"github.com/kosli-dev/cli/internal/requests"
 )
 
+type commonEvaluateOptions struct {
+	flowName     string
+	policyFile   string
+	output       string
+	showInput    bool
+	attestations []string
+}
+
 func fetchAndEnrichTrail(flowName, trailName string, attestations []string) (interface{}, error) {
 	url := fmt.Sprintf("%s/api/v2/trails/%s/%s/%s", global.Host, global.Org, flowName, trailName)
 
