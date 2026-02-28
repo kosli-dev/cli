@@ -127,49 +127,26 @@ func printEvaluateResultAsTable(raw string, out io.Writer, _ int) error {
 
 	allow, _ := result["allow"].(bool)
 
+	var rows []string
 	if allow {
-		_, err := fmt.Fprintln(out, "Policy evaluation: ALLOWED")
-		if err != nil {
-			return err
-		}
-		if _, hasInput := result["input"]; hasInput {
-			if err := printEvaluateInput(out, result["input"]); err != nil {
-				return err
-			}
-		}
+		rows = append(rows, "RESULT:\tALLOWED")
+		tabFormattedPrint(out, []string{}, rows)
 		return nil
 	}
 
-	_, err := fmt.Fprintln(out, "Policy evaluation: DENIED")
-	if err != nil {
-		return err
-	}
+	rows = append(rows, "RESULT:\tDENIED")
 
 	if violations, ok := result["violations"].([]interface{}); ok && len(violations) > 0 {
-		_, err = fmt.Fprintln(out, "Violations:")
-		if err != nil {
-			return err
-		}
-		for _, v := range violations {
-			_, err = fmt.Fprintf(out, "  - %s\n", v)
-			if err != nil {
-				return err
+		for i, v := range violations {
+			if i == 0 {
+				rows = append(rows, fmt.Sprintf("VIOLATIONS:\t%s", v))
+			} else {
+				rows = append(rows, fmt.Sprintf("\t%s", v))
 			}
 		}
+		tabFormattedPrint(out, []string{}, rows)
 		return fmt.Errorf("policy denied: %v", violations)
 	}
+	tabFormattedPrint(out, []string{}, rows)
 	return fmt.Errorf("policy denied")
-}
-
-func printEvaluateInput(out io.Writer, input interface{}) error {
-	_, err := fmt.Fprintln(out, "Input:")
-	if err != nil {
-		return err
-	}
-	inputJSON, err := json.MarshalIndent(input, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal input: %v", err)
-	}
-	_, err = fmt.Fprintln(out, string(inputJSON))
-	return err
 }

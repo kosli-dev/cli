@@ -99,20 +99,20 @@ func (suite *EvaluateTrailCommandTestSuite) TestEvaluateTrailCmd() {
 			goldenRegex: `(?s)"allow":\s*false.*"violations":\s*\[.*"always denied"`,
 		},
 		{
-			name:   "with --policy allow-all --output table prints allowed text",
-			cmd:    fmt.Sprintf(`evaluate trail %s --flow %s --policy testdata/policies/allow-all.rego --output table %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
-			golden: "Policy evaluation: ALLOWED\n",
+			name:        "with --policy allow-all --output table prints allowed text",
+			cmd:         fmt.Sprintf(`evaluate trail %s --flow %s --policy testdata/policies/allow-all.rego --output table %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenRegex: `RESULT:\s+ALLOWED`,
 		},
 		{
-			wantError: true,
-			name:      "with --policy deny-all --output table prints denied text with violations",
-			cmd:       fmt.Sprintf(`evaluate trail %s --flow %s --policy testdata/policies/deny-all.rego --output table %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
-			golden:    "Policy evaluation: DENIED\nViolations:\n  - always denied\nError: policy denied: [always denied]\n",
+			wantError:   true,
+			name:        "with --policy deny-all --output table prints denied text with violations",
+			cmd:         fmt.Sprintf(`evaluate trail %s --flow %s --policy testdata/policies/deny-all.rego --output table %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenRegex: `RESULT:\s+DENIED\nVIOLATIONS:\s+always denied`,
 		},
 		{
-			name:   "with --policy allow-all and no --output defaults to table output",
-			cmd:    fmt.Sprintf(`evaluate trail %s --flow %s --policy testdata/policies/allow-all.rego %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
-			golden: "Policy evaluation: ALLOWED\n",
+			name:        "with --policy allow-all and no --output defaults to table output",
+			cmd:         fmt.Sprintf(`evaluate trail %s --flow %s --policy testdata/policies/allow-all.rego %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenRegex: `RESULT:\s+ALLOWED`,
 		},
 		{
 			wantError: true,
@@ -132,9 +132,9 @@ func (suite *EvaluateTrailCommandTestSuite) TestEvaluateTrailCmd() {
 			goldenRegex: `(?s)"allow":\s*false.*"input":\s*\{.*"trail".*"violations":\s*\[.*"always denied"`,
 		},
 		{
-			name:        "with --policy allow-all --output table --show-input prints input after result",
+			name:        "with --policy allow-all --output table --show-input ignores show-input",
 			cmd:         fmt.Sprintf(`evaluate trail %s --flow %s --policy testdata/policies/allow-all.rego --output table --show-input %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
-			goldenRegex: `(?s)Policy evaluation: ALLOWED\nInput:\n\{.*"trail"`,
+			goldenRegex: `RESULT:\s+ALLOWED`,
 		},
 	}
 

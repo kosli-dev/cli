@@ -21,3 +21,11 @@
 - [x] Slice 11: Use `output.FormattedPrint` for output dispatch
 - [x] Slice 12: Debug logging for swallowed errors during attestation detail fetching
 - [x] Slice 13: Standardise `assert` vs `require` in `transform_test.go`
+- [ ] Slice 14: Make `--output table` produce actual tabular output ← active
+  - [ ] table allowed output uses `RESULT:\tALLOWED` key-value row
+  - [ ] table denied output uses `RESULT:\tDENIED` with `VIOLATIONS:` rows
+  - [ ] `--show-input` is ignored for table output
+  - [ ] remove `printEvaluateInput` helper
+- [ ] Slice 15: DRY up command flag registration
+- [ ] Slice 16: Extract tree-traversal duplication in transform.go
+- [ ] Slice 17: Align test method naming
