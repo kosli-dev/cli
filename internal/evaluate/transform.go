@@ -1,5 +1,7 @@
 package evaluate
 
+import "strings"
+
 // TransformTrail converts attestations_statuses arrays in trail data
 // to maps keyed by attestation_name for easier Rego policy access.
 func TransformTrail(trailData interface{}) interface{} {
@@ -97,6 +99,78 @@ func RehydrateTrail(trailData interface{}, details map[string]interface{}) inter
 	}
 
 	return trailData
+}
+
+// FilterAttestations limits which attestations appear in the trail data.
+// When filters is nil or empty, all attestations are included unchanged.
+// Plain names (e.g. "pull-request") filter trail-level attestations.
+// Dot-qualified names (e.g. "cli.unit-test") filter artifact-level attestations.
+func FilterAttestations(trailData interface{}, filters []string) interface{} {
+	if len(filters) == 0 {
+		return trailData
+	}
+
+	trailFilters, artifactFilters := parseAttestationFilters(filters)
+
+	trailMap, ok := trailData.(map[string]interface{})
+	if !ok {
+		return trailData
+	}
+	cs, ok := trailMap["compliance_status"].(map[string]interface{})
+	if !ok {
+		return trailData
+	}
+
+	if as, ok := cs["attestations_statuses"].(map[string]interface{}); ok {
+		filterMap(as, trailFilters)
+	}
+
+	if artifacts, ok := cs["artifacts_statuses"].(map[string]interface{}); ok {
+		for artName, artData := range artifacts {
+			artMap, ok := artData.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			if as, ok := artMap["attestations_statuses"].(map[string]interface{}); ok {
+				if allowed, exists := artifactFilters[artName]; exists {
+					filterMap(as, allowed)
+				} else {
+					// No filters mention this artifact — clear its attestations
+					for k := range as {
+						delete(as, k)
+					}
+				}
+			}
+		}
+	}
+
+	return trailData
+}
+
+func parseAttestationFilters(filters []string) (trailFilters map[string]bool, artifactFilters map[string]map[string]bool) {
+	trailFilters = make(map[string]bool)
+	artifactFilters = make(map[string]map[string]bool)
+	for _, f := range filters {
+		if dotIdx := strings.IndexByte(f, '.'); dotIdx >= 0 {
+			artName := f[:dotIdx]
+			attName := f[dotIdx+1:]
+			if artifactFilters[artName] == nil {
+				artifactFilters[artName] = make(map[string]bool)
+			}
+			artifactFilters[artName][attName] = true
+		} else {
+			trailFilters[f] = true
+		}
+	}
+	return
+}
+
+func filterMap(m map[string]interface{}, keep map[string]bool) {
+	for k := range m {
+		if !keep[k] {
+			delete(m, k)
+		}
+	}
 }
 
 func rehydrateAttestationMap(attestations map[string]interface{}, details map[string]interface{}) {
