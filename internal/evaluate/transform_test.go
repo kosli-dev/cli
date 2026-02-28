@@ -199,6 +199,28 @@ func TestCollectAttestationIDs(t *testing.T) {
 		assert.Equal(t, []string{"att-uuid-001"}, ids)
 	})
 
+	t.Run("skips entries with null or missing attestation_id", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"attestations_statuses": map[string]interface{}{
+					"has-id": map[string]interface{}{
+						"attestation_name": "has-id",
+						"attestation_id":   "att-uuid-001",
+					},
+					"null-id": map[string]interface{}{
+						"attestation_name": "null-id",
+						"attestation_id":   nil,
+					},
+					"missing-id": map[string]interface{}{
+						"attestation_name": "missing-id",
+					},
+				},
+			},
+		}
+		ids := CollectAttestationIDs(input)
+		assert.Equal(t, []string{"att-uuid-001"}, ids)
+	})
+
 	t.Run("collects IDs from artifact-level attestation", func(t *testing.T) {
 		input := map[string]interface{}{
 			"compliance_status": map[string]interface{}{
@@ -216,5 +238,32 @@ func TestCollectAttestationIDs(t *testing.T) {
 		}
 		ids := CollectAttestationIDs(input)
 		assert.Equal(t, []string{"att-uuid-002"}, ids)
+	})
+
+	t.Run("collects from both trail-level and artifact-level", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"attestations_statuses": map[string]interface{}{
+					"trail-att": map[string]interface{}{
+						"attestation_name": "trail-att",
+						"attestation_id":   "att-trail-001",
+					},
+				},
+				"artifacts_statuses": map[string]interface{}{
+					"art1": map[string]interface{}{
+						"attestations_statuses": map[string]interface{}{
+							"art-att": map[string]interface{}{
+								"attestation_name": "art-att",
+								"attestation_id":   "att-art-001",
+							},
+						},
+					},
+				},
+			},
+		}
+		ids := CollectAttestationIDs(input)
+		assert.Len(t, ids, 2)
+		assert.Contains(t, ids, "att-trail-001")
+		assert.Contains(t, ids, "att-art-001")
 	})
 }
