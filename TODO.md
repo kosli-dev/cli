@@ -15,8 +15,8 @@
   - [x] Slice 5c: `--attestations` filtering
 - [x] Slice 6: Replace `--format` with `--output` flag
 - [x] Slice 7: `kosli evaluate trails` (collection mode)
-- [ ] Slice 8: Make `--policy` required, remove no-policy code path  ← active
-- [ ] Slice 9: Extract shared enrichment pipeline
+- [x] Slice 8: Make `--policy` required, remove no-policy code path
+- [x] Slice 9: Extract shared enrichment pipeline
 - [ ] Slice 10: Extract shared options struct
 - [ ] Slice 11: Use `output.FormattedPrint` for output dispatch
 - [ ] Slice 12: Debug logging for swallowed errors during attestation detail fetching
