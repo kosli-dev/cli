@@ -9,6 +9,9 @@
 - [x] Slice 2: `--policy` flag + OPA Rego evaluation
 - [x] Slice 3: JSON audit result output + `--format` flag
 - [x] Slice 4: `--show-input` flag
-- [ ] Slice 5: `--attestations` flag + attestation enrichment ← active
+- [ ] Slice 5: `--attestations` flag + attestation enrichment
+  - [x] Slice 5a: Array-to-map transform for `attestations_statuses`
+  - [ ] Slice 5b: Rehydration ← active
+  - [ ] Slice 5c: `--attestations` filtering
 - [ ] Slice 6: `--output` file flag
 - [ ] Slice 7: `kosli evaluate trails` (collection mode)
