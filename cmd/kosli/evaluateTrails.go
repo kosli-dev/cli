@@ -10,11 +10,7 @@ import (
 const evaluateTrailsDesc = `Evaluate multiple trails against a policy.`
 
 type evaluateTrailsOptions struct {
-	flowName     string
-	policyFile   string
-	output       string
-	showInput    bool
-	attestations []string
+	commonEvaluateOptions
 }
 
 func newEvaluateTrailsCmd(out io.Writer) *cobra.Command {
