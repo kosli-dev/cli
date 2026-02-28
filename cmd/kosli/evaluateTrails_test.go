@@ -43,28 +43,24 @@ func (suite *EvaluateTrailsCommandTestSuite) TestEvaluateTrailsCmd() {
 			wantError: true,
 			name:      "missing --flow flag fails",
 			cmd:       fmt.Sprintf(`evaluate trails %s %s`, suite.trailName, suite.defaultKosliArguments),
-			golden:    "Error: required flag(s) \"flow\" not set\n",
+			golden:    "Error: required flag(s) \"flow\", \"policy\" not set\n",
+		},
+		{
+			wantError: true,
+			name:      "missing --policy flag fails",
+			cmd:       fmt.Sprintf(`evaluate trails %s --flow %s %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+			golden:    "Error: required flag(s) \"policy\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "missing --api-token fails",
-			cmd:       fmt.Sprintf(`evaluate trails %s --flow %s --org orgX`, suite.trailName, suite.flowName),
+			cmd:       fmt.Sprintf(`evaluate trails %s --flow %s --policy testdata/policies/allow-all.rego --org orgX`, suite.trailName, suite.flowName),
 		},
 		{
 			wantError: true,
 			name:      "evaluating a non-existing trail fails",
-			cmd:       fmt.Sprintf(`evaluate trails non-existent --flow %s %s`, suite.flowName, suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf(`evaluate trails non-existent --flow %s --policy testdata/policies/allow-all.rego %s`, suite.flowName, suite.defaultKosliArguments),
 			golden:    fmt.Sprintf("Error: Trail with name 'non-existent' does not exist for Organization '%s' and Flow '%s'\n", global.Org, suite.flowName),
-		},
-		{
-			name:       "evaluating one trail prints JSON with trails array containing one item",
-			cmd:        fmt.Sprintf(`evaluate trails %s --flow %s %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
-			goldenJson: []jsonCheck{{"trails", "length:1"}, {"trails.[0].name", suite.trailName}},
-		},
-		{
-			name:       "evaluating two trails prints JSON with trails array containing two items",
-			cmd:        fmt.Sprintf(`evaluate trails %s %s --flow %s %s`, suite.trailName, suite.trailName2, suite.flowName, suite.defaultKosliArguments),
-			goldenJson: []jsonCheck{{"trails", "length:2"}, {"trails.[0].name", suite.trailName}, {"trails.[1].name", suite.trailName2}},
 		},
 		{
 			name: "with --policy allow-all exits 0",
@@ -94,18 +90,13 @@ func (suite *EvaluateTrailsCommandTestSuite) TestEvaluateTrailsCmd() {
 		{
 			wantError: true,
 			name:      "with --output invalid returns error",
-			cmd:       fmt.Sprintf(`evaluate trails %s --flow %s --output invalid %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf(`evaluate trails %s --flow %s --policy testdata/policies/allow-all.rego --output invalid %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
 			golden:    "Error: invalid --output value \"invalid\": must be one of [table, json]\n",
 		},
 		{
 			name:       "with --policy and --show-input --output json includes input in JSON output",
 			cmd:        fmt.Sprintf(`evaluate trails %s --flow %s --policy testdata/policies/allow-all.rego --output json --show-input %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
 			goldenJson: []jsonCheck{{"allow", true}, {"input.trails.[0].name", suite.trailName}},
-		},
-		{
-			name:       "with --output json but no --policy prints trails JSON",
-			cmd:        fmt.Sprintf(`evaluate trails %s --flow %s --output json %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
-			goldenJson: []jsonCheck{{"trails.[0].name", suite.trailName}},
 		},
 	}
 
@@ -124,8 +115,8 @@ func (suite *EvaluateTrailsCommandTestSuite) TestEvaluateTrailsEnrichment() {
 	tests := []cmdTestCase{
 		{
 			name:       "trails in output have map-keyed attestations_statuses",
-			cmd:        fmt.Sprintf(`evaluate trails %s --flow %s %s`, trailName, suite.flowName, suite.defaultKosliArguments),
-			goldenJson: []jsonCheck{{"trails.[0].compliance_status.attestations_statuses.bar.attestation_name", "bar"}},
+			cmd:        fmt.Sprintf(`evaluate trails %s --flow %s --policy testdata/policies/allow-all.rego --output json --show-input %s`, trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"input.trails.[0].compliance_status.attestations_statuses.bar.attestation_name", "bar"}},
 		},
 		{
 			name: "rego policy can reference enriched attestation fields",
@@ -148,8 +139,8 @@ func (suite *EvaluateTrailsCommandTestSuite) TestEvaluateTrailsRehydration() {
 	tests := []cmdTestCase{
 		{
 			name:       "rehydrated fields present on trail-level attestations",
-			cmd:        fmt.Sprintf(`evaluate trails %s --flow %s %s`, trailName, suite.flowName, suite.defaultKosliArguments),
-			goldenJson: []jsonCheck{{"trails.[0].compliance_status.attestations_statuses.trail-att.html_url", "not-nil"}},
+			cmd:        fmt.Sprintf(`evaluate trails %s --flow %s --policy testdata/policies/allow-all.rego --output json --show-input %s`, trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"input.trails.[0].compliance_status.attestations_statuses.trail-att.html_url", "not-nil"}},
 		},
 		{
 			name: "rego policy can reference rehydrated field",
@@ -174,8 +165,8 @@ func (suite *EvaluateTrailsCommandTestSuite) TestEvaluateTrailsAttestationsFilte
 	tests := []cmdTestCase{
 		{
 			name:       "--attestations filters attestations across all trails",
-			cmd:        fmt.Sprintf(`evaluate trails %s --flow %s --attestations trail-att %s`, trailName, suite.flowName, suite.defaultKosliArguments),
-			goldenJson: []jsonCheck{{"trails.[0].compliance_status.attestations_statuses.trail-att.attestation_name", "trail-att"}},
+			cmd:        fmt.Sprintf(`evaluate trails %s --flow %s --attestations trail-att --policy testdata/policies/allow-all.rego --output json --show-input %s`, trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"input.trails.[0].compliance_status.attestations_statuses.trail-att.attestation_name", "trail-att"}},
 		},
 		{
 			name: "rego policy referencing filtered-in attestation passes",
