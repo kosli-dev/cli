@@ -84,6 +84,18 @@ func RehydrateTrail(trailData interface{}, details map[string]interface{}) inter
 		rehydrateAttestationMap(as, details)
 	}
 
+	if artifacts, ok := cs["artifacts_statuses"].(map[string]interface{}); ok {
+		for _, artData := range artifacts {
+			artMap, ok := artData.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			if as, ok := artMap["attestations_statuses"].(map[string]interface{}); ok {
+				rehydrateAttestationMap(as, details)
+			}
+		}
+	}
+
 	return trailData
 }
 
