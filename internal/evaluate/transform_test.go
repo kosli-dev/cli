@@ -268,6 +268,60 @@ func TestCollectAttestationIDs(t *testing.T) {
 	})
 }
 
+func TestFilterAttestations(t *testing.T) {
+	t.Run("nil filters returns trail unchanged", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"attestations_statuses": map[string]interface{}{
+					"bar": map[string]interface{}{
+						"attestation_name": "bar",
+					},
+				},
+			},
+		}
+		result := FilterAttestations(input, nil)
+		cs := result.(map[string]interface{})["compliance_status"].(map[string]interface{})
+		as := cs["attestations_statuses"].(map[string]interface{})
+		assert.Contains(t, as, "bar")
+	})
+
+	t.Run("empty filters slice returns trail unchanged", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"attestations_statuses": map[string]interface{}{
+					"bar": map[string]interface{}{
+						"attestation_name": "bar",
+					},
+				},
+			},
+		}
+		result := FilterAttestations(input, []string{})
+		cs := result.(map[string]interface{})["compliance_status"].(map[string]interface{})
+		as := cs["attestations_statuses"].(map[string]interface{})
+		assert.Contains(t, as, "bar")
+	})
+
+	t.Run("plain name keeps only matching trail-level attestation", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"attestations_statuses": map[string]interface{}{
+					"bar": map[string]interface{}{
+						"attestation_name": "bar",
+					},
+					"baz": map[string]interface{}{
+						"attestation_name": "baz",
+					},
+				},
+			},
+		}
+		result := FilterAttestations(input, []string{"bar"})
+		cs := result.(map[string]interface{})["compliance_status"].(map[string]interface{})
+		as := cs["attestations_statuses"].(map[string]interface{})
+		assert.Contains(t, as, "bar")
+		assert.NotContains(t, as, "baz")
+	})
+}
+
 func TestRehydrateTrail(t *testing.T) {
 	t.Run("nil details map leaves trail unchanged", func(t *testing.T) {
 		input := map[string]interface{}{
