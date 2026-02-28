@@ -179,6 +179,35 @@ func (suite *EvaluateTrailCommandTestSuite) TestEvaluateTrailAttestationTransfor
 	runTestCmd(suite.T(), tests)
 }
 
+func (suite *EvaluateTrailCommandTestSuite) TestEvaluateTrailRehydration() {
+	trailName := "test-trail-rehydration"
+	fingerprint := "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
+
+	BeginTrail(trailName, suite.flowName, "", suite.T())
+	CreateGenericTrailAttestation(suite.flowName, trailName, "trail-att", suite.T())
+	CreateArtifactOnTrail(suite.flowName, trailName, "cli", fingerprint, "file1", suite.T())
+	CreateGenericArtifactAttestation(suite.flowName, trailName, fingerprint, "art-att", true, suite.T())
+
+	tests := []cmdTestCase{
+		{
+			name:       "rehydrated trail-level attestation has html_url from detail",
+			cmd:        fmt.Sprintf(`evaluate trail %s --flow %s %s`, trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"trail.compliance_status.attestations_statuses.trail-att.html_url", "not-nil"}},
+		},
+		{
+			name:       "rehydrated artifact-level attestation has html_url from detail",
+			cmd:        fmt.Sprintf(`evaluate trail %s --flow %s %s`, trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"trail.compliance_status.artifacts_statuses.cli.attestations_statuses.art-att.html_url", "not-nil"}},
+		},
+		{
+			name: "rego policy can reference rehydrated field",
+			cmd:  fmt.Sprintf(`evaluate trail %s --flow %s --policy testdata/policies/check-rehydrated-field.rego %s`, trailName, suite.flowName, suite.defaultKosliArguments),
+		},
+	}
+
+	runTestCmd(suite.T(), tests)
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestEvaluateTrailCommandTestSuite(t *testing.T) {

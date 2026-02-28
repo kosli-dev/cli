@@ -78,6 +78,32 @@ func (o *evaluateTrailOptions) run(out io.Writer, args []string) error {
 
 	trailData = evaluate.TransformTrail(trailData)
 
+	ids := evaluate.CollectAttestationIDs(trailData)
+	if len(ids) > 0 {
+		details := make(map[string]interface{})
+		for _, id := range ids {
+			detailURL := fmt.Sprintf("%s/api/v2/attestations/%s?attestation_id=%s", global.Host, global.Org, id)
+			detailResp, err := kosliClient.Do(&requests.RequestParams{
+				Method: http.MethodGet,
+				URL:    detailURL,
+				Token:  global.ApiToken,
+			})
+			if err != nil {
+				continue
+			}
+			var wrapper map[string]interface{}
+			if err := json.Unmarshal([]byte(detailResp.Body), &wrapper); err != nil {
+				continue
+			}
+			if data, ok := wrapper["data"].([]interface{}); ok && len(data) > 0 {
+				if entry, ok := data[0].(map[string]interface{}); ok {
+					details[id] = entry
+				}
+			}
+		}
+		trailData = evaluate.RehydrateTrail(trailData, details)
+	}
+
 	input := map[string]interface{}{
 		"trail": trailData,
 	}
