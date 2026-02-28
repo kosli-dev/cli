@@ -35,6 +35,12 @@ func TransformTrail(trailData interface{}) interface{} {
 	return trailData
 }
 
+// CollectAttestationIDs extracts all non-null attestation_id values
+// from the already-transformed (map-keyed) trail data.
+func CollectAttestationIDs(trailData interface{}) []string {
+	return nil
+}
+
 func attestationsArrayToMap(arr []interface{}) map[string]interface{} {
 	result := make(map[string]interface{})
 	for _, entry := range arr {
