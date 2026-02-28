@@ -51,6 +51,17 @@ func CollectAttestationIDs(trailData interface{}) []string {
 	if as, ok := cs["attestations_statuses"].(map[string]interface{}); ok {
 		ids = append(ids, collectIDsFromAttestationMap(as)...)
 	}
+	if artifacts, ok := cs["artifacts_statuses"].(map[string]interface{}); ok {
+		for _, artData := range artifacts {
+			artMap, ok := artData.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			if as, ok := artMap["attestations_statuses"].(map[string]interface{}); ok {
+				ids = append(ids, collectIDsFromAttestationMap(as)...)
+			}
+		}
+	}
 	return ids
 }
 

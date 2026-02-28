@@ -198,4 +198,23 @@ func TestCollectAttestationIDs(t *testing.T) {
 		ids := CollectAttestationIDs(input)
 		assert.Equal(t, []string{"att-uuid-001"}, ids)
 	})
+
+	t.Run("collects IDs from artifact-level attestation", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"artifacts_statuses": map[string]interface{}{
+					"cli": map[string]interface{}{
+						"attestations_statuses": map[string]interface{}{
+							"foo": map[string]interface{}{
+								"attestation_name": "foo",
+								"attestation_id":   "att-uuid-002",
+							},
+						},
+					},
+				},
+			},
+		}
+		ids := CollectAttestationIDs(input)
+		assert.Equal(t, []string{"att-uuid-002"}, ids)
+	})
 }
