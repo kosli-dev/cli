@@ -15,10 +15,11 @@ import (
 const evaluateTrailDesc = `Evaluate a trail against a policy.`
 
 type evaluateTrailOptions struct {
-	flowName   string
-	policyFile string
-	format     string
-	showInput  bool
+	flowName     string
+	policyFile   string
+	format       string
+	showInput    bool
+	attestations []string
 }
 
 func newEvaluateTrailCmd(out io.Writer) *cobra.Command {
@@ -44,6 +45,7 @@ func newEvaluateTrailCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.policyFile, "policy", "p", "", "[optional] Path to a Rego policy file to evaluate against the trail.")
 	cmd.Flags().StringVar(&o.format, "format", "text", "[defaulted] The format of the policy evaluation output. Valid formats are: [text, json].")
 	cmd.Flags().BoolVar(&o.showInput, "show-input", false, "[optional] Include the policy input data in the output.")
+	cmd.Flags().StringSliceVar(&o.attestations, "attestations", nil, "[optional] Limit which attestations are included. Plain name for trail-level, dot-qualified (artifact.name) for artifact-level.")
 
 	err := RequireFlags(cmd, []string{"flow"})
 	if err != nil {
@@ -77,6 +79,7 @@ func (o *evaluateTrailOptions) run(out io.Writer, args []string) error {
 	}
 
 	trailData = evaluate.TransformTrail(trailData)
+	trailData = evaluate.FilterAttestations(trailData, o.attestations)
 
 	ids := evaluate.CollectAttestationIDs(trailData)
 	if len(ids) > 0 {
