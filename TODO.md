@@ -14,6 +14,4 @@
   - [x] Slice 5b: Rehydration
   - [x] Slice 5c: `--attestations` filtering
 - [x] Slice 6: Replace `--format` with `--output` flag
-- [ ] Slice 7: `kosli evaluate trails` (collection mode)
-  - [x] Slice 7a: Fetch named trails + policy evaluation
-  - [x] Slice 7b: Full enrichment pipeline
+- [x] Slice 7: `kosli evaluate trails` (collection mode)
