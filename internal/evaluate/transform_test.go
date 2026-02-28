@@ -10,13 +10,13 @@ import (
 func TestTransformTrail(t *testing.T) {
 	t.Run("nil input returns nil", func(t *testing.T) {
 		result := TransformTrail(nil)
-		require.Nil(t, result)
+		assert.Nil(t, result)
 	})
 
 	t.Run("non-map input passes through unchanged", func(t *testing.T) {
 		input := "just a string"
 		result := TransformTrail(input)
-		require.Equal(t, input, result)
+		assert.Equal(t, input, result)
 	})
 
 	t.Run("trail with no compliance_status passes through", func(t *testing.T) {
@@ -25,8 +25,8 @@ func TestTransformTrail(t *testing.T) {
 		}
 		result := TransformTrail(input)
 		resultMap := result.(map[string]interface{})
-		require.Equal(t, "my-trail", resultMap["name"])
-		require.Nil(t, resultMap["compliance_status"])
+		assert.Equal(t, "my-trail", resultMap["name"])
+		assert.Nil(t, resultMap["compliance_status"])
 	})
 
 	t.Run("empty attestations_statuses array becomes empty map", func(t *testing.T) {
@@ -40,7 +40,7 @@ func TestTransformTrail(t *testing.T) {
 		cs := resultMap["compliance_status"].(map[string]interface{})
 		as := cs["attestations_statuses"]
 		require.IsType(t, map[string]interface{}{}, as)
-		require.Empty(t, as)
+		assert.Empty(t, as)
 	})
 
 	t.Run("single trail-level attestation becomes map entry keyed by name", func(t *testing.T) {
@@ -59,8 +59,8 @@ func TestTransformTrail(t *testing.T) {
 		cs := resultMap["compliance_status"].(map[string]interface{})
 		as := cs["attestations_statuses"].(map[string]interface{})
 		bar := as["bar"].(map[string]interface{})
-		require.Equal(t, "bar", bar["attestation_name"])
-		require.Equal(t, true, bar["is_compliant"])
+		assert.Equal(t, "bar", bar["attestation_name"])
+		assert.Equal(t, true, bar["is_compliant"])
 	})
 
 	t.Run("multiple trail-level attestations all present in map", func(t *testing.T) {
@@ -76,10 +76,10 @@ func TestTransformTrail(t *testing.T) {
 		result := TransformTrail(input)
 		cs := result.(map[string]interface{})["compliance_status"].(map[string]interface{})
 		as := cs["attestations_statuses"].(map[string]interface{})
-		require.Len(t, as, 3)
-		require.Contains(t, as, "alpha")
-		require.Contains(t, as, "beta")
-		require.Contains(t, as, "gamma")
+		assert.Len(t, as, 3)
+		assert.Contains(t, as, "alpha")
+		assert.Contains(t, as, "beta")
+		assert.Contains(t, as, "gamma")
 	})
 
 	t.Run("artifact-level attestations_statuses array becomes map", func(t *testing.T) {
@@ -99,8 +99,8 @@ func TestTransformTrail(t *testing.T) {
 		cli := cs["artifacts_statuses"].(map[string]interface{})["cli"].(map[string]interface{})
 		as := cli["attestations_statuses"].(map[string]interface{})
 		foo := as["foo"].(map[string]interface{})
-		require.Equal(t, "foo", foo["attestation_name"])
-		require.Equal(t, true, foo["is_compliant"])
+		assert.Equal(t, "foo", foo["attestation_name"])
+		assert.Equal(t, true, foo["is_compliant"])
 	})
 
 	t.Run("both trail-level and artifact-level transform in one call", func(t *testing.T) {
@@ -121,10 +121,10 @@ func TestTransformTrail(t *testing.T) {
 		result := TransformTrail(input)
 		cs := result.(map[string]interface{})["compliance_status"].(map[string]interface{})
 		trailAs := cs["attestations_statuses"].(map[string]interface{})
-		require.Contains(t, trailAs, "trail-att")
+		assert.Contains(t, trailAs, "trail-att")
 		art1 := cs["artifacts_statuses"].(map[string]interface{})["art1"].(map[string]interface{})
 		artAs := art1["attestations_statuses"].(map[string]interface{})
-		require.Contains(t, artAs, "art-att")
+		assert.Contains(t, artAs, "art-att")
 	})
 
 	t.Run("multiple artifacts each get their attestations transformed", func(t *testing.T) {
@@ -148,9 +148,9 @@ func TestTransformTrail(t *testing.T) {
 		cs := result.(map[string]interface{})["compliance_status"].(map[string]interface{})
 		arts := cs["artifacts_statuses"].(map[string]interface{})
 		art1As := arts["art1"].(map[string]interface{})["attestations_statuses"].(map[string]interface{})
-		require.Contains(t, art1As, "a1")
+		assert.Contains(t, art1As, "a1")
 		art2As := arts["art2"].(map[string]interface{})["attestations_statuses"].(map[string]interface{})
-		require.Contains(t, art2As, "a2")
+		assert.Contains(t, art2As, "a2")
 	})
 
 	t.Run("entry without attestation_name is skipped", func(t *testing.T) {
@@ -165,8 +165,8 @@ func TestTransformTrail(t *testing.T) {
 		result := TransformTrail(input)
 		cs := result.(map[string]interface{})["compliance_status"].(map[string]interface{})
 		as := cs["attestations_statuses"].(map[string]interface{})
-		require.Len(t, as, 1)
-		require.Contains(t, as, "good")
+		assert.Len(t, as, 1)
+		assert.Contains(t, as, "good")
 	})
 }
 

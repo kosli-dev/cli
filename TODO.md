@@ -20,4 +20,4 @@
 - [x] Slice 10: Extract shared options struct
 - [x] Slice 11: Use `output.FormattedPrint` for output dispatch
 - [x] Slice 12: Debug logging for swallowed errors during attestation detail fetching
-- [ ] Slice 13: Standardise `assert` vs `require` in `transform_test.go`
+- [x] Slice 13: Standardise `assert` vs `require` in `transform_test.go`
