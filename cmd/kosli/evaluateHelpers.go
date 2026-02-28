@@ -10,6 +10,7 @@ import (
 	"github.com/kosli-dev/cli/internal/evaluate"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/spf13/cobra"
 )
 
 type commonEvaluateOptions struct {
@@ -18,6 +19,19 @@ type commonEvaluateOptions struct {
 	output       string
 	showInput    bool
 	attestations []string
+}
+
+func (o *commonEvaluateOptions) addFlags(cmd *cobra.Command, policyDesc string) {
+	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
+	cmd.Flags().StringVarP(&o.policyFile, "policy", "p", "", policyDesc)
+	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
+	cmd.Flags().BoolVar(&o.showInput, "show-input", false, "[optional] Include the policy input data in the output.")
+	cmd.Flags().StringSliceVar(&o.attestations, "attestations", nil, "[optional] Limit which attestations are included. Plain name for trail-level, dot-qualified (artifact.name) for artifact-level.")
+
+	err := RequireFlags(cmd, []string{"flow", "policy"})
+	if err != nil {
+		logger.Error("failed to configure required flags: %v", err)
+	}
 }
 
 func fetchAndEnrichTrail(flowName, trailName string, attestations []string) (interface{}, error) {
