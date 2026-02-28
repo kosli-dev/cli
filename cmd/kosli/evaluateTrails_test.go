@@ -112,6 +112,80 @@ func (suite *EvaluateTrailsCommandTestSuite) TestEvaluateTrailsCmd() {
 	runTestCmd(suite.T(), tests)
 }
 
+func (suite *EvaluateTrailsCommandTestSuite) TestEvaluateTrailsEnrichment() {
+	trailName := "test-trails-enrichment"
+	fingerprint := "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
+
+	BeginTrail(trailName, suite.flowName, "", suite.T())
+	CreateGenericTrailAttestation(suite.flowName, trailName, "bar", suite.T())
+	CreateArtifactOnTrail(suite.flowName, trailName, "cli", fingerprint, "file1", suite.T())
+	CreateGenericArtifactAttestation(suite.flowName, trailName, fingerprint, "foo", true, suite.T())
+
+	tests := []cmdTestCase{
+		{
+			name:       "trails in output have map-keyed attestations_statuses",
+			cmd:        fmt.Sprintf(`evaluate trails %s --flow %s %s`, trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"trails.[0].compliance_status.attestations_statuses.bar.attestation_name", "bar"}},
+		},
+		{
+			name: "rego policy can reference enriched attestation fields",
+			cmd:  fmt.Sprintf(`evaluate trails %s --flow %s --policy testdata/policies/check-trails-attestation-name.rego %s`, trailName, suite.flowName, suite.defaultKosliArguments),
+		},
+	}
+
+	runTestCmd(suite.T(), tests)
+}
+
+func (suite *EvaluateTrailsCommandTestSuite) TestEvaluateTrailsRehydration() {
+	trailName := "test-trails-rehydration"
+	fingerprint := "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
+
+	BeginTrail(trailName, suite.flowName, "", suite.T())
+	CreateGenericTrailAttestation(suite.flowName, trailName, "trail-att", suite.T())
+	CreateArtifactOnTrail(suite.flowName, trailName, "cli", fingerprint, "file1", suite.T())
+	CreateGenericArtifactAttestation(suite.flowName, trailName, fingerprint, "art-att", true, suite.T())
+
+	tests := []cmdTestCase{
+		{
+			name:       "rehydrated fields present on trail-level attestations",
+			cmd:        fmt.Sprintf(`evaluate trails %s --flow %s %s`, trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"trails.[0].compliance_status.attestations_statuses.trail-att.html_url", "not-nil"}},
+		},
+		{
+			name: "rego policy can reference rehydrated field",
+			cmd:  fmt.Sprintf(`evaluate trails %s --flow %s --policy testdata/policies/check-trails-rehydrated-field.rego %s`, trailName, suite.flowName, suite.defaultKosliArguments),
+		},
+	}
+
+	runTestCmd(suite.T(), tests)
+}
+
+func (suite *EvaluateTrailsCommandTestSuite) TestEvaluateTrailsAttestationsFilter() {
+	trailName := "test-trails-filter"
+	fingerprint := "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
+
+	BeginTrail(trailName, suite.flowName, "", suite.T())
+	CreateGenericTrailAttestation(suite.flowName, trailName, "trail-att", suite.T())
+	CreateGenericTrailAttestation(suite.flowName, trailName, "trail-other", suite.T())
+	CreateArtifactOnTrail(suite.flowName, trailName, "cli", fingerprint, "file1", suite.T())
+	CreateGenericArtifactAttestation(suite.flowName, trailName, fingerprint, "art-att", true, suite.T())
+	CreateGenericArtifactAttestation(suite.flowName, trailName, fingerprint, "art-other", true, suite.T())
+
+	tests := []cmdTestCase{
+		{
+			name:       "--attestations filters attestations across all trails",
+			cmd:        fmt.Sprintf(`evaluate trails %s --flow %s --attestations trail-att %s`, trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"trails.[0].compliance_status.attestations_statuses.trail-att.attestation_name", "trail-att"}},
+		},
+		{
+			name: "rego policy referencing filtered-in attestation passes",
+			cmd:  fmt.Sprintf(`evaluate trails %s --flow %s --attestations trail-att --policy testdata/policies/check-trails-filtered-attestation.rego %s`, trailName, suite.flowName, suite.defaultKosliArguments),
+		},
+	}
+
+	runTestCmd(suite.T(), tests)
+}
+
 func TestEvaluateTrailsCommandTestSuite(t *testing.T) {
 	suite.Run(t, new(EvaluateTrailsCommandTestSuite))
 }

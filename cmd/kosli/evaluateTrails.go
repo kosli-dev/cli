@@ -15,10 +15,11 @@ import (
 const evaluateTrailsDesc = `Evaluate multiple trails against a policy.`
 
 type evaluateTrailsOptions struct {
-	flowName   string
-	policyFile string
-	output     string
-	showInput  bool
+	flowName     string
+	policyFile   string
+	output       string
+	showInput    bool
+	attestations []string
 }
 
 func newEvaluateTrailsCmd(out io.Writer) *cobra.Command {
@@ -44,6 +45,7 @@ func newEvaluateTrailsCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.policyFile, "policy", "p", "", "[optional] Path to a Rego policy file to evaluate against the trails.")
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	cmd.Flags().BoolVar(&o.showInput, "show-input", false, "[optional] Include the policy input data in the output.")
+	cmd.Flags().StringSliceVar(&o.attestations, "attestations", nil, "[optional] Limit which attestations are included. Plain name for trail-level, dot-qualified (artifact.name) for artifact-level.")
 
 	err := RequireFlags(cmd, []string{"flow"})
 	if err != nil {
@@ -78,6 +80,34 @@ func (o *evaluateTrailsOptions) run(out io.Writer, args []string) error {
 		}
 
 		trailData = evaluate.TransformTrail(trailData)
+		trailData = evaluate.FilterAttestations(trailData, o.attestations)
+
+		ids := evaluate.CollectAttestationIDs(trailData)
+		if len(ids) > 0 {
+			details := make(map[string]interface{})
+			for _, id := range ids {
+				detailURL := fmt.Sprintf("%s/api/v2/attestations/%s?attestation_id=%s", global.Host, global.Org, id)
+				detailResp, err := kosliClient.Do(&requests.RequestParams{
+					Method: http.MethodGet,
+					URL:    detailURL,
+					Token:  global.ApiToken,
+				})
+				if err != nil {
+					continue
+				}
+				var wrapper map[string]interface{}
+				if err := json.Unmarshal([]byte(detailResp.Body), &wrapper); err != nil {
+					continue
+				}
+				if data, ok := wrapper["data"].([]interface{}); ok && len(data) > 0 {
+					if entry, ok := data[0].(map[string]interface{}); ok {
+						details[id] = entry
+					}
+				}
+			}
+			trailData = evaluate.RehydrateTrail(trailData, details)
+		}
+
 		trails = append(trails, trailData)
 	}
 
