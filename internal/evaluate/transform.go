@@ -40,30 +40,10 @@ func TransformTrail(trailData interface{}) interface{} {
 // CollectAttestationIDs extracts all non-null attestation_id values
 // from the already-transformed (map-keyed) trail data.
 func CollectAttestationIDs(trailData interface{}) []string {
-	trailMap, ok := trailData.(map[string]interface{})
-	if !ok {
-		return nil
-	}
-	cs, ok := trailMap["compliance_status"].(map[string]interface{})
-	if !ok {
-		return nil
-	}
-
 	var ids []string
-	if as, ok := cs["attestations_statuses"].(map[string]interface{}); ok {
+	walkTrailAttestations(trailData, func(_ string, as map[string]interface{}) {
 		ids = append(ids, collectIDsFromAttestationMap(as)...)
-	}
-	if artifacts, ok := cs["artifacts_statuses"].(map[string]interface{}); ok {
-		for _, artData := range artifacts {
-			artMap, ok := artData.(map[string]interface{})
-			if !ok {
-				continue
-			}
-			if as, ok := artMap["attestations_statuses"].(map[string]interface{}); ok {
-				ids = append(ids, collectIDsFromAttestationMap(as)...)
-			}
-		}
-	}
+	})
 	return ids
 }
 
@@ -73,31 +53,9 @@ func RehydrateTrail(trailData interface{}, details map[string]interface{}) inter
 	if len(details) == 0 {
 		return trailData
 	}
-	trailMap, ok := trailData.(map[string]interface{})
-	if !ok {
-		return trailData
-	}
-	cs, ok := trailMap["compliance_status"].(map[string]interface{})
-	if !ok {
-		return trailData
-	}
-
-	if as, ok := cs["attestations_statuses"].(map[string]interface{}); ok {
+	walkTrailAttestations(trailData, func(_ string, as map[string]interface{}) {
 		rehydrateAttestationMap(as, details)
-	}
-
-	if artifacts, ok := cs["artifacts_statuses"].(map[string]interface{}); ok {
-		for _, artData := range artifacts {
-			artMap, ok := artData.(map[string]interface{})
-			if !ok {
-				continue
-			}
-			if as, ok := artMap["attestations_statuses"].(map[string]interface{}); ok {
-				rehydrateAttestationMap(as, details)
-			}
-		}
-	}
-
+	})
 	return trailData
 }
 
@@ -112,17 +70,36 @@ func FilterAttestations(trailData interface{}, filters []string) interface{} {
 
 	trailFilters, artifactFilters := parseAttestationFilters(filters)
 
+	walkTrailAttestations(trailData, func(artifactName string, as map[string]interface{}) {
+		if artifactName == "" {
+			filterMap(as, trailFilters)
+		} else if allowed, exists := artifactFilters[artifactName]; exists {
+			filterMap(as, allowed)
+		} else {
+			for k := range as {
+				delete(as, k)
+			}
+		}
+	})
+
+	return trailData
+}
+
+// walkTrailAttestations navigates the trail data structure and calls fn
+// for each attestations_statuses map found. The artifactName is "" for
+// trail-level attestations, or the artifact name for artifact-level ones.
+func walkTrailAttestations(trailData interface{}, fn func(artifactName string, as map[string]interface{})) {
 	trailMap, ok := trailData.(map[string]interface{})
 	if !ok {
-		return trailData
+		return
 	}
 	cs, ok := trailMap["compliance_status"].(map[string]interface{})
 	if !ok {
-		return trailData
+		return
 	}
 
 	if as, ok := cs["attestations_statuses"].(map[string]interface{}); ok {
-		filterMap(as, trailFilters)
+		fn("", as)
 	}
 
 	if artifacts, ok := cs["artifacts_statuses"].(map[string]interface{}); ok {
@@ -132,19 +109,10 @@ func FilterAttestations(trailData interface{}, filters []string) interface{} {
 				continue
 			}
 			if as, ok := artMap["attestations_statuses"].(map[string]interface{}); ok {
-				if allowed, exists := artifactFilters[artName]; exists {
-					filterMap(as, allowed)
-				} else {
-					// No filters mention this artifact — clear its attestations
-					for k := range as {
-						delete(as, k)
-					}
-				}
+				fn(artName, as)
 			}
 		}
 	}
-
-	return trailData
 }
 
 func parseAttestationFilters(filters []string) (trailFilters map[string]bool, artifactFilters map[string]map[string]bool) {
