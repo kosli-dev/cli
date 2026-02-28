@@ -141,7 +141,7 @@ func (suite *EvaluateTrailCommandTestSuite) TestEvaluateTrailCmd() {
 	runTestCmd(suite.T(), tests)
 }
 
-func (suite *EvaluateTrailCommandTestSuite) TestEvaluateTrailAttestationTransform() {
+func (suite *EvaluateTrailCommandTestSuite) TestEvaluateTrailEnrichment() {
 	trailName := "test-trail-with-attestations"
 	fingerprint := "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
 
