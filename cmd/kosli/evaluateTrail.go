@@ -42,12 +42,12 @@ func newEvaluateTrailCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
-	cmd.Flags().StringVarP(&o.policyFile, "policy", "p", "", "[optional] Path to a Rego policy file to evaluate against the trail.")
+	cmd.Flags().StringVarP(&o.policyFile, "policy", "p", "", "Path to a Rego policy file to evaluate against the trail.")
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	cmd.Flags().BoolVar(&o.showInput, "show-input", false, "[optional] Include the policy input data in the output.")
 	cmd.Flags().StringSliceVar(&o.attestations, "attestations", nil, "[optional] Limit which attestations are included. Plain name for trail-level, dot-qualified (artifact.name) for artifact-level.")
 
-	err := RequireFlags(cmd, []string{"flow"})
+	err := RequireFlags(cmd, []string{"flow", "policy"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
@@ -109,15 +109,6 @@ func (o *evaluateTrailOptions) run(out io.Writer, args []string) error {
 
 	input := map[string]interface{}{
 		"trail": trailData,
-	}
-
-	if o.policyFile == "" {
-		output, err := json.MarshalIndent(input, "", "  ")
-		if err != nil {
-			return fmt.Errorf("failed to marshal output: %v", err)
-		}
-		_, err = fmt.Fprintln(out, string(output))
-		return err
 	}
 
 	policySource, err := os.ReadFile(o.policyFile)
