@@ -330,4 +330,55 @@ func TestRehydrateTrail(t *testing.T) {
 		assert.Equal(t, map[string]interface{}{"key": "value"}, bar["user_data"])
 		assert.Equal(t, true, bar["is_compliant"])
 	})
+
+	t.Run("does not overwrite existing fields", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"attestations_statuses": map[string]interface{}{
+					"bar": map[string]interface{}{
+						"attestation_name": "bar",
+						"attestation_id":   "att-uuid-001",
+						"status":           "COMPLETE",
+					},
+				},
+			},
+		}
+		details := map[string]interface{}{
+			"att-uuid-001": map[string]interface{}{
+				"status":     "DIFFERENT",
+				"origin_url": "https://example.com",
+			},
+		}
+		result := RehydrateTrail(input, details)
+		bar := result.(map[string]interface{})["compliance_status"].(map[string]interface{})["attestations_statuses"].(map[string]interface{})["bar"].(map[string]interface{})
+		assert.Equal(t, "COMPLETE", bar["status"], "existing field should not be overwritten")
+		assert.Equal(t, "https://example.com", bar["origin_url"], "new field should be added")
+	})
+
+	t.Run("merges detail fields into artifact-level attestation", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"artifacts_statuses": map[string]interface{}{
+					"cli": map[string]interface{}{
+						"attestations_statuses": map[string]interface{}{
+							"foo": map[string]interface{}{
+								"attestation_name": "foo",
+								"attestation_id":   "att-uuid-002",
+								"is_compliant":     true,
+							},
+						},
+					},
+				},
+			},
+		}
+		details := map[string]interface{}{
+			"att-uuid-002": map[string]interface{}{
+				"origin_url": "https://example.com/artifact",
+			},
+		}
+		result := RehydrateTrail(input, details)
+		foo := result.(map[string]interface{})["compliance_status"].(map[string]interface{})["artifacts_statuses"].(map[string]interface{})["cli"].(map[string]interface{})["attestations_statuses"].(map[string]interface{})["foo"].(map[string]interface{})
+		assert.Equal(t, "https://example.com/artifact", foo["origin_url"])
+		assert.Equal(t, true, foo["is_compliant"])
+	})
 }
