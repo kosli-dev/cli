@@ -208,6 +208,37 @@ func (suite *EvaluateTrailCommandTestSuite) TestEvaluateTrailRehydration() {
 	runTestCmd(suite.T(), tests)
 }
 
+func (suite *EvaluateTrailCommandTestSuite) TestEvaluateTrailAttestationsFilter() {
+	trailName := "test-trail-filter"
+	fingerprint := "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
+
+	BeginTrail(trailName, suite.flowName, "", suite.T())
+	CreateGenericTrailAttestation(suite.flowName, trailName, "trail-att", suite.T())
+	CreateGenericTrailAttestation(suite.flowName, trailName, "trail-other", suite.T())
+	CreateArtifactOnTrail(suite.flowName, trailName, "cli", fingerprint, "file1", suite.T())
+	CreateGenericArtifactAttestation(suite.flowName, trailName, fingerprint, "art-att", true, suite.T())
+	CreateGenericArtifactAttestation(suite.flowName, trailName, fingerprint, "art-other", true, suite.T())
+
+	tests := []cmdTestCase{
+		{
+			name:       "--attestations trail-att keeps only trail-att in trail-level",
+			cmd:        fmt.Sprintf(`evaluate trail %s --flow %s --attestations trail-att %s`, trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"trail.compliance_status.attestations_statuses.trail-att.attestation_name", "trail-att"}},
+		},
+		{
+			name:       "--attestations cli.art-att keeps only art-att in cli's attestations",
+			cmd:        fmt.Sprintf(`evaluate trail %s --flow %s --attestations cli.art-att %s`, trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"trail.compliance_status.artifacts_statuses.cli.attestations_statuses.art-att.attestation_name", "art-att"}},
+		},
+		{
+			name: "rego policy referencing filtered-in attestation passes",
+			cmd:  fmt.Sprintf(`evaluate trail %s --flow %s --attestations trail-att --policy testdata/policies/check-filtered-attestation.rego %s`, trailName, suite.flowName, suite.defaultKosliArguments),
+		},
+	}
+
+	runTestCmd(suite.T(), tests)
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestEvaluateTrailCommandTestSuite(t *testing.T) {
