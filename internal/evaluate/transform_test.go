@@ -61,4 +61,110 @@ func TestTransformTrail(t *testing.T) {
 		require.Equal(t, "bar", bar["attestation_name"])
 		require.Equal(t, true, bar["is_compliant"])
 	})
+
+	t.Run("multiple trail-level attestations all present in map", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"attestations_statuses": []interface{}{
+					map[string]interface{}{"attestation_name": "alpha"},
+					map[string]interface{}{"attestation_name": "beta"},
+					map[string]interface{}{"attestation_name": "gamma"},
+				},
+			},
+		}
+		result := TransformTrail(input)
+		cs := result.(map[string]interface{})["compliance_status"].(map[string]interface{})
+		as := cs["attestations_statuses"].(map[string]interface{})
+		require.Len(t, as, 3)
+		require.Contains(t, as, "alpha")
+		require.Contains(t, as, "beta")
+		require.Contains(t, as, "gamma")
+	})
+
+	t.Run("artifact-level attestations_statuses array becomes map", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"artifacts_statuses": map[string]interface{}{
+					"cli": map[string]interface{}{
+						"attestations_statuses": []interface{}{
+							map[string]interface{}{"attestation_name": "foo", "is_compliant": true},
+						},
+					},
+				},
+			},
+		}
+		result := TransformTrail(input)
+		cs := result.(map[string]interface{})["compliance_status"].(map[string]interface{})
+		cli := cs["artifacts_statuses"].(map[string]interface{})["cli"].(map[string]interface{})
+		as := cli["attestations_statuses"].(map[string]interface{})
+		foo := as["foo"].(map[string]interface{})
+		require.Equal(t, "foo", foo["attestation_name"])
+		require.Equal(t, true, foo["is_compliant"])
+	})
+
+	t.Run("both trail-level and artifact-level transform in one call", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"attestations_statuses": []interface{}{
+					map[string]interface{}{"attestation_name": "trail-att"},
+				},
+				"artifacts_statuses": map[string]interface{}{
+					"art1": map[string]interface{}{
+						"attestations_statuses": []interface{}{
+							map[string]interface{}{"attestation_name": "art-att"},
+						},
+					},
+				},
+			},
+		}
+		result := TransformTrail(input)
+		cs := result.(map[string]interface{})["compliance_status"].(map[string]interface{})
+		trailAs := cs["attestations_statuses"].(map[string]interface{})
+		require.Contains(t, trailAs, "trail-att")
+		art1 := cs["artifacts_statuses"].(map[string]interface{})["art1"].(map[string]interface{})
+		artAs := art1["attestations_statuses"].(map[string]interface{})
+		require.Contains(t, artAs, "art-att")
+	})
+
+	t.Run("multiple artifacts each get their attestations transformed", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"artifacts_statuses": map[string]interface{}{
+					"art1": map[string]interface{}{
+						"attestations_statuses": []interface{}{
+							map[string]interface{}{"attestation_name": "a1"},
+						},
+					},
+					"art2": map[string]interface{}{
+						"attestations_statuses": []interface{}{
+							map[string]interface{}{"attestation_name": "a2"},
+						},
+					},
+				},
+			},
+		}
+		result := TransformTrail(input)
+		cs := result.(map[string]interface{})["compliance_status"].(map[string]interface{})
+		arts := cs["artifacts_statuses"].(map[string]interface{})
+		art1As := arts["art1"].(map[string]interface{})["attestations_statuses"].(map[string]interface{})
+		require.Contains(t, art1As, "a1")
+		art2As := arts["art2"].(map[string]interface{})["attestations_statuses"].(map[string]interface{})
+		require.Contains(t, art2As, "a2")
+	})
+
+	t.Run("entry without attestation_name is skipped", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"attestations_statuses": []interface{}{
+					map[string]interface{}{"attestation_name": "good"},
+					map[string]interface{}{"something_else": "no name"},
+				},
+			},
+		}
+		result := TransformTrail(input)
+		cs := result.(map[string]interface{})["compliance_status"].(map[string]interface{})
+		as := cs["attestations_statuses"].(map[string]interface{})
+		require.Len(t, as, 1)
+		require.Contains(t, as, "good")
+	})
 }

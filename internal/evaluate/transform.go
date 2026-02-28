@@ -20,6 +20,18 @@ func TransformTrail(trailData interface{}) interface{} {
 		cs["attestations_statuses"] = attestationsArrayToMap(arr)
 	}
 
+	if artifacts, ok := cs["artifacts_statuses"].(map[string]interface{}); ok {
+		for _, artData := range artifacts {
+			artMap, ok := artData.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			if arr, ok := artMap["attestations_statuses"].([]interface{}); ok {
+				artMap["attestations_statuses"] = attestationsArrayToMap(arr)
+			}
+		}
+	}
+
 	return trailData
 }
 
