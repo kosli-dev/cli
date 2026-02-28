@@ -381,4 +381,28 @@ func TestRehydrateTrail(t *testing.T) {
 		assert.Equal(t, "https://example.com/artifact", foo["origin_url"])
 		assert.Equal(t, true, foo["is_compliant"])
 	})
+
+	t.Run("attestation with no matching detail is left unchanged", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"attestations_statuses": map[string]interface{}{
+					"bar": map[string]interface{}{
+						"attestation_name": "bar",
+						"attestation_id":   "att-uuid-001",
+						"is_compliant":     true,
+					},
+				},
+			},
+		}
+		details := map[string]interface{}{
+			"att-uuid-999": map[string]interface{}{
+				"origin_url": "https://example.com",
+			},
+		}
+		result := RehydrateTrail(input, details)
+		bar := result.(map[string]interface{})["compliance_status"].(map[string]interface{})["attestations_statuses"].(map[string]interface{})["bar"].(map[string]interface{})
+		assert.Equal(t, "bar", bar["attestation_name"])
+		assert.Equal(t, true, bar["is_compliant"])
+		assert.Nil(t, bar["origin_url"], "no matching detail means no new fields")
+	})
 }
