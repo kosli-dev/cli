@@ -17,7 +17,7 @@ const evaluateTrailDesc = `Evaluate a trail against a policy.`
 type evaluateTrailOptions struct {
 	flowName     string
 	policyFile   string
-	format       string
+	output       string
 	showInput    bool
 	attestations []string
 }
@@ -43,7 +43,7 @@ func newEvaluateTrailCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
 	cmd.Flags().StringVarP(&o.policyFile, "policy", "p", "", "[optional] Path to a Rego policy file to evaluate against the trail.")
-	cmd.Flags().StringVar(&o.format, "format", "text", "[defaulted] The format of the policy evaluation output. Valid formats are: [text, json].")
+	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	cmd.Flags().BoolVar(&o.showInput, "show-input", false, "[optional] Include the policy input data in the output.")
 	cmd.Flags().StringSliceVar(&o.attestations, "attestations", nil, "[optional] Limit which attestations are included. Plain name for trail-level, dot-qualified (artifact.name) for artifact-level.")
 
@@ -56,8 +56,8 @@ func newEvaluateTrailCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *evaluateTrailOptions) run(out io.Writer, args []string) error {
-	if o.format != "text" && o.format != "json" {
-		return fmt.Errorf("invalid --format value %q: must be one of [text, json]", o.format)
+	if o.output != "table" && o.output != "json" {
+		return fmt.Errorf("invalid --output value %q: must be one of [table, json]", o.output)
 	}
 
 	url := fmt.Sprintf("%s/api/v2/trails/%s/%s/%s", global.Host, global.Org, o.flowName, args[0])
@@ -130,7 +130,7 @@ func (o *evaluateTrailOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
-	if o.format == "json" {
+	if o.output == "json" {
 		auditResult := map[string]interface{}{
 			"allow":      result.Allow,
 			"violations": result.Violations,

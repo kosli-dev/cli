@@ -13,5 +13,5 @@
   - [x] Slice 5a: Array-to-map transform for `attestations_statuses`
   - [x] Slice 5b: Rehydration
   - [x] Slice 5c: `--attestations` filtering
-- [ ] Slice 6: `--output` file flag ← active
+- [x] Slice 6: Replace `--format` with `--output` flag
 - [ ] Slice 7: `kosli evaluate trails` (collection mode)
