@@ -77,15 +77,15 @@ func (suite *EvaluateTrailsCommandTestSuite) TestEvaluateTrailsCmd() {
 			goldenJson: []jsonCheck{{"allow", true}},
 		},
 		{
-			name:   "with --output table and --policy prints ALLOWED text",
-			cmd:    fmt.Sprintf(`evaluate trails %s --flow %s --policy testdata/policies/allow-all.rego --output table %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
-			golden: "Policy evaluation: ALLOWED\n",
+			name:        "with --output table and --policy prints ALLOWED text",
+			cmd:         fmt.Sprintf(`evaluate trails %s --flow %s --policy testdata/policies/allow-all.rego --output table %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenRegex: `RESULT:\s+ALLOWED`,
 		},
 		{
-			wantError: true,
-			name:      "with --output table and deny --policy prints DENIED text with violations",
-			cmd:       fmt.Sprintf(`evaluate trails %s --flow %s --policy testdata/policies/deny-all.rego --output table %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
-			golden:    "Policy evaluation: DENIED\nViolations:\n  - always denied\nError: policy denied: [always denied]\n",
+			wantError:   true,
+			name:        "with --output table and deny --policy prints DENIED text with violations",
+			cmd:         fmt.Sprintf(`evaluate trails %s --flow %s --policy testdata/policies/deny-all.rego --output table %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenRegex: `RESULT:\s+DENIED\nVIOLATIONS:\s+always denied`,
 		},
 		{
 			wantError: true,
