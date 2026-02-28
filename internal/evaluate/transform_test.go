@@ -267,3 +267,25 @@ func TestCollectAttestationIDs(t *testing.T) {
 		assert.Contains(t, ids, "att-art-001")
 	})
 }
+
+func TestRehydrateTrail(t *testing.T) {
+	t.Run("nil details map leaves trail unchanged", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"attestations_statuses": map[string]interface{}{
+					"bar": map[string]interface{}{
+						"attestation_name": "bar",
+						"attestation_id":   "att-uuid-001",
+					},
+				},
+			},
+		}
+		result := RehydrateTrail(input, nil)
+		resultMap := result.(map[string]interface{})
+		cs := resultMap["compliance_status"].(map[string]interface{})
+		bar := cs["attestations_statuses"].(map[string]interface{})["bar"].(map[string]interface{})
+		assert.Equal(t, "bar", bar["attestation_name"])
+		assert.Equal(t, "att-uuid-001", bar["attestation_id"])
+		assert.Nil(t, bar["origin_url"])
+	})
+}

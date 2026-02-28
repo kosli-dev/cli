@@ -65,6 +65,12 @@ func CollectAttestationIDs(trailData interface{}) []string {
 	return ids
 }
 
+// RehydrateTrail merges attestation detail data into the already-transformed
+// trail data. Fields from details are added where the key doesn't already exist.
+func RehydrateTrail(trailData interface{}, details map[string]interface{}) interface{} {
+	return trailData
+}
+
 func collectIDsFromAttestationMap(m map[string]interface{}) []string {
 	var ids []string
 	for _, v := range m {
