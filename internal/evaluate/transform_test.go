@@ -320,6 +320,121 @@ func TestFilterAttestations(t *testing.T) {
 		assert.Contains(t, as, "bar")
 		assert.NotContains(t, as, "baz")
 	})
+
+	t.Run("plain name removes non-matching trail-level attestations", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"attestations_statuses": map[string]interface{}{
+					"alpha": map[string]interface{}{"attestation_name": "alpha"},
+					"beta":  map[string]interface{}{"attestation_name": "beta"},
+					"gamma": map[string]interface{}{"attestation_name": "gamma"},
+				},
+			},
+		}
+		result := FilterAttestations(input, []string{"beta"})
+		cs := result.(map[string]interface{})["compliance_status"].(map[string]interface{})
+		as := cs["attestations_statuses"].(map[string]interface{})
+		assert.Len(t, as, 1)
+		assert.Contains(t, as, "beta")
+	})
+
+	t.Run("dot-qualified name keeps only matching artifact-level attestation", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"artifacts_statuses": map[string]interface{}{
+					"cli": map[string]interface{}{
+						"attestations_statuses": map[string]interface{}{
+							"foo": map[string]interface{}{"attestation_name": "foo"},
+							"bar": map[string]interface{}{"attestation_name": "bar"},
+						},
+					},
+				},
+			},
+		}
+		result := FilterAttestations(input, []string{"cli.foo"})
+		cli := result.(map[string]interface{})["compliance_status"].(map[string]interface{})["artifacts_statuses"].(map[string]interface{})["cli"].(map[string]interface{})
+		as := cli["attestations_statuses"].(map[string]interface{})
+		assert.Len(t, as, 1)
+		assert.Contains(t, as, "foo")
+	})
+
+	t.Run("dot-qualified name: unmentioned artifact gets empty attestations_statuses", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"artifacts_statuses": map[string]interface{}{
+					"cli": map[string]interface{}{
+						"attestations_statuses": map[string]interface{}{
+							"foo": map[string]interface{}{"attestation_name": "foo"},
+						},
+					},
+					"server": map[string]interface{}{
+						"attestations_statuses": map[string]interface{}{
+							"bar": map[string]interface{}{"attestation_name": "bar"},
+						},
+					},
+				},
+			},
+		}
+		result := FilterAttestations(input, []string{"cli.foo"})
+		arts := result.(map[string]interface{})["compliance_status"].(map[string]interface{})["artifacts_statuses"].(map[string]interface{})
+		// cli keeps foo
+		cliAs := arts["cli"].(map[string]interface{})["attestations_statuses"].(map[string]interface{})
+		assert.Len(t, cliAs, 1)
+		assert.Contains(t, cliAs, "foo")
+		// server gets empty attestations_statuses
+		serverAs := arts["server"].(map[string]interface{})["attestations_statuses"].(map[string]interface{})
+		assert.Empty(t, serverAs)
+	})
+
+	t.Run("mixed filters: trail-level and artifact-level both applied", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"attestations_statuses": map[string]interface{}{
+					"trail-att":   map[string]interface{}{"attestation_name": "trail-att"},
+					"trail-other": map[string]interface{}{"attestation_name": "trail-other"},
+				},
+				"artifacts_statuses": map[string]interface{}{
+					"cli": map[string]interface{}{
+						"attestations_statuses": map[string]interface{}{
+							"art-att":   map[string]interface{}{"attestation_name": "art-att"},
+							"art-other": map[string]interface{}{"attestation_name": "art-other"},
+						},
+					},
+				},
+			},
+		}
+		result := FilterAttestations(input, []string{"trail-att", "cli.art-att"})
+		cs := result.(map[string]interface{})["compliance_status"].(map[string]interface{})
+		trailAs := cs["attestations_statuses"].(map[string]interface{})
+		assert.Len(t, trailAs, 1)
+		assert.Contains(t, trailAs, "trail-att")
+		cliAs := cs["artifacts_statuses"].(map[string]interface{})["cli"].(map[string]interface{})["attestations_statuses"].(map[string]interface{})
+		assert.Len(t, cliAs, 1)
+		assert.Contains(t, cliAs, "art-att")
+	})
+
+	t.Run("filters with no matches leave all attestations_statuses empty", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"attestations_statuses": map[string]interface{}{
+					"bar": map[string]interface{}{"attestation_name": "bar"},
+				},
+				"artifacts_statuses": map[string]interface{}{
+					"cli": map[string]interface{}{
+						"attestations_statuses": map[string]interface{}{
+							"foo": map[string]interface{}{"attestation_name": "foo"},
+						},
+					},
+				},
+			},
+		}
+		result := FilterAttestations(input, []string{"nonexistent"})
+		cs := result.(map[string]interface{})["compliance_status"].(map[string]interface{})
+		trailAs := cs["attestations_statuses"].(map[string]interface{})
+		assert.Empty(t, trailAs)
+		cliAs := cs["artifacts_statuses"].(map[string]interface{})["cli"].(map[string]interface{})["attestations_statuses"].(map[string]interface{})
+		assert.Empty(t, cliAs)
+	})
 }
 
 func TestRehydrateTrail(t *testing.T) {
