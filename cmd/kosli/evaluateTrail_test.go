@@ -150,6 +150,35 @@ func (suite *EvaluateTrailCommandTestSuite) TestEvaluateTrailCmd() {
 	runTestCmd(suite.T(), tests)
 }
 
+func (suite *EvaluateTrailCommandTestSuite) TestEvaluateTrailAttestationTransform() {
+	trailName := "test-trail-with-attestations"
+	fingerprint := "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
+
+	BeginTrail(trailName, suite.flowName, "", suite.T())
+	CreateGenericTrailAttestation(suite.flowName, trailName, "bar", suite.T())
+	CreateArtifactOnTrail(suite.flowName, trailName, "cli", fingerprint, "file1", suite.T())
+	CreateGenericArtifactAttestation(suite.flowName, trailName, fingerprint, "foo", true, suite.T())
+
+	tests := []cmdTestCase{
+		{
+			name:       "output has map-keyed trail-level attestations_statuses",
+			cmd:        fmt.Sprintf(`evaluate trail %s --flow %s %s`, trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"trail.compliance_status.attestations_statuses.bar.attestation_name", "bar"}},
+		},
+		{
+			name:       "output has map-keyed artifact-level attestations_statuses",
+			cmd:        fmt.Sprintf(`evaluate trail %s --flow %s %s`, trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenJson: []jsonCheck{{"trail.compliance_status.artifacts_statuses.cli.attestations_statuses.foo.attestation_name", "foo"}},
+		},
+		{
+			name: "rego policy can reference attestation by name",
+			cmd:  fmt.Sprintf(`evaluate trail %s --flow %s --policy testdata/policies/check-attestation-name.rego %s`, trailName, suite.flowName, suite.defaultKosliArguments),
+		},
+	}
+
+	runTestCmd(suite.T(), tests)
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestEvaluateTrailCommandTestSuite(t *testing.T) {
