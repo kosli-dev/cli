@@ -16,4 +16,4 @@
 - [x] Slice 6: Replace `--format` with `--output` flag
 - [ ] Slice 7: `kosli evaluate trails` (collection mode)
   - [x] Slice 7a: Fetch named trails + policy evaluation
-  - [ ] Slice 7b: Full enrichment pipeline ← active
+  - [x] Slice 7b: Full enrichment pipeline
