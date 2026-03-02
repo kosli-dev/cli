@@ -70,6 +70,31 @@ violations contains msg if {
 	require.Contains(t, err.Error(), "allow")
 }
 
+func TestEvaluate_NoViolationsRule(t *testing.T) {
+	policy := `package policy
+
+allow = false
+`
+	input := map[string]interface{}{}
+
+	result, err := Evaluate(policy, input)
+	require.NoError(t, err)
+	require.False(t, result.Allow)
+	require.Empty(t, result.Violations)
+}
+
+func TestEvaluate_NonBooleanAllow(t *testing.T) {
+	policy := `package policy
+
+allow = "yes"
+`
+	input := map[string]interface{}{}
+
+	_, err := Evaluate(policy, input)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "boolean")
+}
+
 func TestEvaluate_SyntaxError(t *testing.T) {
 	policy := `package policy
 

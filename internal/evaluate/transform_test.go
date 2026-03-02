@@ -268,6 +268,33 @@ func TestCollectAttestationIDs(t *testing.T) {
 	})
 }
 
+func TestCollectAttestationIDs_Deduplication(t *testing.T) {
+	t.Run("duplicate IDs across trail and artifact level are deduplicated", func(t *testing.T) {
+		input := map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"attestations_statuses": map[string]interface{}{
+					"trail-att": map[string]interface{}{
+						"attestation_name": "trail-att",
+						"attestation_id":   "att-uuid-001",
+					},
+				},
+				"artifacts_statuses": map[string]interface{}{
+					"art1": map[string]interface{}{
+						"attestations_statuses": map[string]interface{}{
+							"art-att": map[string]interface{}{
+								"attestation_name": "art-att",
+								"attestation_id":   "att-uuid-001",
+							},
+						},
+					},
+				},
+			},
+		}
+		ids := CollectAttestationIDs(input)
+		assert.Equal(t, []string{"att-uuid-001"}, ids)
+	})
+}
+
 func TestFilterAttestations(t *testing.T) {
 	t.Run("nil filters returns trail unchanged", func(t *testing.T) {
 		input := map[string]interface{}{
@@ -434,6 +461,52 @@ func TestFilterAttestations(t *testing.T) {
 		assert.Empty(t, trailAs)
 		cliAs := cs["artifacts_statuses"].(map[string]interface{})["cli"].(map[string]interface{})["attestations_statuses"].(map[string]interface{})
 		assert.Empty(t, cliAs)
+	})
+}
+
+func TestFilterAttestations_MalformedFilters(t *testing.T) {
+	makeInput := func() interface{} {
+		return map[string]interface{}{
+			"compliance_status": map[string]interface{}{
+				"attestations_statuses": map[string]interface{}{
+					"bar": map[string]interface{}{"attestation_name": "bar"},
+					"baz": map[string]interface{}{"attestation_name": "baz"},
+				},
+				"artifacts_statuses": map[string]interface{}{
+					"cli": map[string]interface{}{
+						"attestations_statuses": map[string]interface{}{
+							"foo": map[string]interface{}{"attestation_name": "foo"},
+						},
+					},
+				},
+			},
+		}
+	}
+
+	t.Run("leading dot is skipped, behaves same as without it", func(t *testing.T) {
+		// .foo is malformed and should be ignored — result same as ["bar"] alone
+		withMalformed := FilterAttestations(
+			makeInput(), []string{".foo", "bar"})
+		withoutMalformed := FilterAttestations(
+			makeInput(), []string{"bar"})
+		assert.Equal(t, withoutMalformed, withMalformed)
+	})
+
+	t.Run("trailing dot is skipped, behaves same as without it", func(t *testing.T) {
+		// cli. is malformed and should be ignored — result same as ["bar"] alone
+		withMalformed := FilterAttestations(
+			makeInput(), []string{"cli.", "bar"})
+		withoutMalformed := FilterAttestations(
+			makeInput(), []string{"bar"})
+		assert.Equal(t, withoutMalformed, withMalformed)
+	})
+
+	t.Run("empty string filter is skipped, behaves same as without it", func(t *testing.T) {
+		withMalformed := FilterAttestations(
+			makeInput(), []string{"", "bar"})
+		withoutMalformed := FilterAttestations(
+			makeInput(), []string{"bar"})
+		assert.Equal(t, withoutMalformed, withMalformed)
 	})
 }
 

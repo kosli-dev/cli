@@ -34,13 +34,16 @@ func Evaluate(policySource string, input interface{}) (*Result, error) {
 		return nil, fmt.Errorf("policy evaluation failed: %w", err)
 	}
 
-	result := &Result{}
-
-	if len(rs) > 0 && len(rs[0].Expressions) > 0 {
-		if allow, ok := rs[0].Expressions[0].Value.(bool); ok {
-			result.Allow = allow
-		}
+	if len(rs) == 0 || len(rs[0].Expressions) == 0 {
+		return nil, fmt.Errorf("policy did not return a result for 'data.policy.allow'")
 	}
+
+	allow, ok := rs[0].Expressions[0].Value.(bool)
+	if !ok {
+		return nil, fmt.Errorf("policy 'allow' rule must evaluate to boolean, got %T", rs[0].Expressions[0].Value)
+	}
+
+	result := &Result{Allow: allow}
 
 	if !result.Allow {
 		violations, err := collectViolations(ctx, policySource, input)
@@ -61,7 +64,7 @@ func validatePolicy(policySource string) error {
 
 	if module.Package.Path.String() != "data.policy" {
 		return fmt.Errorf("policy package must be 'package policy', got '%s'",
-			module.Package.Path[1:])
+			module.Package.Path[1:].String())
 	}
 
 	hasAllow := false
@@ -87,7 +90,7 @@ func collectViolations(ctx context.Context, policySource string, input interface
 
 	rs, err := r.Eval(ctx)
 	if err != nil {
-		return nil, nil // violations rule is optional
+		return nil, fmt.Errorf("violations evaluation failed: %w", err)
 	}
 
 	var violations []string

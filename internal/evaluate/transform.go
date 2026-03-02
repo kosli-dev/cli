@@ -41,8 +41,14 @@ func TransformTrail(trailData interface{}) interface{} {
 // from the already-transformed (map-keyed) trail data.
 func CollectAttestationIDs(trailData interface{}) []string {
 	var ids []string
+	seen := make(map[string]bool)
 	walkTrailAttestations(trailData, func(_ string, as map[string]interface{}) {
-		ids = append(ids, collectIDsFromAttestationMap(as)...)
+		for _, id := range collectIDsFromAttestationMap(as) {
+			if !seen[id] {
+				seen[id] = true
+				ids = append(ids, id)
+			}
+		}
 	})
 	return ids
 }
@@ -119,9 +125,15 @@ func parseAttestationFilters(filters []string) (trailFilters map[string]bool, ar
 	trailFilters = make(map[string]bool)
 	artifactFilters = make(map[string]map[string]bool)
 	for _, f := range filters {
+		if f == "" {
+			continue
+		}
 		if dotIdx := strings.IndexByte(f, '.'); dotIdx >= 0 {
 			artName := f[:dotIdx]
 			attName := f[dotIdx+1:]
+			if artName == "" || attName == "" {
+				continue
+			}
 			if artifactFilters[artName] == nil {
 				artifactFilters[artName] = make(map[string]bool)
 			}
