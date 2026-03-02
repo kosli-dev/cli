@@ -107,9 +107,7 @@ func (o *getRepoOptions) run(out io.Writer, args []string) error {
 
 func printRepoAsTable(raw string, out io.Writer, page int) error {
 	var response struct {
-		Embedded struct {
-			Repos []map[string]any `json:"repos"`
-		} `json:"_embedded"`
+		Repos []map[string]any `json:"repos"`
 	}
 
 	err := json.Unmarshal([]byte(raw), &response)
@@ -117,7 +115,7 @@ func printRepoAsTable(raw string, out io.Writer, page int) error {
 		return err
 	}
 
-	repos := response.Embedded.Repos
+	repos := response.Repos
 	if len(repos) == 0 {
 		logger.Info("Repo was not found.")
 		return nil

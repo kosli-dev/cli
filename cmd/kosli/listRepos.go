@@ -84,16 +84,14 @@ func (o *listReposOptions) run(out io.Writer) error {
 func printReposListAsTable(raw string, out io.Writer, page int) error {
 	var repos []map[string]any
 	var response struct {
-		Embedded struct {
-			Repos []map[string]any `json:"repos"`
-		} `json:"_embedded"`
+		Repos []map[string]any `json:"repos"`
 	}
 
 	err := json.Unmarshal([]byte(raw), &response)
 	if err != nil {
 		return err
 	}
-	repos = response.Embedded.Repos
+	repos = response.Repos
 
 	if len(repos) == 0 {
 		logger.Info("No repos were found.")
