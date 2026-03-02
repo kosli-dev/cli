@@ -62,13 +62,13 @@ func (suite *ListReposCommandTestSuite) TestListReposCmd() {
 		{
 			name:       "03-listing repos with --output json works when there are repos",
 			cmd:        fmt.Sprintf(`list repos --output json %s`, suite.acmeOrgKosliArguments),
-			goldenJson: []jsonCheck{{"_embedded.repos", "non-empty"}},
+			goldenJson: []jsonCheck{{"repos", "non-empty"}},
 		},
 		// THIS TEST IS FLAKY IN CI SINCE CI VARIABLES ARE SET THERE AND REPOS MAY EXIST FROM OTHER TESTS
 		// {
 		// 	name:       "04-listing repos with --output json works when there are no repos",
 		// 	cmd:        fmt.Sprintf(`list repos --output json %s`, suite.defaultKosliArguments),
-		// 	goldenJson: []jsonCheck{{"_embedded.repos", "[]"}},
+		// 	goldenJson: []jsonCheck{{"repos", "[]"}},
 		// },
 		{
 			wantError: true,
@@ -101,7 +101,7 @@ func (suite *ListReposCommandTestSuite) TestListReposCmd() {
 		{
 			name:       "10-listing repos with --name filter and --output json works",
 			cmd:        fmt.Sprintf(`list repos --name kosli-dev/cli --output json %s`, suite.acmeOrgKosliArguments),
-			goldenJson: []jsonCheck{{"_embedded.repos", "non-empty"}},
+			goldenJson: []jsonCheck{{"repos", "non-empty"}},
 		},
 		{
 			name:        "11-listing repos with --provider filter works",

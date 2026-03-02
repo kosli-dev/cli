@@ -60,7 +60,7 @@ func (suite *GetRepoCommandTestSuite) TestGetRepoCmd() {
 		{
 			name:       "03-getting an existing repo with --output json works",
 			cmd:        fmt.Sprintf(`get repo kosli-dev/cli --output json %s`, suite.acmeOrgKosliArguments),
-			goldenJson: []jsonCheck{{"_embedded.repos", "non-empty"}},
+			goldenJson: []jsonCheck{{"repos", "non-empty"}},
 		},
 		{
 			name: "04-getting an existing repo with matching --provider works",
@@ -69,7 +69,7 @@ func (suite *GetRepoCommandTestSuite) TestGetRepoCmd() {
 		{
 			name:       "05-getting an existing repo with matching --provider and --output json works",
 			cmd:        fmt.Sprintf(`get repo kosli-dev/cli --provider github --output json %s`, suite.acmeOrgKosliArguments),
-			goldenJson: []jsonCheck{{"_embedded.repos", "non-empty"}},
+			goldenJson: []jsonCheck{{"repos", "non-empty"}},
 		},
 		{
 			name:   "06-getting a repo with a non-matching --provider returns not-found message",
