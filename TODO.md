@@ -25,6 +25,4 @@
 - [x] Slice 15: DRY up command flag registration
 - [x] Slice 16: Extract tree-traversal duplication in transform.go
 - [x] Slice 17: Align test method naming
-- [ ] Slice 18: Fail evaluation when rehydration errors occur (instead of silently swallowing them) ← active
-  - [ ] evaluate trail returns error when attestation detail fetch fails (server error)
-  - [ ] evaluate trail returns error when attestation detail response is unparseable
+- [x] Slice 18: Fail evaluation when rehydration errors occur (instead of silently swallowing them)
