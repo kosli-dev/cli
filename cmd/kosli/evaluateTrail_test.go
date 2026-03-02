@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -224,6 +227,43 @@ func (suite *EvaluateTrailCommandTestSuite) TestEvaluateTrailAttestationsFilter(
 		{
 			name: "rego policy referencing filtered-in attestation passes",
 			cmd:  fmt.Sprintf(`evaluate trail %s --flow %s --attestations trail-att --policy testdata/policies/check-filtered-attestation.rego %s`, trailName, suite.flowName, suite.defaultKosliArguments),
+		},
+	}
+
+	runTestCmd(suite.T(), tests)
+}
+
+func (suite *EvaluateTrailCommandTestSuite) TestEvaluateTrailRehydrationError() {
+	trailResponse := `{
+		"name": "test-trail",
+		"compliance_status": {
+			"attestations_statuses": [
+				{"attestation_name": "att1", "attestation_id": "some-id"}
+			]
+		}
+	}`
+
+	fakeServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.URL.Path, "/api/v2/trails/") {
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, trailResponse)
+			return
+		}
+		if strings.Contains(r.URL.Path, "/api/v2/attestations/") {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, `{"message": "internal server error"}`)
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer fakeServer.Close()
+
+	tests := []cmdTestCase{
+		{
+			wantError:   true,
+			name:        "returns error when attestation detail fetch fails",
+			cmd:         fmt.Sprintf(`evaluate trail test-trail --flow test-flow --policy testdata/policies/allow-all.rego --host %s --org test-org --api-token test-token --max-api-retries 0`, fakeServer.URL),
+			goldenRegex: `Error: failed to fetch attestation detail for some-id: .*giving up after 1 attempt`,
 		},
 	}
 
