@@ -258,12 +258,33 @@ func (suite *EvaluateTrailCommandTestSuite) TestEvaluateTrailRehydrationError() 
 	}))
 	defer fakeServer.Close()
 
+	fakeServerBadJSON := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.URL.Path, "/api/v2/trails/") {
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, trailResponse)
+			return
+		}
+		if strings.Contains(r.URL.Path, "/api/v2/attestations/") {
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, `not-json`)
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer fakeServerBadJSON.Close()
+
 	tests := []cmdTestCase{
 		{
 			wantError:   true,
 			name:        "returns error when attestation detail fetch fails",
 			cmd:         fmt.Sprintf(`evaluate trail test-trail --flow test-flow --policy testdata/policies/allow-all.rego --host %s --org test-org --api-token test-token --max-api-retries 0`, fakeServer.URL),
 			goldenRegex: `Error: failed to fetch attestation detail for some-id: .*giving up after 1 attempt`,
+		},
+		{
+			wantError:   true,
+			name:        "returns error when attestation detail response is unparseable",
+			cmd:         fmt.Sprintf(`evaluate trail test-trail --flow test-flow --policy testdata/policies/allow-all.rego --host %s --org test-org --api-token test-token --max-api-retries 0`, fakeServerBadJSON.URL),
+			goldenRegex: `Error: failed to parse attestation detail for some-id: `,
 		},
 	}
 
