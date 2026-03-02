@@ -246,12 +246,12 @@ func (suite *EvaluateTrailCommandTestSuite) TestEvaluateTrailRehydrationError() 
 	fakeServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.URL.Path, "/api/v2/trails/") {
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprint(w, trailResponse)
+			_, _ = fmt.Fprint(w, trailResponse)
 			return
 		}
 		if strings.Contains(r.URL.Path, "/api/v2/attestations/") {
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprint(w, `{"message": "internal server error"}`)
+			_, _ = fmt.Fprint(w, `{"message": "internal server error"}`)
 			return
 		}
 		w.WriteHeader(http.StatusNotFound)
@@ -261,12 +261,12 @@ func (suite *EvaluateTrailCommandTestSuite) TestEvaluateTrailRehydrationError() 
 	fakeServerBadJSON := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.URL.Path, "/api/v2/trails/") {
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprint(w, trailResponse)
+			_, _ = fmt.Fprint(w, trailResponse)
 			return
 		}
 		if strings.Contains(r.URL.Path, "/api/v2/attestations/") {
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprint(w, `not-json`)
+			_, _ = fmt.Fprint(w, `not-json`)
 			return
 		}
 		w.WriteHeader(http.StatusNotFound)
