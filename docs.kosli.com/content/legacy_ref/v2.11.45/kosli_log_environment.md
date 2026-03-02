@@ -35,6 +35,7 @@ Either expression can be omitted to default to NOW.
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 |        --page int  |  [defaulted] The page number of a response. (default 1)  |
 |    -n, --page-limit int  |  [defaulted] The number of elements per page. (default 15)  |
+|        --repo strings  |  [optional] The name of a git repo as it is registered in Kosli. e.g kosli-dev/cli  |
 |        --reverse  |  [defaulted] Reverse the order of output list.  |
 
 
@@ -81,5 +82,22 @@ kosli log environment yourEnvironmentName
 kosli log environment yourEnvironmentName 
 	--page-limit 30 
 	--output json
+
+```
+
+##### list events for an environment filtered by repo
+
+```shell
+kosli log environment yourEnvironmentName 
+	--repo yourOrg/yourRepo 
+
+```
+
+##### list events for an environment filtered by multiple repos
+
+```shell
+kosli log environment yourEnvironmentName 
+	--repo yourOrg/yourRepo1 
+	--repo yourOrg/yourRepo2 
 ```
 
