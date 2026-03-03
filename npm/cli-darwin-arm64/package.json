@@ -1,11 +1,17 @@
 {
   "name": "@kosli-dev/cli-darwin-arm64",
-  "version": "2.11.43-SNAPSHOT-a7aad9f9",
+  "version": "0.0.0",
   "description": "macOS arm64 binary for @kosli-dev/cli",
   "license": "MIT",
-  "os": ["darwin"],
-  "cpu": ["arm64"],
-  "files": ["bin/"],
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "files": [
+    "bin/"
+  ],
   "publishConfig": {
     "registry": "https://gitlab:8929/api/v4/projects/2/packages/npm/",
     "access": "public"

@@ -1,6 +1,6 @@
 {
-  "name": "@kosli-dev/cli", 
-  "version": "2.11.43-SNAPSHOT-a7aad9f9",
+  "name": "@kosli-dev/cli",
+  "version": "0.0.0",
   "description": "CLI client for reporting compliance events to https://kosli.com",
   "license": "MIT",
   "author": "Kosli Inc. <hello@kosli.com>",
@@ -12,11 +12,20 @@
   "bugs": {
     "url": "https://github.com/kosli-dev/cli/issues"
   },
-  "keywords": ["cli", "kosli", "compliance", "supply-chain", "devops"],
+  "keywords": [
+    "cli",
+    "kosli",
+    "compliance",
+    "supply-chain",
+    "devops"
+  ],
   "bin": {
     "kosli": "bin/kosli"
   },
-  "files": ["bin/", "install.js"],
+  "files": [
+    "bin/",
+    "install.js"
+  ],
   "scripts": {
     "postinstall": "node install.js"
   },
