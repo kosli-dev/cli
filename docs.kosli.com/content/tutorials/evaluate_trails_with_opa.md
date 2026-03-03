@@ -203,3 +203,56 @@ fi
 ```
 
 This pattern lets you enforce custom compliance rules as part of your delivery pipeline, using the same trail data that Kosli already collects.
+
+## Step 7: Record the evaluation
+
+After evaluating a trail, you can record the result as an attestation — creating an
+audit record in Kosli that captures the policy, the full evaluation report, and any
+violations.
+
+This step requires write access to your Kosli org. The examples below use variables
+you'd set in your CI/CD pipeline:
+
+```shell {.command}
+# Run the evaluation and save the full JSON report to a file
+# (|| true prevents the step from failing when the policy denies)
+kosli evaluate trail "$TRAIL_NAME" \
+  --policy pr-approved-single.rego \
+  --org "$KOSLI_ORG" \
+  --flow "$FLOW_NAME" \
+  --show-input \
+  --output json > eval-report.json 2>/dev/null || true
+
+# Read the allow/deny result from the report
+is_compliant=$(jq -r '.allow' eval-report.json)
+
+# Extract violations as structured user-data
+jq '{violations: .violations}' eval-report.json > eval-violations.json
+
+# Attest the result
+kosli attest generic \
+  --name opa-evaluation \
+  --flow "$FLOW_NAME" \
+  --trail "$TRAIL_NAME" \
+  --org "$KOSLI_ORG" \
+  --compliant="$is_compliant" \
+  --attachments pr-approved-single.rego,eval-report.json \
+  --user-data eval-violations.json
+```
+
+This creates a generic attestation on the trail with:
+
+- **`--compliant`** set based on whether the policy allowed or denied — read directly
+  from the JSON report rather than relying on the exit code, which avoids issues with
+  `set -e` in CI environments like GitHub Actions
+- **`--attachments`** containing the Rego policy (for reproducibility) and the full
+  JSON evaluation report (including the input data the policy evaluated)
+- **`--user-data`** containing the violations, which appear in the Kosli UI as
+  structured metadata on the attestation
+
+{{<hint warning>}}
+Use `--compliant=value` (with `=`) not `--compliant value` (with a space). Boolean
+flags in Kosli CLI require the `=` syntax when passing `false` — otherwise `false`
+is interpreted as a positional argument. See the
+[boolean flags FAQ](/faq/#boolean-flags).
+{{</hint>}}
