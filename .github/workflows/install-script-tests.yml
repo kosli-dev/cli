@@ -31,7 +31,7 @@ jobs:
           shell: bash
           run: |
             chmod +x install-cli.sh
-            bash bin/test_install_script.sh
+            bash bin/test_install_script.sh --token ${{ secrets.GITHUB_TOKEN }}
 
     mac-homebrew:
         name: Test Homebrew Installation on macOS
@@ -53,4 +53,4 @@ jobs:
           shell: bash
           run: |
             chmod +x install-cli.sh
-            bash bin/test_install_script_over_homebrew.sh
+            bash bin/test_install_script_over_homebrew.sh --token ${{ secrets.GITHUB_TOKEN }}
