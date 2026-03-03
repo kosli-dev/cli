@@ -180,7 +180,7 @@ kosli evaluate trail \
 ```
 
 {{<hint info>}}
-Use the `--attestations` flag to limit which attestations are enriched with full detail. For example, `--attestations pull-request` fetches only pull request attestation details, which speeds up evaluation and reduces noise when exploring the input.
+Use the `--attestations` flag to limit which attestations are enriched with full detail. The flag filters by **attestation name** (not type). For example, `--attestations pull-request` fetches only details for attestations named `pull-request`, which speeds up evaluation and reduces noise when exploring the input.
 {{</hint>}}
 
 ## Step 6: Use in CI/CD
