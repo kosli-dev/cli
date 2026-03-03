@@ -60,7 +60,6 @@ if command -v kosli >/dev/null 2>&1; then
     debug_print "Existing Kosli directory: $EXISTING_KOSLI_DIR"
     
     TARGET_INSTALL_DIR="$EXISTING_KOSLI_DIR"
-    debug_print "Found existing Kosli installation in: $TARGET_INSTALL_DIR"
 fi
 
 # --- Version Selection ---
