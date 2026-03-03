@@ -8,14 +8,14 @@ TOKEN=""
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --token) 
-		    if [[ -n "$2" && "$2" != --* ]]; then
-		      TOKEN="$2"
-			  shift
-			else
-			  echo "Error: --token requires a value"
-			  exit 1
-			fi
-			;;
+            if [[ -n "$2" && "$2" != --* ]]; then
+                TOKEN="$2"
+                shift
+            else
+                echo "Error: --token requires a value"
+                exit 1
+            fi
+            ;;
         *) echo "Unknown parameter: $1"; exit 1 ;;
     esac
     shift

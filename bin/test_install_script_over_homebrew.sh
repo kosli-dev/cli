@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Note: set -e is intentionally omitted here to allow manual exit code checking.
+
 # Attempt to run the install script
 ./install-cli.sh
 
