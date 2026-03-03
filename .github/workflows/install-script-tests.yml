@@ -40,10 +40,6 @@ jobs:
         steps:
         - name: Checkout repository
           uses: actions/checkout@v5
-        - name: install homebrew
-          shell: bash
-          run: |
-            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
         - name: Run Homebrew install 
           shell: bash
