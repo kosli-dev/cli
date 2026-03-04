@@ -25,11 +25,12 @@
       "Bash(CI=true etuk *)",
       "Bash(CI=true etik *)",
       "Bash(source *)",
-      "Bash(xargs *)"
+      "Bash(xargs *)",
+      "Bash(git checkout -b *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ],
     "deny": [
-      "Bash(git add *)",
-      "Bash(git commit *)",
       "Bash(git push *)",
       "Bash(rm -rf *)",
       "Bash(curl *)",
