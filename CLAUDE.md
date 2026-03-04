@@ -116,7 +116,7 @@ If a function is hard to test, that's a design signal — restructure so depende
 
 - Create a feature branch before the first commit: `git checkout -b feature-name`.
 - Each feature gets its own branch ready to push to a PR. User decides when to make a PR.
-- We can consider rebaseing to squash commits for a slice if needed (see below)
+- We can consider rebasing to squash commits for a slice if needed (see below)
 
 ## Working Style: Thin Vertical Slices
 

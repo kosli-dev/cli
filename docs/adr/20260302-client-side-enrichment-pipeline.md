@@ -21,9 +21,9 @@ There is no "trail status", "trail slots", or "trail moment" API that provides a
 
 ## Decision Drivers
 
-- Rego policies need to reference attestations by name (e.g. `input.trail.compliance_status.attestations_statuses.pull_request`)
+- Rego policies need to reference attestations by their literal names (e.g. `input.trail.compliance_status.attestations_statuses["pull-request"]` for an attestation named `pull-request`)
 - Policies may need full attestation detail data (not just the summary in the trail response)
-- No server-side API provides this data in a policy-ready shape yet
+- No server-side API provides this data in a policy-ready, map-based shape yet
 - The enrichment should be transparent — users write policies against the enriched shape without knowing the pipeline exists
 
 ## Options Considered
