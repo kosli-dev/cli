@@ -26,4 +26,4 @@
 - [x] Slice 16: Extract tree-traversal duplication in transform.go
 - [x] Slice 17: Align test method naming
 - [x] Slice 18: Fail evaluation when rehydration errors occur (instead of silently swallowing them)
-- [ ] Slice 19: Add Long descriptions and Example blocks to evaluate commands ← active
+- [x] Slice 19: Add Long descriptions, Example blocks, and docs feedback (policy contract hint, snyk trail example)
