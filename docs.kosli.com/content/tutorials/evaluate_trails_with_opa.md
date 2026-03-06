@@ -2,7 +2,6 @@
 title: "Evaluate trails with OPA policies"
 bookCollapseSection: false
 weight: 509
-draft: true
 summary: "Learn how to use kosli evaluate trail and kosli evaluate trails to check your Kosli trails against custom OPA/Rego policies. This tutorial walks through writing a policy that verifies pull requests have been approved."
 ---
 
@@ -59,7 +58,11 @@ Let's break down what this policy does:
 - **`allow`** — trails are allowed only when there are no violations.
 
 {{<hint info>}}
-The policy contract requires `package policy` and an `allow` rule. The `violations` rule is optional but recommended — it provides human-readable reasons when a trail is denied.
+**Policy contract** — these are Kosli-specific conventions, not OPA built-ins:
+
+- **`package policy`** — required. Kosli queries `data.policy.*` to find your rules.
+- **`allow`** — required. Must evaluate to a **boolean**. Kosli exits with code 0 when `true`, code 1 when `false`.
+- **`violations`** — optional but recommended. Must be a **set of strings**, where each string is a human-readable reason the policy failed. Kosli displays these when `allow` is `false`.
 {{</hint>}}
 
 ## Step 3: Evaluate multiple trails
@@ -105,7 +108,9 @@ RESULT:  ALLOWED
 
 ## Step 4: Evaluate a single trail
 
-To evaluate just one trail, use `kosli evaluate trail` (singular). The data is passed to the policy as `input.trail` instead of `input.trails`, so you need a slightly different policy. Save this as `pr-approved-single.rego`:
+The `kosli evaluate trail` (singular) command evaluates facts within a single trail — a different use case from comparing across multiple trails. For example, you might check that a snyk container scan found no high-severity vulnerabilities.
+
+Save this as `snyk-no-high-vulns.rego`:
 
 ```rego
 package policy
@@ -115,9 +120,11 @@ import rego.v1
 default allow = false
 
 violations contains msg if {
-    some pr in input.trail.compliance_status.attestations_statuses["pull-request"].pull_requests
-    count(pr.approvers) == 0
-    msg := sprintf("trail '%v': pull-request %v has no approvers", [input.trail.name, pr.url])
+    some name, artifact in input.trail.compliance_status.artifacts_statuses
+    snyk := artifact.attestations_statuses["snyk-container-scan"]
+    some result in snyk.processed_snyk_results.results
+    result.high_count > 0
+    msg := sprintf("artifact '%v': snyk container scan found %d high severity vulnerabilities", [name, result.high_count])
 }
 
 allow if {
@@ -125,21 +132,27 @@ allow if {
 }
 ```
 
+This policy iterates over every artifact in the trail, looks up its `snyk-container-scan` attestation, and checks whether any result has a non-zero `high_count`.
+
+Use `--attestations` to enrich only the snyk data (faster than fetching all attestation details):
+
 ```shell {.command}
 kosli evaluate trail \
-  --policy pr-approved-single.rego \
+  --policy snyk-no-high-vulns.rego \
   --org cyber-dojo \
   --flow dashboard-ci \
-  9978a1ca82c273a68afaa85fc37dd60d1e394f84
+  --attestations dashboard.snyk-container-scan \
+  44ca5fa2630947cf375fdbda10972a4bedaaaba3
 ```
 
 ```plaintext {.light-console}
-RESULT:      DENIED
-VIOLATIONS:  trail '9978a1ca82c273a68afaa85fc37dd60d1e394f84': pull-request https://github.com/cyber-dojo/dashboard/pull/344 has no approvers
+RESULT:  ALLOWED
 ```
 
+The trail has zero high-severity vulnerabilities, so the policy allows it.
+
 {{<hint info>}}
-When writing a policy for `kosli evaluate trail`, reference `input.trail` (a single object) instead of `input.trails` (an array). You can write one policy that handles both by checking for both keys, or keep separate policies for each command.
+When writing a policy for `kosli evaluate trail`, reference `input.trail` (a single object). For `kosli evaluate trails`, reference `input.trails` (an array). The data shapes differ, so use separate policies for each command.
 {{</hint>}}
 
 ## Step 5: Explore the policy input with --show-input
@@ -148,24 +161,26 @@ When writing policies, it helps to see exactly what data is available. Use `--sh
 
 ```shell {.command}
 kosli evaluate trail \
-  --policy pr-approved-single.rego \
+  --policy snyk-no-high-vulns.rego \
   --org cyber-dojo \
   --flow dashboard-ci \
+  --attestations dashboard.snyk-container-scan \
   --show-input \
   --output json \
-  9978a1ca82c273a68afaa85fc37dd60d1e394f84
+  44ca5fa2630947cf375fdbda10972a4bedaaaba3
 ```
 
 This outputs the evaluation result along with the complete `input` object. You can pipe it through `jq` to explore the structure:
 
 ```shell {.command}
 kosli evaluate trail \
-  --policy pr-approved-single.rego \
+  --policy snyk-no-high-vulns.rego \
   --org cyber-dojo \
   --flow dashboard-ci \
+  --attestations dashboard.snyk-container-scan \
   --show-input \
   --output json \
-  9978a1ca82c273a68afaa85fc37dd60d1e394f84 2>/dev/null | jq '.input.trail.compliance_status | keys'
+  44ca5fa2630947cf375fdbda10972a4bedaaaba3 2>/dev/null | jq '.input.trail.compliance_status | keys'
 ```
 
 ```plaintext {.light-console}
@@ -217,7 +232,7 @@ you'd set in your CI/CD pipeline:
 # Run the evaluation and save the full JSON report to a file
 # (|| true prevents the step from failing when the policy denies)
 kosli evaluate trail "$TRAIL_NAME" \
-  --policy pr-approved-single.rego \
+  --policy my-policy.rego \
   --org "$KOSLI_ORG" \
   --flow "$FLOW_NAME" \
   --show-input \
@@ -236,7 +251,7 @@ kosli attest generic \
   --trail "$TRAIL_NAME" \
   --org "$KOSLI_ORG" \
   --compliant="$is_compliant" \
-  --attachments pr-approved-single.rego,eval-report.json \
+  --attachments my-policy.rego,eval-report.json \
   --user-data eval-violations.json
 ```
 

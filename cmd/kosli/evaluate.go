@@ -6,13 +6,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const evaluateDesc = `All Kosli evaluate commands.`
+const evaluateShortDesc = `Evaluate Kosli trail data against OPA/Rego policies.`
+
+const evaluateLongDesc = evaluateShortDesc + `
+Fetch trail data from Kosli and evaluate it against custom policies written
+in Rego, the policy language used by Open Policy Agent (OPA).
+The policy must use ` + "`package policy`" + ` and define an ` + "`allow`" + ` rule.
+An optional ` + "`violations`" + ` rule (a set of strings) can provide human-readable denial reasons.
+The command exits with code 0 when allowed and code 1 when denied.`
 
 func newEvaluateCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "evaluate",
-		Short: evaluateDesc,
-		Long:  evaluateDesc,
+		Short: evaluateShortDesc,
+		Long:  evaluateLongDesc,
 	}
 
 	// Add subcommands
