@@ -2,7 +2,6 @@
 title: "Evaluate trails with OPA policies"
 bookCollapseSection: false
 weight: 509
-draft: true
 summary: "Learn how to use kosli evaluate trail and kosli evaluate trails to check your Kosli trails against custom OPA/Rego policies. This tutorial walks through writing a policy that verifies pull requests have been approved."
 ---
 
