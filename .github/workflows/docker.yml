@@ -115,7 +115,7 @@ jobs:
 
 
     - name: Attest SBOM to Github
-      uses: actions/attest-sbom@v1
+      uses: actions/attest-sbom@v4
       with:
         sbom-path: 'sbom.spdx.json'
         subject-name: ${{ env.IMAGE }}
