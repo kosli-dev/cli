@@ -6,14 +6,14 @@ This directory contains the npm package structure for distributing the Kosli CLI
 
 ```
 npm/
-├── wrapper/              # @kosli-dev/cli — the package users install
+├── wrapper/              # @jbrejner/cli — the package users install
 │   ├── package.json      # declares optionalDependencies for all platforms
 │   ├── bin/kosli         # JS shim that detects the platform and runs the binary
 │   └── install.js        # postinstall script that validates the binary
-├── cli-linux-x64/        # @kosli-dev/cli-linux-x64
-├── cli-linux-arm64/      # @kosli-dev/cli-linux-arm64
-├── cli-darwin-x64/       # @kosli-dev/cli-darwin-x64
-└── cli-darwin-arm64/     # @kosli-dev/cli-darwin-arm64
+├── cli-linux-x64/        # @jbrejner/cli-linux-x64
+├── cli-linux-arm64/      # @jbrejner/cli-linux-arm64
+├── cli-darwin-x64/       # @jbrejner/cli-darwin-x64
+└── cli-darwin-arm64/     # @jbrejner/cli-darwin-arm64
     ├── package.json      # declares os/cpu fields for platform filtering
     └── bin/kosli         # the native binary — see below
 ```
@@ -23,7 +23,7 @@ npm/
 Users install a single package:
 
 ```sh
-npm install @kosli-dev/cli
+npm install @jbrejner/cli
 ```
 
 npm resolves the `optionalDependencies` declared in the wrapper's `package.json` and installs only the platform-specific package that matches the current OS and CPU architecture — all non-matching packages are silently skipped. The wrapper's `bin/kosli` JS shim then locates the binary inside the installed platform package and executes it.

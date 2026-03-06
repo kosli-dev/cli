@@ -1,13 +1,13 @@
 {
-  "name": "@jbrejner/cli-darwin-arm64",
+  "name": "@jbrejner/cli-linux-arm",
   "version": "0.0.0",
-  "description": "macOS arm64 binary for @jbrejner/cli",
+  "description": "Linux arm binary for @jbrejner/cli",
   "license": "MIT",
   "os": [
-    "darwin"
+    "linux"
   ],
   "cpu": [
-    "arm64"
+    "arm"
   ],
   "files": [
     "bin/"

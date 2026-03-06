@@ -1,7 +1,7 @@
 {
-  "name": "@kosli-dev/cli-linux-arm64",
+  "name": "@jbrejner/cli-linux-arm64",
   "version": "0.0.0",
-  "description": "Linux arm64 binary for @kosli-dev/cli",
+  "description": "Linux arm64 binary for @jbrejner/cli",
   "license": "MIT",
   "os": [
     "linux"
@@ -13,7 +13,7 @@
     "bin/"
   ],
   "publishConfig": {
-    "registry": "https://gitlab:8929/api/v4/projects/2/packages/npm/",
+    "registry": "https://npm.pkg.github.com",
     "access": "public"
   }
 }

@@ -1,14 +1,14 @@
 "use strict";
 
 // Postinstall script: validates that the platform binary was installed correctly.
-// Runs after `npm install @kosli-dev/cli`.
+// Runs after `npm install @jbrejner/cli`.
 
 const { execFileSync } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 
 const SUPPORTED = {
-  linux: { x64: true, arm64: true },
+  linux: { x64: true, arm64: true, arm: true },
   darwin: { x64: true, arm64: true },
   win32: { x64: true, arm64: true },
 };
@@ -21,7 +21,7 @@ if (!SUPPORTED[platform] || !SUPPORTED[platform][arch]) {
   process.exit(0);
 }
 
-const packageName = `@kosli-dev/cli-${platform}-${arch}`;
+const packageName = `@jbrejner/cli-${platform}-${arch}`;
 
 let binaryPath;
 try {
