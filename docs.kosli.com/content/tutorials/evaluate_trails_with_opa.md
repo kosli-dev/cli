@@ -18,6 +18,7 @@ To follow this tutorial, you need to:
 * [Install Kosli CLI](/getting_started/install/).
 * [Get a Kosli API token](/getting_started/service-accounts/).
 * Set the `KOSLI_API_TOKEN` environment variable to your token:
+
   ```shell {.command}
   export KOSLI_API_TOKEN=<your-api-token>
   ```
@@ -51,18 +52,18 @@ allow if {
 
 Let's break down what this policy does:
 
-- **`package policy`** — every evaluate policy must use the `policy` package.
-- **`import rego.v1`** — use Rego v1 syntax (the `if`/`contains` keywords).
-- **`default allow = false`** — trails are denied unless explicitly allowed.
-- **`violations`** — a set of messages describing why the policy failed. The rule iterates over trails, then over pull requests within the `pull-request` attestation, looking for PRs where `approvers` is empty.
-- **`allow`** — trails are allowed only when there are no violations.
+* **`package policy`** — every evaluate policy must use the `policy` package.
+* **`import rego.v1`** — use Rego v1 syntax (the `if`/`contains` keywords).
+* **`default allow = false`** — trails are denied unless explicitly allowed.
+* **`violations`** — a set of messages describing why the policy failed. The rule iterates over trails, then over pull requests within the `pull-request` attestation, looking for PRs where `approvers` is empty.
+* **`allow`** — trails are allowed only when there are no violations.
 
 {{<hint info>}}
 **Policy contract** — these are Kosli-specific conventions, not OPA built-ins:
 
-- **`package policy`** — required. Kosli queries `data.policy.*` to find your rules.
-- **`allow`** — required. Must evaluate to a **boolean**. Kosli exits with code 0 when `true`, code 1 when `false`.
-- **`violations`** — optional but recommended. Must be a **set of strings**, where each string is a human-readable reason the policy failed. Kosli displays these when `allow` is `false`.
+* **`package policy`** — required. Kosli queries `data.policy.*` to find your rules.
+* **`allow`** — required. Must evaluate to a **boolean**. Kosli exits with code 0 when `true`, code 1 when `false`.
+* **`violations`** — optional but recommended. Must be a **set of strings**, where each string is a human-readable reason the policy failed. Kosli displays these when `allow` is `false`.
 {{</hint>}}
 
 ## Step 3: Evaluate multiple trails
@@ -135,7 +136,7 @@ allow if {
 This policy iterates over every artifact in the trail, looks up its `snyk-container-scan` attestation, and checks whether any result has a non-zero `high_count`.
 
 Use `--attestations` to enrich only the snyk data (faster than fetching all attestation details).
-The value uses the format `artifact-name.attestation-type` — here, `dashboard` is the artifact name and `snyk-container-scan` is the attestation type:
+The value uses the format `artifact-name.attestation-type` — here, `dashboard` is the artifact name and `snyk-container-scan` is the attestation name:
 
 ```shell {.command}
 kosli evaluate trail \
@@ -259,12 +260,12 @@ kosli attest generic \
 
 This creates a generic attestation on the trail with:
 
-- **`--compliant`** set based on whether the policy allowed or denied — read directly
+* **`--compliant`** set based on whether the policy allowed or denied — read directly
   from the JSON report rather than relying on the exit code, which avoids issues with
   `set -e` in CI environments like GitHub Actions
-- **`--attachments`** containing the Rego policy (for reproducibility) and the full
+* **`--attachments`** containing the Rego policy (for reproducibility) and the full
   JSON evaluation report (including the input data the policy evaluated)
-- **`--user-data`** containing the violations, which appear in the Kosli UI as
+* **`--user-data`** containing the violations, which appear in the Kosli UI as
   structured metadata on the attestation
 
 {{<hint warning>}}
