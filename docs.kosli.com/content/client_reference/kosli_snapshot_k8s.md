@@ -21,6 +21,7 @@ to include or exclude namespaces.
 ## Flags
 | Flag | Description |
 | :--- | :--- |
+|        --config-file string  |  [optional] The path to a YAML config file that maps multiple Kosli environments to namespace selectors. Cannot be used with a positional environment name argument or namespace flags.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -x, --exclude-namespaces strings  |  [optional] The comma separated list of namespaces names to exclude from reporting artifacts info from. Requires cluster-wide read permissions for pods and namespaces. Can't be used together with --namespaces or --namespaces-regex.  |
 |        --exclude-namespaces-regex strings  |  [optional] The comma separated list of namespaces regex patterns to exclude from reporting artifacts info from. Requires cluster-wide read permissions for pods and namespaces. Can't be used together with --namespaces or --namespaces-regex.  |
@@ -34,7 +35,6 @@ to include or exclude namespaces.
 | Flag | Description |
 | :--- | :--- |
 |    -a, --api-token string  |  The Kosli API token.  |
-|    -c, --config-file string  |  [optional] The Kosli config file path. (default "kosli")  |
 |        --debug  |  [optional] Print debug logs to stdout. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default false)  |
 |    -H, --host string  |  [defaulted] The Kosli endpoint. (default "https://app.kosli.com")  |
 |        --http-proxy string  |  [optional] The HTTP proxy URL including protocol and port number. e.g. 'http://proxy-server-ip:proxy-port'  |
