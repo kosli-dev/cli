@@ -165,8 +165,10 @@ hugo: cli-docs helm-docs generate-json-metadata
 hugo-local: cli-docs generate-json-metadata
 	cd docs.kosli.com && hugo server --minify --buildDrafts --port=1515
 
-helm-lint: 
-	@cd charts/k8s-reporter && helm lint .
+helm-lint:
+	@cd charts/k8s-reporter && helm lint . \
+		--set reporterConfig.kosliOrg=placeholder \
+		--set 'reporterConfig.environments[0].name=placeholder'
 
 helm-docs: helm-lint
 	@cd charts/k8s-reporter &&  docker run --rm --volume "$(PWD):/helm-docs" jnorwood/helm-docs:latest --template-files README.md.gotmpl,_templates.gotmpl --output-file README.md

@@ -40,14 +40,14 @@ kosliApiToken:
 
 reporterConfig:
   # -- the name of the Kosli org
-  kosliOrg: "my-org"
+  kosliOrg: ""
   # -- List of Kosli environments to report to. Each entry has required 'name' and optional namespace selectors.
   # Use one entry to report a single environment; use multiple entries to report to multiple environments with different selectors.
   # Per entry: name (required), namespaces, namespacesRegex, excludeNamespaces, excludeNamespacesRegex (optional).
   # Leave namespace fields unset for an entry to report the entire cluster to that environment.
-  environments: 
+  environments: []
   #  # One environment, entire cluster:
-  - name: prod-env
+  #  - name: my-env
   #  # One environment, specific namespaces:
   #  - name: prod-env
   #    namespaces: [prod-ns1, prod-ns2]
