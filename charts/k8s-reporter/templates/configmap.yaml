@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "reporter.fullname" . }}-environments-config
+  labels:
+    {{- include "reporter.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    environments:
+    {{- range .Values.reporterConfig.environments }}
+    - name: {{ .name | quote }}
+    {{- if .namespaces }}
+      namespaces: {{ toJson .namespaces }}
+    {{- end }}
+    {{- if .namespacesRegex }}
+      namespacesRegex: {{ toJson .namespacesRegex }}
+    {{- end }}
+    {{- if .excludeNamespaces }}
+      excludeNamespaces: {{ toJson .excludeNamespaces }}
+    {{- end }}
+    {{- if .excludeNamespacesRegex }}
+      excludeNamespacesRegex: {{ toJson .excludeNamespacesRegex }}
+    {{- end }}
+    {{- end }}
