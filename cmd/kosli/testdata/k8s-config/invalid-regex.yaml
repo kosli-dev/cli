@@ -1,0 +1,3 @@
+environments:
+  - name: bad-regex-env
+    namespacesRegex: ["[invalid"]

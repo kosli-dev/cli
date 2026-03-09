@@ -1,0 +1,4 @@
+environments:
+  - name: bad-env
+    namespaces: [prod-ns]
+    excludeNamespaces: [staging-ns]

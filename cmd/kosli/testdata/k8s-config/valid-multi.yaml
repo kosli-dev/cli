@@ -1,0 +1,7 @@
+environments:
+  - name: prod-env
+    namespaces: [prod-ns1, prod-ns2]
+  - name: staging-env
+    namespacesRegex: ["^staging-.*"]
+  - name: infra-env
+    excludeNamespaces: [prod-ns1, prod-ns2, default]
