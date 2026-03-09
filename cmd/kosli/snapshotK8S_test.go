@@ -40,9 +40,27 @@ func (suite *SnapshotK8STestSuite) TestSnapshotK8SCmd() {
 		},
 		{
 			wantError: true,
+			name:      "snapshot K8S fails if both --namespaces-regex and --exclude-namespaces are set",
+			cmd:       fmt.Sprintf(`snapshot k8s %s --namespaces-regex "^default" --exclude-namespaces kube-system %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: only one of --namespaces-regex, --exclude-namespaces is allowed\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot K8S fails if both --namespaces and --exclude-namespaces-regex are set",
+			cmd:       fmt.Sprintf(`snapshot k8s %s --namespaces default --exclude-namespaces-regex "^kube-" %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: only one of --namespaces, --exclude-namespaces-regex is allowed\n",
+		},
+		{
+			wantError: true,
 			name:      "snapshot K8S fails if no args and no --config-file",
 			cmd:       fmt.Sprintf(`snapshot k8s %s`, suite.defaultKosliArguments),
 			golden:    "Error: requires either a positional environment name argument or --config-file\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot K8S fails if --config-file is set to empty value",
+			cmd:       fmt.Sprintf(`snapshot k8s --config-file "" %s`, suite.defaultKosliArguments),
+			golden:    "Error: cannot use '--config-file' with an empty value\n",
 		},
 		{
 			wantError: true,

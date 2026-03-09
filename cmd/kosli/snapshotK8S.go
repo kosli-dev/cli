@@ -161,15 +161,18 @@ func newSnapshotK8SCmd(out io.Writer) *cobra.Command {
 		Example: snapshotK8SExample,
 		Args: func(cmd *cobra.Command, args []string) error {
 			configFileFlag := cmd.Flags().Lookup("config-file")
-			hasConfigFile := configFileFlag != nil && configFileFlag.Changed
-			if hasConfigFile && len(args) > 0 {
+			if configFileFlag != nil && configFileFlag.Changed && o.configFilePath == "" {
+				return fmt.Errorf("cannot use '--config-file' with an empty value")
+			}
+			useConfigFile := o.configFilePath != ""
+			if useConfigFile && len(args) > 0 {
 				return fmt.Errorf("cannot use '--config-file' together with a positional environment name argument")
 			}
-			if !hasConfigFile && len(args) == 0 {
+			if !useConfigFile && len(args) == 0 {
 				return fmt.Errorf("requires either a positional environment name argument or --config-file")
 			}
-			if !hasConfigFile && len(args) > 1 {
-				return fmt.Errorf("accepts at most 1 arg(s), received %d", len(args))
+			if !useConfigFile && len(args) > 1 {
+				return fmt.Errorf("accepts 1 arg(s), received %d", len(args))
 			}
 			return nil
 		},
@@ -180,8 +183,11 @@ func newSnapshotK8SCmd(out io.Writer) *cobra.Command {
 			}
 
 			configFileFlag := cmd.Flags().Lookup("config-file")
-			hasConfigFile := configFileFlag != nil && configFileFlag.Changed
-			if hasConfigFile {
+			if configFileFlag != nil && configFileFlag.Changed && o.configFilePath == "" {
+				return ErrorBeforePrintingUsage(cmd, "cannot use '--config-file' with an empty value")
+			}
+			useConfigFile := o.configFilePath != ""
+			if useConfigFile {
 				namespaceFlagNames := []string{"namespaces", "exclude-namespaces", "namespaces-regex", "exclude-namespaces-regex"}
 				for _, flagName := range namespaceFlagNames {
 					if f := cmd.Flags().Lookup(flagName); f != nil && f.Changed {
@@ -191,7 +197,20 @@ func newSnapshotK8SCmd(out io.Writer) *cobra.Command {
 				return nil
 			}
 
-			return MuXRequiredFlags(cmd, []string{"namespaces", "exclude-namespaces"}, false)
+			// Include vs exclude namespace flags mutual exclusion (all combinations)
+			if err := MuXRequiredFlags(cmd, []string{"namespaces", "exclude-namespaces"}, false); err != nil {
+				return err
+			}
+			if err := MuXRequiredFlags(cmd, []string{"namespaces", "exclude-namespaces-regex"}, false); err != nil {
+				return err
+			}
+			if err := MuXRequiredFlags(cmd, []string{"namespaces-regex", "exclude-namespaces"}, false); err != nil {
+				return err
+			}
+			if err := MuXRequiredFlags(cmd, []string{"namespaces-regex", "exclude-namespaces-regex"}, false); err != nil {
+				return err
+			}
+			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientset, err := kube.NewK8sClientSet(o.kubeconfig)
