@@ -8,6 +8,8 @@ import (
 
 const evaluateShortDesc = `Evaluate Kosli trail data against OPA/Rego policies.`
 
+// Backtick breaks (`"` + "`x`" + `"`) are needed to embed markdown
+// inline code spans inside raw string literals.
 const evaluateLongDesc = evaluateShortDesc + `
 Fetch trail data from Kosli and evaluate it against custom policies written
 in Rego, the policy language used by Open Policy Agent (OPA).

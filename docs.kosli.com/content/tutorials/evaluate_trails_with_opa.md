@@ -134,7 +134,8 @@ allow if {
 
 This policy iterates over every artifact in the trail, looks up its `snyk-container-scan` attestation, and checks whether any result has a non-zero `high_count`.
 
-Use `--attestations` to enrich only the snyk data (faster than fetching all attestation details):
+Use `--attestations` to enrich only the snyk data (faster than fetching all attestation details).
+The value uses the format `artifact-name.attestation-type` — here, `dashboard` is the artifact name and `snyk-container-scan` is the attestation type:
 
 ```shell {.command}
 kosli evaluate trail \
@@ -226,7 +227,8 @@ audit record in Kosli that captures the policy, the full evaluation report, and 
 violations.
 
 This step requires write access to your Kosli org. The examples below use variables
-you'd set in your CI/CD pipeline:
+you'd set in your CI/CD pipeline.
+In your own pipeline you'd use your own policy file — here we use `my-policy.rego` as a placeholder:
 
 ```shell {.command}
 # Run the evaluation and save the full JSON report to a file
