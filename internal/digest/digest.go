@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -297,7 +298,10 @@ func extractImageDigestFromRepoDigest(imageID string, repoDigests []string) (str
 func requestManifestFromRegistry(registryEndPoint, imageName, imageTag, registryToken string,
 	dockerHeaders map[string]string, logger *logger.Logger) (*requests.HTTPResponse, error) {
 	// res, err := requests.DoRequestWithToken([]byte{}, registryEndPoint+"/"+imageName+"/"+"manifests/"+imageTag, registryToken, 3, http.MethodGet, dockerHeaders)
-	url := registryEndPoint + "/" + imageName + "/" + "manifests/" + imageTag
+	url, err := url.JoinPath(registryEndPoint, imageName, "manifests", imageTag)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build registry URL: %v", err)
+	}
 	reqParams := &requests.RequestParams{
 		Method:            http.MethodGet,
 		URL:               url,

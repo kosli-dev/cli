@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -126,6 +127,16 @@ func NewSonarConfig(apiToken, workingDir, ceTaskUrl, projectKey, serverURL, revi
 	}
 }
 
+func sonarURL(serverURL, apiPath string, params url.Values) (string, error) {
+	u, err := url.Parse(serverURL)
+	if err != nil {
+		return "", err
+	}
+	u = u.JoinPath(apiPath)
+	u.RawQuery = params.Encode()
+	return u.String(), nil
+}
+
 func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error) {
 	httpClient := &http.Client{}
 	var analysisID, tokenHeader string
@@ -151,7 +162,10 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 			project.Key = sc.projectKey
 			sonarResults.ServerUrl = sc.serverURL
 			sonarResults.Revision = sc.revision
-			project.Url = fmt.Sprintf("%s/dashboard?id=%s", sonarResults.ServerUrl, project.Key)
+			project.Url, err = sonarURL(sonarResults.ServerUrl, "dashboard", url.Values{"id": {project.Key}})
+			if err != nil {
+				return nil, err
+			}
 			analysisID, err = GetProjectAnalysisFromRevision(httpClient, sonarResults, project, sc.revision, tokenHeader, logger)
 			if err != nil {
 				return nil, err
@@ -292,7 +306,10 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 	}
 
 	if project.Url == "" {
-		project.Url = fmt.Sprintf("%s/dashboard?id=%s", sonarResults.ServerUrl, project.Key)
+		project.Url, err = sonarURL(sonarResults.ServerUrl, "dashboard", url.Values{"id": {project.Key}})
+		if err != nil {
+			return "", err
+		}
 	}
 
 	if taskResponseData.Task.Branch != "" {
@@ -309,7 +326,10 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *SonarResults, project *Project, revision, tokenHeader string, logger *log.Logger) (string, error) {
 	var analysisID string
 
-	projectAnalysesURL := fmt.Sprintf("%s/api/project_analyses/search?project=%s", sonarResults.ServerUrl, project.Key)
+	projectAnalysesURL, err := sonarURL(sonarResults.ServerUrl, "api/project_analyses/search", url.Values{"project": {project.Key}})
+	if err != nil {
+		return "", err
+	}
 	projectAnalysesRequest, err := http.NewRequest("GET", projectAnalysesURL, nil)
 	projectAnalysesRequest.Header.Add("Authorization", tokenHeader)
 	if err != nil {
@@ -351,7 +371,10 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 }
 
 func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *SonarResults, project *Project, analysisID, tokenHeader string) error {
-	projectAnalysesURL := fmt.Sprintf("%s/api/project_analyses/search?project=%s", sonarResults.ServerUrl, project.Key)
+	projectAnalysesURL, err := sonarURL(sonarResults.ServerUrl, "api/project_analyses/search", url.Values{"project": {project.Key}})
+	if err != nil {
+		return err
+	}
 	projectAnalysesRequest, err := http.NewRequest("GET", projectAnalysesURL, nil)
 	projectAnalysesRequest.Header.Add("Authorization", tokenHeader)
 	if err != nil {
@@ -389,7 +412,10 @@ func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *Son
 }
 
 func GetQualityGate(httpClient *http.Client, sonarResults *SonarResults, qualityGate *QualityGate, analysisID, tokenHeader string) (*QualityGate, error) {
-	qualityGateURL := fmt.Sprintf("%s/api/qualitygates/project_status?analysisId=%s", sonarResults.ServerUrl, analysisID)
+	qualityGateURL, err := sonarURL(sonarResults.ServerUrl, "api/qualitygates/project_status", url.Values{"analysisId": {analysisID}})
+	if err != nil {
+		return nil, err
+	}
 	qualityGateRequest, err := http.NewRequest("GET", qualityGateURL, nil)
 	qualityGateRequest.Header.Add("Authorization", tokenHeader)
 	if err != nil {
@@ -429,7 +455,10 @@ func GetQualityGate(httpClient *http.Client, sonarResults *SonarResults, quality
 }
 
 func GetTaskID(httpClient *http.Client, sonarResults *SonarResults, project *Project, analysisID, tokenHeader string, logger *log.Logger) error {
-	CEActivityURL := fmt.Sprintf("%s/api/ce/activity?component=%s", sonarResults.ServerUrl, project.Key)
+	CEActivityURL, err := sonarURL(sonarResults.ServerUrl, "api/ce/activity", url.Values{"component": {project.Key}})
+	if err != nil {
+		return err
+	}
 	CEActivityRequest, err := http.NewRequest("GET", CEActivityURL, nil)
 	CEActivityRequest.Header.Add("Authorization", tokenHeader)
 	if err != nil {

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/kosli-dev/cli/internal/logger"
@@ -45,7 +47,10 @@ func (c *Config) PREvidenceForCommitV2(commit string) ([]*types.PREvidence, erro
 func (c *Config) getPullRequestsFromBitbucketApi(commit string, version int) ([]*types.PREvidence, error) {
 	pullRequestsEvidence := []*types.PREvidence{}
 
-	url := fmt.Sprintf("https://api.bitbucket.org/2.0/repositories/%s/%s/commit/%s/pullrequests", c.Workspace, c.Repository, commit)
+	url, err := url.JoinPath("https://api.bitbucket.org/2.0/repositories", c.Workspace, c.Repository, "commit", commit, "pullrequests")
+	if err != nil {
+		return pullRequestsEvidence, err
+	}
 	c.Logger.Debug("getting pull requests from " + url)
 
 	reqParams := &requests.RequestParams{
@@ -185,7 +190,10 @@ func (c *Config) getPullRequestDetailsFromBitbucket(prApiUrl, prHtmlLink, commit
 
 // getPullRequestCommitsFromBitbucket gets the commits of a pull request from the Bitbucket API
 func (c *Config) getPullRequestCommitsFromBitbucket(prID int) ([]types.Commit, error) {
-	url := fmt.Sprintf("https://api.bitbucket.org/2.0/repositories/%s/%s/pullrequests/%d/commits", c.Workspace, c.Repository, prID)
+	url, err := url.JoinPath("https://api.bitbucket.org/2.0/repositories", c.Workspace, c.Repository, "pullrequests", strconv.Itoa(prID), "commits")
+	if err != nil {
+		return nil, err
+	}
 	c.Logger.Debug("getting pull request commits from " + url)
 
 	allCommits := []types.Commit{}

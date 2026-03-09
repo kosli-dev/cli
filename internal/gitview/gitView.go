@@ -261,19 +261,16 @@ func getCommitURL(repoURL, commitHash string) string {
 
 	host := parsedURL.Host
 	switch {
-	case strings.Contains(host, "github.com"):
-		return fmt.Sprintf("%s/commit/%s", repoURL, commitHash)
 	case strings.Contains(host, "gitlab.com"):
-		return fmt.Sprintf("%s/-/commit/%s", repoURL, commitHash)
+		return parsedURL.JoinPath("-", "commit", commitHash).String()
 	case strings.Contains(host, "bitbucket.org"):
-		return fmt.Sprintf("%s/commits/%s", repoURL, commitHash)
-	case strings.Contains(host, "dev.azure.com"):
-		return fmt.Sprintf("%s/commit/%s", repoURL, commitHash)
+		return parsedURL.JoinPath("commits", commitHash).String()
 	default:
-		// self-hosted instances can have custom domain names.
-		// in this case, we default to repoURL/commit/commitHash
-		// which works except for Bitbucket Data Center (self hosted)
-		return fmt.Sprintf("%s/commit/%s", repoURL, commitHash)
+		// Covers github.com, dev.azure.com, and self-hosted instances (which can
+		// have custom domain names). For self-hosted instances we default
+		// to repoURL/commit/commitHash which works except for Bitbucket Data Center
+		// (self hosted)
+		return parsedURL.JoinPath("commit", commitHash).String()
 	}
 }
 
