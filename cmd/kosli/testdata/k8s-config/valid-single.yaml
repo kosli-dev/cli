@@ -1,0 +1,3 @@
+environments:
+  - name: prod-env
+    namespaces: [prod-ns1, prod-ns2]
