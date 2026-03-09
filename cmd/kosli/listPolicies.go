@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -42,7 +43,10 @@ func newListPoliciesCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *policiesLsOptions) run(out io.Writer, args []string) error {
-	url := fmt.Sprintf("%s/api/v2/policies/%s", global.Host, global.Org)
+	url, err := url.JoinPath(global.Host, "api/v2/policies", global.Org)
+	if err != nil {
+		return err
+	}
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,

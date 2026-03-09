@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	neturl "net/url"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -123,20 +124,30 @@ func newGetAttestationCmd(out io.Writer) *cobra.Command {
 func (o *getAttestationOptions) run(out io.Writer, args []string) error {
 	var url string
 
-	baseUrl := fmt.Sprintf("%s/api/v2/attestations/%s", global.Host, global.Org)
+	base, err := neturl.JoinPath(global.Host, "api/v2/attestations", global.Org)
+	if err != nil {
+		return err
+	}
 	if o.attestationID != "" {
-		url = fmt.Sprintf("%s?attestation_id=%s", baseUrl, o.attestationID)
+		q := neturl.Values{}
+		q.Set("attestation_id", o.attestationID)
+		url = base + "?" + q.Encode()
 	} else {
-		flowBaseUrl := fmt.Sprintf("%s/%s", baseUrl, o.flow)
+		flowBase, err := neturl.JoinPath(base, o.flow)
+		if err != nil {
+			return err
+		}
 		if o.trail != "" {
-			url = fmt.Sprintf("%s/trail/%s", flowBaseUrl, o.trail)
+			url, err = neturl.JoinPath(flowBase, "trail", o.trail, args[0])
+			if err != nil {
+				return err
+			}
+		} else if o.fingerprint != "" {
+			url, err = neturl.JoinPath(flowBase, "artifact", o.fingerprint, args[0])
+			if err != nil {
+				return err
+			}
 		}
-
-		if o.fingerprint != "" {
-			url = fmt.Sprintf("%s/artifact/%s", flowBaseUrl, o.fingerprint)
-		}
-
-		url = fmt.Sprintf("%s/%s", url, args[0])
 	}
 
 	reqParams := &requests.RequestParams{

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -73,11 +74,13 @@ func newCreatePolicyCmd(out io.Writer) *cobra.Command {
 
 func (o *createPolicyOptions) run(args []string) error {
 	var reqParams *requests.RequestParams
-	var url string
 	o.payload.Name = args[0]
 	policyFile := args[1]
 
-	url = fmt.Sprintf("%s/api/v2/policies/%s", global.Host, global.Org)
+	url, err := url.JoinPath(global.Host, "api/v2/policies", global.Org)
+	if err != nil {
+		return err
+	}
 
 	form, err := newPolicyForm(o.payload, policyFile)
 	if err != nil {

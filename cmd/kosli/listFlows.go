@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/output"
@@ -43,7 +44,10 @@ func newListFlowsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *listFlowsOptions) run(out io.Writer) error {
-	url := fmt.Sprintf("%s/api/v2/flows/%s", global.Host, global.Org)
+	url, err := url.JoinPath(global.Host, "api/v2/flows", global.Org)
+	if err != nil {
+		return err
+	}
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -93,7 +94,10 @@ func (o *assertApprovalOptions) run(args []string) error {
 		}
 	}
 
-	url := fmt.Sprintf("%s/api/v2/artifacts/%s/%s/%s/approvals", global.Host, global.Org, o.flowName, o.fingerprint)
+	url, err := url.JoinPath(global.Host, "api/v2/artifacts", global.Org, o.flowName, o.fingerprint, "approvals")
+	if err != nil {
+		return err
+	}
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,

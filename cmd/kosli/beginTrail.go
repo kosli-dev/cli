@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -101,11 +102,13 @@ func newBeginTrailCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *beginTrailOptions) run(args []string) error {
-	url := fmt.Sprintf("%s/api/v2/trails/%s/%s", global.Host, global.Org, o.flow)
+	url, err := url.JoinPath(global.Host, "api/v2/trails", global.Org, o.flow)
+	if err != nil {
+		return err
+	}
 
 	o.payload.Name = args[0]
 
-	var err error
 	o.payload.UserData, err = LoadJsonData(o.userDataFile)
 	if err != nil {
 		return err

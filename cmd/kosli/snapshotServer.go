@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/server"
@@ -96,7 +97,10 @@ func newSnapshotServerCmd(out io.Writer) *cobra.Command {
 func (o *snapshotServerOptions) run(args []string) error {
 	envName := args[0]
 
-	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/server", global.Host, global.Org, envName)
+	url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/server")
+	if err != nil {
+		return err
+	}
 
 	artifacts, err := server.CreateServerArtifactsData(o.paths, o.excludePaths, logger)
 	if err != nil {

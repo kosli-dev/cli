@@ -117,7 +117,10 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 		}
 	}
 
-	baseURL := fmt.Sprintf("%s/api/v2/asserts/%s/fingerprint/%s", global.Host, global.Org, o.fingerprint)
+	baseURL, err := url.JoinPath(global.Host, "api/v2/asserts", global.Org, "fingerprint", o.fingerprint)
+	if err != nil {
+		return err
+	}
 	params := url.Values{}
 
 	if o.flowName != "" {

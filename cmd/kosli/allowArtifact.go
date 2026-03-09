@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"path/filepath"
 
 	"github.com/kosli-dev/cli/internal/requests"
@@ -82,7 +82,10 @@ func (o *allowArtifactOptions) run(args []string) error {
 		}
 	}
 
-	url := fmt.Sprintf("%s/api/v2/allowlists/%s/%s", global.Host, global.Org, o.environmentName)
+	url, err := url.JoinPath(global.Host, "api/v2/allowlists", global.Org, o.environmentName)
+	if err != nil {
+		return err
+	}
 
 	reqParams := &requests.RequestParams{
 		Method:  http.MethodPut,
@@ -91,7 +94,7 @@ func (o *allowArtifactOptions) run(args []string) error {
 		DryRun:  global.DryRun,
 		Token:   global.ApiToken,
 	}
-	_, err := kosliClient.Do(reqParams)
+	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
 		logger.Info("artifact %s was allow listed in environment: %s", o.payload.Fingerprint, o.environmentName)
 	}

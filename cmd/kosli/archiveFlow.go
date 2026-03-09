@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -38,7 +38,10 @@ func newArchiveFlowCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			url := fmt.Sprintf("%s/api/v2/flows/%s/%s/archive", global.Host, global.Org, args[0])
+			url, err := url.JoinPath(global.Host, "api/v2/flows", global.Org, args[0], "archive")
+			if err != nil {
+				return err
+			}
 
 			reqParams := &requests.RequestParams{
 				Method: http.MethodPut,
@@ -46,7 +49,7 @@ func newArchiveFlowCmd(out io.Writer) *cobra.Command {
 				DryRun: global.DryRun,
 				Token:  global.ApiToken,
 			}
-			_, err := kosliClient.Do(reqParams)
+			_, err = kosliClient.Do(reqParams)
 			if err == nil && !global.DryRun {
 				logger.Info("flow %s was archived", args[0])
 			}

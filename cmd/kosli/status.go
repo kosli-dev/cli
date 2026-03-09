@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -37,7 +38,10 @@ func newStatusCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *statusOptions) run(out io.Writer) error {
-	url := fmt.Sprintf("%s/ready", global.Host)
+	url, err := url.JoinPath(global.Host, "ready")
+	if err != nil {
+		return err
+	}
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    url,

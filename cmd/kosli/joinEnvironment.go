@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -49,7 +49,10 @@ func newJoinEnvironmentCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			url := fmt.Sprintf("%s/api/v2/environments/%s/%s/join", global.Host, global.Org, o.logical)
+			url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, o.logical, "join")
+			if err != nil {
+				return err
+			}
 
 			reqParams := &requests.RequestParams{
 				Method:  http.MethodPut,
@@ -58,7 +61,7 @@ func newJoinEnvironmentCmd(out io.Writer) *cobra.Command {
 				DryRun:  global.DryRun,
 				Token:   global.ApiToken,
 			}
-			_, err := kosliClient.Do(reqParams)
+			_, err = kosliClient.Do(reqParams)
 			if err == nil && !global.DryRun {
 				logger.Info("environment '%s' was joined to '%s'", o.payload.Physical, o.logical)
 			}

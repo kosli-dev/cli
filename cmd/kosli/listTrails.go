@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	neturl "net/url"
+	"strconv"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/output"
@@ -125,16 +127,23 @@ func newListTrailsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *listTrailsOptions) run(out io.Writer) error {
-	url := fmt.Sprintf("%s/api/v2/trails/%s?per_page=%d&page=%d", global.Host, global.Org, o.pageLimit, o.pageNumber)
+	base, err := neturl.JoinPath(global.Host, "api/v2/trails", global.Org)
+	if err != nil {
+		return err
+	}
+	q := neturl.Values{}
+	q.Set("per_page", strconv.Itoa(o.pageLimit))
+	q.Set("page", strconv.Itoa(o.pageNumber))
 	if o.flowName != "" {
-		url += fmt.Sprintf("&flow=%s", o.flowName)
+		q.Set("flow", o.flowName)
 	}
 	if o.fingerprint != "" {
-		url += fmt.Sprintf("&fingerprint=%s", o.fingerprint)
+		q.Set("fingerprint", o.fingerprint)
 	}
 	if o.flowTag != "" {
-		url += fmt.Sprintf("&flow_tag=%s", o.flowTag)
+		q.Set("flow_tag", o.flowTag)
 	}
+	url := base + "?" + q.Encode()
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,

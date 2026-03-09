@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -43,7 +43,10 @@ func newRenameFlowCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			url := fmt.Sprintf("%s/api/v2/flows/%s/%s/rename", global.Host, global.Org, args[0])
+			url, err := url.JoinPath(global.Host, "api/v2/flows", global.Org, args[0], "rename")
+			if err != nil {
+				return err
+			}
 			payload.NewName = args[1]
 
 			reqParams := &requests.RequestParams{
@@ -53,7 +56,7 @@ func newRenameFlowCmd(out io.Writer) *cobra.Command {
 				DryRun:  global.DryRun,
 				Token:   global.ApiToken,
 			}
-			_, err := kosliClient.Do(reqParams)
+			_, err = kosliClient.Do(reqParams)
 			if err == nil && !global.DryRun {
 				logger.Info("flow %s was renamed to %s", args[0], payload.NewName)
 			}

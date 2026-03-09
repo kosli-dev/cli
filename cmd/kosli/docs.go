@@ -2,9 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
+	neturl "net/url"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/docgen"
@@ -82,30 +82,49 @@ type kosliLiveDocProvider struct{}
 
 const baseURL = "https://app.kosli.com/api/v2/livedocs/cyber-dojo"
 
+func buildDocURL(base, path, ci, command string) string {
+	u, err := neturl.JoinPath(base, path)
+	if err != nil {
+		return ""
+	}
+	q := neturl.Values{}
+	q.Set("ci", strings.ToLower(ci))
+	q.Set("command", command)
+	return u + "?" + q.Encode()
+}
+
+func buildCLIDocURL(base, path, command string) string {
+	u, err := neturl.JoinPath(base, path)
+	if err != nil {
+		return ""
+	}
+	q := neturl.Values{}
+	q.Set("command", command)
+	return u + "?" + q.Encode()
+}
+
 func (p *kosliLiveDocProvider) YamlDocExists(ci, command string) bool {
-	url := fmt.Sprintf("%s/yaml_exists?ci=%s&command=%s", baseURL, strings.ToLower(ci), command)
-	return liveDocExists(url)
+	return liveDocExists(buildDocURL(baseURL, "yaml_exists", ci, command))
 }
 
 func (p *kosliLiveDocProvider) EventDocExists(ci, command string) bool {
-	url := fmt.Sprintf("%s/event_exists?ci=%s&command=%s", baseURL, strings.ToLower(ci), command)
-	return liveDocExists(url)
+	return liveDocExists(buildDocURL(baseURL, "event_exists", ci, command))
 }
 
 func (p *kosliLiveDocProvider) YamlURL(ci, command string) string {
-	return fmt.Sprintf("%s/yaml?ci=%s&command=%s", baseURL, strings.ToLower(ci), command)
+	return buildDocURL(baseURL, "yaml", ci, command)
 }
 
 func (p *kosliLiveDocProvider) EventURL(ci, command string) string {
-	return fmt.Sprintf("%s/event?ci=%s&command=%s", baseURL, strings.ToLower(ci), command)
+	return buildDocURL(baseURL, "event", ci, command)
 }
 
 func (p *kosliLiveDocProvider) CLIDocExists(command string) (string, string, bool) {
 	fullCommand, ok := liveCliMap[command]
 	if ok {
 		plussed := strings.ReplaceAll(fullCommand, " ", "+")
-		existsURL := fmt.Sprintf("%s/cli_exists?command=%s", baseURL, plussed)
-		url := fmt.Sprintf("%s/cli?command=%s", baseURL, plussed)
+		existsURL := buildCLIDocURL(baseURL, "cli_exists", plussed)
+		url := buildCLIDocURL(baseURL, "cli", plussed)
 		return fullCommand, url, liveDocExists(existsURL)
 	}
 	return "", "", false

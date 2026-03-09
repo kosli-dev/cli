@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -45,7 +46,10 @@ func newListEnvironmentsCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *environmentLsOptions) run(out io.Writer, args []string) error {
-	url := fmt.Sprintf("%s/api/v2/environments/%s", global.Host, global.Org)
+	url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org)
+	if err != nil {
+		return err
+	}
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,

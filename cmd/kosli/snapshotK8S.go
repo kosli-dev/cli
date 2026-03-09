@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -265,9 +266,14 @@ func (o *snapshotK8SOptions) reportEnvironment(clientset *kube.K8SConnection, en
 		return err
 	}
 
+	url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/K8S")
+	if err != nil {
+		return err
+	}
+
 	reqParams := &requests.RequestParams{
 		Method:  http.MethodPut,
-		URL:     fmt.Sprintf("%s/api/v2/environments/%s/%s/report/K8S", global.Host, global.Org, envName),
+		URL:     url,
 		Payload: &kube.K8sEnvRequest{Artifacts: podsData},
 		DryRun:  global.DryRun,
 		Token:   global.ApiToken,

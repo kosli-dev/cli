@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/aws"
 	"github.com/kosli-dev/cli/internal/filters"
@@ -194,7 +194,10 @@ func newSnapshotECSCmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotECSOptions) run(args []string) error {
 	envName := args[0]
-	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/ECS", global.Host, global.Org, envName)
+	url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/ECS")
+	if err != nil {
+		return err
+	}
 
 	tasksData, err := o.awsStaticCreds.GetEcsTasksData(o.clustersFilter, o.serviceFilter, logger)
 	if err != nil {
