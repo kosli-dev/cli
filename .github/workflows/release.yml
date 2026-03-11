@@ -123,11 +123,23 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
+      # Use release notes from the tag body when present (set by interactive `make release` or `make release tag=vX.Y.Z` with dist/release_notes.md). Otherwise GoReleaser uses its default changelog.
+      - name: Get release notes from tag
+        id: get-tag-notes
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          BODY=$(git tag -l --format='%(contents:body)' "$TAG")
+          if [ -n "$BODY" ]; then
+            mkdir -p dist
+            echo "$BODY" > dist/release_notes.md
+            echo "args=--release-notes=dist/release_notes.md" >> $GITHUB_OUTPUT
+          fi
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: release --clean
+          args: release --clean ${{ steps.get-tag-notes.outputs.args }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FURY_TOKEN: ${{ secrets.FURY_TOKEN }}

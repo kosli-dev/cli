@@ -35,13 +35,37 @@ Manually triggered from any branch — deploys docs to `staging-docs--kosli-docs
 
 ## Release process
 
-A release is triggered by pushing a semver tag:
+### Default: interactive release (AI version and changelog)
+
+Run:
+
+```bash
+make release
+```
+
+**Prerequisites:** 
+
+ You need:
+
+- The **1Password CLI** (`op`) and `jq` installed.
+- Access to 1Password shared vault.
+- The **1Password desktop app** linked to the CLI so `op` can read secrets. In the 1Password app: **Settings → Developer → Integrate with 1Password CLI**. See [Turn on the 1Password desktop app integration](https://developer.1password.com/docs/cli/get-started#step-2-turn-on-the-1password-desktop-app-integration).
+
+**What happens:**
+
+1. A script uses Claude to suggest the next semver and draft release notes from the **git diff** (no commit messages). It reads the API key from 1Password via `op` using a default secret reference (vault/item/field); you can override with `OP_ANTHROPIC_API_KEY_REF` if your item lives elsewhere.
+2. You see the suggested tag and release notes. You can press Enter to open your editor and edit `dist/release_notes.md`, or Enter to skip.
+3. You are prompted: **Create tag vX.Y.Z and push? [y/N]**. On **y**, an annotated tag is created with the release notes as the tag body and pushed. The `release.yml` workflow runs on GitHub; it reads the notes from the tag body and passes them to GoReleaser for the GitHub Release. On **n**, nothing is pushed.
+
+### Fallback: release with an explicit tag
+
+If you don’t want the AI flow (e.g. 1Password/`op` not available or the suggest step failed), run:
 
 ```bash
 make release tag=v2.x.y
 ```
 
-This validates the working tree is clean and up to date with the remote, creates an annotated tag, and pushes it. The `release.yml` workflow then runs:
+This checks the branch is up to date, creates an annotated tag (using `dist/release_notes.md` as the tag body if that file exists, otherwise the version string), and pushes it. No prompt. The release workflow runs as above; if the tag has no body, GoReleaser uses its default changelog on the GitHub Release.
 
 ### 1. Pre-build
 
