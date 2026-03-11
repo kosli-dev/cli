@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/kosli-dev/cli/internal/output"
@@ -147,7 +148,10 @@ func (o *environmentGetOptions) run(out io.Writer, args []string) error {
 	if err != nil {
 		return err
 	}
-	url := fmt.Sprintf("%s/api/v2/snapshots/%s/%s/%s", global.Host, global.Org, envName, id)
+	url, err := url.JoinPath(global.Host, "api/v2/snapshots", global.Org, envName, id)
+	if err != nil {
+		return err
+	}
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,

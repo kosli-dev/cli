@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/output"
@@ -101,7 +102,10 @@ func (o *searchOptions) run(out io.Writer, args []string) error {
 	var err error
 	search_value := args[0]
 
-	url := fmt.Sprintf("%s/api/v2/search/%s/sha/%s", global.Host, global.Org, search_value)
+	url, err := url.JoinPath(global.Host, "api/v2/search", global.Org, "sha", search_value)
+	if err != nil {
+		return err
+	}
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,

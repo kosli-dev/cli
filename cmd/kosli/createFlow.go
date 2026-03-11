@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	neturl "net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -96,10 +97,14 @@ func newCreateFlowCmd(out io.Writer) *cobra.Command {
 func (o *createFlowOptions) run(args []string) error {
 	var reqParams *requests.RequestParams
 	var url string
+	var err error
 	o.payload.Name = args[0]
 
 	if o.TemplateFile != "" || o.UseEmptyTemplate {
-		url = fmt.Sprintf("%s/api/v2/flows/%s/template_file", global.Host, global.Org)
+		url, err = neturl.JoinPath(global.Host, "api/v2/flows", global.Org, "template_file")
+		if err != nil {
+			return err
+		}
 		if o.TemplateFile == "" {
 			tmpDir, err := os.MkdirTemp("", "default-template")
 			if err != nil {
@@ -132,7 +137,10 @@ func (o *createFlowOptions) run(args []string) error {
 		}
 	} else {
 		// legacy flows
-		url = fmt.Sprintf("%s/api/v2/flows/%s", global.Host, global.Org)
+		url, err = neturl.JoinPath(global.Host, "api/v2/flows", global.Org)
+		if err != nil {
+			return err
+		}
 		o.payload.Template = injectArtifactIntoTemplateIfNotExisting(o.payload.Template)
 
 		reqParams = &requests.RequestParams{

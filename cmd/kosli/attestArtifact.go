@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"path/filepath"
 
 	"github.com/kosli-dev/cli/internal/gitview"
@@ -201,7 +202,10 @@ func (o *attestArtifactOptions) run(args []string) error {
 		logger.Warn("Repo URL will not be reported, %s", err.Error())
 	}
 
-	url := fmt.Sprintf("%s/api/v2/artifacts/%s/%s", global.Host, global.Org, o.flowName)
+	url, err := url.JoinPath(global.Host, "api/v2/artifacts", global.Org, o.flowName)
+	if err != nil {
+		return err
+	}
 
 	reqParams := &requests.RequestParams{
 		Method:  http.MethodPost,

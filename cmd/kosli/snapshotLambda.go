@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/aws"
 	"github.com/kosli-dev/cli/internal/filters"
@@ -149,7 +149,10 @@ func newSnapshotLambdaCmd(out io.Writer) *cobra.Command {
 func (o *snapshotLambdaOptions) run(args []string) error {
 	envName := args[0]
 
-	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/lambda", global.Host, global.Org, envName)
+	url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/lambda")
+	if err != nil {
+		return err
+	}
 	lambdaData, err := o.awsStaticCreds.GetLambdaPackageData(o.filter)
 	if err != nil {
 		return err

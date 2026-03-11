@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	neturl "net/url"
 	"sort"
 	"strings"
 
@@ -99,9 +100,14 @@ func (o *getArtifactOptions) run(out io.Writer, args []string) error {
 		idType = "commit_sha"
 	}
 
-	url := fmt.Sprintf("%s/api/v2/artifacts/%s/%s/%s/%s", global.Host, global.Org, flowName, idType, id)
+	url, err := neturl.JoinPath(global.Host, "api/v2/artifacts", global.Org, flowName, idType, id)
+	if err != nil {
+		return err
+	}
 	if o.trail != "" {
-		url = url + fmt.Sprintf("?trail=%s", o.trail)
+		q := neturl.Values{}
+		q.Set("trail", o.trail)
+		url += "?" + q.Encode()
 	}
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,

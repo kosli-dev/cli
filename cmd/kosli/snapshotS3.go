@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/aws"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -112,7 +112,10 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotS3Options) run(args []string) error {
 	envName := args[0]
-	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/S3", global.Host, global.Org, envName)
+	url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/S3")
+	if err != nil {
+		return err
+	}
 
 	s3Data, err := o.awsStaticCreds.GetS3Data(o.bucket, o.includePaths, o.excludePaths, logger)
 	if err != nil {

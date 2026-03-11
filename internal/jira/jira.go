@@ -3,6 +3,7 @@ package jira
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	jira "github.com/andygrunwald/go-jira"
@@ -64,10 +65,16 @@ func (jc *JiraConfig) NewJiraClient() (*jira.Client, error) {
 // GetJiraIssueInfo retrieve Jira issue information
 // if issue is not found, we still return a JiraIssueInfo object with IssueExists set to false
 func (jc *JiraConfig) GetJiraIssueInfo(issueID string, issueFields string) (*JiraIssueInfo, error) {
+	issueUrl, err := url.Parse(jc.BaseURL)
+	if err != nil {
+		return nil, err
+	}
+	issueUrl = issueUrl.JoinPath("browse", issueID)
+
 	result := &JiraIssueInfo{
 		IssueID:     issueID,
 		IssueExists: false,
-		IssueURL:    fmt.Sprintf("%s/browse/%s", jc.BaseURL, issueID),
+		IssueURL:    issueUrl.String(),
 	}
 
 	jiraClient, err := jc.NewJiraClient()

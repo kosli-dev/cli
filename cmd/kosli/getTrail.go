@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -49,7 +50,10 @@ func newGetTrailCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *getTrailOptions) run(out io.Writer, args []string) error {
-	url := fmt.Sprintf("%s/api/v2/trails/%s/%s/%s", global.Host, global.Org, o.flowName, args[0])
+	url, err := url.JoinPath(global.Host, "api/v2/trails", global.Org, o.flowName, args[0])
+	if err != nil {
+		return err
+	}
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,

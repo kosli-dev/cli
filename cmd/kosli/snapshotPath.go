@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -112,7 +113,10 @@ func (o *snapshotPathOptions) run(args []string) error {
 }
 
 func reportArtifacts(ps *server.PathsSpec, envName string) error {
-	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/server", global.Host, global.Org, envName)
+	url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/server")
+	if err != nil {
+		return err
+	}
 	artifacts, err := server.CreatePathsArtifactsData(ps, logger)
 	if err != nil {
 		return err

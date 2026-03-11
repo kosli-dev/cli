@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/kosli-dev/cli/internal/evaluate"
@@ -35,11 +36,14 @@ func (o *commonEvaluateOptions) addFlags(cmd *cobra.Command, policyDesc string) 
 }
 
 func fetchAndEnrichTrail(flowName, trailName string, attestations []string) (interface{}, error) {
-	url := fmt.Sprintf("%s/api/v2/trails/%s/%s/%s", global.Host, global.Org, flowName, trailName)
+	trailURL, err := url.JoinPath(global.Host, "api/v2/trails", global.Org, flowName, trailName)
+	if err != nil {
+		return nil, err
+	}
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
-		URL:    url,
+		URL:    trailURL,
 		Token:  global.ApiToken,
 	}
 	response, err := kosliClient.Do(reqParams)
@@ -60,7 +64,13 @@ func fetchAndEnrichTrail(flowName, trailName string, attestations []string) (int
 	if len(ids) > 0 {
 		details := make(map[string]interface{})
 		for _, id := range ids {
-			detailURL := fmt.Sprintf("%s/api/v2/attestations/%s?attestation_id=%s", global.Host, global.Org, id)
+			detailURL, err := url.JoinPath(global.Host, "api/v2/attestations", global.Org)
+			if err != nil {
+				return nil, err
+			}
+			q := url.Values{}
+			q.Set("attestation_id", id)
+			detailURL += "?" + q.Encode()
 			detailResp, err := kosliClient.Do(&requests.RequestParams{
 				Method: http.MethodGet,
 				URL:    detailURL,

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	neturl "net/url"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/output"
@@ -73,9 +74,14 @@ func (o *getAttestationTypeOptions) run(out io.Writer, args []string) error {
 		}
 	}
 
-	url := fmt.Sprintf("%s/api/v2/custom-attestation-types/%s/%s", global.Host, global.Org, attestationType)
+	url, err := neturl.JoinPath(global.Host, "api/v2/custom-attestation-types", global.Org, attestationType)
+	if err != nil {
+		return err
+	}
 	if version != "" {
-		url = fmt.Sprintf("%s?version=%s", url, version)
+		q := neturl.Values{}
+		q.Set("version", version)
+		url += "?" + q.Encode()
 	}
 
 	reqParams := &requests.RequestParams{

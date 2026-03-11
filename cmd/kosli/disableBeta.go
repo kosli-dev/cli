@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -44,8 +44,10 @@ func newDisableExperimentalCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *betaOptions) run(args []string) error {
-	var err error
-	url := fmt.Sprintf("%s/api/v2/organizations/%s/experimental_features", global.Host, global.Org)
+	url, err := url.JoinPath(global.Host, "api/v2/organizations", global.Org, "experimental_features")
+	if err != nil {
+		return err
+	}
 	action := "enabled"
 	if !o.payload.Enabled {
 		action = "disabled"

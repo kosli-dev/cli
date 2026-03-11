@@ -135,5 +135,5 @@ func (HugoFormatter) ExampleUseCases(commandName, example string) string {
 
 func (HugoFormatter) LinkHandler(name string) string {
 	base := strings.TrimSuffix(name, path.Ext(name))
-	return "/client_reference/" + strings.ToLower(base) + "/"
+	return fmt.Sprintf("/client_reference/%s/", strings.ToLower(base))
 }

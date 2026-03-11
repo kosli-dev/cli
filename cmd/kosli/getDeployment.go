@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strconv"
 
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -76,7 +78,10 @@ func (o *getDeploymentOptions) run(out io.Writer, args []string) error {
 	if err != nil {
 		return err
 	}
-	url := fmt.Sprintf("%s/api/v2/deployments/%s/%s/%d", global.Host, global.Org, flowName, id)
+	url, err := url.JoinPath(global.Host, "api/v2/deployments", global.Org, flowName, strconv.Itoa(id))
+	if err != nil {
+		return err
+	}
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,
