@@ -64,23 +64,31 @@ fi
 
 PROMPT="You are a release engineer. Given the following git diff for a CLI application (Kosli CLI), do two things.
 
-1) Suggest the semantic version bump:
+Scope: Consider ONLY changes to the CLI itself—i.e. code under cmd/ and internal/ that affects user-facing commands, flags, and behavior. IGNORE all other changes when deciding the version and when writing the changelog:
+- Ignore: documentation (docs*, *.md), Helm charts (charts/), CI/workflows (.github/), scripts (bin/, scripts/), tests (*_test.go, testdata/), Makefile, config files, and any other non-CLI code.
+- If the diff contains only ignored changes, recommend a patch bump and write a single short line for the changelog (e.g. \"No user-facing CLI changes.\").
+
+1) Suggest the semantic version bump (based only on CLI changes):
    - major: Breaking changes (removed/renamed commands or flags, changed default behavior).
    - minor: New commands, flags, subcommands, or features.
-   - patch: Bug fixes, docs, refactors, internal or dependency changes.
+   - patch: Bug fixes, refactors, internal or dependency updates; or no user-facing CLI changes.
 
-2) Write a short changelog in markdown for the GitHub release body. Use bullet points; be concise; no preamble.
+2) Write a short changelog in markdown for the GitHub release body. Include only user-facing CLI changes. Use bullet points; be concise; no preamble.
+   - Structure the changelog with section headers (e.g. \"# Breaking changes\", \"# New features\", \"# Bug fixes\" or \"# Improvements\") and list items under each header. Use only headers that have at least one change—omit any section that would be empty.
+   - Do not write placeholder lines under any header (no \"No other changes\", \"No user-facing CLI changes in this release\", or similar). If there are no CLI changes at all, output a single short line only (no headers).
 
 Reply in this exact format (no other text before or after):
 BUMP: major|minor|patch
 ---CHANGELOG---
 <markdown changelog here>"
 
+DIFF_FILE=$(mktemp)
+trap 'rm -f "$DIFF_FILE"' EXIT
+printf '%s' "$DIFF" > "$DIFF_FILE"
 BODY=$(jq -n \
   --arg prompt "$PROMPT" \
-  --rawfile diff - \
-  '{model: "claude-sonnet-4-20250514", max_tokens: 1024, messages: [{role: "user", content: ($prompt + "\n\n--- diff ---\n\n" + $diff)}]}' \
-  < <(printf '%s' "$DIFF"))
+  --rawfile diff "$DIFF_FILE" \
+  '{model: "claude-opus-4-6", max_tokens: 1024, messages: [{role: "user", content: ($prompt + "\n\n--- diff ---\n\n" + $diff)}]}')
 
 RESPONSE=$(curl -s -S -X POST "https://api.anthropic.com/v1/messages" \
   -H "x-api-key: $ANTHROPIC_API_KEY" \
@@ -104,8 +112,9 @@ case "$BUMP" in
     ;;
 esac
 
-if echo "$CONTENT" | grep -q '---CHANGELOG---'; then
-  CHANGELOG=$(echo "$CONTENT" | sed -n '/---CHANGELOG---/,$ p' | tail -n +2)
+CHANGELOG_MARKER='---CHANGELOG---'
+if echo "$CONTENT" | grep -qF -- "$CHANGELOG_MARKER"; then
+  CHANGELOG=$(echo "$CONTENT" | sed -n "/${CHANGELOG_MARKER}/,\$ p" | tail -n +2)
 else
   CHANGELOG=$(echo "$CONTENT" | sed -n '2,$ p')
 fi

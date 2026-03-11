@@ -189,7 +189,9 @@ suggest-version-ai:
 # Release notes are carried in the tag message so GitHub Actions can pass them to GoReleaser.
 # For suggest step: ANTHROPIC_API_KEY or KOSLI_RELEASE_SUGGEST_URL (or use secret manager, see scripts/README-release-suggest.md).
 release:
-	@if [ -z "$(tag)" ]; then \
+	@current=$$(git branch --show-current 2>/dev/null || git rev-parse --abbrev-ref HEAD); \
+	if [ "$$current" != "main" ]; then echo "ERROR: release must be run from main branch (current: $$current)"; exit 1; fi; \
+	if [ -z "$(tag)" ]; then \
 	  command -v jq >/dev/null 2>&1 || (echo "Install jq (e.g. brew install jq)" && exit 1); \
 	  bin/suggest-version-ai.sh -o dist/release_notes.md; \
 	  if [ ! -f dist/suggested_version ]; then \
