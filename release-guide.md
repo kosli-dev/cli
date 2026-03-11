@@ -47,9 +47,10 @@ make release
 
  You need:
 
-- The **1Password CLI** (`op`) and `jq` installed.
-- Access to 1Password shared vault.
-- The **1Password desktop app** linked to the CLI so `op` can read secrets. In the 1Password app: **Settings → Developer → Integrate with 1Password CLI**. See [Turn on the 1Password desktop app integration](https://developer.1password.com/docs/cli/get-started#step-2-turn-on-the-1password-desktop-app-integration).
+- **jq**, **curl** installed.
+- An Anthropic API key, provided in one of the following ways:
+  - **Via 1Password**: The **1Password CLI** (`op`), access to the shared vault, and the **1Password desktop app** linked to the CLI so `op` can read secrets. In the 1Password app: **Settings → Developer → Integrate with 1Password CLI**. See [Turn on the 1Password desktop app integration](https://developer.1password.com/docs/cli/get-started#step-2-turn-on-the-1password-desktop-app-integration).
+  - **Via environment variable**: Set `ANTHROPIC_API_KEY` directly in your environment (no 1Password required).
 
 **What happens:**
 

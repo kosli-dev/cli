@@ -131,7 +131,7 @@ jobs:
           BODY=$(git tag -l --format='%(contents:body)' "$TAG")
           if [ -n "$BODY" ]; then
             mkdir -p dist
-            echo "$BODY" > dist/release_notes.md
+            printf '%s' "$BODY" > dist/release_notes.md
             echo "args=--release-notes=dist/release_notes.md" >> $GITHUB_OUTPUT
           fi
 
