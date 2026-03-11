@@ -6,6 +6,8 @@
 #   - ANTHROPIC_API_KEY: call Claude directly.
 #   - OP_ANTHROPIC_API_KEY_REF: 1Password reference (default below; override if your item path differs).
 #
+# Optional: CLAUDE_MODEL (default: claude-sonnet-4-6) — e.g. claude-opus-4-6.
+#
 # Requires: curl, jq; for 1Password: op CLI
 # Usage: bin/suggest-version-ai.sh [base_ref] [-o release_notes.md]
 #   base_ref defaults to the latest git tag.
@@ -13,7 +15,7 @@
 #
 # Output: bump (major|minor|patch), next_version (e.g. v1.3.0), and changelog file.
 
-set -e
+set -euo pipefail
 
 BASE_REF=""
 RELEASE_NOTES_FILE="dist/release_notes.md"
@@ -24,6 +26,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 BASE_REF="${BASE_REF:-$(git describe --tags --abbrev=0 2>/dev/null)}"
+SUGGESTED_VERSION_FILE="$(dirname "$RELEASE_NOTES_FILE")/suggested_version"
 
 if [ -z "$BASE_REF" ]; then
   echo "ERROR: No base ref. Pass a tag or branch, or create a tag first." >&2
@@ -36,15 +39,18 @@ DIFF="$(git diff "$BASE_REF"..HEAD 2>/dev/null | head -c "$MAX_DIFF_CHARS")"
 
 # Get API key from 1Password if not set (default ref; override with OP_ANTHROPIC_API_KEY_REF)
 OP_ANTHROPIC_API_KEY_REF="${OP_ANTHROPIC_API_KEY_REF:-op://Shared/Anthropic API Key/credential}"
-if [ -z "$ANTHROPIC_API_KEY" ]; then
+if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
   if command -v op >/dev/null 2>&1; then
     ANTHROPIC_API_KEY=$(op read "$OP_ANTHROPIC_API_KEY_REF" 2>/dev/null) || true
   fi
 fi
-if [ -z "$ANTHROPIC_API_KEY" ]; then
-  echo "ERROR: Set ANTHROPIC_API_KEY or OP_ANTHROPIC_API_KEY_REF (1Password). See scripts/README-release-suggest.md." >&2
+if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+  echo "ERROR: Set ANTHROPIC_API_KEY or OP_ANTHROPIC_API_KEY_REF (1Password)." >&2
   exit 1
 fi
+
+# Remove stale outputs from a previous run so a failure partway through doesn't mislead the next invocation.
+trap 'rm -f "$RELEASE_NOTES_FILE" "$SUGGESTED_VERSION_FILE"' EXIT
 
 if [ -z "$DIFF" ]; then
   echo "No changes since $BASE_REF. Bump: patch (no change)." >&2
@@ -56,9 +62,14 @@ if [ -z "$DIFF" ]; then
   if [[ "$CURRENT" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
     MAJOR="${CURRENT%%.*}"; REST="${CURRENT#*.}"; MINOR="${REST%%.*}"; PATCH="${REST#*.}"; PATCH="${PATCH%%[-+]*}"
     NEXT="v${MAJOR}.${MINOR}.$((PATCH+1))"
-    echo "$NEXT" > "$(dirname "$RELEASE_NOTES_FILE")/suggested_version"
+    if [ -n "$(git tag -l "$NEXT")" ]; then
+      echo "ERROR: tag $NEXT already exists. Push it or use: make release tag=$NEXT" >&2
+      exit 1
+    fi
+    echo "$NEXT" > "$SUGGESTED_VERSION_FILE"
     echo "$NEXT"
   fi
+  trap - EXIT
   exit 0
 fi
 
@@ -82,13 +93,15 @@ BUMP: major|minor|patch
 ---CHANGELOG---
 <markdown changelog here>"
 
+CLAUDE_MODEL="${CLAUDE_MODEL:-claude-sonnet-4-6}"
 DIFF_FILE=$(mktemp)
-trap 'rm -f "$DIFF_FILE"' EXIT
+trap 'rm -f "$DIFF_FILE" "$RELEASE_NOTES_FILE" "$SUGGESTED_VERSION_FILE"' EXIT
 printf '%s' "$DIFF" > "$DIFF_FILE"
 BODY=$(jq -n \
+  --arg model "$CLAUDE_MODEL" \
   --arg prompt "$PROMPT" \
   --rawfile diff "$DIFF_FILE" \
-  '{model: "claude-opus-4-6", max_tokens: 1024, messages: [{role: "user", content: ($prompt + "\n\n--- diff ---\n\n" + $diff)}]}')
+  '{model: $model, max_tokens: 1024, messages: [{role: "user", content: ($prompt + "\n\n--- diff ---\n\n" + $diff)}]}')
 
 RESPONSE=$(curl -s -S -X POST "https://api.anthropic.com/v1/messages" \
   -H "x-api-key: $ANTHROPIC_API_KEY" \
@@ -134,9 +147,16 @@ else
   NEXT=""
 fi
 
-[ -n "$NEXT" ] && echo "$NEXT" > "$(dirname "$RELEASE_NOTES_FILE")/suggested_version"
+if [ -n "$NEXT" ]; then
+  if [ -n "$(git tag -l "$NEXT")" ]; then
+    echo "ERROR: tag $NEXT already exists. Push it or use: make release tag=$NEXT" >&2
+    exit 1
+  fi
+  echo "$NEXT" > "$SUGGESTED_VERSION_FILE"
+fi
 echo "Suggested bump: $BUMP (from diff since $BASE_REF)" >&2
 echo "Next version:  $NEXT" >&2
 echo "Changelog:     $RELEASE_NOTES_FILE" >&2
+trap - EXIT
 echo "$BUMP"
 echo "$NEXT"

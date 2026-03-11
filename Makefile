@@ -174,11 +174,9 @@ helm-docs: helm-lint
 	@cd charts/k8s-reporter &&  docker run --rm --volume "$(PWD):/helm-docs" jnorwood/helm-docs:latest --template-files README.md.gotmpl,_templates.gotmpl --output-file README.md
 	@cd charts/k8s-reporter &&  docker run --rm --volume "$(PWD):/helm-docs" jnorwood/helm-docs:latest --template-files README.md.gotmpl,_templates.gotmpl --output-file ../../docs.kosli.com/content/helm/_index.md
 
-
-# Suggest next semver and changelog using Claude (or KOSLI_RELEASE_SUGGEST_URL proxy).
+# Suggest next semver and changelog using Claude.
 # Writes changelog to dist/release_notes.md for use with goreleaser --release-notes.
-# Requires: ANTHROPIC_API_KEY or KOSLI_RELEASE_SUGGEST_URL; jq, curl.
-# See scripts/README-release-suggest.md for seamless (no API key) options.
+# Requires: ANTHROPIC_API_KEY from 1Password; jq, curl.
 # Usage: make suggest-version-ai [BASE_REF=v1.2.3]
 suggest-version-ai:
 	@command -v jq >/dev/null 2>&1 || (echo "Install jq (e.g. brew install jq)" && exit 1)
@@ -187,7 +185,6 @@ suggest-version-ai:
 # Release: without tag → suggest version + changelog, then interactive edit & confirm, then tag and push.
 # With tag → escape hatch: create annotated tag (body = dist/release_notes.md if present), push. No AI, no prompt.
 # Release notes are carried in the tag message so GitHub Actions can pass them to GoReleaser.
-# For suggest step: ANTHROPIC_API_KEY or KOSLI_RELEASE_SUGGEST_URL (or use secret manager, see scripts/README-release-suggest.md).
 release:
 	@current=$$(git branch --show-current 2>/dev/null || git rev-parse --abbrev-ref HEAD); \
 	if [ "$$current" != "main" ]; then echo "ERROR: release must be run from main branch (current: $$current)"; exit 1; fi; \

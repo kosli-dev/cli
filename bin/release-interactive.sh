@@ -33,8 +33,11 @@ echo "---"
 echo ""
 
 # Let user edit release notes
-read -r -p "Press Enter to edit release notes (or to continue without editing)..."
-"${EDITOR:-vi}" "$RELEASE_NOTES_FILE"
+read -r -p "Edit release notes? [y/N] " edit_notes
+case "$edit_notes" in
+  y|Y) "${EDITOR:-vi}" "$RELEASE_NOTES_FILE" ;;
+  *) ;;
+esac
 
 echo ""
 read -r -p "Create tag $VER and push? [y/N] " confirm
@@ -52,6 +55,6 @@ fi
 git tag -a "$VER" -F "$RELEASE_NOTES_FILE"
 git push origin "$VER"
 echo "Pushed tag $VER. Release workflow will run on GitHub."
-# Clean up temporary files to avoid reusing them in subsequent releases
-rm "$RELEASE_NOTES_FILE" || true
-rm "$SUGGESTED_VERSION_FILE" || true
+# # Clean up temporary files to avoid reusing them in subsequent releases
+# rm "$RELEASE_NOTES_FILE" || true
+# rm "$SUGGESTED_VERSION_FILE" || true
