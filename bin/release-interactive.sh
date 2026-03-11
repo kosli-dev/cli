@@ -52,3 +52,6 @@ fi
 git tag -a "$VER" -F "$RELEASE_NOTES_FILE"
 git push origin "$VER"
 echo "Pushed tag $VER. Release workflow will run on GitHub."
+# Clean up temporary files to avoid reusing them in subsequent releases
+rm "$RELEASE_NOTES_FILE" || true
+rm "$SUGGESTED_VERSION_FILE" || true
