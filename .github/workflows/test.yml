@@ -113,7 +113,7 @@ jobs:
       contents: write
     steps:
       
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0 # needed for some tests referencing older commits
         ref: ${{ inputs.checkout_ref || github.sha }}
@@ -183,7 +183,7 @@ jobs:
       contents: write
     steps:
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         ref: ${{ inputs.checkout_ref || github.sha }}
 
@@ -222,7 +222,7 @@ jobs:
       contents: write
     steps:
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         ref: ${{ inputs.checkout_ref || github.sha }}
 

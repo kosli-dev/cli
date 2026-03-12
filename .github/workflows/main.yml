@@ -20,7 +20,7 @@ jobs:
       trail_template_file: ${{ steps.prep.outputs.trail_template_file }}
       checkout_ref: ${{ steps.prep.outputs.checkout_ref }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Prepare
         id: prep
