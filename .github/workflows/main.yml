@@ -21,6 +21,8 @@ jobs:
       checkout_ref: ${{ steps.prep.outputs.checkout_ref }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Prepare
         id: prep
