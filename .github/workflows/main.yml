@@ -2,34 +2,44 @@ name: Main
 
 on:
   push:
-    branches:
-      - "**"
+    branches-ignore:
+      - "dependabot/**"
+  pull_request_target:
+    types: [opened, synchronize, reopened]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
 
 jobs:
   pre-build:
+    if: github.event_name == 'push' || github.actor == 'dependabot[bot]'
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.prep.outputs.tag }}
       trail_name: ${{ steps.prep.outputs.trail_name }}
       trail_template_file: ${{ steps.prep.outputs.trail_template_file }}
+      checkout_ref: ${{ steps.prep.outputs.checkout_ref }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Prepare
         id: prep
         run: |
-          TAG=$(echo $GITHUB_SHA | head -c7)
+          if [ "${{ github.event_name }}" == "pull_request_target" ]; then
+            SHA=${{ github.event.pull_request.head.sha }}
+          else
+            SHA=$GITHUB_SHA
+          fi
+          TAG=$(echo $SHA | head -c7)
           echo "TAG=${TAG}" >> ${GITHUB_ENV}
           echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "checkout_ref=$SHA" >> $GITHUB_OUTPUT
 
           if [ "${GITHUB_REF}" == refs/tags/* ]; then
             TRAIL_NAME=${GITHUB_REF##refs/tags/}
             TRAIL_TEMPLATE_FILE=release-flow-template.yml
           else
-            TRAIL_NAME=$(echo $GITHUB_SHA | head -c 7)
+            TRAIL_NAME=$(echo $SHA | head -c 7)
             TRAIL_TEMPLATE_FILE=main-flow-template.yml
           fi
           echo "TRAIL_NAME=${TRAIL_NAME}" >> $GITHUB_ENV
@@ -46,6 +56,7 @@ jobs:
       TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
       FLOW_TEMPLATE_FILE: ${{ needs.pre-build.outputs.trail_template_file }}
       KOSLI_ORG: kosli-public
+      checkout_ref: ${{ needs.pre-build.outputs.checkout_ref }}
     secrets:
       kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
       pr_github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -59,6 +70,7 @@ jobs:
       FLOW_NAME: cli
       TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
       KOSLI_ORG: kosli-public
+      checkout_ref: ${{ needs.pre-build.outputs.checkout_ref }}
     secrets:
       github_access_token: ${{ secrets.KOSLI_GITHUB_TOKEN }}
       gitlab_access_token: ${{ secrets.KOSLI_GITLAB_TOKEN }}
@@ -83,6 +95,7 @@ jobs:
       flow_name: cli
       trail_name: ${{ needs.pre-build.outputs.trail_name }}
       kosli_org: kosli-public
+      checkout_ref: ${{ needs.pre-build.outputs.checkout_ref }}
     secrets:
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
       slack_channel: ci-failures
