@@ -11,6 +11,7 @@ VERSION=""
 FILE_NAME="kosli"
 DEBUG=false
 GITHUB_TOKEN=""
+TARGET_INSTALL_DIR=""
 
 # --- Debug function ---
 debug_print() {
@@ -44,6 +45,22 @@ while [ $# -gt 0 ]; do
             ;;
     esac
 done
+
+# --- Check existing installation ---
+debug_print "Checking for existing Kosli installation"
+if command -v kosli >/dev/null 2>&1; then
+    if command -v brew >/dev/null 2>&1 && brew list kosli-cli >/dev/null 2>&1; then
+        echo "Kosli was installed via Homebrew. Please use 'brew upgrade kosli-cli' instead."
+        exit 1
+    fi
+
+    EXISTING_KOSLI_PATH=$(command -v kosli)
+    debug_print "Existing Kosli found at: $EXISTING_KOSLI_PATH"
+    EXISTING_KOSLI_DIR=$(dirname "$EXISTING_KOSLI_PATH")
+    debug_print "Existing Kosli directory: $EXISTING_KOSLI_DIR"
+    
+    TARGET_INSTALL_DIR="$EXISTING_KOSLI_DIR"
+fi
 
 # --- Version Selection ---
 if [ -n "$VERSION" ]; then
@@ -177,8 +194,14 @@ echo "Installing Kosli CLI..."
 debug_print "Starting installation process"
 debug_print "Current PATH: $PATH"
 
+if [ -n "$TARGET_INSTALL_DIR" ]; then
+    INSTALL_DIRS="$TARGET_INSTALL_DIR"
+else
+    INSTALL_DIRS="/usr/local/bin /usr/bin /opt/bin"
+fi
+
 # Check directories one by one instead of using set --
-for dir in "/usr/local/bin" "/usr/bin" "/opt/bin"; do
+for dir in $INSTALL_DIRS; do
     debug_print "Checking directory: $dir"
     # Check if destination directory exists and is in the PATH
     if [ -d "$dir" ] && echo "$PATH" | grep -q "$dir"; then
