@@ -89,7 +89,7 @@ jobs:
         
         - name: Attest SBOM to Github
           id: sbom-gh-attest
-          uses: actions/attest-sbom@v1
+          uses: actions/attest-sbom@v4
           with:
             sbom-path: '${{matrix.artifact.template_name}}-sbom.spdx.json'
             subject-name: ${{matrix.artifact.template_name}}
