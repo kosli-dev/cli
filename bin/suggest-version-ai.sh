@@ -33,9 +33,11 @@ if [ -z "$BASE_REF" ]; then
   exit 1
 fi
 
-# Cap diff size to stay within context
+# Cap diff size to stay within context (avoid SIGPIPE when diff is large: head exits first)
 MAX_DIFF_CHARS=50000
+set +o pipefail
 DIFF="$(git diff "$BASE_REF"..HEAD 2>/dev/null | head -c "$MAX_DIFF_CHARS")"
+set -o pipefail
 
 # Get API key from 1Password if not set (default ref; override with OP_ANTHROPIC_API_KEY_REF)
 OP_ANTHROPIC_API_KEY_REF="${OP_ANTHROPIC_API_KEY_REF:-op://Shared/Anthropic API Key/credential}"
@@ -116,7 +118,9 @@ if [ -z "$CONTENT" ]; then
   exit 1
 fi
 
+set +o pipefail
 BUMP=$(echo "$CONTENT" | tr '[:upper:]' '[:lower:]' | grep -oE 'major|minor|patch' | head -1)
+set -o pipefail
 case "$BUMP" in
   major|minor|patch) ;;
   *)
@@ -126,11 +130,13 @@ case "$BUMP" in
 esac
 
 CHANGELOG_MARKER='---CHANGELOG---'
+set +o pipefail
 if echo "$CONTENT" | grep -qF -- "$CHANGELOG_MARKER"; then
   CHANGELOG=$(echo "$CONTENT" | sed -n "/${CHANGELOG_MARKER}/,\$ p" | tail -n +2)
 else
   CHANGELOG=$(echo "$CONTENT" | sed -n '2,$ p')
 fi
+set -o pipefail
 mkdir -p "$(dirname "$RELEASE_NOTES_FILE")"
 echo "$CHANGELOG" > "$RELEASE_NOTES_FILE"
 
