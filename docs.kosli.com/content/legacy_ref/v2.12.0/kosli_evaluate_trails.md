@@ -1,25 +1,29 @@
 ---
-title: "kosli list environments"
+title: "kosli evaluate trails"
 beta: false
 deprecated: false
-summary: "List environments for an org."
+summary: "Evaluate multiple trails against a policy."
 ---
 
-# kosli list environments
+# kosli evaluate trails
 
 ## Synopsis
 
 ```shell
-kosli list environments [flags]
+kosli evaluate trails TRAIL-NAME [TRAIL-NAME...] [flags]
 ```
 
-List environments for an org.
+Evaluate multiple trails against a policy.
 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
-|    -h, --help  |  help for environments  |
+|        --attestations strings  |  [optional] Limit which attestations are included. Plain name for trail-level, dot-qualified (artifact.name) for artifact-level.  |
+|    -f, --flow string  |  The Kosli flow name.  |
+|    -h, --help  |  help for trails  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
+|    -p, --policy string  |  Path to a Rego policy file to evaluate against the trails.  |
+|        --show-input  |  [optional] Include the policy input data in the output.  |
 
 
 ## Flags inherited from parent commands
@@ -33,10 +37,4 @@ List environments for an org.
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
-
-## Live Example
-
-{{< raw-html >}}To view a live example of 'kosli list environments' you can run the commands below (for the <a href="https://app.kosli.com/cyber-dojo/environments/aws-prod/snapshots/">cyber-dojo</a> demo organization).<br/><a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli%2Blist%2Benvironments%2B--output%3Djson">Run the commands below and view the output.</a><pre>export KOSLI_ORG=cyber-dojo
-export KOSLI_API_TOKEN=Pj_XT2deaVA6V1qrTlthuaWsmjVt4eaHQwqnwqjRO3A  # read-only
-kosli list environments --output=json</pre>{{< / raw-html >}}
 

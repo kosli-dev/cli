@@ -68,7 +68,7 @@ The attestation can be bound to an *artifact* in two ways:
 
 {{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitLab" >}}View an example of the `kosli attest pullrequest gitlab` command in GitLab.
 
-In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=gitlab&command=kosli+attest+pullrequest+gitlab), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=gitlab&command=kosli+attest+pullrequest+gitlab).{{< /tab >}}{{< /tabs >}}
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=gitlab&command=kosli%2Battest%2Bpullrequest%2Bgitlab), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=gitlab&command=kosli%2Battest%2Bpullrequest%2Bgitlab).{{< /tab >}}{{< /tabs >}}
 
 ## Examples Use Cases
 

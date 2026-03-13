@@ -36,7 +36,7 @@ Get the metadata of a specific flow.
 
 ## Live Example
 
-{{< raw-html >}}To view a live example of 'kosli get flow' you can run the commands below (for the <a href="https://app.kosli.com/cyber-dojo/environments/aws-prod/snapshots/">cyber-dojo</a> demo organization).<br/><a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli+get+flow+dashboard-ci+--output=json">Run the commands below and view the output.</a><pre>export KOSLI_ORG=cyber-dojo
+{{< raw-html >}}To view a live example of 'kosli get flow' you can run the commands below (for the <a href="https://app.kosli.com/cyber-dojo/environments/aws-prod/snapshots/">cyber-dojo</a> demo organization).<br/><a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli%2Bget%2Bflow%2Bdashboard-ci%2B--output%3Djson">Run the commands below and view the output.</a><pre>export KOSLI_ORG=cyber-dojo
 export KOSLI_API_TOKEN=Pj_XT2deaVA6V1qrTlthuaWsmjVt4eaHQwqnwqjRO3A  # read-only
 kosli get flow dashboard-ci --output=json</pre>{{< / raw-html >}}
 

@@ -59,9 +59,9 @@ images in registries or "docker" for local docker images.
 
 {{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli report approval` command in GitHub.
 
-In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli+report+approval), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=github&command=kosli+report+approval).{{< /tab >}}{{< tab "GitLab" >}}View an example of the `kosli report approval` command in GitLab.
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli%2Breport%2Bapproval), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=github&command=kosli%2Breport%2Bapproval).{{< /tab >}}{{< tab "GitLab" >}}View an example of the `kosli report approval` command in GitLab.
 
-In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=gitlab&command=kosli+report+approval), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=gitlab&command=kosli+report+approval).{{< /tab >}}{{< /tabs >}}
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=gitlab&command=kosli%2Breport%2Bapproval), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=gitlab&command=kosli%2Breport%2Bapproval).{{< /tab >}}{{< /tabs >}}
 
 ## Examples Use Cases
 

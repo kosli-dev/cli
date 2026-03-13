@@ -54,7 +54,7 @@ Specify SNAPPISH_1 and SNAPPISH_2 by:
 
 ## Live Example
 
-{{< raw-html >}}To view a live example of 'kosli diff snapshots' you can run the commands below (for the <a href="https://app.kosli.com/cyber-dojo/environments/aws-prod/snapshots/">cyber-dojo</a> demo organization).<br/><a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli+diff+snapshots+aws-beta+aws-prod+--output=json">Run the commands below and view the output.</a><pre>export KOSLI_ORG=cyber-dojo
+{{< raw-html >}}To view a live example of 'kosli diff snapshots' you can run the commands below (for the <a href="https://app.kosli.com/cyber-dojo/environments/aws-prod/snapshots/">cyber-dojo</a> demo organization).<br/><a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli%2Bdiff%2Bsnapshots%2Baws-beta%2Baws-prod%2B--output%3Djson">Run the commands below and view the output.</a><pre>export KOSLI_ORG=cyber-dojo
 export KOSLI_API_TOKEN=Pj_XT2deaVA6V1qrTlthuaWsmjVt4eaHQwqnwqjRO3A  # read-only
 kosli diff snapshots aws-beta aws-prod --output=json</pre>{{< / raw-html >}}
 

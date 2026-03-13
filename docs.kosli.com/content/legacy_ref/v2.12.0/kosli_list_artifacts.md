@@ -25,7 +25,7 @@ By default, the page limit is 15 artifacts per page.
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 |        --page int  |  [defaulted] The page number of a response. (default 1)  |
 |    -n, --page-limit int  |  [defaulted] The number of elements per page. (default 15)  |
-|        --repo string  |  The name of a git repo as it is registered in Kosli. e.g kosli-dev/cli  |
+|        --repo string  |  [optional] The name of a git repo as it is registered in Kosli. e.g kosli-dev/cli  |
 
 
 ## Flags inherited from parent commands

@@ -47,9 +47,9 @@ You can specify flow parameters in flags.
 
 {{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli create flow` command in GitHub.
 
-In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli+create+flow){{< /tab >}}{{< tab "GitLab" >}}View an example of the `kosli create flow` command in GitLab.
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli%2Bcreate%2Bflow){{< /tab >}}{{< tab "GitLab" >}}View an example of the `kosli create flow` command in GitLab.
 
-In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=gitlab&command=kosli+create+flow){{< /tab >}}{{< /tabs >}}
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=gitlab&command=kosli%2Bcreate%2Bflow){{< /tab >}}{{< /tabs >}}
 
 ## Examples Use Cases
 

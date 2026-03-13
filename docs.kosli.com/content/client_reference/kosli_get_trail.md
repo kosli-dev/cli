@@ -37,7 +37,7 @@ Get the metadata of a specific trail.
 
 ## Live Example
 
-{{< raw-html >}}To view a live example of 'kosli get trail' you can run the commands below (for the <a href="https://app.kosli.com/cyber-dojo/environments/aws-prod/snapshots/">cyber-dojo</a> demo organization).<br/><a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli+get+trail+dashboard-ci+1159a6f1193150681b8484545150334e89de6c1c+--output=json">Run the commands below and view the output.</a><pre>export KOSLI_ORG=cyber-dojo
+{{< raw-html >}}To view a live example of 'kosli get trail' you can run the commands below (for the <a href="https://app.kosli.com/cyber-dojo/environments/aws-prod/snapshots/">cyber-dojo</a> demo organization).<br/><a href="https://app.kosli.com/api/v2/livedocs/cyber-dojo/cli?command=kosli%2Bget%2Btrail%2Bdashboard-ci%2B1159a6f1193150681b8484545150334e89de6c1c%2B--output%3Djson">Run the commands below and view the output.</a><pre>export KOSLI_ORG=cyber-dojo
 export KOSLI_API_TOKEN=Pj_XT2deaVA6V1qrTlthuaWsmjVt4eaHQwqnwqjRO3A  # read-only
 kosli get trail dashboard-ci 1159a6f1193150681b8484545150334e89de6c1c --output=json</pre>{{< / raw-html >}}
 

@@ -71,7 +71,7 @@ binding the attestation to the right artifact.
 
 {{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli attest custom` command in GitHub.
 
-In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli+attest+custom), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=github&command=kosli+attest+custom).{{< /tab >}}{{< /tabs >}}
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli%2Battest%2Bcustom), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=github&command=kosli%2Battest%2Bcustom).{{< /tab >}}{{< /tabs >}}
 
 ## Examples Use Cases
 

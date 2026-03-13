@@ -56,7 +56,7 @@ All rules must return `true` for the evaluation to pass and the attestation to b
 
 {{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli create attestation-type` command in GitHub.
 
-In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli+create+attestation-type){{< /tab >}}{{< /tabs >}}
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli%2Bcreate%2Battestation-type){{< /tab >}}{{< /tabs >}}
 
 ## Examples Use Cases
 

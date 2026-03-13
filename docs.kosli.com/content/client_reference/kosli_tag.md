@@ -42,9 +42,9 @@ use --set to add or update tags, and --unset to remove tags.
 
 {{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli tag` command in GitHub.
 
-In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli+tag){{< /tab >}}{{< tab "GitLab" >}}View an example of the `kosli tag` command in GitLab.
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli%2Btag){{< /tab >}}{{< tab "GitLab" >}}View an example of the `kosli tag` command in GitLab.
 
-In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=gitlab&command=kosli+tag){{< /tab >}}{{< /tabs >}}
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=gitlab&command=kosli%2Btag){{< /tab >}}{{< /tabs >}}
 
 ## Examples Use Cases
 
