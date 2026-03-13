@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -112,6 +114,30 @@ func (suite *AttestArtifactCommandTestSuite) TestAttestArtifactCmd() {
 	}
 
 	runTestCmd(suite.T(), tests)
+}
+
+// TestAttestArtifactPayload_RepoInfoOmittedWhenNil ensures that when GitRepoInfo
+// is not available (nil), the JSON payload does not include the repo_info field
+// (omitempty behavior).
+func TestAttestArtifactPayload_RepoInfoOmittedWhenNil(t *testing.T) {
+	payload := AttestArtifactPayload{
+		Fingerprint: "abc123",
+		Filename:    "file1",
+		GitCommit:   "sha",
+		BuildUrl:    "https://build.example.com",
+		CommitUrl:   "https://commit.example.com",
+		RepoUrl:     "https://repo.example.com",
+		Name:        "cli",
+		TrailName:   "trail-1",
+		GitRepoInfo: nil, // not available
+	}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("marshal payload: %v", err)
+	}
+	if strings.Contains(string(data), "repo_info") {
+		t.Errorf("payload must not include repo_info when GitRepoInfo is nil, got: %s", string(data))
+	}
 }
 
 // In order for 'go test' to run this suite, we need to create

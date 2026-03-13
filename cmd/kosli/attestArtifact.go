@@ -30,7 +30,7 @@ type AttestArtifactPayload struct {
 	Filename      string                   `json:"filename"`
 	GitCommit     string                   `json:"git_commit"`
 	GitCommitInfo *gitview.BasicCommitInfo `json:"git_commit_info"`
-	GitRepoInfo   *gitview.GitRepoInfo     `json:"repo_info"`
+	GitRepoInfo   *gitview.GitRepoInfo     `json:"repo_info,omitempty"`
 	BuildUrl      string                   `json:"build_url"`
 	CommitUrl     string                   `json:"commit_url"`
 	RepoUrl       string                   `json:"repo_url"`
