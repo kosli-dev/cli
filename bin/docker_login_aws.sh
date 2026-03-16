@@ -1,4 +1,5 @@
-#!/bin/bash -Eeu
+#!/usr/bin/env bash
+set -Eeu
 
 SCRIPT_NAME=docker_login_aws.sh
 HELP_STRING="Does a docker login to AWS so we can fetch repositories from it"
