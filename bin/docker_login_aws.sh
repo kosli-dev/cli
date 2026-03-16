@@ -4,7 +4,12 @@ set -Eeu
 SCRIPT_NAME=docker_login_aws.sh
 HELP_STRING="Does a docker login to AWS so we can fetch repositories from it"
 SCRIPT_DIR=$(dirname $(readlink -f $0))
-source ${SCRIPT_DIR}/aws_include.sh
+
+if [ -n "${CI:-}" ]; then
+    source ${SCRIPT_DIR}/aws_include.sh
+else
+    source ${SCRIPT_DIR}/../../server/bin/aws_include.sh
+fi
 
 get_aws_account_id()
 {
