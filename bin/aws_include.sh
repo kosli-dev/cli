@@ -1,24 +1,9 @@
 # The POSSIBLE_AWS_SERVERS names must match the [profile <name>] in
 # ~/.aws/config
-POSSIBLE_AWS_SERVERS='staging|azure|prod|dnb|stacc|modulr'
+POSSIBLE_AWS_SERVERS='staging'
 AWS_VAULT_ENV_FILE_BASE=~/.aws/aws_vault_env
 
 S3_PATH_STAGING="s3://merkely-temp"
-S3_PATH_PROD="s3://merkely-prod-temp"
-S3_PATH_DNB="s3://merkely-dnb-temp"
-S3_PATH_STACC="s3://merkely-stacc-temp"
-S3_PATH_MODULR="s3://merkely-modulr-temp"
-
-## Disabled for now since Ewelinca has bash version 3.x.x
-## Bash associative array
-#declare -A S3_PATHS
-#S3_PATHS[staging]="s3://merkely-temp"
-##S3_PATHS[azure]=
-#S3_PATHS[prod]="s3://merkely-prod-temp"
-#S3_PATHS[dnb]="s3://merkely-dnb-temp"
-#S3_PATHS[stacc]="s3://merkely-stacc-temp"
-#S3_PATHS[modulr]="s3://merkely-modulr-temp"
-
 
 # Notes about AWS tools.
 # For commands that execute 'aws ecs' commands it is necessary
@@ -187,15 +172,3 @@ get_s3_path()
             ;;
     esac
 }
-
-## Disabled for now since Ewelinca has bash version 3.x.x
-#get_s3_path()
-#{
-#    local awsServerName=$1; shift
-#    if [ ${S3_PATHS[$awsServerName]+_} ]; then
-#        echo ${S3_PATHS[$awsServerName]}
-#        return 0
-#    else
-#        return 1
-#    fi
-#}
