@@ -208,12 +208,13 @@ part of the template, the state of the extra evidence will affect the overall co
 The `--compliant` flag is a [boolean flag](#boolean-flags). 
 To report generic evidence as non-compliant use `--compliant=false`, as in this example:
 ```shell {.command}
-kosli report evidence artifact generic server:1.0 \
+kosli attest generic server:1.0 \
   --artifact-type docker \
   --name test \
   --description "generic test evidence" \
   --compliant=false \
-  --flow server
+  --flow server \
+  --trail yourTrailName
 ```
 
 Keep in mind a number of flags, usually represented with environment variables, are omitted in this example.  
