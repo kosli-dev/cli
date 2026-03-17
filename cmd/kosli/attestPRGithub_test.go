@@ -145,9 +145,21 @@ func (suite *AttestGithubPRCommandTestSuite) TestAttestGithubPRCmd() {
 		},
 		{
 			name: "17 can attest github pr even if commit has no PR",
-			cmd: fmt.Sprintf(`attest pullrequest github --name bar 
+			cmd: fmt.Sprintf(`attest pullrequest github --name bar
 				--github-org kosli-dev --repository cli --commit %s %s`, suite.commitWithNoPR, suite.defaultKosliArguments),
 			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\ngithub pull request attestation 'bar' is reported to trail: test-123\n",
+		},
+		{
+			wantError: true,
+			name:      "18 fails when --repo-url is not a valid URL",
+			cmd:       fmt.Sprintf("attest pullrequest github --name foo --commit %s --github-token fake --github-org myorg --repository myrepo --repo-url not-a-url %s", suite.commitWithPR, suite.defaultKosliArguments),
+			golden:    "Error: --repo-url 'not-a-url' is not a valid URL\n",
+		},
+		{
+			wantError: true,
+			name:      "19 fails when --repo-provider is not an allowed value",
+			cmd:       fmt.Sprintf("attest pullrequest github --name foo --commit %s --github-token fake --github-org myorg --repository myrepo --repo-provider jenkins %s", suite.commitWithPR, suite.defaultKosliArguments),
+			golden:    "Error: --repo-provider 'jenkins' is not allowed. Must be one of: github, gitlab, bitbucket, azure-devops, circleci\n",
 		},
 	}
 

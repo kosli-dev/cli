@@ -158,6 +158,18 @@ func (suite *AttestBitbucketPRCommandTestSuite) TestAttestBitbucketPRCmd() {
 				--bitbucket-workspace kosli-dev --repository cli-test --commit %s %s`, suite.commitWithNoPR, suite.defaultKosliArguments),
 			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nbitbucket pull request attestation 'foo' is reported to trail: test-123\n",
 		},
+		{
+			wantError: true,
+			name:      "17 fails when --repo-url is not a valid URL",
+			cmd:       fmt.Sprintf("attest pullrequest bitbucket --name foo --commit %s --bitbucket-access-token fake --bitbucket-workspace myworkspace --repository myrepo --repo-url not-a-url %s", suite.commitWithPR, suite.defaultKosliArguments),
+			golden:    "Error: --repo-url 'not-a-url' is not a valid URL\n",
+		},
+		{
+			wantError: true,
+			name:      "18 fails when --repo-provider is not an allowed value",
+			cmd:       fmt.Sprintf("attest pullrequest bitbucket --name foo --commit %s --bitbucket-access-token fake --bitbucket-workspace myworkspace --repository myrepo --repo-provider jenkins %s", suite.commitWithPR, suite.defaultKosliArguments),
+			golden:    "Error: --repo-provider 'jenkins' is not allowed. Must be one of: github, gitlab, bitbucket, azure-devops, circleci\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)
