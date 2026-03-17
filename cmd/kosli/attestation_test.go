@@ -9,21 +9,21 @@ import (
 
 func TestMergeGitRepoInfo(t *testing.T) {
 	tests := []struct {
-		name        string
-		base        *gitview.GitRepoInfo
-		repoID      string
-		repoName    string
-		repoURL     string
+		name         string
+		base         *gitview.GitRepoInfo
+		repoID       string
+		repoName     string
+		repoURL      string
 		repoProvider string
-		wantNil     bool
-		wantID      string
-		wantName    string
-		wantURL     string
+		wantNil      bool
+		wantID       string
+		wantName     string
+		wantURL      string
 		wantProvider string
 	}{
 		{
-			name:     "nil when both ID and Name are empty",
-			wantNil:  true,
+			name:    "nil when both ID and Name are empty",
+			wantNil: true,
 		},
 		{
 			name:    "nil when ID is provided but Name is empty",
@@ -36,12 +36,12 @@ func TestMergeGitRepoInfo(t *testing.T) {
 			wantNil:  true,
 		},
 		{
-			name:      "non-nil when both ID and Name are provided",
-			repoID:    "repo-id",
-			repoName:  "repo-name",
-			wantNil:   false,
-			wantID:    "repo-id",
-			wantName:  "repo-name",
+			name:     "non-nil when both ID and Name are provided",
+			repoID:   "repo-id",
+			repoName: "repo-name",
+			wantNil:  false,
+			wantID:   "repo-id",
+			wantName: "repo-name",
 		},
 		{
 			name:         "includes URL and Provider when both are provided alongside ID and Name",
@@ -71,9 +71,9 @@ func TestMergeGitRepoInfo(t *testing.T) {
 			wantNil: true,
 		},
 		{
-			name:     "nil when base has Name but no ID and no flags",
-			base:     &gitview.GitRepoInfo{Name: "base-name"},
-			wantNil:  true,
+			name:    "nil when base has Name but no ID and no flags",
+			base:    &gitview.GitRepoInfo{Name: "base-name"},
+			wantNil: true,
 		},
 		{
 			name:     "non-nil when base provides Name and flag provides ID",
