@@ -164,7 +164,7 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.repoID, "repo-id", DefaultValue(ci, "repo-id"), repoIDFlag)
 	cmd.Flags().StringVar(&o.repoName, "repository", DefaultValue(ci, "repository"), repoNameFlag)
 	cmd.Flags().StringVar(&o.repoURL, "repo-url", DefaultValue(ci, "repo-url"), repoURLFlag)
-	cmd.Flags().StringVar(&o.repoProvider, "repo-provider", "", repoProviderFlag)
+	cmd.Flags().StringVar(&o.repoProvider, "repo-provider", DefaultValue(ci, "repo-provider"), repoProviderFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 
 	addDryRunFlag(cmd)
