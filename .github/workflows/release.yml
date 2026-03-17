@@ -19,7 +19,7 @@ jobs:
       trail_name: ${{ steps.prep.outputs.trail_name }}
       trail_template_file: ${{ steps.prep.outputs.trail_template_file }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Get tag
         id: tag
@@ -111,7 +111,7 @@ jobs:
       artifacts: ${{ steps.prepare-artifacts-list.outputs.artifacts }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -200,7 +200,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0 # needed to be able to generate legacy versions reference.
 
