@@ -207,21 +207,7 @@ func (o *attestArtifactOptions) run(args []string) error {
 	if err != nil {
 		logger.Warn("failed to get git repo info. %s", err.Error())
 	}
-	if o.payload.GitRepoInfo == nil {
-		o.payload.GitRepoInfo = &gitview.GitRepoInfo{}
-	}
-	if o.repoID != "" {
-		o.payload.GitRepoInfo.ID = o.repoID
-	}
-	if o.repoName != "" {
-		o.payload.GitRepoInfo.Name = o.repoName
-	}
-	if o.repoURL != "" {
-		o.payload.GitRepoInfo.URL = o.repoURL
-	}
-	if o.repoProvider != "" {
-		o.payload.GitRepoInfo.Provider = o.repoProvider
-	}
+	o.payload.GitRepoInfo = mergeGitRepoInfo(o.payload.GitRepoInfo, o.repoID, o.repoName, o.repoURL, o.repoProvider)
 	o.payload.GitCommit = commitInfo.Sha1
 	o.payload.GitCommitInfo = &commitInfo.BasicCommitInfo
 

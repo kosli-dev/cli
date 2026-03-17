@@ -94,21 +94,7 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 	if err := validateRepoFlags(o.repoURL, o.repoProvider); err != nil {
 		return err
 	}
-	if payload.GitRepoInfo == nil {
-		payload.GitRepoInfo = &gitview.GitRepoInfo{}
-	}
-	if o.repoID != "" {
-		payload.GitRepoInfo.ID = o.repoID
-	}
-	if o.repoName != "" {
-		payload.GitRepoInfo.Name = o.repoName
-	}
-	if o.repoURL != "" {
-		payload.GitRepoInfo.URL = o.repoURL
-	}
-	if o.repoProvider != "" {
-		payload.GitRepoInfo.Provider = o.repoProvider
-	}
+	payload.GitRepoInfo = mergeGitRepoInfo(payload.GitRepoInfo, o.repoID, o.repoName, o.repoURL, o.repoProvider)
 
 	payload.UserData, err = LoadJsonData(o.userDataFilePath)
 	if err != nil {
@@ -124,6 +110,31 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 	// process annotations
 	payload.Annotations, err = processAnnotations(o.annotations)
 	return err
+}
+
+// mergeGitRepoInfo applies flag overrides onto base (which may be nil) and
+// returns nil if either ID or Name is still empty after merging, so that the
+// field is omitted from the JSON payload.
+func mergeGitRepoInfo(base *gitview.GitRepoInfo, repoID, repoName, repoURL, repoProvider string) *gitview.GitRepoInfo {
+	if base == nil {
+		base = &gitview.GitRepoInfo{}
+	}
+	if repoID != "" {
+		base.ID = repoID
+	}
+	if repoName != "" {
+		base.Name = repoName
+	}
+	if repoURL != "" {
+		base.URL = repoURL
+	}
+	if repoProvider != "" {
+		base.Provider = repoProvider
+	}
+	if base.ID == "" || base.Name == "" {
+		return nil
+	}
+	return base
 }
 
 var allowedRepoProviders = map[string]struct{}{
