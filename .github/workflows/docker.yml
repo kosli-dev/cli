@@ -21,6 +21,10 @@ on:
       kosli_org:
         required: true
         type: string
+      checkout_ref:
+        required: false
+        type: string
+        default: ''
     secrets:
       slack_channel:
         required: true
@@ -50,9 +54,10 @@ jobs:
       packages: write
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 3
+        ref: ${{ inputs.checkout_ref || github.sha }}
 
     - uses: actions/setup-go@v5
       with:
