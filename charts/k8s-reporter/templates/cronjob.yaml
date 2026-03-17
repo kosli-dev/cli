@@ -9,16 +9,18 @@ metadata:
 
 spec:
   schedule: {{ .Values.cronSchedule | quote }}
-  concurrencyPolicy: Replace
+  concurrencyPolicy: {{ .Values.concurrencyPolicy }}
   startingDeadlineSeconds: 30
+  successfulJobsHistoryLimit: {{ .Values.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.failedJobsHistoryLimit }}
   jobTemplate:
     spec:
       template:
         metadata:
-          labels: 
+          labels:
             {{- range $key, $value :=  .Values.podLabels }}
               {{ $key }}: {{ $value }}
-            {{ end }}    
+            {{ end }}
         spec:
           serviceAccountName: {{ include "reporter.serviceAccountName" . }}
           volumes:
@@ -62,20 +64,20 @@ spec:
               {{- range $key, $value :=  .Values.env }}
               - name: {{ $key }}
                 value: {{ $value }}
-              {{ end }}    
+              {{ end }}
             args:
             - snapshot
             - k8s
             - --config-file
             - /config/config.yaml
             {{ if .Values.reporterConfig.dryRun }}
-            - --dry-run 
+            - --dry-run
             {{ end }}
             {{ if .Values.reporterConfig.httpProxy }}
-            - --http-proxy 
+            - --http-proxy
             - {{ .Values.reporterConfig.httpProxy }}
             {{ end }}
-            
+
             resources:
 {{ toYaml .Values.resources | indent 14 }}
           restartPolicy: Never

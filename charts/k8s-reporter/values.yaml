@@ -1,4 +1,4 @@
-# Default values for k8s-reporter. 
+# Default values for k8s-reporter.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -26,8 +26,17 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
-# -- the cron schedule at which the reporter is triggered to report to Kosli  
+# -- the cron schedule at which the reporter is triggered to report to Kosli
 cronSchedule: "*/5 * * * *"
+
+# -- specifies how to treat concurrent executions of a Job that is created by this CronJob
+concurrencyPolicy: Replace
+
+# -- specifies the number of successful finished jobs to keep
+successfulJobsHistoryLimit: 3
+
+# -- specifies the number of failed finished jobs to keep
+failedJobsHistoryLimit: 1
 
 # -- custom labels to add to pods
 podLabels: {}
@@ -80,7 +89,7 @@ reporterConfig:
 # -- any custom annotations to be added to the cronjob
 podAnnotations: {}
 
-resources: 
+resources:
   requests:
     # -- the memory request
     memory: "64Mi"
