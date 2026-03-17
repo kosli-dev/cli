@@ -214,14 +214,10 @@ func newSnapshotK8SCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientset, err := kube.NewK8sClientSet(o.kubeconfig)
-			if err != nil {
-				return err
-			}
 			if o.configFilePath != "" {
-				return o.runMultiEnv(clientset)
+				return o.runMultiEnv()
 			}
-			return o.run(clientset, args)
+			return o.run(args)
 		},
 	}
 
@@ -237,12 +233,21 @@ func newSnapshotK8SCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *snapshotK8SOptions) run(clientset *kube.K8SConnection, args []string) error {
+func (o *snapshotK8SOptions) run(args []string) error {
+	clientset, err := kube.NewK8sClientSet(o.kubeconfig)
+	if err != nil {
+		return err
+	}
 	return o.reportEnvironment(clientset, args[0], o.filter)
 }
 
-func (o *snapshotK8SOptions) runMultiEnv(clientset *kube.K8SConnection) error {
+func (o *snapshotK8SOptions) runMultiEnv() error {
 	config, err := parseK8SSnapshotConfig(o.configFilePath)
+	if err != nil {
+		return err
+	}
+
+	clientset, err := kube.NewK8sClientSet(o.kubeconfig)
 	if err != nil {
 		return err
 	}
