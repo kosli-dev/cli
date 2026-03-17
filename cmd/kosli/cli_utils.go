@@ -47,6 +47,8 @@ var ciTemplates = map[string]map[string]string{
 		"org":        "${GITHUB_REPOSITORY_OWNER}",
 		"commit-url": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}",
 		"build-url":  "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}",
+		"repo-id":    "${GITHUB_REPOSITORY_ID}",
+		"repo-url":   "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}",
 	},
 	bitbucket: {
 		"git-commit": "${BITBUCKET_COMMIT}",
@@ -54,6 +56,8 @@ var ciTemplates = map[string]map[string]string{
 		"workspace":  "${BITBUCKET_WORKSPACE}",
 		"commit-url": "https://bitbucket.org/${BITBUCKET_WORKSPACE}/${BITBUCKET_REPO_SLUG}/commits/${BITBUCKET_COMMIT}",
 		"build-url":  "https://bitbucket.org/${BITBUCKET_WORKSPACE}/${BITBUCKET_REPO_SLUG}/addon/pipelines/home#!/results/${BITBUCKET_BUILD_NUMBER}",
+		"repo-id":    "${BITBUCKET_REPO_UUID}",
+		"repo-url":   "${BITBUCKET_GIT_HTTP_ORIGIN}",
 	},
 	teamcity: {
 		"git-commit": "${BUILD_VCS_NUMBER}",
@@ -64,6 +68,8 @@ var ciTemplates = map[string]map[string]string{
 		"build-url":  "${CI_JOB_URL}",
 		"commit-url": "${CI_PROJECT_URL}/-/commit/${CI_COMMIT_SHA}",
 		"namespace":  "${CI_PROJECT_NAMESPACE}",
+		"repo-id":    "${CI_PROJECT_ID}",
+		"repo-url":   "${CI_PROJECT_URL}",
 	},
 	azureDevops: {
 		"git-commit": "${BUILD_SOURCEVERSION}",
@@ -72,17 +78,21 @@ var ciTemplates = map[string]map[string]string{
 		"commit-url": "${SYSTEM_COLLECTIONURI}${SYSTEM_TEAMPROJECT}/_git/${BUILD_REPOSITORY_NAME}/commit/${BUILD_SOURCEVERSION}",
 		"org-url":    "${SYSTEM_COLLECTIONURI}",
 		"project":    "${SYSTEM_TEAMPROJECT}",
+		"repo-id":    "${BUILD_REPOSITORY_ID}",
+		"repo-url":   "${BUILD_REPOSITORY_URI}",
 	},
 	circleci: {
 		"git-commit": "${CIRCLE_SHA1}",
 		"repository": "${CIRCLE_PROJECT_REPONAME}",
 		"commit-url": "${CIRCLE_REPOSITORY_URL}/commit/${CIRCLE_SHA1}",
 		"build-url":  "${CIRCLE_BUILD_URL}",
+		"repo-url":   "${CIRCLE_REPOSITORY_URL}",
 	},
 	codeBuild: {
 		"git-commit": "${CODEBUILD_RESOLVED_SOURCE_VERSION}",
 		"commit-url": "${CODEBUILD_SOURCE_REPO_URL}/commit/${CODEBUILD_RESOLVED_SOURCE_VERSION}",
 		"build-url":  "${CODEBUILD_BUILD_URL}",
+		"repo-url":   "${CODEBUILD_SOURCE_REPO_URL}",
 	},
 	jenkins: {
 		"git-commit": "${GIT_COMMIT}",

@@ -23,6 +23,10 @@ type attestArtifactOptions struct {
 	externalFingerprints map[string]string
 	externalURLs         map[string]string
 	annotations          map[string]string
+	repoID               string
+	repoName             string
+	repoURL              string
+	repoProvider         string
 }
 
 type AttestArtifactPayload struct {
@@ -118,6 +122,24 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
+
+			if o.repoURL != "" {
+				parsed, parseErr := url.Parse(o.repoURL)
+				if parseErr != nil || parsed.Scheme == "" || parsed.Host == "" {
+					return fmt.Errorf("--repo-url '%s' is not a valid URL", o.repoURL)
+				}
+			}
+
+			if o.repoProvider != "" {
+				allowedRepoProviders := map[string]struct{}{
+					"github": {}, "gitlab": {}, "bitbucket": {},
+					"azure-devops": {}, "circleci": {},
+				}
+				if _, ok := allowedRepoProviders[o.repoProvider]; !ok {
+					return fmt.Errorf("--repo-provider '%s' is not allowed. Must be one of: github, gitlab, bitbucket, azure-devops, circleci", o.repoProvider)
+				}
+			}
+
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -139,11 +161,15 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringToStringVar(&o.externalFingerprints, "external-fingerprint", map[string]string{}, externalFingerprintFlag)
 	cmd.Flags().StringToStringVar(&o.externalURLs, "external-url", map[string]string{}, externalURLFlag)
 	cmd.Flags().StringToStringVar(&o.annotations, "annotate", map[string]string{}, annotationFlag)
+	cmd.Flags().StringVar(&o.repoID, "repo-id", DefaultValue(ci, "repo-id"), repoIDFlag)
+	cmd.Flags().StringVar(&o.repoName, "repository", DefaultValue(ci, "repository"), repoNameFlag)
+	cmd.Flags().StringVar(&o.repoURL, "repo-url", DefaultValue(ci, "repo-url"), repoURLFlag)
+	cmd.Flags().StringVar(&o.repoProvider, "repo-provider", "", repoProviderFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 
 	addDryRunFlag(cmd)
 
-	err := RequireFlags(cmd, []string{"trail", "flow", "name", "build-url", "commit-url"})
+	err := RequireFlags(cmd, []string{"trail", "flow", "name", "build-url", "commit-url", "repo-id", "repository"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
@@ -193,6 +219,21 @@ func (o *attestArtifactOptions) run(args []string) error {
 	o.payload.GitRepoInfo, err = getGitRepoInfoFromEnvironment()
 	if err != nil {
 		logger.Warn("failed to get git repo info. %s", err.Error())
+	}
+	if o.payload.GitRepoInfo == nil {
+		o.payload.GitRepoInfo = &gitview.GitRepoInfo{}
+	}
+	if o.repoID != "" {
+		o.payload.GitRepoInfo.ID = o.repoID
+	}
+	if o.repoName != "" {
+		o.payload.GitRepoInfo.Name = o.repoName
+	}
+	if o.repoURL != "" {
+		o.payload.GitRepoInfo.URL = o.repoURL
+	}
+	if o.repoProvider != "" {
+		o.payload.GitRepoInfo.Provider = o.repoProvider
 	}
 	o.payload.GitCommit = commitInfo.Sha1
 	o.payload.GitCommitInfo = &commitInfo.BasicCommitInfo

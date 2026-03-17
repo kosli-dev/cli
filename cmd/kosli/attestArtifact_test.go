@@ -27,7 +27,7 @@ func (suite *AttestArtifactCommandTestSuite) SetupTest() {
 		Org:      "docs-cmd-test-user",
 		Host:     "http://localhost:8001",
 	}
-	suite.defaultKosliArguments = fmt.Sprintf(" --flow %s --trail %s --repo-root ../.. --host %s --org %s --api-token %s", suite.flowName, suite.trailName, global.Host, global.Org, global.ApiToken)
+	suite.defaultKosliArguments = fmt.Sprintf(" --flow %s --trail %s --repo-root ../.. --repo-id test-repo-id --repository test-repo-name --host %s --org %s --api-token %s", suite.flowName, suite.trailName, global.Host, global.Org, global.ApiToken)
 	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
 	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
 }
@@ -110,6 +110,23 @@ func (suite *AttestArtifactCommandTestSuite) TestAttestArtifactCmd() {
 			name:      "fails when attesting an artifact with invalid redacted commit info",
 			cmd:       fmt.Sprintf("attest artifact testdata/file1 --artifact-type file --redact-commit-info author,bar --name cli --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com  %s", suite.defaultKosliArguments),
 			golden:    "Error: bar is not an allowed value for --redact-commit-info\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when --repo-url is not a valid URL",
+			cmd:       fmt.Sprintf("attest artifact testdata/file1 --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name cli --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com --repo-url not-a-url %s", suite.defaultKosliArguments),
+			golden:    "Error: --repo-url 'not-a-url' is not a valid URL\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when --repo-provider is not an allowed value",
+			cmd:       fmt.Sprintf("attest artifact testdata/file1 --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name cli --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com --repo-provider jenkins %s", suite.defaultKosliArguments),
+			golden:    "Error: --repo-provider 'jenkins' is not allowed. Must be one of: github, gitlab, bitbucket, azure-devops, circleci\n",
+		},
+		{
+			name:   "can attest with all repo flags",
+			cmd:    fmt.Sprintf("attest artifact testdata/file1 --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name cli --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com --repo-url https://github.com/org/repo --repo-provider github %s", suite.defaultKosliArguments),
+			golden: "artifact testdata/file1 was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\n",
 		},
 	}
 
