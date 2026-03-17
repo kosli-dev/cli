@@ -142,7 +142,7 @@ func newAttestGithubPRCmd(out io.Writer) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.retriever = ghUtils.NewGithubConfig(githubFlagsValues.Token, githubFlagsValues.BaseURL,
-				githubFlagsValues.Org, githubFlagsValues.Repository)
+				githubFlagsValues.Org, o.repoName)
 			return o.run(args)
 		},
 	}

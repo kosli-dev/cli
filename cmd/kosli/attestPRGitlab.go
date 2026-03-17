@@ -141,6 +141,7 @@ func newAttestGitlabPRCmd(out io.Writer) *cobra.Command {
 
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			o.getRetriever().(*gitlabUtils.GitlabConfig).Repository = o.repoName
 			return o.run(args)
 		},
 	}
