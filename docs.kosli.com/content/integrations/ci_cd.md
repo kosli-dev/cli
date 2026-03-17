@@ -97,7 +97,6 @@ The following flags are **defaulted** (which means you don't need to provide the
 | --git-commit | ${CIRCLE_SHA1} |
 | --repository | ${CIRCLE_PROJECT_REPONAME} |
 | --repo-url | ${CIRCLE_REPOSITORY_URL} |
-| --repo-provider | circleci |
 {{< /tab >}}
 
 {{< tab "Teamcity" >}}

@@ -129,7 +129,7 @@ func (suite *AttestAzurePRCommandTestSuite) TestAttestAzurePRCmd() {
 			wantError: true,
 			name:      "15 fails when --repo-provider is not an allowed value",
 			cmd:       fmt.Sprintf("attest pullrequest azure --name foo --commit HEAD --azure-token fake --azure-org-url https://dev.azure.com/myorg --project myproject --repository myrepo --repo-provider jenkins %s", suite.defaultKosliArguments),
-			golden:    "Error: --repo-provider 'jenkins' is not allowed. Must be one of: github, gitlab, bitbucket, azure-devops, circleci\n",
+			golden:    "Error: --repo-provider 'jenkins' is not allowed. Must be one of: github, gitlab, bitbucket, azure-devops\n",
 		},
 	}
 

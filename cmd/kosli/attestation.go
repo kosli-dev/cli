@@ -138,8 +138,7 @@ func mergeGitRepoInfo(base *gitview.GitRepoInfo, repoID, repoName, repoURL, repo
 }
 
 var allowedRepoProviders = map[string]struct{}{
-	"github": {}, "gitlab": {}, "bitbucket": {},
-	"azure-devops": {}, "circleci": {},
+	"github": {}, "gitlab": {}, "bitbucket": {}, "azure-devops": {},
 }
 
 func validateRepoFlags(repoURL, repoProvider string) error {
@@ -151,7 +150,7 @@ func validateRepoFlags(repoURL, repoProvider string) error {
 	}
 	if repoProvider != "" {
 		if _, ok := allowedRepoProviders[repoProvider]; !ok {
-			return fmt.Errorf("--repo-provider '%s' is not allowed. Must be one of: github, gitlab, bitbucket, azure-devops, circleci", repoProvider)
+			return fmt.Errorf("--repo-provider '%s' is not allowed. Must be one of: github, gitlab, bitbucket, azure-devops", repoProvider)
 		}
 	}
 	return nil

@@ -86,12 +86,11 @@ var ciTemplates = map[string]map[string]string{
 		"repo-provider": "azure-devops",
 	},
 	circleci: {
-		"git-commit":    "${CIRCLE_SHA1}",
-		"repository":    "${CIRCLE_PROJECT_REPONAME}",
-		"commit-url":    "${CIRCLE_REPOSITORY_URL}/commit/${CIRCLE_SHA1}",
-		"build-url":     "${CIRCLE_BUILD_URL}",
-		"repo-url":      "${CIRCLE_REPOSITORY_URL}",
-		"repo-provider": "circleci",
+		"git-commit": "${CIRCLE_SHA1}",
+		"repository": "${CIRCLE_PROJECT_REPONAME}",
+		"commit-url": "${CIRCLE_REPOSITORY_URL}/commit/${CIRCLE_SHA1}",
+		"build-url":  "${CIRCLE_BUILD_URL}",
+		"repo-url":   "${CIRCLE_REPOSITORY_URL}",
 	},
 	codeBuild: {
 		"git-commit": "${CODEBUILD_RESOLVED_SOURCE_VERSION}",

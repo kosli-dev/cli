@@ -121,7 +121,7 @@ func (suite *AttestArtifactCommandTestSuite) TestAttestArtifactCmd() {
 			wantError: true,
 			name:      "fails when --repo-provider is not an allowed value",
 			cmd:       fmt.Sprintf("attest artifact testdata/file1 --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name cli --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com --repo-provider jenkins %s", suite.defaultKosliArguments),
-			golden:    "Error: --repo-provider 'jenkins' is not allowed. Must be one of: github, gitlab, bitbucket, azure-devops, circleci\n",
+			golden:    "Error: --repo-provider 'jenkins' is not allowed. Must be one of: github, gitlab, bitbucket, azure-devops\n",
 		},
 		{
 			name:   "can attest with all repo flags",
