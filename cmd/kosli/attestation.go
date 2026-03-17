@@ -113,7 +113,7 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 }
 
 // mergeGitRepoInfo applies flag overrides onto base (which may be nil) and
-// returns nil if either ID or Name is still empty after merging, so that the
+// returns nil if ID, Name, or URL is still empty after merging, so that the
 // field is omitted from the JSON payload.
 func mergeGitRepoInfo(base *gitview.GitRepoInfo, repoID, repoName, repoURL, repoProvider string) *gitview.GitRepoInfo {
 	if base == nil {
@@ -131,7 +131,7 @@ func mergeGitRepoInfo(base *gitview.GitRepoInfo, repoID, repoName, repoURL, repo
 	if repoProvider != "" {
 		base.Provider = repoProvider
 	}
-	if base.ID == "" || base.Name == "" {
+	if base.ID == "" || base.Name == "" || base.URL == "" {
 		return nil
 	}
 	return base

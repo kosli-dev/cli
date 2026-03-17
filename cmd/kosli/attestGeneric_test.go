@@ -186,8 +186,8 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 			golden:    "Error: --repo-provider 'jenkins' is not allowed. Must be one of: github, gitlab, bitbucket, azure-devops, circleci\n",
 		},
 		{
-			name:   "can attest with repo-id and repository",
-			cmd:    fmt.Sprintf("attest generic --name foo --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --repo-id test-repo-id --repository test-repo-name %s", suite.defaultKosliArguments),
+			name:   "can attest with all repo flags",
+			cmd:    fmt.Sprintf("attest generic --name foo --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --repo-id test-repo-id --repository test-repo-name --repo-url https://github.com/org/repo --repo-provider github %s", suite.defaultKosliArguments),
 			golden: "generic attestation 'foo' is reported to trail: test-123\n",
 		},
 	}

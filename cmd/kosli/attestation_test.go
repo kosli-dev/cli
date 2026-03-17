@@ -36,12 +36,20 @@ func TestMergeGitRepoInfo(t *testing.T) {
 			wantNil:  true,
 		},
 		{
-			name:     "non-nil when both ID and Name are provided",
+			name:     "nil when ID and Name are provided but URL is empty",
 			repoID:   "repo-id",
 			repoName: "repo-name",
+			wantNil:  true,
+		},
+		{
+			name:     "non-nil when ID, Name, and URL are all provided",
+			repoID:   "repo-id",
+			repoName: "repo-name",
+			repoURL:  "https://github.com/org/repo",
 			wantNil:  false,
 			wantID:   "repo-id",
 			wantName: "repo-name",
+			wantURL:  "https://github.com/org/repo",
 		},
 		{
 			name:         "includes URL and Provider when both are provided alongside ID and Name",
@@ -76,12 +84,20 @@ func TestMergeGitRepoInfo(t *testing.T) {
 			wantNil: true,
 		},
 		{
-			name:     "non-nil when base provides Name and flag provides ID",
+			name:    "nil when base provides Name and flag provides ID but URL is missing",
+			base:    &gitview.GitRepoInfo{Name: "base-name"},
+			repoID:  "flag-id",
+			wantNil: true,
+		},
+		{
+			name:     "non-nil when base provides Name and flags provide ID and URL",
 			base:     &gitview.GitRepoInfo{Name: "base-name"},
 			repoID:   "flag-id",
+			repoURL:  "https://github.com/org/repo",
 			wantNil:  false,
 			wantID:   "flag-id",
 			wantName: "base-name",
+			wantURL:  "https://github.com/org/repo",
 		},
 	}
 

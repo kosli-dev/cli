@@ -92,11 +92,6 @@ func (suite *BeginTrailCommandTestSuite) TestBeginTrailCmd() {
 			golden: "trail 'test-456' was begun\n",
 		},
 		{
-			name:   "can begin a trail with repo-id and repository",
-			cmd:    fmt.Sprintf("begin trail test-123 --flow %s --repo-id test-repo-id --repository test-repo-name %s", suite.flowName, suite.defaultKosliArguments),
-			golden: "trail 'test-123' was updated\n",
-		},
-		{
 			name:   "can begin a trail with all repo flags",
 			cmd:    fmt.Sprintf("begin trail test-123 --flow %s --repo-id test-repo-id --repository test-repo-name --repo-url https://github.com/org/repo --repo-provider github %s", suite.flowName, suite.defaultKosliArguments),
 			golden: "trail 'test-123' was updated\n",
