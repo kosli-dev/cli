@@ -51,9 +51,9 @@ func innerMain(cmd *cobra.Command, args []string) error {
 	// cobra does not capture unknown/missing commands, see https://github.com/spf13/cobra/issues/706
 	// so we handle this here until it is fixed in cobra
 	if strings.Contains(err.Error(), "unknown flag:") {
-		c, flags, err := cmd.Traverse(args[1:])
-		if err != nil {
-			return err
+		c, flags, traverseErr := cmd.Traverse(args[1:])
+		if traverseErr != nil {
+			return kosliErrors.NewErrUsage(traverseErr.Error())
 		}
 		if c.HasSubCommands() {
 			errMessage := ""
@@ -70,6 +70,7 @@ func innerMain(cmd *cobra.Command, args []string) error {
 			}
 			logger.Error("%s\navailable subcommands are: %s", errMessage, strings.Join(availableSubcommands, " | "))
 		}
+		return kosliErrors.NewErrUsage(err.Error())
 	}
 	if global.DryRun {
 		logger.Info("Error: %s", err.Error())
