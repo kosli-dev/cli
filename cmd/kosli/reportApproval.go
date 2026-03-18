@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/gitview"
 
@@ -162,8 +163,10 @@ func (o *reportApprovalOptions) run(args []string, request bool) error {
 		}
 	} else {
 		// Request last approved git commit from kosli server
-		url := fmt.Sprintf("%s/api/v2/approvals/%s/%s/artifact-commit/%s", global.Host, global.Org,
-			o.flowName, o.payload.Environment)
+		url, err := url.JoinPath(global.Host, "api/v2/approvals", global.Org, o.flowName, "artifact-commit", o.payload.Environment)
+		if err != nil {
+			return err
+		}
 
 		getLastApprovedGitCommitParams := &requests.RequestParams{
 			Method: http.MethodGet,
@@ -206,7 +209,10 @@ func (o *reportApprovalOptions) run(args []string, request bool) error {
 		}
 	}
 
-	url := fmt.Sprintf("%s/api/v2/approvals/%s/%s", global.Host, global.Org, o.flowName)
+	url, err := url.JoinPath(global.Host, "api/v2/approvals", global.Org, o.flowName)
+	if err != nil {
+		return err
+	}
 
 	reqParams := &requests.RequestParams{
 		Method:  http.MethodPost,

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/kosli-dev/cli/internal/requests"
@@ -144,6 +145,7 @@ func newAttestSnykCmd(out io.Writer) *cobra.Command {
 
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			o.repoURLExplicit = cmd.Flags().Changed("repo-url")
 			return o.run(args)
 		},
 	}
@@ -162,9 +164,12 @@ func newAttestSnykCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *attestSnykOptions) run(args []string) error {
-	url := fmt.Sprintf("%s/api/v2/attestations/%s/%s/trail/%s/snyk", global.Host, global.Org, o.flowName, o.trailName)
+	url, err := url.JoinPath(global.Host, "api/v2/attestations", global.Org, o.flowName, "trail", o.trailName, "snyk")
+	if err != nil {
+		return err
+	}
 
-	err := o.CommonAttestationOptions.run(args, o.payload.CommonAttestationPayload)
+	err = o.CommonAttestationOptions.run(args, o.payload.CommonAttestationPayload)
 	if err != nil {
 		return err
 	}

@@ -19,7 +19,7 @@ jobs:
       trail_name: ${{ steps.prep.outputs.trail_name }}
       trail_template_file: ${{ steps.prep.outputs.trail_template_file }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Get tag
         id: tag
@@ -111,7 +111,7 @@ jobs:
       artifacts: ${{ steps.prepare-artifacts-list.outputs.artifacts }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -123,11 +123,23 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
+      # Use release notes from the tag body when present (set by interactive `make release` or `make release tag=vX.Y.Z` with dist/release_notes.md). Otherwise GoReleaser uses its default changelog.
+      # Write to repo root so GoReleaser's --clean (which removes dist/) does not delete the file before it is read.
+      - name: Get release notes from tag
+        id: get-tag-notes
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          BODY=$(git tag -l --format='%(contents:body)' "$TAG")
+          if [ -n "$BODY" ]; then
+            printf '%s' "$BODY" > release_notes.md
+            echo "args=--release-notes=release_notes.md" >> $GITHUB_OUTPUT
+          fi
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: release --clean
+          args: release --clean ${{ steps.get-tag-notes.outputs.args }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
@@ -188,7 +200,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0 # needed to be able to generate legacy versions reference.
 
@@ -218,6 +230,18 @@ jobs:
           TARGET_DIR: docs.kosli.com
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MESSAGE: "Release: {msg}"
+
+  docs-repo-dispatch:
+    needs: [pre-build, goreleaser]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v4
+        with:
+          token: ${{ secrets.DOCS_REPO_ACCESS_TOKEN }}
+          repository: kosli-dev/docs
+          event-type: cli-release
+          client-payload: '{"kosli_cli_tag": "${{ needs.pre-build.outputs.tag }}"}'
 
   evidence-reporter-upload-package-and-deploy:
     needs: [pre-build, goreleaser]
@@ -267,6 +291,7 @@ jobs:
         binary-provenance,
         homebrew-pr,
         docs-gen,
+        docs-repo-dispatch,
         evidence-reporter-upload-package-and-deploy,
         environment-reporter-upload-package-and-deploy,
         environment-reporter-upload-layer

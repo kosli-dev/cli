@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -63,7 +63,10 @@ func newDetachPolicyCmd(out io.Writer) *cobra.Command {
 func (o *detachPolicyOptions) run(args []string) error {
 	var err error
 	for _, env := range o.environments {
-		url := fmt.Sprintf("%s/api/v2/environments/%s/%s/policies", global.Host, global.Org, env)
+		url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, env, "policies")
+		if err != nil {
+			return err
+		}
 		o.payload.PolicyNames = []string{args[0]}
 		reqParams := &requests.RequestParams{
 			Method:  http.MethodDelete,

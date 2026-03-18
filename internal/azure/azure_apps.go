@@ -146,7 +146,10 @@ func (azureClient *AzureClient) NewAppData(app *armappservice.Site, logger *logg
 
 // getBearerToken gets a bearer token
 func (azureClient *AzureClient) getBearerToken(logger *logger.Logger) (string, error) {
-	oauthURL := fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/token", azureClient.Credentials.TenantId)
+	oauthURL, err := url.JoinPath("https://login.microsoftonline.com", azureClient.Credentials.TenantId, "oauth2/token")
+	if err != nil {
+		return "", err
+	}
 
 	data := url.Values{}
 	data.Set("grant_type", "client_credentials")

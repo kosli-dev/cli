@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -38,19 +40,154 @@ func (suite *SnapshotK8STestSuite) TestSnapshotK8SCmd() {
 		},
 		{
 			wantError: true,
-			name:      "snapshot K8S fails if 2 args are provided",
-			cmd:       fmt.Sprintf(`snapshot k8s %s xxx %s`, suite.envName, suite.defaultKosliArguments),
-			golden:    "Error: accepts 1 arg(s), received 2\n",
+			name:      "snapshot K8S fails if both --namespaces-regex and --exclude-namespaces are set",
+			cmd:       fmt.Sprintf(`snapshot k8s %s --namespaces-regex "^default" --exclude-namespaces kube-system %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: only one of --namespaces-regex, --exclude-namespaces is allowed\n",
 		},
 		{
 			wantError: true,
-			name:      "snapshot K8S fails if no args are set",
+			name:      "snapshot K8S fails if both --namespaces and --exclude-namespaces-regex are set",
+			cmd:       fmt.Sprintf(`snapshot k8s %s --namespaces default --exclude-namespaces-regex "^kube-" %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: only one of --namespaces, --exclude-namespaces-regex is allowed\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot K8S fails if no args and no --config-file",
 			cmd:       fmt.Sprintf(`snapshot k8s %s`, suite.defaultKosliArguments),
-			golden:    "Error: accepts 1 arg(s), received 0\n",
+			golden:    "Error: requires either a positional environment name argument or --config-file\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot K8S fails if --config-file is set to empty value",
+			cmd:       fmt.Sprintf(`snapshot k8s --config-file "" %s`, suite.defaultKosliArguments),
+			golden:    "Error: cannot use '--config-file' with an empty value\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot K8S fails if --config-file and positional arg are both provided",
+			cmd:       fmt.Sprintf(`snapshot k8s %s --config-file testdata/k8s-config/valid-single.yaml %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: cannot use '--config-file' together with a positional environment name argument\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot K8S fails if --config-file and --namespaces are both provided",
+			cmd:       fmt.Sprintf(`snapshot k8s --config-file testdata/k8s-config/valid-single.yaml --namespaces default %s`, suite.defaultKosliArguments),
+			golden:    "Error: cannot use '--config-file' together with '--namespaces'\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot K8S fails if --config-file and --exclude-namespaces are both provided",
+			cmd:       fmt.Sprintf(`snapshot k8s --config-file testdata/k8s-config/valid-single.yaml --exclude-namespaces default %s`, suite.defaultKosliArguments),
+			golden:    "Error: cannot use '--config-file' together with '--exclude-namespaces'\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot K8S fails if config file not found",
+			cmd:       fmt.Sprintf(`snapshot k8s --config-file /nonexistent/path.yaml %s`, suite.defaultKosliArguments),
+			golden:    "Error: failed to read config file '/nonexistent/path.yaml': open /nonexistent/path.yaml: no such file or directory\n",
+		},
+		{
+			wantError:   true,
+			name:        "snapshot K8S fails if config file has invalid YAML",
+			cmd:         fmt.Sprintf(`snapshot k8s --config-file testdata/k8s-config/invalid-yaml.yaml %s`, suite.defaultKosliArguments),
+			goldenRegex: "Error: failed to parse config file.*",
+		},
+		{
+			wantError: true,
+			name:      "snapshot K8S fails if config file has empty environments list",
+			cmd:       fmt.Sprintf(`snapshot k8s --config-file testdata/k8s-config/empty-environments.yaml %s`, suite.defaultKosliArguments),
+			golden:    "Error: invalid config: 'environments' list must contain at least one entry\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot K8S fails if config file has entry missing name",
+			cmd:       fmt.Sprintf(`snapshot k8s --config-file testdata/k8s-config/missing-name.yaml %s`, suite.defaultKosliArguments),
+			golden:    "Error: invalid config: environment entry 1 is missing required field 'name'\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot K8S fails if config file has duplicate environment names",
+			cmd:       fmt.Sprintf(`snapshot k8s --config-file testdata/k8s-config/duplicate-names.yaml %s`, suite.defaultKosliArguments),
+			golden:    "Error: invalid config: duplicate environment name 'prod-env'\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot K8S fails if config file has conflicting filters",
+			cmd:       fmt.Sprintf(`snapshot k8s --config-file testdata/k8s-config/conflicting-filters.yaml %s`, suite.defaultKosliArguments),
+			golden:    "Error: invalid config for environment 'bad-env': cannot combine 'namespaces' with 'excludeNamespaces'\n",
+		},
+		{
+			wantError:   true,
+			name:        "snapshot K8S fails if config file has invalid regex",
+			cmd:         fmt.Sprintf(`snapshot k8s --config-file testdata/k8s-config/invalid-regex.yaml %s`, suite.defaultKosliArguments),
+			goldenRegex: `Error: invalid config for environment 'bad-regex-env': invalid regex '\[invalid'.*`,
 		},
 	}
 
 	runTestCmd(suite.T(), tests)
+}
+
+func TestParseK8SSnapshotConfig(t *testing.T) {
+	t.Run("valid single environment config", func(t *testing.T) {
+		config, err := parseK8SSnapshotConfig("testdata/k8s-config/valid-single.yaml")
+		require.NoError(t, err)
+		require.Len(t, config.Environments, 1)
+		assert.Equal(t, "prod-env", config.Environments[0].Name)
+		assert.Equal(t, []string{"prod-ns1", "prod-ns2"}, config.Environments[0].Namespaces)
+	})
+
+	t.Run("valid multi-environment config", func(t *testing.T) {
+		config, err := parseK8SSnapshotConfig("testdata/k8s-config/valid-multi.yaml")
+		require.NoError(t, err)
+		require.Len(t, config.Environments, 3)
+		assert.Equal(t, "prod-env", config.Environments[0].Name)
+		assert.Equal(t, "staging-env", config.Environments[1].Name)
+		assert.Equal(t, "infra-env", config.Environments[2].Name)
+		assert.Equal(t, []string{"^staging-.*"}, config.Environments[1].NamespacesRegex)
+		assert.Equal(t, []string{"prod-ns1", "prod-ns2", "default"}, config.Environments[2].ExcludeNamespaces)
+	})
+
+	t.Run("file not found", func(t *testing.T) {
+		_, err := parseK8SSnapshotConfig("/nonexistent/path.yaml")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to read config file")
+	})
+
+	t.Run("invalid YAML", func(t *testing.T) {
+		_, err := parseK8SSnapshotConfig("testdata/k8s-config/invalid-yaml.yaml")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to parse config file")
+	})
+
+	t.Run("empty environments list", func(t *testing.T) {
+		_, err := parseK8SSnapshotConfig("testdata/k8s-config/empty-environments.yaml")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "'environments' list must contain at least one entry")
+	})
+
+	t.Run("missing environment name", func(t *testing.T) {
+		_, err := parseK8SSnapshotConfig("testdata/k8s-config/missing-name.yaml")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "environment entry 1 is missing required field 'name'")
+	})
+
+	t.Run("duplicate environment names", func(t *testing.T) {
+		_, err := parseK8SSnapshotConfig("testdata/k8s-config/duplicate-names.yaml")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "duplicate environment name 'prod-env'")
+	})
+
+	t.Run("conflicting filters", func(t *testing.T) {
+		_, err := parseK8SSnapshotConfig("testdata/k8s-config/conflicting-filters.yaml")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot combine 'namespaces' with 'excludeNamespaces'")
+	})
+
+	t.Run("invalid regex", func(t *testing.T) {
+		_, err := parseK8SSnapshotConfig("testdata/k8s-config/invalid-regex.yaml")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid regex")
+	})
 }
 
 // In order for 'go test' to run this suite, we need to create

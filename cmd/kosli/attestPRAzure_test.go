@@ -115,9 +115,21 @@ func (suite *AttestAzurePRCommandTestSuite) TestAttestAzurePRCmd() {
 		{
 			wantError: true,
 			name:      "13 if there is a server error, this is output even when assert fails",
-			cmd: fmt.Sprintf(`attest pullrequest azure --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo 
+			cmd: fmt.Sprintf(`attest pullrequest azure --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo
 				--azure-org-url https://dev.azure.com/kosli --project kosli-azure --repository cli --commit HEAD --assert %s`, suite.defaultKosliArguments),
 			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nError: Artifact with fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 does not exist in trail \"test-123\" of flow \"attest-azure-pr\" belonging to organization \"docs-cmd-test-user\"\nError: assert failed: no pull request found for the given commit: .*\n",
+		},
+		{
+			wantError: true,
+			name:      "14 fails when --repo-url is not a valid URL",
+			cmd:       fmt.Sprintf("attest pullrequest azure --name foo --commit HEAD --azure-token fake --azure-org-url https://dev.azure.com/myorg --project myproject --repository myrepo --repo-url not-a-url %s", suite.defaultKosliArguments),
+			golden:    "Error: --repo-url 'not-a-url' is not a valid URL\n",
+		},
+		{
+			wantError: true,
+			name:      "15 fails when --repo-provider is not an allowed value",
+			cmd:       fmt.Sprintf("attest pullrequest azure --name foo --commit HEAD --azure-token fake --azure-org-url https://dev.azure.com/myorg --project myproject --repository myrepo --repo-provider jenkins %s", suite.defaultKosliArguments),
+			golden:    "Error: --repo-provider 'jenkins' is not allowed. Must be one of: github, gitlab, bitbucket, azure-devops\n",
 		},
 	}
 

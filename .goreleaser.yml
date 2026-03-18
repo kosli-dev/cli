@@ -1,3 +1,4 @@
+version: 2
 project_name: kosli
 before:
   hooks:
@@ -22,6 +23,9 @@ builds:
       - amd64
       - arm64
       - arm
+    ignore:
+      - goos: windows
+        goarch: arm
     main: ./cmd/kosli/
 
 archives:
@@ -31,7 +35,7 @@ archives:
     # Default is empty.
     format_overrides:
       - goos: windows
-        format: zip
+        formats: [zip]
 
 
 # docs for nfpm can be found here:  https://goreleaser.com/customization/nfpm/
@@ -48,7 +52,7 @@ nfpms:
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
 
-    builds:
+    ids:
       - kosli
 
     vendor: Kosli Inc.

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -46,6 +47,11 @@ type CommonAttestationOptions struct {
 	externalURLs            map[string]string
 	externalFingerprints    map[string]string
 	annotations             map[string]string
+	repoID                  string
+	repoName                string
+	repoURL                 string
+	repoProvider            string
+	repoURLExplicit         bool
 }
 
 func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestationPayload) error {
@@ -86,6 +92,11 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 		logger.Warn("failed to get git repo info. %s", err.Error())
 	}
 
+	if err := validateRepoFlags(o.repoURL, o.repoProvider, o.repoURLExplicit); err != nil {
+		return err
+	}
+	payload.GitRepoInfo = mergeGitRepoInfo(payload.GitRepoInfo, o.repoID, o.repoName, o.repoURL, o.repoProvider)
+
 	payload.UserData, err = LoadJsonData(o.userDataFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to load user data. %s", err)
@@ -100,6 +111,51 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 	// process annotations
 	payload.Annotations, err = processAnnotations(o.annotations)
 	return err
+}
+
+// mergeGitRepoInfo applies flag overrides onto base (which may be nil) and
+// returns nil if ID, Name, or URL is still empty after merging, so that the
+// field is omitted from the JSON payload.
+func mergeGitRepoInfo(base *gitview.GitRepoInfo, repoID, repoName, repoURL, repoProvider string) *gitview.GitRepoInfo {
+	if base == nil {
+		base = &gitview.GitRepoInfo{}
+	}
+	if repoID != "" {
+		base.ID = repoID
+	}
+	if repoName != "" {
+		base.Name = repoName
+	}
+	if repoURL != "" {
+		base.URL = repoURL
+	}
+	if repoProvider != "" {
+		base.Provider = repoProvider
+	}
+	if base.ID == "" || base.Name == "" || base.URL == "" {
+		logger.Warn("Repo information will not be reported as ID, Name and URL are required.")
+		return nil
+	}
+	return base
+}
+
+var allowedRepoProviders = map[string]struct{}{
+	"github": {}, "gitlab": {}, "bitbucket": {}, "azure-devops": {},
+}
+
+func validateRepoFlags(repoURL, repoProvider string, validateURL bool) error {
+	if repoURL != "" && validateURL {
+		parsed, err := url.Parse(repoURL)
+		if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+			return fmt.Errorf("--repo-url '%s' is not a valid URL", repoURL)
+		}
+	}
+	if repoProvider != "" {
+		if _, ok := allowedRepoProviders[repoProvider]; !ok {
+			return fmt.Errorf("--repo-provider '%s' is not allowed. Must be one of: github, gitlab, bitbucket, azure-devops", repoProvider)
+		}
+	}
+	return nil
 }
 
 func processAnnotations(annotations map[string]string) (map[string]string, error) {

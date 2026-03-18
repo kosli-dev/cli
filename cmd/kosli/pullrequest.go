@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"reflect"
 
@@ -32,9 +33,12 @@ func (o *attestPROptions) getRetriever() types.PRRetriever {
 }
 
 func (o *attestPROptions) run(args []string) error {
-	url := fmt.Sprintf("%s/api/v2/attestations/%s/%s/trail/%s/pull_request", global.Host, global.Org, o.flowName, o.trailName)
+	url, err := url.JoinPath(global.Host, "api/v2/attestations", global.Org, o.flowName, "trail", o.trailName, "pull_request")
+	if err != nil {
+		return err
+	}
 
-	err := o.CommonAttestationOptions.run(args, o.payload.CommonAttestationPayload)
+	err = o.CommonAttestationOptions.run(args, o.payload.CommonAttestationPayload)
 	if err != nil {
 		return err
 	}

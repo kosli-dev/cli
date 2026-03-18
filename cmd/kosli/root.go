@@ -134,6 +134,9 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	gitCommitFlag                   = "[defaulted] The git commit from which the artifact was created. (defaulted in some CIs: https://docs.kosli.com/ci-defaults, otherwise defaults to HEAD )."
 	buildUrlFlag                    = "The url of CI pipeline that built the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
 	commitUrlFlag                   = "The url for the git commit that created the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
+	repoIDFlag                      = "[optional] The unique identifier of the repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
+	repoURLFlag                     = "[optional] The URL of the repository. Must be a valid URL if provided. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
+	repoProviderFlag                = "[optional] The source code hosting provider. One of: github, gitlab, bitbucket, azure-devops."
 	bbUsernameFlag                  = "Bitbucket username. Only needed if you use --bitbucket-password"
 	bbPasswordFlag                  = "Bitbucket App password. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#authentication for more details."
 	bbAccessTokenFlag               = "Bitbucket repo/project/workspace access token. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#access-tokens for more details."
@@ -382,6 +385,7 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 		newConfigCmd(out),
 		newAttachPolicyCmd(out),
 		newDetachPolicyCmd(out),
+		newEvaluateCmd(out),
 	)
 
 	cobra.AddTemplateFunc("isBeta", isBeta)

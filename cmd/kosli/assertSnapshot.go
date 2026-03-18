@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strconv"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -61,7 +63,10 @@ func run(out io.Writer, args []string) error {
 	if err != nil {
 		return err
 	}
-	url := fmt.Sprintf("%s/api/v2/snapshots/%s/%s/%d", global.Host, global.Org, envName, id)
+	url, err := url.JoinPath(global.Host, "api/v2/snapshots", global.Org, envName, strconv.Itoa(id))
+	if err != nil {
+		return err
+	}
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,

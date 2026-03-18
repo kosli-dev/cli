@@ -62,7 +62,11 @@ func (o *listReposOptions) run(out io.Writer) error {
 	if o.repoID != "" {
 		params.Set("repo_id", o.repoID)
 	}
-	reqURL := fmt.Sprintf("%s/api/v2/repos/%s?%s", global.Host, global.Org, params.Encode())
+	base, err := neturl.JoinPath(global.Host, "api/v2/repos", global.Org)
+	if err != nil {
+		return err
+	}
+	reqURL := base + "?" + params.Encode()
 
 	reqParams := &requests.RequestParams{
 		Method: http.MethodGet,

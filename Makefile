@@ -165,18 +165,44 @@ hugo: cli-docs helm-docs generate-json-metadata
 hugo-local: cli-docs generate-json-metadata
 	cd docs.kosli.com && hugo server --minify --buildDrafts --port=1515
 
-helm-lint: 
-	@cd charts/k8s-reporter && helm lint .
+helm-lint:
+	@cd charts/k8s-reporter && helm lint . \
+		--set reporterConfig.kosliOrg=placeholder \
+		--set 'reporterConfig.environments[0].name=placeholder'
 
 helm-docs: helm-lint
 	@cd charts/k8s-reporter &&  docker run --rm --volume "$(PWD):/helm-docs" jnorwood/helm-docs:latest --template-files README.md.gotmpl,_templates.gotmpl --output-file README.md
 	@cd charts/k8s-reporter &&  docker run --rm --volume "$(PWD):/helm-docs" jnorwood/helm-docs:latest --template-files README.md.gotmpl,_templates.gotmpl --output-file ../../docs.kosli.com/content/helm/_index.md
 
+# Suggest next semver and changelog using Claude.
+# Writes changelog to dist/release_notes.md for use with goreleaser --release-notes.
+# Requires: jq, curl, op (1Password CLI). API key from 1Password via op.
+# Usage: make suggest-version-ai [BASE_REF=v1.2.3]
+suggest-version-ai:
+	@command -v jq >/dev/null 2>&1 || (echo "Install jq (e.g. brew install jq)" && exit 1)
+	@command -v curl >/dev/null 2>&1 || (echo "Install curl (e.g. brew install curl)" && exit 1)
+	@bin/suggest-version-ai.sh $(BASE_REF) -o dist/release_notes.md
+
+# Release: without tag → suggest version + changelog, then interactive edit & confirm, then tag and push.
+# With tag → escape hatch: create annotated tag (body = dist/release_notes.md if present), push. No AI, no prompt.
+# Release notes are carried in the tag message so GitHub Actions can pass them to GoReleaser.
 release:
-	@git remote update
-	@git status -uno | grep --silent "Your branch is up to date" || (echo "ERROR: your branch is NOT up to date with remote" && return 1)
-	git tag -a $(tag) -m"$(tag)"
-	git push origin $(tag)
+	@current=$$(git branch --show-current 2>/dev/null || git rev-parse --abbrev-ref HEAD); \
+	if [ "$$current" != "main" ]; then echo "ERROR: release must be run from main branch (current: $$current)"; exit 1; fi; \
+	if [ -z "$(tag)" ]; then \
+	  command -v jq >/dev/null 2>&1 || (echo "Install jq (e.g. brew install jq)" && exit 1); \
+	  command -v curl >/dev/null 2>&1 || (echo "Install curl (e.g. brew install curl)" && exit 1); \
+	  bin/suggest-version-ai.sh -o dist/release_notes.md; \
+	  if [ ! -f dist/suggested_version ]; then \
+	    echo "Suggestion failed or no previous tag. Use: make release tag=vX.Y.Z"; exit 1; \
+	  fi; \
+	  bin/release-interactive.sh; \
+	else \
+	  git remote update; \
+	  git status -uno | grep --silent "Your branch is up to date" || (echo "ERROR: your branch is NOT up to date with remote" && exit 1); \
+	  ([ -f dist/release_notes.md ] && git tag -a $(tag) -F dist/release_notes.md) || git tag -a $(tag) -m"$(tag)"; \
+	  git push origin $(tag); \
+	fi
 
 # check-links:
 # 	@docker run -v ${PWD}:/tmp:ro --rm -i --entrypoint '' ghcr.io/tcort/markdown-link-check:stable /bin/sh -c 'find /tmp/docs.kosli.com/content -name \*.md -print0 | xargs -0 -n1 markdown-link-check -q -c /tmp/link-checker-config.json'

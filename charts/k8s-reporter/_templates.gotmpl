@@ -1,5 +1,11 @@
 {{ define "extra.longdescription" -}}
-The chart allows you to create a Kubernetes cronjob and all its necessary RBAC to report running images to Kosli at a given cron schedule.  
+The chart allows you to create a Kubernetes cronjob and all its necessary RBAC to report running images to Kosli at a given cron schedule.
+
+Configuration is done via **reporterConfig.environments**: a list of Kosli environments to report to. Each entry has a required `name` and optional namespace selectors. Use one entry for a single environment, or multiple entries to report to different environments with different selectors.
+
+## Breaking change in v2.0.0
+
+Version 2.0.0 removes the previous single-environment mode (`kosliEnvironmentName` and the `namespaces` / `namespacesRegex` / `excludeNamespaces` / `excludeNamespacesRegex` flags). You now configure one or more environments only via **reporterConfig.environments**. To report a single environment, use a list with one entry.
 {{- end }}
 
 {{ define "extra.prerequisites" -}}
@@ -28,31 +34,44 @@ kubectl create secret generic kosli-api-token --from-literal=key=<your-api-key>
 
 3. Install the helm chart
 
-A. To report artifacts running in entire cluster (requires cluster-wide read permissions):
+Configure **reporterConfig.environments** (required). Each entry has required `name` and optional `namespaces`, `namespacesRegex`, `excludeNamespaces`, `excludeNamespacesRegex`. Omit namespace fields for an entry to report the entire cluster to that environment.
 
-```shell {.command}
-helm install kosli-reporter kosli/k8s-reporter \
-    --set reporterConfig.kosliOrg=<your-org> \
-    --set reporterConfig.kosliEnvironmentName=<your-env-name>
+**One environment, entire cluster:**
+
+```yaml
+# values.yaml
+reporterConfig:
+  kosliOrg: <your-org>
+  environments:
+    - name: <your-env-name>
 ```
 
-B. To report artifacts running in multiple namespaces (requires cluster-wide read permissions):
+**One environment, specific namespaces:**
 
-```shell {.command}
-helm install kosli-reporter kosli/k8s-reporter \
-    --set reporterConfig.kosliOrg=<your-org> \
-    --set reporterConfig.kosliEnvironmentName=<your-env-name> \
-    --set reporterConfig.namespaces=<namespace1,namespace2>
+```yaml
+reporterConfig:
+  kosliOrg: <your-org>
+  environments:
+    - name: <your-env-name>
+      namespaces: [namespace1, namespace2]
 ```
 
-C. To report artifacts running in one namespace (requires namespace-scoped read permissions):
+**Multiple environments with different selectors:**
+
+```yaml
+reporterConfig:
+  kosliOrg: <your-org>
+  environments:
+    - name: prod-env
+      namespaces: [prod-ns1, prod-ns2]
+    - name: staging-env
+      namespacesRegex: ["^staging-.*"]
+    - name: infra-env
+      excludeNamespaces: [prod-ns1, prod-ns2, default]
+```
 
 ```shell {.command}
-helm install kosli-reporter kosli/k8s-reporter \
-    --set reporterConfig.kosliOrg=<your-org> \
-    --set reporterConfig.kosliEnvironmentName=<your-env-name> \
-    --set reporterConfig.namespaces=<namespace1> \
-    --set serviceAccount.permissionScope=namespace
+helm install kosli-reporter kosli/k8s-reporter -f values.yaml
 ```
 
 > Chart source can be found at https://github.com/kosli-dev/cli/tree/main/charts/k8s-reporter
@@ -64,8 +83,10 @@ helm install kosli-reporter kosli/k8s-reporter \
 {{ define "extra.upgrade" -}}
 ## Upgrading the chart
 
+If upgrading from v1.x to v2.0.0, migrate your values to the **environments** list format (see above). Then:
+
 ```shell {.command}
-helm upgrade kosli-reporter kosli/k8s-reporter ...
+helm upgrade kosli-reporter kosli/k8s-reporter -f values.yaml
 ```
 {{- end }}
 

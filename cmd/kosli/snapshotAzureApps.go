@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/azure"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -108,7 +109,10 @@ func newSnapshotAzureAppsCmd(out io.Writer) *cobra.Command {
 
 func (o *snapshotAzureAppsOptions) run(args []string) error {
 	envName := args[0]
-	url := fmt.Sprintf("%s/api/v2/environments/%s/%s/report/azure-apps", global.Host, global.Org, envName)
+	url, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/azure-apps")
+	if err != nil {
+		return err
+	}
 
 	webAppsData, err := o.azureStaticCredentials.GetAzureAppsData(logger)
 	if err != nil {

@@ -173,6 +173,23 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 			cmd:       fmt.Sprintf("attest generic --name bar --annotate foo.baz=bar %s", suite.defaultKosliArguments),
 			golden:    "Error: --annotate flag should be in the format key=value. Invalid key: 'foo.baz'. Key can only contain [A-Za-z0-9_]\n",
 		},
+		{
+			wantError: true,
+			name:      "fails when --repo-url is not a valid URL",
+			cmd:       fmt.Sprintf("attest generic --name foo --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --repo-url not-a-url %s", suite.defaultKosliArguments),
+			golden:    "Error: --repo-url 'not-a-url' is not a valid URL\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when --repo-provider is not an allowed value",
+			cmd:       fmt.Sprintf("attest generic --name foo --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --repo-provider jenkins %s", suite.defaultKosliArguments),
+			golden:    "Error: --repo-provider 'jenkins' is not allowed. Must be one of: github, gitlab, bitbucket, azure-devops\n",
+		},
+		{
+			name:   "can attest with all repo flags",
+			cmd:    fmt.Sprintf("attest generic --name foo --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --repo-id test-repo-id --repository test-repo-name --repo-url https://github.com/org/repo --repo-provider github %s", suite.defaultKosliArguments),
+			golden: "generic attestation 'foo' is reported to trail: test-123\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

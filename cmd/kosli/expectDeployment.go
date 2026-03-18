@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -88,7 +88,10 @@ func (o *expectDeploymentOptions) run(args []string) error {
 		return err
 	}
 
-	url := fmt.Sprintf("%s/api/v2/deployments/%s/%s", global.Host, global.Org, o.flowName)
+	url, err := url.JoinPath(global.Host, "api/v2/deployments", global.Org, o.flowName)
+	if err != nil {
+		return err
+	}
 
 	reqParams := &requests.RequestParams{
 		Method:  http.MethodPost,

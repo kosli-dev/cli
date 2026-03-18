@@ -30,6 +30,10 @@ on:
         required: false
         type: boolean
         default: true
+      checkout_ref:
+        required: false
+        type: string
+        default: ''
     secrets:
       slack_channel:
         required: true
@@ -69,8 +73,10 @@ jobs:
       contents: write
     steps:
 
-    - uses: actions/checkout@v4
-    
+    - uses: actions/checkout@v6
+      with:
+        ref: ${{ inputs.checkout_ref || github.sha }}
+
     - uses: actions/setup-go@v5
       with:
         go-version: '1.25.0'
@@ -80,7 +86,7 @@ jobs:
       with:
         version:
           ${{ vars.KOSLI_CLI_VERSION }}
-    
+
     - name: Run golangci-lint
       id: lint
       uses: golangci/golangci-lint-action@v9
@@ -107,9 +113,10 @@ jobs:
       contents: write
     steps:
       
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0 # needed for some tests referencing older commits
+        ref: ${{ inputs.checkout_ref || github.sha }}
     
     - uses: actions/setup-go@v5
       with:
@@ -176,7 +183,9 @@ jobs:
       contents: write
     steps:
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
+      with:
+        ref: ${{ inputs.checkout_ref || github.sha }}
 
     - name: setup Snyk
       uses: snyk/actions/setup@master
@@ -213,7 +222,9 @@ jobs:
       contents: write
     steps:
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
+      with:
+        ref: ${{ inputs.checkout_ref || github.sha }}
 
     - name: setup Snyk
       uses: snyk/actions/setup@master

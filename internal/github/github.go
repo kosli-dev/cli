@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/url"
 	"strings"
 	"time"
 
@@ -68,7 +69,8 @@ func graphqlEndpoint(baseURL string) string {
 	if baseURL == "" || baseURL == "https://api.github.com" {
 		return "https://api.github.com/graphql"
 	}
-	return strings.TrimSuffix(baseURL, "/") + "/api/graphql"
+	result, _ := url.JoinPath(baseURL, "api/graphql")
+	return result
 }
 
 func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence, error) {

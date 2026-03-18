@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -100,7 +100,10 @@ func (o *createAttestationTypeOptions) run(args []string) error {
 		return err
 	}
 
-	url := fmt.Sprintf("%s/api/v2/custom-attestation-types/%s", global.Host, global.Org)
+	url, err := url.JoinPath(global.Host, "api/v2/custom-attestation-types", global.Org)
+	if err != nil {
+		return err
+	}
 	reqParams := &requests.RequestParams{
 		Method: http.MethodPost,
 		URL:    url,

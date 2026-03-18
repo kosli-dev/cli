@@ -91,6 +91,23 @@ func (suite *BeginTrailCommandTestSuite) TestBeginTrailCmd() {
 			cmd:    fmt.Sprintf("begin trail test-456 --flow %s --template-file testdata/valid_template.yml --origin-url https://exampl.com --external-url jira=https://jira.kosli.com %s", suite.flowName, suite.defaultKosliArguments),
 			golden: "trail 'test-456' was begun\n",
 		},
+		{
+			name:   "can begin a trail with all repo flags",
+			cmd:    fmt.Sprintf("begin trail test-123 --flow %s --repo-id test-repo-id --repository test-repo-name --repo-url https://github.com/org/repo --repo-provider github %s", suite.flowName, suite.defaultKosliArguments),
+			golden: "trail 'test-123' was updated\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when --repo-url is not a valid URL",
+			cmd:       fmt.Sprintf("begin trail test-123 --flow %s --repo-url not-a-url %s", suite.flowName, suite.defaultKosliArguments),
+			golden:    "Error: --repo-url 'not-a-url' is not a valid URL\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when --repo-provider is not an allowed value",
+			cmd:       fmt.Sprintf("begin trail test-123 --flow %s --repo-provider jenkins %s", suite.flowName, suite.defaultKosliArguments),
+			golden:    "Error: --repo-provider 'jenkins' is not allowed. Must be one of: github, gitlab, bitbucket, azure-devops\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 
@@ -93,7 +94,10 @@ func (o *tagOptions) run(args []string) error {
 	if err != nil {
 		return err
 	}
-	url := fmt.Sprintf("%s/api/v2/tags/%s/%s/%s", global.Host, global.Org, o.resourceType, o.resourceID)
+	url, err := url.JoinPath(global.Host, "api/v2/tags", global.Org, o.resourceType, o.resourceID)
+	if err != nil {
+		return err
+	}
 
 	reqParams := &requests.RequestParams{
 		Method:  http.MethodPatch,

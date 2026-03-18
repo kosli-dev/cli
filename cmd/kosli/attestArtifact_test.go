@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -109,9 +111,55 @@ func (suite *AttestArtifactCommandTestSuite) TestAttestArtifactCmd() {
 			cmd:       fmt.Sprintf("attest artifact testdata/file1 --artifact-type file --redact-commit-info author,bar --name cli --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com  %s", suite.defaultKosliArguments),
 			golden:    "Error: bar is not an allowed value for --redact-commit-info\n",
 		},
+		{
+			wantError: true,
+			name:      "fails when --repo-url is not a valid URL",
+			cmd:       fmt.Sprintf("attest artifact testdata/file1 --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name cli --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com --repo-url not-a-url %s", suite.defaultKosliArguments),
+			golden:    "Error: --repo-url 'not-a-url' is not a valid URL\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when --repo-provider is not an allowed value",
+			cmd:       fmt.Sprintf("attest artifact testdata/file1 --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name cli --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com --repo-provider jenkins %s", suite.defaultKosliArguments),
+			golden:    "Error: --repo-provider 'jenkins' is not allowed. Must be one of: github, gitlab, bitbucket, azure-devops\n",
+		},
+		{
+			name:   "can attest with all repo flags",
+			cmd:    fmt.Sprintf("attest artifact testdata/file1 --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name cli --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com --repo-id test-repo-id --repository test-repo-name --repo-url https://github.com/org/repo --repo-provider github %s", suite.defaultKosliArguments),
+			golden: "artifact testdata/file1 was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\n",
+		},
+		{
+			name:   "can attest without repo-id and repository",
+			cmd:    fmt.Sprintf("attest artifact testdata/file1 --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name cli --commit HEAD --build-url http://www.example.com --commit-url http://www.example.com %s", suite.defaultKosliArguments),
+			golden: "artifact testdata/file1 was attested with fingerprint: 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)
+}
+
+// TestAttestArtifactPayload_RepoInfoOmittedWhenNil ensures that when GitRepoInfo
+// is not available (nil), the JSON payload does not include the repo_info field
+// (omitempty behavior).
+func TestAttestArtifactPayload_RepoInfoOmittedWhenNil(t *testing.T) {
+	payload := AttestArtifactPayload{
+		Fingerprint: "abc123",
+		Filename:    "file1",
+		GitCommit:   "sha",
+		BuildUrl:    "https://build.example.com",
+		CommitUrl:   "https://commit.example.com",
+		RepoUrl:     "https://repo.example.com",
+		Name:        "cli",
+		TrailName:   "trail-1",
+		GitRepoInfo: nil, // not available
+	}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("marshal payload: %v", err)
+	}
+	if strings.Contains(string(data), "repo_info") {
+		t.Errorf("payload must not include repo_info when GitRepoInfo is nil, got: %s", string(data))
+	}
 }
 
 // In order for 'go test' to run this suite, we need to create

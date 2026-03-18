@@ -1,6 +1,4 @@
-{{- include "k8s-reporter.validateNamespacesRegex" . -}}
-{{- include "k8s-reporter.validateExcludeNamespacesRegex" . -}}
-{{- include "k8s-reporter.validateExcludeOptions" . -}}
+{{- include "k8s-reporter.validateEnvironments" . -}}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -11,22 +9,32 @@ metadata:
 
 spec:
   schedule: {{ .Values.cronSchedule | quote }}
-  concurrencyPolicy: Replace
+  concurrencyPolicy: {{ .Values.concurrencyPolicy }}
   startingDeadlineSeconds: 30
+  successfulJobsHistoryLimit: {{ .Values.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.failedJobsHistoryLimit }}
   jobTemplate:
     spec:
       template:
         metadata:
-          labels: 
+          labels:
             {{- range $key, $value :=  .Values.podLabels }}
               {{ $key }}: {{ $value }}
-            {{ end }}    
+            {{ end }}
         spec:
           serviceAccountName: {{ include "reporter.serviceAccountName" . }}
+          volumes:
+          - name: environments-config
+            configMap:
+              name: {{ include "reporter.fullname" . }}-environments-config
           containers:
           - name: reporter
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
             imagePullPolicy: {{ .Values.image.pullPolicy }}
+            volumeMounts:
+            - name: environments-config
+              mountPath: /config
+              readOnly: true
             {{- if .Values.reporterConfig.securityContext }}
             securityContext:
               {{- if hasKey .Values.reporterConfig.securityContext "allowPrivilegeEscalation" }}
@@ -53,37 +61,23 @@ spec:
                   secretKeyRef:
                     name: {{ required ".Values.kosliApiToken.secretName is required." .Values.kosliApiToken.secretName }}
                     key: {{ .Values.kosliApiToken.secretKey | default "token" }}
-              {{ if .Values.reporterConfig.namespaces }}
-              - name: KOSLI_NAMESPACES
-                value: {{ .Values.reporterConfig.namespaces | quote }}
-              {{ else if .Values.reporterConfig.namespacesRegex }}
-              - name: KOSLI_NAMESPACES_REGEX
-                value: {{ .Values.reporterConfig.namespacesRegex | quote }}
-              {{ else if .Values.reporterConfig.excludeNamespaces }}
-              - name: KOSLI_EXCLUDE_NAMESPACES
-                value: {{ .Values.reporterConfig.excludeNamespaces | quote }}
-              {{ else if .Values.reporterConfig.excludeNamespacesRegex }}
-              - name: KOSLI_EXCLUDE_NAMESPACES_REGEX
-                value: {{ .Values.reporterConfig.excludeNamespacesRegex | quote }}
-              {{ end }}
-
               {{- range $key, $value :=  .Values.env }}
               - name: {{ $key }}
                 value: {{ $value }}
-              {{ end }}    
+              {{ end }}
             args:
             - snapshot
             - k8s
-            - {{ required ".Values.reporterConfig.kosliEnvironmentName is required" .Values.reporterConfig.kosliEnvironmentName }}
+            - --config-file
+            - /config/config.yaml
             {{ if .Values.reporterConfig.dryRun }}
-            - --dry-run 
+            - --dry-run
             {{ end }}
             {{ if .Values.reporterConfig.httpProxy }}
-            - --http-proxy 
+            - --http-proxy
             - {{ .Values.reporterConfig.httpProxy }}
             {{ end }}
-            
+
             resources:
 {{ toYaml .Values.resources | indent 14 }}
           restartPolicy: Never
-

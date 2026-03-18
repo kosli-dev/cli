@@ -149,6 +149,12 @@ func goldenJsonContains(t *testing.T, output string, path string, want any) {
 		return
 	}
 
+	// Special case: check that value is not nil
+	if want == "not-nil" {
+		require.NotNil(t, data, "expected non-nil value at path %s", path)
+		return
+	}
+
 	require.Equal(t, want, data, "unexpected value at path %s", path)
 }
 
