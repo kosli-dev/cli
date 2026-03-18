@@ -17,15 +17,25 @@ var (
 	// exitCodesDefault applies to all commands that call the Kosli API.
 	exitCodesDefault = []docgen.ExitCodeEntry{
 		{Code: 0, Meaning: "No error."},
+		{Code: 1, Meaning: "Unexpected error."},
 		{Code: 2, Meaning: "Kosli server is unreachable or returned a server error."},
 		{Code: 3, Meaning: "Invalid API token or unauthorized access."},
 		{Code: 4, Meaning: "CLI usage error (e.g. missing or invalid flags)."},
 	}
 
-	// exitCodesAssert applies to assert commands that can signal compliance violations.
+	// exitCodesAssert applies to assert commands that always signal compliance violations on failure.
 	exitCodesAssert = []docgen.ExitCodeEntry{
 		{Code: 0, Meaning: "No error."},
 		{Code: 1, Meaning: "Assertion/compliance violation."},
+		{Code: 2, Meaning: "Kosli server is unreachable or returned a server error."},
+		{Code: 3, Meaning: "Invalid API token or unauthorized access."},
+		{Code: 4, Meaning: "CLI usage error (e.g. missing or invalid flags)."},
+	}
+
+	// exitCodesAttest applies to attest commands that support --assert flag.
+	exitCodesAttest = []docgen.ExitCodeEntry{
+		{Code: 0, Meaning: "No error."},
+		{Code: 1, Meaning: "Assertion/compliance violation (only when --assert is used)."},
 		{Code: 2, Meaning: "Kosli server is unreachable or returned a server error."},
 		{Code: 3, Meaning: "Invalid API token or unauthorized access."},
 		{Code: 4, Meaning: "CLI usage error (e.g. missing or invalid flags)."},
@@ -56,12 +66,12 @@ var commandExitCodes = map[string][]docgen.ExitCodeEntry{
 	"kosli assert pullrequest azure":    exitCodesAssert,
 	"kosli assert pullrequest bitbucket": exitCodesAssert,
 	"kosli assert status":               exitCodesAssertStatus,
-	// attest commands with --assert flag — can also signal compliance violations
-	"kosli attest pullrequest github":   exitCodesAssert,
-	"kosli attest pullrequest gitlab":   exitCodesAssert,
-	"kosli attest pullrequest azure":    exitCodesAssert,
-	"kosli attest pullrequest bitbucket": exitCodesAssert,
-	"kosli attest jira":                 exitCodesAssert,
+	// attest commands with --assert flag — can signal compliance violations when --assert is used
+	"kosli attest pullrequest github":    exitCodesAttest,
+	"kosli attest pullrequest gitlab":    exitCodesAttest,
+	"kosli attest pullrequest azure":     exitCodesAttest,
+	"kosli attest pullrequest bitbucket": exitCodesAttest,
+	"kosli attest jira":                  exitCodesAttest,
 	// non-API commands
 	"kosli version":                     exitCodesNoAPI,
 	"kosli completion":                  exitCodesNoAPI,
