@@ -232,8 +232,12 @@ func newAttestationForm(payload interface{}, attachments []string) (
 
 func wrapAttestationError(err error) error {
 	if err != nil {
-		return fmt.Errorf("%s", strings.Replace(err.Error(), "requires at least one of: artifact_fingerprint or git_commit_info.",
-			"requires at least one of: specifying the fingerprint (either by calculating it using the artifact name/path and --artifact-type, or by providing it using --fingerprint) or providing --commit (requires an available git repo to access commit details)", 1))
+		msg := strings.Replace(err.Error(), "requires at least one of: artifact_fingerprint or git_commit_info.",
+			"requires at least one of: specifying the fingerprint (either by calculating it using the artifact name/path and --artifact-type, or by providing it using --fingerprint) or providing --commit (requires an available git repo to access commit details)", 1)
+		if msg == err.Error() {
+			return err // no replacement made — return original to preserve error type
+		}
+		return fmt.Errorf("%s", msg)
 	}
 	return err
 }

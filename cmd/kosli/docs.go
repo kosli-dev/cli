@@ -47,17 +47,25 @@ var (
 // commandExitCodes maps command paths to their exit code sets.
 // Commands not in this map receive exitCodesDefault.
 var commandExitCodes = map[string][]docgen.ExitCodeEntry{
-	"kosli assert artifact":                    exitCodesAssert,
-	"kosli assert approval":                    exitCodesAssert,
-	"kosli assert snapshot":                    exitCodesAssert,
-	"kosli assert pullrequest github":          exitCodesAssert,
-	"kosli assert pullrequest gitlab":          exitCodesAssert,
-	"kosli assert pullrequest azure":           exitCodesAssert,
-	"kosli assert pullrequest bitbucket":       exitCodesAssert,
-	"kosli assert status":                      exitCodesAssertStatus,
-	"kosli version":                            exitCodesNoAPI,
-	"kosli completion":                         exitCodesNoAPI,
-	"kosli docs":                               exitCodesNoAPI,
+	// assert commands — can signal compliance violations
+	"kosli assert artifact":             exitCodesAssert,
+	"kosli assert approval":             exitCodesAssert,
+	"kosli assert snapshot":             exitCodesAssert,
+	"kosli assert pullrequest github":   exitCodesAssert,
+	"kosli assert pullrequest gitlab":   exitCodesAssert,
+	"kosli assert pullrequest azure":    exitCodesAssert,
+	"kosli assert pullrequest bitbucket": exitCodesAssert,
+	"kosli assert status":               exitCodesAssertStatus,
+	// attest commands with --assert flag — can also signal compliance violations
+	"kosli attest pullrequest github":   exitCodesAssert,
+	"kosli attest pullrequest gitlab":   exitCodesAssert,
+	"kosli attest pullrequest azure":    exitCodesAssert,
+	"kosli attest pullrequest bitbucket": exitCodesAssert,
+	"kosli attest jira":                 exitCodesAssert,
+	// non-API commands
+	"kosli version":                     exitCodesNoAPI,
+	"kosli completion":                  exitCodesNoAPI,
+	"kosli docs":                        exitCodesNoAPI,
 }
 
 const docsShortDesc = `Generate documentation files for Kosli CLI. `
