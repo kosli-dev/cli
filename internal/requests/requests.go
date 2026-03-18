@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
+	kosliErrors "github.com/kosli-dev/cli/internal/errors"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/version"
 )
@@ -247,8 +248,8 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 		}
 		resp, err := c.HttpClient.Do(req)
 		if err != nil {
-			// err from retryable client is detailed enough
-			return nil, fmt.Errorf("%v", err)
+			// err from retryable client is detailed enough; covers 5xx after retries and network failures
+			return nil, kosliErrors.NewErrServer(fmt.Sprintf("%v", err))
 		}
 
 		defer func() {
@@ -278,16 +279,19 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 				respBodyMap := respBody.(map[string]any)
 				message, ok := respBodyMap["message"]
 				if ok {
-					errors, ok := respBodyMap["errors"]
+					errs, ok := respBodyMap["errors"]
 					if ok {
 						cleanedErrorMessage = strings.Split(message.(string), "You have requested")[0] +
-							": " + fmt.Sprintf("%v", errors)
+							": " + fmt.Sprintf("%v", errs)
 					} else {
 						cleanedErrorMessage = strings.Split(message.(string), "You have requested")[0]
 					}
 				} else {
 					cleanedErrorMessage = fmt.Sprintf("%s", respBodyMap)
 				}
+			}
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
+				return nil, kosliErrors.NewErrConfig(cleanedErrorMessage)
 			}
 			return nil, fmt.Errorf("%s", cleanedErrorMessage)
 		}

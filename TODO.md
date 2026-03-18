@@ -6,7 +6,7 @@
 ## Structured exit codes (issue #4988)
 
 - [x] Slice 1: Typed errors + `os.Exit` dispatch in `main.go` + compliance exit code 1
-- [ ] Slice 2: HTTP error classification in `requests.go` (5xx→2, 401/403→3, network→2) ← active
+- [x] Slice 2: HTTP error classification in `requests.go` (5xx→2, 401/403→3, network→2)
 - [ ] Slice 3: Usage errors (unknown flag, missing required flag → exit 4)
 - [ ] Slice 4: Remaining assert commands + docs
 
