@@ -80,7 +80,7 @@ nfpms:
     # GoReleaser will automatically add the binaries.
     contents:
       # The src and dst attributes also supports name templates
-      - src: dist/{{ .ProjectName }}_{{ .Os }}_{{ if .Amd64 }}{{ .Arch }}_v1{{ else if .Arm }}{{ .Arch }}_6{{ else }}{{ .Arch }}{{ end }}/kosli
+      - src: dist/{{ .ProjectName }}_{{ .Os }}_{{ if .Amd64 }}{{ .Arch }}_v1{{ else if .Arm }}{{ .Arch }}_6{{ else if eq .Arch "arm64" }}{{ .Arch }}_v8.0{{ else }}{{ .Arch }}{{ end }}/kosli
         dst: /usr/local/bin/kosli
 
 publishers:
