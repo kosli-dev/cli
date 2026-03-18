@@ -132,6 +132,7 @@ func mergeGitRepoInfo(base *gitview.GitRepoInfo, repoID, repoName, repoURL, repo
 		base.Provider = repoProvider
 	}
 	if base.ID == "" || base.Name == "" || base.URL == "" {
+		logger.Warn("Repo information will not be reported as ID, Name and URL are required.")
 		return nil
 	}
 	return base
