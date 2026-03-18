@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	kosliErrors "github.com/kosli-dev/cli/internal/errors"
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -37,6 +38,7 @@ func main() {
 	}
 	if err != nil {
 		logger.Error(err.Error())
+		os.Exit(kosliErrors.ExitCodeFor(err))
 	}
 }
 
