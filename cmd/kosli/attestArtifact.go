@@ -23,6 +23,10 @@ type attestArtifactOptions struct {
 	externalFingerprints map[string]string
 	externalURLs         map[string]string
 	annotations          map[string]string
+	repoID               string
+	repoName             string
+	repoURL              string
+	repoProvider         string
 }
 
 type AttestArtifactPayload struct {
@@ -118,6 +122,11 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
+
+			if err := validateRepoFlags(o.repoURL, o.repoProvider, cmd.Flags().Changed("repo-url")); err != nil {
+				return err
+			}
+
 			return ValidateRegistryFlags(cmd, o.fingerprintOptions)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -139,6 +148,10 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringToStringVar(&o.externalFingerprints, "external-fingerprint", map[string]string{}, externalFingerprintFlag)
 	cmd.Flags().StringToStringVar(&o.externalURLs, "external-url", map[string]string{}, externalURLFlag)
 	cmd.Flags().StringToStringVar(&o.annotations, "annotate", map[string]string{}, annotationFlag)
+	cmd.Flags().StringVar(&o.repoID, "repo-id", DefaultValue(ci, "repo-id"), repoIDFlag)
+	cmd.Flags().StringVar(&o.repoName, "repository", DefaultValue(ci, "repository"), repoNameFlag)
+	cmd.Flags().StringVar(&o.repoURL, "repo-url", DefaultValue(ci, "repo-url"), repoURLFlag)
+	cmd.Flags().StringVar(&o.repoProvider, "repo-provider", DefaultValue(ci, "repo-provider"), repoProviderFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 
 	addDryRunFlag(cmd)
@@ -194,6 +207,7 @@ func (o *attestArtifactOptions) run(args []string) error {
 	if err != nil {
 		logger.Warn("failed to get git repo info. %s", err.Error())
 	}
+	o.payload.GitRepoInfo = mergeGitRepoInfo(o.payload.GitRepoInfo, o.repoID, o.repoName, o.repoURL, o.repoProvider)
 	o.payload.GitCommit = commitInfo.Sha1
 	o.payload.GitCommitInfo = &commitInfo.BasicCommitInfo
 

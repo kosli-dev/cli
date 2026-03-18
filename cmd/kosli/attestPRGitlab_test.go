@@ -147,9 +147,21 @@ func (suite *AttestGitlabPRCommandTestSuite) TestAttestGitlabPRCmd() {
 		},
 		{
 			name: "15 can attest github pr even if commit has no merge request",
-			cmd: fmt.Sprintf(`attest pullrequest gitlab --name bar 
+			cmd: fmt.Sprintf(`attest pullrequest gitlab --name bar
 				--gitlab-org kosli-dev --repository merkely-gitlab-demo --commit %s %s`, suite.commitWithNoPR, suite.defaultKosliArguments),
 			goldenRegex: "found 0 merge request\\(s\\) for commit: .*\ngitlab merge request attestation 'bar' is reported to trail: test-123\n",
+		},
+		{
+			wantError: true,
+			name:      "16 fails when --repo-url is not a valid URL",
+			cmd:       fmt.Sprintf("attest pullrequest gitlab --name foo --commit %s --gitlab-token fake --gitlab-org myorg --repository myrepo --repo-url not-a-url %s", suite.commitWithPR, suite.defaultKosliArguments),
+			golden:    "Error: --repo-url 'not-a-url' is not a valid URL\n",
+		},
+		{
+			wantError: true,
+			name:      "17 fails when --repo-provider is not an allowed value",
+			cmd:       fmt.Sprintf("attest pullrequest gitlab --name foo --commit %s --gitlab-token fake --gitlab-org myorg --repository myrepo --repo-provider jenkins %s", suite.commitWithPR, suite.defaultKosliArguments),
+			golden:    "Error: --repo-provider 'jenkins' is not allowed. Must be one of: github, gitlab, bitbucket, azure-devops\n",
 		},
 	}
 

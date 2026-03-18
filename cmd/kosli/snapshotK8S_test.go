@@ -87,9 +87,9 @@ func (suite *SnapshotK8STestSuite) TestSnapshotK8SCmd() {
 			golden:    "Error: failed to read config file '/nonexistent/path.yaml': open /nonexistent/path.yaml: no such file or directory\n",
 		},
 		{
-			wantError: true,
-			name:      "snapshot K8S fails if config file has invalid YAML",
-			cmd:       fmt.Sprintf(`snapshot k8s --config-file testdata/k8s-config/invalid-yaml.yaml %s`, suite.defaultKosliArguments),
+			wantError:   true,
+			name:        "snapshot K8S fails if config file has invalid YAML",
+			cmd:         fmt.Sprintf(`snapshot k8s --config-file testdata/k8s-config/invalid-yaml.yaml %s`, suite.defaultKosliArguments),
 			goldenRegex: "Error: failed to parse config file.*",
 		},
 		{
@@ -117,9 +117,9 @@ func (suite *SnapshotK8STestSuite) TestSnapshotK8SCmd() {
 			golden:    "Error: invalid config for environment 'bad-env': cannot combine 'namespaces' with 'excludeNamespaces'\n",
 		},
 		{
-			wantError: true,
-			name:      "snapshot K8S fails if config file has invalid regex",
-			cmd:       fmt.Sprintf(`snapshot k8s --config-file testdata/k8s-config/invalid-regex.yaml %s`, suite.defaultKosliArguments),
+			wantError:   true,
+			name:        "snapshot K8S fails if config file has invalid regex",
+			cmd:         fmt.Sprintf(`snapshot k8s --config-file testdata/k8s-config/invalid-regex.yaml %s`, suite.defaultKosliArguments),
 			goldenRegex: `Error: invalid config for environment 'bad-regex-env': invalid regex '\[invalid'.*`,
 		},
 	}

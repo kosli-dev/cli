@@ -42,6 +42,10 @@ type beginTrailOptions struct {
 	srcRepoRoot          string
 	externalURLs         map[string]string
 	externalFingerprints map[string]string
+	repoID               string
+	repoName             string
+	repoURL              string
+	repoProvider         string
 }
 
 type TrailPayload struct {
@@ -73,7 +77,7 @@ func newBeginTrailCmd(out io.Writer) *cobra.Command {
 				return fmt.Errorf("%s for --redact-commit-info", err.Error())
 			}
 
-			return nil
+			return validateRepoFlags(o.repoURL, o.repoProvider, cmd.Flags().Changed("repo-url"))
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)
@@ -91,6 +95,10 @@ func newBeginTrailCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.payload.OriginURL, "origin-url", "o", DefaultValue(ci, "build-url"), attestationOriginUrlFlag)
 	cmd.Flags().StringToStringVar(&o.externalFingerprints, "external-fingerprint", map[string]string{}, externalFingerprintFlag)
 	cmd.Flags().StringToStringVar(&o.externalURLs, "external-url", map[string]string{}, externalURLFlag)
+	cmd.Flags().StringVar(&o.repoID, "repo-id", DefaultValue(ci, "repo-id"), repoIDFlag)
+	cmd.Flags().StringVar(&o.repoName, "repository", DefaultValue(ci, "repository"), repoNameFlag)
+	cmd.Flags().StringVar(&o.repoURL, "repo-url", DefaultValue(ci, "repo-url"), repoURLFlag)
+	cmd.Flags().StringVar(&o.repoProvider, "repo-provider", DefaultValue(ci, "repo-provider"), repoProviderFlag)
 	addDryRunFlag(cmd)
 
 	err := RequireFlags(cmd, []string{"flow"})
@@ -126,10 +134,11 @@ func (o *beginTrailOptions) run(args []string) error {
 		o.payload.Commit = &commitInfo.BasicCommitInfo
 	}
 
-	o.payload.GitRepoInfo, err = getGitRepoInfoFromEnvironment()
+	base, err := getGitRepoInfoFromEnvironment()
 	if err != nil {
 		logger.Warn("failed to get git repo info. %s", err.Error())
 	}
+	o.payload.GitRepoInfo = mergeGitRepoInfo(base, o.repoID, o.repoName, o.repoURL, o.repoProvider)
 
 	// process external urls
 	o.payload.ExternalURLs, err = processExternalURLs(o.externalURLs, o.externalFingerprints)

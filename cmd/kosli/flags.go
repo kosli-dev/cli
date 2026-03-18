@@ -49,13 +49,17 @@ func addBitbucketFlags(cmd *cobra.Command, bbConfig *bbUtils.Config, ci string) 
 	cmd.Flags().StringVar(&bbConfig.Password, "bitbucket-password", "", bbPasswordFlag)
 	cmd.Flags().StringVar(&bbConfig.AccessToken, "bitbucket-access-token", "", bbAccessTokenFlag)
 	cmd.Flags().StringVar(&bbConfig.Workspace, "bitbucket-workspace", DefaultValue(ci, "workspace"), bbWorkspaceFlag)
-	cmd.Flags().StringVar(&bbConfig.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
+	if cmd.Flags().Lookup("repository") == nil {
+		cmd.Flags().StringVar(&bbConfig.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
+	}
 }
 
 func addGithubFlags(cmd *cobra.Command, githubFlagsValueHolder *ghUtils.GithubFlagsTempValueHolder, ci string) {
 	cmd.Flags().StringVar(&githubFlagsValueHolder.Token, "github-token", "", githubTokenFlag)
 	cmd.Flags().StringVar(&githubFlagsValueHolder.Org, "github-org", DefaultValue(ci, "org"), githubOrgFlag)
-	cmd.Flags().StringVar(&githubFlagsValueHolder.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
+	if cmd.Flags().Lookup("repository") == nil {
+		cmd.Flags().StringVar(&githubFlagsValueHolder.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
+	}
 	cmd.Flags().StringVar(&githubFlagsValueHolder.BaseURL, "github-base-url", "", githubBaseURLFlag)
 }
 
@@ -63,14 +67,18 @@ func addAzureFlags(cmd *cobra.Command, azureFlagsValueHolder *azUtils.AzureFlags
 	cmd.Flags().StringVar(&azureFlagsValueHolder.Token, "azure-token", "", azureTokenFlag)
 	cmd.Flags().StringVar(&azureFlagsValueHolder.OrgUrl, "azure-org-url", DefaultValue(ci, "org-url"), azureOrgUrlFlag)
 	cmd.Flags().StringVar(&azureFlagsValueHolder.Project, "project", DefaultValue(ci, "project"), azureProjectFlag)
-	cmd.Flags().StringVar(&azureFlagsValueHolder.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
+	if cmd.Flags().Lookup("repository") == nil {
+		cmd.Flags().StringVar(&azureFlagsValueHolder.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
+	}
 }
 
 func addGitlabFlags(cmd *cobra.Command, gitlabConfig *gitlabUtils.GitlabConfig, ci string) {
 	cmd.Flags().StringVar(&gitlabConfig.Token, "gitlab-token", "", gitlabTokenFlag)
 	cmd.Flags().StringVar(&gitlabConfig.Org, "gitlab-org", DefaultValue(ci, "namespace"), gitlabOrgFlag)
 	cmd.Flags().StringVar(&gitlabConfig.BaseURL, "gitlab-base-url", "", gitlabBaseURLFlag)
-	cmd.Flags().StringVar(&gitlabConfig.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
+	if cmd.Flags().Lookup("repository") == nil {
+		cmd.Flags().StringVar(&gitlabConfig.Repository, "repository", DefaultValue(ci, "repository"), repositoryFlag)
+	}
 }
 
 func addListFlags(cmd *cobra.Command, o *listOptions, customPageLimit ...int) {
@@ -105,6 +113,10 @@ func addAttestationFlags(cmd *cobra.Command, o *CommonAttestationOptions, payloa
 	cmd.Flags().StringSliceVar(&o.attachments, "attachments", []string{}, attachmentsFlag)
 	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", attestationRepoRootFlag)
 	cmd.Flags().StringVar(&payload.Description, "description", "", attestationDescription)
+	cmd.Flags().StringVar(&o.repoID, "repo-id", DefaultValue(ci, "repo-id"), repoIDFlag)
+	cmd.Flags().StringVar(&o.repoName, "repository", DefaultValue(ci, "repository"), repoNameFlag)
+	cmd.Flags().StringVar(&o.repoURL, "repo-url", DefaultValue(ci, "repo-url"), repoURLFlag)
+	cmd.Flags().StringVar(&o.repoProvider, "repo-provider", DefaultValue(ci, "repo-provider"), repoProviderFlag)
 
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)

@@ -30,6 +30,9 @@ The following flags are **defaulted** (which means you don't need to provide the
 | --commit | ${BUILD_SOURCEVERSION} |
 | --git-commit | ${BUILD_SOURCEVERSION} |
 | --repository | ${BUILD_REPOSITORY_NAME} |
+| --repo-id | ${BUILD_REPOSITORY_ID} |
+| --repo-url | ${BUILD_REPOSITORY_URI} |
+| --repo-provider | azure-devops |
 | --project | ${SYSTEM_TEAMPROJECT} |
 | --azure-org-url | ${SYSTEM_COLLECTIONURI} |
 {{< /tab >}}
@@ -42,6 +45,9 @@ The following flags are **defaulted** (which means you don't need to provide the
 | --commit | ${BITBUCKET_COMMIT} |
 | --git-commit | ${BITBUCKET_COMMIT} |
 | --repository | ${BITBUCKET_REPO_SLUG} |
+| --repo-id | ${BITBUCKET_REPO_UUID} |
+| --repo-url | ${BITBUCKET_GIT_HTTP_ORIGIN} |
+| --repo-provider | bitbucket |
 | --bitbucket-workspace |  ${BITBUCKET_WORKSPACE} |
 {{< /tab >}}
 
@@ -52,6 +58,7 @@ The following flags are **defaulted** (which means you don't need to provide the
 | --commit-url | ${CODEBUILD_SOURCE_REPO_URL}/commit(s)/${CODEBUILD_RESOLVED_SOURCE_VERSION} |
 | --commit | ${CODEBUILD_RESOLVED_SOURCE_VERSION} |
 | --git-commit | ${CODEBUILD_RESOLVED_SOURCE_VERSION} |
+| --repo-url | ${CODEBUILD_SOURCE_REPO_URL} |
 {{< /tab >}}
 
 {{< tab "Github" >}}
@@ -62,6 +69,9 @@ The following flags are **defaulted** (which means you don't need to provide the
 | --commit | ${GITHUB_SHA} |
 | --git-commit | ${GITHUB_SHA} |
 | --repository | ${GITHUB_REPOSITORY} |
+| --repo-id | ${GITHUB_REPOSITORY_ID} |
+| --repo-url | ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY} |
+| --repo-provider | github |
 | --github-org | ${GITHUB_REPOSITORY_OWNER} |
 {{< /tab >}}
 
@@ -73,6 +83,9 @@ The following flags are **defaulted** (which means you don't need to provide the
 | --commit | ${CI_COMMIT_SHA} |
 | --git-commit | ${CI_COMMIT_SHA} |
 | --repository | ${CI_PROJECT_NAME} |
+| --repo-id | ${CI_PROJECT_ID} |
+| --repo-url | ${CI_PROJECT_URL} |
+| --repo-provider | gitlab |
 | --gitlab-org | ${CI_PROJECT_NAMESPACE} |
 {{< /tab >}}
 
@@ -82,6 +95,8 @@ The following flags are **defaulted** (which means you don't need to provide the
 | --build-url | ${CIRCLE_BUILD_URL} |
 | --commit-url | ${CIRCLE_REPOSITORY_URL}(converted to https url)/commit(s)/${CIRCLE_SHA1} |
 | --git-commit | ${CIRCLE_SHA1} |
+| --repository | ${CIRCLE_PROJECT_REPONAME} |
+| --repo-url | ${CIRCLE_REPOSITORY_URL} |
 {{< /tab >}}
 
 {{< tab "Teamcity" >}}
