@@ -23,6 +23,7 @@ docs.kosli.com/.netlify
 # keep it uncommented on main
 docs.kosli.com/assets/metadata.json
 tmp/
+release_notes.md
 junit.xml
 junit-test-results/.
 .claude/settings.local.json
