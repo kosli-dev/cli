@@ -47,6 +47,15 @@ var (
 		{Code: 2, Meaning: "Kosli server is unreachable or down."},
 	}
 
+	// exitCodesEvaluate applies to evaluate commands that run a policy and can signal policy denial.
+	exitCodesEvaluate = []docgen.ExitCodeEntry{
+		{Code: 0, Meaning: "No error (policy allowed)."},
+		{Code: 1, Meaning: "Policy denied."},
+		{Code: 2, Meaning: "Kosli server is unreachable or returned a server error."},
+		{Code: 3, Meaning: "Invalid API token or unauthorized access."},
+		{Code: 4, Meaning: "CLI usage error (e.g. missing or invalid flags)."},
+	}
+
 	// exitCodesNoAPI applies to commands that do not call the Kosli API (version, completion, docs).
 	exitCodesNoAPI = []docgen.ExitCodeEntry{
 		{Code: 0, Meaning: "No error."},
@@ -72,6 +81,9 @@ var commandExitCodes = map[string][]docgen.ExitCodeEntry{
 	"kosli attest pullrequest azure":     exitCodesAttest,
 	"kosli attest pullrequest bitbucket": exitCodesAttest,
 	"kosli attest jira":                  exitCodesAttest,
+	// evaluate commands — policy denial exits with code 1
+	"kosli evaluate trail":              exitCodesEvaluate,
+	"kosli evaluate trails":             exitCodesEvaluate,
 	// non-API commands
 	"kosli version":                     exitCodesNoAPI,
 	"kosli completion":                  exitCodesNoAPI,
