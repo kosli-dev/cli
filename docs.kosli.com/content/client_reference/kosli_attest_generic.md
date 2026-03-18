@@ -46,7 +46,11 @@ binding the attestation to the right artifact.
 |        --redact-commit-info strings  |  [optional] The list of commit info to be redacted before sending to Kosli. Allowed values are one or more of [author, message, branch].  |
 |        --registry-password string  |  [conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry.  |
 |        --registry-username string  |  [conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry.  |
+|        --repo-id string  |  [optional] The unique identifier of the repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|        --repo-provider string  |  [optional] The source code hosting provider. One of: github, gitlab, bitbucket, azure-devops.  |
 |        --repo-root string  |  [defaulted] The directory where the source git repository is available. Only used if --commit is used or defaulted in CI, see https://docs.kosli.com/integrations/ci_cd/#defaulted-kosli-command-flags-from-ci-variables . (default ".")  |
+|        --repo-url string  |  [optional] The URL of the repository. Must be a valid URL if provided. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|        --repository string  |  [optional] The name of a git repo as it is registered in Kosli. e.g kosli-dev/cli  |
 |    -T, --trail string  |  The Kosli trail name.  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the attestation.  |
 

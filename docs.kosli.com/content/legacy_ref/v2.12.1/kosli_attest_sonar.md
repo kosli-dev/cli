@@ -60,11 +60,7 @@ The attestation can be bound to an *artifact* in two ways:
 |        --redact-commit-info strings  |  [optional] The list of commit info to be redacted before sending to Kosli. Allowed values are one or more of [author, message, branch].  |
 |        --registry-password string  |  [conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry.  |
 |        --registry-username string  |  [conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry.  |
-|        --repo-id string  |  [optional] The unique identifier of the repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|        --repo-provider string  |  [optional] The source code hosting provider. One of: github, gitlab, bitbucket, azure-devops.  |
 |        --repo-root string  |  [defaulted] The directory where the source git repository is available. Only used if --commit is used or defaulted in CI, see https://docs.kosli.com/integrations/ci_cd/#defaulted-kosli-command-flags-from-ci-variables . (default ".")  |
-|        --repo-url string  |  [optional] The URL of the repository. Must be a valid URL if provided. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|        --repository string  |  [optional] The name of a git repo as it is registered in Kosli. e.g kosli-dev/cli  |
 |        --sonar-api-token string  |  [required] SonarCloud/SonarQube API token.  |
 |        --sonar-project-key string  |  [conditional] The project key of the SonarCloud/SonarQube project. Only required if you want to use the project key/revision to get the scan results rather than using Sonar's metadata file.  |
 |        --sonar-revision string  |  [conditional] The revision of the SonarCloud/SonarQube project. Only required if you want to use the project key/revision to get the scan results rather than using Sonar's metadata file and you have overridden the default revision, or you aren't using a CI. Defaults to the value of the git commit flag.  |
