@@ -70,6 +70,21 @@ func (HugoFormatter) FlagsSection(flags, inherited string) string {
 	return b.String()
 }
 
+func (HugoFormatter) ExitCodesSection(codes []ExitCodeEntry) string {
+	if len(codes) == 0 {
+		return ""
+	}
+	var b strings.Builder
+	b.WriteString("## Exit Codes\n")
+	b.WriteString("| Code | Meaning |\n")
+	b.WriteString("| :---: | :--- |\n")
+	for _, e := range codes {
+		fmt.Fprintf(&b, "| %d | %s |\n", e.Code, e.Meaning)
+	}
+	b.WriteString("\n\n")
+	return b.String()
+}
+
 func (HugoFormatter) LiveCIExamples(examples []CIExample, commandName string) string {
 	if len(examples) == 0 {
 		return ""

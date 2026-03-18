@@ -2,12 +2,12 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 
+	kosliErrors "github.com/kosli-dev/cli/internal/errors"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -87,7 +87,7 @@ func run(out io.Writer, args []string) error {
 	if environmentData["compliant"].(bool) {
 		logger.Info("COMPLIANT")
 	} else {
-		return fmt.Errorf("INCOMPLIANT")
+		return kosliErrors.NewErrCompliance("INCOMPLIANT")
 	}
 
 	return nil

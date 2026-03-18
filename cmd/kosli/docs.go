@@ -12,6 +12,50 @@ import (
 	"github.com/spf13/cobra/doc"
 )
 
+// Exit code sets used across command doc generation.
+var (
+	// exitCodesDefault applies to all commands that call the Kosli API.
+	exitCodesDefault = []docgen.ExitCodeEntry{
+		{Code: 0, Meaning: "No error."},
+		{Code: 2, Meaning: "Kosli server is unreachable or returned a server error."},
+		{Code: 3, Meaning: "Invalid API token or unauthorized access."},
+		{Code: 4, Meaning: "CLI usage error (e.g. missing or invalid flags)."},
+	}
+
+	// exitCodesAssert applies to assert commands that can signal compliance violations.
+	exitCodesAssert = []docgen.ExitCodeEntry{
+		{Code: 0, Meaning: "No error."},
+		{Code: 1, Meaning: "Assertion/compliance violation."},
+		{Code: 2, Meaning: "Kosli server is unreachable or returned a server error."},
+		{Code: 3, Meaning: "Invalid API token or unauthorized access."},
+		{Code: 4, Meaning: "CLI usage error (e.g. missing or invalid flags)."},
+	}
+
+	// exitCodesAssertStatus applies to `kosli assert status` which only checks reachability.
+	exitCodesAssertStatus = []docgen.ExitCodeEntry{
+		{Code: 0, Meaning: "Kosli server is responsive."},
+		{Code: 2, Meaning: "Kosli server is unreachable or down."},
+	}
+
+	// exitCodesNoAPI applies to commands that do not call the Kosli API (version, completion, docs).
+	exitCodesNoAPI = []docgen.ExitCodeEntry{
+		{Code: 0, Meaning: "No error."},
+		{Code: 4, Meaning: "CLI usage error."},
+	}
+)
+
+// commandExitCodes maps command paths to their exit code sets.
+// Commands not in this map receive exitCodesDefault.
+var commandExitCodes = map[string][]docgen.ExitCodeEntry{
+	"kosli assert artifact": exitCodesAssert,
+	"kosli assert approval": exitCodesAssert,
+	"kosli assert snapshot": exitCodesAssert,
+	"kosli assert status":   exitCodesAssertStatus,
+	"kosli version":         exitCodesNoAPI,
+	"kosli completion":      exitCodesNoAPI,
+	"kosli docs":            exitCodesNoAPI,
+}
+
 const docsShortDesc = `Generate documentation files for Kosli CLI. `
 
 const docsLongDesc = docsShortDesc + `
@@ -58,8 +102,13 @@ func (o *docsOptions) run() error {
 		}
 
 		metaFn := func(cmd *cobra.Command) docgen.CommandMeta {
+			path := cmd.CommandPath()
+			exitCodes, ok := commandExitCodes[path]
+			if !ok && cmd.Runnable() {
+				exitCodes = exitCodesDefault
+			}
 			return docgen.CommandMeta{
-				Name:       cmd.CommandPath(),
+				Name:       path,
 				Beta:       isBeta(cmd),
 				Deprecated: isDeprecated(cmd),
 				DeprecMsg:  cmd.Deprecated,
@@ -68,6 +117,7 @@ func (o *docsOptions) run() error {
 				UseLine:    cmd.UseLine(),
 				Runnable:   cmd.Runnable(),
 				Example:    cmd.Example,
+				ExitCodes:  exitCodes,
 			}
 		}
 

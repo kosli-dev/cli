@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
+	kosliErrors "github.com/kosli-dev/cli/internal/errors"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -116,7 +117,7 @@ func (o *assertApprovalOptions) run(args []string) error {
 		return err
 	}
 	if len(approvals) == 0 {
-		return fmt.Errorf("artifact with fingerprint %s has no approvals created", o.fingerprint)
+		return kosliErrors.NewErrCompliance(fmt.Sprintf("artifact with fingerprint %s has no approvals created", o.fingerprint))
 	}
 
 	state, ok := approvals[len(approvals)-1]["state"].(string)
@@ -125,6 +126,6 @@ func (o *assertApprovalOptions) run(args []string) error {
 		logger.Info("artifact with fingerprint %s is approved (approval no. [%v])", o.fingerprint, approvalNumber)
 		return nil
 	} else {
-		return fmt.Errorf("artifact with fingerprint %s is not approved", o.fingerprint)
+		return kosliErrors.NewErrCompliance(fmt.Sprintf("artifact with fingerprint %s is not approved", o.fingerprint))
 	}
 }
