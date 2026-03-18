@@ -51,6 +51,7 @@ type CommonAttestationOptions struct {
 	repoName                string
 	repoURL                 string
 	repoProvider            string
+	repoURLExplicit         bool
 }
 
 func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestationPayload) error {
@@ -91,7 +92,7 @@ func (o *CommonAttestationOptions) run(args []string, payload *CommonAttestation
 		logger.Warn("failed to get git repo info. %s", err.Error())
 	}
 
-	if err := validateRepoFlags(o.repoURL, o.repoProvider); err != nil {
+	if err := validateRepoFlags(o.repoURL, o.repoProvider, o.repoURLExplicit); err != nil {
 		return err
 	}
 	payload.GitRepoInfo = mergeGitRepoInfo(payload.GitRepoInfo, o.repoID, o.repoName, o.repoURL, o.repoProvider)
@@ -142,8 +143,8 @@ var allowedRepoProviders = map[string]struct{}{
 	"github": {}, "gitlab": {}, "bitbucket": {}, "azure-devops": {},
 }
 
-func validateRepoFlags(repoURL, repoProvider string) error {
-	if repoURL != "" {
+func validateRepoFlags(repoURL, repoProvider string, validateURL bool) error {
+	if repoURL != "" && validateURL {
 		parsed, err := url.Parse(repoURL)
 		if err != nil || parsed.Scheme == "" || parsed.Host == "" {
 			return fmt.Errorf("--repo-url '%s' is not a valid URL", repoURL)

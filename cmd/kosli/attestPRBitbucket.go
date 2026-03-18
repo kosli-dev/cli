@@ -166,6 +166,7 @@ func newAttestBitbucketPRCmd(out io.Writer) *cobra.Command {
 
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			o.repoURLExplicit = cmd.Flags().Changed("repo-url")
 			o.getRetriever().(*bbUtils.Config).Repository = o.repoName
 			return o.run(args)
 		},

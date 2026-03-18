@@ -153,6 +153,7 @@ func newAttestSonarCmd(out io.Writer) *cobra.Command {
 
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			o.repoURLExplicit = cmd.Flags().Changed("repo-url")
 			return o.run(args)
 		},
 	}

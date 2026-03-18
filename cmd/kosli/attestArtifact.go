@@ -123,7 +123,7 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
-			if err := validateRepoFlags(o.repoURL, o.repoProvider); err != nil {
+			if err := validateRepoFlags(o.repoURL, o.repoProvider, cmd.Flags().Changed("repo-url")); err != nil {
 				return err
 			}
 

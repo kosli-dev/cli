@@ -77,7 +77,7 @@ func newBeginTrailCmd(out io.Writer) *cobra.Command {
 				return fmt.Errorf("%s for --redact-commit-info", err.Error())
 			}
 
-			return validateRepoFlags(o.repoURL, o.repoProvider)
+			return validateRepoFlags(o.repoURL, o.repoProvider, cmd.Flags().Changed("repo-url"))
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(args)
