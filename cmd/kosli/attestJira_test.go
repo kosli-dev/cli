@@ -108,8 +108,9 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
-			wantError: true,
-			name:      "07 assert for non-existing Jira issue gives an error",
+			wantError:    true,
+			wantExitCode: 1,
+			name:         "07 assert for non-existing Jira issue gives an error",
 			cmd: fmt.Sprintf(`attest jira --name jira-validation
 					--jira-base-url https://kosli-test.atlassian.net
 					--repo-root %s
@@ -273,8 +274,9 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
-			wantError: true,
-			name:      "22 if no matching issue exists, assert fails with a non-zero exit code",
+			wantError:    true,
+			wantExitCode: 1,
+			name:         "22 if no matching issue exists, assert fails with a non-zero exit code",
 			cmd: fmt.Sprintf(`attest jira --name bar
 					--jira-base-url https://kosli-test.atlassian.net
 					--jira-project-key ABC
@@ -297,8 +299,9 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
-			wantError: true,
-			name:      "24 if there is a server error, this is output even when assert fails due to no matching issue",
+			wantError:    true,
+			wantExitCode: 1,
+			name:         "24 if there is a server error, this is output even when assert fails due to no matching issue",
 			cmd: fmt.Sprintf(`attest jira --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9
 								--name foo
 								--repo-root %s
@@ -312,8 +315,9 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 			},
 		},
 		{
-			wantError: true,
-			name:      "25 if there is a server error, this is output even when assert fails due to non-existing issue",
+			wantError:    true,
+			wantExitCode: 1,
+			name:         "25 if there is a server error, this is output even when assert fails due to non-existing issue",
 			cmd: fmt.Sprintf(`attest jira --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9
 								--name foo
 								--repo-root %s

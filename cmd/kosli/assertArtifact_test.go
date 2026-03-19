@@ -83,10 +83,11 @@ func (suite *AssertArtifactCommandTestSuite) SetupTest() {
 func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 	tests := []cmdTestCase{
 		{
-			wantError: true,
-			name:      "01 missing --org fails",
-			cmd:       fmt.Sprintf(`assert artifact --fingerprint 8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c  --flow %s --api-token secret`, suite.flowName1),
-			golden:    "Error: --org is not set\nUsage: kosli assert artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+			wantError:    true,
+			wantExitCode: 4,
+			name:         "01 missing --org fails",
+			cmd:          fmt.Sprintf(`assert artifact --fingerprint 8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c  --flow %s --api-token secret`, suite.flowName1),
+			golden:       "Error: --org is not set\nUsage: kosli assert artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
@@ -95,9 +96,10 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 			golden:    "Error: Artifact with fingerprint '8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c' does not exist in flow 'assert-artifact-one' belonging to organization 'docs-cmd-test-user'\n",
 		},
 		{
-			name:        "03 asserting a single existing compliant artifact (using --fingerprint) results in OK and zero exit",
-			cmd:         fmt.Sprintf(`assert artifact --fingerprint %s %s`, suite.fingerprint1, suite.defaultKosliArguments),
-			goldenRegex: "(?s)^COMPLIANT\n.*Attestation-name.*See more details at http://localhost(:8001)?/docs-cmd-test-user/flows/assert-artifact-one/artifacts/0089a849fce9c7c9128cd13a2e8b1c0757bdb6a7bad0fdf2800e38c19055b7fc(?:\\?artifact_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{8})?\n",
+			name:         "03 asserting a single existing compliant artifact (using --fingerprint) results in OK and zero exit",
+			wantExitCode: 0,
+			cmd:          fmt.Sprintf(`assert artifact --fingerprint %s %s`, suite.fingerprint1, suite.defaultKosliArguments),
+			goldenRegex:  "(?s)^COMPLIANT\n.*Attestation-name.*See more details at http://localhost(:8001)?/docs-cmd-test-user/flows/assert-artifact-one/artifacts/0089a849fce9c7c9128cd13a2e8b1c0757bdb6a7bad0fdf2800e38c19055b7fc(?:\\?artifact_id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{8})?\n",
 		},
 		{
 			name: "04 json output of asserting a single existing compliant artifact (using --fingerprint) results in OK and zero exit",
@@ -176,28 +178,32 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 			},
 		},
 		{
-			wantError: true,
-			name:      "14 not providing --fingerprint nor --artifact-type fails",
-			cmd:       fmt.Sprintf(`assert artifact --flow %s %s`, suite.flowName1, suite.defaultKosliArguments),
-			golden:    "Error: docker image name or file/dir path is required when --fingerprint is not provided\nUsage: kosli assert artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+			wantError:    true,
+			wantExitCode: 4,
+			name:         "14 not providing --fingerprint nor --artifact-type fails",
+			cmd:          fmt.Sprintf(`assert artifact --flow %s %s`, suite.flowName1, suite.defaultKosliArguments),
+			golden:       "Error: docker image name or file/dir path is required when --fingerprint is not provided\nUsage: kosli assert artifact [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
-			wantError: true,
-			name:      "15 providing both --environment and --polices fails",
-			cmd:       fmt.Sprintf(`assert artifact --fingerprint %s --environment %s --policy %s %s`, suite.fingerprint1, suite.envName, suite.policyName1, suite.defaultKosliArguments),
-			golden:    "Error: Cannot specify both 'environment_name' and 'policy_name' at the same time\n",
+			wantError:    true,
+			wantExitCode: 4,
+			name:         "15 providing both --environment and --polices fails",
+			cmd:          fmt.Sprintf(`assert artifact --fingerprint %s --environment %s --policy %s %s`, suite.fingerprint1, suite.envName, suite.policyName1, suite.defaultKosliArguments),
+			golden:       "Error: Cannot specify both 'environment_name' and 'policy_name' at the same time\n",
 		},
 		{
-			wantError:   true,
-			name:        "16 asserting a single existing non-compliant artifact (using --fingerprint) results in non-zero exit",
-			cmd:         fmt.Sprintf(`assert artifact --fingerprint %s %s`, suite.fingerprint3, suite.defaultKosliArguments),
-			goldenRegex: "^Error: NON-COMPLIANT\n",
+			wantError:    true,
+			wantExitCode: 1,
+			name:         "16 asserting a single existing non-compliant artifact (using --fingerprint) results in non-zero exit",
+			cmd:          fmt.Sprintf(`assert artifact --fingerprint %s %s`, suite.fingerprint3, suite.defaultKosliArguments),
+			goldenRegex:  "^Error: NON-COMPLIANT\n",
 		},
 		{
-			wantError:   true,
-			name:        "17 asserting a single existing non-compliant artifact (using --artifact-type) results in non-zero exit",
-			cmd:         fmt.Sprintf(`assert artifact %s --artifact-type file %s`, suite.artifact3Path, suite.defaultKosliArguments),
-			goldenRegex: "^Error: NON-COMPLIANT\n",
+			wantError:    true,
+			wantExitCode: 1,
+			name:         "17 asserting a single existing non-compliant artifact (using --artifact-type) results in non-zero exit",
+			cmd:          fmt.Sprintf(`assert artifact %s --artifact-type file %s`, suite.artifact3Path, suite.defaultKosliArguments),
+			goldenRegex:  "^Error: NON-COMPLIANT\n",
 		},
 	}
 
