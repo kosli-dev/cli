@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io"
 
-	kosliErrors "github.com/kosli-dev/cli/internal/errors"
 	azUtils "github.com/kosli-dev/cli/internal/azure"
+	kosliErrors "github.com/kosli-dev/cli/internal/errors"
 	"github.com/spf13/cobra"
 )
 

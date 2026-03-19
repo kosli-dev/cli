@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kosli-dev/cli/internal/gitview"
 	kosliErrors "github.com/kosli-dev/cli/internal/errors"
+	"github.com/kosli-dev/cli/internal/gitview"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"

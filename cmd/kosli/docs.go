@@ -67,14 +67,14 @@ var (
 // Commands not in this map receive exitCodesDefault.
 var commandExitCodes = map[string][]docgen.ExitCodeEntry{
 	// assert commands — can signal compliance violations
-	"kosli assert artifact":             exitCodesAssert,
-	"kosli assert approval":             exitCodesAssert,
-	"kosli assert snapshot":             exitCodesAssert,
-	"kosli assert pullrequest github":   exitCodesAssert,
-	"kosli assert pullrequest gitlab":   exitCodesAssert,
-	"kosli assert pullrequest azure":    exitCodesAssert,
+	"kosli assert artifact":              exitCodesAssert,
+	"kosli assert approval":              exitCodesAssert,
+	"kosli assert snapshot":              exitCodesAssert,
+	"kosli assert pullrequest github":    exitCodesAssert,
+	"kosli assert pullrequest gitlab":    exitCodesAssert,
+	"kosli assert pullrequest azure":     exitCodesAssert,
 	"kosli assert pullrequest bitbucket": exitCodesAssert,
-	"kosli assert status":               exitCodesAssertStatus,
+	"kosli assert status":                exitCodesAssertStatus,
 	// attest commands with --assert flag — can signal compliance violations when --assert is used
 	"kosli attest pullrequest github":    exitCodesAttest,
 	"kosli attest pullrequest gitlab":    exitCodesAttest,
@@ -82,12 +82,12 @@ var commandExitCodes = map[string][]docgen.ExitCodeEntry{
 	"kosli attest pullrequest bitbucket": exitCodesAttest,
 	"kosli attest jira":                  exitCodesAttest,
 	// evaluate commands — policy denial exits with code 1
-	"kosli evaluate trail":              exitCodesEvaluate,
-	"kosli evaluate trails":             exitCodesEvaluate,
+	"kosli evaluate trail":  exitCodesEvaluate,
+	"kosli evaluate trails": exitCodesEvaluate,
 	// non-API commands
-	"kosli version":                     exitCodesNoAPI,
-	"kosli completion":                  exitCodesNoAPI,
-	"kosli docs":                        exitCodesNoAPI,
+	"kosli version":    exitCodesNoAPI,
+	"kosli completion": exitCodesNoAPI,
+	"kosli docs":       exitCodesNoAPI,
 }
 
 const docsShortDesc = `Generate documentation files for Kosli CLI. `

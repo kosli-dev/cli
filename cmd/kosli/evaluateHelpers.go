@@ -8,8 +8,8 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/kosli-dev/cli/internal/evaluate"
 	kosliErrors "github.com/kosli-dev/cli/internal/errors"
+	"github.com/kosli-dev/cli/internal/evaluate"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"

@@ -290,6 +290,9 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 					cleanedErrorMessage = fmt.Sprintf("%s", respBodyMap)
 				}
 			}
+			if resp.StatusCode >= 500 {
+				return nil, kosliErrors.NewErrServer(cleanedErrorMessage)
+			}
 			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return nil, kosliErrors.NewErrConfig(cleanedErrorMessage)
 			}

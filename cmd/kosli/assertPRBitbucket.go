@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io"
 
-	kosliErrors "github.com/kosli-dev/cli/internal/errors"
 	bbUtils "github.com/kosli-dev/cli/internal/bitbucket"
+	kosliErrors "github.com/kosli-dev/cli/internal/errors"
 	"github.com/spf13/cobra"
 )
 

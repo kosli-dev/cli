@@ -37,7 +37,7 @@ func main() {
 		}
 	}
 	if err != nil {
-		logger.Error(err.Error())
+		fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
 		os.Exit(kosliErrors.ExitCodeFor(err))
 	}
 }
@@ -68,7 +68,7 @@ func innerMain(cmd *cobra.Command, args []string) error {
 					availableSubcommands = append(availableSubcommands, strings.Split(sc.Use, " ")[0])
 				}
 			}
-			logger.Error("%s\navailable subcommands are: %s", errMessage, strings.Join(availableSubcommands, " | "))
+			fmt.Fprintf(os.Stderr, "Error: %s\navailable subcommands are: %s\n", errMessage, strings.Join(availableSubcommands, " | "))
 		}
 		return kosliErrors.NewErrUsage(err.Error())
 	}
