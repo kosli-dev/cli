@@ -59,7 +59,7 @@ if ! command -v kosli &> /dev/null; then
     exit 1
 fi
 
-INSTALLED_VERSION=$(kosli version | grep -o "v[0-9]\+\.[0-9]\+\.[0-9]\+")
+INSTALLED_VERSION=$(kosli version -s)
 log_info "Installed version: ${INSTALLED_VERSION}"
 
 if [[ "${INSTALLED_VERSION}" == "${SPECIFIC_VERSION}" ]]; then
