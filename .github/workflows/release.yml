@@ -158,7 +158,7 @@ jobs:
             if ($item.type == "Archive") then
                 . + [{ template_name: ($item.goos + "-" + $item.goarch), path: $item.path }]
             elif ($item.type == "Linux Package") then
-                . + [{ template_name: ($item.extra.Ext + "-pkg-" + $item.goarch), path: $item.path }]
+                . + [{ template_name: (($item.extra.Ext | ltrimstr(".")) + "-pkg-" + $item.goarch), path: $item.path }]
             else
                 .
             end
