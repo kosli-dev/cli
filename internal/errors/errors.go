@@ -1,6 +1,9 @@
 package errors
 
-import "errors"
+import (
+	"errors"
+	"strings"
+)
 
 // Exit codes
 const (
@@ -61,5 +64,23 @@ func ExitCodeFor(err error) int {
 	if errors.As(err, &eu) {
 		return ExitUsage
 	}
+	if isCobraUsageError(err) {
+		return ExitUsage
+	}
 	return ExitCompliance // default non-zero; use exit 1 for unclassified errors
+}
+
+// isCobraUsageError returns true for plain errors produced by Cobra's built-in
+// flag and argument validation that were not already wrapped as ErrUsage.
+// This covers cases where innerMain's wrapping is bypassed (e.g. in tests).
+func isCobraUsageError(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "unknown flag:") ||
+		strings.Contains(msg, "unknown shorthand flag:") ||
+		strings.Contains(msg, "required flag(s)") ||
+		strings.Contains(msg, "accepts") && strings.Contains(msg, "arg(s)") ||
+		strings.Contains(msg, "requires at least") && strings.Contains(msg, "arg(s)")
 }

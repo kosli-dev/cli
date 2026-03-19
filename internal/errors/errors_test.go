@@ -61,4 +61,25 @@ func TestExitCodeFor(t *testing.T) {
 		err := fmt.Errorf("some unexpected error")
 		assert.Equal(t, 1, kosliErrors.ExitCodeFor(err))
 	})
+
+	// Cobra built-in errors are classified as exit 4 without explicit wrapping.
+	t.Run("cobra unknown flag error returns 4", func(t *testing.T) {
+		err := fmt.Errorf("unknown flag: --foo")
+		assert.Equal(t, 4, kosliErrors.ExitCodeFor(err))
+	})
+
+	t.Run("cobra required flag not set returns 4", func(t *testing.T) {
+		err := fmt.Errorf(`required flag(s) "flow", "policy" not set`)
+		assert.Equal(t, 4, kosliErrors.ExitCodeFor(err))
+	})
+
+	t.Run("cobra ExactArgs error returns 4", func(t *testing.T) {
+		err := fmt.Errorf("accepts 1 arg(s), received 0")
+		assert.Equal(t, 4, kosliErrors.ExitCodeFor(err))
+	})
+
+	t.Run("cobra MinimumNArgs error returns 4", func(t *testing.T) {
+		err := fmt.Errorf("requires at least 1 arg(s), only received 0")
+		assert.Equal(t, 4, kosliErrors.ExitCodeFor(err))
+	})
 }
