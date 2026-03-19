@@ -38,7 +38,7 @@ func (suite *AssertPRBitbucketCommandTestSuite) TestAssertPRBitbucketCmd() {
 		},
 		{
 			wantError:    true,
-			wantExitCode: 4,
+			wantExitCode: 1,
 			name:         "assert Bitbucket PR evidence fails when both password and access token are provided",
 			cmd: `assert pullrequest bitbucket --bitbucket-workspace kosli-dev --repository cli-test
 			--commit fd54040fc90e7e83f7b152619bfa18917b72c34f --bitbucket-password xxxx` + suite.defaultKosliArguments,

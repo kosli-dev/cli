@@ -42,6 +42,16 @@ images in registries or "docker" for local docker images.
 |        --repo-root string  |  [defaulted] The directory where the source git repository is available. (default ".")  |
 
 
+## Exit Codes
+| Code | Meaning |
+| :---: | :--- |
+| 0 | No error. |
+| 1 | Unexpected error. |
+| 2 | Kosli server is unreachable or returned a server error. |
+| 3 | Invalid API token or unauthorized access. |
+| 4 | CLI usage error (e.g. missing or invalid flags). |
+
+
 ## Examples Use Cases
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](/getting_started/install/#assigning-flags-via-environment-variables). 

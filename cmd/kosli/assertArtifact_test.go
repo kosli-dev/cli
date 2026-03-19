@@ -186,7 +186,7 @@ func (suite *AssertArtifactCommandTestSuite) TestAssertArtifactCmd() {
 		},
 		{
 			wantError:    true,
-			wantExitCode: 4,
+			wantExitCode: 1,
 			name:         "15 providing both --environment and --polices fails",
 			cmd:          fmt.Sprintf(`assert artifact --fingerprint %s --environment %s --policy %s %s`, suite.fingerprint1, suite.envName, suite.policyName1, suite.defaultKosliArguments),
 			golden:       "Error: Cannot specify both 'environment_name' and 'policy_name' at the same time\n",

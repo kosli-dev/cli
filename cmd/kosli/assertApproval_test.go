@@ -100,7 +100,7 @@ func (suite *AssertApprovalCommandTestSuite) TestAssertApprovalCmd() {
 		},
 		{
 			wantError:    true,
-			wantExitCode: 4,
+			wantExitCode: 1,
 			name:         "8 providing both --fingerprint and --artifact-type fails",
 			cmd:          fmt.Sprintf(`assert approval --artifact-type file --fingerprint %s --flow %s %s`, suite.fingerprint, suite.flowName, suite.defaultKosliArguments),
 			golden:       "Error: only one of --fingerprint, --artifact-type is allowed\n",
