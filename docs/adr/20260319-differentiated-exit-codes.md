@@ -148,7 +148,7 @@ $ ./kosli list environments --bogus-flag                   # exit 4
 
 ### Remaining work — test coverage
 
-Only 11 `wantExitCode` annotations exist across ~134 error test cases. The test infrastructure (`wantExitCode` field in `cmdTestCase`, assertion in `runTestCmd`) is in place and working, but most existing command tests haven't been updated yet. Missing from: `assertArtifact_test.go`, `assertApproval_test.go`, all `assertPR*_test.go`, all `attestPR*_test.go`, `attestJira_test.go`, `evaluateTrails_test.go`.
+55 `wantExitCode` annotations now exist across 14 test files, covering all assert, attest `--assert`, and evaluate command families with compliance failure (exit 1), usage error (exit 4), and success regression guard (exit 0) cases.
 
 No end-to-end test verifies the actual compiled binary's process exit code. The current tests validate error classification logic in isolation.
 
