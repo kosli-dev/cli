@@ -4,6 +4,7 @@ before:
   hooks:
   - go mod tidy
   - rm -rf npm/cli-*/bin
+  - find npm -name "*.tgz" -delete
 builds:
   - id: kosli
     binary: kosli
@@ -51,54 +52,55 @@ archives:
       - goos: windows
         formats: [zip]
 
-
 # docs for nfpm can be found here:  https://goreleaser.com/customization/nfpm/
 nfpms:
   - id: kosli
-
-#     # You can change the file name of the package.
-#     #
-#     # Default:`{{ .PackageName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}`
-
-#   # TODO Maybe enable the template again after we have a better understanding of how to use it.  It seems to be working without it, but it would be nice to have more control over the file name.
-
-#     # file_name_template: >-
-#     #   {{ .ProjectName }}_
-#     #   {{- title .Os }}_
-#     #   {{- if eq .Arch "amd64" }}x86_64
-#     #   {{- else if eq .Arch "386" }}i386
-#     #   {{- else }}{{ .Arch }}{{ end }}
+    # You can change the file name of the package.
+    #
+    # Default:`{{ .PackageName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}`
+    file_name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
 
     ids:
       - kosli
 
-#     vendor: Kosli Inc.
-#     homepage: https://kosli.com/
-#     maintainer: Mike Long <mike@kosli.com>
-#     description: CLI client for reporting compliance events to  https://kosli.com
-#     license: MIT
+    vendor: Kosli Inc.
+    homepage: https://kosli.com/
+    maintainer: Mike Long <mike@kosli.com>
+    description: CLI client for reporting compliance events to  https://kosli.com
+    license: MIT
 
-#     # Formats to be generated.
-#     formats:
-#       - deb
-#       - rpm
+    # Formats to be generated.
+    formats:
+      - deb
+      - rpm
 
-#     # Template to the path that the binaries should be installed.
-#     # Defaults to `/usr/bin`.
-#     bindir: /usr/bin
+    # Template to the path that the binaries should be installed.
+    # Defaults to `/usr/bin`.
+    bindir: /usr/bin
 
-#     # Section.
-#     section: misc
+    # Section.
+    section: misc
 
-#     # Priority.
-#     priority: optional
+    # Priority.
+    priority: optional
 
     # Contents to add to the package.
     # GoReleaser will automatically add the binaries.
     contents:
       # The src and dst attributes also supports name templates
-      - src: dist/{{ .ProjectName }}_{{ .Os }}_{{ if .Amd64 }}{{ .Arch }}_v1{{ else if .Arm }}{{ .Arch }}_6{{ else if eq .Arch "arm64" }}{{ .Arch }}_v8.0{{ else }}{{ .Arch }}{{ end }}/kosli
+      - src: dist/{{ .ProjectName }}_{{ .Os }}_{{ if .Amd64 }}{{ .Arch }}_v1{{ else if .Arm }}{{ .Arch }}_6{{ else }}{{ .Arch }}{{ end }}/kosli
         dst: /usr/local/bin/kosli
+
+after:
+  hooks:
+    - cmd: bash scripts/npm-publish.sh "{{ .Version }}"{{ if or .IsSnapshot (not .IsRelease) }} --dry-run{{ end }}
+      # after hooks suppresses output by default. You need to add output: true to the hook to see the script's messages.
+      output: true
 
 publishers:
   - name: fury.io
