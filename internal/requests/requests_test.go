@@ -2,11 +2,13 @@ package requests
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 	"testing"
 
+	kosliErrors "github.com/kosli-dev/cli/internal/errors"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/version"
 	"github.com/maxcnunes/httpfake"
@@ -59,6 +61,10 @@ func (suite *RequestsTestSuite) SetupSuite() {
 		Get("/fail/").
 		Reply(500).
 		BodyString("server broken")
+	suite.fakeService.NewHandler().
+		Get("/unauthorized/").
+		Reply(401).
+		BodyString(`"Unauthorized"`)
 }
 
 // shutdown the fake service after the suite execution
@@ -518,6 +524,60 @@ func (suite *RequestsTestSuite) TestCreateMultipartRequestBody() {
 			contentType, _, _, err := createMultipartRequestBody(t.formItems)
 			require.True(suite.T(), t.wantError == (err != nil))
 			require.True(suite.T(), strings.HasPrefix(contentType, t.expectedContentTypePrefix))
+		})
+	}
+}
+
+func (suite *RequestsTestSuite) TestDoErrorTypes() {
+	for _, t := range []struct {
+		name          string
+		url           string
+		wantErrServer bool
+		wantErrConfig bool
+		wantPlainErr  bool
+	}{
+		{
+			name:          "500 returns ErrServer",
+			url:           suite.fakeService.ResolveURL("/fail/"),
+			wantErrServer: true,
+		},
+		{
+			name:          "403 returns ErrConfig",
+			url:           suite.fakeService.ResolveURL("/denied/"),
+			wantErrConfig: true,
+		},
+		{
+			name:          "401 returns ErrConfig",
+			url:           suite.fakeService.ResolveURL("/unauthorized/"),
+			wantErrConfig: true,
+		},
+		{
+			name:         "404 returns plain error (not ErrServer or ErrConfig)",
+			url:          suite.fakeService.ResolveURL("/no-go/"),
+			wantPlainErr: true,
+		},
+	} {
+		suite.Run(t.name, func() {
+			client, err := NewKosliClient("", 1, false, logger.NewStandardLogger())
+			require.NoError(suite.T(), err)
+			_, err = client.Do(&RequestParams{
+				Method: http.MethodGet,
+				URL:    t.url,
+			})
+			require.Error(suite.T(), err)
+
+			var errServer *kosliErrors.ErrServer
+			var errConfig *kosliErrors.ErrConfig
+			if t.wantErrServer {
+				require.True(suite.T(), errors.As(err, &errServer), "expected ErrServer, got %T: %v", err, err)
+			}
+			if t.wantErrConfig {
+				require.True(suite.T(), errors.As(err, &errConfig), "expected ErrConfig, got %T: %v", err, err)
+			}
+			if t.wantPlainErr {
+				require.False(suite.T(), errors.As(err, &errServer), "expected plain error, got ErrServer")
+				require.False(suite.T(), errors.As(err, &errConfig), "expected plain error, got ErrConfig")
+			}
 		})
 	}
 }

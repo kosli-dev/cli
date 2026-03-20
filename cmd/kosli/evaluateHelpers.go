@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 
+	kosliErrors "github.com/kosli-dev/cli/internal/errors"
 	"github.com/kosli-dev/cli/internal/evaluate"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -136,7 +137,7 @@ func printEvaluateResultAsJson(raw string, out io.Writer, _ int) error {
 		return err
 	}
 	if allow, ok := result["allow"].(bool); ok && !allow {
-		return fmt.Errorf("policy denied")
+		return kosliErrors.NewErrCompliance("policy denied")
 	}
 	return nil
 }
@@ -167,8 +168,8 @@ func printEvaluateResultAsTable(raw string, out io.Writer, _ int) error {
 			}
 		}
 		tabFormattedPrint(out, []string{}, rows)
-		return fmt.Errorf("policy denied: %v", violations)
+		return kosliErrors.NewErrCompliance(fmt.Sprintf("policy denied: %v", violations))
 	}
 	tabFormattedPrint(out, []string{}, rows)
-	return fmt.Errorf("policy denied")
+	return kosliErrors.NewErrCompliance("policy denied")
 }

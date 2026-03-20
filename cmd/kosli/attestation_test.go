@@ -1,8 +1,11 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"testing"
 
+	kosliErrors "github.com/kosli-dev/cli/internal/errors"
 	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/stretchr/testify/assert"
 )
@@ -115,4 +118,31 @@ func TestMergeGitRepoInfo(t *testing.T) {
 			assert.Equal(t, tt.wantProvider, result.Provider)
 		})
 	}
+}
+
+func TestWrapAttestationError(t *testing.T) {
+	t.Run("nil returns nil", func(t *testing.T) {
+		assert.NoError(t, wrapAttestationError(nil))
+	})
+
+	t.Run("ErrCompliance is preserved through wrapAttestationError", func(t *testing.T) {
+		inner := kosliErrors.NewErrCompliance("assert failed: no pull request found")
+		err := wrapAttestationError(inner)
+		var ec *kosliErrors.ErrCompliance
+		assert.True(t, errors.As(err, &ec), "expected ErrCompliance to be preserved, got %T: %v", err, err)
+	})
+
+	t.Run("ErrServer is preserved through wrapAttestationError", func(t *testing.T) {
+		inner := kosliErrors.NewErrServer("server error")
+		err := wrapAttestationError(inner)
+		var es *kosliErrors.ErrServer
+		assert.True(t, errors.As(err, &es), "expected ErrServer to be preserved, got %T: %v", err, err)
+	})
+
+	t.Run("API message requiring rewrite loses type but message is improved", func(t *testing.T) {
+		raw := fmt.Errorf("requires at least one of: artifact_fingerprint or git_commit_info. some detail")
+		err := wrapAttestationError(raw)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "requires at least one of: specifying the fingerprint")
+	})
 }

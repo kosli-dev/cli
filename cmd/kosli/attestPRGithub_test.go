@@ -124,8 +124,9 @@ func (suite *AttestGithubPRCommandTestSuite) TestAttestGithubPRCmd() {
 			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\ngithub pull request attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
-			wantError: true,
-			name:      "14 assert fails with non-zero exit code when commit has no PRs",
+			wantError:    true,
+			wantExitCode: 1,
+			name:         "14 assert fails with non-zero exit code when commit has no PRs",
 			cmd: fmt.Sprintf(`attest pullrequest github --name bar 
 				--github-org kosli-dev --repository cli --commit %s --assert %s`, suite.commitWithNoPR, suite.defaultKosliArguments),
 			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\ngithub pull request attestation 'bar' is reported to trail: test-123\nError: assert failed: no pull request found for the given commit: .*\n",
@@ -137,8 +138,9 @@ func (suite *AttestGithubPRCommandTestSuite) TestAttestGithubPRCmd() {
 			goldenRegex: "found 1 pull request\\(s\\) for commit: .*\ngithub pull request attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
-			wantError: true,
-			name:      "16 if there is a server error, this is output even when assert fails",
+			wantError:    true,
+			wantExitCode: 1,
+			name:         "16 if there is a server error, this is output even when assert fails",
 			cmd: fmt.Sprintf(`attest pullrequest github --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo 
 				--github-org kosli-dev --repository cli --commit %s --assert %s`, suite.commitWithNoPR, suite.defaultKosliArguments),
 			goldenRegex: "found 0 pull request\\(s\\) for commit: .*\nError: Artifact with fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 does not exist in trail \"test-123\" of flow \"attest-github-pr\" belonging to organization \"docs-cmd-test-user\"\nError: assert failed: no pull request found for the given commit: .*\n",

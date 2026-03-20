@@ -2,6 +2,12 @@ package docgen
 
 import "github.com/spf13/cobra"
 
+// ExitCodeEntry describes one exit code a command can produce.
+type ExitCodeEntry struct {
+	Code    int
+	Meaning string
+}
+
 // CommandMeta holds metadata about a cobra command for doc generation.
 type CommandMeta struct {
 	Name       string
@@ -13,6 +19,7 @@ type CommandMeta struct {
 	UseLine    string
 	Runnable   bool
 	Example    string
+	ExitCodes  []ExitCodeEntry
 }
 
 // CIExample holds data for a single CI system's live example.
@@ -38,6 +45,7 @@ type Formatter interface {
 	DeprecatedWarning(name, message string) string
 	Synopsis(meta CommandMeta) string
 	FlagsSection(flags, inherited string) string
+	ExitCodesSection(codes []ExitCodeEntry) string
 	LiveCIExamples(examples []CIExample, commandName string) string
 	LiveCLIExample(commandName, fullCommand, url string) string
 	ExampleUseCases(commandName, example string) string

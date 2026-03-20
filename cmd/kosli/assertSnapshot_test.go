@@ -64,10 +64,11 @@ func (suite *AssertSnapshotCommandTestSuite) SetupTest() {
 func (suite *AssertSnapshotCommandTestSuite) TestAssertSnapshotCmd() {
 	tests := []cmdTestCase{
 		{
-			wantError: true,
-			name:      "01 missing --org fails",
-			cmd:       fmt.Sprintf(`assert snapshot %s --api-token secret`, suite.nonCompliantEnvName),
-			golden:    "Error: --org is not set\nUsage: kosli assert snapshot ENVIRONMENT-NAME-OR-EXPRESSION [flags]\n",
+			wantError:    true,
+			wantExitCode: 4,
+			name:         "01 missing --org fails",
+			cmd:          fmt.Sprintf(`assert snapshot %s --api-token secret`, suite.nonCompliantEnvName),
+			golden:       "Error: --org is not set\nUsage: kosli assert snapshot ENVIRONMENT-NAME-OR-EXPRESSION [flags]\n",
 		},
 		{
 			wantError: true,
@@ -82,9 +83,10 @@ func (suite *AssertSnapshotCommandTestSuite) TestAssertSnapshotCmd() {
 			golden:    "Error: Environment named 'non-existing' does not exist for organization 'docs-cmd-test-user'\n",
 		},
 		{
-			wantError: true,
-			name:      "04 asserting a non compliant env results in INCOMPLIANT and non-zero exit",
-			cmd:       fmt.Sprintf(`assert snapshot %s %s`, suite.nonCompliantEnvName, suite.defaultKosliArguments),
+			wantError:    true,
+			wantExitCode: 1,
+			name:         "04 asserting a non compliant env results in INCOMPLIANT and non-zero exit",
+			cmd:          fmt.Sprintf(`assert snapshot %s %s`, suite.nonCompliantEnvName, suite.defaultKosliArguments),
 			additionalConfig: assertSnapshotTestConfig{
 				reportToEnv: true,
 				envName:     suite.nonCompliantEnvName,

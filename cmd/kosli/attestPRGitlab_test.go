@@ -126,8 +126,9 @@ func (suite *AttestGitlabPRCommandTestSuite) TestAttestGitlabPRCmd() {
 			goldenRegex: "found 1 merge request\\(s\\) for commit: .*\ngitlab merge request attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
-			wantError: true,
-			name:      "12 assert fails with non-zero exit code when commit has no merge requests",
+			wantError:    true,
+			wantExitCode: 1,
+			name:         "12 assert fails with non-zero exit code when commit has no merge requests",
 			cmd: fmt.Sprintf(`attest pullrequest gitlab --name bar 
 				--gitlab-org kosli-dev --repository merkely-gitlab-demo --commit %s --assert %s`, suite.commitWithNoPR, suite.defaultKosliArguments),
 			goldenRegex: "found 0 merge request\\(s\\) for commit: .*\ngitlab merge request attestation 'bar' is reported to trail: test-123\nError: assert failed: no merge request found for the given commit: .*\n",
@@ -139,8 +140,9 @@ func (suite *AttestGitlabPRCommandTestSuite) TestAttestGitlabPRCmd() {
 			goldenRegex: "found 1 merge request\\(s\\) for commit: .*\ngitlab merge request attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
-			wantError: true,
-			name:      "14 if there is a server error, this is output even when assert fails",
+			wantError:    true,
+			wantExitCode: 1,
+			name:         "14 if there is a server error, this is output even when assert fails",
 			cmd: fmt.Sprintf(`attest pullrequest gitlab --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo 
 				--gitlab-org kosli-dev --repository merkely-gitlab-demo --commit %s --assert %s`, suite.commitWithNoPR, suite.defaultKosliArguments),
 			goldenRegex: "found 0 merge request\\(s\\) for commit: .*\nError: Artifact with fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 does not exist in trail \"test-123\" of flow \"attest-gitlab-pr\" belonging to organization \"docs-cmd-test-user\"\nError: assert failed: no merge request found for the given commit: .*\n",

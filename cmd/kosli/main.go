@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	kosliErrors "github.com/kosli-dev/cli/internal/errors"
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -36,7 +37,8 @@ func main() {
 		}
 	}
 	if err != nil {
-		logger.Error(err.Error())
+		fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
+		os.Exit(kosliErrors.ExitCodeFor(err))
 	}
 }
 
@@ -49,9 +51,9 @@ func innerMain(cmd *cobra.Command, args []string) error {
 	// cobra does not capture unknown/missing commands, see https://github.com/spf13/cobra/issues/706
 	// so we handle this here until it is fixed in cobra
 	if strings.Contains(err.Error(), "unknown flag:") {
-		c, flags, err := cmd.Traverse(args[1:])
-		if err != nil {
-			return err
+		c, flags, traverseErr := cmd.Traverse(args[1:])
+		if traverseErr != nil {
+			return kosliErrors.NewErrUsage(traverseErr.Error())
 		}
 		if c.HasSubCommands() {
 			errMessage := ""
@@ -66,8 +68,9 @@ func innerMain(cmd *cobra.Command, args []string) error {
 					availableSubcommands = append(availableSubcommands, strings.Split(sc.Use, " ")[0])
 				}
 			}
-			logger.Error("%s\navailable subcommands are: %s", errMessage, strings.Join(availableSubcommands, " | "))
+			fmt.Fprintf(os.Stderr, "Error: %s\navailable subcommands are: %s\n", errMessage, strings.Join(availableSubcommands, " | "))
 		}
+		return kosliErrors.NewErrUsage(err.Error())
 	}
 	if global.DryRun {
 		logger.Info("Error: %s", err.Error())

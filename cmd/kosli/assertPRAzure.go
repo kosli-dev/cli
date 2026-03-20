@@ -5,6 +5,7 @@ import (
 	"io"
 
 	azUtils "github.com/kosli-dev/cli/internal/azure"
+	kosliErrors "github.com/kosli-dev/cli/internal/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -64,7 +65,7 @@ func (o *assertPullRequestAzureOptions) run(args []string) error {
 		return err
 	}
 	if len(pullRequestsEvidence) == 0 {
-		return fmt.Errorf("assert failed: found no pull request(s) in Azure DevOps for commit: %s", o.commit)
+		return kosliErrors.NewErrCompliance(fmt.Sprintf("assert failed: found no pull request(s) in Azure DevOps for commit: %s", o.commit))
 	}
 	logger.Info("found [%d] pull request(s) in Azure DevOps for commit: %s", len(pullRequestsEvidence), o.commit)
 	return nil

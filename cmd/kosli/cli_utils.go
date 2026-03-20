@@ -16,6 +16,7 @@ import (
 	"unicode"
 
 	"github.com/kosli-dev/cli/internal/digest"
+	kosliErrors "github.com/kosli-dev/cli/internal/errors"
 	"github.com/kosli-dev/cli/internal/gitview"
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/utils"
@@ -452,11 +453,11 @@ func ValidateSliceValues(values []string, allowedValues map[string]struct{}) err
 
 // ErrorBeforePrintingUsage
 func ErrorBeforePrintingUsage(cmd *cobra.Command, errMsg string) error {
-	return fmt.Errorf(
+	return kosliErrors.NewErrUsage(fmt.Sprintf(
 		"%s\nUsage: %s",
 		errMsg,
 		cmd.UseLine(),
-	)
+	))
 }
 
 // tabFormattedPrint prints data in a tabular format. Takes header titles in a string slice

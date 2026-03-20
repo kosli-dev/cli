@@ -12,6 +12,84 @@ import (
 	"github.com/spf13/cobra/doc"
 )
 
+// Exit code sets used across command doc generation.
+var (
+	// exitCodesDefault applies to all commands that call the Kosli API.
+	exitCodesDefault = []docgen.ExitCodeEntry{
+		{Code: 0, Meaning: "No error."},
+		{Code: 1, Meaning: "Unexpected error."},
+		{Code: 2, Meaning: "Kosli server is unreachable or returned a server error."},
+		{Code: 3, Meaning: "Invalid API token or unauthorized access."},
+		{Code: 4, Meaning: "CLI usage error (e.g. missing or invalid flags)."},
+	}
+
+	// exitCodesAssert applies to assert commands that always signal compliance violations on failure.
+	exitCodesAssert = []docgen.ExitCodeEntry{
+		{Code: 0, Meaning: "No error."},
+		{Code: 1, Meaning: "Assertion/compliance violation."},
+		{Code: 2, Meaning: "Kosli server is unreachable or returned a server error."},
+		{Code: 3, Meaning: "Invalid API token or unauthorized access."},
+		{Code: 4, Meaning: "CLI usage error (e.g. missing or invalid flags)."},
+	}
+
+	// exitCodesAttest applies to attest commands that support --assert flag.
+	exitCodesAttest = []docgen.ExitCodeEntry{
+		{Code: 0, Meaning: "No error."},
+		{Code: 1, Meaning: "Assertion/compliance violation (only when --assert is used)."},
+		{Code: 2, Meaning: "Kosli server is unreachable or returned a server error."},
+		{Code: 3, Meaning: "Invalid API token or unauthorized access."},
+		{Code: 4, Meaning: "CLI usage error (e.g. missing or invalid flags)."},
+	}
+
+	// exitCodesAssertStatus applies to `kosli assert status` which only checks reachability.
+	exitCodesAssertStatus = []docgen.ExitCodeEntry{
+		{Code: 0, Meaning: "Kosli server is responsive."},
+		{Code: 2, Meaning: "Kosli server is unreachable or down."},
+	}
+
+	// exitCodesEvaluate applies to evaluate commands that run a policy and can signal policy denial.
+	exitCodesEvaluate = []docgen.ExitCodeEntry{
+		{Code: 0, Meaning: "No error (policy allowed)."},
+		{Code: 1, Meaning: "Policy denied."},
+		{Code: 2, Meaning: "Kosli server is unreachable or returned a server error."},
+		{Code: 3, Meaning: "Invalid API token or unauthorized access."},
+		{Code: 4, Meaning: "CLI usage error (e.g. missing or invalid flags)."},
+	}
+
+	// exitCodesNoAPI applies to commands that do not call the Kosli API (version, completion, docs).
+	exitCodesNoAPI = []docgen.ExitCodeEntry{
+		{Code: 0, Meaning: "No error."},
+		{Code: 4, Meaning: "CLI usage error."},
+	}
+)
+
+// commandExitCodes maps command paths to their exit code sets.
+// Commands not in this map receive exitCodesDefault.
+var commandExitCodes = map[string][]docgen.ExitCodeEntry{
+	// assert commands — can signal compliance violations
+	"kosli assert artifact":              exitCodesAssert,
+	"kosli assert approval":              exitCodesAssert,
+	"kosli assert snapshot":              exitCodesAssert,
+	"kosli assert pullrequest github":    exitCodesAssert,
+	"kosli assert pullrequest gitlab":    exitCodesAssert,
+	"kosli assert pullrequest azure":     exitCodesAssert,
+	"kosli assert pullrequest bitbucket": exitCodesAssert,
+	"kosli assert status":                exitCodesAssertStatus,
+	// attest commands with --assert flag — can signal compliance violations when --assert is used
+	"kosli attest pullrequest github":    exitCodesAttest,
+	"kosli attest pullrequest gitlab":    exitCodesAttest,
+	"kosli attest pullrequest azure":     exitCodesAttest,
+	"kosli attest pullrequest bitbucket": exitCodesAttest,
+	"kosli attest jira":                  exitCodesAttest,
+	// evaluate commands — policy denial exits with code 1
+	"kosli evaluate trail":  exitCodesEvaluate,
+	"kosli evaluate trails": exitCodesEvaluate,
+	// non-API commands
+	"kosli version":    exitCodesNoAPI,
+	"kosli completion": exitCodesNoAPI,
+	"kosli docs":       exitCodesNoAPI,
+}
+
 const docsShortDesc = `Generate documentation files for Kosli CLI. `
 
 const docsLongDesc = docsShortDesc + `
@@ -58,8 +136,13 @@ func (o *docsOptions) run() error {
 		}
 
 		metaFn := func(cmd *cobra.Command) docgen.CommandMeta {
+			path := cmd.CommandPath()
+			exitCodes, ok := commandExitCodes[path]
+			if !ok && cmd.Runnable() {
+				exitCodes = exitCodesDefault
+			}
 			return docgen.CommandMeta{
-				Name:       cmd.CommandPath(),
+				Name:       path,
 				Beta:       isBeta(cmd),
 				Deprecated: isDeprecated(cmd),
 				DeprecMsg:  cmd.Deprecated,
@@ -68,6 +151,7 @@ func (o *docsOptions) run() error {
 				UseLine:    cmd.UseLine(),
 				Runnable:   cmd.Runnable(),
 				Example:    cmd.Example,
+				ExitCodes:  exitCodes,
 			}
 		}
 

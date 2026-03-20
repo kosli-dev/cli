@@ -1,11 +1,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 
+	kosliErrors "github.com/kosli-dev/cli/internal/errors"
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
@@ -1092,4 +1094,21 @@ func TestValidateSliceValues(t *testing.T) {
 			}
 		})
 	}
+}
+
+func (suite *CliUtilsTestSuite) TestErrorBeforePrintingUsageReturnsErrUsage() {
+	cmd := &cobra.Command{Use: "test"}
+	err := ErrorBeforePrintingUsage(cmd, "missing required flag")
+	require.Error(suite.T(), err)
+	var eu *kosliErrors.ErrUsage
+	require.True(suite.T(), errors.As(err, &eu), "expected ErrUsage, got %T: %v", err, err)
+}
+
+func (suite *CliUtilsTestSuite) TestMissingRequiredFlagIsErrUsage() {
+	// kosli assert artifact requires --org and --api-token; omitting them triggers PreRunE
+	// which calls RequireGlobalFlags → ErrorBeforePrintingUsage
+	_, _, err := executeCommandC(`assert artifact --fingerprint abc123 --org myorg`)
+	require.Error(suite.T(), err)
+	var eu *kosliErrors.ErrUsage
+	require.True(suite.T(), errors.As(err, &eu), "expected ErrUsage, got %T: %v", err, err)
 }

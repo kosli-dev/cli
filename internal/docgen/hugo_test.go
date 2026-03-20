@@ -5,6 +5,33 @@ import (
 	"testing"
 )
 
+func TestHugoExitCodesSection(t *testing.T) {
+	f := HugoFormatter{}
+	codes := []ExitCodeEntry{
+		{Code: 0, Meaning: "No error."},
+		{Code: 1, Meaning: "Assertion/compliance violation."},
+		{Code: 2, Meaning: "Server unreachable."},
+	}
+	got := f.ExitCodesSection(codes)
+	if !strings.Contains(got, "## Exit Codes") {
+		t.Errorf("expected '## Exit Codes' heading, got:\n%s", got)
+	}
+	if !strings.Contains(got, "| 0 | No error. |") {
+		t.Errorf("expected exit code 0 row, got:\n%s", got)
+	}
+	if !strings.Contains(got, "| 1 | Assertion/compliance violation. |") {
+		t.Errorf("expected exit code 1 row, got:\n%s", got)
+	}
+}
+
+func TestHugoExitCodesSectionEmpty(t *testing.T) {
+	f := HugoFormatter{}
+	got := f.ExitCodesSection(nil)
+	if got != "" {
+		t.Errorf("expected empty string for nil codes, got:\n%s", got)
+	}
+}
+
 func TestHugoFrontMatter(t *testing.T) {
 	f := HugoFormatter{}
 	meta := CommandMeta{Name: "kosli attest snyk", Summary: "Report a snyk attestation"}
