@@ -1,4 +1,4 @@
----
+ ---
 title: "Part 2: Install Kosli CLI"
 bookCollapseSection: false
 weight: 220
@@ -89,6 +89,15 @@ sudo mv kosli /usr/local/bin/kosli
 
 {{< /tab >}}
 
+{{< tab "NPM" >}}
+You can install Kosli CLI system-wide with `npm` from the default registry <https://registry.npmjs.org>
+
+```shell {.command}
+npm install -g @kosli/cli
+```
+
+{{< /tab >}}
+
 {{< tab "From source" >}}
 You can build Kosli CLI from source by running:
 ```shell {.command}
@@ -99,7 +108,6 @@ make build
 {{< /tab >}}
 
 {{< /tabs >}}
-
 
 ## Verifying the installation worked
 
