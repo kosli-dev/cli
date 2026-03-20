@@ -30,16 +30,16 @@
     "postinstall": "node install.js"
   },
   "optionalDependencies": {
-    "@jbrejner/cli-linux-x64": "0.0.0",
-    "@jbrejner/cli-linux-arm64": "0.0.0",
-    "@jbrejner/cli-linux-arm": "0.0.0",
-    "@jbrejner/cli-darwin-x64": "0.0.0",
     "@jbrejner/cli-darwin-arm64": "0.0.0",
-    "@jbrejner/cli-win32-x64": "0.0.0",
-    "@jbrejner/cli-win32-arm64": "0.0.0"
+    "@jbrejner/cli-darwin-x64": "0.0.0",
+    "@jbrejner/cli-linux-arm": "0.0.0",
+    "@jbrejner/cli-linux-arm64": "0.0.0",
+    "@jbrejner/cli-linux-x64": "0.0.0",
+    "@jbrejner/cli-win32-arm64": "0.0.0",
+    "@jbrejner/cli-win32-x64": "0.0.0"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com",
+    "registry": "https://registry.npmjs.org",
     "access": "public"
   }
 }
