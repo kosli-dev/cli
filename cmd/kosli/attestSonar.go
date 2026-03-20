@@ -73,7 +73,7 @@ kosli attest sonar \
 	--org yourOrgName \
 	--max-wait 60
 
-# report a SonarQube Cloud attestation for a specific branch about a trail using key/revision:
+# report a SonarQube Cloud attestation about a trail using key/revision:
 kosli attest sonar \
 	--name yourAttestationName \
 	--flow yourFlowName \
@@ -81,20 +81,18 @@ kosli attest sonar \
 	--sonar-api-token yourSonarAPIToken \
 	--sonar-project-key yourSonarProjectKey \
 	--sonar-revision yourSonarRevision \
-	--branch-name yourBranchName \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 
-# report a SonarQube Server attestation for a pull-request about a trail using key/revision:
+# report a SonarQube Server attestation about a trail using key/revision:
 kosli attest sonar \
 	--name yourAttestationName \
 	--flow yourFlowName \
 	--trail yourTrailName \
 	--sonar-api-token yourSonarAPIToken \
-	--sonarqube-url yourSonarQubeURL \
+	--sonar-server-url yourSonarServerURL \
 	--sonar-project-key yourSonarProjectKey \
 	--sonar-revision yourSonarRevision \
-	--pull-request-id yourPullRequestID \
 	--api-token yourAPIToken \
 	--org yourOrgName \
 
