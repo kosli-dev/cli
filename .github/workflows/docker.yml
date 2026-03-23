@@ -104,7 +104,7 @@ jobs:
 
 
     - name: Attest Build Provenance
-      uses: actions/attest-build-provenance@v1
+      uses: actions/attest-build-provenance@v4
       with:
         subject-name: ${{ env.IMAGE }}
         subject-digest: ${{ steps.docker_build.outputs.digest }}
