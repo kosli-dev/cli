@@ -16,10 +16,10 @@ This tutorial shows how you can setup an HTTP proxy and use it when communicatin
 If you already have an HTTP proxy, [start using it with Kosli CLI](#use-the-http-proxy-with-kosli-cli)
 
 
-{{<hint info>}}
+{{% hint info %}}
 In this tutorial, we will setup Tinyproxy (in docker) as an HTTP proxy on a Mac machine.
 The same steps apply for different HTTP proxies and machines, but commands will differ.
-{{</hint>}}
+{{% /hint %}}
 
 
 ## Start the HTTP proxy

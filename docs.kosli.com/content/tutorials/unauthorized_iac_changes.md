@@ -45,10 +45,10 @@ kosli create flow tf-tutorial --use-empty-template
 
 ## Making and tracking an authorized change
 
-{{<hint info>}}
+{{% hint info %}}
 In production, an authorized change will normally go though CI.
 In this tutorial, however, we run the commands that you would otherwise do in CI locally for simplicity.
-{{</hint>}}
+{{% /hint %}}
 
 Let's create a trail to represent a single instance of making an authorized change. We will call it `authorized-1`.
 
@@ -74,13 +74,13 @@ Finally, we apply the terraform plan, and attest the produced terraform state fi
 This will calculate a SHA256 fingerprint for the state file based on its contents. The fingerprint will later be used to determine if a change is 
 authorized or not.
 
-{{<hint info>}}
+{{% hint info %}}
 In this tutorial, we use a simple setup where the terraform state file is stored locally.
 In production cases, however, the state file would be stored in some cloud storage (e.g. AWS S3). 
 In such cases, you would need to download the state file from the remote backend after it was updated by the authorized change.
 
 Note that we set both `--build-url` and `--commit-url` to fake URLs. These are normally defaulted in CI.
-{{</hint>}}
+{{% /hint %}}
 
 ```shell {.command}
 terraform apply -auto-approve tf.plan
@@ -102,11 +102,11 @@ kosli create env terraform-state --type=server
 
 We can report the state file to the environment we created:
 
-{{<hint info>}}
+{{% hint info %}}
 In this tutorial, we run the environment reporting manually. 
 In production, you would configure the environment reporting to run periodically or on changes. 
 See [reporting AWS environments](../report_aws_envs) if you are using S3 as a backend for your state files.
-{{</hint>}}
+{{% /hint %}}
 
 ```shell {.command}
 kosli snapshot path terraform-state --name=tf-state --path=terraform.tfstate
@@ -140,10 +140,10 @@ terraform apply --auto-approve
 
 This updates the state file. Let's report the updated state file to the Kosli environment.
 
-{{<hint info>}}
+{{% hint info %}}
 In production, this step won't be necessary because you would have configured environment reporting to happen
 automatically (either on state file change or periodically).
-{{</hint>}}
+{{% /hint %}}
 
 ```shell {.command}
 kosli snapshot path terraform-state --name=tf-state --path=terraform.tfstate

@@ -13,10 +13,10 @@ Snyk scans analyze your source code, docker images and IaC source for security i
 
 In this tutorial, we will see how you can run and attest different types of Snyk scans to Kosli. We will run the scans on the [Kosli CLI git repo](https://github.com/kosli-dev/cli).
 
-{{<hint info>}}
+{{% hint info %}}
 While snyk attestations can be bound to a trail or an artifact in a trail, this tutorial
 demonstrates it only on trails for simplicity.
-{{</hint>}}
+{{% /hint %}}
 
 ## Getting ready
 
@@ -46,9 +46,9 @@ We will start by creating a flow in Kosli to contain Trails and Artifacts for th
 kosli create flow snyk-demo --use-empty-template
 ```
 
-{{<hint info>}}
+{{% hint info %}}
 `--use-empty-template` indicates that this flow does not have a predefined set of required attestations.
-{{</hint>}}
+{{% /hint %}}
 
 Then, we can start a trail to bind our snyk attestations to.
 
@@ -58,10 +58,10 @@ kosli begin trail test-1 --flow snyk-demo
 
 Now we can start running Snyk scans and attest them to this trail.
 
-{{<hint info>}}
+{{% hint info %}}
 After each attestation in the sections below, you can navigate to:
 **https://app.kosli.com/\<your-personal-org-name\>/flows/snyk-demo/trails/test-1** to view the status of the trail in Kosli.
-{{</hint>}}
+{{% /hint %}}
 
 ## Snyk Open source scan
 
@@ -74,9 +74,9 @@ snyk test --sarif-file-output=os.json
 kosli attest snyk --flow snyk-demo --trail test-1 --name open-source-scan --scan-results os.json --commit HEAD
 ```
 
-{{<hint info>}}
+{{% hint info %}}
 `--commit` allows you to relate the attestation to a specific git commit.
-{{</hint>}}
+{{% /hint %}}
 
 
 ## Snyk Code scan
