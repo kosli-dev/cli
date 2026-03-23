@@ -1,7 +1,7 @@
 {
-  "name": "@jbrejner/cli-darwin-x64",
+  "name": "@kosli/cli-darwin-x64",
   "version": "0.0.0",
-  "description": "macOS x64 binary for @jbrejner/cli",
+  "description": "macOS x64 binary for @kosli/cli",
   "license": "MIT",
   "os": [
     "darwin"

@@ -1,7 +1,7 @@
 {
-  "name": "@jbrejner/cli-linux-x64",
+  "name": "@kosli/cli-linux-x64",
   "version": "0.0.0",
-  "description": "Linux x64 binary for @jbrejner/cli",
+  "description": "Linux x64 binary for @kosli/cli",
   "license": "MIT",
   "os": [
     "linux"

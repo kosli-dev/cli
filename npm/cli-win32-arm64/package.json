@@ -1,7 +1,7 @@
 {
-  "name": "@jbrejner/cli-win32-arm64",
+  "name": "@kosli/cli-win32-arm64",
   "version": "0.0.0",
-  "description": "Windows arm64 binary for @jbrejner/cli",
+  "description": "Windows arm64 binary for @kosli/cli",
   "license": "MIT",
   "os": [
     "win32"

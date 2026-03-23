@@ -36,7 +36,7 @@ fi
 find npm -name package.json -exec sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"${VERSION}\"/" {} \;
 
 # Also update the optionalDependencies version references in the wrapper
-sed -i "s/\(\"@jbrejner\/cli-[^\"]*\": \)\"[^\"]*\"/\1\"${VERSION}\"/g" npm/wrapper/package.json
+sed -i "s/\(\"@kosli\/cli-[^\"]*\": \)\"[^\"]*\"/\1\"${VERSION}\"/g" npm/wrapper/package.json
 
 # Pack and optionally publish platform packages first (wrapper depends on them)
 find npm -name package.json ! -path "npm/wrapper/*" | while read -r f; do

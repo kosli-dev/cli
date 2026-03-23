@@ -1,7 +1,7 @@
 {
-  "name": "@jbrejner/cli-linux-arm",
+  "name": "@kosli/cli-linux-arm",
   "version": "0.0.0",
-  "description": "Linux arm binary for @jbrejner/cli",
+  "description": "Linux arm binary for @kosli/cli",
   "license": "MIT",
   "os": [
     "linux"

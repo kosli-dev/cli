@@ -6,29 +6,29 @@ This directory contains the npm package structure for distributing the Kosli CLI
 
 ```
 npm/
-├── wrapper/              # @jbrejner/cli — the package users install
+├── wrapper/              # @kosli/cli — the package users install
 │   ├── package.json      # declares optionalDependencies for all platforms
 │   ├── bin/kosli         # JS shim that detects the platform and runs the binary
 │   └── install.js        # postinstall script that validates the binary
-├── cli-linux-x64/        # @jbrejner/cli-linux-x64
+├── cli-linux-x64/        # @kosli/cli-linux-x64
 │   ├── package.json      # declares os/cpu fields for platform filtering
 │   └── bin/kosli         # the native binary — see below
-├── cli-linux-arm64/      # @jbrejner/cli-linux-arm64
+├── cli-linux-arm64/      # @kosli/cli-linux-arm64
 │   ├── package.json      # declares os/cpu fields for platform filtering
 │   └── bin/kosli         # the native binary — see below
-├── cli-linux-arm/        # @jbrejner/cli-linux-arm
+├── cli-linux-arm/        # @kosli/cli-linux-arm
 │   ├── package.json      # declares os/cpu fields for platform filtering
 │   └── bin/kosli         # the native binary — see below
-├── cli-darwin-x64/       # @jbrejner/cli-darwin-x64
+├── cli-darwin-x64/       # @kosli/cli-darwin-x64
 │   ├── package.json      # declares os/cpu fields for platform filtering
 │   └── bin/kosli         # the native binary — see below
-├── cli-darwin-arm64/     # @jbrejner/cli-darwin-arm64
+├── cli-darwin-arm64/     # @kosli/cli-darwin-arm64
 │   ├── package.json      # declares os/cpu fields for platform filtering
 │   └── bin/kosli         # the native binary — see below
-└── cli-win32-x64/        # @jbrejner/cli-win32-x64
+└── cli-win32-x64/        # @kosli/cli-win32-x64
 │   ├── package.json      # declares os/cpu fields for platform filtering
 │   └── bin/kosli[.exe]   # the native binary — see below
-└── cli-win32-arm64/      # @jbrejner/cli-win32-arm64
+└── cli-win32-arm64/      # @kosli/cli-win32-arm64
     ├── package.json      # declares os/cpu fields for platform filtering
     └── bin/kosli[.exe]   # the native binary — see below
 ```
@@ -38,13 +38,13 @@ npm/
 Users install a single package:
 
 ```sh
-npm install @jbrejner/cli
+npm install @kosli/cli
 ```
 
 or if using in continuous integration you can install globally:
 
 ```sh
-npm install -g @jbrejner/cli
+npm install -g @kosli/cli
 ```
 
 npm resolves the `optionalDependencies` declared in the wrapper's `package.json` and installs only the platform-specific package that matches the current OS and CPU architecture — all non-matching packages are silently skipped. The wrapper's `bin/kosli` JS shim then locates the binary inside the installed platform package and executes it.

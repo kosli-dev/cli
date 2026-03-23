@@ -1,7 +1,7 @@
 {
-  "name": "@jbrejner/cli-darwin-arm64",
+  "name": "@kosli/cli-darwin-arm64",
   "version": "0.0.0",
-  "description": "macOS arm64 binary for @jbrejner/cli",
+  "description": "macOS arm64 binary for @kosli/cli",
   "license": "MIT",
   "os": [
     "darwin"
