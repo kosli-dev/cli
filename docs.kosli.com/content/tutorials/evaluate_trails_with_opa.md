@@ -23,9 +23,9 @@ To follow this tutorial, you need to:
   export KOSLI_API_TOKEN=<your-api-token>
   ```
 
-{{<hint info>}}
+{{% hint info %}}
 You don't need OPA installed — the Kosli CLI has a built-in Rego evaluator. You just need to write a `.rego` policy file.
-{{</hint>}}
+{{% /hint %}}
 
 ## Step 2: Write a policy
 
@@ -58,13 +58,13 @@ Let's break down what this policy does:
 * **`violations`** — a set of messages describing why the policy failed. The rule iterates over trails, then over pull requests within the `pull-request` attestation, looking for PRs where `approvers` is empty.
 * **`allow`** — trails are allowed only when there are no violations.
 
-{{<hint info>}}
+{{% hint info %}}
 **Policy contract** — these are Kosli-specific conventions, not OPA built-ins:
 
 * **`package policy`** — required. Kosli queries `data.policy.*` to find your rules.
 * **`allow`** — required. Must evaluate to a **boolean**. Kosli exits with code 0 when `true`, code 1 when `false`.
 * **`violations`** — optional but recommended. Must be a **set of strings**, where each string is a human-readable reason the policy failed. Kosli displays these when `allow` is `false`.
-{{</hint>}}
+{{% /hint %}}
 
 ## Step 3: Evaluate multiple trails
 
@@ -153,9 +153,9 @@ RESULT:  ALLOWED
 
 The trail has zero high-severity vulnerabilities, so the policy allows it.
 
-{{<hint info>}}
+{{% hint info %}}
 When writing a policy for `kosli evaluate trail`, reference `input.trail` (a single object). For `kosli evaluate trails`, reference `input.trails` (an array). The data shapes differ, so use separate policies for each command.
-{{</hint>}}
+{{% /hint %}}
 
 ## Step 5: Explore the policy input with --show-input
 
@@ -196,9 +196,9 @@ kosli evaluate trail \
 ]
 ```
 
-{{<hint info>}}
+{{% hint info %}}
 Use the `--attestations` flag to limit which attestations are enriched with full detail. The flag filters by **attestation name** (not type). For example, `--attestations pull-request` fetches only details for attestations named `pull-request`, which speeds up evaluation and reduces noise when exploring the input.
-{{</hint>}}
+{{% /hint %}}
 
 ## Step 6: Use in CI/CD
 
@@ -268,9 +268,9 @@ This creates a generic attestation on the trail with:
 * **`--user-data`** containing the violations, which appear in the Kosli UI as
   structured metadata on the attestation
 
-{{<hint warning>}}
+{{% hint warning %}}
 Use `--compliant=value` (with `=`) not `--compliant value` (with a space). Boolean
 flags in Kosli CLI require the `=` syntax when passing `false` — otherwise `false`
 is interpreted as a positional argument. See the
 [boolean flags FAQ](/faq/#boolean-flags).
-{{</hint>}}
+{{% /hint %}}
