@@ -33,7 +33,7 @@ on:
       kosli_api_token:
         required: true
       snyk_token:
-        required: true         
+        required: true
 
 
 env:
@@ -43,7 +43,7 @@ env:
   # this interferes with the CLI integration tests
 
 
-jobs:  
+jobs:
   docker:
     name: Docker Build
     runs-on: ubuntu-latest
@@ -61,7 +61,8 @@ jobs:
 
     - uses: actions/setup-go@v5
       with:
-        go-version: '1.25.0'
+        go-version-file: '.go-version'
+        check-latest: true
 
     # Set up QEMU emulator to allow building multi-arch images
     - name: Set up QEMU
@@ -76,7 +77,7 @@ jobs:
       with:
         version:
           ${{ vars.KOSLI_CLI_VERSION }}
-    
+
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v3
       with:
@@ -84,7 +85,7 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    # Push image to the GHCR 
+    # Push image to the GHCR
     - name: Build and push Docker image
       id: docker_build
       uses: docker/build-push-action@v5
@@ -127,7 +128,7 @@ jobs:
         subject-digest: ${{ steps.docker_build.outputs.digest }}
         push-to-registry: true
 
-    
+
     - name: setup Snyk
       uses: snyk/actions/setup@master
 
@@ -136,36 +137,36 @@ jobs:
       if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') }}
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-      run: 
+      run:
         kosli attest artifact
            ${{ env.IMAGE }}:${{ inputs.tag }}
-           --flow ${{ inputs.flow_name }} 
-           --trail ${{ inputs.trail_name }} 
+           --flow ${{ inputs.flow_name }}
+           --trail ${{ inputs.trail_name }}
            --name cli-docker
            --fingerprint ${{ env.FINGERPRINT }}
            --external-url sigstore=https://search.sigstore.dev/?hash=${{ env.FINGERPRINT }}
            --org ${{ inputs.kosli_org }}
 
-           
+
     - name: Report SBOM to Kosli
       if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') }}
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-      run: 
+      run:
         kosli attest generic
           --flow ${{ inputs.flow_name }}
-          --trail ${{ inputs.trail_name }} 
+          --trail ${{ inputs.trail_name }}
           --name container-sbom
           --fingerprint ${{ env.FINGERPRINT }}
           --attachments  sbom.spdx.json
           --org ${{ inputs.kosli_org }}
 
-    
+
     - name: Run Snyk Container Test to scan the Docker image for vulnerabilities
       env:
         SNYK_TOKEN: ${{ secrets.snyk_token }}
-      run: 
-          snyk container test ${{ env.IMAGE }}:${{ inputs.tag }} 
+      run:
+          snyk container test ${{ env.IMAGE }}:${{ inputs.tag }}
              --file=Dockerfile
              --sarif
              --policy-path=.snyk
@@ -176,11 +177,11 @@ jobs:
       if:  ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') && (success() || failure()) }}
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-      run: 
-        kosli attest snyk 
+      run:
+        kosli attest snyk
             --flow ${{ inputs.flow_name }}
-            --trail ${{ inputs.trail_name }} 
-            --fingerprint ${{ env.FINGERPRINT }} 
+            --trail ${{ inputs.trail_name }}
+            --fingerprint ${{ env.FINGERPRINT }}
             --name snyk-container-test
             --scan-results snyk-docker.json
             --org ${{ inputs.kosli_org }}
@@ -191,7 +192,7 @@ jobs:
       env:
         KOSLI_ORG: cyber-dojo
         KOSLI_API_TOKEN: any-token-will-do
-      run: 
+      run:
         docker run -e KOSLI_API_TOKEN
           -e KOSLI_ORG --rm ${{ env.IMAGE }}:${{ inputs.tag }}
           list environments
@@ -201,12 +202,12 @@ jobs:
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
         SMOKE_TEST_OUTCOME: ${{ steps.smoke-test.outcome}}
-      run: 
-        kosli attest generic 
+      run:
+        kosli attest generic
             --flow ${{ inputs.flow_name }}
-            --trail ${{ inputs.trail_name }} 
-            --fingerprint ${{ env.FINGERPRINT }} 
+            --trail ${{ inputs.trail_name }}
+            --fingerprint ${{ env.FINGERPRINT }}
             --name smoke-test
-            --compliant=${{ steps.smoke-test.outcome == 'success' }} 
+            --compliant=${{ steps.smoke-test.outcome == 'success' }}
             --org ${{ inputs.kosli_org }}
 
