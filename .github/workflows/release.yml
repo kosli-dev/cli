@@ -250,7 +250,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@v2
+        uses: peter-evans/repository-dispatch@v4
         with:
           token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
           repository: kosli-dev/terraform-aws-evidence-reporter
@@ -262,7 +262,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@v2
+        uses: peter-evans/repository-dispatch@v4
         with:
           token: ${{ secrets.KOSLI_REPORTER_REPO_ACCESS_TOKEN }}
           repository: kosli-dev/terraform-aws-kosli-reporter
