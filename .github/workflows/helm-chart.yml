@@ -88,7 +88,7 @@ jobs:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
 
       - name: Commit and push changes
-        uses: planetscale/ghcommit-action@v0.2.19
+        uses: planetscale/ghcommit-action@v0.2.20
         with:
           commit_message: 'Update helm docs'
           repo: ${{ github.repository }}
