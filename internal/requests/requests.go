@@ -14,11 +14,16 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"time"
 
+	"github.com/google/uuid"
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/version"
 )
+
+// Default timeout for HTTP requests
+const DefaultRequestTimeout = 30 * time.Second
 
 type FormItem struct {
 	Type      string
@@ -37,6 +42,7 @@ type Client struct {
 	Debug         bool
 	Logger        *logger.Logger
 	HttpClient    *http.Client
+	Timeout       time.Duration
 }
 
 // CustomLogger wraps log.Logger and implements the Printf method
@@ -69,6 +75,8 @@ func NewKosliClient(httpProxyURL string, maxAPIRetries int, debug bool, logger *
 	}
 
 	client := retryClient.StandardClient() // return a standard *http.Client from the retryable client
+	client.Timeout = 0 // allow requests to run without artificial limits
+
 	if httpProxyURL != "" {
 		proxyURL, err := url.Parse(httpProxyURL)
 		if err != nil {
@@ -84,7 +92,21 @@ func NewKosliClient(httpProxyURL string, maxAPIRetries int, debug bool, logger *
 		Debug:         debug,
 		Logger:        logger,
 		HttpClient:    client,
+		Timeout:       DefaultRequestTimeout,
 	}, nil
+}
+
+// NewKosliClientWithTimeout creates a new client with a custom timeout.
+// If timeout is 0, it defaults to DefaultRequestTimeout.
+func NewKosliClientWithTimeout(httpProxyURL string, maxAPIRetries int, debug bool, logger *logger.Logger, timeout time.Duration) (*Client, error) {
+	client, err := NewKosliClient(httpProxyURL, maxAPIRetries, debug, logger)
+	if err != nil {
+		return nil, err
+	}
+	if timeout > 0 {
+		client.Timeout = timeout
+	}
+	return client, nil
 }
 
 type RequestParams struct {
@@ -97,6 +119,11 @@ type RequestParams struct {
 	Password          string
 	Token             string
 	DryRun            bool
+}
+
+// generateRequestID creates a unique identifier for request tracing
+func generateRequestID() string {
+	return uuid.New().String()
 }
 
 func (p *RequestParams) newHTTPRequest() (*http.Request, map[string]any, error) {
@@ -132,6 +159,9 @@ func (p *RequestParams) newHTTPRequest() (*http.Request, map[string]any, error) 
 		return nil, nil, fmt.Errorf("failed to create %s request to %s : %v", p.Method, p.URL, err)
 	}
 
+	// Add request ID for tracing
+	requestID := generateRequestID()
+	req.Header.Set("X-Request-ID", requestID)
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("User-Agent", "Kosli/"+version.GetVersion())
 
@@ -240,11 +270,22 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 			// log the payload
 			c.Logger.Info("############### PAYLOAD ###############")
 			c.Logger.Info("payload sent to: %s", req.URL)
+			// Log full request details including auth for debugging
+			c.Logger.Info("[debug] Authorization: %s", req.Header.Get("Authorization"))
+			c.Logger.Info("[debug] X-Request-ID: %s", req.Header.Get("X-Request-ID"))
 			err := c.PayloadOutput(req, jsonFields, "this is the payload being sent:")
 			if err != nil {
 				c.Logger.Error("failed to log payload: %v \nContinuing with the request...", err)
 			}
 		}
+
+		// Apply timeout via context
+		if c.Timeout > 0 {
+			ctx, cancel := context.WithTimeout(req.Context(), c.Timeout)
+			defer cancel()
+			req = req.WithContext(ctx)
+		}
+
 		resp, err := c.HttpClient.Do(req)
 		if err != nil {
 			// err from retryable client is detailed enough
@@ -261,7 +302,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 			return nil, fmt.Errorf("failed to read response from %s request to %s : %v", req.Method, req.URL, err)
 		}
 
-		c.Logger.Debug("request made to %s and got status %d", req.URL, resp.StatusCode)
+		c.Logger.Debug("request [%s] made to %s and got status %d", req.Header.Get("X-Request-ID"), req.URL, resp.StatusCode)
 
 		if resp.StatusCode != 200 && resp.StatusCode != 201 {
 			var respBody any

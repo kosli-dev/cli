@@ -20,4 +20,8 @@ FROM scratch
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /go/src/kosli/kosli /bin/kosli
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+  CMD ["/bin/kosli", "version"]
+
 ENTRYPOINT ["/bin/kosli"]

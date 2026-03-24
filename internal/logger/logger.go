@@ -7,6 +7,16 @@ import (
 	"os"
 )
 
+// LogLevel represents the severity of a log message
+type LogLevel int
+
+const (
+	LevelDebug LogLevel = iota
+	LevelInfo
+	LevelWarn
+	LevelError
+)
+
 type Logger struct {
 	DebugEnabled bool
 	Out          io.Writer
@@ -15,6 +25,7 @@ type Logger struct {
 	debugLog     *log.Logger
 	infoLog      *log.Logger
 	errLog       *log.Logger
+	MinLevel     LogLevel
 }
 
 func NewStandardLogger() *Logger {
@@ -22,6 +33,10 @@ func NewStandardLogger() *Logger {
 }
 
 func NewLogger(infoOut, errOut io.Writer, debug bool) *Logger {
+	minLevel := LevelInfo
+	if debug {
+		minLevel = LevelDebug
+	}
 	return &Logger{
 		DebugEnabled: debug,
 		Out:          infoOut,
@@ -30,6 +45,7 @@ func NewLogger(infoOut, errOut io.Writer, debug bool) *Logger {
 		debugLog:     log.New(errOut, "", 0),
 		errLog:       log.New(errOut, "", 0),
 		infoLog:      log.New(infoOut, "", 0),
+		MinLevel:     minLevel,
 	}
 }
 
