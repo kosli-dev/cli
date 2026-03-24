@@ -28,7 +28,7 @@ on:
       report_to_kosli:
         required: false
         type: boolean
-        default: true
+        default: false
     secrets:
       slack_channel:
         required: true

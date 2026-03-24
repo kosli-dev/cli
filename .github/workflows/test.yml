@@ -29,7 +29,7 @@ on:
       report_results:
         required: false
         type: boolean
-        default: true
+        default: false
       checkout_ref:
         required: false
         type: string
