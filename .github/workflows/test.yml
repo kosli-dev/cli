@@ -174,7 +174,7 @@ jobs:
 
     - name: Upload coverage reports to Codecov
       if: ${{ inputs.report_to_kosli != 'none' }}
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
 
   snyk-code-test:
     if: ${{ inputs.run_snyk }}
