@@ -20,6 +20,7 @@ jobs:
       trail_template_file: ${{ steps.prep.outputs.trail_template_file }}
       checkout_ref: ${{ steps.prep.outputs.checkout_ref }}
       report_to_kosli: ${{ steps.prep.outputs.report_to_kosli }}
+      report_pr_attestations: ${{ steps.prep.outputs.report_pr_attestations }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -57,6 +58,12 @@ jobs:
             echo "report_to_kosli=false" >> $GITHUB_OUTPUT
           fi
 
+          if [ "${{ github.event_name }}" == "push" ] && [ "${GITHUB_REF}" == "refs/heads/main" ]; then
+            echo "report_pr_attestations=true" >> $GITHUB_OUTPUT
+          else
+            echo "report_pr_attestations=false" >> $GITHUB_OUTPUT
+          fi
+
   init-kosli:
     needs: [pre-build]
     uses: ./.github/workflows/init_kosli.yml
@@ -67,6 +74,7 @@ jobs:
       KOSLI_ORG: kosli-public
       checkout_ref: ${{ needs.pre-build.outputs.checkout_ref }}
       report_to_kosli: ${{ needs.pre-build.outputs.report_to_kosli == 'true' }}
+      report_pr_attestations: ${{ needs.pre-build.outputs.report_pr_attestations == 'true' }}
     secrets:
       kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
       pr_github_token: ${{ secrets.GITHUB_TOKEN }}
