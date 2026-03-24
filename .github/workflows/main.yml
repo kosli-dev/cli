@@ -20,7 +20,6 @@ jobs:
       trail_template_file: ${{ steps.prep.outputs.trail_template_file }}
       checkout_ref: ${{ steps.prep.outputs.checkout_ref }}
       report_to_kosli: ${{ steps.prep.outputs.report_to_kosli }}
-      report_pr_attestations: ${{ steps.prep.outputs.report_pr_attestations }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -52,16 +51,12 @@ jobs:
           echo "TRAIL_TEMPLATE_FILE=${TRAIL_TEMPLATE_FILE}" >> $GITHUB_ENV
           echo "trail_template_file=$TRAIL_TEMPLATE_FILE" >> $GITHUB_OUTPUT
 
-          if [ "${{ github.event_name }}" == "push" ] && { [ "${GITHUB_REF}" == "refs/heads/main" ] || [[ "${GITHUB_REF}" == refs/tags/* ]]; }; then
-            echo "report_to_kosli=true" >> $GITHUB_OUTPUT
-          else
-            echo "report_to_kosli=false" >> $GITHUB_OUTPUT
-          fi
-
           if [ "${{ github.event_name }}" == "push" ] && [ "${GITHUB_REF}" == "refs/heads/main" ]; then
-            echo "report_pr_attestations=true" >> $GITHUB_OUTPUT
+            echo "report_to_kosli=all" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "push" ] && [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "report_to_kosli=release" >> $GITHUB_OUTPUT
           else
-            echo "report_pr_attestations=false" >> $GITHUB_OUTPUT
+            echo "report_to_kosli=none" >> $GITHUB_OUTPUT
           fi
 
   init-kosli:
@@ -73,8 +68,7 @@ jobs:
       FLOW_TEMPLATE_FILE: ${{ needs.pre-build.outputs.trail_template_file }}
       KOSLI_ORG: kosli-public
       checkout_ref: ${{ needs.pre-build.outputs.checkout_ref }}
-      report_to_kosli: ${{ needs.pre-build.outputs.report_to_kosli == 'true' }}
-      report_pr_attestations: ${{ needs.pre-build.outputs.report_pr_attestations == 'true' }}
+      report_to_kosli: ${{ needs.pre-build.outputs.report_to_kosli }}
     secrets:
       kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
       pr_github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -89,7 +83,7 @@ jobs:
       TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
       KOSLI_ORG: kosli-public
       checkout_ref: ${{ needs.pre-build.outputs.checkout_ref }}
-      report_results: ${{ needs.pre-build.outputs.report_to_kosli == 'true' }}
+      report_to_kosli: ${{ needs.pre-build.outputs.report_to_kosli }}
     secrets:
       github_access_token: ${{ secrets.KOSLI_GITHUB_TOKEN }}
       gitlab_access_token: ${{ secrets.KOSLI_GITLAB_TOKEN }}
@@ -115,7 +109,7 @@ jobs:
       trail_name: ${{ needs.pre-build.outputs.trail_name }}
       kosli_org: kosli-public
       checkout_ref: ${{ needs.pre-build.outputs.checkout_ref }}
-      report_to_kosli: ${{ needs.pre-build.outputs.report_to_kosli == 'true' }}
+      report_to_kosli: ${{ needs.pre-build.outputs.report_to_kosli }}
     secrets:
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
       slack_channel: ci-failures

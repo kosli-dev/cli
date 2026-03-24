@@ -39,7 +39,7 @@ jobs:
       TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
       FLOW_TEMPLATE_FILE: ${{ needs.pre-build.outputs.trail_template_file }}
       KOSLI_ORG: kosli-public
-      report_to_kosli: true
+      report_to_kosli: release
     secrets:
       kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
       pr_github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -68,7 +68,7 @@ jobs:
       FLOW_NAME: cli-release
       TRAIL_NAME: ${{ needs.pre-build.outputs.trail_name }}
       KOSLI_ORG: kosli-public
-      report_results: true
+      report_to_kosli: release
     secrets:
       github_access_token: ${{ secrets.KOSLI_GITHUB_TOKEN }}
       gitlab_access_token: ${{ secrets.KOSLI_GITLAB_TOKEN }}
@@ -93,7 +93,7 @@ jobs:
       flow_name: cli-release
       trail_name: ${{ needs.pre-build.outputs.trail_name }}
       kosli_org: kosli-public
-      report_to_kosli: true
+      report_to_kosli: release
     secrets:
       slack_webhook: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
       slack_channel: ci-failures
