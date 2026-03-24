@@ -173,7 +173,6 @@ jobs:
            --org ${{ inputs.KOSLI_ORG }}
 
     - name: Upload coverage reports to Codecov
-      if: ${{ inputs.report_to_kosli != 'none' }}
       uses: codecov/codecov-action@v4
 
   snyk-code-test:
