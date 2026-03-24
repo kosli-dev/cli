@@ -26,10 +26,10 @@ on:
         required: false
         type: boolean
         default: true
-      report_results:
+      report_to_kosli:
         required: false
-        type: boolean
-        default: true
+        type: string
+        default: 'none'
       checkout_ref:
         required: false
         type: string
@@ -96,7 +96,7 @@ jobs:
         args: --timeout=5m -v
 
     - name: Report lint to Kosli
-      if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) &&  (success() || failure()) && inputs.report_results }}
+      if:  ${{ (success() || failure()) && inputs.report_to_kosli != 'none' }}
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_reporting_api_token }}
       run: kosli attest generic
@@ -162,7 +162,7 @@ jobs:
         make test_integration_full
 
     - name: Report test to Kosli
-      if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) && (success() || failure()) && inputs.report_results }}
+      if:  ${{ (success() || failure()) && inputs.report_to_kosli != 'none' }}
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_reporting_api_token }}
       run: kosli attest junit
@@ -173,7 +173,7 @@ jobs:
            --org ${{ inputs.KOSLI_ORG }}
 
     - name: Upload coverage reports to Codecov
-      if: ${{ inputs.report_results }}
+      if: ${{ inputs.report_to_kosli != 'none' }}
       uses: codecov/codecov-action@v4
 
   snyk-code-test:
@@ -205,7 +205,7 @@ jobs:
           snyk code test --sarif --policy-path=.snyk  --sarif-file-output=snyk-code.json --prune-repeated-subdependencies
 
     - name: Report Snyk Code to Kosli
-      if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) &&  (success() || failure()) && inputs.report_results }}
+      if:  ${{ (success() || failure()) && inputs.report_to_kosli != 'none' }}
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_reporting_api_token }}
       run: kosli attest snyk
@@ -244,7 +244,7 @@ jobs:
           snyk test --sarif --policy-path=.snyk  --sarif-file-output=snyk-dependency.json --prune-repeated-subdependencies
 
     - name: Report Snyk Test to Kosli
-      if:  ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) &&  (success() || failure()) && inputs.report_results }}
+      if:  ${{ (success() || failure()) && inputs.report_to_kosli != 'none' }}
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_reporting_api_token }}
       run: kosli attest snyk

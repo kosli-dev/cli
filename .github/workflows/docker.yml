@@ -25,6 +25,10 @@ on:
         required: false
         type: string
         default: ''
+      report_to_kosli:
+        required: false
+        type: string
+        default: 'none'
     secrets:
       slack_channel:
         required: true
@@ -134,7 +138,7 @@ jobs:
 
 
     - name: Report Docker image to Kosli
-      if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') }}
+      if: ${{ inputs.report_to_kosli != 'none' }}
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
       run:
@@ -149,7 +153,7 @@ jobs:
 
 
     - name: Report SBOM to Kosli
-      if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') }}
+      if: ${{ inputs.report_to_kosli != 'none' }}
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
       run:
@@ -174,7 +178,7 @@ jobs:
 
 
     - name: Report Snyk Docker scan results attestation to Kosli
-      if:  ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') && (success() || failure()) }}
+      if:  ${{ inputs.report_to_kosli != 'none' && (success() || failure()) }}
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
       run:
@@ -198,7 +202,7 @@ jobs:
           list environments
 
     - name: Report Docker smoke test attestation to Kosli
-      if:  ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') && (success() || failure()) }}
+      if:  ${{ inputs.report_to_kosli != 'none' && (success() || failure()) }}
       env:
         KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
         SMOKE_TEST_OUTCOME: ${{ steps.smoke-test.outcome}}
