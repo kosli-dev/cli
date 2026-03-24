@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -31,35 +32,42 @@ type cmdTestCase struct {
 	goldenFile       string
 	goldenRegex      string
 	goldenJson       []jsonCheck // Use like this for array {"[0].compliant", false}
+	goldenStdout     string      // expected stdout only (exact match, ignored when empty)
+	goldenStderr     string      // expected stderr only (exact match, ignored when empty)
 	wantError        bool
 	additionalConfig interface{}
 }
 
-// executeCommandStdinC executes a command as a user would and return the output
-// this creates a new kosli command that is run, but it cannot be used in other tests
-// because newRootCmd overwrites the global options
-func executeCommandC(cmd string) (*cobra.Command, string, error) {
+// executeCommandC executes a command as a user would and returns the output
+// split into combined, stdout-only, and stderr-only streams.
+// This creates a new kosli command that is run, but it cannot be used in other tests
+// because newRootCmd overwrites the global options.
+func executeCommandC(cmd string) (*cobra.Command, string, string, string, error) {
 	args, err := shellwords.Parse(cmd)
 	if err != nil {
-		return nil, "", err
+		return nil, "", "", "", err
 	}
 
-	buf := new(bytes.Buffer)
+	combinedBuf := new(bytes.Buffer)
+	outBuf := new(bytes.Buffer)
+	errBuf := new(bytes.Buffer)
 
-	root, err := newRootCmd(buf, buf, args)
+	outWriter := io.MultiWriter(outBuf, combinedBuf)
+	errWriter := io.MultiWriter(errBuf, combinedBuf)
+
+	root, err := newRootCmd(outWriter, errWriter, args)
 	if err != nil {
-		return nil, "", err
+		return nil, "", "", "", err
 	}
 
 	root.SilenceErrors = false
-	root.SetOut(buf)
-	root.SetErr(buf)
+	root.SetOut(outWriter)
+	root.SetErr(errWriter)
 	root.SetArgs(args)
 
 	c, err := root.ExecuteC()
-	output := buf.String()
 
-	return c, output, err
+	return c, combinedBuf.String(), outBuf.String(), errBuf.String(), err
 }
 
 // runTestCmd runs a table of cmd test cases
@@ -76,23 +84,33 @@ func runTestCmd(t *testing.T, tests []cmdTestCase) {
 				t.Error("golden and goldenPath cannot be set together")
 			}
 			t.Logf("running cmd: %s", tt.cmd)
-			_, out, err := executeCommandC(tt.cmd)
+			_, combined, stdout, stderr, err := executeCommandC(tt.cmd)
 			if (err != nil) != tt.wantError {
 				t.Errorf("error expectation not matched\n\n WANT error is: %t\n\n but GOT: '%v'", tt.wantError, err)
 			}
 			if tt.golden != "" {
-				if !bytes.Equal([]byte(tt.golden), []byte(out)) {
-					t.Errorf("does not match golden\n\nWANT:\n'%s'\n\nGOT:\n'%s'\n", tt.golden, out)
+				if !bytes.Equal([]byte(tt.golden), []byte(combined)) {
+					t.Errorf("does not match golden\n\nWANT:\n'%s'\n\nGOT:\n'%s'\n", tt.golden, combined)
 				}
 			} else if tt.goldenFile != "" {
-				if err := compareAgainstFile([]byte(out), goldenPath(tt.goldenFile)); err != nil {
+				if err := compareAgainstFile([]byte(combined), goldenPath(tt.goldenFile)); err != nil {
 					t.Error(err)
 				}
 			} else if tt.goldenRegex != "" {
-				require.Regexp(t, tt.goldenRegex, out)
+				require.Regexp(t, tt.goldenRegex, combined)
 			} else if len(tt.goldenJson) > 0 {
 				for _, check := range tt.goldenJson {
-					goldenJsonContains(t, out, check.Path, check.Want)
+					goldenJsonContains(t, combined, check.Path, check.Want)
+				}
+			}
+			if tt.goldenStdout != "" {
+				if !bytes.Equal([]byte(tt.goldenStdout), []byte(stdout)) {
+					t.Errorf("stdout does not match goldenStdout\n\nWANT:\n'%s'\n\nGOT:\n'%s'\n", tt.goldenStdout, stdout)
+				}
+			}
+			if tt.goldenStderr != "" {
+				if !bytes.Equal([]byte(tt.goldenStderr), []byte(stderr)) {
+					t.Errorf("stderr does not match goldenStderr\n\nWANT:\n'%s'\n\nGOT:\n'%s'\n", tt.goldenStderr, stderr)
 				}
 			}
 		})
