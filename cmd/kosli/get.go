@@ -19,7 +19,6 @@ func newGetCmd(out io.Writer) *cobra.Command {
 	cmd.AddCommand(
 		newGetApprovalCmd(out),
 		newGetArtifactCmd(out),
-		newGetDeploymentCmd(out),
 		newGetEnvironmentCmd(out),
 		newGetFlowCmd(out),
 		newGetSnapshotCmd(out),
