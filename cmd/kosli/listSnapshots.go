@@ -186,13 +186,13 @@ func printEnvironmentEventsLogAsTable(raw string, out io.Writer, page int) error
 
 		row := fmt.Sprintf("#%d\tArtifact: %s\t%s", snapshotIndex, artifactName, flow)
 		rows = append(rows, row)
-		row = fmt.Sprintf("\tFingerprint: %s\t", fingerprint)
+		row = fmt.Sprintf("\tFingerprint: %s\t\t", fingerprint)
 		rows = append(rows, row)
-		row = fmt.Sprintf("\tDescription: %s\t", description)
+		row = fmt.Sprintf("\tDescription: %s\t\t", description)
 		rows = append(rows, row)
-		row = fmt.Sprintf("\tReported at: %s\t", reportedAt)
+		row = fmt.Sprintf("\tReported at: %s\t\t", reportedAt)
 		rows = append(rows, row)
-		rows = append(rows, "\t\t") // These tabs are required for alignment
+		rows = append(rows, "\t\t\t") // These tabs are required for alignment
 	}
 	tabFormattedPrint(out, header, rows)
 
