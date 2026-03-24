@@ -54,7 +54,7 @@ jobs:
 
         - name: Attest Build Provenance
           id: artifact-gh-attest
-          uses: actions/attest-build-provenance@v1
+          uses: actions/attest-build-provenance@v4
           with:
             subject-name: ${{matrix.artifact.template_name}}
             subject-digest: sha256:${{ env.FINGERPRINT }}
