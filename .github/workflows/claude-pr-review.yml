@@ -1,0 +1,116 @@
+# Automated PR review using Claude (anthropics/claude-code-action).
+# Requires repository secret: ANTHROPIC_API_KEY
+#
+# - PRs from branches containing dependabot/:
+#   Reviews dependency changelogs and usage in code for breaking changes and upgrade risks.
+# - All other PRs:
+#   General code review (quality, edge cases, bugs, readability, maintainability, tests).
+
+name: Claude PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: claude-pr-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review-dependency-updates:
+    if: >-
+      contains(github.head_ref, 'dependabot/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Claude review (dependency updates)
+        uses: anthropics/claude-code-action@v1
+
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          track_progress: true
+          use_sticky_comment: true
+          allowed_bots: ci-signed-commit-bot
+          claude_args: |
+            --max-turns 30
+            --model claude-opus-4-6
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            This PR updates dependencies. Please:
+
+            1. Identify which dependencies changed.
+            2. For each changed dependency, consider changelogs, release notes, and semver: look for breaking changes, deprecations, and behavior changes that could affect this codebase.
+            3. Search the repo for how each upgraded dependency is used (imports, config, APIs). Flag any usage that might break or behave differently after the upgrade.
+            4. Call out specific risks (e.g. API changes, removed features, new defaults) and suggest follow-up checks or tests if needed.
+            5. If the scope is large, prioritize the most widely used or critical dependencies.
+
+            Note: The PR branch is already checked out in the current working directory.
+            Focus on upgrade safety and actionable concerns; keep the review concise and scoped to this PR.
+
+            Use `gh pr comment` for top-level feedback.
+            Use `mcp__github_inline_comment__create_inline_comment` to highlight specific code issues.
+            Only post GitHub comments - don't submit review text as messages.
+
+  review-general:
+    if: >-
+      !contains(github.head_ref, 'dependabot/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Claude review (general)
+        uses: anthropics/claude-code-action@v1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          track_progress: true
+          use_sticky_comment: true
+          allowed_bots: kosli-ai-agent
+          claude_args: |
+            --max-turns 30
+            --model claude-opus-4-6
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Review this PR for:
+
+            1. **Code quality** – clarity, consistency with the rest of the codebase, and adherence to existing patterns.
+            2. **Edge and corner cases** – missing null/empty checks, boundary conditions, error paths, and invalid inputs.
+            3. **Possible bugs** – logic errors, race conditions, misuse of APIs, and incorrect assumptions.
+            4. **Readability and maintainability** – naming, structure, comments where needed, and ease of future changes.
+            5. **Testability and testing** – whether new/changed behavior is testable and whether tests are present and sufficient; suggest extra tests or coverage gaps where relevant.
+            6. **Security implications** – potential security vulnerabilities, data exposure, and other security risks.
+            7. **Performance considerations** – potential performance bottlenecks, scalability issues, and other performance risks.
+
+            Note: The PR branch is already checked out in the current working directory.
+            Be concise and actionable. Prefer inline suggestions where possible; add a short summary at the end.
+
+            Use `gh pr comment` for top-level feedback.
+            Use `mcp__github_inline_comment__create_inline_comment` to highlight specific code issues.
+            Only post GitHub comments - don't submit review text as messages.
