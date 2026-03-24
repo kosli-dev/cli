@@ -131,7 +131,7 @@ jobs:
           ${{ vars.KOSLI_CLI_VERSION }}
 
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
+      uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: arn:aws:iam::${{ inputs.AWS_ACCOUNT_ID }}:role/cli
         aws-region: ${{ inputs.AWS_REGION }}
