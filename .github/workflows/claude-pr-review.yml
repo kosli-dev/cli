@@ -1,10 +1,20 @@
 # Automated PR review using Claude (anthropics/claude-code-action).
 # Requires repository secret: ANTHROPIC_API_KEY
 #
-# - PRs from branches containing dependabot/:
-#   Reviews dependency changelogs and usage in code for breaking changes and upgrade risks.
-# - All other PRs:
-#   General code review (quality, edge cases, bugs, readability, maintainability, tests).
+# Two-pass review architecture:
+#
+#   Pass 1 (pull_request trigger):
+#     Fast code review — fires immediately when a PR is opened or updated.
+#     Claude reviews logic, security, design, testing, and readability.
+#     No static analysis — that's the pipeline's job.
+#
+#   Pass 2 (workflow_run trigger):
+#     CI-informed follow-up — fires after the Main pipeline completes.
+#     If the pipeline FAILED, Claude reads the failure logs, correlates
+#     them with the PR diff, and posts a targeted follow-up comment.
+#     If the pipeline PASSED, this job is a no-op (avoids noise).
+#
+# Dependabot PRs get a specialised dependency-focused review instead.
 
 name: Claude PR Review
 
@@ -12,13 +22,22 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+  workflow_run:
+    workflows: ["Main"]
+    types: [completed]
+
 concurrency:
-  group: claude-pr-review-${{ github.event.pull_request.number }}
+  group: claude-pr-review-${{ github.event.pull_request.number || github.event.workflow_run.id }}
   cancel-in-progress: true
 
 jobs:
+
+  # ─── Pass 1: Fast code review (on PR open/sync) ──────────────────────
+
   review-dependency-updates:
-    if: github.actor == 'dependabot[bot]'
+    if: >-
+      github.event_name == 'pull_request'
+      && github.actor == 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -33,7 +52,6 @@ jobs:
 
       - name: Claude review (dependency updates)
         uses: anthropics/claude-code-action@v1
-
         env:
           GH_TOKEN: ${{ github.token }}
         with:
@@ -65,8 +83,9 @@ jobs:
             Only post GitHub comments - don't submit review text as messages.
 
   review-general:
-    # Skip for Dependabot PRs
-    if: github.actor != 'dependabot[bot]'
+    if: >-
+      github.event_name == 'pull_request'
+      && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -78,12 +97,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: ".go-version"
-          check-latest: true
 
       - name: Claude review (general)
         uses: anthropics/claude-code-action@v1
@@ -97,7 +110,7 @@ jobs:
           claude_args: |
             --max-turns 30
             --model claude-opus-4-6
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(go build:*),Bash(go vet:*),Bash(go mod tidy:*),Bash(git diff:*),Bash(golangci-lint:*)"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(git diff:*)"
 
           prompt: |
             REPO: ${{ github.repository }}
@@ -106,16 +119,7 @@ jobs:
             Read CLAUDE.md in the repo root for build commands, architecture details, and testing patterns.
             Use this context to assess whether the PR follows established conventions.
 
-            ## Phase 1: Static Analysis (run these BEFORE reading code)
-
-            Run the following checks and note any failures:
-            1. `go build ./...` — verify the code compiles
-            2. `go vet ./...` — catch common Go mistakes
-            3. `go mod tidy && git diff --exit-code go.mod go.sum` — check for missing or unused dependencies
-
-            Include any failures from these checks in your review as high-priority issues.
-
-            ## Phase 2: Code Review
+            ## Code Review
 
             Review this PR for:
 
@@ -127,14 +131,111 @@ jobs:
             6. **Security implications** – potential security vulnerabilities, data exposure, and other security risks.
             7. **Performance considerations** – potential performance bottlenecks, scalability issues, and other performance risks.
 
-            ## Phase 3: Acknowledge Good Work
+            ## Acknowledge Good Work
 
             Briefly note any well-designed patterns, good testing practices, or thoughtful improvements in the PR.
             A good review balances constructive criticism with recognition of quality work.
 
             Note: The PR branch is already checked out in the current working directory.
+            Do NOT run static analysis tools (go build, go vet, golangci-lint) — the CI pipeline handles these.
             Be concise and actionable. Prefer inline suggestions where possible; add a short summary at the end.
 
             Use `gh pr comment` for top-level feedback.
             Use `mcp__github_inline_comment__create_inline_comment` to highlight specific code issues.
+            Only post GitHub comments - don't submit review text as messages.
+
+  # ─── Pass 2: CI-informed follow-up (after Main pipeline completes) ───
+
+  resolve-pr:
+    # Only run on workflow_run events where the pipeline failed
+    if: >-
+      github.event_name == 'workflow_run'
+      && github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    outputs:
+      pr_number: ${{ steps.find-pr.outputs.pr_number }}
+      has_pr: ${{ steps.find-pr.outputs.has_pr }}
+      run_id: ${{ github.event.workflow_run.id }}
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Find PR for this workflow run
+        id: find-pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BRANCH="${{ github.event.workflow_run.head_branch }}"
+          echo "Looking for open PR with head branch: $BRANCH"
+
+          PR_NUMBER=$(gh pr list \
+            --repo ${{ github.repository }} \
+            --head "$BRANCH" \
+            --state open \
+            --json number \
+            --jq '.[0].number // empty')
+
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No open PR found for branch $BRANCH — skipping."
+            echo "has_pr=false" >> $GITHUB_OUTPUT
+            echo "pr_number=0" >> $GITHUB_OUTPUT
+          else
+            echo "Found PR #$PR_NUMBER"
+            echo "has_pr=true" >> $GITHUB_OUTPUT
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          fi
+
+  review-ci-failures:
+    needs: resolve-pr
+    if: needs.resolve-pr.outputs.has_pr == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+      actions: read
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Claude review (CI failure analysis)
+        uses: anthropics/claude-code-action@v1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          track_progress: false
+          use_sticky_comment: false
+          allowed_bots: 'kosli-ai-agent'
+          claude_args: |
+            --max-turns 15
+            --model claude-sonnet-4-6
+            --allowedTools "Bash(gh pr comment:*),Bash(gh pr checks:*),Bash(gh pr diff:*),Bash(gh run view:*),Bash(gh run list:*),Bash(git diff:*),Bash(git log:*)"
+
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ needs.resolve-pr.outputs.pr_number }}
+            FAILED RUN ID: ${{ needs.resolve-pr.outputs.run_id }}
+
+            The CI pipeline (Main workflow) has **failed** for this PR.
+            Your job is to analyse the failure and post a helpful follow-up comment.
+
+            ## Steps
+
+            1. Run `gh pr checks ${{ needs.resolve-pr.outputs.pr_number }} --repo ${{ github.repository }}` to see which checks failed.
+            2. For each failed check, run `gh run view ${{ needs.resolve-pr.outputs.run_id }} --log-failed` to get the failure logs.
+            3. Run `gh pr diff ${{ needs.resolve-pr.outputs.pr_number }}` to see what changed in the PR.
+            4. Correlate the failures with the PR changes:
+               - Is the failure caused by something the PR introduced?
+               - Or is it a pre-existing/flaky issue unrelated to this PR?
+            5. Post a single comment on the PR using `gh pr comment` with:
+               - Which CI jobs failed and why (brief, with the key error message)
+               - Whether the failure is likely caused by this PR's changes
+               - A concrete suggestion for how to fix it, if applicable
+
+            Keep it short and actionable — this is a follow-up to an existing review, not a full review.
+            Do NOT duplicate feedback that was already given in the initial code review.
             Only post GitHub comments - don't submit review text as messages.
