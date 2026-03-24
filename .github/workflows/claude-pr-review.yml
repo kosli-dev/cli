@@ -80,6 +80,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ".go-version"
+          check-latest: true
+
       - name: Claude review (general)
         uses: anthropics/claude-code-action@v1
         env:
@@ -92,11 +98,25 @@ jobs:
           claude_args: |
             --max-turns 30
             --model claude-opus-4-6
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(go build:*),Bash(go vet:*),Bash(go mod tidy:*),Bash(git diff:*),Bash(golangci-lint:*)"
 
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Read CLAUDE.md in the repo root for build commands, architecture details, and testing patterns.
+            Use this context to assess whether the PR follows established conventions.
+
+            ## Phase 1: Static Analysis (run these BEFORE reading code)
+
+            Run the following checks and note any failures:
+            1. `go build ./...` — verify the code compiles
+            2. `go vet ./...` — catch common Go mistakes
+            3. `go mod tidy && git diff --exit-code go.mod go.sum` — check for missing or unused dependencies
+
+            Include any failures from these checks in your review as high-priority issues.
+
+            ## Phase 2: Code Review
 
             Review this PR for:
 
@@ -107,6 +127,11 @@ jobs:
             5. **Testability and testing** – whether new/changed behavior is testable and whether tests are present and sufficient; suggest extra tests or coverage gaps where relevant.
             6. **Security implications** – potential security vulnerabilities, data exposure, and other security risks.
             7. **Performance considerations** – potential performance bottlenecks, scalability issues, and other performance risks.
+
+            ## Phase 3: Acknowledge Good Work
+
+            Briefly note any well-designed patterns, good testing practices, or thoughtful improvements in the PR.
+            A good review balances constructive criticism with recognition of quality work.
 
             Note: The PR branch is already checked out in the current working directory.
             Be concise and actionable. Prefer inline suggestions where possible; add a short summary at the end.
