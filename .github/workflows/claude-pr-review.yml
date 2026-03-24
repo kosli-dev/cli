@@ -18,8 +18,8 @@ concurrency:
 
 jobs:
   review-dependency-updates:
-    if: >-
-      contains(github.head_ref, 'dependabot/')
+    # Skip for Dependabot PRs
+    #if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -41,7 +41,7 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true
           use_sticky_comment: true
-          allowed_bots: ci-signed-commit-bot
+          allowed_bots: 'ci-signed-commit-bot, dependabot[bot]'
           claude_args: |
             --max-turns 30
             --model claude-opus-4-6
@@ -66,8 +66,8 @@ jobs:
             Only post GitHub comments - don't submit review text as messages.
 
   review-general:
-    if: >-
-      !contains(github.head_ref, 'dependabot/')
+    # Skip for Dependabot PRs
+    #if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -94,7 +94,7 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true
           use_sticky_comment: true
-          allowed_bots: kosli-ai-agent
+          allowed_bots: 'kosli-ai-agent, dependabot[bot]'
           claude_args: |
             --max-turns 30
             --model claude-opus-4-6
