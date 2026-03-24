@@ -51,7 +51,7 @@ jobs:
           echo "TRAIL_TEMPLATE_FILE=${TRAIL_TEMPLATE_FILE}" >> $GITHUB_ENV
           echo "trail_template_file=$TRAIL_TEMPLATE_FILE" >> $GITHUB_OUTPUT
 
-          if [ "${GITHUB_REF}" == "refs/heads/main" ] || [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+          if [ "${{ github.event_name }}" == "push" ] && { [ "${GITHUB_REF}" == "refs/heads/main" ] || [[ "${GITHUB_REF}" == refs/tags/* ]]; }; then
             echo "report_to_kosli=true" >> $GITHUB_OUTPUT
           else
             echo "report_to_kosli=false" >> $GITHUB_OUTPUT
