@@ -171,7 +171,7 @@ func printEnvironmentEventsLogAsTable(raw string, out io.Writer, page int) error
 		logger.Info(msg + ".")
 		return nil
 	}
-	header := []string{"SNAPSHOT", "EVENT", "FLOW", "DEPLOYMENTS"}
+	header := []string{"SNAPSHOT", "EVENT", "FLOW"}
 	rows := []string{}
 	for _, event := range events {
 		snapshotIndex := int(event["snapshot_index"].(float64))
@@ -183,21 +183,16 @@ func printEnvironmentEventsLogAsTable(raw string, out io.Writer, page int) error
 			return err
 		}
 		flow := event["pipeline"].(string)
-		deploymentsList := event["deployments"].([]interface{})
-		deployments := ""
-		for _, deployment := range deploymentsList {
-			deployments += fmt.Sprintf("#%d ", int64(deployment.(float64)))
-		}
 
-		row := fmt.Sprintf("#%d\tArtifact: %s\t%s\t%s", snapshotIndex, artifactName, flow, deployments)
+		row := fmt.Sprintf("#%d\tArtifact: %s\t%s", snapshotIndex, artifactName, flow)
 		rows = append(rows, row)
-		row = fmt.Sprintf("\tFingerprint: %s\t\t", fingerprint)
+		row = fmt.Sprintf("\tFingerprint: %s\t", fingerprint)
 		rows = append(rows, row)
-		row = fmt.Sprintf("\tDescription: %s\t\t", description)
+		row = fmt.Sprintf("\tDescription: %s\t", description)
 		rows = append(rows, row)
-		row = fmt.Sprintf("\tReported at: %s\t\t", reportedAt)
+		row = fmt.Sprintf("\tReported at: %s\t", reportedAt)
 		rows = append(rows, row)
-		rows = append(rows, "\t\t\t") // These tabs are required for alignment
+		rows = append(rows, "\t\t") // These tabs are required for alignment
 	}
 	tabFormattedPrint(out, header, rows)
 

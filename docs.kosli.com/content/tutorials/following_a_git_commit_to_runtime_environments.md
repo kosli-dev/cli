@@ -137,9 +137,7 @@ Let's look at this output in detail:
 * **History**:
    * **CI pipeline events**
       * The artifact was **created** on the 22nd August at 11:35:00 CEST.
-      * The artifact has `branch-coverage` **evidence**. 
-      * The artifact was **deployed** to [aws-beta](https://app.kosli.com/cyber-dojo/flows/runner/deployments/18) on 22nd  August 11:37:17 CEST, and to [aws-prod](https://app.kosli.com/cyber-dojo/flows/runner/deployments/19)
-     a minute later.
+      * The artifact has `branch-coverage` **evidence**.
    * **Runtime environment events**
       * The artifact was reported **running** in both environments.
       * The artifact's number of running instances **scaled down**.

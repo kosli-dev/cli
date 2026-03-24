@@ -43,8 +43,8 @@ kosli log env aws-prod
 At the time this tutorial was written the output of this command
 displayed the first page of 177 snapshots. 
 You will see the first page of considerably more than 177 snapshots because 
-`aws-prod` has moved on since this incident (it has been resolved with new 
-commits which have created new deployments). 
+`aws-prod` has moved on since this incident (it has been resolved with new
+commits).
 To limit the output you can set the interval for the command:
 
 ```shell {.command}
@@ -54,15 +54,15 @@ kosli log env aws-prod --interval 176..177
 The output should be:
 
 ```plaintext {.light-console}
-SNAPSHOT  EVENT                                                                          FLOW      DEPLOYMENTS
-#177      Artifact: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/creator:31dee35      creator   #87 
-          Fingerprint: 5d1c926530213dadd5c9fcbf59c8822da56e32a04b0f9c774d7cdde3cf6ba66d             
-          Description: 1 instance stopped running (from 1 to 0).                               
-          Reported at: Tue, 06 Sep 2022 16:53:28 CEST                                          
-                                                                                               
-#176      Artifact: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/creator:b7a5908      creator   #89 
-          Fingerprint: 860ad172ace5aee03e6a1e3492a88b3315ecac2a899d4f159f43ca7314290d5a             
-          Description: 1 instance started running (from 0 to 1).                               
+SNAPSHOT  EVENT                                                                          FLOW
+#177      Artifact: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/creator:31dee35      creator
+          Fingerprint: 5d1c926530213dadd5c9fcbf59c8822da56e32a04b0f9c774d7cdde3cf6ba66d
+          Description: 1 instance stopped running (from 1 to 0).
+          Reported at: Tue, 06 Sep 2022 16:53:28 CEST
+
+#176      Artifact: 274425519734.dkr.ecr.eu-central-1.amazonaws.com/creator:b7a5908      creator
+          Fingerprint: 860ad172ace5aee03e6a1e3492a88b3315ecac2a899d4f159f43ca7314290d5a
+          Description: 1 instance started running (from 0 to 1).
           Reported at: Tue, 06 Sep 2022 16:52:28 CEST
 ```
 
@@ -92,8 +92,6 @@ Build URL:   https://github.com/cyber-dojo/creator/actions/runs/3001102984
 State:       COMPLIANT
 History:  
     Artifact created                               Tue, 06 Sep 2022 16:48:07 CEST
-    Deployment #88 to aws-beta environment         Tue, 06 Sep 2022 16:49:59 CEST
-    Deployment #89 to aws-prod environment         Tue, 06 Sep 2022 16:51:12 CEST
     Started running in aws-beta#196 environment    Tue, 06 Sep 2022 16:51:42 CEST
     Started running in aws-prod#176 environment    Tue, 06 Sep 2022 16:52:28 CEST
 ```
