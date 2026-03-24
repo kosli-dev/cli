@@ -18,8 +18,7 @@ concurrency:
 
 jobs:
   review-dependency-updates:
-    # Skip for Dependabot PRs
-    #if: github.actor != 'dependabot[bot]'
+    if: github.actor == 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -67,7 +66,7 @@ jobs:
 
   review-general:
     # Skip for Dependabot PRs
-    #if: github.actor != 'dependabot[bot]'
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -94,7 +93,7 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true
           use_sticky_comment: true
-          allowed_bots: 'kosli-ai-agent, dependabot[bot]'
+          allowed_bots: 'kosli-ai-agent'
           claude_args: |
             --max-turns 30
             --model claude-opus-4-6
