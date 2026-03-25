@@ -1,6 +1,4 @@
-.PHONY: help build clean clean-cache deps fmt lint vet docker
-.DEFAULT_GOAL := help
-.DELETE_ON_ERROR:
+.PHONY: help build clean clean-cache deps fmt lint vet docker ldflags ensure_golangci-lint check_dirty add_test_tag build_release ensure_network ensure_gotestsum test_setup test_integration test_integration_full test_integration_single test_docs cli-docs licenses upgrade-deps hugo hugo-local helm-lint helm-docs release check-links suggest-version-ai
 .DEFAULT: help
 .DEFAULT_GOAL := help
 .DELETE_ON_ERROR:
