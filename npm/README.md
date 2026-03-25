@@ -112,7 +112,7 @@ Packages are published to the [npm public registry](https://registry.npmjs.org).
 Each package directory contains an `.npmrc` that sets the auth token:
 
 ```text
-//registry.npmjs.org/:_authToken=${MY_LOCAL_NPM_TOKEN}
+//registry.npmjs.org/:_authToken=${NPM_TOKEN}
 ```
 
 ## Automated Publishing with npm-publish.sh
