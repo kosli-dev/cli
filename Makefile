@@ -164,7 +164,7 @@ docker: ## Build CLI Docker image
 
 cli-docs: build ## Generate docs
 	@rm -f docs.kosli.com/content/client_reference/kosli*
-	@export DOCS=true && ./kosli docs --dir docs.kosli.com/content/client_reference
+	@export DOCS=true && ./$(BIN) docs --dir docs.kosli.com/content/client_reference
 
 legacy-ref-docs:
 	@./hack/generate-old-versions-docs.sh "v2.*"
