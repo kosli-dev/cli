@@ -91,3 +91,12 @@ publishers:
       - kosli
     dir: "{{ dir .ArtifactPath }}"
     cmd: curl -F package=@{{ .ArtifactName }} https://{{ .Env.FURY_TOKEN }}@push.fury.io/kosli/
+
+release:
+  prerelease: auto
+  draft: false
+  disable: false
+
+changelog:
+  use: git # github(-native)
+  sort: asc
