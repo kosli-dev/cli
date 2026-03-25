@@ -41,12 +41,11 @@ It most likely means you misspelled a flag.
 ## "unknown command" errors
 E.g.
 ```
-kosli expect deploymenct abc.exe --artifact-type file
-Error: unknown command: deploymenct
-available subcommands are: deployment
+kosli get artefact flowName/artifactName
+Error: unknown command: artefact
 ```
 
-Note that there is a typo in deploymen**c**t.
+Note that there is a typo in **artefact** (should be **artifact**).
 This error will pop up if you're trying to use a command that is not present in the version of the kosli CLI you are using.
 
 ## zsh: no such user or named directory

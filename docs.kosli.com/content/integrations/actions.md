@@ -66,15 +66,6 @@ Custom webhook notifications empower you to implement automation workflows for "
             "html_url": "https://app.kosli.com/cyber-dojo/runner/719defb995c86ad7c406ad74258fe98b9ebd71dfa80cd786870c967cb6c1f08d",
             "api_url": "https://app.kosli.com/api/v2/artifacts/cyber-dojo/runner/fingerprint/719defb995c86ad7c406ad74258fe98b9ebd71dfa80cd786870c967cb6c1f08d",
             "build_url": "https://github.com/cyber-dojo/runner/actions/runs/5891969166",
-            "deployments": [
-                {
-                   "number": "44",
-                   "timestamp": "1692618644",
-                   "build_url": "https://github.com/cyber-dojo/runner/actions/runs/5891969166",
-                   "html_url": "https://app.kosli.com/cyber-dojo/flows/runner/deployments/44",
-                   "api_url": "https://app.kosli.com/api/v2/deployments/cyber-dojo/runner/44"
-               }
-            ],
             "approvals": [
                 {
                    "number": "42",
