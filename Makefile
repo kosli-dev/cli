@@ -1,7 +1,13 @@
+.PHONY: help
+.DEFAULT: help
+.DEFAULT_GOAL := help
+.DELETE_ON_ERROR:
+
 export CGO_ENABLED=0
 export GO111MODULE=on
 
 LDFLAGS := -w -s
+BIN	:= kosli
 
 GIT_COMMIT = $(shell git rev-parse HEAD)
 GIT_SHA    = $(shell git rev-parse --short HEAD)
@@ -35,7 +41,12 @@ LDFLAGS += -X github.com/kosli-dev/cli/internal/version.gitCommit=${GIT_COMMIT}
 LDFLAGS += -X github.com/kosli-dev/cli/internal/version.gitTreeState=${GIT_DIRTY}
 LDFLAGS += -extldflags "-static"
 
-ldflags:
+help: ## Show this help
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} \
+	  /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } \
+	  /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) }' $(MAKEFILE_LIST)
+
+ldflags: ## Print ldflags
 	@echo $(LDFLAGS)
 
 fmt: ## Reformat package sources
@@ -44,10 +55,10 @@ fmt: ## Reformat package sources
 ensure_golangci-lint:
 	@$HOMEBREW_NO_AUTO_UPDATE=1 brew upgrade golangci-lint
 
-lint: deps vet ensure_golangci-lint
+lint: deps vet ensure_golangci-lint ## Run linting
 	@golangci-lint run --timeout=5m --color always  -v ./...
 
-vet: fmt
+vet: fmt ## Run Go vet
 	@go vet ./...
 
 deps: ## Install depdendencies. Runs `go get` internally.
@@ -55,11 +66,11 @@ deps: ## Install depdendencies. Runs `go get` internally.
 	@GOFLAGS="" go mod tidy
 
 build: deps vet ## Build the binary
-	@go build -o kosli -ldflags '$(LDFLAGS)' ./cmd/kosli/
+	@go build -o $(BIN) -ldflags '$(LDFLAGS)' ./cmd/kosli/
 
 check_dirty:
 	@git diff-index --quiet HEAD --  || echo "Cannot test release with dirty git repo"
-	@git diff-index --quiet HEAD -- 
+	@git diff-index --quiet HEAD --
 
 add_test_tag:
 	@git tag -d v0.0.99 2> /dev/null || true
@@ -69,6 +80,12 @@ build_release: check_dirty add_test_tag
 	rm -rf dist/
 	goreleaser release --skip-publish --debug
 	@git tag -d v0.0.99 2> /dev/null || true
+
+clean: ## Clean build artefacts
+	rm -rf $(BIN) dist/
+
+clean-cache: ## Clean Golang mod cache
+	go clean --modcache
 
 ensure_network:
 	docker network inspect cli_net > /dev/null || docker network create --driver bridge cli_net
@@ -128,7 +145,7 @@ test_integration_single: test_setup
 	@export KOSLI_TESTS=true $(FAKE_CI_ENV) && $(GOTESTSUM) -- -p=1 ./... -run "${TARGET}"
 
 
-test_docs: deps vet ensure_network test_setup
+test_docs: deps vet ensure_network test_setup ## Test docs
 	./bin/test_docs_cmds.sh docs.kosli.com/content/use_cases/simulating_a_devops_system/_index.md
 
 logs_integration_test_server:
@@ -140,41 +157,41 @@ follow_integration_test_server:
 enter_integration_test_server:
 	@docker exec -it --workdir / cli_kosli_server bash
 
-docker:
+docker: ## Build CLI Docker image
 	@docker build -t kosli-cli .
 
-cli-docs: build
+cli-docs: build ## Generate docs
 	@rm -f docs.kosli.com/content/client_reference/kosli*
 	@export DOCS=true && ./kosli docs --dir docs.kosli.com/content/client_reference
 
 legacy-ref-docs:
-	@./hack/generate-old-versions-docs.sh "v2.*" 
+	@./hack/generate-old-versions-docs.sh "v2.*"
 
-licenses:
+licenses: ## Update licenses
 	@rm -rf licenses || true
 	@go install github.com/google/go-licenses@latest
 	@go-licenses save ./... --save_path="licenses/" || true
 	$(eval DATA := $(shell go-licenses csv ./...))
 	@echo $(DATA) | tr " " "\n" > licenses/licenses.csv
 
-upgrade-deps:
+upgrade-deps: ## Update Go dependencies
 	@go get -u ./...
 
-generate-json-metadata:
+generate-json-metadata: ## Generate docs metadata
 	echo '{"currentversion": "vlocal"}' > docs.kosli.com/assets/metadata.json
 
-hugo: cli-docs helm-docs generate-json-metadata
+hugo: cli-docs helm-docs generate-json-metadata ## Run docs locally
 	cd docs.kosli.com && hugo server --minify --buildDrafts --port=1515
 
 hugo-local: cli-docs generate-json-metadata
 	cd docs.kosli.com && hugo server --minify --buildDrafts --port=1515
 
-helm-lint:
+helm-lint: ## Link Helm chart
 	@cd charts/k8s-reporter && helm lint . \
 		--set reporterConfig.kosliOrg=placeholder \
 		--set 'reporterConfig.environments[0].name=placeholder'
 
-helm-docs: helm-lint
+helm-docs: helm-lint ## Update Helm docs
 	@cd charts/k8s-reporter &&  docker run --rm --volume "$(PWD):/helm-docs" jnorwood/helm-docs:latest --template-files README.md.gotmpl,_templates.gotmpl --output-file README.md
 	@cd charts/k8s-reporter &&  docker run --rm --volume "$(PWD):/helm-docs" jnorwood/helm-docs:latest --template-files README.md.gotmpl,_templates.gotmpl --output-file ../../docs.kosli.com/content/helm/_index.md
 
@@ -182,7 +199,7 @@ helm-docs: helm-lint
 # Writes changelog to dist/release_notes.md for use with goreleaser --release-notes.
 # Requires: jq, curl, op (1Password CLI). API key from 1Password via op.
 # Usage: make suggest-version-ai [BASE_REF=v1.2.3]
-suggest-version-ai:
+suggest-version-ai: ## Suggest next version using AI
 	@command -v jq >/dev/null 2>&1 || (echo "Install jq (e.g. brew install jq)" && exit 1)
 	@command -v curl >/dev/null 2>&1 || (echo "Install curl (e.g. brew install curl)" && exit 1)
 	@bin/suggest-version-ai.sh $(BASE_REF) -o dist/release_notes.md
@@ -190,7 +207,7 @@ suggest-version-ai:
 # Release: without tag → suggest version + changelog, then interactive edit & confirm, then tag and push.
 # With tag → escape hatch: create annotated tag (body = dist/release_notes.md if present), push. No AI, no prompt.
 # Release notes are carried in the tag message so GitHub Actions can pass them to GoReleaser.
-release:
+release: ## Cut a new release and push next tag
 	@current=$$(git branch --show-current 2>/dev/null || git rev-parse --abbrev-ref HEAD); \
 	if [ "$$current" != "main" ]; then echo "ERROR: release must be run from main branch (current: $$current)"; exit 1; fi; \
 	if [ -z "$(tag)" ]; then \
@@ -211,6 +228,6 @@ release:
 # check-links:
 # 	@docker run -v ${PWD}:/tmp:ro --rm -i --entrypoint '' ghcr.io/tcort/markdown-link-check:stable /bin/sh -c 'find /tmp/docs.kosli.com/content -name \*.md -print0 | xargs -0 -n1 markdown-link-check -q -c /tmp/link-checker-config.json'
 
-check-links: 
+check-links: ## Run html test for dead links
 	@cd docs.kosli.com && hugo --minify
 	@docker run -v ${PWD}:/test --rm wjdp/htmltest -c .htmltest.yml -l 1
