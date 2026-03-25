@@ -9,6 +9,7 @@
   "cpu": [
     "arm"
   ],
+  "bin": {"kosli": "bin/kosli"},
   "files": [
     "bin/"
   ],

@@ -18,7 +18,7 @@ docs.kosli.com/content/client_reference/kosli*
 docs.kosli.com/public/
 docs.kosli.com/.netlify
 npm/cli*/bin/*
-npm/wrapper/bin/*
+npm/*/kosli*.tgz
 *.tar.gz
 *~
 /.idea
