@@ -17,7 +17,10 @@ const platform = process.platform;
 const arch = process.arch;
 
 if (!SUPPORTED[platform] || !SUPPORTED[platform][arch]) {
-  // Not a supported platform — exit cleanly so npm install doesn't fail.
+  process.stderr.write(
+    `[kosli] Note: ${platform}/${arch} is not a supported platform.\n` +
+    `[kosli] The kosli binary will not be available on this system.\n`
+  );
   process.exit(0);
 }
 
@@ -41,14 +44,19 @@ try {
 }
 
 if (!fs.existsSync(binaryPath)) {
-  process.stderr.write(`[kosli] Warning: binary not found at ${binaryPath}\n`);
-  process.exit(0);
+  process.stderr.write(
+    `[kosli] Error: binary not found at ${binaryPath}\n` +
+    `[kosli] Try reinstalling: npm install -g @kosli/cli\n`
+  );
+  process.exit(1);
 }
 
 try {
   execFileSync(binaryPath, ["version"], { stdio: "ignore" });
 } catch (e) {
   process.stderr.write(
-    `[kosli] Warning: binary validation failed: ${e.message}\n`
+    `[kosli] Error: binary validation failed: ${e.message}\n` +
+    `[kosli] Try reinstalling: npm install -g @kosli/cli\n`
   );
+  process.exit(1);
 }
