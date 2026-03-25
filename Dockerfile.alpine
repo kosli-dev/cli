@@ -1,0 +1,24 @@
+ARG ALPINE_VERSION=3.23
+ARG KOSLI_VERSION=2.13.1
+
+FROM ghcr.io/kosli-dev/cli:v${KOSLI_VERSION} AS builder
+
+FROM alpine:${ALPINE_VERSION}
+COPY --from=builder /bin/kosli /bin
+
+RUN apk add --no-cache git curl ca-certificates \
+    && ARCH="$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')" \
+    # Create a non-root user and group to switch to
+    && addgroup -S kosli \
+    && adduser -S -G kosli -h /workspace kosli \
+    && kosli version
+
+# Kosli reads org and token from ENV. Intentionally not populating API keys here
+ENV KOSLI_ORG="" \
+    KOSLI_HOST="https://app.kosli.com"
+
+WORKDIR /workspace
+
+USER kosli
+
+#ENTRYPOINT ["/bin/kosli"]
