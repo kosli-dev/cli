@@ -110,7 +110,6 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	newestCommitFlag                = "[defaulted] The source commit sha for the newest change in the deployment. Can be any commit-ish."
 	repoRootFlag                    = "[defaulted] The directory where the source git repository is available."
 	approvalDescriptionFlag         = "[optional] The approval description."
-	deploymentDescriptionFlag       = "[optional] The deployment description."
 	jiraBaseUrlFlag                 = "The base url for the jira project, e.g. 'https://kosli.atlassian.net'"
 	jiraUsernameFlag                = "Jira username (for Jira Cloud)"
 	jiraAPITokenFlag                = "Jira API token (for Jira Cloud)"
@@ -129,7 +128,6 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	useEmptyTemplateFlag            = "Use an empty template for the flow creation without specifying a file. Cannot be used together with --template or --template-file"
 	approvalUserDataFlag            = "[optional] The path to a JSON file containing additional data you would like to attach to the approval."
 	attestationUserDataFlag         = "[optional] The path to a JSON file containing additional data you would like to attach to the attestation."
-	deploymentUserDataFlag          = "[optional] The path to a JSON file containing additional data you would like to attach to the deployment."
 	trailUserDataFlag               = "[optional] The path to a JSON file containing additional data you would like to attach to the flow trail."
 	gitCommitFlag                   = "[defaulted] The git commit from which the artifact was created. (defaulted in some CIs: https://docs.kosli.com/ci-defaults, otherwise defaults to HEAD )."
 	buildUrlFlag                    = "The url of CI pipeline that built the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
@@ -358,7 +356,6 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 		newFingerprintCmd(out),
 		newAssertCmd(out),
 		newStatusCmd(out),
-		newExpectCmd(out),
 		newSearchCmd(out),
 		newCompletionCmd(out),
 		// Hidden documentation generator command: 'kosli docs'

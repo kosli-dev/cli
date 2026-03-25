@@ -171,7 +171,7 @@ func printEnvironmentEventsLogAsTable(raw string, out io.Writer, page int) error
 		logger.Info(msg + ".")
 		return nil
 	}
-	header := []string{"SNAPSHOT", "EVENT", "FLOW", "DEPLOYMENTS"}
+	header := []string{"SNAPSHOT", "EVENT", "FLOW"}
 	rows := []string{}
 	for _, event := range events {
 		snapshotIndex := int(event["snapshot_index"].(float64))
@@ -183,13 +183,8 @@ func printEnvironmentEventsLogAsTable(raw string, out io.Writer, page int) error
 			return err
 		}
 		flow := event["pipeline"].(string)
-		deploymentsList := event["deployments"].([]interface{})
-		deployments := ""
-		for _, deployment := range deploymentsList {
-			deployments += fmt.Sprintf("#%d ", int64(deployment.(float64)))
-		}
 
-		row := fmt.Sprintf("#%d\tArtifact: %s\t%s\t%s", snapshotIndex, artifactName, flow, deployments)
+		row := fmt.Sprintf("#%d\tArtifact: %s\t%s", snapshotIndex, artifactName, flow)
 		rows = append(rows, row)
 		row = fmt.Sprintf("\tFingerprint: %s\t\t", fingerprint)
 		rows = append(rows, row)

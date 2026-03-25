@@ -470,21 +470,6 @@ func EnableBeta(t *testing.T) {
 	require.NoError(t, err, "beta should be enabled without error")
 }
 
-// ExpectDeployment reports a deployment expectation of a given artifact to the server
-func ExpectDeployment(flowName, fingerprint, envName string, t *testing.T) {
-	t.Helper()
-	o := &expectDeploymentOptions{
-		flowName: flowName,
-		payload: ExpectDeploymentPayload{
-			Fingerprint: fingerprint,
-			Environment: envName,
-			BuildUrl:    "https://example.com",
-		},
-	}
-	err := o.run([]string{})
-	require.NoError(t, err, "deployment should be expected without error")
-}
-
 // CreateEnv creates an env on the server
 func CreateEnv(org, envName, envType string, t *testing.T) {
 	t.Helper()
