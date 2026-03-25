@@ -6,7 +6,7 @@
 export CGO_ENABLED=0
 export GO111MODULE=on
 
-LDFLAGS := -w -s
+LDFLAGS	:= -w -s
 BIN	:= kosli
 
 GIT_COMMIT = $(shell git rev-parse HEAD)
