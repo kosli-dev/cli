@@ -117,7 +117,7 @@ kosli attest sonar
 
 ```
 
-##### report a SonarQube Cloud attestation about a trail using key/revision
+##### report a SonarQube Cloud attestation for a specific branch about a trail using key/revision
 
 ```shell
 kosli attest sonar 
@@ -125,18 +125,20 @@ kosli attest sonar
 	--sonar-api-token yourSonarAPIToken 
 	--sonar-project-key yourSonarProjectKey 
 	--sonar-revision yourSonarRevision 
+	--branch-name yourBranchName 
 
 ```
 
-##### report a SonarQube Server attestation about a trail using key/revision
+##### report a SonarQube Server attestation for a pull-request about a trail using key/revision
 
 ```shell
 kosli attest sonar 
 	--name yourAttestationName 
 	--sonar-api-token yourSonarAPIToken 
-	--sonar-server-url yourSonarServerURL 
+	--sonarqube-url yourSonarQubeURL 
 	--sonar-project-key yourSonarProjectKey 
 	--sonar-revision yourSonarRevision 
+	--pull-request-id yourPullRequestID 
 
 ```
 
