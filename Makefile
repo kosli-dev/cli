@@ -188,7 +188,7 @@ hugo: cli-docs helm-docs generate-json-metadata ## Run docs locally
 hugo-local: cli-docs generate-json-metadata
 	cd docs.kosli.com && hugo server --minify --buildDrafts --port=1515
 
-helm-lint: ## Link Helm chart
+helm-lint: ## Lint Helm chart
 	@cd charts/k8s-reporter && helm lint . \
 		--set reporterConfig.kosliOrg=placeholder \
 		--set 'reporterConfig.environments[0].name=placeholder'
