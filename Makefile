@@ -87,7 +87,7 @@ clean: ## Clean build artefacts
 	rm -rf $(BIN) dist/
 
 clean-cache: ## Clean Golang mod cache
-	go clean --modcache
+	go clean -modcache
 
 ensure_network:
 	docker network inspect cli_net > /dev/null || docker network create --driver bridge cli_net
