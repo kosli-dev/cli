@@ -1,4 +1,6 @@
-.PHONY: help
+.PHONY: help build clean clean-cache deps fmt lint vet docker
+.DEFAULT_GOAL := help
+.DELETE_ON_ERROR:
 .DEFAULT: help
 .DEFAULT_GOAL := help
 .DELETE_ON_ERROR:
