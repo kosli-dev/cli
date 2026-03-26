@@ -17,7 +17,7 @@ on:
           trail_name:
             required: true
             type: string
-        secrets:        
+        secrets:
             kosli_api_token:
                 required: true
 
@@ -54,7 +54,7 @@ jobs:
 
         - name: Attest Build Provenance
           id: artifact-gh-attest
-          uses: actions/attest-build-provenance@v4
+          uses: actions/attest@v4
           with:
             subject-name: ${{matrix.artifact.template_name}}
             subject-digest: sha256:${{ env.FINGERPRINT }}
@@ -63,7 +63,7 @@ jobs:
           run: |
             TRANSPARENCY_LOG_INDEX=$(jq '.verificationMaterial.tlogEntries[0].logIndex' ${{ steps.artifact-gh-attest.outputs.bundle-path }})
             echo "ARTIFACT_TLOG_INDEX=$TRANSPARENCY_LOG_INDEX" >> ${GITHUB_ENV}
-        
+
         - name: Generate SBOM for the binary
           uses: anchore/sbom-action@v0
           with:
@@ -80,16 +80,16 @@ jobs:
             format: 'cyclonedx-json'
             output-file: '${{matrix.artifact.template_name}}-sbom.cyclonedx.json'
             upload-artifact: false
-            upload-release-assets: false        
-        
+            upload-release-assets: false
+
         - name: Publish SBOM
           uses: anchore/sbom-action/publish-sbom@v0
           with:
             sbom-artifact-match: ".*\\.spdx.json$"
-        
+
         - name: Attest SBOM to Github
           id: sbom-gh-attest
-          uses: actions/attest-sbom@v4
+          uses: actions/attest@v4
           with:
             sbom-path: '${{matrix.artifact.template_name}}-sbom.spdx.json'
             subject-name: ${{matrix.artifact.template_name}}
@@ -103,11 +103,11 @@ jobs:
         - name: Report artifact to Kosli
           env:
             KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-          run: 
+          run:
             kosli attest artifact
                 ${{matrix.artifact.path}}
                 --flow ${{ inputs.flow_name }}
-                --trail ${{ inputs.trail_name }} 
+                --trail ${{ inputs.trail_name }}
                 --name ${{matrix.artifact.template_name}}
                 --fingerprint ${{ env.FINGERPRINT }}
                 --external-url sigstore=https://search.sigstore.dev/?hash=${{ env.FINGERPRINT }}
@@ -116,10 +116,10 @@ jobs:
         - name: Report spdx SBOM attestation from sigstore to Kosli
           env:
             KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-          run: 
+          run:
             kosli attest generic
               --flow ${{ inputs.flow_name }}
-              --trail ${{ inputs.trail_name }} 
+              --trail ${{ inputs.trail_name }}
               --name sbom
               --fingerprint ${{ env.FINGERPRINT }}
               --attachments  ${{matrix.artifact.template_name}}-sbom.spdx.json
@@ -140,4 +140,4 @@ jobs:
               --org ${{ inputs.kosli_org }}
 
 
-        
+
