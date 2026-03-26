@@ -25,7 +25,7 @@ npm/
 ├── cli-darwin-arm64/     # @kosli/cli-darwin-arm64
 │   ├── package.json      # declares os/cpu fields for platform filtering
 │   └── bin/kosli         # the native binary — see below
-└── cli-win32-x64/        # @kosli/cli-win32-x64
+├── cli-win32-x64/        # @kosli/cli-win32-x64
 │   ├── package.json      # declares os/cpu fields for platform filtering
 │   └── bin/kosli[.exe]   # the native binary — see below
 └── cli-win32-arm64/      # @kosli/cli-win32-arm64
