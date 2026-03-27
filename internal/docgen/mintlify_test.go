@@ -5,6 +5,32 @@ import (
 	"testing"
 )
 
+func TestMintlifyExitCodesSection(t *testing.T) {
+	f := MintlifyFormatter{}
+	codes := []ExitCodeEntry{
+		{Code: 0, Meaning: "No error."},
+		{Code: 2, Meaning: "Server unreachable."},
+	}
+	got := f.ExitCodesSection(codes)
+	if !strings.Contains(got, "## Exit Codes") {
+		t.Errorf("expected '## Exit Codes' heading, got:\n%s", got)
+	}
+	if !strings.Contains(got, "| 0 | No error. |") {
+		t.Errorf("expected exit code 0 row, got:\n%s", got)
+	}
+	if !strings.Contains(got, "| 2 | Server unreachable. |") {
+		t.Errorf("expected exit code 2 row, got:\n%s", got)
+	}
+}
+
+func TestMintlifyExitCodesSectionEmpty(t *testing.T) {
+	f := MintlifyFormatter{}
+	got := f.ExitCodesSection(nil)
+	if got != "" {
+		t.Errorf("expected empty string for nil codes, got:\n%s", got)
+	}
+}
+
 func TestMintlifyFrontMatter(t *testing.T) {
 	f := MintlifyFormatter{}
 	meta := CommandMeta{Name: "kosli attest snyk", Summary: "Report a snyk attestation"}

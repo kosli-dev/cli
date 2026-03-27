@@ -5,6 +5,7 @@ import (
 	"io"
 
 	bbUtils "github.com/kosli-dev/cli/internal/bitbucket"
+	kosliErrors "github.com/kosli-dev/cli/internal/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -86,7 +87,7 @@ func (o *assertPullRequestBitbucketOptions) run(args []string) error {
 		return err
 	}
 	if len(pullRequestsEvidence) == 0 {
-		return fmt.Errorf("assert failed: found no pull request(s) in Bitbucket for commit: %s", o.commit)
+		return kosliErrors.NewErrCompliance(fmt.Sprintf("assert failed: found no pull request(s) in Bitbucket for commit: %s", o.commit))
 	}
 	logger.Info("found [%d] pull request(s) in Bitbucket for commit: %s", len(pullRequestsEvidence), o.commit)
 	return nil

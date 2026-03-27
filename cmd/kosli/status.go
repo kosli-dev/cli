@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
+	kosliErrors "github.com/kosli-dev/cli/internal/errors"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -52,7 +53,7 @@ func (o *statusOptions) run(out io.Writer) error {
 	if err != nil {
 		logger.Debug("failed to check Kosli's readiness: %s", err.Error())
 		if o.assert {
-			return fmt.Errorf("kosli server %s is unresponsive", global.Host)
+			return kosliErrors.NewErrServer(fmt.Sprintf("kosli server %s is unresponsive", global.Host))
 		}
 		logger.Info("Kosli is Down")
 	} else {

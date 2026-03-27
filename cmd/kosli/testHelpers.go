@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	kosliErrors "github.com/kosli-dev/cli/internal/errors"
 	"github.com/kosli-dev/cli/internal/gitview"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
@@ -35,6 +36,7 @@ type cmdTestCase struct {
 	goldenStdout     string      // expected stdout only (exact match, ignored when empty)
 	goldenStderr     string      // expected stderr only (exact match, ignored when empty)
 	wantError        bool
+	wantExitCode     int // when non-zero, asserts ExitCodeFor(err) == wantExitCode
 	additionalConfig interface{}
 }
 
@@ -87,6 +89,11 @@ func runTestCmd(t *testing.T, tests []cmdTestCase) {
 			_, combined, stdout, stderr, err := executeCommandC(tt.cmd)
 			if (err != nil) != tt.wantError {
 				t.Errorf("error expectation not matched\n\n WANT error is: %t\n\n but GOT: '%v'", tt.wantError, err)
+			}
+			if tt.wantExitCode != 0 {
+				if got := kosliErrors.ExitCodeFor(err); got != tt.wantExitCode {
+					t.Errorf("exit code mismatch: want %d, got %d (error: %v)", tt.wantExitCode, got, err)
+				}
 			}
 			if tt.golden != "" {
 				if !bytes.Equal([]byte(tt.golden), []byte(combined)) {

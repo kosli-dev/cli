@@ -30,22 +30,25 @@ func (suite *AssertPRGithubCommandTestSuite) SetupTest() {
 func (suite *AssertPRGithubCommandTestSuite) TestAssertPRGithubCmd() {
 	tests := []cmdTestCase{
 		{
-			name: "assert Github PR evidence passes when commit has a PR in github",
+			name:         "assert Github PR evidence passes when commit has a PR in github",
+			wantExitCode: 0,
 			cmd: `assert pullrequest github --github-org kosli-dev --repository cli
 			--commit ` + testHelpers.GithubCommitWithPR() + suite.defaultKosliArguments,
 			golden: fmt.Sprintf("found [1] pull request(s) in Github for commit: %s\n", testHelpers.GithubCommitWithPR()),
 		},
 		{
-			wantError: true,
-			name:      "assert Github PR evidence fails when commit has no PRs in github",
-			cmd: `assert pullrequest github --github-org kosli-dev --repository cli 
+			wantError:    true,
+			wantExitCode: 1,
+			name:         "assert Github PR evidence fails when commit has no PRs in github",
+			cmd: `assert pullrequest github --github-org kosli-dev --repository cli
 			--commit 19aab7f063147614451c88969602a10afbabb43d` + suite.defaultKosliArguments,
 			golden: "Error: assert failed: found no pull request(s) in Github for commit: 19aab7f063147614451c88969602a10afbabb43d\n",
 		},
 		{
-			wantError: true,
-			name:      "assert Github PR evidence fails when commit does not exist",
-			cmd: `assert pullrequest github --github-org kosli-dev --repository cli 
+			wantError:    true,
+			wantExitCode: 1,
+			name:         "assert Github PR evidence fails when commit does not exist",
+			cmd: `assert pullrequest github --github-org kosli-dev --repository cli
 			--commit 19aab7f063147614451c88969602a10afba123ab` + suite.defaultKosliArguments,
 			golden: "Error: assert failed: found no pull request(s) in Github for commit: 19aab7f063147614451c88969602a10afba123ab\n",
 		},

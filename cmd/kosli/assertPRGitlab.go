@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 
+	kosliErrors "github.com/kosli-dev/cli/internal/errors"
 	gitlabUtils "github.com/kosli-dev/cli/internal/gitlab"
 	"github.com/spf13/cobra"
 )
@@ -63,7 +64,7 @@ func (o *assertPullRequestGitlabOptions) run(args []string) error {
 		return err
 	}
 	if len(pullRequestsEvidence) == 0 {
-		return fmt.Errorf("assert failed: found no merge request(s) in Gitlab for commit: %s", o.commit)
+		return kosliErrors.NewErrCompliance(fmt.Sprintf("assert failed: found no merge request(s) in Gitlab for commit: %s", o.commit))
 	}
 	logger.Info("found [%d] merge request(s) in Gitlab for commit: %s", len(pullRequestsEvidence), o.commit)
 	return nil

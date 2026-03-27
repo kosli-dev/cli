@@ -78,6 +78,9 @@ func genMarkdownCustom(cmd *cobra.Command, w io.Writer, formatter Formatter, met
 	flags, inherited := RenderFlagsTables(cmd)
 	buf.WriteString(formatter.FlagsSection(flags, inherited))
 
+	// Exit codes
+	buf.WriteString(formatter.ExitCodesSection(meta.ExitCodes))
+
 	// Live CI examples
 	urlSafeName := url.QueryEscape(name)
 	var ciExamples []CIExample

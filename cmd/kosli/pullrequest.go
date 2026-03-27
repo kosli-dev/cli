@@ -9,6 +9,7 @@ import (
 
 	azUtils "github.com/kosli-dev/cli/internal/azure"
 	bbUtils "github.com/kosli-dev/cli/internal/bitbucket"
+	kosliErrors "github.com/kosli-dev/cli/internal/errors"
 	ghUtils "github.com/kosli-dev/cli/internal/github"
 	gitlabUtils "github.com/kosli-dev/cli/internal/gitlab"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -85,7 +86,7 @@ func (o *attestPROptions) run(args []string) error {
 		if err != nil {
 			errString = fmt.Sprintf("%s\nError: ", err.Error())
 		}
-		err = fmt.Errorf("%sassert failed: no %s found for the given commit: %s", errString, label, o.payload.Commit.Sha1)
+		err = kosliErrors.NewErrCompliance(fmt.Sprintf("%sassert failed: no %s found for the given commit: %s", errString, label, o.payload.Commit.Sha1))
 	}
 
 	return wrapAttestationError(err)

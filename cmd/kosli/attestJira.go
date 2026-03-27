@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 
+	kosliErrors "github.com/kosli-dev/cli/internal/errors"
 	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/jira"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -332,7 +333,7 @@ func (o *attestJiraOptions) run(args []string) error {
 		if err != nil {
 			errString = fmt.Sprintf("%s\nError: ", err.Error())
 		}
-		err = fmt.Errorf("%sno Jira references are found in commit message or branch name", errString)
+		err = kosliErrors.NewErrCompliance(fmt.Sprintf("%sno Jira references are found in commit message or branch name", errString))
 	}
 
 	if issueFoundCount != len(issueIDs) && o.assert && !global.DryRun {
@@ -340,7 +341,7 @@ func (o *attestJiraOptions) run(args []string) error {
 		if err != nil {
 			errString = fmt.Sprintf("%s\nError: ", err.Error())
 		}
-		err = fmt.Errorf("%smissing Jira issues from references found in commit message or branch name%s", errString, issueLog)
+		err = kosliErrors.NewErrCompliance(fmt.Sprintf("%smissing Jira issues from references found in commit message or branch name%s", errString, issueLog))
 	}
 	return wrapAttestationError(err)
 }

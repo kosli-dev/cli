@@ -30,22 +30,25 @@ func (suite *AssertPRBitbucketCommandTestSuite) SetupTest() {
 func (suite *AssertPRBitbucketCommandTestSuite) TestAssertPRBitbucketCmd() {
 	tests := []cmdTestCase{
 		{
-			name: "assert Bitbucket PR evidence passes when commit has a PR in bitbucket",
-			cmd: `assert pullrequest bitbucket --bitbucket-workspace kosli-dev --repository cli-test 
+			name:         "assert Bitbucket PR evidence passes when commit has a PR in bitbucket",
+			wantExitCode: 0,
+			cmd: `assert pullrequest bitbucket --bitbucket-workspace kosli-dev --repository cli-test
 			--commit fd54040fc90e7e83f7b152619bfa18917b72c34f` + suite.defaultKosliArguments,
 			golden: "found [1] pull request(s) in Bitbucket for commit: fd54040fc90e7e83f7b152619bfa18917b72c34f\n",
 		},
 		{
-			wantError: true,
-			name:      "assert Bitbucket PR evidence fails when both password and access token are provided",
-			cmd: `assert pullrequest bitbucket --bitbucket-workspace kosli-dev --repository cli-test 
+			wantError:    true,
+			wantExitCode: 1,
+			name:         "assert Bitbucket PR evidence fails when both password and access token are provided",
+			cmd: `assert pullrequest bitbucket --bitbucket-workspace kosli-dev --repository cli-test
 			--commit fd54040fc90e7e83f7b152619bfa18917b72c34f --bitbucket-password xxxx` + suite.defaultKosliArguments,
 			golden: "Error: only one of --bitbucket-password, --bitbucket-access-token is allowed\n",
 		},
 		{
-			wantError: true,
-			name:      "assert Bitbucket PR evidence fails when commit has no PRs in bitbucket",
-			cmd: `assert pullrequest bitbucket --bitbucket-workspace kosli-dev --repository cli-test 
+			wantError:    true,
+			wantExitCode: 1,
+			name:         "assert Bitbucket PR evidence fails when commit has no PRs in bitbucket",
+			cmd: `assert pullrequest bitbucket --bitbucket-workspace kosli-dev --repository cli-test
 			--commit 3dce097040987c4693d2e4be817474d9d0063c93` + suite.defaultKosliArguments,
 			golden: "Error: assert failed: found no pull request(s) in Bitbucket for commit: 3dce097040987c4693d2e4be817474d9d0063c93\n",
 		},

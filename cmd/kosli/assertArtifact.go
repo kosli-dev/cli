@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
+	kosliErrors "github.com/kosli-dev/cli/internal/errors"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
@@ -169,7 +170,7 @@ func (o *assertArtifactOptions) run(out io.Writer, args []string) error {
 
 	isCompliant := evaluationResult["compliant"].(bool)
 	if !isCompliant {
-		return fmt.Errorf("Artifact is not compliant")
+		return kosliErrors.NewErrCompliance("Artifact is not compliant")
 	}
 	return nil
 }

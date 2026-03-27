@@ -3,6 +3,13 @@
 <!-- Each feature gets its own ## section below. -->
 <!-- Only edit YOUR feature's section. Delete it after merging to main. -->
 
+## Structured exit codes (issue #4988)
+
+- [x] Slice 1: Typed errors + `os.Exit` dispatch in `main.go` + compliance exit code 1
+- [x] Slice 2: HTTP error classification in `requests.go` (5xx→2, 401/403→3, network→2)
+- [x] Slice 3: Usage errors (unknown flag, missing required flag → exit 4)
+- [x] Slice 4: Remaining assert commands + docs
+
 ## kosli evaluate trail
 
 - [x] Slice 1: Skeleton `evaluate` parent + `evaluate trail` fetches trail JSON

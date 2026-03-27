@@ -55,6 +55,53 @@ func TestGenMarkdownTreeCreatesFiles(t *testing.T) {
 	}
 }
 
+func TestGenMarkdownTreeIncludesExitCodes(t *testing.T) {
+	dir := t.TempDir()
+
+	root := &cobra.Command{Use: "root"}
+	child := &cobra.Command{
+		Use:   "child",
+		Short: "A child command",
+		Long:  "A child command with a longer description.",
+		RunE:  func(cmd *cobra.Command, args []string) error { return nil },
+	}
+	root.AddCommand(child)
+
+	metaFn := func(cmd *cobra.Command) CommandMeta {
+		return CommandMeta{
+			Name:     cmd.CommandPath(),
+			Summary:  cmd.Short,
+			Long:     cmd.Long,
+			UseLine:  cmd.UseLine(),
+			Runnable: cmd.Runnable(),
+			ExitCodes: []ExitCodeEntry{
+				{Code: 0, Meaning: "No error."},
+				{Code: 1, Meaning: "Violation."},
+			},
+		}
+	}
+
+	err := GenMarkdownTree(root, dir, HugoFormatter{}, metaFn, NullLiveDocProvider{})
+	if err != nil {
+		t.Fatalf("GenMarkdownTree error: %v", err)
+	}
+
+	content, err := os.ReadFile(filepath.Join(dir, "root_child.md"))
+	if err != nil {
+		t.Fatalf("failed to read file: %v", err)
+	}
+	s := string(content)
+	if !strings.Contains(s, "## Exit Codes") {
+		t.Error("expected Exit Codes section in generated doc")
+	}
+	if !strings.Contains(s, "| 0 | No error. |") {
+		t.Error("expected exit code 0 row in generated doc")
+	}
+	if !strings.Contains(s, "| 1 | Violation. |") {
+		t.Error("expected exit code 1 row in generated doc")
+	}
+}
+
 func TestGenMarkdownTreeSkipsHiddenCommands(t *testing.T) {
 	dir := t.TempDir()
 
