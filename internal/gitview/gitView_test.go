@@ -3,6 +3,7 @@ package gitview
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -52,6 +53,31 @@ func (suite *GitViewTestSuite) TestNewGitView() {
 
 	_, err = New(filepath.Join(suite.tmpDir, "non-existing"))
 	require.Error(suite.T(), err)
+}
+
+func (suite *GitViewTestSuite) TestNewGitViewFromWorktree() {
+	dirPath := filepath.Join(suite.tmpDir, "repoName")
+	_, _, err := initializeRepoAndCommit(dirPath, 1)
+	require.NoError(suite.T(), err)
+
+	worktreePath := filepath.Join(suite.tmpDir, "myWorktree")
+	cmd := exec.Command("git", "worktree", "add", "-b", "worktree-branch", worktreePath)
+	cmd.Dir = dirPath
+	output, err := cmd.CombinedOutput()
+	require.NoError(suite.T(), err, "git worktree add failed: %s", string(output))
+
+	gv, err := New(worktreePath)
+	require.NoError(suite.T(), err)
+	require.NotNil(suite.T(), gv)
+
+	branchName, err := gv.BranchName()
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), "worktree-branch", branchName)
+
+	commitInfo, err := gv.GetCommitInfoFromCommitSHA("HEAD", true, []string{})
+	require.NoError(suite.T(), err)
+	require.NotEmpty(suite.T(), commitInfo.Sha1)
+	require.Equal(suite.T(), "worktree-branch", commitInfo.Branch)
 }
 
 func (suite *GitViewTestSuite) TestCommitsBetween() {
