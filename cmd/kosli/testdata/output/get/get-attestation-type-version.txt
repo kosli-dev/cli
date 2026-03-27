@@ -5,7 +5,7 @@ Versions:
                Version:      1
                Timestamp:    Sat, 16 Jan 2016 00:00:00 UTC • 2016-01-16
                Created By:   docs-cmd-test-user
-               Type schema:  {'type': 'object', 'additionalProperties': True, 'properties': {'name': {'type': 'string'}, 'age': {'type': 'integer'}}}
+               Type schema:  \{"additionalProperties":true,"properties":\{"age":\{"type":"integer"\},"name":\{"type":"string"\}\},"type":"object"\}
                Evaluator:
                              Content Type:  jq
                              Rules:

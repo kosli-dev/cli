@@ -172,7 +172,11 @@ func printVersionedAttestationTypeAsTable(raw map[string]interface{}, rows []str
 	rows = append(rows, fmt.Sprintf("	Created By:\t%s", attestationType["created_by"]))
 
 	if typeSchema, ok := attestationType["type_schema"]; ok {
-		rows = append(rows, fmt.Sprintf("	Type schema:\t%s", typeSchema))
+		typeSchemaJSON, err := json.Marshal(typeSchema)
+		if err != nil {
+			return []string{}, err
+		}
+		rows = append(rows, fmt.Sprintf("	Type schema:\t%s", string(typeSchemaJSON)))
 	}
 
 	if evaluator, ok := attestationType["evaluator"].(map[string]interface{}); ok {
