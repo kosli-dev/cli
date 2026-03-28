@@ -38,5 +38,6 @@
 ## kosli evaluate input
 
 - [x] Slice 1: `evaluate input --input-file` with a file path
-- [ ] Slice 2: stdin support ← active
+- [x] Slice 2: stdin support (omit --input-file to read stdin; `-` not supported by cobra)
+- [ ] Slice 3: help text and examples ← active
 - [ ] Slice 3: help text and examples
