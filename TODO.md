@@ -34,3 +34,19 @@
 - [x] Slice 17: Align test method naming
 - [x] Slice 18: Fail evaluation when rehydration errors occur (instead of silently swallowing them)
 - [x] Slice 19: Add Long descriptions, Example blocks, and docs feedback (policy contract hint, snyk trail example)
+
+## kosli evaluate input
+
+- [ ] Slice 1: `evaluate input --input-file` with a file path ← active
+  - [ ] `evaluate input` exists as a subcommand of `evaluate`
+  - [ ] `--input-file` with allow-all policy returns ALLOWED
+  - [ ] `--input-file` with deny-all policy returns DENIED (exit error)
+  - [ ] `--input-file` with non-existent file returns error
+  - [ ] `--input-file` with invalid JSON returns error
+  - [ ] `--policy` is required
+  - [ ] `--input-file` is required
+  - [ ] `--output json` returns structured JSON
+  - [ ] `--show-input` includes input in JSON output
+  - [ ] does not require --api-token, --org, or --flow
+- [ ] Slice 2: stdin support
+- [ ] Slice 3: help text and examples
