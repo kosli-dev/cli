@@ -18,6 +18,11 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 			cmd:       "evaluate input",
 			golden:    "Error: required flag(s) \"input-file\", \"policy\" not set\n",
 		},
+		{
+			name:        "allow-all policy with input file returns ALLOWED",
+			cmd:         "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/allow-all.rego",
+			goldenRegex: `RESULT:\s+ALLOWED`,
+		},
 	}
 	runTestCmd(suite.T(), tests)
 }

@@ -1,7 +1,10 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"io"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -38,5 +41,21 @@ func newEvaluateInputCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *evaluateInputOptions) run(out io.Writer) error {
-	return nil
+	input, err := loadInputFromFile(o.inputFile)
+	if err != nil {
+		return err
+	}
+	return evaluateAndPrintResult(out, o.policyFile, input, o.output, o.showInput)
+}
+
+func loadInputFromFile(filePath string) (map[string]interface{}, error) {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read input file: %w", err)
+	}
+	var input map[string]interface{}
+	if err := json.Unmarshal(data, &input); err != nil {
+		return nil, fmt.Errorf("failed to parse input file: %w", err)
+	}
+	return input, nil
 }
