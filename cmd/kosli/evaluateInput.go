@@ -87,16 +87,17 @@ func (o *evaluateInputOptions) run(out io.Writer) error {
 	return evaluateAndPrintResult(out, o.policyFile, input, o.output, o.showInput)
 }
 
-func loadInputFromFile(filePath string) (map[string]interface{}, error) {
-	data, err := os.ReadFile(filePath)
+func loadInputFromFile(filePath string) (result map[string]interface{}, err error) {
+	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read input file: %w", err)
 	}
-	var input map[string]interface{}
-	if err := json.Unmarshal(data, &input); err != nil {
-		return nil, fmt.Errorf("failed to parse input: %w", err)
-	}
-	return input, nil
+	defer func() {
+		if cerr := f.Close(); cerr != nil && err == nil {
+			err = cerr
+		}
+	}()
+	return loadInput(f)
 }
 
 func loadInput(r io.Reader) (map[string]interface{}, error) {
