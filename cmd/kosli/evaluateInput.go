@@ -19,7 +19,7 @@ type evaluateInputOptions struct {
 const evaluateInputShortDesc = `Evaluate a local JSON input against a Rego policy.`
 
 const evaluateInputLongDesc = evaluateInputShortDesc + `
-Evaluate a JSON input file (or stdin) against a Rego policy using OPA.
+Read JSON from a file or stdin and evaluate it against a Rego policy using OPA.
 The input can contain any JSON structure — the shape is defined by your policy.
 
 The policy must use ` + "`package policy`" + ` and define an ` + "`allow`" + ` rule.
