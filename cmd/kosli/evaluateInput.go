@@ -32,7 +32,7 @@ func newEvaluateInputCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	cmd.Flags().BoolVar(&o.showInput, "show-input", false, "[optional] Include the policy input data in the output.")
 
-	err := RequireFlags(cmd, []string{"input-file", "policy"})
+	err := RequireFlags(cmd, []string{"policy"})
 	if err != nil {
 		logger.Error("failed to configure required flags: %v", err)
 	}
@@ -41,10 +41,18 @@ func newEvaluateInputCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *evaluateInputOptions) run(out io.Writer) error {
-	input, err := loadInputFromFile(o.inputFile)
+	var input map[string]interface{}
+	var err error
+
+	if o.inputFile == "" {
+		input, err = loadInput(os.Stdin)
+	} else {
+		input, err = loadInputFromFile(o.inputFile)
+	}
 	if err != nil {
 		return err
 	}
+
 	return evaluateAndPrintResult(out, o.policyFile, input, o.output, o.showInput)
 }
 

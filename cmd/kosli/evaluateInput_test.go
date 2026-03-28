@@ -16,9 +16,9 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 	tests := []cmdTestCase{
 		{
 			wantError: true,
-			name:      "missing --input-file and --policy flags fails",
+			name:      "missing --policy flag fails",
 			cmd:       "evaluate input",
-			golden:    "Error: required flag(s) \"input-file\", \"policy\" not set\n",
+			golden:    "Error: required flag(s) \"policy\" not set\n",
 		},
 		{
 			name:        "allow-all policy with input file returns ALLOWED",
@@ -44,16 +44,10 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 			goldenRegex: `failed to parse input:`,
 		},
 		{
-			wantError: true,
-			name:      "missing --policy flag fails",
-			cmd:       "evaluate input --input-file testdata/evaluate/trail-input.json",
-			golden:    "Error: required flag(s) \"policy\" not set\n",
-		},
-		{
-			wantError: true,
-			name:      "missing --input-file flag fails",
-			cmd:       "evaluate input --policy testdata/policies/allow-all.rego",
-			golden:    "Error: required flag(s) \"input-file\" not set\n",
+			wantError:   true,
+			name:        "missing --input-file reads from stdin (empty stdin fails)",
+			cmd:         "evaluate input --policy testdata/policies/allow-all.rego",
+			goldenRegex: `failed to parse input:`,
 		},
 		{
 			name: "JSON output with allow-all policy",
