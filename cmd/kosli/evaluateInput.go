@@ -16,19 +16,50 @@ type evaluateInputOptions struct {
 	showInput  bool
 }
 
+const evaluateInputShortDesc = `Evaluate a local JSON input against a Rego policy.`
+
+const evaluateInputLongDesc = evaluateInputShortDesc + `
+Evaluate a JSON input file (or stdin) against a Rego policy using OPA.
+The input can contain any JSON structure — the shape is defined by your policy.
+
+The policy must use ` + "`package policy`" + ` and define an ` + "`allow`" + ` rule.
+An optional ` + "`violations`" + ` rule (a set of strings) can provide human-readable denial reasons.
+The command exits with code 0 when allowed and code 1 when denied.
+
+When ` + "`--input-file`" + ` is omitted, JSON is read from stdin.`
+
+const evaluateInputExample = `
+# evaluate a local JSON file against a policy:
+kosli evaluate input \
+	--input-file trail-data.json \
+	--policy policy.rego
+
+# evaluate and show the data passed to the policy:
+kosli evaluate input \
+	--input-file trail-data.json \
+	--policy policy.rego \
+	--show-input \
+	--output json
+
+# read input from stdin:
+cat trail-data.json | kosli evaluate input \
+	--policy policy.rego`
+
 func newEvaluateInputCmd(out io.Writer) *cobra.Command {
 	o := new(evaluateInputOptions)
 	cmd := &cobra.Command{
-		Use:   "input",
-		Short: "Evaluate a local input file against a policy.",
-		Args:  cobra.NoArgs,
+		Use:     "input",
+		Short:   evaluateInputShortDesc,
+		Long:    evaluateInputLongDesc,
+		Example: evaluateInputExample,
+		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return o.run(out)
 		},
 	}
 
-	cmd.Flags().StringVarP(&o.inputFile, "input-file", "i", "", "Path to a JSON input file.")
-	cmd.Flags().StringVarP(&o.policyFile, "policy", "p", "", "Path to a Rego policy file.")
+	cmd.Flags().StringVarP(&o.inputFile, "input-file", "i", "", "[optional] Path to a JSON input file. Reads from stdin if omitted.")
+	cmd.Flags().StringVarP(&o.policyFile, "policy", "p", "", "Path to a Rego policy file to evaluate against the input.")
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	cmd.Flags().BoolVar(&o.showInput, "show-input", false, "[optional] Include the policy input data in the output.")
 
@@ -57,12 +88,15 @@ func (o *evaluateInputOptions) run(out io.Writer) error {
 }
 
 func loadInputFromFile(filePath string) (map[string]interface{}, error) {
-	f, err := os.Open(filePath)
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read input file: %w", err)
 	}
-	defer f.Close()
-	return loadInput(f)
+	var input map[string]interface{}
+	if err := json.Unmarshal(data, &input); err != nil {
+		return nil, fmt.Errorf("failed to parse input: %w", err)
+	}
+	return input, nil
 }
 
 func loadInput(r io.Reader) (map[string]interface{}, error) {
