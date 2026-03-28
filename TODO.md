@@ -40,4 +40,3 @@
 - [x] Slice 1: `evaluate input --input-file` with a file path
 - [x] Slice 2: stdin support (omit --input-file to read stdin; `-` not supported by cobra)
 - [x] Slice 3: help text and examples
-- [ ] Slice 3: help text and examples
