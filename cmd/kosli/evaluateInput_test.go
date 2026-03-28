@@ -1,8 +1,10 @@
 package main
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -39,7 +41,7 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 			wantError:   true,
 			name:        "invalid JSON input file returns error",
 			cmd:         "evaluate input --input-file testdata/policies/allow-all.rego --policy testdata/policies/allow-all.rego",
-			goldenRegex: `failed to parse input file:`,
+			goldenRegex: `failed to parse input:`,
 		},
 		{
 			wantError: true,
@@ -70,6 +72,22 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 		},
 	}
 	runTestCmd(suite.T(), tests)
+}
+
+func TestLoadInput(t *testing.T) {
+	reader := strings.NewReader(`{"trail": {"name": "from-reader"}}`)
+	input, err := loadInput(reader)
+	require.NoError(t, err)
+	trail, ok := input["trail"].(map[string]interface{})
+	require.True(t, ok)
+	require.Equal(t, "from-reader", trail["name"])
+}
+
+func TestLoadInputInvalidJSON(t *testing.T) {
+	reader := strings.NewReader(`not json`)
+	_, err := loadInput(reader)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "failed to parse input")
 }
 
 func TestEvaluateInputCommandTestSuite(t *testing.T) {

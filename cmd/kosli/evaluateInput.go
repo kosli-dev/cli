@@ -49,13 +49,22 @@ func (o *evaluateInputOptions) run(out io.Writer) error {
 }
 
 func loadInputFromFile(filePath string) (map[string]interface{}, error) {
-	data, err := os.ReadFile(filePath)
+	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read input file: %w", err)
 	}
+	defer f.Close()
+	return loadInput(f)
+}
+
+func loadInput(r io.Reader) (map[string]interface{}, error) {
+	data, err := io.ReadAll(r)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read input: %w", err)
+	}
 	var input map[string]interface{}
 	if err := json.Unmarshal(data, &input); err != nil {
-		return nil, fmt.Errorf("failed to parse input file: %w", err)
+		return nil, fmt.Errorf("failed to parse input: %w", err)
 	}
 	return input, nil
 }
