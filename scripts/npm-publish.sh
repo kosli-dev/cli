@@ -33,27 +33,54 @@ else
 fi
 
 # Inject version into all platform package.json files
-find npm -name package.json -exec sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"${VERSION}\"/" {} \;
-
-# Also update the optionalDependencies version references in the wrapper
-sed -i "s/\(\"@kosli\/cli-[^\"]*\": \)\"[^\"]*\"/\1\"${VERSION}\"/g" npm/wrapper/package.json
-
-# Pack and optionally publish platform packages first (wrapper depends on them)
-find npm -name package.json ! -path "npm/wrapper/*" | while read -r f; do
-  PKG_DIR="$(dirname "$f")"
-  PKG_NAME="$(basename "$PKG_DIR")"
-  echo "Packing ${PKG_NAME}..."
-  (cd "$PKG_DIR" && npm pack)
-  if [ "$DRY_RUN" = false ]; then
-    echo "Publishing ${PKG_NAME}..."
-    (cd "$PKG_DIR" && npm publish --tag "$NPM_TAG")
-  fi
+find npm -name package.json | while IFS= read -r f; do
+  tmp="$(mktemp)"
+  jq --arg v "$VERSION" '.version = $v' "$f" > "$tmp" && mv "$tmp" "$f"
 done
 
-# Pack and optionally publish wrapper last
-echo "Packing wrapper..."
-(cd npm/wrapper && npm pack)
+# Also update the optionalDependencies version references in the wrapper
+tmp="$(mktemp)"
+jq --arg v "$VERSION" '.optionalDependencies = (.optionalDependencies | with_entries(.value = $v))' \
+  npm/wrapper/package.json > "$tmp" && mv "$tmp" npm/wrapper/package.json
+
+# Build ordered package list: platform packages first, wrapper last
+PACKAGES=()
+while IFS= read -r f; do
+  PACKAGES+=("$(dirname "$f")")
+done < <(find npm -name package.json ! -path "npm/wrapper/*" | sort)
+PACKAGES+=("npm/wrapper")
+
+# Phase 1: pack all packages — exit immediately on any failure
+for PKG_DIR in "${PACKAGES[@]}"; do
+  PKG_NAME="$(basename "$PKG_DIR")"
+  echo "Packing ${PKG_NAME}..."
+  (cd "$PKG_DIR" && npm pack) || { echo "❌ Failed to pack ${PKG_NAME}"; exit 1; }
+done
+
+# Phase 2: publish all packages if not a dry run — exit immediately on any failure
+npm_publish_with_retry() {
+  local pkg_dir="$1"
+  local tag="$2"
+  local max_attempts=3
+  local delay=5
+
+  for attempt in $(seq 1 "$max_attempts"); do
+    if (cd "$pkg_dir" && npm publish --tag "$tag"); then
+      return 0
+    fi
+    if [ "$attempt" -lt "$max_attempts" ]; then
+      echo "⚠️  Attempt ${attempt}/${max_attempts} failed. Retrying in ${delay}s..."
+      sleep "$delay"
+      delay=$(( delay * 2 ))
+    fi
+  done
+  return 1
+}
+
 if [ "$DRY_RUN" = false ]; then
-  echo "Publishing wrapper..."
-  (cd npm/wrapper && npm publish --tag "$NPM_TAG")
+  for PKG_DIR in "${PACKAGES[@]}"; do
+    PKG_NAME="$(basename "$PKG_DIR")"
+    echo "Publishing ${PKG_NAME}..."
+    npm_publish_with_retry "$PKG_DIR" "$NPM_TAG" || { echo "❌ Failed to publish ${PKG_NAME} after ${max_attempts} attempts"; exit 1; }
+  done
 fi
