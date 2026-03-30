@@ -1,4 +1,4 @@
- ---
+---
 title: "Part 2: Install Kosli CLI"
 bookCollapseSection: false
 weight: 220
