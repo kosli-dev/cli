@@ -7,7 +7,8 @@
   "homepage": "https://kosli.com",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kosli-dev/cli.git"
+    "url": "git+https://github.com/kosli-dev/cli.git",
+    "directory": "npm/wrapper"
   },
   "bugs": {
     "url": "https://github.com/kosli-dev/cli/issues"
@@ -19,6 +20,9 @@
     "supply-chain",
     "devops"
   ],
+  "engines": {
+    "node": ">=18"
+  },
   "bin": {
     "kosli": "bin/kosli"
   },

@@ -3,6 +3,11 @@
   "version": "0.0.0",
   "description": "Windows x64 binary for @kosli/cli",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kosli-dev/cli.git",
+    "directory": "npm/cli-win32-x64"
+  },
   "os": [
     "win32"
   ],
