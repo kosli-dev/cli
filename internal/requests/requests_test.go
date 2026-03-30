@@ -59,6 +59,10 @@ func (suite *RequestsTestSuite) SetupSuite() {
 		Get("/fail/").
 		Reply(500).
 		BodyString("server broken")
+	suite.fakeService.NewHandler().
+		Get("/proxy-block/").
+		Reply(403).
+		BodyString(`<!DOCTYPE html><html><body><h1>403 Forbidden</h1><p>Blocked by proxy</p></body></html>`)
 }
 
 // shutdown the fake service after the suite execution
@@ -262,6 +266,7 @@ func (suite *RequestsTestSuite) TestDo() {
 	for _, t := range []struct {
 		name             string
 		params           *RequestParams
+		debug            bool
 		wantError        bool
 		expectedLog      string
 		expectedErrorMsg string
@@ -377,15 +382,29 @@ func (suite *RequestsTestSuite) TestDo() {
 			wantError:        true,
 			expectedErrorMsg: "unexpected end of JSON input",
 		},
+		{
+			name: "non-JSON error response body is logged with debug enabled",
+			params: &RequestParams{
+				Method: http.MethodGet,
+				URL:    suite.fakeService.ResolveURL("/proxy-block/"),
+			},
+			debug:            true,
+			wantError:        true,
+			expectedErrorMsg: "invalid character '<' looking for beginning of value",
+			expectedLog:      `<!DOCTYPE html><html><body><h1>403 Forbidden</h1><p>Blocked by proxy</p></body></html>`,
+		},
 	} {
 		suite.Run(t.name, func() {
 			buf := new(bytes.Buffer)
-			client, err := NewKosliClient("", 1, false, logger.NewLogger(buf, buf, false))
+			client, err := NewKosliClient("", 1, t.debug, logger.NewLogger(buf, buf, t.debug))
 			require.NoError(suite.T(), err)
 			resp, err := client.Do(t.params)
 			if t.wantError {
 				require.Error(suite.T(), err)
 				require.Equal(suite.T(), t.expectedErrorMsg, err.Error())
+				if t.expectedLog != "" {
+					require.Contains(suite.T(), buf.String(), t.expectedLog)
+				}
 			} else {
 				require.NoError(suite.T(), err)
 				output := buf.String()

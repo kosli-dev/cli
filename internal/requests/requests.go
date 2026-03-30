@@ -267,6 +267,7 @@ func (c *Client) Do(p *RequestParams) (*HTTPResponse, error) {
 			var respBody any
 			err := json.Unmarshal([]byte(body), &respBody)
 			if err != nil {
+				c.Logger.Debug("response body from %s (status %d):\n%s", req.URL, resp.StatusCode, string(body))
 				return &HTTPResponse{}, err
 			}
 			cleanedErrorMessage := ""
