@@ -9,7 +9,9 @@
   "cpu": [
     "x64"
   ],
-  "bin": {"kosli": "bin/kosli.exe"},
+  "bin": {
+    "kosli": "bin/kosli.exe"
+  },
   "files": [
     "bin/"
   ],
