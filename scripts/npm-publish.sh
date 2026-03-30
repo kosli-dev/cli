@@ -81,6 +81,6 @@ if [ "$DRY_RUN" = false ]; then
   for PKG_DIR in "${PACKAGES[@]}"; do
     PKG_NAME="$(basename "$PKG_DIR")"
     echo "Publishing ${PKG_NAME}..."
-    npm_publish_with_retry "$PKG_DIR" "$NPM_TAG" || { echo "❌ Failed to publish ${PKG_NAME} after retrying"; exit 1; }
+    npm_publish_with_retry "$PKG_DIR" "$NPM_TAG" || { echo "❌ Failed to publish ${PKG_NAME} after retries"; exit 1; }
   done
 fi
