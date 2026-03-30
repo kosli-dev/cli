@@ -33,10 +33,10 @@ else
 fi
 
 # Inject version into all platform package.json files
-find npm -name package.json | while IFS= read -r f; do
+while IFS= read -r f; do
   tmp="$(mktemp)"
   jq --arg v "$VERSION" '.version = $v' "$f" > "$tmp" && mv "$tmp" "$f"
-done
+done < <(find npm -name package.json)
 
 # Also update the optionalDependencies version references in the wrapper
 tmp="$(mktemp)"
@@ -81,6 +81,6 @@ if [ "$DRY_RUN" = false ]; then
   for PKG_DIR in "${PACKAGES[@]}"; do
     PKG_NAME="$(basename "$PKG_DIR")"
     echo "Publishing ${PKG_NAME}..."
-    npm_publish_with_retry "$PKG_DIR" "$NPM_TAG" || { echo "❌ Failed to publish ${PKG_NAME} after ${max_attempts} attempts"; exit 1; }
+    npm_publish_with_retry "$PKG_DIR" "$NPM_TAG" || { echo "❌ Failed to publish ${PKG_NAME} after retrying"; exit 1; }
   done
 fi

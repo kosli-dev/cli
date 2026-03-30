@@ -18,10 +18,11 @@ const arch = process.arch;
 
 if (!SUPPORTED[platform] || !SUPPORTED[platform][arch]) {
   process.stderr.write(
-    `[kosli] Note: ${platform}/${arch} is not a supported platform.\n` +
-    `[kosli] The kosli binary will not be available on this system.\n`
+    `[kosli] Error: ${platform}/${arch} is not a supported platform.\n` +
+    `[kosli] See https://github.com/kosli-dev/cli for supported platforms.\n` +
+    `[kosli] Use --ignore-scripts to skip this check.\n`
   );
-  process.exit(0);
+  process.exit(1);
 }
 
 const packageName = `@kosli/cli-${platform}-${arch}`;
