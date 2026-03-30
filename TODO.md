@@ -5,12 +5,18 @@
 
 ## CLI v3 — Breaking Changes & Cleanup
 
+Tracking issue: kosli-dev/server#5132
+
 ### Deprecated Commands to Remove
 
 | Command | Replacement | File |
 |---------|-------------|------|
 | `kosli report artifact` | `kosli attest` commands | `cmd/kosli/reportArtifact.go` |
 | `kosli snapshot server` (alias `directories`) | `kosli snapshot paths` | `cmd/kosli/snapshotServer.go` |
+| `kosli report approval` | Attestation workflow | `cmd/kosli/reportApproval.go` |
+| `kosli request approval` | Attestation workflow | `cmd/kosli/requestApproval.go` |
+| `kosli get approval` | Attestation workflow | `cmd/kosli/getApproval.go` |
+| `kosli list approvals` | Attestation workflow | `cmd/kosli/listApprovals.go` |
 
 ### Deprecated Flags to Remove
 
@@ -25,11 +31,37 @@
 | `--function-version` | `snapshot lambda` | None (non-functional, kept for compat) | `cmd/kosli/snapshotLambda.go` |
 | `-e` (exclude shorthand) | `fingerprint`, `snapshot server` | `-x` | `cmd/kosli/fingerprint.go`, `cmd/kosli/snapshotServer.go` |
 
-### Legacy Flow Creation Path
+### Flow Creation Simplification
 
 - [ ] Remove the `--template` string-slice flag and the legacy code path in `createFlow.go` (lines 138–153)
-- [ ] Only keep the `--template-file` / `--use-empty-template` path, which hits `PUT /api/v2/flows/<org>/template_file`
+- [ ] Remove `--use-empty-template` flag — no template flag should now mean "no template" (no auto-injected "artifact")
+- [ ] Remove `injectArtifactIntoTemplateIfNotExisting()` — the silent default of adding "artifact" goes away
+- [ ] Only keep `--template-file` path, which hits `PUT /api/v2/flows/<org>/template_file`
 - [ ] Remove the deprecated server endpoint `PUT /api/v2/flows/<org>` (see Legacy Flow Creation Endpoint below)
+
+### Richer Exit Codes
+
+- [ ] Implement structured exit codes (see kosli-dev/server#4988, kosli-dev/server#3728, and [CLI PR #714](https://github.com/kosli-dev/cli/pull/714) with ADR)
+- [ ] `kosli evaluate` must distinguish "policy denied" from "something went wrong" (currently both exit 1)
+
+### Terminology: "evidence" → "attestation"
+
+Update user-facing flag descriptions and help text that still say "evidence":
+- [ ] `commitPREvidenceFlag` in `root.go` — "find pull request evidence" → "find pull request attestation"
+- [ ] `resultsDirFlag` in `root.go` — "evidence vault" → "attestation vault" (or just "vault")
+- [ ] `snykJsonResultsFileFlag` in `root.go` — "evidence vault"
+- [ ] `snykSarifResultsFileFlag` in `root.go` — "evidence vault"
+- [ ] `attachmentsFlag` in `root.go` — "evidence vault"
+- [ ] Internal variable names: `evidencePath`, `evidencePaths` in attestation code (`attestation.go`, `pullrequest.go`, `attestCustom.go`, `attestGeneric.go`, `attestSnyk.go`, `attestSonar.go`)
+- [ ] Test descriptions in `assertPRGithub_test.go` — "PR evidence"
+
+### Command Aliases — Review (discuss with team)
+
+- [ ] `begin trail` aliases: `start`, `init` — keep all?
+- [ ] `attest pr` aliases: `pr`, `mr`, `mergerequest`, `pullrequest` — keep all?
+- [ ] `environment` aliases: `env`, `envs` — keep all?
+- [ ] `snapshot kubernetes` alias: `k8s` — keep?
+- [ ] `snapshot s3` alias: `S3` — keep?
 
 ### API Compatibility Shim in `getArtifact.go`
 
