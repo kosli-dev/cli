@@ -96,6 +96,9 @@ You can install Kosli CLI system-wide with `npm` from the default registry <http
 npm install -g @kosli/cli
 ```
 
+Using `npx` is currently not supported
+
+
 {{< /tab >}}
 
 {{< tab "From source" >}}

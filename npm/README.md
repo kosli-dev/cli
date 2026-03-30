@@ -49,6 +49,8 @@ npm install -g @kosli/cli
 
 npm resolves the `optionalDependencies` declared in the wrapper's `package.json` and installs only the platform-specific package that matches the current OS and CPU architecture — all non-matching packages are silently skipped. The wrapper's `bin/kosli` JS shim then locates the binary inside the installed platform package and executes it.
 
+> **`npx` is not supported.** `npx @kosli/cli` does not install optional dependencies, so the platform binary is never fetched and the command fails. Always install the package before running it.
+
 ## The `bin/` directories are populated by goreleaser
 
 The platform package `bin/` directories are **not committed to git**. They are populated automatically during the release process by a post-build hook in [`.goreleaser.yml`](../.goreleaser.yml):
