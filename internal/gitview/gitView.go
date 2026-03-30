@@ -49,7 +49,9 @@ const redactedCommitInfoValue = "**REDACTED**"
 // repository is bare or a normal one. If the path doesn't contain a valid
 // repository ErrRepositoryNotExists is returned
 func New(repositoryRoot string) (*GitView, error) {
-	repository, err := git.PlainOpen(repositoryRoot)
+	repository, err := git.PlainOpenWithOptions(repositoryRoot, &git.PlainOpenOptions{
+		EnableDotGitCommonDir: true,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to open git repository at %s: %v", repositoryRoot, err)
 	}

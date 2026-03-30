@@ -3,6 +3,13 @@
 <!-- Each feature gets its own ## section below. -->
 <!-- Only edit YOUR feature's section. Delete it after merging to main. -->
 
+## Fix: git worktree HEAD resolution
+
+- [x] Slice 1: Enable `EnableDotGitCommonDir` in `gitview.New()` so HEAD resolves in worktrees
+  - [x] Test: `New()` succeeds when called from a git worktree path
+  - [x] Test: `BranchName()` returns correct branch when called from a worktree
+  - [x] Test: `GetCommitInfoFromCommitSHA("HEAD", ...)` works from a worktree
+
 ## kosli evaluate trail
 
 - [x] Slice 1: Skeleton `evaluate` parent + `evaluate trail` fetches trail JSON
