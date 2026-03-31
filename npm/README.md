@@ -7,30 +7,30 @@ This directory contains the npm package structure for distributing the Kosli CLI
 ```
 npm/
 ├── wrapper/              # @kosli/cli — the package users install
-│   ├── package.json      # declares optionalDependencies for all platforms
 │   ├── bin/kosli         # JS shim that detects the platform and runs the binary
-│   └── install.js        # postinstall script that validates the binary
-├── cli-linux-x64/        # @kosli/cli-linux-x64
-│   ├── package.json      # declares os/cpu fields for platform filtering
-│   └── bin/kosli         # the native binary — see below
-├── cli-linux-arm64/      # @kosli/cli-linux-arm64
-│   ├── package.json      # declares os/cpu fields for platform filtering
-│   └── bin/kosli         # the native binary — see below
-├── cli-linux-arm/        # @kosli/cli-linux-arm
-│   ├── package.json      # declares os/cpu fields for platform filtering
-│   └── bin/kosli         # the native binary — see below
-├── cli-darwin-x64/       # @kosli/cli-darwin-x64
-│   ├── package.json      # declares os/cpu fields for platform filtering
-│   └── bin/kosli         # the native binary — see below
+│   ├── install.js        # postinstall script that validates the binary
+│   └── package.json      # declares optionalDependencies for all platforms
 ├── cli-darwin-arm64/     # @kosli/cli-darwin-arm64
-│   ├── package.json      # declares os/cpu fields for platform filtering
-│   └── bin/kosli         # the native binary — see below
-├── cli-win32-x64/        # @kosli/cli-win32-x64
-│   ├── package.json      # declares os/cpu fields for platform filtering
-│   └── bin/kosli[.exe]   # the native binary — see below
-└── cli-win32-arm64/      # @kosli/cli-win32-arm64
-    ├── package.json      # declares os/cpu fields for platform filtering
-    └── bin/kosli[.exe]   # the native binary — see below
+│   ├── bin/kosli         # the native binary — see below
+│   └── package.json      # declares os/cpu fields for platform filtering
+├── cli-darwin-x64/       # @kosli/cli-darwin-x64
+│   ├── bin/kosli         # the native binary — see below
+│   └── package.json      # declares os/cpu fields for platform filtering
+├── cli-linux-arm/        # @kosli/cli-linux-arm
+│   ├── bin/kosli         # the native binary — see below
+│   └── package.json      # declares os/cpu fields for platform filtering
+├── cli-linux-arm64/      # @kosli/cli-linux-arm64
+│   ├── bin/kosli         # the native binary — see below
+│   └── package.json      # declares os/cpu fields for platform filtering
+├── cli-linux-x64/        # @kosli/cli-linux-x64
+│   ├── bin/kosli         # the native binary — see below
+│   └── package.json      # declares os/cpu fields for platform filtering
+├── cli-win32-arm64/      # @kosli/cli-win32-arm64
+│   ├── bin/kosli.exe     # the native binary — see below
+│   └── package.json      # declares os/cpu fields for platform filtering
+└── cli-win32-x64/        # @kosli/cli-win32-x64
+    ├── bin/kosli.exe     # the native binary — see below
+    └── package.json      # declares os/cpu fields for platform filtering
 ```
 
 ## How it works
