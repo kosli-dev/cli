@@ -85,14 +85,19 @@ jobs:
                     - ubuntu-latest        # linux/x64
                     - ubuntu-24.04-arm     # linux/arm64
                     - macos-latest         # darwin/arm64
-                    - macos-13             # darwin/x64
                     - windows-latest       # win32/x64
                     - windows-11-arm       # win32/arm64
 
         steps:
         - name: Install @kosli/cli via npm
           shell: bash
-          run: npm install -g @kosli/cli@snapshot
+          run: |
+            TAG="${{ github.event.release.tag_name }}"
+            if [[ "${{ github.event_name }}" == "release" && "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              npm install -g @kosli/cli@latest
+            else
+              npm install -g @kosli/cli@snapshot
+            fi
 
         - name: Verify kosli binary works
           shell: bash
