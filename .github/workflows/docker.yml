@@ -77,7 +77,7 @@ jobs:
       uses: docker/setup-buildx-action@v4
 
     - name: setup-kosli-cli
-      uses: kosli-dev/setup-cli-action@v2
+      uses: kosli-dev/setup-cli-action@v3
       with:
         version:
           ${{ vars.KOSLI_CLI_VERSION }}
