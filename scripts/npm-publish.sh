@@ -36,6 +36,9 @@ fi
 while IFS= read -r f; do
   tmp="$(mktemp)"
   jq --arg v "$VERSION" '.version = $v' "$f" > "$tmp" && mv "$tmp" "$f"
+while IFS= read -r f; do
+  tmp="$(mktemp)"
+  jq --arg v "$VERSION" '.version = $v' "$f" > "$tmp" && mv "$tmp" "$f" || { rm -f "$tmp"; exit 1; }
 done < <(find npm -name package.json)
 
 # Also update the optionalDependencies version references in the wrapper
