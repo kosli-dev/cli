@@ -149,12 +149,14 @@ jobs:
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v7
         with:
+          distribution: goreleaser-pro
           version: '~> v2' # latest
           args: release --clean ${{ steps.get-tag-notes.outputs.args }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GORELEASER_KEY: ${{ secrets.KOSLI_GORELEASERPRO }}
 
       - name: Copy npm packages into dist for provenance
         run: find npm -name "*.tgz" -exec cp {} dist/ \;
