@@ -65,7 +65,9 @@ npm_publish_with_retry() {
   local delay=5
 
   for attempt in $(seq 1 "$max_attempts"); do
-    if (cd "$pkg_dir" && npm publish --tag "$tag"); then
+    local provenance_flag=""
+    [ "${GITHUB_ACTIONS:-false}" = "true" ] && provenance_flag="--provenance"
+    if (cd "$pkg_dir" && npm publish --tag "$tag" $provenance_flag); then
       return 0
     fi
     if [ "$attempt" -lt "$max_attempts" ]; then
