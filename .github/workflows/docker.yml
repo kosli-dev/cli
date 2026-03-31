@@ -109,7 +109,7 @@ jobs:
 
 
     - name: Attest Build Provenance
-      uses: actions/attest-build-provenance@v4
+      uses: actions/attest@v4
       with:
         subject-name: ${{ env.IMAGE }}
         subject-digest: ${{ steps.docker_build.outputs.digest }}
@@ -125,7 +125,7 @@ jobs:
 
 
     - name: Attest SBOM to Github
-      uses: actions/attest-sbom@v4
+      uses: actions/attest@v4
       with:
         sbom-path: 'sbom.spdx.json'
         subject-name: ${{ env.IMAGE }}
