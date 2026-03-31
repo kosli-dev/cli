@@ -9,7 +9,7 @@ fi
 
 # When called from goreleaser, $2 is "true" if snapshot build
 DRY_RUN=false
-# Second argument: "true" or "--dry-run" to skip publishing
+if [ "$2" = "true" ] || [ "$2" = "--dry-run" ]; then
   echo "Running in DRY-RUN mode. Packages will be created but not published."
   DRY_RUN=true
 fi
