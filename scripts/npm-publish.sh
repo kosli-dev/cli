@@ -35,9 +35,6 @@ fi
 # Inject version into all platform package.json files
 while IFS= read -r f; do
   tmp="$(mktemp)"
-  jq --arg v "$VERSION" '.version = $v' "$f" > "$tmp" && mv "$tmp" "$f"
-while IFS= read -r f; do
-  tmp="$(mktemp)"
   jq --arg v "$VERSION" '.version = $v' "$f" > "$tmp" && mv "$tmp" "$f" || { rm -f "$tmp"; exit 1; }
 done < <(find npm -name package.json)
 
