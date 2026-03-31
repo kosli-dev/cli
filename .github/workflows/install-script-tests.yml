@@ -7,13 +7,21 @@ on:
             - '.github/workflows/install-script-tests.yml'
             - 'bin/test_install_script.sh'
             - 'bin/test_install_script_over_homebrew.sh'
+            - 'npm/**'
+            - '.goreleaser.yml'
+            - 'scripts/npm-publish.sh'
     pull_request:
         paths:
             - 'install-cli.sh'
             - '.github/workflows/install-script-tests.yml'
             - 'bin/test_install_script.sh'
             - 'bin/test_install_script_over_homebrew.sh'
+            - 'npm/**'
+            - '.goreleaser.yml'
+            - 'scripts/npm-publish.sh'
     workflow_dispatch:
+    release:
+        types: [published]
 
 jobs:
     test-script:
@@ -64,3 +72,28 @@ jobs:
           run: |
             chmod +x install-cli.sh
             bash bin/test_install_script_over_homebrew.sh --token ${{ secrets.GITHUB_TOKEN }}
+
+    # Note: this job installs from the public npm registry, so on push/PR
+    # it tests the currently published version — not the code being changed.
+    # That still catches regressions. The release trigger is what tests new releases.
+    test-npm:
+        name: Test npm install on ${{ matrix.os }}
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os:
+                    - ubuntu-latest        # linux/x64
+                    - ubuntu-24.04-arm     # linux/arm64
+                    - macos-latest         # darwin/arm64
+                    - macos-13             # darwin/x64
+                    - windows-latest       # win32/x64
+                    - windows-11-arm       # win32/arm64
+
+        steps:
+        - name: Install @kosli/cli via npm
+          shell: bash
+          run: npm install -g @kosli/cli
+
+        - name: Verify kosli binary works
+          shell: bash
+          run: kosli version
