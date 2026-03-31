@@ -32,7 +32,7 @@ jobs:
       KOSLI_ORG: kosli-public
       run_lint: false
       run_snyk: false
-      report_results: false
+      report_to_kosli: 'none'
 
     secrets:
       github_access_token: ${{ secrets.KOSLI_GITHUB_TOKEN }}
