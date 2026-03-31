@@ -7,7 +7,7 @@ if [ -z "$VERSION" ]; then
   exit 1
 fi
 
-# When called from goreleaser, $2 is "true" if snapshot build
+# When called from goreleaser, $2 is "--dry-run" if snapshot build
 DRY_RUN=false
 if [ "$2" = "true" ] || [ "$2" = "--dry-run" ]; then
   echo "Running in DRY-RUN mode. Packages will be created but not published."
@@ -41,7 +41,7 @@ done < <(find npm -name package.json)
 # Also update the optionalDependencies version references in the wrapper
 tmp="$(mktemp)"
 jq --arg v "$VERSION" '.optionalDependencies = (.optionalDependencies | with_entries(.value = $v))' \
-  npm/wrapper/package.json > "$tmp" && mv "$tmp" npm/wrapper/package.json
+  npm/wrapper/package.json > "$tmp" && mv "$tmp" npm/wrapper/package.json || { rm -f "$tmp"; exit 1; }
 
 # Build ordered package list: platform packages first, wrapper last
 PACKAGES=()
