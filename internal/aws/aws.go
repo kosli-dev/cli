@@ -96,11 +96,19 @@ func (s *AWSStaticCreds) GetConfigOptFns() []func(*config.LoadOptions) error {
 
 // NewAWSConfigFromEnvOrFlags returns an AWS config that can be used to construct
 // AWS service clients.
-// Credentials for config can be sourced from multiple sources, in this order:
+//
+// Credentials are sourced in this order:
 // 1) static credentials (from CLI flags or KOSLI env vars), if provided
-// 2) AWS Environment variables
-// 3) Shared AWS Configuration/Credentials files (see https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html)
-// more details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials
+// 2) AWS environment variables
+// 3) shared AWS configuration/credentials files (see https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html)
+//
+// Retry: uses adaptive mode (up to MaxAttempts attempts) with a shared in-memory token
+// bucket. Commands like "kosli snapshot lambda" fetch functions concurrently
+// (see GetLambdaPackageData), which can trigger AWS rate limits (HTTP 429).
+// The shared token bucket slows down the entire batch of goroutines when
+// throttling is detected, rather than each goroutine retrying independently.
+//
+// More details: https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/aws/retry
 func (staticCreds *AWSStaticCreds) NewAWSConfigFromEnvOrFlags() (aws.Config, error) {
 	optFns := staticCreds.GetConfigOptFns()
 	optFns = append(optFns, config.WithRetryer(func() aws.Retryer {
