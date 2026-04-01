@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	s3manager "github.com/aws/aws-sdk-go-v2/feature/s3/manager"
@@ -101,7 +102,15 @@ func (s *AWSStaticCreds) GetConfigOptFns() []func(*config.LoadOptions) error {
 // 3) Shared AWS Configuration/Credentials files (see https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html)
 // more details can be found here: https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials
 func (staticCreds *AWSStaticCreds) NewAWSConfigFromEnvOrFlags() (aws.Config, error) {
-	return config.LoadDefaultConfig(context.TODO(), staticCreds.GetConfigOptFns()...)
+	optFns := staticCreds.GetConfigOptFns()
+	optFns = append(optFns, config.WithRetryer(func() aws.Retryer {
+		return retry.NewAdaptiveMode(func(o *retry.AdaptiveModeOptions) {
+			o.StandardOptions = append(o.StandardOptions, func(so *retry.StandardOptions) {
+				so.MaxAttempts = 10
+			})
+		})
+	}))
+	return config.LoadDefaultConfig(context.TODO(), optFns...)
 }
 
 // NewS3Client returns a new S3 API client
