@@ -121,7 +121,7 @@ setup_test_to_use_staging_server_image:
 
 test_integration: deps vet ensure_network test_setup ## Run tests except the too slow ones
 	@[ -e ~/.kosli.yml ] && mv ~/.kosli.yml ~/.kosli-renamed.yml || true
-	@export KOSLI_TESTS=true $(FAKE_CI_ENV) && $(GOTESTSUM) -- --short -p=6 -coverprofile=cover.out ./...
+	@export KOSLI_TESTS=true $(FAKE_CI_ENV) && $(GOTESTSUM) -- --short -p=8 -coverprofile=cover.out ./...
 	@go tool cover -func=cover.out | grep total:
 	@go tool cover -html=cover.out
 	@[ -e ~/.kosli-renamed.yml ] && mv ~/.kosli-renamed.yml ~/.kosli.yml || true
@@ -130,14 +130,14 @@ test_integration: deps vet ensure_network test_setup ## Run tests except the too
 test_integration_full: deps vet ensure_network test_setup ## Run all tests
 	@[ -e ~/.kosli.yml ] && mv ~/.kosli.yml ~/.kosli-renamed.yml || true
 	@mkdir -p junit-test-results
-	@export KOSLI_TESTS=true $(FAKE_CI_ENV) && $(GOTESTSUM) --junitfile junit-test-results/junit.xml -- -p=6 -coverprofile=cover.out ./...
+	@export KOSLI_TESTS=true $(FAKE_CI_ENV) && $(GOTESTSUM) --junitfile junit-test-results/junit.xml -- -p=8 -coverprofile=cover.out ./...
 	@go tool cover -func=cover.out
 	@[ -e ~/.kosli-renamed.yml ] && mv ~/.kosli-renamed.yml ~/.kosli.yml || true
 
 
 test_integration_restart_server: test_setup_restart_server
 	@[ -e ~/.kosli.yml ] && mv ~/.kosli.yml ~/.kosli-renamed.yml || true
-	@export KOSLI_TESTS=true $(FAKE_CI_ENV) && $(GOTESTSUM) -- --short -p=6 -coverprofile=cover.out ./...
+	@export KOSLI_TESTS=true $(FAKE_CI_ENV) && $(GOTESTSUM) -- --short -p=8 -coverprofile=cover.out ./...
 	@go tool cover -html=cover.out
 	@[ -e ~/.kosli-renamed.yml ] && mv ~/.kosli-renamed.yml ~/.kosli.yml || true
 
