@@ -243,7 +243,7 @@ jobs:
 
           docker buildx imagetools create \
             --tag "${IMAGE}:${TAG}" \
-            "${DIGEST_ARGS}"
+            ${DIGEST_ARGS}
 
           DIGEST=$(docker buildx imagetools inspect "${IMAGE}:${TAG}" \
             --format '{{json .Manifest.Digest}}' | tr -d '"')
