@@ -21,6 +21,11 @@ jobs:
       checkout_ref: ${{ steps.prep.outputs.checkout_ref }}
       report_to_kosli: ${{ steps.prep.outputs.report_to_kosli }}
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d # v2.16.1
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -130,6 +135,11 @@ jobs:
       ]
     if: ${{ always() && contains(join(needs.*.result, ','), 'failure') && github.ref == 'refs/heads/master' }}
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d # v2.16.1
+        with:
+          egress-policy: audit
+
       - name: Slack Notification on Failure
         uses: kosli-dev/reusable-actions/.github/actions/send-ci-failure-slack-message@main
         with:
