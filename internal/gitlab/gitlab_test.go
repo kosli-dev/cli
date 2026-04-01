@@ -232,7 +232,7 @@ func (suite *GitlabTestSuite) TestGetMergeRequestApprovers() {
 	}
 	for _, t := range []struct {
 		name           string
-		mrIID          int
+		mrIID          int64
 		gitlabConfig   *GitlabConfig
 		requireEnvVars bool // indicates that a test case needs real credentials from env vars
 		result         result

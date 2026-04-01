@@ -129,7 +129,7 @@ func (c *GitlabConfig) MergeRequestsForCommit(commit string) ([]*gitlab.BasicMer
 }
 
 // GetMergeRequestApprovers returns a list of users (name and username) who approved an MR
-func (c *GitlabConfig) GetMergeRequestApprovers(mrIID, version int) ([]any, error) {
+func (c *GitlabConfig) GetMergeRequestApprovers(mrIID, version int64) ([]any, error) {
 	var approvers []any
 	client, err := c.NewGitlabClientFromToken()
 	if err != nil {
