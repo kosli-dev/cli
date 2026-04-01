@@ -250,8 +250,10 @@ jobs:
           echo "digest=${DIGEST}" >> $GITHUB_OUTPUT
 
       - name: Make the image fingerprint available for following steps
+        env:
+          BUILD_DIGEST: ${{ steps.docker_build.outputs.digest }}
         run: |
-          ARTIFACT_SHA=$(echo "${{ steps.docker_build.outputs.digest }}" | sed 's/.*://')
+          ARTIFACT_SHA=$(echo "${BUILD_DIGEST}" | sed 's/.*://')
           echo "FINGERPRINT=$ARTIFACT_SHA" >> ${GITHUB_ENV}
 
       - name: Attest Build Provenance
