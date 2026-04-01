@@ -20,7 +20,9 @@ const evaluateInputShortDesc = `Evaluate a local JSON input against a Rego polic
 
 const evaluateInputLongDesc = evaluateInputShortDesc + `
 Read JSON from a file or stdin and evaluate it against a Rego policy.
-The input can contain any JSON structure — the shape is defined by your policy.
+The input file should contain the raw JSON object your policy expects —
+not the wrapper produced by ` + "`--show-input`" + `. Use ` + "`jq '.input'`" + ` to extract
+the policy input from a ` + "`--show-input --output json`" + ` capture.
 
 The policy must use ` + "`package policy`" + ` and define an ` + "`allow`" + ` rule.
 An optional ` + "`violations`" + ` rule (a set of strings) can provide human-readable denial reasons.
@@ -29,7 +31,12 @@ The command exits with code 0 when allowed and code 1 when denied.
 When ` + "`--input-file`" + ` is omitted, JSON is read from stdin.`
 
 const evaluateInputExample = `
-# evaluate a local JSON file against a policy:
+# capture trail data for local policy iteration:
+kosli evaluate trail TRAIL --flow FLOW \
+	--policy allow-all.rego \
+	--show-input --output json | jq '.input' > trail-data.json
+
+# then iterate on your policy locally:
 kosli evaluate input \
 	--input-file trail-data.json \
 	--policy policy.rego
