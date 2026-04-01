@@ -14,7 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
-	s3manager "github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
 	"github.com/aws/aws-sdk-go-v2/service/ecs"
 	ecsTypes "github.com/aws/aws-sdk-go-v2/service/ecs/types"
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
@@ -350,7 +350,11 @@ func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, exclud
 		Bucket: aws.String(bucket),
 	}
 
-	downloader := s3manager.NewDownloader(client)
+	downloader, err := transfermanager.NewDownloader(context.TODO(), client)
+	if err != nil {
+		return s3Data, err
+	}
+
 	var lastModifiedTime *time.Time
 	paginator := s3.NewListObjectsV2Paginator(client, params)
 	for paginator.HasMorePages() {
@@ -405,7 +409,7 @@ func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, exclud
 	return s3Data, nil
 }
 
-func downloadFileFromBucket(downloader *s3manager.Downloader, dirName, key, bucket string, logger *logger.Logger) error {
+func downloadFileFromBucket(downloader *transfermanager.Downloader, dirName, key, bucket string, logger *logger.Logger) error {
 	file, err := utils.CreateFile(filepath.Join(dirName, key))
 	if err != nil {
 		return err
@@ -416,11 +420,11 @@ func downloadFileFromBucket(downloader *s3manager.Downloader, dirName, key, buck
 		}
 	}()
 
-	numBytes, err := downloader.Download(context.TODO(), file,
-		&s3.GetObjectInput{
-			Bucket: aws.String(bucket),
-			Key:    aws.String(key),
-		})
+	numBytes, err := downloader.DownloadObject(context.TODO(), &transfermanager.DownloadObjectInput{
+		Bucket:      aws.String(bucket),
+		Key:         aws.String(key),
+		WriteToFile: file.Name(),
+	})
 	if err != nil {
 		return err
 	}
