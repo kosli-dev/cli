@@ -31,6 +31,7 @@
     "install.js"
   ],
   "scripts": {
+    "prepack": "test -f bin/kosli || (echo 'ERROR: bin/kosli is missing' && exit 1) && test -f install.js || (echo 'ERROR: install.js is missing' && exit 1)",
     "postinstall": "node install.js"
   },
   "optionalDependencies": {

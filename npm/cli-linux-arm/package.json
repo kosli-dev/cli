@@ -20,6 +20,9 @@
   "files": [
     "bin/"
   ],
+  "scripts": {
+    "prepack": "test -f bin/kosli || (echo 'ERROR: bin/kosli is missing' && exit 1)"
+  },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
     "access": "public"
