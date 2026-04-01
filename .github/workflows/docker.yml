@@ -232,7 +232,7 @@ jobs:
 
       - name: Make the image fingerprint available for following steps
         run: |
-          ARTIFACT_SHA=$(echo ${{ steps.docker_build.outputs.digest }} | sed 's/.*://')
+          ARTIFACT_SHA=$(echo "${{ steps.docker_build.outputs.digest }}" | sed 's/.*://')
           echo "FINGERPRINT=$ARTIFACT_SHA" >> ${GITHUB_ENV}
 
       - name: Attest Build Provenance
