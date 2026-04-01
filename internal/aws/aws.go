@@ -350,7 +350,7 @@ func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, exclud
 		Bucket: aws.String(bucket),
 	}
 
-	downloader, err := transfermanager.NewDownloader(client)
+	downloader, err := transfermanager.New(client)
 	if err != nil {
 		return s3Data, err
 	}
