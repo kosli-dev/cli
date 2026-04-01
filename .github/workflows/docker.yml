@@ -220,13 +220,23 @@ jobs:
 
       - name: Create manifest and push
         id: docker_build
-        working-directory: /tmp/digests
+        env:
+          IMAGE: ${{ env.IMAGE }}
+          TAG: ${{ inputs.tag }}
         run: |
-          docker buildx imagetools create \
-            --tag ${{ env.IMAGE }}:${{ inputs.tag }} \
-            $(printf '${{ env.IMAGE }}@sha256:%s ' *)
+          # Read only files that look like sha256 hex digests — guards against
+          # any stray files that might land in /tmp/digests unexpectedly.
+          DIGEST_ARGS=$(find /tmp/digests -maxdepth 1 -type f \
+            | grep -E '/[0-9a-f]{64}$' \
+            | xargs -I{} basename {} \
+            | sed "s|^|${IMAGE}@sha256:|" \
+            | xargs)
 
-          DIGEST=$(docker buildx imagetools inspect ${{ env.IMAGE }}:${{ inputs.tag }} \
+          docker buildx imagetools create \
+            --tag "${IMAGE}:${TAG}" \
+            ${DIGEST_ARGS}
+
+          DIGEST=$(docker buildx imagetools inspect "${IMAGE}:${TAG}" \
             --format '{{json .Manifest.Digest}}' | tr -d '"')
           echo "digest=${DIGEST}" >> $GITHUB_OUTPUT
 
