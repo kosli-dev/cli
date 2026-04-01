@@ -42,7 +42,7 @@ func (suite *KubeTestSuite) SetupSuite() {
 	suite.tmpDir, err = os.MkdirTemp("", "testDir")
 	require.NoError(suite.T(), err, "error creating a temporary test directory")
 	suite.kubeConfigPath = filepath.Join(suite.tmpDir, "kubeconfig")
-	err = suite.provider.ExportKubeConfig(suite.clusterName, suite.kubeConfigPath)
+	err = suite.provider.ExportKubeConfig(suite.clusterName, suite.kubeConfigPath, false) // false = don't use internal cluster IPs
 	require.NoError(suite.T(), err, "exporting kubeconfig failed")
 	ctx := context.Background()
 	suite.clientset = suite.getK8sClient(ctx)
