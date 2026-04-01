@@ -3,7 +3,6 @@
 // Postinstall script: validates that the platform binary was installed correctly.
 // Runs after `npm install @kosli/cli`.
 
-const { execFileSync } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 
@@ -53,10 +52,10 @@ if (!fs.existsSync(binaryPath)) {
 }
 
 try {
-  execFileSync(binaryPath, ["version"], { stdio: "ignore" });
+  fs.accessSync(binaryPath, fs.constants.X_OK);
 } catch (e) {
   process.stderr.write(
-    `[kosli] Error: binary validation failed: ${e.message}\n` +
+    `[kosli] Error: binary is not executable: ${e.message}\n` +
     `[kosli] Try reinstalling: npm install -g @kosli/cli\n`
   );
   process.exit(1);
