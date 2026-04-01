@@ -40,3 +40,9 @@
 - [x] Slice 1: `evaluate input --input-file` with a file path
 - [x] Slice 2: stdin support (omit --input-file to read stdin; `-` not supported by cobra)
 - [x] Slice 3: help text and examples
+- [x] Slice 4: PR review feedback
+  - [x] Remove "using OPA" from all evaluate command long descriptions
+  - [x] Add test cases for policy validation errors (missing package policy, missing allow rule, deny without violations)
+  - [x] Update help text examples with fixture-capture workflow
+  - [x] Refactor: use `cmd.InOrStdin()` for testable stdin
+  - [x] Refactor: embed `commonEvaluateOptions` to remove flag duplication
