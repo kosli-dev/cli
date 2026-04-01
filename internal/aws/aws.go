@@ -350,10 +350,7 @@ func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, exclud
 		Bucket: aws.String(bucket),
 	}
 
-	downloader, err := transfermanager.New(client)
-	if err != nil {
-		return s3Data, err
-	}
+	downloader := transfermanager.New(client)
 
 	var lastModifiedTime *time.Time
 	paginator := s3.NewListObjectsV2Paginator(client, params)
