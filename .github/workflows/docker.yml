@@ -231,6 +231,11 @@ jobs:
             | sed "s|^|${IMAGE}@sha256:|" \
             | xargs)
 
+          if [ -z "$DIGEST_ARGS" ]; then
+            echo "::error::No valid digest files found in /tmp/digests"
+            exit 1
+          fi
+
           docker buildx imagetools create \
             --tag "${IMAGE}:${TAG}" \
             ${DIGEST_ARGS}
