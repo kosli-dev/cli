@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 )
 
 type evaluateInputOptions struct {
@@ -82,6 +83,9 @@ func (o *evaluateInputOptions) run(out io.Writer, in io.Reader) error {
 	var err error
 
 	if o.inputFile == "" {
+		if f, ok := in.(*os.File); ok && term.IsTerminal(int(f.Fd())) {
+			return fmt.Errorf("no input provided: use --input-file or pipe JSON to stdin")
+		}
 		input, err = loadInput(in)
 	} else {
 		input, err = loadInputFromFile(o.inputFile)

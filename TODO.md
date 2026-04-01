@@ -46,3 +46,4 @@
   - [x] Update help text examples with fixture-capture workflow
   - [x] Refactor: use `cmd.InOrStdin()` for testable stdin
   - [x] Refactor: embed `commonEvaluateOptions` to remove flag duplication
+- [x] Slice 5: Detect terminal stdin and error when no input is piped
