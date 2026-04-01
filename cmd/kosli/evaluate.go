@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const evaluateShortDesc = `Evaluate data against OPA/Rego policies.`
+const evaluateShortDesc = `Evaluate data against Rego policies.`
 
 // Backtick breaks (`"` + "`x`" + `"`) are needed to embed markdown
 // inline code spans inside raw string literals.
