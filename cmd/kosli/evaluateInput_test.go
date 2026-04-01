@@ -57,6 +57,24 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 			},
 		},
 		{
+			wantError:   true,
+			name:        "policy with wrong package returns error",
+			cmd:         "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/no-package-policy.rego",
+			goldenRegex: `policy package must be 'package policy', got 'foo'`,
+		},
+		{
+			wantError:   true,
+			name:        "policy missing allow rule returns error",
+			cmd:         "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/no-allow-rule.rego",
+			goldenRegex: `policy must declare an 'allow' rule`,
+		},
+		{
+			wantError:   true,
+			name:        "deny without violations rule returns DENIED with no violation messages",
+			cmd:         "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/deny-no-violations.rego",
+			goldenRegex: `RESULT:\s+DENIED`,
+		},
+		{
 			name: "show-input includes input in JSON output",
 			cmd:  "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/allow-all.rego --output json --show-input",
 			goldenJson: []jsonCheck{
