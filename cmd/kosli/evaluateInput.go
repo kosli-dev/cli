@@ -61,7 +61,7 @@ func newEvaluateInputCmd(out io.Writer) *cobra.Command {
 		Example: evaluateInputExample,
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(out)
+			return o.run(out, cmd.InOrStdin())
 		},
 	}
 
@@ -78,12 +78,12 @@ func newEvaluateInputCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *evaluateInputOptions) run(out io.Writer) error {
+func (o *evaluateInputOptions) run(out io.Writer, in io.Reader) error {
 	var input map[string]interface{}
 	var err error
 
 	if o.inputFile == "" {
-		input, err = loadInput(os.Stdin)
+		input, err = loadInput(in)
 	} else {
 		input, err = loadInputFromFile(o.inputFile)
 	}
