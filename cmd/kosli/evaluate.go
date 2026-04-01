@@ -11,8 +11,8 @@ const evaluateShortDesc = `Evaluate data against Rego policies.`
 // Backtick breaks (`"` + "`x`" + `"`) are needed to embed markdown
 // inline code spans inside raw string literals.
 const evaluateLongDesc = evaluateShortDesc + `
-Evaluate trail data or local JSON input against custom policies written
-in Rego, the policy language used by Open Policy Agent (OPA).
+const evaluateLongDesc = evaluateShortDesc + `
+Evaluate trail data or local JSON input against custom Rego policies.
 
 Use ` + "`evaluate trail`" + ` or ` + "`evaluate trails`" + ` to fetch data from Kosli and evaluate it.
 Use ` + "`evaluate input`" + ` to evaluate a local JSON file or stdin without any API calls.
