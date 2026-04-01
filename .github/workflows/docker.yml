@@ -48,9 +48,131 @@ env:
 
 
 jobs:
-  docker:
-    name: Docker Build
+  # ---------------------------------------------------------------------------
+  # Job 1: Resolve the platforms input into a JSON matrix.
+  #
+  # Why a separate job: workflow-level matrix entries must be static or come
+  # from job outputs; they cannot be computed inline from an input string.
+  #
+  # To support a new platform, add one entry to RUNNER_MAP below.
+  # ---------------------------------------------------------------------------
+  prepare:
+    name: Prepare build matrix
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d # v2.16.1
+        with:
+          egress-policy: audit
+
+      - name: Build matrix JSON from platforms input
+        id: set-matrix
+        env:
+          PLATFORMS: ${{ inputs.platforms }}
+          RUNNER_MAP: |
+            {
+              "linux/amd64": "ubuntu-latest",
+              "linux/arm64": "ubuntu-24.04-arm"
+            }
+        run: |
+          MATRIX=$(echo "$PLATFORMS" \
+            | tr ',' '\n' \
+            | jq -Rsc --argjson map "$RUNNER_MAP" '
+                split("\n") |
+                map(select(length > 0) | ltrimstr(" ") | rtrimstr(" ")) |
+                map({
+                  platform: .,
+                  runner:   (. as $p | $map | .[$p] // "ubuntu-latest"),
+                  slug:     gsub("/"; "-")
+                })
+              ')
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Build each platform on its native runner, push by digest.
+  #
+  # Native runners: building linux/arm64 via QEMU on an amd64 runner is
+  # 5-10x slower than running it natively. Each leg pushes its image by digest
+  # (not by tag) so the two images live in the registry without overwriting
+  # each other. Digests are passed to the merge job via artifacts.
+  # ---------------------------------------------------------------------------
+  build:
+    name: Docker Build (${{ matrix.platform }})
+    needs: [prepare]
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      id-token: write
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.prepare.outputs.matrix) }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d # v2.16.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 3
+          ref: ${{ inputs.checkout_ref || github.sha }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+        # No QEMU needed — each runner is already native for its platform
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          # Push without a tag — the merge job creates the final manifest.
+          push: true
+          platforms: ${{ matrix.platform }}
+          outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          # Per-arch cache keeps amd64 and arm64 independent so a change on
+          # one arch doesn't bust the other's cache.
+          cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache-${{ matrix.slug }}
+          cache-to:   type=registry,ref=${{ env.IMAGE }}:buildcache-${{ matrix.slug }},mode=max
+
+      - name: Export digest to file
+        run: |
+          mkdir -p /tmp/digests
+          touch "/tmp/digests/${DIGEST#sha256:}"
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+
+      - name: Upload digest artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: digest-${{ matrix.slug }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+
+  # ---------------------------------------------------------------------------
+  # Job 3: Merge per-arch digests into a single manifest, then run all
+  # post-build steps (SBOM, Snyk, Kosli attestation, smoke test) once.
+  # ---------------------------------------------------------------------------
+  merge:
+    name: Docker Merge & Attest
+    runs-on: ubuntu-latest
+    needs: [build]
     permissions:
       id-token: write
       contents: write
@@ -58,165 +180,156 @@ jobs:
       packages: write
 
     steps:
-    - name: Harden Runner
-      uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d # v2.16.1
-      with:
-        egress-policy: audit
+      - name: Harden Runner
+        uses: step-security/harden-runner@fe104658747b27e96e4f7e80cd0a94068e53901d # v2.16.1
+        with:
+          egress-policy: audit
 
-    - uses: actions/checkout@v6
-      with:
-        fetch-depth: 3
-        ref: ${{ inputs.checkout_ref || github.sha }}
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 3
+          ref: ${{ inputs.checkout_ref || github.sha }}
 
-    - uses: actions/setup-go@v6
-      with:
-        go-version-file: '.go-version'
-        check-latest: true
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: '.go-version'
+          check-latest: true
 
-    # Set up QEMU emulator to allow building multi-arch images
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v4
+      - name: Download all digest artifacts
+        uses: actions/download-artifact@v7
+        with:
+          path: /tmp/digests
+          pattern: digest-*
+          merge-multiple: true
 
-    # This is the a separate action that sets up buildx (buildkit) runner
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
 
-    - name: setup-kosli-cli
-      uses: kosli-dev/setup-cli-action@v3
-      with:
-        version:
-          ${{ vars.KOSLI_CLI_VERSION }}
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v4
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+      - name: setup-kosli-cli
+        uses: kosli-dev/setup-cli-action@v3
+        with:
+          version: ${{ vars.KOSLI_CLI_VERSION }}
 
-    # Push image to the GHCR
-    - name: Build and push Docker image
-      id: docker_build
-      uses: docker/build-push-action@v7
-      with:
-        context: .
-        push: true
-        tags: ${{ env.IMAGE }}:${{ inputs.tag }}
-        platforms: ${{ inputs.platforms }}
-        cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
-        cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
+      - name: Create manifest and push
+        id: docker_build
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create \
+            --tag ${{ env.IMAGE }}:${{ inputs.tag }} \
+            $(printf '${{ env.IMAGE }}@sha256:%s ' *)
 
+          DIGEST=$(docker buildx imagetools inspect ${{ env.IMAGE }}:${{ inputs.tag }} \
+            --format '{{json .Manifest.Digest}}' | tr -d '"')
+          echo "digest=${DIGEST}" >> $GITHUB_OUTPUT
 
-    - name: Make the image fingerprint available for following steps
-      run: |
-        ARTIFACT_SHA=$( echo ${{ steps.docker_build.outputs.digest }} | sed 's/.*://')
-        echo "FINGERPRINT=$ARTIFACT_SHA" >> ${GITHUB_ENV}
+      - name: Make the image fingerprint available for following steps
+        run: |
+          ARTIFACT_SHA=$(echo ${{ steps.docker_build.outputs.digest }} | sed 's/.*://')
+          echo "FINGERPRINT=$ARTIFACT_SHA" >> ${GITHUB_ENV}
 
+      - name: Attest Build Provenance
+        uses: actions/attest@v4
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.docker_build.outputs.digest }}
+          push-to-registry: true
 
-    - name: Attest Build Provenance
-      uses: actions/attest@v4
-      with:
-        subject-name: ${{ env.IMAGE }}
-        subject-digest: ${{ steps.docker_build.outputs.digest }}
-        push-to-registry: true
+      - name: Generate SBOM for the docker image
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.IMAGE }}:${{ inputs.tag }}
+          format: 'spdx-json'
+          output-file: 'sbom.spdx.json'
+          upload-artifact: false
 
-    - name: Generate SBOM for the docker image
-      uses: anchore/sbom-action@v0
-      with:
-        image: ${{ env.IMAGE }}:${{ inputs.tag }}
-        format: 'spdx-json'
-        output-file: 'sbom.spdx.json'
-        upload-artifact: false
+      - name: Attest SBOM to Github
+        uses: actions/attest@v4
+        with:
+          sbom-path: 'sbom.spdx.json'
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.docker_build.outputs.digest }}
+          push-to-registry: true
 
+      - name: setup Snyk
+        uses: snyk/actions/setup@master
 
-    - name: Attest SBOM to Github
-      uses: actions/attest@v4
-      with:
-        sbom-path: 'sbom.spdx.json'
-        subject-name: ${{ env.IMAGE }}
-        subject-digest: ${{ steps.docker_build.outputs.digest }}
-        push-to-registry: true
+      - name: Report Docker image to Kosli
+        if: ${{ inputs.report_to_kosli != 'none' }}
+        env:
+          KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+        run:
+          kosli attest artifact
+             ${{ env.IMAGE }}:${{ inputs.tag }}
+             --flow ${{ inputs.flow_name }}
+             --trail ${{ inputs.trail_name }}
+             --name cli-docker
+             --fingerprint ${{ env.FINGERPRINT }}
+             --external-url sigstore=https://search.sigstore.dev/?hash=${{ env.FINGERPRINT }}
+             --org ${{ inputs.kosli_org }}
 
+      - name: Report SBOM to Kosli
+        if: ${{ inputs.report_to_kosli != 'none' }}
+        env:
+          KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+        run:
+          kosli attest generic
+            --flow ${{ inputs.flow_name }}
+            --trail ${{ inputs.trail_name }}
+            --name container-sbom
+            --fingerprint ${{ env.FINGERPRINT }}
+            --attachments sbom.spdx.json
+            --org ${{ inputs.kosli_org }}
 
-    - name: setup Snyk
-      uses: snyk/actions/setup@master
-
-
-    - name: Report Docker image to Kosli
-      if: ${{ inputs.report_to_kosli != 'none' }}
-      env:
-        KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-      run:
-        kosli attest artifact
-           ${{ env.IMAGE }}:${{ inputs.tag }}
-           --flow ${{ inputs.flow_name }}
-           --trail ${{ inputs.trail_name }}
-           --name cli-docker
-           --fingerprint ${{ env.FINGERPRINT }}
-           --external-url sigstore=https://search.sigstore.dev/?hash=${{ env.FINGERPRINT }}
-           --org ${{ inputs.kosli_org }}
-
-
-    - name: Report SBOM to Kosli
-      if: ${{ inputs.report_to_kosli != 'none' }}
-      env:
-        KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-      run:
-        kosli attest generic
-          --flow ${{ inputs.flow_name }}
-          --trail ${{ inputs.trail_name }}
-          --name container-sbom
-          --fingerprint ${{ env.FINGERPRINT }}
-          --attachments  sbom.spdx.json
-          --org ${{ inputs.kosli_org }}
-
-
-    - name: Run Snyk Container Test to scan the Docker image for vulnerabilities
-      env:
-        SNYK_TOKEN: ${{ secrets.snyk_token }}
-      run:
+      - name: Run Snyk Container Test to scan the Docker image for vulnerabilities
+        env:
+          SNYK_TOKEN: ${{ secrets.snyk_token }}
+        run:
           snyk container test ${{ env.IMAGE }}:${{ inputs.tag }}
              --file=Dockerfile
              --sarif
              --policy-path=.snyk
              --sarif-file-output=snyk-docker.json
 
+      - name: Report Snyk Docker scan results attestation to Kosli
+        if: ${{ inputs.report_to_kosli != 'none' && (success() || failure()) }}
+        env:
+          KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+        run:
+          kosli attest snyk
+              --flow ${{ inputs.flow_name }}
+              --trail ${{ inputs.trail_name }}
+              --fingerprint ${{ env.FINGERPRINT }}
+              --name snyk-container-test
+              --scan-results snyk-docker.json
+              --org ${{ inputs.kosli_org }}
 
-    - name: Report Snyk Docker scan results attestation to Kosli
-      if:  ${{ inputs.report_to_kosli != 'none' && (success() || failure()) }}
-      env:
-        KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-      run:
-        kosli attest snyk
-            --flow ${{ inputs.flow_name }}
-            --trail ${{ inputs.trail_name }}
-            --fingerprint ${{ env.FINGERPRINT }}
-            --name snyk-container-test
-            --scan-results snyk-docker.json
-            --org ${{ inputs.kosli_org }}
+      - name: Smoke test the docker image to be sure it can connect to Kosli
+        id: smoke-test
+        env:
+          KOSLI_ORG: cyber-dojo
+          KOSLI_API_TOKEN: any-token-will-do
+        run:
+          docker run -e KOSLI_API_TOKEN
+            -e KOSLI_ORG --rm ${{ env.IMAGE }}:${{ inputs.tag }}
+            list environments
 
-
-    - name: Smoke test the docker image to be sure it can connect to Kosli
-      id: smoke-test
-      env:
-        KOSLI_ORG: cyber-dojo
-        KOSLI_API_TOKEN: any-token-will-do
-      run:
-        docker run -e KOSLI_API_TOKEN
-          -e KOSLI_ORG --rm ${{ env.IMAGE }}:${{ inputs.tag }}
-          list environments
-
-    - name: Report Docker smoke test attestation to Kosli
-      if:  ${{ inputs.report_to_kosli != 'none' && (success() || failure()) }}
-      env:
-        KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-        SMOKE_TEST_OUTCOME: ${{ steps.smoke-test.outcome}}
-      run:
-        kosli attest generic
-            --flow ${{ inputs.flow_name }}
-            --trail ${{ inputs.trail_name }}
-            --fingerprint ${{ env.FINGERPRINT }}
-            --name smoke-test
-            --compliant=${{ steps.smoke-test.outcome == 'success' }}
-            --org ${{ inputs.kosli_org }}
-
+      - name: Report Docker smoke test attestation to Kosli
+        if: ${{ inputs.report_to_kosli != 'none' && (success() || failure()) }}
+        env:
+          KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+          SMOKE_TEST_OUTCOME: ${{ steps.smoke-test.outcome }}
+        run:
+          kosli attest generic
+              --flow ${{ inputs.flow_name }}
+              --trail ${{ inputs.trail_name }}
+              --fingerprint ${{ env.FINGERPRINT }}
+              --name smoke-test
+              --compliant=${{ steps.smoke-test.outcome == 'success' }}
+              --org ${{ inputs.kosli_org }}
