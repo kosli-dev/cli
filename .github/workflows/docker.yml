@@ -82,11 +82,16 @@ jobs:
             | jq -Rsc --argjson map "$RUNNER_MAP" '
                 split("\n") |
                 map(select(length > 0) | ltrimstr(" ") | rtrimstr(" ")) |
-                map({
-                  platform: .,
-                  runner:   (. as $p | $map | .[$p] // "ubuntu-latest"),
-                  slug:     gsub("/"; "-")
-                })
+                map(
+                  . as $p |
+                  if ($map | has($p)) then {
+                    platform: $p,
+                    runner:   $map[$p],
+                    slug:     ($p | gsub("/"; "-"))
+                  } else
+                    error("Unsupported platform \($p). Add it to RUNNER_MAP in docker.yml.")
+                  end
+                )
               ')
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
@@ -146,7 +151,7 @@ jobs:
           # Per-arch cache keeps amd64 and arm64 independent so a change on
           # one arch doesn't bust the other's cache.
           cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache-${{ matrix.slug }}
-          cache-to:   type=registry,ref=${{ env.IMAGE }}:buildcache-${{ matrix.slug }},mode=max
+          cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache-${{ matrix.slug }},mode=max
 
       - name: Export digest to file
         run: |
@@ -238,7 +243,7 @@ jobs:
 
           docker buildx imagetools create \
             --tag "${IMAGE}:${TAG}" \
-            ${DIGEST_ARGS}
+            "${DIGEST_ARGS}"
 
           DIGEST=$(docker buildx imagetools inspect "${IMAGE}:${TAG}" \
             --format '{{json .Manifest.Digest}}' | tr -d '"')
