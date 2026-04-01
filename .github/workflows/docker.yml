@@ -183,6 +183,7 @@ jobs:
       contents: write
       attestations: write
       packages: write
+      artifact-metadata: write
 
     steps:
       - name: Harden Runner
