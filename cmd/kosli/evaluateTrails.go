@@ -9,7 +9,7 @@ import (
 const evaluateTrailsShortDesc = `Evaluate multiple trails against a policy.`
 
 const evaluateTrailsLongDesc = evaluateTrailsShortDesc + `
-Fetch multiple trails from Kosli and evaluate them together against a Rego policy using OPA.
+Fetch multiple trails from Kosli and evaluate them together against a Rego policy.
 The trail data is passed to the policy as ` + "`input.trails`" + ` (an array), unlike
 ` + "`evaluate trail`" + ` which passes ` + "`input.trail`" + ` (a single object).
 

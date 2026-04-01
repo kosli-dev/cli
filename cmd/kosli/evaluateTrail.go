@@ -9,7 +9,7 @@ import (
 const evaluateTrailShortDesc = `Evaluate a trail against a policy.`
 
 const evaluateTrailLongDesc = evaluateTrailShortDesc + `
-Fetch a single trail from Kosli and evaluate it against a Rego policy using OPA.
+Fetch a single trail from Kosli and evaluate it against a Rego policy.
 The trail data is passed to the policy as ` + "`input.trail`" + `.
 
 Use ` + "`--attestations`" + ` to enrich the input with detailed attestation data
