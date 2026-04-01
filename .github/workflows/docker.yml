@@ -141,7 +141,6 @@ jobs:
         with:
           context: .
           # Push without a tag — the merge job creates the final manifest.
-          push: true
           platforms: ${{ matrix.platform }}
           outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
           # Per-arch cache keeps amd64 and arm64 independent so a change on
