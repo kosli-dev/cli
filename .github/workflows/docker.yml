@@ -151,6 +151,7 @@ jobs:
 
       - name: Export digest to file
         run: |
+          if [ -z "$DIGEST" ]; then echo "::error::Build digest is empty"; exit 1; fi
           mkdir -p /tmp/digests
           touch "/tmp/digests/${DIGEST#sha256:}"
         env:
