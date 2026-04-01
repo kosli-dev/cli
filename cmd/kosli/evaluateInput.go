@@ -10,10 +10,8 @@ import (
 )
 
 type evaluateInputOptions struct {
-	inputFile  string
-	policyFile string
-	output     string
-	showInput  bool
+	commonEvaluateOptions
+	inputFile string
 }
 
 const evaluateInputShortDesc = `Evaluate a local JSON input against a Rego policy.`
@@ -65,10 +63,11 @@ func newEvaluateInputCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
+	o.addFlags(cmd, "Path to a Rego policy file to evaluate against the input.")
 	cmd.Flags().StringVarP(&o.inputFile, "input-file", "i", "", "[optional] Path to a JSON input file. Reads from stdin if omitted.")
-	cmd.Flags().StringVarP(&o.policyFile, "policy", "p", "", "Path to a Rego policy file to evaluate against the input.")
-	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
-	cmd.Flags().BoolVar(&o.showInput, "show-input", false, "[optional] Include the policy input data in the output.")
+
+	cmd.Flags().Lookup("flow").Hidden = true
+	cmd.Flags().Lookup("attestations").Hidden = true
 
 	err := RequireFlags(cmd, []string{"policy"})
 	if err != nil {

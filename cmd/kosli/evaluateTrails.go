@@ -68,6 +68,11 @@ func newEvaluateTrailsCmd(out io.Writer) *cobra.Command {
 
 	o.addFlags(cmd, "Path to a Rego policy file to evaluate against the trails.")
 
+	err := RequireFlags(cmd, []string{"flow", "policy"})
+	if err != nil {
+		logger.Error("failed to configure required flags: %v", err)
+	}
+
 	return cmd
 }
 

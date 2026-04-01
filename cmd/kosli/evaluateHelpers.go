@@ -28,11 +28,6 @@ func (o *commonEvaluateOptions) addFlags(cmd *cobra.Command, policyDesc string) 
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	cmd.Flags().BoolVar(&o.showInput, "show-input", false, "[optional] Include the policy input data in the output.")
 	cmd.Flags().StringSliceVar(&o.attestations, "attestations", nil, "[optional] Limit which attestations are included. Plain name for trail-level, dot-qualified (artifact.name) for artifact-level.")
-
-	err := RequireFlags(cmd, []string{"flow", "policy"})
-	if err != nil {
-		logger.Error("failed to configure required flags: %v", err)
-	}
 }
 
 func fetchAndEnrichTrail(flowName, trailName string, attestations []string) (interface{}, error) {
