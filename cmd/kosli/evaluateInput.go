@@ -107,12 +107,8 @@ func loadInputFromFile(filePath string) (result map[string]interface{}, err erro
 }
 
 func loadInput(r io.Reader) (map[string]interface{}, error) {
-	data, err := io.ReadAll(r)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read input: %w", err)
-	}
 	var input map[string]interface{}
-	if err := json.Unmarshal(data, &input); err != nil {
+	if err := json.NewDecoder(r).Decode(&input); err != nil {
 		return nil, fmt.Errorf("failed to parse input: %w", err)
 	}
 	return input, nil
