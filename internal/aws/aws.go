@@ -350,7 +350,7 @@ func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, exclud
 		Bucket: aws.String(bucket),
 	}
 
-	downloader, err := transfermanager.NewDownloader(context.TODO(), client)
+	downloader, err := transfermanager.NewDownloader(client)
 	if err != nil {
 		return s3Data, err
 	}
@@ -409,7 +409,7 @@ func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, exclud
 	return s3Data, nil
 }
 
-func downloadFileFromBucket(downloader *transfermanager.Downloader, dirName, key, bucket string, logger *logger.Logger) error {
+func downloadFileFromBucket(downloader *transfermanager.Client, dirName, key, bucket string, logger *logger.Logger) error {
 	file, err := utils.CreateFile(filepath.Join(dirName, key))
 	if err != nil {
 		return err
@@ -420,15 +420,17 @@ func downloadFileFromBucket(downloader *transfermanager.Downloader, dirName, key
 		}
 	}()
 
-	numBytes, err := downloader.DownloadObject(context.TODO(), &transfermanager.DownloadObjectInput{
-		Bucket:      aws.String(bucket),
-		Key:         aws.String(key),
-		WriteToFile: file.Name(),
+	result, err := downloader.DownloadObject(context.TODO(), &transfermanager.DownloadObjectInput{
+		Bucket:   aws.String(bucket),
+		Key:      aws.String(key),
+		WriterAt: file,
 	})
 	if err != nil {
 		return err
 	}
-	logger.Debug("downloaded", file.Name(), numBytes, "bytes")
+	if result.ContentLength != nil {
+		logger.Debug("downloaded", file.Name(), *result.ContentLength, "bytes")
+	}
 
 	return nil
 }
