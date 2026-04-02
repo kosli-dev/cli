@@ -6,6 +6,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
+	"github.com/open-policy-agent/opa/v1/storage/inmem"
 )
 
 // Result holds the outcome of a policy evaluation.
@@ -16,18 +17,25 @@ type Result struct {
 
 // Evaluate evaluates a Rego policy against the given input.
 // The policy must use `package policy` and declare an `allow` rule.
-func Evaluate(policySource string, input interface{}) (*Result, error) {
+// An optional params map can be provided to populate data.params in the policy.
+func Evaluate(policySource string, input interface{}, params map[string]interface{}) (*Result, error) {
 	if err := validatePolicy(policySource); err != nil {
 		return nil, err
 	}
 
 	ctx := context.Background()
 
-	r := rego.New(
+	opts := []func(*rego.Rego){
 		rego.Query("data.policy.allow"),
 		rego.Module("policy.rego", policySource),
 		rego.Input(input),
-	)
+	}
+	if params != nil {
+		store := inmem.NewFromObject(map[string]interface{}{"params": params})
+		opts = append(opts, rego.Store(store))
+	}
+
+	r := rego.New(opts...)
 
 	rs, err := r.Eval(ctx)
 	if err != nil {
@@ -46,7 +54,7 @@ func Evaluate(policySource string, input interface{}) (*Result, error) {
 	result := &Result{Allow: allow}
 
 	if !result.Allow {
-		violations, err := collectViolations(ctx, policySource, input)
+		violations, err := collectViolations(ctx, policySource, input, params)
 		if err != nil {
 			return nil, err
 		}
@@ -81,12 +89,18 @@ func validatePolicy(policySource string) error {
 	return nil
 }
 
-func collectViolations(ctx context.Context, policySource string, input interface{}) ([]string, error) {
-	r := rego.New(
+func collectViolations(ctx context.Context, policySource string, input interface{}, params map[string]interface{}) ([]string, error) {
+	opts := []func(*rego.Rego){
 		rego.Query("data.policy.violations"),
 		rego.Module("policy.rego", policySource),
 		rego.Input(input),
-	)
+	}
+	if params != nil {
+		store := inmem.NewFromObject(map[string]interface{}{"params": params})
+		opts = append(opts, rego.Store(store))
+	}
+
+	r := rego.New(opts...)
 
 	rs, err := r.Eval(ctx)
 	if err != nil {

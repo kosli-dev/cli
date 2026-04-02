@@ -40,6 +40,14 @@ kosli evaluate trails yourTrailName1 yourTrailName2 \
 	--show-input \
 	--output json \
 	--api-token yourAPIToken \
+	--org yourOrgName
+
+# evaluate trails with policy parameters:
+kosli evaluate trails yourTrailName1 yourTrailName2 \
+	--policy yourPolicyFile.rego \
+	--flow yourFlowName \
+	--params '{"min_approvers": 2}' \
+	--api-token yourAPIToken \
 	--org yourOrgName`
 
 type evaluateTrailsOptions struct {
@@ -86,9 +94,14 @@ func (o *evaluateTrailsOptions) run(out io.Writer, args []string) error {
 		trails = append(trails, trailData)
 	}
 
+	params, err := parseParams(o.params)
+	if err != nil {
+		return err
+	}
+
 	input := map[string]interface{}{
 		"trails": trails,
 	}
 
-	return evaluateAndPrintResult(out, o.policyFile, input, o.output, o.showInput)
+	return evaluateAndPrintResult(out, o.policyFile, input, o.output, o.showInput, params)
 }

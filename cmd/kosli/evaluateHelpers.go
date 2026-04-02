@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/kosli-dev/cli/internal/evaluate"
 	"github.com/kosli-dev/cli/internal/output"
@@ -20,6 +21,7 @@ type commonEvaluateOptions struct {
 	output       string
 	showInput    bool
 	attestations []string
+	params       string
 }
 
 func (o *commonEvaluateOptions) addFlags(cmd *cobra.Command, policyDesc string) {
@@ -28,6 +30,7 @@ func (o *commonEvaluateOptions) addFlags(cmd *cobra.Command, policyDesc string) 
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	cmd.Flags().BoolVar(&o.showInput, "show-input", false, "[optional] Include the policy input data in the output.")
 	cmd.Flags().StringSliceVar(&o.attestations, "attestations", nil, "[optional] Limit which attestations are included. Plain name for trail-level, dot-qualified (artifact.name) for artifact-level.")
+	cmd.Flags().StringVar(&o.params, "params", "", "[optional] Policy parameters as inline JSON or @file.json. Available in policies as data.params.")
 }
 
 func fetchAndEnrichTrail(flowName, trailName string, attestations []string) (interface{}, error) {
@@ -90,13 +93,36 @@ func fetchAndEnrichTrail(flowName, trailName string, attestations []string) (int
 	return trailData, nil
 }
 
-func evaluateAndPrintResult(out io.Writer, policyFile string, input map[string]interface{}, outputFormat string, showInput bool) error {
+func parseParams(raw string) (map[string]interface{}, error) {
+	if raw == "" {
+		return nil, nil
+	}
+
+	var jsonBytes []byte
+	if strings.HasPrefix(raw, "@") {
+		var err error
+		jsonBytes, err = os.ReadFile(raw[1:])
+		if err != nil {
+			return nil, fmt.Errorf("failed to read --params file: %w", err)
+		}
+	} else {
+		jsonBytes = []byte(raw)
+	}
+
+	var params map[string]interface{}
+	if err := json.Unmarshal(jsonBytes, &params); err != nil {
+		return nil, fmt.Errorf("failed to parse --params: %w", err)
+	}
+	return params, nil
+}
+
+func evaluateAndPrintResult(out io.Writer, policyFile string, input map[string]interface{}, outputFormat string, showInput bool, params map[string]interface{}) error {
 	policySource, err := os.ReadFile(policyFile)
 	if err != nil {
 		return fmt.Errorf("failed to read policy file: %w", err)
 	}
 
-	result, err := evaluate.Evaluate(string(policySource), input)
+	result, err := evaluate.Evaluate(string(policySource), input, params)
 	if err != nil {
 		return err
 	}
@@ -107,6 +133,9 @@ func evaluateAndPrintResult(out io.Writer, policyFile string, input map[string]i
 	}
 	if showInput {
 		auditResult["input"] = input
+	}
+	if showInput && params != nil {
+		auditResult["params"] = params
 	}
 
 	raw, err := json.Marshal(auditResult)

@@ -47,3 +47,10 @@
   - [x] Refactor: use `cmd.InOrStdin()` for testable stdin
   - [x] Refactor: embed `commonEvaluateOptions` to remove flag duplication
 - [x] Slice 5: Detect terminal stdin and error when no input is piped
+
+## Add `--params` flag to `kosli evaluate` commands
+
+- [x] Slice 1: `evaluate.Evaluate()` accepts params, passes via OPA data store
+- [x] Slice 2: Add `--params` flag across all three commands
+- [x] Slice 3: Show params in `--show-input` output
+- [x] Slice 4: Update help text and examples

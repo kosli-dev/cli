@@ -17,7 +17,7 @@ allow = true
 		},
 	}
 
-	result, err := Evaluate(policy, input)
+	result, err := Evaluate(policy, input, nil)
 	require.NoError(t, err)
 	require.True(t, result.Allow)
 	require.Empty(t, result.Violations)
@@ -38,7 +38,7 @@ violations contains msg if {
 		},
 	}
 
-	result, err := Evaluate(policy, input)
+	result, err := Evaluate(policy, input, nil)
 	require.NoError(t, err)
 	require.False(t, result.Allow)
 	require.Contains(t, result.Violations, "always denied")
@@ -51,7 +51,7 @@ allow = true
 `
 	input := map[string]interface{}{}
 
-	_, err := Evaluate(policy, input)
+	_, err := Evaluate(policy, input, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "package policy")
 }
@@ -65,7 +65,7 @@ violations contains msg if {
 `
 	input := map[string]interface{}{}
 
-	_, err := Evaluate(policy, input)
+	_, err := Evaluate(policy, input, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "allow")
 }
@@ -77,7 +77,7 @@ allow = false
 `
 	input := map[string]interface{}{}
 
-	result, err := Evaluate(policy, input)
+	result, err := Evaluate(policy, input, nil)
 	require.NoError(t, err)
 	require.False(t, result.Allow)
 	require.Empty(t, result.Violations)
@@ -90,7 +90,7 @@ allow = "yes"
 `
 	input := map[string]interface{}{}
 
-	_, err := Evaluate(policy, input)
+	_, err := Evaluate(policy, input, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "boolean")
 }
@@ -102,7 +102,82 @@ allow = {{{
 `
 	input := map[string]interface{}{}
 
-	_, err := Evaluate(policy, input)
+	_, err := Evaluate(policy, input, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "parse")
+}
+
+func TestEvaluate_ParamsProvided(t *testing.T) {
+	policy := `package policy
+
+import rego.v1
+
+default allow := false
+
+default threshold := 10
+
+threshold := data.params.threshold if { data.params.threshold }
+
+allow if { input.score >= threshold }
+
+violations contains msg if {
+	input.score < threshold
+	msg := sprintf("score %d is below threshold %d", [input.score, threshold])
+}
+`
+	input := map[string]interface{}{
+		"score": 5,
+	}
+	params := map[string]interface{}{
+		"threshold": 3,
+	}
+
+	result, err := Evaluate(policy, input, params)
+	require.NoError(t, err)
+	require.True(t, result.Allow, "score 5 should pass threshold 3")
+}
+
+func TestEvaluate_ParamsDefault(t *testing.T) {
+	policy := `package policy
+
+import rego.v1
+
+default allow := false
+
+default threshold := 10
+
+threshold := data.params.threshold if { data.params.threshold }
+
+allow if { input.score >= threshold }
+
+violations contains msg if {
+	input.score < threshold
+	msg := sprintf("score %d is below threshold %d", [input.score, threshold])
+}
+`
+	input := map[string]interface{}{
+		"score": 5,
+	}
+
+	// No params — policy uses default threshold of 10
+	result, err := Evaluate(policy, input, nil)
+	require.NoError(t, err)
+	require.False(t, result.Allow, "score 5 should fail default threshold 10")
+	require.Len(t, result.Violations, 1)
+	require.Contains(t, result.Violations[0], "below threshold 10")
+}
+
+func TestEvaluate_ParamsIgnoredByPolicy(t *testing.T) {
+	policy := `package policy
+
+allow = true
+`
+	input := map[string]interface{}{}
+	params := map[string]interface{}{
+		"unused_key": "unused_value",
+	}
+
+	result, err := Evaluate(policy, input, params)
+	require.NoError(t, err)
+	require.True(t, result.Allow, "params not referenced by policy should have no effect")
 }

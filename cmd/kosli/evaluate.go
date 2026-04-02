@@ -18,7 +18,11 @@ Use ` + "`evaluate input`" + ` to evaluate a local JSON file or stdin without an
 
 The policy must use ` + "`package policy`" + ` and define an ` + "`allow`" + ` rule.
 An optional ` + "`violations`" + ` rule (a set of strings) can provide human-readable denial reasons.
-The command exits with code 0 when allowed and code 1 when denied.`
+The command exits with code 0 when allowed and code 1 when denied.
+
+Use ` + "`--params`" + ` to pass configuration data (thresholds, expected counts, etc.)
+to your policy. Params are available as ` + "`data.params`" + ` in Rego, keeping policy
+logic reusable across environments with different tolerances.`
 
 func newEvaluateCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
