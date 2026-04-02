@@ -14,7 +14,7 @@ kosli evaluate trails TRAIL-NAME [TRAIL-NAME...] [flags]
 ```
 
 Evaluate multiple trails against a policy.
-Fetch multiple trails from Kosli and evaluate them together against a Rego policy.
+Fetch multiple trails from Kosli and evaluate them together against a Rego policy using OPA.
 The trail data is passed to the policy as `input.trails` (an array), unlike
 `evaluate trail` which passes `input.trail` (a single object).
 

@@ -1,22 +1,21 @@
 ---
-title: "kosli evaluate trails"
+title: "kosli evaluate trail"
 beta: false
 deprecated: false
-summary: "Evaluate multiple trails against a policy."
+summary: "Evaluate a trail against a policy."
 ---
 
-# kosli evaluate trails
+# kosli evaluate trail
 
 ## Synopsis
 
 ```shell
-kosli evaluate trails TRAIL-NAME [TRAIL-NAME...] [flags]
+kosli evaluate trail TRAIL-NAME [flags]
 ```
 
-Evaluate multiple trails against a policy.
-Fetch multiple trails from Kosli and evaluate them together against a Rego policy.
-The trail data is passed to the policy as `input.trails` (an array), unlike
-`evaluate trail` which passes `input.trail` (a single object).
+Evaluate a trail against a policy.
+Fetch a single trail from Kosli and evaluate it against a Rego policy using OPA.
+The trail data is passed to the policy as `input.trail`.
 
 Use `--attestations` to enrich the input with detailed attestation data
 (e.g. pull request approvers, scan results). Use `--show-input` to inspect the
@@ -27,9 +26,9 @@ full data structure available to the policy. Use `--output json` for structured 
 | :--- | :--- |
 |        --attestations strings  |  [optional] Limit which attestations are included. Plain name for trail-level, dot-qualified (artifact.name) for artifact-level.  |
 |    -f, --flow string  |  The Kosli flow name.  |
-|    -h, --help  |  help for trails  |
+|    -h, --help  |  help for trail  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
-|    -p, --policy string  |  Path to a Rego policy file to evaluate against the trails.  |
+|    -p, --policy string  |  Path to a Rego policy file to evaluate against the trail.  |
 |        --show-input  |  [optional] Include the policy input data in the output.  |
 
 
@@ -49,27 +48,27 @@ full data structure available to the policy. Use `--output json` for structured 
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-##### evaluate multiple trails against a policy
+##### evaluate a trail against a policy
 
 ```shell
-kosli evaluate trails yourTrailName1 yourTrailName2 
+kosli evaluate trail yourTrailName 
 	--policy yourPolicyFile.rego 
 
 ```
 
-##### evaluate trails with attestation enrichment
+##### evaluate a trail with attestation enrichment
 
 ```shell
-kosli evaluate trails yourTrailName1 yourTrailName2 
+kosli evaluate trail yourTrailName 
 	--policy yourPolicyFile.rego 
 	--attestations pull-request 
 
 ```
 
-##### evaluate trails with JSON output and show the policy input
+##### evaluate a trail and show the policy input data
 
 ```shell
-kosli evaluate trails yourTrailName1 yourTrailName2 
+kosli evaluate trail yourTrailName 
 	--policy yourPolicyFile.rego 
 	--show-input 
 	--output json 
