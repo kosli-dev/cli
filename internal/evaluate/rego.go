@@ -18,7 +18,7 @@ type Result struct {
 // Evaluate evaluates a Rego policy against the given input.
 // The policy must use `package policy` and declare an `allow` rule.
 // An optional params map can be provided to populate data.params in the policy.
-func Evaluate(policySource string, input interface{}, params ...map[string]interface{}) (*Result, error) {
+func Evaluate(policySource string, input interface{}, params map[string]interface{}) (*Result, error) {
 	if err := validatePolicy(policySource); err != nil {
 		return nil, err
 	}
@@ -30,8 +30,8 @@ func Evaluate(policySource string, input interface{}, params ...map[string]inter
 		rego.Module("policy.rego", policySource),
 		rego.Input(input),
 	}
-	if len(params) > 0 && params[0] != nil {
-		store := inmem.NewFromObject(map[string]interface{}{"params": params[0]})
+	if params != nil {
+		store := inmem.NewFromObject(map[string]interface{}{"params": params})
 		opts = append(opts, rego.Store(store))
 	}
 
@@ -54,11 +54,7 @@ func Evaluate(policySource string, input interface{}, params ...map[string]inter
 	result := &Result{Allow: allow}
 
 	if !result.Allow {
-		var p map[string]interface{}
-		if len(params) > 0 {
-			p = params[0]
-		}
-		violations, err := collectViolations(ctx, policySource, input, p)
+		violations, err := collectViolations(ctx, policySource, input, params)
 		if err != nil {
 			return nil, err
 		}

@@ -17,7 +17,7 @@ allow = true
 		},
 	}
 
-	result, err := Evaluate(policy, input)
+	result, err := Evaluate(policy, input, nil)
 	require.NoError(t, err)
 	require.True(t, result.Allow)
 	require.Empty(t, result.Violations)
@@ -38,7 +38,7 @@ violations contains msg if {
 		},
 	}
 
-	result, err := Evaluate(policy, input)
+	result, err := Evaluate(policy, input, nil)
 	require.NoError(t, err)
 	require.False(t, result.Allow)
 	require.Contains(t, result.Violations, "always denied")
@@ -51,7 +51,7 @@ allow = true
 `
 	input := map[string]interface{}{}
 
-	_, err := Evaluate(policy, input)
+	_, err := Evaluate(policy, input, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "package policy")
 }
@@ -65,7 +65,7 @@ violations contains msg if {
 `
 	input := map[string]interface{}{}
 
-	_, err := Evaluate(policy, input)
+	_, err := Evaluate(policy, input, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "allow")
 }
@@ -77,7 +77,7 @@ allow = false
 `
 	input := map[string]interface{}{}
 
-	result, err := Evaluate(policy, input)
+	result, err := Evaluate(policy, input, nil)
 	require.NoError(t, err)
 	require.False(t, result.Allow)
 	require.Empty(t, result.Violations)
@@ -90,7 +90,7 @@ allow = "yes"
 `
 	input := map[string]interface{}{}
 
-	_, err := Evaluate(policy, input)
+	_, err := Evaluate(policy, input, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "boolean")
 }
@@ -102,7 +102,7 @@ allow = {{{
 `
 	input := map[string]interface{}{}
 
-	_, err := Evaluate(policy, input)
+	_, err := Evaluate(policy, input, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "parse")
 }
@@ -160,7 +160,7 @@ violations contains msg if {
 	}
 
 	// No params — policy uses default threshold of 10
-	result, err := Evaluate(policy, input)
+	result, err := Evaluate(policy, input, nil)
 	require.NoError(t, err)
 	require.False(t, result.Allow, "score 5 should fail default threshold 10")
 	require.Len(t, result.Violations, 1)
