@@ -106,3 +106,31 @@ allow = {{{
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "parse")
 }
+
+func TestEvaluate_ParamsProvided(t *testing.T) {
+	policy := `package policy
+
+import rego.v1
+
+default threshold := 10
+
+threshold := data.params.threshold if { data.params.threshold }
+
+allow if { input.score >= threshold }
+
+violations contains msg if {
+	input.score < threshold
+	msg := sprintf("score %d is below threshold %d", [input.score, threshold])
+}
+`
+	input := map[string]interface{}{
+		"score": 5,
+	}
+	params := map[string]interface{}{
+		"threshold": 3,
+	}
+
+	result, err := Evaluate(policy, input, params)
+	require.NoError(t, err)
+	require.True(t, result.Allow, "score 5 should pass threshold 3")
+}
