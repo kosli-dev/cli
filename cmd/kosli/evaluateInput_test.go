@@ -98,6 +98,15 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 			cmd:         "evaluate input --input-file testdata/evaluate/score-input.json --policy testdata/policies/allow-all.rego --params not-json",
 			goldenRegex: `failed to parse --params`,
 		},
+		{
+			name: "show-input with params includes params in JSON output",
+			cmd:  `evaluate input --input-file testdata/evaluate/score-input.json --policy testdata/policies/check-params-threshold.rego --params '{"threshold":3}' --output json --show-input`,
+			goldenJson: []jsonCheck{
+				{"allow", true},
+				{"input.score", float64(5)},
+				{"params.threshold", float64(3)},
+			},
+		},
 	}
 	runTestCmd(suite.T(), tests)
 }

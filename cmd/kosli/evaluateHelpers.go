@@ -134,6 +134,9 @@ func evaluateAndPrintResult(out io.Writer, policyFile string, input map[string]i
 	if showInput {
 		auditResult["input"] = input
 	}
+	if showInput && params != nil {
+		auditResult["params"] = params
+	}
 
 	raw, err := json.Marshal(auditResult)
 	if err != nil {
