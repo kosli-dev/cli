@@ -109,7 +109,7 @@ jobs:
     uses: ./.github/workflows/docker.yml
     with:
       tag: ${{ needs.pre-build.outputs.tag }}
-      platforms: linux/amd64
+      platforms: linux/amd64,linux/arm64
       flow_name: cli
       trail_name: ${{ needs.pre-build.outputs.trail_name }}
       kosli_org: kosli-public
