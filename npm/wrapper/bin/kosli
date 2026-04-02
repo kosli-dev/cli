@@ -1,0 +1,46 @@
+#!/usr/bin/env node
+"use strict";
+
+const { spawnSync } = require("child_process");
+const path = require("path");
+
+const platform = process.platform;
+const arch = process.arch;
+
+const SUPPORTED = {
+  linux: { x64: true, arm64: true, arm: true },
+  darwin: { x64: true, arm64: true },
+  win32: { x64: true, arm64: true },
+};
+
+if (!SUPPORTED[platform] || !SUPPORTED[platform][arch]) {
+  process.stderr.write(
+    `[kosli] Error: ${platform}/${arch} is not a supported platform.\n` +
+    `[kosli] See https://github.com/kosli-dev/cli for supported platforms.\n`
+  );
+  process.exit(1);
+}
+
+const packageName = `@kosli/cli-${platform}-${arch}`;
+
+let binaryPath;
+try {
+  const packageDir = path.dirname(
+    require.resolve(`${packageName}/package.json`)
+  );
+  const binaryName = platform === "win32" ? "kosli.exe" : "kosli";
+  binaryPath = path.join(packageDir, "bin", binaryName);
+} catch (e) {
+  process.stderr.write(
+    `[kosli] Error: platform package ${packageName} is not installed.\n` +
+    `[kosli] Try reinstalling: npm install -g @kosli/cli\n`
+  );
+  process.exit(1);
+}
+
+const result = spawnSync(binaryPath, process.argv.slice(2), { stdio: "inherit" });
+if (result.error) {
+  process.stderr.write(`[kosli] Error: failed to run binary: ${result.error.message}\n`);
+  process.exit(1);
+}
+process.exit(result.status ?? 1);

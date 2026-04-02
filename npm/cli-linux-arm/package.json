@@ -1,0 +1,30 @@
+{
+  "name": "@kosli/cli-linux-arm",
+  "version": "0.0.0",
+  "description": "Linux arm binary for @kosli/cli",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kosli-dev/cli.git",
+    "directory": "npm/cli-linux-arm"
+  },
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm"
+  ],
+  "bin": {
+    "kosli": "bin/kosli"
+  },
+  "files": [
+    "bin/"
+  ],
+  "scripts": {
+    "prepack": "test -f bin/kosli || (echo 'ERROR: bin/kosli is missing' && exit 1)"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  }
+}

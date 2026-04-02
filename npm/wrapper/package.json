@@ -1,0 +1,50 @@
+{
+  "name": "@kosli/cli",
+  "version": "0.0.0",
+  "description": "CLI client for reporting compliance events to https://kosli.com",
+  "license": "MIT",
+  "author": "Kosli Inc. <hello@kosli.com>",
+  "homepage": "https://kosli.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kosli-dev/cli.git",
+    "directory": "npm/wrapper"
+  },
+  "bugs": {
+    "url": "https://github.com/kosli-dev/cli/issues"
+  },
+  "keywords": [
+    "cli",
+    "kosli",
+    "compliance",
+    "supply-chain",
+    "devops"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "kosli": "bin/kosli"
+  },
+  "files": [
+    "bin/",
+    "install.js"
+  ],
+  "scripts": {
+    "prepack": "test -f bin/kosli || (echo 'ERROR: bin/kosli is missing' && exit 1) && test -f install.js || (echo 'ERROR: install.js is missing' && exit 1)",
+    "postinstall": "node install.js"
+  },
+  "optionalDependencies": {
+    "@kosli/cli-darwin-arm64": "0.0.0",
+    "@kosli/cli-darwin-x64": "0.0.0",
+    "@kosli/cli-linux-arm": "0.0.0",
+    "@kosli/cli-linux-arm64": "0.0.0",
+    "@kosli/cli-linux-x64": "0.0.0",
+    "@kosli/cli-win32-arm64": "0.0.0",
+    "@kosli/cli-win32-x64": "0.0.0"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  }
+}
