@@ -82,6 +82,22 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 				{"input.trail.name", "test-trail"},
 			},
 		},
+		{
+			name:        "inline --params overrides policy default threshold",
+			cmd:         `evaluate input --input-file testdata/evaluate/score-input.json --policy testdata/policies/check-params-threshold.rego --params '{"threshold":3}'`,
+			goldenRegex: `RESULT:\s+ALLOWED`,
+		},
+		{
+			name:        "--params from file overrides policy default threshold",
+			cmd:         "evaluate input --input-file testdata/evaluate/score-input.json --policy testdata/policies/check-params-threshold.rego --params @testdata/evaluate/params-low-threshold.json",
+			goldenRegex: `RESULT:\s+ALLOWED`,
+		},
+		{
+			wantError:   true,
+			name:        "--params with invalid JSON returns error",
+			cmd:         "evaluate input --input-file testdata/evaluate/score-input.json --policy testdata/policies/allow-all.rego --params not-json",
+			goldenRegex: `failed to parse --params`,
+		},
 	}
 	runTestCmd(suite.T(), tests)
 }

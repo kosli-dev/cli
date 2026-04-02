@@ -81,9 +81,14 @@ func (o *evaluateTrailOptions) run(out io.Writer, args []string) error {
 		return err
 	}
 
+	params, err := parseParams(o.params)
+	if err != nil {
+		return err
+	}
+
 	input := map[string]interface{}{
 		"trail": trailData,
 	}
 
-	return evaluateAndPrintResult(out, o.policyFile, input, o.output, o.showInput)
+	return evaluateAndPrintResult(out, o.policyFile, input, o.output, o.showInput, params)
 }

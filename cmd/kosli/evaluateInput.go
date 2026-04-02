@@ -94,7 +94,12 @@ func (o *evaluateInputOptions) run(out io.Writer, in io.Reader) error {
 		return err
 	}
 
-	return evaluateAndPrintResult(out, o.policyFile, input, o.output, o.showInput)
+	params, err := parseParams(o.params)
+	if err != nil {
+		return err
+	}
+
+	return evaluateAndPrintResult(out, o.policyFile, input, o.output, o.showInput, params)
 }
 
 func loadInputFromFile(filePath string) (result map[string]interface{}, err error) {
