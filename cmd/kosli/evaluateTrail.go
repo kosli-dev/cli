@@ -39,6 +39,22 @@ kosli evaluate trail yourTrailName \
 	--show-input \
 	--output json \
 	--api-token yourAPIToken \
+	--org yourOrgName
+
+# evaluate a trail with policy parameters (inline JSON):
+kosli evaluate trail yourTrailName \
+	--policy yourPolicyFile.rego \
+	--flow yourFlowName \
+	--params '{"min_approvers": 2}' \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# evaluate a trail with policy parameters from a file:
+kosli evaluate trail yourTrailName \
+	--policy yourPolicyFile.rego \
+	--flow yourFlowName \
+	--params @params.json \
+	--api-token yourAPIToken \
 	--org yourOrgName`
 
 type evaluateTrailOptions struct {

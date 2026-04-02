@@ -27,7 +27,10 @@ The policy must use ` + "`package policy`" + ` and define an ` + "`allow`" + ` r
 An optional ` + "`violations`" + ` rule (a set of strings) can provide human-readable denial reasons.
 The command exits with code 0 when allowed and code 1 when denied.
 
-When ` + "`--input-file`" + ` is omitted, JSON is read from stdin.`
+When ` + "`--input-file`" + ` is omitted, JSON is read from stdin.
+
+Use ` + "`--params`" + ` to pass configuration data to the policy as ` + "`data.params`" + `.
+This accepts inline JSON or a file reference (` + "`@file.json`" + `).`
 
 const evaluateInputExample = `
 # capture trail data for local policy iteration:
@@ -49,7 +52,19 @@ kosli evaluate input \
 
 # read input from stdin:
 cat trail-data.json | kosli evaluate input \
-	--policy policy.rego`
+	--policy policy.rego
+
+# evaluate with policy parameters (inline JSON):
+kosli evaluate input \
+	--input-file trail-data.json \
+	--policy policy.rego \
+	--params '{"threshold": 3}'
+
+# evaluate with policy parameters from a file:
+kosli evaluate input \
+	--input-file trail-data.json \
+	--policy policy.rego \
+	--params @params.json`
 
 func newEvaluateInputCmd(out io.Writer) *cobra.Command {
 	o := new(evaluateInputOptions)

@@ -40,6 +40,14 @@ kosli evaluate trails yourTrailName1 yourTrailName2 \
 	--show-input \
 	--output json \
 	--api-token yourAPIToken \
+	--org yourOrgName
+
+# evaluate trails with policy parameters:
+kosli evaluate trails yourTrailName1 yourTrailName2 \
+	--policy yourPolicyFile.rego \
+	--flow yourFlowName \
+	--params '{"min_approvers": 2}' \
+	--api-token yourAPIToken \
 	--org yourOrgName`
 
 type evaluateTrailsOptions struct {
