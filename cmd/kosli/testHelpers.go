@@ -63,6 +63,7 @@ func executeCommandC(cmd string) (*cobra.Command, string, string, string, error)
 	root.SilenceErrors = false
 	root.SetOut(outWriter)
 	root.SetErr(errWriter)
+	root.SetIn(new(bytes.Buffer))
 	root.SetArgs(args)
 
 	c, err := root.ExecuteC()

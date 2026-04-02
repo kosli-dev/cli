@@ -34,3 +34,16 @@
 - [x] Slice 17: Align test method naming
 - [x] Slice 18: Fail evaluation when rehydration errors occur (instead of silently swallowing them)
 - [x] Slice 19: Add Long descriptions, Example blocks, and docs feedback (policy contract hint, snyk trail example)
+
+## kosli evaluate input
+
+- [x] Slice 1: `evaluate input --input-file` with a file path
+- [x] Slice 2: stdin support (omit --input-file to read stdin; `-` not supported by cobra)
+- [x] Slice 3: help text and examples
+- [x] Slice 4: PR review feedback
+  - [x] Remove "using OPA" from all evaluate command long descriptions
+  - [x] Add test cases for policy validation errors (missing package policy, missing allow rule, deny without violations)
+  - [x] Update help text examples with fixture-capture workflow
+  - [x] Refactor: use `cmd.InOrStdin()` for testable stdin
+  - [x] Refactor: embed `commonEvaluateOptions` to remove flag duplication
+- [x] Slice 5: Detect terminal stdin and error when no input is piped

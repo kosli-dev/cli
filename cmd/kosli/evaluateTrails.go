@@ -9,7 +9,7 @@ import (
 const evaluateTrailsShortDesc = `Evaluate multiple trails against a policy.`
 
 const evaluateTrailsLongDesc = evaluateTrailsShortDesc + `
-Fetch multiple trails from Kosli and evaluate them together against a Rego policy using OPA.
+Fetch multiple trails from Kosli and evaluate them together against a Rego policy.
 The trail data is passed to the policy as ` + "`input.trails`" + ` (an array), unlike
 ` + "`evaluate trail`" + ` which passes ` + "`input.trail`" + ` (a single object).
 
@@ -67,6 +67,11 @@ func newEvaluateTrailsCmd(out io.Writer) *cobra.Command {
 	}
 
 	o.addFlags(cmd, "Path to a Rego policy file to evaluate against the trails.")
+
+	err := RequireFlags(cmd, []string{"flow", "policy"})
+	if err != nil {
+		logger.Error("failed to configure required flags: %v", err)
+	}
 
 	return cmd
 }

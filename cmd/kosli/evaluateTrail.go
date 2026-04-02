@@ -9,7 +9,7 @@ import (
 const evaluateTrailShortDesc = `Evaluate a trail against a policy.`
 
 const evaluateTrailLongDesc = evaluateTrailShortDesc + `
-Fetch a single trail from Kosli and evaluate it against a Rego policy using OPA.
+Fetch a single trail from Kosli and evaluate it against a Rego policy.
 The trail data is passed to the policy as ` + "`input.trail`" + `.
 
 Use ` + "`--attestations`" + ` to enrich the input with detailed attestation data
@@ -66,6 +66,11 @@ func newEvaluateTrailCmd(out io.Writer) *cobra.Command {
 	}
 
 	o.addFlags(cmd, "Path to a Rego policy file to evaluate against the trail.")
+
+	err := RequireFlags(cmd, []string{"flow", "policy"})
+	if err != nil {
+		logger.Error("failed to configure required flags: %v", err)
+	}
 
 	return cmd
 }
