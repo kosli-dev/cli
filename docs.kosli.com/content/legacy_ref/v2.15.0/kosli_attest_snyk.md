@@ -1,39 +1,26 @@
 ---
-title: "kosli attest jira"
+title: "kosli attest snyk"
 beta: false
 deprecated: false
-summary: "Report a jira attestation to an artifact or a trail in a Kosli flow.  "
+summary: "Report a snyk attestation to an artifact or a trail in a Kosli flow.  "
 ---
 
-# kosli attest jira
+# kosli attest snyk
 
 ## Synopsis
 
 ```shell
-kosli attest jira [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli attest snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
-Report a jira attestation to an artifact or a trail in a Kosli flow.  
-Parses the given commit's message, current branch name or the content of the `--jira-secondary-source`
-argument for Jira issue references of the form:  
-'at least 2 characters long, starting with an uppercase letter project key followed by
-dash and one or more digits'.
+Report a snyk attestation to an artifact or a trail in a Kosli flow.  
+Only SARIF snyk output is accepted. 
+Snyk output can be for "snyk code test", "snyk container test", or "snyk iac test".
 
-If you want to restrict the Jira issue matching to a specific project, use the
-`--jira-project-key` flag to specify your own project key. You can specify multiple project keys if needed.
+The `--scan-results` .json file is analyzed and a summary of the scan results are reported to Kosli.
 
-If the `--ignore-branch-match` is set, the branch name is not parsed for a match.
-
-The found issue references will be checked against Jira to confirm their existence.
-The attestation is reported in all cases, and its compliance status depends on referencing
-existing Jira issues.  
-If you have wrong Jira credentials or wrong Jira-base-url it will be reported as non existing Jira issue.
-This is because Jira returns same 404 error code in all cases.
-
-The `--jira-issue-fields` can be used to include fields from the jira issue. By default no fields
-are included. `*all` will give all fields. Using `--jira-issue-fields "*all" --dry-run` will give you
-the complete list so you can select the once you need. The issue fields uses the jira API that is documented here:
-https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issues/#api-rest-api-2-issue-issueidorkey-get-request
+By default, the `--scan-results` .json file is also uploaded to Kosli's evidence vault.
+You can disable that by setting `--upload-results=false`
 
 
 The attestation can be bound to a *trail* using the trail name.  
@@ -51,7 +38,6 @@ binding the attestation to the right artifact.
 | :--- | :--- |
 |        --annotate stringToString  |  [optional] Annotate the attestation with data using key=value.  |
 |    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [oci, docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it).  |
-|        --assert  |  [optional] Exit with non-zero code if the attestation is non-compliant  |
 |        --attachments strings  |  [optional] The comma-separated list of paths of attachments for the reported attestation. Attachments can be files or directories. All attachments are compressed and uploaded to Kosli's evidence vault.  |
 |    -g, --commit string  |  [conditional] The git commit for which the attestation is associated to. Becomes required when reporting an attestation for an artifact before reporting it to Kosli. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --description string  |  [optional] attestation description  |
@@ -61,22 +47,20 @@ binding the attestation to the right artifact.
 |        --external-url stringToString  |  [optional] Add labeled reference URL for an external resource. The format is label=url (labels cannot contain '.' or '='). This flag can be set multiple times. If the resource is a file or dir, you can optionally add its fingerprint via --external-fingerprint  |
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact to attach the attestation to. Only required if the attestation is for an artifact and --artifact-type and artifact name/path are not used.  |
 |    -f, --flow string  |  The Kosli flow name.  |
-|    -h, --help  |  help for jira  |
-|        --ignore-branch-match  |  Ignore branch name when searching for Jira ticket reference.  |
-|        --jira-api-token string  |  Jira API token (for Jira Cloud)  |
-|        --jira-base-url string  |  The base url for the jira project, e.g. 'https://kosli.atlassian.net'  |
-|        --jira-issue-fields string  |  [optional] The comma separated list of fields to include from the Jira issue. Default no fields are included. '*all' will give all fields.  |
-|        --jira-pat string  |  Jira personal access token (for self-hosted Jira)  |
-|        --jira-project-key strings  |  [optional] Jira project key to match against. Can be repeated. Defaults to matching any jira project key.  |
-|        --jira-secondary-source string  |  [optional] An optional string to search for Jira ticket reference, e.g. '--jira-secondary-source ${{ github.head_ref }}'  |
-|        --jira-username string  |  Jira username (for Jira Cloud)  |
+|    -h, --help  |  help for snyk  |
 |    -n, --name string  |  The name of the attestation as declared in the flow or trail yaml template.  |
 |    -o, --origin-url string  |  [optional] The url pointing to where the attestation came from or is related. (defaulted to the CI url in some CIs: https://docs.kosli.com/integrations/ci_cd/#defaulted-kosli-command-flags-from-ci-variables ).  |
 |        --redact-commit-info strings  |  [optional] The list of commit info to be redacted before sending to Kosli. Allowed values are one or more of [author, message, branch].  |
 |        --registry-password string  |  [conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry.  |
 |        --registry-username string  |  [conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry.  |
+|        --repo-id string  |  [optional] The unique identifier of the repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|        --repo-provider string  |  [optional] The source code hosting provider. One of: github, gitlab, bitbucket, azure-devops.  |
 |        --repo-root string  |  [defaulted] The directory where the source git repository is available. Only used if --commit is used or defaulted in CI, see https://docs.kosli.com/integrations/ci_cd/#defaulted-kosli-command-flags-from-ci-variables . (default ".")  |
+|        --repo-url string  |  [optional] The URL of the repository. Must be a valid URL if provided. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|        --repository string  |  [optional] The name of a git repo as it is registered in Kosli. e.g kosli-dev/cli  |
+|    -R, --scan-results string  |  The path to Snyk scan SARIF results file from 'snyk test' and 'snyk container test'. By default, the Snyk results will be uploaded to Kosli's evidence vault.  |
 |    -T, --trail string  |  The Kosli trail name.  |
+|        --upload-results  |  [defaulted] Whether to upload the provided Snyk results file as an attachment to Kosli or not. (default true)  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the attestation.  |
 
 
@@ -92,113 +76,73 @@ binding the attestation to the right artifact.
 |        --org string  |  The Kosli organization.  |
 
 
+## Live Examples in different CI systems
+
+{{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli attest snyk` command in GitHub.
+
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli%2Battest%2Bsnyk), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=github&command=kosli%2Battest%2Bsnyk).{{< /tab >}}{{< tab "GitLab" >}}View an example of the `kosli attest snyk` command in GitLab.
+
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=gitlab&command=kosli%2Battest%2Bsnyk), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=gitlab&command=kosli%2Battest%2Bsnyk).{{< /tab >}}{{< /tabs >}}
+
 ## Examples Use Cases
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-##### report a jira attestation about a pre-built docker artifact (kosli calculates the fingerprint)
+##### report a snyk attestation about a pre-built docker artifact (kosli calculates the fingerprint)
 
 ```shell
-kosli attest jira yourDockerImageName 
+kosli attest snyk yourDockerImageName 
 	--artifact-type docker 
 	--name yourAttestationName 
-	--jira-base-url https://kosli.atlassian.net 
-	--jira-username user@domain.com 
-	--jira-api-token yourJiraAPIToken 
+	--scan-results yourSnykSARIFScanResults 
 
 ```
 
-##### report a jira attestation about a pre-built docker artifact (you provide the fingerprint)
+##### report a snyk attestation about a pre-built docker artifact (you provide the fingerprint)
 
 ```shell
-kosli attest jira 
+kosli attest snyk 
 	--fingerprint yourDockerImageFingerprint 
 	--name yourAttestationName 
-	--jira-base-url https://kosli.atlassian.net 
-	--jira-username user@domain.com 
-	--jira-api-token yourJiraAPIToken 
+	--scan-results yourSnykSARIFScanResults 
 
 ```
 
-##### report a jira attestation about a trail
+##### report a snyk attestation about a trail
 
 ```shell
-kosli attest jira 
+kosli attest snyk 
 	--name yourAttestationName 
-	--jira-base-url https://kosli.atlassian.net 
-	--jira-username user@domain.com 
-	--jira-api-token yourJiraAPIToken 
+	--scan-results yourSnykSARIFScanResults 
 
 ```
 
-##### report a jira attestation matching a specific jira project key
+##### report a snyk attestation about an artifact which has not been reported yet in a trail
 
 ```shell
-kosli attest jira 
-	--name yourAttestationName 
-	--jira-base-url https://kosli.atlassian.net 
-	--jira-username user@domain.com 
-	--jira-api-token yourJiraAPIToken 
-	--jira-project-key ABC 
-
-```
-
-##### report a jira attestation about a trail and include jira issue summary, description and creator
-
-```shell
-kosli attest jira 
-	--name yourAttestationName 
-	--jira-base-url https://kosli.atlassian.net 
-	--jira-username user@domain.com 
-	--jira-api-token yourJiraAPIToken 
-	--jira-issue-fields "summary,description,creator"
-
-```
-
-##### report a jira attestation about an artifact which has not been reported yet in a trail
-
-```shell
-kosli attest jira 
+kosli attest snyk 
 	--name yourTemplateArtifactName.yourAttestationName 
 	--commit yourArtifactGitCommit 
-	--jira-base-url https://kosli.atlassian.net 
-	--jira-username user@domain.com 
-	--jira-api-token yourJiraAPIToken 
+	--scan-results yourSnykSARIFScanResults 
 
 ```
 
-##### report a jira attestation about a trail with an attachment
+##### report a snyk attestation about a trail with an attachment
 
 ```shell
-kosli attest jira 
+kosli attest snyk 
 	--name yourAttestationName 
-	--jira-base-url https://kosli.atlassian.net 
-	--jira-username user@domain.com 
-	--jira-api-token yourJiraAPIToken 
-	--attachments yourAttachmentPathName 
+	--scan-results yourSnykSARIFScanResults 
+	--attachments yourEvidencePathName 
 
 ```
 
-##### fail if no issue reference is found, or the issue is not found in your jira instance
+##### report a snyk attestation about a trail without uploading the snyk results file
 
 ```shell
-kosli attest jira 
+kosli attest snyk 
 	--name yourAttestationName 
-	--jira-base-url https://kosli.atlassian.net 
-	--jira-username user@domain.com 
-	--jira-api-token yourJiraAPIToken 
-	--assert
-
-```
-
-##### get jira reference from original branch name in a GitHub Pull Request merge job
-
-```shell
-kosli attest jira 
-	--name yourAttestationName 
-	--jira-secondary-source ${{ github.head_ref }} 
-	--jira-base-url https://kosli.atlassian.net 
-	--jira-username user@domain.com 
-	--jira-api-token yourJiraAPIToken 
+	--scan-results yourSnykSARIFScanResults 
+	--upload-results=false 
 ```
 
