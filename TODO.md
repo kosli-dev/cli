@@ -53,4 +53,4 @@
 - [x] Slice 1: `evaluate.Evaluate()` accepts params, passes via OPA data store
 - [x] Slice 2: Add `--params` flag across all three commands
 - [x] Slice 3: Show params in `--show-input` output
-- [ ] Slice 4: Update help text and examples ← active
+- [x] Slice 4: Update help text and examples
