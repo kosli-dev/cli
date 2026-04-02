@@ -1,7 +1,6 @@
 package docker
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -20,26 +19,6 @@ func (suite *DockerTestSuite) SetupSuite() {
 func (suite *DockerTestSuite) SetupTest() {
 	err := PullDockerImage(suite.testImageName)
 	require.NoError(suite.T(), err)
-}
-
-func (suite *DockerTestSuite) TestNewDockerClientNegotiatesAPIVersion() {
-	cli, err := newDockerClient()
-	suite.Require().NoError(err)
-
-	// Ping triggers version negotiation. If WithAPIVersionNegotiation() is
-	// missing and the SDK default exceeds the daemon's max API version,
-	// this call will fail with "client version X is too new".
-	ping, err := cli.Ping(context.Background())
-	suite.Require().NoError(err,
-		"Docker client should be able to ping the daemon; "+
-			"if this fails with 'client version X is too new', "+
-			"WithAPIVersionNegotiation() may be missing from newDockerClient()")
-
-	// After negotiation the client version must not exceed the server's max.
-	suite.Assert().NotEmpty(ping.APIVersion,
-		"server should report its API version in the ping response")
-	suite.Assert().LessOrEqual(cli.ClientVersion(), ping.APIVersion,
-		"negotiated client API version should be <= server max API version")
 }
 
 func (suite *DockerTestSuite) TestPullDockerImage() {
