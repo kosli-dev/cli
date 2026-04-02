@@ -251,7 +251,7 @@ func FileSha256(filepath string, logger *logger.Logger) (string, error) {
 // It requires the docker daemon to be accessible and the docker image to be locally present.
 // The docker image must have been pushed into a registry to have a digest.
 func DockerImageSha256(imageID string) (string, error) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return "", err
 	}
@@ -323,7 +323,7 @@ func requestManifestFromRegistry(registryEndPoint, imageName, imageTag, registry
 // RemoteDockerImageSha256 returns a sha256 digest of a docker image by reading it from
 // remote docker registry
 func RemoteDockerImageSha256(imageName, imageTag, registryEndPoint, registryToken string, logger *logger.Logger) (string, error) {
-	// Some docker images have Manifest list, aka “fat manifest” which combines
+	// Some docker images have Manifest list, aka "fat manifest" which combines
 	// image manifests for one or more platforms. Other images don't have such manifest.
 	// The response Content-Type header specifies whether an image has it or not.
 	// More details here: https://docs.docker.com/registry/spec/manifest-v2-2/

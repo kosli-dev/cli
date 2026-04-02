@@ -88,7 +88,7 @@ func (o *snapshotDockerOptions) run(args []string) error {
 
 func CreateDockerArtifactsData() ([]*server.ServerData, error) {
 	result := []*server.ServerData{}
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return result, err
 	}

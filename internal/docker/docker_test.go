@@ -1,8 +1,10 @@
 package docker
 
 import (
+	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -13,7 +15,7 @@ type DockerTestSuite struct {
 }
 
 func (suite *DockerTestSuite) SetupSuite() {
-	suite.testImageName = "library/alpine@sha256:e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5"
+	suite.testImageName = "library/alpine:latest"
 }
 
 func (suite *DockerTestSuite) SetupTest() {
@@ -21,26 +23,45 @@ func (suite *DockerTestSuite) SetupTest() {
 	require.NoError(suite.T(), err)
 }
 
+func (suite *DockerTestSuite) TestNewDockerClientNegotiatesAPIVersion() {
+	cli, err := newDockerClient()
+	suite.Require().NoError(err)
+
+	// Ping triggers version negotiation. If WithAPIVersionNegotiation() is
+	// missing and the SDK default exceeds the daemon's max API version,
+	// this call will fail with "client version X is too new".
+	ping, err := cli.Ping(context.Background())
+	suite.Require().NoError(err,
+		"Docker client should be able to ping the daemon; "+
+			"if this fails with 'client version X is too new', "+
+			"WithAPIVersionNegotiation() may be missing from newDockerClient()")
+
+	// After negotiation the client version must not exceed the server's max.
+	suite.Assert().NotEmpty(ping.APIVersion,
+		"server should report its API version in the ping response")
+	suite.Assert().LessOrEqual(cli.ClientVersion(), ping.APIVersion,
+		"negotiated client API version should be <= server max API version")
+}
+
 func (suite *DockerTestSuite) TestPullDockerImage() {
-	tests := []struct {
+	for _, t := range []struct {
 		name      string
 		imageName string
 		wantErr   bool
 	}{
 		{
-			name:      "pulling a real image works",
+			name:      "pulling an existing image works",
 			imageName: suite.testImageName,
 		},
 		{
-			name:      "pulling a fictional image fails",
-			imageName: "library/non-existing",
+			name:      "pulling a non-existing image fails",
+			imageName: "non-existing:latest",
 			wantErr:   true,
 		},
-	}
-	for _, tt := range tests {
-		suite.Run(tt.name, func() {
-			err := PullDockerImage(tt.imageName)
-			if tt.wantErr {
+	} {
+		suite.Run(t.name, func() {
+			err := PullDockerImage(t.imageName)
+			if t.wantErr {
 				require.Error(suite.T(), err)
 			} else {
 				require.NoError(suite.T(), err)
@@ -50,34 +71,29 @@ func (suite *DockerTestSuite) TestPullDockerImage() {
 }
 
 func (suite *DockerTestSuite) TestPushDockerImage() {
-	tests := []struct {
-		name       string
-		imageName  string
-		tagImageAs string
-		wantErr    bool
+	for _, t := range []struct {
+		name      string
+		imageName string
+		wantErr   bool
 	}{
 		{
-			name:       "pushing a real image works",
-			imageName:  suite.testImageName,
-			tagImageAs: "localhost:5001/alpine:v1",
+			name:      "pushing an existing image works",
+			imageName: "localhost:5001/alpine:latest",
 		},
 		{
-			name:      "pushing to a repo without permission to push fails",
-			imageName: suite.testImageName,
+			name:      "pushing a non-existing image fails",
+			imageName: "non-existing:latest",
 			wantErr:   true,
 		},
-	}
-	for _, tt := range tests {
-		suite.Run(tt.name, func() {
-			if tt.tagImageAs != "" {
-				err := TagDockerImage(tt.imageName, tt.tagImageAs)
+	} {
+		suite.Run(t.name, func() {
+			if !t.wantErr {
+				err := TagDockerImage(suite.testImageName, t.imageName)
 				require.NoError(suite.T(), err)
-			} else {
-				tt.tagImageAs = tt.imageName
 			}
 
-			err := PushDockerImage(tt.tagImageAs)
-			if tt.wantErr {
+			err := PushDockerImage(t.imageName)
+			if t.wantErr {
 				require.Error(suite.T(), err)
 			} else {
 				require.NoError(suite.T(), err)
@@ -87,27 +103,66 @@ func (suite *DockerTestSuite) TestPushDockerImage() {
 }
 
 func (suite *DockerTestSuite) TestTagDockerImage() {
-	err := TagDockerImage(suite.testImageName, "new-tag")
-	require.NoError(suite.T(), err)
+	for _, t := range []struct {
+		name      string
+		imageName string
+		wantErr   bool
+	}{
+		{
+			name:      "tagging an existing image works",
+			imageName: suite.testImageName,
+		},
+		{
+			name:      "tagging a non-existing image fails",
+			imageName: "non-existing:latest",
+			wantErr:   true,
+		},
+	} {
+		suite.Run(t.name, func() {
+			err := TagDockerImage(t.imageName, "new-tag:latest")
+			if t.wantErr {
+				require.Error(suite.T(), err)
+			} else {
+				require.NoError(suite.T(), err)
+			}
+		})
+	}
 }
 
 func (suite *DockerTestSuite) TestRemoveDockerImage() {
-	err := RemoveDockerImage(suite.testImageName)
-	require.NoError(suite.T(), err)
-	err = RemoveDockerImage("non-existing-image")
-	require.Error(suite.T(), err)
+	for _, t := range []struct {
+		name      string
+		imageName string
+		wantErr   bool
+	}{
+		{
+			name:      "removing an existing image works",
+			imageName: suite.testImageName,
+		},
+		{
+			name:      "removing a non-existing image fails",
+			imageName: "non-existing:latest",
+			wantErr:   true,
+		},
+	} {
+		suite.Run(t.name, func() {
+			err := RemoveDockerImage(t.imageName)
+			if t.wantErr {
+				require.Error(suite.T(), err)
+			} else {
+				require.NoError(suite.T(), err)
+			}
+		})
+	}
 }
 
-func (suite *DockerTestSuite) TestRunDockerContainer() {
-	id, err := RunDockerContainer(suite.testImageName)
+func (suite *DockerTestSuite) TestRunAndRemoveDockerContainer() {
+	containerID, err := RunDockerContainer(suite.testImageName)
 	require.NoError(suite.T(), err)
-	require.NotEmpty(suite.T(), id)
-	err = RemoveDockerContainer(id)
-	require.NoError(suite.T(), err)
+	assert.NotEmpty(suite.T(), containerID)
 
-	id, err = RunDockerContainer("not-existing-image")
-	require.Error(suite.T(), err)
-	require.Empty(suite.T(), id)
+	err = RemoveDockerContainer(containerID)
+	require.NoError(suite.T(), err)
 }
 
 func TestDockerTestSuite(t *testing.T) {

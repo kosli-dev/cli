@@ -14,9 +14,17 @@ import (
 	"github.com/docker/docker/client"
 )
 
+// newDockerClient creates a Docker client with API version negotiation enabled.
+// This ensures the client automatically downgrades its API version to match
+// the daemon, preventing "client version X is too new" errors when the SDK
+// is newer than the Docker Engine.
+func newDockerClient() (*client.Client, error) {
+	return client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+}
+
 // PullDockerImage pulls a docker image or returns an error
 func PullDockerImage(imageName string) error {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := newDockerClient()
 	if err != nil {
 		return err
 	}
@@ -41,7 +49,7 @@ func PullDockerImage(imageName string) error {
 
 // PushDockerImage pushes a docker image to the local registry or returns an error
 func PushDockerImage(imageName string) error {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := newDockerClient()
 	if err != nil {
 		return err
 	}
@@ -73,7 +81,7 @@ func PushDockerImage(imageName string) error {
 
 // TagDockerImage tags a docker image or returns an error
 func TagDockerImage(sourceName, targetName string) error {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := newDockerClient()
 	if err != nil {
 		return err
 	}
@@ -83,7 +91,7 @@ func TagDockerImage(sourceName, targetName string) error {
 
 // RemoveDockerImage deletes a docker image or return an error
 func RemoveDockerImage(imageName string) error {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := newDockerClient()
 	if err != nil {
 		return err
 	}
@@ -98,7 +106,7 @@ func RemoveDockerImage(imageName string) error {
 
 // RunDockerContainer runs a docker container that sleeps for 6 minutes and returns its ID or returns an error
 func RunDockerContainer(imageName string) (string, error) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := newDockerClient()
 	if err != nil {
 		return "", err
 	}
@@ -117,7 +125,7 @@ func RunDockerContainer(imageName string) (string, error) {
 
 // RemoveDockerContainer remove a docker container or returns an error
 func RemoveDockerContainer(containerID string) error {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := newDockerClient()
 	if err != nil {
 		return err
 	}
