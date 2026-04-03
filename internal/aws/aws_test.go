@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/service/lambda/types"
 	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/testHelpers"
@@ -664,6 +665,128 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 			if !t.wantErr {
 				require.GreaterOrEqual(suite.T(), len(data), t.minNumberOfArtifacts)
 			}
+		})
+	}
+}
+
+// helper to build a FakeLambdaClient with named functions for testing
+func fakeLambdaClientWithFunctions(names ...string) *FakeLambdaClient {
+	fns := make([]types.FunctionConfiguration, len(names))
+	lastModified := "2024-01-15T10:30:00.000+0000"
+	codeSha256 := "abc123"
+	for i, name := range names {
+		n := name
+		fns[i] = types.FunctionConfiguration{
+			FunctionName: &n,
+			CodeSha256:   &codeSha256,
+			LastModified: &lastModified,
+			PackageType:  types.PackageTypeZip,
+		}
+	}
+	return &FakeLambdaClient{Functions: fns}
+}
+
+func functionNames(result *[]types.FunctionConfiguration) []string {
+	names := make([]string, len(*result))
+	for i, f := range *result {
+		names[i] = *f.FunctionName
+	}
+	return names
+}
+
+func (suite *AWSTestSuite) TestGetFilteredLambdaFuncs() {
+	for _, t := range []struct {
+		name          string
+		functions     []string
+		filter        *filters.ResourceFilterOptions
+		pageSize      int
+		expectedNames []string
+		wantErr       bool
+	}{
+		{
+			name:          "no filter returns all functions",
+			functions:     []string{"alpha", "beta", "gamma"},
+			filter:        &filters.ResourceFilterOptions{},
+			expectedNames: []string{"alpha", "beta", "gamma"},
+		},
+		{
+			name:          "empty function list returns empty result",
+			functions:     []string{},
+			filter:        &filters.ResourceFilterOptions{},
+			expectedNames: []string{},
+		},
+		{
+			name:          "IncludeNames filters to matching functions",
+			functions:     []string{"alpha", "beta", "gamma"},
+			filter:        &filters.ResourceFilterOptions{IncludeNames: []string{"beta"}},
+			expectedNames: []string{"beta"},
+		},
+		{
+			name:          "IncludeNames with multiple names",
+			functions:     []string{"alpha", "beta", "gamma"},
+			filter:        &filters.ResourceFilterOptions{IncludeNames: []string{"alpha", "gamma"}},
+			expectedNames: []string{"alpha", "gamma"},
+		},
+		{
+			name:          "IncludeNamesRegex filters by pattern",
+			functions:     []string{"alpha", "beta", "gamma"},
+			filter:        &filters.ResourceFilterOptions{IncludeNamesRegex: []string{"^a.*"}},
+			expectedNames: []string{"alpha"},
+		},
+		{
+			name:          "ExcludeNames removes matching functions",
+			functions:     []string{"alpha", "beta", "gamma"},
+			filter:        &filters.ResourceFilterOptions{ExcludeNames: []string{"beta"}},
+			expectedNames: []string{"alpha", "gamma"},
+		},
+		{
+			name:          "ExcludeNamesRegex removes matching pattern",
+			functions:     []string{"alpha", "beta", "gamma"},
+			filter:        &filters.ResourceFilterOptions{ExcludeNamesRegex: []string{"^[bg].*"}},
+			expectedNames: []string{"alpha"},
+		},
+		{
+			name:      "combined ExcludeNames and ExcludeNamesRegex",
+			functions: []string{"alpha", "beta", "gamma", "delta"},
+			filter: &filters.ResourceFilterOptions{
+				ExcludeNames:      []string{"alpha"},
+				ExcludeNamesRegex: []string{"^d.*"},
+			},
+			expectedNames: []string{"beta", "gamma"},
+		},
+		{
+			name:          "multi-page results with filtering across pages",
+			functions:     []string{"alpha", "beta", "gamma", "delta"},
+			filter:        &filters.ResourceFilterOptions{IncludeNamesRegex: []string{"^[ag].*"}},
+			pageSize:      2,
+			expectedNames: []string{"alpha", "gamma"},
+		},
+		{
+			name:          "multi-page results without filtering",
+			functions:     []string{"alpha", "beta", "gamma"},
+			filter:        &filters.ResourceFilterOptions{},
+			pageSize:      1,
+			expectedNames: []string{"alpha", "beta", "gamma"},
+		},
+		{
+			name:      "invalid regex causes an error",
+			functions: []string{"alpha"},
+			filter:    &filters.ResourceFilterOptions{IncludeNamesRegex: []string{"invalid["}},
+			wantErr:   true,
+		},
+	} {
+		suite.Run(t.name, func() {
+			client := fakeLambdaClientWithFunctions(t.functions...)
+			if t.pageSize > 0 {
+				client.PageSize = t.pageSize
+			}
+			result, err := getFilteredLambdaFuncs(client, nil, &[]types.FunctionConfiguration{}, t.filter)
+			if t.wantErr {
+				require.Error(suite.T(), err)
+				return
+			}
+			require.NoError(suite.T(), err)
+			require.ElementsMatch(suite.T(), t.expectedNames, functionNames(result))
 		})
 	}
 }

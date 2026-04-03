@@ -59,11 +59,15 @@
 
 - [x] Slice 1: Define `LambdaAPI` interface and refactor signatures
 - [x] Slice 2: Contract test suite against real AWS
-- [ ] Slice 3: Build `FakeLambdaClient` that passes the contract ← active
-  - [ ] Create `FakeLambdaClient` struct with in-memory function list
-  - [ ] Implement `ListFunctions` with marker-based pagination
-  - [ ] Implement `GetFunctionConfiguration` with error for missing functions
-  - [ ] Pass `runLambdaContractTests` against the fake
-- [ ] Slice 4: Fake-backed unit tests for filtering and pagination
+- [x] Slice 3: Build `FakeLambdaClient` that passes the contract
+- [ ] Slice 4: Fake-backed unit tests for filtering and pagination ← active
+  - [ ] Test: no filter returns all functions
+  - [ ] Test: IncludeNames filter
+  - [ ] Test: IncludeNamesRegex filter
+  - [ ] Test: ExcludeNames filter
+  - [ ] Test: ExcludeNamesRegex filter
+  - [ ] Test: combined exclude + exclude-regex
+  - [ ] Test: multi-page results with filtering
+  - [ ] Test: empty function list returns empty result
 - [ ] Slice 5: Fake-backed unit tests for orchestration
 - [ ] Slice 6: Trim existing integration tests
