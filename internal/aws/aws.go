@@ -139,6 +139,13 @@ func (staticCreds *AWSStaticCreds) NewLambdaClient() (*lambda.Client, error) {
 	return lambda.NewFromConfig(cfg), nil
 }
 
+// LambdaAPI is the interface for AWS Lambda operations used by this package.
+// The real *lambda.Client satisfies this implicitly.
+type LambdaAPI interface {
+	ListFunctions(ctx context.Context, params *lambda.ListFunctionsInput, optFns ...func(*lambda.Options)) (*lambda.ListFunctionsOutput, error)
+	GetFunctionConfiguration(ctx context.Context, params *lambda.GetFunctionConfigurationInput, optFns ...func(*lambda.Options)) (*lambda.GetFunctionConfigurationOutput, error)
+}
+
 // NewECSClient returns a new ECS API client
 func (staticCreds *AWSStaticCreds) NewECSClient() (*ecs.Client, error) {
 	cfg, err := staticCreds.NewAWSConfigFromEnvOrFlags()
@@ -149,7 +156,7 @@ func (staticCreds *AWSStaticCreds) NewECSClient() (*ecs.Client, error) {
 }
 
 // getFilteredLambdaFuncs fetches a filtered set of lambda functions recursively (50 at a time) and returns a list of FunctionConfiguration
-func getFilteredLambdaFuncs(client *lambda.Client, nextMarker *string, allFunctions *[]types.FunctionConfiguration,
+func getFilteredLambdaFuncs(client LambdaAPI, nextMarker *string, allFunctions *[]types.FunctionConfiguration,
 	filter *filters.ResourceFilterOptions) (*[]types.FunctionConfiguration, error) {
 	params := &lambda.ListFunctionsInput{}
 	if nextMarker != nil {
@@ -187,11 +194,16 @@ func getFilteredLambdaFuncs(client *lambda.Client, nextMarker *string, allFuncti
 
 // GetLambdaPackageData returns a digest and metadata of a Lambda function package
 func (staticCreds *AWSStaticCreds) GetLambdaPackageData(filter *filters.ResourceFilterOptions) ([]*LambdaData, error) {
-	lambdaData := []*LambdaData{}
 	client, err := staticCreds.NewLambdaClient()
 	if err != nil {
-		return lambdaData, err
+		return []*LambdaData{}, err
 	}
+	return getLambdaPackageDataFromClient(client, filter)
+}
+
+// getLambdaPackageDataFromClient fetches Lambda function data using the provided LambdaAPI client.
+func getLambdaPackageDataFromClient(client LambdaAPI, filter *filters.ResourceFilterOptions) ([]*LambdaData, error) {
+	lambdaData := []*LambdaData{}
 
 	filteredFunctions, err := getFilteredLambdaFuncs(client, nil, &[]types.FunctionConfiguration{}, filter)
 	if err != nil {
@@ -247,7 +259,7 @@ func (staticCreds *AWSStaticCreds) GetLambdaPackageData(filter *filters.Resource
 }
 
 // getAndProcessOneLambdaFunc get a lambda function by its name and return a LambdaData object from it
-func getAndProcessOneLambdaFunc(client *lambda.Client, functionName string) (*LambdaData, error) {
+func getAndProcessOneLambdaFunc(client LambdaAPI, functionName string) (*LambdaData, error) {
 	params := &lambda.GetFunctionConfigurationInput{
 		FunctionName: aws.String(functionName),
 	}
