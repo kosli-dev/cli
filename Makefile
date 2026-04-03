@@ -144,6 +144,11 @@ test_integration_restart_server: test_setup_restart_server
 test_integration_single: test_setup
 	@export KOSLI_TESTS=true $(FAKE_CI_ENV) && $(GOTESTSUM) -- -p=1 ./... -run "${TARGET}"
 
+test_smoke_aws: ## Run AWS contract and smoke tests against real AWS (requires AWS creds)
+	@echo "Running AWS contract and smoke tests against real AWS..."
+	@echo "Requires AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY to be set"
+	@$(GOTESTSUM) -- -v -p=1 -run "LambdaContract_RealAWS|AWSTestSuite/TestGetLambdaPackageData|AWSTestSuite/TestGetEcsTasksData|AWSTestSuite/TestGetS3Data" ./internal/aws/
+
 
 test_docs: deps vet ensure_network test_setup ## Test docs
 	./bin/test_docs_cmds.sh docs.kosli.com/content/use_cases/simulating_a_devops_system/_index.md

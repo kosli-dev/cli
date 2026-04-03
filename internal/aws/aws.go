@@ -146,6 +146,20 @@ type LambdaAPI interface {
 	GetFunctionConfiguration(ctx context.Context, params *lambda.GetFunctionConfigurationInput, optFns ...func(*lambda.Options)) (*lambda.GetFunctionConfigurationOutput, error)
 }
 
+// defaultNewLambdaClient creates a real Lambda client from credentials.
+func defaultNewLambdaClient(creds *AWSStaticCreds) (LambdaAPI, error) {
+	return creds.NewLambdaClient()
+}
+
+// NewLambdaClientFunc is the factory used by GetLambdaPackageData to create a
+// LambdaAPI client. Tests can replace this to inject a FakeLambdaClient.
+var NewLambdaClientFunc = defaultNewLambdaClient
+
+// ResetLambdaClientFactory restores the default (real AWS) client factory.
+func ResetLambdaClientFactory() {
+	NewLambdaClientFunc = defaultNewLambdaClient
+}
+
 // NewECSClient returns a new ECS API client
 func (staticCreds *AWSStaticCreds) NewECSClient() (*ecs.Client, error) {
 	cfg, err := staticCreds.NewAWSConfigFromEnvOrFlags()
@@ -194,7 +208,7 @@ func getFilteredLambdaFuncs(client LambdaAPI, nextMarker *string, allFunctions *
 
 // GetLambdaPackageData returns a digest and metadata of a Lambda function package
 func (staticCreds *AWSStaticCreds) GetLambdaPackageData(filter *filters.ResourceFilterOptions) ([]*LambdaData, error) {
-	client, err := staticCreds.NewLambdaClient()
+	client, err := NewLambdaClientFunc(staticCreds)
 	if err != nil {
 		return []*LambdaData{}, err
 	}
