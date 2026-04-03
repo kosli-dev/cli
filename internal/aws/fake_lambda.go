@@ -16,6 +16,9 @@ type FakeLambdaClient struct {
 	// PageSize controls how many functions are returned per ListFunctions call.
 	// Defaults to 50 (matching the AWS default) if zero.
 	PageSize int
+	// GetFunctionConfigurationErr, if set, is returned by GetFunctionConfiguration
+	// for any function. Useful for testing error propagation.
+	GetFunctionConfigurationErr error
 }
 
 func (f *FakeLambdaClient) pageSize() int {
@@ -59,6 +62,9 @@ func (f *FakeLambdaClient) ListFunctions(_ context.Context, params *lambda.ListF
 func (f *FakeLambdaClient) GetFunctionConfiguration(_ context.Context, params *lambda.GetFunctionConfigurationInput, _ ...func(*lambda.Options)) (*lambda.GetFunctionConfigurationOutput, error) {
 	if params.FunctionName == nil {
 		return nil, fmt.Errorf("FunctionName is required")
+	}
+	if f.GetFunctionConfigurationErr != nil {
+		return nil, f.GetFunctionConfigurationErr
 	}
 	for _, fn := range f.Functions {
 		if fn.FunctionName != nil && *fn.FunctionName == *params.FunctionName {

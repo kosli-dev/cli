@@ -2,6 +2,7 @@ package aws
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -787,6 +788,102 @@ func (suite *AWSTestSuite) TestGetFilteredLambdaFuncs() {
 			}
 			require.NoError(suite.T(), err)
 			require.ElementsMatch(suite.T(), t.expectedNames, functionNames(result))
+		})
+	}
+}
+
+func (suite *AWSTestSuite) TestGetLambdaPackageDataFromClient() {
+	// base64-encoded SHA256 that decodes to a known hex fingerprint
+	zipCodeSha256 := "Mh48OOkSYuXHLfS9QF6bF3tvTXUOGvC3jKLiuF1vkbQ="
+	expectedZipFingerprint := "321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"
+	// Image package types use the raw CodeSha256 (not base64-decoded)
+	imageCodeSha256 := "e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"
+	lastModified := "2024-01-15T10:30:00.000+0000"
+
+	for _, t := range []struct {
+		name                string
+		client              *FakeLambdaClient
+		filter              *filters.ResourceFilterOptions
+		expectedDigests     map[string]string // functionName -> fingerprint
+		wantErr             bool
+		wantErrMsgSubstring string
+	}{
+		{
+			name: "single Zip function returns decoded fingerprint",
+			client: func() *FakeLambdaClient {
+				fnName := "zip-func"
+				return &FakeLambdaClient{Functions: []types.FunctionConfiguration{
+					{FunctionName: &fnName, CodeSha256: &zipCodeSha256, LastModified: &lastModified, PackageType: types.PackageTypeZip},
+				}}
+			}(),
+			filter:          &filters.ResourceFilterOptions{},
+			expectedDigests: map[string]string{"zip-func": expectedZipFingerprint},
+		},
+		{
+			name: "single Image function returns raw CodeSha256",
+			client: func() *FakeLambdaClient {
+				fnName := "image-func"
+				return &FakeLambdaClient{Functions: []types.FunctionConfiguration{
+					{FunctionName: &fnName, CodeSha256: &imageCodeSha256, LastModified: &lastModified, PackageType: types.PackageTypeImage},
+				}}
+			}(),
+			filter:          &filters.ResourceFilterOptions{},
+			expectedDigests: map[string]string{"image-func": imageCodeSha256},
+		},
+		{
+			name: "multiple functions processed concurrently",
+			client: func() *FakeLambdaClient {
+				fn1 := "zip-func"
+				fn2 := "image-func"
+				return &FakeLambdaClient{Functions: []types.FunctionConfiguration{
+					{FunctionName: &fn1, CodeSha256: &zipCodeSha256, LastModified: &lastModified, PackageType: types.PackageTypeZip},
+					{FunctionName: &fn2, CodeSha256: &imageCodeSha256, LastModified: &lastModified, PackageType: types.PackageTypeImage},
+				}}
+			}(),
+			filter: &filters.ResourceFilterOptions{},
+			expectedDigests: map[string]string{
+				"zip-func":   expectedZipFingerprint,
+				"image-func": imageCodeSha256,
+			},
+		},
+		{
+			name: "empty function list returns empty result",
+			client: &FakeLambdaClient{
+				Functions: []types.FunctionConfiguration{},
+			},
+			filter:          &filters.ResourceFilterOptions{},
+			expectedDigests: map[string]string{},
+		},
+		{
+			name: "GetFunctionConfiguration error propagates",
+			client: func() *FakeLambdaClient {
+				fnName := "will-fail"
+				return &FakeLambdaClient{
+					Functions: []types.FunctionConfiguration{
+						{FunctionName: &fnName, CodeSha256: &zipCodeSha256, LastModified: &lastModified, PackageType: types.PackageTypeZip},
+					},
+					GetFunctionConfigurationErr: fmt.Errorf("simulated AWS error"),
+				}
+			}(),
+			filter:  &filters.ResourceFilterOptions{},
+			wantErr: true,
+		},
+	} {
+		suite.Run(t.name, func() {
+			data, err := getLambdaPackageDataFromClient(t.client, t.filter)
+			if t.wantErr {
+				require.Error(suite.T(), err)
+				return
+			}
+			require.NoError(suite.T(), err)
+
+			gotDigests := map[string]string{}
+			for _, d := range data {
+				for name, fp := range d.Digests {
+					gotDigests[name] = fp
+				}
+			}
+			require.Equal(suite.T(), t.expectedDigests, gotDigests)
 		})
 	}
 }
