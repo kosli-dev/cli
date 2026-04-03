@@ -57,13 +57,14 @@
 
 ## Fakes & contract tests for cloud provider integrations (#758)
 
-- [ ] Slice 1: Define `LambdaAPI` interface and refactor signatures ← active
-  - [ ] Define `LambdaAPI` interface with `ListFunctions` and `GetFunctionConfiguration`
-  - [ ] Change `getFilteredLambdaFuncs` to accept `LambdaAPI`
-  - [ ] Change `getAndProcessOneLambdaFunc` to accept `LambdaAPI`
-  - [ ] Extract `getLambdaPackageDataFromClient(LambdaAPI, filter)` from `GetLambdaPackageData`
-  - [ ] All existing tests still pass
-- [ ] Slice 2: Contract test suite against real AWS
+- [x] Slice 1: Define `LambdaAPI` interface and refactor signatures
+- [ ] Slice 2: Contract test suite against real AWS ← active
+  - [ ] Create `runLambdaContractTests(t, client LambdaAPI)` shared test function
+  - [ ] Test: ListFunctions returns results (non-empty)
+  - [ ] Test: ListFunctions pagination — marker-based, returns all functions across pages
+  - [ ] Test: GetFunctionConfiguration for existing function returns config
+  - [ ] Test: GetFunctionConfiguration for missing function returns error
+  - [ ] Run suite against real `*lambda.Client`, env-gated
 - [ ] Slice 3: Build `FakeLambdaClient` that passes the contract
 - [ ] Slice 4: Fake-backed unit tests for filtering and pagination
 - [ ] Slice 5: Fake-backed unit tests for orchestration
