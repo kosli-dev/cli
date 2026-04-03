@@ -61,10 +61,7 @@
 - [x] Slice 2: Contract test suite against real AWS
 - [x] Slice 3: Build `FakeLambdaClient` that passes the contract
 - [x] Slice 4: Fake-backed unit tests for filtering and pagination
-- [ ] Slice 5: Fake-backed unit tests for orchestration ← active
-  - [ ] Test: single Zip function — returns decoded fingerprint
-  - [ ] Test: single Image function — returns raw CodeSha256
-  - [ ] Test: multiple functions processed concurrently
-  - [ ] Test: error in GetFunctionConfiguration propagates
-  - [ ] Test: empty function list returns empty result
-- [ ] Slice 6: Trim existing integration tests
+- [x] Slice 5: Fake-backed unit tests for orchestration
+- [ ] Slice 6: Trim existing integration tests ← active
+  - [ ] Remove filtering-focused integration tests (now covered by fakes)
+  - [ ] Keep: invalid credentials error, one Zip happy path, one Image happy path

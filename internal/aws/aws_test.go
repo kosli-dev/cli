@@ -251,6 +251,10 @@ func (suite *AWSTestSuite) TestAWSClients() {
 // they are skipped
 // All cases will run in CI
 
+// TestGetLambdaPackageData is a smoke test for the real AWS integration.
+// Filtering logic and fingerprint processing are covered by fake-backed tests
+// (TestGetFilteredLambdaFuncs, TestGetLambdaPackageDataFromClient).
+// These cases prove the real SDK wiring works.
 func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 	type expectedFunction struct {
 		name        string
@@ -258,7 +262,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 	}
 	for _, t := range []struct {
 		name              string
-		requireEnvVars    bool // indicates that a test case needs real credentials from env vars
+		requireEnvVars    bool
 		creds             *AWSStaticCreds
 		filter            *filters.ResourceFilterOptions
 		expectedFunctions []expectedFunction
@@ -275,16 +279,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			wantErr: true,
 		},
 		{
-			name: "providing the wrong region gives an empty result",
-			creds: &AWSStaticCreds{
-				Region: "ap-south-1",
-			},
-			filter:            &filters.ResourceFilterOptions{IncludeNames: []string{"cli-tests"}},
-			requireEnvVars:    true,
-			expectedFunctions: []expectedFunction{},
-		},
-		{
-			name: "can get zip package lambda function data from name",
+			name: "can get zip package lambda function data",
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
@@ -294,74 +289,13 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			requireEnvVars: true,
 		},
 		{
-			name: "can get image package lambda function data from name",
+			name: "can get image package lambda function data",
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
 			filter: &filters.ResourceFilterOptions{IncludeNames: []string{"cli-tests-docker"}},
 			expectedFunctions: []expectedFunction{{name: "cli-tests-docker",
 				fingerprint: "e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"}},
-			requireEnvVars: true,
-		},
-		{
-			name: "can get a list of lambda functions data from names",
-			creds: &AWSStaticCreds{
-				Region: "eu-central-1",
-			},
-			filter: &filters.ResourceFilterOptions{IncludeNames: []string{"cli-tests-docker", "cli-tests"}},
-			expectedFunctions: []expectedFunction{
-				{name: "cli-tests",
-					fingerprint: "321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"},
-				{name: "cli-tests-docker",
-					fingerprint: "e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"}},
-			requireEnvVars: true,
-		},
-		{
-			name: "can get a list of lambda functions data from names regex",
-			creds: &AWSStaticCreds{
-				Region: "eu-central-1",
-			},
-			filter: &filters.ResourceFilterOptions{IncludeNamesRegex: []string{"^cli-test.*"}},
-			expectedFunctions: []expectedFunction{
-				{name: "cli-tests",
-					fingerprint: "321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"},
-				{name: "cli-tests-docker",
-					fingerprint: "e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"}},
-			requireEnvVars: true,
-		},
-		{
-			name: "can exclude lambda functions matching a regex pattern",
-			creds: &AWSStaticCreds{
-				Region: "eu-central-1",
-			},
-			filter: &filters.ResourceFilterOptions{ExcludeNamesRegex: []string{"^([^c]|c[^l]|cl[^i]|cli[^-]).*$"}},
-			expectedFunctions: []expectedFunction{
-				{name: "cli-tests",
-					fingerprint: "321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"},
-				{name: "cli-tests-docker",
-					fingerprint: "e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"}},
-			requireEnvVars: true,
-		},
-		{
-			name: "invalid exclude name regex pattern causes an error",
-			creds: &AWSStaticCreds{
-				Region: "eu-central-1",
-			},
-			filter:         &filters.ResourceFilterOptions{ExcludeNamesRegex: []string{"invalid["}},
-			requireEnvVars: true,
-			wantErr:        true,
-		},
-		{
-			name: "can combine exclude and exclude-regex and they are joined",
-			creds: &AWSStaticCreds{
-				Region: "eu-central-1",
-			},
-			filter: &filters.ResourceFilterOptions{
-				ExcludeNames:      []string{"cli-tests"},
-				ExcludeNamesRegex: []string{"^([^c]|c[^l]|cl[^i]|cli[^-]).*$"}},
-			expectedFunctions: []expectedFunction{
-				{name: "cli-tests-docker",
-					fingerprint: "e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"}},
 			requireEnvVars: true,
 		},
 	} {
@@ -371,25 +305,17 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetLambdaPackageData() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
-				matchFound := false
 				require.Len(suite.T(), data, len(t.expectedFunctions))
-				if len(t.expectedFunctions) == 0 {
-					matchFound = true
-				}
-			loop1:
-				for _, expectedFunction := range t.expectedFunctions {
+				for _, expected := range t.expectedFunctions {
+					found := false
 					for _, item := range data {
-						if fingerprint, ok := item.Digests[expectedFunction.name]; ok {
-							if expectedFunction.fingerprint == fingerprint {
-								matchFound = true
-								break loop1
-							} else {
-								suite.T().Logf("fingerprint did not match: GOT %s -- WANT %s", fingerprint, expectedFunction.fingerprint)
-							}
+						if fingerprint, ok := item.Digests[expected.name]; ok && fingerprint == expected.fingerprint {
+							found = true
+							break
 						}
 					}
+					require.True(suite.T(), found, "expected function %s with fingerprint %s not found", expected.name, expected.fingerprint)
 				}
-				require.True(suite.T(), matchFound)
 			}
 		})
 	}
