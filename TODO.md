@@ -63,9 +63,4 @@
 - [x] Slice 4: Fake-backed unit tests for filtering and pagination
 - [x] Slice 5: Fake-backed unit tests for orchestration
 - [x] Slice 6: Trim existing integration tests
-- [ ] Slice 7: Package-level factory + fake-backed command tests ← active
-  - [ ] Add `NewLambdaClientFunc` factory variable to `internal/aws`
-  - [ ] `GetLambdaPackageData` uses factory instead of direct client creation
-  - [ ] `snapshotLambda_test.go` injects fake in SetupTest, resets in TearDownTest
-  - [ ] Remove `requireAuthToBeSet` from command test cases — they always run
-  - [ ] Add Makefile target for AWS smoke tests
+- [x] Slice 7: Package-level factory + fake-backed command tests
