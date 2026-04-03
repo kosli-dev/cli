@@ -62,6 +62,4 @@
 - [x] Slice 3: Build `FakeLambdaClient` that passes the contract
 - [x] Slice 4: Fake-backed unit tests for filtering and pagination
 - [x] Slice 5: Fake-backed unit tests for orchestration
-- [ ] Slice 6: Trim existing integration tests ← active
-  - [ ] Remove filtering-focused integration tests (now covered by fakes)
-  - [ ] Keep: invalid credentials error, one Zip happy path, one Image happy path
+- [x] Slice 6: Trim existing integration tests
