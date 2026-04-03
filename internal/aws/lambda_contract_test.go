@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
+	"github.com/aws/aws-sdk-go-v2/service/lambda/types"
 	"github.com/kosli-dev/cli/internal/testHelpers"
 	"github.com/stretchr/testify/require"
 )
@@ -27,7 +28,10 @@ func runLambdaContractTests(t *testing.T, client LambdaAPI, existingFunctionName
 	})
 
 	t.Run("ListFunctions with MaxItems paginates via Marker", func(t *testing.T) {
-		// Request one function per page to force pagination
+		// Request one function per page to force pagination.
+		// The test setup must seed at least 2 functions for this to exercise
+		// the marker path — if there's only one, NextMarker will be nil and
+		// the test degrades to a no-op.
 		maxItems := int32(1)
 		out, err := client.ListFunctions(context.TODO(), &lambda.ListFunctionsInput{
 			MaxItems: &maxItems,
@@ -36,16 +40,16 @@ func runLambdaContractTests(t *testing.T, client LambdaAPI, existingFunctionName
 		require.NotNil(t, out)
 		require.LessOrEqual(t, len(out.Functions), 1)
 
-		if out.NextMarker != nil {
-			// Follow the marker to prove pagination works
-			out2, err := client.ListFunctions(context.TODO(), &lambda.ListFunctionsInput{
-				MaxItems: &maxItems,
-				Marker:   out.NextMarker,
-			})
-			require.NoError(t, err)
-			require.NotNil(t, out2)
-			require.LessOrEqual(t, len(out2.Functions), 1)
-		}
+		// Follow the marker to prove pagination works
+		require.NotNil(t, out.NextMarker, "expected NextMarker when more functions exist")
+		out2, err := client.ListFunctions(context.TODO(), &lambda.ListFunctionsInput{
+			MaxItems: &maxItems,
+			Marker:   out.NextMarker,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, out2)
+		require.LessOrEqual(t, len(out2.Functions), 1)
+		require.NotEmpty(t, out2.Functions, "second page should return at least one function")
 	})
 
 	t.Run("GetFunctionConfiguration returns config for existing function", func(t *testing.T) {
@@ -67,6 +71,31 @@ func runLambdaContractTests(t *testing.T, client LambdaAPI, existingFunctionName
 		})
 		require.Error(t, err)
 	})
+}
+
+func TestLambdaContract_Fake(t *testing.T) {
+	fnName1 := "my-function"
+	fnName2 := "other-function"
+	lastModified := "2024-01-15T10:30:00.000+0000"
+	codeSha256 := "abc123"
+	client := &FakeLambdaClient{
+		Functions: []types.FunctionConfiguration{
+			{
+				FunctionName: &fnName1,
+				CodeSha256:   &codeSha256,
+				LastModified: &lastModified,
+				PackageType:  types.PackageTypeZip,
+			},
+			{
+				FunctionName: &fnName2,
+				CodeSha256:   &codeSha256,
+				LastModified: &lastModified,
+				PackageType:  types.PackageTypeZip,
+			},
+		},
+		PageSize: 1,
+	}
+	runLambdaContractTests(t, client, fnName1)
 }
 
 func TestLambdaContract_RealAWS(t *testing.T) {
