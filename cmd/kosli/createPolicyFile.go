@@ -186,11 +186,7 @@ func newWizardStyles() wizardStyles {
 // Bubbletea model
 // ---------------------------------------------------------------------------
 
-const (
-	formWidth    = 50
-	previewWidth = 40
-	maxWidth     = 100
-)
+const formWidth = 55
 
 type policyWizardModel struct {
 	step   wizardStep
@@ -224,7 +220,7 @@ func newPolicyWizardModel(wctx *wizardContext) policyWizardModel {
 		policy: policy.NewPolicy(),
 		wctx:   wctx,
 		styles: newWizardStyles(),
-		width:  maxWidth,
+		width:  120, // sensible default until WindowSizeMsg arrives
 	}
 	m.form = m.buildForm()
 	return m
@@ -239,7 +235,6 @@ func (m policyWizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		return m, nil
 	case tea.KeyMsg:
 		if msg.String() == "ctrl+c" {
 			m.cancelled = true
@@ -247,7 +242,7 @@ func (m policyWizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	// Forward to form
+	// Always forward to form (including WindowSizeMsg)
 	form, cmd := m.form.Update(msg)
 	if f, ok := form.(*huh.Form); ok {
 		m.form = f
@@ -281,13 +276,11 @@ func (m policyWizardModel) View() string {
 
 	s := m.styles
 	fw := formWidth
-	pw := previewWidth
 	available := m.width - s.base.GetHorizontalFrameSize()
-	if available < fw+pw+4 {
-		pw = available - fw - 4
-		if pw < 20 {
-			pw = 0
-		}
+	// Give remaining width to preview, with a gap of 2
+	pw := available - fw - 2
+	if pw < 30 {
+		pw = 0 // hide preview if terminal too narrow
 	}
 
 	// Header
@@ -552,7 +545,7 @@ func (m *policyWizardModel) buildForm() *huh.Form {
 		f = huh.NewForm(huh.NewGroup())
 	}
 
-	return f.WithWidth(formWidth).WithShowHelp(false).WithShowErrors(true)
+	return f.WithWidth(formWidth).WithShowHelp(true).WithShowErrors(true)
 }
 
 func notEmpty(field string) func(string) error {
