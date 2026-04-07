@@ -198,20 +198,15 @@ type policyWizardModel struct {
 	height int
 
 	// State for loops and expression building
-	exprTarget      exprTarget
-	exprMode        string
-	exprContext     string // for custom expressions
-	exprTagKey      string // for flow tag / custom tag
-	currentAttRule  policy.AttestationRule
-	cancelled       bool
-	confirmed       bool
-
-	// Form-bound values
-	requireProv  bool
-	requireTrail bool
-	confirmBool  bool
-	inputStr     string
-	selectStr    string
+	exprTarget     exprTarget
+	exprMode       string
+	exprContext    string // for custom expressions
+	exprTagKey     string // for flow tag / custom tag
+	currentAttRule policy.AttestationRule
+	cancelled      bool
+	confirmed      bool
+	requireProv    bool
+	requireTrail   bool
 }
 
 func newPolicyWizardModel(wctx *wizardContext) policyWizardModel {
@@ -328,57 +323,45 @@ func (m *policyWizardModel) buildForm() *huh.Form {
 	var f *huh.Form
 	switch m.step {
 	case stepBasics:
-		m.requireProv = true
-		m.requireTrail = true
 		f = huh.NewForm(huh.NewGroup(
-			huh.NewConfirm().
+			huh.NewConfirm().Key("prov").
 				Title("Require artifact provenance?").
 				Description("All artifacts must belong to a Kosli flow").
-				Value(&m.requireProv).
 				Affirmative("Yes").Negative("No"),
-			huh.NewConfirm().
+			huh.NewConfirm().Key("trail").
 				Title("Require trail compliance?").
 				Description("All artifacts must be part of compliant trails").
-				Value(&m.requireTrail).
 				Affirmative("Yes").Negative("No"),
 		))
 
 	case stepProvExcConfirm:
-		m.confirmBool = false
 		f = huh.NewForm(huh.NewGroup(
-			huh.NewConfirm().
+			huh.NewConfirm().Key("confirm").
 				Title(m.excConfirmTitle("provenance")).
 				Description("Exceptions waive this requirement for matching artifacts").
-				Value(&m.confirmBool).
 				Affirmative("Yes").Negative("No"),
 		))
 
 	case stepTrailExcConfirm:
-		m.confirmBool = false
 		f = huh.NewForm(huh.NewGroup(
-			huh.NewConfirm().
+			huh.NewConfirm().Key("confirm").
 				Title(m.excConfirmTitle("trail compliance")).
 				Description("Exceptions waive this requirement for matching artifacts").
-				Value(&m.confirmBool).
 				Affirmative("Yes").Negative("No"),
 		))
 
 	case stepAttConfirm:
-		m.confirmBool = false
 		title := "Add a required attestation?"
 		if m.policy.Artifacts != nil && len(m.policy.Artifacts.Attestations) > 0 {
 			title = "Add another required attestation?"
 		}
 		f = huh.NewForm(huh.NewGroup(
-			huh.NewConfirm().
+			huh.NewConfirm().Key("confirm").
 				Title(title).
-				Value(&m.confirmBool).
 				Affirmative("Yes").Negative("No"),
 		))
 
 	case stepAttDetails:
-		m.selectStr = ""
-		m.inputStr = ""
 		allTypes := append([]string{}, builtInAttestationTypes...)
 		allTypes = append(allTypes, m.wctx.customAttestTypes...)
 		opts := make([]huh.Option[string], len(allTypes))
@@ -386,31 +369,26 @@ func (m *policyWizardModel) buildForm() *huh.Form {
 			opts[i] = huh.NewOption(t, t)
 		}
 		f = huh.NewForm(huh.NewGroup(
-			huh.NewSelect[string]().
+			huh.NewSelect[string]().Key("type").
 				Title("Attestation type").
-				Options(opts...).
-				Value(&m.selectStr),
-			huh.NewInput().
+				Options(opts...),
+			huh.NewInput().Key("name").
 				Title("Attestation name").
 				Description("Use * to match any name for this type").
-				Placeholder("*").
-				Value(&m.inputStr),
+				Placeholder("*"),
 		))
 
 	case stepAttCondConfirm:
-		m.confirmBool = false
 		f = huh.NewForm(huh.NewGroup(
-			huh.NewConfirm().
+			huh.NewConfirm().Key("confirm").
 				Title("Add a condition for this attestation?").
 				Description("Only require when condition is met").
-				Value(&m.confirmBool).
 				Affirmative("Yes").Negative("No"),
 		))
 
 	case stepExprMode:
-		m.selectStr = ""
 		f = huh.NewForm(huh.NewGroup(
-			huh.NewSelect[string]().
+			huh.NewSelect[string]().Key("mode").
 				Title("How do you want to define this condition?").
 				Options(
 					huh.NewOption("Match by flow name", "flow_name"),
@@ -418,126 +396,101 @@ func (m *policyWizardModel) buildForm() *huh.Form {
 					huh.NewOption("Match by artifact name pattern", "artifact_name"),
 					huh.NewOption("Custom comparison", "custom"),
 					huh.NewOption("Write raw expression", "raw"),
-				).
-				Value(&m.selectStr),
+				),
 		))
 
 	case stepExprFlowName:
-		m.inputStr = ""
-		m.selectStr = ""
 		if len(m.wctx.flowNames) > 0 {
 			opts := make([]huh.Option[string], len(m.wctx.flowNames))
 			for i, n := range m.wctx.flowNames {
 				opts[i] = huh.NewOption(n, n)
 			}
 			f = huh.NewForm(huh.NewGroup(
-				huh.NewSelect[string]().
+				huh.NewSelect[string]().Key("value").
 					Title("Select a flow").
-					Options(opts...).
-					Value(&m.selectStr),
+					Options(opts...),
 			))
 		} else {
 			f = huh.NewForm(huh.NewGroup(
-				huh.NewInput().
+				huh.NewInput().Key("value").
 					Title("Flow name").
 					Description("The flow name to match").
-					Value(&m.inputStr).
 					Validate(notEmpty("flow name")),
 			))
 		}
 
 	case stepExprFlowTag:
-		m.inputStr = ""
 		f = huh.NewForm(huh.NewGroup(
-			huh.NewInput().
+			huh.NewInput().Key("value").
 				Title("Tag key").
 				Description("e.g. team, risk-level, key.with.dots").
-				Value(&m.inputStr).
 				Validate(notEmpty("tag key")),
 		))
 
 	case stepExprFlowTagOp:
-		m.selectStr = ""
-		m.inputStr = ""
 		f = huh.NewForm(huh.NewGroup(
-			huh.NewSelect[string]().
+			huh.NewSelect[string]().Key("op").
 				Title("Operator").
-				Options(huh.NewOptions("==", "!=", ">", "<", ">=", "<=")...).
-				Value(&m.selectStr),
-			huh.NewInput().
+				Options(huh.NewOptions("==", "!=", ">", "<", ">=", "<=")...),
+			huh.NewInput().Key("value").
 				Title("Value").
 				Description("The value to compare against").
-				Value(&m.inputStr).
 				Validate(notEmpty("value")),
 		))
 
 	case stepExprArtifactName:
-		m.inputStr = ""
 		f = huh.NewForm(huh.NewGroup(
-			huh.NewInput().
+			huh.NewInput().Key("value").
 				Title("Artifact name regex").
 				Description("e.g. ^datadog:.*").
 				Placeholder("^datadog:.*").
-				Value(&m.inputStr).
 				Validate(notEmpty("regex")),
 		))
 
 	case stepExprCustomCtx:
-		m.selectStr = ""
 		f = huh.NewForm(huh.NewGroup(
-			huh.NewSelect[string]().
+			huh.NewSelect[string]().Key("value").
 				Title("Context field").
 				Options(
 					huh.NewOption("flow.name", "flow.name"),
 					huh.NewOption("flow.tags.<key>", "flow.tags.<key>"),
 					huh.NewOption("artifact.name", "artifact.name"),
 					huh.NewOption("artifact.fingerprint", "artifact.fingerprint"),
-				).
-				Value(&m.selectStr),
+				),
 		))
 
 	case stepExprCustomTagKey:
-		m.inputStr = ""
 		f = huh.NewForm(huh.NewGroup(
-			huh.NewInput().
+			huh.NewInput().Key("value").
 				Title("Tag key").
 				Description("The flow tag key (e.g. team, risk-level)").
-				Value(&m.inputStr).
 				Validate(notEmpty("tag key")),
 		))
 
 	case stepExprCustomOp:
-		m.selectStr = ""
-		m.inputStr = ""
 		f = huh.NewForm(huh.NewGroup(
-			huh.NewSelect[string]().
+			huh.NewSelect[string]().Key("op").
 				Title("Operator").
-				Options(huh.NewOptions("==", "!=", "in", "matches")...).
-				Value(&m.selectStr),
-			huh.NewInput().
+				Options(huh.NewOptions("==", "!=", "in", "matches")...),
+			huh.NewInput().Key("value").
 				Title("Value").
 				Description("The value to compare against").
-				Value(&m.inputStr).
 				Validate(notEmpty("value")),
 		))
 
 	case stepExprRaw:
-		m.inputStr = ""
 		f = huh.NewForm(huh.NewGroup(
-			huh.NewInput().
+			huh.NewInput().Key("value").
 				Title("Raw expression").
 				Description(`e.g. flow.name == "prod" and artifact.name == "svc"`).
 				Placeholder(`flow.name == "prod"`).
-				Value(&m.inputStr).
 				Validate(notEmpty("expression")),
 		))
 
 	case stepFinalConfirm:
-		m.confirmBool = true
 		f = huh.NewForm(huh.NewGroup(
-			huh.NewConfirm().
+			huh.NewConfirm().Key("confirm").
 				Title("Write this policy?").
-				Value(&m.confirmBool).
 				Affirmative("Yes").Negative("No"),
 		))
 
@@ -578,6 +531,8 @@ func (m *policyWizardModel) excConfirmTitle(rule string) string {
 func (m *policyWizardModel) processFormResults() {
 	switch m.step {
 	case stepBasics:
+		m.requireProv = m.form.GetBool("prov")
+		m.requireTrail = m.form.GetBool("trail")
 		if m.requireProv || m.requireTrail {
 			if m.policy.Artifacts == nil {
 				m.policy.Artifacts = &policy.ArtifactRules{}
@@ -591,48 +546,44 @@ func (m *policyWizardModel) processFormResults() {
 		}
 
 	case stepAttDetails:
-		name := m.inputStr
+		name := m.form.GetString("name")
 		if name == "" {
 			name = "*"
 		}
 		m.currentAttRule = policy.AttestationRule{
-			Type: m.selectStr,
+			Type: m.form.GetString("type"),
 			Name: name,
 		}
 
 	case stepExprMode:
-		m.exprMode = m.selectStr
+		m.exprMode = m.form.GetString("mode")
 
 	case stepExprFlowName:
-		name := m.selectStr
-		if name == "" {
-			name = m.inputStr
-		}
-		m.applyExpression(policy.FlowNameExpr(name))
+		m.applyExpression(policy.FlowNameExpr(m.form.GetString("value")))
 
 	case stepExprFlowTag:
-		m.exprTagKey = m.inputStr
+		m.exprTagKey = m.form.GetString("value")
 
 	case stepExprFlowTagOp:
-		m.applyExpression(policy.FlowTagExpr(m.exprTagKey, m.selectStr, m.inputStr))
+		m.applyExpression(policy.FlowTagExpr(m.exprTagKey, m.form.GetString("op"), m.form.GetString("value")))
 
 	case stepExprArtifactName:
-		m.applyExpression(policy.ArtifactNameMatchExpr(m.inputStr))
+		m.applyExpression(policy.ArtifactNameMatchExpr(m.form.GetString("value")))
 
 	case stepExprCustomCtx:
-		m.exprContext = m.selectStr
+		m.exprContext = m.form.GetString("value")
 
 	case stepExprCustomTagKey:
-		m.exprContext = "flow.tags." + m.inputStr
+		m.exprContext = "flow.tags." + m.form.GetString("value")
 
 	case stepExprCustomOp:
-		m.applyExpression(policy.ComparisonExpr(m.exprContext, m.selectStr, m.inputStr))
+		m.applyExpression(policy.ComparisonExpr(m.exprContext, m.form.GetString("op"), m.form.GetString("value")))
 
 	case stepExprRaw:
-		m.applyExpression(policy.WrapExpr(m.inputStr))
+		m.applyExpression(policy.WrapExpr(m.form.GetString("value")))
 
 	case stepFinalConfirm:
-		m.confirmed = m.confirmBool
+		m.confirmed = m.form.GetBool("confirm")
 	}
 }
 
@@ -676,7 +627,7 @@ func (m *policyWizardModel) advanceStep() {
 		}
 
 	case stepProvExcConfirm:
-		if m.confirmBool {
+		if m.form.GetBool("confirm") {
 			m.exprTarget = targetProvException
 			m.step = stepExprMode
 		} else if m.requireTrail {
@@ -687,7 +638,7 @@ func (m *policyWizardModel) advanceStep() {
 		}
 
 	case stepTrailExcConfirm:
-		if m.confirmBool {
+		if m.form.GetBool("confirm") {
 			m.exprTarget = targetTrailException
 			m.step = stepExprMode
 		} else {
@@ -695,7 +646,7 @@ func (m *policyWizardModel) advanceStep() {
 		}
 
 	case stepAttConfirm:
-		if m.confirmBool {
+		if m.form.GetBool("confirm") {
 			m.step = stepAttDetails
 		} else {
 			m.step = stepFinalConfirm
@@ -705,7 +656,7 @@ func (m *policyWizardModel) advanceStep() {
 		m.step = stepAttCondConfirm
 
 	case stepAttCondConfirm:
-		if m.confirmBool {
+		if m.form.GetBool("confirm") {
 			m.exprTarget = targetAttCondition
 			m.step = stepExprMode
 		} else {
