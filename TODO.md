@@ -59,7 +59,7 @@
 
 - [x] Slice 1: Policy model + YAML generation (`internal/policy/`)
 - [x] Slice 2: Expression builder
-- [ ] Slice 3: Skeleton Cobra command + huh dependency
+- [x] Slice 3: Skeleton Cobra command + huh dependency
 - [ ] Slice 4: Attestation loop in wizard
 - [ ] Slice 5: Expression builder wizard
 - [ ] Slice 6: API lookups for flows and custom attestation types
