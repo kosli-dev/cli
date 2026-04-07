@@ -307,6 +307,7 @@ func collectExceptions(ruleName string, wctx *wizardContext) ([]policy.Exception
 
 const (
 	exprModeFlowName     = "flow_name"
+	exprModeFlowTag      = "flow_tag"
 	exprModeArtifactName = "artifact_name"
 	exprModeCustom       = "custom"
 	exprModeRaw          = "raw"
@@ -318,6 +319,7 @@ func collectExpression(wctx *wizardContext) (string, error) {
 		Title("How do you want to define this condition?").
 		Options(
 			huh.NewOption("Match by flow name", exprModeFlowName),
+			huh.NewOption("Match by flow tag", exprModeFlowTag),
 			huh.NewOption("Match by artifact name pattern", exprModeArtifactName),
 			huh.NewOption("Custom comparison", exprModeCustom),
 			huh.NewOption("Write raw expression", exprModeRaw),
@@ -331,6 +333,8 @@ func collectExpression(wctx *wizardContext) (string, error) {
 	switch mode {
 	case exprModeFlowName:
 		return collectFlowNameExpr(wctx)
+	case exprModeFlowTag:
+		return collectFlowTagExpr()
 	case exprModeArtifactName:
 		return collectArtifactNameExpr()
 	case exprModeCustom:
@@ -374,6 +378,53 @@ func collectFlowNameExpr(wctx *wizardContext) (string, error) {
 		}
 	}
 	return policy.FlowNameExpr(flowName), nil
+}
+
+var flowTagOperators = []string{"==", "!=", ">", "<", ">=", "<="}
+
+func collectFlowTagExpr() (string, error) {
+	var tagKey string
+	var operator string
+	var value string
+
+	err := huh.NewInput().
+		Title("Tag key").
+		Description("The flow tag key (e.g. team, risk-level, key.with.dots)").
+		Value(&tagKey).
+		Validate(func(s string) error {
+			if s == "" {
+				return fmt.Errorf("tag key is required")
+			}
+			return nil
+		}).
+		Run()
+	if err != nil {
+		return "", err
+	}
+
+	err = huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Operator").
+				Options(huh.NewOptions(flowTagOperators...)...).
+				Value(&operator),
+			huh.NewInput().
+				Title("Value").
+				Description("The value to compare against").
+				Value(&value).
+				Validate(func(s string) error {
+					if s == "" {
+						return fmt.Errorf("value is required")
+					}
+					return nil
+				}),
+		),
+	).Run()
+	if err != nil {
+		return "", err
+	}
+
+	return policy.FlowTagExpr(tagKey, operator, value), nil
 }
 
 func collectArtifactNameExpr() (string, error) {

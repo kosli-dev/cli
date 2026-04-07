@@ -23,6 +23,11 @@ func FlowNameInExpr(names []string) string {
 	return fmt.Sprintf(`${{ flow.name in [%s] }}`, strings.Join(quoted, ", "))
 }
 
+// FlowTagExpr returns a policy expression comparing a flow tag to a value.
+func FlowTagExpr(key, op, value string) string {
+	return fmt.Sprintf(`${{ flow.tags.%s %s "%s" }}`, key, op, value)
+}
+
 // ArtifactNameMatchExpr returns a policy expression matching artifact names by regex.
 func ArtifactNameMatchExpr(regex string) string {
 	return fmt.Sprintf(`${{ matches(artifact.name, "%s") }}`, regex)

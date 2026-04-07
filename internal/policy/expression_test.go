@@ -21,6 +21,16 @@ func TestFlowNameInExpr_Single(t *testing.T) {
 	assert.Equal(t, `${{ flow.name == "prod" }}`, result)
 }
 
+func TestFlowTagExpr(t *testing.T) {
+	result := FlowTagExpr("risk-level", "==", "high")
+	assert.Equal(t, `${{ flow.tags.risk-level == "high" }}`, result)
+}
+
+func TestFlowTagExpr_DottedKey(t *testing.T) {
+	result := FlowTagExpr("key.with.dots", "!=", "bad")
+	assert.Equal(t, `${{ flow.tags.key.with.dots != "bad" }}`, result)
+}
+
 func TestArtifactNameMatchExpr(t *testing.T) {
 	result := ArtifactNameMatchExpr("^datadog:.*")
 	assert.Equal(t, `${{ matches(artifact.name, "^datadog:.*") }}`, result)
