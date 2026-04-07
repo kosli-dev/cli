@@ -109,9 +109,10 @@ func (o *createPolicyFileOptions) run(out io.Writer) error {
 type wizardStep int
 
 const (
-	stepBasics           wizardStep = iota // provenance + trail compliance
-	stepProvExcConfirm                     // add provenance exception?
-	stepTrailExcConfirm                    // add trail compliance exception?
+	stepProvConfirm     wizardStep = iota // require provenance?
+	stepProvExcConfirm                    // add provenance exception?
+	stepTrailConfirm                      // require trail compliance?
+	stepTrailExcConfirm                   // add trail compliance exception?
 	stepAttConfirm                         // add attestation?
 	stepAttDetails                         // attestation type + name
 	stepAttCondConfirm                     // add condition for attestation?
@@ -211,7 +212,7 @@ type policyWizardModel struct {
 
 func newPolicyWizardModel(wctx *wizardContext) policyWizardModel {
 	m := policyWizardModel{
-		step:   stepBasics,
+		step:   stepProvConfirm,
 		policy: policy.NewPolicy(),
 		wctx:   wctx,
 		styles: newWizardStyles(),
@@ -322,13 +323,17 @@ var builtInAttestationTypes = []string{
 func (m *policyWizardModel) buildForm() *huh.Form {
 	var f *huh.Form
 	switch m.step {
-	case stepBasics:
+	case stepProvConfirm:
 		f = huh.NewForm(huh.NewGroup(
-			huh.NewConfirm().Key("prov").
+			huh.NewConfirm().Key("confirm").
 				Title("Require artifact provenance?").
 				Description("All artifacts must belong to a Kosli flow").
 				Affirmative("Yes").Negative("No"),
-			huh.NewConfirm().Key("trail").
+		))
+
+	case stepTrailConfirm:
+		f = huh.NewForm(huh.NewGroup(
+			huh.NewConfirm().Key("confirm").
 				Title("Require trail compliance?").
 				Description("All artifacts must be part of compliant trails").
 				Affirmative("Yes").Negative("No"),
@@ -530,19 +535,22 @@ func (m *policyWizardModel) excConfirmTitle(rule string) string {
 
 func (m *policyWizardModel) processFormResults() {
 	switch m.step {
-	case stepBasics:
-		m.requireProv = m.form.GetBool("prov")
-		m.requireTrail = m.form.GetBool("trail")
-		if m.requireProv || m.requireTrail {
+	case stepProvConfirm:
+		m.requireProv = m.form.GetBool("confirm")
+		if m.requireProv {
 			if m.policy.Artifacts == nil {
 				m.policy.Artifacts = &policy.ArtifactRules{}
 			}
-			if m.requireProv {
-				m.policy.Artifacts.Provenance = &policy.BooleanRule{Required: true}
+			m.policy.Artifacts.Provenance = &policy.BooleanRule{Required: true}
+		}
+
+	case stepTrailConfirm:
+		m.requireTrail = m.form.GetBool("confirm")
+		if m.requireTrail {
+			if m.policy.Artifacts == nil {
+				m.policy.Artifacts = &policy.ArtifactRules{}
 			}
-			if m.requireTrail {
-				m.policy.Artifacts.TrailCompliance = &policy.BooleanRule{Required: true}
-			}
+			m.policy.Artifacts.TrailCompliance = &policy.BooleanRule{Required: true}
 		}
 
 	case stepAttDetails:
@@ -615,22 +623,24 @@ func (m *policyWizardModel) commitAttestation() {
 
 func (m *policyWizardModel) advanceStep() {
 	switch m.step {
-	case stepBasics:
+	case stepProvConfirm:
 		if m.requireProv {
 			m.exprTarget = targetProvException
 			m.step = stepProvExcConfirm
-		} else if m.requireTrail {
-			m.exprTarget = targetTrailException
-			m.step = stepTrailExcConfirm
 		} else {
-			m.step = stepAttConfirm
+			m.step = stepTrailConfirm
 		}
 
 	case stepProvExcConfirm:
 		if m.form.GetBool("confirm") {
 			m.exprTarget = targetProvException
 			m.step = stepExprMode
-		} else if m.requireTrail {
+		} else {
+			m.step = stepTrailConfirm
+		}
+
+	case stepTrailConfirm:
+		if m.requireTrail {
 			m.exprTarget = targetTrailException
 			m.step = stepTrailExcConfirm
 		} else {
