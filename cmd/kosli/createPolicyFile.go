@@ -197,6 +197,7 @@ type policyWizardModel struct {
 	outputFile     string
 	requireProv    bool
 	requireTrail   bool
+	validationErr  string
 }
 
 func newPolicyWizardModel(wctx *wizardContext) policyWizardModel {
@@ -240,6 +241,11 @@ func (m policyWizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	if m.form.State == huh.StateCompleted {
 		m.processFormResults()
+		if m.validationErr != "" {
+			// Stay on the same step, rebuild the form
+			m.form = m.buildForm()
+			return m, m.form.Init()
+		}
 		m.advanceStep()
 		if m.step == stepDone {
 			return m, tea.Quit
@@ -272,9 +278,14 @@ func (m policyWizardModel) View() string {
 	header := s.title.Render("Kosli Policy Builder")
 
 	// Form (left)
+	formContent := m.form.View()
+	if m.validationErr != "" {
+		errStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FE5F86")).Bold(true)
+		formContent = errStyle.Render("⚠ "+m.validationErr) + "\n\n" + formContent
+	}
 	formView := lipgloss.NewStyle().
 		Width(fw).
-		Render(m.form.View())
+		Render(formContent)
 
 	var body string
 	if pw > 0 {
@@ -306,7 +317,7 @@ func (m policyWizardModel) View() string {
 // ---------------------------------------------------------------------------
 
 var builtInAttestationTypes = []string{
-	"generic", "junit", "snyk", "pull_request", "jira", "sonar",
+	"generic", "junit", "snyk", "pull_request", "jira", "sonar", "*",
 }
 
 func (m *policyWizardModel) buildForm() *huh.Form {
@@ -545,12 +556,18 @@ func (m *policyWizardModel) processFormResults() {
 		}
 
 	case stepAttDetails:
+		attType := m.form.GetString("type")
 		name := m.form.GetString("name")
 		if name == "" {
 			name = "*"
 		}
+		if attType == "*" && name == "*" {
+			m.validationErr = "when type is *, name must not be * — please specify a name"
+			return
+		}
+		m.validationErr = ""
 		m.currentAttRule = policy.AttestationRule{
-			Type: m.form.GetString("type"),
+			Type: attType,
 			Name: name,
 		}
 

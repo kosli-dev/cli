@@ -82,7 +82,7 @@ func TestToYAML_SingleAttestation(t *testing.T) {
 	p := NewPolicy()
 	p.Artifacts = &ArtifactRules{
 		Attestations: []AttestationRule{
-			{Type: "snyk"},
+			{Type: "snyk", Name: "*"},
 		},
 	}
 	out, err := p.ToYAML()
@@ -92,6 +92,7 @@ func TestToYAML_SingleAttestation(t *testing.T) {
 artifacts:
     attestations:
         - type: snyk
+          name: '*'
 `
 	assert.Equal(t, expected, string(out))
 }
@@ -125,7 +126,7 @@ func TestToYAML_MultipleAttestations(t *testing.T) {
 	p.Artifacts = &ArtifactRules{
 		Attestations: []AttestationRule{
 			{Type: "snyk", Name: "security-scan"},
-			{Type: "junit"},
+			{Type: "junit", Name: "*"},
 			{Type: "custom:coverage-metrics", Name: "coverage"},
 		},
 	}
@@ -138,6 +139,7 @@ artifacts:
         - type: snyk
           name: security-scan
         - type: junit
+          name: '*'
         - type: custom:coverage-metrics
           name: coverage
 `
@@ -189,7 +191,7 @@ artifacts:
 	assert.Equal(t, expected, string(out))
 }
 
-func TestToYAML_WildcardNameOmitted(t *testing.T) {
+func TestToYAML_WildcardNameExplicit(t *testing.T) {
 	p := NewPolicy()
 	p.Artifacts = &ArtifactRules{
 		Attestations: []AttestationRule{
@@ -199,11 +201,32 @@ func TestToYAML_WildcardNameOmitted(t *testing.T) {
 	out, err := p.ToYAML()
 	require.NoError(t, err)
 
-	// name: "*" should be omitted from output
+	// name: "*" should always be explicit in output
 	expected := `_schema: https://kosli.mintlify.app/schemas/policy/v1
 artifacts:
     attestations:
         - type: snyk
+          name: '*'
+`
+	assert.Equal(t, expected, string(out))
+}
+
+func TestToYAML_WildcardTypeRequiresNonWildcardName(t *testing.T) {
+	// When type is "*", name must not be "*" per the schema
+	p := NewPolicy()
+	p.Artifacts = &ArtifactRules{
+		Attestations: []AttestationRule{
+			{Type: "*", Name: "security-scan"},
+		},
+	}
+	out, err := p.ToYAML()
+	require.NoError(t, err)
+
+	expected := `_schema: https://kosli.mintlify.app/schemas/policy/v1
+artifacts:
+    attestations:
+        - type: '*'
+          name: security-scan
 `
 	assert.Equal(t, expected, string(out))
 }

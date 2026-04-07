@@ -26,7 +26,7 @@ type ExceptionRule struct {
 
 type AttestationRule struct {
 	Type string `yaml:"type"`
-	Name string `yaml:"name,omitempty"`
+	Name string `yaml:"name"`
 	If   string `yaml:"if,omitempty"`
 }
 
@@ -37,26 +37,5 @@ func NewPolicy() *Policy {
 }
 
 func (p *Policy) ToYAML() ([]byte, error) {
-	out := p.normalized()
-	return yaml.Marshal(out)
-}
-
-// normalized returns a copy with wildcard "*" names cleared so they are omitted from YAML.
-func (p *Policy) normalized() *Policy {
-	cp := *p
-	if cp.Artifacts != nil {
-		arts := *cp.Artifacts
-		if len(arts.Attestations) > 0 {
-			normalized := make([]AttestationRule, len(arts.Attestations))
-			for i, a := range arts.Attestations {
-				if a.Name == "*" {
-					a.Name = ""
-				}
-				normalized[i] = a
-			}
-			arts.Attestations = normalized
-		}
-		cp.Artifacts = &arts
-	}
-	return &cp
+	return yaml.Marshal(p)
 }
