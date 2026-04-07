@@ -63,4 +63,4 @@
 - [x] Slice 4: Attestation loop in wizard
 - [x] Slice 5: Expression builder wizard
 - [x] Slice 6: API lookups for flows and custom attestation types
-- [ ] Slice 7: Preview screen + polish
+- [x] Slice 7: Preview screen + polish

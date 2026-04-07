@@ -135,6 +135,28 @@ func (o *createPolicyFileOptions) run(out io.Writer) error {
 		return fmt.Errorf("failed to generate policy YAML: %w", err)
 	}
 
+	// Preview the generated YAML
+	var confirm bool
+	err = huh.NewForm(
+		huh.NewGroup(
+			huh.NewNote().
+				Title("Generated policy YAML").
+				Description(string(yamlBytes)),
+			huh.NewConfirm().
+				Title("Write this policy?").
+				Value(&confirm).
+				Affirmative("Yes").
+				Negative("No"),
+		),
+	).Run()
+	if err != nil {
+		return err
+	}
+	if !confirm {
+		logger.Info("policy file creation cancelled")
+		return nil
+	}
+
 	if o.outputFile != "" {
 		err = os.WriteFile(o.outputFile, yamlBytes, 0644)
 		if err != nil {
