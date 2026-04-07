@@ -1,4 +1,4 @@
-package main
+package policywizard
 
 import (
 	"strings"
@@ -11,52 +11,56 @@ import (
 
 const formWidth = 55
 
-type policyWizardModel struct {
+// Model is the bubbletea model for the policy wizard.
+type Model struct {
 	step   wizardStep
 	form   *huh.Form
-	policy *policy.Policy
-	wctx   *wizardContext
-	styles wizardStyles
+	styles styles
 	width  int
 	height int
+	ctx    *Context
 
-	// State for loops and expression building
+	// Public results — read after the program exits.
+	Policy    *policy.Policy
+	OutputFile string
+	Cancelled  bool
+
+	// Internal state for loops and expression building.
 	exprTarget     exprTarget
 	exprMode       string
 	exprContext    string
 	exprTagKey     string
 	currentAttRule policy.AttestationRule
-	cancelled      bool
-	outputFile     string
 	requireProv    bool
 	requireTrail   bool
 	validationErr  string
 }
 
-func newPolicyWizardModel(wctx *wizardContext) policyWizardModel {
-	m := policyWizardModel{
+// NewModel creates a new policy wizard model.
+func NewModel(ctx *Context) Model {
+	m := Model{
 		step:   stepProvConfirm,
-		policy: policy.NewPolicy(),
-		wctx:   wctx,
-		styles: newWizardStyles(),
+		Policy: policy.NewPolicy(),
+		ctx:    ctx,
+		styles: newStyles(),
 		width:  120,
 	}
 	m.form = m.buildForm()
 	return m
 }
 
-func (m policyWizardModel) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return m.form.Init()
 }
 
-func (m policyWizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
 	case tea.KeyMsg:
 		if msg.String() == "ctrl+c" {
-			m.cancelled = true
+			m.Cancelled = true
 			return m, tea.Quit
 		}
 	}
@@ -67,7 +71,7 @@ func (m policyWizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	if m.form.State == huh.StateAborted {
-		m.cancelled = true
+		m.Cancelled = true
 		return m, tea.Quit
 	}
 
@@ -88,8 +92,8 @@ func (m policyWizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m policyWizardModel) View() string {
-	if m.cancelled || m.step == stepDone {
+func (m Model) View() string {
+	if m.Cancelled || m.step == stepDone {
 		return ""
 	}
 
@@ -112,7 +116,7 @@ func (m policyWizardModel) View() string {
 
 	var body string
 	if pw > 0 {
-		yamlBytes, _ := m.policy.ToYAML()
+		yamlBytes, _ := m.Policy.ToYAML()
 		yamlStr := strings.TrimRight(string(yamlBytes), "\n")
 		if yamlStr == "" {
 			yamlStr = "(empty)"

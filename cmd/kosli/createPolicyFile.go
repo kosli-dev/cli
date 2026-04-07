@@ -1,12 +1,16 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
+	"net/url"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/kosli-dev/cli/internal/policy"
+	"github.com/kosli-dev/cli/internal/policywizard"
+	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -50,32 +54,30 @@ func runCreatePolicyFile() error {
 		return fmt.Errorf("this command requires an interactive terminal; write policy YAML manually or use 'kosli create policy' directly")
 	}
 
-	wctx := &wizardContext{}
+	ctx := &policywizard.Context{}
 	if global.ApiToken != "" && global.Org != "" {
-		wctx.fetchFromAPI()
+		ctx.FlowNames = fetchFlowNames()
+		ctx.CustomAttestTypes = fetchCustomAttestationTypes()
 	}
 
-	m := newPolicyWizardModel(wctx)
+	m := policywizard.NewModel(ctx)
 	finalModel, err := tea.NewProgram(m, tea.WithAltScreen()).Run()
 	if err != nil {
 		return fmt.Errorf("wizard error: %w", err)
 	}
 
-	wm := finalModel.(policyWizardModel)
-	if wm.cancelled {
+	wm := finalModel.(policywizard.Model)
+	if wm.Cancelled {
 		logger.Info("policy file creation cancelled")
 		return nil
 	}
 
-	return writePolicyFile(wm.policy, wm.outputFile)
-}
-
-func writePolicyFile(p *policy.Policy, filename string) error {
+	filename := wm.OutputFile
 	if filename == "" {
 		filename = "policy.yaml"
 	}
 
-	yamlBytes, err := p.ToYAML()
+	yamlBytes, err := wm.Policy.ToYAML()
 	if err != nil {
 		return fmt.Errorf("failed to generate policy YAML: %w", err)
 	}
@@ -86,4 +88,70 @@ func writePolicyFile(p *policy.Policy, filename string) error {
 	}
 	logger.Info("policy file written to %s", filename)
 	return nil
+}
+
+func fetchFlowNames() []string {
+	u, err := url.JoinPath(global.Host, "api/v2/flows", global.Org)
+	if err != nil {
+		logger.Debug("failed to build flows URL: %v", err)
+		return nil
+	}
+
+	reqParams := &requests.RequestParams{
+		Method: http.MethodGet,
+		URL:    u,
+		Token:  global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
+	if err != nil {
+		logger.Debug("failed to fetch flows: %v", err)
+		return nil
+	}
+
+	var flows []map[string]any
+	if err := json.Unmarshal([]byte(response.Body), &flows); err != nil {
+		logger.Debug("failed to parse flows response: %v", err)
+		return nil
+	}
+
+	names := make([]string, 0, len(flows))
+	for _, flow := range flows {
+		if name, ok := flow["name"].(string); ok {
+			names = append(names, name)
+		}
+	}
+	return names
+}
+
+func fetchCustomAttestationTypes() []string {
+	u, err := url.JoinPath(global.Host, "api/v2/custom-attestation-types", global.Org)
+	if err != nil {
+		logger.Debug("failed to build attestation types URL: %v", err)
+		return nil
+	}
+
+	reqParams := &requests.RequestParams{
+		Method: http.MethodGet,
+		URL:    u,
+		Token:  global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
+	if err != nil {
+		logger.Debug("failed to fetch attestation types: %v", err)
+		return nil
+	}
+
+	var types []map[string]any
+	if err := json.Unmarshal([]byte(response.Body), &types); err != nil {
+		logger.Debug("failed to parse attestation types response: %v", err)
+		return nil
+	}
+
+	names := make([]string, 0, len(types))
+	for _, t := range types {
+		if name, ok := t["name"].(string); ok {
+			names = append(names, "custom:"+name)
+		}
+	}
+	return names
 }

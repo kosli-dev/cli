@@ -1,4 +1,4 @@
-package main
+package policywizard
 
 import (
 	"fmt"
@@ -14,23 +14,23 @@ import (
 type wizardStep int
 
 const (
-	stepProvConfirm     wizardStep = iota // require provenance?
-	stepProvExcConfirm                    // add provenance exception?
-	stepTrailConfirm                      // require trail compliance?
-	stepTrailExcConfirm                   // add trail compliance exception?
-	stepAttConfirm                        // add attestation?
-	stepAttDetails                        // attestation type + name
-	stepAttCondConfirm                    // add condition for attestation?
-	stepExprMode                          // choose expression mode
-	stepExprFlowName                      // flow name input/select
-	stepExprFlowTag                       // tag key input
-	stepExprFlowTagOp                     // tag operator + value
-	stepExprArtifactName                  // artifact regex input
-	stepExprCustomCtx                     // custom context select
-	stepExprCustomTagKey                  // tag key for custom context
-	stepExprCustomOp                      // custom operator + value
-	stepExprRaw                           // raw expression input
-	stepSaveFile                          // ask for filename
+	stepProvConfirm     wizardStep = iota
+	stepProvExcConfirm
+	stepTrailConfirm
+	stepTrailExcConfirm
+	stepAttConfirm
+	stepAttDetails
+	stepAttCondConfirm
+	stepExprMode
+	stepExprFlowName
+	stepExprFlowTag
+	stepExprFlowTagOp
+	stepExprArtifactName
+	stepExprCustomCtx
+	stepExprCustomTagKey
+	stepExprCustomOp
+	stepExprRaw
+	stepSaveFile
 	stepDone
 )
 
@@ -50,7 +50,7 @@ var builtInAttestationTypes = []string{
 	"generic", "junit", "snyk", "pull_request", "jira", "sonar", "*",
 }
 
-func (m *policyWizardModel) buildForm() *huh.Form {
+func (m *Model) buildForm() *huh.Form {
 	var f *huh.Form
 	switch m.step {
 	case stepProvConfirm:
@@ -71,14 +71,14 @@ func (m *policyWizardModel) buildForm() *huh.Form {
 
 	case stepAttConfirm:
 		title := "Add a required attestation?"
-		if m.policy.Artifacts != nil && len(m.policy.Artifacts.Attestations) > 0 {
+		if m.Policy.Artifacts != nil && len(m.Policy.Artifacts.Attestations) > 0 {
 			title = "Add another required attestation?"
 		}
 		f = confirmForm(title, "")
 
 	case stepAttDetails:
 		allTypes := append([]string{}, builtInAttestationTypes...)
-		allTypes = append(allTypes, m.wctx.customAttestTypes...)
+		allTypes = append(allTypes, m.ctx.CustomAttestTypes...)
 		opts := make([]huh.Option[string], len(allTypes))
 		for i, t := range allTypes {
 			opts[i] = huh.NewOption(t, t)
@@ -111,9 +111,9 @@ func (m *policyWizardModel) buildForm() *huh.Form {
 		))
 
 	case stepExprFlowName:
-		if len(m.wctx.flowNames) > 0 {
-			opts := make([]huh.Option[string], len(m.wctx.flowNames))
-			for i, n := range m.wctx.flowNames {
+		if len(m.ctx.FlowNames) > 0 {
+			opts := make([]huh.Option[string], len(m.ctx.FlowNames))
+			for i, n := range m.ctx.FlowNames {
 				opts[i] = huh.NewOption(n, n)
 			}
 			f = huh.NewForm(huh.NewGroup(
@@ -209,13 +209,13 @@ func notEmpty(field string) func(string) error {
 	}
 }
 
-func (m *policyWizardModel) excConfirmTitle(rule string) string {
+func (m *Model) excConfirmTitle(rule string) string {
 	var count int
-	if rule == "provenance" && m.policy.Artifacts != nil && m.policy.Artifacts.Provenance != nil {
-		count = len(m.policy.Artifacts.Provenance.Exceptions)
+	if rule == "provenance" && m.Policy.Artifacts != nil && m.Policy.Artifacts.Provenance != nil {
+		count = len(m.Policy.Artifacts.Provenance.Exceptions)
 	}
-	if rule == "trail compliance" && m.policy.Artifacts != nil && m.policy.Artifacts.TrailCompliance != nil {
-		count = len(m.policy.Artifacts.TrailCompliance.Exceptions)
+	if rule == "trail compliance" && m.Policy.Artifacts != nil && m.Policy.Artifacts.TrailCompliance != nil {
+		count = len(m.Policy.Artifacts.TrailCompliance.Exceptions)
 	}
 	if count > 0 {
 		return fmt.Sprintf("Add another exception to %s?", rule)
@@ -227,24 +227,24 @@ func (m *policyWizardModel) excConfirmTitle(rule string) string {
 // State transitions: processFormResults
 // ---------------------------------------------------------------------------
 
-func (m *policyWizardModel) processFormResults() {
+func (m *Model) processFormResults() {
 	switch m.step {
 	case stepProvConfirm:
 		m.requireProv = m.form.GetBool("confirm")
 		if m.requireProv {
-			if m.policy.Artifacts == nil {
-				m.policy.Artifacts = &policy.ArtifactRules{}
+			if m.Policy.Artifacts == nil {
+				m.Policy.Artifacts = &policy.ArtifactRules{}
 			}
-			m.policy.Artifacts.Provenance = &policy.BooleanRule{Required: true}
+			m.Policy.Artifacts.Provenance = &policy.BooleanRule{Required: true}
 		}
 
 	case stepTrailConfirm:
 		m.requireTrail = m.form.GetBool("confirm")
 		if m.requireTrail {
-			if m.policy.Artifacts == nil {
-				m.policy.Artifacts = &policy.ArtifactRules{}
+			if m.Policy.Artifacts == nil {
+				m.Policy.Artifacts = &policy.ArtifactRules{}
 			}
-			m.policy.Artifacts.TrailCompliance = &policy.BooleanRule{Required: true}
+			m.Policy.Artifacts.TrailCompliance = &policy.BooleanRule{Required: true}
 		}
 
 	case stepAttDetails:
@@ -291,20 +291,20 @@ func (m *policyWizardModel) processFormResults() {
 		m.applyExpression(policy.WrapExpr(m.form.GetString("value")))
 
 	case stepSaveFile:
-		m.outputFile = m.form.GetString("filename")
+		m.OutputFile = m.form.GetString("filename")
 	}
 }
 
-func (m *policyWizardModel) applyExpression(expr string) {
+func (m *Model) applyExpression(expr string) {
 	switch m.exprTarget {
 	case targetProvException:
-		m.policy.Artifacts.Provenance.Exceptions = append(
-			m.policy.Artifacts.Provenance.Exceptions,
+		m.Policy.Artifacts.Provenance.Exceptions = append(
+			m.Policy.Artifacts.Provenance.Exceptions,
 			policy.ExceptionRule{If: expr},
 		)
 	case targetTrailException:
-		m.policy.Artifacts.TrailCompliance.Exceptions = append(
-			m.policy.Artifacts.TrailCompliance.Exceptions,
+		m.Policy.Artifacts.TrailCompliance.Exceptions = append(
+			m.Policy.Artifacts.TrailCompliance.Exceptions,
 			policy.ExceptionRule{If: expr},
 		)
 	case targetAttCondition:
@@ -313,11 +313,11 @@ func (m *policyWizardModel) applyExpression(expr string) {
 	}
 }
 
-func (m *policyWizardModel) commitAttestation() {
-	if m.policy.Artifacts == nil {
-		m.policy.Artifacts = &policy.ArtifactRules{}
+func (m *Model) commitAttestation() {
+	if m.Policy.Artifacts == nil {
+		m.Policy.Artifacts = &policy.ArtifactRules{}
 	}
-	m.policy.Artifacts.Attestations = append(m.policy.Artifacts.Attestations, m.currentAttRule)
+	m.Policy.Artifacts.Attestations = append(m.Policy.Artifacts.Attestations, m.currentAttRule)
 	m.currentAttRule = policy.AttestationRule{}
 }
 
@@ -325,7 +325,7 @@ func (m *policyWizardModel) commitAttestation() {
 // State transitions: advanceStep
 // ---------------------------------------------------------------------------
 
-func (m *policyWizardModel) advanceStep() {
+func (m *Model) advanceStep() {
 	switch m.step {
 	case stepProvConfirm:
 		if m.requireProv {
@@ -420,7 +420,7 @@ func (m *policyWizardModel) advanceStep() {
 	}
 }
 
-func (m *policyWizardModel) advanceAfterExpr() {
+func (m *Model) advanceAfterExpr() {
 	switch m.exprTarget {
 	case targetProvException:
 		m.step = stepProvExcConfirm
