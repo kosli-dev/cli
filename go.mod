@@ -4,20 +4,20 @@ go 1.25.0
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.21.0
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.10.1
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.1
 	github.com/Azure/azure-sdk-for-go/sdk/containers/azcontainerregistry v0.2.3
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appservice/armappservice/v2 v2.3.0
 	github.com/andygrunwald/go-jira v1.17.0
 	github.com/aws/aws-sdk-go-v2 v1.41.5
-	github.com/aws/aws-sdk-go-v2/config v1.32.13
-	github.com/aws/aws-sdk-go-v2/credentials v1.19.13
-	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.1.13
-	github.com/aws/aws-sdk-go-v2/service/ecs v1.75.0
+	github.com/aws/aws-sdk-go-v2/config v1.32.14
+	github.com/aws/aws-sdk-go-v2/credentials v1.19.14
+	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.1.14
+	github.com/aws/aws-sdk-go-v2/service/ecs v1.76.0
 	github.com/aws/aws-sdk-go-v2/service/lambda v1.88.5
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.98.0
-	github.com/aws/smithy-go v1.24.2
+	github.com/aws/smithy-go v1.24.3
 	github.com/containers/image/v5 v5.36.2
-	github.com/docker/docker v28.3.2+incompatible
+	github.com/docker/docker v28.5.2+incompatible
 	github.com/go-git/go-billy/v5 v5.8.0
 	github.com/go-git/go-git/v5 v5.17.2
 	github.com/go-playground/validator/v10 v10.30.2
@@ -57,7 +57,7 @@ require (
 	cel.dev/expr v0.25.1 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.11.2 // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v1.4.2 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v1.6.0 // indirect
 	github.com/BurntSushi/toml v1.5.0 // indirect
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
@@ -75,8 +75,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.21 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.21 // indirect
 	github.com/aws/aws-sdk-go-v2/service/signin v1.0.9 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.30.14 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.18 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.30.15 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.19 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.41.10 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
@@ -119,9 +119,8 @@ require (
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
-	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
-	github.com/golang-jwt/jwt/v5 v5.2.2 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/cel-go v0.27.0 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
