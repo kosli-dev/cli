@@ -1,15 +1,25 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/charmbracelet/huh"
 	"github.com/kosli-dev/cli/internal/policy"
+	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
+
+// wizardContext holds data fetched from the API to populate wizard options.
+type wizardContext struct {
+	flowNames            []string
+	customAttestTypes    []string // e.g. ["custom:coverage-metrics", "custom:compliance-check"]
+}
 
 const createPolicyFileShortDesc = `Interactively create a Kosli environment policy YAML file.`
 
@@ -60,6 +70,11 @@ func (o *createPolicyFileOptions) run(out io.Writer) error {
 		return fmt.Errorf("this command requires an interactive terminal; write policy YAML manually or use 'kosli create policy' directly")
 	}
 
+	wctx := &wizardContext{}
+	if global.ApiToken != "" && global.Org != "" {
+		wctx.fetchFromAPI()
+	}
+
 	p := policy.NewPolicy()
 
 	var requireProvenance bool
@@ -88,14 +103,14 @@ func (o *createPolicyFileOptions) run(out io.Writer) error {
 	if requireProvenance || requireTrailCompliance {
 		p.Artifacts = &policy.ArtifactRules{}
 		if requireProvenance {
-			exceptions, exErr := collectExceptions("provenance")
+			exceptions, exErr := collectExceptions("provenance", wctx)
 			if exErr != nil {
 				return exErr
 			}
 			p.Artifacts.Provenance = &policy.BooleanRule{Required: true, Exceptions: exceptions}
 		}
 		if requireTrailCompliance {
-			exceptions, exErr := collectExceptions("trail compliance")
+			exceptions, exErr := collectExceptions("trail compliance", wctx)
 			if exErr != nil {
 				return exErr
 			}
@@ -104,7 +119,7 @@ func (o *createPolicyFileOptions) run(out io.Writer) error {
 	}
 
 	// Attestation loop
-	attestations, err := collectAttestations()
+	attestations, err := collectAttestations(wctx)
 	if err != nil {
 		return err
 	}
@@ -142,7 +157,7 @@ var builtInAttestationTypes = []string{
 	"sonar",
 }
 
-func collectAttestations() ([]policy.AttestationRule, error) {
+func collectAttestations(wctx *wizardContext) ([]policy.AttestationRule, error) {
 	var attestations []policy.AttestationRule
 
 	for {
@@ -165,7 +180,7 @@ func collectAttestations() ([]policy.AttestationRule, error) {
 			break
 		}
 
-		rule, err := collectOneAttestation()
+		rule, err := collectOneAttestation(wctx)
 		if err != nil {
 			return nil, err
 		}
@@ -174,12 +189,16 @@ func collectAttestations() ([]policy.AttestationRule, error) {
 	return attestations, nil
 }
 
-func collectOneAttestation() (policy.AttestationRule, error) {
+func collectOneAttestation(wctx *wizardContext) (policy.AttestationRule, error) {
 	var attType string
 	var attName string
 
-	typeOptions := make([]huh.Option[string], len(builtInAttestationTypes))
-	for i, t := range builtInAttestationTypes {
+	allTypes := builtInAttestationTypes
+	if len(wctx.customAttestTypes) > 0 {
+		allTypes = append(allTypes, wctx.customAttestTypes...)
+	}
+	typeOptions := make([]huh.Option[string], len(allTypes))
+	for i, t := range allTypes {
 		typeOptions[i] = huh.NewOption(t, t)
 	}
 
@@ -221,7 +240,7 @@ func collectOneAttestation() (policy.AttestationRule, error) {
 		return policy.AttestationRule{}, err
 	}
 	if addCondition {
-		expr, exprErr := collectExpression()
+		expr, exprErr := collectExpression(wctx)
 		if exprErr != nil {
 			return policy.AttestationRule{}, exprErr
 		}
@@ -231,7 +250,7 @@ func collectOneAttestation() (policy.AttestationRule, error) {
 	return rule, nil
 }
 
-func collectExceptions(ruleName string) ([]policy.ExceptionRule, error) {
+func collectExceptions(ruleName string, wctx *wizardContext) ([]policy.ExceptionRule, error) {
 	var exceptions []policy.ExceptionRule
 
 	for {
@@ -255,7 +274,7 @@ func collectExceptions(ruleName string) ([]policy.ExceptionRule, error) {
 			break
 		}
 
-		expr, err := collectExpression()
+		expr, err := collectExpression(wctx)
 		if err != nil {
 			return nil, err
 		}
@@ -271,7 +290,7 @@ const (
 	exprModeRaw          = "raw"
 )
 
-func collectExpression() (string, error) {
+func collectExpression(wctx *wizardContext) (string, error) {
 	var mode string
 	err := huh.NewSelect[string]().
 		Title("How do you want to define this condition?").
@@ -289,7 +308,7 @@ func collectExpression() (string, error) {
 
 	switch mode {
 	case exprModeFlowName:
-		return collectFlowNameExpr()
+		return collectFlowNameExpr(wctx)
 	case exprModeArtifactName:
 		return collectArtifactNameExpr()
 	case exprModeCustom:
@@ -300,21 +319,37 @@ func collectExpression() (string, error) {
 	return "", fmt.Errorf("unknown expression mode: %s", mode)
 }
 
-func collectFlowNameExpr() (string, error) {
+func collectFlowNameExpr(wctx *wizardContext) (string, error) {
 	var flowName string
-	err := huh.NewInput().
-		Title("Flow name").
-		Description("The flow name to match").
-		Value(&flowName).
-		Validate(func(s string) error {
-			if s == "" {
-				return fmt.Errorf("flow name is required")
-			}
-			return nil
-		}).
-		Run()
-	if err != nil {
-		return "", err
+
+	if len(wctx.flowNames) > 0 {
+		options := make([]huh.Option[string], len(wctx.flowNames))
+		for i, name := range wctx.flowNames {
+			options[i] = huh.NewOption(name, name)
+		}
+		err := huh.NewSelect[string]().
+			Title("Select a flow").
+			Options(options...).
+			Value(&flowName).
+			Run()
+		if err != nil {
+			return "", err
+		}
+	} else {
+		err := huh.NewInput().
+			Title("Flow name").
+			Description("The flow name to match").
+			Value(&flowName).
+			Validate(func(s string) error {
+				if s == "" {
+					return fmt.Errorf("flow name is required")
+				}
+				return nil
+			}).
+			Run()
+		if err != nil {
+			return "", err
+		}
 	}
 	return policy.FlowNameExpr(flowName), nil
 }
@@ -427,4 +462,75 @@ func collectRawExpr() (string, error) {
 		return "", err
 	}
 	return policy.WrapExpr(raw), nil
+}
+
+func (wctx *wizardContext) fetchFromAPI() {
+	wctx.flowNames = fetchFlowNames()
+	wctx.customAttestTypes = fetchCustomAttestationTypes()
+}
+
+func fetchFlowNames() []string {
+	u, err := url.JoinPath(global.Host, "api/v2/flows", global.Org)
+	if err != nil {
+		logger.Debug("failed to build flows URL: %v", err)
+		return nil
+	}
+
+	reqParams := &requests.RequestParams{
+		Method: http.MethodGet,
+		URL:    u,
+		Token:  global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
+	if err != nil {
+		logger.Debug("failed to fetch flows: %v", err)
+		return nil
+	}
+
+	var flows []map[string]any
+	if err := json.Unmarshal([]byte(response.Body), &flows); err != nil {
+		logger.Debug("failed to parse flows response: %v", err)
+		return nil
+	}
+
+	names := make([]string, 0, len(flows))
+	for _, flow := range flows {
+		if name, ok := flow["name"].(string); ok {
+			names = append(names, name)
+		}
+	}
+	return names
+}
+
+func fetchCustomAttestationTypes() []string {
+	u, err := url.JoinPath(global.Host, "api/v2/custom-attestation-types", global.Org)
+	if err != nil {
+		logger.Debug("failed to build attestation types URL: %v", err)
+		return nil
+	}
+
+	reqParams := &requests.RequestParams{
+		Method: http.MethodGet,
+		URL:    u,
+		Token:  global.ApiToken,
+	}
+	response, err := kosliClient.Do(reqParams)
+	if err != nil {
+		logger.Debug("failed to fetch attestation types: %v", err)
+		return nil
+	}
+
+	var types []map[string]any
+	if err := json.Unmarshal([]byte(response.Body), &types); err != nil {
+		logger.Debug("failed to parse attestation types response: %v", err)
+		return nil
+	}
+
+	names := make([]string, 0, len(types))
+	for _, t := range types {
+		if name, ok := t["name"].(string); ok {
+			names = append(names, "custom:"+name)
+		}
+	}
+	return names
 }
