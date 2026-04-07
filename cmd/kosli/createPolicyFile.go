@@ -95,6 +95,18 @@ func (o *createPolicyFileOptions) run(out io.Writer) error {
 		}
 	}
 
+	// Attestation loop
+	attestations, err := collectAttestations()
+	if err != nil {
+		return err
+	}
+	if len(attestations) > 0 {
+		if p.Artifacts == nil {
+			p.Artifacts = &policy.ArtifactRules{}
+		}
+		p.Artifacts.Attestations = attestations
+	}
+
 	yamlBytes, err := p.ToYAML()
 	if err != nil {
 		return fmt.Errorf("failed to generate policy YAML: %w", err)
@@ -111,4 +123,83 @@ func (o *createPolicyFileOptions) run(out io.Writer) error {
 
 	_, err = out.Write(yamlBytes)
 	return err
+}
+
+var builtInAttestationTypes = []string{
+	"generic",
+	"junit",
+	"snyk",
+	"pull_request",
+	"jira",
+	"sonar",
+}
+
+func collectAttestations() ([]policy.AttestationRule, error) {
+	var attestations []policy.AttestationRule
+
+	for {
+		prompt := "Add a required attestation?"
+		if len(attestations) > 0 {
+			prompt = "Add another required attestation?"
+		}
+
+		var addAttestation bool
+		err := huh.NewConfirm().
+			Title(prompt).
+			Value(&addAttestation).
+			Affirmative("Yes").
+			Negative("No").
+			Run()
+		if err != nil {
+			return nil, err
+		}
+		if !addAttestation {
+			break
+		}
+
+		rule, err := collectOneAttestation()
+		if err != nil {
+			return nil, err
+		}
+		attestations = append(attestations, rule)
+	}
+	return attestations, nil
+}
+
+func collectOneAttestation() (policy.AttestationRule, error) {
+	var attType string
+	var attName string
+
+	typeOptions := make([]huh.Option[string], len(builtInAttestationTypes))
+	for i, t := range builtInAttestationTypes {
+		typeOptions[i] = huh.NewOption(t, t)
+	}
+
+	err := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Attestation type").
+				Options(typeOptions...).
+				Value(&attType),
+			huh.NewInput().
+				Title("Attestation name").
+				Description("Use * to match any name for this type").
+				Placeholder("*").
+				Value(&attName),
+		),
+	).Run()
+	if err != nil {
+		return policy.AttestationRule{}, err
+	}
+
+	if attName == "" {
+		attName = "*"
+	}
+
+	rule := policy.AttestationRule{
+		Type: attType,
+		Name: attName,
+	}
+
+	return rule, nil
 }
