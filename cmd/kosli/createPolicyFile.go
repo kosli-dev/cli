@@ -33,19 +33,11 @@ custom attestation types from the Kosli API to offer as suggestions.
 `
 
 const createPolicyFileExample = `
-# create a policy file interactively (output to stdout):
+# create a policy file interactively:
 kosli create policy-file
-
-# create a policy file and write to a file:
-kosli create policy-file --output-file policy.yml
 `
 
-type createPolicyFileOptions struct {
-	outputFile string
-}
-
 func newCreatePolicyFileCmd(out io.Writer) *cobra.Command {
-	o := new(createPolicyFileOptions)
 	cmd := &cobra.Command{
 		Use:     "policy-file",
 		Short:   createPolicyFileShortDesc,
@@ -53,16 +45,14 @@ func newCreatePolicyFileCmd(out io.Writer) *cobra.Command {
 		Example: createPolicyFileExample,
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(out)
+			return runCreatePolicyFile()
 		},
 	}
-
-	cmd.Flags().StringVarP(&o.outputFile, "output-file", "o", "", "write policy YAML to this file instead of stdout")
 
 	return cmd
 }
 
-func (o *createPolicyFileOptions) run(out io.Writer) error {
+func runCreatePolicyFile() error {
 	if !term.IsTerminal(int(os.Stdin.Fd())) {
 		return fmt.Errorf("this command requires an interactive terminal; write policy YAML manually or use 'kosli create policy' directly")
 	}
@@ -79,7 +69,7 @@ func (o *createPolicyFileOptions) run(out io.Writer) error {
 	}
 
 	wm := finalModel.(policyWizardModel)
-	if wm.cancelled || !wm.confirmed {
+	if wm.cancelled {
 		logger.Info("policy file creation cancelled")
 		return nil
 	}
@@ -89,17 +79,16 @@ func (o *createPolicyFileOptions) run(out io.Writer) error {
 		return fmt.Errorf("failed to generate policy YAML: %w", err)
 	}
 
-	if o.outputFile != "" {
-		err = os.WriteFile(o.outputFile, yamlBytes, 0644)
-		if err != nil {
-			return fmt.Errorf("failed to write policy file: %w", err)
-		}
-		logger.Info("policy file written to %s", o.outputFile)
-		return nil
+	filename := wm.outputFile
+	if filename == "" {
+		filename = "policy.yaml"
 	}
-
-	_, err = out.Write(yamlBytes)
-	return err
+	err = os.WriteFile(filename, yamlBytes, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write policy file: %w", err)
+	}
+	logger.Info("policy file written to %s", filename)
+	return nil
 }
 
 // ---------------------------------------------------------------------------
@@ -125,7 +114,7 @@ const (
 	stepExprCustomTagKey                   // tag key for custom context
 	stepExprCustomOp                       // custom operator + value
 	stepExprRaw                            // raw expression input
-	stepFinalConfirm                       // write policy?
+	stepSaveFile                           // ask for filename
 	stepDone
 )
 
@@ -205,7 +194,7 @@ type policyWizardModel struct {
 	exprTagKey     string // for flow tag / custom tag
 	currentAttRule policy.AttestationRule
 	cancelled      bool
-	confirmed      bool
+	outputFile     string
 	requireProv    bool
 	requireTrail   bool
 }
@@ -492,11 +481,13 @@ func (m *policyWizardModel) buildForm() *huh.Form {
 				Validate(notEmpty("expression")),
 		))
 
-	case stepFinalConfirm:
+	case stepSaveFile:
 		f = huh.NewForm(huh.NewGroup(
-			huh.NewConfirm().Key("confirm").
-				Title("Write this policy?").
-				Affirmative("Yes").Negative("No"),
+			huh.NewInput().Key("filename").
+				Title("Save policy to file").
+				Description("Enter filename (e.g. policy.yaml)").
+				Placeholder("policy.yaml").
+				Validate(notEmpty("filename")),
 		))
 
 	default:
@@ -590,8 +581,8 @@ func (m *policyWizardModel) processFormResults() {
 	case stepExprRaw:
 		m.applyExpression(policy.WrapExpr(m.form.GetString("value")))
 
-	case stepFinalConfirm:
-		m.confirmed = m.form.GetBool("confirm")
+	case stepSaveFile:
+		m.outputFile = m.form.GetString("filename")
 	}
 }
 
@@ -659,7 +650,7 @@ func (m *policyWizardModel) advanceStep() {
 		if m.form.GetBool("confirm") {
 			m.step = stepAttDetails
 		} else {
-			m.step = stepFinalConfirm
+			m.step = stepSaveFile
 		}
 
 	case stepAttDetails:
@@ -716,7 +707,7 @@ func (m *policyWizardModel) advanceStep() {
 	case stepExprRaw:
 		m.advanceAfterExpr()
 
-	case stepFinalConfirm:
+	case stepSaveFile:
 		m.step = stepDone
 	}
 }
