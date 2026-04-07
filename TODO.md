@@ -61,6 +61,6 @@
 - [x] Slice 2: Expression builder
 - [x] Slice 3: Skeleton Cobra command + huh dependency
 - [x] Slice 4: Attestation loop in wizard
-- [ ] Slice 5: Expression builder wizard
+- [x] Slice 5: Expression builder wizard
 - [ ] Slice 6: API lookups for flows and custom attestation types
 - [ ] Slice 7: Preview screen + polish

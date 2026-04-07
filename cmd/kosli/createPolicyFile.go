@@ -88,10 +88,18 @@ func (o *createPolicyFileOptions) run(out io.Writer) error {
 	if requireProvenance || requireTrailCompliance {
 		p.Artifacts = &policy.ArtifactRules{}
 		if requireProvenance {
-			p.Artifacts.Provenance = &policy.BooleanRule{Required: true}
+			exceptions, exErr := collectExceptions("provenance")
+			if exErr != nil {
+				return exErr
+			}
+			p.Artifacts.Provenance = &policy.BooleanRule{Required: true, Exceptions: exceptions}
 		}
 		if requireTrailCompliance {
-			p.Artifacts.TrailCompliance = &policy.BooleanRule{Required: true}
+			exceptions, exErr := collectExceptions("trail compliance")
+			if exErr != nil {
+				return exErr
+			}
+			p.Artifacts.TrailCompliance = &policy.BooleanRule{Required: true, Exceptions: exceptions}
 		}
 	}
 
@@ -201,5 +209,222 @@ func collectOneAttestation() (policy.AttestationRule, error) {
 		Name: attName,
 	}
 
+	var addCondition bool
+	err = huh.NewConfirm().
+		Title("Add a condition for this attestation?").
+		Description("Only require this attestation when the condition is met").
+		Value(&addCondition).
+		Affirmative("Yes").
+		Negative("No").
+		Run()
+	if err != nil {
+		return policy.AttestationRule{}, err
+	}
+	if addCondition {
+		expr, exprErr := collectExpression()
+		if exprErr != nil {
+			return policy.AttestationRule{}, exprErr
+		}
+		rule.If = expr
+	}
+
 	return rule, nil
+}
+
+func collectExceptions(ruleName string) ([]policy.ExceptionRule, error) {
+	var exceptions []policy.ExceptionRule
+
+	for {
+		prompt := fmt.Sprintf("Add an exception to %s?", ruleName)
+		if len(exceptions) > 0 {
+			prompt = fmt.Sprintf("Add another exception to %s?", ruleName)
+		}
+
+		var addException bool
+		err := huh.NewConfirm().
+			Title(prompt).
+			Description("Exceptions waive this requirement for matching artifacts").
+			Value(&addException).
+			Affirmative("Yes").
+			Negative("No").
+			Run()
+		if err != nil {
+			return nil, err
+		}
+		if !addException {
+			break
+		}
+
+		expr, err := collectExpression()
+		if err != nil {
+			return nil, err
+		}
+		exceptions = append(exceptions, policy.ExceptionRule{If: expr})
+	}
+	return exceptions, nil
+}
+
+const (
+	exprModeFlowName     = "flow_name"
+	exprModeArtifactName = "artifact_name"
+	exprModeCustom       = "custom"
+	exprModeRaw          = "raw"
+)
+
+func collectExpression() (string, error) {
+	var mode string
+	err := huh.NewSelect[string]().
+		Title("How do you want to define this condition?").
+		Options(
+			huh.NewOption("Match by flow name", exprModeFlowName),
+			huh.NewOption("Match by artifact name pattern", exprModeArtifactName),
+			huh.NewOption("Custom comparison", exprModeCustom),
+			huh.NewOption("Write raw expression", exprModeRaw),
+		).
+		Value(&mode).
+		Run()
+	if err != nil {
+		return "", err
+	}
+
+	switch mode {
+	case exprModeFlowName:
+		return collectFlowNameExpr()
+	case exprModeArtifactName:
+		return collectArtifactNameExpr()
+	case exprModeCustom:
+		return collectCustomExpr()
+	case exprModeRaw:
+		return collectRawExpr()
+	}
+	return "", fmt.Errorf("unknown expression mode: %s", mode)
+}
+
+func collectFlowNameExpr() (string, error) {
+	var flowName string
+	err := huh.NewInput().
+		Title("Flow name").
+		Description("The flow name to match").
+		Value(&flowName).
+		Validate(func(s string) error {
+			if s == "" {
+				return fmt.Errorf("flow name is required")
+			}
+			return nil
+		}).
+		Run()
+	if err != nil {
+		return "", err
+	}
+	return policy.FlowNameExpr(flowName), nil
+}
+
+func collectArtifactNameExpr() (string, error) {
+	var regex string
+	err := huh.NewInput().
+		Title("Artifact name regex").
+		Description("Regular expression to match artifact names (e.g. ^datadog:.*)").
+		Placeholder("^datadog:.*").
+		Value(&regex).
+		Validate(func(s string) error {
+			if s == "" {
+				return fmt.Errorf("regex is required")
+			}
+			return nil
+		}).
+		Run()
+	if err != nil {
+		return "", err
+	}
+	return policy.ArtifactNameMatchExpr(regex), nil
+}
+
+var exprContexts = []string{
+	"flow.name",
+	"flow.tags.<key>",
+	"artifact.name",
+	"artifact.fingerprint",
+}
+
+var exprOperators = []string{"==", "!=", "in", "matches"}
+
+func collectCustomExpr() (string, error) {
+	var context string
+	var operator string
+	var value string
+
+	err := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Context field").
+				Options(huh.NewOptions(exprContexts...)...).
+				Value(&context),
+		),
+	).Run()
+	if err != nil {
+		return "", err
+	}
+
+	if context == "flow.tags.<key>" {
+		var tagKey string
+		err = huh.NewInput().
+			Title("Tag key").
+			Description("The flow tag key (e.g. team, risk-level)").
+			Value(&tagKey).
+			Validate(func(s string) error {
+				if s == "" {
+					return fmt.Errorf("tag key is required")
+				}
+				return nil
+			}).
+			Run()
+		if err != nil {
+			return "", err
+		}
+		context = "flow.tags." + tagKey
+	}
+
+	err = huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Operator").
+				Options(huh.NewOptions(exprOperators...)...).
+				Value(&operator),
+			huh.NewInput().
+				Title("Value").
+				Description("The value to compare against").
+				Value(&value).
+				Validate(func(s string) error {
+					if s == "" {
+						return fmt.Errorf("value is required")
+					}
+					return nil
+				}),
+		),
+	).Run()
+	if err != nil {
+		return "", err
+	}
+
+	return policy.ComparisonExpr(context, operator, value), nil
+}
+
+func collectRawExpr() (string, error) {
+	var raw string
+	err := huh.NewInput().
+		Title("Raw expression").
+		Description("Enter a policy expression (e.g. flow.name == \"prod\" and artifact.name == \"svc\")").
+		Placeholder(`flow.name == "prod"`).
+		Value(&raw).
+		Validate(func(s string) error {
+			if s == "" {
+				return fmt.Errorf("expression is required")
+			}
+			return nil
+		}).
+		Run()
+	if err != nil {
+		return "", err
+	}
+	return policy.WrapExpr(raw), nil
 }
