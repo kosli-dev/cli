@@ -7,19 +7,16 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/kosli-dev/cli/internal/policy"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
-
-// wizardContext holds data fetched from the API to populate wizard options.
-type wizardContext struct {
-	flowNames            []string
-	customAttestTypes    []string // e.g. ["custom:coverage-metrics", "custom:compliance-check"]
-}
 
 const createPolicyFileShortDesc = `Interactively create a Kosli environment policy YAML file.`
 
@@ -75,86 +72,21 @@ func (o *createPolicyFileOptions) run(out io.Writer) error {
 		wctx.fetchFromAPI()
 	}
 
-	p := policy.NewPolicy()
-
-	var requireProvenance bool
-	var requireTrailCompliance bool
-
-	err := huh.NewForm(
-		huh.NewGroup(
-			huh.NewConfirm().
-				Title("Require artifact provenance?").
-				Description("All artifacts must belong to a Kosli flow").
-				Value(&requireProvenance).
-				Affirmative("Yes").
-				Negative("No"),
-			huh.NewConfirm().
-				Title("Require trail compliance?").
-				Description("All artifacts must be part of compliant trails").
-				Value(&requireTrailCompliance).
-				Affirmative("Yes").
-				Negative("No"),
-		),
-	).Run()
+	m := newPolicyWizardModel(wctx)
+	finalModel, err := tea.NewProgram(m, tea.WithAltScreen()).Run()
 	if err != nil {
-		return err
+		return fmt.Errorf("wizard error: %w", err)
 	}
 
-	if requireProvenance || requireTrailCompliance {
-		p.Artifacts = &policy.ArtifactRules{}
-		if requireProvenance {
-			exceptions, exErr := collectExceptions("provenance", wctx)
-			if exErr != nil {
-				return exErr
-			}
-			p.Artifacts.Provenance = &policy.BooleanRule{Required: true, Exceptions: exceptions}
-		}
-		if requireTrailCompliance {
-			exceptions, exErr := collectExceptions("trail compliance", wctx)
-			if exErr != nil {
-				return exErr
-			}
-			p.Artifacts.TrailCompliance = &policy.BooleanRule{Required: true, Exceptions: exceptions}
-		}
-	}
-
-	// Attestation loop
-	attestations, err := collectAttestations(wctx)
-	if err != nil {
-		return err
-	}
-	if len(attestations) > 0 {
-		if p.Artifacts == nil {
-			p.Artifacts = &policy.ArtifactRules{}
-		}
-		p.Artifacts.Attestations = attestations
-	}
-
-	yamlBytes, err := p.ToYAML()
-	if err != nil {
-		return fmt.Errorf("failed to generate policy YAML: %w", err)
-	}
-
-	// Preview the generated YAML
-	var confirm bool
-	err = huh.NewForm(
-		huh.NewGroup(
-			huh.NewNote().
-				Title("Generated policy YAML").
-				Description(string(yamlBytes)),
-			huh.NewConfirm().
-				Title("Write this policy?").
-				Value(&confirm).
-				Affirmative("Yes").
-				Negative("No"),
-		),
-	).Run()
-	if err != nil {
-		return err
-	}
-	if !confirm {
+	wm := finalModel.(policyWizardModel)
+	if wm.cancelled || !wm.confirmed {
 		logger.Info("policy file creation cancelled")
 		return nil
+	}
+
+	yamlBytes, err := wm.policy.ToYAML()
+	if err != nil {
+		return fmt.Errorf("failed to generate policy YAML: %w", err)
 	}
 
 	if o.outputFile != "" {
@@ -170,372 +102,686 @@ func (o *createPolicyFileOptions) run(out io.Writer) error {
 	return err
 }
 
+// ---------------------------------------------------------------------------
+// Wizard step enum
+// ---------------------------------------------------------------------------
+
+type wizardStep int
+
+const (
+	stepBasics           wizardStep = iota // provenance + trail compliance
+	stepProvExcConfirm                     // add provenance exception?
+	stepTrailExcConfirm                    // add trail compliance exception?
+	stepAttConfirm                         // add attestation?
+	stepAttDetails                         // attestation type + name
+	stepAttCondConfirm                     // add condition for attestation?
+	stepExprMode                           // choose expression mode
+	stepExprFlowName                       // flow name input/select
+	stepExprFlowTag                        // tag key input
+	stepExprFlowTagOp                      // tag operator + value
+	stepExprArtifactName                   // artifact regex input
+	stepExprCustomCtx                      // custom context select
+	stepExprCustomTagKey                   // tag key for custom context
+	stepExprCustomOp                       // custom operator + value
+	stepExprRaw                            // raw expression input
+	stepFinalConfirm                       // write policy?
+	stepDone
+)
+
+// exprTarget tracks what we're building an expression for.
+type exprTarget int
+
+const (
+	targetProvException exprTarget = iota
+	targetTrailException
+	targetAttCondition
+)
+
+// ---------------------------------------------------------------------------
+// Wizard context (API data)
+// ---------------------------------------------------------------------------
+
+type wizardContext struct {
+	flowNames         []string
+	customAttestTypes []string
+}
+
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
+
+type wizardStyles struct {
+	base        lipgloss.Style
+	title       lipgloss.Style
+	preview     lipgloss.Style
+	previewText lipgloss.Style
+	footer      lipgloss.Style
+	accent      lipgloss.Style
+}
+
+func newWizardStyles() wizardStyles {
+	accent := lipgloss.Color("#7571F9")
+	green := lipgloss.Color("#02BF87")
+	return wizardStyles{
+		base: lipgloss.NewStyle().Padding(1, 2),
+		title: lipgloss.NewStyle().
+			Bold(true).
+			Foreground(accent).
+			Padding(0, 1),
+		preview: lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(accent).
+			Padding(1, 2),
+		previewText: lipgloss.NewStyle().
+			Foreground(green),
+		footer: lipgloss.NewStyle().
+			Foreground(lipgloss.Color("240")).
+			Padding(1, 1, 0, 1),
+		accent: lipgloss.NewStyle().
+			Foreground(accent),
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Bubbletea model
+// ---------------------------------------------------------------------------
+
+const (
+	formWidth    = 50
+	previewWidth = 40
+	maxWidth     = 100
+)
+
+type policyWizardModel struct {
+	step   wizardStep
+	form   *huh.Form
+	policy *policy.Policy
+	wctx   *wizardContext
+	styles wizardStyles
+	width  int
+	height int
+
+	// State for loops and expression building
+	exprTarget      exprTarget
+	exprMode        string
+	exprContext     string // for custom expressions
+	exprTagKey      string // for flow tag / custom tag
+	currentAttRule  policy.AttestationRule
+	cancelled       bool
+	confirmed       bool
+
+	// Form-bound values
+	requireProv  bool
+	requireTrail bool
+	confirmBool  bool
+	inputStr     string
+	selectStr    string
+}
+
+func newPolicyWizardModel(wctx *wizardContext) policyWizardModel {
+	m := policyWizardModel{
+		step:   stepBasics,
+		policy: policy.NewPolicy(),
+		wctx:   wctx,
+		styles: newWizardStyles(),
+		width:  maxWidth,
+	}
+	m.form = m.buildForm()
+	return m
+}
+
+func (m policyWizardModel) Init() tea.Cmd {
+	return m.form.Init()
+}
+
+func (m policyWizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+		return m, nil
+	case tea.KeyMsg:
+		if msg.String() == "ctrl+c" {
+			m.cancelled = true
+			return m, tea.Quit
+		}
+	}
+
+	// Forward to form
+	form, cmd := m.form.Update(msg)
+	if f, ok := form.(*huh.Form); ok {
+		m.form = f
+	}
+
+	if m.form.State == huh.StateAborted {
+		m.cancelled = true
+		return m, tea.Quit
+	}
+
+	if m.form.State == huh.StateCompleted {
+		m.processFormResults()
+		m.advanceStep()
+		if m.step == stepDone {
+			return m, tea.Quit
+		}
+		m.form = m.buildForm()
+		return m, m.form.Init()
+	}
+
+	return m, cmd
+}
+
+func (m policyWizardModel) View() string {
+	if m.cancelled {
+		return ""
+	}
+	if m.step == stepDone {
+		return ""
+	}
+
+	s := m.styles
+	fw := formWidth
+	pw := previewWidth
+	available := m.width - s.base.GetHorizontalFrameSize()
+	if available < fw+pw+4 {
+		pw = available - fw - 4
+		if pw < 20 {
+			pw = 0
+		}
+	}
+
+	// Header
+	header := s.title.Render("Kosli Policy Builder")
+
+	// Form (left)
+	formView := lipgloss.NewStyle().
+		Width(fw).
+		Render(m.form.View())
+
+	var body string
+	if pw > 0 {
+		// YAML preview (right)
+		yamlBytes, _ := m.policy.ToYAML()
+		yamlStr := strings.TrimRight(string(yamlBytes), "\n")
+		if yamlStr == "" {
+			yamlStr = "(empty)"
+		}
+		previewContent := s.previewText.Render(yamlStr)
+		previewTitle := s.accent.Bold(true).Render("Live Preview")
+		previewPanel := s.preview.
+			Width(pw).
+			Render(previewTitle + "\n\n" + previewContent)
+
+		body = lipgloss.JoinHorizontal(lipgloss.Top, formView, "  ", previewPanel)
+	} else {
+		body = formView
+	}
+
+	// Footer
+	footer := s.footer.Render("ctrl+c to cancel • enter to confirm")
+
+	return s.base.Render(header + "\n\n" + body + "\n" + footer)
+}
+
+// ---------------------------------------------------------------------------
+// Form builders — one per step
+// ---------------------------------------------------------------------------
+
 var builtInAttestationTypes = []string{
-	"generic",
-	"junit",
-	"snyk",
-	"pull_request",
-	"jira",
-	"sonar",
+	"generic", "junit", "snyk", "pull_request", "jira", "sonar",
 }
 
-func collectAttestations(wctx *wizardContext) ([]policy.AttestationRule, error) {
-	var attestations []policy.AttestationRule
+func (m *policyWizardModel) buildForm() *huh.Form {
+	var f *huh.Form
+	switch m.step {
+	case stepBasics:
+		m.requireProv = true
+		m.requireTrail = true
+		f = huh.NewForm(huh.NewGroup(
+			huh.NewConfirm().
+				Title("Require artifact provenance?").
+				Description("All artifacts must belong to a Kosli flow").
+				Value(&m.requireProv).
+				Affirmative("Yes").Negative("No"),
+			huh.NewConfirm().
+				Title("Require trail compliance?").
+				Description("All artifacts must be part of compliant trails").
+				Value(&m.requireTrail).
+				Affirmative("Yes").Negative("No"),
+		))
 
-	for {
-		prompt := "Add a required attestation?"
-		if len(attestations) > 0 {
-			prompt = "Add another required attestation?"
+	case stepProvExcConfirm:
+		m.confirmBool = false
+		f = huh.NewForm(huh.NewGroup(
+			huh.NewConfirm().
+				Title(m.excConfirmTitle("provenance")).
+				Description("Exceptions waive this requirement for matching artifacts").
+				Value(&m.confirmBool).
+				Affirmative("Yes").Negative("No"),
+		))
+
+	case stepTrailExcConfirm:
+		m.confirmBool = false
+		f = huh.NewForm(huh.NewGroup(
+			huh.NewConfirm().
+				Title(m.excConfirmTitle("trail compliance")).
+				Description("Exceptions waive this requirement for matching artifacts").
+				Value(&m.confirmBool).
+				Affirmative("Yes").Negative("No"),
+		))
+
+	case stepAttConfirm:
+		m.confirmBool = false
+		title := "Add a required attestation?"
+		if m.policy.Artifacts != nil && len(m.policy.Artifacts.Attestations) > 0 {
+			title = "Add another required attestation?"
 		}
+		f = huh.NewForm(huh.NewGroup(
+			huh.NewConfirm().
+				Title(title).
+				Value(&m.confirmBool).
+				Affirmative("Yes").Negative("No"),
+		))
 
-		var addAttestation bool
-		err := huh.NewConfirm().
-			Title(prompt).
-			Value(&addAttestation).
-			Affirmative("Yes").
-			Negative("No").
-			Run()
-		if err != nil {
-			return nil, err
+	case stepAttDetails:
+		m.selectStr = ""
+		m.inputStr = ""
+		allTypes := append([]string{}, builtInAttestationTypes...)
+		allTypes = append(allTypes, m.wctx.customAttestTypes...)
+		opts := make([]huh.Option[string], len(allTypes))
+		for i, t := range allTypes {
+			opts[i] = huh.NewOption(t, t)
 		}
-		if !addAttestation {
-			break
-		}
-
-		rule, err := collectOneAttestation(wctx)
-		if err != nil {
-			return nil, err
-		}
-		attestations = append(attestations, rule)
-	}
-	return attestations, nil
-}
-
-func collectOneAttestation(wctx *wizardContext) (policy.AttestationRule, error) {
-	var attType string
-	var attName string
-
-	allTypes := builtInAttestationTypes
-	if len(wctx.customAttestTypes) > 0 {
-		allTypes = append(allTypes, wctx.customAttestTypes...)
-	}
-	typeOptions := make([]huh.Option[string], len(allTypes))
-	for i, t := range allTypes {
-		typeOptions[i] = huh.NewOption(t, t)
-	}
-
-	err := huh.NewForm(
-		huh.NewGroup(
+		f = huh.NewForm(huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("Attestation type").
-				Options(typeOptions...).
-				Value(&attType),
+				Options(opts...).
+				Value(&m.selectStr),
 			huh.NewInput().
 				Title("Attestation name").
 				Description("Use * to match any name for this type").
 				Placeholder("*").
-				Value(&attName),
-		),
-	).Run()
-	if err != nil {
-		return policy.AttestationRule{}, err
-	}
+				Value(&m.inputStr),
+		))
 
-	if attName == "" {
-		attName = "*"
-	}
+	case stepAttCondConfirm:
+		m.confirmBool = false
+		f = huh.NewForm(huh.NewGroup(
+			huh.NewConfirm().
+				Title("Add a condition for this attestation?").
+				Description("Only require when condition is met").
+				Value(&m.confirmBool).
+				Affirmative("Yes").Negative("No"),
+		))
 
-	rule := policy.AttestationRule{
-		Type: attType,
-		Name: attName,
-	}
+	case stepExprMode:
+		m.selectStr = ""
+		f = huh.NewForm(huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("How do you want to define this condition?").
+				Options(
+					huh.NewOption("Match by flow name", "flow_name"),
+					huh.NewOption("Match by flow tag", "flow_tag"),
+					huh.NewOption("Match by artifact name pattern", "artifact_name"),
+					huh.NewOption("Custom comparison", "custom"),
+					huh.NewOption("Write raw expression", "raw"),
+				).
+				Value(&m.selectStr),
+		))
 
-	var addCondition bool
-	err = huh.NewConfirm().
-		Title("Add a condition for this attestation?").
-		Description("Only require this attestation when the condition is met").
-		Value(&addCondition).
-		Affirmative("Yes").
-		Negative("No").
-		Run()
-	if err != nil {
-		return policy.AttestationRule{}, err
-	}
-	if addCondition {
-		expr, exprErr := collectExpression(wctx)
-		if exprErr != nil {
-			return policy.AttestationRule{}, exprErr
-		}
-		rule.If = expr
-	}
-
-	return rule, nil
-}
-
-func collectExceptions(ruleName string, wctx *wizardContext) ([]policy.ExceptionRule, error) {
-	var exceptions []policy.ExceptionRule
-
-	for {
-		prompt := fmt.Sprintf("Add an exception to %s?", ruleName)
-		if len(exceptions) > 0 {
-			prompt = fmt.Sprintf("Add another exception to %s?", ruleName)
-		}
-
-		var addException bool
-		err := huh.NewConfirm().
-			Title(prompt).
-			Description("Exceptions waive this requirement for matching artifacts").
-			Value(&addException).
-			Affirmative("Yes").
-			Negative("No").
-			Run()
-		if err != nil {
-			return nil, err
-		}
-		if !addException {
-			break
-		}
-
-		expr, err := collectExpression(wctx)
-		if err != nil {
-			return nil, err
-		}
-		exceptions = append(exceptions, policy.ExceptionRule{If: expr})
-	}
-	return exceptions, nil
-}
-
-const (
-	exprModeFlowName     = "flow_name"
-	exprModeFlowTag      = "flow_tag"
-	exprModeArtifactName = "artifact_name"
-	exprModeCustom       = "custom"
-	exprModeRaw          = "raw"
-)
-
-func collectExpression(wctx *wizardContext) (string, error) {
-	var mode string
-	err := huh.NewSelect[string]().
-		Title("How do you want to define this condition?").
-		Options(
-			huh.NewOption("Match by flow name", exprModeFlowName),
-			huh.NewOption("Match by flow tag", exprModeFlowTag),
-			huh.NewOption("Match by artifact name pattern", exprModeArtifactName),
-			huh.NewOption("Custom comparison", exprModeCustom),
-			huh.NewOption("Write raw expression", exprModeRaw),
-		).
-		Value(&mode).
-		Run()
-	if err != nil {
-		return "", err
-	}
-
-	switch mode {
-	case exprModeFlowName:
-		return collectFlowNameExpr(wctx)
-	case exprModeFlowTag:
-		return collectFlowTagExpr()
-	case exprModeArtifactName:
-		return collectArtifactNameExpr()
-	case exprModeCustom:
-		return collectCustomExpr()
-	case exprModeRaw:
-		return collectRawExpr()
-	}
-	return "", fmt.Errorf("unknown expression mode: %s", mode)
-}
-
-func collectFlowNameExpr(wctx *wizardContext) (string, error) {
-	var flowName string
-
-	if len(wctx.flowNames) > 0 {
-		options := make([]huh.Option[string], len(wctx.flowNames))
-		for i, name := range wctx.flowNames {
-			options[i] = huh.NewOption(name, name)
-		}
-		err := huh.NewSelect[string]().
-			Title("Select a flow").
-			Options(options...).
-			Value(&flowName).
-			Run()
-		if err != nil {
-			return "", err
-		}
-	} else {
-		err := huh.NewInput().
-			Title("Flow name").
-			Description("The flow name to match").
-			Value(&flowName).
-			Validate(func(s string) error {
-				if s == "" {
-					return fmt.Errorf("flow name is required")
-				}
-				return nil
-			}).
-			Run()
-		if err != nil {
-			return "", err
-		}
-	}
-	return policy.FlowNameExpr(flowName), nil
-}
-
-var flowTagOperators = []string{"==", "!=", ">", "<", ">=", "<="}
-
-func collectFlowTagExpr() (string, error) {
-	var tagKey string
-	var operator string
-	var value string
-
-	err := huh.NewInput().
-		Title("Tag key").
-		Description("The flow tag key (e.g. team, risk-level, key.with.dots)").
-		Value(&tagKey).
-		Validate(func(s string) error {
-			if s == "" {
-				return fmt.Errorf("tag key is required")
+	case stepExprFlowName:
+		m.inputStr = ""
+		m.selectStr = ""
+		if len(m.wctx.flowNames) > 0 {
+			opts := make([]huh.Option[string], len(m.wctx.flowNames))
+			for i, n := range m.wctx.flowNames {
+				opts[i] = huh.NewOption(n, n)
 			}
-			return nil
-		}).
-		Run()
-	if err != nil {
-		return "", err
-	}
+			f = huh.NewForm(huh.NewGroup(
+				huh.NewSelect[string]().
+					Title("Select a flow").
+					Options(opts...).
+					Value(&m.selectStr),
+			))
+		} else {
+			f = huh.NewForm(huh.NewGroup(
+				huh.NewInput().
+					Title("Flow name").
+					Description("The flow name to match").
+					Value(&m.inputStr).
+					Validate(notEmpty("flow name")),
+			))
+		}
 
-	err = huh.NewForm(
-		huh.NewGroup(
+	case stepExprFlowTag:
+		m.inputStr = ""
+		f = huh.NewForm(huh.NewGroup(
+			huh.NewInput().
+				Title("Tag key").
+				Description("e.g. team, risk-level, key.with.dots").
+				Value(&m.inputStr).
+				Validate(notEmpty("tag key")),
+		))
+
+	case stepExprFlowTagOp:
+		m.selectStr = ""
+		m.inputStr = ""
+		f = huh.NewForm(huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("Operator").
-				Options(huh.NewOptions(flowTagOperators...)...).
-				Value(&operator),
+				Options(huh.NewOptions("==", "!=", ">", "<", ">=", "<=")...).
+				Value(&m.selectStr),
 			huh.NewInput().
 				Title("Value").
 				Description("The value to compare against").
-				Value(&value).
-				Validate(func(s string) error {
-					if s == "" {
-						return fmt.Errorf("value is required")
-					}
-					return nil
-				}),
-		),
-	).Run()
-	if err != nil {
-		return "", err
-	}
+				Value(&m.inputStr).
+				Validate(notEmpty("value")),
+		))
 
-	return policy.FlowTagExpr(tagKey, operator, value), nil
-}
+	case stepExprArtifactName:
+		m.inputStr = ""
+		f = huh.NewForm(huh.NewGroup(
+			huh.NewInput().
+				Title("Artifact name regex").
+				Description("e.g. ^datadog:.*").
+				Placeholder("^datadog:.*").
+				Value(&m.inputStr).
+				Validate(notEmpty("regex")),
+		))
 
-func collectArtifactNameExpr() (string, error) {
-	var regex string
-	err := huh.NewInput().
-		Title("Artifact name regex").
-		Description("Regular expression to match artifact names (e.g. ^datadog:.*)").
-		Placeholder("^datadog:.*").
-		Value(&regex).
-		Validate(func(s string) error {
-			if s == "" {
-				return fmt.Errorf("regex is required")
-			}
-			return nil
-		}).
-		Run()
-	if err != nil {
-		return "", err
-	}
-	return policy.ArtifactNameMatchExpr(regex), nil
-}
-
-var exprContexts = []string{
-	"flow.name",
-	"flow.tags.<key>",
-	"artifact.name",
-	"artifact.fingerprint",
-}
-
-var exprOperators = []string{"==", "!=", "in", "matches"}
-
-func collectCustomExpr() (string, error) {
-	var context string
-	var operator string
-	var value string
-
-	err := huh.NewForm(
-		huh.NewGroup(
+	case stepExprCustomCtx:
+		m.selectStr = ""
+		f = huh.NewForm(huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("Context field").
-				Options(huh.NewOptions(exprContexts...)...).
-				Value(&context),
-		),
-	).Run()
-	if err != nil {
-		return "", err
-	}
+				Options(
+					huh.NewOption("flow.name", "flow.name"),
+					huh.NewOption("flow.tags.<key>", "flow.tags.<key>"),
+					huh.NewOption("artifact.name", "artifact.name"),
+					huh.NewOption("artifact.fingerprint", "artifact.fingerprint"),
+				).
+				Value(&m.selectStr),
+		))
 
-	if context == "flow.tags.<key>" {
-		var tagKey string
-		err = huh.NewInput().
-			Title("Tag key").
-			Description("The flow tag key (e.g. team, risk-level)").
-			Value(&tagKey).
-			Validate(func(s string) error {
-				if s == "" {
-					return fmt.Errorf("tag key is required")
-				}
-				return nil
-			}).
-			Run()
-		if err != nil {
-			return "", err
-		}
-		context = "flow.tags." + tagKey
-	}
+	case stepExprCustomTagKey:
+		m.inputStr = ""
+		f = huh.NewForm(huh.NewGroup(
+			huh.NewInput().
+				Title("Tag key").
+				Description("The flow tag key (e.g. team, risk-level)").
+				Value(&m.inputStr).
+				Validate(notEmpty("tag key")),
+		))
 
-	err = huh.NewForm(
-		huh.NewGroup(
+	case stepExprCustomOp:
+		m.selectStr = ""
+		m.inputStr = ""
+		f = huh.NewForm(huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("Operator").
-				Options(huh.NewOptions(exprOperators...)...).
-				Value(&operator),
+				Options(huh.NewOptions("==", "!=", "in", "matches")...).
+				Value(&m.selectStr),
 			huh.NewInput().
 				Title("Value").
 				Description("The value to compare against").
-				Value(&value).
-				Validate(func(s string) error {
-					if s == "" {
-						return fmt.Errorf("value is required")
-					}
-					return nil
-				}),
-		),
-	).Run()
-	if err != nil {
-		return "", err
+				Value(&m.inputStr).
+				Validate(notEmpty("value")),
+		))
+
+	case stepExprRaw:
+		m.inputStr = ""
+		f = huh.NewForm(huh.NewGroup(
+			huh.NewInput().
+				Title("Raw expression").
+				Description(`e.g. flow.name == "prod" and artifact.name == "svc"`).
+				Placeholder(`flow.name == "prod"`).
+				Value(&m.inputStr).
+				Validate(notEmpty("expression")),
+		))
+
+	case stepFinalConfirm:
+		m.confirmBool = true
+		f = huh.NewForm(huh.NewGroup(
+			huh.NewConfirm().
+				Title("Write this policy?").
+				Value(&m.confirmBool).
+				Affirmative("Yes").Negative("No"),
+		))
+
+	default:
+		f = huh.NewForm(huh.NewGroup())
 	}
 
-	return policy.ComparisonExpr(context, operator, value), nil
+	return f.WithWidth(formWidth).WithShowHelp(false).WithShowErrors(true)
 }
 
-func collectRawExpr() (string, error) {
-	var raw string
-	err := huh.NewInput().
-		Title("Raw expression").
-		Description("Enter a policy expression (e.g. flow.name == \"prod\" and artifact.name == \"svc\")").
-		Placeholder(`flow.name == "prod"`).
-		Value(&raw).
-		Validate(func(s string) error {
-			if s == "" {
-				return fmt.Errorf("expression is required")
+func notEmpty(field string) func(string) error {
+	return func(s string) error {
+		if s == "" {
+			return fmt.Errorf("%s is required", field)
+		}
+		return nil
+	}
+}
+
+func (m *policyWizardModel) excConfirmTitle(rule string) string {
+	var count int
+	if rule == "provenance" && m.policy.Artifacts != nil && m.policy.Artifacts.Provenance != nil {
+		count = len(m.policy.Artifacts.Provenance.Exceptions)
+	}
+	if rule == "trail compliance" && m.policy.Artifacts != nil && m.policy.Artifacts.TrailCompliance != nil {
+		count = len(m.policy.Artifacts.TrailCompliance.Exceptions)
+	}
+	if count > 0 {
+		return fmt.Sprintf("Add another exception to %s?", rule)
+	}
+	return fmt.Sprintf("Add an exception to %s?", rule)
+}
+
+// ---------------------------------------------------------------------------
+// State transitions
+// ---------------------------------------------------------------------------
+
+func (m *policyWizardModel) processFormResults() {
+	switch m.step {
+	case stepBasics:
+		if m.requireProv || m.requireTrail {
+			if m.policy.Artifacts == nil {
+				m.policy.Artifacts = &policy.ArtifactRules{}
 			}
-			return nil
-		}).
-		Run()
-	if err != nil {
-		return "", err
+			if m.requireProv {
+				m.policy.Artifacts.Provenance = &policy.BooleanRule{Required: true}
+			}
+			if m.requireTrail {
+				m.policy.Artifacts.TrailCompliance = &policy.BooleanRule{Required: true}
+			}
+		}
+
+	case stepAttDetails:
+		name := m.inputStr
+		if name == "" {
+			name = "*"
+		}
+		m.currentAttRule = policy.AttestationRule{
+			Type: m.selectStr,
+			Name: name,
+		}
+
+	case stepExprMode:
+		m.exprMode = m.selectStr
+
+	case stepExprFlowName:
+		name := m.selectStr
+		if name == "" {
+			name = m.inputStr
+		}
+		m.applyExpression(policy.FlowNameExpr(name))
+
+	case stepExprFlowTag:
+		m.exprTagKey = m.inputStr
+
+	case stepExprFlowTagOp:
+		m.applyExpression(policy.FlowTagExpr(m.exprTagKey, m.selectStr, m.inputStr))
+
+	case stepExprArtifactName:
+		m.applyExpression(policy.ArtifactNameMatchExpr(m.inputStr))
+
+	case stepExprCustomCtx:
+		m.exprContext = m.selectStr
+
+	case stepExprCustomTagKey:
+		m.exprContext = "flow.tags." + m.inputStr
+
+	case stepExprCustomOp:
+		m.applyExpression(policy.ComparisonExpr(m.exprContext, m.selectStr, m.inputStr))
+
+	case stepExprRaw:
+		m.applyExpression(policy.WrapExpr(m.inputStr))
+
+	case stepFinalConfirm:
+		m.confirmed = m.confirmBool
 	}
-	return policy.WrapExpr(raw), nil
 }
+
+func (m *policyWizardModel) applyExpression(expr string) {
+	switch m.exprTarget {
+	case targetProvException:
+		m.policy.Artifacts.Provenance.Exceptions = append(
+			m.policy.Artifacts.Provenance.Exceptions,
+			policy.ExceptionRule{If: expr},
+		)
+	case targetTrailException:
+		m.policy.Artifacts.TrailCompliance.Exceptions = append(
+			m.policy.Artifacts.TrailCompliance.Exceptions,
+			policy.ExceptionRule{If: expr},
+		)
+	case targetAttCondition:
+		m.currentAttRule.If = expr
+		m.commitAttestation()
+	}
+}
+
+func (m *policyWizardModel) commitAttestation() {
+	if m.policy.Artifacts == nil {
+		m.policy.Artifacts = &policy.ArtifactRules{}
+	}
+	m.policy.Artifacts.Attestations = append(m.policy.Artifacts.Attestations, m.currentAttRule)
+	m.currentAttRule = policy.AttestationRule{}
+}
+
+func (m *policyWizardModel) advanceStep() {
+	switch m.step {
+	case stepBasics:
+		if m.requireProv {
+			m.exprTarget = targetProvException
+			m.step = stepProvExcConfirm
+		} else if m.requireTrail {
+			m.exprTarget = targetTrailException
+			m.step = stepTrailExcConfirm
+		} else {
+			m.step = stepAttConfirm
+		}
+
+	case stepProvExcConfirm:
+		if m.confirmBool {
+			m.exprTarget = targetProvException
+			m.step = stepExprMode
+		} else if m.requireTrail {
+			m.exprTarget = targetTrailException
+			m.step = stepTrailExcConfirm
+		} else {
+			m.step = stepAttConfirm
+		}
+
+	case stepTrailExcConfirm:
+		if m.confirmBool {
+			m.exprTarget = targetTrailException
+			m.step = stepExprMode
+		} else {
+			m.step = stepAttConfirm
+		}
+
+	case stepAttConfirm:
+		if m.confirmBool {
+			m.step = stepAttDetails
+		} else {
+			m.step = stepFinalConfirm
+		}
+
+	case stepAttDetails:
+		m.step = stepAttCondConfirm
+
+	case stepAttCondConfirm:
+		if m.confirmBool {
+			m.exprTarget = targetAttCondition
+			m.step = stepExprMode
+		} else {
+			m.commitAttestation()
+			m.step = stepAttConfirm
+		}
+
+	case stepExprMode:
+		switch m.exprMode {
+		case "flow_name":
+			m.step = stepExprFlowName
+		case "flow_tag":
+			m.step = stepExprFlowTag
+		case "artifact_name":
+			m.step = stepExprArtifactName
+		case "custom":
+			m.step = stepExprCustomCtx
+		case "raw":
+			m.step = stepExprRaw
+		}
+
+	case stepExprFlowName:
+		m.advanceAfterExpr()
+
+	case stepExprFlowTag:
+		m.step = stepExprFlowTagOp
+
+	case stepExprFlowTagOp:
+		m.advanceAfterExpr()
+
+	case stepExprArtifactName:
+		m.advanceAfterExpr()
+
+	case stepExprCustomCtx:
+		if m.exprContext == "flow.tags.<key>" {
+			m.step = stepExprCustomTagKey
+		} else {
+			m.step = stepExprCustomOp
+		}
+
+	case stepExprCustomTagKey:
+		m.step = stepExprCustomOp
+
+	case stepExprCustomOp:
+		m.advanceAfterExpr()
+
+	case stepExprRaw:
+		m.advanceAfterExpr()
+
+	case stepFinalConfirm:
+		m.step = stepDone
+	}
+}
+
+func (m *policyWizardModel) advanceAfterExpr() {
+	switch m.exprTarget {
+	case targetProvException:
+		m.step = stepProvExcConfirm
+	case targetTrailException:
+		m.step = stepTrailExcConfirm
+	case targetAttCondition:
+		// attestation was committed in applyExpression
+		m.step = stepAttConfirm
+	}
+}
+
+// ---------------------------------------------------------------------------
+// API fetching
+// ---------------------------------------------------------------------------
 
 func (wctx *wizardContext) fetchFromAPI() {
 	wctx.flowNames = fetchFlowNames()
