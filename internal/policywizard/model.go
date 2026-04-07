@@ -33,6 +33,7 @@ type Model struct {
 	currentAttRule policy.AttestationRule
 	requireProv    bool
 	requireTrail   bool
+	lastConfirm    bool
 	validationErr  string
 }
 

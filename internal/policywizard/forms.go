@@ -224,13 +224,49 @@ func (m *Model) excConfirmTitle(rule string) string {
 }
 
 // ---------------------------------------------------------------------------
+// Form values — extracted from huh form for testability
+// ---------------------------------------------------------------------------
+
+type formValues struct {
+	confirm  bool
+	str      string // generic string: value, filename, mode
+	attType  string
+	attName  string
+	operator string
+}
+
+func extractFormValues(f *huh.Form) formValues {
+	return formValues{
+		confirm:  f.GetBool("confirm"),
+		str:      firstNonEmpty(f.GetString("value"), f.GetString("filename"), f.GetString("mode")),
+		attType:  f.GetString("type"),
+		attName:  f.GetString("name"),
+		operator: f.GetString("op"),
+	}
+}
+
+func firstNonEmpty(ss ...string) string {
+	for _, s := range ss {
+		if s != "" {
+			return s
+		}
+	}
+	return ""
+}
+
+// ---------------------------------------------------------------------------
 // State transitions: processFormResults
 // ---------------------------------------------------------------------------
 
 func (m *Model) processFormResults() {
+	m.applyFormValues(extractFormValues(m.form))
+}
+
+func (m *Model) applyFormValues(fv formValues) {
+	m.lastConfirm = fv.confirm
 	switch m.step {
 	case stepProvConfirm:
-		m.requireProv = m.form.GetBool("confirm")
+		m.requireProv = fv.confirm
 		if m.requireProv {
 			if m.Policy.Artifacts == nil {
 				m.Policy.Artifacts = &policy.ArtifactRules{}
@@ -239,7 +275,7 @@ func (m *Model) processFormResults() {
 		}
 
 	case stepTrailConfirm:
-		m.requireTrail = m.form.GetBool("confirm")
+		m.requireTrail = fv.confirm
 		if m.requireTrail {
 			if m.Policy.Artifacts == nil {
 				m.Policy.Artifacts = &policy.ArtifactRules{}
@@ -248,50 +284,49 @@ func (m *Model) processFormResults() {
 		}
 
 	case stepAttDetails:
-		attType := m.form.GetString("type")
-		name := m.form.GetString("name")
+		name := fv.attName
 		if name == "" {
 			name = "*"
 		}
-		if attType == "*" && name == "*" {
+		if fv.attType == "*" && name == "*" {
 			m.validationErr = "when type is *, name must not be * — please specify a name"
 			return
 		}
 		m.validationErr = ""
 		m.currentAttRule = policy.AttestationRule{
-			Type: attType,
+			Type: fv.attType,
 			Name: name,
 		}
 
 	case stepExprMode:
-		m.exprMode = m.form.GetString("mode")
+		m.exprMode = fv.str
 
 	case stepExprFlowName:
-		m.applyExpression(policy.FlowNameExpr(m.form.GetString("value")))
+		m.applyExpression(policy.FlowNameExpr(fv.str))
 
 	case stepExprFlowTag:
-		m.exprTagKey = m.form.GetString("value")
+		m.exprTagKey = fv.str
 
 	case stepExprFlowTagOp:
-		m.applyExpression(policy.FlowTagExpr(m.exprTagKey, m.form.GetString("op"), m.form.GetString("value")))
+		m.applyExpression(policy.FlowTagExpr(m.exprTagKey, fv.operator, fv.str))
 
 	case stepExprArtifactName:
-		m.applyExpression(policy.ArtifactNameMatchExpr(m.form.GetString("value")))
+		m.applyExpression(policy.ArtifactNameMatchExpr(fv.str))
 
 	case stepExprCustomCtx:
-		m.exprContext = m.form.GetString("value")
+		m.exprContext = fv.str
 
 	case stepExprCustomTagKey:
-		m.exprContext = "flow.tags." + m.form.GetString("value")
+		m.exprContext = "flow.tags." + fv.str
 
 	case stepExprCustomOp:
-		m.applyExpression(policy.ComparisonExpr(m.exprContext, m.form.GetString("op"), m.form.GetString("value")))
+		m.applyExpression(policy.ComparisonExpr(m.exprContext, fv.operator, fv.str))
 
 	case stepExprRaw:
-		m.applyExpression(policy.WrapExpr(m.form.GetString("value")))
+		m.applyExpression(policy.WrapExpr(fv.str))
 
 	case stepSaveFile:
-		m.OutputFile = m.form.GetString("filename")
+		m.OutputFile = fv.str
 	}
 }
 
@@ -336,7 +371,7 @@ func (m *Model) advanceStep() {
 		}
 
 	case stepProvExcConfirm:
-		if m.form.GetBool("confirm") {
+		if m.lastConfirm {
 			m.exprTarget = targetProvException
 			m.step = stepExprMode
 		} else {
@@ -352,7 +387,7 @@ func (m *Model) advanceStep() {
 		}
 
 	case stepTrailExcConfirm:
-		if m.form.GetBool("confirm") {
+		if m.lastConfirm {
 			m.exprTarget = targetTrailException
 			m.step = stepExprMode
 		} else {
@@ -360,7 +395,7 @@ func (m *Model) advanceStep() {
 		}
 
 	case stepAttConfirm:
-		if m.form.GetBool("confirm") {
+		if m.lastConfirm {
 			m.step = stepAttDetails
 		} else {
 			m.step = stepSaveFile
@@ -370,7 +405,7 @@ func (m *Model) advanceStep() {
 		m.step = stepAttCondConfirm
 
 	case stepAttCondConfirm:
-		if m.form.GetBool("confirm") {
+		if m.lastConfirm {
 			m.exprTarget = targetAttCondition
 			m.step = stepExprMode
 		} else {
