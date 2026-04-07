@@ -54,3 +54,22 @@
 - [x] Slice 2: Add `--params` flag across all three commands
 - [x] Slice 3: Show params in `--show-input` output
 - [x] Slice 4: Update help text and examples
+
+## kosli create policy-file
+
+- [ ] Slice 1: Policy model + YAML generation (`internal/policy/`) ← active
+  - [ ] Empty policy (just `_schema`) produces valid YAML
+  - [ ] Provenance required=true
+  - [ ] Provenance with exceptions
+  - [ ] Trail-compliance required + exceptions
+  - [ ] Single attestation rule (type only)
+  - [ ] Attestation with name + if condition
+  - [ ] Multiple attestations
+  - [ ] Full policy with all fields
+  - [ ] `name: "*"` is omitted from YAML output
+- [ ] Slice 2: Expression builder
+- [ ] Slice 3: Skeleton Cobra command + huh dependency
+- [ ] Slice 4: Attestation loop in wizard
+- [ ] Slice 5: Expression builder wizard
+- [ ] Slice 6: API lookups for flows and custom attestation types
+- [ ] Slice 7: Preview screen + polish
