@@ -160,7 +160,7 @@ func (m *Model) buildForm() *huh.Form {
 	case stepExprCustomOp:
 		f = huh.NewForm(huh.NewGroup(
 			huh.NewSelect[string]().Key("op").Title("Operator").
-				Options(huh.NewOptions("==", "!=", "in", "matches")...),
+				Options(huh.NewOptions("==", "!=", ">", "<", ">=", "<=")...),
 			huh.NewInput().Key("value").Title("Value").
 				Description("The value to compare against").
 				Validate(notEmpty("value")),
