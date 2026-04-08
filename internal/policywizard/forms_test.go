@@ -182,15 +182,6 @@ func TestAdvance_ExprCustomCtx_DirectGoesToOp(t *testing.T) {
 	assert.Equal(t, stepExprCustomOp, m.step)
 }
 
-func TestAdvance_SaveFile_GoesToDone(t *testing.T) {
-	m := newTestModel()
-	m.step = stepSaveFile
-
-	m.advanceStep()
-
-	assert.Equal(t, stepDone, m.step)
-}
-
 func TestAdvanceAfterExpr_AllTargets(t *testing.T) {
 	tests := []struct {
 		target   exprTarget
@@ -463,13 +454,13 @@ func TestAdvance_SaveFile_WithAPI_GoesToUploadConfirm(t *testing.T) {
 	assert.Equal(t, stepUploadConfirm, m.step)
 }
 
-func TestAdvance_SaveFile_WithoutAPI_GoesToDone(t *testing.T) {
+func TestAdvance_SaveFile_WithoutAPI_GoesToWriting(t *testing.T) {
 	m := newTestModel()
 	m.step = stepSaveFile
 
 	m.advanceStep()
 
-	assert.Equal(t, stepDone, m.step)
+	assert.Equal(t, stepWriting, m.step)
 }
 
 func TestAdvance_UploadConfirm_YesGoesToDetails(t *testing.T) {
@@ -482,19 +473,28 @@ func TestAdvance_UploadConfirm_YesGoesToDetails(t *testing.T) {
 	assert.Equal(t, stepUploadDetails, m.step)
 }
 
-func TestAdvance_UploadConfirm_NoGoesToDone(t *testing.T) {
+func TestAdvance_UploadConfirm_NoGoesToWriting(t *testing.T) {
 	m := newTestModel()
 	m.step = stepUploadConfirm
 	m.lastConfirm = false
 
 	m.advanceStep()
 
-	assert.Equal(t, stepDone, m.step)
+	assert.Equal(t, stepWriting, m.step)
 }
 
-func TestAdvance_UploadDetails_GoesToDone(t *testing.T) {
+func TestAdvance_UploadDetails_GoesToWriting(t *testing.T) {
 	m := newTestModel()
 	m.step = stepUploadDetails
+
+	m.advanceStep()
+
+	assert.Equal(t, stepWriting, m.step)
+}
+
+func TestAdvance_Complete_GoesToDone(t *testing.T) {
+	m := newTestModel()
+	m.step = stepComplete
 
 	m.advanceStep()
 

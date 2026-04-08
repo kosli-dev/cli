@@ -34,6 +34,8 @@ const (
 	stepSaveFile
 	stepUploadConfirm
 	stepUploadDetails
+	stepWriting  // spinner while writing/uploading
+	stepComplete // show success message
 	stepDone
 )
 
@@ -504,17 +506,20 @@ func (m *Model) advanceStep() {
 		if m.ctx.HasAPICredentials {
 			m.step = stepUploadConfirm
 		} else {
-			m.step = stepDone
+			m.step = stepWriting
 		}
 
 	case stepUploadConfirm:
 		if m.lastConfirm {
 			m.step = stepUploadDetails
 		} else {
-			m.step = stepDone
+			m.step = stepWriting
 		}
 
 	case stepUploadDetails:
+		m.step = stepWriting
+
+	case stepComplete:
 		m.step = stepDone
 	}
 }

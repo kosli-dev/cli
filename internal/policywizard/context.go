@@ -9,13 +9,35 @@ type FetchResult struct {
 }
 
 // Context holds data fetched from the API to populate wizard options.
+// WriteRequest contains the parameters for writing and uploading a policy.
+type WriteRequest struct {
+	YAMLBytes   []byte
+	Filename    string
+	PolicyName  string
+	Description string
+	Org         string
+	Upload      bool
+}
+
+// WriteResult is returned after writing/uploading.
+type WriteResult struct {
+	Filename   string
+	PolicyName string
+	PolicyURL  string // e.g. https://app.kosli.com/my-org/policies/my-policy
+	Uploaded   bool
+	Err        error
+}
+
 type Context struct {
 	FlowNames         []string
 	CustomAttestTypes []string
 	HasAPICredentials bool
 	Org               string // current org (e.g. from $KOSLI_ORG)
+	Host              string // e.g. https://app.kosli.com
 	// FetchFunc is called asynchronously to fetch API data. If nil, no fetch is performed.
 	FetchFunc func() FetchResult
+	// WriteFunc writes the file and optionally uploads the policy. Called as a tea.Cmd.
+	WriteFunc func(WriteRequest) WriteResult
 }
 
 // Kosli brand colors for terminal UI.
