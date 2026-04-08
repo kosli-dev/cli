@@ -200,6 +200,8 @@ func (m *Model) buildForm() *huh.Form {
 		))
 
 	default:
+		// Every step must have a form. If we reach here, a new step was
+		// added without a matching case — show an empty form rather than crash.
 		f = huh.NewForm(huh.NewGroup())
 	}
 
