@@ -110,8 +110,7 @@ func (m Model) View() string {
 
 	formContent := m.form.View()
 	if m.validationErr != "" {
-		errStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FE5F86")).Bold(true)
-		formContent = errStyle.Render("⚠ "+m.validationErr) + "\n\n" + formContent
+		formContent = s.err.Render("⚠ "+m.validationErr) + "\n\n" + formContent
 	}
 	formView := lipgloss.NewStyle().Width(fw).Render(formContent)
 

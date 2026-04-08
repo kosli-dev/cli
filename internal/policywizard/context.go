@@ -8,6 +8,14 @@ type Context struct {
 	CustomAttestTypes []string
 }
 
+// Kosli brand colors for terminal UI.
+const (
+	colorBlue    = lipgloss.Color("#1C4BC6") // Blue 600 — primary accent
+	colorGreen   = lipgloss.Color("#45A26D") // Success green
+	colorRed     = lipgloss.Color("#C13D33") // Error red
+	colorTextDim = lipgloss.Color("#646A71") // Tertiary text
+)
+
 type styles struct {
 	base        lipgloss.Style
 	title       lipgloss.Style
@@ -15,27 +23,29 @@ type styles struct {
 	previewText lipgloss.Style
 	footer      lipgloss.Style
 	accent      lipgloss.Style
+	err         lipgloss.Style
 }
 
 func newStyles() styles {
-	accent := lipgloss.Color("#7571F9")
-	green := lipgloss.Color("#02BF87")
 	return styles{
 		base: lipgloss.NewStyle().Padding(1, 2),
 		title: lipgloss.NewStyle().
 			Bold(true).
-			Foreground(accent).
+			Foreground(colorBlue).
 			Padding(0, 1),
 		preview: lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(accent).
+			BorderForeground(colorBlue).
 			Padding(1, 2),
 		previewText: lipgloss.NewStyle().
-			Foreground(green),
+			Foreground(colorGreen),
 		footer: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("240")).
+			Foreground(colorTextDim).
 			Padding(1, 1, 0, 1),
 		accent: lipgloss.NewStyle().
-			Foreground(accent),
+			Foreground(colorBlue),
+		err: lipgloss.NewStyle().
+			Foreground(colorRed).
+			Bold(true),
 	}
 }
