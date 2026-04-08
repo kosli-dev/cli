@@ -3,6 +3,7 @@ package policywizard
 import (
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/charmbracelet/huh"
@@ -80,7 +81,7 @@ func (m *Model) buildForm() *huh.Form {
 		f = confirmForm(title, "")
 
 	case stepAttDetails:
-		allTypes := append([]string{}, builtInAttestationTypes...)
+		allTypes := slices.Clone(builtInAttestationTypes)
 		allTypes = append(allTypes, m.ctx.CustomAttestTypes...)
 		opts := make([]huh.Option[string], len(allTypes))
 		for i, t := range allTypes {
