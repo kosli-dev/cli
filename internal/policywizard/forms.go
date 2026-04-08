@@ -165,7 +165,7 @@ func (m *Model) buildForm() *huh.Form {
 			huh.NewSelect[string]().Key("op").Title("Operator").
 				Options(huh.NewOptions("==", "!=", ">", "<", ">=", "<=", "matches", "exists")...),
 			huh.NewInput().Key("value").Title("Value").
-				Description("The value to compare against (leave empty for exists)"),
+				Description("The value to compare against (ignored for exists)"),
 		))
 
 	case stepExprRaw:
