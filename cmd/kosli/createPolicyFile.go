@@ -54,21 +54,15 @@ func runCreatePolicyFile() error {
 		return fmt.Errorf("this command requires an interactive terminal; write policy YAML manually or use 'kosli create policy' directly")
 	}
 
-	hasAPI := global.ApiToken != "" && global.Org != ""
-	ctx := &policywizard.Context{
-		HasAPICredentials: hasAPI,
-	}
-	if hasAPI {
+	ctx := &policywizard.Context{}
+	if global.ApiToken != "" && global.Org != "" {
+		fmt.Fprint(os.Stderr, "Starting Kosli Policy Builder...\r")
 		ctx.FetchFunc = func() policywizard.FetchResult {
 			return policywizard.FetchResult{
 				FlowNames:         fetchFlowNames(),
 				CustomAttestTypes: fetchCustomAttestationTypes(),
 			}
 		}
-	}
-
-	if hasAPI {
-		fmt.Fprint(os.Stderr, "Starting Kosli Policy Builder...\r")
 	}
 
 	m := policywizard.NewModel(ctx)

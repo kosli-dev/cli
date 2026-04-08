@@ -12,7 +12,6 @@ type FetchResult struct {
 type Context struct {
 	FlowNames         []string
 	CustomAttestTypes []string
-	HasAPICredentials bool
 	// FetchFunc is called asynchronously to fetch API data. If nil, no fetch is performed.
 	FetchFunc func() FetchResult
 }
