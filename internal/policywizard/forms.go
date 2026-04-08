@@ -31,6 +31,8 @@ const (
 	stepExprCustomOp
 	stepExprRaw
 	stepSaveFile
+	stepUploadConfirm
+	stepUploadDetails
 	stepDone
 )
 
@@ -171,6 +173,22 @@ func (m *Model) buildForm() *huh.Form {
 		f = inputForm("filename", "Save policy to file",
 			"Enter filename (e.g. policy.yaml)", "policy.yaml", "filename")
 
+	case stepUploadConfirm:
+		f = confirmForm("Upload this policy to Kosli?",
+			"Requires --api-token and --org to be set")
+
+	case stepUploadDetails:
+		f = huh.NewForm(huh.NewGroup(
+			huh.NewInput().Key("policy_name").
+				Title("Policy name").
+				Description("Name for the policy in Kosli").
+				Validate(notEmpty("policy name")),
+			huh.NewInput().Key("description").
+				Title("Description").
+				Description("Optional description for the policy").
+				Placeholder(""),
+		))
+
 	default:
 		f = huh.NewForm(huh.NewGroup())
 	}
@@ -228,17 +246,19 @@ func (m *Model) excConfirmTitle(rule string) string {
 // ---------------------------------------------------------------------------
 
 type formValues struct {
-	confirm  bool
-	str      string // generic string: value, filename, mode
-	attType  string
-	attName  string
-	operator string
+	confirm     bool
+	str         string // generic string: value, filename, mode, policy_name
+	str2        string // secondary string: description
+	attType     string
+	attName     string
+	operator    string
 }
 
 func extractFormValues(f *huh.Form) formValues {
 	return formValues{
 		confirm:  f.GetBool("confirm"),
-		str:      firstNonEmpty(f.GetString("value"), f.GetString("filename"), f.GetString("mode")),
+		str:      firstNonEmpty(f.GetString("value"), f.GetString("filename"), f.GetString("mode"), f.GetString("policy_name")),
+		str2:     f.GetString("description"),
 		attType:  f.GetString("type"),
 		attName:  f.GetString("name"),
 		operator: f.GetString("op"),
@@ -327,6 +347,13 @@ func (m *Model) applyFormValues(fv formValues) {
 
 	case stepSaveFile:
 		m.OutputFile = fv.str
+
+	case stepUploadConfirm:
+		m.UploadPolicy = fv.confirm
+
+	case stepUploadDetails:
+		m.UploadPolicyName = fv.str
+		m.UploadDescription = fv.str2
 	}
 }
 
@@ -451,6 +478,20 @@ func (m *Model) advanceStep() {
 		m.advanceAfterExpr()
 
 	case stepSaveFile:
+		if m.ctx.HasAPICredentials {
+			m.step = stepUploadConfirm
+		} else {
+			m.step = stepDone
+		}
+
+	case stepUploadConfirm:
+		if m.lastConfirm {
+			m.step = stepUploadDetails
+		} else {
+			m.step = stepDone
+		}
+
+	case stepUploadDetails:
 		m.step = stepDone
 	}
 }

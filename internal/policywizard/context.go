@@ -6,6 +6,7 @@ import "github.com/charmbracelet/lipgloss"
 type Context struct {
 	FlowNames         []string
 	CustomAttestTypes []string
+	HasAPICredentials bool
 }
 
 // Kosli brand colors for terminal UI.

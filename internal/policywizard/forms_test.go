@@ -416,6 +416,72 @@ func TestApply_SaveFile_SetsOutputFile(t *testing.T) {
 	assert.Equal(t, "my-policy.yaml", m.OutputFile)
 }
 
+func TestApply_UploadConfirm_SetsFlag(t *testing.T) {
+	m := newTestModel()
+	m.step = stepUploadConfirm
+
+	m.applyFormValues(formValues{confirm: true})
+
+	assert.True(t, m.UploadPolicy)
+}
+
+func TestApply_UploadDetails_SetsNameAndDescription(t *testing.T) {
+	m := newTestModel()
+	m.step = stepUploadDetails
+
+	m.applyFormValues(formValues{str: "my-policy", str2: "A test policy"})
+
+	assert.Equal(t, "my-policy", m.UploadPolicyName)
+	assert.Equal(t, "A test policy", m.UploadDescription)
+}
+
+func TestAdvance_SaveFile_WithAPI_GoesToUploadConfirm(t *testing.T) {
+	m := NewModel(&Context{HasAPICredentials: true})
+	m.step = stepSaveFile
+
+	m.advanceStep()
+
+	assert.Equal(t, stepUploadConfirm, m.step)
+}
+
+func TestAdvance_SaveFile_WithoutAPI_GoesToDone(t *testing.T) {
+	m := newTestModel()
+	m.step = stepSaveFile
+
+	m.advanceStep()
+
+	assert.Equal(t, stepDone, m.step)
+}
+
+func TestAdvance_UploadConfirm_YesGoesToDetails(t *testing.T) {
+	m := newTestModel()
+	m.step = stepUploadConfirm
+	m.lastConfirm = true
+
+	m.advanceStep()
+
+	assert.Equal(t, stepUploadDetails, m.step)
+}
+
+func TestAdvance_UploadConfirm_NoGoesToDone(t *testing.T) {
+	m := newTestModel()
+	m.step = stepUploadConfirm
+	m.lastConfirm = false
+
+	m.advanceStep()
+
+	assert.Equal(t, stepDone, m.step)
+}
+
+func TestAdvance_UploadDetails_GoesToDone(t *testing.T) {
+	m := newTestModel()
+	m.step = stepUploadDetails
+
+	m.advanceStep()
+
+	assert.Equal(t, stepDone, m.step)
+}
+
 func TestApply_StoresLastConfirm(t *testing.T) {
 	m := newTestModel()
 	m.step = stepProvConfirm

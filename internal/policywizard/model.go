@@ -21,9 +21,12 @@ type Model struct {
 	ctx    *Context
 
 	// Public results — read after the program exits.
-	Policy    *policy.Policy
-	OutputFile string
-	Cancelled  bool
+	Policy            *policy.Policy
+	OutputFile        string
+	Cancelled         bool
+	UploadPolicy      bool
+	UploadPolicyName  string
+	UploadDescription string
 
 	// Internal state for loops and expression building.
 	exprTarget     exprTarget

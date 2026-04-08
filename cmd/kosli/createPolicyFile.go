@@ -54,8 +54,11 @@ func runCreatePolicyFile() error {
 		return fmt.Errorf("this command requires an interactive terminal; write policy YAML manually or use 'kosli create policy' directly")
 	}
 
-	ctx := &policywizard.Context{}
-	if global.ApiToken != "" && global.Org != "" {
+	hasAPI := global.ApiToken != "" && global.Org != ""
+	ctx := &policywizard.Context{
+		HasAPICredentials: hasAPI,
+	}
+	if hasAPI {
 		ctx.FlowNames = fetchFlowNames()
 		ctx.CustomAttestTypes = fetchCustomAttestationTypes()
 	}
@@ -87,7 +90,22 @@ func runCreatePolicyFile() error {
 		return fmt.Errorf("failed to write policy file: %w", err)
 	}
 	logger.Info("policy file written to %s", filename)
+
+	if wm.UploadPolicy && wm.UploadPolicyName != "" {
+		return uploadPolicy(wm.UploadPolicyName, wm.UploadDescription, filename)
+	}
 	return nil
+}
+
+func uploadPolicy(name, description, policyFile string) error {
+	o := &createPolicyOptions{
+		payload: PolicyPayload{
+			Name:        name,
+			Description: description,
+			Type:        "env",
+		},
+	}
+	return o.run([]string{name, policyFile})
 }
 
 func fetchFlowNames() []string {
