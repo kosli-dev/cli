@@ -14,7 +14,7 @@ import (
 type wizardStep int
 
 const (
-	stepLoading         wizardStep = iota
+	stepLoading wizardStep = iota
 	stepProvConfirm
 	stepProvExcConfirm
 	stepTrailConfirm
