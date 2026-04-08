@@ -2,11 +2,19 @@ package policywizard
 
 import "github.com/charmbracelet/lipgloss"
 
+// FetchResult holds the data returned by the API fetch.
+type FetchResult struct {
+	FlowNames         []string
+	CustomAttestTypes []string
+}
+
 // Context holds data fetched from the API to populate wizard options.
 type Context struct {
 	FlowNames         []string
 	CustomAttestTypes []string
 	HasAPICredentials bool
+	// FetchFunc is called asynchronously to fetch API data. If nil, no fetch is performed.
+	FetchFunc func() FetchResult
 }
 
 // Kosli brand colors for terminal UI.

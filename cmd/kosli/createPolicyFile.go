@@ -59,8 +59,12 @@ func runCreatePolicyFile() error {
 		HasAPICredentials: hasAPI,
 	}
 	if hasAPI {
-		ctx.FlowNames = fetchFlowNames()
-		ctx.CustomAttestTypes = fetchCustomAttestationTypes()
+		ctx.FetchFunc = func() policywizard.FetchResult {
+			return policywizard.FetchResult{
+				FlowNames:         fetchFlowNames(),
+				CustomAttestTypes: fetchCustomAttestationTypes(),
+			}
+		}
 	}
 
 	m := policywizard.NewModel(ctx)
