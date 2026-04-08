@@ -16,6 +16,11 @@ func TestFlowNameInExpr(t *testing.T) {
 	assert.Equal(t, `${{ flow.name in ["runner", "saver"] }}`, result)
 }
 
+func TestFlowNameInExpr_Empty(t *testing.T) {
+	assert.Equal(t, "", FlowNameInExpr(nil))
+	assert.Equal(t, "", FlowNameInExpr([]string{}))
+}
+
 func TestFlowNameInExpr_Single(t *testing.T) {
 	result := FlowNameInExpr([]string{"prod"})
 	assert.Equal(t, `${{ flow.name == "prod" }}`, result)

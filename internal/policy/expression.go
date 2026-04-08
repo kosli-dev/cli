@@ -13,6 +13,9 @@ func FlowNameExpr(name string) string {
 // FlowNameInExpr returns a policy expression matching any of the given flow names.
 // For a single name, it returns an equality expression instead.
 func FlowNameInExpr(names []string) string {
+	if len(names) == 0 {
+		return ""
+	}
 	if len(names) == 1 {
 		return FlowNameExpr(names[0])
 	}
