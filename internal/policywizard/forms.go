@@ -3,6 +3,7 @@ package policywizard
 import (
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -144,7 +145,13 @@ func (m *Model) buildForm() *huh.Form {
 		))
 
 	case stepExprArtifactName:
-		f = inputForm("value", "Artifact name regex", "e.g. ^datadog:.*", "^datadog:.*", "regex")
+		f = huh.NewForm(huh.NewGroup(
+			huh.NewInput().Key("value").
+				Title("Artifact name regex").
+				Description("e.g. ^datadog:.*").
+				Placeholder("^datadog:.*").
+				Validate(validateRegex),
+		))
 
 	case stepExprCustomCtx:
 		f = huh.NewForm(huh.NewGroup(
@@ -237,6 +244,16 @@ func notEmpty(field string) func(string) error {
 		}
 		return nil
 	}
+}
+
+func validateRegex(s string) error {
+	if s == "" {
+		return fmt.Errorf("regex is required")
+	}
+	if _, err := regexp.Compile(s); err != nil {
+		return fmt.Errorf("invalid regex: %s", err)
+	}
+	return nil
 }
 
 func validateYAMLExtension(s string) error {
