@@ -41,6 +41,11 @@ func TestArtifactNameMatchExpr(t *testing.T) {
 	assert.Equal(t, `${{ matches(artifact.name, "^datadog:.*") }}`, result)
 }
 
+func TestMatchesExpr(t *testing.T) {
+	result := MatchesExpr("flow.name", "^prod")
+	assert.Equal(t, `${{ matches(flow.name, "^prod") }}`, result)
+}
+
 func TestComparisonExpr(t *testing.T) {
 	result := ComparisonExpr("flow.tags.risk", "==", "high")
 	assert.Equal(t, `${{ flow.tags.risk == "high" }}`, result)

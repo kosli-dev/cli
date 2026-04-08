@@ -398,6 +398,21 @@ func TestApply_AttCondition_CommitsAttestation(t *testing.T) {
 	assert.Equal(t, `${{ flow.name == "prod" }}`, m.Policy.Artifacts.Attestations[0].If)
 }
 
+func TestApply_ExprCustomOp_MatchesUsesFunction(t *testing.T) {
+	m := newTestModel()
+	m.step = stepExprCustomOp
+	m.exprTarget = targetProvException
+	m.exprContext = "flow.name"
+	m.Policy.Artifacts = &policy.ArtifactRules{
+		Provenance: &policy.BooleanRule{Required: true},
+	}
+
+	m.applyFormValues(formValues{operator: "matches", str: "^prod"})
+
+	require.Len(t, m.Policy.Artifacts.Provenance.Exceptions, 1)
+	assert.Equal(t, `${{ matches(flow.name, "^prod") }}`, m.Policy.Artifacts.Provenance.Exceptions[0].If)
+}
+
 func TestApply_SaveFile_SetsOutputFile(t *testing.T) {
 	m := newTestModel()
 	m.step = stepSaveFile

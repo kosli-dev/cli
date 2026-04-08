@@ -33,7 +33,12 @@ func FlowTagExpr(key, op, value string) string {
 
 // ArtifactNameMatchExpr returns a policy expression matching artifact names by regex.
 func ArtifactNameMatchExpr(regex string) string {
-	return fmt.Sprintf(`${{ matches(artifact.name, "%s") }}`, regex)
+	return MatchesExpr("artifact.name", regex)
+}
+
+// MatchesExpr returns a policy expression using the matches() function form.
+func MatchesExpr(context, regex string) string {
+	return fmt.Sprintf(`${{ matches(%s, "%s") }}`, context, regex)
 }
 
 // ComparisonExpr returns a policy expression comparing a context field to a value.
