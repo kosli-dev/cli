@@ -34,6 +34,9 @@ const (
 	stepExprCustomTagKey
 	stepExprCustomOp
 	stepExprRaw
+	stepExprNegate
+	stepExprCombineConfirm
+	stepExprCombineOp
 	stepSaveFile
 	stepDone
 )
@@ -169,6 +172,23 @@ func (m *Model) buildForm() *huh.Form {
 		f = inputForm("value", "Raw expression",
 			`e.g. flow.name == "prod" and artifact.name == "svc"`,
 			`flow.name == "prod"`, "expression")
+
+	case stepExprNegate:
+		f = confirmForm("Negate this condition?",
+			"Wrap with not() — e.g. not(flow.name == \"prod\")")
+
+	case stepExprCombineConfirm:
+		f = confirmForm("Combine with another condition?",
+			"Chain with and/or — e.g. expr1 and expr2")
+
+	case stepExprCombineOp:
+		f = huh.NewForm(huh.NewGroup(
+			huh.NewSelect[string]().Key("value").Title("Logical operator").
+				Options(
+					huh.NewOption("and — both must be true", "and"),
+					huh.NewOption("or — either can be true", "or"),
+				),
+		))
 
 	case stepSaveFile:
 		f = huh.NewForm(huh.NewGroup(
@@ -321,16 +341,16 @@ func (m *Model) applyFormValues(fv formValues) {
 		m.exprMode = fv.str
 
 	case stepExprFlowName:
-		m.applyExpression(policy.FlowNameExpr(fv.str))
+		m.storeSubExpr(policy.FlowNameExpr(fv.str))
 
 	case stepExprFlowTag:
 		m.exprTagKey = fv.str
 
 	case stepExprFlowTagOp:
-		m.applyExpression(policy.FlowTagExpr(m.exprTagKey, fv.operator, fv.str))
+		m.storeSubExpr(policy.FlowTagExpr(m.exprTagKey, fv.operator, fv.str))
 
 	case stepExprArtifactName:
-		m.applyExpression(policy.ArtifactNameMatchExpr(fv.str))
+		m.storeSubExpr(policy.ArtifactNameMatchExpr(fv.str))
 
 	case stepExprCustomCtx:
 		m.exprContext = fv.str
@@ -341,15 +361,29 @@ func (m *Model) applyFormValues(fv formValues) {
 	case stepExprCustomOp:
 		switch fv.operator {
 		case "exists":
-			m.applyExpression(policy.ExistsExpr(m.exprContext))
+			m.storeSubExpr(policy.ExistsExpr(m.exprContext))
 		case "matches":
-			m.applyExpression(policy.MatchesExpr(m.exprContext, fv.str))
+			m.storeSubExpr(policy.MatchesExpr(m.exprContext, fv.str))
 		default:
-			m.applyExpression(policy.ComparisonExpr(m.exprContext, fv.operator, fv.str))
+			m.storeSubExpr(policy.ComparisonExpr(m.exprContext, fv.operator, fv.str))
 		}
 
 	case stepExprRaw:
-		m.applyExpression(policy.WrapExpr(fv.str))
+		m.storeSubExpr(policy.WrapExpr(fv.str))
+
+	case stepExprNegate:
+		if fv.confirm && len(m.pendingExprs) > 0 {
+			last := len(m.pendingExprs) - 1
+			m.pendingExprs[last] = policy.NegateExpr(m.pendingExprs[last])
+		}
+
+	case stepExprCombineOp:
+		m.combineOp = fv.str
+
+	case stepExprCombineConfirm:
+		if !fv.confirm {
+			m.finalizeExpression()
+		}
 
 	case stepSaveFile:
 		m.OutputFile = fv.str
@@ -357,6 +391,26 @@ func (m *Model) applyFormValues(fv formValues) {
 			m.OutputFile = "policy.yaml"
 		}
 	}
+}
+
+// storeSubExpr unwraps a full expression and appends it to the pending list.
+func (m *Model) storeSubExpr(expr string) {
+	m.pendingExprs = append(m.pendingExprs, policy.UnwrapExpr(expr))
+}
+
+// finalizeExpression combines all pending sub-expressions and applies them.
+func (m *Model) finalizeExpression() {
+	if len(m.pendingExprs) == 0 {
+		return
+	}
+	op := m.combineOp
+	if op == "" {
+		op = "and"
+	}
+	combined := policy.CombineExprs(op, m.pendingExprs...)
+	m.applyExpression(combined)
+	m.pendingExprs = nil
+	m.combineOp = ""
 }
 
 func (m *Model) applyExpression(expr string) {
@@ -408,6 +462,8 @@ func (m *Model) advanceStep() {
 	case stepProvExcConfirm:
 		if m.lastConfirm {
 			m.exprTarget = targetProvException
+			m.pendingExprs = nil
+			m.combineOp = ""
 			m.step = stepExprMode
 		} else {
 			m.step = stepTrailConfirm
@@ -424,6 +480,8 @@ func (m *Model) advanceStep() {
 	case stepTrailExcConfirm:
 		if m.lastConfirm {
 			m.exprTarget = targetTrailException
+			m.pendingExprs = nil
+			m.combineOp = ""
 			m.step = stepExprMode
 		} else {
 			m.step = stepAttConfirm
@@ -442,6 +500,8 @@ func (m *Model) advanceStep() {
 	case stepAttCondConfirm:
 		if m.lastConfirm {
 			m.exprTarget = targetAttCondition
+			m.pendingExprs = nil
+			m.combineOp = ""
 			m.step = stepExprMode
 		} else {
 			m.commitAttestation()
@@ -463,13 +523,13 @@ func (m *Model) advanceStep() {
 		}
 
 	case stepExprFlowName:
-		m.advanceAfterExpr()
+		m.step = stepExprNegate
 	case stepExprFlowTag:
 		m.step = stepExprFlowTagOp
 	case stepExprFlowTagOp:
-		m.advanceAfterExpr()
+		m.step = stepExprNegate
 	case stepExprArtifactName:
-		m.advanceAfterExpr()
+		m.step = stepExprNegate
 
 	case stepExprCustomCtx:
 		if m.exprContext == "flow.tags.<key>" {
@@ -481,9 +541,22 @@ func (m *Model) advanceStep() {
 	case stepExprCustomTagKey:
 		m.step = stepExprCustomOp
 	case stepExprCustomOp:
-		m.advanceAfterExpr()
+		m.step = stepExprNegate
 	case stepExprRaw:
-		m.advanceAfterExpr()
+		m.step = stepExprNegate
+
+	case stepExprNegate:
+		m.step = stepExprCombineConfirm
+
+	case stepExprCombineConfirm:
+		if m.lastConfirm {
+			m.step = stepExprCombineOp
+		} else {
+			m.advanceAfterExpr()
+		}
+
+	case stepExprCombineOp:
+		m.step = stepExprMode
 
 	case stepSaveFile:
 		m.step = stepDone

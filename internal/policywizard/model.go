@@ -37,6 +37,8 @@ type Model struct {
 	exprMode       string
 	exprContext    string
 	exprTagKey     string
+	pendingExprs   []string // raw (unwrapped) sub-expressions being combined
+	combineOp      string   // "and" or "or"
 	currentAttRule policy.AttestationRule
 	requireProv    bool
 	requireTrail   bool

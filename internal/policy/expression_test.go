@@ -77,3 +77,25 @@ func TestWrapExpr_Idempotent(t *testing.T) {
 	result := WrapExpr(`${{ flow.name == "prod" }}`)
 	assert.Equal(t, `${{ flow.name == "prod" }}`, result)
 }
+
+func TestUnwrapExpr(t *testing.T) {
+	result := UnwrapExpr(`${{ flow.name == "prod" }}`)
+	assert.Equal(t, `flow.name == "prod"`, result)
+}
+
+func TestUnwrapExpr_AlreadyRaw(t *testing.T) {
+	result := UnwrapExpr(`flow.name == "prod"`)
+	assert.Equal(t, `flow.name == "prod"`, result)
+}
+
+func TestNegateExpr(t *testing.T) {
+	result := NegateExpr(`flow.name == "prod"`)
+	assert.Equal(t, `not(flow.name == "prod")`, result)
+}
+
+func TestCombineAndNegate(t *testing.T) {
+	a := UnwrapExpr(FlowNameExpr("prod"))
+	b := NegateExpr(UnwrapExpr(ArtifactNameMatchExpr("^datadog:.*")))
+	result := CombineExprs("and", a, b)
+	assert.Equal(t, `${{ flow.name == "prod" and not(matches(artifact.name, "^datadog:.*")) }}`, result)
+}

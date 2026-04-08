@@ -66,3 +66,15 @@ func WrapExpr(raw string) string {
 	}
 	return fmt.Sprintf("${{ %s }}", raw)
 }
+
+// UnwrapExpr strips the ${{ }} wrapper, returning the inner expression.
+func UnwrapExpr(expr string) string {
+	s := strings.TrimPrefix(expr, "${{ ")
+	s = strings.TrimSuffix(s, " }}")
+	return s
+}
+
+// NegateExpr wraps a raw (unwrapped) expression with not().
+func NegateExpr(raw string) string {
+	return fmt.Sprintf("not(%s)", raw)
+}
