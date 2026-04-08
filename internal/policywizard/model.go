@@ -34,6 +34,7 @@ type Model struct {
 	UploadPolicy      bool
 	UploadPolicyName  string
 	UploadDescription string
+	UploadOrg         string
 
 	// Internal state for loops and expression building.
 	exprTarget     exprTarget

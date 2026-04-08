@@ -429,10 +429,29 @@ func TestApply_UploadDetails_SetsNameAndDescription(t *testing.T) {
 	m := newTestModel()
 	m.step = stepUploadDetails
 
-	m.applyFormValues(formValues{str: "my-policy", str2: "A test policy"})
+	m.applyFormValues(formValues{str: "my-policy", str2: "A test policy", str3: "my-org"})
 
 	assert.Equal(t, "my-policy", m.UploadPolicyName)
 	assert.Equal(t, "A test policy", m.UploadDescription)
+	assert.Equal(t, "my-org", m.UploadOrg)
+}
+
+func TestApply_UploadDetails_OrgDefaultsFromContext(t *testing.T) {
+	m := NewModel(&Context{Org: "default-org"})
+	m.step = stepUploadDetails
+
+	m.applyFormValues(formValues{str: "my-policy", str3: ""})
+
+	assert.Equal(t, "default-org", m.UploadOrg)
+}
+
+func TestApply_UploadDetails_OrgOverridesContext(t *testing.T) {
+	m := NewModel(&Context{Org: "default-org"})
+	m.step = stepUploadDetails
+
+	m.applyFormValues(formValues{str: "my-policy", str3: "other-org"})
+
+	assert.Equal(t, "other-org", m.UploadOrg)
 }
 
 func TestAdvance_SaveFile_WithAPI_GoesToUploadConfirm(t *testing.T) {

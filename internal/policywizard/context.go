@@ -13,6 +13,7 @@ type Context struct {
 	FlowNames         []string
 	CustomAttestTypes []string
 	HasAPICredentials bool
+	Org               string // current org (e.g. from $KOSLI_ORG)
 	// FetchFunc is called asynchronously to fetch API data. If nil, no fetch is performed.
 	FetchFunc func() FetchResult
 }

@@ -179,7 +179,15 @@ func (m *Model) buildForm() *huh.Form {
 			"Requires --api-token and --org to be set")
 
 	case stepUploadDetails:
+		orgInput := huh.NewInput().Key("org").
+			Title("Organization").
+			Description("Kosli organization to upload to").
+			Validate(notEmpty("organization"))
+		if m.ctx.Org != "" {
+			orgInput = orgInput.Placeholder(m.ctx.Org)
+		}
 		f = huh.NewForm(huh.NewGroup(
+			orgInput,
 			huh.NewInput().Key("policy_name").
 				Title("Policy name").
 				Description("Name for the policy in Kosli").
@@ -250,6 +258,7 @@ type formValues struct {
 	confirm     bool
 	str         string // generic string: value, filename, mode, policy_name
 	str2        string // secondary string: description
+	str3        string // tertiary string: org
 	attType     string
 	attName     string
 	operator    string
@@ -260,6 +269,7 @@ func extractFormValues(f *huh.Form) formValues {
 		confirm:  f.GetBool("confirm"),
 		str:      firstNonEmpty(f.GetString("value"), f.GetString("filename"), f.GetString("mode"), f.GetString("policy_name")),
 		str2:     f.GetString("description"),
+		str3:     f.GetString("org"),
 		attType:  f.GetString("type"),
 		attName:  f.GetString("name"),
 		operator: f.GetString("op"),
@@ -353,6 +363,10 @@ func (m *Model) applyFormValues(fv formValues) {
 		m.UploadPolicy = fv.confirm
 
 	case stepUploadDetails:
+		m.UploadOrg = fv.str3
+		if m.UploadOrg == "" {
+			m.UploadOrg = m.ctx.Org
+		}
 		m.UploadPolicyName = fv.str
 		m.UploadDescription = fv.str2
 	}

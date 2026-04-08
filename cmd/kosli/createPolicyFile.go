@@ -57,6 +57,7 @@ func runCreatePolicyFile() error {
 	hasAPI := global.ApiToken != "" && global.Org != ""
 	ctx := &policywizard.Context{
 		HasAPICredentials: hasAPI,
+		Org:               global.Org,
 	}
 	if hasAPI {
 		ctx.FetchFunc = func() policywizard.FetchResult {
@@ -96,6 +97,9 @@ func runCreatePolicyFile() error {
 	logger.Info("policy file written to %s", filename)
 
 	if wm.UploadPolicy && wm.UploadPolicyName != "" {
+		if wm.UploadOrg != "" {
+			global.Org = wm.UploadOrg
+		}
 		return uploadPolicy(wm.UploadPolicyName, wm.UploadDescription, filename)
 	}
 	return nil
