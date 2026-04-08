@@ -47,6 +47,8 @@ func ExistsExpr(context string) string {
 }
 
 // ComparisonExpr returns a policy expression comparing a context field to a value.
+// The value is always quoted as a string. For operators like > or <, the policy
+// engine must handle string-to-numeric coercion if needed.
 func ComparisonExpr(context, op, value string) string {
 	return fmt.Sprintf(`${{ %s %s "%s" }}`, context, op, value)
 }
