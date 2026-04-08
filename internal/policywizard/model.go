@@ -10,7 +10,7 @@ import (
 	"github.com/kosli-dev/cli/internal/policy"
 )
 
-const formWidth = 55
+const formWidth = 45
 
 // fetchDoneMsg is sent when the async API fetch completes.
 type fetchDoneMsg struct {
@@ -151,7 +151,7 @@ func (m Model) View() string {
 	fw := formWidth
 	available := m.width - s.base.GetHorizontalFrameSize()
 	pw := available - fw - 2
-	if pw < 30 {
+	if pw < 25 {
 		pw = 0
 	}
 
