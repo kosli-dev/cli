@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/kosli-dev/cli/internal/policywizard"
@@ -82,11 +84,27 @@ func runCreatePolicyFile() error {
 		return fmt.Errorf("failed to generate policy YAML: %w", err)
 	}
 
-	err = os.WriteFile(wm.OutputFile, yamlBytes, 0644)
+	outPath := filepath.Clean(wm.OutputFile)
+	if err := validateOutputFile(outPath); err != nil {
+		return err
+	}
+
+	err = os.WriteFile(outPath, yamlBytes, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write policy file: %w", err)
 	}
-	logger.Info("policy file written to %s", wm.OutputFile)
+	logger.Info("policy file written to %s", outPath)
+	return nil
+}
+
+func validateOutputFile(path string) error {
+	ext := strings.ToLower(filepath.Ext(path))
+	if ext != ".yaml" && ext != ".yml" {
+		return fmt.Errorf("output file must have a .yaml or .yml extension, got %q", filepath.Base(path))
+	}
+	if _, err := os.Stat(path); err == nil {
+		return fmt.Errorf("file %q already exists; remove it or choose a different name", path)
+	}
 	return nil
 }
 

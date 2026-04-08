@@ -2,6 +2,8 @@ package policywizard
 
 import (
 	"fmt"
+	"path/filepath"
+	"strings"
 
 	"github.com/charmbracelet/huh"
 	"github.com/kosli-dev/cli/internal/policy"
@@ -173,7 +175,8 @@ func (m *Model) buildForm() *huh.Form {
 			huh.NewInput().Key("filename").
 				Title("Save policy to file").
 				Description("Press enter to accept default").
-				Placeholder("policy.yaml"),
+				Placeholder("policy.yaml").
+				Validate(validateYAMLExtension),
 		))
 
 	default:
@@ -212,6 +215,17 @@ func notEmpty(field string) func(string) error {
 		}
 		return nil
 	}
+}
+
+func validateYAMLExtension(s string) error {
+	if s == "" {
+		return nil // placeholder "policy.yaml" will be used
+	}
+	ext := strings.ToLower(filepath.Ext(s))
+	if ext != ".yaml" && ext != ".yml" {
+		return fmt.Errorf("file must have a .yaml or .yml extension")
+	}
+	return nil
 }
 
 func (m *Model) excConfirmTitle(rule string) string {
