@@ -83,6 +83,11 @@ func TestUnwrapExpr(t *testing.T) {
 	assert.Equal(t, `flow.name == "prod"`, result)
 }
 
+func TestUnwrapExpr_NoInnerSpaces(t *testing.T) {
+	result := UnwrapExpr(`${{flow.name == "prod"}}`)
+	assert.Equal(t, `flow.name == "prod"`, result)
+}
+
 func TestUnwrapExpr_AlreadyRaw(t *testing.T) {
 	result := UnwrapExpr(`flow.name == "prod"`)
 	assert.Equal(t, `flow.name == "prod"`, result)

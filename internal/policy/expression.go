@@ -70,10 +70,12 @@ func WrapExpr(raw string) string {
 }
 
 // UnwrapExpr strips the ${{ }} wrapper, returning the inner expression.
+// Tolerates varying whitespace inside the delimiters.
 func UnwrapExpr(expr string) string {
-	s := strings.TrimPrefix(expr, "${{ ")
-	s = strings.TrimSuffix(s, " }}")
-	return s
+	s := strings.TrimSpace(expr)
+	s = strings.TrimPrefix(s, "${{")
+	s = strings.TrimSuffix(s, "}}")
+	return strings.TrimSpace(s)
 }
 
 // NegateExpr prefixes a raw (unwrapped) expression with the not operator.
