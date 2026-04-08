@@ -10,9 +10,9 @@ ignore:
         reason: Choosing to ignore this licence issue for now
   SNYK-GOLANG-GOLANGORGXCRYPTOSSHAGENT-12668891:
     - "*":
-        reason: No fix available
-        expires: 2025-11-17T05:18:46.481Z
-        created: 2025-09-17T05:18:46.483Z
+        reason: No fix available (latest golang.org/x/crypto v0.49.0 still affected)
+        expires: 2026-10-08T00:00:00.000Z
+        created: 2026-04-08T00:00:00.000Z
 patch: {}
 exclude:
   global:
