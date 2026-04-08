@@ -80,27 +80,22 @@ func runCreatePolicyFile() error {
 		return nil
 	}
 
-	filename := wm.OutputFile
-	if filename == "" {
-		filename = "policy.yaml"
-	}
-
 	yamlBytes, err := wm.Policy.ToYAML()
 	if err != nil {
 		return fmt.Errorf("failed to generate policy YAML: %w", err)
 	}
 
-	err = os.WriteFile(filename, yamlBytes, 0644)
+	err = os.WriteFile(wm.OutputFile, yamlBytes, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write policy file: %w", err)
 	}
-	logger.Info("policy file written to %s", filename)
+	logger.Info("policy file written to %s", wm.OutputFile)
 
 	if wm.UploadPolicy && wm.UploadPolicyName != "" {
 		if wm.UploadOrg != "" {
 			global.Org = wm.UploadOrg
 		}
-		return uploadPolicy(wm.UploadPolicyName, wm.UploadDescription, filename)
+		return uploadPolicy(wm.UploadPolicyName, wm.UploadDescription, wm.OutputFile)
 	}
 	return nil
 }

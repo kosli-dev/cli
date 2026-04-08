@@ -171,21 +171,26 @@ func (m *Model) buildForm() *huh.Form {
 			`flow.name == "prod"`, "expression")
 
 	case stepSaveFile:
-		f = inputForm("filename", "Save policy to file",
-			"Enter filename (e.g. policy.yaml)", "policy.yaml", "filename")
+		f = huh.NewForm(huh.NewGroup(
+			huh.NewInput().Key("filename").
+				Title("Save policy to file").
+				Description("Press enter to accept default").
+				Placeholder("policy.yaml"),
+		))
 
 	case stepUploadConfirm:
 		f = confirmForm("Upload this policy to Kosli?",
 			"Requires --api-token and --org to be set")
 
 	case stepUploadDetails:
+		orgDesc := "Kosli organization to upload to"
+		if m.ctx.Org != "" {
+			orgDesc = "Press enter to accept default"
+		}
 		orgInput := huh.NewInput().Key("org").
 			Title("Organization").
-			Description("Kosli organization to upload to").
-			Validate(notEmpty("organization"))
-		if m.ctx.Org != "" {
-			orgInput = orgInput.Placeholder(m.ctx.Org)
-		}
+			Description(orgDesc).
+			Placeholder(m.ctx.Org)
 		f = huh.NewForm(huh.NewGroup(
 			orgInput,
 			huh.NewInput().Key("policy_name").
@@ -358,6 +363,9 @@ func (m *Model) applyFormValues(fv formValues) {
 
 	case stepSaveFile:
 		m.OutputFile = fv.str
+		if m.OutputFile == "" {
+			m.OutputFile = "policy.yaml"
+		}
 
 	case stepUploadConfirm:
 		m.UploadPolicy = fv.confirm
