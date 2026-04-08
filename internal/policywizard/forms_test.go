@@ -413,6 +413,21 @@ func TestApply_ExprCustomOp_MatchesUsesFunction(t *testing.T) {
 	assert.Equal(t, `${{ matches(flow.name, "^prod") }}`, m.Policy.Artifacts.Provenance.Exceptions[0].If)
 }
 
+func TestApply_ExprCustomOp_ExistsUsesFunction(t *testing.T) {
+	m := newTestModel()
+	m.step = stepExprCustomOp
+	m.exprTarget = targetProvException
+	m.exprContext = "flow"
+	m.Policy.Artifacts = &policy.ArtifactRules{
+		Provenance: &policy.BooleanRule{Required: true},
+	}
+
+	m.applyFormValues(formValues{operator: "exists"})
+
+	require.Len(t, m.Policy.Artifacts.Provenance.Exceptions, 1)
+	assert.Equal(t, `${{ exists(flow) }}`, m.Policy.Artifacts.Provenance.Exceptions[0].If)
+}
+
 func TestApply_SaveFile_SetsOutputFile(t *testing.T) {
 	m := newTestModel()
 	m.step = stepSaveFile

@@ -160,10 +160,9 @@ func (m *Model) buildForm() *huh.Form {
 	case stepExprCustomOp:
 		f = huh.NewForm(huh.NewGroup(
 			huh.NewSelect[string]().Key("op").Title("Operator").
-				Options(huh.NewOptions("==", "!=", ">", "<", ">=", "<=", "matches")...),
+				Options(huh.NewOptions("==", "!=", ">", "<", ">=", "<=", "matches", "exists")...),
 			huh.NewInput().Key("value").Title("Value").
-				Description("The value to compare against").
-				Validate(notEmpty("value")),
+				Description("The value to compare against (leave empty for exists)"),
 		))
 
 	case stepExprRaw:
@@ -340,9 +339,12 @@ func (m *Model) applyFormValues(fv formValues) {
 		m.exprContext = "flow.tags." + fv.str
 
 	case stepExprCustomOp:
-		if fv.operator == "matches" {
+		switch fv.operator {
+		case "exists":
+			m.applyExpression(policy.ExistsExpr(m.exprContext))
+		case "matches":
 			m.applyExpression(policy.MatchesExpr(m.exprContext, fv.str))
-		} else {
+		default:
 			m.applyExpression(policy.ComparisonExpr(m.exprContext, fv.operator, fv.str))
 		}
 

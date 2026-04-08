@@ -41,6 +41,11 @@ func MatchesExpr(context, regex string) string {
 	return fmt.Sprintf(`${{ matches(%s, "%s") }}`, context, regex)
 }
 
+// ExistsExpr returns a policy expression checking that a context field is not null.
+func ExistsExpr(context string) string {
+	return fmt.Sprintf(`${{ exists(%s) }}`, context)
+}
+
 // ComparisonExpr returns a policy expression comparing a context field to a value.
 func ComparisonExpr(context, op, value string) string {
 	return fmt.Sprintf(`${{ %s %s "%s" }}`, context, op, value)

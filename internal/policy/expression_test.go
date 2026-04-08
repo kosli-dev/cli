@@ -46,6 +46,11 @@ func TestMatchesExpr(t *testing.T) {
 	assert.Equal(t, `${{ matches(flow.name, "^prod") }}`, result)
 }
 
+func TestExistsExpr(t *testing.T) {
+	result := ExistsExpr("flow")
+	assert.Equal(t, `${{ exists(flow) }}`, result)
+}
+
 func TestComparisonExpr(t *testing.T) {
 	result := ComparisonExpr("flow.tags.risk", "==", "high")
 	assert.Equal(t, `${{ flow.tags.risk == "high" }}`, result)
