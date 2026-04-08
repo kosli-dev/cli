@@ -112,42 +112,19 @@ func validateOutputFile(path string) error {
 }
 
 func fetchFlowNames() []string {
-	u, err := url.JoinPath(global.Host, "api/v2/flows", global.Org)
-	if err != nil {
-		logger.Debug("failed to build flows URL: %v", err)
-		return nil
-	}
-
-	reqParams := &requests.RequestParams{
-		Method: http.MethodGet,
-		URL:    u,
-		Token:  global.ApiToken,
-	}
-	response, err := kosliClient.Do(reqParams)
-	if err != nil {
-		logger.Debug("failed to fetch flows: %v", err)
-		return nil
-	}
-
-	var flows []map[string]any
-	if err := json.Unmarshal([]byte(response.Body), &flows); err != nil {
-		logger.Debug("failed to parse flows response: %v", err)
-		return nil
-	}
-
-	names := make([]string, 0, len(flows))
-	for _, flow := range flows {
-		if name, ok := flow["name"].(string); ok {
-			names = append(names, name)
-		}
-	}
-	return names
+	return fetchNameList("api/v2/flows", nil)
 }
 
 func fetchCustomAttestationTypes() []string {
-	u, err := url.JoinPath(global.Host, "api/v2/custom-attestation-types", global.Org)
+	return fetchNameList("api/v2/custom-attestation-types", func(name string) string {
+		return "custom:" + name
+	})
+}
+
+func fetchNameList(apiPath string, transform func(string) string) []string {
+	u, err := url.JoinPath(global.Host, apiPath, global.Org)
 	if err != nil {
-		logger.Debug("failed to build attestation types URL: %v", err)
+		logger.Debug("failed to build URL for %s: %v", apiPath, err)
 		return nil
 	}
 
@@ -158,20 +135,23 @@ func fetchCustomAttestationTypes() []string {
 	}
 	response, err := kosliClient.Do(reqParams)
 	if err != nil {
-		logger.Debug("failed to fetch attestation types: %v", err)
+		logger.Debug("failed to fetch %s: %v", apiPath, err)
 		return nil
 	}
 
-	var types []map[string]any
-	if err := json.Unmarshal([]byte(response.Body), &types); err != nil {
-		logger.Debug("failed to parse attestation types response: %v", err)
+	var items []map[string]any
+	if err := json.Unmarshal([]byte(response.Body), &items); err != nil {
+		logger.Debug("failed to parse %s response: %v", apiPath, err)
 		return nil
 	}
 
-	names := make([]string, 0, len(types))
-	for _, t := range types {
-		if name, ok := t["name"].(string); ok {
-			names = append(names, "custom:"+name)
+	names := make([]string, 0, len(items))
+	for _, item := range items {
+		if name, ok := item["name"].(string); ok {
+			if transform != nil {
+				name = transform(name)
+			}
+			names = append(names, name)
 		}
 	}
 	return names
