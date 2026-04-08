@@ -32,10 +32,6 @@ const (
 	stepExprCustomOp
 	stepExprRaw
 	stepSaveFile
-	stepUploadConfirm
-	stepUploadDetails
-	stepWriting  // spinner while writing/uploading
-	stepComplete // show success message
 	stepDone
 )
 
@@ -180,31 +176,6 @@ func (m *Model) buildForm() *huh.Form {
 				Placeholder("policy.yaml"),
 		))
 
-	case stepUploadConfirm:
-		f = confirmForm("Upload this policy to Kosli?",
-			"Requires --api-token and --org to be set")
-
-	case stepUploadDetails:
-		orgDesc := "Kosli organization to upload to"
-		if m.ctx.Org != "" {
-			orgDesc = "Press enter to accept default"
-		}
-		orgInput := huh.NewInput().Key("org").
-			Title("Organization").
-			Description(orgDesc).
-			Placeholder(m.ctx.Org)
-		f = huh.NewForm(huh.NewGroup(
-			orgInput,
-			huh.NewInput().Key("policy_name").
-				Title("Policy name").
-				Description("Name for the policy in Kosli").
-				Validate(notEmpty("policy name")),
-			huh.NewInput().Key("description").
-				Title("Description").
-				Description("Optional description for the policy").
-				Placeholder(""),
-		))
-
 	default:
 		f = huh.NewForm(huh.NewGroup())
 	}
@@ -262,21 +233,17 @@ func (m *Model) excConfirmTitle(rule string) string {
 // ---------------------------------------------------------------------------
 
 type formValues struct {
-	confirm     bool
-	str         string // generic string: value, filename, mode, policy_name
-	str2        string // secondary string: description
-	str3        string // tertiary string: org
-	attType     string
-	attName     string
-	operator    string
+	confirm  bool
+	str      string // generic string: value, filename, mode
+	attType  string
+	attName  string
+	operator string
 }
 
 func extractFormValues(f *huh.Form) formValues {
 	return formValues{
 		confirm:  f.GetBool("confirm"),
-		str:      firstNonEmpty(f.GetString("value"), f.GetString("filename"), f.GetString("mode"), f.GetString("policy_name")),
-		str2:     f.GetString("description"),
-		str3:     f.GetString("org"),
+		str:      firstNonEmpty(f.GetString("value"), f.GetString("filename"), f.GetString("mode")),
 		attType:  f.GetString("type"),
 		attName:  f.GetString("name"),
 		operator: f.GetString("op"),
@@ -368,17 +335,6 @@ func (m *Model) applyFormValues(fv formValues) {
 		if m.OutputFile == "" {
 			m.OutputFile = "policy.yaml"
 		}
-
-	case stepUploadConfirm:
-		m.UploadPolicy = fv.confirm
-
-	case stepUploadDetails:
-		m.UploadOrg = fv.str3
-		if m.UploadOrg == "" {
-			m.UploadOrg = m.ctx.Org
-		}
-		m.UploadPolicyName = fv.str
-		m.UploadDescription = fv.str2
 	}
 }
 
@@ -503,23 +459,6 @@ func (m *Model) advanceStep() {
 		m.advanceAfterExpr()
 
 	case stepSaveFile:
-		if m.ctx.HasAPICredentials {
-			m.step = stepUploadConfirm
-		} else {
-			m.step = stepWriting
-		}
-
-	case stepUploadConfirm:
-		if m.lastConfirm {
-			m.step = stepUploadDetails
-		} else {
-			m.step = stepWriting
-		}
-
-	case stepUploadDetails:
-		m.step = stepWriting
-
-	case stepComplete:
 		m.step = stepDone
 	}
 }

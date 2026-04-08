@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/kosli-dev/cli/internal/policywizard"
@@ -56,12 +55,8 @@ func runCreatePolicyFile() error {
 	}
 
 	hasAPI := global.ApiToken != "" && global.Org != ""
-	host := global.Host
 	ctx := &policywizard.Context{
 		HasAPICredentials: hasAPI,
-		Org:               global.Org,
-		Host:              host,
-		WriteFunc:         writeAndUploadPolicy,
 	}
 	if hasAPI {
 		ctx.FetchFunc = func() policywizard.FetchResult {
@@ -73,61 +68,28 @@ func runCreatePolicyFile() error {
 	}
 
 	m := policywizard.NewModel(ctx)
-	_, err := tea.NewProgram(m, tea.WithAltScreen()).Run()
+	finalModel, err := tea.NewProgram(m, tea.WithAltScreen()).Run()
 	if err != nil {
 		return fmt.Errorf("wizard error: %w", err)
 	}
 
-	return nil
-}
-
-func writeAndUploadPolicy(req policywizard.WriteRequest) policywizard.WriteResult {
-	result := policywizard.WriteResult{
-		Filename:   req.Filename,
-		PolicyName: req.PolicyName,
+	wm := finalModel.(policywizard.Model)
+	if wm.Cancelled {
+		logger.Info("policy file creation cancelled")
+		return nil
 	}
 
-	// Write file
-	err := os.WriteFile(req.Filename, req.YAMLBytes, 0644)
+	yamlBytes, err := wm.Policy.ToYAML()
 	if err != nil {
-		result.Err = fmt.Errorf("failed to write policy file: %w", err)
-		return result
+		return fmt.Errorf("failed to generate policy YAML: %w", err)
 	}
 
-	// Upload if requested
-	if req.Upload && req.PolicyName != "" {
-		if req.Org != "" {
-			global.Org = req.Org
-		}
-		err = uploadPolicy(req.PolicyName, req.Description, req.Filename)
-		if err != nil {
-			result.Err = fmt.Errorf("policy file saved to %s but upload failed: %w", req.Filename, err)
-			return result
-		}
-		result.Uploaded = true
-		result.PolicyURL = policyURL(global.Host, req.Org, req.PolicyName)
+	err = os.WriteFile(wm.OutputFile, yamlBytes, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write policy file: %w", err)
 	}
-
-	return result
-}
-
-func policyURL(host, org, policyName string) string {
-	// Map API host to UI host
-	uiHost := host
-	uiHost = strings.TrimSuffix(uiHost, "/")
-	// The API host is the same as the UI host for Kosli
-	return fmt.Sprintf("%s/%s/policies/%s", uiHost, org, policyName)
-}
-
-func uploadPolicy(name, description, policyFile string) error {
-	o := &createPolicyOptions{
-		payload: PolicyPayload{
-			Name:        name,
-			Description: description,
-			Type:        "env",
-		},
-	}
-	return o.run([]string{name, policyFile})
+	logger.Info("policy file written to %s", wm.OutputFile)
+	return nil
 }
 
 func fetchFlowNames() []string {

@@ -17,11 +17,6 @@ type fetchDoneMsg struct {
 	result FetchResult
 }
 
-// writeDoneMsg is sent when the file write/upload completes.
-type writeDoneMsg struct {
-	result WriteResult
-}
-
 // Model is the bubbletea model for the policy wizard.
 type Model struct {
 	step    wizardStep
@@ -33,13 +28,9 @@ type Model struct {
 	ctx     *Context
 
 	// Public results — read after the program exits.
-	Policy            *policy.Policy
-	OutputFile        string
-	Cancelled         bool
-	UploadPolicy      bool
-	UploadPolicyName  string
-	UploadDescription string
-	UploadOrg         string
+	Policy     *policy.Policy
+	OutputFile string
+	Cancelled  bool
 
 	// Internal state for loops and expression building.
 	exprTarget     exprTarget
@@ -51,7 +42,6 @@ type Model struct {
 	requireTrail   bool
 	lastConfirm    bool
 	validationErr  string
-	writeResult    *WriteResult
 }
 
 // NewModel creates a new policy wizard model.
@@ -85,46 +75,6 @@ func (m Model) Init() tea.Cmd {
 	return m.form.Init()
 }
 
-func (m Model) completionView() string {
-	s := m.styles
-	if m.writeResult == nil {
-		return ""
-	}
-	r := m.writeResult
-	if r.Err != nil {
-		return s.err.Render("✗ Error: " + r.Err.Error()) + "\n\n" +
-			s.footer.Render("Press any key to exit")
-	}
-
-	var b strings.Builder
-	b.WriteString(s.accent.Bold(true).Render("✓ Policy file saved") + "  " + r.Filename + "\n")
-	if r.Uploaded {
-		b.WriteString(s.accent.Bold(true).Render("✓ Policy created") + "    " + r.PolicyName + "\n")
-		if r.PolicyURL != "" {
-			b.WriteString("\n" + s.accent.Render("→") + " " + r.PolicyURL + "\n")
-		}
-	}
-	b.WriteString("\n" + s.footer.Render("Press any key to exit"))
-	return b.String()
-}
-
-func (m Model) startWrite() tea.Cmd {
-	yamlBytes, _ := m.Policy.ToYAML()
-	req := WriteRequest{
-		YAMLBytes:   yamlBytes,
-		Filename:    m.OutputFile,
-		PolicyName:  m.UploadPolicyName,
-		Description: m.UploadDescription,
-		Org:         m.UploadOrg,
-		Upload:      m.UploadPolicy,
-	}
-	writeFn := m.ctx.WriteFunc
-	return func() tea.Msg {
-		result := writeFn(req)
-		return writeDoneMsg{result: result}
-	}
-}
-
 func (m Model) startFetch() tea.Cmd {
 	fetchFn := m.ctx.FetchFunc
 	return func() tea.Msg {
@@ -149,25 +99,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.step = stepProvConfirm
 		m.form = m.buildForm()
 		return m, m.form.Init()
-	case writeDoneMsg:
-		m.writeResult = &msg.result
-		m.step = stepComplete
-		return m, nil
 	}
 
-	// During loading/writing, only update the spinner
-	if m.step == stepLoading || m.step == stepWriting {
+	// During loading, only update the spinner
+	if m.step == stepLoading {
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
-	}
-
-	// On the completion screen, any key quits
-	if m.step == stepComplete {
-		if _, ok := msg.(tea.KeyMsg); ok {
-			return m, tea.Quit
-		}
-		return m, nil
 	}
 
 	form, cmd := m.form.Update(msg)
@@ -190,9 +128,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.step == stepDone {
 			return m, tea.Quit
 		}
-		if m.step == stepWriting {
-			return m, m.startWrite()
-		}
 		m.form = m.buildForm()
 		return m, m.form.Init()
 	}
@@ -211,15 +146,6 @@ func (m Model) View() string {
 	if m.step == stepLoading {
 		loading := m.spinner.View() + " Fetching flows and attestation types from Kosli..."
 		return s.base.Render(header + "\n\n" + loading)
-	}
-
-	if m.step == stepWriting {
-		loading := m.spinner.View() + " Saving policy..."
-		return s.base.Render(header + "\n\n" + loading)
-	}
-
-	if m.step == stepComplete {
-		return s.base.Render(header + "\n\n" + m.completionView() + "\n")
 	}
 
 	fw := formWidth
