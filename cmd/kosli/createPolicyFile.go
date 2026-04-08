@@ -73,7 +73,10 @@ func runCreatePolicyFile() error {
 		return fmt.Errorf("wizard error: %w", err)
 	}
 
-	wm := finalModel.(policywizard.Model)
+	wm, ok := finalModel.(policywizard.Model)
+	if !ok {
+		return fmt.Errorf("unexpected model type from wizard")
+	}
 	if wm.Cancelled {
 		logger.Info("policy file creation cancelled")
 		return nil
