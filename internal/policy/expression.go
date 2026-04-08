@@ -74,7 +74,7 @@ func UnwrapExpr(expr string) string {
 	return s
 }
 
-// NegateExpr wraps a raw (unwrapped) expression with not().
+// NegateExpr prefixes a raw (unwrapped) expression with the not operator.
 func NegateExpr(raw string) string {
-	return fmt.Sprintf("not(%s)", raw)
+	return fmt.Sprintf("not %s", raw)
 }

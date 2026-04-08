@@ -175,7 +175,7 @@ func (m *Model) buildForm() *huh.Form {
 
 	case stepExprNegate:
 		f = confirmForm("Negate this condition?",
-			"Wrap with not() — e.g. not(flow.name == \"prod\")")
+			"Prefix with not — e.g. not flow.name == \"prod\"")
 
 	case stepExprCombineConfirm:
 		f = confirmForm("Combine with another condition?",
