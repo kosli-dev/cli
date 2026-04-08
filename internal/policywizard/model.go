@@ -1,6 +1,7 @@
 package policywizard
 
 import (
+	"os"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -8,6 +9,7 @@ import (
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/kosli-dev/cli/internal/policy"
+	"golang.org/x/term"
 )
 
 const formWidth = 45
@@ -56,13 +58,18 @@ func NewModel(ctx *Context) Model {
 		startStep = stepLoading
 	}
 
+	w := 80
+	if tw, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil && tw > 0 {
+		w = tw
+	}
+
 	m := Model{
 		step:    startStep,
 		Policy:  policy.NewPolicy(),
 		ctx:     ctx,
 		styles:  newStyles(),
 		spinner: s,
-		width:   120,
+		width:   w,
 	}
 	if startStep != stepLoading {
 		m.form = m.buildForm()
