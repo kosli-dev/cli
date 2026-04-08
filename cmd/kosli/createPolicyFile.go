@@ -67,6 +67,10 @@ func runCreatePolicyFile() error {
 		}
 	}
 
+	if hasAPI {
+		fmt.Fprint(os.Stderr, "Starting Kosli Policy Builder...\r")
+	}
+
 	m := policywizard.NewModel(ctx)
 	finalModel, err := tea.NewProgram(m, tea.WithAltScreen()).Run()
 	if err != nil {
