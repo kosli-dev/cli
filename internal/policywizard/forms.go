@@ -355,11 +355,17 @@ func (m *Model) applyFormValues(fv formValues) {
 func (m *Model) applyExpression(expr string) {
 	switch m.exprTarget {
 	case targetProvException:
+		if m.Policy.Artifacts == nil || m.Policy.Artifacts.Provenance == nil {
+			return
+		}
 		m.Policy.Artifacts.Provenance.Exceptions = append(
 			m.Policy.Artifacts.Provenance.Exceptions,
 			policy.ExceptionRule{If: expr},
 		)
 	case targetTrailException:
+		if m.Policy.Artifacts == nil || m.Policy.Artifacts.TrailCompliance == nil {
+			return
+		}
 		m.Policy.Artifacts.TrailCompliance.Exceptions = append(
 			m.Policy.Artifacts.TrailCompliance.Exceptions,
 			policy.ExceptionRule{If: expr},
