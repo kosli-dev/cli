@@ -108,6 +108,7 @@ func newAssertArtifactCmd(out io.Writer) *cobra.Command {
 
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
+	cmd.MarkFlagsMutuallyExclusive("environment", "policy")
 
 	return cmd
 }
