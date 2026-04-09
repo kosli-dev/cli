@@ -424,6 +424,36 @@ func TestApply_ExprCustomOp_MatchesInvalidRegex(t *testing.T) {
 	assert.Contains(t, m.validationErr, "invalid regex")
 }
 
+func TestApply_ExprCustomOp_MatchesValidRetryClears(t *testing.T) {
+	m := newTestModel()
+	m.step = stepExprCustomOp
+	m.exprContext = "flow.name"
+
+	// First attempt: invalid regex
+	m.applyFormValues(formValues{operator: "matches", str: "[unclosed"})
+	assert.Contains(t, m.validationErr, "invalid regex")
+
+	// Second attempt: valid regex should clear error
+	m.applyFormValues(formValues{operator: "matches", str: "^prod"})
+	assert.Empty(t, m.validationErr)
+	require.Len(t, m.pendingExprs, 1)
+}
+
+func TestApply_ExprCustomOp_SwitchOperatorClearsError(t *testing.T) {
+	m := newTestModel()
+	m.step = stepExprCustomOp
+	m.exprContext = "flow.name"
+
+	// First attempt: invalid regex with matches
+	m.applyFormValues(formValues{operator: "matches", str: "[unclosed"})
+	assert.Contains(t, m.validationErr, "invalid regex")
+
+	// Switch to == operator should clear error
+	m.applyFormValues(formValues{operator: "==", str: "prod"})
+	assert.Empty(t, m.validationErr)
+	require.Len(t, m.pendingExprs, 1)
+}
+
 func TestApply_ExprCustomOp_ExistsStoresPending(t *testing.T) {
 	m := newTestModel()
 	m.step = stepExprCustomOp

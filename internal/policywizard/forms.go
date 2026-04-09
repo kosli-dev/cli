@@ -378,6 +378,7 @@ func (m *Model) applyFormValues(fv formValues) {
 		m.exprContext = "flow.tags." + fv.str
 
 	case stepExprCustomOp:
+		m.validationErr = ""
 		switch fv.operator {
 		case "exists":
 			m.storeSubExpr(policy.ExistsExpr(m.exprContext))
