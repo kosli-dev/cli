@@ -14,17 +14,21 @@ import (
 
 const assertArtifactShortDesc = `Assert the compliance status of an artifact in Kosli. ` +
 	`
-There are four (mutually exclusive) ways to use ^kosli assert artifact^:
+There are three ways to choose what to assert against:
 
 1. Against an environment. When ^--environment^ is specified,
 asserts against all policies currently attached to the given environment.
 2. Against one or more policies. When ^--policy^ is specified,
 asserts against all the given policies.
-3. Against a flow. When ^--flow^ is specified, asserts against the
-current template file of the given flow.
-4. Against many flows. When none of  ^--environment^, ^--policy^, or ^--flow^
-are specified, asserts against the template files of *all* flows the artifact
-is found in (by fingerprint).
+3. Against flow templates. When neither ^--environment^ nor ^--policy^
+is specified, asserts against the template files of the flows the artifact
+is found in.
+
+^--environment^ and ^--policy^ are mutually exclusive.
+
+^--flow^ can be combined with any of the above to narrow the lookup
+to a specific flow. Without ^--flow^, all flows containing the artifact
+(by fingerprint) are considered.
 `
 
 const assertArtifactLongDesc = assertArtifactShortDesc + `
@@ -104,6 +108,7 @@ func newAssertArtifactCmd(out io.Writer) *cobra.Command {
 
 	addFingerprintFlags(cmd, o.fingerprintOptions)
 	addDryRunFlag(cmd)
+	cmd.MarkFlagsMutuallyExclusive("environment", "policy")
 
 	return cmd
 }
