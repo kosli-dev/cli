@@ -105,7 +105,11 @@ func printReposListAsTable(raw string, out io.Writer, page int) error {
 	header := []string{"NAME", "URL", "PROVIDER", "LAST_ACTIVITY"}
 	rows := []string{}
 	for _, repo := range repos {
-		row := fmt.Sprintf("%s\t%s\t%s\t%s", repo["name"], repo["url"], repo["provider"], repo["latest_activity"])
+		latestActivity := ""
+		if v := repo["latest_activity"]; v != nil {
+			latestActivity = fmt.Sprintf("%s", v)
+		}
+		row := fmt.Sprintf("%s\t%s\t%s\t%s", repo["name"], repo["url"], repo["provider"], latestActivity)
 		rows = append(rows, row)
 	}
 	tabFormattedPrint(out, header, rows)

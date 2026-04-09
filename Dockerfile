@@ -9,6 +9,8 @@ FROM golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS builder
 
 RUN apk add --update --no-cache git bash make ca-certificates
 
+ENV GOTOOLCHAIN=auto
+
 WORKDIR /go/src/kosli
 
 COPY . .
