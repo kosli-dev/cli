@@ -130,7 +130,6 @@ func printRepoAsTable(raw string, out io.Writer, page int) error {
 		fmt.Sprintf("Name:\t%s", repo["name"]),
 		fmt.Sprintf("URL:\t%s", repo["url"]),
 		fmt.Sprintf("Provider:\t%s", repo["provider"]),
-		fmt.Sprintf("Latest Activity:\t%s", repo["latest_activity"]),
 	}
 
 	tabFormattedPrint(out, []string{}, rows)
