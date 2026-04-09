@@ -447,7 +447,7 @@ func TestApply_ExprNegate_Yes_NegatesLastPending(t *testing.T) {
 	m.applyFormValues(formValues{confirm: true})
 
 	require.Len(t, m.pendingExprs, 1)
-	assert.Equal(t, `not flow.name == "prod"`, m.pendingExprs[0])
+	assert.Equal(t, `not (flow.name == "prod")`, m.pendingExprs[0])
 }
 
 func TestApply_ExprNegate_No_LeavesUnchanged(t *testing.T) {
@@ -587,7 +587,7 @@ func TestCombineFlow_NegatedExprWithOr(t *testing.T) {
 
 	require.Len(t, m.Policy.Artifacts.TrailCompliance.Exceptions, 1)
 	assert.Equal(t,
-		`${{ not flow.name == "staging" or exists(flow) }}`,
+		`${{ not (flow.name == "staging") or exists(flow) }}`,
 		m.Policy.Artifacts.TrailCompliance.Exceptions[0].If,
 	)
 }

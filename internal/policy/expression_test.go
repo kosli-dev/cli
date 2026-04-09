@@ -95,12 +95,12 @@ func TestUnwrapExpr_AlreadyRaw(t *testing.T) {
 
 func TestNegateExpr(t *testing.T) {
 	result := NegateExpr(`flow.name == "prod"`)
-	assert.Equal(t, `not flow.name == "prod"`, result)
+	assert.Equal(t, `not (flow.name == "prod")`, result)
 }
 
 func TestCombineAndNegate(t *testing.T) {
 	a := UnwrapExpr(FlowNameExpr("prod"))
 	b := NegateExpr(UnwrapExpr(ArtifactNameMatchExpr("^datadog:.*")))
 	result := CombineExprs("and", a, b)
-	assert.Equal(t, `${{ flow.name == "prod" and not matches(artifact.name, "^datadog:.*") }}`, result)
+	assert.Equal(t, `${{ flow.name == "prod" and not (matches(artifact.name, "^datadog:.*")) }}`, result)
 }
