@@ -55,6 +55,9 @@ func ComparisonExpr(context, op, value string) string {
 
 // CombineExprs joins inner expressions (without ${{ }} wrappers) with a logical operator.
 func CombineExprs(op string, exprs ...string) string {
+	if len(exprs) == 0 {
+		return ""
+	}
 	if len(exprs) == 1 {
 		return WrapExpr(exprs[0])
 	}

@@ -68,6 +68,11 @@ func TestCombineExprs_Single(t *testing.T) {
 	assert.Equal(t, `${{ flow.name == "prod" }}`, result)
 }
 
+func TestCombineExprs_Empty(t *testing.T) {
+	result := CombineExprs("and")
+	assert.Equal(t, "", result)
+}
+
 func TestWrapExpr_AddsWrapper(t *testing.T) {
 	result := WrapExpr(`flow.name == "prod"`)
 	assert.Equal(t, `${{ flow.name == "prod" }}`, result)
