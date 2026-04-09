@@ -382,6 +382,10 @@ func (m *Model) applyFormValues(fv formValues) {
 		case "exists":
 			m.storeSubExpr(policy.ExistsExpr(m.exprContext))
 		case "matches":
+			if err := validateRegex(fv.str); err != nil {
+				m.validationErr = err.Error()
+				return
+			}
 			m.storeSubExpr(policy.MatchesExpr(m.exprContext, fv.str))
 		default:
 			m.storeSubExpr(policy.ComparisonExpr(m.exprContext, fv.operator, fv.str))

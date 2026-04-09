@@ -413,6 +413,17 @@ func TestApply_ExprCustomOp_MatchesStoresPending(t *testing.T) {
 	assert.Equal(t, `matches(flow.name, "^prod")`, m.pendingExprs[0])
 }
 
+func TestApply_ExprCustomOp_MatchesInvalidRegex(t *testing.T) {
+	m := newTestModel()
+	m.step = stepExprCustomOp
+	m.exprContext = "flow.name"
+
+	m.applyFormValues(formValues{operator: "matches", str: "[unclosed"})
+
+	assert.Empty(t, m.pendingExprs)
+	assert.Contains(t, m.validationErr, "invalid regex")
+}
+
 func TestApply_ExprCustomOp_ExistsStoresPending(t *testing.T) {
 	m := newTestModel()
 	m.step = stepExprCustomOp
