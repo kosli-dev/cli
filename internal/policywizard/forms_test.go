@@ -454,6 +454,28 @@ func TestApply_ExprCustomOp_SwitchOperatorClearsError(t *testing.T) {
 	require.Len(t, m.pendingExprs, 1)
 }
 
+func TestApply_ExprCustomOp_EmptyValueRejected(t *testing.T) {
+	m := newTestModel()
+	m.step = stepExprCustomOp
+	m.exprContext = "flow.name"
+
+	m.applyFormValues(formValues{operator: "==", str: ""})
+
+	assert.Empty(t, m.pendingExprs)
+	assert.Contains(t, m.validationErr, "value is required")
+}
+
+func TestApply_ExprCustomOp_MatchesEmptyRegexRejected(t *testing.T) {
+	m := newTestModel()
+	m.step = stepExprCustomOp
+	m.exprContext = "flow.name"
+
+	m.applyFormValues(formValues{operator: "matches", str: ""})
+
+	assert.Empty(t, m.pendingExprs)
+	assert.Contains(t, m.validationErr, "regex pattern is required")
+}
+
 func TestApply_ExprCustomOp_ExistsStoresPending(t *testing.T) {
 	m := newTestModel()
 	m.step = stepExprCustomOp

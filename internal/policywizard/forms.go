@@ -383,12 +383,20 @@ func (m *Model) applyFormValues(fv formValues) {
 		case "exists":
 			m.storeSubExpr(policy.ExistsExpr(m.exprContext))
 		case "matches":
+			if fv.str == "" {
+				m.validationErr = "regex pattern is required for matches"
+				return
+			}
 			if err := validateRegex(fv.str); err != nil {
 				m.validationErr = err.Error()
 				return
 			}
 			m.storeSubExpr(policy.MatchesExpr(m.exprContext, fv.str))
 		default:
+			if fv.str == "" {
+				m.validationErr = "value is required"
+				return
+			}
 			m.storeSubExpr(policy.ComparisonExpr(m.exprContext, fv.operator, fv.str))
 		}
 
