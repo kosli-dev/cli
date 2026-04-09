@@ -202,7 +202,7 @@ jobs:
           check-latest: true
 
       - name: Download all digest artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           path: /tmp/digests
           pattern: digest-*
