@@ -25,16 +25,12 @@ The command exits with code 0 when allowed and code 1 when denied.
 
 When `--input-file` is omitted, JSON is read from stdin.
 
-Use `--params` to pass configuration data to the policy as `data.params`.
-This accepts inline JSON or a file reference (`@file.json`).
-
 ## Flags
 | Flag | Description |
 | :--- | :--- |
 |    -h, --help  |  help for input  |
 |    -i, --input-file string  |  [optional] Path to a JSON input file. Reads from stdin if omitted.  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
-|        --params string  |  [optional] Policy parameters as inline JSON or @file.json. Available in policies as data.params.  |
 |    -p, --policy string  |  Path to a Rego policy file to evaluate against the input.  |
 |        --show-input  |  [optional] Include the policy input data in the output.  |
 
@@ -89,25 +85,5 @@ kosli evaluate input
 ```shell
 cat trail-data.json | kosli evaluate input 
 	--policy policy.rego
-
-```
-
-##### evaluate with policy parameters (inline JSON)
-
-```shell
-kosli evaluate input 
-	--input-file trail-data.json 
-	--policy policy.rego 
-	--params '{"threshold": 3}'
-
-```
-
-##### evaluate with policy parameters from a file
-
-```shell
-kosli evaluate input 
-	--input-file trail-data.json 
-	--policy policy.rego 
-	--params @params.json
 ```
 
