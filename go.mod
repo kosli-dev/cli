@@ -24,7 +24,7 @@ require (
 	github.com/google/go-github/v42 v42.0.0
 	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/joshdk/go-junit v1.0.0
-	github.com/mattn/go-shellwords v1.0.12
+	github.com/mattn/go-shellwords v1.0.13
 	github.com/maxcnunes/httpfake v1.2.4
 	github.com/microsoft/azure-devops-go-api/azuredevops v1.0.0-b5
 	github.com/mitchellh/go-homedir v1.1.0
