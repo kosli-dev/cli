@@ -27,6 +27,14 @@ spec:
           - name: environments-config
             configMap:
               name: {{ include "reporter.fullname" . }}-environments-config
+          {{- if .Values.customCA.enabled }}
+          - name: custom-ca
+            secret:
+              secretName: {{ required "customCA.secretName is required when customCA.enabled is true" .Values.customCA.secretName }}
+          {{- end }}
+          {{- with .Values.extraVolumes }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
           containers:
           - name: reporter
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -35,6 +43,15 @@ spec:
             - name: environments-config
               mountPath: /config
               readOnly: true
+            {{- if .Values.customCA.enabled }}
+            - name: custom-ca
+              mountPath: /etc/ssl/certs/kosli-custom-ca.crt
+              subPath: {{ .Values.customCA.key }}
+              readOnly: true
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
             {{- if .Values.reporterConfig.securityContext }}
             securityContext:
               {{- if hasKey .Values.reporterConfig.securityContext "allowPrivilegeEscalation" }}
@@ -65,6 +82,9 @@ spec:
               - name: {{ $key }}
                 value: {{ $value }}
               {{ end }}
+              {{- with .Values.extraEnvVars }}
+              {{- toYaml . | nindent 14 }}
+              {{- end }}
             args:
             - snapshot
             - k8s

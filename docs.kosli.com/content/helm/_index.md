@@ -4,7 +4,7 @@ title: Kubernetes Reporter Helm Chart
 
 # k8s-reporter
 
-![Version: 2.1.0](https://img.shields.io/badge/Version-2.1.0-informational?style=flat-square)
+![Version: 2.2.0](https://img.shields.io/badge/Version-2.2.0-informational?style=flat-square)
 
 A Helm chart for installing the Kosli K8S reporter as a cronjob.
 The chart allows you to create a Kubernetes cronjob and all its necessary RBAC to report running images to Kosli at a given cron schedule.
@@ -96,11 +96,69 @@ helm upgrade kosli-reporter kosli/k8s-reporter -f values.yaml
 helm uninstall kosli-reporter
 ```
 
+## Running behind a TLS-inspecting proxy (corporate / custom CA bundle)
+
+If your network sits behind a TLS-inspecting appliance (Zscaler, Netskope, Palo Alto, etc.) that re-signs HTTPS traffic with a certificate not trusted by any public CA, you need to make the appliance's CA bundle available to the reporter.
+
+The chart offers two ways to do this. Use whichever fits your deployment flow.
+
+### Option 1 — `customCA` convenience wrapper (recommended for the common case)
+
+1. Create a Secret containing the corporate CA certificate (PEM format, single cert or bundle):
+
+```shell {.command}
+kubectl create secret generic corporate-ca-bundle --from-file=ca.crt=/path/to/corporate-ca.crt
+```
+
+2. Enable the wrapper in `values.yaml`:
+
+```yaml
+customCA:
+  enabled: true
+  secretName: corporate-ca-bundle
+  key: ca.crt
+```
+
+The chart mounts the certificate as a single file at `/etc/ssl/certs/kosli-custom-ca.crt` using `subPath`. Go's standard library reads it automatically alongside the system CA bundle — no `SSL_CERT_FILE` env var is needed (and the wrapper deliberately does not set one; setting `SSL_CERT_FILE` would replace the system bundle and break trust for any public CAs your bundle does not include).
+
+### Option 2 — generic `extraVolumes` / `extraVolumeMounts` / `extraEnvVars`
+
+Use these when you need a non-default mount path, a ConfigMap instead of a Secret, multiple volumes, or any other shape the wrapper does not cover:
+
+```yaml
+extraVolumes:
+  - name: corporate-ca
+    secret:
+      secretName: corporate-ca-bundle
+
+extraVolumeMounts:
+  - name: corporate-ca
+    mountPath: /etc/ssl/certs/corporate
+    readOnly: true
+```
+
+Note: if you mount the CA outside `/etc/ssl/certs/` and set `SSL_CERT_FILE` via `extraEnvVars`, your bundle must include the public CAs you also need to trust — Go uses only that file when `SSL_CERT_FILE` is set.
+
+### Pod Security Standards
+
+Both options use `secret`-backed volumes, which are permitted under the Pod Security Standards `restricted` profile. `hostPath` mounts are not permitted under that profile and should not be used here.
+
+### Cluster-wide alternative
+
+If you already run [cert-manager's trust-manager](https://cert-manager.io/docs/trust/trust-manager/) to distribute a corporate CA bundle into a well-known ConfigMap in every namespace, point `extraVolumes` / `extraVolumeMounts` at that ConfigMap instead of creating a per-namespace Secret.
+
 ## Configurations
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | concurrencyPolicy | string | `"Replace"` | specifies how to treat concurrent executions of a Job that is created by this CronJob |
 | cronSchedule | string | `"*/5 * * * *"` | the cron schedule at which the reporter is triggered to report to Kosli |
+| customCA | object | `{"enabled":false,"key":"ca.crt","secretName":""}` | convenience wrapper for mounting a corporate / custom CA bundle into the reporter's trust store. When enabled, the chart creates a Secret-backed volume and mounts the CA file into /etc/ssl/certs/ using subPath so it is picked up additively by Go's standard library alongside the system CA bundle (no SSL_CERT_FILE env var needed; setting it would replace the system bundle and is the footgun this wrapper hides). The Secret itself must be created out-of-band, e.g.:   kubectl create secret generic corporate-ca-bundle --from-file=ca.crt=/path/to/corporate-ca.crt |
+| customCA.enabled | bool | `false` | enable mounting a corporate/custom CA bundle into the trust store |
+| customCA.key | string | `"ca.crt"` | key within the Secret that holds the PEM-formatted CA certificate (single cert or multi-cert PEM bundle) |
+| customCA.secretName | string | `""` | name of an existing Secret in the same namespace containing the CA bundle |
+| extraEnvVars | list | `[]` | additional environment variables to inject into the reporter container. List of {name, value} or {name, valueFrom} entries, rendered verbatim into the container env. Use this when you need valueFrom (secretKeyRef / configMapKeyRef) or want a structure beyond simple key=value. For simple key=value pairs you can also use the `env:` map above. |
+| extraVolumeMounts | list | `[]` | additional container-level volumeMounts for the reporter container. Rendered verbatim into the container spec alongside the chart's own mounts. |
+| extraVolumes | list | `[]` | additional Pod-level volumes to attach to the reporter pod. Rendered verbatim into the Pod spec alongside the chart's own volumes. Use together with `extraVolumeMounts` to mount Secrets, ConfigMaps, or other volumes into the container. |
 | failedJobsHistoryLimit | int | `1` | specifies the number of failed finished jobs to keep |
 | fullnameOverride | string | `""` | overrides the fullname used for the created k8s resources. It has higher precedence than `nameOverride` |
 | image.pullPolicy | string | `"IfNotPresent"` | the kosli reporter image pull policy |

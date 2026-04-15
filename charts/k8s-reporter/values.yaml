@@ -86,6 +86,48 @@ reporterConfig:
 # env:
 #   KOSLI_HOST: https://<instance_name>.kosli.com
 
+# -- additional environment variables to inject into the reporter container.
+# List of {name, value} or {name, valueFrom} entries, rendered verbatim into the container env.
+# Use this when you need valueFrom (secretKeyRef / configMapKeyRef) or want a structure beyond simple key=value.
+# For simple key=value pairs you can also use the `env:` map above.
+extraEnvVars: []
+  # - name: SSL_CERT_FILE
+  #   value: /etc/ssl/certs/corporate/ca.crt
+  # - name: MY_SECRET
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: my-secret
+  #       key: token
+
+# -- additional Pod-level volumes to attach to the reporter pod.
+# Rendered verbatim into the Pod spec alongside the chart's own volumes.
+# Use together with `extraVolumeMounts` to mount Secrets, ConfigMaps, or other volumes into the container.
+extraVolumes: []
+  # - name: corporate-ca
+  #   secret:
+  #     secretName: corporate-ca-bundle
+
+# -- additional container-level volumeMounts for the reporter container.
+# Rendered verbatim into the container spec alongside the chart's own mounts.
+extraVolumeMounts: []
+  # - name: corporate-ca
+  #   mountPath: /etc/ssl/certs/corporate
+  #   readOnly: true
+
+# -- convenience wrapper for mounting a corporate / custom CA bundle into the reporter's trust store.
+# When enabled, the chart creates a Secret-backed volume and mounts the CA file into /etc/ssl/certs/
+# using subPath so it is picked up additively by Go's standard library alongside the system CA bundle
+# (no SSL_CERT_FILE env var needed; setting it would replace the system bundle and is the footgun this wrapper hides).
+# The Secret itself must be created out-of-band, e.g.:
+#   kubectl create secret generic corporate-ca-bundle --from-file=ca.crt=/path/to/corporate-ca.crt
+customCA:
+  # -- enable mounting a corporate/custom CA bundle into the trust store
+  enabled: false
+  # -- name of an existing Secret in the same namespace containing the CA bundle
+  secretName: ""
+  # -- key within the Secret that holds the PEM-formatted CA certificate (single cert or multi-cert PEM bundle)
+  key: "ca.crt"
+
 # -- any custom annotations to be added to the cronjob
 podAnnotations: {}
 

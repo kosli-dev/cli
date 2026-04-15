@@ -98,6 +98,59 @@ helm uninstall kosli-reporter
 ```
 {{- end }}
 
+{{ define "extra.customCA" -}}
+## Running behind a TLS-inspecting proxy (corporate / custom CA bundle)
+
+If your network sits behind a TLS-inspecting appliance (Zscaler, Netskope, Palo Alto, etc.) that re-signs HTTPS traffic with a certificate not trusted by any public CA, you need to make the appliance's CA bundle available to the reporter.
+
+The chart offers two ways to do this. Use whichever fits your deployment flow.
+
+### Option 1 — `customCA` convenience wrapper (recommended for the common case)
+
+1. Create a Secret containing the corporate CA certificate (PEM format, single cert or bundle):
+
+```shell {.command}
+kubectl create secret generic corporate-ca-bundle --from-file=ca.crt=/path/to/corporate-ca.crt
+```
+
+2. Enable the wrapper in `values.yaml`:
+
+```yaml
+customCA:
+  enabled: true
+  secretName: corporate-ca-bundle
+  key: ca.crt
+```
+
+The chart mounts the certificate as a single file at `/etc/ssl/certs/kosli-custom-ca.crt` using `subPath`. Go's standard library reads it automatically alongside the system CA bundle — no `SSL_CERT_FILE` env var is needed (and the wrapper deliberately does not set one; setting `SSL_CERT_FILE` would replace the system bundle and break trust for any public CAs your bundle does not include).
+
+### Option 2 — generic `extraVolumes` / `extraVolumeMounts` / `extraEnvVars`
+
+Use these when you need a non-default mount path, a ConfigMap instead of a Secret, multiple volumes, or any other shape the wrapper does not cover:
+
+```yaml
+extraVolumes:
+  - name: corporate-ca
+    secret:
+      secretName: corporate-ca-bundle
+
+extraVolumeMounts:
+  - name: corporate-ca
+    mountPath: /etc/ssl/certs/corporate
+    readOnly: true
+```
+
+Note: if you mount the CA outside `/etc/ssl/certs/` and set `SSL_CERT_FILE` via `extraEnvVars`, your bundle must include the public CAs you also need to trust — Go uses only that file when `SSL_CERT_FILE` is set.
+
+### Pod Security Standards
+
+Both options use `secret`-backed volumes, which are permitted under the Pod Security Standards `restricted` profile. `hostPath` mounts are not permitted under that profile and should not be used here.
+
+### Cluster-wide alternative
+
+If you already run [cert-manager's trust-manager](https://cert-manager.io/docs/trust/trust-manager/) to distribute a corporate CA bundle into a well-known ConfigMap in every namespace, point `extraVolumes` / `extraVolumeMounts` at that ConfigMap instead of creating a per-namespace Secret.
+{{- end }}
+
 {{ define "extra.valuesHeader" -}}
 ## Configurations
 {{- end }}
