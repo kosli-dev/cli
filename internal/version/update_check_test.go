@@ -60,6 +60,12 @@ func TestCheckForUpdate_DevBuild(t *testing.T) {
 	assert.Empty(t, notice)
 }
 
+func TestCheckForUpdate_UnreleasedBuild(t *testing.T) {
+	notice, err := checkForUpdateWithURL("v1.0.0+unreleased", "http://should-not-be-called")
+	assert.NoError(t, err)
+	assert.Empty(t, notice)
+}
+
 func TestCheckForUpdate_NetworkError(t *testing.T) {
 	notice, err := checkForUpdateWithURL("v0.1.0", "http://localhost:1") // nothing listening
 	assert.NoError(t, err)                                               // must be silent
