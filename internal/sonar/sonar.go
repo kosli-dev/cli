@@ -34,7 +34,7 @@ type SonarResults struct {
 	Revision    string       `json:"revision"`
 	Project     Project      `json:"project"`
 	Branch      *Branch      `json:"branch,omitempty"`
-	PullRequest string       `json:"pullRequest,omitempty"`
+	PullRequest *PullRequest `json:"pullRequest,omitempty"`
 	QualityGate *QualityGate `json:"qualityGate,omitempty"`
 }
 
@@ -47,6 +47,10 @@ type Project struct {
 type Branch struct {
 	Name string `json:"name,omitempty"`
 	Type string `json:"type,omitempty"`
+}
+
+type PullRequest struct {
+	Key string `json:"key"`
 }
 
 type QualityGate struct {
@@ -94,6 +98,7 @@ type Task struct {
 	Status        string `json:"status"`
 	Branch        string `json:"branch"`
 	BranchType    string `json:"branchType"`
+	PullRequest   string `json:"pullRequest"`
 }
 
 type ActivityResponse struct {
@@ -106,25 +111,25 @@ type ProjectAnalyses struct {
 	Errors   []Error    `json:"errors,omitempty"`
 }
 
-type PRAnalyses struct {
-	PullRequests []PRAnalysis `json:"pullRequests"`
-	Errors       []Error      `json:"errors,omitempty"`
-}
-
 type Analysis struct {
 	Key      string `json:"key"`
 	Date     string `json:"date"`
 	Revision string `json:"revision"`
 }
 
-type PRAnalysis struct {
-	Key    string `json:"key"`
-	Date   string `json:"analysisDate"`
-	Branch string `json:"branch"`
-	Commit Commit `json:"commit"`
+// These are the structs for the response from the project_pull_requests/list API
+type PullRequestsResponse struct {
+	PullRequests []PullRequestInfo `json:"pullRequests"`
+	Errors       []Error           `json:"errors,omitempty"`
 }
 
-type Commit struct {
+type PullRequestInfo struct {
+	Key          string   `json:"key"`
+	AnalysisDate string   `json:"analysisDate"`
+	Commit       PRCommit `json:"commit"`
+}
+
+type PRCommit struct {
 	SHA string `json:"sha"`
 }
 
@@ -158,7 +163,7 @@ func sonarURL(serverURL, apiPath string, params url.Values) (string, error) {
 
 func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error) {
 	httpClient := &http.Client{}
-	var analysisID, pullRequest, tokenHeader string
+	var analysisID, tokenHeader string
 	var err error
 	project := &Project{}
 	qualityGate := &QualityGate{}
@@ -171,15 +176,23 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 		return nil, fmt.Errorf("API token must be given to retrieve data from SonarQube")
 	}
 
+	// If explicit pull-request flag was given, set it on the results
 	if sc.pullRequest != "" {
-		pullRequest = sc.pullRequest
-		sonarResults.PullRequest = pullRequest
+		sonarResults.PullRequest = &PullRequest{Key: sc.pullRequest}
 	}
 
-	// Read the report-task.txt file (if it exists) to get the project key, server URL, dashboard URL and ceTaskURL
+	// Read the report-task.txt file (if it exists) to get the server URL, dashboard URL and ceTaskURL
 	err = sc.readFile(project, sonarResults, logger)
 	if err != nil {
-		if sc.projectKey == "" || (sc.revision == "" && sc.pullRequest == "") {
+		if sc.CETaskUrl != "" {
+			// If the CE task URL is provided directly (e.g. via --sonar-ce-task-url), we can skip the report-task.txt
+			// and use the CE task URL to get the data. Extract the server URL from the CE task URL.
+			parsedURL, parseErr := url.Parse(sc.CETaskUrl)
+			if parseErr != nil {
+				return nil, fmt.Errorf("failed to parse CE task URL: %s", parseErr)
+			}
+			sonarResults.ServerUrl = fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Host)
+		} else if sc.projectKey == "" || (sc.revision == "" && sc.pullRequest == "") {
 			return nil, fmt.Errorf("%s. Alternatively provide the project key and either revision or pull-request ID for the scan to attest", err)
 			// If the report-task.txt does not exist, but we've been given the project key and revision (or PR ID), we can still get the data
 		} else {
@@ -190,7 +203,7 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 			if err != nil {
 				return nil, err
 			}
-			if pullRequest == "" {
+			if sonarResults.PullRequest == nil {
 				analysisID, err = GetProjectAnalysisFromRevision(httpClient, sonarResults, project, sc.revision, tokenHeader, logger)
 				if err != nil {
 					return nil, err
@@ -202,13 +215,23 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 				}
 			}
 		}
-	} else {
+	}
+
+	if analysisID == "" && sc.CETaskUrl != "" {
 		//Get the analysis ID, status, project name and branch data from the ceTaskURL (ce API)
 		analysisID, err = GetCETaskData(httpClient, project, sonarResults, sc.CETaskUrl, tokenHeader, sc.maxWait, logger)
 		if err != nil {
 			return nil, err
 		}
-		if pullRequest == "" {
+
+		if sonarResults.PullRequest != nil {
+			// For PR scans, project_analyses/search does not return PR analyses on SonarCloud.
+			// Use the project_pull_requests/list API to get the revision and analysis date instead.
+			err = GetPRAnalysisData(httpClient, sonarResults, project, sonarResults.PullRequest.Key, tokenHeader)
+			if err != nil {
+				return nil, err
+			}
+		} else {
 			//Get project revision and scan date/time from the projectAnalyses API
 			err = GetProjectAnalysisFromAnalysisID(httpClient, sonarResults, project, analysisID, tokenHeader)
 			if err != nil {
@@ -217,15 +240,20 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 		}
 	}
 
-	if pullRequest != "" {
-		err = GetPRAnalysis(httpClient, sonarResults, project, pullRequest, tokenHeader)
+	// If we have an explicit PR (from flag) via the key+PR path, get PR analysis data
+	if sonarResults.PullRequest != nil && sonarResults.AnalaysedAt == "" {
+		err = GetPRAnalysisData(httpClient, sonarResults, project, sonarResults.PullRequest.Key, tokenHeader)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	//Get the quality gate status from the qualitygates/project_status API
-	qualityGate, err = GetQualityGate(httpClient, sonarResults, qualityGate, analysisID, project.Key, pullRequest, tokenHeader)
+	var pullRequestKey string
+	if sonarResults.PullRequest != nil {
+		pullRequestKey = sonarResults.PullRequest.Key
+	}
+	qualityGate, err = GetQualityGate(httpClient, sonarResults, qualityGate, analysisID, project.Key, pullRequestKey, tokenHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -270,10 +298,10 @@ func (sc *SonarConfig) readFile(project *Project, results *SonarResults, logger 
 
 func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *SonarResults, ceTaskURL, tokenHeader string, maxWait int, logger *log.Logger) (string, error) {
 	taskRequest, err := http.NewRequest("GET", ceTaskURL, nil)
-	taskRequest.Header.Add("Authorization", tokenHeader)
 	if err != nil {
 		return "", err
 	}
+	taskRequest.Header.Add("Authorization", tokenHeader)
 
 	wait := 1    // start wait period
 	retries := 0 // number of retries so far
@@ -345,7 +373,10 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 		}
 	}
 
-	if taskResponseData.Task.Branch != "" {
+	if taskResponseData.Task.PullRequest != "" {
+		sonarResults.PullRequest = &PullRequest{Key: taskResponseData.Task.PullRequest}
+		sonarResults.Branch = nil
+	} else if taskResponseData.Task.Branch != "" {
 		sonarResults.Branch = &Branch{}
 		sonarResults.Branch.Name = taskResponseData.Task.Branch
 		sonarResults.Branch.Type = taskResponseData.Task.BranchType
@@ -364,10 +395,10 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 		return "", err
 	}
 	projectAnalysesRequest, err := http.NewRequest("GET", projectAnalysesURL, nil)
-	projectAnalysesRequest.Header.Add("Authorization", tokenHeader)
 	if err != nil {
 		return "", err
 	}
+	projectAnalysesRequest.Header.Add("Authorization", tokenHeader)
 
 	projectAnalysesResponse, err := httpClient.Do(projectAnalysesRequest)
 	if err != nil {
@@ -409,20 +440,25 @@ func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *Son
 		return err
 	}
 	projectAnalysesRequest, err := http.NewRequest("GET", projectAnalysesURL, nil)
-	projectAnalysesRequest.Header.Add("Authorization", tokenHeader)
 	if err != nil {
 		return err
 	}
+	projectAnalysesRequest.Header.Add("Authorization", tokenHeader)
 
 	projectAnalysesResponse, err := httpClient.Do(projectAnalysesRequest)
 	if err != nil {
 		return err
 	}
+	defer func() { _ = projectAnalysesResponse.Body.Close() }()
 
 	projectAnalysesData := &ProjectAnalyses{}
 	err = json.NewDecoder(projectAnalysesResponse.Body).Decode(projectAnalysesData)
 	if err != nil {
 		return fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube")
+	}
+
+	if projectAnalysesData.Errors != nil {
+		return fmt.Errorf("SonarQube error: %s", projectAnalysesData.Errors[0].Msg)
 	}
 
 	for analysis := range projectAnalysesData.Analyses {
@@ -433,10 +469,6 @@ func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *Son
 		}
 	}
 
-	if projectAnalysesData.Errors != nil {
-		return fmt.Errorf("SonarQube error: %s", projectAnalysesData.Errors[0].Msg)
-	}
-
 	if sonarResults.AnalaysedAt == "" {
 		return fmt.Errorf("analysis with ID %s not found on %s. Snapshot may have been deleted by SonarQube", analysisID, sonarResults.ServerUrl)
 	}
@@ -444,45 +476,45 @@ func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *Son
 	return nil
 }
 
-func GetPRAnalysis(httpClient *http.Client, sonarResults *SonarResults, project *Project, pullRequestID, tokenHeader string) error {
-	PRAnalysesURL, err := sonarURL(sonarResults.ServerUrl, "api/project_pull_requests/list", url.Values{"project": {project.Key}})
+// GetPRAnalysisData retrieves the revision and analysis date for a pull request scan
+// from the project_pull_requests/list API. This is needed because the project_analyses/search
+// API does not return PR analyses on SonarCloud.
+func GetPRAnalysisData(httpClient *http.Client, sonarResults *SonarResults, project *Project, prKey, tokenHeader string) error {
+	prURL, err := sonarURL(sonarResults.ServerUrl, "api/project_pull_requests/list", url.Values{"project": {project.Key}})
 	if err != nil {
 		return err
 	}
-	PRAnalysesRequest, err := http.NewRequest("GET", PRAnalysesURL, nil)
-	PRAnalysesRequest.Header.Add("Authorization", tokenHeader)
+	prRequest, err := http.NewRequest("GET", prURL, nil)
 	if err != nil {
 		return err
 	}
+	prRequest.Header.Add("Authorization", tokenHeader)
 
-	PRAnalysesResponse, err := httpClient.Do(PRAnalysesRequest)
+	prResponse, err := httpClient.Do(prRequest)
 	if err != nil {
 		return err
 	}
+	defer func() { _ = prResponse.Body.Close() }()
 
-	PRAnalysesData := &PRAnalyses{}
-	err = json.NewDecoder(PRAnalysesResponse.Body).Decode(PRAnalysesData)
+	prData := &PullRequestsResponse{}
+	err = json.NewDecoder(prResponse.Body).Decode(prData)
 	if err != nil {
 		return fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube")
 	}
 
-	for pullRequest := range PRAnalysesData.PullRequests {
-		if PRAnalysesData.PullRequests[pullRequest].Key == pullRequestID {
-			sonarResults.AnalaysedAt = PRAnalysesData.PullRequests[pullRequest].Date
-			sonarResults.Revision = PRAnalysesData.PullRequests[pullRequest].Commit.SHA
-			break
+	if prData.Errors != nil {
+		return fmt.Errorf("SonarQube error: %s", prData.Errors[0].Msg)
+	}
+
+	for _, pr := range prData.PullRequests {
+		if pr.Key == prKey {
+			sonarResults.AnalaysedAt = pr.AnalysisDate
+			sonarResults.Revision = pr.Commit.SHA
+			return nil
 		}
 	}
 
-	if PRAnalysesData.Errors != nil {
-		return fmt.Errorf("SonarQube error: %s", PRAnalysesData.Errors[0].Msg)
-	}
-
-	if sonarResults.AnalaysedAt == "" {
-		return fmt.Errorf("pull request with ID %s not found on %s. Snapshot may have been deleted by SonarQube", pullRequestID, sonarResults.ServerUrl)
-	}
-
-	return nil
+	return fmt.Errorf("pull request %s not found for project %s on %s", prKey, project.Key, sonarResults.ServerUrl)
 }
 
 func GetQualityGate(httpClient *http.Client, sonarResults *SonarResults, qualityGate *QualityGate, analysisID, projectKey, pullRequest, tokenHeader string) (*QualityGate, error) {
@@ -500,10 +532,10 @@ func GetQualityGate(httpClient *http.Client, sonarResults *SonarResults, quality
 		}
 	}
 	qualityGateRequest, err := http.NewRequest("GET", qualityGateURL, nil)
-	qualityGateRequest.Header.Add("Authorization", tokenHeader)
 	if err != nil {
 		return nil, err
 	}
+	qualityGateRequest.Header.Add("Authorization", tokenHeader)
 
 	qualityGateResponse, err := httpClient.Do(qualityGateRequest)
 	if err != nil {
@@ -543,10 +575,10 @@ func GetTaskID(httpClient *http.Client, sonarResults *SonarResults, project *Pro
 		return err
 	}
 	CEActivityRequest, err := http.NewRequest("GET", CEActivityURL, nil)
-	CEActivityRequest.Header.Add("Authorization", tokenHeader)
 	if err != nil {
 		return err
 	}
+	CEActivityRequest.Header.Add("Authorization", tokenHeader)
 
 	CEActivityResponse, err := httpClient.Do(CEActivityRequest)
 	if err != nil {

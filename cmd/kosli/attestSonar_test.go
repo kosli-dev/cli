@@ -156,6 +156,16 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
+			name:   "can attest sonar for a pull request scan using report-task.txt",
+			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork-pr %s", suite.defaultKosliArguments),
+			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
+		},
+		{
+			name:   "can attest sonar using --sonar-ce-task-url without report-task.txt",
+			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-ce-task-url https://sonarcloud.io/api/ce/task?id=AZrs5eywBfkZKeU0sde9 %s", suite.defaultKosliArguments),
+			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
+		},
+		{
 			wantError: true,
 			name:      "14 if outdated task given (i.e. we try to get results for an older scan that SonarCloud has deleted), we get an error",
 			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork-old %s", suite.defaultKosliArguments),
@@ -182,7 +192,7 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 			wantError: true,
 			name:      "18 providing an incorrect pull-request ID gives an error",
 			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork --pull-request 1 %s", suite.defaultKosliArguments),
-			golden:    "Error: pull request with ID 1 not found on https://sonarcloud.io. Snapshot may have been deleted by SonarQube\n",
+			golden:    "Error: pull request 1 not found for project cyber-dojo_differ on https://sonarcloud.io\n",
 		},
 		{
 			name:   "19 can retrieve scan results using project key and pull-request flag",

@@ -242,6 +242,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	sonarRevisionFlag               = "[conditional] The revision of the SonarCloud/SonarQube project. Only required if you want to use the project key/revision to get the scan results rather than using Sonar's metadata file and you have overridden the default revision, or you aren't using a CI. Defaults to the value of the git commit flag."
 	sonarPRFlag                     = "[conditional] The ID of the pull-request. Only required if you want to use the project key/pull-request to get the scan results rather than using Sonar's metadata file."
 	sonarMaxWaitFlag                = "[optional] Allow the command to wait and retry fetching the scan results from SonarQube, up to the maximum number of seconds provided, with exponential backoff. Useful when using SonarQube's metadata file to retrieve and attest scans that take a long time to process . Defaults to 30 seconds."
+	sonarCETaskURLFlag              = "[conditional] The URL of the SonarQube CE task. Can be used instead of --sonar-working-dir when the report-task.txt file is not accessible, e.g. due to container isolation in CI/CD pipelines."
 	logicalEnvFlag                  = "[required] The logical environment."
 	physicalEnvFlag                 = "[required] The physical environment."
 	attestationTypeDescriptionFlag  = "[optional] The attestation type description."
