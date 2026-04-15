@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/kosli-dev/cli/internal/version"
 	"github.com/spf13/cobra"
@@ -25,7 +24,7 @@ type versionOptions struct {
 	short bool
 }
 
-func newVersionCmd(out io.Writer) *cobra.Command {
+func newVersionCmd(out, errOut io.Writer) *cobra.Command {
 	o := new(versionOptions)
 	cmd := &cobra.Command{
 		Use:     "version",
@@ -34,7 +33,7 @@ func newVersionCmd(out io.Writer) *cobra.Command {
 		Long:    versionLongDesc,
 		Args:    cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			o.run(out)
+			o.run(out, errOut)
 		},
 	}
 
@@ -43,12 +42,12 @@ func newVersionCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *versionOptions) run(out io.Writer) {
+func (o *versionOptions) run(out, errOut io.Writer) {
 	logger.Info(formatVersion(o.short))
 
 	notice, _ := version.CheckForUpdate(version.GetVersion())
 	if notice != "" {
-		_, _ = fmt.Fprint(os.Stderr, notice)
+		_, _ = fmt.Fprint(errOut, notice) // stderr — doesn't pollute piped stdout
 	}
 }
 

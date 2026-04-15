@@ -323,11 +323,13 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 				return err
 			}
 
-			// Fire update check in background — result collected in PostRun
-			// Skip for version (runs check synchronously) and Cobra's internal
-			// completion commands (__complete, __completeNoDesc) which fire on
-			// every Tab press.
-			if cmd.Name() != "version" && cmd.Name() != "--version" && !strings.HasPrefix(cmd.Name(), "__") {
+			// Fire update check in background — result collected in PostRun.
+			// Skip when:
+			//   - "version" subcommand: runs the check synchronously itself
+			//   - "__complete*": Cobra shell-completion commands fire on every Tab press
+			//   - --version flag: Cobra handles it internally and skips PersistentPostRun,
+			//     so the goroutine result would always be silently discarded
+			if cmd.Name() != "version" && !strings.HasPrefix(cmd.Name(), "__") && !cmd.Root().Flags().Changed("version") {
 				go func() {
 					notice, _ := version.CheckForUpdate(version.GetVersion())
 					updateNoticeCh <- notice
@@ -379,7 +381,7 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 	// Add subcommands
 	cmd.AddCommand(
 
-		newVersionCmd(out),
+		newVersionCmd(out, errOut),
 		newFingerprintCmd(out),
 		newAssertCmd(out),
 		newStatusCmd(out),

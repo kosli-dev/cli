@@ -14,7 +14,7 @@ import (
 
 const (
 	githubLatestReleaseURL = "https://api.github.com/repos/kosli-dev/cli/releases/latest"
-	updateCheckTimeout     = 3 * time.Second
+	updateCheckTimeout     = 2 * time.Second
 )
 
 type githubRelease struct {
