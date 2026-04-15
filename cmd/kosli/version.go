@@ -10,7 +10,7 @@ import (
 
 const versionShortDesc = `Print the version of a Kosli CLI.  `
 const versionLongDesc = versionShortDesc + `
-The output will look something like this:  
+The output will look something like this:
 version.BuildInfo{Version:"v0.0.1", GitCommit:"fe51cd1e31e6a202cba7dead9552a6d418ded79a", GitTreeState:"clean", GoVersion:"go1.16.3"}
 
 - Version is the semantic version of the release.
@@ -27,10 +27,11 @@ type versionOptions struct {
 func newVersionCmd(out io.Writer) *cobra.Command {
 	o := new(versionOptions)
 	cmd := &cobra.Command{
-		Use:   "version",
-		Short: versionShortDesc,
-		Long:  versionLongDesc,
-		Args:  cobra.NoArgs,
+		Use:     "version",
+		Aliases: []string{"ver"},
+		Short:   versionShortDesc,
+		Long:    versionLongDesc,
+		Args:    cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			o.run(out)
 		},
@@ -43,6 +44,11 @@ func newVersionCmd(out io.Writer) *cobra.Command {
 
 func (o *versionOptions) run(out io.Writer) {
 	logger.Info(formatVersion(o.short))
+
+	notice, _ := version.CheckForUpdate(version.GetVersion())
+	if notice != "" {
+		logger.Info(notice)
+	}
 }
 
 func formatVersion(short bool) string {
