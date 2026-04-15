@@ -171,6 +171,11 @@ func newAttestSonarCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
+			err = MuXRequiredFlags(cmd, []string{"sonar-revision", "pull-request"}, false)
+			if err != nil {
+				return err
+			}
+
 			err = ValidateAttestationArtifactArg(args, o.fingerprintOptions.artifactType, o.payload.ArtifactFingerprint)
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
