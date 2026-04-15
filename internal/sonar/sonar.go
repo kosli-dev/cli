@@ -471,7 +471,7 @@ func GetPRAnalysisData(httpClient *http.Client, sonarResults *SonarResults, proj
 	if err != nil {
 		return err
 	}
-	defer prResponse.Body.Close()
+	defer func() { _ = prResponse.Body.Close() }()
 
 	prData := &PullRequestsResponse{}
 	err = json.NewDecoder(prResponse.Body).Decode(prData)
