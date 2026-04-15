@@ -15,13 +15,14 @@ import (
 )
 
 type SonarConfig struct {
-	APIToken   string
-	WorkingDir string
-	CETaskUrl  string
-	revision   string
-	projectKey string
-	serverURL  string
-	maxWait    int
+	APIToken    string
+	WorkingDir  string
+	CETaskUrl   string
+	revision    string
+	projectKey  string
+	serverURL   string
+	pullRequest string
+	maxWait     int
 }
 
 // Structs to build the JSON for our attestation payload
@@ -29,11 +30,11 @@ type SonarResults struct {
 	ServerUrl   string       `json:"serverUrl"`
 	TaskID      string       `json:"taskId"`
 	Status      string       `json:"status"`
-	AnalaysedAt string       `json:"analysedAt"`
+	AnalysedAt  string       `json:"analysedAt"`
 	Revision    string       `json:"revision"`
 	Project     Project      `json:"project"`
 	Branch      *Branch      `json:"branch,omitempty"`
-	PullRequest *PullRequest `json:"pullRequest,omitempty"`
+	PullRequest string       `json:"pullRequest,omitempty"`
 	QualityGate *QualityGate `json:"qualityGate,omitempty"`
 }
 
@@ -46,10 +47,6 @@ type Project struct {
 type Branch struct {
 	Name string `json:"name,omitempty"`
 	Type string `json:"type,omitempty"`
-}
-
-type PullRequest struct {
-	Key string `json:"key"`
 }
 
 type QualityGate struct {
@@ -124,6 +121,7 @@ type PullRequestsResponse struct {
 
 type PullRequestInfo struct {
 	Key          string   `json:"key"`
+	Branch       string   `json:"branch"`
 	AnalysisDate string   `json:"analysisDate"`
 	Commit       PRCommit `json:"commit"`
 }
@@ -137,15 +135,16 @@ type Error struct {
 	Msg string `json:"msg"`
 }
 
-func NewSonarConfig(apiToken, workingDir, ceTaskUrl, projectKey, serverURL, revision string, maxWait int) *SonarConfig {
+func NewSonarConfig(apiToken, workingDir, ceTaskUrl, projectKey, serverURL, revision, pullRequest string, maxWait int) *SonarConfig {
 	return &SonarConfig{
-		APIToken:   apiToken,
-		WorkingDir: workingDir,
-		CETaskUrl:  ceTaskUrl,
-		revision:   revision,
-		projectKey: projectKey,
-		serverURL:  serverURL,
-		maxWait:    maxWait,
+		APIToken:    apiToken,
+		WorkingDir:  workingDir,
+		CETaskUrl:   ceTaskUrl,
+		revision:    revision,
+		projectKey:  projectKey,
+		serverURL:   serverURL,
+		pullRequest: pullRequest,
+		maxWait:     maxWait,
 	}
 }
 
@@ -174,6 +173,11 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 		return nil, fmt.Errorf("API token must be given to retrieve data from SonarQube")
 	}
 
+	// If explicit pull-request flag was given, set it on the results
+	if sc.pullRequest != "" {
+		sonarResults.PullRequest = sc.pullRequest
+	}
+
 	// Read the report-task.txt file (if it exists) to get the server URL, dashboard URL and ceTaskURL
 	err = sc.readFile(project, sonarResults, logger)
 	if err != nil {
@@ -185,10 +189,10 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 				return nil, fmt.Errorf("failed to parse CE task URL: %s", parseErr)
 			}
 			sonarResults.ServerUrl = fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Host)
-		} else if sc.projectKey == "" || sc.revision == "" {
-			return nil, fmt.Errorf("%s. Alternatively provide the project key and revision for the scan to attest", err)
-			// If the report-task.txt does not exist, but we've been given the project key and revision, we can still get the data
+		} else if sc.projectKey == "" || (sc.revision == "" && sc.pullRequest == "") {
+			return nil, fmt.Errorf("%s. Alternatively provide the project key and either revision or pull-request ID for the scan to attest", err)
 		} else {
+			// If the report-task.txt does not exist, but we've been given the project key and revision (or PR ID), we can still get the data
 			project.Key = sc.projectKey
 			sonarResults.ServerUrl = sc.serverURL
 			sonarResults.Revision = sc.revision
@@ -196,10 +200,13 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 			if err != nil {
 				return nil, err
 			}
-			analysisID, err = GetProjectAnalysisFromRevision(httpClient, sonarResults, project, sc.revision, tokenHeader, logger)
-			if err != nil {
-				return nil, err
+			if sonarResults.PullRequest == "" {
+				analysisID, err = GetProjectAnalysisFromRevision(httpClient, sonarResults, project, sc.revision, tokenHeader, logger)
+				if err != nil {
+					return nil, err
+				}
 			}
+
 			err = GetTaskID(httpClient, sonarResults, project, analysisID, tokenHeader, logger)
 			if err != nil {
 				return nil, err
@@ -207,31 +214,33 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 		}
 	}
 
-	if analysisID == "" {
+	if analysisID == "" && sc.CETaskUrl != "" {
 		//Get the analysis ID, status, project name and branch data from the ceTaskURL (ce API)
 		analysisID, err = GetCETaskData(httpClient, project, sonarResults, sc.CETaskUrl, tokenHeader, sc.maxWait, logger)
 		if err != nil {
 			return nil, err
 		}
 
-		if sonarResults.PullRequest != nil {
-			// For PR scans, project_analyses/search does not return PR analyses on SonarCloud.
-			// Use the project_pull_requests/list API to get the revision and analysis date instead.
-			err = GetPRAnalysisData(httpClient, sonarResults, project, sonarResults.PullRequest.Key, tokenHeader)
-			if err != nil {
-				return nil, err
-			}
-		} else {
+		if sonarResults.PullRequest == "" {
 			//Get project revision and scan date/time from the projectAnalyses API
 			err = GetProjectAnalysisFromAnalysisID(httpClient, sonarResults, project, analysisID, tokenHeader)
 			if err != nil {
 				return nil, err
 			}
 		}
+		// PR case falls through to the block below
+	}
+
+	// If we have a PR get PR analysis data
+	if sonarResults.PullRequest != "" {
+		err = GetPRAnalysisData(httpClient, sonarResults, project, sonarResults.PullRequest, tokenHeader)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	//Get the quality gate status from the qualitygates/project_status API
-	qualityGate, err = GetQualityGate(httpClient, sonarResults, qualityGate, analysisID, tokenHeader)
+	qualityGate, err = GetQualityGate(httpClient, sonarResults, qualityGate, analysisID, project.Key, sonarResults.PullRequest, tokenHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -293,11 +302,17 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 		}
 		err = json.NewDecoder(taskResponse.Body).Decode(taskResponseData)
 		if err != nil {
+			_ = taskResponse.Body.Close()
 			return "", fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube")
 		}
 		// If the CETaskURL from the report-task.txt file gives a 404, the CE task does not exist, or SonarQube is down.
 		if taskResponseData.Errors != nil {
+			_ = taskResponse.Body.Close()
 			return "", fmt.Errorf("%s on %s. \nSonarQube may be experiencing problems, please check https://status.sonarqube.com/ and try again later. \nOtherwise if you are attesting an older scan, the snapshot may have been deleted by SonarQube", taskResponseData.Errors[0].Msg, sonarResults.ServerUrl)
+		}
+
+		if err := taskResponse.Body.Close(); err != nil {
+			logger.Warn("failed to close task response body: %v", err)
 		}
 
 		if taskResponseData.Task.Status == "PENDING" || taskResponseData.Task.Status == "IN_PROGRESS" {
@@ -319,9 +334,6 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 				wait *= 2
 			}
 		} else {
-			if err := taskResponse.Body.Close(); err != nil {
-				logger.Warn("failed to close task response body: %v", err)
-			}
 			break
 		}
 	}
@@ -352,7 +364,7 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 	}
 
 	if taskResponseData.Task.PullRequest != "" {
-		sonarResults.PullRequest = &PullRequest{Key: taskResponseData.Task.PullRequest}
+		sonarResults.PullRequest = taskResponseData.Task.PullRequest
 		sonarResults.Branch = nil
 	} else if taskResponseData.Task.Branch != "" {
 		sonarResults.Branch = &Branch{}
@@ -382,6 +394,11 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 	if err != nil {
 		return "", err
 	}
+	defer func() {
+		if err := projectAnalysesResponse.Body.Close(); err != nil {
+			logger.Warn("failed to close project analyses response body: %v", err)
+		}
+	}()
 
 	projectAnalysesData := &ProjectAnalyses{}
 	err = json.NewDecoder(projectAnalysesResponse.Body).Decode(projectAnalysesData)
@@ -389,24 +406,20 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 		return "", fmt.Errorf("please check your API token and SonarQube server URL are correct and you have the correct permissions in SonarQube")
 	}
 
+	if projectAnalysesData.Errors != nil {
+		return "", fmt.Errorf("SonarQube error: %s", projectAnalysesData.Errors[0].Msg)
+	}
+
 	for analysis := range projectAnalysesData.Analyses {
 		if projectAnalysesData.Analyses[analysis].Revision == revision {
-			sonarResults.AnalaysedAt = projectAnalysesData.Analyses[analysis].Date
+			sonarResults.AnalysedAt = projectAnalysesData.Analyses[analysis].Date
 			analysisID = projectAnalysesData.Analyses[analysis].Key
 			break
 		}
 	}
 
-	if projectAnalysesData.Errors != nil {
-		return "", fmt.Errorf("SonarQube error: %s", projectAnalysesData.Errors[0].Msg)
-	}
-
-	if sonarResults.AnalaysedAt == "" {
+	if sonarResults.AnalysedAt == "" {
 		return "", fmt.Errorf("analysis for revision %s of project %s not found. Check the revision is correct. \nThe scan may still be being processed by SonarQube, try again later.\n Otherwise if you are attesting an older scan, the snapshot may also have been deleted by SonarQube", revision, project.Key)
-	}
-	if err := projectAnalysesResponse.Body.Close(); err != nil {
-		// Log warning for cleanup error
-		logger.Warn("failed to close project analyses response body: %v", err)
 	}
 
 	return analysisID, nil
@@ -441,13 +454,13 @@ func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *Son
 
 	for analysis := range projectAnalysesData.Analyses {
 		if projectAnalysesData.Analyses[analysis].Key == analysisID {
-			sonarResults.AnalaysedAt = projectAnalysesData.Analyses[analysis].Date
+			sonarResults.AnalysedAt = projectAnalysesData.Analyses[analysis].Date
 			sonarResults.Revision = projectAnalysesData.Analyses[analysis].Revision
 			break
 		}
 	}
 
-	if sonarResults.AnalaysedAt == "" {
+	if sonarResults.AnalysedAt == "" {
 		return fmt.Errorf("analysis with ID %s not found on %s. Snapshot may have been deleted by SonarQube", analysisID, sonarResults.ServerUrl)
 	}
 
@@ -486,7 +499,7 @@ func GetPRAnalysisData(httpClient *http.Client, sonarResults *SonarResults, proj
 
 	for _, pr := range prData.PullRequests {
 		if pr.Key == prKey {
-			sonarResults.AnalaysedAt = pr.AnalysisDate
+			sonarResults.AnalysedAt = pr.AnalysisDate
 			sonarResults.Revision = pr.Commit.SHA
 			return nil
 		}
@@ -495,10 +508,19 @@ func GetPRAnalysisData(httpClient *http.Client, sonarResults *SonarResults, proj
 	return fmt.Errorf("pull request %s not found for project %s on %s", prKey, project.Key, sonarResults.ServerUrl)
 }
 
-func GetQualityGate(httpClient *http.Client, sonarResults *SonarResults, qualityGate *QualityGate, analysisID, tokenHeader string) (*QualityGate, error) {
-	qualityGateURL, err := sonarURL(sonarResults.ServerUrl, "api/qualitygates/project_status", url.Values{"analysisId": {analysisID}})
-	if err != nil {
-		return nil, err
+func GetQualityGate(httpClient *http.Client, sonarResults *SonarResults, qualityGate *QualityGate, analysisID, projectKey, pullRequest, tokenHeader string) (*QualityGate, error) {
+	var qualityGateURL string
+	var err error
+	if pullRequest == "" {
+		qualityGateURL, err = sonarURL(sonarResults.ServerUrl, "api/qualitygates/project_status", url.Values{"analysisId": {analysisID}})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		qualityGateURL, err = sonarURL(sonarResults.ServerUrl, "api/qualitygates/project_status", url.Values{"projectKey": {projectKey}, "pullRequest": {pullRequest}})
+		if err != nil {
+			return nil, err
+		}
 	}
 	qualityGateRequest, err := http.NewRequest("GET", qualityGateURL, nil)
 	if err != nil {
@@ -510,6 +532,7 @@ func GetQualityGate(httpClient *http.Client, sonarResults *SonarResults, quality
 	if err != nil {
 		return nil, err
 	}
+	defer func() { _ = qualityGateResponse.Body.Close() }()
 
 	qualityGateData := &QualityGateResponse{}
 	err = json.NewDecoder(qualityGateResponse.Body).Decode(qualityGateData)
@@ -553,6 +576,11 @@ func GetTaskID(httpClient *http.Client, sonarResults *SonarResults, project *Pro
 	if err != nil {
 		return err
 	}
+	defer func() {
+		if err := CEActivityResponse.Body.Close(); err != nil {
+			logger.Warn("failed to close CE activity response body: %v", err)
+		}
+	}()
 
 	CEActivityData := &ActivityResponse{}
 	err = json.NewDecoder(CEActivityResponse.Body).Decode(CEActivityData)
@@ -560,24 +588,26 @@ func GetTaskID(httpClient *http.Client, sonarResults *SonarResults, project *Pro
 		return fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube")
 	}
 
-	for task := range CEActivityData.Tasks {
-		if CEActivityData.Tasks[task].AnalysisID == analysisID {
-			sonarResults.TaskID = CEActivityData.Tasks[task].TaskID
-			sonarResults.Status = CEActivityData.Tasks[task].Status
-			project.Name = CEActivityData.Tasks[task].ComponentName
-			if CEActivityData.Tasks[task].Branch != "" {
+	for t := range CEActivityData.Tasks {
+		task := CEActivityData.Tasks[t]
+		matched := (analysisID != "" && task.AnalysisID == analysisID) ||
+			(analysisID == "" && sonarResults.PullRequest != "" && task.PullRequest == sonarResults.PullRequest)
+		if matched {
+			sonarResults.TaskID = task.TaskID
+			sonarResults.Status = task.Status
+			project.Name = task.ComponentName
+			if task.PullRequest != "" {
+				sonarResults.PullRequest = task.PullRequest
+				sonarResults.Branch = nil
+			} else if task.Branch != "" {
 				sonarResults.Branch = &Branch{}
-				sonarResults.Branch.Name = CEActivityData.Tasks[task].Branch
-				sonarResults.Branch.Type = CEActivityData.Tasks[task].BranchType
+				sonarResults.Branch.Name = task.Branch
+				sonarResults.Branch.Type = task.BranchType
 			} else {
 				sonarResults.Branch = nil
 			}
 			break
 		}
-	}
-	if err := CEActivityResponse.Body.Close(); err != nil {
-		// Log warning for cleanup error
-		logger.Warn("failed to close CE activity response body: %v", err)
 	}
 
 	return nil
