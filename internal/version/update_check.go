@@ -41,7 +41,7 @@ func checkForUpdateWithURL(currentVersion string, apiURL string) (string, error)
 	ctx, cancel := context.WithTimeout(context.Background(), updateCheckTimeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, githubLatestReleaseURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
 	if err != nil {
 		return "", nil
 	}
@@ -52,7 +52,7 @@ func checkForUpdateWithURL(currentVersion string, apiURL string) (string, error)
 	if err != nil {
 		return "", nil
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return "", nil

@@ -357,7 +357,7 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 			select {
 			case notice := <-updateNoticeCh:
 				if notice != "" {
-					fmt.Fprint(errOut, notice) // stderr — doesn't pollute piped stdout
+					_, _ = fmt.Fprint(errOut, notice) // stderr — doesn't pollute piped stdout
 				}
 			default:
 				// goroutine not done yet (took > command duration) — skip silently

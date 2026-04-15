@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,7 +12,7 @@ import (
 func TestCheckForUpdate_NewVersionAvailable(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, `{"tag_name":"v9.99.0"}`)
+		_, _ = fmt.Fprintf(w, `{"tag_name":"v9.99.0"}`)
 	}))
 	defer srv.Close()
 	// (override URL via a package-level var for testability — see note below)
@@ -26,7 +25,7 @@ func TestCheckForUpdate_NewVersionAvailable(t *testing.T) {
 func TestCheckForUpdate_AlreadyLatest(t *testing.T) {
 	current := GetVersion() // always reflects the real built version
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, `{"tag_name":"%s"}`, current)
+		_, _ = fmt.Fprintf(w, `{"tag_name":"%s"}`, current)
 	}))
 	defer srv.Close()
 
@@ -36,8 +35,7 @@ func TestCheckForUpdate_AlreadyLatest(t *testing.T) {
 }
 
 func TestCheckForUpdate_OptOut(t *testing.T) {
-	os.Setenv("KOSLI_NO_UPDATE_CHECK", "1")
-	defer os.Unsetenv("KOSLI_NO_UPDATE_CHECK")
+	t.Setenv("KOSLI_NO_UPDATE_CHECK", "1")
 	notice, _ := CheckForUpdate("v0.1.0")
 	assert.Empty(t, notice)
 }
