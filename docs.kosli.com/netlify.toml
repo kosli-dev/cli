@@ -20,4 +20,4 @@
 [[context.production.plugins]]
 package = "netlify-plugin-checklinks"
   [context.production.plugins.inputs]
-  skipPatterns = [".netlify.app", "https://docs.kosli.com/ci-defaults%29", "https://fonts.googleapis.com/", "https://docs.kosli.com/legacy_ref/", "https://leadbooster-chat.pipedrive.com/"]
+  skipPatterns = [".netlify.app", "https://docs.kosli.com/ci-defaults%29", "https://fonts.googleapis.com/", "https://docs.kosli.com/legacy_ref/"]
