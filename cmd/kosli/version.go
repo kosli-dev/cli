@@ -45,6 +45,8 @@ func newVersionCmd(out, errOut io.Writer) *cobra.Command {
 func (o *versionOptions) run(out, errOut io.Writer) {
 	logger.Info(formatVersion(o.short))
 
+	// Synchronous check — version command always shows the update notice,
+	// unlike other commands where the check may be skipped if slower than the command.
 	notice, _ := version.CheckForUpdate(version.GetVersion())
 	if notice != "" {
 		_, _ = fmt.Fprint(errOut, notice) // stderr — doesn't pollute piped stdout

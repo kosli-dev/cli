@@ -26,12 +26,12 @@ func CheckForUpdate(currentVersion string) (string, error) {
 	return checkForUpdateWithURL(currentVersion, githubLatestReleaseURL)
 }
 
-// CheckForUpdate queries the GitHub API for the latest release and returns
-// a non-empty notice string if the current version is outdated.
+// checkForUpdateWithURL is the internal, testable implementation.
+// It queries the given URL for the latest release and returns a non-empty
+// notice string if the current version is outdated.
 // It returns silently (empty string, nil) on any network or parse error,
 // so it never blocks or fails a command.
 // Set KOSLI_NO_UPDATE_CHECK=1 to skip entirely.
-// checkForUpdateWithURL is the testable implementation
 func checkForUpdateWithURL(currentVersion string, apiURL string) (string, error) {
 	if os.Getenv("KOSLI_NO_UPDATE_CHECK") != "" {
 		return "", nil
