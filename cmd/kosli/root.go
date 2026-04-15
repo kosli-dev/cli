@@ -312,6 +312,7 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 		Use:              "kosli",
 		Short:            "The Kosli CLI.",
 		Long:             globalUsage,
+		Version:          fmt.Sprintf("%#v", version.Get()),
 		SilenceUsage:     true,
 		SilenceErrors:    true,
 		TraverseChildren: true,
@@ -323,8 +324,10 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 			}
 
 			// Fire update check in background — result collected in PostRun
-			// Skip if we're running version command
-			if cmd.Name() != "version" {
+			// Skip for version (runs check synchronously) and Cobra's internal
+			// completion commands (__complete, __completeNoDesc) which fire on
+			// every Tab press.
+			if cmd.Name() != "version" && !strings.HasPrefix(cmd.Name(), "__") {
 				go func() {
 					notice, _ := version.CheckForUpdate(version.GetVersion())
 					updateNoticeCh <- notice
@@ -364,6 +367,7 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 			}
 		},
 	}
+	cmd.SetVersionTemplate("{{.Version}}\n")
 	cmd.PersistentFlags().StringVarP(&global.ApiToken, "api-token", "a", "", apiTokenFlag)
 	cmd.PersistentFlags().StringVar(&global.Org, "org", "", orgFlag)
 	cmd.PersistentFlags().StringVarP(&global.Host, "host", "H", defaultHost, hostFlag)
