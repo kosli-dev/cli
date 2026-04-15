@@ -276,10 +276,10 @@ func (sc *SonarConfig) readFile(project *Project, results *SonarResults, logger 
 
 func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *SonarResults, ceTaskURL, tokenHeader string, maxWait int, logger *log.Logger) (string, error) {
 	taskRequest, err := http.NewRequest("GET", ceTaskURL, nil)
-	taskRequest.Header.Add("Authorization", tokenHeader)
 	if err != nil {
 		return "", err
 	}
+	taskRequest.Header.Add("Authorization", tokenHeader)
 
 	wait := 1    // start wait period
 	retries := 0 // number of retries so far
