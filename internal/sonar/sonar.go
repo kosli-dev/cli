@@ -195,15 +195,14 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 				if err != nil {
 					return nil, err
 				}
-			}
-			err = GetTaskID(httpClient, sonarResults, project, analysisID, tokenHeader, logger)
-			if err != nil {
-				return nil, err
+
+				err = GetTaskID(httpClient, sonarResults, project, analysisID, tokenHeader, logger)
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
-	}
-
-	if analysisID == "" {
+	} else {
 		//Get the analysis ID, status, project name and branch data from the ceTaskURL (ce API)
 		analysisID, err = GetCETaskData(httpClient, project, sonarResults, sc.CETaskUrl, tokenHeader, sc.maxWait, logger)
 		if err != nil {
@@ -489,7 +488,7 @@ func GetPRAnalysis(httpClient *http.Client, sonarResults *SonarResults, project 
 func GetQualityGate(httpClient *http.Client, sonarResults *SonarResults, qualityGate *QualityGate, analysisID, projectKey, pullRequest, tokenHeader string) (*QualityGate, error) {
 	var qualityGateURL string
 	var err error
-	if analysisID != "" {
+	if pullRequest == "" {
 		qualityGateURL, err = sonarURL(sonarResults.ServerUrl, "api/qualitygates/project_status", url.Values{"analysisId": {analysisID}})
 		if err != nil {
 			return nil, err

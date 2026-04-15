@@ -164,7 +164,7 @@ func newAttestSonarCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.projectKey, "sonar-project-key", "", sonarProjectKeyFlag)
 	cmd.Flags().StringVar(&o.serverURL, "sonar-server-url", "https://sonarcloud.io", sonarServerURLFlag)
 	cmd.Flags().StringVar(&o.revision, "sonar-revision", o.commitSHA, sonarRevisionFlag)
-	cmd.Flags().StringVar(&o.pullRequest, "pull-request", "", sonarRevisionFlag)
+	cmd.Flags().StringVar(&o.pullRequest, "pull-request", "", sonarPRFlag)
 	cmd.Flags().IntVar(&o.maxWait, "max-wait", 30, sonarMaxWaitFlag)
 
 	err := RequireFlags(cmd, []string{"flow", "trail", "name", "sonar-api-token"})
