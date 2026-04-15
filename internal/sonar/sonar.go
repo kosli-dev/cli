@@ -177,7 +177,15 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 	// Read the report-task.txt file (if it exists) to get the project key, server URL, dashboard URL and ceTaskURL
 	err = sc.readFile(project, sonarResults, logger)
 	if err != nil {
-		if sc.projectKey == "" || sc.revision == "" {
+		if sc.CETaskUrl != "" {
+			// If the CE task URL is provided directly (e.g. via --sonar-ce-task-url), we can skip the report-task.txt
+			// and use the CE task URL to get the data. Extract the server URL from the CE task URL.
+			parsedURL, parseErr := url.Parse(sc.CETaskUrl)
+			if parseErr != nil {
+				return nil, fmt.Errorf("failed to parse CE task URL: %s", parseErr)
+			}
+			sonarResults.ServerUrl = fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Host)
+		} else if sc.projectKey == "" || sc.revision == "" {
 			return nil, fmt.Errorf("%s. Alternatively provide the project key and revision for the scan to attest", err)
 			// If the report-task.txt does not exist, but we've been given the project key and revision, we can still get the data
 		} else {
