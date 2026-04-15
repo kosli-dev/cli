@@ -98,7 +98,7 @@ helm uninstall kosli-reporter
 
 ## Running behind a TLS-inspecting proxy (corporate / custom CA bundle)
 
-If your network sits behind a TLS-inspecting appliance (Zscaler, Netskope, Palo Alto, etc.) that re-signs HTTPS traffic with a certificate not trusted by any public CA, you need to make the appliance's CA bundle available to the reporter.
+If your network sits behind a TLS-inspecting appliance (Zscaler, Netskope, Palo Alto, etc.) that re-signs HTTPS traffic with a corporate CA certificate, the reporter will fail with `x509: certificate signed by unknown authority`. To fix this, make the appliance's CA bundle available to the reporter.
 
 The chart offers two ways to do this. Use whichever fits your deployment flow.
 
@@ -119,7 +119,9 @@ customCA:
   key: ca.crt
 ```
 
-The chart mounts the certificate as a single file at `/etc/ssl/certs/kosli-custom-ca.crt` using `subPath`. Go's standard library reads it automatically alongside the system CA bundle — no `SSL_CERT_FILE` env var is needed (and the wrapper deliberately does not set one; setting `SSL_CERT_FILE` would replace the system bundle and break trust for any public CAs your bundle does not include).
+The chart mounts the certificate as a single file at `/etc/ssl/certs/kosli-custom-ca.crt` using `subPath`. Go's standard library on Linux loads CA roots in two independent passes — it reads the system bundle file (e.g. `/etc/ssl/certs/ca-certificates.crt`) and **also** scans `/etc/ssl/certs/` for additional certificate files. The mounted file is picked up by the directory scan and added to the trust store alongside the system roots, so no `SSL_CERT_FILE` env var is needed.
+
+The wrapper deliberately does **not** set `SSL_CERT_FILE`. Setting it would replace the system bundle entirely with the customer's file, breaking trust for any public CAs the bundle does not include.
 
 ### Option 2 — generic `extraVolumes` / `extraVolumeMounts` / `extraEnvVars`
 
@@ -152,11 +154,11 @@ If you already run [cert-manager's trust-manager](https://cert-manager.io/docs/t
 |-----|------|---------|-------------|
 | concurrencyPolicy | string | `"Replace"` | specifies how to treat concurrent executions of a Job that is created by this CronJob |
 | cronSchedule | string | `"*/5 * * * *"` | the cron schedule at which the reporter is triggered to report to Kosli |
-| customCA | object | `{"enabled":false,"key":"ca.crt","secretName":""}` | convenience wrapper for mounting a corporate / custom CA bundle into the reporter's trust store. When enabled, the chart creates a Secret-backed volume and mounts the CA file into /etc/ssl/certs/ using subPath so it is picked up additively by Go's standard library alongside the system CA bundle (no SSL_CERT_FILE env var needed; setting it would replace the system bundle and is the footgun this wrapper hides). The Secret itself must be created out-of-band, e.g.:   kubectl create secret generic corporate-ca-bundle --from-file=ca.crt=/path/to/corporate-ca.crt |
+| customCA | object | `{"enabled":false,"key":"ca.crt","secretName":""}` | convenience wrapper for mounting a corporate / custom CA bundle. See the "Running behind a TLS-inspecting proxy" section of the README for usage. |
 | customCA.enabled | bool | `false` | enable mounting a corporate/custom CA bundle into the trust store |
 | customCA.key | string | `"ca.crt"` | key within the Secret that holds the PEM-formatted CA certificate (single cert or multi-cert PEM bundle) |
 | customCA.secretName | string | `""` | name of an existing Secret in the same namespace containing the CA bundle |
-| extraEnvVars | list | `[]` | additional environment variables to inject into the reporter container. List of {name, value} or {name, valueFrom} entries, rendered verbatim into the container env. Use this when you need valueFrom (secretKeyRef / configMapKeyRef) or want a structure beyond simple key=value. For simple key=value pairs you can also use the `env:` map above. |
+| extraEnvVars | list | `[]` | additional environment variables to inject into the reporter container. List of {name, value} or {name, valueFrom} entries, rendered verbatim into the container env. Supports plain values and valueFrom (secretKeyRef / configMapKeyRef). Note: entries here are appended after the chart's own env entries; on duplicate names the later entry wins. |
 | extraVolumeMounts | list | `[]` | additional container-level volumeMounts for the reporter container. Rendered verbatim into the container spec alongside the chart's own mounts. |
 | extraVolumes | list | `[]` | additional Pod-level volumes to attach to the reporter pod. Rendered verbatim into the Pod spec alongside the chart's own volumes. Use together with `extraVolumeMounts` to mount Secrets, ConfigMaps, or other volumes into the container. |
 | failedJobsHistoryLimit | int | `1` | specifies the number of failed finished jobs to keep |

@@ -31,6 +31,7 @@ spec:
           - name: custom-ca
             secret:
               secretName: {{ required "customCA.secretName is required when customCA.enabled is true" .Values.customCA.secretName }}
+              defaultMode: 0644
           {{- end }}
           {{- with .Values.extraVolumes }}
           {{- toYaml . | nindent 10 }}

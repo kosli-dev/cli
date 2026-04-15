@@ -82,17 +82,18 @@ reporterConfig:
     # Omit this field for OpenShift environments to allow automatic UID assignment
     runAsUser: 1000
 
+# DEPRECATED: prefer `extraEnvVars` below. Retained for backward compatibility.
 # Uncomment the env variable below and replace <instance_name>, if you are on a single tenant Kosli instance
 # env:
 #   KOSLI_HOST: https://<instance_name>.kosli.com
 
 # -- additional environment variables to inject into the reporter container.
 # List of {name, value} or {name, valueFrom} entries, rendered verbatim into the container env.
-# Use this when you need valueFrom (secretKeyRef / configMapKeyRef) or want a structure beyond simple key=value.
-# For simple key=value pairs you can also use the `env:` map above.
+# Supports plain values and valueFrom (secretKeyRef / configMapKeyRef).
+# Note: entries here are appended after the chart's own env entries; on duplicate names the later entry wins.
 extraEnvVars: []
-  # - name: SSL_CERT_FILE
-  #   value: /etc/ssl/certs/corporate/ca.crt
+  # - name: HTTPS_PROXY
+  #   value: http://proxy.corp:8080
   # - name: MY_SECRET
   #   valueFrom:
   #     secretKeyRef:
@@ -114,12 +115,8 @@ extraVolumeMounts: []
   #   mountPath: /etc/ssl/certs/corporate
   #   readOnly: true
 
-# -- convenience wrapper for mounting a corporate / custom CA bundle into the reporter's trust store.
-# When enabled, the chart creates a Secret-backed volume and mounts the CA file into /etc/ssl/certs/
-# using subPath so it is picked up additively by Go's standard library alongside the system CA bundle
-# (no SSL_CERT_FILE env var needed; setting it would replace the system bundle and is the footgun this wrapper hides).
-# The Secret itself must be created out-of-band, e.g.:
-#   kubectl create secret generic corporate-ca-bundle --from-file=ca.crt=/path/to/corporate-ca.crt
+# -- convenience wrapper for mounting a corporate / custom CA bundle. See the
+# "Running behind a TLS-inspecting proxy" section of the README for usage.
 customCA:
   # -- enable mounting a corporate/custom CA bundle into the trust store
   enabled: false

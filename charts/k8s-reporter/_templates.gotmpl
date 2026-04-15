@@ -101,7 +101,7 @@ helm uninstall kosli-reporter
 {{ define "extra.customCA" -}}
 ## Running behind a TLS-inspecting proxy (corporate / custom CA bundle)
 
-If your network sits behind a TLS-inspecting appliance (Zscaler, Netskope, Palo Alto, etc.) that re-signs HTTPS traffic with a certificate not trusted by any public CA, you need to make the appliance's CA bundle available to the reporter.
+If your network sits behind a TLS-inspecting appliance (Zscaler, Netskope, Palo Alto, etc.) that re-signs HTTPS traffic with a corporate CA certificate, the reporter will fail with `x509: certificate signed by unknown authority`. To fix this, make the appliance's CA bundle available to the reporter.
 
 The chart offers two ways to do this. Use whichever fits your deployment flow.
 
@@ -122,7 +122,9 @@ customCA:
   key: ca.crt
 ```
 
-The chart mounts the certificate as a single file at `/etc/ssl/certs/kosli-custom-ca.crt` using `subPath`. Go's standard library reads it automatically alongside the system CA bundle — no `SSL_CERT_FILE` env var is needed (and the wrapper deliberately does not set one; setting `SSL_CERT_FILE` would replace the system bundle and break trust for any public CAs your bundle does not include).
+The chart mounts the certificate as a single file at `/etc/ssl/certs/kosli-custom-ca.crt` using `subPath`. Go's standard library on Linux loads CA roots in two independent passes — it reads the system bundle file (e.g. `/etc/ssl/certs/ca-certificates.crt`) and **also** scans `/etc/ssl/certs/` for additional certificate files. The mounted file is picked up by the directory scan and added to the trust store alongside the system roots, so no `SSL_CERT_FILE` env var is needed.
+
+The wrapper deliberately does **not** set `SSL_CERT_FILE`. Setting it would replace the system bundle entirely with the customer's file, breaking trust for any public CAs the bundle does not include.
 
 ### Option 2 — generic `extraVolumes` / `extraVolumeMounts` / `extraEnvVars`
 
