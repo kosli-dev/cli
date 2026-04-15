@@ -82,10 +82,13 @@ reporterConfig:
     # Omit this field for OpenShift environments to allow automatic UID assignment
     runAsUser: 1000
 
-# DEPRECATED: prefer `extraEnvVars` below. Retained for backward compatibility.
-# Uncomment the env variable below and replace <instance_name>, if you are on a single tenant Kosli instance
-# env:
-#   KOSLI_HOST: https://<instance_name>.kosli.com
+# -- map of plain environment variables to inject into the reporter container.
+# For value-only key=value pairs. Use `extraEnvVars` below if you need `valueFrom`
+# (secretKeyRef / configMapKeyRef) or any other structured env entry.
+# Example for a single tenant Kosli instance:
+#   env:
+#     KOSLI_HOST: https://<instance_name>.kosli.com
+env: {}
 
 # -- additional environment variables to inject into the reporter container.
 # List of {name, value} or {name, valueFrom} entries, rendered verbatim into the container env.
