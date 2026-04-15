@@ -15,7 +15,6 @@ func TestCheckForUpdate_NewVersionAvailable(t *testing.T) {
 		_, _ = fmt.Fprintf(w, `{"tag_name":"v9.99.0"}`)
 	}))
 	defer srv.Close()
-	// (override URL via a package-level var for testability — see note below)
 
 	notice, err := checkForUpdateWithURL("v0.1.0", srv.URL)
 	assert.NoError(t, err)
@@ -51,6 +50,13 @@ func TestCheckForUpdate_NewerThanLatest(t *testing.T) {
 func TestCheckForUpdate_OptOut(t *testing.T) {
 	t.Setenv("KOSLI_NO_UPDATE_CHECK", "1")
 	notice, _ := CheckForUpdate("v0.1.0")
+	assert.Empty(t, notice)
+}
+
+func TestCheckForUpdate_DevBuild(t *testing.T) {
+	// dev builds should be skipped without any HTTP call
+	notice, err := checkForUpdateWithURL("main", "http://should-not-be-called")
+	assert.NoError(t, err)
 	assert.Empty(t, notice)
 }
 
