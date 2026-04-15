@@ -83,9 +83,7 @@ reporterConfig:
     runAsUser: 1000
 
 # -- map of plain environment variables to inject into the reporter container.
-# For value-only key=value pairs. Use `extraEnvVars` below if you need `valueFrom`
-# (secretKeyRef / configMapKeyRef) or any other structured env entry.
-# Example for a single tenant Kosli instance:
+# If you are on a single-tenant Kosli instance, set KOSLI_HOST:
 #   env:
 #     KOSLI_HOST: https://<instance_name>.kosli.com
 env: {}
