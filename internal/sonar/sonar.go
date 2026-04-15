@@ -33,6 +33,7 @@ type SonarResults struct {
 	Revision    string       `json:"revision"`
 	Project     Project      `json:"project"`
 	Branch      *Branch      `json:"branch,omitempty"`
+	PullRequest *PullRequest `json:"pullRequest,omitempty"`
 	QualityGate *QualityGate `json:"qualityGate,omitempty"`
 }
 
@@ -45,6 +46,10 @@ type Project struct {
 type Branch struct {
 	Name string `json:"name,omitempty"`
 	Type string `json:"type,omitempty"`
+}
+
+type PullRequest struct {
+	Key string `json:"key"`
 }
 
 type QualityGate struct {
@@ -92,6 +97,7 @@ type Task struct {
 	Status        string `json:"status"`
 	Branch        string `json:"branch"`
 	BranchType    string `json:"branchType"`
+	PullRequest   string `json:"pullRequest"`
 }
 
 type ActivityResponse struct {
@@ -108,6 +114,22 @@ type Analysis struct {
 	Key      string `json:"key"`
 	Date     string `json:"date"`
 	Revision string `json:"revision"`
+}
+
+// These are the structs for the response from the project_pull_requests/list API
+type PullRequestsResponse struct {
+	PullRequests []PullRequestInfo `json:"pullRequests"`
+	Errors       []Error           `json:"errors,omitempty"`
+}
+
+type PullRequestInfo struct {
+	Key          string   `json:"key"`
+	AnalysisDate string   `json:"analysisDate"`
+	Commit       PRCommit `json:"commit"`
+}
+
+type PRCommit struct {
+	SHA string `json:"sha"`
 }
 
 // Struct for error messages from sonar APIs
@@ -184,10 +206,19 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 			return nil, err
 		}
 
-		//Get project revision and scan date/time from the projectAnalyses API
-		err = GetProjectAnalysisFromAnalysisID(httpClient, sonarResults, project, analysisID, tokenHeader)
-		if err != nil {
-			return nil, err
+		if sonarResults.PullRequest != nil {
+			// For PR scans, project_analyses/search does not return PR analyses on SonarCloud.
+			// Use the project_pull_requests/list API to get the revision and analysis date instead.
+			err = GetPRAnalysisData(httpClient, sonarResults, project, sonarResults.PullRequest.Key, tokenHeader)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			//Get project revision and scan date/time from the projectAnalyses API
+			err = GetProjectAnalysisFromAnalysisID(httpClient, sonarResults, project, analysisID, tokenHeader)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -312,7 +343,10 @@ func GetCETaskData(httpClient *http.Client, project *Project, sonarResults *Sona
 		}
 	}
 
-	if taskResponseData.Task.Branch != "" {
+	if taskResponseData.Task.PullRequest != "" {
+		sonarResults.PullRequest = &PullRequest{Key: taskResponseData.Task.PullRequest}
+		sonarResults.Branch = nil
+	} else if taskResponseData.Task.Branch != "" {
 		sonarResults.Branch = &Branch{}
 		sonarResults.Branch.Name = taskResponseData.Task.Branch
 		sonarResults.Branch.Type = taskResponseData.Task.BranchType
@@ -409,6 +443,47 @@ func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *Son
 	}
 
 	return nil
+}
+
+// GetPRAnalysisData retrieves the revision and analysis date for a pull request scan
+// from the project_pull_requests/list API. This is needed because the project_analyses/search
+// API does not return PR analyses on SonarCloud.
+func GetPRAnalysisData(httpClient *http.Client, sonarResults *SonarResults, project *Project, prKey, tokenHeader string) error {
+	prURL, err := sonarURL(sonarResults.ServerUrl, "api/project_pull_requests/list", url.Values{"project": {project.Key}})
+	if err != nil {
+		return err
+	}
+	prRequest, err := http.NewRequest("GET", prURL, nil)
+	if err != nil {
+		return err
+	}
+	prRequest.Header.Add("Authorization", tokenHeader)
+
+	prResponse, err := httpClient.Do(prRequest)
+	if err != nil {
+		return err
+	}
+	defer prResponse.Body.Close()
+
+	prData := &PullRequestsResponse{}
+	err = json.NewDecoder(prResponse.Body).Decode(prData)
+	if err != nil {
+		return fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube")
+	}
+
+	if prData.Errors != nil {
+		return fmt.Errorf("SonarQube error: %s", prData.Errors[0].Msg)
+	}
+
+	for _, pr := range prData.PullRequests {
+		if pr.Key == prKey {
+			sonarResults.AnalaysedAt = pr.AnalysisDate
+			sonarResults.Revision = pr.Commit.SHA
+			return nil
+		}
+	}
+
+	return fmt.Errorf("pull request %s not found for project %s on %s", prKey, project.Key, sonarResults.ServerUrl)
 }
 
 func GetQualityGate(httpClient *http.Client, sonarResults *SonarResults, qualityGate *QualityGate, analysisID, tokenHeader string) (*QualityGate, error) {
