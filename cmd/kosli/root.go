@@ -327,7 +327,7 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 			// Skip for version (runs check synchronously) and Cobra's internal
 			// completion commands (__complete, __completeNoDesc) which fire on
 			// every Tab press.
-			if cmd.Name() != "version" && !strings.HasPrefix(cmd.Name(), "__") {
+			if cmd.Name() != "version" && cmd.Name() != "--version" && !strings.HasPrefix(cmd.Name(), "__") {
 				go func() {
 					notice, _ := version.CheckForUpdate(version.GetVersion())
 					updateNoticeCh <- notice

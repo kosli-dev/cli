@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/kosli-dev/cli/internal/version"
 	"github.com/spf13/cobra"
@@ -47,7 +48,7 @@ func (o *versionOptions) run(out io.Writer) {
 
 	notice, _ := version.CheckForUpdate(version.GetVersion())
 	if notice != "" {
-		logger.Info(notice)
+		_, _ = fmt.Fprint(os.Stderr, notice)
 	}
 }
 
