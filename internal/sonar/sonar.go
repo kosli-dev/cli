@@ -427,11 +427,16 @@ func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *Son
 	if err != nil {
 		return err
 	}
+	defer func() { _ = projectAnalysesResponse.Body.Close() }()
 
 	projectAnalysesData := &ProjectAnalyses{}
 	err = json.NewDecoder(projectAnalysesResponse.Body).Decode(projectAnalysesData)
 	if err != nil {
 		return fmt.Errorf("please check your API token is correct and you have the correct permissions in SonarQube")
+	}
+
+	if projectAnalysesData.Errors != nil {
+		return fmt.Errorf("SonarQube error: %s", projectAnalysesData.Errors[0].Msg)
 	}
 
 	for analysis := range projectAnalysesData.Analyses {
@@ -440,10 +445,6 @@ func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *Son
 			sonarResults.Revision = projectAnalysesData.Analyses[analysis].Revision
 			break
 		}
-	}
-
-	if projectAnalysesData.Errors != nil {
-		return fmt.Errorf("SonarQube error: %s", projectAnalysesData.Errors[0].Msg)
 	}
 
 	if sonarResults.AnalaysedAt == "" {
