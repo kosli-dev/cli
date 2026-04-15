@@ -83,7 +83,7 @@ reporterConfig:
     runAsUser: 1000
 
 # -- map of plain environment variables to inject into the reporter container.
-# If you are on a single-tenant Kosli instance, set KOSLI_HOST:
+# For a single-tenant Kosli instance, set KOSLI_HOST to https://<instance_name>.kosli.com.
 #   env:
 #     KOSLI_HOST: https://<instance_name>.kosli.com
 env: {}
