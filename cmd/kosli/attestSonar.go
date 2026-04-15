@@ -18,14 +18,15 @@ type SonarAttestationPayload struct {
 
 type attestSonarOptions struct {
 	*CommonAttestationOptions
-	apiToken   string
-	workingDir string
-	ceTaskURL  string
-	projectKey string
-	serverURL  string
-	revision   string
-	maxWait    int
-	payload    SonarAttestationPayload
+	apiToken    string
+	workingDir  string
+	ceTaskURL   string
+	projectKey  string
+	serverURL   string
+	revision    string
+	pullRequest string
+	maxWait     int
+	payload     SonarAttestationPayload
 }
 
 const attestSonarShortDesc = `Report a SonarQube attestation to an artifact or a trail in a Kosli flow.  `
@@ -163,6 +164,7 @@ func newAttestSonarCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&o.projectKey, "sonar-project-key", "", sonarProjectKeyFlag)
 	cmd.Flags().StringVar(&o.serverURL, "sonar-server-url", "https://sonarcloud.io", sonarServerURLFlag)
 	cmd.Flags().StringVar(&o.revision, "sonar-revision", o.commitSHA, sonarRevisionFlag)
+	cmd.Flags().StringVar(&o.pullRequest, "pull-request", "", sonarRevisionFlag)
 	cmd.Flags().IntVar(&o.maxWait, "max-wait", 30, sonarMaxWaitFlag)
 
 	err := RequireFlags(cmd, []string{"flow", "trail", "name", "sonar-api-token"})
@@ -184,7 +186,7 @@ func (o *attestSonarOptions) run(args []string) error {
 		return err
 	}
 
-	sc := sonar.NewSonarConfig(o.apiToken, o.workingDir, o.ceTaskURL, o.projectKey, o.serverURL, o.revision, o.maxWait)
+	sc := sonar.NewSonarConfig(o.apiToken, o.workingDir, o.ceTaskURL, o.projectKey, o.serverURL, o.revision, o.pullRequest, o.maxWait)
 
 	o.payload.SonarResults, err = sc.GetSonarResults(logger)
 	if err != nil {
