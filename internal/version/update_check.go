@@ -40,6 +40,7 @@ func checkForUpdateWithURL(currentVersion string, apiURL string) (string, error)
 		return "", nil // dev build — skip
 	}
 
+	// context provides the timeout and not http.Client
 	ctx, cancel := context.WithTimeout(context.Background(), updateCheckTimeout)
 	defer cancel()
 
