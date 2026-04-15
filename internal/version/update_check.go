@@ -50,7 +50,7 @@ func checkForUpdateWithURL(currentVersion string, apiURL string) (string, error)
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", fmt.Sprintf("kosli-cli/%s", currentVersion))
 
-	client := &http.Client{Timeout: updateCheckTimeout}
+	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", nil

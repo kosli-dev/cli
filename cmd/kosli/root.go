@@ -316,6 +316,12 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 		SilenceErrors:    true,
 		TraverseChildren: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			// You can bind cobra and viper in a few locations, but PersistencePreRunE on the root command works well
+			err := initialize(cmd, out, errOut)
+			if err != nil {
+				return err
+			}
+
 			// Fire update check in background — result collected in PostRun
 			// Skip if we're running version command
 			if cmd.Name() != "version" {
@@ -323,12 +329,6 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 					notice, _ := version.CheckForUpdate(version.GetVersion())
 					updateNoticeCh <- notice
 				}()
-			}
-
-			// You can bind cobra and viper in a few locations, but PersistencePreRunE on the root command works well
-			err := initialize(cmd, out, errOut)
-			if err != nil {
-				return err
 			}
 
 			if global.ApiToken == "DRY_RUN" {
