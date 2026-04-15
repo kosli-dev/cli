@@ -82,9 +82,47 @@ reporterConfig:
     # Omit this field for OpenShift environments to allow automatic UID assignment
     runAsUser: 1000
 
-# Uncomment the env variable below and replace <instance_name>, if you are on a single tenant Kosli instance
-# env:
-#   KOSLI_HOST: https://<instance_name>.kosli.com
+# -- map of plain environment variables to inject into the reporter container.
+# For a single-tenant Kosli instance, set KOSLI_HOST to https://<instance_name>.kosli.com.
+env: {}
+
+# -- additional environment variables to inject into the reporter container.
+# List of {name, value} or {name, valueFrom} entries, rendered verbatim into the container env.
+# Supports plain values and valueFrom (secretKeyRef / configMapKeyRef).
+# Note: entries here are appended after the chart's own env entries; on duplicate names the later entry wins.
+extraEnvVars: []
+  # - name: HTTPS_PROXY
+  #   value: http://proxy.corp:8080
+  # - name: MY_SECRET
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: my-secret
+  #       key: token
+
+# -- additional Pod-level volumes to attach to the reporter pod.
+# Rendered verbatim into the Pod spec alongside the chart's own volumes.
+# Use together with `extraVolumeMounts` to mount Secrets, ConfigMaps, or other volumes into the container.
+extraVolumes: []
+  # - name: corporate-ca
+  #   secret:
+  #     secretName: corporate-ca-bundle
+
+# -- additional container-level volumeMounts for the reporter container.
+# Rendered verbatim into the container spec alongside the chart's own mounts.
+extraVolumeMounts: []
+  # - name: corporate-ca
+  #   mountPath: /etc/ssl/certs/corporate
+  #   readOnly: true
+
+# -- convenience wrapper for mounting a corporate / custom CA bundle. See the
+# "Running behind a TLS-inspecting proxy" section of the README for usage.
+customCA:
+  # -- enable mounting a corporate/custom CA bundle into the trust store
+  enabled: false
+  # -- name of an existing Secret in the same namespace containing the CA bundle
+  secretName: ""
+  # -- key within the Secret that holds the PEM-formatted CA certificate (single cert or multi-cert PEM bundle)
+  key: "ca.crt"
 
 # -- any custom annotations to be added to the cronjob
 podAnnotations: {}

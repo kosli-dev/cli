@@ -18,15 +18,24 @@ spec:
       template:
         metadata:
           labels:
-            {{- range $key, $value :=  .Values.podLabels }}
-              {{ $key }}: {{ $value }}
-            {{ end }}
+            {{- range $key, $value := .Values.podLabels }}
+              {{ $key }}: {{ $value | quote }}
+            {{- end }}
         spec:
           serviceAccountName: {{ include "reporter.serviceAccountName" . }}
           volumes:
           - name: environments-config
             configMap:
               name: {{ include "reporter.fullname" . }}-environments-config
+          {{- if .Values.customCA.enabled }}
+          - name: custom-ca
+            secret:
+              secretName: {{ required "customCA.secretName is required when customCA.enabled is true" .Values.customCA.secretName | quote }}
+              defaultMode: 0644
+          {{- end }}
+          {{- with .Values.extraVolumes }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
           containers:
           - name: reporter
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -35,6 +44,15 @@ spec:
             - name: environments-config
               mountPath: /config
               readOnly: true
+            {{- if .Values.customCA.enabled }}
+            - name: custom-ca
+              mountPath: /etc/ssl/certs/kosli-custom-ca.crt
+              subPath: {{ required "customCA.key is required when customCA.enabled is true" .Values.customCA.key | quote }}
+              readOnly: true
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
             {{- if .Values.reporterConfig.securityContext }}
             securityContext:
               {{- if hasKey .Values.reporterConfig.securityContext "allowPrivilegeEscalation" }}
@@ -61,10 +79,13 @@ spec:
                   secretKeyRef:
                     name: {{ required ".Values.kosliApiToken.secretName is required." .Values.kosliApiToken.secretName }}
                     key: {{ .Values.kosliApiToken.secretKey | default "token" }}
-              {{- range $key, $value :=  .Values.env }}
+              {{- range $key, $value := .Values.env }}
               - name: {{ $key }}
-                value: {{ $value }}
-              {{ end }}
+                value: {{ $value | quote }}
+              {{- end }}
+              {{- with .Values.extraEnvVars }}
+              {{- toYaml . | nindent 14 }}
+              {{- end }}
             args:
             - snapshot
             - k8s
