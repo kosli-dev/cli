@@ -18,8 +18,8 @@ spec:
       template:
         metadata:
           labels:
-            {{- range $key, $value :=  .Values.podLabels }}
-              {{ $key }}: {{ $value }}
+            {{- range $key, $value := .Values.podLabels }}
+              {{ $key }}: {{ $value | quote }}
             {{- end }}
         spec:
           serviceAccountName: {{ include "reporter.serviceAccountName" . }}
@@ -79,7 +79,7 @@ spec:
                   secretKeyRef:
                     name: {{ required ".Values.kosliApiToken.secretName is required." .Values.kosliApiToken.secretName }}
                     key: {{ .Values.kosliApiToken.secretKey | default "token" }}
-              {{- range $key, $value :=  .Values.env }}
+              {{- range $key, $value := .Values.env }}
               - name: {{ $key }}
                 value: {{ $value | quote }}
               {{- end }}
