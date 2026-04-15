@@ -38,7 +38,7 @@ spec:
           {{- end }}
           containers:
           - name: reporter
-            image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+            image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
             imagePullPolicy: {{ .Values.image.pullPolicy }}
             volumeMounts:
             - name: environments-config
