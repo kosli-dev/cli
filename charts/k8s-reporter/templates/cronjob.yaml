@@ -47,7 +47,7 @@ spec:
             {{- if .Values.customCA.enabled }}
             - name: custom-ca
               mountPath: /etc/ssl/certs/kosli-custom-ca.crt
-              subPath: {{ .Values.customCA.key }}
+              subPath: {{ required "customCA.key is required when customCA.enabled is true" .Values.customCA.key }}
               readOnly: true
             {{- end }}
             {{- with .Values.extraVolumeMounts }}
@@ -82,7 +82,7 @@ spec:
               {{- range $key, $value :=  .Values.env }}
               - name: {{ $key }}
                 value: {{ $value }}
-              {{ end }}
+              {{- end }}
               {{- with .Values.extraEnvVars }}
               {{- toYaml . | nindent 14 }}
               {{- end }}
