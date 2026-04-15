@@ -373,10 +373,10 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 		return "", err
 	}
 	projectAnalysesRequest, err := http.NewRequest("GET", projectAnalysesURL, nil)
-	projectAnalysesRequest.Header.Add("Authorization", tokenHeader)
 	if err != nil {
 		return "", err
 	}
+	projectAnalysesRequest.Header.Add("Authorization", tokenHeader)
 
 	projectAnalysesResponse, err := httpClient.Do(projectAnalysesRequest)
 	if err != nil {
@@ -418,10 +418,10 @@ func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *Son
 		return err
 	}
 	projectAnalysesRequest, err := http.NewRequest("GET", projectAnalysesURL, nil)
-	projectAnalysesRequest.Header.Add("Authorization", tokenHeader)
 	if err != nil {
 		return err
 	}
+	projectAnalysesRequest.Header.Add("Authorization", tokenHeader)
 
 	projectAnalysesResponse, err := httpClient.Do(projectAnalysesRequest)
 	if err != nil {
@@ -500,10 +500,10 @@ func GetQualityGate(httpClient *http.Client, sonarResults *SonarResults, quality
 		return nil, err
 	}
 	qualityGateRequest, err := http.NewRequest("GET", qualityGateURL, nil)
-	qualityGateRequest.Header.Add("Authorization", tokenHeader)
 	if err != nil {
 		return nil, err
 	}
+	qualityGateRequest.Header.Add("Authorization", tokenHeader)
 
 	qualityGateResponse, err := httpClient.Do(qualityGateRequest)
 	if err != nil {
@@ -543,10 +543,10 @@ func GetTaskID(httpClient *http.Client, sonarResults *SonarResults, project *Pro
 		return err
 	}
 	CEActivityRequest, err := http.NewRequest("GET", CEActivityURL, nil)
-	CEActivityRequest.Header.Add("Authorization", tokenHeader)
 	if err != nil {
 		return err
 	}
+	CEActivityRequest.Header.Add("Authorization", tokenHeader)
 
 	CEActivityResponse, err := httpClient.Do(CEActivityRequest)
 	if err != nil {
