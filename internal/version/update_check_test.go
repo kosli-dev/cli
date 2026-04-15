@@ -23,13 +23,26 @@ func TestCheckForUpdate_NewVersionAvailable(t *testing.T) {
 }
 
 func TestCheckForUpdate_AlreadyLatest(t *testing.T) {
-	current := GetVersion() // always reflects the real built version
+	current := "v9.99.0"
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = fmt.Fprintf(w, `{"tag_name":"%s"}`, current)
 	}))
 	defer srv.Close()
 
 	notice, err := checkForUpdateWithURL(current, srv.URL)
+	assert.NoError(t, err)
+	assert.Empty(t, notice)
+}
+
+func TestCheckForUpdate_NewerThanLatest(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprintf(w, `{"tag_name":"v1.0.0"}`)
+	}))
+	defer srv.Close()
+
+	// User has a newer version — should NOT show an update notice
+	notice, err := checkForUpdateWithURL("v2.0.0", srv.URL)
 	assert.NoError(t, err)
 	assert.Empty(t, notice)
 }

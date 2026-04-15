@@ -8,6 +8,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	semver "github.com/Masterminds/semver/v3"
 )
 
 const (
@@ -48,7 +50,8 @@ func checkForUpdateWithURL(currentVersion string, apiURL string) (string, error)
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", fmt.Sprintf("kosli-cli/%s", currentVersion))
 
-	resp, err := http.DefaultClient.Do(req)
+	client := &http.Client{Timeout: updateCheckTimeout}
+	resp, err := client.Do(req)
 	if err != nil {
 		return "", nil
 	}
@@ -63,20 +66,19 @@ func checkForUpdateWithURL(currentVersion string, apiURL string) (string, error)
 		return "", nil
 	}
 
-	latestVersion := release.TagName
-	// Strip leading 'v' for semver comparison
-	if latestVersion != "" && latestVersion[0] == 'v' {
-		latestVersion = latestVersion[1:]
+	latestVer, err := semver.NewVersion(release.TagName)
+	if err != nil {
+		return "", nil
 	}
-	current := currentVersion
-	if len(current) > 0 && current[0] == 'v' {
-		current = current[1:]
+	currentVer, err := semver.NewVersion(currentVersion)
+	if err != nil {
+		return "", nil
 	}
 
-	if latestVersion != "" && current != latestVersion {
+	if latestVer.GreaterThan(currentVer) {
 		return fmt.Sprintf(
-			"\nA new version of the Kosli CLI is available: v%s (you have v%s)\nUpgrade: https://docs.kosli.com/getting_started/install/\n",
-			latestVersion, current,
+			"\nA new version of the Kosli CLI is available: %s (you have %s)\nUpgrade: https://docs.kosli.com/getting_started/install/\n",
+			release.TagName, currentVersion,
 		), nil
 	}
 	return "", nil
