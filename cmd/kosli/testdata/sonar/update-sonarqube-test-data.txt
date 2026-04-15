@@ -37,6 +37,23 @@ After 5 years all snapshots are deleted, including snapshots marked by version e
 7. In report-task.txt, replace the value of ceTaskId with the ID you just copied.
    - Also replace the id at the end of the ceTaskUrl with that ID.
 
+## Instructions for updating PR scan test data in .scannerwork-pr/report-task.txt
+
+The PR scan fixture works the same way as the main branch fixture, but the CE task must be from a pull request scan
+(i.e. the CE task API response will have a `pullRequest` field instead of `branch`).
+
+1. Find a recent pull request analysis for the project. You can use the project_pull_requests/list API:
+   - The endpoint is https://sonarcloud.io/api/project_pull_requests/list?project=cyber-dojo_differ
+   - This returns a JSON object with an array of pull requests, each with a key, analysisDate, and commit SHA.
+2. Choose a pull request that has a recent analysis.
+3. Find the CE task for that PR analysis using the CE activity API:
+   - The endpoint is https://sonarcloud.io/api/ce/activity?component=cyber-dojo_differ
+   - Look for a task with a `pullRequest` field matching the PR key from step 2.
+4. Copy the task ID and update .scannerwork-pr/report-task.txt:
+   - Replace the ceTaskId value with the new task ID.
+   - Replace the id at the end of the ceTaskUrl with the same ID.
+   - Update the pullRequest parameter in the dashboardUrl if the PR number has changed.
+
 ## Instructions for updating test data passed as CLI command arguments
 
 Instead of using the report-task.txt file, some of our sonar tests take the key of the SonarQube project and a git commit as arguments to the CLI command, which are then used to find the relevant analysis in SonarQube. This should rarely need to be updated, since once an analysis snapshot is 4 weeks old in SonarQube, it will remain in the database until at least 2 years.

@@ -174,7 +174,7 @@ func (sc *SonarConfig) GetSonarResults(logger *log.Logger) (*SonarResults, error
 		return nil, fmt.Errorf("API token must be given to retrieve data from SonarQube")
 	}
 
-	// Read the report-task.txt file (if it exists) to get the project key, server URL, dashboard URL and ceTaskURL
+	// Read the report-task.txt file (if it exists) to get the server URL, dashboard URL and ceTaskURL
 	err = sc.readFile(project, sonarResults, logger)
 	if err != nil {
 		if sc.CETaskUrl != "" {
