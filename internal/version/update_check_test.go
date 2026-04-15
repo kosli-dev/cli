@@ -25,6 +25,9 @@ func TestCheckForUpdate_NewVersionAvailable(t *testing.T) {
 func TestCheckForUpdate_AlreadyLatest(t *testing.T) {
 	current := "v9.99.0"
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprintf(w, `{"tag_name":"%s"}`, current)
+	}))
 		_, _ = fmt.Fprintf(w, `{"tag_name":"%s"}`, current)
 	}))
 	defer srv.Close()
