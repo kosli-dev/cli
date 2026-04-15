@@ -20,7 +20,7 @@ spec:
           labels:
             {{- range $key, $value :=  .Values.podLabels }}
               {{ $key }}: {{ $value }}
-            {{ end }}
+            {{- end }}
         spec:
           serviceAccountName: {{ include "reporter.serviceAccountName" . }}
           volumes:
@@ -30,7 +30,7 @@ spec:
           {{- if .Values.customCA.enabled }}
           - name: custom-ca
             secret:
-              secretName: {{ required "customCA.secretName is required when customCA.enabled is true" .Values.customCA.secretName }}
+              secretName: {{ required "customCA.secretName is required when customCA.enabled is true" .Values.customCA.secretName | quote }}
               defaultMode: 0644
           {{- end }}
           {{- with .Values.extraVolumes }}
@@ -47,7 +47,7 @@ spec:
             {{- if .Values.customCA.enabled }}
             - name: custom-ca
               mountPath: /etc/ssl/certs/kosli-custom-ca.crt
-              subPath: {{ required "customCA.key is required when customCA.enabled is true" .Values.customCA.key }}
+              subPath: {{ required "customCA.key is required when customCA.enabled is true" .Values.customCA.key | quote }}
               readOnly: true
             {{- end }}
             {{- with .Values.extraVolumeMounts }}
@@ -81,7 +81,7 @@ spec:
                     key: {{ .Values.kosliApiToken.secretKey | default "token" }}
               {{- range $key, $value :=  .Values.env }}
               - name: {{ $key }}
-                value: {{ $value }}
+                value: {{ $value | quote }}
               {{- end }}
               {{- with .Values.extraEnvVars }}
               {{- toYaml . | nindent 14 }}
