@@ -9,6 +9,7 @@ import (
 
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/security"
+	"github.com/kosli-dev/cli/internal/version"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -306,10 +307,14 @@ func getConfigFileFlagDefault() string {
 
 func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 	global = new(GlobalOpts)
+
+	var updateNoticeCh = make(chan string, 1) // buffered — goroutine never blocks
+
 	cmd := &cobra.Command{
 		Use:              "kosli",
 		Short:            "The Kosli CLI.",
 		Long:             globalUsage,
+		Version:          fmt.Sprintf("%#v", version.Get()),
 		SilenceUsage:     true,
 		SilenceErrors:    true,
 		TraverseChildren: true,
@@ -318,6 +323,19 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 			err := initialize(cmd, out, errOut)
 			if err != nil {
 				return err
+			}
+
+			// Fire update check in background — result collected in PostRun.
+			// Skip when:
+			//   - "version" subcommand: runs the check synchronously itself
+			//   - "__complete*": Cobra shell-completion commands fire on every Tab press
+			//   - --version flag: Cobra handles it internally and skips PersistentPostRun,
+			//     so the goroutine result would always be silently discarded
+			if cmd.Name() != "version" && !strings.HasPrefix(cmd.Name(), "__") && !cmd.Root().Flags().Changed("version") {
+				go func() {
+					notice, _ := version.CheckForUpdate(version.GetVersion())
+					updateNoticeCh <- notice
+				}()
 			}
 
 			if global.ApiToken == "DRY_RUN" {
@@ -342,7 +360,18 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 
 			return flagError
 		},
+		PersistentPostRun: func(cmd *cobra.Command, args []string) {
+			select {
+			case notice := <-updateNoticeCh:
+				if notice != "" {
+					_, _ = fmt.Fprint(errOut, notice) // stderr — doesn't pollute piped stdout
+				}
+			default:
+				// goroutine not done yet (took > command duration) — skip silently
+			}
+		},
 	}
+	cmd.SetVersionTemplate("{{.Version}}\n")
 	cmd.PersistentFlags().StringVarP(&global.ApiToken, "api-token", "a", "", apiTokenFlag)
 	cmd.PersistentFlags().StringVar(&global.Org, "org", "", orgFlag)
 	cmd.PersistentFlags().StringVarP(&global.Host, "host", "H", defaultHost, hostFlag)
@@ -354,7 +383,7 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 	// Add subcommands
 	cmd.AddCommand(
 
-		newVersionCmd(out),
+		newVersionCmd(out, errOut),
 		newFingerprintCmd(out),
 		newAssertCmd(out),
 		newStatusCmd(out),

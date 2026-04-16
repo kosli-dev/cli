@@ -10,7 +10,7 @@ import (
 
 const versionShortDesc = `Print the version of a Kosli CLI.  `
 const versionLongDesc = versionShortDesc + `
-The output will look something like this:  
+The output will look something like this:
 version.BuildInfo{Version:"v0.0.1", GitCommit:"fe51cd1e31e6a202cba7dead9552a6d418ded79a", GitTreeState:"clean", GoVersion:"go1.16.3"}
 
 - Version is the semantic version of the release.
@@ -24,15 +24,16 @@ type versionOptions struct {
 	short bool
 }
 
-func newVersionCmd(out io.Writer) *cobra.Command {
+func newVersionCmd(out, errOut io.Writer) *cobra.Command {
 	o := new(versionOptions)
 	cmd := &cobra.Command{
-		Use:   "version",
-		Short: versionShortDesc,
-		Long:  versionLongDesc,
-		Args:  cobra.NoArgs,
+		Use:     "version",
+		Aliases: []string{"ver"},
+		Short:   versionShortDesc,
+		Long:    versionLongDesc,
+		Args:    cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			o.run(out)
+			o.run(out, errOut)
 		},
 	}
 
@@ -41,8 +42,15 @@ func newVersionCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *versionOptions) run(out io.Writer) {
+func (o *versionOptions) run(out, errOut io.Writer) {
 	logger.Info(formatVersion(o.short))
+
+	// Synchronous check — version command always shows the update notice,
+	// unlike other commands where the check may be skipped if slower than the command.
+	notice, _ := version.CheckForUpdate(version.GetVersion())
+	if notice != "" {
+		_, _ = fmt.Fprint(errOut, notice) // stderr — doesn't pollute piped stdout
+	}
 }
 
 func formatVersion(short bool) string {
