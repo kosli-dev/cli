@@ -2,6 +2,7 @@ package policywizard
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -263,6 +264,9 @@ func validateYAMLExtension(s string) error {
 	ext := strings.ToLower(filepath.Ext(s))
 	if ext != ".yaml" && ext != ".yml" {
 		return fmt.Errorf("file must have a .yaml or .yml extension")
+	}
+	if _, err := os.Stat(s); err == nil {
+		return fmt.Errorf("file %q already exists; choose a different name", s)
 	}
 	return nil
 }
