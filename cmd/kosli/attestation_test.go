@@ -116,3 +116,54 @@ func TestMergeGitRepoInfo(t *testing.T) {
 		})
 	}
 }
+
+func TestParseAttestationNameTemplate(t *testing.T) {
+	tests := []struct {
+		name      string
+		template  string
+		wantP1    string
+		wantP2    string
+		wantError bool
+	}{
+		{
+			name:     "no dot returns whole string as p1",
+			template: "myattestation",
+			wantP1:   "myattestation",
+			wantP2:   "",
+		},
+		{
+			name:     "dot separates flow and attestation name",
+			template: "myflow.myattestation",
+			wantP1:   "myflow",
+			wantP2:   "myattestation",
+		},
+		{
+			name:      "leading dot is invalid",
+			template:  ".myattestation",
+			wantError: true,
+		},
+		{
+			name:      "trailing dot is invalid",
+			template:  "myflow.",
+			wantError: true,
+		},
+		{
+			name:      "multiple dots are invalid",
+			template:  "myflow.myattestation.extra",
+			wantError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p1, p2, err := parseAttestationNameTemplate(tt.template)
+			if tt.wantError {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, tt.wantP1, p1)
+			assert.Equal(t, tt.wantP2, p2)
+		})
+	}
+}
