@@ -124,6 +124,12 @@ func (suite *AttestSnykCommandTestSuite) TestAttestSnykCmd() {
 				--scan-results testdata/snyk_sarif.json %s`, suite.defaultKosliArguments),
 			golden: "Error: --annotate flag should be in the format key=value. Invalid key: 'foo.baz'. Key can only contain [A-Za-z0-9_]\n",
 		},
+		{
+			wantError: true,
+			name:      "fails when --name has invalid dot format",
+			cmd:       fmt.Sprintf("attest snyk --name .foo --scan-results testdata/snyk_sarif.json %s", suite.defaultKosliArguments),
+			golden:    "Error: failed to parse attestation name: invalid attestation name format: .foo\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

@@ -170,6 +170,12 @@ func (suite *AttestBitbucketPRCommandTestSuite) TestAttestBitbucketPRCmd() {
 			cmd:       fmt.Sprintf("attest pullrequest bitbucket --name foo --commit %s --bitbucket-access-token fake --bitbucket-workspace myworkspace --repository myrepo --repo-provider jenkins %s", suite.commitWithPR, suite.defaultKosliArguments),
 			golden:    "Error: --repo-provider 'jenkins' is not allowed. Must be one of: github, gitlab, bitbucket, azure-devops\n",
 		},
+		{
+			wantError: true,
+			name:      "19 fails when --name has invalid dot format",
+			cmd:       fmt.Sprintf("attest pullrequest bitbucket --name .foo --bitbucket-workspace myworkspace --repository myrepo %s", suite.defaultKosliArguments),
+			golden:    "Error: failed to parse attestation name: invalid attestation name format: .foo\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)
