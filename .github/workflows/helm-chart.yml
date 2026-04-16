@@ -42,9 +42,9 @@ jobs:
         run: make helm-lint
 
       - name: Setup Helm Docs
-        uses: gabe565/setup-helm-docs-action@v1
+        uses: gabe565/setup-helm-docs-action@d5c35bdc9133cfbea3b671acadf50a29029e87c2 # v1.0.4
         with:
-          version: 'latest'
+          version: 'latest' # v1.14.2
 
       - name: Generate Helm Docs
         run: |
