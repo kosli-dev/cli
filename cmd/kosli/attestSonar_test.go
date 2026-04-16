@@ -1,7 +1,13 @@
 package main
 
 import (
+	"archive/zip"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/testHelpers"
@@ -31,6 +37,7 @@ type AttestSonarCommandTestSuite struct {
 	flowName            string
 	trailName           string
 	artifactFingerprint string
+	prScannerWorkDir    string
 	suite.Suite
 	defaultKosliArguments string
 }
@@ -59,6 +66,8 @@ func (suite *AttestSonarCommandTestSuite) SetupTest() {
 	CreateFlowWithTemplate(suite.flowName, "testdata/valid_template.yml", suite.T())
 	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
 	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.T())
+
+	suite.prScannerWorkDir = createPRScannerWorkDir(suite.T())
 }
 
 func (suite *AttestSonarQubeCommandTestSuite) SetupTest() {
@@ -191,7 +200,7 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 		},
 		{
 			name:   "21 can attest sonar for a pull request scan using report-task.txt without --pull-request flag",
-			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork-pr %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir %s %s", suite.prScannerWorkDir, suite.defaultKosliArguments),
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
@@ -343,6 +352,122 @@ func (suite *AttestSonarQubeCommandTestSuite) TestAttestSonarQubeCmd() {
 	}
 
 	runTestCmd(suite.T(), tests)
+}
+
+// createPRScannerWorkDir downloads the report-task.txt from the latest
+// SonarCloud PR scan of cyber-dojo_differ. The file is uploaded as a GitHub
+// Actions artifact by the sonar-pr-trigger workflow in that repo.
+func createPRScannerWorkDir(t *testing.T) string {
+	t.Helper()
+
+	tmpDir := t.TempDir()
+	httpClient := &http.Client{}
+
+	// GitHub token is required to download workflow artifacts.
+	// Check GH_TOKEN (gh CLI), GITHUB_TOKEN (CI), in that order.
+	ghToken := os.Getenv("GH_TOKEN")
+	if ghToken == "" {
+		ghToken = os.Getenv("GITHUB_TOKEN")
+	}
+	if ghToken == "" {
+		t.Fatalf("GH_TOKEN or GITHUB_TOKEN must be set to download artifacts from GitHub")
+	}
+
+	// Find the artifact ID via GitHub API
+	req, err := http.NewRequest("GET",
+		"https://api.github.com/repos/cyber-dojo/differ/actions/artifacts?name=sonar-pr-report-task&per_page=1", nil)
+	if err != nil {
+		t.Fatalf("failed to create artifact list request: %v", err)
+	}
+	req.Header.Add("Authorization", "Bearer "+ghToken)
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		t.Fatalf("failed to list artifacts from GitHub: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("GitHub artifacts API returned status %d", resp.StatusCode)
+	}
+
+	var result struct {
+		Artifacts []struct {
+			ID      int    `json:"id"`
+			Expired bool   `json:"expired"`
+			Name    string `json:"name"`
+		} `json:"artifacts"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatalf("failed to decode artifacts response: %v", err)
+	}
+	if len(result.Artifacts) == 0 {
+		t.Fatalf("no sonar-pr-report-task artifact found in cyber-dojo/differ")
+	}
+	if result.Artifacts[0].Expired {
+		t.Fatalf("sonar-pr-report-task artifact has expired")
+	}
+
+	// Download the artifact zip
+	downloadURL := fmt.Sprintf("https://api.github.com/repos/cyber-dojo/differ/actions/artifacts/%d/zip", result.Artifacts[0].ID)
+	dlReq, err := http.NewRequest("GET", downloadURL, nil)
+	if err != nil {
+		t.Fatalf("failed to create artifact download request: %v", err)
+	}
+	dlReq.Header.Add("Authorization", "Bearer "+ghToken)
+
+	dlResp, err := httpClient.Do(dlReq)
+	if err != nil {
+		t.Fatalf("failed to download artifact: %v", err)
+	}
+	defer func() { _ = dlResp.Body.Close() }()
+
+	if dlResp.StatusCode != http.StatusOK {
+		t.Fatalf("artifact download returned status %d", dlResp.StatusCode)
+	}
+
+	// Save zip to temp file, then extract report-task.txt
+	zipPath := filepath.Join(tmpDir, "artifact.zip")
+	zipFile, err := os.Create(zipPath)
+	if err != nil {
+		t.Fatalf("failed to create temp zip file: %v", err)
+	}
+	if _, err := io.Copy(zipFile, dlResp.Body); err != nil {
+		_ = zipFile.Close()
+		t.Fatalf("failed to write artifact zip: %v", err)
+	}
+	_ = zipFile.Close()
+
+	zipReader, err := zip.OpenReader(zipPath)
+	if err != nil {
+		t.Fatalf("failed to open artifact zip: %v", err)
+	}
+	defer func() { _ = zipReader.Close() }()
+
+	for _, f := range zipReader.File {
+		if f.Name == "report-task.txt" {
+			rc, err := f.Open()
+			if err != nil {
+				t.Fatalf("failed to open report-task.txt in zip: %v", err)
+			}
+			outPath := filepath.Join(tmpDir, "report-task.txt")
+			outFile, err := os.Create(outPath)
+			if err != nil {
+				_ = rc.Close()
+				t.Fatalf("failed to create report-task.txt: %v", err)
+			}
+			_, err = io.Copy(outFile, rc)
+			_ = rc.Close()
+			_ = outFile.Close()
+			if err != nil {
+				t.Fatalf("failed to extract report-task.txt: %v", err)
+			}
+			return tmpDir
+		}
+	}
+
+	t.Fatalf("report-task.txt not found in artifact zip")
+	return ""
 }
 
 // In order for 'go test' to run this suite, we need to create
