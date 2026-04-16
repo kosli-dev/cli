@@ -27,6 +27,16 @@ jobs:
         id: tag
         uses: dawidd6/action-get-tag@v1
 
+      - name: Verify annotated tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG_TYPE=$(gh api repos/${{ github.repository }}/git/refs/tags/${{ steps.tag.outputs.tag }} --jq '.object.type')
+          if [ "$TAG_TYPE" != "tag" ]; then
+            echo "::error::Tag ${{ steps.tag.outputs.tag }} is lightweight, not annotated. Use 'make release' to cut releases."
+            exit 1
+          fi
+
       - name: Prepare
         id: prep
         run: |
