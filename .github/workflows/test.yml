@@ -164,6 +164,7 @@ jobs:
         INTEGRATION_TEST_AZURE_CLIENT_ID: ${{ secrets.azure_client_id }}
         KOSLI_SONAR_API_TOKEN: ${{ secrets.sonarqube_token }}
         KOSLI_API_TOKEN_PROD: ${{ secrets.kosli_querying_api_token }}
+        GH_TOKEN: ${{ secrets.github_access_token }}  # sonar tests download artifacts from cyber-dojo/differ
       run: |
         # some tests use git operations, therefore the git author on the CI VM needs to be set
         git config --global user.name "John Doe"
