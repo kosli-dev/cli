@@ -114,7 +114,7 @@ func addAttestationFlags(cmd *cobra.Command, o *CommonAttestationOptions, payloa
 	cmd.Flags().StringVar(&o.srcRepoRoot, "repo-root", ".", attestationRepoRootFlag)
 	cmd.Flags().StringVar(&payload.Description, "description", "", attestationDescription)
 	cmd.Flags().StringVar(&o.repoID, "repo-id", DefaultValue(ci, "repo-id"), repoIDFlag)
-	cmd.Flags().StringVar(&o.repoName, "repository", DefaultValue(ci, "repository"), repoNameFlag)
+	cmd.Flags().StringVar(&o.repoName, "repository", DefaultValue(ci, "repository"), attestationRepoNameFlag)
 	cmd.Flags().StringVar(&o.repoURL, "repo-url", DefaultValue(ci, "repo-url"), repoURLFlag)
 	cmd.Flags().StringVar(&o.repoProvider, "repo-provider", DefaultValue(ci, "repo-provider"), repoProviderFlag)
 

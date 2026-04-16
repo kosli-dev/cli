@@ -48,8 +48,11 @@ const attestArtifactShortDesc = `Attest an artifact creation to a Kosli flow.  `
 
 const attestArtifactLongDesc = attestArtifactShortDesc + `
 ` + fingerprintDesc + kosliIgnoreDesc + `
-This command requires access to a git repo to associate the artifact to the git commit it is originating from. 
-You can optionally redact some of the git commit data sent to Kosli using ^--redact-commit-info^`
+This command requires access to a git repo to associate the artifact to the git commit it is originating from.
+You can optionally redact some of the git commit data sent to Kosli using ^--redact-commit-info^.
+To record repository information, all three of ^--repo-id^, ^--repo-url^, and ^--repository^ must be set together.
+These are automatically set in GitHub Actions, GitLab CI, Bitbucket Pipelines, and Azure DevOps.
+In other CI systems, set them explicitly to capture repository metadata.`
 
 const attestArtifactExample = `
 # Attest that a file type artifact has been created, and let Kosli calculate its fingerprint
@@ -149,7 +152,7 @@ func newAttestArtifactCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringToStringVar(&o.externalURLs, "external-url", map[string]string{}, externalURLFlag)
 	cmd.Flags().StringToStringVar(&o.annotations, "annotate", map[string]string{}, annotationFlag)
 	cmd.Flags().StringVar(&o.repoID, "repo-id", DefaultValue(ci, "repo-id"), repoIDFlag)
-	cmd.Flags().StringVar(&o.repoName, "repository", DefaultValue(ci, "repository"), repoNameFlag)
+	cmd.Flags().StringVar(&o.repoName, "repository", DefaultValue(ci, "repository"), attestationRepoNameFlag)
 	cmd.Flags().StringVar(&o.repoURL, "repo-url", DefaultValue(ci, "repo-url"), repoURLFlag)
 	cmd.Flags().StringVar(&o.repoProvider, "repo-provider", DefaultValue(ci, "repo-provider"), repoProviderFlag)
 	addFingerprintFlags(cmd, o.fingerprintOptions)
