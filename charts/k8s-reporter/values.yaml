@@ -70,16 +70,25 @@ reporterConfig:
   # -- the http proxy url
   httpProxy: ""
 
-  # -- the security context for the reporter cronjob
-  # Set to null or {} to disable security context entirely (not recommended)
-  # For OpenShift, you can omit runAsUser to let OpenShift assign the UID
+  # -- the security context for the reporter cronjob.
+  # Set to null or {} to disable security context entirely (not recommended).
+  # For OpenShift with SCC, explicitly set runAsUser to null to let OpenShift
+  # assign the UID from the allowed range. Simply omitting runAsUser from your
+  # values override will not work because Helm deep-merges with these defaults.
+  # Example OpenShift override:
+  #   securityContext:
+  #     allowPrivilegeEscalation: false
+  #     runAsNonRoot: true
+  #     runAsUser: null
   securityContext:
     # -- whether to allow privilege escalation
     allowPrivilegeEscalation: false
     # -- whether to run as non root
     runAsNonRoot: true
-    # -- the user id to run as
-    # Omit this field for OpenShift environments to allow automatic UID assignment
+    # -- the user id to run as.
+    # For OpenShift environments with SCC, set to null (runAsUser: null) to allow
+    # automatic UID assignment. Simply omitting this field will not work due to
+    # Helm's deep merge with chart defaults.
     runAsUser: 1000
 
 # -- map of plain environment variables to inject into the reporter container.
