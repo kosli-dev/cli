@@ -2,12 +2,14 @@ package main
 
 import (
 	"archive/zip"
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/testHelpers"
@@ -38,6 +40,8 @@ type AttestSonarCommandTestSuite struct {
 	trailName           string
 	artifactFingerprint string
 	prScannerWorkDir    string
+	prKey               string
+	prCETaskURL         string
 	suite.Suite
 	defaultKosliArguments string
 }
@@ -67,7 +71,7 @@ func (suite *AttestSonarCommandTestSuite) SetupTest() {
 	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
 	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.T())
 
-	suite.prScannerWorkDir = createPRScannerWorkDir(suite.T())
+	suite.prScannerWorkDir, suite.prKey, suite.prCETaskURL = downloadPRScanData(suite.T())
 }
 
 func (suite *AttestSonarQubeCommandTestSuite) SetupTest() {
@@ -184,7 +188,7 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 		},
 		{
 			name:   "18 can retrieve scan results using report-task.txt file and pull-request flag",
-			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork --pull-request 359 %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork --pull-request %s %s", suite.prKey, suite.defaultKosliArguments),
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
@@ -195,7 +199,7 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 		},
 		{
 			name:   "20 can retrieve scan results using project key and pull-request flag",
-			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-project-key cyber-dojo_differ --pull-request 359 %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-project-key cyber-dojo_differ --pull-request %s %s", suite.prKey, suite.defaultKosliArguments),
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
@@ -228,7 +232,7 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 		},
 		{
 			name:   "26 can attest sonar for a pull request scan using --sonar-ce-task-url",
-			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-ce-task-url https://sonarcloud.io/api/ce/task?id=AZ2Qge89T7Y829rQbv87 %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-ce-task-url %s %s", suite.prCETaskURL, suite.defaultKosliArguments),
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
@@ -354,10 +358,11 @@ func (suite *AttestSonarQubeCommandTestSuite) TestAttestSonarQubeCmd() {
 	runTestCmd(suite.T(), tests)
 }
 
-// createPRScannerWorkDir downloads the report-task.txt from the latest
+// downloadPRScanData downloads the report-task.txt from the latest
 // SonarCloud PR scan of cyber-dojo_differ. The file is uploaded as a GitHub
 // Actions artifact by the sonar-pr-trigger workflow in that repo.
-func createPRScannerWorkDir(t *testing.T) string {
+// Returns the directory containing report-task.txt, the PR key, and the CE task URL.
+func downloadPRScanData(t *testing.T) (workDir, prKey, ceTaskURL string) {
 	t.Helper()
 
 	tmpDir := t.TempDir()
@@ -462,12 +467,47 @@ func createPRScannerWorkDir(t *testing.T) string {
 			if err != nil {
 				t.Fatalf("failed to extract report-task.txt: %v", err)
 			}
-			return tmpDir
+
+			prKey, ceTaskURL = parsePRReportTask(t, outPath)
+			return tmpDir, prKey, ceTaskURL
 		}
 	}
 
 	t.Fatalf("report-task.txt not found in artifact zip")
-	return ""
+	return "", "", ""
+}
+
+// parsePRReportTask extracts the PR key and CE task URL from a report-task.txt file.
+func parsePRReportTask(t *testing.T, path string) (prKey, ceTaskURL string) {
+	t.Helper()
+
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatalf("failed to open %s: %v", path, err)
+	}
+	defer func() { _ = f.Close() }()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "ceTaskUrl=") {
+			ceTaskURL = strings.TrimPrefix(line, "ceTaskUrl=")
+		}
+		if strings.HasPrefix(line, "dashboardUrl=") {
+			// dashboardUrl contains ...&pullRequest=<key>
+			if i := strings.Index(line, "pullRequest="); i != -1 {
+				prKey = line[i+len("pullRequest="):]
+			}
+		}
+	}
+
+	if prKey == "" {
+		t.Fatalf("pullRequest not found in %s", path)
+	}
+	if ceTaskURL == "" {
+		t.Fatalf("ceTaskUrl not found in %s", path)
+	}
+	return prKey, ceTaskURL
 }
 
 // In order for 'go test' to run this suite, we need to create
