@@ -161,6 +161,12 @@ func (suite *AttestGithubPRCommandTestSuite) TestAttestGithubPRCmd() {
 			cmd:       fmt.Sprintf("attest pullrequest github --name foo --commit %s --github-token fake --github-org myorg --repository myrepo --repo-provider jenkins %s", suite.commitWithPR, suite.defaultKosliArguments),
 			golden:    "Error: --repo-provider 'jenkins' is not allowed. Must be one of: github, gitlab, bitbucket, azure-devops\n",
 		},
+		{
+			wantError: true,
+			name:      "20 fails when --name has invalid dot format",
+			cmd:       fmt.Sprintf("attest pullrequest github --name .foo --github-org myorg --commit %s --github-token fake --repository myrepo %s", suite.commitWithPR, suite.defaultKosliArguments),
+			golden:    "Error: failed to parse attestation name: invalid attestation name format: .foo\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

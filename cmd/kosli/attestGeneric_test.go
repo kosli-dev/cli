@@ -190,6 +190,12 @@ func (suite *AttestGenericCommandTestSuite) TestAttestGenericCmd() {
 			cmd:    fmt.Sprintf("attest generic --name foo --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --repo-id test-repo-id --repository test-repo-name --repo-url https://github.com/org/repo --repo-provider github %s", suite.defaultKosliArguments),
 			golden: "generic attestation 'foo' is reported to trail: test-123\n",
 		},
+		{
+			wantError: true,
+			name:      "fails when --name has invalid dot format",
+			cmd:       fmt.Sprintf("attest generic --name .foo %s", suite.defaultKosliArguments),
+			golden:    "Error: failed to parse attestation name: invalid attestation name format: .foo\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

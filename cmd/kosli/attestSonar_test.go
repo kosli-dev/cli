@@ -247,6 +247,12 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-ce-task-url https://sonarcloud.io/api/ce/task?id=AZERk4uWpzGpahwkB9ac %s", suite.defaultKosliArguments),
 			golden:    "Error: No activity found for task 'AZERk4uWpzGpahwkB9ac' on https://sonarcloud.io. \nSonarQube may be experiencing problems, please check https://status.sonarqube.com/ and try again later. \nOtherwise if you are attesting an older scan, the snapshot may have been deleted by SonarQube\n",
 		},
+		{
+			wantError: true,
+			name:      "29 fails when --name has invalid dot format",
+			cmd:       fmt.Sprintf("attest sonar --name .foo %s", suite.defaultKosliArguments),
+			golden:    "Error: failed to parse attestation name: invalid attestation name format: .foo\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)
@@ -352,6 +358,12 @@ func (suite *AttestSonarQubeCommandTestSuite) TestAttestSonarQubeCmd() {
 			name:   "can retrieve scan results using report-task.txt file and pull-request flag",
 			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarqube/.scannerwork --pull-request 359 --sonar-server-url http://example.com %s", suite.defaultKosliArguments),
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
+		},
+		{
+			wantError: true,
+			name:      "fails when --name has invalid dot format",
+			cmd:       fmt.Sprintf("attest sonar --name .foo %s", suite.defaultKosliArguments),
+			golden:    "Error: failed to parse attestation name: invalid attestation name format: .foo\n",
 		},
 	}
 
