@@ -18,7 +18,7 @@ type VersionTestSuite struct {
 
 // reset the variables before each test
 func (suite *VersionTestSuite) SetupTest() {
-	version = "main"
+	version = "dev"
 	metadata = ""
 	gitCommit = ""
 	gitTreeState = ""
@@ -37,18 +37,18 @@ func (suite *VersionTestSuite) TestGetVersion() {
 		want string
 	}{
 		{
-			name: "version is main when metadata is empty.",
+			name: "version is dev when metadata is empty.",
 			args: args{
 				metadata: "",
 			},
-			want: "main",
+			want: "dev",
 		},
 		{
 			name: "version is suffixed with metadat when metadata is not empty.",
 			args: args{
 				metadata: "bla",
 			},
-			want: "main+bla",
+			want: "dev+bla",
 		},
 		{
 			name: "default version is overwritten when provided and there is metadata.",

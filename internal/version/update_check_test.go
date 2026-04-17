@@ -55,7 +55,7 @@ func TestCheckForUpdate_OptOut(t *testing.T) {
 
 func TestCheckForUpdate_DevBuild(t *testing.T) {
 	// dev builds should be skipped without any HTTP call
-	notice, err := checkForUpdateWithURL("main", "http://should-not-be-called")
+	notice, err := checkForUpdateWithURL("dev", "http://should-not-be-called")
 	assert.NoError(t, err)
 	assert.Empty(t, notice)
 }
