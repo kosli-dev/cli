@@ -62,6 +62,7 @@ func (suite *UpdateNoticeTestSuite) TestVersionFlagPrintsNotice() {
 	cmd, err := newRootCmd(io.Discard, &errBuf, []string{"--version"})
 	suite.Require().NoError(err)
 
+	cmd.SetArgs([]string{"--version"})
 	suite.NoError(innerMain(cmd, []string{"kosli", "--version"}))
 	suite.Contains(errBuf.String(), "A new version")
 }
