@@ -60,7 +60,7 @@ func TestCheckForUpdate_DevBuild(t *testing.T) {
 	assert.Empty(t, notice)
 }
 
-func TestCheckForUpdate_UnreleasedBuild(t *testing.T) {
+func TestCheckForUpdate_DevBuildWithMetadata(t *testing.T) {
 	notice, err := checkForUpdateWithURL("dev+unreleased", "http://should-not-be-called")
 	assert.NoError(t, err)
 	assert.Empty(t, notice)
