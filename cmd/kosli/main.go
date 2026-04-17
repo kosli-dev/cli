@@ -7,6 +7,7 @@ import (
 
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
+	"github.com/kosli-dev/cli/internal/version"
 	"github.com/spf13/cobra"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
@@ -43,6 +44,15 @@ func main() {
 func innerMain(cmd *cobra.Command, args []string) error {
 	err := cmd.Execute()
 	if err == nil {
+		// Cobra handles --version internally and bypasses all hooks, so we print
+		// the update notice here after the fact.
+		if cmd.Root().Flags().Changed("version") {
+			notice, _ := version.CheckForUpdate(version.GetVersion())
+			if notice != "" {
+				_, _ = fmt.Fprint(logger.ErrOut, notice)
+			}
+		}
+
 		return nil
 	}
 
