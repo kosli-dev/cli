@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/version"
@@ -46,6 +48,22 @@ func (suite *UpdateNoticeTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf("--host %s --org %s --api-token %s",
 		global.Host, global.Org, global.ApiToken)
+}
+
+func (suite *UpdateNoticeTestSuite) TestVersionFlagPrintsNotice() {
+	const fakeNotice = "\nA new version of the Kosli CLI is available: v9.99.0 (you have v0.0.1)\nUpgrade: https://docs.kosli.com/getting_started/install/\n"
+	defer version.SetCheckForUpdateOverride(func(string) (string, error) { return fakeNotice, nil })()
+
+	var errBuf bytes.Buffer
+	origErrOut := logger.ErrOut
+	logger.ErrOut = &errBuf
+	defer func() { logger.ErrOut = origErrOut }()
+
+	cmd, err := newRootCmd(io.Discard, &errBuf, []string{"--version"})
+	suite.Require().NoError(err)
+
+	suite.NoError(innerMain(cmd, []string{"kosli", "--version"}))
+	suite.Contains(errBuf.String(), "A new version")
 }
 
 func (suite *UpdateNoticeTestSuite) TestVersionNoticeSkippedForJSON() {
