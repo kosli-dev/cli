@@ -173,7 +173,7 @@ func (suite *AttestBitbucketPRCommandTestSuite) TestAttestBitbucketPRCmd() {
 		{
 			wantError: true,
 			name:      "19 fails when --name has invalid dot format",
-			cmd:       fmt.Sprintf("attest pullrequest bitbucket --name .foo --bitbucket-workspace myworkspace --repository myrepo %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest pullrequest bitbucket --name .foo --bitbucket-workspace myworkspace --commit %s --bitbucket-access-token fake --repository myrepo %s", suite.commitWithPR, suite.defaultKosliArguments),
 			golden:    "Error: failed to parse attestation name: invalid attestation name format: .foo\n",
 		},
 	}

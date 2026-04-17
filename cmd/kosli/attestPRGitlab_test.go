@@ -166,7 +166,7 @@ func (suite *AttestGitlabPRCommandTestSuite) TestAttestGitlabPRCmd() {
 		{
 			wantError: true,
 			name:      "18 fails when --name has invalid dot format",
-			cmd:       fmt.Sprintf("attest pullrequest gitlab --name .foo --gitlab-org myorg --repository myrepo %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest pullrequest gitlab --name .foo --gitlab-org myorg --commit %s --gitlab-token fake --repository myrepo %s", suite.commitWithPR, suite.defaultKosliArguments),
 			golden:    "Error: failed to parse attestation name: invalid attestation name format: .foo\n",
 		},
 	}
