@@ -39,7 +39,7 @@ func CheckForUpdate(currentVersion string) (string, error) {
 // so it never blocks or fails a command.
 // Set KOSLI_NO_UPDATE_CHECK=1 to skip entirely.
 func checkForUpdateWithURL(currentVersion string, apiURL string) (string, error) {
-	// checks disabled -skip
+	// checks disabled — skip
 	if os.Getenv("KOSLI_NO_UPDATE_CHECK") != "" {
 		return "", nil
 	}
