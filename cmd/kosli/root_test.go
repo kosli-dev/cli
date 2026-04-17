@@ -39,6 +39,11 @@ type UpdateNoticeTestSuite struct {
 }
 
 func (suite *UpdateNoticeTestSuite) SetupTest() {
+	global = &GlobalOpts{
+		ApiToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6ImNkNzg4OTg5In0.e8i_lA_QrEhFncb05Xw6E_tkCHU9QfcY4OLTVUCHffY",
+		Org:      "docs-cmd-test-user",
+		Host:     "http://localhost:8001",
+	}
 	suite.defaultKosliArguments = fmt.Sprintf("--host %s --org %s --api-token %s",
 		global.Host, global.Org, global.ApiToken)
 }
@@ -46,9 +51,7 @@ func (suite *UpdateNoticeTestSuite) SetupTest() {
 func (suite *UpdateNoticeTestSuite) TestVersionNoticeSkippedForJSON() {
 	const fakeNotice = "\nA new version of the Kosli CLI is available: v9.99.0 (you have v0.0.1)\nUpgrade: https://docs.kosli.com/getting_started/install/\n"
 
-	orig := version.OverrideCheckForUpdate
-	version.OverrideCheckForUpdate = func(string) (string, error) { return fakeNotice, nil }
-	defer func() { version.OverrideCheckForUpdate = orig }()
+	defer version.SetCheckForUpdateOverride(func(string) (string, error) { return fakeNotice, nil })()
 
 	// with --output json: no notice in stderr
 	_, _, _, stderr, err := executeCommandC(

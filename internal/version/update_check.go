@@ -21,13 +21,22 @@ type githubRelease struct {
 	TagName string `json:"tag_name"`
 }
 
-// OverrideCheckForUpdate may be set in tests to replace the real HTTP check.
-var OverrideCheckForUpdate func(currentVersion string) (string, error)
+// overrideCheckForUpdate may be set by tests (via SetCheckForUpdateOverride)
+// to replace the real HTTP check.
+var overrideCheckForUpdate func(currentVersion string) (string, error)
+
+// SetCheckForUpdateOverride replaces the implementation used by CheckForUpdate
+// with fn and returns a function that restores the previous value. Tests only.
+func SetCheckForUpdateOverride(fn func(currentVersion string) (string, error)) func() {
+	old := overrideCheckForUpdate
+	overrideCheckForUpdate = fn
+	return func() { overrideCheckForUpdate = old }
+}
 
 // CheckForUpdate is the public entry point — uses the real GitHub URL
 func CheckForUpdate(currentVersion string) (string, error) {
-	if OverrideCheckForUpdate != nil {
-		return OverrideCheckForUpdate(currentVersion)
+	if overrideCheckForUpdate != nil {
+		return overrideCheckForUpdate(currentVersion)
 	}
 	return checkForUpdateWithURL(currentVersion, githubLatestReleaseURL)
 }
