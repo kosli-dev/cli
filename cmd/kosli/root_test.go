@@ -52,7 +52,6 @@ func (suite *UpdateNoticeTestSuite) SetupTest() {
 
 func (suite *UpdateNoticeTestSuite) TestVersionFlagPrintsNotice() {
 	const fakeNotice = "\nA new version of the Kosli CLI is available: v9.99.0 (you have v0.0.1)\nUpgrade: https://docs.kosli.com/getting_started/install/\n"
-	defer version.SetCheckForUpdateOverride(func(string) (string, error) { return fakeNotice, nil })()
 
 	var errBuf bytes.Buffer
 	origErrOut := logger.ErrOut
