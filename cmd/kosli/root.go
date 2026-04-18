@@ -334,7 +334,7 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 			if cmd.Name() != "version" && !strings.HasPrefix(cmd.Name(), "__") {
 				f := cmd.Flags().Lookup("output")
 				// skip version checks if using JSON output (programmatic usage)
-				if f == nil || f.Value.String() != "json" {
+				if f == nil || f.Value.String() == "table" {
 					go func() {
 						notice, _ := version.CheckForUpdate(version.GetVersion())
 						updateNoticeCh <- notice
