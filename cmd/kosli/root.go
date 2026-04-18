@@ -332,8 +332,7 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 			// Note: --version is handled by Cobra before any hooks run, so it never
 			// reaches this point; innerMain handles the notice for that case.
 			if cmd.Name() != "version" && !strings.HasPrefix(cmd.Name(), "__") {
-				f := cmd.Flags().Lookup("output")
-				// skip version checks if using JSON output (programmatic usage)
+				// skip version checks if not using table output (programmatic usage)
 				if f == nil || f.Value.String() == "table" {
 					go func() {
 						notice, _ := version.CheckForUpdate(version.GetVersion())
