@@ -23,20 +23,32 @@ type githubRelease struct {
 
 // overrideCheckForUpdate may be set by tests (via SetCheckForUpdateOverride)
 // to replace the real HTTP check.
-var overrideCheckForUpdate func(currentVersion string) (string, error)
+var (
+	overrideMu             sync.RWMutex
+	overrideCheckForUpdate func(currentVersion string) (string, error)
+)
 
 // SetCheckForUpdateOverride replaces the implementation used by CheckForUpdate
 // with fn and returns a function that restores the previous value. Tests only.
 func SetCheckForUpdateOverride(fn func(currentVersion string) (string, error)) func() {
+	overrideMu.Lock()
 	old := overrideCheckForUpdate
 	overrideCheckForUpdate = fn
-	return func() { overrideCheckForUpdate = old }
+	overrideMu.Unlock()
+	return func() {
+		overrideMu.Lock()
+		overrideCheckForUpdate = old
+		overrideMu.Unlock()
+	}
 }
 
 // CheckForUpdate is the public entry point — uses the real GitHub URL
 func CheckForUpdate(currentVersion string) (string, error) {
-	if overrideCheckForUpdate != nil {
-		return overrideCheckForUpdate(currentVersion)
+	overrideMu.RLock()
+	fn := overrideCheckForUpdate
+	overrideMu.RUnlock()
+	if fn != nil {
+		return fn(currentVersion)
 	}
 	return checkForUpdateWithURL(currentVersion, githubLatestReleaseURL)
 }
