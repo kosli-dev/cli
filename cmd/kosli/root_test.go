@@ -62,8 +62,15 @@ func (suite *UpdateNoticeTestSuite) TestVersionFlagPrintsNotice() {
 	cmd, err := newRootCmd(io.Discard, &errBuf, []string{"--version"})
 	suite.Require().NoError(err)
 
+	var called bool
+	defer version.SetCheckForUpdateOverride(func(string) (string, error) {
+		called = true
+		return fakeNotice, nil
+	})()
+
 	cmd.SetArgs([]string{"--version"})
 	suite.NoError(innerMain(cmd, []string{"kosli", "--version"}))
+	suite.True(called, "expected CheckForUpdate override to be called for --version")
 	suite.Contains(errBuf.String(), "A new version")
 }
 
