@@ -36,8 +36,6 @@ func (f *FakeLambdaClient) ListFunctions(_ context.Context, params *lambda.ListF
 			pageSize = maxItems
 		}
 	}
-		pageSize = int(*params.MaxItems)
-	}
 
 	start := 0
 	if params.Marker != nil {
