@@ -334,7 +334,7 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 			// reaches this point; innerMain handles the notice for that case.
 			if cmd.Name() != "version" && !strings.HasPrefix(cmd.Name(), "__") && !global.Debug {
 				f := cmd.Flags().Lookup("output")
-				// skip version checks if not using table output (programmatic usage)
+				// skip version checks for programmatic output (avoid polluting JSON in CI pipelines)
 				if f == nil || f.Value.String() == "table" {
 					go func() {
 						notice, _ := version.CheckForUpdate(version.GetVersion())
