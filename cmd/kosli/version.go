@@ -47,9 +47,12 @@ func (o *versionOptions) run(out, errOut io.Writer) {
 
 	// Synchronous check — version command always shows the update notice,
 	// unlike other commands where the check may be skipped if slower than the command.
-	notice, _ := version.CheckForUpdate(version.GetVersion())
-	if notice != "" {
-		_, _ = fmt.Fprint(errOut, notice) // stderr — doesn't pollute piped stdout
+	// Skip wehn in debug mode
+	if !global.Debug {
+		notice, _ := version.CheckForUpdate(version.GetVersion())
+		if notice != "" {
+			_, _ = fmt.Fprint(errOut, notice) // stderr — doesn't pollute piped stdout
+		}
 	}
 }
 

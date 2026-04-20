@@ -46,10 +46,15 @@ func innerMain(cmd *cobra.Command, args []string) error {
 	if err == nil {
 		// Cobra handles --version internally and bypasses all hooks, so we print
 		// the update notice here after the fact.
+		// initialize() also never runs, so global.Debug is not set — check
+		// the flag and KOSLI_DEBUG env var directly.
 		if cmd.Root().Flags().Changed("version") {
-			notice, _ := version.CheckForUpdate(version.GetVersion())
-			if notice != "" {
-				_, _ = fmt.Fprint(logger.ErrOut, notice)
+			debugEnabled := cmd.Root().Flags().Changed("debug") || os.Getenv("KOSLI_DEBUG") != ""
+			if !debugEnabled {
+				notice, _ := version.CheckForUpdate(version.GetVersion())
+				if notice != "" {
+					_, _ = fmt.Fprint(logger.ErrOut, notice)
+				}
 			}
 		}
 

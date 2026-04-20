@@ -329,9 +329,10 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 			// Skip when:
 			//   - "version" subcommand: runs the check synchronously itself
 			//   - "__complete*": Cobra shell-completion commands fire on every Tab press
+			//   - debug mode: noisy HTTP traffic is undesirable when debugging
 			// Note: --version is handled by Cobra before any hooks run, so it never
 			// reaches this point; innerMain handles the notice for that case.
-			if cmd.Name() != "version" && !strings.HasPrefix(cmd.Name(), "__") {
+			if cmd.Name() != "version" && !strings.HasPrefix(cmd.Name(), "__") && !global.Debug {
 				f := cmd.Flags().Lookup("output")
 				// skip version checks if not using table output (programmatic usage)
 				if f == nil || f.Value.String() == "table" {
