@@ -102,6 +102,7 @@ func TestCheckForUpdate_Non200(t *testing.T) {
 }
 
 func TestSetCheckForUpdateOverride_Race(t *testing.T) {
+	t.Setenv("KOSLI_NO_UPDATE_CHECK", "1") // prevent real HTTP calls when override is momentarily nil
 	fake := func(string) (string, error) { return "notice", nil }
 	var wg sync.WaitGroup
 	for i := 0; i < 50; i++ {

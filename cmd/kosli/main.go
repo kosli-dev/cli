@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	log "github.com/kosli-dev/cli/internal/logger"
@@ -49,7 +50,13 @@ func innerMain(cmd *cobra.Command, args []string) error {
 		// initialize() also never runs, so global.Debug is not set — check
 		// the flag and KOSLI_DEBUG env var directly.
 		if cmd.Root().Flags().Changed("version") {
-			debugEnabled := cmd.Root().Flags().Changed("debug") || os.Getenv("KOSLI_DEBUG") != ""
+			debugEnabled := cmd.Root().Flags().Changed("debug")
+			// match Viper internal bool env coercion
+			if !debugEnabled {
+				if v, err := strconv.ParseBool(os.Getenv("KOSLI_DEBUG")); err == nil {
+					debugEnabled = v
+				}
+			}
 			if !debugEnabled {
 				notice, _ := version.CheckForUpdate(version.GetVersion())
 				if notice != "" {
