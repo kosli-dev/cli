@@ -30,7 +30,12 @@ func (f *FakeLambdaClient) pageSize() int {
 
 func (f *FakeLambdaClient) ListFunctions(_ context.Context, params *lambda.ListFunctionsInput, _ ...func(*lambda.Options)) (*lambda.ListFunctionsOutput, error) {
 	pageSize := f.pageSize()
-	if params.MaxItems != nil && int(*params.MaxItems) < pageSize {
+	if params.MaxItems != nil {
+		maxItems := int(*params.MaxItems)
+		if maxItems < pageSize {
+			pageSize = maxItems
+		}
+	}
 		pageSize = int(*params.MaxItems)
 	}
 
