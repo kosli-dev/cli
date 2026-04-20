@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	semver "github.com/Masterminds/semver/v3"
@@ -14,15 +15,42 @@ import (
 
 const (
 	githubLatestReleaseURL = "https://api.github.com/repos/kosli-dev/cli/releases/latest"
-	updateCheckTimeout     = 2 * time.Second
+	updateCheckTimeout     = 1 * time.Second // max timeout when checking version
 )
 
 type githubRelease struct {
 	TagName string `json:"tag_name"`
 }
 
+// overrideCheckForUpdate may be set by tests (via SetCheckForUpdateOverride)
+// to replace the real HTTP check.
+var (
+	overrideMu             sync.RWMutex
+	overrideCheckForUpdate func(currentVersion string) (string, error)
+)
+
+// SetCheckForUpdateOverride replaces the implementation used by CheckForUpdate
+// with fn and returns a function that restores the previous value. Tests only.
+func SetCheckForUpdateOverride(fn func(currentVersion string) (string, error)) func() {
+	overrideMu.Lock()
+	old := overrideCheckForUpdate
+	overrideCheckForUpdate = fn
+	overrideMu.Unlock()
+	return func() {
+		overrideMu.Lock()
+		overrideCheckForUpdate = old
+		overrideMu.Unlock()
+	}
+}
+
 // CheckForUpdate is the public entry point — uses the real GitHub URL
 func CheckForUpdate(currentVersion string) (string, error) {
+	overrideMu.RLock()
+	fn := overrideCheckForUpdate
+	overrideMu.RUnlock()
+	if fn != nil {
+		return fn(currentVersion)
+	}
 	return checkForUpdateWithURL(currentVersion, githubLatestReleaseURL)
 }
 
@@ -33,11 +61,13 @@ func CheckForUpdate(currentVersion string) (string, error) {
 // so it never blocks or fails a command.
 // Set KOSLI_NO_UPDATE_CHECK=1 to skip entirely.
 func checkForUpdateWithURL(currentVersion string, apiURL string) (string, error) {
+	// checks disabled — skip
 	if os.Getenv("KOSLI_NO_UPDATE_CHECK") != "" {
 		return "", nil
 	}
-	if currentVersion == "" || strings.HasPrefix(currentVersion, "main") || strings.Contains(currentVersion, "+unreleased") {
-		return "", nil // dev build — skip
+	// dev build — skip
+	if currentVersion == "" || strings.HasPrefix(currentVersion, "dev") {
+		return "", nil
 	}
 
 	// context provides the timeout and not http.Client
