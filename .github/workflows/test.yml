@@ -88,7 +88,7 @@ jobs:
         check-latest: true
 
     - name: setup-kosli-cli
-      uses: kosli-dev/setup-cli-action@v3
+      uses: kosli-dev/setup-cli-action@v4
       with:
         version:
           ${{ vars.KOSLI_CLI_VERSION }}
@@ -135,7 +135,7 @@ jobs:
         check-latest: true
 
     - name: setup-kosli-cli
-      uses: kosli-dev/setup-cli-action@v3
+      uses: kosli-dev/setup-cli-action@v4
       with:
         version:
           ${{ vars.KOSLI_CLI_VERSION }}
@@ -208,7 +208,7 @@ jobs:
       uses: snyk/actions/setup@master
 
     - name: setup-kosli-cli
-      uses: kosli-dev/setup-cli-action@v3
+      uses: kosli-dev/setup-cli-action@v4
       with:
         version:
           ${{ vars.KOSLI_CLI_VERSION }}
@@ -252,7 +252,7 @@ jobs:
       uses: snyk/actions/setup@master
 
     - name: setup-kosli-cli
-      uses: kosli-dev/setup-cli-action@v3
+      uses: kosli-dev/setup-cli-action@v4
       with:
         version:
           ${{ vars.KOSLI_CLI_VERSION }}

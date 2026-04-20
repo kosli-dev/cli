@@ -50,7 +50,7 @@ jobs:
             fetch-depth: 0
 
         - name: setup-kosli-cli
-          uses: kosli-dev/setup-cli-action@v3
+          uses: kosli-dev/setup-cli-action@v4
           with:
             version: ${{ vars.KOSLI_CLI_VERSION }}
 
