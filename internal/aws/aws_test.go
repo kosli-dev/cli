@@ -300,7 +300,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			skipOrSetCreds(suite.T(), t.requireEnvVars, t.creds)
+			skipIfCredsUnset(suite.T(), t.requireEnvVars, t.creds)
 			data, err := t.creds.GetLambdaPackageData(t.filter)
 			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetLambdaPackageData() error = %v, wantErr %v", err, t.wantErr)
@@ -436,7 +436,7 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			skipOrSetCreds(suite.T(), t.requireEnvVars, t.creds)
+			skipIfCredsUnset(suite.T(), t.requireEnvVars, t.creds)
 			data, err := t.creds.GetS3Data(t.bucketName, t.includePaths, t.excludePaths, logger.NewStandardLogger())
 			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetS3Data() error = %v, wantErr %v", err, t.wantErr)
@@ -579,7 +579,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			skipOrSetCreds(suite.T(), t.requireEnvVars, t.creds)
+			skipIfCredsUnset(suite.T(), t.requireEnvVars, t.creds)
 			if t.clusterFilter == nil {
 				t.clusterFilter = new(filters.ResourceFilterOptions)
 			}
@@ -814,7 +814,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageDataFromClient() {
 	}
 }
 
-func skipOrSetCreds(T *testing.T, requireEnvVars bool, creds *AWSStaticCreds) {
+func skipIfCredsUnset(T *testing.T, requireEnvVars bool, creds *AWSStaticCreds) {
 	if requireEnvVars {
 		// skips the test case if it requires env vars and they are not set
 		testHelpers.SkipIfEnvVarUnset(T, []string{"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"})

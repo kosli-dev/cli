@@ -79,5 +79,5 @@ func (f *FakeLambdaClient) GetFunctionConfiguration(_ context.Context, params *l
 			}, nil
 		}
 	}
-	return nil, fmt.Errorf("function not found: %s", *params.FunctionName)
+	return nil, fmt.Errorf("function not found: %s", *params.FunctionName) // Real AWS returns *types.ResourceNotFoundException
 }
