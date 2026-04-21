@@ -54,3 +54,63 @@
 - [x] Slice 2: Add `--params` flag across all three commands
 - [x] Slice 3: Show params in `--show-input` output
 - [x] Slice 4: Update help text and examples
+
+## Fakes & contract tests for cloud provider integrations (#758)
+
+### Lambda (done — this PR)
+
+- [x] Slice 1: Define `LambdaAPI` interface and refactor signatures
+- [x] Slice 2: Contract test suite against real AWS
+- [x] Slice 3: Build `FakeLambdaClient` that passes the contract
+- [x] Slice 4: Fake-backed unit tests for filtering and pagination
+- [x] Slice 5: Fake-backed unit tests for orchestration
+- [x] Slice 6: Trim existing integration tests
+- [x] Slice 7: Package-level factory + fake-backed command tests
+
+### ECS (next)
+
+- [ ] Define `ECSAPI` interface (`ListClusters`, `DescribeClusters`, `ListServices`, `ListTasks`, `DescribeTasks`) and refactor signatures
+- [ ] Contract test suite against real AWS (env-gated)
+- [ ] Build `FakeECSClient` that passes the contract (nested pagination: clusters → services → tasks)
+- [ ] Fake-backed unit tests for filtering (cluster names, service names, regex, exclude patterns)
+- [ ] Fake-backed unit tests for orchestration (concurrent cluster/service/task fetching, error propagation)
+- [ ] `NewECSClientFunc` factory + inject fake into `snapshotECS_test.go` command tests
+- [ ] Trim existing ECS integration tests to smoke tests
+- [ ] Add ECS to `make test_smoke_aws`
+
+### S3
+
+- [ ] Define `S3API` interface (decide: fake at paginator level or raw `ListObjectsV2` level)
+- [ ] Contract test suite against real AWS (env-gated)
+- [ ] Build `FakeS3Client` that passes the contract
+- [ ] Fake-backed unit tests for path include/exclude filtering and digest computation
+- [ ] `NewS3ClientFunc` factory + inject fake into `snapshotS3_test.go` command tests
+- [ ] Trim existing S3 integration tests to smoke tests
+- [ ] Add S3 to `make test_smoke_aws`
+
+### Azure Apps
+
+- [ ] Define interfaces for ARM AppService + Azure Container Registry clients
+- [ ] Contract test suite against real Azure (env-gated)
+- [ ] Build fakes that pass the contracts
+- [ ] Fake-backed unit tests for app listing, image fingerprinting, error propagation
+- [ ] Factory + inject fakes into `snapshotAzureApps_test.go` command tests
+- [ ] Trim existing Azure integration tests to smoke tests
+
+### Docker
+
+- [ ] Define `DockerAPI` interface (Pull, Push, Tag, Remove, Run, container operations)
+- [ ] Contract test suite against real Docker daemon
+- [ ] Build `FakeDockerClient` that passes the contract
+- [ ] Fake-backed unit tests
+- [ ] Factory + inject fake into `snapshotDocker_test.go` command tests
+- [ ] Trim existing Docker integration tests to smoke tests
+
+### Kubernetes
+
+- [ ] Define interface for Kubernetes clientset operations (pod listing, namespace listing)
+- [ ] Contract test suite against real cluster (KIND, env-gated)
+- [ ] Build fake that passes the contract (semaphore pattern, namespace filtering)
+- [ ] Fake-backed unit tests for filtering, large-scale concurrency, error propagation
+- [ ] Factory + inject fake into `snapshotK8S_test.go` command tests
+- [ ] Trim existing Kube integration tests to smoke tests
