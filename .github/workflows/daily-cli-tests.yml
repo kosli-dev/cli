@@ -54,6 +54,39 @@ jobs:
       kosli_querying_api_token: ${{ secrets.KOSLI_API_TOKEN_PROD }}
       sonarqube_token: ${{ secrets.KOSLI_SONARQUBE_TOKEN }}
 
+  aws-contract-tests:
+    name: AWS Contract Tests
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: '.go-version'
+          check-latest: true
+
+      - name: Install gotestsum
+        run: go install gotest.tools/gotestsum@latest
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::772819027869:role/cli
+          aws-region: eu-central-1
+          role-duration-seconds: 2400
+          role-session-name: ${{ github.event.repository.name }}
+
+      - name: Run AWS contract tests
+        run: make test_smoke_aws
+
   slack-notification-on-failure:
     runs-on: ubuntu-24.04
     permissions:
@@ -63,6 +96,7 @@ jobs:
       [
         set-trail-name,
         test,
+        aws-contract-tests,
       ]
     if: ${{ always() && contains(join(needs.*.result, ','), 'failure') && github.ref == 'refs/heads/main' }}
     steps:
