@@ -158,6 +158,12 @@ func (suite *AttestCustomCommandTestSuite) TestAttestCustomCmd() {
 			cmd:       fmt.Sprintf("attest custom --name bar --annotate foo.baz=bar %s", suite.defaultKosliArguments),
 			golden:    "Error: --annotate flag should be in the format key=value. Invalid key: 'foo.baz'. Key can only contain [A-Za-z0-9_]\n",
 		},
+		{
+			wantError: true,
+			name:      "fails when --name has invalid dot format",
+			cmd:       fmt.Sprintf("attest custom --name .foo %s", suite.defaultKosliArguments),
+			golden:    "Error: failed to parse attestation name: invalid attestation name format: .foo\n",
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

@@ -198,14 +198,16 @@ func prepareAttestationForm(payload interface{}, evidencePaths []string) ([]requ
 }
 
 func parseAttestationNameTemplate(template string) (string, string, error) {
-	parts := strings.Split(template, ".")
-	if len(parts) == 1 {
-		return parts[0], "", nil
-	} else if len(parts) == 2 {
-		return parts[0], parts[1], nil
-	} else {
+	p1, p2, found := strings.Cut(template, ".")
+	// No dot: treat the whole string as the attestation name
+	if !found {
+		return template, "", nil
+	}
+	// Reject empty sides (e.g. ".foo", "foo.") or multiple dots (e.g. "foo.bar.baz")
+	if p1 == "" || p2 == "" || strings.Contains(p2, ".") {
 		return "", "", fmt.Errorf("invalid attestation name format: %s", template)
 	}
+	return p1, p2, nil
 }
 
 // newAttestationForm constructs a list of FormItems for an attestation
