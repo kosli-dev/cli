@@ -329,13 +329,18 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 			// Skip when:
 			//   - "version" subcommand: runs the check synchronously itself
 			//   - "__complete*": Cobra shell-completion commands fire on every Tab press
-			//   - --version flag: Cobra handles it internally and skips PersistentPostRun,
-			//     so the goroutine result would always be silently discarded
-			if cmd.Name() != "version" && !strings.HasPrefix(cmd.Name(), "__") && !cmd.Root().Flags().Changed("version") {
-				go func() {
-					notice, _ := version.CheckForUpdate(version.GetVersion())
-					updateNoticeCh <- notice
-				}()
+			//   - debug mode: noisy HTTP traffic is undesirable when debugging
+			// Note: --version is handled by Cobra before any hooks run, so it never
+			// reaches this point; innerMain handles the notice for that case.
+			if cmd.Name() != "version" && !strings.HasPrefix(cmd.Name(), "__") && !global.Debug {
+				f := cmd.Flags().Lookup("output")
+				// skip version checks for programmatic output (avoid polluting JSON in CI pipelines)
+				if f == nil || f.Value.String() == "table" {
+					go func() {
+						notice, _ := version.CheckForUpdate(version.GetVersion())
+						updateNoticeCh <- notice
+					}()
+				}
 			}
 
 			if global.ApiToken == "DRY_RUN" {
