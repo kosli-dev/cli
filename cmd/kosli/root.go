@@ -133,8 +133,8 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	gitCommitFlag                   = "[defaulted] The git commit from which the artifact was created. (defaulted in some CIs: https://docs.kosli.com/ci-defaults, otherwise defaults to HEAD )."
 	buildUrlFlag                    = "The url of CI pipeline that built the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
 	commitUrlFlag                   = "The url for the git commit that created the artifact. (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
-	repoIDFlag                      = "[conditional] The stable, unique identifier for the repository in your VCS provider (e.g. a numeric ID). Do not use the repository name as it can change if the repo is renamed. All three of ^--repo-id^, ^--repo-url^ and ^--repository^ must be set to record repository information (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
-	repoURLFlag                     = "[conditional] The URL of the repository. Must be a valid URL. All three of ^--repo-id^, ^--repo-url^ and ^--repository^ must be set to record repository information (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
+	repoIDFlag                      = "[conditional] The stable, unique identifier for the repository in your VCS provider (e.g. a numeric ID). Do not use the repository name as it can change if the repo is renamed. All three of --repo-id, --repo-url and --repository must be set to record repository information (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
+	repoURLFlag                     = "[conditional] The URL of the repository. Must be a valid URL. All three of --repo-id, --repo-url and --repository must be set to record repository information (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
 	repoProviderFlag                = "[optional] The source code hosting provider. One of: github, gitlab, bitbucket, azure-devops (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
 	bbUsernameFlag                  = "Bitbucket username. Only needed if you use --bitbucket-password"
 	bbPasswordFlag                  = "Bitbucket App password. See https://developer.atlassian.com/cloud/bitbucket/rest/intro/#authentication for more details."
@@ -256,7 +256,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	getAttestationFlowNameFlag      = "[conditional] The name of the Kosli flow for the attestation. Required if ATTESTATION-NAME provided. Cannot be used together with --attestation-id."
 	attestationIDFlag               = "[conditional] The unique identifier of the attestation to retrieve. Cannot be used together with ATTESTATION-NAME."
 	repoNameFlag                    = "[optional] The name of a git repo as it is registered in Kosli. e.g kosli-dev/cli"
-	attestationRepoNameFlag         = "[conditional] The name of the repository (e.g. owner/repo-name). All three of ^--repo-id^, ^--repo-url^ and ^--repository^ must be set to record repository information (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
+	attestationRepoNameFlag         = "[conditional] The name of the repository (e.g. owner/repo-name). All three of --repo-id, --repo-url and --repository must be set to record repository information (defaulted in some CIs: https://docs.kosli.com/ci-defaults )."
 )
 
 var global *GlobalOpts
