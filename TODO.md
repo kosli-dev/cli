@@ -55,6 +55,22 @@
 - [x] Slice 3: Show params in `--show-input` output
 - [x] Slice 4: Update help text and examples
 
+## Fakes & contract tests for GitHub API integration
+
+### Slice 1: FakeGitHubClient + contract tests (`internal/github`) ← active
+
+- [x] `TestGitHubContract_Fake`: V2 returns PRs for commit with PRs
+- [x] `TestGitHubContract_Fake`: V2 returns empty for commit with no PRs
+- [x] `TestGitHubContract_Fake`: V2 returns error when Err is injected
+- [x] `TestGitHubContract_Fake`: V1 returns PRs for commit with PRs
+- [x] `TestGitHubContract_Fake`: V1 returns empty for commit with no PRs
+- [x] `TestGitHubContract_Fake`: V1 returns error when Err is injected
+- [x] `TestGitHubContract_RealGitHub`: same contract, env-gated on `KOSLI_GITHUB_TOKEN`
+
+### Slice 2: Thread fake through command layer
+
+- [ ] TBD — depends on how the reflection issue in `getGitProviderAndLabel` is resolved
+
 ## Fakes & contract tests for cloud provider integrations (#758)
 
 ### Lambda (done — this PR)
