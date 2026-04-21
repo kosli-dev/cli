@@ -73,9 +73,6 @@ jobs:
           go-version-file: '.go-version'
           check-latest: true
 
-      - name: Install gotestsum
-        run: go install gotest.tools/gotestsum@latest
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
