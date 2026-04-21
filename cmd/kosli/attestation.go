@@ -14,7 +14,10 @@ import (
 const commitDescription = `You can optionally associate the attestation to a git commit using ^--commit^ (requires access to a git repo).
 You can optionally redact some of the git commit data sent to Kosli using ^--redact-commit-info^.
 Note that when the attestation is reported for an artifact that does not yet exist in Kosli, ^--commit^ is required to facilitate
-binding the attestation to the right artifact.`
+binding the attestation to the right artifact.
+To record repository information, all three of ^--repo-id^, ^--repo-url^, and ^--repository^ must be set together.
+These are automatically set in GitHub Actions, GitLab CI, Bitbucket Pipelines, and Azure DevOps.
+In other CI systems, set them explicitly to capture repository metadata.`
 
 type URLInfo struct {
 	Href        string `json:"href"`

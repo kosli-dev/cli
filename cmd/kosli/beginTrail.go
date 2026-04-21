@@ -15,8 +15,11 @@ const beginTrailShortDesc = `Begin or update a Kosli flow trail.`
 
 const beginTrailLongDesc = beginTrailShortDesc + `
 
-You can optionally associate the trail to a git commit using ^--commit^ (requires access to a git repo). And you  
+You can optionally associate the trail to a git commit using ^--commit^ (requires access to a git repo). And you
 can optionally redact some of the git commit data sent to Kosli using ^--redact-commit-info^.
+To record repository information, all three of ^--repo-id^, ^--repo-url^, and ^--repository^ must be set together.
+These are automatically set in GitHub Actions, GitLab CI, Bitbucket Pipelines, and Azure DevOps.
+In other CI systems, set them explicitly to capture repository metadata.
 
 ^TRAIL-NAME^s must start with a letter or number, and only contain letters, numbers, ^.^, ^-^, ^_^, and ^~^.
 `
@@ -96,7 +99,7 @@ func newBeginTrailCmd(out io.Writer) *cobra.Command {
 	cmd.Flags().StringToStringVar(&o.externalFingerprints, "external-fingerprint", map[string]string{}, externalFingerprintFlag)
 	cmd.Flags().StringToStringVar(&o.externalURLs, "external-url", map[string]string{}, externalURLFlag)
 	cmd.Flags().StringVar(&o.repoID, "repo-id", DefaultValue(ci, "repo-id"), repoIDFlag)
-	cmd.Flags().StringVar(&o.repoName, "repository", DefaultValue(ci, "repository"), repoNameFlag)
+	cmd.Flags().StringVar(&o.repoName, "repository", DefaultValue(ci, "repository"), attestationRepoNameFlag)
 	cmd.Flags().StringVar(&o.repoURL, "repo-url", DefaultValue(ci, "repo-url"), repoURLFlag)
 	cmd.Flags().StringVar(&o.repoProvider, "repo-provider", DefaultValue(ci, "repo-provider"), repoProviderFlag)
 	addDryRunFlag(cmd)
