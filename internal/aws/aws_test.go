@@ -2,9 +2,11 @@ package aws
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/service/lambda/types"
 	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/testHelpers"
@@ -249,6 +251,10 @@ func (suite *AWSTestSuite) TestAWSClients() {
 // they are skipped
 // All cases will run in CI
 
+// TestGetLambdaPackageData is a smoke test for the real AWS integration.
+// Filtering logic and fingerprint processing are covered by fake-backed tests
+// (TestGetFilteredLambdaFuncs, TestGetLambdaPackageDataFromClient).
+// These cases prove the real SDK wiring works.
 func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 	type expectedFunction struct {
 		name        string
@@ -256,7 +262,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 	}
 	for _, t := range []struct {
 		name              string
-		requireEnvVars    bool // indicates that a test case needs real credentials from env vars
+		requireEnvVars    bool
 		creds             *AWSStaticCreds
 		filter            *filters.ResourceFilterOptions
 		expectedFunctions []expectedFunction
@@ -273,16 +279,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			wantErr: true,
 		},
 		{
-			name: "providing the wrong region gives an empty result",
-			creds: &AWSStaticCreds{
-				Region: "ap-south-1",
-			},
-			filter:            &filters.ResourceFilterOptions{IncludeNames: []string{"cli-tests"}},
-			requireEnvVars:    true,
-			expectedFunctions: []expectedFunction{},
-		},
-		{
-			name: "can get zip package lambda function data from name",
+			name: "can get zip package lambda function data",
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
@@ -292,7 +289,7 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 			requireEnvVars: true,
 		},
 		{
-			name: "can get image package lambda function data from name",
+			name: "can get image package lambda function data",
 			creds: &AWSStaticCreds{
 				Region: "eu-central-1",
 			},
@@ -301,93 +298,24 @@ func (suite *AWSTestSuite) TestGetLambdaPackageData() {
 				fingerprint: "e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"}},
 			requireEnvVars: true,
 		},
-		{
-			name: "can get a list of lambda functions data from names",
-			creds: &AWSStaticCreds{
-				Region: "eu-central-1",
-			},
-			filter: &filters.ResourceFilterOptions{IncludeNames: []string{"cli-tests-docker", "cli-tests"}},
-			expectedFunctions: []expectedFunction{
-				{name: "cli-tests",
-					fingerprint: "321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"},
-				{name: "cli-tests-docker",
-					fingerprint: "e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"}},
-			requireEnvVars: true,
-		},
-		{
-			name: "can get a list of lambda functions data from names regex",
-			creds: &AWSStaticCreds{
-				Region: "eu-central-1",
-			},
-			filter: &filters.ResourceFilterOptions{IncludeNamesRegex: []string{"^cli-test.*"}},
-			expectedFunctions: []expectedFunction{
-				{name: "cli-tests",
-					fingerprint: "321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"},
-				{name: "cli-tests-docker",
-					fingerprint: "e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"}},
-			requireEnvVars: true,
-		},
-		{
-			name: "can exclude lambda functions matching a regex pattern",
-			creds: &AWSStaticCreds{
-				Region: "eu-central-1",
-			},
-			filter: &filters.ResourceFilterOptions{ExcludeNamesRegex: []string{"^([^c]|c[^l]|cl[^i]|cli[^-]).*$"}},
-			expectedFunctions: []expectedFunction{
-				{name: "cli-tests",
-					fingerprint: "321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"},
-				{name: "cli-tests-docker",
-					fingerprint: "e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"}},
-			requireEnvVars: true,
-		},
-		{
-			name: "invalid exclude name regex pattern causes an error",
-			creds: &AWSStaticCreds{
-				Region: "eu-central-1",
-			},
-			filter:         &filters.ResourceFilterOptions{ExcludeNamesRegex: []string{"invalid["}},
-			requireEnvVars: true,
-			wantErr:        true,
-		},
-		{
-			name: "can combine exclude and exclude-regex and they are joined",
-			creds: &AWSStaticCreds{
-				Region: "eu-central-1",
-			},
-			filter: &filters.ResourceFilterOptions{
-				ExcludeNames:      []string{"cli-tests"},
-				ExcludeNamesRegex: []string{"^([^c]|c[^l]|cl[^i]|cli[^-]).*$"}},
-			expectedFunctions: []expectedFunction{
-				{name: "cli-tests-docker",
-					fingerprint: "e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"}},
-			requireEnvVars: true,
-		},
 	} {
 		suite.Run(t.name, func() {
-			skipOrSetCreds(suite.T(), t.requireEnvVars, t.creds)
+			skipIfCredsUnset(suite.T(), t.requireEnvVars, t.creds)
 			data, err := t.creds.GetLambdaPackageData(t.filter)
 			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetLambdaPackageData() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
-				matchFound := false
 				require.Len(suite.T(), data, len(t.expectedFunctions))
-				if len(t.expectedFunctions) == 0 {
-					matchFound = true
-				}
-			loop1:
-				for _, expectedFunction := range t.expectedFunctions {
+				for _, expected := range t.expectedFunctions {
+					found := false
 					for _, item := range data {
-						if fingerprint, ok := item.Digests[expectedFunction.name]; ok {
-							if expectedFunction.fingerprint == fingerprint {
-								matchFound = true
-								break loop1
-							} else {
-								suite.T().Logf("fingerprint did not match: GOT %s -- WANT %s", fingerprint, expectedFunction.fingerprint)
-							}
+						if fingerprint, ok := item.Digests[expected.name]; ok && fingerprint == expected.fingerprint {
+							found = true
+							break
 						}
 					}
+					require.True(suite.T(), found, "expected function %s with fingerprint %s not found", expected.name, expected.fingerprint)
 				}
-				require.True(suite.T(), matchFound)
 			}
 		})
 	}
@@ -508,7 +436,7 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			skipOrSetCreds(suite.T(), t.requireEnvVars, t.creds)
+			skipIfCredsUnset(suite.T(), t.requireEnvVars, t.creds)
 			data, err := t.creds.GetS3Data(t.bucketName, t.includePaths, t.excludePaths, logger.NewStandardLogger())
 			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetS3Data() error = %v, wantErr %v", err, t.wantErr)
@@ -651,7 +579,7 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			skipOrSetCreds(suite.T(), t.requireEnvVars, t.creds)
+			skipIfCredsUnset(suite.T(), t.requireEnvVars, t.creds)
 			if t.clusterFilter == nil {
 				t.clusterFilter = new(filters.ResourceFilterOptions)
 			}
@@ -668,7 +596,225 @@ func (suite *AWSTestSuite) TestGetEcsTasksData() {
 	}
 }
 
-func skipOrSetCreds(T *testing.T, requireEnvVars bool, creds *AWSStaticCreds) {
+// helper to build a FakeLambdaClient with named functions for testing
+func fakeLambdaClientWithFunctions(names ...string) *FakeLambdaClient {
+	fns := make([]types.FunctionConfiguration, len(names))
+	lastModified := "2024-01-15T10:30:00.000+0000"
+	codeSha256 := "abc123"
+	for i, name := range names {
+		n := name
+		fns[i] = types.FunctionConfiguration{
+			FunctionName: &n,
+			CodeSha256:   &codeSha256,
+			LastModified: &lastModified,
+			PackageType:  types.PackageTypeZip,
+		}
+	}
+	return &FakeLambdaClient{Functions: fns}
+}
+
+func functionNames(result *[]types.FunctionConfiguration) []string {
+	names := make([]string, len(*result))
+	for i, f := range *result {
+		names[i] = *f.FunctionName
+	}
+	return names
+}
+
+func (suite *AWSTestSuite) TestGetFilteredLambdaFuncs() {
+	for _, t := range []struct {
+		name          string
+		functions     []string
+		filter        *filters.ResourceFilterOptions
+		pageSize      int
+		expectedNames []string
+		wantErr       bool
+	}{
+		{
+			name:          "no filter returns all functions",
+			functions:     []string{"alpha", "beta", "gamma"},
+			filter:        &filters.ResourceFilterOptions{},
+			expectedNames: []string{"alpha", "beta", "gamma"},
+		},
+		{
+			name:          "empty function list returns empty result",
+			functions:     []string{},
+			filter:        &filters.ResourceFilterOptions{},
+			expectedNames: []string{},
+		},
+		{
+			name:          "IncludeNames filters to matching functions",
+			functions:     []string{"alpha", "beta", "gamma"},
+			filter:        &filters.ResourceFilterOptions{IncludeNames: []string{"beta"}},
+			expectedNames: []string{"beta"},
+		},
+		{
+			name:          "IncludeNames with multiple names",
+			functions:     []string{"alpha", "beta", "gamma"},
+			filter:        &filters.ResourceFilterOptions{IncludeNames: []string{"alpha", "gamma"}},
+			expectedNames: []string{"alpha", "gamma"},
+		},
+		{
+			name:          "IncludeNamesRegex filters by pattern",
+			functions:     []string{"alpha", "beta", "gamma"},
+			filter:        &filters.ResourceFilterOptions{IncludeNamesRegex: []string{"^a.*"}},
+			expectedNames: []string{"alpha"},
+		},
+		{
+			name:          "ExcludeNames removes matching functions",
+			functions:     []string{"alpha", "beta", "gamma"},
+			filter:        &filters.ResourceFilterOptions{ExcludeNames: []string{"beta"}},
+			expectedNames: []string{"alpha", "gamma"},
+		},
+		{
+			name:          "ExcludeNamesRegex removes matching pattern",
+			functions:     []string{"alpha", "beta", "gamma"},
+			filter:        &filters.ResourceFilterOptions{ExcludeNamesRegex: []string{"^[bg].*"}},
+			expectedNames: []string{"alpha"},
+		},
+		{
+			name:      "combined ExcludeNames and ExcludeNamesRegex",
+			functions: []string{"alpha", "beta", "gamma", "delta"},
+			filter: &filters.ResourceFilterOptions{
+				ExcludeNames:      []string{"alpha"},
+				ExcludeNamesRegex: []string{"^d.*"},
+			},
+			expectedNames: []string{"beta", "gamma"},
+		},
+		{
+			name:          "multi-page results with filtering across pages",
+			functions:     []string{"alpha", "beta", "gamma", "delta"},
+			filter:        &filters.ResourceFilterOptions{IncludeNamesRegex: []string{"^[ag].*"}},
+			pageSize:      2,
+			expectedNames: []string{"alpha", "gamma"},
+		},
+		{
+			name:          "multi-page results without filtering",
+			functions:     []string{"alpha", "beta", "gamma"},
+			filter:        &filters.ResourceFilterOptions{},
+			pageSize:      1,
+			expectedNames: []string{"alpha", "beta", "gamma"},
+		},
+		{
+			name:      "invalid regex causes an error",
+			functions: []string{"alpha"},
+			filter:    &filters.ResourceFilterOptions{IncludeNamesRegex: []string{"invalid["}},
+			wantErr:   true,
+		},
+	} {
+		suite.Run(t.name, func() {
+			client := fakeLambdaClientWithFunctions(t.functions...)
+			if t.pageSize > 0 {
+				client.PageSize = t.pageSize
+			}
+			result, err := getFilteredLambdaFuncs(client, nil, &[]types.FunctionConfiguration{}, t.filter)
+			if t.wantErr {
+				require.Error(suite.T(), err)
+				return
+			}
+			require.NoError(suite.T(), err)
+			require.ElementsMatch(suite.T(), t.expectedNames, functionNames(result))
+		})
+	}
+}
+
+func (suite *AWSTestSuite) TestGetLambdaPackageDataFromClient() {
+	// base64-encoded SHA256 that decodes to a known hex fingerprint
+	zipCodeSha256 := "Mh48OOkSYuXHLfS9QF6bF3tvTXUOGvC3jKLiuF1vkbQ="
+	expectedZipFingerprint := "321e3c38e91262e5c72df4bd405e9b177b6f4d750e1af0b78ca2e2b85d6f91b4"
+	// Image package types use the raw CodeSha256 (not base64-decoded)
+	imageCodeSha256 := "e908950659e56bb886acbb0ecf9b8f38bf6e0382ede71095e166269ee4db601e"
+	lastModified := "2024-01-15T10:30:00.000+0000"
+
+	for _, t := range []struct {
+		name                string
+		client              *FakeLambdaClient
+		filter              *filters.ResourceFilterOptions
+		expectedDigests     map[string]string // functionName -> fingerprint
+		wantErr             bool
+		wantErrMsgSubstring string
+	}{
+		{
+			name: "single Zip function returns decoded fingerprint",
+			client: func() *FakeLambdaClient {
+				fnName := "zip-func"
+				return &FakeLambdaClient{Functions: []types.FunctionConfiguration{
+					{FunctionName: &fnName, CodeSha256: &zipCodeSha256, LastModified: &lastModified, PackageType: types.PackageTypeZip},
+				}}
+			}(),
+			filter:          &filters.ResourceFilterOptions{},
+			expectedDigests: map[string]string{"zip-func": expectedZipFingerprint},
+		},
+		{
+			name: "single Image function returns raw CodeSha256",
+			client: func() *FakeLambdaClient {
+				fnName := "image-func"
+				return &FakeLambdaClient{Functions: []types.FunctionConfiguration{
+					{FunctionName: &fnName, CodeSha256: &imageCodeSha256, LastModified: &lastModified, PackageType: types.PackageTypeImage},
+				}}
+			}(),
+			filter:          &filters.ResourceFilterOptions{},
+			expectedDigests: map[string]string{"image-func": imageCodeSha256},
+		},
+		{
+			name: "multiple functions processed concurrently",
+			client: func() *FakeLambdaClient {
+				fn1 := "zip-func"
+				fn2 := "image-func"
+				return &FakeLambdaClient{Functions: []types.FunctionConfiguration{
+					{FunctionName: &fn1, CodeSha256: &zipCodeSha256, LastModified: &lastModified, PackageType: types.PackageTypeZip},
+					{FunctionName: &fn2, CodeSha256: &imageCodeSha256, LastModified: &lastModified, PackageType: types.PackageTypeImage},
+				}}
+			}(),
+			filter: &filters.ResourceFilterOptions{},
+			expectedDigests: map[string]string{
+				"zip-func":   expectedZipFingerprint,
+				"image-func": imageCodeSha256,
+			},
+		},
+		{
+			name: "empty function list returns empty result",
+			client: &FakeLambdaClient{
+				Functions: []types.FunctionConfiguration{},
+			},
+			filter:          &filters.ResourceFilterOptions{},
+			expectedDigests: map[string]string{},
+		},
+		{
+			name: "GetFunctionConfiguration error propagates",
+			client: func() *FakeLambdaClient {
+				fnName := "will-fail"
+				return &FakeLambdaClient{
+					Functions: []types.FunctionConfiguration{
+						{FunctionName: &fnName, CodeSha256: &zipCodeSha256, LastModified: &lastModified, PackageType: types.PackageTypeZip},
+					},
+					GetFunctionConfigurationErr: fmt.Errorf("simulated AWS error"),
+				}
+			}(),
+			filter:  &filters.ResourceFilterOptions{},
+			wantErr: true,
+		},
+	} {
+		suite.Run(t.name, func() {
+			data, err := getLambdaPackageDataFromClient(t.client, t.filter)
+			if t.wantErr {
+				require.Error(suite.T(), err)
+				return
+			}
+			require.NoError(suite.T(), err)
+
+			gotDigests := map[string]string{}
+			for _, d := range data {
+				for name, fp := range d.Digests {
+					gotDigests[name] = fp
+				}
+			}
+			require.Equal(suite.T(), t.expectedDigests, gotDigests)
+		})
+	}
+}
+
+func skipIfCredsUnset(T *testing.T, requireEnvVars bool, creds *AWSStaticCreds) {
 	if requireEnvVars {
 		// skips the test case if it requires env vars and they are not set
 		testHelpers.SkipIfEnvVarUnset(T, []string{"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"})
