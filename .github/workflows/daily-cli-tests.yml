@@ -54,7 +54,7 @@ jobs:
       kosli_querying_api_token: ${{ secrets.KOSLI_API_TOKEN_PROD }}
       sonarqube_token: ${{ secrets.KOSLI_SONARQUBE_TOKEN }}
 
-  aws-contract-tests:
+  contract-tests:
     name: Contract Tests
     runs-on: ubuntu-latest
     permissions:
@@ -95,7 +95,7 @@ jobs:
       [
         set-trail-name,
         test,
-        aws-contract-tests,
+        contract-tests,
       ]
     if: ${{ always() && contains(join(needs.*.result, ','), 'failure') && github.ref == 'refs/heads/main' }}
     steps:

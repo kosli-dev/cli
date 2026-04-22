@@ -36,16 +36,6 @@ func runGitHubContractTests(t *testing.T, provider types.PRRetriever, commitWith
 		require.Empty(t, prs)
 	})
 
-	t.Run("V2 returns error when Err is injected", func(t *testing.T) {
-		if f, ok := provider.(*FakeGitHubClient); ok {
-			orig := f.Err
-			f.Err = errInjected
-			defer func() { f.Err = orig }()
-			_, err := provider.PREvidenceForCommitV2(commitWithPR)
-			require.Error(t, err)
-		}
-	})
-
 	t.Run("V1 returns PRs for commit with PRs", func(t *testing.T) {
 		prs, err := provider.PREvidenceForCommitV1(commitWithPR)
 		require.NoError(t, err)
@@ -57,19 +47,9 @@ func runGitHubContractTests(t *testing.T, provider types.PRRetriever, commitWith
 		require.Error(t, err)
 	})
 
-	t.Run("V1 returns error when Err is injected", func(t *testing.T) {
-		if f, ok := provider.(*FakeGitHubClient); ok {
-			orig := f.Err
-			f.Err = errInjected
-			defer func() { f.Err = orig }()
-			_, err := provider.PREvidenceForCommitV1(commitWithPR)
-			require.Error(t, err)
-		}
-	})
-
 	t.Run("ProviderAndLabel returns github and pull request", func(t *testing.T) {
-		provider, label := provider.ProviderAndLabel()
-		require.Equal(t, "github", provider)
+		providerName, label := provider.ProviderAndLabel()
+		require.Equal(t, "github", providerName)
 		require.Equal(t, "pull request", label)
 	})
 }
@@ -90,6 +70,22 @@ func TestGitHubContract_Fake(t *testing.T) {
 	}
 
 	runGitHubContractTests(t, client, commitWithPR, commitUnknown)
+
+	// Error injection is a fake-specific mechanism with no real-API equivalent.
+	// These tests verify the fake itself, not the contract.
+	t.Run("V2 returns error when Err is injected", func(t *testing.T) {
+		client.Err = errInjected
+		defer func() { client.Err = nil }()
+		_, err := client.PREvidenceForCommitV2(commitWithPR)
+		require.Error(t, err)
+	})
+
+	t.Run("V1 returns error when Err is injected", func(t *testing.T) {
+		client.Err = errInjected
+		defer func() { client.Err = nil }()
+		_, err := client.PREvidenceForCommitV1(commitWithPR)
+		require.Error(t, err)
+	})
 }
 
 func TestGitHubContract_RealGitHub(t *testing.T) {
