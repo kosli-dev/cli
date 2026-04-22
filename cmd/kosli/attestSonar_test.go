@@ -39,6 +39,9 @@ type AttestSonarCommandTestSuite struct {
 	flowName            string
 	trailName           string
 	artifactFingerprint string
+	mainScannerWorkDir  string
+	mainCETaskURL       string
+	mainRevision        string
 	prScannerWorkDir    string
 	prKey               string
 	prCETaskURL         string
@@ -71,6 +74,7 @@ func (suite *AttestSonarCommandTestSuite) SetupTest() {
 	BeginTrail(suite.trailName, suite.flowName, "", suite.T())
 	CreateArtifactOnTrail(suite.flowName, suite.trailName, "cli", suite.artifactFingerprint, "file1", suite.T())
 
+	suite.mainScannerWorkDir, suite.mainCETaskURL, suite.mainRevision = downloadMainScanData(suite.T())
 	suite.prScannerWorkDir, suite.prKey, suite.prCETaskURL = downloadPRScanData(suite.T())
 }
 
@@ -95,61 +99,61 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 		{
 			wantError: true,
 			name:      "01 fails when more arguments are provided",
-			cmd:       fmt.Sprintf("attest sonar foo bar --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest sonar foo bar --sonar-working-dir %s %s", suite.mainScannerWorkDir, suite.defaultKosliArguments),
 			golden:    "Error: accepts at most 1 arg(s), received 2 [foo bar]\n",
 		},
 		{
 			wantError: true,
 			name:      "02 fails when both --fingerprint and --artifact-type",
-			cmd:       fmt.Sprintf("attest sonar testdata/file1 --fingerprint xxxx --artifact-type file --name bar --commit HEAD --origin-url http://www.example.com  --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest sonar testdata/file1 --fingerprint xxxx --artifact-type file --name bar --commit HEAD --origin-url http://www.example.com  --sonar-working-dir %s %s", suite.mainScannerWorkDir, suite.defaultKosliArguments),
 			golden:    "Error: only one of --fingerprint, --artifact-type is allowed\n",
 		},
 		{
 			wantError: true,
 			name:      "03 fails when --fingerprint is not valid",
-			cmd:       fmt.Sprintf("attest sonar --name foo-s --fingerprint xxxx --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest sonar --name foo-s --fingerprint xxxx --commit HEAD --origin-url http://www.example.com --sonar-working-dir %s %s", suite.mainScannerWorkDir, suite.defaultKosliArguments),
 			golden:    "Error: xxxx is not a valid SHA256 fingerprint. It should match the pattern ^([a-f0-9]{64})$\nUsage: kosli attest sonar [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "04 attesting against an artifact that does not exist fails",
-			cmd:       fmt.Sprintf("attest sonar --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest sonar --fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir %s %s", suite.mainScannerWorkDir, suite.defaultKosliArguments),
 			golden:    "Error: Artifact with fingerprint 1234e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 does not exist in trail \"test-123\" of flow \"attest-sonar\" belonging to organization \"docs-cmd-test-user\"\n",
 		},
 		{
 			name:   "05 can attest sonar against an artifact using artifact name and --artifact-type",
-			cmd:    fmt.Sprintf("attest sonar testdata/file1 --artifact-type file --name foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar testdata/file1 --artifact-type file --name foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir %s %s", suite.mainScannerWorkDir, suite.defaultKosliArguments),
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			name:   "06 can attest sonar against an artifact using artifact name and --artifact-type when --name does not exist in the trail template",
-			cmd:    fmt.Sprintf("attest sonar testdata/file1 --artifact-type file --name bar --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar testdata/file1 --artifact-type file --name bar --commit HEAD --origin-url http://www.example.com --sonar-working-dir %s %s", suite.mainScannerWorkDir, suite.defaultKosliArguments),
 			golden: "sonar attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
 			name:   "07 can attest sonar against an artifact using --fingerprint",
-			cmd:    fmt.Sprintf("attest sonar --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar --fingerprint 7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 --name foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir %s %s", suite.mainScannerWorkDir, suite.defaultKosliArguments),
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			name:   "08 can attest sonar against a trail",
-			cmd:    fmt.Sprintf("attest sonar --name bar --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar --name bar --commit HEAD --origin-url http://www.example.com --sonar-working-dir %s %s", suite.mainScannerWorkDir, suite.defaultKosliArguments),
 			golden: "sonar attestation 'bar' is reported to trail: test-123\n",
 		},
 		{
 			name:   "09 can attest sonar against a trail when name is not found in the trail template",
-			cmd:    fmt.Sprintf("attest sonar --name additional --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar --name additional --commit HEAD --origin-url http://www.example.com --sonar-working-dir %s %s", suite.mainScannerWorkDir, suite.defaultKosliArguments),
 			golden: "sonar attestation 'additional' is reported to trail: test-123\n",
 		},
 		{
 			name:   "10 can attest sonar against an artifact it is created using dot syntax in --name",
-			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir %s %s", suite.mainScannerWorkDir, suite.defaultKosliArguments),
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			wantError: true,
 			name:      "11 trying to fetch data from SonarCloud with incorrect API token gives error",
-			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-api-token xxxx --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-api-token xxxx --sonar-working-dir %s %s", suite.mainScannerWorkDir, suite.defaultKosliArguments),
 			golden:    "Error: please check your API token is correct and you have the correct permissions in SonarQube\n",
 		},
 		{
@@ -160,12 +164,12 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 		},
 		{
 			name:   "13 can retrieve scan results using project key and revision and attest them",
-			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-project-key cyber-dojo_differ --sonar-revision 38f3dc8b63abb632ac94a12b3f818b49f8047fa1 %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-project-key cyber-dojo_differ --sonar-revision %s %s", suite.mainRevision, suite.defaultKosliArguments),
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			name:   "14 if report-task.txt file found, we don't use the sonar-project-key, sonar-revision or sonar-server-url flags",
-			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork --sonar-project-key anyKey --sonar-revision anyRevision --sonar-server-url http://example.com %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir %s --sonar-project-key anyKey --sonar-revision anyRevision --sonar-server-url http://example.com %s", suite.mainScannerWorkDir, suite.defaultKosliArguments),
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
@@ -188,13 +192,13 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 		},
 		{
 			name:   "18 can retrieve scan results using report-task.txt file and pull-request flag",
-			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork --pull-request %s %s", suite.prKey, suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir %s --pull-request %s %s", suite.mainScannerWorkDir, suite.prKey, suite.defaultKosliArguments),
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
 			wantError: true,
 			name:      "19 providing an incorrect pull-request ID gives an error",
-			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir testdata/sonar/sonarcloud/.scannerwork --pull-request 1 %s", suite.defaultKosliArguments),
+			cmd:       fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-working-dir %s --pull-request 1 %s", suite.mainScannerWorkDir, suite.defaultKosliArguments),
 			golden:    "Error: pull request 1 not found for project cyber-dojo_differ on https://sonarcloud.io\n",
 		},
 		{
@@ -209,7 +213,7 @@ func (suite *AttestSonarCommandTestSuite) TestAttestSonarCmd() {
 		},
 		{
 			name:   "22 can attest sonar using --sonar-ce-task-url without report-task.txt",
-			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-ce-task-url https://sonarcloud.io/api/ce/task?id=AZrs5eywBfkZKeU0sde9 %s", suite.defaultKosliArguments),
+			cmd:    fmt.Sprintf("attest sonar --name cli.foo --commit HEAD --origin-url http://www.example.com --sonar-ce-task-url %s %s", suite.mainCETaskURL, suite.defaultKosliArguments),
 			golden: "sonar attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
@@ -370,18 +374,85 @@ func (suite *AttestSonarQubeCommandTestSuite) TestAttestSonarQubeCmd() {
 	runTestCmd(suite.T(), tests)
 }
 
+// downloadMainScanData downloads the report-task.txt from the latest
+// main branch SonarCloud scan of cyber-dojo_differ.
+// Returns the directory containing report-task.txt, the CE task URL, and the revision.
+func downloadMainScanData(t *testing.T) (workDir, ceTaskURL, revision string) {
+	t.Helper()
+	workDir = downloadGitHubArtifact(t, "sonar-main-report-task")
+	parsed := parseReportTask(t, filepath.Join(workDir, "report-task.txt"))
+	if parsed.ceTaskURL == "" {
+		t.Fatalf("ceTaskUrl not found in main scan report-task.txt")
+	}
+
+	// Get the revision from the latest SonarCloud analysis
+	revision = getLatestAnalysisRevision(t)
+	return workDir, parsed.ceTaskURL, revision
+}
+
+// getLatestAnalysisRevision fetches the most recent main branch analysis revision
+// from SonarCloud for the cyber-dojo_differ project.
+func getLatestAnalysisRevision(t *testing.T) string {
+	t.Helper()
+
+	sonarToken := os.Getenv("KOSLI_SONAR_API_TOKEN")
+	httpClient := &http.Client{}
+
+	req, err := http.NewRequest("GET",
+		"https://sonarcloud.io/api/project_analyses/search?project=cyber-dojo_differ&ps=1", nil)
+	if err != nil {
+		t.Fatalf("failed to create analysis search request: %v", err)
+	}
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", sonarToken))
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		t.Fatalf("failed to fetch analyses from SonarCloud: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("SonarCloud analyses API returned status %d", resp.StatusCode)
+	}
+
+	var result struct {
+		Analyses []struct {
+			Revision string `json:"revision"`
+		} `json:"analyses"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatalf("failed to decode analyses response: %v", err)
+	}
+	if len(result.Analyses) == 0 {
+		t.Fatalf("no analyses found for cyber-dojo_differ on SonarCloud")
+	}
+	return result.Analyses[0].Revision
+}
+
 // downloadPRScanData downloads the report-task.txt from the latest
-// SonarCloud PR scan of cyber-dojo_differ. The file is uploaded as a GitHub
-// Actions artifact by the sonar-pr-trigger workflow in that repo.
+// SonarCloud PR scan of cyber-dojo_differ.
 // Returns the directory containing report-task.txt, the PR key, and the CE task URL.
 func downloadPRScanData(t *testing.T) (workDir, prKey, ceTaskURL string) {
+	t.Helper()
+	workDir = downloadGitHubArtifact(t, "sonar-pr-report-task")
+	parsed := parseReportTask(t, filepath.Join(workDir, "report-task.txt"))
+	if parsed.prKey == "" {
+		t.Fatalf("pullRequest not found in PR scan report-task.txt")
+	}
+	if parsed.ceTaskURL == "" {
+		t.Fatalf("ceTaskUrl not found in PR scan report-task.txt")
+	}
+	return workDir, parsed.prKey, parsed.ceTaskURL
+}
+
+// downloadGitHubArtifact downloads a named artifact from cyber-dojo/differ
+// and extracts report-task.txt into a temp directory.
+func downloadGitHubArtifact(t *testing.T, artifactName string) string {
 	t.Helper()
 
 	tmpDir := t.TempDir()
 	httpClient := &http.Client{}
 
-	// GitHub token is required to download workflow artifacts.
-	// Check GH_TOKEN (gh CLI), GITHUB_TOKEN (CI), in that order.
 	ghToken := os.Getenv("GH_TOKEN")
 	if ghToken == "" {
 		ghToken = os.Getenv("GITHUB_TOKEN")
@@ -392,7 +463,7 @@ func downloadPRScanData(t *testing.T) (workDir, prKey, ceTaskURL string) {
 
 	// Find the artifact ID via GitHub API
 	req, err := http.NewRequest("GET",
-		"https://api.github.com/repos/cyber-dojo/differ/actions/artifacts?name=sonar-pr-report-task&per_page=1", nil)
+		fmt.Sprintf("https://api.github.com/repos/cyber-dojo/differ/actions/artifacts?name=%s&per_page=1", artifactName), nil)
 	if err != nil {
 		t.Fatalf("failed to create artifact list request: %v", err)
 	}
@@ -405,7 +476,7 @@ func downloadPRScanData(t *testing.T) (workDir, prKey, ceTaskURL string) {
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("GitHub artifacts API returned status %d", resp.StatusCode)
+		t.Fatalf("GitHub artifacts API returned status %d for %s", resp.StatusCode, artifactName)
 	}
 
 	var result struct {
@@ -419,10 +490,10 @@ func downloadPRScanData(t *testing.T) (workDir, prKey, ceTaskURL string) {
 		t.Fatalf("failed to decode artifacts response: %v", err)
 	}
 	if len(result.Artifacts) == 0 {
-		t.Fatalf("no sonar-pr-report-task artifact found in cyber-dojo/differ")
+		t.Fatalf("no %s artifact found in cyber-dojo/differ", artifactName)
 	}
 	if result.Artifacts[0].Expired {
-		t.Fatalf("sonar-pr-report-task artifact has expired")
+		t.Fatalf("%s artifact has expired", artifactName)
 	}
 
 	// Download the artifact zip
@@ -440,7 +511,7 @@ func downloadPRScanData(t *testing.T) (workDir, prKey, ceTaskURL string) {
 	defer func() { _ = dlResp.Body.Close() }()
 
 	if dlResp.StatusCode != http.StatusOK {
-		t.Fatalf("artifact download returned status %d", dlResp.StatusCode)
+		t.Fatalf("artifact download returned status %d for %s", dlResp.StatusCode, artifactName)
 	}
 
 	// Save zip to temp file, then extract report-task.txt
@@ -479,18 +550,21 @@ func downloadPRScanData(t *testing.T) (workDir, prKey, ceTaskURL string) {
 			if err != nil {
 				t.Fatalf("failed to extract report-task.txt: %v", err)
 			}
-
-			prKey, ceTaskURL = parsePRReportTask(t, outPath)
-			return tmpDir, prKey, ceTaskURL
+			return tmpDir
 		}
 	}
 
-	t.Fatalf("report-task.txt not found in artifact zip")
-	return "", "", ""
+	t.Fatalf("report-task.txt not found in %s artifact zip", artifactName)
+	return ""
 }
 
-// parsePRReportTask extracts the PR key and CE task URL from a report-task.txt file.
-func parsePRReportTask(t *testing.T, path string) (prKey, ceTaskURL string) {
+type reportTaskData struct {
+	ceTaskURL string
+	prKey     string
+}
+
+// parseReportTask extracts fields from a report-task.txt file.
+func parseReportTask(t *testing.T, path string) reportTaskData {
 	t.Helper()
 
 	f, err := os.Open(path)
@@ -499,27 +573,20 @@ func parsePRReportTask(t *testing.T, path string) (prKey, ceTaskURL string) {
 	}
 	defer func() { _ = f.Close() }()
 
+	var data reportTaskData
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.HasPrefix(line, "ceTaskUrl=") {
-			ceTaskURL = strings.TrimPrefix(line, "ceTaskUrl=")
+			data.ceTaskURL = strings.TrimPrefix(line, "ceTaskUrl=")
 		}
 		if strings.HasPrefix(line, "dashboardUrl=") {
-			// dashboardUrl contains ...&pullRequest=<key>
 			if i := strings.Index(line, "pullRequest="); i != -1 {
-				prKey = line[i+len("pullRequest="):]
+				data.prKey = line[i+len("pullRequest="):]
 			}
 		}
 	}
-
-	if prKey == "" {
-		t.Fatalf("pullRequest not found in %s", path)
-	}
-	if ceTaskURL == "" {
-		t.Fatalf("ceTaskUrl not found in %s", path)
-	}
-	return prKey, ceTaskURL
+	return data
 }
 
 // In order for 'go test' to run this suite, we need to create
