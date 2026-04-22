@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	ghUtils "github.com/kosli-dev/cli/internal/github"
+	"github.com/kosli-dev/cli/internal/gitview"
 	"github.com/kosli-dev/cli/internal/types"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -23,8 +25,13 @@ func (suite *AttestGithubPRCommandTestSuite) SetupTest() {
 	suite.flowName = "attest-github-pr"
 	suite.trailName = "test-123"
 	suite.artifactFingerprint = "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
-	suite.commitWithPR = "480e5a00379a52b8e184d6815080242a878ca295"
-	suite.commitWithNoPR = "7d1db1c8b7e71ee0ce369f1b722cc8844d3a7af6"
+
+	gv, err := gitview.New("../..")
+	require.NoError(suite.T(), err)
+	suite.commitWithPR, err = gv.ResolveRevision("HEAD")
+	require.NoError(suite.T(), err)
+	suite.commitWithNoPR, err = gv.ResolveRevision("HEAD~1")
+	require.NoError(suite.T(), err)
 
 	ghUtils.NewGithubRetrieverFunc = func(token, baseURL, org, repository string) types.PRRetriever {
 		return &ghUtils.FakeGitHubClient{
