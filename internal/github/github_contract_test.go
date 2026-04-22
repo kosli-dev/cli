@@ -28,6 +28,9 @@ func runGitHubContractTests(t *testing.T, provider types.PRRetriever, commitWith
 		prs, err := provider.PREvidenceForCommitV2(commitWithPR)
 		require.NoError(t, err)
 		require.NotEmpty(t, prs)
+		require.NotEmpty(t, prs[0].URL, "URL should be present")
+		require.NotEmpty(t, prs[0].State, "State should be present")
+		require.Equal(t, commitWithPR, prs[0].MergeCommit, "V2 sets MergeCommit to the queried commit SHA")
 	})
 
 	t.Run("V2 returns empty with no error for unknown commit", func(t *testing.T) {
@@ -40,6 +43,9 @@ func runGitHubContractTests(t *testing.T, provider types.PRRetriever, commitWith
 		prs, err := provider.PREvidenceForCommitV1(commitWithPR)
 		require.NoError(t, err)
 		require.NotEmpty(t, prs)
+		require.NotEmpty(t, prs[0].URL, "URL should be present")
+		require.NotEmpty(t, prs[0].State, "State should be present")
+		require.NotEmpty(t, prs[0].MergeCommit, "MergeCommit should be present")
 	})
 
 	t.Run("V1 returns error for unknown commit", func(t *testing.T) {
@@ -59,8 +65,9 @@ func TestGitHubContract_Fake(t *testing.T) {
 	commitUnknown := "0000000000000000000000000000000000000000"
 
 	pr := &types.PREvidence{
-		URL:   "https://github.com/kosli-dev/cli/pull/1",
-		State: "MERGED",
+		URL:         "https://github.com/kosli-dev/cli/pull/1",
+		State:       "MERGED",
+		MergeCommit: commitWithPR,
 	}
 
 	client := &FakeGitHubClient{
