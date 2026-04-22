@@ -21,6 +21,9 @@ type GithubConfig struct {
 	BaseURL    string
 	Org        string
 	Repository string
+	// Sleep is called between retries in PREvidenceByPRNumber. Defaults to
+	// time.Sleep when nil. Override in tests to avoid real delays.
+	Sleep func(time.Duration)
 }
 
 type GithubFlagsTempValueHolder struct {
@@ -195,7 +198,19 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 		"reviewCursor": (*graphql.String)(nil),
 	}
 
+	sleep := c.Sleep
+	if sleep == nil {
+		sleep = time.Sleep
+	}
+	retryDelays := []time.Duration{10 * time.Second, 20 * time.Second, 30 * time.Second}
 	err = client.Query(ctx, &query, variables)
+	for _, delay := range retryDelays {
+		if err == nil {
+			break
+		}
+		sleep(delay)
+		err = client.Query(ctx, &query, variables)
+	}
 	if err != nil {
 		return nil, err
 	}
