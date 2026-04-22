@@ -54,8 +54,8 @@ jobs:
       kosli_querying_api_token: ${{ secrets.KOSLI_API_TOKEN_PROD }}
       sonarqube_token: ${{ secrets.KOSLI_SONARQUBE_TOKEN }}
 
-  aws-contract-tests:
-    name: AWS Contract Tests
+  contract-tests:
+    name: Contract Tests
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -81,8 +81,10 @@ jobs:
           role-duration-seconds: 2400
           role-session-name: ${{ github.event.repository.name }}
 
-      - name: Run AWS contract tests
-        run: make test_smoke_aws
+      - name: Run contract tests
+        run: make test_contract
+        env:
+          KOSLI_GITHUB_TOKEN: ${{ secrets.KOSLI_GITHUB_TOKEN }}
 
   slack-notification-on-failure:
     runs-on: ubuntu-24.04
@@ -93,7 +95,7 @@ jobs:
       [
         set-trail-name,
         test,
-        aws-contract-tests,
+        contract-tests,
       ]
     if: ${{ always() && contains(join(needs.*.result, ','), 'failure') && github.ref == 'refs/heads/main' }}
     steps:

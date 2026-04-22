@@ -55,6 +55,30 @@
 - [x] Slice 3: Show params in `--show-input` output
 - [x] Slice 4: Update help text and examples
 
+## Fakes & contract tests for GitHub API integration
+
+### Slice 1: FakeGitHubClient + contract tests (`internal/github`) ← active
+
+- [x] `TestGitHubContract_Fake`: V2 returns PRs for commit with PRs
+- [x] `TestGitHubContract_Fake`: V2 returns empty for commit with no PRs
+- [x] `TestGitHubContract_Fake`: V2 returns error when Err is injected
+- [x] `TestGitHubContract_Fake`: V1 returns PRs for commit with PRs
+- [x] `TestGitHubContract_Fake`: V1 returns empty for commit with no PRs
+- [x] `TestGitHubContract_Fake`: V1 returns error when Err is injected
+- [x] `TestGitHubContract_RealGitHub`: same contract, env-gated on `KOSLI_GITHUB_TOKEN`
+
+### Slice 2: Thread fake through command layer ← active
+
+- [x] Add `ProviderAndLabel() (string, string)` to `types.PRRetriever` interface
+- [x] Implement on `GithubConfig` → `("github", "pull request")`
+- [x] Implement on `GitlabConfig` → `("gitlab", "merge request")`
+- [x] Implement on `AzureConfig` → `("azure", "pull request")`
+- [x] Implement on bitbucket `Config` → `("bitbucket", "pull request")`
+- [x] Implement on `FakeGitHubClient` → `("github", "pull request")`
+- [x] Replace reflection in `getGitProviderAndLabel` with `retriever.ProviderAndLabel()`
+- [x] Inject fake in `assertPRGithub_test.go`
+- [x] Inject fake in `attestPRGithub_test.go`
+
 ## Fakes & contract tests for cloud provider integrations (#758)
 
 ### Lambda (done — this PR)

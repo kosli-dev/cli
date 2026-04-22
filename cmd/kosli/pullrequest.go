@@ -5,12 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"reflect"
 
-	azUtils "github.com/kosli-dev/cli/internal/azure"
-	bbUtils "github.com/kosli-dev/cli/internal/bitbucket"
-	ghUtils "github.com/kosli-dev/cli/internal/github"
-	gitlabUtils "github.com/kosli-dev/cli/internal/gitlab"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/types"
 )
@@ -44,7 +39,7 @@ func (o *attestPROptions) run(args []string) error {
 	}
 
 	label := ""
-	o.payload.GitProvider, label = getGitProviderAndLabel(o.retriever)
+	o.payload.GitProvider, label = o.getRetriever().ProviderAndLabel()
 
 	var pullRequestsEvidence []*types.PREvidence
 	pullRequestsEvidence, err = o.getRetriever().PREvidenceForCommitV2(o.payload.Commit.Sha1)
@@ -89,22 +84,4 @@ func (o *attestPROptions) run(args []string) error {
 	}
 
 	return wrapAttestationError(err)
-}
-
-func getGitProviderAndLabel(retriever any) (string, string) {
-	label := "pull request"
-	provider := ""
-	t := reflect.TypeOf(retriever)
-	switch t {
-	case reflect.TypeOf(&gitlabUtils.GitlabConfig{}):
-		provider = "gitlab"
-		label = "merge request"
-	case reflect.TypeOf(&ghUtils.GithubConfig{}):
-		provider = "github"
-	case reflect.TypeOf(&azUtils.AzureConfig{}):
-		provider = "azure"
-	case reflect.TypeOf(&bbUtils.Config{}):
-		provider = "bitbucket"
-	}
-	return provider, label
 }

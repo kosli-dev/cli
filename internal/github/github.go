@@ -73,6 +73,23 @@ func graphqlEndpoint(baseURL string) string {
 	return result
 }
 
+func (c *GithubConfig) ProviderAndLabel() (string, string) {
+	return "github", "pull request"
+}
+
+// NewGithubRetrieverFunc creates a types.PRRetriever from GitHub config
+// parameters. It can be replaced in tests to inject a FakeGitHubClient.
+var NewGithubRetrieverFunc = defaultNewGithubRetriever
+
+func defaultNewGithubRetriever(token, baseURL, org, repository string) types.PRRetriever {
+	return NewGithubConfig(token, baseURL, org, repository)
+}
+
+// ResetGithubRetrieverFunc restores NewGithubRetrieverFunc to its default.
+func ResetGithubRetrieverFunc() {
+	NewGithubRetrieverFunc = defaultNewGithubRetriever
+}
+
 func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence, error) {
 	ctx := context.Background()
 	pullRequestsEvidence := []*types.PREvidence{}
