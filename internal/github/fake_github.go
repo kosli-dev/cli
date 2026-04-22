@@ -16,6 +16,7 @@ var errInjected = errors.New("injected error")
 type FakeGitHubClient struct {
 	// PRsByCommit maps a commit SHA to the PR evidence returned for that commit.
 	// An unknown commit returns an empty slice (no error).
+	// PRsByCommit maps a commit SHA to the PR evidence returned for that commit.
 	PRsByCommit map[string][]*types.PREvidence
 	// Err, if set, is returned by all calls regardless of commit.
 	Err error
