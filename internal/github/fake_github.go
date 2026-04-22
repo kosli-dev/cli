@@ -21,6 +21,10 @@ type FakeGitHubClient struct {
 	Err error
 }
 
+func (f *FakeGitHubClient) ProviderAndLabel() (string, string) {
+	return "github", "pull request"
+}
+
 // PREvidenceForCommitV1 mirrors the REST API: returns an error for commits
 // not present in PRsByCommit (matching the real GitHub V1 behaviour of
 // returning 422 for unknown commits).
@@ -42,5 +46,9 @@ func (f *FakeGitHubClient) PREvidenceForCommitV2(commit string) ([]*types.PREvid
 	if f.Err != nil {
 		return nil, f.Err
 	}
-	return f.PRsByCommit[commit], nil
+	prs := f.PRsByCommit[commit]
+	if prs == nil {
+		return []*types.PREvidence{}, nil
+	}
+	return prs, nil
 }

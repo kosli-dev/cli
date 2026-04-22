@@ -38,6 +38,10 @@ func (c *GitlabConfig) ProjectID() string {
 	return fmt.Sprintf("%s/%s", c.Org, c.Repository)
 }
 
+func (c *GitlabConfig) ProviderAndLabel() (string, string) {
+	return "gitlab", "merge request"
+}
+
 // This is the old implementation, it will be removed after the PR payload is enhanced for all VCS providers
 func (c *GitlabConfig) PREvidenceForCommitV1(commit string) ([]*types.PREvidence, error) {
 	pullRequestsEvidence := []*types.PREvidence{}

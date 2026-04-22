@@ -55,6 +55,10 @@ func NewAzureClientFromToken(ctx context.Context, azToken, orgURL string) (git.C
 	return gitClient, nil
 }
 
+func (c *AzureConfig) ProviderAndLabel() (string, string) {
+	return "azure", "pull request"
+}
+
 // This is the old implementation, it will be removed after the PR payload is enhanced for Azure
 func (c *AzureConfig) PREvidenceForCommitV1(commit string) ([]*types.PREvidence, error) {
 	pullRequestsEvidence := []*types.PREvidence{}

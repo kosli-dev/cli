@@ -67,9 +67,17 @@
 - [x] `TestGitHubContract_Fake`: V1 returns error when Err is injected
 - [x] `TestGitHubContract_RealGitHub`: same contract, env-gated on `KOSLI_GITHUB_TOKEN`
 
-### Slice 2: Thread fake through command layer
+### Slice 2: Thread fake through command layer ← active
 
-- [ ] TBD — depends on how the reflection issue in `getGitProviderAndLabel` is resolved
+- [x] Add `ProviderAndLabel() (string, string)` to `types.PRRetriever` interface
+- [x] Implement on `GithubConfig` → `("github", "pull request")`
+- [x] Implement on `GitlabConfig` → `("gitlab", "merge request")`
+- [x] Implement on `AzureConfig` → `("azure", "pull request")`
+- [x] Implement on bitbucket `Config` → `("bitbucket", "pull request")`
+- [x] Implement on `FakeGitHubClient` → `("github", "pull request")`
+- [x] Replace reflection in `getGitProviderAndLabel` with `retriever.ProviderAndLabel()`
+- [x] Inject fake in `assertPRGithub_test.go`
+- [x] Inject fake in `attestPRGithub_test.go`
 
 ## Fakes & contract tests for cloud provider integrations (#758)
 
