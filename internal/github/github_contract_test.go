@@ -66,6 +66,12 @@ func runGitHubContractTests(t *testing.T, provider types.PRRetriever, commitWith
 			require.Error(t, err)
 		}
 	})
+
+	t.Run("ProviderAndLabel returns github and pull request", func(t *testing.T) {
+		provider, label := provider.ProviderAndLabel()
+		require.Equal(t, "github", provider)
+		require.Equal(t, "pull request", label)
+	})
 }
 
 func TestGitHubContract_Fake(t *testing.T) {
