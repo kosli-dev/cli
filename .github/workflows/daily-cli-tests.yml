@@ -55,7 +55,7 @@ jobs:
       sonarqube_token: ${{ secrets.KOSLI_SONARQUBE_TOKEN }}
 
   aws-contract-tests:
-    name: AWS Contract Tests
+    name: Contract Tests
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -81,8 +81,10 @@ jobs:
           role-duration-seconds: 2400
           role-session-name: ${{ github.event.repository.name }}
 
-      - name: Run AWS contract tests
-        run: make test_smoke_aws
+      - name: Run contract tests
+        run: make test_contract
+        env:
+          KOSLI_GITHUB_TOKEN: ${{ secrets.KOSLI_GITHUB_TOKEN }}
 
   slack-notification-on-failure:
     runs-on: ubuntu-24.04
