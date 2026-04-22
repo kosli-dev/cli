@@ -90,6 +90,37 @@ func ResetGithubRetrieverFunc() {
 	NewGithubRetrieverFunc = defaultNewGithubRetriever
 }
 
+// PREvidenceForCommitHybrid tries PREvidenceForCommitV2 first. If it returns
+// no results it falls back to V1 REST discovery (immediately consistent) +
+// PREvidenceByPRNumber for each PR found, preserving all rich V2 fields.
+func (c *GithubConfig) PREvidenceForCommitHybrid(commit string) ([]*types.PREvidence, error) {
+	prs, err := c.PREvidenceForCommitV2(commit)
+	if err != nil {
+		return nil, err
+	}
+	if len(prs) > 0 {
+		return prs, nil
+	}
+
+	// V2 returned nothing — fall back to REST discovery.
+	restPRs, err := c.PullRequestsForCommit(commit)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*types.PREvidence
+	for _, pr := range restPRs {
+		evidence, err := c.PREvidenceByPRNumber(pr.GetNumber())
+		if err != nil {
+			return nil, err
+		}
+		if evidence != nil {
+			result = append(result, evidence)
+		}
+	}
+	return result, nil
+}
+
 // PREvidenceByPRNumber fetches full PR evidence for a single PR number via
 // GraphQL. Returns nil, nil when the PR does not exist.
 func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, error) {

@@ -53,6 +53,15 @@ func runGitHubContractTests(t *testing.T, provider types.PRRetriever, commitWith
 		require.Error(t, err)
 	})
 
+	t.Run("Hybrid returns PRs for commit with PRs", func(t *testing.T) {
+		prs, err := provider.PREvidenceForCommitHybrid(commitWithPR)
+		require.NoError(t, err)
+		require.NotEmpty(t, prs)
+		require.NotEmpty(t, prs[0].URL, "URL should be present")
+		require.NotEmpty(t, prs[0].State, "State should be present")
+		require.NotEmpty(t, prs[0].MergeCommit, "MergeCommit should be present")
+	})
+
 	t.Run("ProviderAndLabel returns github and pull request", func(t *testing.T) {
 		providerName, label := provider.ProviderAndLabel()
 		require.Equal(t, "github", providerName)
@@ -118,6 +127,44 @@ func TestGitHubContract_Fake(t *testing.T) {
 		_, err := client.PREvidenceForCommitV1(commitWithPR)
 		require.Error(t, err)
 	})
+
+	// Hybrid fallback path: V2 returns empty (PRsByCommit not seeded for this
+	// commit), so the fake falls back through PRNumbersByCommit + PRsByNumber.
+	commitFallback := "fallback-commit"
+	prNumber := testHelpers.GithubPRNumber()
+	fallbackPR := &types.PREvidence{
+		URL:         "https://github.com/kosli-dev/cli/pull/6",
+		State:       "MERGED",
+		MergeCommit: commitFallback,
+	}
+	fallbackClient := &FakeGitHubClient{
+		PRNumbersByCommit: map[string][]int{
+			commitFallback: {prNumber},
+		},
+		PRsByNumber: map[int]*types.PREvidence{
+			prNumber: fallbackPR,
+		},
+	}
+
+	t.Run("Hybrid returns PRs via fallback path when V2 returns empty", func(t *testing.T) {
+		prs, err := fallbackClient.PREvidenceForCommitHybrid(commitFallback)
+		require.NoError(t, err)
+		require.NotEmpty(t, prs)
+		require.Equal(t, fallbackPR.URL, prs[0].URL)
+	})
+
+	t.Run("Hybrid returns empty when commit has no PRs in either path", func(t *testing.T) {
+		prs, err := fallbackClient.PREvidenceForCommitHybrid("commit-with-no-prs")
+		require.NoError(t, err)
+		require.Empty(t, prs)
+	})
+
+	t.Run("Hybrid returns error when Err is injected", func(t *testing.T) {
+		client.Err = errInjected
+		defer func() { client.Err = nil }()
+		_, err := client.PREvidenceForCommitHybrid(commitWithPR)
+		require.Error(t, err)
+	})
 }
 
 func TestGitHubContract_RealGitHub(t *testing.T) {
@@ -136,7 +183,7 @@ func TestGitHubContract_RealGitHub(t *testing.T) {
 }
 
 func TestGitHubContract_Fake_PRByNumber(t *testing.T) {
-	knownPRNumber := 6
+	knownPRNumber := testHelpers.GithubPRNumber()
 	pr := &types.PREvidence{
 		URL:         "https://github.com/kosli-dev/cli/pull/6",
 		State:       "MERGED",
