@@ -100,7 +100,7 @@
 - [ ] Fake-backed unit tests for orchestration (concurrent cluster/service/task fetching, error propagation)
 - [ ] `NewECSClientFunc` factory + inject fake into `snapshotECS_test.go` command tests
 - [ ] Trim existing ECS integration tests to smoke tests
-- [ ] Add ECS to `make test_smoke_aws`
+- [ ] Add ECS to `make test_contract_aws`
 
 ### S3
 
@@ -110,7 +110,7 @@
 - [ ] Fake-backed unit tests for path include/exclude filtering and digest computation
 - [ ] `NewS3ClientFunc` factory + inject fake into `snapshotS3_test.go` command tests
 - [ ] Trim existing S3 integration tests to smoke tests
-- [ ] Add S3 to `make test_smoke_aws`
+- [ ] Add S3 to `make test_contract_aws`
 
 ### Azure Apps
 
