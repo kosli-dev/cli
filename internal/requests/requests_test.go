@@ -541,6 +541,34 @@ func (suite *RequestsTestSuite) TestCreateMultipartRequestBody() {
 	}
 }
 
+func (suite *RequestsTestSuite) TestMultipartDryRunOutput_IsPrettyPrinted() {
+	buf := new(bytes.Buffer)
+	client, err := NewKosliClient("", 1, false, logger.NewLogger(buf, buf, false))
+	require.NoError(suite.T(), err)
+
+	params := &RequestParams{
+		Method: http.MethodPut,
+		URL:    "http://localhost:8001/api/v2/attestations/test",
+		DryRun: true,
+		Token:  "test-token",
+		Form: []FormItem{
+			{
+				Type:      "field",
+				FieldName: "data_json",
+				Content:   map[string]any{"key": "value", "nested": map[string]any{"a": 1}},
+			},
+		},
+	}
+
+	_, err = client.Do(params)
+	require.NoError(suite.T(), err)
+
+	output := buf.String()
+	// Dry-run output should contain pretty-printed JSON with indentation
+	require.Contains(suite.T(), output, "    \"key\": \"value\"", "dry-run output should pretty-print JSON fields")
+	require.Contains(suite.T(), output, "    \"nested\": {", "dry-run output should pretty-print nested JSON")
+}
+
 func (suite *RequestsTestSuite) TestMultipartFieldJSON_IsCompact() {
 	formItems := []FormItem{
 		{
