@@ -55,6 +55,16 @@
 - [x] Slice 3: Show params in `--show-input` output
 - [x] Slice 4: Update help text and examples
 
+## kosli create policy-file
+
+- [x] Slice 1: Policy model + YAML generation (`internal/policy/`)
+- [x] Slice 2: Expression builder
+- [x] Slice 3: Skeleton Cobra command + huh dependency
+- [x] Slice 4: Attestation loop in wizard
+- [x] Slice 5: Expression builder wizard
+- [x] Slice 6: API lookups for flows and custom attestation types
+- [x] Slice 7: Preview screen + polish
+
 ## Fakes & contract tests for GitHub API integration
 
 ### Slice 1: FakeGitHubClient + contract tests (`internal/github`) ← active
