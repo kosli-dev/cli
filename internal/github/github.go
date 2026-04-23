@@ -280,11 +280,8 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 	}
 	retryDelays := []time.Duration{10 * time.Second, 20 * time.Second, 30 * time.Second}
 	err = client.Query(ctx, &query, variables)
-	for _, delay := range retryDelays {
-		if err == nil {
-			break
-		}
-		sleep(delay)
+	for i := 0; err != nil && i < len(retryDelays); i++ {
+		sleep(retryDelays[i])
 		err = client.Query(ctx, &query, variables)
 	}
 	if err != nil {

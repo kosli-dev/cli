@@ -74,16 +74,16 @@ func (f *FakeGitHubClient) PREvidenceForCommitHybrid(commit string) ([]*types.PR
 	return result, nil
 }
 
-// PREvidenceByPRNumber mirrors the GraphQL API: returns nil with no error for
-// PR numbers not present in PRsByNumber (matching the real GitHub behaviour of
-// returning null for non-existent pull requests).
+// PREvidenceByPRNumber mirrors the GraphQL API: returns an error for PR numbers
+// not present in PRsByNumber (matching the real GitHub behaviour of returning
+// an error for non-existent pull requests).
 func (f *FakeGitHubClient) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, error) {
 	if f.Err != nil {
 		return nil, f.Err
 	}
 	pr, ok := f.PRsByNumber[prNumber]
 	if !ok {
-		return nil, nil
+		return nil, fmt.Errorf("could not resolve to a pull request with number %d", prNumber)
 	}
 	return pr, nil
 }

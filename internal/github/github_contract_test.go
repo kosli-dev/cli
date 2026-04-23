@@ -87,9 +87,9 @@ func runPRByNumberContractTests(t *testing.T, provider prByNumberRetriever, know
 		require.NotEmpty(t, pr.MergeCommit, "MergeCommit should be present")
 	})
 
-	t.Run("returns nil for unknown PR number", func(t *testing.T) {
+	t.Run("returns error for unknown PR number", func(t *testing.T) {
 		pr, err := provider.PREvidenceByPRNumber(999999999)
-		require.NoError(t, err)
+		require.Error(t, err)
 		require.Nil(t, pr)
 	})
 }
