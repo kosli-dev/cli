@@ -61,7 +61,7 @@ func (f *FakeGitHubClient) PREvidenceForCommitHybrid(commit string) ([]*types.PR
 	}
 	// Fallback: use PRNumbersByCommit for V1-style discovery.
 	prNumbers := f.PRNumbersByCommit[commit]
-	var result []*types.PREvidence
+	result := []*types.PREvidence{}
 	for _, n := range prNumbers {
 		evidence, err := f.PREvidenceByPRNumber(n)
 		if err != nil {

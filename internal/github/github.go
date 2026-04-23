@@ -111,7 +111,7 @@ func (c *GithubConfig) PREvidenceForCommitHybrid(commit string) ([]*types.PREvid
 		return nil, err
 	}
 
-	var result []*types.PREvidence
+	result := []*types.PREvidence{}
 	for _, pr := range restPRs {
 		evidence, err := c.PREvidenceByPRNumber(pr.GetNumber())
 		if err != nil {
