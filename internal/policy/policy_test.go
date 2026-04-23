@@ -12,7 +12,7 @@ func TestToYAML_EmptyPolicy(t *testing.T) {
 	out, err := p.ToYAML()
 	require.NoError(t, err)
 
-	expected := "_schema: https://kosli.mintlify.app/schemas/policy/v1\n"
+	expected := "_schema: https://docs.kosli.com/schemas/policy/v1\n"
 	assert.Equal(t, expected, string(out))
 }
 
@@ -24,7 +24,7 @@ func TestToYAML_ProvenanceRequired(t *testing.T) {
 	out, err := p.ToYAML()
 	require.NoError(t, err)
 
-	expected := `_schema: https://kosli.mintlify.app/schemas/policy/v1
+	expected := `_schema: https://docs.kosli.com/schemas/policy/v1
 artifacts:
     provenance:
         required: true
@@ -45,7 +45,7 @@ func TestToYAML_ProvenanceWithExceptions(t *testing.T) {
 	out, err := p.ToYAML()
 	require.NoError(t, err)
 
-	expected := `_schema: https://kosli.mintlify.app/schemas/policy/v1
+	expected := `_schema: https://docs.kosli.com/schemas/policy/v1
 artifacts:
     provenance:
         required: true
@@ -68,7 +68,7 @@ func TestToYAML_TrailComplianceWithExceptions(t *testing.T) {
 	out, err := p.ToYAML()
 	require.NoError(t, err)
 
-	expected := `_schema: https://kosli.mintlify.app/schemas/policy/v1
+	expected := `_schema: https://docs.kosli.com/schemas/policy/v1
 artifacts:
     trail-compliance:
         required: true
@@ -88,7 +88,7 @@ func TestToYAML_SingleAttestation(t *testing.T) {
 	out, err := p.ToYAML()
 	require.NoError(t, err)
 
-	expected := `_schema: https://kosli.mintlify.app/schemas/policy/v1
+	expected := `_schema: https://docs.kosli.com/schemas/policy/v1
 artifacts:
     attestations:
         - type: snyk
@@ -111,7 +111,7 @@ func TestToYAML_AttestationWithNameAndIf(t *testing.T) {
 	out, err := p.ToYAML()
 	require.NoError(t, err)
 
-	expected := `_schema: https://kosli.mintlify.app/schemas/policy/v1
+	expected := `_schema: https://docs.kosli.com/schemas/policy/v1
 artifacts:
     attestations:
         - type: pull_request
@@ -133,7 +133,7 @@ func TestToYAML_MultipleAttestations(t *testing.T) {
 	out, err := p.ToYAML()
 	require.NoError(t, err)
 
-	expected := `_schema: https://kosli.mintlify.app/schemas/policy/v1
+	expected := `_schema: https://docs.kosli.com/schemas/policy/v1
 artifacts:
     attestations:
         - type: snyk
@@ -171,7 +171,7 @@ func TestToYAML_FullPolicy(t *testing.T) {
 	out, err := p.ToYAML()
 	require.NoError(t, err)
 
-	expected := `_schema: https://kosli.mintlify.app/schemas/policy/v1
+	expected := `_schema: https://docs.kosli.com/schemas/policy/v1
 artifacts:
     provenance:
         required: true
@@ -202,7 +202,7 @@ func TestToYAML_WildcardNameExplicit(t *testing.T) {
 	require.NoError(t, err)
 
 	// name: "*" should always be explicit in output
-	expected := `_schema: https://kosli.mintlify.app/schemas/policy/v1
+	expected := `_schema: https://docs.kosli.com/schemas/policy/v1
 artifacts:
     attestations:
         - type: snyk
@@ -222,7 +222,7 @@ func TestToYAML_WildcardTypeRequiresNonWildcardName(t *testing.T) {
 	out, err := p.ToYAML()
 	require.NoError(t, err)
 
-	expected := `_schema: https://kosli.mintlify.app/schemas/policy/v1
+	expected := `_schema: https://docs.kosli.com/schemas/policy/v1
 artifacts:
     attestations:
         - type: '*'

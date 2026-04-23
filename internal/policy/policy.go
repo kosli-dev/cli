@@ -2,7 +2,7 @@ package policy
 
 import "gopkg.in/yaml.v3"
 
-const SchemaURL = "https://kosli.mintlify.app/schemas/policy/v1"
+const SchemaURL = "https://docs.kosli.com/schemas/policy/v1"
 
 type Policy struct {
 	Schema    string         `yaml:"_schema"`
