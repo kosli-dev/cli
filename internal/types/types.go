@@ -32,6 +32,11 @@ type Commit struct {
 type PRRetriever interface {
 	PREvidenceForCommitV2(string) ([]*PREvidence, error)
 	PREvidenceForCommitV1(string) ([]*PREvidence, error)
+	// PREvidenceForCommitHybrid tries V2 (GraphQL by commit SHA) first. If it
+	// returns no results it falls back to V1 REST discovery + per-PR GraphQL so
+	// that GitHub's eventual consistency on associatedPullRequests never causes
+	// a false "no PR found".
+	PREvidenceForCommitHybrid(string) ([]*PREvidence, error)
 	// ProviderAndLabel returns the provider name (e.g. "github") and the label
 	// for a pull request (e.g. "pull request", or "merge request" for GitLab).
 	ProviderAndLabel() (string, string)

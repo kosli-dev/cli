@@ -76,6 +76,10 @@ func (c *AzureConfig) PREvidenceForCommitV1(commit string) ([]*types.PREvidence,
 	return pullRequestsEvidence, nil
 }
 
+func (c *AzureConfig) PREvidenceForCommitHybrid(commit string) ([]*types.PREvidence, error) {
+	return c.PREvidenceForCommitV2(commit)
+}
+
 // This is the new implementation, it will be used for Azure
 func (c *AzureConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence, error) {
 	pullRequestsEvidence := []*types.PREvidence{}

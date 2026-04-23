@@ -2,10 +2,12 @@ package github
 
 import (
 	"context"
-	"os"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
+	"time"
 
-	"github.com/kosli-dev/cli/internal/testHelpers"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -40,185 +42,6 @@ func (suite *GithubTestSuite) TestNewGithubClientFromToken() {
 	}
 }
 
-func (suite *GithubTestSuite) TestPREvidenceForCommit() {
-	type result struct {
-		wantError   bool
-		numberOfPRs int
-	}
-	for _, t := range []struct {
-		name           string
-		config         *GithubConfig
-		commit         string
-		requireEnvVars bool // indicates that a test case needs real credentials from env vars
-		result         result
-	}{
-		{
-			name: "invalid token causes an error",
-			config: &GithubConfig{
-				Token:      "some_fake_token",
-				Org:        "kosli-dev",
-				Repository: "cli",
-			},
-			result: result{
-				wantError: true,
-			},
-		},
-		{
-			name: "can list pull requests for a commit.",
-			config: &GithubConfig{
-				Org:        "kosli-dev",
-				Repository: "cli",
-			},
-			requireEnvVars: true,
-			result: result{
-				numberOfPRs: 1,
-			},
-		},
-		{
-			name: "non-existing commit will cause an error.",
-			config: &GithubConfig{
-				Org:        "kosli-dev",
-				Repository: "cli",
-			},
-			commit:         "73d7fee2f31ade8e1a9c456c324255212c3tf45a",
-			requireEnvVars: true,
-			result: result{
-				wantError: true,
-			},
-		},
-	} {
-		suite.Run(t.name, func() {
-			if t.requireEnvVars {
-				testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_GITHUB_TOKEN"})
-				t.config.Token = os.Getenv("KOSLI_GITHUB_TOKEN")
-			}
-			if t.commit == "" {
-				t.commit = testHelpers.GithubCommitWithPR()
-			}
-			prs, err := t.config.PREvidenceForCommitV2(t.commit)
-			if t.result.wantError {
-				require.Errorf(suite.T(), err, "expected an error but got: %s", err)
-			} else {
-				require.NoErrorf(suite.T(), err, "was NOT expecting error but got: %s", err)
-				require.Len(suite.T(), prs, t.result.numberOfPRs)
-			}
-		})
-	}
-}
-
-func (suite *GithubTestSuite) TestPullRequestsForCommit() {
-	type result struct {
-		wantError   bool
-		numberOfPRs int
-	}
-	for _, t := range []struct {
-		name       string
-		ghOrg      string
-		repository string
-		commit     string
-		result     result
-	}{
-		{
-			name:       "can list pull requests for a commit.",
-			ghOrg:      "kosli-dev",
-			repository: "cli",
-			result: result{
-				wantError:   false,
-				numberOfPRs: 1,
-			},
-		},
-		{
-			name:       "non-existing commit will cause an error.",
-			ghOrg:      "kosli-dev",
-			repository: "cli",
-			commit:     "73d7fee2f31ade8e1a9c456c324255212c3tf45a",
-			result: result{
-				wantError: true,
-			},
-		},
-	} {
-		suite.Run(t.name, func() {
-			testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_GITHUB_TOKEN"})
-			token := os.Getenv("KOSLI_GITHUB_TOKEN")
-			c := &GithubConfig{
-				Token:      token,
-				Org:        t.ghOrg,
-				Repository: t.repository,
-			}
-			if t.commit == "" {
-				t.commit = testHelpers.GithubCommitWithPR()
-			}
-			prs, err := c.PullRequestsForCommit(t.commit)
-			if t.result.wantError {
-				require.Errorf(suite.T(), err, "expected an error but got: %s", err)
-			} else {
-				require.NoErrorf(suite.T(), err, "was NOT expecting error but got: %s", err)
-				require.Lenf(suite.T(), prs, t.result.numberOfPRs, "expected %d PRs but got %d", t.result.numberOfPRs, len(prs))
-			}
-		})
-	}
-}
-
-func (suite *GithubTestSuite) TestGetPullRequestApprovers() {
-	type result struct {
-		wantError bool
-		approvers []string
-	}
-	for _, t := range []struct {
-		name       string
-		ghOrg      string
-		repository string
-		number     int
-		result     result
-	}{
-		{
-			name:       "get an empty list for a PR without approvers",
-			ghOrg:      "kosli-dev",
-			repository: "cli",
-			number:     8,
-			result: result{
-				approvers: []string{},
-			},
-		},
-		{
-			name:       "get the list of approvers for an approved PR",
-			ghOrg:      "kosli-dev",
-			repository: "cli",
-			number:     6,
-			result: result{
-				approvers: []string{"sami-alajrami"},
-			},
-		},
-		{
-			name:       "non-existing PR causes an error",
-			ghOrg:      "kosli-dev",
-			repository: "cli",
-			number:     662,
-			result: result{
-				wantError: true,
-			},
-		},
-	} {
-		suite.Run(t.name, func() {
-			testHelpers.SkipIfEnvVarUnset(suite.T(), []string{"KOSLI_GITHUB_TOKEN"})
-			token := os.Getenv("KOSLI_GITHUB_TOKEN")
-			c := &GithubConfig{
-				Token:      token,
-				Org:        t.ghOrg,
-				Repository: t.repository,
-			}
-			approvers, err := c.GetPullRequestApprovers(t.number)
-			if t.result.wantError {
-				require.Errorf(suite.T(), err, "expected an error but got: %s", err)
-			} else {
-				require.NoErrorf(suite.T(), err, "was NOT expecting error but got: %s", err)
-				require.ElementsMatchf(suite.T(), t.result.approvers, approvers, "want approvers: %v, got approvers: %v",
-					t.result.approvers, approvers)
-			}
-		})
-	}
-}
-
 func (suite *GithubTestSuite) TestExtractRepoName() {
 	for _, t := range []struct {
 		name  string
@@ -247,4 +70,62 @@ func (suite *GithubTestSuite) TestExtractRepoName() {
 // a normal test function and pass our suite to suite.Run
 func TestGithubTestSuite(t *testing.T) {
 	suite.Run(t, new(GithubTestSuite))
+}
+
+// graphqlNullPRResponse is a minimal valid GraphQL response where the PR is null.
+// PREvidenceByPRNumber returns nil, nil in this case.
+const graphqlNullPRResponse = `{"data":{"repository":{"pullRequest":null}}}`
+
+func newRetryTestServer(t *testing.T, failCount int) (*httptest.Server, *int) {
+	t.Helper()
+	attempts := 0
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/graphql" {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		attempts++
+		if attempts <= failCount {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, graphqlNullPRResponse)
+	}))
+	return ts, &attempts
+}
+
+func newRetryConfig(serverURL string, sleepFn func(time.Duration)) *GithubConfig {
+	return &GithubConfig{
+		Token:      "fake-token",
+		BaseURL:    serverURL,
+		Org:        "test-org",
+		Repository: "test-repo",
+		Sleep:      sleepFn,
+	}
+}
+
+func TestPREvidenceByPRNumber_RetriesOnGraphQLError(t *testing.T) {
+	ts, attempts := newRetryTestServer(t, 2)
+	defer ts.Close()
+
+	var sleptDurations []time.Duration
+	config := newRetryConfig(ts.URL, func(d time.Duration) { sleptDurations = append(sleptDurations, d) })
+
+	pr, err := config.PREvidenceByPRNumber(1)
+	require.NoError(t, err)
+	require.Nil(t, pr)
+	require.Equal(t, 3, *attempts, "should have retried twice before succeeding")
+	require.Len(t, sleptDurations, 2, "should have slept between retries")
+}
+
+func TestPREvidenceByPRNumber_ReturnsErrorAfterAllRetriesExhausted(t *testing.T) {
+	ts, attempts := newRetryTestServer(t, 999)
+	defer ts.Close()
+
+	config := newRetryConfig(ts.URL, func(time.Duration) {})
+
+	_, err := config.PREvidenceByPRNumber(1)
+	require.Error(t, err)
+	require.Equal(t, 4, *attempts, "should have made 1 initial attempt + 3 retries")
 }

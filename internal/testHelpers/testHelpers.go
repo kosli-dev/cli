@@ -45,6 +45,12 @@ func GithubCommitWithPR() string {
 	return "e21a8afff429e0c87ee523d683f2438113f0a105"
 }
 
+// GithubPRNumber returns the PR number associated with GithubCommitWithPR in
+// kosli-dev/cli. It is stable because merged PRs are never deleted.
+func GithubPRNumber() int {
+	return 6
+}
+
 func CloneGitRepo(url, cloneTo string) (*git.Repository, error) {
 	// the repo worktree filesystem. It has to be osfs so that we can give it a path
 	fs := osfs.New(cloneTo)

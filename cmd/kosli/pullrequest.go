@@ -42,7 +42,7 @@ func (o *attestPROptions) run(args []string) error {
 	o.payload.GitProvider, label = o.getRetriever().ProviderAndLabel()
 
 	var pullRequestsEvidence []*types.PREvidence
-	pullRequestsEvidence, err = o.getRetriever().PREvidenceForCommitV2(o.payload.Commit.Sha1)
+	pullRequestsEvidence, err = o.getRetriever().PREvidenceForCommitHybrid(o.payload.Commit.Sha1)
 	if err != nil {
 		return err
 	}
