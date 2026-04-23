@@ -124,6 +124,103 @@ func (c *GithubConfig) PREvidenceForCommitHybrid(commit string) ([]*types.PREvid
 	return result, nil
 }
 
+// graphqlCommitNode is the shared GraphQL node type for commits on a PR,
+// used in both PREvidenceByPRNumber and PREvidenceForCommitV2.
+type graphqlCommitNode struct {
+	Commit struct {
+		Oid             graphql.String
+		MessageHeadline graphql.String
+		CommittedDate   graphql.String
+		URL             graphql.String
+		Committer       struct {
+			Name  graphql.String
+			Email graphql.String
+			Date  graphql.String
+			User  *struct {
+				Login graphql.String
+			}
+		}
+	}
+}
+
+// graphqlReviewNode is the shared GraphQL node type for approved reviews on a PR.
+type graphqlReviewNode struct {
+	Author struct {
+		Login graphql.String
+	}
+	State       graphql.String
+	SubmittedAt graphql.String
+}
+
+// buildPREvidence constructs a PREvidence from pre-resolved fields and the
+// raw GraphQL commit/review nodes. mergeCommit must be resolved by the caller
+// (it differs between commit-SHA queries and PR-number queries).
+func buildPREvidence(
+	url, mergeCommit, state, author, createdAtStr, mergedAtStr, title, headRef string,
+	commitNodes []graphqlCommitNode,
+	reviewNodes []graphqlReviewNode,
+) (*types.PREvidence, error) {
+	createdAt, err := time.Parse(time.RFC3339, createdAtStr)
+	if err != nil {
+		return nil, err
+	}
+	mergedAt := int64(0)
+	if mergedAtStr != "" {
+		mergedAtTime, err := time.Parse(time.RFC3339, mergedAtStr)
+		if err != nil {
+			return nil, err
+		}
+		mergedAt = mergedAtTime.Unix()
+	}
+
+	evidence := &types.PREvidence{
+		URL:         url,
+		MergeCommit: mergeCommit,
+		State:       state,
+		Author:      author,
+		CreatedAt:   createdAt.Unix(),
+		MergedAt:    mergedAt,
+		Title:       title,
+		HeadRef:     headRef,
+		Approvers:   []any{},
+		Commits:     []types.Commit{},
+	}
+
+	for _, n := range commitNodes {
+		timestamp, err := time.Parse(time.RFC3339, string(n.Commit.CommittedDate))
+		if err != nil {
+			return nil, err
+		}
+		committerUsername := ""
+		if n.Commit.Committer.User != nil {
+			committerUsername = string(n.Commit.Committer.User.Login)
+		}
+		evidence.Commits = append(evidence.Commits, types.Commit{
+			SHA:               string(n.Commit.Oid),
+			Message:           string(n.Commit.MessageHeadline),
+			Committer:         fmt.Sprintf("%s <%s>", string(n.Commit.Committer.Name), string(n.Commit.Committer.Email)),
+			CommitterUsername: committerUsername,
+			Timestamp:         timestamp.Unix(),
+			Branch:            headRef,
+			URL:               string(n.Commit.URL),
+		})
+	}
+
+	for _, r := range reviewNodes {
+		submittedAt, err := time.Parse(time.RFC3339, string(r.SubmittedAt))
+		if err != nil {
+			return nil, err
+		}
+		evidence.Approvers = append(evidence.Approvers, types.PRApprovals{
+			Username:  string(r.Author.Login),
+			State:     string(r.State),
+			Timestamp: submittedAt.Unix(),
+		})
+	}
+
+	return evidence, nil
+}
+
 // PREvidenceByPRNumber fetches full PR evidence for a single PR number via
 // GraphQL. Returns nil, nil when the PR does not exist.
 func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, error) {
@@ -152,35 +249,14 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 					Login graphql.String
 				}
 				Commits struct {
-					Nodes []struct {
-						Commit struct {
-							Oid             graphql.String
-							MessageHeadline graphql.String
-							CommittedDate   graphql.String
-							URL             graphql.String
-							Committer       struct {
-								Name  graphql.String
-								Email graphql.String
-								Date  graphql.String
-								User  *struct {
-									Login graphql.String
-								}
-							}
-						}
-					}
+					Nodes    []graphqlCommitNode
 					PageInfo struct {
 						HasNextPage graphql.Boolean
 						EndCursor   graphql.String
 					}
 				} `graphql:"commits(first: 100, after: $commitCursor)"`
 				Reviews struct {
-					Nodes []struct {
-						Author struct {
-							Login graphql.String
-						}
-						State       graphql.String
-						SubmittedAt graphql.String
-					}
+					Nodes    []graphqlReviewNode
 					PageInfo struct {
 						HasNextPage graphql.Boolean
 						EndCursor   graphql.String
@@ -220,70 +296,16 @@ func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, er
 		return nil, nil
 	}
 
-	createdAt, err := time.Parse(time.RFC3339, string(pr.CreatedAt))
-	if err != nil {
-		return nil, err
-	}
-	mergedAt := int64(0)
-	if pr.MergedAt != "" {
-		mergedAtTime, err := time.Parse(time.RFC3339, string(pr.MergedAt))
-		if err != nil {
-			return nil, err
-		}
-		mergedAt = mergedAtTime.Unix()
-	}
-
 	mergeCommit := ""
 	if pr.MergeCommit != nil {
 		mergeCommit = string(pr.MergeCommit.Oid)
 	}
 
-	evidence := &types.PREvidence{
-		URL:         string(pr.URL),
-		MergeCommit: mergeCommit,
-		State:       string(pr.State),
-		Author:      string(pr.Author.Login),
-		CreatedAt:   createdAt.Unix(),
-		MergedAt:    mergedAt,
-		Title:       string(pr.Title),
-		HeadRef:     string(pr.HeadRefName),
-		Approvers:   []any{},
-		Commits:     []types.Commit{},
-	}
-
-	for _, c := range pr.Commits.Nodes {
-		timestamp, err := time.Parse(time.RFC3339, string(c.Commit.CommittedDate))
-		if err != nil {
-			return nil, err
-		}
-		committerUsername := ""
-		if c.Commit.Committer.User != nil {
-			committerUsername = string(c.Commit.Committer.User.Login)
-		}
-		evidence.Commits = append(evidence.Commits, types.Commit{
-			SHA:               string(c.Commit.Oid),
-			Message:           string(c.Commit.MessageHeadline),
-			Committer:         fmt.Sprintf("%s <%s>", string(c.Commit.Committer.Name), string(c.Commit.Committer.Email)),
-			CommitterUsername: committerUsername,
-			Timestamp:         timestamp.Unix(),
-			Branch:            string(pr.HeadRefName),
-			URL:               string(c.Commit.URL),
-		})
-	}
-
-	for _, r := range pr.Reviews.Nodes {
-		submittedAt, err := time.Parse(time.RFC3339, string(r.SubmittedAt))
-		if err != nil {
-			return nil, err
-		}
-		evidence.Approvers = append(evidence.Approvers, types.PRApprovals{
-			Username:  string(r.Author.Login),
-			State:     string(r.State),
-			Timestamp: submittedAt.Unix(),
-		})
-	}
-
-	return evidence, nil
+	return buildPREvidence(
+		string(pr.URL), mergeCommit, string(pr.State), string(pr.Author.Login),
+		string(pr.CreatedAt), string(pr.MergedAt), string(pr.Title), string(pr.HeadRefName),
+		pr.Commits.Nodes, pr.Reviews.Nodes,
+	)
 }
 
 func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence, error) {
@@ -317,22 +339,7 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 							}
 
 							Commits struct {
-								Nodes []struct {
-									Commit struct {
-										Oid             graphql.String
-										MessageHeadline graphql.String
-										CommittedDate   graphql.String
-										URL             graphql.String
-										Committer       struct {
-											Name  graphql.String
-											Email graphql.String
-											Date  graphql.String
-											User  *struct {
-												Login graphql.String
-											}
-										}
-									}
-								}
+								Nodes    []graphqlCommitNode
 								PageInfo struct {
 									HasNextPage graphql.Boolean
 									EndCursor   graphql.String
@@ -340,13 +347,7 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 							} `graphql:"commits(first: 100, after: $commitCursor)"`
 
 							Reviews struct {
-								Nodes []struct {
-									Author struct {
-										Login graphql.String
-									}
-									State       graphql.String
-									SubmittedAt graphql.String
-								}
+								Nodes    []graphqlReviewNode
 								PageInfo struct {
 									HasNextPage graphql.Boolean
 									EndCursor   graphql.String
@@ -377,69 +378,17 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 		return pullRequestsEvidence, err
 	}
 
-	// Print results for demonstration
 	for _, pr := range query.Repository.Object.Commit.AssociatedPullRequests.Nodes {
-		createdAt, err := time.Parse(time.RFC3339, string(pr.CreatedAt))
+		// MergeCommit is set to the queried commit SHA — V2 queries by commit SHA
+		// so the commit is by definition the merge commit.
+		evidence, err := buildPREvidence(
+			string(pr.URL), commit, string(pr.State), string(pr.Author.Login),
+			string(pr.CreatedAt), string(pr.MergedAt), string(pr.Title), string(pr.HeadRefName),
+			pr.Commits.Nodes, pr.Reviews.Nodes,
+		)
 		if err != nil {
 			return pullRequestsEvidence, err
 		}
-		mergedAt := int64(0)
-		if pr.MergedAt != "" {
-			mergedAtTime, err := time.Parse(time.RFC3339, string(pr.MergedAt))
-			if err != nil {
-				return pullRequestsEvidence, err
-			}
-			mergedAt = mergedAtTime.Unix()
-		}
-
-		evidence := &types.PREvidence{
-			URL:         string(pr.URL),
-			MergeCommit: commit,
-			State:       string(pr.State),
-			Author:      string(pr.Author.Login),
-			CreatedAt:   createdAt.Unix(),
-			MergedAt:    mergedAt,
-			Title:       string(pr.Title),
-			HeadRef:     string(pr.HeadRefName),
-			Approvers:   []any{},
-			Commits:     []types.Commit{},
-		}
-
-		for _, c := range pr.Commits.Nodes {
-			timestamp, err := time.Parse(time.RFC3339, string(c.Commit.CommittedDate))
-			if err != nil {
-				return pullRequestsEvidence, err
-			}
-
-			committerUsername := ""
-			if c.Commit.Committer.User != nil {
-				committerUsername = string(c.Commit.Committer.User.Login)
-			}
-
-			evidence.Commits = append(evidence.Commits, types.Commit{
-				SHA:               string(c.Commit.Oid),
-				Message:           string(c.Commit.MessageHeadline),
-				Committer:         fmt.Sprintf("%s <%s>", string(c.Commit.Committer.Name), string(c.Commit.Committer.Email)),
-				CommitterUsername: committerUsername,
-				Timestamp:         timestamp.Unix(),
-				Branch:            string(pr.HeadRefName),
-				URL:               string(c.Commit.URL),
-			})
-		}
-
-		for _, r := range pr.Reviews.Nodes {
-			submittedAt, err := time.Parse(time.RFC3339, string(r.SubmittedAt))
-			if err != nil {
-				return pullRequestsEvidence, err
-			}
-
-			evidence.Approvers = append(evidence.Approvers, types.PRApprovals{
-				Username:  string(r.Author.Login),
-				State:     string(r.State),
-				Timestamp: submittedAt.Unix(),
-			})
-		}
-
 		pullRequestsEvidence = append(pullRequestsEvidence, evidence)
 	}
 	return pullRequestsEvidence, nil
