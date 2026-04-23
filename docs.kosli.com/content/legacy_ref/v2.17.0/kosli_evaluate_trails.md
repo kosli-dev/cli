@@ -29,6 +29,7 @@ full data structure available to the policy. Use `--output json` for structured 
 |    -f, --flow string  |  The Kosli flow name.  |
 |    -h, --help  |  help for trails  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
+|        --params string  |  [optional] Policy parameters as inline JSON or @file.json. Available in policies as data.params.  |
 |    -p, --policy string  |  Path to a Rego policy file to evaluate against the trails.  |
 |        --show-input  |  [optional] Include the policy input data in the output.  |
 
@@ -73,5 +74,14 @@ kosli evaluate trails yourTrailName1 yourTrailName2
 	--policy yourPolicyFile.rego 
 	--show-input 
 	--output json 
+
+```
+
+##### evaluate trails with policy parameters
+
+```shell
+kosli evaluate trails yourTrailName1 yourTrailName2 
+	--policy yourPolicyFile.rego 
+	--params '{"min_approvers": 2}' 
 ```
 
