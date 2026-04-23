@@ -303,7 +303,12 @@ func (c *Client) PayloadOutput(req *http.Request, jsonFields map[string]any, mes
 		// Log only the JSON fields for multipart/form-data
 		c.Logger.Info(message)
 		for key, value := range jsonFields {
-			c.Logger.Info("Field: %s, Value: %+v", key, string(value.([]byte)))
+			var prettyJSON bytes.Buffer
+			if err := json.Indent(&prettyJSON, value.([]byte), "", "    "); err == nil {
+				c.Logger.Info("Field: %s, Value: %+v", key, prettyJSON.String())
+			} else {
+				c.Logger.Info("Field: %s, Value: %+v", key, string(value.([]byte)))
+			}
 		}
 	} else if req.Body != nil {
 		// For non-multipart requests, log the full JSON body

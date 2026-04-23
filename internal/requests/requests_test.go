@@ -549,14 +549,17 @@ func (suite *RequestsTestSuite) TestMultipartFieldJSON_IsCompact() {
 			Content:   map[string]interface{}{"key": "value", "nested": map[string]interface{}{"a": 1}},
 		},
 	}
-	_, body, _, err := createMultipartRequestBody(formItems)
+	_, body, jsonFields, err := createMultipartRequestBody(formItems)
 	require.NoError(suite.T(), err)
 
 	bodyStr := body.String()
 
-	// The JSON must not contain newlines or indentation
-	// (a compact marshal produces a single line like {"key":"value","nested":{"a":1}})
+	// The JSON in the multipart body must not contain indentation
 	require.NotContains(suite.T(), bodyStr, "    ", "multipart JSON field should not contain indentation")
+
+	// The raw JSON bytes stored for logging must be compact (single line, no newlines)
+	rawJSON := string(jsonFields["data_json"].([]byte))
+	require.NotContains(suite.T(), rawJSON, "\n", "multipart JSON field should be on a single line")
 }
 
 // In order for 'go test' to run this suite, we need to create
