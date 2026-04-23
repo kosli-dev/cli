@@ -34,6 +34,10 @@ func parseRFC3339NanoTimestamp(timestampStr, fieldName string) (int64, error) {
 	return parsedTime.Unix(), nil
 }
 
+func (c *Config) ProviderAndLabel() (string, string) {
+	return "bitbucket", "pull request"
+}
+
 // This is the old implementation, it will be removed after the PR payload is enhanced for Bitbucket
 func (c *Config) PREvidenceForCommitV1(commit string) ([]*types.PREvidence, error) {
 	return c.getPullRequestsFromBitbucketApi(commit, 1)

@@ -32,4 +32,7 @@ type Commit struct {
 type PRRetriever interface {
 	PREvidenceForCommitV2(string) ([]*PREvidence, error)
 	PREvidenceForCommitV1(string) ([]*PREvidence, error)
+	// ProviderAndLabel returns the provider name (e.g. "github") and the label
+	// for a pull request (e.g. "pull request", or "merge request" for GitLab).
+	ProviderAndLabel() (string, string)
 }
