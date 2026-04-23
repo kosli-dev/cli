@@ -144,17 +144,17 @@ test_integration_restart_server: test_setup_restart_server
 test_integration_single: test_setup
 	@export KOSLI_TESTS=true $(FAKE_CI_ENV) && $(GOTESTSUM) -- -p=1 ./... -run "${TARGET}"
 
-test_smoke_aws: ensure_gotestsum ## Run AWS contract and smoke tests against real AWS (requires AWS creds)
-	@echo "Running AWS contract and smoke tests against real AWS..."
+test_contract_aws: ensure_gotestsum ## Run AWS contract tests against real AWS (requires AWS creds)
+	@echo "Running AWS contract tests against real AWS..."
 	@echo "Requires AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY to be set"
 	@$(GOTESTSUM) -- -v -p=1 -run "LambdaContract_RealAWS|AWSTestSuite/TestGetLambdaPackageData|AWSTestSuite/TestGetEcsTasksData|AWSTestSuite/TestGetS3Data" ./internal/aws/
 
-test_smoke_github: ensure_gotestsum ## Run GitHub contract tests against real GitHub API (requires KOSLI_GITHUB_TOKEN)
+test_contract_github: ensure_gotestsum ## Run GitHub contract tests against real GitHub API (requires KOSLI_GITHUB_TOKEN)
 	@echo "Running GitHub contract tests against real GitHub API..."
 	@echo "Requires KOSLI_GITHUB_TOKEN to be set"
 	@$(GOTESTSUM) -- -v -p=1 -run "GitHubContract_RealGitHub" ./internal/github/
 
-test_contract: test_smoke_aws test_smoke_github ## Run all contract tests against real external services
+test_contract: test_contract_aws test_contract_github ## Run all contract tests against real external services
 
 
 test_docs: deps vet ensure_network test_setup ## Test docs
