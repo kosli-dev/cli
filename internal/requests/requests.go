@@ -176,7 +176,7 @@ func createMultipartRequestBody(items []FormItem) (string, *bytes.Buffer, map[st
 			}
 
 			// Marshal the JSON field and add it to the multipart writer
-			jsonBytes, err := json.MarshalIndent(item.Content, "", "    ")
+			jsonBytes, err := json.Marshal(item.Content)
 			if err != nil {
 				return "", body, nil, err
 			}
