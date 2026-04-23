@@ -43,6 +43,10 @@ func (c *Config) PREvidenceForCommitV1(commit string) ([]*types.PREvidence, erro
 	return c.getPullRequestsFromBitbucketApi(commit, 1)
 }
 
+func (c *Config) PREvidenceForCommitHybrid(commit string) ([]*types.PREvidence, error) {
+	return c.PREvidenceForCommitV2(commit)
+}
+
 // This is the new implementation, it will be used for Bitbucket
 func (c *Config) PREvidenceForCommitV2(commit string) ([]*types.PREvidence, error) {
 	return c.getPullRequestsFromBitbucketApi(commit, 2)

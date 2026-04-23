@@ -59,7 +59,7 @@ func newAssertPullRequestGithubCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *assertPullRequestGithubOptions) run(args []string) error {
-	pullRequestsEvidence, err := o.retriever.PREvidenceForCommitV2(o.commit)
+	pullRequestsEvidence, err := o.retriever.PREvidenceForCommitHybrid(o.commit)
 	if err != nil {
 		return err
 	}

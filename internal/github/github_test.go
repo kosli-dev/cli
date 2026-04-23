@@ -2,7 +2,11 @@ package github
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -66,4 +70,62 @@ func (suite *GithubTestSuite) TestExtractRepoName() {
 // a normal test function and pass our suite to suite.Run
 func TestGithubTestSuite(t *testing.T) {
 	suite.Run(t, new(GithubTestSuite))
+}
+
+// graphqlNullPRResponse is a minimal valid GraphQL response where the PR is null.
+// PREvidenceByPRNumber returns nil, nil in this case.
+const graphqlNullPRResponse = `{"data":{"repository":{"pullRequest":null}}}`
+
+func newRetryTestServer(t *testing.T, failCount int) (*httptest.Server, *int) {
+	t.Helper()
+	attempts := 0
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/graphql" {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		attempts++
+		if attempts <= failCount {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, graphqlNullPRResponse)
+	}))
+	return ts, &attempts
+}
+
+func newRetryConfig(serverURL string, sleepFn func(time.Duration)) *GithubConfig {
+	return &GithubConfig{
+		Token:      "fake-token",
+		BaseURL:    serverURL,
+		Org:        "test-org",
+		Repository: "test-repo",
+		Sleep:      sleepFn,
+	}
+}
+
+func TestPREvidenceByPRNumber_RetriesOnGraphQLError(t *testing.T) {
+	ts, attempts := newRetryTestServer(t, 2)
+	defer ts.Close()
+
+	var sleptDurations []time.Duration
+	config := newRetryConfig(ts.URL, func(d time.Duration) { sleptDurations = append(sleptDurations, d) })
+
+	pr, err := config.PREvidenceByPRNumber(1)
+	require.NoError(t, err)
+	require.Nil(t, pr)
+	require.Equal(t, 3, *attempts, "should have retried twice before succeeding")
+	require.Len(t, sleptDurations, 2, "should have slept between retries")
+}
+
+func TestPREvidenceByPRNumber_ReturnsErrorAfterAllRetriesExhausted(t *testing.T) {
+	ts, attempts := newRetryTestServer(t, 999)
+	defer ts.Close()
+
+	config := newRetryConfig(ts.URL, func(time.Duration) {})
+
+	_, err := config.PREvidenceByPRNumber(1)
+	require.Error(t, err)
+	require.Equal(t, 4, *attempts, "should have made 1 initial attempt + 3 retries")
 }
