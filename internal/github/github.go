@@ -222,7 +222,7 @@ func buildPREvidence(
 }
 
 // PREvidenceByPRNumber fetches full PR evidence for a single PR number via
-// GraphQL. Returns nil, nil when the PR does not exist.
+// GraphQL. Returns an error when the PR does not exist.
 func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, error) {
 	ctx := context.Background()
 
