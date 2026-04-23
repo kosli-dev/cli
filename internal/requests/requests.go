@@ -176,7 +176,7 @@ func createMultipartRequestBody(items []FormItem) (string, *bytes.Buffer, map[st
 			}
 
 			// Marshal the JSON field and add it to the multipart writer
-			jsonBytes, err := json.MarshalIndent(item.Content, "", "    ")
+			jsonBytes, err := json.Marshal(item.Content)
 			if err != nil {
 				return "", body, nil, err
 			}
@@ -303,7 +303,12 @@ func (c *Client) PayloadOutput(req *http.Request, jsonFields map[string]any, mes
 		// Log only the JSON fields for multipart/form-data
 		c.Logger.Info(message)
 		for key, value := range jsonFields {
-			c.Logger.Info("Field: %s, Value: %+v", key, string(value.([]byte)))
+			var prettyJSON bytes.Buffer
+			if err := json.Indent(&prettyJSON, value.([]byte), "", "    "); err == nil {
+				c.Logger.Info("Field: %s, Value: %+v", key, prettyJSON.String())
+			} else {
+				c.Logger.Info("Field: %s, Value: %+v", key, string(value.([]byte)))
+			}
 		}
 	} else if req.Body != nil {
 		// For non-multipart requests, log the full JSON body
