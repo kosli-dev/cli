@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -53,15 +54,21 @@ func TestCheckForUpdate_OptOut(t *testing.T) {
 	assert.Empty(t, notice)
 }
 
-func TestCheckForUpdate_DevBuild(t *testing.T) {
-	// dev builds should be skipped without any HTTP call
-	notice, err := checkForUpdateWithURL("main", "http://should-not-be-called")
+func TestCheckForUpdate_EmptyVersion(t *testing.T) {
+	notice, err := checkForUpdateWithURL("", "http://should-not-be-called")
 	assert.NoError(t, err)
 	assert.Empty(t, notice)
 }
 
-func TestCheckForUpdate_UnreleasedBuild(t *testing.T) {
-	notice, err := checkForUpdateWithURL("v1.0.0+unreleased", "http://should-not-be-called")
+func TestCheckForUpdate_DevBuild(t *testing.T) {
+	// dev builds should be skipped without any HTTP call
+	notice, err := checkForUpdateWithURL("dev", "http://should-not-be-called")
+	assert.NoError(t, err)
+	assert.Empty(t, notice)
+}
+
+func TestCheckForUpdate_DevBuildWithMetadata(t *testing.T) {
+	notice, err := checkForUpdateWithURL("dev+unreleased", "http://should-not-be-called")
 	assert.NoError(t, err)
 	assert.Empty(t, notice)
 }
@@ -92,4 +99,26 @@ func TestCheckForUpdate_Non200(t *testing.T) {
 	notice, err := checkForUpdateWithURL("v0.1.0", srv.URL)
 	assert.NoError(t, err)
 	assert.Empty(t, notice)
+}
+
+func TestSetCheckForUpdateOverride_Race(t *testing.T) {
+	t.Setenv("KOSLI_NO_UPDATE_CHECK", "1") // prevent real HTTP calls when override is momentarily nil
+	fake := func(string) (string, error) { return "notice", nil }
+	var wg sync.WaitGroup
+	for i := 0; i < 50; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			_, _ = CheckForUpdate("v1.2.3")
+		}()
+	}
+	for i := 0; i < 50; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			restore := SetCheckForUpdateOverride(fake)
+			restore()
+		}()
+	}
+	wg.Wait()
 }

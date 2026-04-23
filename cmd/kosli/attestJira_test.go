@@ -325,6 +325,12 @@ func (suite *AttestJiraCommandTestSuite) TestAttestJiraCmd() {
 				commitMessage: "SAMI-1 test commit",
 			},
 		},
+		{
+			wantError: true,
+			name:      "26 fails when --name has invalid dot format",
+			cmd:       fmt.Sprintf("attest jira --name .foo --commit HEAD --jira-base-url https://kosli-test.atlassian.net %s", suite.defaultKosliArguments),
+			golden:    "Error: failed to parse attestation name: invalid attestation name format: .foo\n",
+		},
 	}
 
 	for _, test := range tests {

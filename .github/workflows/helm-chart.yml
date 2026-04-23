@@ -1,7 +1,7 @@
 name: helm chart
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: {}
   push:
     branches:
       - main
@@ -17,7 +17,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+        uses: step-security/harden-runner@8d3c67de8e2fe68ef647c8db1e6a09f647780f40 # v2.19.0
         with:
           egress-policy: audit
 
@@ -41,13 +41,15 @@ jobs:
       - name: Lint
         run: make helm-lint
 
+      - name: Setup Helm Docs
+        uses: gabe565/setup-helm-docs-action@d5c35bdc9133cfbea3b671acadf50a29029e87c2 # v1.0.4
+        with:
+          version: 'latest' # v1.14.2
+
       - name: Generate Helm Docs
         run: |
-          curl -L https://github.com/norwoodj/helm-docs/releases/download/v1.5.0/helm-docs_1.5.0_linux_amd64.deb --output helm-docs.dep
-          sudo dpkg -i helm-docs.dep
-          rm helm-docs.dep
-          cd charts/k8s-reporter 
-          helm-docs --template-files README.md.gotmpl,_templates.gotmpl --output-file README.md 
+          cd charts/k8s-reporter
+          helm-docs --template-files README.md.gotmpl,_templates.gotmpl --output-file README.md
           helm-docs --template-files README.md.gotmpl,_templates.gotmpl --output-file ../../docs.kosli.com/content/helm/_index.md
 
       - name: Helm Package
@@ -72,11 +74,11 @@ jobs:
       - name: Upload new chart and the update index.yaml to S3
         run: |
           rm package/old-index.yaml
-          aws s3 cp --recursive package s3://kosli-helm-charts-repo/stable/k8s-reporter/ 
+          aws s3 cp --recursive package s3://kosli-helm-charts-repo/stable/k8s-reporter/
 
       - name: cleanup
         run: |
-          rm -rf package 
+          rm -rf package
 
       - name: Create branch via GitHub API
         run: |

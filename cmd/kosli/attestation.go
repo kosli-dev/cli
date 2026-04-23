@@ -14,7 +14,10 @@ import (
 const commitDescription = `You can optionally associate the attestation to a git commit using ^--commit^ (requires access to a git repo).
 You can optionally redact some of the git commit data sent to Kosli using ^--redact-commit-info^.
 Note that when the attestation is reported for an artifact that does not yet exist in Kosli, ^--commit^ is required to facilitate
-binding the attestation to the right artifact.`
+binding the attestation to the right artifact.
+To record repository information, all three of ^--repo-id^, ^--repo-url^, and ^--repository^ must be set together.
+These are automatically set in GitHub Actions, GitLab CI, Bitbucket Pipelines, and Azure DevOps.
+In other CI systems, set them explicitly to capture repository metadata.`
 
 type URLInfo struct {
 	Href        string `json:"href"`
@@ -195,14 +198,16 @@ func prepareAttestationForm(payload interface{}, evidencePaths []string) ([]requ
 }
 
 func parseAttestationNameTemplate(template string) (string, string, error) {
-	parts := strings.Split(template, ".")
-	if len(parts) == 1 {
-		return parts[0], "", nil
-	} else if len(parts) == 2 {
-		return parts[0], parts[1], nil
-	} else {
+	p1, p2, found := strings.Cut(template, ".")
+	// No dot: treat the whole string as the attestation name
+	if !found {
+		return template, "", nil
+	}
+	// Reject empty sides (e.g. ".foo", "foo.") or multiple dots (e.g. "foo.bar.baz")
+	if p1 == "" || p2 == "" || strings.Contains(p2, ".") {
 		return "", "", fmt.Errorf("invalid attestation name format: %s", template)
 	}
+	return p1, p2, nil
 }
 
 // newAttestationForm constructs a list of FormItems for an attestation

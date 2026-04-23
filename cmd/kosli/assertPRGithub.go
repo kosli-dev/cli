@@ -5,18 +5,19 @@ import (
 	"io"
 
 	ghUtils "github.com/kosli-dev/cli/internal/github"
+	"github.com/kosli-dev/cli/internal/types"
 	"github.com/spf13/cobra"
 )
 
 type assertPullRequestGithubOptions struct {
-	githubConfig *ghUtils.GithubConfig
-	commit       string
+	retriever types.PRRetriever
+	commit    string
 }
 
 const assertPRGithubShortDesc = `Assert a Github pull request for a git commit exists.  `
 
 const assertPRGithubLongDesc = assertPRGithubShortDesc + `
-The command exits with non-zero exit code 
+The command exits with non-zero exit code
 if no pull requests were found for the commit.`
 
 const assertPRGithubExample = `
@@ -38,7 +39,7 @@ func newAssertPullRequestGithubCmd(out io.Writer) *cobra.Command {
 		Example: assertPRGithubExample,
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			o.githubConfig = ghUtils.NewGithubConfig(githubFlagsValues.Token, githubFlagsValues.BaseURL,
+			o.retriever = ghUtils.NewGithubRetrieverFunc(githubFlagsValues.Token, githubFlagsValues.BaseURL,
 				githubFlagsValues.Org, githubFlagsValues.Repository)
 			return o.run(args)
 		},
@@ -58,7 +59,7 @@ func newAssertPullRequestGithubCmd(out io.Writer) *cobra.Command {
 }
 
 func (o *assertPullRequestGithubOptions) run(args []string) error {
-	pullRequestsEvidence, err := o.githubConfig.PREvidenceForCommitV2(o.commit)
+	pullRequestsEvidence, err := o.retriever.PREvidenceForCommitV2(o.commit)
 	if err != nil {
 		return err
 	}
