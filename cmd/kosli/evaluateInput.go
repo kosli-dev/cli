@@ -15,7 +15,7 @@ type evaluateInputOptions struct {
 	inputFile string
 }
 
-const evaluateInputShortDesc = `Evaluate a local JSON input against a Rego policy.`
+const evaluateInputShortDesc = `[BETA] Evaluate a local JSON input against a Rego policy.`
 
 const evaluateInputLongDesc = evaluateInputShortDesc + `
 Read JSON from a file or stdin and evaluate it against a Rego policy.
@@ -25,7 +25,10 @@ the policy input from a ` + "`--show-input --output json`" + ` capture.
 
 The policy must use ` + "`package policy`" + ` and define an ` + "`allow`" + ` rule.
 An optional ` + "`violations`" + ` rule (a set of strings) can provide human-readable denial reasons.
-The command exits with code 0 when allowed and code 1 when denied.
+
+By default a deny exits with code 1. Pass ` + "`--no-assert`" + ` to print the verdict
+and exit 0 even on deny, when this command is feeding another tool as a
+policy decision point.
 
 When ` + "`--input-file`" + ` is omitted, JSON is read from stdin.
 
@@ -64,7 +67,13 @@ kosli evaluate input \
 kosli evaluate input \
 	--input-file trail-data.json \
 	--policy policy.rego \
-	--params @params.json`
+	--params @params.json
+
+# evaluate as a decision point (print verdict, never fail the step):
+kosli evaluate input \
+	--input-file trail-data.json \
+	--policy policy.rego \
+	--no-assert`
 
 func newEvaluateInputCmd(out io.Writer) *cobra.Command {
 	o := new(evaluateInputOptions)
@@ -114,7 +123,7 @@ func (o *evaluateInputOptions) run(out io.Writer, in io.Reader) error {
 		return err
 	}
 
-	return evaluateAndPrintResult(out, o.policyFile, input, o.output, o.showInput, params)
+	return evaluateAndPrintResult(out, o.policyFile, input, o.output, o.showInput, params, o.assertOnDeny())
 }
 
 func loadInputFromFile(filePath string) (result map[string]interface{}, err error) {

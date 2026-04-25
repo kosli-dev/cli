@@ -22,6 +22,8 @@ type commonEvaluateOptions struct {
 	showInput    bool
 	attestations []string
 	params       string
+	assert       bool
+	noAssert     bool
 }
 
 func (o *commonEvaluateOptions) addFlags(cmd *cobra.Command, policyDesc string) {
@@ -31,6 +33,16 @@ func (o *commonEvaluateOptions) addFlags(cmd *cobra.Command, policyDesc string) 
 	cmd.Flags().BoolVar(&o.showInput, "show-input", false, "[optional] Include the policy input data in the output.")
 	cmd.Flags().StringSliceVar(&o.attestations, "attestations", nil, "[optional] Limit which attestations are included. Plain name for trail-level, dot-qualified (artifact.name) for artifact-level.")
 	cmd.Flags().StringVar(&o.params, "params", "", "[optional] Policy parameters as inline JSON or @file.json. Available in policies as data.params.")
+	cmd.Flags().BoolVar(&o.assert, "assert", false, "[optional] Exit with a non-zero status when the policy denies. This is the current default; pass --assert to lock it in across future releases.")
+	cmd.Flags().BoolVar(&o.noAssert, "no-assert", false, "[optional] Print the result and always exit 0, even when the policy denies. Use when this command feeds another tool as a policy decision point.")
+	cmd.MarkFlagsMutuallyExclusive("assert", "no-assert")
+}
+
+// assertOnDeny resolves the --assert / --no-assert pair into a single bool.
+// Today the default is true (assert); a future major release flips this by
+// returning o.assert directly.
+func (o *commonEvaluateOptions) assertOnDeny() bool {
+	return !o.noAssert
 }
 
 func fetchAndEnrichTrail(flowName, trailName string, attestations []string) (interface{}, error) {
@@ -116,7 +128,7 @@ func parseParams(raw string) (map[string]interface{}, error) {
 	return params, nil
 }
 
-func evaluateAndPrintResult(out io.Writer, policyFile string, input map[string]interface{}, outputFormat string, showInput bool, params map[string]interface{}) error {
+func evaluateAndPrintResult(out io.Writer, policyFile string, input map[string]interface{}, outputFormat string, showInput bool, params map[string]interface{}, assertOnDeny bool) error {
 	policySource, err := os.ReadFile(policyFile)
 	if err != nil {
 		return fmt.Errorf("failed to read policy file: %w", err)
@@ -145,54 +157,64 @@ func evaluateAndPrintResult(out io.Writer, policyFile string, input map[string]i
 
 	return output.FormattedPrint(string(raw), outputFormat, out, 0,
 		map[string]output.FormatOutputFunc{
-			"json":  printEvaluateResultAsJson,
-			"table": printEvaluateResultAsTable,
+			"json":  printEvaluateResultAsJsonFn(assertOnDeny),
+			"table": printEvaluateResultAsTableFn(assertOnDeny),
 		})
 }
 
-func printEvaluateResultAsJson(raw string, out io.Writer, _ int) error {
-	if err := output.PrintJson(raw, out, 0); err != nil {
-		return err
-	}
+func printEvaluateResultAsJsonFn(assertOnDeny bool) output.FormatOutputFunc {
+	return func(raw string, out io.Writer, _ int) error {
+		if err := output.PrintJson(raw, out, 0); err != nil {
+			return err
+		}
 
-	var result map[string]interface{}
-	if err := json.Unmarshal([]byte(raw), &result); err != nil {
-		return err
-	}
-	if allow, ok := result["allow"].(bool); ok && !allow {
-		return fmt.Errorf("policy denied")
-	}
-	return nil
-}
-
-func printEvaluateResultAsTable(raw string, out io.Writer, _ int) error {
-	var result map[string]interface{}
-	if err := json.Unmarshal([]byte(raw), &result); err != nil {
-		return err
-	}
-
-	allow, _ := result["allow"].(bool)
-
-	var rows []string
-	if allow {
-		rows = append(rows, "RESULT:\tALLOWED")
-		tabFormattedPrint(out, []string{}, rows)
+		var result map[string]interface{}
+		if err := json.Unmarshal([]byte(raw), &result); err != nil {
+			return err
+		}
+		if allow, ok := result["allow"].(bool); ok && !allow && assertOnDeny {
+			return fmt.Errorf("policy denied")
+		}
 		return nil
 	}
+}
 
-	rows = append(rows, "RESULT:\tDENIED")
+func printEvaluateResultAsTableFn(assertOnDeny bool) output.FormatOutputFunc {
+	return func(raw string, out io.Writer, _ int) error {
+		var result map[string]interface{}
+		if err := json.Unmarshal([]byte(raw), &result); err != nil {
+			return err
+		}
 
-	if violations, ok := result["violations"].([]interface{}); ok && len(violations) > 0 {
-		for i, v := range violations {
-			if i == 0 {
-				rows = append(rows, fmt.Sprintf("VIOLATIONS:\t%s", v))
-			} else {
-				rows = append(rows, fmt.Sprintf("\t%s", v))
+		allow, _ := result["allow"].(bool)
+
+		var rows []string
+		if allow {
+			rows = append(rows, "RESULT:\tALLOWED")
+			tabFormattedPrint(out, []string{}, rows)
+			return nil
+		}
+
+		rows = append(rows, "RESULT:\tDENIED")
+
+		if violations, ok := result["violations"].([]interface{}); ok && len(violations) > 0 {
+			for i, v := range violations {
+				if i == 0 {
+					rows = append(rows, fmt.Sprintf("VIOLATIONS:\t%s", v))
+				} else {
+					rows = append(rows, fmt.Sprintf("\t%s", v))
+				}
 			}
+			tabFormattedPrint(out, []string{}, rows)
+			if assertOnDeny {
+				return fmt.Errorf("policy denied: %v", violations)
+			}
+			return nil
 		}
 		tabFormattedPrint(out, []string{}, rows)
-		return fmt.Errorf("policy denied: %v", violations)
+		if assertOnDeny {
+			return fmt.Errorf("policy denied")
+		}
+		return nil
 	}
-	tabFormattedPrint(out, []string{}, rows)
-	return fmt.Errorf("policy denied")
 }

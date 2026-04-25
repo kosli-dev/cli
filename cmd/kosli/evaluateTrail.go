@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const evaluateTrailShortDesc = `Evaluate a trail against a policy.`
+const evaluateTrailShortDesc = `[BETA] Evaluate a trail against a policy.`
 
 const evaluateTrailLongDesc = evaluateTrailShortDesc + `
 Fetch a single trail from Kosli and evaluate it against a Rego policy.
@@ -54,6 +54,14 @@ kosli evaluate trail yourTrailName \
 	--policy yourPolicyFile.rego \
 	--flow yourFlowName \
 	--params @params.json \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# evaluate a trail as a decision point (print verdict, never fail the step):
+kosli evaluate trail yourTrailName \
+	--policy yourPolicyFile.rego \
+	--flow yourFlowName \
+	--no-assert \
 	--api-token yourAPIToken \
 	--org yourOrgName`
 
@@ -106,5 +114,5 @@ func (o *evaluateTrailOptions) run(out io.Writer, args []string) error {
 		"trail": trailData,
 	}
 
-	return evaluateAndPrintResult(out, o.policyFile, input, o.output, o.showInput, params)
+	return evaluateAndPrintResult(out, o.policyFile, input, o.output, o.showInput, params, o.assertOnDeny())
 }

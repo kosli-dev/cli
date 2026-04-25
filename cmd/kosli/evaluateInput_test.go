@@ -107,6 +107,36 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 				{"params.threshold", float64(3)},
 			},
 		},
+		{
+			name:        "deny-all with --no-assert exits 0 and prints DENIED",
+			cmd:         "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/deny-all.rego --no-assert",
+			goldenRegex: `RESULT:\s+DENIED`,
+		},
+		{
+			wantError:   true,
+			name:        "deny-all with --assert exits non-zero (matches default)",
+			cmd:         "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/deny-all.rego --assert",
+			goldenRegex: `RESULT:\s+DENIED`,
+		},
+		{
+			wantError:   true,
+			name:        "deny-all with no flag still exits non-zero (default unchanged)",
+			cmd:         "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/deny-all.rego",
+			goldenRegex: `RESULT:\s+DENIED`,
+		},
+		{
+			wantError:   true,
+			name:        "--assert and --no-assert together are mutually exclusive",
+			cmd:         "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/allow-all.rego --assert --no-assert",
+			goldenRegex: `none of the others can be.*\[assert no-assert\] were all set`,
+		},
+		{
+			name: "deny-all with --no-assert and --output json prints allow false and exits 0",
+			cmd:  "evaluate input --input-file testdata/evaluate/trail-input.json --policy testdata/policies/deny-all.rego --no-assert --output json",
+			goldenJson: []jsonCheck{
+				{"allow", false},
+			},
+		},
 	}
 	runTestCmd(suite.T(), tests)
 }

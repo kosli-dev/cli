@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const evaluateTrailsShortDesc = `Evaluate multiple trails against a policy.`
+const evaluateTrailsShortDesc = `[BETA] Evaluate multiple trails against a policy.`
 
 const evaluateTrailsLongDesc = evaluateTrailsShortDesc + `
 Fetch multiple trails from Kosli and evaluate them together against a Rego policy.
@@ -47,6 +47,14 @@ kosli evaluate trails yourTrailName1 yourTrailName2 \
 	--policy yourPolicyFile.rego \
 	--flow yourFlowName \
 	--params '{"min_approvers": 2}' \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# evaluate trails as a decision point (print verdict, never fail the step):
+kosli evaluate trails yourTrailName1 yourTrailName2 \
+	--policy yourPolicyFile.rego \
+	--flow yourFlowName \
+	--no-assert \
 	--api-token yourAPIToken \
 	--org yourOrgName`
 
@@ -103,5 +111,5 @@ func (o *evaluateTrailsOptions) run(out io.Writer, args []string) error {
 		"trails": trails,
 	}
 
-	return evaluateAndPrintResult(out, o.policyFile, input, o.output, o.showInput, params)
+	return evaluateAndPrintResult(out, o.policyFile, input, o.output, o.showInput, params, o.assertOnDeny())
 }

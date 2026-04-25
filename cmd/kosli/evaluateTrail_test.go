@@ -139,6 +139,17 @@ func (suite *EvaluateTrailCommandTestSuite) TestEvaluateTrailCmd() {
 			cmd:         fmt.Sprintf(`evaluate trail %s --flow %s --policy testdata/policies/allow-all.rego --output table --show-input %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
 			goldenRegex: `RESULT:\s+ALLOWED`,
 		},
+		{
+			name:        "deny-all with --no-assert exits 0 and prints DENIED",
+			cmd:         fmt.Sprintf(`evaluate trail %s --flow %s --policy testdata/policies/deny-all.rego --no-assert %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenRegex: `RESULT:\s+DENIED`,
+		},
+		{
+			wantError:   true,
+			name:        "--assert and --no-assert together are mutually exclusive",
+			cmd:         fmt.Sprintf(`evaluate trail %s --flow %s --policy testdata/policies/allow-all.rego --assert --no-assert %s`, suite.trailName, suite.flowName, suite.defaultKosliArguments),
+			goldenRegex: `none of the others can be.*\[assert no-assert\] were all set`,
+		},
 	}
 
 	runTestCmd(suite.T(), tests)

@@ -6,11 +6,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const evaluateShortDesc = `Evaluate data against Rego policies.`
+const evaluateShortDesc = `[BETA] Evaluate data against Rego policies.`
 
 // Backtick breaks (`"` + "`x`" + `"`) are needed to embed markdown
 // inline code spans inside raw string literals.
 const evaluateLongDesc = evaluateShortDesc + `
+
+This command is in BETA. Behaviour, flags, and the policy input shape may
+change without notice. Pin a CLI version if you depend on it from CI.
+
 Evaluate trail data or local JSON input against custom Rego policies.
 
 Use ` + "`evaluate trail`" + ` or ` + "`evaluate trails`" + ` to fetch data from Kosli and evaluate it.
@@ -18,7 +22,13 @@ Use ` + "`evaluate input`" + ` to evaluate a local JSON file or stdin without an
 
 The policy must use ` + "`package policy`" + ` and define an ` + "`allow`" + ` rule.
 An optional ` + "`violations`" + ` rule (a set of strings) can provide human-readable denial reasons.
-The command exits with code 0 when allowed and code 1 when denied.
+
+By default a deny exits with code 1 so the command can gate a pipeline.
+Pass ` + "`--no-assert`" + ` to use the command as a policy decision point: it prints
+the verdict and exits 0 even on deny, leaving the asserting to a downstream
+step. ` + "`--assert`" + ` is the current default; pass it explicitly to lock in the
+assert-on-deny behaviour across future releases, where the default will flip
+to ` + "`--no-assert`" + `.
 
 Use ` + "`--params`" + ` to pass configuration data (thresholds, expected counts, etc.)
 to your policy. Params are available as ` + "`data.params`" + ` in Rego, keeping policy
