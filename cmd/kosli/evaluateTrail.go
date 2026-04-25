@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const evaluateTrailShortDesc = `Evaluate a trail against a policy.`
+const evaluateTrailShortDesc = `[BETA] Evaluate a trail against a policy.`
 
 const evaluateTrailLongDesc = evaluateTrailShortDesc + `
 Fetch a single trail from Kosli and evaluate it against a Rego policy.

@@ -15,7 +15,7 @@ type evaluateInputOptions struct {
 	inputFile string
 }
 
-const evaluateInputShortDesc = `Evaluate a local JSON input against a Rego policy.`
+const evaluateInputShortDesc = `[BETA] Evaluate a local JSON input against a Rego policy.`
 
 const evaluateInputLongDesc = evaluateInputShortDesc + `
 Read JSON from a file or stdin and evaluate it against a Rego policy.

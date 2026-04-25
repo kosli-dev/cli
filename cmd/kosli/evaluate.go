@@ -6,11 +6,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const evaluateShortDesc = `Evaluate data against Rego policies.`
+const evaluateShortDesc = `[BETA] Evaluate data against Rego policies.`
 
 // Backtick breaks (`"` + "`x`" + `"`) are needed to embed markdown
 // inline code spans inside raw string literals.
 const evaluateLongDesc = evaluateShortDesc + `
+
+This command is in BETA. Behaviour, flags, and the policy input shape may
+change without notice. Pin a CLI version if you depend on it from CI.
+
 Evaluate trail data or local JSON input against custom Rego policies.
 
 Use ` + "`evaluate trail`" + ` or ` + "`evaluate trails`" + ` to fetch data from Kosli and evaluate it.
