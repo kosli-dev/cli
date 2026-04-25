@@ -55,6 +55,27 @@
 - [x] Slice 3: Show params in `--show-input` output
 - [x] Slice 4: Update help text and examples
 
+## Add `--assert` / `--no-assert` to kosli evaluate commands
+
+Goal: make evaluate commands a policy decision point — print the verdict but
+let callers choose whether a deny becomes a non-zero exit. Today's default
+stays "assert" (non-zero on deny); the next major release flips the default
+to "no-assert" by changing one line.
+
+- [ ] Slice 1: Plumb `assertOnDeny` bool through `evaluateAndPrintResult` and the two printers (always passed `true`) ← active
+  - [ ] Existing `wantError: true` deny-all cases stay green
+- [ ] Slice 2: Add `--assert` / `--no-assert` flags to `commonEvaluateOptions`, mark mutually exclusive, default = assert
+  - [ ] `evaluate trail --policy deny-all --no-assert` exits 0, prints `RESULT: DENIED`
+  - [ ] `evaluate trail --policy deny-all --assert` exits non-zero
+  - [ ] `evaluate trail --policy deny-all` (neither flag) exits non-zero (default unchanged)
+  - [ ] `evaluate trail --assert --no-assert ...` fails with cobra mutual-exclusion error
+  - [ ] `evaluate trail --policy deny-all --no-assert --output json` emits `"allow": false` + violations, exits 0
+  - [ ] Same trio of tests for `evaluate trails` and `evaluate input`
+- [ ] Slice 3: Help text and examples
+  - [ ] Update `evaluateLongDesc` and `evaluateInputLongDesc` exit-code line
+  - [ ] Add `--no-assert` example to each command's `Example` block
+  - [ ] Verify `kosli evaluate trail --help` shows new flags
+
 ## Fakes & contract tests for GitHub API integration
 
 ### Slice 1: FakeGitHubClient + contract tests (`internal/github`) ← active
