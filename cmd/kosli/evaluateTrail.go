@@ -55,6 +55,14 @@ kosli evaluate trail yourTrailName \
 	--flow yourFlowName \
 	--params @params.json \
 	--api-token yourAPIToken \
+	--org yourOrgName
+
+# evaluate a trail as a decision point (print verdict, never fail the step):
+kosli evaluate trail yourTrailName \
+	--policy yourPolicyFile.rego \
+	--flow yourFlowName \
+	--no-assert \
+	--api-token yourAPIToken \
 	--org yourOrgName`
 
 type evaluateTrailOptions struct {

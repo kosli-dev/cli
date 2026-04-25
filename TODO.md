@@ -71,10 +71,10 @@ to "no-assert" by changing one line.
   - [x] `evaluate input --assert --no-assert ...` fails with cobra mutual-exclusion error
   - [x] `evaluate input --policy deny-all --no-assert --output json` emits `"allow": false`, exits 0
   - [x] Smoke test in `evaluate trail` and `evaluate trails` suites (`--no-assert` exit 0 + mutual exclusion); deferred run pending local Kosli server
-- [ ] Slice 3: Help text and examples ← active
-  - [ ] Update `evaluateLongDesc` and `evaluateInputLongDesc` exit-code line
-  - [ ] Add `--no-assert` example to each command's `Example` block
-  - [ ] Verify `kosli evaluate trail --help` shows new flags
+- [x] Slice 3: Help text and examples
+  - [x] Update `evaluateLongDesc` and `evaluateInputLongDesc` exit-code section
+  - [x] Add `--no-assert` example to each command's `Example` block
+  - [x] Verify `kosli evaluate trail --help` shows new flags
 
 ## Fakes & contract tests for GitHub API integration
 

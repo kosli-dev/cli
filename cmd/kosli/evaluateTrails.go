@@ -48,6 +48,14 @@ kosli evaluate trails yourTrailName1 yourTrailName2 \
 	--flow yourFlowName \
 	--params '{"min_approvers": 2}' \
 	--api-token yourAPIToken \
+	--org yourOrgName
+
+# evaluate trails as a decision point (print verdict, never fail the step):
+kosli evaluate trails yourTrailName1 yourTrailName2 \
+	--policy yourPolicyFile.rego \
+	--flow yourFlowName \
+	--no-assert \
+	--api-token yourAPIToken \
 	--org yourOrgName`
 
 type evaluateTrailsOptions struct {
