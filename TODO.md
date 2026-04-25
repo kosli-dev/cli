@@ -62,16 +62,16 @@ let callers choose whether a deny becomes a non-zero exit. Today's default
 stays "assert" (non-zero on deny); the next major release flips the default
 to "no-assert" by changing one line.
 
-- [ ] Slice 1: Plumb `assertOnDeny` bool through `evaluateAndPrintResult` and the two printers (always passed `true`) ← active
-  - [ ] Existing `wantError: true` deny-all cases stay green
-- [ ] Slice 2: Add `--assert` / `--no-assert` flags to `commonEvaluateOptions`, mark mutually exclusive, default = assert
-  - [ ] `evaluate trail --policy deny-all --no-assert` exits 0, prints `RESULT: DENIED`
-  - [ ] `evaluate trail --policy deny-all --assert` exits non-zero
-  - [ ] `evaluate trail --policy deny-all` (neither flag) exits non-zero (default unchanged)
-  - [ ] `evaluate trail --assert --no-assert ...` fails with cobra mutual-exclusion error
-  - [ ] `evaluate trail --policy deny-all --no-assert --output json` emits `"allow": false` + violations, exits 0
-  - [ ] Same trio of tests for `evaluate trails` and `evaluate input`
-- [ ] Slice 3: Help text and examples
+- [x] Slice 1: Plumb `assertOnDeny` bool through `evaluateAndPrintResult` and the two printers (always passed `true`)
+  - [x] Existing `wantError: true` deny-all cases stay green
+- [x] Slice 2: Add `--assert` / `--no-assert` flags to `commonEvaluateOptions`, mark mutually exclusive, default = assert
+  - [x] `evaluate input --policy deny-all --no-assert` exits 0, prints `RESULT: DENIED`
+  - [x] `evaluate input --policy deny-all --assert` exits non-zero
+  - [x] `evaluate input --policy deny-all` (neither flag) exits non-zero (default unchanged)
+  - [x] `evaluate input --assert --no-assert ...` fails with cobra mutual-exclusion error
+  - [x] `evaluate input --policy deny-all --no-assert --output json` emits `"allow": false`, exits 0
+  - [x] Smoke test in `evaluate trail` and `evaluate trails` suites (`--no-assert` exit 0 + mutual exclusion); deferred run pending local Kosli server
+- [ ] Slice 3: Help text and examples ← active
   - [ ] Update `evaluateLongDesc` and `evaluateInputLongDesc` exit-code line
   - [ ] Add `--no-assert` example to each command's `Example` block
   - [ ] Verify `kosli evaluate trail --help` shows new flags

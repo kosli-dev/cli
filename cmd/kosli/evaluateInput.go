@@ -114,7 +114,7 @@ func (o *evaluateInputOptions) run(out io.Writer, in io.Reader) error {
 		return err
 	}
 
-	return evaluateAndPrintResult(out, o.policyFile, input, o.output, o.showInput, params, true)
+	return evaluateAndPrintResult(out, o.policyFile, input, o.output, o.showInput, params, o.assertOnDeny())
 }
 
 func loadInputFromFile(filePath string) (result map[string]interface{}, err error) {

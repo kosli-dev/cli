@@ -22,6 +22,8 @@ type commonEvaluateOptions struct {
 	showInput    bool
 	attestations []string
 	params       string
+	assert       bool
+	noAssert     bool
 }
 
 func (o *commonEvaluateOptions) addFlags(cmd *cobra.Command, policyDesc string) {
@@ -31,6 +33,16 @@ func (o *commonEvaluateOptions) addFlags(cmd *cobra.Command, policyDesc string) 
 	cmd.Flags().BoolVar(&o.showInput, "show-input", false, "[optional] Include the policy input data in the output.")
 	cmd.Flags().StringSliceVar(&o.attestations, "attestations", nil, "[optional] Limit which attestations are included. Plain name for trail-level, dot-qualified (artifact.name) for artifact-level.")
 	cmd.Flags().StringVar(&o.params, "params", "", "[optional] Policy parameters as inline JSON or @file.json. Available in policies as data.params.")
+	cmd.Flags().BoolVar(&o.assert, "assert", false, "[optional] Exit with a non-zero status when the policy denies. This is the current default; pass --assert to lock it in across future releases.")
+	cmd.Flags().BoolVar(&o.noAssert, "no-assert", false, "[optional] Print the result and always exit 0, even when the policy denies. Use when this command feeds another tool as a policy decision point.")
+	cmd.MarkFlagsMutuallyExclusive("assert", "no-assert")
+}
+
+// assertOnDeny resolves the --assert / --no-assert pair into a single bool.
+// Today the default is true (assert); a future major release flips this by
+// returning o.assert directly.
+func (o *commonEvaluateOptions) assertOnDeny() bool {
+	return !o.noAssert
 }
 
 func fetchAndEnrichTrail(flowName, trailName string, attestations []string) (interface{}, error) {

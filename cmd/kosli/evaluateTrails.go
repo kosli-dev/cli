@@ -103,5 +103,5 @@ func (o *evaluateTrailsOptions) run(out io.Writer, args []string) error {
 		"trails": trails,
 	}
 
-	return evaluateAndPrintResult(out, o.policyFile, input, o.output, o.showInput, params, true)
+	return evaluateAndPrintResult(out, o.policyFile, input, o.output, o.showInput, params, o.assertOnDeny())
 }
