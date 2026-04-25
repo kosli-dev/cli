@@ -28,10 +28,18 @@
       "Bash(xargs *)",
       "Bash(git checkout -b *)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git push --force-with-lease *)",
+      "Bash(git push --force-with-lease=*)"
     ],
     "deny": [
-      "Bash(git push *)",
+      "Bash(git push * main)",
+      "Bash(git push * main *)",
+      "Bash(git push * main:*)",
+      "Bash(git push * *:main)",
+      "Bash(git push --force *)",
+      "Bash(git push -f *)",
       "Bash(rm -rf *)",
       "Bash(curl *)",
       "Bash(wget *)"

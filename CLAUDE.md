@@ -4,8 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Workflow Preferences
 
-- Claude **may** run `git checkout -b`, `git add`, and `git commit` as part of the TDD and slice workflow described below.
-- **NEVER** run `git push` or `git push --force`. The user handles all pushing themselves.
+- Claude **may** run `git checkout -b`, `git add`, `git commit`, and `git push` on feature branches as part of the TDD and slice workflow described below. `git push --force-with-lease` is permitted on feature branches for rebase workflows.
+- **NEVER** push to `main` and **NEVER** use `git push --force` / `git push -f` — use `--force-with-lease` instead, and only on feature branches.
 
 ## Project Overview
 
