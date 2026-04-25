@@ -40,6 +40,10 @@
       "Bash(git push * *:main)",
       "Bash(git push --force *)",
       "Bash(git push -f *)",
+      "Bash(git push * --force)",
+      "Bash(git push * --force *)",
+      "Bash(git push * -f)",
+      "Bash(git push * -f *)",
       "Bash(rm -rf *)",
       "Bash(curl *)",
       "Bash(wget *)"
