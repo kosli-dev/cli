@@ -3,6 +3,7 @@ package requests
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -588,6 +589,28 @@ func (suite *RequestsTestSuite) TestMultipartFieldJSON_IsCompact() {
 	// The raw JSON bytes stored for logging must be compact (single line, no newlines)
 	rawJSON := string(jsonFields["data_json"].([]byte))
 	require.NotContains(suite.T(), rawJSON, "\n", "multipart JSON field should be on a single line")
+}
+
+func (suite *RequestsTestSuite) TestNonMultipartJSON_IsCompact() {
+	params := &RequestParams{
+		Method: http.MethodPut,
+		URL:    "https://example.com/api/v2/test",
+		Token:  "test-token",
+		Payload: map[string]interface{}{
+			"key":    "value",
+			"nested": map[string]interface{}{"a": 1},
+		},
+	}
+	req, _, err := params.newHTTPRequest()
+	require.NoError(suite.T(), err)
+
+	bodyBytes, err := io.ReadAll(req.Body)
+	require.NoError(suite.T(), err)
+	bodyStr := string(bodyBytes)
+
+	// The JSON body must not contain indentation or newlines
+	require.NotContains(suite.T(), bodyStr, "    ", "non-multipart JSON body should not contain indentation")
+	require.NotContains(suite.T(), bodyStr, "\n", "non-multipart JSON body should be on a single line")
 }
 
 // In order for 'go test' to run this suite, we need to create

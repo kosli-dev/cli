@@ -119,7 +119,7 @@ func (p *RequestParams) newHTTPRequest() (*http.Request, map[string]any, error) 
 	} else {
 		// JSON payload handling
 		if p.Method != http.MethodGet {
-			jsonBytes, err := json.MarshalIndent(p.Payload, "", "    ")
+			jsonBytes, err := json.Marshal(p.Payload)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -319,7 +319,13 @@ func (c *Client) PayloadOutput(req *http.Request, jsonFields map[string]any, mes
 		}
 		// Restore the body for the actual request
 		req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-		c.Logger.Info("%s \n %+v", message, string(bodyBytes))
+		// Pretty-print the JSON for human-readable output
+		var prettyJSON bytes.Buffer
+		if err := json.Indent(&prettyJSON, bodyBytes, "", "    "); err == nil {
+			c.Logger.Info("%s \n %+v", message, prettyJSON.String())
+		} else {
+			c.Logger.Info("%s \n %+v", message, string(bodyBytes))
+		}
 	}
 	return nil
 }

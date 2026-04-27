@@ -100,6 +100,15 @@ to "no-assert" by changing one line.
 - [x] Inject fake in `assertPRGithub_test.go`
 - [x] Inject fake in `attestPRGithub_test.go`
 
+## perf: compact JSON for non-multipart request bodies (#825)
+
+### Slice 1: Switch MarshalIndent → Marshal and verify
+
+- [x] Test: non-multipart JSON request body is compact (no indentation)
+- [x] Fix: change `json.MarshalIndent` → `json.Marshal` on line 122 of requests.go
+- [x] Fix: update `PayloadOutput` to pretty-print non-multipart body for debug/dry-run logging
+- [x] Verify: all request tests pass
+
 ## Fakes & contract tests for cloud provider integrations (#758)
 
 ### Lambda (done — this PR)
