@@ -185,9 +185,9 @@ func TestGitHubContract_RealGitHub(t *testing.T) {
 func TestGitHubContract_Fake_PRByNumber(t *testing.T) {
 	knownPRNumber := testHelpers.GithubPRNumber()
 	pr := &types.PREvidence{
-		URL:         "https://github.com/kosli-dev/cli/pull/6",
+		URL:         "https://github.com/kosli-dev/cli/pull/829",
 		State:       "MERGED",
-		MergeCommit: "e21a8afff429e0c87ee523d683f2438113f0a105",
+		MergeCommit: "475dd3d1fe69f0d64057defeb0504aad2e132e9d",
 	}
 	client := &FakeGitHubClient{
 		PRsByNumber: map[int]*types.PREvidence{
