@@ -299,7 +299,7 @@ jobs:
           client-payload: '{"kosli_cli_tag": "${{ needs.pre-build.outputs.tag }}"}'
 
   evidence-reporter-upload-package-and-deploy:
-    needs: [pre-build, goreleaser]
+    needs: [pre-build, goreleaser, environment-reporter-upload-layer]
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
@@ -316,7 +316,7 @@ jobs:
           client-payload: '{"kosli_cli_tag": "${{ needs.pre-build.outputs.tag }}"}'
 
   environment-reporter-upload-package-and-deploy:
-    needs: [pre-build, goreleaser]
+    needs: [pre-build, goreleaser, environment-reporter-upload-layer]
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
