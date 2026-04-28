@@ -52,8 +52,7 @@ Note: ^--artifact-type=docker^ reads the image's repo digest via the local Docke
 The image must have been pushed to or pulled from a registry for a repo digest to exist;
 a freshly built image (just ^docker build^) will not have one. If the image is already in
 a registry, prefer ^--artifact-type=oci^, which fetches the digest directly from the
-registry without needing a local Docker daemon. To fingerprint the source instead, use
-^--artifact-type=dir^ on the build context.
+registry without needing a local Docker daemon.
 
 `
 
