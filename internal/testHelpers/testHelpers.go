@@ -37,18 +37,19 @@ func SkipIfEnvVarSet(T *testing.T, requiredEnvVars []string) {
 	}
 }
 
-// Originally we had commit 73d7fee2f31ade8e1a9c456c324255212c30c2a6
-// This worked for a while, but now the PR is no longer found by the github api
-// for reasons we cannot fathom
-// We are now using an even older commit, which currently works.
+// The GitHub API intermittently stops returning PR associations for older commits
+// for reasons we cannot fathom. When that happens, update to a more recent commit.
+// Previous values:
+//   - 73d7fee2f31ade8e1a9c456c324255212c30c2a6 (PR #6)  — stopped working
+//   - e21a8afff429e0c87ee523d683f2438113f0a105 (PR #6)  — stopped working
 func GithubCommitWithPR() string {
-	return "e21a8afff429e0c87ee523d683f2438113f0a105"
+	return "475dd3d1fe69f0d64057defeb0504aad2e132e9d"
 }
 
 // GithubPRNumber returns the PR number associated with GithubCommitWithPR in
 // kosli-dev/cli. It is stable because merged PRs are never deleted.
 func GithubPRNumber() int {
-	return 6
+	return 829
 }
 
 func CloneGitRepo(url, cloneTo string) (*git.Repository, error) {
