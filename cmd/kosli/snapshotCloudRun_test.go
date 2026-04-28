@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/kosli-dev/cli/internal/cloudrun"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -27,6 +28,35 @@ type SnapshotCloudRunTestSuite struct {
 	envName               string
 }
 
+// stubServices returns two Cloud Run services so filter tests can verify
+// inclusion and exclusion in a single run.
+func stubServices() []cloudrun.Service {
+	return []cloudrun.Service{
+		{
+			Name: "alpha",
+			URI:  "https://alpha.run.app",
+			Revisions: []cloudrun.Revision{
+				{
+					Name:      "alpha-rev1",
+					Digests:   map[string]string{"gcr.io/x/alpha@sha256:aaa": "aaa"},
+					CreatedAt: time.Date(2026, 4, 28, 12, 0, 0, 0, time.UTC),
+				},
+			},
+		},
+		{
+			Name: "beta",
+			URI:  "https://beta.run.app",
+			Revisions: []cloudrun.Revision{
+				{
+					Name:      "beta-rev1",
+					Digests:   map[string]string{"gcr.io/x/beta@sha256:bbb": "bbb"},
+					CreatedAt: time.Date(2026, 4, 28, 12, 0, 0, 0, time.UTC),
+				},
+			},
+		},
+	}
+}
+
 func (suite *SnapshotCloudRunTestSuite) SetupTest() {
 	suite.envName = "snapshot-cloud-run-env"
 	global = &GlobalOpts{
@@ -37,21 +67,7 @@ func (suite *SnapshotCloudRunTestSuite) SetupTest() {
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
 	newCloudRunClient = func(_ context.Context) (cloudRunLister, error) {
-		return stubCloudRunLister{
-			services: []cloudrun.Service{
-				{
-					Name: "hello-world",
-					URI:  "https://hello-world.run.app",
-					Revisions: []cloudrun.Revision{
-						{
-							Name:      "hello-world-rev1",
-							Digests:   map[string]string{"gcr.io/x/hello@sha256:abc": "abc"},
-							CreatedAt: time.Date(2026, 4, 28, 12, 0, 0, 0, time.UTC),
-						},
-					},
-				},
-			},
-		}, nil
+		return stubCloudRunLister{services: stubServices()}, nil
 	}
 }
 
@@ -88,11 +104,70 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd() {
 		{
 			name:        "snapshot cloud-run dry-runs the report URL and payload built from the GCP client",
 			cmd:         fmt.Sprintf(`snapshot cloud-run %s --project proj-x --region europe-west1 %s`, suite.envName, suite.defaultKosliArguments),
-			goldenRegex: `(?s)THIS IS A DRY-RUN.*report/cloud-run.*"revisionName": "hello-world-rev1".*"service_name": "hello-world".*"project": "proj-x".*"region": "europe-west1".*"gcr.io/x/hello@sha256:abc": "abc"`,
+			goldenRegex: `(?s)THIS IS A DRY-RUN.*report/cloud-run.*"service_name": "alpha".*"service_name": "beta"`,
+		},
+		{
+			wantError: true,
+			name:      "snapshot cloud-run fails if --services and --exclude are set",
+			cmd:       fmt.Sprintf(`snapshot cloud-run %s --project p --region r --services alpha --exclude beta %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: only one of --services, --exclude is allowed\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot cloud-run fails if --services and --exclude-regex are set",
+			cmd:       fmt.Sprintf(`snapshot cloud-run %s --project p --region r --services alpha --exclude-regex "^b" %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: only one of --services, --exclude-regex is allowed\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot cloud-run fails if --services-regex and --exclude are set",
+			cmd:       fmt.Sprintf(`snapshot cloud-run %s --project p --region r --services-regex "^a" --exclude beta %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: only one of --services-regex, --exclude is allowed\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot cloud-run fails if --services-regex and --exclude-regex are set",
+			cmd:       fmt.Sprintf(`snapshot cloud-run %s --project p --region r --services-regex "^a" --exclude-regex "^b" %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: only one of --services-regex, --exclude-regex is allowed\n",
 		},
 	}
 
 	runTestCmd(suite.T(), tests)
+}
+
+// runFilteredCmd executes the command and returns the combined output for
+// substring assertions. Filter tests need to assert both presence (kept
+// service appears) and absence (excluded service does not appear), so they
+// cannot use the single-assertion cmdTestCase table.
+func (suite *SnapshotCloudRunTestSuite) runFilteredCmd(filterArgs string) string {
+	cmd := fmt.Sprintf(`snapshot cloud-run %s --project p --region r %s %s`, suite.envName, filterArgs, suite.defaultKosliArguments)
+	_, combined, _, _, err := executeCommandC(cmd)
+	require.NoError(suite.T(), err, "command failed: %s", combined)
+	return combined
+}
+
+func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_Services() {
+	out := suite.runFilteredCmd("--services alpha")
+	require.Contains(suite.T(), out, `"service_name": "alpha"`)
+	require.NotContains(suite.T(), out, `"service_name": "beta"`)
+}
+
+func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_ServicesRegex() {
+	out := suite.runFilteredCmd(`--services-regex "^al"`)
+	require.Contains(suite.T(), out, `"service_name": "alpha"`)
+	require.NotContains(suite.T(), out, `"service_name": "beta"`)
+}
+
+func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_Exclude() {
+	out := suite.runFilteredCmd("--exclude alpha")
+	require.NotContains(suite.T(), out, `"service_name": "alpha"`)
+	require.Contains(suite.T(), out, `"service_name": "beta"`)
+}
+
+func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_ExcludeRegex() {
+	out := suite.runFilteredCmd(`--exclude-regex "^al"`)
+	require.NotContains(suite.T(), out, `"service_name": "alpha"`)
+	require.Contains(suite.T(), out, `"service_name": "beta"`)
 }
 
 func TestSnapshotCloudRunCommandTestSuite(t *testing.T) {

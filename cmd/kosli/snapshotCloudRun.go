@@ -7,6 +7,7 @@ import (
 	"net/url"
 
 	"github.com/kosli-dev/cli/internal/cloudrun"
+	"github.com/kosli-dev/cli/internal/filters"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
@@ -26,12 +27,14 @@ var newCloudRunClient = func(ctx context.Context) (cloudRunLister, error) {
 }
 
 type snapshotCloudRunOptions struct {
-	project string
-	region  string
+	project       string
+	region        string
+	serviceFilter *filters.ResourceFilterOptions
 }
 
 func newSnapshotCloudRunCmd(out io.Writer) *cobra.Command {
 	o := new(snapshotCloudRunOptions)
+	o.serviceFilter = new(filters.ResourceFilterOptions)
 	cmd := &cobra.Command{
 		Use:    "cloud-run ENVIRONMENT-NAME",
 		Short:  snapshotCloudRunShortDesc,
@@ -41,6 +44,16 @@ func newSnapshotCloudRunCmd(out io.Writer) *cobra.Command {
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if err := RequireGlobalFlags(global, []string{"Org", "ApiToken"}); err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
+			}
+			for _, pair := range [][]string{
+				{"services", "exclude"},
+				{"services", "exclude-regex"},
+				{"services-regex", "exclude"},
+				{"services-regex", "exclude-regex"},
+			} {
+				if err := MuXRequiredFlags(cmd, pair, false); err != nil {
+					return err
+				}
 			}
 			global.DryRun = true
 			return nil
@@ -52,6 +65,10 @@ func newSnapshotCloudRunCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVar(&o.project, "project", "", "[required] GCP project ID.")
 	cmd.Flags().StringVar(&o.region, "region", "", "[required] GCP region (e.g. europe-west1).")
+	cmd.Flags().StringSliceVar(&o.serviceFilter.IncludeNames, "services", []string{}, cloudRunServicesFlag)
+	cmd.Flags().StringSliceVar(&o.serviceFilter.IncludeNamesRegex, "services-regex", []string{}, cloudRunServicesRegexFlag)
+	cmd.Flags().StringSliceVar(&o.serviceFilter.ExcludeNames, "exclude", []string{}, cloudRunExcludeFlag)
+	cmd.Flags().StringSliceVar(&o.serviceFilter.ExcludeNamesRegex, "exclude-regex", []string{}, cloudRunExcludeRegexFlag)
 	addDryRunFlag(cmd)
 
 	if err := RequireFlags(cmd, []string{"project", "region"}); err != nil {
@@ -78,7 +95,18 @@ func (o *snapshotCloudRunOptions) run(args []string) error {
 		return err
 	}
 
-	payload := cloudrun.ToEnvRequest(services, o.project, o.region)
+	filtered := services[:0]
+	for _, svc := range services {
+		include, err := o.serviceFilter.ShouldInclude(svc.Name)
+		if err != nil {
+			return err
+		}
+		if include {
+			filtered = append(filtered, svc)
+		}
+	}
+
+	payload := cloudrun.ToEnvRequest(filtered, o.project, o.region)
 
 	reqParams := &requests.RequestParams{
 		Method:  http.MethodPut,
