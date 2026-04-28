@@ -9,6 +9,8 @@ import (
 	"github.com/kosli-dev/cli/internal/cloudrun"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type stubCloudRunLister struct {
@@ -168,6 +170,22 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_ExcludeRegex(
 	out := suite.runFilteredCmd(`--exclude-regex "^al"`)
 	require.NotContains(suite.T(), out, `"service_name": "alpha"`)
 	require.Contains(suite.T(), out, `"service_name": "beta"`)
+}
+
+// TestSnapshotCloudRunCmd_UnauthenticatedReturnsFriendlyError verifies that a
+// gRPC Unauthenticated error from GCP surfaces as the actionable ADC message
+// rather than a raw SDK string.
+func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd_UnauthenticatedReturnsFriendlyError() {
+	newCloudRunClient = func(_ context.Context) (cloudRunLister, error) {
+		return stubCloudRunLister{err: status.Error(codes.Unauthenticated, "token expired")}, nil
+	}
+
+	cmd := fmt.Sprintf(`snapshot cloud-run %s --project p --region r %s`, suite.envName, suite.defaultKosliArguments)
+	_, combined, _, _, err := executeCommandC(cmd)
+
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), combined, "GCP authentication failed")
+	require.Contains(suite.T(), combined, "metadata server")
 }
 
 func TestSnapshotCloudRunCommandTestSuite(t *testing.T) {

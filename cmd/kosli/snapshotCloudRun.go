@@ -92,7 +92,7 @@ func (o *snapshotCloudRunOptions) run(args []string) error {
 	}
 	services, err := client.ListServices(ctx, o.project, o.region)
 	if err != nil {
-		return err
+		return cloudrun.Classify(err, o.project, o.region)
 	}
 
 	filtered := services[:0]

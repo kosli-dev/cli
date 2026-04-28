@@ -46,15 +46,18 @@ type Client struct {
 }
 
 // New returns a Client backed by the real Cloud Run Admin API v2 using
-// Application Default Credentials.
+// Application Default Credentials. Construction errors (typically rare in a
+// cluster cron job, since the metadata server provides credentials) are
+// wrapped with a generic "GCP client setup failed" prefix; the SDK's own
+// message is preserved via %w for diagnosis.
 func New(ctx context.Context) (*Client, error) {
 	services, err := run.NewServicesClient(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("creating Cloud Run services client: %w", err)
+		return nil, fmt.Errorf("GCP client setup failed: %w", err)
 	}
 	revisions, err := run.NewRevisionsClient(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("creating Cloud Run revisions client: %w", err)
+		return nil, fmt.Errorf("GCP client setup failed: %w", err)
 	}
 	return &Client{api: &gcpAPI{services: services, revisions: revisions}}, nil
 }
