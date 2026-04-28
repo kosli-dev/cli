@@ -106,7 +106,7 @@ func (o *snapshotCloudRunOptions) run(args []string) error {
 		}
 	}
 
-	payload := cloudrun.ToEnvRequest(filtered, o.project, o.region)
+	payload := cloudrun.ToEnvRequest(filtered)
 
 	reqParams := &requests.RequestParams{
 		Method:  http.MethodPut,

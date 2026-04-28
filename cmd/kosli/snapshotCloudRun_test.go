@@ -106,7 +106,7 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd() {
 		{
 			name:        "snapshot cloud-run dry-runs the report URL and payload built from the GCP client",
 			cmd:         fmt.Sprintf(`snapshot cloud-run %s --project proj-x --region europe-west1 %s`, suite.envName, suite.defaultKosliArguments),
-			goldenRegex: `(?s)THIS IS A DRY-RUN.*report/cloud-run.*"service_name": "alpha".*"service_name": "beta"`,
+			goldenRegex: `(?s)THIS IS A DRY-RUN.*report/cloud-run.*"type": "cloud-run".*"serviceName": "alpha".*"serviceName": "beta"`,
 		},
 		{
 			wantError: true,
@@ -150,26 +150,26 @@ func (suite *SnapshotCloudRunTestSuite) runFilteredCmd(filterArgs string) string
 
 func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_Services() {
 	out := suite.runFilteredCmd("--services alpha")
-	require.Contains(suite.T(), out, `"service_name": "alpha"`)
-	require.NotContains(suite.T(), out, `"service_name": "beta"`)
+	require.Contains(suite.T(), out, `"serviceName": "alpha"`)
+	require.NotContains(suite.T(), out, `"serviceName": "beta"`)
 }
 
 func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_ServicesRegex() {
 	out := suite.runFilteredCmd(`--services-regex "^al"`)
-	require.Contains(suite.T(), out, `"service_name": "alpha"`)
-	require.NotContains(suite.T(), out, `"service_name": "beta"`)
+	require.Contains(suite.T(), out, `"serviceName": "alpha"`)
+	require.NotContains(suite.T(), out, `"serviceName": "beta"`)
 }
 
 func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_Exclude() {
 	out := suite.runFilteredCmd("--exclude alpha")
-	require.NotContains(suite.T(), out, `"service_name": "alpha"`)
-	require.Contains(suite.T(), out, `"service_name": "beta"`)
+	require.NotContains(suite.T(), out, `"serviceName": "alpha"`)
+	require.Contains(suite.T(), out, `"serviceName": "beta"`)
 }
 
 func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_ExcludeRegex() {
 	out := suite.runFilteredCmd(`--exclude-regex "^al"`)
-	require.NotContains(suite.T(), out, `"service_name": "alpha"`)
-	require.Contains(suite.T(), out, `"service_name": "beta"`)
+	require.NotContains(suite.T(), out, `"serviceName": "alpha"`)
+	require.Contains(suite.T(), out, `"serviceName": "beta"`)
 }
 
 // TestSnapshotCloudRunCmd_UnauthenticatedReturnsFriendlyError verifies that a
