@@ -1,15 +1,29 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"io"
+	"net/http"
+	"net/url"
 
+	"github.com/kosli-dev/cli/internal/cloudrun"
+	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
 
 const snapshotCloudRunShortDesc = `Report a snapshot of running services in a Google Cloud Run project and region to Kosli.  `
 const snapshotCloudRunLongDesc = snapshotCloudRunShortDesc + `
-Currently a hidden, in-development command — it always runs in dry-run mode and does not yet talk to GCP or to Kosli.`
+Currently a hidden, in-development command — it always runs in dry-run mode regardless of the --dry-run flag.`
+
+// cloudRunLister is the seam between the command and the GCP client. Tests
+// override newCloudRunClient with a stub that returns canned services.
+type cloudRunLister interface {
+	ListServices(ctx context.Context, project, region string) ([]cloudrun.Service, error)
+}
+
+var newCloudRunClient = func(ctx context.Context) (cloudRunLister, error) {
+	return cloudrun.New(ctx)
+}
 
 type snapshotCloudRunOptions struct {
 	project string
@@ -32,7 +46,7 @@ func newSnapshotCloudRunCmd(out io.Writer) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return o.run(out, args)
+			return o.run(args)
 		},
 	}
 
@@ -47,7 +61,32 @@ func newSnapshotCloudRunCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (o *snapshotCloudRunOptions) run(out io.Writer, args []string) error {
-	_, err := fmt.Fprintln(out, "cloud-run snapshot: not yet implemented (forced dry-run)")
+func (o *snapshotCloudRunOptions) run(args []string) error {
+	envName := args[0]
+	reportURL, err := url.JoinPath(global.Host, "api/v2/environments", global.Org, envName, "report/cloud-run")
+	if err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+	client, err := newCloudRunClient(ctx)
+	if err != nil {
+		return err
+	}
+	services, err := client.ListServices(ctx, o.project, o.region)
+	if err != nil {
+		return err
+	}
+
+	payload := cloudrun.ToEnvRequest(services, o.project, o.region)
+
+	reqParams := &requests.RequestParams{
+		Method:  http.MethodPut,
+		URL:     reportURL,
+		Payload: payload,
+		DryRun:  global.DryRun,
+		Token:   global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
 	return err
 }

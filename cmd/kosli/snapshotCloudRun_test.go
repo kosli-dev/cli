@@ -1,11 +1,25 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"testing"
+	"time"
 
+	"github.com/kosli-dev/cli/internal/cloudrun"
 	"github.com/stretchr/testify/suite"
 )
+
+type stubCloudRunLister struct {
+	services []cloudrun.Service
+	err      error
+}
+
+func (s stubCloudRunLister) ListServices(_ context.Context, _, _ string) ([]cloudrun.Service, error) {
+	return s.services, s.err
+}
+
+var origNewCloudRunClient = newCloudRunClient
 
 type SnapshotCloudRunTestSuite struct {
 	suite.Suite
@@ -21,6 +35,28 @@ func (suite *SnapshotCloudRunTestSuite) SetupTest() {
 		Host:     "http://localhost:8001",
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
+
+	newCloudRunClient = func(_ context.Context) (cloudRunLister, error) {
+		return stubCloudRunLister{
+			services: []cloudrun.Service{
+				{
+					Name: "hello-world",
+					URI:  "https://hello-world.run.app",
+					Revisions: []cloudrun.Revision{
+						{
+							Name:      "hello-world-rev1",
+							Digests:   map[string]string{"gcr.io/x/hello@sha256:abc": "abc"},
+							CreatedAt: time.Date(2026, 4, 28, 12, 0, 0, 0, time.UTC),
+						},
+					},
+				},
+			},
+		}, nil
+	}
+}
+
+func (suite *SnapshotCloudRunTestSuite) TearDownTest() {
+	newCloudRunClient = origNewCloudRunClient
 }
 
 func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd() {
@@ -50,9 +86,9 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd() {
 			golden:    "Error: required flag(s) \"region\" not set\n",
 		},
 		{
-			name:   "snapshot cloud-run succeeds with required args and prints the placeholder",
-			cmd:    fmt.Sprintf(`snapshot cloud-run %s --project p --region r %s`, suite.envName, suite.defaultKosliArguments),
-			golden: "cloud-run snapshot: not yet implemented (forced dry-run)\n",
+			name:        "snapshot cloud-run dry-runs the report URL and payload built from the GCP client",
+			cmd:         fmt.Sprintf(`snapshot cloud-run %s --project proj-x --region europe-west1 %s`, suite.envName, suite.defaultKosliArguments),
+			goldenRegex: `(?s)THIS IS A DRY-RUN.*report/cloud-run.*"revisionName": "hello-world-rev1".*"service_name": "hello-world".*"project": "proj-x".*"region": "europe-west1".*"gcr.io/x/hello@sha256:abc": "abc"`,
 		},
 	}
 
