@@ -31,6 +31,9 @@ GCP test environment (provisioned, ADC already configured on this machine):
 - The CLI command stays `Hidden: true` and forces `global.DryRun = true` until the feature is complete, so we can iterate without exposing it to customers and without risk of accidental writes against the server. Both locks are removed in a later slice once the end-to-end path and tests are in place.
 - The first branch ships only the cobra skeleton (no GCP calls, no HTTP, no payload). The thinnest possible end-to-end wiring slice is deferred to a later branch so the GCP client wrapper can be designed and tested in isolation.
 - Server-side `cloud-run` env type work is tracked separately. The CLI proceeds against a dry-run-only command until that lands; the CLI does not need to coordinate releases with the server side for this branch.
+- Package named `internal/cloudrun` (not `gcprun`) to mirror the user-facing command name `snapshot cloud-run`. If GCP integrations expand later we'll either rename or split into `internal/gcp/run`.
+- `internal/cloudrun` reports all revisions referenced in `service.traffic[]` regardless of percent (including 0%). Trade-off: matches the user's framing of "running or could run" without dragging in retired revisions that aren't currently configured for traffic; canary 90/10 splits surface both revisions naturally.
+- Digest extraction follows the ECS pattern (`internal/aws/aws.go:670-693`): use a `@sha256:` substring if present, else leave the digest empty rather than calling Artifact Registry. Registry-lookup mode (analogous to Azure's `--digests-source acr`) is deferred until customers ask for it.
 
 ---
 
@@ -39,7 +42,7 @@ GCP test environment (provisioned, ADC already configured on this machine):
 Slice plan (each slice is a separate, independently-mergeable branch):
 
 - [x] **Slice 1 (this branch):** Skeleton command — `cmd/kosli/snapshotCloudRun.go` (Hidden, forced dry-run, stub `RunE`), register in `snapshot.go`, arg/flag validation tests. Done 2026-04-28: 5 cmdTestCase tests passing, `make lint` clean, hidden from `snapshot --help` but reachable directly.
-- [ ] **Slice 2:** Internal `internal/gcprun` package — wraps `cloud.google.com/go/run/apiv2` to list services in project+region; unit-tested with a fake.
+- [x] **Slice 2:** Internal `internal/cloudrun` package — wraps `cloud.google.com/go/run/apiv2` to list services in project+region; unit-tested with a fake. Done 2026-04-28: `Client.ListServices` returns `Service{Name, URI, Revisions}` with one `Revision{Name, Digests, CreatedAt}` per traffic-configured revision (any percent including 0%, with `LATEST` resolved via `LatestReadyRevision` and dupes removed). Digest extraction mirrors the ECS fallback (`@sha256:` parse, else empty string). 9 unit tests passing.
 - [ ] **Slice 3:** End-to-end happy path — wire the package into `RunE`, build the snapshot payload, POST to the server `cloud-run` endpoint (still dry-run only).
 - [ ] **Slice 4:** Filtering flags — `--services`, `--services-regex`, `--exclude`, `--exclude-regex`.
 - [ ] **Slice 5:** Multi-revision / traffic splitting — handle services with multiple active revisions and services with no active revisions.
