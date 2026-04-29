@@ -42,11 +42,17 @@ const (
 
 	// the following constants are used in the docs/help
 	fingerprintDesc = `
-The artifact fingerprint can be provided directly with the ^--fingerprint^ flag, or 
+The artifact fingerprint can be provided directly with the ^--fingerprint^ flag, or
 calculated based on ^--artifact-type^ flag.
 
 Artifact type can be one of: "file" for files, "dir" for directories, "oci" for container
 images in registries or "docker" for local docker images.
+
+Note: ^--artifact-type=docker^ reads the image's repo digest via the local Docker daemon.
+The image must have been pushed to or pulled from a registry for a repo digest to exist;
+a freshly built image (just ^docker build^) will not have one. If the image is already in
+a registry, prefer ^--artifact-type=oci^, which fetches the digest directly from the
+registry without needing a local Docker daemon.
 
 `
 
