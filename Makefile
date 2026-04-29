@@ -115,7 +115,7 @@ setup_test_to_use_local_image:
 
 setup_test_to_use_staging_server_image:
 	@rm /tmp/server-image.txt
-	@docker ps -aq | xargs -r docker rm -fv
+	@docker compose down -v
 	@echo "Now run make test_integration"
 	@echo "To look at the logs from kosli server run: make follow_integration_test_server"
 
