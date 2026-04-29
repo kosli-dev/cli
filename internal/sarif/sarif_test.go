@@ -1,10 +1,10 @@
-package snyk
+package sarif
 
 import (
 	"testing"
 )
 
-func TestProcessSnykResultFile(t *testing.T) {
+func TestProcessSarifResultFile(t *testing.T) {
 	type result struct {
 		high_count   int
 		medium_count int
@@ -149,14 +149,14 @@ func TestProcessSnykResultFile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ProcessSnykResultFile(tt.file)
+			got, err := ProcessSarifResultFile(tt.file)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("ProcessSnykResultFile() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ProcessSarifResultFile() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if tt.want != nil && (tt.want.tool != got.Tool.Name ||
 				tt.want.version != got.Tool.Version) {
-				t.Errorf("ProcessSnykResultFile() failed, want: Tool: %s (got %s) -- Version: %s (got %s)", tt.want.tool, got.Tool.Name, tt.want.version, got.Tool.Version)
+				t.Errorf("ProcessSarifResultFile() failed, want: Tool: %s (got %s) -- Version: %s (got %s)", tt.want.tool, got.Tool.Name, tt.want.version, got.Tool.Version)
 			}
 
 			if tt.want != nil && len(tt.want.results) > 0 {
@@ -164,7 +164,7 @@ func TestProcessSnykResultFile(t *testing.T) {
 					if wantResult.high_count != got.Results[i].HighCount ||
 						wantResult.medium_count != got.Results[i].MediumCount ||
 						wantResult.low_count != got.Results[i].LowCount {
-						t.Errorf("ProcessSnykResultFile() failed for Result [%d], want %v -- got %v", i, wantResult, got.Results[i])
+						t.Errorf("ProcessSarifResultFile() failed for Result [%d], want %v -- got %v", i, wantResult, got.Results[i])
 					}
 				}
 			}
