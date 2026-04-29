@@ -17,7 +17,7 @@ type EnvRequest struct {
 // One artifact is emitted per revision in each service's traffic configuration.
 type RevisionData struct {
 	RevisionName string            `json:"revisionName"`
-	ServiceName  string            `json:"serviceName,omitempty"`
+	ServiceName  string            `json:"service_name,omitempty"`
 	Digests      map[string]string `json:"digests"`
 	CreatedAt    int64             `json:"creationTimestamp"`
 }
