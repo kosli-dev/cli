@@ -14,7 +14,7 @@ import (
 
 const snapshotCloudRunShortDesc = `Report a snapshot of running services in a Google Cloud Run project and region to Kosli.  `
 const snapshotCloudRunLongDesc = snapshotCloudRunShortDesc + `
-Currently a hidden, in-development command — it always runs in dry-run mode regardless of the --dry-run flag.`
+Currently a hidden, in-development command. Use --dry-run to inspect the payload without sending it to Kosli.`
 
 // cloudRunLister is the seam between the command and the GCP client. Tests
 // override newCloudRunClient with a stub that returns canned services.
@@ -55,7 +55,6 @@ func newSnapshotCloudRunCmd(out io.Writer) *cobra.Command {
 					return err
 				}
 			}
-			global.DryRun = true
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -119,5 +118,8 @@ func (o *snapshotCloudRunOptions) run(args []string) error {
 		Token:   global.ApiToken,
 	}
 	_, err = kosliClient.Do(reqParams)
+	if err == nil && !global.DryRun {
+		logger.Info("[%d] revisions were reported to environment %s", len(payload.Artifacts), envName)
+	}
 	return err
 }

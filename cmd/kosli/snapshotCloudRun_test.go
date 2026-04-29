@@ -31,8 +31,13 @@ type SnapshotCloudRunTestSuite struct {
 }
 
 // stubServices returns two Cloud Run services so filter tests can verify
-// inclusion and exclusion in a single run.
+// inclusion and exclusion in a single run. Digests are full 64-char hex
+// because the server's CloudRunReport model rejects anything else.
 func stubServices() []cloudrun.Service {
+	const (
+		alphaDigest = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+		betaDigest  = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+	)
 	return []cloudrun.Service{
 		{
 			Name: "alpha",
@@ -40,7 +45,7 @@ func stubServices() []cloudrun.Service {
 			Revisions: []cloudrun.Revision{
 				{
 					Name:      "alpha-rev1",
-					Digests:   map[string]string{"gcr.io/x/alpha@sha256:aaa": "aaa"},
+					Digests:   map[string]string{"gcr.io/x/alpha@sha256:" + alphaDigest: alphaDigest},
 					CreatedAt: time.Date(2026, 4, 28, 12, 0, 0, 0, time.UTC),
 				},
 			},
@@ -51,7 +56,7 @@ func stubServices() []cloudrun.Service {
 			Revisions: []cloudrun.Revision{
 				{
 					Name:      "beta-rev1",
-					Digests:   map[string]string{"gcr.io/x/beta@sha256:bbb": "bbb"},
+					Digests:   map[string]string{"gcr.io/x/beta@sha256:" + betaDigest: betaDigest},
 					CreatedAt: time.Date(2026, 4, 28, 12, 0, 0, 0, time.UTC),
 				},
 			},
@@ -71,6 +76,8 @@ func (suite *SnapshotCloudRunTestSuite) SetupTest() {
 	newCloudRunClient = func(_ context.Context) (cloudRunLister, error) {
 		return stubCloudRunLister{services: stubServices()}, nil
 	}
+
+	CreateEnv(global.Org, suite.envName, "cloud-run", suite.T())
 }
 
 func (suite *SnapshotCloudRunTestSuite) TearDownTest() {
@@ -105,7 +112,7 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd() {
 		},
 		{
 			name:        "05 snapshot cloud-run dry-runs the report URL and payload built from the GCP client",
-			cmd:         fmt.Sprintf(`snapshot cloud-run %s --project proj-x --region europe-west1 %s`, suite.envName, suite.defaultKosliArguments),
+			cmd:         fmt.Sprintf(`snapshot cloud-run %s --project proj-x --region europe-west1 --dry-run %s`, suite.envName, suite.defaultKosliArguments),
 			goldenRegex: `(?s)THIS IS A DRY-RUN.*report/cloud-run.*"type": "cloud-run".*"service_name": "alpha".*"service_name": "beta"`,
 		},
 		{
@@ -142,7 +149,7 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd() {
 // service appears) and absence (excluded service does not appear), so they
 // cannot use the single-assertion cmdTestCase table.
 func (suite *SnapshotCloudRunTestSuite) runFilteredCmd(filterArgs string) string {
-	cmd := fmt.Sprintf(`snapshot cloud-run %s --project p --region r %s %s`, suite.envName, filterArgs, suite.defaultKosliArguments)
+	cmd := fmt.Sprintf(`snapshot cloud-run %s --project p --region r --dry-run %s %s`, suite.envName, filterArgs, suite.defaultKosliArguments)
 	_, combined, _, _, err := executeCommandC(cmd)
 	require.NoError(suite.T(), err, "command failed: %s", combined)
 	return combined
@@ -170,6 +177,19 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_ExcludeRegex(
 	out := suite.runFilteredCmd(`--exclude-regex "^al"`)
 	require.NotContains(suite.T(), out, `"service_name": "alpha"`)
 	require.Contains(suite.T(), out, `"service_name": "beta"`)
+}
+
+// TestSnapshotCloudRunCmd_HappyPathReportsToServer exercises the full
+// CLI → local Kosli server roundtrip with the GCP client stubbed: the env is
+// already created in SetupTest with type "cloud-run", and the command is
+// expected to PUT the snapshot and emit the "[N] revisions were reported"
+// success log mirroring ECS.
+func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd_HappyPathReportsToServer() {
+	cmd := fmt.Sprintf(`snapshot cloud-run %s --project p --region r %s`, suite.envName, suite.defaultKosliArguments)
+	_, combined, _, _, err := executeCommandC(cmd)
+
+	require.NoError(suite.T(), err, "command failed: %s", combined)
+	require.Contains(suite.T(), combined, fmt.Sprintf("[2] revisions were reported to environment %s", suite.envName))
 }
 
 // TestSnapshotCloudRunCmd_UnauthenticatedReturnsFriendlyError verifies that a
