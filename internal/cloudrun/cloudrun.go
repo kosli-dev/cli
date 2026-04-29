@@ -49,7 +49,7 @@ type Client struct {
 // Application Default Credentials. Construction errors (typically rare in a
 // cluster cron job, since the metadata server provides credentials) are
 // wrapped with a generic "GCP client setup failed" prefix; the SDK's own
-// message is preserved via %w for diagnosis.
+// message is preserved via %w for diagnosis. Callers should defer Close().
 func New(ctx context.Context) (*Client, error) {
 	services, err := run.NewServicesClient(ctx)
 	if err != nil {
@@ -57,9 +57,26 @@ func New(ctx context.Context) (*Client, error) {
 	}
 	revisions, err := run.NewRevisionsClient(ctx)
 	if err != nil {
+		_ = services.Close()
 		return nil, fmt.Errorf("GCP client setup failed: %w", err)
 	}
 	return &Client{api: &gcpAPI{services: services, revisions: revisions}}, nil
+}
+
+// Close releases the underlying gRPC connections. Safe to call on a Client
+// constructed with a fake apiClient (returns nil). Returns the first error
+// from closing either client; the second is always attempted.
+func (c *Client) Close() error {
+	g, ok := c.api.(*gcpAPI)
+	if !ok {
+		return nil
+	}
+	sErr := g.services.Close()
+	rErr := g.revisions.Close()
+	if sErr != nil {
+		return sErr
+	}
+	return rErr
 }
 
 // ListServices returns every Cloud Run service in the given project+region,

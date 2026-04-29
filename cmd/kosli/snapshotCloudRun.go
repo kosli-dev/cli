@@ -90,12 +90,15 @@ func (o *snapshotCloudRunOptions) run(args []string) error {
 	if err != nil {
 		return err
 	}
+	if closer, ok := client.(io.Closer); ok {
+		defer func() { _ = closer.Close() }()
+	}
 	services, err := client.ListServices(ctx, o.project, o.region)
 	if err != nil {
 		return cloudrun.Classify(err, o.project, o.region)
 	}
 
-	filtered := services[:0]
+	filtered := make([]cloudrun.Service, 0, len(services))
 	for _, svc := range services {
 		include, err := o.serviceFilter.ShouldInclude(svc.Name)
 		if err != nil {

@@ -266,6 +266,10 @@ func TestListServices_ServiceWithNoTrafficTargetsHasEmptyRevisions(t *testing.T)
 	require.Empty(t, got[0].Revisions)
 }
 
+func TestClient_CloseOnFakeAPIIsNoOp(t *testing.T) {
+	require.NoError(t, newClient(&fakeAPI{}).Close())
+}
+
 func TestListServices_MultipleServices(t *testing.T) {
 	fake := &fakeAPI{
 		services: []*runpb.Service{
