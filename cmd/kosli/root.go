@@ -219,6 +219,8 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	attestationCustomDataFileFlag   = "The filepath of a json file containing the custom attestation data."
 	uploadJunitResultsFlag          = "[defaulted] Whether to upload the provided Junit results directory as an attachment to Kosli or not."
 	uploadSnykResultsFlag           = "[defaulted] Whether to upload the provided Snyk results file as an attachment to Kosli or not."
+	sarifResultsFileFlag            = "The path to a SARIF v2.1.0 scan results file (e.g. from Checkov, Trivy, Semgrep, Snyk, CodeQL). By default, the results file will be uploaded to Kosli's evidence vault."
+	uploadSarifResultsFlag          = "[defaulted] Whether to upload the provided SARIF results file as an attachment to Kosli or not."
 	attestationAssertFlag           = "[optional] Exit with non-zero code if the attestation is non-compliant"
 	beginTrailCommitFlag            = "[defaulted] The git commit from which the trail is begun. (defaulted in some CIs: https://docs.kosli.com/ci-defaults, otherwise defaults to HEAD )."
 	attachmentsFlag                 = "[optional] The comma-separated list of paths of attachments for the reported attestation. Attachments can be files or directories. All attachments are compressed and uploaded to Kosli's evidence vault."
