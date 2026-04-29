@@ -2,7 +2,7 @@
 title: "kosli evaluate trail"
 beta: false
 deprecated: false
-summary: "Evaluate a trail against a policy."
+summary: "[BETA] Evaluate a trail against a policy."
 ---
 
 # kosli evaluate trail
@@ -13,7 +13,7 @@ summary: "Evaluate a trail against a policy."
 kosli evaluate trail TRAIL-NAME [flags]
 ```
 
-Evaluate a trail against a policy.
+[BETA] Evaluate a trail against a policy.
 Fetch a single trail from Kosli and evaluate it against a Rego policy.
 The trail data is passed to the policy as `input.trail`.
 
@@ -24,9 +24,11 @@ full data structure available to the policy. Use `--output json` for structured 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
+|        --assert  |  [optional] Exit with a non-zero status when the policy denies. This is the current default; pass --assert to lock it in across future releases.  |
 |        --attestations strings  |  [optional] Limit which attestations are included. Plain name for trail-level, dot-qualified (artifact.name) for artifact-level.  |
 |    -f, --flow string  |  The Kosli flow name.  |
 |    -h, --help  |  help for trail  |
+|        --no-assert  |  [optional] Print the result and always exit 0, even when the policy denies. Use when this command feeds another tool as a policy decision point.  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 |        --params string  |  [optional] Policy parameters as inline JSON or @file.json. Available in policies as data.params.  |
 |    -p, --policy string  |  Path to a Rego policy file to evaluate against the trail.  |
@@ -44,6 +46,12 @@ full data structure available to the policy. Use `--output json` for structured 
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
+
+## Live Examples in different CI systems
+
+{{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli evaluate trail` command in GitHub.
+
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli%2Bevaluate%2Btrail){{< /tab >}}{{< /tabs >}}
 
 ## Examples Use Cases
 
@@ -91,5 +99,14 @@ kosli evaluate trail yourTrailName
 kosli evaluate trail yourTrailName 
 	--policy yourPolicyFile.rego 
 	--params @params.json 
+
+```
+
+##### evaluate a trail as a decision point (print verdict, never fail the step)
+
+```shell
+kosli evaluate trail yourTrailName 
+	--policy yourPolicyFile.rego 
+	--no-assert 
 ```
 

@@ -2,7 +2,7 @@
 title: "kosli evaluate trails"
 beta: false
 deprecated: false
-summary: "Evaluate multiple trails against a policy."
+summary: "[BETA] Evaluate multiple trails against a policy."
 ---
 
 # kosli evaluate trails
@@ -13,7 +13,7 @@ summary: "Evaluate multiple trails against a policy."
 kosli evaluate trails TRAIL-NAME [TRAIL-NAME...] [flags]
 ```
 
-Evaluate multiple trails against a policy.
+[BETA] Evaluate multiple trails against a policy.
 Fetch multiple trails from Kosli and evaluate them together against a Rego policy.
 The trail data is passed to the policy as `input.trails` (an array), unlike
 `evaluate trail` which passes `input.trail` (a single object).
@@ -25,9 +25,11 @@ full data structure available to the policy. Use `--output json` for structured 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
+|        --assert  |  [optional] Exit with a non-zero status when the policy denies. This is the current default; pass --assert to lock it in across future releases.  |
 |        --attestations strings  |  [optional] Limit which attestations are included. Plain name for trail-level, dot-qualified (artifact.name) for artifact-level.  |
 |    -f, --flow string  |  The Kosli flow name.  |
 |    -h, --help  |  help for trails  |
+|        --no-assert  |  [optional] Print the result and always exit 0, even when the policy denies. Use when this command feeds another tool as a policy decision point.  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 |        --params string  |  [optional] Policy parameters as inline JSON or @file.json. Available in policies as data.params.  |
 |    -p, --policy string  |  Path to a Rego policy file to evaluate against the trails.  |
@@ -83,5 +85,14 @@ kosli evaluate trails yourTrailName1 yourTrailName2
 kosli evaluate trails yourTrailName1 yourTrailName2 
 	--policy yourPolicyFile.rego 
 	--params '{"min_approvers": 2}' 
+
+```
+
+##### evaluate trails as a decision point (print verdict, never fail the step)
+
+```shell
+kosli evaluate trails yourTrailName1 yourTrailName2 
+	--policy yourPolicyFile.rego 
+	--no-assert 
 ```
 

@@ -45,6 +45,12 @@ full data structure available to the policy. Use `--output json` for structured 
 |        --org string  |  The Kosli organization.  |
 
 
+## Live Examples in different CI systems
+
+{{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli evaluate trail` command in GitHub.
+
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli%2Bevaluate%2Btrail){{< /tab >}}{{< /tabs >}}
+
 ## Examples Use Cases
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 

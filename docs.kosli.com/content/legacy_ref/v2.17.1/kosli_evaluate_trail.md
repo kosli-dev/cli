@@ -28,6 +28,7 @@ full data structure available to the policy. Use `--output json` for structured 
 |    -f, --flow string  |  The Kosli flow name.  |
 |    -h, --help  |  help for trail  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
+|        --params string  |  [optional] Policy parameters as inline JSON or @file.json. Available in policies as data.params.  |
 |    -p, --policy string  |  Path to a Rego policy file to evaluate against the trail.  |
 |        --show-input  |  [optional] Include the policy input data in the output.  |
 
@@ -43,6 +44,12 @@ full data structure available to the policy. Use `--output json` for structured 
 |    -r, --max-api-retries int  |  [defaulted] How many times should API calls be retried when the API host is not reachable. (default 3)  |
 |        --org string  |  The Kosli organization.  |
 
+
+## Live Examples in different CI systems
+
+{{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli evaluate trail` command in GitHub.
+
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli%2Bevaluate%2Btrail){{< /tab >}}{{< /tabs >}}
 
 ## Examples Use Cases
 
@@ -72,5 +79,23 @@ kosli evaluate trail yourTrailName
 	--policy yourPolicyFile.rego 
 	--show-input 
 	--output json 
+
+```
+
+##### evaluate a trail with policy parameters (inline JSON)
+
+```shell
+kosli evaluate trail yourTrailName 
+	--policy yourPolicyFile.rego 
+	--params '{"min_approvers": 2}' 
+
+```
+
+##### evaluate a trail with policy parameters from a file
+
+```shell
+kosli evaluate trail yourTrailName 
+	--policy yourPolicyFile.rego 
+	--params @params.json 
 ```
 
