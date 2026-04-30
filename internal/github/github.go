@@ -90,24 +90,30 @@ type debugTransport struct {
 	out  io.Writer
 }
 
+// logf writes debug output and intentionally ignores write errors —
+// failures writing to stderr are not actionable from a debug transport.
+func (d *debugTransport) logf(format string, args ...any) {
+	_, _ = fmt.Fprintf(d.out, format, args...)
+}
+
 func (d *debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	fmt.Fprintf(d.out, "[debug-github] --> %s %s\n", req.Method, req.URL)
+	d.logf("[debug-github] --> %s %s\n", req.Method, req.URL)
 	for k, vs := range req.Header {
 		for _, v := range vs {
 			if strings.EqualFold(k, "Authorization") {
 				v = redactAuthHeader(v)
 			}
-			fmt.Fprintf(d.out, "[debug-github]     %s: %s\n", k, v)
+			d.logf("[debug-github]     %s: %s\n", k, v)
 		}
 	}
 	if req.Body != nil {
 		bodyBytes, err := io.ReadAll(req.Body)
 		_ = req.Body.Close()
 		if err != nil {
-			fmt.Fprintf(d.out, "[debug-github]     <failed to read request body: %v>\n", err)
+			d.logf("[debug-github]     <failed to read request body: %v>\n", err)
 		} else {
 			if len(bodyBytes) > 0 {
-				fmt.Fprintf(d.out, "[debug-github]     body: %s\n", string(bodyBytes))
+				d.logf("[debug-github]     body: %s\n", string(bodyBytes))
 			}
 			req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 		}
@@ -115,24 +121,24 @@ func (d *debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	resp, err := d.base.RoundTrip(req)
 	if err != nil {
-		fmt.Fprintf(d.out, "[debug-github] <-- transport error: %v\n", err)
+		d.logf("[debug-github] <-- transport error: %v\n", err)
 		return resp, err
 	}
-	fmt.Fprintf(d.out, "[debug-github] <-- %d %s (%s %s)\n", resp.StatusCode, resp.Status, req.Method, req.URL)
+	d.logf("[debug-github] <-- %d %s (%s %s)\n", resp.StatusCode, resp.Status, req.Method, req.URL)
 	for k, vs := range resp.Header {
 		for _, v := range vs {
-			fmt.Fprintf(d.out, "[debug-github]     %s: %s\n", k, v)
+			d.logf("[debug-github]     %s: %s\n", k, v)
 		}
 	}
 	if resp.Body != nil {
 		respBytes, err := io.ReadAll(resp.Body)
 		_ = resp.Body.Close()
 		if err != nil {
-			fmt.Fprintf(d.out, "[debug-github]     <failed to read response body: %v>\n", err)
+			d.logf("[debug-github]     <failed to read response body: %v>\n", err)
 			resp.Body = io.NopCloser(bytes.NewReader(nil))
 		} else {
 			if len(respBytes) > 0 {
-				fmt.Fprintf(d.out, "[debug-github]     body: %s\n", string(respBytes))
+				d.logf("[debug-github]     body: %s\n", string(respBytes))
 			}
 			resp.Body = io.NopCloser(bytes.NewReader(respBytes))
 		}
