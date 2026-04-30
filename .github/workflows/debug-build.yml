@@ -7,6 +7,15 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: linux,   arch: amd64 }
+          - { os: linux,   arch: arm64 }
+          - { os: darwin,  arch: amd64 }
+          - { os: darwin,  arch: arm64 }
+          - { os: windows, arch: amd64, ext: .exe }
     steps:
       - uses: actions/checkout@v6
 
@@ -15,19 +24,16 @@ jobs:
           go-version-file: '.go-version'
           check-latest: true
 
-      - name: Build all platforms
-        run: |
-          mkdir -p out
-          for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64; do
-            os="${target%/*}"; arch="${target#*/}"
-            ext=""; [ "$os" = "windows" ] && ext=".exe"
-            CGO_ENABLED=0 GOOS=$os GOARCH=$arch \
-              go build -o "out/kosli-${os}-${arch}${ext}" ./cmd/kosli/
-          done
+      - name: Build kosli-${{ matrix.os }}-${{ matrix.arch }}
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: 0
+        run: go build -o "kosli-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}" ./cmd/kosli/
 
       - uses: actions/upload-artifact@v7
         with:
-          name: kosli-debug
-          path: out/
+          name: kosli-debug-${{ matrix.os }}-${{ matrix.arch }}
+          path: kosli-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}
           if-no-files-found: error
           retention-days: 14
