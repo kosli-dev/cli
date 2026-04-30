@@ -1,10 +1,13 @@
 package github
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -21,6 +24,7 @@ type GithubConfig struct {
 	BaseURL    string
 	Org        string
 	Repository string
+	Debug      bool
 	// Sleep is called between retries in PREvidenceByPRNumber. Defaults to
 	// time.Sleep when nil. Override in tests to avoid real delays.
 	Sleep func(time.Duration)
@@ -34,7 +38,7 @@ type GithubFlagsTempValueHolder struct {
 }
 
 // NewGithubConfig returns a new GithubConfig
-func NewGithubConfig(token, baseURL, org, repository string) *GithubConfig {
+func NewGithubConfig(token, baseURL, org, repository string, debug bool) *GithubConfig {
 	return &GithubConfig{
 		Token:   token,
 		BaseURL: baseURL,
@@ -42,6 +46,7 @@ func NewGithubConfig(token, baseURL, org, repository string) *GithubConfig {
 		// repository name must be extracted if a user is using default value from ${GITHUB_REPOSITORY}
 		// because the value is in the format of "org/repository"
 		Repository: extractRepoName(repository),
+		Debug:      debug,
 	}
 }
 
@@ -52,12 +57,21 @@ func extractRepoName(fullRepositoryName string) string {
 	return repository
 }
 
-// NewGithubClientFromToken returns Github client with a token and context
-func NewGithubClientFromToken(ctx context.Context, ghToken string, baseURL string) (*gh.Client, error) {
+// NewGithubClientFromToken returns Github client with a token and context.
+// When debug is true the underlying transport is wrapped so every HTTP
+// request and response (REST and GraphQL) is dumped to stderr.
+func NewGithubClientFromToken(ctx context.Context, ghToken string, baseURL string, debug bool) (*gh.Client, error) {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: ghToken},
 	)
 	tc := oauth2.NewClient(ctx, ts)
+	if debug {
+		base := tc.Transport
+		if base == nil {
+			base = http.DefaultTransport
+		}
+		tc.Transport = &debugTransport{base: base, out: os.Stderr}
+	}
 	if baseURL != "" {
 		client, err := gh.NewEnterpriseClient(baseURL, baseURL, tc)
 		if err != nil {
@@ -66,6 +80,100 @@ func NewGithubClientFromToken(ctx context.Context, ghToken string, baseURL strin
 		return client, nil
 	}
 	return gh.NewClient(tc), nil
+}
+
+// debugTransport is an http.RoundTripper that logs each request and
+// response to its writer. Used when --debug is enabled to make GitHub
+// auth/permission failures debuggable.
+type debugTransport struct {
+	base http.RoundTripper
+	out  io.Writer
+}
+
+// logf writes debug output and intentionally ignores write errors —
+// failures writing to stderr are not actionable from a debug transport.
+func (d *debugTransport) logf(format string, args ...any) {
+	_, _ = fmt.Fprintf(d.out, format, args...)
+}
+
+func (d *debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	d.logf("[debug-github] --> %s %s\n", req.Method, req.URL)
+	for k, vs := range req.Header {
+		for _, v := range vs {
+			d.logf("[debug-github]     %s: %s\n", k, redactSensitiveHeader(k, v))
+		}
+	}
+	if req.Body != nil {
+		bodyBytes, err := io.ReadAll(req.Body)
+		_ = req.Body.Close()
+		if err != nil {
+			d.logf("[debug-github]     <failed to read request body: %v>\n", err)
+		} else {
+			if len(bodyBytes) > 0 {
+				d.logf("[debug-github]     body: %s\n", string(bodyBytes))
+			}
+			req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+		}
+	}
+
+	resp, err := d.base.RoundTrip(req)
+	if err != nil {
+		d.logf("[debug-github] <-- transport error: %v\n", err)
+		return resp, err
+	}
+	d.logf("[debug-github] <-- %d %s (%s %s)\n", resp.StatusCode, resp.Status, req.Method, req.URL)
+	for k, vs := range resp.Header {
+		for _, v := range vs {
+			d.logf("[debug-github]     %s: %s\n", k, redactSensitiveHeader(k, v))
+		}
+	}
+	if resp.Body != nil {
+		respBytes, err := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		if err != nil {
+			d.logf("[debug-github]     <failed to read response body: %v>\n", err)
+			resp.Body = io.NopCloser(bytes.NewReader(nil))
+		} else {
+			if len(respBytes) > 0 {
+				d.logf("[debug-github]     body: %s\n", string(respBytes))
+			}
+			resp.Body = io.NopCloser(bytes.NewReader(respBytes))
+		}
+	}
+	return resp, nil
+}
+
+// redactSensitiveHeader hides credentials in headers that commonly carry
+// them so debug output is safe to paste into bug reports. Authorization
+// keeps the last 4 chars of the token so the user can spot truncation
+// or whitespace issues; cookie/proxy-auth values are fully replaced.
+func redactSensitiveHeader(name, value string) string {
+	switch strings.ToLower(name) {
+	case "authorization":
+		return redactAuthHeader(value)
+	case "cookie", "set-cookie", "proxy-authorization":
+		return "***"
+	default:
+		return value
+	}
+}
+
+// redactAuthHeader hides all but the last 4 chars of the credential so
+// debug output is safe to paste into bug reports while still letting the
+// user spot truncation/whitespace issues.
+func redactAuthHeader(v string) string {
+	parts := strings.SplitN(v, " ", 2)
+	if len(parts) != 2 {
+		if len(v) <= 4 {
+			return "***"
+		}
+		return "***" + v[len(v)-4:]
+	}
+	tok := parts[1]
+	if len(tok) <= 4 {
+		return parts[0] + " ***"
+	}
+	return parts[0] + " ***" + tok[len(tok)-4:]
 }
 
 func graphqlEndpoint(baseURL string) string {
@@ -84,8 +192,8 @@ func (c *GithubConfig) ProviderAndLabel() (string, string) {
 // parameters. It can be replaced in tests to inject a FakeGitHubClient.
 var NewGithubRetrieverFunc = defaultNewGithubRetriever
 
-func defaultNewGithubRetriever(token, baseURL, org, repository string) types.PRRetriever {
-	return NewGithubConfig(token, baseURL, org, repository)
+func defaultNewGithubRetriever(token, baseURL, org, repository string, debug bool) types.PRRetriever {
+	return NewGithubConfig(token, baseURL, org, repository, debug)
 }
 
 // ResetGithubRetrieverFunc restores NewGithubRetrieverFunc to its default.
@@ -226,7 +334,7 @@ func buildPREvidence(
 func (c *GithubConfig) PREvidenceByPRNumber(prNumber int) (*types.PREvidence, error) {
 	ctx := context.Background()
 
-	ghClient, err := NewGithubClientFromToken(ctx, c.Token, c.BaseURL)
+	ghClient, err := NewGithubClientFromToken(ctx, c.Token, c.BaseURL, c.Debug)
 	if err != nil {
 		return nil, err
 	}
@@ -313,7 +421,7 @@ func (c *GithubConfig) PREvidenceForCommitV2(commit string) ([]*types.PREvidence
 	ctx := context.Background()
 	pullRequestsEvidence := []*types.PREvidence{}
 
-	ghClient, err := NewGithubClientFromToken(ctx, c.Token, c.BaseURL)
+	ghClient, err := NewGithubClientFromToken(ctx, c.Token, c.BaseURL, c.Debug)
 	if err != nil {
 		return pullRequestsEvidence, err
 	}
@@ -423,7 +531,7 @@ func (c *GithubConfig) PREvidenceForCommitV1(commit string) ([]*types.PREvidence
 // PullRequestsForCommit returns a list of pull requests for a specific commit
 func (c *GithubConfig) PullRequestsForCommit(commit string) ([]*gh.PullRequest, error) {
 	ctx := context.Background()
-	client, err := NewGithubClientFromToken(ctx, c.Token, c.BaseURL)
+	client, err := NewGithubClientFromToken(ctx, c.Token, c.BaseURL, c.Debug)
 	if err != nil {
 		return []*gh.PullRequest{}, err
 	}
@@ -437,7 +545,7 @@ func (c *GithubConfig) PullRequestsForCommit(commit string) ([]*gh.PullRequest, 
 func (c *GithubConfig) GetPullRequestApprovers(number int) ([]string, error) {
 	approvers := []string{}
 	ctx := context.Background()
-	client, err := NewGithubClientFromToken(ctx, c.Token, c.BaseURL)
+	client, err := NewGithubClientFromToken(ctx, c.Token, c.BaseURL, c.Debug)
 	if err != nil {
 		return approvers, err
 	}
