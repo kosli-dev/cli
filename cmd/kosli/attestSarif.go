@@ -180,9 +180,15 @@ func (o *attestSarifOptions) run(args []string) error {
 		return err
 	}
 
+	logger.Debug("parsing SARIF results file: %s", o.sarifFilePath)
 	o.payload.SarifResults, err = sarif.ProcessSarifResultFile(o.sarifFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to parse SARIF results file [%s]: %s", o.sarifFilePath, err)
+	}
+	if len(o.payload.SarifResults.Results) > 0 {
+		r := o.payload.SarifResults.Results[0]
+		logger.Debug("SARIF parsed: tool=%s findings=%d high, %d medium, %d low (compliant=%t)",
+			o.payload.SarifResults.Tool.Name, r.HighCount, r.MediumCount, r.LowCount, o.payload.Compliant)
 	}
 
 	if o.uploadResultsFile {
