@@ -129,3 +129,102 @@ func TestPREvidenceByPRNumber_ReturnsErrorAfterAllRetriesExhausted(t *testing.T)
 	require.Error(t, err)
 	require.Equal(t, 4, *attempts, "should have made 1 initial attempt + 3 retries")
 }
+
+func TestRedactAuthHeader(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		in   string
+		want string
+	}{
+		{
+			name: "scheme + long token keeps last 4",
+			in:   "Bearer ghp_abcdef1234567890ABCD",
+			want: "Bearer ***ABCD",
+		},
+		{
+			name: "scheme + short token is fully redacted",
+			in:   "token ab",
+			want: "token ***",
+		},
+		{
+			name: "scheme + 4-char token is fully redacted",
+			in:   "Bearer abcd",
+			want: "Bearer ***",
+		},
+		{
+			name: "no scheme, long value keeps last 4",
+			in:   "nospaceshort",
+			want: "***hort",
+		},
+		{
+			name: "no scheme, short value is fully redacted",
+			in:   "abc",
+			want: "***",
+		},
+		{
+			name: "empty value is fully redacted",
+			in:   "",
+			want: "***",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.want, redactAuthHeader(tc.in))
+		})
+	}
+}
+
+func TestRedactSensitiveHeader(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		headerName string
+		value      string
+		want       string
+	}{
+		{
+			name:       "authorization is redacted via redactAuthHeader",
+			headerName: "Authorization",
+			value:      "Bearer ghp_abcdef1234567890ABCD",
+			want:       "Bearer ***ABCD",
+		},
+		{
+			name:       "authorization match is case-insensitive",
+			headerName: "AUTHORIZATION",
+			value:      "Bearer ghp_abcdef1234567890ABCD",
+			want:       "Bearer ***ABCD",
+		},
+		{
+			name:       "cookie is fully redacted",
+			headerName: "Cookie",
+			value:      "session=abc; csrf=xyz",
+			want:       "***",
+		},
+		{
+			name:       "set-cookie is fully redacted",
+			headerName: "Set-Cookie",
+			value:      "session=abc; Path=/; HttpOnly",
+			want:       "***",
+		},
+		{
+			name:       "proxy-authorization is fully redacted",
+			headerName: "Proxy-Authorization",
+			value:      "Basic dXNlcjpwYXNz",
+			want:       "***",
+		},
+		{
+			name:       "non-sensitive header is returned unchanged",
+			headerName: "Content-Type",
+			value:      "application/json",
+			want:       "application/json",
+		},
+		{
+			name:       "x-oauth-scopes is intentionally not redacted",
+			headerName: "X-OAuth-Scopes",
+			value:      "repo, read:org",
+			want:       "repo, read:org",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.want, redactSensitiveHeader(tc.headerName, tc.value))
+		})
+	}
+}
