@@ -3,7 +3,7 @@ name: Debug build
 on:
   push:
     branches:
-      - 4986-google-cloud-run-1
+      - githbub-extra-debug
   workflow_dispatch:
 
 jobs:
