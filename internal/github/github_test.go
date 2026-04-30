@@ -35,7 +35,7 @@ func (suite *GithubTestSuite) TestNewGithubClientFromToken() {
 		},
 	} {
 		suite.Run(t.name, func() {
-			client, err := NewGithubClientFromToken(context.Background(), t.token, t.baseURL)
+			client, err := NewGithubClientFromToken(context.Background(), t.token, t.baseURL, false)
 			require.NoErrorf(suite.T(), err, "was NOT expecting error but got: %s", err)
 			require.NotNilf(suite.T(), client, "client should not be nil")
 		})

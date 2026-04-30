@@ -20,7 +20,7 @@ func (suite *AssertPRGithubCommandTestSuite) SetupTest() {
 	suite.commitWithPR = "480e5a00379a52b8e184d6815080242a878ca295"
 	suite.commitWithNoPR = "7d1db1c8b7e71ee0ce369f1b722cc8844d3a7af6"
 
-	ghUtils.NewGithubRetrieverFunc = func(token, baseURL, org, repository string) types.PRRetriever {
+	ghUtils.NewGithubRetrieverFunc = func(token, baseURL, org, repository string, debug bool) types.PRRetriever {
 		return &ghUtils.FakeGitHubClient{
 			PRsByCommit: map[string][]*types.PREvidence{
 				suite.commitWithPR: {{URL: "https://github.com/kosli-dev/cli/pull/1", State: "MERGED"}},

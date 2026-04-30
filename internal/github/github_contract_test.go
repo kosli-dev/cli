@@ -175,6 +175,7 @@ func TestGitHubContract_RealGitHub(t *testing.T) {
 		"",
 		"kosli-dev",
 		"cli",
+		false,
 	)
 
 	// commitUnknown is a validly-formatted SHA that does not exist in kosli-dev/cli.
@@ -212,6 +213,7 @@ func TestGitHubContract_RealGitHub_PRByNumber(t *testing.T) {
 		"",
 		"kosli-dev",
 		"cli",
+		false,
 	)
 
 	runPRByNumberContractTests(t, config, testHelpers.GithubPRNumber())

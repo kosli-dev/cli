@@ -1,0 +1,27 @@
+name: Debug build
+
+on:
+  push:
+    branches:
+      - 4986-google-cloud-run-1
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: '.go-version'
+          check-latest: true
+
+      - run: make build
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: kosli-debug
+          path: kosli
+          if-no-files-found: error
+          retention-days: 14
