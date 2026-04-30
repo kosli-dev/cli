@@ -41,4 +41,7 @@ jobs:
 
       - name: Link artifact in run summary
         run: |
-          echo "- [kosli-debug-${{ matrix.os }}-${{ matrix.arch }}](${{ steps.upload.outputs.artifact-url }})" >> "$GITHUB_STEP_SUMMARY"
+          NAME="kosli-debug-${{ matrix.os }}-${{ matrix.arch }}"
+          GH_URL="${{ steps.upload.outputs.artifact-url }}"
+          NIGHTLY_URL="https://nightly.link/${{ github.repository }}/actions/artifacts/${{ steps.upload.outputs.artifact-id }}.zip"
+          echo "- ${NAME}: [GitHub (sign-in)](${GH_URL}) · [nightly.link (public)](${NIGHTLY_URL})" >> "$GITHUB_STEP_SUMMARY"
