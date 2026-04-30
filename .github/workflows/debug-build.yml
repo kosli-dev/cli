@@ -2,8 +2,6 @@ name: Debug build
 
 on:
   push:
-    branches:
-      - githbub-extra-debug
   workflow_dispatch:
 
 jobs:
@@ -17,11 +15,19 @@ jobs:
           go-version-file: '.go-version'
           check-latest: true
 
-      - run: make build
+      - name: Build all platforms
+        run: |
+          mkdir -p out
+          for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64; do
+            os="${target%/*}"; arch="${target#*/}"
+            ext=""; [ "$os" = "windows" ] && ext=".exe"
+            CGO_ENABLED=0 GOOS=$os GOARCH=$arch \
+              go build -o "out/kosli-${os}-${arch}${ext}" ./cmd/kosli/
+          done
 
       - uses: actions/upload-artifact@v7
         with:
           name: kosli-debug
-          path: kosli
+          path: out/
           if-no-files-found: error
           retention-days: 14
