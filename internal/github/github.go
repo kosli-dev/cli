@@ -100,10 +100,7 @@ func (d *debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	d.logf("[debug-github] --> %s %s\n", req.Method, req.URL)
 	for k, vs := range req.Header {
 		for _, v := range vs {
-			if strings.EqualFold(k, "Authorization") {
-				v = redactAuthHeader(v)
-			}
-			d.logf("[debug-github]     %s: %s\n", k, v)
+			d.logf("[debug-github]     %s: %s\n", k, redactSensitiveHeader(k, v))
 		}
 	}
 	if req.Body != nil {
@@ -127,7 +124,7 @@ func (d *debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	d.logf("[debug-github] <-- %d %s (%s %s)\n", resp.StatusCode, resp.Status, req.Method, req.URL)
 	for k, vs := range resp.Header {
 		for _, v := range vs {
-			d.logf("[debug-github]     %s: %s\n", k, v)
+			d.logf("[debug-github]     %s: %s\n", k, redactSensitiveHeader(k, v))
 		}
 	}
 	if resp.Body != nil {
@@ -144,6 +141,21 @@ func (d *debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		}
 	}
 	return resp, nil
+}
+
+// redactSensitiveHeader hides credentials in headers that commonly carry
+// them so debug output is safe to paste into bug reports. Authorization
+// keeps the last 4 chars of the token so the user can spot truncation
+// or whitespace issues; cookie/proxy-auth values are fully replaced.
+func redactSensitiveHeader(name, value string) string {
+	switch strings.ToLower(name) {
+	case "authorization":
+		return redactAuthHeader(value)
+	case "cookie", "set-cookie", "proxy-authorization":
+		return "***"
+	default:
+		return value
+	}
 }
 
 // redactAuthHeader hides all but the last 4 chars of the credential so
