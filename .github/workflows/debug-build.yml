@@ -31,9 +31,14 @@ jobs:
           CGO_ENABLED: 0
         run: go build -o "kosli-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}" ./cmd/kosli/
 
-      - uses: actions/upload-artifact@v7
+      - id: upload
+        uses: actions/upload-artifact@v7
         with:
           name: kosli-debug-${{ matrix.os }}-${{ matrix.arch }}
           path: kosli-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}
           if-no-files-found: error
           retention-days: 14
+
+      - name: Link artifact in run summary
+        run: |
+          echo "- [kosli-debug-${{ matrix.os }}-${{ matrix.arch }}](${{ steps.upload.outputs.artifact-url }})" >> "$GITHUB_STEP_SUMMARY"
