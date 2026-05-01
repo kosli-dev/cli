@@ -97,8 +97,6 @@ before:
 
 Packages are published to the [npm public registry](https://registry.npmjs.org). Platform packages must be published before the wrapper, since the wrapper's `optionalDependencies` references them by version. After a goreleaser build has populated the `bin/` directories:
 
-The package publishing expects the package is configured for [Trusted publishing](https://docs.npmjs.com/trusted-publishers) - so if more platforms are added you must configure the new packages accordingly.
-
 ```sh
 # Publish platform packages first
 (cd npm/cli-linux-x64    && npm publish)
@@ -113,11 +111,7 @@ The package publishing expects the package is configured for [Trusted publishing
 (cd npm/wrapper && npm publish)
 ```
 
-Each package directory contains an `.npmrc` that sets the auth token:
-
-```text
-//registry.npmjs.org/:_authToken=${NPM_TOKEN}
-```
+The package publishing expects the package is configured for [Trusted publishing](https://docs.npmjs.com/trusted-publishers) - so if more platforms are added you must configure the new packages accordingly.
 
 ## Automated Publishing with npm-publish.sh
 
