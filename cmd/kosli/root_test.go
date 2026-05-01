@@ -73,22 +73,20 @@ func (suite *UpdateNoticeTestSuite) TestVersionFlagPrintsNotice() {
 	suite.Contains(errBuf.String(), "A new version")
 }
 
-func (suite *UpdateNoticeTestSuite) TestVersionNoticeSkippedForJSON() {
+func (suite *UpdateNoticeTestSuite) TestVersionNoticeNotShownOnRegularCommands() {
 	const fakeNotice = "\nA new version of the Kosli CLI is available: v9.99.0 (you have v0.0.1)\nUpgrade: https://docs.kosli.com/getting_started/install/\n"
 
 	defer version.SetCheckForUpdateOverride(func(string) (string, error) { return fakeNotice, nil })()
 
-	// with --output json: no notice in stderr
-	_, _, _, stderr, err := executeCommandC(
-		fmt.Sprintf("list flows --output json %s", suite.defaultKosliArguments))
-	suite.NoError(err)
-	suite.Empty(stderr)
-
-	// with --output table: notice IS in stderr
-	_, _, _, stderr, err = executeCommandC(
-		fmt.Sprintf("list flows --output table %s", suite.defaultKosliArguments))
-	suite.NoError(err)
-	suite.Contains(stderr, "A new version")
+	// The update check only runs for the `version` subcommand and the
+	// `--version` flag — regular commands must not print the notice,
+	// regardless of output format.
+	for _, format := range []string{"json", "table"} {
+		_, _, _, stderr, err := executeCommandC(
+			fmt.Sprintf("list flows --output %s %s", format, suite.defaultKosliArguments))
+		suite.NoError(err)
+		suite.NotContains(stderr, "A new version", "no update notice expected for --output %s", format)
+	}
 }
 
 func TestUpdateNoticeTestSuite(t *testing.T) {

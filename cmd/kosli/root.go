@@ -315,8 +315,6 @@ func getConfigFileFlagDefault() string {
 func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 	global = new(GlobalOpts)
 
-	var updateNoticeCh = make(chan string, 1) // buffered — goroutine never blocks
-
 	cmd := &cobra.Command{
 		Use:              "kosli",
 		Short:            "The Kosli CLI.",
@@ -330,24 +328,6 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 			err := initialize(cmd, out, errOut)
 			if err != nil {
 				return err
-			}
-
-			// Fire update check in background — result collected in PostRun.
-			// Skip when:
-			//   - "version" subcommand: runs the check synchronously itself
-			//   - "__complete*": Cobra shell-completion commands fire on every Tab press
-			//   - debug mode: noisy HTTP traffic is undesirable when debugging
-			// Note: --version is handled by Cobra before any hooks run, so it never
-			// reaches this point; innerMain handles the notice for that case.
-			if cmd.Name() != "version" && !strings.HasPrefix(cmd.Name(), "__") && !global.Debug {
-				f := cmd.Flags().Lookup("output")
-				// skip version checks for programmatic output (avoid polluting JSON in CI pipelines)
-				if f == nil || f.Value.String() == "table" {
-					go func() {
-						notice, _ := version.CheckForUpdate(version.GetVersion())
-						updateNoticeCh <- notice
-					}()
-				}
 			}
 
 			if global.ApiToken == "DRY_RUN" {
@@ -371,16 +351,6 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 			})
 
 			return flagError
-		},
-		PersistentPostRun: func(cmd *cobra.Command, args []string) {
-			select {
-			case notice := <-updateNoticeCh:
-				if notice != "" {
-					_, _ = fmt.Fprint(errOut, notice) // stderr — doesn't pollute piped stdout
-				}
-			default:
-				// goroutine not done yet (took > command duration) — skip silently
-			}
 		},
 	}
 	cmd.SetVersionTemplate("{{.Version}}\n")
