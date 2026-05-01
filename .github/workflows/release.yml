@@ -144,6 +144,12 @@ jobs:
           go-version-file: '.go-version'
           check-latest: true
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
       # Use release notes from the tag body when present (set by interactive `make release` or `make release tag=vX.Y.Z` with dist/release_notes.md). Otherwise GoReleaser uses its default changelog.
       # Write to repo root so GoReleaser's --clean (which removes dist/) does not delete the file before it is read.
       - name: Get release notes from tag
