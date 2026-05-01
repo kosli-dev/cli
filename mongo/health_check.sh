@@ -1,7 +1,7 @@
 #!/bin/bash -Eeu
 
 OK=$(echo "rs.status().ok" | \
-  mongosh --username ${MONGO_INITDB_ROOT_USERNAME} \
+  mongosh --quiet --norc --username ${MONGO_INITDB_ROOT_USERNAME} \
         --password ${MONGO_INITDB_ROOT_PASSWORD} \
         --quiet)
 
