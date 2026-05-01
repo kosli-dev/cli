@@ -4,7 +4,7 @@ This directory contains the npm package structure for distributing the Kosli CLI
 
 ## Structure
 
-```
+```text
 npm/
 ├── wrapper/              # @kosli/cli — the package users install
 │   ├── bin/kosli         # JS shim that detects the platform and runs the binary
@@ -111,11 +111,7 @@ Packages are published to the [npm public registry](https://registry.npmjs.org).
 (cd npm/wrapper && npm publish)
 ```
 
-Each package directory contains an `.npmrc` that sets the auth token:
-
-```text
-//registry.npmjs.org/:_authToken=${NPM_TOKEN}
-```
+The package publishing expects the package is configured for [Trusted publishing](https://docs.npmjs.com/trusted-publishers) - so if more platforms are added you must configure the new packages accordingly.
 
 ## Automated Publishing with npm-publish.sh
 
