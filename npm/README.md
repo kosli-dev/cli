@@ -4,7 +4,7 @@ This directory contains the npm package structure for distributing the Kosli CLI
 
 ## Structure
 
-```
+```text
 npm/
 ├── wrapper/              # @kosli/cli — the package users install
 │   ├── bin/kosli         # JS shim that detects the platform and runs the binary
@@ -96,6 +96,8 @@ before:
 ## Publishing
 
 Packages are published to the [npm public registry](https://registry.npmjs.org). Platform packages must be published before the wrapper, since the wrapper's `optionalDependencies` references them by version. After a goreleaser build has populated the `bin/` directories:
+
+The package publishing expects the package is configured for [Trusted publishing](https://docs.npmjs.com/trusted-publishers) - so if more platforms are added you must configure the new packages accordingly.
 
 ```sh
 # Publish platform packages first

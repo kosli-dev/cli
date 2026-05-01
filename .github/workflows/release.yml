@@ -165,7 +165,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           GORELEASER_KEY: ${{ secrets.KOSLI_GORELEASERPRO }}
 
       - name: Copy npm packages into dist for provenance
