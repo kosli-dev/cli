@@ -25,7 +25,7 @@ type attestSarifOptions struct {
 	payload           SarifAttestationPayload
 }
 
-const attestSarifShortDesc = `Report a SARIF attestation to an artifact or a trail in a Kosli flow.  `
+const attestSarifShortDesc = `Report a SARIF attestation to an artifact or a trail in a Kosli flow.`
 
 const attestSarifLongDesc = attestSarifShortDesc + `
 Accepts SARIF v2.1.0 scan results from any compatible tool (e.g. Checkov, Trivy, Semgrep, Snyk, CodeQL).
@@ -189,6 +189,9 @@ func (o *attestSarifOptions) run(args []string) error {
 		r := o.payload.SarifResults.Results[0]
 		logger.Debug("SARIF parsed: tool=%s findings=%d high, %d medium, %d low (compliant=%t)",
 			o.payload.SarifResults.Tool.Name, r.HighCount, r.MediumCount, r.LowCount, o.payload.Compliant)
+	} else {
+		logger.Debug("SARIF parsed: tool=%s no scan runs in file (compliant=%t)",
+			o.payload.SarifResults.Tool.Name, o.payload.Compliant)
 	}
 
 	if o.uploadResultsFile {
