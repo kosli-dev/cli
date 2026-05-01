@@ -3,7 +3,9 @@ package main
 import (
 	"testing"
 
+	"github.com/kosli-dev/cli/internal/docker"
 	"github.com/kosli-dev/cli/internal/version"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -18,16 +20,29 @@ import (
 // contract and breaks customer pipelines, regardless of cause.
 type FingerprintCaptureTestSuite struct {
 	suite.Suite
+	dockerImage string
 }
 
 const (
 	// SHA256 of cmd/kosli/testdata/file1, which contains "hello world!".
 	file1Fingerprint = "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9"
 
+	// SHA256 of cmd/kosli/testdata/folder1, pinned in fingerprint_test.go.
+	folder1Fingerprint = "c43808cb04c6e66c4c6fc1f972dd67c3b9b71c81e0a0c78730da3699922d17be"
+
 	// Realistic notice the version-check goroutine emits when a newer
 	// release exists. Stubbed in via SetCheckForUpdateOverride.
 	fakeUpdateNotice = "\nA new version of the Kosli CLI is available: v9.99.0 (you have v0.0.1)\nUpgrade: https://docs.kosli.com/getting_started/install/\n"
 )
+
+// SetupSuite pulls the alpine test image used by the docker variant. Same
+// pattern as FingerprintTestSuite in fingerprint_test.go — the image is
+// pinned by digest so the assertion can be exact.
+func (suite *FingerprintCaptureTestSuite) SetupSuite() {
+	suite.dockerImage = "library/alpine@sha256:e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5"
+	err := docker.PullDockerImage(suite.dockerImage)
+	require.NoError(suite.T(), err)
+}
 
 // TestFingerprintFile_CaptureCleanliness pins the contract for the
 // most common shell-capture pattern: `kosli fingerprint <file> --artifact-type=file`.
@@ -64,25 +79,56 @@ func (suite *FingerprintCaptureTestSuite) TestFingerprintFile_CaptureCleanliness
 }
 
 // TestFingerprintDir_CaptureCleanliness covers the directory variant. The
-// original cyber-dojo bug fired here because the dir/oci paths run long
-// enough for the background version-check goroutine to complete and write
-// to stderr before the command exits. Same contract as the file variant.
+// original cyber-dojo bug fired here because the dir path runs long enough
+// for the background version-check goroutine to complete and write to
+// stderr before the command exits. Same three contracts as the file variant.
 func (suite *FingerprintCaptureTestSuite) TestFingerprintDir_CaptureCleanliness() {
 	defer version.SetCheckForUpdateOverride(func(string) (string, error) {
 		return fakeUpdateNotice, nil
 	})()
 
-	_, _, stdout, stderr, err := executeCommandC(
+	_, combined, stdout, stderr, err := executeCommandC(
 		"fingerprint --artifact-type dir testdata/folder1")
 	suite.Require().NoError(err)
 
-	// stdout: a 64-char hex fingerprint plus a trailing newline.
-	suite.Regexp("^[0-9a-f]{64}\n$", stdout,
+	suite.Equal(folder1Fingerprint+"\n", stdout,
 		"stdout must contain only the fingerprint — anything else breaks shell capture")
 
-	// stderr: exactly empty.
 	suite.Equal("", stderr,
 		"stderr must be empty — any output here pollutes 2>&1 capture pipelines")
+
+	suite.Equal(folder1Fingerprint+"\n", combined,
+		"combined output (the 2>&1 capture pattern) must be exactly the fingerprint")
+}
+
+// TestFingerprintDocker_CaptureCleanliness covers the docker variant. The
+// docker code path goes through internal/docker.GetImageFingerprint, which
+// hits the local Docker daemon and is entirely separate from the file/dir
+// hashing path — so it could legitimately introduce its own stderr writers
+// (Docker API warnings, daemon connection logs, etc.) that the file/dir
+// tests would not catch. Pinning the contract here protects that surface.
+//
+// Mirrors the docker test in fingerprint_test.go: alpine pinned by digest,
+// so the resulting fingerprint is stable and the assertion can be exact.
+func (suite *FingerprintCaptureTestSuite) TestFingerprintDocker_CaptureCleanliness() {
+	defer version.SetCheckForUpdateOverride(func(string) (string, error) {
+		return fakeUpdateNotice, nil
+	})()
+
+	const alpineFingerprint = "e15947432b813e8ffa90165da919953e2ce850bef511a0ad1287d7cb86de84b5"
+
+	_, combined, stdout, stderr, err := executeCommandC(
+		"fingerprint --artifact-type docker " + suite.dockerImage)
+	suite.Require().NoError(err)
+
+	suite.Equal(alpineFingerprint+"\n", stdout,
+		"stdout must contain only the fingerprint — anything else breaks shell capture")
+
+	suite.Equal("", stderr,
+		"stderr must be empty — any output here pollutes 2>&1 capture pipelines")
+
+	suite.Equal(alpineFingerprint+"\n", combined,
+		"combined output (the 2>&1 capture pattern) must be exactly the fingerprint")
 }
 
 // TestFingerprintFile_DebugModeIsAllowedToWriteStderr pins the *other*
