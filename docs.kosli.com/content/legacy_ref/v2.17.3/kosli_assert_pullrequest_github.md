@@ -14,7 +14,7 @@ kosli assert pullrequest github [flags]
 ```
 
 Assert a Github pull request for a git commit exists.  
-The command exits with non-zero exit code 
+The command exits with non-zero exit code
 if no pull requests were found for the commit.
 
 ## Flags
