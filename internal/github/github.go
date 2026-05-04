@@ -119,7 +119,9 @@ func (d *debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if proxyFunc == nil {
 		proxyFunc = http.ProxyFromEnvironment
 	}
-	if proxyURL, _ := proxyFunc(req); proxyURL != nil {
+	if proxyURL, proxyErr := proxyFunc(req); proxyErr != nil {
+		d.logf("[debug-github]     <proxy lookup error: %v>\n", proxyErr)
+	} else if proxyURL != nil {
 		d.logf("[debug-github]     <via proxy %s>\n", proxyURL.Redacted())
 	}
 	for k, vs := range req.Header {

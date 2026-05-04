@@ -269,6 +269,33 @@ func TestDebugTransport_LogsProxyWhenSet(t *testing.T) {
 	require.Contains(t, buf.String(), "<via proxy http://corp-proxy.example.com:3128>")
 }
 
+// TestDebugTransport_LogsProxyLookupError verifies that when proxyFunc
+// itself fails (e.g. malformed HTTP_PROXY env var) we surface the error
+// in the dump rather than silently swallowing it. This is the debug
+// transport — logging more is its job.
+func TestDebugTransport_LogsProxyLookupError(t *testing.T) {
+	var buf bytes.Buffer
+	tr := &debugTransport{
+		base: &fakeRoundTripper{resp: &http.Response{
+			StatusCode: 200,
+			Status:     "200 OK",
+			Header:     http.Header{},
+			Body:       io.NopCloser(strings.NewReader("{}")),
+		}},
+		out: &buf,
+		proxyFunc: func(*http.Request) (*url.URL, error) {
+			return nil, errors.New("invalid proxy URL: missing scheme")
+		},
+	}
+	req, err := http.NewRequest("POST", "https://api.github.com/graphql", nil)
+	require.NoError(t, err)
+
+	_, err = tr.RoundTrip(req)
+	require.NoError(t, err)
+
+	require.Contains(t, buf.String(), "<proxy lookup error: invalid proxy URL: missing scheme>")
+}
+
 // TestDebugTransport_RedactsProxyUserinfo ensures credentials embedded in
 // the proxy URL (e.g. http://user:pass@proxy) are not leaked into debug
 // output. url.URL.Redacted() replaces the password with "xxxxx".
