@@ -23,12 +23,12 @@ Version 2.0.0 removes the previous single-environment mode (`kosliEnvironmentNam
 To install this chart via the Helm chart repository:
 
 1. Add the Kosli helm repo
-```shell {.command}
+```shell
 helm repo add kosli https://charts.kosli.com/ && helm repo update
 ```
 
 2. Create a secret for the Kosli API token
-```shell {.command}
+```shell
 kubectl create secret generic kosli-api-token --from-literal=key=<your-api-key>
 ```
 
@@ -70,7 +70,7 @@ reporterConfig:
       excludeNamespaces: [prod-ns1, prod-ns2, default]
 ```
 
-```shell {.command}
+```shell
 helm install kosli-reporter kosli/k8s-reporter -f values.yaml
 ```
 
@@ -85,7 +85,7 @@ helm install kosli-reporter kosli/k8s-reporter -f values.yaml
 
 If upgrading from v1.x to v2.0.0, migrate your values to the **environments** list format (see above). Then:
 
-```shell {.command}
+```shell
 helm upgrade kosli-reporter kosli/k8s-reporter -f values.yaml
 ```
 {{- end }}
@@ -93,7 +93,7 @@ helm upgrade kosli-reporter kosli/k8s-reporter -f values.yaml
 {{ define "extra.uninstall" -}}
 ## Uninstalling chart
 
-```shell {.command}
+```shell
 helm uninstall kosli-reporter
 ```
 {{- end }}
@@ -109,7 +109,7 @@ The chart offers two ways to do this. Use whichever fits your deployment flow.
 
 1. Create a Secret containing the corporate CA certificate (PEM format, single cert or bundle):
 
-```shell {.command}
+```shell
 kubectl create secret generic corporate-ca-bundle --from-file=ca.crt=/path/to/corporate-ca.crt
 ```
 

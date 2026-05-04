@@ -1,0 +1,104 @@
+{{ define "mintlify.versionInfo" -}}
+<Info>
+This reference applies to **chart version {{ .Version }}**, which defaults to CLI **{{ .AppVersion }}** via `appVersion`. Override with `image.tag`.
+</Info>
+{{- end }}
+
+{{ define "mintlify.configurations" -}}
+## Configurations
+
+### General
+
+{{ range .Values -}}
+{{ if not (or (hasPrefix "image." .Key) (hasPrefix "reporterConfig." .Key) (hasPrefix "kosliApiToken." .Key) (hasPrefix "customCA" .Key) (hasPrefix "resources." .Key) (hasPrefix "serviceAccount." .Key) (eq "env" .Key) (eq "extraEnvVars" .Key) (eq "extraVolumes" .Key) (eq "extraVolumeMounts" .Key)) -}}
+{{ template "mintlify.paramField" . }}
+
+{{ end -}}
+{{ end -}}
+
+### Image
+
+{{ range .Values -}}
+{{ if hasPrefix "image." .Key -}}
+{{ template "mintlify.paramField" . }}
+
+{{ end -}}
+{{ end -}}
+
+### Reporter configuration
+
+{{ range .Values -}}
+{{ if hasPrefix "reporterConfig." .Key -}}
+{{ template "mintlify.paramField" . }}
+
+{{ end -}}
+{{ end -}}
+
+### Kosli API token
+
+{{ range .Values -}}
+{{ if hasPrefix "kosliApiToken." .Key -}}
+{{ template "mintlify.paramField" . }}
+
+{{ end -}}
+{{ end -}}
+
+### Environment variables
+
+{{ range .Values -}}
+{{ if or (eq "env" .Key) (eq "extraEnvVars" .Key) -}}
+{{ template "mintlify.paramField" . }}
+
+{{ end -}}
+{{ end -}}
+
+### Volumes
+
+{{ range .Values -}}
+{{ if or (eq "extraVolumes" .Key) (eq "extraVolumeMounts" .Key) -}}
+{{ template "mintlify.paramField" . }}
+
+{{ end -}}
+{{ end -}}
+
+### Custom CA
+
+{{ range .Values -}}
+{{ if hasPrefix "customCA" .Key -}}
+{{ template "mintlify.paramField" . }}
+
+{{ end -}}
+{{ end -}}
+
+### Resources
+
+{{ range .Values -}}
+{{ if hasPrefix "resources." .Key -}}
+{{ template "mintlify.paramField" . }}
+
+{{ end -}}
+{{ end -}}
+
+### Service account
+
+{{ range .Values -}}
+{{ if hasPrefix "serviceAccount." .Key -}}
+{{ template "mintlify.paramField" . }}
+
+{{ end -}}
+{{ end -}}
+{{- end }}
+
+{{ define "mintlify.paramField" -}}
+{{- $d := .Default | trimPrefix "`" | trimSuffix "`" -}}
+{{- $desc := or .Description .AutoDescription -}}
+{{- if or (and (eq .Type "object") (ne $d "{}")) (and (eq .Type "list") (ne $d "[]")) }}
+<ParamField path="{{ .Key }}" type="{{ .Type }}">
+  {{ $desc }}
+</ParamField>
+{{- else }}
+<ParamField path="{{ .Key }}" type="{{ .Type }}" default="{{ $d | trimPrefix "\"" | trimSuffix "\"" }}">
+  {{ $desc }}
+</ParamField>
+{{- end }}
+{{- end }}
