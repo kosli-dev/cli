@@ -71,19 +71,12 @@ func NewGithubClientFromToken(ctx context.Context, ghToken string, baseURL strin
 	)
 	tc := oauth2.NewClient(ctx, ts)
 	if debug {
-		if t, ok := tc.Transport.(*oauth2.Transport); ok {
-			base := t.Base
-			if base == nil {
-				base = http.DefaultTransport
-			}
-			t.Base = &debugTransport{base: base, out: os.Stderr}
-		} else {
-			base := tc.Transport
-			if base == nil {
-				base = http.DefaultTransport
-			}
-			tc.Transport = &debugTransport{base: base, out: os.Stderr}
+		t := tc.Transport.(*oauth2.Transport)
+		base := t.Base
+		if base == nil {
+			base = http.DefaultTransport
 		}
+		t.Base = &debugTransport{base: base, out: os.Stderr}
 	}
 	if baseURL != "" {
 		client, err := gh.NewEnterpriseClient(baseURL, baseURL, tc)
