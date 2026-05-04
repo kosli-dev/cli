@@ -91,7 +91,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	artifactDisplayName             = "[optional] Artifact display name, if different from file, image or directory name."
 	orgFlag                         = "The Kosli organization."
 	hostFlag                        = "[defaulted] The Kosli endpoint."
-	httpProxyFlag                   = "[optional] The HTTP proxy URL including protocol and port number. e.g. 'http://proxy-server-ip:proxy-port'"
+	httpProxyFlag                   = "[optional] The HTTP proxy URL including protocol and port number. e.g. `http://proxy-server-ip:proxy-port`"
 	dryRunFlag                      = "[optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors."
 	maxAPIRetryFlag                 = "[defaulted] How many times should API calls be retried when the API host is not reachable."
 	configFileFlag                  = "[optional] The Kosli config file path."
