@@ -47,7 +47,7 @@ jobs:
             path: ${{ github.workspace }}/${{inputs.dir}}
 
         - name: setup-kosli-cli
-          uses: kosli-dev/setup-cli-action@v4
+          uses: kosli-dev/setup-cli-action@v5
           with:
             version:
                 ${{ vars.KOSLI_CLI_VERSION }}

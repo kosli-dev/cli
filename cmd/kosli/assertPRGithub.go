@@ -40,7 +40,7 @@ func newAssertPullRequestGithubCmd(out io.Writer) *cobra.Command {
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.retriever = ghUtils.NewGithubRetrieverFunc(githubFlagsValues.Token, githubFlagsValues.BaseURL,
-				githubFlagsValues.Org, githubFlagsValues.Repository)
+				githubFlagsValues.Org, githubFlagsValues.Repository, global.Debug)
 			return o.run(args)
 		},
 	}
