@@ -1,6 +1,0 @@
-**/*
-!.git
-!docs.kosli.com/content/client_reference/**/*
-!docs.kosli.com/content/legacy_ref/**/*
-!docs.kosli.com/assets/metadata.json
-!docs.kosli.com/static/metadata.json

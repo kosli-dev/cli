@@ -12,18 +12,11 @@ coverage.html
 licenses/
 **/.DS_Store
 .vscode/
-/docs/public
-docs.kosli.com/resources/_gen/*
-docs.kosli.com/content/client_reference/kosli*
-docs.kosli.com/public/
-docs.kosli.com/.netlify
 npm/cli*/bin/*
 npm/*/kosli*.tgz
 *.tar.gz
 *~
 /.idea
-# keep it uncommented on main
-docs.kosli.com/assets/metadata.json
 tmp/
 release_notes.md
 junit.xml

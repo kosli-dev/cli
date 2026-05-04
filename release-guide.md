@@ -13,25 +13,14 @@ Runs on every push to every branch:
 3. **Kosli trail** — attestations are reported to the `cli` flow (on `main` and tags only)
 4. **Slack** — notifies `#ci-failures` on failure (main branch only)
 
-### On push to `main` with docs changes (`publish_docs.yml`)
-
-Triggers when files under `docs.kosli.com/` change on `main` (excluding `content/client_reference/` and `content/helm/`):
-
-- Copies the `docs.kosli.com/` directory to the `docs-main` branch using `git-publish-subdir-action`
-- Preserves generated CLI reference docs and `metadata.json` from the last release (via `.clear-files`)
-
 ### On push to `main` with Helm chart changes (`helm-chart.yml`)
 
 Triggers when files under `charts/` change on `main`:
 
 1. Lints the Helm chart
-2. Generates Helm docs (README + docs site content)
+2. Generates Helm docs (chart README)
 3. Packages and uploads the chart to the S3-hosted Helm repo (`charts.kosli.com`)
 4. Opens a PR to merge the generated Helm docs back into `main`
-
-### Manual: publish branch docs (`publish_branch_docs.yml`)
-
-Manually triggered from any branch — deploys docs to `staging-docs--kosli-docs.netlify.app` for preview.
 
 ## Release process
 
@@ -111,11 +100,9 @@ Builds and pushes `ghcr.io/kosli-dev/cli:<tag>` (linux/amd64 + linux/arm64):
 
 Opens a PR to `Homebrew/homebrew-core` to update the `kosli-cli` formula (skipped for pre-releases).
 
-### 9. Docs generation
+### 9. Docs repo dispatch
 
-- Runs `make legacy-ref-docs` then `make cli-docs` to generate CLI reference markdown
-- Writes `metadata.json` with the release version
-- Pushes the full `docs.kosli.com/` directory to the `docs-main` branch (no `.clear-files` — replaces everything)
+Sends a `cli-release` event to `kosli-dev/docs` so the Mintlify docs site can regenerate CLI reference pages.
 
 ### 10. Reporter dispatches
 
@@ -136,17 +123,4 @@ Tags containing a hyphen (e.g., `v2.12.0-rc1`) are treated as pre-releases:
 
 ## Docs hosting
 
-The docs site is served from the `docs-main` branch (likely via Netlify). Content reaches that branch through two paths:
-
-1. **Static content** — pushed on every merge to `main` that touches `docs.kosli.com/` (preserving generated files)
-2. **Generated CLI reference + version metadata** — pushed only during a release (full replacement)
-
-## Local development
-
-```bash
-make hugo          # Build CLI docs + Helm docs + run Hugo dev server (port 1515)
-make hugo-local    # Build CLI docs only + run Hugo dev server (port 1515)
-make cli-docs      # Regenerate CLI reference markdown from the built binary
-make helm-docs     # Regenerate Helm chart docs
-make check-links   # Build site and check for broken links
-```
+Documentation is maintained in the [kosli-dev/docs](https://github.com/kosli-dev/docs) repo and served via Mintlify. CLI reference pages are regenerated automatically when a `cli-release` dispatch event is received.
