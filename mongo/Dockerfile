@@ -1,4 +1,4 @@
-FROM mongo:4.4.29
+FROM mongo:5.0.32
 WORKDIR /mongo
 COPY . .
 RUN chmod 400 key.cert
