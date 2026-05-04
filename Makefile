@@ -1,4 +1,4 @@
-.PHONY: help build clean clean-cache deps fmt lint vet docker ldflags ensure_golangci-lint check_dirty add_test_tag build_release ensure_network ensure_gotestsum test_setup test_integration test_integration_full test_integration_single test_docs cli-docs licenses upgrade-deps hugo hugo-local helm-lint helm-docs release check-links suggest-version-ai
+.PHONY: help build clean clean-cache deps fmt lint vet docker ldflags ensure_golangci-lint check_dirty add_test_tag build_release ensure_network ensure_gotestsum test_setup test_integration test_integration_full test_integration_single licenses upgrade-deps helm-lint helm-docs release suggest-version-ai
 .DEFAULT: help
 .DEFAULT_GOAL := help
 .DELETE_ON_ERROR:
@@ -157,9 +157,6 @@ test_contract_github: ensure_gotestsum ## Run GitHub contract tests against real
 test_contract: test_contract_aws test_contract_github ## Run all contract tests against real external services
 
 
-test_docs: deps vet ensure_network test_setup ## Test docs
-	./bin/test_docs_cmds.sh docs.kosli.com/content/use_cases/simulating_a_devops_system/_index.md
-
 logs_integration_test_server:
 	@docker logs cli_kosli_server ${CONTAINER} 2>&1
 
@@ -172,13 +169,6 @@ enter_integration_test_server:
 docker: ## Build CLI Docker image
 	@docker build -t kosli-cli .
 
-cli-docs: build ## Generate docs
-	@rm -f docs.kosli.com/content/client_reference/kosli*
-	@export DOCS=true && ./$(BIN) docs --dir docs.kosli.com/content/client_reference
-
-legacy-ref-docs:
-	@./hack/generate-old-versions-docs.sh "v2.*"
-
 licenses: ## Update licenses
 	@rm -rf licenses || true
 	@go install github.com/google/go-licenses@latest
@@ -189,15 +179,6 @@ licenses: ## Update licenses
 upgrade-deps: ## Update Go dependencies
 	@go get -u ./...
 
-generate-json-metadata: ## Generate docs metadata
-	echo '{"currentversion": "vlocal"}' > docs.kosli.com/assets/metadata.json
-
-hugo: cli-docs helm-docs generate-json-metadata ## Run docs locally
-	cd docs.kosli.com && hugo server --minify --buildDrafts --port=1515
-
-hugo-local: cli-docs generate-json-metadata
-	cd docs.kosli.com && hugo server --minify --buildDrafts --port=1515
-
 helm-lint: ## Lint Helm chart
 	@cd charts/k8s-reporter && helm lint . \
 		--set reporterConfig.kosliOrg=placeholder \
@@ -205,7 +186,6 @@ helm-lint: ## Lint Helm chart
 
 helm-docs: helm-lint ## Update Helm docs
 	@cd charts/k8s-reporter &&  docker run --rm --volume "$(PWD):/helm-docs" jnorwood/helm-docs:latest --template-files README.md.gotmpl,_templates.gotmpl --output-file README.md
-	@cd charts/k8s-reporter &&  docker run --rm --volume "$(PWD):/helm-docs" jnorwood/helm-docs:latest --template-files README.md.gotmpl,_templates.gotmpl --output-file ../../docs.kosli.com/content/helm/_index.md
 
 # Suggest next semver and changelog using Claude.
 # Writes changelog to dist/release_notes.md for use with goreleaser --release-notes.
@@ -236,10 +216,3 @@ release: ## Cut a new release and push next tag
 	  ([ -f dist/release_notes.md ] && git tag -a $(tag) -F dist/release_notes.md) || git tag -a $(tag) -m"$(tag)"; \
 	  git push origin $(tag); \
 	fi
-
-# check-links:
-# 	@docker run -v ${PWD}:/tmp:ro --rm -i --entrypoint '' ghcr.io/tcort/markdown-link-check:stable /bin/sh -c 'find /tmp/docs.kosli.com/content -name \*.md -print0 | xargs -0 -n1 markdown-link-check -q -c /tmp/link-checker-config.json'
-
-check-links: ## Run html test for dead links
-	@cd docs.kosli.com && hugo --minify
-	@docker run -v ${PWD}:/test --rm wjdp/htmltest -c .htmltest.yml -l 1
