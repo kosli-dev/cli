@@ -7,7 +7,7 @@ This repo contains the Kosli CLI, for recording and querying software delivery e
 
 Some useful links: 
 
-* [Documentation site](https://docs.kosli.com/client_reference/) for full details on usage.
+* [Documentation site](https://docs.kosli.com/) for full details on usage.
 * [Developer guide](/dev-guide.md) for details on working with the code in this repo.
 * [Kosli main Trails](https://app.kosli.com/kosli-public/flows/cli/trails/)
 * [Kosli release Trails](https://app.kosli.com/kosli-public/flows/cli-release/trails/)

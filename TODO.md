@@ -3,6 +3,15 @@
 <!-- Each feature gets its own ## section below. -->
 <!-- Only edit YOUR feature's section. Delete it after merging to main. -->
 
+## Clean up old docs generation (kosli-dev/docs#42)
+
+- [x] Slice 1: Remove old doc workflows (`publish_docs.yml`, `publish_branch_docs.yml`)
+- [x] Slice 2: Remove `docs-gen` job from `release.yml` + helm-chart.yml docs.kosli.com line
+- [x] Slice 3: Remove Makefile targets + scripts (`bin/test_docs_cmds.sh`, `hack/generate-old-versions-docs.sh`)
+- [x] Slice 4: Remove `docs.kosli.com/` directory
+- [x] Slice 5: Remove Hugo formatter (`internal/docgen/hugo.go`, `hugo_test.go`), update `docs.go` default
+- [x] Slice 6: Clean up references (`.gitignore`, `.clear-files`, `.htmltest.yml`, README, dev-guide, release-guide) — closes kosli-dev/docs#42
+
 ## Fix: git worktree HEAD resolution
 
 - [x] Slice 1: Enable `EnableDotGitCommonDir` in `gitview.New()` so HEAD resolves in worktrees

@@ -22,7 +22,6 @@ type docsOptions struct {
 	dest            string
 	topCmd          *cobra.Command
 	generateHeaders bool
-	mintlify        bool
 }
 
 func newDocsCmd(out io.Writer) *cobra.Command {
@@ -43,19 +42,13 @@ func newDocsCmd(out io.Writer) *cobra.Command {
 	f := cmd.Flags()
 	f.StringVar(&o.dest, "dir", "./", "The directory to which documentation is written.")
 	f.BoolVar(&o.generateHeaders, "generate-headers", true, "Generate standard headers for markdown files.")
-	f.BoolVar(&o.mintlify, "mintlify", false, "Generate Mintlify-compatible MDX output instead of Hugo.")
 
 	return cmd
 }
 
 func (o *docsOptions) run() error {
 	if o.generateHeaders {
-		var formatter docgen.Formatter
-		if o.mintlify {
-			formatter = docgen.MintlifyFormatter{}
-		} else {
-			formatter = docgen.HugoFormatter{}
-		}
+		formatter := docgen.MintlifyFormatter{}
 
 		metaFn := func(cmd *cobra.Command) docgen.CommandMeta {
 			return docgen.CommandMeta{

@@ -7,7 +7,7 @@ This CLI is used to record and query software delivery events to [Kosli](www.kos
 
 ## Usage 
 
-See the [docs](https://docs.kosli.com/client_reference/)
+See the [docs](https://docs.kosli.com/)
 
 ## Linting the code
 
@@ -32,10 +32,6 @@ Windows will not allow building using the makefile, so we need to run the comman
 
 Then to run Kosli commands:  
 `./kosli.exe [COMMAND]` or `.\kosli.exe [COMMAND]`
-
-## Building the documentation
-
-`make hugo-local`
 
 ## Running the tests
 

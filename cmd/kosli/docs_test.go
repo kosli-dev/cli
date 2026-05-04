@@ -16,19 +16,9 @@ type DocsCommandTestSuite struct {
 	suite.Suite
 }
 
-func (suite *DocsCommandTestSuite) TestDocsCmd() {
-	// If this test fails, a simple way to retrieve a new generated master is to:
-	// - add an import for fmt
-	// - uncomment the fmt.Printf() call below
-	// - comment out the line defer os.RemoveAll(tempDirName)
-	// Then:
-	// - make test_integration_single TARGET=TestDocsCommandTestSuite
-	// will tell you where the new snyk.md master file lives.
-	// Then copy it to ./cmd/kosli/testdata/output/docs/hugo/
-	// and undo the changes above.
+func (suite *DocsCommandTestSuite) TestDocsCmdSnyk() {
 	global = &GlobalOpts{}
 	tempDirName, err := os.MkdirTemp("", "generatedDocs")
-	//fmt.Printf("tempDirName :%s:\n\n\n\n\n", tempDirName)
 	require.NoError(suite.T(), err)
 	defer func() {
 		if err := os.RemoveAll(tempDirName); err != nil {
@@ -40,31 +30,6 @@ func (suite *DocsCommandTestSuite) TestDocsCmd() {
 		dest:            tempDirName,
 		topCmd:          newAttestSnykCmd(os.Stdout),
 		generateHeaders: true,
-	}
-	err = o.run()
-	require.NoError(suite.T(), err)
-
-	actualFile := filepath.Join(tempDirName, "snyk.md")
-	require.FileExists(suite.T(), actualFile)
-	err = compareTwoFiles(actualFile, goldenPath("output/docs/hugo/snyk.md"))
-	require.NoError(suite.T(), err)
-}
-
-func (suite *DocsCommandTestSuite) TestDocsCmdMintlifySnyk() {
-	global = &GlobalOpts{}
-	tempDirName, err := os.MkdirTemp("", "generatedDocsMintlify")
-	require.NoError(suite.T(), err)
-	defer func() {
-		if err := os.RemoveAll(tempDirName); err != nil {
-			require.NoError(suite.T(), err, "failed to remove temp dir %s", tempDirName)
-		}
-	}()
-
-	o := &docsOptions{
-		dest:            tempDirName,
-		topCmd:          newAttestSnykCmd(os.Stdout),
-		generateHeaders: true,
-		mintlify:        true,
 	}
 	err = o.run()
 	require.NoError(suite.T(), err)
@@ -75,9 +40,9 @@ func (suite *DocsCommandTestSuite) TestDocsCmdMintlifySnyk() {
 	require.NoError(suite.T(), err)
 }
 
-func (suite *DocsCommandTestSuite) TestDocsCmdMintlifyDeprecated() {
+func (suite *DocsCommandTestSuite) TestDocsCmdDeprecated() {
 	global = &GlobalOpts{}
-	tempDirName, err := os.MkdirTemp("", "generatedDocsMintlifyDeprecated")
+	tempDirName, err := os.MkdirTemp("", "generatedDocsDeprecated")
 	require.NoError(suite.T(), err)
 	defer func() {
 		if err := os.RemoveAll(tempDirName); err != nil {
@@ -89,7 +54,6 @@ func (suite *DocsCommandTestSuite) TestDocsCmdMintlifyDeprecated() {
 		dest:            tempDirName,
 		topCmd:          newReportArtifactCmd(os.Stdout),
 		generateHeaders: true,
-		mintlify:        true,
 	}
 	err = o.run()
 	require.NoError(suite.T(), err)
