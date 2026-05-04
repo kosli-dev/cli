@@ -26,6 +26,7 @@ func newSnapshotCmd(out io.Writer) *cobra.Command {
 		newSnapshotAzureAppsCmd(out),
 		newSnapshotPathsCmd(out),
 		newSnapshotPathCmd(out),
+		newSnapshotCloudRunCmd(out),
 	)
 
 	return cmd
