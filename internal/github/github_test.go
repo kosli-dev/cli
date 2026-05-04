@@ -1,15 +1,21 @@
 package github
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/oauth2"
 )
 
 type GithubTestSuite struct {
@@ -171,6 +177,125 @@ func TestRedactAuthHeader(t *testing.T) {
 			require.Equal(t, tc.want, redactAuthHeader(tc.in))
 		})
 	}
+}
+
+// fakeRoundTripper lets us inject an arbitrary response/error pair into
+// debugTransport without needing a real network. Used to assert behaviour
+// on transport-level errors, including the case where some middleboxes
+// return both a non-nil response and an error.
+type fakeRoundTripper struct {
+	resp *http.Response
+	err  error
+}
+
+func (f *fakeRoundTripper) RoundTrip(*http.Request) (*http.Response, error) {
+	return f.resp, f.err
+}
+
+// TestNewGithubClientFromTokenDebugChain pins the transport chain shape
+// when debug=true: oauth2.Transport must be at the top and debugTransport
+// must be its Base. If this order is reversed, the Authorization header
+// added by oauth2 won't appear in the debug dump — which is the whole
+// reason customers turn debug on for auth failures.
+func TestNewGithubClientFromTokenDebugChain(t *testing.T) {
+	client, err := NewGithubClientFromToken(context.Background(), "fake-token", "", true)
+	require.NoError(t, err)
+	require.NotNil(t, client)
+
+	httpClient := client.Client()
+	require.NotNil(t, httpClient.Transport)
+
+	oauth2Tr, ok := httpClient.Transport.(*oauth2.Transport)
+	require.True(t, ok, "expected *oauth2.Transport at top of chain so it adds Authorization before debug logs")
+
+	_, ok = oauth2Tr.Base.(*debugTransport)
+	require.True(t, ok, "expected *debugTransport as oauth2.Transport.Base when debug=true")
+}
+
+// TestDebugTransport_LogsResponseOnTransportError covers the case where a
+// middlebox (corporate proxy, HTTP/2 layer) returns an error AND a non-nil
+// response. Before this fix the response — which carries the actual
+// diagnostic body — was silently dropped.
+func TestDebugTransport_LogsResponseOnTransportError(t *testing.T) {
+	var buf bytes.Buffer
+	resp := &http.Response{
+		StatusCode: 407,
+		Status:     "407 Proxy Authentication Required",
+		Header:     http.Header{"Proxy-Authenticate": []string{"Basic realm=\"corp\""}},
+		Body:       io.NopCloser(strings.NewReader("authentication required by proxy")),
+	}
+	tr := &debugTransport{
+		base: &fakeRoundTripper{resp: resp, err: errors.New("authenticationrequired")},
+		out:  &buf,
+	}
+	req, err := http.NewRequest("POST", "https://api.github.com/graphql", strings.NewReader(`{"query":"x"}`))
+	require.NoError(t, err)
+
+	gotResp, gotErr := tr.RoundTrip(req)
+	require.Error(t, gotErr)
+	require.NotNil(t, gotResp)
+
+	out := buf.String()
+	require.Contains(t, out, "transport error: authenticationrequired")
+	require.Contains(t, out, "407 Proxy Authentication Required")
+	require.Contains(t, out, "authentication required by proxy")
+}
+
+// TestDebugTransport_LogsProxyWhenSet verifies that when a proxy is
+// configured for the request, the proxy URL is logged on the request
+// line. This is a strong diagnostic for the customer's case where curl
+// works but the CLI gets a transport-level rejection.
+func TestDebugTransport_LogsProxyWhenSet(t *testing.T) {
+	proxyURL, err := url.Parse("http://corp-proxy.example.com:3128")
+	require.NoError(t, err)
+
+	var buf bytes.Buffer
+	tr := &debugTransport{
+		base: &fakeRoundTripper{resp: &http.Response{
+			StatusCode: 200,
+			Status:     "200 OK",
+			Header:     http.Header{},
+			Body:       io.NopCloser(strings.NewReader("{}")),
+		}},
+		out:       &buf,
+		proxyFunc: func(*http.Request) (*url.URL, error) { return proxyURL, nil },
+	}
+	req, err := http.NewRequest("POST", "https://api.github.com/graphql", nil)
+	require.NoError(t, err)
+
+	_, err = tr.RoundTrip(req)
+	require.NoError(t, err)
+
+	require.Contains(t, buf.String(), "<via proxy http://corp-proxy.example.com:3128>")
+}
+
+// TestDebugTransport_RedactsProxyUserinfo ensures credentials embedded in
+// the proxy URL (e.g. http://user:pass@proxy) are not leaked into debug
+// output. url.URL.Redacted() replaces the password with "xxxxx".
+func TestDebugTransport_RedactsProxyUserinfo(t *testing.T) {
+	proxyURL, err := url.Parse("http://user:secret@corp-proxy.example.com:3128")
+	require.NoError(t, err)
+
+	var buf bytes.Buffer
+	tr := &debugTransport{
+		base: &fakeRoundTripper{resp: &http.Response{
+			StatusCode: 200,
+			Status:     "200 OK",
+			Header:     http.Header{},
+			Body:       io.NopCloser(strings.NewReader("{}")),
+		}},
+		out:       &buf,
+		proxyFunc: func(*http.Request) (*url.URL, error) { return proxyURL, nil },
+	}
+	req, err := http.NewRequest("POST", "https://api.github.com/graphql", nil)
+	require.NoError(t, err)
+
+	_, err = tr.RoundTrip(req)
+	require.NoError(t, err)
+
+	out := buf.String()
+	require.NotContains(t, out, "secret")
+	require.Contains(t, out, "user:xxxxx@corp-proxy.example.com")
 }
 
 func TestRedactSensitiveHeader(t *testing.T) {

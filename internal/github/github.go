@@ -60,17 +60,30 @@ func extractRepoName(fullRepositoryName string) string {
 // NewGithubClientFromToken returns Github client with a token and context.
 // When debug is true the underlying transport is wrapped so every HTTP
 // request and response (REST and GraphQL) is dumped to stderr.
+//
+// debugTransport is installed as oauth2.Transport.Base (not as a wrapper
+// around it) so the Authorization header that oauth2 attaches is visible
+// in the dump — otherwise debug logs the request before oauth2 adds the
+// header and we lose the ability to verify it was actually sent.
 func NewGithubClientFromToken(ctx context.Context, ghToken string, baseURL string, debug bool) (*gh.Client, error) {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: ghToken},
 	)
 	tc := oauth2.NewClient(ctx, ts)
 	if debug {
-		base := tc.Transport
-		if base == nil {
-			base = http.DefaultTransport
+		if t, ok := tc.Transport.(*oauth2.Transport); ok {
+			base := t.Base
+			if base == nil {
+				base = http.DefaultTransport
+			}
+			t.Base = &debugTransport{base: base, out: os.Stderr}
+		} else {
+			base := tc.Transport
+			if base == nil {
+				base = http.DefaultTransport
+			}
+			tc.Transport = &debugTransport{base: base, out: os.Stderr}
 		}
-		tc.Transport = &debugTransport{base: base, out: os.Stderr}
 	}
 	if baseURL != "" {
 		client, err := gh.NewEnterpriseClient(baseURL, baseURL, tc)
@@ -88,6 +101,10 @@ func NewGithubClientFromToken(ctx context.Context, ghToken string, baseURL strin
 type debugTransport struct {
 	base http.RoundTripper
 	out  io.Writer
+	// proxyFunc resolves the proxy URL for a request. Override in tests;
+	// nil means use http.ProxyFromEnvironment, whose cache makes it
+	// effectively impossible to set via t.Setenv after process start.
+	proxyFunc func(*http.Request) (*url.URL, error)
 }
 
 // logf writes debug output and intentionally ignores write errors —
@@ -98,6 +115,13 @@ func (d *debugTransport) logf(format string, args ...any) {
 
 func (d *debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	d.logf("[debug-github] --> %s %s\n", req.Method, req.URL)
+	proxyFunc := d.proxyFunc
+	if proxyFunc == nil {
+		proxyFunc = http.ProxyFromEnvironment
+	}
+	if proxyURL, _ := proxyFunc(req); proxyURL != nil {
+		d.logf("[debug-github]     <via proxy %s>\n", proxyURL.Redacted())
+	}
 	for k, vs := range req.Header {
 		for _, v := range vs {
 			d.logf("[debug-github]     %s: %s\n", k, redactSensitiveHeader(k, v))
@@ -119,8 +143,14 @@ func (d *debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	resp, err := d.base.RoundTrip(req)
 	if err != nil {
 		d.logf("[debug-github] <-- transport error: %v\n", err)
-		return resp, err
 	}
+	if resp != nil {
+		d.logResponse(resp, req)
+	}
+	return resp, err
+}
+
+func (d *debugTransport) logResponse(resp *http.Response, req *http.Request) {
 	d.logf("[debug-github] <-- %d %s (%s %s)\n", resp.StatusCode, resp.Status, req.Method, req.URL)
 	for k, vs := range resp.Header {
 		for _, v := range vs {
@@ -140,7 +170,6 @@ func (d *debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 			resp.Body = io.NopCloser(bytes.NewReader(respBytes))
 		}
 	}
-	return resp, nil
 }
 
 // redactSensitiveHeader hides credentials in headers that commonly carry
