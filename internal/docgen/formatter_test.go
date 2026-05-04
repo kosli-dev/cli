@@ -3,7 +3,6 @@ package docgen
 import "testing"
 
 // Compile-time interface satisfaction checks.
-var _ Formatter = (*HugoFormatter)(nil)
 var _ Formatter = (*MintlifyFormatter)(nil)
 var _ LiveDocProvider = (*NullLiveDocProvider)(nil)
 

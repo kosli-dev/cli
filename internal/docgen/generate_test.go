@@ -32,7 +32,7 @@ func TestGenMarkdownTreeCreatesFiles(t *testing.T) {
 		}
 	}
 
-	err := GenMarkdownTree(root, dir, HugoFormatter{}, metaFn, NullLiveDocProvider{})
+	err := GenMarkdownTree(root, dir, MintlifyFormatter{}, metaFn, NullLiveDocProvider{})
 	if err != nil {
 		t.Fatalf("GenMarkdownTree error: %v", err)
 	}
@@ -47,8 +47,8 @@ func TestGenMarkdownTreeCreatesFiles(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to read file: %v", err)
 	}
-	if !strings.Contains(string(content), "# root child") {
-		t.Error("expected command name as heading")
+	if !strings.Contains(string(content), `title: "root child"`) {
+		t.Error("expected command name in front matter title")
 	}
 	if !strings.Contains(string(content), "## Synopsis") {
 		t.Error("expected Synopsis section")
@@ -70,7 +70,7 @@ func TestGenMarkdownTreeSkipsHiddenCommands(t *testing.T) {
 		return CommandMeta{Name: cmd.CommandPath()}
 	}
 
-	err := GenMarkdownTree(root, dir, HugoFormatter{}, metaFn, NullLiveDocProvider{})
+	err := GenMarkdownTree(root, dir, MintlifyFormatter{}, metaFn, NullLiveDocProvider{})
 	if err != nil {
 		t.Fatalf("GenMarkdownTree error: %v", err)
 	}
@@ -106,7 +106,7 @@ func TestGenMarkdownTreeIncludesDeprecatedCommands(t *testing.T) {
 		}
 	}
 
-	err := GenMarkdownTree(root, dir, HugoFormatter{}, metaFn, NullLiveDocProvider{})
+	err := GenMarkdownTree(root, dir, MintlifyFormatter{}, metaFn, NullLiveDocProvider{})
 	if err != nil {
 		t.Fatalf("GenMarkdownTree error: %v", err)
 	}
@@ -120,7 +120,7 @@ func TestGenMarkdownTreeIncludesDeprecatedCommands(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to read file: %v", err)
 	}
-	if !strings.Contains(string(content), "hint danger") {
+	if !strings.Contains(string(content), "<Warning>") {
 		t.Error("expected deprecation warning in output")
 	}
 }
