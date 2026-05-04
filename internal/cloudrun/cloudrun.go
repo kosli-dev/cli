@@ -6,6 +6,7 @@ package cloudrun
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -64,19 +65,14 @@ func New(ctx context.Context) (*Client, error) {
 }
 
 // Close releases the underlying gRPC connections. Safe to call on a Client
-// constructed with a fake apiClient (returns nil). Returns the first error
-// from closing either client; the second is always attempted.
+// constructed with a fake apiClient (returns nil). Both clients are always
+// closed; errors from each are joined so neither is silently dropped.
 func (c *Client) Close() error {
 	g, ok := c.api.(*gcpAPI)
 	if !ok {
 		return nil
 	}
-	sErr := g.services.Close()
-	rErr := g.revisions.Close()
-	if sErr != nil {
-		return sErr
-	}
-	return rErr
+	return errors.Join(g.services.Close(), g.revisions.Close())
 }
 
 // ListServices returns every Cloud Run service in the given project+region,
