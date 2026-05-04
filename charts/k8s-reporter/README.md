@@ -27,12 +27,12 @@ Version 2.0.0 removes the previous single-environment mode (`kosliEnvironmentNam
 To install this chart via the Helm chart repository:
 
 1. Add the Kosli helm repo
-```shell {.command}
+```shell
 helm repo add kosli https://charts.kosli.com/ && helm repo update
 ```
 
 2. Create a secret for the Kosli API token
-```shell {.command}
+```shell
 kubectl create secret generic kosli-api-token --from-literal=key=<your-api-key>
 ```
 
@@ -74,7 +74,7 @@ reporterConfig:
       excludeNamespaces: [prod-ns1, prod-ns2, default]
 ```
 
-```shell {.command}
+```shell
 helm install kosli-reporter kosli/k8s-reporter -f values.yaml
 ```
 
@@ -86,13 +86,13 @@ helm install kosli-reporter kosli/k8s-reporter -f values.yaml
 
 If upgrading from v1.x to v2.0.0, migrate your values to the **environments** list format (see above). Then:
 
-```shell {.command}
+```shell
 helm upgrade kosli-reporter kosli/k8s-reporter -f values.yaml
 ```
 
 ## Uninstalling chart
 
-```shell {.command}
+```shell
 helm uninstall kosli-reporter
 ```
 
@@ -106,7 +106,7 @@ The chart offers two ways to do this. Use whichever fits your deployment flow.
 
 1. Create a Secret containing the corporate CA certificate (PEM format, single cert or bundle):
 
-```shell {.command}
+```shell
 kubectl create secret generic corporate-ca-bundle --from-file=ca.crt=/path/to/corporate-ca.crt
 ```
 
@@ -158,7 +158,7 @@ If you already run [cert-manager's trust-manager](https://cert-manager.io/docs/t
 | customCA.enabled | bool | `false` | enable mounting a corporate/custom CA bundle into the trust store |
 | customCA.key | string | `"ca.crt"` | key within the Secret that holds the PEM-formatted CA certificate (single cert or multi-cert PEM bundle) |
 | customCA.secretName | string | `""` | name of an existing Secret in the same namespace containing the CA bundle |
-| env | object | `{}` | map of plain environment variables to inject into the reporter container. For a single-tenant Kosli instance, set KOSLI_HOST to https://<instance_name>.kosli.com. |
+| env | object | `{}` | map of plain environment variables to inject into the reporter container. For a single-tenant Kosli instance, set `KOSLI_HOST` to `https://<instance_name>.kosli.com`. |
 | extraEnvVars | list | `[]` | additional environment variables to inject into the reporter container. List of {name, value} or {name, valueFrom} entries, rendered verbatim into the container env. Supports plain values and valueFrom (secretKeyRef / configMapKeyRef). Note: entries here are appended after the chart's own env entries; on duplicate names the later entry wins. |
 | extraVolumeMounts | list | `[]` | additional container-level volumeMounts for the reporter container. Rendered verbatim into the container spec alongside the chart's own mounts. |
 | extraVolumes | list | `[]` | additional Pod-level volumes to attach to the reporter pod. Rendered verbatim into the Pod spec alongside the chart's own volumes. Use together with `extraVolumeMounts` to mount Secrets, ConfigMaps, or other volumes into the container. |
