@@ -15,17 +15,26 @@ kosli attest artifact {IMAGE-NAME | FILE-PATH | DIR-PATH} [flags]
 
 Attest an artifact creation to a Kosli flow.  
 
-The artifact fingerprint can be provided directly with the `--fingerprint` flag, or 
+The artifact fingerprint can be provided directly with the `--fingerprint` flag, or
 calculated based on `--artifact-type` flag.
 
 Artifact type can be one of: "file" for files, "dir" for directories, "oci" for container
 images in registries or "docker" for local docker images.
 
+Note: `--artifact-type=docker` reads the image's repo digest via the local Docker daemon.
+The image must have been pushed to or pulled from a registry for a repo digest to exist;
+a freshly built image (just `docker build`) will not have one. If the image is already in
+a registry, prefer `--artifact-type=oci`, which fetches the digest directly from the
+registry without needing a local Docker daemon.
+
 To specify paths in a directory artifact that should always be excluded from the SHA256 calculation, you can add a `.kosli_ignore` file to the root of the artifact.
 Each line should specify a relative path or path glob to be ignored. You can include comments in this file, using `#`.
 The `.kosli_ignore` will be treated as part of the artifact like any other file, unless it is explicitly ignored itself.
-This command requires access to a git repo to associate the artifact to the git commit it is originating from. 
-You can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`
+This command requires access to a git repo to associate the artifact to the git commit it is originating from.
+You can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`.
+To record repository information, all three of `--repo-id`, `--repo-url`, and `--repository` must be set together.
+These are automatically set in GitHub Actions, GitLab CI, Bitbucket Pipelines, and Azure DevOps.
+In other CI systems, set them explicitly to capture repository metadata.
 
 ## Flags
 | Flag | Description |
@@ -47,11 +56,11 @@ You can optionally redact some of the git commit data sent to Kosli using `--red
 |        --redact-commit-info strings  |  [optional] The list of commit info to be redacted before sending to Kosli. Allowed values are one or more of [author, message, branch].  |
 |        --registry-password string  |  [conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry.  |
 |        --registry-username string  |  [conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry.  |
-|        --repo-id string  |  [optional] The unique identifier of the repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|        --repo-provider string  |  [optional] The source code hosting provider. One of: github, gitlab, bitbucket, azure-devops.  |
+|        --repo-id string  |  [conditional] The stable, unique identifier for the repository in your VCS provider (e.g. a numeric ID). Do not use the repository name as it can change if the repo is renamed. All three of --repo-id, --repo-url and --repository must be set to record repository information (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|        --repo-provider string  |  [optional] The source code hosting provider. One of: github, gitlab, bitbucket, azure-devops (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --repo-root string  |  [defaulted] The directory where the source git repository is available. (default ".")  |
-|        --repo-url string  |  [optional] The URL of the repository. Must be a valid URL if provided. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|        --repository string  |  [optional] The name of a git repo as it is registered in Kosli. e.g kosli-dev/cli  |
+|        --repo-url string  |  [conditional] The URL of the repository. Must be a valid URL. All three of --repo-id, --repo-url and --repository must be set to record repository information (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|        --repository string  |  [conditional] The name of the repository (e.g. owner/repo-name). All three of --repo-id, --repo-url and --repository must be set to record repository information (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |    -T, --trail string  |  The Kosli trail name.  |
 
 

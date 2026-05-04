@@ -1,35 +1,44 @@
 ---
-title: "kosli attest pullrequest github"
+title: "kosli attest junit"
 beta: false
 deprecated: false
-summary: "Report a Github pull request attestation to an artifact or a trail in a Kosli flow.  "
+summary: "Report a junit attestation to an artifact or a trail in a Kosli flow.
+JUnit xml files are read from the ^--results-dir^ directory which defaults to the current directory.
+The xml files are automatically uploaded as ^--attachments^ via the ^--upload-results^ flag which defaults to ^true^.  "
 ---
 
-# kosli attest pullrequest github
+# kosli attest junit
 
 ## Synopsis
 
 ```shell
-kosli attest pullrequest github [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli attest junit [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
-Report a Github pull request attestation to an artifact or a trail in a Kosli flow.  
-It checks if a pull request exists for a given merge commit and reports the pull-request attestation to Kosli.
-
+Report a junit attestation to an artifact or a trail in a Kosli flow.
+JUnit xml files are read from the `--results-dir` directory which defaults to the current directory.
+The xml files are automatically uploaded as `--attachments` via the `--upload-results` flag which defaults to `true`.  
 
 The attestation can be bound to a *trail* using the trail name.  
 The attestation can be bound to an *artifact* in two ways:
 - using the artifact's SHA256 fingerprint which is calculated (based on the `--artifact-type` flag and the artifact name/path argument) or can be provided directly (with the `--fingerprint` flag).
 - using the artifact's name in the flow yaml template and the git commit from which the artifact is/will be created. Useful when reporting an attestation before creating/reporting the artifact.
 
+You can optionally associate the attestation to a git commit using `--commit` (requires access to a git repo).
+You can optionally redact some of the git commit data sent to Kosli using `--redact-commit-info`.
+Note that when the attestation is reported for an artifact that does not yet exist in Kosli, `--commit` is required to facilitate
+binding the attestation to the right artifact.
+To record repository information, all three of `--repo-id`, `--repo-url`, and `--repository` must be set together.
+These are automatically set in GitHub Actions, GitLab CI, Bitbucket Pipelines, and Azure DevOps.
+In other CI systems, set them explicitly to capture repository metadata.
+
 ## Flags
 | Flag | Description |
 | :--- | :--- |
 |        --annotate stringToString  |  [optional] Annotate the attestation with data using key=value.  |
 |    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [oci, docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it).  |
-|        --assert  |  [optional] Exit with non-zero code if no pull requests found for the given commit.  |
 |        --attachments strings  |  [optional] The comma-separated list of paths of attachments for the reported attestation. Attachments can be files or directories. All attachments are compressed and uploaded to Kosli's evidence vault.  |
-|    -g, --commit string  |  the git merge commit to be checked for associated pull requests.  |
+|    -g, --commit string  |  [conditional] The git commit for which the attestation is associated to. Becomes required when reporting an attestation for an artifact before reporting it to Kosli. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --description string  |  [optional] attestation description  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
 |    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for --artifact-type dir.  |
@@ -37,21 +46,20 @@ The attestation can be bound to an *artifact* in two ways:
 |        --external-url stringToString  |  [optional] Add labeled reference URL for an external resource. The format is label=url (labels cannot contain '.' or '='). This flag can be set multiple times. If the resource is a file or dir, you can optionally add its fingerprint via --external-fingerprint  |
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact to attach the attestation to. Only required if the attestation is for an artifact and --artifact-type and artifact name/path are not used.  |
 |    -f, --flow string  |  The Kosli flow name.  |
-|        --github-base-url string  |  [optional] GitHub base URL (only needed for GitHub Enterprise installations).  |
-|        --github-org string  |  Github organization. (defaulted if you are running in GitHub Actions: https://docs.kosli.com/ci-defaults ).  |
-|        --github-token string  |  Github token.  |
-|    -h, --help  |  help for github  |
+|    -h, --help  |  help for junit  |
 |    -n, --name string  |  The name of the attestation as declared in the flow or trail yaml template.  |
 |    -o, --origin-url string  |  [optional] The url pointing to where the attestation came from or is related. (defaulted to the CI url in some CIs: https://docs.kosli.com/integrations/ci_cd/#defaulted-kosli-command-flags-from-ci-variables ).  |
 |        --redact-commit-info strings  |  [optional] The list of commit info to be redacted before sending to Kosli. Allowed values are one or more of [author, message, branch].  |
 |        --registry-password string  |  [conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry.  |
 |        --registry-username string  |  [conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry.  |
-|        --repo-id string  |  [optional] The unique identifier of the repository. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|        --repo-provider string  |  [optional] The source code hosting provider. One of: github, gitlab, bitbucket, azure-devops.  |
+|        --repo-id string  |  [conditional] The stable, unique identifier for the repository in your VCS provider (e.g. a numeric ID). Do not use the repository name as it can change if the repo is renamed. All three of --repo-id, --repo-url and --repository must be set to record repository information (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|        --repo-provider string  |  [optional] The source code hosting provider. One of: github, gitlab, bitbucket, azure-devops (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
 |        --repo-root string  |  [defaulted] The directory where the source git repository is available. Only used if --commit is used or defaulted in CI, see https://docs.kosli.com/integrations/ci_cd/#defaulted-kosli-command-flags-from-ci-variables . (default ".")  |
-|        --repo-url string  |  [optional] The URL of the repository. Must be a valid URL if provided. (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
-|        --repository string  |  [optional] The name of a git repo as it is registered in Kosli. e.g kosli-dev/cli  |
+|        --repo-url string  |  [conditional] The URL of the repository. Must be a valid URL. All three of --repo-id, --repo-url and --repository must be set to record repository information (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|        --repository string  |  [conditional] The name of the repository (e.g. owner/repo-name). All three of --repo-id, --repo-url and --repository must be set to record repository information (defaulted in some CIs: https://docs.kosli.com/ci-defaults ).  |
+|    -R, --results-dir string  |  [defaulted] The path to a directory with JUnit test results. By default, the directory will be uploaded to Kosli's evidence vault. (default ".")  |
 |    -T, --trail string  |  The Kosli trail name.  |
+|        --upload-results  |  [defaulted] Whether to upload the provided Junit results directory as an attachment to Kosli or not. (default true)  |
 |    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the attestation.  |
 
 
@@ -69,86 +77,61 @@ The attestation can be bound to an *artifact* in two ways:
 
 ## Live Examples in different CI systems
 
-{{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli attest pullrequest github` command in GitHub.
+{{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli attest junit` command in GitHub.
 
-In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli%2Battest%2Bpullrequest%2Bgithub), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=github&command=kosli%2Battest%2Bpullrequest%2Bgithub).{{< /tab >}}{{< /tabs >}}
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli%2Battest%2Bjunit), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=github&command=kosli%2Battest%2Bjunit).{{< /tab >}}{{< tab "GitLab" >}}View an example of the `kosli attest junit` command in GitLab.
+
+In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=gitlab&command=kosli%2Battest%2Bjunit), which created [this Kosli Event](https://app.kosli.com/api/v2/livedocs/cyber-dojo/event?ci=gitlab&command=kosli%2Battest%2Bjunit).{{< /tab >}}{{< /tabs >}}
 
 ## Examples Use Cases
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-##### report a Github pull request attestation about a pre-built docker artifact (kosli calculates the fingerprint)
+##### report a junit attestation about a pre-built docker artifact (kosli calculates the fingerprint)
 
 ```shell
-kosli attest pullrequest github yourDockerImageName 
+kosli attest junit yourDockerImageName 
 	--artifact-type docker 
 	--name yourAttestationName 
-	--github-token yourGithubToken 
-	--github-org yourGithubOrg 
-	--commit yourArtifactGitCommit 
-	--repository yourGithubGitRepository 
+	--results-dir yourFolderWithJUnitResults 
 
 ```
 
-##### report a Github pull request attestation about a pre-built docker artifact (you provide the fingerprint)
+##### report a junit attestation about a pre-built docker artifact (you provide the fingerprint)
 
 ```shell
-kosli attest pullrequest github 
+kosli attest junit 
 	--fingerprint yourDockerImageFingerprint 
 	--name yourAttestationName 
-	--github-token yourGithubToken 
-	--github-org yourGithubOrg 
-	--commit yourArtifactGitCommit 
-	--repository yourGithubGitRepository 
+	--results-dir yourFolderWithJUnitResults 
 
 ```
 
-##### report a Github pull request attestation about a trail
+##### report a junit attestation about a trail
 
 ```shell
-kosli attest pullrequest github 
+kosli attest junit 
 	--name yourAttestationName 
-	--github-token yourGithubToken 
-	--github-org yourGithubOrg 
-	--commit yourArtifactGitCommit 
-	--repository yourGithubGitRepository 
+	--results-dir yourFolderWithJUnitResults 
 
 ```
 
-##### report a Github pull request attestation about an artifact which has not been reported yet in a trail
+##### report a junit attestation about an artifact which has not been reported yet in a trail
 
 ```shell
-kosli attest pullrequest github 
+kosli attest junit 
 	--name yourTemplateArtifactName.yourAttestationName 
-	--github-token yourGithubToken 
-	--github-org yourGithubOrg 
 	--commit yourArtifactGitCommit 
-	--repository yourGithubGitRepository 
+	--results-dir yourFolderWithJUnitResults 
 
 ```
 
-##### report a Github pull request attestation about a trail with an attachment
+##### report a junit attestation about a trail with an attachment
 
 ```shell
-kosli attest pullrequest github 
+kosli attest junit 
 	--name yourAttestationName 
-	--github-token yourGithubToken 
-	--github-org yourGithubOrg 
-	--commit yourArtifactGitCommit 
-	--repository yourGithubGitRepository 
-	--attachments=yourAttachmentPathName 
-
-```
-
-##### fail if a pull request does not exist for your artifact
-
-```shell
-kosli attest pullrequest github 
-	--name yourTemplateArtifactName.yourAttestationName 
-	--github-token yourGithubToken 
-	--github-org yourGithubOrg 
-	--commit yourArtifactGitCommit 
-	--repository yourGithubGitRepository 
-	--assert
+	--results-dir yourFolderWithJUnitResults 
+	--attachments yourAttachmentPathName 
 ```
 

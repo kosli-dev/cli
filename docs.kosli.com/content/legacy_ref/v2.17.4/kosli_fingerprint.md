@@ -21,6 +21,11 @@ images in registries or "docker" for local docker images.
 Fingerprinting container images can be done using the local docker daemon or the fingerprint can be fetched
 from a remote registry.
 
+Note: `--artifact-type=docker` reads the image's repo digest via the local Docker daemon, so
+the image must have been pushed to or pulled from a registry. A freshly built image (just
+`docker build`) does not have a repo digest. For images already in a registry, prefer
+`--artifact-type=oci` to fetch the digest directly from the registry.
+
 When fingerprinting a 'dir' artifact, you can exclude certain paths from fingerprint calculation 
 using the `--exclude` flag.
 Excluded paths are relative to the DIR-PATH and can be literal paths or glob patterns.

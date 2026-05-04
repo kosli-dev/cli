@@ -1,26 +1,32 @@
 ---
-title: "kosli request approval"
+title: "kosli assert approval"
 beta: false
 deprecated: false
-summary: "Request an approval of a deployment of an artifact to an environment in Kosli.  "
+summary: "Assert an artifact in Kosli has been approved for deployment.  "
 ---
 
-# kosli request approval
+# kosli assert approval
 
 ## Synopsis
 
 ```shell
-kosli request approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
+kosli assert approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
-Request an approval of a deployment of an artifact to an environment in Kosli.  
-The request should be reviewed in the Kosli UI.  
+Assert an artifact in Kosli has been approved for deployment.  
+Exits with non-zero code if the artifact has not been approved.  
 
-The artifact fingerprint can be provided directly with the `--fingerprint` flag, or 
+The artifact fingerprint can be provided directly with the `--fingerprint` flag, or
 calculated based on `--artifact-type` flag.
 
 Artifact type can be one of: "file" for files, "dir" for directories, "oci" for container
 images in registries or "docker" for local docker images.
+
+Note: `--artifact-type=docker` reads the image's repo digest via the local Docker daemon.
+The image must have been pushed to or pulled from a registry for a repo digest to exist;
+a freshly built image (just `docker build`) will not have one. If the image is already in
+a registry, prefer `--artifact-type=oci`, which fetches the digest directly from the
+registry without needing a local Docker daemon.
 
 
 
@@ -28,19 +34,13 @@ images in registries or "docker" for local docker images.
 | Flag | Description |
 | :--- | :--- |
 |    -t, --artifact-type string  |  The type of the artifact to calculate its SHA256 fingerprint. One of: [oci, docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it).  |
-|    -d, --description string  |  [optional] The approval description.  |
 |    -D, --dry-run  |  [optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors.  |
-|    -e, --environment string  |  [defaulted] The environment the artifact is approved for. (defaults to all environments)  |
 |    -x, --exclude strings  |  [optional] The comma separated list of directories and files to exclude from fingerprinting. Can take glob patterns. Only applicable for --artifact-type dir.  |
 |    -F, --fingerprint string  |  [conditional] The SHA256 fingerprint of the artifact. Only required if you don't specify '--artifact-type'.  |
 |    -f, --flow string  |  The Kosli flow name.  |
 |    -h, --help  |  help for approval  |
-|        --newest-commit string  |  [defaulted] The source commit sha for the newest change in the deployment. Can be any commit-ish. (default "HEAD")  |
-|        --oldest-commit string  |  [conditional] The source commit sha for the oldest change in the deployment. Can be any commit-ish. Only required if you don't specify '--environment'.  |
 |        --registry-password string  |  [conditional] The container registry password or access token. Only required if you want to read container image SHA256 digest from a remote container registry.  |
 |        --registry-username string  |  [conditional] The container registry username. Only required if you want to read container image SHA256 digest from a remote container registry.  |
-|        --repo-root string  |  [defaulted] The directory where the source git repository is available. (default ".")  |
-|    -u, --user-data string  |  [optional] The path to a JSON file containing additional data you would like to attach to the approval.  |
 
 
 ## Flags inherited from parent commands
@@ -59,39 +59,19 @@ images in registries or "docker" for local docker images.
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
+##### Assert that a file type artifact has been approved
+
 ```shell
-# Request an approval for an artifact with a provided fingerprint (sha256)
-# for deployment to environment <yourEnvironmentName>.
-# The approval is for all git commits since the last approval to this environment.
-kosli request approval \
-	--api-token yourAPIToken \
-	--description "An optional description for the approval" \
-	--environment yourEnvironmentName \
-	--org yourOrgName \
-	--flow yourFlowName \
-	--fingerprint yourArtifactFingerprint
+kosli assert approval FILE.tgz 
+	--artifact-type file 
 
-# Request that a file type artifact needs approval for deployment to environment <yourEnvironmentName>.
-# The approval is for all git commits since the last approval to this environment.
-kosli request approval FILE.tgz \
-	--api-token yourAPIToken \
-	--artifact-type file \
-	--description "An optional description for the requested approval" \
-	--environment yourEnvironmentName \
-	--newest-commit HEAD \
-	--org yourOrgName \
-	--flow yourFlowName 
 
-# Request an approval for an artifact with a provided fingerprint (sha256).
-# The approval is for all environments.
-# The approval is for all commits since the git commit of origin/production branch.
-kosli request approval \
-	--api-token yourAPIToken \
-	--description "An optional description for the requested approval" \
-	--newest-commit HEAD \
-	--oldest-commit origin/production \
-	--org yourOrgName \
-	--flow yourFlowName \
+```
+
+##### Assert that an artifact with a provided fingerprint (sha256) has been approved
+
+```shell
+kosli assert approval 
 	--fingerprint yourArtifactFingerprint
 ```
 

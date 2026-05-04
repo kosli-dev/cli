@@ -2,7 +2,7 @@
 title: "kosli evaluate input"
 beta: false
 deprecated: false
-summary: "Evaluate a local JSON input against a Rego policy."
+summary: "[BETA] Evaluate a local JSON input against a Rego policy."
 ---
 
 # kosli evaluate input
@@ -13,7 +13,7 @@ summary: "Evaluate a local JSON input against a Rego policy."
 kosli evaluate input [flags]
 ```
 
-Evaluate a local JSON input against a Rego policy.
+[BETA] Evaluate a local JSON input against a Rego policy.
 Read JSON from a file or stdin and evaluate it against a Rego policy.
 The input file should contain the raw JSON object your policy expects —
 not the wrapper produced by `--show-input`. Use `jq '.input'` to extract
@@ -21,7 +21,10 @@ the policy input from a `--show-input --output json` capture.
 
 The policy must use `package policy` and define an `allow` rule.
 An optional `violations` rule (a set of strings) can provide human-readable denial reasons.
-The command exits with code 0 when allowed and code 1 when denied.
+
+By default a deny exits with code 1. Pass `--no-assert` to print the verdict
+and exit 0 even on deny, when this command is feeding another tool as a
+policy decision point.
 
 When `--input-file` is omitted, JSON is read from stdin.
 
@@ -31,8 +34,10 @@ This accepts inline JSON or a file reference (`@file.json`).
 ## Flags
 | Flag | Description |
 | :--- | :--- |
+|        --assert  |  [optional] Exit with a non-zero status when the policy denies. This is the current default; pass --assert to lock it in across future releases.  |
 |    -h, --help  |  help for input  |
 |    -i, --input-file string  |  [optional] Path to a JSON input file. Reads from stdin if omitted.  |
+|        --no-assert  |  [optional] Print the result and always exit 0, even when the policy denies. Use when this command feeds another tool as a policy decision point.  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 |        --params string  |  [optional] Policy parameters as inline JSON or @file.json. Available in policies as data.params.  |
 |    -p, --policy string  |  Path to a Rego policy file to evaluate against the input.  |
@@ -109,5 +114,15 @@ kosli evaluate input
 	--input-file trail-data.json 
 	--policy policy.rego 
 	--params @params.json
+
+```
+
+##### evaluate as a decision point (print verdict, never fail the step)
+
+```shell
+kosli evaluate input 
+	--input-file trail-data.json 
+	--policy policy.rego 
+	--no-assert
 ```
 

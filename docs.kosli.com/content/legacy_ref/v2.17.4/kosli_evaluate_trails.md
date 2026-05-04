@@ -1,21 +1,22 @@
 ---
-title: "kosli evaluate trail"
+title: "kosli evaluate trails"
 beta: false
 deprecated: false
-summary: "Evaluate a trail against a policy."
+summary: "[BETA] Evaluate multiple trails against a policy."
 ---
 
-# kosli evaluate trail
+# kosli evaluate trails
 
 ## Synopsis
 
 ```shell
-kosli evaluate trail TRAIL-NAME [flags]
+kosli evaluate trails TRAIL-NAME [TRAIL-NAME...] [flags]
 ```
 
-Evaluate a trail against a policy.
-Fetch a single trail from Kosli and evaluate it against a Rego policy.
-The trail data is passed to the policy as `input.trail`.
+[BETA] Evaluate multiple trails against a policy.
+Fetch multiple trails from Kosli and evaluate them together against a Rego policy.
+The trail data is passed to the policy as `input.trails` (an array), unlike
+`evaluate trail` which passes `input.trail` (a single object).
 
 Use `--attestations` to enrich the input with detailed attestation data
 (e.g. pull request approvers, scan results). Use `--show-input` to inspect the
@@ -24,12 +25,14 @@ full data structure available to the policy. Use `--output json` for structured 
 ## Flags
 | Flag | Description |
 | :--- | :--- |
+|        --assert  |  [optional] Exit with a non-zero status when the policy denies. This is the current default; pass --assert to lock it in across future releases.  |
 |        --attestations strings  |  [optional] Limit which attestations are included. Plain name for trail-level, dot-qualified (artifact.name) for artifact-level.  |
 |    -f, --flow string  |  The Kosli flow name.  |
-|    -h, --help  |  help for trail  |
+|    -h, --help  |  help for trails  |
+|        --no-assert  |  [optional] Print the result and always exit 0, even when the policy denies. Use when this command feeds another tool as a policy decision point.  |
 |    -o, --output string  |  [defaulted] The format of the output. Valid formats are: [table, json]. (default "table")  |
 |        --params string  |  [optional] Policy parameters as inline JSON or @file.json. Available in policies as data.params.  |
-|    -p, --policy string  |  Path to a Rego policy file to evaluate against the trail.  |
+|    -p, --policy string  |  Path to a Rego policy file to evaluate against the trails.  |
 |        --show-input  |  [optional] Include the policy input data in the output.  |
 
 
@@ -45,57 +48,51 @@ full data structure available to the policy. Use `--output json` for structured 
 |        --org string  |  The Kosli organization.  |
 
 
-## Live Examples in different CI systems
-
-{{< tabs "live-examples" "col-no-wrap" >}}{{< tab "GitHub" >}}View an example of the `kosli evaluate trail` command in GitHub.
-
-In [this YAML file](https://app.kosli.com/api/v2/livedocs/cyber-dojo/yaml?ci=github&command=kosli%2Bevaluate%2Btrail){{< /tab >}}{{< /tabs >}}
-
 ## Examples Use Cases
 
 These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](https://docs.kosli.com/getting_started/install/#assigning-flags-via-environment-variables). 
 
-##### evaluate a trail against a policy
+##### evaluate multiple trails against a policy
 
 ```shell
-kosli evaluate trail yourTrailName 
+kosli evaluate trails yourTrailName1 yourTrailName2 
 	--policy yourPolicyFile.rego 
 
 ```
 
-##### evaluate a trail with attestation enrichment
+##### evaluate trails with attestation enrichment
 
 ```shell
-kosli evaluate trail yourTrailName 
+kosli evaluate trails yourTrailName1 yourTrailName2 
 	--policy yourPolicyFile.rego 
 	--attestations pull-request 
 
 ```
 
-##### evaluate a trail and show the policy input data
+##### evaluate trails with JSON output and show the policy input
 
 ```shell
-kosli evaluate trail yourTrailName 
+kosli evaluate trails yourTrailName1 yourTrailName2 
 	--policy yourPolicyFile.rego 
 	--show-input 
 	--output json 
 
 ```
 
-##### evaluate a trail with policy parameters (inline JSON)
+##### evaluate trails with policy parameters
 
 ```shell
-kosli evaluate trail yourTrailName 
+kosli evaluate trails yourTrailName1 yourTrailName2 
 	--policy yourPolicyFile.rego 
 	--params '{"min_approvers": 2}' 
 
 ```
 
-##### evaluate a trail with policy parameters from a file
+##### evaluate trails as a decision point (print verdict, never fail the step)
 
 ```shell
-kosli evaluate trail yourTrailName 
+kosli evaluate trails yourTrailName1 yourTrailName2 
 	--policy yourPolicyFile.rego 
-	--params @params.json 
+	--no-assert 
 ```
 
