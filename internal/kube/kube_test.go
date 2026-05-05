@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 	"sigs.k8s.io/kind/pkg/cluster"
@@ -64,6 +65,9 @@ func (suite *KubeTestSuite) AfterTest(_, _ string) {
 
 	for _, ns := range namespaces.Items {
 		err = suite.clientset.Clientset.CoreV1().Namespaces().Delete(ctx, ns.Name, metav1.DeleteOptions{})
+		if apierrors.IsNotFound(err) {
+			continue
+		}
 		require.NoErrorf(suite.T(), err, "error deleting namespace %s", ns.Name)
 	}
 }
