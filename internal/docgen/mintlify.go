@@ -78,38 +78,6 @@ func (MintlifyFormatter) FlagsSection(flags, inherited string) string {
 	return b.String()
 }
 
-func (MintlifyFormatter) LiveCIExamples(examples []CIExample, commandName string) string {
-	if len(examples) == 0 {
-		return ""
-	}
-	var b strings.Builder
-	b.WriteString("## Live Examples in different CI systems\n\n")
-	b.WriteString("<Tabs>\n")
-	for _, ex := range examples {
-		fmt.Fprintf(&b, "\t<Tab title=\"%v\">\n", ex.CI)
-		fmt.Fprintf(&b, "\tView an example of the `%s` command in %s.\n\n", commandName, ex.CI)
-		fmt.Fprintf(&b, "\tIn [this YAML file](%v)", ex.YamlURL)
-		if ex.EventURL != "" {
-			fmt.Fprintf(&b, ", which created [this Kosli Event](%v).", ex.EventURL)
-		}
-		b.WriteString("\n\t</Tab>\n")
-	}
-	b.WriteString("</Tabs>\n\n")
-	return b.String()
-}
-
-func (MintlifyFormatter) LiveCLIExample(commandName, fullCommand, url string) string {
-	var b strings.Builder
-	b.WriteString("## Live Example\n\n")
-	fmt.Fprintf(&b, "To view a live example of '%s' you can run the commands below (for the <a href=\"https://app.kosli.com/cyber-dojo/environments/aws-prod/snapshots/\">cyber-dojo</a> demo organization).<br/><a href=\"%s\">Run the commands below and view the output.</a>", commandName, url)
-	b.WriteString("<pre>")
-	b.WriteString("export KOSLI_ORG=cyber-dojo\n")
-	b.WriteString("export KOSLI_API_TOKEN=Pj_XT2deaVA6V1qrTlthuaWsmjVt4eaHQwqnwqjRO3A  # read-only\n")
-	b.WriteString(fullCommand)
-	b.WriteString("</pre>\n\n")
-	return b.String()
-}
-
 func (MintlifyFormatter) ExampleUseCases(commandName, example string) string {
 	var b strings.Builder
 	b.WriteString("## Examples Use Cases\n\n")
