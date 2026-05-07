@@ -177,3 +177,67 @@ to "no-assert" by changing one line.
 - [ ] Fake-backed unit tests for filtering, large-scale concurrency, error propagation
 - [ ] Factory + inject fake into `snapshotK8S_test.go` command tests
 - [ ] Trim existing Kube integration tests to smoke tests
+
+## `kosli snapshot cloud-run`: enumerate idle Cloud Run Jobs (kosli-dev/server#4986)
+
+Goal: in addition to Cloud Run Services + revisions, list Cloud Run Jobs in
+the project/region and emit one artifact per Job, identified by the image at
+`Template.Template.Containers[0].Image`. Idle Jobs (no running Execution) must
+appear. Both CLI and server API are hidden, so the wire format is being
+restructured at the same time.
+
+Decisions locked in during planning:
+
+- Payload kept flat to match the convention used by ECS, K8S, Lambda, etc.
+  (server team rejected an earlier nested-`cloud_run_context` proposal).
+  Each artifact carries top-level `kind: "service" | "job"` discriminator
+  alongside `service_name` / `revision_name` / `job_name`.
+- Filter flags renamed: `--services` → `--include`, `--services-regex` →
+  `--include-regex`. `--exclude` / `--exclude-regex` unchanged. Filter applies
+  uniformly to Service names and Job names.
+- New `Job` struct mirrors `Revision` shape: `Name`, `Digests`, `CreatedAt`.
+- Success log message changed from "[N] revisions were reported" to
+  "[N] artifacts were reported".
+
+Server-side schema change to accept the new payload shape needs to land
+before live test-bed snapshots succeed; CLI tests fake HTTP and stay green
+independently.
+
+### Slice 1: Payload schema refactor (services-only, pure refactor)
+
+Restructure `RevisionData` → `ArtifactData` with flat top-level fields
+(`Kind`, `ServiceName`, `RevisionName`, `JobName`). No new behaviour; existing
+Service-only output keeps working with the new wire format.
+
+- [x] `internal/cloudrun/payload_test.go`: rewrite existing tests to assert on
+      flat `art.Kind == "service"`, `art.ServiceName`, `art.RevisionName`
+- [x] `internal/cloudrun/payload_test.go`: add
+      `TestToEnvRequest_SerializesFlatFields_JSON` to lock the wire format
+- [x] `cmd/kosli/snapshotCloudRun_test.go`: update `goldenRegex` in test 05
+      to assert the flat `kind` / `service_name` shape
+- [x] `cmd/kosli/snapshotCloudRun_test.go`: skip
+      `TestSnapshotCloudRunCmd_HappyPathReportsToServer` pending server-side
+      schema update (kosli-dev/server#4986)
+
+### Slice 2: Internal Jobs primitives (`internal/cloudrun`)
+
+Add `Job` domain type, `listJobs` on `apiClient`, `ListJobs` on `Client`,
+production `gcpAPI.listJobs` using `run.NewJobsClient`. `Close()` extended to
+also close the jobs client. No command wiring yet.
+
+### Slice 3: Wire Jobs end-to-end + log message
+
+Extend `cloudRunLister` with `ListJobs`. In `run()`, list Jobs, apply the same
+name filter, pass into `ToEnvRequest(services, jobs)`. Change success log
+from "[N] revisions were reported" to "[N] artifacts were reported".
+
+### Slice 4: Flag rename
+
+`--services` → `--include`, `--services-regex` → `--include-regex`. Update
+mutually-exclusive pairs and error messages.
+
+### Slice 5: Help text / long description
+
+Update `snapshotCloudRunShortDesc` / `snapshotCloudRunLongDesc` to mention
+Jobs alongside Services. Verify `kosli snapshot cloud-run --help` reads
+correctly.

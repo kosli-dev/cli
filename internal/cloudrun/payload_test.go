@@ -1,6 +1,7 @@
 package cloudrun
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -38,8 +39,10 @@ func TestToEnvRequest_SingleServiceSingleRevision(t *testing.T) {
 	require.Len(t, got.Artifacts, 1)
 
 	art := got.Artifacts[0]
-	require.Equal(t, "svc-a-rev1", art.RevisionName)
+	require.Equal(t, KindService, art.Kind)
 	require.Equal(t, "svc-a", art.ServiceName)
+	require.Equal(t, "svc-a-rev1", art.RevisionName)
+	require.Empty(t, art.JobName)
 	require.Equal(t, map[string]string{"img@sha256:aaa": "aaa"}, art.Digests)
 	require.Equal(t, created.Unix(), art.CreatedAt)
 }
@@ -64,7 +67,11 @@ func TestToEnvRequest_MultipleServicesMultipleRevisions(t *testing.T) {
 	got := ToEnvRequest(services)
 	require.Len(t, got.Artifacts, 3)
 
-	revisionNames := []string{got.Artifacts[0].RevisionName, got.Artifacts[1].RevisionName, got.Artifacts[2].RevisionName}
+	revisionNames := []string{
+		got.Artifacts[0].RevisionName,
+		got.Artifacts[1].RevisionName,
+		got.Artifacts[2].RevisionName,
+	}
 	require.Equal(t, []string{"a-rev1", "a-rev2", "b-rev1"}, revisionNames)
 
 	require.Equal(t, "svc-a", got.Artifacts[0].ServiceName)
@@ -96,4 +103,37 @@ func TestToEnvRequest_ZeroCreatedAtSerialisesAsZero(t *testing.T) {
 	got := ToEnvRequest(services)
 	require.Len(t, got.Artifacts, 1)
 	require.Equal(t, time.Time{}.Unix(), got.Artifacts[0].CreatedAt)
+}
+
+// TestToEnvRequest_SerializesFlatFields_JSON locks the wire format: each
+// artifact must serialise its kind/serviceName/revisionName fields as flat
+// top-level keys (no nested context object), matching the convention used by
+// ECS, K8S, and other env-type reports. Identifying fields are camelCase to
+// mirror the GCP Cloud Run Admin API v2.
+func TestToEnvRequest_SerializesFlatFields_JSON(t *testing.T) {
+	services := []Service{
+		{
+			Name: "svc-a",
+			Revisions: []Revision{
+				{Name: "svc-a-rev1", Digests: map[string]string{"img@sha256:aaa": "aaa"}},
+			},
+		},
+	}
+
+	raw, err := json.Marshal(ToEnvRequest(services))
+	require.NoError(t, err)
+
+	var decoded struct {
+		Artifacts []map[string]any `json:"artifacts"`
+	}
+	require.NoError(t, json.Unmarshal(raw, &decoded))
+	require.Len(t, decoded.Artifacts, 1)
+
+	art := decoded.Artifacts[0]
+	require.Equal(t, "service", art["kind"])
+	require.Equal(t, "svc-a", art["serviceName"])
+	require.Equal(t, "svc-a-rev1", art["revisionName"])
+	require.NotContains(t, art, "cloud_run_context", "fields must be flat, not nested under cloud_run_context")
+	require.NotContains(t, art, "service_name", "JSON keys must be camelCase to mirror GCP API")
+	require.NotContains(t, art, "revision_name", "JSON keys must be camelCase to mirror GCP API")
 }

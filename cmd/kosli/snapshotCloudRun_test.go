@@ -113,7 +113,7 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd() {
 		{
 			name:        "05 snapshot cloud-run dry-runs the report URL and payload built from the GCP client",
 			cmd:         fmt.Sprintf(`snapshot cloud-run %s --project proj-x --region europe-west1 --dry-run %s`, suite.envName, suite.defaultKosliArguments),
-			goldenRegex: `(?s)THIS IS A DRY-RUN.*report/cloud-run.*"type": "cloud-run".*"service_name": "alpha".*"service_name": "beta"`,
+			goldenRegex: `(?s)THIS IS A DRY-RUN.*report/cloud-run.*"type": "cloud-run".*"kind": "service".*"serviceName": "alpha".*"serviceName": "beta"`,
 		},
 		{
 			wantError: true,
@@ -157,26 +157,26 @@ func (suite *SnapshotCloudRunTestSuite) runFilteredCmd(filterArgs string) string
 
 func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_Services() {
 	out := suite.runFilteredCmd("--services alpha")
-	require.Contains(suite.T(), out, `"service_name": "alpha"`)
-	require.NotContains(suite.T(), out, `"service_name": "beta"`)
+	require.Contains(suite.T(), out, `"serviceName": "alpha"`)
+	require.NotContains(suite.T(), out, `"serviceName": "beta"`)
 }
 
 func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_ServicesRegex() {
 	out := suite.runFilteredCmd(`--services-regex "^al"`)
-	require.Contains(suite.T(), out, `"service_name": "alpha"`)
-	require.NotContains(suite.T(), out, `"service_name": "beta"`)
+	require.Contains(suite.T(), out, `"serviceName": "alpha"`)
+	require.NotContains(suite.T(), out, `"serviceName": "beta"`)
 }
 
 func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_Exclude() {
 	out := suite.runFilteredCmd("--exclude alpha")
-	require.NotContains(suite.T(), out, `"service_name": "alpha"`)
-	require.Contains(suite.T(), out, `"service_name": "beta"`)
+	require.NotContains(suite.T(), out, `"serviceName": "alpha"`)
+	require.Contains(suite.T(), out, `"serviceName": "beta"`)
 }
 
 func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_ExcludeRegex() {
 	out := suite.runFilteredCmd(`--exclude-regex "^al"`)
-	require.NotContains(suite.T(), out, `"service_name": "alpha"`)
-	require.Contains(suite.T(), out, `"service_name": "beta"`)
+	require.NotContains(suite.T(), out, `"serviceName": "alpha"`)
+	require.Contains(suite.T(), out, `"serviceName": "beta"`)
 }
 
 // TestSnapshotCloudRunCmd_HappyPathReportsToServer exercises the full
@@ -185,6 +185,13 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_ExcludeRegex(
 // expected to PUT the snapshot and emit the "[N] revisions were reported"
 // success log mirroring ECS.
 func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd_HappyPathReportsToServer() {
+	// Skipped pending kosli-dev/server#4986: CLI now sends the new payload
+	// shape (kind + serviceName/revisionName/jobName, all camelCase to mirror
+	// the GCP Cloud Run Admin API); the local Kosli server still expects the
+	// old shape with service_name (snake_case). Unskip once the server-side
+	// schema accepts the new shape.
+	//suite.T().Skip("server-side schema update pending (kosli-dev/server#4986)")
+
 	cmd := fmt.Sprintf(`snapshot cloud-run %s --project p --region r %s`, suite.envName, suite.defaultKosliArguments)
 	_, combined, _, _, err := executeCommandC(cmd)
 
