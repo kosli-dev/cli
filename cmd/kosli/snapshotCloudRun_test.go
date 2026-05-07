@@ -185,13 +185,6 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_ExcludeRegex(
 // expected to PUT the snapshot and emit the "[N] revisions were reported"
 // success log mirroring ECS.
 func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd_HappyPathReportsToServer() {
-	// Skipped pending kosli-dev/server#4986: CLI now sends the new payload
-	// shape (kind + serviceName/revisionName/jobName, all camelCase to mirror
-	// the GCP Cloud Run Admin API); the local Kosli server still expects the
-	// old shape with service_name (snake_case). Unskip once the server-side
-	// schema accepts the new shape.
-	//suite.T().Skip("server-side schema update pending (kosli-dev/server#4986)")
-
 	cmd := fmt.Sprintf(`snapshot cloud-run %s --project p --region r %s`, suite.envName, suite.defaultKosliArguments)
 	_, combined, _, _, err := executeCommandC(cmd)
 
