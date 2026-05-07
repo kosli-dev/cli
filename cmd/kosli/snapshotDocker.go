@@ -8,9 +8,11 @@ import (
 	"net/url"
 	"strings"
 
+	cerrdefs "github.com/containerd/errdefs"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/kosli-dev/cli/internal/digest"
+	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/server"
 	"github.com/spf13/cobra"
@@ -87,29 +89,51 @@ func (o *snapshotDockerOptions) run(args []string) error {
 }
 
 func CreateDockerArtifactsData() ([]*server.ServerData, error) {
-	result := []*server.ServerData{}
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		return result, err
+		return []*server.ServerData{}, err
 	}
 
 	containers, err := cli.ContainerList(context.Background(), container.ListOptions{})
 	if err != nil {
-		return result, err
+		return []*server.ServerData{}, err
 	}
 
+	return dockerArtifactsFromContainers(containers, digest.DockerImageSha256, logger)
+}
+
+func dockerArtifactsFromContainers(
+	containers []container.Summary,
+	getDigest func(imageID string) (string, error),
+	log *log.Logger,
+) ([]*server.ServerData, error) {
+	result := []*server.ServerData{}
 	for _, c := range containers {
-		digests := make(map[string]string)
-		digests[c.Image], err = digest.DockerImageSha256(c.Image)
+		d, err := getDigest(c.Image)
 		if err != nil {
-			if errors.Is(err, digest.ErrRepoDigestUnavailable) {
-				containerName := strings.TrimPrefix(c.Names[0], "/")
-				logger.Info("ignoring container '%s' as it uses an image with no repo digest", containerName)
+			containerName := containerName(c)
+			switch {
+			case errors.Is(err, digest.ErrRepoDigestUnavailable):
+				log.Info("ignoring container '%s' as it uses an image with no repo digest", containerName)
 				continue
+			case cerrdefs.IsNotFound(err):
+				log.Warn("ignoring container '%s' as its image is no longer present locally: %v", containerName, err)
+				continue
+			default:
+				return []*server.ServerData{}, err
 			}
-			return result, err
 		}
-		result = append(result, &server.ServerData{Digests: digests, CreationTimestamp: c.Created})
+		result = append(result, &server.ServerData{
+			Digests:           map[string]string{c.Image: d},
+			CreationTimestamp: c.Created,
+		})
 	}
 	return result, nil
+}
+
+func containerName(c container.Summary) string {
+	if len(c.Names) == 0 {
+		return c.Image
+	}
+	return strings.TrimPrefix(c.Names[0], "/")
 }
