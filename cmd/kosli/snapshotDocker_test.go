@@ -1,10 +1,16 @@
 package main
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"testing"
 
+	cerrdefs "github.com/containerd/errdefs"
+	"github.com/docker/docker/api/types/container"
+	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/docker"
+	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -75,4 +81,117 @@ func (suite *SnapshotDockerTestSuite) containerDigests() []string {
 // a normal test function and pass our suite to suite.Run
 func TestEnvironmentReportDockerTestSuite(t *testing.T) {
 	suite.Run(t, new(SnapshotDockerTestSuite))
+}
+
+func TestDockerArtifactsFromContainers(t *testing.T) {
+	t.Run("returns digest for a single container when inspect succeeds", func(t *testing.T) {
+		containers := []container.Summary{
+			{Names: []string{"/c1"}, Image: "alpine", Created: 100},
+		}
+		getDigest := func(imageID string) (string, error) {
+			return "deadbeef", nil
+		}
+
+		result, err := dockerArtifactsFromContainers(containers, getDigest, newTestLogger())
+
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		assert.Equal(t, "deadbeef", result[0].Digests["alpine"])
+		assert.Equal(t, int64(100), result[0].CreationTimestamp)
+	})
+
+	t.Run("skips container when inspect returns errdefs.NotFound, returns the rest", func(t *testing.T) {
+		containers := []container.Summary{
+			{Names: []string{"/good"}, Image: "alpine", Created: 100},
+			{Names: []string{"/orphan"}, Image: "ghost", Created: 200},
+		}
+		getDigest := func(imageID string) (string, error) {
+			if imageID == "ghost" {
+				return "", fmt.Errorf("No such image: sha256:abc: %w", cerrdefs.ErrNotFound)
+			}
+			return "deadbeef", nil
+		}
+		logBuf := &bytes.Buffer{}
+
+		result, err := dockerArtifactsFromContainers(containers, getDigest, newTestLoggerWithErr(logBuf))
+
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		assert.Equal(t, "deadbeef", result[0].Digests["alpine"])
+		assert.Contains(t, logBuf.String(), "orphan")
+	})
+
+	t.Run("skips container when inspect returns ErrRepoDigestUnavailable (preserved)", func(t *testing.T) {
+		containers := []container.Summary{
+			{Names: []string{"/good"}, Image: "alpine", Created: 100},
+			{Names: []string{"/local-only"}, Image: "scratch-built", Created: 200},
+		}
+		getDigest := func(imageID string) (string, error) {
+			if imageID == "scratch-built" {
+				return "", digest.ErrRepoDigestUnavailable
+			}
+			return "deadbeef", nil
+		}
+		logBuf := &bytes.Buffer{}
+
+		result, err := dockerArtifactsFromContainers(containers, getDigest, newTestLoggerWithInfo(logBuf))
+
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		assert.Contains(t, logBuf.String(), "local-only")
+	})
+
+	t.Run("returns error for any other inspect error (preserved)", func(t *testing.T) {
+		containers := []container.Summary{
+			{Names: []string{"/c1"}, Image: "alpine", Created: 100},
+		}
+		boom := errors.New("daemon connection broken")
+		getDigest := func(imageID string) (string, error) {
+			return "", boom
+		}
+
+		result, err := dockerArtifactsFromContainers(containers, getDigest, newTestLogger())
+
+		require.ErrorIs(t, err, boom)
+		assert.Empty(t, result)
+	})
+
+	t.Run("mixed: skips middle NotFound, returns first and third in order", func(t *testing.T) {
+		containers := []container.Summary{
+			{Names: []string{"/first"}, Image: "alpine", Created: 100},
+			{Names: []string{"/middle"}, Image: "ghost", Created: 200},
+			{Names: []string{"/third"}, Image: "busybox", Created: 300},
+		}
+		getDigest := func(imageID string) (string, error) {
+			switch imageID {
+			case "alpine":
+				return "aaaa", nil
+			case "busybox":
+				return "bbbb", nil
+			default:
+				return "", fmt.Errorf("No such image: %w", cerrdefs.ErrNotFound)
+			}
+		}
+
+		result, err := dockerArtifactsFromContainers(containers, getDigest, newTestLogger())
+
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		assert.Equal(t, "aaaa", result[0].Digests["alpine"])
+		assert.Equal(t, int64(100), result[0].CreationTimestamp)
+		assert.Equal(t, "bbbb", result[1].Digests["busybox"])
+		assert.Equal(t, int64(300), result[1].CreationTimestamp)
+	})
+}
+
+func newTestLogger() *log.Logger {
+	return log.NewLogger(&bytes.Buffer{}, &bytes.Buffer{}, false)
+}
+
+func newTestLoggerWithErr(errBuf *bytes.Buffer) *log.Logger {
+	return log.NewLogger(&bytes.Buffer{}, errBuf, false)
+}
+
+func newTestLoggerWithInfo(infoBuf *bytes.Buffer) *log.Logger {
+	return log.NewLogger(infoBuf, &bytes.Buffer{}, false)
 }
