@@ -105,7 +105,7 @@ func CreateDockerArtifactsData() ([]*server.ServerData, error) {
 func dockerArtifactsFromContainers(
 	containers []container.Summary,
 	getDigest func(imageID string) (string, error),
-	log *log.Logger,
+	logger *log.Logger,
 ) ([]*server.ServerData, error) {
 	result := []*server.ServerData{}
 	for _, c := range containers {
@@ -114,10 +114,10 @@ func dockerArtifactsFromContainers(
 			containerName := containerName(c)
 			switch {
 			case errors.Is(err, digest.ErrRepoDigestUnavailable):
-				log.Info("ignoring container '%s' as it uses an image with no repo digest", containerName)
+				logger.Info("ignoring container '%s' as it uses an image with no repo digest", containerName)
 				continue
 			case cerrdefs.IsNotFound(err):
-				log.Warn("ignoring container '%s' as its image is no longer present locally: %v", containerName, err)
+				logger.Warn("ignoring container '%s' as its image is no longer present locally: %v", containerName, err)
 				continue
 			default:
 				return []*server.ServerData{}, err
