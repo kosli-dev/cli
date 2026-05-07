@@ -77,39 +77,6 @@ func TestMintlifySynopsis(t *testing.T) {
 	}
 }
 
-func TestMintlifyLiveCIExamples(t *testing.T) {
-	f := MintlifyFormatter{}
-	examples := []CIExample{
-		{CI: "GitHub", YamlURL: "http://yaml", EventURL: "http://event"},
-		{CI: "GitLab", YamlURL: "http://yaml2"},
-	}
-	got := f.LiveCIExamples(examples, "kosli attest snyk")
-	if !strings.Contains(got, "<Tabs>") {
-		t.Error("expected Tabs component")
-	}
-	if !strings.Contains(got, `<Tab title="GitHub">`) {
-		t.Error("expected GitHub tab")
-	}
-	if !strings.Contains(got, `<Tab title="GitLab">`) {
-		t.Error("expected GitLab tab")
-	}
-	if !strings.Contains(got, "</Tabs>") {
-		t.Error("expected closing Tabs")
-	}
-}
-
-func TestMintlifyLiveCLIExample(t *testing.T) {
-	f := MintlifyFormatter{}
-	got := f.LiveCLIExample("kosli list environments", "kosli list environments --output=json", "http://example.com")
-	// Should NOT contain Hugo shortcode wrappers
-	if strings.Contains(got, "{{< raw-html >}}") {
-		t.Error("should not contain Hugo shortcode")
-	}
-	if !strings.Contains(got, "<pre>") {
-		t.Error("expected raw HTML pre tag")
-	}
-}
-
 func TestMintlifyExampleUseCases(t *testing.T) {
 	f := MintlifyFormatter{}
 	example := "# report a snyk attestation\nkosli attest snyk foo"

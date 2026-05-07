@@ -32,7 +32,7 @@ func TestGenMarkdownTreeCreatesFiles(t *testing.T) {
 		}
 	}
 
-	err := GenMarkdownTree(root, dir, MintlifyFormatter{}, metaFn, NullLiveDocProvider{})
+	err := GenMarkdownTree(root, dir, MintlifyFormatter{}, metaFn)
 	if err != nil {
 		t.Fatalf("GenMarkdownTree error: %v", err)
 	}
@@ -70,7 +70,7 @@ func TestGenMarkdownTreeSkipsHiddenCommands(t *testing.T) {
 		return CommandMeta{Name: cmd.CommandPath()}
 	}
 
-	err := GenMarkdownTree(root, dir, MintlifyFormatter{}, metaFn, NullLiveDocProvider{})
+	err := GenMarkdownTree(root, dir, MintlifyFormatter{}, metaFn)
 	if err != nil {
 		t.Fatalf("GenMarkdownTree error: %v", err)
 	}
@@ -106,7 +106,7 @@ func TestGenMarkdownTreeIncludesDeprecatedCommands(t *testing.T) {
 		}
 	}
 
-	err := GenMarkdownTree(root, dir, MintlifyFormatter{}, metaFn, NullLiveDocProvider{})
+	err := GenMarkdownTree(root, dir, MintlifyFormatter{}, metaFn)
 	if err != nil {
 		t.Fatalf("GenMarkdownTree error: %v", err)
 	}
@@ -147,7 +147,7 @@ func TestGenMarkdownTreeWithMintlifyFormatter(t *testing.T) {
 		}
 	}
 
-	err := GenMarkdownTree(root, dir, MintlifyFormatter{}, metaFn, NullLiveDocProvider{})
+	err := GenMarkdownTree(root, dir, MintlifyFormatter{}, metaFn)
 	if err != nil {
 		t.Fatalf("GenMarkdownTree error: %v", err)
 	}
