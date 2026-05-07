@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,13 +13,13 @@ import (
 
 // GenMarkdownTree walks the cobra command tree and generates a doc file for each
 // leaf command using the provided Formatter.
-func GenMarkdownTree(cmd *cobra.Command, dir string, formatter Formatter, metaFn CommandMetaFunc, liveDocs LiveDocProvider) error {
+func GenMarkdownTree(cmd *cobra.Command, dir string, formatter Formatter, metaFn CommandMetaFunc) error {
 	for _, c := range cmd.Commands() {
 		// skip all unavailable commands except deprecated ones
 		if (!c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand()) && c.Deprecated == "" {
 			continue
 		}
-		if err := GenMarkdownTree(c, dir, formatter, metaFn, liveDocs); err != nil {
+		if err := GenMarkdownTree(c, dir, formatter, metaFn); err != nil {
 			return err
 		}
 	}
@@ -39,14 +38,14 @@ func GenMarkdownTree(cmd *cobra.Command, dir string, formatter Formatter, metaFn
 			}
 		}()
 
-		if err := genMarkdownCustom(cmd, f, formatter, metaFn, liveDocs); err != nil {
+		if err := genMarkdownCustom(cmd, f, formatter, metaFn); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func genMarkdownCustom(cmd *cobra.Command, w io.Writer, formatter Formatter, metaFn CommandMetaFunc, liveDocs LiveDocProvider) error {
+func genMarkdownCustom(cmd *cobra.Command, w io.Writer, formatter Formatter, metaFn CommandMetaFunc) error {
 	cmd.InitDefaultHelpCmd()
 	cmd.InitDefaultHelpFlag()
 
@@ -77,29 +76,6 @@ func genMarkdownCustom(cmd *cobra.Command, w io.Writer, formatter Formatter, met
 	// Flags
 	flags, inherited := RenderFlagsTables(cmd)
 	buf.WriteString(formatter.FlagsSection(flags, inherited))
-
-	// Live CI examples
-	urlSafeName := url.QueryEscape(name)
-	var ciExamples []CIExample
-	for _, ci := range []string{"GitHub", "GitLab"} {
-		if liveDocs.YamlDocExists(ci, urlSafeName) {
-			ex := CIExample{
-				CI:      ci,
-				YamlURL: liveDocs.YamlURL(ci, urlSafeName),
-			}
-			if liveDocs.EventDocExists(ci, urlSafeName) {
-				ex.EventURL = liveDocs.EventURL(ci, urlSafeName)
-			}
-			ciExamples = append(ciExamples, ex)
-		}
-	}
-	buf.WriteString(formatter.LiveCIExamples(ciExamples, name))
-
-	// Live CLI example
-	fullCommand, cliURL, cliExists := liveDocs.CLIDocExists(name)
-	if cliExists {
-		buf.WriteString(formatter.LiveCLIExample(name, fullCommand, cliURL))
-	}
 
 	// Example use cases
 	if len(meta.Example) > 0 {
