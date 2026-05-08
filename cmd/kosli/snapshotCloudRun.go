@@ -19,10 +19,43 @@ configuration. Each Cloud Run Job contributes one artifact, identified by the
 image bound to the Job (Jobs do not have a revision/traffic-split model).
 Idle Jobs (no currently-running Execution) are included.
 
-The --include / --include-regex / --exclude / --exclude-regex filters apply
-uniformly to both service and job names.
+GCP authentication uses Application Default Credentials. On a developer
+machine, run ^gcloud auth application-default login^; in GCE/GKE/Cloud Run
+the metadata server / Workload Identity is used automatically. The caller
+needs at least ^roles/run.viewer^ on the target project.
+
+Skip all filtering flags to report every service and every job in the given
+project + region. Use ^--include^ and/or ^--include-regex^ to snapshot only a
+subset, OR ^--exclude^ and/or ^--exclude-regex^ to omit a subset; include and
+exclude are mutually exclusive. Filters apply uniformly to both service and
+job names and are case-sensitive.
 
 Currently a hidden, in-development command. Use --dry-run to inspect the payload without sending it to Kosli.`
+
+const snapshotCloudRunExample = `
+# report every Cloud Run service and job in a project + region:
+kosli snapshot cloud-run yourEnvironmentName \
+	--project yourGCPProject \
+	--region yourGCPRegion \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# report only the named services and jobs:
+kosli snapshot cloud-run yourEnvironmentName \
+	--project yourGCPProject \
+	--region yourGCPRegion \
+	--include hello-world,sandman-job \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# report everything except the kosli-reporter job (the Job that runs this command):
+kosli snapshot cloud-run yourEnvironmentName \
+	--project yourGCPProject \
+	--region yourGCPRegion \
+	--exclude kosli-reporter \
+	--api-token yourAPIToken \
+	--org yourOrgName
+`
 
 // cloudRunLister is the seam between the command and the GCP client. Tests
 // override newCloudRunClient with a stub that returns canned services and
@@ -46,11 +79,12 @@ func newSnapshotCloudRunCmd(out io.Writer) *cobra.Command {
 	o := new(snapshotCloudRunOptions)
 	o.resourceFilter = new(filters.ResourceFilterOptions)
 	cmd := &cobra.Command{
-		Use:    "cloud-run ENVIRONMENT-NAME",
-		Short:  snapshotCloudRunShortDesc,
-		Long:   snapshotCloudRunLongDesc,
-		Hidden: true,
-		Args:   cobra.ExactArgs(1),
+		Use:     "cloud-run ENVIRONMENT-NAME",
+		Short:   snapshotCloudRunShortDesc,
+		Long:    snapshotCloudRunLongDesc,
+		Example: snapshotCloudRunExample,
+		Hidden:  true,
+		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if err := RequireGlobalFlags(global, []string{"Org", "ApiToken"}); err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
