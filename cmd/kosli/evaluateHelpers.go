@@ -21,7 +21,7 @@ var policyFetchTimeout = 10 * time.Second
 
 // policyMaxBytes caps how much of a remote --policy response we read into
 // memory. Real Rego policies are kilobytes; this guards against a malicious or
-// misconfigured server streaming an unbounded body. 5 * 2^20 (1Mb)
+// misconfigured server streaming an unbounded body. 5 * 2^20 (5*1MiB)
 const policyMaxBytes = 5 << 20 // 5 MiB
 
 type commonEvaluateOptions struct {
