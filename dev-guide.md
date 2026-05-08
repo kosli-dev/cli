@@ -33,6 +33,14 @@ Windows will not allow building using the makefile, so we need to run the comman
 Then to run Kosli commands:  
 `./kosli.exe [COMMAND]` or `.\kosli.exe [COMMAND]`
 
+## Generating CLI reference docs
+
+To generate docs for all commands into `client_reference/`:
+`make docs`
+
+To generate docs for a specific command:
+`make docs CMD="attest snyk"`
+
 ## Running the tests
 
 To run the tests you need to set the env-var `KOSLI_API_TOKEN_PROD`

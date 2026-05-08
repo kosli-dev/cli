@@ -16,6 +16,35 @@ type DocsCommandTestSuite struct {
 	suite.Suite
 }
 
+func (suite *DocsCommandTestSuite) TestDocsArgsLookup() {
+	tempDirName, err := os.MkdirTemp("", "docsArgsLookup")
+	require.NoError(suite.T(), err)
+	defer func() {
+		if err := os.RemoveAll(tempDirName); err != nil {
+			require.NoError(suite.T(), err, "failed to remove temp dir %s", tempDirName)
+		}
+	}()
+
+	tests := []cmdTestCase{
+		{
+			name:    "valid subcommand generates docs",
+			cmd:     "docs --dir " + tempDirName + " attest snyk",
+			golden:  "",
+		},
+		{
+			name:      "unknown command returns error",
+			cmd:       "docs --dir " + tempDirName + " nonexistent",
+			wantError: true,
+		},
+		{
+			name:      "partial match returns error",
+			cmd:       "docs --dir " + tempDirName + " attest nonexistent",
+			wantError: true,
+		},
+	}
+	runTestCmd(suite.T(), tests)
+}
+
 func (suite *DocsCommandTestSuite) TestDocsCmdSnyk() {
 	global = &GlobalOpts{}
 	tempDirName, err := os.MkdirTemp("", "generatedDocs")
