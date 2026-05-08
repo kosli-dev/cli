@@ -231,7 +231,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	annotationFlag                  = "[optional] Annotate the attestation with data using key=value."
 	attestationDescription          = "[optional] attestation description"
 	attestationOverrideReasonFlag   = "The reason for overriding the attestation."
-	newComplianceStatusFlag         = "[defaulted] The new compliance status to set on the attestation. A boolean flag https://docs.kosli.com/faq/#boolean-flags"
+	newComplianceStatusFlag         = "The new compliance status to set on the attestation. A boolean flag https://docs.kosli.com/faq/#boolean-flags"
 	originalAttestationTypeFlag     = "The original attestation type being overridden (e.g. generic, snyk, junit, sonar, jira, pull_request, custom)."
 	excludeScalingFlag              = "[optional] Exclude scaling events for snapshots. Snapshots with scaling changes will not result in new environment records."
 	includeScalingFlag              = "[optional] Include scaling events for snapshots. Snapshots with scaling changes will result in new environment records."

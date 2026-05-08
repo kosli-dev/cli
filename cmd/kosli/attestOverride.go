@@ -75,6 +75,10 @@ func newAttestOverrideCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
+			if !cmd.Flags().Changed("new-compliance-status") {
+				return ErrorBeforePrintingUsage(cmd, "required flag(s) \"new-compliance-status\" not set")
+			}
+
 			err = RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
@@ -111,7 +115,7 @@ func newAttestOverrideCmd(out io.Writer) *cobra.Command {
 		logger.Error("failed to hide --attachments flag: %v", err)
 	}
 	cmd.Flags().StringVar(&o.payload.Reason, "reason", "", attestationOverrideReasonFlag)
-	cmd.Flags().BoolVar(&o.payload.NewComplianceStatus, "new-compliance-status", true, newComplianceStatusFlag)
+	cmd.Flags().BoolVar(&o.payload.NewComplianceStatus, "new-compliance-status", false, newComplianceStatusFlag)
 	cmd.Flags().StringVar(&o.payload.OriginalAttestationType, "original-attestation-type", "", originalAttestationTypeFlag)
 
 	err := RequireFlags(cmd, []string{"flow", "trail", "name", "reason", "original-attestation-type"})
