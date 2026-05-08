@@ -136,27 +136,27 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd() {
 		},
 		{
 			wantError: true,
-			name:      "06 snapshot cloud-run fails if --services and --exclude are set",
-			cmd:       fmt.Sprintf(`snapshot cloud-run %s --project p --region r --services alpha --exclude beta %s`, suite.envName, suite.defaultKosliArguments),
-			golden:    "Error: only one of --services, --exclude is allowed\n",
+			name:      "06 snapshot cloud-run fails if --include and --exclude are set",
+			cmd:       fmt.Sprintf(`snapshot cloud-run %s --project p --region r --include alpha --exclude beta %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: only one of --include, --exclude is allowed\n",
 		},
 		{
 			wantError: true,
-			name:      "07 snapshot cloud-run fails if --services and --exclude-regex are set",
-			cmd:       fmt.Sprintf(`snapshot cloud-run %s --project p --region r --services alpha --exclude-regex "^b" %s`, suite.envName, suite.defaultKosliArguments),
-			golden:    "Error: only one of --services, --exclude-regex is allowed\n",
+			name:      "07 snapshot cloud-run fails if --include and --exclude-regex are set",
+			cmd:       fmt.Sprintf(`snapshot cloud-run %s --project p --region r --include alpha --exclude-regex "^b" %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: only one of --include, --exclude-regex is allowed\n",
 		},
 		{
 			wantError: true,
-			name:      "08 snapshot cloud-run fails if --services-regex and --exclude are set",
-			cmd:       fmt.Sprintf(`snapshot cloud-run %s --project p --region r --services-regex "^a" --exclude beta %s`, suite.envName, suite.defaultKosliArguments),
-			golden:    "Error: only one of --services-regex, --exclude is allowed\n",
+			name:      "08 snapshot cloud-run fails if --include-regex and --exclude are set",
+			cmd:       fmt.Sprintf(`snapshot cloud-run %s --project p --region r --include-regex "^a" --exclude beta %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: only one of --include-regex, --exclude is allowed\n",
 		},
 		{
 			wantError: true,
-			name:      "09 snapshot cloud-run fails if --services-regex and --exclude-regex are set",
-			cmd:       fmt.Sprintf(`snapshot cloud-run %s --project p --region r --services-regex "^a" --exclude-regex "^b" %s`, suite.envName, suite.defaultKosliArguments),
-			golden:    "Error: only one of --services-regex, --exclude-regex is allowed\n",
+			name:      "09 snapshot cloud-run fails if --include-regex and --exclude-regex are set",
+			cmd:       fmt.Sprintf(`snapshot cloud-run %s --project p --region r --include-regex "^a" --exclude-regex "^b" %s`, suite.envName, suite.defaultKosliArguments),
+			golden:    "Error: only one of --include-regex, --exclude-regex is allowed\n",
 		},
 	}
 
@@ -174,14 +174,14 @@ func (suite *SnapshotCloudRunTestSuite) runFilteredCmd(filterArgs string) string
 	return combined
 }
 
-func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_Services() {
-	out := suite.runFilteredCmd("--services alpha")
+func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_Include() {
+	out := suite.runFilteredCmd("--include alpha")
 	require.Contains(suite.T(), out, `"serviceName": "alpha"`)
 	require.NotContains(suite.T(), out, `"serviceName": "beta"`)
 }
 
-func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_ServicesRegex() {
-	out := suite.runFilteredCmd(`--services-regex "^al"`)
+func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_IncludeRegex() {
+	out := suite.runFilteredCmd(`--include-regex "^al"`)
 	require.Contains(suite.T(), out, `"serviceName": "alpha"`)
 	require.NotContains(suite.T(), out, `"serviceName": "beta"`)
 }

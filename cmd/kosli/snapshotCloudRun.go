@@ -29,14 +29,14 @@ var newCloudRunClient = func(ctx context.Context) (cloudRunLister, error) {
 }
 
 type snapshotCloudRunOptions struct {
-	project       string
-	region        string
-	serviceFilter *filters.ResourceFilterOptions
+	project        string
+	region         string
+	resourceFilter *filters.ResourceFilterOptions
 }
 
 func newSnapshotCloudRunCmd(out io.Writer) *cobra.Command {
 	o := new(snapshotCloudRunOptions)
-	o.serviceFilter = new(filters.ResourceFilterOptions)
+	o.resourceFilter = new(filters.ResourceFilterOptions)
 	cmd := &cobra.Command{
 		Use:    "cloud-run ENVIRONMENT-NAME",
 		Short:  snapshotCloudRunShortDesc,
@@ -48,10 +48,10 @@ func newSnapshotCloudRunCmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 			for _, pair := range [][]string{
-				{"services", "exclude"},
-				{"services", "exclude-regex"},
-				{"services-regex", "exclude"},
-				{"services-regex", "exclude-regex"},
+				{"include", "exclude"},
+				{"include", "exclude-regex"},
+				{"include-regex", "exclude"},
+				{"include-regex", "exclude-regex"},
 			} {
 				if err := MuXRequiredFlags(cmd, pair, false); err != nil {
 					return err
@@ -66,10 +66,10 @@ func newSnapshotCloudRunCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVar(&o.project, "project", "", "[required] GCP project ID.")
 	cmd.Flags().StringVar(&o.region, "region", "", "[required] GCP region (e.g. europe-west1).")
-	cmd.Flags().StringSliceVar(&o.serviceFilter.IncludeNames, "services", []string{}, cloudRunServicesFlag)
-	cmd.Flags().StringSliceVar(&o.serviceFilter.IncludeNamesRegex, "services-regex", []string{}, cloudRunServicesRegexFlag)
-	cmd.Flags().StringSliceVar(&o.serviceFilter.ExcludeNames, "exclude", []string{}, cloudRunExcludeFlag)
-	cmd.Flags().StringSliceVar(&o.serviceFilter.ExcludeNamesRegex, "exclude-regex", []string{}, cloudRunExcludeRegexFlag)
+	cmd.Flags().StringSliceVar(&o.resourceFilter.IncludeNames, "include", []string{}, cloudRunIncludeFlag)
+	cmd.Flags().StringSliceVar(&o.resourceFilter.IncludeNamesRegex, "include-regex", []string{}, cloudRunIncludeRegexFlag)
+	cmd.Flags().StringSliceVar(&o.resourceFilter.ExcludeNames, "exclude", []string{}, cloudRunExcludeFlag)
+	cmd.Flags().StringSliceVar(&o.resourceFilter.ExcludeNamesRegex, "exclude-regex", []string{}, cloudRunExcludeRegexFlag)
 	addDryRunFlag(cmd)
 
 	if err := RequireFlags(cmd, []string{"project", "region"}); err != nil {
@@ -105,7 +105,7 @@ func (o *snapshotCloudRunOptions) run(args []string) error {
 
 	filteredServices := make([]cloudrun.Service, 0, len(services))
 	for _, svc := range services {
-		include, err := o.serviceFilter.ShouldInclude(svc.Name)
+		include, err := o.resourceFilter.ShouldInclude(svc.Name)
 		if err != nil {
 			return err
 		}
@@ -115,7 +115,7 @@ func (o *snapshotCloudRunOptions) run(args []string) error {
 	}
 	filteredJobs := make([]cloudrun.Job, 0, len(jobs))
 	for _, job := range jobs {
-		include, err := o.serviceFilter.ShouldInclude(job.Name)
+		include, err := o.resourceFilter.ShouldInclude(job.Name)
 		if err != nil {
 			return err
 		}
