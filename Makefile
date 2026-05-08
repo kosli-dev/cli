@@ -1,4 +1,4 @@
-.PHONY: help build clean clean-cache deps fmt lint vet docker ldflags ensure_golangci-lint check_dirty add_test_tag build_release ensure_network ensure_gotestsum test_setup test_integration test_integration_full test_integration_single licenses upgrade-deps helm-lint helm-docs release suggest-version-ai
+.PHONY: help build clean clean-cache deps fmt lint vet docker ldflags ensure_golangci-lint check_dirty add_test_tag build_release ensure_network ensure_gotestsum test_setup test_integration test_integration_full test_integration_single licenses upgrade-deps helm-lint helm-docs docs release suggest-version-ai
 .DEFAULT: help
 .DEFAULT_GOAL := help
 .DELETE_ON_ERROR:
@@ -186,6 +186,11 @@ helm-lint: ## Lint Helm chart
 
 helm-docs: helm-lint ## Update Helm docs
 	@cd charts/k8s-reporter &&  docker run --rm --volume "$(PWD):/helm-docs" jnorwood/helm-docs:latest --template-files README.md.gotmpl,_templates.gotmpl --output-file README.md
+
+docs: build ## Generate CLI reference docs (use CMD="attest snyk" for one command)
+	@mkdir -p client_reference
+	@./kosli docs --dir client_reference $(CMD)
+	@echo "Docs written to client_reference/"
 
 # Suggest next semver and changelog using Claude.
 # Writes changelog to dist/release_notes.md for use with goreleaser --release-notes.

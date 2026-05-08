@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/kosli-dev/cli/internal/docgen"
@@ -12,6 +13,10 @@ const docsShortDesc = `Generate documentation files for Kosli CLI. `
 
 const docsLongDesc = docsShortDesc + `
 This command can generate documentation in the following formats: Markdown.
+
+When called with no arguments, docs are generated for all commands.
+When called with arguments, only the matching subcommand's docs are generated.
+For example: kosli docs attest snyk
 `
 
 type docsOptions struct {
@@ -28,9 +33,16 @@ func newDocsCmd(out io.Writer) *cobra.Command {
 		Short:  docsShortDesc,
 		Long:   docsLongDesc,
 		Hidden: true,
-		Args:   cobra.NoArgs,
+		Args:   cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.topCmd = cmd.Root()
+			if len(args) > 0 {
+				target, _, err := o.topCmd.Find(args)
+				if err != nil {
+					return fmt.Errorf("command %q not found: %w", args, err)
+				}
+				o.topCmd = target
+			}
 			return o.run()
 		},
 	}
@@ -64,4 +76,3 @@ func (o *docsOptions) run() error {
 	}
 	return doc.GenMarkdownTree(o.topCmd, o.dest)
 }
-
