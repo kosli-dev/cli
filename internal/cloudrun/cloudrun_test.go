@@ -2,6 +2,7 @@ package cloudrun
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -12,10 +13,12 @@ import (
 
 // fakeAPI is the in-memory test double for apiClient.
 type fakeAPI struct {
-	services  []*runpb.Service
-	revisions map[string]*runpb.Revision
-	listErr   error
-	getErr    error
+	services    []*runpb.Service
+	revisions   map[string]*runpb.Revision
+	jobs        []*runpb.Job
+	listErr     error
+	getErr      error
+	listJobsErr error
 }
 
 func (f *fakeAPI) listServices(_ context.Context, _, _ string) ([]*runpb.Service, error) {
@@ -36,6 +39,13 @@ func (f *fakeAPI) getRevision(_ context.Context, name string) (*runpb.Revision, 
 	return rev, nil
 }
 
+func (f *fakeAPI) listJobs(_ context.Context, _, _ string) ([]*runpb.Job, error) {
+	if f.listJobsErr != nil {
+		return nil, f.listJobsErr
+	}
+	return f.jobs, nil
+}
+
 type errNotFound struct{ name string }
 
 func (e errNotFound) Error() string { return "revision not found: " + e.name }
@@ -51,6 +61,27 @@ func svcResource(name string) string {
 
 func revResource(svc, rev string) string {
 	return svcResource(svc) + "/revisions/" + rev
+}
+
+func jobResource(name string) string {
+	return "projects/" + testProject + "/locations/" + testRegion + "/jobs/" + name
+}
+
+// jobWithContainers is a small constructor for *runpb.Job test fixtures.
+// It nests Template (ExecutionTemplate) → Template (TaskTemplate) → Containers,
+// which mirrors the real Cloud Run Admin API v2 shape.
+func jobWithContainers(name string, createdAt *timestamppb.Timestamp, images ...string) *runpb.Job {
+	containers := make([]*runpb.Container, 0, len(images))
+	for _, img := range images {
+		containers = append(containers, &runpb.Container{Image: img})
+	}
+	return &runpb.Job{
+		Name:       jobResource(name),
+		CreateTime: createdAt,
+		Template: &runpb.ExecutionTemplate{
+			Template: &runpb.TaskTemplate{Containers: containers},
+		},
+	}
 }
 
 func newClient(fake *fakeAPI) *Client {
@@ -268,6 +299,90 @@ func TestListServices_ServiceWithNoTrafficTargetsHasEmptyRevisions(t *testing.T)
 
 func TestClient_CloseOnFakeAPIIsNoOp(t *testing.T) {
 	require.NoError(t, newClient(&fakeAPI{}).Close())
+}
+
+func TestListJobs_EmptyReturnsEmptySlice(t *testing.T) {
+	got, err := newClient(&fakeAPI{}).ListJobs(context.Background(), testProject, testRegion)
+	require.NoError(t, err)
+	require.Empty(t, got)
+}
+
+func TestListJobs_SingleJobDigestPinned(t *testing.T) {
+	created := time.Date(2026, 4, 28, 12, 0, 0, 0, time.UTC)
+	fake := &fakeAPI{
+		jobs: []*runpb.Job{
+			jobWithContainers("sandman-job", timestamppb.New(created), "gcr.io/foo/bar@sha256:abc123"),
+		},
+	}
+
+	got, err := newClient(fake).ListJobs(context.Background(), testProject, testRegion)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+
+	job := got[0]
+	require.Equal(t, "sandman-job", job.Name)
+	require.True(t, job.CreatedAt.Equal(created), "CreatedAt = %v, want %v", job.CreatedAt, created)
+	require.Equal(t, map[string]string{"gcr.io/foo/bar@sha256:abc123": "abc123"}, job.Digests)
+}
+
+func TestListJobs_TagPinnedImageYieldsEmptyDigest(t *testing.T) {
+	fake := &fakeAPI{
+		jobs: []*runpb.Job{jobWithContainers("job1", nil, "gcr.io/foo/bar:v1")},
+	}
+
+	got, err := newClient(fake).ListJobs(context.Background(), testProject, testRegion)
+	require.NoError(t, err)
+	require.Equal(t, map[string]string{"gcr.io/foo/bar:v1": ""}, got[0].Digests)
+}
+
+func TestListJobs_MultipleContainersAllAppearInDigests(t *testing.T) {
+	fake := &fakeAPI{
+		jobs: []*runpb.Job{
+			jobWithContainers("job1", nil,
+				"gcr.io/foo/main@sha256:main",
+				"gcr.io/foo/sidecar@sha256:side",
+			),
+		},
+	}
+
+	got, err := newClient(fake).ListJobs(context.Background(), testProject, testRegion)
+	require.NoError(t, err)
+	require.Equal(t, map[string]string{
+		"gcr.io/foo/main@sha256:main":    "main",
+		"gcr.io/foo/sidecar@sha256:side": "side",
+	}, got[0].Digests)
+}
+
+func TestListJobs_MultipleJobs(t *testing.T) {
+	fake := &fakeAPI{
+		jobs: []*runpb.Job{
+			jobWithContainers("job-a", nil, "img@sha256:a"),
+			jobWithContainers("job-b", nil, "img@sha256:b"),
+		},
+	}
+
+	got, err := newClient(fake).ListJobs(context.Background(), testProject, testRegion)
+	require.NoError(t, err)
+	require.Len(t, got, 2)
+	require.ElementsMatch(t, []string{"job-a", "job-b"}, []string{got[0].Name, got[1].Name})
+}
+
+func TestListJobs_NilCreateTimeYieldsZeroTime(t *testing.T) {
+	fake := &fakeAPI{
+		jobs: []*runpb.Job{jobWithContainers("job1", nil, "img@sha256:x")},
+	}
+
+	got, err := newClient(fake).ListJobs(context.Background(), testProject, testRegion)
+	require.NoError(t, err)
+	require.True(t, got[0].CreatedAt.IsZero(), "CreatedAt should be zero when CreateTime is nil")
+}
+
+func TestListJobs_ListErrorPropagates(t *testing.T) {
+	wantErr := errors.New("upstream boom")
+	fake := &fakeAPI{listJobsErr: wantErr}
+
+	_, err := newClient(fake).ListJobs(context.Background(), testProject, testRegion)
+	require.ErrorIs(t, err, wantErr)
 }
 
 func TestListServices_MultipleServices(t *testing.T) {

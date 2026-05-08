@@ -35,10 +35,12 @@ type ArtifactData struct {
 	JobName      string            `json:"jobName,omitempty"`
 }
 
-// ToEnvRequest flattens services into a list of artifacts, one per revision.
-// Services with no revisions contribute nothing, mirroring the ECS behaviour
-// of services with no running tasks.
-func ToEnvRequest(services []Service) *EnvRequest {
+// ToEnvRequest flattens services and jobs into a list of artifacts. Services
+// contribute one artifact per revision; jobs contribute one artifact each.
+// Services with no revisions contribute nothing (mirroring ECS services with
+// no running tasks); the same is true of jobs only if the input slice is
+// empty. Service artifacts come first in the output, then job artifacts.
+func ToEnvRequest(services []Service, jobs []Job) *EnvRequest {
 	artifacts := []*ArtifactData{}
 	for _, svc := range services {
 		for _, rev := range svc.Revisions {
@@ -50,6 +52,14 @@ func ToEnvRequest(services []Service) *EnvRequest {
 				RevisionName: rev.Name,
 			})
 		}
+	}
+	for _, job := range jobs {
+		artifacts = append(artifacts, &ArtifactData{
+			Digests:   job.Digests,
+			CreatedAt: job.CreatedAt.Unix(),
+			Kind:      KindJob,
+			JobName:   job.Name,
+		})
 	}
 	return &EnvRequest{Type: reportType, Artifacts: artifacts}
 }

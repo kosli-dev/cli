@@ -35,10 +35,22 @@ type Revision struct {
 	CreatedAt time.Time
 }
 
+// Job is a Cloud Run Job and the digest-pinned images of the containers in its
+// task template. Jobs do not have a revision/traffic-split model — there is one
+// current image per Job, taken from Template.Template.Containers. Same digest
+// semantics as Revision: "" means the image was not digest-pinned and the
+// digest could not be parsed without a registry lookup.
+type Job struct {
+	Name      string
+	Digests   map[string]string
+	CreatedAt time.Time
+}
+
 // apiClient is the unexported seam that lets tests substitute a fake.
 type apiClient interface {
 	listServices(ctx context.Context, project, region string) ([]*runpb.Service, error)
 	getRevision(ctx context.Context, name string) (*runpb.Revision, error)
+	listJobs(ctx context.Context, project, region string) ([]*runpb.Job, error)
 }
 
 // Client fetches Cloud Run data from GCP.
@@ -61,18 +73,24 @@ func New(ctx context.Context) (*Client, error) {
 		_ = services.Close()
 		return nil, fmt.Errorf("GCP client setup failed: %w", err)
 	}
-	return &Client{api: &gcpAPI{services: services, revisions: revisions}}, nil
+	jobs, err := run.NewJobsClient(ctx)
+	if err != nil {
+		_ = services.Close()
+		_ = revisions.Close()
+		return nil, fmt.Errorf("GCP client setup failed: %w", err)
+	}
+	return &Client{api: &gcpAPI{services: services, revisions: revisions, jobs: jobs}}, nil
 }
 
 // Close releases the underlying gRPC connections. Safe to call on a Client
-// constructed with a fake apiClient (returns nil). Both clients are always
-// closed; errors from each are joined so neither is silently dropped.
+// constructed with a fake apiClient (returns nil). All clients are always
+// closed; errors from each are joined so none are silently dropped.
 func (c *Client) Close() error {
 	g, ok := c.api.(*gcpAPI)
 	if !ok {
 		return nil
 	}
-	return errors.Join(g.services.Close(), g.revisions.Close())
+	return errors.Join(g.services.Close(), g.revisions.Close(), g.jobs.Close())
 }
 
 // ListServices returns every Cloud Run service in the given project+region,
@@ -136,6 +154,40 @@ func trafficRevisionNames(svc *runpb.Service) []string {
 	return out
 }
 
+// ListJobs returns every Cloud Run Job in the given project+region. Each Job
+// carries the digest-pinned images of the containers in its task template. The
+// API returns the full Job resource (including its template) on the list call,
+// so unlike services no per-resource follow-up is needed.
+func (c *Client) ListJobs(ctx context.Context, project, region string) ([]Job, error) {
+	rawJobs, err := c.api.listJobs(ctx, project, region)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]Job, 0, len(rawJobs))
+	for _, raw := range rawJobs {
+		out = append(out, toJob(raw))
+	}
+	return out, nil
+}
+
+func toJob(j *runpb.Job) Job {
+	containers := j.GetTemplate().GetTemplate().GetContainers()
+	digests := make(map[string]string, len(containers))
+	for _, container := range containers {
+		image := container.GetImage()
+		digests[image] = parseDigest(image)
+	}
+	var createdAt time.Time
+	if ts := j.GetCreateTime(); ts != nil {
+		createdAt = ts.AsTime()
+	}
+	return Job{
+		Name:      shortName(j.GetName()),
+		Digests:   digests,
+		CreatedAt: createdAt,
+	}
+}
+
 func toRevision(rev *runpb.Revision) Revision {
 	digests := make(map[string]string, len(rev.GetContainers()))
 	for _, container := range rev.GetContainers() {
@@ -178,6 +230,7 @@ func shortName(fullName string) string {
 type gcpAPI struct {
 	services  *run.ServicesClient
 	revisions *run.RevisionsClient
+	jobs      *run.JobsClient
 }
 
 func (g *gcpAPI) listServices(ctx context.Context, project, region string) ([]*runpb.Service, error) {
@@ -198,4 +251,20 @@ func (g *gcpAPI) listServices(ctx context.Context, project, region string) ([]*r
 
 func (g *gcpAPI) getRevision(ctx context.Context, name string) (*runpb.Revision, error) {
 	return g.revisions.GetRevision(ctx, &runpb.GetRevisionRequest{Name: name})
+}
+
+func (g *gcpAPI) listJobs(ctx context.Context, project, region string) ([]*runpb.Job, error) {
+	parent := fmt.Sprintf("projects/%s/locations/%s", project, region)
+	it := g.jobs.ListJobs(ctx, &runpb.ListJobsRequest{Parent: parent})
+	var out []*runpb.Job
+	for {
+		job, err := it.Next()
+		if err == iterator.Done {
+			return out, nil
+		}
+		if err != nil {
+			return nil, fmt.Errorf("listing Cloud Run jobs in %s: %w", parent, err)
+		}
+		out = append(out, job)
+	}
 }
