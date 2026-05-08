@@ -75,13 +75,13 @@ func newAttestOverrideCmd(out io.Writer) *cobra.Command {
 				return err
 			}
 
-			if !cmd.Flags().Changed("new-compliance-status") {
-				return fmt.Errorf(`required flag(s) "new-compliance-status" not set`)
-			}
-
 			err = RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
+			}
+
+			if !cmd.Flags().Changed("new-compliance-status") {
+				return fmt.Errorf(`required flag(s) "new-compliance-status" not set`)
 			}
 
 			err = MuXRequiredFlags(cmd, []string{"fingerprint", "artifact-type"}, false)
