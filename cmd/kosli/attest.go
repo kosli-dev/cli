@@ -25,6 +25,7 @@ func newAttestCmd(out io.Writer) *cobra.Command {
 		newAttestPRCmd(out),
 		newAttestSonarCmd(out),
 		newAttestCustomCmd(out),
+		newAttestOverrideCmd(out),
 	)
 	return cmd
 }
