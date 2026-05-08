@@ -26,7 +26,7 @@ const policyMaxBytes = 5 << 20 // 5 MiB
 
 type commonEvaluateOptions struct {
 	flowName     string
-	policyFile   string
+	policyRef    string
 	output       string
 	showInput    bool
 	attestations []string
@@ -37,7 +37,7 @@ type commonEvaluateOptions struct {
 
 func (o *commonEvaluateOptions) addFlags(cmd *cobra.Command, policyDesc string) {
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
-	cmd.Flags().StringVarP(&o.policyFile, "policy", "p", "", policyDesc)
+	cmd.Flags().StringVarP(&o.policyRef, "policy", "p", "", policyDesc)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	cmd.Flags().BoolVar(&o.showInput, "show-input", false, "[optional] Include the policy input data in the output.")
 	cmd.Flags().StringSliceVar(&o.attestations, "attestations", nil, "[optional] Limit which attestations are included. Plain name for trail-level, dot-qualified (artifact.name) for artifact-level.")
@@ -179,9 +179,6 @@ func fetchRemotePolicy(remoteURL string) ([]byte, error) {
 // the most recent request's host. This blocks an SSRF vector where a trusted
 // remote redirects the CLI to an internal address.
 func sameHostRedirectPolicy(req *http.Request, via []*http.Request) error {
-	if len(via) == 0 {
-		return nil
-	}
 	if len(via) >= 5 {
 		return fmt.Errorf("stopped after %d redirects", len(via))
 	}
