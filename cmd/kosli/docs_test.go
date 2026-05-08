@@ -19,7 +19,11 @@ type DocsCommandTestSuite struct {
 func (suite *DocsCommandTestSuite) TestDocsArgsLookup() {
 	tempDirName, err := os.MkdirTemp("", "docsArgsLookup")
 	require.NoError(suite.T(), err)
-	defer os.RemoveAll(tempDirName)
+	defer func() {
+		if err := os.RemoveAll(tempDirName); err != nil {
+			require.NoError(suite.T(), err, "failed to remove temp dir %s", tempDirName)
+		}
+	}()
 
 	tests := []cmdTestCase{
 		{
