@@ -148,6 +148,10 @@ func fetchRemotePolicy(remoteURL string) ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse --http-proxy %q: %w", global.HttpProxy, err)
 		}
+		// This builds a fresh http.Transport with Go defaults. If the
+		// codebase later adopts a shared transport with custom TLS/dial
+		// settings, route policy fetches through it (or clone it) so they
+		// inherit those settings.
 		client.Transport = &http.Transport{Proxy: http.ProxyURL(proxyURL)}
 	}
 
