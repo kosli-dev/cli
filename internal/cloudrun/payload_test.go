@@ -9,12 +9,12 @@ import (
 )
 
 func TestToEnvRequest_TypeIsCloudRun(t *testing.T) {
-	got := ToEnvRequest(nil)
+	got := ToEnvRequest(nil, nil)
 	require.Equal(t, "cloud-run", got.Type)
 }
 
 func TestToEnvRequest_EmptyInput(t *testing.T) {
-	got := ToEnvRequest(nil)
+	got := ToEnvRequest(nil, nil)
 	require.NotNil(t, got)
 	require.Empty(t, got.Artifacts)
 }
@@ -35,7 +35,7 @@ func TestToEnvRequest_SingleServiceSingleRevision(t *testing.T) {
 		},
 	}
 
-	got := ToEnvRequest(services)
+	got := ToEnvRequest(services, nil)
 	require.Len(t, got.Artifacts, 1)
 
 	art := got.Artifacts[0]
@@ -64,7 +64,7 @@ func TestToEnvRequest_MultipleServicesMultipleRevisions(t *testing.T) {
 		},
 	}
 
-	got := ToEnvRequest(services)
+	got := ToEnvRequest(services, nil)
 	require.Len(t, got.Artifacts, 3)
 
 	revisionNames := []string{
@@ -90,7 +90,7 @@ func TestToEnvRequest_ServiceWithNoRevisionsContributesNothing(t *testing.T) {
 		},
 	}
 
-	got := ToEnvRequest(services)
+	got := ToEnvRequest(services, nil)
 	require.Len(t, got.Artifacts, 1)
 	require.Equal(t, "svc-a", got.Artifacts[0].ServiceName)
 }
@@ -100,7 +100,7 @@ func TestToEnvRequest_ZeroCreatedAtSerialisesAsZero(t *testing.T) {
 		{Name: "svc", Revisions: []Revision{{Name: "rev"}}},
 	}
 
-	got := ToEnvRequest(services)
+	got := ToEnvRequest(services, nil)
 	require.Len(t, got.Artifacts, 1)
 	require.Equal(t, time.Time{}.Unix(), got.Artifacts[0].CreatedAt)
 }
@@ -120,7 +120,7 @@ func TestToEnvRequest_SerializesFlatFields_JSON(t *testing.T) {
 		},
 	}
 
-	raw, err := json.Marshal(ToEnvRequest(services))
+	raw, err := json.Marshal(ToEnvRequest(services, nil))
 	require.NoError(t, err)
 
 	var decoded struct {
@@ -136,4 +136,70 @@ func TestToEnvRequest_SerializesFlatFields_JSON(t *testing.T) {
 	require.NotContains(t, art, "cloud_run_context", "fields must be flat, not nested under cloud_run_context")
 	require.NotContains(t, art, "service_name", "JSON keys must be camelCase to mirror GCP API")
 	require.NotContains(t, art, "revision_name", "JSON keys must be camelCase to mirror GCP API")
+}
+
+func TestToEnvRequest_SingleJob(t *testing.T) {
+	created := time.Date(2026, 4, 28, 12, 0, 0, 0, time.UTC)
+	jobs := []Job{
+		{
+			Name:      "sandman-job",
+			Digests:   map[string]string{"img@sha256:jjj": "jjj"},
+			CreatedAt: created,
+		},
+	}
+
+	got := ToEnvRequest(nil, jobs)
+	require.Len(t, got.Artifacts, 1)
+
+	art := got.Artifacts[0]
+	require.Equal(t, KindJob, art.Kind)
+	require.Equal(t, "sandman-job", art.JobName)
+	require.Empty(t, art.ServiceName)
+	require.Empty(t, art.RevisionName)
+	require.Equal(t, map[string]string{"img@sha256:jjj": "jjj"}, art.Digests)
+	require.Equal(t, created.Unix(), art.CreatedAt)
+}
+
+func TestToEnvRequest_ServicesAndJobsMixed(t *testing.T) {
+	services := []Service{
+		{Name: "svc-a", Revisions: []Revision{{Name: "svc-a-rev1", Digests: map[string]string{"img@sha256:s": "s"}}}},
+	}
+	jobs := []Job{
+		{Name: "job-a", Digests: map[string]string{"img@sha256:j": "j"}},
+	}
+
+	got := ToEnvRequest(services, jobs)
+	require.Len(t, got.Artifacts, 2)
+
+	require.Equal(t, KindService, got.Artifacts[0].Kind, "service artifacts come first")
+	require.Equal(t, "svc-a", got.Artifacts[0].ServiceName)
+	require.Equal(t, "svc-a-rev1", got.Artifacts[0].RevisionName)
+	require.Empty(t, got.Artifacts[0].JobName)
+
+	require.Equal(t, KindJob, got.Artifacts[1].Kind)
+	require.Equal(t, "job-a", got.Artifacts[1].JobName)
+	require.Empty(t, got.Artifacts[1].ServiceName)
+	require.Empty(t, got.Artifacts[1].RevisionName)
+}
+
+func TestToEnvRequest_JobSerializesAsFlatJobName(t *testing.T) {
+	jobs := []Job{
+		{Name: "sandman-job", Digests: map[string]string{"img@sha256:jjj": "jjj"}},
+	}
+
+	raw, err := json.Marshal(ToEnvRequest(nil, jobs))
+	require.NoError(t, err)
+
+	var decoded struct {
+		Artifacts []map[string]any `json:"artifacts"`
+	}
+	require.NoError(t, json.Unmarshal(raw, &decoded))
+	require.Len(t, decoded.Artifacts, 1)
+
+	art := decoded.Artifacts[0]
+	require.Equal(t, "job", art["kind"])
+	require.Equal(t, "sandman-job", art["jobName"])
+	require.NotContains(t, art, "serviceName", "job artifacts must not include serviceName")
+	require.NotContains(t, art, "revisionName", "job artifacts must not include revisionName")
+	require.NotContains(t, art, "job_name", "JSON keys must be camelCase to mirror GCP API")
 }

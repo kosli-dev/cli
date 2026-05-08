@@ -17,9 +17,11 @@ const snapshotCloudRunLongDesc = snapshotCloudRunShortDesc + `
 Currently a hidden, in-development command. Use --dry-run to inspect the payload without sending it to Kosli.`
 
 // cloudRunLister is the seam between the command and the GCP client. Tests
-// override newCloudRunClient with a stub that returns canned services.
+// override newCloudRunClient with a stub that returns canned services and
+// jobs. Both lookups use the same project/region.
 type cloudRunLister interface {
 	ListServices(ctx context.Context, project, region string) ([]cloudrun.Service, error)
+	ListJobs(ctx context.Context, project, region string) ([]cloudrun.Job, error)
 }
 
 var newCloudRunClient = func(ctx context.Context) (cloudRunLister, error) {
@@ -96,19 +98,33 @@ func (o *snapshotCloudRunOptions) run(args []string) error {
 	if err != nil {
 		return cloudrun.Classify(err, o.project, o.region)
 	}
+	jobs, err := client.ListJobs(ctx, o.project, o.region)
+	if err != nil {
+		return cloudrun.Classify(err, o.project, o.region)
+	}
 
-	filtered := make([]cloudrun.Service, 0, len(services))
+	filteredServices := make([]cloudrun.Service, 0, len(services))
 	for _, svc := range services {
 		include, err := o.serviceFilter.ShouldInclude(svc.Name)
 		if err != nil {
 			return err
 		}
 		if include {
-			filtered = append(filtered, svc)
+			filteredServices = append(filteredServices, svc)
+		}
+	}
+	filteredJobs := make([]cloudrun.Job, 0, len(jobs))
+	for _, job := range jobs {
+		include, err := o.serviceFilter.ShouldInclude(job.Name)
+		if err != nil {
+			return err
+		}
+		if include {
+			filteredJobs = append(filteredJobs, job)
 		}
 	}
 
-	payload := cloudrun.ToEnvRequest(filtered)
+	payload := cloudrun.ToEnvRequest(filteredServices, filteredJobs)
 
 	reqParams := &requests.RequestParams{
 		Method:  http.MethodPut,
@@ -119,7 +135,7 @@ func (o *snapshotCloudRunOptions) run(args []string) error {
 	}
 	_, err = kosliClient.Do(reqParams)
 	if err == nil && !global.DryRun {
-		logger.Info("[%d] revisions were reported to environment %s", len(payload.Artifacts), envName)
+		logger.Info("[%d] artifacts were reported to environment %s", len(payload.Artifacts), envName)
 	}
 	return err
 }

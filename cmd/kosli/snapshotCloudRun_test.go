@@ -15,11 +15,16 @@ import (
 
 type stubCloudRunLister struct {
 	services []cloudrun.Service
+	jobs     []cloudrun.Job
 	err      error
 }
 
 func (s stubCloudRunLister) ListServices(_ context.Context, _, _ string) ([]cloudrun.Service, error) {
 	return s.services, s.err
+}
+
+func (s stubCloudRunLister) ListJobs(_ context.Context, _, _ string) ([]cloudrun.Job, error) {
+	return s.jobs, s.err
 }
 
 var origNewCloudRunClient = newCloudRunClient
@@ -60,6 +65,20 @@ func stubServices() []cloudrun.Service {
 					CreatedAt: time.Date(2026, 4, 28, 12, 0, 0, 0, time.UTC),
 				},
 			},
+		},
+	}
+}
+
+// stubJobs returns one Cloud Run Job. Used by tests that need both services
+// and jobs in the same snapshot, or that exercise filtering on job names.
+// Digest is full 64-char hex for the same reason as stubServices.
+func stubJobs() []cloudrun.Job {
+	const sandmanDigest = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+	return []cloudrun.Job{
+		{
+			Name:      "sandman-job",
+			Digests:   map[string]string{"gcr.io/x/sandman@sha256:" + sandmanDigest: sandmanDigest},
+			CreatedAt: time.Date(2026, 4, 28, 12, 0, 0, 0, time.UTC),
 		},
 	}
 }
@@ -182,14 +201,58 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_ExcludeRegex(
 // TestSnapshotCloudRunCmd_HappyPathReportsToServer exercises the full
 // CLI → local Kosli server roundtrip with the GCP client stubbed: the env is
 // already created in SetupTest with type "cloud-run", and the command is
-// expected to PUT the snapshot and emit the "[N] revisions were reported"
-// success log mirroring ECS.
+// expected to PUT the snapshot and emit the "[N] artifacts were reported"
+// success log. Default stub returns 2 services + 0 jobs => 2 artifacts.
 func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd_HappyPathReportsToServer() {
 	cmd := fmt.Sprintf(`snapshot cloud-run %s --project p --region r %s`, suite.envName, suite.defaultKosliArguments)
 	_, combined, _, _, err := executeCommandC(cmd)
 
 	require.NoError(suite.T(), err, "command failed: %s", combined)
-	require.Contains(suite.T(), combined, fmt.Sprintf("[2] revisions were reported to environment %s", suite.envName))
+	require.Contains(suite.T(), combined, fmt.Sprintf("[2] artifacts were reported to environment %s", suite.envName))
+}
+
+// TestSnapshotCloudRunCmd_DryRunIncludesJobs verifies that idle Cloud Run
+// Jobs surface in the snapshot payload alongside services, with the flat
+// kind=job / jobName shape.
+func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd_DryRunIncludesJobs() {
+	newCloudRunClient = func(_ context.Context) (cloudRunLister, error) {
+		return stubCloudRunLister{services: stubServices(), jobs: stubJobs()}, nil
+	}
+
+	cmd := fmt.Sprintf(`snapshot cloud-run %s --project p --region r --dry-run %s`, suite.envName, suite.defaultKosliArguments)
+	_, combined, _, _, err := executeCommandC(cmd)
+
+	require.NoError(suite.T(), err, "command failed: %s", combined)
+	require.Contains(suite.T(), combined, `"kind": "service"`)
+	require.Contains(suite.T(), combined, `"serviceName": "alpha"`)
+	require.Contains(suite.T(), combined, `"kind": "job"`)
+	require.Contains(suite.T(), combined, `"jobName": "sandman-job"`)
+}
+
+// TestSnapshotCloudRunCmd_HappyPathReportsServicesAndJobs is the live-server
+// counterpart to the dry-run test above: 2 services + 1 job → 3 artifacts.
+func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd_HappyPathReportsServicesAndJobs() {
+	newCloudRunClient = func(_ context.Context) (cloudRunLister, error) {
+		return stubCloudRunLister{services: stubServices(), jobs: stubJobs()}, nil
+	}
+
+	cmd := fmt.Sprintf(`snapshot cloud-run %s --project p --region r %s`, suite.envName, suite.defaultKosliArguments)
+	_, combined, _, _, err := executeCommandC(cmd)
+
+	require.NoError(suite.T(), err, "command failed: %s", combined)
+	require.Contains(suite.T(), combined, fmt.Sprintf("[3] artifacts were reported to environment %s", suite.envName))
+}
+
+// TestSnapshotCloudRunFilter_AppliesToJobs verifies that the same name filter
+// applies uniformly to job names — excluding by name removes the matching job.
+func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_AppliesToJobs() {
+	newCloudRunClient = func(_ context.Context) (cloudRunLister, error) {
+		return stubCloudRunLister{services: stubServices(), jobs: stubJobs()}, nil
+	}
+
+	out := suite.runFilteredCmd("--exclude sandman-job")
+	require.Contains(suite.T(), out, `"serviceName": "alpha"`, "services should be unaffected")
+	require.NotContains(suite.T(), out, `"jobName": "sandman-job"`, "the named job must be filtered out")
 }
 
 // TestSnapshotCloudRunCmd_UnauthenticatedReturnsFriendlyError verifies that a
