@@ -8,12 +8,16 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/kosli-dev/cli/internal/evaluate"
 	"github.com/kosli-dev/cli/internal/output"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/spf13/cobra"
 )
+
+// policyFetchTimeout caps how long a remote --policy fetch can take.
+var policyFetchTimeout = 3 * time.Second
 
 type commonEvaluateOptions struct {
 	flowName     string
@@ -105,6 +109,52 @@ func fetchAndEnrichTrail(flowName, trailName string, attestations []string) (int
 	return trailData, nil
 }
 
+// loadPolicy reads a Rego policy from a local file path or, when ref starts
+// with http:// or https://, fetches it over HTTP. Remote fetches are
+// unauthenticated and uncached; callers are responsible for the integrity of
+// the source.
+func loadPolicy(ref string) ([]byte, error) {
+	if isRemotePolicyRef(ref) {
+		return fetchRemotePolicy(ref)
+	}
+	body, err := os.ReadFile(ref)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read policy file: %w", err)
+	}
+	return body, nil
+}
+
+func isRemotePolicyRef(ref string) bool {
+	return strings.HasPrefix(ref, "http://") || strings.HasPrefix(ref, "https://")
+}
+
+func fetchRemotePolicy(remoteURL string) ([]byte, error) {
+	if strings.HasPrefix(remoteURL, "http://") {
+		logger.Warn("fetching policy over plain HTTP from %s; prefer https://", remoteURL)
+	}
+	client := &http.Client{Timeout: policyFetchTimeout}
+	if global != nil && global.HttpProxy != "" {
+		proxyURL, err := url.Parse(global.HttpProxy)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse --http-proxy %q: %w", global.HttpProxy, err)
+		}
+		client.Transport = &http.Transport{Proxy: http.ProxyURL(proxyURL)}
+	}
+	resp, err := client.Get(remoteURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch policy from %s: %w", remoteURL, err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read policy response from %s: %w", remoteURL, err)
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("failed to fetch policy from %s: HTTP %d", remoteURL, resp.StatusCode)
+	}
+	return body, nil
+}
+
 func parseParams(raw string) (map[string]interface{}, error) {
 	if raw == "" {
 		return nil, nil
@@ -128,10 +178,10 @@ func parseParams(raw string) (map[string]interface{}, error) {
 	return params, nil
 }
 
-func evaluateAndPrintResult(out io.Writer, policyFile string, input map[string]interface{}, outputFormat string, showInput bool, params map[string]interface{}, assertOnDeny bool) error {
-	policySource, err := os.ReadFile(policyFile)
+func evaluateAndPrintResult(out io.Writer, policyRef string, input map[string]interface{}, outputFormat string, showInput bool, params map[string]interface{}, assertOnDeny bool) error {
+	policySource, err := loadPolicy(policyRef)
 	if err != nil {
-		return fmt.Errorf("failed to read policy file: %w", err)
+		return err
 	}
 
 	result, err := evaluate.Evaluate(string(policySource), input, params)
