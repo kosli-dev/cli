@@ -17,7 +17,12 @@ import (
 )
 
 // policyFetchTimeout caps how long a remote --policy fetch can take.
-var policyFetchTimeout = 3 * time.Second
+var policyFetchTimeout = 10 * time.Second
+
+// policyMaxBytes caps how much of a remote --policy response we read into
+// memory. Real Rego policies are kilobytes; this guards against a malicious or
+// misconfigured server streaming an unbounded body. 5 * 2^20 (1Mb)
+const policyMaxBytes = 5 << 20 // 5 MiB
 
 type commonEvaluateOptions struct {
 	flowName     string
@@ -132,7 +137,12 @@ func fetchRemotePolicy(remoteURL string) ([]byte, error) {
 	if strings.HasPrefix(remoteURL, "http://") {
 		logger.Warn("fetching policy over plain HTTP from %s; prefer https://", remoteURL)
 	}
-	client := &http.Client{Timeout: policyFetchTimeout}
+
+	client := &http.Client{
+		Timeout:       policyFetchTimeout,
+		CheckRedirect: sameHostRedirectPolicy,
+	}
+
 	if global != nil && global.HttpProxy != "" {
 		proxyURL, err := url.Parse(global.HttpProxy)
 		if err != nil {
@@ -140,19 +150,41 @@ func fetchRemotePolicy(remoteURL string) ([]byte, error) {
 		}
 		client.Transport = &http.Transport{Proxy: http.ProxyURL(proxyURL)}
 	}
+
 	resp, err := client.Get(remoteURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch policy from %s: %w", remoteURL, err)
 	}
 	defer func() { _ = resp.Body.Close() }()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read policy response from %s: %w", remoteURL, err)
-	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("failed to fetch policy from %s: HTTP %d", remoteURL, resp.StatusCode)
 	}
+
+	body, err := io.ReadAll(io.LimitReader(resp.Body, policyMaxBytes+1))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read policy response from %s: %w", remoteURL, err)
+	}
+	if int64(len(body)) > policyMaxBytes {
+		return nil, fmt.Errorf("policy at %s exceeds %d-byte limit", remoteURL, policyMaxBytes)
+	}
+
 	return body, nil
+}
+
+// sameHostRedirectPolicy allows redirects only when the target host matches
+// the most recent request's host. This blocks an SSRF vector where a trusted
+// remote redirects the CLI to an internal address.
+func sameHostRedirectPolicy(req *http.Request, via []*http.Request) error {
+	if len(via) == 0 {
+		return nil
+	}
+	if len(via) >= 5 {
+		return fmt.Errorf("stopped after %d redirects", len(via))
+	}
+	if req.URL.Host != via[len(via)-1].URL.Host {
+		return fmt.Errorf("cross-host redirect to %s blocked", req.URL.Host)
+	}
+	return nil
 }
 
 func parseParams(raw string) (map[string]interface{}, error) {

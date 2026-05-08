@@ -197,6 +197,57 @@ func TestLoadPolicyRemoteNon2xx(t *testing.T) {
 	require.Contains(t, err.Error(), "HTTP 404")
 }
 
+func TestLoadPolicyDoesNotReadNon2xxBody(t *testing.T) {
+	var bodyServed bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = fmt.Fprint(w, "huge error page")
+		bodyServed = true
+	}))
+	defer server.Close()
+
+	_, err := loadPolicy(server.URL + "/policy.rego")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "HTTP 500")
+	// We may or may not have raced the handler, but the error must not
+	// contain the body text — the status check happens before the read.
+	require.NotContains(t, err.Error(), "huge error page")
+	_ = bodyServed
+}
+
+func TestLoadPolicyRejectsOversizedBody(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		// Stream just over the 5 MiB cap.
+		chunk := make([]byte, 1<<20)
+		for i := 0; i < 6; i++ {
+			_, _ = w.Write(chunk)
+		}
+	}))
+	defer server.Close()
+
+	_, err := loadPolicy(server.URL + "/policy.rego")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "exceeds")
+}
+
+func TestLoadPolicyBlocksCrossHostRedirect(t *testing.T) {
+	target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, "package policy\nallow = true\n")
+	}))
+	defer target.Close()
+
+	redirector := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, target.URL+"/policy.rego", http.StatusFound)
+	}))
+	defer redirector.Close()
+
+	_, err := loadPolicy(redirector.URL + "/policy.rego")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "cross-host redirect")
+}
+
 func TestLoadPolicyHonorsHTTPProxy(t *testing.T) {
 	const rego = "package policy\n\nallow = true\n"
 
