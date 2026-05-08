@@ -1,3 +1,128 @@
+{{ define "mintlify.install" -}}
+## Installing the chart
+
+To install this chart via the Helm chart repository:
+
+<Steps>
+  <Step title="Add the Kosli helm repo">
+  ```shell
+  helm repo add kosli https://charts.kosli.com/ && helm repo update
+  ```
+  </Step>
+  <Step title="Create a secret for the Kosli API token">
+  ```shell
+  kubectl create secret generic kosli-api-token --from-literal=key=<your-api-key>
+  ```
+  </Step>
+  <Step title="Install the helm chart">
+  Configure **reporterConfig.environments** (required). Each entry has required `name` and optional `namespaces`, `namespacesRegex`, `excludeNamespaces`, `excludeNamespacesRegex`. Omit namespace fields for an entry to report the entire cluster to that environment.
+
+  **One environment, entire cluster:**
+
+  ```yaml
+  # values.yaml
+  reporterConfig:
+    kosliOrg: <your-org>
+    environments:
+      - name: <your-env-name>
+  ```
+
+  **One environment, specific namespaces:**
+
+  ```yaml
+  reporterConfig:
+    kosliOrg: <your-org>
+    environments:
+      - name: <your-env-name>
+        namespaces: [namespace1, namespace2]
+  ```
+
+  **Multiple environments with different selectors:**
+
+  ```yaml
+  reporterConfig:
+    kosliOrg: <your-org>
+    environments:
+      - name: prod-env
+        namespaces: [prod-ns1, prod-ns2]
+      - name: staging-env
+        namespacesRegex: ["^staging-.*"]
+      - name: infra-env
+        excludeNamespaces: [prod-ns1, prod-ns2, default]
+  ```
+
+  ```shell
+  helm install kosli-reporter kosli/k8s-reporter -f values.yaml
+  ```
+  </Step>
+</Steps>
+
+<Note>Chart source can be found at [GitHub](https://github.com/kosli-dev/cli/tree/main/charts/k8s-reporter).</Note>
+
+<Info>See all available [configuration options](#configurations) below.</Info>
+
+{{- end }}
+
+{{ define "mintlify.customCA" -}}
+## Running behind a TLS-inspecting proxy (corporate / custom CA bundle)
+
+If your network sits behind a TLS-inspecting appliance (Zscaler, Netskope, Palo Alto, etc.) that re-signs HTTPS traffic with a corporate CA certificate, the reporter will fail with `x509: certificate signed by unknown authority`. To fix this, make the appliance's CA bundle available to the reporter.
+
+The chart offers two ways to do this. Use whichever fits your deployment flow.
+
+### Option 1 — customCA convenience wrapper (recommended for the common case)
+
+<Steps>
+  <Step title="Create a Secret containing the corporate CA certificate">
+  PEM format, single cert or bundle:
+
+  ```shell
+  kubectl create secret generic corporate-ca-bundle --from-file=ca.crt=/path/to/corporate-ca.crt
+  ```
+  </Step>
+  <Step title="Enable the wrapper in values.yaml">
+  ```yaml
+  customCA:
+    enabled: true
+    secretName: corporate-ca-bundle
+    key: ca.crt
+  ```
+  </Step>
+</Steps>
+
+The chart mounts the certificate as a single file at `/etc/ssl/certs/kosli-custom-ca.crt` using `subPath`. Go's standard library on Linux loads CA roots in two independent passes — it reads the system bundle file (e.g. `/etc/ssl/certs/ca-certificates.crt`) and **also** scans `/etc/ssl/certs/` for additional certificate files. The mounted file is picked up by the directory scan and added to the trust store alongside the system roots, so no `SSL_CERT_FILE` env var is needed.
+
+The wrapper deliberately does **not** set `SSL_CERT_FILE`. Setting it would replace the system bundle entirely with the customer's file, breaking trust for any public CAs the bundle does not include.
+
+### Option 2 — generic extraVolumes / extraVolumeMounts / extraEnvVars
+
+Use these when you need a non-default mount path, a ConfigMap instead of a Secret, multiple volumes, or any other shape the wrapper does not cover:
+
+```yaml
+extraVolumes:
+  - name: corporate-ca
+    secret:
+      secretName: corporate-ca-bundle
+
+extraVolumeMounts:
+  - name: corporate-ca
+    mountPath: /etc/ssl/certs/corporate
+    readOnly: true
+```
+
+<Warning>
+If you mount the CA outside `/etc/ssl/certs/` and set `SSL_CERT_FILE` via `extraEnvVars`, your bundle must include the public CAs you also need to trust — Go uses only that file when `SSL_CERT_FILE` is set.
+</Warning>
+
+### Pod Security Standards
+
+Both options use `secret`-backed volumes, which are permitted under the Pod Security Standards `restricted` profile. `hostPath` mounts are not permitted under that profile and should not be used here.
+
+### Cluster-wide alternative
+
+If you already run [cert-manager's trust-manager](https://cert-manager.io/docs/trust/trust-manager/) to distribute a corporate CA bundle into a well-known ConfigMap in every namespace, point `extraVolumes` / `extraVolumeMounts` at that ConfigMap instead of creating a per-namespace Secret.
+{{- end }}
+
 {{ define "mintlify.versionInfo" -}}
 <Info>
 This reference applies to **chart version {{ .Version }}**, which defaults to CLI **{{ .AppVersion }}** via `appVersion`. Override with `image.tag`.
@@ -92,6 +217,10 @@ This reference applies to **chart version {{ .Version }}**, which defaults to CL
 {{ define "mintlify.paramField" -}}
 {{- $d := .Default | trimPrefix "`" | trimSuffix "`" -}}
 {{- $desc := or .Description .AutoDescription -}}
+{{- if $desc -}}
+{{- $desc = printf "%s%s" (substr 0 1 $desc | upper) (substr 1 -1 $desc) -}}
+{{- if not (hasSuffix "." $desc) -}}{{- $desc = printf "%s." $desc -}}{{- end -}}
+{{- end -}}
 {{- if or (and (eq .Type "object") (ne $d "{}")) (and (eq .Type "list") (ne $d "[]")) }}
 <ParamField path="{{ .Key }}" type="{{ .Type }}">
   {{ $desc }}
