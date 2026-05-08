@@ -106,6 +106,11 @@ func newAttestOverrideCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	addAttestationFlags(cmd, o.CommonAttestationOptions, o.payload.CommonAttestationPayload, ci)
+	addAttestationFlags(cmd, o.CommonAttestationOptions, o.payload.CommonAttestationPayload, ci)
+	// the override endpoint takes a JSON body and does not accept attachments
+	if err := cmd.Flags().MarkHidden("attachments"); err != nil {
+		logger.Error("failed to hide --attachments flag: %v", err)
+	}
 	cmd.Flags().StringVar(&o.payload.Reason, "reason", "", attestationOverrideReasonFlag)
 	cmd.Flags().BoolVar(&o.payload.NewComplianceStatus, "new-compliance-status", true, newComplianceStatusFlag)
 	cmd.Flags().StringVar(&o.payload.OriginalAttestationType, "original-attestation-type", "", originalAttestationTypeFlag)
