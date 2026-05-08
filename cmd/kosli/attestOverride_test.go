@@ -60,7 +60,7 @@ func (suite *AttestOverrideCommandTestSuite) TestAttestOverrideCmd() {
 			wantError: true,
 			name:      "fails when missing required --new-compliance-status flag",
 			cmd:       fmt.Sprintf("attest override --name foo --reason r --original-attestation-type generic %s", suite.defaultKosliArguments),
-			golden:    "Error: required flag(s) \"new-compliance-status\" not set\nUsage: kosli attest override [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+			golden:    "Error: required flag(s) \"new-compliance-status\" not set\n",
 		},
 		{
 			wantError: true,

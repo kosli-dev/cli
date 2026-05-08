@@ -76,7 +76,7 @@ func newAttestOverrideCmd(out io.Writer) *cobra.Command {
 			}
 
 			if !cmd.Flags().Changed("new-compliance-status") {
-				return ErrorBeforePrintingUsage(cmd, "required flag(s) \"new-compliance-status\" not set")
+				return fmt.Errorf(`required flag(s) "new-compliance-status" not set`)
 			}
 
 			err = RequireGlobalFlags(global, []string{"Org", "ApiToken"})
