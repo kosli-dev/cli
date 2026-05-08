@@ -164,10 +164,20 @@ var htmlTags = map[string]bool{
 	"h1": true, "h2": true, "h3": true, "h4": true, "h5": true, "h6": true,
 }
 
+// singleQuotedURLPattern matches single-quoted URLs like 'http://example.com'
+// so they can be rendered as inline code in Mintlify instead of clickable links.
+// Real links should use markdown syntax [text](url) in the flag description;
+// single quotes are reserved for example/placeholder URLs.
+var singleQuotedURLPattern = regexp.MustCompile(`'(https?://[^\s']+)'`)
+
 func escapeProseFragment(s string) string {
 	// Escape curly braces: {expr} -> \{expr\}
 	s = strings.ReplaceAll(s, "{", "\\{")
 	s = strings.ReplaceAll(s, "}", "\\}")
+
+	// Convert single-quoted URLs to backtick-wrapped inline code
+	// so Mintlify renders them as code instead of clickable links.
+	s = singleQuotedURLPattern.ReplaceAllString(s, "`$1`")
 
 	// Escape angle-bracket placeholders -> backtick-wrapped
 	// but leave standard HTML tags alone

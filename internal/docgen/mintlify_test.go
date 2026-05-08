@@ -191,6 +191,21 @@ func TestEscapeMintlifyProse(t *testing.T) {
 			input: "text ```\n{code}\n<FOO>\n``` more {text}",
 			want:  "text ```\n{code}\n<FOO>\n``` more \\{text\\}",
 		},
+		{
+			name:  "single-quoted URL converted to backtick code",
+			input: "e.g. 'http://proxy-server-ip:proxy-port'",
+			want:  "e.g. `http://proxy-server-ip:proxy-port`",
+		},
+		{
+			name:  "single-quoted https URL converted to backtick code",
+			input: "use 'https://example.com:8080/path'",
+			want:  "use `https://example.com:8080/path`",
+		},
+		{
+			name:  "non-URL single quotes left alone",
+			input: "e.g. 'some text'",
+			want:  "e.g. 'some text'",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
