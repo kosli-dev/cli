@@ -12,8 +12,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const snapshotCloudRunShortDesc = `Report a snapshot of running services in a Google Cloud Run project and region to Kosli.  `
+const snapshotCloudRunShortDesc = `Report a snapshot of Cloud Run services and jobs in a Google Cloud project and region to Kosli.  `
 const snapshotCloudRunLongDesc = snapshotCloudRunShortDesc + `
+Each Cloud Run service contributes one artifact per revision in its traffic
+configuration. Each Cloud Run Job contributes one artifact, identified by the
+image bound to the Job (Jobs do not have a revision/traffic-split model).
+Idle Jobs (no currently-running Execution) are included.
+
+The --include / --include-regex / --exclude / --exclude-regex filters apply
+uniformly to both service and job names.
+
 Currently a hidden, in-development command. Use --dry-run to inspect the payload without sending it to Kosli.`
 
 // cloudRunLister is the seam between the command and the GCP client. Tests
