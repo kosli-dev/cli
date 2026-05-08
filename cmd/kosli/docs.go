@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/kosli-dev/cli/internal/docgen"
 	"github.com/spf13/cobra"
@@ -37,9 +38,12 @@ func newDocsCmd(out io.Writer) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			o.topCmd = cmd.Root()
 			if len(args) > 0 {
-				target, _, err := o.topCmd.Find(args)
+				target, remainingArgs, err := o.topCmd.Find(args)
 				if err != nil {
-					return fmt.Errorf("command %q not found: %w", args, err)
+					return fmt.Errorf("command %q not found: %w", strings.Join(args, " "), err)
+				}
+				if len(remainingArgs) > 0 {
+					return fmt.Errorf("command %q not found", strings.Join(args, " "))
 				}
 				o.topCmd = target
 			}
