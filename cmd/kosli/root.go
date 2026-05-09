@@ -95,7 +95,8 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	dryRunFlag                      = "[optional] Run in dry-run mode. When enabled, no data is sent to Kosli and the CLI exits with 0 exit code regardless of any errors."
 	maxAPIRetryFlag                 = "[defaulted] How many times should API calls be retried when the API host is not reachable."
 	configFileFlag                  = "[optional] The Kosli config file path."
-	debugFlag                       = "[optional] Print debug logs to stdout. A boolean flag https://docs.kosli.com/faq/#boolean-flags (default false)"
+	debugFlag                       = "[optional] Print debug logs to stdout."
+	quietFlag                       = "[optional] Suppress non-critical warning messages. Errors and normal output are not affected. If both --quiet and --debug are set, --debug wins."
 	artifactTypeFlag                = "The type of the artifact to calculate its SHA256 fingerprint. One of: [oci, docker, file, dir]. Only required if you want Kosli to calculate the fingerprint for you (i.e. when you don't specify '--fingerprint' on commands that allow it)."
 	flowNameFlag                    = "The Kosli flow name."
 	flowNameFlagOptional            = "[optional] The Kosli flow name."
@@ -283,6 +284,7 @@ type GlobalOpts struct {
 	MaxAPIRetries int
 	ConfigFile    string
 	Debug         bool
+	Quiet         bool
 }
 
 // ConfigGetter defines an interface for getting the default config file path
@@ -368,6 +370,7 @@ func newRootCmd(out, errOut io.Writer, args []string) (*cobra.Command, error) {
 	cmd.PersistentFlags().IntVarP(&global.MaxAPIRetries, "max-api-retries", "r", defaultMaxAPIRetries, maxAPIRetryFlag)
 	cmd.PersistentFlags().StringVarP(&global.ConfigFile, "config-file", "c", getConfigFileFlagDefault(), configFileFlag)
 	cmd.PersistentFlags().BoolVar(&global.Debug, "debug", false, debugFlag)
+	cmd.PersistentFlags().BoolVarP(&global.Quiet, "quiet", "q", false, quietFlag)
 
 	// Add subcommands
 	cmd.AddCommand(
@@ -419,6 +422,7 @@ func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
 	// assign debug value early here to enable debug logs during config file and env var binding
 	// if --debug is used. The value is re-assigned later after binding config file and env vars
 	logger.DebugEnabled = global.Debug
+	logger.QuietEnabled = global.Quiet && !global.Debug
 
 	// If provided, extract the custom config file dir and name
 
@@ -473,6 +477,10 @@ func initialize(cmd *cobra.Command, out, errOut io.Writer) error {
 	// re-assign debug after binding flags to config or env vars as it may have
 	// a different value now
 	logger.DebugEnabled = global.Debug
+	logger.QuietEnabled = global.Quiet && !global.Debug
+	if global.Quiet && global.Debug {
+		logger.Debug("--quiet is ignored because --debug is set")
+	}
 
 	var err error
 	kosliClient, err = requests.NewKosliClient(global.HttpProxy, global.MaxAPIRetries, global.Debug, logger)

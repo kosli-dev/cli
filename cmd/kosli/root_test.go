@@ -29,6 +29,24 @@ func (suite *RootCommandTestSuite) TestConfigProcessing() {
 	runTestCmd(suite.T(), tests)
 }
 
+func (suite *RootCommandTestSuite) TestQuietFlagSuppressesWarnings() {
+	_, _, _, stderr, err := executeCommandC(
+		"version --config-file testdata/config/plain-text-token.yaml --quiet")
+	suite.NoError(err)
+	suite.NotContains(stderr, "[warning]",
+		"--quiet should suppress warning output, got: %q", stderr)
+}
+
+func (suite *RootCommandTestSuite) TestDebugWinsOverQuiet() {
+	_, _, _, stderr, err := executeCommandC(
+		"version --config-file testdata/config/plain-text-token.yaml --quiet --debug")
+	suite.NoError(err)
+	suite.Contains(stderr, "[warning]",
+		"--debug should override --quiet, expected warnings in stderr, got: %q", stderr)
+	suite.Contains(stderr, "[debug] --quiet is ignored because --debug is set",
+		"expected debug notice that --quiet was overridden, got: %q", stderr)
+}
+
 // In order for 'go test' to run this suite, we need to create
 // a normal test function and pass our suite to suite.Run
 func TestRootCommandTestSuite(t *testing.T) {
