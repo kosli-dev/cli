@@ -5,7 +5,7 @@
 
 This CLI is used to record and query software delivery events to [Kosli](www.kosli.com).
 
-## Usage 
+## Usage
 
 See the [docs](https://docs.kosli.com/)
 
@@ -17,20 +17,20 @@ See the [docs](https://docs.kosli.com/)
 
 `make build`
 
-Then to run Kosli commands:  
+Then to run Kosli commands:
 `./kosli [COMMAND]`
 
 ## Building the code (Windows)
 
 Windows will not allow building using the makefile, so we need to run the commands directly in the terminal.
 
-`set GOFLAGS=""`  
-`go mod download`  
-`go mod tidy`  
-`go vet ./...`  
+`set GOFLAGS=""`
+`go mod download`
+`go mod tidy`
+`go vet ./...`
 `go build -o kosli.exe -ldflags '-extldflags "-static"' ./cmd/kosli/`
 
-Then to run Kosli commands:  
+Then to run Kosli commands:
 `./kosli.exe [COMMAND]` or `.\kosli.exe [COMMAND]`
 
 ## Generating CLI reference docs
@@ -47,7 +47,7 @@ To run the tests you need to set the env-var `KOSLI_API_TOKEN_PROD`
 to an api-token (with reader rights), for the `kosli` Org on https://app.kosli.com
 
 To run all tests except the too slow ones:
-`make test_integration` 
+`make test_integration`
 
 To run all the tests"
 `make test_integration_full`
