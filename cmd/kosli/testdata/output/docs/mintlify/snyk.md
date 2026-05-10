@@ -11,8 +11,8 @@ description: "Report a snyk attestation to an artifact or a trail in a Kosli flo
 snyk [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]
 ```
 
-Report a snyk attestation to an artifact or a trail in a Kosli flow.
-Only SARIF snyk output is accepted.
+Report a snyk attestation to an artifact or a trail in a Kosli flow.  
+Only SARIF snyk output is accepted. 
 Snyk output can be for "snyk code test", "snyk container test", or "snyk iac test".
 
 The `--scan-results` .json file is analyzed and a summary of the scan results are reported to Kosli.
@@ -67,59 +67,59 @@ In other CI systems, set them explicitly to capture repository metadata.
 
 ## Examples Use Cases
 
-These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](/getting_started/install/#assigning-flags-via-environment-variables).
+These examples all assume that the flags  `--api-token`, `--org`, `--host`, (and `--flow`, `--trail` when required), are [set/provided](/getting_started/install/#assigning-flags-via-environment-variables). 
 
 <AccordionGroup>
 <Accordion title="report a snyk attestation about a pre-built docker artifact (kosli calculates the fingerprint)">
 ```shell
-kosli attest snyk yourDockerImageName
-	--artifact-type docker
-	--name yourAttestationName
-	--scan-results yourSnykSARIFScanResults
+kosli attest snyk yourDockerImageName 
+	--artifact-type docker 
+	--name yourAttestationName 
+	--scan-results yourSnykSARIFScanResults 
 
 ```
 </Accordion>
 <Accordion title="report a snyk attestation about a pre-built docker artifact (you provide the fingerprint)">
 ```shell
-kosli attest snyk
-	--fingerprint yourDockerImageFingerprint
-	--name yourAttestationName
-	--scan-results yourSnykSARIFScanResults
+kosli attest snyk 
+	--fingerprint yourDockerImageFingerprint 
+	--name yourAttestationName 
+	--scan-results yourSnykSARIFScanResults 
 
 ```
 </Accordion>
 <Accordion title="report a snyk attestation about a trail">
 ```shell
-kosli attest snyk
-	--name yourAttestationName
-	--scan-results yourSnykSARIFScanResults
+kosli attest snyk 
+	--name yourAttestationName 
+	--scan-results yourSnykSARIFScanResults 
 
 ```
 </Accordion>
 <Accordion title="report a snyk attestation about an artifact which has not been reported yet in a trail">
 ```shell
-kosli attest snyk
-	--name yourTemplateArtifactName.yourAttestationName
-	--commit yourArtifactGitCommit
-	--scan-results yourSnykSARIFScanResults
+kosli attest snyk 
+	--name yourTemplateArtifactName.yourAttestationName 
+	--commit yourArtifactGitCommit 
+	--scan-results yourSnykSARIFScanResults 
 
 ```
 </Accordion>
 <Accordion title="report a snyk attestation about a trail with an attachment">
 ```shell
-kosli attest snyk
-	--name yourAttestationName
-	--scan-results yourSnykSARIFScanResults
-	--attachments yourEvidencePathName
+kosli attest snyk 
+	--name yourAttestationName 
+	--scan-results yourSnykSARIFScanResults 
+	--attachments yourEvidencePathName 
 
 ```
 </Accordion>
 <Accordion title="report a snyk attestation about a trail without uploading the snyk results file">
 ```shell
-kosli attest snyk
-	--name yourAttestationName
-	--scan-results yourSnykSARIFScanResults
-	--upload-results=false
+kosli attest snyk 
+	--name yourAttestationName 
+	--scan-results yourSnykSARIFScanResults 
+	--upload-results=false 
 ```
 </Accordion>
 </AccordionGroup>
