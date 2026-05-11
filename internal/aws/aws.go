@@ -333,10 +333,10 @@ func decodeLambdaFingerprint(fingerprint string) (string, error) {
 // matched against the full object key.
 func shouldExcludePath(key string, includedPaths []string, includedRegex []*regexp.Regexp, excludedPaths []string, excludedRegex []*regexp.Regexp) bool {
 	if len(includedPaths) > 0 || len(includedRegex) > 0 {
-		return !objectMatchesPaths(key, includedPaths, includedRegex)
+		return !objectMatchesFilter(key, includedPaths, includedRegex)
 	}
 	if len(excludedPaths) > 0 || len(excludedRegex) > 0 {
-		return objectMatchesPaths(key, excludedPaths, excludedRegex)
+		return objectMatchesFilter(key, excludedPaths, excludedRegex)
 	}
 	return false
 }
@@ -382,7 +382,10 @@ func containsSingleFile(directoryPath string) (bool, string, error) {
 	return false, "", nil
 }
 
-func objectMatchesPaths(key string, paths []string, patterns []*regexp.Regexp) bool {
+// objectMatchesFilter reports whether key matches any of the filter entries.
+// A key matches when it is prefixed by one of paths (literal prefix match)
+// or when one of patterns matches the full key.
+func objectMatchesFilter(key string, paths []string, patterns []*regexp.Regexp) bool {
 	for _, path := range paths {
 		path = strings.TrimLeft(path, "/")
 		if strings.HasPrefix(key, path) {
