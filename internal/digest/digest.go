@@ -320,39 +320,29 @@ func requestManifestFromRegistry(registryEndPoint, imageName, imageTag, registry
 
 }
 
-// RemoteDockerImageSha256 returns a sha256 digest of a docker image by reading it from
-// remote docker registry
+// RemoteDockerImageSha256 returns a sha256 digest of a docker image by reading
+// it from a remote registry. The Accept header advertises every manifest
+// media type the OCI Distribution spec defines — Docker single-arch, Docker
+// multi-arch ("fat") manifest list, OCI single-arch, and OCI multi-arch
+// index — and lets the registry pick the best match in one round trip. The
+// canonical sha256 is read from the response's Docker-Content-Digest header,
+// which reflects whatever manifest was actually returned.
 func RemoteDockerImageSha256(imageName, imageTag, registryEndPoint, registryToken string, logger *logger.Logger) (string, error) {
-	// Some docker images have Manifest list, aka "fat manifest" which combines
-	// image manifests for one or more platforms. Other images don't have such manifest.
-	// The response Content-Type header specifies whether an image has it or not.
-	// More details here: https://docs.docker.com/registry/spec/manifest-v2-2/
-	v2ManifestType := "application/vnd.docker.distribution.manifest.v2+json"
-	v2FatManifestType := "application/vnd.docker.distribution.manifest.list.v2+json"
+	acceptHeader := strings.Join([]string{
+		"application/vnd.docker.distribution.manifest.list.v2+json",
+		"application/vnd.docker.distribution.manifest.v2+json",
+		"application/vnd.oci.image.index.v1+json",
+		"application/vnd.oci.image.manifest.v1+json",
+	}, ", ")
 
-	var res *requests.HTTPResponse
-	var err error
-
-	dockerHeaders := map[string]string{"Accept": v2FatManifestType}
-	res, err = requestManifestFromRegistry(registryEndPoint, imageName, imageTag, registryToken, dockerHeaders, logger)
+	res, err := requestManifestFromRegistry(registryEndPoint, imageName, imageTag, registryToken,
+		map[string]string{"Accept": acceptHeader}, logger)
 	if err != nil {
 		return "", err
 	}
 
-	responseContentType := res.Resp.Header.Get("Content-Type")
-	if responseContentType != v2FatManifestType {
-		dockerHeaders = map[string]string{"Accept": v2ManifestType}
-
-		res, err = requestManifestFromRegistry(registryEndPoint, imageName, imageTag, registryToken, dockerHeaders, logger)
-		if err != nil {
-			return "", err
-		}
-	}
-
 	digestHeader := res.Resp.Header.Get("docker-content-digest")
-
-	fingerprint := strings.TrimPrefix(digestHeader, "sha256:")
-	return fingerprint, nil
+	return strings.TrimPrefix(digestHeader, "sha256:"), nil
 }
 
 // ValidateDigest checks if a digest matches the sha256 regex
