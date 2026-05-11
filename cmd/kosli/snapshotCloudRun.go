@@ -22,13 +22,24 @@ Idle Jobs (no currently-running Execution) are included.
 GCP authentication uses Application Default Credentials. On a developer
 machine, run ^gcloud auth application-default login^; in GCE/GKE/Cloud Run
 the metadata server / Workload Identity is used automatically. The caller
-needs at least ^roles/run.viewer^ on the target project.
+needs ^roles/run.viewer^ on the target project, plus
+^roles/artifactregistry.reader^ on the Artifact Registry repository (or the
+project) for digest and tag resolution on tag-pinned images. Missing the AR
+role is non-fatal — tag-pinned artifacts then surface with empty digests.
+
+Digest and tag resolution is scoped to Artifact Registry (^*-docker.pkg.dev^)
+and the legacy Container Registry (^*.gcr.io^). Images from other registries
+(Docker Hub, Quay, ECR, etc.) are reported as-is.
 
 Skip all filtering flags to report every service and every job in the given
 project + region. Use ^--include^ and/or ^--include-regex^ to snapshot only a
 subset, OR ^--exclude^ and/or ^--exclude-regex^ to omit a subset; include and
 exclude are mutually exclusive. Filters apply uniformly to both service and
 job names and are case-sensitive.
+
+Pass ^--resolve-names^ to rewrite digest-pinned Service artifact names back
+to their deploy-time tags (commit SHA / version) via an Artifact Registry
+reverse-lookup. Only supported for Artifact Registry hosts.
 
 Currently a hidden, in-development command. Use --dry-run to inspect the payload without sending it to Kosli.`
 
