@@ -426,9 +426,7 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 }
 
 func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *SonarResults, project *Project, analysisID, tokenHeader string) error {
-	// SonarQube's project_analyses/search defaults to the main branch when no branch
-	// is supplied, so we must forward the branch name recorded on the CE task to find
-	// analyses on non-default branches (see issue #861).
+	// Forward branch to find analyses on non-default branches (#861).
 	params := url.Values{"project": {project.Key}}
 	if sonarResults.Branch != nil && sonarResults.Branch.Name != "" {
 		params.Set("branch", sonarResults.Branch.Name)
