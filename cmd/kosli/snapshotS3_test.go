@@ -73,6 +73,24 @@ func (suite *SnapshotS3TestSuite) TestSnapshotS3Cmd() {
 			golden:    "Error: only one of --include, --exclude is allowed\n",
 		},
 		{
+			wantError: true,
+			name:      "snapshot s3 fails if --include and --exclude-regex are set",
+			cmd:       fmt.Sprintf(`snapshot s3 %s %s --bucket %s --include foo --exclude-regex bar`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden:    "Error: only one of --include, --exclude-regex is allowed\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot s3 fails if --include-regex and --exclude are set",
+			cmd:       fmt.Sprintf(`snapshot s3 %s %s --bucket %s --include-regex foo --exclude bar`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden:    "Error: only one of --include-regex, --exclude is allowed\n",
+		},
+		{
+			wantError: true,
+			name:      "snapshot s3 fails if --include-regex and --exclude-regex are set",
+			cmd:       fmt.Sprintf(`snapshot s3 %s %s --bucket %s --include-regex foo --exclude-regex bar`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
+			golden:    "Error: only one of --include-regex, --exclude-regex is allowed\n",
+		},
+		{
 			name:   "can snapshot a subset of files/dirs using --include",
 			cmd:    fmt.Sprintf(`snapshot s3 %s %s --bucket %s --include README.md`, suite.envName, suite.defaultKosliArguments, suite.bucketName),
 			golden: "bucket kosli-cli-public was reported to environment snapshot-s3-env\n",

@@ -3,6 +3,7 @@ package aws
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 	"time"
 
@@ -437,7 +438,7 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 	} {
 		suite.Run(t.name, func() {
 			skipIfCredsUnset(suite.T(), t.requireEnvVars, t.creds)
-			data, err := t.creds.GetS3Data(t.bucketName, t.includePaths, t.excludePaths, logger.NewStandardLogger())
+			data, err := t.creds.GetS3Data(t.bucketName, t.includePaths, nil, t.excludePaths, nil, logger.NewStandardLogger())
 			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetS3Data() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
@@ -449,6 +450,125 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 				} else {
 					require.Equal(suite.T(), t.wantFingerprint, data[0].Digests[t.wantArtifactName])
 				}
+			}
+		})
+	}
+}
+
+func (suite *AWSTestSuite) TestShouldExcludePath() {
+	mustCompile := func(patterns []string) []*regexp.Regexp {
+		compiled, err := compilePathRegex(patterns)
+		require.NoError(suite.T(), err)
+		return compiled
+	}
+	for _, t := range []struct {
+		name         string
+		key          string
+		includePaths []string
+		includeRegex []string
+		excludePaths []string
+		excludeRegex []string
+		wantExclude  bool
+	}{
+		{
+			name: "no filters set => include everything",
+			key:  "images/foo.png",
+		},
+		{
+			name:         "literal exclude prefix excludes matching key",
+			key:          "logs/app.log",
+			excludePaths: []string{"logs/"},
+			wantExclude:  true,
+		},
+		{
+			name:         "literal exclude prefix leaves non-matching key included",
+			key:          "data/x.csv",
+			excludePaths: []string{"logs/"},
+		},
+		{
+			name:         "regex exclude matches by pattern",
+			key:          "images/foo.png",
+			excludeRegex: []string{`.*\.png$`},
+			wantExclude:  true,
+		},
+		{
+			name:         "regex exclude does not match non-png",
+			key:          "images/foo.jpg",
+			excludeRegex: []string{`.*\.png$`},
+		},
+		{
+			name:         "multiple exclude regex patterns OR together — first matches",
+			key:          "images/foo.png",
+			excludeRegex: []string{`.*\.png$`, `.*\.gif$`},
+			wantExclude:  true,
+		},
+		{
+			name:         "multiple exclude regex patterns OR together — second matches",
+			key:          "images/foo.gif",
+			excludeRegex: []string{`.*\.png$`, `.*\.gif$`},
+			wantExclude:  true,
+		},
+		{
+			name:         "multiple exclude regex patterns OR together — none matches",
+			key:          "images/foo.jpg",
+			excludeRegex: []string{`.*\.png$`, `.*\.gif$`},
+		},
+		{
+			name:         "multiple include regex patterns OR together — any match keeps the key",
+			key:          "data/file.csv",
+			includeRegex: []string{`.*\.json$`, `.*\.csv$`},
+		},
+		{
+			name:         "regex include matches by pattern",
+			key:          "data/file.csv",
+			includeRegex: []string{`.*\.csv$`},
+		},
+		{
+			name:         "regex include excludes anything that does not match",
+			key:          "data/file.txt",
+			includeRegex: []string{`.*\.csv$`},
+			wantExclude:  true,
+		},
+		{
+			name:         "literal and regex combine within exclude — either match wins",
+			key:          "images/foo.png",
+			excludePaths: []string{"logs/"},
+			excludeRegex: []string{`.*\.png$`},
+			wantExclude:  true,
+		},
+		{
+			name:         "literal and regex combine within include — either match keeps the key",
+			key:          "data/file.csv",
+			includePaths: []string{"README.md"},
+			includeRegex: []string{`.*\.csv$`},
+		},
+	} {
+		suite.Run(t.name, func() {
+			got := shouldExcludePath(t.key, t.includePaths, mustCompile(t.includeRegex), t.excludePaths, mustCompile(t.excludeRegex))
+			require.Equal(suite.T(), t.wantExclude, got)
+		})
+	}
+}
+
+func (suite *AWSTestSuite) TestCompilePathRegex() {
+	for _, t := range []struct {
+		name     string
+		patterns []string
+		wantErr  bool
+		wantLen  int
+	}{
+		{name: "nil input returns nil", patterns: nil, wantLen: 0},
+		{name: "empty input returns nil", patterns: []string{}, wantLen: 0},
+		{name: "valid patterns compile", patterns: []string{`.*\.png$`, `^logs/`}, wantLen: 2},
+		{name: "invalid pattern returns an error", patterns: []string{`[invalid`}, wantErr: true},
+		{name: "one invalid pattern in a list returns an error", patterns: []string{`.*\.png$`, `[invalid`}, wantErr: true},
+	} {
+		suite.Run(t.name, func() {
+			got, err := compilePathRegex(t.patterns)
+			require.Equal(suite.T(), t.wantErr, err != nil,
+				"compilePathRegex() error = %v, wantErr %v", err, t.wantErr)
+			if !t.wantErr {
+				require.Len(suite.T(), got, t.wantLen)
 			}
 		})
 	}
