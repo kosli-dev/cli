@@ -360,38 +360,3 @@ jobs:
           slack-channel-id: ${{ vars.SLACK_CHANNEL_ID }}
           stage: finish
           status: ${{ steps.status.outputs.value }}
-
-  slack-notification-on-failure:
-    runs-on: ubuntu-24.04
-    permissions:
-      actions: read
-      contents: read
-    needs:
-      [
-        pre-build,
-        init-kosli,
-        never-alone-trail,
-        test,
-        docker,
-        goreleaser,
-        binary-provenance,
-        homebrew-pr,
-        docs-repo-dispatch,
-        evidence-reporter-upload-package-and-deploy,
-        environment-reporter-upload-package-and-deploy,
-        environment-reporter-upload-layer,
-        notify-start,
-        notify-finish
-      ]
-    if: ${{ always() && contains(join(needs.*.result, ','), 'failure') && github.ref == 'refs/heads/main' }}
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450 # v2.19.1
-        with:
-          egress-policy: audit
-
-      - name: Slack Notification on Failure
-        uses: kosli-dev/reusable-actions/.github/actions/send-ci-failure-slack-message@main
-        with:
-          slack_url: ${{ secrets.MERKELY_SLACK_CI_FAILURES_WEBHOOK }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
