@@ -8,18 +8,13 @@ import (
 	"io"
 	"os"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/api/types/registry"
-	"github.com/docker/docker/client"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/registry"
+	"github.com/moby/moby/client"
 )
 
-// newDockerClient creates a Docker client with API version negotiation enabled.
-// This ensures the client automatically downgrades its API version to match
-// the daemon, preventing "client version X is too new" errors when the SDK
-// is newer than the Docker Engine.
 func newDockerClient() (*client.Client, error) {
-	return client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	return client.New(client.FromEnv)
 }
 
 // PullDockerImage pulls a docker image or returns an error
@@ -29,13 +24,12 @@ func PullDockerImage(imageName string) error {
 		return err
 	}
 
-	rc, err := cli.ImagePull(context.Background(), imageName, image.PullOptions{})
+	rc, err := cli.ImagePull(context.Background(), imageName, client.ImagePullOptions{})
 	if err != nil {
 		return err
 	}
 	defer func() {
 		if err := rc.Close(); err != nil {
-			// Log warning for cleanup error
 			fmt.Printf("warning: failed to close image pull reader: %v\n", err)
 		}
 	}()
@@ -59,7 +53,7 @@ func PushDockerImage(imageName string) error {
 	}
 	authConfigBytes, _ := json.Marshal(authConfig)
 	authConfigEncoded := base64.URLEncoding.EncodeToString(authConfigBytes)
-	opts := image.PushOptions{RegistryAuth: authConfigEncoded}
+	opts := client.ImagePushOptions{RegistryAuth: authConfigEncoded}
 
 	rc, err := cli.ImagePush(context.Background(), imageName, opts)
 	if err != nil {
@@ -67,7 +61,6 @@ func PushDockerImage(imageName string) error {
 	}
 	defer func() {
 		if err := rc.Close(); err != nil {
-			// Log warning for cleanup error
 			fmt.Printf("warning: failed to close image push reader: %v\n", err)
 		}
 	}()
@@ -86,7 +79,8 @@ func TagDockerImage(sourceName, targetName string) error {
 		return err
 	}
 
-	return cli.ImageTag(context.Background(), sourceName, targetName)
+	_, err = cli.ImageTag(context.Background(), client.ImageTagOptions{Source: sourceName, Target: targetName})
+	return err
 }
 
 // RemoveDockerImage deletes a docker image or return an error
@@ -96,7 +90,7 @@ func RemoveDockerImage(imageName string) error {
 		return err
 	}
 
-	_, err = cli.ImageRemove(context.Background(), imageName, image.RemoveOptions{Force: true})
+	_, err = cli.ImageRemove(context.Background(), imageName, client.ImageRemoveOptions{Force: true})
 	if err != nil {
 		return err
 	}
@@ -111,16 +105,19 @@ func RunDockerContainer(imageName string) (string, error) {
 		return "", err
 	}
 	ctx := context.Background()
-	resp, err := cli.ContainerCreate(ctx, &container.Config{
-		Image: imageName,
-		Cmd:   []string{"sleep", "360"},
-	}, nil, nil, nil, "")
+	resp, err := cli.ContainerCreate(ctx, client.ContainerCreateOptions{
+		Config: &container.Config{
+			Image: imageName,
+			Cmd:   []string{"sleep", "360"},
+		},
+	})
 
 	if err != nil {
 		return "", err
 	}
 	containerID := resp.ID
-	return containerID, cli.ContainerStart(ctx, containerID, container.StartOptions{})
+	_, err = cli.ContainerStart(ctx, containerID, client.ContainerStartOptions{})
+	return containerID, err
 }
 
 // RemoveDockerContainer remove a docker container or returns an error
@@ -130,5 +127,6 @@ func RemoveDockerContainer(containerID string) error {
 		return err
 	}
 
-	return cli.ContainerRemove(context.Background(), containerID, container.RemoveOptions{Force: true})
+	_, err = cli.ContainerRemove(context.Background(), containerID, client.ContainerRemoveOptions{Force: true})
+	return err
 }
