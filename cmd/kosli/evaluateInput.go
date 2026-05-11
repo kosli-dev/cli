@@ -69,6 +69,11 @@ kosli evaluate input \
 	--policy policy.rego \
 	--params @params.json
 
+# evaluate using a policy fetched from a remote URL:
+kosli evaluate input \
+	--input-file trail-data.json \
+	--policy https://policies.example.com/policy.rego
+
 # evaluate as a decision point (print verdict, never fail the step):
 kosli evaluate input \
 	--input-file trail-data.json \
@@ -88,7 +93,7 @@ func newEvaluateInputCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	o.addFlags(cmd, "Path to a Rego policy file to evaluate against the input.")
+	o.addFlags(cmd, "Path or http(s):// URL of a Rego policy to evaluate against the input.")
 	cmd.Flags().StringVarP(&o.inputFile, "input-file", "i", "", "[optional] Path to a JSON input file. Reads from stdin if omitted.")
 
 	cmd.Flags().Lookup("flow").Hidden = true
@@ -123,7 +128,7 @@ func (o *evaluateInputOptions) run(out io.Writer, in io.Reader) error {
 		return err
 	}
 
-	return evaluateAndPrintResult(out, o.policyFile, input, o.output, o.showInput, params, o.assertOnDeny())
+	return evaluateAndPrintResult(out, o.policyRef, input, o.output, o.showInput, params, o.assertOnDeny())
 }
 
 func loadInputFromFile(filePath string) (result map[string]interface{}, err error) {

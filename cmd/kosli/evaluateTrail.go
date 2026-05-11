@@ -57,6 +57,13 @@ kosli evaluate trail yourTrailName \
 	--api-token yourAPIToken \
 	--org yourOrgName
 
+# evaluate a trail using a policy fetched from a remote URL:
+kosli evaluate trail yourTrailName \
+	--policy https://policies.example.com/trail.rego \
+	--flow yourFlowName \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
 # evaluate a trail as a decision point (print verdict, never fail the step):
 kosli evaluate trail yourTrailName \
 	--policy yourPolicyFile.rego \
@@ -89,7 +96,7 @@ func newEvaluateTrailCmd(out io.Writer) *cobra.Command {
 		},
 	}
 
-	o.addFlags(cmd, "Path to a Rego policy file to evaluate against the trail.")
+	o.addFlags(cmd, "Path or http(s):// URL of a Rego policy to evaluate against the trail.")
 
 	err := RequireFlags(cmd, []string{"flow", "policy"})
 	if err != nil {
@@ -114,5 +121,5 @@ func (o *evaluateTrailOptions) run(out io.Writer, args []string) error {
 		"trail": trailData,
 	}
 
-	return evaluateAndPrintResult(out, o.policyFile, input, o.output, o.showInput, params, o.assertOnDeny())
+	return evaluateAndPrintResult(out, o.policyRef, input, o.output, o.showInput, params, o.assertOnDeny())
 }

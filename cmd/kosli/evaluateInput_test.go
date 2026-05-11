@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -155,6 +158,119 @@ func TestLoadInputInvalidJSON(t *testing.T) {
 	_, err := loadInput(reader)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "failed to parse input")
+}
+
+func TestLoadPolicyFromLocalFile(t *testing.T) {
+	body, err := loadPolicy("testdata/policies/allow-all.rego")
+	require.NoError(t, err)
+	require.Contains(t, string(body), "package policy")
+}
+
+func TestLoadPolicyMissingLocalFile(t *testing.T) {
+	_, err := loadPolicy("testdata/policies/no-such-file.rego")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "failed to read policy file")
+}
+
+func TestLoadPolicyFromHTTPS(t *testing.T) {
+	const rego = "package policy\n\nallow = true\n"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, "/policy.rego", r.URL.Path)
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, rego)
+	}))
+	defer server.Close()
+
+	body, err := loadPolicy(server.URL + "/policy.rego")
+	require.NoError(t, err)
+	require.Equal(t, rego, string(body))
+}
+
+func TestLoadPolicyRemoteNon2xx(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer server.Close()
+
+	_, err := loadPolicy(server.URL + "/missing.rego")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "HTTP 404")
+}
+
+func TestLoadPolicyDoesNotReadNon2xxBody(t *testing.T) {
+	var bodyServed bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = fmt.Fprint(w, "huge error page")
+		bodyServed = true
+	}))
+	defer server.Close()
+
+	_, err := loadPolicy(server.URL + "/policy.rego")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "HTTP 500")
+	// We may or may not have raced the handler, but the error must not
+	// contain the body text — the status check happens before the read.
+	require.NotContains(t, err.Error(), "huge error page")
+	_ = bodyServed
+}
+
+func TestLoadPolicyRejectsOversizedBody(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		// Stream just over the 5 MiB cap.
+		chunk := make([]byte, 1<<20)
+		for i := 0; i < 6; i++ {
+			_, _ = w.Write(chunk)
+		}
+	}))
+	defer server.Close()
+
+	_, err := loadPolicy(server.URL + "/policy.rego")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "exceeds")
+}
+
+func TestLoadPolicyBlocksCrossHostRedirect(t *testing.T) {
+	target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, "package policy\nallow = true\n")
+	}))
+	defer target.Close()
+
+	redirector := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, target.URL+"/policy.rego", http.StatusFound)
+	}))
+	defer redirector.Close()
+
+	_, err := loadPolicy(redirector.URL + "/policy.rego")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "cross-host redirect")
+}
+
+func TestLoadPolicyHonorsHTTPProxy(t *testing.T) {
+	const rego = "package policy\n\nallow = true\n"
+
+	var sawProxyStyleRequest bool
+	proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// A request routed through an HTTP proxy carries an absolute URL on
+		// the request line, so r.URL.Host will be populated.
+		if r.URL.Host != "" {
+			sawProxyStyleRequest = true
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, rego)
+	}))
+	defer proxy.Close()
+
+	prev := global
+	global = &GlobalOpts{HttpProxy: proxy.URL}
+	t.Cleanup(func() { global = prev })
+
+	body, err := loadPolicy("http://policies.example.invalid/policy.rego")
+	require.NoError(t, err)
+	require.Equal(t, rego, string(body))
+	require.True(t, sawProxyStyleRequest, "expected proxy to receive an absolute-URL request")
 }
 
 func TestEvaluateInputCommandTestSuite(t *testing.T) {

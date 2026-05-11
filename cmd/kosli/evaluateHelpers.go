@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/kosli-dev/cli/internal/evaluate"
 	"github.com/kosli-dev/cli/internal/output"
@@ -15,9 +16,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// policyFetchTimeout caps how long a remote --policy fetch can take.
+var policyFetchTimeout = 10 * time.Second
+
+// policyMaxBytes caps how much of a remote --policy response we read into
+// memory. Real Rego policies are kilobytes; this guards against a malicious or
+// misconfigured server streaming an unbounded body. 5 * 2^20 (5*1MiB)
+const policyMaxBytes = 5 << 20 // 5 MiB
+
 type commonEvaluateOptions struct {
 	flowName     string
-	policyFile   string
+	policyRef    string
 	output       string
 	showInput    bool
 	attestations []string
@@ -28,7 +37,7 @@ type commonEvaluateOptions struct {
 
 func (o *commonEvaluateOptions) addFlags(cmd *cobra.Command, policyDesc string) {
 	cmd.Flags().StringVarP(&o.flowName, "flow", "f", "", flowNameFlag)
-	cmd.Flags().StringVarP(&o.policyFile, "policy", "p", "", policyDesc)
+	cmd.Flags().StringVarP(&o.policyRef, "policy", "p", "", policyDesc)
 	cmd.Flags().StringVarP(&o.output, "output", "o", "table", outputFlag)
 	cmd.Flags().BoolVar(&o.showInput, "show-input", false, "[optional] Include the policy input data in the output.")
 	cmd.Flags().StringSliceVar(&o.attestations, "attestations", nil, "[optional] Limit which attestations are included. Plain name for trail-level, dot-qualified (artifact.name) for artifact-level.")
@@ -105,6 +114,80 @@ func fetchAndEnrichTrail(flowName, trailName string, attestations []string) (int
 	return trailData, nil
 }
 
+// loadPolicy reads a Rego policy from a local file path or, when ref starts
+// with http:// or https://, fetches it over HTTP. Remote fetches are
+// unauthenticated and uncached; callers are responsible for the integrity of
+// the source.
+func loadPolicy(ref string) ([]byte, error) {
+	if isRemotePolicyRef(ref) {
+		return fetchRemotePolicy(ref)
+	}
+	body, err := os.ReadFile(ref)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read policy file: %w", err)
+	}
+	return body, nil
+}
+
+func isRemotePolicyRef(ref string) bool {
+	return strings.HasPrefix(ref, "http://") || strings.HasPrefix(ref, "https://")
+}
+
+func fetchRemotePolicy(remoteURL string) ([]byte, error) {
+	if strings.HasPrefix(remoteURL, "http://") {
+		logger.Warn("fetching policy over plain HTTP from %s; prefer https://", remoteURL)
+	}
+
+	client := &http.Client{
+		Timeout:       policyFetchTimeout,
+		CheckRedirect: sameHostRedirectPolicy,
+	}
+
+	if global != nil && global.HttpProxy != "" {
+		proxyURL, err := url.Parse(global.HttpProxy)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse --http-proxy %q: %w", global.HttpProxy, err)
+		}
+		// This builds a fresh http.Transport with Go defaults. If the
+		// codebase later adopts a shared transport with custom TLS/dial
+		// settings, route policy fetches through it (or clone it) so they
+		// inherit those settings.
+		client.Transport = &http.Transport{Proxy: http.ProxyURL(proxyURL)}
+	}
+
+	resp, err := client.Get(remoteURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch policy from %s: %w", remoteURL, err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("failed to fetch policy from %s: HTTP %d", remoteURL, resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(io.LimitReader(resp.Body, policyMaxBytes+1))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read policy response from %s: %w", remoteURL, err)
+	}
+	if int64(len(body)) > policyMaxBytes {
+		return nil, fmt.Errorf("policy at %s exceeds %d-byte limit", remoteURL, policyMaxBytes)
+	}
+
+	return body, nil
+}
+
+// sameHostRedirectPolicy allows redirects only when the target host matches
+// the most recent request's host. This blocks an SSRF vector where a trusted
+// remote redirects the CLI to an internal address.
+func sameHostRedirectPolicy(req *http.Request, via []*http.Request) error {
+	if len(via) >= 5 {
+		return fmt.Errorf("stopped after %d redirects", len(via))
+	}
+	if req.URL.Host != via[len(via)-1].URL.Host {
+		return fmt.Errorf("cross-host redirect to %s blocked", req.URL.Host)
+	}
+	return nil
+}
+
 func parseParams(raw string) (map[string]interface{}, error) {
 	if raw == "" {
 		return nil, nil
@@ -128,10 +211,10 @@ func parseParams(raw string) (map[string]interface{}, error) {
 	return params, nil
 }
 
-func evaluateAndPrintResult(out io.Writer, policyFile string, input map[string]interface{}, outputFormat string, showInput bool, params map[string]interface{}, assertOnDeny bool) error {
-	policySource, err := os.ReadFile(policyFile)
+func evaluateAndPrintResult(out io.Writer, policyRef string, input map[string]interface{}, outputFormat string, showInput bool, params map[string]interface{}, assertOnDeny bool) error {
+	policySource, err := loadPolicy(policyRef)
 	if err != nil {
-		return fmt.Errorf("failed to read policy file: %w", err)
+		return err
 	}
 
 	result, err := evaluate.Evaluate(string(policySource), input, params)
