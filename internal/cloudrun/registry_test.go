@@ -107,22 +107,18 @@ type fakeResolver struct {
 	err     error
 }
 
-func (f *fakeResolver) Resolve(image string) (string, string, error) {
+func (f *fakeResolver) Resolve(image string) (string, error) {
 	if f.err != nil {
-		return "", "", f.err
+		return "", f.err
 	}
 	hex, ok := f.digests[image]
 	if !ok {
-		return "", "", errors.New("not found in fake")
+		return "", errors.New("not found in fake")
 	}
-	host, path, _, err := splitTagPinnedImage(image)
-	if err != nil {
-		return "", "", err
-	}
-	return host + "/" + path + "@sha256:" + hex, hex, nil
+	return hex, nil
 }
 
-func TestResolveTagPinnedDigests_ReplacesEmptyDigest(t *testing.T) {
+func TestResolveTagPinnedDigests_FillsEmptyDigestKeepingTagPinnedKey(t *testing.T) {
 	tagPinned := "europe-west1-docker.pkg.dev/proj/repo/ghost-job:c85b06b0"
 	digests := map[string]string{tagPinned: ""}
 
@@ -131,10 +127,8 @@ func TestResolveTagPinnedDigests_ReplacesEmptyDigest(t *testing.T) {
 	}}
 	c.resolveTagPinnedDigests(digests)
 
-	require.Len(t, digests, 1)
-	require.Contains(t, digests, "europe-west1-docker.pkg.dev/proj/repo/ghost-job@sha256:abc123")
-	require.Equal(t, "abc123", digests["europe-west1-docker.pkg.dev/proj/repo/ghost-job@sha256:abc123"])
-	require.NotContains(t, digests, tagPinned, "tag-pinned key must be removed once resolved")
+	require.Equal(t, map[string]string{tagPinned: "abc123"}, digests,
+		"tag-pinned key must be preserved; only the digest value is filled in")
 }
 
 func TestResolveTagPinnedDigests_LeavesAlreadyResolvedAlone(t *testing.T) {
@@ -184,7 +178,8 @@ func TestResolveTagPinnedDigests_MixedMap(t *testing.T) {
 	}}
 	c.resolveTagPinnedDigests(digests)
 
-	require.Len(t, digests, 2)
-	require.Equal(t, "already", digests[already])
-	require.Equal(t, "newhex", digests["europe-west1-docker.pkg.dev/proj/repo/sidecar@sha256:newhex"])
+	require.Equal(t, map[string]string{
+		already:   "already",
+		tagPinned: "newhex",
+	}, digests, "both keys must be preserved; only the tag-pinned value is filled in")
 }

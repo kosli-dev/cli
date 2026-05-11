@@ -199,9 +199,10 @@ func (c *Client) ListJobs(ctx context.Context, project, region string) ([]Job, e
 // resolveTagPinnedDigests walks the digests map and, for each entry whose
 // value is empty (i.e., the image string was not digest-pinned), asks the
 // resolver to look up the digest in the hosting registry. On success the
-// tag-pinned key is replaced with a digest-pinned key (image@sha256:<hex>)
-// and the value carries the bare hex. Failures are logged at debug level
-// and leave the entry untouched — never fatal.
+// resolved hex is filled in as the value; the tag-pinned key is left in
+// place so the artifact keeps its recognizable deploy-time name (e.g.
+// "…/ghost-job:c85b06b0…" rather than "…/ghost-job@sha256:…"). Failures
+// are logged at debug level and leave the entry untouched — never fatal.
 //
 // No-op when the Client was constructed without a resolver (test paths,
 // or when ADC token-source construction failed).
@@ -213,13 +214,12 @@ func (c *Client) resolveTagPinnedDigests(digests map[string]string) {
 		if hex != "" {
 			continue
 		}
-		resolvedRef, resolvedHex, err := c.resolver.Resolve(image)
+		resolvedHex, err := c.resolver.Resolve(image)
 		if err != nil {
 			c.log.Debug("registry digest resolution failed for %q: %v", image, err)
 			continue
 		}
-		delete(digests, image)
-		digests[resolvedRef] = resolvedHex
+		digests[image] = resolvedHex
 	}
 }
 

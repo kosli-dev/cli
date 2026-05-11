@@ -19,9 +19,11 @@ import (
 // tag-pinned reference in place with an empty digest, mirroring the
 // existing fallback for tag-pinned ECS / Service container images.
 type digestResolver interface {
-	// Resolve returns (resolvedRef, hexDigest, err). On success
-	// resolvedRef is the same image with ":tag" replaced by "@sha256:<hex>".
-	Resolve(image string) (resolvedRef, hexDigest string, err error)
+	// Resolve returns the bare hex digest for the given tag-pinned image
+	// reference, or an error. Callers keep the original image string as
+	// the artifact's identifier and only use the returned hex as the
+	// digest value.
+	Resolve(image string) (hexDigest string, err error)
 }
 
 // errNonGCPRegistry is returned by gcpRegistryResolver when the image's
@@ -46,26 +48,26 @@ func newGCPRegistryResolver(ctx context.Context, log *logger.Logger) (digestReso
 	return &gcpRegistryResolver{tokens: src, log: log}, nil
 }
 
-func (r *gcpRegistryResolver) Resolve(image string) (string, string, error) {
+func (r *gcpRegistryResolver) Resolve(image string) (string, error) {
 	host, path, tag, err := splitTagPinnedImage(image)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 	if !isGCPRegistryHost(host) {
-		return "", "", errNonGCPRegistry
+		return "", errNonGCPRegistry
 	}
 	tok, err := r.tokens.Token()
 	if err != nil {
-		return "", "", fmt.Errorf("getting GCP access token: %w", err)
+		return "", fmt.Errorf("getting GCP access token: %w", err)
 	}
 	hex, err := digest.RemoteDockerImageSha256(path, tag, "https://"+host+"/v2", tok.AccessToken, r.log)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 	if hex == "" {
-		return "", "", fmt.Errorf("registry returned empty digest for %q", image)
+		return "", fmt.Errorf("registry returned empty digest for %q", image)
 	}
-	return host + "/" + path + "@sha256:" + hex, hex, nil
+	return hex, nil
 }
 
 // splitTagPinnedImage parses a tag-pinned image reference of the form
