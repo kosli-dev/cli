@@ -183,6 +183,7 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	ecsServicesRegexFlag            = "[optional] The comma-separated list of ECS service name regex patterns to snapshot. Can't be used together with --exclude-services or --exclude-services-regex."
 	ecsExcludeServicesFlag          = "[optional] The comma-separated list of ECS service names to exclude. Can't be used together with --services or --services-regex."
 	ecsExcludeServicesRegexFlag     = "[optional] The comma-separated list of ECS service name regex patterns to exclude. Can't be used together with --services or --services-regex."
+	cloudRunResolveNamesFlag        = "[optional] When set, resolve digest-pinned artifact names back to their deploy-time tags (commit SHA / version) via an Artifact Registry reverse-lookup. Requires roles/artifactregistry.reader. Default: artifacts keep whatever name the Cloud Run API returned (digest-pinned for Services, deploy-time form for Jobs)."
 	cloudRunIncludeFlag             = "[optional] The comma-separated list of Cloud Run service or job names to snapshot. Can't be used together with --exclude or --exclude-regex."
 	cloudRunIncludeRegexFlag        = "[optional] The comma-separated list of Cloud Run service or job name regex patterns to snapshot. Can't be used together with --exclude or --exclude-regex."
 	cloudRunExcludeFlag             = "[optional] The comma-separated list of Cloud Run service or job names to exclude. Can't be used together with --include or --include-regex."

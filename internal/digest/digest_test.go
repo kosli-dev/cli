@@ -8,6 +8,7 @@ import (
 
 	"github.com/kosli-dev/cli/internal/docker"
 	"github.com/kosli-dev/cli/internal/logger"
+	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -744,8 +745,9 @@ func (suite *DigestTestSuite) TestRemoteDockerImageSha256() {
 				err = docker.PushDockerImage(localImage)
 				require.NoErrorf(suite.T(), err, "TestRemoteDockerImageSha256: test image should be pushable")
 			}
-			actual, err := RemoteDockerImageSha256(t.localImageName, t.localImageTag, "http://localhost:5001/v2", "secret",
-				logger.NewStandardLogger())
+			client, clientErr := requests.NewKosliClient("", 1, false, logger.NewStandardLogger())
+			require.NoErrorf(suite.T(), clientErr, "TestRemoteDockerImageSha256: client construction must not fail")
+			actual, err := RemoteDockerImageSha256(client, t.localImageName, t.localImageTag, "http://localhost:5001/v2", "secret")
 			if t.want.expectError {
 				require.Errorf(suite.T(), err, "TestRemoteDockerImageSha256: error was expected")
 			} else {

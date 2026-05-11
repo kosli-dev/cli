@@ -13,6 +13,9 @@ import (
 
 	run "cloud.google.com/go/run/apiv2"
 	"cloud.google.com/go/run/apiv2/runpb"
+	"github.com/kosli-dev/cli/internal/logger"
+	"github.com/kosli-dev/cli/internal/requests"
+	"golang.org/x/oauth2/google"
 	"google.golang.org/api/iterator"
 )
 
@@ -53,9 +56,20 @@ type apiClient interface {
 	listJobs(ctx context.Context, project, region string) ([]*runpb.Job, error)
 }
 
-// Client fetches Cloud Run data from GCP.
+// Client fetches Cloud Run data from GCP. The optional resolver, when set,
+// is consulted for any tag-pinned image whose digest cannot be parsed from
+// the image string alone — it queries the OCI Distribution endpoint of the
+// hosting registry to look up the current sha256. The optional tagResolver,
+// when set (via the --resolve-names flag at construction time), is consulted
+// for any digest-pinned image to recover a tag pointing at the same digest,
+// so the artifact's display name surfaces the deploy-time tag (commit SHA
+// or version) instead of the opaque sha256. Both resolvers fail open: the
+// original key/value stays in place if the lookup fails.
 type Client struct {
-	api apiClient
+	api         apiClient
+	resolver    digestResolver
+	tagResolver tagResolver
+	log         *logger.Logger
 }
 
 // New returns a Client backed by the real Cloud Run Admin API v2 using
@@ -63,7 +77,16 @@ type Client struct {
 // cluster cron job, since the metadata server provides credentials) are
 // wrapped with a generic "GCP client setup failed" prefix; the SDK's own
 // message is preserved via %w for diagnosis. Callers should defer Close().
-func New(ctx context.Context) (*Client, error) {
+//
+// The returned Client is wired with a registry-lookup resolver for tag-
+// pinned images using ADC. When resolveNames is true, it is also wired with
+// a reverse tag resolver against Artifact Registry, so digest-pinned
+// artifact names (e.g. for Service revisions) are rewritten to their
+// tag-pinned equivalents (commit SHA, version) for display. If ADC is
+// unavailable both resolvers are left nil and the Client falls back to the
+// pre-resolution behaviour: tag-pinned images report empty digests and
+// digest-pinned names stay digest-pinned.
+func New(ctx context.Context, log *logger.Logger, resolveNames bool) (*Client, error) {
 	services, err := run.NewServicesClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("GCP client setup failed: %w", err)
@@ -79,7 +102,34 @@ func New(ctx context.Context) (*Client, error) {
 		_ = revisions.Close()
 		return nil, fmt.Errorf("GCP client setup failed: %w", err)
 	}
-	return &Client{api: &gcpAPI{services: services, revisions: revisions, jobs: jobs}}, nil
+
+	var digestRes digestResolver
+	var tagRes tagResolver
+	src, terr := google.DefaultTokenSource(ctx, "https://www.googleapis.com/auth/cloud-platform")
+	switch {
+	case terr != nil:
+		log.Debug("ADC token source unavailable; registry resolution disabled: %v", terr)
+	default:
+		// One HTTP client shared by both resolvers so that hundreds of
+		// per-artifact registry calls reuse a single connection pool
+		// (TCP + TLS handshakes amortise across the snapshot).
+		kosliClient, cerr := requests.NewKosliClient("", 1, log.DebugEnabled, log)
+		if cerr != nil {
+			log.Debug("registry HTTP client unavailable; registry resolution disabled: %v", cerr)
+			break
+		}
+		digestRes = &gcpRegistryResolver{tokens: src, client: kosliClient, log: log}
+		if resolveNames {
+			tagRes = &gcpArtifactRegistryTagResolver{tokens: src, client: kosliClient, log: log}
+		}
+	}
+
+	return &Client{
+		api:         &gcpAPI{services: services, revisions: revisions, jobs: jobs},
+		resolver:    digestRes,
+		tagResolver: tagRes,
+		log:         log,
+	}, nil
 }
 
 // Close releases the underlying gRPC connections. Safe to call on a Client
@@ -125,7 +175,10 @@ func (c *Client) toService(ctx context.Context, raw *runpb.Service) (Service, er
 		if err != nil {
 			return Service{}, fmt.Errorf("getting revision %s: %w", fullName, err)
 		}
-		svc.Revisions = append(svc.Revisions, toRevision(rev))
+		revision := toRevision(rev)
+		c.resolveTagPinnedDigests(revision.Digests)
+		c.resolveNamesForDigestPinned(revision.Digests)
+		svc.Revisions = append(svc.Revisions, revision)
 	}
 	return svc, nil
 }
@@ -165,9 +218,68 @@ func (c *Client) ListJobs(ctx context.Context, project, region string) ([]Job, e
 	}
 	out := make([]Job, 0, len(rawJobs))
 	for _, raw := range rawJobs {
-		out = append(out, toJob(raw))
+		job := toJob(raw)
+		c.resolveTagPinnedDigests(job.Digests)
+		c.resolveNamesForDigestPinned(job.Digests)
+		out = append(out, job)
 	}
 	return out, nil
+}
+
+// resolveTagPinnedDigests walks the digests map and, for each entry whose
+// value is empty (i.e., the image string was not digest-pinned), asks the
+// resolver to look up the digest in the hosting registry. On success the
+// resolved hex is filled in as the value; the tag-pinned key is left in
+// place so the artifact keeps its recognizable deploy-time name (e.g.
+// "…/ghost-job:c85b06b0…" rather than "…/ghost-job@sha256:…"). Failures
+// are logged at debug level and leave the entry untouched — never fatal.
+//
+// No-op when the Client was constructed without a resolver (test paths,
+// or when ADC token-source construction failed).
+func (c *Client) resolveTagPinnedDigests(digests map[string]string) {
+	if c.resolver == nil {
+		return
+	}
+	for image, hex := range digests {
+		if hex != "" {
+			continue
+		}
+		resolvedHex, err := c.resolver.Resolve(image)
+		if err != nil {
+			c.log.Debug("registry digest resolution failed for %q: %v", image, err)
+			continue
+		}
+		digests[image] = resolvedHex
+	}
+}
+
+// resolveNamesForDigestPinned walks the digests map and, for each entry
+// whose image string is digest-pinned (contains "@sha256:"), asks the tag
+// resolver for a tag pointing at the digest. On success the digest-pinned
+// key is replaced with a tag-pinned key ("image:<tag>"); the hex value
+// (the digest) is preserved. Failures are logged at debug level and leave
+// the entry untouched — never fatal.
+//
+// No-op when the Client was constructed with resolveNames=false (the
+// tagResolver is nil), or when ADC token-source construction failed.
+func (c *Client) resolveNamesForDigestPinned(digests map[string]string) {
+	if c.tagResolver == nil {
+		return
+	}
+	for image, hex := range digests {
+		idx := strings.Index(image, sha256Marker)
+		if idx < 0 {
+			continue // not digest-pinned
+		}
+		tag, err := c.tagResolver.LatestTag(image)
+		if err != nil {
+			c.log.Debug("tag resolution failed for %q: %v", image, err)
+			continue
+		}
+		tagPinned := image[:idx] + ":" + tag
+		delete(digests, image)
+		digests[tagPinned] = hex
+	}
 }
 
 func toJob(j *runpb.Job) Job {

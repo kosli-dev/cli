@@ -92,7 +92,7 @@ func (suite *SnapshotCloudRunTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	newCloudRunClient = func(_ context.Context) (cloudRunLister, error) {
+	newCloudRunClient = func(_ context.Context, _ bool) (cloudRunLister, error) {
 		return stubCloudRunLister{services: stubServices()}, nil
 	}
 
@@ -215,7 +215,7 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd_HappyPathReports
 // Jobs surface in the snapshot payload alongside services, with the flat
 // kind=job / jobName shape.
 func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd_DryRunIncludesJobs() {
-	newCloudRunClient = func(_ context.Context) (cloudRunLister, error) {
+	newCloudRunClient = func(_ context.Context, _ bool) (cloudRunLister, error) {
 		return stubCloudRunLister{services: stubServices(), jobs: stubJobs()}, nil
 	}
 
@@ -232,7 +232,7 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd_DryRunIncludesJo
 // TestSnapshotCloudRunCmd_HappyPathReportsServicesAndJobs is the live-server
 // counterpart to the dry-run test above: 2 services + 1 job → 3 artifacts.
 func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd_HappyPathReportsServicesAndJobs() {
-	newCloudRunClient = func(_ context.Context) (cloudRunLister, error) {
+	newCloudRunClient = func(_ context.Context, _ bool) (cloudRunLister, error) {
 		return stubCloudRunLister{services: stubServices(), jobs: stubJobs()}, nil
 	}
 
@@ -246,7 +246,7 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd_HappyPathReports
 // TestSnapshotCloudRunFilter_AppliesToJobs verifies that the same name filter
 // applies uniformly to job names — excluding by name removes the matching job.
 func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_AppliesToJobs() {
-	newCloudRunClient = func(_ context.Context) (cloudRunLister, error) {
+	newCloudRunClient = func(_ context.Context, _ bool) (cloudRunLister, error) {
 		return stubCloudRunLister{services: stubServices(), jobs: stubJobs()}, nil
 	}
 
@@ -255,11 +255,52 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_AppliesToJobs
 	require.NotContains(suite.T(), out, `"jobName": "sandman-job"`, "the named job must be filtered out")
 }
 
+// TestSnapshotCloudRunCmd_ResolveNamesFlag verifies that --resolve-names
+// reaches the client constructor. Two cases:
+//   - flag present → constructor called with true
+//   - flag absent  → constructor called with false (default unchanged)
+//
+// Without this test, a future refactor could silently break the flag
+// plumbing (e.g. by binding a different variable, or by forgetting to
+// forward the bool through newCloudRunClient).
+func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd_ResolveNamesFlag() {
+	type capture struct {
+		called       bool
+		resolveNames bool
+	}
+	for _, tc := range []struct {
+		name string
+		args string
+		want bool
+	}{
+		{name: "flag present", args: "--resolve-names", want: true},
+		{name: "flag absent", args: "", want: false},
+	} {
+		suite.Run(tc.name, func() {
+			var got capture
+			newCloudRunClient = func(_ context.Context, resolveNames bool) (cloudRunLister, error) {
+				got.called = true
+				got.resolveNames = resolveNames
+				return stubCloudRunLister{services: stubServices()}, nil
+			}
+
+			cmd := fmt.Sprintf(`snapshot cloud-run %s --project p --region r --dry-run %s %s`,
+				suite.envName, tc.args, suite.defaultKosliArguments)
+			_, combined, _, _, err := executeCommandC(cmd)
+
+			require.NoError(suite.T(), err, "command failed: %s", combined)
+			require.True(suite.T(), got.called, "newCloudRunClient must be invoked")
+			require.Equal(suite.T(), tc.want, got.resolveNames,
+				"--resolve-names should reach the client constructor")
+		})
+	}
+}
+
 // TestSnapshotCloudRunCmd_UnauthenticatedReturnsFriendlyError verifies that a
 // gRPC Unauthenticated error from GCP surfaces as the actionable ADC message
 // rather than a raw SDK string.
 func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd_UnauthenticatedReturnsFriendlyError() {
-	newCloudRunClient = func(_ context.Context) (cloudRunLister, error) {
+	newCloudRunClient = func(_ context.Context, _ bool) (cloudRunLister, error) {
 		return stubCloudRunLister{err: status.Error(codes.Unauthenticated, "token expired")}, nil
 	}
 
