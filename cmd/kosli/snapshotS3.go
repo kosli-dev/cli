@@ -13,7 +13,7 @@ import (
 const snapshotS3ShortDesc = `Report a snapshot of the content of an AWS S3 bucket to Kosli.`
 
 const snapshotS3LongDesc = snapshotS3ShortDesc + awsAuthDesc + `
-You can report the entire bucket content, or filter some of the content using ^--include^ and ^--exclude^.
+You can report the entire bucket content, or filter some of the content using ^--include^ / ^--exclude^ (literal prefix match) or ^--include-regex^ / ^--exclude-regex^ (Go regular expressions matched against the full object key).
 In all cases, the content is reported as one artifact. If you wish to report separate files/dirs within the same bucket as separate artifacts, you need to run the command twice.
 
 ` + kosliIgnoreDesc
@@ -59,12 +59,21 @@ kosli snapshot s3 yourEnvironmentName \
 	--exclude file.txt,path/within/bucket \
 	--api-token yourAPIToken \
 	--org yourOrgName
+
+# report contents of an AWS S3 bucket, excluding all PNG files via a regex:
+kosli snapshot s3 yourEnvironmentName \
+	--bucket yourBucketName \
+	--exclude-regex '.*\.png$' \
+	--api-token yourAPIToken \
+	--org yourOrgName
 `
 
 type snapshotS3Options struct {
 	bucket         string
 	includePaths   []string
+	includeRegex   []string
 	excludePaths   []string
+	excludeRegex   []string
 	awsStaticCreds *aws.AWSStaticCreds
 }
 
@@ -84,9 +93,17 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 				return ErrorBeforePrintingUsage(cmd, err.Error())
 			}
 
-			err = MuXRequiredFlags(cmd, []string{"include", "exclude"}, false)
-			if err != nil {
-				return err
+			// Include flags and exclude flags are mutually exclusive
+			// in every combination — choose one direction at a time.
+			for _, pair := range [][]string{
+				{"include", "exclude"},
+				{"include", "exclude-regex"},
+				{"include-regex", "exclude"},
+				{"include-regex", "exclude-regex"},
+			} {
+				if err = MuXRequiredFlags(cmd, pair, false); err != nil {
+					return err
+				}
 			}
 
 			return nil
@@ -98,7 +115,9 @@ func newSnapshotS3Cmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVar(&o.bucket, "bucket", "", bucketNameFlag)
 	cmd.Flags().StringSliceVarP(&o.includePaths, "include", "i", []string{}, bucketPathsFlag)
+	cmd.Flags().StringSliceVar(&o.includeRegex, "include-regex", []string{}, bucketPathsRegexFlag)
 	cmd.Flags().StringSliceVarP(&o.excludePaths, "exclude", "x", []string{}, excludeBucketPathsFlag)
+	cmd.Flags().StringSliceVar(&o.excludeRegex, "exclude-regex", []string{}, excludeBucketPathsRegexFlag)
 	addAWSAuthFlags(cmd, o.awsStaticCreds)
 	addDryRunFlag(cmd)
 
@@ -117,7 +136,7 @@ func (o *snapshotS3Options) run(args []string) error {
 		return err
 	}
 
-	s3Data, err := o.awsStaticCreds.GetS3Data(o.bucket, o.includePaths, o.excludePaths, logger)
+	s3Data, err := o.awsStaticCreds.GetS3Data(o.bucket, o.includePaths, o.includeRegex, o.excludePaths, o.excludeRegex, logger)
 	if err != nil {
 		return err
 	}

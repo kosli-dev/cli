@@ -437,7 +437,7 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 	} {
 		suite.Run(t.name, func() {
 			skipIfCredsUnset(suite.T(), t.requireEnvVars, t.creds)
-			data, err := t.creds.GetS3Data(t.bucketName, t.includePaths, t.excludePaths, logger.NewStandardLogger())
+			data, err := t.creds.GetS3Data(t.bucketName, t.includePaths, nil, t.excludePaths, nil, logger.NewStandardLogger())
 			require.False(suite.T(), (err != nil) != t.wantErr,
 				"GetS3Data() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
@@ -449,6 +449,91 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 				} else {
 					require.Equal(suite.T(), t.wantFingerprint, data[0].Digests[t.wantArtifactName])
 				}
+			}
+		})
+	}
+}
+
+func (suite *AWSTestSuite) TestShouldExcludePath() {
+	for _, t := range []struct {
+		name         string
+		key          string
+		includePaths []string
+		includeRegex []string
+		excludePaths []string
+		excludeRegex []string
+		wantExclude  bool
+		wantErr      bool
+	}{
+		{
+			name: "no filters set => include everything",
+			key:  "images/foo.png",
+		},
+		{
+			name:         "literal exclude prefix excludes matching key",
+			key:          "logs/app.log",
+			excludePaths: []string{"logs/"},
+			wantExclude:  true,
+		},
+		{
+			name:         "literal exclude prefix leaves non-matching key included",
+			key:          "data/x.csv",
+			excludePaths: []string{"logs/"},
+		},
+		{
+			name:         "regex exclude matches by pattern",
+			key:          "images/foo.png",
+			excludeRegex: []string{`.*\.png$`},
+			wantExclude:  true,
+		},
+		{
+			name:         "regex exclude does not match non-png",
+			key:          "images/foo.jpg",
+			excludeRegex: []string{`.*\.png$`},
+		},
+		{
+			name:         "regex include matches by pattern",
+			key:          "data/file.csv",
+			includeRegex: []string{`.*\.csv$`},
+		},
+		{
+			name:         "regex include excludes anything that does not match",
+			key:          "data/file.txt",
+			includeRegex: []string{`.*\.csv$`},
+			wantExclude:  true,
+		},
+		{
+			name:         "literal and regex combine within exclude — either match wins",
+			key:          "images/foo.png",
+			excludePaths: []string{"logs/"},
+			excludeRegex: []string{`.*\.png$`},
+			wantExclude:  true,
+		},
+		{
+			name:         "literal and regex combine within include — either match keeps the key",
+			key:          "data/file.csv",
+			includePaths: []string{"README.md"},
+			includeRegex: []string{`.*\.csv$`},
+		},
+		{
+			name:         "invalid exclude regex returns an error",
+			key:          "anything",
+			excludeRegex: []string{`[invalid`},
+			wantErr:      true,
+		},
+		{
+			name:         "invalid include regex returns an error",
+			key:          "anything",
+			includeRegex: []string{`[invalid`},
+			wantErr:      true,
+		},
+	} {
+		suite.Run(t.name, func() {
+			got, err := shouldExcludePath(t.key, t.includePaths, t.includeRegex, t.excludePaths, t.excludeRegex)
+			require.Equal(suite.T(), t.wantErr, err != nil,
+				"shouldExcludePath() error = %v, wantErr %v", err, t.wantErr)
+			if !t.wantErr {
+				require.Equal(suite.T(), t.wantExclude, got)
 			}
 		})
 	}

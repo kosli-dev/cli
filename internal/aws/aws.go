@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -326,14 +327,22 @@ func decodeLambdaFingerprint(fingerprint string) (string, error) {
 	return hex.EncodeToString(sha256base64), nil
 }
 
-// shouldExcludePath checks if a bucket object should be excluded
-func shouldExcludePath(key string, includedPaths, excludedPaths []string) bool {
-	if len(includedPaths) > 0 {
-		return !objectInPaths(key, includedPaths)
-	} else if len(excludedPaths) > 0 {
-		return objectInPaths(key, excludedPaths)
+// shouldExcludePath checks if a bucket object should be excluded.
+// Paths in includedPaths/excludedPaths match by literal prefix.
+// Patterns in includedRegex/excludedRegex are Go regular expressions
+// matched against the full object key.
+func shouldExcludePath(key string, includedPaths, includedRegex, excludedPaths, excludedRegex []string) (bool, error) {
+	if len(includedPaths) > 0 || len(includedRegex) > 0 {
+		match, err := objectMatchesPaths(key, includedPaths, includedRegex)
+		if err != nil {
+			return false, err
+		}
+		return !match, nil
 	}
-	return false
+	if len(excludedPaths) > 0 || len(excludedRegex) > 0 {
+		return objectMatchesPaths(key, excludedPaths, excludedRegex)
+	}
+	return false, nil
 }
 
 // containsSingleFile checks if a path contains only a single file
@@ -360,18 +369,30 @@ func containsSingleFile(directoryPath string) (bool, string, error) {
 	return false, "", nil
 }
 
-func objectInPaths(key string, paths []string) bool {
+func objectMatchesPaths(key string, paths, patterns []string) (bool, error) {
 	for _, path := range paths {
 		path = strings.TrimLeft(path, "/")
 		if strings.HasPrefix(key, path) {
-			return true
+			return true, nil
 		}
 	}
-	return false
+	for _, pattern := range patterns {
+		re, err := regexp.Compile(pattern)
+		if err != nil {
+			return false, fmt.Errorf("invalid path regex pattern %q: %v", pattern, err)
+		}
+		if re.MatchString(key) {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
-// GetS3Data returns a digest and metadata of the S3 bucket content
-func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, excludePaths []string, logger *logger.Logger) ([]*S3Data, error) {
+// GetS3Data returns a digest and metadata of the S3 bucket content.
+// includePaths / excludePaths match object keys by literal prefix.
+// includeRegex / excludeRegex match object keys by Go regular expression.
+// Include and exclude filters are mutually exclusive (callers enforce this).
+func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, includeRegex, excludePaths, excludeRegex []string, logger *logger.Logger) ([]*S3Data, error) {
 	s3Data := []*S3Data{}
 
 	tempDirName, err := os.MkdirTemp("", "bucketContent")
@@ -407,10 +428,14 @@ func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, exclud
 			if strings.HasSuffix(*object.Key, "/") { // skip folders
 				continue
 			}
-			if shouldExcludePath(*object.Key, includePaths, excludePaths) { // decide if we should skip
+			skip, err := shouldExcludePath(*object.Key, includePaths, includeRegex, excludePaths, excludeRegex)
+			if err != nil {
+				return s3Data, err
+			}
+			if skip {
 				continue
 			}
-			err := downloadFileFromBucket(downloader, tempDirName, *object.Key, bucket, logger)
+			err = downloadFileFromBucket(downloader, tempDirName, *object.Key, bucket, logger)
 			if err != nil {
 				return s3Data, err
 			}
