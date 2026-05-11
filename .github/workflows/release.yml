@@ -313,7 +313,22 @@ jobs:
       AWS_REGION: eu-central-1
 
   notify-finish:
-    needs: [notify-start, goreleaser, environment-reporter-upload-layer]
+    needs:
+      [
+        notify-start,
+        pre-build,
+        init-kosli,
+        never-alone-trail,
+        test,
+        docker,
+        goreleaser,
+        binary-provenance,
+        homebrew-pr,
+        docs-repo-dispatch,
+        evidence-reporter-upload-package-and-deploy,
+        environment-reporter-upload-package-and-deploy,
+        environment-reporter-upload-layer
+      ]
     if: always() && needs.notify-start.result == 'success'
     runs-on: ubuntu-latest
     permissions:
