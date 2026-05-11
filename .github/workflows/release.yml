@@ -338,10 +338,11 @@ jobs:
       - name: Determine status
         id: status
         run: |
-          if [[ "${{ needs.goreleaser.result }}" == "success" && "${{ needs.environment-reporter-upload-layer.result }}" == "success" ]]; then
+          if [[ "${{ !contains(join(needs.*.result, ','), 'failure') && !contains(join(needs.*.result, ','), 'cancelled') }}" == "true" ]]; then
             echo "value=success" >> "$GITHUB_OUTPUT"
           else
             echo "value=failure" >> "$GITHUB_OUTPUT"
+          fi
           fi
 
       - uses: kosli-dev/reusable-actions/slack-release-notify@main
