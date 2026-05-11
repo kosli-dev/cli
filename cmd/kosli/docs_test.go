@@ -27,9 +27,9 @@ func (suite *DocsCommandTestSuite) TestDocsArgsLookup() {
 
 	tests := []cmdTestCase{
 		{
-			name:    "valid subcommand generates docs",
-			cmd:     "docs --dir " + tempDirName + " attest snyk",
-			golden:  "",
+			name:   "valid subcommand generates docs",
+			cmd:    "docs --dir " + tempDirName + " attest snyk",
+			golden: "",
 		},
 		{
 			name:      "unknown command returns error",
