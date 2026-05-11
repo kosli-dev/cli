@@ -353,7 +353,6 @@ jobs:
           else
             echo "value=failure" >> "$GITHUB_OUTPUT"
           fi
-          fi
 
       - uses: kosli-dev/reusable-actions/slack-release-notify@main
         with:
@@ -380,7 +379,9 @@ jobs:
         docs-repo-dispatch,
         evidence-reporter-upload-package-and-deploy,
         environment-reporter-upload-package-and-deploy,
-        environment-reporter-upload-layer
+        environment-reporter-upload-layer,
+        notify-start,
+        notify-finish
       ]
     if: ${{ always() && contains(join(needs.*.result, ','), 'failure') && github.ref == 'refs/heads/main' }}
     steps:
