@@ -319,3 +319,5 @@ replace k8s.io/endpointslice => k8s.io/endpointslice v0.36.0
 replace k8s.io/cri-client => k8s.io/cri-client v0.36.0
 
 replace k8s.io/externaljwt => k8s.io/externaljwt v0.36.0
+
+replace k8s.io/streaming => k8s.io/streaming v0.36.0
