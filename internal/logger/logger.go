@@ -9,6 +9,7 @@ import (
 
 type Logger struct {
 	DebugEnabled bool
+	QuietEnabled bool
 	Out          io.Writer
 	ErrOut       io.Writer
 	warnLog      *log.Logger
@@ -53,6 +54,9 @@ func (l *Logger) Debug(format string, v ...interface{}) {
 }
 
 func (l *Logger) Warn(format string, v ...interface{}) {
+	if l.QuietEnabled {
+		return
+	}
 	format = fmt.Sprintf("[warning] %s\n", format)
 	l.warnLog.Printf(format, v...)
 }
