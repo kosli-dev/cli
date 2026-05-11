@@ -12,6 +12,11 @@ jobs:
   notify-start:
     runs-on: ubuntu-latest
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450 # v2.19.1
+        with:
+          egress-policy: audit
+
       - uses: kosli-dev/reusable-actions/slack-release-notify@main
         with:
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
@@ -335,6 +340,11 @@ jobs:
       actions: read     # ← needed to fetch run_started_at for duration
       contents: read    # ← needed to read release notes via `gh release view`
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450 # v2.19.1
+        with:
+          egress-policy: audit
+
       - name: Determine status
         id: status
         run: |
