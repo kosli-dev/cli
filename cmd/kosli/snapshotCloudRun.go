@@ -65,13 +65,14 @@ type cloudRunLister interface {
 	ListJobs(ctx context.Context, project, region string) ([]cloudrun.Job, error)
 }
 
-var newCloudRunClient = func(ctx context.Context) (cloudRunLister, error) {
-	return cloudrun.New(ctx, logger)
+var newCloudRunClient = func(ctx context.Context, resolveNames bool) (cloudRunLister, error) {
+	return cloudrun.New(ctx, logger, resolveNames)
 }
 
 type snapshotCloudRunOptions struct {
 	project        string
 	region         string
+	resolveNames   bool
 	resourceFilter *filters.ResourceFilterOptions
 }
 
@@ -108,6 +109,7 @@ func newSnapshotCloudRunCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVar(&o.project, "project", "", "[required] GCP project ID.")
 	cmd.Flags().StringVar(&o.region, "region", "", "[required] GCP region (e.g. europe-west1).")
+	cmd.Flags().BoolVar(&o.resolveNames, "resolve-names", false, cloudRunResolveNamesFlag)
 	cmd.Flags().StringSliceVar(&o.resourceFilter.IncludeNames, "include", []string{}, cloudRunIncludeFlag)
 	cmd.Flags().StringSliceVar(&o.resourceFilter.IncludeNamesRegex, "include-regex", []string{}, cloudRunIncludeRegexFlag)
 	cmd.Flags().StringSliceVar(&o.resourceFilter.ExcludeNames, "exclude", []string{}, cloudRunExcludeFlag)
@@ -129,7 +131,7 @@ func (o *snapshotCloudRunOptions) run(args []string) error {
 	}
 
 	ctx := context.Background()
-	client, err := newCloudRunClient(ctx)
+	client, err := newCloudRunClient(ctx, o.resolveNames)
 	if err != nil {
 		return err
 	}

@@ -1,15 +1,17 @@
 package cloudrun
 
 import (
-	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/kosli-dev/cli/internal/digest"
 	"github.com/kosli-dev/cli/internal/logger"
+	"github.com/kosli-dev/cli/internal/requests"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 )
 
 // digestResolver resolves a tag-pinned image reference (e.g.
@@ -38,14 +40,6 @@ var errNonGCPRegistry = errors.New("not a GCP registry host — skipping resolut
 type gcpRegistryResolver struct {
 	tokens oauth2.TokenSource
 	log    *logger.Logger
-}
-
-func newGCPRegistryResolver(ctx context.Context, log *logger.Logger) (digestResolver, error) {
-	src, err := google.DefaultTokenSource(ctx, "https://www.googleapis.com/auth/cloud-platform")
-	if err != nil {
-		return nil, fmt.Errorf("getting GCP token source: %w", err)
-	}
-	return &gcpRegistryResolver{tokens: src, log: log}, nil
 }
 
 func (r *gcpRegistryResolver) Resolve(image string) (string, error) {
@@ -114,4 +108,133 @@ func isGCPRegistryHost(host string) bool {
 		return true
 	}
 	return false
+}
+
+// tagResolver resolves a digest-pinned image reference (e.g.
+// "europe-west1-docker.pkg.dev/proj/repo/img@sha256:<hex>") to a tag
+// pointing at that digest, by querying Artifact Registry's
+// dockerImages.list endpoint. Used by `kosli snapshot cloud-run
+// --resolve-names` to convert the artifact's display name from the
+// opaque digest to a human-readable tag (typically a commit SHA).
+type tagResolver interface {
+	// LatestTag returns one tag pointing at the digest. When the digest
+	// has multiple tags, the longest one wins (commit SHAs beat moving
+	// tags like ":released"), with lex order as tiebreak. Returns an
+	// error if no tags exist for the digest or the API call fails.
+	LatestTag(digestPinnedImage string) (tag string, err error)
+}
+
+// gcpArtifactRegistryTagResolver implements tagResolver against
+// Artifact Registry (*-docker.pkg.dev). The legacy Container Registry
+// hosts (gcr.io family) do not expose an equivalent reverse-lookup
+// API, so they are rejected with errNonGCPRegistry.
+type gcpArtifactRegistryTagResolver struct {
+	tokens oauth2.TokenSource
+	log    *logger.Logger
+}
+
+func (r *gcpArtifactRegistryTagResolver) LatestTag(image string) (string, error) {
+	parts, err := splitDigestPinnedAR(image)
+	if err != nil {
+		return "", err
+	}
+	tok, err := r.tokens.Token()
+	if err != nil {
+		return "", fmt.Errorf("getting GCP access token: %w", err)
+	}
+
+	// dockerImages.get returns a single DockerImage by exact resource name.
+	// The resource name is "<image>@sha256:<hex>" within the repo; "@" and
+	// ":" are allowed in URL path segments per RFC 3986 and Google's
+	// gateway accepts them unescaped.
+	u := fmt.Sprintf(
+		"https://artifactregistry.googleapis.com/v1/projects/%s/locations/%s/repositories/%s/dockerImages/%s@%s",
+		parts.project, parts.location, parts.repo, parts.image, parts.digest,
+	)
+
+	client, err := requests.NewKosliClient("", 1, r.log.DebugEnabled, r.log)
+	if err != nil {
+		return "", fmt.Errorf("creating registry client: %w", err)
+	}
+	res, err := client.Do(&requests.RequestParams{
+		Method: http.MethodGet,
+		URL:    u,
+		Token:  tok.AccessToken,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	var resp struct {
+		Tags []string `json:"tags"`
+	}
+	if err := json.Unmarshal([]byte(res.Body), &resp); err != nil {
+		return "", fmt.Errorf("parsing AR get response: %w", err)
+	}
+	return pickLatestTag(resp.Tags)
+}
+
+// pickLatestTag selects a tag from those pointing at a single digest.
+// AR exposes no per-tag timestamp, so "latest" can't be time-based.
+// Rule: longest tag wins (commit SHAs are 40 hex chars; moving aliases
+// like ":released", ":latest", ":dev" are shorter). Lex order breaks
+// ties for deterministic output.
+func pickLatestTag(tags []string) (string, error) {
+	if len(tags) == 0 {
+		return "", errors.New("digest has no tags")
+	}
+	if len(tags) == 1 {
+		return tags[0], nil
+	}
+	sorted := append([]string(nil), tags...)
+	sort.Slice(sorted, func(i, j int) bool {
+		if len(sorted[i]) != len(sorted[j]) {
+			return len(sorted[i]) > len(sorted[j])
+		}
+		return sorted[i] < sorted[j]
+	})
+	return sorted[0], nil
+}
+
+// digestPinnedRefParts holds the AR-resource-name components extracted
+// from a digest-pinned image reference, ready to interpolate into the
+// dockerImages.get resource URL.
+type digestPinnedRefParts struct {
+	project  string
+	location string
+	repo     string
+	image    string
+	digest   string // "sha256:<hex>"
+}
+
+// splitDigestPinnedAR parses a digest-pinned Artifact Registry image
+// reference into its constituent parts. Rejects non-AR hosts (including
+// gcr.io, since the legacy GCR API does not expose tag reverse-lookup),
+// non-digest-pinned references, and references with too few path
+// segments.
+func splitDigestPinnedAR(image string) (digestPinnedRefParts, error) {
+	idx := strings.Index(image, sha256Marker)
+	if idx < 0 {
+		return digestPinnedRefParts{}, fmt.Errorf("image %q is not digest-pinned", image)
+	}
+	ref := image[:idx]
+	digestPart := image[idx+1:] // strip "@" → "sha256:<hex>"
+
+	parts := strings.SplitN(ref, "/", 4)
+	if len(parts) < 4 {
+		return digestPinnedRefParts{}, fmt.Errorf("image %q has too few path segments for AR", image)
+	}
+	host, project, repo, imagePath := parts[0], parts[1], parts[2], parts[3]
+
+	location := strings.TrimSuffix(host, "-docker.pkg.dev")
+	if location == host {
+		return digestPinnedRefParts{}, fmt.Errorf("host %q is not Artifact Registry (tag resolution unsupported)", host)
+	}
+	return digestPinnedRefParts{
+		project:  project,
+		location: location,
+		repo:     repo,
+		image:    imagePath,
+		digest:   digestPart,
+	}, nil
 }

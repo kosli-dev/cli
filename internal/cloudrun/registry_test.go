@@ -165,6 +165,142 @@ func TestResolveTagPinnedDigests_NilResolverIsNoOp(t *testing.T) {
 	require.Equal(t, map[string]string{tagPinned: ""}, digests)
 }
 
+// --- splitDigestPinnedAR ---
+
+func TestSplitDigestPinnedAR_HappyPath(t *testing.T) {
+	parts, err := splitDigestPinnedAR(
+		"europe-west1-docker.pkg.dev/hello-world-cli-demo/containers/hello-world@sha256:0b2fd168ee792a7b0c9d6f48a21f83a2ed6a4eaff9ce6cf49abec4a9e12ad6d7",
+	)
+	require.NoError(t, err)
+	require.Equal(t, "hello-world-cli-demo", parts.project)
+	require.Equal(t, "europe-west1", parts.location)
+	require.Equal(t, "containers", parts.repo)
+	require.Equal(t, "hello-world", parts.image)
+	require.Equal(t, "sha256:0b2fd168ee792a7b0c9d6f48a21f83a2ed6a4eaff9ce6cf49abec4a9e12ad6d7", parts.digest)
+}
+
+func TestSplitDigestPinnedAR_NestedImagePath(t *testing.T) {
+	parts, err := splitDigestPinnedAR(
+		"europe-west1-docker.pkg.dev/proj/repo/parent/child/img@sha256:abc",
+	)
+	require.NoError(t, err)
+	require.Equal(t, "parent/child/img", parts.image)
+}
+
+func TestSplitDigestPinnedAR_TagPinnedRejected(t *testing.T) {
+	_, err := splitDigestPinnedAR("europe-west1-docker.pkg.dev/proj/repo/img:v1")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "not digest-pinned")
+}
+
+func TestSplitDigestPinnedAR_NonARHostRejected(t *testing.T) {
+	// 4 path segments so the parser passes the segment-count check and
+	// reaches the host check. Refs from GCR or other registries do not
+	// share AR's region-prefixed pkg.dev host pattern.
+	_, err := splitDigestPinnedAR("eu.gcr.io/proj/repo/img@sha256:abc")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "not Artifact Registry")
+}
+
+func TestSplitDigestPinnedAR_TooFewSegmentsRejected(t *testing.T) {
+	_, err := splitDigestPinnedAR("europe-west1-docker.pkg.dev/proj@sha256:abc")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "too few path segments")
+}
+
+// --- pickLatestTag ---
+
+func TestPickLatestTag_SingleTag(t *testing.T) {
+	got, err := pickLatestTag([]string{"d37cf45b250a17eb71ed885785d1fc3f05200e71"})
+	require.NoError(t, err)
+	require.Equal(t, "d37cf45b250a17eb71ed885785d1fc3f05200e71", got)
+}
+
+func TestPickLatestTag_LongestWins(t *testing.T) {
+	// commit-SHA + moving tag: the longer (commit SHA) wins, since it's
+	// more useful as an artifact identifier than ":released" or ":latest".
+	got, err := pickLatestTag([]string{"released", "d37cf45b250a17eb71ed885785d1fc3f05200e71"})
+	require.NoError(t, err)
+	require.Equal(t, "d37cf45b250a17eb71ed885785d1fc3f05200e71", got)
+}
+
+func TestPickLatestTag_LexBreaksTie(t *testing.T) {
+	// Two tags of equal length — fall back to lex order for determinism.
+	got, err := pickLatestTag([]string{"v1.0.0-beta", "v1.0.0-alpha"})
+	require.NoError(t, err)
+	require.Equal(t, "v1.0.0-alpha", got)
+}
+
+func TestPickLatestTag_EmptyErrors(t *testing.T) {
+	_, err := pickLatestTag(nil)
+	require.Error(t, err)
+}
+
+// --- resolveNamesForDigestPinned ---
+
+type fakeTagResolver struct {
+	tags map[string]string // digest-pinned image -> resolved tag
+	err  error
+}
+
+func (f *fakeTagResolver) LatestTag(image string) (string, error) {
+	if f.err != nil {
+		return "", f.err
+	}
+	tag, ok := f.tags[image]
+	if !ok {
+		return "", errors.New("not found in fake")
+	}
+	return tag, nil
+}
+
+func TestResolveNamesForDigestPinned_RewritesDigestToTag(t *testing.T) {
+	digestPinned := "europe-west1-docker.pkg.dev/proj/repo/img@sha256:abc"
+	digests := map[string]string{digestPinned: "abc"}
+
+	c := &Client{tagResolver: &fakeTagResolver{
+		tags: map[string]string{digestPinned: "v1.0.0"},
+	}}
+	c.resolveNamesForDigestPinned(digests)
+
+	require.Equal(t, map[string]string{
+		"europe-west1-docker.pkg.dev/proj/repo/img:v1.0.0": "abc",
+	}, digests, "digest-pinned key must be replaced by tag-pinned key; hex value preserved")
+}
+
+func TestResolveNamesForDigestPinned_LeavesTagPinnedAlone(t *testing.T) {
+	tagPinned := "europe-west1-docker.pkg.dev/proj/repo/img:v1"
+	digests := map[string]string{tagPinned: "abc"}
+
+	c := &Client{tagResolver: &fakeTagResolver{}} // empty fake; would error on any call
+	c.resolveNamesForDigestPinned(digests)
+
+	require.Equal(t, map[string]string{tagPinned: "abc"}, digests)
+}
+
+func TestResolveNamesForDigestPinned_FailureLeavesEntryInPlace(t *testing.T) {
+	digestPinned := "europe-west1-docker.pkg.dev/proj/repo/img@sha256:abc"
+	digests := map[string]string{digestPinned: "abc"}
+
+	c := &Client{
+		tagResolver: &fakeTagResolver{err: errors.New("api down")},
+		log:         newDiscardLogger(t),
+	}
+	c.resolveNamesForDigestPinned(digests)
+
+	require.Equal(t, map[string]string{digestPinned: "abc"}, digests)
+}
+
+func TestResolveNamesForDigestPinned_NilResolverIsNoOp(t *testing.T) {
+	digestPinned := "europe-west1-docker.pkg.dev/proj/repo/img@sha256:abc"
+	digests := map[string]string{digestPinned: "abc"}
+
+	c := &Client{} // no tagResolver
+	c.resolveNamesForDigestPinned(digests)
+
+	require.Equal(t, map[string]string{digestPinned: "abc"}, digests)
+}
+
 func TestResolveTagPinnedDigests_MixedMap(t *testing.T) {
 	already := "europe-west1-docker.pkg.dev/proj/repo/main@sha256:already"
 	tagPinned := "europe-west1-docker.pkg.dev/proj/repo/sidecar:v1"

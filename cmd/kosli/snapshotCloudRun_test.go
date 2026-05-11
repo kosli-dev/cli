@@ -92,7 +92,7 @@ func (suite *SnapshotCloudRunTestSuite) SetupTest() {
 	}
 	suite.defaultKosliArguments = fmt.Sprintf(" --host %s --org %s --api-token %s", global.Host, global.Org, global.ApiToken)
 
-	newCloudRunClient = func(_ context.Context) (cloudRunLister, error) {
+	newCloudRunClient = func(_ context.Context, _ bool) (cloudRunLister, error) {
 		return stubCloudRunLister{services: stubServices()}, nil
 	}
 
@@ -215,7 +215,7 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd_HappyPathReports
 // Jobs surface in the snapshot payload alongside services, with the flat
 // kind=job / jobName shape.
 func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd_DryRunIncludesJobs() {
-	newCloudRunClient = func(_ context.Context) (cloudRunLister, error) {
+	newCloudRunClient = func(_ context.Context, _ bool) (cloudRunLister, error) {
 		return stubCloudRunLister{services: stubServices(), jobs: stubJobs()}, nil
 	}
 
@@ -232,7 +232,7 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd_DryRunIncludesJo
 // TestSnapshotCloudRunCmd_HappyPathReportsServicesAndJobs is the live-server
 // counterpart to the dry-run test above: 2 services + 1 job → 3 artifacts.
 func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd_HappyPathReportsServicesAndJobs() {
-	newCloudRunClient = func(_ context.Context) (cloudRunLister, error) {
+	newCloudRunClient = func(_ context.Context, _ bool) (cloudRunLister, error) {
 		return stubCloudRunLister{services: stubServices(), jobs: stubJobs()}, nil
 	}
 
@@ -246,7 +246,7 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd_HappyPathReports
 // TestSnapshotCloudRunFilter_AppliesToJobs verifies that the same name filter
 // applies uniformly to job names — excluding by name removes the matching job.
 func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_AppliesToJobs() {
-	newCloudRunClient = func(_ context.Context) (cloudRunLister, error) {
+	newCloudRunClient = func(_ context.Context, _ bool) (cloudRunLister, error) {
 		return stubCloudRunLister{services: stubServices(), jobs: stubJobs()}, nil
 	}
 
@@ -259,7 +259,7 @@ func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunFilter_AppliesToJobs
 // gRPC Unauthenticated error from GCP surfaces as the actionable ADC message
 // rather than a raw SDK string.
 func (suite *SnapshotCloudRunTestSuite) TestSnapshotCloudRunCmd_UnauthenticatedReturnsFriendlyError() {
-	newCloudRunClient = func(_ context.Context) (cloudRunLister, error) {
+	newCloudRunClient = func(_ context.Context, _ bool) (cloudRunLister, error) {
 		return stubCloudRunLister{err: status.Error(codes.Unauthenticated, "token expired")}, nil
 	}
 
