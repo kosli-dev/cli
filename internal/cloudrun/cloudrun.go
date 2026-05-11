@@ -14,6 +14,7 @@ import (
 	run "cloud.google.com/go/run/apiv2"
 	"cloud.google.com/go/run/apiv2/runpb"
 	"github.com/kosli-dev/cli/internal/logger"
+	"github.com/kosli-dev/cli/internal/requests"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/iterator"
 )
@@ -104,13 +105,23 @@ func New(ctx context.Context, log *logger.Logger, resolveNames bool) (*Client, e
 
 	var digestRes digestResolver
 	var tagRes tagResolver
-	if src, terr := google.DefaultTokenSource(ctx, "https://www.googleapis.com/auth/cloud-platform"); terr == nil {
-		digestRes = &gcpRegistryResolver{tokens: src, log: log}
-		if resolveNames {
-			tagRes = &gcpArtifactRegistryTagResolver{tokens: src, log: log}
-		}
-	} else {
+	src, terr := google.DefaultTokenSource(ctx, "https://www.googleapis.com/auth/cloud-platform")
+	switch {
+	case terr != nil:
 		log.Debug("ADC token source unavailable; registry resolution disabled: %v", terr)
+	default:
+		// One HTTP client shared by both resolvers so that hundreds of
+		// per-artifact registry calls reuse a single connection pool
+		// (TCP + TLS handshakes amortise across the snapshot).
+		kosliClient, cerr := requests.NewKosliClient("", 1, log.DebugEnabled, log)
+		if cerr != nil {
+			log.Debug("registry HTTP client unavailable; registry resolution disabled: %v", cerr)
+			break
+		}
+		digestRes = &gcpRegistryResolver{tokens: src, client: kosliClient, log: log}
+		if resolveNames {
+			tagRes = &gcpArtifactRegistryTagResolver{tokens: src, client: kosliClient, log: log}
+		}
 	}
 
 	return &Client{

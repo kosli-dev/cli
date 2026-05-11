@@ -37,8 +37,13 @@ var errNonGCPRegistry = errors.New("not a GCP registry host — skipping resolut
 // gcpRegistryResolver implements digestResolver for Artifact Registry
 // (*-docker.pkg.dev) and the legacy Container Registry (gcr.io family),
 // using a GCP OAuth access token from Application Default Credentials.
+// The HTTP client is built once in cloudrun.New() and shared across all
+// Resolve calls in a single snapshot — keeping the connection pool warm
+// so TCP/TLS handshakes amortize across the (potentially hundreds of)
+// artifacts in a report.
 type gcpRegistryResolver struct {
 	tokens oauth2.TokenSource
+	client *requests.Client
 	log    *logger.Logger
 }
 
@@ -54,7 +59,7 @@ func (r *gcpRegistryResolver) Resolve(image string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("getting GCP access token: %w", err)
 	}
-	hex, err := digest.RemoteDockerImageSha256(path, tag, "https://"+host+"/v2", tok.AccessToken, r.log)
+	hex, err := digest.RemoteDockerImageSha256(r.client, path, tag, "https://"+host+"/v2", tok.AccessToken)
 	if err != nil {
 		return "", err
 	}
@@ -127,9 +132,12 @@ type tagResolver interface {
 // gcpArtifactRegistryTagResolver implements tagResolver against
 // Artifact Registry (*-docker.pkg.dev). The legacy Container Registry
 // hosts (gcr.io family) do not expose an equivalent reverse-lookup
-// API, so they are rejected with errNonGCPRegistry.
+// API, so they are rejected with errNonGCPRegistry. The HTTP client
+// is shared with the forward (gcpRegistryResolver) path so a single
+// connection pool serves every per-artifact API call in the snapshot.
 type gcpArtifactRegistryTagResolver struct {
 	tokens oauth2.TokenSource
+	client *requests.Client
 	log    *logger.Logger
 }
 
@@ -152,11 +160,7 @@ func (r *gcpArtifactRegistryTagResolver) LatestTag(image string) (string, error)
 		parts.project, parts.location, parts.repo, parts.image, parts.digest,
 	)
 
-	client, err := requests.NewKosliClient("", 1, r.log.DebugEnabled, r.log)
-	if err != nil {
-		return "", fmt.Errorf("creating registry client: %w", err)
-	}
-	res, err := client.Do(&requests.RequestParams{
+	res, err := r.client.Do(&requests.RequestParams{
 		Method: http.MethodGet,
 		URL:    u,
 		Token:  tok.AccessToken,
