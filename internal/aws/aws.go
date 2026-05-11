@@ -329,20 +329,33 @@ func decodeLambdaFingerprint(fingerprint string) (string, error) {
 
 // shouldExcludePath checks if a bucket object should be excluded.
 // Paths in includedPaths/excludedPaths match by literal prefix.
-// Patterns in includedRegex/excludedRegex are Go regular expressions
+// includedRegex/excludedRegex are pre-compiled regular expressions
 // matched against the full object key.
-func shouldExcludePath(key string, includedPaths, includedRegex, excludedPaths, excludedRegex []string) (bool, error) {
+func shouldExcludePath(key string, includedPaths []string, includedRegex []*regexp.Regexp, excludedPaths []string, excludedRegex []*regexp.Regexp) bool {
 	if len(includedPaths) > 0 || len(includedRegex) > 0 {
-		match, err := objectMatchesPaths(key, includedPaths, includedRegex)
-		if err != nil {
-			return false, err
-		}
-		return !match, nil
+		return !objectMatchesPaths(key, includedPaths, includedRegex)
 	}
 	if len(excludedPaths) > 0 || len(excludedRegex) > 0 {
 		return objectMatchesPaths(key, excludedPaths, excludedRegex)
 	}
-	return false, nil
+	return false
+}
+
+// compilePathRegex pre-compiles a list of path regex patterns so the result
+// can be reused across many object keys without re-compiling per iteration.
+func compilePathRegex(patterns []string) ([]*regexp.Regexp, error) {
+	if len(patterns) == 0 {
+		return nil, nil
+	}
+	compiled := make([]*regexp.Regexp, 0, len(patterns))
+	for _, pattern := range patterns {
+		re, err := regexp.Compile(pattern)
+		if err != nil {
+			return nil, fmt.Errorf("invalid path regex pattern %q: %v", pattern, err)
+		}
+		compiled = append(compiled, re)
+	}
+	return compiled, nil
 }
 
 // containsSingleFile checks if a path contains only a single file
@@ -369,23 +382,19 @@ func containsSingleFile(directoryPath string) (bool, string, error) {
 	return false, "", nil
 }
 
-func objectMatchesPaths(key string, paths, patterns []string) (bool, error) {
+func objectMatchesPaths(key string, paths []string, patterns []*regexp.Regexp) bool {
 	for _, path := range paths {
 		path = strings.TrimLeft(path, "/")
 		if strings.HasPrefix(key, path) {
-			return true, nil
+			return true
 		}
 	}
-	for _, pattern := range patterns {
-		re, err := regexp.Compile(pattern)
-		if err != nil {
-			return false, fmt.Errorf("invalid path regex pattern %q: %v", pattern, err)
-		}
+	for _, re := range patterns {
 		if re.MatchString(key) {
-			return true, nil
+			return true
 		}
 	}
-	return false, nil
+	return false
 }
 
 // GetS3Data returns a digest and metadata of the S3 bucket content.
@@ -394,6 +403,15 @@ func objectMatchesPaths(key string, paths, patterns []string) (bool, error) {
 // Include and exclude filters are mutually exclusive (callers enforce this).
 func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, includeRegex, excludePaths, excludeRegex []string, logger *logger.Logger) ([]*S3Data, error) {
 	s3Data := []*S3Data{}
+
+	includeRegexCompiled, err := compilePathRegex(includeRegex)
+	if err != nil {
+		return s3Data, err
+	}
+	excludeRegexCompiled, err := compilePathRegex(excludeRegex)
+	if err != nil {
+		return s3Data, err
+	}
 
 	tempDirName, err := os.MkdirTemp("", "bucketContent")
 	if err != nil {
@@ -428,14 +446,10 @@ func (staticCreds *AWSStaticCreds) GetS3Data(bucket string, includePaths, includ
 			if strings.HasSuffix(*object.Key, "/") { // skip folders
 				continue
 			}
-			skip, err := shouldExcludePath(*object.Key, includePaths, includeRegex, excludePaths, excludeRegex)
-			if err != nil {
-				return s3Data, err
-			}
-			if skip {
+			if shouldExcludePath(*object.Key, includePaths, includeRegexCompiled, excludePaths, excludeRegexCompiled) {
 				continue
 			}
-			err = downloadFileFromBucket(downloader, tempDirName, *object.Key, bucket, logger)
+			err := downloadFileFromBucket(downloader, tempDirName, *object.Key, bucket, logger)
 			if err != nil {
 				return s3Data, err
 			}

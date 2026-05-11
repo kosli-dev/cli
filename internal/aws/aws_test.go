@@ -3,6 +3,7 @@ package aws
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 	"time"
 
@@ -455,6 +456,11 @@ func (suite *AWSTestSuite) TestGetS3Data() {
 }
 
 func (suite *AWSTestSuite) TestShouldExcludePath() {
+	mustCompile := func(patterns []string) []*regexp.Regexp {
+		compiled, err := compilePathRegex(patterns)
+		require.NoError(suite.T(), err)
+		return compiled
+	}
 	for _, t := range []struct {
 		name         string
 		key          string
@@ -463,7 +469,6 @@ func (suite *AWSTestSuite) TestShouldExcludePath() {
 		excludePaths []string
 		excludeRegex []string
 		wantExclude  bool
-		wantErr      bool
 	}{
 		{
 			name: "no filters set => include everything",
@@ -492,6 +497,28 @@ func (suite *AWSTestSuite) TestShouldExcludePath() {
 			excludeRegex: []string{`.*\.png$`},
 		},
 		{
+			name:         "multiple exclude regex patterns OR together — first matches",
+			key:          "images/foo.png",
+			excludeRegex: []string{`.*\.png$`, `.*\.gif$`},
+			wantExclude:  true,
+		},
+		{
+			name:         "multiple exclude regex patterns OR together — second matches",
+			key:          "images/foo.gif",
+			excludeRegex: []string{`.*\.png$`, `.*\.gif$`},
+			wantExclude:  true,
+		},
+		{
+			name:         "multiple exclude regex patterns OR together — none matches",
+			key:          "images/foo.jpg",
+			excludeRegex: []string{`.*\.png$`, `.*\.gif$`},
+		},
+		{
+			name:         "multiple include regex patterns OR together — any match keeps the key",
+			key:          "data/file.csv",
+			includeRegex: []string{`.*\.json$`, `.*\.csv$`},
+		},
+		{
 			name:         "regex include matches by pattern",
 			key:          "data/file.csv",
 			includeRegex: []string{`.*\.csv$`},
@@ -515,25 +542,33 @@ func (suite *AWSTestSuite) TestShouldExcludePath() {
 			includePaths: []string{"README.md"},
 			includeRegex: []string{`.*\.csv$`},
 		},
-		{
-			name:         "invalid exclude regex returns an error",
-			key:          "anything",
-			excludeRegex: []string{`[invalid`},
-			wantErr:      true,
-		},
-		{
-			name:         "invalid include regex returns an error",
-			key:          "anything",
-			includeRegex: []string{`[invalid`},
-			wantErr:      true,
-		},
 	} {
 		suite.Run(t.name, func() {
-			got, err := shouldExcludePath(t.key, t.includePaths, t.includeRegex, t.excludePaths, t.excludeRegex)
+			got := shouldExcludePath(t.key, t.includePaths, mustCompile(t.includeRegex), t.excludePaths, mustCompile(t.excludeRegex))
+			require.Equal(suite.T(), t.wantExclude, got)
+		})
+	}
+}
+
+func (suite *AWSTestSuite) TestCompilePathRegex() {
+	for _, t := range []struct {
+		name     string
+		patterns []string
+		wantErr  bool
+		wantLen  int
+	}{
+		{name: "nil input returns nil", patterns: nil, wantLen: 0},
+		{name: "empty input returns nil", patterns: []string{}, wantLen: 0},
+		{name: "valid patterns compile", patterns: []string{`.*\.png$`, `^logs/`}, wantLen: 2},
+		{name: "invalid pattern returns an error", patterns: []string{`[invalid`}, wantErr: true},
+		{name: "one invalid pattern in a list returns an error", patterns: []string{`.*\.png$`, `[invalid`}, wantErr: true},
+	} {
+		suite.Run(t.name, func() {
+			got, err := compilePathRegex(t.patterns)
 			require.Equal(suite.T(), t.wantErr, err != nil,
-				"shouldExcludePath() error = %v, wantErr %v", err, t.wantErr)
+				"compilePathRegex() error = %v, wantErr %v", err, t.wantErr)
 			if !t.wantErr {
-				require.Equal(suite.T(), t.wantExclude, got)
+				require.Len(suite.T(), got, t.wantLen)
 			}
 		})
 	}
