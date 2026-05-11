@@ -323,7 +323,7 @@ jobs:
       - name: Determine status
         id: status
         run: |
-          if [[ "${{ needs.release.result }}" == "success" ]]; then
+          if [[ "${{ needs.goreleaser.result }}" == "success" && "${{ needs.environment-reporter-upload-layer.result }}" == "success" ]]; then
             echo "value=success" >> "$GITHUB_OUTPUT"
           else
             echo "value=failure" >> "$GITHUB_OUTPUT"
