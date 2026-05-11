@@ -13,6 +13,7 @@ import (
 
 	run "cloud.google.com/go/run/apiv2"
 	"cloud.google.com/go/run/apiv2/runpb"
+	"github.com/kosli-dev/cli/internal/logger"
 	"google.golang.org/api/iterator"
 )
 
@@ -53,9 +54,16 @@ type apiClient interface {
 	listJobs(ctx context.Context, project, region string) ([]*runpb.Job, error)
 }
 
-// Client fetches Cloud Run data from GCP.
+// Client fetches Cloud Run data from GCP. The optional resolver, when set,
+// is consulted for any tag-pinned image whose digest cannot be parsed from
+// the image string alone — it queries the OCI Distribution endpoint of the
+// hosting registry to look up the current sha256. Resolver failures are
+// non-fatal: the original tag-pinned reference stays in place with an empty
+// digest, mirroring today's tag-pinned ECS / Service container fallback.
 type Client struct {
-	api apiClient
+	api      apiClient
+	resolver digestResolver
+	log      *logger.Logger
 }
 
 // New returns a Client backed by the real Cloud Run Admin API v2 using
@@ -63,7 +71,12 @@ type Client struct {
 // cluster cron job, since the metadata server provides credentials) are
 // wrapped with a generic "GCP client setup failed" prefix; the SDK's own
 // message is preserved via %w for diagnosis. Callers should defer Close().
-func New(ctx context.Context) (*Client, error) {
+//
+// The returned Client is wired with a registry-lookup resolver for tag-
+// pinned images using the same ADC token source. If the resolver cannot be
+// constructed (rare), it is left nil and the Client behaves as before:
+// tag-pinned images report empty digests.
+func New(ctx context.Context, log *logger.Logger) (*Client, error) {
 	services, err := run.NewServicesClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("GCP client setup failed: %w", err)
@@ -79,7 +92,16 @@ func New(ctx context.Context) (*Client, error) {
 		_ = revisions.Close()
 		return nil, fmt.Errorf("GCP client setup failed: %w", err)
 	}
-	return &Client{api: &gcpAPI{services: services, revisions: revisions, jobs: jobs}}, nil
+	resolver, err := newGCPRegistryResolver(ctx, log)
+	if err != nil {
+		log.Debug("registry digest resolution disabled: %v", err)
+		resolver = nil
+	}
+	return &Client{
+		api:      &gcpAPI{services: services, revisions: revisions, jobs: jobs},
+		resolver: resolver,
+		log:      log,
+	}, nil
 }
 
 // Close releases the underlying gRPC connections. Safe to call on a Client
@@ -125,7 +147,9 @@ func (c *Client) toService(ctx context.Context, raw *runpb.Service) (Service, er
 		if err != nil {
 			return Service{}, fmt.Errorf("getting revision %s: %w", fullName, err)
 		}
-		svc.Revisions = append(svc.Revisions, toRevision(rev))
+		revision := toRevision(rev)
+		c.resolveTagPinnedDigests(revision.Digests)
+		svc.Revisions = append(svc.Revisions, revision)
 	}
 	return svc, nil
 }
@@ -165,9 +189,38 @@ func (c *Client) ListJobs(ctx context.Context, project, region string) ([]Job, e
 	}
 	out := make([]Job, 0, len(rawJobs))
 	for _, raw := range rawJobs {
-		out = append(out, toJob(raw))
+		job := toJob(raw)
+		c.resolveTagPinnedDigests(job.Digests)
+		out = append(out, job)
 	}
 	return out, nil
+}
+
+// resolveTagPinnedDigests walks the digests map and, for each entry whose
+// value is empty (i.e., the image string was not digest-pinned), asks the
+// resolver to look up the digest in the hosting registry. On success the
+// tag-pinned key is replaced with a digest-pinned key (image@sha256:<hex>)
+// and the value carries the bare hex. Failures are logged at debug level
+// and leave the entry untouched — never fatal.
+//
+// No-op when the Client was constructed without a resolver (test paths,
+// or when ADC token-source construction failed).
+func (c *Client) resolveTagPinnedDigests(digests map[string]string) {
+	if c.resolver == nil {
+		return
+	}
+	for image, hex := range digests {
+		if hex != "" {
+			continue
+		}
+		resolvedRef, resolvedHex, err := c.resolver.Resolve(image)
+		if err != nil {
+			c.log.Debug("registry digest resolution failed for %q: %v", image, err)
+			continue
+		}
+		delete(digests, image)
+		digests[resolvedRef] = resolvedHex
+	}
 }
 
 func toJob(j *runpb.Job) Job {

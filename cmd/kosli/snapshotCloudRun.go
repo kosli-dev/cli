@@ -66,7 +66,7 @@ type cloudRunLister interface {
 }
 
 var newCloudRunClient = func(ctx context.Context) (cloudRunLister, error) {
-	return cloudrun.New(ctx)
+	return cloudrun.New(ctx, logger)
 }
 
 type snapshotCloudRunOptions struct {
