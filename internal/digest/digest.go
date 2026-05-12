@@ -18,7 +18,7 @@ import (
 
 	"github.com/containers/image/v5/docker"
 	"github.com/containers/image/v5/types"
-	"github.com/docker/docker/client"
+	"github.com/moby/moby/client"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/utils"
@@ -251,7 +251,7 @@ func FileSha256(filepath string, logger *logger.Logger) (string, error) {
 // It requires the docker daemon to be accessible and the docker image to be locally present.
 // The docker image must have been pushed into a registry to have a digest.
 func DockerImageSha256(imageID string) (string, error) {
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	cli, err := client.New(client.FromEnv)
 	if err != nil {
 		return "", err
 	}

@@ -1,11 +1,13 @@
 [![codecov](https://codecov.io/gh/kosli-dev/cli/branch/main/graph/badge.svg?token=Z4Y53XIOKJ)](https://codecov.io/gh/kosli-dev/cli)
 [![Static Badge](https://img.shields.io/badge/provenance-blue?style=plastic&link=https%3A%2F%2Fapp.kosli.com%2Fkosli-public%2Fflows%2Fcli-release%2Ftrails%2F)](https://app.kosli.com/kosli-public/flows/cli-release/trails/)
+[![Main](https://github.com/kosli-dev/cli/actions/workflows/main.yml/badge.svg)](https://github.com/kosli-dev/cli/actions/workflows/main.yml)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 # Kosli CLI
 
-This repo contains the Kosli CLI, for recording and querying software delivery events [Kosli](www.kosli.com)
+This repo contains the Kosli CLI, for recording and querying software delivery events to [Kosli](www.kosli.com).
 
-Some useful links: 
+Some useful links:
 
 * [Documentation site](https://docs.kosli.com/) for full details on usage.
 * [Developer guide](/dev-guide.md) for details on working with the code in this repo.

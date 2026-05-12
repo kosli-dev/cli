@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	cerrdefs "github.com/containerd/errdefs"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/client"
 	"github.com/kosli-dev/cli/internal/digest"
 	log "github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
@@ -89,17 +89,17 @@ func (o *snapshotDockerOptions) run(args []string) error {
 }
 
 func CreateDockerArtifactsData() ([]*server.ServerData, error) {
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	cli, err := client.New(client.FromEnv)
 	if err != nil {
 		return []*server.ServerData{}, err
 	}
 
-	containers, err := cli.ContainerList(context.Background(), container.ListOptions{})
+	containers, err := cli.ContainerList(context.Background(), client.ContainerListOptions{})
 	if err != nil {
 		return []*server.ServerData{}, err
 	}
 
-	return dockerArtifactsFromContainers(containers, digest.DockerImageSha256, logger)
+	return dockerArtifactsFromContainers(containers.Items, digest.DockerImageSha256, logger)
 }
 
 func dockerArtifactsFromContainers(
