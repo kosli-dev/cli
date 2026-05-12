@@ -426,7 +426,12 @@ func GetProjectAnalysisFromRevision(httpClient *http.Client, sonarResults *Sonar
 }
 
 func GetProjectAnalysisFromAnalysisID(httpClient *http.Client, sonarResults *SonarResults, project *Project, analysisID, tokenHeader string) error {
-	projectAnalysesURL, err := sonarURL(sonarResults.ServerUrl, "api/project_analyses/search", url.Values{"project": {project.Key}})
+	// Forward branch to find analyses on non-default branches (#861).
+	params := url.Values{"project": {project.Key}}
+	if sonarResults.Branch != nil && sonarResults.Branch.Name != "" {
+		params.Set("branch", sonarResults.Branch.Name)
+	}
+	projectAnalysesURL, err := sonarURL(sonarResults.ServerUrl, "api/project_analyses/search", params)
 	if err != nil {
 		return err
 	}
