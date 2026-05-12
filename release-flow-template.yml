@@ -23,10 +23,6 @@ trail:
     attestations:
     - name: sbom
       type: generic
-  - name: windows-arm
-    attestations:
-    - name: sbom
-      type: generic
   - name: windows-arm64
     attestations:
     - name: sbom
