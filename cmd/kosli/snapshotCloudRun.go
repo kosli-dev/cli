@@ -14,6 +14,21 @@ import (
 
 const snapshotCloudRunShortDesc = `Report a snapshot of Cloud Run services and jobs in a Google Cloud project and region to Kosli.  `
 const snapshotCloudRunLongDesc = snapshotCloudRunShortDesc + `
+Coverage:
+
+| Deploy method | Container? | API | Reported | Notes |
+|---|---|---|---|---|
+| Cloud Run service (image-deployed) | Yes | ^run^ | ✓ Full | Baseline. |
+| Cloud Run service (source / Buildpacks) | Yes (built for you) | ^run^ | ✓ Full | Same API surface as image-deployed; same behaviour. |
+| Cloud Run Job | Yes | ^run^ | ✓ Full | Jobs surface by resource (not per-Execution). Visible whether running or idle. |
+| Cloud Run function (Cloud Functions 2nd gen) | Yes (Buildpacks) | ^cloudfunctions^ + ^run^ | ✓ Full | Surfaces as the backing Cloud Run service. Image path uses ^gcf-artifacts/...^ encoding. |
+| Cloud Functions 1st gen | No (Google packages the source) | ^cloudfunctions^ only | ✗ | Legacy. Separate API; out of scope for this command. |
+| App Engine Standard | No (gVisor sandbox, not a container) | ^appengine^ | ✗ | Different API; intentionally out of scope. |
+| App Engine Flexible | Yes (containers on managed VMs) | ^appengine^ | ✗ | Mostly superseded by Cloud Run; out of scope. |
+| GKE (Standard / Autopilot) | Yes | ^container^ + Kubernetes API | ✗ | Use ^kosli snapshot k8s^. |
+| Cloud Run for Anthos | Yes (knative on GKE) | knative on the GKE cluster | ✗ | Niche; managed Cloud Run replaced this for most users. |
+| Compute Engine + Container-Optimized OS | Yes (Docker on a VM) | ^compute^ | ✗ | Containers on VMs; out of scope. |
+
 Each Cloud Run service contributes one artifact per revision in its traffic
 configuration. Each Cloud Run Job contributes one artifact, identified by the
 image bound to the Job (Jobs do not have a revision/traffic-split model).
@@ -39,9 +54,7 @@ job names and are case-sensitive.
 
 Pass ^--resolve-names^ to rewrite digest-pinned Service artifact names back
 to their deploy-time tags (commit SHA / version) via an Artifact Registry
-reverse-lookup. Only supported for Artifact Registry hosts.
-
-Currently a hidden, in-development command. Use --dry-run to inspect the payload without sending it to Kosli.`
+reverse-lookup. Only supported for Artifact Registry hosts.`
 
 const snapshotCloudRunExample = `
 # report every Cloud Run service and job in a project + region:
@@ -95,7 +108,6 @@ func newSnapshotCloudRunCmd(out io.Writer) *cobra.Command {
 		Short:   snapshotCloudRunShortDesc,
 		Long:    snapshotCloudRunLongDesc,
 		Example: snapshotCloudRunExample,
-		Hidden:  true,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if err := RequireGlobalFlags(global, []string{"Org", "ApiToken"}); err != nil {
