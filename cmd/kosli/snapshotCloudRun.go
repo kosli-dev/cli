@@ -16,18 +16,18 @@ const snapshotCloudRunShortDesc = `Report a snapshot of Cloud Run services and j
 const snapshotCloudRunLongDesc = snapshotCloudRunShortDesc + `
 Coverage:
 
-| Deploy method | Container? | API | Reported | Notes |
-|---|---|---|---|---|
-| Cloud Run service (image-deployed) | Yes | ^run^ | ✓ Full | Baseline. |
-| Cloud Run service (source / Buildpacks) | Yes (built for you) | ^run^ | ✓ Full | Same API surface as image-deployed; same behaviour. |
-| Cloud Run Job | Yes | ^run^ | ✓ Full | Jobs surface by resource (not per-Execution). Visible whether running or idle. |
-| Cloud Run function (Cloud Functions 2nd gen) | Yes (Buildpacks) | ^cloudfunctions^ + ^run^ | ✓ Full | Surfaces as the backing Cloud Run service. Image path uses ^gcf-artifacts/...^ encoding. |
-| Cloud Functions 1st gen | No (Google packages the source) | ^cloudfunctions^ only | ✗ | Legacy. Separate API; out of scope for this command. |
-| App Engine Standard | No (gVisor sandbox, not a container) | ^appengine^ | ✗ | Different API; intentionally out of scope. |
-| App Engine Flexible | Yes (containers on managed VMs) | ^appengine^ | ✗ | Mostly superseded by Cloud Run; out of scope. |
-| GKE (Standard / Autopilot) | Yes | ^container^ + Kubernetes API | ✗ | Use ^kosli snapshot k8s^. |
-| Cloud Run for Anthos | Yes (knative on GKE) | knative on the GKE cluster | ✗ | Niche; managed Cloud Run replaced this for most users. |
-| Compute Engine + Container-Optimized OS | Yes (Docker on a VM) | ^compute^ | ✗ | Containers on VMs; out of scope. |
+| Deploy method | Container? | Reported | Notes |
+|---|---|---|---|
+| Cloud Run service (image-deployed) | Yes | ✓ Full | |
+| Cloud Run service (source / Buildpacks) | Yes (built for you) | ✓ Full | |
+| Cloud Run Job | Yes | ✓ Full | |
+| Cloud Run function (Cloud Functions 2nd gen) | Yes (Buildpacks) | ✓ Full | |
+| Cloud Functions 1st gen | No (Google packages the source) | ✗ | |
+| App Engine Standard | No (gVisor sandbox, not a container) | ✗ | Not currently supported in the CLI. |
+| App Engine Flexible | Yes (containers on managed VMs) | ✗ | |
+| GKE (Standard / Autopilot) | Yes | ✗ | Use ^kosli snapshot k8s^ instead. |
+| Cloud Run for Anthos | Yes (knative on GKE) | ✗ | |
+| Compute Engine + Container-Optimized OS | Yes (Docker on a VM) | ✗ | |
 
 Each Cloud Run service contributes one artifact per revision in its traffic
 configuration. Each Cloud Run Job contributes one artifact, identified by the
