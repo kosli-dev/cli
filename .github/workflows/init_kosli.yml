@@ -23,7 +23,7 @@ on:
             required: false
             type: string
             default: 'none'
-        secrets:        
+        secrets:
             kosli_api_token:
                 required: true
             pr_github_token:
@@ -75,8 +75,8 @@ jobs:
           if: ${{ inputs.report_to_kosli != 'none' }}
           env:
             KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-          run: kosli begin trail ${{inputs.trail_name}} 
-                --flow ${{inputs.flow_name}} 
+          run: kosli begin trail ${{inputs.trail_name}}
+                --flow ${{inputs.flow_name}}
                 --org ${{inputs.kosli_org}}
 
         - name: Report pull-request attestation to Kosli
@@ -85,11 +85,32 @@ jobs:
             KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
           run: kosli attest pullrequest github
                 --flow ${{inputs.flow_name}}
-                --trail ${{inputs.trail_name}} 
+                --trail ${{inputs.trail_name}}
                 --name pr
                 --github-token ${{ secrets.pr_github_token }}
                 --org ${{inputs.kosli_org}}
-        
+
+        - name: Evaluate trails for four-eyes to Kosli
+          if: ${{ inputs.report_to_kosli == 'all' }}
+          env:
+            KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+          run: kosli evaluate trails ${{inputs.trail_name}} \
+                --policy "./bin/never_alone/four-eyes-policy.rego" \
+                --show-input \
+                --flow ${{inputs.flow_name}} \
+                --output json > "4eyes-eval-${{inputs.trail_name}}.json" 2>/dev/null || true
+
+        - name: Report four-eyes attestation to Kosli
+          if: ${{ inputs.report_to_kosli == 'all' }}
+          env:
+            KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
+          run: kosli attest custom \
+                --type "four-eyes-result" \
+                --name "four-eyes-result" \
+                --attestation-data "4eyes-eval-${{inputs.trail_name}}.json" \
+                --attachments "./bin/never_alone/four-eyes-policy.rego" \
+                --trail ${{inputs.trail_name}} \
+                --flow ${{inputs.flow_name}}
 
         - name: Report never-alone attestation to Kosli
           if: ${{ inputs.report_to_kosli == 'all' }}
@@ -99,8 +120,8 @@ jobs:
             GH_TOKEN: ${{ github.token }}
           run: |
             USER_DATA_FILENAME=never-alone-user-data.json
-            ./bin/never_alone/get_commit_and_pr_info.sh -c ${GITHUB_SHA} -o ${USER_DATA_FILENAME} 
-            
+            ./bin/never_alone/get_commit_and_pr_info.sh -c ${GITHUB_SHA} -o ${USER_DATA_FILENAME}
+
             PR_URL=$(cat ${USER_DATA_FILENAME} | jq -r '.pullRequest.url // empty')
             if [ -n "$PR_URL" ]; then
                 PR_ANNOTATE_ARG="--annotate pull_request=$PR_URL"
