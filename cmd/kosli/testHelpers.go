@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -18,6 +19,13 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 )
+
+// cmdDeprecationLine returns the line Cobra prints before running a command
+// whose Deprecated field is set. Used by tests to prepend the expected
+// deprecation notice to golden strings.
+func cmdDeprecationLine(cmd string) string {
+	return fmt.Sprintf("Command %q is deprecated, this command is deprecated and will be removed in a future release.\n", cmd)
+}
 
 type jsonCheck struct {
 	Path string

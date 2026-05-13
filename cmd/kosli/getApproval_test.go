@@ -54,25 +54,25 @@ func (suite *GetApprovalCommandTestSuite) TestGetApprovalCmd() {
 			wantError: true,
 			name:      "get an approval with more than one argument fails",
 			cmd:       fmt.Sprintf("get approval %s xxx %s", suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: accepts 1 arg(s), received 2\n",
+			golden:    cmdDeprecationLine("approval") + "Error: accepts 1 arg(s), received 2\n",
 		},
 		{
 			wantError: true,
 			name:      "get approval on a non-existing flow fails",
 			cmd:       "get approval get-approval-123#20" + suite.defaultKosliArguments,
-			golden:    "Error: Flow named 'get-approval-123' does not exist for organization 'docs-cmd-test-user'\n",
+			golden:    cmdDeprecationLine("approval") + "Error: Flow named 'get-approval-123' does not exist for organization 'docs-cmd-test-user'\n",
 		},
 		{
 			wantError: true,
 			name:      "get non-existing approval fails",
 			cmd:       fmt.Sprintf("get approval %s#23 %s", suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: Approval number '23' does not exist in flow 'get-approval' belonging to organization 'docs-cmd-test-user'\n",
+			golden:    cmdDeprecationLine("approval") + "Error: Approval number '23' does not exist in flow 'get-approval' belonging to organization 'docs-cmd-test-user'\n",
 		},
 		{
 			wantError: true,
 			name:      "missing --org fails",
 			cmd:       fmt.Sprintf("get approval %s --api-token secret", suite.flowName),
-			golden:    "Error: --org is not set\nUsage: kosli get approval EXPRESSION [flags]\n",
+			golden:    cmdDeprecationLine("approval") + "Error: --org is not set\nUsage: kosli get approval EXPRESSION [flags]\n",
 		},
 	}
 

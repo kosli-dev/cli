@@ -53,10 +53,11 @@ func newRequestApprovalCmd(out io.Writer) *cobra.Command {
 	o := new(reportApprovalOptions)
 	o.fingerprintOptions = new(fingerprintOptions)
 	cmd := &cobra.Command{
-		Use:     "approval [IMAGE-NAME | FILE-PATH | DIR-PATH]",
-		Short:   requestApprovalShortDesc,
-		Long:    requestApprovalLongDesc,
-		Example: requestApprovalExample,
+		Use:        "approval [IMAGE-NAME | FILE-PATH | DIR-PATH]",
+		Short:      requestApprovalShortDesc,
+		Long:       requestApprovalLongDesc,
+		Example:    requestApprovalExample,
+		Deprecated: "this command is deprecated and will be removed in a future release.",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
