@@ -18,10 +18,10 @@ import (
 
 	"github.com/containers/image/v5/docker"
 	"github.com/containers/image/v5/types"
-	"github.com/moby/moby/client"
 	"github.com/kosli-dev/cli/internal/logger"
 	"github.com/kosli-dev/cli/internal/requests"
 	"github.com/kosli-dev/cli/internal/utils"
+	"github.com/moby/moby/client"
 	"github.com/yargevad/filepathx"
 )
 

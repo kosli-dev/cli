@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+const assertApprovalCmdDeprecation = "Command \"approval\" is deprecated, this command is deprecated and will be removed in a future release.\n"
+
 // Define the suite, and absorb the built-in basic suite
 // functionality from testify - including a T() method which
 // returns the current testing context
@@ -52,30 +54,30 @@ func (suite *AssertApprovalCommandTestSuite) TestAssertApprovalCmd() {
 			wantError: true,
 			name:      "1 missing --org fails",
 			cmd:       fmt.Sprintf(`assert approval --fingerprint 8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c  --flow %s --api-token secret`, suite.flowName),
-			golden:    "Error: --org is not set\nUsage: kosli assert approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+			golden:    assertApprovalCmdDeprecation + "Error: --org is not set\nUsage: kosli assert approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "2 asserting approval for a non existing artifact fails",
 			cmd:       fmt.Sprintf(`assert approval --fingerprint 8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c  --flow %s %s`, suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: Artifact with fingerprint '8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c' does not exist in flow 'assert-approval' belonging to organization 'docs-cmd-test-user'\n",
+			golden:    assertApprovalCmdDeprecation + "Error: Artifact with fingerprint '8e568bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c' does not exist in flow 'assert-approval' belonging to organization 'docs-cmd-test-user'\n",
 		},
 		{
 			wantError: true,
 			name:      "3 asserting an existing artifact that does not have an approval (using --fingerprint) works and exits with non-zero code",
 			cmd:       fmt.Sprintf(`assert approval --fingerprint %s --flow %s %s`, suite.fingerprint, suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: artifact with fingerprint fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02 has no approvals created\n",
+			golden:    assertApprovalCmdDeprecation + "Error: artifact with fingerprint fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02 has no approvals created\n",
 		},
 		{
 			wantError: true,
 			name:      "4 asserting approval of an existing artifact that does not have an approval (using --artifact-type) works and exits with non-zero code",
 			cmd:       fmt.Sprintf(`assert approval %s --artifact-type file --flow %s %s`, suite.artifactPath, suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: artifact with fingerprint fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02 has no approvals created\n",
+			golden:    assertApprovalCmdDeprecation + "Error: artifact with fingerprint fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02 has no approvals created\n",
 		},
 		{
 			name:   "5 asserting approval of an existing artifact that has an approval (using --artifact-type) works and exits with zero code",
 			cmd:    fmt.Sprintf(`assert approval %s --artifact-type file --flow %s %s`, suite.artifactPath, suite.flowName, suite.defaultKosliArguments),
-			golden: "artifact with fingerprint fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02 is approved (approval no. [1])\n",
+			golden: assertApprovalCmdDeprecation + "artifact with fingerprint fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02 is approved (approval no. [1])\n",
 			additionalConfig: assertApprovalTestConfig{
 				createApproval: true,
 				isRequest:      false,
@@ -85,31 +87,31 @@ func (suite *AssertApprovalCommandTestSuite) TestAssertApprovalCmd() {
 		{
 			name:   "6 asserting approval of an existing artifact that has an approval (using --fingerprint) works and exits with zero code",
 			cmd:    fmt.Sprintf(`assert approval --fingerprint %s --flow %s %s`, suite.fingerprint, suite.flowName, suite.defaultKosliArguments),
-			golden: "artifact with fingerprint fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02 is approved (approval no. [1])\n",
+			golden: assertApprovalCmdDeprecation + "artifact with fingerprint fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02 is approved (approval no. [1])\n",
 		},
 		{
 			wantError: true,
 			name:      "7 not providing --fingerprint nor --artifact-type fails",
 			cmd:       fmt.Sprintf(`assert approval --flow %s %s`, suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: docker image name or file/dir path is required when --fingerprint is not provided\nUsage: kosli assert approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
+			golden:    assertApprovalCmdDeprecation + "Error: docker image name or file/dir path is required when --fingerprint is not provided\nUsage: kosli assert approval [IMAGE-NAME | FILE-PATH | DIR-PATH] [flags]\n",
 		},
 		{
 			wantError: true,
 			name:      "8 providing both --fingerprint and --artifact-type fails",
 			cmd:       fmt.Sprintf(`assert approval --artifact-type file --fingerprint %s --flow %s %s`, suite.fingerprint, suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: only one of --fingerprint, --artifact-type is allowed\n",
+			golden:    assertApprovalCmdDeprecation + "Error: only one of --fingerprint, --artifact-type is allowed\n",
 		},
 		{
 			wantError: true,
 			name:      "9 missing --flow fails",
 			cmd:       fmt.Sprintf(`assert approval --fingerprint %s  %s`, suite.fingerprint, suite.defaultKosliArguments),
-			golden:    "Error: required flag(s) \"flow\" not set\n",
+			golden:    assertApprovalCmdDeprecation + "Error: required flag(s) \"flow\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "10 asserting approval of an unapproved existing artifact (using --artifact-type) works and exits with non-zero code",
 			cmd:       fmt.Sprintf(`assert approval %s --artifact-type file --flow %s %s`, suite.artifactPath, suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: artifact with fingerprint fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02 is not approved\n",
+			golden:    assertApprovalCmdDeprecation + "Error: artifact with fingerprint fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02 is not approved\n",
 			additionalConfig: assertApprovalTestConfig{
 				createApproval: true,
 				isRequest:      true,
@@ -120,7 +122,7 @@ func (suite *AssertApprovalCommandTestSuite) TestAssertApprovalCmd() {
 			wantError: true,
 			name:      "11 asserting approval of an unapproved existing artifact (using --fingerprint) works and exits with non-zero code",
 			cmd:       fmt.Sprintf(`assert approval --fingerprint %s --flow %s %s`, suite.fingerprint, suite.flowName, suite.defaultKosliArguments),
-			golden:    "Error: artifact with fingerprint fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02 is not approved\n",
+			golden:    assertApprovalCmdDeprecation + "Error: artifact with fingerprint fcf33337634c2577a5d86fd7ecb0a25a7c1bb5d89c14fd236f546a5759252c02 is not approved\n",
 		},
 	}
 

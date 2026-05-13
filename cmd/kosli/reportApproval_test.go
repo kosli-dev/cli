@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+const reportApprovalCmdDeprecation = "Command \"approval\" is deprecated, this command is deprecated and will be removed in a future release.\n"
+
 type ApprovalReportTestSuite struct {
 	suite.Suite
 	defaultKosliArguments string
@@ -57,28 +59,28 @@ func (suite *ApprovalReportTestSuite) TestApprovalReportCmd() {
 	tests := []cmdTestCase{
 		{
 			name: "report approval with a range of commits works ",
-			cmd: `report approval --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + ` --repo-root ../.. 
+			cmd: `report approval --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + ` --repo-root ../..
 			--newest-commit HEAD --oldest-commit HEAD~3` + suite.defaultKosliArguments,
-			golden: fmt.Sprintf("approval created for artifact: %s\n", suite.artifactFingerprint),
+			golden: reportApprovalCmdDeprecation + fmt.Sprintf("approval created for artifact: %s\n", suite.artifactFingerprint),
 		},
 		{
 			name: "report approval with an environment name works",
-			cmd: `report approval --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + ` --repo-root ../.. 
+			cmd: `report approval --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + ` --repo-root ../..
 			--newest-commit HEAD --oldest-commit HEAD~3` + ` --environment staging` + suite.defaultKosliArguments,
-			golden: fmt.Sprintf("approval created for artifact: %s\n", suite.artifactFingerprint),
+			golden: reportApprovalCmdDeprecation + fmt.Sprintf("approval created for artifact: %s\n", suite.artifactFingerprint),
 		},
 		{
 			wantError: true,
 			name:      "report approval with no environment name and no oldest commit fails",
 			cmd: `report approval --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + ` --repo-root ../.. ` +
 				suite.defaultKosliArguments,
-			golden: "Error: at least one of --environment, --oldest-commit is required\n",
+			golden: reportApprovalCmdDeprecation + "Error: at least one of --environment, --oldest-commit is required\n",
 		},
 		{
 			name: "report approval with an environment name and no oldest-commit and no newest-commit works",
 			cmd: `report approval --fingerprint ` + suite.artifactFingerprint + ` --flow ` + suite.flowName + ` --repo-root ../.. ` +
 				` --environment ` + suite.envName + suite.defaultKosliArguments,
-			golden: fmt.Sprintf("approval created for artifact: %s\n", suite.artifactFingerprint),
+			golden: reportApprovalCmdDeprecation + fmt.Sprintf("approval created for artifact: %s\n", suite.artifactFingerprint),
 			additionalConfig: reportApprovalTestConfig{
 				createSnapshot: true,
 			},

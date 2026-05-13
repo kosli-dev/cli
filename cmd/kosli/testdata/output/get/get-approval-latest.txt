@@ -1,3 +1,4 @@
+Command "approval" is deprecated, this command is deprecated and will be removed in a future release.
 ID:                    2
 Artifact fingerprint:  7a498bd886069f1290def0caabc1e97ce0e7b80c105e611258b57d76fcef234c
 Artifact name:         approved-artifact

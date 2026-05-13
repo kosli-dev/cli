@@ -48,11 +48,12 @@ type listApprovalsOptions struct {
 func newListApprovalsCmd(out io.Writer) *cobra.Command {
 	o := new(listApprovalsOptions)
 	cmd := &cobra.Command{
-		Use:     "approvals",
-		Short:   listApprovalsShortDesc,
-		Long:    listApprovalsLongDesc,
-		Example: listApprovalsExample,
-		Args:    cobra.NoArgs,
+		Use:        "approvals",
+		Short:      listApprovalsShortDesc,
+		Long:       listApprovalsLongDesc,
+		Example:    listApprovalsExample,
+		Args:       cobra.NoArgs,
+		Deprecated: "this command is deprecated and will be removed in a future release.",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			err := RequireGlobalFlags(global, []string{"Org", "ApiToken"})
 			if err != nil {
