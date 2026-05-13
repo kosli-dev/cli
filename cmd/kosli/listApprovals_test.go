@@ -8,8 +8,6 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-const approvalsCmdDeprecation = "Command \"approvals\" is deprecated, this command is deprecated and will be removed in a future release.\n"
-
 // Define the suite, and absorb the built-in basic suite
 // functionality from testify - including a T() method which
 // returns the current testing context
@@ -52,36 +50,36 @@ func (suite *ListApprovalsCommandTestSuite) TestListApprovalsCmd() {
 			wantError: true,
 			name:      "missing --flow flag arg causes an error",
 			cmd:       fmt.Sprintf(`list approvals %s`, suite.defaultKosliArguments),
-			golden:    approvalsCmdDeprecation + "Error: required flag(s) \"flow\" not set\n",
+			golden:    cmdDeprecationLine("approvals") + "Error: required flag(s) \"flow\" not set\n",
 		},
 		{
 			wantError: true,
 			name:      "non-existing flow causes an error",
 			cmd:       fmt.Sprintf(`list approvals --flow non-existing %s`, suite.defaultKosliArguments),
-			golden:    approvalsCmdDeprecation + "Error: Flow named 'non-existing' does not exist for organization 'docs-cmd-test-user'\n",
+			golden:    cmdDeprecationLine("approvals") + "Error: Flow named 'non-existing' does not exist for organization 'docs-cmd-test-user'\n",
 		},
 		// TODO: the correct error is overwritten by the hack flag value check in root.go
 		{
 			wantError: true,
 			name:      "negative page number causes an error",
 			cmd:       fmt.Sprintf(`list approvals --flow foo --page -1 %s`, suite.defaultKosliArguments),
-			golden:    approvalsCmdDeprecation + "Error: flag '--page' has value '-1' which is illegal\n",
+			golden:    cmdDeprecationLine("approvals") + "Error: flag '--page' has value '-1' which is illegal\n",
 		},
 		{
 			wantError: true,
 			name:      "negative page limit causes an error",
 			cmd:       fmt.Sprintf(`list approvals --flow foo --page-limit -1 %s`, suite.defaultKosliArguments),
-			golden:    approvalsCmdDeprecation + "Error: flag '--page-limit' has value '-1' which is illegal\n",
+			golden:    cmdDeprecationLine("approvals") + "Error: flag '--page-limit' has value '-1' which is illegal\n",
 		},
 		{
 			name:   "listing approvals on an empty flow works",
 			cmd:    fmt.Sprintf(`list approvals --flow %s %s`, suite.flowName1, suite.defaultKosliArguments),
-			golden: approvalsCmdDeprecation + "No approvals were found.\n",
+			golden: cmdDeprecationLine("approvals") + "No approvals were found.\n",
 		},
 		{
 			name:   "listing approvals on an empty flow with --output json works",
 			cmd:    fmt.Sprintf(`list approvals --flow %s --output json %s`, suite.flowName1, suite.defaultKosliArguments),
-			golden: approvalsCmdDeprecation + "[]",
+			golden: cmdDeprecationLine("approvals") + "[]",
 		},
 		{
 			name:       "listing approvals on a flow works",
