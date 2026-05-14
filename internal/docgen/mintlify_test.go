@@ -278,6 +278,21 @@ func TestBacktickFlags(t *testing.T) {
 			input: "use -h for help",
 			want:  "use `-h` for help",
 		},
+		{
+			name:  "bare double-dash is not a flag",
+			input: "use -- to separate flags from args",
+			want:  "use -- to separate flags from args",
+		},
+		{
+			name:  "flag with equals value",
+			input: "use --output=json here",
+			want:  "use `--output`=json here",
+		},
+		{
+			name:  "numeric arg is not a flag",
+			input: "use -1 for default",
+			want:  "use -1 for default",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
