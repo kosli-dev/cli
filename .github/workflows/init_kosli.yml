@@ -94,27 +94,29 @@ jobs:
           if: ${{ inputs.report_to_kosli == 'all' }}
           env:
             KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-          run: kosli evaluate trails ${{inputs.trail_name}} \
-                --policy "./bin/never_alone/four-eyes-policy.rego" \
-                --show-input \
-                --flow ${{inputs.flow_name}} \
-                --org ${{inputs.kosli_org}} \
-                --no-assert \
-                --params '{"attestation_name": "pr"}' \
-                --output json > "4eyes-eval-${{inputs.trail_name}}.json" || echo '{"allow":false,"violations":["evaluate command failed"]}' > "4eyes-eval-${{inputs.trail_name}}.json"
+          run: |
+            kosli evaluate trails ${{inputs.trail_name}} \
+              --policy "./bin/never_alone/four-eyes-policy.rego" \
+              --show-input \
+              --flow ${{inputs.flow_name}} \
+              --org ${{inputs.kosli_org}} \
+              --no-assert \
+              --params '{"attestation_name": "pr"}' \
+              --output json > "4eyes-eval-${{inputs.trail_name}}.json" || echo '{"allow":false,"violations":["evaluate command failed"]}' > "4eyes-eval-${{inputs.trail_name}}.json"
 
         - name: Report four-eyes attestation to Kosli
           if: ${{ inputs.report_to_kosli == 'all' }}
           env:
             KOSLI_API_TOKEN: ${{ secrets.kosli_api_token }}
-          run: kosli attest custom \
-                --type "four-eyes-result" \
-                --name "four-eyes-result" \
-                --attestation-data "4eyes-eval-${{inputs.trail_name}}.json" \
-                --attachments "./bin/never_alone/four-eyes-policy.rego" \
-                --trail ${{inputs.trail_name}} \
-                --flow ${{inputs.flow_name}} \
-                --org ${{inputs.kosli_org}}
+          run: |
+            kosli attest custom \
+              --type "four-eyes-result" \
+              --name "four-eyes-result" \
+              --attestation-data "4eyes-eval-${{inputs.trail_name}}.json" \
+              --attachments "./bin/never_alone/four-eyes-policy.rego" \
+              --trail ${{inputs.trail_name}} \
+              --flow ${{inputs.flow_name}} \
+              --org ${{inputs.kosli_org}}
 
         - name: Report never-alone attestation to Kosli
           if: ${{ inputs.report_to_kosli == 'all' }}
