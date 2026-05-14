@@ -100,7 +100,7 @@ jobs:
                 --flow ${{inputs.flow_name}} \
                 --org ${{inputs.kosli_org}} \
                 --no-assert \
-                --output json > "4eyes-eval-${{inputs.trail_name}}.json"
+                --output json > "4eyes-eval-${{inputs.trail_name}}.json" || echo '{"allow":false,"violations":["evaluate command failed"]}' > "4eyes-eval-${{inputs.trail_name}}.json"
 
         - name: Report four-eyes attestation to Kosli
           if: ${{ inputs.report_to_kosli == 'all' }}

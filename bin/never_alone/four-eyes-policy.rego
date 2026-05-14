@@ -20,9 +20,9 @@ attestation_name := name if {
 #
 # Used with `kosli evaluate trails` (plural). Each trail in input.trails
 # represents one commit. The PR attestation payload is at:
-#   trail.compliance_status.attestations_statuses["pr-review"]
+#   trail.compliance_status.attestations_statuses[attestation_name]
 #
-# Attested via: kosli attest pullrequest github --name pr-review --commit <sha>
+# Attested via: kosli attest pullrequest github --name <attestation_name> --commit <sha>
 # ---------------------------------------------------------------------------
 
 # Extract PR attestation payload from a trail.
