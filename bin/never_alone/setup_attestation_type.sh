@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-KOSLI_ORG="${KOSLI_ORG:-kosli-public}"
+# Use first arg, existing ENV or set a default
+KOSLI_ORG="${1:-${KOSLI_ORG:-kosli-public}}"
 
 # One-time setup: create custom attestation types for never-alone.
 # Run this after any schema change. Types cannot be updated in place;
