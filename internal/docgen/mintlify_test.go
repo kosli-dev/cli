@@ -217,6 +217,105 @@ func TestEscapeMintlifyProse(t *testing.T) {
 	}
 }
 
+func TestBacktickFlags(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "double-dash flag at start",
+			input: "--api-token",
+			want:  "`--api-token`",
+		},
+		{
+			name:  "single-dash flag at start",
+			input: "-x",
+			want:  "`-x`",
+		},
+		{
+			name:  "flag in middle of sentence",
+			input: "use --api-token to authenticate",
+			want:  "use `--api-token` to authenticate",
+		},
+		{
+			name:  "flag in table cell",
+			input: "| --api-token | API token |",
+			want:  "| `--api-token` | API token |",
+		},
+		{
+			name:  "two adjacent flags",
+			input: "--foo --bar",
+			want:  "`--foo` `--bar`",
+		},
+		{
+			name:  "comma-separated flags",
+			input: "--foo,--bar",
+			want:  "`--foo`,`--bar`",
+		},
+		{
+			name:  "already-backticked flag is left alone",
+			input: "use `--api-token` here",
+			want:  "use `--api-token` here",
+		},
+		{
+			name:  "hyphenated word is not a flag",
+			input: "this is built-in behaviour",
+			want:  "this is built-in behaviour",
+		},
+		{
+			name:  "code fence content is untouched",
+			input: "see ```\nkosli foo --bar\n``` for example",
+			want:  "see ```\nkosli foo --bar\n``` for example",
+		},
+		{
+			name:  "flag with hyphen in name",
+			input: "use --jira-base-url here",
+			want:  "use `--jira-base-url` here",
+		},
+		{
+			name:  "short flag in middle",
+			input: "use -h for help",
+			want:  "use `-h` for help",
+		},
+		{
+			name:  "bare double-dash is not a flag",
+			input: "use -- to separate flags from args",
+			want:  "use -- to separate flags from args",
+		},
+		{
+			name:  "flag with equals value",
+			input: "use --output=json here",
+			want:  "use `--output`=json here",
+		},
+		{
+			name:  "numeric arg is not a flag",
+			input: "use -1 for default",
+			want:  "use -1 for default",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := backtickFlags(tt.input)
+			if got != tt.want {
+				t.Errorf("backtickFlags(%q):\ngot:  %q\nwant: %q", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMintlifyFlagsSectionBackticksFlags(t *testing.T) {
+	f := MintlifyFormatter{}
+	flags := "| --api-token string | required (default $KOSLI_API_TOKEN) |\n"
+	got := f.FlagsSection(flags, "")
+	if !strings.Contains(got, "`--api-token`") {
+		t.Errorf("expected --api-token to be backticked, got:\n%s", got)
+	}
+	if strings.Contains(got, "| --api-token string |") {
+		t.Errorf("expected bare --api-token to be replaced, got:\n%s", got)
+	}
+}
+
 func TestSanitizeDescription(t *testing.T) {
 	tests := []struct {
 		name  string
