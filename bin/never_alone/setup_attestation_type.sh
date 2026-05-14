@@ -22,4 +22,4 @@ kosli create attestation-type four-eyes-result \
   --jq ".allow == true" \
   --org "${KOSLI_ORG}"
 
-echo "Done — four-eyes-result attestation types ready."
+echo "Done — four-eyes-result attestation type ready."
