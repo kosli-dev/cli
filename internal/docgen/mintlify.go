@@ -189,19 +189,13 @@ func backtickFlags(s string) string {
 	return strings.Join(parts, "```")
 }
 
+// nonBoundaryByte matches a single byte that cannot precede a CLI flag:
+// a word char (\w), backtick, slash, or dash.
+var nonBoundaryByte = regexp.MustCompile("[`/\\w-]")
+
+// isFlagBoundaryChar reports whether c is a valid character before a flag.
 func isFlagBoundaryChar(c byte) bool {
-	// A flag must be preceded by start-of-string or a character that is not
-	// a word char, slash, dash, or backtick.
-	if c == '/' || c == '-' || c == '`' {
-		return false
-	}
-	if c == '_' {
-		return false
-	}
-	if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') {
-		return false
-	}
-	return true
+	return !nonBoundaryByte.Match([]byte{c})
 }
 
 func backtickFlagsFragment(s string) string {
