@@ -9,6 +9,8 @@ trail:
 #    type: snyk
   - name: never-alone-trail
     type: generic
+  - name: four-eyes-result
+    type: custom
   artifacts:
   - name: cli-docker
     attestations:
