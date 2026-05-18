@@ -230,7 +230,7 @@ func ingestJunitDir(testResultsDir string) ([]*JUnitResults, []string, error) {
 		return nil
 	})
 	if err != nil {
-		return results, nil, err
+		return nil, nil, err
 	}
 
 	if len(allSuites) == 0 {

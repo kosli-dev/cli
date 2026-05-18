@@ -160,9 +160,7 @@ func TestIngestJunitDir(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotEmpty(t, results)
 	})
-}
 
-func TestIngestJunitDir_ReturnsFilenames(t *testing.T) {
 	t.Run("returns filenames of parsed JUnit XML files", func(t *testing.T) {
 		results, filenames, err := ingestJunitDir("testdata/junit")
 		require.NoError(t, err)
