@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -213,11 +214,11 @@ func ingestJunitDir(testResultsDir string) ([]*JUnitResults, []string, error) {
 	var junitFilenames []string
 
 	var allSuites []junit.Suite
-	err := filepath.Walk(testResultsDir, func(path string, info os.FileInfo, err error) error {
+	err := filepath.WalkDir(testResultsDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if info.Mode().IsRegular() && strings.HasSuffix(info.Name(), ".xml") {
+		if d.Type().IsRegular() && strings.HasSuffix(d.Name(), ".xml") {
 			suites, err := junit.IngestFile(path)
 			if err != nil {
 				if strings.Contains(err.Error(), "Decoder.CharsetReader is nil") {
@@ -238,14 +239,14 @@ func ingestJunitDir(testResultsDir string) ([]*JUnitResults, []string, error) {
 	}
 
 	if len(allSuites) == 0 {
-		return results, nil, fmt.Errorf("no tests found in %s directory", testResultsDir)
+		return nil, nil, fmt.Errorf("no tests found in %s directory", testResultsDir)
 	}
 
 	for _, suite := range allSuites {
 		var timestamp float64
 		timestamp, err := parseTimestamp(suite.Properties["timestamp"])
 		if err != nil {
-			return results, nil, err
+			return nil, nil, err
 		}
 
 		// The values in suite.Totals are based on the results of the tests in the suite and not in the header of the suite.

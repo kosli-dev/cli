@@ -167,7 +167,7 @@ func TestIngestJunitDir(t *testing.T) {
 		results, filenames, err := ingestJunitDir("testdata/junit")
 		require.NoError(t, err)
 		assert.NotEmpty(t, results)
-		assert.NotEmpty(t, filenames)
+		assert.Len(t, filenames, 1)
 		assert.Contains(t, filenames[0], ".xml")
 	})
 }
