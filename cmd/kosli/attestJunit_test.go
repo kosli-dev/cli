@@ -143,29 +143,31 @@ func TestAttestJunitCommandTestSuite(t *testing.T) {
 
 func TestIngestJunitDir(t *testing.T) {
 	t.Run("error includes filename when XML parsing fails", func(t *testing.T) {
-		_, err := ingestJunitDir("testdata_junit_iso8859")
+		_, _, err := ingestJunitDir("testdata_junit_iso8859")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "results.xml")
 	})
 
 	t.Run("returns no tests found for empty directory", func(t *testing.T) {
 		dir := t.TempDir()
-		_, err := ingestJunitDir(dir)
+		_, _, err := ingestJunitDir(dir)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "no tests found")
 	})
 
 	t.Run("parses valid JUnit XML correctly", func(t *testing.T) {
-		results, err := ingestJunitDir("testdata/junit")
+		results, _, err := ingestJunitDir("testdata/junit")
 		require.NoError(t, err)
 		assert.NotEmpty(t, results)
 	})
 }
 
-func TestGetJunitFilenames(t *testing.T) {
-	t.Run("error includes filename when XML parsing fails", func(t *testing.T) {
-		_, err := getJunitFilenames("testdata_junit_iso8859")
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "results.xml")
+func TestIngestJunitDir_ReturnsFilenames(t *testing.T) {
+	t.Run("returns filenames of parsed JUnit XML files", func(t *testing.T) {
+		results, filenames, err := ingestJunitDir("testdata/junit")
+		require.NoError(t, err)
+		assert.NotEmpty(t, results)
+		assert.NotEmpty(t, filenames)
+		assert.Contains(t, filenames[0], ".xml")
 	})
 }

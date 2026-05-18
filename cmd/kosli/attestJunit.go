@@ -161,17 +161,13 @@ func (o *attestJunitOptions) run(args []string) error {
 		return err
 	}
 
-	o.payload.JUnitResults, err = ingestJunitDir(o.testResultsDir)
+	var junitFilenames []string
+	o.payload.JUnitResults, junitFilenames, err = ingestJunitDir(o.testResultsDir)
 	if err != nil {
 		return err
 	}
 
 	if o.uploadResultsDir {
-		// prepare the files to upload as attachments. We are only interested in the actual Junit XMl files
-		junitFilenames, err := getJunitFilenames(o.testResultsDir)
-		if err != nil {
-			return err
-		}
 		o.attachments = append(o.attachments, junitFilenames...)
 	}
 
@@ -212,8 +208,9 @@ type JUnitResults struct {
 	Timestamp float64 `json:"timestamp,omitempty"`
 }
 
-func ingestJunitDir(testResultsDir string) ([]*JUnitResults, error) {
+func ingestJunitDir(testResultsDir string) ([]*JUnitResults, []string, error) {
 	results := []*JUnitResults{}
+	var junitFilenames []string
 
 	var allSuites []junit.Suite
 	err := filepath.Walk(testResultsDir, func(path string, info os.FileInfo, err error) error {
@@ -225,23 +222,26 @@ func ingestJunitDir(testResultsDir string) ([]*JUnitResults, error) {
 			if err != nil {
 				return fmt.Errorf("failed to parse JUnit XML file %s: %w", path, err)
 			}
-			allSuites = append(allSuites, suites...)
+			if len(suites) > 0 {
+				allSuites = append(allSuites, suites...)
+				junitFilenames = append(junitFilenames, path)
+			}
 		}
 		return nil
 	})
 	if err != nil {
-		return results, err
+		return results, nil, err
 	}
 
 	if len(allSuites) == 0 {
-		return results, fmt.Errorf("no tests found in %s directory", testResultsDir)
+		return results, nil, fmt.Errorf("no tests found in %s directory", testResultsDir)
 	}
 
 	for _, suite := range allSuites {
 		var timestamp float64
 		timestamp, err := parseTimestamp(suite.Properties["timestamp"])
 		if err != nil {
-			return results, err
+			return results, nil, err
 		}
 
 		// The values in suite.Totals are based on the results of the tests in the suite and not in the header of the suite.
@@ -258,36 +258,7 @@ func ingestJunitDir(testResultsDir string) ([]*JUnitResults, error) {
 		results = append(results, suiteResult)
 	}
 
-	return results, nil
-}
-
-func getJunitFilenames(directory string) ([]string, error) {
-	var filenames []string
-
-	err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		// Add all regular files that end with ".xml"
-		if info.Mode().IsRegular() && strings.HasSuffix(info.Name(), ".xml") {
-			suites, err := junit.IngestFile(path)
-			if err != nil {
-				return fmt.Errorf("failed to parse JUnit XML file %s: %w", path, err)
-			}
-			if len(suites) > 0 {
-				filenames = append(filenames, path)
-			}
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return filenames, err
-	}
-
-	return filenames, nil
+	return results, junitFilenames, nil
 }
 
 func parseTimestamp(timestampStr string) (float64, error) {
