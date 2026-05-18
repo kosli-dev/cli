@@ -100,6 +100,9 @@ has_independent_approval(trail, pr) if {
 	cutoff := latest_commit_ts(pr)
 	all_authors := pr_commit_authors(pr) | {pr.author}
 	count(all_authors) > 0
+
+	# At least one approver must exist to satisfy four-eyes.
+	count(pr.approvers) > 0
 	every author in all_authors {
 		some approver in pr.approvers
 		approver.state == "APPROVED"
@@ -116,6 +119,9 @@ has_independent_approval(trail, pr) if {
 	cutoff := latest_commit_ts(pr)
 	all_authors := pr_commit_authors(pr)
 	count(all_authors) > 0
+
+	# At least one approver must exist to satisfy four-eyes.
+	count(pr.approvers) > 0
 	every author in all_authors {
 		some approver in pr.approvers
 		approver.state == "APPROVED"
