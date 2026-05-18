@@ -273,7 +273,7 @@ func getJunitFilenames(directory string) ([]string, error) {
 		if info.Mode().IsRegular() && strings.HasSuffix(info.Name(), ".xml") {
 			suites, err := junit.IngestFile(path)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to parse JUnit XML file %s: %w", path, err)
 			}
 			if len(suites) > 0 {
 				filenames = append(filenames, path)

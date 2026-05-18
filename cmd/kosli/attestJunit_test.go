@@ -161,3 +161,11 @@ func TestIngestJunitDir(t *testing.T) {
 		assert.NotEmpty(t, results)
 	})
 }
+
+func TestGetJunitFilenames(t *testing.T) {
+	t.Run("error includes filename when XML parsing fails", func(t *testing.T) {
+		_, err := getJunitFilenames("testdata_junit_iso8859")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "results.xml")
+	})
+}
