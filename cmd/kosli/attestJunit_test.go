@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -137,4 +139,25 @@ func (suite *AttestJunitCommandTestSuite) TestAttestJunitCmd() {
 // a normal test function and pass our suite to suite.Run
 func TestAttestJunitCommandTestSuite(t *testing.T) {
 	suite.Run(t, new(AttestJunitCommandTestSuite))
+}
+
+func TestIngestJunitDir(t *testing.T) {
+	t.Run("error includes filename when XML parsing fails", func(t *testing.T) {
+		_, err := ingestJunitDir("testdata_junit_iso8859")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "results.xml")
+	})
+
+	t.Run("returns no tests found for empty directory", func(t *testing.T) {
+		dir := t.TempDir()
+		_, err := ingestJunitDir(dir)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "no tests found")
+	})
+
+	t.Run("parses valid JUnit XML correctly", func(t *testing.T) {
+		results, err := ingestJunitDir("testdata/junit")
+		require.NoError(t, err)
+		assert.NotEmpty(t, results)
+	})
 }

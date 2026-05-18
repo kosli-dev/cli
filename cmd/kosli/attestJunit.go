@@ -214,16 +214,30 @@ type JUnitResults struct {
 
 func ingestJunitDir(testResultsDir string) ([]*JUnitResults, error) {
 	results := []*JUnitResults{}
-	suites, err := junit.IngestDir(testResultsDir)
+
+	var allSuites []junit.Suite
+	err := filepath.Walk(testResultsDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.Mode().IsRegular() && strings.HasSuffix(info.Name(), ".xml") {
+			suites, err := junit.IngestFile(path)
+			if err != nil {
+				return fmt.Errorf("failed to parse JUnit XML file %s: %w", path, err)
+			}
+			allSuites = append(allSuites, suites...)
+		}
+		return nil
+	})
 	if err != nil {
 		return results, err
 	}
 
-	if len(suites) == 0 {
+	if len(allSuites) == 0 {
 		return results, fmt.Errorf("no tests found in %s directory", testResultsDir)
 	}
 
-	for _, suite := range suites {
+	for _, suite := range allSuites {
 		var timestamp float64
 		timestamp, err := parseTimestamp(suite.Properties["timestamp"])
 		if err != nil {
