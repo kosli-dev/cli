@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -137,4 +139,35 @@ func (suite *AttestJunitCommandTestSuite) TestAttestJunitCmd() {
 // a normal test function and pass our suite to suite.Run
 func TestAttestJunitCommandTestSuite(t *testing.T) {
 	suite.Run(t, new(AttestJunitCommandTestSuite))
+}
+
+func TestIngestJunitDir(t *testing.T) {
+	t.Run("error includes filename and user-friendly message for unsupported encoding", func(t *testing.T) {
+		_, _, err := ingestJunitDir("testdata_junit_iso8859")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "results.xml")
+		assert.Contains(t, err.Error(), "only UTF-8 encoding is supported")
+		assert.Contains(t, err.Error(), "--results-dir")
+	})
+
+	t.Run("returns no tests found for empty directory", func(t *testing.T) {
+		dir := t.TempDir()
+		_, _, err := ingestJunitDir(dir)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "no tests found")
+	})
+
+	t.Run("parses valid JUnit XML correctly", func(t *testing.T) {
+		results, _, err := ingestJunitDir("testdata/junit")
+		require.NoError(t, err)
+		assert.NotEmpty(t, results)
+	})
+
+	t.Run("returns filenames of parsed JUnit XML files", func(t *testing.T) {
+		results, filenames, err := ingestJunitDir("testdata/junit")
+		require.NoError(t, err)
+		assert.NotEmpty(t, results)
+		assert.Len(t, filenames, 1)
+		assert.Contains(t, filenames[0], ".xml")
+	})
 }
