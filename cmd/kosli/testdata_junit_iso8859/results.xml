@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="ISO-8859-15"?>
+<testsuites>
+  <testsuite name="com.example.MyTest" tests="2" failures="0" errors="0" time="0.123">
+    <testcase name="testPass" classname="com.example.MyTest" time="0.05"/>
+    <testcase name="testAlsoPass" classname="com.example.MyTest" time="0.073"/>
+  </testsuite>
+</testsuites>

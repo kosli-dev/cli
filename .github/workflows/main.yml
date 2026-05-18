@@ -39,8 +39,8 @@ jobs:
           else
             SHA=$GITHUB_SHA
           fi
-          TAG=$(echo $SHA | head -c7)
-          echo "TAG=${TAG}" >> ${GITHUB_ENV}
+          TAG=$(echo $SHA | head -c 8)
+          echo "TAG=${TAG}" >> $GITHUB_ENV
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "checkout_ref=$SHA" >> $GITHUB_OUTPUT
 
@@ -48,7 +48,7 @@ jobs:
             TRAIL_NAME=${GITHUB_REF##refs/tags/}
             TRAIL_TEMPLATE_FILE=release-flow-template.yml
           else
-            TRAIL_NAME=$(echo $SHA | head -c 7)
+            TRAIL_NAME=$SHA
             TRAIL_TEMPLATE_FILE=main-flow-template.yml
           fi
           echo "TRAIL_NAME=${TRAIL_NAME}" >> $GITHUB_ENV

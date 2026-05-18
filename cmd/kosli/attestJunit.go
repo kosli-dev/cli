@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
@@ -161,17 +162,13 @@ func (o *attestJunitOptions) run(args []string) error {
 		return err
 	}
 
-	o.payload.JUnitResults, err = ingestJunitDir(o.testResultsDir)
+	var junitFilenames []string
+	o.payload.JUnitResults, junitFilenames, err = ingestJunitDir(o.testResultsDir)
 	if err != nil {
 		return err
 	}
 
 	if o.uploadResultsDir {
-		// prepare the files to upload as attachments. We are only interested in the actual Junit XMl files
-		junitFilenames, err := getJunitFilenames(o.testResultsDir)
-		if err != nil {
-			return err
-		}
 		o.attachments = append(o.attachments, junitFilenames...)
 	}
 
@@ -212,22 +209,44 @@ type JUnitResults struct {
 	Timestamp float64 `json:"timestamp,omitempty"`
 }
 
-func ingestJunitDir(testResultsDir string) ([]*JUnitResults, error) {
+func ingestJunitDir(testResultsDir string) ([]*JUnitResults, []string, error) {
 	results := []*JUnitResults{}
-	suites, err := junit.IngestDir(testResultsDir)
+	var junitFilenames []string
+
+	var allSuites []junit.Suite
+	err := filepath.WalkDir(testResultsDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.Type().IsRegular() && strings.HasSuffix(d.Name(), ".xml") {
+			suites, err := junit.IngestFile(path)
+			if err != nil {
+				if strings.Contains(err.Error(), "Decoder.CharsetReader is nil") {
+					return fmt.Errorf("failed to parse XML file %s: only UTF-8 encoding is supported. "+
+						"If this is not a JUnit results file, use --results-dir to specify the directory containing only JUnit XML files", path)
+				}
+				return fmt.Errorf("failed to parse XML file %s: %w", path, err)
+			}
+			if len(suites) > 0 {
+				allSuites = append(allSuites, suites...)
+				junitFilenames = append(junitFilenames, path)
+			}
+		}
+		return nil
+	})
 	if err != nil {
-		return results, err
+		return nil, nil, err
 	}
 
-	if len(suites) == 0 {
-		return results, fmt.Errorf("no tests found in %s directory", testResultsDir)
+	if len(allSuites) == 0 {
+		return nil, nil, fmt.Errorf("no tests found in %s directory", testResultsDir)
 	}
 
-	for _, suite := range suites {
+	for _, suite := range allSuites {
 		var timestamp float64
 		timestamp, err := parseTimestamp(suite.Properties["timestamp"])
 		if err != nil {
-			return results, err
+			return nil, nil, err
 		}
 
 		// The values in suite.Totals are based on the results of the tests in the suite and not in the header of the suite.
@@ -244,36 +263,7 @@ func ingestJunitDir(testResultsDir string) ([]*JUnitResults, error) {
 		results = append(results, suiteResult)
 	}
 
-	return results, nil
-}
-
-func getJunitFilenames(directory string) ([]string, error) {
-	var filenames []string
-
-	err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		// Add all regular files that end with ".xml"
-		if info.Mode().IsRegular() && strings.HasSuffix(info.Name(), ".xml") {
-			suites, err := junit.IngestFile(path)
-			if err != nil {
-				return err
-			}
-			if len(suites) > 0 {
-				filenames = append(filenames, path)
-			}
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return filenames, err
-	}
-
-	return filenames, nil
+	return results, junitFilenames, nil
 }
 
 func parseTimestamp(timestampStr string) (float64, error) {

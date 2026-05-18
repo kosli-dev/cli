@@ -58,8 +58,10 @@ func (MintlifyFormatter) Synopsis(meta CommandMeta) string {
 func (MintlifyFormatter) FlagsSection(flags, inherited string) string {
 	flags = linkifyKosliDocsURLs(flags)
 	flags = escapeMintlifyProse(flags)
+	flags = backtickFlags(flags)
 	inherited = linkifyKosliDocsURLs(inherited)
 	inherited = escapeMintlifyProse(inherited)
+	inherited = backtickFlags(inherited)
 	var b strings.Builder
 	if flags != "" {
 		b.WriteString("## Flags\n")
@@ -169,6 +171,65 @@ var htmlTags = map[string]bool{
 // Real links should use markdown syntax [text](url) in the flag description;
 // single quotes are reserved for example/placeholder URLs.
 var singleQuotedURLPattern = regexp.MustCompile(`'(https?://[^\s']+)'`)
+
+// flagPattern matches the body of a CLI flag like --name or -x. The caller
+// must check the preceding character to ensure it is a real flag boundary
+// (start-of-string or a non-word, non-slash, non-dash character).
+var flagPattern = regexp.MustCompile(`^-{1,2}[a-zA-Z][\w-]*`)
+
+// backtickFlags wraps every CLI flag mention (--flag, -x) in backticks so
+// Mintlify's smart-typography renderer does not turn `--` into an em dash
+// inside Markdown table cells. Idempotent: flags already inside inline-code
+// spans or fenced code blocks are left alone.
+func backtickFlags(s string) string {
+	parts := strings.Split(s, "```")
+	for i := 0; i < len(parts); i += 2 {
+		parts[i] = backtickFlagsFragment(parts[i])
+	}
+	return strings.Join(parts, "```")
+}
+
+// nonBoundaryByte matches a single byte that cannot precede a CLI flag:
+// a word char (\w), backtick, slash, or dash.
+var nonBoundaryByte = regexp.MustCompile("[`/\\w-]")
+
+// isFlagBoundaryChar reports whether c is a valid character before a flag.
+func isFlagBoundaryChar(c byte) bool {
+	return !nonBoundaryByte.Match([]byte{c})
+}
+
+func backtickFlagsFragment(s string) string {
+	var b strings.Builder
+	i := 0
+	for i < len(s) {
+		if s[i] == '`' {
+			b.WriteByte(s[i])
+			i++
+			for i < len(s) && s[i] != '`' {
+				b.WriteByte(s[i])
+				i++
+			}
+			if i < len(s) {
+				b.WriteByte(s[i])
+				i++
+			}
+			continue
+		}
+		boundary := i == 0 || isFlagBoundaryChar(s[i-1])
+		if boundary && (s[i] == '-') {
+			if loc := flagPattern.FindStringIndex(s[i:]); loc != nil {
+				b.WriteByte('`')
+				b.WriteString(s[i : i+loc[1]])
+				b.WriteByte('`')
+				i += loc[1]
+				continue
+			}
+		}
+		b.WriteByte(s[i])
+		i++
+	}
+	return b.String()
+}
 
 func escapeProseFragment(s string) string {
 	// Escape curly braces: {expr} -> \{expr\}
