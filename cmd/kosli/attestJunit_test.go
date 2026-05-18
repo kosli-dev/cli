@@ -142,10 +142,12 @@ func TestAttestJunitCommandTestSuite(t *testing.T) {
 }
 
 func TestIngestJunitDir(t *testing.T) {
-	t.Run("error includes filename when XML parsing fails", func(t *testing.T) {
+	t.Run("error includes filename and user-friendly message for unsupported encoding", func(t *testing.T) {
 		_, _, err := ingestJunitDir("testdata_junit_iso8859")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "results.xml")
+		assert.Contains(t, err.Error(), "only UTF-8 encoding is supported")
+		assert.Contains(t, err.Error(), "--results-dir")
 	})
 
 	t.Run("returns no tests found for empty directory", func(t *testing.T) {

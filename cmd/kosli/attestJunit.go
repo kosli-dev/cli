@@ -220,7 +220,11 @@ func ingestJunitDir(testResultsDir string) ([]*JUnitResults, []string, error) {
 		if info.Mode().IsRegular() && strings.HasSuffix(info.Name(), ".xml") {
 			suites, err := junit.IngestFile(path)
 			if err != nil {
-				return fmt.Errorf("failed to parse JUnit XML file %s: %w", path, err)
+				if strings.Contains(err.Error(), "Decoder.CharsetReader is nil") {
+					return fmt.Errorf("failed to parse XML file %s: only UTF-8 encoding is supported. "+
+						"If this is not a JUnit results file, use --results-dir to specify the directory containing only JUnit XML files", path)
+				}
+				return fmt.Errorf("failed to parse XML file %s: %w", path, err)
 			}
 			if len(suites) > 0 {
 				allSuites = append(allSuites, suites...)
