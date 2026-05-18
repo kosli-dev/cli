@@ -3,17 +3,47 @@ package policy
 import rego.v1
 
 # Four-eyes principle enforcement: every commit must have independent review.
-# This policy evaluates per-commit attestation data from Kosli and passes only
-# when all violations are resolved.
-default allow = false
+# This policy evaluates per-commit attestation data from Kosli.
+#
+# Positive-assertion model: allow is true only when input.trails is a non-empty
+# array AND every trail explicitly satisfies trail_compliant. Any failure to
+# evaluate (malformed input, helper bug, missing field) leaves trails outside
+# the compliant set and allow stays false. There is no defensive guard rule
+# because the structure is fail-closed by construction.
+default allow := false
 
-allow if count(violation_reasons) == 0
+allow if {
+	is_array(input.trails)
+	count(input.trails) > 0
+	every trail in input.trails {
+		trail_compliant(trail)
+	}
+}
 
 # Set PR attestation name
 attestation_name := name if {
-    name := data.params.attestation_name
-    is_string(name)
+	name := data.params.attestation_name
+	is_string(name)
 } else := "pr-review"
+
+# ---------------------------------------------------------------------------
+# Compliance — a trail is compliant if any of these positive conditions hold
+# ---------------------------------------------------------------------------
+
+# Service-account commits are exempt from PR review.
+trail_compliant(trail) if {
+	is_service_account(trail)
+}
+
+# Human-authored commits are compliant when an associated PR has independent
+# approval covering every author after the latest code commit.
+trail_compliant(trail) if {
+	not is_service_account(trail)
+	attest := pr_attest(trail)
+	some pr in attest.pull_requests
+	all_authors_resolved(pr)
+	has_independent_approval(trail, pr)
+}
 
 # ---------------------------------------------------------------------------
 # Attestation data
@@ -41,6 +71,22 @@ pr_commit_authors(pr) := {u |
 
 # Latest Unix timestamp among PR branch commits.
 latest_commit_ts(pr) := max({c.timestamp | some c in pr.commits})
+
+# Every commit on the PR has a resolvable author (or is a known service-account
+# style commit like web-flow / Copilot co-auth that we tolerate).
+all_authors_resolved(pr) if {
+	every c in pr.commits {
+		author_resolved_or_exempt(c)
+	}
+}
+
+author_resolved_or_exempt(c) if {
+	is_string(c.author_username)
+}
+
+author_resolved_or_exempt(c) if {
+	is_web_flow_commit(c)
+}
 
 # A commit is the merge commit when the PR's merge_commit field matches the
 # trail name (which is the commit SHA). Covers squash, regular, and rebase merges.
@@ -90,7 +136,7 @@ has_independent_approval(trail, pr) if {
 service_account_patterns := {
 	"svc_.*",
 	".*\\[bot\\]",
-	"noreply@github.com"
+	"noreply@github.com",
 }
 
 # Commit author is a service account (CI, GitHub Actions, dependabot, etc).
@@ -106,104 +152,77 @@ is_web_flow_commit(c) if {
 }
 
 # ---------------------------------------------------------------------------
-# Helpers — multi-PR support
+# Violations — human-readable diagnostic output
+#
+# These are derived for debugging and reporting only. allow does NOT depend
+# on this set: a sprintf failure here cannot affect the compliance decision.
+# A trail appears in violations if and only if it is not in trail_compliant.
 # ---------------------------------------------------------------------------
 
-# Check if any associated PR has independent approval for the commit.
-has_any_pr_approval(trail, attest) if {
-	some pr in attest.pull_requests
-	has_independent_approval(trail, pr)
+violations contains "Policy error: input.trails is missing or not an array — cannot evaluate" if {
+	not is_array(object.get(input, "trails", null))
 }
 
-# ---------------------------------------------------------------------------
-# Violation reasons — detection only, no sprintf
-#
-# allow is derived from this set. Keeping detection logic here (no sprintf)
-# means a formatting failure in the violations rules below cannot silently
-# empty this set and flip allow to true.
-# ---------------------------------------------------------------------------
-
-# Guard: if input.trails is absent or not an array, every other rule silently
-# skips iteration and violation_reasons stays empty, making allow=true.
-# object.get ensures the argument to is_array is always defined
-# (avoids undefined-arg propagation that would make `not is_array(undefined)`
-# silently skip the rule).
-violation_reasons contains "missing_trails_input" if {
-	trails := object.get(input, "trails", null)
-	not is_array(trails)
+violations contains "Policy error: input.trails is empty — nothing to evaluate" if {
+	is_array(input.trails)
+	count(input.trails) == 0
 }
 
 # Missing attestation: no PR review data collected for this commit.
-violation_reasons contains {"type": "missing_attestation", "trail": trail.name} if {
+violations contains msg if {
 	some trail in input.trails
+	not trail_compliant(trail)
 	not trail.compliance_status.attestations_statuses[attestation_name]
+	msg := sprintf("Trail %v: %v attestation is missing", [trail.name, attestation_name])
 }
 
-# Unverifiable identity: commit author has no resolvable GitHub account and is not a known service account.
-violation_reasons contains {"type": "unverifiable_identity", "pr_url": pr.url, "sha": c.sha1} if {
+# Unverifiable identity: commit author has no resolvable GitHub account
+# and is not a known service account or web-flow commit.
+violations contains msg if {
 	some trail in input.trails
+	not trail_compliant(trail)
 	attest := pr_attest(trail)
 	some pr in attest.pull_requests
 	some c in pr.commits
 	object.get(c, "author_username", null) == null
 	not is_service_account(trail)
 	not is_web_flow_commit(c)
+	msg := sprintf(
+		"PR %v: commit %v has no linked GitHub account — identity unverifiable",
+		[pr.url, substring(c.sha1, 0, 7)],
+	)
 }
 
-# Missing PR: commit has no associated merged pull request (non-service-account commits must come through a PR).
-violation_reasons contains {"type": "missing_pr", "trail": trail.name} if {
+# Missing PR: non-service-account commit has no associated merged PR.
+violations contains msg if {
 	some trail in input.trails
+	not trail_compliant(trail)
 	not is_service_account(trail)
 	attest := pr_attest(trail)
 	count(attest.pull_requests) == 0
+	msg := sprintf("Commit %v: no associated PR found", [substring(trail.name, 0, 7)])
 }
 
-# Missing approval: commit has an associated PR but no independent approval from someone other than the authors.
-violation_reasons contains {"type": "missing_approval", "trail": trail.name} if {
+# Missing approval: commit has an associated PR but no PR satisfies the
+# independent-approval requirement.
+violations contains msg if {
 	some trail in input.trails
+	not trail_compliant(trail)
 	not is_service_account(trail)
 	attest := pr_attest(trail)
 	count(attest.pull_requests) > 0
-	not has_any_pr_approval(trail, attest)
-}
-
-# ---------------------------------------------------------------------------
-# Violations — message formatting only
-#
-# allow does NOT depend on this set. A sprintf failure here cannot affect
-# the compliance decision; it only affects the human-readable output.
-# ---------------------------------------------------------------------------
-
-violations contains "Policy error: input.trails is missing or not an array — cannot evaluate" if {
-	"missing_trails_input" in violation_reasons
-}
-
-violations contains msg if {
-	some r in violation_reasons
-	r.type == "missing_attestation"
-	msg := sprintf("Trail %v: %v attestation is missing", [r.trail, attestation_name])
-}
-
-violations contains msg if {
-	some r in violation_reasons
-	r.type == "unverifiable_identity"
-	msg := sprintf(
-		"PR %v: commit %v has no linked GitHub account — identity unverifiable",
-		[r.pr_url, substring(r.sha, 0, 7)],
-	)
-}
-
-violations contains msg if {
-	some r in violation_reasons
-	r.type == "missing_pr"
-	msg := sprintf("Commit %v: no associated PR found", [substring(r.trail, 0, 7)])
-}
-
-violations contains msg if {
-	some r in violation_reasons
-	r.type == "missing_approval"
+	not any_pr_fully_approved(trail, attest)
 	msg := sprintf(
 		"Commit %v: no independent approval after latest code commit",
-		[substring(r.trail, 0, 7)],
+		[substring(trail.name, 0, 7)],
 	)
+}
+
+# True if any associated PR has both resolved authors and independent approval.
+# Used only for violation messaging to distinguish "missing approval" from
+# "unverifiable identity".
+any_pr_fully_approved(trail, attest) if {
+	some pr in attest.pull_requests
+	all_authors_resolved(pr)
+	has_independent_approval(trail, pr)
 }
