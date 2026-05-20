@@ -245,6 +245,35 @@ func evaluateAndPrintResult(out io.Writer, policyRef string, input map[string]in
 		})
 }
 
+// evaluateAndPrintDecision runs the explainable evaluator and prints the
+// resulting Decision as pretty JSON. assertOnDeny controls whether a deny
+// causes a non-zero exit, matching the existing evaluateAndPrintResult
+// behaviour.
+func evaluateAndPrintDecision(out io.Writer, policyRef string, input map[string]interface{}, params map[string]interface{}, assertOnDeny bool) error {
+	policySource, err := loadPolicy(policyRef)
+	if err != nil {
+		return err
+	}
+
+	decision, err := evaluate.Decide(string(policySource), input, params)
+	if err != nil {
+		return err
+	}
+
+	raw, err := json.MarshalIndent(decision, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal decision: %v", err)
+	}
+	if _, err := fmt.Fprintln(out, string(raw)); err != nil {
+		return err
+	}
+
+	if decision.Result != "allow" && assertOnDeny {
+		return fmt.Errorf("policy denied")
+	}
+	return nil
+}
+
 func printEvaluateResultAsJsonFn(assertOnDeny bool) output.FormatOutputFunc {
 	return func(raw string, out io.Writer, _ int) error {
 		if err := output.PrintJson(raw, out, 0); err != nil {

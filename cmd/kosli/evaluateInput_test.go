@@ -140,6 +140,32 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 				{"allow", false},
 			},
 		},
+		{
+			name: "--decision on passing bakery policy emits decision JSON with schema_version, checks, and item",
+			cmd:  "evaluate input --input-file testdata/evaluate/bakery-pass.json --policy testdata/policies/bakery.rego --decision",
+			goldenJson: []jsonCheck{
+				{"schema_version", "0.1.0"},
+				{"result", "allow"},
+				{"policy.title", "Bakery batch compliance"},
+				{"items.[0].result", "allow"},
+				{"items.[0].checks", "length:2"},
+			},
+		},
+		{
+			name: "--decision on failing bakery policy with --no-assert emits result=deny and exits 0",
+			cmd:  "evaluate input --input-file testdata/evaluate/bakery-fail.json --policy testdata/policies/bakery.rego --decision --no-assert",
+			goldenJson: []jsonCheck{
+				{"schema_version", "0.1.0"},
+				{"result", "deny"},
+				{"items.[0].result", "deny"},
+			},
+		},
+		{
+			wantError:   true,
+			name:        "--decision on failing bakery policy without --no-assert exits non-zero",
+			cmd:         "evaluate input --input-file testdata/evaluate/bakery-fail.json --policy testdata/policies/bakery.rego --decision",
+			goldenRegex: `policy denied`,
+		},
 	}
 	runTestCmd(suite.T(), tests)
 }
