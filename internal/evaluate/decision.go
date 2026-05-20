@@ -61,13 +61,26 @@ func Decide(policySource string, input interface{}, params map[string]interface{
 		decision.Result = resultAllow
 	}
 
-	module, err := compileWithAnnotations(policySource)
+	parsed, err := parseWithAnnotations(policySource)
 	if err != nil {
 		return nil, err
 	}
 
-	decision.Policy = packageMeta(module)
+	decision.Policy = packageMeta(parsed)
 
+	if iter, ok := detectIteration(parsed); ok {
+		items, err := evaluateIteration(parsed, policySource, input, params, iter)
+		if err != nil {
+			return nil, err
+		}
+		decision.Items = items
+		return decision, nil
+	}
+
+	module, err := compileWithAnnotations(policySource)
+	if err != nil {
+		return nil, err
+	}
 	checks, err := collectChecks(module, policySource, input, params)
 	if err != nil {
 		return nil, err
@@ -78,6 +91,195 @@ func Decide(policySource string, input interface{}, params map[string]interface{
 	decision.Items = []Item{{Result: decision.Result, Checks: checks}}
 
 	return decision, nil
+}
+
+// parseWithAnnotations parses the policy with annotation processing
+// enabled, without invoking the compiler. The parsed AST preserves
+// `every x in <ref> { ... }` structure that the compiler would otherwise
+// lower into a synthesised local variable.
+func parseWithAnnotations(policySource string) (*ast.Module, error) {
+	m, err := ast.ParseModuleWithOpts("policy.rego", policySource, ast.ParserOptions{
+		ProcessAnnotation: true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse policy: %w", err)
+	}
+	return m, nil
+}
+
+// iteration describes an `every x in <domain> { <check>(x) }` pattern
+// detected in `allow`'s body.
+type iteration struct {
+	domain    ast.Ref
+	checkName string
+}
+
+// detectIteration looks for `every x in input.<path> { <rule>(x) }` in
+// any non-default `allow` body and returns its structure. The detection
+// requires exactly one expression inside the `every` body, calling a
+// same-package rule with the iteration variable.
+func detectIteration(parsed *ast.Module) (iteration, bool) {
+	for _, rule := range parsed.Rules {
+		if rule.Default || rule.Head.Name.String() != "allow" {
+			continue
+		}
+		for _, expr := range rule.Body {
+			every, ok := expr.Terms.(*ast.Every)
+			if !ok {
+				continue
+			}
+			domainRef, ok := every.Domain.Value.(ast.Ref)
+			if !ok || !isInputRef(domainRef) {
+				continue
+			}
+			checkName, ok := singleCallWithVarArg(every.Body, every.Value)
+			if !ok {
+				continue
+			}
+			return iteration{domain: domainRef, checkName: checkName}, true
+		}
+	}
+	return iteration{}, false
+}
+
+func isInputRef(ref ast.Ref) bool {
+	if len(ref) == 0 {
+		return false
+	}
+	v, ok := ref[0].Value.(ast.Var)
+	return ok && v.String() == "input"
+}
+
+// singleCallWithVarArg returns the function-rule name when body has
+// exactly one expression of the form `<name>(<iterVar>)`.
+func singleCallWithVarArg(body ast.Body, iterVarTerm *ast.Term) (string, bool) {
+	if len(body) != 1 {
+		return "", false
+	}
+	terms, ok := body[0].Terms.([]*ast.Term)
+	if !ok || len(terms) != 2 {
+		return "", false
+	}
+	callRef, ok := terms[0].Value.(ast.Ref)
+	if !ok || len(callRef) == 0 {
+		return "", false
+	}
+	nameVar, ok := callRef[0].Value.(ast.Var)
+	if !ok {
+		return "", false
+	}
+	argVar, ok := terms[1].Value.(ast.Var)
+	if !ok {
+		return "", false
+	}
+	iterVar, ok := iterVarTerm.Value.(ast.Var)
+	if !ok || argVar != iterVar {
+		return "", false
+	}
+	return nameVar.String(), true
+}
+
+// evaluateIteration resolves the iteration domain against the input,
+// then evaluates the per-item check rule for each element and returns
+// one Item per element.
+func evaluateIteration(parsed *ast.Module, policySource string, input interface{}, params map[string]interface{}, iter iteration) ([]Item, error) {
+	elements, err := resolveInputArray(input, iter.domain)
+	if err != nil {
+		return nil, err
+	}
+
+	title := ruleTitle(parsed, iter.checkName)
+	annotated := ruleIsAnnotated(parsed, iter.checkName)
+
+	items := make([]Item, 0, len(elements))
+	for _, elem := range elements {
+		pass, err := evaluateRuleCall(policySource, iter.checkName, elem, params)
+		if err != nil {
+			return nil, err
+		}
+		item := Item{
+			Result: resultDeny,
+			Checks: []Check{},
+		}
+		if pass {
+			item.Result = resultAllow
+		}
+		if annotated {
+			item.Checks = []Check{{
+				Name:   iter.checkName,
+				Title:  title,
+				Result: passOrFail(pass),
+			}}
+		}
+		items = append(items, item)
+	}
+	return items, nil
+}
+
+// resolveInputArray walks the input map following an `input.x.y` ref and
+// returns the array at that path.
+func resolveInputArray(input interface{}, ref ast.Ref) ([]interface{}, error) {
+	cur := input
+	for _, part := range ref[1:] {
+		key, ok := part.Value.(ast.String)
+		if !ok {
+			return nil, fmt.Errorf("iteration domain %s contains a non-string key segment", ref)
+		}
+		m, ok := cur.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("iteration domain %s: expected object at intermediate path", ref)
+		}
+		cur = m[string(key)]
+	}
+	arr, ok := cur.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("iteration domain %s did not resolve to an array", ref)
+	}
+	return arr, nil
+}
+
+// evaluateRuleCall calls a function rule with `element` as its single
+// argument, returning whether the call evaluated to true.
+func evaluateRuleCall(policySource, name string, element interface{}, params map[string]interface{}) (bool, error) {
+	opts := []func(*rego.Rego){
+		rego.Query(fmt.Sprintf("data.policy.%s(input)", name)),
+		rego.Module("policy.rego", policySource),
+		rego.Input(element),
+	}
+	if params != nil {
+		store := inmem.NewFromObject(map[string]interface{}{"params": params})
+		opts = append(opts, rego.Store(store))
+	}
+	rs, err := rego.New(opts...).Eval(context.Background())
+	if err != nil {
+		return false, fmt.Errorf("evaluating per-item check %q: %w", name, err)
+	}
+	if len(rs) == 0 || len(rs[0].Expressions) == 0 {
+		return false, nil
+	}
+	b, ok := rs[0].Expressions[0].Value.(bool)
+	return ok && b, nil
+}
+
+func ruleIsAnnotated(parsed *ast.Module, name string) bool {
+	for _, r := range parsed.Rules {
+		if r.Head.Name.String() == name && len(r.Annotations) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func ruleTitle(parsed *ast.Module, name string) string {
+	for _, r := range parsed.Rules {
+		if r.Head.Name.String() != name {
+			continue
+		}
+		if len(r.Annotations) > 0 {
+			return r.Annotations[0].Title
+		}
+	}
+	return ""
 }
 
 // compileWithAnnotations parses and compiles the policy with annotation

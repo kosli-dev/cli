@@ -1,0 +1,7 @@
+{
+  "batches": [
+    { "id": "batch-01", "temp_c": 180 },
+    { "id": "batch-02", "temp_c": 200 },
+    { "id": "batch-03", "temp_c": 150 }
+  ]
+}

@@ -166,6 +166,19 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 			cmd:         "evaluate input --input-file testdata/evaluate/bakery-fail.json --policy testdata/policies/bakery.rego --decision",
 			goldenRegex: `policy denied`,
 		},
+		{
+			name: "--decision on an iterating policy produces one item per element with per-item pass/fail",
+			cmd:  "evaluate input --input-file testdata/evaluate/bakery-batches-mixed.json --policy testdata/policies/bakery-batches.rego --decision --no-assert",
+			goldenJson: []jsonCheck{
+				{"result", "deny"},
+				{"items", "length:3"},
+				{"items.[0].result", "allow"},
+				{"items.[1].result", "allow"},
+				{"items.[2].result", "deny"},
+				{"items.[2].checks.[0].name", "batch_ok"},
+				{"items.[2].checks.[0].result", "fail"},
+			},
+		},
 	}
 	runTestCmd(suite.T(), tests)
 }
