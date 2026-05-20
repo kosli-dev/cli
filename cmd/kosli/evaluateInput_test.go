@@ -179,6 +179,26 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 				{"items.[2].checks.[0].result", "fail"},
 			},
 		},
+		{
+			name: "--decision on a multi-definition check records alternatives_applied with nested attribution",
+			cmd:  "evaluate input --input-file testdata/evaluate/scr-trails-mixed.json --policy testdata/policies/scr-shaped.rego --decision --no-assert",
+			goldenJson: []jsonCheck{
+				{"items.[0].result", "allow"},
+				{"items.[0].checks.[0].title", "Commit has independent review (or is exempt)"},
+				{"items.[0].checks.[0].alternatives_applied.[0].title", "exempt — service account author"},
+				{"items.[0].checks.[0].alternatives_applied.[0].result", "pass"},
+				{"items.[0].checks.[0].alternatives_applied.[1].result", "fail"},
+
+				{"items.[1].result", "allow"},
+				{"items.[1].checks.[0].alternatives_applied.[1].result", "pass"},
+				{"items.[1].checks.[0].alternatives_applied.[1].alternatives_applied.[1].title", "merge commit — branch authors approved"},
+				{"items.[1].checks.[0].alternatives_applied.[1].alternatives_applied.[1].result", "pass"},
+
+				{"items.[2].result", "deny"},
+				{"items.[2].checks.[0].alternatives_applied.[1].alternatives_applied.[0].result", "fail"},
+				{"items.[2].checks.[0].alternatives_applied.[1].alternatives_applied.[1].result", "fail"},
+			},
+		},
 	}
 	runTestCmd(suite.T(), tests)
 }

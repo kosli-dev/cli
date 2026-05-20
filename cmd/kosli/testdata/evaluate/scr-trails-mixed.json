@@ -1,0 +1,7 @@
+{
+  "trails": [
+    { "name": "trail-bot",     "author": "bot-renovate", "kind": "regular", "approvers": [] },
+    { "name": "trail-merge",   "author": "alice",        "kind": "merge",   "approvers": [] },
+    { "name": "trail-selfish", "author": "carol",        "kind": "regular", "approvers": [] }
+  ]
+}

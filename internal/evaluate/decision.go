@@ -7,6 +7,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
 	"github.com/open-policy-agent/opa/v1/storage/inmem"
+	"github.com/open-policy-agent/opa/v1/topdown"
 )
 
 // DecisionSchemaVersion is the version of the Decision JSON shape produced
@@ -40,9 +41,21 @@ type Item struct {
 }
 
 type Check struct {
-	Name   string `json:"name"`
-	Title  string `json:"title,omitempty"`
-	Result string `json:"result"`
+	Name                string         `json:"name"`
+	Title               string         `json:"title,omitempty"`
+	Result              string         `json:"result"`
+	AlternativesApplied []*Alternative `json:"alternatives_applied,omitempty"`
+}
+
+// Alternative describes one definition of a multi-definition rule and
+// whether it fired during evaluation. When that definition itself
+// invoked another multi-definition rule, the chain nests under
+// AlternativesApplied.
+type Alternative struct {
+	Rule                string         `json:"rule"`
+	Title               string         `json:"title,omitempty"`
+	Result              string         `json:"result"`
+	AlternativesApplied []*Alternative `json:"alternatives_applied,omitempty"`
 }
 
 // Decide evaluates the given Rego policy against the input and produces a
@@ -205,10 +218,15 @@ func evaluateIteration(parsed *ast.Module, policySource string, input interface{
 			item.Result = resultAllow
 		}
 		if annotated {
+			alts, err := collectAlternatives(parsed, policySource, iter.checkName, elem, params, true)
+			if err != nil {
+				return nil, err
+			}
 			item.Checks = []Check{{
-				Name:   iter.checkName,
-				Title:  title,
-				Result: passOrFail(pass),
+				Name:                iter.checkName,
+				Title:               title,
+				Result:              passOrFail(pass),
+				AlternativesApplied: alts,
 			}}
 		}
 		items = append(items, item)
@@ -270,14 +288,203 @@ func ruleIsAnnotated(parsed *ast.Module, name string) bool {
 	return false
 }
 
+// ruleTitle returns the overall title for a rule by name, preferring a
+// `scope: document` annotation when one is attached to any definition.
 func ruleTitle(parsed *ast.Module, name string) string {
+	var firstAny string
 	for _, r := range parsed.Rules {
 		if r.Head.Name.String() != name {
 			continue
 		}
-		if len(r.Annotations) > 0 {
-			return r.Annotations[0].Title
+		for _, a := range r.Annotations {
+			if a.Scope == "document" {
+				return a.Title
+			}
 		}
+		if firstAny == "" && len(r.Annotations) > 0 {
+			firstAny = r.Annotations[0].Title
+		}
+	}
+	return firstAny
+}
+
+// ruleDefinitions returns the non-default rule definitions sharing the
+// given head name, in source order.
+func ruleDefinitions(parsed *ast.Module, name string) []*ast.Rule {
+	var defs []*ast.Rule
+	for _, r := range parsed.Rules {
+		if r.Default {
+			continue
+		}
+		if r.Head.Name.String() == name {
+			defs = append(defs, r)
+		}
+	}
+	return defs
+}
+
+// collectAlternatives evaluates the named rule with a tracer attached
+// and reports per-definition pass/fail for multi-definition rules.
+// When a successful definition's body calls another multi-definition
+// rule, those nested alternatives are attached recursively. Returns
+// nil when the rule has zero or one definitions.
+func collectAlternatives(parsed *ast.Module, policySource, name string, input interface{}, params map[string]interface{}, asFunctionCall bool) ([]*Alternative, error) {
+	defs := ruleDefinitions(parsed, name)
+	if len(defs) <= 1 {
+		return nil, nil
+	}
+
+	tracer := topdown.NewBufferTracer()
+	query := "data.policy." + name
+	if asFunctionCall {
+		query += "(input)"
+	}
+	opts := []func(*rego.Rego){
+		rego.Query(query),
+		rego.Module("policy.rego", policySource),
+		rego.Input(input),
+		rego.QueryTracer(tracer),
+	}
+	if params != nil {
+		store := inmem.NewFromObject(map[string]interface{}{"params": params})
+		opts = append(opts, rego.Store(store))
+	}
+	if _, err := rego.New(opts...).Eval(context.Background()); err != nil {
+		return nil, fmt.Errorf("evaluating alternatives for %q: %w", name, err)
+	}
+
+	return ruleAlternatives(parsed, *tracer, name, 0), nil
+}
+
+// ruleAlternatives builds the per-definition Alternative entries for a
+// multi-definition rule, scoped to the given trace parent QueryID. The
+// returned entries recurse into other multi-definition rules invoked
+// from each definition's body.
+func ruleAlternatives(parsed *ast.Module, events []*topdown.Event, name string, parentQID uint64) []*Alternative {
+	defs := ruleDefinitions(parsed, name)
+	if len(defs) <= 1 {
+		return nil
+	}
+
+	alts := make([]*Alternative, 0, len(defs))
+	for _, def := range defs {
+		pass, enterQID := definitionOutcome(events, def, parentQID)
+		alt := &Alternative{
+			Rule:   name,
+			Title:  defTitle(def),
+			Result: passOrFail(pass),
+		}
+		if enterQID != 0 {
+			alt.AlternativesApplied = nestedAlternatives(parsed, events, enterQID)
+		}
+		alts = append(alts, alt)
+	}
+	return alts
+}
+
+// nestedAlternatives finds multi-definition annotated rules invoked
+// inside a parent body (matched by ParentID) and builds Alternative
+// chains for each of them.
+func nestedAlternatives(parsed *ast.Module, events []*topdown.Event, parentQID uint64) []*Alternative {
+	seen := map[string]bool{}
+	var names []string
+	for _, e := range events {
+		if e.Op != topdown.EnterOp || e.ParentID != parentQID {
+			continue
+		}
+		r, ok := e.Node.(*ast.Rule)
+		if !ok {
+			continue
+		}
+		n := r.Head.Name.String()
+		if seen[n] {
+			continue
+		}
+		defs := ruleDefinitions(parsed, n)
+		if len(defs) <= 1 || !anyAnnotated(defs) {
+			continue
+		}
+		seen[n] = true
+		names = append(names, n)
+	}
+
+	var out []*Alternative
+	for _, n := range names {
+		out = append(out, ruleAlternatives(parsed, events, n, parentQID)...)
+	}
+	return out
+}
+
+// definitionOutcome searches the trace for the rule definition's
+// Enter/Exit pair scoped to parentQID and returns whether it fired and
+// the Enter event's QueryID (zero when the definition wasn't entered).
+func definitionOutcome(events []*topdown.Event, def *ast.Rule, parentQID uint64) (bool, uint64) {
+	var enterQID uint64
+	pass := false
+	for _, e := range events {
+		r, ok := e.Node.(*ast.Rule)
+		if !ok || !sameRuleDefinition(r, def) || e.ParentID != parentQID {
+			continue
+		}
+		switch e.Op {
+		case topdown.EnterOp:
+			enterQID = e.QueryID
+		case topdown.ExitOp:
+			if e.QueryID == enterQID {
+				pass = true
+			}
+		}
+	}
+	return pass, enterQID
+}
+
+func anyAnnotated(rules []*ast.Rule) bool {
+	for _, r := range rules {
+		if len(r.Annotations) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// sameRuleDefinition matches a traced rule pointer to a parsed rule
+// definition. Tracer events come from a re-parse of the source, so
+// pointer equality won't hold; matching on head name + source location
+// is reliable across parses.
+func sameRuleDefinition(a, b *ast.Rule) bool {
+	if a.Head.Name.String() != b.Head.Name.String() {
+		return false
+	}
+	if a.Location == nil || b.Location == nil {
+		return false
+	}
+	return a.Location.Row == b.Location.Row
+}
+
+// defTitle returns the per-definition title for an Alternative entry.
+// A `scope: rule` annotation describes a specific definition; a
+// `scope: document` annotation describes the rule as a whole and is
+// surfaced separately as the Check title, not as an alternative's.
+func defTitle(def *ast.Rule) string {
+	for _, a := range def.Annotations {
+		if a.Scope == "rule" {
+			return a.Title
+		}
+	}
+	return ""
+}
+
+// checkTitle returns the rule's overall title — a `scope: document`
+// annotation if one is present, otherwise the first available
+// annotation (which for single-definition rules is the natural choice).
+func checkTitle(rule *ast.Rule) string {
+	for _, a := range rule.Annotations {
+		if a.Scope == "document" {
+			return a.Title
+		}
+	}
+	if len(rule.Annotations) > 0 {
+		return rule.Annotations[0].Title
 	}
 	return ""
 }
@@ -331,10 +538,15 @@ func collectChecks(module *ast.Module, policySource string, input interface{}, p
 		if err != nil {
 			return nil, err
 		}
+		alts, err := collectAlternatives(module, policySource, name, input, params, false)
+		if err != nil {
+			return nil, err
+		}
 		checks = append(checks, Check{
-			Name:   name,
-			Title:  rule.Annotations[0].Title,
-			Result: passOrFail(pass),
+			Name:                name,
+			Title:               checkTitle(rule),
+			Result:              passOrFail(pass),
+			AlternativesApplied: alts,
 		})
 	}
 	return checks, nil
