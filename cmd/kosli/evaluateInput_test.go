@@ -141,7 +141,7 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 			},
 		},
 		{
-			name: "--decision on passing bakery policy emits decision JSON with schema_version, checks, and item",
+			name: "--decision on a non-iterating policy emits versioned JSON with policy metadata, one item, and a check per annotated rule",
 			cmd:  "evaluate input --input-file testdata/evaluate/bakery-pass.json --policy testdata/policies/bakery.rego --decision",
 			goldenJson: []jsonCheck{
 				{"schema_version", "0.1.0"},
@@ -152,7 +152,7 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 			},
 		},
 		{
-			name: "--decision on failing bakery policy with --no-assert emits result=deny and exits 0",
+			name: "--decision with --no-assert on a denying policy returns deny in JSON and exits 0",
 			cmd:  "evaluate input --input-file testdata/evaluate/bakery-fail.json --policy testdata/policies/bakery.rego --decision --no-assert",
 			goldenJson: []jsonCheck{
 				{"schema_version", "0.1.0"},
@@ -162,7 +162,7 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 		},
 		{
 			wantError:   true,
-			name:        "--decision on failing bakery policy without --no-assert exits non-zero",
+			name:        "--decision on a denying policy exits non-zero by default (assert-on-deny)",
 			cmd:         "evaluate input --input-file testdata/evaluate/bakery-fail.json --policy testdata/policies/bakery.rego --decision",
 			goldenRegex: `policy denied`,
 		},
