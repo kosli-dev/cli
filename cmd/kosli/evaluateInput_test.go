@@ -141,6 +141,15 @@ func (suite *EvaluateInputCommandTestSuite) TestEvaluateInputCmd() {
 			},
 		},
 		{
+			name: "--decision on a single-definition annotated check populates inputs_used and evaluated",
+			cmd:  "evaluate input --input-file testdata/evaluate/bakery-pass.json --policy testdata/policies/bakery.rego --decision",
+			goldenJson: []jsonCheck{
+				{"items.[0].checks.[0].evaluated", "180 >= 175 and 180 <= 200"},
+				{"items.[0].checks.[0].inputs_used", "not-nil"},
+				{"items.[0].checks.[1].evaluated", "32 >= 25 and 32 <= 40"},
+			},
+		},
+		{
 			name: "--decision on a non-iterating policy emits versioned JSON with policy metadata, one item, and a check per annotated rule",
 			cmd:  "evaluate input --input-file testdata/evaluate/bakery-pass.json --policy testdata/policies/bakery.rego --decision",
 			goldenJson: []jsonCheck{

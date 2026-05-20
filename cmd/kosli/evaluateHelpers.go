@@ -260,12 +260,14 @@ func evaluateAndPrintDecision(out io.Writer, policyRef string, input map[string]
 		return err
 	}
 
-	raw, err := json.MarshalIndent(decision, "", "  ")
-	if err != nil {
+	// Use an Encoder so HTML escaping stays off — the `evaluated` field
+	// contains comparison operators like `>=` and `<=` that JSON's
+	// default escaping would turn into >= / <=.
+	encoder := json.NewEncoder(out)
+	encoder.SetEscapeHTML(false)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(decision); err != nil {
 		return fmt.Errorf("failed to marshal decision: %v", err)
-	}
-	if _, err := fmt.Fprintln(out, string(raw)); err != nil {
-		return err
 	}
 
 	if decision.Result != "allow" && assertOnDeny {

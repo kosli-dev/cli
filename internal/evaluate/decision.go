@@ -3,6 +3,7 @@ package evaluate
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
@@ -41,10 +42,12 @@ type Item struct {
 }
 
 type Check struct {
-	Name                string         `json:"name"`
-	Title               string         `json:"title,omitempty"`
-	Result              string         `json:"result"`
-	AlternativesApplied []*Alternative `json:"alternatives_applied,omitempty"`
+	Name                string                 `json:"name"`
+	Title               string                 `json:"title,omitempty"`
+	Result              string                 `json:"result"`
+	InputsUsed          map[string]interface{} `json:"inputs_used,omitempty"`
+	Evaluated           string                 `json:"evaluated,omitempty"`
+	AlternativesApplied []*Alternative         `json:"alternatives_applied,omitempty"`
 }
 
 // Alternative describes one definition of a multi-definition rule and
@@ -94,7 +97,7 @@ func Decide(policySource string, input interface{}, params map[string]interface{
 	if err != nil {
 		return nil, err
 	}
-	checks, err := collectChecks(module, policySource, input, params)
+	checks, err := collectChecks(parsed, module, policySource, input, params)
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +209,7 @@ func evaluateIteration(parsed *ast.Module, policySource string, input interface{
 
 	items := make([]Item, 0, len(elements))
 	for _, elem := range elements {
-		pass, err := evaluateRuleCall(policySource, iter.checkName, elem, params)
+		pass, events, err := runCheck(policySource, iter.checkName, elem, params, true)
 		if err != nil {
 			return nil, err
 		}
@@ -218,16 +221,16 @@ func evaluateIteration(parsed *ast.Module, policySource string, input interface{
 			item.Result = resultAllow
 		}
 		if annotated {
-			alts, err := collectAlternatives(parsed, policySource, iter.checkName, elem, params, true)
-			if err != nil {
-				return nil, err
+			check := Check{
+				Name:   iter.checkName,
+				Title:  title,
+				Result: passOrFail(pass),
 			}
-			item.Checks = []Check{{
-				Name:                iter.checkName,
-				Title:               title,
-				Result:              passOrFail(pass),
-				AlternativesApplied: alts,
-			}}
+			defs := ruleDefinitions(parsed, iter.checkName)
+			if len(defs) > 1 {
+				check.AlternativesApplied = ruleAlternatives(parsed, events, iter.checkName, 0)
+			}
+			item.Checks = []Check{check}
 		}
 		items = append(items, item)
 	}
@@ -254,29 +257,6 @@ func resolveInputArray(input interface{}, ref ast.Ref) ([]interface{}, error) {
 		return nil, fmt.Errorf("iteration domain %s did not resolve to an array", ref)
 	}
 	return arr, nil
-}
-
-// evaluateRuleCall calls a function rule with `element` as its single
-// argument, returning whether the call evaluated to true.
-func evaluateRuleCall(policySource, name string, element interface{}, params map[string]interface{}) (bool, error) {
-	opts := []func(*rego.Rego){
-		rego.Query(fmt.Sprintf("data.policy.%s(input)", name)),
-		rego.Module("policy.rego", policySource),
-		rego.Input(element),
-	}
-	if params != nil {
-		store := inmem.NewFromObject(map[string]interface{}{"params": params})
-		opts = append(opts, rego.Store(store))
-	}
-	rs, err := rego.New(opts...).Eval(context.Background())
-	if err != nil {
-		return false, fmt.Errorf("evaluating per-item check %q: %w", name, err)
-	}
-	if len(rs) == 0 || len(rs[0].Expressions) == 0 {
-		return false, nil
-	}
-	b, ok := rs[0].Expressions[0].Value.(bool)
-	return ok && b, nil
 }
 
 func ruleIsAnnotated(parsed *ast.Module, name string) bool {
@@ -321,39 +301,6 @@ func ruleDefinitions(parsed *ast.Module, name string) []*ast.Rule {
 		}
 	}
 	return defs
-}
-
-// collectAlternatives evaluates the named rule with a tracer attached
-// and reports per-definition pass/fail for multi-definition rules.
-// When a successful definition's body calls another multi-definition
-// rule, those nested alternatives are attached recursively. Returns
-// nil when the rule has zero or one definitions.
-func collectAlternatives(parsed *ast.Module, policySource, name string, input interface{}, params map[string]interface{}, asFunctionCall bool) ([]*Alternative, error) {
-	defs := ruleDefinitions(parsed, name)
-	if len(defs) <= 1 {
-		return nil, nil
-	}
-
-	tracer := topdown.NewBufferTracer()
-	query := "data.policy." + name
-	if asFunctionCall {
-		query += "(input)"
-	}
-	opts := []func(*rego.Rego){
-		rego.Query(query),
-		rego.Module("policy.rego", policySource),
-		rego.Input(input),
-		rego.QueryTracer(tracer),
-	}
-	if params != nil {
-		store := inmem.NewFromObject(map[string]interface{}{"params": params})
-		opts = append(opts, rego.Store(store))
-	}
-	if _, err := rego.New(opts...).Eval(context.Background()); err != nil {
-		return nil, fmt.Errorf("evaluating alternatives for %q: %w", name, err)
-	}
-
-	return ruleAlternatives(parsed, *tracer, name, 0), nil
 }
 
 // ruleAlternatives builds the per-definition Alternative entries for a
@@ -438,6 +385,210 @@ func definitionOutcome(events []*topdown.Event, def *ast.Rule, parentQID uint64)
 	return pass, enterQID
 }
 
+// extractInputsUsed returns the `input.*` and `data.params.*`
+// references touched by the given rule definition's body, mapped to
+// their resolved values. `data.params.*` values are wrapped with their
+// source so an auditor can see whether the operator supplied the
+// parameter or fell back to a policy default. Only the body's own
+// QueryID is walked — nested rule calls live under different QueryIDs
+// and their internals stay collapsed.
+func extractInputsUsed(events []*topdown.Event, def *ast.Rule, input interface{}, params map[string]interface{}) map[string]interface{} {
+	bodyQID := uint64(0)
+	for _, e := range events {
+		if e.Op != topdown.EnterOp {
+			continue
+		}
+		r, ok := e.Node.(*ast.Rule)
+		if !ok || !sameRuleDefinition(r, def) {
+			continue
+		}
+		bodyQID = e.QueryID
+		break
+	}
+	if bodyQID == 0 {
+		return nil
+	}
+
+	used := map[string]interface{}{}
+	for _, e := range events {
+		if e.QueryID != bodyQID {
+			continue
+		}
+		ast.WalkRefs(e.Node, func(ref ast.Ref) bool {
+			switch {
+			case isInputRef(ref) && len(ref) >= 2:
+				if path, ok := refToDotPath(ref); ok {
+					if val, ok := resolveDotPath(input, ref); ok {
+						used[path] = val
+					}
+				}
+			case isParamsRef(ref):
+				if path, ok := refToDotPath(ref); ok {
+					if val, source, ok := resolveParam(params, ref); ok {
+						used[path] = map[string]interface{}{
+							"value":  val,
+							"source": source,
+						}
+					}
+				}
+			}
+			return false
+		})
+	}
+	if len(used) == 0 {
+		return nil
+	}
+	return used
+}
+
+// binaryOps maps OPA's prefix-form comparison built-ins to their
+// infix symbols, used when rendering an `evaluated` predicate so it
+// reads naturally to an auditor.
+var binaryOps = map[string]string{
+	"eq":    "=",
+	"equal": "==",
+	"neq":   "!=",
+	"lt":    "<",
+	"lte":   "<=",
+	"gt":    ">",
+	"gte":   ">=",
+}
+
+// renderEvaluated produces an `<lhs> <op> <rhs> and ...` form of the
+// rule body with `input.*` and `data.params.*` references substituted
+// with their resolved values. Comprehension and `every` rendering are
+// out of scope for slice 4 — those expressions fall through to OPA's
+// String() form.
+func renderEvaluated(body ast.Body, input interface{}, params map[string]interface{}) string {
+	parts := make([]string, 0, len(body))
+	for _, expr := range body {
+		parts = append(parts, renderExpr(expr, input, params))
+	}
+	return strings.Join(parts, " and ")
+}
+
+func renderExpr(expr *ast.Expr, input interface{}, params map[string]interface{}) string {
+	substituted, err := ast.TransformRefs(expr, func(r ast.Ref) (ast.Value, error) {
+		switch {
+		case isInputRef(r) && len(r) >= 2:
+			if v, ok := resolveDotPath(input, r); ok {
+				if val, err := ast.InterfaceToValue(v); err == nil {
+					return val, nil
+				}
+			}
+		case isParamsRef(r):
+			if v, _, ok := resolveParam(params, r); ok {
+				if val, err := ast.InterfaceToValue(v); err == nil {
+					return val, nil
+				}
+			}
+		}
+		return r, nil
+	})
+	if err != nil {
+		return expr.String()
+	}
+	subExpr, ok := substituted.(*ast.Expr)
+	if !ok {
+		return expr.String()
+	}
+
+	// Rewrite recognised binary operator calls into infix form.
+	if call, ok := subExpr.Terms.([]*ast.Term); ok && len(call) == 3 {
+		if opRef, ok := call[0].Value.(ast.Ref); ok && len(opRef) == 1 {
+			if opVar, ok := opRef[0].Value.(ast.Var); ok {
+				if sym, found := binaryOps[opVar.String()]; found {
+					return fmt.Sprintf("%s %s %s", call[1].String(), sym, call[2].String())
+				}
+			}
+		}
+	}
+	return subExpr.String()
+}
+
+// isParamsRef matches `data.params.<name>...` references.
+func isParamsRef(ref ast.Ref) bool {
+	if len(ref) < 3 {
+		return false
+	}
+	head, ok := ref[0].Value.(ast.Var)
+	if !ok || head.String() != "data" {
+		return false
+	}
+	second, ok := ref[1].Value.(ast.String)
+	return ok && string(second) == "params"
+}
+
+// resolveParam looks up a `data.params.<name>` reference in the
+// supplied params map, returning value + source. When the param isn't
+// supplied at evaluation time the reference resolves through the
+// policy's own default value (if any) — we don't have access to that
+// here, so the missing-param case is surfaced as unresolved.
+func resolveParam(params map[string]interface{}, ref ast.Ref) (interface{}, string, bool) {
+	cur := interface{}(params)
+	for _, p := range ref[2:] {
+		s, ok := p.Value.(ast.String)
+		if !ok {
+			return nil, "", false
+		}
+		m, ok := cur.(map[string]interface{})
+		if !ok {
+			return nil, "", false
+		}
+		v, exists := m[string(s)]
+		if !exists {
+			return nil, "", false
+		}
+		cur = v
+	}
+	return cur, "params", true
+}
+
+// refToDotPath renders an `input.x.y.z` style reference as a dotted
+// string key. Refs containing non-string segments (e.g. iteration
+// variables) are rejected.
+func refToDotPath(ref ast.Ref) (string, bool) {
+	if len(ref) == 0 {
+		return "", false
+	}
+	head, ok := ref[0].Value.(ast.Var)
+	if !ok {
+		return "", false
+	}
+	parts := []string{head.String()}
+	for _, p := range ref[1:] {
+		s, ok := p.Value.(ast.String)
+		if !ok {
+			return "", false
+		}
+		parts = append(parts, string(s))
+	}
+	return strings.Join(parts, "."), true
+}
+
+// resolveDotPath walks a Go value following the path encoded by ref
+// (skipping the head, which names the root). Returns false when an
+// intermediate segment isn't an object or the leaf doesn't exist.
+func resolveDotPath(root interface{}, ref ast.Ref) (interface{}, bool) {
+	cur := root
+	for _, p := range ref[1:] {
+		s, ok := p.Value.(ast.String)
+		if !ok {
+			return nil, false
+		}
+		m, ok := cur.(map[string]interface{})
+		if !ok {
+			return nil, false
+		}
+		v, exists := m[string(s)]
+		if !exists {
+			return nil, false
+		}
+		cur = v
+	}
+	return cur, true
+}
+
 func anyAnnotated(rules []*ast.Rule) bool {
 	for _, r := range rules {
 		if len(r.Annotations) > 0 {
@@ -519,37 +670,54 @@ func packageMeta(module *ast.Module) PolicyMeta {
 }
 
 // collectChecks enumerates the annotated rules referenced directly from
-// `allow`'s body and evaluates each one to determine pass/fail. Unannotated
-// helpers, value rules (min_temp := 175), and the like are intentionally
-// excluded from the check list.
-func collectChecks(module *ast.Module, policySource string, input interface{}, params map[string]interface{}) ([]Check, error) {
-	referenced := referencedRuleNames(module, "allow")
+// `allow`'s body and evaluates each one to determine pass/fail. The
+// compiled module is needed for ref resolution; the parsed module
+// preserves the original predicate shape used to render `evaluated`.
+func collectChecks(parsed, compiled *ast.Module, policySource string, input interface{}, params map[string]interface{}) ([]Check, error) {
+	referenced := referencedRuleNames(compiled, "allow")
 
 	seen := map[string]bool{}
 	var checks []Check
-	for _, rule := range module.Rules {
+	for _, rule := range compiled.Rules {
 		name := rule.Head.Name.String()
 		if !referenced[name] || seen[name] || len(rule.Annotations) == 0 {
 			continue
 		}
 		seen[name] = true
 
-		pass, err := evaluateRule(policySource, name, input, params)
+		pass, events, err := runCheck(policySource, name, input, params, false)
 		if err != nil {
 			return nil, err
 		}
-		alts, err := collectAlternatives(module, policySource, name, input, params, false)
-		if err != nil {
-			return nil, err
+		check := Check{
+			Name:   name,
+			Title:  checkTitle(rule),
+			Result: passOrFail(pass),
 		}
-		checks = append(checks, Check{
-			Name:                name,
-			Title:               checkTitle(rule),
-			Result:              passOrFail(pass),
-			AlternativesApplied: alts,
-		})
+		defs := ruleDefinitions(compiled, name)
+		if len(defs) > 1 {
+			check.AlternativesApplied = ruleAlternatives(compiled, events, name, 0)
+		} else if len(defs) == 1 {
+			check.InputsUsed = extractInputsUsed(events, defs[0], input, params)
+			if parsedDef := findParsedDef(parsed, defs[0]); parsedDef != nil {
+				check.Evaluated = renderEvaluated(parsedDef.Body, input, params)
+			}
+		}
+		checks = append(checks, check)
 	}
 	return checks, nil
+}
+
+// findParsedDef locates the parsed rule definition matching a compiled
+// one. Matching is by name + source location so it works even though
+// the parsed and compiled modules carry different AST node pointers.
+func findParsedDef(parsed *ast.Module, compiled *ast.Rule) *ast.Rule {
+	for _, r := range parsed.Rules {
+		if sameRuleDefinition(r, compiled) {
+			return r
+		}
+	}
+	return nil
 }
 
 // referencedRuleNames walks the body of every definition of `headName` in
@@ -593,11 +761,22 @@ func localRuleName(ref ast.Ref, pkgPath string) (string, bool) {
 	return tail, true
 }
 
-func evaluateRule(policySource, name string, input interface{}, params map[string]interface{}) (bool, error) {
+// runCheck evaluates the named rule with a tracer attached, returning
+// pass/fail and the trace events for downstream analysis (alternatives,
+// inputs_used, evaluated). `asFunctionCall` controls whether the query
+// passes `input` as a positional argument — needed for per-element
+// dispatch of function rules like `trail_compliant(trail)`.
+func runCheck(policySource, name string, input interface{}, params map[string]interface{}, asFunctionCall bool) (bool, []*topdown.Event, error) {
+	tracer := topdown.NewBufferTracer()
+	query := "data.policy." + name
+	if asFunctionCall {
+		query += "(input)"
+	}
 	opts := []func(*rego.Rego){
-		rego.Query("data.policy." + name),
+		rego.Query(query),
 		rego.Module("policy.rego", policySource),
 		rego.Input(input),
+		rego.QueryTracer(tracer),
 	}
 	if params != nil {
 		store := inmem.NewFromObject(map[string]interface{}{"params": params})
@@ -605,13 +784,15 @@ func evaluateRule(policySource, name string, input interface{}, params map[strin
 	}
 	rs, err := rego.New(opts...).Eval(context.Background())
 	if err != nil {
-		return false, fmt.Errorf("evaluating check %q: %w", name, err)
+		return false, nil, fmt.Errorf("evaluating check %q: %w", name, err)
 	}
-	if len(rs) == 0 || len(rs[0].Expressions) == 0 {
-		return false, nil
+	pass := false
+	if len(rs) > 0 && len(rs[0].Expressions) > 0 {
+		if b, ok := rs[0].Expressions[0].Value.(bool); ok {
+			pass = b
+		}
 	}
-	b, ok := rs[0].Expressions[0].Value.(bool)
-	return ok && b, nil
+	return pass, *tracer, nil
 }
 
 func passOrFail(b bool) string {

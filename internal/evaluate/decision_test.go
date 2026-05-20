@@ -361,6 +361,146 @@ temp_ok if { input.temp >= 175 }
 	require.Nil(t, decision.Items[0].Checks[0].AlternativesApplied)
 }
 
+func TestDecide_InputsUsedForSimpleInputRef(t *testing.T) {
+	policy := `package policy
+
+import rego.v1
+
+default allow := false
+
+allow if { temp_ok }
+
+# METADATA
+# title: Temperature in range
+temp_ok if { input.bake.temp_c >= 175 }
+`
+	input := map[string]interface{}{
+		"bake": map[string]interface{}{"temp_c": 180},
+	}
+	decision, err := Decide(policy, input, nil)
+	require.NoError(t, err)
+	check := decision.Items[0].Checks[0]
+	require.Equal(t, 180, check.InputsUsed["input.bake.temp_c"])
+}
+
+func TestDecide_InputsUsedIncludesDataParamsRefs(t *testing.T) {
+	policy := `package policy
+
+import rego.v1
+
+default allow := false
+
+allow if { temp_ok }
+
+# METADATA
+# title: Temperature in range
+temp_ok if { input.temp >= data.params.min_temp_c }
+`
+	input := map[string]interface{}{"temp": 180}
+	params := map[string]interface{}{"min_temp_c": 175}
+	decision, err := Decide(policy, input, params)
+	require.NoError(t, err)
+	check := decision.Items[0].Checks[0]
+	require.Equal(t, 180, check.InputsUsed["input.temp"])
+	require.Equal(t,
+		map[string]interface{}{"value": 175, "source": "params"},
+		check.InputsUsed["data.params.min_temp_c"],
+	)
+}
+
+func TestDecide_InputsUsedForMultiplePredicates(t *testing.T) {
+	policy := `package policy
+
+import rego.v1
+
+default allow := false
+
+allow if { temp_ok }
+
+# METADATA
+# title: Temperature in range
+temp_ok if {
+	input.bake.temp_c >= 175
+	input.bake.temp_c <= 200
+	input.bake.minutes >= 25
+}
+`
+	input := map[string]interface{}{
+		"bake": map[string]interface{}{
+			"temp_c":  180,
+			"minutes": 32,
+		},
+	}
+	decision, err := Decide(policy, input, nil)
+	require.NoError(t, err)
+	check := decision.Items[0].Checks[0]
+	require.Equal(t, 180, check.InputsUsed["input.bake.temp_c"])
+	require.Equal(t, 32, check.InputsUsed["input.bake.minutes"])
+}
+
+func TestDecide_EvaluatedSubstitutesInputValuesIntoSinglePredicate(t *testing.T) {
+	policy := `package policy
+
+import rego.v1
+
+default allow := false
+
+allow if { temp_ok }
+
+# METADATA
+# title: Temperature in range
+temp_ok if { input.bake.temp_c >= 175 }
+`
+	input := map[string]interface{}{
+		"bake": map[string]interface{}{"temp_c": 180},
+	}
+	decision, err := Decide(policy, input, nil)
+	require.NoError(t, err)
+	require.Equal(t, "180 >= 175", decision.Items[0].Checks[0].Evaluated)
+}
+
+func TestDecide_EvaluatedJoinsMultiplePredicatesWithAnd(t *testing.T) {
+	policy := `package policy
+
+import rego.v1
+
+default allow := false
+
+allow if { temp_ok }
+
+# METADATA
+# title: Temperature in range
+temp_ok if {
+	input.bake.temp_c >= 175
+	input.bake.temp_c <= 200
+}
+`
+	input := map[string]interface{}{
+		"bake": map[string]interface{}{"temp_c": 180},
+	}
+	decision, err := Decide(policy, input, nil)
+	require.NoError(t, err)
+	require.Equal(t, "180 >= 175 and 180 <= 200", decision.Items[0].Checks[0].Evaluated)
+}
+
+func TestDecide_EvaluatedSubstitutesParamsValues(t *testing.T) {
+	policy := `package policy
+
+import rego.v1
+
+default allow := false
+
+allow if { temp_ok }
+
+# METADATA
+# title: Temperature in range
+temp_ok if { input.temp >= data.params.threshold }
+`
+	decision, err := Decide(policy, map[string]interface{}{"temp": 180}, map[string]interface{}{"threshold": 175})
+	require.NoError(t, err)
+	require.Equal(t, "180 >= 175", decision.Items[0].Checks[0].Evaluated)
+}
+
 func TestDecide_DocumentScopeAnnotationProvidesCheckTitle(t *testing.T) {
 	// When a multi-def rule carries a `# METADATA scope: document`
 	// annotation, that title summarises the rule and is used at the
