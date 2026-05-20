@@ -103,7 +103,7 @@ Follow a strict Red-Green-Refactor loop for every change:
 3. **Write the test** — add only the test; run it and confirm it fails (red).
 4. **Make it pass** — write the minimum production code to turn the test green.
 5. **Refactor** — clean up duplication and improve names while all tests stay green.
-6. **Commit** — commit the green state with a message like `green: <what the test proves>`.
+6. **Commit** — commit the green state. Use the repo's conventional-commit style (`feat(scope): ...`, `test(scope): ...`, `fix(scope): ...`). Describe what changed for a reviewer; don't reference internal planning artifacts (slice numbers, `TODO.md` sections, prompt vocabulary) — those are local scaffolding.
 7. **Update `TODO.md`** — check off the passing test; note any new tests discovered during the step.
 
 Repeat steps 2–7 until the slice is complete, then commit any remaining cleanup.
@@ -168,6 +168,8 @@ Use a fenced-section approach in `TODO.md` at the repo root:
 - During TDD, nest the test list under the active slice.
 - Trim the test list after the slice is merged (keep only the slice title).
 - Delete the entire section when the feature merges to main.
+
+Slice numbers and section headings live in `TODO.md` only. Commits, PR descriptions, and code comments should describe what changed in terms a future maintainer (without the planning context) can follow.
 
 ### Slice checklist
 
