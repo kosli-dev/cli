@@ -58,6 +58,7 @@ type Alternative struct {
 	Rule                string         `json:"rule"`
 	Title               string         `json:"title,omitempty"`
 	Result              string         `json:"result"`
+	Reason              string         `json:"reason,omitempty"`
 	AlternativesApplied []*Alternative `json:"alternatives_applied,omitempty"`
 }
 
@@ -228,7 +229,7 @@ func evaluateIteration(parsed *ast.Module, policySource string, input interface{
 			}
 			defs := ruleDefinitions(parsed, iter.checkName)
 			if len(defs) > 1 {
-				check.AlternativesApplied = ruleAlternatives(parsed, events, iter.checkName, 0)
+				check.AlternativesApplied = ruleAlternatives(parsed, events, iter.checkName, 0, elem, params)
 			}
 			item.Checks = []Check{check}
 		}
@@ -307,7 +308,7 @@ func ruleDefinitions(parsed *ast.Module, name string) []*ast.Rule {
 // multi-definition rule, scoped to the given trace parent QueryID. The
 // returned entries recurse into other multi-definition rules invoked
 // from each definition's body.
-func ruleAlternatives(parsed *ast.Module, events []*topdown.Event, name string, parentQID uint64) []*Alternative {
+func ruleAlternatives(parsed *ast.Module, events []*topdown.Event, name string, parentQID uint64, input interface{}, params map[string]interface{}) []*Alternative {
 	defs := ruleDefinitions(parsed, name)
 	if len(defs) <= 1 {
 		return nil
@@ -322,7 +323,16 @@ func ruleAlternatives(parsed *ast.Module, events []*topdown.Event, name string, 
 			Result: passOrFail(pass),
 		}
 		if enterQID != 0 {
-			alt.AlternativesApplied = nestedAlternatives(parsed, events, enterQID)
+			if !pass {
+				alt.Reason = findFailReason(events, def, enterQID, input, params)
+			}
+			alt.AlternativesApplied = nestedAlternatives(parsed, events, enterQID, input, params)
+		} else if !pass {
+			// OPA's rule indexer can skip a definition entirely when another
+			// definition has already succeeded (or when index keys rule the
+			// def out). We don't have a trace for it, but the body is still
+			// the auditor-facing reason — render it with values substituted.
+			alt.Reason = renderEvaluated(def.Body, nil, input, params)
 		}
 		alts = append(alts, alt)
 	}
@@ -332,7 +342,7 @@ func ruleAlternatives(parsed *ast.Module, events []*topdown.Event, name string, 
 // nestedAlternatives finds multi-definition annotated rules invoked
 // inside a parent body (matched by ParentID) and builds Alternative
 // chains for each of them.
-func nestedAlternatives(parsed *ast.Module, events []*topdown.Event, parentQID uint64) []*Alternative {
+func nestedAlternatives(parsed *ast.Module, events []*topdown.Event, parentQID uint64, input interface{}, params map[string]interface{}) []*Alternative {
 	seen := map[string]bool{}
 	var names []string
 	for _, e := range events {
@@ -357,7 +367,7 @@ func nestedAlternatives(parsed *ast.Module, events []*topdown.Event, parentQID u
 
 	var out []*Alternative
 	for _, n := range names {
-		out = append(out, ruleAlternatives(parsed, events, n, parentQID)...)
+		out = append(out, ruleAlternatives(parsed, events, n, parentQID, input, params)...)
 	}
 	return out
 }
@@ -393,22 +403,16 @@ func definitionOutcome(events []*topdown.Event, def *ast.Rule, parentQID uint64)
 // QueryID is walked — nested rule calls live under different QueryIDs
 // and their internals stay collapsed.
 func extractInputsUsed(events []*topdown.Event, def *ast.Rule, input interface{}, params map[string]interface{}) map[string]interface{} {
-	bodyQID := uint64(0)
-	for _, e := range events {
-		if e.Op != topdown.EnterOp {
-			continue
-		}
-		r, ok := e.Node.(*ast.Rule)
-		if !ok || !sameRuleDefinition(r, def) {
-			continue
-		}
-		bodyQID = e.QueryID
-		break
-	}
+	return inputsUsedAtQID(events, findBodyQID(events, def), input, params)
+}
+
+// inputsUsedAtQID is the QID-scoped form of extractInputsUsed — used
+// when the caller already knows the body's QueryID (e.g. each
+// Alternative knows its own enterQID).
+func inputsUsedAtQID(events []*topdown.Event, bodyQID uint64, input interface{}, params map[string]interface{}) map[string]interface{} {
 	if bodyQID == 0 {
 		return nil
 	}
-
 	used := map[string]interface{}{}
 	for _, e := range events {
 		if e.QueryID != bodyQID {
@@ -441,6 +445,30 @@ func extractInputsUsed(events []*topdown.Event, def *ast.Rule, input interface{}
 	return used
 }
 
+// findFailReason returns a substituted-form rendering of the first
+// expression that the trace shows failing inside the given body's
+// QueryID. The result is suitable for an Alternative's `reason` field.
+func findFailReason(events []*topdown.Event, parsedDef *ast.Rule, bodyQID uint64, input interface{}, params map[string]interface{}) string {
+	if bodyQID == 0 {
+		return ""
+	}
+	for _, e := range events {
+		if e.QueryID != bodyQID || e.Op != topdown.FailOp {
+			continue
+		}
+		expr, ok := e.Node.(*ast.Expr)
+		if !ok || expr.Location == nil {
+			continue
+		}
+		for _, parsedExpr := range parsedDef.Body {
+			if parsedExpr.Location != nil && parsedExpr.Location.Row == expr.Location.Row {
+				return renderExpr(parsedExpr, input, params)
+			}
+		}
+	}
+	return ""
+}
+
 // binaryOps maps OPA's prefix-form comparison built-ins to their
 // infix symbols, used when rendering an `evaluated` predicate so it
 // reads naturally to an auditor.
@@ -456,15 +484,60 @@ var binaryOps = map[string]string{
 
 // renderEvaluated produces an `<lhs> <op> <rhs> and ...` form of the
 // rule body with `input.*` and `data.params.*` references substituted
-// with their resolved values. Comprehension and `every` rendering are
-// out of scope for slice 4 — those expressions fall through to OPA's
-// String() form.
-func renderEvaluated(body ast.Body, input interface{}, params map[string]interface{}) string {
+// with their resolved values. When `rowsRun` is non-nil, predicates
+// whose source row isn't in the set are omitted — this makes a failing
+// check render only the predicates that the trace shows actually ran
+// before short-circuit. Comprehension and `every` body rendering still
+// falls through to OPA's String() form.
+func renderEvaluated(body ast.Body, rowsRun map[int]bool, input interface{}, params map[string]interface{}) string {
 	parts := make([]string, 0, len(body))
 	for _, expr := range body {
+		if rowsRun != nil && expr.Location != nil && !rowsRun[expr.Location.Row] {
+			continue
+		}
 		parts = append(parts, renderExpr(expr, input, params))
 	}
 	return strings.Join(parts, " and ")
+}
+
+// collectRowsRun returns the set of source rows that produced at least
+// one Eval event at the given QueryID. Used by renderEvaluated to trim
+// later predicates that short-circuiting skipped.
+func collectRowsRun(events []*topdown.Event, qid uint64) map[int]bool {
+	if qid == 0 {
+		return nil
+	}
+	rows := map[int]bool{}
+	for _, e := range events {
+		if e.QueryID != qid || e.Op != topdown.EvalOp {
+			continue
+		}
+		expr, ok := e.Node.(*ast.Expr)
+		if !ok || expr.Location == nil {
+			continue
+		}
+		rows[expr.Location.Row] = true
+	}
+	if len(rows) == 0 {
+		return nil
+	}
+	return rows
+}
+
+// findBodyQID returns the QueryID assigned to the given rule
+// definition's body — the QID on its Enter event in the trace.
+func findBodyQID(events []*topdown.Event, def *ast.Rule) uint64 {
+	for _, e := range events {
+		if e.Op != topdown.EnterOp {
+			continue
+		}
+		r, ok := e.Node.(*ast.Rule)
+		if !ok || !sameRuleDefinition(r, def) {
+			continue
+		}
+		return e.QueryID
+	}
+	return 0
 }
 
 func renderExpr(expr *ast.Expr, input interface{}, params map[string]interface{}) string {
@@ -696,11 +769,27 @@ func collectChecks(parsed, compiled *ast.Module, policySource string, input inte
 		}
 		defs := ruleDefinitions(compiled, name)
 		if len(defs) > 1 {
-			check.AlternativesApplied = ruleAlternatives(compiled, events, name, 0)
+			check.AlternativesApplied = ruleAlternatives(parsed, events, name, 0, input, params)
+			if pass {
+				// On success, hoist evidence from the winning alternative
+				// up to the Check itself — the auditor reads "this is what
+				// the check did" without scanning down for the matching alt.
+				for _, def := range ruleDefinitions(parsed, name) {
+					winPass, winQID := definitionOutcome(events, def, 0)
+					if !winPass || winQID == 0 {
+						continue
+					}
+					check.InputsUsed = inputsUsedAtQID(events, winQID, input, params)
+					rowsRun := collectRowsRun(events, winQID)
+					check.Evaluated = renderEvaluated(def.Body, rowsRun, input, params)
+					break
+				}
+			}
 		} else if len(defs) == 1 {
 			check.InputsUsed = extractInputsUsed(events, defs[0], input, params)
 			if parsedDef := findParsedDef(parsed, defs[0]); parsedDef != nil {
-				check.Evaluated = renderEvaluated(parsedDef.Body, input, params)
+				rowsRun := collectRowsRun(events, findBodyQID(events, defs[0]))
+				check.Evaluated = renderEvaluated(parsedDef.Body, rowsRun, input, params)
 			}
 		}
 		checks = append(checks, check)

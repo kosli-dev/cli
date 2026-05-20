@@ -501,6 +501,119 @@ temp_ok if { input.temp >= data.params.threshold }
 	require.Equal(t, "180 >= 175", decision.Items[0].Checks[0].Evaluated)
 }
 
+func TestDecide_EvaluatedShowsOnlyPredicatesThatRanWhenShortCircuited(t *testing.T) {
+	policy := `package policy
+
+import rego.v1
+
+default allow := false
+
+allow if { temp_ok }
+
+# METADATA
+# title: Temperature in range
+temp_ok if {
+	input.bake.temp_c >= 175
+	input.bake.temp_c <= 200
+}
+`
+	input := map[string]interface{}{
+		"bake": map[string]interface{}{"temp_c": 165},
+	}
+	decision, err := Decide(policy, input, nil)
+	require.NoError(t, err)
+	check := decision.Items[0].Checks[0]
+	require.Equal(t, "fail", check.Result)
+	require.Equal(t, "165 >= 175", check.Evaluated)
+}
+
+const multiDefPolicy = `package policy
+
+import rego.v1
+
+default allow := false
+
+allow if { pr_compliant }
+
+# METADATA
+# title: PR is compliant
+# scope: document
+
+# METADATA
+# title: bot-authored PR
+# scope: rule
+pr_compliant if {
+	input.pr.author == "bot"
+}
+
+# METADATA
+# title: human-authored PR has an approver
+# scope: rule
+pr_compliant if {
+	count(input.pr.approvers) > 0
+}
+`
+
+func TestDecide_MultiDefCheckHoistsEvidenceFromWinningAlternative(t *testing.T) {
+	input := map[string]interface{}{
+		"pr": map[string]interface{}{"author": "alice", "approvers": []interface{}{"bob"}},
+	}
+	decision, err := Decide(multiDefPolicy, input, nil)
+	require.NoError(t, err)
+	check := decision.Items[0].Checks[0]
+	require.Equal(t, "pass", check.Result)
+	require.NotEmpty(t, check.InputsUsed, "passing multi-def check should expose winning-alt inputs_used")
+	require.NotEmpty(t, check.Evaluated, "passing multi-def check should expose winning-alt evaluated")
+}
+
+func TestDecide_FailedAlternativeCarriesReason(t *testing.T) {
+	input := map[string]interface{}{
+		"pr": map[string]interface{}{"author": "alice", "approvers": []interface{}{"bob"}},
+	}
+	decision, err := Decide(multiDefPolicy, input, nil)
+	require.NoError(t, err)
+	check := decision.Items[0].Checks[0]
+	failing := findAlternativeByTitle(check.AlternativesApplied, "bot-authored PR")
+	require.NotNil(t, failing)
+	require.Equal(t, "fail", failing.Result)
+	require.NotEmpty(t, failing.Reason, "failed alternative should carry a reason")
+}
+
+func findAlternativeByTitle(alts []*Alternative, title string) *Alternative {
+	for _, a := range alts {
+		if a.Title == title {
+			return a
+		}
+	}
+	return nil
+}
+
+func TestDecide_EvaluatedIncludesLaterPredicateThatActuallyRanBeforeFailing(t *testing.T) {
+	policy := `package policy
+
+import rego.v1
+
+default allow := false
+
+allow if { temp_ok }
+
+# METADATA
+# title: Temperature in range
+temp_ok if {
+	input.bake.temp_c >= 175
+	input.bake.temp_c <= 200
+}
+`
+	input := map[string]interface{}{
+		"bake": map[string]interface{}{"temp_c": 250},
+	}
+	decision, err := Decide(policy, input, nil)
+	require.NoError(t, err)
+	check := decision.Items[0].Checks[0]
+	require.Equal(t, "fail", check.Result)
+	require.Equal(t, "250 >= 175 and 250 <= 200", check.Evaluated)
+}
+
 func TestDecide_DocumentScopeAnnotationProvidesCheckTitle(t *testing.T) {
 	// When a multi-def rule carries a `# METADATA scope: document`
 	// annotation, that title summarises the rule and is used at the
