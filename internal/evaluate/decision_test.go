@@ -1,6 +1,7 @@
 package evaluate
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -177,4 +178,17 @@ allow = true
 	decision, err := Decide(policy, map[string]interface{}{}, nil)
 	require.NoError(t, err)
 	require.Len(t, decision.Items, 1)
+}
+
+func TestDecide_EmptyChecksMarshalAsArrayNotNull(t *testing.T) {
+	policy := `package policy
+
+allow = true
+`
+	decision, err := Decide(policy, map[string]interface{}{}, nil)
+	require.NoError(t, err)
+	raw, err := json.Marshal(decision)
+	require.NoError(t, err)
+	require.Contains(t, string(raw), `"checks":[]`)
+	require.NotContains(t, string(raw), `"checks":null`)
 }

@@ -72,6 +72,9 @@ func Decide(policySource string, input interface{}, params map[string]interface{
 	if err != nil {
 		return nil, err
 	}
+	if checks == nil {
+		checks = []Check{}
+	}
 	decision.Items = []Item{{Result: decision.Result, Checks: checks}}
 
 	return decision, nil
