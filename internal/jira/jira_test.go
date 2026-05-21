@@ -92,10 +92,10 @@ func TestFindJiraIssueKeys(t *testing.T) {
 		want        []string
 	}{
 		{
-			name:        "commit message with Jira key and CVE identifiers",
-			text:        "Pull request #41: AGENT-459: Pin tomcat-embed to 11.0.22 for CVE-2026-41284 / -42498 / -43514",
+			name:        "Jira key alongside CVE identifiers",
+			text:        "PROJ-42: Upgrade dependency for CVE-2026-41284 / CVE-2026-42498",
 			projectKeys: []string{},
-			want:        []string{"AGENT-459"},
+			want:        []string{"PROJ-42"},
 		},
 		{
 			name:        "CVE identifier is not matched",
@@ -135,15 +135,15 @@ func TestFindJiraIssueKeys(t *testing.T) {
 		},
 		{
 			name:        "with project keys filters to specified projects",
-			text:        "AGENT-459: fix for DEF-789",
-			projectKeys: []string{"AGENT"},
-			want:        []string{"AGENT-459"},
+			text:        "PROJ-10: fix for OTHER-789",
+			projectKeys: []string{"PROJ"},
+			want:        []string{"PROJ-10"},
 		},
 		{
 			name:        "with project keys still rejects CVE-like matches",
-			text:        "AGENT-459: Pin for CVE-2026-41284",
-			projectKeys: []string{"AGENT", "CVE"},
-			want:        []string{"AGENT-459"},
+			text:        "PROJ-10: Upgrade for CVE-2026-41284",
+			projectKeys: []string{"PROJ", "CVE"},
+			want:        []string{"PROJ-10"},
 		},
 		{
 			name:        "empty text returns nil",
