@@ -1,0 +1,19 @@
+{
+  "trails": [
+    {
+      "name": "trail-bot-update",
+      "author": "ci-bot",
+      "pr": { "approvers": [] }
+    },
+    {
+      "name": "trail-feature-x",
+      "author": "alice",
+      "pr": { "approvers": ["bob"] }
+    },
+    {
+      "name": "trail-unreviewed",
+      "author": "carol",
+      "pr": { "approvers": [] }
+    }
+  ]
+}
