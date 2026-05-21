@@ -7,6 +7,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Claude **may** run `git checkout -b`, `git add`, `git commit`, and `git push` on feature branches as part of the TDD and slice workflow described below. `git push --force-with-lease` is permitted on feature branches for rebase workflows.
 - **NEVER** push to `main` and **NEVER** use `git push --force` / `git push -f` — use `--force-with-lease` instead, and only on feature branches.
 
+## Commit Messages
+
+All commits follow the [Conventional Commits](https://www.conventionalcommits.org/) specification.
+
 ## Project Overview
 
 Kosli CLI — a Go command-line tool for recording and querying software delivery events to the [Kosli](https://www.kosli.com) platform. Built with Cobra/Viper, it supports artifact fingerprinting, environment snapshots, and compliance attestations across AWS, Azure, Docker, Kubernetes, and various CI/CD systems.
@@ -103,7 +107,7 @@ Follow a strict Red-Green-Refactor loop for every change:
 3. **Write the test** — add only the test; run it and confirm it fails (red).
 4. **Make it pass** — write the minimum production code to turn the test green.
 5. **Refactor** — clean up duplication and improve names while all tests stay green.
-6. **Commit** — commit the green state with a message like `green: <what the test proves>`.
+6. **Commit** — commit the green state.
 7. **Update `TODO.md`** — check off the passing test; note any new tests discovered during the step.
 
 Repeat steps 2–7 until the slice is complete, then commit any remaining cleanup.
