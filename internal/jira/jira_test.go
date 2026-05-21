@@ -3,6 +3,8 @@ package jira
 import (
 	"regexp"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMakeJiraIssueKey(t *testing.T) {
@@ -78,6 +80,83 @@ func TestMakeJiraIssueKey(t *testing.T) {
 					}
 				}
 			}
+		})
+	}
+}
+
+func TestFindJiraIssueKeys(t *testing.T) {
+	tests := []struct {
+		name        string
+		text        string
+		projectKeys []string
+		want        []string
+	}{
+		{
+			name:        "commit message with Jira key and CVE identifiers",
+			text:        "Pull request #41: AGENT-459: Pin tomcat-embed to 11.0.22 for CVE-2026-41284 / -42498 / -43514",
+			projectKeys: []string{},
+			want:        []string{"AGENT-459"},
+		},
+		{
+			name:        "CVE identifier is not matched",
+			text:        "fix CVE-2026-41284",
+			projectKeys: []string{},
+			want:        nil,
+		},
+		{
+			name:        "multiple CVE identifiers produce no matches",
+			text:        "CVE-2026-41284 and CVE-2025-12345",
+			projectKeys: []string{},
+			want:        nil,
+		},
+		{
+			name:        "CWE-like multi-segment identifier is not matched",
+			text:        "addresses CWE-79-1234",
+			projectKeys: []string{},
+			want:        nil,
+		},
+		{
+			name:        "multiple valid Jira keys",
+			text:        "PROJ-1 and PROJ-2 are related",
+			projectKeys: []string{},
+			want:        []string{"PROJ-1", "PROJ-2"},
+		},
+		{
+			name:        "Jira key at end of string",
+			text:        "fix for PROJ-999",
+			projectKeys: []string{},
+			want:        []string{"PROJ-999"},
+		},
+		{
+			name:        "standalone Jira key",
+			text:        "ABC-123",
+			projectKeys: []string{},
+			want:        []string{"ABC-123"},
+		},
+		{
+			name:        "with project keys filters to specified projects",
+			text:        "AGENT-459: fix for DEF-789",
+			projectKeys: []string{"AGENT"},
+			want:        []string{"AGENT-459"},
+		},
+		{
+			name:        "with project keys still rejects CVE-like matches",
+			text:        "AGENT-459: Pin for CVE-2026-41284",
+			projectKeys: []string{"AGENT", "CVE"},
+			want:        []string{"AGENT-459"},
+		},
+		{
+			name:        "empty text returns nil",
+			text:        "",
+			projectKeys: []string{},
+			want:        nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := FindJiraIssueKeys(tt.text, tt.projectKeys)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
