@@ -18,14 +18,16 @@ const logEnvironmentLongDesc = logEnvironmentShortDesc + `
 The results are paginated and ordered from latest to oldest.
 By default, the page limit is 15 events per page.
 
-You can optionally specify an INTERVAL between two snapshot expressions with [expression]..[expression]. 
+You can optionally specify an INTERVAL between two snapshot expressions with [expression]..[expression].
 
 Expressions can be:
-* ~N   N'th behind the latest snapshot  
-* N    snapshot number N  
-* NOW  the latest snapshot  
+* ~N   N'th behind the latest snapshot
+* N    snapshot number N
+* NOW  the latest snapshot
 
 Either expression can be omitted to default to NOW.
+
+You can also filter events by range using --start/--end (snapshot index or time expression such as "NOW" or "1hour") or --start-ts/--end-ts (Unix timestamps).
 `
 
 const logEnvironmentExample = `
@@ -59,6 +61,26 @@ kosli log environment yourEnvironmentName \
 	--repo yourOrg/yourRepo2 \
 	--api-token yourAPIToken \
 	--org yourOrgName
+
+# list events starting from snapshot 5:
+kosli log environment yourEnvironmentName \
+	--start 5 \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# list events between two time expressions:
+kosli log environment yourEnvironmentName \
+	--start 1hour \
+	--end NOW \
+	--api-token yourAPIToken \
+	--org yourOrgName
+
+# list events between two Unix timestamps:
+kosli log environment yourEnvironmentName \
+	--start-ts 1700000000 \
+	--end-ts 1700086400 \
+	--api-token yourAPIToken \
+	--org yourOrgName
 `
 
 type logEnvironmentOptions struct {
@@ -66,6 +88,10 @@ type logEnvironmentOptions struct {
 	reverse  bool
 	interval string
 	repos    []string
+	start    string
+	end      string
+	startTS  float64
+	endTS    float64
 }
 
 func newLogEnvironmentCmd(out io.Writer) *cobra.Command {
@@ -92,6 +118,10 @@ func newLogEnvironmentCmd(out io.Writer) *cobra.Command {
 
 	cmd.Flags().StringVarP(&o.interval, "interval", "i", "", intervalFlag)
 	cmd.Flags().StringSliceVar(&o.repos, "repo", []string{}, repoNameFlag)
+	cmd.Flags().StringVar(&o.start, "start", "", eventsStartFlag)
+	cmd.Flags().StringVar(&o.end, "end", "", eventsEndFlag)
+	cmd.Flags().Float64Var(&o.startTS, "start-ts", 0, eventsStartTSFlag)
+	cmd.Flags().Float64Var(&o.endTS, "end-ts", 0, eventsEndTSFlag)
 	addListFlags(cmd, &o.listOptions)
 	cmd.Flags().BoolVar(&o.reverse, "reverse", false, reverseFlag)
 
@@ -125,6 +155,18 @@ func (o *logEnvironmentOptions) getEnvironmentEvents(out io.Writer, envName, int
 		if repo != "" {
 			q.Add("repo_name", repo)
 		}
+	}
+	if o.start != "" {
+		q.Set("start", o.start)
+	}
+	if o.end != "" {
+		q.Set("end", o.end)
+	}
+	if o.startTS != 0 {
+		q.Set("start_ts", strconv.FormatFloat(o.startTS, 'f', -1, 64))
+	}
+	if o.endTS != 0 {
+		q.Set("end_ts", strconv.FormatFloat(o.endTS, 'f', -1, 64))
 	}
 	u.RawQuery = q.Encode()
 

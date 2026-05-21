@@ -152,6 +152,41 @@ func (suite *LogEnvironmentCommandTestSuite) TestLogEnvironmentCmd() {
 				reportToEnv: true,
 			},
 		},
+		{
+			name: "listing events with --start as snapshot index works",
+			cmd:  fmt.Sprintf(`log env %s --start 1 %s`, suite.eventsEnvName, suite.defaultKosliArguments),
+			additionalConfig: listSnapshotsTestConfig{
+				reportToEnv: true,
+			},
+		},
+		{
+			name: "listing events with --end as snapshot index works",
+			cmd:  fmt.Sprintf(`log env %s --end 2 %s`, suite.eventsEnvName, suite.defaultKosliArguments),
+			additionalConfig: listSnapshotsTestConfig{
+				reportToEnv: true,
+			},
+		},
+		{
+			name: "listing events with --start and --end as time expressions works",
+			cmd:  fmt.Sprintf(`log env %s --start 1hour --end NOW %s`, suite.eventsEnvName, suite.defaultKosliArguments),
+			additionalConfig: listSnapshotsTestConfig{
+				reportToEnv: true,
+			},
+		},
+		{
+			name: "listing events with --start-ts and --end-ts works",
+			cmd:  fmt.Sprintf(`log env %s --start-ts 1700000000 --end-ts 1700086400 %s`, suite.eventsEnvName, suite.defaultKosliArguments),
+			additionalConfig: listSnapshotsTestConfig{
+				reportToEnv: true,
+			},
+		},
+		{
+			name: "listing events with --start-ts as float works",
+			cmd:  fmt.Sprintf(`log env %s --start-ts 1700000000.5 %s`, suite.eventsEnvName, suite.defaultKosliArguments),
+			additionalConfig: listSnapshotsTestConfig{
+				reportToEnv: true,
+			},
+		},
 	}
 
 	for _, t := range tests {

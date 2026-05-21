@@ -273,6 +273,10 @@ The ^.kosli_ignore^ will be treated as part of the artifact like any other file,
 	getAttestationFlowNameFlag      = "[conditional] The name of the Kosli flow for the attestation. Required if ATTESTATION-NAME provided. Cannot be used together with --attestation-id."
 	attestationIDFlag               = "[conditional] The unique identifier of the attestation to retrieve. Cannot be used together with ATTESTATION-NAME."
 	repoNameFlag                    = "[optional] The name of a git repo as it is registered in Kosli. e.g kosli-dev/cli"
+	eventsStartFlag                 = "[optional] The start of the events range. Can be a snapshot index (integer) or a time expression (e.g. NOW, 1hour)."
+	eventsEndFlag                   = "[optional] The end of the events range. Can be a snapshot index (integer) or a time expression (e.g. NOW, 1hour)."
+	eventsStartTSFlag               = "[optional] The start of the events range as a Unix timestamp in seconds (integer or float)."
+	eventsEndTSFlag                 = "[optional] The end of the events range as a Unix timestamp in seconds (integer or float)."
 	attestationRepoNameFlag         = "[conditional] The name of the repository (e.g. owner/repo-name). All three of --repo-id, --repo-url and --repository must be set to record repository information (defaulted in some CIs: https://docs.kosli.com/integrations/ci_cd )."
 )
 
