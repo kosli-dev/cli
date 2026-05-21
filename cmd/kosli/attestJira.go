@@ -276,13 +276,22 @@ func (o *attestJiraOptions) run(args []string) error {
 	if err != nil {
 		return err
 	}
-	jiraIssueKeyPattern := jira.MakeJiraIssueKeyPattern(o.projectKeys)
-
-	issueIDs, commitInfo, err := gv.MatchPatternInCommitMessageORBranchName(jiraIssueKeyPattern, o.payload.Commit.Sha1,
-		o.secondarySource, o.ignoreBranchMatch)
+	commitInfo, err := gv.GetCommitInfoFromCommitSHA(o.payload.Commit.Sha1, true, []string{})
 	if err != nil {
 		return err
 	}
+
+	// Search commit message, branch name, and secondary source for Jira issue keys,
+	// filtering out false positives from multi-segment identifiers like CVE-2026-41284.
+	searchTexts := []string{commitInfo.Message}
+	if !o.ignoreBranchMatch {
+		searchTexts = append(searchTexts, commitInfo.Branch)
+	}
+	if o.secondarySource != "" {
+		searchTexts = append(searchTexts, o.secondarySource)
+	}
+	combinedText := strings.Join(searchTexts, "\n")
+	issueIDs := jira.FindJiraIssueKeys(combinedText, o.projectKeys)
 	logger.Debug("Checked for Jira issue references in Git commit %s on branch %s commit message:\n%s", commitInfo.Sha1, commitInfo.Branch, commitInfo.Message)
 	logger.Debug("the following Jira references are found in commit message or branch name: %v", issueIDs)
 
