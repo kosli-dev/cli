@@ -146,6 +146,18 @@ func TestFindJiraIssueKeys(t *testing.T) {
 			want:        []string{"PROJ-10"},
 		},
 		{
+			name:        "key appears both standalone and in multi-segment identifier",
+			text:        "CVE-2026-41284 and also CVE-2026 standalone",
+			projectKeys: []string{},
+			want:        []string{"CVE-2026"},
+		},
+		{
+			name:        "duplicate keys are deduplicated",
+			text:        "PROJ-42 and PROJ-42 again",
+			projectKeys: []string{},
+			want:        []string{"PROJ-42"},
+		},
+		{
 			name:        "empty text returns nil",
 			text:        "",
 			projectKeys: []string{},

@@ -157,6 +157,7 @@ func FindJiraIssueKeys(text string, projectKeys []string) []string {
 // isPartialMultiSegment returns true if every occurrence of match in text
 // is immediately followed by a "-<digit>" suffix, indicating it is part
 // of a longer multi-segment identifier (e.g. CVE-2026-41284).
+// Precondition: match must exist in text (guaranteed when called from FindJiraIssueKeys).
 func isPartialMultiSegment(text, match string, dashDigit *regexp.Regexp) bool {
 	start := 0
 	for {
