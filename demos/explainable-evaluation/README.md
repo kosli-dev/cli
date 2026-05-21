@@ -4,6 +4,11 @@ Seven demos that show what the experimental `kosli evaluate input --decision`
 flag produces, from a single-batch bakery policy up to a Kosli-shaped trails
 policy with iteration and alternatives.
 
+If you want to **write your own policies** rather than just run the demos,
+read [WRITING-POLICIES.md](WRITING-POLICIES.md) — it's a practical guide
+to the annotations and patterns that produce this output, intended for the
+CS team to play with and feed back on.
+
 ## Setup
 
 From the repo root:
