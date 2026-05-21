@@ -3,6 +3,8 @@ package jira
 import (
 	"regexp"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMakeJiraIssueKey(t *testing.T) {
@@ -78,6 +80,95 @@ func TestMakeJiraIssueKey(t *testing.T) {
 					}
 				}
 			}
+		})
+	}
+}
+
+func TestFindJiraIssueKeys(t *testing.T) {
+	tests := []struct {
+		name        string
+		text        string
+		projectKeys []string
+		want        []string
+	}{
+		{
+			name:        "Jira key alongside CVE identifiers",
+			text:        "PROJ-42: Upgrade dependency for CVE-2026-41284 / CVE-2026-42498",
+			projectKeys: []string{},
+			want:        []string{"PROJ-42"},
+		},
+		{
+			name:        "CVE identifier is not matched",
+			text:        "fix CVE-2026-41284",
+			projectKeys: []string{},
+			want:        nil,
+		},
+		{
+			name:        "multiple CVE identifiers produce no matches",
+			text:        "CVE-2026-41284 and CVE-2025-12345",
+			projectKeys: []string{},
+			want:        nil,
+		},
+		{
+			name:        "CWE-like multi-segment identifier is not matched",
+			text:        "addresses CWE-79-1234",
+			projectKeys: []string{},
+			want:        nil,
+		},
+		{
+			name:        "multiple valid Jira keys",
+			text:        "PROJ-1 and PROJ-2 are related",
+			projectKeys: []string{},
+			want:        []string{"PROJ-1", "PROJ-2"},
+		},
+		{
+			name:        "Jira key at end of string",
+			text:        "fix for PROJ-999",
+			projectKeys: []string{},
+			want:        []string{"PROJ-999"},
+		},
+		{
+			name:        "standalone Jira key",
+			text:        "ABC-123",
+			projectKeys: []string{},
+			want:        []string{"ABC-123"},
+		},
+		{
+			name:        "with project keys filters to specified projects",
+			text:        "PROJ-10: fix for OTHER-789",
+			projectKeys: []string{"PROJ"},
+			want:        []string{"PROJ-10"},
+		},
+		{
+			name:        "with project keys still rejects CVE-like matches",
+			text:        "PROJ-10: Upgrade for CVE-2026-41284",
+			projectKeys: []string{"PROJ", "CVE"},
+			want:        []string{"PROJ-10"},
+		},
+		{
+			name:        "key appears both standalone and in multi-segment identifier",
+			text:        "CVE-2026-41284 and also CVE-2026 standalone",
+			projectKeys: []string{},
+			want:        []string{"CVE-2026"},
+		},
+		{
+			name:        "duplicate keys are deduplicated",
+			text:        "PROJ-42 and PROJ-42 again",
+			projectKeys: []string{},
+			want:        []string{"PROJ-42"},
+		},
+		{
+			name:        "empty text returns nil",
+			text:        "",
+			projectKeys: []string{},
+			want:        nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := FindJiraIssueKeys(tt.text, tt.projectKeys)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }

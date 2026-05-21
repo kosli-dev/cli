@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
+	"sort"
 	"strings"
 
 	jira "github.com/andygrunwald/go-jira"
@@ -114,4 +116,60 @@ func MakeJiraIssueKeyPattern(projectKeys []string) string {
 	} else {
 		return `(` + strings.Join(projectKeys, "|") + `)-[0-9]+`
 	}
+}
+
+// FindJiraIssueKeys finds all Jira issue keys in text, filtering out
+// partial matches from multi-segment identifiers like CVE-2026-41284.
+// A match is discarded if every occurrence in text is immediately
+// followed by "-<digit>".
+func FindJiraIssueKeys(text string, projectKeys []string) []string {
+	pattern := MakeJiraIssueKeyPattern(projectKeys)
+	re := regexp.MustCompile(pattern)
+	candidates := re.FindAllString(text, -1)
+
+	// Deduplicate
+	seen := make(map[string]struct{})
+	var unique []string
+	for _, c := range candidates {
+		if _, ok := seen[c]; !ok {
+			seen[c] = struct{}{}
+			unique = append(unique, c)
+		}
+	}
+
+	// Filter out matches that are always followed by -<digit> in the text
+	dashDigit := regexp.MustCompile(`^-\d`)
+	var result []string
+	for _, m := range unique {
+		if isPartialMultiSegment(text, m, dashDigit) {
+			continue
+		}
+		result = append(result, m)
+	}
+
+	sort.Strings(result)
+	if len(result) == 0 {
+		return nil
+	}
+	return result
+}
+
+// isPartialMultiSegment returns true if every occurrence of match in text
+// is immediately followed by a "-<digit>" suffix, indicating it is part
+// of a longer multi-segment identifier (e.g. CVE-2026-41284).
+// Precondition: match must exist in text (guaranteed when called from FindJiraIssueKeys).
+func isPartialMultiSegment(text, match string, dashDigit *regexp.Regexp) bool {
+	start := 0
+	for {
+		idx := strings.Index(text[start:], match)
+		if idx < 0 {
+			break
+		}
+		afterIdx := start + idx + len(match)
+		if afterIdx >= len(text) || !dashDigit.MatchString(text[afterIdx:]) {
+			return false
+		}
+		start = start + idx + 1
+	}
+	return true
 }
