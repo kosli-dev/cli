@@ -41,6 +41,10 @@ func (MintlifyFormatter) DeprecatedWarning(name, message string) string {
 	return b.String()
 }
 
+func (MintlifyFormatter) TutorialTip(url string) string {
+	return fmt.Sprintf("<Tip>\nSee the [tutorial](%s) for a walkthrough.\n</Tip>\n\n", url)
+}
+
 func (MintlifyFormatter) Synopsis(meta CommandMeta) string {
 	var b strings.Builder
 	if len(meta.Long) > 0 {

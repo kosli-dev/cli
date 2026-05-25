@@ -125,6 +125,58 @@ func TestGenMarkdownTreeIncludesDeprecatedCommands(t *testing.T) {
 	}
 }
 
+func TestGenMarkdownTreeRendersTutorialTip(t *testing.T) {
+	dir := t.TempDir()
+
+	root := &cobra.Command{Use: "root"}
+	withTutorial := &cobra.Command{
+		Use:         "withtut",
+		Short:       "Cmd with tutorial",
+		Long:        "long desc",
+		Annotations: map[string]string{"tutorialURL": "https://docs.kosli.com/tutorials/x"},
+		RunE:        func(cmd *cobra.Command, args []string) error { return nil },
+	}
+	without := &cobra.Command{
+		Use:   "withouttut",
+		Short: "Cmd without tutorial",
+		Long:  "long desc",
+		RunE:  func(cmd *cobra.Command, args []string) error { return nil },
+	}
+	root.AddCommand(withTutorial, without)
+
+	metaFn := func(cmd *cobra.Command) CommandMeta {
+		return CommandMeta{
+			Name:     cmd.CommandPath(),
+			Summary:  cmd.Short,
+			Long:     cmd.Long,
+			UseLine:  cmd.UseLine(),
+			Runnable: cmd.Runnable(),
+			Tutorial: cmd.Annotations["tutorialURL"],
+		}
+	}
+
+	if err := GenMarkdownTree(root, dir, MintlifyFormatter{}, metaFn); err != nil {
+		t.Fatalf("GenMarkdownTree error: %v", err)
+	}
+
+	withContent, err := os.ReadFile(filepath.Join(dir, "root_withtut.md"))
+	if err != nil {
+		t.Fatalf("failed to read file: %v", err)
+	}
+	if !strings.Contains(string(withContent), "<Tip>") ||
+		!strings.Contains(string(withContent), "https://docs.kosli.com/tutorials/x") {
+		t.Errorf("expected Tip block with tutorial URL, got:\n%s", string(withContent))
+	}
+
+	withoutContent, err := os.ReadFile(filepath.Join(dir, "root_withouttut.md"))
+	if err != nil {
+		t.Fatalf("failed to read file: %v", err)
+	}
+	if strings.Contains(string(withoutContent), "<Tip>") {
+		t.Errorf("expected no Tip block when tutorial unset, got:\n%s", string(withoutContent))
+	}
+}
+
 func TestGenMarkdownTreeWithMintlifyFormatter(t *testing.T) {
 	dir := t.TempDir()
 

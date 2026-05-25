@@ -73,6 +73,7 @@ func (o *docsOptions) run() error {
 				UseLine:    cmd.UseLine(),
 				Runnable:   cmd.Runnable(),
 				Example:    cmd.Example,
+				Tutorial:   cmd.Annotations["tutorialURL"],
 			}
 		}
 

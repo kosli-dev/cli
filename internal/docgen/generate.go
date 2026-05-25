@@ -70,6 +70,11 @@ func genMarkdownCustom(cmd *cobra.Command, w io.Writer, formatter Formatter, met
 		buf.WriteString(formatter.DeprecatedWarning(name, meta.DeprecMsg))
 	}
 
+	// Tutorial tip
+	if meta.Tutorial != "" {
+		buf.WriteString(formatter.TutorialTip(meta.Tutorial))
+	}
+
 	// Synopsis
 	buf.WriteString(formatter.Synopsis(meta))
 
