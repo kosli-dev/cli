@@ -309,7 +309,6 @@ jobs:
         docker,
         goreleaser,
         binary-provenance,
-        homebrew-pr,
         docs-repo-dispatch,
         evidence-reporter-upload-package-and-deploy,
         environment-reporter-upload-package-and-deploy,
