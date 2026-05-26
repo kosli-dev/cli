@@ -82,6 +82,11 @@ func genMarkdownCustom(cmd *cobra.Command, w io.Writer, formatter Formatter, met
 		buf.WriteString(formatter.ExampleUseCases(name, meta.Example))
 	}
 
+	// Tutorial tip
+	if meta.Tutorial != "" {
+		buf.WriteString(formatter.TutorialTip(meta.Tutorial))
+	}
+
 	_, err := fmt.Fprint(w, buf.String())
 	return err
 }

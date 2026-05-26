@@ -13,6 +13,7 @@ type CommandMeta struct {
 	UseLine    string
 	Runnable   bool
 	Example    string
+	Tutorial   string
 }
 
 // Formatter defines the interface for generating doc output in different formats.
@@ -21,6 +22,7 @@ type Formatter interface {
 	FrontMatter(meta CommandMeta) string
 	BetaWarning(name string) string
 	DeprecatedWarning(name, message string) string
+	TutorialTip(url string) string
 	Synopsis(meta CommandMeta) string
 	FlagsSection(flags, inherited string) string
 	ExampleUseCases(commandName, example string) string

@@ -50,6 +50,17 @@ func TestMintlifyBetaWarning(t *testing.T) {
 	}
 }
 
+func TestMintlifyTutorialTip(t *testing.T) {
+	f := MintlifyFormatter{}
+	got := f.TutorialTip("https://docs.kosli.com/tutorials/snyk")
+	if !strings.Contains(got, "<Tip>") || !strings.Contains(got, "</Tip>") {
+		t.Errorf("expected Tip component, got:\n%s", got)
+	}
+	if !strings.Contains(got, "[tutorial](https://docs.kosli.com/tutorials/snyk)") {
+		t.Errorf("expected markdown link to tutorial URL, got:\n%s", got)
+	}
+}
+
 func TestMintlifyDeprecatedWarning(t *testing.T) {
 	f := MintlifyFormatter{}
 	got := f.DeprecatedWarning("kosli artifact", "see kosli attest commands")
