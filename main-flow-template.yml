@@ -14,7 +14,7 @@ trail:
   - name: never-alone-data
     type: generic
   - name: four-eyes-result
-    type: custom
+    type: custom:four-eyes-result
   artifacts:
   - name: cli-docker
     attestations:
