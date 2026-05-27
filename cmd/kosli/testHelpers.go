@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -14,6 +16,7 @@ import (
 	"testing"
 
 	"github.com/kosli-dev/cli/internal/gitview"
+	"github.com/kosli-dev/cli/internal/requests"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -516,6 +519,22 @@ func UnSetEnvVars(envVars map[string]string, t *testing.T) {
 		err := os.Unsetenv(key)
 		require.NoErrorf(t, err, "error unsetting env variable %s", key)
 	}
+}
+
+// CreateControl creates a control in the org via the API.
+func CreateControl(org, identifier, name string, t *testing.T) {
+	t.Helper()
+	u, err := url.JoinPath(global.Host, "api/v2/controls", org)
+	require.NoError(t, err, "control URL should be constructed without error")
+
+	reqParams := &requests.RequestParams{
+		Method:  http.MethodPost,
+		URL:     u,
+		Payload: map[string]string{"identifier": identifier, "name": name},
+		Token:   global.ApiToken,
+	}
+	_, err = kosliClient.Do(reqParams)
+	require.NoError(t, err, "control should be created without error")
 }
 
 // CreatePolicy creates a policy on the server
