@@ -106,6 +106,11 @@ func (suite *AttestDecisionCommandTestSuite) TestAttestDecisionCmd() {
 			golden: "decision attestation 'foo' is reported to trail: test-123\n",
 		},
 		{
+			name:   "can record a decision with user data",
+			cmd:    fmt.Sprintf("attest decision --name foo --control RCTL-043 --compliant=true --user-data testdata/person-type-data-example.json %s", suite.defaultKosliArguments),
+			golden: "decision attestation 'foo' is reported to trail: test-123\n",
+		},
+		{
 			wantError: true,
 			name:      "fails when annotation key is invalid",
 			cmd:       fmt.Sprintf("attest decision --name foo --control RCTL-043 --compliant=true --annotate foo.bar=baz %s", suite.defaultKosliArguments),
