@@ -11,11 +11,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type DecisionAttestationPayload struct {
-	*CommonAttestationPayload
-	TypeName  string `json:"type_name"`
+type DecisionAttestationData struct {
 	Control   string `json:"control"`
 	Compliant bool   `json:"is_compliant"`
+}
+
+type DecisionAttestationPayload struct {
+	*CommonAttestationPayload
+	TypeName        string                  `json:"type_name"`
+	AttestationData DecisionAttestationData `json:"attestation_data"`
 }
 
 type attestDecisionOptions struct {
@@ -134,8 +138,8 @@ func newAttestDecisionCmd(out io.Writer) *cobra.Command {
 
 	ci := WhichCI()
 	addAttestationFlags(cmd, o.CommonAttestationOptions, o.payload.CommonAttestationPayload, ci)
-	cmd.Flags().StringVar(&o.payload.Control, "control", "", attestationDecisionControlFlag)
-	cmd.Flags().BoolVarP(&o.payload.Compliant, "compliant", "C", false, attestationCompliantFlag)
+	cmd.Flags().StringVar(&o.payload.AttestationData.Control, "control", "", attestationDecisionControlFlag)
+	cmd.Flags().BoolVarP(&o.payload.AttestationData.Compliant, "compliant", "C", false, attestationCompliantFlag)
 
 	err := RequireFlags(cmd, []string{"flow", "trail", "name", "control"})
 	if err != nil {
