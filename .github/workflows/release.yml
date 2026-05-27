@@ -239,25 +239,6 @@ jobs:
     secrets:
       kosli_api_token: ${{ secrets.KOSLI_PUBLIC_API_TOKEN }}
 
-  homebrew-pr:
-    needs: [goreleaser, pre-build]
-    name: Bump Homebrew formula
-    runs-on: ubuntu-latest
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
-        with:
-          egress-policy: audit
-
-      - uses: mislav/bump-homebrew-formula-action@v4
-        if: ${{ !contains(github.ref, '-') }} # skip prereleases
-        with:
-          # A PR will be sent to github.com/Homebrew/homebrew-core to update this formula:
-          formula-name: kosli-cli
-        env:
-          # the personal access token should have "repo" & "workflow" scopes
-          COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
-
   docs-repo-dispatch:
     needs: [pre-build, goreleaser]
     runs-on: ubuntu-latest
@@ -328,7 +309,6 @@ jobs:
         docker,
         goreleaser,
         binary-provenance,
-        homebrew-pr,
         docs-repo-dispatch,
         evidence-reporter-upload-package-and-deploy,
         environment-reporter-upload-package-and-deploy,
